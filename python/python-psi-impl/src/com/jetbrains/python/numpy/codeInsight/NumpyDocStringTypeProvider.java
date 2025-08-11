@@ -96,7 +96,8 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     NUMPY_ALIAS_TO_REAL_TYPE.put("non-zero int", "int");
   }
 
-  private static @Nullable NumpyDocString forFunction(@NotNull PyFunction function, @Nullable PsiElement reference, @Nullable String knownSignature) {
+  @Nullable
+  private static NumpyDocString forFunction(@NotNull PyFunction function, @Nullable PsiElement reference, @Nullable String knownSignature) {
     String docString = function.getDocStringValue();
     if (docString == null) {
       // Docstring for constructor can be found in the docstring of class
@@ -132,11 +133,13 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
    * @param reference An original reference element to specified function.
    * @return Numpy docstring wrapper object for specified function.
    */
-  public static @Nullable NumpyDocString forFunction(@NotNull PyFunction function, @Nullable PsiElement reference) {
+  @Nullable
+  public static NumpyDocString forFunction(@NotNull PyFunction function, @Nullable PsiElement reference) {
     return forFunction(function, reference, null);
   }
 
-  private static @Nullable String findRedirect(@NotNull List<Substring> lines) {
+  @Nullable
+  private static String findRedirect(@NotNull List<Substring> lines) {
     for (Substring line : lines) {
       Matcher matcher = REDIRECT.matcher(line);
       if (matcher.matches() && matcher.groupCount() > 0) {
@@ -153,7 +156,8 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
    * @param reference An original reference element.
    * @return Resolved function or null if it was not resolved.
    */
-  private static @Nullable PyFunction resolveRedirectToFunction(@NotNull String redirect, @NotNull PsiElement reference) {
+  @Nullable
+  private static PyFunction resolveRedirectToFunction(@NotNull String redirect, @NotNull PsiElement reference) {
     final QualifiedName qualifiedName = QualifiedName.fromDottedString(redirect);
     final String functionName = qualifiedName.getLastComponent();
     final List<PsiElement> items = PyResolveImportUtil.resolveQualifiedName(qualifiedName.removeLastComponent(),
@@ -172,7 +176,8 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  public static @Nullable String cleanupOptional(@NotNull String typeString) {
+  @Nullable
+  public static String cleanupOptional(@NotNull String typeString) {
     int index = typeString.indexOf(", optional");
     if (index >= 0) {
       return typeString.substring(0, index);
@@ -180,7 +185,8 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  public static @NotNull List<String> getNumpyUnionType(@NotNull String typeString) {
+  @NotNull
+  public static List<String> getNumpyUnionType(@NotNull String typeString) {
     final Matcher arrayMatcher = NUMPY_ARRAY_PATTERN.matcher(typeString);
     if (arrayMatcher.matches()) {
       typeString = arrayMatcher.group(2);
@@ -192,8 +198,9 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     return Arrays.asList(typeString.split(" *, *"));
   }
 
+  @Nullable
   @Override
-  public @Nullable Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     if (isApplicable(function)) {
       final PyExpression callee = callSite instanceof PyCallExpression ? ((PyCallExpression)callSite).getCallee() : null;
       final NumpyDocString docString = forFunction(function, callee);
@@ -249,8 +256,9 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable Ref<PyType> getParameterType(@NotNull PyNamedParameter parameter, @NotNull PyFunction function, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getParameterType(@NotNull PyNamedParameter parameter, @NotNull PyFunction function, @NotNull TypeEvalContext context) {
     if (isApplicable(function)) {
       final String name = parameter.getName();
       if (name != null) {
@@ -292,7 +300,8 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     return PyPsiFacade.getInstance(anchor.getProject());
   }
 
-  private static @Nullable PyType parseSingleNumpyDocType(@NotNull PsiElement anchor, @NotNull String typeString) {
+  @Nullable
+  private static PyType parseSingleNumpyDocType(@NotNull PsiElement anchor, @NotNull String typeString) {
     final PyPsiFacade facade = getPsiFacade(anchor);
     final String realTypeName = getNumpyRealTypeName(typeString);
     PyType type = facade.parseTypeAnnotation(realTypeName, anchor);
@@ -307,7 +316,8 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     return getNominalType(anchor, typeString);
   }
 
-  private static @NotNull String getNumpyRealTypeName(@NotNull String typeString) {
+  @NotNull
+  private static String getNumpyRealTypeName(@NotNull String typeString) {
     final String realTypeName = NUMPY_ALIAS_TO_REAL_TYPE.get(typeString);
     if (realTypeName != null) {
       return realTypeName;
@@ -325,7 +335,8 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   /**
    * Converts literal into type, e.g. -1 -> int, 'fro' -> str
    */
-  private static @Nullable PyType getNominalType(@NotNull PsiElement anchor, @NotNull String typeString) {
+  @Nullable
+  private static PyType getNominalType(@NotNull PsiElement anchor, @NotNull String typeString) {
     final PyExpression expression = PyUtil.createExpressionFromFragment(typeString, anchor);
     if (expression != null) {
       final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
@@ -339,7 +350,8 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  private static @Nullable PyType parseNumpyDocType(@NotNull PsiElement anchor, @NotNull String typeString) {
+  @Nullable
+  private static PyType parseNumpyDocType(@NotNull PsiElement anchor, @NotNull String typeString) {
     final String withoutOptional = cleanupOptional(typeString);
     final Set<PyType> types = new LinkedHashSet<>();
     if (withoutOptional != null) {
@@ -357,7 +369,7 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     return getPsiFacade(anchor).createUnionType(types);
   }
 
-  public static boolean isUfuncType(@NotNull PsiElement anchor, final @NotNull String typeString) {
+  public static boolean isUfuncType(@NotNull PsiElement anchor, @NotNull final String typeString) {
     for (String typeName : getNumpyUnionType(typeString)) {
       if (anchor instanceof PyFunction && isInsideNumPy(anchor) && NumpyUfuncs.isUFunc(((PyFunction)anchor).getName()) &&
           ("array_like".equals(typeName) || "ndarray".equals(typeName))) {
@@ -367,7 +379,8 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     return false;
   }
 
-  private static @Nullable PyType getParameterType(@NotNull PyFunction function, @NotNull String parameterName) {
+  @Nullable
+  private static PyType getParameterType(@NotNull PyFunction function, @NotNull String parameterName) {
     final NumpyDocString docString = forFunction(function, function);
     if (docString != null) {
       String paramType = docString.getParamType(parameterName);

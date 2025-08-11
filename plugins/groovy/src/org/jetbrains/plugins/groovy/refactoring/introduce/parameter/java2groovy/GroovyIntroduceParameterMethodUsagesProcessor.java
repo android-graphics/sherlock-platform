@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -137,7 +137,8 @@ public final class GroovyIntroduceParameterMethodUsagesProcessor implements Intr
     return false;
   }
 
-  private static @Nullable GrExpression getLast(GrExpression[] oldArgs) {
+  @Nullable
+  private static GrExpression getLast(GrExpression[] oldArgs) {
     GrExpression anchor;
     if (oldArgs.length > 0) {
       anchor = oldArgs[oldArgs.length - 1];
@@ -243,12 +244,13 @@ public final class GroovyIntroduceParameterMethodUsagesProcessor implements Intr
 
   }
 
-  public static @NotNull GrParameter addParameter(@NotNull GrParameterListOwner parametersOwner,
-                                                  @Nullable MethodJavaDocHelper javaDocHelper,
-                                                  @NotNull PsiType forcedType,
-                                                  @NotNull String parameterName,
-                                                  boolean isFinal,
-                                                  @NotNull Project project) {
+  @NotNull
+  public static GrParameter addParameter(@NotNull GrParameterListOwner parametersOwner,
+                                         @Nullable MethodJavaDocHelper javaDocHelper,
+                                         @NotNull PsiType forcedType,
+                                         @NotNull String parameterName,
+                                         boolean isFinal,
+                                         @NotNull Project project) {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
     final String typeText =
@@ -271,7 +273,8 @@ public final class GroovyIntroduceParameterMethodUsagesProcessor implements Intr
     return parameter;
   }
 
-  private static @Nullable PsiParameter getAnchorParameter(GrParameterListOwner parametersOwner) {
+  @Nullable
+  private static PsiParameter getAnchorParameter(GrParameterListOwner parametersOwner) {
     PsiParameterList parameterList = parametersOwner.getParameterList();
     final PsiParameter anchorParameter;
     final PsiParameter[] parameters = parameterList.getParameters();

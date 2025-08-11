@@ -27,6 +27,7 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     override fun setupSettingsUI(builder: Panel) {
       setupJavaSdkUI(builder)
       setupSampleCodeUI(builder)
+      setupSampleCodeWithOnBoardingTipsUI(builder)
     }
 
     override fun setupAdvancedSettingsUI(builder: Panel) {
@@ -46,17 +47,25 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
   private class AssetsStep(
     private val parent: Step
-  ) : AssetsNewProjectWizardStep(parent) {
+  ) : AssetsJavaNewProjectWizardStep(parent) {
 
     override fun setupAssets(project: Project) {
-      setOutputDirectory(parent.contentRoot)
+      outputDirectory = parent.contentRoot
 
       if (context.isCreatingNewProject) {
         addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
       }
+
       if (parent.addSampleCode) {
-        withJavaSampleCodeAsset(project, "src")
+        withJavaSampleCodeAsset("src", "", parent.generateOnboardingTips)
       }
+    }
+
+    override fun setupProject(project: Project) {
+      if (parent.generateOnboardingTips) {
+        prepareOnboardingTips(project)
+      }
+      super.setupProject(project)
     }
   }
 }

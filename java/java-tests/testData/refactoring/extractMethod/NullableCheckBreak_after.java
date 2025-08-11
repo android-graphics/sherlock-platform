@@ -14,7 +14,7 @@ class Test {
   }
 
     @Nullable
-    private Test.Pojo newMethod() {
+    private Pojo newMethod() {
         Pojo x = things.get(0);
 
         if(x.it > 0) {

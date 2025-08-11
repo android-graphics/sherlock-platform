@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import org.jetbrains.annotations.ApiStatus;
-
-@ApiStatus.Internal
 public interface PlusMinus<T> {
   void plus(final T t);
   void minus(final T t);

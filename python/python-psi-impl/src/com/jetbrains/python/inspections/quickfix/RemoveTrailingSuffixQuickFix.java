@@ -27,8 +27,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class RemoveTrailingSuffixQuickFix extends PsiUpdateModCommandQuickFix {
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.remove.trailing.suffix");
   }
 

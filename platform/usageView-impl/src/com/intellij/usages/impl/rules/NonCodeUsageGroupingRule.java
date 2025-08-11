@@ -37,7 +37,6 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
       super(2, supplier);
     }
 
-    @Override
     public String toString() {
       return "DynamicUsages";
     }
@@ -49,7 +48,6 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
       super(3, supplier);
     }
 
-    @Override
     public String toString() {
       return "NonCodeUsages";
     }
@@ -88,8 +86,9 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
     }
   }
 
+  @Nullable
   @Override
-  protected @Nullable UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+  protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     if (usage instanceof UnknownUsagesInUnloadedModules) {
       return ourUnloadedGroup;
     }
@@ -120,7 +119,8 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
     return false;
   }
 
-  private static @Nls String buildText(@NlsContexts.ListItem String usages, @Nls String scope) {
+  @Nls
+  private static String buildText(@NlsContexts.ListItem String usages, @Nls String scope) {
     return StringUtil.isEmpty(scope) ? usages : UsageViewBundle.message("usage.view.results.node.scope.in", usages, scope);
   }
 }

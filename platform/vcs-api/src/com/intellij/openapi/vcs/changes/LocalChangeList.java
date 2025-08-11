@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -15,7 +15,7 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class LocalChangeList implements Cloneable, ChangeList {
-  public static final @NonNls String OLD_DEFAULT_NAME = "Default";
+  @NonNls public static final String OLD_DEFAULT_NAME = "Default";
 
   public static LocalChangeList createEmptyChangeList(Project project, @NotNull String name) {
     return VcsContextFactory.getInstance().createLocalChangeList(project, name);
@@ -33,15 +33,19 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
   /**
    * Logical id that identifies the changelist and should survive name change.
    */
-  public @NotNull @NonNls String getId() {
+  @NotNull
+  @NonNls
+  public String getId() {
     return getName();
   }
 
   @Override
-  public abstract @NotNull @Nls String getName();
+  @NotNull
+  public abstract @Nls String getName();
 
   @Override
-  public abstract @Nullable @NlsSafe String getComment();
+  @Nullable
+  public abstract @NlsSafe String getComment();
 
   public abstract boolean isDefault();
 
@@ -50,7 +54,8 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
   /**
    * Get additional data associated with this changelist.
    */
-  public abstract @Nullable Object getData();
+  @Nullable
+  public abstract Object getData();
 
   public abstract LocalChangeList copy();
 

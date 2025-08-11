@@ -11,13 +11,10 @@ import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.ByteBuffer;
-import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -61,13 +58,12 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
    * @see java.lang.instrument.Instrumentation#appendToSystemClassLoaderSearch
    */
   @SuppressWarnings("unused")
-  private void appendToClassPathForInstrumentation(@NotNull String jar) {
-    FileSystem fileSystem = getPlatformDefaultFileSystem();
-    classPath.addFile(fileSystem.getPath(jar));
+  final void appendToClassPathForInstrumentation(@NotNull String jar) {
+    classPath.addFile(Paths.get(jar));
   }
 
   /**
-   * There are two definitions of the `ClassPath` class: one from the app class loader that bootstrap uses,
+   * There are two definitions of the `ClassPath` class: one from the app class loader that is used by bootstrap,
    * and another one from the core class loader produced as a result of creating a plugin class loader.
    * The core class loader doesn't use bootstrap class loader as a parent - instead, only platform classloader is used (only JRE classes).
    */
@@ -113,7 +109,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   protected static @NotNull UrlClassLoader.Builder createDefaultBuilderForJdk(@NotNull ClassLoader parent) {
-    FileSystem fileSystem = getPlatformDefaultFileSystem();
     Builder configuration = new Builder();
 
     if (parent instanceof URLClassLoader) {
@@ -121,7 +116,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
       // LinkedHashSet is used to remove duplicates
       Set<Path> files = new LinkedHashSet<>(urls.length);
       for (URL url : urls) {
-        files.add(fileSystem.getPath(url.getPath()));
+        files.add(Paths.get(url.getPath()));
       }
       configuration.files = files;
     }
@@ -129,7 +124,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
       String[] parts = System.getProperty("java.class.path").split(File.pathSeparator);
       Set<Path> files = new LinkedHashSet<>(parts.length);
       for (String s : parts) {
-        files.add(fileSystem.getPath(s));
+        files.add(Paths.get(s));
       }
       configuration.files = files;
     }
@@ -220,51 +215,24 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     //
     // com.intellij.util.lang
     // see XxHash3Test.packages
-    if (isSystemClassLoader && packageNameHash == -9217824570049207139L && isNotExcludedLangClasses(fileNameWithoutExtension)) {
-      return appClassLoader.loadClass(name);
+    if (isSystemClassLoader && packageNameHash == -9217824570049207139L) {
+      // these two classes from com.intellij.util.lang are located in intellij.platform.util module, which shouldn't be loaded by appClassLoader (IDEA-331043)
+      if (!fileNameWithoutExtension.endsWith("/CompoundRuntimeException") && !fileNameWithoutExtension.endsWith("/JavaVersion")) {
+        return appClassLoader.loadClass(name);
+      }
     }
 
-    Class<?> aClass;
+    Class<?> clazz;
     try {
-      aClass = classPath.findClass(name, fileName, packageNameHash, classDataConsumer);
+      clazz = classPath.findClass(name, fileName, packageNameHash, classDataConsumer);
     }
     catch (IOException e) {
       throw new ClassNotFoundException(name, e);
     }
-    if (aClass == null) {
+    if (clazz == null) {
       throw new ClassNotFoundException(name);
     }
-    return aClass;
-  }
-
-  @ApiStatus.Internal
-  public @Nullable Class<?> loadClassWithPrecomputedMeta(String name,
-                                                         String fileName,
-                                                         String fileNameWithoutExtension,
-                                                         long packageNameHash) throws IOException, ClassNotFoundException {
-    synchronized (getClassLoadingLock(name)) {
-      Class<?> c = findLoadedClass(name);
-      if (c != null) {
-        return c;
-      }
-
-      ClassLoader parent = getParent();
-      if (parent != null) {
-        try {
-          c = parent.loadClass(name);
-        }
-        catch (ClassNotFoundException ignored) {
-        }
-      }
-
-      if (c != null) {
-        return c;
-      }
-      if (isSystemClassLoader && packageNameHash == -9217824570049207139L && isNotExcludedLangClasses(fileNameWithoutExtension)) {
-        return appClassLoader.loadClass(name);
-      }
-      return classPath.findClass(name, fileName, packageNameHash, classDataConsumer);
-    }
+    return clazz;
   }
 
   private void definePackageIfNeeded(String name) {
@@ -385,10 +353,32 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   @ApiStatus.Internal
   public @Nullable BiFunction<String, Boolean, String> resolveScopeManager;
 
-  private static boolean isNotExcludedLangClasses(String fileNameWithoutExtension) {
-    // these two classes from com.intellij.util.lang are located in intellij.platform.util module,
-    // which shouldn't be loaded by appClassLoader (IDEA-331043)
-    return !fileNameWithoutExtension.endsWith("/CompoundRuntimeException") && !fileNameWithoutExtension.endsWith("/JavaVersion");
+  public @Nullable Class<?> loadClassInsideSelf(String name,
+                                                String fileName,
+                                                long packageNameHash,
+                                                boolean forceLoadFromSubPluginClassloader) throws IOException {
+    synchronized (getClassLoadingLock(name)) {
+      Class<?> c = findLoadedClass(name);
+      if (c != null) {
+        return c;
+      }
+
+      if (!forceLoadFromSubPluginClassloader) {
+        // "self" makes sense for PluginClassLoader, but not for UrlClassLoader - our parent it is implementation detail
+        ClassLoader parent = getParent();
+        if (parent != null) {
+          try {
+            c = parent.loadClass(name);
+          }
+          catch (ClassNotFoundException ignore) { }
+        }
+
+        if (c != null) {
+          return c;
+        }
+      }
+      return classPath.findClass(name, fileName, packageNameHash, classDataConsumer);
+    }
   }
 
   /**
@@ -620,7 +610,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     /**
      * `ZipFile` handles opened in `JarLoader` will be kept in as soft references.
      * Depending on OS, the option significantly speeds up classloading from libraries.
-     *  Warning: on Windows, an unclosed handle locks a file, preventing its modification.
+     * Caveat: on Windows, an unclosed handle locks a file, preventing its modification.
      * Thus, the option is recommended when .jar files are not modified or a process that uses this option is transient.
      */
     public @NotNull UrlClassLoader.Builder allowLock(boolean lockJars) {
@@ -645,11 +635,10 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
      * `FileLoader` will save a list of files/packages under its root and use this information instead of walking files.
      * Should be used only when the caches can be properly invalidated (when e.g., a new file appears under `FileLoader`'s root).
      * Currently, the flag is used for faster unit tests / debug IDE instance, because IDEA's build process (as of 14.1) ensures deletion of
-     * such information upon appearing a new file for output root.
+     * such information upon appearing new file for output root.
      * <p>
-     * IDEA's building process does not ensure deletion of cached information upon deletion of some file under a local root.
-     * However, false positives are not a logical error,
-     * since code is prepared for that and disk access is performed upon class/resource loading.
+     * IDEA's building process does not ensure deletion of cached information upon deletion of some file under a local root,
+     * but false positives are not a logical error, since code is prepared for that and disk access is performed upon class/resource loading.
      */
     public @NotNull UrlClassLoader.Builder usePersistentClasspathIndexForLocalClassDirectories() {
       this.isClassPathIndexEnabled = true;
@@ -686,33 +675,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
     public @NotNull UrlClassLoader get() {
       return new UrlClassLoader(this, null, isParallelCapable);
-    }
-  }
-
-  private static volatile FileSystem theFileSystem;
-  /**
-   * This is a workaround to avoid `getSystemClassLoader()` call during the system class loader instantiation.
-   * When system property "java.system.class.loader" is set to UrlClassLoader(or inheritors),
-   * such classloader is being instantiated during `ClassLoader#initSystemClassLoader()` call.
-   * Since UrlClassLoader uses nio in constructor, it triggers default file system initialization
-   * which calls ClassLoader.getSystemClassLoader() and fails because it's not permitted (to avoid recursion issue).
-   * <p>
-   * Also, loading nio classes might not work during `#appendToClassPathForInstrumentation`.
-   * Because for some versions of JBR, it leads to NPE during initialization of ZipFile through FileSystems.getDefault.
-   */
-  private static FileSystem getPlatformDefaultFileSystem() {
-    if (theFileSystem != null) {
-      return theFileSystem;
-    }
-    try {
-      Class<?> aClass = Class.forName("sun.nio.fs.DefaultFileSystemProvider");
-      Method theFileSystemMethod = aClass.getDeclaredMethod("theFileSystem");
-      FileSystem fileSystem = (FileSystem)theFileSystemMethod.invoke(aClass);
-      theFileSystem = fileSystem;
-      return fileSystem;
-    }
-    catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-      throw new Error(e);
     }
   }
 }

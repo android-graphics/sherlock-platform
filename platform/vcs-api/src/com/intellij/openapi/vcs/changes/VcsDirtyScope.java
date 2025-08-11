@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -34,12 +34,14 @@ public abstract class VcsDirtyScope {
   /**
    * @return project for this dirty scope
    */
-  public abstract @NotNull Project getProject();
+  @NotNull
+  public abstract Project getProject();
 
   /**
    * @return the vcs for this dirty scope
    */
-  public abstract @NotNull AbstractVcs getVcs();
+  @NotNull
+  public abstract AbstractVcs getVcs();
 
   /**
    * Get dirty files and directories.
@@ -74,7 +76,7 @@ public abstract class VcsDirtyScope {
    *
    * @param path a path to check
    */
-  public abstract boolean belongsTo(@NotNull final FilePath path);
+  public abstract boolean belongsTo(final FilePath path);
 
   public abstract boolean wasEveryThingDirty();
 }

@@ -38,7 +38,7 @@ public class PyFunctionFindUsagesHandler extends PyFindUsagesHandler {
   }
 
   @Override
-  protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
+  public boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
     return true;
   }
 

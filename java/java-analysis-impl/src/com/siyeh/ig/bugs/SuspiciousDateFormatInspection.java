@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -24,8 +24,9 @@ import java.util.Locale;
 
 public final class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspectionTool {
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
@@ -154,13 +155,17 @@ public final class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalI
       myRange = range;
     }
 
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
     @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
+    public String getName() {
       return CommonQuickFixBundle.message("fix.replace.x.with.y", myToken.toString(), myToken.fixed());
     }
 
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
     @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("incorrect.date.format.fix.family.name");
     }
 

@@ -35,23 +35,27 @@ public abstract class ReferenceBase implements PsiReference {
     }
 
     @Override
-    public @NotNull XPathElement getElement() {
+    @NotNull
+    public XPathElement getElement() {
         return element;
     }
 
     @Override
-    public @NotNull TextRange getRangeInElement() {
+    @NotNull
+    public TextRange getRangeInElement() {
         final int outer = element.getTextRange().getStartOffset();
         return TextRange.from(nameNode.getTextRange().getStartOffset() - outer, nameNode.getTextLength());
     }
 
     @Override
-    public @Nullable PsiElement resolve() {
+    @Nullable
+    public PsiElement resolve() {
         return null;
     }
 
     @Override
-    public @NotNull String getCanonicalText() {
+    @NotNull
+    public String getCanonicalText() {
         return nameNode.getText();
     }
 

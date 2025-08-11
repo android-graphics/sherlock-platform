@@ -2,12 +2,12 @@
 package com.intellij.commandInterface.commandLine;
 
 import com.intellij.commandInterface.command.Command;
-import com.intellij.commandInterface.commandLine.psi.CommandLineFile;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.commandInterface.commandLine.psi.CommandLineFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,18 +17,20 @@ import org.jetbrains.annotations.Nullable;
  * @author Ilya.Kazakevich
  */
 public class CommandLineElement extends ASTWrapperPsiElement implements CommandLinePart {
-  protected CommandLineElement(final @NotNull ASTNode node) {
+  protected CommandLineElement(@NotNull final ASTNode node) {
     super(node);
   }
 
 
+  @Nullable
   @Override
-  public final @Nullable CommandLineFile getCommandLineFile() {
+  public final CommandLineFile getCommandLineFile() {
     return PsiTreeUtil.getParentOfType(this, CommandLineFile.class);
   }
 
+  @Nullable
   @Override
-  public final @Nullable Command findRealCommand() {
+  public final Command findRealCommand() {
     final CommandLineFile commandLineFile = getCommandLineFile();
     if (commandLineFile != null) {
       return commandLineFile.findRealCommand();

@@ -47,17 +47,14 @@ public final class Suppliers {
       return this.instance;
     }
 
-    @Override
     public boolean equals(Object obj) {
       return obj instanceof SupplierOfInstance && this.instance.equals(((SupplierOfInstance<?>)obj).instance);
     }
 
-    @Override
     public int hashCode() {
       return this.instance.hashCode();
     }
 
-    @Override
     public String toString() {
       return "Suppliers.ofInstance(" + this.instance + ")";
     }

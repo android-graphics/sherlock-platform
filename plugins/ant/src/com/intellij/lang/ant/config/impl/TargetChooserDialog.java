@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.ant.config.impl;
 
@@ -42,7 +42,8 @@ public class TargetChooserDialog extends DialogWrapper {
   }
 
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  @Nullable
+  protected JComponent createCenterPanel() {
     myTree = initTree();
     myTree.addKeyListener(new KeyAdapter() {
       @Override
@@ -68,7 +69,7 @@ public class TargetChooserDialog extends DialogWrapper {
   }
 
   private Tree initTree() {
-    final @NonNls DefaultMutableTreeNode root = new DefaultMutableTreeNode("Root");
+    @NonNls final DefaultMutableTreeNode root = new DefaultMutableTreeNode("Root");
     final Tree tree = new Tree(root);
     tree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
@@ -142,7 +143,8 @@ public class TargetChooserDialog extends DialogWrapper {
            mySelectedTarget.getModel().getBuildFile() == descriptor.getBuildFile();
   }
 
-  public @Nullable AntBuildTarget getSelectedTarget() {
+  @Nullable
+  public AntBuildTarget getSelectedTarget() {
     return mySelectedTarget;
   }
 

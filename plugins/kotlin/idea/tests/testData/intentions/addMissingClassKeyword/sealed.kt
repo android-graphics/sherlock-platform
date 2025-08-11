@@ -1,4 +1,4 @@
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 sealed <caret>Foo {
     abstract fun foo()
 }

@@ -6,5 +6,3 @@ interface I {
 class C<caret> : I { // comment1
     // comment2
 }
-
-// MEMBER: "foo(): Unit"

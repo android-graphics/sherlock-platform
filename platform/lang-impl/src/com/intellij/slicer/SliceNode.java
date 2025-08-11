@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -38,7 +38,8 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     this.targetEqualUsages = targetEqualUsages;
   }
 
-  public @NotNull SliceNode copy() {
+  @NotNull
+  public SliceNode copy() {
     SliceUsage newUsage = getValue().copy();
     SliceNode newNode = new SliceNode(getProject(), newUsage, targetEqualUsages);
     newNode.dupNodeCalculated = dupNodeCalculated;
@@ -47,7 +48,8 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   }
 
   @Override
-  public @NotNull Collection<SliceNode> getChildren() {
+  @NotNull
+  public Collection<SliceNode> getChildren() {
     if (isUpToDate()) return myCachedChildren == null ? Collections.emptyList() : myCachedChildren;
     try {
       List<SliceNode> nodes;
@@ -83,13 +85,6 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     Processor<SliceUsage> processor = sliceUsage -> {
       progress.checkCanceled();
-
-      //don't open a node if there is a duplicate above
-      calculateDupNode();
-      if (duplicate != this && duplicate != null) {
-        return true;
-      }
-
       SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages);
       synchronized (children) {
         node.index = children.size();
@@ -121,8 +116,9 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     return false;
   }
 
+  @NotNull
   @Override
-  protected @NotNull PresentationData createPresentation() {
+  protected PresentationData createPresentation() {
     return new PresentationData(){
       @Override
       public Object @NotNull [] getEqualityObjects() {
@@ -198,7 +194,8 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     changed = true;
   }
 
-  public @Nullable SliceLanguageSupportProvider getProvider() {
+  @Nullable
+  public SliceLanguageSupportProvider getProvider() {
     AbstractTreeNode<SliceUsage> element = getElement();
     if (element == null) {
       return null;

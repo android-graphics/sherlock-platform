@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
@@ -77,11 +78,11 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
     ): Boolean? {
         val enumEntriesClass = enumEntriesPropertySymbol.returnType.expandedSymbol
             ?: return null
-        if (EXPERIMENTAL_ANNOTATION_CLASS_ID in enumEntriesClass.annotations) {
+        if (enumEntriesClass.hasAnnotation(EXPERIMENTAL_ANNOTATION_CLASS_ID)) {
             return true
         }
         val necessaryOptIns = WasExperimentalOptInsNecessityChecker.getNecessaryOptInsFromWasExperimental(
-            enumEntriesClass.annotations, moduleApiVersion,
+            enumEntriesClass.annotationsList, moduleApiVersion,
         )
         return EXPERIMENTAL_ANNOTATION_CLASS_ID in necessaryOptIns
     }

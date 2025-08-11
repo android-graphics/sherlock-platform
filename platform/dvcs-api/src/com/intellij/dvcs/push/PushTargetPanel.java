@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.dvcs.push;
 
 import com.intellij.dvcs.push.ui.PushTargetEditorListener;
@@ -15,20 +29,20 @@ public abstract class PushTargetPanel<T extends PushTarget> extends JPanel {
   /**
    * @param isActive true if appropriate repository changes will be pushed, a.e. if repository checked
    */
-  public abstract void render(@NotNull ColoredTreeCellRenderer renderer,
+  abstract public void render(@NotNull ColoredTreeCellRenderer renderer,
                               boolean isSelected,
                               boolean isActive,
                               @Nullable @Nls String forceRenderedText);
 
-  public abstract @Nullable T getValue();
-
-  public void editingStarted() { }
+  @Nullable
+  abstract public T getValue();
 
   public abstract void fireOnCancel();
 
   public abstract void fireOnChange();
 
-  public abstract @Nullable ValidationInfo verify();
+  @Nullable
+  public abstract ValidationInfo verify();
 
   public abstract void setFireOnChangeAction(@NotNull Runnable action);
 
@@ -38,9 +52,5 @@ public abstract class PushTargetPanel<T extends PushTarget> extends JPanel {
   public abstract void addTargetEditorListener(@NotNull PushTargetEditorListener listener);
 
   public void forceUpdateEditableUiModel(@NotNull String forcedText) {
-  }
-
-  public boolean showSourceWhenEditing() {
-    return true;
   }
 }

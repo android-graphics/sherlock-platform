@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.CommonBundle;
@@ -128,7 +128,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
 
     myTargetDirectoryFixed = initialTargetDirectory == null;
     mySuggestToMoveToAnotherRoot = initialTargetElement == null;
-    if (!targetPackageName.isEmpty()) {
+    if (targetPackageName.length() != 0) {
       myWithBrowseButtonReference.prependItem(targetPackageName);
       myClassPackageChooser.prependItem(targetPackageName);
     }
@@ -316,7 +316,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
   protected void canRun() throws ConfigurationException {
     if (isMoveToPackage()) {
       String name = getTargetPackage().trim();
-      if (!name.isEmpty() && !PsiNameHelper.getInstance(myManager.getProject()).isQualifiedName(name)) {
+      if (name.length() != 0 && !PsiNameHelper.getInstance(myManager.getProject()).isQualifiedName(name)) {
         throw new ConfigurationException(JavaBundle.message("move.classes.invalid.destination.package.name.message", name));
       }
     }
@@ -333,7 +333,8 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     validateButtonsAsync(ModalityState.stateForComponent(myMainPanel));
   }
 
-  private @Nullable PsiClass findTargetClass() {
+  @Nullable
+  private PsiClass findTargetClass() {
     String name = myInnerClassChooser.getText().trim();
     return JavaPsiFacade.getInstance(myManager.getProject()).findClass(name, ProjectScope.getProjectScope(myProject));
   }
@@ -346,7 +347,8 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     return myHavePackages ? myWithBrowseButtonReference.getText() : myClassPackageChooser.getText();
   }
 
-  private static @Nullable @NlsContexts.DialogMessage String verifyDestinationForElement(@NotNull PsiElement element, @NotNull MoveDestination moveDestination) {
+  @Nullable
+  private static @NlsContexts.DialogMessage String verifyDestinationForElement(@NotNull PsiElement element, @NotNull MoveDestination moveDestination) {
     final String message;
     if (element instanceof PsiDirectory) {
       message = moveDestination.verify((PsiDirectory)element);
@@ -419,7 +421,8 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     refactoringSettings.MOVE_SEARCH_FOR_TEXT = isSearchInNonJavaFiles();
   }
 
-  private @Nullable @NlsContexts.DialogMessage String verifyInnerClassDestination() {
+  @Nullable
+  private @NlsContexts.DialogMessage String verifyInnerClassDestination() {
     PsiClass targetClass = findTargetClass();
     if (targetClass == null) return null;
 
@@ -470,9 +473,10 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     return myCbSearchTextOccurrences.isSelected();
   }
 
-  private @Nullable MoveDestination selectDestination() {
+  @Nullable
+  private MoveDestination selectDestination() {
     final String packageName = getTargetPackage().trim();
-    if (!packageName.isEmpty() && !PsiNameHelper.getInstance(myManager.getProject()).isQualifiedName(packageName)) {
+    if (packageName.length() > 0 && !PsiNameHelper.getInstance(myManager.getProject()).isQualifiedName(packageName)) {
       Messages.showErrorDialog(myProject, JavaRefactoringBundle.message("please.enter.a.valid.target.package.name"),
                                RefactoringBundle.message("move.title"));
       return null;

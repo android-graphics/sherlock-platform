@@ -8,16 +8,14 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.MessageConstants
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
+import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.util.ui.RestartDialogImpl
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 class MergeMenuWithWindowTitleAction : ToggleAction(), DumbAware {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = CustomWindowHeaderUtil.hideNativeLinuxTitleAvailable && CustomWindowHeaderUtil.hideNativeLinuxTitleSupported
+    e.presentation.isEnabledAndVisible = IdeRootPane.hideNativeLinuxTitleAvailable && IdeRootPane.hideNativeLinuxTitleSupported
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {

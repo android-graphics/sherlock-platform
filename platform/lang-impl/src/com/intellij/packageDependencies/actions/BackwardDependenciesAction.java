@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -8,13 +8,11 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.search.SearchScope;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-@ApiStatus.Internal
 public final class BackwardDependenciesAction extends BaseAnalysisAction {
   private BackwardDependenciesAdditionalUi myPanel;
 
@@ -24,7 +22,7 @@ public final class BackwardDependenciesAction extends BaseAnalysisAction {
   }
 
   @Override
-  protected void analyze(final @NotNull Project project, final @NotNull AnalysisScope scope) {
+  protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
     scope.setSearchInLibraries(true); //find library usages in project
     final SearchScope selectedScope = myPanel.getScopeChooserCombo().getSelectedScope();
     new BackwardDependenciesHandler(project, scope, selectedScope != null ? new AnalysisScope(selectedScope, project) : new AnalysisScope(project)).analyze();
@@ -48,7 +46,8 @@ public final class BackwardDependenciesAction extends BaseAnalysisAction {
   }
 
   @Override
-  protected @Nullable JComponent getAdditionalActionSettings(final @NotNull Project project, final BaseAnalysisActionDialog dialog) {
+  @Nullable
+  protected JComponent getAdditionalActionSettings(final @NotNull Project project, final BaseAnalysisActionDialog dialog) {
     myPanel = new BackwardDependenciesAdditionalUi();
     myPanel.getScopeChooserCombo().init(project, null);
     return myPanel.getPanel();

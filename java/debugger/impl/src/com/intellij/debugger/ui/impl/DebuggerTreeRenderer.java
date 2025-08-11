@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -51,7 +51,8 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  public static @Nullable Icon getDescriptorIcon(NodeDescriptor descriptor) {
+  @Nullable
+  public static Icon getDescriptorIcon(NodeDescriptor descriptor) {
     if (descriptor instanceof ThreadGroupDescriptorImpl threadGroupDescriptor) {
       return threadGroupDescriptor.isCurrent() ? AllIcons.Debugger.ThreadGroupCurrent : AllIcons.Debugger.ThreadGroup;
     }
@@ -141,10 +142,7 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
     final Icon valueIcon = valueDescriptor.getValueIcon();
     if (valueIcon != null) {
-      // Keep watch icon to make clear the source of a node, prefer the provided icon otherwise
-      nodeIcon = nodeIcon == AllIcons.Debugger.Db_watch
-                 ? IconManager.getInstance().createRowIcon(nodeIcon, valueIcon)
-                 : valueIcon;
+      nodeIcon = IconManager.getInstance().createRowIcon(nodeIcon, valueIcon);
     }
     return nodeIcon;
   }

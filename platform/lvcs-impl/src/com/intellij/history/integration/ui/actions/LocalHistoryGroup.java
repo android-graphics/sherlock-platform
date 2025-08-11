@@ -3,6 +3,7 @@
 package com.intellij.history.integration.ui.actions;
 
 import com.intellij.ide.actions.NonTrivialActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAware;
@@ -23,7 +24,7 @@ public final class LocalHistoryGroup extends NonTrivialActionGroup implements Du
       return;
     }
 
-    if (e.isFromContextMenu()) {
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
       VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
       if (file == null || !(file.isInLocalFileSystem() || VersionManagingFileSystem.isEnforcedNonLocal(file))) {
         e.getPresentation().setEnabledAndVisible(false);

@@ -25,11 +25,6 @@ open class CommandChain : MarshallableCommand, Iterable<MarshallableCommand> {
     return this
   }
 
-  fun addCommands(commands: Collection<MarshallableCommand>): CommandChain {
-    _chain.addAll(commands)
-    return this
-  }
-
   /**
    * Pattern for adding a command: %YOUR_COMMAND_PREFIX COMMAND_PARAM_1 .. COMMAND_PARAM_N
    */

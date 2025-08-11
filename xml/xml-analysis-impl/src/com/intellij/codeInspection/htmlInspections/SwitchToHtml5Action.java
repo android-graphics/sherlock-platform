@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -17,13 +17,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SwitchToHtml5Action implements LocalQuickFix, IntentionAction {
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return XmlAnalysisBundle.message("html.quickfix.switch.to.html5");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getText() {
+  public String getText() {
     return getFamilyName();
   }
 
@@ -47,8 +49,9 @@ public class SwitchToHtml5Action implements LocalQuickFix, IntentionAction {
     applyFix(project);
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
     return null;
   }
 

@@ -35,7 +35,6 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
     Enum,
     StringList,
     StringSet,
-    StringMap,
     Unsupported
   }
 

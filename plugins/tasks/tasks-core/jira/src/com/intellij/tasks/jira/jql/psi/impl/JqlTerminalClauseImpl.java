@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.jql.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -14,13 +13,15 @@ public abstract class JqlTerminalClauseImpl extends JqlElementImpl implements Jq
     super(node);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFieldName() {
+  public String getFieldName() {
     return getField().getText();
   }
 
+  @NotNull
   @Override
-  public @NotNull JqlIdentifier getField() {
+  public JqlIdentifier getField() {
     JqlIdentifier identifier = findChildByClass(JqlIdentifier.class);
     assert identifier != null;
     return identifier;

@@ -27,7 +27,6 @@ interface FsRootDataLoader {
   fun loadDirectoryData(storage: Path, id: Int, parent: VirtualFile, childName: CharSequence, fs: NewVirtualFileSystem)
 }
 
-@Internal
 class EmptyFsRootDataLoader : FsRootDataLoader {
   override val name: String = "empty"
 

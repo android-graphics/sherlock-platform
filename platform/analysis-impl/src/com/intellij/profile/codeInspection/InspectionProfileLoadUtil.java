@@ -2,6 +2,7 @@
 package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolsSupplier;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;

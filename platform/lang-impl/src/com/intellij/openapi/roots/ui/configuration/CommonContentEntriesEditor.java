@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration;
 
@@ -204,7 +204,8 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     return mainPanel;
   }
 
-  protected @Nullable JPanel createBottomControl(Module module) {
+  @Nullable
+  protected JPanel createBottomControl(Module module) {
     return null;
   }
 
@@ -290,11 +291,13 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     }
   }
 
-  private @Nullable String getNextContentEntry(final String contentEntryUrl) {
+  @Nullable
+  private String getNextContentEntry(final String contentEntryUrl) {
     return getAdjacentContentEntry(contentEntryUrl, 1);
   }
 
-  private @Nullable String getAdjacentContentEntry(final String contentEntryUrl, int delta) {
+  @Nullable
+  private String getAdjacentContentEntry(final String contentEntryUrl, int delta) {
     final ContentEntry[] contentEntries = getModel().getContentEntries();
     for (int idx = 0; idx < contentEntries.length; idx++) {
       ContentEntry entry = contentEntries[idx];
@@ -424,7 +427,8 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
       });
     }
 
-    private @Nullable ContentEntry getContentEntry(final String url) {
+    @Nullable
+    private ContentEntry getContentEntry(final String url) {
       final ContentEntry[] entries = getModel().getContentEntries();
       for (final ContentEntry entry : entries) {
         if (entry.getUrl().equals(url)) return entry;

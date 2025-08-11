@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.encoding;
 
 import com.intellij.openapi.application.ModalityState;
@@ -23,13 +23,11 @@ import com.intellij.util.Alarm;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.LazyInitializer.LazyValue;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 
-@ApiStatus.Internal
 public class LargeFileEncodingWidget extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
   public static final String WIDGET_ID = "largeFileEncodingWidget";
 
@@ -40,7 +38,7 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
 
   private boolean myActionEnabled;
 
-  public LargeFileEncodingWidget(final @NotNull Project project) {
+  public LargeFileEncodingWidget(@NotNull final Project project) {
     super(project);
     myComponent = LazyInitializer.create(() -> {
       var result = new TextPanel.WithIconAndArrows();
@@ -50,12 +48,14 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
   }
 
   @Override
-  public @NotNull StatusBarWidget copy() {
+  @NotNull
+  public StatusBarWidget copy() {
     return new LargeFileEncodingWidget(getProject());
   }
 
   @Override
-  public @NotNull String ID() {
+  @NotNull
+  public String ID() {
     return WIDGET_ID;
   }
 

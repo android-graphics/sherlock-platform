@@ -1,6 +1,7 @@
 from collections.abc import Callable, Sequence
 from contextvars import Context
-from typing import Any, Final
+from typing import Any
+from typing_extensions import Literal
 
 from . import futures
 
@@ -11,9 +12,9 @@ __all__ = ()
 # That's why the import order is reversed.
 from .futures import isfuture as isfuture
 
-_PENDING: Final = "PENDING"  # undocumented
-_CANCELLED: Final = "CANCELLED"  # undocumented
-_FINISHED: Final = "FINISHED"  # undocumented
+_PENDING: Literal["PENDING"]  # undocumented
+_CANCELLED: Literal["CANCELLED"]  # undocumented
+_FINISHED: Literal["FINISHED"]  # undocumented
 
 def _format_callbacks(cb: Sequence[tuple[Callable[[futures.Future[Any]], None], Context]]) -> str: ...  # undocumented
 def _future_repr_info(future: futures.Future[Any]) -> list[str]: ...  # undocumented

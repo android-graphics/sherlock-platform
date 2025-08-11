@@ -3,7 +3,6 @@
 // ACTION: Introduce import alias
 // ACTION: Remove constructor call
 // ERROR: This class does not have a constructor
-// K2_AFTER_ERROR: This type does not have a constructor.
 
 interface A
 

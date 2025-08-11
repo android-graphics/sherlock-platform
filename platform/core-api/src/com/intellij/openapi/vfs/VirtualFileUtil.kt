@@ -10,12 +10,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.io.CanonicalPathPrefixTree
-import com.intellij.openapi.util.io.CanonicalPathPrefixTree.CanonicalPathElement
-import com.intellij.openapi.util.io.PathPrefixTree
+import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
 import com.intellij.openapi.util.io.relativizeToClosestAncestor
-import com.intellij.openapi.vfs.VirtualFilePrefixTree.VirtualFileElement
-import com.intellij.openapi.vfs.limits.FileSizeLimit
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFileBase
@@ -23,8 +19,7 @@ import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import com.intellij.util.containers.prefixTree.PrefixTreeFactory
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.SystemIndependent
 import java.io.IOException
@@ -54,15 +49,6 @@ fun VirtualFile.readBytes(): ByteArray {
 @RequiresWriteLock
 fun VirtualFile.writeBytes(content: ByteArray) {
   setBinaryContent(content)
-}
-
-fun VirtualFile.isTooLarge(): Boolean {
-  return FileSizeLimit.isTooLarge(length, extension)
-}
-
-fun VirtualFile.isTooLargeForIntellijSense(): Boolean {
-  val maxFileSize = FileSizeLimit.getIntellisenseLimit(extension)
-  return length > maxFileSize
 }
 
 fun VirtualFile.toNioPathOrNull(): Path? {
@@ -220,17 +206,10 @@ fun Path.refreshAndFindVirtualDirectory(): VirtualFile? {
   return file
 }
 
-@ApiStatus.Internal
-object VirtualFilePrefixTree : PrefixTreeFactory<VirtualFile, VirtualFileElement> {
-  override fun convertToList(element: VirtualFile): List<VirtualFileElement> {
-    return element.toNioPathOrNull()?.let(PathPrefixTree::convertToList)?.map(VirtualFileElement::NioPath)
-           ?: CanonicalPathPrefixTree.convertToList(element.path).map(VirtualFileElement::CanonicalPath)
-  }
+object VirtualFilePrefixTreeFactory : AbstractPrefixTreeFactory<VirtualFile, String>() {
 
-  @ApiStatus.Internal
-  sealed interface VirtualFileElement {
-    data class NioPath(private val keyElement: Path) : VirtualFileElement
-    data class CanonicalPath(private val keyElement: CanonicalPathElement) : VirtualFileElement
+  override fun convertToList(element: VirtualFile): List<String> {
+    return CanonicalPathPrefixTreeFactory.convertToList(element.path)
   }
 }
 

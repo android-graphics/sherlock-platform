@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:ApiStatus.Internal
-
 package com.intellij.openapi.vfs.newvfs.persistent
 
-import com.intellij.ide.ApplicationActivity
+import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.IdleTracker
 import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.application.ApplicationManager
@@ -11,8 +9,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 import com.intellij.openapi.diagnostic.JulLogger
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.CHILDREN_CACHED
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.IS_DIRECTORY
@@ -34,7 +30,6 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.take
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
@@ -46,7 +41,8 @@ import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.DurationUnit.MILLISECONDS
 import kotlin.time.toDuration
 
-private val LOG = FSRecords.LOG
+private val LOG: Logger
+  get() = FSRecords.LOG
 
 private object VFSHealthCheckerConstants {
   val HEALTH_CHECKING_ENABLED = getBooleanProperty("vfs.health-check.enabled",
@@ -85,62 +81,60 @@ private object VFSHealthCheckerConstants {
   val MAX_SINGLE_ERROR_LOGS_BEFORE_THROTTLE = getIntProperty("vfs.health-check.max-single-error-logs", 128)
 }
 
-private class VFSHealthCheckServiceStarter : ApplicationActivity {
-  init {
-    if (!HEALTH_CHECKING_ENABLED) {
-      LOG.info("VFS health-check disabled")
-      throw ExtensionNotApplicableException.create()
-    }
+private class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
 
-    if (HEALTH_CHECKING_PERIOD_MS < 1.minutes.inWholeMilliseconds) {
-      LOG.warn("VFS health-check is NOT enabled: incorrect period $HEALTH_CHECKING_PERIOD_MS ms, must be >= 1 min")
-      throw ExtensionNotApplicableException.create()
-    }
-  }
+  override suspend fun execute(asyncScope: CoroutineScope) {
+    if (HEALTH_CHECKING_ENABLED) {
+      if (HEALTH_CHECKING_PERIOD_MS < 1.minutes.inWholeMilliseconds) {
+        LOG.warn("VFS health-check is NOT enabled: incorrect period $HEALTH_CHECKING_PERIOD_MS ms, must be >= 1 min")
+        return
+      }
+      LOG.info("VFS health-check enabled: first after $HEALTH_CHECKING_START_DELAY_MS ms, and each following $HEALTH_CHECKING_PERIOD_MS ms, wrap in RA: ${WRAP_HEALTH_CHECK_IN_READ_ACTION}")
 
-  override suspend fun execute() {
-    LOG.info("VFS health-check enabled: first after $HEALTH_CHECKING_START_DELAY_MS ms, " +
-             "and each following $HEALTH_CHECKING_PERIOD_MS ms, wrap in RA: $WRAP_HEALTH_CHECK_IN_READ_ACTION")
+      asyncScope.launch(Dispatchers.Default) {
+        delay(HEALTH_CHECKING_START_DELAY_MS.toDuration(MILLISECONDS))
 
-    delay(HEALTH_CHECKING_START_DELAY_MS.toDuration(MILLISECONDS))
+        val checkingPeriod = HEALTH_CHECKING_PERIOD_MS.toDuration(MILLISECONDS)
+        while (isActive && !FSRecords.getInstance().isClosed) {
 
-    coroutineScope {
-      val checkingPeriod = HEALTH_CHECKING_PERIOD_MS.toDuration(MILLISECONDS)
-      while (isActive && !FSRecords.getInstance().isClosed) {
-        //MAYBE RC: track FSRecords.getLocalModCount() to run the check only if there are enough changes
-        //          since the last check.
-        if (!PowerSaveMode.isEnabled()) {
-          //HealthCheck is not really an urgent process -- it is OK to delay a minute or two after
-          // the scheduled time. On the other side, health-check takes anywhere from 3 sec to 1.5 min
-          // depending on load, and could slow down the IDE operations in the process.
-          // We don't want to disturb the user with health-check, so we delay the check until the user
-          // is idle for at least 1 min straight -- which gives us a good probability the health-check
-          // will finish before the user returns from its retreat.
-          @OptIn(FlowPreview::class)
-          IdleTracker.getInstance().events
-            .debounce(1.minutes)
-            .take(1)
-            .collect {
-              withContext(Dispatchers.IO) {
-                //MAYBE RC: show a progress bar -- or better not bother user?
-                doCheckupAndReportResults()
+          //MAYBE RC: track FSRecords.getLocalModCount() to run the check only if there are enough changes
+          //          since the last check.
+          if (!PowerSaveMode.isEnabled()) {
+            //HealthCheck is not really an urgent process -- it is OK to delay a minute or two after
+            // the scheduled time. On the other side, health-check takes anywhere from 3 sec to 1.5 min
+            // depending on load, and could slow down the IDE operations in the process.
+            // We don't want to disturb the user with health-check, so we delay the check until the user
+            // is idle for at least 1 min straight -- which gives us a good probability the health-check
+            // will finish before the user returns from its retreat.
+            @OptIn(FlowPreview::class)
+            IdleTracker.getInstance().events
+              .debounce(1.minutes)
+              .take(1)
+              .collect {
+                launch(Dispatchers.IO) {
+                  //MAYBE RC: show a progress bar -- or better not bother user?
+                  doCheckupAndReportResults()
+                }
               }
-            }
-        }
-        else {
-          LOG.info("VFS health-check skipped: PowerSaveMode is enabled")
-        }
+          }
+          else {
+            LOG.info("VFS health-check skipped: PowerSaveMode is enabled")
+          }
 
-        delay(checkingPeriod)
+          delay(checkingPeriod)
 
-        //MAYBE RC: this seems useless -- i.e. VFS h-check is ~10-60sec long once/(few) hours,
-        //          which is negligible comparing to (GC/JIT/bg tasks) load accumulated
-        //          over the same few hours
-        if (PowerStatus.getPowerStatus() == PowerStatus.BATTERY) {
-          LOG.info("VFS health-check delayed: power source is battery")
-          delay(checkingPeriod) // make it twice rarer
+          //MAYBE RC: this seems useless -- i.e. VFS h-check is ~10-60sec long once/(few) hours,
+          //          which is negligible comparing to (GC/JIT/bg tasks) load accumulated
+          //          over the same few hours
+          if (PowerStatus.getPowerStatus() == PowerStatus.BATTERY) {
+            LOG.info("VFS health-check delayed: power source is battery")
+            delay(checkingPeriod) //make it twice rarer
+          }
         }
       }
+    }
+    else {
+      LOG.info("VFS health-check disabled")
     }
   }
 
@@ -153,9 +147,8 @@ private class VFSHealthCheckServiceStarter : ApplicationActivity {
     val checkHealthReport = try {
       checker.checkHealth(CHECK_ORPHAN_RECORDS)
     }
-    catch (_: AlreadyDisposedException) {
-      return //VFS is already closed
-      //TODO RC: do we need it to catch it now, as ADE extends PCE?
+    catch (e: AlreadyDisposedException) {
+      return
     }
 
     VfsUsageCollector.logVfsHealthCheck(
@@ -197,7 +190,6 @@ private class VFSHealthCheckServiceStarter : ApplicationActivity {
  * Performs VFS self-consistency checks.
  * E.g. fields have reasonable values, all the references (ids) are valid and could be resolved, and so on.
  */
-@ApiStatus.Internal
 class VFSHealthChecker(private val impl: FSRecordsImpl,
                        private val log: Logger = LOG) {
 
@@ -229,9 +221,9 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
 
   private suspend fun verifyFileRecords(checkForOrphanRecords: Boolean): VFSHealthCheckReport.FileRecordsReport {
     val connection = impl.connection()
-    val fileRecords = connection.records()
-    val namesEnumerator = connection.names()
-    val contentsStorage = connection.contents()
+    val fileRecords = connection.records
+    val namesEnumerator = connection.names
+    val contentsStorage = connection.contents
 
     val maxAllocatedID = fileRecords.maxAllocatedID()
 
@@ -277,7 +269,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
 
             var attributesAreResolvable: Boolean
             try {
-              connection.attributes().checkAttributeRecordSanity(fileId, attributeRecordId)
+              connection.attributes.checkAttributeRecordSanity(fileId, attributeRecordId)
               attributesAreResolvable = true
             }
             catch (t: Throwable) {
@@ -414,7 +406,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
       try {
         readAction {
           val rootIds = impl.treeAccessor().listRoots()
-          val records = impl.connection().records()
+          val records = impl.connection().records
           val maxAllocatedID = records.maxAllocatedID()
           rootsCount = rootIds.size
 
@@ -445,7 +437,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
   }
 
   private fun verifyNamesEnumerator(): VFSHealthCheckReport.NamesEnumeratorReport {
-    val namesEnumerator = impl.connection().names()
+    val namesEnumerator = impl.connection().names
     val report = VFSHealthCheckReport.NamesEnumeratorReport()
     try {
       namesEnumerator.forEach { id, name ->
@@ -485,7 +477,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
     val report = VFSHealthCheckReport.ContentEnumeratorReport(0, 0)
 
     val connection = impl.connection()
-    val contentsStorage = connection.contents()
+    val contentsStorage = connection.contents
     val contentRecordsIterator = contentsStorage.createRecordIdIterator()
     while (contentRecordsIterator.hasNextId()) {
       report.contentRecordsChecked ++
@@ -662,7 +654,7 @@ fun main(args: Array<String>) {
   }
   val path = Paths.get(args[0])
   println("Checking VFS [$path]")
-  val records = FSRecordsImpl.connect(path) { _, error ->
+  val records = FSRecordsImpl.connect(path, emptyList(), false) { _, error ->
     throw error
   }
   println("VFS roots:")
@@ -671,7 +663,7 @@ fun main(args: Array<String>) {
   }
 
   val log = configureLogger()
-  runBlockingCancellable {
+  runBlocking {
     val checkupReport = VFSHealthChecker(records, log).checkHealth(checkForOrphanRecords = true)
     println(checkupReport)
   }

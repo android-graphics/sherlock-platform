@@ -84,7 +84,8 @@ public class FindByExpressionDialog extends InputExpressionDialog<FindFormPanel>
     }
 
     @Override
-    protected @NotNull String getPrivateDimensionServiceKey() {
+    @NotNull
+    protected String getPrivateDimensionServiceKey() {
         return "XPathView.FindDialog.DIMENSION_SERVICE_KEY";
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
@@ -14,8 +14,8 @@ import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
@@ -29,8 +29,8 @@ public class SetKeywordsDialog extends DialogWrapper {
     "Rev", "LastChangedRevision",
     "Author", "LastChangedBy");
 
-  private final @Nullable PropertyValue myKeywordsValue;
-  private final @NotNull List<JCheckBox> myKeywordOptions;
+  @Nullable private final PropertyValue myKeywordsValue;
+  @NotNull private final List<JCheckBox> myKeywordOptions;
 
   protected SetKeywordsDialog(Project project, @Nullable PropertyValue keywordsValue) {
     super(project, false);
@@ -42,14 +42,16 @@ public class SetKeywordsDialog extends DialogWrapper {
     init();
   }
 
-  public @Nullable String getKeywords() {
+  @Nullable
+  public String getKeywords() {
     List<JCheckBox> selectedKeywords = ContainerUtil.filter(myKeywordOptions, keywordOption -> keywordOption.isSelected());
 
     return StringUtil.nullize(StringUtil.join(selectedKeywords, keywordOption -> keywordOption.getText(), " "));
   }
 
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  @Nullable
+  protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(new JBLabel(message("label.select.keywords.to.set")), BorderLayout.NORTH);
     JPanel buttonsPanel = new JPanel(new GridLayout(5, 1));
@@ -85,7 +87,8 @@ public class SetKeywordsDialog extends DialogWrapper {
    * TODO: Subversion 1.8 also allow defining custom keywords (in "svn:keywords" property value). But currently it is unnecessary for this
    * TODO: dialog.
    */
-  private static @NotNull Set<String> parseKeywords(@Nullable PropertyValue keywordsValue) {
+  @NotNull
+  private static Set<String> parseKeywords(@Nullable PropertyValue keywordsValue) {
     Set<String> result = new HashSet<>();
 
     if (keywordsValue != null) {

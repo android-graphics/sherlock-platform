@@ -32,11 +32,11 @@ import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.ConfigurationKind
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.idea.test.testFramework.resetApplicationToNull
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
@@ -125,8 +125,8 @@ abstract class AbstractKotlinUastTest : TestCase(),
 
     private fun initializeCoreEnvironment() {
         CoreApplicationEnvironment.registerApplicationExtensionPoint(
-            UastLanguagePlugin.EP,
-            UastLanguagePlugin::class.java,
+          UastLanguagePlugin.EP,
+          UastLanguagePlugin::class.java,
         )
 
         CoreApplicationEnvironment.registerApplicationExtensionPoint(
@@ -180,14 +180,8 @@ abstract class AbstractKotlinUastTest : TestCase(),
     }
 
     override fun setUp() {
-        super.setUp()
         testRootDisposable = Disposer.newDisposable()
-
-        val oldUseK2Plugin = useK2Plugin
-        useK2Plugin = pluginMode == KotlinPluginMode.K2
-        Disposer.register(testRootDisposable) {
-            useK2Plugin = oldUseK2Plugin
-        }
+        setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
     }
 
     @Suppress("SSBasedInspection")
@@ -209,7 +203,7 @@ abstract class AbstractKotlinUastTest : TestCase(),
 
             if (sourceFile.extension == KotlinParserDefinition.STD_SCRIPT_SUFFIX) {
                 put(CommonConfigurationKeys.ALLOW_ANY_SCRIPTS_IN_SOURCE_ROOTS, true)
-                loadScriptingPlugin(this, testRootDisposable)
+                loadScriptingPlugin(this)
             }
         }
     }
@@ -217,7 +211,7 @@ abstract class AbstractKotlinUastTest : TestCase(),
 
 val TEST_KOTLIN_MODEL_DIR = KotlinRoot.DIR.resolve("uast/uast-kotlin/tests/testData")
 
-private fun loadScriptingPlugin(configuration: CompilerConfiguration, parentDisposable: Disposable) {
+private fun loadScriptingPlugin(configuration: CompilerConfiguration) {
     val pluginClasspath = listOf(
         TestKotlinArtifacts.kotlinScriptingCompiler,
         TestKotlinArtifacts.kotlinScriptingCompilerImpl,
@@ -225,5 +219,5 @@ private fun loadScriptingPlugin(configuration: CompilerConfiguration, parentDisp
         TestKotlinArtifacts.kotlinScriptingJvm
     )
 
-    PluginCliParser.loadPluginsSafe(pluginClasspath.map { it.absolutePath }, emptyList(), emptyList(), configuration, parentDisposable)
+    PluginCliParser.loadPluginsSafe(pluginClasspath.map { it.absolutePath }, emptyList(), emptyList(), configuration)
 }

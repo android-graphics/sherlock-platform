@@ -33,7 +33,8 @@ public final class XsltRunConfigType implements ConfigurationType {
   public XsltRunConfigType() {
     myFactory = new ConfigurationFactory(this) {
       @Override
-      public @NotNull RunConfiguration createTemplateConfiguration(final @NotNull Project project) {
+      @NotNull
+      public RunConfiguration createTemplateConfiguration(@NotNull final Project project) {
         return new XsltRunConfiguration(project, this);
       }
 
@@ -48,13 +49,15 @@ public final class XsltRunConfigType implements ConfigurationType {
     return ConfigurationTypeUtil.findConfigurationType(XsltRunConfigType.class);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDisplayName() {
+  public String getDisplayName() {
     return getId();
   }
 
   @Override
-  public @NotNull @NlsSafe String getId() {
+  @NotNull
+  public @NlsSafe String getId() {
     return "XSLT";
   }
 

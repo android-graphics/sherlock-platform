@@ -60,8 +60,9 @@ public abstract class DelegatingFileSystem<P extends DelegatingFileSystemProvide
     return new Iterable<Path>() {
       final Iterable<Path> myIterable = getDelegate().getRootDirectories();
 
+      @NotNull
       @Override
-      public @NotNull Iterator<Path> iterator() {
+      public Iterator<Path> iterator() {
         return new Iterator<Path>() {
           final Iterator<Path> myIterator = myIterable.iterator();
 
@@ -89,8 +90,9 @@ public abstract class DelegatingFileSystem<P extends DelegatingFileSystemProvide
     return getDelegate().supportedFileAttributeViews();
   }
 
+  @NotNull
   @Override
-  public @NotNull Path getPath(@NotNull String first, @NotNull String @NotNull ... more) {
+  public Path getPath(@NotNull String first, @NotNull String @NotNull ... more) {
     return provider().toDelegatePath(getDelegate(first).getPath(first, more));
   }
 

@@ -15,18 +15,20 @@ public final class UnknownArgumentsInfo implements ArgumentsInfo {
   /**
    * Argument help text
    */
-  private final @NotNull Help myHelp;
+  @NotNull
+  private final Help myHelp;
 
   /**
    * @param allArgumentsHelpText argument help text
    */
-  public UnknownArgumentsInfo(final @NotNull Help allArgumentsHelpText) {
+  public UnknownArgumentsInfo(@NotNull final Help allArgumentsHelpText) {
     myHelp = allArgumentsHelpText;
   }
 
 
+  @Nullable
   @Override
-  public @Nullable Pair<Boolean, Argument> getArgument(final int argumentPosition) {
+  public Pair<Boolean, Argument> getArgument(final int argumentPosition) {
     return Pair.create(false, new Argument(myHelp));
   }
 }

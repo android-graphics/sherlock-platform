@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger;
 
 import com.intellij.debugger.impl.AlternativeJreClassFinder;
@@ -62,8 +62,9 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
     return state.execute(environment.getExecutor(), environment.getRunner());
   }
 
+  @NotNull
   @Override
-  public @NotNull GlobalSearchScope getSearchScope() {
+  public GlobalSearchScope getSearchScope() {
     return mySearchScope;
   }
 
@@ -87,13 +88,15 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
     return environment.getRunProfile().getName();
   }
 
+  @Nullable
   @Override
-  public @Nullable Sdk getAlternativeJre() {
+  public Sdk getAlternativeJre() {
     return AlternativeJreClassFinder.getAlternativeJre(environment.getRunProfile());
   }
 
+  @Nullable
   @Override
-  public @Nullable Sdk getRunJre() {
+  public Sdk getRunJre() {
     if (state instanceof JavaCommandLine) {
       try {
         return ((JavaCommandLine)state).getJavaParameters().getJdk();

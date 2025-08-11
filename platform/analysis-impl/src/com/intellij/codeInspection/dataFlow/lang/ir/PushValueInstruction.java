@@ -33,7 +33,6 @@ public class PushValueInstruction extends EvalInstruction {
     return factory.fromDfType(myValue);
   }
 
-  @Override
   public String toString() {
     return "PUSH_VAL " + myValue;
   }

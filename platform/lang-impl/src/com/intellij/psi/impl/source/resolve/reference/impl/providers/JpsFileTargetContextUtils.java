@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.project.Project;
@@ -8,7 +8,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -26,7 +25,7 @@ public final class JpsFileTargetContextUtils {
    * @see com.intellij.codeInsight.daemon.quickFix.CreateFilePathFix
    * @see com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider
    */
-  public static @Unmodifiable @NotNull Collection<FileTargetContext> prepareTargetContexts(@NotNull Project project,
+  public static @NotNull Collection<FileTargetContext> prepareTargetContexts(@NotNull Project project,
                                                                     @NotNull VirtualFile file,
                                                                     @NotNull Collection<FileTargetContext> targetContexts) {
     // here we try to sort target locations depending on src/test origin
@@ -87,7 +86,7 @@ public final class JpsFileTargetContextUtils {
     return true;
   }
 
-  private static @Unmodifiable List<FileTargetContextWrapper> findSourceRootTypes(Collection<? extends FileTargetContext> targetContexts) {
+  private static List<FileTargetContextWrapper> findSourceRootTypes(Collection<? extends FileTargetContext> targetContexts) {
     return ContainerUtil.map(targetContexts, c -> {
       Project project = c.getFileSystemItem().getProject();
 

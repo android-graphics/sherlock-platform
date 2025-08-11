@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -16,7 +16,8 @@ import java.util.Map;
 public class RegExpColorsPage implements ColorSettingsPage {
 
   @Override
-  public @NotNull String getDisplayName() {
+  @NotNull
+  public String getDisplayName() {
     return RegExpBundle.message("color.settings.title.regexp");
   }
 
@@ -55,14 +56,16 @@ public class RegExpColorsPage implements ColorSettingsPage {
   }
 
   @Override
-  public @NotNull SyntaxHighlighter getHighlighter() {
+  @NotNull
+  public SyntaxHighlighter getHighlighter() {
     final SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(RegExpFileType.INSTANCE, null, null);
     assert highlighter != null;
     return highlighter;
   }
 
   @Override
-  public @NotNull String getDemoText() {
+  @NotNull
+  public String getDemoText() {
     return
       """
         ^[\\w\\.-]+@([\\w\\-]+|\\.)+[A-Z0-9]{2,4}(?x)

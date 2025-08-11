@@ -1,4 +1,3 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.refactoring
 
 import com.intellij.openapi.application.WriteAction
@@ -10,8 +9,10 @@ import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.webSymbols.search.PsiSourcedWebSymbolReference
 import com.intellij.webSymbols.search.PsiSourcedWebSymbolReference.RenameHandler
+import org.jetbrains.annotations.ApiStatus
 
-private class PsiSourcedWebSymbolRefactoringHelper : RefactoringHelper<List<RenameHandler>> {
+@ApiStatus.Internal
+class PsiSourcedWebSymbolRefactoringHelper : RefactoringHelper<List<RenameHandler>> {
   override fun prepareOperation(usages: Array<out UsageInfo>, elements: List<PsiElement>): List<RenameHandler> =
     usages.mapNotNull { (it.reference as? PsiSourcedWebSymbolReference)?.createRenameHandler() }
 

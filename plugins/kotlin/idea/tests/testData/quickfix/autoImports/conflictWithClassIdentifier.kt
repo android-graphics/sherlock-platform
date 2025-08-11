@@ -1,5 +1,5 @@
 // "Import class 'Arrays'" "true"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 class java
 
 fun test() {

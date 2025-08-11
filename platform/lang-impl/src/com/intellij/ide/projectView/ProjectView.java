@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView;
 
@@ -28,7 +28,8 @@ public abstract class ProjectView {
 
   public abstract void select(Object element, VirtualFile file, boolean requestFocus);
 
-  public abstract @NotNull ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus);
+  @NotNull
+  public abstract ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus);
 
   /**
    * Changes currently selected view and subview (if any).
@@ -44,9 +45,11 @@ public abstract class ProjectView {
    * @return callback which will be set to {@link ActionCallback#setDone done} if new content was selected
    * or to {@link ActionCallback#setRejected rejected} if content didn't change.
    */
-  public abstract @NotNull ActionCallback changeViewCB(@NotNull String viewId, @Nullable("default subview") String subId);
+  @NotNull
+  public abstract ActionCallback changeViewCB(@NotNull String viewId, @Nullable("default subview") String subId);
 
-  public abstract @Nullable PsiElement getParentOfCurrentSelection();
+  @Nullable
+  public abstract PsiElement getParentOfCurrentSelection();
 
   // show pane identified by id using default(or currently selected) subId
   public abstract void changeView(@NotNull String viewId);
@@ -138,15 +141,18 @@ public abstract class ProjectView {
 
   public abstract void setSortByType(@NotNull String paneId, final boolean sortByType);
 
-  public abstract @NotNull NodeSortKey getSortKey(String paneId);
+  @NotNull
+  public abstract NodeSortKey getSortKey(String paneId);
 
   public abstract void setSortKey(@NotNull String paneId, @NotNull NodeSortKey sortKey);
 
   public abstract AbstractProjectViewPane getCurrentProjectViewPane();
 
-  public abstract @NotNull Collection<String> getPaneIds();
+  @NotNull
+  public abstract Collection<String> getPaneIds();
 
-  public abstract @NotNull Collection<SelectInTarget> getSelectInTargets();
+  @NotNull
+  public abstract Collection<SelectInTarget> getSelectInTargets();
 
   public abstract @NotNull String getDefaultViewId();
 }

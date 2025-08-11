@@ -1,6 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(UnsafeCastFunction::class)
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.modulesEditor
 
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
@@ -13,12 +11,11 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleKind
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Sourceset
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.createPanelWithPopupHandler
-import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 import javax.swing.JComponent
 
-internal class ModulesEditorToolbarDecorator(
+class ModulesEditorToolbarDecorator(
     private val tree: ModulesEditorTree,
     private val moduleCreator: NewModuleCreator,
     private val model: TargetsModel,
@@ -29,7 +26,7 @@ internal class ModulesEditorToolbarDecorator(
         setToolbarPosition(ActionToolbarPosition.TOP)
         setAddAction { button ->
             val allModules = getModules().withAllSubModules(includeSourcesets = false)
-            val target = tree.selectedSettingItem as Module?
+            val target = tree.selectedSettingItem?.safeAs<Module>()
             val isRootModule = target == null
             val popup = moduleCreator.create(
                 target = tree.selectedSettingItem as? Module,

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push;
 
 import com.intellij.diff.util.DiffUtil;
@@ -43,18 +43,19 @@ import java.util.stream.Collectors;
 public final class PushController implements Disposable {
   private static final Logger LOG = Logger.getInstance(PushController.class);
 
-  private final @NotNull Project myProject;
-  private final @Nullable PushSource myPushSource;
-  private final @NotNull Collection<? extends Repository> myAllRepos;
-  private final @NotNull List<? extends Repository> myPreselectedRepositories;
-  private final @NotNull List<PushSupport<Repository, PushSource, PushTarget>> myPushSupports;
-  private final @NotNull PushLog myPushLog;
-  private final @NotNull VcsPushDialog myDialog;
-  private final @NotNull ModalityState myModalityState;
-  private final @Nullable Repository myCurrentlyOpenedRepository;
+  @NotNull private final Project myProject;
+  @Nullable private final PushSource myPushSource;
+  @NotNull private final Collection<? extends Repository> myAllRepos;
+  @NotNull private final List<? extends Repository> myPreselectedRepositories;
+  @NotNull private final List<PushSupport<Repository, PushSource, PushTarget>> myPushSupports;
+  @NotNull private final PushLog myPushLog;
+  @NotNull private final VcsPushDialog myDialog;
+  @NotNull private final ModalityState myModalityState;
+  @Nullable private final Repository myCurrentlyOpenedRepository;
   private final boolean mySingleRepoProject;
   private static final int DEFAULT_CHILDREN_PRESENTATION_NUMBER = 20;
-  private final @NonNls ExecutorService myExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("DVCS Push");
+  @NonNls
+  private final ExecutorService myExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("DVCS Push");
 
   private final Map<RepositoryNode, MyRepoModel<Repository, PushSource, PushTarget>> myView2Model = new TreeMap<>();
 
@@ -98,7 +99,8 @@ public final class PushController implements Disposable {
     return myAllRepos.size() == 1;
   }
 
-  private @NotNull <R extends Repository, S extends PushSource, T extends PushTarget> List<PushSupport<R, S, T>> getAffectedSupports() {
+  @NotNull
+  private <R extends Repository, S extends PushSource, T extends PushTarget> List<PushSupport<R, S, T>> getAffectedSupports() {
     Collection<AbstractVcs> vcss = ContainerUtil.map2Set(myAllRepos, repository -> repository.getVcs());
     return ContainerUtil.map(vcss, vcs -> {
       //noinspection unchecked
@@ -145,7 +147,7 @@ public final class PushController implements Disposable {
            preselectByUser(model.getRepository());
   }
 
-  private RepositoryNode findNodeByRepo(final @Nullable Repository repository) {
+  private RepositoryNode findNodeByRepo(@Nullable final Repository repository) {
     if (repository == null) return null;
     Map.Entry<RepositoryNode, MyRepoModel<Repository, PushSource, PushTarget>> entry =
       ContainerUtil.find(myView2Model.entrySet(), entry1 -> {
@@ -174,7 +176,8 @@ public final class PushController implements Disposable {
     }
   }
 
-  private @Nullable <R extends Repository, S extends PushSource, T extends PushTarget> PushSupport<R, S, T> getPushSupportByRepository(final @NotNull R repository) {
+  @Nullable
+  private <R extends Repository, S extends PushSource, T extends PushTarget> PushSupport<R, S, T> getPushSupportByRepository(@NotNull final R repository) {
     //noinspection unchecked
     return (PushSupport<R, S, T>)ContainerUtil.find(myPushSupports, support -> support.getVcs().equals(repository.getVcs()));
   }
@@ -238,7 +241,9 @@ public final class PushController implements Disposable {
   }
 
   // TODO This logic shall be moved to some common place and used instead of DvcsUtil.getShortRepositoryName
-  private @Nls @NotNull String getDisplayedRepoName(@NotNull Repository repository) {
+  @Nls
+  @NotNull
+  private String getDisplayedRepoName(@NotNull Repository repository) {
     String name = DvcsUtil.getShortRepositoryName(repository);
     int slash = name.lastIndexOf(File.separatorChar);
     if (slash < 0) {
@@ -248,7 +253,7 @@ public final class PushController implements Disposable {
     return !containedInOtherNames(repository, candidate) ? candidate : name;
   }
 
-  private boolean containedInOtherNames(final @NotNull Repository except, final String candidate) {
+  private boolean containedInOtherNames(@NotNull final Repository except, final String candidate) {
     return ContainerUtil.exists(myAllRepos, repository -> !repository.equals(except) && repository.getRoot().getName().equals(candidate));
   }
 
@@ -276,8 +281,8 @@ public final class PushController implements Disposable {
     return ContainerUtil.exists(nodes, node -> node.isLoading());
   }
 
-  private <R extends Repository, S extends PushSource, T extends PushTarget> void loadCommits(final @NotNull MyRepoModel<R, S, T> model,
-                                                                                              final @NotNull RepositoryNode node,
+  private <R extends Repository, S extends PushSource, T extends PushTarget> void loadCommits(@NotNull final MyRepoModel<R, S, T> model,
+                                                                                              @NotNull final RepositoryNode node,
                                                                                               final boolean initial) {
     if (myDialog.isDisposed()) return;
 
@@ -405,17 +410,20 @@ public final class PushController implements Disposable {
       mySkippedHandlers = skippedHandlers;
     }
 
-    public @NotNull String getFailedHandlerName() {
+    @NotNull
+    public String getFailedHandlerName() {
       return myFailedHandlerName;
     }
 
-    public @NotNull List<String> getSkippedHandlers() {
+    @NotNull
+    public List<String> getSkippedHandlers() {
       return mySkippedHandlers;
     }
   }
 
+  @NotNull
   @CalledInAny
-  public @NotNull PrePushHandler.Result executeHandlers(@NotNull ProgressIndicator indicator) throws ProcessCanceledException, HandlerException {
+  public PrePushHandler.Result executeHandlers(@NotNull ProgressIndicator indicator) throws ProcessCanceledException, HandlerException {
     List<PrePushHandler> handlers = PrePushHandler.EP_NAME.getExtensionList();
     if (handlers.isEmpty()) {
       return PrePushHandler.Result.OK;
@@ -480,7 +488,8 @@ public final class PushController implements Disposable {
     return outgoingCommitsProvider.getOutgoingCommits(repository, new PushSpec<>(source, target), true).getCommits();
   }
 
-  private @NotNull List<PushInfo> preparePushDetails() {
+  @NotNull
+  private List<PushInfo> preparePushDetails() {
     List<PushInfo> allDetails = new ArrayList<>();
 
     for (MyRepoModel<Repository, PushSource, PushTarget> model : getSelectedRepoNode()) {
@@ -501,7 +510,8 @@ public final class PushController implements Disposable {
     return Collections.unmodifiableList(allDetails);
   }
 
-  public @NotNull Map<PushSupport<Repository, PushSource, PushTarget>, Collection<PushInfo>> getSelectedPushSpecs() {
+  @NotNull
+  public Map<PushSupport<Repository, PushSource, PushTarget>, Collection<PushInfo>> getSelectedPushSpecs() {
     Map<PushSupport<Repository, PushSource, PushTarget>, Collection<PushInfo>> result = new HashMap<>();
 
     for (MyRepoModel<Repository, PushSource, PushTarget> model : getSelectedRepoNode()) {
@@ -515,7 +525,8 @@ public final class PushController implements Disposable {
     return result;
   }
 
-  private @NotNull @Unmodifiable <R extends Repository, S extends PushSource, T extends PushTarget> Map<R, PushSpec<S, T>> collectPushSpecsForVcs(@NotNull PushSupport<R, S, T> pushSupport) {
+  @NotNull
+  private <R extends Repository, S extends PushSource, T extends PushTarget> Map<R, PushSpec<S, T>> collectPushSpecsForVcs(@NotNull PushSupport<R, S, T> pushSupport) {
     Map<PushSupport<Repository, PushSource, PushTarget>, Collection<PushInfo>> allSpecs = getSelectedPushSpecs();
     Collection<PushInfo> pushInfos = allSpecs.get(pushSupport);
     return pushInfos != null ?
@@ -528,7 +539,7 @@ public final class PushController implements Disposable {
            Collections.emptyMap();
   }
 
-  private @Unmodifiable Collection<MyRepoModel<Repository, PushSource, PushTarget>> getSelectedRepoNode() {
+  private Collection<MyRepoModel<Repository, PushSource, PushTarget>> getSelectedRepoNode() {
     //return all selected despite a loading state;
     return ContainerUtil.filter(myView2Model.values(), model -> {
       return (mySingleRepoProject || model.isSelected()) && isPushAllowed(model);
@@ -541,7 +552,8 @@ public final class PushController implements Disposable {
     myExecutorService.shutdownNow();
   }
 
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myProject;
   }
 
@@ -557,14 +569,15 @@ public final class PushController implements Disposable {
   }
 
 
-  private @NotNull List<DefaultMutableTreeNode> getPresentationForCommits(final @NotNull Project project,
-                                                                          @NotNull List<? extends VcsFullCommitDetails> commits,
-                                                                          int commitsNum) {
+  @NotNull
+  private List<DefaultMutableTreeNode> getPresentationForCommits(@NotNull final Project project,
+                                                                 @NotNull List<? extends VcsFullCommitDetails> commits,
+                                                                 int commitsNum) {
     Function<VcsFullCommitDetails, DefaultMutableTreeNode> commitToNode = commit -> new CommitNode(project, commit);
     List<DefaultMutableTreeNode> childrenToShown = new ArrayList<>();
     for (int i = 0; i < commits.size(); ++i) {
       if (i >= commitsNum) {
-        final @NonNls VcsLinkedTextComponent moreCommitsLink =
+        @NonNls final VcsLinkedTextComponent moreCommitsLink =
           new VcsLinkedTextComponent(HtmlChunk.link("loadMore", "...").toString(), (sourceNode, event) -> {
             TreeNode parent = sourceNode.getParent();
             if (parent instanceof RepositoryNode) {
@@ -579,7 +592,8 @@ public final class PushController implements Disposable {
     return childrenToShown;
   }
 
-  public @NotNull Map<PushSupport<?, ?, ?>, VcsPushOptionsPanel> createAdditionalPanels() {
+  @NotNull
+  public Map<PushSupport<?, ?, ?>, VcsPushOptionsPanel> createAdditionalPanels() {
     Map<PushSupport<?, ?, ?>, VcsPushOptionsPanel> result = new LinkedHashMap<>();
     for (PushSupport<?, ?, ?> support : myPushSupports) {
       ContainerUtil.putIfNotNull(support, support.createOptionsPanel(), result);
@@ -589,7 +603,7 @@ public final class PushController implements Disposable {
   }
 
   @ApiStatus.Experimental
-  public @Unmodifiable Map<String, VcsPushOptionsPanel> createCustomPanels(Collection<? extends Repository> repos) {
+  public Map<String, VcsPushOptionsPanel> createCustomPanels(Collection<? extends Repository> repos) {
     return ContainerUtil.map2MapNotNull(CustomPushOptionsPanelFactory.EP_NAME.getExtensionList(), panelProvider -> {
       try {
         VcsPushOptionsPanel panel = panelProvider.createOptionsPanel(this, repos);
@@ -602,7 +616,8 @@ public final class PushController implements Disposable {
     });
   }
 
-  public @NotNull JComponent createTopPanel() {
+  @NotNull
+  public JComponent createTopPanel() {
     List<JComponent> notifications = new ArrayList<>();
     if (myPushSource == null) {
       Runnable closeDialog = () -> myDialog.doCancelAction();
@@ -635,32 +650,35 @@ public final class PushController implements Disposable {
       myCommits = commits;
     }
 
+    @NotNull
     @Override
-    public @NotNull Repository getRepository() {
+    public Repository getRepository() {
       return myRepository;
     }
 
+    @NotNull
     @Override
-    public @NotNull PushSpec<PushSource, PushTarget> getPushSpec() {
+    public PushSpec<PushSource, PushTarget> getPushSpec() {
       return myPushSpec;
     }
 
+    @NotNull
     @Override
-    public @NotNull List<VcsFullCommitDetails> getCommits() {
+    public List<VcsFullCommitDetails> getCommits() {
       return myCommits;
     }
   }
 
   private static final class MyRepoModel<Repo extends Repository, S extends PushSource, T extends PushTarget> {
-    private final @NotNull Repo myRepository;
-    private final @NotNull PushSupport<Repo, S, T> mySupport;
-    private final @NotNull S mySource;
-    private @Nullable T myTarget;
+    @NotNull private final Repo myRepository;
+    @NotNull private final PushSupport<Repo, S, T> mySupport;
+    @NotNull private final S mySource;
+    @Nullable private T myTarget;
     @Nullable VcsError myTargetError;
 
     int myNumberOfShownCommits;
     @NotNull List<? extends VcsFullCommitDetails> myLoadedCommits = Collections.emptyList();
-    private final @NotNull CheckBoxModel myCheckBoxModel;
+    @NotNull private final CheckBoxModel myCheckBoxModel;
 
     MyRepoModel(@NotNull Repo repository,
                 @NotNull PushSupport<Repo, S, T> supportForRepo,
@@ -675,19 +693,23 @@ public final class PushController implements Disposable {
       myNumberOfShownCommits = DEFAULT_CHILDREN_PRESENTATION_NUMBER;
     }
 
-    public @NotNull Repo getRepository() {
+    @NotNull
+    public Repo getRepository() {
       return myRepository;
     }
 
-    public @NotNull PushSupport<Repo, S, T> getSupport() {
+    @NotNull
+    public PushSupport<Repo, S, T> getSupport() {
       return mySupport;
     }
 
-    public @NotNull S getSource() {
+    @NotNull
+    public S getSource() {
       return mySource;
     }
 
-    public @Nullable T getTarget() {
+    @Nullable
+    public T getTarget() {
       return myTarget;
     }
 
@@ -719,7 +741,8 @@ public final class PushController implements Disposable {
       myNumberOfShownCommits *= 2;
     }
 
-    public @NotNull List<? extends VcsFullCommitDetails> getLoadedCommits() {
+    @NotNull
+    public List<? extends VcsFullCommitDetails> getLoadedCommits() {
       return myLoadedCommits;
     }
 
@@ -731,7 +754,8 @@ public final class PushController implements Disposable {
       return myTargetError != null || !myLoadedCommits.isEmpty();
     }
 
-    public @NotNull CheckBoxModel getCheckBoxModel() {
+    @NotNull
+    public CheckBoxModel getCheckBoxModel() {
       return myCheckBoxModel;
     }
 

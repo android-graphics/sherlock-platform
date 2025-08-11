@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -60,12 +60,14 @@ public final class GroovyDslAnnotator implements Annotator {
     }
 
     @Override
-    public @NotNull String getText() {
+    @NotNull
+    public String getText() {
       return GroovyBundle.message("intention.name.activate.back");
     }
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return GroovyBundle.message("intention.family.name.activate.dsl.descriptor");
     }
 

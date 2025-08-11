@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -30,7 +30,8 @@ public interface SdkDownloadTask {
   /**
    * @return proper distribution name if known.
    */
-  default @Nullable String getProductName() { return null; }
+  @Nullable
+  default String getProductName() { return null; }
 
   /**
    * @return SDK is expected to have a system dependent home directory.

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.psi.*;
@@ -34,7 +34,8 @@ public class TypeProvider {
   public TypeProvider() {
   }
 
-  public @NotNull PsiType getReturnType(@NotNull PsiMethod method) {
+  @NotNull
+  public PsiType getReturnType(@NotNull PsiMethod method) {
     if (method instanceof GrMethod) {
       GrTypeElement typeElement = ((GrMethod)method).getReturnTypeElementGroovy();
       if (typeElement != null) return typeElement.getType();
@@ -48,12 +49,14 @@ public class TypeProvider {
     return TypesUtil.getJavaLangObject(method);
   }
 
-  public @NotNull PsiType getVarType(@NotNull PsiVariable variable) {
+  @NotNull
+  public PsiType getVarType(@NotNull PsiVariable variable) {
     if (variable instanceof PsiParameter) return getParameterType((PsiParameter)variable);
     return getVariableTypeInner(variable);
   }
 
-  private static @NotNull PsiType getVariableTypeInner(@NotNull PsiVariable variable) {
+  @NotNull
+  private static PsiType getVariableTypeInner(@NotNull PsiVariable variable) {
     PsiType type = null;
     if (variable instanceof GrVariable) {
       type = ((GrVariable)variable).getDeclaredType();
@@ -67,7 +70,8 @@ public class TypeProvider {
     return type;
   }
 
-  public @NotNull PsiType getParameterType(@NotNull PsiParameter parameter) {
+  @NotNull
+  public PsiType getParameterType(@NotNull PsiParameter parameter) {
     if (!(parameter instanceof GrParameter)) {
       PsiElement scope = parameter.getDeclarationScope();
       if (scope instanceof GrAccessorMethod) {
@@ -133,7 +137,8 @@ public class TypeProvider {
     return types;
   }
 
-  public @NotNull PsiType getReturnType(GrClosableBlock closure) {
+  @NotNull
+  public PsiType getReturnType(GrClosableBlock closure) {
     final PsiType returnType = closure.getReturnType();
     if (PsiTypes.nullType().equals(returnType) && PsiUtil.isBlockReturnVoid(closure)) {
       return PsiTypes.voidType();

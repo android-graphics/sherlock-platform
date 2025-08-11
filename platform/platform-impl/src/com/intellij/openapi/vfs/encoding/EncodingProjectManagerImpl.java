@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -37,7 +37,10 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -74,7 +77,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
   public EncodingProjectManagerImpl(@NotNull Project project) {
     myProject = project;
-    myIdeEncodingManager = (EncodingManagerImpl)getInstance();
+    myIdeEncodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
   }
 
   @Override
@@ -180,8 +183,6 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     if (!myMapping.isEmpty()) {
       VirtualFile parent = virtualFile;
       while (parent != null) {
-        //TODO RC: parent.getUrl() creates A LOT of dummy allocations -- seems like we could
-        //         organise the mapping hierarchically instead
         Charset charset = myMapping.get(new LightFilePointer(parent.getUrl()));
         if (charset != null || !useParentDefaults) return charset;
         parent = parent.getParent();
@@ -251,8 +252,8 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     result.add(StandardCharsets.UTF_16);
     result.add(StandardCharsets.ISO_8859_1);
     result.add(StandardCharsets.US_ASCII);
-    result.add(getInstance().getDefaultCharset());
-    result.add(getInstance().getDefaultCharsetForPropertiesFiles(null));
+    result.add(EncodingManager.getInstance().getDefaultCharset());
+    result.add(EncodingManager.getInstance().getDefaultCharsetForPropertiesFiles(null));
     result.remove(null);
     return result;
   }
@@ -576,8 +577,8 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     myBomForNewUtf8Files = option;
   }
 
-  @ApiStatus.Internal
-  public @NotNull BOMForNewUTF8Files getBOMForNewUTF8Files() {
+  @NotNull
+  BOMForNewUTF8Files getBOMForNewUTF8Files() {
     return myBomForNewUtf8Files;
   }
 

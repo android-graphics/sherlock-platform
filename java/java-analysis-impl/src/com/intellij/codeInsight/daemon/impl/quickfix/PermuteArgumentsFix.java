@@ -1,14 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.CommonIntentionAction;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -21,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 public final class PermuteArgumentsFix extends PsiUpdateModCommandAction<PsiCall> {
   private static final Logger LOG = Logger.getInstance(PermuteArgumentsFix.class);
@@ -33,7 +33,8 @@ public final class PermuteArgumentsFix extends PsiUpdateModCommandAction<PsiCall
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return QuickFixBundle.message("permute.arguments");
   }
 
@@ -47,7 +48,7 @@ public final class PermuteArgumentsFix extends PsiUpdateModCommandAction<PsiCall
     Objects.requireNonNull(call.getArgumentList()).replace(Objects.requireNonNull(myPermutation.getArgumentList()));
   }
 
-  public static boolean registerFix(@NotNull Consumer<? super CommonIntentionAction> info, PsiCall callExpression, final CandidateInfo[] candidates) {
+  public static boolean registerFix(@NotNull HighlightInfo.Builder info, PsiCall callExpression, final CandidateInfo[] candidates, final TextRange fixRange) {
     PsiExpression[] expressions = Objects.requireNonNull(callExpression.getArgumentList()).getExpressions();
     if (expressions.length < 2) return false;
     List<PsiCall> permutations = new ArrayList<>();
@@ -83,7 +84,7 @@ public final class PermuteArgumentsFix extends PsiUpdateModCommandAction<PsiCall
     }
     if (permutations.size() == 1) {
       PermuteArgumentsFix fix = new PermuteArgumentsFix(callExpression, permutations.get(0));
-      info.accept(fix);
+      info.registerFix(fix, null, null, fixRange, null);
       return true;
     }
 

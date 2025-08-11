@@ -11,7 +11,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.EditorTextField
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import javax.swing.ScrollPaneConstants
 
@@ -21,7 +20,6 @@ import javax.swing.ScrollPaneConstants
  *
  * @see ArgumentFileFilter
  */
-@ApiStatus.Internal
 class ShowTextPopupHyperlinkInfo(@NlsContexts.PopupTitle private val title: String, private val text: String) : HyperlinkInfo {
   override fun navigate(project: Project) {
     ApplicationManager.getApplication().invokeLater {

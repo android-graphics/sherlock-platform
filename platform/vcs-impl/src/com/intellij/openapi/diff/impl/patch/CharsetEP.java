@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.project.Project;
@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,9 +15,8 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-@ApiStatus.Internal
 public final class CharsetEP implements PatchEP {
-  private static final Key<Map<String, String>> ourName = Key.create("Charset");
+  private final static Key<Map<String, String>> ourName = Key.create("Charset");
 
   @Override
   public @NotNull String getName() {

@@ -1,4 +1,4 @@
-# Generated with inspect_tf_submodules.py for tensorflow 2.19.0.
+# Generated with inspect_tf_submodules.py for tensorflow 2.12.0.
 import tensorflow.audio
 print(tensorflow.audio.__name__)
 import tensorflow.autodiff
@@ -21,6 +21,8 @@ import tensorflow.dtypes
 print(tensorflow.dtypes.__name__)
 import tensorflow.errors
 print(tensorflow.errors.__name__)
+import tensorflow.estimator
+print(tensorflow.estimator.__name__)
 import tensorflow.experimental
 print(tensorflow.experimental.__name__)
 import tensorflow.feature_column
@@ -30,9 +32,7 @@ print(tensorflow.graph_util.__name__)
 import tensorflow.image
 print(tensorflow.image.__name__)
 try:
-    # false negative to make referring to this name as tf.<name> possible
-    # when tensorflow Typeshed stubs are disabled
-    import tensorflow.initializers
+    import tensorflow.<warning descr="Module 'initializers' not found">initializers</warning>
     print(tensorflow.initializers.__name__)
     assert False
 except ModuleNotFoundError:
@@ -48,9 +48,7 @@ print(tensorflow.lite.__name__)
 import tensorflow.lookup
 print(tensorflow.lookup.__name__)
 try:
-    # false negative to make referring to this name as tf.<name> possible
-    # when tensorflow Typeshed stubs are disabled    
-    import tensorflow.losses
+    import tensorflow.<warning descr="Module 'losses' not found">losses</warning>
     print(tensorflow.losses.__name__)
     assert False
 except ModuleNotFoundError:
@@ -58,9 +56,7 @@ except ModuleNotFoundError:
 import tensorflow.math
 print(tensorflow.math.__name__)
 try:
-    # false negative to make referring to this name as tf.<name> possible
-    # when tensorflow Typeshed stubs are disabled    
-    import tensorflow.metrics
+    import tensorflow.<warning descr="Module 'metrics' not found">metrics</warning>
     print(tensorflow.metrics.__name__)
     assert False
 except ModuleNotFoundError:
@@ -72,9 +68,7 @@ print(tensorflow.nest.__name__)
 import tensorflow.nn
 print(tensorflow.nn.__name__)
 try:
-    # false negative to make referring to this name as tf.<name> possible
-    # when tensorflow Typeshed stubs are disabled    
-    import tensorflow.optimizers
+    import tensorflow.<warning descr="Module 'optimizers' not found">optimizers</warning>
     print(tensorflow.optimizers.__name__)
     assert False
 except ModuleNotFoundError:
@@ -93,8 +87,6 @@ import tensorflow.raw_ops
 print(tensorflow.raw_ops.__name__)
 import tensorflow.saved_model
 print(tensorflow.saved_model.__name__)
-import tensorflow.security
-print(tensorflow.security.__name__)
 import tensorflow.sets
 print(tensorflow.sets.__name__)
 import tensorflow.signal

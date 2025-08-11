@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
@@ -6,9 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PatternContextInfo {
-  private final @NotNull PatternTreeContext myTreeContext;
-  private final @Nullable PatternContext myPatternContext;
-  private final @Nullable String myContextConstraint;
+  @NotNull private final PatternTreeContext myTreeContext;
+  @Nullable private final PatternContext myPatternContext;
+  @Nullable private final String myContextConstraint;
 
   public PatternContextInfo(@NotNull PatternTreeContext treeContext,
                             @Nullable PatternContext patternContext,
@@ -27,15 +27,18 @@ public class PatternContextInfo {
     this(treeContext, null, null);
   }
 
-  public @NotNull PatternTreeContext getTreeContext() {
+  @NotNull
+  public PatternTreeContext getTreeContext() {
     return myTreeContext;
   }
 
-  public @Nullable PatternContext getPatternContext() {
+  @Nullable
+  public PatternContext getPatternContext() {
     return myPatternContext;
   }
 
-  public @Nullable String getContextConstraint() {
+  @Nullable
+  public String getContextConstraint() {
     return myContextConstraint;
   }
 }

@@ -12,8 +12,9 @@ import org.jetbrains.annotations.NotNull;
  */
 @ApiStatus.Internal
 public class SetDelete extends SetOperationToBase {
+  @NotNull
   @Override
-  protected @NotNull DirDiffOperation getOperation(DirDiffElementImpl element) {
+  protected DirDiffOperation getOperation(DirDiffElementImpl element) {
     return DirDiffOperation.DELETE;
   }
 

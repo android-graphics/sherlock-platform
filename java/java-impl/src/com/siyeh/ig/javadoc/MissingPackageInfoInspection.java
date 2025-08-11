@@ -61,7 +61,6 @@ public final class MissingPackageInfoInspection extends PackageGlobalInspection 
     }
   }
 
-  @SuppressWarnings("InspectionDescriptionNotFoundInspection") // TODO IJPL-166089
   private static class LocalMissingPackageInfoInspection extends BaseSharedLocalInspection<MissingPackageInfoInspection> {
 
     LocalMissingPackageInfoInspection(MissingPackageInfoInspection settingsDelegate) {

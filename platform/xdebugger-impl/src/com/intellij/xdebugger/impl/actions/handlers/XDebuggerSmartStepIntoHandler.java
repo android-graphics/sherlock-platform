@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint;
 import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -55,7 +54,6 @@ import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -70,19 +68,18 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-@ApiStatus.Internal
 public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandler {
   private static final Ref<Boolean> SHOW_AD = new Ref<>(true);
   private static final Logger LOG = Logger.getInstance(XDebuggerSmartStepIntoHandler.class);
   private static final String COUNTER_PROPERTY = "debugger.smart.chooser.counter";
 
   @Override
-  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+  protected boolean isEnabled(@NotNull XDebugSession session, DataContext dataContext) {
     return super.isEnabled(session, dataContext) && session.getDebugProcess().getSmartStepIntoHandler() != null;
   }
 
   @Override
-  protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+  protected void perform(@NotNull XDebugSession session, DataContext dataContext) {
     XSmartStepIntoHandler<?> handler = session.getDebugProcess().getSmartStepIntoHandler();
     XSourcePosition position = session.getTopFramePosition();
     if (position != null && handler != null) {
@@ -165,13 +162,14 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
         return aValue.getIcon();
       }
 
+      @NotNull
       @Override
-      public @NotNull String getTextFor(V value) {
+      public String getTextFor(V value) {
         return value.getText();
       }
 
       @Override
-      public PopupStep<?> onChosen(V selectedValue, boolean finalChoice) {
+      public PopupStep onChosen(V selectedValue, boolean finalChoice) {
         session.smartStepInto(handler, selectedValue);
         highlighter.dropHighlight();
         return FINAL_CHOICE;
@@ -218,7 +216,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     SmartStepData<V> data = new SmartStepData<>(handler, variants, session, editor);
 
     EditorHyperlinkSupport hyperlinkSupport = EditorHyperlinkSupport.get(editor);
-    for (SmartStepData<V>.VariantInfo info : data.myVariants) {
+    for (SmartStepData.VariantInfo info : data.myVariants) {
       TextRange range = info.myVariant.getHighlightRange();
       if (range != null) {
         List<RangeHighlighter> highlighters = new SmartList<>();
@@ -236,22 +234,19 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     // for the remote development scenario we have to add a fake invisible highlighter on the whole document with extra payload
     // that will be restored on the client and used to alternate actions availability
     // see com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt.addActionAvailabilityHint
-    RangeHighlighterEx highlighter =
-      ((MarkupModelEx)editor.getMarkupModel()).addRangeHighlighterAndChangeAttributes(HighlighterColors.NO_HIGHLIGHTING, 0,
-                                                                                      editor.getDocument().getTextLength(),
-                                                                                      HighlighterLayer.LAST,
-                                                                                      HighlighterTargetArea.EXACT_RANGE, false, h -> {
-          // this hints should be added in this lambda in order to be serialized by RD markup machinery
-          EditorActionAvailabilityHintKt.addActionAvailabilityHint(h,
-                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ENTER, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_TAB, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ESCAPE, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside));
-        });
-    data.myActionHintSyntheticHighlighter = highlighter;
+    ((MarkupModelEx)editor.getMarkupModel()).addRangeHighlighterAndChangeAttributes(HighlighterColors.NO_HIGHLIGHTING, 0, editor.getDocument().getTextLength(),
+                                                                                    HighlighterLayer.LAST, HighlighterTargetArea.EXACT_RANGE, false, h -> {
+      // this hints should be added in this lambda in order to be serialized by RD markup machinery
+      EditorActionAvailabilityHintKt.addActionAvailabilityHint(h,
+                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ENTER, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_TAB, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ESCAPE, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside));
+      data.myActionHintSyntheticHighlighter = h;
+    });
 
     session.updateExecutionPosition();
     if (AppMode.isRemoteDevHost()) {
@@ -426,8 +421,8 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
 
     class VariantInfo {
-      final @NotNull V myVariant;
-      final @NotNull Point myStartPoint;
+      @NotNull final V myVariant;
+      @NotNull final Point myStartPoint;
 
       VariantInfo(@NotNull V variant) {
         myVariant = variant;
@@ -436,7 +431,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
   }
 
-  abstract static class SmartStepEditorActionHandler extends EditorActionHandler {
+  static abstract class SmartStepEditorActionHandler extends EditorActionHandler {
     protected final EditorActionHandler myOriginalHandler;
 
     SmartStepEditorActionHandler(EditorActionHandler originalHandler) {
@@ -445,8 +440,9 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
 
     @Override
     protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      if (hasSmartStepDebugData(editor)) {
-        myPerform(editor, caret, dataContext, editor.getUserData(SMART_STEP_INPLACE_DATA));
+      SmartStepData stepData = editor.getUserData(SMART_STEP_INPLACE_DATA);
+      if (stepData != null) {
+        myPerform(editor, caret, dataContext, stepData);
       }
       else {
         myOriginalHandler.execute(editor, caret, dataContext);
@@ -455,11 +451,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
 
     @Override
     protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-      return hasSmartStepDebugData(editor) || myOriginalHandler.isEnabled(editor, caret, dataContext);
-    }
-
-    protected boolean hasSmartStepDebugData(@NotNull Editor editor) {
-      return editor.getUserData(SMART_STEP_INPLACE_DATA) != null;
+      return editor.getUserData(SMART_STEP_INPLACE_DATA) != null || myOriginalHandler.isEnabled(editor, caret, dataContext);
     }
 
     protected abstract void myPerform(@NotNull Editor editor,
@@ -541,9 +533,8 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
   }
 
-  @ApiStatus.Internal
-  public static class EnterHandler extends SmartStepEditorActionHandler {
-    public EnterHandler(EditorActionHandler original) {
+  static final class EnterHandler extends SmartStepEditorActionHandler {
+    EnterHandler(EditorActionHandler original) {
       super(original);
     }
 

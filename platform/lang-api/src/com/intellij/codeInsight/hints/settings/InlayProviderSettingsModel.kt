@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
@@ -53,7 +52,6 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
    *
    * @return continuation which is run in EDT
    */
-  @RequiresBackgroundThread
   open fun collectData(editor: Editor, file: PsiFile) : Runnable {
     return Runnable { collectAndApply(editor, file) }
   }
@@ -125,8 +123,4 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
    * List of cases. If main check box is disabled, these checkboxes are also disabled
    */
   abstract val cases: List<ImmediateConfigurable.Case>
-
-  override fun toString(): String {
-    return "InlayProviderSettingsModel[${language.displayName}, $id, isEnabled=$isEnabled]"
-  }
 }

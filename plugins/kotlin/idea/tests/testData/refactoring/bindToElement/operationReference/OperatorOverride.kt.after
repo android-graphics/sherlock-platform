@@ -1,5 +1,3 @@
-import AImpl.minus
-
 // BIND_TO AImpl.minus
 interface A {
     operator fun plus(i: A)

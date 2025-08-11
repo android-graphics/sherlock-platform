@@ -24,7 +24,6 @@ public class FilterPattern extends ObjectPattern<Object,FilterPattern> {
     myFilter = filter;
   }
 
-  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof FilterPattern)) return false;
@@ -36,7 +35,6 @@ public class FilterPattern extends ObjectPattern<Object,FilterPattern> {
     return true;
   }
 
-  @Override
   public int hashCode() {
     return myFilter != null ? myFilter.hashCode() : 0;
   }

@@ -4,7 +4,6 @@
   "versionSuffix": "EAP",
   "buildNumber": "123.456",
   "productCode": "XL",
-  "envVarBaseName": "XPLAT",
   "dataDirectoryName": "XPlatLauncherTest",
   "svgIconPath": "bin/idea.svg",
   "productVendor": "JetBrains",
@@ -21,8 +20,7 @@
       "additionalJvmArguments": [
         "-Didea.vendor.name=JetBrains",
         "-Didea.paths.selector=XPlatLauncherTest",
-        "-Dide.home.macro.test=%IDE_HOME%",
-        "-Dcache.dir.macro.test=%IDE_CACHE_DIR%"
+        "-Dpath.macro.test=%IDE_HOME%"
       ],
       "mainClass": "com.intellij.idea.TestMain",
       "customCommands": [

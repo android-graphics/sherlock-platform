@@ -246,12 +246,7 @@ public class TextAttributes implements Cloneable {
 
   @Override
   public String toString() {
-    return "[fore=" + getForegroundColor() + ", back=" + getBackgroundColor()
-           + ", type=" + getFontType()
-           + (getEffectType() == null ? "" : ", effect=" + getEffectType())
-           + (getEffectColor() == null ? "" : ", effect color=" + getEffectColor())
-           + (attrs.getAdditionalEffects().isEmpty() ? "" : ", additional=" + attrs.getAdditionalEffects())
-           + (getErrorStripeColor() == null ? "" : ", stripe=" + getErrorStripeColor())
-           + "]";
+    return "[" + getForegroundColor() + "," + getBackgroundColor() + "," + getFontType() + "," + getEffectType() + "," + getEffectColor()
+           + "," + attrs.getAdditionalEffects() + "," + getErrorStripeColor() + "]";
   }
 }

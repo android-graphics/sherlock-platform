@@ -11,18 +11,16 @@ import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 import com.intellij.openapi.editor.impl.FontFamilyService
 import com.intellij.ui.AbstractFontCombo
+import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.util.function.Consumer
 import javax.swing.JComponent
-import javax.swing.JLabel
 
-@ApiStatus.Internal
 open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : AbstractFontOptionsPanel() {
 
   protected val defaultPreferences: FontPreferencesImpl = FontPreferencesImpl()
@@ -143,7 +141,7 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
           .comment(boldFontHint.first, DEFAULT_COMMENT_WIDTH, boldFontHint.second)
       }.bottomGap(BottomGap.SMALL)
 
-      val secondaryFont = JLabel(ApplicationBundle.message("secondary.font"))
+      val secondaryFont = Label(ApplicationBundle.message("secondary.font"))
       setSecondaryFontLabel(secondaryFont)
       row(secondaryFont) {
         cell(secondaryCombo)
@@ -197,22 +195,22 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
 
   private class RegularFontWeightCombo : FontWeightCombo(false) {
 
-    override fun getSubFamily(preferences: FontPreferences): String? {
+    public override fun getSubFamily(preferences: FontPreferences): String? {
       return preferences.regularSubFamily
     }
 
-    override fun getRecommendedSubFamily(family: String): String {
+    public override fun getRecommendedSubFamily(family: String): String {
       return FontFamilyService.getRecommendedSubFamily(family)
     }
   }
 
   private inner class BoldFontWeightCombo : FontWeightCombo(true) {
 
-    override fun getSubFamily(preferences: FontPreferences): String? {
+    public override fun getSubFamily(preferences: FontPreferences): String? {
       return preferences.boldSubFamily
     }
 
-    override fun getRecommendedSubFamily(family: String): String {
+    public override fun getRecommendedSubFamily(family: String): String {
       return FontFamilyService.getRecommendedBoldSubFamily(
         family,
         ObjectUtils.notNull(regularWeightCombo?.selectedSubFamily, FontFamilyService.getRecommendedSubFamily(family)))

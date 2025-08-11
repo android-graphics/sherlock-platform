@@ -33,7 +33,6 @@ public class StaticDescriptorImpl extends NodeDescriptorImpl implements StaticDe
     return myType;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   @Override
   public String getName() {
     return "static";

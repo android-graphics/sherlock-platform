@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search.actions;
 
 import com.intellij.find.SearchReplaceComponent;
@@ -53,8 +53,9 @@ public final class LargeFilePrevNextOccurrenceAction extends DumbAwareAction imp
     return task == null || task.isFinished();
   }
 
+  @Nullable
   @Override
-  public @Nullable ShortcutSet getShortcut(@NotNull DataContext context) {
+  public ShortcutSet getShortcut(@NotNull DataContext context) {
     List<Shortcut> list = new ArrayList<>();
     boolean isSingleLine = !isMultiLine();
     if (myDirectionForward) {

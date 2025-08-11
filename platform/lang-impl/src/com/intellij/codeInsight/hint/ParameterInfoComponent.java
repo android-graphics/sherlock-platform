@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.hint;
 
@@ -26,7 +26,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Function;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.DumbModeAccessType;
@@ -56,7 +55,6 @@ public final class ParameterInfoComponent extends JPanel {
   private OneElementComponent[] myPanels;
   private JLabel myShortcutLabel;
   private JPanel myBottomPanel;
-  private JComponent myCustomBottomComponent;
   private final JLabel myDumbLabel = new JLabel(IdeBundle.message("dumb.mode.results.might.be.incomplete"));
   private final boolean myAllowSwitchLabel;
 
@@ -74,8 +72,7 @@ public final class ParameterInfoComponent extends JPanel {
   private static final Border EMPTY_BORDER = JBUI.Borders.empty(2, 10);
   private static final Border BOTTOM_BORDER = new CompoundBorder(JBUI.Borders.customLine(SEPARATOR_COLOR, 0, 0, 1, 0), EMPTY_BORDER);
 
-  private int myWidthLimit;
-  private static final int myMaxWrappableLengthLimit = 1000;
+  private int myWidthLimit = 500;
   private final int myMaxVisibleRows = Registry.intValue("parameter.info.max.visible.rows");
 
   private static final Comparator<TextRange> TEXT_RANGE_COMPARATOR = (o1, o2) -> {
@@ -111,40 +108,27 @@ public final class ParameterInfoComponent extends JPanel {
     this(parameterInfoControllerData, editor, false, false);
   }
 
-  @ApiStatus.Internal
-  public static int getWidthLimit(Editor editor) {
-    // disable splitting by width to avoid depending on the platform's font in tests
-    if (ApplicationManager.getApplication().isUnitTestMode())
-      return Integer.MAX_VALUE;
-
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()
-        && !isForeignClientOnServer()) { //don't access ui for the foreign cwm clientIds
-      JComponent editorComponent = editor.getComponent();
-      JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
-      return (layeredPane.getWidth() * 4) / 5;
-    }
-    return 1000;
-  }
-
-  @ApiStatus.Internal
-  public static Font getBoldFont(@NotNull Editor editor) {
-    return Registry.is("parameter.info.editor.font")
-           ? editor.getColorsScheme().getFont(EditorFontType.BOLD)
-           : StartupUiUtil.getLabelFont().deriveFont(Font.BOLD);
-  }
-
   ParameterInfoComponent(ParameterInfoControllerData parameterInfoControllerData, Editor editor,
                          boolean requestFocus, boolean allowSwitchLabel) {
     super(new BorderLayout());
     myParameterInfoControllerData = parameterInfoControllerData;
     myEditor = editor;
     myRequestFocus = requestFocus;
-    myWidthLimit = getWidthLimit(editor);
+
+    if (!ApplicationManager.getApplication().isUnitTestMode()
+        && !ApplicationManager.getApplication().isHeadlessEnvironment()
+        && !isForeignClientOnServer()) { //don't access ui for the foreign cwm clientIds
+      JComponent editorComponent = editor.getComponent();
+      JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
+      myWidthLimit = layeredPane.getWidth();
+    }
 
     NORMAL_FONT = editor != null && Registry.is("parameter.info.editor.font")
                   ? editor.getColorsScheme().getFont(EditorFontType.PLAIN)
                   : StartupUiUtil.getLabelFont();
-    BOLD_FONT = getBoldFont(editor);
+    BOLD_FONT = editor != null && Registry.is("parameter.info.editor.font")
+                ? editor.getColorsScheme().getFont(EditorFontType.BOLD)
+                : NORMAL_FONT.deriveFont(Font.BOLD);
 
     if (mySimpleDesignMode) {
       setOpaque(false);
@@ -160,15 +144,15 @@ public final class ParameterInfoComponent extends JPanel {
     if (myRequestFocus) {
       AccessibleContextUtil.setName(this, CodeInsightBundle.message("accessible.name.parameter.info.press.tab"));
     }
-    myBottomPanel = new JPanel(new VerticalLayout(5));
-    myBottomPanel.setOpaque(false);
-    add(myBottomPanel, BorderLayout.SOUTH);
 
     myDumbLabel.setForeground(CONTEXT_HELP_FOREGROUND);
     myDumbLabel.setIcon(AllIcons.General.Warning);
     if (mySimpleDesignMode) {
+      myBottomPanel = new JPanel(new BorderLayout());
+      myBottomPanel.setOpaque(false);
       myDumbLabel.setBorder(JBUI.Borders.emptyTop(12));
-      myBottomPanel.add(myDumbLabel);
+      myBottomPanel.add(myDumbLabel, BorderLayout.NORTH);
+      add(myBottomPanel, BorderLayout.SOUTH);
     }
     else {
       myDumbLabel.setBorder(new CompoundBorder(JBUI.Borders.customLine(SEPARATOR_COLOR, 0, 0, 1, 0), JBUI.Borders.empty(2, 10, 6, 10)));
@@ -176,16 +160,12 @@ public final class ParameterInfoComponent extends JPanel {
     }
 
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myMainPanel, true);
-    // Set a maximum size to avoid unnecessary vertical scroll bar
-    // in case of raw HTML contents exceeding width limit
-    pane.getViewport().setMaximumSize(new Dimension(myWidthLimit, 1000));
     pane.setOpaque(!mySimpleDesignMode);
     pane.getViewport().setOpaque(!mySimpleDesignMode);
     add(pane, BorderLayout.CENTER);
 
     myAllowSwitchLabel = allowSwitchLabel && !(editor instanceof EditorWindow);
     setShortcutLabel();
-    setCustomBottomComponent();
   }
 
   private void setPanels() {
@@ -200,8 +180,10 @@ public final class ParameterInfoComponent extends JPanel {
   }
 
   private void setShortcutLabel() {
+    JPanel parentPanel = mySimpleDesignMode ? myBottomPanel : this;
+
     if (myShortcutLabel != null) {
-      myBottomPanel.remove(myShortcutLabel);
+      parentPanel.remove(myShortcutLabel);
     }
 
     String upShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_UP);
@@ -226,25 +208,13 @@ public final class ParameterInfoComponent extends JPanel {
         myShortcutLabel.setFont(labelFont.deriveFont(labelFont.getSize2D() - (SystemInfo.isWindows ? 1 : 2)));
         myShortcutLabel.setBorder(JBUI.Borders.empty(6, 10, 0, 10));
       }
-      myBottomPanel.add(myShortcutLabel);
-    }
-  }
-
-  private void setCustomBottomComponent() {
-    if (myCustomBottomComponent != null) {
-      myBottomPanel.remove(myCustomBottomComponent);
-    }
-
-    myCustomBottomComponent = myParameterInfoControllerData.getHandler().createBottomComponent();
-    if (myCustomBottomComponent != null) {
-      myBottomPanel.add(myCustomBottomComponent);
+      parentPanel.add(myShortcutLabel, BorderLayout.SOUTH);
     }
   }
 
   void fireDescriptorsWereSet() {
     setPanels();
     setShortcutLabel();
-    setCustomBottomComponent();
   }
 
   @Override
@@ -256,7 +226,7 @@ public final class ParameterInfoComponent extends JPanel {
       return preferredSize;
     }
     else {
-      return new Dimension(preferredSize.width, visibleRowsHeight);
+      return new Dimension(preferredSize.width + 20, visibleRowsHeight);
     }
   }
 
@@ -277,7 +247,6 @@ public final class ParameterInfoComponent extends JPanel {
     private int i;
     private Function<? super String, String> myEscapeFunction;
     private final ParameterInfoControllerBase.Model result = new ParameterInfoControllerBase.Model();
-    private boolean isVisible = true;
 
     MyParameterContext(boolean singleParameterInfo) {
       mySingleParameterInfo = singleParameterInfo;
@@ -363,16 +332,6 @@ public final class ParameterInfoComponent extends JPanel {
       setEnabled(i, enabled);
     }
 
-    @Override
-    public void setUIComponentVisible(boolean visible) {
-      isVisible = visible;
-    }
-
-    @Override
-    public boolean isUIComponentVisible() {
-      return isVisible;
-    }
-
     public boolean isLastParameterOwner() {
       return i == myPanels.length - 1;
     }
@@ -431,8 +390,6 @@ public final class ParameterInfoComponent extends JPanel {
           }
         });
 
-        setVisible(i, context.isUIComponentVisible());
-
         // ensure that highlighted element is visible
         if (context.isHighlighted()) {
           highlightedComponentIdx = i;
@@ -441,10 +398,6 @@ public final class ParameterInfoComponent extends JPanel {
     }
 
     if (myShortcutLabel != null) myShortcutLabel.setVisible(!singleParameterInfo);
-
-    if (myCustomBottomComponent != null) {
-      myParameterInfoControllerData.getHandler().updateBottomComponent(myCustomBottomComponent);
-    }
 
     updateLabels();
 
@@ -551,7 +504,10 @@ public final class ParameterInfoComponent extends JPanel {
       StringBuilder buf = new StringBuilder(text.length());
       configureColor(background);
 
-      String[] lines = UIUtil.splitText(text, getFontMetrics(BOLD_FONT), myWidthLimit, ',');
+      String[] lines = UIUtil.splitText(text, getFontMetrics(BOLD_FONT),
+                                        // disable splitting by width, to avoid depending on platform's font in tests
+                                        ApplicationManager.getApplication().isUnitTestMode() ? Integer.MAX_VALUE : myWidthLimit,
+                                        ',');
 
       int lineOffset = 0;
 
@@ -604,7 +560,7 @@ public final class ParameterInfoComponent extends JPanel {
         String paramText = escapeString(texts[i], escapeFunction);
         if (paramText == null) break;
         FontMetrics fontMetrics = getFontMetrics(BOLD_FONT);
-        if (fontMetrics.stringWidth(line + texts[i]) >= myMaxWrappableLengthLimit) {
+        if (fontMetrics.stringWidth(line + texts[i]) >= myWidthLimit) {
           OneLineComponent component = getOneLineComponent(index);
           buf.append(component.setup(escapeString(line.toString(), escapeFunction), flagsMap, background));
           index += 1;
@@ -769,8 +725,8 @@ public final class ParameterInfoComponent extends JPanel {
 
     // flagsMap is supposed to use TEXT_RANGE_COMPARATOR
     @Contract(pure = true)
-    private static String buildLabelText(final @NotNull String text,
-                                         final @NotNull TreeMap<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
+    private static String buildLabelText(@NotNull final String text,
+                                         @NotNull final TreeMap<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
       final StringBuilder labelText = new StringBuilder(text);
       final Int2IntMap faultMap = new Int2IntOpenHashMap();
 

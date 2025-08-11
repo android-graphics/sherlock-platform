@@ -17,10 +17,10 @@ import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 
 object FeatureSuggesterTestUtils {
-  fun subscribeToSuggestions(project: Project, disposable: Disposable, suggestionFound: (UiSuggestion) -> Unit) {
+  fun subscribeToSuggestions(project: Project, disposable: Disposable, suggestionFound: (PopupSuggestion) -> Unit) {
     project.messageBus.connect(disposable).subscribe(FeatureSuggestersManagerListener.TOPIC,
       object : FeatureSuggestersManagerListener {
-        override fun featureFound(suggestion: UiSuggestion) {
+        override fun featureFound(suggestion: PopupSuggestion) {
           suggestionFound(suggestion)
         }
       })

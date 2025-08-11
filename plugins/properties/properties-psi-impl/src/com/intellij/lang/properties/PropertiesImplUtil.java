@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -33,7 +33,8 @@ import java.util.stream.Stream;
  * @author Konstantin Bulenkov
  */
 public final class PropertiesImplUtil extends PropertiesUtil {
-  public static @NotNull ResourceBundleWithCachedFiles getResourceBundleWithCachedFiles(final @NotNull PropertiesFile representative) {
+  @NotNull
+  public static ResourceBundleWithCachedFiles getResourceBundleWithCachedFiles(@NotNull final PropertiesFile representative) {
     return ReadAction.compute(() -> {
       final PsiFile containingFile = representative.getContainingFile();
       if (!containingFile.isValid()) {
@@ -66,17 +67,20 @@ public final class PropertiesImplUtil extends PropertiesUtil {
     });
   }
 
-  public static @NotNull List<PropertiesFile> getResourceBundleFiles(@NotNull PropertiesFile representative) {
+  @NotNull
+  public static List<PropertiesFile> getResourceBundleFiles(@NotNull PropertiesFile representative) {
     return getResourceBundleWithCachedFiles(representative).getFiles();
   }
 
-  public static @NotNull ResourceBundle getResourceBundle(@NotNull PropertiesFile representative) {
+  @NotNull
+  public static ResourceBundle getResourceBundle(@NotNull PropertiesFile representative) {
     return getResourceBundleWithCachedFiles(representative).getBundle();
   }
 
-  private static @Nullable ResourceBundleWithCachedFiles getResourceBundle(final @NotNull String baseName,
-                                                                           final @Nullable String extension,
-                                                                           final @NotNull PsiDirectory baseDirectory) {
+  @Nullable
+  private static ResourceBundleWithCachedFiles getResourceBundle(@NotNull final String baseName,
+                                                                 @Nullable final String extension,
+                                                                 @NotNull final PsiDirectory baseDirectory) {
     final ResourceBundleManager bundleBaseNameManager = ResourceBundleManager.getInstance(baseDirectory.getProject());
     final List<PropertiesFile> bundleFiles = Stream
       .of(baseDirectory.isValid() ? baseDirectory.getFiles() : PsiFile.EMPTY_ARRAY)
@@ -93,12 +97,14 @@ public final class PropertiesImplUtil extends PropertiesUtil {
     return getPropertiesFile(file) != null;
   }
 
-  public static @Nullable PropertiesFile getPropertiesFile(@NotNull VirtualFile file, @NotNull Project project) {
+  @Nullable
+  public static PropertiesFile getPropertiesFile(@NotNull VirtualFile file, @NotNull Project project) {
     return getPropertiesFile(PsiManager.getInstance(project).findFile(file));
   }
 
   @Contract("null -> null")
-  public static @Nullable PropertiesFile getPropertiesFile(@Nullable PsiFile file) {
+  @Nullable
+  public static PropertiesFile getPropertiesFile(@Nullable PsiFile file) {
     if (!canBePropertyFile(file)) return null;
     return file instanceof PropertiesFile ? (PropertiesFile)file : XmlPropertiesFileImpl.getPropertiesFile(file);
   }
@@ -107,12 +113,14 @@ public final class PropertiesImplUtil extends PropertiesUtil {
     return file instanceof PropertiesFile || file instanceof XmlFile && file.getFileType() == XmlFileType.INSTANCE;
   }
 
-  public static @Nullable PropertiesFile getPropertiesFile(@Nullable PsiElement element) {
+  @Nullable
+  public static PropertiesFile getPropertiesFile(@Nullable PsiElement element) {
     if (!(element instanceof PsiFile)) return null;
     return getPropertiesFile((PsiFile)element);
   }
 
-  public static @NotNull List<IProperty> findPropertiesByKey(final @NotNull Project project, final @NotNull String key) {
+  @NotNull
+  public static List<IProperty> findPropertiesByKey(@NotNull final Project project, @NotNull final String key) {
     GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     List<IProperty> properties = new ArrayList<>(PropertyKeyIndex.getInstance().getProperties(key, project, scope));
     final Set<VirtualFile> files = new HashSet<>();
@@ -131,7 +139,8 @@ public final class PropertiesImplUtil extends PropertiesUtil {
     return properties;
   }
 
-  public static @Nullable ResourceBundle createByUrl(final @NotNull String url, final @NotNull Project project) {
+  @Nullable
+  public static ResourceBundle createByUrl(final @NotNull String url, final @NotNull Project project) {
     final int idx = url.lastIndexOf('/');
     if (idx == -1) return null;
     final String baseDirectoryName = url.substring(0, idx);
@@ -172,7 +181,8 @@ public final class PropertiesImplUtil extends PropertiesUtil {
     return true;
   }
 
-  public static @Nullable IProperty getProperty(@Nullable PsiElement element) {
+  @Nullable
+  public static IProperty getProperty(@Nullable PsiElement element) {
     if (element instanceof IProperty) {
       return (IProperty)element;
     }
@@ -197,11 +207,13 @@ public final class PropertiesImplUtil extends PropertiesUtil {
       myFiles = files;
     }
 
-    public @NotNull ResourceBundle getBundle() {
+    @NotNull
+    public ResourceBundle getBundle() {
       return myBundle;
     }
 
-    public @NotNull List<PropertiesFile> getFiles() {
+    @NotNull
+    public List<PropertiesFile> getFiles() {
       return myFiles;
     }
   }

@@ -3,23 +3,22 @@ package com.intellij.execution
 
 import com.intellij.execution.configurations.RemoteConnection
 import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.localPort
 
 /**
- * Allows resolving the stored debugger connection configuration against [TargetEnvironment] and to obtain [RemoteConnection] with the
- * resolved connection parameters for the IDE.
+ * Allows to resolve the stored debugger connection configuration against
+ * [TargetEnvironment] and to obtain [RemoteConnection] with the resolved
+ * connection parameters for the IDE.
  */
-internal class TargetDebuggerConnection(
-  private val remoteConnection: RemoteConnection,
-  val debuggerPortRequest: TargetEnvironment.TargetPortBinding,
-) {
+internal class TargetDebuggerConnection(private val remoteConnection: RemoteConnection,
+                                        val debuggerPortRequest: TargetEnvironment.TargetPortBinding) {
   private var remoteConnectionResolved: Boolean = false
 
   fun resolveRemoteConnection(environment: TargetEnvironment) {
-    val (localEndpoint, _) = environment.targetPortBindings[debuggerPortRequest]
-                             ?: error("Target port binding $debuggerPortRequest could not be found in the environment: $environment")
+    val localPort = environment.targetPortBindings[debuggerPortRequest]?.localPort
     remoteConnection.apply {
-      debuggerHostName = localEndpoint.host
-      debuggerAddress = localEndpoint.port.toString()
+      debuggerHostName = "localhost"
+      debuggerAddress = localPort.toString()
     }
     remoteConnectionResolved = true
   }

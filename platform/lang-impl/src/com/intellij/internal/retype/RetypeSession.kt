@@ -44,16 +44,14 @@ import com.intellij.ui.EditorNotifications
 import com.intellij.ui.LightColors
 import com.intellij.util.Alarm
 import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyEvent
 import java.io.File
 import java.util.*
 import java.util.function.Function
 import javax.swing.JComponent
 
-private fun String.toReadable(): String = replace(" ", "<Space>").replace("\n", "<Enter>").replace("\t", "<Tab>")
+fun String.toReadable(): String = replace(" ", "<Space>").replace("\n", "<Enter>").replace("\t", "<Tab>")
 
-@ApiStatus.Internal
 class RetypeLog {
   val LOG: Logger = Logger.getInstance(RetypeLog::class.java)
   private val log = arrayListOf<String>()
@@ -597,10 +595,8 @@ class RetypeSession(
   }
 }
 
-@get:ApiStatus.Internal
 val RETYPE_SESSION_KEY: Key<RetypeSession> = Key.create("com.intellij.internal.retype.RetypeSession")
 
-@ApiStatus.Internal
 class RetypeEditorNotificationProvider : EditorNotificationProvider {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     return Function { createNotificationPanel(it) }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.navigation.actions;
 
@@ -27,7 +27,9 @@ public interface TypeDeclarationProvider {
    * @param context the action data context.
    * @return the custom text or {@code null} to use the default text.
    */
-  default @Nullable @Nls(capitalization = Nls.Capitalization.Title) String getActionText(@NotNull DataContext context) {
+  @Nullable
+  @Nls(capitalization = Nls.Capitalization.Title)
+  default String getActionText(@NotNull DataContext context) {
     return null;
   }
 }

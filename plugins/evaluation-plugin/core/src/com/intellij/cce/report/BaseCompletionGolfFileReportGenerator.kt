@@ -19,8 +19,6 @@ abstract class BaseCompletionGolfFileReportGenerator(
   dirs: GeneratorDirectories
 ) : FileReportGenerator(featuresStorages, dirs, filterName, comparisonFilterName) {
 
-  override val scripts: List<Resource> = listOf(Resource("/script.js", "../res/script.js"))
-
   override fun createHead(head: HEAD, reportTitle: String, resourcePath: Path) {
     super.createHead(head, reportTitle, resourcePath)
     with(head) {
@@ -35,7 +33,7 @@ abstract class BaseCompletionGolfFileReportGenerator(
     }
   }
 
-  override fun getHtml(fileEvaluations: List<FileEvaluationInfo>, resourcePath: String, text: String): String {
+  override fun getHtml(fileEvaluations: List<FileEvaluationInfo>, fileName: String, resourcePath: String, text: String): String {
     return createHTML().body {
       div("cg") {
         div {
@@ -62,6 +60,24 @@ abstract class BaseCompletionGolfFileReportGenerator(
           div("red-code") {
             label("labelText") { +"Filters check " }
             span("stats-absent") { +"skipped" }
+          }
+          div("wrong-filters") {
+            label("labelText") { +"Highlight wrong filters: " }
+            select {
+              id = "wrong-filters"
+              option {
+                value = "no"
+                label = "no"
+              }
+              option {
+                value = "raw-filter"
+                label = "raw"
+              }
+              option {
+                value = "analyzed-filter"
+                label = "analyzed"
+              }
+            }
           }
           div("model-skipped") {
             label("labelText") { +"Highlight skipped by model: " }
@@ -112,9 +128,7 @@ abstract class BaseCompletionGolfFileReportGenerator(
           }
         }
       }
-      for (resource in scripts){
-        script { src = resource.destinationPath }
-      }
+      script { src = "../res/script.js" }
       script { +"isCompletionGolf = true" }
       script {
         +"""
@@ -215,13 +229,13 @@ abstract class BaseCompletionGolfFileReportGenerator(
 
   private fun FlowContent.prepareLine(session: Session, evaluationIndex: Int, maxLineLength: Int) {
     val expectedText = session.expectedText
-    val lookups = session.lookups.filter { lookup -> lookup.offset < expectedText.length }
+    val lookups = session.lookups
     var offset = 0
 
     div("line-code") {
       style = "min-width: calc(7.8 * ${maxLineLength}px);"
       lookups.forEachIndexed { i, lookup ->
-        if (offset < lookup.offset) {
+        if (lookup.offset != offset) {
           span("code-span") { +expectedText.substring(offset, lookup.offset) }
           offset = lookup.offset
         }

@@ -15,7 +15,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xml.XmlBundle;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -130,7 +129,6 @@ public class ConfigFilesTreeBuilder {
     return nonEmptyGroups > 1;
   }
 
-  @Contract(mutates = "param1,param3")
   private void addChildrenFiles(@NotNull Set<? super PsiFile> psiFiles, DefaultMutableTreeNode parentNode, @NotNull List<? extends PsiFile> moduleFiles) {
     moduleFiles.sort(FILE_COMPARATOR);
     for (PsiFile file : moduleFiles) {

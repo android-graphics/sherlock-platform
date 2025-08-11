@@ -9,12 +9,12 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.NonPersistentModuleStore
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -40,23 +40,23 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ModuleRootListe
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.nio.file.Path
-import kotlin.coroutines.coroutineContext
-
-private val LOG = logger<ModuleManagerComponentBridge>()
 
 internal class ModuleManagerComponentBridge(private val project: Project, coroutineScope: CoroutineScope)
   : ModuleManagerBridgeImpl(project = project, coroutineScope = coroutineScope, moduleRootListenerBridge = ModuleRootListenerBridgeImpl) {
-  private val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
+  private val virtualFileManager: VirtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
 
   internal class ModuleManagerInitProjectActivity : InitProjectActivity {
     override suspend fun run(project: Project) {
       val modules = (project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge).modules().toList()
-      coroutineContext.ensureActive()
       span("firing modules_added event") {
-        fireModulesAdded(project, modules)
+        blockingContext {
+          fireModulesAdded(project, modules)
+        }
       }
       span("deprecated module component moduleAdded calling") {
         for (module in modules) {
@@ -80,7 +80,7 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
     initializeModuleBridges(event, builder)
 
     // Initialize facets
-    project.service<FacetEntityChangeListener>().initializeFacetBridge(event, builder)
+    FacetEntityChangeListener.getInstance(project).initializeFacetBridge(event, builder)
 
     // Initialize module libraries
     val moduleLibraryChanges = ((event[LibraryEntity::class.java] as? List<EntityChange<LibraryEntity>>) ?: emptyList())
@@ -90,26 +90,22 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
     }
   }
 
-  @Suppress("UNCHECKED_CAST")
+  @Suppress("SSBasedInspection", "UNCHECKED_CAST")
   private fun initializeModuleBridges(event: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     val moduleChanges = (event[ModuleEntity::class.java] as? List<EntityChange<ModuleEntity>>) ?: emptyList()
     LOG.debug { "Starting initialize bridges for ${moduleChanges.size} modules" }
 
-    // Theoretically, the module initialization can be parallelized using fork-join approach, see IJPL-149482
+    // Theoretically, the module initialization can be parallized using fork-join approach, see IJPL-149482
     //   This approach is used in ModuleManagerBridgeImpl.loadModules
-    // However, simple use of Dispatchers.Default while being inside write action, may cause threading issues, see IDEA-355596
-    for (change in moduleChanges) {
-      if (change !is EntityChange.Added<ModuleEntity>) {
-        continue
-      }
-      if (change.newEntity.findModule(builder) != null) {
-        continue
-      }
+    // However, simple use of Dispatchers.Default while being inside of write action, may cause threading issues, see IDEA-355596
+    moduleChanges.forEach {
+      if (it !is EntityChange.Added<ModuleEntity>) return@forEach
+      if (it.newEntity.findModule(builder) != null) return@forEach
 
-      LOG.debug { "Creating module instance for ${change.newEntity.name}" }
+      LOG.debug { "Creating module instance for ${it.newEntity.name}" }
       val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
       val bridge = createModuleInstanceWithoutCreatingComponents(
-        moduleEntity = change.newEntity,
+        moduleEntity = it.newEntity,
         versionedStorage = entityStore,
         diff = builder,
         isNew = true,
@@ -117,11 +113,11 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
         plugins = plugins,
         corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID },
       )
-      LOG.debug { "Creating components ${change.newEntity.name}" }
+      LOG.debug { "Creating components ${it.newEntity.name}" }
       bridge.callCreateComponents()
 
-      LOG.debug { "${change.newEntity.name} module initialized" }
-      builder.mutableModuleMap.addMapping(change.newEntity, bridge)
+      LOG.debug { "${it.newEntity.name} module initialized" }
+      builder.mutableModuleMap.addMapping(it.newEntity, bridge)
     }
   }
 
@@ -141,12 +137,10 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
   }
 
   override fun registerNonPersistentModuleStore(module: ModuleBridge) {
-    (module as ModuleBridgeImpl).registerService(
-      serviceInterface = IComponentStore::class.java,
-      implementation = NonPersistentModuleStore::class.java,
-      pluginDescriptor = ComponentManagerImpl.fakeCorePluginDescriptor,
-      override = true,
-    )
+    (module as ModuleBridgeImpl).registerService(serviceInterface = IComponentStore::class.java,
+                                                 implementation = NonPersistentModuleStore::class.java,
+                                                 pluginDescriptor = ComponentManagerImpl.fakeCorePluginDescriptor,
+                                                 override = true)
   }
 
   override fun loadModuleToBuilder(moduleName: String, filePath: String, diff: MutableEntityStorage): ModuleEntity {
@@ -168,37 +162,28 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
       throw IOException("Failed to load module from $filePath")
     }
 
-    if (moduleEntity.entitySource is OrphanageWorkerEntitySource) {
-      throw IOException("The file only declares additional module components, but not the module itself: $filePath")
-    }
-
     val moduleFileUrl = getModuleVirtualFileUrl(moduleEntity)!!
     LocalFileSystem.getInstance().refreshAndFindFileByNioFile(moduleFileUrl.toPath())
     return moduleEntity
   }
 
-  override fun createModule(
-    symbolicId: ModuleId,
-    name: String,
-    virtualFileUrl: VirtualFileUrl?,
-    entityStorage: VersionedEntityStorage,
-    diff: MutableEntityStorage?,
-  ): ModuleBridge {
-    return ModuleBridgeImpl(
-      moduleEntityId = symbolicId,
-      name = name,
-      project = project,
-      virtualFileUrl = virtualFileUrl,
-      entityStorage = entityStorage,
-      diff = diff,
-    )
+  override fun createModule(symbolicId: ModuleId, name: String, virtualFileUrl: VirtualFileUrl?, entityStorage: VersionedEntityStorage,
+                            diff: MutableEntityStorage?): ModuleBridge {
+    return ModuleBridgeImpl(moduleEntityId = symbolicId,
+                            name = name,
+                            project = project,
+                            virtualFileUrl = virtualFileUrl,
+                            entityStorage = entityStorage,
+                            diff = diff)
+  }
+
+  companion object {
+    val LOG = logger<ModuleManagerComponentBridge>()
   }
 }
 
-private class SingleImlSerializationContext(
-  override val virtualFileUrlManager: VirtualFileUrlManager,
-  override val fileContentReader: JpsFileContentReader,
-) : BaseIdeSerializationContext() {
+private class SingleImlSerializationContext(override val virtualFileUrlManager: VirtualFileUrlManager,
+                                            override val fileContentReader: JpsFileContentReader) : BaseIdeSerializationContext() {
   override val isExternalStorageEnabled: Boolean
     get() = false
   override val fileInDirectorySourceNames: FileInDirectorySourceNames

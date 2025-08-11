@@ -30,7 +30,8 @@ public class AddEncodingQuickFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.add.encoding");
   }
 

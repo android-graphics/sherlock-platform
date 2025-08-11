@@ -22,7 +22,8 @@ public interface PyAstArgumentList extends PyAstElement {
   /**
    * @return all argument list param expressions (keyword argument or nameless)
    */
-  default @NotNull Collection<? extends PyAstExpression> getArgumentExpressions() {
+  @NotNull
+  default Collection<? extends PyAstExpression> getArgumentExpressions() {
     final PyAstExpression[] arguments = getArguments();
     final Collection<PyAstExpression> result = new ArrayList<>(arguments.length);
     for (final PyAstExpression expression : arguments) {
@@ -41,7 +42,8 @@ public interface PyAstArgumentList extends PyAstElement {
     return childrenToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), PyAstExpression.EMPTY_ARRAY);
   }
 
-  default @Nullable PyAstKeywordArgument getKeywordArgument(String name) {
+  @Nullable
+  default PyAstKeywordArgument getKeywordArgument(String name) {
     ASTNode node = getNode().getFirstChildNode();
     while (node != null) {
       if (node.getElementType() == PyElementTypes.KEYWORD_ARGUMENT_EXPRESSION) {
@@ -57,11 +59,13 @@ public interface PyAstArgumentList extends PyAstElement {
   /**
    * @return the call expression to which this argument list belongs; not null in correctly parsed cases.
    */
-  default @Nullable PyAstCallExpression getCallExpression() {
+  @Nullable
+  default PyAstCallExpression getCallExpression() {
     return PsiTreeUtil.getParentOfType(this, PyAstCallExpression.class);
   }
 
-  default @Nullable ASTNode getClosingParen() {
+  @Nullable
+  default ASTNode getClosingParen() {
     ASTNode node = getNode();
     final ASTNode[] children = node.getChildren(TokenSet.create(PyTokenTypes.RPAR));
     return children.length == 0 ? null : children[children.length - 1];

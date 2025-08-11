@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
@@ -13,28 +13,32 @@ import static com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleTyp
 
 
 public abstract class WebModuleTypeBase<T extends ModuleBuilder> extends ModuleType<T> implements ModuleTypeWithWebFeatures {
-  public static final @NonNls String WEB_MODULE = WEB_MODULE_ENTITY_TYPE_ID_NAME;
+  @NonNls public static final String WEB_MODULE = WEB_MODULE_ENTITY_TYPE_ID_NAME;
 
   public WebModuleTypeBase() {
     super(WEB_MODULE);
   }
 
-  public static @NotNull WebModuleTypeBase<?> getInstance() {
+  @NotNull
+  public static WebModuleTypeBase<?> getInstance() {
     return (WebModuleTypeBase<?>)ModuleTypeManager.getInstance().findByID(WEB_MODULE);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return ProjectBundle.message("module.web.title");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
+  public String getDescription() {
     return ProjectBundle.message("module.web.description");
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getNodeIcon(final boolean isOpened) {
+  public Icon getNodeIcon(final boolean isOpened) {
     return AllIcons.Nodes.Module;
   }
 

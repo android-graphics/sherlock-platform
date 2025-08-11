@@ -23,12 +23,14 @@ public final class CustomLogProcessor extends AbstractLogProcessor {
     super(LombokClassNames.CUSTOM_LOG);
   }
 
-  private static @NotNull String getCustomDeclaration(@NotNull PsiClass psiClass) {
+  @NotNull
+  private static String getCustomDeclaration(@NotNull PsiClass psiClass) {
     return ConfigDiscovery.getInstance().getStringLombokConfigProperty(ConfigKey.LOG_CUSTOM_DECLARATION, psiClass);
   }
 
+  @Nullable
   @Override
-  public @Nullable String getLoggerType(@NotNull PsiClass psiClass) {
+  public String getLoggerType(@NotNull PsiClass psiClass) {
     return CustomLogParser.parseLoggerType(getCustomDeclaration(psiClass));
   }
 

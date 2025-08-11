@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -13,9 +13,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.vcs.log.util.StopWatchScopeKt.StopWatchScope;
+import static com.intellij.vcs.log.util.StopWatchScopeKt.*;
 
-public final @NonNls class StopWatch {
+@NonNls
+public final class StopWatch {
 
   private static final Logger LOG = Logger.getInstance(StopWatch.class);
 
@@ -26,8 +27,8 @@ public final @NonNls class StopWatch {
   private final long myStartTime;
 
   private final Span mySpan;
-  private final @NotNull String myOperation;
-  private final @NotNull Map<VirtualFile, Long> myDurationPerRoot;
+  @NotNull private final String myOperation;
+  @NotNull private final Map<VirtualFile, Long> myDurationPerRoot;
 
   private StopWatch(@NotNull String operation) {
     mySpan = TelemetryManager.getInstance().getTracer(StopWatchScope).spanBuilder(operation).startSpan();
@@ -36,7 +37,8 @@ public final @NonNls class StopWatch {
     myDurationPerRoot = new HashMap<>();
   }
 
-  public static @NotNull StopWatch start(@NonNls @NotNull String operation) {
+  @NotNull
+  public static StopWatch start(@NonNls @NotNull String operation) {
     return new StopWatch(operation);
   }
 
@@ -71,7 +73,8 @@ public final @NonNls class StopWatch {
   /**
    * 1h 1m 1.001s
    */
-  public static @NotNull String formatTime(long time) {
+  @NotNull
+  public static String formatTime(long time) {
     if (time < 1000 * UNITS[0]) {
       return time + "ms";
     }

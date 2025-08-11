@@ -53,7 +53,7 @@ public class PythonUnitTestTestIdUrlProvider implements SMTestLocator, DumbAware
 
       String fileName = list.get(listSize - 3);
       final List<Location> locations = findLocations(project, fileName, className, methodName);
-      if (!locations.isEmpty()) {
+      if (locations.size() > 0) {
         return locations;
       }
       return findLocations(project, list.get(listSize-2), list.get(listSize-1), null);

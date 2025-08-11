@@ -40,8 +40,7 @@ public enum LombokCopyableAnnotations {
     annotationsToAdd.forEach(modifierList::addAnnotation);
   }
 
-  public @NotNull List<PsiAnnotation> collectCopyableAnnotations(@NotNull PsiModifierListOwner psiFromElement,
-                                                                 @Nullable PsiClass containingClass) {
+  public @NotNull <T extends PsiModifierListOwner & PsiMember> List<PsiAnnotation> collectCopyableAnnotations(@NotNull T psiFromElement) {
     final PsiAnnotation[] fieldAnnotations = psiFromElement.getAnnotations();
     if (0 == fieldAnnotations.length) {
       // nothing to copy if no annotations defined
@@ -58,6 +57,7 @@ public enum LombokCopyableAnnotations {
       }
     }
 
+    final PsiClass containingClass = psiFromElement.getContainingClass();
     // append only for BASE_COPYABLE
     if (BASE_COPYABLE.equals(this) && null != containingClass) {
       Collection<String> configuredCopyableAnnotations =
@@ -86,14 +86,7 @@ public enum LombokCopyableAnnotations {
   public static <T extends PsiModifierListOwner & PsiMember> void copyCopyableAnnotations(@NotNull T fromPsiElement,
                                                                                           @NotNull LombokLightModifierList toModifierList,
                                                                                           @NotNull LombokCopyableAnnotations copyableAnnotations) {
-    copyCopyableAnnotations(fromPsiElement, fromPsiElement.getContainingClass(), toModifierList, copyableAnnotations);
-  }
-
-  public static void copyCopyableAnnotations(@NotNull PsiModifierListOwner fromPsiElement,
-                                             @Nullable PsiClass containingClass,
-                                             @NotNull LombokLightModifierList toModifierList,
-                                             @NotNull LombokCopyableAnnotations copyableAnnotations) {
-    List<PsiAnnotation> annotationsToAdd = copyableAnnotations.collectCopyableAnnotations(fromPsiElement, containingClass);
+    List<PsiAnnotation> annotationsToAdd = copyableAnnotations.collectCopyableAnnotations(fromPsiElement);
     annotationsToAdd.forEach(toModifierList::withAnnotation);
   }
 }

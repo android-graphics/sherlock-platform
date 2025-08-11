@@ -13,8 +13,7 @@ final class TextFragmentFactory {
                                   int start,
                                   int end,
                                   boolean isRtl,
-                                  FontInfo fontInfo,
-                                  EditorView view) {
+                                  FontInfo fontInfo) {
     boolean needsLayout = isRtl || fontInfo.getFont().hasLayoutAttributes();
     boolean nonLatinText = false;
     if (!needsLayout && (containsSurrogatePairs(lineChars, start, end) || Font.textRequiresLayout(lineChars, start, end))) {
@@ -37,17 +36,17 @@ final class TextFragmentFactory {
           UnicodeScript script = UnicodeScript.of(c);
           if (script != UnicodeScript.COMMON && script != UnicodeScript.INHERITED && script != UnicodeScript.UNKNOWN) {
             if (lastScript != script && lastScript != UnicodeScript.COMMON) {
-              fragments.add(new ComplexTextFragment(lineChars, lastOffset, i, isRtl, fontInfo, view));
+              fragments.add(new ComplexTextFragment(lineChars, lastOffset, i, isRtl, fontInfo));
               lastOffset = i;
             }
             lastScript = script;
           }
         }
       }
-      fragments.add(new ComplexTextFragment(lineChars, lastOffset, end, isRtl, fontInfo, view));
+      fragments.add(new ComplexTextFragment(lineChars, lastOffset, end, isRtl, fontInfo));
     }
     else {
-      fragments.add(new SimpleTextFragment(lineChars, start, end, fontInfo, view));
+      fragments.add(new SimpleTextFragment(lineChars, start, end, fontInfo));
     }
   }
 

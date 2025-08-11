@@ -35,13 +35,15 @@ public class ConvertIndentsFix implements LocalQuickFix {
     myToSpaces = toSpaces;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return myToSpaces ? PyPsiBundle.message("QFIX.convert.indents.to.spaces") : PyPsiBundle.message("QFIX.convert.indents.to.tabs");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.convert.indents");
   }
 

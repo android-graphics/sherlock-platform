@@ -26,11 +26,3 @@ fun simulateBreak() {
       }
     }
 }
-
-class CustomAccessibilityAction(val action: () -> Boolean)
-
-fun lambdaInConstructor() {
-    CustomAccessibilityAction {
-        return@CustomAccessibilityAction
-    }
-}

@@ -1,11 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
-public final class BufferingTextSplitter {
+class BufferingTextSplitter {
   private final @NotNull StringBuilder myLineBuffer = new StringBuilder();
   private boolean myBufferedCr = false;
 
@@ -48,7 +46,7 @@ public final class BufferingTextSplitter {
       boolean isCrLf = isCr && input[nextLine + 1] == '\n';
       boolean isCrLine = isCr && !isCrLf;
 
-      if (myLineBuffer.isEmpty()) {
+      if (myLineBuffer.length() == 0) {
         String text = new String(input, offset, nextLine - offset);
         myLineConsumer.consume(text, isCrLine);
       }
@@ -81,13 +79,12 @@ public final class BufferingTextSplitter {
    * Flush incomplete lines buffer to consumer
    */
   public void flush() {
-    if (!myLineBuffer.isEmpty() || myBufferedCr) {
+    if (myLineBuffer.length() > 0 || myBufferedCr) {
       sendBufferLine();
     }
   }
 
-  @ApiStatus.Internal
-  public interface LineConsumer {
+  interface LineConsumer {
     void consume(@NotNull String line, boolean isCrOnly);
   }
 }

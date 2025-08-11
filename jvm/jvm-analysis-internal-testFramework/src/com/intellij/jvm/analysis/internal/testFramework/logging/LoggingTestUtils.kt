@@ -79,6 +79,7 @@ object LoggingTestUtils {
           LogBuilder atError();
           LogBuilder atTrace();
           LogBuilder atLevel(Level level);
+          boolean isInfoEnabled(){return true;}
         }
       """.trimIndent())
     fixture.addClass("""

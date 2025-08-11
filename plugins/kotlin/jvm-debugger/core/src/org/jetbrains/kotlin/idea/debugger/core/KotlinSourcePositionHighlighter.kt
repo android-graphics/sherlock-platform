@@ -32,16 +32,10 @@ class KotlinSourcePositionHighlighter : SourcePositionHighlighter() {
         }
 
         // Highlight only lambda body in case of lambda breakpoint.
-        val lambda = element.parentOfType<KtFunction>() ?.takeIf { it is KtFunctionLiteral || it.name == null } ?: return null
+        val lambda = element.parentOfType<KtFunction>()?.takeIf { it is KtFunctionLiteral || it.name == null } ?: return null
         val lambdaRange = JavaLineBreakpointType.getTextRangeWithoutTrailingComments(lambda)
 
-        val body = lambda.bodyExpression ?: lambda
-        val bodyRange = JavaLineBreakpointType.getTextRangeWithoutTrailingComments(body)
-
-        if (lambda.isOneLiner()) {
-            // Try to highlight only the body of lambda, otherwise take the whole lambda (including curly braces).
-            return if (!bodyRange.isEmpty) bodyRange else lambdaRange
-        }
+        if (lambda.isOneLiner()) return lambdaRange
 
         val lambdaLineRange = lambda.getLineRange() ?: return null
         val lineRange = sourcePosition.file.getRangeOfLine(sourcePosition.line, skipWhitespace = false) ?: return null
@@ -49,10 +43,7 @@ class KotlinSourcePositionHighlighter : SourcePositionHighlighter() {
 
         // Highlight only part of the line after {
         if (sourcePosition.line == lambdaLineRange.first) {
-            // Try to highlight only the body of lambda, otherwise take the whole lambda (including curly braces).
-            val onlyBody = if (bodyRange.startOffset in intersection) intersection.cutInit(bodyRange.startOffset) else intersection
-            // Text range is grown to include \n to highlight tail of the line.
-            return onlyBody.grown(1)
+            return intersection?.grown(1)
         }
 
         // Highlight only part of the line before }
@@ -62,14 +53,9 @@ class KotlinSourcePositionHighlighter : SourcePositionHighlighter() {
             // In case closing brace is the only lambda's symbol on the line, it could be hard to find the highlighting, highlight the whole line
             && intersection.length > 1
         ) {
-            // Try to highlight only the body of lambda, otherwise take the whole lambda (including curly braces).
-            val onlyBody = if (bodyRange.endOffset in intersection) intersection.cutTail(bodyRange.endOffset) else intersection
-            return onlyBody
+            return intersection
         }
 
         return null
     }
-
-    private fun TextRange.cutInit(newStartOffset: Int) = TextRange(newStartOffset, endOffset)
-    private fun TextRange.cutTail(newEndOffset: Int) = TextRange(startOffset, newEndOffset)
 }

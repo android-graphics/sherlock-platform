@@ -7,10 +7,8 @@ import org.jetbrains.idea.maven.model.*
 import java.io.File
 
 
-class MavenBuildPathsChange(
-  private val transformer: (String) -> String,
-  private val needTransformConfiguration: (String) -> Boolean = { false },
-) {
+class MavenBuildPathsChange(private val transformer: (String) -> String,
+                            private val needTransformConfiguration: (String) -> Boolean = { false }) {
   fun perform(model: MavenModel) = model.transformPaths()
 
   private fun MavenModel.transformPaths() {
@@ -44,9 +42,10 @@ class MavenBuildPathsChange(
     excludes
   )
 
-  private fun MavenArtifact.transformPaths(): MavenArtifact {
-    return this.replaceFile(File(transformer(file.path)), null)
-  }
+  private fun MavenArtifact.transformPaths() = this.replaceFile(
+    File(transformer(file.path)),
+    null
+  )
 
   private fun MavenArtifactNode.transformPaths(parent: MavenArtifactNode?): MavenArtifactNode {
     val result = MavenArtifactNode(

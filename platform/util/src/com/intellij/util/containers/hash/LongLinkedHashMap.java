@@ -2,7 +2,6 @@
 package com.intellij.util.containers.hash;
 
 import it.unimi.dsi.fastutil.HashCommon;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +14,6 @@ import java.util.*;
  * NOTE: not the same as {@link java.util.LinkedHashMap} -- this implementation supports .accessOrder,
  * which re-orders entries on .get() 
  */
-@ApiStatus.Internal
 public class LongLinkedHashMap<V> {
   private static final long NULL_KEY = 0L;
 

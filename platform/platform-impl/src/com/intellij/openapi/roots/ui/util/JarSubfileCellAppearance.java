@@ -2,13 +2,12 @@
 package com.intellij.openapi.roots.ui.util;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
-@ApiStatus.Internal
 public final class JarSubfileCellAppearance extends ValidFileCellAppearance {
   public JarSubfileCellAppearance(VirtualFile file) {
     super(file);
@@ -16,7 +15,7 @@ public final class JarSubfileCellAppearance extends ValidFileCellAppearance {
 
   @Override
   protected Icon getIcon() {
-    return ArchiveFileType.INSTANCE.getIcon();
+    return ((FileType)ArchiveFileType.INSTANCE).getIcon();
   }
 
   @Override

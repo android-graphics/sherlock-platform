@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -30,12 +30,12 @@ import java.util.*;
  */
 public final class ArrangementAndMatchConditionComponent extends JPanel implements ArrangementUiComponent {
 
-  private final @NotNull List<ArrangementUiComponent>  myComponents      = new ArrayList<>();
-  private final @NotNull Set<ArrangementSettingsToken> myAvailableTokens = new HashSet<>();
+  @NotNull private final List<ArrangementUiComponent>  myComponents      = new ArrayList<>();
+  @NotNull private final Set<ArrangementSettingsToken> myAvailableTokens = new HashSet<>();
 
-  private final @NotNull ArrangementCompositeMatchCondition mySetting;
-  private @Nullable Rectangle                          myScreenBounds;
-  private @Nullable ArrangementUiComponent             myComponentUnderMouse;
+  @NotNull private final ArrangementCompositeMatchCondition mySetting;
+  @Nullable private      Rectangle                          myScreenBounds;
+  @Nullable private      ArrangementUiComponent             myComponentUnderMouse;
 
   public ArrangementAndMatchConditionComponent(@NotNull StdArrangementMatchRule rule,
                                                @NotNull ArrangementCompositeMatchCondition setting,
@@ -76,8 +76,9 @@ public final class ArrangementAndMatchConditionComponent extends JPanel implemen
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull ArrangementMatchCondition getMatchCondition() {
+  public ArrangementMatchCondition getMatchCondition() {
     return mySetting;
   }
 
@@ -86,13 +87,15 @@ public final class ArrangementAndMatchConditionComponent extends JPanel implemen
     // Do nothing
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent getUiComponent() {
+  public JComponent getUiComponent() {
     return this;
   }
 
+  @Nullable
   @Override
-  public @Nullable Rectangle getScreenBounds() {
+  public Rectangle getScreenBounds() {
     return myScreenBounds;
   }
 
@@ -192,8 +195,9 @@ public final class ArrangementAndMatchConditionComponent extends JPanel implemen
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable Rectangle onMouseExited() {
+  public Rectangle onMouseExited() {
     if (myComponentUnderMouse != null) {
       Rectangle result = myComponentUnderMouse.onMouseExited();
       myComponentUnderMouse = null;
@@ -202,13 +206,15 @@ public final class ArrangementAndMatchConditionComponent extends JPanel implemen
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable ArrangementSettingsToken getToken() {
+  public ArrangementSettingsToken getToken() {
     return myComponentUnderMouse == null ? null : myComponentUnderMouse.getToken();
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<ArrangementSettingsToken> getAvailableTokens() {
+  public Set<ArrangementSettingsToken> getAvailableTokens() {
     return myAvailableTokens;
   }
 

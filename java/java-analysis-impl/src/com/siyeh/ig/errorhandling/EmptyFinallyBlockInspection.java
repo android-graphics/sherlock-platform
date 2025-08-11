@@ -18,8 +18,8 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -40,7 +40,8 @@ public final class EmptyFinallyBlockInspection extends BaseInspection implements
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("empty.finally.block.problem.descriptor");
   }
 
@@ -57,7 +58,8 @@ public final class EmptyFinallyBlockInspection extends BaseInspection implements
 
   private static class RemoveTryFinallyBlockFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("remove.try.finally.block.quickfix");
     }
 
@@ -89,7 +91,8 @@ public final class EmptyFinallyBlockInspection extends BaseInspection implements
   private static class RemoveFinallyBlockFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("remove.finally.block.quickfix");
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
@@ -59,7 +59,7 @@ class KotlinChangeSignatureProcessor(
 
     override fun getChangeInfo(): KotlinChangeInfo = super.getChangeInfo() as KotlinChangeInfo
 
-    protected override fun findUsages(): Array<UsageInfo> {
+    override fun findUsages(): Array<UsageInfo> {
         val allUsages = ArrayList<UsageInfo>()
         val javaUsages = mutableSetOf<UsageInfo>()
         changeInfo.getOrCreateJavaChangeInfos()?.let { javaChangeInfos ->
@@ -119,7 +119,7 @@ class KotlinChangeSignatureProcessor(
         }
     }
 
-    protected override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
+    override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         val usageProcessors = ChangeSignatureUsageProcessor.EP_NAME.extensions
 
         if (!usageProcessors.all { it.setupDefaultValues(myChangeInfo, refUsages, myProject) }) return false
@@ -150,7 +150,7 @@ class KotlinChangeSignatureProcessor(
         return showConflicts(conflictDescriptions, usageArray)
     }
 
-    protected override fun isPreviewUsages(usages: Array<UsageInfo>): Boolean = isPreviewUsages
+    override fun isPreviewUsages(usages: Array<out UsageInfo>): Boolean = isPreviewUsages
 
     override fun getCommandName() = commandName
 

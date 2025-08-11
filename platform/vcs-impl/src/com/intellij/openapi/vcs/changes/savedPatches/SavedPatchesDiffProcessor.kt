@@ -8,10 +8,8 @@ import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi.Companion.SAVED_PATCHES_UI_PLACE
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.util.containers.JBIterable
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-@ApiStatus.Internal
 class SavedPatchesDiffProcessor(tree: ChangesTree, private val isInEditor: Boolean, isShowDiffWithLocal: () -> Boolean)
   : TreeHandlerDiffRequestProcessor(SAVED_PATCHES_UI_PLACE, tree, SavedPatchesDiffPreviewHandler(isShowDiffWithLocal)) {
   init {
@@ -23,7 +21,6 @@ class SavedPatchesDiffProcessor(tree: ChangesTree, private val isInEditor: Boole
   }
 }
 
-@ApiStatus.Internal
 class SavedPatchesDiffPreviewHandler(private val isShowDiffWithLocal: () -> Boolean) : ChangesTreeDiffPreviewHandler() {
   override fun iterateSelectedChanges(tree: ChangesTree): JBIterable<Wrapper> {
     return collectWrappers(VcsTreeModelData.selected(tree))

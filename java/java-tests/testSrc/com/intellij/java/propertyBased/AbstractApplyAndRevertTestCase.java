@@ -24,7 +24,6 @@ import com.intellij.testFramework.TestDataProvider;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jetCheck.Generator;
 
 import java.io.File;
@@ -122,7 +121,6 @@ public abstract class AbstractApplyAndRevertTestCase extends HeavyPlatformTestCa
     }
   }
 
-  @Unmodifiable
   protected static List<CompilerMessage> filterErrors(List<CompilerMessage> messages) {
     return ContainerUtil.filter(messages, message -> message.getCategory() == CompilerMessageCategory.ERROR);
   }

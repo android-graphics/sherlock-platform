@@ -142,7 +142,7 @@ class GradleDistributionsTest : GradleCodeInsightTestCase() {
   companion object {
 
     private val FIXTURE_BUILDER = GradleTestFixtureBuilder.create("GradleDistributionsTest") { gradleVersion ->
-      withSettingsFile(gradleVersion) {
+      withSettingsFile {
         setProjectName("GradleDistributionsTest")
       }
       withBuildFile(gradleVersion) {

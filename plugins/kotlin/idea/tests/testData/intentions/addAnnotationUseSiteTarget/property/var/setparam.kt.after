@@ -1,4 +1,4 @@
-// CHOSEN_OPTION: SETTER_PARAMETER|Add use-site target 'setparam'
+// CHOOSE_USE_SITE_TARGET: setparam
 
 annotation class A
 

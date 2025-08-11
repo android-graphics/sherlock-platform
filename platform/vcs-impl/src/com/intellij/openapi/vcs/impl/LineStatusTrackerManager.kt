@@ -6,7 +6,6 @@ package com.intellij.openapi.vcs.impl
 import com.google.common.collect.HashMultiset
 import com.google.common.collect.Multiset
 import com.intellij.codeWithMe.ClientId
-import com.intellij.codeWithMe.asContextElement
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.icons.AllIcons
 import com.intellij.notification.Notification
@@ -20,7 +19,6 @@ import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -60,17 +58,16 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.EventDispatcher
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.Semaphore
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.messages.Topic
-import com.intellij.util.messages.Topic.ProjectLevel
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.isNonModalCommit
 import com.intellij.vcsUtil.VcsUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.NonNls
@@ -79,15 +76,14 @@ import java.nio.charset.Charset
 import java.util.*
 import java.util.function.Supplier
 
-class LineStatusTrackerManager(
-  private val project: Project,
-  private val coroutineScope: CoroutineScope,
-) : LineStatusTrackerManagerI, Disposable {
+class LineStatusTrackerManager(private val project: Project) : LineStatusTrackerManagerI, Disposable {
   private val LOCK = Any()
   private var isDisposed = false
 
   private val trackers = HashMap<Document, TrackerData>()
   private val forcedDocuments = HashMap<Document, Multiset<Any>>()
+
+  private val eventDispatcher = EventDispatcher.create(Listener::class.java)
 
   private var partialChangeListsEnabled: Boolean = false
   private val documentsInDefaultChangeList = HashSet<Document>()
@@ -100,9 +96,6 @@ class LineStatusTrackerManager(
 
   companion object {
     private val LOG = logger<LineStatusTrackerManager>()
-
-    @ProjectLevel
-    val TOPIC: Topic<Listener> = Topic(Listener::class.java, Topic.BroadcastDirection.NONE)
 
     @JvmStatic
     fun getInstance(project: Project): LineStatusTrackerManagerI = project.service()
@@ -117,13 +110,13 @@ class LineStatusTrackerManager(
     override val order: Int
       get() = VcsInitObject.OTHER_INITIALIZATION.order
 
-    override suspend fun execute(project: Project) {
-      (project.serviceAsync<LineStatusTrackerManagerI>() as LineStatusTrackerManager).startListenForEditors()
+    override fun runActivity(project: Project) {
+      getInstanceImpl(project).startListenForEditors()
     }
   }
 
   private fun startListenForEditors() {
-    val connection = project.messageBus.connect(coroutineScope)
+    val connection = project.messageBus.connect(this)
     connection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
     connection.subscribe(VcsFreezingProcess.Listener.TOPIC, MyFreezeListener())
     connection.subscribe(CommandListener.TOPIC, MyCommandListener())
@@ -132,7 +125,7 @@ class LineStatusTrackerManager(
     connection.subscribe(FileStatusListener.TOPIC, MyFileStatusListener())
     connection.subscribe(VcsBaseContentProviderListener.TOPIC, BaseContentProviderListener())
 
-    ApplicationManager.getApplication().messageBus.connect(coroutineScope)
+    ApplicationManager.getApplication().messageBus.connect(this)
       .subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
 
     LocalLineStatusTrackerProvider.EP_NAME.addChangeListener(Runnable { updateTrackingSettings() }, this)
@@ -140,15 +133,17 @@ class LineStatusTrackerManager(
 
     updatePartialChangeListsAvailability()
 
-    coroutineScope.launch(Dispatchers.EDT) {
-      ApplicationManager.getApplication().addApplicationListener(MyApplicationListener(), this@LineStatusTrackerManager)
-
-      EditorFactory.getInstance().eventMulticaster.addDocumentListener(MyDocumentListener(), this@LineStatusTrackerManager)
-
-      writeIntentReadAction {
-        MyEditorFactoryListener().install(this@LineStatusTrackerManager)
-        onEverythingChanged()
+    AppUIExecutor.onUiThread().expireWith(project).execute {
+      if (project.isDisposed) {
+        return@execute
       }
+
+      ApplicationManager.getApplication().addApplicationListener(MyApplicationListener(), this)
+
+      EditorFactory.getInstance().eventMulticaster.addDocumentListener(MyDocumentListener(), this)
+
+      MyEditorFactoryListener().install(this)
+      onEverythingChanged()
 
       PartialLineStatusTrackerManagerState.restoreState(project)
     }
@@ -221,10 +216,6 @@ class LineStatusTrackerManager(
     }
   }
 
-  fun hasPendingUpdate(document: Document) : Boolean {
-    return loader.hasRequestFor(document)
-  }
-
   override fun invokeAfterUpdate(task: Runnable) {
     loader.addAfterUpdateRunnable(task)
   }
@@ -236,11 +227,8 @@ class LineStatusTrackerManager(
     }
   }
 
-  /**
-   * See [LineStatusTrackerManager.TOPIC]
-   */
   fun addTrackerListener(listener: Listener, disposable: Disposable) {
-    project.messageBus.connect(disposable).subscribe(TOPIC, listener)
+    eventDispatcher.addListener(listener, disposable)
   }
 
   open class ListenerAdapter : Listener
@@ -249,12 +237,6 @@ class LineStatusTrackerManager(
     }
 
     fun onTrackerRemoved(tracker: LineStatusTracker<*>) {
-    }
-
-    /**
-     * See [LineStatusTrackerI.isValid]
-     */
-    fun onTrackerBecomeValid(tracker: LineStatusTracker<*>) {
     }
   }
 
@@ -415,8 +397,6 @@ class LineStatusTrackerManager(
     virtualFile: VirtualFile, document: Document,
     refreshExisting: Boolean = false,
   ) {
-    ThreadingAssertions.assertEventDispatchThread()
-
     val provider = getTrackerProvider(virtualFile, document)
 
     val oldTracker = trackers[document]?.tracker
@@ -435,17 +415,13 @@ class LineStatusTrackerManager(
     virtualFile: VirtualFile, document: Document,
     provider: LocalLineStatusTrackerProvider,
   ): LocalLineStatusTracker<*>? {
-    ThreadingAssertions.assertEventDispatchThread()
-
     if (isDisposed) return null
     if (trackers[document] != null) return null
 
-    val tracker = SlowOperations.startSection("vcs.line-status-tracker-provider").use {
+    val tracker = SlowOperations.allowSlowOperations("vcs.line-status-tracker-provider").use {
       provider.createTracker(project, virtualFile) ?: return null
     }
     tracker.mode = getTrackingMode()
-
-    tracker.addListener(MyTrackerStateListener(tracker))
 
     val data = TrackerData(tracker)
     val replacedData = trackers.put(document, data)
@@ -453,7 +429,7 @@ class LineStatusTrackerManager(
 
     registerTrackerInCLM(data)
     refreshTracker(tracker, provider)
-    project.messageBus.syncPublisher(TOPIC).onTrackerAdded(tracker)
+    eventDispatcher.multicaster.onTrackerAdded(tracker)
 
     if (clmFreezeCounter > 0) {
       tracker.freeze()
@@ -464,7 +440,7 @@ class LineStatusTrackerManager(
   }
 
   private fun getTrackerProvider(virtualFile: VirtualFile, document: Document): LocalLineStatusTrackerProvider? {
-    SlowOperations.startSection("vcs.line-status-tracker-provider").use {
+    SlowOperations.allowSlowOperations("vcs.line-status-tracker-provider").use {
       if (!canCreateTrackerFor(virtualFile, document)) {
         return null
       }
@@ -482,7 +458,7 @@ class LineStatusTrackerManager(
   private fun releaseTracker(document: Document, wasUnbound: Boolean = false) {
     val data = trackers.remove(document) ?: return
 
-    project.messageBus.syncPublisher(TOPIC).onTrackerRemoved(data.tracker)
+    eventDispatcher.multicaster.onTrackerRemoved(data.tracker)
     unregisterTrackerInCLM(data, wasUnbound)
     data.tracker.release()
 
@@ -676,7 +652,7 @@ class LineStatusTrackerManager(
       }
 
       if (tracker is LocalLineStatusTrackerImpl<*>) {
-        ClientId.withExplicitClientId(ClientId.localId) {
+        ClientId.withClientId(ClientId.localId) {
           tracker.setBaseRevision(text)
           log("Offered content", tracker.virtualFile)
         }
@@ -821,15 +797,14 @@ class LineStatusTrackerManager(
       if (documentsInDefaultChangeList.contains(document)) return
 
       val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
-      if (!virtualFile.isInLocalFileSystem) return
       if (getLineStatusTracker(document) != null) return
+
+      val provider = getTrackerProvider(virtualFile, document)
+      if (provider != ChangelistsLocalStatusTrackerProvider) return
 
       val changeList = ChangeListManager.getInstance(project).getChangeList(virtualFile)
       val inAnotherChangelist = changeList != null && !ActiveChangeListTracker.getInstance(project).isActiveChangeList(changeList)
       if (inAnotherChangelist) {
-        val provider = getTrackerProvider(virtualFile, document)
-        if (provider != ChangelistsLocalStatusTrackerProvider) return
-
         log("Tracker install from DocumentListener: ", virtualFile)
 
         val tracker = synchronized(LOCK) {
@@ -842,12 +817,6 @@ class LineStatusTrackerManager(
       else {
         documentsInDefaultChangeList.add(document)
       }
-    }
-  }
-
-  private inner class MyTrackerStateListener(val tracker: LocalLineStatusTracker<*>) : LineStatusTrackerListener {
-    override fun onBecomingValid() {
-      project.messageBus.syncPublisher(TOPIC).onTrackerBecomeValid(tracker)
     }
   }
 
@@ -1302,7 +1271,7 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
 
       isScheduled = true
       scope.launch {
-        withContext(ClientId.localId.asContextElement()) {
+        ClientId.withClientId(ClientId.localId) {
           coroutineToIndicator {
             handleRequests()
           }

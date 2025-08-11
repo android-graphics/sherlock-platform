@@ -39,9 +39,9 @@ private val pathElements = hashSetOf("interface-class", "implementation-class")
 private val predefinedTypes = hashSetOf("java.lang.Object")
 private val ignoreModules = hashSetOf("intellij.java.testFramework", "intellij.platform.uast.testFramework")
 
-class ModuleStructureValidator(private val context: BuildContext, private val allProductModules: Collection<ModuleItem>) {
+class ModuleStructureValidator(private val context: BuildContext, modules: Collection<ModuleItem>) {
   // filter out jars with relative paths in name
-  private val modules: Collection<ModuleItem> = allProductModules.filter {
+  private val modules: Collection<ModuleItem> = modules.filter {
     it.reason != ModuleIncludeReasons.PRODUCT_MODULES && (!it.relativeOutputFile.contains("\\") || !it.relativeOutputFile.contains('/'))
   }
 
@@ -120,9 +120,6 @@ class ModuleStructureValidator(private val context: BuildContext, private val al
         if (role != null && role.scope.name == "RUNTIME") {
           continue
         }
-        if (role != null && role.scope.name == "PROVIDED") { // https://jetbrains.slack.com/archives/C0XLQPQGP/p1733558147426029?thread_ts=1733392446.551349&cid=C0XLQPQGP
-          continue
-        }
 
         // skip localization modules
         val dependantModule = dependency.module!!
@@ -130,7 +127,7 @@ class ModuleStructureValidator(private val context: BuildContext, private val al
           continue
         }
 
-        if (allProductModules.none { it.moduleName == dependantModule.name }) {
+        if (modules.none { it.moduleName == dependantModule.name }) {
           errors.add(AssertionError("Missing dependency found: ${module.name} -> ${dependantModule.name} [${role.scope.name}]", null))
           continue
         }

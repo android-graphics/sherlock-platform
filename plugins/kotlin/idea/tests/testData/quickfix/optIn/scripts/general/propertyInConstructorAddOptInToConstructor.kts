@@ -1,5 +1,4 @@
 // "Opt in for 'PropertyTypeMarker' on constructor" "true"
-// PRIORITY: HIGH
 // RUNTIME_WITH_SCRIPT_RUNTIME
 // ACTION: Add full qualifier
 // ACTION: Convert to secondary constructor
@@ -22,4 +21,4 @@ class PropertyTypeMarked
 
 class PropertyTypeContainer(val subject: Property<caret>TypeMarked)
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityUseOptInAnnotationFix

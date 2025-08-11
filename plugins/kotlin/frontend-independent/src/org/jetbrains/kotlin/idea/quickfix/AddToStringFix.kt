@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.intention.PriorityAction
+import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
@@ -17,7 +17,8 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 class AddToStringFix(
     element: KtExpression,
     elementContext: ElementContext,
-) : KotlinPsiUpdateModCommandAction.ElementBased<KtExpression, AddToStringFix.ElementContext>(element, elementContext) {
+) : KotlinPsiUpdateModCommandAction.ElementBased<KtExpression, AddToStringFix.ElementContext>(element, elementContext),
+    LowPriorityAction {
 
     data class ElementContext(
         val useSafeCallOperator: Boolean,
@@ -40,7 +41,7 @@ class AddToStringFix(
             if (useSafeCallOperator) "fix.add.tostring.call.text.safe"
             else "fix.add.tostring.call.text",
         )
-        return Presentation.of(actionName).withPriority(PriorityAction.Priority.LOW)
+        return Presentation.of(actionName)
     }
 
     override fun invoke(

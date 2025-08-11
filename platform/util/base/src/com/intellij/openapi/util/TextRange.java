@@ -292,11 +292,4 @@ public class TextRange implements Segment, Serializable {
   public static boolean isProperRange(int startOffset, int endOffset) {
     return startOffset <= endOffset && startOffset >= 0;
   }
-
-  /**
-   * @return true if {@link ProperTextRange#create} will work on this range
-   */
-  public boolean isProperRange() {
-    return isProperRange(getStartOffset(), getEndOffset());
-  }
 }

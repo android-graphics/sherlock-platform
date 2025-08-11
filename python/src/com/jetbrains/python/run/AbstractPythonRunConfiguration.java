@@ -27,7 +27,6 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
-import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -183,7 +182,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
             throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_sdk"));
           }
         }
-        else if (!PySdkExtKt.getSdkSeemsValid(mySdk)) {
+        else if (getSdkHome() == null || !PythonSdkType.getInstance().isValidSdkHome(getSdkHome())) {
           throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_valid_sdk"));
         }
       }

@@ -14,8 +14,6 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.Locale
-import kotlin.collections.ArrayList
 
 class HelpIndexer
 @Throws(IOException::class)
@@ -68,7 +66,7 @@ internal constructor(indexDir: String) {
       }
     }
     else {
-      val filename = file.name.lowercase(Locale.getDefault())
+      val filename = file.name.toLowerCase()
       if (filename.endsWith(".htm") || filename.endsWith(".html")) {
         queue.add(file)
       }

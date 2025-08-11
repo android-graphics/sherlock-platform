@@ -13,7 +13,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 @Presentation(typeName = "Attribute")
 public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl implements DomAttributeChildDescription<Void> {
@@ -75,7 +74,6 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
     return (GenericAttributeValue)handler.getAttributeChild(this).getProxy();
   }
 
-  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -83,10 +81,11 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
 
     final AttributeChildDescriptionImpl that = (AttributeChildDescriptionImpl)o;
 
-    return Objects.equals(myGetterMethod, that.myGetterMethod);
+    if (myGetterMethod != null ? !myGetterMethod.equals(that.myGetterMethod) : that.myGetterMethod != null) return false;
+
+    return true;
   }
 
-  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 29 * result + (myGetterMethod != null ? myGetterMethod.hashCode() : 0);

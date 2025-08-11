@@ -29,8 +29,9 @@ public final class PyYieldFromIntention extends PsiUpdateModCommandAction<PyForS
     super(PyForStatement.class);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.yield.from");
   }
 
@@ -67,7 +68,8 @@ public final class PyYieldFromIntention extends PsiUpdateModCommandAction<PyForS
       }
   }
 
-  private static @Nullable PyTargetExpression findSingleForLoopTarget(@NotNull PyForStatement forLoop) {
+  @Nullable
+  private static PyTargetExpression findSingleForLoopTarget(@NotNull PyForStatement forLoop) {
     final PyForPart forPart = forLoop.getForPart();
     final PyExpression forTarget = forPart.getTarget();
     if (forTarget instanceof PyTargetExpression) {
@@ -76,7 +78,8 @@ public final class PyYieldFromIntention extends PsiUpdateModCommandAction<PyForS
     return null;
   }
 
-  private static @Nullable PyReferenceExpression findSingleYieldValue(@NotNull PyForStatement forLoop) {
+  @Nullable
+  private static PyReferenceExpression findSingleYieldValue(@NotNull PyForStatement forLoop) {
     final PyForPart forPart = forLoop.getForPart();
     if (forLoop.getElsePart() == null) {
       final PyStatement[] statements = forPart.getStatementList().getStatements();

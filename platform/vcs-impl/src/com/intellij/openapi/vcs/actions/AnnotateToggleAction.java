@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.ide.DataManager;
@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -19,14 +18,16 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.EditorNotifications;
+import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.LightColors;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,8 +38,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -65,11 +66,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     super.update(e);
     Provider provider = getProvider(e);
     Presentation presentation = e.getPresentation();
-    presentation.setEnabledAndVisible(provider != null);
-    if (ActionPlaces.ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION.equals(e.getPlace())) {
-      // Actions in the VCS pop-up should always be visible in order not to break numeric key-bindings
-      presentation.setVisible(true);
-    }
+    presentation.setEnabled(provider != null);
     if (provider != null) {
       presentation.setText(provider.getActionName(e));
     }
@@ -82,10 +79,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     Set<String> names = ContainerUtil.map2Set(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss(), vcs -> {
       AnnotationProvider provider = vcs.getAnnotationProvider();
       if (provider != null) {
-        String customActionName = provider.getCustomActionName();
-        if (customActionName != null) return customActionName;
-        String actionName = provider.getActionName();
-        if (!actionName.isEmpty()) return actionName;
+        return provider.getActionName();
       }
       return defaultName;
     });
@@ -103,9 +97,9 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
   public void setSelected(@NotNull AnActionEvent e, boolean selected) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) {
-      AnnotationWarningUserData warningUserData = editor.getUserData(AnnotateDataKeys.WARNING_DATA);
-      if (warningUserData != null && !warningUserData.getWarning().getShowAnnotation()) {
-        warningUserData.getForceAnnotate().run();
+      MyEditorNotificationPanel notificationPanel = ObjectUtils.tryCast(editor.getHeaderComponent(), MyEditorNotificationPanel.class);
+      if (notificationPanel != null) {
+        notificationPanel.showAnnotations();
         return;
       }
     }
@@ -116,43 +110,40 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     }
   }
 
-  public static void doAnnotate(final @NotNull Editor editor,
-                                final @NotNull Project project,
-                                final @NotNull FileAnnotation fileAnnotation,
-                                final @NotNull AbstractVcs vcs) {
+  public static void doAnnotate(@NotNull final Editor editor,
+                                @NotNull final Project project,
+                                @NotNull final FileAnnotation fileAnnotation,
+                                @NotNull final AbstractVcs vcs) {
     if (project.isDisposed() || editor.isDisposed()) return;
     UpToDateLineNumberProvider upToDateLineNumberProvider = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
     doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumberProvider);
   }
 
-  public static void doAnnotate(final @NotNull Editor editor,
-                                final @NotNull Project project,
-                                final @NotNull FileAnnotation fileAnnotation,
-                                final @NotNull AbstractVcs vcs,
-                                final @NotNull UpToDateLineNumberProvider upToDateLineNumbers) {
-    doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, project.getService(AnnotateWarningsService.class));
+  public static void doAnnotate(@NotNull final Editor editor,
+                                @NotNull final Project project,
+                                @NotNull final FileAnnotation fileAnnotation,
+                                @NotNull final AbstractVcs vcs,
+                                @NotNull final UpToDateLineNumberProvider upToDateLineNumbers) {
+    doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, true);
   }
 
-  private static void doAnnotate(final @NotNull Editor editor,
-                                 final @NotNull Project project,
-                                 final @NotNull FileAnnotation fileAnnotation,
-                                 final @NotNull AbstractVcs vcs,
-                                 final @NotNull UpToDateLineNumberProvider upToDateLineNumbers,
-                                 final @Nullable AnnotateWarningsService warningsService) {
+  private static void doAnnotate(@NotNull final Editor editor,
+                                 @NotNull final Project project,
+                                 @NotNull final FileAnnotation fileAnnotation,
+                                 @NotNull final AbstractVcs vcs,
+                                 @NotNull final UpToDateLineNumberProvider upToDateLineNumbers,
+                                 final boolean warnAboutSuspiciousAnnotations) {
     ThreadingAssertions.assertEventDispatchThread();
     if (project.isDisposed() || editor.isDisposed()) return;
 
-    AnnotationWarning warning = warningsService != null ? warningsService.getWarning(fileAnnotation, upToDateLineNumbers) : null;
-    if (warning == null) {
-      resetWarningData(editor);
-      updateEditorNotifications(editor, project);
-    }
-    else {
-      editor.putUserData(AnnotateDataKeys.WARNING_DATA, new AnnotationWarningUserData(warning, () -> {
-        doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, null);
-      }));
-      updateEditorNotifications(editor, project);
-      if (!warning.getShowAnnotation()) {
+    if (warnAboutSuspiciousAnnotations) {
+      int expectedLines = Math.max(upToDateLineNumbers.getLineCount(), 1);
+      int actualLines = Math.max(fileAnnotation.getLineCount(), 1);
+      if (Math.abs(expectedLines - actualLines) > 1) { // 1 - for different conventions about files ending with line separator
+        LOG.warn("Unexpected annotation lines number. Expected: " + expectedLines + ", actual: " + actualLines);
+        editor.setHeaderComponent(new MyEditorNotificationPanel(editor, vcs, () -> {
+          doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, false);
+        }));
         return;
       }
     }
@@ -167,7 +158,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
       if (hasVcsAnnotations(editor)) {
         if (newFileAnnotation != null) {
           assert Comparing.equal(fileAnnotation.getFile(), newFileAnnotation.getFile());
-          doAnnotate(editor, project, newFileAnnotation, vcs, upToDateLineNumbers, null);
+          doAnnotate(editor, project, newFileAnnotation, vcs, upToDateLineNumbers, false);
         }
         else {
           DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
@@ -196,8 +187,12 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
 
     VcsAnnotationLocalChangesListener changesListener = ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener();
     changesListener.registerAnnotation(fileAnnotation);
-    Disposer.register(disposable, () -> changesListener.unregisterAnnotation(fileAnnotation));
-    Disposer.register(disposable, () -> resetWarningData(editor));
+    Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        changesListener.unregisterAnnotation(fileAnnotation);
+      }
+    });
 
     closeVcsAnnotations(editor);
 
@@ -270,14 +265,8 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     InlineDiffFromAnnotation.showDiffOnHover(editor, fileAnnotation, presentation, disposable);
   }
 
-  private static void updateEditorNotifications(@NotNull Editor editor, @NotNull Project project) {
-    VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
-    if (file != null) {
-      EditorNotifications.getInstance(project).updateNotifications(file);
-    }
-  }
-
-  static @NotNull List<ActiveAnnotationGutter> getVcsAnnotations(@NotNull Editor editor) {
+  @NotNull
+  static List<ActiveAnnotationGutter> getVcsAnnotations(@NotNull Editor editor) {
     List<TextAnnotationGutterProvider> annotations = editor.getGutter().getTextAnnotations();
     return ContainerUtil.filterIsInstance(annotations, ActiveAnnotationGutter.class);
   }
@@ -291,11 +280,8 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     editor.getGutter().closeTextAnnotations(vcsAnnotations);
   }
 
-  private static void resetWarningData(@NotNull Editor editor) {
-    editor.putUserData(AnnotateDataKeys.WARNING_DATA, null);
-  }
-
-  static @Nullable TextAnnotationPresentation getAnnotationPresentation(@NotNull Editor editor) {
+  @Nullable
+  static TextAnnotationPresentation getAnnotationPresentation(@NotNull Editor editor) {
     List<ActiveAnnotationGutter> annotations = getVcsAnnotations(editor);
     for (TextAnnotationGutterProvider annotation : annotations) {
       if (annotation instanceof AnnotationGutterLineConvertorProxy) {
@@ -308,7 +294,8 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     return null;
   }
 
-  static @Nullable FileAnnotation getFileAnnotation(@NotNull Editor editor) {
+  @Nullable
+  static FileAnnotation getFileAnnotation(@NotNull Editor editor) {
     TextAnnotationPresentation presentation = getAnnotationPresentation(editor);
     if (presentation instanceof AnnotationPresentation) return ((AnnotationPresentation)presentation).getFileAnnotation();
     return null;
@@ -324,7 +311,8 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     }
   }
 
-  private static @Nullable Map<VcsRevisionNumber, Integer> computeLineNumbers(@NotNull FileAnnotation fileAnnotation) {
+  @Nullable
+  private static Map<VcsRevisionNumber, Integer> computeLineNumbers(@NotNull FileAnnotation fileAnnotation) {
     final Map<VcsRevisionNumber, Integer> numbers = new HashMap<>();
     final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
     if (fileRevisionList != null) {
@@ -339,7 +327,8 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     return numbers.size() < 2 ? null : numbers;
   }
 
-  private static @NotNull Couple<Map<VcsRevisionNumber, Color>> computeBgColors(@NotNull FileAnnotation fileAnnotation, @NotNull Editor editor) {
+  @NotNull
+  private static Couple<Map<VcsRevisionNumber, Color>> computeBgColors(@NotNull FileAnnotation fileAnnotation, @NotNull Editor editor) {
     Map<VcsRevisionNumber, Color> commitOrderColors = new HashMap<>();
     Map<VcsRevisionNumber, Color> commitAuthorColors = new HashMap<>();
 
@@ -385,7 +374,8 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
                      commitAuthorColors.size() > 1 ? commitAuthorColors : null);
   }
 
-  private static @Nullable Provider getProvider(AnActionEvent e) {
+  @Nullable
+  private static Provider getProvider(AnActionEvent e) {
     return EP_NAME.findFirstSafe(provider -> provider.isEnabled(e));
   }
 
@@ -407,6 +397,33 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
 
     default @Nls(capitalization = Nls.Capitalization.Title) String getActionName(@NotNull AnActionEvent e) {
       return getVcsActionName(e.getProject());
+    }
+  }
+
+  private static class MyEditorNotificationPanel extends EditorNotificationPanel {
+    private final Editor myEditor;
+    private final Runnable myShowAnnotations;
+
+    MyEditorNotificationPanel(@NotNull Editor editor, @NotNull AbstractVcs vcs, @NotNull Runnable doShowAnnotations) {
+      super(LightColors.RED, Status.Error);
+      myEditor = editor;
+      myShowAnnotations = doShowAnnotations;
+
+      setText(VcsBundle.message("annotation.wrong.line.number.notification.text", vcs.getDisplayName()));
+
+      createActionLabel(VcsBundle.message("link.label.display.anyway"), () -> showAnnotations());
+      createActionLabel(VcsBundle.message("link.label.hide"), () -> hideNotification()).setToolTipText(
+        VcsBundle.message("hide.this.notification"));
+    }
+
+    public void showAnnotations() {
+      hideNotification();
+      myShowAnnotations.run();
+    }
+
+    private void hideNotification() {
+      setVisible(false);
+      if (myEditor.getHeaderComponent() == this) myEditor.setHeaderComponent(null);
     }
   }
 }

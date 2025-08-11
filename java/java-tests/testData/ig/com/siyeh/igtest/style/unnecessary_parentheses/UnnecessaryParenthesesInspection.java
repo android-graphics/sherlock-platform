@@ -101,10 +101,10 @@ public class UnnecessaryParenthesesInspection
     }
 
     class ParenthesesAroundLambda {
-      <error descr="Static declarations in inner classes are not supported at language level '15'">interface</error> I {
+      <error descr="Static declarations in inner classes are not supported at language level '15'">interface I</error> {
         void foo(int x, int y);
       }
-      <error descr="Static declarations in inner classes are not supported at language level '15'">interface</error> J {
+      <error descr="Static declarations in inner classes are not supported at language level '15'">interface J</error> {
         void foo(int x);
       }
 
@@ -147,7 +147,7 @@ public class UnnecessaryParenthesesInspection
   }
 
   public java.util.function.IntFunction context() {
-    return <error descr="Variable expected">(a -> a)</error>=1;
+    return <error descr="Incompatible types. Found: 'int', required: '<lambda expression>'">(a -> a)=1</error>;
   }
 
   void conditionals(boolean prevConnect, boolean nextConnect) {

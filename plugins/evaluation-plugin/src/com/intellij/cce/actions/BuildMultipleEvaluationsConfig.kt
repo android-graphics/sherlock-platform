@@ -13,15 +13,12 @@ fun <T : EvaluationStrategy> List<EvaluationWorkspace>.buildMultipleEvaluationsC
 ): Config {
   val existingConfig = this.first().readConfig(strategySerializer)
   val projectPath = createTempProject()
-  return Config.build {
+  return Config.build(projectPath, existingConfig.language) {
     for (workspace in this@buildMultipleEvaluationsConfig) {
       val config = workspace.readConfig(strategySerializer)
       mergeFilters(config.reports.sessionsFilters)
       mergeComparisonFilters(config.reports.comparisonFilters)
     }
-    actions = existingConfig.actions?.copy(
-      projectPath = projectPath
-    )
     strategy = existingConfig.strategy
     outputDir = existingConfig.outputDir
     title?.let { evaluationTitle = title }

@@ -39,7 +39,6 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -137,10 +136,8 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   public void reset() {
     if (myServiceDirectoryPathField != null) {
       BuildLayoutParameters buildLayoutParameters = GradleInstallationManager.defaultBuildLayoutParameters(myInitialSettings.getProject());
-      Path gradleUserHomeDir = maybeGetTargetValue(buildLayoutParameters.getGradleUserHomePath()); //NON-NLS
-      if (gradleUserHomeDir != null) {
-        ((JBTextField)myServiceDirectoryPathField.getTextField()).getEmptyText().setText(gradleUserHomeDir.toString());
-      }
+      String gradleUserHomeDir = maybeGetTargetValue(buildLayoutParameters.getGradleUserHome()); //NON-NLS
+      ((JBTextField)myServiceDirectoryPathField.getTextField()).getEmptyText().setText(gradleUserHomeDir);
       myServiceDirectoryPathField.setLocalPath(myInitialSettings.getServiceDirectoryPath());
     }
 
@@ -226,8 +223,9 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     myDefaultProjectSettingsControl.disposeUiResources();
   }
 
+  @NotNull
   @Override
-  public @NotNull GradleSettings getInitialSettings() {
+  public GradleSettings getInitialSettings() {
     return myInitialSettings;
   }
 
@@ -337,7 +335,8 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     return label;
   }
 
-  private static @Nullable String trimIfPossible(@Nullable String s) {
+  @Nullable
+  private static String trimIfPossible(@Nullable String s) {
     return StringUtil.nullize(StringUtil.trim(s));
   }
 
@@ -349,7 +348,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     }
     if (gradleUserHomeDir == null) {
       BuildLayoutParameters buildLayoutParameters = GradleInstallationManager.defaultBuildLayoutParameters(settings.getProject());
-      Path gradleUserHome = GradleTargetUtil.maybeGetLocalValue(buildLayoutParameters.getGradleUserHomePath());
+      String gradleUserHome = GradleTargetUtil.maybeGetLocalValue(buildLayoutParameters.getGradleUserHome());
       if (gradleUserHome == null) {
         Messages.showErrorDialog(settings.getProject(),
                                  GradleBundle.message("gradle.settings.text.vm.options.migration.error.text",
@@ -358,7 +357,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
         return false;
       }
       else {
-        gradleUserHomeDir = gradleUserHome.toFile();
+        gradleUserHomeDir = new File(gradleUserHome);
       }
     }
 
@@ -400,7 +399,8 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   private static final Pattern VM_OPTIONS_REGEX = Pattern.compile("^(\\s*\"?org\\.gradle\\.jvmargs\"?\\s*[=:]).*?(?<!\\\\)($)",
                                                                   Pattern.MULTILINE | Pattern.DOTALL);
 
-  public static @NotNull String updateVMOptions(@NotNull String originalText, @NotNull String vmOptions) {
+  @NotNull
+  public static String updateVMOptions(@NotNull String originalText, @NotNull String vmOptions) {
     Matcher matcher = VM_OPTIONS_REGEX.matcher(originalText);
 
     StringBuilder result = new StringBuilder(originalText.length() + vmOptions.length());

@@ -46,17 +46,20 @@ class CreatePatternFix implements IntentionAction, LocalQuickFix {
   }
 
   @Override
-  public @NotNull String getText() {
+  @NotNull
+  public String getText() {
     return RelaxngBundle.message("relaxng.quickfix.create-pattern.name", myReference.getCanonicalText());
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return RelaxngBundle.message("relaxng.quickfix.create-pattern.family");
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return getText();
   }
 

@@ -69,7 +69,7 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
     assertNotNull(stringValue);
 
     PsiElement referenceElement = marks.get("<the_ref>").getParent(); // ident -> expr
-    final PyDocStringOwner docOwner = (PyDocStringOwner)referenceElement.getReference().resolve();
+    final PyDocStringOwner docOwner = (PyDocStringOwner)((PyReferenceExpression)referenceElement).getReference().resolve();
     assertNotNull(docOwner);
     assertEquals(docElement, docOwner.getDocStringExpression());
 
@@ -91,7 +91,7 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
   private void checkHover() {
     Map<String, PsiElement> marks = loadTest();
     final PsiElement originalElement = marks.get("<the_ref>");
-    final PsiElement docOwner = originalElement.getParent().getReference().resolve();
+    final PsiElement docOwner = ((PyReferenceExpression)originalElement.getParent()).getReference().resolve();
     checkByHTML(myProvider.getQuickNavigateInfo(docOwner, originalElement));
   }
 
@@ -165,11 +165,18 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
   }
 
   public void testPropNewSetter() {
-    checkHTMLOnly();
+    Map<String, PsiElement> marks = loadTest();
+    PsiElement referenceElement = marks.get("<the_ref>");
+    final PyDocStringOwner docStringOwner = (PyDocStringOwner)referenceElement.getParent().getReference().resolve();
+    checkByHTML(myProvider.generateDoc(docStringOwner, referenceElement));
   }
 
   public void testPropNewDeleter() {
-    checkHTMLOnly();
+    Map<String, PsiElement> marks = loadTest();
+    PsiElement referenceElement = marks.get("<the_ref>");
+    final PyDocStringOwner docStringOwner =
+      (PyDocStringOwner)((PyReferenceExpression)(referenceElement.getParent())).getReference().resolve();
+    checkByHTML(myProvider.generateDoc(docStringOwner, referenceElement));
   }
 
   public void testPropOldGetter() {
@@ -178,7 +185,10 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
 
 
   public void testPropOldSetter() {
-    checkHTMLOnly();
+    Map<String, PsiElement> marks = loadTest();
+    PsiElement referenceElement = marks.get("<the_ref>");
+    final PyDocStringOwner docStringOwner = (PyDocStringOwner)referenceElement.getParent().getReference().resolve();
+    checkByHTML(myProvider.generateDoc(docStringOwner, referenceElement));
   }
 
   public void testPropOldDeleter() {
@@ -512,7 +522,11 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
-  public void testParamAndReturnValueDescriptionNoTagsRest() {
+  public void testParamDescriptionEpytext() {
+    checkHTMLOnly();
+  }
+
+  public void testParamAndReturnValueDescriptionNoTagsEpytext() {
     checkHTMLOnly();
   }
 
@@ -525,6 +539,11 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
   }
 
   public void testKeywordArgsDescriptionRest() {
+    checkHTMLOnly();
+  }
+
+  // PY-11425
+  public void testKeywordArgsDescriptionEpydoc() {
     checkHTMLOnly();
   }
 
@@ -713,6 +732,11 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
   }
 
   // PY-33341
+  public void testClassAndInstanceAttributesInOneSectionEpydoc() {
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> checkHTMLOnly());
+  }
+
+  // PY-33341
   public void testAttributesOrderGoogle() {
     checkHTMLOnly();
   }
@@ -845,26 +869,6 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
   // PY-64074
   public void testTypeAliasStatement() {
     checkHTMLOnly();
-  }
-
-  // PY-23067
-  public void testFunctoolsWraps() {
-    checkHTMLOnly();
-  }
-
-  public void testExplicitCallableParameterListRendering() {
-    checkHTMLOnly();
-  }
-
-  public void testInferredCallableParameterListRendering() {
-    checkHTMLOnly();
-  }
-
-  // PY-38169
-  public void testUnderscoreCollectionsAbcSymbolRealOrigin() {
-    runWithAdditionalFileInLibDir("_collections_abc.py", "class Mapping: ...", ignored -> {
-      checkHTMLOnly();
-    });
   }
 
   @Override

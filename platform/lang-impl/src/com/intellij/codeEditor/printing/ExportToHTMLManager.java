@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeEditor.printing;
 
 import com.intellij.CommonBundle;
@@ -255,10 +255,13 @@ final class ExportToHTMLManager {
   }
 
   private final class ExportRunnable implements Runnable {
-    private final @NotNull ExportToHTMLSettings myExportToHTMLSettings;
+    @NotNull
+    private final ExportToHTMLSettings myExportToHTMLSettings;
     private final PsiDirectory myPsiDirectory;
-    private final @NotNull Path outDir;
-    private final @NotNull Project myProject;
+    @NotNull
+    private final Path outDir;
+    @NotNull
+    private final Project myProject;
 
     ExportRunnable(@NotNull ExportToHTMLSettings exportToHTMLSettings,
                    PsiDirectory psiDirectory,

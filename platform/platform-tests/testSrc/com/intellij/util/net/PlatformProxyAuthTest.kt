@@ -7,7 +7,6 @@ import com.intellij.testFramework.junit5.TestApplication
 import io.ktor.server.cio.HttpServer
 import io.ktor.server.cio.HttpServerSettings
 import io.ktor.server.cio.backend.httpServer
-import io.ktor.utils.io.writeFully
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -15,6 +14,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.net.Authenticator
 import kotlin.test.assertEquals
+
 
 @TestApplication
 class PlatformProxyAuthTest {

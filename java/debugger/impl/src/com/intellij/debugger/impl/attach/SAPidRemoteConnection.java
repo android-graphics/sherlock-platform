@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -40,7 +40,8 @@ public class SAPidRemoteConnection extends PidRemoteConnection {
     }
   }
 
-  private static synchronized @NotNull ClassLoader getBaseSAJDIClassLoader(Path fallback) {
+  @NotNull
+  private static synchronized ClassLoader getBaseSAJDIClassLoader(Path fallback) {
     if (BASE_SA_JDI_CLASS_LOADER == null) {
       Path saJdiJar = Paths.get(SystemProperties.getJavaHome(), "lib/sa-jdi.jar");
       if (!Files.exists(saJdiJar)) {
@@ -82,8 +83,9 @@ public class SAPidRemoteConnection extends PidRemoteConnection {
       return c;
     }
 
+    @Nullable
     @Override
-    public @Nullable URL getResource(String name) {
+    public URL getResource(String name) {
       if ("sa.properties".equals(name)) {
         URL resource = findResource(name);
         if (resource != null) {

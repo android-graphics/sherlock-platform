@@ -30,7 +30,7 @@ internal class ProjectIndexingHistoryFusReporterListener : ProjectIndexingActivi
       times.dumbModeWithoutPausesDuration.toMillis(),
       history.scanningStatistics.sumOf { statistics -> statistics.numberOfScannedFiles },
       history.scanningStatistics.sumOf { statistics -> statistics.numberOfFilesFullyIndexedByInfrastructureExtensions },
-      times.isCancelled
+      times.wasInterrupted
     )
   }
 
@@ -58,7 +58,7 @@ internal class ProjectIndexingHistoryFusReporterListener : ProjectIndexingActivi
       history.providerStatistics.sumOf { statistics -> statistics.totalNumberOfIndexedFiles },
       history.providerStatistics.sumOf { statistics -> statistics.totalNumberOfFilesFullyIndexedByExtensions },
       // JsonFileProviderIndexStatistics#totalNumberOfNotEvaluatedFiles is not yet reported
-      times.isCancelled
+      times.wasInterrupted
     )
   }
 }

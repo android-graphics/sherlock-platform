@@ -16,7 +16,6 @@ import com.intellij.notification.*
 import com.intellij.notification.impl.NotificationIdsHolder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -45,7 +44,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import javax.swing.event.HyperlinkEvent
 
@@ -75,27 +73,22 @@ private class SetupJavaProjectFromSourcesActivity : ProjectActivity {
 
     // todo get current project structure, and later setup from sources only if it wasn't manually changed by the user
 
-    detectJavaProjectStructure(project, projectDir)
-  }
-}
+    val title = JavaUiBundle.message("task.searching.for.project.sources")
 
-@ApiStatus.Internal
-suspend fun detectJavaProjectStructure(project: Project, projectDir: VirtualFile, setupFromSources: Boolean = true) {
-  val title = JavaUiBundle.message("task.searching.for.project.sources")
-
-  withBackgroundProgress(project, title) {
-    val importers = searchImporters(projectDir)
-    if (!importers.isEmpty) {
-      withContext(Dispatchers.EDT) {
-        setCompilerOutputPath(project, "${projectDir.path}/out")
+    withBackgroundProgress(project, title) {
+      val importers = searchImporters(projectDir)
+      if (!importers.isEmpty) {
+        withContext(Dispatchers.EDT) {
+          setCompilerOutputPath(project, "${projectDir.path}/out")
+        }
+                
+        blockingContext {
+          showNotificationToImport(project, projectDir, importers)
+        }
       }
-
-      blockingContext {
-        showNotificationToImport(project, projectDir, importers)
+      else {
+        setupFromSources(project = project, projectDir = projectDir)
       }
-    }
-    else if (setupFromSources){
-      setupFromSources(project = project, projectDir = projectDir)
     }
   }
 }
@@ -208,12 +201,10 @@ private suspend fun setupFromSources(project: Project, projectDir: VirtualFile) 
   }
 
   withContext(Dispatchers.EDT) {
-    writeIntentReadAction {
-      builder.commit(project)
+    builder.commit(project)
 
-      val compileOutput = if (projectPath.endsWith('/')) "${projectPath}out" else "$projectPath/out"
-      setCompilerOutputPath(project, compileOutput)
-    }
+    val compileOutput = if (projectPath.endsWith('/')) "${projectPath}out" else "$projectPath/out"
+    setCompilerOutputPath(project, compileOutput)
   }
 
   val modules = ModuleManager.getInstance(project).modules

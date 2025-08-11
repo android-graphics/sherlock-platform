@@ -2,11 +2,9 @@
 package com.intellij.warmup.util
 
 import com.intellij.platform.util.ArgsParser
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 
-@ApiStatus.Internal
 interface OpenProjectArgs : HeadlessConfigurableArgs {
   val projectDir: Path
 
@@ -16,7 +14,6 @@ interface OpenProjectArgs : HeadlessConfigurableArgs {
   val disabledConfigurators: Set<String>
 }
 
-@ApiStatus.Internal
 open class OpenProjectArgsImpl(parser: ArgsParser) : HeadlessConfigurableArgsImpl(parser), OpenProjectArgs {
   override val projectDir by parser.arg("project-dir", "project home directory").file()
 

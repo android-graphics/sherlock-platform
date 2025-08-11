@@ -1,4 +1,0 @@
-androidx/compose/**
-kotlin/jvm/internal/DefaultConstructorMarker
-kotlin/ranges/ClosedFloatingPointRange
-org/w3c/dom/Element

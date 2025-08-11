@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.editorActions.wordSelection;
 
@@ -39,7 +39,8 @@ final class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBas
     return new TextRange(paragraphStart >= 0 ? paragraphStart + 2 : 0, paragraphEnd);
   }
 
-  private static @Nullable TextRange findCustomRange(String text, int start, int end, char startChar, char endChar) {
+  @Nullable
+  private static TextRange findCustomRange(String text, int start, int end, char startChar, char endChar) {
     int prev = text.lastIndexOf(startChar, start);
     int next = text.indexOf(endChar, end);
     if (prev < 0 || next < 0) {
@@ -53,7 +54,8 @@ final class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBas
     return new TextRange(prev, next + 1);
   }
 
-  private static @Nullable TextRange findSentenceRange(String editorText, int start, int end) {
+  @Nullable
+  private static TextRange findSentenceRange(String editorText, int start, int end) {
     int sentenceStart = start;
 
     while (sentenceStart > 0) {
@@ -131,7 +133,8 @@ final class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBas
                                     ch -> Character.isJavaIdentifierPart(ch) || ch == '\'' || ch == '-');
   }
 
-  private static @Nullable TextRange expandSelection(PsiElement e, CharSequence editorText, int selStart, int selEnd) {
+  @Nullable
+  private static TextRange expandSelection(PsiElement e, CharSequence editorText, int selStart, int selEnd) {
     TextRange range = e.getTextRange();
     int shift = range.getStartOffset();
     if (selStart <= shift || selEnd >= range.getEndOffset()) {

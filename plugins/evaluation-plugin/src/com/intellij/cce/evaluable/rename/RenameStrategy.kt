@@ -6,7 +6,6 @@ import com.intellij.cce.filter.EvaluationFilter
 
 
 data class RenameStrategy(
-  val collectContextOnly: Boolean,
   val placeholderName: String,
   val suggestionsProvider: String = DEFAULT_PROVIDER,
   override val filters: Map<String, EvaluationFilter>

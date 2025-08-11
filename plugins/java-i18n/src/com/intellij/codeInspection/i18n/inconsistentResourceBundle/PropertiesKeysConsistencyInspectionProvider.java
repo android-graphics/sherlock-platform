@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n.inconsistentResourceBundle;
 
 import com.intellij.codeInspection.*;
@@ -18,13 +18,15 @@ import java.util.Set;
  * @author Dmitry Batkovich
  */
 public final class PropertiesKeysConsistencyInspectionProvider implements InconsistentResourceBundleInspectionProvider {
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return "REPORT_INCONSISTENT_PROPERTIES";
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPresentableName() {
+  public String getPresentableName() {
     return JavaI18nBundle.message("inconsistent.bundle.report.inconsistent.properties");
   }
 

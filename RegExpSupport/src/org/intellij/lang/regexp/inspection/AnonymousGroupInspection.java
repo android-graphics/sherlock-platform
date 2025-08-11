@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -19,8 +19,9 @@ import java.util.Collection;
  */
 public class AnonymousGroupInspection extends LocalInspectionTool {
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new AnonymousGroupVisitor(holder);
   }
 

@@ -229,6 +229,22 @@ public class PySmartEnterTest extends PyTestCase {
     }
   }
 
+  public void testDocEpytext() {
+    CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
+    boolean oldStubOnEnter = codeInsightSettings.JAVADOC_STUB_ON_ENTER;
+    codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
+    documentationSettings.setFormat(DocStringFormat.EPYTEXT);
+    try {
+      doTest();
+    }
+    finally {
+      documentationSettings.setFormat(DocStringFormat.PLAIN);
+      codeInsightSettings.JAVADOC_STUB_ON_ENTER = oldStubOnEnter;
+
+    }
+  }
+
   public void testDocTypeRType() {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     boolean oldStubOnEnter = codeInsightSettings.JAVADOC_STUB_ON_ENTER;
@@ -237,7 +253,7 @@ public class PySmartEnterTest extends PyTestCase {
     boolean oldInsertType = pyCodeInsightSettings.INSERT_TYPE_DOCSTUB;
     pyCodeInsightSettings.INSERT_TYPE_DOCSTUB = true;
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    documentationSettings.setFormat(DocStringFormat.REST);
+    documentationSettings.setFormat(DocStringFormat.EPYTEXT);
     try {
       doTest();
     }

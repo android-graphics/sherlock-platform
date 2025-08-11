@@ -12,21 +12,27 @@ sealed interface GradleCommandLineOption : GradleCommandLineNode {
 
   data class ShortNotation(override val name: String, val value: String) : GradleCommandLineOption {
 
-    override val tokens: List<String> = listOf("$name$value")
+    override val text: String = "$name$value"
+
+    override val tokens: List<String> = listOf(text)
 
     override val values: List<String> = listOf(value)
   }
 
   data class LongNotation(override val name: String, val value: String) : GradleCommandLineOption {
 
-    override val tokens: List<String> = listOf("$name=$value")
+    override val text: String = "$name=$value"
+
+    override val tokens: List<String> = listOf(text)
 
     override val values: List<String> = listOf(value)
   }
 
   data class PropertyNotation(override val name: String, val propertyName: String, val propertyValue: String) : GradleCommandLineOption {
 
-    override val tokens: List<String> = listOf("$name$propertyName=$propertyValue")
+    override val text: String = "$name$propertyName=$propertyValue"
+
+    override val tokens: List<String> = listOf(text)
 
     override val values: List<String> = listOf("$propertyName=$propertyValue")
   }
@@ -34,5 +40,9 @@ sealed interface GradleCommandLineOption : GradleCommandLineNode {
   data class VarargNotation(override val name: String, override val values: List<String>) : GradleCommandLineOption {
 
     override val tokens: List<String> = listOf(name) + values
+
+    override val text: String = tokens.joinToString(" ")
+
+    constructor(name: String, vararg values: String) : this(name, values.toList())
   }
 }

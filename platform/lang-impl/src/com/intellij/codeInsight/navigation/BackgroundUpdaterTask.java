@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.application.ReadAction;
@@ -51,8 +51,9 @@ public abstract class BackgroundUpdaterTask extends BackgroundUpdaterTaskBase<Ps
     return super.updateComponent(element);
   }
 
+  @Nullable
   @Override
-  protected @Nullable PsiElement getTheOnlyOneElement() {
+  protected PsiElement getTheOnlyOneElement() {
     return super.getTheOnlyOneElement();
   }
 }

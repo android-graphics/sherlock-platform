@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.openapi.externalSystem.model.Key;
@@ -18,14 +18,17 @@ import java.util.Objects;
 import java.util.Set;
 
 public final class BuildScriptClasspathData extends AbstractExternalEntityData {
-  public static final @NotNull Key<BuildScriptClasspathData> KEY =
+  @NotNull
+  public static final Key<BuildScriptClasspathData> KEY =
     Key.create(BuildScriptClasspathData.class, ProjectKeys.LIBRARY_DEPENDENCY.getProcessingWeight() + 1);
   public static final Key<VersionCatalogsModel> VERSION_CATALOGS = Key.create(VersionCatalogsModel.class, KEY.getProcessingWeight());
   public static final Key<DependencyAccessorsModel> ACCESSORS = Key.create(DependencyAccessorsModel.class, KEY.getProcessingWeight());
 
-  private @Nullable File gradleHomeDir;
+  @Nullable
+  private File gradleHomeDir;
 
-  private final @NotNull List<ClasspathEntry> classpathEntries;
+  @NotNull
+  private final List<ClasspathEntry> classpathEntries;
 
   @PropertyMapping({"owner", "classpathEntries"})
   public BuildScriptClasspathData(@NotNull ProjectSystemId owner, @NotNull List<ClasspathEntry> classpathEntries) {
@@ -34,7 +37,8 @@ public final class BuildScriptClasspathData extends AbstractExternalEntityData {
     this.classpathEntries = classpathEntries;
   }
 
-  public @Nullable File getGradleHomeDir() {
+  @Nullable
+  public File getGradleHomeDir() {
     return gradleHomeDir;
   }
 
@@ -57,19 +61,23 @@ public final class BuildScriptClasspathData extends AbstractExternalEntityData {
     return Objects.hash(super.hashCode(), gradleHomeDir, classpathEntries);
   }
 
-  public @NotNull List<ClasspathEntry> getClasspathEntries() {
+  @NotNull
+  public List<ClasspathEntry> getClasspathEntries() {
     return classpathEntries;
   }
 
   public static final class ClasspathEntry {
 
-    private static final Interner<ClasspathEntry> ourEntryInterner = Interner.createWeakInterner();
+    private final static Interner<ClasspathEntry> ourEntryInterner = Interner.createWeakInterner();
 
-    private final @NotNull Set<String> classesFile;
+    @NotNull
+    private final Set<String> classesFile;
 
-    private final @NotNull Set<String> sourcesFile;
+    @NotNull
+    private final Set<String> sourcesFile;
 
-    private final @NotNull Set<String> javadocFile;
+    @NotNull
+    private final Set<String> javadocFile;
 
     public static ClasspathEntry create(@NotNull Set<String> classesFile,
                                         @NotNull Set<String> sourcesFile,
@@ -89,15 +97,18 @@ public final class BuildScriptClasspathData extends AbstractExternalEntityData {
       this.javadocFile = javadocFile;
     }
 
-    public @NotNull Set<String> getClassesFile() {
+    @NotNull
+    public Set<String> getClassesFile() {
       return classesFile;
     }
 
-    public @NotNull Set<String> getSourcesFile() {
+    @NotNull
+    public Set<String> getSourcesFile() {
       return sourcesFile;
     }
 
-    public @NotNull Set<String> getJavadocFile() {
+    @NotNull
+    public Set<String> getJavadocFile() {
       return javadocFile;
     }
 

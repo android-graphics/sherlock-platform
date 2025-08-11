@@ -18,15 +18,13 @@ public final class PreviewFeatureWarningsTest extends LightJavaCodeInsightFixtur
     myFixture.enableInspections(PreviewFeatureInspection.class);
     myFixture.configureByFiles(
       BASE_PATH + "/../java.base/jdk.internal/PreviewFeature.java",
-      BASE_PATH + "/../java.base/jdk.internal/FirstPreviewFeature.java",
-      BASE_PATH + "/../java.base/jdk.internal/PreviewFeatureMethod.java"
+      BASE_PATH + "/../java.base/jdk.internal/FirstPreviewFeature.java"
     );
   }
 
   public void testImplementsPreviewFeature() { doTest(); }
   public void testAccessInnerClassInsidePreviewFeatureClass() { doTest(); }
   public void testAccessStaticMethodInPreviewFeatureClass() { doTest(); }
-  public void testCallPreviewMethod() { doTest(); }
   public void testSuppressPreviewFeatureWarning() { doTest(); }
 
   @Override

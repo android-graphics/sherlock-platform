@@ -25,7 +25,6 @@ class SaxonSourceFrame extends AbstractSaxonFrame<Debugger.SourceFrame, NodeInfo
     super(prev, element);
   }
 
-  @Override
   public String getXPath() {
     return Navigator.getPath(myElement);
   }

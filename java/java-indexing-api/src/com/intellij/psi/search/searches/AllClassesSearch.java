@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -34,11 +34,13 @@ public final class AllClassesSearch extends ExtensibleQueryFactory<PsiClass, All
       myShortNameCondition = shortNameCondition;
     }
 
-    public @NotNull SearchScope getScope() {
+    @NotNull
+    public SearchScope getScope() {
       return myScope;
     }
 
-    public @NotNull Project getProject() {
+    @NotNull
+    public Project getProject() {
       return myProject;
     }
 
@@ -47,11 +49,13 @@ public final class AllClassesSearch extends ExtensibleQueryFactory<PsiClass, All
     }
   }
 
-  public static @NotNull Query<PsiClass> search(@NotNull SearchScope scope, @NotNull Project project) {
+  @NotNull
+  public static Query<PsiClass> search(@NotNull SearchScope scope, @NotNull Project project) {
     return INSTANCE.createQuery(new SearchParameters(scope, project));
   }
 
-  public static @NotNull Query<PsiClass> search(@NotNull SearchScope scope, @NotNull Project project, @NotNull Condition<? super String> shortNameCondition) {
+  @NotNull
+  public static Query<PsiClass> search(@NotNull SearchScope scope, @NotNull Project project, @NotNull Condition<? super String> shortNameCondition) {
     return INSTANCE.createQuery(new SearchParameters(scope, project, shortNameCondition));
   }
 }

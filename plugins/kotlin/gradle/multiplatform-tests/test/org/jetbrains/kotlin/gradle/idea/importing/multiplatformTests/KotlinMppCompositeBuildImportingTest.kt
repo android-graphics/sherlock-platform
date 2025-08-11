@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.LinkedProjectPathsTestsFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
 import org.jetbrains.kotlin.test.TestMetadata
@@ -24,7 +23,7 @@ class KotlinMppCompositeBuildImportingTest : AbstractKotlinMppGradleImportingTes
     @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
     fun testJvmAndNative() {
         doTest {
-            onlyCheckers(OrderEntriesChecker, LinkedProjectPathsTestsFeature)
+            onlyCheckers(OrderEntriesChecker)
             linkProject("consumerBuild")
 
             // only interested in dependencies from consumerBuild to producerBuild
@@ -36,7 +35,7 @@ class KotlinMppCompositeBuildImportingTest : AbstractKotlinMppGradleImportingTes
     @PluginTargetVersions(pluginVersion = "1.8.20-dev-3309+", gradleVersion = "7.5.1+") // Indirectly limit to AGP 7.4.1+, see: KTIJ-25679
     fun testJvmAndAndroid() {
         doTest {
-            onlyCheckers(OrderEntriesChecker, LinkedProjectPathsTestsFeature)
+            onlyCheckers(OrderEntriesChecker)
             linkProject("consumerBuild")
 
             // only interested in dependencies from consumerBuild to producerBuild

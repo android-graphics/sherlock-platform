@@ -72,7 +72,7 @@ class GradleManagedPropertyTest : GradleCodeInsightTestCase() {
 
   companion object {
 
-    private val FIXTURE_BUILDER = GradleTestFixtureBuilder.create("GradleManagedPropertyTest") { gradleVersion ->
+    private val FIXTURE_BUILDER = GradleTestFixtureBuilder.create("GradleManagedPropertyTest") {
       withFile("buildSrc/build.gradle", "")
       withFile("buildSrc/src/main/java/pkg/MyExtension.java", """
         |package pkg;
@@ -87,7 +87,7 @@ class GradleManagedPropertyTest : GradleCodeInsightTestCase() {
         |}
       """.trimMargin())
       withBuildFile(content = "project.extensions.create('myExt', pkg.MyExtension)")
-      withSettingsFile(gradleVersion) {
+      withSettingsFile {
         setProjectName("GradleManagedPropertyTest")
       }
     }

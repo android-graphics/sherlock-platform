@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.mockJDI.members;
 
 import com.intellij.debugger.mockJDI.MockLocalVariable;
@@ -11,7 +10,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Objects;
@@ -35,12 +33,12 @@ public class MockPsiMethod extends MockMirror implements Method {
   }
 
   @Override
-  public @Unmodifiable List<String> argumentTypeNames() {
+  public List<String> argumentTypeNames() {
     return ContainerUtil.map(myPsiMethod.getParameterList().getParameters(), parameter -> parameter.getType().getCanonicalText());
   }
 
   @Override
-  public @Unmodifiable List<Type> argumentTypes() {
+  public List<Type> argumentTypes() {
     return ContainerUtil.map(
       myPsiMethod.getParameterList().getParameters(),
       parameter -> MockType.createType(myVirtualMachine, parameter.getType())
@@ -123,7 +121,7 @@ public class MockPsiMethod extends MockMirror implements Method {
   }
 
   @Override
-  public @Unmodifiable List<LocalVariable> arguments() {
+  public List<LocalVariable> arguments() {
     return ContainerUtil.map(myPsiMethod.getParameterList().getParameters(), p -> new MockLocalVariable(myVirtualMachine, p));
   }
 

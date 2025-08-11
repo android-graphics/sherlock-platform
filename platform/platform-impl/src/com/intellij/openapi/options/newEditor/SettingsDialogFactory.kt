@@ -6,7 +6,6 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 
 // extended externally
@@ -37,11 +36,6 @@ open class SettingsDialogFactory {
   }
 
   open fun create(project: Project, groups: List<ConfigurableGroup>, configurable: Configurable?, filter: String?): DialogWrapper {
-    return create(project = project, groups = groups, configurable = configurable, filter = filter, isModal = true)
-  }
-
-  @ApiStatus.Internal
-  open fun create(project: Project, groups: List<ConfigurableGroup>, configurable: Configurable?, filter: String?, isModal: Boolean): DialogWrapper {
-    return SettingsDialog(project, null, groups, configurable, filter, isModal)
+    return SettingsDialog(project, groups, configurable, filter)
   }
 }

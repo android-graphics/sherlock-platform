@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 
 import com.intellij.lang.ASTNode;
@@ -53,18 +53,21 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub>
     return "Parameter list";
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement getLParen() {
+  public PsiElement getLParen() {
     return findChildByType(T_LPAREN);
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement getRParen() {
+  public PsiElement getRParen() {
     return findLastChildByType(T_RPAREN);
   }
 
+  @NotNull
   @Override
-  public @NotNull TextRange getParametersRange() {
+  public TextRange getParametersRange() {
     TextRange range = getTextRange();
     PsiElement lParen = getLParen();
     PsiElement rParen = getRParen();
@@ -142,7 +145,7 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub>
 
 
   @Override
-  public ASTNode addInternal(@NotNull ASTNode first, @NotNull ASTNode last, ASTNode anchor, Boolean before) {
+  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
     GrParameter[] params = getParameters();
     ASTNode result = super.addInternal(first, last, anchor == null ? findChildByType(before ? T_RPAREN : T_LPAREN) : anchor, before);
     if (first == last && first.getPsi() instanceof GrParameter && params.length > 0) {
@@ -162,8 +165,9 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub>
     return result;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<? extends PsiElement> getComponents() {
+  public List<? extends PsiElement> getComponents() {
     return Arrays.asList(getParameters());
   }
 }

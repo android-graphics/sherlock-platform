@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig;
 
 import com.intellij.codeInspection.InspectionsBundle;
@@ -9,7 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class GroupDisplayNameUtil {
-  private static final @NonNls Map<String, String> packageGroupDisplayNameMap = new HashMap<>();
+  @NonNls
+  private static final Map<String, String> packageGroupDisplayNameMap = new HashMap<>();
 
   static {
     packageGroupDisplayNameMap.put("abstraction", "group.names.abstraction.issues");

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.projectWizard.ModuleNameLocationSettings;
@@ -15,8 +15,9 @@ public class NewProjectNameLocationSettings implements ModuleNameLocationSetting
     myModuleNameLocationComponent = moduleNameLocationComponent;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getModuleName() {
+  public String getModuleName() {
     return myModuleNameLocationComponent.getModuleName();
   }
 
@@ -26,8 +27,9 @@ public class NewProjectNameLocationSettings implements ModuleNameLocationSetting
     myModuleNameLocationComponent.setModuleName(moduleName);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getModuleContentRoot() {
+  public String getModuleContentRoot() {
     return myModuleNameLocationComponent.getModuleContentRoot();
   }
 

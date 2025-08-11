@@ -6,4 +6,4 @@ class <caret>() {
 
 }
 
-// DISABLE_ERRORS
+// DISABLE-ERRORS

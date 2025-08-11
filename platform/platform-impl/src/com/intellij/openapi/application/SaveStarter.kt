@@ -8,15 +8,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private class SaveStarter() : ApplicationStarterBase(0) {
+internal class SaveStarter private constructor() : ApplicationStarterBase(0) {
   override val usageMessage: String
     get() = IdeBundle.message("wrong.number.of.arguments.usage.ide.executable.save")
 
   override suspend fun executeCommand(args: List<String>, currentDirectory: String?): CliResult {
     withContext(Dispatchers.EDT) {
-      writeIntentReadAction {
-        FileDocumentManager.getInstance().saveAllDocuments()
-      }
+      FileDocumentManager.getInstance().saveAllDocuments()
     }
     saveSettings(ApplicationManager.getApplication())
     return CliResult.OK

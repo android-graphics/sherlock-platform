@@ -21,11 +21,6 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   boolean isAfterEndOfLine();
   void setAfterEndOfLine(boolean value);
 
-  @ApiStatus.Internal
-  default void fireChanged(boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
-    throw new UnsupportedOperationException();
-  }
-
   int getAffectedAreaStartOffset();
 
   int getAffectedAreaEndOffset();

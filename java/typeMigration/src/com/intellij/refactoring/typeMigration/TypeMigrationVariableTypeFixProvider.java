@@ -32,10 +32,12 @@ public final class TypeMigrationVariableTypeFixProvider implements ChangeVariabl
     return new IntentionAction[]{createTypeMigrationFix(variable, toReturn)};
   }
 
-  private static @NotNull VariableTypeFix createTypeMigrationFix(final @NotNull PsiVariable variable, final @NotNull PsiType toReturn) {
+  @NotNull
+  private static VariableTypeFix createTypeMigrationFix(@NotNull final PsiVariable variable, @NotNull final PsiType toReturn) {
     return new VariableTypeFix(variable, toReturn) {
+      @NotNull
       @Override
-      public @NotNull String getText() {
+      public String getText() {
         return TypeMigrationBundle.message("migrate.fix.text", myName, StringUtil.escapeXmlEntities(getReturnType().getPresentableText()));
       }
 

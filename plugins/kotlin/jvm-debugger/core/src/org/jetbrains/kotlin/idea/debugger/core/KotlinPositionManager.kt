@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // The package directive doesn't match the file location to prevent API breakage
 package org.jetbrains.kotlin.idea.debugger
@@ -17,14 +17,12 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
@@ -43,6 +41,7 @@ import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
 import com.intellij.util.asSafely
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.indexing.DumbModeAccessType
@@ -53,6 +52,8 @@ import com.jetbrains.jdi.ReferenceTypeImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
 import kotlinx.coroutines.*
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -85,8 +86,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.resume
 
-class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames,
-                                                                      PositionManagerAsync {
+class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames {
     private val sourceSearchScopes: List<GlobalSearchScope> = listOf(
         debugProcess.searchScope,
         KotlinAllFilesScopeProvider.getInstance(debugProcess.project).getAllKotlinFilesScope()
@@ -104,7 +104,6 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     override fun createStackFrames(descriptor: StackFrameDescriptorImpl): List<XStackFrame>? {
-        DebuggerManagerThreadImpl.assertIsManagerThread()
         if (descriptor.location?.isInKotlinSources() != true) {
             return null
         }
@@ -126,8 +125,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         return listOf(KotlinStackFrame(descriptor, visibleVariables))
     }
 
-    override suspend fun getSourcePositionAsync(location: Location?): SourcePosition? {
-        DebuggerManagerThreadImpl.assertIsManagerThread()
+    override fun getSourcePosition(location: Location?): SourcePosition? {
         if (location == null) throw NoDataException.INSTANCE
 
         val fileName = location.safeSourceName() ?: throw NoDataException.INSTANCE
@@ -153,7 +151,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                     )
 
                     if (defaultPsiFile != null) {
-                        return readAction { SourcePosition.createFromLine(defaultPsiFile, 0) }
+                        return SourcePosition.createFromLine(defaultPsiFile, 0)
                     }
                 } catch (e: AbsentInformationException) {
                     // ignored
@@ -180,7 +178,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
 
         val sourcePosition = createSourcePosition(location, psiFile, sourceLineNumber)
-            ?: readAction { SourcePosition.createFromLine(psiFile, sourceLineNumber) }
+            ?: SourcePosition.createFromLine(psiFile, sourceLineNumber)
 
         // There may be several locations for same source line. If same source position would be created for all of them,
         // breakpoints at this line will stop on every location.
@@ -191,19 +189,19 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         return sourcePosition
     }
 
-    private suspend fun createSourcePosition(location: Location, file: KtFile, sourceLineNumber: Int): SourcePosition? {
+    private fun createSourcePosition(location: Location, file: KtFile, sourceLineNumber: Int): SourcePosition? {
         val lambdaOrFunIfInside = getLambdaOrFunOnLineIfInside(location, file, sourceLineNumber)
         if (lambdaOrFunIfInside != null) {
-            return readAction {
-                val elementAt = getFirstElementInsideLambdaOnLine(file, lambdaOrFunIfInside, sourceLineNumber)
-                elementAt?.let { SourcePosition.createFromElement(it) }
-                    ?: SourcePosition.createFromLine(file, sourceLineNumber)
+            val elementAt = getFirstElementInsideLambdaOnLine(file, lambdaOrFunIfInside, sourceLineNumber)
+            if (elementAt != null) {
+                return SourcePosition.createFromElement(elementAt)
             }
+            return SourcePosition.createFromLine(file, sourceLineNumber)
         }
 
         val callableReferenceIfInside = getCallableReferenceIfInside(location, file, sourceLineNumber)
         if (callableReferenceIfInside != null) {
-            val sourcePosition = readAction { SourcePosition.createFromElement(callableReferenceIfInside) }
+            val sourcePosition = SourcePosition.createFromElement(callableReferenceIfInside)
             if (sourcePosition != null) {
                 // Never stop on invocation of method reference
                 return KotlinReentrantSourcePosition(sourcePosition)
@@ -212,7 +210,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
         val elementInDeclaration = getElementForDeclarationLine(location, file, sourceLineNumber)
         if (elementInDeclaration != null) {
-            return readAction { SourcePosition.createFromElement(elementInDeclaration) }
+            return SourcePosition.createFromElement(elementInDeclaration)
         }
         return null
     }
@@ -232,7 +230,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         return elementsOnLine.firstOrNull()
     }
 
-    private suspend fun Location.shouldBeTreatedAsReentrantSourcePosition(psiFile: PsiFile, sourceFileName: String): Boolean {
+    private fun Location.shouldBeTreatedAsReentrantSourcePosition(psiFile: PsiFile, sourceFileName: String): Boolean {
         val method = safeMethod() ?: return false
         val sameLineLocations = method
             .safeAllLineLocations()
@@ -247,21 +245,18 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         if (sameLineLocations.size < 2 || hasFinallyBlockInParent(psiFile)) {
             return false
         }
-        val locationsInSameInlinedFunction = findLocationsInSameInlinedFunction(sameLineLocations, method)
+        val locationsInSameInlinedFunction = findLocationsInSameInlinedFunction(sameLineLocations, method, sourceFileName)
         return locationsInSameInlinedFunction.ifEmpty { sameLineLocations }.indexOf(this) > 0
     }
 
-    private suspend fun Location.hasFinallyBlockInParent(psiFile: PsiFile): Boolean {
-        val line = getZeroBasedLineNumber()
-        return readAction {
-            val elementAt = psiFile.getLineStartOffset(line)?.let { psiFile.findElementAt(it) }
-            elementAt?.parentOfType<KtFinallySection>() != null
-        }
+    private fun Location.hasFinallyBlockInParent(psiFile: PsiFile): Boolean {
+        val elementAt = psiFile.getLineStartOffset(getZeroBasedLineNumber())?.let { psiFile.findElementAt(it) }
+        return elementAt?.parentOfType<KtFinallySection>() != null
     }
 
-    private fun Location.findLocationsInSameInlinedFunction(locations: List<Location>, method: Method): List<Location> {
+    private fun Location.findLocationsInSameInlinedFunction(locations: List<Location>, method: Method, sourceFileName: String): List<Location> {
         val leastEnclosingBorders = method
-            .getInlineFunctionBorders()
+            .getInlineFunctionBorders(sourceFileName)
             .getLeastEnclosingBorders(this)
             ?: return emptyList()
         return locations.filter { leastEnclosingBorders.contains(it) }
@@ -277,88 +272,84 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         return result
     }
 
-    private fun Method.getInlineFunctionBorders(): List<ClosedRange<Location>> =
-        getInlineFunctionOrArgumentVariables().mapNotNull { it.getBorders() }.toList()
+    private fun Method.getInlineFunctionBorders(sourceFileName: String): List<ClosedRange<Location>> {
+        return getInlineFunctionOrArgumentVariables()
+            .mapNotNull { it.getBorders() }
+            .filter { it.start.safeSourceName() == sourceFileName }
+            .toList()
+    }
 
-    private suspend fun getAlternativeSource(location: Location): PsiFile? {
+    private fun getAlternativeSource(location: Location): PsiFile? {
         val manager = PsiManager.getInstance(debugProcess.project)
         val qName = location.declaringType().name()
-        return readAction {
-            val alternativeFileUrl = DebuggerUtilsEx.getAlternativeSourceUrl(qName, debugProcess.project) ?: return@readAction null
-            val alternativePsiFile = VirtualFileManager.getInstance().findFileByUrl(alternativeFileUrl) ?: return@readAction null
-            manager.findFile(alternativePsiFile)
-        }
+        val alternativeFileUrl = DebuggerUtilsEx.getAlternativeSourceUrl(qName, debugProcess.project) ?: return null
+        val alternativePsiFile = VirtualFileManager.getInstance().findFileByUrl(alternativeFileUrl) ?: return null
+        return manager.findFile(alternativePsiFile)
     }
 
     // Returns a property or a constructor if debugger stops at class declaration
-    private suspend fun getElementForDeclarationLine(location: Location, file: KtFile, lineNumber: Int): KtElement? {
-        val contextElement = readAction {
-            val lineStartOffset = file.getLineStartOffset(lineNumber) ?: return@readAction null
-            val elementAt = file.findElementAt(lineStartOffset)
-            CodeFragmentContextTuner.getInstance().tuneContextElement(elementAt)
-        } ?: return null
+    private fun getElementForDeclarationLine(location: Location, file: KtFile, lineNumber: Int): KtElement? {
+        val lineStartOffset = file.getLineStartOffset(lineNumber) ?: return null
+        val elementAt = file.findElementAt(lineStartOffset)
+        val contextElement = CodeFragmentContextTuner.getInstance().tuneContextElement(elementAt)
 
         if (contextElement !is KtClass) return null
+
         val methodName = location.method().name()
-
-        return readAction {
-            when {
-                JvmAbi.isGetterName(methodName) -> {
-                    val valueParameters = contextElement.primaryConstructor?.valueParameters ?: emptyList()
-                    valueParameters.find { it.hasValOrVar() && it.name != null && JvmAbi.getterName(it.name!!) == methodName }
-                }
-
-                methodName == "<init>" -> contextElement.primaryConstructor
-                else -> null
+        return when {
+            JvmAbi.isGetterName(methodName) -> {
+                val valueParameters = contextElement.primaryConstructor?.valueParameters ?: emptyList()
+                valueParameters.find { it.hasValOrVar() && it.name != null && JvmAbi.getterName(it.name!!) == methodName }
             }
+            methodName == "<init>" -> contextElement.primaryConstructor
+            else -> null
         }
     }
 
-    private suspend fun getCallableReferenceIfInside(location: Location, file: KtFile, lineNumber: Int): KtCallableReferenceExpression? {
+    private fun getCallableReferenceIfInside(location: Location, file: KtFile, lineNumber: Int): KtCallableReferenceExpression? {
         val currentLocationClassName = location.getClassName() ?: return null
-        val allReferenceExpressions = readAction { getElementsAtLineIfAny<KtCallableReferenceExpression>(file, lineNumber) }
+        val allReferenceExpressions = getElementsAtLineIfAny<KtCallableReferenceExpression>(file, lineNumber)
         if (allReferenceExpressions.isEmpty()) return null
-        val (inlinedReference, notInlined) = allReferenceExpressions.separateInlinedAndNonInlinedElements(location)
-        if (inlinedReference != null) return inlinedReference
-        return readAction {
-            notInlined.firstOrNull {
+        analyze(allReferenceExpressions.first()) {
+            val (inlinedReference, notInlined) = allReferenceExpressions.separateInlinedAndNonInlinedElements(location)
+            if (inlinedReference != null) return inlinedReference
+            return notInlined.firstOrNull {
                 it.calculatedClassNameMatches(currentLocationClassName, false)
             }
         }
     }
 
-    private suspend fun getLambdaOrFunOnLineIfInside(location: Location, file: KtFile, lineNumber: Int): KtFunction? {
+    private fun getLambdaOrFunOnLineIfInside(location: Location, file: KtFile, lineNumber: Int): KtFunction? {
         val currentLocationClassName = location.getClassName() ?: return null
 
-        val start = readAction { getStartLineOffset(file, lineNumber) }
-        val end = readAction { getEndLineOffset(file, lineNumber) }
+        val start = getStartLineOffset(file, lineNumber)
+        val end = getEndLineOffset(file, lineNumber)
         if (start == null || end == null) return null
 
-        val literalsOrFunctions = readAction {
-            getLambdasAtLine(file, lineNumber)
-                // We are not interested in lambdas when we're in the middle of them and no more lambdas on the line
-                // because in such case there is only one possible source position on the line.
-                .takeIf { lambdas -> lambdas.any { it.isStartingOrEndingOnLine(lineNumber) } }
-        } ?: return null
+        val literalsOrFunctions = getLambdasAtLine(file, lineNumber)
+        // We are not interested in lambdas when we're in the middle of them and no more lambdas on the line
+        // because in such case there is only one possible source position on the line.
+        if (literalsOrFunctions.none { it.isStartingOrEndingOnLine(lineNumber) }) {
+            return null
+        }
+        analyze(literalsOrFunctions.first()) {
+            val (innermostContainingLiteral, notInlinedLambdas) = literalsOrFunctions.separateInlinedAndNonInlinedElements(location)
+            if (innermostContainingLiteral != null) return innermostContainingLiteral
 
-        val (innermostContainingLiteral, notInlinedLambdas) = literalsOrFunctions.separateInlinedAndNonInlinedElements(location)
-        if (innermostContainingLiteral != null) return innermostContainingLiteral
-
-        return readAction { notInlinedLambdas.getAppropriateLiteralBasedOnDeclaringClassName(currentLocationClassName) }
-            ?: readAction { notInlinedLambdas.getAppropriateLiteralForCrossinlineLambda(currentLocationClassName) }
-            ?: notInlinedLambdas.getAppropriateLiteralBasedOnLambdaName(location, lineNumber)
-
+            return notInlinedLambdas.getAppropriateLiteralBasedOnDeclaringClassName(currentLocationClassName) ?:
+                   notInlinedLambdas.getAppropriateLiteralForCrossinlineLambda(currentLocationClassName) ?:
+                   notInlinedLambdas.getAppropriateLiteralBasedOnLambdaName(location, lineNumber)
+        }
     }
 
-    private suspend fun <T : KtExpression> List<T>.separateInlinedAndNonInlinedElements(location: Location): Pair<T?, List<T>> {
+    context(KaSession)
+    private fun <T : KtExpression> List<T>.separateInlinedAndNonInlinedElements(location: Location): Pair<T?, List<T>> {
         val notInlined = mutableListOf<T>()
         var innermostInlinedElement: T? = null
         for (expression in this) {
-            val isCrossinline = dumbAnalyze(expression, fallback = false) {
-                getInlineArgumentSymbol(expression)?.isCrossinline
-            }
-            if (isCrossinline != null && (!isCrossinline || isInlinedArgument(expression, location))) {
-                if (isInsideInlineArgument(expression, location)) {
+            val inlineArgument = getInlineArgumentSymbol(expression)
+            if (inlineArgument != null && (!inlineArgument.isCrossinline || isInlinedArgument(expression, location))) {
+                if (isInsideInlineArgument(expression, location, debugProcess as DebugProcessImpl)) {
                     innermostInlinedElement = expression
                 }
             } else {
@@ -376,6 +367,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
      * Crossinline lambda generated class name contains $$inlined$<CALL METHOD NAME>$N substring
      * where N is the sequential number of the lambda with the same call method name
      */
+    context(KaSession)
     private fun List<KtFunction>.getAppropriateLiteralForCrossinlineLambda(currentLocationClassName: String): KtFunction? {
         if (isEmpty()) return null
         val crossinlineLambdaPrefix = "\$\$inlined\$"
@@ -414,10 +406,11 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
     private fun KtFunction.getLambdaCallMethod(): KtCallExpression? = parentOfType<KtCallExpression>()
 
-    private fun KtCallExpression.getBytecodeMethodName(): String? = runDumbAnalyze(this, fallback = null) f@{
-        val resolvedCall = resolveToCall()?.successfulFunctionCallOrNull() ?: return@f null
-        val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return@f null
-        getByteCodeMethodName(symbol)
+    context(KaSession)
+    private fun KtCallExpression.getBytecodeMethodName(): String? {
+        val resolvedCall = resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+        val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return null
+        return symbol.getByteCodeMethodName()
     }
 
     private fun PsiElement.calculatedClassNameMatches(currentLocationClassName: String, isLambda: Boolean): Boolean {
@@ -429,7 +422,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
     private fun isNestedClassName(name: String): Boolean = "\$" in name
 
-    private suspend fun List<KtFunction>.getAppropriateLiteralBasedOnLambdaName(location: Location, lineNumber: Int): KtFunction? {
+    private fun List<KtFunction>.getAppropriateLiteralBasedOnLambdaName(location: Location, lineNumber: Int): KtFunction? {
         val method = location.safeMethod() ?: return null
         if (!method.name().isGeneratedIrBackendLambdaMethodName()) {
             return null
@@ -461,9 +454,9 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         return suitableFunLiterals.getSamLambdaWithIndex(methodIdx)
     }
 
-    private suspend fun KtFunction.hasExecutableCodeInsideOnLine(lineNumber: Int): Boolean {
-        val file = readAction { containingFile.virtualFile }
-        return hasExecutableCodeInsideOnLine(file, lineNumber, debugProcess.project) { element ->
+    private fun KtFunction.hasExecutableCodeInsideOnLine(lineNumber: Int): Boolean {
+        val file = containingFile.virtualFile
+        return hasExecutableCodeInsideOnLine(file, lineNumber, project) { element ->
             when (element) {
                 is KtNamedFunction -> ApplicabilityResult.UNKNOWN
                 is KtElement -> {
@@ -479,27 +472,27 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         } || hasImplicitReturnOnLine(this, lineNumber)
     }
 
-    private suspend fun hasImplicitReturnOnLine(function: KtFunction, lineNumber: Int): Boolean {
-        if (function !is KtFunctionLiteral || readAction { function.getLineNumber(start = false) } != lineNumber) {
+    private fun hasImplicitReturnOnLine(function: KtFunction, lineNumber: Int): Boolean {
+        if (function !is KtFunctionLiteral || function.getLineNumber(start = false) != lineNumber) {
             return false
         }
-        val isUnitReturnType = runDumbAnalyze(function, fallback = false) {
+        val isUnitReturnType = analyze(function) {
             val functionalType = function.functionType
-            (functionalType as? KaFunctionType)?.returnType?.isUnitType == true
+            (functionalType as? KaFunctionType)?.returnType?.isUnit == true
         }
         if (!isUnitReturnType) {
             // We always must specify return explicitly
             return false
         }
         // This check does not cover some more complex cases (e.g. "if" or "when" block expressions)
-        return readAction { function.lastStatementSkippingComments() } !is KtReturnExpression
+        return function.lastStatementSkippingComments() !is KtReturnExpression
     }
 
     private fun KtFunction.lastStatementSkippingComments(): KtElement? {
         return bodyBlockExpression?.childrenOfType<KtElement>()?.lastOrNull()
     }
 
-    private suspend fun List<KtFunction>.getSamLambdaWithIndex(index: Int): KtFunction? {
+    private fun List<KtFunction>.getSamLambdaWithIndex(index: Int): KtFunction? {
         var samLambdaCounter = 0
         for (literal in this) {
             if (literal.isSamLambda()) {
@@ -512,7 +505,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         return null
     }
 
-    private suspend fun getPsiFileByLocation(location: Location): PsiFile? {
+    private fun getPsiFileByLocation(location: Location): PsiFile? {
         val sourceName = location.safeSourceName() ?: return null
         if (!DebuggerUtils.isKotlinSourceFile(sourceName)) return null
 
@@ -591,12 +584,9 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     private fun getClassesWithInlinedCode(candidatesWithInline: List<String>, line: Int): List<ReferenceType> {
         val candidatesWithInlineInternalNames = candidatesWithInline.map { it.fqnToInternalName() }
         val futures = debugProcess.virtualMachineProxy.allClasses().map { type ->
-            hasInlinedLinesToAsync(type, line, candidatesWithInlineInternalNames)
-                .thenApply { hasInlinedLines -> type.takeIf { hasInlinedLines } }
-                .exceptionally { e ->
-                    val exception = DebuggerUtilsAsync.unwrap(e)
-                    if (exception is ObjectCollectedException) null else throw e
-                }
+            hasInlinedLinesToAsync(type, line, candidatesWithInlineInternalNames).thenApply { hasInlinedLines ->
+                type.takeIf { hasInlinedLines }
+            }
         }.toTypedArray()
         CompletableFuture.allOf(*futures).join()
         return futures.mapNotNull { it.get() }
@@ -621,14 +611,12 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             throw NoDataException.INSTANCE
         }
         try {
-            val virtualMachine = type.virtualMachine()
-            if (DexDebugFacility.isDex(virtualMachine) && !virtualMachine.canGetSourceDebugExtension()) {
+            if (DexDebugFacility.isDex(debugProcess) &&
+                (debugProcess.virtualMachineProxy as? VirtualMachineProxyImpl)?.canGetSourceDebugExtension() != true) {
                 // If we cannot get source debug extension information, we approximate information for inline functions.
                 // This allows us to stop on some breakpoints in inline functions, but does not work very well.
                 // Source debug extensions are not available on Android devices before Android O.
-                val inlineLocations = ReadAction.nonBlocking<List<Location>> {
-                    DebuggerUtils.getLocationsOfInlinedLine(type, position, debugProcess.searchScope)
-                }.executeSynchronously()
+                val inlineLocations = runReadAction { DebuggerUtils.getLocationsOfInlinedLine(type, position, debugProcess.searchScope) }
                 if (inlineLocations.isNotEmpty()) {
                     return inlineLocations
                 }
@@ -664,7 +652,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         val isInsideProjectWithCompose = position.isInsideProjectWithCompose()
         val xBreakpoint = requestor.asSafely<Breakpoint<*>>()?.xBreakpoint
         val xSession = debugProcess.asSafely<DebugProcessImpl>()?.xdebugProcess?.session.asSafely<XDebugSessionImpl>()
-        return runBlockingMaybeCancellable {
+        return runBlockingCancellable {
             if (xBreakpoint == null || xSession == null) {
                 collectPrepareRequestsWithProgress(requestor, position, isInsideProjectWithCompose, file)
             } else {
@@ -788,34 +776,31 @@ private fun sourcePathMatchesCandidates(sourcePath: String, sourceCandidatesInte
     return internalName.isInnerClassOfAny(sourceCandidatesInternalName)
 }
 
-private suspend fun findFileCandidatesWithBackgroundProcess(
+@RequiresBackgroundThread
+private fun findFileCandidatesWithBackgroundProcess(
     project: Project,
     className: JvmClassName,
     sourceName: String,
-    scopes: List<GlobalSearchScope>
-): List<KtFile> = withContext(Dispatchers.Default) {
-    withBackgroundProgress(
-        project, KotlinDebuggerCoreBundle.message("progress.title.kt.file.search"),
-        cancellable = false
-    ) {
-        val files = try {
-            readAction {
-                FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, ThrowableComputable {
-                    val files = DebuggerUtils.findSourceFilesForClass(project, scopes, className, sourceName)
-                    if (files.isNotEmpty()) return@ThrowableComputable files
-                    DebuggerUtils.tryFindFileByClassNameAndFileName(project, className, sourceName, scopes)
-                })
-            }
-        } catch (_: IndexNotReadyException) {
-            emptyList()
-        }
-        if (files.isNotEmpty()) return@withBackgroundProgress files
+    scopes: List<GlobalSearchScope>,
+): List<KtFile> {
+    return runBlockingCancellable {
+        withBackgroundProgress(
+            project, KotlinDebuggerCoreBundle.message("progress.title.kt.file.search"),
+            cancellable = false
+        ) {
+            val files = FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, ThrowableComputable {
+                val files = DebuggerUtils.findSourceFilesForClass(project, scopes, className, sourceName)
+                if (files.isNotEmpty()) return@ThrowableComputable files
+                DebuggerUtils.tryFindFileByClassNameAndFileName(project, className, sourceName, scopes)
+            })
+            if (files.isNotEmpty()) return@withBackgroundProgress files
 
-        withProgressText(KotlinDebuggerCoreBundle.message("progress.text.waiting.for.smart.mode")) {
-            waitForSmartMode(project)
-        }
-        smartReadAction(project) {
-            DebuggerUtils.findSourceFilesForClass(project, scopes, className, sourceName)
+            withProgressText(KotlinDebuggerCoreBundle.message("progress.text.waiting.for.smart.mode")) {
+                waitForSmartMode(project)
+            }
+            smartReadAction(project) {
+                DebuggerUtils.findSourceFilesForClass(project, scopes, className, sourceName)
+            }
         }
     }
 }
@@ -908,17 +893,17 @@ private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: In
     return targetClasses
 }
 
-private suspend fun KtFunction.isSamLambda(): Boolean {
+private fun KtFunction.isSamLambda(): Boolean {
     if (this !is KtFunctionLiteral && this !is KtNamedFunction) {
         return false
     }
 
-    return dumbAnalyze(this, fallback = false) f@{
-        val parentCall = KtPsiUtil.getParentCallIfPresent(this@isSamLambda) as? KtCallExpression ?: return@f false
-        val call = parentCall.resolveToCall()?.successfulFunctionCallOrNull() ?: return@f false
-        val valueArgument = parentCall.getContainingValueArgument(this@isSamLambda) ?: return@f false
-        val argument = call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return@f false
-        argument.returnType is KaUsualClassType
+    analyze(this) {
+        val parentCall = KtPsiUtil.getParentCallIfPresent(this@isSamLambda) as? KtCallExpression ?: return false
+        val call = parentCall.resolveToCall()?.successfulFunctionCallOrNull() ?: return false
+        val valueArgument = parentCall.getContainingValueArgument(this@isSamLambda) ?: return false
+        val argument = call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return false
+        return argument.returnType is KaUsualClassType
     }
 }
 

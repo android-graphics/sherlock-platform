@@ -1,15 +1,12 @@
 // PROBLEM: none
-// WITH_STDLIB
+// API_VERSION: 1.8
 
-@file:OptIn(UnstableApiA::class, UnstableApiB::class, ExperimentalSubclassOptIn::class)
+@file:OptIn(UnstableApi::class, ExperimentalSubclassOptIn::class)
 
-@RequiresOptIn
-annotation class UnstableApiA
+@RequiresOptIn(message = "Interfaces in this library are experimental for implementation")
+annotation class UnstableApi
 
-@RequiresOptIn
-annotation class UnstableApiB
-
-@SubclassOptInRequired(UnstableApiA::class, UnstableApiB::class)
+@SubclassOptInRequired(UnstableApi::class)
 interface CoreLibraryApi
 
 interface SomeImplementation : CoreLibraryApi

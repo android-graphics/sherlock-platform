@@ -1,3 +1,0 @@
-fragment commitStatusRollupShort on StatusCheckRollup {
-  state
-}

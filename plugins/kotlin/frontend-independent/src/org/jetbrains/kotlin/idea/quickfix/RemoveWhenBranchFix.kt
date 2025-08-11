@@ -5,6 +5,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -17,12 +18,14 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 class RemoveWhenBranchFix(
     element: KtWhenEntry,
-    private val elseBranch: Boolean,
 ) : KotlinCrossLanguageQuickFixAction<KtWhenEntry>(element) {
-    override fun getFamilyName(): String =
-        if (elseBranch) KotlinBundle.message("remove.else.branch") else KotlinBundle.message("remove.branch")
+    override fun getFamilyName() = if (runReadAction { element?.isElse } == true) {
+        KotlinBundle.message("remove.else.branch")
+    } else {
+        KotlinBundle.message("remove.branch")
+    }
 
-    override fun getText(): String = familyName
+    override fun getText() = familyName
 
     override fun invokeImpl(project: Project, editor: Editor?, file: PsiFile) {
         element?.delete()
@@ -31,11 +34,11 @@ class RemoveWhenBranchFix(
     companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
         override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
             val whenEntry = psiElement.getParentOfType<KtWhenEntry>(strict = false)
-            return if (whenEntry != null && (whenEntry.isElse || whenEntry.conditions.size == 1)) {
-                listOf(RemoveWhenBranchFix(whenEntry, whenEntry.isElse))
-            } else {
-                emptyList()
+            if (whenEntry != null && (whenEntry.isElse || whenEntry.conditions.size == 1)) {
+                return listOf(RemoveWhenBranchFix(whenEntry))
             }
+
+            return emptyList()
         }
     }
 }

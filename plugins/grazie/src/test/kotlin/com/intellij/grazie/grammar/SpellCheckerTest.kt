@@ -1,22 +1,8 @@
 package com.intellij.grazie.grammar
 
 import com.intellij.grazie.GrazieTestBase
-import com.intellij.grazie.spellcheck.GrazieCheckers
-import com.intellij.openapi.components.service
+import com.intellij.grazie.spellcheck.GrazieSpellchecker
 import org.junit.Test
-
-object GrazieSpellchecker {
-  fun isCorrect(word: String): Boolean? {
-    return service<GrazieCheckers>().isCorrect(word)
-  }
-
-  /**
-   * Checks text for spelling mistakes.
-   */
-  fun getSuggestions(word: String): Collection<String> {
-    return service<GrazieCheckers>().getSuggestions(word)
-  }
-}
 
 class SpellCheckerTest : GrazieTestBase() {
   @Test

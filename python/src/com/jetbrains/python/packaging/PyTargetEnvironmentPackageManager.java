@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.HelperPackage;
@@ -35,13 +36,12 @@ import com.jetbrains.python.run.PythonScripts;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PySdkExtKt;
-import com.jetbrains.python.venvReader.VirtualEnvReader;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -113,7 +113,8 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
       for (PyRequirement req : requirements) {
         simplifiedArgs.addAll(req.getInstallOptions());
       }
-      throw e.copyWith("pip", makeSafeToDisplayCommand(simplifiedArgs));
+      throw new PyExecutionException(e.getMessage(), "pip", makeSafeToDisplayCommand(simplifiedArgs),
+                                     e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
     }
     finally {
       LOG.debug("Packages cache is about to be refreshed because these requirements were installed: " + requirements);
@@ -158,7 +159,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
       getPythonProcessResult(pythonExecution, !canModify, true, targetEnvironmentRequest);
     }
     catch (PyExecutionException e) {
-      throw e.copyWith("pip", args);
+      throw new PyExecutionException(e.getMessage(), "pip", args, e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
     }
     finally {
       LOG.debug("Packages cache is about to be refreshed because these packages were uninstalled: " + packages);
@@ -169,12 +170,16 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
 
   @Override
   public @Nullable List<PyPackage> getPackages() {
+    if (!Registry.is("python.use.targets.api")) {
+      return Collections.emptyList();
+    }
     final List<PyPackage> packages = myPackagesCache;
     return packages != null ? Collections.unmodifiableList(packages) : null;
   }
 
   @Override
   protected @NotNull List<PyPackage> collectPackages() throws ExecutionException {
+    assertUseTargetsAPIFlagEnabled();
     if (getSdk() instanceof PyLazySdk) {
       return List.of();
     }
@@ -203,6 +208,12 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     return parsePackagingToolOutput(output);
   }
 
+  private static void assertUseTargetsAPIFlagEnabled() throws ExecutionException {
+    if (!Registry.is("python.use.targets.api")) {
+      throw new ExecutionException(PySdkBundle.message("python.sdk.please.reconfigure.interpreter"));
+    }
+  }
+
   @Override
   public @NotNull String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException {
     final Sdk sdk = getSdk();
@@ -226,11 +237,11 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     // TODO [targets] Pass `parentDir = null`
     getPythonProcessResult(pythonExecution, false, true, targetEnvironmentRequest);
 
-    final Path binary = VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(destinationDir));
+    final String binary = PythonSdkUtil.getPythonExecutable(destinationDir);
     final char separator = targetEnvironmentRequest.getTargetPlatform().getPlatform().fileSeparator;
     final String binaryFallback = destinationDir + separator + "bin" + separator + "python";
 
-    return (binary != null) ? binary.toString() : binaryFallback;
+    return (binary != null) ? binary : binaryFallback;
   }
 
   /**

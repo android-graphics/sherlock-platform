@@ -60,7 +60,7 @@ object TextParser {
           throw ce
         }
         catch (e: Exception) {
-          logger.info("Text parsing error. Can't do paint on ${component::class.java.simpleName}", e)
+          logger.error("Text parsing error. Can't do paint on ${component::class.java.simpleName}", e)
         }
       }
     })

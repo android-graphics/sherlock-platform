@@ -36,10 +36,11 @@ import java.util.Set;
  */
 public final class PyArgumentEqualDefaultInspection extends PyInspection {
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                                 boolean isOnTheFly,
-                                                 @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                        boolean isOnTheFly,
+                                        @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -115,8 +116,9 @@ public final class PyArgumentEqualDefaultInspection extends PyInspection {
       }
     }
 
-    private static @Nullable PyExpression findDefaultValue(@NotNull PyCallExpression.PyArgumentsMapping mapping,
-                                                           @NotNull PyCallableParameter parameter) {
+    @Nullable
+    private static PyExpression findDefaultValue(@NotNull PyCallExpression.PyArgumentsMapping mapping,
+                                                 @NotNull PyCallableParameter parameter) {
       final String name = parameter.getName();
       final PyExpression value = parameter.getDefaultValue();
 
@@ -173,9 +175,9 @@ public final class PyArgumentEqualDefaultInspection extends PyInspection {
       return false;
     }
 
-    private static boolean isBothInstanceOf(final @NotNull PyExpression key,
-                                            final @NotNull PyExpression defaultValue,
-                                            final @NotNull Class clazz) {
+    private static boolean isBothInstanceOf(@NotNull final PyExpression key,
+                                            @NotNull final PyExpression defaultValue,
+                                            @NotNull final Class clazz) {
       return clazz.isInstance(key) && clazz.isInstance(defaultValue);
     }
   }

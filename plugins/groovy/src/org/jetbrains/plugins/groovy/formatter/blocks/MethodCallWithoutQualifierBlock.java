@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter.blocks;
 
 import com.intellij.formatting.Block;
@@ -25,8 +25,9 @@ public class MethodCallWithoutQualifierBlock extends GroovyBlock {
     myChildren = children;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<Block> getSubBlocks() {
+  public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
       mySubBlocks = new ArrayList<>();
       new GroovyBlockGenerator(this).addNestedChildrenSuffix(mySubBlocks, myTopLevel, myChildren);
@@ -34,8 +35,9 @@ public class MethodCallWithoutQualifierBlock extends GroovyBlock {
     return mySubBlocks;
   }
 
+  @NotNull
   @Override
-  public @NotNull TextRange getTextRange() {
+  public TextRange getTextRange() {
     return new TextRange(myChildren.get(0).getTextRange().getStartOffset(), myChildren.get(myChildren.size() - 1).getTextRange().getEndOffset());
   }
 

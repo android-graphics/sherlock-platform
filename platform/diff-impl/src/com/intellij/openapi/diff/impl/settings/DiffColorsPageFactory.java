@@ -22,7 +22,8 @@ import java.util.List;
 @ApiStatus.Internal
 public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAndFontDescriptorsProvider, DisplayPrioritySortable {
   @Override
-  public @NotNull NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
+  @NotNull
+  public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
     final SchemesPanel schemesPanel = new SchemesPanel(options);
 
     CompositeColorDescriptionPanel descriptionPanel = new CompositeColorDescriptionPanel();
@@ -34,7 +35,7 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
 
     schemesPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
       @Override
-      public void schemeChanged(final @NotNull Object source) {
+      public void schemeChanged(@NotNull final Object source) {
         previewPanel.setColorScheme(options.getSelectedScheme());
         optionsPanel.updateOptionsList();
       }
@@ -62,12 +63,14 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
   }
 
   @Override
-  public @NotNull String getPanelDisplayName() {
+  @NotNull
+  public String getPanelDisplayName() {
     return getDiffGroup();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDisplayName() {
+  public String getDisplayName() {
     return getDiffGroup();
   }
 
@@ -76,7 +79,8 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
     return DisplayPriority.COMMON_SETTINGS;
   }
 
-  public static @Nls String getDiffGroup() {
+  @Nls
+  public static String getDiffGroup() {
     return ApplicationBundle.message("title.diff");
   }
 }

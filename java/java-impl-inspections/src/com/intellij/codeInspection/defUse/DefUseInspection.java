@@ -1,12 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.defUse;
 
 import com.intellij.codeInsight.ExpressionUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
-import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
-import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
+import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
@@ -14,7 +17,6 @@ import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
@@ -48,7 +50,8 @@ public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool 
   }
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
+  @NotNull
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethod(@NotNull PsiMethod method) {
@@ -128,16 +131,27 @@ public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool 
   private void processFieldsViaDfa(PsiElement body, ProblemsHolder holder) {
     DfaValueFactory factory = new DfaValueFactory(holder.getProject());
     var flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
-    Set<DfaAnchor> variables = OverwrittenFieldAnalyzer.getOverwrittenFields(flow);
-    for (DfaAnchor anchor : variables) {
-      if (!(anchor instanceof JavaExpressionAnchor expressionAnchor)) continue;
-      PsiElement expression = expressionAnchor.getExpression();
-      if (expression instanceof PsiPrefixExpression && REPORT_PREFIX_EXPRESSIONS ||
-          expression instanceof PsiPostfixExpression && REPORT_POSTFIX_EXPRESSIONS) {
-        holder.registerProblem(expression, JavaBundle.message("inspection.unused.assignment.problem.descriptor4"));
+    Set<AssignInstruction> variables = OverwrittenFieldAnalyzer.getOverwrittenFields(flow);
+    for (AssignInstruction instruction : variables) {
+      DfaValue value = instruction.getAssignedValue();
+      if (!(value instanceof DfaVariableValue)) continue;
+      PsiField field = ObjectUtils.tryCast(((DfaVariableValue)value).getPsiVariable(), PsiField.class);
+      if (field == null) continue;
+      PsiExpression lExpression = instruction.getLExpression();
+      PsiExpression expression = instruction.getRExpression();
+      if (lExpression == null) continue;
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(lExpression.getParent());
+      if (parent instanceof PsiPrefixExpression && REPORT_PREFIX_EXPRESSIONS ||
+          parent instanceof PsiPostfixExpression && REPORT_POSTFIX_EXPRESSIONS) {
+        holder.registerProblem(parent, JavaBundle.message("inspection.unused.assignment.problem.descriptor4"));
       }
-      else if (expression instanceof PsiAssignmentExpression assignment) {
-        reportAssignmentProblem(assignment, holder);
+      else if (parent instanceof PsiAssignmentExpression) {
+        if (expression instanceof PsiArrayInitializerExpression ||
+            expression instanceof PsiNewExpression && ((PsiNewExpression)expression).getArrayInitializer() != null) {
+          // Due to implementation quirk, array initializers are reassigned in CFG, so false warnings appear there
+          continue;
+        }
+        reportAssignmentProblem((PsiAssignmentExpression)parent, holder);
       }
     }
   }
@@ -178,10 +192,10 @@ public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool 
       if (classInitializer.hasModifierProperty(PsiModifier.STATIC) == isStatic) {
         final List<PsiAssignmentExpression> assignments = collectAssignments(field, classInitializer);
         if (!assignments.isEmpty()) {
-          boolean isDefinitely = ControlFlowUtil.variableDefinitelyAssignedIn(field, classInitializer.getBody());
+          boolean isDefinitely = HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, classInitializer.getBody());
           if (isDefinitely) {
             try {
-              ControlFlow flow = ControlFlowFactory.getControlFlowNoConstantEvaluate(classInitializer.getBody());
+              ControlFlow flow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(classInitializer.getBody());
               if (ContainerUtil.exists(ControlFlowUtil.getReadBeforeWrite(flow),
                                        read -> (isStatic || ExpressionUtil.isEffectivelyUnqualified(read)) &&
                                                read.isReferenceTo(field))) {
@@ -226,13 +240,13 @@ public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool 
       return false;
     }
     for (PsiMethod constructor : constructors) {
-      if (!JavaPsiConstructorUtil.getChainedConstructors(constructor).isEmpty()) continue;
+      if (!JavaHighlightUtil.getChainedConstructors(constructor).isEmpty()) continue;
       final PsiCodeBlock body = constructor.getBody();
-      if (body == null || !ControlFlowUtil.variableDefinitelyAssignedIn(field, body)) {
+      if (body == null || !HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, body)) {
         return false;
       }
       try {
-        ControlFlow flow = ControlFlowFactory.getControlFlowNoConstantEvaluate(body);
+        ControlFlow flow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(body);
         if (ContainerUtil.exists(ControlFlowUtil.getReadBeforeWrite(flow),
                                  read -> ExpressionUtil.isEffectivelyUnqualified(read) && read.isReferenceTo(field))) {
           return false;
@@ -265,7 +279,8 @@ public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool 
     return false;
   }
 
-  private static @NotNull List<PsiMethodCallExpression> collectMethodsBeforeAssignment(PsiField field, ControlFlow flow) {
+  @NotNull
+  private static List<PsiMethodCallExpression> collectMethodsBeforeAssignment(PsiField field, ControlFlow flow) {
     List<PsiMethodCallExpression> results = new ArrayList<>();
     PsiManager manager = field.getManager();
     List<ControlFlowUtil.ControlFlowEdge> edges = ControlFlowUtil.getEdges(flow, 0);
@@ -312,7 +327,8 @@ public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool 
     return results;
   }
 
-  private static @NotNull List<PsiAssignmentExpression> collectAssignments(@NotNull PsiField field, @NotNull PsiClassInitializer classInitializer) {
+  @NotNull
+  private static List<PsiAssignmentExpression> collectAssignments(@NotNull PsiField field, @NotNull PsiClassInitializer classInitializer) {
     final List<PsiAssignmentExpression> assignmentExpressions = new ArrayList<>();
     classInitializer.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
@@ -342,12 +358,14 @@ public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool 
   }
 
   @Override
-  public @NotNull String getGroupDisplayName() {
+  @NotNull
+  public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.probable.bugs");
   }
 
   @Override
-  public @NotNull String getShortName() {
+  @NotNull
+  public String getShortName() {
     return SHORT_NAME;
   }
 
@@ -373,11 +391,13 @@ public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool 
       return myAssignments != null ? myAssignments : Collections.emptyList();
     }
 
-    public static @NotNull FieldWrite createInitializer() {
+    @NotNull
+    public static FieldWrite createInitializer() {
       return new FieldWrite(true, null);
     }
 
-    public static @NotNull FieldWrite createAssignments(boolean definitely, @NotNull List<PsiAssignmentExpression> assignmentExpressions) {
+    @NotNull
+    public static FieldWrite createAssignments(boolean definitely, @NotNull List<PsiAssignmentExpression> assignmentExpressions) {
       return new FieldWrite(definitely, assignmentExpressions);
     }
   }

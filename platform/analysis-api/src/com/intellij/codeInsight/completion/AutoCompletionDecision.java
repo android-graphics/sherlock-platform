@@ -1,9 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class AutoCompletionDecision {
@@ -17,8 +16,7 @@ public class AutoCompletionDecision {
   private AutoCompletionDecision() {
   }
 
-  @ApiStatus.Internal
-  public static final class InsertItem extends AutoCompletionDecision {
+  static final class InsertItem extends AutoCompletionDecision {
     private final LookupElement myElement;
 
     private InsertItem(LookupElement element) {

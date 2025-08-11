@@ -2,10 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -91,7 +88,7 @@ object BranchedFoldingUtils {
         }
         lift(expression)
         if (lhs != null && op != null) {
-            expression.replace(psiFactory.createExpressionByPattern("$0 $1 $2", lhs, op, expression))
+            expression.replace(psiFactory.createExpressionByPattern("$0 $1 $2", lhs!!, op!!, expression))
         }
     }
 
@@ -148,7 +145,7 @@ object BranchedFoldingUtils {
             }
 
             is KtCallExpression -> {
-                e.expressionType?.isNothingType ?: false
+                e.expressionType?.isNothing ?: false
             }
 
             is KtBreakExpression, is KtContinueExpression, is KtThrowExpression, is KtReturnExpression -> true
@@ -187,8 +184,7 @@ object BranchedFoldingUtils {
      * We say they match when they satisfy the following conditions:
      *  1. They have the same left operands
      *  2. They have the same operation tokens
-     *  3. No assignability errors are present
-     *  4. It satisfies one of the following:
+     *  3. It satisfies one of the following:
      *      - The left operand is nullable and the right is null
      *      - Their operations are the same
      *      - If we cannot find symbols of their operations
@@ -197,7 +193,6 @@ object BranchedFoldingUtils {
      *            they are the same.
      */
     context(KaSession)
-    @OptIn(KaExperimentalApi::class)
     private fun checkAssignmentsMatch(
         first: KtBinaryExpression,
         second: KtBinaryExpression,
@@ -215,28 +210,19 @@ object BranchedFoldingUtils {
         }
         if (!haveSameLeft(first, second) || first.operationToken != second.operationToken) return false
 
-        val secondRight = second.right
-        // Check if they satisfy the above condition 3.
-        if (secondRight != null && analyze(secondRight) {
-                secondRight
-                    .diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-                    .isNotEmpty()
-            }) return false
-
-        // Check if they satisfy the first of condition 4.
-        val isSecondRightNull = secondRight?.isNull()
+        // Check if they satisfy the first of condition 3.
+        val isSecondRightNull = second.right?.isNull()
         if (isSecondRightNull == true && leftType.canBeNull) return true
 
-
-        // Check if they satisfy the second of condition 4.
+        // Check if they satisfy the second of condition 3.
         if (firstOperation != null && firstOperation == second.operationReference.mainReference.resolve()) return true
 
-        // Check if they satisfy the third and fourth of condition 4.
+        // Check if they satisfy the third and fourth of condition 3.
         val rightTypeOfSecond = second.right?.expressionType ?: return false
         if (!leftType.canBeNull && rightTypeOfSecond.canBeNull) return false
         val nonNullableRightTypeOfSecond = rightTypeOfSecond.withNullability(KaTypeNullability.NON_NULLABLE)
-        return nonNullableRightTypeOfFirst.semanticallyEquals(nonNullableRightTypeOfSecond) ||
-                (first.operationToken == KtTokens.EQ && nonNullableRightTypeOfSecond.isSubtypeOf(leftType))
+        return nonNullableRightTypeOfFirst.isEqualTo(nonNullableRightTypeOfSecond) ||
+                (first.operationToken == KtTokens.EQ && nonNullableRightTypeOfSecond.isSubTypeOf(leftType))
     }
 
     /**
@@ -276,7 +262,7 @@ object BranchedFoldingUtils {
      *       return       // cannot be lifted because of the null returned expression -> this function will return `null`
      *     }
      */
-    fun getFoldableBranchedReturn(branch: KtExpression?): KtReturnExpression? =
+    private fun getFoldableBranchedReturn(branch: KtExpression?): KtReturnExpression? =
         (branch?.lastBlockStatementOrThis() as? KtReturnExpression)?.takeIf {
             it.returnedExpression != null &&
                     it.returnedExpression !is KtLambdaExpression &&
@@ -363,7 +349,7 @@ object BranchedFoldingUtils {
                 getFoldableReturnsFromBranches(expression.tryBlockAndCatchBodies())
         }
         is KtCallExpression -> {
-            if (expression.expressionType?.isNothingType == true) FoldableReturns(emptyList(), true) else FoldableReturns.NotFoldable
+            if (expression.expressionType?.isNothing == true) FoldableReturns(emptyList(), true) else FoldableReturns.NotFoldable
         }
         is KtBreakExpression, is KtContinueExpression, is KtThrowExpression -> FoldableReturns(emptyList(), true)
         else -> FoldableReturns.NotFoldable
@@ -416,7 +402,7 @@ object BranchedFoldingUtils {
                 getFoldableReturns(expression.tryBlockAndCatchBodies())
         }
         is KtCallExpression -> {
-            if (expression.expressionType?.isNothingType == true) emptyList() else null
+            if (expression.expressionType?.isNothing == true) emptyList() else null
         }
         is KtBreakExpression, is KtContinueExpression, is KtThrowExpression -> emptyList()
         else -> null

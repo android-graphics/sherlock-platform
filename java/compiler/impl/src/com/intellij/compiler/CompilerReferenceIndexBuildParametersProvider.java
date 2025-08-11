@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase;
@@ -13,12 +13,14 @@ import java.util.List;
 import static com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase.isCaseSensitiveFS;
 
 final class CompilerReferenceIndexBuildParametersProvider extends BuildProcessParametersProvider {
-  private final @NotNull Project project;
+  @NotNull
+  private final Project project;
 
   CompilerReferenceIndexBuildParametersProvider(@NotNull Project project) { this.project = project; }
 
+  @NotNull
   @Override
-  public @NotNull List<String> getVMArguments() {
+  public List<String> getVMArguments() {
     boolean enabled = CompilerReferenceServiceBase.isEnabled();
     if (!enabled) return Collections.emptyList();
     boolean caseSensitiveFS = isCaseSensitiveFS(project);

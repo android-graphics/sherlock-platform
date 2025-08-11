@@ -8,9 +8,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 object DataContextUtils {
   /**
    * Returns language from [CommonDataKeys.PSI_FILE]

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.youtrack.lang;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
@@ -29,8 +29,9 @@ public class YouTrackParserDefinition implements ParserDefinition {
   public static final IElementType QUERY = new IElementType("QUERY", YouTrackLanguage.INSTANCE);
   public static final IFileElementType FILE = new IFileElementType(YouTrackLanguage.INSTANCE);
 
+  @NotNull
   @Override
-  public @NotNull Lexer createLexer(Project project) {
+  public Lexer createLexer(Project project) {
     return new YouTrackMockLexer();
   }
 
@@ -44,23 +45,27 @@ public class YouTrackParserDefinition implements ParserDefinition {
     return FILE;
   }
 
+  @NotNull
   @Override
-  public @NotNull TokenSet getWhitespaceTokens() {
+  public TokenSet getWhitespaceTokens() {
     return TokenSet.EMPTY;
   }
 
+  @NotNull
   @Override
-  public @NotNull TokenSet getCommentTokens() {
+  public TokenSet getCommentTokens() {
     return TokenSet.EMPTY;
   }
 
+  @NotNull
   @Override
-  public @NotNull TokenSet getStringLiteralElements() {
+  public TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement createElement(ASTNode node) {
+  public PsiElement createElement(ASTNode node) {
     assert node.getElementType() == QUERY;
     return new YouTrackQueryElement(node);
   }
@@ -105,8 +110,9 @@ public class YouTrackParserDefinition implements ParserDefinition {
       return 0;
     }
 
+    @Nullable
     @Override
-    public @Nullable IElementType getTokenType() {
+    public IElementType getTokenType() {
       return myStart >= myEnd? null : ANY_TEXT;
     }
 
@@ -125,8 +131,9 @@ public class YouTrackParserDefinition implements ParserDefinition {
       myStart = myEnd;
     }
 
+    @NotNull
     @Override
-    public @NotNull CharSequence getBufferSequence() {
+    public CharSequence getBufferSequence() {
       return myBuffer;
     }
 
@@ -142,8 +149,9 @@ public class YouTrackParserDefinition implements ParserDefinition {
    */
   private static class YouTrackMockParser implements PsiParser {
 
+    @NotNull
     @Override
-    public @NotNull ASTNode parse(IElementType root, PsiBuilder builder) {
+    public ASTNode parse(IElementType root, PsiBuilder builder) {
       PsiBuilder.Marker rootMarker = builder.mark();
 
       PsiBuilder.Marker queryMarker = builder.mark();

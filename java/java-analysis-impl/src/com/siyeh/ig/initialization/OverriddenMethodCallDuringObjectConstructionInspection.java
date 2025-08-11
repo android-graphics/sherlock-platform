@@ -28,7 +28,8 @@ import org.jetbrains.annotations.NotNull;
 public final class OverriddenMethodCallDuringObjectConstructionInspection extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("overridden.method.call.in.constructor.problem.descriptor");
   }
 

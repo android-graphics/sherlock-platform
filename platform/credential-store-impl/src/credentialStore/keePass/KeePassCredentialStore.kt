@@ -6,6 +6,7 @@ import com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
 import com.intellij.credentialStore.kdbx.KdbxPassword
 import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.credentialStore.kdbx.loadKdbx
+import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.delete
@@ -119,7 +120,7 @@ internal class KeePassCredentialStore(
   }
 }
 
-class InMemoryCredentialStore : BaseKeePassCredentialStore() {
+class InMemoryCredentialStore : BaseKeePassCredentialStore(), PasswordStorage {
   override val db = KeePassDatabase()
 
   override fun markDirty() {}

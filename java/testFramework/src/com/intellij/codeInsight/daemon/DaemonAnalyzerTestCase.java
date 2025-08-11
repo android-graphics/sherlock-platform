@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.Pass;
@@ -21,7 +21,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -52,7 +51,6 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -184,7 +182,8 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     doDoTest(checkWarnings, checkInfos);
   }
 
-  protected @NotNull HighlightTestInfo testFile(@NonNls String @NotNull ... filePath) {
+  @NotNull
+  protected HighlightTestInfo testFile(@NonNls String @NotNull ... filePath) {
     return new HighlightTestInfo(getTestRootDisposable(), filePath) {
       @Override
       public HighlightTestInfo doTest() {
@@ -212,11 +211,12 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     doDoTest(checkWarnings, checkInfos);
   }
 
-  protected @NotNull @Unmodifiable Collection<HighlightInfo> doDoTest(boolean checkWarnings, boolean checkInfos) {
+  @NotNull
+  protected Collection<HighlightInfo> doDoTest(boolean checkWarnings, boolean checkInfos) {
     return doDoTest(checkWarnings, checkInfos, false);
   }
 
-  protected @Unmodifiable Collection<HighlightInfo> doDoTest(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings) {
+  protected Collection<HighlightInfo> doDoTest(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings) {
     return ContainerUtil.filter(
       checkHighlighting(new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos)),
       info -> info.getSeverity() == HighlightSeverity.INFORMATION && checkInfos ||
@@ -225,7 +225,8 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
               info.getSeverity().compareTo(HighlightSeverity.WARNING) > 0);
   }
 
-  protected @NotNull Collection<HighlightInfo> checkHighlighting(final @NotNull ExpectedHighlightingData data) {
+  @NotNull
+  protected Collection<HighlightInfo> checkHighlighting(@NotNull final ExpectedHighlightingData data) {
     data.init();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
@@ -247,11 +248,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
                                @NotNull Collection<? extends HighlightInfo> infos,
                                @NotNull String text) {
     PsiFile file = getFile();
-    ActionUtil.underModalProgress(myProject, "", () -> {
-      //line marker tooltips are called in BGT in production
-      data.checkLineMarkers(file, DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(file), getProject()), text);
-      return null;
-    });
+    data.checkLineMarkers(file, DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(file), getProject()), text);
     data.checkResult(file, infos, text);
   }
 
@@ -277,15 +274,18 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     ((FileTreeAccessFilter)myVirtualFileFilter).allowTreeAccessForAllFiles();
   }
 
-  protected final @NotNull @Unmodifiable List<HighlightInfo> highlightErrors() {
+  @NotNull
+  protected final List<HighlightInfo> highlightErrors() {
     return doHighlighting(HighlightSeverity.ERROR);
   }
 
-  protected final @NotNull @Unmodifiable List<HighlightInfo> doHighlighting(@NotNull HighlightSeverity minSeverity) {
+  @NotNull
+  protected final List<HighlightInfo> doHighlighting(@NotNull HighlightSeverity minSeverity) {
     return filter(doHighlighting(), minSeverity);
   }
 
-  protected final @NotNull @Unmodifiable List<HighlightInfo> doHighlighting() {
+  @NotNull
+  protected final List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     IntList toIgnore = new IntArrayList();
@@ -301,6 +301,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
       toIgnore.add(Pass.LINE_MARKERS);
       toIgnore.add(Pass.SLOW_LINE_MARKERS);
       toIgnore.add(Pass.LOCAL_INSPECTIONS);
+      toIgnore.add(Pass.WHOLE_FILE_LOCAL_INSPECTIONS);
       toIgnore.add(Pass.POPUP_HINTS);
       toIgnore.add(Pass.UPDATE_ALL);
     }
@@ -325,7 +326,8 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     return annotatedWith(CanChangeDocumentDuringHighlighting.class);
   }
 
-  public static @NotNull @Unmodifiable List<HighlightInfo> filter(@NotNull List<? extends HighlightInfo> infos, @NotNull HighlightSeverity minSeverity) {
+  @NotNull
+  public static List<HighlightInfo> filter(@NotNull List<? extends HighlightInfo> infos, @NotNull HighlightSeverity minSeverity) {
     return ContainerUtil.filter(infos, info -> info.getSeverity().compareTo(minSeverity) >= 0);
   }
 
@@ -356,17 +358,19 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor);
   }
 
-  protected static @Nullable IntentionAction findIntentionAction(@NotNull Collection<? extends HighlightInfo> infos,
-                                                                 @NotNull String intentionActionName,
-                                                                 @NotNull Editor editor,
-                                                                 @NotNull PsiFile file) {
+  @Nullable
+  protected static IntentionAction findIntentionAction(@NotNull Collection<? extends HighlightInfo> infos,
+                                                       @NotNull String intentionActionName,
+                                                       @NotNull Editor editor,
+                                                       @NotNull PsiFile file) {
     List<IntentionAction> actions = getIntentionActions(infos, editor, file);
     return LightQuickFixTestCase.findActionWithText(actions, intentionActionName);
   }
 
-  protected static @NotNull @Unmodifiable List<IntentionAction> getIntentionActions(@NotNull Collection<? extends HighlightInfo> infos,
-                                                                                    @NotNull Editor editor,
-                                                                                    @NotNull PsiFile file) {
+  @NotNull
+  protected static List<IntentionAction> getIntentionActions(@NotNull Collection<? extends HighlightInfo> infos,
+                                                             @NotNull Editor editor,
+                                                             @NotNull PsiFile file) {
     List<IntentionAction> actions = LightQuickFixTestCase.getAvailableActions(editor, file);
 
     final List<IntentionAction> quickFixActions = new ArrayList<>();
@@ -387,7 +391,8 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     doDoTest(checkWarnings, checkInfos);
   }
 
-  public @NotNull PsiClass createClass(@NotNull @Language("JAVA") String text) throws IOException {
+  @NotNull
+  public PsiClass createClass(@NotNull @Language("JAVA") String text) throws IOException {
     VirtualFile classVFile = WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
       final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
       final PsiJavaFile javaFile = (PsiJavaFile)factory.createFileFromText("a.java", JavaFileType.INSTANCE, text);

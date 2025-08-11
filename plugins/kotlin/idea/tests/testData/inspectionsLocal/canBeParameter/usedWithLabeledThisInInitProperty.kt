@@ -1,6 +1,4 @@
 // PROBLEM: none
-// WITH_STDLIB
-
 class UsedWithLabeledThisInInitProperty(<caret>val x: Int) {
     init {
         run {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl;
 
@@ -24,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,7 +36,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PsiToDocumentSynchronizer {
@@ -188,7 +191,7 @@ public class PsiToDocumentSynchronizer {
       }
     }
     catch (Throwable e) {
-      myPsiDocumentManager.forceReload(changeScope.getViewProvider().getVirtualFile(), Collections.singletonList(changeScope.getViewProvider()));
+      myPsiDocumentManager.forceReload(changeScope.getViewProvider().getVirtualFile(), changeScope.getViewProvider());
       //noinspection ConstantConditions
       ExceptionUtil.rethrowAllAsUnchecked(e);
     }

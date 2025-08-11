@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:ApiStatus.Internal
-
 package com.intellij.util.indexing
 
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory
@@ -55,7 +53,6 @@ fun createTimestampsEnumerator(path: Path): DurableDataEnumerator<TimestampsImmu
 }
 
 /** Descriptor for [PersistentEnumerator] */
-@ApiStatus.Internal
 class TimestampsKeyDescriptor : KeyDescriptor<TimestampsImmutable> {
   override fun isEqual(val1: TimestampsImmutable, val2: TimestampsImmutable): Boolean {
     return val1 == val2

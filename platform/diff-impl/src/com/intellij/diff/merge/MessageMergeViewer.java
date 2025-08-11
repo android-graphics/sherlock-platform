@@ -13,9 +13,9 @@ import java.awt.event.ActionEvent;
 
 @ApiStatus.Internal
 class MessageMergeViewer implements MergeTool.MergeViewer {
-  private final @NotNull MergeContext myMergeContext;
+  @NotNull private final MergeContext myMergeContext;
 
-  private final @NotNull JPanel myPanel;
+  @NotNull private final JPanel myPanel;
 
   MessageMergeViewer(@NotNull MergeContext context, @NotNull @Nls String message) {
     myMergeContext = context;
@@ -24,23 +24,27 @@ class MessageMergeViewer implements MergeTool.MergeViewer {
     myPanel.add(DiffUtil.createMessagePanel(message), BorderLayout.CENTER);
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent getComponent() {
+  public JComponent getComponent() {
     return myPanel;
   }
 
+  @Nullable
   @Override
-  public @Nullable JComponent getPreferredFocusedComponent() {
+  public JComponent getPreferredFocusedComponent() {
     return null;
   }
 
+  @NotNull
   @Override
-  public @NotNull MergeTool.ToolbarComponents init() {
+  public MergeTool.ToolbarComponents init() {
     return new MergeTool.ToolbarComponents();
   }
 
+  @Nullable
   @Override
-  public @Nullable Action getResolveAction(final @NotNull MergeResult result) {
+  public Action getResolveAction(@NotNull final MergeResult result) {
     if (result != MergeResult.CANCEL) return null;
 
     String caption = MergeUtil.getResolveActionTitle(result, null, myMergeContext);

@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema.remote;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**

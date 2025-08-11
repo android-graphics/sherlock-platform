@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
-import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessWrapper;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,16 +28,17 @@ public class WinTerminalExecutor extends TerminalExecutor {
     }
   }
 
-  private @Nullable File myRedirectFile;
-  private @Nullable FileInputStream myRedirectStream;
+  @Nullable private File myRedirectFile;
+  @Nullable private FileInputStream myRedirectStream;
 
   public WinTerminalExecutor(@NotNull @NonNls String exePath, @NotNull Command command) {
     super(exePath, command);
   }
 
+  @NotNull
   @Override
-  protected @NotNull SvnProcessHandler createProcessHandler() {
-    return new WinTerminalProcessHandler(myProcess, myCommandLine, needsUtf8Output(), needsBinaryOutput());
+  protected SvnProcessHandler createProcessHandler() {
+    return new WinTerminalProcessHandler(myProcess, myCommandLine.getCommandLineString(), needsUtf8Output(), needsBinaryOutput());
   }
 
   @Override
@@ -78,12 +79,13 @@ public class WinTerminalExecutor extends TerminalExecutor {
     deleteTempFile(myRedirectFile);
   }
 
+  @NotNull
   @Override
-  protected @NotNull Process createProcess() throws ExecutionException {
+  protected Process createProcess() throws ExecutionException {
     checkRedirectFile();
 
-    List<String> parameters = escapeArguments(buildParameters());
-    parameters.add(0, CommandLineUtil.getWinShellName());
+    List<@NonNls String> parameters = escapeArguments(buildParameters());
+    parameters.add(0, ExecUtil.getWindowsShellName());
     parameters.add(1, "/c");
     parameters.add(">>");
     //noinspection ConstantConditions
@@ -116,12 +118,14 @@ public class WinTerminalExecutor extends TerminalExecutor {
   /**
    * TODO: Identify pty4j quoting requirements for Windows and implement accordingly
    */
+  @NotNull
   @Override
-  protected @NotNull List<String> escapeArguments(@NotNull List<String> arguments) {
+  protected List<String> escapeArguments(@NotNull List<String> arguments) {
     return ContainerUtil.map(arguments, argument -> needQuote(argument) && !isQuoted(argument) ? quote(argument) : argument);
   }
 
-  private static @NotNull String quote(@NotNull String argument) {
+  @NotNull
+  private static String quote(@NotNull String argument) {
     return StringUtil.wrapWithDoubleQuote(argument);
   }
 

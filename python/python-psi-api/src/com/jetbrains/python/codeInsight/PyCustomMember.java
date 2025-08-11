@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.icons.AllIcons;
@@ -33,7 +33,8 @@ public class PyCustomMember extends UserDataHolderBase {
   private final String myName;
   private final boolean myResolveToInstance;
   private final Function<? super PsiElement, ? extends PyType> myTypeCallback;
-  private final @Nullable String myTypeName;
+  @Nullable
+  private final String myTypeName;
 
   private final PsiElement myTarget;
   private PyPsiPath myPsiPath;
@@ -47,7 +48,7 @@ public class PyCustomMember extends UserDataHolderBase {
   private Icon myIcon = AllIcons.Nodes.Method;
   private PyCustomMemberTypeInfo<?> myCustomTypeInfo;
 
-  public PyCustomMember(final @NotNull String name, final @Nullable String type, final boolean resolveToInstance) {
+  public PyCustomMember(@NotNull final String name, @Nullable final String type, final boolean resolveToInstance) {
     myName = name;
     myResolveToInstance = resolveToInstance;
     myTypeName = type;
@@ -56,7 +57,7 @@ public class PyCustomMember extends UserDataHolderBase {
     myTypeCallback = null;
   }
 
-  public PyCustomMember(final @NotNull String name) {
+  public PyCustomMember(@NotNull final String name) {
     myName = name;
     myResolveToInstance = false;
     myTypeName = null;
@@ -65,8 +66,8 @@ public class PyCustomMember extends UserDataHolderBase {
     myTypeCallback = null;
   }
 
-  public PyCustomMember(final @NotNull String name,
-                        final @Nullable String type,
+  public PyCustomMember(@NotNull final String name,
+                        @Nullable final String type,
                         final Function<? super PsiElement, ? extends PyType> typeCallback) {
     myName = name;
 
@@ -77,7 +78,7 @@ public class PyCustomMember extends UserDataHolderBase {
     myTypeCallback = typeCallback;
   }
 
-  public PyCustomMember(final @NotNull String name, final @Nullable PsiElement target, @Nullable String typeName) {
+  public PyCustomMember(@NotNull final String name, @Nullable final PsiElement target, @Nullable String typeName) {
     myName = name;
     myTarget = target;
     myResolveToInstance = false;
@@ -85,7 +86,7 @@ public class PyCustomMember extends UserDataHolderBase {
     myTypeCallback = null;
   }
 
-  public PyCustomMember(final @NotNull String name, final @Nullable PsiElement target) {
+  public PyCustomMember(@NotNull final String name, @Nullable final PsiElement target) {
     this(name, target, null);
   }
 
@@ -94,7 +95,7 @@ public class PyCustomMember extends UserDataHolderBase {
     return this;
   }
 
-  public PyCustomMember resolvesToClass(final @NotNull String classQName) {
+  public PyCustomMember resolvesToClass(@NotNull final String classQName) {
     myPsiPath = new PyPsiPath.ToClassQName(classQName);
     return this;
   }
@@ -125,7 +126,8 @@ public class PyCustomMember extends UserDataHolderBase {
   /**
    * Force resolving to {@link com.jetbrains.python.codeInsight.PyCustomMemberProviderImpl.MyInstanceElement} even if element is function
    */
-  public final @NotNull PyCustomMember alwaysResolveToCustomElement() {
+  @NotNull
+  public final PyCustomMember alwaysResolveToCustomElement() {
     myAlwaysResolveToCustomElement = true;
     return this;
   }
@@ -189,7 +191,8 @@ public class PyCustomMember extends UserDataHolderBase {
    * @param resolveContext context to be used in resolve
    * @return resolved element
    */
-  public @Nullable PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
+  @Nullable
+  public PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
 
     if (myTarget != null) {
       return myTarget;
@@ -219,14 +222,16 @@ public class PyCustomMember extends UserDataHolderBase {
     return null;
   }
 
-  private @Nullable PsiElement findResolveTarget(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
+  @Nullable
+  private PsiElement findResolveTarget(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
     if (myPsiPath != null) {
       return myPsiPath.resolve(context, resolveContext);
     }
     return null;
   }
 
-  public @Nullable String getShortType() {
+  @Nullable
+  public String getShortType() {
     if (myTypeName == null) {
       return null;
     }
@@ -249,14 +254,14 @@ public class PyCustomMember extends UserDataHolderBase {
    * @param reference reference to check
    * @return true if reference points to it
    */
-  public final boolean isReferenceToMe(final @NotNull PsiReference reference) {
+  public final boolean isReferenceToMe(@NotNull final PsiReference reference) {
     return PyCustomMemberProvider.getInstance().isReferenceToMe(reference, this);
   }
 
   /**
    * @param icon icon to use (will be used method icon otherwise)
    */
-  public PyCustomMember withIcon(final @NotNull Icon icon) {
+  public PyCustomMember withIcon(@NotNull final Icon icon) {
     myIcon = icon;
     return this;
   }
@@ -267,7 +272,7 @@ public class PyCustomMember extends UserDataHolderBase {
    *
    * @param customInfo custom info to add
    */
-  public PyCustomMember withCustomTypeInfo(final @NotNull PyCustomMemberTypeInfo<?> customInfo) {
+  public PyCustomMember withCustomTypeInfo(@NotNull final PyCustomMemberTypeInfo<?> customInfo) {
     LOG.assertTrue(myTypeName != null, "Cant add custom type info if no type provided");
     myCustomTypeInfo = customInfo;
     return this;

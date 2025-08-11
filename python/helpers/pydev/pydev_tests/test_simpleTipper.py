@@ -3,7 +3,6 @@
 '''
 from _pydev_bundle import _pydev_imports_tipper
 from _pydevd_bundle.pydevd_constants import IS_PY38_OR_GREATER
-from _pydevd_bundle.pydevd_constants import IS_PY313_OR_GREATER
 import inspect
 import pytest
 import sys
@@ -84,7 +83,6 @@ class TestCPython(unittest.TestCase):
             t = self.assert_in('readlines' , tips)
             self.assertTrue('->' in t[1] or 'sizehint' in t[1])
 
-    @pytest.mark.xfail(IS_PY313_OR_GREATER, reason='PCQA-886')
     def test_imports(self):
         '''
         You can print_ the results to check...

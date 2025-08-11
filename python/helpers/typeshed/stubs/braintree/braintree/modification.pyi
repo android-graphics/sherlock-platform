@@ -1,7 +1,7 @@
-from decimal import Decimal
+from typing import Any
 
-from braintree.resource import Resource
+from braintree.resource import Resource as Resource
 
 class Modification(Resource):
-    amount: Decimal
+    amount: Any
     def __init__(self, gateway, attributes) -> None: ...

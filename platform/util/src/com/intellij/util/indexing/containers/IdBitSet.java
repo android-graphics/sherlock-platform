@@ -4,7 +4,6 @@ package com.intellij.util.indexing.containers;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -18,8 +17,7 @@ import java.util.Arrays;
  * Differs from {@link java.util.BitSet} in that it stores ids relative to indexBase=min(ids), which allows to store large
  * ids with a memory footprint proportional to the width of ids _range_ not to the size of ids themselves.
  */
-@ApiStatus.Internal
-public final class IdBitSet implements Cloneable, RandomAccessIntContainer {
+final class IdBitSet implements Cloneable, RandomAccessIntContainer {
   /** log2(bits per long) */
   private static final int SHIFT = 6;
   private static final int BITS_PER_WORD = 1 << SHIFT;
@@ -37,7 +35,7 @@ public final class IdBitSet implements Cloneable, RandomAccessIntContainer {
    */
   private int bitIndexBase = -1;
 
-  public IdBitSet(int capacity) {
+  IdBitSet(int capacity) {
     bitSlots = allocateArrayForCapacity(capacityWithReserve(capacity));
   }
 
@@ -154,18 +152,6 @@ public final class IdBitSet implements Cloneable, RandomAccessIntContainer {
     }
   }
 
-  public int getMin() {
-    return nextSetBit(0);
-  }
-
-  public int getMax() {
-    if (bitIndexBase < 0 || bitsSet <= 0) {
-      throw new IllegalStateException();
-    }
-    long word = bitSlots[maxNonZeroSlotIndex];
-    return (maxNonZeroSlotIndex * BITS_PER_WORD) + (BITS_PER_WORD - 1 - Long.numberOfLeadingZeros(word)) + bitIndexBase;
-  }
-
   private int nextSetBit(int bitIndex) {
     if (bitIndexBase < 0) {
       throw new IllegalStateException();
@@ -203,9 +189,6 @@ public final class IdBitSet implements Cloneable, RandomAccessIntContainer {
   }
 
   private static long @NotNull [] allocateArrayForCapacity(int capacityInBits) {
-    if (capacityInBits < 0) {
-      throw new IllegalArgumentException("capacityInBits(=" + capacityInBits + ") must be >= 0");
-    }
     return new long[(capacityInBits >> SHIFT) + 1];
   }
 

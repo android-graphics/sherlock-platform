@@ -1,15 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(FlowPreview::class)
-
 package com.intellij.openapi.progress.util
 
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapperPeer
@@ -18,63 +14,75 @@ import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer.GlasspanePeerUnav
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.ui.PopupBorder
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
-import org.jetbrains.annotations.ApiStatus.Internal
+import com.intellij.util.Alarm
+import com.intellij.util.SingleAlarm
+import com.intellij.util.ui.EdtInvocationManager
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Window
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
-import java.lang.Runnable
 import javax.swing.*
 import javax.swing.border.Border
 
-@Internal
-class ProgressDialog(
-  private val progressWindow: ProgressWindow,
-  private val shouldShowBackground: Boolean,
-  cancelText: @Nls String?,
-  private val parentWindow: Window?,
-) : Disposable {
+class ProgressDialog(private val myProgressWindow: ProgressWindow,
+                     private val myShouldShowBackground: Boolean,
+                     cancelText: @Nls String?,
+                     private val myParentWindow: Window?) : Disposable {
   companion object {
-    internal const val UPDATE_INTERVAL: Int = 50 // msec. 20 frames per second.
+    const val UPDATE_INTERVAL: Int = 50 //msec. 20 frames per second.
   }
 
-  private var lastTimeDrawn: Long = -1
-  private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-  private val cancelButtonEnabledRequests = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-  private var wasShown = false
-  private val startMillis = System.currentTimeMillis()
+  private var myLastTimeDrawn: Long = -1
+  private val myUpdateAlarm = SingleAlarm(this::update, 500, this)
+  private var myWasShown = false
+  private val myStartMillis = System.currentTimeMillis()
 
   private val ui = ProgressDialogUI()
 
-  private val repaintRunnable = Runnable(::doRepaint)
+  private val myRepaintRunnable = Runnable {
+    ui.updateTitle(myProgressWindow.title)
+    ui.updateProgress(
+      text = myProgressWindow.text,
+      details = myProgressWindow.text2,
+      fraction = if (myProgressWindow.isIndeterminate) null else myProgressWindow.fraction,
+    )
+    val progressBar = ui.progressBar
+    if (progressBar.isShowing && progressBar.isIndeterminate && isWriteActionProgress()) {
+      val progressBarUI = progressBar.ui
+      if (progressBarUI is DarculaProgressBarUI) {
+        progressBarUI.updateIndeterminateAnimationIndex(myStartMillis)
+      }
+    }
+    myLastTimeDrawn = System.currentTimeMillis()
+    synchronized(this@ProgressDialog) {
+      myRepaintedFlag = true
+    }
+  }
 
-  private var repaintedFlag = true // guarded by this
-  private var popup: DialogWrapper? = null
-
-  @Suppress("SSBasedInspection")
-  private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+  private var myRepaintedFlag = true // guarded by this
+  private var myPopup: DialogWrapper? = null
+  private val myDisableCancelAlarm = SingleAlarm(
+    this::setCancelButtonDisabledInEDT, 500, null, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any()
+  )
+  private val myEnableCancelAlarm = SingleAlarm(
+    this::setCancelButtonEnabledInEDT, 500, null, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any()
+  )
 
   init {
-    ui.progressBar.isIndeterminate = progressWindow.isIndeterminate
+    ui.progressBar.isIndeterminate = myProgressWindow.isIndeterminate
     val cancelButton = ui.cancelButton
     if (cancelText != null) {
       cancelButton.text = cancelText
     }
-    if (progressWindow.myShouldShowCancel) {
+    if (myProgressWindow.myShouldShowCancel) {
       cancelButton.addActionListener {
-        progressWindow.cancel()
+        myProgressWindow.cancel()
       }
       val cancelFunction = ActionListener {
         if (cancelButton.isEnabled) {
-          progressWindow.cancel()
+          myProgressWindow.cancel()
         }
       }
       cancelButton.registerKeyboardAction(
@@ -87,96 +95,69 @@ class ProgressDialog(
       cancelButton.isVisible = false
     }
     val backgroundButton = ui.backgroundButton
-    if (shouldShowBackground) {
+    if (myShouldShowBackground) {
       backgroundButton.addActionListener {
-        progressWindow.background()
+        myProgressWindow.background()
       }
     }
     else {
       backgroundButton.isVisible = false
     }
-
-    coroutineScope.launch {
-      updateRequests
-        .throttle(500)
-        .collectLatest {
-          withContext(Dispatchers.EDT + progressWindow.modalityState.asContextElement()) {
-            if (!repaintedFlag) {
-              return@withContext
-            }
-
-            if (System.currentTimeMillis() > lastTimeDrawn + UPDATE_INTERVAL) {
-              repaintedFlag = false
-              doRepaint()
-            }
-            else {
-              scheduleUpdate()
-            }
-          }
-        }
-    }
-
-    coroutineScope.launch {
-      val anyModalityContext = Dispatchers.EDT + ModalityState.any().asContextElement()
-      cancelButtonEnabledRequests
-        .debounce(500)
-        .collectLatest { isEnabled ->
-          withContext(anyModalityContext) {
-            ui.cancelButton.isEnabled = isEnabled
-          }
-        }
-    }
-  }
-
-  private fun doRepaint() {
-    ui.updateTitle(progressWindow.title)
-    ui.updateProgress(
-      text = progressWindow.text,
-      details = progressWindow.text2,
-      fraction = if (progressWindow.isIndeterminate) null else progressWindow.fraction,
-    )
-    val progressBar = ui.progressBar
-    if (progressBar.isShowing && progressBar.isIndeterminate && isWriteActionProgress()) {
-      val progressBarUI = progressBar.ui
-      if (progressBarUI is DarculaProgressBarUI) {
-        progressBarUI.updateIndeterminateAnimationIndex(startMillis)
-      }
-    }
-    lastTimeDrawn = System.currentTimeMillis()
-    synchronized(this@ProgressDialog) {
-      repaintedFlag = true
-    }
   }
 
   override fun dispose() {
-    coroutineScope.cancel()
-
     Disposer.dispose(ui)
+    myEnableCancelAlarm.cancelAllRequests()
+    myDisableCancelAlarm.cancelAllRequests()
   }
 
   val panel: JPanel get() = ui.panel
 
-  fun getRepaintRunnable(): Runnable = repaintRunnable
+  fun getRepaintRunnable(): Runnable = myRepaintRunnable
 
-  fun getPopup(): DialogWrapper? = popup
+  fun getPopup(): DialogWrapper? = myPopup
 
   fun cancel() {
     enableCancelButtonIfNeeded(false)
   }
 
+  private fun setCancelButtonEnabledInEDT() {
+    ui.cancelButton.isEnabled = true
+  }
+
+  private fun setCancelButtonDisabledInEDT() {
+    ui.cancelButton.isEnabled = false
+  }
+
   fun enableCancelButtonIfNeeded(enable: Boolean) {
-    if (progressWindow.myShouldShowCancel) {
-      check(cancelButtonEnabledRequests.tryEmit(enable))
+    if (myProgressWindow.myShouldShowCancel && !myUpdateAlarm.isDisposed) {
+      (if (enable) myEnableCancelAlarm else myDisableCancelAlarm).request()
     }
   }
 
-  fun scheduleUpdate() {
-    check(updateRequests.tryEmit(Unit))
+  @Synchronized
+  fun update() {
+    if (myRepaintedFlag) {
+      if (System.currentTimeMillis() > myLastTimeDrawn + UPDATE_INTERVAL) {
+        myRepaintedFlag = false
+        EdtInvocationManager.invokeLaterIfNeeded(myRepaintRunnable)
+      }
+      else {
+        // later to avoid concurrent dispose/addRequest
+        if (!myUpdateAlarm.isDisposed && myUpdateAlarm.isEmpty) {
+          EdtInvocationManager.invokeLaterIfNeeded {
+            if (!myUpdateAlarm.isDisposed) {
+              myUpdateAlarm.request(myProgressWindow.modalityState)
+            }
+          }
+        }
+      }
+    }
   }
 
   @Synchronized
   fun background() {
-    if (shouldShowBackground) {
+    if (myShouldShowBackground) {
       ui.backgroundButton.isEnabled = false
     }
 
@@ -188,61 +169,63 @@ class ProgressDialog(
   }
 
   fun hideImmediately() {
-    if (popup != null) {
-      popup!!.close(DialogWrapper.CANCEL_EXIT_CODE)
-      popup = null
+    if (myPopup != null) {
+      myPopup!!.close(DialogWrapper.CANCEL_EXIT_CODE)
+      myPopup = null
     }
   }
 
   fun show() {
-    if (wasShown) {
+    if (myWasShown) {
       return
     }
-    wasShown = true
+    myWasShown = true
 
-    if (ApplicationManager.getApplication().isHeadlessEnvironment || parentWindow == null) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment || myParentWindow == null) {
       return
     }
-    if (popup != null) {
-      popup!!.close(DialogWrapper.CANCEL_EXIT_CODE)
+    if (myPopup != null) {
+      myPopup!!.close(DialogWrapper.CANCEL_EXIT_CODE)
     }
 
-    val popup = createDialog(parentWindow)
-    this.popup = popup
+    val popup = createDialog(myParentWindow)
+    myPopup = popup
 
     popup.show()
 
     // 'Light' popup is shown in glass pane, glass pane is 'activating' (becomes visible) in 'invokeLater' call
     // (see IdeGlassPaneImp.addImpl), requesting focus to cancel button until that time has no effect, as it's not showing.
     SwingUtilities.invokeLater {
-      if (this.popup != null && !this.popup!!.isDisposed) {
+      if (myPopup != null && !myPopup!!.isDisposed) {
         val window = SwingUtilities.getWindowAncestor(ui.cancelButton)
         if (window != null) {
           val originalFocusOwner = window.mostRecentFocusOwner
           if (originalFocusOwner != null) {
-            Disposer.register(this.popup!!.disposable) { originalFocusOwner.requestFocusInWindow() }
+            Disposer.register(myPopup!!.disposable) { originalFocusOwner.requestFocusInWindow() }
           }
         }
         ui.cancelButton.requestFocusInWindow()
-        doRepaint()
+        myRepaintRunnable.run()
       }
     }
   }
 
-  private fun isWriteActionProgress(): Boolean = progressWindow is PotemkinProgress
+  private fun isWriteActionProgress(): Boolean {
+    return myProgressWindow is PotemkinProgress
+  }
 
   private fun createDialog(window: Window): DialogWrapper {
     if (Registry.`is`("ide.modal.progress.wrapper.refactoring")) {
       return createDialogWrapper(
         panel = panel,
         cancelAction = {
-          if (progressWindow.myShouldShowCancel) {
-            progressWindow.cancel()
+          if (myProgressWindow.myShouldShowCancel) {
+            myProgressWindow.cancel()
           }
         },
         window = window,
         writeAction = isWriteActionProgress(),
-        project = progressWindow.myProject,
+        project = myProgressWindow.myProject,
       )
     }
     return createDialogPrevious(window).also {
@@ -254,11 +237,15 @@ class ProgressDialog(
     if (isWriteActionProgress()) {
       if (window.isShowing) {
         return object : MyDialogWrapper(window) {
-          override fun useLightPopup(): Boolean = false
+          override fun useLightPopup(): Boolean {
+            return false
+          }
         }
       }
-      return object : MyDialogWrapper(progressWindow.myProject) {
-        override fun useLightPopup(): Boolean = false
+      return object : MyDialogWrapper(myProgressWindow.myProject) {
+        override fun useLightPopup(): Boolean {
+          return false
+        }
       }
     }
     // GTW-1384 - If the parent window is JOptionPane.getRootFrame() then invoke DialogWrapper(Component) instead of DialogWrapper(Project)
@@ -267,10 +254,11 @@ class ProgressDialog(
     if (window.isShowing || window == JOptionPane.getRootFrame()) {
       return MyDialogWrapper(window)
     }
-    return MyDialogWrapper(progressWindow.myProject)
+    return MyDialogWrapper(myProgressWindow.myProject)
   }
 
   private open inner class MyDialogWrapper : DialogWrapper {
+
     constructor(project: Project?) : super(project, false) {
       init()
     }
@@ -279,13 +267,13 @@ class ProgressDialog(
       init()
     }
 
-    final override fun doCancelAction() {
-      if (progressWindow.myShouldShowCancel) {
-        progressWindow.cancel()
+    override fun doCancelAction() {
+      if (myProgressWindow.myShouldShowCancel) {
+        myProgressWindow.cancel()
       }
     }
 
-    final override fun createPeer(parent: Component, canBeParent: Boolean): DialogWrapperPeer {
+    override fun createPeer(parent: Component, canBeParent: Boolean): DialogWrapperPeer {
       return if (useLightPopup() && areLightPopupsEnabled()) {
         try {
           GlassPaneDialogWrapperPeer(this, parent)
@@ -299,25 +287,27 @@ class ProgressDialog(
       }
     }
 
-    final override fun createPeer(owner: Window, canBeParent: Boolean, applicationModalIfPossible: Boolean): DialogWrapperPeer {
+    override fun createPeer(owner: Window, canBeParent: Boolean, applicationModalIfPossible: Boolean): DialogWrapperPeer {
       return if (useLightPopup() && areLightPopupsEnabled()) {
         try {
           GlassPaneDialogWrapperPeer(this)
         }
         catch (e: GlasspanePeerUnavailableException) {
-          super.createPeer(WindowManager.getInstance().suggestParentWindow(progressWindow.myProject), canBeParent,
+          super.createPeer(WindowManager.getInstance().suggestParentWindow(myProgressWindow.myProject), canBeParent,
                            applicationModalIfPossible)
         }
       }
       else {
-        super.createPeer(WindowManager.getInstance().suggestParentWindow(progressWindow.myProject), canBeParent,
+        super.createPeer(WindowManager.getInstance().suggestParentWindow(myProgressWindow.myProject), canBeParent,
                          applicationModalIfPossible)
       }
     }
 
-    protected open fun useLightPopup(): Boolean = true
+    protected open fun useLightPopup(): Boolean {
+      return true
+    }
 
-    final override fun createPeer(project: Project?, canBeParent: Boolean): DialogWrapperPeer {
+    override fun createPeer(project: Project?, canBeParent: Boolean): DialogWrapperPeer {
       return try {
         GlassPaneDialogWrapperPeer(project, this)
       }
@@ -326,19 +316,27 @@ class ProgressDialog(
       }
     }
 
-    final override fun init() {
+    override fun init() {
       super.init()
       setUndecorated(true)
       rootPane.windowDecorationStyle = JRootPane.NONE
       panel.border = PopupBorder.Factory.create(true, true)
     }
 
-    final override fun isProgressDialog(): Boolean = true
+    override fun isProgressDialog(): Boolean {
+      return true
+    }
 
-    final override fun createCenterPanel(): JComponent = panel
+    override fun createCenterPanel(): JComponent {
+      return panel
+    }
 
-    final override fun createSouthPanel(): JComponent? = null
+    override fun createSouthPanel(): JComponent? {
+      return null
+    }
 
-    final override fun createContentPaneBorder(): Border? = null
+    override fun createContentPaneBorder(): Border? {
+      return null
+    }
   }
 }

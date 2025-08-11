@@ -16,8 +16,6 @@
 package org.intellij.images.editor.impl;
 
 import org.intellij.images.options.*;
-import org.intellij.images.ui.ImageComponent;
-import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,16 +26,17 @@ import java.awt.image.BufferedImage;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-@Internal
 public final class ImageEditorManagerImpl {
   private ImageEditorManagerImpl() {
   }
 
-  public static @NotNull ImageEditorUI createImageEditorUI(BufferedImage image) {
+  @NotNull
+  public static ImageEditorUI createImageEditorUI(BufferedImage image) {
     return createImageEditorUI(image, null);
   }
 
-  public static @NotNull ImageEditorUI createImageEditorUI(BufferedImage image, @Nullable String format) {
+  @NotNull
+  public static ImageEditorUI createImageEditorUI(BufferedImage image, @Nullable String format) {
     ImageEditorUI ui = new ImageEditorUI(null);
     Options options = OptionsManager.getInstance().getOptions();
     EditorOptions editorOptions = options.getEditorOptions();
@@ -48,9 +47,5 @@ public final class ImageEditorManagerImpl {
 
     ui.setImageProvider((scale, ancestor) -> image, format);
     return ui;
-  }
-
-  public static ImageComponent getImageComponent(ImageEditorUI comp) {
-    return comp.getImageComponent();
   }
 }

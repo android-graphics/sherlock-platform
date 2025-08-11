@@ -1,4 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -14,7 +15,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.InlineOptionsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -52,7 +52,8 @@ public final class GroovyInlineMethodUtil {
   private GroovyInlineMethodUtil() {
   }
 
-  public static @NotNull InlineHandler.Settings inlineMethodSettings(GrMethod method, Editor editor, boolean invokedOnReference) {
+  @NotNull
+  public static InlineHandler.Settings inlineMethodSettings(GrMethod method, Editor editor, boolean invokedOnReference) {
 
     final Project project = method.getProject();
     if (method.isConstructor()) {
@@ -152,7 +153,8 @@ public final class GroovyInlineMethodUtil {
   /**
    * Shows dialog with question to inline
    */
-  private static @NotNull InlineHandler.Settings inlineMethodDialogResult(GrMethod method, Project project, boolean invokedOnReference) {
+  @NotNull
+  private static InlineHandler.Settings inlineMethodDialogResult(GrMethod method, Project project, boolean invokedOnReference) {
     Application application = ApplicationManager.getApplication();
     if (!application.isUnitTestMode()) {
       final InlineMethodDialog dialog = new InlineMethodDialog(project, method, invokedOnReference, checkMethodForRecursion(method));
@@ -263,7 +265,8 @@ public final class GroovyInlineMethodUtil {
     public final int offsetInMethod;
     public final PsiClass containingClass;
 
-    public @Nullable @Nls String getPresentation() {
+    @Nullable
+    public @Nls String getPresentation() {
       return declaration.getName();
     }
 
@@ -334,6 +337,11 @@ public final class GroovyInlineMethodUtil {
       setTitle(getRefactoringName());
 
       init();
+    }
+
+    @Override
+    protected String getBorderTitle() {
+      return GroovyRefactoringBundle.message("inline.method.border.title");
     }
 
     @Override
@@ -417,11 +425,12 @@ public final class GroovyInlineMethodUtil {
     }
   }
 
-  private static @Nullable GrExpression inferArg(GrSignature signature,
-                                                 GrParameter[] parameters,
-                                                 GrParameter parameter,
-                                                 GrClosureSignatureUtil.ArgInfo<PsiElement> argInfo,
-                                                 Project project) {
+  @Nullable
+  private static GrExpression inferArg(GrSignature signature,
+                                       GrParameter[] parameters,
+                                       GrParameter parameter,
+                                       GrClosureSignatureUtil.ArgInfo<PsiElement> argInfo,
+                                       Project project) {
     if (argInfo == null) return null;
     List<PsiElement> arguments = argInfo.args;
 
@@ -512,14 +521,14 @@ public final class GroovyInlineMethodUtil {
     StringBuilder buffer = new StringBuilder();
     final PsiModifierList modifierList = parameter.getModifierList();
     buffer.append(modifierList.getText().trim());
-    if (!buffer.isEmpty()) buffer.append(' ');
+    if (buffer.length() > 0) buffer.append(' ');
 
     final GrTypeElement typeElement = parameter.getTypeElementGroovy();
     if (typeElement != null) {
       buffer.append(typeElement.getText()).append(' ');
     }
 
-    if (buffer.isEmpty()) {
+    if (buffer.length() == 0) {
       buffer.append("def ");
     }
     buffer.append(varName).append(" = ").append(expression.getText());
@@ -561,6 +570,6 @@ public final class GroovyInlineMethodUtil {
   }
 
   public static @Nls(capitalization = Title) String getRefactoringName() {
-    return RefactoringBundle.message("inline.method.title");
+    return GroovyRefactoringBundle.message("inline.method.title");
   }
 }

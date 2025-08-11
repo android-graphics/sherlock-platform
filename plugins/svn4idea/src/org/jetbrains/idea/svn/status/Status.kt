@@ -8,7 +8,6 @@ import org.jetbrains.idea.svn.api.NodeKind
 import org.jetbrains.idea.svn.api.Revision
 import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.checkin.CommitInfo
-import org.jetbrains.idea.svn.conflict.TreeConflictDescription
 import org.jetbrains.idea.svn.info.Info
 import org.jetbrains.idea.svn.lock.Lock
 import org.jetbrains.idea.svn.status.StatusType.*
@@ -19,7 +18,7 @@ class Status private constructor(builder: Builder) : BaseNodeDescription(builder
   private val infoProvider = builder.infoProvider
   val info by lazy { if (itemStatus != STATUS_NONE) infoProvider.get() else null }
 
-  val url: Url? = builder.url
+  val url = builder.url
     get() = field ?: info?.url
 
   private val fileExists = builder.fileExists
@@ -31,8 +30,8 @@ class Status private constructor(builder: Builder) : BaseNodeDescription(builder
     }
 
   val copyFromUrl: Url? get() = if (isCopied) info?.copyFromUrl else null
-  val treeConflict: TreeConflictDescription? get() = if (isTreeConflicted) info?.treeConflict else null
-  val repositoryRootUrl: Url? get() = info?.repositoryRootUrl
+  val treeConflict get() = if (isTreeConflicted) info?.treeConflict else null
+  val repositoryRootUrl get() = info?.repositoryRootUrl
 
   val file: File = builder.file
   val commitInfo: CommitInfo = builder.commitInfo?.build() ?: CommitInfo.EMPTY

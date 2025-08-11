@@ -18,7 +18,7 @@ public class TodoPanelSettings {
   @OptionTag(tag = "todo-filter", nameAttribute = "", valueAttribute = "name")
   public String todoFilterName;
   @OptionTag(tag = "is-preview-enabled", nameAttribute = "")
-  public boolean showPreview = true;
+  public boolean showPreview;
 
   public TodoPanelSettings() {
   }

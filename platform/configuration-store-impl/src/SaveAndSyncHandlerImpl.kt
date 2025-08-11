@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.codeWithMe.ClientId
@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.util.NlsContexts
@@ -41,7 +42,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope) : SaveAndSyncHandler() {
+internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope) : SaveAndSyncHandler() {
   private val LISTEN_DELAY = 15.milliseconds
 
   private val refreshRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -71,7 +72,7 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
         .collect {
           val eventPublisher = eventPublisher
           withContext(Dispatchers.EDT) {
-            writeIntentReadAction {
+            blockingContext {
               eventPublisher.beforeRefresh()
               refreshOpenFiles()
               maybeRefresh(ModalityState.nonModal())
@@ -157,7 +158,9 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
       }
 
       runCatching {
-        eventPublisher.beforeSave(task, forceExecuteImmediately)
+        blockingContext {
+          eventPublisher.beforeSave(task, forceExecuteImmediately)
+        }
         saveProjectsAndApp(task.forceSavingAllSettings, task.project)
       }.getOrLogException(LOG)
     }
@@ -217,11 +220,7 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
 
   private suspend fun executeOnIdle() {
     withContext(Dispatchers.EDT + ClientId.ownerId.asContextElement()) {
-      (serviceAsync<FileDocumentManager>() as FileDocumentManagerImpl).run {
-        writeIntentReadAction {
-          saveAllDocuments(false)
-        }
-      }
+      (serviceAsync<FileDocumentManager>() as FileDocumentManagerImpl).saveAllDocuments(false)
     }
   }
 
@@ -285,18 +284,16 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
         title = getProgressTitle(componentManager),
         cancellation = TaskCancellation.nonCancellable(),
       ) {
-        withContext(NonCancellable) {
-          // ensure that is fully canceled
-          currentJob?.join()
+        // ensure that is fully canceled
+        currentJob?.join()
 
-          isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
+        isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
 
-          if (project != null && !ApplicationManager.getApplication().isUnitTestMode) {
-            val stateStore = project.stateStore
-            val path = if (stateStore.storageScheme == StorageScheme.DIRECTORY_BASED) stateStore.projectBasePath else stateStore.projectFilePath
-            // update last modified for all project files modified between project open and close
-            ConversionService.getInstance()?.saveConversionResult(path)
-          }
+        if (project != null && !ApplicationManager.getApplication().isUnitTestMode) {
+          val stateStore = project.stateStore
+          val path = if (stateStore.storageScheme == StorageScheme.DIRECTORY_BASED) stateStore.projectBasePath else stateStore.projectFilePath
+          // update last modified for all project files modified between project open and close
+          ConversionService.getInstance()?.saveConversionResult(path)
         }
       }
     }
@@ -323,7 +320,9 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
         if (roots.any { it is NewVirtualFile && it.isDirty }) {
           val session = queue.createBackgroundRefreshSession(roots)
           bgRefreshSession = session
-          session.launch()
+          blockingContext {
+            session.launch()
+          }
           bgRefreshSession = null
           sessions.incrementAndGet()
           events.addAndGet(session.metric("events") as Int)

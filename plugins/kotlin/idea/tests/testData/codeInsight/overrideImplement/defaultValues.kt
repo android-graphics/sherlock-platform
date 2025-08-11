@@ -6,5 +6,3 @@ interface T {
 class C : T {
     <caret>
 }
-
-// MEMBER: "foo(a: Int = ...): Unit"

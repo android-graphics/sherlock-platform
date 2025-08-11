@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.Disposable;
@@ -26,8 +26,8 @@ import static com.intellij.openapi.components.Service.Level.PROJECT;
 public class MavenProgressIndicator {
   private @NotNull ProgressIndicator myIndicator;
   private final List<Condition<MavenProgressIndicator>> myCancelConditions = new ArrayList<>();
-  private final @Nullable Supplier<MavenSyncConsole> mySyncSupplier;
-  private final @Nullable Project myProject;
+  private @Nullable final Supplier<MavenSyncConsole> mySyncSupplier;
+  private @Nullable final Project myProject;
 
   public MavenProgressIndicator(@Nullable Project project,
                                 @Nullable Supplier<MavenSyncConsole> syncSupplier) {
@@ -55,11 +55,13 @@ public class MavenProgressIndicator {
     myIndicator = i;
   }
 
-  public synchronized @NotNull ProgressIndicator getIndicator() {
+  @NotNull
+  public synchronized ProgressIndicator getIndicator() {
     return myIndicator;
   }
 
-  public synchronized @Nullable MavenSyncConsole getSyncConsole() {
+  @Nullable
+  public synchronized MavenSyncConsole getSyncConsole() {
     return null == mySyncSupplier ? null : mySyncSupplier.get();
   }
 

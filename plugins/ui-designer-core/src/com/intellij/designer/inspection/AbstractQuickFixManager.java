@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.inspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -223,7 +223,8 @@ public abstract class AbstractQuickFixManager {
   /**
    * @return error info for the current {@link #myComponent} state.
    */
-  protected abstract @NotNull List<ErrorInfo> getErrorInfos();
+  @NotNull
+  protected abstract List<ErrorInfo> getErrorInfos();
 
   /**
    * @return rectangle (in {@link #myComponent} coordinates) that represents
@@ -231,7 +232,8 @@ public abstract class AbstractQuickFixManager {
    *         returned non empty list of error infos. {@code null} means that
    *         error bounds are not defined.
    */
-  protected abstract @Nullable Rectangle getErrorBounds();
+  @Nullable
+  protected abstract Rectangle getErrorBounds();
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //
@@ -249,13 +251,14 @@ public abstract class AbstractQuickFixManager {
       return AllIcons.Actions.RealIntentionBulb;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getTextFor(ErrorInfo value) {
+    public String getTextFor(ErrorInfo value) {
       return value.getName();
     }
 
     @Override
-    public PopupStep<?> onChosen(ErrorInfo value, boolean finalChoice) {
+    public PopupStep onChosen(ErrorInfo value, boolean finalChoice) {
       List<QuickFix> quickFixes = value.getQuickFixes();
       if (finalChoice) {
         return doFinalStep(getQuickFixRunnable(quickFixes.get(0)));
@@ -284,13 +287,14 @@ public abstract class AbstractQuickFixManager {
       return value.getIcon();
     }
 
+    @NotNull
     @Override
-    public @NotNull String getTextFor(QuickFix value) {
+    public String getTextFor(QuickFix value) {
       return value.getName();
     }
 
     @Override
-    public PopupStep<?> onChosen(QuickFix value, boolean finalChoice) {
+    public PopupStep onChosen(QuickFix value, boolean finalChoice) {
       return doFinalStep(getQuickFixRunnable(value));
     }
   }
@@ -327,7 +331,7 @@ public abstract class AbstractQuickFixManager {
 
       String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
         ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
-      if (!acceleratorsText.isEmpty()) {
+      if (acceleratorsText.length() > 0) {
         setToolTipText(DesignerBundle.message("tooltip.press.accelerator", acceleratorsText));
       }
 

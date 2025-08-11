@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.plugins.api;
 
 import com.intellij.lang.Language;
@@ -18,6 +18,7 @@ import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.*;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.*;
 
@@ -47,12 +48,12 @@ public final class MavenPluginParamInfo {
           Map pluginsMap = res;
 
           for (int i = paramPath.length - 1; i >= 0; i--) {
-            pluginsMap = getOrCreate(pluginsMap, paramPath[i]);
+            pluginsMap = MavenUtil.getOrCreate(pluginsMap, paramPath[i]);
           }
 
           ParamInfo paramInfo = new ParamInfo(pluginDescriptor.getPluginDescriptor().getClassLoader(), param);
 
-          Map<String, ParamInfo> goalsMap = getOrCreate(pluginsMap, pluginId);
+          Map<String, ParamInfo> goalsMap = MavenUtil.getOrCreate(pluginsMap, pluginId);
 
           String goal = pluginDescriptor.goal;
           assert goal == null || !goal.isEmpty();
@@ -67,17 +68,6 @@ public final class MavenPluginParamInfo {
       }
 
       myMap = res;
-    }
-
-    return res;
-  }
-
-  private static @NotNull <K, V extends Map<?, ?>> V getOrCreate(Map<K, V> map, K key) {
-    V res = map.get(key);
-    if (res == null) {
-      //noinspection unchecked
-      res = (V)new HashMap<>();
-      map.put(key, res);
     }
 
     return res;
@@ -248,12 +238,14 @@ public final class MavenPluginParamInfo {
       }
     }
 
-    public @Nullable Language getLanguage() {
+    @Nullable
+    public Language getLanguage() {
       ensureLanguageInit();
       return myLanguageInstance;
     }
 
-    public @Nullable MavenParamLanguageProvider getLanguageProvider() {
+    @Nullable
+    public MavenParamLanguageProvider getLanguageProvider() {
       ensureLanguageInit();
       return myLanguageProvider;
     }

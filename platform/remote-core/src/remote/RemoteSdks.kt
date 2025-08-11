@@ -6,6 +6,5 @@ import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-fun Sdk.isBasedOnCredentialsType(credentialsType: CredentialsType<*>): Boolean {
-  return (sdkAdditionalData as? RemoteSdkAdditionalData)?.remoteConnectionType == credentialsType
-}
+fun Sdk.isBasedOnCredentialsType(credentialsType: CredentialsType<*>): Boolean =
+  (sdkAdditionalData as? RemoteSdkAdditionalData)?.remoteConnectionType == credentialsType

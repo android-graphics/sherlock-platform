@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
+import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
@@ -54,9 +55,10 @@ public class ThreadBlockedMonitor {
     return Registry.intValue("debugger.evaluate.single.threaded.timeout", 1000);
   }
 
-  protected @Nullable InvocationWatcher startInvokeWatching(int invokePolicy,
-                                                            @Nullable ThreadReferenceProxyImpl thread,
-                                                            @NotNull SuspendContextImpl context) {
+  @Nullable
+  protected InvocationWatcher startInvokeWatching(int invokePolicy,
+                                                  @Nullable ThreadReferenceProxyImpl thread,
+                                                  @NotNull SuspendContextImpl context) {
     if (thread != null && getSingleThreadedEvaluationThreshold() > 0 &&
         context.getSuspendPolicy() == EventRequest.SUSPEND_ALL &&
         BitUtil.isSet(invokePolicy, ObjectReference.INVOKE_SINGLE_THREADED)) {
@@ -101,8 +103,8 @@ public class ThreadBlockedMonitor {
     }
   }
 
-  private static void onThreadBlocked(final @NotNull ThreadReference blockedThread,
-                                      final @NotNull ThreadReference blockingThread,
+  private static void onThreadBlocked(@NotNull final ThreadReference blockedThread,
+                                      @NotNull final ThreadReference blockingThread,
                                       final DebugProcessImpl process) {
     XDebuggerManagerImpl.getNotificationGroup()
       .createNotification(JavaDebuggerBundle.message("status.thread.blocked.by", blockedThread.name(), blockingThread.name()),
@@ -116,8 +118,8 @@ public class ThreadBlockedMonitor {
             protected void action() {
               ThreadReferenceProxyImpl threadProxy = process.getVirtualMachineProxy().getThreadReferenceProxy(blockingThread);
               SuspendContextImpl suspendingContext = SuspendManagerUtil.getSuspendingContext(process.getSuspendManager(), threadProxy);
-              getCommandManagerThread()
-                .invokeNow(process.createResumeThreadCommand(suspendingContext, threadProxy));
+              process.getManagerThread()
+                .invoke(process.createResumeThreadCommand(suspendingContext, threadProxy));
             }
           });
         }
@@ -202,17 +204,19 @@ public class ThreadBlockedMonitor {
     public void invocationFinished() {
       myObsolete.set(true);
       if (myTask.isDone() && myAllResumed.get()) {
-        // suspend all threads but the current one (which should be suspended already)
-        myThread.getVirtualMachine().suspend();
-        LOG.warn("Long invocation on " + myThread + " has been finished");
-        myThreadBlockedMonitor.myInvocationWatching = null;
-        myThread.resumeImpl();
-        Set<ThreadReferenceProxyImpl> resumedThreads = mySuspendAllContext.myResumedThreads;
-        if (resumedThreads != null) {
-          for (ThreadReferenceProxyImpl thread : resumedThreads) {
-            thread.resumeImpl();
+        myProcess.getManagerThread().invoke(PrioritizedTask.Priority.HIGH, () -> {
+          // suspend all threads but the current one (which should be suspended already)
+          myThread.getVirtualMachine().suspend();
+          LOG.warn("Long invocation on " + myThread + " has been finished");
+          myThreadBlockedMonitor.myInvocationWatching = null;
+          myThread.resumeImpl();
+          Set<ThreadReferenceProxyImpl> resumedThreads = mySuspendAllContext.myResumedThreads;
+          if (resumedThreads != null) {
+            for (ThreadReferenceProxyImpl thread : resumedThreads) {
+              thread.resumeImpl();
+            }
           }
-        }
+        });
         if (myDiagnosticsTask != null) {
           myDiagnosticsTask.cancel(false);
         }
@@ -303,11 +307,13 @@ public class ThreadBlockedMonitor {
     public void invocationFinished() {
       myObsolete.set(true);
       if (myTask.isDone() && myAllResumed.get()) {
-        // suspend all threads but the current one (which should be suspended already
-        myThread.getVirtualMachine().suspend();
-        LOG.warn("Long invocation on " + myThread + " has been finished");
-        myThreadBlockedMonitor.myIsInResumeAllMode = false;
-        myThread.resumeImpl();
+        myProcess.getManagerThread().invoke(PrioritizedTask.Priority.HIGH, () -> {
+          // suspend all threads but the current one (which should be suspended already
+          myThread.getVirtualMachine().suspend();
+          LOG.warn("Long invocation on " + myThread + " has been finished");
+          myThreadBlockedMonitor.myIsInResumeAllMode = false;
+          myThread.resumeImpl();
+        });
       }
       else {
         myTask.cancel(true);

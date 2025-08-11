@@ -6,7 +6,6 @@ import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -50,6 +49,5 @@ public interface DomGenericInfo {
   GenericDomValue<?> getNameDomElement(DomElement element);
 
   @NotNull
-  @Unmodifiable
   List<? extends CustomDomChildrenDescription> getCustomNameChildrenDescription();
 }

@@ -23,8 +23,9 @@ public final class ProjectSettingsPage implements SearchableConfigurable, Config
     myProject = project;
   }
 
+  @Nls
   @Override
-  public @Nls String getDisplayName() {
+  public String getDisplayName() {
     return LombokBundle.message("plugin.settings.title");
   }
 
@@ -54,8 +55,9 @@ public final class ProjectSettingsPage implements SearchableConfigurable, Config
     initFromSettings();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getId() {
+  public String getId() {
     return getDisplayName();
   }
 }

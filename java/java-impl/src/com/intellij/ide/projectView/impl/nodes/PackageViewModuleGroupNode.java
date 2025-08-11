@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -34,7 +33,7 @@ public class PackageViewModuleGroupNode extends ModuleGroupNode {
   }
 
   @Override
-  protected @Unmodifiable @NotNull List<Module> getModulesByFile(@NotNull VirtualFile file) {
+  protected @NotNull List<Module> getModulesByFile(@NotNull VirtualFile file) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     Module module = fileIndex.getModuleForFile(file, false);
     if (module != null) {

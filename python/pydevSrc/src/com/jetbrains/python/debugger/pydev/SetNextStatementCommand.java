@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
 import com.intellij.openapi.util.Pair;
@@ -9,8 +9,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class SetNextStatementCommand extends AbstractThreadCommand {
   private final int myLine;
-  private final @NotNull PyDebugCallback<Pair<Boolean, String>> myCallback;
-  private final @Nullable String myFunctionName;
+  @NotNull private final PyDebugCallback<Pair<Boolean, String>> myCallback;
+  @Nullable private final String myFunctionName;
 
   protected SetNextStatementCommand(@NotNull RemoteDebugger debugger,
                                     @NotNull String threadId,

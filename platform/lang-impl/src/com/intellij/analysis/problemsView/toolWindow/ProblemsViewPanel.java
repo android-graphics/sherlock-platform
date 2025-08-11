@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow;
 
 import com.intellij.codeInsight.daemon.impl.IntentionsUI;
@@ -29,6 +29,7 @@ import com.intellij.ui.preview.DescriptorPreview;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.SingleAlarm;
@@ -79,7 +80,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
     if (node != null) ProblemsViewStatsCollector.problemSelected(this, node.getProblem());
     updateAutoscroll();
     updatePreview();
-  }, 50, this, stateForComponent(this));
+  }, 50, this, Alarm.ThreadToUse.SWING_THREAD, stateForComponent(this));
 
   private final SingleAlarm myUpdateAlarm = new SingleAlarm(() -> {
     ToolWindow window = getCurrentToolWindow();
@@ -91,7 +92,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
     int count = root == null ? 0 : root.getProblemCount();
     content.setDisplayName(getName(count));
     ProblemsViewIconUpdater.update(getProject());
-  }, 50, this, stateForComponent(this));
+  }, 50, this, Alarm.ThreadToUse.SWING_THREAD, stateForComponent(this));
 
   private final Option myAutoscrollToSource = new Option() {
     @Override
@@ -418,8 +419,10 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull @NonNls String getTabId() {
+  @NonNls
+  public String getTabId() {
     return myId;
   }
 
@@ -497,7 +500,8 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
     return isNotNullAndSelected(getShowPreview()) ? null : myOpenInPreviewTab;
   }
 
-  public @Nullable Option getShowPreview() {
+  @Nullable
+  public Option getShowPreview() {
     return myShowPreview;
   }
 
@@ -511,11 +515,13 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
     return null; // TODO:malenkov - support file hierarchy & mySortFoldersFirst;
   }
 
-  protected @Nullable Option getSortBySeverity() {
+  @Nullable
+  protected Option getSortBySeverity() {
     return null;
   }
 
-  protected @Nullable Option getSortByName() {
+  @Nullable
+  protected Option getSortByName() {
     return mySortByName;
   }
 

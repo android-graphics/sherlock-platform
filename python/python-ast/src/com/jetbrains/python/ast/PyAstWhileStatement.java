@@ -24,7 +24,8 @@ import org.jetbrains.annotations.NotNull;
  */
 @ApiStatus.Experimental
 public interface PyAstWhileStatement extends PyAstLoopStatement, PyAstStatementWithElse {
-  default @NotNull PyAstWhilePart getWhilePart() {
+  @NotNull
+  default PyAstWhilePart getWhilePart() {
     return childToPsiNotNull(PyElementTypes.WHILE_PART);
   }
 

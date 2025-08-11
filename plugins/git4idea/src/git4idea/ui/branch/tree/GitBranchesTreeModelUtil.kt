@@ -2,12 +2,13 @@
 package git4idea.ui.branch.tree
 
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.dvcs.branch.BranchType
 import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsScope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
-import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -22,7 +23,7 @@ import git4idea.GitRemoteBranch
 import git4idea.GitTag
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
-import git4idea.branch.GitTagType
+import git4idea.branch.TagsNode
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
@@ -80,7 +81,7 @@ private fun GitReference.isNotFavorite(favoriteBranches: Map<GitRepository, Set<
   return repositories.any { repo -> !(favoriteBranches[repo]?.contains(this.name) ?: false) }
 }
 
-internal fun buildBranchTreeNodes(branchType: GitRefType,
+internal fun buildBranchTreeNodes(branchType: BranchType,
                                   branchesMap: Map<String, Any>,
                                   path: List<String>,
                                   repository: GitRepository? = null): List<Any> {
@@ -97,7 +98,7 @@ internal fun buildBranchTreeNodes(branchType: GitRefType,
   }
 }
 
-private fun Map<String, Any>.mapToNodes(branchType: GitRefType, path: List<String>, repository: GitRepository?): List<Any> {
+private fun Map<String, Any>.mapToNodes(branchType: BranchType, path: List<String>, repository: GitRepository?): List<Any> {
   return entries.map { (name, value) ->
     if (value is GitReference && repository != null) GitBranchesTreeModel.RefUnderRepository(repository, value)
     else if (value is Map<*, *>) GitBranchesTreeModel.BranchesPrefixGroup(branchType, path + name, repository) else value
@@ -128,8 +129,8 @@ internal fun createTreePathFor(model: GitBranchesTreeModel, value: Any): TreePat
 
   val refUnderRepository = value as? GitBranchesTreeModel.RefUnderRepository
   val reference = value as? GitReference ?: refUnderRepository?.ref ?: return null
-  val isRecent = reference is GitLocalBranch && model.getIndexOfChild(root, GitBranchType.RECENT) != -1
-  val refType = GitRefType.of(reference, isRecent)
+  val isRecent = reference is GitLocalBranch && model.getIndexOfChild(root, GitBranchesTreeModel.RecentNode) != -1
+  val refType = if (isRecent) GitBranchesTreeModel.RecentNode else GitRefType.of(reference)
   val path = mutableListOf<Any>().apply {
     add(root)
     if (refUnderRepository != null) {
@@ -162,8 +163,7 @@ internal fun getPreferredBranch(project: Project,
                                 branchNameMatcher: MinusculeMatcher?,
                                 localBranchesTree: LazyRefsSubtreeHolder<GitLocalBranch>,
                                 remoteBranchesTree: LazyRefsSubtreeHolder<GitRemoteBranch>,
-                                tagsTree: LazyRefsSubtreeHolder<GitTag>,
-                                recentBranchesTree: LazyRefsSubtreeHolder<GitReference> = localBranchesTree, ): GitReference? {
+                                recentBranchesTree: LazyRefsSubtreeHolder<GitReference> = localBranchesTree): GitBranch? {
   if (branchNameMatcher == null) {
     return getPreferredBranch(project, repositories, localBranchesTree.sortedValues)
   }
@@ -171,9 +171,8 @@ internal fun getPreferredBranch(project: Project,
   val recentMatch = recentBranchesTree.topMatch as? GitBranch
   val localMatch = localBranchesTree.topMatch as? GitBranch
   val remoteMatch = remoteBranchesTree.topMatch as? GitBranch
-  val tagMatch = tagsTree.topMatch
 
-  return recentMatch ?: localMatch ?: remoteMatch ?: tagMatch
+  return recentMatch ?: localMatch ?: remoteMatch
 }
 
 internal fun getPreferredBranch(
@@ -210,14 +209,22 @@ internal fun getPreferredBranch(
 
 internal fun getLocalAndRemoteTopLevelNodes(localBranchesTree: LazyRefsSubtreeHolder<GitLocalBranch>,
                                             remoteBranchesTree: LazyRefsSubtreeHolder<GitRemoteBranch>,
-                                            tagsTree: LazyRefsSubtreeHolder<GitTag>? = null,
+                                            tagsTree: LazyRefsSubtreeHolder<GitTag>,
                                             recentCheckoutBranchesTree: LazyRefsSubtreeHolder<GitReference>? = null): List<Any> {
   return listOfNotNull(
-    if (recentCheckoutBranchesTree != null && !recentCheckoutBranchesTree.isEmpty()) GitBranchType.RECENT else null,
+    if (recentCheckoutBranchesTree != null && !recentCheckoutBranchesTree.isEmpty()) GitBranchesTreeModel.RecentNode else null,
     if (!localBranchesTree.isEmpty()) GitBranchType.LOCAL else null,
     if (!remoteBranchesTree.isEmpty()) GitBranchType.REMOTE else null,
-    if (tagsTree != null && !tagsTree.isEmpty()) GitTagType else null
+    if (!tagsTree.isEmpty()) TagsNode else null
   )
+}
+
+internal fun matchBranches(
+  matcher: MinusculeMatcher?,
+  branches: Collection<GitBranch>,
+  exceptBranchFilter: (GitBranch) -> Boolean = { false }
+): MatchResult<GitBranch> {
+  return match(matcher, branches, GitBranch::getName, exceptBranchFilter)
 }
 
 internal fun <N> match(
@@ -310,7 +317,7 @@ internal class LazyRefsSubtreeHolder<out T: GitReference>(repositories: List<Git
 
   val tree: Map<String, Any> by lazy {
     val infoList = matchingResult.matchedNodes
-    getInstance().getTracer(VcsScope).spanBuilder(GitTelemetrySpan.GitBranchesPopup.BuildingTree.getName()).use { span ->
+    computeWithSpan(getInstance().getTracer(VcsScope), GitTelemetrySpan.GitBranchesPopup.BuildingTree.getName()) {
       buildSubTree(infoList.map { (if (isPrefixGrouping()) it.name.split('/') else listOf(it.name)) to it })
     }
   }

@@ -2,8 +2,10 @@
 package com.jetbrains.python.defaultProjectAwareService;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.module.Module;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @param <STATE> class with service state
@@ -17,15 +19,17 @@ public abstract class PyDefaultProjectAwareService<
   APP_SERVICE extends SERVICE,
   MODULE_SERVICE extends SERVICE> implements PersistentStateComponent<STATE> {
 
-  private final @NotNull STATE myCurrentState;
+  @NotNull
+  private final STATE myCurrentState;
 
 
   protected PyDefaultProjectAwareService(@NotNull STATE defaultState) {
     myCurrentState = defaultState;
   }
 
+  @NotNull
   @Override
-  public @NotNull STATE getState() {
+  public STATE getState() {
     return myCurrentState;
   }
 

@@ -41,7 +41,7 @@ class Main {
 
         A a = y.get();
         B b = y.get();
-        C c = y.<error descr="Incompatible types. Found: 'capture<? extends B>', required: 'C'">get</error>();
+        <error descr="Incompatible types. Found: 'capture<? extends B>', required: 'C'">C c = y.get();</error>
     }
 
     <M> M[] m(M m) {

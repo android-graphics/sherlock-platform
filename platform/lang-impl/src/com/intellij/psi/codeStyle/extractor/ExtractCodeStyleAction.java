@@ -36,7 +36,6 @@ import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -46,7 +45,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.Map;
 
-@ApiStatus.Internal
 public final class ExtractCodeStyleAction extends AnAction implements DumbAware {
 
   @Override
@@ -116,6 +114,7 @@ public final class ExtractCodeStyleAction extends AnAction implements DumbAware 
             public void hyperlinkUpdate(HyperlinkEvent e) {
               if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                 boolean apply = "apply".equals(e.getDescription());
+                ExtractedSettingsDialog myDialog = null;
                 if (!apply) {
                   final List<Value> values = calculatedValues.getValues();
                   Language language = file.getLanguage();
@@ -125,7 +124,7 @@ public final class ExtractCodeStyleAction extends AnAction implements DumbAware 
                     if (target.equals(language)) {
                       //this is our language
                       nameProvider.addSettings(provider);
-                      ExtractedSettingsDialog myDialog = new ExtractedSettingsDialog(project, nameProvider, values);
+                      myDialog = new ExtractedSettingsDialog(project, nameProvider, values);
                       apply = myDialog.showAndGet();
                       break;
                     }

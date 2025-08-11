@@ -8,25 +8,13 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.util.Disposer
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CopyOnWriteArrayList
-
-@ApiStatus.Internal
-interface TerminalUiSettingsListener {
-  fun cursorChanged() {}
-  fun fontChanged() {}
-}
 
 @State(name = "TerminalUiSettingsManager", storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE))])
 @Service(Service.Level.APP)
@@ -35,7 +23,7 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
     private set
   private var cachedColorPalette: JBTerminalSchemeColorPalette? = null
   private var fontSize = -1f
-  private val listeners: MutableList<TerminalUiSettingsListener> = CopyOnWriteArrayList()
+  private val terminalPanels: MutableList<JBTerminalPanel> = CopyOnWriteArrayList()
   private var state = State()
 
   init {
@@ -65,9 +53,9 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
   }
 
   @JvmName("addListener")
-  internal fun addListener(parentDisposable: Disposable, listener: TerminalUiSettingsListener) {
-    listeners.add(listener)
-    Disposer.register(parentDisposable) { listeners.remove(listener) }
+  internal fun addListener(terminalPanel: JBTerminalPanel) {
+    terminalPanels.add(terminalPanel)
+    Disposer.register(terminalPanel) { terminalPanels.remove(terminalPanel) }
   }
 
   var cursorShape: CursorShape
@@ -78,8 +66,9 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
     }
 
   private fun fireCursorUpdate() {
-    for (listener in listeners) {
-      listener.cursorChanged()
+    for (panel in terminalPanels) {
+      panel.setCursorShape(panel.settingsProvider.cursorShape)
+      panel.repaint()
     }
   }
 
@@ -96,12 +85,16 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
     }
 
   private fun fireFontChanged() {
-    for (listener in listeners) {
-      listener.fontChanged()
+    for (panel in terminalPanels) {
+      panel.fontChanged()
     }
   }
 
-  fun getFontSize(): Float {
+  fun getFontSize(): Int {
+    return (getFontSize2D() + 0.5).toInt()
+  }
+
+  fun getFontSize2D(): Float {
     if (fontSize <= 0) {
       fontSize = detectFontSize()
     }

@@ -11,10 +11,8 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
-@ApiStatus.Internal
 abstract class ShelfAction(
   dynamicText: Supplier<@NlsActions.ActionText String>,
   dynamicDescription: Supplier<@NlsActions.ActionDescription String>)
@@ -38,7 +36,6 @@ abstract class ShelfAction(
   }
 }
 
-@ApiStatus.Internal
 class ApplyShelfAction : ShelfAction(VcsBundle.messagePointer("saved.patch.apply.action"),
                                      VcsBundle.messagePointer("shelf.apply.action.description")) {
   override fun perform(project: Project, shelves: List<ShelvedChangeList>) {
@@ -46,7 +43,6 @@ class ApplyShelfAction : ShelfAction(VcsBundle.messagePointer("saved.patch.apply
   }
 }
 
-@ApiStatus.Internal
 class PopShelfAction : ShelfAction(VcsBundle.messagePointer("saved.patch.pop.action"),
                                    VcsBundle.messagePointer("shelf.pop.action.description")) {
   override fun perform(project: Project, shelves: List<ShelvedChangeList>) {
@@ -54,7 +50,6 @@ class PopShelfAction : ShelfAction(VcsBundle.messagePointer("saved.patch.pop.act
   }
 }
 
-@ApiStatus.Internal
 class DropShelfAction : ShelfAction(VcsBundle.messagePointer("shelf.drop.action"),
                                     VcsBundle.messagePointer("shelf.drop.action.description")) {
   override fun perform(project: Project, shelves: List<ShelvedChangeList>) {
@@ -75,7 +70,6 @@ class DropShelfAction : ShelfAction(VcsBundle.messagePointer("shelf.drop.action"
   }
 }
 
-@ApiStatus.Internal
 class ShelfOperationsGroup : SavedPatchesOperationsGroup() {
   override fun isApplicable(patchObject: SavedPatchesProvider.PatchObject<*>): Boolean {
     return patchObject.data is ShelvedChangeList

@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.ReflectedProject;
@@ -38,7 +52,7 @@ import java.util.*;
 public abstract class AntDomProject extends AntDomNamedElement implements PropertiesProvider {
   private static final Logger LOG = Logger.getInstance(AntDomProject.class);
 
-  public static final @NonNls String DEFAULT_ENVIRONMENT_PREFIX = "env.";
+  @NonNls public static final String DEFAULT_ENVIRONMENT_PREFIX = "env.";
 
   private volatile ClassLoader myClassLoader;
   private volatile Map<String, String> myProperties;
@@ -52,7 +66,8 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
   @Convert(AntPathConverter.class)
   public abstract GenericAttributeValue<PsiFileSystemItem> getBasedir();
 
-  public final @Nullable PsiFileSystemItem getProjectBasedir() {
+  @Nullable
+  public final PsiFileSystemItem getProjectBasedir() {
     final PsiFileSystemItem basedir = getBasedir().getValue();
     if (basedir != null) {
       return basedir;
@@ -69,7 +84,8 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
     return tag.getManager().findDirectory(parent);
   }
 
-  public final @Nullable @NlsSafe String getProjectBasedirPath() {
+  @Nullable
+  public final @NlsSafe String getProjectBasedirPath() {
     final String basedir = getBasedir().getStringValue();
     if (basedir != null) {
       final File file = new File(basedir);
@@ -97,7 +113,8 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
     }
   }
 
-  public final @Nullable @NlsSafe String getContainingFileDir() {
+  @Nullable
+  public final @NlsSafe String getContainingFileDir() {
     final VirtualFile containingFile = getXmlTag().getContainingFile().getOriginalFile().getVirtualFile();
     if (containingFile == null) {
       return null;
@@ -115,7 +132,8 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
   @SubTagList("include")
   public abstract List<AntDomInclude> getDeclaredIncludes();
 
-  public final @Nullable AntDomTarget findDeclaredTarget(String declaredName) {
+  @Nullable
+  public final AntDomTarget findDeclaredTarget(String declaredName) {
     for (AntDomTarget target : getDeclaredTargets()) {
       if (declaredName.equals(target.getName().getRawText())) {
         return target;
@@ -124,7 +142,8 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
     return null;
   }
 
-  public final @NotNull ClassLoader getClassLoader() {
+  @NotNull
+  public final ClassLoader getClassLoader() {
     ClassLoader loader = myClassLoader;
     if (loader == null) {
       final XmlTag tag = getXmlTag();
@@ -155,7 +174,8 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
     return antInstallation;
   }
 
-  public final @Nullable Sdk getTargetJdk() {
+  @Nullable
+  public final Sdk getTargetJdk() {
     final XmlTag tag = getXmlTag();
     final PsiFile containingFile = tag.getContainingFile();
     final AntBuildFileImpl buildFile = (AntBuildFileImpl)AntConfigurationBase.getInstance(containingFile.getProject()).getAntBuildFile(containingFile);
@@ -172,17 +192,20 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
   }
 
   @Override
-  public @NotNull Iterator<String> getNamesIterator() {
+  @NotNull
+  public Iterator<String> getNamesIterator() {
     return getProperties().keySet().iterator();
   }
 
   @Override
-  public @Nullable String getPropertyValue(String propertyName) {
+  @Nullable
+  public String getPropertyValue(String propertyName) {
     return getProperties().get(propertyName);
   }
 
   @Override
-  public @Nullable PsiElement getNavigationElement(String propertyName) {
+  @Nullable
+  public PsiElement getNavigationElement(String propertyName) {
     final DomTarget target = DomTarget.getTarget(this);
     final PsiElement nameElementPsi = target != null ? PomService.convertToPsi(target) : null;
     if (nameElementPsi != null) {

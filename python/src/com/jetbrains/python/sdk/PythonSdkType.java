@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
@@ -34,7 +33,6 @@ import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -45,7 +43,7 @@ import com.jetbrains.python.remote.PyRemoteInterpreterUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
-import com.jetbrains.python.sdk.add.v1.PyDetectedSdkAdditionalData;
+import com.jetbrains.python.sdk.add.target.PyDetectedSdkAdditionalData;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.target.PyInterpreterVersionUtil;
@@ -58,8 +56,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.lang.ref.WeakReference;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
@@ -126,26 +122,9 @@ public final class PythonSdkType extends SdkType {
     return Collections.emptyList();
   }
 
-  /**
-   * This function doesn't support remote SDKs.
-   *
-   * @deprecated Use {@link PySdkExtKt#getSdkSeemsValid(Sdk)}
-   */
   @Override
-  @Deprecated
-  @RequiresBackgroundThread(generateAssertion = false) //No warning yet as there are usages: to be fixed
-  public boolean isValidSdkHome(final @NotNull String localPath) {
-    try {
-      return isLocalPathValid(Paths.get(localPath));
-    }
-    catch (InvalidPathException e) {
-      return false;
-    }
-  }
-
-  @RequiresBackgroundThread(generateAssertion = false) //No warning yet as there are usages: to be fixed
-  private static boolean isLocalPathValid(@NotNull Path path) {
-    return PythonSdkFlavor.getFlavor(path.toString()) != null;
+  public boolean isValidSdkHome(final @NotNull String path) {
+    return PythonSdkFlavor.getFlavor(path) != null;
   }
 
   @Override
@@ -155,14 +134,31 @@ public final class PythonSdkType extends SdkType {
       public void validateSelectedFiles(VirtualFile @NotNull [] files) throws Exception {
         if (files.length != 0) {
           VirtualFile file = files[0];
-          if (!isLocatedInWsl(file) && !isLocalPathValid(file.toNioPath())) {
-            throw new Exception(PyBundle.message("python.sdk.error.invalid.interpreter.selected", file.getName()));
+          if (!isLocatedInWsl(file) && !isValidSdkHome(file.getPath())) {
+            throw new Exception(PyBundle.message("python.sdk.error.invalid.interpreter.name", file.getName()));
           }
         }
       }
-    }
-      .withTitle(PyBundle.message("sdk.select.path"))
-      .withShowHiddenFiles(SystemInfo.isUnix);
+
+      @Override
+      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+        // TODO: add a better, customizable filtering
+        if (!file.isDirectory()) {
+          if (isLocatedInLocalWindowsFS(file)) {
+            String path = file.getPath();
+            boolean looksExecutable = false;
+            for (String ext : PythonSdkUtil.WINDOWS_EXECUTABLE_SUFFIXES) {
+              if (path.endsWith(ext)) {
+                looksExecutable = true;
+                break;
+              }
+            }
+            return looksExecutable && super.isFileVisible(file, showHiddenFiles);
+          }
+        }
+        return super.isFileVisible(file, showHiddenFiles);
+      }
+    }.withTitle(PyBundle.message("sdk.select.path")).withShowHiddenFiles(SystemInfo.isUnix);
 
     // XXX: Workaround for PY-21787 and PY-43507 since the native macOS dialog always follows symlinks
     if (SystemInfo.isMac) {
@@ -170,6 +166,10 @@ public final class PythonSdkType extends SdkType {
     }
 
     return descriptor;
+  }
+
+  private static boolean isLocatedInLocalWindowsFS(@NotNull VirtualFile file) {
+    return SystemInfo.isWindows && !isCustomPythonSdkHomePath(file.getPath());
   }
 
   private static boolean isLocatedInWsl(@NotNull VirtualFile file) {
@@ -245,7 +245,6 @@ public final class PythonSdkType extends SdkType {
     }
   }
 
-  @RequiresBackgroundThread(generateAssertion = false) //because of process output
   public static @Nullable String suggestBaseSdkName(@NotNull String sdkHome) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
     if (flavor == null) return null;
@@ -298,13 +297,13 @@ public final class PythonSdkType extends SdkType {
         // TODO we should have "remote" SDK data with unknown credentials anyway!
       }
     }
-
     var additionalData = PySdkProvider.EP_NAME.getExtensionList().stream()
       .map(ext -> ext.loadAdditionalDataForSdk(additional))
       .filter(data -> data != null)
       .findFirst()
       .orElseGet(() -> PythonSdkAdditionalData.loadFromElement(additional));
-
+    // Convert legacy conda SDK, temporary fix.
+    PyCondaSdkFixKt.fixPythonCondaSdk(currentSdk, additionalData);
     return additionalData;
   }
 
@@ -317,7 +316,7 @@ public final class PythonSdkType extends SdkType {
    */
   @Contract(pure = true)
   static boolean isCustomPythonSdkHomePath(@NotNull String homePath) {
-    return CustomSdkHomePattern.isCustomPythonSdkHomePath(homePath);
+    return PythonSdkUtil.isCustomPythonSdkHomePath(homePath);
   }
 
   public static boolean isSkeletonsPath(String path) {
@@ -348,20 +347,14 @@ public final class PythonSdkType extends SdkType {
     final WeakReference<Component> ownerComponentRef = sdk.getUserData(SDK_CREATOR_COMPONENT_KEY);
     final Component ownerComponent = SoftReference.dereference(ownerComponentRef);
     AtomicReference<Project> projectRef = new AtomicReference<>();
-    if (PlatformUtils.isQodana()) {
-      Project project = ContainerUtil.getFirstItem(Arrays.asList(ProjectManager.getInstance().getOpenProjects()));
-      projectRef.set(project);
-    }
-    else {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        if (ownerComponent != null) {
-          projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(ownerComponent)));
-        }
-        else {
-          projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()));
-        }
-      });
-    }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      if (ownerComponent != null) {
+        projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(ownerComponent)));
+      }
+      else {
+        projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()));
+      }
+    });
     PythonSdkUpdater.updateOrShowError(sdk, projectRef.get(), ownerComponent);
   }
 
@@ -483,7 +476,7 @@ public final class PythonSdkType extends SdkType {
       return null;
     }
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
-    return flavor != null ? PythonSdkFlavor.getVersionStringStatic(sdkHome) : null;
+    return flavor != null ? flavor.getVersionString(sdkHome) : null;
   }
 
   @Override
@@ -564,6 +557,23 @@ public final class PythonSdkType extends SdkType {
   @Deprecated(forRemoval = true)
   public static @NotNull LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
     return PySdkUtil.getLanguageLevelForSdk(sdk);
+  }
+
+  public static @Nullable Sdk findPython2Sdk(@Nullable Module module) {
+    final Sdk moduleSDK = PythonSdkUtil.findPythonSdk(module);
+    if (moduleSDK != null && getLanguageLevelForSdk(moduleSDK).isPython2()) {
+      return moduleSDK;
+    }
+    return findPython2Sdk(PythonSdkUtil.getAllSdks());
+  }
+
+  public static @Nullable Sdk findPython2Sdk(@NotNull List<? extends Sdk> sdks) {
+    for (Sdk sdk : ContainerUtil.sorted(sdks, PreferredSdkComparator.INSTANCE)) {
+      if (getLanguageLevelForSdk(sdk).isPython2()) {
+        return sdk;
+      }
+    }
+    return null;
   }
 
   @Override

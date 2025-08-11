@@ -174,15 +174,6 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
   }
 
   @Override
-  public PsiElement getOriginalElement() {
-    PsiElement parent = getParent();
-    if (parent instanceof PsiJavaCodeReferenceElement) {
-      return PsiImplUtil.getCorrespondingOriginalElementOfType(this, PsiReferenceParameterList.class);
-    }
-    return this;
-  }
-
-  @Override
   public String toString() {
     return "PsiReferenceParameterList";
   }

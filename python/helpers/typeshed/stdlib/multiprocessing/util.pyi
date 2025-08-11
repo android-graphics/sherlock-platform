@@ -2,7 +2,7 @@ import threading
 from _typeshed import ConvertibleToInt, Incomplete, Unused
 from collections.abc import Callable, Iterable, Mapping, MutableMapping, Sequence
 from logging import Logger, _Level as _LoggingLevel
-from typing import Any, Final, Generic, TypeVar, overload
+from typing import Any
 
 __all__ = [
     "sub_debug",
@@ -22,17 +22,14 @@ __all__ = [
     "SUBWARNING",
 ]
 
-_T = TypeVar("_T")
-_R_co = TypeVar("_R_co", default=Any, covariant=True)
+NOTSET: int
+SUBDEBUG: int
+DEBUG: int
+INFO: int
+SUBWARNING: int
 
-NOTSET: Final[int]
-SUBDEBUG: Final[int]
-DEBUG: Final[int]
-INFO: Final[int]
-SUBWARNING: Final[int]
-
-LOGGER_NAME: Final[str]
-DEFAULT_LOGGING_FORMAT: Final[str]
+LOGGER_NAME: str
+DEFAULT_LOGGING_FORMAT: str
 
 def sub_debug(msg: object, *args: object) -> None: ...
 def debug(msg: object, *args: object) -> None: ...
@@ -45,29 +42,13 @@ def is_abstract_socket_namespace(address: str | bytes | None) -> bool: ...
 abstract_sockets_supported: bool
 
 def get_temp_dir() -> str: ...
-def register_after_fork(obj: _T, func: Callable[[_T], object]) -> None: ...
+def register_after_fork(obj: Incomplete, func: Callable[[Incomplete], object]) -> None: ...
 
-class Finalize(Generic[_R_co]):
-    # "args" and "kwargs" are passed as arguments to "callback".
-    @overload
+class Finalize:
     def __init__(
         self,
-        obj: None,
-        callback: Callable[..., _R_co],
-        *,
-        args: Sequence[Any] = (),
-        kwargs: Mapping[str, Any] | None = None,
-        exitpriority: int,
-    ) -> None: ...
-    @overload
-    def __init__(
-        self, obj: None, callback: Callable[..., _R_co], args: Sequence[Any], kwargs: Mapping[str, Any] | None, exitpriority: int
-    ) -> None: ...
-    @overload
-    def __init__(
-        self,
-        obj: Any,
-        callback: Callable[..., _R_co],
+        obj: Incomplete | None,
+        callback: Callable[..., Incomplete],
         args: Sequence[Any] = (),
         kwargs: Mapping[str, Any] | None = None,
         exitpriority: int | None = None,
@@ -78,7 +59,7 @@ class Finalize(Generic[_R_co]):
         _finalizer_registry: MutableMapping[Incomplete, Incomplete] = {},
         sub_debug: Callable[..., object] = ...,
         getpid: Callable[[], int] = ...,
-    ) -> _R_co: ...
+    ) -> Incomplete: ...
     def cancel(self) -> None: ...
     def still_active(self) -> bool: ...
 
@@ -92,7 +73,7 @@ class ForkAwareThreadLock:
 
 class ForkAwareLocal(threading.local): ...
 
-MAXFD: Final[int]
+MAXFD: int
 
 def close_all_fds_except(fds: Iterable[int]) -> None: ...
 def spawnv_passfds(path: bytes, args: Sequence[ConvertibleToInt], passfds: Sequence[int]) -> int: ...

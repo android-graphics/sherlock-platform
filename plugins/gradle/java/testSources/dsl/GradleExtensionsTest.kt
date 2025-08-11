@@ -70,7 +70,7 @@ class GradleExtensionsTest : GradleCodeInsightTestCase() {
   companion object {
 
     private val FIXTURE_BUILDER = GradleTestFixtureBuilder.create("GradleExtensionsTest") { gradleVersion ->
-      withSettingsFile(gradleVersion) {
+      withSettingsFile {
         setProjectName("GradleExtensionsTest")
       }
       withBuildFile(gradleVersion) {

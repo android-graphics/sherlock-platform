@@ -1,126 +1,108 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.IOUtil;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetLoader;
 import org.jetbrains.jps.builders.BuildTargetType;
-import org.jetbrains.jps.builders.storage.BuildDataPaths;
-import org.jetbrains.jps.model.JpsModel;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-@ApiStatus.Internal
 public final class BuildTargetTypeState {
   private static final int VERSION = 1;
   private static final Logger LOG = Logger.getInstance(BuildTargetTypeState.class);
-  @SuppressWarnings("SSBasedInspection")
-  private final Object2IntOpenHashMap<BuildTarget<?>> targetIds = new Object2IntOpenHashMap<>();
-  private final List<Pair<String, Integer>> staleTargetIds;
-  private final ConcurrentMap<BuildTarget<?>, BuildTargetConfiguration> configurations;
-  private final BuildTargetType<?> targetType;
-  private final BuildTargetStateManagerImpl targetStateManager;
-  private final Path targetStateFile;
+  private final Map<BuildTarget<?>, Integer> myTargetIds;
+  private final List<Pair<String, Integer>> myStaleTargetIds;
+  private final ConcurrentMap<BuildTarget<?>, BuildTargetConfiguration> myConfigurations;
+  private final BuildTargetType<?> myTargetType;
+  private final BuildTargetsState myTargetsState;
+  private final File myTargetsFile;
   private volatile long myAverageTargetBuildTimeMs = -1;
 
-  public BuildTargetTypeState(@NotNull BuildTargetType<?> targetType,
-                              @NotNull BuildTargetStateManagerImpl state,
-                              @NotNull BuildDataPaths dataPaths,
-                              @NotNull JpsModel model) {
-    targetIds.defaultReturnValue(-1);
-
-    this.targetType = targetType;
-    targetStateManager = state;
-    targetStateFile = dataPaths.getTargetTypeDataRootDir(targetType).resolve("targets.dat");
-    configurations = new ConcurrentHashMap<>();
-    staleTargetIds = new ArrayList<>();
-    load(model);
+  public BuildTargetTypeState(BuildTargetType<?> targetType, BuildTargetsState state) {
+    myTargetType = targetType;
+    myTargetsState = state;
+    myTargetsFile = new File(state.getDataPaths().getTargetTypeDataRoot(targetType), "targets.dat");
+    myConfigurations = new ConcurrentHashMap<>(16, 0.75f, 1);
+    myTargetIds = new HashMap<>();
+    myStaleTargetIds = new ArrayList<>();
+    load();
   }
 
-  private void load(@NotNull JpsModel model) {
-    if (Files.notExists(targetStateFile)) {
-      return;
+  private boolean load() {
+    if (!myTargetsFile.exists()) {
+      return false;
     }
 
-    try (DataInputStream input = new DataInputStream(new BufferedInputStream(Files.newInputStream(targetStateFile)))) {
+    try (DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(myTargetsFile)))) {
       int version = input.readInt();
       int size = input.readInt();
-      BuildTargetLoader<?> loader = targetType.createLoader(model);
+      BuildTargetLoader<?> loader = myTargetType.createLoader(myTargetsState.getModel());
       while (size-- > 0) {
         String stringId = IOUtil.readString(input);
         int intId = input.readInt();
-        targetStateManager.markUsedId(intId);
+        myTargetsState.markUsedId(intId);
         BuildTarget<?> target = loader.createTarget(stringId);
         if (target != null) {
-          targetIds.put(target, intId);
+          myTargetIds.put(target, intId);
         }
         else {
-          staleTargetIds.add(Pair.create(stringId, intId));
+          myStaleTargetIds.add(Pair.create(stringId, intId));
         }
       }
       if (version >= 1) {
         myAverageTargetBuildTimeMs = input.readLong();
       }
+      return true;
     }
     catch (IOException e) {
-      LOG.info("Cannot load " + targetType.getTypeId() + " targets data: " + e.getMessage(), e);
+      LOG.info("Cannot load " + myTargetType.getTypeId() + " targets data: " + e.getMessage(), e);
+      return false;
     }
   }
 
   public synchronized void save() {
-    try {
-      NioFiles.createParentDirectories(targetStateFile);
-    }
-    catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-
-    try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(targetStateFile)))) {
+    FileUtil.createParentDirs(myTargetsFile);
+    try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(myTargetsFile)))) {
       output.writeInt(VERSION);
-      output.writeInt(targetIds.size() + staleTargetIds.size());
-      for (Object2IntMap.Entry<BuildTarget<?>> entry : targetIds.object2IntEntrySet()) {
+      output.writeInt(myTargetIds.size() + myStaleTargetIds.size());
+      for (Map.Entry<BuildTarget<?>, Integer> entry : myTargetIds.entrySet()) {
         IOUtil.writeString(entry.getKey().getId(), output);
-        output.writeInt(entry.getIntValue());
+        output.writeInt(entry.getValue());
       }
-      for (Pair<String, Integer> pair : staleTargetIds) {
+      for (Pair<String, Integer> pair : myStaleTargetIds) {
         IOUtil.writeString(pair.first, output);
         output.writeInt(pair.second);
       }
       output.writeLong(myAverageTargetBuildTimeMs);
     }
     catch (IOException e) {
-      LOG.info("Cannot save " + targetType.getTypeId() + " targets data: " + e.getMessage(), e);
+      LOG.info("Cannot save " + myTargetType.getTypeId() + " targets data: " + e.getMessage(), e);
     }
   }
 
-  public synchronized @NotNull List<Pair<String, Integer>> getStaleTargetIds() {
-    return new ArrayList<>(staleTargetIds);
+  public synchronized List<Pair<String, Integer>> getStaleTargetIds() {
+    return new ArrayList<>(myStaleTargetIds);
   }
 
-  public synchronized void removeStaleTarget(@NotNull String targetId) {
-    staleTargetIds.removeIf(pair -> pair.first.equals(targetId));
+  public synchronized void removeStaleTarget(String targetId) {
+    myStaleTargetIds.removeIf(pair -> pair.first.equals(targetId));
   }
 
   public synchronized int getTargetId(BuildTarget<?> target) {
-    int result = targetIds.getInt(target);
-    if (result == -1) {
-      result = targetStateManager.getFreeId();
-      targetIds.put(target, result);
+    if (!myTargetIds.containsKey(target)) {
+      myTargetIds.put(target, myTargetsState.getFreeId());
     }
-    return result;
+    return myTargetIds.get(target);
   }
 
   public void setAverageTargetBuildTime(long timeInMs) {
@@ -134,14 +116,15 @@ public final class BuildTargetTypeState {
     return myAverageTargetBuildTimeMs;
   }
 
-  public @NotNull BuildTargetConfiguration getConfiguration(@NotNull BuildTarget<?> target, @NotNull BuildDataPaths dataPaths) {
-    BuildTargetConfiguration configuration = configurations.get(target);
-    if (configuration != null) {
-      return configuration;
+  public BuildTargetConfiguration getConfiguration(BuildTarget<?> target) {
+    BuildTargetConfiguration configuration = myConfigurations.get(target);
+    if (configuration == null) {
+      configuration = new BuildTargetConfiguration(target, myTargetsState);
+      final BuildTargetConfiguration existing = myConfigurations.putIfAbsent(target, configuration);
+      if (existing != null) {
+        configuration = existing;
+      }
     }
-
-    configuration = new BuildTargetConfiguration(target, dataPaths);
-    BuildTargetConfiguration existing = configurations.putIfAbsent(target, configuration);
-    return existing == null ? configuration : existing;
+    return configuration;
   }
 }

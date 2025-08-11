@@ -5,7 +5,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.assertj.core.api.Assertions
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 
 abstract class GradleGroovyScriptRunConfigurationProducerTestCase : GradleRunConfigurationProducerTestCase() {
@@ -36,9 +35,8 @@ abstract class GradleGroovyScriptRunConfigurationProducerTestCase : GradleRunCon
     expectedTaskNames: Set<String>,
     taskDataMap: Map<String, TaskData>
   ) {
-    Assertions.assertThat(taskDataMap.keys)
-      .describedAs("The set of task names extracted from build script is different to expected")
-      .containsExactlyInAnyOrderElementsOf(expectedTaskNames)
+    assertTrue("The set of task names extracted from build script is different to expected",
+               expectedTaskNames == taskDataMap.keys)
     for (taskName in expectedTaskNames) {
       val task = taskDataMap[taskName]!!
       verifyRunConfigurationProducer<GradleGroovyScriptRunConfigurationProducer>(expectedSettings = task.name, task.nameElement)

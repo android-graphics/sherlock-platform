@@ -3,7 +3,6 @@ package com.intellij.codeInspection.java18StreamApi;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,7 +32,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
     elements.add(new PipelineElement(guavaLists, "transform", PseudoLambdaReplaceTemplate.MAP));
   }
 
-  public @Unmodifiable @NotNull Collection<PipelineElement> findElementsByMethodName(final @NotNull String methodName) {
+  public @NotNull Collection<PipelineElement> findElementsByMethodName(final @NotNull String methodName) {
     return ContainerUtil.filter(myElements, element -> methodName.equals(element.methodName()));
   }
 

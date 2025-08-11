@@ -17,10 +17,10 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -41,7 +41,8 @@ public final class RedundantFieldInitializationInspection extends BaseInspection
   public boolean onlyWarnOnNull = false;
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("redundant.field.initialization.problem.descriptor");
   }
 
@@ -59,7 +60,8 @@ public final class RedundantFieldInitializationInspection extends BaseInspection
   private static class RedundantFieldInitializationFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("redundant.field.initialization.remove.quickfix");
     }
 

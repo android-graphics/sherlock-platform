@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class Breakpoint
@@ -27,7 +27,6 @@ import com.intellij.debugger.statistics.DebuggerStatistics;
 import com.intellij.debugger.ui.impl.watch.CompilingEvaluatorImpl;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -44,7 +43,6 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,7 +54,6 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointActionsPanel;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin;
@@ -74,20 +71,19 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
 import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 public abstract class Breakpoint<P extends JavaBreakpointProperties> implements FilteredRequestor, ClassPrepareRequestor, OverheadProducer {
-  private static final ExecutorService RELOAD_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor("Breakpoint reload", 1);
   public static final Key<Breakpoint<?>> DATA_KEY = Key.create("JavaBreakpoint");
   private static final Key<Long> HIT_COUNTER = Key.create("HIT_COUNTER");
 
   final XBreakpoint<P> myXBreakpoint;
-  protected final @NotNull Project myProject;
+  @NotNull
+  protected final Project myProject;
 
-  private static final @NonNls String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
+  @NonNls private static final String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
   protected boolean myCachedVerifiedState = false;
 
   protected Breakpoint(@NotNull Project project, XBreakpoint<P> xBreakpoint) {
@@ -95,11 +91,13 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     myXBreakpoint = xBreakpoint;
   }
 
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myProject;
   }
 
-  protected @NotNull P getProperties() {
+  @NotNull
+  protected P getProperties() {
     return myXBreakpoint.getProperties();
   }
 
@@ -107,7 +105,8 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return myXBreakpoint;
   }
 
-  public abstract @Nullable PsiClass getPsiClass();
+  @Nullable
+  public abstract PsiClass getPsiClass();
 
   /**
    * Request for creating all needed JPDA requests in the specified VM
@@ -146,16 +145,11 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   public void customizeRenderer(SimpleColoredComponent renderer) {
     if (myXBreakpoint != null) {
       renderer.setIcon(myXBreakpoint.getType().getEnabledIcon());
-      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162794")) {
-        renderer.append(XBreakpointUtil.getShortText(myXBreakpoint));
-      }
     }
     else {
       renderer.setIcon(AllIcons.Debugger.Db_set_breakpoint);
-      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162794")) {
-        renderer.append(getDisplayName());
-      }
     }
+    renderer.append(getDisplayName());
   }
 
   @Override
@@ -179,7 +173,8 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return getDisplayName();
   }
 
-  public @Nullable String getClassName() {
+  @Nullable
+  public String getClassName() {
     return null;
   }
 
@@ -197,7 +192,8 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     }
   }
 
-  public @Nullable String getShortClassName() {
+  @Nullable
+  public String getShortClassName() {
     final String className = getClassName();
     if (className == null) {
       return null;
@@ -207,7 +203,8 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return dotIndex >= 0 && dotIndex + 1 < className.length() ? className.substring(dotIndex + 1) : className;
   }
 
-  public @Nullable String getPackageName() {
+  @Nullable
+  public String getPackageName() {
     return null;
   }
 
@@ -219,7 +216,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     ReadAction.nonBlocking(this::reload)
       .coalesceBy(myProject, this)
       .expireWith(myProject)
-      .submit(RELOAD_EXECUTOR);
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   /**
@@ -275,7 +272,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     }
   }
 
-  protected void createOrWaitPrepare(final DebugProcessImpl debugProcess, final @NotNull SourcePosition classPosition) {
+  protected void createOrWaitPrepare(final DebugProcessImpl debugProcess, @NotNull final SourcePosition classPosition) {
     long startTimeNs = System.nanoTime();
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classPosition);
     if (debugProcess.getVirtualMachineProxy().canBeModified() && !isObsolete()) {
@@ -402,10 +399,10 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   public boolean evaluateCondition(final EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
     DebugProcessImpl debugProcess = context.getDebugProcess();
     if (isCountFilterEnabled() && !isConditionEnabled()) {
-      context.getVirtualMachineProxy().suspend();
+      debugProcess.getVirtualMachineProxy().suspend();
       debugProcess.getRequestsManager().deleteRequest(this);
       createRequest(debugProcess);
-      context.getVirtualMachineProxy().resume();
+      debugProcess.getVirtualMachineProxy().resume();
     }
 
     StackFrameProxyImpl frame = context.getFrameProxy();
@@ -465,19 +462,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
                                                                              condition,
                                                                            this::createConditionCodeFragment));
         });
-
-        XEvaluationOrigin originBackup = XEvaluationOrigin.getOrigin(context);
-        boolean evaluationResult;
-        try {
-          XEvaluationOrigin.setOrigin(context, XEvaluationOrigin.BREAKPOINT_CONDITION);
-          if (Registry.is("debugger.retry.conditional.breakpoints", true)) {
-            context.setMayRetryEvaluation(true);
-          }
-          evaluationResult = DebuggerUtilsEx.evaluateBoolean(evaluator, context);
-        } finally {
-          XEvaluationOrigin.setOrigin(context, originBackup);
-          context.setMayRetryEvaluation(false);
-        }
+        boolean evaluationResult = DebuggerUtilsEx.evaluateBoolean(evaluator, context);
         JavaDebuggerEvaluatorStatisticsCollector.logEvaluationResult(myProject, evaluator, true, XEvaluationOrigin.BREAKPOINT_CONDITION);
         if (!evaluationResult) {
           return false;
@@ -512,11 +497,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       myEvaluator = evaluator;
     }
 
-    static @Nullable ExpressionEvaluator cacheOrGet(String propertyName,
-                                                    EventRequest request,
-                                                    PsiElement context,
-                                                    TextWithImports text,
-                                                    EvaluatingComputable<? extends ExpressionEvaluator> supplier) throws EvaluateException {
+    @Nullable
+    static ExpressionEvaluator cacheOrGet(String propertyName,
+                                          EventRequest request,
+                                          PsiElement context,
+                                          TextWithImports text,
+                                          EvaluatingComputable<? extends ExpressionEvaluator> supplier) throws EvaluateException {
       EvaluatorCache cache = (EvaluatorCache)request.getProperty(propertyName);
       if (cache != null && Objects.equals(cache.myContext, context) && Objects.equals(cache.myTextWithImports, text)) {
         return cache.myEvaluator;
@@ -557,7 +543,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   private static PsiCodeFragment createCodeFragment(Project project, TextWithImports text, PsiElement context) {
-    return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createPsiCodeFragment(text, context, project);
+    return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createCodeFragment(text, context, project);
   }
 
   protected String calculateEventClass(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
@@ -651,7 +637,8 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     }
   }
 
-  public abstract @Nullable PsiElement getEvaluationElement();
+  @Nullable
+  public abstract PsiElement getEvaluationElement();
 
   protected TextWithImports getLogMessage() {
     return TextWithImportsImpl.fromXExpression(myXBreakpoint.getLogExpressionObject());

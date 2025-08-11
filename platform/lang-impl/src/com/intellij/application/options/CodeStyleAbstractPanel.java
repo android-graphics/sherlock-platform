@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
@@ -73,7 +73,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
   private final List<TextRange>       myPreviewRangesToHighlight = new ArrayList<>();
 
   private final EditorEx myEditor;
-  private final @NotNull CodeStyleSettings mySettings;
+  @NotNull
+  private final CodeStyleSettings mySettings;
   private boolean myShouldUpdatePreview;
   private long myLastDocumentModificationStamp;
   private String myTextToReformat;
@@ -81,7 +82,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
 
   private final Alarm myUpdateAlarm;
 
-  private @Nullable CodeStyleSchemesModel myModel;
+  @Nullable private CodeStyleSchemesModel myModel;
   private boolean mySomethingChanged;
   private long myEndHighlightPreviewChangesTimeMillis = -1;
   private boolean myShowsPreviewHighlighters;
@@ -138,7 +139,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     myUserActivityWatcher.register(component);
   }
 
-  private @Nullable EditorEx createEditor() {
+  @Nullable
+  private EditorEx createEditor() {
     if (StringUtil.isEmpty(getPreviewText())) return null;
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document editorDocument = editorFactory.createDocument("");
@@ -264,7 +266,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
    * @return          list of changes applied to the {@link #myTextToReformat target text} during reformatting. It is sorted
    *                  by change start offset in ascending order
    */
-  private @Nullable Document collectChangesBeforeCurrentSettingsAppliance(@NotNull Project project) {
+  @Nullable
+  private Document collectChangesBeforeCurrentSettingsAppliance(@NotNull Project project) {
     PsiFile psiFile = createFileFromText(project, myTextToReformat);
     prepareForReformat(psiFile);
     CodeStyle.runWithLocalSettings(
@@ -295,7 +298,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
   private void prepareForReformat(PsiFile psiFile) {
   }
 
-  protected @NotNull String getFileExt() {
+  @NotNull
+  protected String getFileExt() {
     return getFileType().getDefaultExtension();
   }
 
@@ -323,7 +327,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     );
   }
 
-  protected @NotNull PsiFile doReformat(final Project project, @NotNull PsiFile psiFile) {
+  @NotNull
+  protected PsiFile doReformat(final Project project, @NotNull PsiFile psiFile) {
     CodeStyleManager.getInstance(project).reformat(psiFile);
     return psiFile;
   }
@@ -368,11 +373,15 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     }
   }
 
-  protected abstract @Nullable EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme);
+  @Nullable
+  protected abstract EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme);
 
-  protected abstract @NotNull FileType getFileType();
+  @NotNull
+  protected abstract FileType getFileType();
 
-  protected abstract @NonNls @Nullable String getPreviewText();
+  @NonNls
+  @Nullable
+  protected abstract String getPreviewText();
 
   public abstract void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException;
 
@@ -391,7 +400,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
 
   public abstract boolean isModified(CodeStyleSettings settings);
 
-  public abstract @Nullable JComponent getPanel();
+  @Nullable
+  public abstract JComponent getPanel();
 
   @Override
   public void dispose() {
@@ -597,7 +607,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
    * Override this method if the panel is linked to a specific language.
    * @return The language this panel is associated with.
    */
-  public @Nullable Language getDefaultLanguage()  {
+  @Nullable
+  public Language getDefaultLanguage()  {
     return myDefaultLanguage;
   }
 
@@ -609,7 +620,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     return myCurrentSettings;
   }
 
-  protected @Nullable CodeStyleSettings getModelSettings() {
+  @Nullable
+  protected CodeStyleSettings getModelSettings() {
     CodeStyleSchemesModel model = myModel;
     return model != null ? model.getCloneSettings(model.getSelectedScheme()) : null;
   }
@@ -649,7 +661,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
   public void highlightOptions(@NotNull String searchString) {
   }
 
-  private static @Nullable JPanel findTabbedPaneChild(@NotNull JComponent component) {
+  @Nullable
+  private static JPanel findTabbedPaneChild(@NotNull JComponent component) {
     Container parent = component.getParent();
     while (parent != null && !(parent instanceof NewCodeStyleSettingsPanel)) {
       Container nextParent = parent.getParent();

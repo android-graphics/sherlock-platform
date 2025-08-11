@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.diff.DiffEditorTitleCustomizer;
@@ -42,7 +42,8 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   enum ScrollToPolicy {
     FIRST_CHANGE, LAST_CHANGE;
 
-    public @Nullable <T> T select(@NotNull List<T> changes) {
+    @Nullable
+    public <T> T select(@NotNull List<T> changes) {
       if (this == FIRST_CHANGE) return ContainerUtil.getFirstItem(changes);
       if (this == LAST_CHANGE) return ContainerUtil.getLastItem(changes);
       throw new IllegalStateException();
@@ -75,8 +76,6 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   //
 
   Key<ActionToolbar> LEFT_TOOLBAR = Key.create("Diff.LeftToolbar");
-
-  Key<Runnable> PATCH_FILE_PREVIEW_MODIFICATION_SWITCH = Key.create("Diff.PatchFilePreviewModificationSwitch");
 
   /**
    * Add panel to the bottom of diff window.

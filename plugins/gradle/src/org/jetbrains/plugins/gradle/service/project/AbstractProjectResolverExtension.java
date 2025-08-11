@@ -1,10 +1,22 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider;
-import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
@@ -13,11 +25,14 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.Consumer;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider;
+import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 
 import java.util.*;
@@ -30,8 +45,8 @@ import java.util.*;
 @Order(ExternalSystemConstants.UNORDERED)
 public abstract class AbstractProjectResolverExtension implements GradleProjectResolverExtension {
 
-  protected @NotNull ProjectResolverContext resolverCtx;
-  protected @NotNull GradleProjectResolverExtension nextResolver;
+  @NotNull protected ProjectResolverContext resolverCtx;
+  @NotNull protected GradleProjectResolverExtension nextResolver;
 
   @Override
   public void setProjectResolverContext(@NotNull ProjectResolverContext projectResolverContext) {
@@ -46,8 +61,9 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
     nextResolver = next;
   }
 
+  @Nullable
   @Override
-  public @Nullable GradleProjectResolverExtension getNext() {
+  public GradleProjectResolverExtension getNext() {
     return nextResolver;
   }
 
@@ -56,8 +72,9 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
     nextResolver.populateProjectExtraModels(gradleProject, ideProject);
   }
 
+  @Nullable
   @Override
-  public @Nullable DataNode<ModuleData> createModule(@NotNull IdeaModule gradleModule, @NotNull DataNode<ProjectData> projectDataNode) {
+  public DataNode<ModuleData> createModule(@NotNull IdeaModule gradleModule, @NotNull DataNode<ProjectData> projectDataNode) {
     return nextResolver.createModule(gradleModule, projectDataNode);
   }
 
@@ -86,21 +103,24 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
     nextResolver.populateModuleDependencies(gradleModule, ideModule, ideProject);
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<TaskData> populateModuleTasks(@NotNull IdeaModule gradleModule,
-                                                           @NotNull DataNode<ModuleData> ideModule,
-                                                           @NotNull DataNode<ProjectData> ideProject)
+  public Collection<TaskData> populateModuleTasks(@NotNull IdeaModule gradleModule,
+                                                  @NotNull DataNode<ModuleData> ideModule,
+                                                  @NotNull DataNode<ProjectData> ideProject)
     throws IllegalArgumentException, IllegalStateException {
     return nextResolver.populateModuleTasks(gradleModule, ideModule, ideProject);
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<Class<?>> getExtraProjectModelClasses() {
+  public Set<Class<?>> getExtraProjectModelClasses() {
     return Collections.emptySet();
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<Class<?>> getExtraBuildModelClasses() {
+  public Set<Class<?>> getExtraBuildModelClasses() {
     return Collections.emptySet();
   }
 
@@ -116,26 +136,30 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
     return providers;
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<Class<?>> getToolingExtensionsClasses() {
+  public Set<Class<?>> getToolingExtensionsClasses() {
     return Collections.emptySet();
   }
 
+  @NotNull
   @Override
-  public @NotNull List<Pair<String, String>> getExtraJvmArgs() {
+  public List<Pair<String, String>> getExtraJvmArgs() {
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
-  public @NotNull List<String> getExtraCommandLineArgs() {
+  public List<String> getExtraCommandLineArgs() {
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
-  public @NotNull ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
-                                                               @NotNull Throwable error,
-                                                               @NotNull String projectPath,
-                                                               @Nullable String buildFilePath) {
+  public ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
+                                                      @NotNull Throwable error,
+                                                      @NotNull String projectPath,
+                                                      @Nullable String buildFilePath) {
     return nextResolver.getUserFriendlyError(buildEnvironment, error, projectPath, buildFilePath);
   }
 
@@ -145,5 +169,11 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
 
   @Override
   public void preImportCheck() {
+  }
+
+  @Override
+  public void enhanceTaskProcessing(@NotNull List<String> taskNames,
+                                    @Nullable String jvmParametersSetup,
+                                    @NotNull Consumer<String> initScriptConsumer) {
   }
 }

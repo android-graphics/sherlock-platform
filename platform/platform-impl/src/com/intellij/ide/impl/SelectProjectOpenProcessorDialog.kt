@@ -4,7 +4,6 @@ package com.intellij.ide.impl
 import com.intellij.ide.environment.EnvironmentService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.DialogWrapper
@@ -68,9 +67,7 @@ class SelectProjectOpenProcessorDialog(
           if (processor != null) {
             return processor
           }
-          writeIntentReadAction {
-            SelectProjectOpenProcessorDialog(processors, file).showAndGetChoice()
-          }
+          SelectProjectOpenProcessorDialog(processors, file).showAndGetChoice()
         }
       }
     }

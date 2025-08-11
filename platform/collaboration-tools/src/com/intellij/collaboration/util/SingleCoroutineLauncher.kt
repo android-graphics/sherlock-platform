@@ -4,7 +4,6 @@ package com.intellij.collaboration.util
 import com.intellij.collaboration.async.mapState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -15,7 +14,6 @@ import kotlin.coroutines.EmptyCoroutineContext
 class SingleCoroutineLauncher(private val cs: CoroutineScope) {
 
   private val currentTaskKey = MutableStateFlow<UUID?>(null)
-  private var currentJob: Job? = null
   val busy: StateFlow<Boolean> = currentTaskKey.mapState(cs) { it != null }
 
   fun launch(context: CoroutineContext = EmptyCoroutineContext,
@@ -23,19 +21,13 @@ class SingleCoroutineLauncher(private val cs: CoroutineScope) {
              block: suspend CoroutineScope.() -> Unit) {
     val key = UUID.randomUUID()
     if (!currentTaskKey.compareAndSet(null, key)) return
-    currentJob = cs.launch(context, start) {
+    cs.launch(context, start) {
       try {
         block()
       }
       finally {
-        currentJob = null
         currentTaskKey.compareAndSet(key, null)
       }
     }
-  }
-
-  fun cancel() {
-    currentJob?.cancel()
-    currentJob = null
   }
 }

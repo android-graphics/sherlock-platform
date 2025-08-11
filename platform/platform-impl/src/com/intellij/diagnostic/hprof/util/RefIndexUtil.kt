@@ -17,9 +17,7 @@ package com.intellij.diagnostic.hprof.util
 
 import com.intellij.diagnostic.hprof.classstore.ClassDefinition
 import com.intellij.diagnostic.hprof.classstore.ClassStore
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 object RefIndexUtil {
 
   fun getFieldDescription(refIndex: Int,

@@ -25,12 +25,14 @@ public class UnresolvedRefTrueFalseQuickFix extends PsiUpdateModCommandQuickFix 
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return PyPsiBundle.message("QFIX.replace.with.true.or.false", newName);
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.replace.with.true.or.false");
   }
 

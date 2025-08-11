@@ -37,7 +37,8 @@ public final class AbstractMethodWithMissingImplementationsInspection
   extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "abstract.method.with.missing.implementations.problem.descriptor");
   }
@@ -103,7 +104,8 @@ public final class AbstractMethodWithMissingImplementationsInspection
      * @param aClass subclass to find the method in.
      * @return the overriding method.
      */
-    private static @Nullable PsiMethod findOverridingMethod(PsiClass aClass, @NotNull PsiMethod method, @NotNull PsiClass superClass) {
+    @Nullable
+    private static PsiMethod findOverridingMethod(PsiClass aClass, @NotNull PsiMethod method, @NotNull PsiClass superClass) {
       final PsiSubstitutor substitutor =
         TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
       final MethodSignature signature = method.getSignature(substitutor);

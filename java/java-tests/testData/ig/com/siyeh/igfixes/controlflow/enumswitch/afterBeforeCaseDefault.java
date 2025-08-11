@@ -1,4 +1,4 @@
-// "Create missing branch 'ERROR'" "true"
+// "Create missing switch branch 'ERROR'" "true"
 package com.siyeh.ipp.enumswitch;
 
 class Main {

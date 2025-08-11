@@ -1,11 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.execution.wsl.WslPath;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,28 +21,21 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.platform.eel.EelDescriptor;
-import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 import static com.intellij.openapi.util.NlsActions.ActionText;
-import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
 
 /**
  * @author anna
@@ -53,7 +44,6 @@ public class ProjectSdksModel implements SdkModel {
   private static final Logger LOG = Logger.getInstance(ProjectSdksModel.class);
 
   private final HashMap<Sdk, Sdk> myProjectSdks = new HashMap<>();
-  private final List<Sdk> myRemovedSdks = new ArrayList<>();
   private final EventDispatcher<Listener> mySdkEventsDispatcher = EventDispatcher.create(Listener.class);
 
   private boolean myModified;
@@ -61,8 +51,9 @@ public class ProjectSdksModel implements SdkModel {
   private Sdk myProjectSdk;
   private boolean myInitialized;
 
+  @NotNull
   @Override
-  public @NotNull Listener getMulticaster() {
+  public Listener getMulticaster() {
     return mySdkEventsDispatcher.getMulticaster();
   }
 
@@ -72,7 +63,8 @@ public class ProjectSdksModel implements SdkModel {
   }
 
   @Override
-  public @Nullable Sdk findSdk(@NotNull String sdkName) {
+  @Nullable
+  public Sdk findSdk(@NotNull String sdkName) {
     for (Sdk projectJdk : myProjectSdks.values()) {
       if (sdkName.equals(projectJdk.getName())) return projectJdk;
     }
@@ -90,19 +82,9 @@ public class ProjectSdksModel implements SdkModel {
   }
 
   public void syncSdks() {
-    syncSdks(LocalEelDescriptor.INSTANCE);
-  }
-
-  /**
-   * @param eel can be null only if the corresponding feature flag is disabled.
-   */
-  @ApiStatus.Internal
-  public void syncSdks(@Nullable EelDescriptor eelDescriptor) {
     final Sdk[] projectSdks = ProjectJdkTable.getInstance().getAllJdks();
     for (Sdk sdk : projectSdks) {
       if (myProjectSdks.containsKey(sdk) || myProjectSdks.containsValue(sdk)) continue;
-
-      if (eelDescriptor != null && !sdkMatchesEel(eelDescriptor, sdk)) continue;
 
       Sdk editableCopy;
       try {
@@ -119,47 +101,12 @@ public class ProjectSdksModel implements SdkModel {
     }
   }
 
-  @ApiStatus.Internal
-  public static boolean sdkMatchesEel(@NotNull EelDescriptor eelDescriptor, Sdk sdk) {
-    String sdkHomePath = sdk.getHomePath();
-    return sdkMatchesEel(eelDescriptor, sdkHomePath);
-  }
-
-  @ApiStatus.Internal
-  public static boolean sdkMatchesEel(@NotNull EelDescriptor eelDescriptor, String sdkHomePath) {
-    if (sdkHomePath != null) {
-      try {
-        Path path = Path.of(sdkHomePath);
-        if (getEelDescriptor(path).equals(eelDescriptor)) {
-          return true;
-        }
-      }
-      catch (InvalidPathException ignored) {
-        // Ignored.
-      }
-    }
-    return false;
-  }
-
   public void reset(@Nullable Project project) {
-    EelDescriptor eelDescriptor;
-    if (!Registry.is("java.home.finder.use.eel")) {
-      eelDescriptor = null;
-    }
-    else if (project != null && !project.isDefault()) {
-      eelDescriptor = getEelDescriptor(project);
-    }
-    else {
-      eelDescriptor = LocalEelDescriptor.INSTANCE;
-    }
-
     myProjectSdks.clear();
     ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
     jdkTable.preconfigure();
     final Sdk[] projectSdks = jdkTable.getAllJdks();
     for (Sdk sdk : projectSdks) {
-      if (eelDescriptor != null && !sdkMatchesEel(eelDescriptor, sdk)) continue;
-
       try {
         Sdk editable = sdk.clone();
         myProjectSdks.put(sdk, editable);
@@ -183,7 +130,8 @@ public class ProjectSdksModel implements SdkModel {
     myInitialized = false;
   }
 
-  public @NotNull HashMap<Sdk, Sdk> getProjectSdks() {
+  @NotNull
+  public HashMap<Sdk, Sdk> getProjectSdks() {
     return myProjectSdks;
   }
 
@@ -220,7 +168,7 @@ public class ProjectSdksModel implements SdkModel {
         if (myProjectSdks.containsKey(tableItem)) {
           itemsInTable.add(tableItem);
         }
-        if (myRemovedSdks.contains(tableItem)) {
+        else {
           jdkTable.removeJdk(tableItem);
         }
       }
@@ -309,17 +257,15 @@ public class ProjectSdksModel implements SdkModel {
       myProjectSdks.remove(projectJdk);
       SdkDownloadTracker.getInstance().onSdkRemoved(projectJdk);
       mySdkEventsDispatcher.getMulticaster().beforeSdkRemove(projectJdk);
-      myRemovedSdks.add(projectJdk);
       myModified = true;
     }
   }
 
-  public void createAddActions(@Nullable Project project,
-                               @NotNull DefaultActionGroup group,
+  public void createAddActions(@NotNull DefaultActionGroup group,
                                @NotNull JComponent parent,
                                @NotNull java.util.function.Consumer<? super Sdk> updateTree,
                                @Nullable Predicate<? super SdkTypeId> filter) {
-    createAddActions(project, group, parent, null, updateTree, filter);
+    createAddActions(group, parent, null, updateTree, filter);
   }
 
   private static @NotNull List<SdkType> getAddableSdkTypes(@Nullable Predicate<? super SdkTypeId> filter) {
@@ -332,15 +278,14 @@ public class ProjectSdksModel implements SdkModel {
     return result;
   }
 
-  public void createAddActions(@Nullable Project project,
-                               @NotNull DefaultActionGroup group,
+  public void createAddActions(@NotNull DefaultActionGroup group,
                                @NotNull JComponent parent,
                                @Nullable Sdk selectedSdk,
                                @NotNull java.util.function.Consumer<? super Sdk> updateTree,
                                @Nullable Predicate<? super SdkTypeId> filter) {
 
     Map<SdkType, NewSdkAction> downloadActions = createDownloadActions(filter);
-    Map<SdkType, NewSdkAction> defaultAddActions = createAddActions(project, filter);
+    Map<SdkType, NewSdkAction> defaultAddActions = createAddActions(filter);
 
     for (SdkType type : getAddableSdkTypes(filter)) {
       NewSdkAction downloadAction = downloadActions.get(type);
@@ -354,16 +299,16 @@ public class ProjectSdksModel implements SdkModel {
     }
   }
 
-  public abstract static class NewSdkAction extends DumbAwareAction {
+  public static abstract class NewSdkAction extends DumbAwareAction {
     private final SdkType mySdkType;
 
     private Sdk mySelectedSdkOverride;
     private JComponent myParentOverride;
     private java.util.function.Consumer<? super Sdk> myCallbackOverride;
 
-    private final @NotNull @ListItem String myListItemText;
+    @NotNull @ListItem private final String myListItemText;
     /** this is the text that is shown for the item in the nested list pop-up of SdkPopup **/
-    private final @NotNull @ListItem String myListSubItemText;
+    @NotNull @ListItem private final String myListSubItemText;
 
     private NewSdkAction(@NotNull SdkType sdkType,
                          @NotNull @ActionText String actionText,
@@ -376,11 +321,15 @@ public class ProjectSdksModel implements SdkModel {
       mySdkType = sdkType;
     }
 
-    public final @NotNull @ListItem String getListItemText() {
+    @NotNull
+    @ListItem
+    public final String getListItemText() {
       return myListItemText;
     }
 
-    public final @NotNull @ListItem String getListSubItemText() {
+    @NotNull
+    @ListItem
+    public final String getListSubItemText() {
       return myListSubItemText;
     }
 
@@ -394,7 +343,8 @@ public class ProjectSdksModel implements SdkModel {
       return this;
     }
 
-    public final @NotNull SdkType getSdkType() {
+    @NotNull
+    public final SdkType getSdkType() {
       return mySdkType;
     }
 
@@ -428,8 +378,7 @@ public class ProjectSdksModel implements SdkModel {
         public void actionPerformed(@Nullable Sdk selectedSdk,
                                     @NotNull JComponent parent,
                                     @NotNull java.util.function.Consumer<? super Sdk> callback) {
-          Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parent));
-          doDownload(project, downloadExtension, parent, selectedSdk, type, callback);
+          doDownload(downloadExtension, parent, selectedSdk, type, callback);
         }
       };
 
@@ -442,7 +391,7 @@ public class ProjectSdksModel implements SdkModel {
     return false;
   }
 
-  public @NotNull Map<SdkType, NewSdkAction> createAddActions(@Nullable Project project, @Nullable Predicate<? super SdkTypeId> filter) {
+  public @NotNull Map<SdkType, NewSdkAction> createAddActions(@Nullable Predicate<? super SdkTypeId> filter) {
     Map<SdkType, NewSdkAction> result = new LinkedHashMap<>();
     for (final SdkType type : getAddableSdkTypes(filter)) {
       String sdkPresentableName = type.getPresentableName(), text, title, subText;
@@ -467,9 +416,7 @@ public class ProjectSdksModel implements SdkModel {
             type.showCustomCreateUI(ProjectSdksModel.this, parent, selectedSdk, sdk -> setupSdk(sdk, callback));
           }
           else {
-            Path pathToEnvironment = (project == null || project.getProjectFilePath() == null) ?
-                                     Path.of(System.getProperty("user.home")) : Path.of(project.getProjectFilePath());
-            SdkConfigurationUtil.selectSdkHome(type, null, pathToEnvironment, home -> addSdk(type, home, sdk -> callback.accept(sdk)));
+            SdkConfigurationUtil.selectSdkHome(type, home -> addSdk(type, home, sdk -> callback.accept(sdk)));
           }
         }
       };
@@ -478,12 +425,11 @@ public class ProjectSdksModel implements SdkModel {
     return result;
   }
 
-  public void doAdd(@NotNull JComponent parent, final @NotNull SdkType type, final @NotNull Consumer<? super Sdk> callback) {
+  public void doAdd(@NotNull JComponent parent, @NotNull final SdkType type, @NotNull final Consumer<? super Sdk> callback) {
     doAdd(parent, null, type, callback);
   }
 
-  private void doDownload(@Nullable Project project,
-                         @NotNull SdkDownload downloadExtension,
+  public void doDownload(@NotNull SdkDownload downloadExtension,
                          @NotNull JComponent parent,
                          @Nullable Sdk selectedSdk,
                          @NotNull SdkType type,
@@ -491,10 +437,10 @@ public class ProjectSdksModel implements SdkModel {
     LOG.assertTrue(downloadExtension.supportsDownload(type));
     myModified = true;
 
-    downloadExtension.showDownloadUI(type, this, parent, project, selectedSdk, null, sdk -> setupInstallableSdk(type, sdk, callback));
+    downloadExtension.showDownloadUI(type, this, parent, selectedSdk, sdk -> setupInstallableSdk(type, sdk, callback));
   }
 
-  public void doAdd(@NotNull JComponent parent, final @Nullable Sdk selectedSdk, final @NotNull SdkType type, final @NotNull Consumer<? super Sdk> callback) {
+  public void doAdd(@NotNull JComponent parent, @Nullable final Sdk selectedSdk, @NotNull final SdkType type, @NotNull final Consumer<? super Sdk> callback) {
     myModified = true;
     if (type.supportsCustomCreateUI()) {
       type.showCustomCreateUI(this, parent, selectedSdk, sdk -> setupSdk(sdk, callback));
@@ -509,19 +455,22 @@ public class ProjectSdksModel implements SdkModel {
     setupSdk(newJdk, callback);
   }
 
-  public @NotNull Sdk createSdk(@NotNull SdkType type, @NotNull String home) {
+  @NotNull
+  public Sdk createSdk(@NotNull SdkType type, @NotNull String home) {
     String newSdkName = SdkConfigurationUtil.createUniqueSdkName(type, home, myProjectSdks.values());
     return createSdkInternal(type, newSdkName, home);
   }
 
-  public @NotNull Sdk createSdk(@NotNull SdkType type, @NotNull String suggestedName, @NotNull String home) {
+  @NotNull
+  public Sdk createSdk(@NotNull SdkType type, @NotNull String suggestedName, @NotNull String home) {
     String newSdkName = SdkConfigurationUtil.createUniqueSdkName(suggestedName, myProjectSdks.values());
     return createSdkInternal(type, newSdkName, home);
   }
 
-  private static @NotNull Sdk createSdkInternal(@NotNull SdkType type,
-                                                @NotNull String newSdkName,
-                                                @NotNull String home) {
+  @NotNull
+  private static Sdk createSdkInternal(@NotNull SdkType type,
+                                       @NotNull String newSdkName,
+                                       @NotNull String home) {
     final Sdk newJdk = ProjectJdkTable.getInstance().createSdk(newSdkName, type);
     SdkModificator sdkModificator = newJdk.getSdkModificator();
     sdkModificator.setHomePath(home);
@@ -533,51 +482,30 @@ public class ProjectSdksModel implements SdkModel {
   }
 
   @RequiresEdt
-  public void setupInstallableSdk(
-    @NotNull SdkType type,
-    @NotNull SdkDownloadTask downloadTask,
-    @Nullable java.util.function.Consumer<? super Sdk> callback
-  ) {
-    final Sdk incompleteSdk = createIncompleteSdk(type, downloadTask, callback);
+  public void setupInstallableSdk(@NotNull SdkType type,
+                                  @NotNull SdkDownloadTask item,
+                                  @Nullable java.util.function.Consumer<? super Sdk> callback) {
+    final Sdk incompleteSdk = createIncompleteSdk(type, item, callback);
     downloadSdk(incompleteSdk);
   }
 
-  @RequiresEdt
-  @ApiStatus.Internal
-  public static @NotNull Sdk createDownloadSdkInternal(
-    @NotNull SdkType type,
-    @NotNull SdkDownloadTask downloadTask,
-    @NotNull Collection<? extends Sdk> sdks
-  ) {
+  public @NotNull Sdk createIncompleteSdk(@NotNull SdkType type,
+                                          @NotNull SdkDownloadTask item,
+                                          java.util.function.@Nullable Consumer<? super Sdk> callback) {
     // we do not ask the SdkType to set up the SDK for us, instead, we return an incomplete SDK to the
     // model with an expectation it would be updated later on
-    String suggestedName = downloadTask.getSuggestedSdkName();
-    String homeDir = FileUtil.toSystemIndependentName(downloadTask.getPlannedHomeDir());
-    if (!Registry.is("ide.workspace.model.per.environment.model.separation", false)) {
-      if (WslPath.isWslUncPath(homeDir)) {
-        suggestedName += " (WSL)";
-      }
+    String suggestedName = item.getSuggestedSdkName();
+    String homeDir = FileUtil.toSystemIndependentName(item.getPlannedHomeDir());
+    if (WslPath.isWslUncPath(homeDir)) {
+      suggestedName += " (WSL)";
     }
 
-    String newSdkName = SdkConfigurationUtil.createUniqueSdkName(suggestedName, sdks);
-    Sdk downloadSdk = createSdkInternal(type, newSdkName, homeDir);
-
     SdkDownloadTracker tracker = SdkDownloadTracker.getInstance();
-    tracker.registerSdkDownload(downloadSdk, downloadTask);
-
-    return downloadSdk;
-  }
-
-  public @NotNull Sdk createIncompleteSdk(
-    @NotNull SdkType type,
-    @NotNull SdkDownloadTask downloadTask,
-    java.util.function.@Nullable Consumer<? super Sdk> callback
-  ) {
-    Sdk tempSdk = createDownloadSdkInternal(type, downloadTask, myProjectSdks.values());
+    var tempSdk = createSdk(type, suggestedName, homeDir);
+    tracker.registerSdkDownload(tempSdk, item);
 
     AtomicReference<Sdk> sdk = new AtomicReference<>();
     doAdd(tempSdk, (editableSdk) -> {
-      SdkDownloadTracker tracker = SdkDownloadTracker.getInstance();
       tracker.registerEditableSdk(tempSdk, editableSdk);
       tracker.tryRegisterSdkDownloadFailureHandler(editableSdk, () -> removeSdk(editableSdk));
       sdk.set(editableSdk);
@@ -638,7 +566,8 @@ public class ProjectSdksModel implements SdkModel {
     }
   }
 
-  public @Nullable Sdk findSdk(final @Nullable Sdk modelJdk) {
+  @Nullable
+  public Sdk findSdk(@Nullable final Sdk modelJdk) {
     for (Map.Entry<Sdk, Sdk> entry : myProjectSdks.entrySet()) {
       Sdk jdk = entry.getKey();
       if (Comparing.equal(entry.getValue(), modelJdk)) {
@@ -648,7 +577,8 @@ public class ProjectSdksModel implements SdkModel {
     return null;
   }
 
-  public @Nullable Sdk getProjectSdk() {
+  @Nullable
+  public Sdk getProjectSdk() {
     if (!myProjectSdks.containsValue(myProjectSdk)) return null;
     return myProjectSdk;
   }

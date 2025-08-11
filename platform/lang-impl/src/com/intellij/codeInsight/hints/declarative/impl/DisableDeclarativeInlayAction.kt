@@ -8,9 +8,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.project.DumbAware
 
-internal class DisableDeclarativeInlayAction : AnAction(CodeInsightBundle.message("inlay.hints.declarative.disable.action.no.provider.text")), DumbAware {
+internal class DisableDeclarativeInlayAction : AnAction(CodeInsightBundle.message("inlay.hints.declarative.disable.action.no.provider.text")) {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }

@@ -1,6 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-@file:OptIn(UnsafeCastFunction::class)
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.formatter
 
@@ -28,7 +26,6 @@ import org.jetbrains.kotlin.kdoc.parser.KDocElementTypes
 import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 private val QUALIFIED_OPERATION = TokenSet.create(DOT, SAFE_ACCESS)
@@ -1095,11 +1092,6 @@ private val INDENT_RULES = arrayOf(
         .notForType(LBRACKET, RBRACKET)
         .set(Indent.getNormalIndent()),
 
-    strategy("Context Parameters List")
-        .within(CONTEXT_RECEIVER_LIST)
-        .forType(VALUE_PARAMETER)
-        .set(Indent.getNormalIndent()),
-
     strategy("Type aliases")
         .within(TYPEALIAS)
         .notForType(TYPE_ALIAS_KEYWORD, EOL_COMMENT, MODIFIER_LIST, BLOCK_COMMENT, DOC_COMMENT)
@@ -1108,15 +1100,6 @@ private val INDENT_RULES = arrayOf(
     strategy("Default parameter values")
         .within(VALUE_PARAMETER)
         .forElement { node -> node.psi != null && node.psi == (node.psi.parent as? KtParameter)?.defaultValue }
-        .continuationIf(KotlinCodeStyleSettings::CONTINUATION_INDENT_FOR_EXPRESSION_BODIES, indentFirst = true),
-
-    strategy("Named arguments")
-        .within(VALUE_ARGUMENT)
-        .notForType(EQ, VALUE_ARGUMENT_NAME)
-        .forElement { node ->
-            val parent = node.psi?.parent
-            parent is KtValueArgument && parent.isNamed()
-        }
         .continuationIf(KotlinCodeStyleSettings::CONTINUATION_INDENT_FOR_EXPRESSION_BODIES, indentFirst = true),
 )
 

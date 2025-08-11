@@ -6,8 +6,6 @@ import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 /**
  * <h3>Obsolescence notice</h3>
  * <p>
@@ -71,12 +69,7 @@ public abstract class EmptyProgressIndicatorBase implements ProgressIndicator {
   @Override
   public final void checkCanceled() {
     if (isCanceled() && myNonCancelableSectionCount == 0 && !Cancellation.isInNonCancelableSection()) {
-      ProcessCanceledException e = new ProcessCanceledException();
-      if (this instanceof EmptyProgressIndicator) {
-        Throwable cause = Objects.requireNonNull(((EmptyProgressIndicator)this).getCancellationCause());
-        e.addSuppressed(cause);
-      }
-      throw e;
+      throw new ProcessCanceledException();
     }
   }
 

@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeCoreBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
@@ -69,8 +70,9 @@ public class ConfirmationDialog extends OptionsMessageDialog {
     myCheckBoxDoNotShowDialog.setText(doNotShowAgainMessage);
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getDoNotShowMessage() {
+  protected String getDoNotShowMessage() {
     return myDoNotShowAgainMessage == null ? super.getDoNotShowMessage() : myDoNotShowAgainMessage;
   }
 

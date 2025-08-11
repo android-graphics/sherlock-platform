@@ -11,17 +11,17 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
+import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -113,13 +113,22 @@ public abstract class OccurrencesChooser<T> {
 
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(model)
-      .setRenderer(new GroupedItemsListRenderer<C>(new ListItemDescriptorAdapter<C>() {
+      .setRenderer(new DefaultListCellRenderer() {
         @Override
-        public @Nullable String getTextFor(C value) {
-          if (value == null) return "";
-          return value.formatDescription(occurrencesMap.get(value).size());
+        public Component getListCellRendererComponent(final JList list,
+                                                      final Object value,
+                                                      final int index,
+                                                      final boolean isSelected,
+                                                      final boolean cellHasFocus) {
+          final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          @SuppressWarnings("unchecked") final C choices = (C)value;
+
+          if (choices != null) {
+            setText(choices.formatDescription(occurrencesMap.get(choices).size()));
+          }
+          return rendererComponent;
         }
-      }))
+      })
       .setItemSelectedCallback(value -> {
         if (value == null) return;
         dropHighlighters();

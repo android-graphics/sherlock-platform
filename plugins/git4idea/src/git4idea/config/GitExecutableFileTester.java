@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
@@ -173,19 +174,17 @@ class GitExecutableFileTester {
 
   private static @NotNull GitVersion testExecutable(@NotNull GitExecutable executable) throws Exception {
     GitVersion.Type type = null;
-    File workingDirectory = new File(".");
     if (executable instanceof GitExecutable.Unknown) {
       type = GitVersion.Type.UNDEFINED;
     }
     else if (executable instanceof GitExecutable.Wsl) {
       WSLDistribution distribution = ((GitExecutable.Wsl)executable).getDistribution();
       type = distribution.getVersion() == 1 ? GitVersion.Type.WSL1 : GitVersion.Type.WSL2;
-      workingDirectory = new File(distribution.getWindowsPath("/"));
     }
 
     LOG.debug("Acquiring git version for " + executable);
     GitLineHandler handler = new GitLineHandler(null,
-                                                workingDirectory,
+                                                new File("."),
                                                 executable,
                                                 GitCommand.VERSION,
                                                 Collections.emptyList());

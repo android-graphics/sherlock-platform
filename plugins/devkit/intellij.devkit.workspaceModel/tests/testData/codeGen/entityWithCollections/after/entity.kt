@@ -11,7 +11,6 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 interface CollectionFieldEntity : WorkspaceEntity {
   val versions: Set<Int>
   val names: List<String>
-  val manifestAttributes: Map<String, String>
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -19,7 +18,6 @@ interface CollectionFieldEntity : WorkspaceEntity {
     override var entitySource: EntitySource
     var versions: MutableSet<Int>
     var names: MutableList<String>
-    var manifestAttributes: Map<String, String>
   }
 
   companion object : EntityType<CollectionFieldEntity, Builder>() {
@@ -29,14 +27,12 @@ interface CollectionFieldEntity : WorkspaceEntity {
     operator fun invoke(
       versions: Set<Int>,
       names: List<String>,
-      manifestAttributes: Map<String, String>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
     ): Builder {
       val builder = builder()
       builder.versions = versions.toMutableWorkspaceSet()
       builder.names = names.toMutableWorkspaceList()
-      builder.manifestAttributes = manifestAttributes
       builder.entitySource = entitySource
       init?.invoke(builder)
       return builder

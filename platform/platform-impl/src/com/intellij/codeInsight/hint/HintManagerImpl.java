@@ -213,8 +213,7 @@ public class HintManagerImpl extends HintManager {
     ClientHintManager.getCurrentInstance().showHint(component, p, flags, timeout, onHintHidden);
   }
 
-  @ApiStatus.Internal
-  public static void doShowInGivenLocation(final LightweightHint hint, final Editor editor, Point p, HintHint hintInfo, boolean updateSize) {
+  static void doShowInGivenLocation(final LightweightHint hint, final Editor editor, Point p, HintHint hintInfo, boolean updateSize) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     JComponent externalComponent = getExternalComponent(editor);

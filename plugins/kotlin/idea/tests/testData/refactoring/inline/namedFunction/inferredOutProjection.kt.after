@@ -1,3 +1,0 @@
-fun foo(array: Array<out String>) = array.size
-
-// IGNORE_K1

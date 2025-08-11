@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2010 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntFilesProvider;
@@ -28,7 +42,7 @@ public abstract class AntDomFileSet extends AntDomFilesProviderImpl{
   public abstract GenericAttributeValue<PsiFileSystemItem> getFile();
 
   @Override
-  protected @NotNull List<File> getFiles(@Nullable AntDomPattern pattern, Set<AntFilesProvider> processed) {
+  @NotNull protected List<File> getFiles(@Nullable AntDomPattern pattern, Set<AntFilesProvider> processed) {
     assert pattern != null;
     final File singleFile = getCanonicalFile(getFile().getStringValue());
     if (singleFile == null || pattern.hasIncludePatterns()) {
@@ -80,7 +94,7 @@ public abstract class AntDomFileSet extends AntDomFilesProviderImpl{
     }
 
     private static String makePath(final String parentPath, final String name) {
-      if (parentPath.isEmpty()) {
+      if (parentPath.length() == 0) {
         return name;
       }
       return parentPath + "/" + name;

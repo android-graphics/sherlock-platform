@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.dom.*;
-import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.util.ActionCandidate;
 import org.jetbrains.idea.devkit.util.ComponentCandidate;
 import org.jetbrains.idea.devkit.util.ListenerCandidate;
@@ -65,35 +64,35 @@ final class LineMarkerInfoHelper {
                                                                             @NotNull PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.listener"),
-                                      (NullableFunction<Listeners.Listener, String>)listener ->
-                                        listener.getTopicClassName().getStringValue());
+                                      (NullableFunction<Listeners.Listener, String>)listener -> listener.getTopicClassName()
+                                        .getStringValue());
   }
 
   static RelatedItemLineMarkerInfo<PsiElement> createListenerTopicLineMarkerInfo(@NotNull List<? extends ListenerCandidate> targets,
                                                                                  @NotNull PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.listener"),
-                                      (NullableFunction<Listeners.Listener, String>)listener ->
-                                        listener.getListenerClassName().getStringValue());
+                                      (NullableFunction<Listeners.Listener, String>)listener -> listener.getListenerClassName()
+                                        .getStringValue());
   }
 
   static RelatedItemLineMarkerInfo<?> createActionLineMarkerInfo(List<? extends ActionCandidate> targets, PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.action"),
-                                      (NullableFunction<Action, String>)action -> action.getEffectiveId());
+                                      (NullableFunction<ActionOrGroup, String>)actionOrGroup -> actionOrGroup.getId().getStringValue());
   }
 
   static RelatedItemLineMarkerInfo<?> createActionGroupLineMarkerInfo(List<? extends ActionCandidate> targets, PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.action.group"),
-                                      (NullableFunction<Group, String>)group -> group.getEffectiveId());
+                                      (NullableFunction<ActionOrGroup, String>)actionOrGroup -> actionOrGroup.getId().getStringValue());
   }
 
   static RelatedItemLineMarkerInfo<?> createComponentLineMarkerInfo(List<? extends ComponentCandidate> targets, PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.component"),
-                                      (NullableFunction<Component, String>)component ->
-                                        component.getImplementationClass().getStringValue());
+                                      (NullableFunction<Component, String>)component -> component.getImplementationClass()
+                                        .getStringValue());
   }
 
 
@@ -112,8 +111,9 @@ final class LineMarkerInfoHelper {
             return getDomElementName((T)domElement, namer);
           }
 
+          @Nls
           @Override
-          public @Nls @Nullable String getCustomContainerName() {
+          public @Nullable String getCustomContainerName() {
             PsiElement psiElement = getElement();
             if (psiElement == null) return null;
             return UniqueVFilePathBuilder.getInstance()
@@ -129,21 +129,25 @@ final class LineMarkerInfoHelper {
         return getDomElementName((T)domElement, namer);
       })
       .setTargetRenderer(() -> new PsiTargetPresentationRenderer<>() {
+        @Nls
+        @NotNull
         @Override
-        public @Nls @NotNull String getElementText(@NotNull PsiElement element) {
+        public String getElementText(@NotNull PsiElement element) {
           DomElement domElement = DomUtil.getDomElement(element);
           //noinspection unchecked
           return getDomElementName((T)domElement, namer);
         }
 
+        @Nls
         @Override
-        public @Nls String getContainerText(@NotNull PsiElement element) {
+        public String getContainerText(@NotNull PsiElement element) {
           return UniqueVFilePathBuilder.getInstance()
             .getUniqueVirtualFilePath(element.getProject(), element.getContainingFile().getVirtualFile());
         }
 
+        @Nullable
         @Override
-        protected @Nullable Icon getIcon(@NotNull PsiElement element) {
+        protected Icon getIcon(@NotNull PsiElement element) {
           DomElement domElement = DomUtil.getDomElement(element);
           assert domElement != null;
           return ObjectUtils.chooseNotNull(domElement.getPresentation().getIcon(), element.getIcon(0));
@@ -153,7 +157,8 @@ final class LineMarkerInfoHelper {
       .createLineMarkerInfo(element);
   }
 
-  private static @NlsSafe <T extends DomElement> String getDomElementName(T domElement, NullableFunction<T, @NlsSafe String> namer) {
+  @NlsSafe
+  private static <T extends DomElement> String getDomElementName(T domElement, NullableFunction<T, @NlsSafe String> namer) {
     return StringUtil.defaultIfEmpty(namer.fun(domElement), "?");
   }
 }

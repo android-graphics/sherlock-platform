@@ -552,7 +552,6 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-21224
   public void testSixWithMetaclass() {
-    enablePyiStubsForPackages("six");
     doTest();
   }
 
@@ -709,10 +708,14 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-23632
   public void testMockPatchObject() {
-    enablePyiStubsForPackages("mock");
-    final PsiFile file = myFixture.configureByFile(getTestDirectoryPath() + "/a.py");
-    configureInspection();
-    assertSdkRootsNotParsed(file);
+    runWithAdditionalClassEntryInSdkRoots(
+      getTestDirectoryPath() + "/lib",
+      () -> {
+        final PsiFile file = myFixture.configureByFile(getTestDirectoryPath() + "/a.py");
+        configureInspection();
+        assertSdkRootsNotParsed(file);
+      }
+    );
   }
 
   // PY-20197

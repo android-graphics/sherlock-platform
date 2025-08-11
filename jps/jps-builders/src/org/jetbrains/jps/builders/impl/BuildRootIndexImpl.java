@@ -1,12 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileFilters;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FileCollectionFactory;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
@@ -22,29 +21,24 @@ import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-@ApiStatus.Internal
 public final class BuildRootIndexImpl implements BuildRootIndex {
   private static final Key<Map<File, BuildRootDescriptor>> ROOT_DESCRIPTOR_MAP = Key.create("_root_to_descriptor_map");
   private static final Key<Map<BuildTarget<?>, List<? extends BuildRootDescriptor>>> TEMP_TARGET_ROOTS_MAP = Key.create("_module_to_root_map");
   private final IgnoredFileIndex myIgnoredFileIndex;
   private final Map<BuildTarget<?>, List<? extends BuildRootDescriptor>> myRootsByTarget;
-  private final Map<File, List<BuildRootDescriptor>> myRootToDescriptors;
-  private final ConcurrentMap<BuildRootDescriptor, FileFilter> fileFilters;
+  private final Map<File,List<BuildRootDescriptor>> myRootToDescriptors;
+  private final ConcurrentMap<BuildRootDescriptor, FileFilter> myFileFilters;
 
-  public BuildRootIndexImpl(@NotNull BuildTargetRegistry targetRegistry,
-                            @NotNull JpsModel model,
-                            @NotNull ModuleExcludeIndex index,
-                            @NotNull BuildDataPaths dataPaths,
-                            @NotNull IgnoredFileIndex ignoredFileIndex) {
+  public BuildRootIndexImpl(@NotNull BuildTargetRegistry targetRegistry, @NotNull JpsModel model, @NotNull ModuleExcludeIndex index,
+                            @NotNull BuildDataPaths dataPaths, @NotNull IgnoredFileIndex ignoredFileIndex) {
     myIgnoredFileIndex = ignoredFileIndex;
     myRootsByTarget = new HashMap<>();
     myRootToDescriptors = FileCollectionFactory.createCanonicalFileMap();
-    fileFilters = new ConcurrentHashMap<>(16, 0.75f, 1);
+    myFileFilters = new ConcurrentHashMap<>(16, 0.75f, 1);
     final Iterable<AdditionalRootsProviderService> rootsProviders = JpsServiceManager.getInstance().getExtensions(AdditionalRootsProviderService.class);
     for (BuildTargetType<?> targetType : TargetTypeRegistry.getInstance().getTargetTypes()) {
       for (BuildTarget<?> target : targetRegistry.getAllTargets(targetType)) {
@@ -80,10 +74,13 @@ public final class BuildRootIndexImpl implements BuildRootIndex {
     myRootsByTarget.put(target, descriptors);
   }
 
-  private void registerDescriptor(@NotNull BuildRootDescriptor descriptor) {
-    myRootToDescriptors.computeIfAbsent(descriptor.getRootFile(), k -> {
-      return new SmartList<>();
-    }).add(descriptor);
+  private void registerDescriptor(BuildRootDescriptor descriptor) {
+    List<BuildRootDescriptor> list = myRootToDescriptors.get(descriptor.getRootFile());
+    if (list == null) {
+      list = new SmartList<>();
+      myRootToDescriptors.put(descriptor.getRootFile(), list);
+    }
+    list.add(descriptor);
   }
 
   @Override
@@ -206,14 +203,14 @@ public final class BuildRootIndexImpl implements BuildRootIndex {
       current = FileUtilRt.getParentFile(current);
       depth++;
     }
-    return result == null ? Collections.emptyList() : result;
+    return result != null ? result : Collections.emptyList();
   }
 
   private @NotNull <R extends BuildRootDescriptor> List<R> filterDescriptorsByFile(@NotNull List<R> descriptors, File file, int parentsToCheck) {
     List<R> result = descriptors;
     for (int i = 0; i < descriptors.size(); i++) {
       R descriptor = descriptors.get(i);
-      if (isFileAccepted(file.toPath(), descriptor) && isParentDirectoriesAccepted(file.toPath(), parentsToCheck, descriptor)) {
+      if (isFileAccepted(file, descriptor) && isParentDirectoriesAccepted(file, parentsToCheck, descriptor)) {
         if (result != descriptors) {
           result.add(descriptor);
         }
@@ -228,14 +225,10 @@ public final class BuildRootIndexImpl implements BuildRootIndex {
     return result;
   }
 
-  private boolean isParentDirectoriesAccepted(@NotNull Path file, int parentsToCheck, BuildRootDescriptor descriptor) {
-    Path current = file;
+  private boolean isParentDirectoriesAccepted(File file, int parentsToCheck, BuildRootDescriptor descriptor) {
+    File current = file;
     while (parentsToCheck-- > 0) {
-      current = current.getParent();
-      if (current == null) {
-        return true;
-      }
-
+      current = FileUtil.getParentFile(current);
       if (!isDirectoryAccepted(current, descriptor)) {
         return false;
       }
@@ -267,21 +260,21 @@ public final class BuildRootIndexImpl implements BuildRootIndex {
 
   @Override
   public @NotNull FileFilter getRootFilter(@NotNull BuildRootDescriptor descriptor) {
-    return fileFilters.computeIfAbsent(descriptor, BuildRootDescriptor::createFileFilter);
-  }
-
-  @Override
-  public boolean isFileAccepted(@NotNull Path file, @NotNull BuildRootDescriptor descriptor) {
-    if (myIgnoredFileIndex.isIgnored(file.getFileName().toString())) {
-      return false;
+    FileFilter filter = myFileFilters.get(descriptor);
+    if (filter == null) {
+      filter = descriptor.createFileFilter();
+      myFileFilters.put(descriptor, filter);
     }
-
-    FileFilter rootFilter = getRootFilter(descriptor);
-    return rootFilter == FileFilters.EVERYTHING || rootFilter.accept(file.toFile());
+    return filter;
   }
 
   @Override
-  public boolean isDirectoryAccepted(@NotNull Path dir, @NotNull BuildRootDescriptor descriptor) {
-    return !myIgnoredFileIndex.isIgnored(dir.getFileName().toString()) && !descriptor.getExcludedRoots().contains(dir);
+  public boolean isFileAccepted(@NotNull File file, @NotNull BuildRootDescriptor descriptor) {
+    return !myIgnoredFileIndex.isIgnored(file.getName()) && getRootFilter(descriptor).accept(file);
+  }
+
+  @Override
+  public boolean isDirectoryAccepted(@NotNull File dir, @NotNull BuildRootDescriptor descriptor) {
+    return !myIgnoredFileIndex.isIgnored(dir.getName()) && !descriptor.getExcludedRoots().contains(dir);
   }
 }

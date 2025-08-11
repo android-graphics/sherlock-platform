@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.repo;
 
 import com.intellij.openapi.project.Project;
@@ -15,7 +15,7 @@ import java.util.Map;
 
 public final class HgConfig {
 
-  private final @NotNull Map<String, Map<String, String>> myConfigMap;
+  @NotNull private final Map<String, Map<String, String>> myConfigMap;
 
   public static HgConfig getInstance(Project project, VirtualFile root) {
     return new HgConfig(project, root);
@@ -28,11 +28,13 @@ public final class HgConfig {
     myConfigMap = new HgShowConfigCommand(project).execute(repo);
   }
 
-  public @Nullable String getDefaultPath() {
+  @Nullable
+  public String getDefaultPath() {
     return getNamedConfig("paths", "default");
   }
 
-  public @Nullable String getDefaultPushPath() {
+  @Nullable
+  public String getDefaultPushPath() {
     String path = getNamedConfig("paths", "default:pushurl");
     if (path == null) {
       path = getNamedConfig("paths", "default-push");
@@ -43,7 +45,8 @@ public final class HgConfig {
     return path;
   }
 
-  public @Nullable String getNamedConfig(@NotNull @NonNls String sectionName, @Nullable @NonNls String configName) {
+  @Nullable
+  public String getNamedConfig(@NotNull @NonNls String sectionName, @Nullable @NonNls String configName) {
     if (StringUtil.isEmptyOrSpaces(sectionName) || StringUtil.isEmptyOrSpaces(configName)) {
       return null;
     }
@@ -51,7 +54,8 @@ public final class HgConfig {
     return sectionValues != null ? sectionValues.get(configName) : null;
   }
 
-  public @NotNull Collection<String> getPaths() {
+  @NotNull
+  public Collection<String> getPaths() {
     Map<String, String> pathOptions = myConfigMap.get("paths"); //NON-NLS
     return pathOptions != null ? pathOptions.values() : Collections.emptyList();
   }

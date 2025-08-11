@@ -6,12 +6,12 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess.VfsRootAccessNotAllowedError
-import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.indexing.InitialScanningSkipReporter.FullScanningReason
 import com.intellij.util.indexing.InitialScanningSkipReporter.FullScanningReason.*
 import com.intellij.util.indexing.InitialScanningSkipReporter.NotSeenIdsBasedFullScanningDecision
@@ -58,7 +58,7 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
                                           sourceOfScanning: SourceOfScanning): Job {
   FileBasedIndex.getInstance().loadIndexes()
   val isFilterInvalidated = initialScanningLock.withLock {
-    ConcurrencyUtil.computeIfAbsent(project, FIRST_SCANNING_REQUESTED) { FirstScanningState.REQUESTED }
+    (project as UserDataHolderEx).putUserDataIfAbsent(FIRST_SCANNING_REQUESTED, FirstScanningState.REQUESTED)
     project.getUserData(PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED) == true
   }
   val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
@@ -144,11 +144,10 @@ private fun scheduleFullScanning(
     clearIndexesForDirtyFiles(project, notSeenIds.result.plus(additionalOrphanDirtyFiles), projectDirtyFilesQueue, false)
   }
   else CompletableDeferred(Unit)
-  val parameters = CompletableDeferred(ScanningIterators(indexingReason, null, null, fullScanningType))
-  UnindexedFilesScanner(project, true, isFilterUpToDate,
-                        someDirtyFilesScheduledForIndexing.asCompletableFuture(),
-                        allowCheckingForOutdatedIndexesUsingFileModCount = notSeenIds !is AllNotSeenDirtyFileIds,
-                        scanningParameters = parameters)
+
+  UnindexedFilesScanner(project, true, isFilterUpToDate, null, null, indexingReason,
+                        fullScanningType, someDirtyFilesScheduledForIndexing.asCompletableFuture(),
+                        allowCheckingForOutdatedIndexesUsingFileModCount = notSeenIds !is AllNotSeenDirtyFileIds)
     .queue()
   return someDirtyFilesScheduledForIndexing
 }
@@ -171,11 +170,8 @@ private fun scheduleDirtyFilesScanning(
   val projectDirtyFilesFromOrphanQueue = coroutineScope.async { projectDirtyFiles.await()?.projectDirtyFilesFromOrphanQueue ?: emptyList() }
   val iterators = listOf(DirtyFilesIndexableFilesIterator(projectDirtyFilesFromProjectQueue, false),
                          DirtyFilesIndexableFilesIterator(projectDirtyFilesFromOrphanQueue, true))
-
-  val scanningIterators = CompletableDeferred(ScanningIterators(indexingReason, iterators, null, partialScanningType))
-  UnindexedFilesScanner(project, true, true,
-                        projectDirtyFiles.asCompletableFuture(),
-                        scanningParameters = scanningIterators)
+  UnindexedFilesScanner(project, true, true, iterators, null,
+                        indexingReason, partialScanningType, projectDirtyFiles.asCompletableFuture())
     .queue()
   return projectDirtyFiles
 }
@@ -204,8 +200,8 @@ private suspend fun clearIndexesForDirtyFiles(project: Project,
 private fun OrphanDirtyFilesQueue.getNotSeenIds(project: Project, projectQueue: ProjectDirtyFilesQueue): GetNotSeenDirtyFileIdsResult {
   if (projectQueue.lastSeenIndexInOrphanQueue > untrimmedSize) {
     LOG.error("It should not happen that project has seen file id in orphan queue at index larger than number of files that orphan queue ever had. " +
-              "projectQueue.lastSeenIdsInOrphanQueue=${projectQueue.lastSeenIndexInOrphanQueue}, orphanQueue.untrimmedSize=${untrimmedSize}, " +
-              "orphanQueue.fileIds.size=${fileIds.size}, project=$project")
+              "projectQueue.lastSeenIdsInOrphanQueue=${projectQueue.lastSeenIndexInOrphanQueue}, orphanQueue.lastId=${untrimmedSize}, " +
+              "project=$project")
     return ProjectDirtyFilesQueuePointsToIncorrectPosition
   }
 
@@ -303,9 +299,9 @@ private enum class ReusingPersistentFilterCondition(val reason: FullScanningReas
       return state.filterHolder.wasDataLoadedFromDisk(state.project)
     }
   },
-  IS_SCANNING_AND_INDEXING_COMPLETED(FilterIncompatibleAsFullScanningIsNotCompleted) {
+  IS_SCANNING_COMPLETED(FilterIncompatibleAsFullScanningIsNotCompleted) {
     override fun isUpToDate(state: FilterCheckState): Boolean {
-      return state.project.getService(ProjectIndexingDependenciesService::class.java).isScanningAndIndexingCompleted()
+      return state.project.getService(ProjectIndexingDependenciesService::class.java).isScanningCompleted()
     }
   },
   FILTER_IS_NOT_INVALIDATED(FilterIncompatibleAsFilterIsInvalidated) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -23,7 +23,7 @@ public abstract class XDebuggerTreeValueNodeInplaceEditor extends XDebuggerTreeI
 
   protected XDebuggerTreeValueNodeInplaceEditor(@NonNls String historyId,
                                                 XValueNodeImpl node,
-                                                final @NotNull @NlsSafe String nodeName) {
+                                                @NotNull final @NlsSafe String nodeName) {
     super(node, historyId);
     myValueNode = node;
 
@@ -41,8 +41,9 @@ public abstract class XDebuggerTreeValueNodeInplaceEditor extends XDebuggerTreeI
     myEditorPanel = JBUI.Panels.simplePanel(myExpressionEditor.getComponent());
   }
 
+  @Nullable
   @Override
-  protected @Nullable Rectangle getEditorBounds() {
+  protected Rectangle getEditorBounds() {
     Rectangle bounds = super.getEditorBounds();
     if (bounds == null) {
       return null;

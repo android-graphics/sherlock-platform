@@ -44,16 +44,19 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
     return false;
   }
 
-  protected final @Nullable PyFunction findOnlySuitableFunction(@NotNull Editor editor, @NotNull PsiFile file) {
+  @Nullable
+  protected final PyFunction findOnlySuitableFunction(@NotNull Editor editor, @NotNull PsiFile file) {
     return findOnlySuitableFunction(editor, file, input -> !isReturnTypeDefined(input));
   }
 
-  public static @Nullable PyFunction findOnlySuitableFunction(@NotNull Editor editor, @NotNull PsiFile file, Predicate<PyFunction> condition) {
+  @Nullable
+  public static PyFunction findOnlySuitableFunction(@NotNull Editor editor, @NotNull PsiFile file, Predicate<PyFunction> condition) {
     final PsiElement elementAt = getElementUnderCaret(editor, file);
     return elementAt != null ? ContainerUtil.getOnlyItem(findSuitableFunctions(elementAt, condition)) : null;
   }
 
-  protected final @Nullable PyNamedParameter findOnlySuitableParameter(@NotNull Editor editor, @NotNull PsiFile file) {
+  @Nullable
+  protected final PyNamedParameter findOnlySuitableParameter(@NotNull Editor editor, @NotNull PsiFile file) {
     final PsiElement elementAt = getElementUnderCaret(editor, file);
     final StreamEx<PyNamedParameter> parameters;
     final PyNamedParameter immediateParam = PsiTreeUtil.getParentOfType(elementAt, PyNamedParameter.class);
@@ -82,7 +85,8 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
       .findFirst().orElse(null);
   }
 
-  private static @Nullable PsiElement getElementUnderCaret(@NotNull Editor editor, @NotNull PsiFile file) {
+  @Nullable
+  private static PsiElement getElementUnderCaret(@NotNull Editor editor, @NotNull PsiFile file) {
     final int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
     return PyUtil.findNonWhitespaceAtOffset(file, offset);
   }
@@ -93,7 +97,8 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
 
   protected abstract boolean isReturnTypeDefined(@NotNull PyFunction function);
 
-  private static @NotNull List<PyFunction> findSuitableFunctions(@NotNull PsiElement elementAt, @NotNull Predicate<PyFunction> extraCondition) {
+  @NotNull
+  private static List<PyFunction> findSuitableFunctions(@NotNull PsiElement elementAt, @NotNull Predicate<PyFunction> extraCondition) {
     final StreamEx<PyFunction> definitions;
     final PyFunction immediateDefinition = findFunctionDefinitionUnderCaret(elementAt);
     if (immediateDefinition != null) {
@@ -115,7 +120,8 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
       .toList();
   }
 
-  private static @Nullable PyFunction findFunctionDefinitionUnderCaret(@NotNull PsiElement elementAt) {
+  @Nullable
+  private static PyFunction findFunctionDefinitionUnderCaret(@NotNull PsiElement elementAt) {
     final PyFunction parentFunction = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
     if (parentFunction != null) {
       final ASTNode nameNode = parentFunction.getNameNode();
@@ -129,7 +135,8 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
     return null;
   }
 
-  private static @NotNull List<PyCallExpression> getCallExpressions(@NotNull PsiElement elementAt) {
+  @NotNull
+  private static List<PyCallExpression> getCallExpressions(@NotNull PsiElement elementAt) {
     final PyResolveContext context = getResolveContext(elementAt);
     final PyReferenceExpression referenceExpr = PsiTreeUtil.getParentOfType(elementAt, PyReferenceExpression.class);
     if (referenceExpr != null) {

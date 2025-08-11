@@ -10,10 +10,11 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.Map;
 
 public final class CompiledClassPropertiesProvider implements PropertiesProvider {
   private final ClassLoader myLoader;
-  private final HashMap<String, HashMap<String, LwIntrospectedProperty>> myCache;
+  private final HashMap<String, Map<String, LwIntrospectedProperty>> myCache;
 
   public CompiledClassPropertiesProvider(final ClassLoader loader) {
     if (loader == null) {
@@ -24,16 +25,16 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
   }
 
   @Override
-  public HashMap<String, LwIntrospectedProperty> getLwProperties(final String className) {
+  public HashMap getLwProperties(final String className) {
     if (myCache.containsKey(className)) {
-      return myCache.get(className);
+      return (HashMap)myCache.get(className);
     }
 
     if (Utils.validateJComponentClass(myLoader, className, false) != null) {
       return null;
     }
 
-    final Class<?> aClass;
+    final Class aClass;
     try {
       aClass = Class.forName(className, false, myLoader);
     }
@@ -54,7 +55,7 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
     for (final PropertyDescriptor descriptor : descriptors) {
       final Method readMethod = descriptor.getReadMethod();
       final Method writeMethod = descriptor.getWriteMethod();
-      final Class<?> propertyType = descriptor.getPropertyType();
+      final Class propertyType = descriptor.getPropertyType();
       if (writeMethod == null || readMethod == null || propertyType == null) {
         continue;
       }

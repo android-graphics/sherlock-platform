@@ -1,7 +1,9 @@
 // MODE: usages
 
-fun function(param: String): Int = 1/*<# [3 Usages] #>*/
-fun higherOrderFun(s: String, param: (String) -> Int) = param(s)/*<# [1 Usage] #>*/
+/*<# block [ 3 Usages] #>*/
+fun function(param: String): Int = 1
+/*<# block [ 1 Usage] #>*/
+fun higherOrderFun(s: String, param: (String) -> Int) = param(s)
 
 fun main() {
     function("someString")

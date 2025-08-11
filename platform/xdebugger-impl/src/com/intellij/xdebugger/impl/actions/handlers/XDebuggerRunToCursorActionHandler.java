@@ -20,10 +20,8 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public class XDebuggerRunToCursorActionHandler extends XDebuggerSuspendedActionHandler {
   private final boolean myIgnoreBreakpoints;
 
@@ -32,12 +30,12 @@ public class XDebuggerRunToCursorActionHandler extends XDebuggerSuspendedActionH
   }
 
   @Override
-  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+  protected boolean isEnabled(final @NotNull XDebugSession session, final DataContext dataContext) {
     return super.isEnabled(session, dataContext) && XDebuggerUtilImpl.getCaretPosition(session.getProject(), dataContext) != null;
   }
 
   @Override
-  protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+  protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
     XSourcePosition position = XDebuggerUtilImpl.getCaretPosition(session.getProject(), dataContext);
     if (position != null) {
       session.runToPosition(position, myIgnoreBreakpoints);

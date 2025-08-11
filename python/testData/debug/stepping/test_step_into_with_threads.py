@@ -21,4 +21,3 @@ class A(threading.Thread):
 if __name__ == '__main__':
     t = A()
     t.start()
-    t.join()

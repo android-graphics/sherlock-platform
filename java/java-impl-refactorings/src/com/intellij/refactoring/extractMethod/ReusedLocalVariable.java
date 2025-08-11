@@ -1,13 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class ReusedLocalVariable {
-  private final @NotNull String myName;
-  private final @Nullable String myTempName;
-  private final @NotNull String myType;
+  @NotNull private final String myName;
+  @Nullable private final String myTempName;
+  @NotNull private final String myType;
   private final boolean myReuseValue;
 
   ReusedLocalVariable(@NotNull String name, @Nullable String tempName, @NotNull String type, boolean reuseValue) {

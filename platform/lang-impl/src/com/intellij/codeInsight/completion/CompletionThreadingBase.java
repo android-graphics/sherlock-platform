@@ -2,13 +2,11 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.progress.ProgressManager;
-import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Objects;
 
-@ApiStatus.Internal
 public abstract class CompletionThreadingBase implements CompletionThreading {
-  protected static final ThreadLocal<Boolean> isInBatchUpdate = ThreadLocal.withInitial(() -> Boolean.FALSE);
+  protected final static ThreadLocal<Boolean> isInBatchUpdate = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
   public static void withBatchUpdate(Runnable runnable, CompletionProcess process) {
     if (isInBatchUpdate.get().booleanValue() || !(process instanceof CompletionProgressIndicator)) {

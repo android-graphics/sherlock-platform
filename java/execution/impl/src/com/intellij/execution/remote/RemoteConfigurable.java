@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.remote;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -304,8 +304,9 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     myModuleSelector.applyTo(rc);
   }
 
+  @NotNull
   @Override
-  protected @NotNull JComponent createEditor() {
+  protected JComponent createEditor() {
     return mainPanel;
   }
 

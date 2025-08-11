@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.runtime.deployment.debug;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-final class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
+public final class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
   private static final Logger LOG = Logger.getInstance(JavaDebuggerLauncherImpl.class);
 
   @Override
@@ -80,13 +80,15 @@ final class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
       return myEnvironment;
     }
 
+    @Nullable
     @Override
-    public @Nullable RunContentDescriptor getReuseContent() {
+    public RunContentDescriptor getReuseContent() {
       return myExecutionEnvironment.getContentToReuse();
     }
 
+    @Nullable
     @Override
-    public @Nullable Icon getIcon() {
+    public Icon getIcon() {
       return myExecutionEnvironment.getRunProfile().getIcon();
     }
 
@@ -95,8 +97,9 @@ final class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
       actionGroup.add(new CloseAction(myExecutionEnvironment.getExecutor(), content, myExecutionEnvironment.getProject()));
     }
 
+    @Nullable
     @Override
-    public @Nullable RunProfile getRunProfile() {
+    public RunProfile getRunProfile() {
       return myExecutionEnvironment.getRunProfile();
     }
   }
@@ -114,16 +117,18 @@ final class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
       myRunProfile = runProfile;
     }
 
+    @Nullable
     @Override
-    public @Nullable ExecutionResult createExecutionResult() throws ExecutionException {
+    public ExecutionResult createExecutionResult() throws ExecutionException {
       ConsoleViewImpl consoleView = new ConsoleViewImpl(myProject, false);
       RemoteDebugProcessHandler process = new RemoteDebugProcessHandler(myProject);
       consoleView.attachToProcess(process);
       return new DefaultExecutionResult(consoleView, process);
     }
 
+    @NotNull
     @Override
-    public @NotNull GlobalSearchScope getSearchScope() {
+    public GlobalSearchScope getSearchScope() {
       return mySearchScope;
     }
 

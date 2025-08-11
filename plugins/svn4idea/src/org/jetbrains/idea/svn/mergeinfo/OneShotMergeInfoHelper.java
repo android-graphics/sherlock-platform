@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -33,11 +33,11 @@ import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
 
 public class OneShotMergeInfoHelper implements MergeChecker {
 
-  private final @NotNull MergeContext myMergeContext;
-  private final @NotNull Map<Long, Collection<String>> myPartiallyMerged;
+  @NotNull private final MergeContext myMergeContext;
+  @NotNull private final Map<Long, Collection<String>> myPartiallyMerged;
   // subpath [file] (local) to (subpathURL - merged FROM - to ranges list)
-  private final @NotNull NavigableMap<String, Map<String, MergeRangeList>> myMergeInfoMap;
-  private final @NotNull Object myMergeInfoLock;
+  @NotNull private final NavigableMap<String, Map<String, MergeRangeList>> myMergeInfoMap;
+  @NotNull private final Object myMergeInfoLock;
 
   public OneShotMergeInfoHelper(@NotNull MergeContext mergeContext) {
     myMergeContext = mergeContext;
@@ -56,12 +56,14 @@ public class OneShotMergeInfoHelper implements MergeChecker {
   }
 
   @Override
-  public @Nullable Collection<String> getNotMergedPaths(@NotNull SvnChangeList changeList) {
+  @Nullable
+  public Collection<String> getNotMergedPaths(@NotNull SvnChangeList changeList) {
     return myPartiallyMerged.get(changeList.getNumber());
   }
 
   @Override
-  public @NotNull MergeCheckResult checkList(@NotNull SvnChangeList changeList) {
+  @NotNull
+  public MergeCheckResult checkList(@NotNull SvnChangeList changeList) {
     Set<String> notMergedPaths = new HashSet<>();
     boolean hasMergedPaths = false;
 
@@ -82,7 +84,8 @@ public class OneShotMergeInfoHelper implements MergeChecker {
            : MergeCheckResult.NOT_MERGED;
   }
 
-  public @NotNull MergeCheckResult checkPath(@NotNull String repositoryRelativePath, long revisionNumber) {
+  @NotNull
+  public MergeCheckResult checkPath(@NotNull String repositoryRelativePath, long revisionNumber) {
     MergeCheckResult result = MergeCheckResult.NOT_EXISTS;
     String sourceRelativePath = Url.getRelative(myMergeContext.getRepositoryRelativeSourcePath(), ensureStartSlash(repositoryRelativePath));
 
@@ -117,9 +120,9 @@ public class OneShotMergeInfoHelper implements MergeChecker {
 
   private static class InfoProcessor implements PairProcessor<String, Map<String, MergeRangeList>> {
 
-    private final @NotNull String myRepositoryRelativeSourcePath;
+    @NotNull private final String myRepositoryRelativeSourcePath;
     private boolean myIsMerged;
-    private final @NotNull String mySourceRelativePath;
+    @NotNull private final String mySourceRelativePath;
     private final long myRevisionNumber;
 
     InfoProcessor(@NotNull String sourceRelativePath, @NotNull String repositoryRelativeSourcePath, long revisionNumber) {
@@ -159,7 +162,8 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     }
   }
 
-  private @NotNull PropertyConsumer createPropertyHandler() {
+  @NotNull
+  private PropertyConsumer createPropertyHandler() {
     return new PropertyConsumer() {
       @Override
       public void handleProperty(@NotNull File path, @NotNull PropertyData property) throws SvnBindException {
@@ -173,11 +177,13 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     };
   }
 
-  private @NotNull String getWorkingCopyRelativePath(@NotNull File file) {
+  @NotNull
+  private String getWorkingCopyRelativePath(@NotNull File file) {
     return toSystemIndependentName(Objects.requireNonNull(getRelativePath(myMergeContext.getWcInfo().getRootInfo().getIoFile(), file)));
   }
 
-  private static @NotNull String toKey(@NotNull String path) {
+  @NotNull
+  private static String toKey(@NotNull String path) {
     return SystemInfo.isFileSystemCaseSensitive ? path : toUpperCase(path);
   }
 

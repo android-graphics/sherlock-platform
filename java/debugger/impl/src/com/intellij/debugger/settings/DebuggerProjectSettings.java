@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -23,8 +23,9 @@ public class DebuggerProjectSettings implements PersistentStateComponent<Debugge
     return project.getService(DebuggerProjectSettings.class);
   }
 
+  @Nullable
   @Override
-  public @Nullable DebuggerProjectSettings getState() {
+  public DebuggerProjectSettings getState() {
     return this;
   }
 

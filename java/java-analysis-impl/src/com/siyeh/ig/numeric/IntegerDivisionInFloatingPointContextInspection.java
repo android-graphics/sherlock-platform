@@ -35,7 +35,8 @@ import java.util.Set;
 
 public final class IntegerDivisionInFloatingPointContextInspection extends BaseInspection {
 
-  static final @NonNls Set<String> s_integralTypes = Set.of(
+  @NonNls
+  static final Set<String> s_integralTypes = Set.of(
     "int",
     "long",
     "short",
@@ -49,7 +50,8 @@ public final class IntegerDivisionInFloatingPointContextInspection extends BaseI
   );
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("integer.division.in.floating.point.context.problem.descriptor");
   }
 

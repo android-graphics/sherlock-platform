@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -35,8 +35,9 @@ public final class DefaultAnnotationParamInspection extends AbstractBaseJavaLoca
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitNameValuePair(final @NotNull PsiNameValuePair pair) {
@@ -66,10 +67,13 @@ public final class DefaultAnnotationParamInspection extends AbstractBaseJavaLoca
     };
   }
 
-  private static @NotNull LocalQuickFix createRemoveParameterFix() {
+  @NotNull
+  private static LocalQuickFix createRemoveParameterFix() {
     return new PsiUpdateModCommandQuickFix() {
+      @Nls
+      @NotNull
       @Override
-      public @Nls @NotNull String getFamilyName() {
+      public String getFamilyName() {
         return JavaBundle.message("quickfix.family.remove.redundant.parameter");
       }
 

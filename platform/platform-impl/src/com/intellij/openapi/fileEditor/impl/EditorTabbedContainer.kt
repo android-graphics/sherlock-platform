@@ -10,19 +10,23 @@ import com.intellij.ide.actions.MaximizeEditorInSplitAction
 import com.intellij.ide.actions.ShowFilePathAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.ide.ui.customization.CustomisedActionGroup
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.application.*
-import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.FileDropManager
 import com.intellij.openapi.editor.containsFileDropTargets
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_INDEX_KEY
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_LOCATION_HASH_KEY
@@ -35,13 +39,14 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.toolWindow.ToolWindowHeader
 import com.intellij.ui.*
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
 import com.intellij.ui.docking.DockableContent
 import com.intellij.ui.docking.DragSession
+import com.intellij.ui.docking.impl.DockManagerImpl
 import com.intellij.ui.docking.impl.DockManagerImpl.Companion.isNorthPanelAvailable
+import com.intellij.ui.docking.impl.DockManagerImpl.Companion.isNorthPanelVisible
 import com.intellij.ui.tabs.*
 import com.intellij.ui.tabs.TabInfo.DragOutDelegate
 import com.intellij.ui.tabs.UiDecorator.UiDecoration
@@ -52,19 +57,20 @@ import com.intellij.ui.tabs.impl.multiRow.CompressibleMultiRowLayout
 import com.intellij.ui.tabs.impl.multiRow.ScrollableMultiRowLayout
 import com.intellij.ui.tabs.impl.multiRow.WrapMultiRowLayout
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout
-import com.intellij.util.concurrency.EdtScheduler
+import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TimedDeadzone
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.awt.event.AWTEventListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.util.concurrent.TimeUnit
 import java.util.function.Function
 import javax.swing.*
 
@@ -224,7 +230,6 @@ class EditorTabbedContainer internal constructor(
         if (UISettings.getInstance().showFileIconInTabs) {
           it.setIcon(icon)
         }
-        InternalUICustomization.getInstance().componentMarker.markAIComponent(it.component, selectedEditor)
       }
     )
     selectedEditor?.tabActions?.let {
@@ -262,7 +267,7 @@ class EditorTabbedContainer internal constructor(
     get() = editorTabs
 }
 
-@Internal
+@ApiStatus.Internal
 class DockableEditor(
   @JvmField internal val img: Image?,
   @JvmField internal val file: VirtualFile,
@@ -270,7 +275,7 @@ class DockableEditor(
   private val preferredSize: Dimension,
   @JvmField internal val isPinned: Boolean,
   @JvmField internal val isSingletonEditorInWindow: Boolean,
-  @JvmField internal val isNorthPanelAvailable: Boolean = true,
+  @JvmField internal val isNorthPanelAvailable: Boolean = isNorthPanelVisible(UISettings.getInstance()),
 ) : DockableContent<VirtualFile?> {
   override fun getKey(): VirtualFile = file
 
@@ -337,18 +342,18 @@ private fun doProcessDoubleClick(e: MouseEvent, editorTabs: JBTabsImpl, window: 
 
 private fun createKeepMousePositionRunnable(event: MouseEvent): () -> Unit {
   return {
-    EdtScheduler.getInstance().schedule(50) {
-      val component = event.component
-      if (component != null && component.isShowing) {
-        val p = component.locationOnScreen
-        p.translate(event.x, event.y)
-        try {
-          Robot().mouseMove(p.x, p.y)
-        }
-        catch (ignored: AWTException) {
-        }
-      }
-    }
+    EdtScheduledExecutorService.getInstance().schedule({
+                                                         val component = event.component
+                                                         if (component != null && component.isShowing) {
+                                                           val p = component.locationOnScreen
+                                                           p.translate(event.x, event.y)
+                                                           try {
+                                                             Robot().mouseMove(p.x, p.y)
+                                                           }
+                                                           catch (ignored: AWTException) {
+                                                           }
+                                                         }
+                                                       }, 50, TimeUnit.MILLISECONDS)
   }
 }
 
@@ -356,7 +361,7 @@ private class TabMouseListener(private val window: EditorWindow, private val edi
   private var actionClickCount = 0
 
   override fun mouseReleased(e: MouseEvent) {
-    if (!UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED) || e.isConsumed) {
+    if (!UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
       return
     }
 
@@ -377,31 +382,27 @@ private class TabMouseListener(private val window: EditorWindow, private val edi
   }
 
   override fun mousePressed(e: MouseEvent) {
-    if (!UIUtil.isActionClick(e) || e.isConsumed) {
-      return
-    }
-    if (e.clickCount == 1) {
-      actionClickCount = 0
-    }
-    // clicks on the close window button don't count in determining whether we have a double click on the tab (IDEA-70403)
-    val deepestComponent = SwingUtilities.getDeepestComponentAt(e.component, e.x, e.y)
-    if (deepestComponent !is InplaceButton) {
-      actionClickCount++
-    }
-    if (actionClickCount > 1 && actionClickCount % 2 == 0) {
-      doProcessDoubleClick(e = e, editorTabs = editorTabs, window = window)
+    if (UIUtil.isActionClick(e)) {
+      if (e.clickCount == 1) {
+        actionClickCount = 0
+      }
+      // clicks on the close window button don't count in determining whether we have a double click on the tab (IDEA-70403)
+      val deepestComponent = SwingUtilities.getDeepestComponentAt(e.component, e.x, e.y)
+      if (deepestComponent !is InplaceButton) {
+        actionClickCount++
+      }
+      if (actionClickCount > 1 && actionClickCount % 2 == 0) {
+        doProcessDoubleClick(e = e, editorTabs = editorTabs, window = window)
+      }
     }
   }
 
   override fun mouseClicked(e: MouseEvent) {
-    if (!UIUtil.isActionClick(e, MouseEvent.MOUSE_CLICKED) ||
-        !(e.isMetaDown || !SystemInfoRt.isMac && e.isControlDown) ||
-        e.isConsumed) {
-      return
-    }
-    val o = editorTabs.findInfo(e)?.`object`
-    if (o is VirtualFile) {
-      ShowFilePathAction.show((o as VirtualFile?)!!, e)
+    if (UIUtil.isActionClick(e, MouseEvent.MOUSE_CLICKED) && (e.isMetaDown || !SystemInfoRt.isMac && e.isControlDown)) {
+      val o = editorTabs.findInfo(e)?.`object`
+      if (o is VirtualFile) {
+        ShowFilePathAction.show((o as VirtualFile?)!!, e)
+      }
     }
   }
 }
@@ -419,9 +420,7 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
 
     // setting isHidden to true will hide the tab - we must select another tab now
     window.getTabToSelect(tabBeingClosed = info, fileBeingClosed = file, componentIndex = dragStartIndex)?.let {
-      WriteIntentReadAction.run {
-        window.setCurrentCompositeAndSelectTab(it)
-      }
+      window.setCurrentCompositeAndSelectTab(it)
     }
     info.isHidden = true
 
@@ -430,9 +429,13 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
     file.putUserData(DRAG_START_LOCATION_HASH_KEY, System.identityHashCode(editorTabs))
     file.putUserData(DRAG_START_PINNED_KEY, isPinnedAtStart)
     val presentation = Presentation(info.text)
+    if (DockManagerImpl.REOPEN_WINDOW.isIn(file)) {
+      presentation.putClientProperty(DockManagerImpl.REOPEN_WINDOW, DockManagerImpl.REOPEN_WINDOW.get(file, true))
+    }
     presentation.icon = info.icon
     val editors = info.composite.allEditors
     val isSingletonEditorInWindow = isSingletonEditorInWindow(editors)
+    presentation.putClientProperty(DockManagerImpl.ALLOW_DOCK_TOOL_WINDOWS, !isSingletonEditorInWindow)
     session = DockManager.getInstance(window.manager.project).createDragSession(
       mouseEvent,
       DockableEditor(
@@ -562,7 +565,6 @@ private class EditorTabs(
 
     val source = ActionManager.getInstance().getAction("EditorTabsEntryPoint")
     source.templatePresentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
-    source.templatePresentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true)
     _entryPointActionGroup = DefaultActionGroup(java.util.List.of(source))
   }
 
@@ -585,9 +587,6 @@ private class EditorTabs(
   }
 
   override fun getEditorWindow(): EditorWindow = window
-
-  @Internal
-  override fun minHeaderHeight(): Int = ToolWindowHeader.getUnscaledHeight()
 
   override fun createRowLayout(): TabLayout {
     if (!isSingleRow || (isHorizontalTabs && (TabLayout.showPinnedTabsSeparately() || !UISettings.getInstance().hideTabsIfNeeded))) {
@@ -633,22 +632,11 @@ private class EditorTabs(
       return null
     }
 
-    val group = info.tabLabelActions ?: return null
-    val actions: Array<AnAction?> = if (group is DefaultActionGroup) {
-      group.getChildren(ActionManager.getInstance())
-    }
-    else if (group is CustomisedActionGroup && group.delegate is DefaultActionGroup) {
-      (group.delegate as DefaultActionGroup).getChildren(ActionManager.getInstance())
-    }
-    else {
-      group.getChildren(null)
-    }
-
-    val closeTabAction = actions.lastOrNull() as? CloseTab
+    val closeTabAction = info.tabLabelActions?.getChildren(null)?.lastOrNull() as? CloseTab
     return closeTabAction?.getIcon(isHovered)
   }
 
-  override fun createTabPainterAdapter(): TabPainterAdapter = InternalUICustomization.getInstance().editorTabPainterAdapter
+  override fun createTabPainterAdapter(): TabPainterAdapter = EditorTabPainterAdapter()
 
   override fun createTabBorder(): JBTabsBorder = JBEditorTabsBorder(this)
 
@@ -752,5 +740,5 @@ private class EditorTabLabel(info: TabInfo, tabs: JBTabsImpl) : TabLabel(tabs, i
 }
 
 internal fun isSingletonEditorInWindow(editors: List<FileEditor>): Boolean {
-  return editors.any { FileEditorManagerKeys.SINGLETON_EDITOR_IN_WINDOW.get(it, false) }
+  return editors.any { FileEditorManagerImpl.SINGLETON_EDITOR_IN_WINDOW.get(it, false) || EditorWindow.HIDE_TABS.get(it, false) }
 }

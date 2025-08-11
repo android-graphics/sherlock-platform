@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.imports;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -7,7 +7,6 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.ImportsUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -49,21 +48,12 @@ public final class ReplaceOnDemandImportIntention extends MCIntention {
     if (importStatementBase instanceof PsiImportModuleStatement || importStatementBase instanceof PsiImportStatement) {
       final PsiClass[] classes = javaFile.getClasses();
       final ClassCollector visitor = ClassCollector.create(importStatementBase);
-      if (visitor == null) return;
+      if(visitor==null) return;
       for (PsiClass aClass : classes) {
         aClass.accept(visitor);
       }
-      PsiJavaModule psiJavaModule = javaFile.getModuleDeclaration();
-      if (psiJavaModule != null) {
-        psiJavaModule.accept(visitor);
-      }
-      ImportUtils.ImplicitImportChecker checker = ImportUtils.createImplicitImportChecker(javaFile);
-      final PsiClass[] importedClasses = Arrays.stream(visitor.getImportedClasses())
-        .filter(
-          cl -> !(importStatementBase instanceof PsiImportModuleStatement) ||
-                !checker.isImplicitlyImported(cl.getQualifiedName(), false))
-        .sorted(new PsiClassComparator())
-        .toArray(PsiClass[]::new);
+      final PsiClass[] importedClasses = visitor.getImportedClasses();
+      Arrays.sort(importedClasses, new PsiClassComparator());
       createImportStatements(importStatementBase, importedClasses, factory::createImportStatement);
     }
     else if (importStatementBase instanceof PsiImportStaticStatement) {
@@ -99,8 +89,10 @@ public final class ReplaceOnDemandImportIntention extends MCIntention {
 
   private static class ClassCollector extends JavaRecursiveElementWalkingVisitor {
 
-    private final @Nullable String importedPackageName;
-    private final @Nullable PsiImportModuleStatement importModuleStatement;
+    @Nullable
+    private final String importedPackageName;
+    @Nullable
+    private final PsiImportModuleStatement importModuleStatement;
     private final Set<PsiClass> importedClasses = new HashSet<>();
 
     ClassCollector(@NotNull String importedPackageName) {
@@ -143,7 +135,8 @@ public final class ReplaceOnDemandImportIntention extends MCIntention {
       return importedClasses.toArray(PsiClass.EMPTY_ARRAY);
     }
 
-    static @Nullable ClassCollector create(@NotNull PsiImportStatementBase statementBase) {
+    @Nullable
+    static ClassCollector create(@NotNull PsiImportStatementBase statementBase) {
       if (statementBase instanceof PsiImportModuleStatement moduleStatement) {
         return new ClassCollector(moduleStatement);
       }

@@ -33,22 +33,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
-import javax.swing.JComponent;
-import javax.swing.JTabbedPane;
-import javax.swing.SwingUtilities;
-import java.awt.Component;
-import java.awt.KeyboardFocusManager;
-import java.awt.Window;
+import javax.swing.*;
+import java.awt.*;
+import java.util.List;
 import java.util.*;
 
-import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.BGT_DATA_PROVIDER;
-
-/** @noinspection removal*/
 public class DataManagerImpl extends DataManager {
   private static final Logger LOG = Logger.getInstance(DataManagerImpl.class);
 
-  private static class ThreadState { int depth; Set<String> ids; }
-  private static final ThreadLocal<ThreadState> ourGetDataLevel = ThreadLocal.withInitial(() -> new ThreadState());
+  private static final ThreadLocal<int[]> ourGetDataLevel = ThreadLocal.withInitial(() -> new int[1]);
 
   private final Map<Pair<String, GetDataRuleType>, GetDataRule> myRulesCache = ConcurrentFactoryMap.createMap(o -> getDataRule(o.first, o.second));
 
@@ -78,56 +71,60 @@ public class DataManagerImpl extends DataManager {
   public @Nullable Object getDataFromProviderAndRules(@NotNull String dataId,
                                                       @Nullable GetDataRuleType ruleType,
                                                       @NotNull DataProvider provider) {
-    return getDataFromProviderAndRulesInner(dataId, ruleType, provider);
+    return getDataFromProviderAndRulesInner(dataId, ruleType, null, provider);
   }
 
   @ApiStatus.Internal
   public @Nullable Object getDataFromRules(@NotNull String dataId,
                                            @NotNull GetDataRuleType ruleType,
                                            @NotNull DataProvider provider) {
-    return getDataFromRulesInner(dataId, ruleType, provider);
+    return getDataFromRulesInner(dataId, ruleType, null, provider);
   }
 
   private @Nullable Object getDataFromProviderAndRulesInner(@NotNull String dataId,
                                                             @Nullable GetDataRuleType ruleType,
+                                                            @Nullable Set<String> alreadyComputedIds,
                                                             @NotNull DataProvider provider) {
     ProgressManager.checkCanceled();
-    ThreadState state = ourGetDataLevel.get();
-    if (state.ids != null && state.ids.contains(dataId)) {
+    if (alreadyComputedIds != null && alreadyComputedIds.contains(dataId)) {
       return null;
     }
-    state.depth++;
+    int[] depth = ourGetDataLevel.get();
     try {
-      Object data = getDataFromProviderInner(dataId, provider, null);
+      depth[0]++;
+      Object data = getDataFromProviderInner(dataId, provider);
       if (data != null) {
         return data;
       }
-      return ruleType == null ? null : getDataFromRulesInner(dataId, ruleType, provider);
+      return ruleType == null ? null : getDataFromRulesInner(dataId, ruleType, alreadyComputedIds, provider);
     }
     finally {
-      state.depth--;
+      depth[0]--;
+      if (alreadyComputedIds != null) alreadyComputedIds.remove(dataId);
     }
   }
 
   private @Nullable Object getDataFromRulesInner(@NotNull String dataId,
                                                  @NotNull GetDataRuleType ruleType,
+                                                 @Nullable Set<String> alreadyComputedIds,
                                                  @NotNull DataProvider provider) {
     GetDataRule rule = myRulesCache.get(Pair.create(dataId, ruleType));
     if (rule == null) return null;
-    return getDataFromRuleInner(rule, dataId, ruleType, provider);
+    return getDataFromRuleInner(rule, dataId, ruleType, alreadyComputedIds, provider);
   }
 
   private @Nullable Object getDataFromRuleInner(@NotNull GetDataRule rule,
                                                 @NotNull String dataId,
                                                 @NotNull GetDataRuleType ruleType,
+                                                @Nullable Set<String> alreadyComputedIds,
                                                 @NotNull DataProvider provider) {
-    ThreadState state = ourGetDataLevel.get();
-    if (state.ids == null || state.depth == 0) state.ids = new HashSet<>();
-    state.depth++;
+    int[] depth = ourGetDataLevel.get();
     try {
-      state.ids.add(dataId);
+      depth[0]++;
+      Set<String> ids = alreadyComputedIds == null ? new HashSet<>() : alreadyComputedIds;
+      ids.add(dataId);
       Object data = rule.getData(id -> {
-        Object o = getDataFromProviderAndRulesInner(id, ruleType, provider);
+        Object o = getDataFromProviderAndRulesInner(id, ruleType, ids, provider);
         return o == CustomizedDataContext.EXPLICIT_NULL ? null : o;
       });
       return data == null ? null :
@@ -135,13 +132,10 @@ public class DataManagerImpl extends DataManager {
              DataValidators.validOrNull(data, dataId, rule);
     }
     finally {
-      state.depth--;
-      state.ids.remove(dataId);
+      depth[0]--;
     }
   }
 
-  /** @deprecated Most components now implement {@link UiDataProvider} */
-  @Deprecated
   public static @Nullable DataProvider getDataProviderEx(@Nullable Object component) {
     DataProvider dataProvider = null;
     if (component instanceof DataProvider) {
@@ -150,6 +144,11 @@ public class DataManagerImpl extends DataManager {
     else if (component instanceof JComponent) {
       dataProvider = getDataProvider((JComponent)component);
     }
+
+    if (dataProvider instanceof BackgroundableDataProvider) {
+      dataProvider = ((BackgroundableDataProvider)dataProvider).createBackgroundDataProvider();
+    }
+
     return dataProvider;
   }
 
@@ -175,9 +174,19 @@ public class DataManagerImpl extends DataManager {
 
   @Override
   public @NotNull DataContext customizeDataContext(@NotNull DataContext context, @NotNull Object provider) {
+    class MyAdapter implements EdtNoGetDataProvider, DataValidators.SourceWrapper {
+      @Override
+      public @NotNull Object unwrapSource() { return provider; }
+
+      @Override
+      public void dataSnapshot(@NotNull DataSink sink) {
+        if (provider instanceof UiDataProvider o) o.uiDataSnapshot(sink);
+        else if (provider instanceof DataSnapshotProvider o) o.dataSnapshot(sink);
+      }
+    }
     DataProvider p = provider instanceof DataProvider o ? o :
-                     provider instanceof UiDataProvider o ? (EdtNoGetDataProvider)sink -> sink.uiDataSnapshot(o) :
-                     provider instanceof DataSnapshotProvider o ? (EdtNoGetDataProvider)sink -> sink.dataSnapshot(o) :
+                     provider instanceof UiDataProvider ? new MyAdapter() :
+                     provider instanceof DataSnapshotProvider ? new MyAdapter() :
                      null;
     if (p == null) throw new AssertionError("Unexpected provider: " + provider.getClass().getName());
     return IdeUiService.getInstance().createCustomizedDataContext(context, p);
@@ -196,20 +205,19 @@ public class DataManagerImpl extends DataManager {
 
   private static @Nullable GetDataRule getDataRuleInner(@NotNull String dataId, @NotNull GetDataRuleType ruleType) {
     String uninjectedId = InjectedDataKeys.uninjectedId(dataId);
-    boolean noSlowRule = ruleType != GetDataRuleType.PROVIDER || BGT_DATA_PROVIDER.is(dataId);
+    GetDataRule slowRule = ruleType == GetDataRuleType.PROVIDER &&
+                           !PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId) ?
+                           dataProvider -> getSlowData(dataId, dataProvider) : null;
     List<GetDataRule> rules1 = rulesForKey(dataId, ruleType);
     List<GetDataRule> rules2 = uninjectedId == null ? null : rulesForKey(uninjectedId, ruleType);
-    if (rules1 == null && rules2 == null && noSlowRule) return null;
+    if (rules1 == null && rules2 == null) return slowRule;
     return dataProvider -> {
-      DataProvider bgtProvider = noSlowRule ? null : BGT_DATA_PROVIDER.getData(dataProvider);
-      DataProvider injectedProvider = uninjectedId == null ? null : id -> {
+      Object data = slowRule == null ? null : slowRule.getData(dataProvider);
+      data = data != null ? data : rules1 == null ? null : getRulesData(dataId, rules1, dataProvider);
+      data = data != null ? data : rules2 == null ? null : getRulesData(dataId, rules2, id -> {
         String injectedId = InjectedDataKeys.injectedId(id);
         return injectedId != null ? dataProvider.getData(injectedId) : null;
-      };
-      Object data = getDataFromProviderInner(dataId, bgtProvider, dataProvider);
-      data = data != null ? data : uninjectedId == null ? null : getDataFromProviderInner(uninjectedId, bgtProvider, injectedProvider);
-      data = data != null ? data : rules1 == null ? null : getRulesData(dataId, rules1, dataProvider);
-      data = data != null ? data : rules2 == null ? null : getRulesData(uninjectedId, rules2, injectedProvider);
+      });
       return data;
     };
   }
@@ -244,17 +252,19 @@ public class DataManagerImpl extends DataManager {
     return null;
   }
 
-  private static @Nullable Object getDataFromProviderInner(@NotNull String dataId,
-                                                           @Nullable DataProvider provider,
-                                                           @Nullable DataProvider outerProvider) {
-    if (provider == null) {
-      return null;
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull DataProvider dataProvider) {
+    DataProvider bgtProvider = PlatformCoreDataKeys.BGT_DATA_PROVIDER.getData(dataProvider);
+    if (bgtProvider != null) {
+      Object data = getDataFromProviderInner(dataId, bgtProvider);
+      if (data != null) return data;
     }
-    else if (!(provider instanceof CompositeDataProvider composite)) {
+    return null;
+  }
+
+  private static @Nullable Object getDataFromProviderInner(@NotNull String dataId, @NotNull DataProvider provider) {
+    if (!(provider instanceof CompositeDataProvider)) {
       try {
-        Object data = provider instanceof ParametrizedDataProvider o
-                      ? (outerProvider == null ? null : o.getData(dataId, outerProvider))
-                      : provider.getData(dataId);
+        Object data = provider.getData(dataId);
         if (data != null) {
           return data == CustomizedDataContext.EXPLICIT_NULL ? data :
                  DataValidators.validOrNull(data, dataId, provider);
@@ -264,8 +274,8 @@ public class DataManagerImpl extends DataManager {
       }
     }
     else {
-      for (DataProvider p : composite.getDataProviders()) {
-        Object data = getDataFromProviderInner(dataId, p, outerProvider);
+      for (DataProvider p : ((CompositeDataProvider)provider).getDataProviders()) {
+        Object data = getDataFromProviderInner(dataId, p);
         if (data != null) return data;
       }
     }
@@ -275,7 +285,7 @@ public class DataManagerImpl extends DataManager {
   @Override
   public @NotNull DataContext getDataContext(Component component) {
     ThreadingAssertions.assertEventDispatchThread();
-    if (ourGetDataLevel.get().depth > 0) {
+    if (ourGetDataLevel.get()[0] > 0) {
       LOG.error("DataContext shall not be created and queried inside another getData() call.");
     }
     if (component instanceof DependentTransientComponent) {
@@ -381,10 +391,5 @@ public class DataManagerImpl extends DataManager {
     }
 
     return editor;
-  }
-
-  @ApiStatus.Internal
-  public interface ParametrizedDataProvider {
-    Object getData(@NotNull String dataId, @NotNull DataProvider dataProvider);
   }
 }

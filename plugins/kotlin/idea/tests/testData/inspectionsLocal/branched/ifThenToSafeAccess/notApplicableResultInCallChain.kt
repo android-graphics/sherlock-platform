@@ -1,7 +1,7 @@
 // FIR_COMPARISON
 // PROBLEM: none
 // WITH_STDLIB
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 
 val someNullableString: String? = ""
 fun String.bar(): Result<String> = Result.success("")

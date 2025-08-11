@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.util.Key;
@@ -26,7 +26,8 @@ public abstract class DslPointcut<T,V> {
   };
   public static Key<Map<String, List>> BOUND = Key.create("gdsl.bound");
 
-  abstract @Nullable List<V> matches(T src, ProcessingContext context);
+  @Nullable
+  abstract List<V> matches(T src, ProcessingContext context);
 
   abstract boolean operatesOn(Class c);
 

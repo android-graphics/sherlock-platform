@@ -7,33 +7,34 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import junit.framework.TestCase;
 
 /**
  * User: anna
  */
 public class InplaceRenameInvariantTest extends LightJavaCodeInsightTestCase {
-  public void testStartCaretPosition() {
+  public void test_start_caret_position() {
     String text = """
        class <caret>Test {
        }""";
     doTestPositionInvariance(text, false, false);
   }
 
-  public void testMiddleCaretPosition() {
+  public void test_middle_caret_position() {
     String text = """
        class Te<caret>st {
        }""";
     doTestPositionInvariance(text, false, false);
   }
 
-  public void testEndCaretPosition() {
+  public void test_end_caret_position() {
     String text = """
        class Test<caret> {
        }""";
     doTestPositionInvariance(text, false, false);
   }
 
-  public void testEndCaretPositionTyping() {
+  public void test_end_caret_position_typing() {
     String text = """
        class Test {
          Test<caret> myTest;
@@ -41,21 +42,21 @@ public class InplaceRenameInvariantTest extends LightJavaCodeInsightTestCase {
     doTestPositionInvariance(text, false, false);
   }
 
-  public void testStartCaretPositionPreselect() {
+  public void test_start_caret_position_preselect() {
     String text = """
        class <caret>Test {
        }""";
     doTestPositionInvariance(text, true, false);
   }
 
-  public void testMiddleCaretPositionPreselect() {
+  public void test_middle_caret_position_preselect() {
     String text = """
        class Te<caret>st {
        }""";
     doTestPositionInvariance(text, true, false);
   }
 
-  public void testEndCaretPositionPreselect() {
+  public void test_end_caret_position_preselect() {
     String text = """
        class Test<caret> {
        }""";
@@ -71,7 +72,7 @@ public class InplaceRenameInvariantTest extends LightJavaCodeInsightTestCase {
       int offset = getEditor().getCaretModel().getOffset();
       final PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.getInstance().getAllAccepted());
 
-      assertNotNull(element);
+      TestCase.assertNotNull(element);
 
       MemberInplaceRenameHandler handler = new MemberInplaceRenameHandler();
 
@@ -81,12 +82,12 @@ public class InplaceRenameInvariantTest extends LightJavaCodeInsightTestCase {
         type("1");
         offset++;
       }
-      assertEquals(offset, getEditor().getCaretModel().getOffset());
+      TestCase.assertEquals(offset, getEditor().getCaretModel().getOffset());
     }
     finally {
       getEditor().getSettings().setPreselectRename(oldPreselectSetting);
       TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
-      assertNotNull(state);
+      TestCase.assertNotNull(state);
       state.gotoEnd(false);
     }
   }

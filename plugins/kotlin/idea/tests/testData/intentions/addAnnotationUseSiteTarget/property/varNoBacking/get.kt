@@ -1,4 +1,4 @@
-// CHOSEN_OPTION: PROPERTY_GETTER|Add use-site target 'get'
+// CHOOSE_USE_SITE_TARGET: get
 // AFTER-WARNING: Parameter 'p' is never used
 
 annotation class A

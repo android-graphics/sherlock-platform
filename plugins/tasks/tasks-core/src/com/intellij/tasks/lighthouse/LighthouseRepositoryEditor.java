@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.lighthouse;
 
 import com.intellij.openapi.project.Project;
@@ -35,8 +34,9 @@ public class LighthouseRepositoryEditor extends BaseRepositoryEditor<LighthouseR
     super.apply();
   }
 
+  @Nullable
   @Override
-  protected @Nullable JComponent createCustomPanel() {
+  protected JComponent createCustomPanel() {
     myProjectIDLabel = new JBLabel(TaskBundle.message("label.project.id"), SwingConstants.RIGHT);
     myProjectId = new JTextField();
     installListener(myProjectId);
@@ -46,7 +46,7 @@ public class LighthouseRepositoryEditor extends BaseRepositoryEditor<LighthouseR
   }
 
   @Override
-  public void setAnchor(final @Nullable JComponent anchor) {
+  public void setAnchor(@Nullable final JComponent anchor) {
     super.setAnchor(anchor);
     myProjectIDLabel.setAnchor(anchor);
   }

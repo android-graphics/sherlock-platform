@@ -1,15 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "LeakingThis", "ReplaceJavaStaticMethodWithKotlinAnalog")
-@file:Internal
 
 package com.intellij.serviceContainer
 
-import com.intellij.codeWithMe.ClientIdContextElement
-import com.intellij.codeWithMe.ClientIdContextElementPrecursor
 import com.intellij.concurrency.currentTemporaryThreadContextOrNull
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.concurrency.withThreadLocal
-import com.intellij.configurationStore.ProjectIdManager
 import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.LoadingState
@@ -20,7 +16,6 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.idea.AppMode.isLightEdit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
-import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.ServiceDescriptor.PreloadMode
 import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
@@ -36,15 +31,16 @@ import com.intellij.openapi.extensions.impl.createExtensionPoints
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.platform.instanceContainer.internal.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.UList
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
-import com.intellij.util.messages.impl.MessageDeliveryListener
 import com.intellij.util.runSuppressing
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -58,6 +54,8 @@ import java.lang.reflect.Modifier
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.collections.component1
+import kotlin.collections.component2
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.streams.asSequence
@@ -77,7 +75,6 @@ val emptyConstructorMethodType: MethodType = MethodType.methodType(Void.TYPE)
 val coroutineScopeMethodType: MethodType = MethodType.methodType(Void.TYPE, CoroutineScope::class.java)
 
 private val applicationMethodType = MethodType.methodType(Void.TYPE, Application::class.java)
-private val applicationAndScopeMethodType = MethodType.methodType(Void.TYPE, Application::class.java, CoroutineScope::class.java)
 private val componentManagerMethodType = MethodType.methodType(Void.TYPE, ComponentManager::class.java)
 
 @Internal
@@ -85,10 +82,10 @@ fun MethodHandles.Lookup.findConstructorOrNull(clazz: Class<*>, type: MethodType
   return try {
     findConstructor(clazz, type)
   }
-  catch (_: NoSuchMethodException) {
+  catch (e: NoSuchMethodException) {
     return null
   }
-  catch (_: IllegalAccessException) {
+  catch (e: IllegalAccessException) {
     return null
   }
 }
@@ -161,14 +158,9 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
   private val scopeHolder = ScopeHolder(
     parentScope = parentScope,
-    additionalContext = (additionalContext + this.asContextElement()).let { context ->
-      val clientIdContextElement = context[ClientIdContextElement.Key]
-      return@let if (clientIdContextElement == null) context + ClientIdContextElementPrecursor
-      else context
-    },
+    additionalContext = additionalContext + this.asContextElement(),
     containerName = debugString(short = true),
   )
 
@@ -176,7 +168,6 @@ abstract class ComponentManagerImpl(
     emptyConstructorMethodType,
     coroutineScopeMethodType,
     applicationMethodType,
-    applicationAndScopeMethodType,
     componentManagerMethodType,
   )
 
@@ -191,6 +182,9 @@ abstract class ComponentManagerImpl(
     else null,
     ordered = false,
   )
+
+  val serviceContainerInternal: InstanceContainerInternal
+    get() = serviceContainer
 
   private val componentContainer = InstanceContainerImpl(
     scopeHolder = scopeHolder,
@@ -342,7 +336,7 @@ abstract class ComponentManagerImpl(
               continue
             }
 
-            if (listener.os != null && !listener.os.isSuitableForOs()) {
+            if (listener.os != null && !isSuitableForOs(listener.os)) {
               continue
             }
 
@@ -443,7 +437,7 @@ abstract class ComponentManagerImpl(
     val registrationScope = if (pluginClassLoader is PluginAwareClassLoader) pluginClassLoader.pluginCoroutineScope else null
     val registrar = componentContainer.startRegistration(registrationScope)
     for (descriptor in components) {
-      if (descriptor.os != null && !descriptor.os.isSuitableForOs()) {
+      if (descriptor.os != null && !isSuitableForOs(descriptor.os)) {
         continue
       }
       if (!isComponentSuitable(descriptor)) {
@@ -589,7 +583,7 @@ abstract class ComponentManagerImpl(
     val registrar = serviceContainer.startRegistration(registrationScope)
     val app = getApplication()!!
     for (descriptor in services) {
-      if (!isServiceSuitable(descriptor) || (descriptor.os != null && !descriptor.os.isSuitableForOs())) {
+      if (!isServiceSuitable(descriptor) || descriptor.os != null && !isSuitableForOs(descriptor.os)) {
         continue
       }
 
@@ -647,8 +641,11 @@ abstract class ComponentManagerImpl(
         (component is PersistentStateComponent<*> ||
          component is SettingsSavingComponent ||
          component is com.intellij.openapi.util.JDOMExternalizable)) {
-      check(canBeInitOutOfOrder(component) || componentStore.isStoreInitialized || getApplication()!!.isUnitTestMode) {
-        "You cannot get $component before component store is initialized"
+      if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
+        if (!getApplication()!!.isUnitTestMode) {
+          throw IllegalStateException("You cannot get $component before component store is initialized")
+        }
+        return
       }
 
       componentStore.initComponent(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId)
@@ -657,10 +654,6 @@ abstract class ComponentManagerImpl(
 
   protected open fun isPreInitialized(service: Any): Boolean {
     return service is PathMacroManager || service is IComponentStore || service is MessageBusFactory
-  }
-
-  private fun canBeInitOutOfOrder(service: Any): Boolean {
-    return service is ProjectIdManager
   }
 
   protected abstract fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor
@@ -692,6 +685,7 @@ abstract class ComponentManagerImpl(
     }
   }
 
+  @RequiresBlockingContext
   final override fun <T : Any> getService(serviceClass: Class<T>): T? {
     return doGetService(serviceClass, true) ?: return postGetService(serviceClass, createIfNeeded = true)
   }
@@ -732,7 +726,7 @@ abstract class ComponentManagerImpl(
         return try {
           holder.tryGetInstance() as T?
         }
-        catch (_: CancellationException) {
+        catch (ce: CancellationException) {
           // container scope might be canceled => holder might hold CE
           return null
         }
@@ -775,16 +769,6 @@ abstract class ComponentManagerImpl(
     return result
   }
 
-  private class StartUpMessageDeliveryListener(private val messageBus: MessageBusImpl, private val logMessageBusDeliveryFunction: (Topic<*>, String, Any, Long) -> Unit): MessageDeliveryListener {
-    override fun messageDelivered(topic: Topic<*>, messageName: String, handler: Any, durationNanos: Long) {
-      if (!StartUpMeasurer.isMeasuringPluginStartupCosts()) {
-        messageBus.removeMessageDeliveryListener(this)
-        return
-      }
-      logMessageBusDeliveryFunction(topic, messageName, handler, durationNanos)
-    }
-  }
-
   @Synchronized
   private fun getOrCreateMessageBusUnderLock(): MessageBus {
     var messageBus = this.messageBus
@@ -795,7 +779,14 @@ abstract class ComponentManagerImpl(
     @Suppress("RetrievingService", "SimplifiableServiceRetrieving")
     messageBus = getApplication()!!.getService(MessageBusFactory::class.java).createMessageBus(this, parent?.messageBus) as MessageBusImpl
     if (StartUpMeasurer.isMeasuringPluginStartupCosts()) {
-      messageBus.addMessageDeliveryListener(StartUpMessageDeliveryListener(messageBus, ::logMessageBusDelivery))
+      messageBus.setMessageDeliveryListener { topic, messageName, handler, duration ->
+        if (!StartUpMeasurer.isMeasuringPluginStartupCosts()) {
+          messageBus.setMessageDeliveryListener(null)
+          return@setMessageDeliveryListener
+        }
+
+        logMessageBusDelivery(topic = topic, messageName = messageName, handler = handler, duration = duration)
+      }
     }
 
     registerServiceInstance(MessageBus::class.java, messageBus, fakeCorePluginDescriptor)
@@ -805,7 +796,7 @@ abstract class ComponentManagerImpl(
 
   protected open fun logMessageBusDelivery(topic: Topic<*>, messageName: String, handler: Any, duration: Long) {
     val loader = handler.javaClass.classLoader
-    val pluginId = PluginUtil.getPluginId(loader).idString
+    val pluginId = if (loader is PluginAwareClassLoader) loader.pluginId.idString else PluginManagerCore.CORE_ID.idString
     StartUpMeasurer.addPluginCost(pluginId, "MessageBus", duration)
   }
 
@@ -817,10 +808,9 @@ abstract class ComponentManagerImpl(
     implementation: Class<*>,
     pluginDescriptor: PluginDescriptor,
     override: Boolean,
-    clientKind: ClientKind? = null
   ) {
     val descriptor = ServiceDescriptor(serviceInterface.name, implementation.name, null, null, false,
-                                       null, PreloadMode.FALSE, clientKind, null)
+                                       null, PreloadMode.FALSE, null, null)
     serviceContainer.registerInitializer(
       keyClass = serviceInterface,
       initializer = ServiceClassInstanceInitializer(
@@ -863,8 +853,8 @@ abstract class ComponentManagerImpl(
           // => but [parentDisposable] is [UsefulTestCase.getTestRootDisposable] which might be disposed after the fixture.
           //
           // This indicates a problem with scoping.
-          // The [parentDisposable] should be disposed on the same level as the code which replaces the service.
-          // If the service is registered in a [setUp] method before a test,
+          // The [parentDisposable] should be disposed on the same level as the code which replaces the service, i.e.,
+          // if the service is registered in a [setUp] method before a test,
           // then the [parentDisposable] should be disposed in [tearDown] right after the test.
           // In other words, it's generally incorrect to use [UsefulTestCase.getTestRootDisposable]
           // as a [parentDisposable] for the replacement service.
@@ -899,6 +889,7 @@ abstract class ComponentManagerImpl(
 
   final override fun <T : Any> instantiateClass(aClass: Class<T>, pluginId: PluginId): T {
     checkCanceledIfNotInClassInit()
+
     return resetThreadContext().use {
       doInstantiateClass(aClass, pluginId)
     }
@@ -975,7 +966,7 @@ abstract class ComponentManagerImpl(
 
   final override fun createError(error: Throwable, pluginId: PluginId): RuntimeException {
     return when (val effectiveError: Throwable = if (error is InvocationTargetException) error.targetException else error) {
-      is ProcessCanceledException, is ExtensionNotApplicableException, is PluginException -> effectiveError
+      is ProcessCanceledException, is ExtensionNotApplicableException, is PluginException -> effectiveError as RuntimeException
       else -> PluginException(effectiveError, pluginId)
     }
   }
@@ -1040,7 +1031,7 @@ abstract class ComponentManagerImpl(
     val asyncServices = mutableListOf<ServiceDescriptor>()
     for (plugin in modules) {
       for (service in getContainerDescriptor(plugin).services) {
-        if (!isServiceSuitable(service) || (service.os != null && !service.os.isSuitableForOs())) {
+        if (!isServiceSuitable(service) || (service.os != null && !isSuitableForOs(service.os))) {
           continue
         }
 
@@ -1066,11 +1057,7 @@ abstract class ComponentManagerImpl(
             LOG.error(PluginException(message, plugin.pluginId))
           }
           else if (!isKnown || !impl.startsWith("com.intellij.")) {
-            val application = ApplicationManager.getApplication()
-            if (application == null || application.isUnitTestMode || application.isInternal) {
-              // logged only during development, let's not spam users
-              LOG.warn(message)
-            }
+            LOG.warn(message)
           }
         }
 
@@ -1339,12 +1326,12 @@ abstract class ComponentManagerImpl(
     ignoreDisposal {
       componentContainer.getInstanceHolder(keyClass = componentType)
     }?.let {
-      return HolderAdapter(key = componentType, holder = it)
+      return HolderAdapter(key = componentType, it)
     }
     for (holder in componentContainer.instanceHolders()) {
       val instanceClass = holder.instanceClass()
       if (componentType === instanceClass || componentType.isAssignableFrom(instanceClass)) {
-        return HolderAdapter(key = componentType, holder = holder)
+        return HolderAdapter(key = componentType, holder)
       }
     }
     return null
@@ -1377,27 +1364,43 @@ abstract class ComponentManagerImpl(
     return holder != null || parent?.hasComponent(componentKey) == true
   }
 
+  final override fun isSuitableForOs(os: ExtensionDescriptor.Os): Boolean {
+    return when (os) {
+      ExtensionDescriptor.Os.mac -> SystemInfoRt.isMac
+      ExtensionDescriptor.Os.linux -> SystemInfoRt.isLinux
+      ExtensionDescriptor.Os.windows -> SystemInfoRt.isWindows
+      ExtensionDescriptor.Os.unix -> SystemInfoRt.isUnix
+      ExtensionDescriptor.Os.freebsd -> SystemInfoRt.isFreeBSD
+      else -> throw IllegalArgumentException("Unknown OS '$os'")
+    }
+  }
+
   fun instanceCoroutineScope(pluginClass: Class<*>): CoroutineScope {
-    val intersectionScope = pluginCoroutineScope(pluginClass.classLoader)
+    val pluginClassloader = pluginClass.classLoader
+    val intersectionScope = pluginCoroutineScope(pluginClassloader)
     // The parent scope should become canceled only when the container is disposed, or the plugin is unloaded.
     // Leaking the parent scope might lead to premature cancellation.
     // Fool proofing: a fresh child scope is created per instance to avoid leaking the parent to clients.
     return intersectionScope.childScope(pluginClass.name)
   }
 
-  // to run post-start-up activities - to not create scope for each class and do not keep it alive
+  @Internal // to run post-start-up activities - to not create scope for each class and do not keep it alive
   fun pluginCoroutineScope(pluginClassloader: ClassLoader): CoroutineScope {
     val intersectionScope = if (pluginClassloader is PluginAwareClassLoader) {
       val pluginScope = pluginClassloader.pluginCoroutineScope
-      // for consistency
-      val parentScope = parent?.scopeHolder?.intersectScope(pluginScope) ?: pluginScope
-      scopeHolder.intersectScope(parentScope)
+      val parentScope = parent?.intersectionCoroutineScope(pluginScope) // for consistency
+                        ?: pluginScope
+      intersectionCoroutineScope(parentScope)
     }
     else {
       // non-unloadable
       scopeHolder.containerScope
     }
     return intersectionScope
+  }
+
+  private fun intersectionCoroutineScope(pluginScope: CoroutineScope): CoroutineScope {
+    return scopeHolder.intersectScope(pluginScope)
   }
 }
 
@@ -1534,7 +1537,7 @@ private fun InstanceHolder.getInstanceBlocking(debugString: String, keyClass: Cl
     try {
       return tryGetInstance()
     }
-    catch (_: CancellationException) {
+    catch (ce: CancellationException) {
       return null
     }
   }
@@ -1627,13 +1630,13 @@ private fun dontLogAccessInClinit(): AccessToken {
 /**
  * Should be used everywhere [ComponentManagerImpl.checkState] is used.
  */
-private inline fun <X> checkState(x: () -> X): X {
-  try {
-    return x()
+private fun <X> checkState(x: () -> X): X {
+  return try {
+    x()
   }
-  catch (e: ContainerDisposedException) {
+  catch (cde: ContainerDisposedException) {
     ProgressManager.checkCanceled()
-    throw e
+    throw cde
   }
 }
 
@@ -1641,11 +1644,11 @@ private inline fun <X> checkState(x: () -> X): X {
  * Used everywhere the adapter was requested from the `ComponentManagerImpl.componentKeyToAdapter`
  * but [ComponentManagerImpl.checkState] is not used.
  */
-private inline fun <X> ignoreDisposal(x: () -> X): X? {
+private fun <X> ignoreDisposal(x: () -> X): X? {
   return try {
     x()
   }
-  catch (_: ContainerDisposedException) {
+  catch (cde: ContainerDisposedException) {
     null
   }
 }
@@ -1654,12 +1657,12 @@ private inline fun <X> rethrowCEasPCE(action: () -> X): X {
   try {
     return action()
   }
-  catch (e: ProcessCanceledException) {
-    throw e
+  catch (pce : ProcessCanceledException) {
+    throw pce
   }
-  catch (e: CancellationException) {
-    throwAlreadyDisposedIfNotUnderIndicatorOrJob(e)
-    throw CeProcessCanceledException(e)
+  catch (ce: CancellationException) {
+    throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause = ce)
+    throw CeProcessCanceledException(ce)
   }
 }
 
@@ -1676,22 +1679,25 @@ private fun <X> runBlockingInitialization(action: suspend CoroutineScope.() -> X
       val contextForInitializer =
         (ctx.contextModality()?.asContextElement() ?: EmptyCoroutineContext) + // leak modality state into initialization coroutine
         (ctx[Job] ?: EmptyCoroutineContext) + // bind to caller Job
-        getLockPermitContext(ctx, false) + // capture whether the caller holds the read lock
+        readActionContext() + // capture whether the caller holds the read lock
         (currentTemporaryThreadContextOrNull() ?: EmptyCoroutineContext) + // propagate modality state/CurrentlyInitializingInstance
         NestedBlockingEventLoop(Thread.currentThread()) // avoid processing events from outer runBlocking (if any)
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking(contextForInitializer, action)
     }
-    catch (e: ProcessCanceledException) {
-      throw e
+    catch (pce : ProcessCanceledException) {
+      throw pce
     }
-    catch (e: CancellationException) {
-      throw CeProcessCanceledException(e)
+    catch (ce: CancellationException) {
+      throw CeProcessCanceledException(ce)
     }
   }
 }
 
-@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER", "ERROR_SUPPRESSION")
+@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER")
 private class NestedBlockingEventLoop(override val thread: Thread) : EventLoopImplBase() {
-  override fun shouldBeProcessedFromContext(): Boolean = true
+
+  override fun shouldBeProcessedFromContext(): Boolean {
+    return true
+  }
 }

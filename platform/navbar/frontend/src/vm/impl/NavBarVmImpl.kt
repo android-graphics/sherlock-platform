@@ -38,7 +38,7 @@ class NavBarVmImpl(
 
   init {
     cs.launch {
-      contextItems.distinctUntilChanged().collectLatest { items ->
+      contextItems.collectLatest { items ->
         if (items.isNotEmpty()) {
           _items.value = items.mapIndexed(::NavBarItemVmImpl)
           _selectedIndex.value = -1
@@ -89,14 +89,10 @@ class NavBarVmImpl(
     }
   }
 
-  override fun selectTail(withPopupOpen: Boolean) {
-    val shiftToLeft = if (withPopupOpen) 1 else 0
-
+  override fun selectTail() {
     val items = items.value
-    val i = (items.size - 1 - shiftToLeft).coerceAtLeast(0)
+    val i = (items.size - 2).coerceAtLeast(0)
     items[i].select()
-
-    if (withPopupOpen) showPopup()
   }
 
   override fun showPopup() {
@@ -106,15 +102,7 @@ class NavBarVmImpl(
   private suspend fun handleSelectionChange() {
     _items.collectLatest { items: List<NavBarItemVmImpl> ->
       _selectedIndex.zipWithNext { unselected, selected ->
-
-        // Sometimes _selectedIndex may come here before the new _items value even if the _items value was set before _selectedIndex value.
-        // This check prevents OutOfBounds exception.
-        // The _selectedIndex will be replayed here again as soon as the new _items value is collected.
-        if (selected >= items.size) {
-          return@zipWithNext
-        }
-
-        if (unselected >= 0 && unselected < items.size) {
+        if (unselected >= 0) {
           items[unselected].selected.value = false
         }
         if (selected >= 0) {
@@ -213,10 +201,6 @@ class NavBarVmImpl(
 
     override fun activate() {
       _activationRequests.tryEmit(item)
-    }
-
-    override fun toString(): String {
-      return item.toString()
     }
   }
 }

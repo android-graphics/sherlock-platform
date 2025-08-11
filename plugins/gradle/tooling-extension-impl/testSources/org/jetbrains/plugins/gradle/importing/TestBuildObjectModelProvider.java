@@ -7,8 +7,6 @@ import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 
-import java.util.Collection;
-
 /**
  * @see org.jetbrains.plugins.gradle.importing.GradleActionWithImportTest#test start tasks can be set by model builder and run on import()
  */
@@ -20,9 +18,9 @@ public class TestBuildObjectModelProvider implements ProjectImportModelProvider 
   }
 
   @Override
-  public void populateModels(
+  public void populateBuildModels(
     @NotNull BuildController controller,
-    @NotNull Collection<? extends @NotNull GradleBuild> buildModels,
+    @NotNull GradleBuild buildModel,
     @NotNull GradleModelConsumer modelConsumer
   ) {
     // used as a trigger for a ModelBuilder which accepts Object and configure build

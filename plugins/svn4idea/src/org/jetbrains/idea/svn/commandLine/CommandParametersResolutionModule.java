@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.project.Project;
@@ -31,9 +31,11 @@ public class CommandParametersResolutionModule extends BaseCommandRuntimeModule 
       command.setWorkingDirectory(resolveWorkingDirectory(command));
     }
     command.setConfigDir(myAuthenticationService.getSpecialConfigDir().toFile());
+    command.saveOriginalParameters();
   }
 
-  private @Nullable Url resolveRepositoryUrl(@NotNull Command command) {
+  @Nullable
+  private Url resolveRepositoryUrl(@NotNull Command command) {
     UrlMappingRepositoryProvider urlMappingProvider = new UrlMappingRepositoryProvider(myVcs, command.getTarget());
     InfoCommandRepositoryProvider infoCommandProvider = new InfoCommandRepositoryProvider(myVcs, command.getTarget());
 
@@ -45,14 +47,16 @@ public class CommandParametersResolutionModule extends BaseCommandRuntimeModule 
     return repository != null ? repository.getUrl() : null;
   }
 
-  private @NotNull File resolveWorkingDirectory(@NotNull Command command) {
+  @NotNull
+  private File resolveWorkingDirectory(@NotNull Command command) {
     File file = command.getTarget().getFile();
     RootUrlInfo root = file != null ? myVcs.getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(file)) : null;
 
     return root != null ? root.getIoFile() : getDefaultWorkingDirectory(myVcs.getProject());
   }
 
-  public static @NotNull File getDefaultWorkingDirectory(@NotNull Project project) {
+  @NotNull
+  public static File getDefaultWorkingDirectory(@NotNull Project project) {
     VirtualFile baseDir = project.getBaseDir();
 
     return baseDir != null ? virtualToIoFile(baseDir) : CommandUtil.getHomeDirectory();

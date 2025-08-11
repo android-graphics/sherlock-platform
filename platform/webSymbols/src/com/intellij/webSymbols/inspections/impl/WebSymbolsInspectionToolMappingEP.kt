@@ -46,7 +46,6 @@ internal class WebSymbolsInspectionToolMappingEP : PluginAware {
   var bundleName: String? = null
 
   @Attribute("messageKey")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
   @JvmField
   var messageKey: String? = null
 

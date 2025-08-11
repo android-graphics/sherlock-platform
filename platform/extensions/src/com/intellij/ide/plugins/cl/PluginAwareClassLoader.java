@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import kotlinx.coroutines.CoroutineScope;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.NonExtendable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,46 +15,38 @@ import java.util.Collection;
 
 @NonExtendable
 public interface PluginAwareClassLoader {
-  @Internal
   int ACTIVE = 1;
-  @Internal
   int UNLOAD_IN_PROGRESS = 2;
 
   @NotNull PluginDescriptor getPluginDescriptor();
 
   @NotNull PluginId getPluginId();
 
-  @Internal
+  @ApiStatus.Internal
   @Nullable String getModuleId();
 
-  @Internal
   long getEdtTime();
 
-  @Internal
   long getBackgroundTime();
 
-  @Internal
   long getLoadedClassCount();
 
-  @Internal
   @NotNull Collection<Path> getFiles();
 
-  @Internal
   @MagicConstant(intValues = {ACTIVE, UNLOAD_IN_PROGRESS})
   int getState();
 
   /**
    * Loads class by name from this classloader and delegates loading to parent classloaders if and only if not found.
    */
-  @Internal
+  @ApiStatus.Internal
   @Nullable Class<?> tryLoadingClass(@NotNull String name, boolean forceLoadFromSubPluginClassloader) throws ClassNotFoundException;
 
-  @Internal
+  @ApiStatus.Internal
   @Nullable Class<?> loadClassInsideSelf(@NotNull String name) throws ClassNotFoundException;
 
-  @Internal
   @Nullable String getPackagePrefix();
 
-  @Internal
+  @ApiStatus.Internal
   @NotNull CoroutineScope getPluginCoroutineScope();
 }

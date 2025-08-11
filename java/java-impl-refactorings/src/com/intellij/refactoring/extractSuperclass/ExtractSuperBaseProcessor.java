@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -48,7 +48,8 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
   }
 
   @Override
-  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  @NotNull
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new ExtractSuperClassViewDescriptor(myTargetDirectory, myClass, myMemberInfos);
   }
 
@@ -159,12 +160,14 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
   }
 
   @Override
-  protected @NotNull String getCommandName() {
+  @NotNull
+  protected String getCommandName() {
     return JavaRefactoringBundle.message("extract.subclass.command");
   }
 
+  @NotNull
   @Override
-  protected @NotNull Collection<? extends PsiElement> getElementsToWrite(final @NotNull UsageViewDescriptor descriptor) {
+  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull final UsageViewDescriptor descriptor) {
     return ((ExtractSuperClassViewDescriptor) descriptor).getMembersToMakeWritable();
   }
 }

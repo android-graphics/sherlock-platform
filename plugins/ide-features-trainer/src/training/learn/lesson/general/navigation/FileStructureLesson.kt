@@ -32,15 +32,15 @@ abstract class FileStructureLesson
       actionTask("FileStructurePopup") {
         LessonsBundle.message("file.structure.open.popup", action(it))
       }
-      task {
+      task(searchSubstring) {
         text(LessonsBundle.message("file.structure.request.prefixes", strong(firstWord), strong(secondWord), code(searchSubstring)))
-        stateCheck { checkWordInSearch(searchSubstring) }
+        stateCheck { checkWordInSearch(it) }
         restoreAfterStateBecomeFalse { focusOwner is EditorComponentImpl }
         test {
           ideFrame {
             waitComponent(DnDAwareTree::class.java, "FileStructurePopup")
           }
-          type(searchSubstring)
+          type(it)
         }
       }
       task {

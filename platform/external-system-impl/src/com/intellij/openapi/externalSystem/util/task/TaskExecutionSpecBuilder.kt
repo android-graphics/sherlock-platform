@@ -8,14 +8,11 @@ import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMo
 import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 
 /**
- * Builder for [com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec].
- * @see [TaskExecutionSpec.create].
+ * Builder for {@link com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec}.
  */
-@ApiStatus.NonExtendable
 interface TaskExecutionSpecBuilder {
 
   val project: Project

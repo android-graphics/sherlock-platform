@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ProjectGeneratorPeer;
@@ -23,8 +22,10 @@ public class EmptyWebProjectTemplate extends WebProjectTemplate<Object> {
     return Generators.EMPTY_WEB_PROJECT;
   }
 
+  @Nls
+  @NotNull
   @Override
-  public @Nls @NotNull String getName() {
+  public String getName() {
     return ProjectBundle.message("item.text.empty.project");
   }
 
@@ -38,28 +39,30 @@ public class EmptyWebProjectTemplate extends WebProjectTemplate<Object> {
     //ignore
   }
 
+  @NotNull
   @Override
-  public @NotNull ProjectGeneratorPeer<Object> createPeer() {
+  public ProjectGeneratorPeer<Object> createPeer() {
     return new ProjectGeneratorPeer<>() {
-
+      @NotNull
       @Override
-      public @NotNull JComponent getComponent(@NotNull TextFieldWithBrowseButton myLocationField,
-                                              @NotNull Runnable checkValid) {
+      public JComponent getComponent() {
         return new JPanel();
       }
 
       @Override
       public void buildUI(@NotNull SettingsStep settingsStep) {
-        settingsStep.addSettingsComponent(new JPanel());
+        settingsStep.addSettingsComponent(getComponent());
       }
 
+      @NotNull
       @Override
-      public @NotNull Object getSettings() {
+      public Object getSettings() {
         return new Object();
       }
 
+      @Nullable
       @Override
-      public @Nullable ValidationInfo validate() {
+      public ValidationInfo validate() {
         return null;
       }
 

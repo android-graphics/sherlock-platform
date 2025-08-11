@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.refactoring.rename.inplace;
 
 import com.intellij.lang.Language;
@@ -24,26 +38,30 @@ public class GrMethodInplaceRenamer extends MemberInplaceRenamer {
     return true;
   }
 
+  @NotNull
   @Override
-  protected @NotNull TextRange getRangeToRename(@NotNull PsiElement element) {
+  protected TextRange getRangeToRename(@NotNull PsiElement element) {
     TextRange range = getIdentifierNameRange(element);
     return range != null ? range : super.getRangeToRename(element);
   }
 
+  @NotNull
   @Override
-  protected @NotNull TextRange getRangeToRename(@NotNull PsiReference reference) {
+  protected TextRange getRangeToRename(@NotNull PsiReference reference) {
     TextRange range = getReferenceNameRange(reference.getElement());
     return range != null ? range : super.getRangeToRename(reference);
   }
 
-  private static @Nullable TextRange getIdentifierNameRange(@NotNull PsiElement element) {
+  @Nullable
+  private static TextRange getIdentifierNameRange(@NotNull PsiElement element) {
     if (element instanceof JavaIdentifier) {
       return GrStringUtil.getStringContentRange(element.getNavigationElement());
     }
     return null;
   }
 
-  private static @Nullable TextRange getReferenceNameRange(PsiElement element) {
+  @Nullable
+  private static TextRange getReferenceNameRange(PsiElement element) {
     if (element instanceof GrReferenceExpression referenceExpression) {
       PsiElement nameElement = referenceExpression.getReferenceNameElement();
       TextRange stringContentRange = GrStringUtil.getStringContentRange(nameElement);

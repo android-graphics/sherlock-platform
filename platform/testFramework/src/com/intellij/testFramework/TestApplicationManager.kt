@@ -18,7 +18,6 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.UndoManagerImpl
@@ -42,7 +41,6 @@ import com.intellij.testFramework.common.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.ref.GCUtil
-import com.intellij.util.ref.IgnoredTraverseEntry
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
@@ -97,7 +95,7 @@ class TestApplicationManager private constructor() {
           }
         },
         { CodeStyle.dropTemporarySettings(project) },
-        { WriteIntentReadAction.run<Nothing?> { UsefulTestCase.doPostponedFormatting(project) } },
+        { UsefulTestCase.doPostponedFormatting(project) },
         { LookupManager.hideActiveLookup(project) },
         {
           if (isLightProject) {
@@ -110,14 +108,8 @@ class TestApplicationManager private constructor() {
           }
         },
         {
-          app.runWriteIntentReadAction<Unit, Nothing?> {
-            WriteCommandAction.runWriteCommandAction(project) {
-              val fileDocumentManager = app.serviceIfCreated<FileDocumentManager, FileDocumentManagerImpl>()
-              if (fileDocumentManager != null) {
-                fileDocumentManager.dropAllUnsavedDocuments()
-                fileDocumentManager.clearDocumentCache()
-              }
-            }
+          WriteCommandAction.runWriteCommandAction(project) {
+            app.serviceIfCreated<FileDocumentManager, FileDocumentManagerImpl>()?.dropAllUnsavedDocuments()
           }
         },
         { project.serviceIfCreated<EditorHistoryManager>()?.removeAllFiles() },
@@ -128,7 +120,7 @@ class TestApplicationManager private constructor() {
         },
         { LightPlatformTestCase.checkAssertions() },
         { LightPlatformTestCase.clearUncommittedDocuments(project) },
-        { app.runWriteIntentReadAction<Unit, Nothing?> { (UndoManager.getInstance(project) as UndoManagerImpl).dropHistoryInTests() } },
+        { (UndoManager.getInstance(project) as UndoManagerImpl).dropHistoryInTests() },
         { project.serviceIfCreated<TemplateDataLanguageMappings>()?.cleanupForNextTest() },
         { (project.serviceIfCreated<PsiManager>() as PsiManagerImpl?)?.cleanupForNextTest() },
         { (project.serviceIfCreated<StructureViewFactory>() as StructureViewFactoryImpl?)?.cleanupForNextTest() },
@@ -138,7 +130,7 @@ class TestApplicationManager private constructor() {
           // reset data provider before disposing the project to ensure that the disposed project is not accessed
           getInstanceIfCreated()?.setDataProvider(null)
         },
-        { WriteIntentReadAction.run { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } },
+        { ProjectManagerEx.getInstanceEx().forceCloseProject(project) },
         {
           if (testCounter++ % 100 == 0) {
             // Some tests are written in Groovy, and running all of them may result in some 40M of memory wasted on bean data,
@@ -187,10 +179,6 @@ class TestApplicationManager private constructor() {
      */
     @JvmStatic
     fun disposeApplicationAndCheckForLeaks() {
-      disposeApplicationAndCheckForLeaks(emptyList())
-    }
-    @JvmStatic
-    fun disposeApplicationAndCheckForLeaks(ignoredTraverseEntries : List<IgnoredTraverseEntry>) {
       val edtThrowable = runInEdtAndGet {
         runAllCatching(
           { PlatformTestUtil.cleanupAllProjects() },
@@ -206,7 +194,7 @@ class TestApplicationManager private constructor() {
           { UsefulTestCase.waitForAppLeakingThreads(10, TimeUnit.SECONDS) },
           {
             if (ApplicationManager.getApplication() != null) {
-              assertNonDefaultProjectsAreNotLeaked(ignoredTraverseEntries)
+              assertNonDefaultProjectsAreNotLeaked()
             }
           },
           {

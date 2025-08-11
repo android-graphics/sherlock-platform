@@ -1,4 +1,4 @@
-from typing import Any, ClassVar
+from typing import Any
 
 from ..cmd import Command
 
@@ -6,9 +6,9 @@ PYTHON_SOURCE_EXTENSION: str
 
 class install_lib(Command):
     description: str
-    user_options: ClassVar[list[tuple[str, str | None, str]]]
-    boolean_options: ClassVar[list[str]]
-    negative_opt: ClassVar[dict[str, str]]
+    user_options: Any
+    boolean_options: Any
+    negative_opt: Any
     install_dir: Any
     build_dir: Any
     force: int

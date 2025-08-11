@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,14 +17,15 @@ import static java.util.Collections.synchronizedMap;
 
 public class RepositoryLocationCache {
 
-  private final @NotNull Project myProject;
-  private final @NotNull Map<Couple<String>, RepositoryLocation> myMap = synchronizedMap(new HashMap<>());
+  @NotNull private final Project myProject;
+  @NotNull private final Map<Couple<String>, RepositoryLocation> myMap = synchronizedMap(new HashMap<>());
 
   public RepositoryLocationCache(@NotNull Project project) {
     myProject = project;
   }
 
-  public @Nullable RepositoryLocation getLocation(@NotNull AbstractVcs vcs, @NotNull FilePath filePath, boolean silent) {
+  @Nullable
+  public RepositoryLocation getLocation(@NotNull AbstractVcs vcs, @NotNull FilePath filePath, boolean silent) {
     Couple<String> key = Couple.of(vcs.getName(), filePath.getPath());
     RepositoryLocation location = myMap.get(key);
 
@@ -36,7 +37,8 @@ public class RepositoryLocationCache {
     return location;
   }
 
-  private @Nullable RepositoryLocation getLocationUnderProgress(@NotNull AbstractVcs vcs, @NotNull FilePath filePath, boolean silent) {
+  @Nullable
+  private RepositoryLocation getLocationUnderProgress(@NotNull AbstractVcs vcs, @NotNull FilePath filePath, boolean silent) {
     ThrowableComputable<RepositoryLocation, RuntimeException> result = () -> {
       CommittedChangesProvider committedChangesProvider = vcs.getCommittedChangesProvider();
       return committedChangesProvider != null ? committedChangesProvider.getLocationFor(filePath) : null;

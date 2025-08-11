@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.options.Configurable;
@@ -35,12 +35,14 @@ public interface ActionInfo {
     public UpdateOrStatusOptionsDialog createOptionsDialog(Project project, LinkedHashMap<Configurable, AbstractVcs> envToConfMap, String scopeName) {
       return new UpdateOrStatusOptionsDialog(project, VcsBundle.message("action.display.name.update.scope", scopeName), envToConfMap) {
         @Override
-        protected @NlsSafe String getActionNameForDimensions() {
+        @NlsSafe
+        protected String getActionNameForDimensions() {
           return "update-v2";
         }
 
+        @NotNull
         @Override
-        protected @NotNull String getDoNotShowMessage() {
+        protected String getDoNotShowMessage() {
           return VcsBundle.message("update.checkbox.don.t.show.again");
         }
 
@@ -153,7 +155,8 @@ public interface ActionInfo {
     public UpdateOrStatusOptionsDialog createOptionsDialog(Project project, LinkedHashMap<Configurable, AbstractVcs> envToConfMap, String scopeName) {
       return new UpdateOrStatusOptionsDialog(project, VcsBundle.message("action.display.name.integrate.scope", scopeName), envToConfMap) {
         @Override
-        protected @NlsSafe String getActionNameForDimensions() {
+        @NlsSafe
+        protected String getActionNameForDimensions() {
           return "integrate";
         }
 

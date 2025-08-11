@@ -57,7 +57,4 @@
  * @see com.jetbrains.python.magicLiteral.PyMagicLiteralTools
  * @see com.jetbrains.python.magicLiteral.PyMagicLiteralExtensionPoint
  * */
-@ApiStatus.Internal
 package com.jetbrains.python.magicLiteral;
-
-import org.jetbrains.annotations.ApiStatus;

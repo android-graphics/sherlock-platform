@@ -9,8 +9,6 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.actionSystem.KeepPopupOnPerform
-import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.Document
@@ -80,7 +78,6 @@ interface LocalLineStatusTracker<R : Range> : LineStatusTracker<R> {
   }
 }
 
-@ApiStatus.Internal
 abstract class LocalLineStatusTrackerImpl<R : Range>(
   final override val project: Project,
   document: Document,
@@ -157,16 +154,9 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
       actions.add(RollbackLineStatusRangeAction(editor, range))
       actions.add(LineStatusMarkerPopupActions.ShowLineStatusRangeDiffAction(editor, tracker, range))
       actions.add(LineStatusMarkerPopupActions.CopyLineStatusRangeAction(editor, tracker, range))
+      actions.add(LineStatusMarkerPopupActions.ToggleByWordDiffAction(editor, tracker, range, mousePosition, this))
       return actions
     }
-
-    override fun createEditorContextMenuActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> = listOf(
-      LineStatusMarkerPopupActions.CopyLineStatusRangeAction(editor, tracker, range),
-      Separator.getInstance(),
-      LineStatusMarkerPopupActions.ToggleByWordDiffAction(editor, tracker, range, mousePosition, this).apply {
-        templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.Never
-      },
-    )
 
     override fun createAdditionalInfoPanel(editor: Editor, range: Range, mousePosition: Point?, disposable: Disposable): JComponent? {
       val clientIds = (range as? LstLocalRange)?.clientIds ?: return null
@@ -244,8 +234,11 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
 fun saveDocumentWhenUnchanged(project: Project, document: Document) {
   if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
     // Use 'invokeLater' to avoid saving inside document change event processing and deadlock with CLM.
+    // Override ANY modality (that is abused by LineStatusTrackerManager) to prevent errors in TransactionGuard.
+    var modalityState = ModalityState.defaultModalityState()
+    if (modalityState == ModalityState.any()) modalityState = ModalityState.nonModal()
     ApplicationManager.getApplication().invokeLater(Runnable {
       FileDocumentManager.getInstance().saveDocument(document)
-    }, ModalityState.nonModal(), project.disposed)
+    }, modalityState, project.disposed)
   }
 }

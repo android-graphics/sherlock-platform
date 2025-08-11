@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -50,7 +50,8 @@ public abstract class FilterAction extends DumbAwareAction implements Filter {
    * @param variable  variable from which the value of the filter text to be displayed can be retrieved.
    * @return a short text to display as editor inlay.
    */
-  public @NotNull String getShortText(NamedScriptableDefinition variable) {
+  @NotNull
+  public String getShortText(NamedScriptableDefinition variable) {
     return "";
   }
 

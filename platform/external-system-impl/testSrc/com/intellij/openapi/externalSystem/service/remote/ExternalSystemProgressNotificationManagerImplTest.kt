@@ -70,11 +70,11 @@ class ExternalSystemProgressNotificationManagerImplTest : UsefulTestCase() {
 
   private class DummyTaskNotificationListener : ExternalSystemTaskNotificationListener {
     val logger = java.lang.StringBuilder()
-    override fun onStart(projectPath: String, id: ExternalSystemTaskId) {
+    override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
       logger.append("start $id;")
     }
 
-    override fun onEnd(projectPath: String, id: ExternalSystemTaskId) {
+    override fun onEnd(id: ExternalSystemTaskId) {
       logger.append("end $id;")
     }
   }

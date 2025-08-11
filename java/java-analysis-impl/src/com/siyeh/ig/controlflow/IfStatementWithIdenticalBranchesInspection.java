@@ -66,8 +66,9 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
       );
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitIfStatement(@NotNull PsiIfStatement ifStatement) {
@@ -129,14 +130,18 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
       myInvert = invert;
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getName() {
+    public String getName() {
       return myInvert ? JavaAnalysisBundle.message("inspection.common.if.parts.family.else.if.invert") 
                       : JavaAnalysisBundle.message("inspection.common.if.parts.family.else.if");
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaAnalysisBundle.message("inspection.common.if.parts.family.else.if");
     }
 
@@ -163,10 +168,11 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
     }
   }
 
-  private static @Nullable ExtractionUnit extractHeadCommonStatement(@NotNull PsiStatement thenStmt,
-                                                                     @NotNull PsiStatement elseStmt,
-                                                                     @NotNull List<PsiLocalVariable> conditionVariables,
-                                                                     @NotNull LocalEquivalenceChecker equivalence) {
+  @Nullable
+  private static ExtractionUnit extractHeadCommonStatement(@NotNull PsiStatement thenStmt,
+                                                           @NotNull PsiStatement elseStmt,
+                                                           @NotNull List<PsiLocalVariable> conditionVariables,
+                                                           @NotNull LocalEquivalenceChecker equivalence) {
     if (thenStmt instanceof PsiDeclarationStatement) {
       return extractDeclarationUnit(thenStmt, elseStmt, conditionVariables, equivalence);
     }
@@ -176,10 +182,11 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
     return new ExtractionUnit(thenStmt, elseStmt, statementMayChangeSemantics, mayInfluenceCondition, true);
   }
 
-  private static @Nullable ExtractionUnit extractDeclarationUnit(@NotNull PsiStatement thenStmt,
-                                                                 @NotNull PsiStatement elseStmt,
-                                                                 @NotNull List<PsiLocalVariable> conditionVariables,
-                                                                 @NotNull LocalEquivalenceChecker equivalence) {
+  @Nullable
+  private static ExtractionUnit extractDeclarationUnit(@NotNull PsiStatement thenStmt,
+                                                       @NotNull PsiStatement elseStmt,
+                                                       @NotNull List<PsiLocalVariable> conditionVariables,
+                                                       @NotNull LocalEquivalenceChecker equivalence) {
     if (!equivalence.topLevelVarsAreEqualNotConsideringInitializers(thenStmt, elseStmt)) return null;
     PsiLocalVariable thenVariable = extractVariable(thenStmt);
     PsiLocalVariable elseVariable = extractVariable(elseStmt);
@@ -222,13 +229,15 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
       myIsOnTheFly = isOnTheFly;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaAnalysisBundle.message("inspection.common.if.parts.family");
     }
 
+    @NotNull
     @Override
-    public @NotNull String getName() {
+    public String getName() {
       return myType.getFixMessage(myMayChangeSemantics);
     }
 
@@ -318,11 +327,11 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
           if (baseName != null) {
             Predicate<PsiVariable> canReuseVariable = var -> PsiTreeUtil.isAncestor(ifStatement, var, false);
             String nameToBeReplacedWith = manager.suggestUniqueVariableName(baseName, ifStatement, canReuseVariable);
-            for (PsiReference reference : ReferencesSearch.search(thenVariable, new LocalSearchScope(ifStatement)).asIterable()) {
+            for (PsiReference reference : ReferencesSearch.search(thenVariable, new LocalSearchScope(ifStatement))) {
               PsiReferenceExpression expression = (PsiReferenceExpression)reference.getElement();
               referenceToNewName.put(expression, nameToBeReplacedWith);
             }
-            for (PsiReference reference : ReferencesSearch.search(elseVariable, new LocalSearchScope(ifStatement)).asIterable()) {
+            for (PsiReference reference : ReferencesSearch.search(elseVariable, new LocalSearchScope(ifStatement))) {
               PsiReferenceExpression expression = (PsiReferenceExpression)reference.getElement();
               referenceToNewName.put(expression, nameToBeReplacedWith);
             }
@@ -394,8 +403,9 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
     }
   }
 
+  @Nullable
   @Contract(pure = true)
-  private static @Nullable PsiLocalVariable extractVariable(@Nullable PsiStatement statement) {
+  private static PsiLocalVariable extractVariable(@Nullable PsiStatement statement) {
     PsiDeclarationStatement declarationStatement = tryCast(statement, PsiDeclarationStatement.class);
     if (declarationStatement == null) return null;
     PsiElement[] elements = declarationStatement.getDeclaredElements();
@@ -562,18 +572,21 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
     EXTRACT_SIDE_EFFECTS("inspection.common.if.parts.message.complete.duplicate.side.effect",
                          "inspection.common.if.parts.description.complete.duplicate.side.effect");
 
-    private final @PropertyKey(resourceBundle = InspectionGadgetsBundle.BUNDLE) @NotNull String myBundleFixKey;
-    private final @PropertyKey(resourceBundle = InspectionGadgetsBundle.BUNDLE) @NotNull String myBundleDescriptionKey;
+    private @PropertyKey(resourceBundle = InspectionGadgetsBundle.BUNDLE) @NotNull final String myBundleFixKey;
+    private @PropertyKey(resourceBundle = InspectionGadgetsBundle.BUNDLE) @NotNull final String myBundleDescriptionKey;
 
-    private @NotNull @IntentionName String getFixMessage(boolean mayChangeSemantics) {
+    @NotNull
+    private @IntentionName String getFixMessage(boolean mayChangeSemantics) {
       return InspectionGadgetsBundle.message(myBundleFixKey, getMayChangeSemanticsText(mayChangeSemantics));
     }
 
-    private static @NotNull String getMayChangeSemanticsText(boolean mayChangeSemantics) {
+    @NotNull
+    private static String getMayChangeSemanticsText(boolean mayChangeSemantics) {
       return mayChangeSemantics ? " (" + InspectionGadgetsBundle.message("inspection.note.may.change.semantics") + ")" : "";
     }
 
-    private @NotNull @InspectionMessage String getDescriptionMessage(boolean mayChangeSemantics) {
+    @NotNull
+    private @InspectionMessage String getDescriptionMessage(boolean mayChangeSemantics) {
       return InspectionGadgetsBundle.message(myBundleDescriptionKey, getMayChangeSemanticsText(mayChangeSemantics));
     }
 
@@ -584,7 +597,8 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
     }
   }
 
-  private static @Nullable PsiIfStatement getEnclosingIfStmt(@NotNull PsiIfStatement ifStatement) {
+  @Nullable
+  private static PsiIfStatement getEnclosingIfStmt(@NotNull PsiIfStatement ifStatement) {
     PsiElement parent = ifStatement.getParent();
     if (parent instanceof PsiIfStatement) {
       return (PsiIfStatement)parent;
@@ -623,7 +637,8 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
    * }
    * ...commonStatements
    */
-  private static @Nullable ImplicitElseData getIfWithImplicitElse(@NotNull PsiIfStatement ifStatement,
+  @Nullable
+  private static ImplicitElseData getIfWithImplicitElse(@NotNull PsiIfStatement ifStatement,
                                                         PsiStatement @NotNull [] thenStatements,
                                                         String jumpKeyword, boolean basicJumpStatement) {
     if (!PsiKeyword.RETURN.equals(jumpKeyword) && !PsiKeyword.CONTINUE.equals(jumpKeyword)) return null;
@@ -707,9 +722,10 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
       myIfToDelete = ifToDelete;
     }
 
-    static @Nullable ImplicitElse from(PsiStatement @NotNull [] thenBranch,
-                                       PsiStatement @NotNull [] elseBranch,
-                                       @NotNull PsiIfStatement ifStatement) {
+    @Nullable
+    static ImplicitElse from(PsiStatement @NotNull [] thenBranch,
+                             PsiStatement @NotNull [] elseBranch,
+                             @NotNull PsiIfStatement ifStatement) {
       if (elseBranch.length != 0 || thenBranch.length == 0) return null;
       PsiStatement lastThenStatement = thenBranch[thenBranch.length - 1];
       String jumpKeyword = null;
@@ -750,11 +766,11 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
       return CommonPartType.COMPLETE_DUPLICATE;
     }
 
-    static @Nullable IfInspectionResult inspect(@NotNull PsiIfStatement ifStatement,
-                                                PsiStatement @NotNull [] thenBranch,
-                                                PsiStatement @NotNull [] elseBranch,
-                                                boolean isOnTheFly,
-                                                IfStatementWithIdenticalBranchesInspection inspection) {
+    @Nullable static IfInspectionResult inspect(@NotNull PsiIfStatement ifStatement,
+                                         PsiStatement @NotNull [] thenBranch,
+                                         PsiStatement @NotNull [] elseBranch,
+                                         boolean isOnTheFly,
+                                         IfStatementWithIdenticalBranchesInspection inspection) {
       ImplicitElse implicitElse = from(thenBranch, elseBranch, ifStatement);
       if (implicitElse == null) return null;
       CommonPartType type = implicitElse.getType();
@@ -763,7 +779,8 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
     }
   }
 
-  private static @NotNull LocalEquivalenceChecker getChecker(PsiStatement[] thenBranch, PsiStatement[] elseBranch) {
+  @NotNull
+  private static LocalEquivalenceChecker getChecker(PsiStatement[] thenBranch, PsiStatement[] elseBranch) {
     Set<PsiLocalVariable> localVariables = new HashSet<>();
     addLocalVariables(localVariables, Arrays.asList(thenBranch));
     addLocalVariables(localVariables, Arrays.asList(elseBranch));
@@ -812,13 +829,14 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
         .or(headCommonParts, unit -> unit.haveSideEffects() && !(unit.getThenStatement() instanceof PsiDeclarationStatement));
     }
 
-    private static @NotNull CommonPartType getType(@NotNull List<? extends ExtractionUnit> headStatements,
-                                                   List<? extends PsiStatement> tailStatements,
-                                                   boolean declarationsAreEquivalent,
-                                                   int thenLen,
-                                                   int elseLen,
-                                                   @NotNull PsiStatement thenBranch,
-                                                   @NotNull PsiStatement elseBranch) {
+    @NotNull
+    private static CommonPartType getType(@NotNull List<? extends ExtractionUnit> headStatements,
+                                          List<? extends PsiStatement> tailStatements,
+                                          boolean declarationsAreEquivalent,
+                                          int thenLen,
+                                          int elseLen,
+                                          @NotNull PsiStatement thenBranch,
+                                          @NotNull PsiStatement elseBranch) {
       if (declarationsAreEquivalent) {
         int duplicatedStatements = headStatements.size() + tailStatements.size();
         if (thenLen == duplicatedStatements && elseLen == duplicatedStatements) {
@@ -866,10 +884,11 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
       return false;
     }
 
-    static @Nullable ThenElse from(@NotNull PsiIfStatement ifStatement,
-                                   PsiStatement @NotNull [] thenBranch,
-                                   PsiStatement @NotNull [] elseBranch,
-                                   boolean isOnTheFly) {
+    @Nullable
+    static ThenElse from(@NotNull PsiIfStatement ifStatement,
+                         PsiStatement @NotNull [] thenBranch,
+                         PsiStatement @NotNull [] elseBranch,
+                         boolean isOnTheFly) {
       LocalEquivalenceChecker equivalence = getChecker(thenBranch, elseBranch);
 
       int thenLen = thenBranch.length;
@@ -947,7 +966,7 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
     }
 
 
-    static @Nullable IfInspectionResult inspect(@NotNull PsiIfStatement ifStatement,
+    @Nullable static IfInspectionResult inspect(@NotNull PsiIfStatement ifStatement,
                                                 PsiStatement @NotNull [] thenBranch,
                                                 PsiStatement @NotNull [] elseBranch,
                                                 boolean isOnTheFly,
@@ -1173,7 +1192,8 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
       myInvert = needInvert;
     }
 
-    static @Nullable ElseIf from(@NotNull PsiIfStatement ifStatement, PsiStatement @NotNull [] thenStatements) {
+    @Nullable
+    static ElseIf from(@NotNull PsiIfStatement ifStatement, PsiStatement @NotNull [] thenStatements) {
       PsiStatement elseBranch = ifStatement.getElseBranch();
       if (ifStatement.getCondition() == null) return null;
       PsiIfStatement elseIf = tryCast(ControlFlowUtils.stripBraces(elseBranch), PsiIfStatement.class);
@@ -1201,7 +1221,7 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
       return null;
     }
 
-    static @Nullable IfInspectionResult inspect(@NotNull PsiIfStatement ifStatement,
+    @Nullable static IfInspectionResult inspect(@NotNull PsiIfStatement ifStatement,
                                                 PsiStatement @NotNull [] thenBranch,
                                                 PsiStatement @NotNull [] elseBranch,
                                                 boolean isOnTheFly,

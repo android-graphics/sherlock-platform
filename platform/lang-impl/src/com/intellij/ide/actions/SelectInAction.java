@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.*;
@@ -61,7 +61,8 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
     popup.showInBestPositionFor(dataContext);
   }
 
-  private static @NotNull ListPopup createLegacyPopup(@NotNull DataContext dataContext, @NotNull SelectInContext context, List<SelectInTarget> targetVector) {
+  @NotNull
+  private static ListPopup createLegacyPopup(@NotNull DataContext dataContext, @NotNull SelectInContext context, List<SelectInTarget> targetVector) {
     ListPopup popup;
     if (targetVector.isEmpty()) {
       DefaultActionGroup group = new DefaultActionGroup();
@@ -75,7 +76,8 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
     return popup;
   }
 
-  private static @NotNull ListPopup createActionPopup(@NotNull DataContext dataContext, @NotNull SelectInContext context, List<SelectInTarget> targetVector) {
+  @NotNull
+  private static ListPopup createActionPopup(@NotNull DataContext dataContext, @NotNull SelectInContext context, List<SelectInTarget> targetVector) {
     DefaultActionGroup group = new DefaultActionGroup();
     if (targetVector.isEmpty()) {
       group.add(new NoTargetsAction());
@@ -106,7 +108,8 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
       init(IdeBundle.message("title.popup.select.target"), myVisibleTargets, icons);
     }
 
-    private static @NotNull List<Icon> fillInIcons(@NotNull Collection<? extends SelectInTarget> targets, @NotNull SelectInContext selectInContext) {
+    @NotNull
+    private static List<Icon> fillInIcons(@NotNull Collection<? extends SelectInTarget> targets, @NotNull SelectInContext selectInContext) {
       ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(selectInContext.getProject());
       List<Icon> list = new ArrayList<>();
       for (SelectInTarget target : targets) {
@@ -119,7 +122,8 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
     }
 
     @Override
-    public @NotNull String getTextFor(final SelectInTarget value) {
+    @NotNull
+    public String getTextFor(final SelectInTarget value) {
       String text = value.toString();
       String id = value.getMinorViewId() == null ? value.getToolWindowId() : null;
       ToolWindow toolWindow = id == null ? null : ToolWindowManager.getInstance(mySelectInContext.getProject()).getToolWindow(id);
@@ -134,7 +138,7 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
 
     @DirtyUI
     @Override
-    public PopupStep<?> onChosen(final SelectInTarget target, final boolean finalChoice) {
+    public PopupStep onChosen(final SelectInTarget target, final boolean finalChoice) {
       if (finalChoice) {
         PsiDocumentManager.getInstance(mySelectInContext.getProject()).commitAllDocuments();
         target.selectIn(mySelectInContext, true);
@@ -142,7 +146,7 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
       }
       if (target instanceof CompositeSelectInTarget) {
         final ArrayList<SelectInTarget> subTargets = new ArrayList<>(((CompositeSelectInTarget)target).getSubTargets(mySelectInContext));
-        if (!subTargets.isEmpty()) {
+        if (subTargets.size() > 0) {
           subTargets.sort(new SelectInManager.SelectInTargetComparator());
           return new SelectInActionsStep(subTargets, mySelectInContext);
         }

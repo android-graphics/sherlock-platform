@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.lang.properties.references;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -13,20 +27,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class PropertyReference extends PropertyReferenceBase implements LocalQuickFixProvider {
-  private final @Nullable String myBundleName;
+  @Nullable private final String myBundleName;
 
-  public PropertyReference(final @NotNull String key, final @NotNull PsiElement element, final @Nullable String bundleName, final boolean soft, final TextRange range) {
+  public PropertyReference(@NotNull final String key, @NotNull final PsiElement element, @Nullable final String bundleName, final boolean soft, final TextRange range) {
     super(key, soft, element, range);
     myBundleName = bundleName;
   }
 
-  public PropertyReference(@NotNull String key, @NotNull PsiElement element, final @Nullable String bundleName, final boolean soft) {
+  public PropertyReference(@NotNull String key, @NotNull PsiElement element, @Nullable final String bundleName, final boolean soft) {
     super(key, soft, element);
     myBundleName = bundleName;
   }
 
   @Override
-  protected @Nullable List<PropertiesFile> getPropertiesFiles() {
+  @Nullable
+  protected List<PropertiesFile> getPropertiesFiles() {
     if (myBundleName == null) {
       return null;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -17,7 +17,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -65,7 +64,7 @@ public abstract class FileReferenceHelper {
    *
    * @return roots, which could be used as the start resolution context.
    */
-  public @Unmodifiable @NotNull Collection<PsiFileSystemItem> getRoots(@NotNull Module module, @NotNull VirtualFile hostFile) {
+  public @NotNull Collection<PsiFileSystemItem> getRoots(@NotNull Module module, @NotNull VirtualFile hostFile) {
     return getRoots(module);
   }
 
@@ -89,7 +88,7 @@ public abstract class FileReferenceHelper {
    * @see #processContexts(FileReferenceSetParameters, VirtualFile, boolean, Processor) for more generic processing
    * @apiNote before running this method {@link #isMine(Project, VirtualFile)} should be called
    */
-  public @Unmodifiable @NotNull Collection<PsiFileSystemItem> getContexts(@NotNull Project project, final @NotNull VirtualFile hostFile) {
+  public @NotNull Collection<PsiFileSystemItem> getContexts(@NotNull Project project, final @NotNull VirtualFile hostFile) {
     return emptySet();
   }
 
@@ -125,7 +124,7 @@ public abstract class FileReferenceHelper {
    *
    * @apiNote before running this method {@link #isMine(Project, VirtualFile)} should be called.
    */
-  public @Unmodifiable @NotNull Collection<FileTargetContext> getTargetContexts(@NotNull Project project,
+  public @NotNull Collection<FileTargetContext> getTargetContexts(@NotNull Project project,
                                                          @NotNull VirtualFile hostFile,
                                                          boolean isAbsoluteReference) {
     if (isAbsoluteReference) {
@@ -161,7 +160,7 @@ public abstract class FileReferenceHelper {
    * @deprecated use {@link #getRoots(Module, VirtualFile)} that provides better context
    */
   @Deprecated
-  public @Unmodifiable @NotNull Collection<PsiFileSystemItem> getRoots(@NotNull Module module) {
+  public @NotNull Collection<PsiFileSystemItem> getRoots(@NotNull Module module) {
     return emptyList();
   }
 

@@ -406,9 +406,11 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     }
 
     @Override
-    public void uiDataSnapshot(@NotNull DataSink sink) {
-      super.uiDataSnapshot(sink);
-      sink.set(LangDataKeys.CONSOLE_VIEW, TerminalExecutionConsole.this);
+    public @Nullable Object getData(@NotNull String dataId) {
+      if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
+        return TerminalExecutionConsole.this;
+      }
+      return super.getData(dataId);
     }
   }
 

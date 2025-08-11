@@ -29,7 +29,8 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 public final class ReturnFromFinallyBlockInspection extends AbstractBaseUastLocalInspectionTool {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "ReturnInsideFinallyBlock";
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,7 +39,6 @@ import kotlinx.coroutines.Dispatchers;
 import kotlinx.coroutines.ExecutorsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -110,7 +109,7 @@ final class RefreshWorker {
       processQueue(events);
     }
     catch (RefreshCancelledException e) {
-      LOG.trace("refresh cancelled [1T]");
+      LOG.trace("refresh cancelled");
     }
   }
 
@@ -146,7 +145,7 @@ final class RefreshWorker {
     }
 
     if (myCancelled) {
-      LOG.trace("refresh cancelled [MT]");
+      LOG.trace("refresh cancelled");
     }
   }
 
@@ -279,7 +278,7 @@ final class RefreshWorker {
     return !isDirectoryChanged(dir, vfsChildren, vfsNames);
   }
 
-  private static @Unmodifiable List<String> getNames(VirtualFile[] children) {
+  private static List<String> getNames(VirtualFile[] children) {
     return ContainerUtil.map(children, VirtualFile::getName);
   }
 

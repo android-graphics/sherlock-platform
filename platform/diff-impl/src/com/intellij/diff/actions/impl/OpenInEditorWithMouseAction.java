@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.diff.actions.impl;
 
 import com.intellij.diff.tools.util.DiffDataKeys;
@@ -9,7 +23,6 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,9 +33,8 @@ import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
 
-@ApiStatus.Internal
 public abstract class OpenInEditorWithMouseAction extends AnAction implements DumbAware {
-  private @NotNull List<? extends Editor> myEditors = Collections.emptyList();
+  @NotNull private List<? extends Editor> myEditors = Collections.emptyList();
 
   public OpenInEditorWithMouseAction() {
     AnAction navigateAction = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_DECLARATION); // null in MPS
@@ -114,7 +126,8 @@ public abstract class OpenInEditorWithMouseAction extends AnAction implements Du
     OpenInEditorAction.openEditor(project, navigatable, callback);
   }
 
-  private @Nullable Editor getEditor(@NotNull Component component) {
+  @Nullable
+  private Editor getEditor(@NotNull Component component) {
     for (Editor editor : myEditors) {
       if (editor != null && editor.getGutter() == component) {
         return editor;
@@ -123,5 +136,6 @@ public abstract class OpenInEditorWithMouseAction extends AnAction implements Du
     return null;
   }
 
-  protected abstract @Nullable Navigatable getNavigatable(@NotNull Editor editor, int line);
+  @Nullable
+  protected abstract Navigatable getNavigatable(@NotNull Editor editor, int line);
 }

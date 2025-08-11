@@ -74,14 +74,16 @@ class StdlibVersionChooserDialog(
     }
 
     private fun createRenderer(): ListCellRenderer<LibraryNameAndVersion?> {
-        return listCellRenderer("") {
-            val libraryName = StringUtil.shortenTextWithEllipsis(
-                value.libraryName, MAXIMUM_VISIBLE_LIBRARY_NAME, SUFFIX_LENGTH, USE_ELLIPSIS_SYMBOL
-            )
-            text(libraryName) {
-                align = LcrInitParams.Align.LEFT
+        return listCellRenderer {
+            value?.let {
+                val libraryName = StringUtil.shortenTextWithEllipsis(
+                    it.libraryName, MAXIMUM_VISIBLE_LIBRARY_NAME, SUFFIX_LENGTH, USE_ELLIPSIS_SYMBOL
+                )
+                text(libraryName) {
+                    align = LcrInitParams.Align.LEFT
+                }
+                text(it.version)
             }
-            text(value.version)
         }
     }
 

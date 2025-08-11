@@ -28,8 +28,9 @@ public class TextMateEditorHighlighterProvider implements EditorHighlighterProvi
       super(highlighter != null ? highlighter : new TextMateHighlighter(null), colors);
     }
 
+    @NotNull
     @Override
-    protected @NotNull DataStorage createStorage() {
+    protected DataStorage createStorage() {
       return new TextMateLexerDataStorage();
     }
   }

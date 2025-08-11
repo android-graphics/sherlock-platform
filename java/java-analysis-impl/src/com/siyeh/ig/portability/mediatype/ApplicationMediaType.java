@@ -555,7 +555,6 @@ public enum ApplicationMediaType {
     this.contentType = contentType;
   }
 
-  @Override
   public String toString() {
     return contentType;
   }

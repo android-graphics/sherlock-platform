@@ -107,7 +107,7 @@ public final class ScopeEditorPanel implements Disposable {
     void settingsChanged();
   }
 
-  public ScopeEditorPanel(final @NotNull Project project, @NotNull NamedScopesHolder holder) {
+  public ScopeEditorPanel(@NotNull final Project project, @NotNull NamedScopesHolder holder) {
     myProject = project;
     myHolder = holder;
 
@@ -295,15 +295,14 @@ public final class ScopeEditorPanel implements Disposable {
       LOG.warn("ScopeEditorPanel.updateSelectedSets called before tree initialization", new Throwable());
       return;
     }
-    var paths = myPackageTree.getSelectionPaths();
-    if (paths == null) return;
+    int[] rows = myPackageTree.getSelectionRows();
+    if (rows == null) return;
     PatternDialectProvider provider = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE);
     if (provider == null) return;
-    final var nodes = new ArrayList<PackageDependenciesNode>(paths.length);
-    for (var path : paths) {
-      if (path.getLastPathComponent() instanceof PackageDependenciesNode node) {
-        nodes.add(node);
-      }
+    final var nodes = new ArrayList<PackageDependenciesNode>(rows.length);
+    for (int row : rows) {
+      final PackageDependenciesNode node = (PackageDependenciesNode)myPackageTree.getPathForRow(row).getLastPathComponent();
+      nodes.add(node);
     }
     computeSelection(invoker, nodes, provider, false).onSuccess(result -> {
       myInclude.setSelection(result);
@@ -341,7 +340,8 @@ public final class ScopeEditorPanel implements Disposable {
   }
 
   @ApiStatus.Internal
-  static @Nullable PackageSet doExcludeSelected(@NotNull PackageSet set, @Nullable PackageSet current) {
+  @Nullable
+  static PackageSet doExcludeSelected(@NotNull PackageSet set, @Nullable PackageSet current) {
     if (current == null) {
       current = new ComplementPackageSet(set);
     }
@@ -378,7 +378,8 @@ public final class ScopeEditorPanel implements Disposable {
   }
 
   @ApiStatus.Internal
-  static @Nullable PackageSet doIncludeSelected(@NotNull PackageSet set, @Nullable PackageSet current) {
+  @Nullable
+  static PackageSet doIncludeSelected(@NotNull PackageSet set, @Nullable PackageSet current) {
     if (current == null) {
       current = set;
     }
@@ -404,10 +405,11 @@ public final class ScopeEditorPanel implements Disposable {
     return current;
   }
 
-  private static @Nullable PackageSet processComplementaryScope(@NotNull PackageSet current,
-                                                                PackageSet added,
-                                                                boolean checkComplementSet,
-                                                                boolean[] append) {
+  @Nullable
+  private static PackageSet processComplementaryScope(@NotNull PackageSet current,
+                                                      PackageSet added,
+                                                      boolean checkComplementSet,
+                                                      boolean[] append) {
     final String text = added.getText();
     if (current instanceof ComplementPackageSet &&
         Comparing.strEqual(((ComplementPackageSet)current).getComplementarySet().getText(), text)) {
@@ -472,7 +474,8 @@ public final class ScopeEditorPanel implements Disposable {
     return toolbar.getComponent();
   }
 
-  private @NotNull FlattenModulesToggleAction createFlattenModulesAction(Runnable update) {
+  @NotNull
+  private FlattenModulesToggleAction createFlattenModulesAction(Runnable update) {
     return new FlattenModulesToggleAction(myProject, () -> DependencyUISettings.getInstance().UI_SHOW_MODULES,
                                           () -> !DependencyUISettings.getInstance().UI_SHOW_MODULE_GROUPS, value -> {
       DependencyUISettings.getInstance().UI_SHOW_MODULE_GROUPS = !value;
@@ -496,7 +499,7 @@ public final class ScopeEditorPanel implements Disposable {
     }
   }
   
-  private void rebuild(final boolean updateText, final @Nullable Runnable runnable, final boolean requestFocus, final int delayMillis) {
+  private void rebuild(final boolean updateText, @Nullable final Runnable runnable, final boolean requestFocus, final int delayMillis) {
     ThreadingAssertions.assertEventDispatchThread();
     myRebuildRequired = false;
     cancelCurrentProgress();
@@ -700,12 +703,13 @@ public final class ScopeEditorPanel implements Disposable {
     }
 
     @Override
-    protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
+    @NotNull
+    protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
       final DefaultActionGroup group = new DefaultActionGroup();
       for (final PatternDialectProvider provider : PatternDialectProvider.EP_NAME.getExtensionList()) {
         group.add(new AnAction(provider.getDisplayName()) {
           @Override
-          public void actionPerformed(final @NotNull AnActionEvent e) {
+          public void actionPerformed(@NotNull final AnActionEvent e) {
             DependencyUISettings.getInstance().SCOPE_TYPE = provider.getShortName();
             myUpdate.run();
           }
@@ -715,7 +719,7 @@ public final class ScopeEditorPanel implements Disposable {
     }
 
     @Override
-    public void update(final @NotNull AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final PatternDialectProvider provider = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE);
       e.getPresentation().setText(provider.getDisplayName());

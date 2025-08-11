@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch.apply;
 
 import com.intellij.diff.tools.util.text.LineOffsets;
@@ -9,7 +9,6 @@ import com.intellij.openapi.diff.impl.patch.PatchLine;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,19 +17,19 @@ import java.util.Objects;
 
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
 
-@ApiStatus.Internal
 public final class PlainSimplePatchApplier {
   private static final Logger LOG = getInstance(PlainSimplePatchApplier.class);
 
-  private final @NotNull List<? extends PatchHunk> myHunks;
-  private final @NotNull CharSequence myText;
-  private final @NotNull LineOffsets myLineOffsets;
+  @NotNull private final List<? extends PatchHunk> myHunks;
+  @NotNull private final CharSequence myText;
+  @NotNull private final LineOffsets myLineOffsets;
 
   private final StringBuilder sb = new StringBuilder();
   private int baseLine = 0;
   private int patchedLine = 0;
 
-  public static @Nullable String apply(@NotNull CharSequence text, @NotNull List<? extends PatchHunk> hunks) {
+  @Nullable
+  public static String apply(@NotNull CharSequence text, @NotNull List<? extends PatchHunk> hunks) {
     return new PlainSimplePatchApplier(text, hunks).execute();
   }
 
@@ -40,7 +39,8 @@ public final class PlainSimplePatchApplier {
     myLineOffsets = LineOffsetsUtil.create(text);
   }
 
-  private @Nullable String execute() {
+  @Nullable
+  private String execute() {
     if (myHunks.isEmpty()) return myText.toString();
 
     try {
@@ -71,7 +71,7 @@ public final class PlainSimplePatchApplier {
 
     if (lastBaseLine != null) {
       boolean lastLineAlreadyApplied =
-        !lastBaseLine.isSuppressNewLine() && baseLine + 1 == myLineOffsets.getLineCount() && getLineContent(baseLine).isEmpty() ||
+        !lastBaseLine.isSuppressNewLine() && baseLine + 1 == myLineOffsets.getLineCount() && getLineContent(baseLine).length() == 0 ||
         lastBaseLine.isSuppressNewLine() && baseLine == myLineOffsets.getLineCount();
       if (lastLineAlreadyApplied) {
         boolean isNoNewlinePatched = lastPatchedLine != null ? lastPatchedLine.isSuppressNewLine() : lastBaseLine.isSuppressNewLine();
@@ -84,7 +84,7 @@ public final class PlainSimplePatchApplier {
     }
 
     // insertion into empty file - use "No newline at end of file" flag from patch
-    if (baseLine == 0 && myText.isEmpty()) {
+    if (baseLine == 0 && myText.length() == 0) {
       boolean isNoNewlinePatched = lastPatchedLine != null && lastPatchedLine.isSuppressNewLine();
       if (!isNoNewlinePatched) {
         if (patchedLine > 0) sb.append('\n');
@@ -164,7 +164,8 @@ public final class PlainSimplePatchApplier {
     patchedLine++;
   }
 
-  private @NotNull CharSequence getLineContent(int line) {
+  @NotNull
+  private CharSequence getLineContent(int line) {
     return myText.subSequence(myLineOffsets.getLineStart(line), myLineOffsets.getLineEnd(line));
   }
 

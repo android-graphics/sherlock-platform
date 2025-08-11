@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.migration;
 
 import com.intellij.history.LocalHistory;
@@ -46,7 +46,8 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  @NotNull
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new MigrationUsagesViewDescriptor(myMigrationMap, false);
   }
 
@@ -170,7 +171,8 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected @NotNull String getCommandName() {
+  @NotNull
+  protected String getCommandName() {
     return getRefactoringName();
   }
 

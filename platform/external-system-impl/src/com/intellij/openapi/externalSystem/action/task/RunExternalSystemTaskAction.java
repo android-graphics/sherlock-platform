@@ -16,14 +16,12 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecution
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Internal
 public class RunExternalSystemTaskAction extends ExternalSystemNodeAction<TaskData> {
 
   private static final Logger LOG = Logger.getInstance(RunExternalSystemTaskAction.class);
@@ -50,7 +48,8 @@ public class RunExternalSystemTaskAction extends ExternalSystemNodeAction<TaskDa
     context.getRunManager().setSelectedConfiguration(configuration);
   }
 
-  private static @Nullable RunnerAndConfigurationSettings findOrGet(@NotNull ConfigurationContext context) {
+  @Nullable
+  private static RunnerAndConfigurationSettings findOrGet(@NotNull ConfigurationContext context) {
     RunnerAndConfigurationSettings result = context.findExisting();
     if (result == null) {
       result = context.getConfiguration();

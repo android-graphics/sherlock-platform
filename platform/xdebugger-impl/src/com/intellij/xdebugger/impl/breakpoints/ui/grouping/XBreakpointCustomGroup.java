@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
 import com.intellij.icons.AllIcons;
@@ -24,12 +24,14 @@ public class XBreakpointCustomGroup extends XBreakpointGroup {
   }
 
   @Override
-  public @Nullable Icon getIcon(final boolean isOpen) {
+  @Nullable
+  public Icon getIcon(final boolean isOpen) {
     return AllIcons.Nodes.Folder;
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return myName;
   }
 

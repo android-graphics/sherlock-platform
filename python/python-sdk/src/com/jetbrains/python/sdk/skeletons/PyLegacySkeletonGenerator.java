@@ -39,7 +39,8 @@ public class PyLegacySkeletonGenerator extends PySkeletonGenerator {
   }
 
   @Override
-  public final @NotNull Builder commandBuilder() {
+  @NotNull
+  public final Builder commandBuilder() {
     final Builder builder = new LegacyBuilder();
     if (myCurrentFolder != null) {
       builder.workingDir(myCurrentFolder);
@@ -52,7 +53,8 @@ public class PyLegacySkeletonGenerator extends PySkeletonGenerator {
    *                      You might want to disable it for commands where non-zero exit code is possible for situations other
    *                      than misconfigured interpreter or execution error in order to inspect the output manually.
    */
-  protected @NotNull ProcessOutput runProcess(@NotNull Builder builder, boolean ensureSuccess) throws InvalidSdkException {
+  @NotNull
+  protected ProcessOutput runProcess(@NotNull Builder builder, boolean ensureSuccess) throws InvalidSdkException {
     ProcessOutput output = builder.runProcess();
     if (ensureSuccess && output.getExitCode() != 0) {
       throw new InvalidSdkException(formatGeneratorFailureMessage(output));
@@ -70,12 +72,13 @@ public class PyLegacySkeletonGenerator extends PySkeletonGenerator {
     return PySdkUtil.getProcessOutput(homePath, commandLine, extraEnv, timeout, bytes, true);
   }
 
-  protected @NotNull ProcessOutput runProcessWithLineOutputListener(@NotNull String homePath,
-                                                                    @NotNull List<String> cmd,
-                                                                    @NotNull Map<String, String> env,
-                                                                    @Nullable String stdin,
-                                                                    int timeout,
-                                                                    @NotNull LineWiseProcessOutputListener listener)
+  @NotNull
+  protected ProcessOutput runProcessWithLineOutputListener(@NotNull String homePath,
+                                                           @NotNull List<String> cmd,
+                                                           @NotNull Map<String, String> env,
+                                                           @Nullable String stdin,
+                                                           int timeout,
+                                                           @NotNull LineWiseProcessOutputListener listener)
     throws ExecutionException, InvalidSdkException {
     final GeneralCommandLine commandLine = new GeneralCommandLine(cmd)
       .withWorkDirectory(homePath)
@@ -90,7 +93,8 @@ public class PyLegacySkeletonGenerator extends PySkeletonGenerator {
 
   private final class LegacyBuilder extends Builder {
 
-    public @NotNull List<String> getCommandLine() {
+    @NotNull
+    public List<String> getCommandLine() {
       final List<String> commandLine = new ArrayList<>();
       commandLine.add(mySdk.getHomePath());
       commandLine.add(PythonHelpersLocator.findPathStringInHelpers(GENERATOR3));
@@ -114,7 +118,8 @@ public class PyLegacySkeletonGenerator extends PySkeletonGenerator {
       return commandLine;
     }
 
-    public @NotNull Map<String, String> getEnvironment() {
+    @NotNull
+    public Map<String, String> getEnvironment() {
       Map<String, String> env = new HashMap<>();
       final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(mySdk);
       final String flavorPathParam = flavor != null ? flavor.envPathParam() : null;
@@ -130,7 +135,8 @@ public class PyLegacySkeletonGenerator extends PySkeletonGenerator {
       return env;
     }
 
-    public @NotNull String getWorkingDir() throws InvalidSdkException {
+    @NotNull
+    public String getWorkingDir() throws InvalidSdkException {
       if (myWorkingDir != null) {
         return myWorkingDir;
       }
@@ -140,7 +146,8 @@ public class PyLegacySkeletonGenerator extends PySkeletonGenerator {
     }
 
     @Override
-    public @NotNull ProcessOutput runProcess() throws InvalidSdkException {
+    @NotNull
+    public ProcessOutput runProcess() throws InvalidSdkException {
       return getProcessOutput(getWorkingDir(),
                               ArrayUtil.toStringArray(getCommandLine()),
                               getStdin(),

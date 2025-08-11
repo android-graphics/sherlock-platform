@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,8 +31,7 @@ import static com.intellij.openapi.editor.markup.EffectType.LINE_UNDERSCORE;
 /**
  * Emulates the ANSI terminal state
  */
-@ApiStatus.Internal
-public final class AnsiTerminalEmulator {
+class AnsiTerminalEmulator {
   private static final Logger LOG = Logger.getInstance(AnsiTerminalEmulator.class);
 
   private static final AnsiTerminalEmulator EMPTY_EMULATOR = new AnsiTerminalEmulator();
@@ -41,11 +39,16 @@ public final class AnsiTerminalEmulator {
   private static final int COLOR_CUBE_MIN_INDEX = MAX_8BIT_COLOR_INDEX + 1;
   private static final int GRAY_MIN_INDEX = 232;
 
-  private @NotNull TerminalFont myFont = TerminalFont.DEFAULT;
-  private @NotNull Weight myWeight = Weight.DEFAULT;
-  private @NotNull Underline myUnderline = Underline.DEFAULT;
-  private @NotNull BlinkSpeed myBlink = BlinkSpeed.DEFAULT;
-  private @NotNull FrameType myFrameType = FrameType.DEFAULT;
+  @NotNull
+  private TerminalFont myFont = TerminalFont.DEFAULT;
+  @NotNull
+  private Weight myWeight = Weight.DEFAULT;
+  @NotNull
+  private Underline myUnderline = Underline.DEFAULT;
+  @NotNull
+  private BlinkSpeed myBlink = BlinkSpeed.DEFAULT;
+  @NotNull
+  private FrameType myFrameType = FrameType.DEFAULT;
 
   private boolean myIsItalic;
   private boolean myIsInverse;
@@ -163,14 +166,16 @@ public final class AnsiTerminalEmulator {
   /**
    * @return an ANSI string representing the SGR state of the current emulator. Same state is always represented with the same string.
    */
-  public @NotNull String getAnsiSerializedSGRState() {
+  @NotNull
+  public String getAnsiSerializedSGRState() {
     return Objects.requireNonNull(mySerializedSgrStateProvider.getValue());
   }
 
   /**
    * @return an ANSI string representing the SGR state of the current emulator. Same state is always represented with the same string.
    */
-  public @NotNull String computeAnsiSerializedSGRState() {
+  @NotNull
+  public String computeAnsiSerializedSGRState() {
     List<String> state = new ArrayList<>();
     IntConsumer codeConsumer = it -> state.add(Integer.toString(it));
 
@@ -250,7 +255,8 @@ public final class AnsiTerminalEmulator {
     return EMPTY_EMULATOR.equals(this);
   }
 
-  public @Nullable Color getBackgroundColor() {
+  @Nullable
+  public Color getBackgroundColor() {
     return myBackgroundColor == null ? null : myBackgroundColor.getColor();
   }
 
@@ -258,7 +264,8 @@ public final class AnsiTerminalEmulator {
     return myBackgroundColor == null ? -1 : myBackgroundColor.getColorIndex();
   }
 
-  public @Nullable Color getForegroundColor() {
+  @Nullable
+  public Color getForegroundColor() {
     return myForegroundColor == null ? null : myForegroundColor.getColor();
   }
 
@@ -270,11 +277,13 @@ public final class AnsiTerminalEmulator {
     return myIsInverse;
   }
 
-  public @NotNull Underline getUnderline() {
+  @NotNull
+  public Underline getUnderline() {
     return myUnderline;
   }
 
-  public @NotNull FrameType getFrameType() {
+  @NotNull
+  public FrameType getFrameType() {
     return myFrameType;
   }
 
@@ -282,7 +291,8 @@ public final class AnsiTerminalEmulator {
     return myIsCrossedOut;
   }
 
-  public @NotNull Weight getWeight() {
+  @NotNull
+  public Weight getWeight() {
     return myWeight;
   }
 
@@ -394,7 +404,8 @@ public final class AnsiTerminalEmulator {
      */
     public final int sgrCode;
 
-    public final @Nullable EffectType effectType;
+    @Nullable
+    public final EffectType effectType;
 
     FrameType(int sgrCode, @Nullable EffectType effectType) {
       this.sgrCode = sgrCode;
@@ -445,7 +456,8 @@ public final class AnsiTerminalEmulator {
      */
     public final int sgrCode;
 
-    public final @Nullable EffectType effectType;
+    @Nullable
+    public final EffectType effectType;
 
     Underline(int sgrCode, @Nullable EffectType effectType) {
       this.sgrCode = sgrCode;
@@ -488,8 +500,9 @@ public final class AnsiTerminalEmulator {
       myBlue = blue;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getAnsiEncodedColor() {
+    public String getAnsiEncodedColor() {
       return SGR_COLOR_ENCODING_RGB + ";" + myRed + ";" + myGreen + ";" + myBlue;
     }
 
@@ -499,8 +512,9 @@ public final class AnsiTerminalEmulator {
       return -1;
     }
 
+    @NotNull
     @Override
-    public @NotNull Color getColor() {
+    public Color getColor() {
       //noinspection UseJBColor
       return new Color(myRed, myGreen, myBlue);
     }
@@ -543,8 +557,9 @@ public final class AnsiTerminalEmulator {
       return myColorIndex;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getAnsiEncodedColor() {
+    public String getAnsiEncodedColor() {
       return SGR_COLOR_ENCODING_INDEXED + ";" + getColorIndex();
     }
 
@@ -585,8 +600,9 @@ public final class AnsiTerminalEmulator {
       }
     }
 
+    @Nullable
     @Override
-    public @Nullable Color getColor() {
+    public Color getColor() {
       return null;
     }
   }
@@ -614,8 +630,9 @@ public final class AnsiTerminalEmulator {
       }
     }
 
+    @Nullable
     @Override
-    public @Nullable Color getColor() {
+    public Color getColor() {
       int colorIndex = getColorIndex();
       if (colorIndex >= COLOR_CUBE_MIN_INDEX && colorIndex < GRAY_MIN_INDEX) {
         int encodedColor = colorIndex - COLOR_CUBE_MIN_INDEX;

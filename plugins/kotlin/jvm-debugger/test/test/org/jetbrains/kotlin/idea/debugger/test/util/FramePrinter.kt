@@ -1,8 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.test.util
 
 import com.intellij.debugger.SourcePosition
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.DebuggerUtils
+import com.intellij.debugger.engine.JavaStackFrame
+import com.intellij.debugger.engine.SourcePositionProvider
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
@@ -18,15 +21,15 @@ import com.intellij.xdebugger.XTestValueNode
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants
 import com.sun.jdi.ArrayType
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.idea.debugger.core.render.GetterDescriptor
+import org.jetbrains.kotlin.idea.debugger.core.GetterDescriptor
+import org.jetbrains.kotlin.idea.debugger.core.invokeInManagerThread
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.DelegateDescriptor
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableValueDescriptorImpl
 import org.jetbrains.kotlin.idea.debugger.test.KOTLIN_LIBRARY_NAME
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.concurrent.TimeUnit
 
-internal class FramePrinter(private val suspendContext: SuspendContextImpl) {
+class FramePrinter(private val suspendContext: SuspendContextImpl) {
     fun print(frame: XStackFrame): String {
         return buildString { appendRecursively(frame, 0) }
     }
@@ -125,7 +128,7 @@ internal class FramePrinter(private val suspendContext: SuspendContextImpl) {
             semaphore.up()
         }
 
-        suspendContext.managerThread.schedule(object : SuspendContextCommandImpl(suspendContext) {
+        suspendContext.debugProcess.managerThread.schedule(object : SuspendContextCommandImpl(suspendContext) {
             override fun contextAction(suspendContext: SuspendContextImpl) {
                 val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
                 valueDescriptor.setContext(evaluationContext)
@@ -159,9 +162,9 @@ internal class FramePrinter(private val suspendContext: SuspendContextImpl) {
         }
 
         val debugProcess = suspendContext.debugProcess
-        return runBlocking {
-            withDebugContext(suspendContext) {
-                SourcePositionProvider.getSourcePosition(descriptor, debugProcess.project, debugProcess.debuggerContext)
+        return debugProcess.invokeInManagerThread { debuggerContext ->
+            runReadAction {
+                SourcePositionProvider.getSourcePosition(descriptor, debugProcess.project, debuggerContext)
             }
         }
     }

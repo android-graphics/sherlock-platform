@@ -47,7 +47,6 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
   val isSimpleButton: Boolean get() = options.isNullOrEmpty()
 
   var addSeparator: Boolean = true
-  var hideDisabledOptions: Boolean = false
   var selectFirstItem: Boolean = true
   var popupBackgroundColor: Color? = null
   var showPopupYOffset: Int = 6

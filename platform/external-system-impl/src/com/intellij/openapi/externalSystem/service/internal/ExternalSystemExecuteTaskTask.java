@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.internal;
 
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -11,6 +11,8 @@ import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentCo
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,13 +26,13 @@ import static com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskI
 
 public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
-  private final @NotNull List<String> myTasksToExecute;
-  private final @Nullable String myVmOptions;
-  private @Nullable String myArguments;
-  private final @Nullable String myJvmParametersSetup;
+  @NotNull private final List<String> myTasksToExecute;
+  @Nullable private final String myVmOptions;
+  @Nullable private String myArguments;
+  @Nullable private final String myJvmParametersSetup;
   private final boolean myPassParentEnvs;
   private final Map<String, String> myEnv;
-  private final @NotNull ExternalSystemRunConfiguration myConfiguration;
+  @NotNull private final ExternalSystemRunConfiguration myConfiguration;
 
   public ExternalSystemExecuteTaskTask(@NotNull Project project,
                                        @NotNull ExternalSystemTaskExecutionSettings settings,
@@ -48,15 +50,18 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     configuration.copyUserDataTo(this);
   }
 
-  public @NotNull List<String> getTasksToExecute() {
+  @NotNull
+  public List<String> getTasksToExecute() {
     return myTasksToExecute;
   }
 
-  public @Nullable String getVmOptions() {
+  @Nullable
+  public String getVmOptions() {
     return myVmOptions;
   }
 
-  public @Nullable String getArguments() {
+  @Nullable
+  public String getArguments() {
     return myArguments;
   }
 
@@ -81,9 +86,6 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
       .withArguments(parseCmdParameters(myArguments))
       .withEnvironmentVariables(myEnv)
       .passParentEnvs(myPassParentEnvs);
-
-    settings.setTasks(myTasksToExecute);
-    settings.setJvmParameters(myJvmParametersSetup);
 
     putUserDataTo(settings);
 
@@ -111,10 +113,21 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
       var facade = manager.getFacade(project, projectPath, projectSystemId);
       var taskManager = facade.getTaskManager();
       //noinspection unchecked
-      taskManager.executeTasks(projectPath, id, settings);
+      taskManager.executeTasks(id, myTasksToExecute, projectPath, settings, myJvmParametersSetup);
     }
     finally {
       activity.finished();
+    }
+  }
+
+  /**
+   * @see com.intellij.openapi.util.UserDataHolderBase#copyUserDataTo
+   */
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private void putUserDataTo(@NotNull UserDataHolder dataHolder) {
+    var userMap = getUserMap();
+    for (Key key : userMap.getKeys()) {
+      dataHolder.putUserData(key, userMap.get(key));
     }
   }
 

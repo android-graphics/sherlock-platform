@@ -2,15 +2,18 @@
 
 package org.jetbrains.kotlin.nj2k
 
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.config.AnalysisFlags
-import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.j2k.ConverterContext
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
@@ -42,13 +45,14 @@ context(KaSession)
 fun untilToExpression(
     from: JKExpression,
     to: JKExpression,
-    conversionContext: ConverterContext
+    conversionContext: NewJ2kConverterContext
 ): JKExpression {
-    val isPossibleToUseRangeUntil = conversionContext.converter.targetModule?.languageVersionSettings?.isPossibleToUseRangeUntil() == true
+    val isPossibleToUseRangeUntil = conversionContext.converter.targetModule
+        ?.let { it.languageVersionSettings.isPossibleToUseRangeUntil(it, conversionContext.project) } == true
     return rangeExpression(
         from,
         to,
-        if (isPossibleToUseRangeUntil) JKOperatorToken.RANGE_UNTIL else JKOperatorToken.UNTIL,
+        if (isPossibleToUseRangeUntil) "..<" else "until",
         conversionContext
     )
 }
@@ -57,17 +61,17 @@ context(KaSession)
 fun downToExpression(
     from: JKExpression,
     to: JKExpression,
-    conversionContext: ConverterContext
+    conversionContext: NewJ2kConverterContext
 ): JKExpression =
     rangeExpression(
         from,
         to,
-        JKOperatorToken.DOWN_TO,
+        "downTo",
         conversionContext
     )
 
 fun JKExpression.parenthesizeIfCompoundExpression(): JKExpression = when (this) {
-    is JKIfElseExpression, is JKBinaryExpression, is JKTypeCastExpression, is JKUnaryExpression -> JKParenthesizedExpression(this)
+    is JKIfElseExpression, is JKBinaryExpression, is JKTypeCastExpression -> JKParenthesizedExpression(this)
     else -> this
 }
 
@@ -82,15 +86,15 @@ context(KaSession)
 fun rangeExpression(
     from: JKExpression,
     to: JKExpression,
-    token: JKOperatorToken,
-    conversionContext: ConverterContext
+    operatorName: String,
+    conversionContext: NewJ2kConverterContext
 ): JKExpression =
     JKBinaryExpression(
         from,
         to,
         JKKtOperatorImpl(
-            token,
-            conversionContext.symbolProvider.provideMethodSymbol("kotlin.ranges.${token.text}").returnType!!
+            JKKtWordOperatorToken(operatorName),
+            conversionContext.symbolProvider.provideMethodSymbol("kotlin.ranges.$operatorName").returnType!!
         )
     )
 
@@ -144,7 +148,7 @@ fun annotationArgumentStringLiteral(content: String): JKExpression {
 }
 
 context(KaSession)
-fun JKVariable.findUsages(scope: JKTreeElement, context: ConverterContext): List<JKFieldAccessExpression> {
+fun JKVariable.findUsages(scope: JKTreeElement, context: NewJ2kConverterContext): List<JKFieldAccessExpression> {
     val symbol = context.symbolProvider.provideUniverseSymbol(this)
     val usages = mutableListOf<JKFieldAccessExpression>()
     val searcher = object : RecursiveConversion(context) {
@@ -179,6 +183,9 @@ fun JKExpression.unboxFieldReference(): JKFieldAccessExpression? = when {
     else -> null
 }
 
+fun JKFieldAccessExpression.asAssignmentFromTarget(): JKKtAssignmentStatement? =
+    parent.safeAs<JKKtAssignmentStatement>()?.takeIf { it.field == this }
+
 fun JKFieldAccessExpression.isInDecrementOrIncrement(): Boolean =
     when (parent.safeAs<JKUnaryExpression>()?.operator?.token) {
         JKOperatorToken.PLUSPLUS, JKOperatorToken.MINUSMINUS -> true
@@ -186,8 +193,15 @@ fun JKFieldAccessExpression.isInDecrementOrIncrement(): Boolean =
     }
 
 context(KaSession)
-fun JKVariable.hasUsages(scope: JKTreeElement, context: ConverterContext): Boolean =
+fun JKVariable.hasUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
     findUsages(scope, context).isNotEmpty()
+
+context(KaSession)
+fun JKVariable.hasWritableUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
+    findUsages(scope, context).any {
+        it.asAssignmentFromTarget() != null
+                || it.isInDecrementOrIncrement()
+    }
 
 fun equalsExpression(left: JKExpression, right: JKExpression, typeFactory: JKTypeFactory) =
     JKBinaryExpression(
@@ -312,7 +326,6 @@ fun JKExpression.callOn(
     symbol: JKMethodSymbol,
     arguments: List<JKExpression> = emptyList(),
     typeArguments: List<JKTypeElement> = emptyList(),
-    expressionType: JKType? = null,
     canMoveLambdaOutsideParentheses: Boolean = false
 ): JKQualifiedExpression = JKQualifiedExpression(
     this,
@@ -320,10 +333,8 @@ fun JKExpression.callOn(
         symbol,
         JKArgumentList(arguments.map { JKArgumentImpl(it) }),
         JKTypeArgumentList(typeArguments),
-        expressionType,
-        canMoveLambdaOutsideParentheses
-    ),
-    expressionType
+        canMoveLambdaOutsideParentheses = canMoveLambdaOutsideParentheses
+    )
 )
 
 val JKStatement.statements: List<JKStatement>
@@ -378,13 +389,27 @@ val JKTreeElement.identifier: JKSymbol?
 val JKClass.isObjectOrCompanionObject
     get() = classKind == JKClass.ClassKind.OBJECT || classKind == JKClass.ClassKind.COMPANION
 
-private const val EXPERIMENTAL_STDLIB_API_ANNOTATION = "kotlin.ExperimentalStdlibApi"
+const val EXPERIMENTAL_STDLIB_API_ANNOTATION = "kotlin.ExperimentalStdlibApi"
 
-private fun LanguageVersionSettings.isPossibleToUseRangeUntil(): Boolean {
-    if (apiVersion >= ApiVersion.KOTLIN_1_9) return true
-    if (languageVersion < LanguageVersion.KOTLIN_1_8) return false
-    return FqName(EXPERIMENTAL_STDLIB_API_ANNOTATION).asString() in getFlag(AnalysisFlags.optIn)
+fun LanguageVersionSettings.isPossibleToUseRangeUntil(module: Module, project: Project): Boolean =
+    areKotlinVersionsSufficientToUseRangeUntil(module, project) &&
+            FqName(EXPERIMENTAL_STDLIB_API_ANNOTATION).asString() in getFlag(AnalysisFlags.optIn)
+
+/**
+ * Checks that compilerVersion and languageVersion (or -XXLanguage:+RangeUntilOperator) versions are high enough to use rangeUntil
+ * operator.
+ *
+ * Note that this check is not enough. You also need to check for OptIn (because stdlib declarations are annotated with OptIn)
+ */
+fun LanguageVersionSettings.areKotlinVersionsSufficientToUseRangeUntil(module: Module, project: Project): Boolean {
+    val compilerVersion = ExternalCompilerVersionProvider.get(module)
+        ?: IdeKotlinVersion.opt(KotlinJpsPluginSettings.jpsVersion(project))
+        ?: return false
+    // `rangeUntil` is added to languageVersion 1.8 only since 1.7.20-Beta compiler
+    return compilerVersion >= COMPILER_VERSION_WITH_RANGEUNTIL_SUPPORT && supportsFeature(LanguageFeature.RangeUntilOperator)
 }
+
+private val COMPILER_VERSION_WITH_RANGEUNTIL_SUPPORT = IdeKotlinVersion.get("1.7.20-Beta")
 
 val JKAnnotationListOwner.hasAnnotations: Boolean
     get() = annotationList.annotations.isNotEmpty()

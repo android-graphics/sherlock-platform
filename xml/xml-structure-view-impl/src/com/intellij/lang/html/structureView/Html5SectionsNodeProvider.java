@@ -1,4 +1,18 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.lang.html.structureView;
 
 import com.intellij.icons.AllIcons;
@@ -26,27 +40,30 @@ import java.util.List;
 public class Html5SectionsNodeProvider implements FileStructureNodeProvider<Html5SectionTreeElement>, PropertyOwner,
                                                   ActionShortcutProvider {
 
-  @SuppressWarnings("UnresolvedPluginConfigReference")
   public static final String ACTION_ID = "HTML5_OUTLINE_MODE";
   public static final String HTML5_OUTLINE_PROVIDER_PROPERTY = "html5.sections.node.provider";
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return ACTION_ID;
   }
 
   @Override
-  public @NotNull ActionPresentation getPresentation() {
+  @NotNull
+  public ActionPresentation getPresentation() {
     return new ActionPresentationData(XmlPsiBundle.message("html5.outline.mode"), null, AllIcons.Xml.Html5);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getCheckBoxText() {
+  public String getCheckBoxText() {
     return XmlPsiBundle.message("html5.outline.mode");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getActionIdForShortcut() {
+  public String getActionIdForShortcut() {
     return "FileStructurePopup";
   }
 
@@ -56,12 +73,14 @@ public class Html5SectionsNodeProvider implements FileStructureNodeProvider<Html
   }
 
   @Override
-  public @NotNull String getPropertyName() {
+  @NotNull
+  public String getPropertyName() {
     return HTML5_OUTLINE_PROVIDER_PROPERTY;
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<Html5SectionTreeElement> provideNodes(final @NotNull TreeElement node) {
+  public Collection<Html5SectionTreeElement> provideNodes(@NotNull final TreeElement node) {
     if (!(node instanceof HtmlFileTreeElement)) return Collections.emptyList();
 
     final XmlFile xmlFile = ((HtmlFileTreeElement)node).getElement();

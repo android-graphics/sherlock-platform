@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.google.common.collect.Sets;
@@ -40,7 +40,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class SdkDownloadTracker {
   private static final Logger LOG = Logger.getInstance(SdkDownloadTracker.class);
 
-  public static @NotNull SdkDownloadTracker getInstance() {
+  @NotNull
+  public static SdkDownloadTracker getInstance() {
     return ApplicationManager.getApplication().getService(SdkDownloadTracker.class);
   }
 
@@ -69,7 +70,8 @@ public final class SdkDownloadTracker {
     myPendingTasks.remove(task);
   }
 
-  private @Nullable PendingDownload findTask(@NotNull Sdk sdk) {
+  @Nullable
+  private PendingDownload findTask(@NotNull Sdk sdk) {
     for (PendingDownload task : myPendingTasks) {
       if (task.containsSdk(sdk)) {
         return task;
@@ -120,7 +122,8 @@ public final class SdkDownloadTracker {
    * Looks into the currently downloading SDK instances
    * and returns one with matching name
    */
-  public @NotNull List<Sdk> findDownloadingSdks(@Nullable String sdkName) {
+  @NotNull
+  public List<Sdk> findDownloadingSdks(@Nullable String sdkName) {
     if (sdkName == null) return Collections.emptyList();
 
     List<Sdk> result = new ArrayList<>();
@@ -228,7 +231,8 @@ public final class SdkDownloadTracker {
   // it does call the method from the dialog setup, with NON_MODAL modality, which
   // we would like to ignore.
   private static final class SmartPendingDownloadModalityTracker implements PendingDownloadModalityTracker{
-    static @NotNull ModalityState modality() {
+    @NotNull
+    static ModalityState modality() {
       ModalityState state = ModalityState.current();
       TransactionGuard.getInstance().assertWriteSafeContext(state);
       return state;
@@ -239,7 +243,7 @@ public final class SdkDownloadTracker {
     @Override
     public synchronized void updateModality() {
       ModalityState newModality = modality();
-      if (newModality != myModalityState && !newModality.accepts(myModalityState)) {
+      if (newModality != myModalityState && newModality.dominates(myModalityState)) {
         myModalityState = newModality;
       }
     }
@@ -266,7 +270,8 @@ public final class SdkDownloadTracker {
       return myCollection.contains(sdk);
     }
 
-    synchronized @NotNull List<T> copy() {
+    @NotNull
+    synchronized List<T> copy() {
       return new ArrayList<>(myCollection);
     }
   }

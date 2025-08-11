@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +29,6 @@ import java.awt.event.FocusListener;
 /**
  * @author MYakovlev
  */
-@ApiStatus.Internal
 public final class SelectInEditorManagerImpl extends SelectInEditorManager implements Disposable, FocusListener, CaretListener{
   private final Project myProject;
   private RangeHighlighter mySegmentHighlighter;

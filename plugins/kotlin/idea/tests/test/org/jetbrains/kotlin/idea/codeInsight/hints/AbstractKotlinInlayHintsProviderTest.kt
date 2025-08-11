@@ -2,17 +2,15 @@
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
+import com.intellij.psi.util.startOffset
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
-import com.intellij.util.PsiNavigateUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
@@ -25,16 +23,14 @@ abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProvi
     override fun setUp() {
         setUpWithKotlinPlugin { super.setUp() }
 
-        customToStringProvider = provider@{ element ->
-            val navigatable = PsiNavigateUtil.getNavigatable(element)
-            val openFileDescriptor = navigatable as? OpenFileDescriptor ?: return@provider ""
-            val virtualFile = openFileDescriptor.file
+        customToStringProvider = { element ->
+            val virtualFile = element.containingFile.virtualFile
             val jarFileSystem = virtualFile.fileSystem as? JarFileSystem
             val path = jarFileSystem?.let {
                 val root = VfsUtilCore.getRootFile(virtualFile)
                 "${it.protocol}://${root.name}${JarFileSystem.JAR_SEPARATOR}${VfsUtilCore.getRelativeLocation(virtualFile, root)}"
             } ?: virtualFile.name
-            "[$path:${if (jarFileSystem != null) "*" else openFileDescriptor.offset.toString()}]"
+            "[$path:${if (jarFileSystem != null) "*" else element.startOffset.toString()}]"
         }
     }
 
@@ -49,7 +45,7 @@ abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProvi
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
-    open fun doTest(testPath: String) {
+    fun doTest(testPath: String) {
         val defaultFile = File(testPath)
         val k2File = when (pluginMode) {
             KotlinPluginMode.K1 -> null
@@ -58,10 +54,7 @@ abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProvi
         }
 
         configureDependencies(defaultFile)
-        val file = k2File ?: defaultFile
-        IgnoreTests.runTestIfNotDisabledByFileDirective(file.toPath(), IgnoreTests.DIRECTIVES.of(pluginMode)) {
-            doTestProviders(file = file)
-        }
+        doTestProviders(file = k2File ?: defaultFile)
     }
 
     private val dependencySuffixes = listOf(".dependency.kt", ".dependency.java", ".dependency1.kt", ".dependency2.kt")
@@ -92,7 +85,7 @@ abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProvi
         val options: Map<String, Boolean> = calculateOptions(fileContents)
 
         try {
-            doTestProvider("${file.name.substringBefore(".")}.kt", fileContents, inlayHintsProvider, options, file)
+            doTestProvider("${file.name.substringBefore(".")}.kt", fileContents, inlayHintsProvider, options)
         } catch (e: FileComparisonFailedError) {
             throw FileComparisonFailedError(
                 e.message,

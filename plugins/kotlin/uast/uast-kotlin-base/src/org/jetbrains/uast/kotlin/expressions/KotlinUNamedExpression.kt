@@ -34,8 +34,7 @@ class KotlinUNamedExpression private constructor(
         ): UNamedExpression {
             val expression = valueArgument.getArgumentExpression()
             return KotlinUNamedExpression(name, valueArgument.asElement(), uastParent) { expressionParent ->
-                val languagePlugin = UastFacade.findPlugin(expressionParent.lang)
-                expression?.let { languagePlugin?.convertOpt(it, expressionParent) }
+                expression?.let { expressionParent.getLanguagePlugin().convertOpt(it, expressionParent) }
                     ?: UastEmptyExpression(expressionParent)
             }
         }

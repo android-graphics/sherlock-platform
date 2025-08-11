@@ -17,15 +17,17 @@ import org.jetbrains.annotations.Nullable;
  * @author konstantin.aleev
  */
 public final class ConfigurationTypeDashboardGroupingRule implements RunDashboardGroupingRule {
-  public static final @NonNls String NAME = "ConfigurationTypeDashboardGroupingRule";
+  @NonNls public static final String NAME = "ConfigurationTypeDashboardGroupingRule";
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return NAME;
   }
 
+  @Nullable
   @Override
-  public @Nullable RunDashboardGroup getGroup(AbstractTreeNode<?> node) {
+  public RunDashboardGroup getGroup(AbstractTreeNode<?> node) {
     Project project = node.getProject();
     if (project != null && !PropertiesComponent.getInstance(project).getBoolean(getName(), true)) {
       return null;

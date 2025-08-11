@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -7,9 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.svn.api.*;
-import org.jetbrains.idea.svn.auth.PasswordAuthenticationData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import java.io.File;
@@ -21,19 +19,19 @@ import java.util.List;
 // TODO: Probably make command immutable and use CommandBuilder for updates.
 public class Command {
 
-  private final @NotNull List<String> myParameters = new ArrayList<>();
-  private final @NotNull SvnCommandName myName;
-  private @Nullable PasswordAuthenticationData myAuthParameters = null;
+  @NotNull private final List<String> myParameters = new ArrayList<>();
+  @NotNull private final List<String> myOriginalParameters = new ArrayList<>();
+  @NotNull private final SvnCommandName myName;
 
   private File workingDirectory;
-  private @Nullable File myConfigDir;
-  private @Nullable LineCommandListener myResultBuilder;
-  private volatile @Nullable Url myRepositoryUrl;
-  private @NotNull Target myTarget;
-  private @Unmodifiable Collection<? extends File> myTargets;
-  private @Nullable PropertyValue myPropertyValue;
+  @Nullable private File myConfigDir;
+  @Nullable private LineCommandListener myResultBuilder;
+  @Nullable private volatile Url myRepositoryUrl;
+  @NotNull private Target myTarget;
+  @Nullable private Collection<File> myTargets;
+  @Nullable private PropertyValue myPropertyValue;
 
-  private @Nullable ProgressTracker myCanceller;
+  @Nullable private ProgressTracker myCanceller;
 
   public Command(@NotNull SvnCommandName name) {
     myName = name;
@@ -73,11 +71,8 @@ public class Command {
     }
   }
 
-  public void putAuth(@Nullable PasswordAuthenticationData authData) {
-    myAuthParameters = authData;
-  }
-
-  public @Nullable ProgressTracker getCanceller() {
+  @Nullable
+  public ProgressTracker getCanceller() {
     return myCanceller;
   }
 
@@ -85,7 +80,8 @@ public class Command {
     myCanceller = canceller;
   }
 
-  public @Nullable File getConfigDir() {
+  @Nullable
+  public File getConfigDir() {
     return myConfigDir;
   }
 
@@ -93,34 +89,41 @@ public class Command {
     return workingDirectory;
   }
 
-  public @Nullable LineCommandListener getResultBuilder() {
+  @Nullable
+  public LineCommandListener getResultBuilder() {
     return myResultBuilder;
   }
 
-  public @Nullable Url getRepositoryUrl() {
+  @Nullable
+  public Url getRepositoryUrl() {
     return myRepositoryUrl;
   }
 
-  public @NotNull Url requireRepositoryUrl() {
+  @NotNull
+  public Url requireRepositoryUrl() {
     Url result = getRepositoryUrl();
     assert result != null;
 
     return result;
   }
 
-  public @NotNull Target getTarget() {
+  @NotNull
+  public Target getTarget() {
     return myTarget;
   }
 
-  public @Nullable List<String> getTargetsPaths() {
+  @Nullable
+  public List<String> getTargetsPaths() {
     return ContainerUtil.isEmpty(myTargets) ? null : ContainerUtil.map(myTargets, file -> CommandUtil.format(file.getAbsolutePath(), null));
   }
 
-  public @Nullable PropertyValue getPropertyValue() {
+  @Nullable
+  public PropertyValue getPropertyValue() {
     return myPropertyValue;
   }
 
-  public @NotNull SvnCommandName getName() {
+  @NotNull
+  public SvnCommandName getName() {
     return myName;
   }
 
@@ -144,7 +147,7 @@ public class Command {
     myTarget = target;
   }
 
-  public void setTargets(@Nullable @Unmodifiable Collection<? extends File> targets) {
+  public void setTargets(@Nullable Collection<File> targets) {
     myTargets = targets;
   }
 
@@ -152,12 +155,16 @@ public class Command {
     myPropertyValue = propertyValue;
   }
 
-  public @NotNull List<String> getParameters() {
-    return new ArrayList<>(myParameters);
+  // TODO: used only to ensure authentication info is not logged to file. Remove when command execution model is refactored
+  // TODO: - so we could determine if parameter should be logged by the parameter itself.
+  public void saveOriginalParameters() {
+    myOriginalParameters.clear();
+    myOriginalParameters.addAll(myParameters);
   }
 
-  public @Nullable PasswordAuthenticationData getAuthParameters() {
-    return myAuthParameters;
+  @NotNull
+  public List<String> getParameters() {
+    return new ArrayList<>(myParameters);
   }
 
   public @NlsSafe @NotNull String getText() {
@@ -168,7 +175,7 @@ public class Command {
       data.add(myConfigDir.getPath());
     }
     data.add(myName.getName());
-    data.addAll(myParameters);
+    data.addAll(myOriginalParameters);
 
     List<String> targetsPaths = getTargetsPaths();
     if (!ContainerUtil.isEmpty(targetsPaths)) {
@@ -197,7 +204,8 @@ public class Command {
     return is(SvnCommandName.cat) && hasLocalTarget() && isLocal(getRevision());
   }
 
-  private @Nullable Revision getRevision() {
+  @Nullable
+  private Revision getRevision() {
     int index = myParameters.indexOf("--revision");
 
     return index >= 0 && index + 1 < myParameters.size() ? Revision.parse(myParameters.get(index + 1)) : null;

@@ -22,7 +22,8 @@ public class RedundantParenthesesQuickFix extends PsiUpdateModCommandQuickFix {
   private static final Logger LOG = Logger.getInstance(RedundantParenthesesQuickFix.class);
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.redundant.parentheses");
   }
 

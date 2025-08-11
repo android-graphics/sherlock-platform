@@ -29,7 +29,8 @@ import java.util.List;
 public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.add.type.hints.for.function");
   }
 
@@ -71,7 +72,8 @@ public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
     return false;
   }
 
-  private static @Nullable PyFunction findSuitableFunction(@NotNull Editor editor, @NotNull PsiFile file) {
+  @Nullable
+  private static PyFunction findSuitableFunction(@NotNull Editor editor, @NotNull PsiFile file) {
     return TypeIntention.findOnlySuitableFunction(editor, file, input -> true);
   }
 
@@ -112,7 +114,7 @@ public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
 
     replacementTextBuilder.append(") -> ");
 
-    String returnType = SpecifyTypeInPy3AnnotationsIntention.returnType(function).getAnnotationText();
+    String returnType = SpecifyTypeInPy3AnnotationsIntention.returnType(function);
     templates.add(Pair.create(replacementTextBuilder.length(), returnType));
 
     replacementTextBuilder.append(returnType);

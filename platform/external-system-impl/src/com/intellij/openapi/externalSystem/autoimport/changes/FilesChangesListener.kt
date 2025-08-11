@@ -2,8 +2,7 @@
 package com.intellij.openapi.externalSystem.autoimport.changes
 
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Stamp
-import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
 /**
  * Describes interface for listening modifications in files or documents.
@@ -11,12 +10,10 @@ import org.jetbrains.annotations.ApiStatus
  * Call sequence of [init], [onFileChange] and [apply] must be called on the same thread,
  * but threads may be different for different call sequences.
  */
-@ApiStatus.Internal
-interface FilesChangesListener {
-
+interface FilesChangesListener : EventListener {
   fun init() {}
 
-  fun onFileChange(stamp: Stamp, path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {}
+  fun onFileChange(path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {}
 
   fun apply() {}
 }

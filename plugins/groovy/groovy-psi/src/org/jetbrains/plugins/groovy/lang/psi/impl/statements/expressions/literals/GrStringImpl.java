@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
@@ -99,8 +99,9 @@ public class GrStringImpl extends GrAbstractLiteral implements GrString {
     return this;
   }
 
+  @NotNull
   @Override
-  public @NotNull LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
+  public LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
     return new GrLiteralEscaper(this);
   }
 }

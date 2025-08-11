@@ -16,11 +16,6 @@ import java.util.stream.IntStream;
 
 public class TestMain {
   public static void main(String[] args) throws Exception {
-    if (args.length > 0 && "serverMode".equals(args[0])) {
-      System.out.println("Started in server mode");
-      args = Arrays.copyOfRange(args, 1, args.length);
-    }
-
     if (args.length > 0) {
       switch (args[0]) {
         case "dump-launch-parameters" -> dumpLaunchParameters(args);
@@ -31,7 +26,6 @@ public class TestMain {
         case "exception" -> exception();
         case "sigsegv" -> segmentationViolation();
         case "main-class" -> mainClassName();
-        case "remoteDevStatus" -> checkStatus();
         default -> {
           System.err.println(
             "unexpected command: " + Arrays.toString(args) + '\n' +
@@ -138,15 +132,6 @@ public class TestMain {
     }
     finally {
       System.setOut(stdout);
-    }
-  }
-
-  private static void checkStatus() {
-    var vmOptions = ManagementFactory.getRuntimeMXBean().getInputArguments();
-    var debugOption = vmOptions.stream().filter(o -> o.startsWith("-agentlib:jdwp=")).findFirst();
-    if (debugOption.isPresent()) {
-      System.err.println("VM options contain the debug option: " + debugOption.get());
-      System.exit(1);
     }
   }
 }

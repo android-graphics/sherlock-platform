@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.internal;
 
 import org.gradle.internal.impldep.com.google.common.base.Objects;
@@ -26,13 +26,15 @@ public class AnnotationProcessingConfigImpl implements AnnotationProcessingConfi
     myArgs = args;
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<String> getAnnotationProcessorPath() {
+  public Collection<String> getAnnotationProcessorPath() {
     return GradleContainerUtil.unmodifiablePathSet(myPaths);
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<String> getAnnotationProcessorArguments() {
+  public Collection<String> getAnnotationProcessorArguments() {
     return myArgs;
   }
   @Override
@@ -40,8 +42,9 @@ public class AnnotationProcessingConfigImpl implements AnnotationProcessingConfi
     return isTestSources;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getProcessorOutput() {
+  public String getProcessorOutput() {
     return myProcessorOutput;
   }
 

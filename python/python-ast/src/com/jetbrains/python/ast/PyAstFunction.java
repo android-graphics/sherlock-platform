@@ -11,9 +11,9 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.ast.controlFlow.AstScopeOwner;
 import com.jetbrains.python.ast.docstring.DocStringUtilCore;
-import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -28,19 +28,21 @@ import java.util.Optional;
 @ApiStatus.Experimental
 public interface PyAstFunction extends PsiNameIdentifierOwner, PyAstCompoundStatement,
                                        PyAstDecoratable, PyAstCallable, PyAstStatementListContainer, PyAstPossibleClassMember,
-                                       AstScopeOwner, PyAstDocStringOwner, PyAstTypeCommentOwner, PyAstAnnotationOwner, PyAstTypeParameterListOwner {
+                                       AstScopeOwner, PyAstDocStringOwner, PyAstTypeCommentOwner, PyAstAnnotationOwner, PyAstTypeParameterListOwner{
 
   PyAstFunction[] EMPTY_ARRAY = new PyAstFunction[0];
   ArrayFactory<PyAstFunction> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyAstFunction[count];
 
   @Override
-  default @Nullable String getName() {
+  @Nullable
+  default String getName() {
     ASTNode node = getNameNode();
     return node != null ? node.getText() : null;
   }
 
   @Override
-  default @Nullable PsiElement getNameIdentifier() {
+  @Nullable
+  default PsiElement getNameIdentifier() {
     final ASTNode nameNode = getNameNode();
     return nameNode != null ? nameNode.getPsi() : null;
   }
@@ -51,7 +53,8 @@ public interface PyAstFunction extends PsiNameIdentifierOwner, PyAstCompoundStat
    * @return the node, or null if the function is incomplete (only the "def"
    *         keyword was typed)
    */
-  default @Nullable ASTNode getNameNode() {
+  @Nullable
+  default ASTNode getNameNode() {
     ASTNode id = getNode().findChildByType(PyTokenTypes.IDENTIFIER);
     if (id == null) {
       ASTNode error = getNode().findChildByType(TokenType.ERROR_ELEMENT);
@@ -63,14 +66,16 @@ public interface PyAstFunction extends PsiNameIdentifierOwner, PyAstCompoundStat
   }
 
   @Override
-  default @NotNull PyAstStatementList getStatementList() {
+  @NotNull
+  default PyAstStatementList getStatementList() {
     final PyAstStatementList statementList = childToPsi(PyElementTypes.STATEMENT_LIST);
     assert statementList != null : "Statement list missing for function " + getText();
     return statementList;
   }
 
   @Override
-  default @Nullable PyAstFunction asMethod() {
+  @Nullable
+  default PyAstFunction asMethod() {
     if (getContainingClass() != null) {
       return this;
     }
@@ -80,7 +85,8 @@ public interface PyAstFunction extends PsiNameIdentifierOwner, PyAstCompoundStat
   }
 
   @Override
-  default @Nullable String getDocStringValue() {
+  @Nullable
+  default String getDocStringValue() {
     return DocStringUtilCore.getDocStringValue(this);
   }
 
@@ -91,7 +97,8 @@ public interface PyAstFunction extends PsiNameIdentifierOwner, PyAstCompoundStat
   }
 
   @Override
-  default @Nullable PyAstStringLiteralExpression getDocStringExpression() {
+  @Nullable
+  default PyAstStringLiteralExpression getDocStringExpression() {
     final PyAstStatementList stmtList = getStatementList();
     return DocStringUtilCore.findDocStringExpression(stmtList);
   }
@@ -172,7 +179,8 @@ public interface PyAstFunction extends PsiNameIdentifierOwner, PyAstCompoundStat
   /**
    * @return function protection level (underscore based)
    */
-  default @NotNull ProtectionLevel getProtectionLevel() {
+  @NotNull
+  default ProtectionLevel getProtectionLevel() {
     final int underscoreLevels = PyUtilCore.getInitialUnderscores(getName());
     for (final ProtectionLevel level : ProtectionLevel.values()) {
       if (level.getUnderscoreLevel() == underscoreLevels) {
@@ -221,7 +229,8 @@ public interface PyAstFunction extends PsiNameIdentifierOwner, PyAstCompoundStat
   PyAstParameterList getParameterList();
 
   @Override
-  default @Nullable PyAstClass getContainingClass() {
+  @Nullable
+  default PyAstClass getContainingClass() {
     final PsiElement parent = PsiTreeUtil.getParentOfType(this, StubBasedPsiElement.class);
     if (parent instanceof PyAstClass) {
       return (PyAstClass)parent;

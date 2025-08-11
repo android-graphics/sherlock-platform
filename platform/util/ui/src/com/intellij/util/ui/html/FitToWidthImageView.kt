@@ -9,9 +9,10 @@ import javax.swing.Icon
 import javax.swing.text.Element
 import javax.swing.text.FlowView
 import javax.swing.text.View
+import javax.swing.text.html.ImageView
 import kotlin.math.max
 
-internal class FitToWidthImageView(element: Element) : DataUrlImageView(element) {
+internal class FitToWidthImageView(element: Element) : ImageView(element) {
   private var myAvailableWidth = 0
 
   override fun getLoadingImageIcon(): Icon =

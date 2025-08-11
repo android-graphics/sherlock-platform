@@ -1,5 +1,4 @@
 // "Opt in for 'Library' on 'a'" "true"
-// PRIORITY: HIGH
 // ACTION: Convert property initializer to getter
 // ACTION: Convert to lazy property
 // ACTION: Move to constructor
@@ -23,4 +22,4 @@ val foo: MockLibrary = MockLibrary();
         val a = foo<caret>
     }
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityUseOptInAnnotationFix

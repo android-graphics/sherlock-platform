@@ -3,8 +3,6 @@ package com.intellij.util.io.blobstorage;
 
 import org.jetbrains.annotations.ApiStatus;
 
-import java.io.IOException;
-
 /**
  * Provides access to storage internal statistics.
  * If storage provides access to such a statistics -- it must implement this interface
@@ -13,16 +11,16 @@ import java.io.IOException;
 public interface BlobStorageStatistics {
 
   /** records currently alive (=allocated-relocated-deleted) */
-  int liveRecordsCount() throws IOException;
+  int liveRecordsCount();
 
   /** records allocated since storage creation (including deleted/relocated) */
-  int recordsAllocated() throws IOException;
+  int recordsAllocated();
 
   /** records re-allocated -- i.e. recordId is accessible, but the access redirects to another (actual) record */
-  int recordsRelocated() throws IOException;
+  int recordsRelocated();
 
   /** records deleted, i.e. un-accessible anymore */
-  int recordsDeleted() throws IOException;
+  int recordsDeleted();
 
 
   /**
@@ -30,11 +28,11 @@ public interface BlobStorageStatistics {
    * Includes all the overhead of file/records header, alignment, etc.
    * Could be <= file size, if e.g. file is expanded in advance.
    */
-  long sizeInBytes() throws IOException;
+  long sizeInBytes();
 
   /** Total size of all alive records' payload, i.e. 'useful size', without any overhead */
-  long totalLiveRecordsPayloadBytes() throws IOException;
+  long totalLiveRecordsPayloadBytes();
 
   /** Total size of all alive records' capacity */
-  long totalLiveRecordsCapacityBytes() throws IOException;
+  long totalLiveRecordsCapacityBytes();
 }

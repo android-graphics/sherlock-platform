@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.coverage.filters.ModifiedFilesFilter;
@@ -18,7 +17,8 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
   private final Project myProject;
   private ModifiedFilesFilter myModifiedFilesFilter;
 
-  protected abstract @Nullable Runnable createRenewRequest(final @NotNull CoverageSuitesBundle suite, final @NotNull CoverageDataManager dataManager);
+  @Nullable
+  protected abstract Runnable createRenewRequest(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager);
 
   public BaseCoverageAnnotator(final Project project) {
     myProject = project;
@@ -31,7 +31,7 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
 
   @ApiStatus.Internal
   @Override
-  public final void renewCoverageData(final @NotNull CoverageSuitesBundle suite, final @NotNull CoverageDataManager dataManager) {
+  public final void renewCoverageData(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager) {
     final Runnable request = createRenewRequest(suite, dataManager);
     if (request != null) {
       if (myProject.isDisposed()) return;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.openapi.application.ReadAction;
@@ -68,7 +68,8 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
   }
 
   @Override
-  public @Nullable PsiClass getContainingClassElement() {
+  @Nullable
+  public PsiClass getContainingClassElement() {
     return JavaPsiFacade.getInstance(getProject()).findClass(myContainingClassName, ProjectScope.getAllScope(getProject()));
   }
 
@@ -100,7 +101,8 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
   }
 
   @Override
-  public @Nullable PsiClass getContainingClass() {
+  @Nullable
+  public PsiClass getContainingClass() {
     return ReadAction.compute(() -> {
       try {
         final GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(myContainingClassName);
@@ -120,7 +122,8 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
   }
 
   @Override
-  public @NotNull SearchScope getUseScope() {
+  @NotNull
+  public SearchScope getUseScope() {
     return GlobalSearchScope.projectScope(getProject());
   }
 
@@ -204,7 +207,8 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
   }
 
   @Override
-  public @Nullable Icon getIcon(boolean open) {
+  @Nullable
+  public Icon getIcon(boolean open) {
     return JetgroovyIcons.Groovy.Method;
   }
 }

@@ -1,14 +1,13 @@
 package com.jetbrains.performancePlugin.remotedriver.fixtures
 
-import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextCellRendererReader
+import com.jetbrains.performancePlugin.remotedriver.dataextractor.JComboBoxTextCellReader
 import org.assertj.swing.core.Robot
-import org.assertj.swing.driver.BasicJComboBoxCellReader
 import org.assertj.swing.fixture.JComboBoxFixture
 import javax.swing.JComboBox
 
 class JComboBoxTextFixture(robot: Robot, component: JComboBox<*>) : JComboBoxFixture(robot, component) {
   init {
-    replaceCellReader(BasicJComboBoxCellReader(TextCellRendererReader()))
+    replaceCellReader(JComboBoxTextCellReader())
   }
 
   /*

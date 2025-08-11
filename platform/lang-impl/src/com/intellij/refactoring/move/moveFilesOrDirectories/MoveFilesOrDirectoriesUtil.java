@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.DirectoryChooserUtil;
@@ -220,7 +220,8 @@ public final class MoveFilesOrDirectoriesUtil {
     }
   }
 
-  public static @Nullable PsiDirectory resolveToDirectory(final Project project, final PsiElement element) {
+  @Nullable
+  public static PsiDirectory resolveToDirectory(final Project project, final PsiElement element) {
     if (!(element instanceof PsiDirectoryContainer)) {
       return (PsiDirectory)element;
     }
@@ -233,7 +234,8 @@ public final class MoveFilesOrDirectoriesUtil {
     };
   }
 
-  private static @Nullable PsiDirectory getCommonDirectory(PsiElement[] movedElements) {
+  @Nullable
+  private static PsiDirectory getCommonDirectory(PsiElement[] movedElements) {
     PsiDirectory commonDirectory = null;
 
     for (PsiElement movedElement : movedElements) {
@@ -260,7 +262,8 @@ public final class MoveFilesOrDirectoriesUtil {
     return commonDirectory;
   }
 
-  public static @Nullable PsiDirectory getInitialTargetDirectory(PsiDirectory initialTargetElement, final PsiElement[] movedElements) {
+  @Nullable
+  public static PsiDirectory getInitialTargetDirectory(PsiDirectory initialTargetElement, final PsiElement[] movedElements) {
     PsiDirectory initialTargetDirectory = initialTargetElement;
     if (initialTargetDirectory == null) {
       if (movedElements != null) {
@@ -276,7 +279,8 @@ public final class MoveFilesOrDirectoriesUtil {
     return initialTargetDirectory;
   }
 
-  private static @Nullable PsiDirectory getContainerDirectory(final PsiElement psiElement) {
+  @Nullable
+  private static PsiDirectory getContainerDirectory(final PsiElement psiElement) {
     if (psiElement instanceof PsiDirectory) {
       return (PsiDirectory)psiElement;
     }

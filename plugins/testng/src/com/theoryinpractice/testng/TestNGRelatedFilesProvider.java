@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng;
 
 import com.intellij.navigation.GotoRelatedItem;
@@ -22,9 +22,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-final class TestNGRelatedFilesProvider extends GotoRelatedProvider {
+public class TestNGRelatedFilesProvider extends GotoRelatedProvider {
+
+  @NotNull
   @Override
-  public @NotNull List<? extends GotoRelatedItem> getItems(@NotNull PsiElement context) {
+  public List<? extends GotoRelatedItem> getItems(@NotNull PsiElement context) {
     PsiClass psiClass = PsiTreeUtil.getParentOfType(context, PsiClass.class, false);
     if (psiClass != null) {
       final Project project = psiClass.getProject();

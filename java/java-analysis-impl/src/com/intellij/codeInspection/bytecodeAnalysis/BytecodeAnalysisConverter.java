@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.dataFlow.MutationSignature;
@@ -22,7 +22,8 @@ public final class BytecodeAnalysisConverter {
    * Creates a stable non-negated EKey for given PsiMethod and direction
    * Returns null if conversion is impossible (something is not resolvable).
    */
-  public static @Nullable EKey psiKey(@NotNull PsiMember psiMethod, @NotNull Direction direction) {
+  @Nullable
+  public static EKey psiKey(@NotNull PsiMember psiMethod, @NotNull Direction direction) {
     PsiClass psiClass = psiMethod.getContainingClass();
     if (psiClass != null) {
       String className = getJvmClassName(psiClass);
@@ -43,7 +44,8 @@ public final class BytecodeAnalysisConverter {
     return null;
   }
 
-  private static @Nullable String methodSignature(@NotNull PsiMethod psiMethod, @NotNull PsiClass psiClass) {
+  @Nullable
+  private static String methodSignature(@NotNull PsiMethod psiMethod, @NotNull PsiClass psiClass) {
     StringBuilder sb = new StringBuilder();
 
     sb.append('(');
@@ -77,18 +79,21 @@ public final class BytecodeAnalysisConverter {
     return sb.toString();
   }
 
-  private static @Nullable String descriptor(@NotNull PsiClass psiClass, int dimensions) {
+  @Nullable
+  private static String descriptor(@NotNull PsiClass psiClass, int dimensions) {
     String fqn = getJvmClassName(psiClass);
     if (fqn == null) return null;
     return "[".repeat(dimensions) + 'L' + fqn + ';';
   }
 
-  private static @Nullable String getJvmClassName(@NotNull PsiClass psiClass) {
+  @Nullable
+  private static String getJvmClassName(@NotNull PsiClass psiClass) {
     String name = ClassUtil.getJVMClassName(psiClass);
     return name == null ? null : name.replace('.', '/');
   }
 
-  private static @Nullable String descriptor(@NotNull PsiType psiType) {
+  @Nullable
+  private static String descriptor(@NotNull PsiType psiType) {
     int dimensions = 0;
     psiType = TypeConversionUtil.erasure(psiType);
     if (psiType instanceof PsiArrayType arrayType) {
@@ -120,7 +125,8 @@ public final class BytecodeAnalysisConverter {
    * @param primaryKey primary stable keys
    * @return corresponding (stable!) keys
    */
-  public static @NotNull ArrayList<EKey> mkInOutKeys(@NotNull PsiMethod psiMethod, @NotNull EKey primaryKey) {
+  @NotNull
+  public static ArrayList<EKey> mkInOutKeys(@NotNull PsiMethod psiMethod, @NotNull EKey primaryKey) {
     PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
     ArrayList<EKey> keys = new ArrayList<>(parameters.length * 2 + 2);
     keys.add(primaryKey);

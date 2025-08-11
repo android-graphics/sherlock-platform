@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.framework.FrameworkTypeEx;
@@ -91,7 +91,8 @@ public final class FrameworkSupportUtil {
     return findProvider(id, getAllProviders());
   }
 
-  public static @Nullable FrameworkSupportInModuleProvider findProvider(@NotNull String id, final List<? extends FrameworkSupportInModuleProvider> providers) {
+  @Nullable
+  public static FrameworkSupportInModuleProvider findProvider(@NotNull String id, final List<? extends FrameworkSupportInModuleProvider> providers) {
     for (FrameworkSupportInModuleProvider provider : providers) {
       String frameworkId = provider.getFrameworkType().getId();
       if (id.equals(frameworkId)
@@ -111,12 +112,14 @@ public final class FrameworkSupportUtil {
     }
 
     @Override
-    public @NotNull Collection<FrameworkSupportInModuleProvider> getNodes() {
+    @NotNull
+    public Collection<FrameworkSupportInModuleProvider> getNodes() {
       return myFrameworkSupportProviders;
     }
 
+    @NotNull
     @Override
-    public @NotNull Iterator<FrameworkSupportInModuleProvider> getIn(final FrameworkSupportInModuleProvider provider) {
+    public Iterator<FrameworkSupportInModuleProvider> getIn(final FrameworkSupportInModuleProvider provider) {
       List<FrameworkSupportInModuleProvider> dependencies = new ArrayList<>();
       String underlyingId = provider.getFrameworkType().getUnderlyingFrameworkTypeId();
       if (underlyingId != null) {

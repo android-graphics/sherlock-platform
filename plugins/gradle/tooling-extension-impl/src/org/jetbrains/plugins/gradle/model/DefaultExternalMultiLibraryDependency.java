@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model;
 
 import org.gradle.internal.impldep.com.google.common.base.Objects;
@@ -44,18 +44,21 @@ public final class DefaultExternalMultiLibraryDependency extends AbstractExterna
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<File> getFiles() {
+  public Collection<File> getFiles() {
     return files;
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<File> getSources() {
+  public Collection<File> getSources() {
     return sources;
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<File> getJavadoc() {
+  public Collection<File> getJavadoc() {
     return javadocs;
   }
 

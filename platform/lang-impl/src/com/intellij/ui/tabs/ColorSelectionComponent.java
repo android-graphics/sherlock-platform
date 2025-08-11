@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs;
 
 import com.intellij.ide.IdeBundle;
@@ -29,7 +29,7 @@ public final class ColorSelectionComponent extends JPanel {
   private final Map<String, ColorButton> myColorToButtonMap = new LinkedHashMap<>();
   private final ButtonGroup myButtonGroup = new ButtonGroup();
 
-  private static final String CUSTOM_COLOR_ID = "Custom";
+  private final static String CUSTOM_COLOR_ID = "Custom";
 
   public ColorSelectionComponent() {
     super(new GridLayout(1, 0, 5, 5));
@@ -64,7 +64,9 @@ public final class ColorSelectionComponent extends JPanel {
     button.repaint();
   }
 
-  public @Nullable @NonNls String getSelectedColorName() {
+  @Nullable
+  @NonNls
+  public String getSelectedColorName() {
     for (String name : myColorToButtonMap.keySet()) {
       ColorButton button = myColorToButtonMap.get(name);
       if (!button.isSelected()) continue;
@@ -121,8 +123,9 @@ public final class ColorSelectionComponent extends JPanel {
     @Override
     protected ButtonUI createUI() {
       return new ColorButtonUI() {
+        @Nullable
         @Override
-        protected @Nullable Color getUnfocusedBorderColor(@NotNull ColorButtonBase button) {
+        protected Color getUnfocusedBorderColor(@NotNull ColorButtonBase button) {
           if (StartupUiUtil.isUnderDarcula()) return JBColor.GRAY;
           return super.getUnfocusedBorderColor(button);
         }

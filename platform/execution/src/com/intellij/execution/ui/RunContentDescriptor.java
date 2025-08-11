@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.build.events.BuildEventsNls;
@@ -47,7 +47,8 @@ public class RunContentDescriptor implements Disposable {
   private String myContentToolWindowId;
   private final AnAction @NotNull [] myRestartActions;
 
-  private final @Nullable Runnable myActivationCallback;
+  @Nullable
+  private final Runnable myActivationCallback;
 
   public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
                               @Nullable ProcessHandler processHandler,
@@ -139,7 +140,8 @@ public class RunContentDescriptor implements Disposable {
    * </p>
    * @return the icon to show, or null if the executor icon should be used.
    */
-  public @Nullable Icon getIcon() {
+  @Nullable
+  public Icon getIcon() {
     return myIconView.getValue();
   }
 
@@ -157,7 +159,8 @@ public class RunContentDescriptor implements Disposable {
     myIconView.setValue(icon);
   }
 
-  public @Nullable ProcessHandler getProcessHandler() {
+  @Nullable
+  public ProcessHandler getProcessHandler() {
     return myProcessHandler;
   }
 
@@ -181,7 +184,8 @@ public class RunContentDescriptor implements Disposable {
    * </p>
    * @return the title to show, or null if the executor name should be used.
    */
-  public @BuildEventsNls.Title String getDisplayName() {
+  @BuildEventsNls.Title
+  public String getDisplayName() {
     return myDisplayNameView.getValue();
   }
 
@@ -203,7 +207,8 @@ public class RunContentDescriptor implements Disposable {
     return myHelpId;
   }
 
-  public @Nullable Content getAttachedContent() {
+  @Nullable
+  public Content getAttachedContent() {
     return myContent;
   }
 
@@ -214,7 +219,8 @@ public class RunContentDescriptor implements Disposable {
   /**
    * @return Tool window id where content should be shown. Null if content tool window is determined by executor.
    */
-  public @Nullable String getContentToolWindowId() {
+  @Nullable
+  public String getContentToolWindowId() {
     return myContentToolWindowId;
   }
 
@@ -281,7 +287,8 @@ public class RunContentDescriptor implements Disposable {
    * which only display a single piece of content.
    * @return the RunnerLayoutUi instance or null if this tab does not use RunnerLayoutUi for managing its contents.
    */
-  public @Nullable RunnerLayoutUi getRunnerLayoutUi() {
+  @Nullable
+  public RunnerLayoutUi getRunnerLayoutUi() {
     return myRunnerLayoutUi;
   }
 
@@ -303,7 +310,8 @@ public class RunContentDescriptor implements Disposable {
     return false;
   }
 
-  public @NotNull RunContentDescriptorReusePolicy getReusePolicy() {
+  @NotNull
+  public RunContentDescriptorReusePolicy getReusePolicy() {
     return myReusePolicy;
   }
 

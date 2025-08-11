@@ -14,7 +14,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,17 +23,16 @@ import javax.swing.event.HyperlinkEvent;
 /**
  * @author anna
  */
-@ApiStatus.Internal
 public abstract class AbstractUpdateDialog extends DialogWrapper {
-  protected final boolean myAddConfigureUpdatesLink;
+  protected final boolean myEnableLink;
 
-  protected AbstractUpdateDialog(boolean addConfigureUpdatesLink) {
-    this(null, addConfigureUpdatesLink);
+  protected AbstractUpdateDialog(boolean enableLink) {
+    this(null, enableLink);
   }
 
-  protected AbstractUpdateDialog(@Nullable Project project, boolean addConfigureUpdatesLink) {
+  protected AbstractUpdateDialog(@Nullable Project project, boolean enableLink) {
     super(project, true);
-    myAddConfigureUpdatesLink = addConfigureUpdatesLink;
+    myEnableLink = enableLink;
     setTitle(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
@@ -54,7 +52,7 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
   }
 
   protected void configureMessageArea(@NotNull JEditorPane area) {
-    String messageBody = myAddConfigureUpdatesLink ? IdeBundle.message("updates.configure.label") : "";
+    String messageBody = myEnableLink ? IdeBundle.message("updates.configure.label") : "";
     HtmlChunk.Element html = new HtmlBuilder()
       .append(HtmlChunk.head()
                 .addRaw(UIUtil.getCssFontDeclaration(StartupUiUtil.getLabelFont()))
@@ -68,7 +66,7 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     area.setCaretPosition(0);
     area.setEditable(false);
 
-    if (myAddConfigureUpdatesLink) {
+    if (myEnableLink) {
       area.addHyperlinkListener((e) -> {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           ShowSettingsUtil.getInstance().editConfigurable(area, new UpdateSettingsConfigurable(false));

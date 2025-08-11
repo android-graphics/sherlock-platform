@@ -66,8 +66,8 @@ class GradleDslPropertiesFileTest : GradleCodeInsightTestCase() {
 
   companion object {
 
-    private val PROPERTIES_FIXTURE = GradleTestFixtureBuilder.create("GradlePropertiesFileTest") { gradleVersion ->
-      withSettingsFile(gradleVersion) {
+    private val PROPERTIES_FIXTURE = GradleTestFixtureBuilder.create("GradlePropertiesFileTest") {
+      withSettingsFile {
         setProjectName("GradlePropertiesFileTest")
       }
       withBuildFile(content = "")

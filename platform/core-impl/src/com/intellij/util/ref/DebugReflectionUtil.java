@@ -247,17 +247,9 @@ public final class DebugReflectionUtil {
       BackLink<?> backLink = this;
       while (backLink != null) {
         backLink.print(result);
-        backLink = backLink.prev();
+        backLink = backLink.backLink;
       }
       return result.toString();
-    }
-
-    BackLink<?> prev() {
-      return backLink;
-    }
-
-    String getFieldName() {
-      return this.fieldName != null ? this.fieldName : field.getDeclaringClass().getName() + "." + field.getName();
     }
 
     void print(@NotNull StringBuilder result) {
@@ -278,8 +270,9 @@ public final class DebugReflectionUtil {
         valueStr = "(" + e.getMessage() + " while computing .toString())";
       }
 
-      result.append("via '").append(getFieldName()).append("'; Value: '").append(valueStr).append("' of ").append(value.getClass())
-        .append("\n");
+      Field field = this.field;
+      String fieldName = this.fieldName != null ? this.fieldName : field.getDeclaringClass().getName() + "." + field.getName();
+      result.append("via '").append(fieldName).append("'; Value: '").append(valueStr).append("' of ").append(value.getClass()).append("\n");
     }
   }
 }

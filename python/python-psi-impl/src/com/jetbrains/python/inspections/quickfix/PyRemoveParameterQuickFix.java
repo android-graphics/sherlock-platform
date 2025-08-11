@@ -37,7 +37,8 @@ import org.jetbrains.annotations.NotNull;
 public class PyRemoveParameterQuickFix implements LocalQuickFix {
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.remove.parameter");
   }
 

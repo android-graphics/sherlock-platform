@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
@@ -31,13 +31,13 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class ArrangementMatchingRulesControl extends JBTable {
-  protected final @NotNull IntObjectMap<ArrangementListRowDecorator> myComponents   = new IntObjectMap<>();
-  private final @NotNull IntList mySelectedRows = new IntArrayList();
+  @NotNull protected final IntObjectMap<ArrangementListRowDecorator> myComponents   = new IntObjectMap<>();
+  @NotNull private final IntList mySelectedRows = new IntArrayList();
 
-  private final @NotNull ArrangementMatchNodeComponentFactory myFactory;
-  private final @NotNull RepresentationCallback           myRepresentationCallback;
-  private final @NotNull MatchingRulesRendererBase        myRenderer;
-  protected @NotNull ArrangementMatchingRuleEditor        myEditor;
+  @NotNull private final ArrangementMatchNodeComponentFactory myFactory;
+  @NotNull protected ArrangementMatchingRuleEditor        myEditor;
+  @NotNull private final RepresentationCallback           myRepresentationCallback;
+  @NotNull private final MatchingRulesRendererBase        myRenderer;
 
   private ArrangementMatchingRulesValidator myValidator;
 
@@ -90,7 +90,8 @@ public class ArrangementMatchingRulesControl extends JBTable {
     return new MatchingRulesRendererBase();
   }
 
-  protected @NotNull ArrangementMatchingRulesValidator createValidator() {
+  @NotNull
+  protected ArrangementMatchingRulesValidator createValidator() {
     return new ArrangementMatchingRulesValidator(getModel());
   }
 
@@ -101,8 +102,9 @@ public class ArrangementMatchingRulesControl extends JBTable {
     return myValidator;
   }
 
+  @NotNull
   @Override
-  public @NotNull ArrangementMatchingRulesModel getModel() {
+  public ArrangementMatchingRulesModel getModel() {
     return (ArrangementMatchingRulesModel)super.getModel();
   }
 
@@ -392,7 +394,8 @@ public class ArrangementMatchingRulesControl extends JBTable {
   /**
    * @return    selected model rows sorted in descending order
    */
-  public @NotNull IntList getSelectedModelRows() {
+  @NotNull
+  public IntList getSelectedModelRows() {
     mySelectedRows.clear();
     int min = selectionModel.getMinSelectionIndex();
     if (min >= 0) {
@@ -423,7 +426,8 @@ public class ArrangementMatchingRulesControl extends JBTable {
     return myMinRowHeight;
   }
 
-  private @NotNull JComponent adjustHeight(@NotNull JComponent component, int row) {
+  @NotNull
+  private JComponent adjustHeight(@NotNull JComponent component, int row) {
     int height = component.getPreferredSize().height;
     if (height < myMinRowHeight) {
       height = myMinRowHeight;

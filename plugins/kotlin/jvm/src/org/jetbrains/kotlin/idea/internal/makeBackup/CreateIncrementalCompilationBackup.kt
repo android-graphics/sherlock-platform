@@ -35,7 +35,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.zip.ZipOutputStream
 
-private class CreateIncrementalCompilationBackup : AnAction(KotlinJvmBundle.message("create.backup.for.debugging.kotlin.incremental.compilation")) {
+class CreateIncrementalCompilationBackup : AnAction(KotlinJvmBundle.message("create.backup.for.debugging.kotlin.incremental.compilation")) {
     companion object {
         const val BACKUP_DIR_NAME = ".backup"
         const val PATCHES_TO_CREATE = 5
@@ -80,6 +80,7 @@ private class CreateIncrementalCompilationBackup : AnAction(KotlinJvmBundle.mess
                 gateway.createTransientRootEntry(),
                 project.baseDir!!.path,
                 project.locationHash,
+                null
             )
 
             var patchesCreated = 0

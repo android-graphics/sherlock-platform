@@ -4,9 +4,8 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
-import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
-@ApiStatus.Internal
 abstract class PersistentContentCustomLayoutOptions(private val content: Content,
                                                     private val selectedOptionKey: String) : CustomContentLayoutOptions {
 
@@ -73,7 +72,6 @@ abstract class PersistentContentCustomLayoutOptions(private val content: Content
   }
 }
 
-@ApiStatus.Internal
 abstract class PersistentContentCustomLayoutOption(private val options: PersistentContentCustomLayoutOptions) : CustomContentLayoutOption {
 
   override fun isEnabled(): Boolean = true

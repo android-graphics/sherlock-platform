@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -19,7 +20,6 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection;
 import org.jetbrains.annotations.NonNls;
@@ -59,7 +59,7 @@ public final class AssignFieldFromParameterAction extends PsiUpdateModCommandAct
         return null;
       }
       if (field.hasModifierProperty(PsiModifier.FINAL)) {
-        if (!JavaPsiConstructorUtil.getChainedConstructors(method).isEmpty()) return null;
+        if (!JavaHighlightUtil.getChainedConstructors(method).isEmpty()) return null;
         try {
           ControlFlow flow =
             ControlFlowFactory.getInstance(project).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());

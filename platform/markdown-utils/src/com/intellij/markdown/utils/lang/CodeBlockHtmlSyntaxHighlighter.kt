@@ -6,14 +6,12 @@ import com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter.Companion.colorHtm
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.util.text.StringUtil
 
 class CodeBlockHtmlSyntaxHighlighter(
-  private val project: Project?,
+  private val project: Project?
 ) : HtmlSyntaxHighlighter {
   override fun color(language: String?, rawContent: @NlsSafe String): HtmlChunk =
-    findRegisteredLanguage(language)?.let { colorHtmlChunk(project, it, rawContent) }
-    ?: HtmlChunk.raw(StringUtil.escapeXmlEntities(rawContent))
+    findRegisteredLanguage(language)?.let { colorHtmlChunk(project, it, rawContent) } ?: HtmlChunk.raw(rawContent)
 
   private fun findRegisteredLanguage(language: String?): Language? = Language.getRegisteredLanguages()
     .singleOrNull { registeredLanguage ->

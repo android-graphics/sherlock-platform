@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.changes
 
 import com.intellij.ide.projectView.ProjectView
@@ -12,8 +12,8 @@ import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.LocalChangeListsLoadedListener
 import com.intellij.packageDependencies.DependencyValidationManager
 
-internal class ChangeListScopeViewUpdater(private val project: Project) : ChangeListAdapter() {
-  internal class InitialRefresh(private val project: Project) : LocalChangeListsLoadedListener {
+class ChangeListScopeViewUpdater(private val project: Project) : ChangeListAdapter() {
+  class InitialRefresh(private val project: Project) : LocalChangeListsLoadedListener {
     override fun processLoadedLists(lists: MutableList<LocalChangeList>) {
       updateAvailableScopesList(project)
     }

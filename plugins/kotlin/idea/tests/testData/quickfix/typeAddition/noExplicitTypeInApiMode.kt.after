@@ -2,8 +2,6 @@
 // COMPILER_ARGUMENTS: -Xexplicit-api=strict
 // ERROR: Visibility must be specified in explicit API mode
 // ERROR: Visibility must be specified in explicit API mode
-// K2_AFTER_ERROR: Visibility must be specified in explicit API mode.
-// K2_AFTER_ERROR: Visibility must be specified in explicit API mode.
 package a
 
 interface A {
@@ -11,4 +9,4 @@ interface A {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SpecifyTypeExplicitlyFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils$SpecifyExplicitTypeQuickFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SpecifyExplicitTypeFixFactories$SpecifyExplicitTypeQuickFix

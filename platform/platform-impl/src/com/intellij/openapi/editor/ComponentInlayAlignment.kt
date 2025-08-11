@@ -23,11 +23,5 @@ enum class ComponentInlayAlignment {
   /**
    * Fit viewport X span, ensure inlay component shifted and resized to viewport, if viewport width less than minimum component width then component's minimum width used.
    */
-  FIT_VIEWPORT_X_SPAN,
-  /**
-   * Use component size and align inlay to the offset
-   * Please note that this is experimental and can be deleted in the future
-   */
-  @ApiStatus.Internal
-  INLINE_COMPONENT
+  FIT_VIEWPORT_X_SPAN
 }

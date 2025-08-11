@@ -1,7 +1,9 @@
 import abc
 
 
-class A1(metaclass=abc.ABCMeta):
+class A1(object):
+    __metaclass__ = abc.ABCMeta
+
     @abc.abstractmethod
     def m1(self):
         pass

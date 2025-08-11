@@ -13,9 +13,6 @@ public interface PsiMarkdownCodeBlock extends PsiElement {
   @NotNull
   String getCodeText();
 
-  /** @return The language for this code block. An inline code block has no language info */
+  /** @return The language for this code block */
   @Nullable Language getCodeLanguage();
-
-  /** @return Whether the code block is a single line block */
-  boolean isInline();
 }

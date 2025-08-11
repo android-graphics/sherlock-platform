@@ -9,14 +9,11 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
-@ApiStatus.Internal
 public class ProjectStartupConfigurationBase implements PersistentStateComponent<ProjectStartupConfigurationBase> {
   @SuppressWarnings("FieldMayBeFinal")
   @XCollection(propertyElementName = "configurations")
@@ -45,9 +42,10 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
     return myList;
   }
 
-  public void setList(final @NotNull @Unmodifiable List<? extends ConfigurationDescriptor> list) {
+  public void setList(final @NotNull List<? extends ConfigurationDescriptor> list) {
     myList.clear();
-    myList.addAll(ContainerUtil.sorted(list, new ConfigurationDescriptorComparator()));
+    list.sort(new ConfigurationDescriptorComparator());
+    myList.addAll(list);
   }
 
   public boolean isEmpty() {

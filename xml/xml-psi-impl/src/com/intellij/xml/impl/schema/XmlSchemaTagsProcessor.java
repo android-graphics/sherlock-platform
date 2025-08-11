@@ -34,7 +34,7 @@ public abstract class XmlSchemaTagsProcessor {
       processTag(tag, null);
     }
     finally {
-      PROCESSING_FLAG.remove();
+      PROCESSING_FLAG.set(null);
     }
   }
 

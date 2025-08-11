@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.CoverageSuitesBundle;
@@ -7,13 +7,11 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-@ApiStatus.Internal
-public final class CoverageViewTreeStructure extends AbstractTreeStructure {
+class CoverageViewTreeStructure extends AbstractTreeStructure {
   private final Project myProject;
   private final AtomicReference<Object> myRootNode = new AtomicReference<>(null);
   final CoverageSuitesBundle myData;
@@ -23,8 +21,9 @@ public final class CoverageViewTreeStructure extends AbstractTreeStructure {
     myData = bundle;
   }
 
+  @NotNull
   @Override
-  public @NotNull Object getRootElement() {
+  public Object getRootElement() {
     while (true) {
       Object root = myRootNode.get();
       if (root != null) return root;
@@ -38,7 +37,7 @@ public final class CoverageViewTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public Object @NotNull [] getChildElements(final @NotNull Object element) {
+  public Object @NotNull [] getChildElements(@NotNull final Object element) {
     if (element instanceof AbstractTreeNode<?> node) {
       return ArrayUtil.toObjectArray(node.getChildren());
     }
@@ -47,7 +46,7 @@ public final class CoverageViewTreeStructure extends AbstractTreeStructure {
 
 
   @Override
-  public Object getParentElement(final @NotNull Object element) {
+  public Object getParentElement(@NotNull final Object element) {
     if (element instanceof AbstractTreeNode<?> node) {
       return node.getParent();
     }
@@ -55,7 +54,8 @@ public final class CoverageViewTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public @NotNull NodeDescriptor<?> createDescriptor(final @NotNull Object element, final NodeDescriptor parentDescriptor) {
+  @NotNull
+  public NodeDescriptor createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor) {
     if (element instanceof AbstractTreeNode<?> node) {
       return node;
     }

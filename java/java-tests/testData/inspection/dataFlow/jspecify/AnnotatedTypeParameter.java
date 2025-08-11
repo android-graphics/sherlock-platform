@@ -16,8 +16,6 @@
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-// Covered by
-// conformance-tests/src/assertions/java/org/jspecify/conformance/tests/irrelevantannotations/nullmarked/AnnotatedTypeParameters.java
 @NullMarked
 class AnnotatedTypeParameter {
   // jspecify_unrecognized_location

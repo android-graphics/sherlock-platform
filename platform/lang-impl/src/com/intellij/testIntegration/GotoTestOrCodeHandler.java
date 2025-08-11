@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.testIntegration;
 
@@ -38,7 +38,8 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
   }
 
   @Override
-  protected @Nullable GotoData getSourceAndTargetElements(final Editor editor, final PsiFile file) {
+  @Nullable
+  protected GotoData getSourceAndTargetElements(final Editor editor, final PsiFile file) {
     PsiElement selectedElement = getSelectedElement(editor, file);
     PsiElement sourceElement = TestFinderHelper.findSourceElement(selectedElement);
     if (sourceElement == null) return null;
@@ -73,8 +74,9 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
         for (TestCreator creator : LanguageTestCreators.INSTANCE.allForLanguage(file.getLanguage())) {
           if (!creator.isAvailable(file.getProject(), editor, file)) continue;
           actions.add(new AdditionalAction() {
+            @NotNull
             @Override
-            public @NotNull String getText() {
+            public String getText() {
               String text = creator instanceof ItemPresentation ? ((ItemPresentation)creator).getPresentableText() : null;
               return ObjectUtils.notNull(text, LangBundle.message("action.create.new.test.text"));
             }
@@ -97,7 +99,8 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
     return new GotoData(sourceElement, PsiUtilCore.toPsiElementArray(candidates), actions);
   }
 
-  public static @NotNull PsiElement getSelectedElement(Editor editor, PsiFile file) {
+  @NotNull
+  public static PsiElement getSelectedElement(Editor editor, PsiFile file) {
     return PsiUtilCore.getElementAtOffset(file, editor.getCaretModel().getOffset());
   }
 
@@ -106,8 +109,9 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
     return false;
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getChooserTitle(@NotNull PsiElement sourceElement, String name, int length, boolean finished) {
+  protected String getChooserTitle(@NotNull PsiElement sourceElement, String name, int length, boolean finished) {
     String suffix = finished ? "" : " so far";
     if (TestFinderHelper.isTest(sourceElement)) {
       return CodeInsightBundle.message("goto.test.chooserTitle.subject", name, length, suffix);
@@ -117,8 +121,9 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
     }
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
+  protected String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
     if (TestFinderHelper.isTest(sourceElement)) {
       return CodeInsightBundle.message("goto.test.findUsages.subject.title", name);
     }
@@ -127,13 +132,15 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
     }
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getNotFoundMessage(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  protected String getNotFoundMessage(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return CodeInsightBundle.message("goto.test.notFound");
   }
 
+  @Nullable
   @Override
-  protected @Nullable String getAdText(PsiElement source, int length) {
+  protected String getAdText(PsiElement source, int length) {
     if (length > 0 && !TestFinderHelper.isTest(source)) {
       final Shortcut shortcut = KeymapUtil.getPrimaryShortcut(DefaultRunExecutor.getRunExecutorInstance().getContextActionId());
       if (shortcut != null) {

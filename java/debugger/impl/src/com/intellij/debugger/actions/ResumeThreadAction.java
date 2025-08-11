@@ -3,7 +3,6 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.SuspendManagerUtil;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
@@ -18,11 +17,9 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 public class ResumeThreadAction extends DebuggerAction {
   @Override
-  public void actionPerformed(final @NotNull AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     DebuggerTreeNodeImpl[] selectedNode = getSelectedNodes(e.getDataContext());
     final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
     final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
@@ -35,13 +32,12 @@ public class ResumeThreadAction extends DebuggerAction {
 
       if (threadDescriptor.isSuspended()) {
         final ThreadReferenceProxyImpl thread = threadDescriptor.getThreadReference();
-        DebuggerManagerThreadImpl debuggerManagerThread = debuggerContext.getManagerThread();
-        Objects.requireNonNull(debuggerManagerThread).schedule(new DebuggerCommandImpl() {
+        debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
           @Override
-          protected void action() {
+          protected void action() throws Exception {
             SuspendContextImpl suspendingContext = SuspendManagerUtil.getSuspendingContext(debugProcess.getSuspendManager(), thread);
             if (suspendingContext != null) {
-              debuggerManagerThread.invokeNow(debugProcess.createResumeThreadCommand(suspendingContext, thread));
+              debugProcess.createResumeThreadCommand(suspendingContext, thread).run();
             }
             ApplicationManager.getApplication().invokeLater(() -> debuggerTreeNode.calcValue());
           }

@@ -35,7 +35,8 @@ import org.jetbrains.annotations.Nullable;
 public class ControlFlowStatementWithoutBracesInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "control.flow.statement.without.braces.problem.descriptor", infos);
   }
@@ -56,13 +57,15 @@ public class ControlFlowStatementWithoutBracesInspection extends BaseInspection 
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return InspectionGadgetsBundle.message(
         "control.flow.statement.without.braces.message", myKeywordText);
     }
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "control.flow.statement.without.braces.add.quickfix");
     }
@@ -118,8 +121,9 @@ public class ControlFlowStatementWithoutBracesInspection extends BaseInspection 
       return body != null && !(body instanceof PsiBlockStatement);
     }
 
+    @Nullable
     @Override
-    protected @Nullable Pair<PsiElement, PsiElement> getOmittedBodyBounds(PsiStatement body) {
+    protected Pair<PsiElement, PsiElement> getOmittedBodyBounds(PsiStatement body) {
       if (body instanceof PsiLoopStatement || body instanceof PsiIfStatement) {
         final PsiElement lastChild = body.getLastChild();
         return Pair.create(PsiTreeUtil.skipWhitespacesAndCommentsBackward(body),

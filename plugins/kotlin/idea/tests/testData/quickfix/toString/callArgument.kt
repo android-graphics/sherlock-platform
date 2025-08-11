@@ -1,5 +1,4 @@
 // "Add 'toString()' call" "true"
-// PRIORITY: LOW
 
 fun foo() {
     bar(Any()<caret>)

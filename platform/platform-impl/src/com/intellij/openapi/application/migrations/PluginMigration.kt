@@ -6,13 +6,11 @@ import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PluginMigrationOptions
 import com.intellij.openapi.extensions.PluginId
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
 
-/**
- * Note that migrations are not taken into account for IDE updates through Toolbox
- */
-internal abstract class PluginMigration {
+@Internal
+abstract class PluginMigration {
   open fun migratePlugins(options: PluginMigrationOptions) {
     migratePlugins(PluginMigrationDescriptor(options))
   }
@@ -43,8 +41,7 @@ internal abstract class PluginMigration {
 
 internal const val MIGRATION_INSTALLED_PLUGINS_TXT = "migration_installed_plugins.txt"
 
-@ApiStatus.Internal
-fun getMigrationInstalledPluginIds(): Collection<PluginId> {
+internal fun getMigrationInstalledPluginIds(): Collection<PluginId> {
   val migratedPluginsPath = PathManager.getConfigDir().resolve(MIGRATION_INSTALLED_PLUGINS_TXT)
   if (Files.exists(migratedPluginsPath)) {
     val lines = Files.readAllLines(migratedPluginsPath)

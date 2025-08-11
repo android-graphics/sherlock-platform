@@ -37,7 +37,8 @@ public final class MyPsiUtil {
     private MyPsiUtil() {
     }
 
-    public static @Nullable XmlElement findContextNode(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+    @Nullable
+    public static XmlElement findContextNode(@NotNull PsiFile psiFile, @NotNull Editor editor) {
         PsiElement contextNode = psiFile.findElementAt(editor.getCaretModel().getOffset());
         while (contextNode != null && !isValidContextNode(contextNode)) {
             contextNode = contextNode.getParent();
@@ -51,7 +52,8 @@ public final class MyPsiUtil {
         return contextNode instanceof XmlTag || contextNode instanceof XmlDocument;
     }
 
-    public static @NotNull PsiElement getNameElement(@NotNull XmlTag tag) {
+    @NotNull
+    public static PsiElement getNameElement(@NotNull XmlTag tag) {
         final PsiElement element = findNameElement(tag);
         if (element != null) {
             return element;
@@ -60,7 +62,8 @@ public final class MyPsiUtil {
         return tag;
     }
 
-    public static @Nullable PsiElement findNameElement(@NotNull XmlTag tag) {
+    @Nullable
+    public static PsiElement findNameElement(@NotNull XmlTag tag) {
         PsiElement[] children = tag.getChildren();
         for (PsiElement child : children) {
             if (isNameElement(child)) {
@@ -129,7 +132,7 @@ public final class MyPsiUtil {
      */
     public static boolean isInDeclaredNamespace(XmlTag context, String nsUri, String nsPrefix) {
 
-        if (nsUri == null || nsUri.isEmpty() || nsPrefix != null && !nsPrefix.isEmpty()) {
+        if (nsUri == null || nsUri.length() == 0 || nsPrefix != null && nsPrefix.length() > 0) {
             return true;
         }
 

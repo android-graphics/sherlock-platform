@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
-import org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter.KotlinFirIntroduceLambdaParameterHandler
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter.KotlinFirIntroduceParameterHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractExtractionTest
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.IntroduceParameterDescriptor
@@ -22,20 +21,12 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 abstract class AbstractK2IntroduceParameterTest : AbstractExtractionTest() {
 
-    protected fun doIntroduceParameterTest(path: String) {
-        doIntroduceParameterTest(path, false)
-    }
-
-    protected fun doIntroduceFunctionalParameterTest(path: String) {
-        doIntroduceParameterTest(path, true)
-    }
-
     @OptIn(KaAllowAnalysisOnEdt::class)
-    protected fun doIntroduceParameterTest(unused: String, asLambda: Boolean) {
+    protected fun doIntroduceParameterTest(unused: String) {
         doTestIfNotDisabledByFileDirective { file ->
             val fileText = file.text
 
-            open class TestIntroduceParameterHelperImpl : KotlinIntroduceParameterHelper<KtNamedDeclaration> {
+            open class HelperImpl : KotlinIntroduceParameterHelper<KtNamedDeclaration> {
                 override fun configure(descriptor: IntroduceParameterDescriptor<KtNamedDeclaration>): IntroduceParameterDescriptor<KtNamedDeclaration> = with(descriptor) {
                     val singleReplace = InTextDirectivesUtils.isDirectiveDefined(fileText, "// SINGLE_REPLACE")
                     val withDefaultValue = InTextDirectivesUtils.getPrefixedBoolean(fileText, "// WITH_DEFAULT_VALUE:") ?: true
@@ -47,8 +38,7 @@ abstract class AbstractK2IntroduceParameterTest : AbstractExtractionTest() {
                 }
             }
 
-            val helper = TestIntroduceParameterHelperImpl()
-            val handler = if (asLambda) KotlinFirIntroduceLambdaParameterHandler(helper) else KotlinFirIntroduceParameterHandler(helper)
+            val handler = KotlinFirIntroduceParameterHandler(HelperImpl())
             with(handler) {
                 val target = (file as KtFile).findElementByCommentPrefix("// TARGET:") as? KtNamedDeclaration
                 if (target != null) {

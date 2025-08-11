@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Mikhail Golubev
  */
 public class PyFunctionTypeAnnotationFile extends PyFileImpl implements PyExpressionCodeFragment {
-  private final @Nullable PsiElement myContext;
+  @Nullable private final PsiElement myContext;
 
   public PyFunctionTypeAnnotationFile(FileViewProvider viewProvider) {
     super(viewProvider, PyFunctionTypeAnnotationDialect.INSTANCE);
@@ -47,8 +47,9 @@ public class PyFunctionTypeAnnotationFile extends PyFileImpl implements PyExpres
     myContext = context;
   }
 
+  @NotNull
   @Override
-  public @NotNull FileType getFileType() {
+  public FileType getFileType() {
     return PyFunctionTypeAnnotationFileType.INSTANCE;
   }
 
@@ -68,7 +69,8 @@ public class PyFunctionTypeAnnotationFile extends PyFileImpl implements PyExpres
     return myContext != null && myContext.isValid() ? myContext : super.getContext();
   }
 
-  public @Nullable PyFunctionTypeAnnotation getAnnotation() {
+  @Nullable
+  public PyFunctionTypeAnnotation getAnnotation() {
     return findChildByClass(PyFunctionTypeAnnotation.class);
   }
 }

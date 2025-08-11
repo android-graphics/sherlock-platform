@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.distribution
 
 import com.intellij.ide.macro.Macro
@@ -7,10 +7,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.util.NlsContexts
 
 interface FileChooserInfo {
-  @Deprecated("Amend `fileChooserDescriptor` with `FileChooserDescriptor#withTitle`", level = DeprecationLevel.ERROR)
-  val fileChooserTitle: @NlsContexts.DialogTitle String? get() = null
-  @Deprecated("Amend `fileChooserDescriptor` with `FileChooserDescriptor#withDescription`", level = DeprecationLevel.ERROR)
-  val fileChooserDescription: @NlsContexts.Label String? get() = null
+  val fileChooserTitle: @NlsContexts.DialogTitle String?
+  val fileChooserDescription: @NlsContexts.Label String?
   val fileChooserDescriptor: FileChooserDescriptor
   val fileChooserMacroFilter: ((Macro) -> Boolean)?
 

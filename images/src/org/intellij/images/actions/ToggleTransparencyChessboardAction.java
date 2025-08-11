@@ -18,22 +18,18 @@ package org.intellij.images.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.DumbAwareToggleAction;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import org.intellij.images.options.DefaultImageEditorSettings;
 import org.intellij.images.ui.ImageComponentDecorator;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Show/hide background action.
-
+ *
+ * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  * @see ImageComponentDecorator#setTransparencyChessboardVisible
  */
-final class ToggleTransparencyChessboardAction extends DumbAwareToggleAction {
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
-  }
-
+public final class ToggleTransparencyChessboardAction extends ToggleAction {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     ImageComponentDecorator decorator = e.getData(ImageComponentDecorator.DATA_KEY);
@@ -50,10 +46,15 @@ final class ToggleTransparencyChessboardAction extends DumbAwareToggleAction {
   }
 
   @Override
-  public void update(final @NotNull AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     ImageComponentDecorator decorator = e.getData(ImageComponentDecorator.DATA_KEY);
     e.getPresentation().setEnabled(decorator != null && decorator.isEnabledForActionPlace(e.getPlace()));
     e.getPresentation().setText(isSelected(e) ? IdeBundle.message("action.text.hide.chessboard") : IdeBundle.message("action.text.show.chessboard"));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
@@ -103,10 +104,10 @@ public class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
   public void testMapsInvalidation() {
     JavaAutoPopupTest.registerCompletionContributor(CacheVerifyingContributor.class, myFixture.getTestRootDisposable(), LoadingOrder.FIRST);
     myFixture.configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-    assertInstanceOf(myFixture.getFile().getVirtualFile().getFileSystem(),
-                     LocalFileSystem.class);// otherwise, the completion copy won't be preserved which is critical here
+    UsefulTestCase.assertInstanceOf(myFixture.getFile().getVirtualFile().getFileSystem(),
+                                    LocalFileSystem.class);// otherwise, the completion copy won't be preserved which is critical here
     myFixture.completeBasic();
-    assertOrderedEquals(myFixture.getLookupElementStrings(), "getAaa", "getBbb");
+    UsefulTestCase.assertOrderedEquals(myFixture.getLookupElementStrings(), "getAaa", "getBbb");
     myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getCaretModel().getOffset() + 2);
     assertNull(myFixture.completeBasic());
   }
@@ -162,21 +163,21 @@ public class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
     myFixture.completeBasic();
     LookupElementPresentation p = NormalCompletionTestCase.renderElement(myFixture.getLookup().getItems().get(0));
     assertEquals("SocketChannel", p.getItemText());
-    assertEquals(JBColor.foreground(), p.getItemTextForeground());
+    assertEquals(p.getItemTextForeground(), JBColor.foreground());
 
     p = NormalCompletionTestCase.renderElement(
       ContainerUtil.find(myFixture.getLookup().getItems(), item -> item.getLookupString().equals("AsynchronousServerSocketChannel")));
-    assertEquals(JBColor.RED, p.getItemTextForeground());
+    assertEquals(p.getItemTextForeground(), JBColor.RED);
 
     myFixture.type("\n.s");
     myFixture.completeBasic();
     p = NormalCompletionTestCase.renderElement(myFixture.getLookup().getItems().get(0));
     assertEquals("shutdownInput", p.getItemText());
-    assertEquals(JBColor.RED, p.getItemTextForeground());
+    assertEquals(p.getItemTextForeground(), JBColor.RED);
 
     p = NormalCompletionTestCase.renderElement(
       ContainerUtil.find(myFixture.getLookup().getItems(), item -> item.getLookupString().equals("isConnected")));
-    assertEquals(JBColor.foreground(), p.getItemTextForeground());
+    assertEquals(p.getItemTextForeground(), JBColor.foreground());
   }
 
   // TODO (IJPL-426): DUMB_RUNTIME_ONLY_INDEX means "entities available before the test has changed indexing mode"

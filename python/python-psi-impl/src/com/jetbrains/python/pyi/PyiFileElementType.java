@@ -24,8 +24,9 @@ public class PyiFileElementType extends PyFileElementType {
     super(language);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getExternalId() {
+  public String getExternalId() {
     return "PythonStub.FILE";
   }
 }

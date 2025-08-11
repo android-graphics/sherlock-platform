@@ -6,7 +6,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
-import org.jetbrains.annotations.ApiStatus
 import kotlin.math.roundToInt
 
 @Service(Service.Level.PROJECT)
@@ -65,7 +64,6 @@ internal class RunWidgetWidthHelper(private var project: Project) {
 
 }
 
-@ApiStatus.Internal
 interface UpdateWidth {
   fun updated()
 }

@@ -27,12 +27,14 @@ import org.jetbrains.annotations.NotNull;
 
 public final class SystemRunFinalizersOnExitInspection extends BaseInspection {
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "CallToSystemRunFinalizersOnExit";
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "system.run.finalizers.on.exit.problem.descriptor");
   }

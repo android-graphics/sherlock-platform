@@ -4,13 +4,13 @@ import unittest.suite
 from collections.abc import Callable, Sequence
 from re import Pattern
 from types import ModuleType
-from typing import Any, Final
-from typing_extensions import TypeAlias, deprecated
+from typing import Any
+from typing_extensions import TypeAlias
 
 _SortComparisonMethod: TypeAlias = Callable[[str, str], int]
 _SuiteClass: TypeAlias = Callable[[list[unittest.case.TestCase]], unittest.suite.TestSuite]
 
-VALID_MODULE_NAME: Final[Pattern[str]]
+VALID_MODULE_NAME: Pattern[str]
 
 class TestLoader:
     errors: list[type[BaseException]]
@@ -34,22 +34,18 @@ class TestLoader:
 
 defaultTestLoader: TestLoader
 
-if sys.version_info < (3, 13):
-    @deprecated("Deprecated in Python 3.11; removal scheduled for Python 3.13")
-    def getTestCaseNames(
-        testCaseClass: type[unittest.case.TestCase],
-        prefix: str,
-        sortUsing: _SortComparisonMethod = ...,
-        testNamePatterns: list[str] | None = None,
-    ) -> Sequence[str]: ...
-    @deprecated("Deprecated in Python 3.11; removal scheduled for Python 3.13")
-    def makeSuite(
-        testCaseClass: type[unittest.case.TestCase],
-        prefix: str = "test",
-        sortUsing: _SortComparisonMethod = ...,
-        suiteClass: _SuiteClass = ...,
-    ) -> unittest.suite.TestSuite: ...
-    @deprecated("Deprecated in Python 3.11; removal scheduled for Python 3.13")
-    def findTestCases(
-        module: ModuleType, prefix: str = "test", sortUsing: _SortComparisonMethod = ..., suiteClass: _SuiteClass = ...
-    ) -> unittest.suite.TestSuite: ...
+def getTestCaseNames(
+    testCaseClass: type[unittest.case.TestCase],
+    prefix: str,
+    sortUsing: _SortComparisonMethod = ...,
+    testNamePatterns: list[str] | None = None,
+) -> Sequence[str]: ...
+def makeSuite(
+    testCaseClass: type[unittest.case.TestCase],
+    prefix: str = "test",
+    sortUsing: _SortComparisonMethod = ...,
+    suiteClass: _SuiteClass = ...,
+) -> unittest.suite.TestSuite: ...
+def findTestCases(
+    module: ModuleType, prefix: str = "test", sortUsing: _SortComparisonMethod = ..., suiteClass: _SuiteClass = ...
+) -> unittest.suite.TestSuite: ...

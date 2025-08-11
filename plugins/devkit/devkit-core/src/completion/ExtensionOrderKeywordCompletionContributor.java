@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -49,7 +49,8 @@ final class ExtensionOrderKeywordCompletionContributor extends CompletionContrib
     });
   }
 
-  private static @NotNull PsiElementPattern.Capture<PsiElement> getCapture() {
+  @NotNull
+  private static PsiElementPattern.Capture<PsiElement> getCapture() {
     //TODO write a method for attribute value in XmlPatterns
     return psiElement().inside(
       XmlPatterns.xmlAttributeValue("order").inside(
@@ -66,7 +67,8 @@ final class ExtensionOrderKeywordCompletionContributor extends CompletionContrib
         })));
   }
 
-  private static @NotNull String getCompletionPrefix(@NotNull CompletionParameters parameters) {
+  @NotNull
+  private static String getCompletionPrefix(@NotNull CompletionParameters parameters) {
     XmlElement position = (XmlElement)parameters.getPosition();
     int startOffset = position.getTextOffset();
     int endOffset = parameters.getOffset();
@@ -74,7 +76,8 @@ final class ExtensionOrderKeywordCompletionContributor extends CompletionContrib
     return document.getText(new TextRange(startOffset, endOffset));
   }
 
-  private static @NotNull String getPrefixLastPart(@NotNull String prefix) {
+  @NotNull
+  private static String getPrefixLastPart(@NotNull String prefix) {
     String lastPart = StringUtil.substringAfterLast(prefix, String.valueOf(LoadingOrder.ORDER_RULE_SEPARATOR));
     if (lastPart == null) {
       lastPart = prefix;

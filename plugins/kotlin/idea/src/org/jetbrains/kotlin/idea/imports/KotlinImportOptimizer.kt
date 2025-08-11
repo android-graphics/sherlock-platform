@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiRecursiveVisitor
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
@@ -97,7 +96,7 @@ class KotlinImportOptimizer : ImportOptimizer {
 
     private data class OptimizeInformation(val add: Int, val remove: Int, val imports: List<ImportPath>)
 
-    private class CollectUsedDescriptorsVisitor(file: KtFile) : KtVisitorVoid(), PsiRecursiveVisitor {
+    private class CollectUsedDescriptorsVisitor(file: KtFile) : KtVisitorVoid() {
         private val currentPackageName = file.packageFqName
         private val aliases: Map<FqName, List<Name>> = if (file.hasImportAlias()) {
             file.importDirectives

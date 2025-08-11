@@ -8,12 +8,10 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferEditor
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferModelEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
 
-internal class TerminalCopyTextAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
+internal class TerminalCopyTextAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
     val selectedText = e.editor?.selectionModel?.selectedText ?: return
     CopyPasteManager.copyTextToClipboard(selectedText)
@@ -21,15 +19,9 @@ internal class TerminalCopyTextAction : DumbAwareAction(), ActionRemoteBehaviorS
 
   override fun update(e: AnActionEvent) {
     val editor = e.editor
-    val isVisible =
-      editor != null &&
-      (
-        editor.isPromptEditor || editor.isOutputEditor || editor.isAlternateBufferEditor || // gen1
-        editor.isOutputModelEditor || editor.isAlternateBufferModelEditor // gen2
-      )
-    val isEnabled = isVisible && editor.selectionModel.hasSelection()
-    e.presentation.isVisible = isVisible
-    e.presentation.isEnabled = isEnabled
+    e.presentation.isEnabledAndVisible = editor != null
+                                         && (editor.isPromptEditor || editor.isOutputEditor || editor.isAlternateBufferEditor)
+                                         && editor.selectionModel.hasSelection()
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

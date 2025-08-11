@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.psi.PsiElement;
@@ -15,8 +15,9 @@ public class ThrowingInstruction extends InstructionImpl {
   }
 
   @Override
-  public @NonNls String toString() {
-    final @NonNls StringBuilder builder = new StringBuilder();
+  @NonNls
+  public String toString() {
+    @NonNls final StringBuilder builder = new StringBuilder();
     builder.append(num());
     builder.append("(");
     for (Instruction successor : allSuccessors()) {

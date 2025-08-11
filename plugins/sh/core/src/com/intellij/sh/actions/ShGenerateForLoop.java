@@ -11,8 +11,9 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public class ShGenerateForLoop extends ShBaseGenerateAction {
+  @NotNull
   @Override
-  protected @NotNull CodeInsightActionHandler getHandler() {
+  protected CodeInsightActionHandler getHandler() {
     return this;
   }
 

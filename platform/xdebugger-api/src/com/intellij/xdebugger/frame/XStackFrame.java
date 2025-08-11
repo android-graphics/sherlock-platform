@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xdebugger.frame;
 
@@ -28,7 +28,8 @@ public abstract class XStackFrame extends XValueContainer {
    *
    * @return an object which will be used to determine if the stack frame changed after stepping
    */
-  public @Nullable Object getEqualityObject() {
+  @Nullable
+  public Object getEqualityObject() {
     return null;
   }
 
@@ -41,14 +42,16 @@ public abstract class XStackFrame extends XValueContainer {
    *   <li>watches
    * </ul>
    */
-  public @Nullable XDebuggerEvaluator getEvaluator() {
+  @Nullable
+  public XDebuggerEvaluator getEvaluator() {
     return null;
   }
 
   /**
    * @return the current executing point in the stack frame
    */
-  public @Nullable XSourcePosition getSourcePosition() {
+  @Nullable
+  public XSourcePosition getSourcePosition() {
     return null;
   }
 

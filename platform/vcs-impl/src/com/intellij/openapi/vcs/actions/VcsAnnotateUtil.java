@@ -5,9 +5,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -30,7 +28,7 @@ public final class VcsAnnotateUtil {
 
   public static @Nullable Editor getEditorFor(@NotNull VirtualFile file, @NotNull DataContext dataContext) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
-    if (editor != null && isEditorForFile(editor, file)) {
+    if (editor != null && file.equals(editor.getVirtualFile())) {
       return editor;
     }
 
@@ -43,12 +41,6 @@ public final class VcsAnnotateUtil {
       .filter(TextEditor.class)
       .map(it -> it.getEditor())
       .first();
-  }
-
-  public static boolean isEditorForFile(@NotNull Editor editor, @NotNull VirtualFile file) {
-    // Editor.getVirtualFile is not being set for many editors
-    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-    return editor.getDocument().equals(document);
   }
 
   public static @NotNull BackgroundableActionLock getBackgroundableLock(@NotNull Project project, @NotNull VirtualFile file) {

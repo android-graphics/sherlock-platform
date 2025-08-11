@@ -3,17 +3,18 @@ package com.jetbrains.python.sdk.poetry
 
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import org.jdom.Element
-import java.nio.file.Path
+
+/**
+ * Additional Poetry data associated with an SDK.
+ *
+ */
 
 /**
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
  */
 
 class PyPoetrySdkAdditionalData : PythonSdkAdditionalData {
-  constructor(associatedModulePath: Path?) : super(PyPoetrySdkFlavor) {
-    this.associatedModulePath = associatedModulePath?.toString()
-  }
-
+  constructor() : super(PyPoetrySdkFlavor)
   constructor(data: PythonSdkAdditionalData) : super(data)
 
   override fun save(element: Element) {
@@ -32,11 +33,18 @@ class PyPoetrySdkAdditionalData : PythonSdkAdditionalData {
     fun load(element: Element): PyPoetrySdkAdditionalData? =
       when {
         element.getAttributeValue(IS_POETRY) == "true" -> {
-          PyPoetrySdkAdditionalData(null).apply {
+          PyPoetrySdkAdditionalData().apply {
             load(element)
           }
         }
         else -> null
       }
+
+    /**
+     * Creates a new instance of data with copied fields.
+     */
+    @JvmStatic
+    fun copy(data: PythonSdkAdditionalData): PyPoetrySdkAdditionalData =
+      PyPoetrySdkAdditionalData(data)
   }
 }

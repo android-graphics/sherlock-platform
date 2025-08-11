@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.descriptors.impl;
 
 import com.intellij.openapi.project.Project;
@@ -21,13 +35,13 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 
 public final class ConfigFileImpl extends SimpleModificationTracker implements ConfigFile {
-  private @NotNull ConfigFileInfo myInfo;
+  @NotNull private ConfigFileInfo myInfo;
   private final VirtualFilePointer myFilePointer;
   private volatile Reference<PsiFile> myPsiFile;
   private final ConfigFileContainerImpl myContainer;
   private final Project myProject;
 
-  public ConfigFileImpl(final @NotNull ConfigFileContainerImpl container, final @NotNull ConfigFileInfo configuration) {
+  public ConfigFileImpl(@NotNull final ConfigFileContainerImpl container, @NotNull final ConfigFileInfo configuration) {
     myContainer = container;
     myInfo = configuration;
     final VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
@@ -52,17 +66,19 @@ public final class ConfigFileImpl extends SimpleModificationTracker implements C
     return myFilePointer.getUrl();
   }
 
-  public void setInfo(final @NotNull ConfigFileInfo info) {
+  public void setInfo(@NotNull final ConfigFileInfo info) {
     myInfo = info;
   }
 
   @Override
-  public @Nullable VirtualFile getVirtualFile() {
+  @Nullable
+  public VirtualFile getVirtualFile() {
     return myFilePointer.isValid() ? myFilePointer.getFile() : null;
   }
 
   @Override
-  public @Nullable PsiFile getPsiFile() {
+  @Nullable
+  public PsiFile getPsiFile() {
     PsiFile psiFile = com.intellij.reference.SoftReference.dereference(myPsiFile);
 
     if (psiFile != null && psiFile.isValid()) {
@@ -80,7 +96,8 @@ public final class ConfigFileImpl extends SimpleModificationTracker implements C
   }
 
   @Override
-  public @Nullable XmlFile getXmlFile() {
+  @Nullable
+  public XmlFile getXmlFile() {
     final PsiFile file = getPsiFile();
     return file instanceof XmlFile ? (XmlFile)file : null;
   }
@@ -90,7 +107,8 @@ public final class ConfigFileImpl extends SimpleModificationTracker implements C
   }
 
   @Override
-  public @NotNull ConfigFileInfo getInfo() {
+  @NotNull
+  public ConfigFileInfo getInfo() {
     return myInfo;
   }
 
@@ -109,7 +127,8 @@ public final class ConfigFileImpl extends SimpleModificationTracker implements C
 
 
   @Override
-  public @NotNull ConfigFileMetaData getMetaData() {
+  @NotNull
+  public ConfigFileMetaData getMetaData() {
     return myInfo.getMetaData();
   }
 }

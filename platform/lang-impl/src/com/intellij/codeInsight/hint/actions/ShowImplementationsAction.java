@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -14,8 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class ShowImplementationsAction extends ShowRelatedElementsActionBase {
-  public static final @NonNls String CODEASSISTS_QUICKDEFINITION_LOOKUP_FEATURE = "codeassists.quickdefinition.lookup";
-  public static final @NonNls String CODEASSISTS_QUICKDEFINITION_FEATURE = "codeassists.quickdefinition";
+  @NonNls public static final String CODEASSISTS_QUICKDEFINITION_LOOKUP_FEATURE = "codeassists.quickdefinition.lookup";
+  @NonNls public static final String CODEASSISTS_QUICKDEFINITION_FEATURE = "codeassists.quickdefinition";
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -23,12 +23,14 @@ public class ShowImplementationsAction extends ShowRelatedElementsActionBase {
   }
 
   @Override
-  protected @NotNull List<ImplementationViewSessionFactory> getSessionFactories() {
+  @NotNull
+  protected List<ImplementationViewSessionFactory> getSessionFactories() {
     return ImplementationViewSessionFactory.EP_NAME.getExtensionList();
   }
 
   @Override
-  protected @NotNull String getPopupTitle(@NotNull ImplementationViewSession session) {
+  @NotNull
+  protected String getPopupTitle(@NotNull ImplementationViewSession session) {
     return CodeInsightBundle.message("implementation.view.title", session.getText());
   }
 
@@ -45,7 +47,8 @@ public class ShowImplementationsAction extends ShowRelatedElementsActionBase {
   }
 
   @Override
-  protected @NotNull String getIndexNotReadyMessage() {
+  @NotNull
+  protected String getIndexNotReadyMessage() {
     return CodeInsightBundle.message("show.implementations.index.not.ready");
   }
 }

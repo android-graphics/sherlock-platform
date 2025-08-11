@@ -3,7 +3,7 @@ class Test {
                 return null;
         }
         public boolean test() {
-                return <error descr="Incompatible types. Found: 'java.lang.Object', required: 'boolean'">doStuff</error>();
+                <error descr="Incompatible types. Found: 'java.lang.Object', required: 'boolean'">return doStuff();</error>
         }
         
         public Boolean test1() {

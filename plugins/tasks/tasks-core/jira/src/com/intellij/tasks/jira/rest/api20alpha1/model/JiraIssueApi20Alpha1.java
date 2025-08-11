@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.rest.api20alpha1.model;
 
 import com.intellij.tasks.jira.rest.model.*;
@@ -17,68 +16,81 @@ public class JiraIssueApi20Alpha1 extends JiraIssue {
   private String key;
 
 
+  @NotNull
   @Override
-  public @NotNull String getKey() {
+  public String getKey() {
     return key;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getIssueUrl() {
+  public String getIssueUrl() {
     return self;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getSummary() {
+  public String getSummary() {
     return fields.summary.getValue();
   }
 
+  @Nullable
   @Override
-  public @Nullable String getDescription() {
+  public String getDescription() {
     return fields.description.getValue();
   }
 
+  @NotNull
   @Override
-  public @NotNull Date getCreated() {
+  public Date getCreated() {
     return fields.created.getValue();
   }
 
+  @NotNull
   @Override
-  public @NotNull Date getUpdated() {
+  public Date getUpdated() {
     return fields.updated.getValue();
   }
 
+  @Nullable
   @Override
-  public @Nullable Date getResolutionDate() {
+  public Date getResolutionDate() {
     return fields.resolutiondate.getValue();
   }
 
+  @Nullable
   @Override
-  public @Nullable Date getDueDate() {
+  public Date getDueDate() {
     return fields.duedate.getValue();
   }
 
+  @NotNull
   @Override
-  public @NotNull JiraIssueType getIssueType() {
+  public JiraIssueType getIssueType() {
     return fields.issuetype.getValue();
   }
 
+  @Nullable
   @Override
-  public @Nullable JiraUser getAssignee() {
+  public JiraUser getAssignee() {
     return fields.assignee.getValue();
   }
 
+  @Nullable
   @Override
-  public @Nullable JiraUser getReporter() {
+  public JiraUser getReporter() {
     return fields.reporter.getValue();
   }
 
+  @NotNull
   @Override
-  public @NotNull List<JiraComment> getComments() {
+  public List<JiraComment> getComments() {
     return fields.comment.getValue();
   }
 
+  @NotNull
   @Override
-  public @NotNull JiraStatus getStatus() {
+  public JiraStatus getStatus() {
     return fields.status.getValue();
   }
 

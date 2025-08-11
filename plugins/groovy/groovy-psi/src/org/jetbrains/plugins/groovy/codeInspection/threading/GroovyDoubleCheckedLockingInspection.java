@@ -45,7 +45,8 @@ public final class GroovyDoubleCheckedLockingInspection extends BaseInspection {
   public boolean ignoreOnVolatileVariables = false;
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return GroovyBundle.message("inspection.message.double.checked.locking");
   }
 
@@ -55,8 +56,9 @@ public final class GroovyDoubleCheckedLockingInspection extends BaseInspection {
       checkbox("ignoreOnVolatileVariables", GroovyBundle.message("checkbox.ignore.double.checked.locking.on.volatile.fields")));
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new DoubleCheckedLockingVisitor();
   }
 

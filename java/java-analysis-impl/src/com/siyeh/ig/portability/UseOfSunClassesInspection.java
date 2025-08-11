@@ -25,7 +25,8 @@ import org.jetbrains.annotations.NotNull;
 public final class UseOfSunClassesInspection extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "use.sun.classes.problem.descriptor");
   }
@@ -46,7 +47,7 @@ public final class UseOfSunClassesInspection extends BaseInspection {
       if (!(deepComponentType instanceof PsiClassType classType)) {
         return;
       }
-      final @NonNls String className = classType.getCanonicalText();
+      @NonNls final String className = classType.getCanonicalText();
       if (!className.startsWith("sun.")) {
         return;
       }
@@ -68,7 +69,7 @@ public final class UseOfSunClassesInspection extends BaseInspection {
       if (!(type instanceof PsiClassType classType)) {
         return;
       }
-      final @NonNls String className = classType.getCanonicalText();
+      @NonNls final String className = classType.getCanonicalText();
       if (!className.startsWith("sun.")) {
         return;
       }

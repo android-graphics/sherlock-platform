@@ -1,23 +1,20 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing.pyTestFixtures
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.module.Module
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.types.TypeEvalContext
-import org.jetbrains.annotations.ApiStatus
 
 internal fun getCustomFixtures(context: TypeEvalContext, forWhat: PyFunction) =
   PyTestFixtureExtension.EP_NAME.extensions.map { it.getCustomFixtures(context, forWhat) }.flatten()
 
-@ApiStatus.Internal
-internal fun PyFunction.isSubjectForFixture() =
+fun PyFunction.isSubjectForFixture() =
   PyTestFixtureExtension.EP_NAME.extensions.find { it.isSubjectForFixture(this) } != null
 
-@ApiStatus.Internal
-internal fun PyFunction.isCustomFixture() =
+fun PyFunction.isCustomFixture() =
   PyTestFixtureExtension.EP_NAME.extensions.find { it.isCustomFixture(this) } != null
 
-@ApiStatus.Internal
 interface PyTestFixtureExtension {
   companion object {
     val EP_NAME = ExtensionPointName.create<PyTestFixtureExtension>("Pythonid.pyTestFixtureExtension")

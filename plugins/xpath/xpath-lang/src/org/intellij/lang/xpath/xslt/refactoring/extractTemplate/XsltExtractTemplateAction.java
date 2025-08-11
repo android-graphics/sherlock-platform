@@ -162,7 +162,7 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
                     final XsltVariable variable = XsltElementFactory.getInstance().wrapElement(tag, XsltVariable.class);
                     final LocalSearchScope searchScope = new LocalSearchScope(parentScope);
                     final Query<PsiReference> query = ReferencesSearch.search(variable, searchScope);
-                    for (PsiReference reference : query.asIterable()) {
+                    for (PsiReference reference : query) {
                         final XmlElement context = PsiTreeUtil.getContextOfType(reference.getElement(), XmlElement.class, true);
                         if (context == null || context.getTextRange().getStartOffset() > endOffset) {
                             return false;
@@ -252,7 +252,8 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
     }
 
     @Override
-    public @Nullable String getErrorMessage(Editor editor, PsiFile file, XmlAttribute context) {
+    @Nullable
+    public String getErrorMessage(Editor editor, PsiFile file, XmlAttribute context) {
         if (!editor.getSelectionModel().hasSelection()) {
             return XPathBundle.message("notification.content.please.select.code.that.should.be.extracted");
         }

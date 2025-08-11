@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight.unwrap;
 
@@ -71,7 +71,8 @@ public class KotlinUnwrappers {
         }
 
         @Override
-        protected @Nullable KtExpression getExpressionToUnwrap(@NotNull KtElement target) {
+        @Nullable
+        protected KtExpression getExpressionToUnwrap(@NotNull KtElement target) {
             return target instanceof KtLoopExpression ? ((KtLoopExpression) target).getBody() : null;
         }
     }
@@ -82,7 +83,8 @@ public class KotlinUnwrappers {
         }
 
         @Override
-        protected @Nullable KtExpression getExpressionToUnwrap(@NotNull KtElement target) {
+        @Nullable
+        protected KtExpression getExpressionToUnwrap(@NotNull KtElement target) {
             return target instanceof KtTryExpression ? ((KtTryExpression) target).getTryBlock() : null;
         }
     }
@@ -92,8 +94,9 @@ public class KotlinUnwrappers {
             super(key);
         }
 
+        @NotNull
         @Override
-        protected @NotNull KtElement getEnclosingElement(@NotNull KtElement element) {
+        protected KtElement getEnclosingElement(@NotNull KtElement element) {
             return (KtElement)element.getParent();
         }
 
@@ -124,8 +127,9 @@ public class KotlinUnwrappers {
             return super.isApplicableTo(e) && getEnclosingElement((KtElement)e).getParent() instanceof KtBlockExpression;
         }
 
+        @NotNull
         @Override
-        protected @NotNull KtElement getEnclosingElement(@NotNull KtElement element) {
+        protected KtElement getEnclosingElement(@NotNull KtElement element) {
             return (KtElement)element.getParent();
         }
 

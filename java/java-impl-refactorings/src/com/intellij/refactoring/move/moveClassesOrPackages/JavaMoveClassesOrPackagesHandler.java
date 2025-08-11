@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.CommonBundle;
@@ -50,7 +50,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     return element instanceof PsiDirectory && JavaDirectoryService.getInstance().getPackageInSources((PsiDirectory)element) != null;
   }
 
-  public static boolean isReferenceInAnonymousClass(final @Nullable PsiReference reference) {
+  public static boolean isReferenceInAnonymousClass(@Nullable final PsiReference reference) {
     if (reference instanceof PsiJavaCodeReferenceElement &&
        ((PsiJavaCodeReferenceElement)reference).getParent() instanceof PsiAnonymousClass) {
       return true;
@@ -67,8 +67,9 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     return targetContainer == null || super.canMove(elements, targetContainer, reference);
   }
 
+  @Nullable
   @Override
-  public @Nullable String getActionName(PsiElement @NotNull [] elements) {
+  public String getActionName(PsiElement @NotNull [] elements) {
     int classCount = 0, directoryCount = 0;
     for (PsiElement element : elements) {
       if (element instanceof PsiClass) classCount++;
@@ -154,11 +155,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     if (targetContainer instanceof PsiDirectory) {
       if (CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(adjustedElements), true)) {
         if (!packageHasMultipleDirectoriesInModule(project, (PsiDirectory)targetContainer)) {
-          var dialogue = createMoveClassesOrPackagesToNewDirectoryDialog((PsiDirectory)targetContainer, adjustedElements, callback);
-          if (Boolean.getBoolean("ide.performance.skip.refactoring.dialogs"))
-            dialogue.performOKAction();
-          else
-            dialogue.show();
+          createMoveClassesOrPackagesToNewDirectoryDialog((PsiDirectory)targetContainer, adjustedElements, callback).show();
           return;
         }
       }
@@ -173,9 +170,10 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     MoveClassesOrPackagesImpl.doMove(project, adjustedElements, initialTargetElement, moveCallback);
   }
 
-  protected @NotNull DialogWrapper createMoveClassesOrPackagesToNewDirectoryDialog(final @NotNull PsiDirectory directory,
-                                                                                   PsiElement[] elementsToMove,
-                                                                                   final MoveCallback moveCallback) {
+  @NotNull
+  protected DialogWrapper createMoveClassesOrPackagesToNewDirectoryDialog(@NotNull final PsiDirectory directory,
+                                                                       PsiElement[] elementsToMove,
+                                                                       final MoveCallback moveCallback) {
     return new MoveClassesOrPackagesToNewDirectoryDialog(directory, elementsToMove, moveCallback);
   }
 
@@ -217,8 +215,8 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
         new MoveClassesOrPackagesToNewDirectoryDialog(directories[0], directories, false, callback) {
           @Override
           protected BaseRefactoringProcessor createRefactoringProcessor(Project project,
-                                                                        final @NotNull PsiDirectory targetDirectory,
-                                                                        @NotNull PsiPackage aPackage,
+                                                                        final PsiDirectory targetDirectory,
+                                                                        PsiPackage aPackage,
                                                                         boolean searchInComments,
                                                                         boolean searchForTextOccurences) {
             final MoveDestination destination = createDestination(aPackage, targetDirectory);
@@ -233,8 +231,9 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
               return null;
             }
             return new MoveDirectoryWithClassesProcessor(project, directories, null, searchInComments, searchForTextOccurences, true, callback) {
+              @NotNull
               @Override
-              public @NotNull TargetDirectoryWrapper getTargetDirectory(PsiDirectory dir) {
+              public TargetDirectoryWrapper getTargetDirectory(PsiDirectory dir) {
                 final PsiDirectory targetDirectory = destination.getTargetDirectory(dir);
                 return new TargetDirectoryWrapper(targetDirectory);
               }

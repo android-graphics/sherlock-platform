@@ -36,8 +36,9 @@ import java.util.stream.Collectors;
 
 public final class PyArgumentListInspection extends PyInspection {
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -48,8 +49,9 @@ public final class PyArgumentListInspection extends PyInspection {
       super(holder, context);
     }
 
+    @NotNull
     @Override
-    protected @NotNull ProblemsHolder getHolder() {
+    protected ProblemsHolder getHolder() {
       //noinspection ConstantConditions, see Visitor#Visitor(ProblemsHolder, LocalInspectionToolSession)
       return super.getHolder();
     }
@@ -120,20 +122,8 @@ public final class PyArgumentListInspection extends PyInspection {
       }
     }
 
-    if (!mappings.isEmpty()) {
-      boolean specificMismatchKindReported = false;
-      if (ContainerUtil.all(mappings, mapping -> !mapping.getUnmappedArguments().isEmpty())) {
-        highlightUnexpectedArguments(node, holder, mappings, context);
-        specificMismatchKindReported = true;
-      }
-      if (ContainerUtil.all(mappings, mapping -> !mapping.getUnmappedParameters().isEmpty())) {
-        highlightUnfilledParameters(node, holder, mappings, context);
-        specificMismatchKindReported = true;
-      }
-      if (!specificMismatchKindReported && ContainerUtil.all(mappings, mapping -> !mapping.isComplete())) {
-        highlightIncorrectArguments(node, holder, mappings, context);
-      }
-    }
+    highlightUnexpectedArguments(node, holder, mappings, context);
+    highlightUnfilledParameters(node, holder, mappings, context);
     highlightStarArgumentTypeMismatch(node, holder, context);
   }
 
@@ -234,6 +224,8 @@ public final class PyArgumentListInspection extends PyInspection {
                                                    @NotNull ProblemsHolder holder,
                                                    @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
                                                    @NotNull TypeEvalContext context) {
+    if (mappings.isEmpty() || mappings.stream().anyMatch(mapping -> mapping.getUnmappedArguments().isEmpty())) return;
+
     if (mappings.size() == 1) {
       // if there is only one mapping, we could suggest quick fixes
       final Set<String> duplicateKeywords = getDuplicateKeywordArguments(node);
@@ -278,6 +270,8 @@ public final class PyArgumentListInspection extends PyInspection {
                                                   @NotNull ProblemsHolder holder,
                                                   @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
                                                   @NotNull TypeEvalContext context) {
+    if (mappings.isEmpty() || mappings.stream().anyMatch(mapping -> mapping.getUnmappedParameters().isEmpty())) return;
+
     Optional
       .ofNullable(node.getNode())
       .map(astNode -> astNode.findChildByType(PyTokenTypes.RPAR))
@@ -302,20 +296,12 @@ public final class PyArgumentListInspection extends PyInspection {
       );
   }
 
-  private static void highlightIncorrectArguments(@NotNull PyArgumentList node,
-                                                  @NotNull ProblemsHolder holder,
-                                                  @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
-                                                  @NotNull TypeEvalContext context) {
-    holder.registerProblem(
-      node,
-      addPossibleCalleesRepresentation(PyPsiBundle.message("INSP.incorrect.arguments"), mappings, context, holder.isOnTheFly())
-    );
-  }
-
-  private static @NlsSafe @NotNull String addPossibleCalleesRepresentation(@NotNull @InspectionMessage String prefix,
-                                                                           @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
-                                                                           @NotNull TypeEvalContext context,
-                                                                           boolean isOnTheFly) {
+  @NlsSafe
+  @NotNull
+  private static String addPossibleCalleesRepresentation(@NotNull @InspectionMessage String prefix,
+                                                         @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
+                                                         @NotNull TypeEvalContext context,
+                                                         boolean isOnTheFly) {
     final @NlsSafe String separator = isOnTheFly ? "<br>" : " ";
     final @NlsSafe String possibleCalleesRepresentation = calculatePossibleCalleesRepresentation(mappings, context, isOnTheFly);
 
@@ -334,9 +320,10 @@ public final class PyArgumentListInspection extends PyInspection {
   }
 
 
-  private static @NotNull @NlsSafe String calculatePossibleCalleesRepresentation(@NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
-                                                                                 @NotNull TypeEvalContext context,
-                                                                                 boolean isOnTheFly) {
+  @NotNull
+  private static @NlsSafe String calculatePossibleCalleesRepresentation(@NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
+                                                                        @NotNull TypeEvalContext context,
+                                                                        boolean isOnTheFly) {
     return StreamEx
       .of(mappings)
       .map(PyCallExpression.PyArgumentsMapping::getCallableType)
@@ -346,8 +333,9 @@ public final class PyArgumentListInspection extends PyInspection {
       .collect(Collectors.joining(isOnTheFly ? "<br>" : " "));
   }
 
-  private static @Nullable @NlsSafe String calculatePossibleCalleeRepresentation(@NotNull PyCallableType callableType,
-                                                                                 @NotNull TypeEvalContext context) {
+  @Nullable
+  private static @NlsSafe String calculatePossibleCalleeRepresentation(@NotNull PyCallableType callableType,
+                                                                       @NotNull TypeEvalContext context) {
     final String name = callableType.getCallable() != null ? callableType.getCallable().getName() : "";
     final List<PyCallableParameter> callableParameters = callableType.getParameters(context);
     if (callableParameters == null) return null;

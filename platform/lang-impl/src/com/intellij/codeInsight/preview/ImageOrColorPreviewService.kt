@@ -3,7 +3,6 @@ package com.intellij.codeInsight.preview
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
@@ -160,9 +159,7 @@ internal class ImageOrColorPreviewService(
       val elements = readAction { getPsiElementsAt(editor, offset) }
       if (elements == myElements.get()) return
       withContext(Dispatchers.EDT) {
-        writeIntentReadAction {
-          showElements(elements)
-        }
+        showElements(elements)
       }
     }
 
@@ -204,9 +201,7 @@ internal class ImageOrColorPreviewService(
       }
       myElements.set(null)
       withContext(Dispatchers.EDT) {
-        writeIntentReadAction {
-          hideElements(elements)
-        }
+        hideElements(elements)
       }
     }
 

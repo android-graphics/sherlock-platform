@@ -1,4 +1,4 @@
-// "Create missing branch 'INACTIVE'" "true"
+// "Create missing switch branch 'INACTIVE'" "true"
 package com.siyeh.ipp.enumswitch;
 
 class BeforeDefault {

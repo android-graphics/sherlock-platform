@@ -27,7 +27,8 @@ public interface PyAstStatementPart extends PyAstStatementListContainer {
   PyAstStatementPart[] EMPTY_ARRAY = new PyAstStatementPart[0];
 
   @Override
-  default @NotNull PyAstStatementList getStatementList() {
+  @NotNull
+  default PyAstStatementList getStatementList() {
     return childToPsiNotNull(PyElementTypes.STATEMENT_LIST);
   }
 }

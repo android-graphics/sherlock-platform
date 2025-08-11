@@ -39,8 +39,8 @@ public final class PluginBuildConfiguration implements PersistentStateComponent<
   private final ConfigFileContainer myPluginXmlContainer;
   private VirtualFilePointer myManifestFilePointer;
   private boolean myUseUserManifest = false;
-  private static final @NonNls String META_INF = "META-INF";
-  private static final @NonNls String PLUGIN_XML = "plugin.xml";
+  @NonNls private static final String META_INF = "META-INF";
+  @NonNls private static final String PLUGIN_XML = "plugin.xml";
 
   private State state = new State();
 
@@ -50,7 +50,8 @@ public final class PluginBuildConfiguration implements PersistentStateComponent<
     Disposer.register(module, myPluginXmlContainer);
   }
 
-  public static @Nullable PluginBuildConfiguration getInstance(@NotNull Module module) {
+  @Nullable
+  public static PluginBuildConfiguration getInstance(@NotNull Module module) {
     return ModuleType.is(module, PluginModuleType.getInstance()) ? module.getService(PluginBuildConfiguration.class) : null;
   }
 
@@ -82,8 +83,9 @@ public final class PluginBuildConfiguration implements PersistentStateComponent<
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable State getState() {
+  public State getState() {
     state.url = getPluginXmlUrl();
     state.manifest = myManifestFilePointer == null ? null : myManifestFilePointer.getUrl();
     return state;
@@ -100,7 +102,8 @@ public final class PluginBuildConfiguration implements PersistentStateComponent<
     }
   }
 
-  public @Nullable ConfigFile getPluginXML() {
+  @Nullable
+  public ConfigFile getPluginXML() {
     return myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
   }
 
@@ -121,11 +124,13 @@ public final class PluginBuildConfiguration implements PersistentStateComponent<
                                                false);
   }
 
-  public @Nullable ConfigFile getPluginXmlConfigFile() {
+  @Nullable
+  public ConfigFile getPluginXmlConfigFile() {
     return myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
   }
 
-  private @Nullable String getPluginXmlUrl() {
+  @Nullable
+  private String getPluginXmlUrl() {
     ConfigFile configFile = getPluginXmlConfigFile();
     return configFile != null ? configFile.getUrl() : null;
   }
@@ -134,7 +139,8 @@ public final class PluginBuildConfiguration implements PersistentStateComponent<
     return new File(myModule.getModuleFilePath()).getParent() + File.separator + META_INF + File.separator + PLUGIN_XML;
   }
 
-  public @NotNull @NlsSafe String getPluginXmlPath() {
+  @NotNull
+  public @NlsSafe String getPluginXmlPath() {
     String url = getPluginXmlUrl();
     if (url == null) {
       return getDefaultLocation();
@@ -164,11 +170,13 @@ public final class PluginBuildConfiguration implements PersistentStateComponent<
     }
   }
 
-  public @Nullable @NlsSafe String getManifestPath() {
+  @Nullable
+  public @NlsSafe String getManifestPath() {
     return myManifestFilePointer != null ? FileUtil.toSystemDependentName(myManifestFilePointer.getPresentableUrl()) : null;
   }
 
-  public @Nullable VirtualFile getManifest(){
+  @Nullable
+  public VirtualFile getManifest(){
     return myManifestFilePointer != null ? myManifestFilePointer.getFile() : null;
   }
 

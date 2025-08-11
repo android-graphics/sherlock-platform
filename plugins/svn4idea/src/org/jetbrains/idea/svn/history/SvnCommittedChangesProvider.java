@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.history;
 
@@ -50,15 +50,15 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnCommittedChangesProvider implements CachingCommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> {
 
-  private static final Logger LOG = Logger.getInstance(SvnCommittedChangesProvider.class);
+  private final static Logger LOG = Logger.getInstance(SvnCommittedChangesProvider.class);
 
-  private final @NotNull SvnVcs myVcs;
-  private final @NotNull MessageBusConnection myConnection;
+  @NotNull private final SvnVcs myVcs;
+  @NotNull private final MessageBusConnection myConnection;
   private MergeInfoUpdatesListener myMergeInfoUpdatesListener;
-  private final @NotNull SvnCommittedListsZipper myZipper;
+  @NotNull private final SvnCommittedListsZipper myZipper;
 
-  public static final int VERSION_WITH_COPY_PATHS_ADDED = 2;
-  public static final int VERSION_WITH_REPLACED_PATHS = 3;
+  public final static int VERSION_WITH_COPY_PATHS_ADDED = 2;
+  public final static int VERSION_WITH_REPLACED_PATHS = 3;
 
   public SvnCommittedChangesProvider(@NotNull SvnVcs vcs) {
     myVcs = vcs;
@@ -74,19 +74,22 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @Override
-  public @NotNull ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
+  @NotNull
+  public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
     return new SvnVersionFilterComponent(showDateFilter);
   }
 
   @Override
-  public @Nullable RepositoryLocation getLocationFor(@NotNull FilePath root) {
+  @Nullable
+  public RepositoryLocation getLocationFor(@NotNull FilePath root) {
     Info info = myVcs.getInfo(root.getIOFile());
 
     return info != null && info.getUrl() != null ? new SvnRepositoryLocation(info.getUrl(), info.getRepositoryRootUrl(), root) : null;
   }
 
   @Override
-  public @NotNull VcsCommittedListsZipper getZipper() {
+  @NotNull
+  public VcsCommittedListsZipper getZipper() {
     return myZipper;
   }
 
@@ -115,9 +118,10 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @Override
-  public @NotNull List<SvnChangeList> getCommittedChanges(@NotNull ChangeBrowserSettings settings,
-                                                          @NotNull RepositoryLocation location,
-                                                          int maxCount) throws VcsException {
+  @NotNull
+  public List<SvnChangeList> getCommittedChanges(@NotNull ChangeBrowserSettings settings,
+                                                 @NotNull RepositoryLocation location,
+                                                 int maxCount) throws VcsException {
     SvnRepositoryLocation svnLocation = (SvnRepositoryLocation)location;
     List<SvnChangeList> result = new ArrayList<>();
     Url repositoryRoot = getRepositoryRoot(svnLocation);
@@ -146,7 +150,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     builder.finish();
   }
 
-  private @NotNull Url getRepositoryRoot(@NotNull SvnRepositoryLocation svnLocation) throws VcsException {
+  @NotNull
+  private Url getRepositoryRoot(@NotNull SvnRepositoryLocation svnLocation) throws VcsException {
     // TODO: Additionally SvnRepositoryLocation could possibly be refactored to always contain FilePath (or similar local item)
     // TODO: So here we could get repository url without performing remote svn command
 
@@ -178,15 +183,18 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
              createLogHandler(resultConsumer, filterOutByDate, author));
   }
 
-  private static @NotNull Revision createBeforeRevision(@NotNull ChangeBrowserSettings settings) {
+  @NotNull
+  private static Revision createBeforeRevision(@NotNull ChangeBrowserSettings settings) {
     return createRevision(settings.getDateBeforeFilter(), settings.getChangeBeforeFilter(), Revision.HEAD);
   }
 
-  private static @NotNull Revision createAfterRevision(@NotNull ChangeBrowserSettings settings) {
+  @NotNull
+  private static Revision createAfterRevision(@NotNull ChangeBrowserSettings settings) {
     return createRevision(settings.getDateAfterFilter(), settings.getChangeAfterFilter(), Revision.of(1));
   }
 
-  private static @NotNull Revision createRevision(@Nullable Date date, @Nullable Long change, @NotNull Revision defaultValue) {
+  @NotNull
+  private static Revision createRevision(@Nullable Date date, @Nullable Long change, @NotNull Revision defaultValue) {
     Revision result;
 
     if (date != null) {
@@ -202,9 +210,10 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return result;
   }
 
-  private @NotNull LogEntryConsumer createLogHandler(@NotNull ThrowableConsumer<LogEntry, SvnBindException> resultConsumer,
-                                                     boolean filterOutByDate,
-                                                     @Nullable String author) {
+  @NotNull
+  private LogEntryConsumer createLogHandler(@NotNull ThrowableConsumer<LogEntry, SvnBindException> resultConsumer,
+                                            boolean filterOutByDate,
+                                            @Nullable String author) {
     return logEntry -> {
       if (myVcs.getProject().isDisposed()) throw new ProcessCanceledException();
 
@@ -237,7 +246,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @Override
-  public @NotNull VcsCommittedViewAuxiliary createActions(@NotNull DecoratorManager manager, @Nullable RepositoryLocation location) {
+  @NotNull
+  public VcsCommittedViewAuxiliary createActions(@NotNull DecoratorManager manager, @Nullable RepositoryLocation location) {
     RootsAndBranches rootsAndBranches = new RootsAndBranches(myVcs, manager, location);
     refreshMergeInfo(rootsAndBranches);
 
@@ -261,13 +271,15 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return 0;
   }
 
+  @Nullable
   @Override
-  public @Nullable Pair<SvnChangeList, FilePath> getOneList(@NotNull VirtualFile file, @NotNull VcsRevisionNumber number) throws VcsException {
+  public Pair<SvnChangeList, FilePath> getOneList(@NotNull VirtualFile file, @NotNull VcsRevisionNumber number) throws VcsException {
     return new SingleCommittedListProvider(myVcs, file, number).run();
   }
 
+  @NotNull
   @Override
-  public @NotNull RepositoryLocation getForNonLocal(@NotNull VirtualFile file) {
+  public RepositoryLocation getForNonLocal(@NotNull VirtualFile file) {
     return new SvnRepositoryLocation(FileUtil.toSystemIndependentName(file.getPresentableUrl()));
   }
 
@@ -282,14 +294,16 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @Override
-  public @NotNull SvnChangeList readChangeList(@NotNull RepositoryLocation location, @NotNull DataInput stream) throws IOException {
+  @NotNull
+  public SvnChangeList readChangeList(@NotNull RepositoryLocation location, @NotNull DataInput stream) throws IOException {
     int version = getFormatVersion();
     return new SvnChangeList(myVcs, (SvnRepositoryLocation)location, stream, VERSION_WITH_COPY_PATHS_ADDED <= version,
                              VERSION_WITH_REPLACED_PATHS <= version);
   }
 
   @Override
-  public @Nullable Collection<FilePath> getIncomingFiles(@NotNull RepositoryLocation location) throws VcsException {
+  @Nullable
+  public Collection<FilePath> getIncomingFiles(@NotNull RepositoryLocation location) throws VcsException {
     FilePath root = null;
 
     if (Registry.is("svn.use.incoming.optimization")) {
@@ -303,7 +317,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return root != null ? getIncomingFiles(root) : null;
   }
 
-  private @NotNull Collection<FilePath> getIncomingFiles(@NotNull FilePath root) throws SvnBindException {
+  @NotNull
+  private Collection<FilePath> getIncomingFiles(@NotNull FilePath root) throws SvnBindException {
     // TODO: "svn diff -r BASE:HEAD --xml --summarize" command is also suitable here and outputs only necessary changed files,
     // TODO: while "svn status -u" also outputs other files which could be not modified on server. But for svn 1.7 "--xml --summarize"
     // TODO: could only be used with url targets - so we could not use "svn diff" here now for all cases (we could not use url with

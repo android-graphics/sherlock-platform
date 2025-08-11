@@ -1,4 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -42,7 +43,8 @@ public class AddTypeCastFix extends PsiUpdateModCommandAction<PsiExpression> {
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return QuickFixBundle.message("add.typecast.family");
   }
 
@@ -61,15 +63,18 @@ public class AddTypeCastFix extends PsiUpdateModCommandAction<PsiExpression> {
   }
 
   public static void addTypeCast(Project project, PsiExpression originalExpression, PsiType type) {
-    PsiExpression typeCast = createCastExpression(originalExpression, type);
+    PsiExpression typeCast = createCastExpression(originalExpression, project, type);
     originalExpression.replace(Objects.requireNonNull(typeCast));
   }
 
-  static String tryConvertNumericLiteral(PsiElement expr, @NotNull PsiType type) {
-    return expr instanceof PsiLiteralExpression literal ? PsiLiteralUtil.tryConvertNumericLiteral(literal, type) : null;
+  private static String tryConvertNumericLiteral(PsiElement expr, @NotNull PsiType type) {
+    if (expr instanceof PsiLiteralExpression) {
+      return PsiLiteralUtil.tryConvertNumericLiteral((PsiLiteralExpression)expr, type);
+    }
+    return null;
   }
 
-  static PsiExpression createCastExpression(PsiExpression original, PsiType type) {
+  static PsiExpression createCastExpression(PsiExpression original, Project project, PsiType type) {
     // remove nested casts
     PsiElement expression = PsiUtil.deparenthesizeExpression(original);
     if (expression == null) return null;
@@ -80,35 +85,35 @@ public class AddTypeCastFix extends PsiUpdateModCommandAction<PsiExpression> {
     if (newLiteral != null) {
       return factory.createExpressionFromText(newLiteral, null);
     }
-    if (type instanceof PsiEllipsisType ellipsisType) type = ellipsisType.toArrayType();
+    if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
     String text = "(" + type.getCanonicalText(false) + ")value";
     PsiTypeCastExpression typeCast = (PsiTypeCastExpression)factory.createExpressionFromText(text, original);
 
-    PsiExpression operand = typeCast.getOperand();
-    assert operand != null;
     if (expression instanceof PsiConditionalExpression) {
       // we'd better cast one branch of ternary expression if we can
       PsiConditionalExpression conditional = (PsiConditionalExpression)expression.copy();
-      PsiExpression thenExpression = conditional.getThenExpression();
-      PsiExpression elseExpression = conditional.getElseExpression();
-      if (thenExpression != null && elseExpression != null) {
-        boolean replaceThen = !TypeConversionUtil.areTypesAssignmentCompatible(type, thenExpression);
-        boolean replaceElse = !TypeConversionUtil.areTypesAssignmentCompatible(type, elseExpression);
+      PsiExpression thenE = conditional.getThenExpression();
+      PsiExpression elseE = conditional.getElseExpression();
+      PsiType thenType = thenE == null ? null : thenE.getType();
+      PsiType elseType = elseE == null ? null : elseE.getType();
+      if (elseType != null && thenType != null) {
+        boolean replaceThen = !TypeConversionUtil.isAssignable(type, thenType);
+        boolean replaceElse = !TypeConversionUtil.isAssignable(type, elseType);
         if (replaceThen != replaceElse) {
           if (replaceThen) {
-            operand.replace(thenExpression);
-            thenExpression.replace(typeCast);
+            Objects.requireNonNull(typeCast.getOperand()).replace(thenE);
+            thenE.replace(typeCast);
           }
           else {
-            operand.replace(elseExpression);
-            elseExpression.replace(typeCast);
+            Objects.requireNonNull(typeCast.getOperand()).replace(elseE);
+            elseE.replace(typeCast);
           }
           return conditional;
         }
       }
     }
 
-    operand.replace(expression);
+    Objects.requireNonNull(typeCast.getOperand()).replace(expression);
 
     return typeCast;
   }
@@ -119,14 +124,14 @@ public class AddTypeCastFix extends PsiUpdateModCommandAction<PsiExpression> {
                                  TextRange fixRange) {
     String referenceName = ref.getReferenceName();
     if (referenceName == null) return;
-    if (qualifier instanceof PsiReferenceExpression referenceExpression) {
-      PsiElement resolve = referenceExpression.resolve();
+    if (qualifier instanceof PsiReferenceExpression) {
+      PsiElement resolve = ((PsiReferenceExpression)qualifier).resolve();
       if (resolve == null) return;
-      if (resolve instanceof PsiParameter parameter && parameter.getTypeElement() == null) {
+      if (resolve instanceof PsiParameter && ((PsiParameter)resolve).getTypeElement() == null) {
         PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(resolve, PsiMethodCallExpression.class);
         if (callExpression != null) {
           JavaResolveResult result = callExpression.resolveMethodGenerics();
-          if (result instanceof MethodCandidateInfo candidateInfo && candidateInfo.getInferenceErrorMessage() != null) {
+          if (result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).getInferenceErrorMessage() != null) {
             return;
           }
         }

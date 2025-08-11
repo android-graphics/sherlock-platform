@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -18,15 +18,18 @@ import org.jetbrains.annotations.Nullable;
 public final class Descriptor {
   private static final Logger LOG = Logger.getInstance(Descriptor.class);
 
-  private final @NotNull @InspectionMessage String myText;
+  @NotNull
+  private final @InspectionMessage String myText;
   private final String[] myGroup;
   private final String myShortName;
   private final InspectionToolWrapper<?, ?> myToolWrapper;
   private final HighlightDisplayLevel myLevel;
-  private final @Nullable NamedScope myScope;
+  @Nullable
+  private final NamedScope myScope;
   private final TextAttributesKey myEditorAttributesKey;
   private final ScopeToolState myState;
-  private final @NotNull InspectionProfileModifiableModel myInspectionProfile;
+  @NotNull
+  private final InspectionProfileModifiableModel myInspectionProfile;
 
   private Element myConfig;
   private boolean myEnabled;
@@ -70,11 +73,13 @@ public final class Descriptor {
     myEnabled = enabled;
   }
 
-  public @NotNull @InspectionMessage String getText() {
+  @NotNull
+  public @InspectionMessage String getText() {
     return myText;
   }
 
-  public @NotNull HighlightDisplayKey getKey() {
+  @NotNull
+  public HighlightDisplayKey getKey() {
     return HighlightDisplayKey.findOrRegister(myShortName, myText);
   }
 
@@ -86,7 +91,8 @@ public final class Descriptor {
     return myEditorAttributesKey;
   }
 
-  public @Nullable Element getConfig() {
+  @Nullable
+  public Element getConfig() {
     return myConfig;
   }
 
@@ -97,20 +103,24 @@ public final class Descriptor {
     }
   }
 
-  public @NotNull InspectionToolWrapper<?, ?> getToolWrapper() {
+  @NotNull
+  public InspectionToolWrapper<?, ?> getToolWrapper() {
     return myToolWrapper;
   }
 
-  public @Nullable String loadDescription() {
+  @Nullable
+  public String loadDescription() {
     loadConfig();
     return myToolWrapper.loadDescription();
   }
 
-  public @NotNull InspectionProfileModifiableModel getInspectionProfile() {
+  @NotNull
+  public InspectionProfileModifiableModel getInspectionProfile() {
     return myInspectionProfile;
   }
 
-  public static @NotNull Element createConfigElement(InspectionToolWrapper<?, ?> toolWrapper) {
+  @NotNull
+  public static Element createConfigElement(InspectionToolWrapper<?, ?> toolWrapper) {
     Element element = new Element("options");
     try {
       toolWrapper.getTool().writeSettings(element);
@@ -125,15 +135,18 @@ public final class Descriptor {
     return myGroup;
   }
 
-  public @NotNull String getScopeName() {
+  @NotNull
+  public String getScopeName() {
     return myState.getScopeName();
   }
 
-  public @Nullable NamedScope getScope() {
+  @Nullable
+  public NamedScope getScope() {
     return myScope;
   }
 
-  public @NotNull ScopeToolState getState() {
+  @NotNull
+  public ScopeToolState getState() {
     return myState;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.icons.AllIcons;
@@ -19,8 +19,6 @@ import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
-import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +26,6 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiStatus.Internal
 public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNode {
   private final InlineWatch myWatch;
   private final List<Inlay<InlineDebugRenderer>> myInlays = new ArrayList<>();
@@ -41,8 +38,9 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     myWatch = watch;
   }
 
+  @NotNull
   @Override
-  public @NotNull XValue getValueContainer() {
+  public XValue getValueContainer() {
     return myValueContainer;
   }
 
@@ -67,8 +65,9 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     });
   }
 
+  @Nullable
   @Override
-  public @Nullable XDebuggerTreeNodeHyperlink getLink() {
+  public XDebuggerTreeNodeHyperlink getLink() {
     return new XDebuggerTreeNodeHyperlink(" " + myWatch.getPosition().getFile().getName() + ":" + (myWatch.getPosition().getLine() + 1)) {
       @Override
       public boolean alwaysOnScreen() {
@@ -86,11 +85,6 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
   @Override
   public @NotNull XEvaluationOrigin getEvaluationOrigin() {
     return XEvaluationOrigin.INLINE_WATCH;
-  }
-
-  @Override
-  protected boolean shouldUpdateInlineDebuggerData() {
-    return XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowValuesInline();
   }
 
   private static class XInlineWatchValue extends XNamedValue implements XValueTextProvider {
@@ -160,8 +154,8 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     }
 
     private class MyEvaluationCallback extends XEvaluationCallbackBase implements XEvaluationCallbackWithOrigin, Obsolescent {
-      private final @NotNull XValueNode myNode;
-      private final @NotNull XValuePlace myPlace;
+      @NotNull private final XValueNode myNode;
+      @NotNull private final XValuePlace myPlace;
 
       MyEvaluationCallback(@NotNull XValueNode node, @NotNull XValuePlace place) {
         myNode = node;
@@ -194,8 +188,9 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     }
 
     private static final XValuePresentation EMPTY_PRESENTATION = new XValuePresentation() {
+      @NotNull
       @Override
-      public @NotNull String getSeparator() {
+      public String getSeparator() {
         return "";
       }
 
@@ -210,7 +205,8 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     }
 
     @Override
-    public @NotNull ThreeState computeInlineDebuggerData(@NotNull XInlineDebuggerDataCallback callback) {
+    @NotNull
+    public ThreeState computeInlineDebuggerData(@NotNull XInlineDebuggerDataCallback callback) {
       callback.computed(myPosition);
       return ThreeState.YES;
     }

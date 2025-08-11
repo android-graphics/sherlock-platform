@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.DefaultRepo
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repositories
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repository
 import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
-import java.util.Locale
 
 abstract class KotlinVersionProviderService : WizardService {
     abstract fun getKotlinVersion(projectKind: ProjectKind): WizardKotlinVersion
@@ -31,10 +30,10 @@ abstract class KotlinVersionProviderService : WizardService {
         getKotlinVersionRepository(getKotlinVersionKind(version))
 
     protected fun getKotlinVersionKind(version: Version) = when {
-        "eap" in version.toString().lowercase(Locale.getDefault()) -> KotlinVersionKind.EAP
-        "rc" in version.toString().lowercase(Locale.getDefault()) -> KotlinVersionKind.EAP
-        "dev" in version.toString().lowercase(Locale.getDefault()) -> KotlinVersionKind.DEV
-        "m" in version.toString().lowercase(Locale.getDefault()) -> KotlinVersionKind.M
+        "eap" in version.toString().toLowerCase() -> KotlinVersionKind.EAP
+        "rc" in version.toString().toLowerCase() -> KotlinVersionKind.EAP
+        "dev" in version.toString().toLowerCase() -> KotlinVersionKind.DEV
+        "m" in version.toString().toLowerCase() -> KotlinVersionKind.M
         else -> KotlinVersionKind.STABLE
     }
 

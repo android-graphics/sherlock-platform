@@ -1,18 +1,16 @@
-from _typeshed import ConvertibleToInt, Incomplete, Unused
-from collections.abc import Iterable, Iterator
-from typing import ClassVar, Literal
+from _typeshed import Incomplete, Unused
+from collections.abc import Iterator
+from typing import ClassVar
+from typing_extensions import Literal
 
-from openpyxl.descriptors.base import Bool, Integer, String, Typed, _ConvertibleToBool
+from openpyxl.descriptors.base import Bool, Integer, String, Typed, _ConvertibleToBool, _ConvertibleToInt
 from openpyxl.descriptors.excel import ExtensionList
-from openpyxl.descriptors.sequence import Sequence
 from openpyxl.descriptors.serialisable import Serialisable
 from openpyxl.styles.alignment import Alignment
 from openpyxl.styles.borders import Border
-from openpyxl.styles.cell_style import CellStyle, StyleArray
 from openpyxl.styles.fills import Fill
 from openpyxl.styles.fonts import Font
 from openpyxl.styles.protection import Protection
-from openpyxl.workbook.workbook import Workbook
 
 class NamedStyle(Serialisable):
     font: Typed[Font, Literal[False]]
@@ -23,6 +21,8 @@ class NamedStyle(Serialisable):
     protection: Typed[Protection, Literal[False]]
     builtinId: Integer[Literal[True]]
     hidden: Bool[Literal[True]]
+    # Overwritten by property below
+    # xfId: Integer
     name: String[Literal[False]]
     def __init__(
         self,
@@ -33,22 +33,24 @@ class NamedStyle(Serialisable):
         alignment: Alignment | None = None,
         number_format: Incomplete | None = None,
         protection: Protection | None = None,
-        builtinId: ConvertibleToInt | None = None,
+        builtinId: _ConvertibleToInt | None = None,
         hidden: _ConvertibleToBool | None = False,
+        xfId: Unused = None,
     ) -> None: ...
     def __setattr__(self, attr: str, value) -> None: ...
     def __iter__(self) -> Iterator[tuple[str, str]]: ...
-    def bind(self, wb: Workbook) -> None: ...
-    def as_tuple(self) -> StyleArray: ...
-    def as_xf(self) -> CellStyle: ...
-    def as_name(self) -> _NamedCellStyle: ...
+    @property
+    def xfId(self) -> int | None: ...
+    def bind(self, wb) -> None: ...
+    def as_tuple(self): ...
+    def as_xf(self): ...
+    def as_name(self): ...
 
-class NamedStyleList(list[NamedStyle]):
-    def __init__(self, iterable: Iterable[NamedStyle] = ()) -> None: ...  # type: ignore[override]
+class NamedStyleList(list[Incomplete]):
     @property
     def names(self) -> list[str]: ...
-    def __getitem__(self, key: int | str) -> NamedStyle: ...  # type: ignore[override]
-    def append(self, style: NamedStyle) -> None: ...
+    def __getitem__(self, key): ...
+    def append(self, style) -> None: ...
 
 class _NamedCellStyle(Serialisable):
     tagname: ClassVar[str]
@@ -63,9 +65,9 @@ class _NamedCellStyle(Serialisable):
     def __init__(
         self,
         name: str,
-        xfId: ConvertibleToInt,
-        builtinId: ConvertibleToInt | None = None,
-        iLevel: ConvertibleToInt | None = None,
+        xfId: _ConvertibleToInt,
+        builtinId: _ConvertibleToInt | None = None,
+        iLevel: _ConvertibleToInt | None = None,
         hidden: _ConvertibleToBool | None = None,
         customBuiltin: _ConvertibleToBool | None = None,
         extLst: Unused = None,
@@ -74,10 +76,11 @@ class _NamedCellStyle(Serialisable):
 class _NamedCellStyleList(Serialisable):
     tagname: ClassVar[str]
     # Overwritten by property below
-    # count: Integer[Literal[True]]
-    cellStyle: Sequence[list[_NamedCellStyle]]
+    # count: Integer
+    cellStyle: Incomplete
     __attrs__: ClassVar[tuple[str, ...]]
-    def __init__(self, count: Unused = None, cellStyle: list[_NamedCellStyle] | tuple[_NamedCellStyle, ...] = ()) -> None: ...
+    def __init__(self, count: Unused = None, cellStyle=()) -> None: ...
     @property
     def count(self) -> int: ...
-    def remove_duplicates(self) -> list[_NamedCellStyle]: ...
+    @property
+    def names(self) -> NamedStyleList: ...

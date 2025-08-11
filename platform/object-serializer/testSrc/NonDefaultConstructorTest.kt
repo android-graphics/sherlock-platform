@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
-import com.intellij.testFramework.rethrowLoggedErrorsIn
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.write
 import org.junit.Rule
@@ -80,7 +79,7 @@ class NonDefaultConstructorTest {
   }
 
   @Test
-  fun `remove versioned file on parameter error`(): Unit = rethrowLoggedErrorsIn {
+  fun `remove versioned file on parameter error`() {
     val disposable = Disposer.newDisposable()
     com.intellij.openapi.diagnostic.DefaultLogger.disableStderrDumping(disposable)
     try {

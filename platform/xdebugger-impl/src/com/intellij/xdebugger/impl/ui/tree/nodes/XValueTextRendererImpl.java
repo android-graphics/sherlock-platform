@@ -18,15 +18,13 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class XValueTextRendererImpl extends XValueTextRendererBase implements XCustomizableTextRenderer {
+public class XValueTextRendererImpl extends XValueTextRendererBase {
   private final ColoredTextContainer myText;
 
   public XValueTextRendererImpl(@NotNull ColoredTextContainer text) {
@@ -67,11 +65,5 @@ public class XValueTextRendererImpl extends XValueTextRendererBase implements XC
   @Override
   public void renderSpecialSymbol(@NotNull String symbol) {
     myText.append(symbol, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-  }
-
-  @ApiStatus.Internal
-  @Override
-  public void renderRaw(@NotNull @NlsSafe String text, @NotNull SimpleTextAttributes attributes) {
-    myText.append(text, attributes);
   }
 }

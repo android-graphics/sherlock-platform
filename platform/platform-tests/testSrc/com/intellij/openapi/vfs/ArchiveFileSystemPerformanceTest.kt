@@ -3,7 +3,7 @@ package com.intellij.openapi.vfs
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
-import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -20,7 +20,7 @@ class ArchiveFileSystemPerformanceTest : BareTestFixtureTestCase() {
 
   @Test fun getRootByEntry() {
     val root = fs.getRootByEntry(entry)!!
-    Benchmark.newBenchmark("ArchiveFileSystem.getRootByEntry()") {
+    PerformanceTestUtil.newPerformanceTest("ArchiveFileSystem.getRootByEntry()") {
       for (i in 0..100000) {
         assertEquals(root, fs.getRootByEntry(entry))
       }
@@ -29,7 +29,7 @@ class ArchiveFileSystemPerformanceTest : BareTestFixtureTestCase() {
 
   @Test fun getLocalByEntry() {
     val local = fs.getLocalByEntry(entry)!!
-    Benchmark.newBenchmark("ArchiveFileSystem.getLocalByEntry()") {
+    PerformanceTestUtil.newPerformanceTest("ArchiveFileSystem.getLocalByEntry()") {
       for (i in 0..100000) {
         assertEquals(local, fs.getLocalByEntry(entry))
       }

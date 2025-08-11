@@ -14,7 +14,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Objects;
 
-@ApiStatus.Internal
 public final class ActionUrl implements JDOMExternalizable {
   public static final int ADDED = 1;
   public static final int DELETED = -1;

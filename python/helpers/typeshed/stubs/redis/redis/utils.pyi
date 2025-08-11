@@ -1,7 +1,8 @@
 from _typeshed import Unused
 from collections.abc import Iterable, Mapping
 from contextlib import AbstractContextManager
-from typing import Any, Literal, TypeVar, overload
+from typing import Any, TypeVar, overload
+from typing_extensions import Literal
 
 from .client import Pipeline, Redis, _StrType
 

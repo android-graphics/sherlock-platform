@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.daemon.*;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -42,9 +41,8 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
-@ApiStatus.Internal
 public final class GutterIconsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  public static final @NonNls String ID = "editor.preferences.gutterIcons";
+  @NonNls public static final String ID = "editor.preferences.gutterIcons";
 
   private JPanel myPanel;
   private CheckBoxList<GutterIconDescriptor> myList;
@@ -52,18 +50,21 @@ public final class GutterIconsConfigurable implements SearchableConfigurable, Co
   private final List<GutterIconDescriptor> myDescriptors = new ArrayList<>();
   private final Map<GutterIconDescriptor, PluginDescriptor> myFirstDescriptors = new HashMap<>();
 
+  @Nls
   @Override
-  public @Nls String getDisplayName() {
+  public String getDisplayName() {
     return IdeBundle.message("configurable.GutterIconsConfigurable.display.name");
   }
 
+  @Nullable
   @Override
-  public @Nullable String getHelpTopic() {
+  public String getHelpTopic() {
     return "reference.settings.editor.gutter.icons";
   }
 
+  @Nullable
   @Override
-  public @Nullable JComponent createComponent() {
+  public JComponent createComponent() {
     LanguageExtensionPoint<LineMarkerProvider>[] extensions = LineMarkerProviders.EP_NAME.getExtensions();
     NullableFunction<LanguageExtensionPoint<LineMarkerProvider>, PluginDescriptor> function =
       point1 -> {
@@ -152,7 +153,7 @@ public final class GutterIconsConfigurable implements SearchableConfigurable, Co
       LineMarkerSettings.getSettings().setEnabled(descriptor, myList.isItemSelected(descriptor));
     }
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      DaemonCodeAnalyzerEx.getInstanceEx(project).restart("GutterIconsConfigurable.apply");
+      DaemonCodeAnalyzer.getInstance(project).restart();
     }
     ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorOptionsListener.GUTTER_ICONS_CONFIGURABLE_TOPIC).changesApplied();
   }
@@ -213,8 +214,9 @@ public final class GutterIconsConfigurable implements SearchableConfigurable, Co
         return panel;
       }
 
+      @Nullable
       @Override
-      protected @Nullable Point findPointRelativeToCheckBox(int x, int y, @NotNull JCheckBox checkBox, int index) {
+      protected Point findPointRelativeToCheckBox(int x, int y, @NotNull JCheckBox checkBox, int index) {
         return super.findPointRelativeToCheckBoxWithAdjustedRendering(x, y, checkBox, index);
       }
     };
@@ -223,13 +225,15 @@ public final class GutterIconsConfigurable implements SearchableConfigurable, Co
     ListSpeedSearch.installOn(myList, JCheckBox::getText);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getId() {
+  public String getId() {
     return ID;
   }
 
+  @Nullable
   @Override
-  public @Nullable Runnable enableSearch(String option) {
+  public Runnable enableSearch(String option) {
     return () -> Objects.requireNonNull(SpeedSearchSupply.getSupply(myList, true)).findAndSelectElement(option);
   }
 

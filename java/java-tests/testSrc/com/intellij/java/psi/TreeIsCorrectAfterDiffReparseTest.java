@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NonNls;
 
 public class TreeIsCorrectAfterDiffReparseTest extends LightJavaCodeInsightTestCase {
 
-  public void testIDEADEV41862() throws Throwable {
+  public void testIDEADEV41862() {
     @NonNls String part1 = """
       package com.test;
 
@@ -1106,8 +1106,14 @@ public class TreeIsCorrectAfterDiffReparseTest extends LightJavaCodeInsightTestC
     final Document doc = docManager.getDocument(getFile());
     WriteCommandAction.runWriteCommandAction(getProject(), () -> doc.insertString(part1.length(), "/**"));
 
-    DebugUtil.runWithCheckInternalInvariantsEnabled(() -> {
+
+    boolean old = DebugUtil.CHECK;
+    DebugUtil.CHECK = true;
+    try {
       docManager.commitAllDocuments();
-    });
+    }
+    finally {
+      DebugUtil.CHECK = old;
+    }
   }
 }

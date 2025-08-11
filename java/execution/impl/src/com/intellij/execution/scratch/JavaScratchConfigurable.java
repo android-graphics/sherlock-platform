@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.scratch;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -126,7 +126,8 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
     configuration.setScratchFileUrl(vFile != null ? vFile.getUrl() : null);
   }
 
-  private @Nullable VirtualFile getVFileFromEditor() {
+  @Nullable
+  private VirtualFile getVFileFromEditor() {
     final String path = FileUtil.toSystemIndependentName(myScratchPathField.getComponent().getText().trim());
     return !StringUtil.isEmpty(path) ? LocalFileSystem.getInstance().findFileByPath(path) : null;
   }
@@ -147,8 +148,9 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
     myScratchPathField.getComponent().setText(file != null? FileUtil.toSystemDependentName(file.getPath()): "");
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent createEditor() {
+  public JComponent createEditor() {
     return myWholePanel;
   }
 

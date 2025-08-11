@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -29,20 +29,25 @@ import org.jetbrains.annotations.NotNull;
  * @author Hani Suleiman
  */
 public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final @NonNls String TESTNG_PREFIX = "testng.";
+  @NonNls private static final String TESTNG_PREFIX = "testng.";
 
   @Override
-  public @Nls @NotNull String getGroupDisplayName() {
+  @Nls
+  @NotNull
+  public String getGroupDisplayName() {
     return TestNGUtil.TESTNG_GROUP_NAME;
   }
 
   @Override
-  public @NonNls @NotNull String getShortName() {
+  @NonNls
+  @NotNull
+  public String getShortName() {
     return "ConvertJavadoc";
   }
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
+  @NotNull
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override public void visitDocTag(final @NotNull PsiDocTag tag) {
         if (tag.getName().startsWith(TESTNG_PREFIX)) {
@@ -56,7 +61,8 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
     private static final Logger LOG = Logger.getInstance(ConvertJavadocQuickfix.class);
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return TestngBundle.message("intention.family.name.convert.testng.javadoc.to.annotations");
     }
 

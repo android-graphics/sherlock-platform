@@ -33,8 +33,9 @@ public interface PyAstSlashParameter extends PyAstParameter {
     return false;
   }
 
+  @Nullable
   @Override
-  default @Nullable String getDefaultValueText() {
+  default String getDefaultValueText() {
     return null;
   }
 

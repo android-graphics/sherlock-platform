@@ -1,14 +1,12 @@
-from _typeshed import Incomplete
 from collections.abc import Iterable, Sequence
 from socket import socket
-from typing import Final
-from typing_extensions import TypeAlias
+from typing import Any
 
-# Really complex, consider unpacking a TypedDict
-_AdjustmentsParams: TypeAlias = Incomplete
+from .compat import HAS_IPV6 as HAS_IPV6, PY2 as PY2, WIN as WIN, string_types as string_types
+from .proxy_headers import PROXY_HEADERS as PROXY_HEADERS
 
-truthy: frozenset[str]
-KNOWN_PROXY_HEADERS: Final[frozenset[str]]
+truthy: frozenset[Any]
+KNOWN_PROXY_HEADERS: frozenset[Any]
 
 def asbool(s: bool | str | int | None) -> bool: ...
 def asoctal(s: str) -> int: ...
@@ -21,6 +19,7 @@ def as_socket_list(sockets: Sequence[object]) -> list[socket]: ...
 
 class _str_marker(str): ...
 class _int_marker(int): ...
+class _bool_marker: ...
 
 class Adjustments:
     host: _str_marker
@@ -31,7 +30,7 @@ class Adjustments:
     trusted_proxy_count: int | None
     trusted_proxy_headers: set[str]
     log_untrusted_proxy_headers: bool
-    clear_untrusted_proxy_headers: bool
+    clear_untrusted_proxy_headers: _bool_marker | bool
     url_scheme: str
     url_prefix: str
     ident: str
@@ -56,10 +55,8 @@ class Adjustments:
     ipv4: bool
     ipv6: bool
     sockets: list[socket]
-    channel_request_lookahead: int
-    server_name: str
-    def __init__(self, **kw: _AdjustmentsParams) -> None: ...
+    def __init__(self, **kw: Any) -> None: ...
     @classmethod
-    def parse_args(cls, argv: str) -> tuple[dict[str, bool], list[str]]: ...
+    def parse_args(cls, argv: str) -> tuple[dict[str, Any], Any]: ...
     @classmethod
     def check_sockets(cls, sockets: Iterable[socket]) -> None: ...

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
 import com.intellij.psi.*;
@@ -63,8 +63,9 @@ public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrI
     return mySuggestedNames;
   }
 
+  @Nullable
   @Override
-  protected @Nullable JComponent getComponent() {
+  protected JComponent getComponent() {
     return myPanel.getRootPane();
   }
 
@@ -86,23 +87,26 @@ public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrI
     });
   }
 
+  @Nullable
   @Override
-  protected @Nullable GrIntroduceConstantSettings getInitialSettingsForInplace(final @NotNull GrIntroduceContext context,
-                                                                               final @NotNull OccurrencesChooser.ReplaceChoice choice,
-                                                                               final String[] names) {
+  protected GrIntroduceConstantSettings getInitialSettingsForInplace(@NotNull final GrIntroduceContext context,
+                                                                     @NotNull final OccurrencesChooser.ReplaceChoice choice,
+                                                                     final String[] names) {
     return new GrIntroduceConstantSettings() {
       @Override
       public String getVisibilityModifier() {
         return PsiModifier.PUBLIC;
       }
 
+      @Nullable
       @Override
-      public @Nullable PsiClass getTargetClass() {
+      public PsiClass getTargetClass() {
         return (PsiClass)context.getScope();
       }
 
+      @Nullable
       @Override
-      public @Nullable String getName() {
+      public String getName() {
         return names[0];
       }
 
@@ -111,8 +115,9 @@ public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrI
         return isReplaceAllOccurrences();
       }
 
+      @Nullable
       @Override
-      public @Nullable PsiType getSelectedType() {
+      public PsiType getSelectedType() {
         GrExpression expression = context.getExpression();
         GrVariable var = context.getVar();
         StringPartInfo stringPart = context.getStringPart();
@@ -132,8 +137,9 @@ public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrI
         return PsiModifier.PUBLIC;
       }
 
+      @Nullable
       @Override
-      public @Nullable String getName() {
+      public String getName() {
         return getInputName();
       }
 
@@ -142,20 +148,23 @@ public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrI
         return isReplaceAllOccurrences();
       }
 
+      @Nullable
       @Override
-      public @Nullable PsiType getSelectedType() {
+      public PsiType getSelectedType() {
         return GrInplaceConstantIntroducer.this.getSelectedType();
       }
 
+      @Nullable
       @Override
-      public @Nullable PsiClass getTargetClass() {
+      public PsiClass getTargetClass() {
         return (PsiClass)myContext.getScope();
       }
     };
   }
 
+  @Nullable
   @Override
-  protected @Nullable PsiElement checkLocalScope() {
+  protected PsiElement checkLocalScope() {
     return ((PsiField)getVariable()).getContainingClass();
   }
 

@@ -1,4 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 package com.intellij.ide.util
 
 import com.intellij.featureStatistics.ProductivityFeaturesRegistry
@@ -9,15 +10,12 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
-import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.runBackgroundableTask
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileVisitor
 import java.awt.datatransfer.StringSelection
 
-@Suppress("HardCodedStringLiteral") // it is an internal action, so localization is not required
+@Suppress("HardCodedStringLiteral") // it is the internal action, so localization is not required
 internal open class DumpInvalidTipsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     runBackgroundableTask("Analyzing tips", e.getData(CommonDataKeys.PROJECT)) {
@@ -64,19 +62,21 @@ internal open class DumpInvalidTipsAction : AnAction() {
     CopyPasteManager.getInstance().setContents(StringSelection(issues))
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 
   companion object {
     private val LOG = Logger.getInstance(DumpInvalidTipsAction::class.java)
   }
 }
 
-@Suppress("HardCodedStringLiteral") // it is an internal action, so localization is not required
+@Suppress("HardCodedStringLiteral") // it is the internal action, so localization is not required
 internal class SelectAndDumpInvalidTipsAction : DumpInvalidTipsAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
     val descriptor = FileChooserDescriptor(true, true, false, false, false, true)
-      .withExtensionFilter(FileTypeManager.getInstance().getStdFileType("HTML"))
+      .withFileFilter { it.isDirectory || it.extension == "html" || it.extension == "htm" }
       .withDescription("Choose HTML files or folders with tips.")
     val chosenFiles = FileChooser.chooseFiles(descriptor, project, null)
 
@@ -89,13 +89,12 @@ internal class SelectAndDumpInvalidTipsAction : DumpInvalidTipsAction() {
   }
 
   private fun collectTipFilesRecursively(file: VirtualFile, list: MutableList<VirtualFile>) {
-    VfsUtilCore. visitChildrenRecursively(file, object : VirtualFileVisitor<Any>() {
-      override fun visitFile(file: VirtualFile): Boolean {
-        if (file.extension == "html" || file.extension == "htm") {
-          list.add(file)
-        }
-        return true
-      }
-    })
+    if (file.isDirectory) {
+      file.children.forEach { collectTipFilesRecursively(it, list) }
+    }
+    else if (file.extension == "html" || file.extension == "htm") {
+      list.add(file)
+    }
   }
 }
+

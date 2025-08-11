@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
 import com.intellij.CommonBundle
@@ -15,7 +15,6 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.enteredTextSatisfies
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevKitBundle
 import java.awt.event.ActionEvent
 import java.nio.file.Path
@@ -89,13 +88,10 @@ class UpdateFromSourcesDialog(private val project: Project,
   }
 }
 
-@ApiStatus.Internal
-fun Panel.optionsPanel(project: Project, state: UpdateFromSourcesSettingsState): TextFieldWithHistoryWithBrowseButton {
+internal fun Panel.optionsPanel(project: Project, state: UpdateFromSourcesSettingsState): TextFieldWithHistoryWithBrowseButton {
   val pathField = textFieldWithHistoryWithBrowseButton(
-    project,
-    FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.installation.choose.ide.directory.title")),
-    historyProvider = { state.workIdePathsHistory }
-  )
+    project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.installation.choose.ide.directory.title"),
+    FileChooserDescriptorFactory.createSingleFolderDescriptor(), { state.workIdePathsHistory })
   row(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.row.ide.installation")) {
     cell(pathField)
       .align(AlignX.FILL)

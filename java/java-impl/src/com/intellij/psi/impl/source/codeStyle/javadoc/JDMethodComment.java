@@ -14,8 +14,8 @@ class JDMethodComment extends JDParamListOwnerComment {
   private final List<String> myReturnTags = new ArrayList<>(); // In erroneous cases multiple return tags are possible (see IDEA-186041)
   private List<TagDescription> myThrowsList;
 
-  JDMethodComment(@NotNull CommentFormatter formatter,boolean isMarkdown) {
-    super(formatter, isMarkdown);
+  JDMethodComment(@NotNull CommentFormatter formatter) {
+    super(formatter);
   }
 
   @Override
@@ -27,8 +27,7 @@ class JDMethodComment extends JDParamListOwnerComment {
         JDTag tag = JDTag.RETURN;
         sb.append(myFormatter.getParser().formatJDTagDescription(returnTag,
                                                                  prefix + tag.getWithEndWhitespace(),
-                                                                 prefix + javadocContinuationIndent(),
-                                                                 getIsMarkdown()));
+                                                                 prefix + javadocContinuationIndent()));
 
         if (myFormatter.getSettings().JD_ADD_BLANK_AFTER_RETURN) {
           sb.append(prefix);

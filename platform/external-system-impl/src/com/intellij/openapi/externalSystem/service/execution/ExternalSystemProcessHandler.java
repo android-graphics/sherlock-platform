@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.process.BuildProcessHandler;
@@ -66,7 +66,8 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
     return myExecutionName;
   }
 
-  public @Nullable ExternalSystemTask getTask() {
+  @Nullable
+  public ExternalSystemTask getTask() {
     return myTask;
   }
 
@@ -76,7 +77,7 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
   }
 
   @Override
-  public void notifyTextAvailable(@NotNull String text, final @NotNull Key outputType) {
+  public void notifyTextAvailable(@NotNull String text, @NotNull final Key outputType) {
     if (escapeAnsiText) {
       myAnsiEscapeDecoder.escapeText(text, outputType, (decodedText, attributes) ->
         super.notifyTextAvailable(decodedText, attributes)
@@ -115,8 +116,9 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
     return false;
   }
 
+  @Nullable
   @Override
-  public @Nullable OutputStream getProcessInput() {
+  public OutputStream getProcessInput() {
     return myProcessInputWriter;
   }
 

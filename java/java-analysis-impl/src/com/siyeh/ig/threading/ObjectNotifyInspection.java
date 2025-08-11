@@ -28,12 +28,14 @@ import org.jetbrains.annotations.NotNull;
 public final class ObjectNotifyInspection extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "CallToNotifyInsteadOfNotifyAll";
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "object.notify.problem.descriptor");
   }

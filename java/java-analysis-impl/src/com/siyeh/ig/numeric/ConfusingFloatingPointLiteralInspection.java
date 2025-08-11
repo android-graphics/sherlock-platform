@@ -42,7 +42,8 @@ public final class ConfusingFloatingPointLiteralInspection extends BaseInspectio
   public boolean ignoreScientificNotation = false;
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("confusing.floating.point.literal.problem.descriptor");
   }
 
@@ -65,7 +66,8 @@ public final class ConfusingFloatingPointLiteralInspection extends BaseInspectio
   private static class ConfusingFloatingPointLiteralFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("confusing.floating.point.literal.change.quickfix");
     }
 

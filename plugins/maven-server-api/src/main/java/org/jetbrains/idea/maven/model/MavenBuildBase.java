@@ -15,8 +15,6 @@
  */
 package org.jetbrains.idea.maven.model;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,9 +24,9 @@ public class MavenBuildBase implements Serializable {
   private String myFinalName;
   private String myDefaultGoal;
   private String myDirectory;
-  private @NotNull List<@NotNull MavenResource> myResources = Collections.emptyList();
-  private @NotNull List<@NotNull MavenResource> myTestResources = Collections.emptyList();
-  private @NotNull List<@NotNull String> myFilters = Collections.emptyList();
+  private List<MavenResource> myResources = Collections.emptyList();
+  private List<MavenResource> myTestResources = Collections.emptyList();
+  private List<String> myFilters = Collections.emptyList();
 
   public String getFinalName() {
     return myFinalName;
@@ -54,27 +52,27 @@ public class MavenBuildBase implements Serializable {
     myDirectory = directory;
   }
 
-  public @NotNull List<@NotNull MavenResource> getResources() {
+  public List<MavenResource> getResources() {
     return myResources;
   }
 
-  public void setResources(@NotNull List<@NotNull MavenResource> resources) {
-    myResources = new ArrayList<>(resources);
+  public void setResources(List<MavenResource> resources) {
+    myResources = new ArrayList<MavenResource>(resources);
   }
 
-  public @NotNull List<@NotNull MavenResource> getTestResources() {
+  public List<MavenResource> getTestResources() {
     return myTestResources;
   }
 
-  public void setTestResources(@NotNull List<@NotNull MavenResource> testResources) {
-    myTestResources = new ArrayList<>(testResources);
+  public void setTestResources(List<MavenResource> testResources) {
+    myTestResources = new ArrayList<MavenResource>(testResources);
   }
 
-  public @NotNull List<@NotNull String> getFilters() {
+  public List<String> getFilters() {
     return myFilters;
   }
 
-  public void setFilters(@NotNull List<@NotNull String> filters) {
-    myFilters = new ArrayList<>(filters);
+  public void setFilters(List<String> filters) {
+    myFilters = new ArrayList<String>(filters);
   }
 }

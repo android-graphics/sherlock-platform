@@ -14,30 +14,37 @@ import org.jetbrains.annotations.NotNull;
 class PyTypeHintParser extends PyParser {
 
   @Override
-  protected @NotNull ParsingContext createParsingContext(@NotNull SyntaxTreeBuilder builder, @NotNull LanguageLevel languageLevel) {
+  @NotNull
+  protected ParsingContext createParsingContext(@NotNull SyntaxTreeBuilder builder, @NotNull LanguageLevel languageLevel) {
     return new ParsingContext(builder, languageLevel) {
 
-      private final @NotNull StatementParsing myStatementParsing = new StatementParsing(this) {
+      @NotNull
+      private final StatementParsing myStatementParsing = new StatementParsing(this) {
         @Override
-        protected @NotNull IElementType getReferenceType() {
+        @NotNull
+        protected IElementType getReferenceType() {
           return PyDocstringTokenTypes.DOC_REFERENCE;
         }
       };
 
-      private final @NotNull ExpressionParsing myExpressionParsing = new ExpressionParsing(this) {
+      @NotNull
+      private final ExpressionParsing myExpressionParsing = new ExpressionParsing(this) {
         @Override
-        protected @NotNull IElementType getReferenceType() {
+        @NotNull
+        protected IElementType getReferenceType() {
           return PyDocstringTokenTypes.DOC_REFERENCE;
         }
       };
 
       @Override
-      public @NotNull StatementParsing getStatementParser() {
+      @NotNull
+      public StatementParsing getStatementParser() {
         return myStatementParsing;
       }
 
       @Override
-      public @NotNull ExpressionParsing getExpressionParser() {
+      @NotNull
+      public ExpressionParsing getExpressionParser() {
         return myExpressionParsing;
       }
     };

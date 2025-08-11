@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -38,7 +38,8 @@ public abstract class InspectionViewActionBase extends AnAction {
     return ActionUpdateThread.BGT;
   }
 
-  public static @Nullable InspectionResultsView getView(@Nullable AnActionEvent event) {
+  @Nullable
+  public static InspectionResultsView getView(@Nullable AnActionEvent event) {
     if (event == null) {
       return null;
     }
@@ -46,7 +47,8 @@ public abstract class InspectionViewActionBase extends AnAction {
     return view != null && view.isDisposed() ? null : view;
   }
 
-  protected static @Nullable InspectionToolWrapper<?, ?> getToolWrapper(AnActionEvent e) {
+  @Nullable
+  protected static InspectionToolWrapper<?, ?> getToolWrapper(AnActionEvent e) {
     Object[] selectedNode = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
     if (selectedNode == null) return null;
 

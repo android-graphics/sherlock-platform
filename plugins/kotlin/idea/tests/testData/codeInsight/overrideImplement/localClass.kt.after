@@ -12,5 +12,3 @@ fun f() {
         }
     }
 }
-
-// MEMBER: "f(a: R): Unit"

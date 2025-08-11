@@ -64,10 +64,10 @@ class MavenCommandLineInfo(project: Project, projectPathField: WorkingDirectoryF
       val projectsManager = MavenProjectsManager.getInstance(project)
       val mavenProject = readAction { projectsManager.findContainingProject(projectDirectory) }
                          ?: return emptyList()
-      val localRepository = blockingContext { projectsManager.repositoryPath }
+      val localRepository = blockingContext { projectsManager.localRepository }
       return blockingContext {
-        mavenProject.declaredPluginInfos
-          .mapNotNull { MavenArtifactUtil.readPluginInfo(it.artifact) }
+        mavenProject.declaredPlugins
+          .mapNotNull { MavenArtifactUtil.readPluginInfo(localRepository, it.mavenId) }
           .flatMap { it.mojos }
           .map { TextCompletionInfo(it.displayName) }
           .sortedBy { it.text }

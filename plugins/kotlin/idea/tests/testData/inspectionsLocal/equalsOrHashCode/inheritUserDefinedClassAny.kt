@@ -1,4 +1,6 @@
-// WITH_STDLIB
+// ERROR: Unresolved reference: javaClass
+// ERROR: Unresolved reference: javaClass
+
 // IGNORE_K2
 
 open class Any {

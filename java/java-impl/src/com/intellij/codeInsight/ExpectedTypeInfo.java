@@ -59,7 +59,6 @@ public interface ExpectedTypeInfo {
 
   boolean equals(ExpectedTypeInfo info);
 
-  @Override
   String toString();
 
   ExpectedTypeInfo @NotNull [] intersect(@NotNull ExpectedTypeInfo info);

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
@@ -29,20 +29,23 @@ public class GrPropertySelectionImpl extends GrExpressionImpl implements GrPrope
     return "Property selection";
   }
 
+  @NotNull
   @Override
-  public @NotNull GrExpression getQualifier() {
+  public GrExpression getQualifier() {
     return findNotNullChildByClass(GrExpression.class);
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getReferenceNameElement() {
+  public PsiElement getReferenceNameElement() {
     final PsiElement last = getLastChild();
     LOG.assertTrue(last != null);
     return last;
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiType getType() {
+  public PsiType getType() {
     return null;
   }
 }

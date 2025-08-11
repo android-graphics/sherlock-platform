@@ -21,7 +21,6 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.SmartHashSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +40,6 @@ import static com.intellij.ui.tree.TreePathUtil.pathToCustomNode;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 
-@ApiStatus.Internal
 public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> implements InvokerSupplier {
   private final Invoker invoker = Invoker.forBackgroundThreadWithReadAction(this);
   private final ProjectFileNodeUpdater updater;

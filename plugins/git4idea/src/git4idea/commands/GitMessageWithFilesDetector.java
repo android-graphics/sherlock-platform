@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
  *
  * @see GitSimpleEventDetector
  */
-public class GitMessageWithFilesDetector implements GitLineEventDetector {
+public class GitMessageWithFilesDetector implements GitLineHandlerListener {
   private static final Logger LOG = Logger.getInstance(GitMessageWithFilesDetector.class);
 
   private final @NotNull Event myEvent;
@@ -29,7 +29,7 @@ public class GitMessageWithFilesDetector implements GitLineEventDetector {
 
   protected final @NotNull Set<String> myAffectedFiles = new HashSet<>();
   protected boolean myMessageDetected;
-  protected @Nullable Key myMessageOutputType;
+  private @Nullable Key myMessageOutputType;
 
   public GitMessageWithFilesDetector(@NotNull Event event, @NotNull VirtualFile root) {
     myEvent = event;
@@ -61,16 +61,8 @@ public class GitMessageWithFilesDetector implements GitLineEventDetector {
 
   /**
    * @return if the error "Your local changes to the following files would be overwritten by checkout" has happened.
-   *
-   * @deprecated replaced with {@link #isDetected()}
    */
-  @Deprecated
   public boolean wasMessageDetected() {
-    return isDetected();
-  }
-
-  @Override
-  public boolean isDetected() {
     return myMessageDetected;
   }
 

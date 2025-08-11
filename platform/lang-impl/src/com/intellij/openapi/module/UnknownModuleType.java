@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
@@ -19,29 +19,33 @@ public final class UnknownModuleType extends ModuleType {
     myModuleType = moduleType;
   }
 
+  @NotNull
   @Override
-  public @NotNull ModuleBuilder createModuleBuilder() {
+  public ModuleBuilder createModuleBuilder() {
     return myModuleType.createModuleBuilder();
   }
 
   @SuppressWarnings("DialogTitleCapitalization")
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return ProjectBundle.message("module.type.unknown.name", myModuleType.getName());
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
+  public String getDescription() {
     return myModuleType.getDescription();
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getNodeIcon(boolean isOpened) {
+  public Icon getNodeIcon(boolean isOpened) {
     return myModuleType.getIcon();
   }
 
   @Override
-  public ModuleWizardStep @NotNull [] createWizardSteps(final @NotNull WizardContext wizardContext, final @NotNull ModuleBuilder moduleBuilder, final @NotNull ModulesProvider modulesProvider) {
+  public ModuleWizardStep @NotNull [] createWizardSteps(@NotNull final WizardContext wizardContext, @NotNull final ModuleBuilder moduleBuilder, @NotNull final ModulesProvider modulesProvider) {
     return myModuleType.createWizardSteps(wizardContext, moduleBuilder, modulesProvider);
   }
 

@@ -1,5 +1,6 @@
 from collections.abc import Callable
-from typing import IO, Any, Generic, SupportsIndex, TypeVar, overload
+from typing import IO, Any, Generic, TypeVar, overload
+from typing_extensions import SupportsIndex
 
 _TB = TypeVar("_TB", bound=_BaseEntry)
 _TP = TypeVar("_TP", bound=POFile)
@@ -70,7 +71,7 @@ class _BaseEntry:
     msgid: str
     msgstr: str
     msgid_plural: str
-    msgstr_plural: dict[int, str]
+    msgstr_plural: list[str]
     msgctxt: str
     obsolete: bool
     encoding: str
@@ -83,7 +84,7 @@ class _BaseEntry:
 class POEntry(_BaseEntry):
     comment: str
     tcomment: str
-    occurrences: list[tuple[str, str]]
+    occurrences: list[tuple[str, int]]
     flags: list[str]
     previous_msgctxt: str | None
     previous_msgid: str | None
@@ -109,7 +110,7 @@ class POEntry(_BaseEntry):
 class MOEntry(_BaseEntry):
     comment: str
     tcomment: str
-    occurrences: list[tuple[str, str]]
+    occurrences: list[tuple[str, int]]
     flags: list[str]
     previous_msgctxt: str | None
     previous_msgid: str | None

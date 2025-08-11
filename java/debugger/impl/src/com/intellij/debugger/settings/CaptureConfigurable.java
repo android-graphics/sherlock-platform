@@ -4,8 +4,11 @@ package com.intellij.debugger.settings;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AnnotationsPanel;
 import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.engine.JVMNameUtil;
+import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -15,7 +18,8 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable.NoScroll;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -27,18 +31,17 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiParameter;
+import com.intellij.psi.*;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -57,6 +60,7 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -75,19 +79,23 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
     myProject = project;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getId() {
+  public String getId() {
     return getHelpTopic();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getHelpTopic() {
+  public String getHelpTopic() {
     return "reference.idesettings.debugger.capture";
   }
 
+  @Nullable
   @Override
-  public @Nullable JComponent createComponent() {
+  public JComponent createComponent() {
     myTableModel = new MyTableModel();
+    myTableModel.addFromAnnotations(myProject);
 
     JBTable table = new JBTable(myTableModel);
     table.setColumnSelectionAllowed(false);
@@ -213,7 +221,7 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
       }
 
       @Override
-      public void actionPerformed(final @NotNull AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         selectedCapturePoints(table).forEach(c -> c.myEnabled = !c.myEnabled);
         table.repaint();
       }
@@ -223,11 +231,21 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
                                                  JavaDebuggerBundle.messagePointer("action.AnActionButton.description.import"),
                                                  AllIcons.Actions.Install) {
       @Override
-      public void actionPerformed(final @NotNull AnActionEvent e) {
-        var descriptor = new FileChooserDescriptor(true, false, true, false, true, true)
-          .withExtensionFilter(FileTypeManager.getInstance().getStdFileType("XML"))
-          .withTitle(JavaDebuggerBundle.message("import.capture.points"))
-          .withDescription(JavaDebuggerBundle.message("please.select.a.file.to.import"));
+      public void actionPerformed(@NotNull final AnActionEvent e) {
+        FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, false, true, true) {
+          @Override
+          public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+            return super.isFileVisible(file, showHiddenFiles) &&
+                   (file.isDirectory() || "xml".equals(file.getExtension()) || FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE));
+          }
+
+          @Override
+          public boolean isFileSelectable(@Nullable VirtualFile file) {
+            return file != null && FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
+          }
+        };
+        descriptor.setDescription(JavaDebuggerBundle.message("please.select.a.file.to.import"));
+        descriptor.setTitle(JavaDebuggerBundle.message("import.capture.points"));
 
         VirtualFile[] files = FileChooser.chooseFiles(descriptor, e.getProject(), null);
         if (ArrayUtil.isEmpty(files)) return;
@@ -258,7 +276,7 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
                                                  JavaDebuggerBundle.messagePointer("action.AnActionButton.description.export"),
                                                  AllIcons.ToolbarDecorator.Export) {
       @Override
-      public void actionPerformed(final @NotNull AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         VirtualFileWrapper wrapper = FileChooserFactory.getInstance()
           .createSaveFileDialog(new FileSaverDescriptor(JavaDebuggerBundle.message("export.selected.capture.points.to.file"), "", "xml"), e.getProject())
           .save((Path)null, null);
@@ -335,6 +353,76 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
 
     private MyTableModel() {
       myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
+    }
+
+    private void addFromAnnotations(@NotNull Project project) {
+      if (Registry.is("debugger.capture.points.annotations")) {
+        List<CapturePoint> capturePointsFromAnnotations = new ArrayList<>();
+        processCaptureAnnotations(project, (capture, e, annotation) -> {
+          if (e instanceof PsiMethod) {
+            addCapturePointIfNeeded(e, (PsiMethod)e, "this", capture, capturePointsFromAnnotations);
+          }
+          else if (e instanceof PsiParameter psiParameter) {
+            PsiMethod psiMethod = (PsiMethod)psiParameter.getDeclarationScope();
+            addCapturePointIfNeeded(psiParameter, psiMethod,
+                                    DecompiledLocalVariable.PARAM_PREFIX + psiMethod.getParameterList().getParameterIndex(psiParameter),
+                                    capture, capturePointsFromAnnotations);
+          }
+        });
+
+        capturePointsFromAnnotations.forEach(this::addIfNeeded);
+      }
+    }
+
+    private static void addCapturePointIfNeeded(PsiModifierListOwner psiElement,
+                                                PsiMethod psiMethod,
+                                                String defaultExpression,
+                                                boolean capture,
+                                                List<CapturePoint> capturePointsFromAnnotations) {
+      CapturePoint capturePoint = new CapturePoint();
+      capturePoint.myEnabled = false;
+      if (capture) {
+        capturePoint.myClassName = JVMNameUtil.getNonAnonymousClassName(psiMethod.getContainingClass());
+        capturePoint.myMethodName = JVMNameUtil.getJVMMethodName(psiMethod);
+      }
+      else {
+        capturePoint.myInsertClassName = JVMNameUtil.getNonAnonymousClassName(psiMethod.getContainingClass());
+        capturePoint.myInsertMethodName = JVMNameUtil.getJVMMethodName(psiMethod);
+      }
+
+      PsiModifierList modifierList = psiElement.getModifierList();
+      if (modifierList != null) {
+        PsiAnnotation annotation = modifierList.findAnnotation(getAnnotationName(capture));
+        if (annotation != null) {
+          PsiAnnotationMemberValue keyExpressionValue = annotation.findAttributeValue("keyExpression");
+          String keyExpression = keyExpressionValue != null ? StringUtil.unquoteString(keyExpressionValue.getText()) : null;
+          if (StringUtil.isEmpty(keyExpression)) {
+            keyExpression = defaultExpression;
+          }
+          if (capture) {
+            capturePoint.myCaptureKeyExpression = keyExpression;
+          }
+          else {
+            capturePoint.myInsertKeyExpression = keyExpression;
+          }
+
+          PsiAnnotationMemberValue groupValue = annotation.findAttributeValue("group");
+          String group = groupValue != null ? StringUtil.unquoteString(groupValue.getText()) : null;
+          if (!StringUtil.isEmpty(group)) {
+            for (CapturePoint capturePointsFromAnnotation : capturePointsFromAnnotations) {
+              if (StringUtil.startsWith(group, capturePointsFromAnnotation.myClassName) &&
+                  StringUtil.endsWith(group, capturePointsFromAnnotation.myMethodName)) {
+                capturePointsFromAnnotation.myInsertClassName = capturePoint.myInsertClassName;
+                capturePointsFromAnnotation.myInsertMethodName = capturePoint.myInsertMethodName;
+                capturePointsFromAnnotation.myInsertKeyExpression = capturePoint.myInsertKeyExpression;
+                return;
+              }
+            }
+          }
+        }
+      }
+
+      capturePointsFromAnnotations.add(capturePoint);
     }
 
     @Override
@@ -452,46 +540,45 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
     myCaptureVariables.setSelected(DebuggerSettings.getInstance().CAPTURE_VARIABLES);
     myDebuggerAgent.setSelected(DebuggerSettings.getInstance().INSTRUMENTING_AGENT);
     myTableModel.myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
+    myTableModel.addFromAnnotations(myProject);
     myTableModel.fireTableDataChanged();
   }
 
+  @Nls
   @Override
-  public @Nls String getDisplayName() {
+  public String getDisplayName() {
     return JavaDebuggerBundle.message("async.stacktraces.configurable.display.name");
   }
 
-  interface CapturePointConsumer<R> {
-    R accept(boolean capture, PsiModifierListOwner e, PsiAnnotation annotation);
+  interface CapturePointConsumer {
+    void accept(boolean capture, PsiModifierListOwner e, PsiAnnotation annotation);
   }
 
-  static <R> List<R> processCaptureAnnotations(@Nullable Project project, CapturePointConsumer<R> consumer) {
+  static void processCaptureAnnotations(@Nullable Project project, CapturePointConsumer consumer) {
     if (project == null) { // fallback
       project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
     }
-    if (project.isDefault()) {
-      return Collections.emptyList();
+    if (!project.isDefault()) {
+      DebuggerProjectSettings debuggerProjectSettings = DebuggerProjectSettings.getInstance(project);
+      scanPointsInt(project, debuggerProjectSettings, true, consumer);
+      scanPointsInt(project, debuggerProjectSettings, false, consumer);
     }
-    DebuggerProjectSettings debuggerProjectSettings = DebuggerProjectSettings.getInstance(project);
-    return ContainerUtil.concat(
-      scanPointsInt(project, debuggerProjectSettings, true, consumer),
-      scanPointsInt(project, debuggerProjectSettings, false, consumer));
   }
 
-  private static <R> List<R> scanPointsInt(Project project,
-                                           DebuggerProjectSettings debuggerProjectSettings,
-                                           boolean capture,
-                                           CapturePointConsumer<R> consumer) {
+  private static void scanPointsInt(Project project,
+                                    DebuggerProjectSettings debuggerProjectSettings,
+                                    boolean capture,
+                                    CapturePointConsumer consumer) {
     try {
-      return NodeRendererSettings.visitAnnotatedElements(getAsyncAnnotations(debuggerProjectSettings, capture), project,
-                                                         (e, annotation) -> consumer.accept(capture, e, annotation),
-                                                         PsiMethod.class, PsiParameter.class);
+      getAsyncAnnotations(debuggerProjectSettings, capture)
+        .forEach(annotationName -> NodeRendererSettings.visitAnnotatedElements(annotationName, project,
+                                                                               (e, annotation) -> consumer.accept(capture, e, annotation)));
     }
-    catch (IndexNotReadyException | ProcessCanceledException ignore) {
+    catch (IndexNotReadyException | ProcessCanceledException | AlreadyDisposedException ignore) {
     }
     catch (Exception e) {
       LOG.error(e);
     }
-    return Collections.emptyList();
   }
 
   static String getAnnotationName(boolean capture) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.openapi.project.Project;
@@ -19,7 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 class ReplacementInfoImpl implements ReplacementInfo {
-  private final @NotNull MatchResult matchResult;
+  @NotNull
+  private final MatchResult matchResult;
   private final List<SmartPsiElementPointer<PsiElement>> matchesPtrList = new SmartList<>();
   private final Map<String, MatchResult> variableMap = new HashMap<>();
   private final Map<PsiElement, String> elementToVariableNameMap = new HashMap<>(1);
@@ -49,8 +50,9 @@ class ReplacementInfoImpl implements ReplacementInfo {
     this.replacement = replacement;
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement getMatch(int index) {
+  public PsiElement getMatch(int index) {
     return matchesPtrList.get(index).getElement();
   }
 

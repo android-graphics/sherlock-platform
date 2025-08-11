@@ -7,37 +7,29 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.util.xml.dom.readXmlAsModel
 import com.intellij.xml.util.XmlStringUtil
-import org.jetbrains.annotations.VisibleForTesting
-import java.net.URI
+import org.jetbrains.intellij.build.BuildContext
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.createDirectories
 
-/**
- * @param buildNumber build number to use in place of since-build/until-build for plugins which do not specify these constraints
- */
-internal fun generatePluginRepositoryMetaFile(pluginSpecs: List<PluginRepositorySpec>, targetDir: Path, buildNumber: String): Path {
+internal fun generatePluginRepositoryMetaFile(pluginSpecs: List<PluginRepositorySpec>, targetDir: Path, context: BuildContext): Path {
   val categories = TreeMap<String, MutableList<Plugin>>()
   for (spec in pluginSpecs) {
-    val p = readPlugin(spec.pluginZip, spec.pluginXml, buildNumber, targetDir)
+    val p = readPlugin(spec.pluginZip, spec.pluginXml, context.buildNumber, targetDir)
     categories.computeIfAbsent(p.category) { mutableListOf() }.add(p)
   }
-  Files.createDirectories(targetDir)
   val result = targetDir.resolve("plugins.xml")
   writePluginsXml(result, categories)
   return result
 }
 
 private fun writePluginsXml(target: Path, categories: Map<String, List<Plugin>>) {
-  target.parent.createDirectories()
   Files.newBufferedWriter(target).use { out ->
     out.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
     out.write("<plugin-repository>\n")
     for (it in categories.keys) {
       out.write("  <category name=\"$it\">\n")
-      val sortedPlugins = categories.get(it)!!.sortedWith { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.id, o2.id) }
-      for (p in sortedPlugins) {
+      for (p in categories.get(it)!!.sortedWith { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.id, o2.id) }) {
         out.write("""
           <idea-plugin size="${p.size}">
             <name>${XmlStringUtil.escapeString(p.name)}</name>
@@ -45,8 +37,8 @@ private fun writePluginsXml(target: Path, categories: Map<String, List<Plugin>>)
             <version>${p.version}</version>
             <idea-version since-build="${p.sinceBuild}" until-build="${p.untilBuild}"/>
             <vendor>${XmlStringUtil.escapeString(p.vendor)}</vendor>
-            <download-url>${XmlStringUtil.escapeString(p.relativeFileUrl)}</download-url>
-            ${p.description?.let { "<description>${XmlStringUtil.wrapInCDATA(p.description)}</description>" } ?: ""}
+            <download-url>${XmlStringUtil.escapeString(p.relativeFilePath)}</download-url>
+            ${p.description?.let { "<description>${XmlStringUtil.wrapInCDATA(p.description)}</description>" }}
             ${p.depends}
           </idea-plugin>
         """.trimIndent())
@@ -120,17 +112,4 @@ private data class Plugin(
   @JvmField val relativeFilePath: String?,
   @JvmField val depends: String?,
 )
-
-/** url-encodes relative path */
-private val Plugin.relativeFileUrl: String? get() {
-  if (relativeFilePath == null) return null
-  return URI(/* scheme = */ null, /* host = */ null, /* path = */ relativeFilePath, /* fragment = */ null).toString()
-}
-
-@VisibleForTesting
-object PluginRepositoryXmlGeneratorTestUtils {
-  fun generatePluginRepositoryMetaFile(pluginSpecs: List<PluginRepositorySpec>, targetDir: Path, buildNumber: String): Path =
-    org.jetbrains.intellij.build.impl.generatePluginRepositoryMetaFile(pluginSpecs, targetDir, buildNumber)
-}
-
 

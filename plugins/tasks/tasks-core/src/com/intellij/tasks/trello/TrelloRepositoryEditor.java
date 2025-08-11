@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tasks.trello;
 
@@ -61,7 +61,8 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
         myRepository.setPassword(password);
         new BoardsComboBoxUpdater() {
           @Override
-          protected @NotNull List<TrelloBoard> fetch(@NotNull ProgressIndicator indicator) throws Exception {
+          @NotNull
+          protected List<TrelloBoard> fetch(@NotNull ProgressIndicator indicator) throws Exception {
             myRepository.setCurrentUser(myRepository.fetchUserByToken());
             return super.fetch(indicator);
           }
@@ -80,8 +81,9 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
         if (board != TrelloRepository.UNSPECIFIED_BOARD) {
           myRepository.setCurrentBoard(board);
           new ListsComboBoxUpdater() {
+            @Nullable
             @Override
-            public @Nullable TrelloList getSelectedItem() {
+            public TrelloList getSelectedItem() {
               return TrelloRepository.UNSPECIFIED_LIST;
             }
           }.queue();
@@ -132,7 +134,8 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
     if (myRepository.getCurrentUser() != null) {
       new BoardsComboBoxUpdater() {
         @Override
-        protected @NotNull List<TrelloBoard> fetch(@NotNull ProgressIndicator indicator) throws Exception {
+        @NotNull
+        protected List<TrelloBoard> fetch(@NotNull ProgressIndicator indicator) throws Exception {
           final List<TrelloBoard> boards = super.fetch(indicator);
           TrelloBoard currentBoard = getSelectedItem();
           if (currentBoard != null && currentBoard != TrelloRepository.UNSPECIFIED_BOARD) {
@@ -151,7 +154,8 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
     if (myRepository.getCurrentBoard() != null && myRepository.getCurrentBoard() != TrelloRepository.UNSPECIFIED_BOARD) {
       new ListsComboBoxUpdater() {
         @Override
-        protected @NotNull List<TrelloList> fetch(@NotNull ProgressIndicator indicator) throws Exception {
+        @NotNull
+        protected List<TrelloList> fetch(@NotNull ProgressIndicator indicator) throws Exception {
           final List<TrelloList> lists = super.fetch(indicator);
           TrelloList currentList = myRepository.getCurrentList();
           if (currentList != null && currentList != TrelloRepository.UNSPECIFIED_LIST) {
@@ -169,8 +173,9 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
     }
   }
 
+  @Nullable
   @Override
-  protected @Nullable JComponent createCustomPanel() {
+  protected JComponent createCustomPanel() {
     myBoardComboBox = new ComboBox<>(300);
     myBoardLabel = new JBLabel(TaskBundle.message("label.board"), SwingConstants.RIGHT);
     myBoardLabel.setLabelFor(myBoardComboBox);
@@ -207,18 +212,21 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
       super(TrelloRepositoryEditor.this.myProject, TaskBundle.message("progress.title.downloading.trello.boards"), myBoardComboBox);
     }
 
+    @NotNull
     @Override
-    protected @NotNull List<TrelloBoard> fetch(@NotNull ProgressIndicator indicator) throws Exception {
+    protected List<TrelloBoard> fetch(@NotNull ProgressIndicator indicator) throws Exception {
       return myRepository.fetchUserBoards();
     }
 
+    @Nullable
     @Override
-    public @Nullable TrelloBoard getExtraItem() {
+    public TrelloBoard getExtraItem() {
       return TrelloRepository.UNSPECIFIED_BOARD;
     }
 
+    @Nullable
     @Override
-    public @Nullable TrelloBoard getSelectedItem() {
+    public TrelloBoard getSelectedItem() {
       return myRepository.getCurrentBoard();
     }
 
@@ -239,18 +247,21 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
       super(TrelloRepositoryEditor.this.myProject, TaskBundle.message("progress.title.downloading.trello.lists"), myListComboBox);
     }
 
+    @NotNull
     @Override
-    protected @NotNull List<TrelloList> fetch(@NotNull ProgressIndicator indicator) throws Exception {
+    protected List<TrelloList> fetch(@NotNull ProgressIndicator indicator) throws Exception {
       return myRepository.fetchBoardLists();
     }
 
+    @Nullable
     @Override
-    public @Nullable TrelloList getExtraItem() {
+    public TrelloList getExtraItem() {
       return TrelloRepository.UNSPECIFIED_LIST;
     }
 
+    @Nullable
     @Override
-    public @Nullable TrelloList getSelectedItem() {
+    public TrelloList getSelectedItem() {
       return myRepository.getCurrentList();
     }
 

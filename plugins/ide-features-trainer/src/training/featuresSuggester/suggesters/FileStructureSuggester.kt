@@ -1,4 +1,3 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.featuresSuggester.suggesters
 
 import com.intellij.find.FindManager
@@ -15,7 +14,7 @@ import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.EditorFindAction
 import training.featuresSuggester.actions.EditorFocusGainedAction
 
-private class FileStructureSuggester : AbstractFeatureSuggester() {
+class FileStructureSuggester : AbstractFeatureSuggester() {
   override val id: String = "File structure"
   override val suggestingActionDisplayName: String = FeatureSuggesterBundle.message("file.structure.name")
 
@@ -25,8 +24,6 @@ private class FileStructureSuggester : AbstractFeatureSuggester() {
   override val minSuggestingIntervalDays = 14
 
   override val languages = listOf("JAVA", "kotlin", "Python", "JavaScript", "ECMAScript 6")
-
-  override val forceCheckForStatistics = true
 
   private var prevActionIsEditorFindAction = false
 

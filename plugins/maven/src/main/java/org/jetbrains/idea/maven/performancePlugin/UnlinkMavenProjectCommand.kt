@@ -1,7 +1,6 @@
 package org.jetbrains.idea.maven.performancePlugin
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.jetbrains.performancePlugin.commands.OpenFileCommand.Companion.findFile
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
@@ -32,9 +31,7 @@ class UnlinkMavenProjectCommand(text: String, line: Int) : PerformanceCommandCor
     }
     val projectsManager = MavenProjectsManager.getInstance(project)
     withContext(Dispatchers.EDT) {
-      writeIntentReadAction {
-        projectsManager.removeManagedFiles(listOf(projectPomFile), null, null)
-      }
+      projectsManager.removeManagedFiles(listOf(projectPomFile), null, null)
     }
   }
 

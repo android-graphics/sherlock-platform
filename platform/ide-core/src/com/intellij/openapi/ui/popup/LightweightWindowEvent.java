@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.popup;
 
 import org.jetbrains.annotations.NotNull;
@@ -21,11 +21,13 @@ public class LightweightWindowEvent {
     return myOk;
   }
 
-  public @NotNull Balloon asBalloon() {
+  @NotNull
+  public Balloon asBalloon() {
     return (Balloon)myWindow;
   }
 
-  public @NotNull JBPopup asPopup() {
+  @NotNull
+  public JBPopup asPopup() {
     return (JBPopup)myWindow;
   }
 }

@@ -45,7 +45,6 @@ import java.util.Collections;
  * </p>
  *
  * @see MessageBundleReferenceContributor
- * @see ActionWithoutIdReferencesQueryExecutor
  */
 final class DevKitRelatedPropertiesProvider extends DevkitRelatedLineMarkerProviderBase {
 
@@ -73,7 +72,7 @@ final class DevKitRelatedPropertiesProvider extends DevkitRelatedLineMarkerProvi
 
     DomElement domElement = DomUtil.getDomElement(leaf);
     if (domElement instanceof ActionOrGroup actionOrGroup) {
-      createLineMarker(leaf, result, domElement, actionOrGroup.getEffectiveIdAttribute());
+      createLineMarker(leaf, result, domElement, actionOrGroup.getId());
     }
     else if (domElement instanceof OverrideText overrideText) {
       createLineMarker(leaf, result, domElement, overrideText.getPlace());
@@ -91,10 +90,10 @@ final class DevKitRelatedPropertiesProvider extends DevkitRelatedLineMarkerProvi
     final XmlElement valueXmlElement = DomUtil.getValueElement(referenceElement);
     if (valueXmlElement == null) return;
 
-    PropertiesFile propertiesFile = DescriptorI18nUtil.findBundlePropertiesFile(domElement);
-    if (propertiesFile == null) return;
+    PropertiesFile file = DescriptorI18nUtil.findBundlePropertiesFile(domElement);
+    if (file == null) return;
 
-    final Query<PsiReference> query = ReferencesSearch.search(valueXmlElement, new LocalSearchScope(propertiesFile.getContainingFile()));
+    final Query<PsiReference> query = ReferencesSearch.search(valueXmlElement, new LocalSearchScope(file.getContainingFile()));
     if (query.findFirst() == null) return;
 
     result.add(

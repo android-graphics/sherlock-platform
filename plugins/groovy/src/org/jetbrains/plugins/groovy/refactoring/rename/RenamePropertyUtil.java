@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RadioUpDownListener;
-import com.intellij.ui.components.JBBox;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -117,7 +116,8 @@ public final class RenamePropertyUtil {
       return new JLabel(RefactoringBundle.message("what.would.you.like.to.do"));
     }
 
-    private @Nullable String getPropertyName() {
+    @Nullable
+    private String getPropertyName() {
       if (myMember instanceof GrMethod) {
         return GroovyPropertyUtils.getPropertyNameByAccessorName(myMember.getName());
       }
@@ -139,7 +139,7 @@ public final class RenamePropertyUtil {
       gr.add(myRbRenameMember);
       myRbRenameProperty.setSelected(true);
 
-      JBBox box = JBBox.createVerticalBox();
+      Box box = Box.createVerticalBox();
       box.add(Box.createVerticalStrut(5));
       box.add(myRbRenameProperty);
       box.add(myRbRenameMember);

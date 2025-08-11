@@ -1,19 +1,25 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner.history;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
 import com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor;
-import com.intellij.execution.testframework.sm.runner.events.*;
+import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestFinishedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestIgnoredEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestStartedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.Stack;
+import java.util.Objects;
+
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-
-import java.util.Objects;
 
 @ApiStatus.Internal
 public class ImportedTestContentHandler extends DefaultHandler {
@@ -98,8 +104,9 @@ public class ImportedTestContentHandler extends DefaultHandler {
       }
       else if (TestResultsXmlFormatter.STATUS_IGNORED.equals(myStatus) || TestResultsXmlFormatter.STATUS_SKIPPED.equals(myStatus)) {
         myProcessor.onTestIgnored(new TestIgnoredEvent(myCurrentTest, "", currentText) {
+          @NotNull
           @Override
-          public @NotNull String getIgnoreComment() {
+          public String getIgnoreComment() {
             return "";
           }
         });

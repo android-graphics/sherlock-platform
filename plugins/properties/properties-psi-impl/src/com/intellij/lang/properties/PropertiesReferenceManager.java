@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -39,20 +39,22 @@ public final class PropertiesReferenceManager {
     myDumbService = DumbService.getInstance(project);
   }
 
-  public @NotNull List<PropertiesFile> findPropertiesFiles(@NotNull Module module, @NotNull String bundleName) {
+  @NotNull
+  public List<PropertiesFile> findPropertiesFiles(@NotNull Module module, @NotNull String bundleName) {
     ConcurrentMap<String, List<PropertiesFile>> map =
       CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
         ConcurrentMap<String, List<PropertiesFile>> factoryMap = ConcurrentFactoryMap.createMap(
-          bundleName1 -> findPropertiesFiles(GlobalSearchScope.moduleRuntimeScope(module, true), bundleName1,
+          bundleName1 -> findPropertiesFiles(GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module), bundleName1,
                                              BundleNameEvaluator.DEFAULT));
         return CachedValueProvider.Result.create(factoryMap, PsiModificationTracker.MODIFICATION_COUNT);
       });
     return map.get(bundleName);
   }
 
-  public @NotNull List<PropertiesFile> findPropertiesFiles(@NotNull GlobalSearchScope searchScope,
-                                                           @NotNull String bundleName,
-                                                           @NotNull BundleNameEvaluator bundleNameEvaluator) {
+  @NotNull
+  public List<PropertiesFile> findPropertiesFiles(@NotNull GlobalSearchScope searchScope,
+                                                  @NotNull String bundleName,
+                                                  @NotNull BundleNameEvaluator bundleNameEvaluator) {
 
 
     final ArrayList<PropertiesFile> result = new ArrayList<>();
@@ -65,9 +67,10 @@ public final class PropertiesReferenceManager {
     return result;
   }
 
-  public @Nullable PropertiesFile findPropertiesFile(@NotNull Module module,
-                                                     @NotNull String bundleName,
-                                                     @Nullable Locale locale) {
+  @Nullable
+  public PropertiesFile findPropertiesFile(@NotNull Module module,
+                                           @NotNull String bundleName,
+                                           @Nullable Locale locale) {
     List<PropertiesFile> propFiles = findPropertiesFiles(module, bundleName);
     if (locale != null) {
       for(PropertiesFile propFile: propFiles) {
@@ -79,7 +82,7 @@ public final class PropertiesReferenceManager {
 
     // fallback to default locale
     for(PropertiesFile propFile: propFiles) {
-      if (propFile.getLocale().getLanguage().isEmpty() || propFile.getLocale().equals(Locale.getDefault())) {
+      if (propFile.getLocale().getLanguage().length() == 0 || propFile.getLocale().equals(Locale.getDefault())) {
         return propFile;
       }
     }
@@ -92,13 +95,13 @@ public final class PropertiesReferenceManager {
     return null;
   }
 
-  public boolean processAllPropertiesFiles(final @NotNull PropertiesFileProcessor processor) {
+  public boolean processAllPropertiesFiles(@NotNull final PropertiesFileProcessor processor) {
     return processPropertiesFiles(GlobalSearchScope.allScope(myPsiManager.getProject()), processor, BundleNameEvaluator.DEFAULT);
   }
 
-  public boolean processPropertiesFiles(final @NotNull GlobalSearchScope searchScope,
-                                        final @NotNull PropertiesFileProcessor processor,
-                                        final @NotNull BundleNameEvaluator evaluator) {
+  public boolean processPropertiesFiles(@NotNull final GlobalSearchScope searchScope,
+                                        @NotNull final PropertiesFileProcessor processor,
+                                        @NotNull final BundleNameEvaluator evaluator) {
     for(VirtualFile file:FileTypeIndex.getFiles(PropertiesFileType.INSTANCE, searchScope)) {
       if (!processFile(file, evaluator, processor)) return false;
     }

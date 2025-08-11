@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.tree;
 
@@ -8,32 +8,36 @@ import com.intellij.psi.StubBuilder;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Arrays;
 
-/**
- * OBSOLESCENCE NOTE:
- * Use {@link com.intellij.psi.stubs.LanguageStubDefinition}, {@link com.intellij.psi.stubs.StubElementFactory}, {@link com.intellij.psi.stubs.LightStubElementFactory} instead
- */
-@ApiStatus.Obsolete
 public class IStubFileElementType<T extends PsiFileStub> extends StubFileElementType<T> {
+  private static final SynchronizedClearableLazy<Integer> TEMPLATE_STUB_BASE_VERSION =
+    new SynchronizedClearableLazy<>(IStubFileElementType::calcTemplateStubBaseVersion);
+
   public IStubFileElementType(Language language) {
     super(language);
   }
 
   public IStubFileElementType(@NonNls String debugName, Language language) {
     super(debugName, language);
-    if (hasNonTrivialExternalId()) {
+    if (hasNonTrivialExternalId() && !isOutOfOurControl()) {
       IStubElementType.checkNotInstantiatedTooLate(getClass());
     }
-    TemplateLanguageStubBaseVersion.dropVersion();
+    dropTemplateStubBaseVersion();
   }
 
   private boolean hasNonTrivialExternalId() {
     return ReflectionUtil.getMethodDeclaringClass(getClass(), "getExternalId") != IStubFileElementType.class;
+  }
+
+  private boolean isOutOfOurControl() {
+    return getClass().getName().contains(".kotlin."); // KT-28732
   }
 
   /**
@@ -44,13 +48,13 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
    * data language stub changes.
    * <p>
    * Important: Negative values are not allowed! The platform relies on the fact that template languages have stub versions bigger than
-   * {@link TemplateLanguageStubBaseVersion#getVersion()}, see {@link StubBuilderType#getVersion()}. At the same time
-   * {@link TemplateLanguageStubBaseVersion#getVersion()} is computed as a sum of stub versions of all non-template languages.
+   * {@link IStubFileElementType#TEMPLATE_STUB_BASE_VERSION}, see {@link StubBuilderType#getVersion()}. At the same time
+   * {@link IStubFileElementType#TEMPLATE_STUB_BASE_VERSION} is computed as a sum of stub versions of all non-template languages.
    *
    * @return stub version
    */
   public int getStubVersion() {
-    return getLanguage() instanceof TemplateLanguage ? TemplateLanguageStubBaseVersion.getVersion() : 0;
+    return getLanguage() instanceof TemplateLanguage ? TEMPLATE_STUB_BASE_VERSION.getValue() : 0;
   }
 
   public StubBuilder getBuilder() {
@@ -64,7 +68,7 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
    */
   @Override
   public @NonNls @NotNull String getExternalId() {
-    return StubSerializerId.DEFAULT_EXTERNAL_ID;
+    return DEFAULT_EXTERNAL_ID;
   }
 
   @Override
@@ -85,6 +89,17 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
   }
 
   public static int getTemplateStubBaseVersion() {
-    return TemplateLanguageStubBaseVersion.getVersion();
+    return TEMPLATE_STUB_BASE_VERSION.getValue().intValue();
+  }
+
+  private static int calcTemplateStubBaseVersion() {
+    IElementType[] dataElementTypes = IElementType.enumerate(
+      (elementType) -> elementType instanceof IStubFileElementType && !(elementType.getLanguage() instanceof TemplateLanguage));
+    return Arrays.stream(dataElementTypes).mapToInt((e) -> ((IStubFileElementType<?>)e).getStubVersion()).sum();
+  }
+
+  @ApiStatus.Internal
+  public static void dropTemplateStubBaseVersion() {
+    TEMPLATE_STUB_BASE_VERSION.drop();
   }
 }

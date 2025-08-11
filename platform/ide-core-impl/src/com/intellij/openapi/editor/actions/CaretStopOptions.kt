@@ -3,9 +3,8 @@ package com.intellij.openapi.editor.actions
 
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.OptionTag
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+
 data class CaretStop
 @JvmOverloads constructor(@Attribute("start") val isAtStart: Boolean = false,
                           @Attribute("end") val isAtEnd: Boolean = false) {
@@ -17,7 +16,6 @@ data class CaretStop
   } // @formatter:on
 }
 
-@ApiStatus.Internal
 data class CaretStopPolicy(@OptionTag("WORD") val wordStop: CaretStop = CaretStop.NONE,
                            @OptionTag("LINE") val lineStop: CaretStop = CaretStop.NONE) {
   companion object { // @formatter:off
@@ -28,7 +26,6 @@ data class CaretStopPolicy(@OptionTag("WORD") val wordStop: CaretStop = CaretSto
   } // @formatter:on
 }
 
-@ApiStatus.Internal
 data class CaretStopOptions(@OptionTag("BACKWARD") val backwardPolicy: CaretStopPolicy,
                             @OptionTag("FORWARD") val forwardPolicy: CaretStopPolicy) {
   private constructor(other: CaretStopOptions) : this(backwardPolicy = other.backwardPolicy,
@@ -40,7 +37,6 @@ data class CaretStopOptions(@OptionTag("BACKWARD") val backwardPolicy: CaretStop
 
 // transposed human-friendly options view and constants
 
-@ApiStatus.Internal
 data class CaretStopBoundary(val backward: CaretStop = CaretStop.NONE,
                              val forward: CaretStop = CaretStop.NONE) {
   companion object { // @formatter:off
@@ -57,7 +53,6 @@ data class CaretStopBoundary(val backward: CaretStop = CaretStop.NONE,
  * While using CaretStopOptions is more convenient from the code point of view (chain: backward/forward -> word/line -> start/end),
  * it is more easy to reason about when the direction and boundary axes are switched (word/line -> backward/forward -> start/end).
  */
-@ApiStatus.Internal
 data class CaretStopOptionsTransposed(val wordBoundary: CaretStopBoundary,
                                       val lineBoundary: CaretStopBoundary) {
   fun toCaretStopOptions(): CaretStopOptions =

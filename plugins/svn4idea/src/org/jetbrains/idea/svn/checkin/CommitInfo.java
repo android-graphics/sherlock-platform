@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -13,7 +13,7 @@ public final class CommitInfo {
   public static final CommitInfo EMPTY = new CommitInfo.Builder().setRevisionNumber(-1).build();
 
   private final long myRevisionNumber;
-  private final @NotNull Revision myRevision;
+  @NotNull private final Revision myRevision;
   private final Date myDate;
   private final String myAuthor;
 
@@ -28,7 +28,8 @@ public final class CommitInfo {
     return myRevisionNumber;
   }
 
-  public @NotNull Revision getRevision() {
+  @NotNull
+  public Revision getRevision() {
     return myRevision;
   }
 
@@ -75,22 +76,26 @@ public final class CommitInfo {
       return date;
     }
 
-    public @NotNull Builder setRevisionNumber(long revisionNumber) {
+    @NotNull
+    public Builder setRevisionNumber(long revisionNumber) {
       this.revisionNumber = revisionNumber;
       return this;
     }
 
-    public @NotNull Builder setAuthor(String author) {
+    @NotNull
+    public Builder setAuthor(String author) {
       this.author = author;
       return this;
     }
 
-    public @NotNull Builder setDate(Date date) {
+    @NotNull
+    public Builder setDate(Date date) {
       this.date = date;
       return this;
     }
 
-    public @NotNull CommitInfo build() {
+    @NotNull
+    public CommitInfo build() {
       return new CommitInfo(this);
     }
   }

@@ -59,7 +59,7 @@ interface GradleProjectsPublishingDsl {
     }
 }
 
-object GradleProjectsPublishingTestsFeature : TestFeature<ProjectsToPublish> {
+internal object GradleProjectsPublishingTestsFeature : TestFeature<ProjectsToPublish> {
     override fun createDefaultConfiguration(): ProjectsToPublish = ProjectsToPublish(mutableSetOf())
 
     override fun KotlinMppTestsContext.beforeImport() {

@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.treeStructure.NullNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +21,6 @@ import java.awt.event.InputEvent;
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Internal
 public class SelectExternalTaskDialog extends SelectExternalSystemNodeDialog {
 
   private static final Class<? extends ExternalSystemNode>[] NODE_CLASSES = ContainerUtil.ar(

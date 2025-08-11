@@ -46,12 +46,13 @@ public class ChainedComparisonsQuickFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.chained.comparison");
   }
 
   @Override
-  public void applyFix(final @NotNull Project project, final @NotNull PsiElement element, final @NotNull ModPsiUpdater updater) {
+  public void applyFix(@NotNull final Project project, @NotNull final PsiElement element, @NotNull final ModPsiUpdater updater) {
     final PyBinaryExpression expression = as(element, PyBinaryExpression.class);
     if (isLogicalAndExpression(expression)) {
       final PyBinaryExpression rightExpression = as(expression.getRightExpression(), PyBinaryExpression.class);
@@ -97,7 +98,8 @@ public class ChainedComparisonsQuickFix extends PsiUpdateModCommandQuickFix {
     rightExpression.delete();
   }
 
-  private static @NotNull PyExpression makePsiConsistentBinaryExpression(@NotNull Project project, @NotNull PyBinaryExpression binaryExpression) {
+  @NotNull
+  private static PyExpression makePsiConsistentBinaryExpression(@NotNull Project project, @NotNull PyBinaryExpression binaryExpression) {
     final ArrayList<PyExpression> elements = new ArrayList<>();
     final ArrayList<String> operators = new ArrayList<>();
     collectExpressionsDfs(elements, operators, binaryExpression);
@@ -127,9 +129,10 @@ public class ChainedComparisonsQuickFix extends PsiUpdateModCommandQuickFix {
     }
   }
 
-  private static @Nullable PyExpression buildResultExpression(@NotNull Project project,
-                                                              @NotNull ArrayList<PyExpression> elements,
-                                                              @NotNull ArrayList<String> operators) {
+  @Nullable
+  private static PyExpression buildResultExpression(@NotNull Project project,
+                                                    @NotNull ArrayList<PyExpression> elements,
+                                                    @NotNull ArrayList<String> operators) {
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     final int size = elements.size();
     if (elements.isEmpty()) return null;
@@ -145,7 +148,8 @@ public class ChainedComparisonsQuickFix extends PsiUpdateModCommandQuickFix {
   }
 
 
-  private static @NotNull PsiElement getLeftestOperator(@NotNull PyBinaryExpression expression) {
+  @NotNull
+  private static PsiElement getLeftestOperator(@NotNull PyBinaryExpression expression) {
     PsiElement op = expression.getPsiOperator();
     while (isComparisonExpression(expression.getLeftExpression())) {
       expression = (PyBinaryExpression)expression.getLeftExpression();
@@ -155,7 +159,8 @@ public class ChainedComparisonsQuickFix extends PsiUpdateModCommandQuickFix {
     return op;
   }
 
-  private static @NotNull PyExpression invertExpression(@NotNull PyBinaryExpression expression, @NotNull PyElementGenerator elementGenerator) {
+  @NotNull
+  private static PyExpression invertExpression(@NotNull PyBinaryExpression expression, @NotNull PyElementGenerator elementGenerator) {
     if (isComparisonExpression(expression)) {
       final PyExpression left = expression.getLeftExpression();
       final PyExpression right = expression.getRightExpression();
@@ -170,7 +175,8 @@ public class ChainedComparisonsQuickFix extends PsiUpdateModCommandQuickFix {
     }
   }
 
-  private static @NotNull String invertOperator(@NotNull PsiElement op) {
+  @NotNull
+  private static String invertOperator(@NotNull PsiElement op) {
     if (op.getText().equals(">")) {
       return "<";
     }
@@ -186,7 +192,8 @@ public class ChainedComparisonsQuickFix extends PsiUpdateModCommandQuickFix {
     return op.getText();
   }
 
-  private static @Nullable PyExpression getLargeRightExpression(@NotNull PyBinaryExpression expression, @NotNull Project project) {
+  @Nullable
+  static private PyExpression getLargeRightExpression(@NotNull PyBinaryExpression expression, @NotNull Project project) {
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     PyExpression left = expression.getLeftExpression();
     PyExpression right = expression.getRightExpression();

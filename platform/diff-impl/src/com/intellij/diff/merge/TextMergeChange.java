@@ -28,11 +28,11 @@ import java.util.Collections;
 @ApiStatus.Internal
 public class TextMergeChange extends ThreesideDiffChangeBase {
 
-  private final @NotNull TextMergeViewer myMergeViewer;
-  protected final @NotNull MergeThreesideViewer myViewer;
+  @NotNull private final TextMergeViewer myMergeViewer;
+  @NotNull protected final MergeThreesideViewer myViewer;
 
   private final int myIndex;
-  private final @NotNull MergeLineFragment myFragment;
+  @NotNull private final MergeLineFragment myFragment;
   private final boolean myIsImportChange;
 
   protected final boolean[] myResolved = new boolean[2];
@@ -40,7 +40,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   private boolean myIsResolvedWithAI;
 
-  private @Nullable MergeInnerDifferences myInnerFragments; // warning: might be out of date
+  @Nullable private MergeInnerDifferences myInnerFragments; // warning: might be out of date
 
   @RequiresEdt
   public TextMergeChange(int index,
@@ -163,17 +163,20 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     return new MyAIResolvedDiffType(baseType);
   }
 
+  @NotNull
   @Override
-  protected @NotNull Editor getEditor(@NotNull ThreeSide side) {
+  protected Editor getEditor(@NotNull ThreeSide side) {
     return myViewer.getEditor(side);
   }
 
+  @Nullable
   @Override
-  protected @Nullable MergeInnerDifferences getInnerFragments() {
+  protected MergeInnerDifferences getInnerFragments() {
     return myInnerFragments;
   }
 
-  public @NotNull MergeLineFragment getFragment() {
+  @NotNull
+  public MergeLineFragment getFragment() {
     return myFragment;
   }
 
@@ -205,7 +208,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     ContainerUtil.addIfNotNull(myOperations, createResetOperation());
   }
 
-  private @Nullable DiffGutterOperation createOperation(@NotNull ThreeSide side, @NotNull DiffGutterOperation.ModifiersRendererBuilder builder) {
+  @Nullable
+  private DiffGutterOperation createOperation(@NotNull ThreeSide side, @NotNull DiffGutterOperation.ModifiersRendererBuilder builder) {
     if (isResolved(side)) return null;
 
     EditorEx editor = myViewer.getEditor(side);
@@ -214,13 +218,15 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     return new DiffGutterOperation.WithModifiers(editor, offset, myViewer.getModifierProvider(), builder);
   }
 
-  private @Nullable DiffGutterOperation createResolveOperation() {
+  @Nullable
+  private DiffGutterOperation createResolveOperation() {
     return createOperation(ThreeSide.BASE, (ctrlPressed, shiftPressed, altPressed) -> {
       return createResolveRenderer();
     });
   }
 
-  private @Nullable DiffGutterOperation createAcceptOperation(@NotNull Side versionSide, @NotNull OperationType type) {
+  @Nullable
+  private DiffGutterOperation createAcceptOperation(@NotNull Side versionSide, @NotNull OperationType type) {
     ThreeSide side = versionSide.select(ThreeSide.LEFT, ThreeSide.RIGHT);
     return createOperation(side, (ctrlPressed, shiftPressed, altPressed) -> {
       if (!isChange(versionSide)) return null;
@@ -234,7 +240,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     });
   }
 
-  private @Nullable DiffGutterOperation createResetOperation() {
+  @Nullable
+  private DiffGutterOperation createResetOperation() {
     if (!isResolved() || !myIsResolvedWithAI) return null;
 
     EditorEx editor = myViewer.getEditor(ThreeSide.BASE);
@@ -250,7 +257,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     });
   }
 
-  private @Nullable GutterIconRenderer createApplyRenderer(final @NotNull Side side, final boolean modifier) {
+  @Nullable
+  private GutterIconRenderer createApplyRenderer(@NotNull final Side side, final boolean modifier) {
     if (isResolved(side)) return null;
     Icon icon = isOnesideAppliedConflict() ? DiffUtil.getArrowDownIcon(side) : DiffUtil.getArrowIcon(side);
     return createIconRenderer(DiffBundle.message("action.presentation.diff.accept.text"), icon, isConflict(), () -> {
@@ -260,7 +268,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     });
   }
 
-  private @Nullable GutterIconRenderer createIgnoreRenderer(final @NotNull Side side, final boolean modifier) {
+  @Nullable
+  private GutterIconRenderer createIgnoreRenderer(@NotNull final Side side, final boolean modifier) {
     if (isResolved(side)) return null;
     return createIconRenderer(DiffBundle.message("action.presentation.merge.ignore.text"), AllIcons.Diff.Remove, isConflict(), () -> {
       myViewer.executeMergeCommand(DiffBundle.message("merge.dialog.ignore.change.command"), Collections.singletonList(this),
@@ -268,7 +277,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     });
   }
 
-  private @Nullable GutterIconRenderer createResolveRenderer() {
+  @Nullable
+  private GutterIconRenderer createResolveRenderer() {
     if (!this.isConflict() || !myViewer.canResolveChangeAutomatically(this, ThreeSide.BASE)) return null;
 
     return createIconRenderer(DiffBundle.message("action.presentation.merge.resolve.text"), AllIcons.Diff.MagicResolve, false, () -> {
@@ -277,10 +287,11 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     });
   }
 
-  private static @NotNull GutterIconRenderer createIconRenderer(final @NotNull @NlsContexts.Tooltip String text,
-                                                                final @NotNull Icon icon,
-                                                                boolean ctrlClickVisible,
-                                                                final @NotNull Runnable perform) {
+  @NotNull
+  private static GutterIconRenderer createIconRenderer(@NotNull final @NlsContexts.Tooltip String text,
+                                                       @NotNull final Icon icon,
+                                                       boolean ctrlClickVisible,
+                                                       @NotNull final Runnable perform) {
     @Nls String appendix = ctrlClickVisible ? DiffBundle.message("tooltip.merge.ctrl.click.to.resolve.conflict") : null;
     final String tooltipText = DiffUtil.createTooltipText(text, appendix);
     return new DiffGutterRenderer(icon, tooltipText) {
@@ -299,7 +310,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   // State
   //
 
-  public @NotNull State storeState() {
+  @NotNull
+  public State storeState() {
     return new State(
       myIndex,
       getStartLine(),

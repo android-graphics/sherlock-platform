@@ -56,7 +56,6 @@ public abstract class PatternCondition<T> {
 
   public abstract boolean accepts(@NotNull T t, final ProcessingContext context);
 
-  @Override
   public @NonNls String toString() {
     final StringBuilder builder = new StringBuilder();
     append(builder, "");

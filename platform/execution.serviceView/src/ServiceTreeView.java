@@ -49,9 +49,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.ref.WeakReference;
-import java.util.*;
 import java.util.List;
 import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.CancellationException;
 
 import static com.intellij.platform.execution.serviceView.ServiceViewDragHelper.getTheOnlyRootContributor;
@@ -100,8 +100,9 @@ final class ServiceTreeView extends ServiceView {
           }));
       }
 
+      @Nullable
       @Override
-      public @Nullable ServiceViewItem getSelectedItem() {
+      public ServiceViewItem getSelectedItem() {
         return myLastSelection;
       }
     };
@@ -258,7 +259,7 @@ final class ServiceTreeView extends ServiceView {
       NavBarVm vm = myNavBarPanel.getModel();
       if (vm != null) {
         myNavBarPanel.updateModel();
-        vm.selectTail(false);
+        vm.selectTail();
       }
     }
   }
@@ -559,8 +560,9 @@ final class ServiceTreeView extends ServiceView {
       myPath = ContainerUtil.newLinkedList(path.getPath());
     }
 
+    @NotNull
     @Override
-    public @NotNull Action visit(@NotNull TreePath path) {
+    public Action visit(@NotNull TreePath path) {
       Object node = path.getLastPathComponent();
       if (node.equals(myPath.peek())) {
         myPath.poll();
@@ -577,8 +579,9 @@ final class ServiceTreeView extends ServiceView {
       myPaths = paths;
     }
 
+    @NotNull
     @Override
-    public @NotNull Action visit(@NotNull TreePath path) {
+    public Action visit(@NotNull TreePath path) {
       if (path.getParentPath() == null) return Action.CONTINUE;
 
       for (TreePath treePath : myPaths) {

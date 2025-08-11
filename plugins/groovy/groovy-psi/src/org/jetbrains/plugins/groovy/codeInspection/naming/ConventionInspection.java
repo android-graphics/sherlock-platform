@@ -47,7 +47,8 @@ public abstract class ConventionInspection extends BaseInspection {
 
   protected Pattern m_regexPattern = Pattern.compile(m_regex);
 
-  protected abstract @NonNls String getDefaultRegex();
+  @NonNls
+  protected abstract String getDefaultRegex();
 
   protected abstract int getDefaultMinLength();
 

@@ -18,32 +18,17 @@ class ExternalSystemExecutionTracer {
 
   val stdout: MutableList<String> = ArrayList()
   val stderr: MutableList<String> = ArrayList()
-  val output: MutableList<String> = ArrayList()
   val messages: MutableList<MessageEvent> = ArrayList()
 
-  inline fun <R> traceExecution(mode: PrintOutputMode = PrintOutputMode.NEVER, action: () -> R): R {
-    try {
-      return Disposer.newDisposable().use { disposable ->
-        install(disposable)
-        action()
-      }
-    }
-    catch (ex: Throwable) {
-      if (mode == PrintOutputMode.ON_EXCEPTION) {
-        printExecutionOutput()
-      }
-      throw ex
-    }
-    finally {
-      if (mode == PrintOutputMode.ALWAYS) {
-        printExecutionOutput()
-      }
+  inline fun <R> traceExecution(action: () -> R): R {
+    return Disposer.newDisposable().use { disposable ->
+      install(disposable)
+      action()
     }
   }
 
   fun install(parentDisposable: Disposable) {
     whenExternalSystemTaskOutputAdded(parentDisposable) { _, text, stdOut ->
-      output.add(text)
       when (stdOut) {
         true -> stdout.add(text)
         else -> stderr.add(text)
@@ -76,15 +61,16 @@ class ExternalSystemExecutionTracer {
       println(it.result?.details)
     }
     println("MESSAGES END")
-  }
 
-  enum class PrintOutputMode { NEVER, ALWAYS, ON_EXCEPTION }
+  }
 
   companion object {
 
     inline fun <R> assertExecutionStatusIsSuccess(action: () -> R): R {
       val tracer = ExternalSystemExecutionTracer()
-      val result = tracer.traceExecution(PrintOutputMode.ON_EXCEPTION, action)
+      val result = tracer.traceExecution {
+        action()
+      }
       val status = tracer.status
       if (status != OperationExecutionStatus.Success) {
         tracer.printExecutionOutput()
@@ -97,13 +83,28 @@ class ExternalSystemExecutionTracer {
     }
 
     inline fun <R> printExecutionOutputOnException(action: () -> R): R {
-      return ExternalSystemExecutionTracer()
-        .traceExecution(PrintOutputMode.ON_EXCEPTION, action)
+      val tracer = ExternalSystemExecutionTracer()
+      try {
+        return tracer.traceExecution {
+          action()
+        }
+      }
+      catch (ex: Throwable) {
+        tracer.printExecutionOutput()
+        throw ex
+      }
     }
 
     inline fun <R> printExecutionOutput(action: () -> R): R {
-      return ExternalSystemExecutionTracer()
-        .traceExecution(PrintOutputMode.ALWAYS, action)
+      val tracer = ExternalSystemExecutionTracer()
+      try {
+        return tracer.traceExecution {
+          action()
+        }
+      }
+      finally {
+        tracer.printExecutionOutput()
+      }
     }
   }
 }

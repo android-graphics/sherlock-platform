@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -16,8 +16,7 @@ public interface VcsIgnoreManager {
   void removeRunConfigurationFromVcsIgnore(@NotNull @NlsSafe String configurationName);
 
   /**
-   * Check if the file could be potentially ignored. The implementation expected to be fast-enough.
-   * However, this doesn't mean that the file is ignored in VCS.
+   * Check if the file could be potentially ignored. However, this doesn't mean that the file is ignored in VCS.
    * To check if the file ignored use {@link ChangeListManager#isIgnoredFile(VirtualFile)}
    *
    * @param file to check
@@ -25,9 +24,6 @@ public interface VcsIgnoreManager {
    */
   boolean isPotentiallyIgnoredFile(@NotNull VirtualFile file);
 
-  /**
-   * @see #isPotentiallyIgnoredFile(VirtualFile)
-   */
   boolean isPotentiallyIgnoredFile(@NotNull FilePath filePath);
 
   static VcsIgnoreManager getInstance(@NotNull Project project) {

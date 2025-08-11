@@ -35,7 +35,6 @@ public final class InternalProjectIdentifier implements ProjectIdentifier {
     return this.build.getRootDir();
   }
 
-  @Override
   public String toString() {
     return String.format("project=%s, %s", projectPath, build);
   }

@@ -5,12 +5,11 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.TypeOfAnnotationMemberFix
-import org.jetbrains.kotlin.psi.KtTypeReference
 
 internal object TypeOfAnnotationMemberFixFactory {
 
   val typeOfAnnotationMemberFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InvalidTypeOfAnnotationMember ->
-    val typeReference = diagnostic.psi as? KtTypeReference ?: return@ModCommandBased emptyList()
+    val typeReference = diagnostic.psi
 
     val arrayElementType = typeReference.type.arrayElementType ?: return@ModCommandBased emptyList()
     if (!arrayElementType.isPrimitive) return@ModCommandBased emptyList()

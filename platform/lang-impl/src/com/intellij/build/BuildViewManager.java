@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build;
 
 import com.intellij.build.progress.BuildProgress;
@@ -18,8 +18,9 @@ public class BuildViewManager extends AbstractViewManager {
     super(project);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getViewName() {
+  public String getViewName() {
     return LangBundle.message("tab.title.build.output");
   }
 

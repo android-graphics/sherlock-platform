@@ -1,1 +1,0 @@
-val prefixed = $$"Foo <caret> Baz"

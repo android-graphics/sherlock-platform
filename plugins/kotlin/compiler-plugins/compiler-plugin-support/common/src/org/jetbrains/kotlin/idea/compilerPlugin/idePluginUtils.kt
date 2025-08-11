@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.getInstance
-import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import java.io.File
 
 fun Module.getSpecialAnnotations(prefix: String): List<String> =
@@ -34,26 +33,16 @@ fun modifyCompilerArgumentsForPluginWithFacetSettings(
     compilerPluginId: String,
     pluginName: String
 ) {
-    var shouldSetupCompilerArguments = false
+    // investigate why copyBean() sometimes throws exceptions
+    val commonArguments = facetSettings.compilerArguments ?: CommonCompilerArguments.DummyImpl()
 
-    val commonArguments = facetSettings.compilerArguments ?: CommonCompilerArguments.DummyImpl().also {
-        shouldSetupCompilerArguments = true
-    }
+    /** See [CommonCompilerArguments.PLUGIN_OPTION_FORMAT] **/
+    val newOptionsForPlugin = setup?.options?.map { "plugin:$compilerPluginId:${it.key}=${it.value}" } ?: emptyList()
 
-    val newAllPluginOptions = getNewPluginOptionsOrNull(setup, compilerPluginId, commonArguments)
-    val newPluginClasspaths = getNewPluginClasspathsOrNull(commonArguments, pluginName, setup)
+    val oldAllPluginOptions =
+        (commonArguments.pluginOptions ?: emptyArray()).filterTo(mutableListOf()) { !it.startsWith("plugin:$compilerPluginId:") }
+    val newAllPluginOptions = oldAllPluginOptions + newOptionsForPlugin
 
-    if (shouldSetupCompilerArguments)
-        setupCompilerArguments(facetSettings, commonArguments, newAllPluginOptions, newPluginClasspaths)
-    else
-        updateCompilerArgumentsIfNeeded(facetSettings, newAllPluginOptions, newPluginClasspaths)
-}
-
-private fun getNewPluginClasspathsOrNull(
-    commonArguments: CommonCompilerArguments,
-    pluginName: String,
-    setup: CompilerPluginSetup?
-): Array<String>? {
     val oldPluginClasspaths = (commonArguments.pluginClasspaths ?: emptyArray()).filterTo(mutableListOf()) {
         val lastIndexOfFile = it.lastIndexOfAny(charArrayOf('/', File.separatorChar))
         if (lastIndexOfFile < 0) {
@@ -62,45 +51,10 @@ private fun getNewPluginClasspathsOrNull(
         !it.drop(lastIndexOfFile + 1).matches("(kotlin-)?(maven-)?$pluginName-.*\\.jar".toRegex())
     }
 
-    val newClasspath = setup?.classpath ?: emptyList()
-    val newPluginClasspaths = (oldPluginClasspaths + newClasspath).toTypedArray()
+    val newPluginClasspaths = oldPluginClasspaths + (setup?.classpath ?: emptyList())
 
-    return if (newPluginClasspaths.contentEquals(commonArguments.pluginClasspaths)) null else newPluginClasspaths
-}
+    commonArguments.pluginOptions = newAllPluginOptions.toTypedArray()
+    commonArguments.pluginClasspaths = newPluginClasspaths.toTypedArray()
 
-private fun getNewPluginOptionsOrNull(
-    setup: CompilerPluginSetup?,
-    compilerPluginId: String,
-    commonArguments: CommonCompilerArguments,
-): Array<String>? {
-    // See [CommonCompilerArguments.PLUGIN_OPTION_FORMAT]
-    val newOptionsForPlugin = setup?.options?.map { "plugin:$compilerPluginId:${it.key}=${it.value}" } ?: emptyList()
-
-    val oldAllPluginOptions =
-        (commonArguments.pluginOptions ?: emptyArray()).filterTo(mutableListOf()) { !it.startsWith("plugin:$compilerPluginId:") }
-    val newAllPluginOptions = (oldAllPluginOptions + newOptionsForPlugin).toTypedArray()
-    return if (newAllPluginOptions.contentEquals(commonArguments.pluginOptions)) null else newAllPluginOptions
-}
-
-private fun setupCompilerArguments(
-    facetSettings: IKotlinFacetSettings,
-    commonArguments: CommonCompilerArguments,
-    newOptionsForPlugin: Array<String>?,
-    newClasspath: Array<String>?,
-) {
-    newOptionsForPlugin?.also { commonArguments.pluginOptions = newOptionsForPlugin }
-    newClasspath?.also { commonArguments.pluginClasspaths = newClasspath }
     facetSettings.compilerArguments = commonArguments
-}
-
-private fun updateCompilerArgumentsIfNeeded(
-    facetSettings: IKotlinFacetSettings,
-    newOptionsForPlugin: Array<String>?,
-    newClasspath: Array<String>?,
-) {
-    if (newOptionsForPlugin == null && newClasspath == null) return
-    facetSettings.updateCompilerArguments {
-        newOptionsForPlugin?.also { pluginOptions = newOptionsForPlugin }
-        newClasspath?.also { pluginClasspaths = newClasspath }
-    }
 }

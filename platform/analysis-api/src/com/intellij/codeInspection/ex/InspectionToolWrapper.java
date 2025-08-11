@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -10,17 +10,19 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.l10n.LocalizationUtil;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.ResourceUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,8 +38,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   private static final Pattern ADDENDUM_PLACE = Pattern.compile("<p><small>New in [\\d.]+</small></p>|(</body>)?\\s*</html>", Pattern.CASE_INSENSITIVE);
 
   protected T myTool;
-  @ApiStatus.Internal
-  public final E myEP;
+  protected final E myEP;
   private @Nullable HighlightDisplayKey myDisplayKey;
 
   private volatile Set<String> applicableToLanguages; // lazy initialized
@@ -174,21 +175,15 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   public @Nls String loadDescription() {
-    String description = getStaticDescription();
-    if (description != null) {
-      return description;
-    }
-
+    final String description = getStaticDescription();
+    if (description != null) return description;
     try {
       InputStream descriptionStream = getDescriptionStream();
-      if (descriptionStream != null) {
-        //noinspection HardCodedStringLiteral(IDEA-249976)
-        return insertAddendum(ResourceUtil.loadText(descriptionStream), getTool().getDescriptionAddendum());
-      }
-      return null;
+      //noinspection HardCodedStringLiteral(IDEA-249976)
+      return descriptionStream != null ? insertAddendum(ResourceUtil.loadText(descriptionStream),
+                                         getTool().getDescriptionAddendum()) : null;
     }
-    catch (IOException ignored) {
-    }
+    catch (IOException ignored) { }
 
     return getTool().loadDescription();
   }
@@ -206,15 +201,13 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   private @Nullable InputStream getDescriptionStream() {
-    String path = INSPECTION_DESCRIPTIONS_FOLDER + "/" + getDescriptionFileName();
-    ClassLoader classLoader;
-    if (myEP == null) {
-      classLoader = getTool().getClass().getClassLoader();
+    Application app = ApplicationManager.getApplication();
+    Path path = Path.of(INSPECTION_DESCRIPTIONS_FOLDER).resolve(getDescriptionFileName());
+    if (myEP == null || app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+      return LocalizationUtil.INSTANCE.getResourceAsStream(getDescriptionContextClass().getClassLoader(), path);
     }
-    else {
-      classLoader = myEP.getPluginDescriptor().getPluginClassLoader();
-    }
-    return LocalizationUtil.INSTANCE.getResourceAsStream(classLoader, path, null);
+
+    return LocalizationUtil.INSTANCE.getResourceAsStream(myEP.getPluginDescriptor().getPluginClassLoader(), path);
   }
 
   private @NotNull String getDescriptionFileName() {
@@ -225,7 +218,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return getShortName();
   }
 
-  public final @NotNull Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
+  public @NotNull Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
     return getTool().getClass();
   }
 
@@ -233,7 +226,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return getTool().getMainToolId();
   }
 
-  public final E getExtension() {
+  public E getExtension() {
     return myEP;
   }
 

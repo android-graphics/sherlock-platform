@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.dataFlow.DfaUtil;
@@ -76,13 +76,15 @@ class ResultUtil {
     return new Pending(DfaUtil.upwardsAntichain(sum, (l, r) -> r.isSuperStateOf(l)));
   }
 
-  private @Nullable Result checkFinal(Result r1, Result r2) {
+  @Nullable
+  private Result checkFinal(Result r1, Result r2) {
     if (r1 == top) return r1;
     if (r1 == bottom) return r2;
     return null;
   }
 
-  private @NotNull Result addSingle(Pending pending, Value value) {
+  @NotNull
+  private Result addSingle(Pending pending, Value value) {
     for (int i = 0; i < pending.delta.length; i++) {
       Component component = pending.delta[i];
       if (component.ids.length == 0) {

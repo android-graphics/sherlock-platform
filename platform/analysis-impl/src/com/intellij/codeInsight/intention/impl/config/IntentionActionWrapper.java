@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.CommonIntentionAction;
@@ -17,7 +17,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,8 +38,7 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
     return getDescriptionDirectoryName(getImplementationClassName());
   }
 
-  @ApiStatus.Internal
-  public static @NotNull String getDescriptionDirectoryName(@NotNull String fqn) {
+  static @NotNull String getDescriptionDirectoryName(@NotNull String fqn) {
     return fqn.substring(fqn.lastIndexOf('.') + 1).replaceAll("\\$", "");
   }
 
@@ -118,8 +116,7 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
     return extension.className;
   }
 
-  @ApiStatus.Internal
-  public @NotNull ClassLoader getImplementationClassLoader() {
+  @NotNull ClassLoader getImplementationClassLoader() {
     return extension.getLoaderForClass();
   }
 

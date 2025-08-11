@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
@@ -12,11 +12,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.rt.execution.application.AppMainV2;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.File;
 
 public final class ProcessProxyFactoryImpl extends ProcessProxyFactory {
   private static final boolean ourMayUseLauncher = !Boolean.getBoolean("idea.no.launcher");
@@ -27,13 +27,14 @@ public final class ProcessProxyFactoryImpl extends ProcessProxyFactory {
     String mainClass = javaParameters.getMainClass();
 
     if (ourMayUseLauncher && mainClass != null) {
-      var rtJarPath = Path.of(JavaSdkUtil.getIdeaRtJarPath());
-      var runtimeJarFile = Files.isRegularFile(rtJarPath) && rtJarPath.startsWith(PathManager.getHomePath());
+      String rtJarPath = JavaSdkUtil.getIdeaRtJarPath();
+      boolean runtimeJarFile = new File(rtJarPath).isFile() && FileUtil.isAncestor(PathManager.getHomePath(), rtJarPath, true);
 
       if (runtimeJarFile || javaParameters.getModuleName() == null) {
         try {
           ProcessProxyImpl proxy = new ProcessProxyImpl(StringUtil.getShortName(mainClass));
           String port = String.valueOf(proxy.getPortNumber());
+          String binPath = proxy.getBinPath();
           JavaSdkVersion jdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(javaParameters.getJdk());
           if (jdkVersion != null && !jdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7)) {
             throw new ExecutionException(JavaBundle.message("error.message.ide.does.not.support.starting.processes.using.old.java", 
@@ -41,13 +42,14 @@ public final class ProcessProxyFactoryImpl extends ProcessProxyFactory {
           }
 
           if (runtimeJarFile) {
-            javaParameters.getVMParametersList().add("-javaagent:" + rtJarPath + '=' + port);
+            javaParameters.getVMParametersList().add("-javaagent:" + rtJarPath + '=' + port + ':' + binPath);
           }
           else {
             JavaSdkUtil.addRtJar(javaParameters.getClassPath());
 
             ParametersList vmParametersList = javaParameters.getVMParametersList();
             vmParametersList.defineProperty(AppMainV2.LAUNCHER_PORT_NUMBER, port);
+            vmParametersList.defineProperty(AppMainV2.LAUNCHER_BIN_PATH, binPath);
 
             boolean isJava21preview = JavaSdkVersion.JDK_21.equals(jdkVersion) &&
                                       javaParameters.getVMParametersList().getParameters().contains(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);

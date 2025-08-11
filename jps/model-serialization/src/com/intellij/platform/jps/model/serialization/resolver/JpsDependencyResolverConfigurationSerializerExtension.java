@@ -11,8 +11,9 @@ import java.util.List;
 public final class JpsDependencyResolverConfigurationSerializerExtension extends JpsModelSerializerExtension {
   private static final JpsDependencyResolverConfigurationSerializer SERIALIZER_IMPL = new JpsDependencyResolverConfigurationSerializer();
 
+  @NotNull
   @Override
-  public @NotNull List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
+  public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
     return Collections.singletonList(SERIALIZER_IMPL);
   }
 }

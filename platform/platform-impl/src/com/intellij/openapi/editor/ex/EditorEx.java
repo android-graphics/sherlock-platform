@@ -93,11 +93,6 @@ public interface EditorEx extends Editor {
 
   void setPermanentHeaderComponent(JComponent component);
 
-  /**
-   * This method doesn't set the scheme itself, but the delegate
-   * @param scheme - original scheme
-   * @see EditorImpl.MyColorSchemeDelegate
-   */
   void setColorsScheme(@NotNull EditorColorsScheme scheme);
 
   void setInsertMode(boolean val);
@@ -182,7 +177,6 @@ public interface EditorEx extends Editor {
   @Override
   VirtualFile getVirtualFile();
 
-  @NotNull
   TextDrawingCallback getTextDrawingCallback();
 
   @NotNull
@@ -206,6 +200,7 @@ public interface EditorEx extends Editor {
   /**
    * Allows to define {@code 'placeholder text'} for the current editor, i.e. virtual text that will be represented until
    * any user data is entered.
+   *
    * Feel free to see the detailed feature
    * definition <a href="http://dev.w3.org/html5/spec/Overview.html#the-placeholder-attribute">here</a>.
    *

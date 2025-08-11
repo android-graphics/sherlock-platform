@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInspection.util.InspectionMessage;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**

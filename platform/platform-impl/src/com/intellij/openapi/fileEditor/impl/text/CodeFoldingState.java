@@ -24,8 +24,6 @@ import org.jetbrains.annotations.NotNull;
 @FunctionalInterface
 public interface CodeFoldingState {
   void setToEditor(@NotNull Editor editor);
-  @Override
   boolean equals(Object obj);
-  @Override
   int hashCode();
 }

@@ -65,7 +65,8 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
   }
 
   @Override
-  protected @NotNull TextRange getTextRange() {
+  @NotNull
+  protected TextRange getTextRange() {
     return myImplicitModeElement.getModeRange();
   }
 
@@ -94,7 +95,8 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
   }
 
   @Override
-  public @Nullable PsiElement resolveImpl() {
+  @Nullable
+  public PsiElement resolveImpl() {
     if (myIsDeclaration) {
       return myImplicitModeElement;
     }
@@ -197,7 +199,8 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
   }
 
   @Override
-  public @NotNull String getUnresolvedMessagePattern() {
+  @NotNull
+  public String getUnresolvedMessagePattern() {
     final QName qName = myImplicitModeElement.getQName();
     if (qName != null && qName != QNameUtil.UNRESOLVED) {
       return XPathBundle.message("inspection.message.undefined.mode", qName);

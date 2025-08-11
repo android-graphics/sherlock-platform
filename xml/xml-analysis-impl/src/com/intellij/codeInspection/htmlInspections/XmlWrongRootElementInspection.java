@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -21,17 +21,20 @@ import org.jetbrains.annotations.NotNull;
 
 public final class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
   @Override
-  public @NonNls @NotNull String getShortName() {
+  @NonNls
+  @NotNull
+  public String getShortName() {
     return "XmlWrongRootElement";
   }
 
   @Override
-  public @NotNull HighlightDisplayLevel getDefaultLevel() {
+  @NotNull
+  public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
   @Override
-  protected void checkTag(final @NotNull XmlTag tag, final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
+  protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     if (!(tag.getParent() instanceof XmlTag)) {
       final PsiFile psiFile = tag.getContainingFile();
       if (!(psiFile instanceof XmlFile xmlFile)) {
@@ -101,12 +104,13 @@ public final class XmlWrongRootElementInspection extends HtmlLocalInspectionTool
     }
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return XmlAnalysisBundle.message("xml.quickfix.change.root.element.to", myText);
     }
 
     @Override
-    public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final XmlTag myTag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), XmlTag.class);
       myTag.setName(myText);
     }

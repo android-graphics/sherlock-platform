@@ -1,8 +1,6 @@
-// "Move to constructor parameters" "false"
-// ACTION: Add getter
-// ACTION: Add initializer
+// "class org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$MoveToConstructorParameters" "false"
+// ACTION: Initialize property 'n'
 // ACTION: Make internal
 // ACTION: Make private
 // ERROR: Property must be initialized
-// K2_AFTER_ERROR: Property must be initialized.
 <caret>val n: Int

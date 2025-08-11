@@ -1,5 +1,5 @@
 // "Replace with safe (?.) call" "true"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 fun test(foo: Foo?) {
     baz {
         bar("")

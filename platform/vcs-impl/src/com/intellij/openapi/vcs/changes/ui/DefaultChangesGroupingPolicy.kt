@@ -4,10 +4,8 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultTreeModel
 
-@ApiStatus.Internal
 object NoneChangesGroupingPolicy : ChangesGroupingPolicy {
   override fun getParentNodeFor(nodePath: StaticFilePath,
                                 node: ChangesBrowserNode<*>,
@@ -19,7 +17,6 @@ object NoneChangesGroupingFactory : ChangesGroupingPolicyFactory() {
     NoneChangesGroupingPolicy
 }
 
-@ApiStatus.Internal
 class DefaultChangesGroupingPolicy(val project: Project, model: DefaultTreeModel) : SimpleChangesGroupingPolicy<Any>(model) {
   override fun getGroupRootValueFor(nodePath: StaticFilePath, node: ChangesBrowserNode<*>): Any? {
     if (isMergeConflict(nodePath, node)) {

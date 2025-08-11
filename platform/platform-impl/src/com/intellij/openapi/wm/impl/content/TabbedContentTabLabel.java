@@ -7,7 +7,6 @@ import com.intellij.openapi.wm.impl.content.tabActions.ContentTabAction;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -15,7 +14,6 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-@ApiStatus.Internal
 public final class TabbedContentTabLabel extends ContentTabLabel {
   private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
 

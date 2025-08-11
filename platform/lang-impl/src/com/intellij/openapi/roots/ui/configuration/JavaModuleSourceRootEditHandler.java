@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.icons.AllIcons;
@@ -22,28 +22,33 @@ public final class JavaModuleSourceRootEditHandler extends JavaSourceRootEditHan
     super(JavaSourceRootType.SOURCE);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getRootTypeName() {
+  public String getRootTypeName() {
     return ProjectBundle.message("module.toggle.sources.action");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getRootsGroupTitle() {
+  public String getRootsGroupTitle() {
     return ProjectBundle.message("module.paths.sources.group");
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getRootIcon() {
+  public Icon getRootIcon() {
     return AllIcons.Modules.SourceRoot;
   }
 
+  @NotNull
   @Override
-  protected @NotNull Icon getGeneratedRootIcon() {
+  protected Icon getGeneratedRootIcon() {
     return AllIcons.Modules.GeneratedSourceRoot;
   }
 
+  @Nullable
   @Override
-  public @Nullable Icon getFolderUnderRootIcon() {
+  public Icon getFolderUnderRootIcon() {
     return AllIcons.Nodes.Package;
   }
 
@@ -52,13 +57,15 @@ public final class JavaModuleSourceRootEditHandler extends JavaSourceRootEditHan
     return new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.ALT_MASK));
   }
 
+  @NotNull
   @Override
-  public @NotNull Color getRootsGroupColor() {
+  public Color getRootsGroupColor() {
     return SOURCES_COLOR;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getUnmarkRootButtonText() {
+  public String getUnmarkRootButtonText() {
     return ProjectBundle.message("module.paths.unmark.source.tooltip");
   }
 }

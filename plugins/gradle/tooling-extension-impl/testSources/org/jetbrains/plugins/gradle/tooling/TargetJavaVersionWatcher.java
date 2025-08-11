@@ -12,14 +12,6 @@ public class TargetJavaVersionWatcher extends TestWatcher {
   @Nullable
   private JavaVersionRestriction myRestriction;
 
-  public TargetJavaVersionWatcher() {
-    this(null);
-  }
-
-  public TargetJavaVersionWatcher(@Nullable JavaVersionRestriction restriction) {
-    myRestriction = restriction;
-  }
-
   public @NotNull JavaVersionRestriction getRestriction() {
     return myRestriction != null ? myRestriction : JavaVersionRestriction.NO;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -32,7 +32,6 @@ import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.IconTableCellRenderer;
 import one.util.streamex.MoreCollectors;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +63,6 @@ public final class InspectionsConfigTreeTable extends TreeTable {
     return SystemInfo.isMac ? 16 : 0;
   }
 
-  @ApiStatus.Internal
   public static InspectionsConfigTreeTable create(final InspectionsConfigTreeTableSettings settings, @NotNull Disposable parentDisposable) {
     return new InspectionsConfigTreeTable(new InspectionsConfigTreeTableModel(settings, parentDisposable));
   }
@@ -114,8 +112,9 @@ public final class InspectionsConfigTreeTable extends TreeTable {
     }.installOn(this);
 
     setTransferHandler(new TransferHandler() {
+      @Nullable
       @Override
-      protected @Nullable Transferable createTransferable(JComponent c) {
+      protected Transferable createTransferable(JComponent c) {
         final TreePath path = getTree().getPathForRow(getTree().getLeadSelectionRow());
         if (path != null) {
           return new TextTransferable(StringUtil.join(ContainerUtil.mapNotNull(path.getPath(),
@@ -146,16 +145,16 @@ public final class InspectionsConfigTreeTable extends TreeTable {
     getEmptyText().setText(AnalysisBundle.message("inspections.settings.empty.text"));
   }
 
-  @ApiStatus.Internal
-  public @Nullable InspectionConfigTreeNode.Tool getStrictlySelectedToolNode() {
+  @Nullable
+  public InspectionConfigTreeNode.Tool getStrictlySelectedToolNode() {
     TreePath[] paths = getTree().getSelectionPaths();
     return paths != null && paths.length == 1 && paths[0].getLastPathComponent() instanceof InspectionConfigTreeNode.Tool
            ? (InspectionConfigTreeNode.Tool)paths[0].getLastPathComponent()
            : null;
   }
 
-  @ApiStatus.Internal
-  public @Nullable InspectionConfigTreeNode.Group getStrictlySelectedGroupNode() {
+  @Nullable
+  public InspectionConfigTreeNode.Group getStrictlySelectedGroupNode() {
     TreePath[] paths = getTree().getSelectionPaths();
     return paths != null && paths.length == 1 && paths[0].getLastPathComponent() instanceof InspectionConfigTreeNode.Group
            ? (InspectionConfigTreeNode.Group)paths[0].getLastPathComponent()
@@ -172,7 +171,6 @@ public final class InspectionsConfigTreeTable extends TreeTable {
     UIUtil.fixOSXEditorBackground(this);
   }
 
-  @ApiStatus.Internal
   public abstract static class InspectionsConfigTreeTableSettings {
     private final TreeNode myRoot;
     private final Project myProject;
@@ -182,15 +180,18 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       myProject = project;
     }
 
-    public @NotNull TreeNode getRoot() {
+    @NotNull
+    public TreeNode getRoot() {
       return myRoot;
     }
 
-    public @NotNull Project getProject() {
+    @NotNull
+    public Project getProject() {
       return myProject;
     }
 
-    protected abstract @NotNull InspectionProfileImpl getInspectionProfile();
+    @NotNull
+    protected abstract InspectionProfileImpl getInspectionProfile();
 
     protected abstract void onChanged(@NotNull InspectionConfigTreeNode node);
 
@@ -220,8 +221,9 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       return 3;
     }
 
+    @Nullable
     @Override
-    public @Nullable String getColumnName(final int column) {
+    public String getColumnName(final int column) {
       return null;
     }
 
@@ -235,8 +237,9 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       };
     }
 
+    @Nullable
     @Override
-    public @Nullable Object getValueAt(final Object node, final int column) {
+    public Object getValueAt(final Object node, final int column) {
       if (column == TREE_COLUMN) {
         return null;
       }
@@ -249,7 +252,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
         else {
           final MultiColoredHighlightSeverityIconSink sink = new MultiColoredHighlightSeverityIconSink();
           for (final HighlightDisplayKey selectedInspectionsNode : inspectionsKeys) {
-            final String toolId = selectedInspectionsNode.getShortName();
+            final String toolId = selectedInspectionsNode.toString();
             if (mySettings.getInspectionProfile().getTools(toolId, mySettings.getProject()).isEnabled()) {
               sink.put(mySettings.getInspectionProfile().getToolDefaultState(toolId, mySettings.getProject()),
                        mySettings.getInspectionProfile().getNonDefaultTools(toolId, mySettings.getProject()));
@@ -264,10 +267,11 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       throw new IllegalArgumentException();
     }
 
-    private @Nullable Boolean isEnabled(@NotNull List<HighlightDisplayKey> selectedInspectionsNodes) {
+    @Nullable
+    private Boolean isEnabled(@NotNull List<HighlightDisplayKey> selectedInspectionsNodes) {
       return selectedInspectionsNodes
         .stream()
-        .map(key -> mySettings.getInspectionProfile().getTools(key.getShortName(), mySettings.getProject()))
+        .map(key -> mySettings.getInspectionProfile().getTools(key.toString(), mySettings.getProject()))
         .flatMap(tools -> tools.isEnabled() ? tools.getTools().stream().map(ScopeToolState::isEnabled) : Stream.of(false))
         .distinct()
         .collect(MoreCollectors.onlyOne()).orElse(null);
@@ -288,7 +292,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       final InspectionProfileImpl profile = mySettings.getInspectionProfile();
 
       for (final InspectionConfigTreeNode.Tool aNode : InspectionsAggregationUtil.getInspectionsNodes((InspectionConfigTreeNode)node)) {
-        InspectionProfileImpl.setToolEnabled(doEnable, profile, aNode.getKey().getShortName(), mySettings.getProject());
+        InspectionProfileImpl.setToolEnabled(doEnable, profile, aNode.getKey().toString(), mySettings.getProject());
         mySettings.onChanged(aNode);
       }
       updateRightPanel();
@@ -323,7 +327,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       final InspectionProfileImpl profile = mySettings.getInspectionProfile();
 
       for (HighlightDisplayKey tool : tools) {
-        InspectionProfileImpl.setToolEnabled(newState, profile, tool.getShortName(), mySettings.getProject());
+        InspectionProfileImpl.setToolEnabled(newState, profile, tool.toString(), mySettings.getProject());
       }
 
       for (InspectionConfigTreeNode node : nodes) {
@@ -389,7 +393,8 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       return myOccurrences.size();
     }
 
-    public @NotNull Map<String, HighlightSeverity> getOccurrences() {
+    @NotNull
+    public Map<String, HighlightSeverity> getOccurrences() {
       return myOccurrences;
     }
   }
@@ -432,7 +437,8 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       }
     }
 
-    private @Nullable Map<String, HighlightSeverity> computeSeverities() {
+    @Nullable
+    private Map<String, HighlightSeverity> computeSeverities() {
       if (myScopeToAverageSeverityMap.isEmpty()) {
         return null;
       }
@@ -488,7 +494,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       return result;
     }
 
-    public void put(final @NotNull ScopeToolState defaultState, final @NotNull List<? extends ScopeToolState> nonDefault) {
+    public void put(@NotNull final ScopeToolState defaultState, @NotNull final List<? extends ScopeToolState> nonDefault) {
       putOne(defaultState);
       if (myDefaultScopeName == null) {
         myDefaultScopeName = defaultState.getScopeName();

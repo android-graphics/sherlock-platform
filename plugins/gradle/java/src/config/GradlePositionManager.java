@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.execution.wsl.WSLDistribution;
@@ -47,17 +47,18 @@ public final class GradlePositionManager extends ScriptPositionManagerHelper {
   private static final Key<CachedValue<Map<File, String>>> GRADLE_CLASS_NAME = Key.create("GRADLE_CLASS_NAME");
 
   @Override
-  public boolean isAppropriateRuntimeName(final @NotNull String runtimeName) {
+  public boolean isAppropriateRuntimeName(@NotNull final String runtimeName) {
     return true;
   }
 
   @Override
-  public boolean isAppropriateScriptFile(final @NotNull GroovyFile scriptFile) {
+  public boolean isAppropriateScriptFile(@NotNull final GroovyFile scriptFile) {
     return GroovyScriptUtil.isSpecificScriptFile(scriptFile, GradleScriptType.INSTANCE);
   }
 
   @Override
-  public @NotNull String getRuntimeScriptName(@NotNull GroovyFile groovyFile) {
+  @NotNull
+  public String getRuntimeScriptName(@NotNull GroovyFile groovyFile) {
     VirtualFile virtualFile = groovyFile.getVirtualFile();
     if (virtualFile == null) return "";
 
@@ -73,8 +74,9 @@ public final class GradlePositionManager extends ScriptPositionManagerHelper {
     return className == null ? "" : className;
   }
 
+  @Nullable
   @Override
-  public @Nullable String customizeClassName(@NotNull PsiClass psiClass) {
+  public String customizeClassName(@NotNull PsiClass psiClass) {
     PsiFile file = psiClass.getContainingFile();
     if (file instanceof GroovyFile) {
       return getRuntimeScriptName((GroovyFile)file);
@@ -115,7 +117,8 @@ public final class GradlePositionManager extends ScriptPositionManagerHelper {
     return sourceFilePath;
   }
 
-  private static @Nullable String getScriptForClassName(@NotNull ReferenceType refType) {
+  @Nullable
+  private static String getScriptForClassName(@NotNull ReferenceType refType) {
     try {
       final List<String> data = refType.sourcePaths(null);
       if (!data.isEmpty()) {
@@ -140,7 +143,8 @@ public final class GradlePositionManager extends ScriptPositionManagerHelper {
       return Result.create(result, ProjectRootManager.getInstance(myModule.getProject()));
     }
 
-    private static @Nullable String calcClassName(File scriptFile) {
+    @Nullable
+    private static String calcClassName(File scriptFile) {
       TextResource resource = getResource(scriptFile);
       return new TextResourceScriptSource(resource).getClassName();
     }
@@ -157,7 +161,8 @@ public final class GradlePositionManager extends ScriptPositionManagerHelper {
       return resource;
     }
 
-    private static @Nullable TextResource getWslUriResource(@NotNull File scriptFile) {
+    @Nullable
+    private static TextResource getWslUriResource(@NotNull File scriptFile) {
       WSLDistribution wslDistribution = WslPath.getDistributionByWindowsUncPath(scriptFile.getPath());
       if (wslDistribution == null) return null;
       String wslPath = wslDistribution.getWslPath(scriptFile.toPath());

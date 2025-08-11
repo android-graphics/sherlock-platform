@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,8 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -133,8 +132,9 @@ public abstract class GitImplBase implements Git {
       try {
         version = GitExecutableManager.getInstance().identifyVersion(executable);
 
-        if (GitVersion.isUnsupportedWslVersion(version.getType())) {
-          throw new UnsupportedWSLVersionException();
+        if (version.getType() == GitVersion.Type.WSL1 &&
+            !Registry.is("git.allow.wsl1.executables")) {
+          throw new GitNotInstalledException(GitBundle.message("executable.error.git.not.installed"), null);
         }
       }
       catch (ProcessCanceledException e) {
@@ -262,7 +262,7 @@ public abstract class GitImplBase implements Git {
                                                       @NotNull File file,
                                                       @NotNull @NlsContexts.DialogTitle String dialogTitle,
                                                       @NotNull @NlsContexts.Button String okButtonText) throws IOException {
-    Charset encoding = root == null ? StandardCharsets.UTF_8 : GitConfigUtil.getCommitEncodingCharset(project, root);
+    String encoding = root == null ? CharsetToolkit.UTF8 : GitConfigUtil.getCommitEncoding(project, root);
     String initialText = trimLeading(ignoreComments(FileUtil.loadFile(file, encoding)));
 
     String newText = showUnstructuredEditorAndWait(project, root, initialText, dialogTitle, okButtonText);

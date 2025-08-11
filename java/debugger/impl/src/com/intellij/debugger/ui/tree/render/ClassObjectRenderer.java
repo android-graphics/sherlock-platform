@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -10,8 +10,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.util.PsiNavigateUtil;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
@@ -51,12 +49,13 @@ final class ClassObjectRenderer extends CompoundRendererProvider {
               Value res = process.invokeMethod(evaluationContext, (ObjectReference)value, nameMethod, Collections.emptyList());
               if (res instanceof StringReference) {
                 callback.evaluated("");
-                String className = ((StringReference)res).value();
+                final String line = ((StringReference)res).value();
                 ApplicationManager.getApplication().runReadAction(() -> {
-                  PsiClass psiClass = DebuggerUtils.findClass(className, valueDescriptor.getProject(), process.getSearchScope());
+                  final PsiClass psiClass = DebuggerUtils.findClass(line,
+                                                                    valueDescriptor.getProject(),
+                                                                    process.getSearchScope());
                   if (psiClass != null) {
-                    PsiElement element = psiClass.getNavigationElement(); // do not do this in EDT
-                    DebuggerUIUtil.invokeLater(() -> PsiNavigateUtil.navigate(element));
+                    DebuggerUIUtil.invokeLater(() -> psiClass.navigate(true));
                   }
                 });
               }

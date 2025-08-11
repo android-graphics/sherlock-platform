@@ -45,7 +45,6 @@ import com.intellij.util.CommonProcessors.FindProcessor
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ComponentAdapter
@@ -57,7 +56,6 @@ import javax.swing.JPanel
 import kotlin.math.max
 import kotlin.math.min
 
-@ApiStatus.Internal
 object LocalTrackerDiffUtil {
   @JvmStatic
   fun computeDifferences(tracker: LineStatusTracker<*>?,
@@ -81,55 +79,41 @@ object LocalTrackerDiffUtil {
     indicator.checkCanceled()
     val data = runReadAction {
       partialTracker.readLock {
-        if (partialTracker.isReleased) return@readLock TrackerData.Released
-
+        val isReleased = partialTracker.isReleased
+        val isOperational = partialTracker.isOperational()
         val affectedChangelistIds = partialTracker.getAffectedChangeListsIds()
 
-        val ranges = partialTracker.getRanges()
-        if (ranges == null) {
-          val hasPendingUpdate = LineStatusTrackerManager.getInstanceImpl(tracker.project).hasPendingUpdate(tracker.document)
-          TrackerData.Invalid(affectedChangelistIds, hasPendingUpdate)
+        if (!isOperational) {
+          TrackerData(isReleased, affectedChangelistIds, null)
         }
         else {
+          val ranges = partialTracker.getRanges()
+
           val localText = document2.immutableCharSequence
           val vcsText = document1.immutableCharSequence
           val trackerVcsText = partialTracker.vcsDocument.immutableCharSequence
 
           val diffData = TrackerDiffData(ranges, localText, vcsText, trackerVcsText)
-          TrackerData.Valid(affectedChangelistIds, diffData)
+          TrackerData(isReleased, affectedChangelistIds, diffData)
         }
       }
     }
 
-    return when (data) {
-      is TrackerData.Released -> handler.error() // DiffRequest is out of date
-      is TrackerData.Invalid -> {
-        if (data.affectedChangelist.singleOrNull() == activeChangelistId) {
-          if (data.isLoading) {
-            // tracker is waiting for initialisation
-            // there are only one changelist, so it's safe to fallback to default logic
-            handler.fallbackWithProgress()
-          }
-          else {
-            handler.fallback() // ex: file is unchanged
-          }
-        } else handler.retryLater()
-      }
-      is TrackerData.Valid -> {
-        handleValidData(data, handler, textDiffProvider, indicator, activeChangelistId, allowExcludeChangesFromCommit)
-      }
+    if (data.isReleased) {
+      return handler.error() // DiffRequest is out of date
     }
-  }
 
-  private fun handleValidData(
-    data: TrackerData.Valid,
-    handler: LocalTrackerDiffHandler,
-    textDiffProvider: TwosideTextDiffProvider,
-    indicator: ProgressIndicator,
-    activeChangelistId: String,
-    allowExcludeChangesFromCommit: Boolean,
-  ): Runnable {
     val diffData = data.diffData
+    if (diffData?.ranges == null) {
+      if (data.affectedChangelist.size == 1 && data.affectedChangelist.contains(activeChangelistId)) {
+        // tracker is waiting for initialisation
+        // there are only one changelist, so it's safe to fallback to default logic
+        return handler.fallbackWithProgress()
+      }
+
+      return handler.retryLater()
+    }
+
     val ranges = diffData.ranges
     val isContentsEqual = ranges.isEmpty()
     val texts = arrayOf(diffData.vcsText, diffData.localText)
@@ -199,26 +183,15 @@ object LocalTrackerDiffUtil {
     fun isPartiallyExcluded(): Boolean = isFromActiveChangelist() && exclusionState is RangeExclusionState.Partial
   }
 
-  private sealed interface TrackerData {
-    data object Released : TrackerData
+  private data class TrackerData(val isReleased: Boolean,
+                                 val affectedChangelist: List<String>,
+                                 val diffData: TrackerDiffData?)
 
-    data class Invalid(
-      val affectedChangelist: List<String>,
-      val isLoading: Boolean,
-    ) : TrackerData
+  private data class TrackerDiffData(val ranges: List<LocalRange>?,
+                                     val localText: CharSequence,
+                                     val vcsText: CharSequence,
+                                     val trackerVcsText: CharSequence)
 
-    data class Valid(
-      val affectedChangelist: List<String>,
-      val diffData: TrackerDiffData,
-    ) : TrackerData
-  }
-
-  private data class TrackerDiffData(
-    val ranges: List<LocalRange>,
-    val localText: CharSequence,
-    val vcsText: CharSequence,
-    val trackerVcsText: CharSequence,
-  )
 
   @JvmStatic
   fun installTrackerListener(viewer: DiffViewerBase, localRequest: LocalChangeListDiffRequest) {

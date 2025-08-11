@@ -3,7 +3,6 @@ import importlib.machinery
 import sys
 import types
 from _typeshed import ReadableBuffer, StrOrBytesPath
-from _typeshed.importlib import LoaderProtocol
 from collections.abc import Callable
 from typing import Any
 from typing_extensions import ParamSpec
@@ -24,13 +23,13 @@ def source_from_cache(path: str) -> str: ...
 def decode_source(source_bytes: ReadableBuffer) -> str: ...
 def find_spec(name: str, package: str | None = None) -> importlib.machinery.ModuleSpec | None: ...
 def spec_from_loader(
-    name: str, loader: LoaderProtocol | None, *, origin: str | None = None, is_package: bool | None = None
+    name: str, loader: importlib.abc.Loader | None, *, origin: str | None = None, is_package: bool | None = None
 ) -> importlib.machinery.ModuleSpec | None: ...
 def spec_from_file_location(
     name: str,
     location: StrOrBytesPath | None = None,
     *,
-    loader: LoaderProtocol | None = None,
+    loader: importlib.abc.Loader | None = None,
     submodule_search_locations: list[str] | None = ...,
 ) -> importlib.machinery.ModuleSpec | None: ...
 def module_from_spec(spec: importlib.machinery.ModuleSpec) -> types.ModuleType: ...

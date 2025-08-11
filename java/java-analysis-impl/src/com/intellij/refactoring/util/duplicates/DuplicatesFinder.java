@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -22,7 +22,6 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -34,8 +33,8 @@ public final class DuplicatesFinder {
   private final List<? extends PsiVariable> myOutputParameters;
   private final List<PsiElement> myPatternAsList;
   private boolean myMultipleExitPoints;
-  private final @Nullable ReturnValue myReturnValue;
-  private final @Unmodifiable @Nullable Set<? extends TextRange> myTextRanges;
+  @Nullable private final ReturnValue myReturnValue;
+  @Nullable private final Set<? extends TextRange> myTextRanges;
   private final MatchType myMatchType;
   private final Set<? extends PsiVariable> myEffectivelyLocal;
   private ComplexityHolder myPatternComplexityHolder;
@@ -47,7 +46,7 @@ public final class DuplicatesFinder {
                           @NotNull List<? extends PsiVariable> outputParameters,
                           @NotNull MatchType matchType,
                           @Nullable Set<? extends PsiVariable> effectivelyLocal,
-                          @Nullable @Unmodifiable Set<? extends TextRange> textRanges) {
+                          @Nullable Set<? extends TextRange> textRanges) {
     myReturnValue = returnValue;
     LOG.assertTrue(pattern.length > 0);
     myPattern = pattern;
@@ -112,7 +111,8 @@ public final class DuplicatesFinder {
     return myPattern;
   }
 
-  public @Nullable ReturnValue getReturnValue() {
+  @Nullable
+  public ReturnValue getReturnValue() {
     return myReturnValue;
   }
 
@@ -124,7 +124,8 @@ public final class DuplicatesFinder {
     return result;
   }
 
-  public @Nullable Match isDuplicate(@NotNull PsiElement element, boolean ignoreParameterTypesAndPostVariableUsages) {
+  @Nullable
+  public Match isDuplicate(@NotNull PsiElement element, boolean ignoreParameterTypesAndPostVariableUsages) {
     annotatePattern();
     Match match = isDuplicateFragment(element, ignoreParameterTypesAndPostVariableUsages);
     deannotatePattern();
@@ -190,7 +191,8 @@ public final class DuplicatesFinder {
   }
 
 
-  private @Nullable Match isDuplicateFragment(@NotNull PsiElement candidate, boolean ignoreParameterTypesAndPostVariableUsages) {
+  @Nullable
+  private Match isDuplicateFragment(@NotNull PsiElement candidate, boolean ignoreParameterTypesAndPostVariableUsages) {
     if (isSelf(candidate)) return null;
     PsiElement sibling = candidate;
     ArrayList<PsiElement> candidates = new ArrayList<>();
@@ -421,7 +423,8 @@ public final class DuplicatesFinder {
     return true;
   }
 
-  private @Nullable Boolean matchParameter(@NotNull PsiElement pattern, @NotNull PsiElement candidate, @NotNull Match match) {
+  @Nullable
+  private Boolean matchParameter(@NotNull PsiElement pattern, @NotNull PsiElement candidate, @NotNull Match match) {
     final Parameter parameter = pattern.getUserData(PARAMETER);
     if (parameter == null || myMatchType == MatchType.EXACT && parameter.isFolded()) {
       return null;
@@ -435,10 +438,11 @@ public final class DuplicatesFinder {
     return true;
   }
 
-  private @Nullable Boolean matchVarargs(@NotNull PsiExpressionList pattern,
-                                         @NotNull PsiExpressionList candidate,
-                                         @NotNull List<PsiElement> candidates,
-                                         @NotNull Match match) {
+  @Nullable
+  private Boolean matchVarargs(@NotNull PsiExpressionList pattern,
+                               @NotNull PsiExpressionList candidate,
+                               @NotNull List<PsiElement> candidates,
+                               @NotNull Match match) {
     final PsiExpression[] expressions = pattern.getExpressions();
     final PsiExpression[] childExpressions = candidate.getExpressions();
     if (expressions.length > 0 && expressions[expressions.length - 1] instanceof PsiReferenceExpression) {
@@ -482,10 +486,11 @@ public final class DuplicatesFinder {
     return false;
   }
 
-  private @Nullable Boolean matchReferenceElement(@NotNull PsiJavaCodeReferenceElement pattern,
-                                                  @NotNull PsiJavaCodeReferenceElement candidate,
-                                                  @NotNull List<? extends PsiElement> candidates,
-                                                  @NotNull Match match) {
+  @Nullable
+  private Boolean matchReferenceElement(@NotNull PsiJavaCodeReferenceElement pattern,
+                                        @NotNull PsiJavaCodeReferenceElement candidate,
+                                        @NotNull List<? extends PsiElement> candidates,
+                                        @NotNull Match match) {
     final PsiElement resolveResult1 = pattern.resolve();
     final PsiElement resolveResult2 = candidate.resolve();
     if (resolveResult1 instanceof PsiClass && resolveResult2 instanceof PsiClass) return true;
@@ -579,9 +584,10 @@ public final class DuplicatesFinder {
     return true;
   }
 
-  private static @Nullable Boolean matchReferenceExpression(@NotNull PsiReferenceExpression pattern,
-                                                            @NotNull PsiReferenceExpression candidate,
-                                                            @NotNull Match match) {
+  @Nullable
+  private static Boolean matchReferenceExpression(@NotNull PsiReferenceExpression pattern,
+                                                  @NotNull PsiReferenceExpression candidate,
+                                                  @NotNull Match match) {
     final PsiExpression patternQualifier = pattern.getQualifierExpression();
     final PsiExpression candidateQualifier = candidate.getQualifierExpression();
     if (patternQualifier == null) {
@@ -965,7 +971,6 @@ public final class DuplicatesFinder {
       return myFolded;
     }
 
-    @Override
     public String toString() {
       return myVariable + ", " + myType + (myFolded ? ", folded" : "");
     }

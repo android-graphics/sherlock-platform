@@ -8,11 +8,10 @@ import com.intellij.codeInsight.hints.settings.InlayGroupSettingProvider
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.JBIntSpinner
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
-import org.jetbrains.annotations.ApiStatus
+import javax.swing.JList
 
-@ApiStatus.Internal
 class CodeVisionGlobalSettingsProvider : InlayGroupSettingProvider {
 
   companion object {
@@ -35,14 +34,25 @@ class CodeVisionGlobalSettingsProvider : InlayGroupSettingProvider {
   override val group: InlayGroup = InlayGroup.CODE_VISION_GROUP_NEW
 
   override val component: DialogPanel = panel {
-    row(CodeVisionBundle.message("CodeLensGlobalSettingsProvider.defaultPosition.description")) {
-      defaultPositionComboBox = comboBox(defaultAnchors, renderer = textListCellRenderer("") { CodeVisionBundle.message(it.key) })
-        .component
+    row {
+      label(CodeVisionBundle.message("CodeLensGlobalSettingsProvider.defaultPosition.description"))
+
+      defaultPositionComboBox = comboBox(defaultAnchors,  object: SimpleListCellRenderer<CodeVisionAnchorKind>() {
+        override fun customize(list: JList<out CodeVisionAnchorKind>,
+                               value: CodeVisionAnchorKind,
+                               index: Int,
+                               selected: Boolean,
+                               hasFocus: Boolean) {
+          text = CodeVisionBundle.message(value.key)
+        }
+      }).component
     }
-    row(CodeVisionBundle.message("CodeLensGlobalSettingsProvider.visibleMetricsAbove.description")) {
+    row {
+      label(CodeVisionBundle.message("CodeLensGlobalSettingsProvider.visibleMetricsAbove.description"))
       visibleMetricsAbove = spinner(1..10, 1).component
     }
-    row(CodeVisionBundle.message("CodeLensGlobalSettingsProvider.visibleMetricsNext.description")) {
+    row {
+      label(CodeVisionBundle.message("CodeLensGlobalSettingsProvider.visibleMetricsNext.description"))
       visibleMetricsNext = spinner(1..10, 1).component
     }
   }

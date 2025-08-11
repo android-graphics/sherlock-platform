@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,8 +23,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiStatus.Internal
-public abstract class AbstractUseDPIAwareBorderInspection extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
+abstract class AbstractUseDPIAwareBorderInspection extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
   private static final String JB_UI_CLASS_NAME = JBUI.class.getName();
   private static final Integer ZERO = Integer.valueOf(0);
 
@@ -49,7 +47,7 @@ public abstract class AbstractUseDPIAwareBorderInspection extends DevKitUastInsp
   protected abstract @NotNull LocalQuickFix createConvertToDpiAwareMethodCall();
 
   @Override
-  public PsiElementVisitor buildInternalVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
+  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
       @Override
       public boolean visitCallExpression(@NotNull UCallExpression expression) {
@@ -146,7 +144,8 @@ public abstract class AbstractUseDPIAwareBorderInspection extends DevKitUastInsp
     return true;
   }
 
-  private static @Nullable Integer evaluateIntegerValue(@NotNull UExpression expression) {
+  @Nullable
+  private static Integer evaluateIntegerValue(@NotNull UExpression expression) {
     Object evaluatedExpression = expression.evaluate();
     if (evaluatedExpression instanceof Integer value) {
       return value;

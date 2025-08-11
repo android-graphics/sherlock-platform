@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionException;
@@ -10,11 +10,13 @@ import org.jetbrains.annotations.NotNull;
 public final class JavaCommandLineStateUtil {
   private JavaCommandLineStateUtil() { }
 
-  public static @NotNull OSProcessHandler startProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+  @NotNull
+  public static OSProcessHandler startProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     return startProcess(commandLine, false);
   }
 
-  public static @NotNull OSProcessHandler startProcess(@NotNull GeneralCommandLine commandLine, boolean ansiColoring) throws ExecutionException {
+  @NotNull
+  public static OSProcessHandler startProcess(@NotNull GeneralCommandLine commandLine, boolean ansiColoring) throws ExecutionException {
     ProcessHandlerFactory factory = ProcessHandlerFactory.getInstance();
     OSProcessHandler processHandler = ansiColoring ?
                                       factory.createColoredProcessHandler(commandLine) :

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.util;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -9,7 +9,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 public class SimpleMethodCallLookupElement extends LookupElement {
@@ -20,7 +19,8 @@ public class SimpleMethodCallLookupElement extends LookupElement {
   }
 
   @Override
-  public @NotNull String getLookupString() {
+  @NotNull
+  public String getLookupString() {
     return myMethod.getName();
   }
 
@@ -39,8 +39,8 @@ public class SimpleMethodCallLookupElement extends LookupElement {
     presentation.setItemText(myMethod.getName());
     presentation.setTailText(PsiFormatUtil.formatMethod(myMethod,
                                                         PsiSubstitutor.EMPTY,
-                                                        PsiFormatUtilBase.SHOW_PARAMETERS,
-                                                        PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE));
+                                                        PsiFormatUtil.SHOW_PARAMETERS,
+                                                        PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE));
     final PsiType returnType = myMethod.getReturnType();
     if (returnType != null) {
       presentation.setTypeText(returnType.getCanonicalText());

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -23,8 +23,9 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 
 public final class GroovyPointlessArithmeticInspection extends BaseInspection {
 
+  @NotNull
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new PointlessArithmeticVisitor();
   }
 
@@ -78,7 +79,8 @@ public final class GroovyPointlessArithmeticInspection extends BaseInspection {
 
   private static class PointlessArithmeticFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return GroovyBundle.message("intention.family.name.simplify");
     }
 
@@ -155,7 +157,7 @@ public final class GroovyPointlessArithmeticInspection extends BaseInspection {
     final PsiElement inner = PsiUtil.skipParentheses(expression, false);
     if (inner == null) return false;
 
-    final @NonNls String text = inner.getText();
+    @NonNls final String text = inner.getText();
     return "0".equals(text) ||
            "0x0".equals(text) ||
            "0X0".equals(text) ||
@@ -172,7 +174,7 @@ public final class GroovyPointlessArithmeticInspection extends BaseInspection {
     final PsiElement inner = PsiUtil.skipParentheses(expression, false);
     if (inner == null) return false;
 
-    final @NonNls String text = inner.getText();
+    @NonNls final String text = inner.getText();
     return "1".equals(text) ||
            "0x1".equals(text) ||
            "0X1".equals(text) ||

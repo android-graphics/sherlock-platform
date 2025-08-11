@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.icons.AllIcons;
@@ -21,28 +21,33 @@ public final class JavaTestSourceRootEditHandler extends JavaSourceRootEditHandl
     super(JavaSourceRootType.TEST_SOURCE);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getRootTypeName() {
+  public String getRootTypeName() {
     return ProjectBundle.message("module.toggle.test.sources.action");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getRootsGroupTitle() {
+  public String getRootsGroupTitle() {
     return ProjectBundle.message("module.paths.test.sources.group");
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getRootIcon() {
+  public Icon getRootIcon() {
     return AllIcons.Modules.TestRoot;
   }
 
+  @NotNull
   @Override
-  protected @NotNull Icon getGeneratedRootIcon() {
+  protected Icon getGeneratedRootIcon() {
     return AllIcons.Modules.GeneratedTestRoot;
   }
 
+  @Nullable
   @Override
-  public @Nullable Icon getFolderUnderRootIcon() {
+  public Icon getFolderUnderRootIcon() {
     return AllIcons.Nodes.Package;
   }
 
@@ -51,18 +56,21 @@ public final class JavaTestSourceRootEditHandler extends JavaSourceRootEditHandl
     return new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.ALT_MASK));
   }
 
+  @NotNull
   @Override
-  public @NotNull Color getRootsGroupColor() {
+  public Color getRootsGroupColor() {
     return TESTS_COLOR;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getMarkRootButtonText() {
+  public String getMarkRootButtonText() {
     return ProjectBundle.message("button.folder.type.tests");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getUnmarkRootButtonText() {
+  public String getUnmarkRootButtonText() {
     return ProjectBundle.message("module.paths.unmark.tests.tooltip");
   }
 }

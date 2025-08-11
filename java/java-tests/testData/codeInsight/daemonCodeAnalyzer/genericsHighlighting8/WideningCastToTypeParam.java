@@ -45,7 +45,7 @@ class TestNonNarrowingConversion<T extends Z> {
     public T z = null;
 
     public int a() {
-        TestNonNarrowingConversion<T> x = new <error descr="Incompatible types. Found: 'TestNonNarrowingConversion<Z>', required: 'TestNonNarrowingConversion<T>'">TestNonNarrowingConversion<Z></error>(new Z());
+        <error descr="Incompatible types. Found: 'TestNonNarrowingConversion<Z>', required: 'TestNonNarrowingConversion<T>'">TestNonNarrowingConversion<T> x = new TestNonNarrowingConversion<Z>(new Z());</error>
         return 1;
     }
 }

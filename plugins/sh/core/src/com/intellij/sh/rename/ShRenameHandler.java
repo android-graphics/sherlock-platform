@@ -19,7 +19,7 @@ import com.intellij.sh.psi.ShFunctionDefinition;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-final class ShRenameHandler implements RenameHandler {
+public class ShRenameHandler implements RenameHandler {
   @Override
   public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);

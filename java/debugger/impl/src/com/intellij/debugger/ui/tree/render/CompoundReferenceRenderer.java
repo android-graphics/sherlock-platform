@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -25,12 +25,10 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
-import com.intellij.xdebugger.frame.XValueNode;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +49,6 @@ public class CompoundReferenceRenderer extends NodeRendererImpl implements FullV
   private ChildrenRenderer myChildrenRenderer;
   private ValueIconRenderer myIconRenderer = null;
   protected final NodeRendererSettings myRendererSettings;
-  private boolean myHasOverhead = false;
 
   private FullValueEvaluatorProvider myFullValueEvaluatorProvider;
 
@@ -70,17 +67,6 @@ public class CompoundReferenceRenderer extends NodeRendererImpl implements FullV
 
   public CompoundReferenceRenderer(String name, ValueLabelRenderer labelRenderer, ChildrenRenderer childrenRenderer) {
     this(NodeRendererSettings.getInstance(), name, labelRenderer, childrenRenderer);
-  }
-
-  @ApiStatus.Internal
-  @Override
-  public boolean hasOverhead() {
-    return myHasOverhead;
-  }
-
-  @ApiStatus.Internal
-  public void setHasOverhead(boolean value) {
-    myHasOverhead = value;
   }
 
   @Override
@@ -113,40 +99,19 @@ public class CompoundReferenceRenderer extends NodeRendererImpl implements FullV
     return null;
   }
 
-  @Override
-  public @Nullable Icon calcInlayIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
-    throws EvaluateException {
-    if (myIconRenderer != null) {
-      return myIconRenderer.calcInlayIcon(descriptor, evaluationContext, listener);
-    }
-    return null;
-  }
-
   void setIconRenderer(ValueIconRenderer iconRenderer) {
     myIconRenderer = iconRenderer;
   }
 
   @Override
-  public @Nullable XFullValueEvaluator getFullValueEvaluator(@NotNull EvaluationContextImpl evaluationContext,
-                                                             @NotNull ValueDescriptorImpl valueDescriptor) {
+  public @Nullable XFullValueEvaluator getFullValueEvaluator(EvaluationContextImpl evaluationContext, ValueDescriptorImpl valueDescriptor) {
     if (myFullValueEvaluatorProvider != null) {
       return myFullValueEvaluatorProvider.getFullValueEvaluator(evaluationContext, valueDescriptor);
     }
     return null;
   }
 
-  @Override
-  public @Nullable XFullValueEvaluator getFullValueEvaluator(@NotNull XValueNode node,
-                                                             @NotNull EvaluationContextImpl evaluationContext,
-                                                             @NotNull ValueDescriptorImpl valueDescriptor) {
-    if (myFullValueEvaluatorProvider != null) {
-      return myFullValueEvaluatorProvider.getFullValueEvaluator(node, evaluationContext, valueDescriptor);
-    }
-    return null;
-  }
-
-  @ApiStatus.Internal
-  public void setFullValueEvaluator(FullValueEvaluatorProvider fullValueEvaluatorProvider) {
+  void setFullValueEvaluator(FullValueEvaluatorProvider fullValueEvaluatorProvider) {
     myFullValueEvaluatorProvider = fullValueEvaluatorProvider;
   }
 
@@ -220,7 +185,8 @@ public class CompoundReferenceRenderer extends NodeRendererImpl implements FullV
     return getLabelRenderer().isApplicable(type) && getChildrenRenderer().isApplicable(type);
   }
 
-  public @NotNull String getClassName() {
+  @NotNull
+  public String getClassName() {
     return myProperties.getClassName();
   }
 

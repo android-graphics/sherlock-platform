@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server.indexer;
 
 import org.apache.commons.lang3.StringUtils;
@@ -11,8 +11,8 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.maven.archetype.ArchetypeManager;
 import org.apache.maven.archetype.catalog.Archetype;
 import org.apache.maven.archetype.catalog.ArchetypeCatalog;
-import org.apache.maven.index.*;
 import org.apache.maven.index.Scanner;
+import org.apache.maven.index.*;
 import org.apache.maven.index.context.DefaultIndexingContext;
 import org.apache.maven.index.context.IndexCreator;
 import org.apache.maven.index.context.IndexUtils;
@@ -35,7 +35,6 @@ import org.jetbrains.idea.maven.server.security.MavenToken;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.*;
@@ -85,7 +84,8 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     return result;
   }
 
-  private @NotNull IndexingContext getIndex(MavenIndexId mavenIndexId) throws IOException, ComponentLookupException {
+  @NotNull
+  private IndexingContext getIndex(MavenIndexId mavenIndexId) throws IOException, ComponentLookupException {
     synchronized (myContexts) {
       IndexingContext context = myContexts.get(mavenIndexId.indexId);
       if (context != null) return context;
@@ -106,10 +106,10 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
   }
 
   @Override
-  public boolean indexExists(Path dir, MavenToken token) throws RemoteException {
+  public boolean indexExists(File dir, MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
-      try (FSDirectory directory = FSDirectory.open(dir)) {
+      try (FSDirectory directory = FSDirectory.open(dir.toPath())) {
         return DirectoryReader.indexExists(directory);
       }
     }
@@ -301,15 +301,15 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
 
   @Override
   public @NotNull ArrayList<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId indexId,
-                                                              @NotNull ArrayList<Path> artifactFiles,
+                                                              @NotNull ArrayList<File> artifactFiles,
                                                               MavenToken token) throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
       IndexingContext context = getIndex(indexId);
       ArrayList<AddArtifactResponse> results = new ArrayList<>();
       synchronized (context) {
-        for (Path artifactFile : artifactFiles) {
-          ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(context, artifactFile.toFile());
+        for (File artifactFile : artifactFiles) {
+          ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(context, artifactFile);
           IndexedMavenId id = null;
           if (artifactContext != null) {
             myIndexer.addArtifactToIndex(artifactContext, context);
@@ -317,7 +317,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
             ArtifactInfo a = artifactContext.getArtifactInfo();
             id = new IndexedMavenId(a.getGroupId(), a.getArtifactId(), a.getVersion(), a.getPackaging(), a.getDescription());
           }
-          results.add(new AddArtifactResponse(artifactFile.toFile(), id));
+          results.add(new AddArtifactResponse(artifactFile, id));
         }
       }
       return results;
@@ -425,7 +425,8 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     }
   }
 
-  private static @NotNull WildcardQuery getWildcardQuery(String pattern) {
+  @NotNull
+  private static WildcardQuery getWildcardQuery(String pattern) {
     return new WildcardQuery(new Term(SEARCH_TERM_CLASS_NAMES, "*/" + pattern.replaceAll("\\.", "/")));
   }
 

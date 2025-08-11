@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.inspection;
 
 import com.intellij.CommonBundle;
@@ -23,7 +23,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -32,11 +31,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public final class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
-  private final @NotNull SmartPsiElementPointer<PsiClass> myNewSuperClass;
-  private final @NotNull SmartPsiElementPointer<PsiClass> myOldSuperClass;
+public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
+  @NotNull
+  private final SmartPsiElementPointer<PsiClass> myNewSuperClass;
+  @NotNull
+  private final SmartPsiElementPointer<PsiClass> myOldSuperClass;
   private final int myInheritorCount;
-  private final @NotNull String myNewSuperName;
+  @NotNull
+  private final String myNewSuperName;
   private final boolean myImplements;
 
   public ChangeSuperClassFix(
@@ -53,8 +55,9 @@ public final class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAct
     myImplements = isImplements;
   }
 
+  @NotNull
   @TestOnly
-  public @NotNull PsiClass getNewSuperClass() {
+  public PsiClass getNewSuperClass() {
     return Objects.requireNonNull(myNewSuperClass.getElement());
   }
 
@@ -63,8 +66,9 @@ public final class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAct
     return myInheritorCount;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     if (myImplements) {
       return JavaCompilerBundle.message("intention.name.make.implements", myNewSuperName);
     }
@@ -73,8 +77,9 @@ public final class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAct
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return InspectionsBundle.message("group.names.inheritance.issues");
   }
 
@@ -84,7 +89,7 @@ public final class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAct
   }
 
   @Override
-  public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor problemDescriptor) {
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor problemDescriptor) {
     final PsiClass oldSuperClass = myOldSuperClass.getElement();
     final PsiClass newSuperClass = myNewSuperClass.getElement();
     if (oldSuperClass == null || newSuperClass == null) return;
@@ -110,9 +115,9 @@ public final class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAct
    * 1. does not check that oldSuperClass is really super of aClass
    * 2. does not check that newSuperClass not exists in currently existed supers
    */
-  private static void changeSuperClass(final @NotNull PsiClass aClass,
-                                       final @NotNull PsiClass oldSuperClass,
-                                       final @NotNull PsiClass newSuperClass) {
+  private static void changeSuperClass(@NotNull final PsiClass aClass,
+                                       @NotNull final PsiClass oldSuperClass,
+                                       @NotNull final PsiClass newSuperClass) {
     PsiMethod[] ownMethods = aClass.getMethods();
     // first is own method, second is parent
     List<Pair<PsiMethod, Set<PsiMethod>>> oldOverridenMethods =
@@ -150,9 +155,9 @@ public final class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAct
   }
 
   private static void addSuperClass(
-    final @NotNull PsiClass aClass,
-    final @NotNull PsiClass oldSuperClass,
-    final @NotNull PsiClass newSuperClass
+    @NotNull final PsiClass aClass,
+    @NotNull final PsiClass oldSuperClass,
+    @NotNull final PsiClass newSuperClass
   ) {
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(aClass.getProject());
     PsiElementFactory factory = psiFacade.getElementFactory();
@@ -194,9 +199,10 @@ public final class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAct
     return list == null ? PsiJavaCodeReferenceElement.EMPTY_ARRAY : list.getReferenceElements();
   }
 
-  private static @NotNull @Unmodifiable List<PsiMethod> getOverridenMethodsToDelete(List<MemberInfo> candidates,
-                                                                                    String newClassName,
-                                                                                    Project project) {
+  @NotNull
+  private static List<PsiMethod> getOverridenMethodsToDelete(List<MemberInfo> candidates,
+                                                             String newClassName,
+                                                             Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return ContainerUtil.map(candidates, c -> (PsiMethod)c.getMember());
     }
@@ -211,8 +217,9 @@ public final class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAct
         setTitle(JavaCompilerBundle.message("choose.members"));
         init();
       }
+      @NotNull
       @Override
-      protected @NotNull JComponent createCenterPanel() {
+      protected JComponent createCenterPanel() {
         return panel;
       }
     };

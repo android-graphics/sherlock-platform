@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -35,13 +36,15 @@ public class MoveFileFix implements IntentionAction {
     return IntentionPreviewInfo.moveToDirectory(myFile, myTarget);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getText() {
+  public String getText() {
     return myMessage;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return getText();
   }
 

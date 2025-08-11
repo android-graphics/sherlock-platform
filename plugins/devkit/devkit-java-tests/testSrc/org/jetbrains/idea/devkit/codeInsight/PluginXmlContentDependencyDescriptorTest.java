@@ -72,10 +72,6 @@ public class PluginXmlContentDependencyDescriptorTest extends JavaCodeInsightFix
   public void testContentDescriptorDuplicatedHighlighting() {
     doHighlightingTest();
   }
-  
-  public void testContentDescriptorLoadingAttribute() {
-    doHighlightingTest("requiredModule", "onDemandModule");
-  }
 
   public void testContentDescriptorNoModuleDescriptorFileHighlighting() {
     doHighlightingTest();

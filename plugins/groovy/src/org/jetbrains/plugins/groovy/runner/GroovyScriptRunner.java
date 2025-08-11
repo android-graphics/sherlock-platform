@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
@@ -36,7 +36,8 @@ public abstract class GroovyScriptRunner {
     return false;
   }
 
-  protected static @Nullable String getConfPath(final String groovyHomePath) {
+  @Nullable
+  protected static String getConfPath(final String groovyHomePath) {
     String confpath = FileUtil.toSystemDependentName(groovyHomePath + "/conf/groovy-starter.conf");
     if (new File(confpath).exists()) {
       return confpath;
@@ -79,7 +80,8 @@ public abstract class GroovyScriptRunner {
     }
   }
 
-  protected static @Nullable VirtualFile findGroovyJar(@NotNull Module module) {
+  @Nullable
+  protected static VirtualFile findGroovyJar(@NotNull Module module) {
     final VirtualFile[] files = OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots();
     for (VirtualFile root : files) {
       if (GroovyConfigUtils.GROOVY_JAR_PATTERN.matcher(root.getName()).matches() || GroovyConfigUtils.matchesGroovyAll(root.getName())) {
@@ -105,11 +107,12 @@ public abstract class GroovyScriptRunner {
     }
   }
 
-  public static @Nullable PathsList getClassPathFromRootModel(Module module,
-                                                              boolean isTests,
-                                                              JavaParameters params,
-                                                              boolean allowDuplication,
-                                                              PathsList pathList)
+  @Nullable
+  public static PathsList getClassPathFromRootModel(Module module,
+                                                    boolean isTests,
+                                                    JavaParameters params,
+                                                    boolean allowDuplication,
+                                                    PathsList pathList)
     throws CantRunException {
     if (module == null) {
       return null;

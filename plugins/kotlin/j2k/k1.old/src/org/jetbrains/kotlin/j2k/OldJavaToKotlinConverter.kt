@@ -57,7 +57,7 @@ class OldJavaToKotlinConverter(
 
                 result!!.importsToAdd.forEach { postProcessor.insertImport(kotlinFile, it) }
 
-                J2KPostProcessingRunner.run(postProcessor, kotlinFile)
+                AfterConversionPass(project, postProcessor).run(kotlinFile, converterContext = null, range = null, onPhaseChanged = null)
 
                 kotlinFile.text
             } catch (e: ProcessCanceledException) {

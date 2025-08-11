@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.psi;
 
 import com.intellij.codeInsight.navigation.UtilKt;
@@ -48,8 +48,9 @@ final class PsiExternalDocumentationHandlerTarget implements DocumentationTarget
     return myPointer;
   }
 
+  @NotNull
   @Override
-  public @NotNull TargetPresentation computePresentation() {
+  public TargetPresentation computePresentation() {
     return UtilKt.targetPresentation(myTargetElement);
   }
 
@@ -58,8 +59,9 @@ final class PsiExternalDocumentationHandlerTarget implements DocumentationTarget
     return myTargetElement instanceof Navigatable ? (Navigatable)myTargetElement : null;
   }
 
+  @NotNull
   @Override
-  public @NotNull DocumentationResult computeDocumentation() {
+  public DocumentationResult computeDocumentation() {
     return DocumentationResult.asyncDocumentation(fetchComputable(myPointer.myHandler, myPointer.myUrl, myTargetElement));
   }
 

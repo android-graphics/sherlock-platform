@@ -5,8 +5,6 @@ import com.intellij.terminal.completion.ShellCommandSpecsManager
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 
 internal class TestCommandSpecsManager(vararg specs: ShellCommandSpec) : ShellCommandSpecsManager {
-  constructor(specs: List<ShellCommandSpec>) : this(*specs.toTypedArray())
-
   private val specs: Map<String, ShellCommandSpec> = specs.associateBy { it.name }
 
   override suspend fun getCommandSpec(commandName: String): ShellCommandSpec? {

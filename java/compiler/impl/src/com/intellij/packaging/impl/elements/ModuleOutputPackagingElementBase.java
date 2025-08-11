@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.openapi.module.ModulePointer;
@@ -15,8 +15,9 @@ public abstract class ModuleOutputPackagingElementBase extends ModulePackagingEl
     super(type, project, modulePointer);
   }
 
+  @NotNull
   @Override
-  public @NotNull PackagingElementOutputKind getFilesKind(PackagingElementResolvingContext context) {
+  public PackagingElementOutputKind getFilesKind(PackagingElementResolvingContext context) {
     return PackagingElementOutputKind.DIRECTORIES_WITH_CLASSES;
   }
 

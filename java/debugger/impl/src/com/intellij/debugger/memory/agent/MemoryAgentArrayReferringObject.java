@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -20,8 +20,9 @@ public class MemoryAgentArrayReferringObject extends MemoryAgentReferringObject 
     this.myIndex = index;
   }
 
+  @NotNull
   @Override
-  public @NotNull ValueDescriptorImpl createValueDescription(@NotNull Project project, @NotNull Value referee) {
+  public ValueDescriptorImpl createValueDescription(@NotNull Project project, @NotNull Value referee) {
     return new ArrayElementDescriptorImpl(project, (ArrayReference)myReference, myIndex) {
       @Override
       public Value calcValue(EvaluationContextImpl evaluationContext) {
@@ -30,11 +31,13 @@ public class MemoryAgentArrayReferringObject extends MemoryAgentReferringObject 
     };
   }
 
+  @Nullable
   @Override
-  public @Nullable String getNodeName(int order) {
+  public String getNodeName(int order) {
     return null;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getSeparator() { return " in "; }
+  public String getSeparator() { return " in "; }
 }

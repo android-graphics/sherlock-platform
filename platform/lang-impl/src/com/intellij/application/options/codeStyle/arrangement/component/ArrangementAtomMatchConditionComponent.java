@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -36,22 +36,14 @@ import java.util.Set;
  */
 public final class ArrangementAtomMatchConditionComponent implements ArrangementUiComponent {
 
-  private static final @NotNull BorderStrategy TEXT_BORDER_STRATEGY       = new NameBorderStrategy();
-  private static final @NotNull BorderStrategy PREDEFINED_BORDER_STRATEGY = new PredefinedConditionBorderStrategy();
-  private final @NotNull Set<ArrangementSettingsToken> myAvailableTokens = new HashSet<>();
-  private final @NotNull BorderStrategy myBorderStrategy;
-  private final @NotNull @Nls String myText;
-  private final @NotNull ArrangementColorsProvider myColorsProvider;
-  private final @NotNull RoundedLineBorder myBorder;
-  private final @NotNull ArrangementAtomMatchCondition myCondition;
-  private final @NotNull ArrangementAnimationPanel myAnimationPanel;
-  private final @Nullable ActionButton myCloseButton;
-  private final @Nullable Rectangle myCloseButtonBounds;
-  private final @Nullable Consumer<? super ArrangementAtomMatchConditionComponent> myCloseCallback;
-  private final @Nullable Dimension myTextControlSize;
-  private final @NotNull SimpleColoredComponent myTextControl = new SimpleColoredComponent() {
+  @NotNull private static final BorderStrategy TEXT_BORDER_STRATEGY       = new NameBorderStrategy();
+  @NotNull private static final BorderStrategy PREDEFINED_BORDER_STRATEGY = new PredefinedConditionBorderStrategy();
+
+  @NotNull
+  private final SimpleColoredComponent myTextControl = new SimpleColoredComponent() {
+    @NotNull
     @Override
-    public @NotNull Dimension getMinimumSize() {
+    public Dimension getMinimumSize() {
       return getPreferredSize();
     }
 
@@ -60,8 +52,9 @@ public final class ArrangementAtomMatchConditionComponent implements Arrangement
       return getPreferredSize();
     }
 
+    @NotNull
     @Override
-    public @NotNull Dimension getPreferredSize() {
+    public Dimension getPreferredSize() {
       return myTextControlSize == null ? super.getPreferredSize() : myTextControlSize;
     }
 
@@ -70,9 +63,25 @@ public final class ArrangementAtomMatchConditionComponent implements Arrangement
       return "text component for " + myText;
     }
   };
-  private @NotNull Color myBackgroundColor;
-  private @Nullable Rectangle myScreenBounds;
-  private @Nullable Listener myListener;
+
+  @NotNull private final Set<ArrangementSettingsToken> myAvailableTokens = new HashSet<>();
+
+  @NotNull private final BorderStrategy myBorderStrategy;
+  @NotNull private final @Nls String myText;
+  @NotNull private final ArrangementColorsProvider myColorsProvider;
+  @NotNull private final RoundedLineBorder myBorder;
+  @NotNull private final ArrangementAtomMatchCondition myCondition;
+  @NotNull private final ArrangementAnimationPanel myAnimationPanel;
+
+  @Nullable private final ActionButton myCloseButton;
+  @Nullable private final Rectangle myCloseButtonBounds;
+  @Nullable private final Consumer<? super ArrangementAtomMatchConditionComponent> myCloseCallback;
+
+  @NotNull private Color myBackgroundColor;
+
+  @Nullable private final Dimension myTextControlSize;
+  @Nullable private Rectangle myScreenBounds;
+  @Nullable private Listener myListener;
 
   private boolean myInverted = false;
   private boolean myEnabled = true;
@@ -80,8 +89,8 @@ public final class ArrangementAtomMatchConditionComponent implements Arrangement
   private boolean myCloseButtonHovered;
 
   // cached value for inverted atom condition, e.g. condition: 'static', opposite: 'not static'
-  private @Nullable ArrangementAtomMatchCondition myOppositeCondition;
-  private @Nullable @Nls String myInvertedText;
+  @Nullable private ArrangementAtomMatchCondition myOppositeCondition;
+  @Nullable @Nls private String myInvertedText;
 
   public ArrangementAtomMatchConditionComponent(@NotNull ArrangementStandardSettingsManager manager,
                                                 @NotNull ArrangementColorsProvider colorsProvider,
@@ -209,8 +218,9 @@ public final class ArrangementAtomMatchConditionComponent implements Arrangement
     setData(myCondition.getValue());
   }
 
+  @NotNull
   @Override
-  public @NotNull ArrangementAtomMatchCondition getMatchCondition() {
+  public ArrangementAtomMatchCondition getMatchCondition() {
     if (Boolean.valueOf(myInverted).equals(myCondition.getValue())) {
       if (myOppositeCondition == null) {
         myOppositeCondition = new ArrangementAtomMatchCondition(myCondition.getType(), !myInverted);
@@ -228,13 +238,15 @@ public final class ArrangementAtomMatchConditionComponent implements Arrangement
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent getUiComponent() {
+  public JComponent getUiComponent() {
     return myAnimationPanel;
   }
 
+  @Nullable
   @Override
-  public @Nullable Rectangle getScreenBounds() {
+  public Rectangle getScreenBounds() {
     return myScreenBounds;
   }
 
@@ -255,7 +267,8 @@ public final class ArrangementAtomMatchConditionComponent implements Arrangement
     }
   }
 
-  private @NotNull TextAttributes updateComponentText(boolean selected) {
+  @NotNull
+  private TextAttributes updateComponentText(boolean selected) {
     myTextControl.clear();
     TextAttributes attributes = myColorsProvider.getTextAttributes(myCondition.getType(), selected);
     myTextControl.append(getComponentText(), SimpleTextAttributes.fromTextAttributes(attributes));
@@ -292,8 +305,9 @@ public final class ArrangementAtomMatchConditionComponent implements Arrangement
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable Rectangle onMouseMove(@NotNull MouseEvent event) {
+  public Rectangle onMouseMove(@NotNull MouseEvent event) {
     Rectangle buttonBounds = getCloseButtonScreenBounds();
     if (buttonBounds == null) {
       return null;
@@ -324,8 +338,9 @@ public final class ArrangementAtomMatchConditionComponent implements Arrangement
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable Rectangle onMouseExited() {
+  public Rectangle onMouseExited() {
     if (myCloseButton == null) {
       return null;
     }
@@ -333,7 +348,8 @@ public final class ArrangementAtomMatchConditionComponent implements Arrangement
     return getCloseButtonScreenBounds();
   }
 
-  private @Nullable Rectangle getCloseButtonScreenBounds() {
+  @Nullable
+  private Rectangle getCloseButtonScreenBounds() {
     if (myCloseButton == null || myScreenBounds == null) {
       return null;
     }
@@ -344,7 +360,8 @@ public final class ArrangementAtomMatchConditionComponent implements Arrangement
     return buttonBounds;
   }
 
-  public @NotNull ArrangementAnimationPanel getAnimationPanel() {
+  @NotNull
+  public ArrangementAnimationPanel getAnimationPanel() {
     return myAnimationPanel;
   }
 
@@ -353,13 +370,15 @@ public final class ArrangementAtomMatchConditionComponent implements Arrangement
     return getComponentText();
   }
 
+  @NotNull
   @Override
-  public @NotNull ArrangementSettingsToken getToken() {
+  public ArrangementSettingsToken getToken() {
     return myCondition.getType();
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<ArrangementSettingsToken> getAvailableTokens() {
+  public Set<ArrangementSettingsToken> getAvailableTokens() {
     return myAvailableTokens;
   }
 
@@ -420,7 +439,7 @@ public final class ArrangementAtomMatchConditionComponent implements Arrangement
 
   private static final class NameBorderStrategy implements BorderStrategy {
 
-    private static final @NotNull BasicStroke
+    @NotNull private static final BasicStroke
       STROKE = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 1, new float[]{5, 5}, 0);
 
     @Override

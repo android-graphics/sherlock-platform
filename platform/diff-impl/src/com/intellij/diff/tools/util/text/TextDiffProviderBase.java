@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util.text;
 
 import com.intellij.diff.tools.util.base.HighlightPolicy;
@@ -9,7 +9,6 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil.IgnorePolicySettingA
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-@ApiStatus.Internal
 public class TextDiffProviderBase implements TextDiffProvider {
   private final IgnorePolicySettingAction myIgnorePolicySettingAction;
   private final HighlightPolicySettingAction myHighlightPolicySettingAction;
@@ -32,22 +30,26 @@ public class TextDiffProviderBase implements TextDiffProvider {
     settings.addListener(new MyListener(rediff), disposable);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<AnAction> getToolbarActions() {
+  public List<AnAction> getToolbarActions() {
     return Arrays.asList(myIgnorePolicySettingAction, myHighlightPolicySettingAction);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<AnAction> getPopupActions() {
+  public List<AnAction> getPopupActions() {
     return Arrays.asList(Separator.getInstance(), myIgnorePolicySettingAction.getActions(), Separator.getInstance(),
                          myHighlightPolicySettingAction.getActions(), Separator.getInstance());
   }
 
-  public @NotNull IgnorePolicy getIgnorePolicy() {
+  @NotNull
+  public IgnorePolicy getIgnorePolicy() {
     return myIgnorePolicySettingAction.getValue();
   }
 
-  public @NotNull HighlightPolicy getHighlightPolicy() {
+  @NotNull
+  public HighlightPolicy getHighlightPolicy() {
     return myHighlightPolicySettingAction.getValue();
   }
 
@@ -56,11 +58,15 @@ public class TextDiffProviderBase implements TextDiffProvider {
   }
 
 
-  protected @Nls @Nullable String getText(@NotNull IgnorePolicy option) {
+  @Nls
+  @Nullable
+  protected String getText(@NotNull IgnorePolicy option) {
     return null;
   }
 
-  protected @Nls @Nullable String getText(@NotNull HighlightPolicy option) {
+  @Nls
+  @Nullable
+  protected String getText(@NotNull HighlightPolicy option) {
     return null;
   }
 
@@ -71,8 +77,9 @@ public class TextDiffProviderBase implements TextDiffProvider {
       super(settings, ignorePolicies);
     }
 
+    @NotNull
     @Override
-    protected @NotNull String getText(@NotNull IgnorePolicy option) {
+    protected String getText(@NotNull IgnorePolicy option) {
       String text = TextDiffProviderBase.this.getText(option);
       if (text != null) return text;
       return super.getText(option);
@@ -85,8 +92,9 @@ public class TextDiffProviderBase implements TextDiffProvider {
       super(settings, highlightPolicies);
     }
 
+    @NotNull
     @Override
-    protected @NotNull String getText(@NotNull HighlightPolicy option) {
+    protected String getText(@NotNull HighlightPolicy option) {
       String text = TextDiffProviderBase.this.getText(option);
       if (text != null) return text;
       return super.getText(option);
@@ -94,7 +102,7 @@ public class TextDiffProviderBase implements TextDiffProvider {
   }
 
   private static class MyListener extends TextDiffSettings.Listener.Adapter {
-    private final @NotNull Runnable myRediff;
+    @NotNull private final Runnable myRediff;
 
     MyListener(@NotNull Runnable rediff) {
       myRediff = rediff;

@@ -7,15 +7,17 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.projectRoots.Sdk
 import kotlinx.coroutines.CoroutineScope
 
-internal class PythonAddInterpreterState(
-  val propertyGraph: PropertyGraph, // todo move to presenter
+class PythonAddInterpreterState(
+  val propertyGraph: PropertyGraph,
   val projectPath: ObservableProperty<String>,
   val scope: CoroutineScope,
-  // todo replace with flow, local properties for every creator
-  val allExistingSdks: ObservableMutableProperty<List<Sdk>>, // todo merge with allSdks, replace with flow and local properties
-  val installableSdks: ObservableMutableProperty<List<Sdk>>, // todo not needed
+  val basePythonSdks: ObservableMutableProperty<List<Sdk>>,
+  val allExistingSdks: ObservableMutableProperty<List<Sdk>>,
+  val installableSdks: ObservableMutableProperty<List<Sdk>>,
+  val selectedVenv: ObservableMutableProperty<Sdk?>,
   val condaExecutable: ObservableMutableProperty<String>,
 ) {
   internal val allSdks: ObservableMutableProperty<List<Sdk>> = propertyGraph.property(initial = allExistingSdks.get())
 
+  val selectedVenvPath: ObservableMutableProperty<String?> = selectedVenv.transformToHomePathProperty(allSdks)
 }

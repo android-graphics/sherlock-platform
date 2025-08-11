@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.util.gotoByName.GotoFileModel;
@@ -64,7 +64,8 @@ final class DirectoryPathMatcher {
     myService = DirectoryPathMatcherService.getInstance(project);
   }
 
-  static @Nullable DirectoryPathMatcher root(@NotNull GotoFileModel model, @NotNull String pattern) {
+  @Nullable
+  static DirectoryPathMatcher root(@NotNull GotoFileModel model, @NotNull String pattern) {
     DirectoryPathMatcher matcher = new DirectoryPathMatcher(model, null, "");
     for (int i = 0; i < pattern.length(); i++) {
       matcher = matcher.appendChar(pattern.charAt(i));
@@ -129,7 +130,8 @@ final class DirectoryPathMatcher {
     return tooMany.getAsBoolean() ? null : names;
   }
 
-  private @NotNull List<Pair<VirtualFile, String>> getMatchingRoots() {
+  @NotNull
+  private List<Pair<VirtualFile, String>> getMatchingRoots() {
     return myFiles != null ? myFiles : getProjectRoots(myModel);
   }
 
@@ -149,8 +151,9 @@ final class DirectoryPathMatcher {
         return (myService.shouldProcess(file) || myProjectFileFilter.test(file)) && consumer.process(file);
       }
 
+      @Nullable
       @Override
-      public @Nullable Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
+      public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
         return file instanceof NewVirtualFile ? ((NewVirtualFile)file).getCachedChildren() : null;
       }
     });
@@ -160,7 +163,8 @@ final class DirectoryPathMatcher {
     return StringUtil.indexOf(name, c, 0, name.length(), false) >= 0;
   }
 
-  private static @NotNull List<Pair<VirtualFile, String>> getProjectRoots(GotoFileModel model) {
+  @NotNull
+  private static List<Pair<VirtualFile, String>> getProjectRoots(GotoFileModel model) {
     Set<VirtualFile> roots = new HashSet<>(BaseProjectDirectories.getBaseDirectories(model.getProject()));
     for (Module module : ModuleManager.getInstance(model.getProject()).getModules()) {
       for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {

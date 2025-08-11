@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Function;
 
 public class BasicExpressionParser {
-  private static final boolean useNewImplementation = Registry.is("pratt.java.expression.parser", true);
+  private static final boolean useNewImplementation = Registry.is("pratt.java.expression.parser", false);
 
   private final BasicOldExpressionParser myOldExpressionParser;
   private final BasicPrattExpressionParser myNewExpressionParser;
@@ -38,7 +38,8 @@ public class BasicExpressionParser {
     myParser = parser;
   }
 
-  public @Nullable PsiBuilder.Marker parse(@NotNull PsiBuilder builder) {
+  @Nullable
+  public PsiBuilder.Marker parse(@NotNull PsiBuilder builder) {
     if (useNewImplementation) {
       return myNewExpressionParser.parse(builder);
     }
@@ -88,8 +89,9 @@ public class BasicExpressionParser {
   /**
    * @deprecated plugin compatibility, use the one from the StatementParser
    */
+  @Nullable
   @Deprecated
-  public @Nullable PsiBuilder.Marker parseCaseLabel(@NotNull PsiBuilder builder) {
+  public PsiBuilder.Marker parseCaseLabel(@NotNull PsiBuilder builder) {
     return myParser.getStatementParser().parseCaseLabel(builder).first;
   }
 }

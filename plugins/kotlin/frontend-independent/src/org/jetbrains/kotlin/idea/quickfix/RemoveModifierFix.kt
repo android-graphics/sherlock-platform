@@ -42,9 +42,9 @@ open class RemoveModifierFixBase(
         }
     }
 
-    override fun getFamilyName(): String = KotlinBundle.message("remove.modifier")
+    override fun getFamilyName() = KotlinBundle.message("remove.modifier")
 
-    override fun getText(): String = text
+    override fun getText() = text
 
     override fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile) = element?.hasModifier(modifier) == true
 

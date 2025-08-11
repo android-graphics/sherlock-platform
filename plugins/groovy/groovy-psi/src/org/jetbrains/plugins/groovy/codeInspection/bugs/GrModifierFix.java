@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -98,13 +98,15 @@ public class GrModifierFix extends ModCommandQuickFix {
     return GroovyBundle.message(modifier + ".visibility.presentation");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return myText;
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return GroovyBundle.message("change.modifier.family.name");
   }
 

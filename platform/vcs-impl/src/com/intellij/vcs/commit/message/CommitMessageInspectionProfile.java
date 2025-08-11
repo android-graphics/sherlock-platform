@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit.message;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -13,7 +13,6 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -28,15 +27,13 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
   public static final @NotNull Topic<ProfileListener> TOPIC = Topic.create("commit message inspection changes", ProfileListener.class);
 
   private static final String PROFILE_NAME = "Commit Dialog"; // NON-NLS
-
-  private static @NotNull InspectionProfileImpl createDefaultProfile() {
-    return new InspectionProfileImpl(PROFILE_NAME, new CommitMessageInspectionToolSupplier(), (InspectionProfileImpl)null);
-  }
+  public static final InspectionProfileImpl DEFAULT =
+    new InspectionProfileImpl(PROFILE_NAME, new CommitMessageInspectionToolSupplier(), (InspectionProfileImpl)null);
 
   private final @NotNull Project myProject;
 
   public CommitMessageInspectionProfile(@NotNull Project project) {
-    super(PROFILE_NAME, new CommitMessageInspectionToolSupplier(), createDefaultProfile());
+    super(PROFILE_NAME, new CommitMessageInspectionToolSupplier(), DEFAULT);
 
     myProject = project;
   }
@@ -45,7 +42,6 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
     return project.getService(CommitMessageInspectionProfile.class);
   }
 
-  @ApiStatus.Internal
   public static @NotNull BodyLimitSettings getBodyLimitSettings(@NotNull Project project) {
     VcsConfiguration configuration = VcsConfiguration.getInstance(project);
     CommitMessageInspectionProfile profile = getInstance(project);

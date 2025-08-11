@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
-/**
- * @see git4idea.repo.GitRepositoryStateChangeListener
- */
 public interface BranchChangeListener extends EventListener {
 
   Topic<BranchChangeListener> VCS_BRANCH_CHANGED = Topic.create("VCS branch changed", BranchChangeListener.class);

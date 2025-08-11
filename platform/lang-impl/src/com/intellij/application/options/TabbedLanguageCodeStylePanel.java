@@ -58,7 +58,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   private TabbedPaneWrapper myTabbedPane;
   private final PredefinedCodeStyle[] myPredefinedCodeStyles;
   private JPopupMenu myCopyFromMenu;
-  private @Nullable TabChangeListener myListener;
+  @Nullable private TabChangeListener myListener;
   private final EventDispatcher<PredefinedCodeStyleListener> myPredefinedCodeStyleEventDispatcher = EventDispatcher.create(PredefinedCodeStyleListener.class);
 
   private Ref<LanguageCodeStyleSettingsProvider> myProviderRef;
@@ -253,8 +253,9 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     return myActiveTab.createHighlighter(scheme);
   }
 
+  @NotNull
   @Override
-  protected @NotNull FileType getFileType() {
+  protected FileType getFileType() {
     ensureTabs();
     return myActiveTab.getFileType();
   }
@@ -434,7 +435,8 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
   }
 
-  private @Nullable LanguageCodeStyleSettingsProvider getProvider() {
+  @Nullable
+  private LanguageCodeStyleSettingsProvider getProvider() {
     if (myProviderRef == null) {
       myProviderRef = Ref.create(LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage()));
     }
@@ -503,14 +505,16 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       return 0;
     }
 
+    @Nullable
     @Override
-    protected @Nullable EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
+    protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
       return null;
     }
 
     @SuppressWarnings("ConstantConditions")
+    @NotNull
     @Override
-    protected @NotNull FileType getFileType() {
+    protected FileType getFileType() {
       Language language = getDefaultLanguage();
       return language != null ? language.getAssociatedFileType() : FileTypes.PLAIN_TEXT;
     }
@@ -545,8 +549,9 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       return myConfigurable.isModified();
     }
 
+    @Nullable
     @Override
-    public @Nullable JComponent getPanel() {
+    public JComponent getPanel() {
       if (myComponent == null) {
         myComponent = myConfigurable.createComponent();
       }
@@ -612,8 +617,9 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @SuppressWarnings("ConstantConditions")
+    @NotNull
     @Override
-    protected @NotNull FileType getFileType() {
+    protected FileType getFileType() {
       Language language = TabbedLanguageCodeStylePanel.this.getDefaultLanguage();
       return language != null ? language.getAssociatedFileType() : FileTypes.PLAIN_TEXT;
     }
@@ -663,7 +669,8 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       myEditor.reset(settings, indentOptions);
     }
 
-    protected @Nullable CommonCodeStyleSettings.IndentOptions getIndentOptions(CodeStyleSettings settings) {
+    @Nullable
+    protected CommonCodeStyleSettings.IndentOptions getIndentOptions(CodeStyleSettings settings) {
       return settings.getCommonSettings(getDefaultLanguage()).getIndentOptions();
     }
 

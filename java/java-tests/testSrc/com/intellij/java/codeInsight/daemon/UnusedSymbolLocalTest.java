@@ -2,7 +2,6 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -11,10 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
 import com.intellij.testFramework.IdeaTestUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -45,26 +41,7 @@ public class UnusedSymbolLocalTest extends DaemonAnalyzerTestCase {
     });
   }
 
-  public void testImplicitReadsWrites() throws Exception {
-    ImplicitUsageProvider.EP_NAME.getPoint().registerExtension(new ImplicitUsageProvider() {
-      @Override
-      public boolean isImplicitUsage(@NotNull PsiElement element) {
-        return isImplicitWrite(element) || isImplicitRead(element);
-      }
-
-      @Override
-      public boolean isImplicitRead(@NotNull PsiElement element) {
-        return element instanceof PsiField field && field.getName().contains("Read");
-      }
-
-      @Override
-      public boolean isImplicitWrite(@NotNull PsiElement element) {
-        return element instanceof PsiField field && field.getName().contains("Written");
-      }
-    }, getTestRootDisposable());
-
-    doTest(); 
-  }
+  //public void testInjectedAnno() throws Exception { doTest(); }
 
   public void testChangeInsideCodeBlock() throws Exception {
     doTest();

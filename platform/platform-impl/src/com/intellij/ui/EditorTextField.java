@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -163,7 +162,8 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       }
     });
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGapsKt.UnscaledGaps(3));
-    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+    putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, this); // Disable warning in Kotlin UI DSL, see IDEA-309743
   }
 
   private @Nullable Project getProjectIfValid() {
@@ -193,9 +193,6 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     setDocument(myDocument); // reinit editor.
   }
 
-  /**
-   * @see EditorEx#setShowPlaceholderWhenFocused(boolean)
-   */
   public void setShowPlaceholderWhenFocused(boolean b) {
     myShowPlaceholderWhenFocused = b;
     EditorEx editor = getEditor(false);
@@ -229,12 +226,11 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   @Override
   public void setBackground(Color bg) {
     if (myIgnoreSetBgColor) {
-      bg = getBackground();
-      super.setBackground(bg);
-    } else {
-      super.setBackground(bg);
-      myEnforcedBgColor = bg;
+      super.setBackground(getBackground());
+      return;
     }
+    super.setBackground(bg);
+    myEnforcedBgColor = bg;
     EditorEx editor = getEditor(false);
     if (editor != null) {
       editor.setBackgroundColor(bg);
@@ -330,24 +326,22 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   @Override
   public void setText(final @Nullable String text) {
-    WriteIntentReadAction.run((Runnable)() ->
-      CommandProcessor.getInstance().executeCommand(getProject(), () ->
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          LineSeparator separator = LINE_SEPARATOR_KEY.get(myDocument);
-          if (separator == null) {
-            separator = detectLineSeparators(myDocument, text);
+    CommandProcessor.getInstance().executeCommand(getProject(), () ->
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        LineSeparator separator = LINE_SEPARATOR_KEY.get(myDocument);
+        if (separator == null) {
+          separator = detectLineSeparators(myDocument, text);
+        }
+        LINE_SEPARATOR_KEY.set(myDocument, separator);
+        myDocument.replaceString(0, myDocument.getTextLength(), normalize(text, separator));
+        Editor editor = getEditor();
+        if (editor != null) {
+          final CaretModel caretModel = editor.getCaretModel();
+          if (caretModel.getOffset() >= myDocument.getTextLength()) {
+            caretModel.moveToOffset(myDocument.getTextLength());
           }
-          LINE_SEPARATOR_KEY.set(myDocument, separator);
-          myDocument.replaceString(0, myDocument.getTextLength(), normalize(text, separator));
-          Editor editor = getEditor();
-          if (editor != null) {
-            final CaretModel caretModel = editor.getCaretModel();
-            if (caretModel.getOffset() >= myDocument.getTextLength()) {
-              caretModel.moveToOffset(myDocument.getTextLength());
-            }
-          }
-        }), null, null, UndoConfirmationPolicy.DEFAULT, getDocument())
-    );
+        }
+      }), null, null, UndoConfirmationPolicy.DEFAULT, getDocument());
   }
 
   private static @NotNull String normalize(@Nullable String text, @Nullable LineSeparator separator) {
@@ -517,16 +511,14 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       });
     }
     Disposer.register(myDisposable, () -> {
-      WriteIntentReadAction.run((Runnable)() -> {
-        // remove traces of this editor from UndoManager to avoid leaks
-        Document document = myDocument;
-        if (document != null) {
-          if (project != null && !project.isDisposed()) {
-            ((UndoManagerImpl)UndoManager.getInstance(project)).clearDocumentReferences(document);
-          }
-          ((UndoManagerImpl)UndoManager.getGlobalInstance()).clearDocumentReferences(document);
+      // remove traces of this editor from UndoManager to avoid leaks
+      Document document = myDocument;
+      if (document != null) {
+        if (project != null && !project.isDisposed()) {
+          ((UndoManagerImpl)UndoManager.getInstance(project)).clearDocumentReferences(document);
         }
-      });
+        ((UndoManagerImpl)UndoManager.getGlobalInstance()).clearDocumentReferences(document);
+      }
     });
   }
 
@@ -559,19 +551,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     EditorEx editor = createEditor();
     editor.getContentComponent().setEnabled(isEnabled());
     if (myCaretPosition >= 0) {
-      //  at com.intellij.openapi.application.impl.ApplicationImpl.assertReadAccessAllowed(ApplicationImpl.java:1009)
-      //	at com.intellij.openapi.editor.impl.CaretImpl.getOffset(CaretImpl.java:661)
-      //	at com.intellij.openapi.editor.impl.CaretImpl.doMoveToLogicalPosition(CaretImpl.java:419)
-      //	at com.intellij.openapi.editor.impl.CaretImpl.moveToLogicalPosition(CaretImpl.java:610)
-      //	at com.intellij.openapi.editor.impl.CaretImpl.lambda$moveToOffset$0(CaretImpl.java:105)
-      //	at com.intellij.openapi.editor.impl.CaretModelImpl.doWithCaretMerging(CaretModelImpl.java:413)
-      //	at com.intellij.openapi.editor.impl.CaretImpl.moveToOffset(CaretImpl.java:103)
-      //	at com.intellij.openapi.editor.CaretModel.moveToOffset(CaretModel.java:91)
-      //	at com.intellij.openapi.editor.CaretModel.moveToOffset(CaretModel.java:77)
-      //	at com.intellij.ui.EditorTextField.initEditorInner(EditorTextField.java:562)
-      ReadAction.run(() -> {
-        editor.getCaretModel().moveToOffset(myCaretPosition);
-      });
+      editor.getCaretModel().moveToOffset(myCaretPosition);
       editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
     String tooltip = getToolTipText();
@@ -727,7 +707,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       if (highlighter != null) editor.setHighlighter(highlighter);
     }
 
-    WriteIntentReadAction.run((Runnable)() -> {
+    ReadAction.run(() -> {
       editor.getSettings().setCaretRowShown(false);
 
       editor.setOneLineMode(myOneLineMode);

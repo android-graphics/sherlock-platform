@@ -17,10 +17,6 @@ public class DataFlowInspection11Test extends DataFlowInspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
   }
 
-  public void testNullabilityJdk11() { doTest();}
-  
-  public void testComparatorComparingContract() { doTest();}
-
   public void testStreamCollector10Inlining() { doTest(); }
   
   public void testStreamFlatMapOptional() {doTest();}
@@ -28,8 +24,4 @@ public class DataFlowInspection11Test extends DataFlowInspectionTestCase {
   public void testAvoidWarningAtNotInferredType() { doTest();}
 
   public void testSameArguments() { doTest(); }
-  
-  public void testMethodReturnTypeUnmodifiableAnnotation() { 
-    doTest();
-  }
 }

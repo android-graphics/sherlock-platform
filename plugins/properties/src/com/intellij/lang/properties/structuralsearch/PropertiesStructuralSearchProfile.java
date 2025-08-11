@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -29,7 +29,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-final class PropertiesStructuralSearchProfile extends StructuralSearchProfile {
+/**
+ * @author Bas Leijdekkers
+ */
+public class PropertiesStructuralSearchProfile extends StructuralSearchProfile {
+
   private static final String TYPED_VAR_PREFIX = "__$_";
 
   @Override
@@ -47,9 +51,10 @@ final class PropertiesStructuralSearchProfile extends StructuralSearchProfile {
     };
   }
 
-  private static @NotNull Configuration createConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
-                                                            @NotNull @NonNls String refName,
-                                                            @NotNull @NonNls String criteria) {
+  @NotNull
+  private static Configuration createConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
+                                                  @NotNull @NonNls String refName,
+                                                  @NotNull @NonNls String criteria) {
     return PredefinedConfigurationUtil.createConfiguration(
       name, refName, criteria, PropertiesBundle.message("properties.files.inspection.group.display.name"), PropertiesFileType.INSTANCE);
   }

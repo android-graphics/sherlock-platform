@@ -1,4 +1,0 @@
-@org.junit.Test
-fun ${NAME}() {
-  ${BODY}
-}

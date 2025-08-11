@@ -1,11 +1,11 @@
 package com.michaelbaranov.microba.calendar;
 
-import com.michaelbaranov.microba.calendar.ui.DatePickerUI;
-
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+
+import com.michaelbaranov.microba.calendar.ui.DatePickerUI;
 
 /**
  * A concrete implementation of JComponent. Capable of displaying and selecting
@@ -143,7 +143,6 @@ public class DatePicker extends CalendarPane {
     updateUI();
   }
 
-  @Override
   public String getUIClassID() {
     return uiClassID;
   }
@@ -346,7 +345,6 @@ public class DatePicker extends CalendarPane {
     ((DatePickerUI) getUI()).showPopup(false);
   }
 
-  @Override
   public boolean commitEdit() {
     try {
       ((DatePickerUI) getUI()).commit();
@@ -357,7 +355,6 @@ public class DatePicker extends CalendarPane {
     }
   }
 
-  @Override
   public void revertEdit() {
     ((DatePickerUI) getUI()).revert();
     fireCommitEvent(false);

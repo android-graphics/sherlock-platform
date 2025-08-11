@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.Disposable;
@@ -17,12 +17,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 class AnnotationPresentation implements TextAnnotationPresentation {
-  private final @NotNull FileAnnotation myFileAnnotation;
-  private final @NotNull UpToDateLineNumberProvider myUpToDateLineNumberProvider;
-  private final @Nullable AnnotationSourceSwitcher mySwitcher;
+  @NotNull private final FileAnnotation myFileAnnotation;
+  @NotNull private final UpToDateLineNumberProvider myUpToDateLineNumberProvider;
+  @Nullable private final AnnotationSourceSwitcher mySwitcher;
   private final ArrayList<AnAction> myActions = new ArrayList<>();
 
-  private final @NotNull Disposable myDisposable;
+  @NotNull private final Disposable myDisposable;
   private boolean myDisposed = false;
 
   AnnotationPresentation(@NotNull FileAnnotation fileAnnotation,
@@ -82,7 +82,8 @@ class AnnotationPresentation implements TextAnnotationPresentation {
     return myActions;
   }
 
-  public @NotNull List<AnAction> getActions() {
+  @NotNull
+  public List<AnAction> getActions() {
     return myActions;
   }
 

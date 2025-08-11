@@ -99,25 +99,27 @@ public class SingleEntryIndexForwardIndexAccessor<V> extends AbstractMapForwardI
 
     @Override
     public boolean differentiate(@NotNull Map<Integer, V> newData,
-                                 @NotNull UpdatedEntryProcessor<? super Integer, ? super V> changesProcessor) throws StorageException {
+                                 @NotNull KeyValueUpdateProcessor<? super Integer, ? super V> addProcessor,
+                                 @NotNull KeyValueUpdateProcessor<? super Integer, ? super V> updateProcessor,
+                                 @NotNull RemovedKeyProcessor<? super Integer> removeProcessor) throws StorageException {
       boolean newValueExists = !newData.isEmpty();
       V newValue = ContainerUtil.getFirstItem(newData.values());
       if (myContainsValue) {
         if (!newValueExists) {
-          changesProcessor.removed(myInputId, myInputId);
+          removeProcessor.process(myInputId, myInputId);
           return true;
         }
         else if (Comparing.equal(myCurrentValue, newValue)) {
           return false;
         }
         else {
-          changesProcessor.updated(myInputId, newValue, myInputId);
+          updateProcessor.process(myInputId, newValue, myInputId);
           return true;
         }
       }
       else {
         if (newValueExists) {
-          changesProcessor.added(myInputId, newValue, myInputId);
+          addProcessor.process(myInputId, newValue, myInputId);
           return true;
         }
         else {

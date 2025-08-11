@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.optionalToIf;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -36,8 +36,9 @@ public final class OptionalToIfInspection extends AbstractBaseJavaLocalInspectio
     return Set.of(JavaFeature.STREAM_OPTIONAL);
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression terminalCall) {
@@ -52,7 +53,8 @@ public final class OptionalToIfInspection extends AbstractBaseJavaLocalInspectio
     };
   }
 
-  static @Nullable List<Operation> extractOperations(@NotNull PsiMethodCallExpression lastCall, boolean hasTerminalCall) {
+  @Nullable
+  static List<Operation> extractOperations(@NotNull PsiMethodCallExpression lastCall, boolean hasTerminalCall) {
     List<Operation> operations = new ArrayList<>();
     for (PsiMethodCallExpression call = lastCall; call != null; call = MethodCallUtils.getQualifierMethodCall(call)) {
       PsiMethod method = call.resolveMethod();
@@ -70,7 +72,8 @@ public final class OptionalToIfInspection extends AbstractBaseJavaLocalInspectio
     return operations;
   }
 
-  private static @Nullable Operation convertToOperation(@NotNull String name, @NotNull PsiType type, PsiExpression @NotNull [] args) {
+  @Nullable
+  private static Operation convertToOperation(@NotNull String name, @NotNull PsiType type, PsiExpression @NotNull [] args) {
     Operation operation = IntermediateOperation.create(name, args);
     if (operation != null) return operation;
     operation = TerminalOperation.create(name, args);
@@ -87,7 +90,8 @@ public final class OptionalToIfInspection extends AbstractBaseJavaLocalInspectio
     return StreamEx.of(operations).flatMap(or -> or.myOperation.nestedOperations().append(or));
   }
 
-  static @Nullable String generateCode(@NotNull OptionalToIfContext context, @NotNull List<Operation> operations) {
+  @Nullable
+  static String generateCode(@NotNull OptionalToIfContext context, @NotNull List<Operation> operations) {
     List<OperationRecord> records = createRecords(operations);
 
     allOperations(records).forEach(r -> r.myOperation.preprocessVariables(r.myInVar, r.myOutVar, context));
@@ -96,7 +100,8 @@ public final class OptionalToIfInspection extends AbstractBaseJavaLocalInspectio
     return wrapCode(context, records, "");
   }
 
-  static @Nullable String wrapCode(@NotNull OptionalToIfContext context, @NotNull List<OperationRecord> records, @NotNull String code) {
+  @Nullable
+  static String wrapCode(@NotNull OptionalToIfContext context, @NotNull List<OperationRecord> records, @NotNull String code) {
     for (int i = records.size() - 1; i >= 0; i--) {
       OperationRecord record = records.get(i);
       Operation operation = record.myOperation;
@@ -116,7 +121,8 @@ public final class OptionalToIfInspection extends AbstractBaseJavaLocalInspectio
     return code;
   }
 
-  static @NotNull List<OperationRecord> createRecords(@NotNull List<Operation> operations) {
+  @NotNull
+  static List<OperationRecord> createRecords(@NotNull List<Operation> operations) {
     ChainVariable inVar = ChainVariable.STUB;
     ChainVariable outVar;
     List<OperationRecord> records = new ArrayList<>(operations.size());
@@ -128,7 +134,8 @@ public final class OptionalToIfInspection extends AbstractBaseJavaLocalInspectio
     return records;
   }
 
-  static @Nullable List<Instruction> createInstructions(PsiStatement @NotNull [] statements) {
+  @Nullable
+  static List<Instruction> createInstructions(PsiStatement @NotNull [] statements) {
     List<Instruction> instructions = new ArrayList<>(statements.length);
     for (PsiStatement statement : statements) {
       Instruction instruction = Instruction.create(statement);
@@ -162,8 +169,10 @@ public final class OptionalToIfInspection extends AbstractBaseJavaLocalInspectio
 
   private static class ReplaceOptionalWithIfFix extends PsiUpdateModCommandQuickFix {
 
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
     @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaBundle.message("quickfix.family.replace.optional.chain.with.if.statements");
     }
 

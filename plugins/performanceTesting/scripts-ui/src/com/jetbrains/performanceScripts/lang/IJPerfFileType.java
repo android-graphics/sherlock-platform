@@ -14,23 +14,27 @@ public final class IJPerfFileType extends LanguageFileType {
 
   private IJPerfFileType() {super(IJPerfLanguage.INSTANCE);}
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return "IntegrationPerformanceTest";
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDisplayName() {
+  public String getDisplayName() {
     return PerformanceScriptsBundle.message("filetype.ijperformance.test.display.name");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
+  public String getDescription() {
     return PerformanceScriptsBundle.message("filetype.ijperformance.test.description");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDefaultExtension() {
+  public String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 

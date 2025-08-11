@@ -91,11 +91,13 @@ public final class ClassUtils {
 
   private ClassUtils() {}
 
-  public static @Nullable PsiClass findClass(@NonNls String fqClassName, PsiElement context) {
+  @Nullable
+  public static PsiClass findClass(@NonNls String fqClassName, PsiElement context) {
     return JavaPsiFacade.getInstance(context.getProject()).findClass(fqClassName, context.getResolveScope());
   }
 
-  public static @Nullable PsiClass findObjectClass(PsiElement context) {
+  @Nullable
+  public static PsiClass findObjectClass(PsiElement context) {
     return findClass(CommonClassNames.JAVA_LANG_OBJECT, context);
   }
 
@@ -216,23 +218,31 @@ public final class ClassUtils {
   }
 
   public static boolean isInnerClass(PsiClass aClass) {
-    final PsiClass parentClass = PsiUtil.getContainingClass(aClass);
+    final PsiClass parentClass = getContainingClass(aClass);
     return parentClass != null;
   }
 
   /**
    * @return containing class for {@code element} ignoring {@link PsiAnonymousClass} if {@code element} is located in corresponding expression list
-   * @deprecated use {@link PsiUtil#getContainingClass(PsiElement)}
    */
-  @Deprecated
-  public static @Nullable PsiClass getContainingClass(PsiElement element) {
-    return PsiUtil.getContainingClass(element);
+  @Nullable
+  public static PsiClass getContainingClass(PsiElement element) {
+    PsiClass currentClass;
+    while (true) {
+      currentClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+      if (currentClass instanceof PsiAnonymousClass &&
+          PsiTreeUtil.isAncestor(((PsiAnonymousClass)currentClass).getArgumentList(), element, false)) {
+        element = currentClass;
+      } else {
+        return currentClass;
+      }
+    }
   }
 
   public static PsiClass getOutermostContainingClass(PsiClass aClass) {
     PsiClass outerClass = aClass;
     while (true) {
-      final PsiClass containingClass = PsiUtil.getContainingClass(outerClass);
+      final PsiClass containingClass = getContainingClass(outerClass);
       if (containingClass != null) {
         outerClass = containingClass;
       }
@@ -242,7 +252,8 @@ public final class ClassUtils {
     }
   }
 
-  public static @Nullable PsiClass getContainingStaticClass(PsiElement element) {
+  @Nullable
+  public static PsiClass getContainingStaticClass(PsiElement element) {
     PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false, PsiFile.class);
     while (isNonStaticClass(aClass)) {
       aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true, PsiFile.class);
@@ -276,7 +287,8 @@ public final class ClassUtils {
    * @param aClass anonymous class to extract the "double brace" initializer from
    * @return "double brace" initializer or null if the class does not follow double brace initialization anti-pattern
    */
-  public static @Nullable PsiClassInitializer getDoubleBraceInitializer(PsiAnonymousClass aClass) {
+  @Nullable
+  public static PsiClassInitializer getDoubleBraceInitializer(PsiAnonymousClass aClass) {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
     if (initializers.length != 1) {
       return null;

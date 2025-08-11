@@ -2,8 +2,10 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.ContextAwareRunnable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.util.Conditions
 import kotlinx.coroutines.CompletionHandler
 import kotlinx.coroutines.DisposableHandle
 import kotlinx.coroutines.InternalCoroutinesApi

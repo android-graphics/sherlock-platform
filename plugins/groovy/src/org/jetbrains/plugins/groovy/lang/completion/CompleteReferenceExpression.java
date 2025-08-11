@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -218,7 +218,8 @@ public final class CompleteReferenceExpression {
     }
   }
 
-  public static @NotNull LookupElementBuilder createPropertyLookupElement(@NotNull String name, @Nullable PsiType type) {
+  @NotNull
+  public static LookupElementBuilder createPropertyLookupElement(@NotNull String name, @Nullable PsiType type) {
     LookupElementBuilder res = LookupElementBuilder.create(name).withIcon(JetgroovyIcons.Groovy.Property);
     if (type != null) {
       res = res.withTypeText(type.getPresentableText());
@@ -226,9 +227,10 @@ public final class CompleteReferenceExpression {
     return res;
   }
 
-  public static @Nullable LookupElementBuilder createPropertyLookupElement(@NotNull PsiMethod accessor,
-                                                                           @Nullable PsiSubstitutor substitutor,
-                                                                           @Nullable PrefixMatcher matcher) {
+  @Nullable
+  public static LookupElementBuilder createPropertyLookupElement(@NotNull PsiMethod accessor,
+                                                                 @Nullable PsiSubstitutor substitutor,
+                                                                 @Nullable PrefixMatcher matcher) {
     String propName;
     PsiType propType;
     final boolean getter = GroovyPropertyUtils.isSimplePropertyGetter(accessor, null);
@@ -267,7 +269,8 @@ public final class CompleteReferenceExpression {
     return builder;
   }
 
-  private static @NotNull PsiElement generatePropertyElement(@NotNull String name, @NotNull PsiMethod method, @Nullable PsiType type) {
+  @NotNull
+  private static PsiElement generatePropertyElement(@NotNull String name, @NotNull PsiMethod method, @Nullable PsiType type) {
     PsiType nonNullType = type == null ? TypesUtil.getJavaLangObject(method) : type;
     return new GrPropertyForCompletion(method, name, nonNullType);
   }
@@ -351,7 +354,8 @@ public final class CompleteReferenceExpression {
     ResolveUtil.processNonCodeMembers(qualifierType, myProcessor, myRefExpr, state);
   }
 
-  private @NotNull Set<String> addAllRestrictedProperties() {
+  @NotNull
+  private Set<String> addAllRestrictedProperties() {
     if (myRefExpr.getQualifier() != null) {
       return Collections.emptySet();
     }
@@ -572,7 +576,8 @@ public final class CompleteReferenceExpression {
       return list.toArray(GroovyResolveResult.EMPTY_ARRAY);
     }
 
-    private @NotNull List<GroovyResolveResult> getInapplicableResults() {
+    @NotNull
+    private List<GroovyResolveResult> getInapplicableResults() {
       if (myInapplicable == null) return Collections.emptyList();
       return myInapplicable;
     }

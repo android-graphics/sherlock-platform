@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsSetting;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -28,7 +27,6 @@ import java.util.List;
 import java.util.Set;
 
 
-@ApiStatus.Internal
 public abstract class VcsAbstractSetting implements PersistentVcsSetting {
   private final Set<String> myApplicable = new HashSet<>();
 

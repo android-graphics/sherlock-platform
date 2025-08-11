@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.externalSystemIntegration.output.parsers;
 
 import com.intellij.build.events.BuildEvent;
@@ -6,7 +6,6 @@ import com.intellij.build.events.impl.*;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenSpyLoggedEventParser;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -34,8 +33,7 @@ public class MavenSpyOutputParser {
 
   public void processLine(@NotNull String spyLine,
                           @NotNull Consumer<? super BuildEvent> messageConsumer) {
-    String line = extractLine(spyLine);
-    if (line == null) return;
+    String line = spyLine.substring(PREFIX.length());
     try {
       int threadSeparatorIdx = line.indexOf('-');
       if (threadSeparatorIdx < 0) {
@@ -72,13 +70,6 @@ public class MavenSpyOutputParser {
     catch (Exception e) {
       MavenLog.LOG.error("Error processing line " + spyLine, e);
     }
-  }
-
-  private static @Nullable String extractLine(@NotNull String line) {
-    if (line.startsWith(PREFIX)) {
-      return line.substring(PREFIX.length());
-    }
-    return null;
   }
 
   protected void parse(int threadId,
@@ -219,7 +210,8 @@ public class MavenSpyOutputParser {
     }
   }
 
-  private static @NotNull String getDownloadId(String artifactCoord) {
+  @NotNull
+  private static String getDownloadId(String artifactCoord) {
     return "download" + artifactCoord;
   }
 

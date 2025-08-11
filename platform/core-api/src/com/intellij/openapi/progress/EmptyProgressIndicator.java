@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  * </p>
  */
 public class EmptyProgressIndicator extends EmptyProgressIndicatorBase implements StandardProgressIndicator {
-  private volatile @Nullable Throwable myCancellationRequester;
+  private volatile boolean myIsCanceled;
 
   @Obsolete
   @Contract(pure = true)
@@ -28,22 +28,18 @@ public class EmptyProgressIndicator extends EmptyProgressIndicatorBase implement
   @Override
   public void start() {
     super.start();
-    myCancellationRequester = null;
+    myIsCanceled = false;
   }
 
   @Override
   public final void cancel() {
-    myCancellationRequester = new Throwable("Origin of cancellation of " + this);
+    myIsCanceled = true;
     ProgressManager.canceled(this);
-  }
-
-  final @Nullable Throwable getCancellationCause() {
-    return myCancellationRequester;
   }
 
   @Override
   public final boolean isCanceled() {
-    return myCancellationRequester != null;
+    return myIsCanceled;
   }
 
   /**

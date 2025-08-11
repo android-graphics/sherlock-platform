@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,10 +12,10 @@ import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
-import com.jetbrains.python.tables.TableCommandParameters;
-import com.jetbrains.python.tables.TableCommandType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.jetbrains.python.tables.TableCommandParameters;
+import com.jetbrains.python.tables.TableCommandType;
 
 import java.util.List;
 
@@ -25,9 +25,11 @@ import java.util.List;
  * @author traff
  */
 public interface PyFrameAccessor {
-  default @Nullable Project getProject() { return null; }
+  @Nullable
+  default Project getProject() { return null; }
 
-  default @Nullable XDebuggerTreeNodeHyperlink getUserTypeRenderersLink(@NotNull String typeRendererId) {
+  @Nullable
+  default XDebuggerTreeNodeHyperlink getUserTypeRenderersLink(@NotNull String typeRendererId) {
     return null;
   }
 
@@ -39,7 +41,8 @@ public interface PyFrameAccessor {
   @Nullable
   XValueChildrenList loadFrame(@Nullable XStackFrame frame) throws PyDebuggerException;
 
-  default @Nullable XValueChildrenList loadSpecialVariables(ProcessDebugger.GROUP_TYPE groupType) throws PyDebuggerException {
+  @Nullable
+  default XValueChildrenList loadSpecialVariables(ProcessDebugger.GROUP_TYPE groupType) throws PyDebuggerException {
     return null;
   }
 
@@ -52,7 +55,8 @@ public interface PyFrameAccessor {
   /**
    * Load full list of a variable's attributes ignoring view settings
    */
-  default @Nullable XValueChildrenList loadVariableDefaultView(PyDebugValue variable) throws PyDebuggerException { return new XValueChildrenList(); }
+  @Nullable
+  default XValueChildrenList loadVariableDefaultView(PyDebugValue variable) throws PyDebuggerException { return new XValueChildrenList(); }
 
   void changeVariable(PyDebugValue variable, String expression) throws PyDebuggerException;
 
@@ -80,7 +84,7 @@ public interface PyFrameAccessor {
 
   default void addFrameListener(@NotNull PyFrameListener listener) {}
 
-  default void loadAsyncVariablesValues(@Nullable XStackFrame frame, final @NotNull List<PyAsyncValue<String>> pyAsyncValues) {}
+  default void loadAsyncVariablesValues(@Nullable XStackFrame frame, @NotNull final List<PyAsyncValue<String>> pyAsyncValues) {}
 
   default boolean isFrameCached(@NotNull XStackFrame frame) {
     return false;
@@ -102,7 +106,8 @@ public interface PyFrameAccessor {
    */
   default String execImageCommand(String command) { return null; }
 
-  default @Nullable XCompositeNode getCurrentRootNode() {
+  @Nullable
+  default XCompositeNode getCurrentRootNode() {
     return null;
   }
 
@@ -115,11 +120,13 @@ public interface PyFrameAccessor {
       myCallback = callback;
     }
 
-    public @NotNull PyDebugValue getDebugValue() {
+    @NotNull
+    public PyDebugValue getDebugValue() {
       return myDebugValue;
     }
 
-    public @NotNull PyDebugCallback<T> getCallback() {
+    @NotNull
+    public PyDebugCallback<T> getCallback() {
       return myCallback;
     }
   }

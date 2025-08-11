@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.jql.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -21,8 +20,9 @@ public class JqlSortKeyImpl extends JqlElementImpl implements JqlSortKey {
     visitor.visitJqlSortKey(this);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFieldName() {
+  public String getFieldName() {
     PsiElement fieldNode = getFirstChild();
     assert fieldNode != null;
     return unescape(fieldNode.getText());

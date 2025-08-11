@@ -20,7 +20,6 @@ public class PsiModifierListStubImpl extends StubBase<PsiModifierList> implement
     return myMask;
   }
 
-  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "PsiModifierListStub[" + "mask=" + getModifiersMask() + "]";

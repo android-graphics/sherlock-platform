@@ -1,29 +1,44 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package com.intellij.util.descriptors;
 
 import org.jetbrains.annotations.NotNull;
 
 public class ConfigFileInfo {
-  private final @NotNull ConfigFileMetaData myMetaData;
-  private final @NotNull String myUrl;
+  @NotNull private final ConfigFileMetaData myMetaData;
+  @NotNull private final String myUrl;
 
 
-  public ConfigFileInfo(final @NotNull ConfigFileMetaData metaData, final @NotNull String url) {
+  public ConfigFileInfo(@NotNull final ConfigFileMetaData metaData, @NotNull final String url) {
     myMetaData = metaData;
     myUrl = url;
   }
 
-  public @NotNull ConfigFileMetaData getMetaData() {
+  @NotNull
+  public ConfigFileMetaData getMetaData() {
     return myMetaData;
   }
 
-  public @NotNull String getUrl() {
+  @NotNull
+  public String getUrl() {
     return myUrl;
   }
 
 
-  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -36,7 +51,6 @@ public class ConfigFileInfo {
     return true;
   }
 
-  @Override
   public int hashCode() {
     int result;
     result = myMetaData.hashCode();

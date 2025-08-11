@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.Collections;
 
-@Internal
 public final class FileTypeIndexImpl
   extends ScalarIndexExtension<FileType>
   implements CustomImplementationFileBasedIndexExtension<FileType, Void> {

@@ -3,8 +3,9 @@ package com.intellij.performance.performancePlugin.commands
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.ui.playback.PlaybackContext
-import com.intellij.openapi.util.io.toCanonicalPath
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerWorkspaceSettings
 import java.io.File
 import kotlin.io.path.div
@@ -20,12 +21,14 @@ internal class EnableKotlinDaemonLogCommand(text: String, line: Int) : Performan
 
     override suspend fun doExecute(context: PlaybackContext) {
         val project = context.project
-        val kotlinDaemonLogFile: File = (PathManager.getLogDir() / "kotlin-daemon.log").toFile().apply { createNewFile() }
+        val kotlinDaemonLog: File = (PathManager.getLogDir() / "kotlin-daemon.log").toFile()
+        withContext(Dispatchers.IO) {
+            kotlinDaemonLog.createNewFile()
+        }
         val compilerSettings = KotlinCompilerWorkspaceSettings.getInstance(project)
         val daemonDefaultVmOptions = compilerSettings.daemonVmOptions
-        val kotlinDaemonLogPath = kotlinDaemonLogFile.toPath().toCanonicalPath()
         compilerSettings.daemonVmOptions =
-            daemonDefaultVmOptions + (if (daemonDefaultVmOptions.isEmpty()) "" else " ") + "-Dkotlin.daemon.log.path=$kotlinDaemonLogPath"
+            daemonDefaultVmOptions + (if (daemonDefaultVmOptions.isEmpty()) "" else " ") + "-Dkotlin.daemon.log.path=$kotlinDaemonLog"
     }
 
     override fun getName(): String {

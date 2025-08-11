@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.control;
 
 import com.intellij.modcommand.ActionContext;
@@ -28,8 +28,9 @@ public final class FlipIfIntention extends GrPsiUpdateIntention {
     ifStatement.getThenBranch().replaceWithStatement(elseIfCopy.getThenBranch());
   }
 
+  @NotNull
   @Override
-  protected @NotNull PsiElementPredicate getElementPredicate() {
+  protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {

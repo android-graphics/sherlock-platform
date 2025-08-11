@@ -1,6 +1,6 @@
 // "Replace with array call" "true"
 // COMPILER_ARGUMENTS: -XXLanguage:+ProhibitAssigningSingleElementsToVarargsInNamedForm
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 
 annotation class Some(vararg val strings: String)
 

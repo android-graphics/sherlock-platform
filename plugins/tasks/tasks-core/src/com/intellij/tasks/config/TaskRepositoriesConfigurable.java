@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.config;
 
 import com.intellij.ide.DataManager;
@@ -30,8 +30,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -184,7 +184,8 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
     myRepositoryEditor.doLayout();
   }
 
-  private @Nullable TaskRepository getSelectedRepository() {
+  @Nullable
+  private TaskRepository getSelectedRepository() {
     return myRepositoriesList.getSelectedValue();
   }
 
@@ -255,13 +256,15 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull String getId() {
+  public String getId() {
     return ID;
   }
 
+  @Nullable
   @Override
-  public @Nullable Runnable enableSearch(String option) {
+  public Runnable enableSearch(String option) {
     TaskRepository matched = ContainerUtil.find(myRepositories, repository -> repository.getRepositoryType().getName().contains(option));
     return matched == null ? null : () -> myRepositoriesList.setSelectedValue(matched, true);
   }

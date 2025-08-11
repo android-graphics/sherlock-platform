@@ -1,24 +1,15 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter
 
-import com.intellij.CommonBundle
-import com.intellij.lang.findUsages.DescriptiveNameUtil
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor
-import com.intellij.refactoring.changeSignature.ParameterInfoImpl
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer
-import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
@@ -30,11 +21,11 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
@@ -50,19 +41,11 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
-import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.*
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher
-import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.ExtractionDataAnalyzer
-import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.ExtractionEngineHelper
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.approximateWithResolvableType
-import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.idea.refactoring.introduce.*
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.AnalysisResult
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionOptions
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionTarget
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionEngine
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.*
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.executeCommand
@@ -74,10 +57,10 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.*
 
 
-open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduceParameterHelper<KtNamedDeclaration> = KotlinIntroduceParameterHelper.Default()) : RefactoringActionHandler {
+class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduceParameterHelper<KtNamedDeclaration> = KotlinIntroduceParameterHelper.Default()) : RefactoringActionHandler {
 
     context(KaSession)
-    protected fun findInternalUsagesOfParametersAndReceiver(
+    private fun findInternalUsagesOfParametersAndReceiver(
         targetParent: KtNamedDeclaration
     ): MultiMap<KtElement, KtElement> {
         val usages = MultiMap<KtElement, KtElement>()
@@ -85,7 +68,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
         targetParent.getValueParameters()
             .filter { !it.hasValOrVar() }
             .forEach {
-                val paramUsages = ReferencesSearch.search(it).asIterable().map { reference -> reference.element as KtElement }
+                val paramUsages = ReferencesSearch.search(it).map { reference -> reference.element as KtElement }
                 if (paramUsages.isNotEmpty()) {
                     usages.put(it, paramUsages)
                 }
@@ -134,7 +117,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
         return approximateWithResolvableType(type, physicalExpression)
     }
 
-    open operator fun invoke(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration) {
+    operator fun invoke(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration) {
         val expressionTypeEvaluator: KaSession.() -> KaType? = {
             val physicalExpression = expression.substringContextOrThis
             getExpressionType(physicalExpression, expression)
@@ -156,12 +139,12 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
             val nameValidator = CollectingNameValidator(targetParent.getValueParameters().mapNotNull { it.name }, bodyValidator)
 
             if (physicalExpression is KtProperty && !isUnitTestMode()) {
-                suggestedNames.addIfNotNull(physicalExpression.name?.quoteIfNeeded())
+                suggestedNames.addIfNotNull(physicalExpression.name)
             }
             suggestedNames.addAll(KotlinNameSuggester.suggestNamesByType(expressionType, targetParent, nameValidator, "p"))
             suggestedNames
         }
-        addParameter(project, editor, expression, expression, targetParent, expressionTypeEvaluator, nameSuggester)
+        addParameter(project, editor, expression, targetParent, expressionTypeEvaluator, nameSuggester)
     }
 
     /**
@@ -169,16 +152,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
      * (to be reused in "create parameter from usage" where both type and name are fixed, and computed a bit differently from the regular "introduce parameter")
      */
     @OptIn(KaExperimentalApi::class)
-    fun addParameter(
-        project: Project,
-        editor: Editor,
-        expression: KtExpression,
-        argumentValue: KtExpression?,
-        targetParent: KtNamedDeclaration,
-        expressionTypeEvaluator: KaSession.() -> KaType?,
-        nameSuggester: KaSession.(KaType) -> List<String>,
-        silently: Boolean = false,
-    ) {
+    fun addParameter(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration, expressionTypeEvaluator: KaSession.()->KaType?, nameSuggester:  KaSession.(KaType)->List<String>) {
         val physicalExpression = expression.substringContextOrThis
         if (physicalExpression is KtProperty && physicalExpression.isLocal && physicalExpression.nameIdentifier == null) {
             showErrorHintByKey(project, editor, "cannot.refactor.no.expression", INTRODUCE_PARAMETER)
@@ -191,7 +165,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
             val expressionType = expressionTypeEvaluator.invoke(this)
             message = if (expressionType == null) {
                 KotlinBundle.message("error.text.expression.has.no.type")
-            } else if (expressionType.isUnitType || expressionType.isNothingType) {
+            } else if (expressionType.isUnit || expressionType.isNothing) {
                 KotlinBundle.message(
                     "cannot.introduce.parameter.of.0.type",
                     expressionType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT),
@@ -201,7 +175,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
             if (message != null) {
                 return@analyzeInModalWindow null
             }
-            require(expressionType != null)
+            require (expressionType!=null)
             suggestedNames = nameSuggester.invoke(this, expressionType)
 
             val parametersUsages = findInternalUsagesOfParametersAndReceiver(targetParent)
@@ -213,7 +187,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
                 ?: Collections.emptyList()
 
             val occurrencesToReplace = if (expression is KtProperty) {
-                ReferencesSearch.search(expression).asIterable().mapNotNullTo(SmartList(expression.toRange())) { it.element.toRange() }
+                ReferencesSearch.search(expression).mapNotNullTo(SmartList(expression.toRange())) { it.element.toRange() }
             } else {
                 K2SemanticMatcher.findMatches(patternElement = expression, scopeElement = targetParent)
                     .filterNot {
@@ -238,8 +212,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
                 expressionType,
                 parametersUsages,
                 occurrencesToReplace,
-                psiFactory,
-                argumentValue
+                psiFactory
             ) to expressionType
         }
 
@@ -267,10 +240,9 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
                         && !haveLambdaArgumentsToReplace
                         && expression.extractableSubstringInfo == null
                         && !expression.mustBeParenthesizedInInitializerPosition()
-                        && PsiTreeUtil.isAncestor(introduceParameterDescriptor.callableDescriptor, physicalExpression, true)
 
-                if (isTestMode || silently) {
-                    introduceParameterDescriptor.performRefactoring(editor = editor)
+                if (isTestMode) {
+                    introduceParameterDescriptor.performRefactoring()
                     return
                 }
 
@@ -284,7 +256,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
                         editor
                     ) {
                         override fun performRefactoring(descriptor: IntroduceParameterDescriptor<KtNamedDeclaration>) {
-                            descriptor.performRefactoring(editor = editor)
+                            descriptor.performRefactoring()
                         }
 
                         override fun switchToDialogUI() {
@@ -314,7 +286,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
         val types = analyzeInModalWindow(physicalExpression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             buildList {
                 add(replacementType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
-                replacementType.allSupertypes(shouldApproximate = true).mapTo(this) {
+                replacementType.getAllSuperTypes(true).mapTo(this) {
                     it.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
                 }
             }
@@ -338,8 +310,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
         replacementType: KaType,
         parametersUsages: MultiMap<KtElement, KtElement>,
         occurrencesToReplace: List<KotlinPsiRange>,
-        psiFactory: KtPsiFactory,
-        argumentValue: KtExpression?
+        psiFactory: KtPsiFactory
     ): IntroduceParameterDescriptor<KtNamedDeclaration> = helper.configure(
         IntroduceParameterDescriptor(
             originalRange = originalExpression.toRange(),
@@ -351,7 +322,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
                     functionalTypeRenderer = KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
                 }, position = Variance.IN_VARIANCE)
             },
-            argumentValue = argumentValue,
+            argumentValue = originalExpression,
             withDefaultValue = false,
             parametersUsages = parametersUsages,
             occurrencesToReplace = occurrencesToReplace,
@@ -423,52 +394,9 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
     }
 }
 
-@OptIn(KaExperimentalApi::class)
-fun IntroduceParameterDescriptor<KtNamedDeclaration>.performRefactoring(editor: Editor) {
+fun IntroduceParameterDescriptor<KtNamedDeclaration>.performRefactoring(onExit: (() -> Unit)? = null) {
     val superMethods = checkSuperMethods(callable, emptyList(), RefactoringBundle.message("to.refactor"))
-    val targetCallable = superMethods.firstOrNull() ?: return
-
-    if (!targetCallable.canRefactorElement()) {
-        val unmodifiableFileName = targetCallable.containingFile?.name
-        val message = RefactoringBundle.message("refactoring.cannot.be.performed") + "\n" +
-                KotlinBundle.message(
-                    "error.hint.cannot.modify.0.declaration.from.1.file",
-                    DescriptiveNameUtil.getDescriptiveName(targetCallable),
-                    unmodifiableFileName!!,
-                )
-        CommonRefactoringUtil.showErrorHint(callable.project, editor, message, CommonBundle.getErrorTitle(), INTRODUCE_PARAMETER)
-        return
-    }
-
-    if (targetCallable is PsiMethod) {
-        val typeReference =
-            KtPsiFactory.contextual(callable).createType(newParameterTypeText, callable, callable, Variance.INVARIANT)
-
-        val psiType = analyzeInModalWindow(typeReference, KotlinBundle.message("fix.change.signature.prepare")) {
-            typeReference.type.asPsiType(targetCallable, true)
-        }
-
-        val newParam = ParameterInfoImpl.create(-1).withName(newParameterName).withType(psiType)
-        val newParameters = ParameterInfoImpl.fromMethod(targetCallable) + newParam
-        object : ChangeSignatureProcessor(
-            targetCallable.project,
-            targetCallable,
-            false,
-            null,
-            targetCallable.name,
-            targetCallable.returnType,
-            newParameters
-        ) {
-            override fun performRefactoring(usages: Array<out UsageInfo?>) {
-                super.performRefactoring(usages)
-                occurrencesToReplace.forEach {
-                    occurrenceReplacer(it)
-                }
-            }
-        }.run()
-    }
-
-    if (targetCallable !is KtNamedDeclaration) return
+    val targetCallable = superMethods.filterIsInstance<KtNamedDeclaration>().firstOrNull() ?: return
 
     val methodDescriptor = KotlinMethodDescriptor((targetCallable as? KtClass)?.primaryConstructor ?: targetCallable)
     val changeInfo = KotlinChangeInfo(methodDescriptor)
@@ -476,7 +404,7 @@ fun IntroduceParameterDescriptor<KtNamedDeclaration>.performRefactoring(editor: 
     val defaultValue = (if (newArgumentValue is KtProperty) (newArgumentValue as KtProperty).initializer else newArgumentValue)?.let { KtPsiUtil.safeDeparenthesize(it) }
 
     if (!withDefaultValue) {
-        val parameters = callable.getValueParameters()
+        val parameters = targetCallable.getValueParameters()
         val withReceiver = methodDescriptor.receiver != null
         parametersToRemove
             .map {
@@ -500,12 +428,7 @@ fun IntroduceParameterDescriptor<KtNamedDeclaration>.performRefactoring(editor: 
         defaultValue = if (withDefaultValue) defaultValue else null,
         context = targetCallable
     )
-
-    val containingParameter = originalRange.elements.firstOrNull()?.parentOfType<KtParameter>()
-
-    val targetParameterIndex = containingParameter?.let { (callable as? KtFunction)?.valueParameterList?.parameters?.indexOf(containingParameter) } ?: -1
-
-    changeInfo.addParameter(parameterInfo, targetParameterIndex)
+    changeInfo.addParameter(parameterInfo)
 
     object : KotlinChangeSignatureProcessor(targetCallable.project, changeInfo) {
         override fun performRefactoring(usages: Array<out UsageInfo?>) {
@@ -513,106 +436,7 @@ fun IntroduceParameterDescriptor<KtNamedDeclaration>.performRefactoring(editor: 
             occurrencesToReplace.forEach {
                 occurrenceReplacer(it)
             }
+            onExit?.invoke()
         }
     }.run()
-}
-
-open class KotlinFirIntroduceLambdaParameterHandler(
-    private val helper: KotlinIntroduceParameterHelper<KtNamedDeclaration> = KotlinIntroduceParameterHelper.Default()
-) : KotlinFirIntroduceParameterHandler(helper) {
-    @OptIn(KaExperimentalApi::class)
-    private val extractLambdaHelper = object : ExtractionEngineHelper(INTRODUCE_LAMBDA_PARAMETER) {
-        private fun createDialog(
-            project: Project,
-            editor: Editor,
-            lambdaExtractionDescriptor: ExtractableCodeDescriptor
-        ): KotlinIntroduceParameterDialog? {
-            val callable = lambdaExtractionDescriptor.extractionData.targetSibling as KtNamedDeclaration
-            val originalRange = lambdaExtractionDescriptor.extractionData.originalRange
-            val (parametersUsages, returnType) = analyzeInModalWindow(callable, KotlinBundle.message("fix.change.signature.prepare")) {
-                findInternalUsagesOfParametersAndReceiver(callable) to calculateFunctionalType(lambdaExtractionDescriptor)
-            }
-            val introduceParameterDescriptor = IntroduceParameterDescriptor(
-                originalRange = originalRange,
-                callable = callable,
-                callableDescriptor = callable,
-                newParameterName = "", // to be chosen in the dialog
-                newParameterTypeText = "", // to be chosen in the dialog
-                argumentValue = KtPsiFactory(project).createExpression("{}"), // substituted later
-                withDefaultValue = false,
-                parametersUsages = parametersUsages,
-                occurrencesToReplace = listOf(originalRange),
-                parametersToRemove = listOf()
-            )
-            return KotlinIntroduceParameterDialog(project, editor, introduceParameterDescriptor,
-                                                  lambdaExtractionDescriptor.suggestedNames.toTypedArray(),
-                                                  listOf(returnType),
-                                                  helper,
-                                                  lambdaExtractionDescriptor)
-        }
-
-        context(KaSession)
-        fun calculateFunctionalType(
-            oldDescriptor: ExtractableCodeDescriptor,
-        ): String {
-            val receiverText = oldDescriptor.receiverParameter?.parameterType?.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.IN_VARIANCE)?.let { "$it." } ?: ""
-            val parameters =
-                oldDescriptor.parameters.joinToString(", ", "(", ")") { it.parameterType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.IN_VARIANCE) }
-
-            val returnTypeText = oldDescriptor.returnType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE)
-            return "$receiverText$parameters -> $returnTypeText"
-        }
-
-        override fun configureAndRun(
-            project: Project,
-            editor: Editor,
-            descriptorWithConflicts: ExtractableCodeDescriptorWithConflicts,
-            onFinish: (ExtractionResult) -> Unit
-        ) {
-            val lambdaExtractionDescriptor = descriptorWithConflicts.descriptor
-            if (!ExtractionTarget.FAKE_LAMBDALIKE_FUNCTION.isAvailable(lambdaExtractionDescriptor)) {
-                showErrorHint(
-                    project,
-                    editor,
-                    KotlinBundle.message("error.text.can.t.introduce.lambda.parameter.for.this.expression"),
-                    INTRODUCE_LAMBDA_PARAMETER
-                )
-                return
-            }
-
-            val dialog = createDialog(project, editor, lambdaExtractionDescriptor) ?: return
-            if (isUnitTestMode()) {
-                dialog.performRefactoring()
-            } else {
-                dialog.showAndGet()
-            }
-        }
-    }
-
-    override fun invoke(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration) {
-        val duplicateContainer =
-            when (targetParent) {
-                is KtFunction -> targetParent.bodyExpression
-                is KtClass -> targetParent.body
-                else -> null
-            } ?: throw AssertionError("Body element is not found: ${targetParent.getElementTextWithContext()}")
-        val extractionData = ActionUtil.underModalProgress(project, KotlinBundle.message("fix.change.signature.prepare")) {
-            ExtractionData(
-                targetParent.containingKtFile,
-                expression.toRange(),
-                targetParent,
-                duplicateContainer,
-                ExtractionOptions.DEFAULT
-            )
-        }
-        val engine = object :
-            IExtractionEngine<KaType, ExtractionData, ExtractionGeneratorConfiguration, ExtractionResult, ExtractableCodeDescriptor, ExtractableCodeDescriptorWithConflicts>(
-                extractLambdaHelper
-            ) {
-            override fun performAnalysis(extractionData: ExtractionData): AnalysisResult<KaType> {
-                return ExtractionDataAnalyzer(extractionData).performAnalysis()
-            }
-        }
-        engine.run(editor, extractionData)
-    }
 }

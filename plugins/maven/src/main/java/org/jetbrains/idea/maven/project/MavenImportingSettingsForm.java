@@ -12,9 +12,8 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.updateSettings.impl.LabelTextReplacingUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.EnumComboBoxModel;
-import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction;
@@ -40,7 +39,7 @@ public class MavenImportingSettingsForm {
   private JTextField myDependencyTypes;
   private JBTextField myVMOptionsForImporter;
   private ExternalSystemJdkComboBox myJdkForImporterComboBox;
-  private JBLabel myImporterJdkWarning;
+  private JLabel myImporterJdkWarning;
   private JCheckBox myAutoDetectCompilerCheckBox;
 
   private final ComponentValidator myImporterJdkValidator;
@@ -53,7 +52,7 @@ public class MavenImportingSettingsForm {
     myUpdateFoldersOnImportPhaseComboBox.setModel(new DefaultComboBoxModel<>(MavenImportingSettings.UPDATE_FOLDERS_PHASES));
 
     myGeneratedSourcesComboBox.setModel(new EnumComboBoxModel<>(MavenImportingSettings.GeneratedSourcesFolder.class));
-    myGeneratedSourcesComboBox.setRenderer(BuilderKt.textListCellRenderer("", value -> value.getTitle()));
+    myGeneratedSourcesComboBox.setRenderer(SimpleListCellRenderer.create("", value -> value.getTitle()));
 
     LabelTextReplacingUtil.replaceText(myPanel);
     myAutoDetectCompilerCheckBox.setVisible(Registry.is("maven.import.compiler.arguments", true));

@@ -29,7 +29,13 @@ import java.util.List;
 /**
  * Removes <a href="http://unicode.org/faq/utf_bom.html">file's BOM</a> (if any).
  */
-final class RemoveBomAction extends AnAction implements DumbAware {
+public final class RemoveBomAction extends AnAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(RemoveBomAction.class);
+
+  public RemoveBomAction() {
+    super(IdeBundle.messagePointer("remove.BOM"));
+  }
+
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
@@ -116,7 +122,7 @@ final class RemoveBomAction extends AnAction implements DumbAware {
       WriteAction.runAndWait(() -> virtualFile.setBinaryContent(contentWithStrippedBom));
     }
     catch (IOException ex) {
-      Logger.getInstance(RemoveBomAction.class).warn("Unexpected exception occurred on attempt to remove BOM from file " + virtualFile, ex);
+      LOG.warn("Unexpected exception occurred on attempt to remove BOM from file " + virtualFile, ex);
     }
   }
 

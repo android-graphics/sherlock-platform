@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.changeToMethod;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -27,8 +27,9 @@ import static org.jetbrains.plugins.groovy.codeInspection.changeToMethod.transfo
  */
 public final class ChangeToMethodInspection extends BaseInspection {
 
+  @NotNull
   @Override
-  protected @NotNull BaseInspectionVisitor buildVisitor() {
+  protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
       public void visitExpression(@NotNull GrExpression expression) {
@@ -53,8 +54,10 @@ public final class ChangeToMethodInspection extends BaseInspection {
 
     private TransformationBasedFix(Transformation<?> transformation) { myTransformation = transformation; }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return GroovyBundle.message("replace.with.method.fix", myTransformation.getMethod());
     }
 
@@ -68,7 +71,8 @@ public final class ChangeToMethodInspection extends BaseInspection {
     }
   }
 
-  public @Nullable Transformation<? extends GrExpression> getTransformation(@NotNull GrExpression expression) {
+  @Nullable
+  public Transformation<? extends GrExpression> getTransformation(@NotNull GrExpression expression) {
     if (expression instanceof GrUnaryExpression unary) {
       return UNARY_TRANSFORMATIONS.get(unary.getOperationTokenType());
     }
@@ -83,7 +87,8 @@ public final class ChangeToMethodInspection extends BaseInspection {
     return null;
   }
 
-  public @Nullable PsiElement getHighlightingElement(@NotNull GrExpression expression) {
+  @Nullable
+  public PsiElement getHighlightingElement(@NotNull GrExpression expression) {
     if (expression instanceof GrUnaryExpression unary) {
       return unary.getOperationToken();
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -26,7 +26,7 @@ import java.nio.charset.Charset;
  */
 @Deprecated
 public final class FilePathImpl implements FilePath {
-  private final @NotNull String myPath;
+  @NotNull private final String myPath;
   private final boolean myIsDirectory;
 
   public FilePathImpl(@NotNull String path, boolean isDirectory) {
@@ -56,8 +56,9 @@ public final class FilePathImpl implements FilePath {
     return result;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPath() {
+  public String getPath() {
     return myPath;
   }
 
@@ -72,44 +73,52 @@ public final class FilePathImpl implements FilePath {
   }
 
   @Override
-  public @Nullable FilePath getParentPath() {
+  @Nullable
+  public FilePath getParentPath() {
     String parent = PathUtil.getParentPath(myPath);
     return parent.isEmpty() ? null : new FilePathImpl(parent, true);
   }
 
   @Override
-  public @Nullable VirtualFile getVirtualFile() {
+  @Nullable
+  public VirtualFile getVirtualFile() {
     return LocalFileSystem.getInstance().findFileByPath(myPath);
   }
 
   @Override
-  public @Nullable VirtualFile getVirtualFileParent() {
+  @Nullable
+  public VirtualFile getVirtualFileParent() {
     FilePath parent = getParentPath();
     return parent != null ? parent.getVirtualFile() : null;
   }
 
   @Override
-  public @NotNull File getIOFile() {
+  @NotNull
+  public File getIOFile() {
     return new File(myPath);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return PathUtil.getFileName(myPath);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPresentableUrl() {
+  public String getPresentableUrl() {
     return FileUtil.toSystemDependentName(myPath);
   }
 
   @Override
-  public @NotNull Charset getCharset() {
+  @NotNull
+  public Charset getCharset() {
     return getCharset(null);
   }
 
   @Override
-  public @NotNull Charset getCharset(@Nullable Project project) {
+  @NotNull
+  public Charset getCharset(@Nullable Project project) {
     VirtualFile file = getVirtualFile();
     String path = myPath;
     while ((file == null || !file.isValid()) && !path.isEmpty()) {
@@ -124,14 +133,16 @@ public final class FilePathImpl implements FilePath {
   }
 
   @Override
-  public @NotNull FileType getFileType() {
+  @NotNull
+  public FileType getFileType() {
     VirtualFile file = getVirtualFile();
     FileTypeManager manager = FileTypeManager.getInstance();
     return file != null ? manager.getFileTypeByFile(file) : manager.getFileTypeByFileName(getName());
   }
 
   @Override
-  public @NonNls String toString() {
+  @NonNls
+  public String toString() {
     return myPath + (myIsDirectory ? "/" : "");
   }
 

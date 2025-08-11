@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -56,13 +56,15 @@ public class XValueGroupNodeImpl extends XValueContainerNode<XValueGroup> implem
     return "Group:" + myValueContainer.getName();
   }
 
+  @Nullable
   @Override
-  public @Nullable String getName() {
+  public String getName() {
     return myValueContainer.getName();
   }
 
+  @Nullable
   @Override
-  public @Nullable String getRawValue() {
+  public String getRawValue() {
     return null;
   }
 

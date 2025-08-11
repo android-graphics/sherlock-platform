@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.Expression;
@@ -11,13 +13,11 @@ import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiUtilBase;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-@ApiStatus.Internal
 public abstract class CommentMacro extends MacroBase {
   private final Function<? super Commenter, String> myCommenterFunction;
 
@@ -26,8 +26,9 @@ public abstract class CommentMacro extends MacroBase {
     myCommenterFunction = commenterFunction;
   }
 
+  @Nullable
   @Override
-  protected @Nullable Result calculateResult(Expression @NotNull [] params, ExpressionContext context, boolean quick) {
+  protected Result calculateResult(Expression @NotNull [] params, ExpressionContext context, boolean quick) {
     Editor editor = context.getEditor();
     Language language = editor == null ? null : PsiUtilBase.getLanguageInEditor(editor, context.getProject());
     Commenter commenter = language == null ? null : LanguageCommenters.INSTANCE.forLanguage(language);

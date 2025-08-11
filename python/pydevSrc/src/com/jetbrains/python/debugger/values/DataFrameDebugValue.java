@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.values;
 
 import com.intellij.util.SmartFMap;
@@ -14,12 +14,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-import static com.jetbrains.python.debugger.values.DataFrameDebugValueUtilKt.getInformationColumns;
+import static com.jetbrains.python.debugger.values.DataFrameDebugValueUtilKt.getColumnData;
 
 public final class DataFrameDebugValue extends PyDebugValue {
   private final ColumnNode treeColumns = new ColumnNode();
-
-  public static final String pyDataFrameType = "DataFrame";
 
   public DataFrameDebugValue(@NotNull String name,
                              @Nullable String type,
@@ -61,19 +59,17 @@ public final class DataFrameDebugValue extends PyDebugValue {
 
 
   @Override
-  public @NotNull PyDebugCallback<String> createDebugValueCallback() {
+  @NotNull
+  public PyDebugCallback<String> createDebugValueCallback() {
     return new PyDebugCallback<>() {
       @Override
       public void ok(String value) {
         myLoadValuePolicy = ValuesPolicy.SYNC;
         myValue = value;
-        try {
-          DataFrameDebugValue.InformationColumns columns = getInformationColumns(value);
-          if (columns != null) {
-            setColumns(columns);
-          }
-        } catch (Exception ignored) {}
-
+        DataFrameDebugValue.InformationColumns columns = getColumnData(value);
+        if (columns != null) {
+          setColumns(columns);
+        }
         for (XValueNode node : myValueNodes) {
           if (node != null && !node.isObsolete()) {
             updateNodeValueAfterLoading(node, value, "", null);

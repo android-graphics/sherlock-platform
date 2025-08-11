@@ -24,7 +24,6 @@ interface EditedCommitDetails {
   val commit: VcsFullCommitDetails
 }
 
-@ApiStatus.Internal
 @ApiStatus.Experimental
 class EditedCommitDetailsImpl(
   override val currentUser: VcsUser?,

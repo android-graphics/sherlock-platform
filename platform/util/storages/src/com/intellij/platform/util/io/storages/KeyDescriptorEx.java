@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages;
 
-import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -72,10 +71,8 @@ public interface KeyDescriptorEx<K> extends EqualityPolicy<K>, DataExternalizerE
         try (DataOutputStream os = new DataOutputStream(stream)) {
           oldSchoolDescriptor.save(os, key);
         }
-        ByteArraySequence byteArraySequence = stream.toByteArraySequence();
-        return new ByteArrayWriter(byteArraySequence.getInternalBuffer(),
-                                   byteArraySequence.getOffset(),
-                                   byteArraySequence.getLength());
+
+        return new ByteArrayWriter(stream.toByteArray());
       }
 
       @Override

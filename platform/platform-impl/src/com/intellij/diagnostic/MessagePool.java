@@ -1,24 +1,17 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-/**
- * The class is for routing messages inside an IDE and shouldn't be accessed from plugins.
- * <p>
- * For reporting errors, see {@link com.intellij.openapi.diagnostic.Logger#error} methods.
- * <p>
- * For receiving reports, register own {@link com.intellij.openapi.diagnostic.ErrorReportSubmitter}.
- */
-@ApiStatus.Internal
 public final class MessagePool {
   public enum State { NoErrors, ReadErrors, UnreadErrors }
 
@@ -37,32 +30,33 @@ public final class MessagePool {
 
   private MessagePool() { }
 
-  /** @deprecated use {@link #addIdeFatalMessage(AbstractMessage)} instead */
-  @Deprecated(forRemoval = true)
   public void addIdeFatalMessage(@NotNull IdeaLoggingEvent event) {
-    addIdeFatalMessage(event.getData() instanceof AbstractMessage am ? am : new LogMessage(event.getThrowable(), event.getMessage(), List.of()));
-  }
-
-  public void addIdeFatalMessage(@NotNull AbstractMessage message) {
+    AbstractMessage message;
     if (myErrors.size() < MAX_POOL_SIZE) {
-      doAddMessage(message);
+      Object data = event.getData();
+      message = data instanceof AbstractMessage ? (AbstractMessage)data :
+                new LogMessage(event.getThrowable(), event.getMessage(), Collections.emptyList());
     }
     else if (myErrors.size() == MAX_POOL_SIZE) {
-      doAddMessage(new LogMessage(new TooManyErrorsException(), null, List.of()));
+      message = new LogMessage(new TooManyErrorsException(), null, Collections.emptyList());
     }
+    else {
+      return;
+    }
+    doAddMessage(message);
   }
 
   public @NotNull State getState() {
     if (myErrors.isEmpty()) return State.NoErrors;
-    for (var message: myErrors) {
+    for (AbstractMessage message: myErrors) {
       if (!message.isRead()) return State.UnreadErrors;
     }
     return State.ReadErrors;
   }
 
-  public @NotNull List<AbstractMessage> getFatalErrors(boolean includeReadMessages, boolean includeSubmittedMessages) {
-    var result = new ArrayList<AbstractMessage>();
-    for (var message : myErrors) {
+  public List<AbstractMessage> getFatalErrors(boolean includeReadMessages, boolean includeSubmittedMessages) {
+    List<AbstractMessage> result = new ArrayList<>();
+    for (AbstractMessage message : myErrors) {
       if (!includeReadMessages && message.isRead()) continue;
       if (!includeSubmittedMessages && (message.isSubmitted() || message.getThrowable() instanceof TooManyErrorsException)) continue;
       result.add(message);
@@ -71,7 +65,7 @@ public final class MessagePool {
   }
 
   public void clearErrors() {
-    for (var message : myErrors) {
+    for (AbstractMessage message : myErrors) {
       message.setRead(true); // expire notifications
     }
     myErrors.clear();
@@ -106,7 +100,9 @@ public final class MessagePool {
     }
 
     if (ApplicationManager.getApplication().isInternal()) {
-      message.getAllAttachments().forEach(attachment -> attachment.setIncluded(true));
+      for (Attachment attachment : message.getAllAttachments()) {
+        attachment.setIncluded(true);
+      }
     }
 
     if (shallAddSilently(message)) {

@@ -2,15 +2,12 @@
 @file:JvmName("PyPackageRepositoryUtil")
 package com.jetbrains.python.packaging.repository
 
-import com.intellij.openapi.components.service
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.RequestBuilder
-import com.jetbrains.python.packaging.PyPIPackageUtil
-import com.jetbrains.python.packaging.pip.PypiPackageCache
 import org.jetbrains.annotations.ApiStatus
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
-import java.util.Base64
+import java.util.*
 
 @ApiStatus.Experimental
 internal fun RequestBuilder.withBasicAuthorization(repository: PyPackageRepository?): RequestBuilder {
@@ -39,11 +36,7 @@ internal fun encodeCredentialsForUrl(login: String, password: String): String {
 }
 
 @ApiStatus.Experimental
-object PyEmptyPackagePackageRepository : PyPackageRepository("empty repository", null, null)
+object PyEmptyPackagePackageRepository : PyPackageRepository("empty repository", "", "")
 
 @ApiStatus.Experimental
-object PyPIPackageRepository : PyPackageRepository("PyPI", PyPIPackageUtil.PYPI_LIST_URL, null) {
-  override fun getPackages(): Set<String> {
-    return service<PypiPackageCache>().packages
-  }
-}
+object PyPIPackageRepository : PyPackageRepository("PyPI", "https://pypi.python.org/simple", "")

@@ -13,7 +13,6 @@ internal class RelativeFileWithoutExtensionReferenceProvider: PathReferenceProvi
     if (psiElement is MarkdownPsiElement) {
       val fileReference = ReferenceUtil.findFileReference(references) ?: return false
       val reference = RelativeFileWithoutExtensionReference(psiElement, fileReference, soft)
-      if (reference.resolve() == null) return false
       references.add(reference)
     }
     return false

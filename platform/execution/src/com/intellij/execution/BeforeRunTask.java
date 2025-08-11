@@ -70,7 +70,6 @@ public abstract class BeforeRunTask<T extends BeforeRunTask<?>> implements Clone
     }
   }
 
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -82,7 +81,6 @@ public abstract class BeforeRunTask<T extends BeforeRunTask<?>> implements Clone
     return true;
   }
 
-  @Override
   public int hashCode() {
     return 31 * myProviderId.hashCode() + (myIsEnabled ? 1 : 0);
   }

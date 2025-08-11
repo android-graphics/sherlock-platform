@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -31,6 +31,7 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +86,8 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   }
 
   @Override
-  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  @NotNull
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new MoveInstanceMethodViewDescriptor(myMethod, myTargetVariable, myTargetClass);
   }
 
@@ -162,7 +164,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     final PsiManager manager = myMethod.getManager();
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(manager.getProject());
     final List<UsageInfo> usages = new ArrayList<>();
-    for (PsiReference ref : ReferencesSearch.search(myMethod, searchScope, false).asIterable()) {
+    for (PsiReference ref : ReferencesSearch.search(myMethod, searchScope, false)) {
       final PsiElement element = ref.getElement();
       if (element instanceof PsiReferenceExpression) {
         boolean isInternal = PsiTreeUtil.isAncestor(myMethod, element, true);
@@ -228,7 +230,8 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   }
 
   @Override
-  protected @NotNull String getCommandName() {
+  @NotNull
+  protected String getCommandName() {
     return RefactoringBundle.message("move.instance.method.command");
   }
 
@@ -525,7 +528,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
           }
           if (myTargetVariable.equals(resolved)) {
             PsiThisExpression thisExpression = RefactoringChangeUtil.createThisExpression(
-              manager, PsiTreeUtil.isAncestor(myMethod, PsiUtil.getContainingClass(expression), true) ? myTargetClass : null);
+              manager, PsiTreeUtil.isAncestor(myMethod, ClassUtils.getContainingClass(expression), true) ? myTargetClass : null);
             replaceMap.put(expression, thisExpression);
             return;
           }

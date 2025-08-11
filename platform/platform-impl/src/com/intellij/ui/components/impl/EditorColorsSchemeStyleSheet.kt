@@ -103,9 +103,6 @@ internal class EditorColorsSchemeStyleSheet(private val editorColorsScheme: Edit
             }
           }
         }
-        EffectType.FADED -> {
-          // Do nothing
-        }
       }
     }
     return result

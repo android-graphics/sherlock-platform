@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.annotations.NotNull;
@@ -31,13 +31,12 @@ public class DecompilerTestFixture {
   private Path tempDir;
   private Path targetDir;
   private TestConsoleDecompiler decompiler;
-  private boolean cleanup = true;
 
-  public void setUp(Map<String, Object> customOptions) throws IOException {
+  public void setUp(Map<String, String> customOptions) throws IOException {
     setUp(customOptions, null);
   }
 
-  public void setUp(@NotNull Map<String, Object> customOptions,
+  public void setUp(@NotNull Map<String, String> customOptions,
                     @Nullable CancellationManager cancellationManager) throws IOException {
     testDataDir = Path.of("testData");
     if (!isTestDataDir(testDataDir)) testDataDir = Path.of("community/plugins/java-decompiler/engine/testData");
@@ -70,7 +69,7 @@ public class DecompilerTestFixture {
 
   public void tearDown() throws IOException {
     try {
-      if (tempDir != null && cleanup) {
+      if (tempDir != null) {
         deleteRecursively(tempDir);
       }
     }
@@ -93,14 +92,6 @@ public class DecompilerTestFixture {
 
   public ConsoleDecompiler getDecompiler() {
     return decompiler;
-  }
-
-  public void setCleanup(boolean value) {
-    this.cleanup = value;
-  }
-
-  public boolean getCleanup() {
-    return cleanup;
   }
 
   private static boolean isTestDataDir(Path dir) {

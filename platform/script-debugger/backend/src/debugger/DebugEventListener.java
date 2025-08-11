@@ -17,6 +17,7 @@ package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
 
@@ -39,7 +40,7 @@ public interface DebugEventListener extends EventListener {
   /**
    * Reports that a new script has been loaded.
    */
-  default void scriptAdded(@NotNull Vm vm, @NotNull Script script) {
+  default void scriptAdded(@NotNull Vm vm, @NotNull Script script, @Nullable String sourceMapUrl) {
   }
 
   /**

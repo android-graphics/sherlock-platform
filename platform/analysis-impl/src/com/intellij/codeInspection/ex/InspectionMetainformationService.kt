@@ -26,7 +26,6 @@ private data class InspectionsMetaInformation @JsonCreator constructor(
 data class MetaInformation @JsonCreator constructor(
   @JsonProperty("id") val id: String,
   @JsonProperty("cweIds") val cweIds: List<Int>?,
-  @JsonProperty("codeQualityCategory") val codeQualityCategory: String?,
   @JsonProperty("categories") val categories: List<String>?
 )
 

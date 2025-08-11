@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.ant.config.actions;
 
@@ -38,7 +38,7 @@ public class TargetActionStub extends AnAction implements Disposable {
   }
 
   @Override
-  public void actionPerformed(final @NotNull AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     if (myProject == null) {
       return;
     }

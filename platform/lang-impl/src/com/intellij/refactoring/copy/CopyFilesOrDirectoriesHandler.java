@@ -95,7 +95,8 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
     copyAsFiles(elements, defaultTargetDirectory, project);
   }
 
-  private static @Nullable PsiDirectory tryNotNullizeDirectory(@NotNull Project project, @Nullable PsiDirectory defaultTargetDirectory) {
+  @Nullable
+  private static PsiDirectory tryNotNullizeDirectory(@NotNull Project project, @Nullable PsiDirectory defaultTargetDirectory) {
     if (defaultTargetDirectory == null) {
       VirtualFile root = FileChooserUtil.getLastOpenedFile(project);
       if (root == null) root = project.isDefault() ? null : ProjectUtil.guessProjectDir(project);
@@ -183,7 +184,8 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
     }
   }
 
-  private static @Nullable PsiDirectory getCommonParentDirectory(PsiElement[] elements){
+  @Nullable
+  private static PsiDirectory getCommonParentDirectory(PsiElement[] elements){
     PsiDirectory result = null;
 
     for (PsiElement element : elements) {
@@ -219,8 +221,8 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
    * @param newName can be not null only if elements.length == 1
    */
   private static void copyImpl(final VirtualFile @NotNull [] files,
-                               final @Nullable String newName,
-                               final @NotNull PsiDirectory targetDirectory,
+                               @Nullable final String newName,
+                               @NotNull final PsiDirectory targetDirectory,
                                final boolean doClone,
                                final boolean openInEditor) {
     if (doClone && files.length != 1) {
@@ -297,7 +299,8 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
    * @param newName can be not null only if elements.length == 1
    * @return first copied PsiFile (recursively); null if no PsiFiles copied
    */
-  public static @Nullable PsiFile copyToDirectory(@NotNull PsiFileSystemItem elementToCopy,
+  @Nullable
+  public static PsiFile copyToDirectory(@NotNull PsiFileSystemItem elementToCopy,
                                         @Nullable String newName,
                                         @NotNull PsiDirectory targetDirectory) throws IncorrectOperationException, IOException {
     return copyToDirectory(elementToCopy, newName, targetDirectory, null, null);
@@ -309,7 +312,8 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
    * @param choice a horrible way to pass/keep user preference
    * @return first copied PsiFile (recursively); null if no PsiFiles copied
    */
-  public static @Nullable PsiFile copyToDirectory(@NotNull PsiFileSystemItem elementToCopy,
+  @Nullable
+  public static PsiFile copyToDirectory(@NotNull PsiFileSystemItem elementToCopy,
                                         @Nullable String newName,
                                         @NotNull PsiDirectory targetDirectory,
                                         int @Nullable [] choice,
@@ -579,7 +583,8 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
     return false;
   }
 
-  public static @Nullable PsiDirectory resolveDirectory(@NotNull PsiDirectory defaultTargetDirectory) {
+  @Nullable
+  public static PsiDirectory resolveDirectory(@NotNull PsiDirectory defaultTargetDirectory) {
     final Project project = defaultTargetDirectory.getProject();
     final Boolean showDirsChooser = defaultTargetDirectory.getCopyableUserData(CopyPasteDelegator.SHOW_CHOOSER_KEY);
     if (showDirsChooser != null && showDirsChooser.booleanValue()) {
@@ -593,8 +598,9 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
     return defaultTargetDirectory;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getActionName(PsiElement[] elements) {
+  public String getActionName(PsiElement[] elements) {
     int fileCount = 0, directoryCount = 0;
     for (PsiElement element : elements) {
       if (element instanceof PsiFile) {

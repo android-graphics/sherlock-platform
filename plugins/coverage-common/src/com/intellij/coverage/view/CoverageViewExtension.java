@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.CoverageBundle;
@@ -16,7 +16,6 @@ import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -45,15 +44,18 @@ public abstract class CoverageViewExtension {
     myCoverageDataManager = CoverageDataManager.getInstance(myProject);
   }
 
-  public abstract @Nullable String getPercentage(int columnIdx, @NotNull AbstractTreeNode<?> node);
+  @Nullable
+  public abstract String getPercentage(int columnIdx, @NotNull AbstractTreeNode<?> node);
 
-  public abstract @Unmodifiable List<AbstractTreeNode<?>> getChildrenNodes(AbstractTreeNode<?> node);
+  public abstract List<AbstractTreeNode<?>> getChildrenNodes(AbstractTreeNode<?> node);
 
   public abstract ColumnInfo[] createColumnInfos();
 
-  public abstract @Nullable PsiElement getParentElement(PsiElement element);
+  @Nullable
+  public abstract PsiElement getParentElement(PsiElement element);
 
-  public abstract @NotNull AbstractTreeNode<?> createRootNode();
+  @NotNull
+  public abstract AbstractTreeNode<?> createRootNode();
 
   void onRootReset() {
   }
@@ -73,13 +75,15 @@ public abstract class CoverageViewExtension {
   }
 
   @ApiStatus.Internal
-  public @Nullable PsiElement getElementToSelect(Object object) {
+  @Nullable
+  public PsiElement getElementToSelect(Object object) {
     if (object instanceof PsiElement) return (PsiElement)object;
     return object instanceof VirtualFile ? PsiManager.getInstance(myProject).findFile((VirtualFile)object) : null;
   }
 
   @ApiStatus.Internal
-  protected @Nullable VirtualFile getVirtualFile(Object object) {
+  @Nullable
+  protected VirtualFile getVirtualFile(Object object) {
     if (object instanceof PsiElement) {
       if (object instanceof PsiDirectory) return ((PsiDirectory)object).getVirtualFile();
       final PsiFile containingFile = ((PsiElement)object).getContainingFile();
@@ -101,7 +105,8 @@ public abstract class CoverageViewExtension {
    * directly after all the default actions (Flatten Packages, Generate Coverage Report)
    */
   @ApiStatus.Experimental
-  public @NotNull List<AnAction> createExtraToolbarActions() {
+  @NotNull
+  public List<AnAction> createExtraToolbarActions() {
     return Collections.emptyList();
   }
 
@@ -117,24 +122,27 @@ public abstract class CoverageViewExtension {
    * @deprecated This method is not used in CoverageView.
    * The root node should return a correct list of children instead.
    */
+  @NotNull
   @Deprecated(forRemoval = true)
-  public @NotNull List<AbstractTreeNode<?>> createTopLevelNodes() {
+  public List<AbstractTreeNode<?>> createTopLevelNodes() {
     return Collections.emptyList();
   }
 
   /**
    * @deprecated This method is not used in CoverageView.
    */
+  @Nullable
   @Deprecated
-  public @Nullable String getSummaryForNode(@NotNull AbstractTreeNode<?> ignoredNode) {
+  public String getSummaryForNode(@NotNull AbstractTreeNode<?> ignoredNode) {
     return null;
   }
 
   /**
    * @deprecated This method is not used in CoverageView.
    */
+  @Nullable
   @Deprecated
-  public @Nullable String getSummaryForRootNode(@NotNull AbstractTreeNode<?> ignoredNode) {
+  public String getSummaryForRootNode(@NotNull AbstractTreeNode<?> ignoredNode) {
     return null;
   }
 }

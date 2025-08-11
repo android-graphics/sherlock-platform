@@ -5,9 +5,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.actionSystem.toolbarLayout.RIGHT_ALIGN_KEY
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -21,7 +18,6 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-@Suppress("HardCodedStringLiteral")
 @Internal
 internal class ShowCompressibleToolbarAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent): Unit = BundleMessagesDialog(e.project).show()
@@ -73,7 +69,6 @@ internal class ShowCompressibleToolbarAction : AnAction(), DumbAware {
       actionGroup.addAction(ProjectToolbarWidgetAction())
       actionGroup.addAction(ProjectToolbarWidgetAction())
       actionGroup.addAction(FilenameToolbarWidgetAction())
-      actionGroup.addAction(RightAlignedAction())
       val actionToolbar = ActionManager.getInstance().createActionToolbar("CompressibleToolbar", actionGroup, true)
       actionToolbar.layoutStrategy = ToolbarLayoutStrategy.COMPRESSING_STRATEGY
       return actionToolbar.component
@@ -83,16 +78,5 @@ internal class ShowCompressibleToolbarAction : AnAction(), DumbAware {
       return JLabel("Outside toolbar text")
     }
 
-  }
-
-  private class RightAlignedAction : AnAction(), CustomComponentAction {
-    override fun actionPerformed(e: AnActionEvent) {
-    }
-
-    override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-      return JLabel("Right aligned").apply {
-        putClientProperty(RIGHT_ALIGN_KEY, true)
-      }
-    }
   }
 }

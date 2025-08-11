@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyElementVisitor;
@@ -49,7 +50,8 @@ public class PyTupleParameterImpl extends PyBaseElementImpl<PyTupleParameterStub
   }
 
   @Override
-  public @Nullable String getDefaultValueText() {
+  @Nullable
+  public String getDefaultValueText() {
     final PyTupleParameterStub stub = getStub();
     if (stub != null) {
       return stub.getDefaultValueText();
@@ -68,7 +70,8 @@ public class PyTupleParameterImpl extends PyBaseElementImpl<PyTupleParameterStub
   }
 
   @Override
-  public @NotNull ItemPresentation getPresentation() {
+  @NotNull
+  public ItemPresentation getPresentation() {
     return new PyElementPresentation(this);
   }
 }

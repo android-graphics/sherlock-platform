@@ -100,7 +100,7 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
     cmdArguments.add("--config");
     cmdArguments.add("hg4ideapass.port=" + port);
 
-    if (arguments != null && !arguments.isEmpty()) {
+    if (arguments != null && arguments.size() != 0) {
       cmdArguments.addAll(arguments);
     }
     return cmdArguments;

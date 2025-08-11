@@ -3,9 +3,7 @@
 package org.jetbrains.kotlin.idea.gradleJava.scripting.roots
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -16,10 +14,10 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotifications
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
@@ -29,6 +27,7 @@ import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.scriptingErrorLog
 import org.jetbrains.kotlin.idea.core.script.scriptingInfoLog
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
+import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.gradle.scripting.LastModifiedFiles
 import org.jetbrains.kotlin.idea.gradleJava.scripting.getGradleVersion
 import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslGradleBuildSync
@@ -42,7 +41,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.FileSystems
 import java.nio.file.Files
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -68,7 +66,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  *   - [New] - not yet imported
  *   - [Imported] - imported
  */
-class GradleBuildRootsManager(val project: Project, private val coroutineScope: CoroutineScope) : GradleBuildRootsLocator(project), ScriptingSupport {
+class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(project), ScriptingSupport {
     private val manager: CompositeScriptConfigurationManager
         get() = ScriptConfigurationManager.getInstance(project) as CompositeScriptConfigurationManager
 
@@ -182,7 +180,7 @@ class GradleBuildRootsManager(val project: Project, private val coroutineScope: 
 
         scriptingDebugLog { "save script models after import: ${sync.models}" }
 
-        val newData = GradleBuildRootData(sync.creationTimestamp, sync.projectRoots, gradleHome, sync.javaHome, sync.models)
+        val newData = GradleBuildRootData(sync.ts, sync.projectRoots, gradleHome, sync.javaHome, sync.models)
         val mergedData = if (sync.failed && oldRoot is Imported) merge(oldRoot.data, newData) else newData
 
         val newRoot = tryCreateImportedRoot(sync.workingDir, LastModifiedFiles()) { mergedData } ?: return null
@@ -295,7 +293,7 @@ class GradleBuildRootsManager(val project: Project, private val coroutineScope: 
         }
     }
 
-    fun loadLinkedRoot(settings: GradleProjectSettings, version: String): GradleBuildRoot {
+    fun loadLinkedRoot(settings: GradleProjectSettings, version: String = getGradleVersion(project, settings)): GradleBuildRoot {
         if (!enabled) {
             return Legacy(settings)
         }
@@ -313,7 +311,7 @@ class GradleBuildRootsManager(val project: Project, private val coroutineScope: 
         return tryCreateImportedRoot(settings.externalProjectPath) {
             GradleBuildRootDataSerializer.getInstance().read(it)?.let { data ->
                 val gradleHome = data.gradleHome
-                if (gradleHome.isNotBlank() && GradleInstallationManager.getGradleVersion(Path.of(gradleHome)) != version) return@let null
+                if (gradleHome.isNotBlank() && GradleInstallationManager.getGradleVersion(gradleHome) != version) return@let null
 
                 addFromSettings(data, settings)
             }
@@ -395,34 +393,24 @@ class GradleBuildRootsManager(val project: Project, private val coroutineScope: 
 
         if (openedScripts.isEmpty()) return
 
-        coroutineScope.launch(Dispatchers.EDT) {
-            //maybe readaction
-            writeIntentReadAction {
-                if (project.isDisposed) return@writeIntentReadAction
+        GlobalScope.launch(EDT(project)) {
+            if (project.isDisposed) return@launch
 
-                openedScripts.forEach {
-                    if (isApplicable(it)) {
-                        DefaultScriptingSupport.getInstance(project).ensureNotificationsRemoved(it)
-                    }
-
-                    if (KotlinPluginModeProvider.isK1Mode() && restartAnalyzer) {
-                        val kotlinCodeBlockModificationListenerClass = Class.forName("org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener")
-                        kotlinCodeBlockModificationListenerClass
-                            .getMethod("incModificationCount")
-                            .invoke(
-                                @Suppress("IncorrectServiceRetrieving")
-                                project.getService(kotlinCodeBlockModificationListenerClass),
-                            )
-
-                        // this required only for "pause" state
-                        PsiManager.getInstance(project).findFile(it)?.let { ktFile ->
-                            DaemonCodeAnalyzer.getInstance(project).restart(ktFile)
-                        }
-
-                    }
-
-                    EditorNotifications.getInstance(project).updateAllNotifications()
+            openedScripts.forEach {
+                if (isApplicable(it)) {
+                    DefaultScriptingSupport.getInstance(project).ensureNotificationsRemoved(it)
                 }
+
+                if (KotlinPluginModeProvider.isK1Mode() && restartAnalyzer) {
+                    KotlinCodeBlockModificationListener.getInstance(project).incModificationCount()
+                    // this required only for "pause" state
+                    PsiManager.getInstance(project).findFile(it)?.let { ktFile ->
+                        DaemonCodeAnalyzer.getInstance(project).restart(ktFile)
+                    }
+
+                }
+
+                EditorNotifications.getInstance(project).updateAllNotifications()
             }
         }
     }

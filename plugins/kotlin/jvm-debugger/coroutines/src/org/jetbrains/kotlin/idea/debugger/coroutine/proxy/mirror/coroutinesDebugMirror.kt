@@ -73,7 +73,7 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
         )
     }
 
-    internal fun getCoroutineInfo(value: ObjectReference?, context: DefaultExecutionContext): MirrorOfCoroutineInfo? {
+    fun getCoroutineInfo(value: ObjectReference?, context: DefaultExecutionContext): MirrorOfCoroutineInfo? {
         val coroutineOwner = debugProbesCoroutineOwner.mirror(value, context)
         return coroutineOwner?.coroutineInfo
     }

@@ -7,11 +7,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.GeneralModuleType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -35,13 +32,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public abstract class CreateTemplateInPackageAction<T extends PsiElement> extends CreateFromTemplateAction<T>
-  implements NewFileActionWithCategory {
-
-  private static final @NotNull Logger LOG = Logger.getInstance(CreateTemplateInPackageAction.class);
-
-  public static final String JAVA_NEW_FILE_CATEGORY = "Java";
-
+public abstract class CreateTemplateInPackageAction<T extends PsiElement> extends CreateFromTemplateAction<T> {
   private final @Nullable Set<? extends JpsModuleSourceRootType<?>> mySourceRootTypes;
 
   protected CreateTemplateInPackageAction(String text, String description, Icon icon,
@@ -64,11 +55,6 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
                                           @Nullable Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     super(dynamicText, dynamicDescription, icon);
     mySourceRootTypes = rootTypes;
-  }
-
-  @Override
-  public @NotNull String getCategory() {
-    return JAVA_NEW_FILE_CATEGORY;
   }
 
   @Override
@@ -146,15 +132,7 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
   }
 
   public static boolean isInContentRoot(VirtualFile file, ProjectFileIndex index) {
-    return file.equals(index.getContentRootForFile(file)) &&
-           noSourceRootConfigured(file, index);
-  }
-
-  private static boolean noSourceRootConfigured(VirtualFile file, ProjectFileIndex index) {
-    Module module = index.getModuleForFile(file);
-    return module != null &&
-           ModuleType.get(module) instanceof GeneralModuleType &&
-           ModuleRootManager.getInstance(module).getSourceRoots().length == 0;
+    return file.equals(index.getContentRootForFile(file));
   }
 
   protected abstract boolean checkPackageExists(PsiDirectory directory);

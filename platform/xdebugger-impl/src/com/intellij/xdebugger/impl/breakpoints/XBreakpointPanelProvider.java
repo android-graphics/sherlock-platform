@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.Disposable;
@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,9 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoint> {
+  @Override
+  public void createBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules) {
+  }
 
   @Override
   public void addListener(final BreakpointsListener listener, Project project, Disposable disposable) {
@@ -33,7 +37,8 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
   }
 
   @Override
-  public @Nullable XBreakpoint<?> findBreakpoint(final @NotNull Project project, final @NotNull Document document, final int offset) {
+  @Nullable
+  public XBreakpoint<?> findBreakpoint(@NotNull final Project project, @NotNull final Document document, final int offset) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     int line = document.getLineNumber(offset);
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);

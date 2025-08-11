@@ -29,7 +29,8 @@ public class LombokNullAnnotationLibraryCustom implements LombokNullAnnotationLi
     return typeUse;
   }
 
-  public static @Nullable LombokNullAnnotationLibrary parseCustom(String value) {
+  @Nullable
+  public static LombokNullAnnotationLibrary parseCustom(String value) {
     if (StringUtil.toLowerCase(value).startsWith("custom:")) {
       String customConfigValue = value.substring("custom:".length());
       final boolean useType = StringUtil.toLowerCase(customConfigValue).startsWith("type_use:");

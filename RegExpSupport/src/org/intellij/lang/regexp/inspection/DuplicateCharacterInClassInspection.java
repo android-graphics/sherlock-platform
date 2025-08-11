@@ -2,6 +2,7 @@
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;

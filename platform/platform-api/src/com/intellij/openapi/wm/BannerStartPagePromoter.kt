@@ -2,18 +2,14 @@
 package com.intellij.openapi.wm
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.ui.popup.IconButton
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.BackgroundRoundedPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.dsl.gridLayout.GridLayout
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
+import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-import com.intellij.ui.dsl.gridLayout.toUnscaledGaps
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -45,15 +41,11 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
         override fun showNotify() {
           onBannerShown()
         }
-
-        override fun hideNotify() {
-          onBannerHide()
-        }
       })
     }
 
     closeAction?.let { closeAction ->
-      val closeIcons = IconButton(IdeBundle.message("banner.button.close"), AllIcons.Actions.Close, AllIcons.Actions.CloseDarkGrey)
+      val closeIcons = IconButton(null, AllIcons.Actions.Close, AllIcons.Actions.CloseDarkGrey)
       val closeButton = InplaceButton(closeIcons) {
         closeAction(hPanel)
       }
@@ -61,7 +53,7 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
       headerPanel.add(closeButton)
     }
 
-    val descriptionLabel = JLabel("<html>${description}</html>").also {
+    val description = JLabel("<html>${description}</html>").also {
       it.alignmentX = Component.LEFT_ALIGNMENT
       it.font = JBUI.Fonts.label().deriveFont(JBUI.Fonts.label().size2D + (when {
         SystemInfo.isLinux -> JBUIScale.scale(-2)
@@ -73,7 +65,6 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
       it.preferredSize = Dimension(100, 0)
     }
     val button = createButton()
-    button.accessibleContext.accessibleDescription = "$headerLabel. $description"
 
     val vPanel = JPanel(GridLayout()).apply {
       isOpaque = false
@@ -83,7 +74,7 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     builder
       .cell(headerPanel, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
       .row(rowGaps = UnscaledGapsY(top = 4, bottom = 8))
-      .cell(descriptionLabel, horizontalAlign = HorizontalAlign.FILL)
+      .cell(description, horizontalAlign = HorizontalAlign.FILL)
       .row()
       .cell(button, visualPaddings = button.insets.toUnscaledGaps())
 
@@ -120,8 +111,6 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
   protected abstract fun runAction()
 
   protected open fun onBannerShown() {}
-
-  protected open fun onBannerHide() {}
 
   protected open fun createHeader(): JLabel {
     val result = JLabel(headerLabel)

@@ -1,5 +1,0 @@
-class Foo {
-    val i = 0
-    val bar = i
-    val baz = i
-}

@@ -1,6 +1,5 @@
 // NEW_NAME: c
 // RENAME: member
-// SHOULD_FAIL_WITH: Function 'r' will be shadowed by function 'c'
 class Receiver{
     fun <caret>r() {}
 }

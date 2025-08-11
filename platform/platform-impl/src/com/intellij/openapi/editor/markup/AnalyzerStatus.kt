@@ -31,8 +31,8 @@ class AnalyzerStatus(val icon: Icon, @Nls @get:Nls val title: String, @Nls @get:
   }
 
 
-  fun withNavigation(value: Boolean) : AnalyzerStatus {
-    showNavigation = value
+  fun withNavigation() : AnalyzerStatus {
+    showNavigation = true
     return this
   }
 

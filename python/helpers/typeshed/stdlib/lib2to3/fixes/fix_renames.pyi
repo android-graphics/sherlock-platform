@@ -1,10 +1,11 @@
 from collections.abc import Generator
-from typing import ClassVar, Final, Literal
+from typing import ClassVar
+from typing_extensions import Literal
 
 from .. import fixer_base
 
-MAPPING: Final[dict[str, dict[str, str]]]
-LOOKUP: Final[dict[tuple[str, str], str]]
+MAPPING: dict[str, dict[str, str]]
+LOOKUP: dict[tuple[str, str], str]
 
 def alternates(members): ...
 def build_pattern() -> Generator[str, None, None]: ...

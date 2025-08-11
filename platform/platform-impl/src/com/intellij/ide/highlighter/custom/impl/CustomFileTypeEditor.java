@@ -16,7 +16,6 @@ import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,7 +28,6 @@ import java.util.stream.Stream;
 /**
  * @author Yura Cangea, dsl
  */
-@ApiStatus.Internal
 public final class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   private final JTextField myFileTypeName = new JTextField();
   private final JTextField myFileTypeDescr = new JTextField();

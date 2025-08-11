@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.lang.LangBundle;
@@ -27,10 +28,10 @@ import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternOccurrence;
 import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -38,7 +39,6 @@ import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-@ApiStatus.Internal
 public final class TodoCommentInspection extends LocalInspectionTool {
 
   public boolean onlyWarnOnEmpty = true;

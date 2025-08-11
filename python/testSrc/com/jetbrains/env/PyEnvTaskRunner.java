@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env;
 
 import com.google.common.collect.Sets;
@@ -8,23 +8,20 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.python.community.testFramework.testEnv.EnvTagsKt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.LoggingRule;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.tools.sdkTools.PySdkTools;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
-import com.jetbrains.python.venvReader.VirtualEnvReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.*;
-
 
 public class PyEnvTaskRunner {
   private static final Logger LOG = Logger.getInstance(PyEnvTaskRunner.class);
@@ -71,10 +68,16 @@ public class PyEnvTaskRunner {
       try {
         testTask.setUp(testName);
         wasExecuted = true;
-        final Path executable = VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(root));
+        if (isJython(root)) {
+          testTask.useLongTimeout();
+        }
+        else {
+          testTask.useNormalTimeout();
+        }
+        final String executable = PythonSdkUtil.getPythonExecutable(root);
         assert executable != null : "No executable in " + root;
 
-        final Sdk sdk = getSdk(executable.toString(), testTask);
+        final Sdk sdk = getSdk(executable, testTask);
         if (skipOnFlavors != null) {
           final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
           if (ContainerUtil.exists(skipOnFlavors, o -> o.isInstance(flavor))) {
@@ -98,7 +101,7 @@ public class PyEnvTaskRunner {
           }
 
 
-          testTask.runTestOn(executable.toString(), sdk);
+          testTask.runTestOn(executable, sdk);
 
           passedRoots.add(root);
         }
@@ -131,12 +134,12 @@ public class PyEnvTaskRunner {
     }
 
     if (!wasExecuted) {
-      LOG.warn("test " +
-               testName +
-               " was not executed.\n" +
-               formatCollectionToString(myRoots, "All roots") +
-               "\n" +
-               formatCollectionToString(requiredTags, "Required tags in tags.txt in root"));
+      throw new RuntimeException("test " +
+                                 testName +
+                                 " was not executed.\n" +
+                                 formatCollectionToString(myRoots, "All roots") +
+                                 "\n" +
+                                 formatCollectionToString(requiredTags, "Required tags in tags.txt in root"));
     }
   }
 
@@ -178,7 +181,7 @@ public class PyEnvTaskRunner {
 
     EnvInfo(@NotNull String root) {
       this.root = root;
-      tags = EnvTagsKt.loadEnvTags(Path.of(root)).stream().toList();
+      tags = PyEnvTestCase.loadEnvTags(root);
       pythonVersion = ContainerUtil.find(tags, tag -> tag.matches("^python\\d\\.\\d+$"));
     }
 
@@ -226,6 +229,10 @@ public class PyEnvTaskRunner {
     }
 
     return necessaryTags.isEmpty();
+  }
+
+  public static boolean isJython(@NotNull String sdkHome) {
+    return sdkHome.toLowerCase(Locale.ROOT).contains("jython");
   }
 
   @NotNull

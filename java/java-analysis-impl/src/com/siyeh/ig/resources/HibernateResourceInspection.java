@@ -25,7 +25,8 @@ import org.jetbrains.annotations.NotNull;
 public final class HibernateResourceInspection extends ResourceInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "HibernateResourceOpenedButNotSafelyClosed";
   }
 

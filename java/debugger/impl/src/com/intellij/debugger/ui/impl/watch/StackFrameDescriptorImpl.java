@@ -8,7 +8,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
-import com.intellij.debugger.impl.SimpleStackFrameContext;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointIntentionAction;
@@ -48,15 +47,19 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   public StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame,
                                   @NotNull MethodsTracker tracker) {
-    this(frame, false, null, tracker,
-         ContextUtil.getSourcePosition(new SimpleStackFrameContext(frame, frame.getVirtualMachine().getDebugProcess())));
+    this(frame, false, null, tracker);
+  }
+
+  private StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame,
+                                   @Nullable Method method,
+                                   @NotNull MethodsTracker tracker) {
+    this(frame, true, method, tracker);
   }
 
   private StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame,
                                    boolean useMethod,
                                    @Nullable Method method,
-                                   @NotNull MethodsTracker tracker,
-                                   SourcePosition sourcePosition) {
+                                   @NotNull MethodsTracker tracker) {
     myFrame = frame;
 
     try {
@@ -68,7 +71,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex,
                                                        useMethod ? method : DebuggerUtilsEx.getMethod(myLocation));
       myIsSynthetic = DebuggerUtils.isSynthetic(myMethodOccurrence.getMethod());
-      mySourcePosition = sourcePosition;
+      mySourcePosition = ContextUtil.getSourcePosition(this);
       PsiFile psiFile = mySourcePosition != null ? mySourcePosition.getFile() : null;
       myIsInLibraryContent =
         DebuggerUtilsEx.isInLibraryContent(psiFile != null ? psiFile.getVirtualFile() : null, getDebugProcess().getProject());
@@ -82,27 +85,11 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     }
   }
 
-  private static CompletableFuture<SourcePosition> getSourcePositionAsync(@NotNull Location location, @NotNull StackFrameProxyImpl frame) {
-    try {
-      CompoundPositionManager positionManager = frame.getVirtualMachine().getDebugProcess().getPositionManager();
-      return positionManager.getSourcePositionFuture(location);
-    }
-    catch (Exception e) {
-      return CompletableFuture.failedFuture(e);
-    }
-  }
-
   public static CompletableFuture<StackFrameDescriptorImpl> createAsync(@NotNull StackFrameProxyImpl frame,
                                                                         @NotNull MethodsTracker tracker) {
-    CompletableFuture<Location> locationAsync = frame.locationAsync();
-    CompletableFuture<SourcePosition> positionAsync =
-      locationAsync.thenCompose(location -> DebuggerUtilsAsync.reschedule(getSourcePositionAsync(location, frame)));
-    return locationAsync
+    return frame.locationAsync()
       .thenCompose(DebuggerUtilsAsync::method)
-      .thenCombine(positionAsync, (method, position) -> {
-        DebuggerManagerThreadImpl.assertIsManagerThread();
-        return new StackFrameDescriptorImpl(frame, true, method, tracker, position);
-      })
+      .thenApply(method -> new StackFrameDescriptorImpl(frame, method, tracker))
       .exceptionally(throwable -> {
         Throwable exception = DebuggerUtilsAsync.unwrap(throwable);
         if (exception instanceof EvaluateException) {
@@ -110,7 +97,6 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
           if (!(exception.getCause() instanceof InvalidStackFrameException)) {
             LOG.error(new Exception(exception));
           }
-          DebuggerManagerThreadImpl.assertIsManagerThread();
           return new StackFrameDescriptorImpl(frame, tracker); // fallback to sync
         }
         throw (RuntimeException)throwable;
@@ -122,16 +108,19 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   }
 
   @Override
-  public @NotNull StackFrameProxyImpl getFrameProxy() {
+  @NotNull
+  public StackFrameProxyImpl getFrameProxy() {
     return myFrame;
   }
 
+  @NotNull
   @Override
-  public @NotNull DebugProcess getDebugProcess() {
+  public DebugProcess getDebugProcess() {
     return myFrame.getVirtualMachine().getDebugProcess();
   }
 
-  public @Nullable Method getMethod() {
+  @Nullable
+  public Method getMethod() {
     return myMethodOccurrence.getMethod();
   }
 
@@ -147,7 +136,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return !myFrame.isBottom() && myMethodOccurrence.canDrop();
   }
 
-  public @Nullable ValueMarkup getValueMarkup() {
+  @Nullable
+  public ValueMarkup getValueMarkup() {
     Map<?, ValueMarkup> markers = getValueMarkers();
     if (!markers.isEmpty() && myThisObject != null) {
       return markers.get(myThisObject);
@@ -246,7 +236,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
            (DebugProcessImpl.shouldHideStackFramesUsingSteppingFilters() && DebugProcessImpl.isPositionFiltered(getLocation()));
   }
 
-  public @Nullable Location getLocation() {
+  @Nullable
+  public Location getLocation() {
     return myLocation;
   }
 
@@ -273,7 +264,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return myIcon;
   }
 
-  public @Nullable ObjectReference getThisObject() {
+  @Nullable
+  public ObjectReference getThisObject() {
     if (myThisObject == null) {
       try {
         myThisObject = myFrame.thisObject();

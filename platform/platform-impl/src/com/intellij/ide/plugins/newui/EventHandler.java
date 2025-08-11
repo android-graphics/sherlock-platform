@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +16,9 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.function.Consumer;
 
-@ApiStatus.Internal
+/**
+ * @author Alexander Lobas
+ */
 public abstract class EventHandler {
   public void connect(@NotNull PluginsGroupComponent container) {
   }
@@ -118,5 +119,9 @@ public abstract class EventHandler {
   }
 
   private abstract static class MyAnAction extends AnAction {
+    @Override
+    public void setShortcutSet(@NotNull ShortcutSet shortcutSet) {
+      super.setShortcutSet(shortcutSet);
+    }
   }
 }

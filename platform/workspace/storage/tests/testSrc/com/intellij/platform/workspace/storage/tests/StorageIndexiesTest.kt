@@ -1,7 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.workspace.storage.tests
+package com.intellij.platform.workspace.storage.tests.impl
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
@@ -102,4 +103,9 @@ class StorageIndexesTest {
   private fun String.toPathWithScheme(): String {
     return URLUtil.FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + FileUtil.toSystemIndependentName(this)
   }
+}
+
+internal class VFUEntitySource(private val vfu: VirtualFileUrl) : EntitySource {
+  override val virtualFileUrl: VirtualFileUrl
+    get() = vfu
 }

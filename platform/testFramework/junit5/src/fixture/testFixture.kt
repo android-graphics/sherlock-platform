@@ -3,7 +3,6 @@ package com.intellij.testFramework.junit5.fixture
 
 import org.jetbrains.annotations.ApiStatus.OverrideOnly
 import org.jetbrains.annotations.TestOnly
-import kotlin.reflect.KProperty
 
 /**
  * Main building block for fixtures.
@@ -29,7 +28,7 @@ fun <T> testFixture(debugString: String = "", initializer: TestFixtureInitialize
   return TestFixtureImpl(debugString, initializer)
 }
 
-sealed interface TestFixture<out T> {
+sealed interface TestFixture<T> {
 
   /**
    * Gets value from an initialized fixture.
@@ -37,36 +36,6 @@ sealed interface TestFixture<out T> {
    * @throws IllegalStateException when called during initialization. Use [TestFixtureInitializer.R.init] instead.
    */
   fun get(): T
-
-  /**
-   * Used for implementing property delegates of read-only properties.
-   *
-   * Example:
-   * ```
-   * @TestFixtures
-   * class MyTest {
-   *   private val path by pathFixture(...)
-   * }
-   * ```
-   */
-  operator fun getValue(thisRef: Any?, property: KProperty<*>): T = get()
-}
-
-sealed interface TestContext {
-  /**
-   * Unique test or container ID, for example [org.junit.jupiter.api.extension.ExtensionContext.getUniqueId]
-   */
-  val uniqueId: String
-
-  /**
-   * Display name for the current test or container, for example [org.junit.jupiter.api.extension.ExtensionContext.getDisplayName]
-   */
-  val testName: String
-
-  /**
-   * Returns the annotation with which a test or container is marked or null if there is none.
-   */
-  fun <T : Annotation> findAnnotation(clazz: Class<T>): T?
 }
 
 /**
@@ -75,10 +44,12 @@ sealed interface TestContext {
 fun interface TestFixtureInitializer<T> {
 
   /**
-   * @param context [TestContext] which provides information about the test and allows to query annotations
+   * @param uniqueId unique test or container ID, same as [org.junit.jupiter.api.extension.ExtensionContext.getUniqueId]
+   *
+   * TODO consider passing whole ExtensionContext here
    */
   @OverrideOnly
-  suspend fun R<T>.initFixture(context: TestContext): InitializedTestFixture<T>
+  suspend fun R<T>.initFixture(uniqueId: String): InitializedTestFixture<T>
 
   sealed interface InitializedTestFixture<T>
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.vfs;
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -22,44 +21,32 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public abstract class AbstractVcsVirtualFile extends VirtualFile {
-
-  protected final @NotNull @NlsSafe String myName;
-  protected final @NotNull @NlsSafe String myPath;
-  private final @Nullable VirtualFile myParent;
-
-  protected @NlsSafe String myRevision;
+  @NlsSafe
+  protected final String myName;
+  @NlsSafe
+  protected final String myPath;
+  @NlsSafe
+  protected String myRevision;
+  private final VirtualFile myParent;
   protected int myModificationStamp = 0;
+  @NotNull
+  private final VirtualFileSystem myFileSystem;
 
-  /**
-   * @deprecated {@link VcsFileSystem} cannot be overwritten
-   */
-  @Deprecated
-  protected AbstractVcsVirtualFile(@NotNull @NlsSafe String path, @NotNull VirtualFileSystem ignored) {
-    this(path);
-  }
-
-  protected AbstractVcsVirtualFile(@NotNull @NlsSafe String path) {
+  protected AbstractVcsVirtualFile(String path, @NotNull VirtualFileSystem fileSystem) {
+    myFileSystem = fileSystem;
     myPath = path;
     File file = new File(myPath);
     myName = file.getName();
-    if (!isDirectory()) {
-      myParent = new VcsVirtualFolder(file.getParent(), this);
-    }
+    if (!isDirectory())
+      myParent = new VcsVirtualFolder(file.getParent(), this, myFileSystem);
     else
       myParent = null;
 
     OutsidersPsiFileSupport.markFile(this);
   }
 
-  /**
-   * @deprecated {@link VcsFileSystem} cannot be overwritten
-   */
-  @Deprecated
-  protected AbstractVcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name, @NotNull VirtualFileSystem ignored) {
-    this(parent, name);
-  }
-
-  protected AbstractVcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name) {
+  protected AbstractVcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name, @NotNull VirtualFileSystem fileSystem) {
+    myFileSystem = fileSystem;
     myPath = parent != null && !StringUtil.isEmpty(parent.getPath()) ? parent.getPath() + "/" + name : name;
     myName = name;
     myParent = parent;
@@ -67,36 +54,21 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
     OutsidersPsiFileSupport.markFile(this);
   }
 
-  protected AbstractVcsVirtualFile(@Nullable VirtualFile parent, @NotNull FilePath path) {
-    myPath = path.getPath();
-    myName = path.getName();
-    myParent = parent;
-
-    OutsidersPsiFileSupport.markFile(this, path);
-  }
-
-  protected AbstractVcsVirtualFile(@NotNull FilePath path) {
-    myPath = path.getPath();
-    myName = path.getName();
-
-    FilePath parentPath = !isDirectory() ? path.getParentPath() : null;
-    myParent = parentPath != null ? new VcsVirtualFolder(parentPath, this) : null;
-
-    OutsidersPsiFileSupport.markFile(this, path);
+  @Override
+  @NotNull
+  public VirtualFileSystem getFileSystem() {
+    return myFileSystem;
   }
 
   @Override
-  public @NotNull VirtualFileSystem getFileSystem() {
-    return VcsFileSystem.getInstance();
-  }
-
-  @Override
-  public @NotNull String getPath() {
+  @NotNull
+  public String getPath() {
     return myPath;
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return myName;
   }
 
@@ -105,7 +77,9 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
     return getPresentableName(myName);
   }
 
-  protected @NotNull @Nls String getPresentableName(@NotNull @Nls String baseName) {
+  @NotNull
+  @Nls
+  protected String getPresentableName(@NotNull @Nls String baseName) {
     if (myRevision == null) return baseName;
     return baseName + " (" + myRevision + ")";
   }
@@ -137,7 +111,8 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   }
 
   @Override
-  public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
+  @NotNull
+  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
     throw new RuntimeException(VcsFileSystem.getCouldNotImplementMessage());
   }
 

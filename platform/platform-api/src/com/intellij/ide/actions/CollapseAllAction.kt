@@ -2,6 +2,7 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.TreeExpander
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions.ACTION_COLLAPSE_ALL
@@ -39,7 +40,7 @@ class CollapseAllAction : DumbAwareAction, ActionRemoteBehaviorSpecification.Fro
     event.presentation.isVisible = expander == null && !hideIfMissing ||
                                    expander != null && expander.isCollapseAllVisible
     event.presentation.isEnabled = expander != null && expander.canCollapse()
-    if (ExperimentalUI.isNewUI() && event.isFromContextMenu) {
+    if (ExperimentalUI.isNewUI() && ActionPlaces.isPopupPlace(event.place)) {
       event.presentation.icon = null
     }
   }

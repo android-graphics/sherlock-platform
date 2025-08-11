@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -31,8 +31,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -51,7 +51,7 @@ public final class MavenArchetypesStep extends ModuleWizardStep implements Dispo
 
   private boolean skipUpdateUI;
   private final AbstractMavenModuleBuilder myBuilder;
-  private final @Nullable StepAdapter myStep;
+  @Nullable private final StepAdapter myStep;
 
   public MavenArchetypesStep(AbstractMavenModuleBuilder builder, @Nullable StepAdapter step) {
     myBuilder = builder;
@@ -132,7 +132,8 @@ public final class MavenArchetypesStep extends ModuleWizardStep implements Dispo
 
   }
 
-  public @Nullable MavenArchetype getSelectedArchetype() {
+  @Nullable
+  public MavenArchetype getSelectedArchetype() {
     if (!myUseArchetypeCheckBox.isSelected() || myArchetypesTree.isSelectionEmpty()) return null;
     return getArchetypeInfoFromPathComponent(myArchetypesTree.getLastSelectedPathComponent());
   }
@@ -153,7 +154,8 @@ public final class MavenArchetypesStep extends ModuleWizardStep implements Dispo
     }
   }
 
-  private static @Nullable TreePath findNodePath(MavenArchetype object, TreeModel model, Object parent) {
+  @Nullable
+  private static TreePath findNodePath(MavenArchetype object, TreeModel model, Object parent) {
     for (int i = 0; i < model.getChildCount(parent); i++) {
       DefaultMutableTreeNode each = (DefaultMutableTreeNode)model.getChild(parent, i);
       if (each.getUserObject().equals(object)) return new TreePath(each.getPath());
@@ -250,7 +252,8 @@ public final class MavenArchetypesStep extends ModuleWizardStep implements Dispo
   }
 
   // todo DefaultProject usage may lead to plugin classloader leak on the plugin unload
-  private static @NotNull Project findProject() {
+  @NotNull
+  private static Project findProject() {
     ProjectManager projectManager = ProjectManager.getInstance();
     Project[] openProjects = projectManager.getOpenProjects();
     return openProjects.length != 0 ? openProjects[0] : projectManager.getDefaultProject();

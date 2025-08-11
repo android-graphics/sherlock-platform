@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -21,8 +21,9 @@ import java.util.Set;
 
 public final class GotoTypeDeclarationAction extends BaseCodeInsightAction implements DumbAware, CtrlMouseAction {
 
+  @NotNull
   @Override
-  protected @NotNull CodeInsightActionHandler getHandler() {
+  protected CodeInsightActionHandler getHandler() {
     return GotoTypeDeclarationHandler2.INSTANCE;
   }
 
@@ -32,8 +33,8 @@ public final class GotoTypeDeclarationAction extends BaseCodeInsightAction imple
   }
 
   @Override
-  public void update(final @NotNull AnActionEvent event) {
-    if (TypeDeclarationProvider.EP_NAME.getExtensionList().isEmpty()) {
+  public void update(@NotNull final AnActionEvent event) {
+    if (TypeDeclarationProvider.EP_NAME.getExtensionList().size() == 0) {
       event.getPresentation().setVisible(false);
       return;
     }
@@ -48,7 +49,8 @@ public final class GotoTypeDeclarationAction extends BaseCodeInsightAction imple
     super.update(event);
   }
 
-  public static @Nullable PsiElement findSymbolType(@NotNull Editor editor, int offset) {
+  @Nullable
+  public static PsiElement findSymbolType(@NotNull Editor editor, int offset) {
     final PsiElement[] psiElements = findSymbolTypes(editor, offset);
     if (psiElements != null && psiElements.length > 0) return psiElements[0];
     return null;

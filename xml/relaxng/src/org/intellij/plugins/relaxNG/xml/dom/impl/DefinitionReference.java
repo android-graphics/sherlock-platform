@@ -71,12 +71,13 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
     }
 
     final Set<Define> set = DefinitionResolver.resolve(scope, myValue.getValue());
-    if (set == null || set.isEmpty()) return ResolveResult.EMPTY_ARRAY;
+    if (set == null || set.size() == 0) return ResolveResult.EMPTY_ARRAY;
 
     return ContainerUtil.map2Array(set, ResolveResult.class, this);
   }
 
-  public @Nullable RngGrammar getScope() {
+  @Nullable
+  public RngGrammar getScope() {
     RngGrammar scope = myValue.getParentOfType(RngGrammar.class, true);
     if (scope == null) {
       return null;
@@ -102,11 +103,11 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
     }
 
     final Map<String, Set<Define>> map = DefinitionResolver.getAllVariants(scope);
-    if (map == null || map.isEmpty()) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+    if (map == null || map.size() == 0) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
 
     return ContainerUtil.mapNotNull(map.values(), defines -> {
       final Define define = defines.iterator().next();
-      if (defines.isEmpty()) {
+      if (defines.size() == 0) {
         return null;
       } else {
         final PsiElement element = define.getPsiElement();
@@ -136,7 +137,8 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
   }
 
   @Override
-  public @NotNull String getUnresolvedMessagePattern() {
+  @NotNull
+  public String getUnresolvedMessagePattern() {
     //noinspection UnresolvedPropertyKey
     return RelaxngBundle.message("relaxng.annotator.unresolved-pattern-reference");
   }

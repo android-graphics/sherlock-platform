@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -26,7 +26,8 @@ import java.util.List;
 public final class CharUsedInArithmeticContextInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("char.used.in.arithmetic.context.problem.descriptor");
   }
 
@@ -61,7 +62,8 @@ public final class CharUsedInArithmeticContextInspection extends BaseInspection 
   private static class CharUsedInArithmeticContentFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("char.used.in.arithmetic.context.quickfix");
     }
 
@@ -88,12 +90,14 @@ public final class CharUsedInArithmeticContextInspection extends BaseInspection 
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return InspectionGadgetsBundle.message("char.used.in.arithmetic.context.cast.quickfix", typeText);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("char.used.in.arithmetic.content.cast.fix.family.name");
     }
 

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.ReferenceQueue;
 import java.util.*;
 
-abstract class RefKeyRefValueHashMap<K,V> implements Map<K,V>, ReferenceQueueable {
+abstract class RefKeyRefValueHashMap<K,V> implements Map<K,V>{
   private final RefHashMap<K, ValueReference<K,V>> myMap;
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
@@ -27,8 +27,7 @@ abstract class RefKeyRefValueHashMap<K,V> implements Map<K,V>, ReferenceQueueabl
   protected abstract @NotNull ValueReference<K,V> createValueReference(@NotNull RefHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q);
 
   // returns true if some refs were tossed
-  @Override
-  public boolean processQueue() {
+  boolean processQueue() {
     boolean processed = myMap.processQueue();
     while(true) {
       //noinspection unchecked

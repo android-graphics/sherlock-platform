@@ -1,5 +1,4 @@
 // "Add 'toString()' call" "true"
-// PRIORITY: LOW
 // ACTION: Add 'toString()' call
 // ACTION: Change parameter 'a' type of function 'bar' to 'Any'
 // ACTION: Create function 'bar'

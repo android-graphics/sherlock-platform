@@ -7,14 +7,15 @@ import com.intellij.remoteServer.agent.RemoteAgentManager;
 import com.intellij.remoteServer.agent.RemoteAgentProxyFactory;
 import com.intellij.util.Base64;
 import com.intellij.util.PathUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiStatus.Internal
+/**
+ * @author michael.golubev
+ */
 public class RemoteAgentManagerImpl extends RemoteAgentManager {
 
   private final RemoteAgentClassLoaderCache myClassLoaderCache = new RemoteAgentClassLoaderCache();

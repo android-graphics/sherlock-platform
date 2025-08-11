@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.google.common.base.CaseFormat;
@@ -18,7 +18,6 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
@@ -38,10 +37,10 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
   private static final PsiClassConverter CLASS_CONVERTER = new PluginPsiClassConverter();
   private static final LanguageResolvingConverter LANGUAGE_CONVERTER = new LanguageResolvingConverter();
-  private static final Converter<String> ACTION_CONVERTER = new ActionOrGroupReferencingConverter.OnlyActions();
+  private static final ActionOrGroupResolveConverter ACTION_CONVERTER = new ActionOrGroupResolveConverter.OnlyActions();
 
   @Override
-  public void registerExtensions(final @NotNull Extension extension, final @NotNull DomExtensionsRegistrar registrar) {
+  public void registerExtensions(@NotNull final Extension extension, @NotNull final DomExtensionsRegistrar registrar) {
     final ExtensionPoint extensionPoint = extension.getExtensionPoint();
     if (extensionPoint == null) return;
 
@@ -143,7 +142,8 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     });
   }
 
-  static @Nullable With findWithElement(List<? extends With> withElements, PsiField field) {
+  @Nullable
+  static With findWithElement(List<? extends With> withElements, PsiField field) {
     for (With with : withElements) {
       PsiField withPsiField = DomUtil.hasXml(with.getTag()) ? with.getTag().getValue() : with.getAttribute().getValue();
       if (field.getManager().areElementsEquivalent(field, withPsiField)) {
@@ -194,8 +194,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     {
       extension.setConverter(LANGUAGE_CONVERTER);
     }
-    else if ("action".equals(propertyName) ||
-             "actionId".equals(propertyName)) {
+    else if ("action".equals(propertyName)) {
       extension.setConverter(ACTION_CONVERTER);
     }
   }
@@ -255,7 +254,8 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
   }
 
-  private static @Nullable PsiType getElementType(final PsiType psiType) {
+  @Nullable
+  private static PsiType getElementType(final PsiType psiType) {
     if (psiType instanceof PsiArrayType) {
       return ((PsiArrayType)psiType).getComponentType();
     }
@@ -363,7 +363,8 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
   }
 
-  private static @NotNull ResolvingConverter<PsiEnumConstant> createEnumConverter(PsiClass fieldPsiClass) {
+  @NotNull
+  private static ResolvingConverter<PsiEnumConstant> createEnumConverter(PsiClass fieldPsiClass) {
     return new PsiEnumConstantResolvingConverter(fieldPsiClass.getQualifiedName());
   }
 
@@ -391,21 +392,24 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       return DevKitBundle.message("plugin.xml.convert.enum.cannot.resolve", s, myEnumFqn);
     }
 
+    @NotNull
     @Override
-    public @NotNull @Unmodifiable Collection<? extends PsiEnumConstant> getVariants(@NotNull ConvertContext context) {
+    public Collection<? extends PsiEnumConstant> getVariants(@NotNull ConvertContext context) {
       PsiClass enumClass = getEnumClass(context);
       if (enumClass == null) return Collections.emptyList();
 
       return ContainerUtil.findAll(enumClass.getFields(), PsiEnumConstant.class);
     }
 
+    @Nullable
     @Override
-    public @Nullable LookupElement createLookupElement(PsiEnumConstant constant) {
+    public LookupElement createLookupElement(PsiEnumConstant constant) {
       return JavaLookupElementBuilder.forField(constant, toXmlName(constant), null);
     }
 
+    @Nullable
     @Override
-    public @Nullable PsiEnumConstant fromString(@Nullable String s, @NotNull ConvertContext context) {
+    public PsiEnumConstant fromString(@Nullable String s, @NotNull ConvertContext context) {
       if (s == null) return null;
 
       PsiClass enumClass = getEnumClass(context);
@@ -415,12 +419,14 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       return name instanceof PsiEnumConstant ? (PsiEnumConstant)name : null;
     }
 
+    @Nullable
     @Override
-    public @Nullable String toString(@Nullable PsiEnumConstant constant, @NotNull ConvertContext context) {
+    public String toString(@Nullable PsiEnumConstant constant, @NotNull ConvertContext context) {
       return constant == null ? null : toXmlName(constant);
     }
 
-    private @Nullable PsiClass getEnumClass(ConvertContext context) {
+    @Nullable
+    private PsiClass getEnumClass(ConvertContext context) {
       return DomJavaUtil.findClass(myEnumFqn, context.getInvocationElement());
     }
 

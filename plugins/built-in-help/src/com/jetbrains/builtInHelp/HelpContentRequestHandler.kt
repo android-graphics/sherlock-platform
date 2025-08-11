@@ -11,8 +11,6 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import org.jetbrains.io.send
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 import javax.xml.bind.JAXBContext
 
 @Suppress("unused")
@@ -26,7 +24,7 @@ class HelpContentRequestHandler : HelpRequestHandlerBase() {
   override fun process(
     urlDecoder: QueryStringDecoder,
     request: FullHttpRequest,
-    context: ChannelHandlerContext,
+    context: ChannelHandlerContext
   ): Boolean {
     for (name: String in urlDecoder.parameters().keys) {
       val param = urlDecoder.parameters()[name]
@@ -41,21 +39,15 @@ class HelpContentRequestHandler : HelpRequestHandlerBase() {
           mapStream
         ) as HelpMap
 
-        val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.PERMANENT_REDIRECT)
-
-        var location = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/${
-          map.getUrlForId(
-            name
-          )
-        }"
-
-        if (urlDecoder.parameters().containsKey("keymap")) location += "?keymap=${URLEncoder.encode(urlDecoder.parameters()["keymap"]!![0], StandardCharsets.UTF_8)}"
-
+        val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.TEMPORARY_REDIRECT)
         response.headers().add(
           "Location",
-          location
+          "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/${
+            map.getUrlForId(
+              name
+            )
+          }"
         )
-
         context.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE)
         return true
       }

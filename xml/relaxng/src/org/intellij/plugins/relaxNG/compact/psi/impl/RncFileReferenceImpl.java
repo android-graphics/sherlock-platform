@@ -66,7 +66,8 @@ abstract class RncFileReferenceImpl extends RncElementImpl implements RncFileRef
   }
 
   @Override
-  public @Nullable String getFileReference() {
+  @Nullable
+  public String getFileReference() {
     final ASTNode element = getNode().findChildByType(RncTokenTypes.LITERAL);
     if (element == null) return null;
     final String s = EscapeUtil.unescapeText(element);

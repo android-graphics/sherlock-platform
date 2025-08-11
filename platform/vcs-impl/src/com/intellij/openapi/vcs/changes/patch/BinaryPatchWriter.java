@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.BinaryEncoder;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.util.ArrayUtilRt;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,12 +19,11 @@ import static com.intellij.openapi.vcs.changes.patch.BlobIndexUtil.NOT_COMMITTED
 import static com.intellij.openapi.vcs.changes.patch.GitPatchWriter.getIndexHeader;
 import static com.intellij.openapi.vcs.changes.patch.GitPatchWriter.writeGitHeader;
 
-@ApiStatus.Internal
 public final class BinaryPatchWriter {
-  private static final Logger LOG = Logger.getInstance(BinaryFilePatch.class);
+  private final static Logger LOG = Logger.getInstance(BinaryFilePatch.class);
 
-  private static final @NonNls String GIT_BINARY_HEADER = "GIT binary patch";
-  private static final @NonNls String LITERAL_HEADER = "literal %s";
+  private final static @NonNls String GIT_BINARY_HEADER = "GIT binary patch";
+  private final static @NonNls String LITERAL_HEADER = "literal %s";
 
   public static void writeBinaries(@Nullable Path basePath,
                                    @NotNull List<BinaryFilePatch> patches,
@@ -52,7 +50,8 @@ public final class BinaryPatchWriter {
     }
   }
 
-  private static @NotNull String getSha1ForContent(byte @Nullable [] content) {
+  @NotNull
+  private static String getSha1ForContent(byte @Nullable [] content) {
     return content != null ? BlobIndexUtil.getSha1(content) : NOT_COMMITTED_HASH;
   }
 }

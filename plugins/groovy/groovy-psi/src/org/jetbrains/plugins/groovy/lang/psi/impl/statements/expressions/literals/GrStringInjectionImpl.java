@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
@@ -20,13 +20,15 @@ public class GrStringInjectionImpl extends GroovyPsiElementImpl implements GrStr
   }
 
   @Override
-  public @Nullable GrExpression getExpression() {
+  @Nullable
+  public GrExpression getExpression() {
     final GrExpression expression = findExpressionChild(this);
     return expression instanceof GrClosableBlock ? null : expression;
   }
 
   @Override
-  public @Nullable GrClosableBlock getClosableBlock() {
+  @Nullable
+  public GrClosableBlock getClosableBlock() {
     return findChildByClass(GrClosableBlock.class);
   }
 

@@ -1,4 +1,4 @@
-  // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeWithMe.ClientId
@@ -8,7 +8,6 @@ import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.PopupUpdateEvent
 import com.intellij.lang.documentation.ide.ui.PopupUpdateEvent.ContentUpdateKind
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
@@ -43,9 +42,7 @@ internal suspend fun showDocumentationPopup(
   val popupUI = DocumentationPopupUI(project, DocumentationUI(project, browser))
   val popup = createDocumentationPopup(project, popupUI, popupContext)
   try {
-    writeIntentReadAction {
-      popupContext.setUpPopup(popup, popupUI)
-    }
+    popupContext.setUpPopup(popup, popupUI)
   }
   catch (ce: CancellationException) {
     Disposer.dispose(popup)

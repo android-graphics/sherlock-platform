@@ -151,22 +151,16 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
     EditorModificationUtil.insertStringAtCaret(editor, emptyItem)
     PsiDocumentManager.getInstance(file.project).commitDocument(document)
     val item = (file as MarkdownFile).getListItemAt(editor.caretModel.offset, document)!!
-    val listNumberingType = codeInsightSettings.listNumberingType
-    if (codeInsightSettings.renumberListsOnType && listNumberingType != MarkdownCodeInsightSettings.ListNumberingType.PREVIOUS_NUMBER) {
+    if (codeInsightSettings.renumberListsOnType) {
       // Will fix numbering in a whole list
-      item.list.renumberInBulk(document, recursive = false, restart = false, sequentially = listNumberingType == MarkdownCodeInsightSettings.ListNumberingType.SEQUENTIAL)
+      item.list.renumberInBulk(document, recursive = false, restart = false)
     } else {
       // Will only fix current item based on previous one
       val previousItem = item.siblings(forward = false, withSelf = false).filterIsInstance<MarkdownListItem>().firstOrNull()
       val previousNumber = previousItem?.obtainMarkerNumber()
       if (previousNumber != null) {
         val marker = item.markerElement as? MarkdownListNumber
-        val currentNumber = when (listNumberingType) {
-          MarkdownCodeInsightSettings.ListNumberingType.SEQUENTIAL -> previousNumber + 1
-          MarkdownCodeInsightSettings.ListNumberingType.ONES -> 1
-          MarkdownCodeInsightSettings.ListNumberingType.PREVIOUS_NUMBER -> previousNumber
-        }
-        marker?.replaceWithOtherNumber(currentNumber)
+        marker?.replaceWithOtherNumber(previousNumber + 1)
       }
     }
 

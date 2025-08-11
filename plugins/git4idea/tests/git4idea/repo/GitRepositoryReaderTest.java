@@ -4,7 +4,6 @@ package git4idea.repo;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -23,7 +22,6 @@ import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -88,7 +86,7 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
     myRootDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir);
     VirtualFile gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myGitDir);
     myRepoFiles = GitRepositoryFiles.createInstance(myRootDir, gitDir);
-    myRepositoryReader = new GitRepositoryReader(myProject, myRepoFiles);
+    myRepositoryReader = new GitRepositoryReader(myRepoFiles);
   }
 
   @NotNull
@@ -110,8 +108,6 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
 
   @Test
   public void testBranches() throws Exception {
-    Assume.assumeTrue(Registry.is("git.read.branches.from.disk")); // not a valid git repository: .git/objects is missing
-
     Collection<GitRemote> remotes = GitConfig.read(new File(myGitDir, "config")).parseRemotes();
     GitBranchState state = myRepositoryReader.readState(remotes);
 
@@ -123,8 +119,6 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
 
   @Test
   public void testTags() throws Exception {
-    Assume.assumeTrue(Registry.is("git.read.branches.from.disk")); // not a valid git repository
-
     try {
       GitVcsSettings.getInstance(myProject).getState().setShowTags(true);
       GitRepository repo = Mockito.mock(GitRepository.class);
@@ -132,7 +126,12 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
       Mockito.when(repo.getRepositoryFiles()).thenReturn(myRepoFiles);
       Mockito.when(repo.getCoroutineScope()).thenReturn(GlobalScope.INSTANCE);
       GitTagHolder holder = new GitTagHolder(repo);
-      holder.ensureUpToDateForTests$intellij_vcs_git();
+      holder.updateEnabled();
+      do {
+        //noinspection BusyWait
+        Thread.sleep(100);
+      }
+      while (holder.isLoading());
       Map<GitTag, Hash> tags = holder.getTags();
       assertReferences(tags, readRefs(myTempDir, RefType.TAG));
     }

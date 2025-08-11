@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 
@@ -12,31 +11,27 @@ import java.util.Objects;
 
 public class PluginResolutionResponse implements Serializable {
   private final @NotNull MavenId myMavenPluginId;
-  private final @Nullable MavenArtifact myPluginArtifact;
-  private final @NotNull List<MavenArtifact> myDependencyArtifacts;
+  private final boolean myResolved;
+  private final @NotNull List<MavenArtifact> myArtifacts;
 
-  public PluginResolutionResponse(@NotNull MavenId mavenPluginId,
-                                  @Nullable MavenArtifact pluginArtifact,
-                                  @NotNull List<MavenArtifact> dependencyArtifacts) {
+  public PluginResolutionResponse(@NotNull MavenId mavenPluginId, boolean resolved, @NotNull List<MavenArtifact> artifacts) {
     myMavenPluginId = mavenPluginId;
-    myPluginArtifact = pluginArtifact;
-    myDependencyArtifacts = dependencyArtifacts;
+    myResolved = resolved;
+    myArtifacts = artifacts;
   }
 
-  public @NotNull MavenId getMavenPluginId() {
+  @NotNull
+  public MavenId getMavenPluginId() {
     return myMavenPluginId;
   }
 
-  public @Nullable MavenArtifact getPluginArtifact() {
-    return myPluginArtifact;
-  }
-
   public boolean isResolved() {
-    return myPluginArtifact != null;
+    return myResolved;
   }
 
-  public @NotNull List<MavenArtifact> getPluginDependencyArtifacts() {
-    return myDependencyArtifacts;
+  @NotNull
+  public List<MavenArtifact> getArtifacts() {
+    return myArtifacts;
   }
 
   @Override
@@ -44,22 +39,22 @@ public class PluginResolutionResponse implements Serializable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     PluginResolutionResponse response = (PluginResolutionResponse)o;
-    return Objects.equals(myMavenPluginId, response.myMavenPluginId) &&
-           Objects.equals(myPluginArtifact, response.myPluginArtifact) &&
-           Objects.equals(myDependencyArtifacts, response.myDependencyArtifacts);
+    return myResolved == response.myResolved &&
+           myMavenPluginId.equals(response.myMavenPluginId) &&
+           myArtifacts.equals(response.myArtifacts);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myMavenPluginId, myPluginArtifact, myDependencyArtifacts);
+    return Objects.hash(myMavenPluginId, myResolved, myArtifacts);
   }
 
   @Override
   public String toString() {
     return "PluginResolutionResponse{" +
            "pluginId=" + myMavenPluginId +
-           ", plugin=" + myPluginArtifact +
-           ", dependencies=" + myDependencyArtifacts +
+           ", resolved=" + myResolved +
+           ", artifacts=" + myArtifacts +
            '}';
   }
 }

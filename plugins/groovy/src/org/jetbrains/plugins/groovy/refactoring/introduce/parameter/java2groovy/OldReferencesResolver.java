@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy;
 
@@ -14,6 +14,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -32,7 +33,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil.getNewName;
 
@@ -97,7 +101,8 @@ public class OldReferencesResolver {
   /**
    * checks for the case: qualifier.getFoo()(args)
    */
-  private static @Nullable GrExpression getQualifierFromGetterCall(GrMethodCall methodExpression) {
+  @Nullable
+  private static GrExpression getQualifierFromGetterCall(GrMethodCall methodExpression) {
     final GroovyResolveResult result = methodExpression.advancedResolve();
     if (!(result.getElement() instanceof GrAccessorMethod) || result.isInvokedOnProperty()) return null;
 
@@ -250,7 +255,7 @@ public class OldReferencesResolver {
 
     if (myExpr instanceof GrClosableBlock) {
       int count = 0;
-      for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(myParameterInitializer)).asIterable()) {
+      for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(myParameterInitializer))) {
         count++;
         if (count > 1) break;
       }
@@ -305,7 +310,8 @@ public class OldReferencesResolver {
     return myManager.areElementsEquivalent(resolved, contextClass);
   }
 
-  private @NotNull GrExpression getActualArg(int index) {
+  @NotNull
+  private GrExpression getActualArg(int index) {
     if (myActualArgs == null || myActualArgs[index] == null) {
       final GrExpression[] arguments = myContext.getArgumentList().getExpressionArguments();
       if (index < arguments.length) return arguments[index];
@@ -396,7 +402,8 @@ public class OldReferencesResolver {
     return newExpr;
   }
 
-  private static @Nullable PsiElement getClassContainingResolve(final GroovyResolveResult result) {
+  @Nullable
+  private static PsiElement getClassContainingResolve(final GroovyResolveResult result) {
     final PsiElement elem = result.getElement();
     if (elem != null) {
       if (elem instanceof PsiMember) {

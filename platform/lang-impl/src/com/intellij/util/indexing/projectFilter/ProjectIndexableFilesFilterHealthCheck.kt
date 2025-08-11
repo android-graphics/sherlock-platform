@@ -401,7 +401,7 @@ private fun <T> Computation<T>.takeIfScanningIsCompleted(project: Project): Comp
       val service = project.getService(ProjectIndexingDependenciesService::class.java)
       return outerCompute {
         checkCancelled()
-        if (!service.isScanningAndIndexingCompleted()) {
+        if (!service.isScanningCompleted()) {
           throw ProcessCanceledException()
         }
       }

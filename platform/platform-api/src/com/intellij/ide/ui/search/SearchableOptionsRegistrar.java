@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.search;
 
+import com.intellij.DynamicBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -24,7 +25,6 @@ public abstract class SearchableOptionsRegistrar {
     return ApplicationManager.getApplication().getService(SearchableOptionsRegistrar.class);
   }
 
-  @ApiStatus.Internal
   public abstract @NotNull ConfigurableHit getConfigurables(@NotNull List<? extends ConfigurableGroup> groups,
                                                             DocumentEvent.EventType type,
                                                             @Nullable Set<? extends Configurable> configurables,
@@ -48,6 +48,12 @@ public abstract class SearchableOptionsRegistrar {
   public abstract @NotNull Set<String> getProcessedWordsWithoutStemming(@NotNull String text);
 
   public abstract Set<String> getProcessedWords(@NotNull String text);
+
+  @ApiStatus.Internal
+  public static String getSearchableOptionsName() {
+    String langTag = DynamicBundle.getLocale().toLanguageTag();
+    return SEARCHABLE_OPTIONS_XML_NAME + (langTag.equals("en") ? "" : "_" + langTag);
+  }
 
   public interface AdditionalLocationProvider {
     /**

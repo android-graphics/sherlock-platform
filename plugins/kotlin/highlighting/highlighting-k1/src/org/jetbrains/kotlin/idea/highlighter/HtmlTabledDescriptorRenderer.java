@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.highlighter;
 
@@ -32,8 +32,9 @@ import static org.jetbrains.kotlin.resolve.calls.inference.constraintPosition.Co
 import static org.jetbrains.kotlin.resolve.calls.inference.constraintPosition.ConstraintPositionKind.VALUE_PARAMETER_POSITION;
 
 public class HtmlTabledDescriptorRenderer extends TabledDescriptorRenderer {
+    @NotNull
     @Override
-    public @NotNull DiagnosticParameterRenderer<KotlinType> getTypeRenderer() {
+    public DiagnosticParameterRenderer<KotlinType> getTypeRenderer() {
         return IdeRenderers.HTML_RENDER_TYPE;
     }
 

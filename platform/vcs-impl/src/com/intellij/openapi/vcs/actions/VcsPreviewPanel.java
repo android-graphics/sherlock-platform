@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.application.options.colors.ColorAndFontSettingsListener;
@@ -107,7 +121,8 @@ class VcsPreviewPanel implements PreviewPanel {
     myEditor.getGutterComponentEx().registerTextAnnotation(new MyTextAnnotationGutterProvider(annotationColors, anchorIndexes, lastCommitLine));
   }
 
-  private static @NotNull Range createModifiedRange(int currentLine, byte... inner) {
+  @NotNull
+  private static Range createModifiedRange(int currentLine, byte... inner) {
     List<InnerRange> innerRanges = new ArrayList<>();
 
     int currentInnerLine = 0;
@@ -149,8 +164,9 @@ class VcsPreviewPanel implements PreviewPanel {
         myDispatcher.getMulticaster().selectionInPreviewChanged(colorKey.getExternalName());
       }
 
+      @NotNull
       @Override
-      public @NotNull String getAccessibleName() {
+      public String getAccessibleName() {
         return DiffBundle.message("vcs.marker.changed.line");
       }
     });
@@ -166,8 +182,8 @@ class VcsPreviewPanel implements PreviewPanel {
   }
 
   private static class MyTextAnnotationGutterProvider implements TextAnnotationGutterProvider {
-    private final @NotNull List<? extends Color> myBackgroundColors;
-    private final @NotNull List<Integer> myAnchorIndexes;
+    @NotNull private final List<? extends Color> myBackgroundColors;
+    @NotNull private final List<Integer> myAnchorIndexes;
     private final int myLastCommitLine;
 
     MyTextAnnotationGutterProvider(@NotNull List<? extends Color> backgroundColors,
@@ -178,8 +194,9 @@ class VcsPreviewPanel implements PreviewPanel {
       myLastCommitLine = lastCommitLine;
     }
 
+    @Nullable
     @Override
-    public @Nullable String getLineText(int line, Editor editor) {
+    public String getLineText(int line, Editor editor) {
       if (line < myBackgroundColors.size()) {
         int anchorIndex = myAnchorIndexes.indexOf(line);
         String text = VcsBundle.message("annotation.background");
@@ -189,8 +206,9 @@ class VcsPreviewPanel implements PreviewPanel {
       return null;
     }
 
+    @Nullable
     @Override
-    public @Nullable String getToolTip(int line, Editor editor) {
+    public String getToolTip(int line, Editor editor) {
       return null;
     }
 
@@ -199,13 +217,15 @@ class VcsPreviewPanel implements PreviewPanel {
       return null;
     }
 
+    @Nullable
     @Override
-    public @Nullable ColorKey getColor(int line, Editor editor) {
+    public ColorKey getColor(int line, Editor editor) {
       return myLastCommitLine == line ? EditorColors.ANNOTATIONS_LAST_COMMIT_COLOR : EditorColors.ANNOTATIONS_COLOR;
     }
 
+    @Nullable
     @Override
-    public @Nullable Color getBgColor(int line, Editor editor) {
+    public Color getBgColor(int line, Editor editor) {
       if (line < myBackgroundColors.size()) {
         return myBackgroundColors.get(line);
       }

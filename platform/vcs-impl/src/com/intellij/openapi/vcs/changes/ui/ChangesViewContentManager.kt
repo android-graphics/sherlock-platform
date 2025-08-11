@@ -21,7 +21,6 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ObjectUtils.tryCast
-import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcs.commit.CommitModeManager
 import org.jetbrains.annotations.NonNls
 import java.util.function.Predicate
@@ -307,20 +306,6 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     }
 
     /**
-     * @see subscribeOnVcsToolWindowLayoutChanges
-     */
-    @JvmStatic
-    fun isToolWindowTabVertical(project: Project, tabName: String): Boolean {
-      val toolWindow = getToolWindowFor(project, tabName)
-      return toolWindow != null && !toolWindow.anchor.isHorizontal
-    }
-
-    @JvmStatic
-    fun shouldHaveSplitterDiffPreview(project: Project, isContentVertical: Boolean): Boolean {
-      return !isContentVertical || !isCommitToolWindowShown(project)
-    }
-
-    /**
      * Specified tab order in toolwindow.
      *
      * @see ChangesViewContentManager.TabOrderWeight
@@ -350,13 +335,4 @@ private fun getContentWeight(content: Content): Int {
   }
 
   return ChangesViewContentManager.TabOrderWeight.OTHER.weight
-}
-
-fun MessageBusConnection.subscribeOnVcsToolWindowLayoutChanges(updateLayout: Runnable) {
-  subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
-    override fun toolWindowMappingChanged() = updateLayout.run()
-  })
-  subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-    override fun stateChanged(toolWindowManager: ToolWindowManager) = updateLayout.run()
-  })
 }

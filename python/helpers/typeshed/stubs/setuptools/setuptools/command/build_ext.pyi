@@ -1,5 +1,5 @@
 from _typeshed import Incomplete
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from .._distutils.command.build_ext import build_ext as _build_ext
 
@@ -12,19 +12,19 @@ def get_abi3_suffix(): ...
 
 class build_ext(_build_ext):
     editable_mode: ClassVar[bool]
-    inplace: bool
+    inplace: Any
     def run(self) -> None: ...
     def copy_extensions_to_source(self) -> None: ...
     def get_ext_filename(self, fullname): ...
-    shlib_compiler: Incomplete
-    shlibs: list[Incomplete]
-    ext_map: dict[Incomplete, Incomplete]
+    shlib_compiler: Any
+    shlibs: Any
+    ext_map: Any
     def initialize_options(self) -> None: ...
-    extensions: list[Incomplete]
+    extensions: Any
     def finalize_options(self) -> None: ...
     def setup_shlib_compiler(self) -> None: ...
     def get_export_symbols(self, ext): ...
-    compiler: Incomplete
+    compiler: Any
     def build_extension(self, ext) -> None: ...
     def links_to_dynamic(self, ext): ...
     def get_outputs(self): ...
@@ -40,7 +40,7 @@ def link_shared_object(
     library_dirs: Incomplete | None = None,
     runtime_library_dirs: Incomplete | None = None,
     export_symbols: Incomplete | None = None,
-    debug: bool = False,
+    debug: int = 0,
     extra_preargs: Incomplete | None = None,
     extra_postargs: Incomplete | None = None,
     build_temp: Incomplete | None = None,

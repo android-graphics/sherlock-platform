@@ -17,10 +17,10 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
@@ -51,12 +51,14 @@ public final class TrivialStringConcatenationInspection extends BaseInspection i
   }
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "ConcatenationWithEmptyString";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("trivial.string.concatenation.problem.descriptor");
   }
 
@@ -224,9 +226,10 @@ public final class TrivialStringConcatenationInspection extends BaseInspection i
     }
   }
 
-  static @NonNls String buildReplacement(@NotNull PsiExpression operandToReplace,
-                                         boolean seenString,
-                                         CommentTracker commentTracker) {
+  @NonNls
+  static String buildReplacement(@NotNull PsiExpression operandToReplace,
+                                 boolean seenString,
+                                 CommentTracker commentTracker) {
     if (ExpressionUtils.isNullLiteral(operandToReplace)) {
       if (seenString) {
         return "null";
@@ -257,12 +260,14 @@ public final class TrivialStringConcatenationInspection extends BaseInspection i
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return m_name;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.temporary.object.fix.family.name");
     }
 

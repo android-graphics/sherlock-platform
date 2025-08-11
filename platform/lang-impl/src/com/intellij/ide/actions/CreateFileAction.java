@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
@@ -8,11 +8,13 @@ import com.intellij.ide.ui.newItemPopup.NewItemSimplePopupPanel;
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
@@ -53,7 +55,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   /**
    * @deprecated Use {@link #CreateFileAction(Supplier, Supplier, Supplier)}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public CreateFileAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, final Icon icon) {
     super(dynamicText, dynamicDescription, icon);
   }
@@ -84,7 +86,14 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
       }
     }
     else {
-      createLightWeightPopup(validator, elementsConsumer).showCenteredInCurrentWindow(project);
+      if (Experiments.getInstance().isFeatureEnabled("show.create.new.element.in.popup")) {
+        createLightWeightPopup(validator, elementsConsumer).showCenteredInCurrentWindow(project);
+      }
+      else {
+        Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.file.name"),
+                                 IdeBundle.message("title.new.file"), null, null, validator);
+        elementsConsumer.accept(validator.getCreatedElements());
+      }
     }
   }
 
@@ -118,14 +127,17 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     return new PsiElement[]{file};
   }
 
-  public static @NotNull PsiDirectory findOrCreateSubdirectory(@NotNull PsiDirectory parent, @NotNull String subdirName) {
+  @NotNull
+  public static PsiDirectory findOrCreateSubdirectory(@NotNull PsiDirectory parent, @NotNull String subdirName) {
     final PsiDirectory sub = parent.findSubdirectory(subdirName);
     return sub == null ? WriteAction.compute(() -> parent.createSubdirectory(subdirName)) : sub;
   }
 
   public static final class MkDirs {
-    public final @NotNull String newName;
-    public final @NotNull PsiDirectory directory;
+    @NotNull
+    public final String newName;
+    @NotNull
+    public final PsiDirectory directory;
 
     public MkDirs(@NotNull String newName, @NotNull PsiDirectory directory) {
       if (SystemInfo.isWindows) {
@@ -178,7 +190,8 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     return newName + "." + getDefaultExtension();
   }
 
-  protected @Nullable String getDefaultExtension() {
+  @Nullable
+  protected String getDefaultExtension() {
     return null;
   }
 

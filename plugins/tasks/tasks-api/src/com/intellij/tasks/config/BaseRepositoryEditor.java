@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.config;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -154,7 +154,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     for (CommitPlaceholderProvider extension : CommitPlaceholderProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       String[] placeholders = extension.getPlaceholders(myRepository);
       for (String placeholder : placeholders) {
-        if (!comment.isEmpty()) {
+        if (comment.length() > 0) {
           comment.append(", ");
         }
         comment.append("{").append(placeholder).append("}");
@@ -185,7 +185,8 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myUseHttpAuthenticationCheckBox.setEnabled(enabled);
   }
 
-  protected @Nullable JComponent createCustomPanel() {
+  @Nullable
+  protected JComponent createCustomPanel() {
     return null;
   }
 
@@ -298,7 +299,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   }
 
   @Override
-  public void setAnchor(final @Nullable JComponent anchor) {
+  public void setAnchor(@Nullable final JComponent anchor) {
     myAnchor = anchor;
     myUrlLabel.setAnchor(anchor);
     myUsernameLabel.setAnchor(anchor);

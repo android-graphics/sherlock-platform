@@ -19,7 +19,6 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.uast.*;
 
 import java.util.*;
@@ -79,14 +78,9 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
         }
       }
     }
-    WritableRefEntity refParent = parent != null ? (WritableRefEntity)manager.getReference(parent.getSourcePsi()) : null;
+    RefElement refParent = parent != null ? manager.getReference(parent.getSourcePsi()) : null;
     if (refParent != null) {
-      if (!myManager.isDeclarationsFound()) {
-        refParent.add(this);
-      }
-      else {
-        setOwner(refParent);
-      }
+      setOwner((WritableRefEntity)refParent);
     }
     else {
       PsiFile containingFile = getContainingFile();
@@ -388,7 +382,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   @Override
-  public @Unmodifiable List<RefField> getFields() {
+  public List<RefField> getFields() {
     LOG.assertTrue(isInitialized());
     return ContainerUtil.filterIsInstance(getChildren(), RefField.class);
   }

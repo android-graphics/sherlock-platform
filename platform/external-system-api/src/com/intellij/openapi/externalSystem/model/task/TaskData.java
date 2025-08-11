@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.task;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -13,13 +13,12 @@ import org.jetbrains.annotations.Nullable;
  * Container for external system task information.
  */
 public final class TaskData extends AbstractExternalEntityData implements ExternalConfigPathAware, Comparable<TaskData> {
-  private final @NotNull String name;
-  private final @Nullable String description;
-  private final @NotNull String linkedExternalProjectPath;
-  private @Nullable String group;
-  private @Nullable String type;
+  @NotNull private final String name;
+  @Nullable private final String description;
+  @NotNull private final String linkedExternalProjectPath;
+  @Nullable private String group;
+  @Nullable private String type;
   private boolean inherited;
-  private boolean isJvm;
   private boolean isTest;
   private boolean isJvmTest;
 
@@ -34,20 +33,24 @@ public final class TaskData extends AbstractExternalEntityData implements Extern
     this.description = description;
   }
 
-  public @NotNull @NlsSafe String getName() {
+  @NotNull
+  public @NlsSafe String getName() {
     return name;
   }
 
   @Override
-  public @NotNull String getLinkedExternalProjectPath() {
+  @NotNull
+  public String getLinkedExternalProjectPath() {
     return linkedExternalProjectPath;
   }
 
-  public @Nullable @NlsSafe String getDescription() {
+  @Nullable
+  public @NlsSafe String getDescription() {
     return description;
   }
 
-  public @Nullable String getGroup() {
+  @Nullable
+  public String getGroup() {
     return group;
   }
 
@@ -55,7 +58,8 @@ public final class TaskData extends AbstractExternalEntityData implements Extern
     this.group = group;
   }
 
-  public @Nullable String getType() {
+  @Nullable
+  public String getType() {
     return type;
   }
 
@@ -71,14 +75,6 @@ public final class TaskData extends AbstractExternalEntityData implements Extern
     this.inherited = inherited;
   }
 
-  public boolean isJvm() {
-    return isJvm;
-  }
-
-  public void setJvm(boolean isJvm) {
-    this.isJvm = isJvm;
-  }
-
   public boolean isTest() {
     return isTest;
   }
@@ -91,8 +87,8 @@ public final class TaskData extends AbstractExternalEntityData implements Extern
     return isJvmTest;
   }
 
-  public void setJvmTest(boolean isJvmTest) {
-    this.isJvmTest = isJvmTest;
+  public void setJvmTest(boolean test) {
+    isJvmTest = test;
   }
 
   @Override

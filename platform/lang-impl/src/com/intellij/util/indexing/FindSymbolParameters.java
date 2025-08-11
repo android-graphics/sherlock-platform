@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.project.Project;
@@ -48,23 +48,28 @@ public final class FindSymbolParameters {
     return new FindSymbolParameters(myCompletePattern, myLocalPatternName, scope, myIdFilter);
   }
 
-  public @NotNull String getCompletePattern() {
+  @NotNull
+  public String getCompletePattern() {
     return myCompletePattern;
   }
 
-  public @NotNull String getLocalPatternName() {
+  @NotNull
+  public String getLocalPatternName() {
     return myLocalPatternName;
   }
 
-  public @NotNull GlobalSearchScope getSearchScope() {
+  @NotNull
+  public GlobalSearchScope getSearchScope() {
     return mySearchScope;
   }
 
-  public @Nullable IdFilter getIdFilter() {
+  @Nullable
+  public IdFilter getIdFilter() {
     return myIdFilter;
   }
 
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return Objects.requireNonNull(mySearchScope.getProject());
   }
 
@@ -86,7 +91,8 @@ public final class FindSymbolParameters {
                                     ((FileBasedIndexImpl) FileBasedIndex.getInstance()).projectIndexableFiles(project));
   }
 
-  public static @NotNull GlobalSearchScope searchScopeFor(@NotNull Project project, boolean searchInLibraries) {
+  @NotNull
+  public static GlobalSearchScope searchScopeFor(@NotNull Project project, boolean searchInLibraries) {
     return searchInLibraries ? ProjectScope.getAllScope(project) : ProjectScope.getProjectScope(project);
   }
 }

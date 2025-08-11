@@ -11,6 +11,7 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.util.BlankDiffWindowUtil;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -29,7 +30,7 @@ public abstract class BaseShowDiffAction extends DumbAwareAction {
     Presentation presentation = e.getPresentation();
     boolean canShow = isAvailable(e);
     presentation.setEnabled(canShow);
-    if (e.isFromContextMenu()) {
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
       presentation.setVisible(canShow);
     }
   }
@@ -49,18 +50,21 @@ public abstract class BaseShowDiffAction extends DumbAwareAction {
     return !DiffUtil.isFileWithoutContent(file);
   }
 
-  protected abstract @Nullable DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e);
+  @Nullable
+  protected abstract DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e);
 
-  public static @NotNull MutableDiffRequestChain createMutableChainFromFiles(@Nullable Project project,
-                                                                             @NotNull VirtualFile file1,
-                                                                             @NotNull VirtualFile file2) {
+  @NotNull
+  public static MutableDiffRequestChain createMutableChainFromFiles(@Nullable Project project,
+                                                                    @NotNull VirtualFile file1,
+                                                                    @NotNull VirtualFile file2) {
     return createMutableChainFromFiles(project, file1, file2, null);
   }
 
-  public static @NotNull MutableDiffRequestChain createMutableChainFromFiles(@Nullable Project project,
-                                                                             @NotNull VirtualFile file1,
-                                                                             @NotNull VirtualFile file2,
-                                                                             @Nullable VirtualFile baseFile) {
+  @NotNull
+  public static MutableDiffRequestChain createMutableChainFromFiles(@Nullable Project project,
+                                                                    @NotNull VirtualFile file1,
+                                                                    @NotNull VirtualFile file2,
+                                                                    @Nullable VirtualFile baseFile) {
     DiffContentFactory contentFactory = DiffContentFactory.getInstance();
     DiffRequestFactory requestFactory = DiffRequestFactory.getInstance();
 
@@ -73,18 +77,17 @@ public abstract class BaseShowDiffAction extends DumbAwareAction {
         (baseContent == null || baseContent instanceof DocumentContent)) {
       chain = BlankDiffWindowUtil.createBlankDiffRequestChain((DocumentContent)content1,
                                                               (DocumentContent)content2,
-                                                              (DocumentContent)baseContent,
-                                                              project);
+                                                              (DocumentContent)baseContent);
     }
     else {
-      chain = new MutableDiffRequestChain(content1, baseContent, content2, project);
+      chain = new MutableDiffRequestChain(content1, baseContent, content2);
     }
 
     if (baseFile != null) {
       chain.setWindowTitle(requestFactory.getTitle(baseFile));
     }
     else {
-      chain.setWindowTitle(requestFactory.getTitleForComparison(file1, file2));
+      chain.setWindowTitle(requestFactory.getTitle(file1, file2));
     }
     return chain;
   }

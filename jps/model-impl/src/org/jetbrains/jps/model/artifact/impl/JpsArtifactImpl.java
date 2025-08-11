@@ -1,7 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.artifact.impl;
 
-import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
@@ -36,8 +36,9 @@ class JpsArtifactImpl<P extends JpsElement> extends JpsNamedCompositeElementBase
     myOutputPath = original.myOutputPath;
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsArtifactImpl<P> createCopy() {
+  public JpsArtifactImpl<P> createCopy() {
     return new JpsArtifactImpl<>(this);
   }
 
@@ -53,28 +54,29 @@ class JpsArtifactImpl<P extends JpsElement> extends JpsNamedCompositeElementBase
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable String getOutputFilePath() {
-    if (Strings.isEmpty(myOutputPath)) {
-      return null;
-    }
-
+  public String getOutputFilePath() {
+    if (StringUtil.isEmpty(myOutputPath)) return null;
     JpsCompositePackagingElement root = getRootElement();
     return root instanceof JpsArchivePackagingElement ? myOutputPath + "/" + ((JpsArchivePackagingElement)root).getArchiveName() : myOutputPath;
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsArtifactType<P> getArtifactType() {
+  public JpsArtifactType<P> getArtifactType() {
     return myArtifactType;
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsArtifactReferenceImpl createReference() {
+  public JpsArtifactReferenceImpl createReference() {
     return new JpsArtifactReferenceImpl(getName());
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsCompositePackagingElement getRootElement() {
+  public JpsCompositePackagingElement getRootElement() {
     return myContainer.getChild(ROOT_ELEMENT_CHILD_ROLE);
   }
 

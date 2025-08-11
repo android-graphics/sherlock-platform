@@ -1,6 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(UnsafeCastFunction::class)
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.ide.impl.NewProjectUtil
@@ -17,7 +15,6 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import org.jetbrains.kotlin.idea.statistics.WizardLoggingSession
 import org.jetbrains.kotlin.idea.statistics.WizardStatsService
 import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ProjectTemplate
-import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal object NewWizardOpener {

@@ -1,14 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -16,7 +19,7 @@ import java.time.format.DateTimeFormatter;
 
 @ApiStatus.Internal
 @State(name = "DateTimeFormatter", storages = @Storage("ui-datetime.xml"), category = SettingsCategory.SYSTEM)
-public final class DateTimeFormatManager implements PersistentStateComponent<DateTimeFormatManager> {
+public final class DateTimeFormatManager implements PersistentStateComponent<Element> {
   private static final String DEFAULT_DATE_FORMAT = "dd MMM yyyy";
 
   private boolean myOverrideSystemDateFormat = false;
@@ -25,13 +28,14 @@ public final class DateTimeFormatManager implements PersistentStateComponent<Dat
   private boolean myPrettyFormattingAllowed = true;
 
   @Override
-  public DateTimeFormatManager getState() {
-    return this;
+  public @Nullable Element getState() {
+    return XmlSerializer.serialize(this);
   }
 
   @Override
-  public void loadState(@NotNull DateTimeFormatManager state) {
-    XmlSerializerUtil.copyBean(state, this);
+  public void loadState(@NotNull Element state) {
+    var loaded = XmlSerializer.deserialize(state, DateTimeFormatManager.class);
+    XmlSerializerUtil.copyBean(loaded, this);
     resetFormats();
   }
 

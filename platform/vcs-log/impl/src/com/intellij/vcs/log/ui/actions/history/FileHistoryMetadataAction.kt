@@ -5,9 +5,7 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogCommitDataCache
 import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.data.VcsLogData
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 abstract class FileHistoryMetadataAction : FileHistoryOneCommitAction<VcsCommitMetadata>() {
   override fun getCache(logData: VcsLogData): VcsLogCommitDataCache<VcsCommitMetadata> = logData.miniDetailsGetter
 

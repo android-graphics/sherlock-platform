@@ -14,8 +14,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.AnnotationInfo;
+import com.jetbrains.python.debugger.PySignature;
+import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
@@ -31,7 +34,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class SpecifyTypeInDocstringIntention extends TypeIntention {
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.specify.type.in.docstring");
   }
 
@@ -63,14 +67,21 @@ public final class SpecifyTypeInDocstringIntention extends TypeIntention {
     if (!PyGenerateDocstringIntention.ensureNotPlainDocstringFormat(pyFunction)) return;
 
     final PyDocstringGenerator docstringGenerator = PyDocstringGenerator.forDocStringOwner(pyFunction);
-
+    String type = PyNames.OBJECT;
     if (param != null) {
-      String type = SpecifyTypeInPy3AnnotationsIntention.parameterType(param);
+      final String paramName = StringUtil.notNullize(param.getName());
+      final PySignature signature = PySignatureCacheManager.getInstance(pyFunction.getProject()).findSignature(pyFunction);
+      if (signature != null) {
+        type = ObjectUtils.chooseNotNull(signature.getArgTypeQualifiedName(paramName), type);
+      }
       docstringGenerator.withParamTypedByName(param, type);
     }
     else {
-      AnnotationInfo info = SpecifyTypeInPy3AnnotationsIntention.returnType(pyFunction);
-      docstringGenerator.withReturnValue(info.getAnnotationText());
+      final PySignature signature = PySignatureCacheManager.getInstance(pyFunction.getProject()).findSignature(pyFunction);
+      if (signature != null) {
+        type = ObjectUtils.chooseNotNull(signature.getReturnTypeQualifiedName(), type);
+      }
+      docstringGenerator.withReturnValue(type);
     }
 
     WriteAction.run(() -> {

@@ -73,12 +73,13 @@ public class InspectionCommandEx extends AbstractCommand {
   public InspectionCommandEx(@NotNull String text, int line) {
     super(text, line);
     if (text.startsWith(PREFIX)) {
-      Args.parse(myOptions, text.substring(PREFIX.length()).trim().split(" "), false);
+      Args.parse(myOptions, text.substring(PREFIX.length()).trim().split(" "));
     }
   }
 
+  @NotNull
   @Override
-  protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
+  protected Promise<Object> _execute(@NotNull final PlaybackContext context) {
     final ActionCallback actionCallback = new ActionCallbackProfilerStopper();
 
     if (StringUtil.isNotEmpty(myOptions.downloadFileUrl)) {
@@ -269,9 +270,10 @@ public class InspectionCommandEx extends AbstractCommand {
     }
   }
 
-  private static @NotNull String buildIdentifier(final @NotNull String inspectionResultFilename,
-                                                 final String @Nullable [] inspectionTrueFields,
-                                                 @NotNull Project project) {
+  @NotNull
+  private static String buildIdentifier(@NotNull final String inspectionResultFilename,
+                                        final String @Nullable [] inspectionTrueFields,
+                                        @NotNull Project project) {
 
     return Stream.of(project.getName(),
                      StringUtil.trimExtensions(inspectionResultFilename),
@@ -289,9 +291,13 @@ public class InspectionCommandEx extends AbstractCommand {
   }
 
   public static class Options {
-    @Argument public @Nullable String scopeName;
+    @Nullable
+    @Argument
+    public String scopeName;
 
-    @Argument public @Nullable String toolShortName;
+    @Nullable
+    @Argument
+    public String toolShortName;
 
     @Argument
     public String @Nullable [] inspectionTrueFields;
@@ -299,9 +305,13 @@ public class InspectionCommandEx extends AbstractCommand {
     @Argument
     public String @Nullable [] inspectionFalseFields;
 
-    @Argument public @Nullable String downloadFileUrl;
+    @Nullable
+    @Argument
+    public String downloadFileUrl;
 
-    @Argument public @Nullable String directory;
+    @Nullable
+    @Argument
+    public String directory;
 
     @Argument
     public boolean hideResults = false;

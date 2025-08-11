@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.Disposable;
@@ -15,18 +15,20 @@ import org.jetbrains.annotations.NotNull;
  */
 @Deprecated(forRemoval = true)
 public abstract class PyPackageManagers implements Disposable {
-  public static @NotNull PyPackageManagers getInstance() {
+  @NotNull
+  public static PyPackageManagers getInstance() {
     return ApplicationManager.getApplication().getService(PyPackageManagers.class);
   }
 
   /**
    * @param sdk must not be disposed if {@link Disposable}
    */
-  public abstract @NotNull PyPackageManager forSdk(@NotNull Sdk sdk);
+  @NotNull
+  public abstract PyPackageManager forSdk(@NotNull Sdk sdk);
 
   public abstract PackageManagementService getManagementService(Project project, Sdk sdk);
 
-  public abstract void clearCache(final @NotNull Sdk sdk);
+  public abstract void clearCache(@NotNull final Sdk sdk);
 
   @Override
   public void dispose() {

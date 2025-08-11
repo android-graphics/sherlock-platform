@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -26,7 +26,8 @@ public final class ThreadLocalSetWithNullInspection extends BaseInspection {
     CallMatcher.instanceCall("java.lang.ThreadLocal", "set").parameterCount(1);
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("thread.local.set.with.null.problem.descriptor");
   }
 
@@ -71,7 +72,8 @@ public final class ThreadLocalSetWithNullInspection extends BaseInspection {
   private static class ReplaceWithRemove extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("thread.local.set.with.null.quickfix");
     }
 

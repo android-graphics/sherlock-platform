@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.Location;
@@ -25,8 +39,9 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
 
   public static final FileUrlProvider INSTANCE = new FileUrlProvider();
 
+  @NotNull
   @Override
-  public @NotNull List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+  public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     if (!URLUtil.FILE_PROTOCOL.equals(protocol)) {
       return Collections.emptyList();
     }
@@ -70,7 +85,8 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
     return locations;
   }
 
-  public static @Nullable Location createLocationFor(@NotNull Project project, @NotNull VirtualFile virtualFile, int lineNum) {
+  @Nullable
+  public static Location createLocationFor(@NotNull Project project, @NotNull VirtualFile virtualFile, int lineNum) {
     return createLocationFor(project, virtualFile, lineNum, -1);
   }
 
@@ -83,7 +99,8 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
    *                    a non-positive column number doesn't change text caret position inside the file
    * @return Location instance, or null if not found
    */
-  public static @Nullable Location createLocationFor(@NotNull Project project, @NotNull VirtualFile virtualFile, int lineNum, int columnNum) {
+  @Nullable
+  public static Location createLocationFor(@NotNull Project project, @NotNull VirtualFile virtualFile, int lineNum, int columnNum) {
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
     if (psiFile == null) {
       return null;
@@ -116,8 +133,9 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
     if (elementAtLine instanceof PsiPlainText && offset > 0) {
       int offsetInPlainTextFile = offset;
       return new PsiLocation<>(project, (PsiPlainText)elementAtLine) {
+        @Nullable
         @Override
-        public @Nullable OpenFileDescriptor getOpenFileDescriptor() {
+        public OpenFileDescriptor getOpenFileDescriptor() {
           VirtualFile file = getVirtualFile();
           return file != null ? new OpenFileDescriptor(getProject(), file, offsetInPlainTextFile) : null;
         }

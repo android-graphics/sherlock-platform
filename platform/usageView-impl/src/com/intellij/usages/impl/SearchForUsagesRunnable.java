@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -46,7 +47,6 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -57,22 +57,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 final class SearchForUsagesRunnable implements Runnable {
-  private static final @NonNls String FIND_OPTIONS_HREF_TARGET = "FindOptions";
-  private static final @NonNls String SEARCH_IN_PROJECT_HREF_TARGET = "SearchInProject";
-  private static final @NonNls String LARGE_FILES_HREF_TARGET = "LargeFiles";
-  private static final @NonNls String SHOW_PROJECT_FILE_OCCURRENCES_HREF_TARGET = "SHOW_PROJECT_FILE_OCCURRENCES";
+  @NonNls private static final String FIND_OPTIONS_HREF_TARGET = "FindOptions";
+  @NonNls private static final String SEARCH_IN_PROJECT_HREF_TARGET = "SearchInProject";
+  @NonNls private static final String LARGE_FILES_HREF_TARGET = "LargeFiles";
+  @NonNls private static final String SHOW_PROJECT_FILE_OCCURRENCES_HREF_TARGET = "SHOW_PROJECT_FILE_OCCURRENCES";
   private final AtomicInteger myUsageCountWithoutDefinition = new AtomicInteger(0);
   private final AtomicReference<Usage> myFirstUsage = new AtomicReference<>();
-  private final @NotNull Project myProject;
+  @NotNull
+  private final Project myProject;
   private final AtomicReference<UsageViewEx> myUsageViewRef;
   private final UsageViewPresentation myPresentation;
   private final UsageTarget[] mySearchFor;
-  private final Supplier<? extends UsageSearcher> mySearcherFactory;
+  private final Factory<? extends UsageSearcher> mySearcherFactory;
   private final FindUsagesProcessPresentation myProcessPresentation;
-  private final @NotNull SearchScope mySearchScopeToWarnOfFallingOutOf;
+  @NotNull private final SearchScope mySearchScopeToWarnOfFallingOutOf;
   private final UsageViewManager.UsageViewStateListener myListener;
   private final UsageViewManagerImpl myUsageViewManager;
   private final AtomicInteger myOutOfScopeUsages = new AtomicInteger();
@@ -84,7 +84,7 @@ final class SearchForUsagesRunnable implements Runnable {
                           @NotNull AtomicReference<UsageViewEx> usageViewRef,
                           @NotNull UsageViewPresentation presentation,
                           UsageTarget @NotNull [] searchFor,
-                          @NotNull Supplier<? extends UsageSearcher> searcherFactory,
+                          @NotNull Factory<? extends UsageSearcher> searcherFactory,
                           @NotNull FindUsagesProcessPresentation processPresentation,
                           @NotNull SearchScope searchScopeToWarnOfFallingOutOf,
                           @Nullable UsageViewManager.UsageViewStateListener listener,
@@ -103,7 +103,8 @@ final class SearchForUsagesRunnable implements Runnable {
     myTooManyUsages = tooManyUsages;
   }
 
-  private static @NotNull String createOptionsHtml(@NonNls UsageTarget @NotNull [] searchFor) {
+  @NotNull
+  private static String createOptionsHtml(@NonNls UsageTarget @NotNull [] searchFor) {
     KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut(searchFor);
     HtmlBuilder builder = new HtmlBuilder()
       .appendLink(FIND_OPTIONS_HREF_TARGET, UsageViewBundle.message("link.display.name.find.options"));
@@ -113,7 +114,8 @@ final class SearchForUsagesRunnable implements Runnable {
     return builder.toString();
   }
 
-  private static @NotNull String createSearchInProjectHtml() {
+  @NotNull
+  private static String createSearchInProjectHtml() {
     return HtmlChunk.link(SEARCH_IN_PROJECT_HREF_TARGET, UsageViewBundle.message("link.display.name.search.in.project")).toString();
   }
 
@@ -160,7 +162,8 @@ final class SearchForUsagesRunnable implements Runnable {
     ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, actualType, wrapInHtml(resultLines), AllIcons.Actions.Find, resultListener);
   }
 
-  private @NotNull @Unmodifiable Collection<String> getUnloadedModulesBelongingToScope() {
+  @NotNull
+  private Collection<String> getUnloadedModulesBelongingToScope() {
     return ReadAction.compute(() -> {
       if (!(mySearchScopeToWarnOfFallingOutOf instanceof GlobalSearchScope)) return Collections.emptySet();
       Collection<UnloadedModuleDescription> unloadedInSearchScope =
@@ -193,9 +196,10 @@ final class SearchForUsagesRunnable implements Runnable {
     return resolveScope;
   }
 
-  private static @NotNull HyperlinkListener addHrefHandling(@Nullable HyperlinkListener listener,
-                                                            @NotNull String hrefTarget,
-                                                            @NotNull Runnable handler) {
+  @NotNull
+  private static HyperlinkListener addHrefHandling(@Nullable HyperlinkListener listener,
+                                                   @NotNull String hrefTarget,
+                                                   @NotNull Runnable handler) {
     return new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
@@ -213,7 +217,8 @@ final class SearchForUsagesRunnable implements Runnable {
     return XmlStringUtil.wrapInHtml(StringUtil.join(strings, "<br>"));
   }
 
-  private static @NotNull String detailedLargeFilesMessage(@NotNull Collection<? extends VirtualFile> largeFiles) {
+  @NotNull
+  private static String detailedLargeFilesMessage(@NotNull Collection<? extends VirtualFile> largeFiles) {
     return UsageViewBundle.message("files.are.too.large.large.and.cannot.be.scanned",
                                    largeFiles.size(),
                                    "<br> " + StringUtil.join(ContainerUtil.getFirstItems(new ArrayList<>(largeFiles), 10),
@@ -221,18 +226,21 @@ final class SearchForUsagesRunnable implements Runnable {
                                    + "<br> ");
   }
 
-  private static @NotNull String presentableFileInfo(@NotNull VirtualFile vFile) {
+  @NotNull
+  private static String presentableFileInfo(@NotNull VirtualFile vFile) {
     return getPresentablePath(vFile)
            + "&nbsp;("
            + UsageViewManagerImpl.presentableSize(UsageViewManagerImpl.getFileLength(vFile))
            + ")";
   }
 
-  private static @NotNull String getPresentablePath(@NotNull VirtualFile virtualFile) {
+  @NotNull
+  private static String getPresentablePath(@NotNull VirtualFile virtualFile) {
     return "'" + ReadAction.compute(virtualFile::getPresentableUrl) + "'";
   }
 
-  private @NotNull HyperlinkListener createGotToOptionsListener(UsageTarget @NotNull [] targets) {
+  @NotNull
+  private HyperlinkListener createGotToOptionsListener(UsageTarget @NotNull [] targets) {
     return new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
@@ -242,7 +250,8 @@ final class SearchForUsagesRunnable implements Runnable {
       }
     };
   }
-  private @NotNull HyperlinkListener createSearchInProjectListener() {
+  @NotNull
+  private HyperlinkListener createSearchInProjectListener() {
     return new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
@@ -258,9 +267,7 @@ final class SearchForUsagesRunnable implements Runnable {
 
   static PsiElement getPsiElement(UsageTarget @NotNull [] searchFor) {
     UsageTarget target = searchFor[0];
-    if (!(target instanceof PsiElementUsageTarget)) {
-      return null;
-    }
+    if (!(target instanceof PsiElementUsageTarget)) return null;
     return ReadAction.compute(((PsiElementUsageTarget)target)::getElement);
   }
 
@@ -270,13 +277,10 @@ final class SearchForUsagesRunnable implements Runnable {
     }
 
     Editor editor = usageInfo.openTextEditor(true);
-    if (editor == null) {
-      return;
-    }
-
+    if (editor == null) return;
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES);
 
-    RangeBlinker rangeBlinker = new RangeBlinker(editor, attributes, 6, null);
+    RangeBlinker rangeBlinker = new RangeBlinker(editor, attributes, 6);
     List<Segment> segments = new ArrayList<>();
     Processor<Segment> processor = Processors.cancelableCollectProcessor(segments);
     usageInfo.processRangeMarkers(processor);
@@ -295,7 +299,7 @@ final class SearchForUsagesRunnable implements Runnable {
       return null;
     }
 
-    UsageViewEx usageView = myUsageViewManager.createUsageView(mySearchFor, Usage.EMPTY_ARRAY, myPresentation, mySearcherFactory::get);
+    UsageViewEx usageView = myUsageViewManager.createUsageView(mySearchFor, Usage.EMPTY_ARRAY, myPresentation, mySearcherFactory);
     if (myUsageViewRef.compareAndSet(null, usageView)) {
       // associate progress only if created successfully, otherwise Dispose will cancel the actual progress, see IDEA-195542
       PsiElement element = getPsiElement(mySearchFor);
@@ -347,7 +351,7 @@ final class SearchForUsagesRunnable implements Runnable {
     searchUsages();
     endSearchForUsages();
 
-    snapshot.logResponsivenessSinceCreation("Find Usages in " + myProject.getName(), "FindUsagesTotal");
+    snapshot.logResponsivenessSinceCreation("Find Usages in " + myProject.getName());
   }
 
   private void searchUsages() {
@@ -359,7 +363,7 @@ final class SearchForUsagesRunnable implements Runnable {
     }
     TooManyUsagesStatus.createFor(indicator);
 
-    UsageSearcher usageSearcher = mySearcherFactory.get();
+    UsageSearcher usageSearcher = mySearcherFactory.create();
     long startSearchStamp = System.currentTimeMillis();
     GlobalSearchScope everythingScope = GlobalSearchScope.everythingScope(myProject);
 
@@ -498,7 +502,8 @@ final class SearchForUsagesRunnable implements Runnable {
     }
   }
 
-  private static @NotNull String mayHaveUsagesInUnloadedModulesMessage(@NotNull Collection<String> unloadedModules) {
+  @NotNull
+  private static String mayHaveUsagesInUnloadedModulesMessage(@NotNull Collection<String> unloadedModules) {
     String modulesText = unloadedModules.size() > 1
                          ? UsageViewBundle.message("message.part.number.of.unloaded.modules", unloadedModules.size())
                          : UsageViewBundle.message("message.part.unloaded.module.0",

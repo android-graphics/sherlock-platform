@@ -31,12 +31,10 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler {
     myIndex = index;
   }
 
-  @Override
   public boolean equals(final Object obj) {
     return super.equals(obj) && myIndex == ((IndexedElementInvocationHandler)obj).myIndex;
   }
 
-  @Override
   public int hashCode() {
     return super.hashCode() * 239 + myIndex;
   }

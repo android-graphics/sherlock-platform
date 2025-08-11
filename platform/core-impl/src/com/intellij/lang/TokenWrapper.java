@@ -8,34 +8,22 @@ package com.intellij.lang;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Allows replacing text in a given node.
- * Useful for string-preprocessor-like macro support
- */
 public class TokenWrapper extends IElementType {
   private final IElementType myDelegate;
-  private final @NotNull String myText;
+  private final @NotNull String myValue;
 
-  public TokenWrapper(@NotNull IElementType delegate, @NotNull CharSequence text) {
+  public TokenWrapper(@NotNull IElementType delegate, @NotNull CharSequence value) {
     super("Wrapper", delegate.getLanguage(), false);
     myDelegate = delegate;
-    myText = text.toString();
+    myValue = value.toString();
   }
 
   public @NotNull IElementType getDelegate() {
     return myDelegate;
   }
 
-  /**
-   * @deprecated Use {@link #getText()} instead as it's name is more descriptive.
-   */
-  @Deprecated
   public @NotNull String getValue() {
-    return getText();
-  }
-
-  public @NotNull String getText() {
-    return myText;
+    return myValue;
   }
 
   @Override

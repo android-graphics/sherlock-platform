@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -15,7 +15,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.containers.MultiMap;
 import kotlin.jvm.functions.Function3;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -25,8 +28,10 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 
-@ApiStatus.Internal
-public final class FTManager {
+/**
+ * @author Eugene Zhuravlev
+ */
+final class FTManager {
   private static final Logger LOG = Logger.getInstance(FTManager.class);
   private static final String DEFAULT_TEMPLATE_EXTENSION = "ft";
   static final String TEMPLATE_EXTENSION_SUFFIX = "." + DEFAULT_TEMPLATE_EXTENSION;
@@ -38,14 +43,14 @@ public final class FTManager {
   private final Path templateDir;
   private final @Nullable FTManager original;
   private final Map<String, FileTemplateBase> templates;
-  private volatile List<? extends FileTemplateBase> sortedTemplates;
-  private final @NotNull List<? extends DefaultTemplate> defaultTemplates;
+  private volatile List<FileTemplateBase> sortedTemplates;
+  private final List<DefaultTemplate> defaultTemplates;
   private final StreamProvider streamProvider;
 
   FTManager(@NotNull @NonNls String name,
             @NotNull Path defaultTemplatesDirName,
             @NotNull Path templateDir,
-            @NotNull List<? extends DefaultTemplate> defaultTemplates,
+            List<DefaultTemplate> defaultTemplates,
             boolean isInternal,
             StreamProvider streamProvider) {
     this.name = name;
@@ -54,7 +59,7 @@ public final class FTManager {
     templatePath = defaultTemplatesDirName;
     this.templateDir = templateDir;
     original = null;
-    this.defaultTemplates = List.copyOf(defaultTemplates);
+    this.defaultTemplates = defaultTemplates;
     templates = new HashMap<>(defaultTemplates.size());
     for (DefaultTemplate template : defaultTemplates) {
       BundledFileTemplate bundled = new BundledFileTemplate(template, this.isInternal);
@@ -78,7 +83,7 @@ public final class FTManager {
   }
 
   @TestOnly
-  public FTManager(@NotNull @NonNls String name, @NotNull Path templateDir) {
+  FTManager(@NotNull @NonNls String name, @NotNull Path templateDir) {
     this(name, Path.of("test"), templateDir, Collections.emptyList(), false, FileTemplatesLoaderKt.streamProvider(null));
   }
 
@@ -86,12 +91,13 @@ public final class FTManager {
     return name;
   }
 
-  public @NotNull Collection<? extends FileTemplateBase> getAllTemplates(boolean includeDisabled) {
-    List<? extends FileTemplateBase> sorted = sortedTemplates;
+  @NotNull
+  Collection<FileTemplateBase> getAllTemplates(boolean includeDisabled) {
+    List<FileTemplateBase> sorted = sortedTemplates;
     if (sorted == null) {
       sorted = new ArrayList<>(getTemplates().values());
       sorted.sort((t1, t2) -> t1.getName().compareToIgnoreCase(t2.getName()));
-      sortedTemplates = List.copyOf(sorted);
+      sortedTemplates = sorted;
     }
 
     if (includeDisabled) {
@@ -111,7 +117,8 @@ public final class FTManager {
   /**
    * @return template no matter enabled or disabled it is
    */
-  public @Nullable FileTemplateBase getTemplate(@NotNull String templateQname) {
+  @Nullable
+  FileTemplateBase getTemplate(@NotNull String templateQname) {
     return getTemplates().get(templateQname);
   }
 
@@ -166,28 +173,28 @@ public final class FTManager {
 
   void updateTemplates(@NotNull Collection<? extends FileTemplate> newTemplates) {
     final Set<String> toDisable = new HashSet<>();
-    for (DefaultTemplate defaultTemplate : defaultTemplates) {
-      toDisable.add(defaultTemplate.getQualifiedName());
+    for (DefaultTemplate template : defaultTemplates) {
+      toDisable.add(template.getQualifiedName());
     }
-    for (FileTemplate newTemplate : newTemplates) {
-      toDisable.remove(((FileTemplateBase)newTemplate).getQualifiedName());
+    for (FileTemplate template : newTemplates) {
+      toDisable.remove(((FileTemplateBase)template).getQualifiedName());
     }
     restoreDefaults(toDisable);
     MultiMap<String, FileTemplate> children = new MultiMap<>();
-    for (FileTemplate newTemplate : newTemplates) {
-      FileTemplateBase _template = addTemplate(newTemplate.getName(), newTemplate.getExtension());
-      _template.setText(newTemplate.getText());
-      _template.setFileName(newTemplate.getFileName());
-      _template.setReformatCode(newTemplate.isReformatCode());
-      _template.setLiveTemplateEnabled(newTemplate.isLiveTemplateEnabled());
+    for (FileTemplate template : newTemplates) {
+      FileTemplateBase _template = addTemplate(template.getName(), template.getExtension());
+      _template.setText(template.getText());
+      _template.setFileName(template.getFileName());
+      _template.setReformatCode(template.isReformatCode());
+      _template.setLiveTemplateEnabled(template.isLiveTemplateEnabled());
       if (FileTemplateBase.isChild(_template)) {
         children.putValue(getParentName(_template), _template);
       }
     }
     for (String parentName : children.keySet()) {
-      FileTemplateBase parentTemplate = getTemplate(parentName);
-      if (parentTemplate != null) {
-        parentTemplate.setChildren(children.get(parentName).toArray(FileTemplate.EMPTY_ARRAY));
+      FileTemplateBase template = getTemplate(parentName);
+      if (template != null) {
+        template.setChildren(children.get(parentName).toArray(FileTemplate.EMPTY_ARRAY));
       }
     }
     saveTemplates(true);
@@ -283,7 +290,8 @@ public final class FTManager {
     return true;
   }
 
-  private @NotNull @NonNls String getSpec(String fileName) {
+  @NotNull
+  private @NonNls String getSpec(String fileName) {
     return FileUtil.toSystemIndependentName(templatePath.resolve(fileName).toString());
   }
 

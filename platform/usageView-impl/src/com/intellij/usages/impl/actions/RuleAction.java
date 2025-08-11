@@ -4,7 +4,6 @@ package com.intellij.usages.impl.actions;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions.ActionText;
@@ -23,9 +22,7 @@ import java.util.function.Supplier;
  * @author Eugene Zhuravlev
  */
 @ApiStatus.Internal
-public abstract class RuleAction extends ToggleAction
-  implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
-
+public abstract class RuleAction extends ToggleAction implements DumbAware {
   protected RuleAction(@ActionText @NotNull String text, @NotNull Icon icon) {
     this(() -> text, icon);
   }

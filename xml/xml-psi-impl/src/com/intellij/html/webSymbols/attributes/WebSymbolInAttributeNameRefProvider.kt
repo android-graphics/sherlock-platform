@@ -4,12 +4,12 @@ package com.intellij.html.webSymbols.attributes
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider
+import com.intellij.webSymbols.references.WebSymbolReferenceProvider
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor
 
-class WebSymbolInAttributeNameRefProvider : PsiWebSymbolReferenceProvider<XmlAttribute> {
+class WebSymbolInAttributeNameRefProvider : WebSymbolReferenceProvider<XmlAttribute>() {
 
-  override fun getReferencedSymbol(psiElement: XmlAttribute): WebSymbol? =
+  override fun getSymbol(psiElement: XmlAttribute): WebSymbol? =
     psiElement.descriptor
       ?.asSafely<WebSymbolAttributeDescriptor>()
       ?.symbol

@@ -18,7 +18,8 @@ public final class PyMembersUtil {
    * @param pyMemberInfos collection to sort
    * @return sorted collection
    */
-  public static @NotNull Collection<PyMemberInfo<PyElement>> filterOutObject(final @NotNull Collection<PyMemberInfo<PyElement>> pyMemberInfos) {
+  @NotNull
+  public static Collection<PyMemberInfo<PyElement>> filterOutObject(@NotNull final Collection<PyMemberInfo<PyElement>> pyMemberInfos) {
     return Collections2.filter(pyMemberInfos, new ObjectPredicate(false));
   }
 
@@ -33,11 +34,11 @@ public final class PyMembersUtil {
     }
 
     @Override
-    public boolean applyNotNull(final @NotNull PyMemberInfo<PyElement> input) {
+    public boolean applyNotNull(@NotNull final PyMemberInfo<PyElement> input) {
       return myAllowObjects == isObject(input);
     }
 
-    private static boolean isObject(final @NotNull PyMemberInfo<PyElement> classMemberInfo) {
+    private static boolean isObject(@NotNull final PyMemberInfo<PyElement> classMemberInfo) {
       final PyElement element = classMemberInfo.getMember();
       return (element instanceof PyClass) && PyNames.OBJECT.equals(element.getName());
     }

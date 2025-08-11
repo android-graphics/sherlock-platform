@@ -1,5 +1,3 @@
-from typing import Final
-
 from ._greenlet import (
     _C_API as _C_API,
     GreenletExit as GreenletExit,
@@ -9,5 +7,3 @@ from ._greenlet import (
     greenlet as greenlet,
     settrace as settrace,
 )
-
-__version__: Final[str]

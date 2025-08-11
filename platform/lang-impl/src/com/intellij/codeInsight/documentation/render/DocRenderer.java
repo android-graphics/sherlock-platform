@@ -6,7 +6,6 @@ import com.intellij.codeInsight.documentation.DocFontSizePopup;
 import com.intellij.codeInsight.documentation.DocumentationActionProvider;
 import com.intellij.codeInsight.documentation.DocumentationFontSize;
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil;
-import com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.documentation.QuickDocHighlightingHelper;
@@ -20,11 +19,9 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.backend.documentation.InlineDocumentation;
 import com.intellij.psi.PsiDocCommentBase;
@@ -174,10 +171,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
         g.fillRect(startX, filledStartY, endX - startX, filledHeight);
       }
     }
-    Color guideColor = isDebugZombie()
-                       ? bgColor
-                       : editor.getColorsScheme().getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_GUIDE);
-    g.setColor(guideColor);
+    g.setColor(editor.getColorsScheme().getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_GUIDE));
     g.fillRect(startX, filledStartY, scale(LINE_WIDTH), filledHeight);
 
     int topBottomInset = scale(TOP_BOTTOM_INSETS);
@@ -252,8 +246,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       if (nextLineNumber < document.getLineCount()) {
         int lineStartOffset = document.getLineStartOffset(nextLineNumber);
         int contentStartOffset = CharArrayUtil.shiftForward(document.getImmutableCharSequence(), lineStartOffset, " \t\n");
-        int vfmtRightShift = VirtualFormattingInlaysInfo.measureVirtualFormattingInlineInlays(editor, contentStartOffset, contentStartOffset);
-        return editor.offsetToXY(contentStartOffset, false, true).x + vfmtRightShift;
+        return editor.offsetToXY(contentStartOffset, true, true).x;
       }
     }
     return editor.getInsets().left;
@@ -316,12 +309,10 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     pane.getCaret().setSelectionVisible(!reusable);
     pane.setBorder(JBUI.Borders.empty());
     Map<TextAttribute, Object> fontAttributes = new HashMap<>();
-    int fontSize = DocumentationFontSize.getDocumentationFontSize().getSize();
-    fontAttributes.put(TextAttribute.SIZE, JBUIScale.scale(fontSize));
+    fontAttributes.put(TextAttribute.SIZE, JBUIScale.scale(DocumentationFontSize.getDocumentationFontSize().getSize()));
     // disable kerning for now - laying out all fragments in a file with it takes too much time
     fontAttributes.put(TextAttribute.KERNING, 0);
     pane.setFont(pane.getFont().deriveFont(fontAttributes));
-    pane.setScaleFactor(((float)fontSize) / FontSize.SMALL.getSize());
     EditorColorsScheme scheme = editor.getColorsScheme();
     Color textColor = getTextColor(scheme);
     pane.setForeground(textColor);
@@ -380,12 +371,6 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     return ourCachedStyleSheet;
   }
 
-  private boolean isDebugZombie() {
-    return Registry.is("cache.markup.debug", false) &&
-           myItem instanceof DocRenderItemImpl itemImpl &&
-           itemImpl.isZombie();
-  }
-
   private static final class ChangeFontSize extends DumbAwareAction {
     ChangeFontSize() {
       super(CodeInsightBundle.messagePointer("javadoc.adjust.font.size"));
@@ -415,11 +400,10 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       }
     };
     private boolean myRepaintRequested;
-    private float myScaleFactor = 1f;
 
     EditorInlineHtmlPane(boolean trackMemory, Editor editor) {
       super(
-        QuickDocHighlightingHelper.getDefaultDocStyleOptions(() -> editor.getColorsScheme(), true),
+        QuickDocHighlightingHelper.getDefaultDocStyleOptions(editor.getColorsScheme(), true),
         JBHtmlPaneConfiguration.builder()
           .imageResolverFactory(pane -> IMAGE_MANAGER.getImageProvider())
           .customStyleSheetProvider(bg -> getStyleSheet(editor))
@@ -447,15 +431,6 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       if (foldRegion != null) {
         foldRegion.repaint();
       }
-    }
-
-    void setScaleFactor(float scaleFactor) {
-      myScaleFactor = scaleFactor;
-    }
-
-    @Override
-    public float getContentsScaleFactor() {
-      return myScaleFactor;
     }
 
     @Override

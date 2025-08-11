@@ -19,7 +19,8 @@ import static de.plushnikov.intellij.plugin.processor.clazz.log.AbstractLogProce
 
 public class UseSlf4jAnnotationQuickFix extends PsiUpdateModCommandAction<PsiClass> {
 
-  private final @NotNull SmartPsiElementPointer<PsiField> elementToRemove;
+  @NotNull
+  private final SmartPsiElementPointer<PsiField> elementToRemove;
 
   public UseSlf4jAnnotationQuickFix(@NotNull PsiField elementToRemove, @NotNull PsiClass containingClass) {
     super(containingClass);

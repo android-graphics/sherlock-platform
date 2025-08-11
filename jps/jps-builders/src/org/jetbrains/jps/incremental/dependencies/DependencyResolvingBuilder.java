@@ -38,7 +38,6 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.model.JpsGlobal;
-import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryDescription;
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService;
@@ -74,7 +73,6 @@ import java.util.zip.ZipFile;
  * so this builder does nothing in normal cases. However, it's needed when the build process is started in standalone mode (not from IDE) or
  * if build is triggered before IDE downloads all required dependencies.
  */
-@ApiStatus.Internal
 public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(DependencyResolvingBuilder.class);
   private static final String MAVEN_REPOSITORY_PATH_VAR = "MAVEN_REPOSITORY";
@@ -168,30 +166,10 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     return ExitCode.ABORT;
   }
 
-  /**
-   * Downloads JARs from all Maven libraries configured in the project, including not only libraries added as dependencies to its modules,
-   * but also project-level libraries which aren't used in the modules.
-   */
-  static void resolveAllMissingDependenciesInProject(@NotNull CompileContext context, @NotNull BuildTargetChunk currentTargets)
-    throws Exception {
-    JpsProject project = context.getProjectDescriptor().getProject();
-    Set<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> allLibraries = collectRepositoryLibraries(project.getModules());
-    ContainerUtil.addAll(allLibraries, project.getLibraryCollection().getLibraries(JpsRepositoryLibraryType.INSTANCE));
-    resolveMissingDependencies(context, currentTargets, allLibraries);
-  }
-
-  /**
-   * Downloads JARs from Maven libraries which are added as dependency to any from the provided {@code modules}.
-   */
   @SuppressWarnings("RedundantThrows")
   static void resolveMissingDependencies(CompileContext context, Collection<? extends JpsModule> modules,
                                          BuildTargetChunk currentTargets) throws Exception {
-    resolveMissingDependencies(context, currentTargets, collectRepositoryLibraries(modules));
-  }
-
-  private static void resolveMissingDependencies(CompileContext context,
-                                                 BuildTargetChunk currentTargets,
-                                                 Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> libs) throws Exception {
+    Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> libs = getRepositoryLibraries(modules);
     if (!libs.isEmpty()) {
       JpsDependencyResolverConfiguration resolverConfiguration = JpsDependencyResolverConfigurationService
         .getInstance()
@@ -243,8 +221,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     JpsLibraryResolveGuard.performUnderGuard(context, descriptor, compiledRoots, () -> {
       try {
         // list of missing roots needed to be resolved
-        List<? extends File>
-          required = ContainerUtil.filter(compiledRoots, root -> !verifyLibraryArtifact(context, lib.getName(), descriptor, root));
+        List<File> required = ContainerUtil.filter(compiledRoots, root -> !verifyLibraryArtifact(context, lib.getName(), descriptor, root));
 
         // be strict and verify effective repo manager exists (will throw an exception if bind repository is required, but missing)
         ArtifactRepositoryManager effectiveRepoManager = getRepositoryManager(context, descriptor, lib.getName(), useBindRepositories);
@@ -362,7 +339,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
   private static void verifyLibraryRootsChecksums(@NotNull CompileContext context,
                                                   @NotNull String libraryName,
                                                   @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
-                                                  @NotNull List<? extends File> compiledRoots,
+                                                  @NotNull List<File> compiledRoots,
                                                   boolean verifySha256Checksums) throws ArtifactVerificationException {
     // don't verify checksums if the library doesn't have a fixed version or when verification is disabled
     if (!verifySha256Checksums || !isLibraryVersionFixed(descriptor)) {
@@ -375,7 +352,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     }
 
     List<Path> allCompiledRoots = ContainerUtil.map(compiledRoots, File::toPath);
-    List<? extends Path> missingCompiledRoots = ContainerUtil.filter(allCompiledRoots, rootFile -> !Files.exists(rootFile));
+    List<Path> missingCompiledRoots = ContainerUtil.filter(allCompiledRoots, rootFile -> !Files.exists(rootFile));
 
     if (!missingCompiledRoots.isEmpty()) {
       reportMissingCompiledRootArtifacts(context, libraryName, descriptor, allCompiledRoots, missingCompiledRoots);
@@ -402,7 +379,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
   }
 
   private static boolean isAllCompiledRootsVerificationPresent(@NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
-                                                               @NotNull List<? extends File> compiledRootsFiles) {
+                                                               @NotNull List<File> compiledRootsFiles) {
     if (compiledRootsFiles.size() != descriptor.getArtifactsVerification().size()) {
       return false;
     }
@@ -507,8 +484,8 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
   private static void reportMissingCompiledRootArtifacts(@NotNull CompileContext context,
                                                          @NotNull String libraryName,
                                                          @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
-                                                         @NotNull List<? extends Path> allRoots,
-                                                         @NotNull List<? extends Path> missingRoots) {
+                                                         @NotNull List<Path> allRoots,
+                                                         @NotNull List<Path> missingRoots) {
     if (missingRoots.isEmpty() || !SystemProperties.getBooleanProperty(RESOLUTION_REPORT_INVALID_SHA256_CHECKSUM_PROPERTY, false)) {
       return;
     }
@@ -542,7 +519,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
                                                                 @NotNull String libraryName,
                                                                 @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
                                                                 @NotNull String problemKind,
-                                                                @NotNull Consumer<? super Properties> metadataWriter) {
+                                                                @NotNull Consumer<Properties> metadataWriter) {
     String outputDirPath = System.getProperty(RESOLUTION_CORRUPTED_ARTIFACTS_REPORTS_DIRECTORY_PROPERTY, null);
     if (outputDirPath == null) {
       return null;
@@ -591,7 +568,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
 
     private static void performUnderGuard(@NotNull CompileContext context,
                                           @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
-                                          @NotNull List<? extends File> roots,
+                                          @NotNull List<File> roots,
                                           @NotNull ThrowingRunnable action) throws Exception {
       Stream<Guard> descriptorGuard = Stream.of(getDescriptorGuard(context, descriptor));
       Stream<Guard> rootsGuards = roots.stream()
@@ -682,8 +659,8 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static @NotNull Set<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> collectRepositoryLibraries(Collection<? extends JpsModule> modules) {
-    final Set<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> result = new SmartHashSet<>();
+  private static @NotNull Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> getRepositoryLibraries(Collection<? extends JpsModule> modules) {
+    final Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> result = new SmartHashSet<>();
     for (JpsModule module : modules) {
       for (JpsDependencyElement dep : module.getDependenciesList().getDependencies()) {
         if (dep instanceof JpsLibraryDependency) {

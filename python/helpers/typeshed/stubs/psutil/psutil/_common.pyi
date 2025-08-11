@@ -2,7 +2,8 @@ import enum
 from _typeshed import Incomplete, StrOrBytesPath, SupportsWrite
 from collections.abc import Callable
 from socket import AF_INET6 as AF_INET6, AddressFamily, SocketKind
-from typing import Any, Literal, NamedTuple, TypeVar, overload
+from typing import Any, NamedTuple, TypeVar, overload
+from typing_extensions import Literal
 
 POSIX: bool
 WINDOWS: bool
@@ -48,16 +49,16 @@ NIC_DUPLEX_HALF: int
 NIC_DUPLEX_UNKNOWN: int
 
 class NicDuplex(enum.IntEnum):
-    NIC_DUPLEX_FULL = 2
-    NIC_DUPLEX_HALF = 1
-    NIC_DUPLEX_UNKNOWN = 0
+    NIC_DUPLEX_FULL: int
+    NIC_DUPLEX_HALF: int
+    NIC_DUPLEX_UNKNOWN: int
 
 POWER_TIME_UNKNOWN: int
 POWER_TIME_UNLIMITED: int
 
 class BatteryTime(enum.IntEnum):
-    POWER_TIME_UNKNOWN = -1
-    POWER_TIME_UNLIMITED = -2
+    POWER_TIME_UNKNOWN: int
+    POWER_TIME_UNLIMITED: int
 
 ENCODING: str
 ENCODING_ERRS: str
@@ -89,6 +90,8 @@ class sdiskpart(NamedTuple):
     mountpoint: str
     fstype: str
     opts: str
+    maxfile: int
+    maxpath: int
 
 class snetio(NamedTuple):
     bytes_sent: int

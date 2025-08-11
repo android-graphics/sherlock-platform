@@ -3,9 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.vcs.changes.CommitExecutor
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 object NullCommitWorkflowHandler : CommitWorkflowHandler {
   override val amendCommitHandler: AmendCommitHandler = NullAmendCommitHandler
 
@@ -14,7 +12,6 @@ object NullCommitWorkflowHandler : CommitWorkflowHandler {
   override fun execute(executor: CommitExecutor) = Unit
 }
 
-@ApiStatus.Internal
 @Suppress("UNUSED_PARAMETER")
 object NullAmendCommitHandler : AmendCommitHandler {
   override var isAmendCommitMode: Boolean

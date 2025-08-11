@@ -5,6 +5,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;

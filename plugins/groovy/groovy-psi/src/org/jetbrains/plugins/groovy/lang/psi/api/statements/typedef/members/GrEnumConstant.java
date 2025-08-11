@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
@@ -28,8 +28,9 @@ public interface GrEnumConstant extends GrField, GrConstructorCall, PsiEnumConst
   @Override
   GrArgumentList getArgumentList();
 
+  @Nullable
   @Override
-  default @Nullable PsiMethod resolveMethod() {
+  default PsiMethod resolveMethod() {
     return GrConstructorCall.super.resolveMethod();
   }
 

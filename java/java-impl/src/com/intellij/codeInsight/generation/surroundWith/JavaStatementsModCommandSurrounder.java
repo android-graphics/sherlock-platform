@@ -1,4 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.lang.surroundWith.ModCommandSurrounder;
@@ -9,13 +10,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
-public abstract class JavaStatementsModCommandSurrounder extends ModCommandSurrounder {
+abstract class JavaStatementsModCommandSurrounder extends ModCommandSurrounder {
   @Override
   public boolean isApplicable(PsiElement @NotNull [] elements) {
     return ContainerUtil.find(elements, PsiSwitchLabelStatementBase.class::isInstance) == null;
@@ -34,12 +34,13 @@ public abstract class JavaStatementsModCommandSurrounder extends ModCommandSurro
   protected abstract void surroundStatements(@NotNull ActionContext context,
                                              @NotNull PsiElement container,
                                              @NotNull PsiElement @NotNull [] statements,
-                                             @NotNull ModPsiUpdater updater);
+                                             @NotNull ModPsiUpdater updater) throws IncorrectOperationException;
 
   protected static @NotNull PsiStatement addAfter(final PsiStatement statement, final PsiElement container, final PsiElement[] statements) {
     if (container instanceof PsiSwitchLabeledRuleStatement && !(statement instanceof PsiBlockStatement)) {
       Project project = container.getProject();
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      PsiManager manager = PsiManager.getInstance(project);
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
       CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
       PsiBlockStatement blockStatement = (PsiBlockStatement)factory.createStatementFromText("{\n}", null);

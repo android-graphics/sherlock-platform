@@ -8,7 +8,6 @@ import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +17,6 @@ import java.util.Map;
 /**
  * @author Dmitry Avdeev
  */
-@ApiStatus.Internal
 @State(
   name = "LineMarkerSettings",
   storages = @Storage("gutter.xml"),

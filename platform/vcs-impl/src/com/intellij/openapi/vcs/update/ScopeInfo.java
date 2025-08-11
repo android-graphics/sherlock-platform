@@ -23,7 +23,7 @@ public interface ScopeInfo {
   /**
    * @deprecated Use {@link #getRoots(DataContext, ActionInfo)}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   default FilePath[] getRoots(VcsContext context, @NotNull ActionInfo actionInfo) {
     DataContext dataContext = SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, context.getProject())

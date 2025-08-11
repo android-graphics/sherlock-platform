@@ -17,7 +17,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.DocumentUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -153,18 +152,15 @@ public final class EditorActionUtil {
     return TextRange.create(startOffset, endOffset);
   }
 
-  @ApiStatus.Internal
   public static int getNextCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy, boolean isCamel) {
     return getNextCaretStopOffset(editor, caretStopPolicy, isCamel, false);
   }
 
-  @ApiStatus.Internal
   public static int getPreviousCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy, boolean isCamel) {
     return getPreviousCaretStopOffset(editor, caretStopPolicy, isCamel, false);
   }
 
   @SuppressWarnings("Duplicates")
-  @ApiStatus.Internal
   public static int getNextCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy,
                                            boolean isCamel, boolean handleQuoted) {
     int maxOffset = getNextLineStopOffset(editor, caretStopPolicy.getLineStop());
@@ -194,7 +190,6 @@ public final class EditorActionUtil {
   }
 
   @SuppressWarnings("Duplicates")
-  @ApiStatus.Internal
   public static int getPreviousCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy,
                                                boolean isCamel, boolean handleQuoted) {
     int minOffset = getPreviousLineStopOffset(editor, caretStopPolicy.getLineStop());
@@ -326,7 +321,6 @@ public final class EditorActionUtil {
              .isWordBoundary(leftTokenType, rightTokenType);
   }
 
-  @ApiStatus.Internal
   public static int getNextLineStopOffset(@NotNull Editor editor, @NotNull CaretStop lineStop) {
     final Document document = editor.getDocument();
     final CaretModel caretModel = editor.getCaretModel();
@@ -354,7 +348,6 @@ public final class EditorActionUtil {
     }
   }
 
-  @ApiStatus.Internal
   public static int getPreviousLineStopOffset(@NotNull Editor editor, @NotNull CaretStop lineStop) {
     final Document document = editor.getDocument();
     final CaretModel caretModel = editor.getCaretModel();
@@ -649,7 +642,6 @@ public final class EditorActionUtil {
                         isWithSelection, camel);
   }
 
-  @ApiStatus.Internal
   public static void moveToNextCaretStop(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy,
                                          boolean isWithSelection, boolean isCamel) {
     Document document = editor.getDocument();
@@ -743,7 +735,6 @@ public final class EditorActionUtil {
                             isWithSelection, camel);
   }
 
-  @ApiStatus.Internal
   public static void moveToPreviousCaretStop(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy,
                                              boolean isWithSelection, boolean isCamel) {
     SelectionModel selectionModel = editor.getSelectionModel();

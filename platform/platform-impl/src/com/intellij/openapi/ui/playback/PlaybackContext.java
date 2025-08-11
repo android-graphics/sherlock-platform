@@ -3,7 +3,6 @@ package com.intellij.openapi.ui.playback;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +65,6 @@ public abstract class PlaybackContext  {
     return myBaseDir != null ? myBaseDir : new File(System.getProperty("user.dir"));
   }
   
-  @ApiStatus.Internal
   public PathMacro getPathMacro() {
     return new PathMacro().setScriptDir(getCurrentCmd().getScriptDir()).setBaseDir(getBaseDir());
   }

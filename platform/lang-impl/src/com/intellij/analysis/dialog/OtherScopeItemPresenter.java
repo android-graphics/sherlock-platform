@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.dialog;
 
 import com.intellij.analysis.AnalysisScope;
@@ -7,7 +7,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +14,6 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
-@ApiStatus.Internal
 public final class OtherScopeItemPresenter implements ModelScopeItemPresenter {
 
   @Override
@@ -23,8 +21,9 @@ public final class OtherScopeItemPresenter implements ModelScopeItemPresenter {
     return AnalysisScope.FILE;
   }
 
+  @NotNull
   @Override
-  public @NotNull JRadioButton getButton(ModelScopeItem m) {
+  public JRadioButton getButton(ModelScopeItem m) {
     OtherScopeItem model = (OtherScopeItem)m;
     AnalysisScope scope = model.getScope();
     JRadioButton button = new JRadioButton();
@@ -34,8 +33,9 @@ public final class OtherScopeItemPresenter implements ModelScopeItemPresenter {
     return button;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<JComponent> getAdditionalComponents(JRadioButton b, ModelScopeItem m, Disposable dialogDisposable) {
+  public List<JComponent> getAdditionalComponents(JRadioButton b, ModelScopeItem m, Disposable dialogDisposable) {
     return Collections.emptyList();
   }
 

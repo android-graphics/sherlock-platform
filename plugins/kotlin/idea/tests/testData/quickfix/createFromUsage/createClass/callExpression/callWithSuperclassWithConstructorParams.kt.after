@@ -1,6 +1,5 @@
 // "Create class 'Foo'" "true"
 // ERROR: No value passed for parameter 'n'
-// K2_AFTER_ERROR: No value passed for parameter 'n'.
 
 open class A(n: Int)
 

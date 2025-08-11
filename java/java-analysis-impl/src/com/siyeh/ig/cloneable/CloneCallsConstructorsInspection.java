@@ -27,7 +27,8 @@ import org.jetbrains.annotations.NotNull;
 public final class CloneCallsConstructorsInspection extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final PsiType type = (PsiType)infos[0];
     return type instanceof PsiArrayType
            ? InspectionGadgetsBundle.message("clone.instantiates.new.array.problem.descriptor", type.getPresentableText())

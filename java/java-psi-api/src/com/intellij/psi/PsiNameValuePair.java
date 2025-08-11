@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
@@ -59,20 +59,23 @@ public interface PsiNameValuePair extends PsiElement, JvmAnnotationAttribute {
    * The downside is that the result might not be in the same tree as the parent, might be non-physical and so
    * should only be used for read operations.
    */
-  default @Nullable PsiAnnotationMemberValue getDetachedValue() {
+  @Nullable
+  default PsiAnnotationMemberValue getDetachedValue() {
     return getValue();
   }
 
   @NotNull
   PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue);
 
+  @NotNull
   @Override
-  default @NotNull String getAttributeName() {
+  default String getAttributeName() {
     return getAnnotationAttributeName(this);
   }
 
+  @Nullable
   @Override
-  default @Nullable JvmAnnotationAttributeValue getAttributeValue() {
+  default JvmAnnotationAttributeValue getAttributeValue() {
     return getAnnotationAttributeValue(this);
   }
 }

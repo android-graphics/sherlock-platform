@@ -53,24 +53,20 @@ public class Saxon9TraceListener implements TraceListener {
     }
   }
 
-  @Override
   public void open(Controller controller) {
     myDebugger.getEventQueue().startDocument();
     trace("<trace>");
   }
 
-  @Override
   public void setOutputDestination(Logger logger) {
 
   }
 
-  @Override
   public void close() {
     myDebugger.getEventQueue().endDocument();
     trace("</trace>");
   }
 
-  @Override
   public void enter(InstructionInfo instructionInfo, XPathContext xPathContext) {
     if (MUTED) return;
     trace("<" + instructionInfo + ">");
@@ -81,7 +77,6 @@ public class Saxon9TraceListener implements TraceListener {
     }
   }
 
-  @Override
   public void leave(InstructionInfo instructionInfo) {
     if (MUTED) return;
     trace("</>");
@@ -90,7 +85,6 @@ public class Saxon9TraceListener implements TraceListener {
     }
   }
 
-  @Override
   public void startCurrentItem(Item item) {
     if (MUTED) return;
     if (item instanceof NodeInfo) {
@@ -99,7 +93,6 @@ public class Saxon9TraceListener implements TraceListener {
     }
   }
 
-  @Override
   public void endCurrentItem(Item item) {
     if (MUTED) return;
     if (item instanceof NodeInfo) {
@@ -113,17 +106,14 @@ public class Saxon9TraceListener implements TraceListener {
       super(previous, new MySource(instr));
     }
 
-    @Override
     public String getInstruction() {
       return getPrevious().getInstruction();
     }
 
-    @Override
     public Value eval(String expr) throws Debugger.EvaluationException {
       return getPrevious().eval(expr);
     }
 
-    @Override
     public List<Debugger.Variable> getVariables() {
       return getPrevious().getVariables();
     }
@@ -135,26 +125,21 @@ public class Saxon9TraceListener implements TraceListener {
         myInstruction = instr;
       }
 
-      @Override
       public void setSystemId(String systemId) {
       }
 
-      @Override
       public String getPublicId() {
         return null;
       }
 
-      @Override
       public String getSystemId() {
         return myInstruction.getSystemId();
       }
 
-      @Override
       public int getLineNumber() {
         return myInstruction.getLineNumber();
       }
 
-      @Override
       public int getColumnNumber() {
         return myInstruction.getColumnNumber();
       }

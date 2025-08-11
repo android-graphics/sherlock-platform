@@ -6,6 +6,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyTypeParameter;
@@ -27,10 +28,9 @@ public class PyTypeParameterElementType extends PyStubElementType<PyTypeParamete
   }
 
   @Override
-  public @NotNull PyTypeParameterStub createStub(@NotNull PyTypeParameter psi, StubElement<? extends PsiElement> parentStub) {
-    return new PyTypeParameterStubImpl(psi.getName(), psi.getKind(),
-                                       psi.getBoundExpression() != null ? psi.getBoundExpression().getText() : null,
-                                       psi.getDefaultExpression() != null ? psi.getDefaultExpression().getText() : null,
+  @NotNull
+  public PyTypeParameterStub createStub(@NotNull PyTypeParameter psi, StubElement<? extends PsiElement> parentStub) {
+    return new PyTypeParameterStubImpl(psi.getName(), psi.getKind(), psi.getBoundExpression() != null ? psi.getBoundExpression().getText() : null,
                                        parentStub, getStubElementType());
   }
 
@@ -39,28 +39,28 @@ public class PyTypeParameterElementType extends PyStubElementType<PyTypeParamete
     dataStream.writeName(stub.getName());
     dataStream.writeVarInt(stub.getKind().getIndex());
     dataStream.writeName(stub.getBoundExpressionText());
-    dataStream.writeName(stub.getDefaultExpressionText());
   }
 
   @Override
-  public @NotNull PyTypeParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  @NotNull
+  public PyTypeParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     String name = dataStream.readNameString();
     PyTypeParameter.Kind kind = PyTypeParameter.Kind.fromIndex(dataStream.readVarInt());
     String boundExpressionText = dataStream.readNameString();
-    String defaultExpressionText = dataStream.readNameString();
     return new PyTypeParameterStubImpl(name,
                                        kind,
                                        boundExpressionText,
-                                       defaultExpressionText,
                                        parentStub, getStubElementType());
   }
 
   @Override
-  public @NotNull PsiElement createElement(@NotNull ASTNode node) {
+  @NotNull
+  public PsiElement createElement(@NotNull ASTNode node) {
     return new PyTypeParameterImpl(node);
   }
 
-  protected @NotNull IStubElementType getStubElementType() {
+  @NotNull
+  protected IStubElementType getStubElementType() {
     return PyStubElementTypes.TYPE_PARAMETER;
   }
 }

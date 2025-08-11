@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
 import com.intellij.util.ArrayUtilRt;
@@ -241,44 +241,30 @@ public final class Strings {
     return indexOfIgnoreCase((CharSequence)where, what, fromIndex);
   }
 
-  @Contract(pure = true)
-  public static int indexOfIgnoreCase(@NotNull CharSequence where,
-                                      @NotNull CharSequence what,
-                                      int start) {
-    return indexOfIgnoreCase(where, what, start, where.length());
-  }
-
   /**
    * Implementation copied from {@link String#indexOf(String, int)} except character comparisons made case-insensitive
    */
   @Contract(pure = true)
-  public static int indexOfIgnoreCase(@NotNull CharSequence where,
-                                      @NotNull CharSequence what,
-                                      int startOffset,
-                                      int endOffset) {
-    if (endOffset < startOffset) {
-      return -1;
-    }
-
+  public static int indexOfIgnoreCase(@NotNull CharSequence where, @NotNull CharSequence what, int fromIndex) {
     int targetCount = what.length();
     int sourceCount = where.length();
 
-    if (startOffset >= sourceCount) {
+    if (fromIndex >= sourceCount) {
       return targetCount == 0 ? sourceCount : -1;
     }
 
-    if (startOffset < 0) {
-      startOffset = 0;
+    if (fromIndex < 0) {
+      fromIndex = 0;
     }
 
     if (targetCount == 0) {
-      return startOffset;
+      return fromIndex;
     }
 
     char first = what.charAt(0);
-    int max = endOffset - targetCount;
+    int max = sourceCount - targetCount;
 
-    for (int i = startOffset; i <= max; i++) {
+    for (int i = fromIndex; i <= max; i++) {
       /* Look for first character. */
       if (!charsEqualIgnoreCase(where.charAt(i), first)) {
         //noinspection StatementWithEmptyBody,AssignmentToForLoopParameter
@@ -556,7 +542,6 @@ public final class Strings {
     return count;
   }
 
-  @Contract(mutates = "param2")
   public static @NotNull StringBuilder escapeToRegexp(@NotNull CharSequence text, @NotNull StringBuilder builder) {
     for (int i = 0; i < text.length(); i++) {
       final char c = text.charAt(i);
@@ -664,7 +649,6 @@ public final class Strings {
     return result.toString();
   }
 
-  @Contract(mutates = "param4")
   public static <T> void join(@NotNull Iterable<? extends T> items,
                               @NotNull Function<? super T, ? extends CharSequence> f,
                               @NotNull String separator,
@@ -694,7 +678,6 @@ public final class Strings {
     return result.toString();
   }
 
-  @Contract(mutates = "param3")
   public static void join(@NotNull Collection<String> strings, @NotNull String separator, @NotNull StringBuilder result) {
     boolean isFirst = true;
     for (String string : strings) {
@@ -848,7 +831,6 @@ public final class Strings {
     return StringUtilRt.convertLineSeparators(text, newSeparator);
   }
 
-  @Contract(pure = true)
   public static @NotNull String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, int @Nullable [] offsetsToKeep) {
     return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep);
   }
@@ -862,7 +844,6 @@ public final class Strings {
    * </ul>
    */
   @SuppressWarnings({"StringEquality", "StringEqualitySSR"})
-  @Contract(pure = true)
   public static boolean areSameInstance(@Nullable String s1, @Nullable String s2) {
     return s1 == s2;
   }

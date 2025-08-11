@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -11,7 +11,8 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 
 public abstract class RepositoryUnresolvedReferenceQuickFixProvider
   extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
-  private static @NotNull
+  static private
+  @NotNull
   String getFQTypeName(@NotNull PsiJavaCodeReferenceElement ref) {
     while (ref.getParent() != null && ref.getParent() instanceof PsiJavaCodeReferenceElement) {
       ref = (PsiJavaCodeReferenceElement)ref.getParent();
@@ -48,8 +49,9 @@ public abstract class RepositoryUnresolvedReferenceQuickFixProvider
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull Class<PsiJavaCodeReferenceElement> getReferenceClass() {
+  public Class<PsiJavaCodeReferenceElement> getReferenceClass() {
     return PsiJavaCodeReferenceElement.class;
   }
 }

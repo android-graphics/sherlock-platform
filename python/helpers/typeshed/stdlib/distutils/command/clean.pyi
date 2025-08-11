@@ -1,11 +1,11 @@
-from typing import Any, ClassVar
+from typing import Any
 
 from ..cmd import Command
 
 class clean(Command):
     description: str
-    user_options: ClassVar[list[tuple[str, str | None, str]]]
-    boolean_options: ClassVar[list[str]]
+    user_options: Any
+    boolean_options: Any
     build_base: Any
     build_lib: Any
     build_temp: Any

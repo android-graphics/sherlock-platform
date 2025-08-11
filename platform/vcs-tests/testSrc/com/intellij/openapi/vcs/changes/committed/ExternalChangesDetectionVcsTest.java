@@ -47,7 +47,7 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
       myClientRoot = new File(myTempDirTestFixture.getTempDirPath(), "clientroot");
       myClientRoot.mkdir();
 
-      initProject(myClientRoot, this.getTestName());
+      initProject(myClientRoot, ExternalChangesDetectionVcsTest.this.getTestName());
 
       myVcs = new MockAbstractVcs(myProject);
       myVcs.setChangeProvider(new MyMockChangeProvider());

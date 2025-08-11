@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.importing;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMo
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -19,19 +18,18 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ImportSpecBuilder {
 
-  private final @NotNull Project myProject;
-  private final @NotNull ProjectSystemId myExternalSystemId;
-  private @NotNull ProgressExecutionMode myProgressExecutionMode;
-  private @Nullable ExternalProjectRefreshCallback myCallback;
+  @NotNull private final Project myProject;
+  @NotNull private final ProjectSystemId myExternalSystemId;
+  @NotNull private ProgressExecutionMode myProgressExecutionMode;
+  @Nullable private ExternalProjectRefreshCallback myCallback;
   private boolean isPreviewMode;
   private boolean isActivateBuildToolWindowOnStart = false;
   private boolean isActivateBuildToolWindowOnFailure = true;
   private @NotNull ThreeState isNavigateToError = ThreeState.UNSURE;
-  private @Nullable String myVmOptions;
-  private @Nullable String myArguments;
+  @Nullable private String myVmOptions;
+  @Nullable private String myArguments;
   private boolean myCreateDirectoriesForEmptyContentRoots;
-  private @Nullable ProjectResolverPolicy myProjectResolverPolicy;
-  private @Nullable UserDataHolderBase myUserData;
+  @Nullable private ProjectResolverPolicy myProjectResolverPolicy;
 
   public ImportSpecBuilder(@NotNull Project project, @NotNull ProjectSystemId id) {
     myProject = project;
@@ -50,10 +48,18 @@ public class ImportSpecBuilder {
   }
 
   /**
+   * @deprecated see {@link ImportSpecBuilder#forceWhenUptodate(boolean)}
+   */
+  @Deprecated(forRemoval = true)
+  public ImportSpecBuilder forceWhenUptodate() {
+    return forceWhenUptodate(true);
+  }
+
+  /**
    * @deprecated it does nothing from
    * 16.02.2017, 16:42, ebef09cdbbd6ace3c79d3e4fb63028bac2f15f75
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public ImportSpecBuilder forceWhenUptodate(boolean force) {
     return this;
   }
@@ -109,11 +115,6 @@ public class ImportSpecBuilder {
     return this;
   }
 
-  public ImportSpecBuilder withUserData(@Nullable UserDataHolderBase userData) {
-    myUserData = userData;
-    return this;
-  }
-
   public ImportSpec build() {
     ImportSpecImpl mySpec = new ImportSpecImpl(myProject, myExternalSystemId);
     mySpec.setProgressExecutionMode(myProgressExecutionMode);
@@ -125,7 +126,6 @@ public class ImportSpecBuilder {
     mySpec.setArguments(myArguments);
     mySpec.setVmOptions(myVmOptions);
     mySpec.setProjectResolverPolicy(myProjectResolverPolicy);
-    mySpec.setUserData(myUserData);
     ExternalProjectRefreshCallback callback;
     if (myCallback != null) {
       callback = myCallback;
@@ -149,22 +149,24 @@ public class ImportSpecBuilder {
     isActivateBuildToolWindowOnFailure = spec.isActivateBuildToolWindowOnFailure();
     myArguments = spec.getArguments();
     myVmOptions = spec.getVmOptions();
-    myUserData = spec.getUserData();
   }
 
   @ApiStatus.Internal
-  public static final class DefaultProjectRefreshCallback implements ExternalProjectRefreshCallback {
+  public final static class DefaultProjectRefreshCallback implements ExternalProjectRefreshCallback {
     private final Project myProject;
+    private final ProgressExecutionMode myExecutionMode;
 
     public DefaultProjectRefreshCallback(ImportSpec spec) {
       myProject = spec.getProject();
+      myExecutionMode = spec.getProgressExecutionMode();
     }
 
     @Override
-    public void onSuccess(final @Nullable DataNode<ProjectData> externalProject) {
+    public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
       if (externalProject == null) {
         return;
       }
+      final boolean synchronous = myExecutionMode == ProgressExecutionMode.MODAL_SYNC;
       ProjectDataManager.getInstance().importData(externalProject, myProject);
     }
   }

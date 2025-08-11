@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -53,11 +53,13 @@ public final class FindSuperElementsHelper {
   /**
    * @return (super method, sub class) or null if can't find any siblings
    */
-  public static @Nullable SiblingInfo getSiblingInfoInheritedViaSubClass(final @NotNull PsiMethod method) {
+  @Nullable
+  public static SiblingInfo getSiblingInfoInheritedViaSubClass(@NotNull final PsiMethod method) {
     return getSiblingInheritanceInfos(Collections.singletonList(method)).get(method);
   }
 
-  public static @NotNull Map<PsiMethod, SiblingInfo> getSiblingInheritanceInfos(final @NotNull Collection<? extends PsiMethod> methods) {
+  @NotNull
+  public static Map<PsiMethod, SiblingInfo> getSiblingInheritanceInfos(@NotNull final Collection<? extends PsiMethod> methods) {
     MultiMap<PsiClass, PsiMethod> byClass = MultiMap.create();
     for (PsiMethod method : methods) {
       PsiClass containingClass = method.getContainingClass();
@@ -95,8 +97,8 @@ public final class FindSuperElementsHelper {
   }
 
   public static final class SiblingInfo {
-    public final @NotNull PsiMethod superMethod;
-    public final @NotNull PsiClass subClass;
+    @NotNull public final PsiMethod superMethod;
+    @NotNull public final PsiClass subClass;
 
     private SiblingInfo(@NotNull PsiMethod superMethod, @NotNull PsiClass subClass) {
       this.superMethod = superMethod;
@@ -146,7 +148,8 @@ public final class FindSuperElementsHelper {
       }
     }
 
-    private @Nullable SiblingInfo findSibling(@NotNull PsiClass inheritor, @NotNull PsiClass anInterface, @NotNull PsiMethod method) {
+    @Nullable
+    private SiblingInfo findSibling(@NotNull PsiClass inheritor, @NotNull PsiClass anInterface, @NotNull PsiMethod method) {
       for (PsiMethod superMethod : anInterface.findMethodsByName(method.getName(), true)) {
         PsiClass superInterface = superMethod.getContainingClass();
         if (superInterface == null || myContainingClass.isInheritor(superInterface, true)) {

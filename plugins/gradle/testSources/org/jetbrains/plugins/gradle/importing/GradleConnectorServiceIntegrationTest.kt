@@ -4,9 +4,7 @@ package org.jetbrains.plugins.gradle.importing
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.gradle.tooling.ProjectConnection
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.junit.Test
@@ -36,14 +34,11 @@ class GradleConnectorServiceIntegrationTest : GradleImportingTestCase() {
       .isEqualTo(requestConnection(childProjectPath, getExecutionSettings(childProjectPath)))
   }
 
-  private fun getExecutionSettings(projectPath: String): GradleExecutionSettings = runBlocking {
+  private fun getExecutionSettings(projectPath: String): GradleExecutionSettings =
     ExternalSystemApiUtil.getExecutionSettings(myProject, projectPath, externalSystemId)
-  }
 
-  private fun requestConnection(projectPath: String, executionSettings: GradleExecutionSettings): ProjectConnection {
-    val taskId = ExternalSystemTaskId.create(externalSystemId, EXECUTE_TASK, myProject)
-    return GradleExecutionHelper.execute(projectPath, executionSettings, taskId, null, null) { it }
-  }
+  private fun requestConnection(projectPath: String, executionSettings: GradleExecutionSettings) = GradleExecutionHelper()
+    .execute(projectPath, executionSettings, ExternalSystemTaskId.create(externalSystemId, EXECUTE_TASK, myProject), null, null) { it }
 
   companion object {
     /** It's sufficient to run the test against single gradle version. */

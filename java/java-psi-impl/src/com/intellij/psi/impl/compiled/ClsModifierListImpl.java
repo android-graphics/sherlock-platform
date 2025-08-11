@@ -137,16 +137,6 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
   }
 
   @Override
-  public String getText() {
-    StringBuilder builder = new StringBuilder();
-    appendMirrorText(0, builder);
-    if (builder.length() > 0 && builder.charAt(builder.length() - 1) == ' ') {
-      builder.setLength(builder.length() - 1);
-    }
-    return builder.toString();
-  }
-
-  @Override
   protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.MODIFIER_LIST);
     PsiAnnotation[] annotations = getAnnotations();
@@ -184,7 +174,8 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
     });
   }
 
-  private static @NotNull Map<String, PsiAnnotation> getAnnotationByShortName(@NotNull PsiAnnotation @NotNull [] annotations) {
+  @NotNull
+  private static Map<String, PsiAnnotation> getAnnotationByShortName(@NotNull PsiAnnotation @NotNull [] annotations) {
     HashMap<String, PsiAnnotation> result = new HashMap<>();
     for (@NotNull PsiAnnotation annotation : annotations) {
       result.put(getAnnotationReferenceShortName(annotation), annotation);

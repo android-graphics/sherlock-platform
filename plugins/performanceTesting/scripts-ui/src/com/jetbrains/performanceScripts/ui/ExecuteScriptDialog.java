@@ -27,7 +27,7 @@ public final class ExecuteScriptDialog extends DialogWrapper {
   private final ScriptRunner myScriptRunner;
   private final Action execute;
 
-  public ExecuteScriptDialog(final @NotNull Project project) {
+  public ExecuteScriptDialog(@NotNull final Project project) {
     super(project);
     this.project = project;
     myScriptRunner = new ScriptRunner();
@@ -74,8 +74,9 @@ public final class ExecuteScriptDialog extends DialogWrapper {
     INSPECTION
   }
 
+  @NotNull
   @Contract(pure = true)
-  private static @NotNull String generateTestScript(@NotNull PerformanceScriptType scriptType) {
+  private static String generateTestScript(@NotNull PerformanceScriptType scriptType) {
     return switch (scriptType) {
       case TYPING -> """
         %delayType 150|Sample text for typing scenario
@@ -110,13 +111,15 @@ public final class ExecuteScriptDialog extends DialogWrapper {
     };
   }
 
+  @Nullable
   @Override
-  public @Nullable JComponent getPreferredFocusedComponent() {
+  public JComponent getPreferredFocusedComponent() {
     return scriptText;
   }
 
+  @Nullable
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  protected JComponent createCenterPanel() {
     return myMainPanel;
   }
 

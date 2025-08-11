@@ -24,8 +24,8 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val oldModuleName = "module"
     val newModuleName = "newModule"
     renameModule(oldModuleName, newModuleName)
-    val tag = findTag("project.artifactId")
     readAction {
+      val tag = findTag("project.artifactId")
       assertEquals(newModuleName, tag.getValue().getText())
     }
   }
@@ -53,8 +53,10 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val oldModuleName = "m1"
     val newModuleName = "m1new"
     renameModule(oldModuleName, newModuleName)
-    val tag = findTagValue(m1File, "project.artifactId")
-    assertEquals(newModuleName, tag.getText())
+    readAction {
+      val tag = findTag(m1File, "project.artifactId")
+      assertEquals(newModuleName, tag.getValue().getText())
+    }
   }
 
   @Test
@@ -80,8 +82,10 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val oldModuleName = "parent"
     val newModuleName = "newParent"
     renameModule(oldModuleName, newModuleName)
-    val tag = findTagValue(m1File, "project.parent.artifactId")
-    assertEquals(newModuleName, tag.getText())
+    readAction {
+      val tag = findTag(m1File, "project.parent.artifactId")
+      assertEquals(newModuleName, tag.getValue().getText())
+    }
   }
 
   @Test
@@ -123,8 +127,10 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val oldModuleName = "m1"
     val newModuleName = "m1new"
     renameModule(oldModuleName, newModuleName)
-    val tag = findTagValue(m2File, "project.dependencies.dependency.artifactId")
-    assertEquals(newModuleName, tag.getText())
+    readAction {
+      val tag = findTag(m2File, "project.dependencies.dependency.artifactId")
+      assertEquals(newModuleName, tag.getValue().getText())
+    }
   }
 
   @Test
@@ -168,8 +174,10 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val oldModuleName = "m1"
     val newModuleName = "m1new"
     renameModule(oldModuleName, newModuleName)
-    val tag = findTagValue(m2File, "project.dependencyManagement.dependencies.dependency.artifactId")
-    assertEquals(newModuleName, tag.getText())
+    readAction {
+      val tag = findTag(m2File, "project.dependencyManagement.dependencies.dependency.artifactId")
+      assertEquals(newModuleName, tag.getValue().getText())
+    }
   }
 
   @Test
@@ -237,8 +245,10 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val oldModuleName = "m1"
     val newModuleName = "m1new"
     renameModule(oldModuleName, newModuleName)
-    val tag = findTagValue(m3File, "project.dependencies.dependency.exclusions.exclusion.artifactId")
-    assertEquals(newModuleName, tag.getText())
+    readAction {
+      val tag = findTag(m3File, "project.dependencies.dependency.exclusions.exclusion.artifactId")
+      assertEquals(newModuleName, tag.getValue().getText())
+    }
   }
 
   @Test
@@ -284,8 +294,10 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val oldModuleName = "m1"
     val newModuleName = "m1new"
     renameModule(oldModuleName, newModuleName)
-    val tag = findTagValue(m2File, "project.dependencies.dependency.artifactId")
-    assertEquals(oldModuleName, tag.getText())
+    readAction {
+      val tag = findTag(m2File, "project.dependencies.dependency.artifactId")
+      assertEquals(oldModuleName, tag.getValue().getText())
+    }
   }
 
   @Test
@@ -298,8 +310,8 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val oldModuleName = "module"
     val newModuleName = "group.module"
     renameModule(oldModuleName, newModuleName)
-    val tag = findTag("project.artifactId")
     readAction {
+      val tag = findTag("project.artifactId")
       assertEquals(oldModuleName, tag.getValue().getText())
     }
   }

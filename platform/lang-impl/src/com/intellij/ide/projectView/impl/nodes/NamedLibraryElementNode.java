@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.icons.AllIcons;
@@ -36,7 +36,8 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   }
 
   @Override
-  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
+  @NotNull
+  public Collection<AbstractTreeNode<?>> getChildren() {
     List<AbstractTreeNode<?>> children = new ArrayList<>();
     NamedLibraryElement libraryElement = getValue();
     if (libraryElement != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.lang.Language;
@@ -73,18 +73,21 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
     return myContext.getContainingFile();
   }
 
+  @NotNull
   @Override
-  public @NotNull GrCodeReferenceElement getClassReference() {
+  public GrCodeReferenceElement getClassReference() {
     return myRef;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getShortName() {
+  public String getShortName() {
     return StringUtil.getShortName(myQualifiedName);
   }
 
+  @NotNull
   @Override
-  public @NotNull GrAnnotationArgumentList getParameterList() {
+  public GrAnnotationArgumentList getParameterList() {
     return myAnnotationArgList;
   }
 

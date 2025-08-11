@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_CANCELED
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FAILED
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED_WITH_WARNINGS
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.Change
@@ -33,36 +34,35 @@ class ShowNotificationCommitResultHandler(private val committer: VcsCommitter) :
     val message = getCommitSummary()
 
     val allExceptions = committer.exceptions
-
-    val notification = if (allExceptions.isEmpty()) {
-      CommitNotification(VcsNotifier.standardNotification().displayId, "", message)
-    } else {
-      val errors = collectErrors(allExceptions)
-      val errorsSize = errors.size
-      val warningsSize = allExceptions.size - errorsSize
-      val notificationActions = allExceptions.filterIsInstance<CommitExceptionWithActions>().flatMap { it.actions }
-
-      val title: @NlsContexts.NotificationTitle String
-      val displayId: @NonNls String
-      val notificationType: NotificationType
-      if (errorsSize > 0) {
-        displayId = COMMIT_FAILED
-        title = message("message.text.commit.failed.with.error", errorsSize)
-        notificationType = NotificationType.ERROR
-      }
-      else {
-        displayId = COMMIT_FINISHED_WITH_WARNINGS
-        title = message("message.text.commit.finished.with.warning", warningsSize)
-        notificationType = NotificationType.WARNING
-      }
-
-      CommitNotification(VcsNotifier.importantNotification().displayId, title, message, notificationType).apply {
-        setDisplayId(displayId)
-        notificationActions.forEach(this::addAction)
-        VcsNotifier.addShowDetailsAction(committer.project, this)
-      }
+    if (allExceptions.isEmpty()) {
+      notifier.notifyMinorInfo(COMMIT_FINISHED, "", message)
+      return
     }
-    notification.expirePreviousAndNotify(committer.project)
+
+    val errors = collectErrors(allExceptions)
+    val errorsSize = errors.size
+    val warningsSize = allExceptions.size - errorsSize
+    val notificationActions = allExceptions.filterIsInstance<CommitExceptionWithActions>().flatMap { it.actions }
+
+    val title: @NlsContexts.NotificationTitle String
+    val displayId: @NonNls String
+    val notificationType: NotificationType
+    if (errorsSize > 0) {
+      displayId = COMMIT_FAILED
+      title = message("message.text.commit.failed.with.error", errorsSize)
+      notificationType = NotificationType.ERROR
+    }
+    else {
+      displayId = COMMIT_FINISHED_WITH_WARNINGS
+      title = message("message.text.commit.finished.with.warning", warningsSize)
+      notificationType = NotificationType.WARNING
+    }
+
+    val notification = VcsNotifier.importantNotification().createNotification(title, message, notificationType)
+    notification.setDisplayId(displayId)
+    notificationActions.forEach { notification.addAction(it) }
+    VcsNotifier.addShowDetailsAction(committer.project, notification)
+    notification.notify(committer.project)
   }
 
   @NlsContexts.NotificationContent

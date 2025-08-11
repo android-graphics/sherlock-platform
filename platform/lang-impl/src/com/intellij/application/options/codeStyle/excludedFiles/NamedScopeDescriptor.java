@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.formatting.fileSet.FileSetDescriptor;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class NamedScopeDescriptor implements FileSetDescriptor {
-  public static final String NAMED_SCOPE_TYPE = "namedScope";
+  public final static String NAMED_SCOPE_TYPE = "namedScope";
 
   private final String myScopeId;
   private @Nullable PackageSet myFileSet;
@@ -66,22 +66,26 @@ public final class NamedScopeDescriptor implements FileSetDescriptor {
     return scope != null ? Pair.create(holder, scope) : null;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return myScopeId;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getType() {
+  public String getType() {
     return NAMED_SCOPE_TYPE;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getPattern() {
+  public String getPattern() {
     return myFileSet != null ? myFileSet.getText() : null;
   }
 
-  public @Nullable PackageSet getFileSet() {
+  @Nullable
+  public PackageSet getFileSet() {
     return myFileSet;
   }
 

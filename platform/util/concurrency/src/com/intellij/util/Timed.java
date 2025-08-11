@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util;
 
@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -15,8 +14,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
-@ApiStatus.Internal
-public abstract class Timed<T> implements Disposable {
+abstract class Timed<T> implements Disposable {
   private static final Logger LOG = Logger.getInstance(Timed.class);
   private static final Map<Timed, Boolean> ourReferences = Collections.synchronizedMap(new WeakHashMap<>());
   protected static final int SERVICE_DELAY = 60;
@@ -26,7 +24,7 @@ public abstract class Timed<T> implements Disposable {
   protected T myT;
   private boolean myPolled;
 
-  Timed(final @Nullable Disposable parentDisposable) {
+  Timed(@Nullable final Disposable parentDisposable) {
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, this);
     }

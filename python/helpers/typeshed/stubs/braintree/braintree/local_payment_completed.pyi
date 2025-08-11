@@ -1,6 +1,8 @@
-from braintree.resource import Resource
-from braintree.transaction import Transaction
+from typing import Any
+
+from braintree.resource import Resource as Resource
+from braintree.transaction import Transaction as Transaction
 
 class LocalPaymentCompleted(Resource):
-    transaction: Transaction
+    transaction: Any
     def __init__(self, gateway, attributes) -> None: ...

@@ -6,6 +6,7 @@ from typing import Any
 
 __version__: str
 
+PYTHON_VERSION: tuple[int, int, int]
 CLASS_METHODS: frozenset[str]
 METACLASS_BASES: frozenset[str]
 METHOD_CONTAINER_NODES: set[ast.AST]

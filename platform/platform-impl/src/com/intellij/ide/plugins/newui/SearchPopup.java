@@ -15,7 +15,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,7 +28,6 @@ import java.awt.event.ComponentEvent;
 /**
  * @author Alexander Lobas
  */
-@ApiStatus.Internal
 public final class SearchPopup extends ComponentAdapter implements CaretListener {
   public final Type type;
 

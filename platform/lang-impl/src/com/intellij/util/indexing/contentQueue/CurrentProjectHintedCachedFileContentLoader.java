@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-@Internal
 public final class CurrentProjectHintedCachedFileContentLoader implements CachedFileContentLoader {
   private final Project myProject;
 

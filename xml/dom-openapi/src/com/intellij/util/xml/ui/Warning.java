@@ -27,7 +27,6 @@ public class Warning {
   }
 
 
-  @Override
   public String toString() {
     return getWarning();
   }

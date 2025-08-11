@@ -21,8 +21,6 @@ abstract class GradleExecutionTestCase : GradleExecutionBaseTestCase() {
 
   fun isPerTaskOutputSupported(): Boolean = isGradleAtLeast("4.7")
 
-  fun isBuildCompilationReportSupported(): Boolean = isGradleAtLeast("8.11")
-
   fun isBuiltInTestEventsUsed(): Boolean = isGradleAtLeast("7.6")
 
   fun isIntellijTestEventsUsed(): Boolean = !isBuiltInTestEventsUsed()
@@ -66,7 +64,7 @@ abstract class GradleExecutionTestCase : GradleExecutionBaseTestCase() {
   companion object {
 
     private val JAVA_JUNIT5_ASSERTJ_FIXTURE = GradleTestFixtureBuilder.create("java-plugin-junit5-assertj-project") { gradleVersion ->
-      withSettingsFile(gradleVersion) {
+      withSettingsFile {
         setProjectName("java-plugin-junit5-assertj-project")
       }
       withBuildFile(gradleVersion) {
@@ -79,7 +77,7 @@ abstract class GradleExecutionTestCase : GradleExecutionBaseTestCase() {
     }
 
     private val JAVA_JUNIT4_FIXTURE = GradleTestFixtureBuilder.create("java-plugin-junit4-project") { gradleVersion ->
-      withSettingsFile(gradleVersion) {
+      withSettingsFile {
         setProjectName("java-plugin-junit4-project")
       }
       withBuildFile(gradleVersion) {
@@ -91,7 +89,7 @@ abstract class GradleExecutionTestCase : GradleExecutionBaseTestCase() {
     }
 
     private val JAVA_JUNIT4_OPENTEST4J_FIXTURE = GradleTestFixtureBuilder.create("java-plugin-junit4-opentest4j-project") { gradleVersion ->
-      withSettingsFile(gradleVersion) {
+      withSettingsFile {
         setProjectName("java-plugin-junit4-opentest4j-project")
       }
       withBuildFile(gradleVersion) {
@@ -104,7 +102,7 @@ abstract class GradleExecutionTestCase : GradleExecutionBaseTestCase() {
     }
 
     private val JAVA_TESTNG_FIXTURE = GradleTestFixtureBuilder.create("java-plugin-testng-project") { gradleVersion ->
-      withSettingsFile(gradleVersion) {
+      withSettingsFile {
         setProjectName("java-plugin-testng-project")
       }
       withBuildFile(gradleVersion) {
@@ -121,7 +119,7 @@ abstract class GradleExecutionTestCase : GradleExecutionBaseTestCase() {
     }
 
     private val GROOVY_SPOCK_FIXTURE = GradleTestFixtureBuilder.create("groovy-plugin-spock-project") { gradleVersion ->
-      withSettingsFile(gradleVersion) {
+      withSettingsFile {
         setProjectName("groovy-plugin-spock-project")
       }
       withBuildFile(gradleVersion) {
@@ -135,7 +133,7 @@ abstract class GradleExecutionTestCase : GradleExecutionBaseTestCase() {
     }
 
     private val JAVA_ROBOLECTRIC_FIXTURE = GradleTestFixtureBuilder.create("java-plugin-robolectric-project") { gradleVersion ->
-      withSettingsFile(gradleVersion) {
+      withSettingsFile {
         setProjectName("java-plugin-robolectric-project")
       }
       withBuildFile(gradleVersion) {

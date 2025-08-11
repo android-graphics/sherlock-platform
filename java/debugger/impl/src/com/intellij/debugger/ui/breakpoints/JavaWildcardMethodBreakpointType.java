@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.HelpID;
@@ -24,23 +24,27 @@ public final class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBa
     super("java-wildcard-method", JavaDebuggerBundle.message("method.breakpoints.tab.title"));
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getEnabledIcon() {
+  public Icon getEnabledIcon() {
     return AllIcons.Debugger.Db_method_breakpoint;
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getDisabledIcon() {
+  public Icon getDisabledIcon() {
     return AllIcons.Debugger.Db_disabled_method_breakpoint;
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getMutedEnabledIcon() {
+  public Icon getMutedEnabledIcon() {
     return AllIcons.Debugger.Db_muted_method_breakpoint;
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getMutedDisabledIcon() {
+  public Icon getMutedDisabledIcon() {
     return AllIcons.Debugger.Db_muted_disabled_method_breakpoint;
   }
 
@@ -54,8 +58,9 @@ public final class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBa
     return JavaDebuggerBundle.message("method.breakpoints.tab.title");
   }
 
+  @Nls
   @Override
-  public @Nls String getGeneralDescription(XBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
+  public String getGeneralDescription(XBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
     return JavaDebuggerBundle.message("method.breakpoint.description");
   }
 
@@ -64,8 +69,9 @@ public final class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBa
     return JavaMethodBreakpointType.getText(breakpoint);
   }
 
+  @Nullable
   @Override
-  public @Nullable XBreakpointCustomPropertiesPanel<XBreakpoint<JavaMethodBreakpointProperties>> createCustomPropertiesPanel(@NotNull Project project) {
+  public XBreakpointCustomPropertiesPanel<XBreakpoint<JavaMethodBreakpointProperties>> createCustomPropertiesPanel(@NotNull Project project) {
     return new MethodBreakpointPropertiesPanel();
   }
 
@@ -74,13 +80,15 @@ public final class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBa
   //  return MethodBreakpoint.CATEGORY;
   //}
 
+  @Nullable
   @Override
-  public @Nullable JavaMethodBreakpointProperties createProperties() {
+  public JavaMethodBreakpointProperties createProperties() {
     return new JavaMethodBreakpointProperties();
   }
 
+  @Nullable
   @Override
-  public @Nullable XBreakpoint<JavaMethodBreakpointProperties> addBreakpoint(final Project project, JComponent parentComponent) {
+  public XBreakpoint<JavaMethodBreakpointProperties> addBreakpoint(final Project project, JComponent parentComponent) {
     final AddWildcardBreakpointDialog dialog = new AddWildcardBreakpointDialog(project);
     if (!dialog.showAndGet()) {
       return null;
@@ -95,8 +103,9 @@ public final class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBa
     return XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpoint(this, properties);
   }
 
+  @NotNull
   @Override
-  public @NotNull Breakpoint<JavaMethodBreakpointProperties> createJavaBreakpoint(Project project, XBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
+  public Breakpoint<JavaMethodBreakpointProperties> createJavaBreakpoint(Project project, XBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
     return new WildcardMethodBreakpoint(project, breakpoint);
   }
 }

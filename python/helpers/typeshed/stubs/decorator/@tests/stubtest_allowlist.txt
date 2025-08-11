@@ -7,4 +7,3 @@ decorator.FunctionMaker.varkw
 decorator.decorate
 decorator.decorator
 decorator.get_init
-decorator.EMPTY

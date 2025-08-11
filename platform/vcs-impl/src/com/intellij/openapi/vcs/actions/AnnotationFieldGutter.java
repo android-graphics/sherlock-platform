@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,9 +24,9 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public abstract class AnnotationFieldGutter implements ActiveAnnotationGutter {
-  protected final @NotNull FileAnnotation myAnnotation;
-  private final @NotNull TextAnnotationPresentation myPresentation;
-  private final @Nullable Couple<? extends Map<VcsRevisionNumber, Color>> myColorScheme;
+  @NotNull protected final FileAnnotation myAnnotation;
+  @NotNull private final TextAnnotationPresentation myPresentation;
+  @Nullable private final Couple<? extends Map<VcsRevisionNumber, Color>> myColorScheme;
 
   AnnotationFieldGutter(@NotNull FileAnnotation annotation,
                         @NotNull TextAnnotationPresentation presentation,
@@ -37,12 +36,13 @@ public abstract class AnnotationFieldGutter implements ActiveAnnotationGutter {
     myColorScheme = colorScheme;
   }
 
-  public @NotNull FileAnnotation getFileAnnotation() {
+  @NotNull
+  public FileAnnotation getFileAnnotation() {
     return myAnnotation;
   }
 
-  @ApiStatus.Internal
-  public @NotNull TextAnnotationPresentation getPresentation() {
+  @NotNull
+  public TextAnnotationPresentation getPresentation() {
     return myPresentation;
   }
 
@@ -50,8 +50,9 @@ public abstract class AnnotationFieldGutter implements ActiveAnnotationGutter {
     return false;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getToolTip(final int line, final Editor editor) {
+  public String getToolTip(final int line, final Editor editor) {
     return null;
   }
 
@@ -69,8 +70,9 @@ public abstract class AnnotationFieldGutter implements ActiveAnnotationGutter {
     return myPresentation.getFontType(line);
   }
 
+  @Nullable
   @Override
-  public @Nullable ColorKey getColor(final int line, final Editor editor) {
+  public ColorKey getColor(final int line, final Editor editor) {
     return myPresentation.getColor(line);
   }
 
@@ -84,8 +86,9 @@ public abstract class AnnotationFieldGutter implements ActiveAnnotationGutter {
     myPresentation.gutterClosed();
   }
 
+  @Nullable
   @Override
-  public @Nullable Color getBgColor(int line, Editor editor) {
+  public Color getBgColor(int line, Editor editor) {
     if (myColorScheme == null) return null;
     ColorMode type = ShowAnnotationColorsAction.getType();
     Map<VcsRevisionNumber, Color> colorMap = type == ColorMode.AUTHOR ? myColorScheme.second : myColorScheme.first;

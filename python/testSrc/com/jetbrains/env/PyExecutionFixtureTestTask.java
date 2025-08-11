@@ -85,6 +85,8 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   public static final int NORMAL_TIMEOUT = 30000;
+  public static final int LONG_TIMEOUT = 120000;
+  protected int myTimeout = NORMAL_TIMEOUT;
   protected CodeInsightTestFixture myFixture;
 
   @Nullable
@@ -117,6 +119,15 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     return myFixture.getProject();
   }
 
+  @Override
+  public void useNormalTimeout() {
+    myTimeout = NORMAL_TIMEOUT;
+  }
+
+  @Override
+  public void useLongTimeout() {
+    myTimeout = LONG_TIMEOUT;
+  }
 
   /**
    * Returns virt file by path. May be relative or not.
@@ -225,11 +236,11 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   }
 
   protected boolean waitFor(ProcessHandler p) {
-    return p.waitFor(NORMAL_TIMEOUT);
+    return p.waitFor(myTimeout);
   }
 
   protected boolean waitFor(@NotNull Semaphore s) throws InterruptedException {
-    return waitFor(s, NORMAL_TIMEOUT);
+    return waitFor(s, myTimeout);
   }
 
   protected static boolean waitFor(@NotNull Semaphore s, long timeout) throws InterruptedException {
@@ -270,7 +281,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     public EmptyModuleBuilder createModuleBuilder() {
       return new EmptyModuleBuilder() {
         @Override
-        public ModuleType<?> getModuleType() {
+        public ModuleType getModuleType() {
           return getInstance();
         }
       };

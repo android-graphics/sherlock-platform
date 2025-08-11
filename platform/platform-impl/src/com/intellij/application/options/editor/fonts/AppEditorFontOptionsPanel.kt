@@ -15,10 +15,8 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.panel
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
-@ApiStatus.Internal
 class AppEditorFontOptionsPanel(scheme: EditorColorsScheme) : AppFontOptionsPanel(scheme) {
   private lateinit var restoreDefaults: Cell<ActionLink>
 

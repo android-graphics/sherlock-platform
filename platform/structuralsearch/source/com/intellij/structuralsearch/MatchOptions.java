@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
@@ -31,25 +31,26 @@ public class MatchOptions implements JDOMExternalizable {
   private Scopes.Type scopeType;
   private String scopeDescriptor;
   private boolean searchInjectedCode;
-  private @NotNull String pattern;
+  @NotNull
+  private String pattern;
 
   private String myPatternContextId;
 
-  private static final @NonNls String TEXT_ATTRIBUTE_NAME = "text";
-  private static final @NonNls String LOOSE_MATCHING_ATTRIBUTE_NAME = "loose";
-  private static final @NonNls String RECURSIVE_ATTRIBUTE_NAME = "recursive";
-  public static final @NonNls String OLD_CASE_SENSITIVE_ATTRIBUTE_NAME = "caseInsensitive";
-  public static final @NonNls String CASE_SENSITIVE_ATTRIBUTE_NAME = "case_sensitive";
-  private static final @NonNls String CONSTRAINT_TAG_NAME = "constraint";
-  private static final @NonNls String FILE_TYPE_ATTR_NAME = "type";
-  private static final @NonNls String DIALECT_ATTR_NAME = "dialect";
-  private static final @NonNls String PATTERN_CONTEXT_ATTR_NAME = "pattern_context";
-  private static final @NonNls String SCOPE_TYPE = "scope_type";
-  private static final @NonNls String SCOPE_DESCRIPTOR = "scope_descriptor";
-  private static final @NonNls String SEARCH_INJECTED_CODE = "search_injected";
+  @NonNls private static final String TEXT_ATTRIBUTE_NAME = "text";
+  @NonNls private static final String LOOSE_MATCHING_ATTRIBUTE_NAME = "loose";
+  @NonNls private static final String RECURSIVE_ATTRIBUTE_NAME = "recursive";
+  @NonNls public static final String OLD_CASE_SENSITIVE_ATTRIBUTE_NAME = "caseInsensitive";
+  @NonNls public static final String CASE_SENSITIVE_ATTRIBUTE_NAME = "case_sensitive";
+  @NonNls private static final String CONSTRAINT_TAG_NAME = "constraint";
+  @NonNls private static final String FILE_TYPE_ATTR_NAME = "type";
+  @NonNls private static final String DIALECT_ATTR_NAME = "dialect";
+  @NonNls private static final String PATTERN_CONTEXT_ATTR_NAME = "pattern_context";
+  @NonNls private static final String SCOPE_TYPE = "scope_type";
+  @NonNls private static final String SCOPE_DESCRIPTOR = "scope_descriptor";
+  @NonNls private static final String SEARCH_INJECTED_CODE = "search_injected";
 
-  public static final @NonNls String INSTANCE_MODIFIER_NAME = "Instance";
-  public static final @NonNls String MODIFIER_ANNOTATION_NAME = "Modifier";
+  @NonNls public static final String INSTANCE_MODIFIER_NAME = "Instance";
+  @NonNls public static final String MODIFIER_ANNOTATION_NAME = "Modifier";
 
   public MatchOptions() {
     variableConstraints = new LinkedHashMap<>();
@@ -75,7 +76,8 @@ public class MatchOptions implements JDOMExternalizable {
     myPatternContextId = options.myPatternContextId;
   }
 
-  public @NotNull MatchOptions copy() {
+  @NotNull
+  public MatchOptions copy() {
     return new MatchOptions(this);
   }
 
@@ -122,7 +124,6 @@ public class MatchOptions implements JDOMExternalizable {
     return caseSensitiveMatch;
   }
 
-  @Override
   public String toString() {
     return "match options:\n" +
            "pattern:\n" + pattern +
@@ -161,7 +162,8 @@ public class MatchOptions implements JDOMExternalizable {
     StringToConstraintsTransformer.transformCriteria(criteria, this);
   }
 
-  public @Nullable SearchScope getScope() {
+  @Nullable
+  public SearchScope getScope() {
     return scope;
   }
 
@@ -251,7 +253,6 @@ public class MatchOptions implements JDOMExternalizable {
     }
   }
 
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof MatchOptions matchOptions)) return false;
@@ -270,7 +271,6 @@ public class MatchOptions implements JDOMExternalizable {
     return true;
   }
 
-  @Override
   public int hashCode() {
     int result = looseMatching ? 1 : 0;
     result = 29 * result + (recursiveSearch ? 1 : 0);
@@ -289,11 +289,13 @@ public class MatchOptions implements JDOMExternalizable {
     myFileType = fileType;
   }
 
-  public @Nullable LanguageFileType getFileType() {
+  @Nullable
+  public LanguageFileType getFileType() {
     return myFileType;
   }
 
-  public @Nullable Language getDialect() {
+  @Nullable
+  public Language getDialect() {
     if (myDialect == null) {
       final LanguageFileType fileType = getFileType();
       return (fileType == null) ? null : fileType.getLanguage();

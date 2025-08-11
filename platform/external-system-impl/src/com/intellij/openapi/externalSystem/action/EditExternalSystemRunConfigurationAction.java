@@ -10,7 +10,6 @@ import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsColle
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.RunConfigurationNode;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -18,7 +17,6 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Internal
 public class EditExternalSystemRunConfigurationAction extends ExternalSystemAction {
 
   @Override

@@ -13,42 +13,47 @@ import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
 
 public abstract class XDebuggerEditorsProvider {
-  public abstract @NotNull FileType getFileType();
+  @NotNull
+  public abstract FileType getFileType();
 
   /** @deprecated Use {@link #createDocument(Project, XExpression, XSourcePosition, EvaluationMode)} instead */
+  @NotNull
   @Deprecated
-  public @NotNull Document createDocument(@NotNull Project project,
+  public Document createDocument(@NotNull Project project,
                                  @NotNull String text,
                                  @Nullable XSourcePosition sourcePosition,
                                  @NotNull EvaluationMode mode) {
     throw new AbstractMethodError("createDocument must be implemented in " + getClass());
   }
 
-  public @NotNull Document createDocument(@NotNull Project project,
-                                          @NotNull XExpression expression,
-                                          @Nullable XSourcePosition sourcePosition,
-                                          @NotNull EvaluationMode mode) {
+  @NotNull
+  public Document createDocument(@NotNull Project project,
+                                 @NotNull XExpression expression,
+                                 @Nullable XSourcePosition sourcePosition,
+                                 @NotNull EvaluationMode mode) {
     return createDocument(project, expression.getExpression(), sourcePosition, mode);
   }
   
   public void afterEditorCreated(@Nullable Editor editor) {}
 
-  public @NotNull @Unmodifiable Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
+  @NotNull
+  public Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
     FileType type = getFileType();
     return type instanceof LanguageFileType ? Collections.singleton(((LanguageFileType)type).getLanguage()) : Collections.emptyList();
   }
 
-  public @NotNull XExpression createExpression(@NotNull Project project, @NotNull Document document, @Nullable Language language, @NotNull EvaluationMode mode) {
+  @NotNull
+  public XExpression createExpression(@NotNull Project project, @NotNull Document document, @Nullable Language language, @NotNull EvaluationMode mode) {
     return XDebuggerUtil.getInstance().createExpression(document.getText(), language, null, mode);
   }
 
-  public @NotNull InlineDebuggerHelper getInlineDebuggerHelper() {
+  @NotNull
+  public InlineDebuggerHelper getInlineDebuggerHelper() {
     return InlineDebuggerHelper.DEFAULT;
   }
 

@@ -7,5 +7,5 @@ plugins {
 
 kotlin {
     ios()
-    {{androidTargetPlaceholder}}
+    android()
 }

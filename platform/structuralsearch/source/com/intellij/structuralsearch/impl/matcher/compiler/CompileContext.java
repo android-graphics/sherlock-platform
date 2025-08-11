@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,19 +42,23 @@ public class CompileContext {
     mySearchHelper.clear();
   }
 
-  public @NotNull OptimizingSearchHelper getSearchHelper() {
+  @NotNull
+  public OptimizingSearchHelper getSearchHelper() {
     return mySearchHelper;
   }
 
-  public @NotNull CompiledPattern getPattern() {
+  @NotNull
+  public CompiledPattern getPattern() {
     return myPattern;
   }
 
-  public @NotNull MatchOptions getOptions() {
+  @NotNull
+  public MatchOptions getOptions() {
     return myOptions;
   }
 
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myProject;
   }
 }

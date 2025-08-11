@@ -45,12 +45,6 @@ internal class CollectionFieldEntityImpl(private val dataSource: CollectionField
       return dataSource.names
     }
 
-  override val manifestAttributes: Map<String, String>
-    get() {
-      readField("manifestAttributes")
-      return dataSource.manifestAttributes
-    }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -100,9 +94,6 @@ internal class CollectionFieldEntityImpl(private val dataSource: CollectionField
       if (!getEntityData().isNamesInitialized()) {
         error("Field CollectionFieldEntity#names should be initialized")
       }
-      if (!getEntityData().isManifestAttributesInitialized()) {
-        error("Field CollectionFieldEntity#manifestAttributes should be initialized")
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -126,7 +117,6 @@ internal class CollectionFieldEntityImpl(private val dataSource: CollectionField
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.versions != dataSource.versions) this.versions = dataSource.versions.toMutableSet()
       if (this.names != dataSource.names) this.names = dataSource.names.toMutableList()
-      if (this.manifestAttributes != dataSource.manifestAttributes) this.manifestAttributes = dataSource.manifestAttributes.toMutableMap()
       updateChildToParentReferences(parents)
     }
 
@@ -184,14 +174,6 @@ internal class CollectionFieldEntityImpl(private val dataSource: CollectionField
         namesUpdater.invoke(value)
       }
 
-    override var manifestAttributes: Map<String, String>
-      get() = getEntityData().manifestAttributes
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).manifestAttributes = value
-        changedProperty.add("manifestAttributes")
-      }
-
     override fun getEntityClass(): Class<CollectionFieldEntity> = CollectionFieldEntity::class.java
   }
 }
@@ -200,11 +182,9 @@ internal class CollectionFieldEntityImpl(private val dataSource: CollectionField
 internal class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
   lateinit var versions: MutableSet<Int>
   lateinit var names: MutableList<String>
-  lateinit var manifestAttributes: Map<String, String>
 
   internal fun isVersionsInitialized(): Boolean = ::versions.isInitialized
   internal fun isNamesInitialized(): Boolean = ::names.isInitialized
-  internal fun isManifestAttributesInitialized(): Boolean = ::manifestAttributes.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<CollectionFieldEntity> {
     val modifiable = CollectionFieldEntityImpl.Builder(null)
@@ -241,7 +221,7 @@ internal class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEn
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
-    return CollectionFieldEntity(versions, names, manifestAttributes, entitySource) {
+    return CollectionFieldEntity(versions, names, entitySource) {
     }
   }
 
@@ -259,7 +239,6 @@ internal class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEn
     if (this.entitySource != other.entitySource) return false
     if (this.versions != other.versions) return false
     if (this.names != other.names) return false
-    if (this.manifestAttributes != other.manifestAttributes) return false
     return true
   }
 
@@ -271,7 +250,6 @@ internal class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEn
 
     if (this.versions != other.versions) return false
     if (this.names != other.names) return false
-    if (this.manifestAttributes != other.manifestAttributes) return false
     return true
   }
 
@@ -279,7 +257,6 @@ internal class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEn
     var result = entitySource.hashCode()
     result = 31 * result + versions.hashCode()
     result = 31 * result + names.hashCode()
-    result = 31 * result + manifestAttributes.hashCode()
     return result
   }
 
@@ -287,7 +264,6 @@ internal class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEn
     var result = javaClass.hashCode()
     result = 31 * result + versions.hashCode()
     result = 31 * result + names.hashCode()
-    result = 31 * result + manifestAttributes.hashCode()
     return result
   }
 }

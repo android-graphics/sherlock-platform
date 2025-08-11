@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.formatting.service.CoreFormattingService;
@@ -52,7 +52,8 @@ import java.util.function.Consumer;
 public abstract class AbstractLayoutCodeProcessor {
   private static final Logger LOG = Logger.getInstance(AbstractLayoutCodeProcessor.class);
 
-  protected final @NotNull Project myProject;
+  @NotNull
+  protected final Project myProject;
   private final Module myModule;
 
   private PsiDirectory myDirectory;
@@ -200,7 +201,8 @@ public abstract class AbstractLayoutCodeProcessor {
    *                  is finished correctly or not (exception occurred, user cancelled formatting etc)
    * @throws IncorrectOperationException    if unexpected exception occurred during formatting
    */
-  protected abstract @NotNull FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) throws IncorrectOperationException;
+  @NotNull
+  protected abstract FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) throws IncorrectOperationException;
 
   protected static @NotNull FutureTask<Boolean> emptyTask() {
     return new FutureTask<>(EmptyRunnable.INSTANCE, true);
@@ -223,7 +225,8 @@ public abstract class AbstractLayoutCodeProcessor {
     runProcessFiles();
   }
 
-  private @NotNull FileRecursiveIterator build() {
+  @NotNull
+  private FileRecursiveIterator build() {
     if (myFiles != null) {
       return new FileRecursiveIterator(myProject, ContainerUtil.filter(myFiles, AbstractLayoutCodeProcessor::canBeFormatted));
     }
@@ -239,12 +242,14 @@ public abstract class AbstractLayoutCodeProcessor {
     return new FileRecursiveIterator(myProject);
   }
 
-  private @NotNull FileRecursiveIterator buildChangedFilesIterator() {
+  @NotNull
+  private FileRecursiveIterator buildChangedFilesIterator() {
     List<PsiFile> files = getChangedFilesFromContext();
     return new FileRecursiveIterator(myProject, files);
   }
 
-  private @NotNull List<PsiFile> getChangedFilesFromContext() {
+  @NotNull
+  private List<PsiFile> getChangedFilesFromContext() {
     List<PsiDirectory> dirs = getAllSearchableDirsFromContext();
     return VcsFacade.getInstance().getChangedFilesFromDirs(myProject, dirs);
   }
@@ -266,7 +271,7 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
 
-  private void runProcessFile(final @NotNull VirtualFile file) {
+  private void runProcessFile(@NotNull final VirtualFile file) {
     ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(List.of(file));
     if (status.hasReadonlyFiles()) {
       return;
@@ -559,7 +564,8 @@ public abstract class AbstractLayoutCodeProcessor {
     }
   }
 
-  public @Nullable LayoutCodeInfoCollector getInfoCollector() {
+  @Nullable
+  public LayoutCodeInfoCollector getInfoCollector() {
     return myInfoCollector;
   }
 }

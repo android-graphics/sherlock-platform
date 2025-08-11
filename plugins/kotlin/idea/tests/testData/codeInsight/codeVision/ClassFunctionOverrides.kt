@@ -1,8 +1,11 @@
 // MODE: inheritors
 
-abstract class SomeClass {/*<# [2 Implementations] #>*/
-open fun someFun() = ""/*<# [1 Override] #>*/
-    abstract fun someAbstractFun()/*<# [2 Implementations] #>*/
+/*<# block [ 2 Inheritors] #>*/
+abstract class SomeClass {
+/*<# block [     1 Override] #>*/
+    open fun someFun() = ""
+/*<# block [     2 Implementations] #>*/
+    abstract fun someAbstractFun()
 }
 
 class DerivedClassA : SomeClass {

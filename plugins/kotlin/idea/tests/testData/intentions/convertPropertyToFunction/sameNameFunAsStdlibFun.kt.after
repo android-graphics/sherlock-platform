@@ -1,5 +1,4 @@
 // WITH_STDLIB
-// PRIORITY: LOW
 class Foo {
     fun isEmpty(): Boolean = true
 }

@@ -14,15 +14,12 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.List;
 
-@ApiStatus.Internal
 public final class TabOutScopesTrackerImpl implements TabOutScopesTracker {
   private static final Key<Integer> CARET_SHIFT = Key.create("tab.out.caret.shift");
 
@@ -112,9 +109,11 @@ public final class TabOutScopesTrackerImpl implements TabOutScopesTracker {
 
     private List<RangeMarker> getCurrentScopes(boolean create) {
       Caret currentCaret = myEditor.getCaretModel().getCurrentCaret();
-      return create ?
-             ConcurrencyUtil.computeIfAbsent(currentCaret, TRACKED_SCOPES, ()->ContainerUtil.createLockFreeCopyOnWriteList())
-             : currentCaret.getUserData(TRACKED_SCOPES);
+      List<RangeMarker> result = currentCaret.getUserData(TRACKED_SCOPES);
+      if (result == null && create) {
+        result = currentCaret.putUserDataIfAbsent(TRACKED_SCOPES, ContainerUtil.createLockFreeCopyOnWriteList());
+      }
+      return result;
     }
 
     private void registerScope(final int offsetStart, final int offsetEnd, final int caretShift) {

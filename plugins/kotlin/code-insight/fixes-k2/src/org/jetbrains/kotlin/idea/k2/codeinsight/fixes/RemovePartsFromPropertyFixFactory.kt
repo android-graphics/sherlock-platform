@@ -38,7 +38,8 @@ internal object RemovePartsFromPropertyFixFactory {
         createQuickFix(diagnostic.psi)
     }
 
-    private fun KaSession.createQuickFix(
+    context(KaSession)
+    private fun createQuickFix(
         element: KtElement,
     ): List<RemovePartsFromPropertyFix> {
         val property = element.getParentOfType<KtProperty>(strict = false) ?: return emptyList()
@@ -61,7 +62,8 @@ internal object RemovePartsFromPropertyFixFactory {
         )
     }
 
-    private fun KaSession.getTypeInfo(property: KtProperty): CallableReturnTypeUpdaterUtils.TypeInfo? {
+    context(KaSession)
+    private fun getTypeInfo(property: KtProperty): CallableReturnTypeUpdaterUtils.TypeInfo? {
         if (property.hasInitializer() && property.initializer != null && property.typeReference == null) {
             return CallableReturnTypeUpdaterUtils.getTypeInfo(property)
         }
@@ -102,16 +104,16 @@ internal object RemovePartsFromPropertyFixFactory {
             elementContext: ElementContext,
             updater: ModPsiUpdater,
         ) {
+            if (elementContext.removeInitializer) {
+                removeInitializer(actionContext.project, element, elementContext, updater)
+            }
+
             if (elementContext.removeGetter) {
                 element.getter?.delete()
             }
 
             if (elementContext.removeSetter) {
                 element.setter?.delete()
-            }
-
-            if (elementContext.removeInitializer) {
-                removeInitializer(actionContext.project, element, elementContext, updater)
             }
         }
 
@@ -129,6 +131,7 @@ internal object RemovePartsFromPropertyFixFactory {
                 declaration = element,
                 typeInfo = elementContext.typeInfo,
                 project = project,
+                editor = null,
                 updater = updater,
             )
         }

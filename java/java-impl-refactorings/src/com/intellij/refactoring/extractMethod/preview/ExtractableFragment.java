@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.openapi.util.TextRange;
@@ -32,12 +32,14 @@ class ExtractableFragment {
     myEnd = start != end ? smartPointerManager.createSmartPsiElementPointer(end) : myStart;
   }
 
-  public @Nullable Navigatable getNavigatable() {
+  @Nullable
+  public Navigatable getNavigatable() {
     PsiElement start = myStart != null ? myStart.getElement() : null;
     return start instanceof Navigatable ? (Navigatable)start : null;
   }
 
-  public @Nullable ElementsRange getElementsRange() {
+  @Nullable
+  public ElementsRange getElementsRange() {
     if (myStart == null || myEnd == null) {
       return null;
     }
@@ -52,7 +54,8 @@ class ExtractableFragment {
     return new ElementsRange(start, end);
   }
 
-  public @Nullable TextRange getTextRange() {
+  @Nullable
+  public TextRange getTextRange() {
     ElementsRange elementsRange = getElementsRange();
     return elementsRange != null ? elementsRange.getTextRange() : null;
   }

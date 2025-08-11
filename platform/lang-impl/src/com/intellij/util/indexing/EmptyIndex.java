@@ -1,20 +1,24 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
+import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
-import com.intellij.util.indexing.impl.UpdateData;
-import com.intellij.util.indexing.impl.ValueContainerProcessor;
+import com.intellij.util.indexing.snapshot.EmptyValueContainer;
 import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, Input, Void>, MeasurableIndexStore {
+  private final ReadWriteLock myLock = new ReentrantReadWriteLock();
   private final IndexExtension<Key, Value, Input> myExtension;
 
   EmptyIndex(@NotNull IndexExtension<Key, Value, Input> extension) {
@@ -24,6 +28,11 @@ final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, 
   @Override
   public boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
     return true;
+  }
+
+  @Override
+  public @NotNull ReadWriteLock getLock() {
+    return myLock;
   }
 
   @Override
@@ -53,8 +62,8 @@ final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, 
   }
 
   @Override
-  public @NotNull FileIndexingStateWithExplanation getIndexingStateForFile(int fileId, @NotNull IndexedFile file) {
-    return FileIndexingStateWithExplanation.upToDate();
+  public @NotNull FileIndexingState getIndexingStateForFile(int fileId, @NotNull IndexedFile file) {
+    return FileIndexingState.UP_TO_DATE;
   }
 
   @Override
@@ -76,7 +85,7 @@ final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, 
   }
 
   @Override
-  public void updateWith(@NotNull UpdateData<Key, Value> updateData) {
+  public void updateWithMap(@NotNull AbstractUpdateData<Key, Value> updateData) {
   }
 
   @Override
@@ -97,19 +106,21 @@ final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, 
   }
 
   @Override
-  public <E extends Exception> boolean withData(@NotNull Key key,
-                                                @NotNull ValueContainerProcessor<Value, E> processor) throws E {
-    return processor.process(ValueContainer.emptyContainer());
+  public @NotNull ValueContainer<Value> getData(@NotNull Key key) {
+    //noinspection unchecked
+    return EmptyValueContainer.INSTANCE;
   }
 
   @Override
-  public @NotNull StorageUpdate mapInputAndPrepareUpdate(int inputId, @Nullable Input content) {
+  public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content) {
     return prepareUpdate(inputId, InputData.empty());
   }
 
   @Override
-  public @NotNull StorageUpdate prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
-    return StorageUpdate.NOOP;
+  public @NotNull Computable<Boolean> prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
+    return () -> {
+      return true;
+    };
   }
 
   @Override

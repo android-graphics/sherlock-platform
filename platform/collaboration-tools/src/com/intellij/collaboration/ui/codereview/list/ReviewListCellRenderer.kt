@@ -21,7 +21,6 @@ import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import icons.CollaborationToolsIcons
 import icons.DvcsImplIcons
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import javax.swing.*
@@ -29,16 +28,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.properties.Delegates
 
-@ApiStatus.Internal
-data class ReviewListCellUiOptions(
-  val bordered: Boolean = true,
-)
-
-@ApiStatus.Internal
-internal class ReviewListCellRenderer<T>(
-  private val presenter: (T) -> ReviewListItemPresentation,
-  private val options: ReviewListCellUiOptions = ReviewListCellUiOptions(),
-)
+internal class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPresentation)
   : ListCellRenderer<T>, SelectablePanel(null) {
 
   private val toolTipManager
@@ -97,21 +87,14 @@ internal class ReviewListCellRenderer<T>(
   }
 
   private fun updateRendering() {
-    val hSelectionInsets = if (!options.bordered) 0 else 13
-    val hBorder = when {
-      !options.bordered -> 6
-      isNewUI -> 19
-      else -> 13
-    }
-
     if (isNewUI) {
-      border = JBUI.Borders.empty(4, hBorder, 5, hBorder)
+      border = JBUI.Borders.empty(4, 19, 5, 19)
       selectionArc = JBUI.CurrentTheme.Popup.Selection.ARC.get()
       selectionArcCorners = SelectionArcCorners.ALL
-      selectionInsets = JBInsets(0, hSelectionInsets, 0, hSelectionInsets)
+      selectionInsets = JBInsets(0, 13, 0, 13)
     }
     else {
-      border = JBUI.Borders.empty(4, hBorder, 5, hBorder)
+      border = JBUI.Borders.empty(4, 13, 5, 13)
       selectionArc = 0
       selectionArcCorners = SelectionArcCorners.ALL
       selectionInsets = JBInsets(0)
@@ -375,12 +358,5 @@ internal class ReviewListCellRenderer<T>(
         return true
       }
     }
-  }
-}
-
-@ApiStatus.Internal
-data object ReviewListCellRendererFactory {
-  fun <T> getCellRenderer(presenter: (T) -> ReviewListItemPresentation): ListCellRenderer<T> {
-    return ReviewListCellRenderer(presenter)
   }
 }

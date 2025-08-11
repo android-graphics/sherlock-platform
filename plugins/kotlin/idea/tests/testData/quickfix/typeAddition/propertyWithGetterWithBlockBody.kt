@@ -4,7 +4,6 @@
 // ACTION: Convert member to extension
 // ACTION: Convert property to function
 // ACTION: Move to companion object
-// K2_AFTER_ERROR: This property must have an explicit type, be initialized, or be delegated.
 
 class My {
     val <caret>x

@@ -20,11 +20,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
-public final class MethodReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
+class MethodReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
+
   private boolean m_referencesStaticallyAccessible = true;
   private final PsiMember m_method;
 

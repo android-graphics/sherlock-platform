@@ -3,9 +3,9 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -35,8 +35,9 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
     return Set.of(JavaFeature.IMPLICIT_CLASSES);
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitClass(@NotNull PsiClass aClass) {
@@ -64,7 +65,7 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
           return;
         }
 
-        PsiJavaModule javaModule = JavaPsiModuleUtil.findDescriptorByElement(aClass);
+        PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(aClass);
         if (javaModule != null) {
           return;
         }
@@ -162,8 +163,10 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
 
   private static class ReplaceWithImplicitClassFix extends PsiUpdateModCommandQuickFix {
 
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
     @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaBundle.message("inspection.explicit.to.implicit.class.migration.fix.name");
     }
 
@@ -183,10 +186,10 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
         }
 
         for (SmartPsiElementPointer<PsiImportStatementBase> pointer : pointers) {
-          PsiImportStatementBase importStatementBase = pointer.getElement();
-          if (importStatementBase == null) continue;
-          if (!importStatementBase.isOnDemand()) continue;
-          ReplaceOnDemandImportIntention.replaceOnDemand(importStatementBase);
+          PsiImportStatementBase pointerElement = pointer.getElement();
+          if (pointerElement == null) continue;
+          if (!pointerElement.isOnDemand()) continue;
+          ReplaceOnDemandImportIntention.replaceOnDemand(pointerElement);
         }
       }
       PsiClass psiClass = ObjectUtils.tryCast(element, PsiClass.class);

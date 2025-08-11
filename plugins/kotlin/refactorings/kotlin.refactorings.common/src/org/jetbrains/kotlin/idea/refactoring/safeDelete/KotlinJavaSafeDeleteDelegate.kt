@@ -12,6 +12,7 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteCustomUsageInfo
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -26,7 +27,9 @@ class KotlinJavaSafeDeleteDelegate : JavaSafeDeleteDelegate {
       paramIdx: Int,
       isVararg: Boolean
     ) {
-        val element = reference.element as? KtElement ?: return
+        if (reference !is KtReference) return
+
+        val element = reference.element
 
         val originalParameter = parameter.unwrapped ?: return
 

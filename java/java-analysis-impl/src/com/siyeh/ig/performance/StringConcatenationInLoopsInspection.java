@@ -55,13 +55,15 @@ import static com.intellij.openapi.util.Predicates.nonNull;
 public final class StringConcatenationInLoopsInspection extends BaseInspection {
 
   @org.intellij.lang.annotations.Pattern(VALID_ID_PATTERN)
+  @NotNull
   @Override
-  public @NotNull String getID() {
+  public String getID() {
     return "StringConcatenationInLoop";
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("string.concatenation.in.loops.problem.descriptor");
   }
 
@@ -195,7 +197,8 @@ public final class StringConcatenationInLoopsInspection extends BaseInspection {
       });
     }
 
-    private static @Nullable PsiCodeBlock getSurroundingBlock(PsiElement expression) {
+    @Nullable
+    private static PsiCodeBlock getSurroundingBlock(PsiElement expression) {
       PsiElement parent = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, PsiClassInitializer.class, PsiLambdaExpression.class);
       if(parent instanceof PsiMethod) {
         return ((PsiMethod)parent).getBody();
@@ -272,14 +275,16 @@ public final class StringConcatenationInLoopsInspection extends BaseInspection {
   }
 
   @Contract("null -> null")
-  private static @Nullable PsiVariable getAppendedVariable(PsiExpression expression) {
+  @Nullable
+  private static PsiVariable getAppendedVariable(PsiExpression expression) {
     PsiReferenceExpression lhs = getAppendedExpression(expression);
     if (lhs == null) return null;
     return ObjectUtils.tryCast(lhs.resolve(), PsiVariable.class);
   }
 
   @Contract("null -> null")
-  private static @Nullable PsiReferenceExpression getAppendedExpression(PsiExpression expression) {
+  @Nullable
+  private static PsiReferenceExpression getAppendedExpression(PsiExpression expression) {
     PsiElement parent = expression;
     while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiPolyadicExpression) {
       parent = parent.getParent();
@@ -598,7 +603,8 @@ public final class StringConcatenationInLoopsInspection extends BaseInspection {
       }
     }
 
-    private static @NotNull PsiMethodCallExpression getDeepestQualifierCall(PsiMethodCallExpression result) {
+    @NotNull
+    private static PsiMethodCallExpression getDeepestQualifierCall(PsiMethodCallExpression result) {
       PsiMethodCallExpression append = result;
       while (true) {
         PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(append);
@@ -701,8 +707,10 @@ public final class StringConcatenationInLoopsInspection extends BaseInspection {
       ct.insertCommentsBefore(loop);
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getName() {
+    public String getName() {
       final String introduce = StringUtil.getShortName(myTargetType);
       if (myNullSafe) {
         return InspectionGadgetsBundle.message("string.concatenation.introduce.fix.name.null.safe", myName, introduce);
@@ -711,8 +719,10 @@ public final class StringConcatenationInLoopsInspection extends BaseInspection {
       }
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("string.concatenation.introduce.fix");
     }
   }
@@ -749,8 +759,10 @@ public final class StringConcatenationInLoopsInspection extends BaseInspection {
       ct.insertCommentsBefore(commentPlace == null ? variable : commentPlace);
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getName() {
+    public String getName() {
       final String introduce = StringUtil.getShortName(myTargetType);
       if (myNullSafe) {
         return InspectionGadgetsBundle.message("string.concatenation.replace.fix.name.null.safe", myName, introduce);
@@ -759,8 +771,10 @@ public final class StringConcatenationInLoopsInspection extends BaseInspection {
       }
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("string.concatenation.replace.fix");
     }
   }

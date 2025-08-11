@@ -20,12 +20,9 @@ import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.ButtonGroup
-import javax.swing.JButton
-import javax.swing.JComponent
-import javax.swing.JPanel
+import javax.swing.*
 
-internal class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
+class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
   private val service = controller.service.getThemeService()
 
   private val pages = mutableListOf<SchemePane>()
@@ -142,8 +139,10 @@ internal class ThemeChooserPage(val controller: WizardController) : OnboardingPa
     constraints.weightx = 2.0
     schemesPaneGridBagLayout.setConstraints(schemePane.pane, constraints)
 
-    schemesPane.revalidate()
-    schemesPane.repaint()
+    SwingUtilities.invokeLater {
+      schemesPane.revalidate()
+      schemesPane.repaint()
+    }
 
     service.updateScheme(schemePane.scheme.id)
   }

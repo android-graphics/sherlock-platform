@@ -14,7 +14,8 @@ import java.util.Map;
 public interface AdditionalContextFeatureProvider {
   LanguageExtension<AdditionalContextFeatureProvider> EP_NAME = new LanguageExtension<>("com.intellij.completion.ml.additionalContextFeatures");
 
-  static @NotNull List<AdditionalContextFeatureProvider> forLanguage(Language language) {
+  @NotNull
+  static List<AdditionalContextFeatureProvider> forLanguage(Language language) {
     return EP_NAME.allForLanguageOrAny(language);
   }
 

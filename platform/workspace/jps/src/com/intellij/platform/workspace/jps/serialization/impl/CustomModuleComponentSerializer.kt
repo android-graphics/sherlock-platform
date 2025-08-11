@@ -2,8 +2,8 @@
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -21,11 +21,10 @@ interface CustomModuleComponentSerializer {
    * [detachedModuleEntity] - module entity that is not added to the builder. You can change it by casting to builder and modify properties
    */
   fun loadComponent(detachedModuleEntity: ModuleEntity.Builder,
-                    componentTag: Element,
+                    reader: JpsFileContentReader,
+                    imlFileUrl: VirtualFileUrl,
                     errorReporter: ErrorReporter,
                     virtualFileManager: VirtualFileUrlManager)
 
-  fun saveComponent(moduleEntity: ModuleEntity): Element?
-
-  val componentName: String
+  fun saveComponent(moduleEntity: ModuleEntity, imlFileUrl: VirtualFileUrl, writer: JpsFileContentWriter)
 }

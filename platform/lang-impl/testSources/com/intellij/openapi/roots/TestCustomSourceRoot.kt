@@ -2,7 +2,6 @@
 
 package com.intellij.openapi.roots
 
-import com.intellij.jps.impl.JpsIdePluginManagerImpl
 import com.intellij.jps.impl.JpsPluginBean
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteActionAndWait
@@ -39,7 +38,7 @@ class TestCustomRootModelSerializerExtension : JpsModelSerializerExtension() {
         .files(listOf(tempPluginRoot.toPath()))
         .get()
       val pluginDescriptor = DefaultPluginDescriptor(PluginId.getId("com.intellij.custom.source.root.test"), pluginClassLoader)
-      JpsIdePluginManagerImpl.EP_NAME.point.registerExtension(JpsPluginBean(), pluginDescriptor, jpsPluginDisposable)
+      JpsPluginBean.EP_NAME.point.registerExtension(JpsPluginBean(), pluginDescriptor, jpsPluginDisposable)
     }
 
   }

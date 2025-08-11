@@ -30,6 +30,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.nodes.EvaluatingExpressionRootNode;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -383,10 +384,14 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }
   }
 
-  private class EvaluationMainPanel extends BorderLayoutPanel implements UiDataProvider {
+  private class EvaluationMainPanel extends BorderLayoutPanel implements DataProvider {
+    @Nullable
     @Override
-    public void uiDataSnapshot(@NotNull DataSink sink) {
-      sink.set(KEY, XDebuggerEvaluationDialog.this);
+    public Object getData(@NotNull @NonNls String dataId) {
+      if (KEY.is(dataId)) {
+        return XDebuggerEvaluationDialog.this;
+      }
+      return null;
     }
 
     @Override

@@ -28,7 +28,8 @@ import org.jetbrains.annotations.NotNull;
 public final class ConnectionResourceInspection extends ResourceInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "ConnectionOpenedButNotSafelyClosed";
   }
 

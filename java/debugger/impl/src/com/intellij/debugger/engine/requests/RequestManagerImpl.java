@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -23,10 +23,8 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ClassPrepareEvent;
-import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.*;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -60,17 +58,19 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     return myEventRequestManager;
   }
 
-  public @Nullable LightOrRealThreadInfo getFilterThread() {
+  @Nullable
+  public LightOrRealThreadInfo getFilterThread() {
     return myFilterThread;
   }
 
-  public @Nullable ThreadReference getFilterRealThread() {
+  @Nullable
+  public ThreadReference getFilterRealThread() {
     return myFilterThread != null ? myFilterThread.getRealThread() : null;
   }
 
   /** @deprecated Use setThreadFilter instead */
   @Deprecated
-  public void setFilterThread(final @Nullable ThreadReference filterThread) {
+  public void setFilterThread(@Nullable final ThreadReference filterThread) {
     if (filterThread != null) {
       setThreadFilter(new RealThreadInfo(filterThread));
     }
@@ -78,10 +78,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       setThreadFilter(null);
     }
   }
-  public void setThreadFilter(final @Nullable LightOrRealThreadInfo filter) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Thread filter is set to " + filter);
-    }
+  public void setThreadFilter(@Nullable final LightOrRealThreadInfo filter) {
     myFilterThread = filter;
   }
 
@@ -94,16 +91,10 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     return Collections.unmodifiableSet(requestSet);
   }
 
-  public static @Nullable Requestor findRequestor(EventRequest request) {
+  @Nullable
+  public static Requestor findRequestor(EventRequest request) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return request != null ? (Requestor)request.getProperty(REQUESTOR) : null;
-  }
-
-  public static boolean hasSuspendAllRequestor(@NotNull EventSet eventSet) {
-    return ContainerUtil.exists(eventSet, e -> {
-      Requestor requestor = findRequestor(e.request());
-      return requestor instanceof SuspendingRequestor sr && DebuggerSettings.SUSPEND_ALL.equals(sr.getSuspendPolicy());
-    });
   }
 
   private static void addClassFilter(EventRequest request, String pattern) {
@@ -207,7 +198,8 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   // requests creation
   @Override
-  public @Nullable ClassPrepareRequest createClassPrepareRequest(ClassPrepareRequestor requestor, String pattern) {
+  @Nullable
+  public ClassPrepareRequest createClassPrepareRequest(ClassPrepareRequestor requestor, String pattern) {
     if (myEventRequestManager == null) { // detached already
       return null;
     }

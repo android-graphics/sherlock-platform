@@ -1,11 +1,11 @@
-# $Id: eo.py 9452 2023-09-27 00:11:54Z milde $
+# $Id: eo.py 4564 2006-05-21 20:44:42Z wiemann $
 # Author: Marcelo Huerta San Martin <richieadler@users.sourceforge.net>
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
-# Two files must be translated for each language: one in docutils/languages,
-# the other in docutils/parsers/rst/languages.
+# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
+# translated for each language: one in docutils/languages, the other in
+# docutils/parsers/rst/languages.
 
 """
 Esperanto-language mappings for language-dependent features of Docutils.
@@ -15,8 +15,8 @@ __docformat__ = 'reStructuredText'
 
 labels = {
       # fixed: language-dependent
-      'author': 'Aŭtoro',
-      'authors': 'Aŭtoroj',
+      'author': 'A\u016dtoro',
+      'authors': 'A\u016dtoroj',
       'organization': 'Organizo',
       'address': 'Adreso',
       'contact': 'Kontakto',
@@ -24,13 +24,13 @@ labels = {
       'revision': 'Revido',
       'status': 'Stato',
       'date': 'Dato',
-      # 'copyright': 'Kopirajto',
-      'copyright': 'Aŭtorrajto',
-      'dedication': 'Dediĉo',
+      # 'copyright': u'Kopirajto',
+      'copyright': 'A\u016dtorrajto',
+      'dedication': 'Dedi\u0109o',
       'abstract': 'Resumo',
       'attention': 'Atentu!',
       'caution': 'Zorgu!',
-      'danger': 'DANĜERO!',
+      'danger': 'DAN\u011cERO!',
       'error': 'Eraro',
       'hint': 'Spuro',
       'important': 'Grava',
@@ -42,8 +42,8 @@ labels = {
 
 bibliographic_fields = {
       # language-dependent: fixed
-      'aŭtoro': 'author',
-      'aŭtoroj': 'authors',
+      'a\\u016dtoro': 'author',
+      'a\\u016dtoroj': 'authors',
       'organizo': 'organization',
       'adreso': 'address',
       'kontakto': 'contact',
@@ -51,8 +51,8 @@ bibliographic_fields = {
       'revido': 'revision',
       'stato': 'status',
       'dato': 'date',
-      'aŭtorrajto': 'copyright',
-      'dediĉo': 'dedication',
+      'a\\u016dtorrajto': 'copyright',
+      'dedi\\u0109o': 'dedication',
       'resumo': 'abstract'}
 """Esperanto (lowcased) to canonical name mapping for bibliographic fields."""
 

@@ -33,18 +33,15 @@ public abstract class Constraint {
 
   abstract int relationType();
 
-  @Override
   public String toString() {
     return myLeft.getCanonicalText() + " " + relationString() + " " + myRight.getCanonicalText();
   }
 
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     return o instanceof Constraint constraint && Objects.equals(myLeft, constraint.myLeft) && Objects.equals(myRight, constraint.myRight);
   }
 
-  @Override
   public int hashCode() {
     int result;
     result = (myLeft != null ? myLeft.hashCode() : 0);

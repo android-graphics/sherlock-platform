@@ -56,7 +56,8 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
   }
 
   @Override
-  public @NotNull Path getHostWorkingDirectory() {
+  @NotNull
+  public Path getHostWorkingDirectory() {
     return getLocalBuildSystemDirectory();
   }
 
@@ -87,7 +88,8 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
     setUnixProcessPriority(myCommandLine, priority);
   }
 
-  public static @NotNull Path getLocalBuildSystemDirectory() {
+  @NotNull
+  public static Path getLocalBuildSystemDirectory() {
     return PathManagerEx.getAppSystemDir().resolve(BuildManager.SYSTEM_ROOT);
   }
 

@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
@@ -27,8 +27,9 @@ import static com.intellij.psi.JavaTokenType.*;
  */
 public final class ExpressionMayBeFactorizedInspection extends BaseInspection {
 
+  @NotNull
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("if.may.be.factorized.problem.descriptor");
   }
 
@@ -160,7 +161,8 @@ public final class ExpressionMayBeFactorizedInspection extends BaseInspection {
 
   private static class ExpressionMayBeFactorizedFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("if.may.be.factorized.quickfix");
     }
 

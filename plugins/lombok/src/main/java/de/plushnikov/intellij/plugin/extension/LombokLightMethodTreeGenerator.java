@@ -19,7 +19,8 @@ public final class LombokLightMethodTreeGenerator implements TreeGenerator {
   }
 
   @Override
-  public @Nullable TreeElement generateTreeFor(PsiElement original, CharTable table, PsiManager manager) {
+  @Nullable
+  public TreeElement generateTreeFor(PsiElement original, CharTable table, PsiManager manager) {
     TreeElement result = null;
     if (original instanceof LombokLightMethodBuilder) {
       result = ChangeUtil.copyElement((TreeElement) SourceTreeToPsiMap.psiElementToTree(original), table);

@@ -28,8 +28,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -356,11 +356,8 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     return this;
   }
 
-  /** @deprecated Use {@link #addExtraActions(AnAction...)} */
-  @Deprecated
   public @NotNull ToolbarDecorator setActionGroup(@NotNull ActionGroup actionGroup) {
-    AnAction[] actions = actionGroup instanceof DefaultActionGroup o ? o.getChildren(ActionManager.getInstance()) :
-                         actionGroup.getChildren(null);
+    AnAction[] actions = actionGroup.getChildren(null);
     for (AnAction action : actions) {
       if (!(action instanceof Separator)) {
         addExtraAction(action);
@@ -444,8 +441,8 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     installDnD();
     panel.putClientProperty(DECORATOR_KEY, Boolean.TRUE);
     panel.putClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY, myActionsPanel.getComponent(0));
-    panel.putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, contextComponent);
-    panel.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
+    panel.putClientProperty(DslComponentProperty.LABEL_FOR, contextComponent);
+    panel.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
     panel.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY);
 
     panel.setBorder(myPanelBorder != null ? myPanelBorder : IdeBorderFactory.createBorder(SideBorder.ALL));

@@ -1,5 +1,3 @@
-import AImpl.bar
-
 // BIND_TO AImpl.bar
 interface A {
     infix fun Int.foo(i: Int)

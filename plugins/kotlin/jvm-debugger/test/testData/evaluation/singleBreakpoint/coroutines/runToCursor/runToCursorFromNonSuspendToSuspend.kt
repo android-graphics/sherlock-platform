@@ -45,3 +45,6 @@ fun ccc(i: Int) {
     val cStr = "hello $cInt"
     println("ccc: end $cInt, $cStr")
 }
+
+// REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
+// REGISTRY: debugger.always.suspend.thread.before.switch=true

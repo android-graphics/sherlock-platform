@@ -21,13 +21,15 @@ import java.util.List;
 @ApiStatus.Experimental
 public interface PyAstSubscriptionExpression extends PyAstQualifiedExpression, PyAstCallSiteExpression, PyAstReferenceOwner {
 
+  @Nullable
   @Override
-  default @Nullable PyAstExpression getReceiver(@Nullable PyAstCallable resolvedCallee) {
+  default PyAstExpression getReceiver(@Nullable PyAstCallable resolvedCallee) {
     return getOperand();
   }
 
+  @NotNull
   @Override
-  default @NotNull List<PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
+  default List<PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
     if (AccessDirection.of(this) == AccessDirection.WRITE) {
       final PsiElement parent = getParent();
       if (parent instanceof PyAstAssignmentStatement) {
@@ -40,7 +42,8 @@ public interface PyAstSubscriptionExpression extends PyAstQualifiedExpression, P
   /**
    * @return For {@code spam[x][y][n]} will return {@code spam} regardless number of its dimensions
    */
-  default @NotNull PyAstExpression getRootOperand() {
+  @NotNull
+  default PyAstExpression getRootOperand() {
     PyAstExpression operand = getOperand();
     while (operand instanceof PyAstSubscriptionExpression) {
       operand = ((PyAstSubscriptionExpression)operand).getOperand();
@@ -48,11 +51,13 @@ public interface PyAstSubscriptionExpression extends PyAstQualifiedExpression, P
     return operand;
   }
 
-  default @NotNull PyAstExpression getOperand() {
+  @NotNull
+  default PyAstExpression getOperand() {
     return childToPsiNotNull(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
 
-  default @Nullable PyAstExpression getIndexExpression() {
+  @Nullable
+  default PyAstExpression getIndexExpression() {
     return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 1);
   }
 
@@ -61,8 +66,9 @@ public interface PyAstSubscriptionExpression extends PyAstQualifiedExpression, P
     return getOperand();
   }
 
+  @Nullable
   @Override
-  default @Nullable QualifiedName asQualifiedName() {
+  default QualifiedName asQualifiedName() {
     return PyPsiUtilsCore.asQualifiedName(this);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -56,7 +56,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.impl.CallReferenceImplKt
 public final class GroovyExpectedTypesProvider {
   private static final ExtensionPointName<GroovyExpectedTypesContributor> EP_NAME = new ExtensionPointName<>("org.intellij.groovy.expectedTypesContributor");
 
-  public static TypeConstraint[] calculateTypeConstraints(final @NotNull GrExpression expression) {
+  public static TypeConstraint[] calculateTypeConstraints(@NotNull final GrExpression expression) {
     return TypeInferenceHelper.getCurrentContext().getCachedValue(expression, GroovyExpectedTypesProvider::doCalculateTypeConstraints);
   }
 
@@ -448,7 +448,7 @@ public final class GroovyExpectedTypesProvider {
     }
 
     @Override
-    public void visitUnaryExpression(final @NotNull GrUnaryExpression expression) {
+    public void visitUnaryExpression(@NotNull final GrUnaryExpression expression) {
       TypeConstraint constraint = new TypeConstraint(PsiTypes.intType()) {
         @Override
         public boolean satisfied(PsiType type, @NotNull PsiElement context) {
@@ -457,8 +457,9 @@ public final class GroovyExpectedTypesProvider {
           return !resolveWithArguments(new JustTypeArgument(boxed), reference.getMethodName(), reference.getArguments(), reference.getElement()).isEmpty();
         }
 
+        @NotNull
         @Override
-        public @NotNull PsiType getDefaultType() {
+        public PsiType getDefaultType() {
           return PsiTypes.intType();
         }
       };

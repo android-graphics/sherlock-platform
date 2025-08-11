@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.refactorings.introduce;
 
 import com.intellij.find.FindManager;
@@ -40,11 +40,11 @@ import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 
 import java.util.*;
 
-final class IntroducePropertyAction extends BaseRefactoringAction {
+public class IntroducePropertyAction extends BaseRefactoringAction {
   private static final String PREFIX = "${";
   private static final String SUFFIX = "}";
 
-  IntroducePropertyAction() {
+  public IntroducePropertyAction() {
     setInjectedContext(true);
   }
 
@@ -77,7 +77,8 @@ final class IntroducePropertyAction extends BaseRefactoringAction {
     return getSelectedElementAndTextRange(editor, file) != null;
   }
 
-  static @Nullable Pair<XmlElement, TextRange> getSelectedElementAndTextRange(Editor editor, final PsiFile file) {
+  @Nullable
+  static Pair<XmlElement, TextRange> getSelectedElementAndTextRange(Editor editor, final PsiFile file) {
     final int startOffset = editor.getSelectionModel().getSelectionStart();
     final int endOffset = editor.getSelectionModel().getSelectionEnd();
 
@@ -100,7 +101,7 @@ final class IntroducePropertyAction extends BaseRefactoringAction {
 
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
     @Override
-    public void invoke(final @NotNull Project project, final Editor editor, PsiFile file, DataContext dataContext) {
+    public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
       MavenActionsUsagesCollector.trigger(project, MavenActionsUsagesCollector.INTRODUCE_PROPERTY);
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -151,7 +152,8 @@ final class IntroducePropertyAction extends BaseRefactoringAction {
       showFindUsages(project, propertyName, selectedString, replaceWith, selectedProject);
     }
 
-    private static @NotNull List<VirtualFile> getFiles(PsiFile file, MavenDomProjectModel model) {
+    @NotNull
+    private static List<VirtualFile> getFiles(PsiFile file, MavenDomProjectModel model) {
       Set<VirtualFile> virtualFiles = new HashSet<>();
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
@@ -242,7 +244,7 @@ final class IntroducePropertyAction extends BaseRefactoringAction {
           final Set<UsageInfo> usages = new HashSet<>();
 
           @Override
-          public void generate(final @NotNull Processor<? super Usage> processor) {
+          public void generate(@NotNull final Processor<? super Usage> processor) {
             ApplicationManager.getApplication().runReadAction(() -> {
               collectUsages(myModel);
               for (MavenDomProjectModel model : MavenDomProjectProcessorUtils.getChildrenProjects(myModel)) {
@@ -286,7 +288,8 @@ final class IntroducePropertyAction extends BaseRefactoringAction {
             }
           }
 
-          private @NotNull Set<UsageInfo> getUsages(@NotNull XmlElement xmlElement) {
+          @NotNull
+          private Set<UsageInfo> getUsages(@NotNull XmlElement xmlElement) {
             String s = xmlElement.getText();
             if (StringUtil.isEmptyOrSpaces(s)) return Collections.emptySet();
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -62,25 +62,29 @@ public interface LineAnnotationAspect {
   /**
    * Used to override default text style
    */
-  default @Nullable EditorFontType getStyle(int line) {
+  @Nullable
+  default EditorFontType getStyle(int line) {
     return null;
   }
 
   /**
    * Used to override default text color
    */
-  default @Nullable ColorKey getColor(int line) {
+  @Nullable
+  default ColorKey getColor(int line) {
     return null;
   }
 
   /**
    * Used to override default background color
    */
-  default @Nullable Color getBgColor(int line) {
+  @Nullable
+  default Color getBgColor(int line) {
     return null;
   }
 
-  default @NlsContexts.ListItem String getDisplayName() {
+  @NlsContexts.ListItem
+  default String getDisplayName() {
     return getId(); //NON-NLS backward compatibility
   }
 }

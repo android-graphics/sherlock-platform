@@ -107,9 +107,6 @@ public class UninitializedReadCollector {
     else if (statement instanceof PsiForeachStatement foreachStatement) {
       return foreachStatementAssignsVariable(foreachStatement, variable);
     }
-    else if (statement instanceof PsiForeachPatternStatement) { //not throw errors
-      return false;
-    }
     else if (statement instanceof PsiWhileStatement whileStatement) {
       return whileStatementAssignsVariable(whileStatement, variable, stamp, checkedMethods);
     }
@@ -494,7 +491,7 @@ public class UninitializedReadCollector {
     if (!checkedMethods.add(methodSignature)) {
       return false;
     }
-    final PsiClass containingClass = PsiUtil.getContainingClass(callExpression);
+    final PsiClass containingClass = ClassUtils.getContainingClass(callExpression);
     final PsiClass calledClass = method.getContainingClass();
 
     // Can remark out this block to continue chase outside of of

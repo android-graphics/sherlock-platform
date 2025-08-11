@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.dvcs.hosting;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -43,7 +45,8 @@ public interface RepositoryListLoader {
    * Load repository urls in a single requests
    */
   @RequiresBackgroundThread
-  default @NotNull List<String> getAvailableRepositories(@NotNull ProgressIndicator progressIndicator) throws RepositoryListLoadingException {
+  @NotNull
+  default List<String> getAvailableRepositories(@NotNull ProgressIndicator progressIndicator) throws RepositoryListLoadingException {
     return Collections.emptyList();
   }
 
@@ -51,7 +54,8 @@ public interface RepositoryListLoader {
    * Load repository urls in multiple requests with ability to show partial result
    */
   @RequiresBackgroundThread
-  default @NotNull Result getAvailableRepositoriesFromMultipleSources(@NotNull ProgressIndicator progressIndicator) {
+  @NotNull
+  default Result getAvailableRepositoriesFromMultipleSources(@NotNull ProgressIndicator progressIndicator) {
     try {
       return new Result(getAvailableRepositories(progressIndicator), Collections.emptyList());
     }
@@ -64,8 +68,8 @@ public interface RepositoryListLoader {
    * Result from multiple sources
    */
   class Result {
-    private final @NotNull List<String> myUrls;
-    private final @NotNull List<RepositoryListLoadingException> myErrors;
+    @NotNull private final List<String> myUrls;
+    @NotNull private final List<RepositoryListLoadingException> myErrors;
 
     public Result(@NotNull List<String> urls, @NotNull List<RepositoryListLoadingException> errors) {
       this.myUrls = urls;
@@ -75,14 +79,16 @@ public interface RepositoryListLoader {
     /**
      * @return all loaded urls (can contain duplicates)
      */
-    public @NotNull List<String> getUrls() {
+    @NotNull
+    public List<String> getUrls() {
       return myUrls;
     }
 
     /**
      * @return exceptions occurred during loading from some sources
      */
-    public @NotNull List<RepositoryListLoadingException> getErrors() {
+    @NotNull
+    public List<RepositoryListLoadingException> getErrors() {
       return myErrors;
     }
   }

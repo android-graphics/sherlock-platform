@@ -16,6 +16,7 @@ import com.intellij.util.Processor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
@@ -51,8 +52,9 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS);
   }
 
+  @Nullable
   @Override
-  public @Nullable String getName() {
+  public String getName() {
     final PyNamedParameterStub stub = getStub();
     if (stub != null) {
       return stub.getName();
@@ -68,7 +70,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   }
 
   @Override
-  public @NotNull PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+  @NotNull
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     final ASTNode oldNameIdentifier = getNameIdentifierNode();
     if (oldNameIdentifier != null) {
       final ASTNode nameElement = PyUtil.createNewName(this, name);
@@ -105,7 +108,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   }
 
   @Override
-  public @Nullable PyExpression getDefaultValue() {
+  @Nullable
+  public PyExpression getDefaultValue() {
     final PyNamedParameterStub stub = getStub();
     if (stub != null && stub.getDefaultValueText() == null) {
       return null;
@@ -122,8 +126,9 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return PyNamedParameter.super.hasDefaultValue();
   }
 
+  @Nullable
   @Override
-  public @Nullable String getDefaultValueText() {
+  public String getDefaultValueText() {
     final PyNamedParameterStub stub = getStub();
     if (stub != null) {
       return stub.getDefaultValueText();
@@ -131,23 +136,27 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return PyNamedParameter.super.getDefaultValueText();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getRepr(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
+  public String getRepr(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
     return PyCallableParameterImpl.psi(this).getPresentableText(includeDefaultValue, context);
   }
 
   @Override
-  public @Nullable PyType getArgumentType(@NotNull TypeEvalContext context) {
+  @Nullable
+  public PyType getArgumentType(@NotNull TypeEvalContext context) {
     return PyCallableParameterImpl.psi(this).getArgumentType(context);
   }
 
   @Override
-  public @Nullable PyAnnotation getAnnotation() {
+  @Nullable
+  public PyAnnotation getAnnotation() {
     return getStubOrPsiChild(PyStubElementTypes.ANNOTATION);
   }
 
+  @Nullable
   @Override
-  public @Nullable String getAnnotationValue() {
+  public String getAnnotationValue() {
     final PyAnnotationOwnerStub stub = getStub();
     if (stub != null) {
       return stub.getAnnotation();
@@ -156,16 +165,19 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   }
 
   @Override
-  public @NotNull Icon getIcon(final int flags) {
+  @NotNull
+  public Icon getIcon(final int flags) {
     return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter);
   }
 
-  protected @Nullable PyFunction getContainingFunction(@NotNull PyParameterList parameterList) {
+  @Nullable
+  protected PyFunction getContainingFunction(@NotNull PyParameterList parameterList) {
     return parameterList.getContainingFunction();
   }
 
   @Override
-  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  @Nullable
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PsiElement parent = getParentByStub();
     if (parent instanceof PyParameterList) {
       PyFunction func = getContainingFunction((PyParameterList)parent);
@@ -249,7 +261,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return new PyElementPresentation(this);
   }
 
-  private @Nullable PyType getTypeFromUsages(@NotNull TypeEvalContext context) {
+  @Nullable
+  private PyType getTypeFromUsages(@NotNull TypeEvalContext context) {
     final Set<String> usedAttributes = new LinkedHashSet<>();
 
     final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
@@ -374,7 +387,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return null;
   }
 
-  private @NotNull List<PyCallableParameter> getParametersByCallArgument(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+  @NotNull
+  private List<PyCallableParameter> getParametersByCallArgument(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
     final PyArgumentList argumentList = PsiTreeUtil.getParentOfType(element, PyArgumentList.class);
     if (argumentList != null) {
       boolean elementIsArgument = false;
@@ -429,8 +443,9 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return super.toString() + "('" + getName() + "')";
   }
 
+  @NotNull
   @Override
-  public @NotNull SearchScope getUseScope() {
+  public SearchScope getUseScope() {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
     if (owner instanceof PyFunction) {
       return owner.getUseScope();
@@ -438,8 +453,9 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return new LocalSearchScope(getContainingFile());
   }
 
+  @Nullable
   @Override
-  public @Nullable String getTypeCommentAnnotation() {
+  public String getTypeCommentAnnotation() {
     return getTypeCommentAnnotationFromStubOrPsi(this);
   }
 }

@@ -2,8 +2,6 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor.Companion.getPreviewText
-import com.intellij.openapi.application.readAction
-import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.intentions.ConvertToStringTemplateInspection
 import org.jetbrains.kotlin.idea.intentions.DestructureInspection
@@ -58,13 +56,9 @@ class KotlinQuickFixIntentionPreviewTest : KotlinLightCodeInsightFixtureTestCase
     private fun doTest(@Language("kotlin") input: String, actionName: String, @Language("kotlin") output: String) {
         myFixture.configureByText("Test.kt", input)
         val action = myFixture.findSingleIntention(actionName)
-        val previewText = runBlocking { 
-            readAction { getPreviewText(project, action, file, editor) } 
-        }
+        val text = getPreviewText(project, action, file, editor)
         assertEquals(
-            output, previewText
+            output, text
         )
     }
-    
-    override fun runFromCoroutine(): Boolean = true
 }

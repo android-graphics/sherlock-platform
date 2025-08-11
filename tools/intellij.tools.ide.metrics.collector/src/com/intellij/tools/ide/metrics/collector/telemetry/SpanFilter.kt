@@ -19,22 +19,13 @@ class SpanFilter internal constructor(
       return SpanFilter(filter = { spanData -> spanData.name == name }, rawFilter = { it.operationName == name })
     }
 
-    fun nameInList(names: List<String>): SpanFilter {
+    fun containsNameIn(names: List<String>): SpanFilter {
       return SpanFilter(filter = { names.contains(it.name) }, rawFilter = { names.contains(it.operationName) })
     }
 
-    fun nameInList(vararg names: String): SpanFilter {
-      return nameInList(names.toList())
+    fun containsNameIn(vararg names: String): SpanFilter {
+      return SpanFilter(filter = { names.contains(it.name) }, rawFilter = { names.contains(it.operationName) })
     }
-
-    fun nameContainsAny(names: List<String>): SpanFilter {
-      return SpanFilter(filter = { span -> names.any { span.name.contains(it) } }, rawFilter = { span -> names.any { span.operationName.contains(it) } })
-    }
-
-    fun nameContainsAny(vararg names: String): SpanFilter {
-      return nameContainsAny(names.toList())
-    }
-
 
     fun nameContains(substring: String): SpanFilter {
       return SpanFilter(filter = { it.name.contains(substring) }, rawFilter = { it.operationName.contains(substring) })

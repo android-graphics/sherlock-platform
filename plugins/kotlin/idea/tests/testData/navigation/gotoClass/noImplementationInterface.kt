@@ -6,3 +6,4 @@ interface NoImplementationInterface {
 }
 
 // SEARCH_TEXT: NoImplemen
+// REF: (test).NoImplementationInterface

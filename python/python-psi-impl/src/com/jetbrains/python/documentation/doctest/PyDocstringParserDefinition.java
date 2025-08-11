@@ -19,18 +19,21 @@ public final class PyDocstringParserDefinition extends PythonParserDefinition {
                                                                                                 .getInstance());
 
   @Override
-  public @NotNull Lexer createLexer(Project project) {
+  @NotNull
+  public Lexer createLexer(Project project) {
     return new PyDocstringLexer();
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiParser createParser(Project project) {
+  public PsiParser createParser(Project project) {
     return new PyDocstringParser();
   }
 
 
+  @NotNull
   @Override
-  public @NotNull TokenSet getWhitespaceTokens() {
+  public TokenSet getWhitespaceTokens() {
     return TokenSet.orSet(super.getWhitespaceTokens(), TokenSet.create(PyDocstringTokenTypes.DOTS));
   }
 

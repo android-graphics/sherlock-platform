@@ -60,11 +60,12 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   @Override
   public int getStubVersion() {
     // Don't forget to update versions of indexes that use the updated stub-based elements
-    return 98;
+    return 88;
   }
 
+  @Nullable
   @Override
-  public @Nullable ASTNode parseContents(@NotNull ASTNode node) {
+  public ASTNode parseContents(@NotNull ASTNode node) {
     final LanguageLevel languageLevel = getLanguageLevel(node.getPsi());
     PythonRuntimeService instance = PythonRuntimeService.getInstance();
     if (instance != null) {
@@ -96,7 +97,8 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
     return null;
   }
 
-  private @Nullable ASTNode parseConsoleCode(@NotNull ASTNode node, PythonConsoleData consoleData) {
+  @Nullable
+  private ASTNode parseConsoleCode(@NotNull ASTNode node, PythonConsoleData consoleData) {
     final Lexer lexer = createConsoleLexer(node, consoleData);
     final PsiElement psi = node.getPsi();
     if (psi != null) {
@@ -110,7 +112,8 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
     return null;
   }
 
-  private @Nullable Lexer createConsoleLexer(ASTNode node, PythonConsoleData consoleData) {
+  @Nullable
+  private Lexer createConsoleLexer(ASTNode node, PythonConsoleData consoleData) {
     if (consoleData.isIPythonEnabled()) {
       return new PythonConsoleLexer();
     }
@@ -138,8 +141,9 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
     return ((PyFile)file).getLanguageLevel();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getExternalId() {
+  public String getExternalId() {
     return "python.FILE";
   }
 
@@ -150,8 +154,9 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
     dataStream.writeName(stub.getDeprecationMessage());
   }
 
+  @NotNull
   @Override
-  public @NotNull PyFileStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public PyFileStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     List<String> all = readNullableList(dataStream);
     BitSet future_features = readBitSet(dataStream);
     StringRef deprecationMessage = dataStream.readName();
@@ -192,7 +197,8 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
     }
   }
 
-  public static @Nullable List<String> readNullableList(StubInputStream dataStream) throws IOException {
+  @Nullable
+  public static List<String> readNullableList(StubInputStream dataStream) throws IOException {
     boolean hasNames = dataStream.readBoolean();
     List<String> names = null;
     if (hasNames) {

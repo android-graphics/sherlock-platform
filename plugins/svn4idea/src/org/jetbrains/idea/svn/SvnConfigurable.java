@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package org.jetbrains.idea.svn;
@@ -28,8 +28,8 @@ public abstract class SvnConfigurable extends ConfigurableBase<ConfigurableUi<Sv
   private static final @NonNls String ID = "vcs.Subversion";
   private static final @NonNls String HELP_ID = "project.propSubversion";
 
-  private final @NotNull Project myProject;
-  private final @NotNull Supplier<? extends ConfigurableUi<SvnConfiguration>> myUiSupplier;
+  @NotNull private final Project myProject;
+  @NotNull private final Supplier<? extends ConfigurableUi<SvnConfiguration>> myUiSupplier;
 
   public static @NlsContexts.ConfigurableName @NotNull String getGroupDisplayName() {
     return SvnVcs.VCS_DISPLAY_NAME;
@@ -57,8 +57,9 @@ public abstract class SvnConfigurable extends ConfigurableBase<ConfigurableUi<Sv
     return myUiSupplier.get();
   }
 
+  @NotNull
   @Override
-  protected @NotNull SvnConfiguration getSettings() {
+  protected SvnConfiguration getSettings() {
     return SvnConfiguration.getInstance(myProject);
   }
 
@@ -87,9 +88,9 @@ public abstract class SvnConfigurable extends ConfigurableBase<ConfigurableUi<Sv
   }
 
   public static void selectConfigurationDirectory(@NotNull String path,
-                                                  final @NotNull Consumer<? super String> dirConsumer,
+                                                  @NotNull final Consumer<? super String> dirConsumer,
                                                   final Project project,
-                                                  final @Nullable Component component) {
+                                                  @Nullable final Component component) {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
       .withTitle(message("dialog.title.select.configuration.directory"))
       .withDescription(message("dialog.description.select.configuration.directory"))

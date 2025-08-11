@@ -3,6 +3,7 @@ package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.ui.CommonProgramParametersPanel;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
@@ -20,6 +21,7 @@ import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
+import com.jetbrains.python.extensions.FileChooserDescriptorExtKt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,10 +48,12 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
     myProject = configuration.getProject();
 
-    var chooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
-      .withExtensionFilter(PyBundle.message("python.scripts"), "py", "")
-      .withTitle(PyBundle.message("python.run.select.script"));
-    var listener = new PyBrowseActionListener(configuration, chooserDescriptor) {
+    final FileChooserDescriptor chooserDescriptor =
+      FileChooserDescriptorExtKt
+        .withPythonFiles(FileChooserDescriptorFactory.createSingleFileDescriptor().withTitle(PyBundle.message("python.run.select.script")), true);
+
+    final PyBrowseActionListener listener = new PyBrowseActionListener(configuration, chooserDescriptor) {
+
       @Override
       protected void onFileChosen(final @NotNull VirtualFile chosenFile) {
         super.onFileChosen(chosenFile);
@@ -221,7 +225,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
           JBPopupFactory.getInstance().createListPopup(
             new BaseListPopupStep<@Nls String>(PyBundle.message("python.configuration.choose.target.to.run"), Lists.newArrayList(getScriptPathText(), getModuleNameText())) {
               @Override
-              public PopupStep<?> onChosen(@Nls String selectedValue, boolean finalChoice) {
+              public PopupStep onChosen(@Nls String selectedValue, boolean finalChoice) {
                 setTargetComboBoxValue(selectedValue);
                 updateRunModuleMode();
                 return FINAL_CHOICE;

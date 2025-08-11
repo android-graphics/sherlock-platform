@@ -10,4 +10,8 @@ public final class ExceptionDebugHelper {
     t.printStackTrace(new PrintWriter(writer));
     return writer.getBuffer().toString();
   }
+
+  public static int getCurrentThreadStackDepth() {
+    return Thread.currentThread().getStackTrace().length;
+  }
 }

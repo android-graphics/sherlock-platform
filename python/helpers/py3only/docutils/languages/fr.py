@@ -1,11 +1,11 @@
-# $Id: fr.py 9452 2023-09-27 00:11:54Z milde $
+# $Id: fr.py 4564 2006-05-21 20:44:42Z wiemann $
 # Author: Stefane Fermigier <sf@fermigier.com>
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
-# Two files must be translated for each language: one in docutils/languages,
-# the other in docutils/parsers/rst/languages.
+# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
+# translated for each language: one in docutils/languages, the other in
+# docutils/parsers/rst/languages.
 
 """
 French-language mappings for language-dependent features of Docutils.
@@ -20,12 +20,12 @@ labels = {
       'address': 'Adresse',
       'contact': 'Contact',
       'version': 'Version',
-      'revision': 'Révision',
+      'revision': 'R\u00e9vision',
       'status': 'Statut',
       'date': 'Date',
       'copyright': 'Copyright',
-      'dedication': 'Dédicace',
-      'abstract': 'Résumé',
+      'dedication': 'D\u00e9dicace',
+      'abstract': 'R\u00e9sum\u00e9',
       'attention': 'Attention!',
       'caution': 'Avertissement!',
       'danger': '!DANGER!',
@@ -45,12 +45,12 @@ bibliographic_fields = {
       'adresse': 'address',
       'contact': 'contact',
       'version': 'version',
-      'révision': 'revision',
+      'r\u00e9vision': 'revision',
       'statut': 'status',
       'date': 'date',
       'copyright': 'copyright',
-      'dédicace': 'dedication',
-      'résumé': 'abstract'}
+      'd\u00e9dicace': 'dedication',
+      'r\u00e9sum\u00e9': 'abstract'}
 """French (lowcased) to canonical name mapping for bibliographic fields."""
 
 author_separators = [';', ',']

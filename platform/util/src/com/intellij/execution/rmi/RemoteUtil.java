@@ -7,7 +7,6 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +19,6 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author Gregory.Shrago
  */
-@ApiStatus.Internal
 public final class RemoteUtil {
   RemoteUtil() {
   }

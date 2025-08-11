@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.target.TargetEnvironment;
@@ -9,7 +9,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,11 +23,13 @@ public final class JavaTargetDependentParameters {
     parameters.add(parameter);
   }
 
-  public @NotNull @Unmodifiable List<String> toLocalParameters() {
+  @NotNull
+  public List<String> toLocalParameters() {
     return ContainerUtil.map(parameters, f -> f.apply(new LocalTargetEnvironmentRequest()).toLocalParameter());
   }
 
-  public @NotNull List<Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>> asTargetParameters() {
+  @NotNull
+  public List<Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>> asTargetParameters() {
     return parameters;
   }
 
@@ -36,7 +37,8 @@ public final class JavaTargetDependentParameters {
     myEnvironment = environment;
   }
 
-  public @Nullable TargetEnvironment getTargetEnvironment() {
+  @Nullable
+  public TargetEnvironment getTargetEnvironment() {
     return myEnvironment;
   }
 }

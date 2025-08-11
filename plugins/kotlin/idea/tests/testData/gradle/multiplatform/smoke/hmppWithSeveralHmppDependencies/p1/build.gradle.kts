@@ -12,7 +12,7 @@ android {
 
 kotlin {
     jvm()
-    androidTarget()
+    android()
     iosArm64()
     iosX64()
 

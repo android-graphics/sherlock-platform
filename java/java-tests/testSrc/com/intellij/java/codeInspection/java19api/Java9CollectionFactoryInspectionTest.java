@@ -36,7 +36,7 @@ public class Java9CollectionFactoryInspectionTest extends LightQuickFixParameter
 
   @Override
   protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk11();
+    return IdeaTestUtil.getMockJdk9();
   }
 
   @Override

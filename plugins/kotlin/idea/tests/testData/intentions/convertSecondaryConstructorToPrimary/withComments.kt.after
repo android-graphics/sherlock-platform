@@ -1,4 +1,3 @@
-// "Convert to primary constructor" "true"
 class WithComments/* Some parameter */
 /**
  * A constructor
@@ -10,4 +9,3 @@ class WithComments/* Some parameter */
 ) {
 
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertSecondaryConstructorToPrimaryInspection$createQuickFix$1

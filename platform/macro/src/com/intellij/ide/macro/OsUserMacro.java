@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
  package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -8,18 +8,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class OsUserMacro extends Macro {
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return "OSUser";
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
+  public String getDescription() {
     return IdeCoreBundle.message("macro.os.user");
   }
 
+  @Nullable
   @Override
-  public @Nullable String expand(@NotNull DataContext dataContext) {
+  public String expand(@NotNull DataContext dataContext) {
     return SystemProperties.getUserName();
   }
 }

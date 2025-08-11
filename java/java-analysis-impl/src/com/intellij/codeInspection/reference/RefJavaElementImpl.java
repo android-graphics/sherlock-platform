@@ -24,7 +24,7 @@ import java.util.Objects;
 /**
  * Subclasses are allowed to use bit 17 and higher for flags.
  */
-public abstract sealed class RefJavaElementImpl extends RefElementImpl implements RefJavaElement
+public sealed abstract class RefJavaElementImpl extends RefElementImpl implements RefJavaElement
   permits RefClassImpl, RefFieldImpl, RefFunctionalExpressionImpl, RefMethodImpl, RefParameterImpl {
 
   private static final int ACCESS_MODIFIER_MASK = 0b11;
@@ -69,7 +69,8 @@ public abstract sealed class RefJavaElementImpl extends RefElementImpl implement
   }
 
   @Override
-  public synchronized @NotNull Collection<RefClass> getOutTypeReferences() {
+  @NotNull
+  public synchronized Collection<RefClass> getOutTypeReferences() {
     final RefEntity owner = getOwner();
     return owner instanceof RefJavaElement ? ((RefJavaElement)owner).getOutTypeReferences() : Collections.emptySet();
   }
@@ -81,7 +82,8 @@ public abstract sealed class RefJavaElementImpl extends RefElementImpl implement
     }
   }
 
-  private static @NotNull String getName(@NotNull UElement declaration) {
+  @NotNull
+  private static String getName(@NotNull UElement declaration) {
     PsiElement element = declaration.getJavaPsi();
     if (element instanceof PsiAnonymousClass anonymousClass) {
       PsiClass psiBaseClass = anonymousClass.getBaseClassType().resolve();
@@ -165,8 +167,9 @@ public abstract sealed class RefJavaElementImpl extends RefElementImpl implement
     setFlag(b, IS_SYNTHETIC_JSP_ELEMENT_MASK);
   }
 
+  @NotNull
   @Override
-  public synchronized @NotNull String getAccessModifier() {
+  public synchronized String getAccessModifier() {
     long access_id = myFlags & ACCESS_MODIFIER_MASK;
     if (access_id == ACCESS_PRIVATE) return PsiModifier.PRIVATE;
     if (access_id == ACCESS_PUBLIC) return PsiModifier.PUBLIC;

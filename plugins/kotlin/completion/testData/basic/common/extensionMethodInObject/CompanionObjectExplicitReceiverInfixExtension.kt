@@ -11,4 +11,5 @@ fun usage(t: T) {
     t foo<caret>
 }
 
+// IGNORE_K2
 // EXIST: { lookupString: "fooExtension", itemText: "fooExtension", icon: "Function"}

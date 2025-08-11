@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.settings;
 
 import com.intellij.openapi.externalSystem.service.settings.AbstractExternalSystemConfigurable;
@@ -16,34 +16,39 @@ public final class GradleConfigurable extends AbstractExternalSystemConfigurable
 
   public static final String DISPLAY_NAME = GradleConstants.SYSTEM_ID.getReadableName();
   public static final String ID = "reference.settingsdialog.project.gradle";
-  public static final @NonNls String HELP_TOPIC = ID;
+  @NonNls public static final String HELP_TOPIC = ID;
 
   public GradleConfigurable(@NotNull Project project) {
     super(project, GradleConstants.SYSTEM_ID);
   }
 
+  @NotNull
   @Override
-  protected @NotNull ExternalSystemSettingsControl<GradleProjectSettings> createProjectSettingsControl(@NotNull GradleProjectSettings settings) {
+  protected ExternalSystemSettingsControl<GradleProjectSettings> createProjectSettingsControl(@NotNull GradleProjectSettings settings) {
     return new GradleProjectSettingsControl(settings);
   }
 
+  @Nullable
   @Override
-  protected @Nullable ExternalSystemSettingsControl<GradleSettings> createSystemSettingsControl(@NotNull GradleSettings settings) {
+  protected ExternalSystemSettingsControl<GradleSettings> createSystemSettingsControl(@NotNull GradleSettings settings) {
     return new GradleSystemSettingsControl(settings);
   }
 
+  @NotNull
   @Override
-  protected @NotNull GradleProjectSettings newProjectSettings() {
+  protected GradleProjectSettings newProjectSettings() {
     return new GradleProjectSettings();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getId() {
+  public String getId() {
     return ID;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getHelpTopic() {
+  public String getHelpTopic() {
     return HELP_TOPIC;
   }
 }

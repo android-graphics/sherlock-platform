@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.SdkVersionUtil;
 import com.intellij.openapi.util.Comparing;
@@ -79,17 +80,12 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
 
   @Override
   public @NotNull Collection<String> suggestHomePaths() {
-    return suggestHomePaths(null);
-  }
-
-  @Override
-  public @NotNull Collection<String> suggestHomePaths(@Nullable Project project) {
     //there is no need to search for JDKs if there is JavaSdkImpl registered
     if (!notSimpleJavaSdkTypeIfAlternativeExists().test(this)) {
       return Collections.emptyList();
     }
 
-    return JdkFinder.getInstance().suggestHomePaths(project);
+    return JdkFinder.getInstance().suggestHomePaths();
   }
 
   @Override

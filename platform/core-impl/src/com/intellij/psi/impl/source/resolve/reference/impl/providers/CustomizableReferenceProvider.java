@@ -44,7 +44,6 @@ public interface CustomizableReferenceProvider {
       myOptionDescription = optionDescription;
     }
 
-    @Override
     public String toString() { return myOptionDescription; }
 
     /** @noinspection unchecked*/

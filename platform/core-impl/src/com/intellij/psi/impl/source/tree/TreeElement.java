@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
@@ -24,7 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class TreeElement extends ElementBase implements ASTNode, ReparseableASTNode, Cloneable, LighterASTNode {
+public abstract class TreeElement extends ElementBase implements ASTNode, ReparseableASTNode, Cloneable {
   public static final TreeElement[] EMPTY_ARRAY = new TreeElement[0];
   private TreeElement myNextSibling;
   private TreeElement myPrevSibling;
@@ -140,19 +139,6 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
     return offsetInParent;
   }
 
-  @Override
-  public abstract int getTextLength();
-
-  @Override
-  public IElementType getTokenType() {
-    return getElementType();
-  }
-
-  @Override
-  public int getEndOffset() {
-    return getStartOffset() + getTextLength();
-  }
-
   public int getTextOffset() {
     return getStartOffset();
   }
@@ -189,11 +175,9 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   final void setTreeParent(CompositeElement parent) {
     if (parent == myParent) return;
 
-    if (myParent != null) {
-      PsiFileImpl file = getCachedFile(this);
-      if (file != null) {
-        file.beforeAstChange();
-      }
+    PsiFileImpl file = getCachedFile(this);
+    if (file != null) {
+      file.beforeAstChange();
     }
 
     myParent = parent;

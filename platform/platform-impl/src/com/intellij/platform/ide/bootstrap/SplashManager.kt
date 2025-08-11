@@ -5,7 +5,7 @@ package com.intellij.platform.ide.bootstrap
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.ide.impl.ProjectUtil.getRootFrameForWindow
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -13,6 +13,8 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.wm.impl.FrameBoundsConverter
+import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.progress.ModalTaskOwner
@@ -27,10 +29,12 @@ import com.intellij.util.lang.ByteBufferCleaner
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus.Internal
 import sun.awt.image.SunWritableRaster
 import java.awt.*
-import java.awt.event.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
 import java.awt.geom.RoundRectangle2D
 import java.awt.image.*
 import java.nio.ByteBuffer
@@ -39,7 +43,12 @@ import java.nio.channels.FileChannel
 import java.nio.file.*
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
+import javax.swing.JFrame
+import javax.swing.WindowConstants
 import kotlin.coroutines.coroutineContext
+
+@Volatile
+private var PROJECT_FRAME: JFrame? = null
 
 @Volatile
 private var SPLASH_WINDOW: Splash? = null
@@ -51,10 +60,9 @@ private val SHOW_SPLASH_LONGER = System.getProperty("idea.show.splash.longer", "
 
 private fun isTooLateToShowSplash(): Boolean = !SHOW_SPLASH_LONGER && LoadingState.COMPONENTS_LOADED.isOccurred
 
-@Internal
-fun CoroutineScope.scheduleShowSplashIfNeeded(lockSystemDirsJob: Job, initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>, args: List<String>) {
+internal fun CoroutineScope.scheduleShowSplashIfNeeded(lockSystemDirsJob: Job, initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>, args: List<String>) {
   launch(CoroutineName("showSplashIfNeeded")) {
-    if (!AppMode.isLightEdit() && !isRealRemoteDevHost(args) && CommandLineArgs.isSplashNeeded(args)) {
+    if (!AppMode.isLightEdit() && CommandLineArgs.isSplashNeeded(args)) {
       lockSystemDirsJob.join()
       try {
         showSplashIfNeeded(initUiScale = initUiScale, appInfoDeferred = appInfoDeferred)
@@ -68,8 +76,6 @@ fun CoroutineScope.scheduleShowSplashIfNeeded(lockSystemDirsJob: Job, initUiScal
     }
   }
 }
-
-private fun isRealRemoteDevHost(args: List<String>): Boolean = AppMode.isRemoteDevHost() && args.firstOrNull() != AppMode.SPLIT_MODE_COMMAND
 
 private fun CoroutineScope.showSplashIfNeeded(initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>) {
   val oldJob = splashJob.get()
@@ -129,20 +135,14 @@ private fun CoroutineScope.showSplashIfNeeded(initUiScale: Job, appInfoDeferred:
         return@span
       }
 
-      val deactivationListener = if (SHOW_SPLASH_LONGER) {
-        // Hide if splash or IDE frame was deactivated because of focusing some other window in the OS (not IDE Frame).
-        val listener = AWTEventListener { e ->
-          if (e.id == WindowEvent.WINDOW_DEACTIVATED) {
-            val windowEvent = e as WindowEvent
-            if (getRootFrameForWindow(windowEvent.oppositeWindow) == null) {
-              hideSplash()
-            }
+      // Hide if splash was deactivated because of focusing some other window in the OS (not IDE Frame).
+      splash.addWindowListener(object : WindowAdapter() {
+        override fun windowDeactivated(e: WindowEvent?) {
+          if (ProjectUtil.getRootFrameForWindow(e?.oppositeWindow) == null) {
+            hideSplash()
           }
         }
-        Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.WINDOW_EVENT_MASK)
-        listener
-      }
-      else null
+      })
 
       StartUpMeasurer.addInstantEvent("splash shown")
       try {
@@ -168,9 +168,8 @@ private fun CoroutineScope.showSplashIfNeeded(initUiScale: Job, appInfoDeferred:
           showJob.join()
         }
       }
-      catch (_: CancellationException) {
+      catch (ignore: CancellationException) {
         SPLASH_WINDOW = null
-        Toolkit.getDefaultToolkit().removeAWTEventListener(deactivationListener)
         splash.isVisible = false
         splash.dispose()
         StartUpMeasurer.addInstantEvent("splash hidden")
@@ -193,6 +192,59 @@ private fun CoroutineScope.showSplashIfNeeded(initUiScale: Job, appInfoDeferred:
   }
 }
 
+@Suppress("unused")
+private suspend fun showLastProjectFrameIfAvailable(initUiDeferred: Job): Boolean {
+  lateinit var backgroundColor: Color
+  var extendedState = 0
+  val savedBounds: Rectangle = span("splash as project frame initialization") {
+    val infoFile = Path.of(PathManager.getSystemPath(), "lastProjectFrameInfo")
+    val buffer = try {
+      withContext(Dispatchers.IO) {
+        Files.newByteChannel(infoFile).use { channel ->
+          val buffer = ByteBuffer.allocate(channel.size().toInt())
+          do {
+            channel.read(buffer)
+          }
+          while (buffer.hasRemaining())
+          buffer.flip()
+          if (buffer.getShort().toInt() != 0) {
+            return@withContext null
+          }
+
+          buffer
+        }
+      } ?: return@span null
+    }
+    catch (ignore: NoSuchFileException) {
+      return@span null
+    }
+
+    val savedBounds = Rectangle(buffer.getInt(), buffer.getInt(), buffer.getInt(), buffer.getInt())
+
+    @Suppress("UseJBColor")
+    backgroundColor = Color(buffer.getInt(), true)
+
+    @Suppress("UNUSED_VARIABLE")
+    val isFullScreen = buffer.get().toInt() == 1
+    extendedState = buffer.getInt()
+    savedBounds
+  } ?: return false
+
+  initUiDeferred.join()
+  span("splash as project frame creation") {
+    withContext(RawSwingDispatcher) {
+      PROJECT_FRAME = doShowFrame(savedBounds = savedBounds, backgroundColor = backgroundColor, extendedState = extendedState)
+    }
+  }
+  return true
+}
+
+internal fun getAndUnsetSplashProjectFrame(): JFrame? {
+  val frame = PROJECT_FRAME
+  PROJECT_FRAME = null
+  return frame
+}
+
 fun hideSplashBeforeShow(window: Window) {
   if (splashJob.get().isCompleted) {
     return
@@ -210,6 +262,29 @@ internal fun hasSplash(): Boolean = SPLASH_WINDOW != null
 
 fun hideSplash() {
   splashJob.get().cancel("hideSplash")
+}
+
+private fun doShowFrame(savedBounds: Rectangle, backgroundColor: Color, extendedState: Int): IdeFrameImpl {
+  val frame = IdeFrameImpl()
+  frame.isAutoRequestFocus = false
+  frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
+  val devicePair = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(savedBounds)
+  // this functionality under the flag - fully correct behavior is not needed here (that's default is not applied if null)
+  if (devicePair != null) {
+    frame.bounds = devicePair.first
+  }
+  frame.extendedState = extendedState
+  frame.minimumSize = Dimension(340, frame.minimumSize.getHeight().toInt())
+  frame.background = backgroundColor
+  frame.contentPane.background = backgroundColor
+  if (SystemInfoRt.isMac) {
+    frame.iconImage = null
+  }
+  StartUpMeasurer.addInstantEvent("frame shown")
+  val activity = StartUpMeasurer.startActivity("frame set visible")
+  frame.isVisible = true
+  activity.end()
+  return frame
 }
 
 @RequiresEdt
@@ -326,7 +401,7 @@ private suspend fun readImage(file: Path, scale: Float, isJreHiDPIEnabled: Boole
       }
     }
   }
-  catch (_: NoSuchFileException) {
+  catch (ignore: NoSuchFileException) {
     return null
   }
 
@@ -396,7 +471,7 @@ private fun writeImage(file: Path, image: BufferedImage) {
   try {
     Files.move(tempFile, file, StandardCopyOption.ATOMIC_MOVE)
   }
-  catch (_: AtomicMoveNotSupportedException) {
+  catch (e: AtomicMoveNotSupportedException) {
     Files.move(tempFile, file)
   }
 }

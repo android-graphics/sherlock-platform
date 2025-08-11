@@ -45,12 +45,14 @@ public final class CastThatLosesPrecisionInspection extends BaseInspection {
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "NumericCastThatLosesPrecision";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final PsiType operandType = (PsiType)infos[0];
     boolean negativeOnly = (boolean)infos[1];
     return InspectionGadgetsBundle.message(negativeOnly ?

@@ -39,7 +39,7 @@ final class ShowNavBarAction extends AnAction implements DumbAware, PopupAction,
   }
 
   @Override
-  public void update(final @NotNull AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final boolean enabled = e.getData(CommonDataKeys.PROJECT) != null;
     e.getPresentation().setEnabled(enabled);
 

@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.codeInspection;
 
@@ -54,14 +56,16 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider implem
     suppress(element.getContainingFile(), findSuppressionLeaf(tag, null, 0), inspectionId, tag.getTextRange().getStartOffset());
   }
 
-  protected @Nullable PsiElement findSuppression(final PsiElement anchor, final String id, PsiElement originalElement) {
+  @Nullable
+  protected PsiElement findSuppression(final PsiElement anchor, final String id, PsiElement originalElement) {
     final PsiElement element = findSuppressionLeaf(anchor, id, 0);
     if (element != null) return element;
 
     return findFileSuppression(anchor, id, originalElement);
   }
 
-  protected @Nullable PsiElement findFileSuppression(PsiElement anchor, String id, PsiElement originalElement) {
+  @Nullable
+  protected PsiElement findFileSuppression(PsiElement anchor, String id, PsiElement originalElement) {
     final PsiFile file = anchor.getContainingFile();
     if (file instanceof XmlFile) {
       final XmlDocument document = ((XmlFile)file).getDocument();
@@ -72,7 +76,8 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider implem
     return null;
   }
 
-  protected @Nullable PsiElement findSuppressionLeaf(PsiElement leaf, final @Nullable String id, int offset) {
+  @Nullable
+  protected PsiElement findSuppressionLeaf(PsiElement leaf, @Nullable final String id, int offset) {
     while (leaf != null && leaf.getTextOffset() >= offset) {
       if (isSuppressedInComment(leaf, id)) {
         return leaf;
@@ -102,7 +107,7 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider implem
     if (id == null) {
       return true;
     }
-    final @NonNls HashSet<String> parts = new HashSet<>(StringUtil.getWordsIn(text));
+    @NonNls final HashSet<String> parts = new HashSet<>(StringUtil.getWordsIn(text));
     return parts.contains(id) || parts.contains(XmlSuppressableInspectionTool.ALL);
   }
 
@@ -135,13 +140,15 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider implem
     return StringUtil.replace(originalText, getSuffix(), ", " + inspectionId + getSuffix());
   }
 
-  protected @NonNls String getPrefix() {
+  @NonNls
+  protected String getPrefix() {
     return "<!--" +
            SUPPRESS_MARK +
            " ";
   }
 
-  protected @NonNls String getSuffix() {
+  @NonNls
+  protected String getSuffix() {
     return " -->";
   }
 }

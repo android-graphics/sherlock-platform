@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.eventLog.EventLogSystemEvents
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProvider
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogger
-import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.logState
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker
 import com.intellij.internal.statistic.updater.allowExecution
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
@@ -61,7 +61,7 @@ class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : 
       project: Project?,
       recorderLoggers: MutableMap<String, StatisticsEventLogger>,
       usagesCollector: FeatureUsagesCollector,
-      metrics: suspend () -> Set<MetricEvent>,
+      metrics: Set<MetricEvent>,
     ) {
       var group = usagesCollector.group
       if (group == null) {
@@ -77,9 +77,7 @@ class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : 
       }
 
       try {
-        val data = metrics.invoke()
-
-        logUsagesAsStateEvents(project = project, group = group, metrics = data, logger = logger)
+        logUsagesAsStateEvents(project = project, group = group, metrics = metrics, logger = logger)
       }
       catch (e: Throwable) {
         if (project != null && project.isDisposed) {
@@ -89,8 +87,6 @@ class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : 
         val data = FeatureUsageData(recorder).addProject(project)
         @Suppress("UnstableApiUsage")
         logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_FAILED, data.build(), true).asDeferred().join()
-
-        LOG.error(e)
       }
     }
 
@@ -146,9 +142,8 @@ class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : 
      * state events recorded by a scheduler [ApplicationUsagesCollector] or [ProjectUsagesCollector]
      */
     fun logStateEvent(group: EventLogGroup, event: String, data: FeatureUsageData) {
-      val usageLogger = FeatureUsageLogger.getInstance()
-      usageLogger.logState(group, event, data.build())
-      usageLogger.logState(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED)
+      logState(group, event, data.build())
+      logState(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED)
     }
   }
 
@@ -186,7 +181,7 @@ class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : 
             project = null,
             recorderLoggers = recorderLoggers,
             usagesCollector = usagesCollector,
-            metrics = usagesCollector::getMetricsAsync,
+            metrics = usagesCollector.getMetricsAsync(),
           )
         }
       }
@@ -229,11 +224,13 @@ class ProjectFUStateUsagesLogger(
       }
 
       launch {
+        val metrics = usagesCollector.collect(project)
+
         FUStateUsagesLogger.logMetricsOrError(
           project = project,
           recorderLoggers = recorderLoggers,
           usagesCollector = usagesCollector,
-          metrics = { usagesCollector.collect(project) },
+          metrics = metrics,
         )
       }
     }

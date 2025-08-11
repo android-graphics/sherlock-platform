@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -65,7 +65,7 @@ public final class ReflectedProject {
   }
 
   ReflectedProject(final ClassLoader classLoader) {
-    Object project;
+    Object project = null;
     try {
       final Class<?> projectClass = classLoader.loadClass(ANT_PROJECT_CLASS);
       project = projectClass.getConstructor().newInstance();
@@ -121,11 +121,13 @@ public final class ReflectedProject {
     myProject = project;
   }
 
-  public @Nullable Map<String, Class<?>> getTaskDefinitions() {
+  @Nullable
+  public Map<String, Class<?>> getTaskDefinitions() {
     return myTaskDefinitions;
   }
 
-  public @Nullable Map<String, Class<?>> getDataTypeDefinitions() {
+  @Nullable
+  public Map<String, Class<?>> getDataTypeDefinitions() {
     return myDataTypeDefinitions;
   }
 
@@ -141,7 +143,8 @@ public final class ReflectedProject {
     return myTargetClass;
   }
 
-  public @Nullable Object getProject() {
+  @Nullable
+  public Object getProject() {
     return myProject;
   }
 }

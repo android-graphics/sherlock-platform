@@ -39,19 +39,22 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NOT;
 public final class GroovyDoubleNegationInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return GroovyBundle.message("inspection.message.double.negation.ref");
   }
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(@NotNull PsiElement location) {
+  @Nullable
+  protected LocalQuickFix buildFix(@NotNull PsiElement location) {
     return new DoubleNegationFix();
   }
 
   private static class DoubleNegationFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return GroovyBundle.message("intention.family.name.remove.double.negation");
     }
 
@@ -81,8 +84,9 @@ public final class GroovyDoubleNegationInspection extends BaseInspection {
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new DoubleNegationVisitor();
   }
 

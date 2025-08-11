@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,14 +19,15 @@ public final class ConstructorDescriptor implements ItemToReplaceDescriptor {
   private final PsiClass myPsiClass;
 
   // null if and only if default constructor is used
-  private final @Nullable PsiMethod myConstructor;
+  @Nullable private final PsiMethod myConstructor;
   private ConstructorDescriptor(@NotNull PsiNewExpression expression, @Nullable PsiMethod constructor, @NotNull PsiClass psiClass) {
     myNewExpression = expression;
     this.myConstructor = constructor;
     this.myPsiClass = psiClass;
   }
 
-  public static @Nullable ConstructorDescriptor createIfInaccessible(@NotNull PsiNewExpression expression) {
+  @Nullable
+  public static ConstructorDescriptor createIfInaccessible(@NotNull PsiNewExpression expression) {
     PsiMethod constructor = expression.resolveConstructor();
     if (constructor != null) {
       PsiClass containingClass = constructor.getContainingClass();
@@ -73,7 +74,8 @@ public final class ConstructorDescriptor implements ItemToReplaceDescriptor {
     myNewExpression.replace(elementFactory.createExpressionFromText(newCallExpression, myNewExpression));
   }
 
-  private static @NotNull String methodName(@NotNull String jvmClassName) {
+  @NotNull
+  private static String methodName(@NotNull String jvmClassName) {
     String name = StringUtil.getShortName(jvmClassName);
     return "new" + StringUtil.capitalize(name);
   }

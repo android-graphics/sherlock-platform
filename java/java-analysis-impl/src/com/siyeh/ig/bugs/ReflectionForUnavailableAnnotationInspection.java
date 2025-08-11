@@ -65,7 +65,7 @@ public final class ReflectionForUnavailableAnnotationInspection extends BaseInsp
   }
   
   private static class SetRuntimeRetentionFix extends PsiUpdateModCommandAction<PsiClass> {
-    private final @IntentionName String myName;
+    @IntentionName private final String myName;
 
     private SetRuntimeRetentionFix(@IntentionName String name, @NotNull PsiClass psiClass) { 
       super(psiClass);
@@ -97,13 +97,15 @@ public final class ReflectionForUnavailableAnnotationInspection extends BaseInsp
     }
   }
 
-  private static @IntentionName String getText(@NotNull PsiClass aClass) {
+  @IntentionName
+  private static String getText(@NotNull PsiClass aClass) {
     return JavaAnalysisBundle.message("inspection.i18n.quickfix.annotate.element.as", "annotation", aClass.getName(),
                                       "Retention(RetentionPolicy.RUNTIME)");
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("reflection.for.unavailable.annotation.problem.descriptor");
   }
 
@@ -123,7 +125,7 @@ public final class ReflectionForUnavailableAnnotationInspection extends BaseInsp
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final @NonNls String methodName = methodExpression.getReferenceName();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"isAnnotationPresent".equals(methodName) && !"getAnnotation".equals(methodName)) {
         return;
       }
@@ -163,7 +165,7 @@ public final class ReflectionForUnavailableAnnotationInspection extends BaseInsp
       final PsiAnnotationParameterList parameters = retentionAnnotation.getParameterList();
       final PsiNameValuePair[] attributes = parameters.getAttributes();
       for (PsiNameValuePair attribute : attributes) {
-        final @NonNls String name = attribute.getName();
+        @NonNls final String name = attribute.getName();
         if (name != null && !PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(name)) {
           continue;
         }
@@ -171,7 +173,7 @@ public final class ReflectionForUnavailableAnnotationInspection extends BaseInsp
         if (value == null) {
           continue;
         }
-        final @NonNls String text = value.getText();
+        @NonNls final String text = value.getText();
         if (!text.contains("RUNTIME")) {
           if (annotationClass.isWritable()) {
             registerError(arg, annotationClass, retentionAnnotation);

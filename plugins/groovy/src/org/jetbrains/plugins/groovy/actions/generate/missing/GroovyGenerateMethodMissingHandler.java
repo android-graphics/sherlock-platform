@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.actions.generate.missing;
 
 import com.intellij.codeInsight.generation.ClassMember;
@@ -45,8 +45,9 @@ public class GroovyGenerateMethodMissingHandler extends GenerateMembersHandlerBa
     return ClassMember.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
-  protected @NotNull List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members)
+  protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members)
     throws IncorrectOperationException {
 
     final String templName = JavaTemplateUtil.TEMPLATE_FROM_USAGE_METHOD_BODY;
@@ -58,7 +59,8 @@ public class GroovyGenerateMethodMissingHandler extends GenerateMembersHandlerBa
            : Collections.emptyList();
   }
 
-  private static @Nullable GrMethod genMethod(PsiClass aClass, FileTemplate template) {
+  @Nullable
+  private static GrMethod genMethod(PsiClass aClass, FileTemplate template) {
     Properties properties = FileTemplateManager.getInstance(aClass.getProject()).getDefaultProperties();
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, CommonClassNames.JAVA_LANG_OBJECT);
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, "null");

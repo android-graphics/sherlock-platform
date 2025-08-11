@@ -134,15 +134,19 @@ public final class AsmCodeGenerator {
         fis.close();
       }
 
-      try (FileOutputStream fos = new FileOutputStream(classFile)) {
+      FileOutputStream fos = new FileOutputStream(classFile);
+      try {
         fos.write(patchedData);
+      }
+      finally {
+        fos.close();
       }
     }
     catch (IOException e) {
-      myErrors.add(new FormErrorInfo(null, "Cannot read or write class file " + classFile.getPath() + ": " + e));
+      myErrors.add(new FormErrorInfo(null, "Cannot read or write class file " + classFile.getPath() + ": " + e.toString()));
     }
     catch(IllegalStateException e) {
-      myErrors.add(new FormErrorInfo(null, "Unexpected data in form file when patching class " + classFile.getPath() + ": " + e));
+      myErrors.add(new FormErrorInfo(null, "Unexpected data in form file when patching class " + classFile.getPath() + ": " + e.toString()));
     }
   }
 
@@ -309,7 +313,7 @@ public final class AsmCodeGenerator {
 
       final String rootBinding = myRootContainer.getComponent(0).getBinding();
       if (rootBinding != null && myFieldDescMap.containsKey(rootBinding)) {
-        buildGetRootComponentMethod();
+        buildGetRootComponenMethod();
       }
 
       if (myGetFontMethod != null) {
@@ -324,7 +328,7 @@ public final class AsmCodeGenerator {
       super.visitEnd();
     }
 
-    private void buildGetRootComponentMethod() {
+    private void buildGetRootComponenMethod() {
       final Type componentType = Type.getType(JComponent.class);
       final Method method = new Method(GET_ROOT_COMPONENT_METHOD_NAME, componentType, new Type[0]);
       GeneratorAdapter generator = new GeneratorAdapter(Opcodes.ACC_PUBLIC | Opcodes.ACC_SYNTHETIC, method, null, null, cv);
@@ -619,10 +623,11 @@ public final class AsmCodeGenerator {
                                           final InstrumentationClassFinder.PseudoClass componentClass,
                                           final GeneratorAdapter generator,
                                           final int componentLocal) throws CodeGenerationException {
-      for (Map.Entry<String, Object> e : lwComponent.getDelegeeClientProperties().entrySet()) {
+      for (Object o : lwComponent.getDelegeeClientProperties().entrySet()) {
+        Map.Entry e = (Map.Entry)o;
         generator.loadLocal(componentLocal);
 
-        generator.push(e.getKey());
+        generator.push((String)e.getKey());
 
         Object value = e.getValue();
         if (value instanceof StringDescriptor) {

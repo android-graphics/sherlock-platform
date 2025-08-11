@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
 import com.intellij.lang.ASTNode;
@@ -146,8 +146,9 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
     return result.toArray(PsiElement.EMPTY_ARRAY);
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement getModifier(@GrModifierConstant @NotNull @NonNls String name) {
+  public PsiElement getModifier(@GrModifierConstant @NotNull @NonNls String name) {
     return findChildByType(NAME_TO_MODIFIER_ELEMENT_TYPE.get(name));
   }
 
@@ -231,7 +232,7 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
   }
 
   @Override
-  public ASTNode addInternal(@NotNull ASTNode first, @NotNull ASTNode last, ASTNode anchor, Boolean before) {
+  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
     final ASTNode node = super.addInternal(first, last, anchor, before);
     final PsiElement sibling = getNextSibling();
     if (sibling != null && sibling.getText().contains("\n")) {
@@ -244,7 +245,8 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
     return getTextLength() == 0 || getModifiers().length == 0 && getRawAnnotations().length == 0;
   }
 
-  private @Nullable PsiElement findAnchor(String name) {
+  @Nullable
+  private PsiElement findAnchor(String name) {
     final int myPriority = PRIORITY.getInt(name);
     PsiElement anchor = null;
 
@@ -279,7 +281,8 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
   }
 
   @Override
-  public @Nullable PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
+  @Nullable
+  public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
     for (GrAnnotation annotation : getAnnotations()) {
       if (annotation.hasQualifiedName(qualifiedName)) {
         return annotation;
@@ -289,7 +292,8 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
   }
 
   @Override
-  public @NotNull GrAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+  @NotNull
+  public GrAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, getResolveScope());
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
     GrAnnotation annotation;
@@ -316,8 +320,9 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
     return annotation;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<? extends PsiElement> getComponents() {
+  public List<? extends PsiElement> getComponents() {
     return Arrays.asList(getModifiers());
   }
 }

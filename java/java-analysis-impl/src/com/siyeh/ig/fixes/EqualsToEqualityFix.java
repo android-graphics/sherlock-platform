@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -26,7 +26,8 @@ public final class EqualsToEqualityFix extends PsiUpdateModCommandQuickFix {
     myNegated = negated;
   }
 
-  public static @Nullable EqualsToEqualityFix buildFix(PsiMethodCallExpression expressionToFix, boolean negated) {
+  @Nullable
+  public static EqualsToEqualityFix buildFix(PsiMethodCallExpression expressionToFix, boolean negated) {
     if (ExpressionUtils.isVoidContext(expressionToFix)) {
       // replacing top level equals() call will produce red code
       return null;
@@ -34,8 +35,10 @@ public final class EqualsToEqualityFix extends PsiUpdateModCommandQuickFix {
     return new EqualsToEqualityFix(negated);
   }
 
+  @Nls
+  @NotNull
   @Override
-  public @Nls @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return myNegated
            ? CommonQuickFixBundle.message("fix.replace.x.with.y", "!equals()", "!=")
            : CommonQuickFixBundle.message("fix.replace.x.with.y", "equals()", "==");

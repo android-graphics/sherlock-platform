@@ -38,8 +38,9 @@ import java.awt.*;
 class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<XsltConfigImpl> {
   public boolean SHOW_LINKED_FILES = true;
 
+  @Nullable
   @Override
-  public @Nullable XsltConfigImpl getState() {
+  public XsltConfigImpl getState() {
     return this;
   }
 
@@ -82,7 +83,9 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
   }
 
     @Override
-    public @NotNull @NonNls String getHelpTopic() {
+    @NotNull
+    @NonNls
+    public String getHelpTopic() {
       return "settings.xslt";
     }
 
@@ -117,7 +120,8 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
     }
 
     @Override
-    public @NotNull String getId() {
+    @NotNull
+    public String getId() {
       return getHelpTopic();
     }
   }

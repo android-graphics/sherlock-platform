@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -45,15 +45,18 @@ public final class GrStubUtils {
     DataInputOutputUtil.writeNullable(dataStream, typeText, dataStream::writeUTFFast);
   }
 
-  public static @Nullable String readNullableString(StubInputStream dataStream) throws IOException {
+  @Nullable
+  public static String readNullableString(StubInputStream dataStream) throws IOException {
     return DataInputOutputUtil.readNullable(dataStream, dataStream::readUTFFast);
   }
 
-  public static @Nullable String getTypeText(@Nullable GrTypeElement typeElement) {
+  @Nullable
+  public static String getTypeText(@Nullable GrTypeElement typeElement) {
     return typeElement == null ? null : typeElement.getText();
   }
 
-  private static @NotNull Map<String, String> getAliasMapping(@Nullable PsiFile file) {
+  @NotNull
+  private static Map<String, String> getAliasMapping(@Nullable PsiFile file) {
     if (!(file instanceof GroovyFile)) return Collections.emptyMap();
     return CachedValuesManager.getCachedValue(file, () -> {
       Map<String, String> mapping = new HashMap<>();
@@ -70,7 +73,8 @@ public final class GrStubUtils {
     });
   }
 
-  public static @Nullable String getReferenceName(@NotNull GrReferenceElement element) {
+  @Nullable
+  public static String getReferenceName(@NotNull GrReferenceElement element) {
     final String referenceName = element.getReferenceName();
     if (referenceName == null) return null;
 
@@ -84,7 +88,8 @@ public final class GrStubUtils {
     return mappedFqn == null || element.isQualified() ? fullText : fullText.replace(referenceName, mappedFqn);
   }
 
-  public static @Nullable String getBaseClassName(@NotNull GrTypeDefinition psi) {
+  @Nullable
+  public static String getBaseClassName(@NotNull GrTypeDefinition psi) {
     if (!(psi instanceof GrAnonymousClassDefinition)) return null;
     return getReferenceName(((GrAnonymousClassDefinition)psi).getBaseClassReferenceGroovy());
   }
@@ -126,7 +131,8 @@ public final class GrStubUtils {
     return false;
   }
 
-  public static @NotNull String getShortTypeText(@Nullable String text) {
+  @NotNull
+  public static String getShortTypeText(@Nullable String text) {
     if (text == null) {
       return "";
     }
@@ -137,7 +143,8 @@ public final class GrStubUtils {
     return PsiNameHelper.getShortClassName(text.substring(0, i)) + text.substring(i);
   }
 
-  public static @Nullable String getPackageName(final GrFileStub stub) {
+  @Nullable
+  public static String getPackageName(final GrFileStub stub) {
     for (StubElement child : stub.getChildrenStubs()) {
       if (child instanceof GrPackageDefinitionStub) {
         return ((GrPackageDefinitionStub)child).getPackageName();

@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:ApiStatus.Internal
-
 package com.intellij.execution.wsl
 
 import com.intellij.openapi.components.service
@@ -12,13 +10,13 @@ import com.intellij.platform.ijent.deploy
 import com.intellij.platform.ijent.spi.DeployedIjent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
 /**
  * An entry point for running [IjentApi] over WSL and checking if [IjentApi] even should be used for WSL.
  */
-@ApiStatus.Internal
 @ApiStatus.Experimental
 interface WslIjentManager {
   /**
@@ -50,28 +48,24 @@ interface WslIjentManager {
   }
 }
 
-internal suspend fun deployAndLaunchIjent(
-  parentScope: CoroutineScope,
+suspend fun deployAndLaunchIjent(
   project: Project?,
-  ijentLabel: String,
   wslDistribution: WSLDistribution,
   wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
-): IjentPosixApi =
-  deployAndLaunchIjentGettingPath(parentScope, project, ijentLabel, wslDistribution, wslCommandLineOptionsModifier).ijentApi
+): IjentPosixApi = deployAndLaunchIjentGettingPath(project, wslDistribution, wslCommandLineOptionsModifier).ijentApi
 
 @VisibleForTesting
 suspend fun deployAndLaunchIjentGettingPath(
-  parentScope: CoroutineScope,
   project: Project?,
-  ijentLabel: String,
   wslDistribution: WSLDistribution,
   wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
 ): DeployedIjent.Posix {
-  return WslIjentDeployingStrategy(
-    scope = parentScope,
-    ijentLabel = ijentLabel,
-    distribution = wslDistribution,
-    project = project,
-    wslCommandLineOptionsModifier = wslCommandLineOptionsModifier
-  ).deploy()
+  return coroutineScope {
+    WslIjentDeployingStrategy(
+      scope = this,
+      distribution = wslDistribution,
+      project = project,
+      wslCommandLineOptionsModifier = wslCommandLineOptionsModifier
+    ).deploy("WSL-${wslDistribution.id}")
+  }
 }

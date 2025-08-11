@@ -2,10 +2,4 @@
 
 class A {
     volatile int field1 = 0;
-
-    private volatile String field2 = "";
-
-    A() {
-        field2 = "new";
-    }
 }

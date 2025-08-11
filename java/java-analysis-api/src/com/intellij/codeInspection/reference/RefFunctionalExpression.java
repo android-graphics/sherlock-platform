@@ -3,7 +3,6 @@ package com.intellij.codeInspection.reference;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.uast.UExpression;
 
 import java.util.List;
@@ -16,7 +15,6 @@ public interface RefFunctionalExpression extends RefJavaElement, RefOverridable 
    * @return list of parameters of the functional expression
    */
   @NotNull
-  @Unmodifiable
   List<RefParameter> getParameters();
 
   /**

@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ui.util.ValidFileCellAppearance;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.JavaModuleTestCase;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -177,6 +178,12 @@ public class CellAppearanceTest extends JavaModuleTestCase {
     @Override
     public <R> R accept(@NotNull RootPolicy<R> policy, R initialValue) {
       return policy.visitOrderEntry(this, initialValue);
+    }
+
+    @Override
+    public String @NotNull [] getUrls(@NotNull OrderRootType rootType) {
+      notImplemented();
+      return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
 
     @Override

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.documentation.docstrings;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,24 +25,31 @@ import java.util.List;
 
 
 public enum DocStringFormat {
+  /**
+   * @see DocStringUtil#ensureNotPlainDocstringFormat(PsiElement)
+   */
   PLAIN("Plain", ""),
+  EPYTEXT("Epytext", "epytext"),
   REST("reStructuredText", "rest"),
   NUMPY("NumPy", "numpy"),
   GOOGLE("Google", "google");
 
   public static final List<String> ALL_NAMES = getAllNames();
 
-  private static @NotNull List<String> getAllNames() {
+  @NotNull
+  private static List<String> getAllNames() {
     return ContainerUtil.map(values(), format -> format.getName());
   }
 
   public static final List<String> ALL_NAMES_BUT_PLAIN = getAllNamesButPlain();
 
-  private static @NotNull List<String> getAllNamesButPlain() {
+  @NotNull
+  private static List<String> getAllNamesButPlain() {
     return ContainerUtil.mapNotNull(values(), format -> format == PLAIN ? null : format.getName());
   }
 
-  public static @Nullable DocStringFormat fromName(@NotNull String name) {
+  @Nullable
+  public static DocStringFormat fromName(@NotNull String name) {
     for (DocStringFormat format : values()) {
       if (format.getName().equalsIgnoreCase(name)) {
         return format;
@@ -50,7 +58,8 @@ public enum DocStringFormat {
     return null;
   }
 
-  public static @NotNull DocStringFormat fromNameOrPlain(@NotNull String name) {
+  @NotNull
+  public static DocStringFormat fromNameOrPlain(@NotNull String name) {
     return ObjectUtils.notNull(fromName(name), PLAIN);
   }
 
@@ -62,11 +71,13 @@ public enum DocStringFormat {
     myFormatterCommand = formatterCommand;
   }
 
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return myName;
   }
 
-  public @NotNull String getFormatterCommand() {
+  @NotNull
+  public String getFormatterCommand() {
     return myFormatterCommand;
   }
 }

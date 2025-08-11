@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.definition.AbstractBasicJavaDefinitionService;
@@ -31,7 +31,7 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
                                JavaTokenType.RBRACE));
 
   public JavaQuoteHandler() {
-    super(TokenSet.orSet(BASIC_TEXT_LITERALS, TokenSet.create(JavaDocTokenType.DOC_TAG_VALUE_QUOTE, JavaDocTokenType.DOC_INLINE_CODE_FENCE, JavaDocTokenType.DOC_CODE_FENCE)));
+    super(TokenSet.orSet(BASIC_TEXT_LITERALS, TokenSet.create(JavaDocTokenType.DOC_TAG_VALUE_QUOTE)));
   }
 
   @Override
@@ -70,8 +70,9 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
     return closingQuote;
   }
 
+  @NotNull
   @Override
-  public @NotNull TokenSet getConcatenatableStringTokenTypes() {
+  public TokenSet getConcatenatableStringTokenTypes() {
     return myConcatenableStrings;
   }
 
@@ -98,8 +99,9 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
            BasicJavaAstTreeUtil.is(element.getParent().getParent().getNode(), REFERENCE_EXPRESSION_SET);
   }
 
+  @Nullable
   @Override
-  public @Nullable CharSequence getClosingQuote(@NotNull HighlighterIterator iterator, int offset) {
+  public CharSequence getClosingQuote(@NotNull HighlighterIterator iterator, int offset) {
     return (iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_LITERAL || iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) 
            && offset == iterator.getStart() + 3 ? "\"\"\"" : null;
   }

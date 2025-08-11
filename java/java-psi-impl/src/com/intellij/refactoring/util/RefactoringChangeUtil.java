@@ -9,7 +9,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,10 +17,8 @@ import java.util.Objects;
 public final class RefactoringChangeUtil {
   private static final Logger LOG = Logger.getInstance(RefactoringChangeUtil.class);
 
-  @Contract("null -> null")
-  public static PsiType getTypeByExpression(@Nullable PsiExpression expr) {
-    if (expr == null) return null;
-    PsiType type = expr.getType();
+  public static PsiType getTypeByExpression(PsiExpression expr) {
+    PsiType type = expr != null ? expr.getType() : null;
     if (type == null) {
       if (expr instanceof PsiArrayInitializerExpression) {
         PsiExpression[] initializers = ((PsiArrayInitializerExpression)expr).getInitializers();

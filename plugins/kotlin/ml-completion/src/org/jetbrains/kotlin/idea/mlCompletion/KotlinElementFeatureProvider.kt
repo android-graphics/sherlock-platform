@@ -6,22 +6,20 @@ import com.intellij.codeInsight.completion.ml.ContextFeatures
 import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
-import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass
+import org.jetbrains.kotlin.idea.base.codeInsight.LOOKUP_ELEMENT_CONTRIBUTOR
 
-internal class KotlinElementFeatureProvider : ElementFeatureProvider {
-
+class KotlinElementFeatureProvider : ElementFeatureProvider {
     override fun getName(): String = "kotlin"
 
     override fun calculateFeatures(
         element: LookupElement,
         location: CompletionLocation,
-        contextFeatures: ContextFeatures,
+        contextFeatures: ContextFeatures
     ): Map<String, MLFeatureValue> {
-        val contributor = element.contributorClass
-            ?: return emptyMap()
-
-        return mapOf(
-            "k2_contributor" to MLFeatureValue.className(contributor),
-        )
+        val result: MutableMap<String, MLFeatureValue> = mutableMapOf()
+        element.getUserData(LOOKUP_ELEMENT_CONTRIBUTOR)?.let {
+            result["k2_contributor"] = MLFeatureValue.className(it)
+        }
+        return result
     }
 }

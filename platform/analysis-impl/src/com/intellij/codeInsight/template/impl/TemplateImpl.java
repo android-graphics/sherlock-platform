@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.impl;
 
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,8 +91,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     this(key, string, group, true);
   }
 
-  @ApiStatus.Internal
-  public TemplateImpl(@NotNull @NlsSafe String key, @NlsSafe String string, @NotNull @NonNls String group, boolean storeBuildingStacktrace) {
+  TemplateImpl(@NotNull @NlsSafe String key, @NlsSafe String string, @NotNull @NonNls String group, boolean storeBuildingStacktrace) {
     super(StringUtil.convertLineSeparators(StringUtil.notNullize(string)));
     myKey = key;
     myGroupName = group;
@@ -364,8 +362,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     return new ArrayList<>(myVariables);
   }
 
-  @ApiStatus.Internal
-  public void dropParsedData() {
+  void dropParsedData() {
     for (Variable variable : myVariables) {
       variable.dropParsedData();
     }

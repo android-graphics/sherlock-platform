@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.project.RootsChangeRescanningInfo;
@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Set;
 
-@Internal
 public final class BuildableRootsChangeRescanningInfoImpl extends BuildableRootsChangeRescanningInfoEx {
   private final Set<ModuleId> modules = new SmartHashSet<>();
   private boolean hasInheritedSdk;
@@ -32,25 +31,29 @@ public final class BuildableRootsChangeRescanningInfoImpl extends BuildableRoots
   }
 
   @Override
-  public @NotNull BuildableRootsChangeRescanningInfo addModule(@NotNull com.intellij.openapi.module.Module module) {
+  @NotNull
+  public BuildableRootsChangeRescanningInfo addModule(@NotNull com.intellij.openapi.module.Module module) {
     modules.add(new ModuleId(module.getName()));
     return this;
   }
 
   @Override
-  public @NotNull BuildableRootsChangeRescanningInfo addInheritedSdk() {
+  @NotNull
+  public BuildableRootsChangeRescanningInfo addInheritedSdk() {
     hasInheritedSdk = true;
     return this;
   }
 
   @Override
-  public @NotNull BuildableRootsChangeRescanningInfo addSdk(@NotNull Sdk sdk) {
+  @NotNull
+  public BuildableRootsChangeRescanningInfo addSdk(@NotNull Sdk sdk) {
     sdks.add(new Pair<>(sdk.getName(), sdk.getSdkType().getName()));
     return this;
   }
 
   @Override
-  public @NotNull BuildableRootsChangeRescanningInfo addLibrary(@NotNull Library library) {
+  @NotNull
+  public BuildableRootsChangeRescanningInfo addLibrary(@NotNull Library library) {
     LibraryId libraryId;
     if (library instanceof LibraryBridge) {
       libraryId = ((LibraryBridge)library).getLibraryId();

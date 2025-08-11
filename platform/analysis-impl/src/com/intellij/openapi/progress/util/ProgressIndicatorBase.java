@@ -4,12 +4,6 @@ package com.intellij.openapi.progress.util;
 import com.intellij.openapi.progress.StandardProgressIndicator;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 
-/**
- * <h3>Obsolescence notice</h3>
- * <p>
- * See {@link AbstractProgressIndicatorBase} notice.
- * </p>
- */
 public class ProgressIndicatorBase extends AbstractProgressIndicatorExBase implements StandardProgressIndicator {
 
   @Obsolete

@@ -21,13 +21,9 @@
         "id": "cpp",
         "extensions": [
           ".cpp",
-          ".cppm",
           ".cc",
-          ".ccm",
           ".cxx",
-          ".cxxm",
           ".c++",
-          ".c++m",
           ".hpp",
           ".hh",
           ".hxx",

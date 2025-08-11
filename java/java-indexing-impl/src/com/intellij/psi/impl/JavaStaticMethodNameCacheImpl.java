@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.project.Project;
@@ -19,7 +19,8 @@ import java.util.function.Predicate;
 
 @ApiStatus.Experimental
 public final class JavaStaticMethodNameCacheImpl extends JavaStaticMethodNameCache {
-  private final @NotNull Project myProject;
+  @NotNull
+  private final Project myProject;
 
   public JavaStaticMethodNameCacheImpl(@NotNull Project project) {
     myProject = project;

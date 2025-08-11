@@ -4,7 +4,6 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
-import com.intellij.codeInspection.StaticImportCanBeUsedInspection;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -16,7 +15,6 @@ import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -39,10 +37,6 @@ public final class JavaReferenceAdjuster implements ReferenceAdjuster {
       if (elementType == JavaElementType.REFERENCE_EXPRESSION) {
         PsiReferenceExpression ref = (PsiReferenceExpression)element.getPsi();
         if (ImportUtils.isAlreadyStaticallyImported(ref)) {
-          deQualifyImpl((PsiQualifiedReferenceElement)element);
-          return element;
-        }
-        if (tryAutoStaticallyImport(ref)) {
           deQualifyImpl((PsiQualifiedReferenceElement)element);
           return element;
         }
@@ -109,8 +103,7 @@ public final class JavaReferenceAdjuster implements ReferenceAdjuster {
                 }
               }
 
-              ((SourceJavaCodeReference)element).fullyQualify(psiClass);
-              return element;
+              return replaceReferenceWithFQ(element, psiClass);
             }
             else {
               int oldLength = element.getTextLength();
@@ -134,21 +127,6 @@ public final class JavaReferenceAdjuster implements ReferenceAdjuster {
     }
 
     return element;
-  }
-
-  private static boolean tryAutoStaticallyImport(@NotNull PsiReferenceExpression reference) {
-    StaticImportCanBeUsedInspection.StaticImportContext context =
-      StaticImportCanBeUsedInspection.findOnDemandImportContext(reference);
-    if (context == null) return false;
-    PsiClass qualifierClass = context.psiClass();
-    PsiFile file = reference.getContainingFile();
-    if (!(file instanceof PsiJavaFile javaFile)) return false;
-    PsiImportList importList = javaFile.getImportList();
-    if (importList == null) return false;
-    String referenceName = reference.getReferenceName();
-    if (referenceName == null) return false;
-    PsiReferenceExpressionImpl.bindToElementViaStaticImport(qualifierClass, referenceName, importList);
-    return true;
   }
 
   @Override
@@ -241,13 +219,13 @@ public final class JavaReferenceAdjuster implements ReferenceAdjuster {
   private static @NotNull ASTNode makeShortReference(@NotNull CompositeElement reference, @NotNull PsiClass refClass, boolean addImports) {
     final @NotNull PsiJavaCodeReferenceElement psiReference = (PsiJavaCodeReferenceElement)reference.getPsi();
     final PsiQualifiedReferenceElement reference1 = getClassReferenceToShorten(refClass, addImports, psiReference);
-    if (reference1 != null) deQualifyImpl(reference1);
+    if (reference1 != null) replaceReferenceWithShort(reference1);
     return reference;
   }
 
-  public static @Nullable PsiQualifiedReferenceElement getClassReferenceToShorten(@NotNull PsiClass refClass,
-                                                                                  boolean addImports,
-                                                                                  @NotNull PsiQualifiedReferenceElement reference) {
+  public static @Nullable PsiQualifiedReferenceElement getClassReferenceToShorten(final @NotNull PsiClass refClass,
+                                                                                  final boolean addImports,
+                                                                                  final @NotNull PsiQualifiedReferenceElement reference) {
     PsiClass parentClass = refClass.getContainingClass();
     if (parentClass != null) {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(parentClass.getProject());
@@ -275,7 +253,7 @@ public final class JavaReferenceAdjuster implements ReferenceAdjuster {
     return isSafeToShortenReference(refClass.getName(), psiReference, refClass);
   }
 
-  private static boolean isSafeToShortenReference(String referenceText, PsiElement psiReference, PsiClass refClass) {
+  private static boolean isSafeToShortenReference(final String referenceText, final PsiElement psiReference, final PsiClass refClass) {
     final PsiManager manager = refClass.getManager();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     final PsiResolveHelper helper = facade.getResolveHelper();
@@ -311,7 +289,7 @@ public final class JavaReferenceAdjuster implements ReferenceAdjuster {
                 if (typeArguments.length != classTypeParameters.length) {
                   return false;
                 }
-                if (StreamEx.zip(typeArguments, classTypeParameters,
+                if (StreamEx.zip(typeArguments, classTypeParameters, 
                                  (type, typeParam) -> manager.areElementsEquivalent(typeParam, PsiUtil.resolveClassInClassTypeOnly(type)))
                   .has(false)) {
                   return false;
@@ -321,9 +299,16 @@ public final class JavaReferenceAdjuster implements ReferenceAdjuster {
           }
         }
       }
-      return !(psiReference instanceof PsiReferenceExpression) || helper.resolveReferencedVariable(referenceText, psiReference) == null;
+      return helper.resolveReferencedVariable(referenceText, psiReference) == null;
     }
     return false;
+  }
+
+  private static @NotNull ASTNode replaceReferenceWithShort(PsiQualifiedReferenceElement reference) {
+    ASTNode node = reference.getNode();
+    assert node != null;
+    deQualifyImpl(reference);
+    return node;
   }
 
   private static void deQualifyImpl(PsiQualifiedReferenceElement reference) {
@@ -341,5 +326,10 @@ public final class JavaReferenceAdjuster implements ReferenceAdjuster {
         }
       }
     }
+  }
+
+  private static ASTNode replaceReferenceWithFQ(ASTNode reference, PsiClass refClass) {
+    ((SourceJavaCodeReference)reference).fullyQualify(refClass);
+    return reference;
   }
 }

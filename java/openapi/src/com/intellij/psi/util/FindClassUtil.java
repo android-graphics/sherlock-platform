@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.module.Module;
@@ -26,7 +26,8 @@ public final class FindClassUtil {
    * @param qualifiedName the full-qualified name of the class to find.
    * @return the modules that contain the given class in dependencies or libraries.
    */
-  public static @NotNull Collection<Module> findModulesWithClass(@NotNull Project project, @NonNls @NotNull String qualifiedName) {
+  @NotNull
+  public static Collection<Module> findModulesWithClass(@NotNull Project project, @NonNls @NotNull String qualifiedName) {
     GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     PsiClass[] possibleClasses = facade.findClasses(qualifiedName, allScope);

@@ -22,7 +22,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,11 +46,11 @@ import java.util.function.Consumer;
 public final class ShowFilePathAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Disabled {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    var file = getFile(e);
-    var visible = RevealFileAction.isSupported() && file != null && !LightVirtualFile.shouldSkipEventSystem(file);
+    var visible = RevealFileAction.isSupported();
     e.getPresentation().setVisible(visible);
     if (visible) {
-      e.getPresentation().setEnabled(true);
+      var file = getFile(e);
+      e.getPresentation().setEnabled(file != null);
       var isPopup = List.of(ActionPlaces.PROJECT_VIEW_POPUP, ActionPlaces.EDITOR_TAB_POPUP, ActionPlaces.BOOKMARKS_VIEW_POPUP).contains(e.getPlace());
       e.getPresentation().setText(ActionsBundle.message(isPopup ? "action.ShowFilePath.popup" : "action.ShowFilePath.text"));
     }

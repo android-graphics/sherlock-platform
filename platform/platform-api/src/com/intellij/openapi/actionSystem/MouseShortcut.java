@@ -57,7 +57,6 @@ public class MouseShortcut extends Shortcut {
     return myClickCount;
   }
 
-  @Override
   public boolean equals(Object obj) {
     if (this == obj) return true;
     if (obj == null || getClass() != obj.getClass()) return false;
@@ -69,7 +68,6 @@ public class MouseShortcut extends Shortcut {
            && myClickCount == other.myClickCount;
   }
 
-  @Override
   public int hashCode() {
     return myButton + myModifiers + myClickCount;
   }

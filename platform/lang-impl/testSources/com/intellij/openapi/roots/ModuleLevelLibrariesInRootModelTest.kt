@@ -18,6 +18,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension

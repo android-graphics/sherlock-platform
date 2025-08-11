@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.navigation.actions;
 
@@ -27,8 +27,9 @@ import static com.intellij.codeInsight.navigation.CtrlMouseDataKt.*;
 
 public class GotoImplementationAction extends BaseCodeInsightAction implements CtrlMouseAction {
 
+  @NotNull
   @Override
-  protected @NotNull CodeInsightActionHandler getHandler() {
+  protected CodeInsightActionHandler getHandler() {
     return new GotoImplementationHandler();
   }
 
@@ -38,7 +39,7 @@ public class GotoImplementationAction extends BaseCodeInsightAction implements C
   }
 
   @Override
-  public void update(final @NotNull AnActionEvent event) {
+  public void update(@NotNull final AnActionEvent event) {
     if (!DefinitionsScopedSearch.INSTANCE.hasAnyExecutors()) {
       event.getPresentation().setVisible(false);
     }

@@ -1,5 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.tools;
+
 
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.javaee.ExternalResourceManager;
@@ -17,7 +18,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,8 +31,10 @@ import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.List;
 
-@ApiStatus.Internal
-public final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
+/**
+ * @author Konstantin Bulenkov
+ */
+final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
   private JPanel panel;
   private TextFieldWithBrowseButton generateFromUrl;
   private JLabel status;
@@ -52,7 +54,8 @@ public final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrappe
     super(project, true);
     myProject = project;
 
-    UIUtils.configureBrowseButton(project, generateFromUrl, "xsd", XmlBundle.message("select.xsd.schema.dialog.title"), false);
+    UIUtils
+      .configureBrowseButton(project, generateFromUrl, new String[]{"xsd"}, XmlBundle.message("select.xsd.schema.dialog.title"), false);
 
     doInitFor(rootElementChooserText, rootElementChooser);
     doInitFor(generateFromUrlText, generateFromUrl.getTextField());
@@ -165,12 +168,13 @@ public final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrappe
       rootElementChooser.setSelectedItem(selectedItem);
     }
     else {
-      rootElementChooser.setSelectedIndex(!myRootValues.isEmpty() ? 0 : -1);
+      rootElementChooser.setSelectedIndex(myRootValues.size() > 0 ? 0 : -1);
     }
     previousUri = uri;
   }
 
-  private static @Nullable XmlTag getRootTag(PsiFile psifile) {
+  @Nullable
+  private static XmlTag getRootTag(PsiFile psifile) {
     XmlFile xmlFile = null;
     if (psifile instanceof XmlFile) {
       xmlFile = (XmlFile)psifile;
@@ -189,7 +193,8 @@ public final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrappe
     }
   }
 
-  private @Nullable PsiFile findFile(String uri) {
+  @Nullable
+  private PsiFile findFile(String uri) {
     final VirtualFile file =
       uri != null ? VfsUtilCore.findRelativeFile(ExternalResourceManager.getInstance().getResourceLocation(uri), null) : null;
     return file != null ? PsiManager.getInstance(myProject).findFile(file) : null;
@@ -204,7 +209,9 @@ public final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrappe
     return rootElementChooser.getSelectedItem() != null;
   }
 
-  private @Nullable @InspectionMessage String doValidateWithData() {
+  @Nullable
+  @InspectionMessage
+  private String doValidateWithData() {
     String rootElementName = getElementName();
     if (rootElementName == null || rootElementName.isEmpty()) {
       return XmlBundle.message("schema2.instance.no.valid.root.element.name.validation.error");
@@ -281,7 +288,8 @@ public final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrappe
   }
 
   @Override
-  protected @NotNull String getHelpId() {
+  @NotNull
+  protected String getHelpId() {
     return "webservices.GenerateInstanceDocumentFromSchema";
   }
 }

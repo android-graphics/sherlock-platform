@@ -25,7 +25,8 @@ import org.jetbrains.annotations.NotNull;
 public final class InterfaceWithOnlyOneDirectInheritorInspection extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("interface.one.inheritor.problem.descriptor");
   }
 

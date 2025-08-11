@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -22,7 +22,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrary> implements NavigatableWithText {
-  private final @NotNull ItemPresentation myItemPresentation;
+  @NotNull private final ItemPresentation myItemPresentation;
 
   public SyntheticLibraryElementNode(@NotNull Project project, @NotNull SyntheticLibrary library,
                                      @NotNull ItemPresentation itemPresentation, ViewSettings settings) {
@@ -35,8 +35,9 @@ public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrar
     return getLibrary().contains(file);
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
+  public Collection<AbstractTreeNode<?>> getChildren() {
     SyntheticLibrary library = getLibrary();
     Project project = Objects.requireNonNull(getProject());
     Set<VirtualFile> excludedRoots = library.getExcludedRoots();
@@ -49,7 +50,8 @@ public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrar
     return myItemPresentation.getPresentableText();
   }
 
-  private @NotNull SyntheticLibrary getLibrary() {
+  @NotNull
+  private SyntheticLibrary getLibrary() {
     return Objects.requireNonNull(getValue());
   }
 
@@ -58,8 +60,9 @@ public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrar
     presentation.updateFrom(myItemPresentation);
   }
 
+  @Nullable
   @Override
-  public @Nullable String getNavigateActionText(boolean focusEditor) {
+  public String getNavigateActionText(boolean focusEditor) {
     NavigatableWithText navigatable = ObjectUtils.tryCast(getLibrary(), NavigatableWithText.class);
     return navigatable != null ? navigatable.getNavigateActionText(focusEditor) : null;
   }

@@ -22,7 +22,9 @@ import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelected
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelectedFromUi
 import com.intellij.ui.dsl.gridLayout.Constraints
+import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.toUnscaled
 import com.intellij.ui.dsl.validation.CellValidation
 import com.intellij.ui.dsl.validation.impl.CompoundCellValidation
 import com.intellij.util.ui.NamedColorUtil
@@ -146,6 +148,12 @@ internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig, pare
     return this
   }
 
+  @Deprecated("Use customize(UnscaledGaps) instead")
+  @ApiStatus.ScheduledForRemoval
+  override fun customize(customGaps: Gaps): SegmentedButton<T> {
+    return customize(customGaps.toUnscaled())
+  }
+
   override fun customize(customGaps: UnscaledGaps): SegmentedButton<T> {
     super.customize(customGaps)
     return this
@@ -205,7 +213,7 @@ internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig, pare
     val result = ItemPresentationImpl()
     result.renderer(item)
 
-    if (result.text.isNullOrEmpty() && result.icon == null) {
+    if (result.text.isNullOrEmpty()) {
       throw UiDslException("Empty text in segmented button presentation is not allowed")
     }
 

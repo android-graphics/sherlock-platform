@@ -1,14 +1,16 @@
-// "Make 'foo' private" "true"
-// PRIORITY: HIGH
+// "Make 'foo' private" "false"
 // ACTION: Convert parameter to receiver
 // ACTION: Enable a trailing comma by default in the formatter
-// ACTION: Make 'PrivateType' public
-// ACTION: Make 'foo' private
+// ACTION: Make 'Nested' internal
+// ACTION: Make 'Nested' public
 // ACTION: Remove parameter 'arg'
+// ERROR: 'internal' function exposes its 'private-in-class' parameter type argument Nested
+// ERROR: Cannot access 'Nested': it is private in 'Outer'
 
-private class PrivateType
+class Outer {
+    private class Nested
+}
 
-fun foo(<caret>arg: PrivateType) {}
+class Generic<T>
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPrivateFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeVisibilityFixFactories$ChangeToPrivateModCommandAction
+internal fun foo(<caret>arg: Generic<Outer.Nested>) {}

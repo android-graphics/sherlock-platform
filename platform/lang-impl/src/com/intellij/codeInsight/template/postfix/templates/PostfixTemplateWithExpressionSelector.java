@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -19,7 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class PostfixTemplateWithExpressionSelector extends PostfixTemplate {
-  private final @NotNull PostfixTemplateExpressionSelector mySelector;
+  @NotNull
+  private final PostfixTemplateExpressionSelector mySelector;
 
   /**
    * @deprecated use {@link #PostfixTemplateWithExpressionSelector(String, String, String, String, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
@@ -67,7 +68,7 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
   }
 
   @Override
-  public final void expand(@NotNull PsiElement context, final @NotNull Editor editor) {
+  public final void expand(@NotNull PsiElement context, @NotNull final Editor editor) {
     List<PsiElement> expressions = mySelector.getExpressions(context,
                                                              editor.getDocument(),
                                                              editor.getCaretModel().getOffset());
@@ -93,7 +94,7 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
       editor, expressions,
       new Pass<>() {
         @Override
-        public void pass(final @NotNull PsiElement e) {
+        public void pass(@NotNull final PsiElement e) {
           prepareAndExpandForChooseExpression(e, editor);
         }
       },

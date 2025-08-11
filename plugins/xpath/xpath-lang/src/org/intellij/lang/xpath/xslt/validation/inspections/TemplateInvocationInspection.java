@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.validation.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -27,17 +27,20 @@ import java.util.Map;
 public class TemplateInvocationInspection extends XsltInspection {
 
   @Override
-  public @NotNull HighlightDisplayLevel getDefaultLevel() {
+  @NotNull
+    public HighlightDisplayLevel getDefaultLevel() {
         return HighlightDisplayLevel.ERROR;
     }
 
   @Override
-  public @NotNull String getShortName() {
+    @NotNull
+    public String getShortName() {
         return "XsltTemplateInvocation";
     }
 
     @Override
-    public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
+    @NotNull
+    public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
         if (!(holder.getFile() instanceof XmlFile)) return PsiElementVisitor.EMPTY_VISITOR;
         final XsltElementFactory xsltElementFactory = XsltElementFactory.getInstance();
         return new XmlElementVisitor() {
@@ -93,7 +96,7 @@ public class TemplateInvocationInspection extends XsltInspection {
 
                     final XmlAttributeValue valueElement = argAttribute.getValueElement();
                     final PsiElement valueToken = XsltSupport.getAttValueToken(argAttribute);
-                    if (valueToken != null && !s.trim().isEmpty()) {
+                    if (valueToken != null && s.trim().length() > 0) {
                         if (template.getParameter(s) == null) {
                             final LocalQuickFix fix1 = new AddParameterFix(s, template).createQuickFix(onTheFly);
                             final LocalQuickFix fix2 = new RemoveParamFix(argNames.get(s).getTag(), s).createQuickFix(onTheFly);

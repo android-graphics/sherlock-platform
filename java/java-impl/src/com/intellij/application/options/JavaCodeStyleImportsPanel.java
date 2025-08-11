@@ -6,12 +6,10 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -20,7 +18,6 @@ import java.util.List;
 
 class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
   private FullyQualifiedNamesInJavadocOptionProvider myFqnInJavadocOption;
-  private @Nullable JCheckBox myCbPreserveModuleImports;
   private ListTableModel<InnerClassItem> doNotInsertInnerListModel;
 
   private static final ColumnInfo<?, ?>[] INNER_CLASS_COLUMNS = {
@@ -38,17 +35,13 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
   };
   private TableView<InnerClassItem> mydoNotInsertInnerTable;
 
-  JavaCodeStyleImportsPanel() {
-    super();
-  }
-
   @Override
   protected CodeStyleImportsBaseUI createKotlinUI(JComponent packages, JComponent importLayout) {
     createDoNotImportInnerList();
-    myCbPreserveModuleImports = new JBCheckBox(JavaBundle.message("checkbox.preserve.module.import"));
     myFqnInJavadocOption = new FullyQualifiedNamesInJavadocOptionProvider();
+
     JavaCodeStyleImportsUI result =
-      new JavaCodeStyleImportsUI(packages, importLayout, mydoNotInsertInnerTable, myCbPreserveModuleImports, myFqnInJavadocOption.getPanel());
+      new JavaCodeStyleImportsUI(packages, importLayout, mydoNotInsertInnerTable, myFqnInJavadocOption.getPanel());
     result.init();
     return result;
   }
@@ -58,10 +51,7 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     final JavaCodeStyleSettings javaSettings = getJavaSettings(settings);
     applyLayoutSettings(javaSettings);
     myFqnInJavadocOption.apply(settings);
-    JCheckBox cbPreserveModuleImports = myCbPreserveModuleImports;
-    if(cbPreserveModuleImports!=null) javaSettings.setPreserveModuleImports(cbPreserveModuleImports.isSelected());
     javaSettings.setDoNotImportInner(getInnerClassesNames());
-    javaSettings.setLayoutOnDemandImportFromSamePackageFirst(myImportLayoutPanel.isLayoutOnDemandImportsFromSamePackageFirst());
   }
 
   @Override
@@ -72,12 +62,6 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     for (String name : javaSettings.getDoNotImportInner()) {
       doNotInsertInnerListModel.addRow(new InnerClassItem(name));
     }
-
-    JCheckBox cbPreserveModuleImports = myCbPreserveModuleImports;
-    if (cbPreserveModuleImports != null) cbPreserveModuleImports.setSelected(javaSettings.isPreserveModuleImports());
-
-    JBCheckBox cbLayoutOnDemandImportsFromSamePackageFirst = myImportLayoutPanel.getCbLayoutOnDemandImportsFromSamePackageFirst();
-    if (cbLayoutOnDemandImportsFromSamePackageFirst != null) cbLayoutOnDemandImportsFromSamePackageFirst.setSelected(javaSettings.isLayoutOnDemandImportFromSamePackageFirst());
   }
 
   @Override
@@ -86,12 +70,6 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     boolean isModified = isModifiedLayoutSettings(javaSettings);
     isModified |= myFqnInJavadocOption.isModified(settings);
     isModified |= !javaSettings.getDoNotImportInner().equals(getInnerClassesNames());
-
-    JCheckBox cbPreserveModuleImports = myCbPreserveModuleImports;
-    if (cbPreserveModuleImports != null) isModified |= isModified(cbPreserveModuleImports, javaSettings.isPreserveModuleImports());
-
-    JBCheckBox cbLayoutOnDemandImportsFromSamePackageFirst = myImportLayoutPanel.getCbLayoutOnDemandImportsFromSamePackageFirst();
-    if (cbLayoutOnDemandImportsFromSamePackageFirst != null) isModified |= isModified(cbLayoutOnDemandImportsFromSamePackageFirst, javaSettings.isLayoutOnDemandImportFromSamePackageFirst());
     return isModified;
   }
 
@@ -116,16 +94,6 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
       }
     }
     return items;
-  }
-
-  @Override
-  protected boolean isShowLayoutOnDemandImportFromSamePackageFirstCheckbox() {
-    return true;
-  }
-
-  @Override
-  protected boolean isSupportModule() {
-    return true;
   }
 
   private abstract static class MyColumnInfo extends ColumnInfo<InnerClassItem, String> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.jetbrains.python.debugger.render.PyNodeRenderer;
@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class PyDebugValueDescriptor {
 
-  private @Nullable PyNodeRenderer myRenderer;
+  @Nullable private PyNodeRenderer myRenderer;
 
   /**
    * Because of the variables and recreated every time we make a step in the debugger,
@@ -18,9 +18,10 @@ public class PyDebugValueDescriptor {
    * to preserve access to its children renderers. Otherwise, it will be impossible to
    * reach them during the renderers' restoration process.
    */
-  private @Nullable Map<String, PyDebugValueDescriptor> myChildrenDescriptors;
+  @Nullable private Map<String, PyDebugValueDescriptor> myChildrenDescriptors;
 
-  public @Nullable PyNodeRenderer getRenderer() {
+  @Nullable
+  public PyNodeRenderer getRenderer() {
     return myRenderer;
   }
 
@@ -28,7 +29,8 @@ public class PyDebugValueDescriptor {
     myRenderer = renderer;
   }
 
-  public @Nullable Map<String, PyDebugValueDescriptor> getChildrenDescriptors() {
+  @Nullable
+  public Map<String, PyDebugValueDescriptor> getChildrenDescriptors() {
     return myChildrenDescriptors;
   }
 

@@ -1,3 +1,5 @@
+import sys
+
 single_input: int
 file_input: int
 eval_input: int
@@ -85,9 +87,11 @@ encoding_decl: int
 yield_expr: int
 yield_arg: int
 sync_comp_for: int
-func_body_suite: int
-func_type: int
-func_type_input: int
-namedexpr_test: int
-typelist: int
+if sys.version_info >= (3, 8):
+    func_body_suite: int
+    func_type: int
+    func_type_input: int
+    namedexpr_test: int
+    typelist: int
+
 sym_name: dict[int, str]

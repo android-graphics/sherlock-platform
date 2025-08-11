@@ -25,6 +25,7 @@ import java.time.format.DateTimeFormatter
 import javax.swing.JFormattedTextField
 import javax.swing.text.MaskFormatter
 
+
 class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
   init {
     title = SmartUpdateBundle.message("dialog.title.smart.update")

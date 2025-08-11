@@ -35,12 +35,14 @@ public class MakeTypeExplicitFix extends ReplaceElementFix<XPathExpression> {
     }
 
     @Override
-    public @NotNull String getText() {
+    @NotNull
+    public String getText() {
         return getFamilyName();
     }
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
         return XPathBundle.message("intention.family.name.make.type.conversion.explicit");
     }
 

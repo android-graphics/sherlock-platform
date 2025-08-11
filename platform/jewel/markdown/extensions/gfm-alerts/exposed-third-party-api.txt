@@ -1,3 +1,0 @@
-androidx/compose/**
-org/commonmark/parser/Parser$ParserExtension
-org/commonmark/renderer/text/TextContentRenderer$TextContentRendererExtension

@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.tools.holders.EditorHolder;
@@ -12,7 +26,6 @@ import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,8 +34,8 @@ import java.awt.*;
 import java.util.List;
 
 public class ThreesideContentPanel extends JPanel {
-  protected final @NotNull ThreeDiffSplitter mySplitter;
-  private final @NotNull List<DiffContentPanel> myPanels;
+  @NotNull protected final ThreeDiffSplitter mySplitter;
+  @NotNull private final List<DiffContentPanel> myPanels;
 
   public ThreesideContentPanel(@NotNull List<? extends JComponent> contents) {
     super(new BorderLayout());
@@ -43,7 +56,6 @@ public class ThreesideContentPanel extends JPanel {
     }
   }
 
-  @ApiStatus.Internal
   public void setBreadcrumbs(@NotNull ThreeSide side, @Nullable DiffBreadcrumbsPanel breadcrumbs, @NotNull TextDiffSettings settings) {
     if (breadcrumbs != null) {
       DiffContentPanel panel = side.select(myPanels);
@@ -74,7 +86,7 @@ public class ThreesideContentPanel extends JPanel {
   }
 
   public static class Holders extends ThreesideContentPanel {
-    private final @Nullable EditorEx myBaseEditor;
+    @Nullable private final EditorEx myBaseEditor;
 
     public Holders(@NotNull List<? extends EditorHolder> holders) {
       super(ContainerUtil.map(holders, holder -> holder.getComponent()));

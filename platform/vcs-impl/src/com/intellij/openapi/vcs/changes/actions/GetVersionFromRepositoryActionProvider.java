@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -14,14 +14,12 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.actions.GetVersionAction;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-@ApiStatus.Internal
-public final class GetVersionFromRepositoryActionProvider implements AnActionExtensionProvider {
+public class GetVersionFromRepositoryActionProvider implements AnActionExtensionProvider {
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS) != null;
@@ -56,14 +54,15 @@ public final class GetVersionFromRepositoryActionProvider implements AnActionExt
   }
 
   private static class MyFileContentProvider implements GetVersionAction.FileRevisionProvider {
-    private final @NotNull Change myChange;
+    @NotNull private final Change myChange;
 
     private MyFileContentProvider(@NotNull Change change) {
       myChange = change;
     }
 
+    @NotNull
     @Override
-    public @NotNull FilePath getFilePath() {
+    public FilePath getFilePath() {
       return ChangesUtil.getFilePath(myChange);
     }
 

@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.editor.actions;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.SimpleEditorPreview;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -22,7 +21,6 @@ import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextComponentAccessor;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,9 +38,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
-import org.intellij.images.fileTypes.impl.SvgFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,8 +52,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.*;
 
@@ -97,7 +93,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     setTitle(IdeBundle.message("dialog.title.background.image"));
-    myEditorPreview = createEditorPreview(getDisposable());
+    myEditorPreview = createEditorPreview();
     myIdePreview = createFramePreview();
     myPropertyTmp = getSystemProp() + "#" + project.getLocationHash();
     UiNotifyConnector.doWhenFirstShown(myRoot, () -> createTemporaryBackgroundTransform(myPreviewPanel, myPropertyTmp, getDisposable()));
@@ -139,12 +135,12 @@ public class BackgroundImageDialog extends DialogWrapper {
     System.getProperties().remove(myPropertyTmp);
   }
 
-  private static @NotNull SimpleEditorPreview createEditorPreview(@NotNull Disposable disposable) {
+  @NotNull
+  private static SimpleEditorPreview createEditorPreview() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     ColorAndFontOptions options = new ColorAndFontOptions();
     options.reset();
     options.selectScheme(scheme.getName());
-    Disposer.register(disposable, () -> options.disposeUIResources());
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
     int index;
     int attempt = 0;
@@ -155,7 +151,8 @@ public class BackgroundImageDialog extends DialogWrapper {
     return new SimpleEditorPreview(options, pages[index], false);
   }
 
-  private static @NotNull JComponent createFramePreview() {
+  @NotNull
+  private static JComponent createFramePreview() {
     EditorEmptyTextPainter painter = ApplicationManager.getApplication().getService(EditorEmptyTextPainter.class);
     JBPanelWithEmptyText panel = new JBPanelWithEmptyText() {
       @Override
@@ -178,22 +175,26 @@ public class BackgroundImageDialog extends DialogWrapper {
     return panel;
   }
 
+  @Nullable
   @Override
-  protected @Nullable String getDimensionServiceKey() {
+  protected String getDimensionServiceKey() {
     return getClass().getName();
   }
 
-  private @NotNull String getRecentItemsKey() {
+  @NotNull
+  private String getRecentItemsKey() {
     return getDimensionServiceKey() + "#recent";
   }
 
+  @Nullable
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  protected JComponent createCenterPanel() {
     return myRoot;
   }
 
+  @Nullable
   @Override
-  public @Nullable JComponent getPreferredFocusedComponent() {
+  public JComponent getPreferredFocusedComponent() {
     return myPathField;
   }
 
@@ -218,9 +219,9 @@ public class BackgroundImageDialog extends DialogWrapper {
     initFillPanel(myFillPanel, myFillGroup, getDisposable());
     ((CardLayout)myPreviewPanel.getLayout()).show(myPreviewPanel, EDITOR);
     myPathField.getComboBox().setEditable(true);
-    var descriptor = new FileChooserDescriptor(true, false, false, false, true, false)
-      .withExtensionFilter(IdeCoreBundle.message("file.chooser.files.label", ImagesBundle.message("filetype.images.display.name")), ImageFileTypeManager.getInstance().getImageFileType(), SvgFileType.INSTANCE);
-    myPathField.addBrowseFolderListener(null, descriptor, TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT);
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, true, false)
+      .withFileFilter(file -> ImageFileTypeManager.getInstance().isImage(file));
+    myPathField.addBrowseFolderListener(null, null, null, descriptor, TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT);
     JTextComponent textComponent = getComboEditor();
     textComponent.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -418,7 +419,8 @@ public class BackgroundImageDialog extends DialogWrapper {
     return getSystemProp(EDITOR.equals(myPreviewTarget));
   }
 
-  private static @NotNull String getSystemProp(boolean forEditor) {
+  @NotNull
+  private static String getSystemProp(boolean forEditor) {
     return forEditor ? EDITOR_PROP : FRAME_PROP;
   }
 
@@ -434,7 +436,8 @@ public class BackgroundImageDialog extends DialogWrapper {
     getOKAction().setEnabled(!clear);
   }
 
-  private @NotNull String calcNewValue() {
+  @NotNull
+  private String calcNewValue() {
     String path = (String)myPathField.getComboBox().getEditor().getItem();
     String type = getFillRbGroup().getSelection().getActionCommand().replace('-', '_');
     String anchor = getAnchorRbGroup().getSelection().getActionCommand().replace('-', '_');
@@ -462,7 +465,8 @@ public class BackgroundImageDialog extends DialogWrapper {
     return myAnchorGroup;
   }
 
-  private static @NotNull Color getSelectionBackground() {
+  @NotNull
+  private static Color getSelectionBackground() {
     return ColorUtil.mix(UIUtil.getListSelectionBackground(true), UIUtil.getLabelBackground(), StartupUiUtil.isUnderDarcula() ? .5 : .75);
   }
 
@@ -514,7 +518,8 @@ public class BackgroundImageDialog extends DialogWrapper {
     }
   }
 
-  private static @NotNull BufferedImage sampleImage() {
+  @NotNull
+  private static BufferedImage sampleImage() {
     int size = 16;
     BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
     Graphics ig = image.getGraphics();
@@ -528,9 +533,10 @@ public class BackgroundImageDialog extends DialogWrapper {
     return image;
   }
 
-  private static @NotNull JBPanelWithEmptyText addClickablePanel(@NotNull JPanel buttonPanel,
-                                                                 @NotNull JToggleButton button,
-                                                                 @NotNull Color color) {
+  @NotNull
+  private static JBPanelWithEmptyText addClickablePanel(@NotNull JPanel buttonPanel,
+                                                        @NotNull JToggleButton button,
+                                                        @NotNull Color color) {
     JBPanelWithEmptyText panel = new JBPanelWithEmptyText() {
 
       @Override

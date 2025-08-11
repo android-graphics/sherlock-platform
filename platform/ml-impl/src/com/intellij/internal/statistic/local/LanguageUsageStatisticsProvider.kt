@@ -2,9 +2,7 @@
 package com.intellij.internal.statistic.local
 
 import com.intellij.lang.Language
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 interface LanguageUsageStatisticsProvider {
   fun getStatisticsForLanguage(language: Language): LanguageUsageStatistics
 
@@ -15,7 +13,6 @@ interface LanguageUsageStatisticsProvider {
   fun updateLanguageStatistics(language: Language)
 }
 
-@ApiStatus.Internal
 data class LanguageUsageStatistics(val useCount: Int, val isMostUsed: Boolean,
                                    val lastUsed: Long, val isMostRecent: Boolean) {
   companion object {

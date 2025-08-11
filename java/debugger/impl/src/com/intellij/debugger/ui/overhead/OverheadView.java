@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.overhead;
 
 import com.intellij.CommonBundle;
@@ -39,7 +39,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
 public class OverheadView extends BorderLayoutPanel implements Disposable, UiDataProvider {
-  private final @NotNull DebugProcessImpl myProcess;
+  @NotNull private final DebugProcessImpl myProcess;
 
   static final EnabledColumnInfo ENABLED_COLUMN = new EnabledColumnInfo();
   static final NameColumnInfo NAME_COLUMN = new NameColumnInfo();
@@ -106,7 +106,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, UiDat
       }
 
       @Override
-      public void actionPerformed(final @NotNull AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         myTable.getSelection().forEach(c -> c.setEnabled(!c.isEnabled()));
         myTable.repaint();
       }
@@ -161,8 +161,9 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, UiDat
       return Boolean.class;
     }
 
+    @Nullable
     @Override
-    public @Nullable Boolean valueOf(OverheadProducer item) {
+    public Boolean valueOf(OverheadProducer item) {
       return item.isEnabled();
     }
 
@@ -182,8 +183,9 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, UiDat
       super(CommonBundle.message("title.name"));
     }
 
+    @Nullable
     @Override
-    public @Nullable OverheadProducer valueOf(OverheadProducer aspects) {
+    public OverheadProducer valueOf(OverheadProducer aspects) {
       return aspects;
     }
 
@@ -192,8 +194,9 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, UiDat
       return OverheadProducer.class;
     }
 
+    @Nullable
     @Override
-    public @Nullable TableCellRenderer getRenderer(OverheadProducer producer) {
+    public TableCellRenderer getRenderer(OverheadProducer producer) {
       return new ColoredTableCellRenderer() {
         @Override
         protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
@@ -229,8 +232,9 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, UiDat
       myGetter = getter;
     }
 
+    @Nullable
     @Override
-    public @Nullable OverheadProducer valueOf(OverheadProducer aspects) {
+    public OverheadProducer valueOf(OverheadProducer aspects) {
       return aspects;
     }
 
@@ -239,8 +243,9 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, UiDat
       return OverheadProducer.class;
     }
 
+    @Nullable
     @Override
-    public @Nullable TableCellRenderer getRenderer(OverheadProducer producer) {
+    public TableCellRenderer getRenderer(OverheadProducer producer) {
       return new ColoredTableCellRenderer() {
         @Override
         protected void customizeCellRenderer(@NotNull JTable table,
@@ -258,8 +263,9 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, UiDat
       };
     }
 
+    @Nullable
     @Override
-    public @Nullable Comparator<OverheadProducer> getComparator() {
+    public Comparator<OverheadProducer> getComparator() {
       return Comparator.comparing(c -> {
         Long value = myGetter.apply(c);
         return value != null ? value : Long.MAX_VALUE;

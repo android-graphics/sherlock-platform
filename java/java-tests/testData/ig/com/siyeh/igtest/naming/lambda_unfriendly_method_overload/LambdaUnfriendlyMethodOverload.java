@@ -33,7 +33,7 @@ class X {
   void <warning descr="Lambda-unfriendly overload of method 'a()'">a</warning> (Function<String, String> f) {}
 
   void b() {
-    a<error descr="Ambiguous method call: both 'X.a(IntPredicate)' and 'X.a(Function<String, String>)' match">(z -> true)</error>;
+    <error descr="Ambiguous method call: both 'X.a(IntPredicate)' and 'X.a(Function<String, String>)' match">a</error>(z -> true);
   }
 
   void assertEquals(double expected, Runnable messageSupplier) {}

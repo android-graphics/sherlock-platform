@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-final class VcsGroupsWrapper extends ActionGroup implements DumbAware {
+public class VcsGroupsWrapper extends ActionGroup implements DumbAware {
   private static final Logger LOG = Logger.getInstance(VcsGroupsWrapper.class);
 
   @Override
@@ -52,18 +51,20 @@ final class VcsGroupsWrapper extends ActionGroup implements DumbAware {
     }
   }
 
-  private static @NotNull Set<String> collectVcses(@NotNull Project project, @NotNull DataContext dataContext) {
+  @NotNull
+  private static Set<String> collectVcses(@NotNull Project project, @NotNull DataContext dataContext) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
 
-    return VcsContextUtil.selectedFilesIterable(dataContext)
-      .filterMap(file -> vcsManager.getVcsFor(VcsUtil.resolveSymlinkIfNeeded(project, file)))
+    return VcsContextUtil.selectedFilePathsIterable(dataContext)
+      .filterMap(vcsManager::getVcsFor)
       .map(AbstractVcs::getName)
       .unique()
       .take(vcsManager.getAllActiveVcss().length) // stop processing files if all available vcses are already affected
       .toSet();
   }
 
-  private static @Nullable DefaultActionGroup mergeVcsGroups(@NotNull AnActionEvent e) {
+  @Nullable
+  private static DefaultActionGroup mergeVcsGroups(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return null;
 

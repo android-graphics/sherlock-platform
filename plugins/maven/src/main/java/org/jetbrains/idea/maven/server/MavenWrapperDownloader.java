@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.build.events.impl.ProgressBuildEventImpl;
@@ -22,32 +22,28 @@ import java.util.Locale;
 public final class MavenWrapperDownloader {
 
   public static void checkOrInstall(@NotNull Project project, @Nullable String workingDir) {
-    checkOrInstall(project, workingDir, null, true);
+    checkOrInstall(project, workingDir, null);
   }
 
   public static void checkOrInstallForSync(@NotNull Project project,
-                                           @Nullable String workingDir,
-                                           boolean showNotificationIfUrlMissing) {
-    checkOrInstall(project, workingDir, MavenProjectsManager.getInstance(project).getSyncConsole(), showNotificationIfUrlMissing);
+                                           @Nullable String workingDir) {
+    checkOrInstall(project, workingDir, MavenProjectsManager.getInstance(project).getSyncConsole());
   }
 
   private static synchronized void checkOrInstall(@NotNull Project project,
                                                   @Nullable String workingDir,
-                                                  @Nullable MavenSyncConsole syncConsole,
-                                                  boolean showNotificationIfUrlMissing) {
+                                                  @Nullable MavenSyncConsole syncConsole) {
     if (workingDir == null) return;
     MavenDistributionsCache distributionsCache = MavenDistributionsCache.getInstance(project);
 
     String multiModuleDir = distributionsCache.getMultimoduleDirectory(workingDir);
     String distributionUrl = distributionsCache.getWrapperDistributionUrl(multiModuleDir);
     if (distributionUrl == null) {
-      if (showNotificationIfUrlMissing) {
-        MavenWrapperEventLogNotification.noDistributionUrlEvent(project, multiModuleDir);
-      }
+      MavenWrapperEventLogNotification.noDistributionUrlEvent(project, multiModuleDir);
       return;
     }
 
-    MavenDistribution distribution = MavenWrapperSupport.getCurrentDistribution(project, distributionUrl);
+    MavenDistribution distribution = MavenWrapperSupport.getCurrentDistribution(distributionUrl);
     if (distribution != null) return;
 
     MavenLog.LOG.info("start install wrapper " + distributionUrl);
@@ -57,7 +53,7 @@ public final class MavenWrapperDownloader {
     Task.Backgroundable task = getTaskInfo();
     BackgroundableProcessIndicator indicator = new WrapperProgressIndicator(project, task, syncConsole);
     try {
-      distribution = new MavenWrapperSupport().downloadAndInstallMaven(distributionUrl, indicator, project);
+      distribution = new MavenWrapperSupport().downloadAndInstallMaven(distributionUrl, indicator);
       if (syncConsole != null && distributionUrl.toLowerCase(Locale.ENGLISH).startsWith("http:")) {
         MavenWrapperSupport.showUnsecureWarning(syncConsole, LocalFileSystem.getInstance().findFileByPath(multiModuleDir));
       }
@@ -79,7 +75,8 @@ public final class MavenWrapperDownloader {
     }
   }
 
-  private static @NotNull Task.Backgroundable getTaskInfo() {
+  @NotNull
+  private static Task.Backgroundable getTaskInfo() {
     return new Task.Backgroundable(null, SyncBundle.message("maven.sync.wrapper.downloading")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) { }

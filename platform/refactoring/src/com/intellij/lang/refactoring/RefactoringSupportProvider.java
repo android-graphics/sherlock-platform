@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.refactoring;
 
 import com.intellij.lang.ContextAwareActionHandler;
@@ -33,13 +33,15 @@ public abstract class RefactoringSupportProvider {
   /**
    * @see #getIntroduceVariableHandler(PsiElement)
    */
-  public @Nullable RefactoringActionHandler getIntroduceVariableHandler() { return null; }
+  @Nullable
+  public RefactoringActionHandler getIntroduceVariableHandler() { return null; }
 
   /**
    * @return handler for introducing local variables in this language
    * @see RefactoringActionHandler
    */
-  public @Nullable RefactoringActionHandler getIntroduceVariableHandler(PsiElement element) {
+  @Nullable
+  public RefactoringActionHandler getIntroduceVariableHandler(PsiElement element) {
     return getIntroduceVariableHandler(); 
   }
 
@@ -47,32 +49,37 @@ public abstract class RefactoringSupportProvider {
    * @return handler for extracting methods in this language
    * @see RefactoringActionHandler
    */
-  public @Nullable RefactoringActionHandler getExtractMethodHandler() { return null; }
+  @Nullable
+  public RefactoringActionHandler getExtractMethodHandler() { return null; }
 
   /**
    * @return handler for introducing constants in this language
    * @see RefactoringActionHandler
    */
-  public @Nullable RefactoringActionHandler getIntroduceConstantHandler() { return null; }
+  @Nullable
+  public RefactoringActionHandler getIntroduceConstantHandler() { return null; }
 
   /**
    * @return handler for introducing fields in this language
    * @see RefactoringActionHandler
    */
-  public @Nullable RefactoringActionHandler getIntroduceFieldHandler() { return null; }
+  @Nullable
+  public RefactoringActionHandler getIntroduceFieldHandler() { return null; }
 
   /**
    * @return handler for introducing parameters in this language
    * @see RefactoringActionHandler
    */
-  public @Nullable RefactoringActionHandler getIntroduceParameterHandler() { return null; }
+  @Nullable
+  public RefactoringActionHandler getIntroduceParameterHandler() { return null; }
 
   /**
    * @return handler for introducing functional parameters/closures in this language
    * @see ContextAwareActionHandler
    * @see RefactoringActionHandler
    */
-  public @Nullable RefactoringActionHandler getIntroduceFunctionalParameterHandler() {
+  @Nullable
+  public RefactoringActionHandler getIntroduceFunctionalParameterHandler() {
     return null;
   }
 
@@ -89,37 +96,43 @@ public abstract class RefactoringSupportProvider {
    * @return handler for pulling up members in this language
    * @see RefactoringActionHandler
    */
-  public @Nullable RefactoringActionHandler getPullUpHandler() { return null; }
+  @Nullable
+  public RefactoringActionHandler getPullUpHandler() { return null; }
 
   /**
    * @return handler for pushing down members in this language
    * @see RefactoringActionHandler
    */
-  public @Nullable RefactoringActionHandler getPushDownHandler() { return null; }
+  @Nullable
+  public RefactoringActionHandler getPushDownHandler() { return null; }
 
   /**
    * @return handler for extracting members to an interface in this language
    * @see RefactoringActionHandler
    */
-  public @Nullable RefactoringActionHandler getExtractInterfaceHandler() { return null; }
+  @Nullable
+  public RefactoringActionHandler getExtractInterfaceHandler() { return null; }
 
   /**
    * @return handler for extracting members to some module in this language
    * @see RefactoringActionHandler
    */
-  public @Nullable RefactoringActionHandler getExtractModuleHandler() { return null; }
+  @Nullable
+  public RefactoringActionHandler getExtractModuleHandler() { return null; }
 
   /**
    * @return handler for extracting super class in this language
    * @see RefactoringActionHandler
    */
-  public @Nullable RefactoringActionHandler getExtractSuperClassHandler() { return null; }
+  @Nullable
+  public RefactoringActionHandler getExtractSuperClassHandler() { return null; }
 
   /**
    * @return handler for changing signature in this language
    * @see RefactoringActionHandler
    */
-  public @Nullable ChangeSignatureHandler getChangeSignatureHandler() { return null; }
+  @Nullable
+  public ChangeSignatureHandler getChangeSignatureHandler() { return null; }
 
   public boolean isInplaceRenameAvailable(@NotNull PsiElement element, PsiElement context) { return false; }
 
@@ -131,7 +144,8 @@ public abstract class RefactoringSupportProvider {
    * @return handler for extracting [delegate] class in this language
    * @see RefactoringActionHandler
    */
-  public @Nullable RefactoringActionHandler getExtractClassHandler() {
+  @Nullable
+  public RefactoringActionHandler getExtractClassHandler() {
     return null;
   }
 

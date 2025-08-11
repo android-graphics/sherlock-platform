@@ -1,11 +1,11 @@
 // "Add name to argument: 'b = B()'" "true"
+// LANGUAGE_VERSION: 1.3
 
 open class A {}
 open class B : A() {}
 
-fun f(a: A, b: A, c: A) {}
+fun f(a: Int, b: A) {}
 fun g() {
-     f(c=A(), <caret>B(), a=A())
+     f(a=1, <caret>B())
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddNameToArgumentFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddNameToArgumentFixFactory$AddNameToArgumentFix

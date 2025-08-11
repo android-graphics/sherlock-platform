@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.library;
 
 import com.intellij.framework.FrameworkTypeEx;
@@ -24,18 +23,20 @@ public class LibraryBasedFrameworkSupportProvider extends FrameworkSupportInModu
     myLibraryTypeClass = libraryTypeClass;
   }
 
+  @NotNull
   @Override
-  public @NotNull FrameworkTypeEx getFrameworkType() {
+  public FrameworkTypeEx getFrameworkType() {
     return myFrameworkType;
   }
 
+  @NotNull
   @Override
-  public @NotNull FrameworkSupportInModuleConfigurable createConfigurable(final @NotNull FrameworkSupportModel model) {
+  public FrameworkSupportInModuleConfigurable createConfigurable(@NotNull final FrameworkSupportModel model) {
     return new LibrarySupportConfigurable();
   }
 
   @Override
-  public boolean isEnabledForModuleType(@NotNull ModuleType<?> moduleType) {
+  public boolean isEnabledForModuleType(@NotNull ModuleType moduleType) {
     return moduleType instanceof JavaModuleType;
   }
 
@@ -51,8 +52,9 @@ public class LibraryBasedFrameworkSupportProvider extends FrameworkSupportInModu
                            @NotNull ModifiableModelsProvider modifiableModelsProvider) {
     }
 
+    @NotNull
     @Override
-    public @NotNull CustomLibraryDescription createLibraryDescription() {
+    public CustomLibraryDescription createLibraryDescription() {
       return DownloadableLibraryService.getInstance().createDescriptionForType(myLibraryTypeClass);
     }
 

@@ -1,4 +1,4 @@
-// "Create missing branch 'true'" "true-preview"
+// "Create missing switch branch 'true'" "true-preview"
 import java.util.List;
 
 class Test {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.formatting.fileSet.FileSetDescriptor;
@@ -16,7 +16,7 @@ public final class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
   private ExcludedFilesScopeForm myForm;
   private DefaultComboBoxModel<String> myScopeListModel;
 
-  public static final int EDIT_SCOPES = NEXT_USER_EXIT_CODE;
+  public final static int EDIT_SCOPES = NEXT_USER_EXIT_CODE;
 
   private final Action myEditAction;
   private final List<? extends NamedScope> myAvailableScopes;
@@ -50,8 +50,9 @@ public final class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
   }
 
 
+  @Nullable
   @Override
-  public @Nullable FileSetDescriptor getDescriptor() {
+  public FileSetDescriptor getDescriptor() {
     int selectedIndex = myForm.getScopesList().getSelectedIndex();
     String scopeName = selectedIndex >= 0 ? myScopeListModel.getElementAt(selectedIndex) : null;
     if (scopeName != null) {
@@ -64,8 +65,9 @@ public final class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
     return null;
   }
 
+  @Nullable
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  protected JComponent createCenterPanel() {
     myForm = new ExcludedFilesScopeForm();
     return myForm.getTopPanel();
   }

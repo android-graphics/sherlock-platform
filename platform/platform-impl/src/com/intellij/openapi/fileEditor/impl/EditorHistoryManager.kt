@@ -21,9 +21,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.util.PlatformUtils
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -62,6 +62,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     private val LOG = logger<EditorHistoryManager>()
 
     @JvmStatic
+    @RequiresBlockingContext
     fun getInstance(project: Project): EditorHistoryManager = project.service()
   }
 
@@ -80,23 +81,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  interface IncludeInEditorHistoryFile : OptionallyIncluded {
-    override fun isIncludedInEditorHistory(project: Project): Boolean = true
-  }
-
-  @ApiStatus.Internal
-  @ApiStatus.Experimental
-  interface OptionallyIncluded {
-    fun isIncludedInEditorHistory(project: Project): Boolean
-    fun isPersistedInEditorHistory(): Boolean = true
-  }
-
-  private fun isIncludedInHistory(file: VirtualFile): Boolean {
-    if (file is OptionallyIncluded) return file.isIncludedInEditorHistory(project)
-
-    // don't add files that cannot be found via VFM (light & etc.)
-    return VirtualFileManager.getInstance().findFileByUrl(file.url) != null
-  }
+  interface IncludeInEditorHistoryFile
 
   /**
    * Makes file the most recent one
@@ -107,8 +92,8 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     fileEditorManager: FileEditorManagerEx,
   ) {
     ThreadingAssertions.assertEventDispatchThread()
-
-    if (!isIncludedInHistory(file)) {
+    // don't add files that cannot be found via VFM (light & etc.)
+    if (file !is IncludeInEditorHistoryFile && VirtualFileManager.getInstance().findFileByUrl(file.url) == null) {
       return
     }
 
@@ -150,14 +135,11 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
 
     val disposable = Disposer.newDisposable()
     val pointer = VirtualFilePointerManager.getInstance().create(file, disposable, null)
-    val isPersisted = if (file is OptionallyIncluded) file.isPersistedInEditorHistory() else true
-
     val entry = HistoryEntry(
       filePointer = pointer,
       selectedProvider = selected.provider,
       isPreview = editorComposite != null && editorComposite.isPreview,
       disposable = disposable,
-      isPersisted = isPersisted,
       providerToState = stateMap,
     )
     synchronized(this) {
@@ -314,11 +296,6 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       fileToElement.put(file, e)
     }
 
-    if (PlatformUtils.isJetBrainsClient()) {
-      // JetBrains Client doesn't have local files, so there is no need to load a history here
-      return
-    }
-
     val list = fileToElement.values.mapNotNull { element ->
       try {
         SlowOperations.knownIssue("IDEA-333919, EA-831462").use {
@@ -355,9 +332,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       }
     }
     for (entry in entries) {
-      if (entry.isPersisted) {
-        element.addContent(entry.writeExternal(project))
-      }
+      element.addContent(entry.writeExternal(project))
     }
     return element
   }

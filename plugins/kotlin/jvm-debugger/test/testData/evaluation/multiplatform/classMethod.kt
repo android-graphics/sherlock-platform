@@ -9,6 +9,7 @@ expect class Platform {
 // MODULE: jvm(common)
 // FILE: jvm.kt
 
+
 actual class Platform {
     actual fun name1() = "name1"
     actual fun name2(param: String): String = param

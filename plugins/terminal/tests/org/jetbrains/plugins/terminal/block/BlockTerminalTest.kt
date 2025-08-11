@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.completion.spec.ShellCommandSpec
@@ -9,19 +8,19 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
-import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.*
-import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.toShellName
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.availableCommandsGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCachingGeneratorCommandsRunner
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
-import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
-import org.jetbrains.plugins.terminal.block.session.ShellCommandSentListener
 import org.jetbrains.plugins.terminal.block.testApps.MoveCursorToLineEndAndPrint
 import org.jetbrains.plugins.terminal.block.testApps.SimpleTextRepeater
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.toShellName
+import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
+import org.jetbrains.plugins.terminal.block.session.ShellCommandSentListener
 import org.jetbrains.plugins.terminal.block.util.CommandResult
 import org.jetbrains.plugins.terminal.block.util.TerminalSessionTestUtil
 import org.jetbrains.plugins.terminal.block.util.TerminalSessionTestUtil.assertCommandResult
@@ -89,14 +88,12 @@ internal class BlockTerminalTest(private val shellPath: Path) {
                        SimpleTextRepeater.Item("Done", false, true, 1))
     setTerminalBufferMaxLines(items.sumOf { it.count })
     val session = startBlockTerminalSession(TermSize(200, 100))
-    Benchmark.newBenchmark("$shellPath - large output is read") {
+    PerformanceTestUtil.newPerformanceTest("$shellPath - large output is read") {
       val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
       session.sendCommandToExecuteWithoutAddingToHistory(SimpleTextRepeater.Helper.generateCommand(items))
       assertCommandResult(0, SimpleTextRepeater.Helper.getExpectedOutput(items), outputFuture)
     }.attempts(1).start()
   }
-
-  val LOG = Logger.getInstance(BlockTerminalTest::class.java)
 
   @Test
   fun `concurrent command and generator execution`() {
@@ -115,7 +112,7 @@ internal class BlockTerminalTest(private val shellPath: Path) {
           "",
           "",
           session.shellIntegration.shellType.toShellName(),
-          ShellCachingGeneratorCommandsRunner { command -> session.commandExecutionManager.runGeneratorAsync(command).await() }
+          ShellCachingGeneratorCommandsRunner(session)
         )
         val commandsListDeferred: Deferred<List<ShellCommandSpec>> = async(Dispatchers.Default) {
           generatorsExecutor.execute(context, availableCommandsGenerator())
@@ -133,7 +130,7 @@ internal class BlockTerminalTest(private val shellPath: Path) {
 
         // Wait until the user command is finished
         assertCommandResult(0, "foo\n", outputFuture)
-        LOG.debug("#$stepId Done in ${startTime.elapsedNow().inWholeMilliseconds}ms")
+        println("#$stepId Done in ${startTime.elapsedNow().inWholeMilliseconds}ms")
       }
     }
   }

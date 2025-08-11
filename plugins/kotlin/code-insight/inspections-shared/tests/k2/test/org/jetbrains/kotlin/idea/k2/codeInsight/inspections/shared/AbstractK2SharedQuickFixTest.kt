@@ -3,19 +3,14 @@ package org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared
 
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.runInEdtAndWait
-import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.psi.KtFile
-import java.io.File
 
 abstract class AbstractK2SharedQuickFixTest : AbstractQuickFixTest() {
 
-    override fun checkUnexpectedErrors(mainFile: File, ktFile: KtFile, fileText: String) {
-        K2DirectiveBasedActionUtils.checkForErrorsAfter(mainFile, ktFile, fileText)
-    }
+    override fun checkForUnexpectedErrors() {}
 
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

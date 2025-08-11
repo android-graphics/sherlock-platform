@@ -2,9 +2,6 @@
 package com.intellij.openapi.editor.actions;
 
 
-import org.jetbrains.annotations.ApiStatus;
-
-@ApiStatus.Internal
 public final class ResetFontSizeGlobalAction extends ResetFontSizeActionBase {
   public ResetFontSizeGlobalAction() {
     super(true);

@@ -1,6 +1,0 @@
-package test
-
-import JavaAnnotationWithValue
-
-@JavaAnnotationWithValue("some")
-class Some

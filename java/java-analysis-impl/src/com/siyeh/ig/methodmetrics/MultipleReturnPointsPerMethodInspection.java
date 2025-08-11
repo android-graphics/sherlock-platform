@@ -38,7 +38,8 @@ public final class MultipleReturnPointsPerMethodInspection
   public boolean ignoreEqualsMethod = false;
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "MethodWithMultipleReturnPoints";
   }
 
@@ -53,7 +54,8 @@ public final class MultipleReturnPointsPerMethodInspection
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final Integer returnPointCount = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "multiple.return.points.per.method.problem.descriptor",

@@ -3,7 +3,7 @@
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Introduce import alias
 // WITH_STDLIB
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 class Foo<@MyExperimentalAPI<caret> T> {}
 
 @RequiresOptIn

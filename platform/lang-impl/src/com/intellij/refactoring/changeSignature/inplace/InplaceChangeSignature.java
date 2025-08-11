@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature.inplace;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -102,7 +102,8 @@ public final class InplaceChangeSignature implements DocumentListener {
     showBalloon();
   }
 
-  public static @Nullable InplaceChangeSignature getCurrentRefactoring(@NotNull Editor editor) {
+  @Nullable
+  public static InplaceChangeSignature getCurrentRefactoring(@NotNull Editor editor) {
     return editor.getUserData(INPLACE_CHANGE_SIGNATURE);
   }
 
@@ -118,7 +119,8 @@ public final class InplaceChangeSignature implements DocumentListener {
     return myInitialSignature;
   }
 
-  public @NotNull ChangeInfo getStableChange() {
+  @NotNull
+  public ChangeInfo getStableChange() {
     return myStableChange;
   }
 

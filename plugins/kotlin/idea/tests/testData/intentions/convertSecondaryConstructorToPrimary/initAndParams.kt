@@ -1,4 +1,3 @@
-// "Convert to primary constructor" "true"
 class InitAndParams {
     constructor<caret>(x: Int, z: Int) {
         this.y = x
@@ -14,5 +13,3 @@ class InitAndParams {
 
     val v: Int
 }
-
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertSecondaryConstructorToPrimaryInspection$createQuickFix$1

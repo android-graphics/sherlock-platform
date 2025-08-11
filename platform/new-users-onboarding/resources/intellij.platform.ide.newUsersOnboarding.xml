@@ -1,6 +1,7 @@
 <idea-plugin package="com.intellij.platform.ide.newUsersOnboarding">
   <dependencies>
     <module name="intellij.platform.ide.newUiOnboarding"/>
+    <module name="intellij.platform.experiment"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.ide.newUiOnboarding">
@@ -12,7 +13,7 @@
     <registryKey key="ide.newUsersOnboarding" defaultValue="true"
                  description="Whether to show New Users Onboarding dialog on first IDE start and corresponding action in the Help menu"/>
     <postStartupActivity implementation="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStartupActivity"/>
-    <applicationActivity implementation="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingExperiment$Initializer"/>
+    <applicationInitializedListener implementation="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingExperiment$Initializer"/>
 
     <notificationGroup displayType="BALLOON" id="newUsersOnboarding" bundle="messages.NewUsersOnboardingBundle"
                        key="notification.group"/>

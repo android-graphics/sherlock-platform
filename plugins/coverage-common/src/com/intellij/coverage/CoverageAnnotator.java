@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.coverage.filters.ModifiedFilesFilter;
@@ -24,7 +23,9 @@ public interface CoverageAnnotator {
    * @param psiDirectory {@link PsiDirectory} to obtain coverage information for
    * @return human-readable coverage information
    */
-  default @Nullable @Nls String getDirCoverageInformationString(@NotNull PsiDirectory psiDirectory, @NotNull CoverageSuitesBundle currentSuite,
+  @Nullable
+  @Nls
+  default String getDirCoverageInformationString(@NotNull PsiDirectory psiDirectory, @NotNull CoverageSuitesBundle currentSuite,
                                                  @NotNull CoverageDataManager manager) {
     return getDirCoverageInformationString(psiDirectory.getProject(), psiDirectory.getVirtualFile(), currentSuite, manager);
   }
@@ -35,7 +36,9 @@ public interface CoverageAnnotator {
    * @param directory {@link VirtualFile} to obtain coverage information for
    * @return human-readable coverage information
    */
-  default @Nullable @Nls String getDirCoverageInformationString(@NotNull Project project, @NotNull VirtualFile directory,
+  @Nullable
+  @Nls
+  default String getDirCoverageInformationString(@NotNull Project project, @NotNull VirtualFile directory,
                                                  @NotNull CoverageSuitesBundle currentSuite, @NotNull CoverageDataManager manager) {
     PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(directory);
     if (psiDirectory == null) return null;
@@ -48,7 +51,9 @@ public interface CoverageAnnotator {
    * @param psiFile {@link PsiFile} to obtain coverage information for
    * @return human-readable coverage information
    */
-  default @Nullable @Nls String getFileCoverageInformationString(@NotNull PsiFile psiFile, @NotNull CoverageSuitesBundle currentSuite,
+  @Nullable
+  @Nls
+  default String getFileCoverageInformationString(@NotNull PsiFile psiFile, @NotNull CoverageSuitesBundle currentSuite,
                                                   @NotNull CoverageDataManager manager) {
     VirtualFile file = psiFile.getVirtualFile();
     VirtualFile virtualFile = Objects.requireNonNullElse(file.getCanonicalFile(), file);
@@ -61,7 +66,9 @@ public interface CoverageAnnotator {
    * @param file {@link VirtualFile} to obtain coverage information for
    * @return human-readable coverage information
    */
-  default @Nullable @Nls String getFileCoverageInformationString(@NotNull Project project, @NotNull VirtualFile file,
+  @Nullable
+  @Nls
+  default String getFileCoverageInformationString(@NotNull Project project, @NotNull VirtualFile file,
                                                   @NotNull CoverageSuitesBundle currentSuite, @NotNull CoverageDataManager manager) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) return null;
@@ -73,7 +80,8 @@ public interface CoverageAnnotator {
   void renewCoverageData(@NotNull CoverageSuitesBundle suite, @NotNull CoverageDataManager dataManager);
 
   @ApiStatus.Internal
-  default @Nullable ModifiedFilesFilter getModifiedFilesFilter() {
+  @Nullable
+  default ModifiedFilesFilter getModifiedFilesFilter() {
     return null;
   }
 }

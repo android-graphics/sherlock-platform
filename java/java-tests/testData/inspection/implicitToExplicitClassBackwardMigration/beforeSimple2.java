@@ -1,9 +1,9 @@
 private final String field = "field";
 
-public static void main() {
+public static void mai<caret>n() {
   System.out.println("Hello, world!");
 }
 
-public static void main<caret>(String[] args) {
+public static void main(String[] args) {
   System.out.println("Hello, world!");
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.openapi.extensions.BaseExtensionPointName;
@@ -7,7 +7,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.components.JBBox;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -31,13 +30,15 @@ public final class CoverageOptionsConfigurable extends CompositeConfigurable<Cov
     myProject = project;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getId() {
+  public String getId() {
     return "coverage";
   }
 
+  @Nls
   @Override
-  public @Nls String getDisplayName() {
+  public String getDisplayName() {
     return CoverageBundle.message("configurable.CoverageOptionsConfigurable.display.name");
   }
 
@@ -83,28 +84,33 @@ public final class CoverageOptionsConfigurable extends CompositeConfigurable<Cov
     c.fill = GridBagConstraints.BOTH;
     c.weightx = 1;
     c.weighty = 1;
-    panel.add(JBBox.createVerticalBox(), c);
+    panel.add(Box.createVerticalBox(), c);
     return panel;
   }
 
+  @NotNull
   @Override
-  protected @NotNull List<CoverageOptions> createConfigurables() {
+  protected List<CoverageOptions> createConfigurables() {
     return CoverageOptions.EP_NAME.getExtensions(myProject);
   }
 
   @Override
   public boolean isModified() {
-    return myManager.getOptionToReplace() != getSelectedValue()
-           || myManager.activateViewOnRun() != myPanel.myActivateCoverageViewCB.isSelected()
-           || myManager.showInProjectView() != myPanel.myShowInProjectViewCB.isSelected()
-           || super.isModified();
+    if (myManager.getOptionToReplace() != getSelectedValue()) {
+      return true;
+    }
+
+    if (myManager.activateViewOnRun() != myPanel.myActivateCoverageViewCB.isSelected()) {
+      return true;
+    }
+
+    return super.isModified();
   }
 
   @Override
   public void apply() throws ConfigurationException {
     myManager.setOptionsToReplace(getSelectedValue());
     myManager.setActivateViewOnRun(myPanel.myActivateCoverageViewCB.isSelected());
-    myManager.setShowInProjectView(myPanel.myShowInProjectViewCB.isSelected());
     super.apply();
   }
 
@@ -133,7 +139,6 @@ public final class CoverageOptionsConfigurable extends CompositeConfigurable<Cov
     radioButton.setSelected(true);
 
     myPanel.myActivateCoverageViewCB.setSelected(myManager.activateViewOnRun());
-    myPanel.myShowInProjectViewCB.setSelected(myManager.showInProjectView());
     super.reset();
   }
 
@@ -156,6 +161,5 @@ public final class CoverageOptionsConfigurable extends CompositeConfigurable<Cov
 
     private JPanel myWholePanel;
     private JCheckBox myActivateCoverageViewCB;
-    private JCheckBox myShowInProjectViewCB;
   }
 }

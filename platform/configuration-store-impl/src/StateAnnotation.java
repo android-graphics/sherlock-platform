@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore;
 
 import com.intellij.openapi.components.SettingsCategory;
@@ -18,8 +18,9 @@ class StateAnnotation implements State {
     storages = new Storage[]{storage};
   }
 
+  @NotNull
   @Override
-  public @NotNull String name() {
+  public String name() {
     return name;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
@@ -29,7 +29,8 @@ import java.util.*;
  * @author maxim
  */
 public final class ReplacementBuilder {
-  private final @NotNull String replacement;
+  @NotNull
+  private final String replacement;
   private final MultiMap<String, ParameterInfo> parameterizations = MultiMap.createLinked();
   private final Map<String, ScriptSupport> replacementVarsMap = new HashMap<>();
   private final ReplaceOptions options;
@@ -93,15 +94,15 @@ public final class ReplacementBuilder {
         assert dialect != null;
         final PatternContextInfo context = new PatternContextInfo(PatternTreeContext.Block, options.getMatchOptions().getPatternContext());
         final PsiElement[] elements =
-          MatcherImplUtil.createTreeFromText(prepareReplacementPattern(), context, fileType, dialect, project, false);
+          MatcherImplUtil.createTreeFromText(options.getReplacement(), context, fileType, dialect, project, false);
         if (elements.length > 0) {
           final PsiElement patternNode = elements[0].getParent();
           patternNode.accept(new PsiRecursiveElementWalkingVisitor() {
             @Override
             public void visitElement(@NotNull PsiElement element) {
               final String text = element.getText();
-              if (profile.isReplacementTypedVariable(text)) {
-                final Collection<ParameterInfo> infos = findParameterization(profile.stripReplacementTypedVariableDecorations(text));
+              if (MatchUtil.isTypedVariable(text)) {
+                final Collection<ParameterInfo> infos = findParameterization(Replacer.stripTypedVariableDecoration(text));
                 for (ParameterInfo info : infos) {
                   if (info.getElement() == null) {
                     info.setElement(element);
@@ -154,7 +155,8 @@ public final class ReplacementBuilder {
     return result.toString();
   }
 
-  private @Nullable Object generateReplacement(@NotNull ParameterInfo info, @NotNull MatchResult match) {
+  @Nullable
+  private Object generateReplacement(@NotNull ParameterInfo info, @NotNull MatchResult match) {
     ScriptSupport scriptSupport = replacementVarsMap.get(info.getName());
 
     if (scriptSupport == null) {
@@ -179,32 +181,8 @@ public final class ReplacementBuilder {
 
   public ParameterInfo findParameterization(PsiElement element) {
     if (element == null) return null;
-    StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
-    assert profile != null;
     final String text = element.getText();
-    if (!profile.isReplacementTypedVariable(text)) return null;
-    return ContainerUtil.find(findParameterization(profile.stripReplacementTypedVariableDecorations(text)), info -> info.getElement() == element);
-  }
-
-  public @NotNull String prepareReplacementPattern() {
-    final LanguageFileType fileType = options.getMatchOptions().getFileType();
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
-    assert profile != null;
-
-    final StringBuilder buf = new StringBuilder();
-    final Template template = TemplateManager.getInstance(myProject).createTemplate("", "", options.getReplacement());
-    final int segmentsCount = template.getSegmentsCount();
-    final String text = template.getTemplateText();
-
-    int prevOffset = 0;
-    for (int i = 0; i < segmentsCount; i++) {
-      final int offset = template.getSegmentOffset(i);
-      final String name = template.getSegmentName(i);
-      final String compiledName = profile.compileReplacementTypedVariable(name);
-      buf.append(text, prevOffset, offset).append(compiledName);
-      prevOffset = offset;
-    }
-    buf.append(text.substring(prevOffset));
-    return buf.toString();
+    if (!MatchUtil.isTypedVariable(text)) return null;
+    return ContainerUtil.find(findParameterization(Replacer.stripTypedVariableDecoration(text)), info -> info.getElement() == element);
   }
 }

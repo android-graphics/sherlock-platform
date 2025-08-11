@@ -22,12 +22,13 @@ import java.util.List;
  */
 public class AugmentedAssignmentQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.augment.assignment");
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull PsiElement element, final @NotNull ModPsiUpdater updater) {
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull final ModPsiUpdater updater) {
     if (element instanceof PyAssignmentStatement statement && element.isWritable()) {
 
       final PyExpression target = statement.getLeftHandSideExpression();

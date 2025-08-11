@@ -24,10 +24,10 @@ class KotlinLazyUBlockExpression(
 
     companion object {
         fun create(initializers: List<KtAnonymousInitializer>, uastParent: UElement): UBlockExpression {
-            val languagePlugin = UastFacade.findPlugin(uastParent.lang)
+            val languagePlugin = uastParent.getLanguagePlugin()
             return KotlinLazyUBlockExpression(uastParent) { expressionParent ->
                 initializers.map {
-                    languagePlugin?.convertOpt(it.body, expressionParent) ?: UastEmptyExpression(expressionParent)
+                    languagePlugin.convertOpt(it.body, expressionParent) ?: UastEmptyExpression(expressionParent)
                 }
             }
         }

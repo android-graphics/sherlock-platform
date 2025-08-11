@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.jql.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -24,15 +23,17 @@ public class JqlHistoryPredicateImpl extends JqlElementImpl implements JqlHistor
     visitor.visitJqlHistoryPredicate(this);
   }
 
+  @NotNull
   @Override
-  public @NotNull Type getType() {
+  public Type getType() {
     PsiElement keyword = findChildByType(JqlTokenTypes.HISTORY_PREDICATES);
     assert keyword != null;
     return Type.valueOf(StringUtil.toUpperCase(keyword.getText()));
   }
 
+  @Nullable
   @Override
-  public @Nullable JqlOperand getOperand() {
+  public JqlOperand getOperand() {
     return findChildByClass(JqlOperand.class);
   }
 }

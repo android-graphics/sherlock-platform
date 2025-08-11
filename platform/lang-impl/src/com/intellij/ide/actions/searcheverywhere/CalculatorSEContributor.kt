@@ -31,7 +31,8 @@ import javax.swing.KeyStroke
 import javax.swing.ListCellRenderer
 import kotlin.math.*
 
-private class CalculatorSEContributorFactory : SearchEverywhereContributorFactory<EvaluationResult> {
+internal class CalculatorSEContributorFactory : SearchEverywhereContributorFactory<EvaluationResult> {
+
   override fun createContributor(initEvent: AnActionEvent): SearchEverywhereContributor<EvaluationResult> {
     return CalculatorSEContributor()
   }
@@ -43,7 +44,8 @@ private class CalculatorSEContributorFactory : SearchEverywhereContributorFactor
  */
 data class EvaluationResult(val value: String, val expression: String)
 
-internal class CalculatorSEContributor : WeightedSearchEverywhereContributor<EvaluationResult> {
+private class CalculatorSEContributor : WeightedSearchEverywhereContributor<EvaluationResult> {
+
   override fun getSearchProviderId(): String = "CalculatorSEContributor"
   override fun getGroupName(): String = LangBundle.message("search.everywhere.calculator.group.name")
   override fun getSortWeight(): Int = 0
@@ -63,6 +65,8 @@ internal class CalculatorSEContributor : WeightedSearchEverywhereContributor<Eva
     }
     consumer.process(FoundItemDescriptor(EvaluationResult(result, pattern), 0x8000))
   }
+
+  override fun getDataForItem(element: EvaluationResult, dataId: String): Any? = null
 
   override fun processSelectedItem(selected: EvaluationResult, modifiers: Int, searchText: String): Boolean {
     CopyPasteManager.getInstance().setContents(StringSelection(selected.value))

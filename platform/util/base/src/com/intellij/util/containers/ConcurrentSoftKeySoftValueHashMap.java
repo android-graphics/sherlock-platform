@@ -11,7 +11,7 @@ import java.lang.ref.SoftReference;
  * Concurrent map with soft keys and soft values.
  * Null keys are NOT allowed
  * Null values are NOT allowed
- * To create, use {@link ContainerUtil#createConcurrentSoftKeySoftValueMap()}
+ * To instantiate use {@link ContainerUtil#createConcurrentWeakKeySoftValueMap(int, float, int, HashingStrategy)}
  */
 final class ConcurrentSoftKeySoftValueHashMap<K, V> extends ConcurrentWeakKeySoftValueHashMap<K,V> {
   ConcurrentSoftKeySoftValueHashMap(int initialCapacity,
@@ -67,7 +67,6 @@ final class ConcurrentSoftKeySoftValueHashMap<K, V> extends ConcurrentWeakKeySof
       ((SoftValue<K,V>)valueReference).myKeyReference = keyReference;
     }
     ObjectUtilsRt.reachabilityFence(k);
-    ObjectUtilsRt.reachabilityFence(v); // to avoid queueing in myValueQueue before setting its myKeyReference to not-null value
     return keyReference;
   }
 }

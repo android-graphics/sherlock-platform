@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence
 
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.actions.ActionsCollector
-import com.intellij.ide.actions.ToolwindowFusEventFields
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.internal.statistic.collectors.fus.DataContextUtils
 import com.intellij.internal.statistic.eventLog.events.*
@@ -17,7 +16,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.actionSystem.impl.Utils
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.project.DumbService
@@ -28,12 +26,10 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.TimeoutUtil
 import it.unimi.dsi.fastutil.objects.Object2LongMaps
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
-import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InputEvent
 import java.lang.ref.WeakReference
 import java.util.*
 
-@ApiStatus.Internal
 class ActionsCollectorImpl : ActionsCollector() {
   private data class ActionUpdateStatsKey(val actionId: String, val language: String)
 
@@ -174,12 +170,12 @@ class ActionsCollectorImpl : ActionsCollector() {
                customDataProvider: (MutableList<EventPair<*>>) -> Unit) {
       if (action == null) return
 
-      val isLookupActive = project?.takeIf { !project.isDisposed }
+      val isLookupActive = project
+        ?.takeIf { !project.isDisposed }
         ?.getServiceIfCreated(LookupManager::class.java)
         ?.let { event?.dataContext?.getData(CommonDataKeys.HOST_EDITOR) }
         ?.let { LookupManager.getActiveLookup(it) } != null
 
-      val toolWindowId = event?.dataContext?.getData(PlatformDataKeys.TOOL_WINDOW)?.id
       val projectPairs = projectData(project)
 
       eventId.log(project) {
@@ -193,7 +189,6 @@ class ActionsCollectorImpl : ActionsCollector() {
           addAll(projectPairs)
           if (eventId == ActionsEventLogGroup.ACTION_FINISHED) {
             add(ActionsEventLogGroup.LOOKUP_ACTIVE.with(isLookupActive))
-            add(ToolwindowFusEventFields.TOOLWINDOW.with(toolWindowId))
           }
         }
         customDataProvider(this)
@@ -206,22 +201,20 @@ class ActionsCollectorImpl : ActionsCollector() {
     }
 
     private fun projectData(project: Project?): List<EventPair<*>> {
-      return ReadAction.compute<List<EventPair<*>>, Nothing> {
-        val isDumb = project
-          ?.takeIf { !project.isDisposed }
-          ?.let { DumbService.isDumb(project) }
-        val incompleteDependenciesMode = project
-          ?.takeIf { !project.isDisposed }
-          ?.getServiceIfCreated(IncompleteDependenciesService::class.java)
-          ?.getState()
+      val isDumb = project
+        ?.takeIf { !project.isDisposed }
+        ?.let { DumbService.isDumb(project) }
+      val incompleteDependenciesMode = project
+        ?.takeIf { !project.isDisposed }
+        ?.getServiceIfCreated(IncompleteDependenciesService::class.java)
+        ?.getState()
 
-        return@compute buildList {
-          if (isDumb != null) {
-            add(EventFields.Dumb.with(isDumb))
-          }
-          if (incompleteDependenciesMode != null) {
-            add(ActionsEventLogGroup.INCOMPLETE_DEPENDENCIES_MODE.with(incompleteDependenciesMode))
-          }
+      return buildList {
+        if (isDumb != null) {
+          add(ActionsEventLogGroup.DUMB.with(isDumb))
+        }
+        if (incompleteDependenciesMode != null) {
+          add(ActionsEventLogGroup.INCOMPLETE_DEPENDENCIES_MODE.with(incompleteDependenciesMode))
         }
       }
     }
@@ -232,7 +225,7 @@ class ActionsCollectorImpl : ActionsCollector() {
       data.add(EventFields.InputEvent.with(from(event)))
       val place = event.place
       data.add(EventFields.ActionPlace.with(place))
-      data.add(ActionsEventLogGroup.CONTEXT_MENU.with(event.isFromContextMenu))
+      data.add(ActionsEventLogGroup.CONTEXT_MENU.with(ActionPlaces.isPopupPlace(place)))
       return data
     }
 

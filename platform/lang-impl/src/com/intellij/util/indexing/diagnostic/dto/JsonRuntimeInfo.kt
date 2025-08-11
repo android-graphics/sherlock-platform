@@ -2,7 +2,8 @@
 package com.intellij.util.indexing.diagnostic.dto
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.intellij.openapi.vfs.limits.FileSizeLimit
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.PersistentFSConstants
 import com.intellij.util.indexing.UnindexedFilesUpdater
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -20,8 +21,8 @@ data class JsonRuntimeInfo(
         runtime.maxMemory(),
         runtime.availableProcessors(),
         UnindexedFilesUpdater.getMaxNumberOfIndexingThreads(),
-        FileSizeLimit.getIntellisenseLimit(),
-        FileSizeLimit.getDefaultContentLoadLimit()
+        PersistentFSConstants.getMaxIntellisenseFileSize(),
+        FileUtilRt.LARGE_FOR_CONTENT_LOADING
       )
     }
   }

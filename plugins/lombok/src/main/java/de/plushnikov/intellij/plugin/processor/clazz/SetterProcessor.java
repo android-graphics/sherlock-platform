@@ -70,8 +70,8 @@ public final class SetterProcessor extends AbstractClassProcessor {
   private static void validateAnnotationOnRightType(@NotNull PsiAnnotation psiAnnotation,
                                                     @NotNull PsiClass psiClass,
                                                     @NotNull ProblemSink builder) {
-    if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum() || psiClass.isRecord()) {
-      builder.addErrorMessage("inspection.message.setter.only.supported.on.class.or.field.type");
+    if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
+      builder.addErrorMessage("inspection.message.s.only.supported.on.class.or.field.type", psiAnnotation.getQualifiedName());
       builder.markFailed();
     }
   }
@@ -104,8 +104,10 @@ public final class SetterProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  private @NotNull Collection<PsiField> filterSetterFields(@NotNull PsiClass psiClass) {
-    final Collection<PsiMethod> classMethods = filterToleratedElements(PsiClassUtil.collectClassMethodsIntern(psiClass));
+  @NotNull
+  private Collection<PsiField> filterSetterFields(@NotNull PsiClass psiClass) {
+    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
+    filterToleratedElements(classMethods);
 
     final SetterFieldProcessor fieldProcessor = getSetterFieldProcessor();
     final Collection<PsiField> setterFields = new ArrayList<>();
@@ -130,11 +132,8 @@ public final class SetterProcessor extends AbstractClassProcessor {
       createSetter &= PsiAnnotationSearchUtil.isNotAnnotatedWith(psiField, fieldProcessor.getSupportedAnnotationClasses());
       //Skip fields that start with $
       createSetter &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
-
-      final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
-      createSetter &= accessorsInfo.acceptsFieldName(psiField.getName());
       //Skip fields if a method with same name already exists
-      final Collection<String> methodNames = LombokUtils.toAllSetterNames(accessorsInfo, psiField.getName(), PsiTypes.booleanType().equals(psiField.getType()));
+      final Collection<String> methodNames = fieldProcessor.getAllSetterNames(psiField, PsiTypes.booleanType().equals(psiField.getType()));
       for (String methodName : methodNames) {
         createSetter &= !PsiMethodUtil.hasSimilarMethod(classMethods, methodName, 1);
       }
@@ -146,7 +145,8 @@ public final class SetterProcessor extends AbstractClassProcessor {
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
     final PsiClass containingClass = psiField.getContainingClass();
     if (null != containingClass) {
-      final Collection<PsiMethod> classMethods = filterToleratedElements(PsiClassUtil.collectClassMethodsIntern(containingClass));
+      final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(containingClass);
+      filterToleratedElements(classMethods);
 
       final SetterFieldProcessor fieldProcessor = getSetterFieldProcessor();
 

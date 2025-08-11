@@ -5,7 +5,6 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -19,32 +18,25 @@ import java.util.function.Predicate;
 public final class DevKitInspectionUtil {
 
   static boolean isAllowedInPluginsOnly(@NotNull PsiFile file) {
-    return isAllowed(file, false, DevKitInspectionUtil::isPluginFile);
+    return isAllowed(file, DevKitInspectionUtil::isPluginFile);
   }
 
-  /**
-   * @see #isAllowedIncludingTestSources(PsiFile)
-   */
   public static boolean isAllowed(@NotNull PsiFile file) {
-    return isAllowed(file, false, __ -> true);
-  }
-
-  public static boolean isAllowedIncludingTestSources(@NotNull PsiFile file) {
-    return isAllowed(file, true, ___ -> true);
+    return isAllowed(file, __ -> true);
   }
 
   public static boolean isClassAvailable(@NotNull ProblemsHolder holder, @NonNls String classFqn) {
     return JavaPsiFacade.getInstance(holder.getProject()).findClass(classFqn, holder.getFile().getResolveScope()) != null;
   }
 
-  private static boolean isAllowed(@NotNull PsiFile file, boolean allowedInTestSources, @NotNull Predicate<? super PsiFile> predicate) {
+  private static boolean isAllowed(@NotNull PsiFile file, @NotNull Predicate<? super PsiFile> predicate) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return true;  // always run in tests
 
     VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) return false;
-    if (!allowedInTestSources && TestSourcesFilter.isTestSources(vFile, file.getProject())) return false;
+    if (TestSourcesFilter.isTestSources(vFile, file.getProject())) return false;
 
-    if (IntelliJProjectUtil.isIntelliJPlatformProject(file.getProject())) {
+    if (PsiUtil.isIdeaProject(file.getProject())) {
       return predicate.test(file);
     }
 

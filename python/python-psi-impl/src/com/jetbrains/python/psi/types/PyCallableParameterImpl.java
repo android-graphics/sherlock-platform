@@ -34,21 +34,21 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 public final class PyCallableParameterImpl implements PyCallableParameter {
-  private final @Nullable @NlsSafe String myName;
-  private final @Nullable Ref<PyType> myType;
-  private final @Nullable PyExpression myDefaultValue;
-  private final @Nullable PyParameter myElement;
-  private final @Nullable PsiElement myDeclarationElement;
+  @Nullable private final @NlsSafe String myName;
+  @Nullable private final Ref<PyType> myType;
+  @Nullable private final PyExpression myDefaultValue;
+  @Nullable private final PyParameter myElement;
+  @Nullable private final PsiElement myDeclarationElement;
   private final boolean myIsPositional;
   private final boolean myIsKeyword;
 
-  PyCallableParameterImpl(@Nullable String name,
-                          @Nullable Ref<PyType> type,
-                          @Nullable PyExpression defaultValue,
-                          @Nullable PyParameter element,
-                          boolean isPositional,
-                          boolean isKeyword,
-                          @Nullable PsiElement declarationElement) {
+  private PyCallableParameterImpl(@Nullable String name,
+                                  @Nullable Ref<PyType> type,
+                                  @Nullable PyExpression defaultValue,
+                                  @Nullable PyParameter element,
+                                  boolean isPositional,
+                                  boolean isKeyword,
+                                  @Nullable PsiElement declarationElement) {
     myName = name;
     myType = type;
     myDefaultValue = defaultValue;
@@ -58,41 +58,50 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
     myDeclarationElement = declarationElement;
   }
 
-  public static @NotNull PyCallableParameter nonPsi(@Nullable PyType type) {
+  @NotNull
+  public static PyCallableParameter nonPsi(@Nullable PyType type) {
     return nonPsi(null, type);
   }
 
-  public static @NotNull PyCallableParameter nonPsi(@Nullable String name, @Nullable PyType type) {
+  @NotNull
+  public static PyCallableParameter nonPsi(@Nullable String name, @Nullable PyType type) {
     return nonPsi(name, type, null);
   }
 
-  public static @NotNull PyCallableParameter nonPsi(@Nullable String name, @Nullable PyType type, @Nullable PyExpression defaultValue) {
+  @NotNull
+  public static PyCallableParameter nonPsi(@Nullable String name, @Nullable PyType type, @Nullable PyExpression defaultValue) {
     return new PyCallableParameterImpl(name, Ref.create(type), defaultValue, null, false, false, null);
   }
 
-  public static @NotNull PyCallableParameter nonPsi(@Nullable String name, @Nullable PyType type, @Nullable PyExpression defaultValue,
-                                                    @NotNull PsiElement declarationElement) {
+  @NotNull
+  public static PyCallableParameter nonPsi(@Nullable String name, @Nullable PyType type, @Nullable PyExpression defaultValue,
+                                           @NotNull PsiElement declarationElement) {
     return new PyCallableParameterImpl(name, Ref.create(type), defaultValue, null, false, false, declarationElement);
   }
 
-  public static @NotNull PyCallableParameter positionalNonPsi(@Nullable String name, @Nullable PyType type) {
+  @NotNull
+  public static PyCallableParameter positionalNonPsi(@Nullable String name, @Nullable PyType type) {
     return new PyCallableParameterImpl(name, Ref.create(type), null, null, true, false, null);
   }
 
-  public static @NotNull PyCallableParameter keywordNonPsi(@Nullable String name, @Nullable PyType type) {
+  @NotNull
+  public static PyCallableParameter keywordNonPsi(@Nullable String name, @Nullable PyType type) {
     return new PyCallableParameterImpl(name, Ref.create(type), null, null, false, true, null);
   }
 
-  public static @NotNull PyCallableParameter psi(@NotNull PyParameter parameter) {
+  @NotNull
+  public static PyCallableParameter psi(@NotNull PyParameter parameter) {
     return new PyCallableParameterImpl(null, null, null, parameter, false, false, null);
   }
 
-  public static @NotNull PyCallableParameter psi(@NotNull PyParameter parameter, @Nullable PyType type) {
+  @NotNull
+  public static PyCallableParameter psi(@NotNull PyParameter parameter, @Nullable PyType type) {
     return new PyCallableParameterImpl(null, Ref.create(type), null, parameter, false, false, null);
   }
 
+  @Nullable
   @Override
-  public @Nullable @Nls String getName() {
+  public @Nls String getName() {
     if (myName != null) {
       return myName;
     }
@@ -102,8 +111,9 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context) {
     if (myType != null) {
       return myType.get();
     }
@@ -113,19 +123,22 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable PyParameter getParameter() {
+  public PyParameter getParameter() {
     return myElement;
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement getDeclarationElement() {
+  public PsiElement getDeclarationElement() {
     if (myDeclarationElement != null) return myDeclarationElement;
     return getParameter();
   }
 
+  @Nullable
   @Override
-  public @Nullable PyExpression getDefaultValue() {
+  public PyExpression getDefaultValue() {
     return myElement == null ? myDefaultValue : myElement.getDefaultValue();
   }
 
@@ -134,8 +147,9 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
     return myElement == null ? myDefaultValue != null : myElement.hasDefaultValue();
   }
 
+  @Nullable
   @Override
-  public @Nullable String getDefaultValueText() {
+  public String getDefaultValueText() {
     if (myElement != null) return myElement.getDefaultValueText();
     return myDefaultValue == null ? null : myDefaultValue.getText();
   }
@@ -161,13 +175,15 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
     return myElement != null && myElement.isSelf();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
+  public String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
     return getPresentableText(includeDefaultValue, context, Objects::isNull);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context, @NotNull Predicate<PyType> typeFilter) {
+  public String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context, @NotNull Predicate<PyType> typeFilter) {
     if (myElement instanceof PyNamedParameter || myElement == null) {
       final StringBuilder sb = new StringBuilder();
 
@@ -193,8 +209,9 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
     return PyUtil.getReadableRepr(myElement, false);
   }
 
+  @Nullable
   @Override
-  public @Nullable PyType getArgumentType(@NotNull TypeEvalContext context) {
+  public PyType getArgumentType(@NotNull TypeEvalContext context) {
     final PyType parameterType = getType(context);
 
     if (isPositionalContainer() && parameterType instanceof PyTupleType tupleType) {

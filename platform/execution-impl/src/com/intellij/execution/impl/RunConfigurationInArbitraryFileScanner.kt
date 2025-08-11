@@ -32,7 +32,7 @@ private class RunConfigurationInArbitraryFileScanner : IndexableFileScanner {
   }
 }
 
-internal fun loadFileWithRunConfigs(project: Project): List<String> = if (project.isDefault) listOf() else 
+internal fun loadFileWithRunConfigs(project: Project): List<String> =
   FilenameIndex.getAllFilesByExt(project, "run.xml", ProjectScope.getContentScope(project)).filter { isFileWithRunConfigs(it) }.map { it.path }
 
 private fun isFileWithRunConfigs(file: VirtualFile): Boolean {

@@ -49,6 +49,8 @@ final class PySearchableOptionContributor extends SearchableOptionContributor {
                          configurableId, displayName, false);
     processor.addOptions("reStructuredText", displayName, "Docstring format",
                          configurableId, displayName, false);
+    processor.addOptions("Epytext", "Docstring format", "Docstring format",
+                         configurableId, displayName, false);
     processor.addOptions("Plain", displayName, "Docstring format",
                          configurableId, displayName, false);
     processor.addOptions("Unittests", displayName, "Default test runner",

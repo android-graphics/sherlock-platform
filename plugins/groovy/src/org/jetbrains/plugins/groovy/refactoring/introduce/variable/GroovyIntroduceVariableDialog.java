@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
@@ -78,7 +78,8 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
   }
 
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  @Nullable
+  protected JComponent createCenterPanel() {
     JPanel contentPane = new JPanel(new BorderLayout());
     contentPane.add(createNamePanel(), BorderLayout.CENTER);
     contentPane.add(createCBPanel(), BorderLayout.SOUTH);
@@ -133,7 +134,8 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     return namePanel;
   }
 
-  protected @Nullable String getEnteredName() {
+  @Nullable
+  protected String getEnteredName() {
     return myNameField.getEnteredName();
   }
 
@@ -145,7 +147,8 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     return myCbIsFinal.isSelected();
   }
 
-  private @Nullable PsiType getSelectedType() {
+  @Nullable
+  private PsiType getSelectedType() {
     return myTypeComboBox.getSelectedType();
   }
 
@@ -183,8 +186,9 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     return new MyGroovyIntroduceVariableSettings(this);
   }
 
+  @NotNull
   @Override
-  public @NotNull LinkedHashSet<String> suggestNames() {
+  public LinkedHashSet<String> suggestNames() {
     return new GrVariableNameSuggester(myContext, myValidator).suggestNames();
   }
 

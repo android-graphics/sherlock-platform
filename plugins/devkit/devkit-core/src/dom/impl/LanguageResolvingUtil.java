@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.completion.CompletionConfidenceEP;
@@ -31,7 +31,6 @@ import com.intellij.util.xml.DomJavaUtil;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
@@ -78,7 +77,7 @@ public final class LanguageResolvingUtil {
     }
     else {
       GlobalSearchScope allScope = projectProductionScope.union(librariesScope);
-      allLanguages = ClassInheritorsSearch.search(languageClass, allScope, true).asIterable();
+      allLanguages = ClassInheritorsSearch.search(languageClass, allScope, true);
       libraryDefinitions = collectLibraryLanguages(context, allScope);
     }
 
@@ -133,13 +132,14 @@ public final class LanguageResolvingUtil {
     return all;
   }
 
-  private static @Unmodifiable List<LanguageDefinition> collectLibraryLanguages(ConvertContext context, GlobalSearchScope scope) {
+  private static List<LanguageDefinition> collectLibraryLanguages(ConvertContext context, GlobalSearchScope scope) {
     return ContainerUtil.mapNotNull(Language.getRegisteredLanguages(), language -> getLibraryDefinition(context, language, scope));
   }
 
-  private static @Nullable LanguageDefinition getLibraryDefinition(ConvertContext context,
-                                                                   Language language,
-                                                                   @NotNull GlobalSearchScope scope) {
+  @Nullable
+  private static LanguageDefinition getLibraryDefinition(ConvertContext context,
+                                                         Language language,
+                                                         @NotNull GlobalSearchScope scope) {
     if (language.getID().isEmpty()) {
       return null;
     }
@@ -154,8 +154,8 @@ public final class LanguageResolvingUtil {
     }, () -> language.getDisplayName());
   }
 
-  private static @Unmodifiable List<LanguageDefinition> mapToProjectDefinitions(Collection<? extends PsiClass> projectLanguages,
-                                                                                List<? extends LanguageDefinition> libraryDefinitions) {
+  private static List<LanguageDefinition> mapToProjectDefinitions(Collection<? extends PsiClass> projectLanguages,
+                                                                  List<? extends LanguageDefinition> libraryDefinitions) {
     return ContainerUtil.mapNotNull(projectLanguages, language -> getDefinition(language, libraryDefinitions));
   }
 
@@ -189,7 +189,8 @@ public final class LanguageResolvingUtil {
     });
   }
 
-  private static @Nullable Icon computeIconForProjectLanguage(PsiClass language) {
+  @Nullable
+  private static Icon computeIconForProjectLanguage(PsiClass language) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(language);
     if (module == null) return null;
 
@@ -213,7 +214,8 @@ public final class LanguageResolvingUtil {
    * - matching LFT in current module
    * - matching LFT in resolve scope
    */
-  private static @Nullable PsiClass findLanguageFileType(PsiClass language, Module module, PsiClass languageFileType) {
+  @Nullable
+  private static PsiClass findLanguageFileType(PsiClass language, Module module, PsiClass languageFileType) {
     final UExpression associatedFileTypeExpression = getReturnExpression(language, "getAssociatedFileType");
     if (associatedFileTypeExpression != null) {
       return PsiTypesUtil.getPsiClass(associatedFileTypeExpression.getExpressionType());
@@ -226,9 +228,10 @@ public final class LanguageResolvingUtil {
     return findMatchingFileType(languageFileType, language, language.getUseScope());
   }
 
-  private static @Nullable PsiClass findMatchingFileType(PsiClass languageFileType,
-                                                         PsiClass language,
-                                                         SearchScope scope) {
+  @Nullable
+  private static PsiClass findMatchingFileType(PsiClass languageFileType,
+                                               PsiClass language,
+                                               SearchScope scope) {
     return ClassInheritorsSearch.search(languageFileType, scope, true).filtering(psiClass -> {
       UClass uClass = UastContextKt.toUElement(psiClass, UClass.class);
       if (uClass == null) return false;
@@ -244,15 +247,17 @@ public final class LanguageResolvingUtil {
     }).findFirst();
   }
 
-  private static @Nullable String computeConstantReturnValue(PsiClass psiClass,
-                                                             String methodName) {
+  @Nullable
+  private static String computeConstantReturnValue(PsiClass psiClass,
+                                                   String methodName) {
     final UExpression expression = getReturnExpression(psiClass, methodName);
     if (expression == null) return null;
 
     return UastUtils.evaluateString(expression);
   }
 
-  private static @Nullable UExpression getReturnExpression(PsiClass psiClass, String methodName) {
+  @Nullable
+  private static UExpression getReturnExpression(PsiClass psiClass, String methodName) {
     final PsiMethod[] methods = psiClass.findMethodsByName(methodName, false);
     if (methods.length != 1) {
       return null;
@@ -272,7 +277,8 @@ public final class LanguageResolvingUtil {
     return getStringConstantExpression(methodCallExpression, index);
   }
 
-  private static @Nullable UCallExpression getSuperConstructorParameterExpression(UClass languageClass) {
+  @Nullable
+  private static UCallExpression getSuperConstructorParameterExpression(UClass languageClass) {
     UMethod defaultConstructor = ContainerUtil.find(languageClass.getMethods(),
                                                     method -> method.isConstructor() && method.getUastParameters().isEmpty());
     if (defaultConstructor == null) {
@@ -290,7 +296,8 @@ public final class LanguageResolvingUtil {
     return ObjectUtils.tryCast(expression, UCallExpression.class);
   }
 
-  private static @Nullable String getStringConstantExpression(@Nullable UCallExpression callExpression, int index) {
+  @Nullable
+  private static String getStringConstantExpression(@Nullable UCallExpression callExpression, int index) {
     if (callExpression == null) {
       return null;
     }
@@ -301,7 +308,8 @@ public final class LanguageResolvingUtil {
     return UastUtils.evaluateString(argument);
   }
 
-  private static @Nullable LanguageDefinition createAnyLanguageDefinition(ConvertContext context) {
+  @Nullable
+  private static LanguageDefinition createAnyLanguageDefinition(ConvertContext context) {
     final PsiClass languageClass = DomJavaUtil.findClass(Language.class.getName(), context.getInvocationElement());
     if (languageClass == null) return null;
 
@@ -329,7 +337,8 @@ public final class LanguageResolvingUtil {
   /**
    * @return value for "any language" for given EP {@code language} declaration, with few exceptions it's always {@link Language#ANY} ID.
    */
-  public static @NotNull String getAnyLanguageValue(ExtensionPoint extensionPoint) {
+  @NotNull
+  public static String getAnyLanguageValue(ExtensionPoint extensionPoint) {
     final GenericAttributeValue<PsiClass> epBeanClass = extensionPoint.getBeanClass();
     String value = epBeanClass.getStringValue();
     if (value != null && EP_WITH_ANY_LANGUAGE_ID.contains(value)) {

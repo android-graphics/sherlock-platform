@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
@@ -79,8 +79,9 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
     return super.getFileExt();
   }
 
+  @NotNull
   @Override
-  protected @NotNull FileType getFileType() {
+  protected FileType getFileType() {
     if (getDefaultLanguage() != null) {
       FileType assocType = getDefaultLanguage().getAssociatedFileType();
       if (assocType != null) {
@@ -91,7 +92,8 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
   }
 
   @Override
-  protected @Nullable EditorHighlighter createHighlighter(final @NotNull EditorColorsScheme scheme) {
+  @Nullable
+  protected EditorHighlighter createHighlighter(final @NotNull EditorColorsScheme scheme) {
     FileType fileType = getFileType();
     return FileTypeEditorHighlighterProviders.getInstance().forFileType(fileType).getEditorHighlighter(
       ProjectUtil.guessCurrentProject(getPanel()), fileType, null, scheme);
@@ -164,9 +166,9 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
   }
 
   protected abstract static class OrderedOption {
-    private final @NotNull String optionName;
-    private final @Nullable OptionAnchor anchor;
-    private final @Nullable String anchorOptionName;
+    @NotNull private final String optionName;
+    @Nullable private final OptionAnchor anchor;
+    @Nullable private final String anchorOptionName;
 
     protected OrderedOption(@NotNull String optionName,
                             @Nullable OptionAnchor anchor,
@@ -176,15 +178,18 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
       this.anchorOptionName = anchorOptionName;
     }
 
-    public @NotNull String getOptionName() {
+    @NotNull
+    public String getOptionName() {
       return optionName;
     }
 
-    public @Nullable OptionAnchor getAnchor() {
+    @Nullable
+    public OptionAnchor getAnchor() {
       return anchor;
     }
 
-    public @Nullable String getAnchorOptionName() {
+    @Nullable
+    public String getAnchorOptionName() {
       return anchorOptionName;
     }
   }

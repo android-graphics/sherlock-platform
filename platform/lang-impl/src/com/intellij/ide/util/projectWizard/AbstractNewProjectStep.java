@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.RecentProjectsManager;
@@ -66,19 +66,19 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
   }
 
   @Override
-  public final void update(@NotNull AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     NewWelcomeScreen.updateNewProjectIconIfWelcomeScreen(e);
     updateActions();
   }
 
-  protected final void updateActions() {
+  protected void updateActions() {
     removeAll();
     AbstractCallback<T> callback = myCustomization.createCallback();
     ProjectSpecificAction projectSpecificAction = myCustomization.createProjectSpecificAction(callback);
     addProjectSpecificAction(projectSpecificAction);
 
-    List<DirectoryProjectGenerator<?>> generators = EP_NAME.getExtensionList();
+    List<DirectoryProjectGenerator<?>> generators = myCustomization.getProjectGenerators();
     addAll(myCustomization.getActions(generators, callback));
     if (!myCustomization.showUserDefinedProjects()) {
       return;
@@ -112,14 +112,16 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       return new ProjectSpecificAction(emptyProjectGenerator, createProjectSpecificSettingsStep(emptyProjectGenerator, callback));
     }
 
-    protected @NotNull AbstractCallback<T> createCallback() {
-      return new AbstractCallback<>();
-    }
+    protected abstract @NotNull AbstractCallback<T> createCallback();
 
     protected abstract @NotNull DirectoryProjectGenerator<T> createEmptyProjectGenerator();
 
     protected abstract @NotNull ProjectSettingsStepBase<T> createProjectSpecificSettingsStep(@NotNull DirectoryProjectGenerator<T> projectGenerator,
                                                                                              @NotNull AbstractCallback<T> callback);
+
+    protected @NotNull List<DirectoryProjectGenerator<?>> getProjectGenerators() {
+      return EP_NAME.getExtensionList();
+    }
 
     public AnAction[] getActions(@NotNull List<? extends DirectoryProjectGenerator<?>> generators, @NotNull AbstractCallback<T> callback) {
       List<AnAction> actions = new ArrayList<>();
@@ -154,7 +156,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       return projectSpecificAction.getChildren(ActionManager.getInstance());
     }
 
-    protected static boolean shouldIgnore(@NotNull DirectoryProjectGenerator<?> generator) {
+    protected boolean shouldIgnore(@NotNull DirectoryProjectGenerator<?> generator) {
       return generator instanceof HideableProjectGenerator && ((HideableProjectGenerator)generator).isHidden();
     }
 
@@ -162,7 +164,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       return false;
     }
 
-    final void setProjectStep(@NotNull AbstractNewProjectStep<T> projectStep) {
+    void setProjectStep(@NotNull AbstractNewProjectStep<T> projectStep) {
       myProjectStep = projectStep;
     }
   }
@@ -198,6 +200,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       builder.setNewProject(true);
       builder.setRunConfigurators(true);
       builder.setProjectCreatedWithWizard(true);
+      builder.setRefreshVfsNeeded(false);
       builder.withBeforeOpenCallback(project -> {
         if (extraUserData != null) {
           extraUserData.accept(project);
@@ -264,15 +267,15 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
   }
 
   @Override
-  public final @NotNull ActionUpdateThread getActionUpdateThread() {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
   }
 
-  final void setWizardContext(@NotNull WizardContext wizardContext) {
+  void setWizardContext(@NotNull WizardContext wizardContext) {
     myWizardContext = wizardContext;
   }
 
-  final @Nullable WizardContext getWizardContext() {
+  @Nullable WizardContext getWizardContext() {
     return myWizardContext;
   }
 }

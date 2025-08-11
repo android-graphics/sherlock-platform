@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml;
 
 import com.intellij.diagnostic.PluginException;
@@ -68,16 +68,19 @@ public class XmlNamedReferenceProviderBean extends CustomLoadingExtensionPointBe
   @RequiredElement
   public String implementationClass;
 
+  @Nullable
   @Override
-  protected @Nullable String getImplementationClassName() {
+  protected String getImplementationClassName() {
     return implementationClass;
   }
 
-  public @NotNull Class<? extends XmlNamedReferenceHost> getHostElementClass() {
+  @NotNull
+  public Class<? extends XmlNamedReferenceHost> getHostElementClass() {
     return loadClass(hostElementClass);
   }
 
-  public @NotNull Class<? extends Symbol> getResolveTargetClass() {
+  @NotNull
+  public Class<? extends Symbol> getResolveTargetClass() {
     return loadClass(targetClass);
   }
 

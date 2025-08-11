@@ -16,7 +16,6 @@
 package com.intellij.remoteServer.util;
 
 import com.intellij.ui.table.JBTable;
-import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableColumnModel;
@@ -28,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@ApiStatus.Internal
 public class JTableWrapper<T, C extends Column<T>> {
 
   private static final int COLUMN_HEADER_MARGIN_WIDTH = 2;

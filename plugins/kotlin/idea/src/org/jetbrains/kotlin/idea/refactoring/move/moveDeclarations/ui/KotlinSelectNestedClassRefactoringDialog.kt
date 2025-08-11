@@ -8,7 +8,6 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.RadioUpDownListener
-import com.intellij.ui.components.JBBox
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -52,7 +51,7 @@ internal class KotlinSelectNestedClassRefactoringDialog private constructor(
         RadioUpDownListener.installOn(moveToUpperLevelButton, moveMembersButton)
 
         return JPanel(BorderLayout()).apply {
-            val box = JBBox.createVerticalBox().apply {
+            val box = Box.createVerticalBox().apply {
                 add(Box.createVerticalStrut(5))
                 add(moveToUpperLevelButton)
                 add(moveMembersButton)

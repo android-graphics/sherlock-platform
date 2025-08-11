@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -13,8 +13,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
-
-import static com.intellij.util.lang.ImmutableZipFile.CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE;
 
 @ApiStatus.Internal
 public final class HashMapZipFile implements ZipFile {
@@ -41,17 +39,12 @@ public final class HashMapZipFile implements ZipFile {
     return (HashMapZipFile)ImmutableZipFile.load(file, true);
   }
 
-  public static @Nullable HashMapZipFile loadIfNotEmpty(@NotNull Path file) throws IOException {
-    @SuppressWarnings("resource")
-    ZipFile result = ImmutableZipFile.load(file, true);
-    return result instanceof EmptyZipFile ? null : (HashMapZipFile)result;
-  }
-
-  static @NotNull HashMapZipFile createHashMapZipFile(@NotNull ByteBuffer buffer,
-                                                      int fileSize,
-                                                      int entryCount,
-                                                      int centralDirSize,
-                                                      int centralDirPosition) throws EOFException {
+  @NotNull
+  static HashMapZipFile createHashMapZipFile(@NotNull ByteBuffer buffer,
+                                             int fileSize,
+                                             int entryCount,
+                                             int centralDirSize,
+                                             int centralDirPosition) throws EOFException {
     // ensure the table is even length
     if (entryCount == 65535) {
       // it means that more than 65k entries - estimate the number of entries
@@ -103,7 +96,7 @@ public final class HashMapZipFile implements ZipFile {
   @Override
   public ByteBuffer getByteBuffer(@NotNull String path) throws IOException {
     ImmutableZipEntry entry = getRawEntry(path.charAt(0) == '/' ? path.substring(1) : path);
-    return entry == null ? null : entry.getByteBuffer(this, null);
+    return entry == null ? null : entry.getByteBuffer(this);
   }
 
   /**
@@ -129,7 +122,7 @@ public final class HashMapZipFile implements ZipFile {
 
       @Override
       public @NotNull ByteBuffer getByteBuffer() throws IOException {
-        return entry.getByteBuffer(HashMapZipFile.this, null);
+        return entry.getByteBuffer(HashMapZipFile.this);
       }
 
       @Override
@@ -145,7 +138,7 @@ public final class HashMapZipFile implements ZipFile {
   }
 
   public @Nullable ImmutableZipEntry getRawEntry(String name) {
-    int index = probe(name, Xxh3.hash(name.getBytes(StandardCharsets.UTF_8)), nameMap);
+    int index = probe(name, Xxh3.hash(name), nameMap);
     return index < 0 ? null : nameMap[index];
   }
 
@@ -175,9 +168,9 @@ public final class HashMapZipFile implements ZipFile {
     int prevEntryExpectedDataOffset = -1;
     int endOffset = centralDirPosition + centralDirSize;
     while (offset < endOffset) {
-      if (buffer.getInt(offset) != CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE) {
-        throw new EOFException("No valid central directory file header signature present (expectedCentralDirectorySize=" + centralDirSize +
-                               ", expectedCentralDirectoryOffset=" + offset + ")");
+      if (buffer.getInt(offset) != 33639248) {
+        throw new EOFException("Expected central directory size " + centralDirSize +
+                               " but only at " + offset + " no valid central directory file header signature");
       }
 
       int compressedSize = buffer.getInt(offset + 20);

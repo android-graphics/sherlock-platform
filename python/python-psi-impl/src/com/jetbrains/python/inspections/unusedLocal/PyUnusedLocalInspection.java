@@ -24,7 +24,8 @@ public final class PyUnusedLocalInspection extends PyInspection {
   public boolean ignoreVariablesStartingWithUnderscore = true;
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  @NotNull
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     final PyUnusedLocalInspectionVisitor visitor = new PyUnusedLocalInspectionVisitor(holder,
                                                                                       ignoreTupleUnpacking,
                                                                                       ignoreLambdaParameters,

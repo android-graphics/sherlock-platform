@@ -24,7 +24,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Container
 import java.util.*
@@ -38,8 +37,7 @@ private var IS_NOTIFICATION_REGISTERED = false
 
 // TODO: consider to detect IM-freezes and then notify user (offer to disable IM)
 
-@ApiStatus.Internal
-suspend fun disableInputMethodsIfPossible() {
+internal suspend fun disableInputMethodsIfPossible() {
   if (SystemInfo.isWindows || SystemInfo.isMac || !SystemInfo.isJetBrainsJvm) {
     return
   }
@@ -97,7 +95,7 @@ private fun disableInputMethodsImpl() {
 
     val frames = WindowManagerEx.getInstanceEx().projectFrameHelpers.mapNotNull { fh -> SwingUtilities.getRoot(fh.frame) }
 
-    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       val startMs = System.currentTimeMillis()
       for (frameRoot in frames) {
         freeIMRecursively(frameRoot)

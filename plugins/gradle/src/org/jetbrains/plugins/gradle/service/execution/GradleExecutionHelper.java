@@ -26,47 +26,37 @@ import com.intellij.util.lang.JavaVersion;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
+import org.gradle.api.logging.LogLevel;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
 import org.gradle.tooling.events.OperationType;
+import org.gradle.tooling.model.BuildIdentifier;
+import org.gradle.tooling.model.UnsupportedMethodException;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
+import org.jetbrains.plugins.gradle.properties.GradleProperties;
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
+import org.jetbrains.plugins.gradle.properties.models.Property;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
-import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension;
+import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineOption;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTask;
 
 import java.io.File;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.util.*;
 
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
 
-public final class GradleExecutionHelper {
-
-  /**
-   * @deprecated Use helper methods without object instantiation.
-   * All method is this class is static.
-   */
-  @Deprecated
-  public GradleExecutionHelper() { }
+public class GradleExecutionHelper {
 
   private static final Logger LOG = Logger.getInstance(GradleExecutionHelper.class);
 
-  /**
-   * @deprecated Use the {@link ProjectConnection#newBuild} function directly.
-   * Or use the {@link com.intellij.openapi.externalSystem.util.ExternalSystemUtil#runTask} API for the high-level Gradle task execution.
-   */
-  @Deprecated
   public @NotNull BuildLauncher getBuildLauncher(
     @NotNull ProjectConnection connection,
     @NotNull ExternalSystemTaskId id,
@@ -79,11 +69,6 @@ public final class GradleExecutionHelper {
     return operation;
   }
 
-  /**
-   * @deprecated Use the {@link ProjectConnection#newTestLauncher} function directly.
-   * Or use the {@link com.intellij.openapi.externalSystem.util.ExternalSystemUtil#runTask} API for the high-level Gradle task execution.
-   */
-  @Deprecated
   public @NotNull TestLauncher getTestLauncher(
     @NotNull ProjectConnection connection,
     @NotNull ExternalSystemTaskId id,
@@ -96,52 +81,24 @@ public final class GradleExecutionHelper {
     return operation;
   }
 
-  /**
-   * @deprecated Existed for the {@link #getBuildLauncher} and {@link #getTestLauncher} functions.
-   */
-  @Deprecated
-  private static void prepare(
-    @NotNull ProjectConnection connection,
-    @NotNull LongRunningOperation operation,
-    @NotNull ExternalSystemTaskId id,
-    @NotNull List<String> tasksAndArguments,
-    @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskNotificationListener listener
-  ) {
-    GradleExecutionSettings effectiveSettings = new GradleExecutionSettings(settings);
-    effectiveSettings.setTasks(ContainerUtil.concat(effectiveSettings.getTasks(), tasksAndArguments));
-    CancellationToken cancellationToken = GradleConnector.newCancellationTokenSource().token();
-    BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener, cancellationToken, effectiveSettings);
-    prepareForExecution(operation, cancellationToken, id, effectiveSettings, listener, buildEnvironment);
-  }
-
-  /**
-   * @deprecated Use instead the static variant of this method.
-   */
-  @Deprecated
-  public <T> T execute(
-    @NotNull String projectPath,
-    @Nullable GradleExecutionSettings settings,
-    @NotNull Function<? super ProjectConnection, ? extends T> f
-  ) {
+  public <T> T execute(@NotNull String projectPath,
+                       @Nullable GradleExecutionSettings settings,
+                       @NotNull Function<? super ProjectConnection, ? extends T> f) {
     return execute(projectPath, settings, null, null, null, f);
   }
 
-  public static <T> T execute(
-    @NotNull String projectPath,
-    @Nullable GradleExecutionSettings settings,
-    @Nullable ExternalSystemTaskId taskId,
-    @Nullable ExternalSystemTaskNotificationListener listener,
-    @Nullable CancellationToken cancellationToken,
-    @NotNull Function<? super ProjectConnection, ? extends T> f
-  ) {
+  public <T> T execute(@NotNull String projectPath,
+                       @Nullable GradleExecutionSettings settings,
+                       @Nullable ExternalSystemTaskId taskId,
+                       @Nullable ExternalSystemTaskNotificationListener listener,
+                       @Nullable CancellationToken cancellationToken,
+                       @NotNull Function<? super ProjectConnection, ? extends T> f) {
     String projectDir;
     File projectPathFile = new File(projectPath);
     if (projectPathFile.isFile() && projectPath.endsWith(GradleConstants.EXTENSION) && projectPathFile.getParent() != null) {
       projectDir = projectPathFile.getParent();
       if (settings != null) {
         List<String> arguments = settings.getArguments();
-        // Setting the custom build file location is deprecated since Gradle 7.6, see IDEA-359161 for more details.
         if (!arguments.contains("-b") && !arguments.contains("--build-file")) {
           settings.withArguments("-b", projectPath);
         }
@@ -150,55 +107,65 @@ public final class GradleExecutionHelper {
     else {
       projectDir = projectPath;
     }
-    return withGradleConnection(projectDir, taskId, settings, listener, cancellationToken, connection -> {
-      try {
-        return SystemPropertiesAdjuster.executeAdjusted(projectDir, () -> f.fun(connection));
-      }
-      catch (ExternalSystemException | ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Throwable e) {
-        LOG.warn("Gradle execution error", e);
-        Throwable rootCause = ExceptionUtil.getRootCause(e);
-        ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause), e);
-        externalSystemException.initCause(e);
-        throw externalSystemException;
-      }
-    });
+    return withGradleConnection(
+      projectDir, taskId, settings, listener, cancellationToken,
+      connection -> {
+        try {
+          return SystemPropertiesAdjuster.executeAdjusted(projectDir, () -> f.fun(connection));
+        }
+        catch (ExternalSystemException | ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.warn("Gradle execution error", e);
+          Throwable rootCause = ExceptionUtil.getRootCause(e);
+          ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause), e);
+          externalSystemException.initCause(e);
+          throw externalSystemException;
+        }
+      });
   }
 
-  @ApiStatus.Internal
-  public static void prepareForExecution(
+  public static void prepare(
+    @NotNull ProjectConnection connection,
     @NotNull LongRunningOperation operation,
-    @NotNull CancellationToken cancellationToken,
     @NotNull ExternalSystemTaskId id,
     @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskNotificationListener listener,
-    @Nullable BuildEnvironment buildEnvironment
+    @NotNull ExternalSystemTaskNotificationListener listener
+  ) {
+    prepare(connection, operation, id, Collections.emptyList(), settings, listener);
+  }
+
+  private static void prepare(
+    @NotNull ProjectConnection connection,
+    @NotNull LongRunningOperation operation,
+    @NotNull ExternalSystemTaskId id,
+    @NotNull List<String> tasksAndArguments,
+    @NotNull GradleExecutionSettings settings,
+    @NotNull ExternalSystemTaskNotificationListener listener
   ) {
     clearSystemProperties(operation);
 
     applyIdeaParameters(settings);
 
+    BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener, null, settings);
+
     setupJvmArguments(operation, settings, buildEnvironment);
 
     setupLogging(settings, buildEnvironment);
 
-    setupArguments(operation, settings);
+    setupArguments(operation, tasksAndArguments, settings);
 
     setupEnvironment(operation, settings);
 
-    setupJavaHome(operation, settings, id);
+    setupJavaHome(operation, settings);
 
     setupProgressListeners(operation, settings, id, listener, buildEnvironment);
 
     setupStandardIO(operation, settings, id, listener);
 
-    operation.withCancellationToken(cancellationToken);
-
-    GradleExecutionHelperExtension.EP_NAME.forEachExtensionSafe(proc -> {
-      proc.prepareForExecution(id, operation, settings, buildEnvironment);
-    });
+    GradleOperationHelperExtension.EP_NAME
+      .forEachExtensionSafe(proc -> proc.prepareForExecution(id, operation, settings, buildEnvironment));
   }
 
   private static void clearSystemProperties(LongRunningOperation operation) {
@@ -222,8 +189,8 @@ public final class GradleExecutionHelper {
     @NotNull ExternalSystemTaskNotificationListener listener,
     @Nullable BuildEnvironment buildEnvironment
   ) {
-    var buildRootDir = getBuildRoot(buildEnvironment);
-    var progressListener = new GradleProgressListener(listener, id, buildRootDir);
+    String buildRootDir = getBuildRoot(buildEnvironment);
+    GradleProgressListener progressListener = new GradleProgressListener(listener, id, buildRootDir);
     operation.addProgressListener((ProgressListener)progressListener);
     operation.addProgressListener(
       progressListener,
@@ -254,40 +221,40 @@ public final class GradleExecutionHelper {
     }
   }
 
-  @ApiStatus.Internal
-  @VisibleForTesting
-  public static void setupJvmArguments(
+  private static void setupJvmArguments(
     @NotNull LongRunningOperation operation,
     @NotNull GradleExecutionSettings settings,
     @Nullable BuildEnvironment buildEnvironment
   ) {
-    var jvmArgs = ContainerUtil.filter(settings.getJvmArguments(), it -> !StringUtil.isEmpty(it));
-
-    if (jvmArgs.isEmpty()) {
-      return;
-    }
-
-    var buildEnvironmentRoot = getBuildRoot(buildEnvironment);
-    var buildEnvironmentJvmArgs = getJvmArgs(buildEnvironment);
-
-    // the BuildEnvironment jvm arguments of the main build should be used for the 'buildSrc' import
-    // to avoid spawning of the second Gradle daemon
-    if (buildEnvironmentRoot != null && !"buildSrc".equals(buildEnvironmentRoot.getFileName().toString())) {
+    List<String> jvmArgs = settings.getJvmArguments();
+    if (!jvmArgs.isEmpty()) {
       // merge gradle args e.g. defined in gradle.properties
-      jvmArgs = mergeBuildJvmArguments(buildEnvironmentJvmArgs, jvmArgs);
-    }
+      Collection<String> merged;
+      if (buildEnvironment != null) {
+        // the BuildEnvironment jvm arguments of the main build should be used for the 'buildSrc' import
+        // to avoid spawning of the second gradle daemon
+        BuildIdentifier buildIdentifier = getBuildIdentifier(buildEnvironment);
+        List<String> buildJvmArguments = buildIdentifier == null || "buildSrc".equals(buildIdentifier.getRootDir().getName())
+                                         ? ContainerUtil.emptyList()
+                                         : buildEnvironment.getJava().getJvmArguments();
+        merged = mergeBuildJvmArguments(buildJvmArguments, jvmArgs);
+      }
+      else {
+        merged = jvmArgs;
+      }
 
-    operation.setJvmArguments(ArrayUtilRt.toStringArray(jvmArgs));
+      // filter nulls and empty strings
+      List<String> filteredArgs = ContainerUtil.mapNotNull(merged, s -> StringUtil.isEmpty(s) ? null : s);
+
+      operation.setJvmArguments(ArrayUtilRt.toStringArray(filteredArgs));
+    }
   }
 
   private static void setupJavaHome(
     @NotNull LongRunningOperation operation,
-    @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskId id
+    @NotNull GradleExecutionSettings settings
   ) {
-    var javaHome = GradleDaemonJvmHelper.isExecutingUpdateDaemonJvmTask(settings)
-                   ? GradleDaemonJvmHelper.getGradleJvmForUpdateDaemonJvmTask(id)
-                   : settings.getJavaHome();
+    final String javaHome = settings.getJavaHome();
     if (javaHome != null && new File(javaHome).isDirectory()) {
       LOG.debug("Java home to set for Gradle operation: " + javaHome);
       operation.setJavaHome(new File(javaHome));
@@ -296,9 +263,14 @@ public final class GradleExecutionHelper {
 
   private static void setupArguments(
     @NotNull LongRunningOperation operation,
+    @NotNull List<String> tasksAndArguments,
     @NotNull GradleExecutionSettings settings
   ) {
-    var commandLine = fixUpGradleCommandLine(settings.getCommandLine());
+    var commandLine = GradleCommandLineUtil.parseCommandLine(
+      tasksAndArguments,
+      settings.getArguments()
+    );
+    commandLine = fixUpGradleCommandLine(commandLine);
 
     LOG.info("Passing command-line to Gradle Tooling API: " +
              StringUtil.join(obfuscatePasswordParameters(commandLine.getTokens()), " "));
@@ -318,10 +290,19 @@ public final class GradleExecutionHelper {
     var tasks = new ArrayList<GradleCommandLineTask>();
     for (var task : commandLine.getTasks()) {
       var name = task.getName();
-      var options = ContainerUtil.filter(task.getOptions(), it -> !GradleCommandLineUtil.isWildcardTestPattern(it));
+      var options = ContainerUtil.filter(task.getOptions(), it -> !isWildcardTestPattern(it));
       tasks.add(new GradleCommandLineTask(name, options));
     }
     return new GradleCommandLine(tasks, commandLine.getOptions());
+  }
+
+  private static boolean isWildcardTestPattern(@NotNull GradleCommandLineOption option) {
+    return option.getName().equals(GradleConstants.TESTS_ARG_NAME) &&
+           option.getValues().size() == 1 && (
+             option.getValues().get(0).equals("*") ||
+             option.getValues().get(0).equals("'*'") ||
+             option.getValues().get(0).equals("\"*\"")
+           );
   }
 
   private static void setupTestLauncherArguments(
@@ -356,28 +337,27 @@ public final class GradleExecutionHelper {
     }
   }
 
-  @ApiStatus.Internal
-  @VisibleForTesting
-  public static void setupLogging(
-    @NotNull GradleExecutionSettings settings,
-    @Nullable BuildEnvironment buildEnvironment
-  ) {
+  private static void setupLogging(@NotNull GradleExecutionSettings settings,
+                                   @Nullable BuildEnvironment buildEnvironment) {
     var arguments = settings.getArguments();
     var options = GradleCommandLineOptionsProvider.LOGGING_OPTIONS.getOptions();
     var optionsNames = GradleCommandLineOptionsProvider.getAllOptionsNames(options);
 
-    if (ContainerUtil.exists(optionsNames, it -> arguments.contains(it))) {
-      return;
-    }
-
     // workaround for https://github.com/gradle/gradle/issues/19340
     // when using TAPI, user-defined log level option in gradle.properties is ignored by Gradle.
     // try to read this file manually and apply log level explicitly
-    var buildRoot = getBuildRoot(buildEnvironment);
-    if (buildRoot != null) {
-      var properties = GradlePropertiesFile.getProperties(settings.getServiceDirectory(), buildRoot);
-      var logLevel = properties.getGradleLogLevel();
-      if (logLevel != null) {
+    if (buildEnvironment == null || !isRootDirAvailable(buildEnvironment)) {
+      return;
+    }
+    GradleProperties properties = GradlePropertiesFile.INSTANCE.getProperties(settings.getServiceDirectory(),
+                                                                              buildEnvironment.getBuildIdentifier().getRootDir().toPath());
+    Property<String> loggingLevelProperty = properties.getGradleLoggingLevel();
+    @NonNls String gradleLogLevel = loggingLevelProperty != null ? loggingLevelProperty.getValue() : null;
+
+    if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))
+        && gradleLogLevel != null) {
+      try {
+        LogLevel logLevel = LogLevel.valueOf(gradleLogLevel.toUpperCase());
         switch (logLevel) {
           case DEBUG -> settings.withArgument("-d");
           case INFO -> settings.withArgument("-i");
@@ -385,32 +365,46 @@ public final class GradleExecutionHelper {
           case QUIET -> settings.withArgument("-q");
         }
       }
-    }
-
-    if (ContainerUtil.exists(optionsNames, it -> arguments.contains(it))) {
-      return;
+      catch (IllegalArgumentException e) {
+        LOG.warn("org.gradle.logging.level must be one of quiet, warn, lifecycle, info, or debug");
+      }
     }
 
     // Default logging level for integration tests
     final Application application = ApplicationManager.getApplication();
     if (application != null && application.isUnitTestMode()) {
-      settings.withArgument("--info");
+      if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))) {
+        settings.withArgument("--info");
+      }
     }
   }
 
-  public static @Nullable Path getBuildRoot(@Nullable BuildEnvironment buildEnvironment) {
+  private static boolean isRootDirAvailable(@NotNull BuildEnvironment environment) {
+    try {
+      environment.getBuildIdentifier().getRootDir();
+    }
+    catch (UnsupportedMethodException e) {
+      return false;
+    }
+    return true;
+  }
+
+  @Nullable
+  private static BuildIdentifier getBuildIdentifier(@NotNull BuildEnvironment buildEnvironment) {
+    try {
+      return buildEnvironment.getBuildIdentifier();
+    }
+    catch (UnsupportedMethodException ignore) {
+    }
+    return null;
+  }
+
+  public static @Nullable String getBuildRoot(@Nullable BuildEnvironment buildEnvironment) {
     if (buildEnvironment == null) {
       return null;
     }
-    return buildEnvironment.getBuildIdentifier().getRootDir().toPath();
-  }
-
-  private static @NotNull List<String> getJvmArgs(@Nullable BuildEnvironment buildEnvironment) {
-    if (buildEnvironment == null) {
-      return Collections.emptyList();
-    }
-    var jvmArgs = buildEnvironment.getJava().getJvmArguments();
-    return ContainerUtil.filter(jvmArgs, it -> !StringUtil.isEmpty(it));
+    BuildIdentifier buildIdentifier = getBuildIdentifier(buildEnvironment);
+    return buildIdentifier == null ? null : buildIdentifier.getRootDir().getPath();
   }
 
   private static void setupEnvironment(
@@ -437,14 +431,16 @@ public final class GradleExecutionHelper {
 
   @ApiStatus.Internal
   @VisibleForTesting
-  public static @NotNull List<String> mergeBuildJvmArguments(@NotNull List<String> jvmArgs, @NotNull List<String> jvmArgsFromIdeSettings) {
+  static List<String> mergeBuildJvmArguments(@NotNull List<String> jvmArgs, @NotNull List<String> jvmArgsFromIdeSettings) {
     List<String> mergedJvmArgs = mergeJvmArgs(jvmArgs, jvmArgsFromIdeSettings);
     JvmOptions jvmOptions = new JvmOptions(null);
     jvmOptions.setAllJvmArgs(mergedJvmArgs);
     return jvmOptions.getAllJvmArgs();
   }
 
-  private static @NotNull List<String> mergeJvmArgs(@NotNull List<String> jvmArgs, @NotNull List<String> jvmArgsFromIdeSettings) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  static List<String> mergeJvmArgs(@NotNull List<String> jvmArgs, @NotNull List<String> jvmArgsFromIdeSettings) {
     List<String> mergedJvmArgs = ContainerUtil.concat(jvmArgs, jvmArgsFromIdeSettings);
     MultiMap<String, String> argumentsMap = parseJvmArgs(mergedJvmArgs);
 
@@ -514,11 +510,12 @@ public final class GradleExecutionHelper {
     return i <= 0 ? Couple.of(arg, "") : Couple.of(arg.substring(0, i), arg.substring(i));
   }
 
-  public static @Nullable BuildEnvironment getBuildEnvironment(@NotNull ProjectConnection connection,
-                                                               @NotNull ExternalSystemTaskId taskId,
-                                                               @NotNull ExternalSystemTaskNotificationListener listener,
-                                                               @Nullable CancellationToken cancellationToken,
-                                                               @Nullable GradleExecutionSettings settings) {
+  @Nullable
+  public static BuildEnvironment getBuildEnvironment(@NotNull ProjectConnection connection,
+                                                     @NotNull ExternalSystemTaskId taskId,
+                                                     @NotNull ExternalSystemTaskNotificationListener listener,
+                                                     @Nullable CancellationToken cancellationToken,
+                                                     @Nullable GradleExecutionSettings settings) {
     Span span = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
       .spanBuilder("GetBuildEnvironment")
       .startSpan();
@@ -530,7 +527,10 @@ public final class GradleExecutionHelper {
           modelBuilder.withCancellationToken(cancellationToken);
         }
         if (settings != null) {
-          setupJavaHome(modelBuilder, settings, taskId);
+          final String javaHome = settings.getJavaHome();
+          if (javaHome != null && new File(javaHome).isDirectory()) {
+            modelBuilder.setJavaHome(new File(javaHome));
+          }
         }
         // do not use connection.getModel methods since it doesn't allow to handle progress events
         // and we can miss gradle tooling client side events like distribution download.
@@ -610,9 +610,9 @@ public final class GradleExecutionHelper {
     }
   }
 
-  @ApiStatus.Internal
+  @NotNull
   @VisibleForTesting
-  public static @NotNull List<String> obfuscatePasswordParameters(@NotNull List<String> commandLineArguments) {
+  static List<String> obfuscatePasswordParameters(@NotNull List<String> commandLineArguments) {
     List<String> replaced = new ArrayList<>(commandLineArguments.size());
     final String PASSWORD_PARAMETER_IDENTIFIER = ".password=";
     for (String option : commandLineArguments) {

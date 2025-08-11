@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
 import com.intellij.psi.PsiElement;
@@ -22,14 +22,16 @@ import static org.jetbrains.plugins.groovy.lang.typing.DefaultMethodCallTypeCalc
 public class GrNumericBinaryExpressionTypeCalculator implements NullableFunction<GrOperatorExpression, PsiType> {
   public static final GrNumericBinaryExpressionTypeCalculator INSTANCE = new GrNumericBinaryExpressionTypeCalculator();
 
+  @Nullable
   @Override
-  public @Nullable PsiType fun(GrOperatorExpression e) {
+  public PsiType fun(GrOperatorExpression e) {
     final GroovyCallReference operatorReference = Objects.requireNonNull(e.getReference());
     final GroovyResolveResult resolveResult = operatorReference.advancedResolve();
     return getTypeByResult(e.getLeftType(), e.getRightType(), operatorReference.getArguments(), resolveResult, e);
   }
 
-  public @Nullable PsiType getTypeByResult(PsiType leftType, PsiType rightType, List<Argument> arguments, GroovyResolveResult resolveResult, GrExpression context) {
+  @Nullable
+  public PsiType getTypeByResult(PsiType leftType, PsiType rightType, List<Argument> arguments, GroovyResolveResult resolveResult, GrExpression context) {
     if (resolveResult.isApplicable() && !PsiUtil.isDGMMethod(resolveResult.getElement())) {
       return getTypeFromResult(resolveResult, arguments, context);
     }
@@ -41,7 +43,8 @@ public class GrNumericBinaryExpressionTypeCalculator implements NullableFunction
     return getTypeFromResult(resolveResult, arguments, context);
   }
 
-  protected @Nullable PsiType inferNumericType(@NotNull PsiType ltype, @NotNull PsiType rtype, PsiElement e) {
+  @Nullable
+  protected PsiType inferNumericType(@NotNull PsiType ltype, @NotNull PsiType rtype, PsiElement e) {
     return GrBinaryExpressionUtil.getDefaultNumericResultType(ltype, rtype, e);
   }
 }

@@ -3,14 +3,13 @@ package org.jetbrains.idea.maven.project.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil
 
 /**
- * Sync project
+ * Reload project
  */
 open class ReimportProjectAction : MavenProjectsAction() {
   override fun isVisible(e: AnActionEvent): Boolean {
@@ -34,7 +33,7 @@ open class ReimportProjectAction : MavenProjectsAction() {
   override fun perform(manager: MavenProjectsManager, mavenProjects: List<MavenProject>, e: AnActionEvent) {
     if (MavenUtil.isProjectTrustedEnoughToImport(manager.project)) {
       FileDocumentManager.getInstance().saveAllDocuments()
-      manager.scheduleUpdateMavenProjects(MavenSyncSpec.incremental("ReimportProjectAction", true), mavenProjects.map { it.file }, emptyList())
+      manager.scheduleForceUpdateMavenProjects(mavenProjects)
     }
   }
 }

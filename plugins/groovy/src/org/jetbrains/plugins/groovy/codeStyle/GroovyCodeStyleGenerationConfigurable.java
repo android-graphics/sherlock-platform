@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.application.options.codeStyle.CommenterForm;
@@ -32,8 +32,9 @@ public class GroovyCodeStyleGenerationConfigurable implements CodeStyleConfigura
     myCommenterForm = new CommenterForm(GroovyLanguage.INSTANCE);
   }
 
+  @Nullable
   @Override
-  public @Nullable JComponent createComponent() {
+  public JComponent createComponent() {
     JPanel membersOrderPanel = ToolbarDecorator.createDecorator(myMembersOrderList).disableAddAction().disableRemoveAction().createPanel();
     membersOrderPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.order.of.members")));
 
@@ -60,8 +61,9 @@ public class GroovyCodeStyleGenerationConfigurable implements CodeStyleConfigura
     reset(mySettings);
   }
 
+  @Nls
   @Override
-  public @Nls String getDisplayName() {
+  public String getDisplayName() {
     return ApplicationBundle.message("title.code.generation");
   }
 
@@ -79,7 +81,7 @@ public class GroovyCodeStyleGenerationConfigurable implements CodeStyleConfigura
 
   public static class MembersOrderList extends JBList {
 
-    private abstract static class PropertyManager {
+    private static abstract class PropertyManager {
 
       public final @Nls(capitalization = Sentence) String myName;
 

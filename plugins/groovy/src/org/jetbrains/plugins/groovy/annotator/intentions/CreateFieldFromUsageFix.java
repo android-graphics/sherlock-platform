@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -28,7 +28,7 @@ public class CreateFieldFromUsageFix extends GrCreateFromUsageBaseFix {
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     final List<PsiClass> classes = getTargetClasses();
-    if (classes.isEmpty()) {
+    if (classes.size() == 0) {
       return IntentionPreviewInfo.EMPTY;
     }
     PsiClass targetClass = classes.get(0);
@@ -54,13 +54,15 @@ public class CreateFieldFromUsageFix extends GrCreateFromUsageBaseFix {
     return GroovyExpectedTypesProvider.calculateTypeConstraints(getRefExpr());
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return GroovyBundle.message("create.field.from.usage.family.name");
   }
 
   @Override
-  public @NotNull String getText() {
+  @NotNull
+  public String getText() {
     return GroovyBundle.message("create.field.from.usage", myReferenceName);
   }
 

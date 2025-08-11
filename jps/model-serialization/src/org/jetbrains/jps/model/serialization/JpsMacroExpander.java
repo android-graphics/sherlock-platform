@@ -23,10 +23,6 @@ public final class JpsMacroExpander {
     }
   }
 
-  public JpsMacroExpander(ExpandMacroToPathMap expandMacroMap) {
-    myExpandMacroMap = expandMacroMap;
-  }
-
   public void addFileHierarchyReplacements(String macroName, File file) {
     doAddFileHierarchyReplacements("$" + macroName + "$", file);
   }

@@ -16,18 +16,12 @@ class JUnit5ProjectFixtureTest {
   private companion object {
     val sharedProject0 = projectFixture()
     val sharedProject1 = projectFixture()
-    val openedProject = projectFixture(openAfterCreation = true)
 
     var seenProject: Project? = null
   }
 
   private val localProject0 = projectFixture()
   private val localProject1 = projectFixture()
-
-  @Test
-  fun `open after creation`() {
-    assertTrue(openedProject.get().isOpen)
-  }
 
   @Test
   fun `fixture returns same instance`() {

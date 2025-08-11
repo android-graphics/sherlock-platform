@@ -50,7 +50,7 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
 
         val basePointer = runReadAction {
             analyze(baseClass) {
-                baseClass.namedClassSymbol?.createPointer()
+                baseClass.getNamedClassOrObjectSymbol()?.createPointer()
             }
         } ?: return null
 
@@ -90,7 +90,7 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
 
                 analyze(ktClassOrObject) {
                     val baseSymbol = basePointer.restoreSymbol() ?: return false
-                    val ktSymbol = ktClassOrObject.classSymbol ?: return false
+                    val ktSymbol = ktClassOrObject.getClassOrObjectSymbol() ?: return false
                     if (!parameters.includeAnonymous && ktSymbol !is KaNamedSymbol) {
                         return false
                     }

@@ -17,8 +17,9 @@ public final class CommandLineLanguage extends Language {
     super("CommandLine");
   }
 
+  @NotNull
   @Override
-  public @NotNull LanguageFileType getAssociatedFileType() {
+  public LanguageFileType getAssociatedFileType() {
     return CommandLineFileType.INSTANCE;
   }
 }

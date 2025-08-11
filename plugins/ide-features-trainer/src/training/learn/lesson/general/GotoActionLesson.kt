@@ -17,7 +17,6 @@ import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.util.isToStringContains
 import java.awt.event.KeyEvent
-import java.util.Locale
 import javax.swing.JDialog
 
 class GotoActionLesson(private val sample: LessonSample,
@@ -50,7 +49,7 @@ class GotoActionLesson(private val sample: LessonSample,
       task("About") {
         showWarningIfSearchPopupClosed()
         text(LessonsBundle.message("goto.action.invoke.about.action",
-                                   LessonUtil.actionName(it).lowercase(Locale.getDefault()), LessonUtil.rawEnter()))
+                                   LessonUtil.actionName(it).toLowerCase(), LessonUtil.rawEnter()))
         triggerUI().component { dialog: JDialog ->
           dialog.title.isToStringContains(IdeBundle.message("about.popup.about.app", ApplicationNamesInfo.getInstance().fullProductName))
         }
@@ -75,9 +74,8 @@ class GotoActionLesson(private val sample: LessonSample,
       }
 
       val showLineNumbersName = ActionsBundle.message("action.EditorGutterToggleGlobalLineNumbers.text")
-      task {
-        val prefix = LearnBundle.message("show.line.number.prefix.to.show.first")
-        text(LessonsBundle.message("goto.action.show.line.numbers.request", strong(prefix), strong(showLineNumbersName)))
+      task(LearnBundle.message("show.line.number.prefix.to.show.first")) {
+        text(LessonsBundle.message("goto.action.show.line.numbers.request", strong(it), strong(showLineNumbersName)))
         triggerAndBorderHighlight().listItem { item ->
           val matchedValue = item as? GotoActionModel.MatchedValue
           val actionWrapper = matchedValue?.value as? GotoActionModel.ActionWrapper
@@ -87,7 +85,7 @@ class GotoActionLesson(private val sample: LessonSample,
         restoreState { !checkInsideSearchEverywhere() }
         test {
           waitComponent(SearchEverywhereUI::class.java)
-          type(prefix)
+          type(it)
         }
       }
 

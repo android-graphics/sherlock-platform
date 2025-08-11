@@ -1,9 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.speedSearch;
 
-import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
@@ -14,6 +13,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,9 +24,10 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.InputMethodEvent;
+import java.awt.im.InputContext;
 import java.awt.im.InputMethodRequests;
 
-public final class ListWithFilter<T> extends JPanel implements UiCompatibleDataProvider {
+public final class ListWithFilter<T> extends JPanel implements DataProvider {
   private final JList<T> myList;
   private final SearchTextField mySearchField = new SearchTextField(false);
   private final NameFilteringListModel<T> myModel;
@@ -37,8 +38,11 @@ public final class ListWithFilter<T> extends JPanel implements UiCompatibleDataP
   private final boolean mySearchAlwaysVisible;
 
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(PlatformDataKeys.SPEED_SEARCH_TEXT, mySearchField.getText());
+  public Object getData(@NotNull @NonNls String dataId) {
+    if (PlatformDataKeys.SPEED_SEARCH_TEXT.is(dataId)) {
+      return mySearchField.getText();
+    }
+    return null;
   }
 
   public static @NotNull <T> JComponent wrap(@NotNull JList<? extends T> list,
@@ -233,13 +237,6 @@ public final class ListWithFilter<T> extends JPanel implements UiCompatibleDataP
           }
         }
       };
-    }
-
-    @Override
-    public void selectTextRange(int begin, int length) {
-      if (searchFieldShown) {
-        mySearchField.getTextEditor().select(begin, begin + length);
-      }
     }
   }
 

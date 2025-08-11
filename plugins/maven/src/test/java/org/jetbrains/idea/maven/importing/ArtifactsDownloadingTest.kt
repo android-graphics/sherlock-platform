@@ -21,7 +21,8 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.junit.Test
-import kotlin.io.path.exists
+import java.io.File
+import java.util.*
 
 class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
     
@@ -40,8 +41,8 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
                     </dependencies>
                     """.trimIndent())
 
-    val sources = repositoryPath.resolve("junit/junit/4.0/junit-4.0-sources.jar")
-    val javadoc = repositoryPath.resolve("junit/junit/4.0/junit-4.0-javadoc.jar")
+    val sources = File(repositoryPath, "/junit/junit/4.0/junit-4.0-sources.jar")
+    val javadoc = File(repositoryPath, "/junit/junit/4.0/junit-4.0-javadoc.jar")
 
     assertFalse(sources.exists())
     assertFalse(javadoc.exists())
@@ -67,13 +68,14 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
                     </dependencies>
                     """.trimIndent())
 
-    val sources = repositoryPath.resolve("junit/junit/4.0/junit-4.0-sources.jar")
-    val javadoc = repositoryPath.resolve("junit/junit/4.0/junit-4.0-javadoc.jar")
+    val sources = File(repositoryPath, "/junit/junit/4.0/junit-4.0-sources.jar")
+    val javadoc = File(repositoryPath, "/junit/junit/4.0/junit-4.0-javadoc.jar")
 
     assertFalse(sources.exists())
     assertFalse(javadoc.exists())
 
     mavenGeneralSettings.isWorkOffline = false
+    projectsManager.embeddersManager.reset() // to recognize change
     downloadArtifacts()
 
     assertTrue(sources.exists())
@@ -83,6 +85,7 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
     FileUtil.delete(javadoc)
 
     mavenGeneralSettings.isWorkOffline = true
+    projectsManager.embeddersManager.reset() // to recognize change
 
     downloadArtifacts()
 
@@ -110,8 +113,8 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
                     </dependencies>
                     """.trimIndent())
 
-    val sources = repositoryPath.resolve("jmock/jmock/1.2.0/jmock-1.2.0-sources.jar")
-    val javadoc = repositoryPath.resolve("jmock/jmock/1.2.0/jmock-1.2.0-javadoc.jar")
+    val sources = File(repositoryPath, "/jmock/jmock/1.2.0/jmock-1.2.0-sources.jar")
+    val javadoc = File(repositoryPath, "/jmock/jmock/1.2.0/jmock-1.2.0-javadoc.jar")
     assertFalse(sources.exists())
     assertFalse(javadoc.exists())
 
@@ -121,8 +124,8 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
 
     assertTrue(sources.exists())
     assertTrue(javadoc.exists())
-    assertFalse(repositoryPath.resolve("junit/junit/4.0/junit-4.0-sources.jar").exists())
-    assertFalse(repositoryPath.resolve("junit/junit/4.0/junit-4.0-javadoc.jar").exists())
+    assertFalse(File(repositoryPath, "/junit/junit/4.0/junit-4.0-sources.jar").exists())
+    assertFalse(File(repositoryPath, "/junit/junit/4.0/junit-4.0-javadoc.jar").exists())
   }
 
   @Test
@@ -169,8 +172,8 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
                     </dependencies>
                     """.trimIndent())
 
-    val sources = repositoryPath.resolve("junit/junit/4.0/junit-4.0-sources.jar")
-    val javadoc = repositoryPath.resolve("junit/junit/4.0/junit-4.0-javadoc.jar")
+    val sources = File(repositoryPath, "/junit/junit/4.0/junit-4.0-sources.jar")
+    val javadoc = File(repositoryPath, "/junit/junit/4.0/junit-4.0-javadoc.jar")
 
     assertFalse(sources.exists())
     assertFalse(javadoc.exists())
@@ -184,7 +187,7 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
   @Test
   @Throws(Exception::class)
   fun JavadocsAndSourcesForDepsWithClassifiersAndType() = runBlocking {
-    val remoteRepo = FileUtil.toSystemIndependentName(dir.resolve("repo").toString())
+    val remoteRepo = FileUtil.toSystemIndependentName(dir.path + "/repo")
     updateSettingsXmlFully("""<settings>
 <mirrors>
   <mirror>
@@ -203,11 +206,11 @@ ${VfsUtilCore.pathToUrl(pathTransformer.toRemotePath(remoteRepo)!!)}</url>
     createDummyArtifact(remoteRepo, "/xxx/yyy/1/yyy-1-test-sources.jar")
     createDummyArtifact(remoteRepo, "/xxx/yyy/1/yyy-1-test-javadoc.jar")
 
-    createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-sources.jar")
-    createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-javadoc.jar")
-
     createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-foo-sources.jar")
     createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-foo-javadoc.jar")
+
+    createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-foo-sources.jar")
+    createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-foo-javadoc.jar")
 
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -236,15 +239,15 @@ ${VfsUtilCore.pathToUrl(pathTransformer.toRemotePath(remoteRepo)!!)}</url>
                     </dependencies>
                     """.trimIndent())
 
-    val files1 = listOf(repositoryPath.resolve("xxx/xxx/1/xxx-1-sources.jar"),
-                        repositoryPath.resolve("xxx/xxx/1/xxx-1-javadoc.jar"),
-                        repositoryPath.resolve("xxx/yyy/1/yyy-1-test-sources.jar"),
-                        repositoryPath.resolve("xxx/yyy/1/yyy-1-test-javadoc.jar"))
+  val files1 = listOf(File(repositoryPath, "/xxx/xxx/1/xxx-1-sources.jar"),
+                      File(repositoryPath, "/xxx/xxx/1/xxx-1-javadoc.jar"),
+                      File(repositoryPath, "/xxx/yyy/1/yyy-1-test-sources.jar"),
+                      File(repositoryPath, "/xxx/yyy/1/yyy-1-test-javadoc.jar"))
 
-    val files2 = listOf(repositoryPath.resolve("xxx/xxx/1/xxx-1-foo-sources.jar"),
-                        repositoryPath.resolve("xxx/xxx/1/xxx-1-foo-javadoc.jar"),
-                        repositoryPath.resolve("xxx/zzz/1/zzz-1-test-foo-sources.jar"),
-                        repositoryPath.resolve("xxx/zzz/1/zzz-1-test-foo-javadoc.jar"))
+    val files2 = listOf(File(repositoryPath, "/xxx/xxx/1/xxx-1-foo-sources.jar"),
+                        File(repositoryPath, "/xxx/xxx/1/xxx-1-foo-javadoc.jar"),
+                        File(repositoryPath, "/xxx/zzz/1/zzz-1-test-foo-sources.jar"),
+                        File(repositoryPath, "/xxx/zzz/1/zzz-1-test-foo-javadoc.jar"))
 
     for (each in files1) {
       assertFalse(each.toString(), each.exists())
@@ -280,7 +283,7 @@ ${VfsUtilCore.pathToUrl(pathTransformer.toRemotePath(remoteRepo)!!)}</url>
                       </build>
                       """.trimIndent())
 
-      val f = repositoryPath.resolve("org/apache/maven/plugins/maven-surefire-plugin/2.4.2/maven-surefire-plugin-2.4.2.jar")
+      val f = File(repositoryPath, "/org/apache/maven/plugins/maven-surefire-plugin/2.4.2/maven-surefire-plugin-2.4.2.jar")
 
       assertTrue(f.exists())
     }
@@ -292,7 +295,7 @@ ${VfsUtilCore.pathToUrl(pathTransformer.toRemotePath(remoteRepo)!!)}</url>
 
   @Test
   fun DownloadBuildExtensionsOnResolve() = runBlocking {
-    val f = repositoryPath.resolve("org/apache/maven/wagon/wagon-ftp/2.10/wagon-ftp-2.10.pom")
+    val f = File(repositoryPath, "/org/apache/maven/wagon/wagon-ftp/2.10/wagon-ftp-2.10.pom")
     assertFalse(f.exists())
 
     importProjectAsync("""

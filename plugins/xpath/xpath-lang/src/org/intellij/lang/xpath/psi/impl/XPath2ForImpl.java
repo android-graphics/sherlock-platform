@@ -27,7 +27,8 @@ public class XPath2ForImpl extends XPath2ElementImpl implements XPath2For {
   }
 
   @Override
-  public @NotNull XPathType getType() {
+  @NotNull
+  public XPathType getType() {
     final XPathExpression value = getReturn();
     return value != null ? value.getType() : XPathType.UNKNOWN;
   }

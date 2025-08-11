@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.modcommand.ActionContext
@@ -6,6 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -22,7 +23,6 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.TypeParameterUtils.typeRefere
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.inferClassIdByPsi
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class RemoveExplicitTypeIntention :
@@ -42,15 +42,35 @@ internal class RemoveExplicitTypeIntention :
         return listOf(textRange)
     }
 
-    override fun isApplicableByPsi(element: KtDeclaration): Boolean = canExplicitTypeBeRemoved(element)
+    override fun isApplicableByPsi(element: KtDeclaration): Boolean {
+        val typeReference = element.typeReference ?: return false
 
-    override fun KaSession.prepareContext(element: KtDeclaration): Unit? = when {
+        return when {
+            !isApplicableByTypeReference(element, typeReference) -> false
+            element is KtParameter -> element.isLoopParameter || element.isSetterParameter
+            element is KtNamedFunction -> true
+            element is KtProperty || element is KtPropertyAccessor -> element.getInitializerOrGetterInitializer() != null
+            else -> false
+        }
+    }
+
+    context(KaSession)
+    override fun prepareContext(element: KtDeclaration): Unit? = when {
         element is KtParameter -> true
-        element is KtNamedFunction && element.hasBlockBody() -> element.returnType.isUnitType
-        element is KtNamedFunction && element.isRecursive() -> false
+        element is KtNamedFunction && element.hasBlockBody() -> element.returnType.isUnit
         element is KtCallableDeclaration && publicReturnTypeShouldBePresentInApiMode(element) -> false
         else -> !element.isExplicitTypeReferenceNeededForTypeInferenceByAnalyze()
     }.asUnit
+
+    private val KtDeclaration.typeReference: KtTypeReference?
+        get() = when (this) {
+            is KtCallableDeclaration -> typeReference
+            is KtPropertyAccessor -> returnTypeReference
+            else -> null
+        }
+
+    private fun isApplicableByTypeReference(element: KtDeclaration, typeReference: KtTypeReference): Boolean =
+        !typeReference.isAnnotatedDeep() && !element.isExplicitTypeReferenceNeededForTypeInferenceByPsi(typeReference)
 
     context(KaSession)
     private fun publicReturnTypeShouldBePresentInApiMode(declaration: KtCallableDeclaration): Boolean {
@@ -60,7 +80,8 @@ internal class RemoveExplicitTypeIntention :
         if (declaration is KtFunction && declaration.isLocal) return false
         if (declaration is KtProperty && declaration.isLocal) return false
 
-        return isPublicApi(declaration.symbol)
+        val symbolWithVisibility = declaration.symbol as? KaSymbolWithVisibility ?: return false
+        return isPublicApi(symbolWithVisibility)
     }
 
     context(KaSession)
@@ -81,9 +102,9 @@ internal class RemoveExplicitTypeIntention :
 
         val initializerType = initializer.expressionType ?: return true
         val typeCanBeRemoved = if (isVar) {
-            initializerType.semanticallyEquals(explicitType)
+            initializerType.isEqualTo(explicitType)
         } else {
-            initializerType.isSubtypeOf(explicitType)
+            initializerType.isSubTypeOf(explicitType)
         }
         return !typeCanBeRemoved
     }
@@ -101,10 +122,10 @@ internal class RemoveExplicitTypeIntention :
         // `val n: Int = 1` - type of `1` is context-independent
         // `val n: Long = 1` - type of `1` is context-dependent
         is KtConstantExpression -> {
-            val classId = initializer.inferClassIdByPsi()
+            val classId = initializer.getClassId()
             val let = classId?.let { buildClassType(it) }
             val superType = typeReference.type
-            val subTypeOf = let?.isSubtypeOf(superType)
+            val subTypeOf = let?.isSubTypeOf(superType)
             subTypeOf == true
         }
         is KtCallExpression -> initializer.typeArgumentList != null || !returnTypeOfCallDependsOnTypeParameters(initializer)
@@ -114,19 +135,6 @@ internal class RemoveExplicitTypeIntention :
         is KtLambdaExpression -> isLambdaExpressionTypeContextIndependent(initializer, typeReference)
         is KtNamedFunction -> isAnonymousFunctionTypeContextIndependent(initializer, typeReference)
         is KtSimpleNameExpression, is KtBinaryExpression -> true
-        is KtIfExpression -> {
-            val type = typeReference.type
-            val thenType = initializer.then?.expressionType
-            val elseType = initializer.`else`?.expressionType
-            thenType != null && elseType != null && type.semanticallyEquals(thenType) && type.semanticallyEquals(elseType)
-        }
-        is KtWhenExpression -> {
-            val type = typeReference.type
-            initializer.entries.all {
-                val expressionType = it.expression?.expressionType ?: return@all false
-                expressionType.semanticallyEquals(type)
-            }
-        }
 
         // consider types of expressions that the compiler views as constants, e.g. `1 + 2`, as independent
         else -> initializer.evaluate() != null
@@ -153,7 +161,7 @@ internal class RemoveExplicitTypeIntention :
         val resolved = callableReferenceExpression.callableReference.references.firstNotNullOfOrNull { it.resolve() } ?: return false
         if (resolved !is KtNamedFunction) return true
 
-        val symbol = resolved.symbol
+        val symbol = resolved.getFunctionLikeSymbol()
 
         @OptIn(KaExperimentalApi::class)
         val typeParameters = symbol.typeParameters
@@ -177,6 +185,16 @@ internal class RemoveExplicitTypeIntention :
       elementContext: Unit,
       updater: ModPsiUpdater,
     ) {
-        element.removeDeclarationTypeReference()
+        element.removeTypeReference()
+    }
+
+    private fun KtDeclaration.removeTypeReference() {
+        if (this is KtCallableDeclaration) {
+            typeReference = null
+        } else if (this is KtPropertyAccessor) {
+            val first = rightParenthesis?.nextSibling ?: return
+            val last = returnTypeReference ?: return
+            deleteChildRange(first, last)
+        }
     }
 }

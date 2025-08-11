@@ -70,7 +70,6 @@ public enum VideoMediaType {
     this.contentType = contentType;
   }
 
-  @Override
   public String toString() {
     return contentType;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.actions;
 
 import com.intellij.diff.DiffDialogHints;
@@ -40,19 +40,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
  * Compares selected file/folder with itself in another revision.
  */
 public abstract class DvcsCompareWithAction<T extends Repository> extends DumbAwareAction {
-  protected abstract @NotNull AbstractRepositoryManager<T> getRepositoryManager(@NotNull Project project);
+  @NotNull
+  protected abstract AbstractRepositoryManager<T> getRepositoryManager(@NotNull Project project);
 
   protected abstract boolean nothingToCompare(@NotNull T repository);
 
-  protected abstract @Nullable JBPopup createPopup(@NotNull Project project, @NotNull T repository, @NotNull VirtualFile file);
+  @Nullable
+  protected abstract JBPopup createPopup(@NotNull Project project, @NotNull T repository, @NotNull VirtualFile file);
 
 
   @Override
@@ -93,9 +95,10 @@ public abstract class DvcsCompareWithAction<T extends Repository> extends DumbAw
     return repository != null && !repository.isFresh() && !nothingToCompare(repository);
   }
 
-  protected static @NotNull JBPopup createPopup(@NotNull @NlsContexts.PopupTitle String title,
-                                                @NotNull List<String> options,
-                                                @NotNull Consumer<? super String> onChosen) {
+  @NotNull
+  protected static JBPopup createPopup(@NotNull @NlsContexts.PopupTitle String title,
+                                       @NotNull List<String> options,
+                                       @NotNull Consumer<? super String> onChosen) {
     return JBPopupFactory.getInstance()
       .createPopupChooserBuilder(options)
       .setTitle(title)
@@ -141,7 +144,8 @@ public abstract class DvcsCompareWithAction<T extends Repository> extends DumbAw
     }
   }
 
-  protected static @NotNull String getPresentableCurrentBranchName(Repository repository) {
+  @NotNull
+  protected static String getPresentableCurrentBranchName(Repository repository) {
     String branchName = repository.getCurrentBranchName();
     if (branchName != null) return branchName;
 

@@ -2,21 +2,19 @@
 package com.intellij.maven.testFramework
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerTestUtil
 import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
 import com.intellij.openapi.application.*
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
-import com.intellij.openapi.module.LanguageLevelUtil
+import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ModuleListener
-import com.intellij.openapi.project.modules
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
@@ -28,18 +26,12 @@ import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
-import com.intellij.platform.backend.observation.Observation
-import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.testFramework.CodeStyleSettingsTracker
-import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.*
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -54,39 +46,21 @@ import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
+import org.jetbrains.idea.maven.project.preimport.SimpleStructureProjectVisitor
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import java.nio.file.Path
+import java.io.File
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
-/**
- * This test case uses the NIO API for handling file operations.
- *
- * **Background**:
- * The test framework is transitioning from the `IO` API to the`NIO` API
- *
- * **Implementation Notes**:
- * - `<TestCase>` represents the updated implementation using the `NIO` API.
- * - `<TestCaseLegacy>` represents the legacy implementation using the `IO` API.
- * - For now, both implementations coexist to allow for a smooth transition and backward compatibility.
- * - Eventually, `<TestCaseLegacy>` will be removed from the codebase.
- *
- * **Action Items**:
- * - Prefer using `<TestCase>` for new test cases.
- * - Update existing tests to use `<TestCase>` where possible.
- *
- * **Future Direction**:
- * Once the transition is complete, all test cases relying on the `IO` API will be retired,
- * and the codebase will exclusively use the `NIO` implementation.
- */
 abstract class MavenImportingTestCase : MavenTestCase() {
-
   private var myProjectsManager: MavenProjectsManager? = null
   private var myCodeStyleSettingsTracker: CodeStyleSettingsTracker? = null
   private var myNotificationAware: AutoImportProjectNotificationAware? = null
@@ -95,13 +69,14 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   @Throws(Exception::class)
   override fun setUp() {
+    assumeThisTestCanBeReusedForPreimport()
     isAutoReloadEnabled = false
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), PathManager.getConfigPath())
     super.setUp()
     myCodeStyleSettingsTracker = CodeStyleSettingsTracker { currentCodeStyleSettings }
     val settingsFile = MavenUtil.resolveGlobalSettingsFile(BundledMaven3)
     if (settingsFile != null) {
-      VfsRootAccess.allowRootAccess(getTestRootDisposable(), settingsFile.toAbsolutePath().toString())
+      VfsRootAccess.allowRootAccess(getTestRootDisposable(), settingsFile.absolutePath)
     }
     myNotificationAware = AutoImportProjectNotificationAware.getInstance(project)
     myProjectTracker = AutoImportProjectTracker.getInstance(project)
@@ -129,6 +104,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     return true
   }
 
+  @Throws(Exception::class)
   override fun setUpInWriteAction() {
     super.setUpInWriteAction()
     myProjectsManager = MavenProjectsManager.getInstance(project)
@@ -136,15 +112,17 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   @Suppress("unused")
-  protected fun mn(
-    parent: String, /* can be used to prepend module name depending on the importing settings*/
-    moduleName: String,
-  ): String {
+  protected fun mn(parent: String /* can be used to prepend module name depending on the importing settings*/,
+                   moduleName: String): String {
     return moduleName
   }
 
   protected fun assertModules(vararg expectedNames: String) {
-    val actualNames = project.modules.map { it.name }
+    val actual = ModuleManager.getInstance(project).modules
+    val actualNames: MutableList<String> = ArrayList()
+    for (m in actual) {
+      actualNames.add(m.getName())
+    }
     assertUnorderedElementsAreEqual(actualNames, *expectedNames)
   }
 
@@ -157,15 +135,11 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   protected val projectsTree: MavenProjectsTree
     get() = projectsManager.getProjectsTree()
 
-  protected fun assertModuleOutput(moduleName: String, output: String, testOutput: String) {
+  protected fun assertModuleOutput(moduleName: String, output: String?, testOutput: String?) {
     val e = getCompilerExtension(moduleName)
     assertFalse(e!!.isCompilerOutputPathInherited())
-    assertEquals(getAbsolutePath(output), getAbsolutePath(e.getCompilerOutputUrl()))
-    assertEquals(getAbsolutePath(testOutput), getAbsolutePath(e.getCompilerOutputUrlForTests()))
-  }
-
-  protected fun assertModuleOutput(moduleName: String, output: Path, testOutput: Path) {
-    assertModuleOutput(moduleName, output.toString(), testOutput.toString())
+    assertEquals(output, getAbsolutePath(e.getCompilerOutputUrl()))
+    assertEquals(testOutput, getAbsolutePath(e.getCompilerOutputUrlForTests()))
   }
 
   protected val projectsManager: MavenProjectsManager
@@ -181,26 +155,22 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   @JvmOverloads
-  protected fun assertModuleLibDep(
-    moduleName: String,
-    depName: String,
-    classesPath: String? = null,
-    sourcePath: String? = null,
-    javadocPath: String? = null,
-  ) {
+  protected fun assertModuleLibDep(moduleName: String,
+                                   depName: String,
+                                   classesPath: String? = null,
+                                   sourcePath: String? = null,
+                                   javadocPath: String? = null) {
     val lib = getModuleLibDep(moduleName, depName)
     assertModuleLibDepPath(lib, OrderRootType.CLASSES, if (classesPath == null) null else listOf(classesPath))
     assertModuleLibDepPath(lib, OrderRootType.SOURCES, if (sourcePath == null) null else listOf(sourcePath))
     assertModuleLibDepPath(lib, JavadocOrderRootType.getInstance(), if (javadocPath == null) null else listOf(javadocPath))
   }
 
-  protected fun assertModuleLibDep(
-    moduleName: String,
-    depName: String,
-    classesPaths: List<String>,
-    sourcePaths: List<String>,
-    javadocPaths: List<String>,
-  ) {
+  protected fun assertModuleLibDep(moduleName: String,
+                                   depName: String,
+                                   classesPaths: List<String>,
+                                   sourcePaths: List<String>,
+                                   javadocPaths: List<String>) {
     val lib = getModuleLibDep(moduleName, depName)
     assertModuleLibDepPath(lib, OrderRootType.CLASSES, classesPaths)
     assertModuleLibDepPath(lib, OrderRootType.SOURCES, sourcePaths)
@@ -288,23 +258,19 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertUnorderedElementsAreEqual(actualNames, *expectedNames)
   }
 
-  fun assertProjectLibraryCoordinates(
-    libraryName: String,
-    groupId: String?,
-    artifactId: String?,
-    version: String?,
-  ) {
+  fun assertProjectLibraryCoordinates(libraryName: String,
+                                      groupId: String?,
+                                      artifactId: String?,
+                                      version: String?) {
     assertProjectLibraryCoordinates(libraryName, groupId, artifactId, null, JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING, version)
   }
 
-  fun assertProjectLibraryCoordinates(
-    libraryName: String,
-    groupId: String?,
-    artifactId: String?,
-    classifier: String?,
-    packaging: String?,
-    version: String?,
-  ) {
+  fun assertProjectLibraryCoordinates(libraryName: String,
+                                      groupId: String?,
+                                      artifactId: String?,
+                                      classifier: String?,
+                                      packaging: String?,
+                                      version: String?) {
     val lib = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(libraryName)
     assertNotNull("Library [$libraryName] not found", lib)
     val libraryProperties = (lib as LibraryEx?)!!.getProperties()
@@ -371,9 +337,22 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected open suspend fun importProjectsAsync(files: List<VirtualFile>) {
+    if (preimportTestMode) {
+      val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(project)
+      try {
+        MavenProjectStaticImporter.getInstance(project)
+          .syncStatic(files, null, mavenImporterSettings, mavenGeneralSettings, true, SimpleStructureProjectVisitor(), activity, true)
+      }
+      finally {
+        activity.finished()
+      }
 
-    initProjectsManager(false)
-    projectsManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null, null, true)
+
+    }
+    else {
+      initProjectsManager(false)
+      projectsManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null, null, true)
+    }
 
     IndexingTestUtil.suspendUntilIndexesAreReady(project)
   }
@@ -407,7 +386,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     runBlockingMaybeCancellable { updateAllProjects() }
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
-        assertFalse("Failed to import Maven project: " + each.problems, each.hasReadingErrors())
+        assertFalse("Failed to import Maven project: " + each.getProblems(), each.hasReadingProblems())
       }
     }
     IndexingTestUtil.waitUntilIndexesAreReady(project);
@@ -417,17 +396,15 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     return doImportProjectsAsync(files, failOnReadingError, emptyList(), *profiles)
   }
 
-  protected suspend fun doImportProjectsAsync(
-    files: List<VirtualFile>, failOnReadingError: Boolean,
-    disabledProfiles: List<String>, vararg profiles: String,
-  ) {
+  protected suspend fun doImportProjectsAsync(files: List<VirtualFile>, failOnReadingError: Boolean,
+                                              disabledProfiles: List<String>, vararg profiles: String) {
     assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed())
     initProjectsManager(false)
     projectsManager.projectsTree.resetManagedFilesAndProfiles(files, MavenExplicitProfiles(profiles.toList(), disabledProfiles))
     updateAllProjects()
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
-        assertFalse("Failed to import Maven project: " + each.problems, each.hasReadingErrors())
+        assertFalse("Failed to import Maven project: " + each.getProblems(), each.hasReadingProblems())
       }
     }
   }
@@ -444,61 +421,53 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     isAutoReloadEnabled = true
   }
 
-  private fun assertAutoReloadIsEnabled() {
-    assertTrue("Auto-reload is disabled in this test", isAutoReloadEnabled)
+  private fun assertAutoReloadIsInitialized() {
+    assertTrue("Auto-reload is disabled for tests by default", isAutoReloadEnabled)
   }
 
-  protected fun assertHasPendingProjectForReload() {
-    assertAutoReloadIsEnabled()
-    blockTillCinfigurationReady()
-    assertTrue("Expected notification about pending projects for auto-reload", myNotificationAware!!.isNotificationVisible())
+  protected suspend fun assertHasPendingProjectForReload() {
+    assertAutoReloadIsInitialized()
+    assertWithinTimeout(10) {
+      assertTrue("Expected notification about pending projects for auto-reload", myNotificationAware!!.isNotificationVisible())
+    }
     assertNotEmpty(myNotificationAware!!.getProjectsWithNotification())
   }
 
   protected fun assertNoPendingProjectForReload() {
-    assertAutoReloadIsEnabled()
-    blockTillCinfigurationReady()
+    assertAutoReloadIsInitialized()
     assertFalse(myNotificationAware!!.isNotificationVisible())
     assertEmpty(myNotificationAware!!.getProjectsWithNotification())
   }
 
   @RequiresBackgroundThread
   protected suspend fun scheduleProjectImportAndWait() {
-    assertAutoReloadIsEnabled()
+    assertAutoReloadIsInitialized()
 
     // otherwise all imports will be skipped
     assertHasPendingProjectForReload()
-    withContext(Dispatchers.EDT) {
-      myProjectTracker!!.scheduleProjectRefresh()
+    waitForImportWithinTimeout {
+      withContext(Dispatchers.EDT) {
+        myProjectTracker!!.scheduleProjectRefresh()
+      }
     }
-
-    awaitConfiguration()
 
     // otherwise project settings was modified while importing
     assertNoPendingProjectForReload()
   }
 
-  @RequiresBackgroundThread
-  protected suspend fun awaitConfiguration() {
-    val isEdt = ApplicationManager.getApplication().isDispatchThread
-    if (isEdt) {
-      MavenLog.LOG.warn("Calling awaitConfiguration() from EDT sometimes causes deadlocks, even though it shouldn't")
-    }
-    assertFalse("Call awaitConfiguration() from background thread", isEdt)
-    Observation.awaitConfiguration(project) { message ->
-      logConfigurationMessage(message)
-    }
-  }
+  protected suspend fun scheduleProjectImportAndWaitAsync() {
+    assertAutoReloadIsInitialized()
 
-  protected fun blockTillCinfigurationReady() {
-    runBlockingCancellable {
-      awaitConfiguration()
+    // otherwise all imports will be skipped
+    assertHasPendingProjectForReload()
+    waitForImportWithinTimeout {
+      withContext(Dispatchers.EDT) {
+        myProjectTracker!!.scheduleProjectRefresh()
+      }
     }
-  }
 
-  private fun logConfigurationMessage(message: String) {
-    if (message.contains("scanning")) return
-    MavenLog.LOG.warn(message)
+    // otherwise project settings was modified while importing
+    assertNoPendingProjectForReload()
   }
 
   protected suspend fun updateAllProjects() {
@@ -537,7 +506,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     if (SystemInfo.isWindows) {
       MavenServerManager.getInstance().closeAllConnectorsAndWait()
     }
-    FileUtil.delete(repositoryPath.resolve(relativePath))
+    FileUtil.delete(File(repositoryPath, relativePath))
   }
 
   protected fun setupJdkForModules(vararg moduleNames: String) {
@@ -573,7 +542,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     catch (e: ModuleWithNameAlreadyExists) {
       throw RuntimeException(e)
     }
-    edtWriteAction {
+    writeAction {
       modifiableModel.commit()
       project.getMessageBus().syncPublisher(ModuleListener.TOPIC).modulesRenamed(project, listOf(module)) { oldName }
     }
@@ -581,6 +550,11 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   @RequiresBackgroundThread
   protected suspend fun waitForImportWithinTimeout(action: suspend () -> Unit) {
+    waitForImportWithinTimeout(project, action)
+  }
+
+  @RequiresBackgroundThread
+  protected suspend fun waitForImportWithinTimeout(project: Project, action: suspend () -> Unit) {
     MavenLog.LOG.warn("waitForImportWithinTimeout started")
     val importStarted = AtomicBoolean(false)
     val importFinished = AtomicBoolean(false)
@@ -617,13 +591,15 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
     action()
 
-    awaitConfiguration()
-
-    assertTrue("Import failed: start", importStarted.get())
-    assertTrue("Import failed: finish", importFinished.get())
-    assertTrue("Import failed: plugins", pluginResolutionFinished.get())
-    assertTrue("Import failed: artifacts", artifactDownloadingFinished.get())
-    MavenLog.LOG.warn("waitForImportWithinTimeout finished")
+    assertWithinTimeout {
+      assertTrue(
+        importStarted.get()
+        && importFinished.get()
+        && pluginResolutionFinished.get()
+        && artifactDownloadingFinished.get()
+      )
+      MavenLog.LOG.warn("waitForImportWithinTimeout finished")
+    }
   }
 
   private class MavenImportLoggingListener : MavenImportListener {
@@ -709,27 +685,5 @@ abstract class MavenImportingTestCase : MavenTestCase() {
       Messages.NO
     }
     return counter
-  }
-
-  protected fun getSourceLanguageLevel(): LanguageLevel? {
-    return getSourceLanguageLevelForModule("project")
-  }
-
-  protected fun getTargetLanguageLevel(): LanguageLevel? {
-    return getTargetLanguageLevelForModule("project")
-  }
-
-  protected fun getSourceLanguageLevelForModule(moduleName: String): LanguageLevel? {
-    return LanguageLevelUtil.getCustomLanguageLevel(getModule(moduleName))
-  }
-
-  protected fun getTargetLanguageLevelForModule(moduleName: String): LanguageLevel? {
-    val compilerConfiguration = CompilerConfiguration.getInstance(project)
-    val targetLevel = compilerConfiguration.getBytecodeTargetLevel(getModule(moduleName)) ?: return null
-    return LanguageLevel.parse(targetLevel)
-  }
-
-  protected fun runWithoutStaticSync() {
-    Registry.get("maven.preimport.project").setValue(false, testRootDisposable)
   }
 }

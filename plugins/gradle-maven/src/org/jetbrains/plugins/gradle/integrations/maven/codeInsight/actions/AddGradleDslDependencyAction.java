@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.integrations.maven.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.plugins.gradle.config.GradleFileType;
@@ -25,9 +24,8 @@ import static java.util.Optional.ofNullable;
 /**
  * @author Vladislav.Soroka
  */
-public final class AddGradleDslDependencyAction extends CodeInsightAction {
-  @ApiStatus.Internal
-  public static final ThreadLocal<List<MavenId>> TEST_THREAD_LOCAL = new ThreadLocal<>();
+public class AddGradleDslDependencyAction extends CodeInsightAction {
+  static final ThreadLocal<List<MavenId>> TEST_THREAD_LOCAL = new ThreadLocal<>();
 
   public AddGradleDslDependencyAction() {
     getTemplatePresentation().setDescription(GradleBundle.messagePointer("gradle.codeInsight.action.add_maven_dependency.description"));
@@ -35,8 +33,9 @@ public final class AddGradleDslDependencyAction extends CodeInsightAction {
     getTemplatePresentation().setIcon(AllIcons.Nodes.PpLib);
   }
 
+  @NotNull
   @Override
-  protected @NotNull CodeInsightActionHandler getHandler() {
+  protected CodeInsightActionHandler getHandler() {
     return new AddGradleDslDependencyActionHandler();
   }
 
@@ -48,7 +47,8 @@ public final class AddGradleDslDependencyAction extends CodeInsightAction {
     return !GradleConstants.SETTINGS_FILE_NAME.equals(file.getName());
   }
 
-  private static @NotNull Boolean packageSearchPluginEnabled() {
+  @NotNull
+  private static Boolean packageSearchPluginEnabled() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return false;
     return ofNullable(getPlugin(getId("com.jetbrains.packagesearch.intellij-plugin"))).map(p -> p.isEnabled()).orElse(false);
   }

@@ -3,7 +3,6 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.util.MethodInvocator;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,9 +12,7 @@ import java.awt.image.BufferedImage;
 import java.util.Map;
 
 public final class GraphicsUtil {
-  @SuppressWarnings("SpellCheckingInspection")
-  @ApiStatus.Internal
-  public static final String DESKTOP_HINTS = "awt.font.desktophints";
+  @SuppressWarnings("SpellCheckingInspection") private static final String DESKTOP_HINTS = "awt.font.desktophints";
 
   private static final MethodInvocator ourSafelyGetGraphicsMethod = new MethodInvocator(JComponent.class, "safelyGetGraphics", Component.class);
 
@@ -41,9 +38,6 @@ public final class GraphicsUtil {
     ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
   }
 
-  /**
-   * Prefer using {@link #setAntialiasingType(JComponent, Object)} instead
-   */
   public static void setupAntialiasing(@NotNull Graphics g2) {
     setupAntialiasing(g2, true, false);
   }
@@ -61,9 +55,6 @@ public final class GraphicsUtil {
     return ourGraphics.getFontMetrics(font).charWidth(ch);
   }
 
-  /**
-   * Prefer using {@link #setAntialiasingType(JComponent, Object)} instead
-   */
   public static void setupAntialiasing(Graphics g2, boolean enableAA, boolean ignoreSystemSettings) {
     if (g2 instanceof Graphics2D g) {
       Toolkit tk = Toolkit.getDefaultToolkit();
@@ -138,11 +129,11 @@ public final class GraphicsUtil {
    * NB: {@link JComponent#paint(Graphics)} should be using {@link sun.swing.SwingUtilities2#drawString} to make use of this component hint.
    */
   public static void setAntialiasingType(@NotNull JComponent component, @Nullable Object type) {
-    AATextInfo.putClientProperty((AATextInfo) type, component);
+    AATextInfo.putClientProperty(type, component);
   }
 
-  public static @NotNull AATextInfo createAATextInfo(@NotNull Object hint) {
-    return new AATextInfo(hint, StartupUiUtil.getLcdContrastValue());
+  public static Object createAATextInfo(@NotNull Object hint) {
+    return AATextInfo.create(hint, StartupUiUtil.getLcdContrastValue());
   }
 
   public static boolean isRemoteEnvironment() {

@@ -4,7 +4,7 @@ package org.editorconfig.language.codeinsight
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ThrowableRunnable
@@ -39,16 +39,7 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
   fun testNumerousWildcards() = doTest(EditorConfigNumerousWildcardsInspection::class, checkWeakWarnings = true)
   fun testOptionRedundancy() = doTest(EditorConfigOptionRedundancyInspection::class)
   fun testPairAcceptability() = doTest(EditorConfigPairAcceptabilityInspection::class)
-  fun testPartialOverride() = doTest(EditorConfigPartialOverrideInspection::class, checkWeakWarnings = false)
-  // IJPL-162949
-  fun testPartialOverrideDoesNotLookPastChildrenWithRootDeclarations() {
-    myFixture.configureByFiles(
-      "${getTestName(true)}/withRoot/.editorconfig",
-      "${getTestName(true)}/withoutRoot/.editorconfig",
-    )
-    doTest(EditorConfigPartialOverrideInspection::class, checkWeakWarnings = true)
-  }
-
+  fun testPartialOverride() = doTest(EditorConfigPartialOverrideInspection::class, checkWarnings = true)
   fun testPatternRedundancy_complex() = doTest(EditorConfigPatternRedundancyInspection::class)
   fun testPatternRedundancy_simple() = doTest(EditorConfigPatternRedundancyInspection::class)
   fun testReferenceCorrectness_complex() = doTest(EditorConfigReferenceCorrectnessInspection::class)
@@ -109,11 +100,6 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
     EditorConfigValueUniquenessInspection::class
   )
 
-  fun testFantomasOptions() = doTest(
-    EditorConfigKeyCorrectnessInspection::class,
-    EditorConfigValueCorrectnessInspection::class
-  )
-
   fun testHeaderProcessingPerformance() {
     doTestPerf(EditorConfigNoMatchingFilesInspection::class)
   }
@@ -129,7 +115,7 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
   private fun doTestPerf(inspection: KClass<out LocalInspectionTool>) {
     myFixture.enableInspections(inspection.java)
     myFixture.configureByFile("${getTestName(true)}/.editorconfig")
-    Benchmark.newBenchmark("${inspection.simpleName} performance", ThrowableRunnable<Throwable> {
+    PerformanceTestUtil.newPerformanceTest("${inspection.simpleName} performance", ThrowableRunnable<Throwable> {
       myFixture.doHighlighting()
     }).attempts(1).start()
   }
@@ -140,7 +126,7 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
     vararg inspections: KClass<out LocalInspectionTool>,
     checkWarnings: Boolean = true,
     checkWeakWarnings: Boolean = false,
-    checkInfos: Boolean = false,
+    checkInfos: Boolean = false
   ) {
     myFixture.enableInspections(inspections.map(KClass<out LocalInspectionTool>::java))
     myFixture.testHighlighting(checkWarnings, checkInfos, checkWeakWarnings, "${getTestName(true)}/.editorconfig")

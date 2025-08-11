@@ -1,4 +1,4 @@
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 
 import annotation.Ann
 

@@ -21,7 +21,6 @@ public class ClassCanBeRecordInspectionWeakenAccessibilityTest extends LightQuic
     return LightJavaCodeInsightFixtureTestCase.JAVA_LATEST;
   }
 
-
   @Override
   protected String getBasePath() {
     return "/inspection/classCanBeRecord/weakenAccessibility";

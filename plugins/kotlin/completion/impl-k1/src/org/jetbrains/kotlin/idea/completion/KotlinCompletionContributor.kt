@@ -6,7 +6,6 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.addingPolicy.PolicyController
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
@@ -17,10 +16,10 @@ import com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorExecutor
 import com.intellij.psi.PsiComment
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
-import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.InsertStringTemplateBracesInsertHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.StringTemplateCompletion
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletion
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletionSession
+import org.jetbrains.kotlin.idea.completion.stringTemplates.wrapLookupElementForStringTemplateAfterDotCompletion
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -127,17 +126,15 @@ class KotlinCompletionContributor : KindExecutingCompletionContributor() {
     override fun collectKinds(
         parameters: CompletionParameters,
         generatorExecutor: SuggestionGeneratorExecutor,
-        result: CompletionResultSet,
+        result: CompletionResultSet
     ) {
         StringTemplateCompletion.correctParametersForInStringTemplateCompletion(parameters)?.let { correctedParameters ->
-            generateCompletionKinds(correctedParameters, generatorExecutor, result) {
-                LookupElementDecorator.withDelegateInsertHandler(it, InsertStringTemplateBracesInsertHandler)
-            }
+            generateCompletionKinds(correctedParameters, generatorExecutor, result, ::wrapLookupElementForStringTemplateAfterDotCompletion)
             return
         }
 
         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
-            generateCompletionKinds(parameters, generatorExecutor, result)
+            generateCompletionKinds(parameters, generatorExecutor, result, null)
         })
     }
 
@@ -145,7 +142,7 @@ class KotlinCompletionContributor : KindExecutingCompletionContributor() {
         parameters: CompletionParameters,
         suggestionGeneratorExecutor: SuggestionGeneratorExecutor,
         result: CompletionResultSet,
-        lookupElementPostProcessor: ((LookupElement) -> LookupElement)? = null,
+        lookupElementPostProcessor: ((LookupElement) -> LookupElement)?
     ) {
         val position = parameters.position
         if (position.getNonStrictParentOfType<PsiComment>() != null) {

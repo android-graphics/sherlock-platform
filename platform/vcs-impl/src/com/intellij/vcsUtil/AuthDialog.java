@@ -15,9 +15,9 @@ package com.intellij.vcsUtil;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.AuthenticationPanel;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +44,8 @@ public class AuthDialog extends DialogWrapper {
     init();
   }
 
-  private static @Nullable Boolean decideOnShowRememberPasswordOption(@Nullable String password, boolean rememberByDefault) {
+  @Nullable
+  private static Boolean decideOnShowRememberPasswordOption(@Nullable String password, boolean rememberByDefault) {
     // if password saving is disabled, don't show the checkbox.
     if (PasswordSafe.getInstance().isMemoryOnly()) {
       return null;
@@ -66,11 +67,13 @@ public class AuthDialog extends DialogWrapper {
     return authPanel.getPreferredFocusedComponent();
   }
 
-  public @NotNull String getUsername() {
+  @NotNull
+  public String getUsername() {
     return authPanel.getLogin();
   }
 
-  public @NotNull String getPassword() {
+  @NotNull
+  public String getPassword() {
     return String.valueOf(authPanel.getPassword());
   }
 

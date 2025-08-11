@@ -24,10 +24,8 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
@@ -36,7 +34,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@ApiStatus.Obsolete
 public abstract class RemoteServersServiceViewContributor
   implements ServiceViewContributor<RemoteServersServiceViewContributor.RemoteServerNodeServiceViewContributor>,
              Comparator<RemoteServersServiceViewContributor.RemoteServerNodeServiceViewContributor>,
@@ -119,7 +116,6 @@ public abstract class RemoteServersServiceViewContributor
   /**
    * @return newly created remote server or {@code null} if edit server configurable dialog was cancelled
    */
-  @ApiStatus.Obsolete
   public static <C extends ServerConfiguration> RemoteServer<C> addNewRemoteServer(@NotNull Project project,
                                                                                    @NotNull ServerType<C> serverType,
                                                                                    @Nullable Class<?> contributorClass) {
@@ -235,7 +231,7 @@ public abstract class RemoteServersServiceViewContributor
     }
 
     @Override
-    public @Unmodifiable @NotNull List<RemoteServerNodeServiceViewContributor> getServices(@NotNull Project project) {
+    public @NotNull List<RemoteServerNodeServiceViewContributor> getServices(@NotNull Project project) {
       return ContainerUtil.map(myNode.getChildren(), myRootContributor::createNodeContributor);
     }
 

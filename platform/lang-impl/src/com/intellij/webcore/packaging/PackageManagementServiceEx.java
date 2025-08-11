@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.webcore.packaging;
 
 import com.intellij.util.CatchingConsumer;
@@ -20,8 +22,8 @@ public abstract class PackageManagementServiceEx extends PackageManagementServic
   public abstract void fetchLatestVersion(@NotNull InstalledPackage pkg, final @NotNull CatchingConsumer<? super String, ? super Exception> consumer);
 
   public void installPackage(final RepoPackage repoPackage,
-                             final @Nullable String version,
+                             @Nullable final String version,
                              @Nullable String extraOptions,
                              final Listener listener,
-                             final @NotNull File workingDir) {}
+                             @NotNull final File workingDir) {}
 }

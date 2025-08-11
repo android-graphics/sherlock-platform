@@ -7,7 +7,6 @@ import com.intellij.psi.PsiReference
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
 import org.jetbrains.kotlin.base.fe10.analysis.findAnnotation
 import org.jetbrains.kotlin.base.fe10.analysis.getStringValue
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
 import org.jetbrains.kotlin.idea.base.injection.InjectionInfo
@@ -28,7 +27,7 @@ import org.intellij.lang.annotations.Language as LanguageAnnotation
 
 internal class KotlinLanguageInjectionContributor : KotlinLanguageInjectionContributorBase() {
     override val kotlinSupport: KotlinLanguageInjectionSupport? by lazy {
-        InjectorUtils.getActiveInjectionSupports().filterIsInstance<KotlinLanguageInjectionSupport>().firstOrNull()
+        ArrayList(InjectorUtils.getActiveInjectionSupports()).filterIsInstance(KotlinLanguageInjectionSupport::class.java).firstOrNull()
     }
 
     override fun KtCallExpression.hasCallableId(packageName: FqName, callableName: Name): Boolean {
@@ -39,12 +38,7 @@ internal class KotlinLanguageInjectionContributor : KotlinLanguageInjectionContr
     override fun resolveReference(reference: PsiReference): PsiElement? = allowResolveInDispatchThread { reference.resolve() }
 
     override fun injectionInfoByAnnotation(callableDeclaration: KtCallableDeclaration): InjectionInfo? {
-        // no injections in kotlin stdlib
-        val packageName = callableDeclaration.containingKtFile.packageFqName.asString()
-        val kotlinPackage = StandardNames.BUILT_INS_PACKAGE_NAME.asString()
-        if (packageName == kotlinPackage || packageName.startsWith("${kotlinPackage}.")) return null
-
-        val descriptor = allowResolveInDispatchThread { callableDeclaration.descriptor } ?: return null
+        val descriptor = callableDeclaration.descriptor ?: return null
         return injectionInfoByAnnotation(descriptor)
     }
 

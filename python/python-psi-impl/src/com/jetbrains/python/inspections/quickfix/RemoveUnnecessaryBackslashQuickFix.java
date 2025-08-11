@@ -20,7 +20,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RemoveUnnecessaryBackslashQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.remove.unnecessary.backslash");
   }
 

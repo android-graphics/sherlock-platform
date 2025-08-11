@@ -2,9 +2,7 @@
 package com.intellij.psi.filters;
 
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
 public final class FalseFilter implements ElementFilter {
   public static final FalseFilter INSTANCE = new FalseFilter();
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.*;
@@ -34,6 +34,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.SwingUndoUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +53,7 @@ import static java.awt.FlowLayout.CENTER;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.InputEvent.META_DOWN_MASK;
 
-public final class SearchReplaceComponent extends EditorHeaderComponent implements UiDataProvider {
+public final class SearchReplaceComponent extends EditorHeaderComponent implements DataProvider {
   public static final int RIGHT_PANEL_WEST_OFFSET = 13;
   private static final float MAX_LEFT_PANEL_PROP = 0.9F;
   private static final float DEFAULT_PROP = 0.33F;
@@ -79,12 +80,10 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   private final JPanel myReplaceToolbarWrapper;
 
   private final @Nullable JPanel myModePanel;
-  private final @Nullable ActionToolbarImpl myModeToolbar;
 
   private final Project myProject;
   private final JComponent myTargetComponent;
-  private final SearchSession mySearchSession;
-  private @Nullable OnePixelSplitter mySplitter;
+  @Nullable private OnePixelSplitter mySplitter;
 
   private final Runnable myCloseRunnable;
   private final Runnable myReplaceRunnable;
@@ -97,30 +96,22 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   private final boolean myAddSearchResultsToGlobalSearch;
   private final SearchComponentMode myMode;
 
-  private @NotNull @NlsContexts.Label String myStatusText = "";
-  private @NotNull Color myStatusColor = ExperimentalUI.isNewUI() ? UIUtil.getLabelInfoForeground() : UIUtil.getLabelForeground();
+  @NotNull private @NlsContexts.Label String myStatusText = "";
+  @NotNull private Color myStatusColor = ExperimentalUI.isNewUI() ? UIUtil.getLabelInfoForeground() : UIUtil.getLabelForeground();
   private final AnAction modeAction = new ModeAction();
 
-  private final @Nullable ShortcutSet findActionShortcutSet;
-  private final @Nullable ShortcutSet replaceActionShortcutSet;
+  @Nullable private final ShortcutSet findActionShortcutSet;
+  @Nullable private final ShortcutSet replaceActionShortcutSet;
 
   private final CloseAction myCloseAction = new CloseAction();
 
-  public static @NotNull Builder buildFor(@Nullable Project project,
-                                          @NotNull JComponent component,
-                                          @Nullable SearchSession session) {
-    return new Builder(project, component, session);
-  }
-
-  /** @deprecated Use {@link #buildFor(Project, JComponent, SearchSession)} instead */
-  @Deprecated(forRemoval = true)
-  public static @NotNull Builder buildFor(@Nullable Project project, @NotNull JComponent component) {
-    return new Builder(project, component, null);
+  @NotNull
+  public static Builder buildFor(@Nullable Project project, @NotNull JComponent component) {
+    return new Builder(project, component);
   }
 
   private SearchReplaceComponent(@Nullable Project project,
                                  @NotNull JComponent targetComponent,
-                                 @Nullable SearchSession searchSession,
                                  @NotNull DefaultActionGroup searchToolbar1Actions,
                                  @NotNull DefaultActionGroup searchToolbar2Actions,
                                  @NotNull DefaultActionGroup searchFieldActions,
@@ -139,7 +130,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
                                  boolean showSeparator) {
     myProject = project;
     myTargetComponent = targetComponent;
-    mySearchSession = searchSession;
     mySearchFieldActions = searchFieldActions;
     myReplaceFieldActions = replaceFieldActions;
     myReplaceRunnable = replaceRunnable;
@@ -251,18 +241,17 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     float initialProportion = maximizeLeftPanelOnResize? MAX_LEFT_PANEL_PROP : DEFAULT_PROP;
 
     if (isNewUI && myReplaceRunnable != null) {
-      myModeToolbar = createToolbar(new DefaultActionGroup(modeAction));
-      myModeToolbar.setReservePlaceAutoPopupIcon(false);
-      JComponent modeToolbarComponent = myModeToolbar.getComponent();
+      ActionToolbar modeToolbar = createToolbar(new DefaultActionGroup(modeAction));
+      modeToolbar.setReservePlaceAutoPopupIcon(false);
+      JComponent modeToolbarComponent = modeToolbar.getComponent();
       modeToolbarComponent.setBorder(JBUI.Borders.empty());
       modeToolbarComponent.setOpaque(false);
 
-      myModePanel = JBUI.Panels.simplePanel().addToTop(myModeToolbar.getComponent());
+      myModePanel = JBUI.Panels.simplePanel().addToTop(modeToolbar.getComponent());
       myModePanel.setOpaque(false);
       add(myModePanel, BorderLayout.WEST);
     }
     else {
-      myModeToolbar = null;
       myModePanel = null;
     }
 
@@ -350,12 +339,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   }
 
   @Override
-  public void addNotify() {
-    super.addNotify();
-    updateBindingsActionsAndFocus();
-  }
-
-  @Override
   public void removeNotify() {
     super.removeNotify();
 
@@ -377,11 +360,13 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     myStatusText = status;
   }
 
-  public @NotNull @NlsContexts.Label String getStatusText() {
+  @NotNull
+  public @NlsContexts.Label String getStatusText() {
     return myStatusText;
   }
 
-  public @NotNull Color getStatusColor() {
+  @NotNull
+  public Color getStatusColor() {
     return myStatusColor;
   }
 
@@ -407,20 +392,17 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     myStatusColor = NamedColorUtil.getErrorForeground();
   }
 
+  @Nullable
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(PlatformDataKeys.SPEED_SEARCH_TEXT, mySearchTextComponent.getText());
-    sink.set(SearchSession.KEY, mySearchSession);
-    DataSink.uiDataSnapshot(sink, mySearchSession);
-    DataSink.uiDataSnapshot(sink, myDataProviderDelegate);
+  public Object getData(@NotNull @NonNls String dataId) {
+    if (PlatformDataKeys.SPEED_SEARCH_TEXT.is(dataId)) {
+      return mySearchTextComponent.getText();
+    }
+    return myDataProviderDelegate != null ? myDataProviderDelegate.getData(dataId) : null;
   }
 
   public Project getProject() {
     return myProject;
-  }
-
-  public SearchSession getSearchSession() {
-    return mySearchSession;
   }
 
   public void addListener(@NotNull Listener listener) {
@@ -439,17 +421,18 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     }
   }
 
-  public @NotNull JTextComponent getSearchTextComponent() {
+  @NotNull
+  public JTextComponent getSearchTextComponent() {
     return mySearchTextComponent;
   }
 
-  public @NotNull JTextComponent getReplaceTextComponent() {
+  @NotNull
+  public JTextComponent getReplaceTextComponent() {
     return myReplaceTextComponent;
   }
 
 
   private void updateSearchComponent(@NotNull String textToSet) {
-    if (!checkTextLength(textToSet)) return;
     if (!updateTextComponent(true)) {
       replaceTextInTextComponentEnsuringSelection(textToSet, mySearchTextComponent);
       return;
@@ -496,7 +479,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   }
 
   private void updateReplaceComponent(@NotNull String textToSet) {
-    if (!checkTextLength(textToSet)) return;
     if (!updateTextComponent(false)) {
       replaceTextInTextComponentEnsuringSelection(textToSet, myReplaceTextComponent);
       return;
@@ -519,16 +501,14 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     myReplaceFieldWrapper.repaint();
   }
 
-  private static boolean checkTextLength(@NotNull String text) {
-    return text.length() <= Registry.intValue("editor.max.search.selection.length", 10_000);
-  }
-
   public void update(@NotNull String findText, @NotNull String replaceText, boolean replaceMode, boolean multiline) {
     updateInner(findText, replaceText, replaceMode, multiline);
     boolean needToResetSearchFocus = mySearchTextComponent != null && mySearchTextComponent.hasFocus();
     boolean needToResetReplaceFocus = myReplaceTextComponent != null && myReplaceTextComponent.hasFocus();
     if (needToResetReplaceFocus) myReplaceTextComponent.requestFocusInWindow();
     if (needToResetSearchFocus) mySearchTextComponent.requestFocusInWindow();
+    updateBindings();
+    updateActions();
     revalidate();
     repaint();
   }
@@ -539,22 +519,11 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     updateReplaceComponent(replaceText);
     myReplaceFieldWrapper.setVisible(replaceMode);
     myReplaceToolbarWrapper.setVisible(replaceMode);
-    updateBindingsActionsAndFocus();
-  }
-
-  private void updateBindingsActionsAndFocus() {
-    updateBindings();
-    updateActions();
     List<Component> focusOrder = new ArrayList<>();
     focusOrder.add(mySearchTextComponent);
     focusOrder.add(myReplaceTextComponent);
     focusOrder.addAll(myExtraSearchButtons);
     focusOrder.addAll(myExtraReplaceButtons);
-    focusOrder.addAll(List.of(mySearchActionsToolbar.getComponents()));
-    focusOrder.addAll(List.of(myReplaceActionsToolbar.getComponents()));
-    if (myModeToolbar != null && myModeToolbar.getComponents().length > 0) {
-      focusOrder.add(myModeToolbar.getComponent(0));
-    }
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new ListFocusTraversalPolicy(focusOrder));
   }
@@ -747,14 +716,16 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   }
 
 
-  private @NotNull ActionToolbarImpl createReplaceToolbar1(@NotNull DefaultActionGroup group) {
+  @NotNull
+  private ActionToolbarImpl createReplaceToolbar1(@NotNull DefaultActionGroup group) {
     ActionToolbarImpl toolbar = createToolbar(group);
     toolbar.setForceMinimumSize(true);
     toolbar.setReservePlaceAutoPopupIcon(false);
     return toolbar;
   }
 
-  private @NotNull ActionToolbarImpl createToolbar(@NotNull ActionGroup group) {
+  @NotNull
+  private ActionToolbarImpl createToolbar(@NotNull ActionGroup group) {
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, group, true);
     toolbar.setTargetComponent(this);
     toolbar.setLayoutStrategy(ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY);
@@ -778,7 +749,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   public static final class Builder {
     private final Project myProject;
     private final JComponent myTargetComponent;
-    private final SearchSession mySearchSession;
 
     private DataProvider myDataProvider;
 
@@ -802,81 +772,90 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
     private SearchComponentMode myMode;
 
-    private Builder(@Nullable Project project, @NotNull JComponent component, @Nullable SearchSession searchSession) {
+    private Builder(@Nullable Project project, @NotNull JComponent component) {
       myProject = project;
       myTargetComponent = component;
-      mySearchSession = searchSession;
       myMode = new TextAreaMode();
     }
 
-    /** @deprecated Use searchSession and {@link SearchReplaceComponent#buildFor(Project, JComponent, SearchSession)} */
-    @Deprecated(forRemoval = true)
-    public @NotNull Builder withDataProvider(@NotNull DataProvider provider) {
+    @NotNull
+    public Builder withDataProvider(@NotNull DataProvider provider) {
       myDataProvider = provider;
       return this;
     }
 
-    public @NotNull Builder withReplaceAction(@NotNull Runnable action) {
+    @NotNull
+    public Builder withReplaceAction(@NotNull Runnable action) {
       myReplaceAction = action;
       return this;
     }
 
-    public @NotNull Builder withCloseAction(@NotNull Runnable action) {
+    @NotNull
+    public Builder withCloseAction(@NotNull Runnable action) {
       myCloseAction = action;
       return this;
     }
 
-    public @NotNull Builder addSearchFieldActions(AnAction @NotNull ... actions) {
+    @NotNull
+    public Builder addSearchFieldActions(AnAction @NotNull ... actions) {
       mySearchFieldActions.addAll(actions);
       return this;
     }
 
-    public @NotNull Builder addReplaceFieldActions(AnAction @NotNull ... actions) {
+    @NotNull
+    public Builder addReplaceFieldActions(AnAction @NotNull ... actions) {
       myReplaceFieldActions.addAll(actions);
       return this;
     }
 
-    public @NotNull Builder addPrimarySearchActions(AnAction @NotNull ... actions) {
+    @NotNull
+    public Builder addPrimarySearchActions(AnAction @NotNull ... actions) {
       mySearchActions.addAll(actions);
       return this;
     }
 
-    public @NotNull Builder addSecondarySearchActions(AnAction @NotNull ... actions) {
+    @NotNull
+    public Builder addSecondarySearchActions(AnAction @NotNull ... actions) {
       for (AnAction action : actions) {
         mySearchActions.addAction(action).setAsSecondary(true);
       }
       return this;
     }
 
-    public @NotNull Builder addExtraSearchActions(AnAction @NotNull ... actions) {
+    @NotNull
+    public Builder addExtraSearchActions(AnAction @NotNull ... actions) {
       myExtraSearchActions.addAll(actions);
       return this;
     }
 
-    public @NotNull Builder addPrimaryReplaceActions(AnAction @NotNull ... actions) {
+    @NotNull
+    public Builder addPrimaryReplaceActions(AnAction @NotNull ... actions) {
       myReplaceActions.addAll(actions);
       return this;
     }
 
-    public @NotNull Builder addExtraReplaceAction(AnAction @NotNull ... actions) {
+    @NotNull
+    public Builder addExtraReplaceAction(AnAction @NotNull ... actions) {
       myExtraReplaceActions.addAll(actions);
       return this;
     }
 
-    public @NotNull Builder withShowOnlySearchPanel() {
+    @NotNull
+    public Builder withShowOnlySearchPanel() {
       myShowOnlySearchPanel = true;
       return this;
     }
 
-    public @NotNull Builder withMaximizeLeftPanelOnResize() {
+    @NotNull
+    public Builder withMaximizeLeftPanelOnResize() {
       myMaximizeLeftPanelOnResize = true;
       return this;
     }
 
-    public @NotNull SearchReplaceComponent build() {
+    @NotNull
+    public SearchReplaceComponent build() {
       return new SearchReplaceComponent(myProject,
                                         myTargetComponent,
-                                        mySearchSession,
                                         mySearchActions,
                                         myExtraSearchActions,
                                         mySearchFieldActions,
@@ -895,17 +874,20 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
                                         myShowSeparator);
     }
 
-    public @NotNull Builder withMultilineEnabled(boolean b) {
+    @NotNull
+    public Builder withMultilineEnabled(boolean b) {
       myMultilineEnabled = b;
       return this;
     }
 
-    public @NotNull Builder withNewLineButton(boolean b) {
+    @NotNull
+    public Builder withNewLineButton(boolean b) {
       myShowNewLineButton = b;
       return this;
     }
 
-    public @NotNull Builder withAddSearchResultsToGlobalSearch(boolean b) {
+    @NotNull
+    public Builder withAddSearchResultsToGlobalSearch(boolean b) {
       myAddSearchResultsToGlobalSearch = b;
       return this;
     }
@@ -913,17 +895,20 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     /**
      * @deprecated use {@link #withUseSearchField(boolean, boolean)} instead to specify explicitly search field look and features
      */
+    @NotNull
     @Deprecated(forRemoval = true)
-    public @NotNull Builder withUseSearchField(boolean b) {
+    public Builder withUseSearchField(boolean b) {
       return withUseSearchField(true, true);
     }
 
-    public @NotNull Builder withUseSearchField(boolean enableSearchHistory, boolean enableClearSearchAction) {
+    @NotNull
+    public Builder withUseSearchField(boolean enableSearchHistory, boolean enableClearSearchAction) {
       myMode = new SearchTextFieldMode(enableSearchHistory, enableClearSearchAction);
       return this;
     }
 
-    public @NotNull Builder withoutSeparator() {
+    @NotNull
+    public Builder withoutSeparator() {
       myShowSeparator = false;
       return this;
     }
@@ -942,12 +927,14 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   }
 
   private static class MyTextComponentWrapper extends Wrapper {
-    public @Nullable JTextComponent getTextComponent() {
+    @Nullable
+    public JTextComponent getTextComponent() {
       JComponent wrapped = getTargetComponent();
       return wrapped != null ? unwrapTextComponent(wrapped) : null;
     }
 
-    protected static @NotNull JTextComponent unwrapTextComponent(@NotNull JComponent wrapped) {
+    @NotNull
+    protected static JTextComponent unwrapTextComponent(@NotNull JComponent wrapped) {
       if (wrapped instanceof SearchTextField) {
         return ((SearchTextField)wrapped).getTextEditor();
       }

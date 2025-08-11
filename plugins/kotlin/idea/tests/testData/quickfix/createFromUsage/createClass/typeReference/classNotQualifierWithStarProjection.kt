@@ -1,6 +1,4 @@
 // "Create class 'A'" "true"
-// K2 TODO: improve generated class type arguments when "expected type" is fixed
-// K2_AFTER_ERROR: No type arguments expected for class A : Any.
 package p
 
 fun foo(): <caret>A<*, String> = throw Throwable("")

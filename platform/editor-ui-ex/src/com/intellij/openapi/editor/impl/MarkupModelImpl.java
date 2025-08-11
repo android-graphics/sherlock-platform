@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.impl;
 
@@ -20,7 +20,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,13 +30,12 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   private static final Logger LOG = Logger.getInstance(MarkupModelImpl.class);
   private final DocumentEx myDocument;
 
-  private volatile RangeHighlighter[] myCachedHighlighters;
+  private RangeHighlighter[] myCachedHighlighters;
   private final List<MarkupModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final RangeHighlighterTree myHighlighterTree;          // this tree holds regular highlighters with target = HighlighterTargetArea.EXACT_RANGE
   private final RangeHighlighterTree myHighlighterTreeForLines;  // this tree holds line range highlighters with target = HighlighterTargetArea.LINES_IN_RANGE
 
-  @ApiStatus.Internal
-  public MarkupModelImpl(@NotNull DocumentEx document) {
+  MarkupModelImpl(@NotNull DocumentEx document) {
     myDocument = document;
     myHighlighterTree = new RangeHighlighterTree(this);
     myHighlighterTreeForLines = new RangeHighlighterTree(this);
@@ -111,20 +109,17 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   public @NotNull RangeHighlighter @NotNull [] getAllHighlighters() {
     RangeHighlighter[] cachedHighlighters = myCachedHighlighters;
     if (cachedHighlighters == null) {
-      myCachedHighlighters = cachedHighlighters = computeAllHighlighters();
+      int size = myHighlighterTree.size() + myHighlighterTreeForLines.size();
+      if (size == 0) return RangeHighlighter.EMPTY_ARRAY;
+      List<RangeHighlighterEx> list = new ArrayList<>(size);
+      CommonProcessors.CollectProcessor<RangeHighlighterEx> collectProcessor = new CommonProcessors.CollectProcessor<>(list);
+      myHighlighterTree.processAll(collectProcessor);
+      myHighlighterTreeForLines.processAll(collectProcessor);
+      myCachedHighlighters = cachedHighlighters = list.toArray(RangeHighlighter.EMPTY_ARRAY);
     }
     return cachedHighlighters;
   }
 
-  private @NotNull RangeHighlighter @NotNull [] computeAllHighlighters() {
-    int size = myHighlighterTree.size() + myHighlighterTreeForLines.size();
-    if (size == 0) return RangeHighlighter.EMPTY_ARRAY;
-    List<RangeHighlighterEx> list = new ArrayList<>(size);
-    CommonProcessors.CollectProcessor<RangeHighlighterEx> collectProcessor = new CommonProcessors.CollectProcessor<>(list);
-    myHighlighterTree.processAll(collectProcessor);
-    myHighlighterTreeForLines.processAll(collectProcessor);
-    return list.toArray(RangeHighlighter.EMPTY_ARRAY);
-  }
   @Override
   public @NotNull RangeHighlighterEx addRangeHighlighterAndChangeAttributes(@Nullable TextAttributesKey textAttributesKey,
                                                                             int startOffset,

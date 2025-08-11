@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.searches;
 
 import com.intellij.lang.Language;
@@ -33,8 +33,8 @@ public final class DirectClassInheritorsSearch extends ExtensibleQueryFactory<Ps
   public static final DirectClassInheritorsSearch INSTANCE = new DirectClassInheritorsSearch();
 
   public static class SearchParameters {
-    private final @NotNull PsiClass myClass;
-    private final @NotNull SearchScope myScope;
+    @NotNull private final PsiClass myClass;
+    @NotNull private final SearchScope myScope;
     private final boolean myIncludeAnonymous;
     private final boolean myCheckInheritance;
 
@@ -53,11 +53,13 @@ public final class DirectClassInheritorsSearch extends ExtensibleQueryFactory<Ps
       this(aClass, scope, true);
     }
 
-    public @NotNull PsiClass getClassToProcess() {
+    @NotNull
+    public PsiClass getClassToProcess() {
       return myClass;
     }
 
-    public @NotNull SearchScope getScope() {
+    @NotNull
+    public SearchScope getScope() {
       return myScope;
     }
 
@@ -69,7 +71,8 @@ public final class DirectClassInheritorsSearch extends ExtensibleQueryFactory<Ps
       return myIncludeAnonymous;
     }
 
-    public @Nullable ClassInheritorsSearch.SearchParameters getOriginalParameters() {
+    @Nullable
+    public ClassInheritorsSearch.SearchParameters getOriginalParameters() {
       return null;
     }
 
@@ -83,19 +86,23 @@ public final class DirectClassInheritorsSearch extends ExtensibleQueryFactory<Ps
     super(EP_NAME);
   }
 
-  public static @NotNull Query<PsiClass> search(@NotNull PsiClass aClass) {
+  @NotNull
+  public static Query<PsiClass> search(@NotNull PsiClass aClass) {
     return search(aClass, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(aClass)));
   }
 
-  public static @NotNull Query<PsiClass> search(@NotNull PsiClass aClass, @NotNull SearchScope scope) {
+  @NotNull
+  public static Query<PsiClass> search(@NotNull PsiClass aClass, @NotNull SearchScope scope) {
     return search(aClass, scope, true);
   }
 
-  public static @NotNull Query<PsiClass> search(@NotNull PsiClass aClass, @NotNull SearchScope scope, boolean includeAnonymous) {
+  @NotNull
+  public static Query<PsiClass> search(@NotNull PsiClass aClass, @NotNull SearchScope scope, boolean includeAnonymous) {
     return search(new SearchParameters(aClass, scope, includeAnonymous, true));
   }
 
-  public static @NotNull Query<PsiClass> search(@NotNull SearchParameters parameters) {
+  @NotNull
+  public static Query<PsiClass> search(@NotNull SearchParameters parameters) {
     return INSTANCE.createUniqueResultsQuery(parameters);
   }
 }

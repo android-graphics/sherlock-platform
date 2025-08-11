@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm.actions;
 
 import com.intellij.lang.jvm.JvmParameter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -28,22 +27,26 @@ public interface ChangeParametersRequest extends ActionRequest {
       myExistingParameter = existingParameter;
     }
 
+    @NotNull
     @Override
-    public @NotNull List<ExpectedType> getExpectedTypes() {
+    public List<ExpectedType> getExpectedTypes() {
       return Collections.singletonList(new SimpleExpectedType(myExistingParameter.getType(), ExpectedType.Kind.EXACT));
     }
 
+    @NotNull
     @Override
-    public @NotNull Collection<String> getSemanticNames() {
+    public Collection<String> getSemanticNames() {
       return Collections.singletonList(myExistingParameter.getName());
     }
 
-    public @NotNull JvmParameter getExistingParameter() {
+    @NotNull
+    public JvmParameter getExistingParameter() {
       return myExistingParameter;
     }
 
+    @NotNull
     @Override
-    public @NotNull @Unmodifiable Collection<AnnotationRequest> getExpectedAnnotations() {
+    public Collection<AnnotationRequest> getExpectedAnnotations() {
       return ContainerUtil.mapNotNull(myExistingParameter.getAnnotations(), AnnotationRequestsKt::annotationRequest);
     }
   }

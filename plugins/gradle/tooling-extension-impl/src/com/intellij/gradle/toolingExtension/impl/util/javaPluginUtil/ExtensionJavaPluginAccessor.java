@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil;
 
 import org.gradle.api.Project;
@@ -13,13 +13,15 @@ public class ExtensionJavaPluginAccessor implements JavaPluginAccessor {
     myProject = p;
   }
 
-  private @Nullable JavaPluginExtension getJavaPluginExtension() {
+  @Nullable
+  private JavaPluginExtension getJavaPluginExtension() {
     return myProject.getExtensions().findByType(JavaPluginExtension.class);
   }
 
 
   @Override
-  public @Nullable SourceSetContainer getSourceSetContainer() {
+  @Nullable
+  public SourceSetContainer getSourceSetContainer() {
     JavaPluginExtension javaExtension = getJavaPluginExtension();
     if (javaExtension != null) {
       return javaExtension.getSourceSets();
@@ -28,7 +30,8 @@ public class ExtensionJavaPluginAccessor implements JavaPluginAccessor {
   }
 
   @Override
-  public @Nullable String getTargetCompatibility() {
+  @Nullable
+  public String getTargetCompatibility() {
     JavaPluginExtension javaExtension = getJavaPluginExtension();
     if (javaExtension != null) {
       return javaExtension.getTargetCompatibility().toString();
@@ -37,7 +40,8 @@ public class ExtensionJavaPluginAccessor implements JavaPluginAccessor {
   }
 
   @Override
-  public @Nullable String getSourceCompatibility() {
+  @Nullable
+  public String getSourceCompatibility() {
     JavaPluginExtension javaExtension = getJavaPluginExtension();
     if (javaExtension != null) {
       return javaExtension.getSourceCompatibility().toString();

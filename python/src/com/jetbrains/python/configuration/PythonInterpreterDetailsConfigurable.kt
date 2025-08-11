@@ -26,6 +26,9 @@ class PythonInterpreterDetailsConfigurable(project: Project,
 
   override fun isModified(): Boolean = initialSdkName != currentSdkName || underlyingConfigurable.isModified
 
+  /**
+   * TODO Shouldn't be here the association updated (see [com.jetbrains.python.configuration.PythonSdkDetailsDialog.editSdk]).
+   */
   override fun apply() {
     underlyingConfigurable.apply()
 

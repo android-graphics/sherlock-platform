@@ -33,8 +33,9 @@ public class AddAbstractAndStaticModifiersFix extends PsiUpdateModCommandAction<
     return Presentation.of(LombokBundle.message("make.abstract.and.static.modifier.quickfix", myName));
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return LombokBundle.message("make.abstract.and.static.modifier.quickfix.family.name");
   }
 }

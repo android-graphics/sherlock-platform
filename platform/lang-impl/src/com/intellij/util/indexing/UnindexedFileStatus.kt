@@ -9,8 +9,7 @@ data class UnindexedFileStatus(
   val indexesWereProvidedByInfrastructureExtension: Boolean,
   val timeProcessingUpToDateFiles: Long,
   val timeUpdatingContentLessIndexes: Long,
-  val timeIndexingWithoutContentViaInfrastructureExtension: Long,
-  val timeTotal: Long
+  val timeIndexingWithoutContentViaInfrastructureExtension: Long
 ) {
   val wasFullyIndexedByInfrastructureExtension: Boolean get() = !shouldIndex && indexesWereProvidedByInfrastructureExtension
 }

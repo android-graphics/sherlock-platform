@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.nj2k.conversions
 import com.intellij.psi.*
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.j2k.hasWriteAccesses
 import org.jetbrains.kotlin.lexer.KtTokens.*
@@ -21,7 +20,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.extractRadix
 import kotlin.math.abs
 
-class ForConversion(context: ConverterContext) : RecursiveConversion(context) {
+class ForConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     private val forToWhile = ForToWhileConverter(context, symbolProvider)
     private val forToForeach = ForToForeachConverter(context, symbolProvider, typeFactory)
 
@@ -34,7 +33,7 @@ class ForConversion(context: ConverterContext) : RecursiveConversion(context) {
 }
 
 private class ForToForeachConverter(
-    private val context: ConverterContext,
+    private val context: NewJ2kConverterContext,
     private val symbolProvider: JKSymbolProvider,
     private val typeFactory: JKTypeFactory
 ) {
@@ -251,7 +250,7 @@ private class ForToForeachConverter(
     }
 }
 
-private class ForToWhileConverter(private val context: ConverterContext, private val symbolProvider: JKSymbolProvider) {
+private class ForToWhileConverter(private val context: NewJ2kConverterContext, private val symbolProvider: JKSymbolProvider) {
     context(KaSession)
     fun convert(loop: JKJavaForLoopStatement): JKStatement {
         val whileBody = createWhileBody(loop)

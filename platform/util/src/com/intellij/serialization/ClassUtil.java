@@ -70,7 +70,6 @@ public final class ClassUtil {
       String fullName = aClass.getName();
       if (fullName.equals("java.util.Arrays$ArrayList") ||
           fullName.equals("java.util.Collections$SingletonList") ||
-          fullName.equals("com.intellij.util.containers.FreezableArrayList") ||
           fullName.equals("java.util.Collections$SingletonSet")) {
         return false;
       }

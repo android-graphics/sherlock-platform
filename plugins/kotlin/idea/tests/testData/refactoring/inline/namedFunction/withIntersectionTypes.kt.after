@@ -1,5 +1,0 @@
-fun <T> anotherMethod(a: T, block: () -> Unit) {}
-
-fun main() {
-    anotherMethod(1) {}
-}

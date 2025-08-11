@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remote.hosting.ui
 
+import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.Either
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.platform.util.coroutines.flow.mapStateIn
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.branch.GitBrancher
@@ -18,20 +18,18 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 enum class ResolveConflictsMethod {
   REBASE,
   MERGE;
 }
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 interface ResolveConflictsLocallyViewModel<Error : Any> {
   /**
    * Whether there are conflicts that need to be resolved before merging.
@@ -46,42 +44,24 @@ interface ResolveConflictsLocallyViewModel<Error : Any> {
   val isBusy: StateFlow<Boolean>
 
   fun performResolveConflicts(chooseMethod: suspend () -> ResolveConflictsMethod?)
-
-  companion object {
-    fun <Error : Any> createIn(
-      parentCs: CoroutineScope,
-      project: Project,
-      gitRepository: GitRepository,
-      hasConflicts: Flow<Boolean?>,
-      requestOrError: Flow<Either<Error, ResolveConflictsLocallyCoordinates>>,
-      initialRequestOrErrorState: Either<Error, ResolveConflictsLocallyCoordinates>
-    ): ResolveConflictsLocallyViewModel<Error> =
-      ResolveConflictsLocallyViewModelImpl(parentCs, project, gitRepository, hasConflicts, requestOrError, initialRequestOrErrorState)
-  }
 }
 
-private class ResolveConflictsLocallyViewModelImpl<Error : Any>(
+@ApiStatus.Internal
+abstract class BaseResolveConflictsLocallyViewModel<Error : Any>(
   parentCs: CoroutineScope,
   private val project: Project,
   private val gitRepository: GitRepository,
-  hasConflicts: Flow<Boolean?>,
-  requestOrError: Flow<Either<Error, ResolveConflictsLocallyCoordinates>>,
-  initialRequestOrErrorState: Either<Error, ResolveConflictsLocallyCoordinates>
 ) : ResolveConflictsLocallyViewModel<Error> {
-  private val cs: CoroutineScope = parentCs.childScope("Resolve Conflicts Locally Scope")
+  protected val cs = parentCs.childScope("Resolve Conflicts Locally Scope")
   private val taskLauncher = SingleCoroutineLauncher(cs.childScope("Resolve Conflicts Locally Task"))
 
   private val requestFlow: StateFlow<ResolveConflictsLocallyCoordinates?>
-    get() = requestOrError.mapStateIn(cs) { it.asRightOrNull() }
+    get() = requestOrError.mapState { it.asRightOrNull() }
 
   private val repositories = listOf(gitRepository)
 
+  private val _isBusyFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy
-
-  override val hasConflicts: StateFlow<Boolean?> =
-    hasConflicts.stateIn(cs, SharingStarted.Lazily, false)
-  override val requestOrError: StateFlow<Either<Error, ResolveConflictsLocallyCoordinates>> =
-    requestOrError.stateIn(cs, SharingStarted.Lazily, initialRequestOrErrorState)
 
   override fun performResolveConflicts(chooseMethod: suspend () -> ResolveConflictsMethod?) {
     taskLauncher.launch {
@@ -96,7 +76,7 @@ private class ResolveConflictsLocallyViewModelImpl<Error : Any>(
 
   private suspend fun rebase() {
     prepareAndPerformUpdate { brancher, baseBranch ->
-      brancher.rebase(repositories, baseBranch)
+      brancher.rebase(repositories, baseBranch.nameForLocalOperations)
     }
   }
 

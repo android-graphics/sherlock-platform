@@ -9,11 +9,10 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
-class KotlinPluginDisposable(val coroutineScope: CoroutineScope) : Disposable {
+class KotlinPluginDisposable : Disposable {
     @Volatile
     var disposed: Boolean = false
 

@@ -89,8 +89,6 @@ abstract class LineStatusTrackerBase<R : Range>(
       isInitialized = true
       updateHighlighters()
     }
-
-    if (isValid()) listeners.multicaster.onBecomingValid()
   }
 
   @RequiresEdt
@@ -158,8 +156,6 @@ abstract class LineStatusTrackerBase<R : Range>(
 
     override fun onUnfreeze(side: Side) {
       updateHighlighters()
-
-      if (isValid()) listeners.multicaster.onBecomingValid()
     }
   }
 

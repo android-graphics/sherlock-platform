@@ -5,7 +5,10 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 
 internal class KotlinParameterUsage(
@@ -59,10 +62,6 @@ internal class KotlinImplicitThisToParameterUsage(
         element: KtElement,
         allUsages: Array<out UsageInfo>
     ): KtElement {
-        val parent = element.parent
-        if (parent is KtCallExpression) {
-            return processUsage(changeInfo, parent, allUsages)
-        }
         val newQualifiedCall = KtPsiFactory(element.project).createExpression("${getNewReceiverText()}.${element.text}") as KtQualifiedExpression
         return element.replace(newQualifiedCall) as KtElement
     }
@@ -70,15 +69,19 @@ internal class KotlinImplicitThisToParameterUsage(
 
 internal class KotlinImplicitThisUsage(
     callElement: KtElement,
-    private val newReceiver: String
+    private val targetDescriptor: Name
 ) : UsageInfo(callElement), KotlinBaseChangeSignatureUsage {
+    private fun getNewReceiverText() = when {
+        targetDescriptor.isSpecial -> "this"
+        else -> "this@${targetDescriptor.asString()}"
+    }
 
     override fun processUsage(
         changeInfo: KotlinChangeInfoBase,
         element: KtElement,
         allUsages: Array<out UsageInfo>
     ): KtElement {
-        val newQualifiedCall = KtPsiFactory(element.project).createExpression("$newReceiver.${element.text}"
+        val newQualifiedCall = KtPsiFactory(element.project).createExpression("${getNewReceiverText()}.${element.text}"
         ) as KtQualifiedExpression
         return element.replace(newQualifiedCall).parent as KtElement
     }

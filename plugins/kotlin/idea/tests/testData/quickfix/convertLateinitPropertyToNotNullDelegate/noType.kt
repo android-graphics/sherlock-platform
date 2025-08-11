@@ -1,5 +1,5 @@
 // "Convert to notNull delegate" "false"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 // ACTION: Convert to nullable var
 // ACTION: Make internal
 // ACTION: Make private

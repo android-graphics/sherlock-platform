@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -83,7 +83,8 @@ public final class GrTraitUtil {
     });
   }
 
-  public static @NotNull String getTraitFieldPrefix(@NotNull PsiClass aClass) {
+  @NotNull
+  public static String getTraitFieldPrefix(@NotNull PsiClass aClass) {
     String qname = aClass.getQualifiedName();
     LOG.assertTrue(qname != null, aClass.getClass());
 
@@ -112,7 +113,8 @@ public final class GrTraitUtil {
       .toArray(GrMethod[]::new);
   }
 
-  public static @NotNull Collection<PsiMethod> getCompiledTraitConcreteMethods(final @NotNull ClsClassImpl trait) {
+  @NotNull
+  public static Collection<PsiMethod> getCompiledTraitConcreteMethods(@NotNull final ClsClassImpl trait) {
     return CachedValuesManager.getCachedValue(trait, () -> {
       final Collection<PsiMethod> result = new ArrayList<>();
       doCollectCompiledTraitMethods(trait, result);
@@ -165,7 +167,8 @@ public final class GrTraitUtil {
     return result;
   }
 
-  private static @NotNull PsiTypeMapper createCorrector(final PsiMethod compiledMethod, final PsiClass trait) {
+  @NotNull
+  private static PsiTypeMapper createCorrector(final PsiMethod compiledMethod, final PsiClass trait) {
     final PsiTypeParameter[] traitTypeParameters = trait.getTypeParameters();
     if (traitTypeParameters.length == 0) return ID_MAPPER;
 
@@ -202,7 +205,8 @@ public final class GrTraitUtil {
     };
   }
 
-  public static @NotNull Collection<GrField> getCompiledTraitFields(final @NotNull ClsClassImpl trait) {
+  @NotNull
+  public static Collection<GrField> getCompiledTraitFields(@NotNull final ClsClassImpl trait) {
     return CachedValuesManager.getCachedValue(trait, () -> {
       final Collection<GrField> result = new ArrayList<>();
       doCollectCompiledTraitFields(trait, result);

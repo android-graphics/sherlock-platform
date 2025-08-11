@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm.annotation;
 
 import com.intellij.lang.jvm.JvmClass;
@@ -15,7 +15,9 @@ public interface JvmAnnotationClassValue extends JvmAnnotationAttributeValue {
    *
    * @return referenced class fully qualified name
    */
-  default @NonNls @Nullable String getQualifiedName() {
+  @NonNls
+  @Nullable
+  default String getQualifiedName() {
     JvmClass clazz = getClazz();
     return clazz == null ? null : clazz.getQualifiedName();
   }

@@ -37,7 +37,8 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
 
   protected abstract String getQualifiedName(T aPackage);
 
-  protected abstract @Nullable T getPackage(PsiDirectory psiDirectory);
+  @Nullable
+  protected abstract T getPackage(PsiDirectory psiDirectory);
 
   protected abstract BaseRefactoringProcessor createProcessor(final String newQName,
                                                               final Project project,
@@ -181,7 +182,8 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
     }
   }
 
-  private static @NotNull @Nls String presentableUrl(@Nullable PsiDirectory currentVDirectory, PsiDirectory directory) {
+  @NotNull
+  private static @Nls String presentableUrl(@Nullable PsiDirectory currentVDirectory, PsiDirectory directory) {
     @Nls StringBuilder result = new StringBuilder();
     Module module = ProjectFileIndex.getInstance(directory.getProject()).getModuleForFile(directory.getVirtualFile());
     if (module != null) {

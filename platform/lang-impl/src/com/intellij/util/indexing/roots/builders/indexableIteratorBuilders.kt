@@ -9,7 +9,6 @@ import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -53,14 +52,11 @@ internal object IndexableIteratorBuilders {
                        roots: IndexingUrlSourceRootHolder): Collection<IndexableIteratorBuilder> =
     listOf(LibraryIdIteratorBuilder(libraryId, null, null, roots, dependencyChecked))
 
+  fun forSdk(sdkName: String, sdkType: String): Collection<IndexableIteratorBuilder> = listOf(SdkIteratorBuilder(sdkName, sdkType))
 
-  fun forSdkEntity(sdkId: SdkId,
-                   roots: IndexingUrlRootHolder): Collection<IndexableIteratorBuilder> = listOf(SdkIteratorBuilder(sdkId.name, sdkId.type, null, roots))
+  fun forSdk(sdk: Sdk, file: VirtualFile): Collection<IndexableIteratorBuilder> = forSdk(sdk, listOf(file))
 
-  @JvmOverloads
-  fun forSdk(sdkName: String, sdkType: String, file: Collection<VirtualFile>? = null): IndexableIteratorBuilder = SdkIteratorBuilder(sdkName, sdkType, file)
-
-  fun forSdk(sdkId: SdkId, file: Collection<VirtualFile>? = null): IndexableIteratorBuilder = forSdk(sdkId.name, sdkId.type, file)
+  fun forSdk(sdk: Sdk, files: Collection<VirtualFile>): Collection<IndexableIteratorBuilder> = listOf(SdkIteratorBuilder(sdk, files))
 
   fun forInheritedSdk(): Collection<IndexableIteratorBuilder> = listOf(InheritedSdkIteratorBuilder)
 
@@ -122,8 +118,7 @@ internal data class LibraryIdIteratorBuilder(val libraryId: LibraryId,
 
 internal data class SdkIteratorBuilder(val sdkName: String,
                                        val sdkType: String,
-                                       val roots: Collection<VirtualFile>? = null,
-                                       val rootsUrls: IndexingUrlRootHolder? = null) : IndexableIteratorBuilder {
+                                       val roots: Collection<VirtualFile>? = null) : IndexableIteratorBuilder {
   constructor(sdk: Sdk, roots: Collection<VirtualFile>) : this(sdk.name, sdk.sdkType.name, roots)
 }
 

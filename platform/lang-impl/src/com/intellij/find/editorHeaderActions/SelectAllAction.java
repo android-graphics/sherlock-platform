@@ -6,13 +6,11 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiStatus.Internal
 public final class SelectAllAction extends OccurrenceAction {
 
   public SelectAllAction() {
@@ -45,8 +43,9 @@ public final class SelectAllAction extends OccurrenceAction {
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull ShortcutSet getShortcut() {
+  public ShortcutSet getShortcut() {
     List<Shortcut> shortcuts = new ArrayList<>();
     AnAction selectAllOccurrences = ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL_OCCURRENCES);
     if (selectAllOccurrences != null) {

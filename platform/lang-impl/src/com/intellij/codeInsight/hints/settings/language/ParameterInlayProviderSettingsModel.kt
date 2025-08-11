@@ -14,9 +14,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 class ParameterInlayProviderSettingsModel(
   val provider: InlayParameterHintsProvider,
   language: Language
@@ -66,9 +64,7 @@ class ParameterInlayProviderSettingsModel(
   }
 
   override fun collectData(editor: Editor, file: PsiFile): Runnable {
-    fun createPass() = ParameterHintsPass(file, editor, HintInfoFilter { true }, true)
-
-    val pass = createPass()
+    val pass = ParameterHintsPass(file, editor, HintInfoFilter { true }, true)
     ProgressManager.getInstance().runProcess({
                                                val backup = ParameterInlayProviderSettingsModel(provider, language)
                                                val enabled = ParameterNameHintsSettings.getInstance().isEnabledForLanguage(getLanguageForSettingKey(language))
@@ -86,10 +82,8 @@ class ParameterInlayProviderSettingsModel(
                                                  setShowParameterHintsForLanguage(enabled, language)
                                                }
                                              }, DaemonProgressIndicator())
-
-    val passToCleanupHints = createPass()
     return Runnable {
-      passToCleanupHints.doApplyInformationToEditor()
+      ParameterHintsPass(file, editor, HintInfoFilter { true }, true).doApplyInformationToEditor() // clean up hints
       pass.doApplyInformationToEditor()
     }
   }

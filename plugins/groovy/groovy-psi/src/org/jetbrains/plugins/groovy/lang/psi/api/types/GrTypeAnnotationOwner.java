@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.api.types;
 
 import com.intellij.psi.PsiAnnotation;
@@ -17,8 +17,9 @@ public interface GrTypeAnnotationOwner extends PsiAnnotationOwner {
     return getAnnotations();
   }
 
+  @Nullable
   @Override
-  default @Nullable PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
+  default PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
     for (GrAnnotation annotation : getAnnotations()) {
       if (annotation.hasQualifiedName(qualifiedName)) {
         return annotation;
@@ -27,8 +28,9 @@ public interface GrTypeAnnotationOwner extends PsiAnnotationOwner {
     return null;
   }
 
+  @NotNull
   @Override
-  default @NotNull PsiAnnotation addAnnotation(@NotNull String qualifiedName) {
+  default PsiAnnotation addAnnotation(@NotNull String qualifiedName) {
     throw new IncorrectOperationException();
   }
 }

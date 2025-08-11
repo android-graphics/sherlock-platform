@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.ide.BrowserUtil;
@@ -49,7 +49,7 @@ public abstract class AbstractExternalFilter {
   private static final String BR = "<BR>";
   private static final String DT = "<DT>";
 
-  protected abstract static class RefConvertor {
+  protected static abstract class RefConvertor {
     final Pattern mySelector;
 
     public RefConvertor(@NotNull Pattern selector) {
@@ -98,7 +98,8 @@ public abstract class AbstractExternalFilter {
 
   protected abstract RefConvertor[] getRefConverters();
 
-  public @Nullable String getExternalDocInfo(String url) throws Exception {
+  @Nullable
+  public String getExternalDocInfo(String url) throws Exception {
     Application app = ApplicationManager.getApplication();
     // May block indefinitely: shouldn't be called from EDT or under write lock
     app.assertIsNonDispatchThread();
@@ -124,7 +125,8 @@ public abstract class AbstractExternalFilter {
     return correctDocText(url, fetcher.data);
   }
 
-  protected @NotNull String correctDocText(@NotNull String url, @NotNull CharSequence data) {
+  @NotNull
+  protected String correctDocText(@NotNull String url, @NotNull CharSequence data) {
     CharSequence docText = correctRefs(ourAnchorSuffix.matcher(url).replaceAll(""), data);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Filtered JavaDoc: " + docText + "\n");
@@ -132,7 +134,8 @@ public abstract class AbstractExternalFilter {
     return PlatformDocumentationUtil.fixupText(docText);
   }
 
-  public @Nullable String getExternalDocInfoForElement(String docURL, PsiElement element) throws Exception {
+  @Nullable
+  public String getExternalDocInfoForElement(String docURL, PsiElement element) throws Exception {
     return getExternalDocInfo(docURL);
   }
 
@@ -265,7 +268,8 @@ public abstract class AbstractExternalFilter {
            StringUtil.containsIgnoreCase(read, "<li class=\"blockList\">");
   }
 
-  protected @NotNull ParseSettings getParseSettings(@NotNull String url) {
+  @NotNull
+  protected ParseSettings getParseSettings(@NotNull String url) {
     Pattern startSection = CLASS_DATA_START;
     Pattern endSection = CLASS_DATA_END;
     boolean anchorPresent = false;
@@ -292,7 +296,8 @@ public abstract class AbstractExternalFilter {
     return false;
   }
 
-  static @Nullable String parseContentEncoding(@NotNull String htmlLine) {
+  @Nullable
+  static String parseContentEncoding(@NotNull String htmlLine) {
     if (htmlLine.contains("charset")) {
       Matcher matcher = CHARSET_META.matcher(htmlLine);
       if (matcher.find()) {

@@ -4,10 +4,8 @@ package com.intellij.history.core;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.util.Consumer;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
 public interface ChangeListStorage {
   void close();
 

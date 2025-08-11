@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -11,10 +11,13 @@ import org.jetbrains.annotations.Nullable;
 
 // cannot be final because of ModuleModelDataServiceTest - mock is created for class
 public class ProjectData extends AbstractNamedData implements ExternalConfigPathAware, Identifiable {
-  private final @NotNull String linkedExternalProjectPath;
+  @NotNull
+  private final String linkedExternalProjectPath;
 
-  private @NotNull String ideProjectFileDirectoryPath;
-  private @Nullable String description;
+  @NotNull
+  private String ideProjectFileDirectoryPath;
+  @Nullable
+  private String description;
 
   private String group;
   private String version;
@@ -31,7 +34,8 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
     this.ideProjectFileDirectoryPath = ExternalSystemApiUtil.toCanonicalPath(ideProjectFileDirectoryPath);
   }
 
-  public @NotNull String getIdeProjectFileDirectoryPath() {
+  @NotNull
+  public String getIdeProjectFileDirectoryPath() {
     return ideProjectFileDirectoryPath;
   }
 
@@ -40,11 +44,13 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
   }
 
   @Override
-  public @NotNull String getLinkedExternalProjectPath() {
+  @NotNull
+  public String getLinkedExternalProjectPath() {
     return linkedExternalProjectPath;
   }
 
-  public @Nullable String getIdeGrouping() {
+  @Nullable
+  public String getIdeGrouping() {
     return ideGrouping;
   }
 
@@ -77,8 +83,9 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
     return String.format("%s project '%s'", StringUtil.toLowerCase(getOwner().toString()), getExternalName());
   }
 
+  @NotNull
   @Override
-  public @NotNull String getId() {
+  public String getId() {
     return "";
   }
 
@@ -98,7 +105,8 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
     this.version = version;
   }
 
-  public @Nullable @NlsSafe String getDescription() {
+  @Nullable
+  public @NlsSafe String getDescription() {
     return description;
   }
 

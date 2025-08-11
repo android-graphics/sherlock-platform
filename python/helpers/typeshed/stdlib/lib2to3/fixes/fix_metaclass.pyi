@@ -1,5 +1,6 @@
 from collections.abc import Generator
-from typing import ClassVar, Literal
+from typing import ClassVar
+from typing_extensions import Literal
 
 from .. import fixer_base
 from ..pytree import Base

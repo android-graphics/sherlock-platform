@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class PanelWithActionsAndCloseButton extends JPanel implements UiCompatibleDataProvider, Disposable {
+public abstract class PanelWithActionsAndCloseButton extends JPanel implements DataProvider, Disposable {
   protected final ContentManager myContentManager;
   private final @NonNls String myHelpId;
   private final boolean myVerticalToolbar;
@@ -77,8 +77,9 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements U
   }
 
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(PlatformCoreDataKeys.HELP_ID, myHelpId);
+  @SuppressWarnings("HardCodedStringLiteral")
+  public Object getData(@NotNull String dataId) {
+    return PlatformCoreDataKeys.HELP_ID.is(dataId) ? myHelpId : null;
   }
 
   protected abstract JComponent createCenterPanel();

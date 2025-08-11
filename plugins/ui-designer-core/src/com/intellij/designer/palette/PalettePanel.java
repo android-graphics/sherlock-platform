@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.designer.palette;
 
 import com.intellij.designer.PaletteToolWindowContent;
@@ -6,6 +20,7 @@ import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.ScrollPaneFactory;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +42,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class PalettePanel extends JPanel implements UiDataProvider, PaletteToolWindowContent {
+public class PalettePanel extends JPanel implements DataProvider, PaletteToolWindowContent {
   private final JPanel myPaletteContainer = new PaletteContainer();
   private List<PaletteGroupComponent> myGroupComponents = Collections.emptyList();
   private List<PaletteItemsComponent> myItemsComponents = Collections.emptyList();
@@ -88,7 +103,8 @@ public class PalettePanel extends JPanel implements UiDataProvider, PaletteToolW
     }
   }
 
-  public @Nullable PaletteItem getActiveItem() {
+  @Nullable
+  public PaletteItem getActiveItem() {
     for (PaletteGroupComponent groupComponent : myGroupComponents) {
       if (groupComponent.isSelected()) {
         PaletteItem paletteItem = (PaletteItem)groupComponent.getItemsComponent().getSelectedValue();
@@ -196,7 +212,10 @@ public class PalettePanel extends JPanel implements UiDataProvider, PaletteToolW
   }
 
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(PlatformCoreDataKeys.FILE_EDITOR, myDesigner == null ? null : myDesigner.getEditor());
+  public Object getData(@NotNull @NonNls String dataId) {
+    if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId) && myDesigner != null) {
+      return myDesigner.getEditor();
+    }
+    return null;
   }
 }

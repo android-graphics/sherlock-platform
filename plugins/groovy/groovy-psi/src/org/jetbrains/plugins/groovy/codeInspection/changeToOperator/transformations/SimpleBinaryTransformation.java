@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
 import com.intellij.psi.tree.IElementType;
@@ -19,7 +19,8 @@ public class SimpleBinaryTransformation extends BinaryTransformation {
     myOperator = operatorType;
   }
 
-  protected @NotNull String getOperatorText() {
+  @NotNull
+  protected String getOperatorText() {
     return myOperator.toString();
   }
 

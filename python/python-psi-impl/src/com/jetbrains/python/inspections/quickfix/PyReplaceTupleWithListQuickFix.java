@@ -26,8 +26,9 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 public class PyReplaceTupleWithListQuickFix extends PsiUpdateModCommandQuickFix {
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.make.list");
   }
 

@@ -11,7 +11,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogTextFilter;
 import com.intellij.vcs.log.VcsRef;
@@ -27,7 +26,6 @@ import com.intellij.vcs.log.ui.table.VcsLogCellRenderer;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.Commit;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
-import com.intellij.vcs.log.ui.table.links.VcsLinksRenderer;
 import com.intellij.vcs.log.visible.filters.VcsLogTextFilterWithMatches;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -160,7 +158,6 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     private final @NotNull VcsLogGraphTable myGraphTable;
     private final @NotNull GraphCellPainter myPainter;
     private final @NotNull IssueLinkRenderer myIssueLinkRenderer;
-    private final @NotNull VcsLinksRenderer myVcsLinksRenderer;
     private final @NotNull VcsLogLabelPainter myReferencePainter;
 
     private @NotNull Collection<? extends PrintElement> myPrintElements = Collections.emptyList();
@@ -177,7 +174,6 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       myGraphTable = table;
 
       myReferencePainter = new VcsLogLabelPainter(data, table, iconCache);
-      myVcsLinksRenderer = new VcsLinksRenderer(data.getProject(), this);
       myIssueLinkRenderer = new IssueLinkRenderer(data.getProject(), this);
       setCellState(new VcsLogTableCellState());
 
@@ -233,7 +229,6 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       }
 
       append(""); // appendTextPadding wont work without this
-      boolean renderLinks = !cell.isLoading();
       if (myReferencePainter.isLeftAligned()) {
         myReferencePainter.customizePainter(refs, bookmarks, getBackground(), labelForeground, isSelected,
                                             getAvailableWidth(column, myGraphWidth));
@@ -241,32 +236,18 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
         int referencesWidth = myReferencePainter.getSize().width;
         if (referencesWidth > 0) referencesWidth += LabelPainter.RIGHT_PADDING.get();
         appendTextPadding(myGraphWidth + referencesWidth);
-        appendText(cell, style, isSelected, renderLinks);
+        appendText(cell, style, isSelected);
       }
       else {
         appendTextPadding(myGraphWidth);
-        appendText(cell, style, isSelected, renderLinks);
+        appendText(cell, style, isSelected);
         myReferencePainter.customizePainter(refs, bookmarks, getBackground(), labelForeground, isSelected,
                                             getAvailableWidth(column, myGraphWidth));
       }
     }
 
-    private void appendText(@NotNull GraphCommitCell cell, @NotNull SimpleTextAttributes style, boolean isSelected, boolean renderLinks) {
-      String cellText = StringUtil.replace(cell.getText(), "\t", " ").trim();
-      CommitId commitId = cell.getCommitId();
-
-      if (renderLinks) {
-        if (VcsLinksRenderer.isEnabled()) {
-          myVcsLinksRenderer.appendTextWithLinks(cellText, style, commitId);
-        }
-        else {
-          myIssueLinkRenderer.appendTextWithLinks(cellText, style);
-        }
-      }
-      else {
-        append(cellText, style);
-      }
-
+    private void appendText(@NotNull GraphCommitCell cell, @NotNull SimpleTextAttributes style, boolean isSelected) {
+      myIssueLinkRenderer.appendTextWithLinks(StringUtil.replace(cell.getText(), "\t", " ").trim(), style);
       SpeedSearchUtil.applySpeedSearchHighlighting(myGraphTable, this, false, isSelected);
       if (Registry.is("vcs.log.filter.text.highlight.matches")) {
         VcsLogTextFilter textFilter = myGraphTable.getModel().getVisiblePack().getFilters().get(VcsLogFilterCollection.TEXT_FILTER);

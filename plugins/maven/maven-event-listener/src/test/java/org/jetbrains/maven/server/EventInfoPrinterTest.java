@@ -30,7 +30,6 @@ class EventInfoPrinterTest {
   private static void assertPrintResult(String expected,
                                         Object type,
                                         CharSequence... objects) {
-    assertEquals(expected, new EventInfoPrinter(s -> {}).printToBuffer(type, objects).toString());
-
+    assertEquals(expected, EventInfoPrinter.printToBuffer(type, objects).toString());
   }
 }

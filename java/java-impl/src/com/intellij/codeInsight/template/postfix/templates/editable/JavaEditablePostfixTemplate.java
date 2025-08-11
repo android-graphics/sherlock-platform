@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-@SuppressWarnings("PostfixTemplateDescriptionNotFound")
 public class JavaEditablePostfixTemplate
   extends EditablePostfixTemplateWithMultipleExpressions<JavaPostfixTemplateExpressionCondition> {
   private static final Condition<PsiElement> PSI_ERROR_FILTER = element -> !PsiTreeUtil.hasErrorElements(element);

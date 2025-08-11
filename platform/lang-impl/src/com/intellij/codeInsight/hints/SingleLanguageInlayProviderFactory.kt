@@ -2,10 +2,8 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.lang.Language
-import org.jetbrains.annotations.ApiStatus
 
 
-@ApiStatus.Internal
 class SingleLanguageInlayProviderFactory : InlayHintsProviderFactory {
   override fun getProvidersInfo(): List<ProviderInfo<out Any>> = InlayHintsProviderExtension.findProviders()
 

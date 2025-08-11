@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.extractMethodObject;
 
@@ -58,7 +58,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
   protected final MyExtractMethodProcessor myExtractProcessor;
   private boolean myCreateInnerClass = true;
-  private @NotNull String myInnerClassName;
+  @NotNull
+  private String myInnerClassName;
 
   private boolean myMultipleExitPoints;
   private PsiField[] myOutputFields;
@@ -86,7 +87,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(final UsageInfo @NotNull [] usages) {
+  @NotNull
+  protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo @NotNull [] usages) {
     return new ExtractMethodObjectViewDescriptor(getMethod());
   }
 
@@ -123,7 +125,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         if (usedMethod.hasModifierProperty(PsiModifier.PRIVATE) &&
             (!usedMethod.hasModifierProperty(PsiModifier.STATIC) || myExtractProcessor.isStatic())) {
           PsiMethod toMove = usedMethod;
-          for (PsiReference reference : ReferencesSearch.search(usedMethod).asIterable()) {
+          for (PsiReference reference : ReferencesSearch.search(usedMethod)) {
             if (!PsiTreeUtil.isAncestor(getMethod(), reference.getElement(), false)) {
               toMove = null;
               break;
@@ -361,7 +363,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
     for (PsiLocalVariable var : vars) {
       final String fieldName = var2FieldNames.get(var.getName());
-      for (PsiReference reference : ReferencesSearch.search(var, var.getUseScope()).asIterable()) {
+      for (PsiReference reference : ReferencesSearch.search(var, var.getUseScope())) {
         reference.handleElementRename(fieldName);
       }
     }
@@ -433,7 +435,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private @NotNull String getPureName(@NotNull PsiVariable var) {
+  @NotNull
+  private String getPureName(@NotNull PsiVariable var) {
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myProject);
     return styleManager.variableNameToPropertyName(var.getName(), styleManager.getVariableKind(var));
   }
@@ -474,7 +477,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private PsiMethodCallExpression replaceMethodCallExpression(final String inferredTypeArguments,
                                                               final PsiMethodCallExpression methodCallExpression)
       throws IncorrectOperationException {
-    final @NonNls String staticqualifier =
+    @NonNls final String staticqualifier =
       getMethod().hasModifierProperty(PsiModifier.STATIC) && notHasGeneratedFields() ? getInnerClassName() : null;
     @NonNls String newReplacement;
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
@@ -490,7 +493,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return (PsiMethodCallExpression)methodCallExpression.replace(myElementFactory.createExpressionFromText(newReplacement + "invoke()", null));
   }
 
-  private @NotNull String inferTypeArguments(final PsiMethodCallExpression methodCallExpression) {
+  @NotNull
+  private String inferTypeArguments(final PsiMethodCallExpression methodCallExpression) {
     final PsiReferenceParameterList list = methodCallExpression.getMethodExpression().getParameterList();
 
     if (list != null && list.getTypeArguments().length > 0) {
@@ -514,7 +518,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected @NotNull String getCommandName() {
+  @NotNull
+  protected String getCommandName() {
     return JavaRefactoringBundle.message("extract.method.object");
   }
 
@@ -610,7 +615,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       parameterList.add(parm);
 
       final PsiField field = createField(parm, constructor, parameterModifierList.hasModifierProperty(PsiModifier.FINAL));
-      for (PsiReference reference : ReferencesSearch.search(parameter, parameter.getUseScope()).asIterable()) {
+      for (PsiReference reference : ReferencesSearch.search(parameter, parameter.getUseScope())) {
         reference.handleElementRename(field.getName());
       }
     }
@@ -639,7 +644,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
       LOG.assertTrue(methodBody != null);
 
-      final @NonNls String stmtText;
+      @NonNls final  String stmtText;
       if (Comparing.strEqual(parameterName, fieldName)) {
         stmtText = "this." + fieldName + " = " + parameterName + ";";
       } else {
@@ -677,7 +682,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return myExtractProcessor.getExtractedMethod();
   }
 
-  public @NotNull String getInnerClassName() {
+  @NotNull
+  public String getInnerClassName() {
     return myInnerClassName;
   }
 

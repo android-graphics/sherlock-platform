@@ -22,7 +22,6 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.EDT;
 import kotlin.Unit;
 import kotlin.coroutines.CoroutineContext;
-import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.*;
@@ -31,8 +30,6 @@ import java.util.concurrent.*;
 import java.util.function.Function;
 
 import static com.intellij.openapi.application.ModalityKt.asContextElement;
-import static com.intellij.openapi.progress.CoroutinesKt.closeLockPermitContext;
-import static com.intellij.openapi.progress.CoroutinesKt.getLockPermitContext;
 
 /**
  * <p>
@@ -303,8 +300,7 @@ public final class ProgressRunner<R> {
   private @NotNull CompletableFuture<R> execFromEDT(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressFuture,
                                                     @NotNull Semaphore modalityEntered,
                                                     @NotNull Function<ProgressIndicator, R> onThreadCallable) {
-    final CoroutineContext sharedPermit = isModal && isSync ? getLockPermitContext(true) : EmptyCoroutineContext.INSTANCE;
-    CompletableFuture<R> taskFuture = launchTask(onThreadCallable, progressFuture, sharedPermit);
+    CompletableFuture<R> taskFuture = launchTask(onThreadCallable, progressFuture);
     CompletableFuture<R> resultFuture;
 
     if (isModal) {
@@ -344,8 +340,6 @@ public final class ProgressRunner<R> {
       if (!resultFuture.isDone()) {
         throw new IllegalStateException("Result future must be done at this point");
       }
-      // Shared permit is not needed anymore
-      closeLockPermitContext(sharedPermit);
     }
     return resultFuture;
   }
@@ -371,8 +365,7 @@ public final class ProgressRunner<R> {
       });
     }
 
-    final CoroutineContext sharedPermit = isModal && isSync ? getLockPermitContext(true) : EmptyCoroutineContext.INSTANCE;
-    CompletableFuture<R> resultFuture = launchTask(onThreadCallable, progressFuture, sharedPermit);
+    CompletableFuture<R> resultFuture = launchTask(onThreadCallable, progressFuture);
 
     if (isModal) {
       CompletableFuture<Void> modalityExitFuture = resultFuture
@@ -393,7 +386,6 @@ public final class ProgressRunner<R> {
 
     if (isSync) {
       waitForFutureUnlockingThread(resultFuture);
-      closeLockPermitContext(sharedPermit);
     }
     return resultFuture;
   }
@@ -446,11 +438,10 @@ public final class ProgressRunner<R> {
 
   private @NotNull CompletableFuture<R> launchTask(
     @NotNull Function<@NotNull ProgressIndicator, R> task,
-    @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture,
-    @NotNull CoroutineContext sharedPermit
+    @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture
   ) {
     CompletableFuture<R> resultFuture = new CompletableFuture<>();
-    ChildContext childContext = Propagation.createChildContext("ProgressRunner: " + task);
+    ChildContext childContext = Propagation.createChildContext();
     CoroutineContext context = childContext.getContext();
     Job job = childContext.getJob();
     if (job != null) {
@@ -462,19 +453,16 @@ public final class ProgressRunner<R> {
         return Unit.INSTANCE;
       });
     }
-    // Capture lock here, where we asked for execution, not in Future context
     progressIndicatorFuture.whenComplete((progressIndicator, throwable) -> {
       if (throwable != null) {
         resultFuture.completeExceptionally(throwable);
         return;
       }
       Runnable runnable = new ProgressRunnable<>(resultFuture, task, progressIndicator);
-      // If it sync modal execution on other thread — use current lock state
       ContextAwareRunnable contextRunnable = () -> {
-        childContext.runInChildContext(() -> {
-          CoroutineContext effectiveContext =
-            ThreadContext.currentThreadContext().plus(asContextElement(progressIndicator.getModalityState()).plus(sharedPermit));
-          try (AccessToken ignored = ThreadContext.installThreadContext(effectiveContext, true)) {
+        CoroutineContext effectiveContext = context.plus(asContextElement(progressIndicator.getModalityState()));
+        childContext.runAsCoroutine(() -> {
+          try (AccessToken ignored = ThreadContext.installThreadContext(effectiveContext, false)) {
             runnable.run();
           }
         });

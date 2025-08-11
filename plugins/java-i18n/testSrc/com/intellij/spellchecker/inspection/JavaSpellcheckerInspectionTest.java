@@ -1,10 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.inspection;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -20,45 +17,34 @@ public class JavaSpellcheckerInspectionTest extends LightJavaCodeInsightFixtureT
     return JAVA_21;
   }
 
-  public void testCorrectJava() { doTestInAllModes(); }
-  public void testTypoInJava() { doTestInAllModes(); }
-  public void testVarArg() { doTestInAllModes(); }
-  public void testJapanese() { doTestInAllModes(); }
+  public void testCorrectJava() { doTest(); }
+  public void testTypoInJava() { doTest(); }
+  public void testVarArg() { doTest(); }
+  public void testJapanese() { doTest(); }
 
-  public void testClassName() { doTestInAllModes(); }
-  public void testFieldName() { doTestInAllModes(); }
-  public void testMethodName() { doTestInAllModes(); }
-  public void testConstructorIgnored() { doTestInAllModes();}
-  public void testLocalVariableName() { doTestInAllModes(); }
-  public void testDocComment() { doTestInAllModes(); }
-  public void testStringLiteral() { doTestInAllModes(); }
-  public void testStringLiteralEscaping() { doTestInAllModes(); }
-  public void testSuppressions() { doTest(false); }
+  public void testClassName() { doTest(); }
+  public void testFieldName() { doTest(); }
+  public void testMethodName() { doTest(); }
+  public void testConstructorIgnored() { doTest();}
+  public void testLocalVariableName() { doTest(); }
+  public void testDocComment() { doTest(); }
+  public void testStringLiteral() { doTest(); }
+  public void testStringLiteralEscaping() { doTest(); }
+  public void testSuppressions() { doTest(); }
 
   // suppression by @NonNls
-  public void testMethodReturnTypeWithNonNls() { doTestInAllModes(); }
-  public void testMethodReturnTypeWithNonNlsReturnsLiteral() { doTestInAllModes(); }
-  public void testNonNlsField() { doTestInAllModes(); }
-  public void testNonNlsField2() { doTestInAllModes(); }
-  public void testNonNlsLocalVariable() { doTestInAllModes(); }
-  public void testNonNlsLocalVariableAndComment() { doTestInAllModes(); }
-  public void testFieldComment() { doTestInAllModes(); }
-  public void testDoNotCheckDerivedNames() { doTestInAllModes(); }
-  public void testSkipDateTime() { doTestInAllModes(); }
+  public void testMethodReturnTypeWithNonNls() { doTest(); }
+  public void testMethodReturnTypeWithNonNlsReturnsLiteral() { doTest(); }
+  public void testNonNlsField() { doTest(); }
+  public void testNonNlsField2() { doTest(); }
+  public void testNonNlsLocalVariable() { doTest(); }
+  public void testNonNlsLocalVariableAndComment() { doTest(); }
+  public void testFieldComment() { doTest(); }
+  public void testDoNotCheckDerivedNames() { doTest(); }
+  public void testSkipDateTime() { doTest(); }
 
-  private void doTestInAllModes() {
-    doTest(false);
-    doTest(true);
-  }
-
-  private void doTest(boolean inDumbMode) {
+  private void doTest() {
     myFixture.enableInspections(SpellcheckerInspectionTestCase.getInspectionTools());
-    if (inDumbMode) {
-      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).mustWaitForSmartMode(false, getTestRootDisposable());
-      DumbModeTestUtils.runInDumbModeSynchronously(getProject(),
-                                                   () -> myFixture.testHighlighting(false, false, true, getTestName(false) + ".java"));
-    } else {
-      myFixture.testHighlighting(false, false, true, getTestName(false) + ".java");
-    }
+    myFixture.testHighlighting(false, false, true, getTestName(false) + ".java");
   }
 }

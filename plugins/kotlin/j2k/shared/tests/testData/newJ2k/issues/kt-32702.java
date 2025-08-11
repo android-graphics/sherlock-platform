@@ -1,3 +1,5 @@
+// IGNORE_K2
+
 import java.util.*;
 
 class Test {

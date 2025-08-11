@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.ginq.ast
 
 import com.intellij.openapi.util.Key
@@ -9,7 +9,6 @@ import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager.getCachedValue
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.parents
-import com.intellij.util.CachedValueBase
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -27,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 import org.jetbrains.plugins.groovy.lang.resolve.markAsReferenceResolveTarget
 
-internal fun getTopParsedGinqTree(root: GinqRootPsiElement): GinqExpression? {
+fun getTopParsedGinqTree(root: GinqRootPsiElement): GinqExpression? {
   return getTopParsedGinqInfo(root).second?.asSafely<GinqExpression>()
 }
 
@@ -35,7 +34,7 @@ fun getTopShutdownGinq(root: GinqRootPsiElement): GinqShutdown? {
   return getTopParsedGinqInfo(root).second?.asSafely<GinqShutdown>()
 }
 
-internal fun PsiElement.getClosestGinqTree(root: GinqRootPsiElement): GinqExpression? {
+fun PsiElement.getClosestGinqTree(root: GinqRootPsiElement): GinqExpression? {
   val top = getTopParsedGinqTree(root) ?: return null
   return ginqParents(root, top).firstOrNull()
 }
@@ -342,14 +341,9 @@ private fun isApproximatelyGinq(e: PsiElement): Boolean {
 
 private val INJECTED_GINQ_KEY: Key<CachedValue<Pair<List<ParsingError>, GenericGinqExpression?>>> = Key.create("root ginq expression")
 
-internal fun PsiElement.isGinqRoot() : Boolean = cachedInjectedGinq() != null
+internal fun PsiElement.isGinqRoot() : Boolean = getUserData(INJECTED_GINQ_KEY) != null
 
-@Suppress("UNCHECKED_CAST")
-private fun PsiElement.cachedInjectedGinq(): CachedValueBase<Pair<List<ParsingError>, GenericGinqExpression?>>? {
-  return getUserData(INJECTED_GINQ_KEY) as CachedValueBase<Pair<List<ParsingError>, GenericGinqExpression?>>?
-}
-
-internal fun PsiElement.getStoredGinq() : GinqExpression? = this.cachedInjectedGinq()?.upToDateOrNull?.get()?.second?.asSafely<GinqExpression>()
+internal fun PsiElement.getStoredGinq() : GinqExpression? = this.getUserData(INJECTED_GINQ_KEY)?.upToDateOrNull?.get()?.second?.asSafely<GinqExpression>()
 
 private val GINQ_UNTRANSFORMED_ELEMENT: Key<Unit> = Key.create("Untransformed psi element within Groovy macro")
 
@@ -357,7 +351,7 @@ internal fun PsiElement.markAsGinqUntransformed() = putUserData(GINQ_UNTRANSFORM
 
 internal fun PsiElement.isGinqUntransformed() = getUserData(GINQ_UNTRANSFORMED_ELEMENT) != null
 
-internal fun PsiElement.ginqParents(root: GinqRootPsiElement, topExpr: GinqExpression): Sequence<GinqExpression> = sequence {
+fun PsiElement.ginqParents(root: GinqRootPsiElement, topExpr: GinqExpression): Sequence<GinqExpression> = sequence {
   for (parent in parents(true)) {
     if (parent == root) {
       yield(topExpr)
@@ -370,7 +364,7 @@ internal fun PsiElement.ginqParents(root: GinqRootPsiElement, topExpr: GinqExpre
 
 typealias ParsingError = Pair<PsiElement, @Nls String>
 
-internal fun getOrdering(expr: GrExpression): Ordering {
+fun getOrdering(expr: GrExpression): Ordering {
   if (expr is GrBinaryExpression && expr.operationTokenType == KW_IN) {
     val rightOperand = expr.rightOperand
     val (orderKw, nullsKw) = if (rightOperand is GrReferenceExpression) {

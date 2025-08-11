@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.pushDown
 
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiComment
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.memberPushDown.PushDownProcessor
 import com.intellij.refactoring.util.DocCommentPolicy
@@ -31,7 +32,7 @@ abstract class AbstractPushDownTest : AbstractMemberPullPushTest() {
             val storage = MemberInfoStorage(sourceClass) { true }
             val memberInfos = chooseMembers(storage.getClassMemberInfos(sourceClass))
 
-            PushDownProcessor(sourceClass, memberInfos, DocCommentPolicy(DocCommentPolicy.ASIS)).run()
+            PushDownProcessor(sourceClass, memberInfos, DocCommentPolicy<PsiComment>(DocCommentPolicy.ASIS)).run()
             UIUtil.dispatchAllInvocationEvents()
         }
     }

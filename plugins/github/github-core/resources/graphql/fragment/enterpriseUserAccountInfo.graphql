@@ -1,3 +1,0 @@
-fragment enterpriseUserAccountInfo on EnterpriseUserAccount {
-  name
-}

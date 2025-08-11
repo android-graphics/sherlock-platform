@@ -29,7 +29,8 @@ import org.jetbrains.annotations.Nullable;
 public final class NonAtomicOperationOnVolatileFieldInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("non.atomic.operation.on.volatile.field.problem.descriptor");
   }
 
@@ -104,7 +105,8 @@ public final class NonAtomicOperationOnVolatileFieldInspection extends BaseInspe
       }
     }
 
-    private static @Nullable PsiReferenceExpression findNonSynchronizedVolatileFieldRef(PsiExpression expression) {
+    @Nullable
+    private static PsiReferenceExpression findNonSynchronizedVolatileFieldRef(PsiExpression expression) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
       if (!(expression instanceof PsiReferenceExpression reference)) {
         return null;

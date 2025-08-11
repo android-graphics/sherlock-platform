@@ -1,8 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.CacheSwitcher.switchIndexAndVfs
-import com.intellij.idea.IJIgnore
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.impl.cache.impl.id.IdIndex
@@ -36,7 +35,7 @@ class IndexingFlagTest {
   @Test
   @RunsInEdt
   fun testTumbler() {
-    val fileBasedIndexTumbler = FileBasedIndexTumbler("IndexingFlagTest")
+    val fileBasedIndexTumbler = FileBasedIndexTumbler("test")
     val vFile = temp.newVirtualFile("test", "content".toByteArray())
 
     val fileIndexingStamp = ReadWriteFileIndexingStampImpl(1)
@@ -57,7 +56,6 @@ class IndexingFlagTest {
 
   @Test
   @Ignore("Triggers `Path conflict. Existing symlink: SymlinkData{} vs. new symlink: SymlinkData{}`")
-  @IJIgnore(issue = "IJPL-149673")
   @RunsInEdt
   fun indexingFlagIsKeptThroughVFSReload() {
     val file = temp.newFile("test", "content".toByteArray())

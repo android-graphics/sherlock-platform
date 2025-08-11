@@ -63,7 +63,6 @@ public class NumericBinaryInstruction extends EvalInstruction {
     };
   }
 
-  @Override
   public String toString() {
     return myBinOp == null ? "UNKNOWN_NUMERIC_OP" : "NUMERIC_OP " + myBinOp;
   }

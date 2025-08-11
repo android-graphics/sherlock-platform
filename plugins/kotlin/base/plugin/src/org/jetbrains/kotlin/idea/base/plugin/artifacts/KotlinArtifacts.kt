@@ -43,8 +43,6 @@ object KotlinArtifactConstants {
  * For tests use [TestKotlinArtifacts]
  */
 object KotlinArtifacts {
-    private val kotlincBinDirectory: File = File(KotlinPluginLayout.kotlinc, "bin")
-
     private val kotlincLibDirectory: File = File(KotlinPluginLayout.kotlinc, "lib")
 
     @JvmStatic
@@ -118,10 +116,4 @@ object KotlinArtifacts {
 
     @JvmStatic
     val kotlinxSerializationCompilerPlugin: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLINX_SERIALIZATION_COMPILER_PLUGIN)
-
-    @JvmStatic
-    val powerAssertPlugin: File = File(kotlincLibDirectory, KotlinArtifactNames.POWER_ASSERT_COMPILER_PLUGIN)
-
-    @JvmStatic
-    val kotlinc: File = File(kotlincBinDirectory, KotlinArtifactNames.KOTLINC)
 }

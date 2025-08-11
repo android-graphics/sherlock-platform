@@ -98,7 +98,8 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
   }
 
   @Override
-  public @NotNull RuntimeModuleDescriptor getModule(@NotNull RuntimeModuleId moduleId) {
+  @NotNull
+  public RuntimeModuleDescriptor getModule(@NotNull RuntimeModuleId moduleId) {
     ResolveResult result = resolveModule(moduleId);
     RuntimeModuleDescriptor module = result.getResolvedModule();
     if (module != null) {

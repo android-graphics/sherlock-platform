@@ -7,8 +7,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.*;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 
 /**
  * Please use {@link CompletableFuture} instead as a more standard and better known equivalent
@@ -93,11 +93,13 @@ public class FutureResult<T> implements Future<T> {
     }
   }
 
-  public @Nullable T tryGet() throws ExecutionException {
+  @Nullable
+  public T tryGet() throws ExecutionException {
     return doGet();
   }
 
-  private @Nullable T doGet() throws ExecutionException {
+  @Nullable
+  private T doGet() throws ExecutionException {
     Pair<Object, Boolean> pair = myValue;
     if (pair == null) return null;
 

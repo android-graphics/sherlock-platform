@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model;
 
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +21,8 @@ public class ExternalSystemException extends RuntimeException {
   
   private final String myOriginalReason;
 
-  private final @NotNull String[] myQuickFixes;
+  @NotNull
+  private final String[] myQuickFixes;
   private boolean myCauseInitialized;
 
   public ExternalSystemException() {
@@ -61,11 +61,13 @@ public class ExternalSystemException extends RuntimeException {
   /**
    * @return    textual description of the wrapped exception (if any); empty string otherwise
    */
-  public @NotNull String getOriginalReason() {
+  @NotNull
+  public String getOriginalReason() {
     return myOriginalReason;
   }
 
-  public @NotNull String[] getQuickFixes() {
+  @NotNull
+  public String[] getQuickFixes() {
     return myQuickFixes;
   }
 
@@ -91,7 +93,8 @@ public class ExternalSystemException extends RuntimeException {
     return super.initCause(cause);
   }
 
-  private static @NotNull String extractMessage(@Nullable String message, @Nullable Throwable cause) {
+  @NotNull
+  private static String extractMessage(@Nullable String message, @Nullable Throwable cause) {
     StringBuilder buffer = new StringBuilder();
     if (message != null) {
       buffer.append(message);

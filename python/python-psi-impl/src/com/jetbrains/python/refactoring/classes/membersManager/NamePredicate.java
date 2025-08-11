@@ -29,15 +29,16 @@ import org.jetbrains.annotations.NotNull;
  * @author Ilya.Kazakevich
  */
 class NamePredicate extends NotNullPredicate<PyElement> {
-  private final @NotNull String myName;
+  @NotNull
+  private final String myName;
 
 
-  NamePredicate(final @NotNull String name) {
+  NamePredicate(@NotNull final String name) {
     myName = name;
   }
 
   @Override
-  protected boolean applyNotNull(final @NotNull PyElement input) {
+  protected boolean applyNotNull(@NotNull final PyElement input) {
     return myName.equals(input.getName());
   }
 
@@ -48,7 +49,7 @@ class NamePredicate extends NotNullPredicate<PyElement> {
    * @param stock collection elements to search between
    * @return true if stock contains element with name equal to needle's name
    */
-  static boolean hasElementWithSameName(final @NotNull NavigationItem needle, final @NotNull Iterable<? extends PyElement> stock) {
+  static boolean hasElementWithSameName(@NotNull final NavigationItem needle, @NotNull final Iterable<? extends PyElement> stock) {
     final String name = needle.getName();
     if (name != null) {
       final Optional<? extends PyElement> optional = Iterables.tryFind(stock, new NamePredicate(name));

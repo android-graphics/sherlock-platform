@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.*;
@@ -19,11 +19,12 @@ public final class GrClassConverter extends GrTypeConverter {
     };
   }
 
+  @Nullable
   @Override
-  public @Nullable ConversionResult isConvertible(@NotNull PsiType targetType,
-                                                  @NotNull PsiType actualType,
-                                                  @NotNull Position position,
-                                                  @NotNull GroovyPsiElement context) {
+  public ConversionResult isConvertible(@NotNull PsiType targetType,
+                                        @NotNull PsiType actualType,
+                                        @NotNull Position position,
+                                        @NotNull GroovyPsiElement context) {
     if (!PsiTypesUtil.classNameEquals(targetType, CommonClassNames.JAVA_LANG_CLASS)) {
       return null;
     }

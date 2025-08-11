@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.stepping;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -7,7 +7,6 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -23,13 +22,15 @@ public abstract class XSmartStepIntoHandler<Variant extends XSmartStepIntoVarian
    * @param position current position
    * @return list of function/method calls containing in the current line
    */
-  public abstract @NotNull @Unmodifiable List<Variant> computeSmartStepVariants(@NotNull XSourcePosition position);
+  @NotNull
+  public abstract List<Variant> computeSmartStepVariants(@NotNull XSourcePosition position);
 
   /**
    * @param position current position
    * @return list of function/method calls containing in the current line
    */
-  public @NotNull Promise<List<Variant>> computeSmartStepVariantsAsync(@NotNull XSourcePosition position) {
+  @NotNull
+  public Promise<List<Variant>> computeSmartStepVariantsAsync(@NotNull XSourcePosition position) {
     return Promises.resolvedPromise(computeSmartStepVariants(position));
   }
 
@@ -38,7 +39,8 @@ public abstract class XSmartStepIntoHandler<Variant extends XSmartStepIntoVarian
    * @param position current position
    * @return list of function/method calls containing in the current line
    */
-  public @NotNull Promise<List<Variant>> computeStepIntoVariants(@NotNull XSourcePosition position) {
+  @NotNull
+  public Promise<List<Variant>> computeStepIntoVariants(@NotNull XSourcePosition position) {
     return Promises.rejectedPromise();
   }
 

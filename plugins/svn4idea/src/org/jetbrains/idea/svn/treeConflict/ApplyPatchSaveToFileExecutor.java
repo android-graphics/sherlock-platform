@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,8 +42,8 @@ import static com.intellij.util.ObjectUtils.notNull;
 public final class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFilePatchInProgress> {
   private static final Logger LOG = Logger.getInstance(ApplyPatchSaveToFileExecutor.class);
 
-  private final @NotNull Project myProject;
-  private final @Nullable VirtualFile myNewPatchBase;
+  @NotNull private final Project myProject;
+  @Nullable private final VirtualFile myNewPatchBase;
 
   public ApplyPatchSaveToFileExecutor(@NotNull Project project, @Nullable VirtualFile newPatchBase) {
     myProject = project;
@@ -85,8 +85,9 @@ public final class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<Te
     }
   }
 
-  public static @NotNull List<FilePatch> toOnePatchGroup(@NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups,
-                                                         @NotNull VirtualFile newPatchBase) throws IOException {
+  @NotNull
+  public static List<FilePatch> toOnePatchGroup(@NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups,
+                                                @NotNull VirtualFile newPatchBase) throws IOException {
     List<FilePatch> result = new ArrayList<>();
 
     for (Map.Entry<VirtualFile, Collection<TextFilePatchInProgress>> entry : patchGroups.entrySet()) {
@@ -107,15 +108,17 @@ public final class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<Te
     return result;
   }
 
-  private static @Nullable String getNewBaseRelativePath(@NotNull VirtualFile newBase,
-                                                         @NotNull VirtualFile oldBase,
-                                                         @Nullable String oldBaseRelativePath) throws IOException {
+  @Nullable
+  private static String getNewBaseRelativePath(@NotNull VirtualFile newBase,
+                                               @NotNull VirtualFile oldBase,
+                                               @Nullable String oldBaseRelativePath) throws IOException {
     return !isEmptyOrSpaces(oldBaseRelativePath)
            ? getRelativePath(newBase.getPath(), getCanonicalPath(oldBase, oldBaseRelativePath), '/')
            : oldBaseRelativePath;
   }
 
-  private static @NotNull String getCanonicalPath(@NotNull VirtualFile base, @NotNull String relativePath) throws IOException {
+  @NotNull
+  private static String getCanonicalPath(@NotNull VirtualFile base, @NotNull String relativePath) throws IOException {
     return toSystemIndependentName(new File(base.getPath(), relativePath).getCanonicalPath());
   }
 }

@@ -4,7 +4,6 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.JBValue;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -14,7 +13,6 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-@ApiStatus.Internal
 public final class PluginListLayout extends AbstractLayoutManager implements PagePluginLayout {
   private final JBValue myGroupGap = new JBValue.Float(10);
   private int myMiddleLineHeight;

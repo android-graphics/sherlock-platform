@@ -64,7 +64,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.*;
 
-public final class PropertyInspectorTable extends JBTable implements UiDataProvider {
+public final class PropertyInspectorTable extends JBTable implements DataProvider {
   private static final Logger LOG = Logger.getInstance(PropertyInspectorTable.class);
 
   private static final int PROPERTY_INDENT = 11;
@@ -246,15 +246,32 @@ public final class PropertyInspectorTable extends JBTable implements UiDataProvi
   }
 
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    GuiEditor designer = myProject.isDisposed() ? null : DesignerToolWindowManager.getInstance(myProject).getActiveFormEditor();
-    sink.set(DATA_KEY, this);
-    sink.set(GuiEditor.DATA_KEY, myEditor);
-    sink.set(PlatformCoreDataKeys.FILE_EDITOR, designer == null ? null : designer.getEditor());
-    sink.set(PlatformCoreDataKeys.HELP_ID, ourHelpID);
-    IntrospectedProperty<?> introspectedProperty = getSelectedIntrospectedProperty();
-    String radComponentClassName = getSelectedRadComponentClassName();
-    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+  public @Nullable Object getData(@NotNull String dataId) {
+    if (DATA_KEY.is(dataId)) {
+      return this;
+    }
+    else if (GuiEditor.DATA_KEY.is(dataId)) {
+      return myEditor;
+    }
+    else if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
+      GuiEditor designer = myProject.isDisposed() ? null : DesignerToolWindowManager.getInstance(myProject).getActiveFormEditor();
+      return designer == null ? null : designer.getEditor();
+    }
+    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      IntrospectedProperty<?> property = getSelectedIntrospectedProperty();
+      String className = getSelectedRadComponentClassName();
+      return (DataProvider)slowId -> getSlowData(slowId, className, property);
+    }
+    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
+      return ourHelpID;
+    }
+    return null;
+  }
+
+  private @Nullable Object getSlowData(@NotNull String dataId,
+                                       @Nullable String radComponentClassName,
+                                       @Nullable IntrospectedProperty<?> introspectedProperty) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       if (introspectedProperty == null || radComponentClassName == null || myEditor == null) {
         return null;
       }
@@ -268,10 +285,11 @@ public final class PropertyInspectorTable extends JBTable implements UiDataProvi
         return getter;
       }
       return PropertyUtilBase.findPropertySetter(aClass, introspectedProperty.getName(), false, true);
-    });
-    sink.lazy(CommonDataKeys.PSI_FILE, () -> {
+    }
+    else if (CommonDataKeys.PSI_FILE.is(dataId)) {
       return myEditor != null ? PsiManager.getInstance(myEditor.getProject()).findFile(myEditor.getFile()) : null;
-    });
+    }
+    return null;
   }
 
   /**

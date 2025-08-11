@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util.dynamicMembers;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -84,7 +84,8 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
   }
 
   @Override
-  public @NotNull List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
+  @NotNull
+  public List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
     return Collections.emptyList();
   }
 
@@ -109,7 +110,8 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
   }
 
   @Override
-  public @NotNull GrModifierList getModifierList() {
+  @NotNull
+  public GrModifierList getModifierList() {
     return myMethod.getModifierList();
   }
 
@@ -119,7 +121,8 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
   }
 
   @Override
-  public @NotNull Map<String, NamedArgumentDescriptor> getNamedParameters() {
+  @NotNull
+  public Map<String, NamedArgumentDescriptor> getNamedParameters() {
     return myMethod.getNamedParameters();
   }
 
@@ -154,12 +157,14 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
   }
 
   @Override
-  public @NotNull GrParameterList getParameterList() {
+  @NotNull
+  public GrParameterList getParameterList() {
     return myMethod.getParameterList();
   }
 
   @Override
-  public @NotNull PsiReferenceList getThrowsList() {
+  @NotNull
+  public PsiReferenceList getThrowsList() {
     return myMethod.getThrowsList();
   }
 
@@ -179,12 +184,14 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
   }
 
   @Override
-  public @NotNull MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
+  @NotNull
+  public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     return myMethod.getSignature(substitutor);
   }
 
   @Override
-  public @NotNull PsiElement getNameIdentifierGroovy() {
+  @NotNull
+  public PsiElement getNameIdentifierGroovy() {
     return myMethod.getNameIdentifierGroovy();
   }
 
@@ -227,7 +234,8 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
   }
 
   @Override
-  public @NotNull HierarchicalMethodSignature getHierarchicalMethodSignature() {
+  @NotNull
+  public HierarchicalMethodSignature getHierarchicalMethodSignature() {
     return myMethod.getHierarchicalMethodSignature();
   }
 

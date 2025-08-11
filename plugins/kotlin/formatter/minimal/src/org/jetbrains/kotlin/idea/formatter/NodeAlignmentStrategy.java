@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.formatter;
 
@@ -22,7 +22,8 @@ public abstract class NodeAlignmentStrategy extends CommonAlignmentStrategy {
     }
 
     @Override
-    public abstract @Nullable Alignment getAlignment(@NotNull ASTNode node);
+    @Nullable
+    public abstract Alignment getAlignment(@NotNull ASTNode node);
 
     private static class AlignmentStrategyWrapper extends NodeAlignmentStrategy {
         private final AlignmentStrategy internalStrategy;
@@ -31,8 +32,9 @@ public abstract class NodeAlignmentStrategy extends CommonAlignmentStrategy {
             this.internalStrategy = internalStrategy;
         }
 
+        @Nullable
         @Override
-        public @Nullable Alignment getAlignment(@NotNull ASTNode node) {
+        public Alignment getAlignment(@NotNull ASTNode node) {
             ASTNode parent = node.getTreeParent();
             if (parent != null) {
                 return internalStrategy.getAlignment(parent.getElementType(), node.getElementType());

@@ -6,9 +6,5 @@ this is "good"\
     def c = '\"\"'
     def d = " \
 "
-    def data = [
-      "\"\\\\\""        : "\"\\\\\""
-    ]
-    def dollarSlashy = $/'\\'/$
   }
 }

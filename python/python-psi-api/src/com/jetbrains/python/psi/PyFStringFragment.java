@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi;
 
 import com.jetbrains.python.ast.PyAstFStringFragment;
@@ -22,7 +22,8 @@ public interface PyFStringFragment extends PyAstFStringFragment, PyElement {
    * {@code getFormatPart().getFragments()}.
    */
   @Override
-  default @Nullable PyExpression getExpression() {
+  @Nullable
+  default PyExpression getExpression() {
     return (PyExpression)PyAstFStringFragment.super.getExpression();
   }
 
@@ -33,7 +34,8 @@ public interface PyFStringFragment extends PyAstFStringFragment, PyElement {
    * For instance, for the fragment {@code {  expr  !s:{width}}} it's {@code !s:{width}}.
    */
   @Override
-  default @Nullable PyFStringFragmentFormatPart getFormatPart() {
+  @Nullable
+  default PyFStringFragmentFormatPart getFormatPart() {
     return (PyFStringFragmentFormatPart)PyAstFStringFragment.super.getFormatPart();
   }
 }

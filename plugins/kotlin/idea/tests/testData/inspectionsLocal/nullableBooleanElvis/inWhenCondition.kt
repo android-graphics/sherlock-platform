@@ -1,8 +1,0 @@
-// HIGHLIGHT: GENERIC_ERROR_OR_WARNING
-// IGNORE_K1
-fun foo() {
-    var a: Boolean? = null
-    when {
-        a <caret>?: false -> {}
-    }
-}

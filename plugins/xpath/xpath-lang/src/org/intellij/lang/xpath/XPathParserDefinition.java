@@ -34,7 +34,8 @@ public class XPathParserDefinition implements ParserDefinition {
     public static final IFileElementType FILE = new IFileElementType("XPATH_FILE", XPathFileType.XPATH.getLanguage());
 
     @Override
-    public @NotNull Lexer createLexer(Project project) {
+    @NotNull
+    public Lexer createLexer(Project project) {
         return XPathLexer.create(false);
     }
 
@@ -44,17 +45,20 @@ public class XPathParserDefinition implements ParserDefinition {
     }
 
     @Override
-    public @NotNull TokenSet getWhitespaceTokens() {
+    @NotNull
+    public TokenSet getWhitespaceTokens() {
         return TokenSet.create(XPathTokenTypes.WHITESPACE);
     }
 
     @Override
-    public @NotNull TokenSet getCommentTokens() {
+    @NotNull
+    public TokenSet getCommentTokens() {
         return TokenSet.EMPTY;
     }
 
     @Override
-    public @NotNull TokenSet getStringLiteralElements() {
+    @NotNull
+    public TokenSet getStringLiteralElements() {
         return TokenSet.create(XPathTokenTypes.STRING_LITERAL);
     }
 
@@ -69,7 +73,8 @@ public class XPathParserDefinition implements ParserDefinition {
   }
 
     @Override
-    public final @NotNull PsiElement createElement(ASTNode node) {
+    @NotNull
+    public final PsiElement createElement(ASTNode node) {
       final IElementType type = node.getElementType();
 
       final PsiElement element = createElement(type, node);
@@ -79,7 +84,8 @@ public class XPathParserDefinition implements ParserDefinition {
       return new XPathTokenImpl(node);
     }
 
-  protected @Nullable PsiElement createElement(IElementType type, ASTNode node) {
+  @Nullable
+  protected PsiElement createElement(IElementType type, ASTNode node) {
     if (type == XPathElementTypes.NUMBER) {
         return new XPathNumberImpl(node);
     } else if (type == XPathElementTypes.STRING) {

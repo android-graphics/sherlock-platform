@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.api;
 
 import com.intellij.psi.PsiElement;
@@ -18,12 +18,14 @@ public interface GroovyReference extends PsiPolyVariantReference {
 
   GroovyReference[] EMPTY_ARRAY = new GroovyReference[0];
 
+  @Nullable
   @Override
-  default @Nullable PsiElement resolve() {
+  default PsiElement resolve() {
     return advancedResolve().getElement();
   }
 
-  default @NotNull GroovyResolveResult advancedResolve() {
+  @NotNull
+  default GroovyResolveResult advancedResolve() {
     Collection<? extends GroovyResolveResult> results = resolve(false);
     if (results.size() == 1) {
       return getFirstItem(results);
@@ -48,7 +50,8 @@ public interface GroovyReference extends PsiPolyVariantReference {
    *                   and the method may return additional invalid results.
    * @return read-only collection of results
    */
-  default @NotNull Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
+  @NotNull
+  default Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
     return new SmartList<>(multiResolve(incomplete));
   }
 }

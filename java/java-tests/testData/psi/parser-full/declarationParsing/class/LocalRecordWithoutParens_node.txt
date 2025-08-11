@@ -37,7 +37,7 @@ java.FILE
         DECLARATION_STATEMENT
           MODIFIER_LIST
             <empty list>
-          RECORD
+          IDENTIFIER
           WHITE_SPACE
           IDENTIFIER
           ERROR_ELEMENT

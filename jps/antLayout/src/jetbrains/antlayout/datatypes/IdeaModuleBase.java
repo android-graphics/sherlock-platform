@@ -64,7 +64,6 @@ public abstract class IdeaModuleBase extends LayoutFileSet {
 
   protected abstract String getKind();
 
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -73,7 +72,6 @@ public abstract class IdeaModuleBase extends LayoutFileSet {
     return getDir(getProject()).equals(that.getDir(getProject()));
   }
 
-  @Override
   public int hashCode() {
     return getDir(getProject()).hashCode();
   }

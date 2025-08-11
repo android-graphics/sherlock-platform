@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.CommonBundle;
@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 public class JvmDropFrameActionHandler implements XDropFrameHandler {
 
@@ -72,7 +71,7 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
                                     }
 
                                     @Override
-                                    public void errorOccurred(final @NotNull String errorMessage) {
+                                    public void errorOccurred(@NotNull final String errorMessage) {
                                       showError(project, JavaDebuggerBundle.message("error.executing.finally", errorMessage),
                                                 XDebuggerBundle.message("xdebugger.reset.frame.title"));
                                     }
@@ -137,8 +136,9 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
                 return false;
               }
 
+              @NotNull
               @Override
-              public @NotNull String getDoNotShowMessage() {
+              public String getDoNotShowMessage() {
                 return UIBundle.message("dialog.options.do.not.show");
               }
             })
@@ -161,7 +161,7 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
   }
 
   private static void popFrame(DebugProcessImpl debugProcess, DebuggerContextImpl debuggerContext, JavaStackFrame stackFrame) {
-    Objects.requireNonNull(debuggerContext.getManagerThread())
+    debugProcess.getManagerThread()
       .schedule(debugProcess.createPopFrameCommand(debuggerContext, stackFrame.getStackFrameProxy()));
   }
 

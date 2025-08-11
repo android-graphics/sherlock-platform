@@ -1,6 +1,5 @@
-// NO_OPTION: FIELD|Add use-site target 'field'
-// CHOSEN_OPTION: PROPERTY_GETTER|Add use-site target 'get'
-// AFTER-WARNING: Parameter 'p' is never used
+// CHOOSE_USE_SITE_TARGET: field
+// IS_APPLICABLE: false
 
 annotation class A
 

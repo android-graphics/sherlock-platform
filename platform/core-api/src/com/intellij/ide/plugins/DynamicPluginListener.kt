@@ -4,7 +4,6 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.messages.Topic
 
-@Deprecated("Use DynamicPluginVetoer instead")
 class CannotUnloadPluginException(value: String) : ProcessCanceledException(RuntimeException(value))
 
 interface DynamicPluginListener {
@@ -29,7 +28,12 @@ interface DynamicPluginListener {
   fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
   }
 
-  @Deprecated("Use DynamicPluginVetoer instead")
+  /**
+   * Checks if the plugin can be dynamically unloaded at this moment.
+   * Method should throw [CannotUnloadPluginException] if it isn't possible for some reason.
+   *
+   * Not dispatched for a content modules (plugin model V2).
+   */
   @Throws(CannotUnloadPluginException::class)
   fun checkUnloadPlugin(pluginDescriptor: IdeaPluginDescriptor) {
   }

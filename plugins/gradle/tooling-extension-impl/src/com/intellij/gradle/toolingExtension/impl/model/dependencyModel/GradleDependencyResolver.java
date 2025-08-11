@@ -3,10 +3,6 @@ package com.intellij.gradle.toolingExtension.impl.model.dependencyModel;
 
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache;
-import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.AuxiliaryArtifactResolver;
-import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.AuxiliaryConfigurationArtifacts;
-import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.ExperimentalAuxiliaryArtifactResolver;
-import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.LegacyAuxiliaryArtifactResolver;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetArtifactIndex.GradleSourceSetArtifactIndex;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Action;
@@ -14,22 +10,29 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.*;
 import org.gradle.api.artifacts.component.*;
-import org.gradle.api.artifacts.result.DependencyResult;
-import org.gradle.api.artifacts.result.ResolvedArtifactResult;
-import org.gradle.api.artifacts.result.ResolvedComponentResult;
-import org.gradle.api.artifacts.result.ResolvedDependencyResult;
+import org.gradle.api.artifacts.dsl.DependencyHandler;
+import org.gradle.api.artifacts.result.*;
+import org.gradle.api.component.Artifact;
 import org.gradle.api.specs.Spec;
 import org.gradle.internal.resolve.ModuleVersionResolveException;
+import org.gradle.jvm.JvmLibrary;
+import org.gradle.language.base.artifact.SourcesArtifact;
+import org.gradle.language.java.artifact.JavadocArtifact;
 import org.gradle.util.Path;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
 import org.jetbrains.plugins.gradle.model.FileCollectionDependency;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
+import org.jetbrains.plugins.gradle.tooling.util.StringUtils;
 
 import java.io.File;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
@@ -37,6 +40,7 @@ import java.util.*;
 public final class GradleDependencyResolver {
 
   private static final boolean IS_83_OR_BETTER = GradleVersionUtil.isCurrentGradleAtLeast("8.3");
+  private static final Pattern PUNCTUATION_IN_SUFFIX_PATTERN = Pattern.compile("[\\p{Punct}\\s]+$");
 
   private final @NotNull Project myProject;
   private final @NotNull GradleDependencyDownloadPolicy myDownloadPolicy;
@@ -58,8 +62,7 @@ public final class GradleDependencyResolver {
     this(context, project, GradleDependencyDownloadPolicyCache.getInstance(context).getDependencyDownloadPolicy(project));
   }
 
-  private static @NotNull Set<ResolvedArtifactResult> resolveConfigurationDependencies(@NotNull Configuration configuration,
-                                                                                       Set<String> allowedDependencyGroups) {
+  private static void ensureConfigurationArtifactsResolved(@NotNull Configuration configuration) {
     // The following statement should trigger parallel resolution of configuration artifacts
     // All subsequent iterations are expected to use cached results.
     try {
@@ -67,54 +70,27 @@ public final class GradleDependencyResolver {
         @Override
         public void execute(@NotNull ArtifactView.ViewConfiguration configuration) {
           configuration.setLenient(true);
-
-          if (!allowedDependencyGroups.isEmpty()) {
-            configuration.componentFilter(new Spec<ComponentIdentifier>() {
-              @Override
-              public boolean isSatisfiedBy(ComponentIdentifier componentIdentifier) {
-                if (componentIdentifier instanceof ModuleComponentIdentifier) {
-                  return allowedDependencyGroups.contains(((ModuleComponentIdentifier)componentIdentifier).getGroup());
-                }
-                return false;
-              }
-            });
-          }
         }
       });
-      return artifactView.getArtifacts().getArtifacts();
+      artifactView.getArtifacts().getArtifacts();
     }
     catch (Exception ignore) {
     }
-    return Collections.emptySet();
   }
 
   public @NotNull Collection<ExternalDependency> resolveDependencies(@Nullable Configuration configuration) {
-    return resolveDependencies(configuration, Collections.emptySet());
-  }
-
-  /**
-   * @param configuration           resolvable configuration
-   * @param allowedDependencyGroups this filter forces to use artifactView for getting docs and sources,
-   *                                which is not working well with ivy repositories (see IDEA-275594).
-   *                                So, be careful to use this parameter.
-   * @return both resolved and unresolved with the reason dependencies from the given configuration
-   */
-  public @NotNull Collection<ExternalDependency> resolveDependencies(@Nullable Configuration configuration,
-                                                                     Set<String> allowedDependencyGroups) {
     if (configuration == null) {
       return Collections.emptySet();
     }
-    // configurationDependencies can be empty, for example, in the case of a composite build. We should continue resolution anyway.
-    Set<ResolvedArtifactResult> configurationDependencies = resolveConfigurationDependencies(configuration, allowedDependencyGroups);
+
+    ensureConfigurationArtifactsResolved(configuration);
 
     LenientConfiguration lenientConfiguration = configuration.getResolvedConfiguration().getLenientConfiguration();
     Map<ResolvedDependency, Set<ResolvedArtifact>> resolvedArtifacts = new LinkedHashMap<>();
     boolean hasFailedToTransformDependencies = false;
     for (ResolvedDependency dependency : lenientConfiguration.getAllModuleDependencies()) {
       try {
-        if (allowedDependencyGroups.isEmpty() || allowedDependencyGroups.contains(dependency.getModuleGroup())) {
-          resolvedArtifacts.put(dependency, dependency.getModuleArtifacts());
-        }
+        resolvedArtifacts.put(dependency, dependency.getModuleArtifacts());
       }
       catch (GradleException e) {
         hasFailedToTransformDependencies = true;
@@ -128,7 +104,6 @@ public final class GradleDependencyResolver {
     if (hasFailedToTransformDependencies) {
       for (DependencyResult dependencyResult : configuration.getIncoming().getResolutionResult().getAllDependencies()) {
         ComponentSelector resultRequested = dependencyResult.getRequested();
-        //Note: we don't use here alloweded dependency groups filter, because it has sense only for ModuleComponentSelector
         if (dependencyResult instanceof ResolvedDependencyResult && resultRequested instanceof ProjectComponentSelector) {
           ResolvedComponentResult resolvedComponentResult = ((ResolvedDependencyResult)dependencyResult).getSelected();
           ModuleVersionIdentifier selectedResultVersion = resolvedComponentResult.getModuleVersion();
@@ -136,15 +111,13 @@ public final class GradleDependencyResolver {
         }
       }
     }
-    // Here we collect java doc and source files for a given dependencies
-    AuxiliaryConfigurationArtifacts auxiliaryArtifacts =
-      resolveAuxiliaryArtifacts(configuration, resolvedArtifacts, allowedDependencyGroups);
+    Map<ComponentIdentifier, ComponentArtifactsResult> auxiliaryArtifactsMap = buildAuxiliaryArtifactsMap(configuration, resolvedArtifacts);
     Set<String> resolvedFiles = new HashSet<>();
     Collection<ExternalDependency> artifactDependencies = resolveArtifactDependencies(
-      resolvedFiles, resolvedArtifacts, auxiliaryArtifacts, transformedProjectDependenciesResultMap
+      resolvedFiles, resolvedArtifacts, auxiliaryArtifactsMap, transformedProjectDependenciesResultMap
     );
-    Collection<FileCollectionDependency> otherFileDependencies = resolveOtherFileDependencies(resolvedFiles, configurationDependencies);
-    Collection<ExternalDependency> unresolvedDependencies = collectUnresolvedDependencies(lenientConfiguration, allowedDependencyGroups);
+    Collection<FileCollectionDependency> otherFileDependencies = resolveOtherFileDependencies(resolvedFiles, configuration);
+    Collection<ExternalDependency> unresolvedDependencies = collectUnresolvedDependencies(lenientConfiguration);
 
     Collection<ExternalDependency> result = new LinkedHashSet<>();
     result.addAll(otherFileDependencies);
@@ -161,7 +134,7 @@ public final class GradleDependencyResolver {
   private @NotNull Collection<ExternalDependency> resolveArtifactDependencies(
     @NotNull Set<String> resolvedFiles, // mutable
     @NotNull Map<ResolvedDependency, Set<ResolvedArtifact>> resolvedArtifacts,
-    @NotNull AuxiliaryConfigurationArtifacts auxiliaryArtifacts,
+    @NotNull Map<ComponentIdentifier, ComponentArtifactsResult> auxiliaryArtifactsMap,
     @NotNull Map<ModuleVersionIdentifier, ResolvedDependencyResult> transformedProjectDependenciesResultMap
   ) {
     Collection<ExternalDependency> artifactDependencies = new LinkedHashSet<>();
@@ -184,7 +157,7 @@ public final class GradleDependencyResolver {
           }
         }
         else {
-          ExternalDependency dependency = resolveLibraryDependency(artifact, artifactFile, auxiliaryArtifacts);
+          ExternalDependency dependency = resolveLibraryDependency(artifact, artifactFile, auxiliaryArtifactsMap);
           artifactDependencies.add(dependency);
         }
       }
@@ -276,7 +249,7 @@ public final class GradleDependencyResolver {
   private static @NotNull DefaultExternalLibraryDependency resolveLibraryDependency(
     @NotNull ResolvedArtifact artifact,
     @NotNull File artifactFile,
-    @NotNull AuxiliaryConfigurationArtifacts auxiliaryArtifacts
+    @NotNull Map<ComponentIdentifier, ComponentArtifactsResult> auxiliaryArtifactsMap
   ) {
     DefaultExternalLibraryDependency libraryDependency = new DefaultExternalLibraryDependency();
 
@@ -287,13 +260,18 @@ public final class GradleDependencyResolver {
     libraryDependency.setFile(artifactFile);
 
     ComponentIdentifier componentIdentifier = artifact.getId().getComponentIdentifier();
-    File sourcesFile = auxiliaryArtifacts.getSources(componentIdentifier, artifactFile);
-    if (sourcesFile != null) {
-      libraryDependency.setSource(sourcesFile);
-    }
-    File javadocFile = auxiliaryArtifacts.getJavadoc(componentIdentifier, artifactFile);
-    if (javadocFile != null) {
-      libraryDependency.setJavadoc(javadocFile);
+    ComponentArtifactsResult artifactsResult = auxiliaryArtifactsMap.get(componentIdentifier);
+    if (artifactsResult != null) {
+      Set<File> sourcesArtifactFiles = getResolvedAuxiliaryArtifactFiles(artifactsResult, SourcesArtifact.class);
+      File sourcesFile = chooseAuxiliaryArtifactFile(artifactFile, sourcesArtifactFiles);
+      if (sourcesFile != null) {
+        libraryDependency.setSource(sourcesFile);
+      }
+      Set<File> javadocArtifactFiles = getResolvedAuxiliaryArtifactFiles(artifactsResult, JavadocArtifact.class);
+      File javadocFile = chooseAuxiliaryArtifactFile(artifactFile, javadocArtifactFiles);
+      if (javadocFile != null) {
+        libraryDependency.setJavadoc(javadocFile);
+      }
     }
     if (artifact.getExtension() != null) {
       libraryDependency.setPackaging(artifact.getExtension());
@@ -339,56 +317,83 @@ public final class GradleDependencyResolver {
     return projectDependency;
   }
 
-  private @NotNull AuxiliaryConfigurationArtifacts resolveAuxiliaryArtifacts(
+  private @NotNull Map<ComponentIdentifier, ComponentArtifactsResult> buildAuxiliaryArtifactsMap(
     @NotNull Configuration configuration,
-    @NotNull Map<ResolvedDependency, Set<ResolvedArtifact>> resolvedArtifacts,
-    Set<String> allowedDependencyGroups
+    @NotNull Map<ResolvedDependency, Set<ResolvedArtifact>> resolvedArtifacts
   ) {
-    String experimentalResolverPropertyValue = System.getProperty("idea.experimental.gradle.dependency.resolver", "false");
-    boolean useExperimentalResolver = Boolean.parseBoolean(experimentalResolverPropertyValue);
-    AuxiliaryArtifactResolver resolver;
-    if (GradleVersionUtil.isCurrentGradleAtLeast("7.3") && useExperimentalResolver) {
-      resolver = new ExperimentalAuxiliaryArtifactResolver(myProject, myDownloadPolicy, allowedDependencyGroups);
+    List<ComponentIdentifier> components = new ArrayList<>();
+    for (Collection<ResolvedArtifact> artifacts : resolvedArtifacts.values()) {
+      for (ResolvedArtifact artifact : artifacts) {
+        if (artifact.getId().getComponentIdentifier() instanceof ProjectComponentIdentifier) continue;
+        ModuleVersionIdentifier id = artifact.getModuleVersion().getId();
+        components.add(DefaultModuleComponentIdentifier.create(id));
+      }
     }
-    else {
-      resolver = new LegacyAuxiliaryArtifactResolver(myProject, myDownloadPolicy, resolvedArtifacts);
+
+    if (components.isEmpty()) {
+      return Collections.emptyMap();
     }
-    return resolver.resolve(configuration);
+
+    List<Class<? extends Artifact>> artifactTypes = new ArrayList<>(2);
+    if (myDownloadPolicy.isDownloadSources()) {
+      artifactTypes.add(SourcesArtifact.class);
+    }
+    if (myDownloadPolicy.isDownloadJavadoc()) {
+      artifactTypes.add(JavadocArtifact.class);
+    }
+
+    boolean isBuildScriptConfiguration = myProject.getBuildscript().getConfigurations().contains(configuration);
+    DependencyHandler dependencyHandler =
+      isBuildScriptConfiguration ? myProject.getBuildscript().getDependencies() : myProject.getDependencies();
+    Set<ComponentArtifactsResult> componentResults = dependencyHandler.createArtifactResolutionQuery()
+      .forComponents(components)
+      .withArtifacts(JvmLibrary.class, artifactTypes)
+      .execute()
+      .getResolvedComponents();
+
+    Map<ComponentIdentifier, ComponentArtifactsResult> result = new HashMap<>(componentResults.size());
+    for (ComponentArtifactsResult artifactsResult : componentResults) {
+      result.put(artifactsResult.getId(), artifactsResult);
+    }
+    return result;
   }
 
-  // resolve generated dependencies such as annotation processing build roots and compilation result
   private static @NotNull Collection<FileCollectionDependency> resolveOtherFileDependencies(
     @NotNull Set<String> resolvedFiles, // mutable
-    @NotNull Set<ResolvedArtifactResult> configurationDependencies
+    @NotNull Configuration configuration
   ) {
+    ArtifactView artifactView = configuration.getIncoming().artifactView(new Action<ArtifactView.ViewConfiguration>() {
+      @Override
+      public void execute(@SuppressWarnings("NullableProblems") ArtifactView.ViewConfiguration configuration) {
+        configuration.setLenient(true);
+        configuration.componentFilter(new Spec<ComponentIdentifier>() {
+          @Override
+          public boolean isSatisfiedBy(ComponentIdentifier identifier) {
+            return !(identifier instanceof ProjectComponentIdentifier || identifier instanceof ModuleComponentIdentifier);
+          }
+        });
+      }
+    });
+    Set<ResolvedArtifactResult> artifactResults = artifactView.getArtifacts().getArtifacts();
     Collection<FileCollectionDependency> result = new LinkedHashSet<>();
-    for (ResolvedArtifactResult dependency : configurationDependencies) {
-      ComponentIdentifier identifier = dependency.getId().getComponentIdentifier();
-      // libraries, modules and subprojects are already well known
-      if (identifier instanceof LibraryBinaryIdentifier
-          || identifier instanceof ModuleComponentIdentifier
-          || identifier instanceof ProjectComponentIdentifier) {
+    for (ResolvedArtifactResult artifactResult : artifactResults) {
+      File file = artifactResult.getFile();
+      if (resolvedFiles.contains(file.getPath())) {
         continue;
       }
-      File file = dependency.getFile();
-      String path = file.getPath();
-      if (resolvedFiles.add(path)) {
-        result.add(new DefaultFileCollectionDependency(Collections.singleton(file)));
-      }
+      resolvedFiles.add(file.getPath());
+
+      result.add(new DefaultFileCollectionDependency(Collections.singleton(file)));
     }
     return result;
   }
 
   private static @NotNull Collection<ExternalDependency> collectUnresolvedDependencies(
-    @NotNull LenientConfiguration lenientConfiguration,
-    Set<String> allowedDependencyGroups
+    @NotNull LenientConfiguration lenientConfiguration
   ) {
     Collection<ExternalDependency> result = new LinkedHashSet<>();
     Set<UnresolvedDependency> unresolvedModuleDependencies = lenientConfiguration.getUnresolvedModuleDependencies();
     for (UnresolvedDependency unresolvedDependency : unresolvedModuleDependencies) {
-      if (!allowedDependencyGroups.isEmpty() && !allowedDependencyGroups.contains(unresolvedDependency.getSelector().getGroup())) {
-        continue;
-      }
       MyModuleVersionSelector moduleVersionSelector = null;
       Throwable problem = unresolvedDependency.getProblem();
       if (problem.getCause() != null) {
@@ -422,6 +427,80 @@ public final class GradleDependencyResolver {
       result.add(dependency);
     }
     return result;
+  }
+
+  private static @NotNull Set<File> getResolvedAuxiliaryArtifactFiles(
+    @NotNull ComponentArtifactsResult artifactsResult,
+    @NotNull Class<? extends Artifact> artifactType
+  ) {
+    return artifactsResult.getArtifacts(artifactType).stream()
+      .filter(ResolvedArtifactResult.class::isInstance)
+      .map(ResolvedArtifactResult.class::cast)
+      .map(ResolvedArtifactResult::getFile)
+      .collect(Collectors.toSet());
+  }
+
+  /**
+   * If there are multiple auxiliary artifacts for the same `ComponentIdentifier`, we have to choose the "best match" based on file names.
+   * For context, see IDEA-332969
+   * 1. Find the common suffix of every auxiliary artifact (e.g. "-sources.jar" or ".src.jar") and ignore it going forward
+   * 2. Find the common suffix of the main artifact with the auxiliary artifacts (e.g. ".jar") and ignore it going forward
+   * 3. Filter the auxiliary artifacts, keeping only those that have the longest common prefix with the main artifact (not counting any
+   * punctuation or whitespace at the end of the common prefix)
+   * 4. Deterministically choose from the remaining auxiliary artifacts, preferring the shortest overall file name (the longer ones likely
+   * belong to some different main artifact that also has a longer file name)
+   *
+   * @param main        path to the dependency Jar file
+   * @param auxiliaries set of artifacts associated with this library
+   * @return best match, null otherwise
+   */
+  @VisibleForTesting
+  static @Nullable File chooseAuxiliaryArtifactFile(@NotNull File main, @NotNull Set<File> auxiliaries) {
+    Iterator<File> auxiliariesIterator = auxiliaries.iterator();
+    if (!auxiliariesIterator.hasNext()) {
+      return null;
+    }
+
+    File firstAuxiliary = auxiliariesIterator.next();
+    if (!auxiliariesIterator.hasNext()) {
+      return firstAuxiliary;
+    }
+
+    String mainName = main.getName();
+    String firstAuxiliaryName = firstAuxiliary.getName();
+
+    int commonSuffixOfAuxiliaries = firstAuxiliaryName.length();
+    do {
+      File nextAuxiliary = auxiliariesIterator.next();
+      int commonSuffix = StringUtils.commonSuffixLength(firstAuxiliaryName, nextAuxiliary.getName());
+      if (commonSuffix < commonSuffixOfAuxiliaries) {
+        commonSuffixOfAuxiliaries = commonSuffix;
+      }
+    } while (auxiliariesIterator.hasNext());
+
+    int commonSuffixOfMainAndAuxiliaries =
+      Math.min(commonSuffixOfAuxiliaries, StringUtils.commonSuffixLength(mainName, firstAuxiliaryName));
+    String mainSuffixlessName = mainName.substring(0, mainName.length() - commonSuffixOfMainAndAuxiliaries);
+
+    int commonPrefixOfMainAndShortlistedAuxiliaries = 0;
+    TreeMap<String, File> shortlistedAuxiliariesBySuffixlessName =
+      new TreeMap<>(Comparator.comparingInt(String::length).thenComparing(String::compareTo));
+    for (File auxiliary : auxiliaries) {
+      String auxiliaryName = auxiliary.getName();
+      String auxiliarySuffixlessName = auxiliaryName.substring(0, auxiliaryName.length() - commonSuffixOfAuxiliaries);
+      int commonPrefixNaive = StringUtils.commonPrefixLength(mainSuffixlessName, auxiliarySuffixlessName);
+      Matcher commonPrefixExcessMatcher = PUNCTUATION_IN_SUFFIX_PATTERN.matcher(auxiliarySuffixlessName).region(0, commonPrefixNaive);
+      int commonPrefix = commonPrefixExcessMatcher.find() ? commonPrefixExcessMatcher.start() : commonPrefixNaive;
+      if (commonPrefix >= commonPrefixOfMainAndShortlistedAuxiliaries) {
+        if (commonPrefix > commonPrefixOfMainAndShortlistedAuxiliaries) {
+          commonPrefixOfMainAndShortlistedAuxiliaries = commonPrefix;
+          shortlistedAuxiliariesBySuffixlessName.clear();
+        }
+        shortlistedAuxiliariesBySuffixlessName.put(auxiliarySuffixlessName, auxiliary);
+      }
+    }
+
+    return shortlistedAuxiliariesBySuffixlessName.firstEntry().getValue();
   }
 
   private static @NotNull String getBuildName(@NotNull ProjectComponentIdentifier projectComponentIdentifier) {

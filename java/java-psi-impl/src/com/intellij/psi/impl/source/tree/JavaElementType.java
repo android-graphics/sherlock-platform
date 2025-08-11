@@ -275,6 +275,6 @@ public interface JavaElementType {
                                                                               BASIC_TYPE_WITH_CONJUNCTIONS_TEXT);
 
   IElementType DUMMY_ELEMENT = new JavaDummyElementType(level -> (JavaDocLexer)JavaParserDefinition.createDocLexer(level),
-                                                            level -> JavaParserDefinition.createLexerWithMarkdownEscape(level)
+                                                            level -> (BasicJavaLexer)JavaParserDefinition.createLexer(level)
   );
 }

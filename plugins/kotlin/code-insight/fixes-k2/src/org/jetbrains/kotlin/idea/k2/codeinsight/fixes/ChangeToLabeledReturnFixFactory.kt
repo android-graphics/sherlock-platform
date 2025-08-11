@@ -32,14 +32,16 @@ internal object ChangeToLabeledReturnFixFactory {
         getQuickFix(returnExpression)
     }
 
-    private fun KaSession.getQuickFix(returnExpression: KtReturnExpression): List<ChangeToLabeledReturnFix> {
+    context(KaSession)
+    private fun getQuickFix(returnExpression: KtReturnExpression): List<ChangeToLabeledReturnFix> {
         val candidates = findAccessibleLabels(returnExpression)
         return candidates.map {
             ChangeToLabeledReturnFix(returnExpression, labeledReturn = "return@${it.render()}")
         }
     }
 
-    private fun KaSession.findAccessibleLabels(position: KtReturnExpression): List<Name> {
+    context(KaSession)
+    private fun findAccessibleLabels(position: KtReturnExpression): List<Name> {
         val result = mutableListOf<Name>()
         for (parent in position.parentsWithSelf) {
             when (parent) {
@@ -62,12 +64,13 @@ internal object ChangeToLabeledReturnFixFactory {
         return result
     }
 
-    private fun KaSession.getLambdaReturnExpression(element: PsiElement): KtReturnExpression? {
+    context(KaSession)
+    private fun getLambdaReturnExpression(element: PsiElement): KtReturnExpression? {
         val returnExpression = element.getStrictParentOfType<KtReturnExpression>() ?: return null
         val lambda = returnExpression.getStrictParentOfType<KtLambdaExpression>() ?: return null
         val lambdaReturnType = lambda.functionLiteral.returnType
         val returnType = returnExpression.returnedExpression?.expressionType ?: return null
-        if (!returnType.isSubtypeOf(lambdaReturnType)) return null
+        if (!returnType.isSubTypeOf(lambdaReturnType)) return null
         return returnExpression
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.concurrencyAnnotations;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -17,17 +17,20 @@ import org.jetbrains.annotations.Nullable;
 public final class FieldAccessNotGuardedInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
-  public @NotNull String getGroupDisplayName() {
+  @NotNull
+  public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.concurrency.annotation.issues");
   }
 
   @Override
-  public @NotNull String getShortName() {
+  @NotNull
+  public String getShortName() {
     return "FieldAccessNotGuarded";
   }
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  @NotNull
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new Visitor(holder);
   }
 
@@ -190,7 +193,8 @@ public final class FieldAccessNotGuardedInspection extends AbstractBaseJavaLocal
       }
     }
 
-    private static @Nullable PsiTryStatement findLockTryStatement(PsiReferenceExpression expression, String guard) {
+    @Nullable
+    private static PsiTryStatement findLockTryStatement(PsiReferenceExpression expression, String guard) {
       PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(expression, PsiTryStatement.class);
       while (tryStatement != null) {
         PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();

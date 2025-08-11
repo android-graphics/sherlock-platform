@@ -1,7 +1,7 @@
-from typing import ClassVar
+from typing import Any
 
-from braintree.attribute_getter import AttributeGetter
+from braintree.attribute_getter import AttributeGetter as AttributeGetter
 
 class AddressDetails(AttributeGetter):
-    detail_list: ClassVar[list[str]]
+    detail_list: Any
     def __init__(self, attributes) -> None: ...

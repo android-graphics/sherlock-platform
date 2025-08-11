@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.annotations.NotNull;
@@ -92,7 +92,8 @@ public final class PatternHelper {
     return actions;
   }
 
-  private static @Nullable FunctionExprent findInstanceofExprent(@NotNull IfStatement ifStat) {
+  @Nullable
+  private static FunctionExprent findInstanceofExprent(@NotNull IfStatement ifStat) {
     return ifStat.getHeadexprent().getAllExprents(true).stream()
       .filter(expr -> expr.type == Exprent.EXPRENT_FUNCTION).map(expr -> (FunctionExprent)expr)
       .filter(expr -> expr.getFuncType() == FunctionExprent.FUNCTION_INSTANCEOF)
@@ -125,11 +126,12 @@ public final class PatternHelper {
     return null;
   }
 
-  static @Nullable PatternVariableCandidate findNextPatternVarCandidate(@NotNull Statement ifBranch,
-                                                                        @NotNull VarExprent operand,
-                                                                        @NotNull ConstExprent checkType,
-                                                                        @NotNull VarTracker varTracker,
-                                                                        @NotNull Statement topLevelStatement) {
+  @Nullable
+  static PatternVariableCandidate findNextPatternVarCandidate(@NotNull Statement ifBranch,
+                                                                      @NotNull VarExprent operand,
+                                                                      @NotNull ConstExprent checkType,
+                                                                      @NotNull VarTracker varTracker,
+                                                                      @NotNull Statement topLevelStatement) {
 
     if (ifBranch instanceof BasicBlockStatement) {
       //check that cast correct and get the last assignment
@@ -160,10 +162,11 @@ public final class PatternHelper {
     return null;
   }
 
-  private static @Nullable PatternVariableCandidate findSimpleCandidateFromIfStat(@NotNull Statement ifElseStat,
-                                                                                  @NotNull VarExprent operand,
-                                                                                  @NotNull ConstExprent checkType,
-                                                                                  @NotNull Statement topLevelStatement) {
+  @Nullable
+  private static PatternVariableCandidate findSimpleCandidateFromIfStat(@NotNull Statement ifElseStat,
+                                                                        @NotNull VarExprent operand,
+                                                                        @NotNull ConstExprent checkType,
+                                                                        @NotNull Statement topLevelStatement) {
     List<Exprent> ifElseExprents = ifElseStat.getExprents();
     if (ifElseExprents==null || ifElseExprents.isEmpty() || ifElseExprents.get(0).type != Exprent.EXPRENT_ASSIGNMENT) return null;
 
@@ -224,8 +227,9 @@ public final class PatternHelper {
     return findRecordPatternCandidate(parentSequenceStatement, varTracker);
   }
 
-  private static @Nullable PatternVariableCandidate findRecordPatternCandidate(@NotNull Statement parent,
-                                                                               @NotNull VarTracker varTracker) {
+  @Nullable
+  private static PatternVariableCandidate findRecordPatternCandidate(@NotNull Statement parent,
+                                                                     @NotNull VarTracker varTracker) {
     if (!(parent instanceof SequenceStatement)) {
       return null;
     }
@@ -548,7 +552,7 @@ public final class PatternHelper {
     private final @NotNull Runnable cleaner;
     private final @NotNull Set<IfStatement> usedIfStatement = new HashSet<>();
     private final @NotNull Statement nextStatement;
-    private @Nullable Exprent guards;
+    @Nullable private Exprent guards;
 
     PatternVariableCandidate(@NotNull VarExprent varExprent,
                              @NotNull Statement nextStatement,
@@ -596,9 +600,12 @@ public final class PatternHelper {
   }
 
   static class VarTracker {
-    private @NotNull RecordVarExprent root;
-    private final @NotNull Map<VarExprent, RecordVarExprent> varRecordTracker = new HashMap<>();
-    private final @NotNull List<TempVarAssignmentItem> varTempAssignmentTracker = new ArrayList<>();
+    @NotNull
+    private RecordVarExprent root;
+    @NotNull
+    private final Map<VarExprent, RecordVarExprent> varRecordTracker = new HashMap<>();
+    @NotNull
+    private final List<TempVarAssignmentItem> varTempAssignmentTracker = new ArrayList<>();
 
     VarTracker(@NotNull RecordVarExprent root) { this.root = root; }
 

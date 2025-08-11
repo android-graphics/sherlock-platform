@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,7 +43,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,7 +61,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     Editor editor = instance.openTextEditor(new OpenFileDescriptor(myProject, file, 0), false);
     ((EditorImpl)editor).setCaretActive();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart("JavaCodeInsightTestCase.createEditor " + file);
+    DaemonCodeAnalyzer.getInstance(getProject()).restart();
 
     return editor;
   }
@@ -314,7 +313,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     myFile = getPsiFile(editor.getDocument());
   }
 
-  protected final @Unmodifiable @NotNull List<Editor> openEditors(@NotNull Map<VirtualFile, EditorInfo> editorInfos) {
+  protected final @NotNull List<Editor> openEditors(@NotNull Map<VirtualFile, EditorInfo> editorInfos) {
     return ContainerUtil.map(editorInfos.keySet(), newVFile -> {
       PsiFile file = myPsiManager.findFile(newVFile);
       if (myFile == null) myFile = file;

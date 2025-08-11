@@ -42,12 +42,14 @@ public final class IteratorNextDoesNotThrowNoSuchElementExceptionInspection exte
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "IteratorNextCanNotThrowNoSuchElementException";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("iterator.next.does.not.throw.nosuchelementexception.problem.descriptor");
   }
 

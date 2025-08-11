@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -81,9 +81,9 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
   public GroovySmartCompletionContributor() {
     extend(CompletionType.SMART, INSIDE_EXPRESSION, new CompletionProvider<>() {
       @Override
-      protected void addCompletions(final @NotNull CompletionParameters params,
+      protected void addCompletions(@NotNull final CompletionParameters params,
                                     @NotNull ProcessingContext context,
-                                    final @NotNull CompletionResultSet result) {
+                                    @NotNull final CompletionResultSet result) {
         final PsiElement position = params.getPosition();
         if (position.getParent() instanceof GrLiteral) return;
 
@@ -180,9 +180,9 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
 
     extend(CompletionType.SMART, AFTER_NEW, new CompletionProvider<>() {
       @Override
-      protected void addCompletions(final @NotNull CompletionParameters parameters,
-                                    final @NotNull ProcessingContext matchingContext,
-                                    final @NotNull CompletionResultSet result) {
+      protected void addCompletions(@NotNull final CompletionParameters parameters,
+                                    @NotNull final ProcessingContext matchingContext,
+                                    @NotNull final CompletionResultSet result) {
         generateInheritorVariants(parameters, result.getPrefixMatcher(), lookupElement -> result.addElement(lookupElement));
       }
     });
@@ -191,7 +191,7 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
       @Override
       protected void addCompletions(@NotNull CompletionParameters params,
                                     @NotNull ProcessingContext context,
-                                    final @NotNull CompletionResultSet result) {
+                                    @NotNull final CompletionResultSet result) {
         final PsiElement position = params.getPosition();
 
         if (!isInDefaultAnnotationNameValuePair(position)) return;
@@ -299,7 +299,8 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
     });
   }
 
-  private static @Nullable PsiType inferDiamond(PsiElement place) {
+  @Nullable
+  private static PsiType inferDiamond(PsiElement place) {
     if (!GroovyConfigUtils.getInstance().isVersionAtLeast(place, GroovyConfigUtils.GROOVY1_8)) {
       return null;
     }
@@ -336,7 +337,8 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
     return null;
   }
 
-  private static @Nullable LookupElement addExpectedType(PsiType type, final PsiElement place, CompletionParameters parameters, @Nullable PsiType diamond) {
+  @Nullable
+  private static LookupElement addExpectedType(PsiType type, final PsiElement place, CompletionParameters parameters, @Nullable PsiType diamond) {
     if (!JavaCompletionUtil.hasAccessibleConstructor(type, place)) return null;
 
     final PsiClass psiClass = com.intellij.psi.util.PsiUtil.resolveClassInType(type);
@@ -414,7 +416,8 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
     return TypeConstraint.EMPTY_ARRAY;
   }
 
-  public static @Nullable PsiType getTypeByElement(PsiElement element, PsiElement context) {
+  @Nullable
+  public static PsiType getTypeByElement(PsiElement element, PsiElement context) {
     //if(!element.isValid()) return null;
     if (element instanceof PsiType) {
       return (PsiType)element;

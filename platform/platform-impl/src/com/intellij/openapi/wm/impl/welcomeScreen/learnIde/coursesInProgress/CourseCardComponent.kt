@@ -17,7 +17,6 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.MouseAdapter
@@ -38,7 +37,6 @@ private val hoverColor: Color = ListPluginComponent.SELECTION_COLOR
 private val infoForeground: Color = NamedColorUtil.getInactiveTextColor()
 val mainBackgroundColor: Color = WelcomeScreenUIManager.getMainAssociatedComponentBackground()
 
-@ApiStatus.Internal
 class CourseCardComponent(val data: CourseInfo) : JPanel(BorderLayout()) {
   lateinit var actionComponent: JComponent
   private lateinit var baseComponent: JComponent

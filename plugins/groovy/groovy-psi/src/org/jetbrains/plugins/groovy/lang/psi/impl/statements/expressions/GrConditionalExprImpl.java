@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
@@ -23,12 +23,14 @@ public class GrConditionalExprImpl extends GrExpressionImpl implements GrConditi
   }
 
   @Override
-  public @NotNull GrExpression getCondition() {
+  @NotNull
+  public GrExpression getCondition() {
     return findNotNullChildByClass(GrExpression.class);
   }
 
   @Override
-  public @Nullable GrExpression getThenBranch() {
+  @Nullable
+  public GrExpression getThenBranch() {
     final PsiElement question = findChildByType(GroovyTokenTypes.mQUESTION);
     for (PsiElement nextSibling = question;
          nextSibling != null && nextSibling.getNode().getElementType() != GroovyTokenTypes.mCOLON;
@@ -39,7 +41,8 @@ public class GrConditionalExprImpl extends GrExpressionImpl implements GrConditi
   }
 
   @Override
-  public @Nullable GrExpression getElseBranch() {
+  @Nullable
+  public GrExpression getElseBranch() {
     final PsiElement colon = findChildByType(GroovyTokenTypes.mCOLON);
     for (PsiElement nextSibling = colon;
          nextSibling != null;

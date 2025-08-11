@@ -3,7 +3,6 @@ package com.intellij.webSymbols.query
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
@@ -21,8 +20,6 @@ import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWOR
 @Suppress("INAPPLICABLE_JVM_NAME")
 interface WebSymbolsQueryExecutor : ModificationTracker {
 
-  val location: PsiElement?
-
   val context: WebSymbolsContext
 
   val framework: FrameworkId? get() = context[KIND_FRAMEWORK]
@@ -33,8 +30,6 @@ interface WebSymbolsQueryExecutor : ModificationTracker {
   val namesProvider: WebSymbolNamesProvider
 
   val resultsCustomizer: WebSymbolsQueryResultsCustomizer
-
-  var keepUnresolvedTopLevelReferences: Boolean
 
   fun createPointer(): Pointer<WebSymbolsQueryExecutor>
 

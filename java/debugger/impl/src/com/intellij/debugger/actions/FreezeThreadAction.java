@@ -2,7 +2,6 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -14,29 +13,25 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 public class FreezeThreadAction extends DebuggerAction {
   @Override
-  public void actionPerformed(final @NotNull AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     DebuggerTreeNodeImpl[] selectedNode = getSelectedNodes(e.getDataContext());
     if (selectedNode == null) {
       return;
     }
     final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
     final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
-    if (debugProcess == null) return;
 
     for (final DebuggerTreeNodeImpl debuggerTreeNode : selectedNode) {
       ThreadDescriptorImpl threadDescriptor = ((ThreadDescriptorImpl)debuggerTreeNode.getDescriptor());
       final ThreadReferenceProxyImpl thread = threadDescriptor.getThreadReference();
 
       if (!threadDescriptor.isFrozen()) {
-        DebuggerManagerThreadImpl debuggerManagerThread = Objects.requireNonNull(debuggerContext.getManagerThread());
-        debuggerManagerThread.schedule(new DebuggerCommandImpl() {
+        debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
           @Override
-          protected void action() {
-            debuggerManagerThread.invokeNow(debugProcess.createFreezeThreadCommand(thread));
+          protected void action() throws Exception {
+            debugProcess.createFreezeThreadCommand(thread).run();
             ApplicationManager.getApplication().invokeLater(() -> debuggerTreeNode.calcValue());
           }
         });

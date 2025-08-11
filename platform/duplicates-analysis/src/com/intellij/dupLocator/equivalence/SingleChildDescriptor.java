@@ -15,11 +15,13 @@ public class SingleChildDescriptor {
     myElement = element;
   }
 
-  public @NotNull MyType getType() {
+  @NotNull
+  public MyType getType() {
     return myType;
   }
 
-  public @Nullable PsiElement getElement() {
+  @Nullable
+  public PsiElement getElement() {
     return myElement;
   }
 

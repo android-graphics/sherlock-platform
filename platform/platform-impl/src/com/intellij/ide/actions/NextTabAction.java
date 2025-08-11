@@ -2,9 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
 public final class NextTabAction extends TabNavigationActionBase implements LightEditCompatible {
   public NextTabAction () { super (NavigationType.NEXT); }
 }

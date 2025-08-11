@@ -1,8 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.TreeBackedLighterAST;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,6 +21,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
@@ -27,10 +30,8 @@ import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.IndexedFile;
 import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.indexing.PsiDependentFileContent;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -64,21 +65,21 @@ public final class StubTreeBuilder {
 
     if (fileType instanceof LanguageFileType) {
       Language l = ((LanguageFileType)fileType).getLanguage();
+      ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
+      if (parserDefinition == null) {
+        return null;
+      }
 
-      StubElementRegistryService stubElementRegistryService = StubElementRegistryService.getInstance();
-      LanguageStubDescriptor stubDescriptor = stubElementRegistryService.getStubDescriptor(l);
-      if (stubDescriptor == null) return null;
-
+      IFileElementType elementType = parserDefinition.getFileNodeType();
+      if (!(elementType instanceof IStubFileElementType)) return null;
       VirtualFile vFile = file.getFile();
-      boolean shouldBuildStubFor = stubDescriptor.getStubDefinition().shouldBuildStubFor(vFile);
+      boolean shouldBuildStubFor = ((IStubFileElementType<?>)elementType).shouldBuildStubFor(vFile);
       if (toBuild && !shouldBuildStubFor) return null;
-
       PushedFilePropertiesRetriever pushedFilePropertiesRetriever = PushedFilePropertiesRetriever.getInstance();
       @NotNull List<String> properties = pushedFilePropertiesRetriever != null
                                          ? pushedFilePropertiesRetriever.dumpSortedPushedProperties(vFile)
                                          : Collections.emptyList();
-
-      return new StubBuilderType(stubDescriptor,  properties);
+      return new StubBuilderType((IStubFileElementType<?>)elementType,  properties);
     }
 
     return null;
@@ -127,27 +128,26 @@ public final class StubTreeBuilder {
         PsiDependentFileContent fileContent = (PsiDependentFileContent)inputData;
         FileViewProvider viewProvider = fileContent.getPsiFile().getViewProvider();
         PsiFile psi = viewProvider.getStubBindingRoot();
-        // If we load AST, it should be easily gc-able. See PsiFileImpl.createTreeElementPointer()
+        // if we load AST, it should be easily gc-able. See PsiFileImpl.createTreeElementPointer()
         data = psi.getManager().runInBatchFilesMode(() -> {
           psi.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, contentAsText);
-          StubElement<?> built = null;
+          StubElement built = null;
           try {
-            LanguageStubDescriptor stubDescriptor = ((PsiFileImpl)psi).getStubDescriptor();
-            if (stubDescriptor != null) {
-              LanguageStubDefinition stubDefinition = stubDescriptor.getStubDefinition();
-              StubBuilder stubBuilder = stubDefinition.getBuilder();
+            IStubFileElementType<?> stubFileElementType = ((PsiFileImpl)psi).getElementTypeForStubBuilder();
+            if (stubFileElementType != null) {
+              StubBuilder stubBuilder = stubFileElementType.getBuilder();
               if (stubBuilder instanceof LightStubBuilder) {
                 LightStubBuilder.FORCED_AST.set(fileContent.getLighterAST());
               }
               built = handleStubBuilderException(inputData, stubBuilderType, () -> stubBuilder.buildStubTree(psi));
-              List<Pair<LanguageStubDescriptor, PsiFile>> stubbedRoots = getStubbedRootDescriptors(viewProvider);
+              List<Pair<IStubFileElementType, PsiFile>> stubbedRoots = getStubbedRoots(viewProvider);
               List<PsiFileStub<?>> stubs = new ArrayList<>(stubbedRoots.size());
               stubs.add((PsiFileStub<?>)built);
 
-              for (Pair<LanguageStubDescriptor, PsiFile> stubbedRoot : stubbedRoots) {
+              for (Pair<IStubFileElementType, PsiFile> stubbedRoot : stubbedRoots) {
                 PsiFile secondaryPsi = stubbedRoot.second;
                 if (psi == secondaryPsi) continue;
-                StubBuilder stubbedRootBuilder = stubbedRoot.first.getStubDefinition().getBuilder();
+                StubBuilder stubbedRootBuilder = stubbedRoot.first.getBuilder();
                 if (stubbedRootBuilder instanceof LightStubBuilder) {
                   LightStubBuilder.FORCED_AST.set(new TreeBackedLighterAST(secondaryPsi.getNode()));
                 }
@@ -180,32 +180,21 @@ public final class StubTreeBuilder {
 
   private static void ensureNormalizedOrder(Stub element) {
     if (element instanceof StubBase<?>) {
-      ((StubBase<?>)element).getStubList().finalizeLoadingStage();
+      ((StubBase<?>)element).myStubList.finalizeLoadingStage();
     }
   }
 
-  /**
-   * @deprecated use {@link #getStubbedRootDescriptors(FileViewProvider)} instead
-   */
-  @Deprecated
-  public static @Unmodifiable @NotNull List<Pair<IStubFileElementType<?>, PsiFile>> getStubbedRoots(@NotNull FileViewProvider viewProvider) {
-    List<Pair<LanguageStubDescriptor, PsiFile>> descriptors = getStubbedRootDescriptors(viewProvider);
-    return ContainerUtil.map(descriptors, (Pair<LanguageStubDescriptor, PsiFile> pair) -> {
-      return Pair.create((IStubFileElementType<?>)pair.first.getFileElementType(), pair.second);
-    });
-  }
-
   /** Order is deterministic. First element matches {@link FileViewProvider#getStubBindingRoot()} */
-  @ApiStatus.Experimental
-  public static @Unmodifiable @NotNull List<Pair<LanguageStubDescriptor, PsiFile>> getStubbedRootDescriptors(@NotNull FileViewProvider viewProvider) {
-    List<Trinity<Language, LanguageStubDescriptor, PsiFile>> roots = new SmartList<>();
+  public static @NotNull List<Pair<IStubFileElementType, PsiFile>> getStubbedRoots(@NotNull FileViewProvider viewProvider) {
+    List<Trinity<Language, IStubFileElementType<?>, PsiFile>> roots =
+      new SmartList<>();
     PsiFile stubBindingRoot = viewProvider.getStubBindingRoot();
     for (Language language : viewProvider.getLanguages()) {
       PsiFile file = viewProvider.getPsi(language);
       if (file instanceof PsiFileImpl) {
-        LanguageStubDescriptor descriptor = ((PsiFileImpl)file).getStubDescriptor();
-        if (descriptor != null) {
-          roots.add(Trinity.create(language, descriptor, file));
+        IStubFileElementType<?> type = ((PsiFileImpl)file).getElementTypeForStubBuilder();
+        if (type != null) {
+          roots.add(Trinity.create(language, type, file));
         }
       }
     }

@@ -31,7 +31,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.RemoteTransferUIManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -52,12 +51,13 @@ import org.jetbrains.idea.maven.navigator.structure.MavenProjectsNavigatorPanel;
 import org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.MavenIndexUpdateState;
+import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.jetbrains.idea.maven.utils.MavenEelUtil;
+import org.jetbrains.idea.maven.utils.MavenWslUtil;
 
 import javax.swing.*;
 import javax.swing.text.SimpleAttributeSet;
@@ -259,13 +259,13 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
       });
 
     ProjectRootManagerEx.getInstanceEx(myProject).addProjectJdkListener(() -> {
-      MavenEelUtil.checkJdkAndShowNotification(myProject);
-      MavenEelUtil.restartMavenConnectorsIfJdkIncorrect(myProject);
+      MavenWslUtil.checkWslJdkAndShowNotification(myProject);
+      MavenWslUtil.restartMavenConnectorsIfJdkIncorrect(myProject);
     });
 
     StartupManager.getInstance(myProject).runAfterOpened(() -> {
       DumbService.getInstance(myProject).runWhenSmart(() -> {
-        MavenEelUtil.checkJdkAndShowNotification(myProject);
+        MavenWslUtil.checkWslJdkAndShowNotification(myProject);
       });
     });
   }
@@ -339,7 +339,6 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
     group.add(actionManager.getAction("Maven.ShowVersions"));
 
     toolWindow.setAdditionalGearActions(group);
-    RemoteTransferUIManager.forceDirectTransfer(panel);
   }
 
   private void initTree() {
@@ -465,8 +464,8 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
 
   private final class MyProjectsListener implements MavenProjectsTree.Listener {
     @Override
-    public void projectsIgnoredStateChanged(final List<MavenProject> ignored,
-                                            final List<MavenProject> unignored,
+    public void projectsIgnoredStateChanged(final List<? extends MavenProject> ignored,
+                                            final List<? extends MavenProject> unignored,
                                             boolean fromImport) {
       scheduleStructureRequest(() -> myStructure.updateIgnored(ContainerUtil.concat(ignored, unignored)));
     }
@@ -477,12 +476,13 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
     }
 
     @Override
-    public void projectsUpdated(List<? extends Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
+    public void projectsUpdated(List<? extends Pair<MavenProject, MavenProjectChanges>> updated, List<? extends MavenProject> deleted) {
       scheduleUpdateProjects(MavenUtil.collectFirsts(updated), new ArrayList<>(deleted));
     }
 
     @Override
-    public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+    public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                NativeMavenProjectHolder nativeMavenProject) {
       scheduleUpdateProjects(Collections.singletonList(projectWithChanges.first), Collections.emptyList());
     }
 

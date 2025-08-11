@@ -34,13 +34,11 @@ public class NameLocationPair implements Comparable {
     return myName.compareTo(((NameLocationPair)o).myName);
   }
 
-  @Override
   public boolean equals(Object obj) {
     if (! (obj instanceof NameLocationPair)) return false;
     return compareTo(obj) == 0;
   }
 
-  @Override
   public int hashCode() {
     return myName.hashCode();
   }

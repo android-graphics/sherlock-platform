@@ -140,15 +140,4 @@ public final class FontInfo {
   public int hashCode() {
     return myFont.hashCode();
   }
-
-  @Override
-  public String toString() {
-    return "FontInfo{" +
-           "myFont=" + myFont +
-           ", mySize=" + mySize +
-           ", mySafeCharacters=" + mySafeCharacters +
-           ", myContext=" + myContext +
-           ", myFontMetrics=" + myFontMetrics +
-           '}';
-  }
 }

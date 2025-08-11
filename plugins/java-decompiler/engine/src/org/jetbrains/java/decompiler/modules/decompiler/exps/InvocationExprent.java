@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -13,15 +12,13 @@ import org.jetbrains.java.decompiler.modules.decompiler.ClasspathHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
-import org.jetbrains.java.decompiler.struct.gen.generics.GenericMethodDescriptor;
-import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
@@ -59,8 +56,7 @@ public class InvocationExprent extends Exprent {
   private int invocationType = INVOKE_VIRTUAL;
   private List<Exprent> parameters = new ArrayList<>();
   private List<PooledConstant> bootstrapArguments;
-  private List<VarType> genericArgs = new ArrayList<>();
-  private @Nullable VarType inferredType;
+
   public InvocationExprent() {
     super(EXPRENT_INVOCATION);
   }
@@ -69,7 +65,7 @@ public class InvocationExprent extends Exprent {
                            LinkConstant cn,
                            List<PooledConstant> bootstrapArguments,
                            ListStack<? extends Exprent> stack,
-                           BitSet bytecodeOffsets) {
+                           Set<Integer> bytecodeOffsets) {
     this();
 
     name = cn.elementName;
@@ -155,68 +151,12 @@ public class InvocationExprent extends Exprent {
 
     addBytecodeOffsets(expr.bytecode);
     bootstrapArguments = expr.getBootstrapArguments();
-    genericArgs = expr.genericArgs;
   }
 
   @Override
-  public @NotNull VarType getExprType() {
-    if (inferredType == null) {
-      VarType ret = descriptor.ret;
-      if (ret == null) {
-        return VarType.VARTYPE_UNKNOWN;
-      }
-      return ret;
-    }
-    return inferredType;
+  public VarType getExprType() {
+    return descriptor.ret;
   }
-
-
-  @Override
-  public void inferExprType(VarType upperBound) {
-    List<StructMethod> matches = getMatchedDescriptors();
-    StructMethod desc = null;
-    if(matches.size() == 1) {
-      desc = matches.get(0);
-    }
-
-    genericArgs.clear();
-
-    if (desc != null && desc.getSignature() != null) {
-      VarType ret = desc.getSignature().returnType;
-
-      if (instance != null) {
-        instance.inferExprType(upperBound);
-        VarType instType = instance.getExprType();
-
-        if (instType.isGeneric()) {
-          StructClass cls = DecompilerContext.getStructContext().getClass(instType.getValue());
-
-          if (cls != null && cls.getSignature() != null) {
-            Map<VarType, VarType> map = new HashMap<>();
-            GenericType ginstance = (GenericType)instType;
-
-            if (cls.getSignature().fparameters.size() == ginstance.getArguments().size()) {
-              for (int x = 0; x < ginstance.getArguments().size(); x++) {
-                if (ginstance.getArguments().get(x) != null) { //TODO: Wildcards are null arguments.. look into fixing things?
-                  map.put(GenericType.parse("T" + cls.getSignature().fparameters.get(x) + ";"), ginstance.getArguments().get(x));
-                }
-              }
-            }
-
-            if (!map.isEmpty()) {
-              ret = ret.remap(map);
-            }
-          }
-        }
-      }
-
-      VarType _new = this.gatherGenerics(upperBound, ret, desc.getSignature().typeParameters, genericArgs);
-      if (desc.getSignature().returnType != _new) {
-        inferredType = _new;
-      }
-    }
-  }
-
 
   @Override
   public CheckTypesResult checkExprTypeBounds() {
@@ -235,7 +175,8 @@ public class InvocationExprent extends Exprent {
   }
 
   @Override
-  public List<Exprent> getAllExprents(List<Exprent> lst) {
+  public List<Exprent> getAllExprents() {
+    List<Exprent> lst = new ArrayList<>();
     if (instance != null) {
       lst.add(instance);
     }
@@ -279,7 +220,7 @@ public class InvocationExprent extends Exprent {
 
       if (instance != null && instance.type == EXPRENT_VAR) {
         VarExprent instVar = (VarExprent)instance;
-        VarVersion varPair = new VarVersion(instVar);
+        VarVersionPair varPair = new VarVersionPair(instVar);
 
         VarProcessor varProc = instVar.getProcessor();
         if (varProc == null) {
@@ -355,7 +296,6 @@ public class InvocationExprent extends Exprent {
 
         if (buf.length() > 0) {
           buf.append(".");
-          this.appendParameters(buf, genericArgs);
         }
 
         buf.append(name);
@@ -381,7 +321,7 @@ public class InvocationExprent extends Exprent {
       }
     }
 
-    List<VarVersion> mask = null;
+    List<VarVersionPair> mask = null;
     boolean isEnum = false;
     if (funcType == TYPE_INIT) {
       ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(className);
@@ -390,8 +330,8 @@ public class InvocationExprent extends Exprent {
         isEnum = newNode.classStruct.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
       }
     }
-    List<StructMethod> matches = getMatchedDescriptors();
-    BitSet setAmbiguousParameters = getAmbiguousParameters(matches);
+
+    BitSet setAmbiguousParameters = getAmbiguousParameters();
 
     // omit 'new Type[] {}' for the last parameter of a vararg method call
     if (parameters.size() == descriptor.params.length && isVarArgCall()) {
@@ -513,15 +453,16 @@ public class InvocationExprent extends Exprent {
     "charValue", "java/lang/Character"
   );
 
-  public boolean isUnboxingCall() {
+  private boolean isUnboxingCall() {
     return !isStatic && parameters.isEmpty() && className.equals(UNBOXING_METHODS.get(name));
   }
 
-  private List<StructMethod> getMatchedDescriptors() {
-    List<StructMethod> matches = new ArrayList<>();
+  private BitSet getAmbiguousParameters() {
     StructClass cl = DecompilerContext.getStructContext().getClass(className);
-    if (cl == null) return matches;
+    if (cl == null) return EMPTY_BIT_SET;
 
+    // check number of matches
+    List<MethodDescriptor> matches = new ArrayList<>();
     nextMethod:
     for (StructMethod mt : cl.getMethods()) {
       if (name.equals(mt.getName())) {
@@ -532,19 +473,11 @@ public class InvocationExprent extends Exprent {
               continue nextMethod;
             }
           }
-          matches.add(mt);
+          matches.add(md);
         }
       }
     }
-
-    return matches;
-  }
-
-  private BitSet getAmbiguousParameters(List<StructMethod> matches) {
-    StructClass cl = DecompilerContext.getStructContext().getClass(className);
-    if (cl == null || matches.size() == 1) {
-      return EMPTY_BIT_SET;
-    }
+    if (matches.size() == 1) return EMPTY_BIT_SET;
 
     // check if a call is unambiguous
     StructMethod mt = cl.getMethod(InterpreterUtil.makeUniqueKey(name, stringDescriptor));
@@ -553,8 +486,7 @@ public class InvocationExprent extends Exprent {
       if (md.params.length == parameters.size()) {
         boolean exact = true;
         for (int i = 0; i < md.params.length; i++) {
-          Exprent exp = parameters.get(i);
-          if (!md.params[i].equals(exp.getExprType()) || (exp.type == EXPRENT_NEW && ((NewExprent)exp).isLambda() && !((NewExprent)exp).isMethodReference())) {
+          if (!md.params[i].equals(parameters.get(i).getExprType())) {
             exact = false;
             break;
           }
@@ -567,17 +499,7 @@ public class InvocationExprent extends Exprent {
     BitSet ambiguous = new BitSet(descriptor.params.length);
     for (int i = 0; i < descriptor.params.length; i++) {
       VarType paramType = descriptor.params[i];
-      for (StructMethod mtt : matches) {
-
-        GenericMethodDescriptor gen = mtt.getSignature(); //TODO: Find synthetic flags for params, as Enum generic signatures do no contain the String,int params
-        if (gen != null && gen.parameterTypes.size() > i && gen.parameterTypes.get(i).isGeneric()) {
-          Exprent exp = parameters.get(i);
-          if (exp.type != EXPRENT_NEW || !((NewExprent)exp).isLambda() || ((NewExprent)exp).isMethodReference()) {
-            break;
-          }
-        }
-
-        MethodDescriptor md = MethodDescriptor.parseDescriptor(mtt.getDescriptor());
+      for (MethodDescriptor md : matches) {
         if (!paramType.equals(md.params[i])) {
           ambiguous.set(i);
           break;
@@ -688,13 +610,6 @@ public class InvocationExprent extends Exprent {
 
   public List<PooledConstant> getBootstrapArguments() {
     return bootstrapArguments;
-  }
-
-  @Override
-  public void fillBytecodeRange(@Nullable BitSet values) {
-    measureBytecode(values, parameters);
-    measureBytecode(values, instance);
-    measureBytecode(values);
   }
 
   // *****************************************************************************

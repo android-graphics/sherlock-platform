@@ -51,7 +51,7 @@ internal class TestTerminalOutputManager(project: Project, parentDisposable: Dis
     private fun createEditor(project: Project, parentDisposable: Disposable): EditorEx {
       ExperimentalUI.isNewUI() // `ExperimentalUI` runs `NewUiValue.initialize` in its static init
       val document = DocumentImpl("", true)
-      val editor = TerminalUiUtils.createOutputEditor(document, project, JBTerminalSystemSettingsProviderBase(), installContextMenu = true)
+      val editor = TerminalUiUtils.createOutputEditor(document, project, JBTerminalSystemSettingsProviderBase())
       Disposer.register(parentDisposable) {
         EditorFactory.getInstance().releaseEditor(editor)
       }

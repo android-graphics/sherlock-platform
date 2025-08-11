@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerContext;
@@ -12,7 +12,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
@@ -110,7 +109,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
       return fieldValue;
     }
     catch (InternalException e) {
-      if (evaluationContext.getVirtualMachineProxy().canBeModified()) { // do not care in read only vms
+      if (evaluationContext.getDebugProcess().getVirtualMachineProxy().canBeModified()) { // do not care in read only vms
         LOG.debug(e);
       }
       else {
@@ -130,7 +129,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
         ((ArrayReference)value).length() == 0 &&
         DebuggerUtils.instanceOf(myObject.type(), CommonClassNames.JAVA_LANG_THROWABLE)) {
       try {
-        DebuggerUtilsImpl.invokeThrowableGetStackTrace(myObject, evaluationContext, false);
+        invokeExceptionGetStackTrace(myObject, evaluationContext);
         return true;
       }
       catch (Throwable e) {
@@ -167,8 +166,9 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable String getDeclaredType() {
+  public String getDeclaredType() {
     return myField.typeName();
   }
 
@@ -226,8 +226,9 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
               return field.declaringType().classLoader();
             }
 
+            @NotNull
             @Override
-            public @NotNull Type getLType() throws ClassNotLoadedException {
+            public Type getLType() throws ClassNotLoadedException {
               return field.type();
             }
           });

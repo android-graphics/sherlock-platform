@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
-import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import java.lang.RuntimeException
 
 object AddQualifiersUtil {
@@ -90,7 +89,7 @@ object AddQualifiersUtil {
                 is KtCallableReferenceExpression -> addOrReplaceQualifier(psiFactory, parent, qualifier)
                 is KtCallExpression -> replaceExpressionWithDotQualifier(psiFactory, parent, qualifier)
                 is KtUserType -> addQualifierToType(psiFactory, parent, qualifier)
-                else -> replaceExpressionWithQualifier(psiFactory, referenceExpression, qualifier, fqName)
+                else -> replaceExpressionWithQualifier(psiFactory, referenceExpression, fqName)
             }
         }
         if (referenceExpression.isPhysical) {
@@ -147,13 +146,9 @@ object AddQualifiersUtil {
     private fun replaceExpressionWithQualifier(
         psiFactory: KtPsiFactory,
         referenceExpression: KtNameReferenceExpression,
-        packageQualifier: String,
         fqName: FqName
     ): KtElement {
-        val fqNameUnsafe = fqName.toUnsafe()
-        val shortName = fqNameUnsafe.shortName().asString().quoteIfNeeded()
-        val packageSeparator = ".".takeUnless { packageQualifier.isEmpty() } ?: ""
-        val expressionWithQualifier = psiFactory.createExpression(packageQualifier + packageSeparator + shortName)
+        val expressionWithQualifier = psiFactory.createExpression(fqName.asString())
         return referenceExpression.replace(expressionWithQualifier) as KtElement
     }
 }

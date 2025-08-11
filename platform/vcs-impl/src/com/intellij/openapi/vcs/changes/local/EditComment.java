@@ -1,16 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.local;
 
 import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vcs.changes.ChangeListWorker;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-@ApiStatus.Internal
 public class EditComment implements ChangeListCommand {
   private final String myName;
   private final String myNewComment;
@@ -42,7 +40,8 @@ public class EditComment implements ChangeListCommand {
     }
   }
 
-  public @Nullable String getOldComment() {
+  @Nullable
+  public String getOldComment() {
     return myOldComment;
   }
 }

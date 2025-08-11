@@ -2,10 +2,7 @@
 package com.intellij.ide.impl;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -38,7 +35,7 @@ public final class FlattenModulesToggleAction extends ToggleAction implements Du
     presentation.setEnabledAndVisible(isIntelliJ() && ModuleGrouperKt.isQualifiedModuleNamesEnabled(myProject));
     if (!myIsEnabled.getAsBoolean()) {
       presentation.setEnabled(false);
-      if (e.isFromContextMenu()) {
+      if (ActionPlaces.isPopupPlace(e.getPlace())) {
         presentation.setVisible(false);
       }
     }

@@ -28,9 +28,12 @@ public final class InjectedLanguage {
   private static Map<String, Language> ourLanguageCache;
   private static int ourLanguageCount;
 
-  private final @NotNull String myID;
-  private final @NotNull String myPrefix;
-  private final @NotNull String mySuffix;
+  @NotNull
+  private final String myID;
+  @NotNull
+  private final String myPrefix;
+  @NotNull
+  private final String mySuffix;
   private final boolean myDynamic;
 
   private InjectedLanguage(@NotNull String id, @NotNull String prefix, @NotNull String suffix, boolean dynamic) {
@@ -40,19 +43,23 @@ public final class InjectedLanguage {
     myDynamic = dynamic;
   }
 
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return myID;
   }
 
-  public @Nullable Language getLanguage() {
+  @Nullable
+  public Language getLanguage() {
     return findLanguageById(myID);
   }
 
-  public @NotNull String getPrefix() {
+  @NotNull
+  public String getPrefix() {
     return myPrefix;
   }
 
-  public @NotNull String getSuffix() {
+  @NotNull
+  public String getSuffix() {
     return mySuffix;
   }
 
@@ -63,7 +70,8 @@ public final class InjectedLanguage {
     return myDynamic;
   }
 
-  public static @Nullable Language findLanguageById(@Nullable String langID) {
+  @Nullable
+  public static Language findLanguageById(@Nullable String langID) {
     if (langID == null || langID.isEmpty()) {
       return null;
     }
@@ -105,7 +113,6 @@ public final class InjectedLanguage {
     ourLanguageCount = registeredLanguages.size();
   }
 
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -115,17 +122,18 @@ public final class InjectedLanguage {
     return myID.equals(that.myID);
   }
 
-  @Override
   public int hashCode() {
     return myID.hashCode();
   }
 
-  public static @Nullable InjectedLanguage create(String id) {
+  @Nullable
+  public static InjectedLanguage create(String id) {
     return create(id, "", "", false);
   }
 
   @Contract(value = "null, _, _, _ -> null; !null, _, _, _ -> new", pure = true)
-  public static @Nullable InjectedLanguage create(@Nullable String id, String prefix, String suffix, boolean isDynamic) {
+  @Nullable
+  public static InjectedLanguage create(@Nullable String id, String prefix, String suffix, boolean isDynamic) {
     return id == null ? null : new InjectedLanguage(id, prefix == null ? "" : prefix, suffix == null ? "" : suffix, isDynamic);
   }
 }

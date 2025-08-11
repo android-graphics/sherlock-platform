@@ -1,4 +1,4 @@
-// "Convert argument to 'double'" "true-preview"
+// "Cast argument to 'double'" "true-preview"
 class a {
  void test(Double d) {}
  

@@ -1,5 +1,5 @@
 // "Add parameter to function 'doSmthWithChild'" "true"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 
 interface Parent
 interface Child : Parent

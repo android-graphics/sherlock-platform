@@ -34,7 +34,8 @@ import javax.swing.*;
  */
 public class IgnoreFileType extends LanguageFileType {
 
-  public static final @NotNull IgnoreFileType INSTANCE = new IgnoreFileType();
+  @NotNull
+  public static final IgnoreFileType INSTANCE = new IgnoreFileType();
 
   private IgnoreFileType() {
     this(IgnoreLanguage.INSTANCE);
@@ -49,8 +50,9 @@ public class IgnoreFileType extends LanguageFileType {
    *
    * @return The file type name.
    */
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return getLanguage().getID() + " file";
   }
 
@@ -59,8 +61,9 @@ public class IgnoreFileType extends LanguageFileType {
    *
    * @return The file type description.
    */
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
+  public String getDescription() {
     return getLanguage().getDisplayName();
   }
 
@@ -69,8 +72,9 @@ public class IgnoreFileType extends LanguageFileType {
    *
    * @return The extension, not including the leading '.'.
    */
+  @NotNull
   @Override
-  public @NotNull String getDefaultExtension() {
+  public String getDefaultExtension() {
     return getIgnoreLanguage().getExtension();
   }
 
@@ -89,7 +93,8 @@ public class IgnoreFileType extends LanguageFileType {
    *
    * @return associated language.
    */
-  public @NotNull IgnoreLanguage getIgnoreLanguage() {
+  @NotNull
+  public IgnoreLanguage getIgnoreLanguage() {
     return (IgnoreLanguage)getLanguage();
   }
 }

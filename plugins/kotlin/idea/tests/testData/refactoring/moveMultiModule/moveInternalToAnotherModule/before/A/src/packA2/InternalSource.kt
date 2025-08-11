@@ -5,7 +5,7 @@ import packA1.InternalContent
 class InternalContentUser {
     fun useInternal(p: InternalContent) = p.internalFun()
 
-    internal fun internalFunUser() {
+    internal fun internalFun() {
 
     }
 }

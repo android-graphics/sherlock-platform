@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.ant.model.impl.artifacts;
 
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
@@ -17,7 +16,7 @@ import java.util.List;
 public final class JpsAntArtifactExtensionImpl extends JpsCompositeElementBase<JpsAntArtifactExtensionImpl> implements JpsAntArtifactExtension {
   public static final JpsElementChildRole<JpsAntArtifactExtension> PREPROCESSING_ROLE = JpsElementChildRoleBase.create("ant preprocessing");
   public static final JpsElementChildRole<JpsAntArtifactExtension> POSTPROCESSING_ROLE = JpsElementChildRoleBase.create("ant postprocessing");
-  public static final @NonNls String ARTIFACT_OUTPUT_PATH_PROPERTY = "artifact.output.path";
+  @NonNls public static final String ARTIFACT_OUTPUT_PATH_PROPERTY = "artifact.output.path";
   private final AntArtifactExtensionProperties myProperties;
 
   public JpsAntArtifactExtensionImpl(AntArtifactExtensionProperties properties) {
@@ -29,8 +28,9 @@ public final class JpsAntArtifactExtensionImpl extends JpsCompositeElementBase<J
     myProperties = XmlSerializerUtil.createCopy(original.myProperties);
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsAntArtifactExtensionImpl createCopy() {
+  public JpsAntArtifactExtensionImpl createCopy() {
     return new JpsAntArtifactExtensionImpl(this);
   }
 

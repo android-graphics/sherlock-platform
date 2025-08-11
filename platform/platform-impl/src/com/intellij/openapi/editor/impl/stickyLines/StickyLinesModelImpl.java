@@ -93,7 +93,7 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
       STICKY_LINE_ATTRIBUTE,
       startOffset,
       endOffset,
-      0, // value should be less than SYNTAX because of bug in colors scheme IJPL-149486
+      HighlighterLayer.SYNTAX,
       HighlighterTargetArea.EXACT_RANGE
     );
     StickyLineImpl stickyLine = new StickyLineImpl(highlighter.getDocument(), highlighter, debugText);
@@ -145,9 +145,9 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
   }
 
   @Override
-  public void notifyLinesUpdate() {
+  public void notifyListeners() {
     for (Listener listener : myListeners) {
-      listener.linesUpdated();
+      listener.modelChanged();
     }
   }
 
@@ -158,9 +158,6 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
     }
     for (StickyLine line : getAllStickyLines()) {
       removeStickyLine(line);
-    }
-    for (Listener listener : myListeners) {
-      listener.linesRemoved();
     }
     if (project != null) {
       restartStickyLinesPass(project);

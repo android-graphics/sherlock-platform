@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.intention;
 
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
@@ -17,8 +17,9 @@ public final class TestNGExternalLibraryResolver extends ExternalLibraryResolver
   );
   public static final ExternalLibraryDescriptor TESTNG_DESCRIPTOR = new ExternalLibraryDescriptor("org.testng", "testng", null, null, "7.1.0");
 
+  @Nullable
   @Override
-  public @Nullable ExternalClassResolveResult resolveClass(@NotNull String shortClassName, @NotNull ThreeState isAnnotation, @NotNull Module contextModule) {
+  public ExternalClassResolveResult resolveClass(@NotNull String shortClassName, @NotNull ThreeState isAnnotation, @NotNull Module contextModule) {
     if (TEST_NG_ANNOTATIONS.contains(shortClassName)) {
       return new ExternalClassResolveResult("org.testng.annotations." + shortClassName, TESTNG_DESCRIPTOR);
     }

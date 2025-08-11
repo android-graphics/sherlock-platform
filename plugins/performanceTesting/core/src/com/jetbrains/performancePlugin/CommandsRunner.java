@@ -13,7 +13,7 @@ public final class CommandsRunner {
 
   private CompletableFuture<?> actionCallback;
 
-  static synchronized CommandsRunner getInstance() {
+  synchronized static CommandsRunner getInstance() {
     if (myCommandsRunner == null) {
       myCommandsRunner = new CommandsRunner();
     }
@@ -37,7 +37,10 @@ public final class CommandsRunner {
   }
 
   public static boolean haveCommandsFinishedSuccessfully() {
-    return haveCommandsFinished();
+    if (getInstance().actionCallback == null) {
+      return false;
+    }
+    return getInstance().actionCallback.isDone();
   }
 
   public static boolean haveCommandsFailed() {

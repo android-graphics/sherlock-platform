@@ -33,19 +33,14 @@ internal class InlineCompletionNestedEventInvocationTest : InlineCompletionTestC
         assertFalse("This event must not appear.", event is ForbiddenEvent)
         InlineCompletion.getHandlerOrNull(myFixture.editor)!!.invokeEvent(ForbiddenEvent())
         onSuccess()
-        return InlineCompletionSuggestionUpdateManager.UpdateResult.Changed(variant)
+        return InlineCompletionSuggestionUpdateManager.UpdateResult.Same
       }
     }
 
     class CustomProvider(onSuccessUpdate: () -> Unit) : InlineCompletionProvider {
       override val id: InlineCompletionProviderID = InlineCompletionProviderID("CustomProvider")
-
       override val suggestionUpdateManager = CustomSessionUpdater(onSuccessUpdate)
-
-      override fun isEnabled(event: InlineCompletionEvent): Boolean {
-        return event is InlineCompletionEvent.DirectCall || event is InlineCompletionEvent.DocumentChange
-      }
-
+      override fun isEnabled(event: InlineCompletionEvent): Boolean = true
       override suspend fun getSuggestion(request: InlineCompletionRequest) = InlineCompletionSingleSuggestion.build {
         emit(InlineCompletionGrayTextElement("Test"))
       }

@@ -1,5 +1,4 @@
 // WITH_STDLIB
-// IGNORE_K2
 class CallableObject {
     operator fun User.invoke() = println("User.invoke")
 }

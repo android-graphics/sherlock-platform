@@ -1,4 +1,5 @@
-from typing import Final, NoReturn
+from typing import NoReturn
+from typing_extensions import Final
 
 from Xlib import display
 from Xlib.protocol import rq

@@ -16,7 +16,8 @@ import java.nio.file.Path
 import java.util.regex.Pattern
 import kotlin.io.path.exists
 
-internal object GradleDependencySourceDownloaderErrorHandler {
+object GradleDependencySourceDownloaderErrorHandler {
+
   private const val BUILD_GRADLE = "build.gradle"
   private const val BUILD_GRADLE_KTS = "$BUILD_GRADLE.kts"
 
@@ -41,7 +42,7 @@ internal object GradleDependencySourceDownloaderErrorHandler {
   }
 
   private fun showDefaultNotification(project: Project, artifact: String) {
-    GradleNotification.gradleNotificationGroup
+    GradleNotification.NOTIFICATION_GROUP
       .createNotification(title = GradleBundle.message("gradle.notifications.sources.download.failed.title"),
                           content = GradleBundle.message("gradle.notifications.sources.download.failed.content", artifact),
                           NotificationType.WARNING)
@@ -55,7 +56,7 @@ internal object GradleDependencySourceDownloaderErrorHandler {
                                             repository: RemoteRepositoryDescription) {
     val actions = mutableListOf<AnAction>()
     actions.addIfNotNull(getAction(project, externalProjectPath))
-    GradleNotification.gradleNotificationGroup
+    GradleNotification.NOTIFICATION_GROUP
       .createNotification(
         title = GradleBundle.message("gradle.notifications.sources.download.failed.title"),
         content = GradleBundle.message("gradle.notifications.sources.download.from.repository.failed.content", artifact, repository.name),

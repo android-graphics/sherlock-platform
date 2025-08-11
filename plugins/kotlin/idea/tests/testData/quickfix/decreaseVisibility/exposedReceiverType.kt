@@ -4,7 +4,6 @@
 // ACTION: Make 'Private' protected
 // ACTION: Make 'Private' public
 // ERROR: 'protected (in My)' member exposes its 'private-in-class' receiver type argument Private
-// K2_AFTER_ERROR: 'protected (in My)' member exposes its 'private-in-class' receiver type argument 'Private'.
 
 class Receiver<T>
 

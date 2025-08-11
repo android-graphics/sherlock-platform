@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.config;
 
 import org.apache.commons.cli.Option;
@@ -6,14 +6,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.File;
 import java.util.Map;
 import java.util.Objects;
 
 import static org.jetbrains.idea.maven.config.MavenConfigSettings.*;
 
-public @Nullable class MavenConfig {
+@Nullable
+public class MavenConfig {
   private final Map<String, Option> optionMap;
   private final String baseDir;
 
@@ -54,10 +54,10 @@ public @Nullable class MavenConfig {
     Option option = optionMap.get(configSetting.key);
     if (option == null) return null;
 
-    Path file = Path.of(option.getValue());
-    if (file.isAbsolute() && Files.exists(file)) return option.getValue();
-    file = Path.of(baseDir, option.getValue());
-    if (Files.exists(file)) return file.toAbsolutePath().toString();
+    File file = new File(option.getValue());
+    if (file.isAbsolute() && file.exists()) return option.getValue();
+    file = new File(baseDir, option.getValue());
+    if (file.exists()) return file.getAbsolutePath();
     return null;
   }
 

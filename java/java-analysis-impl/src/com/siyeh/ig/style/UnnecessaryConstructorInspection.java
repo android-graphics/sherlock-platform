@@ -16,9 +16,9 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.VisibilityUtil;
@@ -37,7 +37,8 @@ public final class UnnecessaryConstructorInspection extends BaseInspection {
   public boolean ignoreAnnotations = false;
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "RedundantNoArgConstructor";
   }
 
@@ -49,7 +50,8 @@ public final class UnnecessaryConstructorInspection extends BaseInspection {
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "unnecessary.constructor.problem.descriptor");
   }
@@ -66,7 +68,8 @@ public final class UnnecessaryConstructorInspection extends BaseInspection {
 
   private static class UnnecessaryConstructorFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.constructor.remove.quickfix");
     }

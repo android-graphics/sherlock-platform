@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.psi.PsiElement;
@@ -36,13 +36,16 @@ public final class PushDownData<MemberInfo extends MemberInfoBase<Member>,
   public boolean preserveExternalLinks() {
     return myPreserveLinks;
   }
-  public @NotNull PsiElement getSourceClass() {
+  @NotNull
+  public PsiElement getSourceClass() {
     return mySourceClass;
   }
-  public @NotNull List<MemberInfo> getMembersToMove() {
+  @NotNull
+  public List<MemberInfo> getMembersToMove() {
     return myMembersToMove;
   }
-  public @NotNull DocCommentPolicy getCommentPolicy() {
+  @NotNull
+  public DocCommentPolicy getCommentPolicy() {
     return myCommentPolicy;
   }
 

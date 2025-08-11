@@ -83,7 +83,7 @@ public final class ConvertFormatOperatorToMethodIntention extends PyBaseIntentio
     boolean usesNamedFormat = false;
     final List<ASTNode> stringNodes = stringLiteralExpression.getStringNodes();
     sure(stringNodes);
-    sure(!stringNodes.isEmpty());
+    sure(stringNodes.size() > 0);
     for (ASTNode stringNode : stringNodes) {
       // preserve prefixes and quote form
       CharSequence text = stringNode.getChars();
@@ -182,9 +182,10 @@ public final class ConvertFormatOperatorToMethodIntention extends PyBaseIntentio
     return new Pair<>(result, usesNamedFormat);
   }
 
-  public static @NotNull String convertFormatSpec(@NotNull String modifier,
-                                                  @Nullable String widthAndPrecision,
-                                                  @Nullable String conversionChar) {
+  @NotNull
+  public static String convertFormatSpec(@NotNull String modifier,
+                                         @Nullable String widthAndPrecision,
+                                         @Nullable String conversionChar) {
     final StringBuilder result = new StringBuilder();
     // in strict order
     if (has(modifier, '-')) {
@@ -209,7 +210,8 @@ public final class ConvertFormatOperatorToMethodIntention extends PyBaseIntentio
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.format.operator.to.method");
   }
 
@@ -225,7 +227,7 @@ public final class ConvertFormatOperatorToMethodIntention extends PyBaseIntentio
       return false;
     }
     if (binaryExpression.getLeftExpression() instanceof PyStringLiteralExpression str && binaryExpression.getOperator() == PyTokenTypes.PERC) {
-      if ((!str.getText().isEmpty() && Character.toUpperCase(str.getText().charAt(0)) == 'B')) {
+      if ((str.getText().length() > 0 && Character.toUpperCase(str.getText().charAt(0)) == 'B')) {
         return false;
       }
 

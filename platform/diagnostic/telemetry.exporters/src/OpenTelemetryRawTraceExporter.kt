@@ -3,39 +3,29 @@ package com.intellij.platform.diagnostic.telemetry.exporters
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
-@ApiStatus.Internal
 object OpenTelemetryRawTraceExporter {
 
   private val LOG: Logger = logger<OpenTelemetryRawTraceExporter>()
 
-  fun sendProtobuf(targetUri: URI, binaryTraces: ByteArray) {
-    send(targetUri) {
-      POST(HttpRequest.BodyPublishers.ofByteArray(binaryTraces))
-      header("Content-Type", "application/x-protobuf")
-    }
+  enum class Protocol(val contentType: String) {
+    PROTOBUF("application/x-protobuf"),
+    JSON("application/json")
   }
 
-  fun sendJson(targetUri: URI, json: ByteArray) {
-    send(targetUri) {
-      POST(HttpRequest.BodyPublishers.ofByteArray(json))
-      header("Content-Type", "application/json")
-    }
-  }
-
-  private fun send(targetUri: URI, customizer: HttpRequest.Builder.() -> HttpRequest.Builder) {
+  fun export(targetUri: URI, binaryTraces: ByteArray, protocol: Protocol) {
     try {
-      val builder = HttpRequest.newBuilder().uri(targetUri)
       HttpClient.newHttpClient()
-        .send(
-          customizer(builder).build(),
-          HttpResponse.BodyHandlers.discarding()
-        )
+        .send(HttpRequest.newBuilder()
+                .POST(HttpRequest.BodyPublishers.ofByteArray(binaryTraces))
+                .uri(targetUri)
+                .header("Content-Type", protocol.contentType)
+                .build(),
+              HttpResponse.BodyHandlers.discarding())
     }
     catch (e: Exception) {
       LOG.warn("Unable to upload performance traces to the OTLP server ($targetUri)")

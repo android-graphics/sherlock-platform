@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -16,7 +16,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -100,7 +99,7 @@ public class FindUsagesHandlerBase {
     return FindUsagesHelper.processUsagesInText(element, stringToSearch, false, searchScope, processor);
   }
 
-  protected @Unmodifiable @Nullable Collection<String> getStringsToSearch(final @NotNull PsiElement element) {
+  protected @Nullable Collection<String> getStringsToSearch(final @NotNull PsiElement element) {
     if (element instanceof PsiNamedElement) {
       return ContainerUtil.createMaybeSingletonList(((PsiNamedElement)element).getName());
     }
@@ -112,7 +111,7 @@ public class FindUsagesHandlerBase {
     return false;
   }
 
-  public @Unmodifiable @NotNull Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target, @NotNull SearchScope searchScope) {
+  public @NotNull Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target, @NotNull SearchScope searchScope) {
     return ReferencesSearch.search(createSearchParameters(target, searchScope, null)).findAll();
   }
 

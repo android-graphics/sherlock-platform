@@ -41,13 +41,15 @@ public final class GroovyThreadStopSuspendResumeInspection extends BaseInspectio
   }
 
   @Override
-  protected @Nullable String buildErrorString(Object... args) {
+  @Nullable
+  protected String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.call.to.thread.ref");
 
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

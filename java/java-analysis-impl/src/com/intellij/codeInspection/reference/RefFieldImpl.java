@@ -34,14 +34,7 @@ public final class RefFieldImpl extends RefJavaElementImpl implements RefField {
     LOG.assertTrue(psi != null);
     UField uElement = getUastElement();
     LOG.assertTrue(uElement != null);
-    WritableRefEntity parentRef = (WritableRefEntity)RefMethodImpl.findParentRef(psi, uElement, myManager);
-    if (parentRef == null) return;
-    if (!myManager.isDeclarationsFound()) {
-      parentRef.add(this);
-    }
-    else {
-      this.setOwner(parentRef);
-    }
+    this.setOwner((WritableRefEntity)RefMethodImpl.findParentRef(psi, uElement, myManager));
   }
 
   @Deprecated
@@ -145,7 +138,7 @@ public final class RefFieldImpl extends RefJavaElementImpl implements RefField {
   }
 
   @Override
-  public void accept(final @NotNull RefVisitor visitor) {
+  public void accept(@NotNull final RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor javaVisitor) {
       ReadAction.run(() -> javaVisitor.visitField(this));
     }
@@ -203,13 +196,14 @@ public final class RefFieldImpl extends RefJavaElementImpl implements RefField {
     return owner.getExternalName() + " " + getName();
   }
 
-  static @Nullable RefField fieldFromExternalName(RefManager manager, String externalName) {
+  @Nullable
+  static RefField fieldFromExternalName(RefManager manager, String externalName) {
     return (RefField)manager.getReference(findPsiField(PsiManager.getInstance(manager.getProject()), externalName));
   }
 
-  // used by TeamCity
-  @SuppressWarnings("WeakerAccess")
-  public static @Nullable PsiField findPsiField(PsiManager manager, String externalName) {
+  @SuppressWarnings("WeakerAccess") // used by TeamCity
+  @Nullable
+  public static PsiField findPsiField(PsiManager manager, String externalName) {
     int classNameDelimiter = externalName.lastIndexOf(' ');
     if (classNameDelimiter > 0 && classNameDelimiter < externalName.length() - 1) {
       final String className = externalName.substring(0, classNameDelimiter);

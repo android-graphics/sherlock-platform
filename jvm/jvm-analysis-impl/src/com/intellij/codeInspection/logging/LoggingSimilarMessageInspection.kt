@@ -2,7 +2,10 @@
 package com.intellij.codeInspection.logging
 
 import com.intellij.analysis.JvmAnalysisBundle
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.java.JavaBundle
 import com.intellij.java.library.JavaLibraryUtil
@@ -48,11 +51,9 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
     return true
   }
 
-  override fun buildVisitor(
-    holder: ProblemsHolder,
-    isOnTheFly: Boolean,
-    session: LocalInspectionToolSession,
-  ): PsiElementVisitor {
+  override fun buildVisitor(holder: ProblemsHolder,
+                            isOnTheFly: Boolean,
+                            session: LocalInspectionToolSession): PsiElementVisitor {
     val project = holder.project
     val fileModule = ModuleUtilCore.findModuleForFile(holder.file.virtualFile, project)
     if (!(JavaLibraryUtil.hasLibraryClass(fileModule, LoggingUtil.SLF4J_LOGGER) ||
@@ -161,8 +162,6 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
       val result = mutableSetOf<UCallExpression>()
       file.accept(object : AbstractUastVisitor() {
         override fun visitCallExpression(node: UCallExpression): Boolean {
-          val place = node.sourcePsi ?: return false
-          if (SuppressionUtil.inspectionResultSuppressed(place, this@LoggingSimilarMessageInspection)) return false
           val loggerTypeSearcher = LOGGER_TYPE_SEARCHERS.mapFirst(node) ?: return false
           if (mySkipErrorLogLevel) {
             val hasSetMessage = hasSetThrowable(node, loggerTypeSearcher)
@@ -181,10 +180,8 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
     }
   }
 
-  private fun hasSetThrowable(
-    node: UCallExpression,
-    loggerType: LoggerTypeSearcher?,
-  ): Boolean {
+  private fun hasSetThrowable(node: UCallExpression,
+                              loggerType: LoggerTypeSearcher?): Boolean {
     if (loggerType == null) {
       return false
     }
@@ -192,10 +189,10 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
       return false
     }
     var currentCall = node.receiver
-    (0..MAX_BUILDER_LENGTH).forEach { ignore ->
+    for (ignore in 0..MAX_BUILDER_LENGTH) {
       if (currentCall is UQualifiedReferenceExpression) {
         currentCall = currentCall.selector
-        return@forEach
+        continue
       }
       if (currentCall !is UCallExpression) {
         return false
@@ -325,11 +322,9 @@ private class PartHolderIterator(private val parts: List<LoggingStringPartEvalua
 
 private data class MessageLog(val call: UCallExpression, val parts: List<LoggingStringPartEvaluator.PartHolder>?)
 
-private fun similar(
-  first: List<LoggingStringPartEvaluator.PartHolder>?,
-  second: List<LoggingStringPartEvaluator.PartHolder>?,
-  minTextLength: Int,
-): Boolean {
+private fun similar(first: List<LoggingStringPartEvaluator.PartHolder>?,
+                    second: List<LoggingStringPartEvaluator.PartHolder>?,
+                    minTextLength: Int): Boolean {
   if (first == null || second == null) return false
   if (first.isEmpty() || second.isEmpty()) return false
   if (first.any { it.callPart != null } || second.any { it.callPart != null }) {

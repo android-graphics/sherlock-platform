@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -12,7 +12,6 @@ import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Query;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -21,8 +20,8 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiStatus.Internal
-public abstract class PyLineMarkerNavigator<T extends PsiElement> implements GutterIconNavigationHandler<T> {
+
+abstract class PyLineMarkerNavigator<T extends PsiElement> implements GutterIconNavigationHandler<T> {
 
   private static final Key<NavigatablePsiElement[]> MARKERS = new Key<>("PyLineMarkerNavigatorMarkers");
 
@@ -58,7 +57,7 @@ public abstract class PyLineMarkerNavigator<T extends PsiElement> implements Gut
    * @see #MARKERS
    */
   @TestOnly
-  public static NavigatablePsiElement @Nullable [] getNavigationTargets(final @NotNull UserDataHolder holder) {
+  static NavigatablePsiElement @Nullable [] getNavigationTargets(final @NotNull UserDataHolder holder) {
     return holder.getUserData(MARKERS);
   }
 

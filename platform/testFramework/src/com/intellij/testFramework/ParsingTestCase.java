@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.pom.tree.TreeAspect;
-import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -85,7 +84,8 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     myLowercaseFirstLetter = lowercaseFirstLetter;
   }
 
-  protected @NotNull MockApplication getApplication() {
+  @NotNull
+  protected MockApplication getApplication() {
     return app;
   }
 
@@ -139,7 +139,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
     // That's for reparse routines
     project.registerService(PomModel.class, new PomModelImpl(project));
-    Registry.Companion.markAsLoaded();
+    Registry.markAsLoaded();
     LoadingState.setCurrentState(LoadingState.PROJECT_OPENED);
   }
 
@@ -151,8 +151,9 @@ public abstract class ParsingTestCase extends UsefulTestCase {
         return language.getID();
       }
 
+      @NotNull
       @Override
-      public @NotNull ParserDefinition getInstance() {
+      public ParserDefinition getInstance() {
         return definition;
       }
     });
@@ -214,8 +215,9 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     }
   }
 
+  @NotNull
   // easy debug of not disposed extension
-  protected @NotNull PluginDescriptor getPluginDescriptor() {
+  protected PluginDescriptor getPluginDescriptor() {
     PluginDescriptor pluginDescriptor = this.pluginDescriptor;
     if (pluginDescriptor == null) {
       pluginDescriptor = new DefaultPluginDescriptor(PluginId.getId(getClass().getName() + "." + getName()), ParsingTestCase.class.getClassLoader());
@@ -224,7 +226,8 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     return pluginDescriptor;
   }
 
-  public @NotNull MockProjectEx getProject() {
+  @NotNull
+  public MockProjectEx getProject() {
     return project;
   }
 
@@ -245,7 +248,8 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     return PathManagerEx.getTestDataPath();
   }
 
-  public final @NotNull String getTestName() {
+  @NotNull
+  public final String getTestName() {
     return getTestName(myLowercaseFirstLetter);
   }
 
@@ -304,23 +308,11 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     return myFile;
   }
 
-  private void doSanityChecks(PsiFile root) {
+  private static void doSanityChecks(PsiFile root) {
     assertEquals("psi text mismatch", root.getViewProvider().getContents().toString(), root.getText());
     ensureParsed(root);
-    ensureCorrectReparse(root, isCheckNoPsiEventsOnReparse());
+    ensureCorrectReparse(root);
     checkRangeConsistency(root);
-  }
-
-  /**
-   * @deprecated Don't use this method in new code.
-   * <p>
-   * This method is a hack for old code to avoid failures in parsing tests when PSI machinery detects psi changes on file reparse.
-   * This should not happen because the parser must produce a stable result each time it's called.
-   * Please fix your parser instead of overriding this method. In case of doubts, consult with IntelliJ/Code Platform team.
-   */
-  @Deprecated
-  protected boolean isCheckNoPsiEventsOnReparse() {
-    return true;
   }
 
   private static void checkRangeConsistency(PsiFile file) {
@@ -539,26 +531,16 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     });
   }
 
-  public static void ensureCorrectReparse(@NotNull PsiFile file) {
-    ensureCorrectReparse(file, true);
-  }
-
-  private static void ensureCorrectReparse(@NotNull PsiFile file, boolean isCheckNoPsiEventsOnReparse) {
+  public static void ensureCorrectReparse(@NotNull final PsiFile file) {
     final String psiToStringDefault = DebugUtil.psiToString(file, true, false);
 
-    TreeChangeEventImpl event = DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
-      String fileText = file.getText();
-      DiffLog diffLog = new BlockSupportImpl().reparseRange(
-        file, file.getNode(), TextRange.allOf(fileText), fileText, new EmptyProgressIndicator(), fileText
-      );
-      return diffLog.performActualPsiChange(file);
-    });
+    DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
+                                       final String fileText = file.getText();
+                                       final DiffLog diffLog = new BlockSupportImpl().reparseRange(
+                                         file, file.getNode(), TextRange.allOf(fileText), fileText, new EmptyProgressIndicator(), fileText);
+                                       diffLog.performActualPsiChange(file);
+                                     });
 
     assertEquals(psiToStringDefault, DebugUtil.psiToString(file, true, false));
-
-    // this if-check is only for compatibility reasons! Please fix your parser instead of employing the flag!
-    if (isCheckNoPsiEventsOnReparse) {
-      assertEmpty(event.getChangedElements());
-    }
   }
 }

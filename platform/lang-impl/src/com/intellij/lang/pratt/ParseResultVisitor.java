@@ -16,10 +16,8 @@
 package com.intellij.lang.pratt;
 
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public interface ParseResultVisitor<T> {
   T append();
   T error();

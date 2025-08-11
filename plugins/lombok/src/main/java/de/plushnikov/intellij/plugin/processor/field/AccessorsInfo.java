@@ -46,19 +46,21 @@ public class AccessorsInfo {
     this.prefixes = null == prefixes ? ArrayUtil.EMPTY_STRING_ARRAY : prefixes;
   }
 
-  public static @NotNull AccessorsInfo build(boolean fluentValue,
-                                             boolean chainValue,
-                                             boolean makeFinal,
-                                             boolean doNotUseIsPrefix,
-                                             CapitalizationStrategy capitalizationStrategy,
-                                             String... prefixes) {
+  @NotNull
+  public static AccessorsInfo build(boolean fluentValue,
+                                    boolean chainValue,
+                                    boolean makeFinal,
+                                    boolean doNotUseIsPrefix,
+                                    CapitalizationStrategy capitalizationStrategy,
+                                    String... prefixes) {
     return new AccessorsInfo(fluentValue, chainValue, makeFinal, doNotUseIsPrefix, capitalizationStrategy, prefixes);
   }
 
-  private static @NotNull AccessorsInfo buildAccessorsInfo(@Nullable PsiClass psiClass, @Nullable Boolean chainDeclaredValue,
-                                                           @Nullable Boolean fluentDeclaredValue,
-                                                           @Nullable Boolean makeFinalDeclaredValue,
-                                                           @NotNull Collection<String> prefixDeclared) {
+  @NotNull
+  private static AccessorsInfo buildAccessorsInfo(@Nullable PsiClass psiClass, @Nullable Boolean chainDeclaredValue,
+                                                  @Nullable Boolean fluentDeclaredValue,
+                                                  @Nullable Boolean makeFinalDeclaredValue,
+                                                  @NotNull Collection<String> prefixDeclared) {
     final boolean isFluent;
     final boolean isChained;
     final boolean makeFinal;
@@ -98,8 +100,7 @@ public class AccessorsInfo {
 
       doNotUseIsPrefix = configDiscovery.getBooleanLombokConfigProperty(ConfigKey.GETTER_NO_IS_PREFIX, psiClass);
 
-      final String capitalizationStrategyValue =
-        configDiscovery.getStringLombokConfigProperty(ConfigKey.ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION, psiClass);
+      final String capitalizationStrategyValue = configDiscovery.getStringLombokConfigProperty(ConfigKey.ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION, psiClass);
       capitalizationStrategy = CapitalizationStrategy.convertValue(capitalizationStrategyValue);
     }
     else {
@@ -157,7 +158,8 @@ public class AccessorsInfo {
                               values.prefixes);
   }
 
-  public static @NotNull AccessorsInfo buildFor(@NotNull PsiField psiField) {
+  @NotNull
+  public static AccessorsInfo buildFor(@NotNull PsiField psiField) {
     final AccessorsValues fieldAccessorsValues = getAccessorsValues(psiField);
     final AccessorsValues classAccessorsValues = getAccessorsValues(psiField.getContainingClass());
     final AccessorsValues combinedAccessorValues = fieldAccessorsValues.combine(classAccessorsValues);
@@ -166,12 +168,14 @@ public class AccessorsInfo {
     return buildFrom(containingClass, combinedAccessorValues);
   }
 
-  public static @NotNull AccessorsInfo buildFor(@NotNull PsiClass psiClass) {
+  @NotNull
+  public static AccessorsInfo buildFor(@NotNull PsiClass psiClass) {
     AccessorsValues resultAccessorsValues = getAccessorsValues(psiClass);
     return buildFrom(psiClass, resultAccessorsValues);
   }
 
-  private static @NotNull AccessorsValues getAccessorsValues(@NotNull PsiField psiField) {
+  @NotNull
+  private static AccessorsValues getAccessorsValues(@NotNull PsiField psiField) {
     AccessorsValues accessorsValues = new AccessorsValues();
     final PsiAnnotation accessorsFieldAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.ACCESSORS);
     if (null != accessorsFieldAnnotation) {
@@ -180,7 +184,8 @@ public class AccessorsInfo {
     return accessorsValues;
   }
 
-  public static @NotNull AccessorsValues getAccessorsValues(@Nullable PsiClass psiClass) {
+  @NotNull
+  public static AccessorsValues getAccessorsValues(@Nullable PsiClass psiClass) {
     AccessorsValues resultAccessorsValues = new AccessorsValues();
 
     PsiClass containingClass = psiClass;
@@ -195,7 +200,8 @@ public class AccessorsInfo {
     return resultAccessorsValues;
   }
 
-  public static @NotNull AccessorsInfo buildFor(@NotNull PsiField psiField, AccessorsValues classAccessorsValues) {
+  @NotNull
+  public static AccessorsInfo buildFor(@NotNull PsiField psiField, AccessorsValues classAccessorsValues) {
     final AccessorsValues fieldAccessorsValues = getAccessorsValues(psiField);
     final AccessorsValues combinedAccessorValues = fieldAccessorsValues.combine(classAccessorsValues);
 
@@ -234,40 +240,42 @@ public class AccessorsInfo {
     return prefixes;
   }
 
-  public boolean acceptsFieldName(String fieldName) {
-    return null != removePrefix(fieldName);
-  }
-
-  @Nullable
-  public String removePrefix(String fieldName) {
+  public boolean isPrefixUnDefinedOrNotStartsWith(String fieldName) {
     if (prefixes.length == 0) {
-      return fieldName;
+      return false;
     }
 
     for (String prefix : prefixes) {
-      if (prefix.isEmpty()) {
-        return fieldName;
+      if (canPrefixApply(fieldName, prefix)) {
+        return false;
       }
-
-      final int lengthOfPrefix = prefix.length();
-      if (fieldName.length() <= lengthOfPrefix || !fieldName.startsWith(prefix)) {
-        continue;
-      }
-
-      char charAfterPrefix = fieldName.charAt(lengthOfPrefix);
-      if (Character.isLetter(prefix.charAt(lengthOfPrefix - 1)) && Character.isLowerCase(charAfterPrefix)) {
-        continue;
-      }
-
-      return Character.toLowerCase(charAfterPrefix) + fieldName.substring(lengthOfPrefix + 1);
     }
-
-    return null;
+    return true;
   }
 
-  @NotNull
-  public String removePrefixWithDefault(String fieldName) {
-    final String newName = removePrefix(fieldName);
-    return null != newName ? newName : fieldName;
+  public String removePrefix(String fieldName) {
+    for (String prefix : prefixes) {
+      if (canPrefixApply(fieldName, prefix)) {
+        return prefix.isEmpty() ? fieldName : decapitalizeLikeLombok(fieldName.substring(prefix.length()));
+      }
+    }
+    return fieldName;
+  }
+
+  private static boolean canPrefixApply(String fieldName, String prefix) {
+    final int prefixLength = prefix.length();
+    // we can use digits and upper case letters after a prefix, but not lower case letters
+    return prefixLength == 0 ||
+           fieldName.startsWith(prefix) && fieldName.length() > prefixLength &&
+           (!Character.isLetter(prefix.charAt(prefix.length() - 1)) || !Character.isLowerCase(fieldName.charAt(prefixLength)));
+  }
+
+  private static String decapitalizeLikeLombok(String name) {
+    if (name == null || name.isEmpty()) {
+      return name;
+    }
+    char[] chars = name.toCharArray();
+    chars[0] = Character.toLowerCase(chars[0]);
+    return new String(chars);
   }
 }

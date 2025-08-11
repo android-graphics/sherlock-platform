@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.ui.popup.util;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -144,7 +146,8 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     }
   }
 
-  protected @NotNull Editor createEditor(@Nullable Project project, Document document, @NotNull VirtualFile file) {
+  @NotNull
+  protected Editor createEditor(@Nullable Project project, Document document, @NotNull VirtualFile file) {
     EditorEx editor = (EditorEx)EditorFactory.getInstance().createViewer(document, project, EditorKind.PREVIEW);
 
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -176,7 +179,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
   }
 
   @Override
-  public void setPropertiesPanel(final @Nullable JPanel panel) {
+  public void setPropertiesPanel(@Nullable final JPanel panel) {
     if (panel == null) {
       if (myDetailPanelWrapper != null) {
         myDetailPanelWrapper.removeAll();

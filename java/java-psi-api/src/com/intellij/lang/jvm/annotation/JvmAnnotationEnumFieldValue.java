@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm.annotation;
 
 import com.intellij.lang.jvm.JvmClass;
@@ -23,7 +23,8 @@ public interface JvmAnnotationEnumFieldValue extends JvmAnnotationAttributeValue
    *
    * @return name of the referenced enum field
    */
-  default @Nullable String getFieldName() {
+  @Nullable
+  default String getFieldName() {
     JvmField field = getField();
     return field == null ? null : field.getName();
   }
@@ -33,7 +34,8 @@ public interface JvmAnnotationEnumFieldValue extends JvmAnnotationAttributeValue
    *
    * @return containing class of the referenced enum field
    */
-  default @Nullable JvmClass getContainingClass() {
+  @Nullable
+  default JvmClass getContainingClass() {
     JvmEnumField field = getField();
     return field == null ? null : field.getContainingClass();
   }
@@ -43,7 +45,9 @@ public interface JvmAnnotationEnumFieldValue extends JvmAnnotationAttributeValue
    *
    * @return fully qualified name of the containing class of the referenced enum field
    */
-  default @NonNls @Nullable String getContainingClassName() {
+  @NonNls
+  @Nullable
+  default String getContainingClassName() {
     JvmClass containingClass = getContainingClass();
     return containingClass == null ? null : containingClass.getQualifiedName();
   }

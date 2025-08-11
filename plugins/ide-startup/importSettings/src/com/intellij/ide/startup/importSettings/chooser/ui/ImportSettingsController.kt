@@ -15,7 +15,7 @@ import com.intellij.openapi.ui.OnboardingBackgroundImageProvider
 import com.intellij.openapi.util.Disposer
 import com.jetbrains.rd.util.reactive.viewNotNull
 
-internal sealed interface ImportSettingsController : BaseController {
+interface ImportSettingsController : BaseController {
   companion object {
     fun createController(dialog: OnboardingDialog, skipImportAction: () -> Unit): ImportSettingsController {
       return ImportSettingsControllerImpl(dialog, skipImportAction)

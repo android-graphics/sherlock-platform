@@ -2,7 +2,6 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * A Base62 encoder/decoder.
@@ -11,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus;
  *
  * @author Sebastian Ruhleder, sebastian@seruco.io
  */
-@ApiStatus.Internal
 public final class Base62 {
   private static final int STANDARD_BASE = 256;
   private static final int TARGET_BASE = 62;

@@ -1,5 +1,6 @@
 from _typeshed import Incomplete
-from typing import ClassVar, Literal
+from typing import ClassVar
+from typing_extensions import Literal
 
 from . import Integer, MatchPattern, MinMax, Strict, String
 from .base import _M, _N
@@ -22,7 +23,7 @@ class Percentage(MinMax[float, Incomplete]):
     pattern: str
     min: float
     max: float
-    def __set__(self, instance: Serialisable | Strict, value) -> None: ...
+    def __set__(self, instance: Serialisable | Strict, value: Incomplete) -> None: ...
 
 class Extension(Serialisable):
     uri: String[Literal[False]]

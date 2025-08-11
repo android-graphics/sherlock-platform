@@ -626,7 +626,8 @@ public abstract class KtUsefulTestCase extends TestCase {
 
     @NotNull
     public static String toString(@NotNull Collection<?> collection, @NotNull String separator) {
-        List<String> list = ContainerUtil.sorted(ContainerUtil.map(collection, String::valueOf));
+        List<String> list = ContainerUtil.map(collection, String::valueOf);
+        Collections.sort(list);
         StringBuilder builder = new StringBuilder();
         boolean flag = false;
         for (final String o : list) {

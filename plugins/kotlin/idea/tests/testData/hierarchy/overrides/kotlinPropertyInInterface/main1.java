@@ -42,8 +42,6 @@ class D extends Z {
     }
 }
 
-class E extends C {}
-
 class S {
 
 }

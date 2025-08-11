@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.connection.request;
 
 import com.intellij.internal.statistic.config.StatisticsStringUtil;
@@ -56,7 +56,8 @@ public class StatsRequestBuilder {
     myExtraHeaders = settings.getExtraHeaders();
   }
 
-  public @NotNull StatsRequestBuilder withBody(@NotNull String body, @NotNull String contentType, @NotNull Charset charset) {
+  @NotNull
+  public StatsRequestBuilder withBody(@NotNull String body, @NotNull String contentType, @NotNull Charset charset) {
     if (StatisticsStringUtil.isEmptyOrSpaces(body)) {
       throw new EmptyHttpRequestBody();
     }
@@ -66,12 +67,14 @@ public class StatsRequestBuilder {
     return this;
   }
 
-  public @NotNull StatsRequestBuilder fail(@NotNull StatsResponseHandler processor) {
+  @NotNull
+  public StatsRequestBuilder fail(@NotNull StatsResponseHandler processor) {
     onFail = processor;
     return this;
   }
 
-  public @NotNull StatsRequestBuilder succeed(@NotNull StatsResponseHandler processor) {
+  @NotNull
+  public StatsRequestBuilder succeed(@NotNull StatsResponseHandler processor) {
     onSucceed = processor;
     return this;
   }
@@ -160,7 +163,8 @@ public class StatsRequestBuilder {
     }
   }
 
-  private @NotNull HttpRequest newRequest() {
+  @NotNull
+  private HttpRequest newRequest() {
     HttpRequest.Builder builder = HttpRequest.newBuilder().
       setHeader("User-Agent", myUserAgent).
       timeout(Duration.ofSeconds(10)).

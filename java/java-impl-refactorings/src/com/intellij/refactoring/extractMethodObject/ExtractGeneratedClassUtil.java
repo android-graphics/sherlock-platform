@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -73,8 +73,9 @@ final class ExtractGeneratedClassUtil {
     }
   }
 
-  private static @Nullable PsiElement copy(@NotNull PsiImportStaticStatement importStatement,
-                                           @NotNull PsiElementFactory elementFactory) {
+  @Nullable
+  private static PsiElement copy(@NotNull PsiImportStaticStatement importStatement,
+                                 @NotNull PsiElementFactory elementFactory) {
     PsiClass targetClass = importStatement.resolveTargetClass();
     String memberName = importStatement.getReferenceName();
     if (targetClass != null && memberName != null) {
@@ -87,16 +88,9 @@ final class ExtractGeneratedClassUtil {
   private static boolean isPublic(@NotNull PsiImportStaticStatement staticImport) {
     PsiClass targetClass = staticImport.resolveTargetClass();
     if (targetClass != null && isPublicClass(targetClass)) {
-      PsiJavaCodeReferenceElement reference = staticImport.getImportReference();
-      if (reference != null) {
-        JavaResolveResult[] targets = reference.multiResolve(false);
-        for (JavaResolveResult target : targets) {
-          PsiElement importedElement = target.getElement();
-          if (importedElement instanceof PsiModifierListOwner &&
-              ((PsiModifierListOwner)importedElement).hasModifierProperty(PsiModifier.PUBLIC)) {
-            return true;
-          }
-        }
+      PsiElement importedElement = staticImport.resolve();
+      if (importedElement instanceof PsiModifierListOwner) {
+        return ((PsiModifierListOwner)importedElement).hasModifierProperty(PsiModifier.PUBLIC);
       }
     }
     return false;

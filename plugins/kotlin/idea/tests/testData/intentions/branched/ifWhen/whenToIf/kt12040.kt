@@ -1,4 +1,3 @@
-// PRIORITY: LOW
 // AFTER-WARNING: Parameter 'p' is never used
 fun foo(a: Int) {
     <caret>when (a) {
@@ -11,3 +10,5 @@ fun foo(a: Int) {
 }
 
 fun bar(p: Int){}
+
+// IGNORE_K2

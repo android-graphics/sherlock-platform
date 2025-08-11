@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
@@ -20,8 +19,12 @@ import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.PsiFieldImpl;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -44,8 +47,9 @@ public final class JavaDfaValueFactory {
   private JavaDfaValueFactory() {
   }
 
+  @Nullable
   @Contract("_, null -> null")
-  public static @Nullable DfaValue getExpressionDfaValue(@NotNull DfaValueFactory factory, @Nullable PsiExpression expression) {
+  public static DfaValue getExpressionDfaValue(@NotNull DfaValueFactory factory, @Nullable PsiExpression expression) {
     if (expression == null) return null;
 
     if (expression instanceof PsiParenthesizedExpression) {
@@ -108,7 +112,7 @@ public final class JavaDfaValueFactory {
         target = tryCast(qualifier.resolve(), PsiClass.class);
       }
       else {
-        target = PsiUtil.getContainingClass(expression);
+        target = ClassUtils.getContainingClass(expression);
       }
       return target == null
              ? factory.fromDfType(DfTypes.typedObject(expression.getType(), Nullability.NOT_NULL))
@@ -142,12 +146,13 @@ public final class JavaDfaValueFactory {
    * @param refExpr reference to create a qualifier variable for
    * @return a qualifier variable or null if qualifier is unnecessary or cannot be represented as a variable
    */
-  public static @Nullable DfaValue getQualifierOrThisValue(DfaValueFactory factory, PsiReferenceExpression refExpr) {
+  @Nullable
+  public static DfaValue getQualifierOrThisValue(DfaValueFactory factory, PsiReferenceExpression refExpr) {
     PsiExpression qualifierExpression = refExpr.getQualifierExpression();
     if (qualifierExpression == null) {
       PsiElement element = refExpr.resolve();
       if (element instanceof PsiMember && !((PsiMember)element).hasModifierProperty(PsiModifier.STATIC)) {
-        PsiClass currentClass = PsiUtil.getContainingClass(refExpr);
+        PsiClass currentClass = ClassUtils.getContainingClass(refExpr);
         PsiClass memberClass = ((PsiMember)element).getContainingClass();
         if (memberClass != null && currentClass != null) {
           PsiClass target;
@@ -161,15 +166,11 @@ public final class JavaDfaValueFactory {
         }
       }
     }
-    qualifierExpression = PsiUtil.skipParenthesizedExprDown(qualifierExpression);
-    if (qualifierExpression instanceof PsiTypeCastExpression castExpression &&
-        castExpression.getType() instanceof PsiClassType) {
-      qualifierExpression = castExpression.getOperand();
-    }
     return getQualifierValue(factory, qualifierExpression);
   }
 
-  private static @Nullable DfaValue getQualifierValue(DfaValueFactory factory, PsiExpression qualifierExpression) {
+  @Nullable
+  private static DfaValue getQualifierValue(DfaValueFactory factory, PsiExpression qualifierExpression) {
     DfaValue qualifierValue = getExpressionDfaValue(factory, qualifierExpression);
     if (qualifierValue == null) return null;
     PsiVariable constVar = qualifierValue.getDfType().getConstantOfType(PsiVariable.class);
@@ -179,9 +180,9 @@ public final class JavaDfaValueFactory {
     return qualifierValue;
   }
 
-  static boolean maybeUninitializedConstant(DfaValue constValue,
-                                            @NotNull PsiReferenceExpression refExpr,
-                                            PsiModifierListOwner var) {
+  private static boolean maybeUninitializedConstant(DfaValue constValue,
+                                                    @NotNull PsiReferenceExpression refExpr,
+                                                    PsiModifierListOwner var) {
     // If static final field is referred from the same or inner/nested class,
     // we consider that it might be uninitialized yet as some class initializers may call its methods or
     // even instantiate objects of this class and call their methods
@@ -191,36 +192,19 @@ public final class JavaDfaValueFactory {
   }
 
   @Contract("null -> null")
-  public static @Nullable VariableDescriptor getAccessedVariableOrGetter(final PsiElement target) {
-    return getAccessedVariableOrGetter(target, false);
-  }
-
-  /**
-   * @param target target element (variable or method)
-   * @param stable if true, it's known externally that the access to the element is stable, 
-   *               i.e., if the target element is a virtual method, we are definitely accessing the specified one,
-   *               and not overridden one.
-   * @return the variable descriptor, describing the specified access; null if given element cannot be described as a dataflow variable
-   */
-  @Contract("null, _ -> null")
-  public static @Nullable VariableDescriptor getAccessedVariableOrGetter(@Nullable PsiElement target, boolean stable) {
+  @Nullable
+  public static VariableDescriptor getAccessedVariableOrGetter(final PsiElement target) {
     SpecialField sf = SpecialField.findSpecialField(target);
     if (sf != null) {
       return sf;
     }
-    if (target instanceof PsiVariable variable) {
-      return new PlainDescriptor(variable);
+    if (target instanceof PsiVariable) {
+      return new PlainDescriptor((PsiVariable)target);
     }
     if (target instanceof PsiMethod method) {
       // Assume that methods returning stream always return a new one
       if (InheritanceUtil.isInheritor(method.getReturnType(), JAVA_UTIL_STREAM_BASE_STREAM)) return null;
-
-      PsiField targetField = getFieldForGetter(method, stable);
-      if (targetField != null) {
-        return new PlainDescriptor(targetField);
-      }
-
-      if (!method.isConstructor() && method.getParameterList().isEmpty() &&
+      if (method.getParameterList().isEmpty() &&
           (PropertyUtilBase.isSimplePropertyGetter(method) || JavaMethodContractUtil.isPure(method) || isClassAnnotatedImmutable(method)) &&
           isContractAllowedForGetter(method) &&
           !UNSTABLE_METHODS.methodMatches(method)) {
@@ -228,20 +212,6 @@ public final class JavaDfaValueFactory {
       }
     }
     return null;
-  }
-  
-  private static @Nullable PsiField getFieldForGetter(@NotNull PsiMethod method, boolean stable) {
-    if (!stable && PsiUtil.canBeOverridden(method)) return null;
-    if (GetterDescriptor.isKnownStableMethod(method)) return null;
-    PsiField field = PropertyUtil.getFieldOfGetter(method);
-    if (field == null) return null;
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(method.getProject());
-    if (manager.isNullable(method, true) && !manager.isNullable(field, true)) {
-      // Avoid inlining if getter is marked as nullable, while the field is not.
-      // In this rare case, we cannot preserve the nullability warning on the callsite.
-      return null;
-    }
-    return field;
   }
 
   private static boolean isClassAnnotatedImmutable(PsiMethod method) {
@@ -258,7 +228,8 @@ public final class JavaDfaValueFactory {
     return contracts.isEmpty();
   }
 
-  public static @NotNull DfaValue createCommonValue(DfaValueFactory factory, PsiExpression @NotNull [] expressions, PsiType targetType) {
+  @NotNull
+  public static DfaValue createCommonValue(DfaValueFactory factory, PsiExpression @NotNull [] expressions, PsiType targetType) {
     DfaValue loopElement = null;
     for (PsiExpression expression : expressions) {
       DfaValue expressionValue = getExpressionDfaValue(factory, expression);
@@ -276,7 +247,8 @@ public final class JavaDfaValueFactory {
    * @param variable variable to create a constant based on its value
    * @return a value that represents a constant created from variable; null if variable cannot be represented as a constant
    */
-  static @Nullable DfaValue getConstantFromVariable(DfaValueFactory factory, PsiVariable variable) {
+  @Nullable
+  private static DfaValue getConstantFromVariable(DfaValueFactory factory, PsiVariable variable) {
     if (!variable.hasModifierProperty(PsiModifier.FINAL) || ignoreInitializer(variable)) return null;
     Object value = variable.computeConstantValue();
     PsiType type = variable.getType();
@@ -302,7 +274,8 @@ public final class JavaDfaValueFactory {
     return factory.fromDfType(DfTypes.constant(value, type));
   }
 
-  private static @Nullable Boolean computeJavaLangBooleanFieldReference(final PsiVariable variable) {
+  @Nullable
+  private static Boolean computeJavaLangBooleanFieldReference(final PsiVariable variable) {
     if (!(variable instanceof PsiField)) return null;
     PsiClass psiClass = ((PsiField)variable).getContainingClass();
     if (psiClass == null || !CommonClassNames.JAVA_LANG_BOOLEAN.equals(psiClass.getQualifiedName())) return null;
@@ -315,18 +288,11 @@ public final class JavaDfaValueFactory {
    * @return true if variable initializer should be ignored by analysis
    */
   public static boolean ignoreInitializer(PsiVariable variable) {
-    if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.FINAL)) {
-      if (variable.getClass().getName().equals("org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightFieldForProperty")) {
-        // Kotlin light fields may report default value as initializer, which is wrong. See KT-71407
-        return true;
-      }
-      if (variable.getType().equals(PsiTypes.booleanType())) {
-        // Skip boolean constant fields as they usually used as control knobs to modify program logic
-        // it's better to analyze both true and false values even if it's predefined
-        PsiLiteralExpression initializer =
-          tryCast(PsiUtil.skipParenthesizedExprDown(variable.getInitializer()), PsiLiteralExpression.class);
-        return initializer != null && initializer.getValue() instanceof Boolean;
-      }
+    if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.FINAL) && variable.getType().equals(PsiTypes.booleanType())) {
+      // Skip boolean constant fields as they usually used as control knobs to modify program logic
+      // it's better to analyze both true and false values even if it's predefined
+      PsiLiteralExpression initializer = tryCast(PsiUtil.skipParenthesizedExprDown(variable.getInitializer()), PsiLiteralExpression.class);
+      return initializer != null && initializer.getValue() instanceof Boolean;
     }
     return false;
   }

@@ -1,20 +1,16 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
-import com.dynatrace.hash4j.hashing.HashStream64;
-import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
-import org.jetbrains.jps.builders.BuildTargetHashSupplier;
-import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.GlobalContextKey;
@@ -22,13 +18,7 @@ import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.model.module.JpsModule;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
+import java.io.*;
 import java.util.*;
 
 public final class BuildTargetConfiguration {
@@ -38,138 +28,131 @@ public final class BuildTargetConfiguration {
   private static final GlobalContextKey<Set<File>> ALL_DELETED_ROOTS_KEY = GlobalContextKey.create("_all_deleted_output_roots_");
   private static final String DIRTY_MARK = "$dirty_mark$";
 
-  private final BuildTarget<?> target;
-  @NotNull private final BuildDataPaths dataPaths;
-  private @NotNull String configuration;
-  private volatile String currentState;
+  private final BuildTarget<?> myTarget;
+  private final BuildTargetsState myTargetsState;
+  private String myConfiguration;
+  private volatile String myCurrentState;
 
-  @ApiStatus.Internal
-  public BuildTargetConfiguration(@NotNull BuildTarget<?> target, @NotNull BuildDataPaths dataPaths) {
-    this.target = target;
-    this.dataPaths = dataPaths;
-    configuration = load();
+  public BuildTargetConfiguration(BuildTarget<?> target, BuildTargetsState targetsState) {
+    myTarget = target;
+    myTargetsState = targetsState;
+    myConfiguration = load();
   }
 
-  private @NotNull String load() {
-    try {
-      return Files.readString(getConfigFile());
-    }
-    catch (NoSuchFileException ignore) {
-    }
-    catch (IOException e) {
-      LOG.warn("Cannot load configuration of " + target, e);
+  private String load() {
+    File configFile = getConfigFile();
+    if (configFile.exists()) {
+      try {
+        return new String(FileUtil.loadFileText(configFile));
+      }
+      catch (IOException e) {
+        LOG.info("Cannot load configuration of " + myTarget);
+      }
     }
     return "";
   }
 
-  public boolean isTargetDirty(@NotNull ProjectDescriptor projectDescriptor) {
-    return DIRTY_MARK.equals(configuration) || !getCurrentState(projectDescriptor).equals(configuration);
+  public boolean isTargetDirty(@NotNull ProjectDescriptor pd) {
+    return DIRTY_MARK.equals(myConfiguration) || !getCurrentState(pd).equals(myConfiguration);
   }
 
   public void logDiagnostics(CompileContext context) {
-    if (DIRTY_MARK.equals(configuration)) {
+    if (DIRTY_MARK.equals(myConfiguration)) {
       if (LOG.isDebugEnabled()) {
-        LOG.debug(target + " has been marked dirty in the previous compilation session");
+        LOG.debug(myTarget + " has been marked dirty in the previous compilation session");
       }
     }
     else {
-      String currentState = getCurrentState(context.getProjectDescriptor());
-      if (currentState.equals(configuration)) {
-        return;
-      }
-
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(target + " configuration was changed:");
-        LOG.debug("Old: " + configuration);
-        LOG.debug("New: " + currentState);
-        LOG.debug(target + " will be recompiled");
-      }
-
-      if (target instanceof ModuleBuildTarget) {
-        final JpsModule module = ((ModuleBuildTarget)target).getModule();
-        synchronized (MODULES_WITH_TARGET_CONFIG_CHANGED_KEY) {
-          Set<JpsModule> modules = MODULES_WITH_TARGET_CONFIG_CHANGED_KEY.get(context);
-          if (modules == null) {
-            MODULES_WITH_TARGET_CONFIG_CHANGED_KEY.set(context, modules = new HashSet<>());
+      final String currentState = getCurrentState(context.getProjectDescriptor());
+      if (!currentState.equals(myConfiguration)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(myTarget + " configuration was changed:");
+          LOG.debug("Old:");
+          LOG.debug(myConfiguration);
+          LOG.debug("New:");
+          LOG.debug(currentState);
+          LOG.debug(myTarget + " will be recompiled");
+        }
+        if (myTarget instanceof ModuleBuildTarget) {
+          final JpsModule module = ((ModuleBuildTarget)myTarget).getModule();
+          synchronized (MODULES_WITH_TARGET_CONFIG_CHANGED_KEY) {
+            Set<JpsModule> modules = MODULES_WITH_TARGET_CONFIG_CHANGED_KEY.get(context);
+            if (modules == null) {
+              MODULES_WITH_TARGET_CONFIG_CHANGED_KEY.set(context, modules = new HashSet<>());
+            }
+            modules.add(module);
           }
-          modules.add(module);
         }
       }
     }
   }
 
-  public void save(@NotNull CompileContext context) {
+  public void save(CompileContext context) {
     persist(getCurrentState(context.getProjectDescriptor()));
   }
 
-  void invalidate() {
+  public void invalidate() {
     persist(DIRTY_MARK);
   }
 
-  private void persist(@NotNull String data) {
+  private void persist(final String data) {
     try {
-      Path configFile = getConfigFile();
-      Files.createDirectories(configFile.getParent());
-      Files.writeString(configFile, data);
-      configuration = data;
+      File configFile = getConfigFile();
+      FileUtil.createParentDirs(configFile);
+      try (Writer out = new BufferedWriter(new FileWriter(configFile))) {
+        out.write(data);
+        myConfiguration = data;
+      }
     }
     catch (IOException e) {
-      LOG.info("Cannot save configuration of " + configuration, e);
+      LOG.info("Cannot save configuration of " + myConfiguration, e);
     }
   }
 
-  private @NotNull Path getConfigFile() {
-    return dataPaths.getTargetDataRootDir(target).resolve("config.dat");
+  private File getConfigFile() {
+    return new File(myTargetsState.getDataPaths().getTargetDataRoot(myTarget), "config.dat");
   }
 
-  private @NotNull Path getNonexistentOutputsFile() {
-    return dataPaths.getTargetDataRootDir(target).resolve("nonexistent-outputs.dat");
+  private File getNonexistentOutputsFile() {
+    return new File(myTargetsState.getDataPaths().getTargetDataRoot(myTarget), "nonexistent-outputs.dat");
   }
 
-  private @NotNull String getCurrentState(@NotNull ProjectDescriptor projectDescriptor) {
-    String state = currentState;
-    if (state != null) {
-      return state;
+  private @NotNull String getCurrentState(@NotNull ProjectDescriptor pd) {
+    String state = myCurrentState;
+    if (state == null) {
+      myCurrentState = state = saveToString(pd);
     }
-
-    if (target instanceof BuildTargetHashSupplier) {
-      HashStream64 hash = Hashing.komihash5_0().hashStream();
-      ((BuildTargetHashSupplier)target).computeConfigurationDigest(projectDescriptor, hash);
-      state = Long.toUnsignedString(hash.getAsLong(), Character.MAX_RADIX);
-    }
-    else {
-      StringWriter out = new StringWriter();
-      target.writeConfiguration(projectDescriptor, new PrintWriter(out));
-      state = out.toString();
-    }
-    currentState = state;
     return state;
   }
 
-  void storeNonExistentOutputRoots(@NotNull CompileContext context) throws IOException {
+  private @NotNull String saveToString(@NotNull ProjectDescriptor pd) {
+    StringWriter out = new StringWriter();
+    myTarget.writeConfiguration(pd, new PrintWriter(out));
+    return out.toString();
+  }
+
+  public void storeNonexistentOutputRoots(CompileContext context) throws IOException {
     PathRelativizerService relativizer = context.getProjectDescriptor().dataManager.getRelativizer();
-    Collection<File> outputRoots = target.getOutputRoots(context);
-    List<String> nonexistentOutputRoots = new ArrayList<>();
+    Collection<File> outputRoots = myTarget.getOutputRoots(context);
+    List<String> nonexistentOutputRoots = new SmartList<>();
     for (File root : outputRoots) {
       if (!root.exists()) {
         nonexistentOutputRoots.add(relativizer.toRelative(root.getAbsolutePath()));
       }
     }
-
-    Path file = getNonexistentOutputsFile();
+    File file = getNonexistentOutputsFile();
     if (nonexistentOutputRoots.isEmpty()) {
-      Files.deleteIfExists(file);
+      file.delete();
     }
     else {
-      Files.createDirectories(file.getParent());
-      Files.writeString(file, String.join("\n", nonexistentOutputRoots));
+      FileUtil.writeToFile(file, StringUtil.join(nonexistentOutputRoots, "\n"));
     }
   }
 
   public boolean outputRootWasDeleted(CompileContext context) throws IOException {
-    List<String> nonexistentOutputRoots = new ArrayList<>();
+    List<String> nonexistentOutputRoots = new SmartList<>();
 
-    Collection<File> targetRoots = target.getOutputRoots(context);
+    final Collection<File> targetRoots = myTarget.getOutputRoots(context);
     synchronized (ALL_DELETED_ROOTS_KEY) {
       Set<File> allDeletedRoots = ALL_DELETED_ROOTS_KEY.get(context);
       for (File outputRoot : targetRoots) {
@@ -185,7 +168,7 @@ public final class BuildTargetConfiguration {
           }
         }
         if (wasDeleted) {
-          nonexistentOutputRoots.add(FileUtilRt.toSystemIndependentName(outputRoot.getAbsolutePath()));
+          nonexistentOutputRoots.add(FileUtil.toSystemIndependentName(outputRoot.getAbsolutePath()));
         }
       }
     }
@@ -195,13 +178,14 @@ public final class BuildTargetConfiguration {
     }
 
     Set<String> storedNonExistentOutputs;
-    Path file = getNonexistentOutputsFile();
-    if (Files.notExists(file)) {
-      storedNonExistentOutputs = Set.of();
+    File file = getNonexistentOutputsFile();
+    if (!file.exists()) {
+      storedNonExistentOutputs = Collections.emptySet();
     }
     else {
       PathRelativizerService relativizer = context.getProjectDescriptor().dataManager.getRelativizer();
-      List<String> lines = ContainerUtil.map(StringUtil.split(Files.readString(file), "\n"), s -> relativizer.toFull(s));
+      List<String> lines = ContainerUtil.map(StringUtil.split(FileUtil.loadFile(file), "\n"),
+                                             s -> relativizer.toFull(s));
       storedNonExistentOutputs = CollectionFactory.createFilePathSet(lines);
     }
     return !storedNonExistentOutputs.containsAll(nonexistentOutputRoots);

@@ -3,4 +3,3 @@ val r1 = R1 {} // (1)
 val r2 = object : R1 { // (2)
     override fun run() {}
 }
-// IGNORE_K2

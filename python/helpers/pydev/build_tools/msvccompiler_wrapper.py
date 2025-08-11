@@ -1,11 +1,12 @@
 import os
 import sys
 
+from distutils import msvc9compiler
+
 
 def find_vcvarsall():
     vcvarsall = None
     if sys.version_info[:2] == (2, 7):
-        from distutils import msvc9compiler
         vcvarsall = msvc9compiler.find_vcvarsall(9.0)
         if not vcvarsall:
             env = os.environ
@@ -20,7 +21,7 @@ def find_vcvarsall():
                 if os.path.exists(path) and os.path.isfile(path):
                     vcvarsall = path
     else:
-        vcvarsall = None
+        vcvarsall = msvc9compiler.find_vcvarsall(14.0)
         if not vcvarsall:
             env = os.environ
             productdir = None

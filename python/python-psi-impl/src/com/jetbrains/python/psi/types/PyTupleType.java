@@ -18,7 +18,8 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
 
   private final PyUnpackedTupleType myUnpackedTupleType;
 
-  public static @Nullable PyTupleType create(@NotNull PsiElement anchor, @NotNull List<? extends PyType> elementTypes) {
+  @Nullable
+  public static PyTupleType create(@NotNull PsiElement anchor, @NotNull List<? extends PyType> elementTypes) {
     final PyClass tuple = PyBuiltinCache.getInstance(anchor).getClass(PyNames.TUPLE);
     if (tuple != null) {
       return new PyTupleType(tuple, elementTypes, false);
@@ -26,7 +27,8 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
     return null;
   }
 
-  public static @Nullable PyTupleType createHomogeneous(@NotNull PsiElement anchor, @Nullable PyType elementType) {
+  @Nullable
+  public static PyTupleType createHomogeneous(@NotNull PsiElement anchor, @Nullable PyType elementType) {
     final PyClass tuple = PyBuiltinCache.getInstance(anchor).getClass(PyNames.TUPLE);
     if (tuple != null) {
       return new PyTupleType(tuple, Collections.singletonList(elementType), true);
@@ -44,14 +46,16 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     if (myUnpackedTupleType.isUnbound()) {
       return "(" + (getTypeName(getIteratedItemType())) + ", ...)";
     }
     return "(" + StringUtil.join(myUnpackedTupleType.getElementTypes(), PyTupleType::getTypeName, ", ") + ")";
   }
 
-  private static @Nullable String getTypeName(@Nullable PyType type) {
+  @Nullable
+  private static String getTypeName(@Nullable PyType type) {
     return type == null ? PyNames.UNKNOWN_TYPE : type.getName();
   }
 
@@ -66,7 +70,8 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
    * @param index an index of item
    * @return type of item
    */
-  public @Nullable PyType getElementType(int index) {
+  @Nullable
+  public PyType getElementType(int index) {
     if (isHomogeneous()) {
       return getIteratedItemType();
     }
@@ -96,25 +101,19 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
     return Objects.hash(super.hashCode(), myUnpackedTupleType);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<PyType> getElementTypes() {
+  public List<PyType> getElementTypes() {
     return myUnpackedTupleType.getElementTypes();
   }
 
+  @Nullable
   @Override
-  public @Nullable PyType getIteratedItemType() {
+  public PyType getIteratedItemType() {
     return PyUnionType.union(myUnpackedTupleType.getElementTypes());
   }
 
   public @NotNull PyUnpackedTupleType asUnpackedTupleType() {
     return myUnpackedTupleType;
-  }
-
-  @Override
-  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
-    if (visitor instanceof PyTypeVisitorExt<T> visitorExt) {
-      return visitorExt.visitPyTupleType(this);
-    }
-    return visitor.visitPyType(this);
   }
 }

@@ -1,6 +1,3 @@
-//region Test configuration
-// - hidden: line markers
-//endregion
 import com.example.dumblib.DumbLib
 
 fun linuxFoo() {
@@ -14,4 +11,4 @@ fun linuxFoo() {
  */
 actual object Bar
 
-actual fun bar() {}
+actual fun bar()

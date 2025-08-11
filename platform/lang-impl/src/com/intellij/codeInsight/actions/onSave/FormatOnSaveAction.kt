@@ -9,7 +9,6 @@ import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.util.SlowOperations
 import java.util.concurrent.FutureTask
 
 internal class FormatOnSaveAction : ActionOnSave() {
@@ -30,12 +29,8 @@ internal class FormatOnSaveAction : ActionOnSave() {
     val optimizeImportsOptions = OptimizeImportsOnSaveOptions.getInstance(project)
 
     for (document in documents) {
-      val psiFile = SlowOperations.knownIssue("IJPL-162973").use {
-        manager.getPsiFile(document)?.takeIf {
-          LanguageFormatting.INSTANCE.isAutoFormatAllowed(it)
-        }
-      }
-      if (psiFile == null) continue
+      val psiFile = manager.getPsiFile(document)
+      if (psiFile == null || !LanguageFormatting.INSTANCE.isAutoFormatAllowed(psiFile)) continue
 
       allFiles.add(psiFile)
 
@@ -88,7 +83,6 @@ internal class FormatOnSaveAction : ActionOnSave() {
 
     if (CodeCleanupOnSaveActionInfo.isCodeCleanupOnSaveEnabled(project) && !isDumb(project)) {
       processor = CodeCleanupCodeProcessor(processor)
-      processor.setProfile(CodeCleanupOnSaveOptions.getInstance(project).getInspectionProfile())
     }
 
     // This guarantees that per-file undo chain won't break and there won't be the "Following files affected by this action have been already changed" modal error dialog.

@@ -1,1 +1,0 @@
-s = rf"Hel<caret>lo, {name}!"

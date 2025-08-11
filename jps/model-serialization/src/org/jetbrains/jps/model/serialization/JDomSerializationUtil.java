@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -11,12 +11,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class JDomSerializationUtil {
-  public static final @NonNls String COMPONENT_ELEMENT = "component";
+  @NonNls public static final String COMPONENT_ELEMENT = "component";
 
   private JDomSerializationUtil() {
   }
 
-  public static @Nullable Element findComponent(@Nullable Element root, @NonNls String componentName) {
+  @Nullable
+  public static Element findComponent(@Nullable Element root, @NonNls String componentName) {
     for (Element element : JDOMUtil.getChildren(root, COMPONENT_ELEMENT)) {
       if (isComponent(componentName, element)) {
         return element;
@@ -38,7 +39,8 @@ public final class JDomSerializationUtil {
   }
 
   @ApiStatus.Internal
-  public static @NotNull Element findOrCreateComponentElement(@NotNull Element root, @NotNull String componentName) {
+  @NotNull
+  public static Element findOrCreateComponentElement(@NotNull Element root, @NotNull String componentName) {
     Element component = findComponent(root, componentName);
     if (component == null) {
       component = createComponentElement(componentName);

@@ -427,6 +427,11 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
     });
   }
 
+
+  public void testVariableNotReportedAfterNoReturn() {
+
+  }
+
   // PY-63357
   public void testFunctionParameterAnnotatedWithReferenceToTypeParameter() {
     runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {

@@ -1,4 +1,4 @@
-from typing import Literal
+from typing_extensions import Literal
 
 AF_INET: Literal[2]
 AF_INET6: Literal[10]

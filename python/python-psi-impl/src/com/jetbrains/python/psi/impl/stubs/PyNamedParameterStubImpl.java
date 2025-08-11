@@ -14,7 +14,8 @@ public class PyNamedParameterStubImpl extends StubBase<PyNamedParameter> impleme
   private final boolean myKeywordContainer;
   private final String myTypeCommentAnnotation;
   private final String myAnnotation;
-  private final @Nullable String myDefaultValueText;
+  @Nullable
+  private final String myDefaultValueText;
 
   public PyNamedParameterStubImpl(String name,
                                   boolean isPositionalContainer,
@@ -43,18 +44,21 @@ public class PyNamedParameterStubImpl extends StubBase<PyNamedParameter> impleme
     return myKeywordContainer;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getDefaultValueText() {
+  public String getDefaultValueText() {
     return myDefaultValueText;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getTypeComment() {
+  public String getTypeComment() {
     return myTypeCommentAnnotation;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getAnnotation() {
+  public String getAnnotation() {
     return myAnnotation;
   }
 
@@ -65,13 +69,6 @@ public class PyNamedParameterStubImpl extends StubBase<PyNamedParameter> impleme
 
   @Override
   public String toString() {
-    return "PyNamedParameterStubImpl{" +
-           "myName='" + myName + '\'' +
-           ", myPositionalContainer=" + myPositionalContainer +
-           ", myKeywordContainer=" + myKeywordContainer +
-           ", myTypeCommentAnnotation='" + myTypeCommentAnnotation + '\'' +
-           ", myAnnotation='" + myAnnotation + '\'' +
-           ", myDefaultValueText='" + myDefaultValueText + '\'' +
-           '}';
+    return "PyNamedParameterStub(" + myName + ")";
   }
 }

@@ -34,10 +34,6 @@
           "items": {
             "type": "integer"
           }
-        },
-        "codeQualityCategory": {
-          "type": "string",
-          "description": "The name of code quality category: Security, Performance, Legal, Code Style, Reliability, Sanity or Unspecified"
         }
       },
       "required": [

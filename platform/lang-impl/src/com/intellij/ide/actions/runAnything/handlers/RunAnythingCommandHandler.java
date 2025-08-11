@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything.handlers;
 
 import com.intellij.execution.filters.TextConsoleBuilder;
@@ -32,7 +32,8 @@ public abstract class RunAnythingCommandHandler {
    *
    * @param creationTime time of process created and started to execute
    */
-  public @Nullable String getProcessTerminatedCustomOutput(long creationTime) {
+  @Nullable
+  public String getProcessTerminatedCustomOutput(long creationTime) {
     return null;
   }
 
@@ -41,7 +42,8 @@ public abstract class RunAnythingCommandHandler {
    */
   public abstract TextConsoleBuilder getConsoleBuilder(@NotNull Project project);
 
-  public static @Nullable RunAnythingCommandHandler getMatchedHandler(@NotNull Project project, @NotNull String commandLine) {
+  @Nullable
+  public static RunAnythingCommandHandler getMatchedHandler(@NotNull Project project, @NotNull String commandLine) {
     return Arrays.stream(EP_NAME.getExtensions()).filter(handler -> handler.isMatched(project, commandLine)).findFirst().orElse(null);
   }
 }

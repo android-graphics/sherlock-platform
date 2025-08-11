@@ -50,7 +50,8 @@ public final class GroovyConditionalCanBeConditionalCallInspection extends BaseI
 
   private static class CollapseConditionalFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return GroovyBundle.message("intention.family.name.replace.with.conditional.call");
     }
 
@@ -81,8 +82,9 @@ public final class GroovyConditionalCanBeConditionalCallInspection extends BaseI
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

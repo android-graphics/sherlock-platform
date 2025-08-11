@@ -33,12 +33,14 @@ import static com.intellij.psi.PsiModifier.*;
 public final class SerialVersionUIDNotStaticFinalInspection extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "SerialVersionUIDWithWrongSignature";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "serialversionuid.private.static.final.long.problem.descriptor");
   }
@@ -52,7 +54,8 @@ public final class SerialVersionUIDNotStaticFinalInspection extends BaseInspecti
   private static class SerialVersionUIDNotStaticFinalFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "serialversionuid.private.static.final.long.quickfix");
     }

@@ -19,7 +19,7 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
     val elementType: Class<TElement>
 ) : AbstractKotlinInspection() {
 
-    final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): KtVisitorVoid =
+    final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
         object : KtVisitorVoid() {
             override fun visitKtElement(element: KtElement) {
                 super.visitKtElement(element)
@@ -66,13 +66,13 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
     abstract val defaultFixText: String
 
     @IntentionName
-    open fun fixText(element: TElement): String = defaultFixText
+    open fun fixText(element: TElement) = defaultFixText
 
     abstract fun isApplicable(element: TElement): Boolean
 
     abstract fun applyTo(element: TElement, project: Project = element.project, editor: Editor? = null)
 
-    open val startFixInWriteAction: Boolean = true
+    open val startFixInWriteAction = true
 
     private class LocalFix<TElement : KtElement>(
       @FileModifier.SafeFieldForPreview val inspection: AbstractApplicabilityBasedInspection<TElement>,

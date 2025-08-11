@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.editor.FoldRegion;
@@ -10,7 +10,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class AbstractPsiNamesElementSignatureProviderTest extends BasePlatformTestCase {
+abstract class AbstractPsiNamesElementSignatureProviderTest extends BasePlatformTestCase {
   void doTest(@NotNull String text, @NotNull String ext) {
     myFixture.configureByText("test." + ext, text);
 
@@ -29,11 +29,13 @@ public abstract class AbstractPsiNamesElementSignatureProviderTest extends BaseP
     }
   }
 
-  private static @Nullable PsiElement findElement(@NotNull FoldRegion region, @NotNull PsiFile file) {
+  @Nullable
+  private static PsiElement findElement(@NotNull FoldRegion region, @NotNull PsiFile file) {
     return findElement(region.getStartOffset(), region.getEndOffset(), file);
   }
 
-  static @Nullable PsiElement findElement(int startOffset, int endOffset, @NotNull PsiFile file) {
+  @Nullable
+  static PsiElement findElement(int startOffset, int endOffset, @NotNull PsiFile file) {
     for (PsiElement element = file.findElementAt(startOffset); element != null; element = element.getParent()) {
       TextRange range = element.getTextRange();
       if (range.getStartOffset() < startOffset) {

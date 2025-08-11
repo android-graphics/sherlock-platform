@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl.analysis;
 
@@ -27,17 +27,21 @@ public class XmlChangeAttributeValueIntentionFix extends PsiElementBaseIntention
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return XmlAnalysisBundle.message("xml.quickfix.change.attribute.value", myNewAttributeValue);
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NotNull
   @Override
-  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getText() {
+  public String getText() {
     return myNewAttributeValue != null ? getName() : getFamilyName();
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return XmlAnalysisBundle.message("xml.quickfix.change.attribute.value.family");
   }
 
@@ -52,7 +56,7 @@ public class XmlChangeAttributeValueIntentionFix extends PsiElementBaseIntention
   }
 
   @Override
-  public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     PsiElement e = descriptor.getPsiElement();
     changeAttributeValue(e, null);
   }

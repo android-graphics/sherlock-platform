@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.concurrency.ThreadContext;
@@ -14,7 +14,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * An {@link ExecutorService} implementation which delegates tasks to the EDT for execution.
+ * An {@link ExecutorService} implementation which
+ * delegates tasks to the EDT for execution.
  */
 final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements EdtScheduledExecutorService {
   static final EdtScheduledExecutorService INSTANCE = new EdtScheduledExecutorServiceImpl();
@@ -43,7 +44,7 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
   }
 
   @Override
-  protected void futureDone(@NotNull Future<?> task) {
+  void futureDone(@NotNull Future<?> task) {
     if (EdtExecutorServiceImpl.shouldManifestExceptionsImmediately()) {
       ConcurrencyUtil.manifestExceptionsIn(task);
     }

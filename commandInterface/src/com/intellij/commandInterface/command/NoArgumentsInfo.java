@@ -19,8 +19,9 @@ public final class NoArgumentsInfo implements ArgumentsInfo {
   private NoArgumentsInfo() {
   }
 
+  @Nullable
   @Override
-  public @Nullable Pair<Boolean, Argument> getArgument(final int argumentPosition) {
+  public Pair<Boolean, Argument> getArgument(final int argumentPosition) {
     return null;
   }
 }

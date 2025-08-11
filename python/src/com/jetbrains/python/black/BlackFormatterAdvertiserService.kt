@@ -7,7 +7,6 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.SystemInfo
@@ -42,11 +41,7 @@ class BlackFormatterAdvertiserService private constructor() {
       val project = psiFile.project
       val blackInstalled = project.modules
         .mapNotNull { it.pythonSdk }
-        .any {
-          runBlockingCancellable {
-            BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(project, it)
-          }
-        }
+        .any { BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(it) }
 
         if (blackInstalled) {
           showBlackFormatterSupportNotification(project,

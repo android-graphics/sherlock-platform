@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -66,7 +65,9 @@ public final class GroovyDslFileIndex {
 
   private GroovyDslFileIndex() {}
 
-  public static @Nullable @NlsSafe String getError(VirtualFile file) {
+  @Nullable
+  @NlsSafe
+  public static String getError(VirtualFile file) {
     DslActivationStatus.Entry info = DslActivationStatus.getInstance().getGdslFileInfo(file);
     return info == null ? null : info.error;
   }
@@ -108,7 +109,8 @@ public final class GroovyDslFileIndex {
     entry.error = error;
   }
 
-  private static @Nullable GroovyDslExecutor getCachedExecutor(final @NotNull VirtualFile file, final long stamp) {
+  @Nullable
+  private static GroovyDslExecutor getCachedExecutor(@NotNull final VirtualFile file, final long stamp) {
     final Pair<GroovyDslExecutor, Long> pair = file.getUserData(CACHED_EXECUTOR);
     if (pair == null || pair.second.longValue() != stamp) {
       return null;
@@ -116,7 +118,8 @@ public final class GroovyDslFileIndex {
     return pair.first;
   }
 
-  public static @Nullable PsiClassType processScriptSuperClasses(@NotNull GroovyFile scriptFile) {
+  @Nullable
+  public static PsiClassType processScriptSuperClasses(@NotNull GroovyFile scriptFile) {
     if (!scriptFile.isScript()) return null;
 
     final VirtualFile virtualFile = scriptFile.getOriginalFile().getVirtualFile();
@@ -283,7 +286,8 @@ public final class GroovyDslFileIndex {
   }
 
 
-  private static @NotNull Set<File> getBundledScriptFolders() {
+  @NotNull
+  private static Set<File> getBundledScriptFolders() {
     final GdslScriptProvider[] extensions = GdslScriptProvider.EP_NAME.getExtensions();
     final Set<Class<?>> classes = new HashSet<>(ContainerUtil.map(extensions, GdslScriptProvider::getClass));
     classes.add(GdslScriptProvider.class); // for default extension
@@ -292,19 +296,7 @@ public final class GroovyDslFileIndex {
     for (Class<?> aClass : classes) {
       File jarPath = new File(PathUtil.getJarPathForClass(aClass));
       if (jarPath.isFile()) {
-        String relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
-        if (relevantJarsRoot != null && jarPath.toPath().startsWith(relevantJarsRoot)) {
-          // compilation output jar
-          jarPath = switch (jarPath.getParentFile().getName()) {
-            case "intellij.groovy.psi" -> new File(PathManager.getCommunityHomePath(), "plugins/groovy/groovy-psi/resources/");
-            case "intellij.groovy.grails" -> new File(PathManager.getHomePath(), "plugins/groovy/mvc/");
-            default -> jarPath.getParentFile();
-          };
-        }
-        else {
-          // plugin jar file
-          jarPath = jarPath.getParentFile();
-        }
+        jarPath = jarPath.getParentFile();
       }
       scriptFolders.add(new File(jarPath, "standardDsls"));
     }
@@ -405,7 +397,8 @@ public final class GroovyDslFileIndex {
     }
   }
 
-  private static @Nullable GroovyDslExecutor createExecutor(String text, VirtualFile vfile, final Project project) {
+  @Nullable
+  private static GroovyDslExecutor createExecutor(String text, VirtualFile vfile, final Project project) {
     if (GdslUtil.ourGdslStopped) {
       return null;
     }

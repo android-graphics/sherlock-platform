@@ -8,13 +8,11 @@ import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.nio.file.NoSuchFileException;
 
-@ApiStatus.Internal
 public final class ExportToHTMLAction extends AnAction {
 
   @Override

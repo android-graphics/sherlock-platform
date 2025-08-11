@@ -3,9 +3,9 @@
 package com.intellij.util
 
 /**
- * Runs given code blocks sequentially, catching exceptions along the way.
+ * Sequentially runs given code blocks, catching exceptions along the way.
  * The first thrown exception (if any) is propagated.
- * Further exceptions (again, if any) are added to the "suppressed" list of the first one.
+ * Subsequent exceptions (again, if any) are added to the "suppressed" list of the first one.
  */
 fun runSuppressing(vararg blocks: () -> Unit) {
   var first: Throwable? = null

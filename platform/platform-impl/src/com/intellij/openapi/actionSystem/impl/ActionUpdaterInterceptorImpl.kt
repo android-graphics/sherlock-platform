@@ -2,7 +2,5 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.ActionUpdaterInterceptor
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 class ActionUpdaterInterceptorImpl : ActionUpdaterInterceptor

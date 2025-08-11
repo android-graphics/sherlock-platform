@@ -5,7 +5,7 @@
 // ACTION: Convert to with
 // ACTION: Replace with safe (?.) call
 // ACTION: Surround with null check
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 // WITH_STDLIB
 fun foo(s: String?) {}
 

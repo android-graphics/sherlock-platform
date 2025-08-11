@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -17,7 +17,6 @@ import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.junit4.JUnit4IdeaTestRunner;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -61,12 +60,14 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
-import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
 import java.io.File;
@@ -127,7 +128,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
       if (elements.isEmpty() && perModule != null) {
         for (Module module : collectPackageModules(packageName)) {
-          perModule.put(module, new ArrayList<>(composeDirectoryFilter(module)));
+          perModule.put(module, composeDirectoryFilter(module));
         }
       }
 
@@ -218,7 +219,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                                                      getConfiguration().getConfigurationModule().getModule());
   }
 
-  public @Nullable SourceScope getSourceScope() {
+  @Nullable
+  public SourceScope getSourceScope() {
     return SourceScope.modules(getConfiguration().getModules());
   }
 
@@ -254,20 +256,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   public static File getJUnit5RtFile() {
     File junit4Rt = new File(PathUtil.getJarPathForClass(JUnit4IdeaTestRunner.class));
     String junit4Name = junit4Rt.getName();
-    String junit5Name;
-    if (junit4Rt.isDirectory()) {
-      junit5Name = junit4Name.replace("junit", "junit.v5");
-    }
-    else {
-      var relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
-      Map<String, String> mapping = PathManager.getArchivedCompiledClassesMapping();
-      if (relevantJarsRoot != null && junit4Rt.toPath().startsWith(relevantJarsRoot) && mapping != null) {
-        return new File(mapping.get("production/intellij.junit.v5.rt"));
-      }
-      else {
-        junit5Name = junit4Name.replace("junit", "junit5");
-      }
-    }
+    String junit5Name = junit4Rt.isDirectory() ? junit4Name.replace("junit", "junit.v5")
+                                               : junit4Name.replace("junit", "junit5");
     return new File(junit4Rt.getParent(), junit5Name);
   }
 
@@ -276,7 +266,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
    * When 2 modules have e.g. the same package, one depends on another, and tests have to run in single module only,
    * by configuration settings or to avoid repetition in fork by module mode, additional filters per output directories are required.
    */
-  protected static @Unmodifiable List<String> composeDirectoryFilter(@NotNull Module module) {
+  protected static List<String> composeDirectoryFilter(@NotNull Module module) {
     return ContainerUtil.map(OrderEnumerator.orderEntries(module)
                                .withoutSdk()
                                .withoutLibraries()
@@ -286,9 +276,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     JavaParameters javaParameters = super.createJavaParameters();
-    if (javaParameters.getMainClass() == null) { // for custom main class, e.g. overridden by JUnitDevKitUnitTestingSettings.Companion#apply
-      javaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
-    }
+    javaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
     javaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
 
     final StringBuilder buf = new StringBuilder();
@@ -466,8 +454,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     Collection<OrderRoot> roots;
     try {
       Application application = ApplicationManager.getApplication();
+      application.assertReadAccessNotAllowed();
       application.assertIsNonDispatchThread();
-      ThreadingAssertions.assertNoOwnReadAccess();
       TargetProgressIndicator targetProgressIndicator = getTargetProgressIndicator();
       if (targetProgressIndicator != null) {
         String title = JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 1);
@@ -528,14 +516,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return JUnitStarter.JUNIT5_PARAMETER.equals(getRunner());
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getForkMode() {
+  protected String getForkMode() {
     return getConfiguration().getForkMode();
-  }
-
-  @Override
-  protected boolean isPrintAsyncStackTraceForExceptions() {
-    return getConfiguration().isPrintAsyncStackTraceForExceptions();
   }
 
   /**
@@ -658,12 +642,14 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   @Override
-  protected @NotNull String getFrameworkName() {
+  @NotNull
+  protected String getFrameworkName() {
     return JUNIT_TEST_FRAMEWORK_NAME;
   }
 
   @Override
-  protected @NotNull String getFrameworkId() {
+  @NotNull
+  protected String getFrameworkId() {
     return "junit";
   }
 
@@ -673,7 +659,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   @Override
-  public @NotNull JUnitConfiguration getConfiguration() {
+  @NotNull
+  public JUnitConfiguration getConfiguration() {
     return myConfiguration;
   }
 
@@ -693,7 +680,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   private String myRunner;
   private static final Object LOCK = ObjectUtils.sentinel("JUnitRunner");
 
-  protected @NotNull String getRunner() {
+  @NotNull
+  protected String getRunner() {
     synchronized (LOCK) {
       if (myRunner == null) {
         myRunner = ProgressManager.getInstance()
@@ -705,7 +693,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
   }
 
-  private @NotNull String getRunnerInner() {
+  @NotNull
+  private String getRunnerInner() {
     Project project = myConfiguration.getProject();
     LOG.assertTrue(!DumbService.getInstance(project).isAlternativeResolveEnabled());
     final GlobalSearchScope globalSearchScope = getScopeForJUnit(myConfiguration);

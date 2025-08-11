@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.module.Module;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsManager {
-  private @Nullable Set<VirtualFile> myAnnotationsRoots;
+  @Nullable private Set<VirtualFile> myAnnotationsRoots;
 
   public ReadableExternalAnnotationsManager(PsiManager psiManager) {
     super(psiManager);
@@ -28,7 +28,8 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
     return !initRoots().isEmpty();
   }
 
-  private synchronized @NotNull Set<VirtualFile> initRoots() {
+  @NotNull
+  private synchronized Set<VirtualFile> initRoots() {
     if (myAnnotationsRoots == null) {
       myAnnotationsRoots = new HashSet<>();
       final Module[] modules = ModuleManager.getInstance(myPsiManager.getProject()).getModules();
@@ -45,7 +46,8 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
   }
 
   @Override
-  protected @NotNull List<VirtualFile> getExternalAnnotationsRoots(@NotNull VirtualFile libraryFile) {
+  @NotNull
+  protected List<VirtualFile> getExternalAnnotationsRoots(@NotNull VirtualFile libraryFile) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex();
     Set<VirtualFile> result = new LinkedHashSet<>();
     for (OrderEntry entry : fileIndex.getOrderEntriesForFile(libraryFile)) {

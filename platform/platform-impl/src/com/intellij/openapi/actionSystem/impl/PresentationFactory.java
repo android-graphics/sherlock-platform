@@ -44,7 +44,7 @@ public class PresentationFactory {
         presentation.setDisabledIcon(templatePresentation.getDisabledIcon());
         presentation.putClientProperty(NEED_UPDATE_PRESENTATION, null);
       }
-      processPresentation(action, presentation);
+      processPresentation(presentation, action);
     }
     return presentation;
   }
@@ -58,15 +58,10 @@ public class PresentationFactory {
     return Collections.unmodifiableSet(myPresentations.keySet());
   }
 
-  protected void processPresentation(@NotNull AnAction action, @NotNull Presentation presentation) {
+  protected void processPresentation(@NotNull Presentation presentation, @NotNull AnAction action) {
     processPresentation(presentation);
   }
 
-  public void postProcessPresentation(@NotNull AnAction action, @NotNull Presentation presentation) {
-  }
-
-  /** @deprecated Override {@link #postProcessPresentation(AnAction, Presentation)} instead */
-  @Deprecated(forRemoval = true)
   protected void processPresentation(@NotNull Presentation presentation) {
   }
 

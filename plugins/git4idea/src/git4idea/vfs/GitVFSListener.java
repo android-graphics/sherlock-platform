@@ -1,10 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.vfs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
@@ -23,10 +25,8 @@ import git4idea.commands.GitLineHandler;
 import git4idea.index.GitStageManagerKt;
 import git4idea.util.GitFileUtils;
 import git4idea.util.GitVcsConsoleWriter;
-import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.*;
@@ -36,12 +36,14 @@ import static com.intellij.util.containers.ContainerUtil.map2Map;
 import static git4idea.i18n.GitBundle.message;
 
 public final class GitVFSListener extends VcsVFSListener {
-  private GitVFSListener(@NotNull GitVcs vcs, @NotNull CoroutineScope coroutineScope) {
-    super(vcs, coroutineScope);
+
+  private GitVFSListener(@NotNull GitVcs vcs) {
+    super(vcs);
   }
 
-  public static @NotNull GitVFSListener createInstance(@NotNull GitVcs vcs, @NotNull CoroutineScope coroutineScope) {
-    GitVFSListener listener = new GitVFSListener(vcs, coroutineScope);
+  public static @NotNull GitVFSListener createInstance(@NotNull GitVcs vcs, @NotNull Disposable disposable) {
+    GitVFSListener listener = new GitVFSListener(vcs);
+    Disposer.register(disposable, listener);
     listener.installListeners();
     return listener;
   }
@@ -237,7 +239,7 @@ public final class GitVFSListener extends VcsVFSListener {
 
   private Set<File> executeForceMove(@NotNull VirtualFile root,
                                      @NotNull List<? extends FilePath> files,
-                                     @Unmodifiable @NotNull Map<FilePath, MovedFileInfo> filesToMove) {
+                                     @NotNull Map<FilePath, MovedFileInfo> filesToMove) {
     Set<File> toRefresh = new HashSet<>();
     for (FilePath file : files) {
       MovedFileInfo info = filesToMove.get(file);
@@ -305,6 +307,6 @@ public final class GitVFSListener extends VcsVFSListener {
   @TestOnly
   public void waitForExternalFilesEventsProcessedInTestMode() {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    waitForEventsProcessedInTestMode();
+    myExternalFilesProcessor.waitForEventsProcessedInTestMode();
   }
 }

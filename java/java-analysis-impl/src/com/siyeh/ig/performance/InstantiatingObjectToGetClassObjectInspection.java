@@ -16,8 +16,8 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -39,7 +39,8 @@ public final class InstantiatingObjectToGetClassObjectInspection
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "instantiating.object.to.get.class.object.problem.descriptor");
   }
@@ -57,7 +58,8 @@ public final class InstantiatingObjectToGetClassObjectInspection
     extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "instantiating.object.to.get.class.object.replace.quickfix");
     }
@@ -117,7 +119,7 @@ public final class InstantiatingObjectToGetClassObjectInspection
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final @NonNls String methodName = methodExpression.getReferenceName();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"getClass".equals(methodName) || !expression.getArgumentList().isEmpty()) {
         return;
       }

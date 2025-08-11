@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -11,11 +11,11 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.L
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.SHELF
 import org.jetbrains.annotations.NonNls
 
-internal class VcsShowLocalChangesAction : VcsShowToolWindowTabAction() {
+class VcsShowLocalChangesAction : VcsShowToolWindowTabAction() {
   override val tabName: String get() = LOCAL_CHANGES
 }
 
-internal class VcsShowShelfAction : VcsShowToolWindowTabAction() {
+class VcsShowShelfAction : VcsShowToolWindowTabAction() {
   override val tabName: String get() = SHELF
 
   override fun update(e: AnActionEvent) {

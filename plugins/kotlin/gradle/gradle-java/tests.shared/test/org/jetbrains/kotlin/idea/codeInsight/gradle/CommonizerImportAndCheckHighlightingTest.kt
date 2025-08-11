@@ -12,10 +12,13 @@ import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.junit.Assume
 import org.junit.Test
+import java.io.PrintStream
 import java.util.*
 
 class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImportingTestCase() {
     override fun testDataDirName(): String = "multiplatform/commonizerImportAndCheckHighlighting"
+
+    override fun printOutput(stream: PrintStream, text: String) = stream.println(text)
 
     override fun setUp() {
         val testedVersions = setOf(KotlinGradlePluginVersions.latestStable, KotlinGradlePluginVersions.latest)
@@ -76,7 +79,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
             module("project.p1.linuxArm64Main") {
                 if (SystemInfo.isMac || SystemInfo.isLinux) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*[cC]interop-withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*cinterop-withPosix.*"""), scope)
                     if (kotlinPluginVersion < KotlinToolingVersion("1.5.30-dev")) {
                         libraryDependencyByUrl(Regex(""".*/\(linux_arm64, linux_x64\)/.*posix.*"""), scope)
                     }
@@ -87,7 +90,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
             module("project.p1.linuxX64Main") {
                 if (SystemInfo.isMac || SystemInfo.isLinux) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*[cC]interop-withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*cinterop-withPosix.*"""), scope)
                     if (kotlinPluginVersion < KotlinToolingVersion("1.5.30-dev")) {
                         libraryDependencyByUrl(Regex(""".*/\(linux_arm64, linux_x64\)/.*posix.*"""), scope)
                     }
@@ -98,7 +101,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
             module("project.p1.macosMain") {
                 if (SystemInfo.isMac) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*[cC]interop-withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*cinterop-withPosix.*"""), scope)
                     if (kotlinPluginVersion < KotlinToolingVersion("1.5.30-dev")) {
                         libraryDependencyByUrl(Regex(""".*/\(.*macos_x64.*\)/.*posix.*"""), scope)
                     }
@@ -109,7 +112,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
             module("project.p1.windowsMain") {
                 if (SystemInfo.isWindows) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*[cC]interop-withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*cinterop-withPosix.*"""), scope)
                     libraryDependencyByUrl(Regex(""".*posix.*"""), scope)
                 }
             }

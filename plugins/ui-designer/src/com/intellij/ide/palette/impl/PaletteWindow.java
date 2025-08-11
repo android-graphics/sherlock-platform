@@ -33,7 +33,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 
 
-public class PaletteWindow extends JPanel implements LightToolWindowContent, UiDataProvider {
+public class PaletteWindow extends JPanel implements LightToolWindowContent, DataProvider {
   private final Project myProject;
   private final ArrayList<PaletteGroupHeader> myGroupHeaders = new ArrayList<>();
   private final PaletteItemProvider[] myProviders;
@@ -244,11 +244,31 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, UiD
   }
 
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(PlatformCoreDataKeys.HELP_ID, ourHelpID);
-    sink.set(CommonDataKeys.PROJECT, myProject);
-    DataSink.uiDataSnapshot(sink, getActiveItem());
-    DataSink.uiDataSnapshot(sink, getActiveGroup());
+  public @Nullable Object getData(@NotNull String dataId) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
+      return ourHelpID;
+    }
+    if (CommonDataKeys.PROJECT.is(dataId)) {
+      return myProject;
+    }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      PaletteItem item = getActiveItem();
+      PaletteGroup group = getActiveGroup();
+      DataProvider provider1 = item == null ? null : (DataProvider)item.getData(myProject, dataId);
+      DataProvider provider2 = group == null ? null : (DataProvider)group.getData(myProject, dataId);
+      if (provider1 == null && provider2 == null) return null;
+      return provider1 == null ? provider2 : CompositeDataProvider.compose(provider1, provider2);
+    }
+    PaletteItem item = getActiveItem();
+    if (item != null) {
+      Object data = item.getData(myProject, dataId);
+      if (data != null) return data;
+    }
+    PaletteGroup group = getActiveGroup();
+    if (group != null) {
+      return group.getData(myProject, dataId);
+    }
+    return null;
   }
 
   public Project getProject() {

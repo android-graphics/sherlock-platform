@@ -2,11 +2,12 @@
 
 package org.jetbrains.kotlin.idea.quickfix.utils
 
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import java.io.File
 
-fun findInspectionFile(startDir: File, mode: KotlinPluginMode): File? {
-    return findInspectionFile(startDir, if (mode == KotlinPluginMode.K1) ".inspection" else ".k2Inspection")
+private const val INSPECTION_FILE_NAME = ".inspection"
+
+fun findInspectionFile(startDir: File): File? {
+    return findInspectionFile(startDir, INSPECTION_FILE_NAME)
 }
 
 fun findInspectionFile(startDir: File, inspectionFileName: String): File? {

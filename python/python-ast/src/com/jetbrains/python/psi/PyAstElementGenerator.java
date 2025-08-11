@@ -8,10 +8,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.ast.PyAstExpression;
 import com.jetbrains.python.ast.PyAstExpressionStatement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -33,11 +31,13 @@ public class PyAstElementGenerator {
 
   static final int[] FROM_ROOT = new int[]{0};
 
-  public @NotNull <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text) {
+  @NotNull
+  public <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text) {
     return createFromText(langLevel, aClass, text, FROM_ROOT);
   }
 
-  public @NotNull <T> T createPhysicalFromText(LanguageLevel langLevel, Class<T> aClass, final String text) {
+  @NotNull
+  public <T> T createPhysicalFromText(LanguageLevel langLevel, Class<T> aClass, final String text) {
     return createFromText(langLevel, aClass, text, FROM_ROOT, true);
   }
 
@@ -51,11 +51,13 @@ public class PyAstElementGenerator {
    * @param path      a sequence of numbers, each telling which child to select at current tree level; 0 means first child, etc.
    * @return the newly created PSI element
    */
-  public @NotNull <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text, final int[] path) {
+  @NotNull
+  public <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text, final int[] path) {
     return createFromText(langLevel, aClass, text, path, false);
   }
 
-  private @NotNull <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text, final int[] path, boolean physical) {
+  @NotNull
+  private <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text, final int[] path, boolean physical) {
     PsiElement ret = createDummyFile(langLevel, text, physical);
     for (int skip : path) {
       if (ret != null) {
@@ -93,7 +95,8 @@ public class PyAstElementGenerator {
   /**
    * @return name used for {@link #createDummyFile(LanguageLevel, String)}
    */
-  public static @NotNull String getDummyFileName() {
+  @NotNull
+  public static String getDummyFileName() {
     return "dummy." + PythonFileType.INSTANCE.getDefaultExtension();
   }
 
@@ -123,14 +126,4 @@ public class PyAstElementGenerator {
   }
 
   protected void specifyFileLanguageLevel(@NotNull VirtualFile virtualFile, @Nullable LanguageLevel langLevel) { }
-
-  public @NotNull PyAstExpression createExpressionFromText(@NotNull LanguageLevel languageLevel, @NotNull String text)
-    throws IncorrectOperationException {
-    final PsiFile dummyFile = createDummyFile(languageLevel, text);
-    final PsiElement element = dummyFile.getFirstChild();
-    if (element instanceof PyAstExpressionStatement expressionStatement) {
-      return expressionStatement.getExpression();
-    }
-    throw new IncorrectOperationException("could not parse text as expression: " + text);
-  }
 }

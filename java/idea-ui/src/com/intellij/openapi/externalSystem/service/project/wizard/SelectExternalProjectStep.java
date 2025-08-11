@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -22,7 +21,7 @@ public class SelectExternalProjectStep extends AbstractImportFromExternalSystemW
 
   private final JPanel myComponent = new JPanel(new BorderLayout());
 
-  private @NotNull AbstractImportFromExternalSystemControl myControl;
+  @NotNull private AbstractImportFromExternalSystemControl myControl;
 
   private boolean myExternalSystemSettingsInitialised;
 

@@ -1,6 +1,6 @@
 // "Propagate 'UnstableApi' opt-in requirement to 'SomeImplementation'" "true"
 // RUNTIME_WITH_SCRIPT_RUNTIME
-// LANGUAGE_VERSION: 2.1
+@file:OptIn(ExperimentalSubclassOptIn::class)
 
 @RequiresOptIn
 annotation class UnstableApi

@@ -1,7 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 @file:JvmName("KotlinPsiUtils")
-@file:OptIn(UnsafeCastFunction::class)
 
 package org.jetbrains.kotlin.idea.base.psi
 
@@ -21,10 +20,8 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.util.match
-import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration as isExpectDeclaration_alias
 
 val KtClassOrObject.classIdIfNonLocal: ClassId?
     get() {
@@ -46,24 +43,20 @@ val KtCallableDeclaration.callableIdIfNotLocal: CallableId?
         return CallableId(classId, callableName)
     }
 
-private fun PsiElement.isNotNewLineWhitespace(): Boolean = this is PsiWhiteSpace && !textContains('\n')
-
 fun getElementAtOffsetIgnoreWhitespaceBefore(file: PsiFile, offset: Int): PsiElement? {
     val element = file.findElementAt(offset)
-    return if (element?.isNotNewLineWhitespace() == true) {
-        file.findElementAt(element.getTextRange().endOffset)
-    } else {
-        element
+    if (element is PsiWhiteSpace) {
+        return file.findElementAt(element.getTextRange().endOffset)
     }
+    return element
 }
 
 fun getElementAtOffsetIgnoreWhitespaceAfter(file: PsiFile, offset: Int): PsiElement? {
     val element = file.findElementAt(offset - 1)
-    return if (element?.isNotNewLineWhitespace() == true) {
-        file.findElementAt(element.getTextRange().startOffset - 1)
-    } else {
-        element
+    if (element is PsiWhiteSpace) {
+        return file.findElementAt(element.getTextRange().startOffset - 1)
     }
+    return element
 }
 
 fun getStartLineOffset(file: PsiFile, line: Int): Int? {
@@ -158,11 +151,12 @@ private fun PsiElement.isSuitableTopmostElementAtOffset(offset: Int): Boolean =
 
 fun KtExpression.safeDeparenthesize(): KtExpression = KtPsiUtil.safeDeparenthesize(this)
 
-@Deprecated(
-    "Use 'isExpectDeclaration()' instead",
-    ReplaceWith("isExpectDeclaration()", "org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration"),
-)
-fun KtDeclaration.isExpectDeclaration(): Boolean = isExpectDeclaration_alias()
+fun KtDeclaration.isExpectDeclaration(): Boolean =
+    when {
+        hasExpectModifier() -> true
+        this is KtParameter -> ownerFunction?.isExpectDeclaration() == true
+        else -> containingClassOrObject?.isExpectDeclaration() == true
+    }
 
 fun KtDeclaration.isEffectivelyActual(checkConstructor: Boolean = true): Boolean = when {
     hasActualModifier() -> true
@@ -171,7 +165,8 @@ fun KtDeclaration.isEffectivelyActual(checkConstructor: Boolean = true): Boolean
 }
 
 fun KtPropertyAccessor.deleteBody() {
-    deleteChildRange(parameterList ?: return, lastChild)
+    val leftParenthesis = leftParenthesis ?: return
+    deleteChildRange(leftParenthesis, lastChild)
 }
 
 /**
@@ -238,16 +233,13 @@ fun KtModifierListOwner.hasInlineModifier(): Boolean =
 fun KtPrimaryConstructor.mustHaveValOrVar(): Boolean =
     containingClass()?.mustHaveOnlyPropertiesInPrimaryConstructor() ?: false
 
-fun KtNamedDeclaration.isAlwaysActual(): Boolean = safeAs<KtParameter>()?.parent?.parent?.safeAs<KtPrimaryConstructor>()
-    ?.mustHaveValOrVar() ?: false
-
 fun KtPrimaryConstructor.isRedundant(): Boolean {
     val containingClass = containingClass() ?: return false
     return when {
         valueParameters.isNotEmpty() -> false
         annotations.isNotEmpty() -> false
         modifierList?.text?.isBlank() == false -> false
-        isExpectDeclaration_alias() -> false
+        isExpectDeclaration() -> false
         containingClass.mustHaveNonEmptyPrimaryConstructor() -> false
         containingClass.secondaryConstructors.isNotEmpty() -> false
         else -> true

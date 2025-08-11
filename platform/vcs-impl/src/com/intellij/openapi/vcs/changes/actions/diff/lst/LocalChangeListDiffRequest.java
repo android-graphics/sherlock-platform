@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff.lst;
 
 import com.intellij.diff.contents.DiffContent;
@@ -23,11 +23,11 @@ import java.util.Arrays;
 import java.util.List;
 
 public class LocalChangeListDiffRequest extends ContentDiffRequest {
-  private final @NotNull Project myProject;
-  private final @NotNull VirtualFile myVirtualFile;
-  private final @NotNull String myChangelistId;
-  private final @NotNull @NlsSafe String myChangelistName;
-  private final @NotNull ContentDiffRequest myRequest;
+  @NotNull private final Project myProject;
+  @NotNull private final VirtualFile myVirtualFile;
+  @NotNull private final String myChangelistId;
+  @NotNull private final @NlsSafe String myChangelistName;
+  @NotNull private final ContentDiffRequest myRequest;
 
   private int myAssignments;
   private boolean myInstalled;
@@ -44,43 +44,53 @@ public class LocalChangeListDiffRequest extends ContentDiffRequest {
     myRequest = request;
   }
 
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myProject;
   }
 
-  public @NotNull VirtualFile getVirtualFile() {
+  @NotNull
+  public VirtualFile getVirtualFile() {
     return myVirtualFile;
   }
 
-  public @NotNull String getChangelistId() {
+  @NotNull
+  public String getChangelistId() {
     return myChangelistId;
   }
 
-  public @NotNull String getChangelistName() {
+  @NotNull
+  public String getChangelistName() {
     return myChangelistName;
   }
 
-  public @NotNull ContentDiffRequest getRequest() {
+  @NotNull
+  public ContentDiffRequest getRequest() {
     return myRequest;
   }
 
-  public @Nullable LineStatusTracker getLineStatusTracker() {
+  @Nullable
+  public LineStatusTracker getLineStatusTracker() {
     return LineStatusTrackerManager.getInstance(myProject).getLineStatusTracker(myVirtualFile);
   }
 
 
+  @NlsContexts.DialogTitle
+  @Nullable
   @Override
-  public @NlsContexts.DialogTitle @Nullable String getTitle() {
+  public String getTitle() {
     return VcsBundle.message("change.dialog.title.change.list.name", myRequest.getTitle(), myChangelistName);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<DiffContent> getContents() {
+  public List<DiffContent> getContents() {
     return myRequest.getContents();
   }
 
+  @NotNull
   @Override
-  public @NotNull List<@Nls String> getContentTitles() {
+  public List<@Nls String> getContentTitles() {
     List<String> titles = myRequest.getContentTitles();
     String title1 = titles.get(0);
     String title2 = titles.get(1);

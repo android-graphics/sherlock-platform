@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -18,11 +18,11 @@ import java.awt.event.MouseEvent;
 
 public final class ArrangementCheckBoxUiComponent extends AbstractArrangementUiComponent {
 
-  private final @NotNull JPanel myComponent = new JPanel(new GridBagLayout());
+  @NotNull private final JPanel myComponent = new JPanel(new GridBagLayout());
 
-  private final @NotNull ArrangementAtomMatchCondition myCondition;
-  private final @NotNull JBCheckBox                    myCheckBox;
-  private final @NotNull JLabel                        myTextLabel;
+  @NotNull private final ArrangementAtomMatchCondition myCondition;
+  @NotNull private final JBCheckBox                    myCheckBox;
+  @NotNull private final JLabel                        myTextLabel;
 
   public ArrangementCheckBoxUiComponent(@NotNull ArrangementSettingsToken token) {
     super(token);
@@ -50,8 +50,9 @@ public final class ArrangementCheckBoxUiComponent extends AbstractArrangementUiC
     myComponent.add(myTextLabel, new GridBag().anchor(GridBagConstraints.WEST).insets(0, 0, 0, ArrangementConstants.HORIZONTAL_GAP));
   }
 
+  @NotNull
   @Override
-  public @NotNull ArrangementSettingsToken getToken() {
+  public ArrangementSettingsToken getToken() {
     return myCondition.getType();
   }
 
@@ -64,8 +65,9 @@ public final class ArrangementCheckBoxUiComponent extends AbstractArrangementUiC
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull ArrangementMatchCondition getMatchCondition() {
+  public ArrangementMatchCondition getMatchCondition() {
     return myCondition;
   }
 

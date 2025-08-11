@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.dfaassist.java;
 
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
@@ -103,10 +103,11 @@ public final class JavaDfaAssistProvider implements DfaAssistProvider {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable Value getJdiValueForDfaVariable(@NotNull StackFrameProxyEx proxy,
-                                                   @NotNull DfaVariableValue var,
-                                                   @NotNull PsiElement anchor) throws EvaluateException {
+  public Value getJdiValueForDfaVariable(@NotNull StackFrameProxyEx proxy,
+                                         @NotNull DfaVariableValue var,
+                                         @NotNull PsiElement anchor) throws EvaluateException {
     if (var.getQualifier() != null) {
       VariableDescriptor descriptor = var.getDescriptor();
       if (descriptor instanceof SpecialField) {
@@ -116,21 +117,21 @@ public final class JavaDfaAssistProvider implements DfaAssistProvider {
       Value qualifierValue = getJdiValueForDfaVariable(proxy, var.getQualifier(), anchor);
       if (qualifierValue == null) return null;
       PsiElement element = descriptor.getPsiElement();
-      if (element instanceof PsiField psiField && qualifierValue instanceof ObjectReference objectRef) {
-        ReferenceType type = objectRef.referenceType();
-        PsiClass psiClass = psiField.getContainingClass();
+      if (element instanceof PsiField && qualifierValue instanceof ObjectReference) {
+        ReferenceType type = ((ObjectReference)qualifierValue).referenceType();
+        PsiClass psiClass = ((PsiField)element).getContainingClass();
         if (psiClass != null && type.name().equals(JVMNameUtil.getClassVMName(psiClass))) {
-          Field field = DebuggerUtils.findField(type, psiField.getName());
+          Field field = type.fieldByName(((PsiField)element).getName());
           if (field != null) {
-            return DfaAssistProvider.wrap(objectRef.getValue(field));
+            return DfaAssistProvider.wrap(((ObjectReference)qualifierValue).getValue(field));
           }
         }
       }
-      if (descriptor instanceof ArrayElementDescriptor arrayDesc && qualifierValue instanceof ArrayReference arrayRef) {
-        int index = arrayDesc.getIndex();
-        int length = arrayRef.length();
+      if (descriptor instanceof ArrayElementDescriptor && qualifierValue instanceof ArrayReference) {
+        int index = ((ArrayElementDescriptor)descriptor).getIndex();
+        int length = ((ArrayReference)qualifierValue).length();
         if (index >= 0 && index < length) {
-          return DfaAssistProvider.wrap(arrayRef.getValue(index));
+          return DfaAssistProvider.wrap(((ArrayReference)qualifierValue).getValue(index));
         }
       }
       return null;
@@ -158,21 +159,21 @@ public final class JavaDfaAssistProvider implements DfaAssistProvider {
       if (thisRef != null) {
         ReferenceType type = thisRef.referenceType();
         if (type instanceof ClassType && type.isPrepared()) {
-          Field field = DebuggerUtils.findField(type, "val$" + varName);
+          Field field = type.fieldByName("val$" + varName);
           if (field != null) {
             return DfaAssistProvider.wrap(thisRef.getValue(field));
           }
         }
       }
     }
-    if (psi instanceof PsiField psiField && psiField.hasModifierProperty(PsiModifier.STATIC)) {
-      PsiClass psiClass = psiField.getContainingClass();
+    if (psi instanceof PsiField && ((PsiField)psi).hasModifierProperty(PsiModifier.STATIC)) {
+      PsiClass psiClass = ((PsiField)psi).getContainingClass();
       if (psiClass != null) {
         String name = psiClass.getQualifiedName();
         if (name != null) {
           ReferenceType type = ContainerUtil.getOnlyItem(proxy.getVirtualMachine().classesByName(name));
           if (type != null && type.isPrepared()) {
-            Field field = DebuggerUtils.findField(type, psiField.getName());
+            Field field = type.fieldByName(((PsiField)psi).getName());
             if (field != null && field.isStatic()) {
               return DfaAssistProvider.wrap(type.getValue(field));
             }
@@ -184,7 +185,8 @@ public final class JavaDfaAssistProvider implements DfaAssistProvider {
   }
 
   @Override
-  public @NotNull DebuggerDfaListener createListener() {
+  @NotNull
+  public DebuggerDfaListener createListener() {
     return new JavaDebuggerDfaListener();
   }
 

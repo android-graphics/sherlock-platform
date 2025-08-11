@@ -22,7 +22,6 @@ import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -258,7 +257,6 @@ object IconLoader {
   @JvmStatic
   fun getDisabledIcon(icon: Icon): Icon = getDisabledIcon(icon = icon, disableFilter = null)
 
-  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use com.intellij.ui.svg.colorPatchedIcon")
   @Internal
   fun colorPatchedIcon(icon: Icon, colorPatcher: SvgElementColorPatcherProvider): Icon {
@@ -316,8 +314,19 @@ object IconLoader {
    */
   @JvmStatic
   fun getDarkIcon(icon: Icon, dark: Boolean): Icon {
-    val replacer = if (dark) ourDarkReplacer else ourLightReplacer
-    return replacer.replaceIcon(icon)
+    if (icon is DarkIconProvider) {
+      return icon.getDarkIcon(dark)
+    }
+
+    // cannot `inline` this call, because we need an object to propagate the needed replacer recursively to the parts of compound icon
+    return object : IconReplacer {
+      override fun replaceIcon(icon: Icon): Icon {
+        if (icon is DarkIconProvider) {
+          return icon.getDarkIcon(dark)
+        }
+        return super.replaceIcon(icon)
+      }
+    }.replaceIcon(icon)
   }
 
   fun detachClassLoader(classLoader: ClassLoader) {
@@ -329,7 +338,7 @@ object IconLoader {
   @JvmStatic
   fun createLazy(producer: Supplier<out Icon>): Icon = LazyIcon(producer)
 
-  @Deprecated("Unused", ReplaceWith("com.intellij.ui.icons.CachedImageIcon"), DeprecationLevel.ERROR)
+  @Deprecated("Do not use")
   open class CachedImageIcon private constructor(
     loader: ImageDataLoader,
   ) : com.intellij.ui.icons.CachedImageIcon(
@@ -426,17 +435,4 @@ internal class LazyIcon(private val producer: Supplier<out Icon>) : CopyableIcon
   override fun retrieveIcon(): Icon = getOrComputeIcon()
 
   override fun copy(): Icon = copyIcon(icon = getOrComputeIcon(), ancestor = null, deepCopy = false)
-}
-
-private val ourDarkReplacer = DarkReplacer(true)
-private val ourLightReplacer = DarkReplacer(false)
-
-// we need an object to propagate the replacer recursively to all parts of a compound icon
-private class DarkReplacer(val dark: Boolean) : IconReplacer {
-  override fun replaceIcon(icon: Icon): Icon {
-    if (icon is DarkIconProvider) {
-      return icon.getDarkIcon(dark)
-    }
-    return super.replaceIcon(icon)
-  }
 }

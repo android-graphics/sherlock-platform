@@ -10,13 +10,15 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceBuiltinsQuickFix extends PsiUpdateModCommandQuickFix {
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return PyPsiBundle.message("INTN.convert.builtin.import");
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.convert.builtin");
   }
 

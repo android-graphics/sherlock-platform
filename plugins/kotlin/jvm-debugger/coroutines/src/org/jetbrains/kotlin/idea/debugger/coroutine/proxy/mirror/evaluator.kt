@@ -15,20 +15,11 @@ sealed class MethodEvaluator<T>(val method: Method?) {
                   } else
                       values.toList()
                   @Suppress("UNCHECKED_CAST")
-                  context.evaluationContext.computeAndKeep {
-                      context.invokeMethod(method.declaringType() as ClassType, method, args, internalEvaluate = true)
-                  } as T?
+                  context.evaluationContext.computeAndKeep { context.invokeMethod(method.declaringType() as ClassType, method, args) } as T?
               }
               value != null ->
                   @Suppress("UNCHECKED_CAST")
-                  context.evaluationContext.computeAndKeep {
-                      context.invokeMethod(
-                          value,
-                          method,
-                          values.toList(),
-                          internalEvaluate = true
-                      )
-                  } as T?
+                  context.evaluationContext.computeAndKeep { context.invokeMethod(value, method, values.toList()) } as T?
               else -> throw IllegalArgumentException("Exception while calling method " + method.signature() + " with an empty value.")
             }
         }

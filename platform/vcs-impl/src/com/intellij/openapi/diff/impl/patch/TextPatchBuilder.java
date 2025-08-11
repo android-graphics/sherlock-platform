@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.diff.comparison.ByLine;
@@ -7,7 +7,6 @@ import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.DumbProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -37,40 +36,34 @@ public final class TextPatchBuilder {
   /**
    * @see com.intellij.openapi.vcs.changes.patch.DefaultPatchBaseVersionProvider
    */
-  private static final @NonNls String REVISION_NAME_TEMPLATE = "(revision {0})";
-  private static final @NonNls String DATE_NAME_TEMPLATE = "(date {0})";
+  @NonNls private static final String REVISION_NAME_TEMPLATE = "(revision {0})";
+  @NonNls private static final String DATE_NAME_TEMPLATE = "(date {0})";
 
-  private final @NotNull Path myBasePath;
+  @NotNull private final Path myBasePath;
   private final boolean myIsReversePath;
   private final int myContextLineCount = Registry.get("patch.context.line.count").asInteger();
+  @Nullable private final Runnable myCancelChecker;
 
   private TextPatchBuilder(@NotNull Path basePath,
-                           boolean isReversePath) {
+                           boolean isReversePath,
+                           @Nullable Runnable cancelChecker) {
     myBasePath = basePath;
     myIsReversePath = isReversePath;
+    myCancelChecker = cancelChecker;
   }
 
-  public static @NotNull List<FilePatch> buildPatch(@NotNull Collection<BeforeAfter<AirContentRevision>> changes,
-                                                    @NotNull Path basePath,
-                                                    boolean reversePatch) throws VcsException {
-    return new TextPatchBuilder(basePath, reversePatch).build(changes);
-  }
-
-  /**
-   * @deprecated Use {@link #buildPatch(Collection, Path, boolean)}
-   */
-  @Deprecated
   public static @NotNull List<FilePatch> buildPatch(@NotNull Collection<BeforeAfter<AirContentRevision>> changes,
                                                     @NotNull Path basePath,
                                                     boolean reversePatch,
-                                                    @Nullable Runnable ignoredParameter) throws VcsException {
-    return buildPatch(changes, basePath, reversePatch);
+                                                    @Nullable Runnable cancelChecker) throws VcsException {
+    return new TextPatchBuilder(basePath, reversePatch, cancelChecker).build(changes);
   }
 
-  private @NotNull List<FilePatch> build(@NotNull Collection<BeforeAfter<AirContentRevision>> changes) throws VcsException {
+  @NotNull
+  private List<FilePatch> build(@NotNull Collection<BeforeAfter<AirContentRevision>> changes) throws VcsException {
     List<FilePatch> result = new ArrayList<>();
     for (BeforeAfter<AirContentRevision> c : changes) {
-      ProgressManager.checkCanceled();
+      if (myCancelChecker != null) myCancelChecker.run();
 
       AirContentRevision beforeRevision = myIsReversePath ? c.getAfter() : c.getBefore();
       AirContentRevision afterRevision = myIsReversePath ? c.getBefore() : c.getAfter();
@@ -81,8 +74,9 @@ public final class TextPatchBuilder {
     return result;
   }
 
-  private @Nullable FilePatch createPatch(@Nullable AirContentRevision beforeRevision,
-                                          @Nullable AirContentRevision afterRevision)
+  @Nullable
+  private FilePatch createPatch(@Nullable AirContentRevision beforeRevision,
+                                @Nullable AirContentRevision afterRevision)
     throws VcsException {
     if (beforeRevision == null && afterRevision == null) return null;
 
@@ -104,8 +98,9 @@ public final class TextPatchBuilder {
     return buildModifiedFile(beforeRevision, afterRevision);
   }
 
-  private @Nullable TextFilePatch buildModifiedFile(@NotNull AirContentRevision beforeRevision,
-                                                    @NotNull AirContentRevision afterRevision) throws VcsException {
+  @Nullable
+  private TextFilePatch buildModifiedFile(@NotNull AirContentRevision beforeRevision,
+                                          @NotNull AirContentRevision afterRevision) throws VcsException {
     String beforeContent = beforeRevision.getContentAsString();
     String afterContent = afterRevision.getContentAsString();
 
@@ -123,11 +118,13 @@ public final class TextPatchBuilder {
   }
 
   @SuppressWarnings("unused")
-  public static @NotNull List<PatchHunk> buildPatchHunks(@NotNull String beforeContent, @NotNull String afterContent) {
+  @NotNull
+  public static List<PatchHunk> buildPatchHunks(@NotNull String beforeContent, @NotNull String afterContent) {
     return buildPatchHunks(beforeContent, afterContent, CONTEXT_LINES);
   }
 
-  public static @NotNull List<PatchHunk> buildPatchHunks(@NotNull String beforeContent, @NotNull String afterContent, int contextLineCount) {
+  @NotNull
+  public static List<PatchHunk> buildPatchHunks(@NotNull String beforeContent, @NotNull String afterContent, int contextLineCount) {
     if (beforeContent.equals(afterContent)) return Collections.emptyList();
     if (beforeContent.isEmpty()) {
       return singletonList(createWholeFileHunk(afterContent, true, true));
@@ -157,7 +154,8 @@ public final class TextPatchBuilder {
     return hunks;
   }
 
-  private static @NotNull List<Range> getAdjacentFragments(@NotNull List<Range> fragments, int hunkStart, int contextLineCount) {
+  @NotNull
+  private static List<Range> getAdjacentFragments(@NotNull List<Range> fragments, int hunkStart, int contextLineCount) {
     int hunkEnd = hunkStart + 1;
     while (hunkEnd < fragments.size()) {
       Range lastFragment = fragments.get(hunkEnd - 1);
@@ -172,12 +170,13 @@ public final class TextPatchBuilder {
     return fragments.subList(hunkStart, hunkEnd);
   }
 
-  private static @NotNull PatchHunk createHunk(@NotNull List<? extends Range> hunkFragments,
-                                               @NotNull List<String> beforeLines,
-                                               @NotNull List<String> afterLines,
-                                               boolean beforeNoNewlineAtEOF,
-                                               boolean afterNoNewlineAtEOF,
-                                               int contextLineCount) {
+  @NotNull
+  private static PatchHunk createHunk(@NotNull List<? extends Range> hunkFragments,
+                                      @NotNull List<String> beforeLines,
+                                      @NotNull List<String> afterLines,
+                                      boolean beforeNoNewlineAtEOF,
+                                      boolean afterNoNewlineAtEOF,
+                                      int contextLineCount) {
     Range first = hunkFragments.get(0);
     Range last = hunkFragments.get(hunkFragments.size() - 1);
 
@@ -217,10 +216,11 @@ public final class TextPatchBuilder {
     return hunk;
   }
 
-  private static @NotNull List<Range> compareLines(@NotNull List<String> beforeLines,
-                                                   @NotNull List<String> afterLines,
-                                                   boolean beforeNoNewlineAtEOF,
-                                                   boolean afterNoNewlineAtEOF) {
+  @NotNull
+  private static List<Range> compareLines(@NotNull List<String> beforeLines,
+                                          @NotNull List<String> afterLines,
+                                          boolean beforeNoNewlineAtEOF,
+                                          boolean afterNoNewlineAtEOF) {
     // patch treats "X\n" vs "X" as modification of a single line, while we treat it as a deletion of an empty line
     // so we have to adjust output accordingly
 
@@ -248,7 +248,8 @@ public final class TextPatchBuilder {
     }
   }
 
-  private static @NotNull List<Range> appendRange(@NotNull List<? extends Range> ranges, @NotNull Range change) {
+  @NotNull
+  private static List<Range> appendRange(@NotNull List<? extends Range> ranges, @NotNull Range change) {
     if (ranges.isEmpty()) return singletonList(change);
 
     Range lastRange = ranges.get(ranges.size() - 1);
@@ -261,7 +262,8 @@ public final class TextPatchBuilder {
     }
   }
 
-  private static @NotNull List<Range> doCompareLines(@NotNull List<String> beforeLines, @NotNull List<String> afterLines) {
+  @NotNull
+  private static List<Range> doCompareLines(@NotNull List<String> beforeLines, @NotNull List<String> afterLines) {
     try {
       FairDiffIterable iterable = ByLine.compare(beforeLines, afterLines, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
       return ContainerUtil.newArrayList(iterable.iterateChanges());
@@ -271,8 +273,9 @@ public final class TextPatchBuilder {
     }
   }
 
-  private @NotNull FilePatch buildBinaryPatch(@Nullable AirContentRevision beforeRevision,
-                                              @Nullable AirContentRevision afterRevision) throws VcsException {
+  @NotNull
+  private FilePatch buildBinaryPatch(@Nullable AirContentRevision beforeRevision,
+                                     @Nullable AirContentRevision afterRevision) throws VcsException {
     assert beforeRevision != null || afterRevision != null;
     AirContentRevision headingBeforeRevision = beforeRevision != null ? beforeRevision : afterRevision;
     AirContentRevision headingAfterRevision = afterRevision != null ? afterRevision : beforeRevision;
@@ -283,7 +286,8 @@ public final class TextPatchBuilder {
     return patch;
   }
 
-  private @NotNull TextFilePatch buildAddedFile(@NotNull AirContentRevision afterRevision) throws VcsException {
+  @NotNull
+  private TextFilePatch buildAddedFile(@NotNull AirContentRevision afterRevision) throws VcsException {
     TextFilePatch result = buildPatchHeading(afterRevision, afterRevision);
     result.setFileStatus(FileStatus.ADDED);
     String content = afterRevision.getContentAsString();
@@ -293,7 +297,8 @@ public final class TextPatchBuilder {
     return result;
   }
 
-  private @NotNull TextFilePatch buildDeletedFile(@NotNull AirContentRevision beforeRevision) throws VcsException {
+  @NotNull
+  private TextFilePatch buildDeletedFile(@NotNull AirContentRevision beforeRevision) throws VcsException {
     TextFilePatch result = buildPatchHeading(beforeRevision, beforeRevision);
     result.setFileStatus(FileStatus.DELETED);
     String content = beforeRevision.getContentAsString();
@@ -315,7 +320,8 @@ public final class TextPatchBuilder {
     hunk.addLine(patchLine);
   }
 
-  private static @NotNull PatchHunk createWholeFileHunk(@NotNull String content, boolean isInsertion, boolean isWithEmptyFile) {
+  @NotNull
+  private static PatchHunk createWholeFileHunk(@NotNull String content, boolean isInsertion, boolean isWithEmptyFile) {
     PatchLine.Type type = isInsertion ? PatchLine.Type.ADD : PatchLine.Type.REMOVE;
 
     List<String> lines = tokenize(content);
@@ -336,8 +342,9 @@ public final class TextPatchBuilder {
     return hunk;
   }
 
-  private @NotNull TextFilePatch buildPatchHeading(@NotNull AirContentRevision beforeRevision,
-                                                   @NotNull AirContentRevision afterRevision) {
+  @NotNull
+  private TextFilePatch buildPatchHeading(@NotNull AirContentRevision beforeRevision,
+                                          @NotNull AirContentRevision afterRevision) {
     TextFilePatch result = new TextFilePatch(afterRevision.getCharset(), afterRevision.getLineSeparator());
     setPatchHeading(result, beforeRevision, afterRevision);
     return result;
@@ -353,7 +360,8 @@ public final class TextPatchBuilder {
     result.setAfterVersionId(getRevisionName(afterRevision));
   }
 
-  public static @SystemIndependent @NotNull String getRelativePath(@NotNull Path basePath, @NotNull FilePath filePath) {
+  @SystemIndependent
+  public static @NotNull String getRelativePath(@NotNull Path basePath, @NotNull FilePath filePath) {
     try {
       Path path = filePath.getIOFile().toPath();
       if (!path.isAbsolute()) return filePath.getPath();
@@ -364,7 +372,8 @@ public final class TextPatchBuilder {
     }
   }
 
-  private static @Nullable @NlsSafe String getRevisionName(@NotNull AirContentRevision revision) {
+  @Nullable
+  private static @NlsSafe String getRevisionName(@NotNull AirContentRevision revision) {
     String revisionName = revision.getRevisionNumber();
     if (!StringUtil.isEmptyOrSpaces(revisionName)) {
       return MessageFormat.format(REVISION_NAME_TEMPLATE, revisionName);
@@ -378,7 +387,8 @@ public final class TextPatchBuilder {
     return null;
   }
 
-  private static @NotNull List<String> tokenize(@NotNull String text) {
+  @NotNull
+  private static List<String> tokenize(@NotNull String text) {
     return LineTokenizer.tokenizeIntoList(text, false, true);
   }
 }

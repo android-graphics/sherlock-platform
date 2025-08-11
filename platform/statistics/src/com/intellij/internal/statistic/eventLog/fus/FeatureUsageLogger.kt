@@ -2,12 +2,10 @@
 package com.intellij.internal.statistic.eventLog.fus
 
 import com.intellij.internal.statistic.eventLog.*
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import java.util.concurrent.CompletableFuture
 
 /**
- * An entry point class to record in event log information about feature usages.
+ * An entry point class to record in event log an information about feature usages.
  *
  * DO NOT use this class directly, implement collectors according to "fus-collectors.md" dev guide.
  *
@@ -15,17 +13,8 @@ import java.util.concurrent.CompletableFuture
  * @see com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
  * @see com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
  */
-@Service
-class FeatureUsageLogger {
-
-  companion object {
-    @JvmStatic
-    fun getInstance(): FeatureUsageLogger {
-      return service()
-    }
-  }
-
-  private val loggerProvider: StatisticsEventLoggerProvider
+object FeatureUsageLogger {
+  private val loggerProvider
     get() = StatisticsEventLogProviderUtil.getEventLogProvider("FUS")
 
   init {
@@ -43,7 +32,7 @@ class FeatureUsageLogger {
 
   /**
    * Records that in a group (e.g. 'dialogs', 'intentions') a new event occurred.
-   * Adds context information to the event, e.g., source and shortcut for an action.
+   * Adds context information to the event, e.g. source and shortcut for an action.
    */
   fun log(group: EventLogGroup, action: String, data: Map<String, Any>) {
     loggerProvider.logger.logAsync(group, action, data, false)
@@ -96,5 +85,6 @@ class FeatureUsageLogger {
     return loggerProvider.logger !is EmptyStatisticsEventLogger
   }
 
+  @JvmStatic
   val configVersion: Int get() = getConfig().version
 }

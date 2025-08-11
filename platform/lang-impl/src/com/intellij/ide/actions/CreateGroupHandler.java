@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.project.Project;
@@ -11,19 +11,20 @@ import org.jetbrains.annotations.Nullable;
 
 abstract class CreateGroupHandler implements InputValidatorEx {
 
-  protected final @NotNull Project myProject;
-  protected final @NotNull PsiDirectory myDirectory;
+  @NotNull protected final Project myProject;
+  @NotNull protected final PsiDirectory myDirectory;
 
-  protected @Nullable PsiFileSystemItem createdElement;
-  protected @Nullable @NlsContexts.DetailedDescription String errorText;
+  @Nullable protected PsiFileSystemItem createdElement;
+  @Nullable protected @NlsContexts.DetailedDescription String errorText;
 
   CreateGroupHandler(@NotNull Project project, @NotNull PsiDirectory directory) {
     myProject = project;
     myDirectory = directory;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getErrorText(String inputString) {
+  public String getErrorText(String inputString) {
     return errorText;
   }
 
@@ -32,5 +33,6 @@ abstract class CreateGroupHandler implements InputValidatorEx {
     return createdElement;
   }
 
-  abstract @NotNull String getInitialText();
+  @NotNull
+  abstract String getInitialText();
 }

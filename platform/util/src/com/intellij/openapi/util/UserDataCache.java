@@ -56,13 +56,13 @@ public abstract class UserDataCache<T, Owner extends UserDataHolder, Param> exte
   }
 
   @Override
-  public T get(Key<T> key, Owner owner, Param p) {
-    T value = owner.getUserData(key);
+  public T get(Key<T> a, Owner owner, Param p) {
+    T value = owner.getUserData(a);
     if (value == null) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       value = compute(owner, p);
       if (stamp.mayCacheNow()) {
-        value = ((UserDataHolderEx)owner).putUserDataIfAbsent(key, value);
+        value = ((UserDataHolderEx)owner).putUserDataIfAbsent(a, value);
       }
     }
     return value;

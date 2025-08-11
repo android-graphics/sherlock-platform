@@ -13,9 +13,10 @@ import java.util.StringTokenizer;
 public final class CommandLineTokenizer extends StringTokenizer {
 
     private static final String DEFAULT_DELIMITERS = " \t\n\r\f";
-    private final List<String> myTokens = new ArrayList<>();
+    // keep source level 1.4
+    private final List myTokens = new ArrayList();
     private int myCurrentToken = 0;
-    private final boolean myHandleEscapedWhitespaces;
+    private boolean myHandleEscapedWhitespaces = false;
 
     public CommandLineTokenizer(String str) {
       this(str, false);
@@ -34,11 +35,11 @@ public final class CommandLineTokenizer extends StringTokenizer {
 
     @Override
     public String nextToken() {
-        return myTokens.get(myCurrentToken++);
+        return (String) myTokens.get(myCurrentToken++);
     }
 
     public String peekNextToken() {
-        return myTokens.get(myCurrentToken);
+        return (String) myTokens.get(myCurrentToken);
     }
 
     @Override

@@ -8,9 +8,10 @@ import org.jetbrains.jps.model.serialization.artifact.JpsArtifactPropertiesSeria
 import java.util.Collections;
 import java.util.List;
 
-public final class JpsJavaFxPreloaderModelSerializerExtension extends JpsModelSerializerExtension {
+public class JpsJavaFxPreloaderModelSerializerExtension extends JpsModelSerializerExtension {
+  @NotNull
   @Override
-  public @NotNull List<? extends JpsArtifactPropertiesSerializer<?>> getArtifactTypePropertiesSerializers() {
+  public List<? extends JpsArtifactPropertiesSerializer<?>> getArtifactTypePropertiesSerializers() {
     return Collections.singletonList(new JpsJavaFxPreloaderArtifactPropertiesSerializer());
   }
 }

@@ -1,5 +1,5 @@
 // WithNested: to be implemented
-actual class WithNested<T> {
+actual class WithNested {
     actual fun foo(): Int {
         TODO("Not yet implemented")
     }

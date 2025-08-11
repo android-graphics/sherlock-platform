@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,7 +7,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Utility class used to preserve index during 'map' operations
@@ -15,7 +18,7 @@ import java.util.*;
 public final class ListSelection<T> {
   private static final Logger LOG = Logger.getInstance(ListSelection.class);
 
-  private final @NotNull List<? extends T> myList;
+  @NotNull private final List<? extends T> myList;
   private final int mySelectedIndex;
   private final boolean myExplicitSelection;
 
@@ -34,31 +37,37 @@ public final class ListSelection<T> {
     myExplicitSelection = isExplicit;
   }
 
-  public static @NotNull <V> ListSelection<V> createAt(@NotNull List<? extends V> list, int selectedIndex) {
+  @NotNull
+  public static <V> ListSelection<V> createAt(@NotNull List<? extends V> list, int selectedIndex) {
     if (list.contains(null)) {
       LOG.error("List selection should not contain nulls");
     }
     return new ListSelection<>(list, selectedIndex);
   }
 
-  public static @NotNull <V> ListSelection<V> create(@NotNull List<? extends V> list, @Nullable V selected) {
+  @NotNull
+  public static <V> ListSelection<V> create(@NotNull List<? extends V> list, @Nullable V selected) {
     return createAt(list, list.indexOf(selected));
   }
 
-  public static @NotNull <V> ListSelection<V> create(V @NotNull [] array, V selected) {
+  @NotNull
+  public static <V> ListSelection<V> create(V @NotNull [] array, V selected) {
     return create(Arrays.asList(array), selected);
   }
 
-  public static @NotNull <V> ListSelection<V> createSingleton(@NotNull V element) {
+  @NotNull
+  public static <V> ListSelection<V> createSingleton(@NotNull V element) {
     return createAt(Collections.singletonList(element), 0);
   }
 
-  public static @NotNull <V> ListSelection<V> empty() {
+  @NotNull
+  public static <V> ListSelection<V> empty() {
     return new ListSelection<>(Collections.emptyList(), -1);
   }
 
 
-  public @NotNull List<? extends T> getList() {
+  @NotNull
+  public List<? extends T> getList() {
     return myList;
   }
 
@@ -74,7 +83,8 @@ public final class ListSelection<T> {
    * Map all elements in the list and remove elements for which converter returned null.
    * If the selected element was removed, select the last remaining element before it.
    */
-  public @NotNull <V> ListSelection<V> map(@NotNull NullableFunction<? super T, ? extends V> convertor) {
+  @NotNull
+  public <V> ListSelection<V> map(@NotNull NullableFunction<? super T, ? extends V> convertor) {
     int newSelectionIndex = -1;
     List<V> result = new ArrayList<>();
     for (int i = 0; i < myList.size(); i++) {
@@ -86,7 +96,8 @@ public final class ListSelection<T> {
     return new ListSelection<>(result, newSelectionIndex, myExplicitSelection);
   }
 
-  public @NotNull ListSelection<T> asExplicitSelection() {
+  @NotNull
+  public ListSelection<T> asExplicitSelection() {
     return withExplicitSelection(true);
   }
 
@@ -96,11 +107,13 @@ public final class ListSelection<T> {
    * Ex: see {@link com.intellij.openapi.vcs.changes.ui.VcsTreeModelData#getListSelectionOrAll(JTree)},
    * that might implicitly expand empty or single selection.
    */
-  public @NotNull ListSelection<T> withExplicitSelection(boolean value) {
+  @NotNull
+  public ListSelection<T> withExplicitSelection(boolean value) {
     return new ListSelection<>(myList, mySelectedIndex, value);
   }
 
-  public @NotNull List<? extends T> getExplicitSelection() {
+  @NotNull
+  public List<? extends T> getExplicitSelection() {
     if (myList.isEmpty()) return Collections.emptyList();
     if (myExplicitSelection) return myList;
     return Collections.singletonList(myList.get(mySelectedIndex));
@@ -108,19 +121,5 @@ public final class ListSelection<T> {
 
   public boolean isExplicitSelection() {
     return myExplicitSelection;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof ListSelection<?> selection)) return false;
-    return mySelectedIndex == selection.mySelectedIndex &&
-           myExplicitSelection == selection.myExplicitSelection &&
-           Objects.equals(myList, selection.myList);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(myList, mySelectedIndex, myExplicitSelection);
   }
 }

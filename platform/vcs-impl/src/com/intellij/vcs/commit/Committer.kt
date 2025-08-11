@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.forEachLoggingErrors
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 abstract class Committer(
@@ -111,7 +110,6 @@ interface CommitterResultHandler : EventListener {
   }
 }
 
-@ApiStatus.Internal
 class CommitResultHandlerNotifier(private val committer: Committer,
                                   private val handlers: List<CommitResultHandler>) : CommitterResultHandler {
   constructor(committer: Committer, handler: CommitResultHandler) : this(committer, listOf(handler))

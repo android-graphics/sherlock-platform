@@ -26,7 +26,8 @@ import org.jetbrains.annotations.NotNull;
 public final class InfiniteRecursionInspection extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "infinite.recursion.problem.descriptor");
   }

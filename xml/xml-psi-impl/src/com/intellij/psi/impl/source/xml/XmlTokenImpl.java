@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.xml.IDTDElementType;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,10 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
 
   @Override
   public String toString() {
-    return "XmlToken:" + getTokenType();
+    if(getTokenType() instanceof IDTDElementType){
+      return "DTDToken:" + getTokenType().toString();
+    }
+    return "XmlToken:" + getTokenType().toString();
   }
 
 // Implementation specific

@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.PsiElement;
 import com.siyeh.ig.psiutils.JavaDeprecationUtils;
 
@@ -25,11 +24,6 @@ public final class DeprecatedSkipper extends CompletionPreselectSkipper {
   @Override
   public boolean skipElement(LookupElement element, CompletionLocation location) {
     PsiElement e = element.getPsiElement();
-    if (!isCompletionFromJavaFile(location)) return false;
-
-    return e != null && JavaDeprecationUtils.isDeprecated(e, location.getCompletionParameters().getPosition());  }
-
-  private static boolean isCompletionFromJavaFile(CompletionLocation location) {
-    return location.getCompletionParameters().getOriginalFile().getLanguage() == JavaLanguage.INSTANCE;
+    return e != null && JavaDeprecationUtils.isDeprecated(e, location.getCompletionParameters().getPosition());
   }
 }

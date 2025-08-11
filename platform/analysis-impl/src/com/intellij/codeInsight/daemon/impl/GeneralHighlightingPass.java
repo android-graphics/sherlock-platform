@@ -1,7 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.analysis.AnalysisBundle;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.problems.ProblemImpl;
@@ -16,7 +17,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -28,11 +28,11 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
+import com.intellij.util.TriConsumer;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -40,13 +40,10 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiPredicate;
-import java.util.function.Consumer;
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 
-@ApiStatus.Internal
-public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware
-  permits NasueousGeneralHighlightingPass {
+public /*sealed */class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   static final Logger LOG = Logger.getInstance(GeneralHighlightingPass.class);
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
   static final Predicate<? super PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> {
@@ -56,17 +53,18 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
   private static final Random RESTART_DAEMON_RANDOM = new Random();
 
   private final boolean myUpdateAll;
-  private final @NotNull ProperTextRange myPriorityRange;
+  final @NotNull ProperTextRange myPriorityRange;
 
-  private final List<HighlightInfo> myHighlights = Collections.synchronizedList(new ArrayList<>());
+  final List<HighlightInfo> myHighlights = Collections.synchronizedList(new ArrayList<>());
 
-  private volatile boolean myHasErrorElement;
+  protected volatile boolean myHasErrorElement;
   private volatile boolean myHasErrorSeverity;
+  private volatile boolean myOldErrorFound;
   private final boolean myRunAnnotators;
   private final HighlightInfoUpdater myHighlightInfoUpdater;
   private final HighlightVisitorRunner myHighlightVisitorRunner;
 
-  public GeneralHighlightingPass(@NotNull PsiFile psiFile,
+  GeneralHighlightingPass(@NotNull PsiFile psiFile,
                           @NotNull Document document,
                           int startOffset,
                           int endOffset,
@@ -74,9 +72,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
                           @NotNull ProperTextRange priorityRange,
                           @Nullable Editor editor,
                           boolean runAnnotators,
-                          boolean runVisitors,
-                          boolean highlightErrorElements,
-                          @NotNull HighlightInfoUpdater highlightInfoUpdater) {
+                          boolean runVisitors, boolean highlightErrorElements, @NotNull HighlightInfoUpdater highlightInfoUpdater) {
     super(psiFile.getProject(), document, AnalysisBundle.message("pass.syntax"), psiFile, editor, TextRange.create(startOffset, endOffset), true, HighlightInfoProcessor.getEmpty());
     myUpdateAll = updateAll;
     myPriorityRange = priorityRange;
@@ -86,6 +82,9 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
     PsiUtilCore.ensureValid(psiFile);
     boolean wholeFileHighlighting = isWholeFileHighlighting();
     myHasErrorElement = !wholeFileHighlighting && Boolean.TRUE.equals(getFile().getUserData(HAS_ERROR_ELEMENT));
+    DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
+    FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
+    myOldErrorFound = !wholeFileHighlighting && fileStatusMap.wasErrorFound(getDocument());
 
     // initial guess to show correct progress in the traffic light icon
     setProgressLimit(document.getTextLength()/2); // approx number of PSI elements = file length/2
@@ -93,14 +92,9 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
     myHighlightVisitorRunner = new HighlightVisitorRunner(psiFile, globalScheme, runVisitors, highlightErrorElements);
   }
 
-  boolean hasErrorElement() {
-    return myHasErrorElement;
-  }
-
   private @NotNull PsiFile getFile() {
     return myFile;
   }
-
   public static void assertHighlightingPassNotRunning() {
     HighlightVisitorRunner.assertHighlightingPassNotRunning();
   }
@@ -168,55 +162,37 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
 
       boolean forceHighlightParents = forceHighlightParents();
 
-      // Remove obsolete infos for invalid psi elements.
-      // Unfortunately, the majority of PSI implementations are very bad at increment reparsing, meaning the smallest document change
-      // leads (non-optimally) to many unrelated PSI elements being invalidated, and then the new PSI recreated in their place with identical structure.
-      // If we removed these invalid elements eagerly, it would cause flicker because the newly created elements preempt the just removed invalid ones.
-      // Hence, we defer the removal of invalid elements till the very end, in hope that these highlighters be reused by these new elements.
-      // this optimization, however, could lead to an increased latency
-      Consumer<? super ManagedHighlighterRecycler> recyclerConsumer = invalidPsiRecycler -> {
-        // clear highlights generated by visitors called on psi elements no longer highlightable under the current highlighting level (e.g., when the file level was changed from "All Problems" to "None")
-        for (Divider.DividedElements notVisitable : notVisitableElements) {
-          for (PsiElement element : ContainerUtil.concat(notVisitable.inside(), notVisitable.outside())) {
-            for (HighlightVisitor visitor : filteredVisitors) {
-              myHighlightInfoUpdater.psiElementVisited(visitor.getClass(), element, List.of(), getDocument(), getFile(), myProject, getHighlightingSession(), invalidPsiRecycler);
-            }
+      // clear highlights generated by visitors called on psi elements no longer highlightable under the current highlighting level (e.g., when the file level was changed from "All Problems" to "None")
+      for (Divider.DividedElements notVisitable : notVisitableElements) {
+        for (PsiElement element : ContainerUtil.concat(notVisitable.inside(), notVisitable.outside())) {
+          for (HighlightVisitor visitor : filteredVisitors) {
+            myHighlightInfoUpdater.psiElementVisited(visitor.getClass(), element, List.of(), getDocument(), getFile(), myProject, getHighlightingSession());
           }
         }
-        if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
-          List<? extends Class<? extends HighlightVisitor>> liveVisitorClasses = ContainerUtil.map(filteredVisitors, v -> v.getClass());
-          BiPredicate<? super Object, ? super PsiFile> keepToolIdPredicate = (toolId, __) -> !HighlightInfoUpdaterImpl.isHighlightVisitorToolId(toolId) || liveVisitorClasses.contains(toolId);
-          impl.removeHighlightsForObsoleteTools(getHighlightingSession(), List.of(), keepToolIdPredicate);
-        }
-        boolean success = collectHighlights(allInsideElements, allInsideRanges, allOutsideElements, allOutsideRanges, filteredVisitors,
-                                            forceHighlightParents, (toolId, psiElement, newInfos) -> {
-            myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, newInfos, getDocument(), getFile(), myProject, getHighlightingSession(), invalidPsiRecycler);
-            myHighlights.addAll(newInfos);
-            if (psiElement instanceof PsiErrorElement) {
-              myHasErrorElement = true;
+      }
+
+      boolean success = collectHighlights(allInsideElements, allInsideRanges, allOutsideElements, allOutsideRanges, filteredVisitors,
+                                          forceHighlightParents, (toolId, psiElement, newInfos) -> {
+          myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, newInfos, getDocument(), getFile(), myProject, getHighlightingSession());
+          myHighlights.addAll(newInfos);
+          if (psiElement instanceof PsiErrorElement) {
+            myHasErrorElement = true;
+          }
+          for (HighlightInfo info : newInfos) {
+            if (info.getSeverity() == HighlightSeverity.ERROR) {
+              myHasErrorSeverity = true;
+              break;
             }
-            for (HighlightInfo info : newInfos) {
-              if (info.getSeverity() == HighlightSeverity.ERROR) {
-                myHasErrorSeverity = true;
-                break;
-              }
-            }
+          }
         });
-        if (success) {
-          if (myUpdateAll) {
-            daemonCodeAnalyzer.getFileStatusMap().setErrorFoundFlag(getDocument(), getContext(), myHasErrorSeverity);
-            reportErrorsToWolf(myHasErrorSeverity);
-          }
+      if (success) {
+        if (myUpdateAll) {
+          daemonCodeAnalyzer.getFileStatusMap().setErrorFoundFlag(myProject, getDocument(), myHasErrorSeverity);
+          reportErrorsToWolf(myHasErrorSeverity);
         }
-        else {
-          cancelAndRestartDaemonLater(progress, myProject, "GHP.collectHighlights() == false");
-        }
-      };
-      if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
-        impl.runWithInvalidPsiRecycler(getHighlightingSession(), HighlightInfoUpdaterImpl.WhatTool.ANNOTATOR_OR_VISITOR, recyclerConsumer);
       }
       else {
-        ManagedHighlighterRecycler.runWithRecycler(getHighlightingSession(), recyclerConsumer);
+        cancelAndRestartDaemonLater(progress, myProject);
       }
     });
   }
@@ -242,38 +218,31 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
                                     @NotNull LongList ranges2,
                                     HighlightVisitor @NotNull [] visitors,
                                     boolean forceHighlightParents,
-                                    @NotNull ResultSink resultSink) {
+                                    @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
     int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
-    ProgressManager.checkCanceled();
-    Runnable runnable = () -> myHighlightVisitorRunner.runVisitors(getFile(), myRestrictRange, elements1, ranges1, elements2, ranges2, visitors, forceHighlightParents, chunkSize,
-                                                            myUpdateAll, () -> createInfoHolder(getFile()), resultSink);
+    BooleanSupplier runnable = () -> myHighlightVisitorRunner.runVisitors(getFile(), myRestrictRange, elements1, ranges1, elements2, ranges2, visitors, forceHighlightParents, chunkSize,
+                                                                          myUpdateAll, () -> createInfoHolder(getFile()), resultSink);
     AnnotationSession session = AnnotationSessionImpl.create(getFile());
-    setupAnnotationSession(session, myPriorityRange, myRestrictRange,
-                           ((HighlightingSessionImpl)getHighlightingSession()).getMinimumSeverity());
-    AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(session, false) : null;
-    if (annotatorRunner == null) {
-      runnable.run();
-      return true;
-    }
-    return annotatorRunner.runAnnotatorsAsync(elements1, elements2, runnable, resultSink);
+    setupAnnotationSession(session, myPriorityRange, getHighlightingSession());
+    AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(getFile(), false, session) : null;
+    return annotatorRunner == null ? runnable.getAsBoolean() : annotatorRunner.runAnnotatorsAsync(elements1, elements2, runnable, resultSink);
   }
 
-  @ApiStatus.Internal
   public static final int POST_UPDATE_ALL = 5;
   private static final AtomicInteger RESTART_REQUESTS = new AtomicInteger();
 
   @TestOnly
-  public static boolean isRestartPending() {
+  static boolean isRestartPending() {
     return RESTART_REQUESTS.get() > 0;
   }
 
-  private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress, @NotNull Project project, @NotNull String reason) throws ProcessCanceledException {
+  private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress, @NotNull Project project) throws ProcessCanceledException {
     RESTART_REQUESTS.incrementAndGet();
     progress.cancel();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       RESTART_REQUESTS.decrementAndGet();
       if (!project.isDisposed()) {
-        DaemonCodeAnalyzerEx.getInstanceEx(project).restart(reason);
+        DaemonCodeAnalyzer.getInstance(project).restart();
       }
     }
     else {
@@ -281,7 +250,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
       EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
         RESTART_REQUESTS.decrementAndGet();
         if (!project.isDisposed()) {
-          DaemonCodeAnalyzerEx.getInstanceEx(project).restart(reason);
+          DaemonCodeAnalyzer.getInstance(project).restart();
         }
       }, delay, TimeUnit.MILLISECONDS);
     }
@@ -321,18 +290,15 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
         return added;
       }
     };
-    setupAnnotationSession(holder.getAnnotationSession(), myPriorityRange, myRestrictRange,
-                           ((HighlightingSessionImpl)getHighlightingSession()).getMinimumSeverity());
+    setupAnnotationSession(holder.getAnnotationSession(), myPriorityRange, getHighlightingSession());
     return holder;
   }
 
-  @ApiStatus.Internal
-  public static void setupAnnotationSession(@NotNull AnnotationSession annotationSession,
-                                     @NotNull TextRange priorityRange,
-                                     @NotNull TextRange highlightRange,
-                                     @Nullable HighlightSeverity minimumSeverity) {
+  static void setupAnnotationSession(@NotNull AnnotationSession annotationSession,
+                                     @NotNull ProperTextRange priorityRange, @NotNull HighlightingSession highlightingSession) {
+    HighlightSeverity minimumSeverity = ((HighlightingSessionImpl)highlightingSession).getMinimumSeverity();
     ((AnnotationSessionImpl)annotationSession).setMinimumSeverity(minimumSeverity);
-    ((AnnotationSessionImpl)annotationSession).setVR(priorityRange, highlightRange);
+    ((AnnotationSessionImpl)annotationSession).setVR(priorityRange);
   }
 
   private void reportErrorsToWolf(boolean hasErrors) {

@@ -1,6 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(UnsafeCastFunction::class)
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.compiler.CompilerReferenceService
@@ -17,7 +15,6 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 
 abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase(),
@@ -25,13 +22,7 @@ abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase(),
 
     override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
         super.tuneFixture(moduleBuilder)
-        if (withK2Compiler) {
-            moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, TestKotlinArtifacts.kotlinStdlib.path)
-        } else {
-            // For the K1 tests we want to use a Kotlin 1.x library because Kotlin 2 libraries might not be able to
-            // be consumed by the K1 compiler.
-            moduleBuilder.addMavenLibrary(JavaModuleFixtureBuilder.MavenLib("org.jetbrains.kotlin:kotlin-stdlib:1.9.25"))
-        }
+        moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, TestKotlinArtifacts.kotlinStdlib.path)
     }
 
     protected open val withK2Compiler: Boolean
@@ -40,10 +31,9 @@ abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase(),
     override fun setUp() {
         setUpWithKotlinPlugin { super.setUp() }
         KotlinCompilerReferenceIndexService[project]
+
         if (withK2Compiler) {
             project.enableK2Compiler()
-        } else {
-            project.enableK1Compiler()
         }
     }
 

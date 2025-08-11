@@ -71,8 +71,9 @@ public final class StandardManifestHeaderParsers implements HeaderParserProvider
     myParsers.put("Multi-Release", StandardHeaderParser.INSTANCE);
   }
 
+  @NotNull
   @Override
-  public @NotNull Map<String, HeaderParser> getHeaderParsers() {
+  public Map<String, HeaderParser> getHeaderParsers() {
     return myParsers;
   }
 }

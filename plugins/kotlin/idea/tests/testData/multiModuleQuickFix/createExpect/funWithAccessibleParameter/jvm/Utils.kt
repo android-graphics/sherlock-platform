@@ -1,6 +1,6 @@
 // "Create expected function in common module testModule_Common" "true"
-// DISABLE_ERRORS
-
+// DISABLE-ERRORS
+// IGNORE_K2
 
 actual class Some
 

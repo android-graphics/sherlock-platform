@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -44,7 +43,6 @@ public interface EditorGutter {
   boolean isAnnotationsShown();
 
   @NotNull
-  @Unmodifiable
   List<TextAnnotationGutterProvider> getTextAnnotations();
 
   /**

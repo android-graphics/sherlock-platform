@@ -1,3 +1,0 @@
-androidx/compose/**
-kotlin/jvm/internal/DefaultConstructorMarker
-org/commonmark/**

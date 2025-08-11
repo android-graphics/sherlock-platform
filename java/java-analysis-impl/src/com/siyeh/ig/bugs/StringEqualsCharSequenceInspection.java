@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -21,14 +21,16 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class StringEqualsCharSequenceInspection extends BaseInspection {
 
+  @NotNull
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  protected String buildErrorString(Object... infos) {
     final PsiType type = (PsiType)infos[0];
     return InspectionGadgetsBundle.message("string.equals.char.sequence.problem.descriptor", type.getPresentableText());
   }
 
+  @Nullable
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiReferenceExpression expression = (PsiReferenceExpression)infos[1];
     if (PsiUtil.isLanguageLevel5OrHigher(expression) && !isStringEqualsCall(expression)) {
       return null;
@@ -49,8 +51,10 @@ public final class StringEqualsCharSequenceInspection extends BaseInspection {
   }
 
   private static class StringEqualsCharSequenceFix extends PsiUpdateModCommandQuickFix {
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "contentEquals()");
     }
 

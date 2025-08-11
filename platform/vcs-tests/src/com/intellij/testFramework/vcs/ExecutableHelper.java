@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.vcs;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -25,10 +25,11 @@ public final class ExecutableHelper {
     return findExecutable("Git", "git", "git.exe", Collections.singletonList(GIT_EXECUTABLE_ENV));
   }
 
-  public static @NotNull String findExecutable(@NotNull String programName,
-                                               @NotNull String unixExec,
-                                               @NotNull String winExec,
-                                               @NotNull Collection<String> envs) {
+  @NotNull
+  public static String findExecutable(@NotNull String programName,
+                                      @NotNull String unixExec,
+                                      @NotNull String winExec,
+                                      @NotNull Collection<String> envs) {
     String exec = findEnvValue(programName, envs);
     if (exec != null) {
       return exec;
@@ -37,7 +38,7 @@ public final class ExecutableHelper {
     if (fileExec != null) {
       return fileExec.getAbsolutePath();
     }
-    throw new IllegalStateException(programName + " executable not found. " + (!envs.isEmpty() ?
+    throw new IllegalStateException(programName + " executable not found. " + (envs.size() > 0 ?
                                                                                "Please define a valid environment variable " +
                                                                                envs.iterator().next() +
                                                                                " pointing to the " +
@@ -45,7 +46,8 @@ public final class ExecutableHelper {
                                                                                " executable." : ""));
   }
 
-  public static @Nullable String findEnvValue(@NotNull String programNameForLog, @NotNull Collection<String> envs) {
+  @Nullable
+  public static String findEnvValue(@NotNull String programNameForLog, @NotNull Collection<String> envs) {
     for (String env : envs) {
       String val = System.getenv(env);
       if (val != null && new File(val).canExecute()) {

@@ -14,16 +14,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.core.TemplateKind
 import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
 import org.jetbrains.kotlin.idea.createFromUsage.setupEditorSelection
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.TransformToJavaUtil
+import org.jetbrains.kotlin.idea.refactoring.getContainer
+import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 /**
  * Information of new callable to create. Since we want to avoid the use of AA on EDT i.e., [CreateKotlinCallablePsiEditor],
@@ -37,8 +38,6 @@ internal data class NewCallableInfo(
     val candidatesOfRenderedReturnType: List<String>,
     val containerClassFqName: FqName?,
     val isForCompanion: Boolean,
-    val typeParameterCandidates: List<CreateKotlinCallableAction.ParamCandidate>,
-    val superClassCandidates: List<String>,
 )
 
 /**
@@ -47,9 +46,21 @@ internal data class NewCallableInfo(
  */
 internal class CreateKotlinCallablePsiEditor(
     private val project: Project,
+    private val pointerToContainer: SmartPsiElementPointer<*>,
     private val callableInfo: NewCallableInfo,
 ) {
-    fun showEditor(declaration: KtNamedDeclaration, anchor: PsiElement, isExtension: Boolean, targetClass: PsiElement?, insertContainer: PsiElement) {
+    fun execute(anchor: PsiElement, isExtension: Boolean, targetClass: PsiElement?) {
+        val factory = KtPsiFactory(project)
+        var function = factory.createFunction(callableInfo.definitionAsString)
+        val passedContainerElement = pointerToContainer.element ?: return
+        val shouldComputeContainerFromAnchor = if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile && !isExtension
+            else passedContainerElement.getContainer() == anchor.getContainer()
+        val insertContainer: PsiElement = if (shouldComputeContainerFromAnchor) {
+            (anchor.getExtractionContainers().firstOrNull() ?: return)
+        } else {
+            passedContainerElement
+        }
+
         val containerMaybeCompanion = if (callableInfo.isForCompanion) {
             if (insertContainer is KtClass) {
                 insertContainer.getOrCreateCompanionObject()
@@ -64,49 +75,39 @@ internal class CreateKotlinCallablePsiEditor(
                 }
                 insertContainer
             }
-        } else insertContainer
-
-        val added: PsiElement
-        if (targetClass is PsiClass) {
-            val fqName = callableInfo.containerClassFqName ?: FqName.ROOT
-            added = TransformToJavaUtil.convertToJava(declaration, fqName, targetClass) ?: return
         }
-        else {
-            added = CreateFromUsageUtil.placeDeclarationInContainer(declaration, containerMaybeCompanion, anchor)
-        }
+        else insertContainer
 
-        val psiProcessed = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(added) ?: return
-        runTemplate(psiProcessed)
+        function = CreateFromUsageUtil.placeDeclarationInContainer(function, containerMaybeCompanion, anchor)
+
+        function = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function) ?: return
+        runTemplate(function)
     }
 
-    private fun moveCaretToCallable(editor: Editor, declaration: PsiElement) {
+    private fun moveCaretToCallable(editor: Editor, function: KtCallableDeclaration) {
         val caretModel = editor.caretModel
-        caretModel.moveToOffset(declaration.startOffset)
+        caretModel.moveToOffset(function.startOffset)
     }
 
     private fun getDocumentManager() = PsiDocumentManager.getInstance(project)
 
-    private fun runTemplate(function: PsiElement) {
-        val file = function.containingFile
+    private fun runTemplate(function: KtNamedFunction) {
+        val file = function.containingKtFile
         val editor = EditorHelper.openInEditor(file)
         val functionMarker = editor.document.createRangeMarker(function.textRange)
         moveCaretToCallable(editor, function)
         val template = setupTemplate(function)
-        val listener = buildTemplateListener(editor, file, functionMarker)
-        TemplateManager.getInstance(project).startTemplate(editor, template, listener)
+        TemplateManager.getInstance(project).startTemplate(editor, template, buildTemplateListener(editor, file, functionMarker))
     }
 
-    private fun setupTemplate(declaration: PsiElement): Template {
-        val builder = TemplateBuilderImpl(declaration)
-        if (declaration is KtCallableDeclaration) {
-            declaration.valueParameters.forEachIndexed { index, parameter -> builder.setupParameter(index, parameter) }
-            // Set up template for the return type
-            val returnType = declaration.typeReference
-            if (returnType != null) builder.replaceElement(returnType, ExpressionForCreateCallable(callableInfo.candidatesOfRenderedReturnType))
-        }
-        if (declaration is KtClassOrObject) {
-            declaration.primaryConstructorParameters.forEachIndexed { index, parameter -> builder.setupParameter(index, parameter) }
-        }
+    private fun setupTemplate(function: KtNamedFunction): Template {
+        val builder = TemplateBuilderImpl(function)
+        function.valueParameters.forEachIndexed { index, parameter -> builder.setupParameter(index, parameter) }
+
+        // Set up template for the return type
+        val returnType = function.typeReference
+        if (returnType != null) builder.replaceElement(returnType, ExpressionForCreateCallable(callableInfo.candidatesOfRenderedReturnType))
+
         return builder.buildInlineTemplate()
     }
 
@@ -122,7 +123,7 @@ internal class CreateKotlinCallablePsiEditor(
         replaceElement(parameterTypeElement, ExpressionForCreateCallable(callableInfo.parameterCandidates[parameterIndex].renderedTypes))
     }
 
-    private fun buildTemplateListener(editor: Editor, file: PsiFile, functionMarker: RangeMarker): TemplateEditingAdapter {
+    private fun buildTemplateListener(editor: Editor, file: KtFile, functionMarker: RangeMarker): TemplateEditingAdapter {
         return object : TemplateEditingAdapter() {
             private fun finishTemplate(brokenOff: Boolean) {
                 getDocumentManager().commitDocument(editor.document)
@@ -133,20 +134,20 @@ internal class CreateKotlinCallablePsiEditor(
             private fun getPointerToNewCallable() = PsiTreeUtil.findElementOfClassAtOffset(
                 file,
                 functionMarker.startOffset,
-                KtNamedDeclaration::class.java,
+                KtCallableDeclaration::class.java,
                 false
             )?.createSmartPointer()
 
             private fun updateCallableBody() {
                 val pointerToNewCallable = getPointerToNewCallable() ?: return
                 WriteCommandAction.writeCommandAction(project).run<Throwable> {
-                    val newDecl = pointerToNewCallable.element ?: return@run
-                    when (newDecl) {
-                        is KtNamedFunction -> setupDeclarationBody(newDecl)
-                        else -> Unit
+                    val newCallable = pointerToNewCallable.element ?: return@run
+                    when (newCallable) {
+                        is KtNamedFunction -> setupDeclarationBody(newCallable)
+                        else -> TODO("Handle other cases.")
                     }
-                    CodeStyleManager.getInstance(project).reformat(newDecl)
-                    setupEditorSelection(editor, newDecl)
+                    CodeStyleManager.getInstance(project).reformat(newCallable)
+                    setupEditorSelection(editor, newCallable)
                 }
             }
 

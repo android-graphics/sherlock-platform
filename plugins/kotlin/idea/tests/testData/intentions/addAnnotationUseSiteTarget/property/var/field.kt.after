@@ -1,4 +1,4 @@
-// CHOSEN_OPTION: FIELD|Add use-site target 'field'
+// CHOOSE_USE_SITE_TARGET: field
 
 annotation class A
 

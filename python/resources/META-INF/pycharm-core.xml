@@ -8,8 +8,8 @@
   <xi:include href="intellij.platform.remoteServers.impl.xml"/>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
-    <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
+    <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
+    <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
     <postStartupActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler$MyStartupActivity"/>
 
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
@@ -23,9 +23,7 @@
   <actions>
     <group id="PlatformOpenProjectGroup">
       <reference ref="NewProjectOrModuleGroup"/>
-      <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
-        <add-to-group group-id="ProjectViewToolbar" anchor="first"/>
-      </action>
+      <action id="NewElement" class="com.intellij.ide.actions.NewElementAction"/>
       <reference ref="NewScratchFile"/>
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>

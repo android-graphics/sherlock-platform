@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -210,7 +210,6 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
       deferredFoldRegions.clear();
       storage.removeAll();
       editor.myView.reinitSettings();
-      if (editor.myAdView != null) editor.myView.reinitSettings();
       if (AsyncEditorLoader.isEditorLoaded(editor)) {
         editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
       }
@@ -294,8 +293,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   /**
    * @return    total number of soft wrap-introduced new visual lines
    */
-  @ApiStatus.Internal
-  public int getSoftWrapsIntroducedLinesNumber() {
+  int getSoftWrapsIntroducedLinesNumber() {
     prepareToMapping();
     return storage.getSoftWraps().size(); // Assuming that soft wrap has single line feed all the time
   }
@@ -615,12 +613,10 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     return applianceManager;
   }
 
-  @ApiStatus.Internal
-  @ApiStatus.Experimental
+  @TestOnly
   public void setSoftWrapPainter(SoftWrapPainter painter) {
     myPainter = painter;
     applianceManager.setSoftWrapPainter(painter);
-    reinitSettings();
   }
 
   @Override

@@ -27,7 +27,8 @@ import org.jetbrains.annotations.NotNull;
 public final class CovariantEqualsInspection extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "covariant.equals.problem.descriptor");
   }

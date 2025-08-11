@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree;
 
 import com.intellij.debugger.DebuggerContext;
@@ -15,7 +15,8 @@ public interface ValueDescriptor extends NodeDescriptor {
 
   Value getValue();
 
-  default @Nullable Type getType() {
+  @Nullable
+  default Type getType() {
     Value value = getValue();
     return value != null ? value.type() : null;
   }

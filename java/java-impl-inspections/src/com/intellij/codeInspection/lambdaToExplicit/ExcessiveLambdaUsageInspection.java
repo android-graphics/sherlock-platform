@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.lambdaToExplicit;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -80,13 +80,17 @@ public final class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalI
       myName = name;
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getName() {
+    public String getName() {
       return JavaBundle.message("inspection.excessive.lambda.fix.name", myName);
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaBundle.message("inspection.excessive.lambda.fix.family.name");
     }
 
@@ -123,9 +127,9 @@ public final class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalI
   }
 
   private static class Context {
-    private final @NotNull PsiMethodCallExpression myCall;
-    private final @NotNull PsiLambdaExpression myLambda;
-    private final @NotNull PsiElement myBody;
+    private @NotNull final PsiMethodCallExpression myCall;
+    private @NotNull final PsiLambdaExpression myLambda;
+    private @NotNull final PsiElement myBody;
 
     private Context(@NotNull PsiMethodCallExpression call,
                     @NotNull PsiLambdaExpression lambda,
@@ -135,7 +139,8 @@ public final class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalI
       myBody = body;
     }
 
-    static @Nullable Context from(@Nullable PsiElement element) {
+    @Nullable
+    static Context from(@Nullable PsiElement element) {
       if (!(element instanceof PsiLambdaExpression lambda)) return null;
       PsiElement body = lambda.getBody();
       if (body == null) return null;

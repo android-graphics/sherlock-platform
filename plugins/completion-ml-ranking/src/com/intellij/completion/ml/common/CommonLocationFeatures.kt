@@ -19,7 +19,7 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiTreeUtil
 import kotlin.math.abs
 
-private class CommonLocationFeatures : ContextFeatureProvider {
+class CommonLocationFeatures : ContextFeatureProvider {
   override fun getName(): String = "common"
   override fun calculateFeatures(environment: CompletionEnvironment): Map<String, MLFeatureValue> {
     val result = mutableMapOf<String, MLFeatureValue>()
@@ -51,11 +51,7 @@ private class CommonLocationFeatures : ContextFeatureProvider {
   private fun MutableMap<String, MLFeatureValue>.addTextFeatures(environment: CompletionEnvironment) {
     val lookup = environment.lookup
     val editor = lookup.topLevelEditor
-    val caretOffset = try {
-      lookup.lookupStart
-    } catch (_: AssertionError) {
-      return
-    }
+    val caretOffset = lookup.lookupStart
     val logicalPosition = editor.offsetToLogicalPosition(caretOffset)
     val document = editor.document
     val lineStartOffset = document.getLineStartOffset(logicalPosition.line)

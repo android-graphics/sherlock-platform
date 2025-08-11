@@ -1,4 +1,3 @@
-// PRIORITY: HIGH
 // INTENTION_TEXT: "Import members from 'java.util.regex.Pattern'"
 // WITH_STDLIB
 

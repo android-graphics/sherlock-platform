@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi;
 
 import com.jetbrains.python.ast.PyAstCaseClause;
@@ -6,12 +6,14 @@ import org.jetbrains.annotations.Nullable;
 
 public interface PyCaseClause extends PyAstCaseClause, PyStatementPart {
   @Override
-  default @Nullable PyPattern getPattern() {
+  @Nullable
+  default PyPattern getPattern() {
     return (PyPattern)PyAstCaseClause.super.getPattern();
   }
 
   @Override
-  default @Nullable PyExpression getGuardCondition() {
+  @Nullable
+  default PyExpression getGuardCondition() {
     return (PyExpression)PyAstCaseClause.super.getGuardCondition();
   }
 }

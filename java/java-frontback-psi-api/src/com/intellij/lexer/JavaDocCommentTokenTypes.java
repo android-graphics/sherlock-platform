@@ -26,10 +26,4 @@ public interface JavaDocCommentTokenTypes extends DocCommentTokenTypes {
   default IElementType sharp() {
     return commentData();
   }
-  default IElementType inlineCodeFence() {
-    return commentData();
-  }
-  default IElementType comma() {
-    return commentData();
-  }
 }

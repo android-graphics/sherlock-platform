@@ -16,8 +16,8 @@ import java.awt.font.TextLayout;
 
 public final class EmojiInfoPanel extends JPanel {
   private final EmojiPickerStyle myStyle;
-  private @NlsSafe String myCurrentEmoji;
-  private @Nls String myCurrentEmojiName;
+  @NlsSafe private String myCurrentEmoji;
+  @Nls private String myCurrentEmojiName;
 
   EmojiInfoPanel(EmojiPickerStyle style) {
     myStyle = style;

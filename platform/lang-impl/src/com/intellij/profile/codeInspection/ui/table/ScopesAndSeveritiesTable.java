@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.table;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
@@ -36,7 +36,9 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.NamedColorUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -55,7 +57,6 @@ import static com.intellij.profile.codeInspection.ui.table.SeverityRenderer.EDIT
 /**
  * @author Dmitry Batkovich
  */
-@ApiStatus.Internal
 public final class ScopesAndSeveritiesTable extends JBTable {
   private static final Logger LOG = Logger.getInstance(ScopesAndSeveritiesTable.class);
 
@@ -181,30 +182,35 @@ public final class ScopesAndSeveritiesTable extends JBTable {
       for(final InspectionConfigTreeNode.Tool node : nodes) {
         final HighlightDisplayKey key = node.getKey();
         myKeys.add(key);
-        myKeyNames.add(key.getShortName());
+        myKeyNames.add(key.toString());
       }
 
       myInspectionProfile = inspectionProfile;
       myProject = project;
     }
 
-    public @NotNull List<HighlightDisplayKey> getKeys() {
+    @NotNull
+    public List<HighlightDisplayKey> getKeys() {
       return myKeys;
     }
 
-    public @NotNull List<String> getKeyNames() {
+    @NotNull
+    public List<String> getKeyNames() {
       return myKeyNames;
     }
 
-    public @NotNull Collection<InspectionConfigTreeNode.Tool> getNodes() {
+    @NotNull
+    public Collection<InspectionConfigTreeNode.Tool> getNodes() {
       return myNodes;
     }
 
-    public @NotNull InspectionProfileImpl getInspectionProfile() {
+    @NotNull
+    public InspectionProfileImpl getInspectionProfile() {
       return myInspectionProfile;
     }
 
-    public @NotNull Project getProject() {
+    @NotNull
+    public Project getProject() {
       return myProject;
     }
 
@@ -214,12 +220,13 @@ public final class ScopesAndSeveritiesTable extends JBTable {
 
     protected abstract void onScopeRemoved(final int scopesCount);
 
-    protected abstract void onScopeChosen(final @NotNull ScopeToolState scopeToolState);
+    protected abstract void onScopeChosen(@NotNull final ScopeToolState scopeToolState);
 
     protected abstract void onSettingsChanged();
   }
 
-  public static @NotNull HighlightSeverity getSeverity(final @NotNull List<? extends ScopeToolState> scopeToolStates) {
+  @NotNull
+  public static HighlightSeverity getSeverity(final @NotNull List<? extends ScopeToolState> scopeToolStates) {
     HighlightSeverity previousValue = null;
     for (final ScopeToolState scopeToolState : scopeToolStates) {
       final HighlightSeverity currentValue = scopeToolState.getLevel().getSeverity();
@@ -233,7 +240,8 @@ public final class ScopesAndSeveritiesTable extends JBTable {
     return previousValue;
   }
 
-  public static @NotNull TextAttributesKey getEditorAttributesKey(final @NotNull List<? extends ScopeToolState> scopeToolStates, @NotNull Project project) {
+  @NotNull
+  public static TextAttributesKey getEditorAttributesKey(final @NotNull List<? extends ScopeToolState> scopeToolStates, @NotNull Project project) {
     TextAttributesKey previousValue = null;
     final SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(project);
     for (final ScopeToolState scopeToolState : scopeToolStates) {
@@ -252,29 +260,28 @@ public final class ScopesAndSeveritiesTable extends JBTable {
     return previousValue != null ? previousValue : MIXED_FAKE_KEY;
   }
 
-  @NotNull
-  @Unmodifiable
-  private static List<Pair<TextAttributesKey, @Nls String>> getEditorAttributesKeysAndNames(InspectionProfileImpl profile) {
-    List<@NotNull Pair<TextAttributesKey, @Nls String>> textAttributes = new ArrayList<>(ColorSettingsUtil.getErrorTextAttributes());
+  private static ArrayList<Pair<TextAttributesKey, @Nls String>> getEditorAttributesKeysAndNames(InspectionProfileImpl profile) {
+    final var textAttributes = ColorSettingsUtil.getErrorTextAttributes();
 
-    Collection<HighlightInfoType> standardSeverities = SeverityRegistrar.standardSeverities();
-    SeverityRegistrar registrar = profile.getProfileManager().getSeverityRegistrar();
+    final Collection<HighlightInfoType> standardSeverities = SeverityRegistrar.standardSeverities();
+    final var registrar = profile.getProfileManager().getSeverityRegistrar();
     for (HighlightSeverity severity : registrar.getAllSeverities()) {
-      HighlightInfoType.HighlightInfoTypeImpl highlightInfoType = registrar.getHighlightInfoTypeBySeverity(severity);
-      if (!standardSeverities.contains(highlightInfoType)) {
-        TextAttributesKey attributes = registrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
-        textAttributes.add(new Pair<>(attributes, severity.getDisplayName()));
-      }
+      final var highlightInfoType = registrar.getHighlightInfoTypeBySeverity(severity);
+      if (standardSeverities.contains(highlightInfoType)) continue;
+      final TextAttributesKey attributes = registrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
+      textAttributes.add(new Pair<>(attributes, severity.getDisplayName()));
     }
 
     textAttributes.add(new Pair<>(EDIT_HIGHLIGHTING, InspectionsBundle.message("inspection.edit.highlighting.action")));
-    return List.copyOf(textAttributes);
+    return textAttributes;
   }
 
   private static final class MyTableModel extends AbstractTableModel implements EditableModel {
-    private final @NotNull InspectionProfileImpl myInspectionProfile;
+    @NotNull
+    private final InspectionProfileImpl myInspectionProfile;
     private final List<String> myKeyNames;
-    private final @NotNull Project myProject;
+    @NotNull
+    private final Project myProject;
     private final TableSettings myTableSettings;
     private final List<HighlightDisplayKey> myKeys;
     private final Comparator<String> myScopeComparator;
@@ -318,8 +325,9 @@ public final class ScopesAndSeveritiesTable extends JBTable {
       return lastRowIndex() + 1;
     }
 
+    @Nullable
     @Override
-    public @Nullable String getColumnName(final int column) {
+    public String getColumnName(final int column) {
       return switch (column) {
         case SCOPE_NAME_COLUMN -> LangBundle.message("scopes.chooser.scope.column");
         case SEVERITY_COLUMN -> LangBundle.message("scopes.chooser.scope.severity");
@@ -372,7 +380,8 @@ public final class ScopesAndSeveritiesTable extends JBTable {
       return getScopeToolState(rowIndex).getExistedStates().get(0).getScopeName();
     }
 
-    private @NotNull HighlightSeverity getSeverityState(final int rowIndex) {
+    @NotNull
+    private HighlightSeverity getSeverityState(final int rowIndex) {
       final ExistedScopesStatesAndNonExistNames existedScopesStatesAndNonExistNames = getScopeToolState(rowIndex);
       if (!existedScopesStatesAndNonExistNames.getNonExistNames().isEmpty()) {
         return MIXED_FAKE_SEVERITY;
@@ -388,7 +397,8 @@ public final class ScopesAndSeveritiesTable extends JBTable {
       return getEditorAttributesKey(existedScopesStatesAndNonExistNames.myExistedStates, myProject);
     }
 
-    private @Nullable Boolean isEnabled(final int rowIndex) {
+    @Nullable
+    private Boolean isEnabled(final int rowIndex) {
       Boolean previousValue = null;
       final ExistedScopesStatesAndNonExistNames existedScopesStatesAndNonExistNames = getScopeToolState(rowIndex);
       for (final ScopeToolState scopeToolState : existedScopesStatesAndNonExistNames.getExistedStates()) {
@@ -419,7 +429,8 @@ public final class ScopesAndSeveritiesTable extends JBTable {
       return new ExistedScopesStatesAndNonExistNames(existedStates, nonExistNames);
     }
 
-    private @Nullable ScopeToolState getScopeToolState(final String keyName, final int rowIndex) {
+    @Nullable
+    private ScopeToolState getScopeToolState(final String keyName, final int rowIndex) {
       if (rowIndex == lastRowIndex()) {
         return myInspectionProfile.getToolDefaultState(keyName, myProject);
       }

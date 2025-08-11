@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -41,7 +41,6 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,7 +125,7 @@ public final class RenameUtil {
 
     if (searchInStringsAndComments && searchForInComments != null) {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(searchForInComments, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
-      if (!stringToSearch.isEmpty()) {
+      if (stringToSearch.length() > 0) {
         final String stringToReplace = getStringToReplace(element, newName, false, elementProcessor);
         UsageInfoFactory factory = new NonCodeUsageInfoFactory(searchForInComments, stringToReplace);
         if (!TextOccurrencesUtilBase.processUsagesInStringsAndComments(processor, searchForInComments,
@@ -136,13 +135,13 @@ public final class RenameUtil {
 
     if (searchForTextOccurrences && searchForInComments != null) {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(searchForInComments, NonCodeSearchDescriptionLocation.NON_JAVA);
-      if (!stringToSearch.isEmpty()) {
+      if (stringToSearch.length() > 0) {
         final String stringToReplace = getStringToReplace(element, newName, true, elementProcessor);
         if (!processTextOccurrences(searchForInComments, searchScope, stringToSearch, stringToReplace, processor)) return false;
       }
 
       final Pair<String, String> additionalStringToSearch = elementProcessor.getTextOccurrenceSearchStrings(searchForInComments, newName);
-      if (additionalStringToSearch != null && !additionalStringToSearch.first.isEmpty()) {
+      if (additionalStringToSearch != null && additionalStringToSearch.first.length() > 0) {
         if (!processTextOccurrences(searchForInComments, searchScope, additionalStringToSearch.first, additionalStringToSearch.second,
                                     processor
         )) return false;
@@ -216,8 +215,7 @@ public final class RenameUtil {
     }
   }
 
-  @ApiStatus.Internal
-  public static void registerUndoableRename(PsiElement element, @Nullable RefactoringElementListener listener) {
+  static void registerUndoableRename(PsiElement element, @Nullable RefactoringElementListener listener) {
     final String fqn = element instanceof PsiFile ? ((PsiFile)element).getVirtualFile().getPath() : FqnUtil.elementToFqn(element, null);
     if (fqn != null) {
       UndoableAction action = new BasicUndoableAction() {
@@ -237,7 +235,7 @@ public final class RenameUtil {
   }
 
   public static void doRename(final PsiElement element, String newName, UsageInfo[] usages, final Project project,
-                              final @Nullable RefactoringElementListener listener) throws IncorrectOperationException{
+                              @Nullable final RefactoringElementListener listener) throws IncorrectOperationException{
     registerUndoableRename(element, listener);
     RenamePsiElementProcessorBase processor = RenamePsiElementProcessorBase.forPsiElement(element);
     processor.renameElement(element, newName, usages, listener);
@@ -276,7 +274,8 @@ public final class RenameUtil {
     RenameUtilBase.rename(info, newName);
   }
 
-  public static @Nullable List<UnresolvableCollisionUsageInfo> removeConflictUsages(Set<UsageInfo> usages) {
+  @Nullable
+  public static List<UnresolvableCollisionUsageInfo> removeConflictUsages(Set<UsageInfo> usages) {
     final List<UnresolvableCollisionUsageInfo> result = new ArrayList<>();
     for (Iterator<UsageInfo> iterator = usages.iterator(); iterator.hasNext();) {
       UsageInfo usageInfo = iterator.next();
@@ -320,7 +319,7 @@ public final class RenameUtil {
       TextRange replaceRange = TextRange.create(segment);
 
       // re-map usages to upper host from injected document to avoid duplicated replacements
-      if (document instanceof DocumentWindow documentWindow) {
+      while (document instanceof DocumentWindow documentWindow) {
         replaceRange = documentWindow.injectedToHost(replaceRange);
         document = documentWindow.getDelegate();
       }
@@ -362,9 +361,9 @@ public final class RenameUtil {
     }
   }
 
-  public static boolean isValidName(final @Nullable Project project,
-                                    final @NotNull PsiElement psiElement,
-                                    final @Nullable String newName) {
+  public static boolean isValidName(@Nullable final Project project,
+                                    @NotNull final PsiElement psiElement,
+                                    @Nullable final String newName) {
     if (StringUtil.isEmpty(newName)) {
       return false;
     }
@@ -394,12 +393,13 @@ public final class RenameUtil {
 
   private record UsageOffset(int startOffset, int endOffset, String newText) implements Comparable<UsageOffset> {
     @Override
-    public int compareTo(final @NotNull UsageOffset o) {
+    public int compareTo(@NotNull final UsageOffset o) {
       return startOffset - o.startOffset;
     }
   }
 
-  public static @NotNull String getUsageViewType(@NotNull PsiElement element) {
+  @NotNull
+  public static String getUsageViewType(@NotNull PsiElement element) {
     return ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.ReviseWhenPortedToJDK
@@ -24,18 +24,17 @@ import kotlin.io.path.isRegularFile
 
 private val LOG = logger<RuntimeChooserJreValidator>()
 
-internal interface RuntimeChooserJreValidatorCallback<R> {
+interface RuntimeChooserJreValidatorCallback<R> {
   fun onSdkResolved(displayName: String?, versionString: String, sdkHome: Path): R
   fun onError(@NlsContexts.DialogMessage message: String): R
 }
 
-internal object RuntimeChooserJreValidator {
+object RuntimeChooserJreValidator {
   @ReviseWhenPortedToJDK("12")
   private val minJdkFeatureVersion
     get() = 11
 
   fun isSupportedSdkItem(item: JdkItem): Boolean {
-    // TODO Introduce EelApi here.
     //we do only support mac bundle layout
     if (SystemInfo.isMac && !item.packageToBinJavaPrefix.endsWith("Contents/Home")) {
       return false

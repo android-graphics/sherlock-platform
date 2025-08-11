@@ -24,15 +24,15 @@ class ProgressWindowTest : ProgressWindowTestCase<ProgressWindowTest.TestProgres
   }
 
   override fun assertUninitialized(process: TestProgressWindow) {
-    assertNull("Unexpected dialog instance", process.exposedDialog)
+    assertNull("Unexpected dialog instance", process.dialog)
   }
 
   override fun assertInitialized(process: TestProgressWindow) {
-    assertNotNull("Dialog instance expected", process.exposedDialog)
+    assertNotNull("Dialog instance expected", process.dialog)
   }
 
   class TestProgressWindow internal constructor(project: Project) : ProgressWindow(true, project) {
-    val exposedDialog: ProgressDialog?
+    internal val dialog: ProgressDialog?
       get() = super.getDialog()
 
     public override fun showDialog(): Unit = super.showDialog()

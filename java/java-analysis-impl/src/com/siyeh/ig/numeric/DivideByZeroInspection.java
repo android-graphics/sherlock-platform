@@ -17,10 +17,10 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -39,17 +39,20 @@ public final class DivideByZeroInspection extends BaseInspection {
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "divzero";
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("divide.by.zero.problem.descriptor");
   }
 
+  @Nullable
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     if (infos.length > 0 && infos[0] instanceof PsiBinaryExpression binOp) {
       if (binOp.getOperationTokenType().equals(JavaTokenType.DIV) && isZero(binOp.getLOperand())) {
         PsiType type = binOp.getType();
@@ -122,8 +125,10 @@ public final class DivideByZeroInspection extends BaseInspection {
       new CommentTracker().replaceAndRestoreComments(division, className+".NaN");
     }
 
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
     @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "NaN");
     }
   }

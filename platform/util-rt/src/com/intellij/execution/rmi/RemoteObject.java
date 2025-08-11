@@ -137,7 +137,6 @@ public class RemoteObject implements Remote, Unreferenced {
       return myOriginalClassName;
     }
 
-    @Override
     public String toString() {
       String s = getOriginalClassName();
       String message = getLocalizedMessage();

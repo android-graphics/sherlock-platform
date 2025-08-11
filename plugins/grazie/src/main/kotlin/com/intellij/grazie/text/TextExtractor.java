@@ -21,7 +21,9 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -32,8 +34,7 @@ import java.util.regex.Pattern;
 public abstract class TextExtractor {
   private static final Logger LOG = Logger.getInstance(TextExtractor.class);
   @VisibleForTesting
-  @ApiStatus.Internal
-  public static final LanguageExtension<TextExtractor> EP = new LanguageExtension<>("com.intellij.grazie.textExtractor");
+  static final LanguageExtension<TextExtractor> EP = new LanguageExtension<>("com.intellij.grazie.textExtractor");
   private static final Key<CachedValue<Cache>> COMMON_PARENT_CACHE = Key.create("TextExtractor common parent cache");
   private static final Key<CachedValue<Cache>> QUERY_CACHE = Key.create("TextExtractor query cache");
   private static final Key<Boolean> IGNORED = Key.create("TextExtractor ignored");
@@ -85,7 +86,7 @@ public abstract class TextExtractor {
    * @return text contents intersecting the given PSI element with the domains from the allowed set.
    * The extensions are queried for the given {@code psi} and its parents, the results are cached and reused.
    */
-  public static @Unmodifiable @NotNull List<TextContent> findTextsAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
+  public static @NotNull List<TextContent> findTextsAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     TextRange psiRange = psi.getTextRange();
     PsiFile file = null;
     for (PsiElement each = psi; each != null; each = each.getParent()) {
@@ -207,7 +208,7 @@ public abstract class TextExtractor {
    * That's useful if you iterate over PSI elements and want to process each of their contents just once
    * (e.g. during highlighting).
    */
-  public static @Unmodifiable @NotNull List<TextContent> findUniqueTextsAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
+  public static @NotNull List<TextContent> findUniqueTextsAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     if (psi.getFirstChild() != null) return Collections.emptyList();
 
     TextRange psiRange = psi.getTextRange();

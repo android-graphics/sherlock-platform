@@ -1,17 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.api;
 
 import org.jetbrains.annotations.NotNull;
 
 public class Repository {
 
-  private final @NotNull Url myUrl;
+  @NotNull private final Url myUrl;
 
   public Repository(@NotNull Url url) {
     myUrl = url;
   }
 
-  public @NotNull Url getUrl() {
+  @NotNull
+  public Url getUrl() {
     return myUrl;
   }
 }

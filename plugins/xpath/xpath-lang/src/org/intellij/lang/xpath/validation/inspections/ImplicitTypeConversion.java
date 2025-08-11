@@ -42,7 +42,8 @@ import static com.intellij.codeInspection.options.OptPane.*;
 
 // TODO: Option to flag literals: <number> = '123', <string> = 123, etc.
 public class ImplicitTypeConversion extends XPathInspection {
-    private static final @NonNls String SHORT_NAME = "ImplicitTypeConversion";
+    @NonNls
+    private static final String SHORT_NAME = "ImplicitTypeConversion";
   private static final String STRING = "STRING";
   private static final String NODESET = "NODESET";
   private static final String NUMBER = "NUMBER";
@@ -66,7 +67,9 @@ public class ImplicitTypeConversion extends XPathInspection {
     }
 
   @Override
-  public @NotNull @NonNls String getShortName() {
+    @NotNull
+    @NonNls
+    public String getShortName() {
         return SHORT_NAME;
     }
 

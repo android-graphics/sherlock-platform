@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.ignore;
 
 import com.intellij.openapi.util.Ref;
@@ -53,8 +53,8 @@ public final class SvnPropertyService {
     extensionOk.set(checker.extensionOk());
   }
 
-  private abstract static class IgnorePropertyWorkTemplate {
-    protected final @NotNull SvnVcs myVcs;
+  private static abstract class IgnorePropertyWorkTemplate {
+    @NotNull protected final SvnVcs myVcs;
     protected final boolean myUseCommonExtension;
     protected final boolean myCanUseCachedProperty;
 
@@ -220,7 +220,7 @@ public final class SvnPropertyService {
     }
   }
 
-  private static String getNewPropertyValueForRemove(final Collection<String> data, final @NotNull String propertyValue) {
+  private static String getNewPropertyValueForRemove(final Collection<String> data, @NotNull final String propertyValue) {
     final StringBuilder sb = new StringBuilder();
     final StringTokenizer st = new StringTokenizer(propertyValue, "\r\n ");
     while (st.hasMoreElements()) {

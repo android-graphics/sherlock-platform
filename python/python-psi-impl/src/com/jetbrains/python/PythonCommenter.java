@@ -83,8 +83,9 @@ public final class PythonCommenter implements CodeDocumentationAwareCommenter, I
     return false;
   }
 
+  @Nullable
   @Override
-  public @Nullable Boolean forceIndentedLineComment() {
+  public Boolean forceIndentedLineComment() {
     return true;
   }
 }

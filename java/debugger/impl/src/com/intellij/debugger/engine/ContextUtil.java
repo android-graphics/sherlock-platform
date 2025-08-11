@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
@@ -28,7 +28,8 @@ public class ContextUtil {
   public static final Key<Boolean> IS_JSP_IMPLICIT = new Key<>("JspImplicit");
   private static final Logger LOG = Logger.getInstance(PositionUtil.class);
 
-  public static @Nullable SourcePosition getSourcePosition(final @Nullable StackFrameContext context) {
+  @Nullable
+  public static SourcePosition getSourcePosition(@Nullable final StackFrameContext context) {
     if (context == null) {
       return null;
     }
@@ -53,11 +54,13 @@ public class ContextUtil {
     return debugProcess.getPositionManager().getSourcePosition(location);
   }
 
-  public static @Nullable PsiElement getContextElement(final StackFrameContext context) {
+  @Nullable
+  public static PsiElement getContextElement(final StackFrameContext context) {
     return getContextElement(context, getSourcePosition(context));
   }
 
-  public static @Nullable PsiElement getContextElement(final StackFrameContext context, final SourcePosition position) {
+  @Nullable
+  public static PsiElement getContextElement(final StackFrameContext context, final SourcePosition position) {
     if (LOG.isDebugEnabled()) {
       final SourcePosition sourcePosition = getSourcePosition(context);
       LOG.assertTrue(Comparing.equal(sourcePosition, position));
@@ -121,7 +124,8 @@ public class ContextUtil {
     });
   }
 
-  public static @Nullable PsiElement getContextElement(@Nullable SourcePosition position) {
+  @Nullable
+  public static PsiElement getContextElement(@Nullable SourcePosition position) {
     return position == null ? null : position.getElementAt();
   }
 

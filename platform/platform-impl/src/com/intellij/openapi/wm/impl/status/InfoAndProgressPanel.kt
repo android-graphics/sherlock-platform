@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 @file:OptIn(FlowPreview::class)
 
@@ -65,6 +65,7 @@ import java.awt.*
 import java.awt.event.ActionListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.lang.Runnable
 import java.lang.ref.WeakReference
 import javax.swing.*
 import javax.swing.event.HyperlinkListener
@@ -72,7 +73,6 @@ import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-@ApiStatus.Internal
 class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatusBarImpl,
                                                 private val coroutineScope: CoroutineScope) : UISettingsListener {
   companion object {
@@ -97,7 +97,6 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
   private val balloon = ProcessBalloon(3)
 
   private val mainPanel = InfoAndProgressPanelImpl(this)
-  @get:JvmName("getComponent")
   internal val component: JPanel
     get() = mainPanel
 
@@ -894,7 +893,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       for (i in 0 until count) {
         val size = parent.getComponent(i).preferredSize
         result.width += size.width
-        result.height = max(result.height, size.height)
+        result.height = max(result.height.toDouble(), size.height.toDouble()).toInt()
       }
       return result
     }
@@ -973,16 +972,16 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
             if (component.isVisible) {
               val size = component.getPreferredSize()
               result.width += size.width
-              result.height = max(result.height, size.height)
+              result.height = max(result.height.toDouble(), size.height.toDouble()).toInt()
             }
           }
           if (multiProcessLink.isVisible) {
             val size = multiProcessLink.getPreferredSize()
             result.width += (if (result.width > 0) gap else 0) + size.width
-            result.height = max(result.height, size.height)
+            result.height = max(result.height.toDouble(), size.height.toDouble()).toInt()
           }
           if (processIconComponent != null) {
-            result.height = max(result.height, processIconComponent!!.getPreferredSize().height)
+            result.height = max(result.height.toDouble(), processIconComponent!!.getPreferredSize().height.toDouble()).toInt()
           }
           JBInsets.addTo(result, parent.insets)
           return result

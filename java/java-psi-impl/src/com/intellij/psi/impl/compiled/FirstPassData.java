@@ -9,7 +9,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.org.objectweb.asm.*;
 
 import java.io.IOException;
@@ -105,7 +104,6 @@ class FirstPassData implements SignatureParsing.TypeInfoProvider {
    * @return list of TypeInfo objects that correspond to given types. GUESSING_MAPPER is not used.
    */
   @Contract("null -> null; !null -> !null")
-  @Unmodifiable
   List<TypeInfo> createTypes(String @Nullable [] jvmNames) {
     return jvmNames == null ? null :
            ContainerUtil.map(jvmNames, jvmName -> toTypeInfo(jvmName, false));

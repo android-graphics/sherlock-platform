@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -37,10 +37,11 @@ public final class IntellijTestDiscoveryProducer implements TestDiscoveryProduce
 
   private static final NotNullLazyValue<ObjectReader> JSON_READER = NotNullLazyValue.createValue(() -> new ObjectMapper().readerFor(TestsSearchResult.class));
 
+  @NotNull
   @Override
-  public @NotNull MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
-                                                              @NotNull List<? extends Couple<String>> classesAndMethods,
-                                                              byte frameworkId) {
+  public MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
+                                                     @NotNull List<? extends Couple<String>> classesAndMethods,
+                                                     byte frameworkId) {
     if (!ApplicationManager.getApplication().isInternal()) {
       return MultiMap.empty();
     }
@@ -67,7 +68,8 @@ public final class IntellijTestDiscoveryProducer implements TestDiscoveryProduce
     return MultiMap.empty();
   }
 
-  private static @NotNull <T> MultiMap<String, String> request(List<T> collection, Function<? super T, String> toString, String what) throws IOException {
+  @NotNull
+  private static <T> MultiMap<String, String> request(List<T> collection, Function<? super T, String> toString, String what) throws IOException {
     if (collection.isEmpty()) return MultiMap.empty();
     String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-" + what;
     LOG.debug(url);
@@ -85,8 +87,9 @@ public final class IntellijTestDiscoveryProducer implements TestDiscoveryProduce
     return true;
   }
 
+  @NotNull
   @Override
-  public @NotNull MultiMap<String, String> getDiscoveredTestsForFiles(@NotNull Project project, @NotNull List<String> filePaths, byte frameworkId) {
+  public MultiMap<String, String> getDiscoveredTestsForFiles(@NotNull Project project, @NotNull List<String> filePaths, byte frameworkId) {
     try {
       return request(filePaths, s -> "\"" + s + "\"", "files");
     }
@@ -96,8 +99,9 @@ public final class IntellijTestDiscoveryProducer implements TestDiscoveryProduce
     return MultiMap.empty();
   }
 
+  @NotNull
   @Override
-  public @NotNull List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<? extends Couple<String>> testFqns, byte frameworkId) {
+  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<? extends Couple<String>> testFqns, byte frameworkId) {
     String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/test/details";
     return executeQuery(() -> HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(
       r -> {
@@ -110,8 +114,9 @@ public final class IntellijTestDiscoveryProducer implements TestDiscoveryProduce
       }), project);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<String> getAffectedFilePathsByClassName(@NotNull Project project, @NotNull String testClassName, byte frameworkId) {
+  public List<String> getAffectedFilePathsByClassName(@NotNull Project project, @NotNull String testClassName, byte frameworkId) {
     String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/files/affected/by-test-classes";
     return executeQuery(() -> HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(
       r -> {
@@ -122,8 +127,9 @@ public final class IntellijTestDiscoveryProducer implements TestDiscoveryProduce
       }), project);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<String> getFilesWithoutTests(@NotNull Project project, @NotNull Collection<String> paths) throws IOException {
+  public List<String> getFilesWithoutTests(@NotNull Project project, @NotNull Collection<String> paths) throws IOException {
     if (paths.isEmpty()) return Collections.emptyList();
     String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/files-without-related-tests";
     LOG.debug(url);
@@ -137,17 +143,24 @@ public final class IntellijTestDiscoveryProducer implements TestDiscoveryProduce
   @JsonInclude(JsonInclude.Include.NON_EMPTY)
   @JsonIgnoreProperties(ignoreUnknown = true)
   public static class TestsSearchResult {
-    private @Nullable String method;
+    @Nullable
+    private String method;
 
-    @SerializedName("class") @JsonProperty("class") private @Nullable String className;
+    @SerializedName("class")
+    @JsonProperty("class")
+    @Nullable
+    private String className;
 
     private int found;
 
-    private @NotNull Map<String, List<String>> tests = new HashMap<>();
+    @NotNull
+    private Map<String, List<String>> tests = new HashMap<>();
 
-    private @Nullable String message;
+    @Nullable
+    private String message;
 
-    public @Nullable String getMethod() {
+    @Nullable
+    public String getMethod() {
       return method;
     }
 
@@ -156,7 +169,8 @@ public final class IntellijTestDiscoveryProducer implements TestDiscoveryProduce
       return this;
     }
 
-    public @Nullable String getClassName() {
+    @Nullable
+    public String getClassName() {
       return className;
     }
 
@@ -174,7 +188,8 @@ public final class IntellijTestDiscoveryProducer implements TestDiscoveryProduce
       return this;
     }
 
-    public @NotNull Map<String, List<String>> getTests() {
+    @NotNull
+    public Map<String, List<String>> getTests() {
       return tests;
     }
 
@@ -183,7 +198,8 @@ public final class IntellijTestDiscoveryProducer implements TestDiscoveryProduce
       return this;
     }
 
-    public @Nullable String getMessage() {
+    @Nullable
+    public String getMessage() {
       return message;
     }
 
@@ -195,15 +211,22 @@ public final class IntellijTestDiscoveryProducer implements TestDiscoveryProduce
 
   @JsonInclude(JsonInclude.Include.NON_EMPTY)
   private static class TestDetails {
-    private @Nullable String method;
+    @Nullable
+    private String method;
 
-    @SerializedName("class") @JsonProperty("class") private @Nullable String className;
+    @SerializedName("class")
+    @JsonProperty("class")
+    @Nullable
+    private String className;
 
-    private @Nullable List<String> files = new SmartList<>();
+    @Nullable
+    private List<String> files = new SmartList<>();
 
-    private @Nullable String message;
+    @Nullable
+    private String message;
 
-    public @Nullable String getMethod() {
+    @Nullable
+    public String getMethod() {
       return method;
     }
 
@@ -212,7 +235,8 @@ public final class IntellijTestDiscoveryProducer implements TestDiscoveryProduce
       return this;
     }
 
-    public @Nullable String getClassName() {
+    @Nullable
+    public String getClassName() {
       return className;
     }
 
@@ -221,17 +245,19 @@ public final class IntellijTestDiscoveryProducer implements TestDiscoveryProduce
       return this;
     }
 
-    public @NotNull List<String> getFiles() {
+    @NotNull
+    public List<String> getFiles() {
       if (files == null) return Collections.emptyList();
       return files;
     }
 
-    public TestDetails setFiles(final @NotNull List<String> files) {
+    public TestDetails setFiles(@NotNull final List<String> files) {
       this.files = files;
       return this;
     }
 
-    public @Nullable String getMessage() {
+    @Nullable
+    public String getMessage() {
       return message;
     }
 
@@ -241,7 +267,8 @@ public final class IntellijTestDiscoveryProducer implements TestDiscoveryProduce
     }
   }
 
-  private static @NotNull List<String> executeQuery(@NotNull ThrowableComputable<? extends List<String>, IOException> query, @NotNull Project project) {
+  @NotNull
+  private static List<String> executeQuery(@NotNull ThrowableComputable<? extends List<String>, IOException> query, @NotNull Project project) {
     try {
       if (ApplicationManager.getApplication().isReadAccessAllowed()) {
         List<String> result = ProgressManager.getInstance().run(

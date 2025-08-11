@@ -6,33 +6,49 @@ import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.MissingResourceException;
+
+/**
+ * @author Konstantin Bulenkov
+ */
 final class ExperimentalFeatureRegistryValueWrapper extends RegistryValue {
-  private final ExperimentalFeature feature;
+  private final ExperimentalFeature myFeature;
 
   ExperimentalFeatureRegistryValueWrapper(@NotNull ExperimentalFeature feature) {
     super(Registry.getInstance(), feature.id, null);
+    myFeature = feature;
+  }
 
-    this.feature = feature;
+  @NotNull
+  @Override
+  public String getKey() {
+    return myFeature.id;
   }
 
   @Override
-  public @NotNull String asString() {
+  protected String get(@NotNull String key, String defaultValue, boolean isValue) throws MissingResourceException {
+    return asString();
+  }
+
+  @NotNull
+  @Override
+  public String asString() {
     return Boolean.toString(asBoolean());
   }
 
   @Override
   public boolean asBoolean() {
-    return Experiments.getInstance().isFeatureEnabled(feature.id);
+    return Experiments.getInstance().isFeatureEnabled(myFeature.id);
   }
 
   @Override
-  public boolean isRestartRequired() {
-    return feature.requireRestart;
+  boolean isRestartRequired() {
+    return myFeature.requireRestart;
   }
 
   @Override
   public boolean isChangedFromDefault() {
-    return Experiments.getInstance().isChanged(feature.id);
+    return Experiments.getInstance().isChanged(myFeature.id);
   }
 
   @Override
@@ -41,13 +57,14 @@ final class ExperimentalFeatureRegistryValueWrapper extends RegistryValue {
   }
 
   @Override
-  public void setValue(@NotNull String value, @NotNull RegistryValueSource source) {
+  public void setValue(String value) {
     boolean enable = Boolean.parseBoolean(value);
-    Experiments.getInstance().setFeatureEnabled(feature.id, enable);
+    Experiments.getInstance().setFeatureEnabled(myFeature.id, enable);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
-    return StringUtil.notNullize(feature.description);
+  public String getDescription() {
+    return StringUtil.notNullize(myFeature.description);
   }
 }

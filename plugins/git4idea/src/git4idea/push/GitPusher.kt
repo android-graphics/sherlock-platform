@@ -7,18 +7,12 @@ import com.intellij.dvcs.push.VcsPushOptionValue
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import git4idea.GitUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import git4idea.update.GitUpdateInfoAsLog
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
-import java.util.concurrent.CancellationException
-
-private val LOG = logger<GitPusher>()
 
 class GitPusher(
   private val project: Project,
@@ -87,14 +81,7 @@ class GitPusher(
       val actions = runBlockingCancellable {
         GitPushNotificationCustomizer.EP_NAME.getExtensions(project).flatMap { extension ->
           pushResult.results.flatMap { (gitRepository, pushRepoResult) ->
-            try {
-              extension.getActions(gitRepository, pushRepoResult, customParams)
-            }
-            catch (e: Exception) {
-              if (e is CancellationException) currentCoroutineContext().ensureActive()
-              else LOG.warn("Error occurred when collecting push notification actions from ${extension::javaClass.name}", e)
-              emptyList()
-            }
+            extension.getActions(gitRepository, pushRepoResult, customParams)
           }
         }
       }

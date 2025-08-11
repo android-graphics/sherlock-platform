@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -21,8 +21,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class NegatedEqualityExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
+  @NotNull
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("negated.equality.expression.problem.descriptor", infos[0]);
   }
 
@@ -33,8 +34,9 @@ public final class NegatedEqualityExpressionInspection extends BaseInspection im
 
   private static class NegatedEqualityExpressionFix extends PsiUpdateModCommandQuickFix {
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("negated.equality.expression.quickfix");
     }
 

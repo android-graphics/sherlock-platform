@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.*;
@@ -117,7 +117,8 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     myName = name;
   }
 
-  public @Nullable String getTitle() {
+  @Nullable
+  public String getTitle() {
     assert myIsCorrectThread.get();
     return myTitle;
   }
@@ -156,7 +157,8 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   }
 
   // Note: invoked from the EDT.
-  public @Nullable @Nls String getDuration() {
+  @Nullable
+  public @Nls String getDuration() {
     if (startTime == endTime) return null;
     if (isRunning()) {
       long duration = startTime == 0 ? 0 : System.currentTimeMillis() - startTime;
@@ -221,13 +223,15 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     return result;
   }
 
-  public @NotNull List<ExecutionNode> getChildList() {
+  @NotNull
+  public List<ExecutionNode> getChildList() {
     assert myIsCorrectThread.get();
     List<ExecutionNode> visibleList = myVisibleChildrenList;
     return Objects.requireNonNullElse(visibleList, myChildrenList);
   }
 
-  public @Nullable ExecutionNode getParent() {
+  @Nullable
+  public ExecutionNode getParent() {
     return myParentNode;
   }
 
@@ -286,7 +290,8 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
            (myResult instanceof MessageEventResult && ((MessageEventResult)myResult).getKind() == MessageEvent.Kind.ERROR);
   }
 
-  public @Nullable EventResult getResult() {
+  @Nullable
+  public EventResult getResult() {
     return myResult;
   }
 
@@ -320,7 +325,8 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     myNavigatable = navigatable;
   }
 
-  public @NotNull List<Navigatable> getNavigatables() {
+  @NotNull
+  public List<Navigatable> getNavigatables() {
     if (myNavigatable != null) {
       return Collections.singletonList(myNavigatable);
     }
@@ -338,8 +344,9 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
 
   public void setIconProvider(@NotNull Supplier<? extends Icon> iconProvider) {
     myPreferredIconValue = new NullableLazyValue<>() {
+      @Nullable
       @Override
-      protected @Nullable Icon compute() {
+      protected Icon compute() {
         return iconProvider.get();
       }
     };
@@ -348,7 +355,8 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   /**
    * @return the top most node whose parent structure has changed. Returns null if only node itself needs to be updated.
    */
-  public @Nullable ExecutionNode reportChildMessageKind(MessageEvent.Kind kind) {
+  @Nullable
+  public ExecutionNode reportChildMessageKind(MessageEvent.Kind kind) {
     assert myIsCorrectThread.get();
     if (kind == MessageEvent.Kind.ERROR) {
       myErrors.incrementAndGet();
@@ -423,7 +431,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     };
   }
 
-  private static final class HintData {
+  static private final class HintData {
     private int myErrors;
     private int myWarnings;
     private boolean isRunning;

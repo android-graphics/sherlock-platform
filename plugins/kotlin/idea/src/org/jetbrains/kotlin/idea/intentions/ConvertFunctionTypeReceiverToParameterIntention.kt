@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -246,7 +246,7 @@ class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntent
 
             if (body != null) {
                 val functionParameter = callable.valueParameters.getOrNull(parameterIndex) ?: return
-                for (ref in ReferencesSearch.search(functionParameter, LocalSearchScope(body)).asIterable()) {
+                for (ref in ReferencesSearch.search(functionParameter, LocalSearchScope(body))) {
                     val element = ref.element as? KtSimpleNameExpression ?: continue
                     val callExpression = element.getParentOfTypeAndBranch<KtCallExpression> { calleeExpression } ?: continue
                     usages += ParameterCallInfo(callExpression)

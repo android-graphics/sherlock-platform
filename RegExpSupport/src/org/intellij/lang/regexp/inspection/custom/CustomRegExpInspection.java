@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection.custom;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -34,10 +34,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.function.Function;
 
+import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+
 /**
  * @author Bas Leijdekkers
  */
-public final class CustomRegExpInspection extends LocalInspectionTool implements DynamicGroupTool {
+public class CustomRegExpInspection extends LocalInspectionTool implements DynamicGroupTool {
 
   public static final String SHORT_NAME = "CustomRegExpInspection";
   public final List<RegExpInspectionConfiguration> myConfigurations = new SmartList<>();
@@ -109,7 +111,7 @@ public final class CustomRegExpInspection extends LocalInspectionTool implements
           final String problemDescriptor = StringUtil.defaultIfEmpty(configuration.getProblemDescriptor(), configuration.getName());
           final CustomRegExpQuickFix fix = replacement == null ? null : new CustomRegExpQuickFix(findManager, model, text, result);
           final ProblemDescriptor descriptor =
-            manager.createProblemDescriptor(element, warningRange, problemDescriptor, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly, fix);
+            manager.createProblemDescriptor(element, warningRange, problemDescriptor, GENERIC_ERROR_OR_WARNING, isOnTheFly, fix);
           descriptors.add(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, uuid));
           result = findManager.findString(text, result.getEndOffset(), model, vFile);
         }
@@ -185,7 +187,8 @@ public final class CustomRegExpInspection extends LocalInspectionTool implements
     return myConfigurations;
   }
 
-  public @NotNull InspectionMetaDataDialog createMetaDataDialog(Project project, @NotNull String profileName, @Nullable RegExpInspectionConfiguration configuration) {
+  @NotNull
+  public InspectionMetaDataDialog createMetaDataDialog(Project project, @NotNull String profileName, @Nullable RegExpInspectionConfiguration configuration) {
     Function<String, @Nullable @NlsContexts.DialogMessage String> nameValidator = name -> {
       for (RegExpInspectionConfiguration current : myConfigurations) {
         if ((configuration == null || !configuration.getUuid().equals(current.getUuid())) &&

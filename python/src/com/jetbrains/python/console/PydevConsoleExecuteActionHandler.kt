@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console
 
 import com.intellij.codeInsight.hint.HintManager
@@ -42,7 +42,6 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     }
 
   init {
-    @Suppress("LeakingThis")
     this.consoleCommunication.addCommunicationListener(this)
   }
 
@@ -132,13 +131,13 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
   }
 
   protected fun ipythonInPrompt(prompt: String) {
-    myConsoleView.promptAttributes = object : ConsoleViewContentType("", TextAttributes()) {
+    myConsoleView.setPromptAttributes(object : ConsoleViewContentType("", TextAttributes()) {
       override fun getAttributes(): TextAttributes {
         val attrs = EditorColorsManager.getInstance().globalScheme.getAttributes(USER_INPUT_KEY)
         attrs.fontType = Font.PLAIN
         return attrs
       }
-    }
+    })
 
     val indentPrompt = PyConsoleUtil.IPYTHON_INDENT_PROMPT.padStart(prompt.length)
     myConsoleView.prompt = prompt

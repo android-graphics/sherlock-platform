@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util;
 
 import com.intellij.diff.DiffContext;
@@ -8,16 +8,15 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.List;
 
-@ApiStatus.Internal
 public abstract class FocusTrackerSupport<S> {
-  public abstract @NotNull S getCurrentSide();
+  @NotNull
+  public abstract S getCurrentSide();
 
   public abstract void setCurrentSide(@NotNull S side);
 
@@ -30,7 +29,7 @@ public abstract class FocusTrackerSupport<S> {
   //
 
   public static class Twoside extends FocusTrackerSupport<Side> {
-    private @NotNull Side myCurrentSide;
+    @NotNull private Side myCurrentSide;
 
     public Twoside(@NotNull List<? extends EditorHolder> holders) {
       assert holders.size() == 2;
@@ -42,7 +41,8 @@ public abstract class FocusTrackerSupport<S> {
     }
 
     @Override
-    public @NotNull Side getCurrentSide() {
+    @NotNull
+    public Side getCurrentSide() {
       return myCurrentSide;
     }
 
@@ -67,7 +67,7 @@ public abstract class FocusTrackerSupport<S> {
     }
 
     private final class MyFocusListener extends FocusAdapter {
-      private final @NotNull Side mySide;
+      @NotNull private final Side mySide;
 
       private MyFocusListener(@NotNull Side side) {
         mySide = side;
@@ -81,7 +81,7 @@ public abstract class FocusTrackerSupport<S> {
   }
 
   public static class Threeside extends FocusTrackerSupport<ThreeSide> {
-    private @NotNull ThreeSide myCurrentSide;
+    @NotNull private ThreeSide myCurrentSide;
 
     public Threeside(@NotNull List<? extends EditorHolder> holders) {
       myCurrentSide = ThreeSide.BASE;
@@ -92,7 +92,8 @@ public abstract class FocusTrackerSupport<S> {
     }
 
     @Override
-    public @NotNull ThreeSide getCurrentSide() {
+    @NotNull
+    public ThreeSide getCurrentSide() {
       return myCurrentSide;
     }
 
@@ -117,7 +118,7 @@ public abstract class FocusTrackerSupport<S> {
     }
 
     private final class MyFocusListener extends FocusAdapter {
-      private final @NotNull ThreeSide mySide;
+      @NotNull private final ThreeSide mySide;
 
       private MyFocusListener(@NotNull ThreeSide side) {
         mySide = side;

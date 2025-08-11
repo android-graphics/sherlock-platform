@@ -23,17 +23,20 @@ public class AddSelfQuickFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return PyPsiBundle.message("QFIX.add.parameter.self", myParamName);
   }
 
   @Override
-  public @NonNls @NotNull String getFamilyName() {
+  @NonNls
+  @NotNull
+  public String getFamilyName() {
     return "Add parameter";
   }
 
   @Override
-  public void applyFix(final @NotNull Project project, final @NotNull PsiElement element, final @NotNull ModPsiUpdater updater) {
+  public void applyFix(@NotNull final Project project, @NotNull final PsiElement element, @NotNull final ModPsiUpdater updater) {
     if (element instanceof PyParameterList parameterList) {
       PyNamedParameter newParameter = PyElementGenerator.getInstance(project).createParameter(myParamName);
       parameterList.addParameter(newParameter);

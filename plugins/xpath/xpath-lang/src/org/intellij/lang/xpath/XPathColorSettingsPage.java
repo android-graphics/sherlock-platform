@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.intellij.lang.xpath;
 
@@ -18,12 +18,14 @@ import java.util.Map;
 
 public class XPathColorSettingsPage implements ColorSettingsPage {
     @Override
-    public @NotNull String getDisplayName() {
+    @NotNull
+    public String getDisplayName() {
         return XPathFileType.XPATH.getName();
     }
 
     @Override
-    public @Nullable Icon getIcon() {
+    @Nullable
+    public Icon getIcon() {
         return XPathFileType.XPATH.getIcon();
     }
 
@@ -50,17 +52,21 @@ public class XPathColorSettingsPage implements ColorSettingsPage {
     }
 
     @Override
-    public @NotNull SyntaxHighlighter getHighlighter() {
+    @NotNull
+    public SyntaxHighlighter getHighlighter() {
         return SyntaxHighlighterFactory.getSyntaxHighlighter(XPathFileType.XPATH.getLanguage(), null, null);
     }
 
     @Override
-    public @NonNls @NotNull String getDemoText() {
+    @NonNls
+    @NotNull
+    public String getDemoText() {
         return "//prefix:*[ext:name() = 'changes']/element[(position() mod 2) = $pos + 1]/parent::*";
     }
 
     @Override
-    public @Nullable Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
+    @Nullable
+    public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
         return null;
     }
 }

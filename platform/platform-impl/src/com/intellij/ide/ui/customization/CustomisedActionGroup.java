@@ -4,7 +4,6 @@ package com.intellij.ide.ui.customization;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,12 +51,9 @@ public final class CustomisedActionGroup extends ActionGroupWrapper {
     return myChildren;
   }
 
-  @ApiStatus.Internal
-  public AnAction @NotNull [] getDefaultChildrenOrStubs() {
-    ActionGroup delegate = getDelegate();
-    if (!(delegate instanceof DefaultActionGroup g)) return EMPTY_ARRAY;
-    return CustomizationUtil.getReordableChildren(
-      delegate, g.getChildActionsOrStubs(), mySchema, myDefaultGroupName, myRootGroupName);
+  public @Nullable AnAction getFirstAction() {
+    AnAction[] children = getChildren(null);
+    return children.length > 0 ? children[0] : null;
   }
 
   /** @deprecated Use {@link #getDelegate()} instead */

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.Disposable;
@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,8 +31,7 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
 
   @Override
   public @NotNull LibraryTable getLibraryTable() {
-    // todo: IJPL-175225 add possibility to select non-local global library tables
-    return GlobalLibraryTableBridge.Companion.getInstance(LocalEelDescriptor.INSTANCE);
+    return GlobalLibraryTableBridge.Companion.getInstance();
   }
 
   @Override

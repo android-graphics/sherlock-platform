@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs;
 
 import com.intellij.ide.IdeBundle;
@@ -15,8 +15,8 @@ import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.*;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public final class FileColorManagerImpl extends FileColorManager {
   private static final String FC_ENABLED = "FileColorsEnabled";
@@ -92,7 +92,8 @@ public final class FileColorManagerImpl extends FileColorManager {
   }
 
   @Override
-  public @Nullable Color getColor(@NotNull @NonNls String id) {
+  @Nullable
+  public Color getColor(@NotNull @NonNls String id) {
     Color color = ourDefaultColors.get(id);
     return color == null ? ColorUtil.fromHex(id, null) : color;
   }
@@ -105,7 +106,7 @@ public final class FileColorManagerImpl extends FileColorManager {
   }
 
   @Override
-  public @Unmodifiable Collection<@NonNls String> getColorIDs() {
+  public Collection<@NonNls String> getColorIDs() {
     return ContainerUtil.sorted(ourDefaultColors.keySet());
   }
 
@@ -119,8 +120,9 @@ public final class FileColorManagerImpl extends FileColorManager {
     return list;
   }
 
+  @Nullable
   @Override
-  public @Nullable Color getRendererBackground(VirtualFile vFile) {
+  public Color getRendererBackground(VirtualFile vFile) {
     if (vFile == null) return null;
 
     if (isEnabled()) {
@@ -132,8 +134,9 @@ public final class FileColorManagerImpl extends FileColorManager {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable Color getRendererBackground(PsiFile file) {
+  public Color getRendererBackground(PsiFile file) {
     if (file == null) return null;
 
     VirtualFile vFile = file.getVirtualFile();
@@ -148,14 +151,16 @@ public final class FileColorManagerImpl extends FileColorManager {
   }
 
   @Override
-  public @Nullable Color getFileColor(@NotNull VirtualFile file) {
+  @Nullable
+  public Color getFileColor(@NotNull VirtualFile file) {
     if (!isEnabled()) return null;
     String colorName = myInitializedModel.getValue().getColor(file, getProject());
     return colorName == null ? null : getColor(colorName);
   }
 
   @Override
-  public @Nullable Color getScopeColor(@NotNull String scopeName) {
+  @Nullable
+  public Color getScopeColor(@NotNull String scopeName) {
     if (!isEnabled()) {
       return null;
     }
@@ -183,7 +188,8 @@ public final class FileColorManagerImpl extends FileColorManager {
     return myProject;
   }
 
-  public @NotNull List<FileColorConfiguration> getApplicationLevelConfigurations() {
+  @NotNull
+  public List<FileColorConfiguration> getApplicationLevelConfigurations() {
     return myInitializedModel.getValue().getLocalConfigurations();
   }
 
@@ -191,7 +197,9 @@ public final class FileColorManagerImpl extends FileColorManager {
     return myInitializedModel.getValue().getProjectLevelConfigurations();
   }
 
-  public static @Nullable @NonNls String getColorID(@NotNull Color color) {
+  @Nullable
+  @NonNls
+  public static String getColorID(@NotNull Color color) {
     for (Map.Entry<String, Color> entry : ourDefaultColors.entrySet()) {
       if (color.equals(entry.getValue())) {
         return entry.getKey();
@@ -200,7 +208,8 @@ public final class FileColorManagerImpl extends FileColorManager {
     return null;
   }
 
-  static @Nls String getAlias(@Nls String text) {
+  @Nls
+  static String getAlias(@Nls String text) {
     return StartupUiUtil.isUnderDarcula() && text.equals(IdeBundle.message("color.name.yellow")) ?
            IdeBundle.message("color.name.brown") : text;
   }

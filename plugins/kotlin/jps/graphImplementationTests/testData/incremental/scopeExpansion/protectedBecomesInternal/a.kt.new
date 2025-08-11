@@ -1,6 +1,0 @@
-package test
-
-open class A {
-    @JvmField
-    internal val field : Int = 10
-}

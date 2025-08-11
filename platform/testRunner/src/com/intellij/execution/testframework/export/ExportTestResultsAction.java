@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.export;
 
 import com.intellij.CommonBundle;
@@ -205,7 +205,8 @@ public final class ExportTestResultsAction extends DumbAwareAction {
       });
   }
 
-  private static @NotNull File getOutputFile(
+  @NotNull
+  private static File getOutputFile(
     final @NotNull ExportTestResultsConfiguration config,
     final @NotNull Project project,
     final @NotNull String filename)

@@ -129,7 +129,7 @@ public final class AstLoadingFilter {
         return computable.compute();
       }
       finally {
-        myDisallowedInfo.remove();
+        myDisallowedInfo.set(null);
       }
     }
   }

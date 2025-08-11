@@ -13,7 +13,7 @@ import java.awt.Insets
 interface UnscaledGaps {
   companion object {
     @JvmField
-    val EMPTY: UnscaledGaps = EmptyGaps
+    val EMPTY: UnscaledGaps = UnscaledGaps(0)
   }
 
   val top: Int
@@ -44,21 +44,6 @@ fun Insets.toUnscaledGaps(): UnscaledGaps = JBInsets.unscale(this).let { Unscale
 
 fun UnscaledGaps.toJBEmptyBorder(): JBEmptyBorder {
   return JBEmptyBorder(top, left, bottom, right)
-}
-
-private object EmptyGaps : UnscaledGaps {
-  override val top: Int = 0
-  override val left: Int = 0
-  override val bottom: Int = 0
-  override val right: Int = 0
-
-  override fun copy(top: Int, left: Int, bottom: Int, right: Int): UnscaledGaps {
-    return UnscaledGapsImpl(top, left, bottom, right)
-  }
-
-  override fun toString(): String {
-    return "top = 0, left = 0, bottom = 0, right = 0"
-  }
 }
 
 private class UnscaledGapsImpl(private val _top: Int,

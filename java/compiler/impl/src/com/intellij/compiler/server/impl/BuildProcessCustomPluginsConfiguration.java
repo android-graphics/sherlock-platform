@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server.impl;
 
 import com.intellij.openapi.application.ReadAction;
@@ -52,7 +52,8 @@ public class BuildProcessCustomPluginsConfiguration implements PersistentStateCo
     myState.myProjectLibraries.add(libraryName);
   }
 
-  public @NotNull List<String> getCustomPluginsClasspath() {
+  @NotNull
+  public List<String> getCustomPluginsClasspath() {
     return ReadAction.compute(() -> {
       List<String> result = new ArrayList<>();
       LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
@@ -70,8 +71,9 @@ public class BuildProcessCustomPluginsConfiguration implements PersistentStateCo
     });
   }
 
+  @Nullable
   @Override
-  public @Nullable BuildProcessPluginsState getState() {
+  public BuildProcessPluginsState getState() {
     return myState;
   }
 

@@ -18,18 +18,18 @@ package com.siyeh.ig.dataflow;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-@ApiStatus.Internal
-public final class ScopeUtils {
+final class ScopeUtils {
+
   private ScopeUtils() {}
 
-  public static @Nullable PsiElement findTighterDeclarationLocation(@NotNull PsiElement sibling, @NotNull PsiVariable variable,
-                                                                    boolean skipDeclarationStatements) {
+  @Nullable
+  public static PsiElement findTighterDeclarationLocation(@NotNull PsiElement sibling, @NotNull PsiVariable variable,
+                                                          boolean skipDeclarationStatements) {
     PsiElement prevSibling = sibling.getPrevSibling();
     while (prevSibling instanceof PsiWhiteSpace || prevSibling instanceof PsiComment) {
       prevSibling = prevSibling.getPrevSibling();
@@ -45,7 +45,8 @@ public final class ScopeUtils {
     return prevSibling;
   }
 
-  public static @Nullable PsiElement getChildWhichContainsElement(@NotNull PsiElement ancestor, @NotNull PsiElement element) {
+  @Nullable
+  public static PsiElement getChildWhichContainsElement(@NotNull PsiElement ancestor, @NotNull PsiElement element) {
     PsiElement child = element;
     PsiElement parent = child.getParent();
     while (!parent.equals(ancestor)) {
@@ -58,7 +59,8 @@ public final class ScopeUtils {
     return child;
   }
 
-  public static @Nullable PsiElement getCommonParent(@NotNull List<? extends PsiElement> referenceElements) {
+  @Nullable
+  public static PsiElement getCommonParent(@NotNull List<? extends PsiElement> referenceElements) {
     PsiElement commonParent = null;
     for (PsiElement referenceElement : referenceElements) {
       final PsiElement parent = PsiTreeUtil.getParentOfType(referenceElement, PsiCodeBlock.class, PsiForStatement.class, PsiTryStatement.class);
@@ -120,7 +122,8 @@ public final class ScopeUtils {
     return commonParent;
   }
 
-  public static @Nullable PsiElement moveOutOfLoopsAndClasses(@NotNull PsiElement scope, @NotNull PsiElement maxScope) {
+  @Nullable
+  public static PsiElement moveOutOfLoopsAndClasses(@NotNull PsiElement scope, @NotNull PsiElement maxScope) {
     PsiElement result = maxScope;
     if (result instanceof PsiLoopStatement) {
       return result;

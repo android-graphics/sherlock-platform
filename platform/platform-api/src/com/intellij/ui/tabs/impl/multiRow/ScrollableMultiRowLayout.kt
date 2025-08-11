@@ -53,8 +53,8 @@ class ScrollableMultiRowLayout(tabs: JBTabsImpl,
     for (info in scrollableRow.infos) {
       val length = data.lengths[info]!!
       if (info == selectedInfo) {
-        if (offset <= minX) {
-          scroll(offset - minX)
+        if (offset < minX) {
+          scroll(offset)
         }
         else if (offset + length > maxX) {
           scroll(offset + length - maxX)

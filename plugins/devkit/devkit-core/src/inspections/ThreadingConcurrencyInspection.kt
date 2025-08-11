@@ -41,7 +41,7 @@ internal class ThreadingConcurrencyInspection(
 
   // skip if ancient platform version
   override fun isAllowed(holder: ProblemsHolder): Boolean {
-    return DevKitInspectionUtil.isAllowedIncludingTestSources(holder.file) &&
+    return super.isAllowed(holder) &&
            DevKitInspectionUtil.isClassAvailable(holder, RequiresEdt::class.java.canonicalName)
   }
 

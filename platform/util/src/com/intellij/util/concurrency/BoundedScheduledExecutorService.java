@@ -1,11 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -19,8 +17,7 @@ import java.util.concurrent.TimeUnit;
  * and execute them in parallel in the {@code backendExecutor} not more than {@code maxSimultaneousTasks} at a time.
  * It's assumed that the lifecycle of {@code backendExecutor} is not affected by this class, so calling the {@link #shutdown()} on {@link BoundedScheduledExecutorService} doesn't shut down the {@code backendExecutor}.
  */
-@ApiStatus.Internal
-public final class BoundedScheduledExecutorService extends SchedulingWrapper {
+final class BoundedScheduledExecutorService extends SchedulingWrapper {
   BoundedScheduledExecutorService(@NotNull @NonNls String name, @NotNull ExecutorService backendExecutor, int maxThreads) {
     super(new BoundedTaskExecutor(name, backendExecutor, maxThreads, true),
           ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).delayQueue);
@@ -34,7 +31,7 @@ public final class BoundedScheduledExecutorService extends SchedulingWrapper {
   }
 
   @Override
-  public @Unmodifiable @NotNull List<Runnable> shutdownNow() {
+  public @NotNull List<Runnable> shutdownNow() {
     List<Runnable> runnables = super.shutdownNow();
     return ContainerUtil.concat(runnables, backendExecutorService.shutdownNow());
   }

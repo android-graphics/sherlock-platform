@@ -7,10 +7,12 @@ import com.intellij.internal.statistic.eventLog.validator.storage.persistence.Ev
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.internal.statistic.config.EventLogOptions.*;
 
@@ -20,6 +22,8 @@ public final class EventLogConfigOptionsService {
   @Topic.AppLevel
   public static final Topic<EventLogConfigOptionsListener> TOPIC
     = new Topic<>(EventLogConfigOptionsListener.class, Topic.BroadcastDirection.NONE);
+  private static final Set<String> ourOptions = Set.of(DATA_THRESHOLD, GROUP_THRESHOLD, GROUP_ALERT_THRESHOLD,
+                                                       MACHINE_ID_SALT_REVISION, MACHINE_ID_SALT);
 
   public static EventLogConfigOptionsService getInstance() {
     return ApplicationManager.getApplication().getService(EventLogConfigOptionsService.class);
@@ -27,7 +31,8 @@ public final class EventLogConfigOptionsService {
 
   public void updateOptions(@NotNull String recorderId, @NotNull EventLogMetadataLoader loader) {
     EventLogMetadataSettingsPersistence persisted = EventLogMetadataSettingsPersistence.getInstance();
-    Map<String, String> changedOptions = persisted.updateOptions(recorderId, loader.getOptionValues());
+    Map<String, String> newOptions = ContainerUtil.filter(loader.getOptionValues(), option -> ourOptions.contains(option));
+    Map<String, String> changedOptions = persisted.updateOptions(recorderId, newOptions);
     if (!changedOptions.isEmpty()) {
       ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).optionsChanged(recorderId, changedOptions);
     }

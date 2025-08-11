@@ -17,7 +17,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.LightRecordField;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.JavaElementKind;
+import com.intellij.psi.util.JavaPsiRecordUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -38,7 +41,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
 
   protected VariableTypeFix(@NotNull PsiVariable variable, @NotNull PsiType toReturn) {
     super(variable);
-    myReturnType = PsiTypesUtil.removeExternalAnnotations(GenericsUtil.getVariableTypeByExpressionType(toReturn));
+    myReturnType = GenericsUtil.getVariableTypeByExpressionType(toReturn);
     myName = variable.getName();
   }
 

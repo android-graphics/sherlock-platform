@@ -11,14 +11,16 @@ import org.jetbrains.annotations.NotNull;
  */
 public class StubTreeNode extends SimpleNode {
   
-  private final @NotNull StubElement<?> myStub;
+  @NotNull
+  private final StubElement<?> myStub;
 
   public StubTreeNode(@NotNull StubElement<?> stub, StubTreeNode parent) {
     super(parent);
     myStub = stub;
   }
 
-  public @NotNull StubElement<?> getStub() {
+  @NotNull
+  public StubElement<?> getStub() {
     return myStub;
   }
 

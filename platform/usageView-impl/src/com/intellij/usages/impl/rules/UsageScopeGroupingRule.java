@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.icons.AllIcons;
@@ -24,8 +24,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements DumbAware, UsageGroupingRuleEx {
+  @Nullable
   @Override
-  protected @Nullable UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+  protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     if (!(usage instanceof PsiElementUsage elementUsage)) {
       return null;
     }
@@ -60,7 +61,8 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
     }
 
     @Override
-    public @NotNull String getPresentableGroupText() {
+    @NotNull
+    public String getPresentableGroupText() {
       return UsageViewBundle.message("list.item.test");
     }
   };
@@ -71,7 +73,8 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
     }
 
     @Override
-    public @NotNull String getPresentableGroupText() {
+    @NotNull
+    public String getPresentableGroupText() {
       return UsageViewBundle.message("list.item.production");
     }
   };
@@ -82,7 +85,8 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
     }
 
     @Override
-    public @NotNull String getPresentableGroupText() {
+    @NotNull
+    public String getPresentableGroupText() {
       return UsageViewBundle.message("list.item.library");
     }
   };
@@ -98,14 +102,12 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
       return getPresentableGroupText().compareTo(usageGroup.getPresentableGroupText());
     }
 
-    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof UsageScopeGroup usageTypeGroup)) return false;
       return myCode == usageTypeGroup.myCode;
     }
 
-    @Override
     public int hashCode() {
       return myCode;
     }

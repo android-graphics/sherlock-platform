@@ -1,30 +1,34 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.validation.DialogValidation
-import com.intellij.openapi.ui.validation.DialogValidationRequestor
-import com.intellij.openapi.ui.validation.invoke
+import com.intellij.openapi.ui.*
+import com.intellij.openapi.ui.validation.*
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.EditorTextField
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.validation.CellValidation
-import com.intellij.ui.layout.ComponentPredicate
-import com.intellij.ui.layout.ValidationInfoBuilder
+import com.intellij.ui.layout.*
 import com.intellij.util.containers.map2Array
 import com.intellij.util.ui.JBFont
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
+import java.awt.ItemSelectable
+import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JScrollPane
 import javax.swing.event.DocumentEvent
 import javax.swing.text.BadLocationException
+import javax.swing.text.JTextComponent
 
 @ApiStatus.Internal
 internal class CellImpl<T : JComponent>(
@@ -48,6 +52,7 @@ internal class CellImpl<T : JComponent>(
   var widthGroup: String? = null
     private set
 
+  private var property: ObservableProperty<*>? = null
   private var applyIfEnabled = false
 
   private var visible = viewComponent.isVisible
@@ -217,6 +222,11 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): CellImpl<T> {
+    return bind(componentGet, componentSet, MutableProperty(binding.get, binding.set))
+  }
+
   override fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): CellImpl<T> {
     return validationRequestor(DialogValidationRequestor { _, it -> validationRequestor(it) })
   }
@@ -229,6 +239,12 @@ internal class CellImpl<T : JComponent>(
 
   override fun validationRequestor(validationRequestor: DialogValidationRequestor.WithParameter<T>): CellImpl<T> {
     return validationRequestor(validationRequestor(component))
+  }
+
+  @Deprecated("Use identical validationInfo method, validation method is reserved for new API")
+  @ApiStatus.ScheduledForRemoval
+  override fun validation(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
+    return validationInfo(validation)
   }
 
   override fun validationInfo(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
@@ -260,7 +276,13 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun validationOnInput(vararg validations: DialogValidation): CellImpl<T> {
-    CellValidationImpl.installValidationOnInput(dialogPanelConfig, component.interactiveComponent, *validations)
+    val interactiveComponent = component.interactiveComponent
+    dialogPanelConfig.validationsOnInput.list(interactiveComponent)
+      .addAll(validations.map { it.forComponentIfNeeded(interactiveComponent) })
+
+    // Fallback in case if no validation requestors is defined
+    guessAndInstallValidationRequestor()
+
     return this
   }
 
@@ -274,7 +296,13 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun validationOnApply(vararg validations: DialogValidation): CellImpl<T> {
-    CellValidationImpl.installValidationOnApply(dialogPanelConfig, component.interactiveComponent, *validations)
+    val interactiveComponent = component.interactiveComponent
+    dialogPanelConfig.validationsOnApply.list(interactiveComponent)
+      .addAll(validations.map { it.forComponentIfNeeded(interactiveComponent) })
+
+    // Fallback in case if no validation requestors is defined
+    guessAndInstallValidationRequestor()
+
     return this
   }
 
@@ -287,6 +315,48 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun errorOnApply(message: String, condition: (T) -> Boolean): Cell<T> = addValidationRule(message, condition)
+
+  private fun guessAndInstallValidationRequestor() {
+    val stackTrace = Throwable()
+    val interactiveComponent = component.interactiveComponent
+    val validationRequestors = dialogPanelConfig.validationRequestors.list(interactiveComponent)
+    if (validationRequestors.isNotEmpty()) return
+
+    validationRequestors.add(object : DialogValidationRequestor {
+      override fun subscribe(parentDisposable: Disposable?, validate: () -> Unit) {
+        if (validationRequestors.size > 1) return
+
+        val requestor = guessValidationRequestor(interactiveComponent)
+        if (requestor != null) {
+          requestor.subscribe(parentDisposable, validate)
+        }
+        else {
+          logger<Cell<*>>().warn("Please, install Cell.validationRequestor", stackTrace)
+        }
+      }
+    })
+  }
+
+  private fun guessValidationRequestor(component: JComponent): DialogValidationRequestor? {
+    val property = property
+    if (property != null) {
+      return WHEN_PROPERTY_CHANGED(property)
+    }
+    return when (component) {
+      is JComboBox<*> -> {
+        val requestor = WHEN_STATE_CHANGED(component)
+        when (val editorComponent = component.editor?.editorComponent) {
+          is JTextComponent -> requestor and WHEN_TEXT_CHANGED(editorComponent)
+          is EditorTextField -> requestor and WHEN_DOCUMENT_CHANGED(editorComponent)
+          else -> requestor
+        }
+      }
+      is JTextComponent -> WHEN_TEXT_CHANGED(component)
+      is ItemSelectable -> WHEN_STATE_CHANGED(component)
+      is EditorTextField -> WHEN_DOCUMENT_CHANGED(component)
+      else -> null
+    }
+  }
 
   override fun onApply(callback: () -> Unit): CellImpl<T> {
     dialogPanelConfig.applyCallbacks.list(component).add(callback)
@@ -343,13 +413,7 @@ internal class CellImpl<T : JComponent>(
 
   private fun doEnabled(isEnabled: Boolean) {
     if (viewComponent is JScrollPane) {
-      if (viewComponent === component) {
-        // ScrollPane was added via [Row.cell] method
-        viewComponent.viewport?.view?.isEnabled = isEnabled
-      }
-      else {
-        component.isEnabled = isEnabled
-      }
+      component.isEnabled = isEnabled
     }
     else {
       viewComponent.isEnabled = isEnabled
@@ -381,7 +445,12 @@ internal class CellImpl<T : JComponent>(
 
   companion object {
     internal fun Cell<*>.installValidationRequestor(property: ObservableProperty<*>) {
-      CellValidationImpl.installDefaultValidationRequestor(component.interactiveComponent, property)
+      if (this is CellImpl) {
+        this.property = property
+      }
     }
+
+    private fun DialogValidation.forComponentIfNeeded(component: JComponent) =
+      transformResult { if (this.component == null) forComponent(component) else this }
   }
 }

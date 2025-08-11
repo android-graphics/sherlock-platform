@@ -10,9 +10,7 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 import com.intellij.openapi.vcs.changes.shelf.ShelvedWrapper
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 abstract class UnshelveChangesActionBase(@NlsActions.ActionText text: String, @NlsActions.ActionDescription description: String,
                                          private val removeFromShelf: Boolean) : DumbAwareAction(text, description, null) {
 
@@ -51,12 +49,10 @@ abstract class UnshelveChangesActionBase(@NlsActions.ActionText text: String, @N
   }
 }
 
-@ApiStatus.Internal
 class UnshelveChangesAction : UnshelveChangesActionBase(VcsBundle.message("shelf.unshelve.changes.action.text"),
                                                         VcsBundle.message("shelf.unshelve.changes.action.description"),
                                                         false)
 
-@ApiStatus.Internal
 class UnshelveChangesAndRemoveAction : UnshelveChangesActionBase(VcsBundle.message("shelf.unshelve.changes.remove.action.text"),
                                                                  VcsBundle.message("shelf.unshelve.changes.remove.action.description"),
                                                                  true)

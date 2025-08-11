@@ -14,8 +14,6 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonArrayValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
-import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature;
-import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.tree.JsonSchemaNodeExpansionRequest;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +67,6 @@ public final class JsonSchemaResolver {
   }
 
   public MatchResult detailedResolve() {
-    JsonSchemaHighlightingSessionStatisticsCollector.getInstance().reportSchemaUsageFeature(JsonSchemaFusCountedFeature.JsonSchemaResolveTreeBuild);
     final JsonSchemaTreeNode node = JsonSchemaVariantsTreeBuilder.buildTree(myProject, myExpansionRequest, mySchema, myPosition, false);
     return MatchResult.create(node);
   }

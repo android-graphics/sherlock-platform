@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.ui;
 
 import com.intellij.ide.JavaUiBundle;
@@ -47,8 +47,8 @@ import java.awt.event.HierarchyListener;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author MYakovlev
@@ -57,7 +57,8 @@ public class SdkEditor implements Configurable, Place.Navigator {
   private static final Logger LOG = Logger.getInstance(SdkEditor.class);
   private static final String SDK_TAB = "sdkTab";
 
-  private final @NotNull Sdk mySdk;
+  @NotNull
+  private final Sdk mySdk;
   private final Map<OrderRootType, SdkPathEditor> myPathEditors = new HashMap<>();
 
   private TextFieldWithBrowseButton myHomeComponent;
@@ -176,12 +177,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   }
 
   protected TextFieldWithBrowseButton createHomeComponent() {
-    TextFieldWithBrowseButton myField = new TextFieldWithBrowseButton(e -> doSelectHomePath());
-    if (mySdk.getSdkType().equals(JavaSdk.getInstance())) {
-      myField.setButtonEnabled(false);
-      myField.setButtonVisible(false);
-    }
-    return myField;
+    return new TextFieldWithBrowseButton(e -> doSelectHomePath());
   }
 
   protected boolean showTabForType(@NotNull OrderRootType type) {
@@ -212,7 +208,8 @@ public class SdkEditor implements Configurable, Place.Navigator {
     myModifiedName = name;
   }
 
-  public @NlsSafe String getActualSdkName() {
+  @NlsSafe
+  public String getActualSdkName() {
     return myModifiedName;
   }
 
@@ -337,6 +334,8 @@ public class SdkEditor implements Configurable, Place.Navigator {
       .newBuilder()
       .withSdkType(sdkType)
       .withSdkFilter(sdk -> {
+        if (sdk == null) return false;
+
         if (sdk.getName().equals(this.myInitialName)) return false;
         if (sdk.getName().equals(this.myModifiedName)) return false;
 
@@ -431,11 +430,13 @@ public class SdkEditor implements Configurable, Place.Navigator {
     }
   }
 
-  private @NotNull List<AdditionalDataConfigurable> getAdditionalDataConfigurable() {
+  @NotNull
+  private List<AdditionalDataConfigurable> getAdditionalDataConfigurable() {
     return initAdditionalDataConfigurable(mySdk);
   }
 
-  private @NotNull List<AdditionalDataConfigurable> initAdditionalDataConfigurable(Sdk sdk) {
+  @NotNull
+  private List<AdditionalDataConfigurable> initAdditionalDataConfigurable(Sdk sdk) {
     final SdkType sdkType = (SdkType)sdk.getSdkType();
     List<AdditionalDataConfigurable> configurables = myAdditionalDataConfigurables.get(sdkType);
     if (configurables == null) {
@@ -460,8 +461,9 @@ public class SdkEditor implements Configurable, Place.Navigator {
   }
 
   private class EditedSdkModificator implements SdkModificator {
+    @NotNull
     @Override
-    public @NotNull String getName() {
+    public String getName() {
       return mySdk.getName();
     }
 
@@ -539,14 +541,14 @@ public class SdkEditor implements Configurable, Place.Navigator {
   }
 
   @Override
-  public ActionCallback navigateTo(final @Nullable Place place, final boolean requestFocus) {
+  public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
     if (place == null) return ActionCallback.DONE;
     myTabbedPane.setSelectedTitle((String)place.getPath(SDK_TAB));
     return ActionCallback.DONE;
   }
 
   @Override
-  public void queryPlace(final @NotNull Place place) {
+  public void queryPlace(@NotNull final Place place) {
     place.putPath(SDK_TAB, myTabbedPane.getSelectedTitle());
   }
 }

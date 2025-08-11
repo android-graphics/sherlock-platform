@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.fileActions.export
 
 import com.intellij.openapi.components.service
@@ -118,10 +118,13 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
 
       state = state.copy(resourcesDir = suggestedDir)
 
-      val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-        .withTitle(MarkdownBundle.message("markdown.import.export.dialog.target.directory"))
-        .withDescription(MarkdownBundle.message("markdown.import.export.dialog.target.directory.description"))
-      addBrowseFolderListener(project, descriptor, TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT)
+      addBrowseFolderListener(
+        MarkdownBundle.message("markdown.import.export.dialog.target.directory"),
+        MarkdownBundle.message("markdown.import.export.dialog.target.directory.description"),
+        project,
+        FileChooserDescriptorFactory.createSingleFolderDescriptor(),
+        TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT
+      )
     }
   }
 

@@ -58,7 +58,8 @@ public final class PyKeywordPatternReference extends PsiReferenceBase.Poly<PyKey
     return collectClassAttributeVariants(getElement(), classPattern, typeContext);
   }
 
-  private @Nullable PyClassPattern getContainingClassPattern() {
+  @Nullable
+  private PyClassPattern getContainingClassPattern() {
     return as(getElement().getParent().getParent(), PyClassPattern.class);
   }
 
@@ -89,7 +90,8 @@ public final class PyKeywordPatternReference extends PsiReferenceBase.Poly<PyKey
     return true;
   }
 
-  private static @NotNull List<PyClassLikeType> resolveToClassTypes(@NotNull PyClassPattern classPattern, @NotNull PyResolveContext resolveContext) {
+  @NotNull
+  private static List<PyClassLikeType> resolveToClassTypes(@NotNull PyClassPattern classPattern, @NotNull PyResolveContext resolveContext) {
     List<PsiElement> elements = PyUtil.multiResolveTopPriority(classPattern.getClassNameReference(), resolveContext);
     return StreamEx.of(elements)
       .select(PyClass.class)

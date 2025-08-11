@@ -1,13 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiNameHelper;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesProcessor;
@@ -42,8 +39,9 @@ public class DirectoryAsPackageRenameHandler extends DirectoryAsPackageRenameHan
                                                      final PsiDirectory[] dirsToRename,
                                                      boolean searchInComments, boolean searchInNonJavaFiles) {
     return new MoveDirectoryWithClassesProcessor(project, dirsToRename, null, searchInComments, searchInNonJavaFiles, false, null) {
+      @NotNull
       @Override
-      public @NotNull TargetDirectoryWrapper getTargetDirectory(final PsiDirectory dir) {
+      public TargetDirectoryWrapper getTargetDirectory(final PsiDirectory dir) {
         return new TargetDirectoryWrapper(dir.getParentDirectory(), StringUtil.getShortName(newQName));
       }
 
@@ -52,8 +50,9 @@ public class DirectoryAsPackageRenameHandler extends DirectoryAsPackageRenameHan
         return newQName;
       }
 
+      @NotNull
       @Override
-      protected @NotNull String getCommandName() {
+      protected String getCommandName() {
         return RefactoringBundle.message(dirsToRename.length == 1 ? "rename.directory.command.name" : "rename.directories.command.name");
       }
     };

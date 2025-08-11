@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xdebugger.breakpoints;
 
@@ -37,7 +37,7 @@ import java.util.List;
  * and return it from {@link com.intellij.xdebugger.XDebugProcess#getBreakpointHandlers()}.
  */
 public abstract class XLineBreakpointType<P extends XBreakpointProperties> extends XBreakpointType<XLineBreakpoint<P>,P> {
-  protected XLineBreakpointType(final @NonNls @NotNull String id, final @Nls @NotNull String title) {
+  protected XLineBreakpointType(@NonNls @NotNull final String id, @Nls @NotNull final String title) {
     super(id, title);
   }
 
@@ -53,23 +53,16 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
    * These properties are stored in an {@link XBreakpoint} instance
    * and can be obtained by {@link XBreakpoint#getProperties()}.
    */
-  public abstract @Nullable P createBreakpointProperties(@NotNull VirtualFile file, int line);
+  @Nullable
+  public abstract P createBreakpointProperties(@NotNull VirtualFile file, int line);
 
   @Override
   public String getDisplayText(final XLineBreakpoint<P> breakpoint) {
-    return getDisplayTextDefaultWithPathAndLine(breakpoint);
+    return filePositionDisplayText(breakpoint.getPresentableFilePath(), breakpoint);
   }
 
-  @ApiStatus.Internal
-  public final @Nls @NotNull String getDisplayTextDefaultWithPathAndLine(XLineBreakpoint<P> breakpoint) {
-    // It's not expected to be really short like getShortText(), but too long is also bad.
-    var path = breakpoint.getPresentableFilePath();
-    var shortenedPath = StringUtil.shortenPathWithEllipsis(path, 50);
-
-    return filePositionDisplayText(shortenedPath, breakpoint);
-  }
-
-  private @Nls String filePositionDisplayText(String path, XLineBreakpoint<P> breakpoint) {
+  @Nls
+  private String filePositionDisplayText(String path, XLineBreakpoint<P> breakpoint) {
     var line = breakpoint.getLine();
     var column = getColumn(breakpoint);
     if (column <= 0) {
@@ -111,7 +104,9 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
    *
    * @see XBreakpointType#getGeneralDescription(XBreakpoint)
    */
-  protected @NotNull @Nls String getGeneralDescription(XLineBreakpointVariant variant) {
+  @NotNull
+  @Nls
+  protected String getGeneralDescription(XLineBreakpointVariant variant) {
     // Default implementation just for API backward compatibility, it's highly recommended to properly implement this method.
     return variant.getText();
   }
@@ -167,18 +162,21 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   /**
    * @return range to highlight on the line, {@code null} to highlight the whole line
    */
-  public @Nullable TextRange getHighlightRange(XLineBreakpoint<P> breakpoint) {
+  @Nullable
+  public TextRange getHighlightRange(XLineBreakpoint<P> breakpoint) {
     return null;
   }
 
   /**
    * Return the list of variants if there can be more than one breakpoint on the line.
    */
-  public @NotNull List<? extends XLineBreakpointVariant> computeVariants(@NotNull Project project, @NotNull XSourcePosition position) {
+  @NotNull
+  public List<? extends XLineBreakpointVariant> computeVariants(@NotNull Project project, @NotNull XSourcePosition position) {
     return Collections.emptyList();
   }
 
-  public @NotNull Promise<List<? extends XLineBreakpointVariant>> computeVariantsAsync(@NotNull Project project, @NotNull XSourcePosition position) {
+  @NotNull
+  public Promise<List<? extends XLineBreakpointVariant>> computeVariantsAsync(@NotNull Project project, @NotNull XSourcePosition position) {
     return Promises.resolvedPromise(computeVariants(project, position));
   }
 
@@ -215,11 +213,15 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   public abstract class XLineBreakpointVariant {
-    public abstract @NotNull @Nls String getText();
+    @NotNull
+    @Nls
+    public abstract String getText();
 
-    public abstract @Nullable Icon getIcon();
+    @Nullable
+    public abstract Icon getIcon();
 
-    public abstract @Nullable TextRange getHighlightRange();
+    @Nullable
+    public abstract TextRange getHighlightRange();
 
     /**
      * The priority is considered when several breakpoint variants can be set on the same line,
@@ -243,13 +245,16 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
       return !isMultiVariant();
     }
 
-    public abstract @Nullable P createProperties();
+    @Nullable
+    public abstract P createProperties();
 
     public final XLineBreakpointType<P> getType() {
       return XLineBreakpointType.this;
     }
 
-    public final @NotNull @Nls String getTooltipDescription() {
+    @NotNull
+    @Nls
+    public final String getTooltipDescription() {
       return getType().getGeneralDescription(this);
     }
 
@@ -266,18 +271,21 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
       mySourcePosition = position;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getText() {
+    public String getText() {
       return XDebuggerBundle.message("breakpoint.variant.text.all");
     }
 
+    @Nullable
     @Override
-    public @Nullable Icon getIcon() {
+    public Icon getIcon() {
       return AllIcons.Debugger.MultipleBreakpoints;
     }
 
+    @Nullable
     @Override
-    public @Nullable TextRange getHighlightRange() {
+    public TextRange getHighlightRange() {
       return null;
     }
 
@@ -288,7 +296,8 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     }
 
     @Override
-    public @Nullable P createProperties() {
+    @Nullable
+    public P createProperties() {
       return createBreakpointProperties(mySourcePosition.getFile(),
                                         mySourcePosition.getLine());
     }
@@ -308,8 +317,9 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
       return myElement.getIcon(0);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getText() {
+    public String getText() {
       return StringUtil.shortenTextWithEllipsis(myElement.getText(), 100, 0);
     }
 

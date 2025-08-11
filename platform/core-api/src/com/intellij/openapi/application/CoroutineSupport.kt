@@ -8,6 +8,4 @@ import kotlin.coroutines.CoroutineContext
 interface CoroutineSupport {
 
   fun edtDispatcher(): CoroutineContext
-
-  fun uiDispatcher(): CoroutineContext
 }

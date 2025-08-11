@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
@@ -54,17 +54,12 @@ public final class NewCodeStyleSettingsPanel extends JPanel implements TabbedLan
     }
   }
 
-  public @Nullable String getHelpTopic() {
+  @Nullable
+  public String getHelpTopic() {
     return myTab.getHelpTopic();
   }
 
   public void dispose() {
-    if (isValid()) {
-      Container parent = getParent();
-      if (parent != null && parent.isValid()) {
-        parent.remove(this);
-      }
-    }
     myTab.disposeUIResources();
   }
 
@@ -109,7 +104,8 @@ public final class NewCodeStyleSettingsPanel extends JPanel implements TabbedLan
     return myTab instanceof OptionsContainingConfigurable ? (OptionsContainingConfigurable)myTab : EMPTY_OPTIONS_CONTAINING_CONFIGURABLE;
   }
 
-  public @Nullable CodeStyleAbstractPanel getSelectedPanel() {
+  @Nullable
+  public CodeStyleAbstractPanel getSelectedPanel() {
     if (myTab instanceof CodeStyleAbstractConfigurable) {
       return ((CodeStyleAbstractConfigurable)myTab).getPanel();
     }

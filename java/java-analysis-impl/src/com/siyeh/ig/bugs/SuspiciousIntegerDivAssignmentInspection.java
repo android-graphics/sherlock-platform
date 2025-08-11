@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -32,8 +32,9 @@ public final class SuspiciousIntegerDivAssignmentInspection extends BaseInspecti
   @SuppressWarnings("PublicField")
   public boolean myReportPossiblyExactDivision = true;
 
+  @NotNull
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("suspicious.integer.div.assignment.problem.descriptor");
   }
 
@@ -43,8 +44,9 @@ public final class SuspiciousIntegerDivAssignmentInspection extends BaseInspecti
       checkbox("myReportPossiblyExactDivision", JavaAnalysisBundle.message("inspection.suspicious.integer.div.assignment.option")));
   }
 
+  @Nullable
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new SuspiciousIntegerDivAssignmentFix();
   }
 
@@ -81,8 +83,10 @@ public final class SuspiciousIntegerDivAssignmentInspection extends BaseInspecti
       }
     }
 
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
     @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("suspicious.integer.div.assignment.quickfix");
     }
   }
@@ -118,7 +122,8 @@ public final class SuspiciousIntegerDivAssignmentInspection extends BaseInspecti
     }
   }
 
-  private static @Nullable PsiBinaryExpression getRhs(@NotNull PsiAssignmentExpression assignment) {
+  @Nullable
+  private static PsiBinaryExpression getRhs(@NotNull PsiAssignmentExpression assignment) {
     final PsiBinaryExpression rhs =
       ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(assignment.getRExpression()), PsiBinaryExpression.class);
     if (rhs == null ||

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -105,22 +105,6 @@ public class ContainerUtilCollectionsTest extends Assert {
     Map<Object, Object> map = CollectionFactory.createSoftMap(HashingStrategy.identity());
     checkKeyTossedEventually(map);
   }
-  @Test(timeout = TIMEOUT)
-  public void testSoftMapTossedEvenWithCustomStrategy() {
-    Map<Object, Object> map = CollectionFactory.createSoftMap(new HashingStrategy<>() {
-      @Override
-      public int hashCode(Object object) {
-        return 0;
-      }
-
-      @Override
-      public boolean equals(Object o1, Object o2) {
-        return o1.equals(o2);
-      }
-    }, (__, ___) -> {
-    });
-    checkKeyTossedEventually(map);
-  }
 
   @Test(timeout = TIMEOUT)
   public void testRemoveFromSoftEntrySet() {
@@ -212,8 +196,6 @@ public class ContainerUtilCollectionsTest extends Assert {
     Reference<Object> ref = new SoftReference<>(value);
     map.put(1, value);
     assertEquals(1, map.size());
-    //Help GC, even in interpreter mode
-    //noinspection UnusedAssignment
     value = null;
 
     do {
@@ -489,7 +471,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testOldConcurrentLongObjectHashMap() {
-    ConcurrentLongObjectMap<Object> map = Java11Shim.Companion.getINSTANCE().createConcurrentLongObjectMap();
+    ConcurrentLongObjectMap<Object> map = Java11Shim.INSTANCE.createConcurrentLongObjectMap();
     check(map);
   }
 
@@ -517,7 +499,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test
   public void testOldConcurrentIntObjectHashMap() {
-    IntObjectMap<Object> map = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+    IntObjectMap<Object> map = ContainerUtil.createConcurrentIntObjectMap();
     for (int i = 0; i < 1000; i++) {
       Object prev = map.put(i, i);
       assertNull(prev);
@@ -725,7 +707,6 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testWeakKeyMapsKeySetIsIterable() {
-    //noinspection ResultOfMethodCallIgnored
     UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> CollectionFactory.createWeakMap(11, 1, HashingStrategy.canonical()));
     checkKeySetIterable(CollectionFactory.createWeakMap(11, 0.5f, HashingStrategy.canonical()));
     checkKeySetIterable(ContainerUtil.createWeakKeySoftValueMap());
@@ -770,13 +751,13 @@ public class ContainerUtilCollectionsTest extends Assert {
   @Test
   public void testEntrySet() {
     checkEntrySetIterator(ConcurrentCollectionFactory.createConcurrentIntObjectMap());
-    checkEntrySetIterator(ConcurrentCollectionFactory.createConcurrentIntObjectMap());
+    checkEntrySetIterator(ContainerUtil.createConcurrentIntObjectMap());
     checkEntrySetIterator(ConcurrentCollectionFactory.createConcurrentIntObjectSoftValueMap());
     checkEntrySetIterator(ConcurrentCollectionFactory.createConcurrentIntObjectWeakValueMap());
     checkEntrySetIterator(ContainerUtil.createIntKeyWeakValueMap());
 
     checkEntrySetIterator(ConcurrentCollectionFactory.createConcurrentLongObjectMap());
-    checkEntrySetIterator(Java11Shim.Companion.getINSTANCE().createConcurrentLongObjectMap());
+    checkEntrySetIterator(Java11Shim.INSTANCE.createConcurrentLongObjectMap());
   }
 
   @Test
@@ -882,41 +863,10 @@ public class ContainerUtilCollectionsTest extends Assert {
   }
 
   @Test
-  public void testKeyEvictionListenerWorksInConcurrentSoftMap() {
+  public void testKeyEvictionListenerWorks() {
     AtomicReference<Object> evicted = new AtomicReference<>();
     AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
     map.set(CollectionFactory.createConcurrentSoftMap((thisMap,value) -> {
-      assertTrue(evicted.compareAndSet(null, value));
-      assertSame(map.get(), thisMap);
-    }));
-    Object value = new Object();
-    map.get().put(new Object(), value);
-
-    GCUtil.tryGcSoftlyReachableObjects(() -> map.get().remove("") != null/*to call processQueue()*/ || map.get().isEmpty());
-    map.get().remove(""); // to call processQueue()
-    assertSame(value, evicted.get());
-  }
-
-  @Test
-  public void testKeyEvictionListenerWorksInSoftMap() {
-    AtomicReference<Object> evicted = new AtomicReference<>();
-    AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
-    map.set(CollectionFactory.createSoftMap((thisMap, value) -> {
-      assertTrue(evicted.compareAndSet(null, value));
-      assertSame(map.get(), thisMap);
-    }));
-    Object value = new Object();
-    map.get().put(new Object(), value);
-
-    GCUtil.tryGcSoftlyReachableObjects(() -> map.get().remove("") != null/*to call processQueue()*/ || map.get().isEmpty());
-    map.get().remove(""); // to call processQueue()
-    assertSame(value, evicted.get());
-  }
-  @Test
-  public void testKeyEvictionListenerWorksInSoftMapWithCustomStrategy() {
-    AtomicReference<Object> evicted = new AtomicReference<>();
-    AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
-    map.set(CollectionFactory.createSoftMap(HashingStrategy.identity(), (thisMap, value) -> {
       assertTrue(evicted.compareAndSet(null, value));
       assertSame(map.get(), thisMap);
     }));

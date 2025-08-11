@@ -2,9 +2,8 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.intention.PriorityAction
-import com.intellij.modcommand.ModCommandAction
 import com.intellij.psi.PsiElement
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.name.ClassId
@@ -37,13 +36,7 @@ abstract class OptInGeneralUtilsBase {
             // propose to add a propagating annotation first, and in all other cases
             // the non-propagating opt-in annotation should be default.
             // The same logic applies to the similar conditional expressions onward.
-            isOverrideError -> OptInFixes.PropagateOptInAnnotationFix(
-                targetElement,
-                annotationClassId,
-                kind,
-                argumentClassFqName = null,
-                PriorityAction.Priority.HIGH
-            )
+            isOverrideError -> OptInFixes.HighPriorityPropagateOptInAnnotationFix(targetElement, annotationClassId, kind)
 
             targetElement.isSubclassOptPropagateApplicable(annotationFqName) -> OptInFixes.PropagateOptInAnnotationFix(
                 targetElement, ClassId.topLevel(OptInNames.SUBCLASS_OPT_IN_REQUIRED_FQ_NAME), kind, annotationFqName
@@ -59,14 +52,15 @@ abstract class OptInGeneralUtilsBase {
         optInClassId: ClassId,
         annotationFqName: FqName,
         isOverrideError: Boolean
-    ): ModCommandAction {
-        val existingAnnotationEntry = (targetElement as? KtAnnotated)?.findAnnotation(optInClassId)
-        val priority = if (isOverrideError) PriorityAction.Priority.NORMAL else PriorityAction.Priority.HIGH
-        return if (existingAnnotationEntry != null) {
-            OptInFixes.ModifyOptInAnnotationFix(existingAnnotationEntry, kind, annotationFqName, priority)
+    ): AddAnnotationFix {
+        val existingAnnotationEntry = (targetElement as? KtAnnotated)?.findAnnotation(optInClassId)?.createSmartPointer()
+
+        return if (isOverrideError) {
+            OptInFixes.UseOptInAnnotationFix(targetElement, optInClassId, kind, annotationFqName, existingAnnotationEntry)
         } else {
-            OptInFixes.UseOptInAnnotationFix(targetElement, optInClassId, kind, annotationFqName, priority)
+            OptInFixes.HighPriorityUseOptInAnnotationFix(targetElement, optInClassId, kind, annotationFqName, existingAnnotationEntry)
         }
+
     }
 
     fun collectCandidates(element: PsiElement): List<CandidateData> {
@@ -100,7 +94,7 @@ abstract class OptInGeneralUtilsBase {
     }
 
     fun findContainingClassOrObjectCandidate(element: KtDeclaration): CandidateData? {
-        val containingClassOrObject = element as? KtClassOrObject ?: (element.containingClassOrObject ?: return null)
+        val containingClassOrObject = if (element is KtClassOrObject) element else element.containingClassOrObject ?: return null
         return CandidateData(containingClassOrObject, AddAnnotationFix.Kind.ContainingClass(containingClassOrObject.name))
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.facet.Facet;
@@ -112,7 +112,8 @@ public abstract class FrameworkSupportProviderTestCase extends JavaProjectTestCa
     myFrameworkSupportModel.setSelectedVersion(frameworkType.getId(), version);
   }
 
-  protected @NotNull <F extends Facet> F getFacet(FacetTypeId<F> id) {
+  @NotNull
+  protected <F extends Facet> F getFacet(FacetTypeId<F> id) {
     final F facet = FacetManager.getInstance(myModule).getFacetByType(id);
     assertNotNull(id + " facet not found", facet);
     return facet;

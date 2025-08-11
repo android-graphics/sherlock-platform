@@ -1,4 +1,4 @@
-// "Create missing branch 'Outer.Book'" "true-preview"
+// "Create missing switch branch 'Outer.Book'" "true-preview"
 class Outer {
   interface SaleItem permits Book {
   }

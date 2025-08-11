@@ -32,7 +32,8 @@ import java.util.*;
 public class AddCallSuperQuickFix extends PsiUpdateModCommandQuickFix {
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.add.super");
   }
 
@@ -87,7 +88,8 @@ public class AddCallSuperQuickFix extends PsiUpdateModCommandQuickFix {
   }
 
 
-  private static @NotNull String getSelfParameterName(@NotNull ParametersInfo info) {
+  @NotNull
+  private static String getSelfParameterName(@NotNull ParametersInfo info) {
     final PyParameter selfParameter = info.getSelfParameter();
     if (selfParameter == null) {
       return PyNames.CANONICAL_SELF;
@@ -95,9 +97,10 @@ public class AddCallSuperQuickFix extends PsiUpdateModCommandQuickFix {
     return StringUtil.defaultIfEmpty(selfParameter.getName(), PyNames.CANONICAL_SELF);
   }
 
-  private static @NotNull Couple<List<String>> buildNewFunctionParamsAndSuperInitCallArgs(@NotNull ParametersInfo origInfo,
-                                                                                          @NotNull ParametersInfo superInfo,
-                                                                                          boolean addSelfToCall) {
+  @NotNull
+  private static Couple<List<String>> buildNewFunctionParamsAndSuperInitCallArgs(@NotNull ParametersInfo origInfo,
+                                                                                 @NotNull ParametersInfo superInfo,
+                                                                                 boolean addSelfToCall) {
     final List<String> newFunctionParams = new ArrayList<>();
     final List<String> superCallArgs = new ArrayList<>();
 
@@ -314,44 +317,54 @@ public class AddCallSuperQuickFix extends PsiUpdateModCommandQuickFix {
       myKeywordContainerParam = keywordContainer;
     }
 
-    public @Nullable PyParameter getSelfParameter() {
+    @Nullable
+    public PyParameter getSelfParameter() {
       return mySelfParam;
     }
 
-    public @NotNull List<PyParameter> getRequiredParameters() {
+    @NotNull
+    public List<PyParameter> getRequiredParameters() {
       return Collections.unmodifiableList(myRequiredParams);
     }
 
-    public @NotNull List<PyParameter> getOptionalParameters() {
+    @NotNull
+    public List<PyParameter> getOptionalParameters() {
       return Collections.unmodifiableList(myOptionalParams);
     }
 
-    public @Nullable PyParameter getPositionalContainerParameter() {
+    @Nullable
+    public PyParameter getPositionalContainerParameter() {
       return myPositionalContainerParam;
     }
 
-    public @Nullable PyParameter getSingleStarParameter() {
+    @Nullable
+    public PyParameter getSingleStarParameter() {
       return mySingleStarParam;
     }
 
-    public @NotNull List<PyParameter> getRequiredKeywordOnlyParameters() {
+    @NotNull
+    public List<PyParameter> getRequiredKeywordOnlyParameters() {
       return Collections.unmodifiableList(myRequiredKwOnlyParams);
     }
 
-    public @NotNull List<PyParameter> getOptionalKeywordOnlyParameters() {
+    @NotNull
+    public List<PyParameter> getOptionalKeywordOnlyParameters() {
       return Collections.unmodifiableList(myOptionalKwOnlyParams);
     }
 
-    public @Nullable PyParameter getKeywordContainerParameter() {
+    @Nullable
+    public PyParameter getKeywordContainerParameter() {
       return myKeywordContainerParam;
     }
 
-    public @NotNull Set<String> getAllParameterNames() {
+    @NotNull
+    public Set<String> getAllParameterNames() {
       return Collections.unmodifiableSet(myAllParameterNames);
     }
   }
 
-  private static @NotNull List<String> collectParameterNames(@NotNull PyParameter param) {
+  @NotNull
+  private static List<String> collectParameterNames(@NotNull PyParameter param) {
     final List<String> result = new ArrayList<>();
     collectParameterNames(param, result);
     return result;

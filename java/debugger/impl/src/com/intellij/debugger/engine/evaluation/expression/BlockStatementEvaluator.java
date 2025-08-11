@@ -1,11 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import org.jetbrains.annotations.NotNull;
 
-public class BlockStatementEvaluator implements ModifiableEvaluator {
+public class BlockStatementEvaluator implements Evaluator {
   protected Evaluator[] myStatements;
 
   public BlockStatementEvaluator(Evaluator[] statements) {
@@ -13,10 +12,10 @@ public class BlockStatementEvaluator implements ModifiableEvaluator {
   }
 
   @Override
-  public @NotNull ModifiableValue evaluateModifiable(@NotNull EvaluationContextImpl context) throws EvaluateException {
-    ModifiableValue result = new ModifiableValue(context.getVirtualMachineProxy().mirrorOfVoid(), null);
+  public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
+    Object result = context.getDebugProcess().getVirtualMachineProxy().mirrorOfVoid();
     for (Evaluator statement : myStatements) {
-      result = statement.evaluateModifiable(context);
+      result = statement.evaluate(context);
     }
     return result;
   }

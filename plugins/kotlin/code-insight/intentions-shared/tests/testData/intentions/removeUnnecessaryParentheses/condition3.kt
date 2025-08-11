@@ -1,4 +1,4 @@
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 
 fun foo(value: Int): String {
     return ("a"

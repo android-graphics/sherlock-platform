@@ -13,13 +13,9 @@ import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.jdi.GeneratedLocation;
-import com.intellij.debugger.jdi.GeneratedReferenceType;
-import com.intellij.debugger.jdi.JvmtiError;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.memory.ui.CollectionHistoryView;
 import com.intellij.debugger.requests.Requestor;
-import com.intellij.debugger.settings.DebuggerSettingsUtils;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
@@ -45,13 +41,11 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
-import com.intellij.unscramble.DumpItem;
-import com.intellij.unscramble.JavaThreadDumpItem;
 import com.intellij.unscramble.ThreadDumpPanel;
+import com.intellij.unscramble.ThreadState;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
@@ -67,7 +61,6 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.jetbrains.jdi.ArrayReferenceImpl;
-import com.jetbrains.jdi.JNITypeParser;
 import com.jetbrains.jdi.LocationImpl;
 import com.jetbrains.jdi.ObjectReferenceImpl;
 import com.sun.jdi.*;
@@ -76,7 +69,10 @@ import com.sun.jdi.event.EventSet;
 import one.util.streamex.StreamEx;
 import org.jdom.Attribute;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -84,7 +80,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.regex.PatternSyntaxException;
-import java.util.stream.Collectors;
 
 public abstract class DebuggerUtilsEx extends DebuggerUtils {
   private static final Logger LOG = Logger.getInstance(DebuggerUtilsEx.class);
@@ -126,11 +121,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return null;
   }
 
-  /**
-   * Does not handle array types correctly
-   * @deprecated use {@link DebuggerUtils#instanceOf(Type, String)}
-   */
-  @Deprecated
+
   public static boolean isAssignableFrom(@NotNull String baseQualifiedName, @NotNull Type checkedType) {
     if (checkedType instanceof ReferenceType) {
       if (CommonClassNames.JAVA_LANG_OBJECT.equals(baseQualifiedName)) {
@@ -141,8 +132,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return baseQualifiedName.equals(checkedType.name());
   }
 
-  @Deprecated
-  public static ReferenceType getSuperClass(final @NotNull String baseQualifiedName, @NotNull ReferenceType checkedType) {
+  public static ReferenceType getSuperClass(@NotNull final String baseQualifiedName, @NotNull ReferenceType checkedType) {
     if (baseQualifiedName.equals(checkedType.name())) {
       return checkedType;
     }
@@ -177,7 +167,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static ClassFilter create(Element element) throws InvalidDataException {
-    return DebuggerSettingsUtils.create(element);
+    ClassFilter filter = new ClassFilter();
+    DefaultJDOMExternalizer.readExternal(filter, element);
+    return filter;
   }
 
   private static boolean isFiltered(ClassFilter classFilter, String qName) {
@@ -211,30 +203,43 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return (int)Arrays.stream(classFilters).filter(ClassFilter::isEnabled).count();
   }
 
-  /**
-   * @deprecated Use {@link DebuggerSettingsUtils#readFilters} directly
-   */
-  @Deprecated
   public static ClassFilter[] readFilters(List<? extends Element> children) {
-    return DebuggerSettingsUtils.readFilters(children);
+    if (ContainerUtil.isEmpty(children)) {
+      return ClassFilter.EMPTY_ARRAY;
+    }
+
+    //do not leave null elements in the resulting array in case of read errors
+    List<ClassFilter> filters = new ArrayList<>(children.size());
+    for (Element child : children) {
+      try {
+        filters.add(create(child));
+      }
+      catch (InvalidDataException e) {
+        LOG.error(e);
+      }
+    }
+    return filters.toArray(ClassFilter.EMPTY_ARRAY);
   }
 
-  /**
-   * @deprecated Use {@link DebuggerSettingsUtils#writeFilters} directly
-   */
-  @Deprecated
   public static void writeFilters(@NotNull Element parentNode,
                                   @NonNls String tagName,
                                   ClassFilter[] filters) throws WriteExternalException {
-    DebuggerSettingsUtils.writeFilters(parentNode, tagName, filters);
+    for (ClassFilter filter : filters) {
+      Element element = new Element(tagName);
+      parentNode.addContent(element);
+      DefaultJDOMExternalizer.writeExternal(filter, element);
+    }
   }
 
-  /**
-   * @deprecated Use {@link DebuggerSettingsUtils#filterEquals} directly
-   */
-  @Deprecated
   public static boolean filterEquals(ClassFilter[] filters1, ClassFilter[] filters2) {
-    return DebuggerSettingsUtils.filterEquals(filters1, filters2);
+    if (filters1.length != filters2.length) {
+      return false;
+    }
+    final Set<ClassFilter> f1 = new HashSet<>(Math.max((int)(filters1.length / .75f) + 1, 16));
+    final Set<ClassFilter> f2 = new HashSet<>(Math.max((int)(filters2.length / .75f) + 1, 16));
+    Collections.addAll(f1, filters1);
+    Collections.addAll(f2, filters2);
+    return f2.equals(f1);
   }
 
   private static boolean elementListsEqual(List<? extends Element> l1, List<? extends Element> l2) {
@@ -306,7 +311,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return elementsEqual(root1, root2);
   }
 
-  public static @NotNull List<Pair<Breakpoint, Event>> getEventDescriptors(@Nullable SuspendContextImpl suspendContext) {
+  @NotNull
+  public static List<Pair<Breakpoint, Event>> getEventDescriptors(@Nullable SuspendContextImpl suspendContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (suspendContext != null) {
       EventSet events = suspendContext.getEventSet();
@@ -326,34 +332,28 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   private static int myThreadDumpsCount = 0;
 
-  @ApiStatus.Internal
-  public static void addDumpItems(Project project, List<DumpItem> dumpItems, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
+  public static void addThreadDump(Project project, List<ThreadState> threads, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
     final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     consoleBuilder.filters(ExceptionFilters.getFilters(searchScope));
     final ConsoleView consoleView = consoleBuilder.getConsole();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     consoleView.allowHeavyFilters();
-    final ThreadDumpPanel panel = ThreadDumpPanel.createFromDumpItems(project, consoleView, toolbarActions, dumpItems);
+    final ThreadDumpPanel panel = new ThreadDumpPanel(project, consoleView, toolbarActions, threads);
 
     String id = JavaDebuggerBundle.message("thread.dump.name", DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis()));
     final Content content = ui.createContent(id + " " + myThreadDumpsCount, panel, id, null, null);
     content.putUserData(RunnerContentUi.LIGHTWEIGHT_CONTENT_MARKER, Boolean.TRUE);
     content.setCloseable(true);
     content.setDescription(JavaDebuggerBundle.message("thread.dump"));
-    content.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_REMOTE_CLIENTS, true);
+    content.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_GUEST, true);
     ui.addContent(content);
     ui.selectAndFocus(content, true, true);
     myThreadDumpsCount++;
     Disposer.register(content, consoleView);
     ui.selectAndFocus(content, true, false);
-    if (!dumpItems.isEmpty()) {
+    if (!threads.isEmpty()) {
       panel.selectStackFrame(0);
     }
-  }
-
-  public static void addThreadDump(Project project, List<ThreadState> threads, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
-    List<DumpItem> javaThreadDump = new ArrayList<>(ContainerUtil.map(threads, JavaThreadDumpItem::new));
-    addDumpItems(project, javaThreadDump, ui, searchScope);
   }
 
   public static void addCollectionHistoryTab(@NotNull XDebugSession session, @NotNull XValueNodeImpl node) {
@@ -389,40 +389,17 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     ui.selectAndFocus(content, true, true);
   }
 
-  public static StringReference mirrorOfString(@NotNull String s, @NotNull EvaluationContext context)
-    throws EvaluateException {
-    return mirrorOfString(s, ((SuspendContextImpl)context.getSuspendContext()).getVirtualMachineProxy(), context);
-  }
-
-  /**
-   * @deprecated use {@link #mirrorOfString(String, EvaluationContext)}
-   */
-  @Deprecated
   public static StringReference mirrorOfString(@NotNull String s, VirtualMachineProxyImpl virtualMachineProxy, EvaluationContext context)
     throws EvaluateException {
     return context.computeAndKeep(() -> virtualMachineProxy.mirrorOf(s));
   }
 
-  public static @NotNull ArrayReference mirrorOfArray(@NotNull ArrayType arrayType, int dimension, EvaluationContext context)
+  public static ArrayReference mirrorOfArray(@NotNull ArrayType arrayType, int dimension, EvaluationContext context)
     throws EvaluateException {
     return context.computeAndKeep(() -> context.getDebugProcess().newInstance(arrayType, dimension));
   }
 
-  public static @NotNull ArrayReference mirrorOfArray(@NotNull ArrayType arrayType,
-                                                      @NotNull List<? extends Value> values,
-                                                      @NotNull EvaluationContext context)
-    throws EvaluateException {
-    ArrayReference res = context.computeAndKeep(() -> context.getDebugProcess().newInstance(arrayType, values.size()));
-    try {
-      setArrayValues(res, values, false);
-    }
-    catch (Exception e) {
-      throw new EvaluateException(e.getMessage(), e);
-    }
-    return res;
-  }
-
-  public static @NotNull ArrayReference mirrorOfByteArray(byte[] bytes, EvaluationContext context)
+  public static ArrayReference mirrorOfByteArray(byte[] bytes, EvaluationContext context)
     throws EvaluateException, InvalidTypeException, ClassNotLoadedException {
     context = ((EvaluationContextImpl)context).withAutoLoadClasses(true);
     ArrayType arrayClass = (ArrayType)context.getDebugProcess().findClass(context, "byte[]", context.getClassLoader());
@@ -432,24 +409,57 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     for (byte b : bytes) {
       mirrors.add(virtualMachine.mirrorOf(b));
     }
-    setArrayValues(reference, mirrors, false);
+
+    if (isAndroidVM(virtualMachine)) {
+      // Android VM has a limited buffer size to receive JDWP data (see https://issuetracker.google.com/issues/73584940)
+      setChuckByChunk(reference, mirrors);
+    }
+    else {
+      try {
+        setValuesNoCheck(reference, mirrors);
+      }
+      catch (VMMismatchException e) {
+        LOG.error("Class vm: " + arrayClass.virtualMachine() +
+                  " loaded by " + arrayClass.virtualMachine().getClass().getClassLoader() +
+                  "\nReference vm: " + reference.virtualMachine() +
+                  " loaded by " + reference.virtualMachine().getClass().getClassLoader() +
+                  "\nMirrors vms: " + StreamEx.of(mirrors).map(Mirror::virtualMachine).distinct()
+                    .map(vm -> {
+                      return vm +
+                             " loaded by " + vm.getClass().getClassLoader() +
+                             " same as ref vm = " + (vm == reference.virtualMachine());
+                    })
+                    .joining(", ")
+          , e);
+      }
+    }
+
     return reference;
   }
 
-  public static void setArrayValues(@NotNull ArrayReference array, @NotNull List<? extends Value> values, boolean checkAssignable)
-    throws ClassNotLoadedException, InvalidTypeException {
+  private static final int BATCH_SIZE = 4096;
 
-    // The comment below is a workaround for QD-10948.
-    //noinspection ConstantValue
+  private static void setChuckByChunk(ArrayReference reference, List<? extends Value> values)
+    throws ClassNotLoadedException, InvalidTypeException {
+    int loaded = 0;
+    while (loaded < values.size()) {
+      int chunkSize = Math.min(BATCH_SIZE, values.size() - loaded);
+      reference.setValues(loaded, values, loaded, chunkSize);
+      loaded += chunkSize;
+    }
+  }
+
+  public static void setValuesNoCheck(ArrayReference array, List<Value> values) throws ClassNotLoadedException, InvalidTypeException {
     if (array instanceof ArrayReferenceImpl) {
-      ((ArrayReferenceImpl)array).setValues(0, values, 0, -1, checkAssignable);
+      ((ArrayReferenceImpl)array).setValues(0, values, 0, -1, false);
     }
     else {
       array.setValues(values);
     }
   }
 
-  public static @NotNull CodeFragmentFactory getCodeFragmentFactory(@Nullable PsiElement context, @Nullable FileType fileType) {
+  @NotNull
+  public static CodeFragmentFactory getCodeFragmentFactory(@Nullable PsiElement context, @Nullable FileType fileType) {
     DefaultCodeFragmentFactory defaultFactory = DefaultCodeFragmentFactory.getInstance();
     if (fileType == null) {
       if (context == null) {
@@ -468,7 +478,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return defaultFactory;
   }
 
-  public static @NotNull CodeFragmentFactory findAppropriateCodeFragmentFactory(final TextWithImports text, final PsiElement context) {
+  @NotNull
+  public static CodeFragmentFactory findAppropriateCodeFragmentFactory(final TextWithImports text, final PsiElement context) {
     CodeFragmentFactory factory = ReadAction.compute(() -> getCodeFragmentFactory(context, text.getFileType()));
     return new CodeFragmentFactoryContextWrapper(factory);
   }
@@ -480,10 +491,11 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
    * {@link ThreeState#NO} means assertions are disabled
    * {@link ThreeState#UNSURE} means there are no assertions in the current class, so the status was not requested by the runtime
    */
-  public static @NotNull ThreeState getEffectiveAssertionStatus(@NotNull Location location) {
+  @NotNull
+  public static ThreeState getEffectiveAssertionStatus(@NotNull Location location) {
     ReferenceType type = location.declaringType();
     if (type instanceof ClassType) {
-      Field field = DebuggerUtils.findField(type, "$assertionsDisabled");
+      Field field = type.fieldByName("$assertionsDisabled");
       if (field != null && field.isStatic() && field.isSynthetic()) {
         Value value = type.getValue(field);
         if (value instanceof BooleanValue) {
@@ -492,6 +504,95 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       }
     }
     return ThreeState.UNSURE;
+  }
+
+  private static class SigReader {
+    final String buffer;
+    int pos = 0;
+
+    SigReader(String s) {
+      buffer = s;
+    }
+
+    int get() {
+      return buffer.charAt(pos++);
+    }
+
+    int peek() {
+      return buffer.charAt(pos);
+    }
+
+    boolean eof() {
+      return buffer.length() <= pos;
+    }
+
+    @NonNls
+    String getSignature() {
+      if (eof()) return "";
+
+      switch (get()) {
+        case 'Z' -> {
+          return "boolean";
+        }
+        case 'B' -> {
+          return "byte";
+        }
+        case 'C' -> {
+          return "char";
+        }
+        case 'S' -> {
+          return "short";
+        }
+        case 'I' -> {
+          return "int";
+        }
+        case 'J' -> {
+          return "long";
+        }
+        case 'F' -> {
+          return "float";
+        }
+        case 'D' -> {
+          return "double";
+        }
+        case 'V' -> {
+          return "void";
+        }
+        case 'L' -> {
+          int start = pos;
+          pos = buffer.indexOf(';', start) + 1;
+          LOG.assertTrue(pos > 0);
+          return buffer.substring(start, pos - 1).replace('/', '.');
+        }
+        case '[' -> {
+          return getSignature() + "[]";
+        }
+        case '(' -> {
+          StringBuilder result = new StringBuilder("(");
+          String separator = "";
+          while (peek() != ')') {
+            result.append(separator);
+            result.append(getSignature());
+            separator = ", ";
+          }
+          get();
+          result.append(")");
+          return getSignature() + " " + getClassName() + "." + getMethodName() + " " + result;
+        }
+        default -> {
+          //          LOG.assertTrue(false, "unknown signature " + buffer);
+          return null;
+        }
+      }
+    }
+
+    String getMethodName() {
+      return "";
+    }
+
+    String getClassName() {
+      return "";
+    }
   }
 
   public static String methodKey(Method m) {
@@ -511,26 +612,37 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static String methodName(final String className, final String methodName, final String signature) {
-    var type = org.jetbrains.org.objectweb.asm.Type.getMethodType(signature);
-    var params = Arrays.stream(type.getArgumentTypes())
-      .map(org.jetbrains.org.objectweb.asm.Type::getClassName)
-      .collect(Collectors.joining(", "));
-    return className + "." + methodName + "(" + params + ")";
+    try {
+      return new SigReader(signature) {
+        @Override
+        String getMethodName() {
+          return methodName;
+        }
+
+        @Override
+        String getClassName() {
+          return className;
+        }
+      }.getSignature();
+    }
+    catch (Exception ignored) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Internal error : unknown signature" + signature);
+      }
+      return className + "." + methodName;
+    }
   }
 
   public static String signatureToName(String s) {
-    return org.jetbrains.org.objectweb.asm.Type.getType(s).getClassName();
-  }
-
-  public static String typeNameToSignature(String name) {
-    return JNITypeParser.typeNameToSignature(name);
+    return new SigReader(s).getSignature();
   }
 
   public static List<Method> declaredMethodsByName(@NotNull ReferenceType type, @NotNull String name) {
     return StreamEx.of(type.methods()).filter(m -> name.equals(m.name())).toList();
   }
 
-  public static @Nullable List<Location> allLineLocations(Method method) {
+  @Nullable
+  public static List<Location> allLineLocations(Method method) {
     try {
       return method.allLineLocations();
     }
@@ -539,9 +651,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
-  public static @Nullable List<Location> allLineLocations(ReferenceType cls) {
+  @Nullable
+  public static List<Location> allLineLocations(ReferenceType cls) {
     try {
-      return DebuggerUtilsAsync.allLineLocationsSync(cls);
+      return cls.allLineLocations();
     }
     catch (AbsentInformationException ignored) {
       return null;
@@ -569,11 +682,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
-  public static @Nullable String getSourceName(Location location, @Nullable String defaultName) {
+  @Nullable
+  public static String getSourceName(Location location, @Nullable String defaultName) {
     return getSourceName(location, e -> defaultName);
   }
 
-  public static @Nullable String getSourceName(Location location, @NotNull Function<? super Throwable, String> defaultNameProvider) {
+  @Nullable
+  public static String getSourceName(Location location, @NotNull Function<? super Throwable, String> defaultNameProvider) {
     try {
       return location.sourceName();
     }
@@ -610,7 +725,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     });
   }
 
-  public static @NotNull List<Location> locationsOfLine(@NotNull Method method, int line) {
+  @NotNull
+  public static List<Location> locationsOfLine(@NotNull Method method, int line) {
     try {
       return method.locationsOfLine(DebugProcess.JAVA_STRATUM, null, line);
     }
@@ -750,12 +866,14 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     map.put(className, source);
   }
 
-  public static @Nullable String getAlternativeSourceUrl(@Nullable String className, Project project) {
+  @Nullable
+  public static String getAlternativeSourceUrl(@Nullable String className, Project project) {
     Map<String, String> map = project.getUserData(DEBUGGER_ALTERNATIVE_SOURCE_MAPPING);
     return map != null ? map.get(className) : null;
   }
 
-  public static @Nullable XSourcePosition toXSourcePosition(@Nullable SourcePosition position) {
+  @Nullable
+  public static XSourcePosition toXSourcePosition(@Nullable SourcePosition position) {
     if (position != null) {
       VirtualFile file = position.getFile().getVirtualFile();
       if (file == null) {
@@ -768,7 +886,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return null;
   }
 
-  public static @Nullable SourcePosition toSourcePosition(@Nullable XSourcePosition position, Project project) {
+  @Nullable
+  public static SourcePosition toSourcePosition(@Nullable XSourcePosition position, Project project) {
     if (position != null) {
       if (position instanceof JavaXSourcePosition) {
         return ((JavaXSourcePosition)position).mySourcePosition;
@@ -783,7 +902,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   private static class JavaXSourcePosition implements XSourcePosition, ExecutionPointHighlighter.HighlighterProvider {
     private final SourcePosition mySourcePosition;
-    private final @NotNull VirtualFile myFile;
+    @NotNull private final VirtualFile myFile;
 
     JavaXSourcePosition(@NotNull SourcePosition sourcePosition, @NotNull VirtualFile file) {
       mySourcePosition = sourcePosition;
@@ -800,18 +919,21 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return mySourcePosition.getOffset();
     }
 
+    @NotNull
     @Override
-    public @NotNull VirtualFile getFile() {
+    public VirtualFile getFile() {
       return myFile;
     }
 
+    @NotNull
     @Override
-    public @NotNull Navigatable createNavigatable(@NotNull Project project) {
+    public Navigatable createNavigatable(@NotNull Project project) {
       return XDebuggerUtilImpl.createNavigatable(project, this);
     }
 
+    @Nullable
     @Override
-    public @Nullable TextRange getHighlightRange() {
+    public TextRange getHighlightRange() {
       return SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition);
     }
   }
@@ -823,7 +945,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
    * Also, whole line highlighting is represented by <code>null</code> return value.
    * @return highlighting range inside the line or null if the whole line should be highlighted
    */
-  public static @Nullable TextRange getHighlightingRangeInsideLine(@Nullable TextRange range, @Nullable PsiFile file, int line) {
+  @Nullable
+  public static TextRange getHighlightingRangeInsideLine(@Nullable TextRange range, @Nullable PsiFile file, int line) {
     if (range != null && file != null) {
       Document document = file.getViewProvider().getDocument();
       if (document != null) {
@@ -836,7 +959,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @RequiresReadLock
-  public static @Nullable PsiFile getPsiFile(@Nullable XSourcePosition position, Project project) {
+  @Nullable
+  public static PsiFile getPsiFile(@Nullable XSourcePosition position, Project project) {
     if (position != null) {
       VirtualFile file = position.getFile();
       if (file.isValid()) {
@@ -849,7 +973,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   /**
    * Decompiler aware version
    */
-  public static @Nullable PsiElement findElementAt(@Nullable PsiFile file, int offset) {
+  @Nullable
+  public static PsiElement findElementAt(@Nullable PsiFile file, int offset) {
     return file != null ? file.findElementAt(offset) : null;
   }
 
@@ -886,7 +1011,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return getLambdaBaseClassName(typeName) != null;
   }
 
-  public static @Nullable String getLambdaBaseClassName(String typeName) {
+  @Nullable
+  public static String getLambdaBaseClassName(String typeName) {
     return StringUtil.substringBefore(typeName, "$$Lambda");
   }
 
@@ -953,7 +1079,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return lambdas;
   }
 
-  public static @Nullable PsiElement getBody(PsiElement method) {
+  @Nullable
+  public static PsiElement getBody(PsiElement method) {
     if (method instanceof PsiParameterListOwner) {
       return ((PsiParameterListOwner)method).getBody();
     }
@@ -984,7 +1111,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @RequiresReadLock
-  public static @Nullable PsiElement getFirstElementOnTheLine(@NotNull PsiLambdaExpression lambda, Document document, int line) {
+  @Nullable
+  public static PsiElement getFirstElementOnTheLine(@NotNull PsiLambdaExpression lambda, Document document, int line) {
     TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
     if (!intersects(lineRange, lambda)) return null;
     PsiElement body = lambda.getBody();
@@ -1041,13 +1169,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public static boolean methodMatches(@NotNull PsiMethod psiMethod,
                                       String className,
-                                      @Nullable String name,
+                                      String name,
                                       String signature,
                                       DebugProcessImpl process) {
     PsiClass containingClass = psiMethod.getContainingClass();
     try {
       if (containingClass != null &&
-          (name == null || JVMNameUtil.getJVMMethodName(psiMethod).equals(name)) &&
+          JVMNameUtil.getJVMMethodName(psiMethod).equals(name) &&
           JVMNameUtil.getJVMSignature(psiMethod).getName(process).equals(signature)) {
         String methodClassName = JVMNameUtil.getClassVMName(containingClass);
         if (Objects.equals(methodClassName, className)) {
@@ -1068,11 +1196,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return false;
   }
 
-  public static @Nullable PsiElement getContainingMethod(@Nullable PsiElement elem) {
+  @Nullable
+  public static PsiElement getContainingMethod(@Nullable PsiElement elem) {
     return PsiTreeUtil.getContextOfType(elem, PsiMethod.class, PsiLambdaExpression.class, PsiClassInitializer.class);
   }
 
-  public static @Nullable PsiElement getContainingMethod(@Nullable SourcePosition position) {
+  @Nullable
+  public static PsiElement getContainingMethod(@Nullable SourcePosition position) {
     if (position == null) return null;
     return getContainingMethod(position.getElementAt());
   }
@@ -1133,20 +1263,39 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     });
   }
 
-  public static @NotNull Location findOrCreateLocation(@NotNull VirtualMachine virtualMachine, @NotNull StackTraceElement stackTraceElement) {
-    return findOrCreateLocation(virtualMachine,
+  @NotNull
+  public static Location findOrCreateLocation(DebugProcessImpl debugProcess, StackTraceElement stackTraceElement) {
+    return findOrCreateLocation(debugProcess, debugProcess.getVirtualMachineProxy()::classesByName, stackTraceElement);
+  }
+
+  @NotNull
+  public static Location findOrCreateLocation(DebugProcessImpl debugProcess,
+                                              @NotNull ClassesByNameProvider classesByName,
+                                              StackTraceElement stackTraceElement) {
+    return findOrCreateLocation(debugProcess,
+                                classesByName,
                                 stackTraceElement.getClassName(),
                                 stackTraceElement.getMethodName(),
                                 stackTraceElement.getLineNumber());
   }
 
-  public static @NotNull Location findOrCreateLocation(@NotNull VirtualMachine virtualMachine,
-                                                       @NotNull String className,
-                                                       @NotNull String methodName,
-                                                       int line) {
-    ReferenceType classType = ContainerUtil.getFirstItem(virtualMachine.classesByName(className));
+  @NotNull
+  public static Location findOrCreateLocation(DebugProcessImpl debugProcess,
+                                              @NotNull String className,
+                                              @NotNull String methodName,
+                                              int line) {
+    return findOrCreateLocation(debugProcess, debugProcess.getVirtualMachineProxy()::classesByName, className, methodName, line);
+  }
+
+  @NotNull
+  public static Location findOrCreateLocation(DebugProcessImpl debugProcess,
+                                              @NotNull ClassesByNameProvider classesByName,
+                                              @NotNull String className,
+                                              @NotNull String methodName,
+                                              int line) {
+    ReferenceType classType = ContainerUtil.getFirstItem(classesByName.get(className));
     if (classType == null) {
-      classType = new GeneratedReferenceType(virtualMachine, className);
+      classType = new GeneratedReferenceType(debugProcess.getVirtualMachineProxy().getVirtualMachine(), className);
     }
     else if (line >= 0) {
       for (Method method : declaredMethodsByName(classType, methodName)) {

@@ -45,16 +45,19 @@ abstract class SuppressInspectionAction extends SuppressIntentionAction {
     }
 
     @Override
-    public @NotNull String getText() {
+    @NotNull
+    public String getText() {
         return myMsg;
     }
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
         return XPathBundle.message("intention.family.name.suppress.inspection");
     }
 
-    protected abstract @Nullable XmlTag getAnchor(@NotNull PsiElement element);
+    @Nullable
+    protected abstract XmlTag getAnchor(@NotNull PsiElement element);
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
@@ -103,7 +106,8 @@ abstract class SuppressInspectionAction extends SuppressIntentionAction {
         }
     }
 
-    private static @NotNull XmlComment createComment(Project project, String s) throws IncorrectOperationException {
+    @NotNull
+    private static XmlComment createComment(Project project, String s) throws IncorrectOperationException {
         final XmlTag element = XmlElementFactory.getInstance(project).createTagFromText("<foo><!-- " + s + " --></foo>", XMLLanguage.INSTANCE);
         final XmlComment newComment = PsiTreeUtil.getChildOfType(element, XmlComment.class);
         assert newComment != null;

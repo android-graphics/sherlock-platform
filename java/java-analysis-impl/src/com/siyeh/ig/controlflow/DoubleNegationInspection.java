@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -21,7 +21,8 @@ import org.jetbrains.annotations.Nullable;
 public final class DoubleNegationInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("double.negation.problem.descriptor");
   }
 
@@ -31,14 +32,16 @@ public final class DoubleNegationInspection extends BaseInspection implements Cl
   }
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  @Nullable
+  protected LocalQuickFix buildFix(Object... infos) {
     return new DoubleNegationFix();
   }
 
   private static class DoubleNegationFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("double.negation.quickfix");
     }
 

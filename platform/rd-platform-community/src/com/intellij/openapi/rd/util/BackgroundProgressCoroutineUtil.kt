@@ -413,7 +413,6 @@ private class BridgeIndicatorEx(val coroutineContext: CoroutineContext) : Abstra
   }
 }
 
-@ApiStatus.Internal
 @Deprecated("It is a legacy api")
 class ProgressCoroutineScopeLegacy private constructor(indicator: ProgressIndicator) : ProgressCoroutineScope(indicator) {
 

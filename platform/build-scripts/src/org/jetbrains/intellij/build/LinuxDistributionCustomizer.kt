@@ -3,11 +3,12 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.plus
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
 
-open class LinuxDistributionCustomizer {
+abstract class LinuxDistributionCustomizer {
   /**
    * Path to a 128x128 PNG product icon for Linux distribution.
    * If omitted, only an SVG icon will be included.
@@ -19,12 +20,8 @@ open class LinuxDistributionCustomizer {
    */
   var iconPngPathForEAP: String? = null
 
-  @Suppress("unused")
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("New native launcher is always enabled")
   /**
    * Enables the use of the new cross-platform launcher (which loads launch data from `product-info.json` instead of hardcoding into a script).
-   * It's now recommended to use the new launcher, so it must always be built. Setting this property to `false` will have no effect.
    */
   var useXPlatLauncher = true
 
@@ -33,22 +30,21 @@ open class LinuxDistributionCustomizer {
    */
   var extraExecutables: PersistentList<String> = persistentListOf()
 
-  open fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> {
-    val basePatterns = sequenceOf(
+  open fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): List<String> {
+    val basePatterns = persistentListOf(
       "bin/*.sh",
       "plugins/**/*.sh",
       "bin/fsnotifier",
-      "bin/restarter",
-      "bin/${context.productProperties.baseFileName}",
+      "bin/restarter"
     )
-    val rtPatterns = if (includeRuntime) {
-      context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX, context.productProperties.runtimeDistribution)
-    }
-    else {
-      emptySequence()
-    }
 
-    return basePatterns + rtPatterns +
+    val launcherPattern = if (useXPlatLauncher) listOf("bin/${context.productProperties.baseFileName}") else emptyList()
+
+    val rtPatterns =
+      if (includeRuntime) context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX, context.productProperties.runtimeDistribution)
+      else emptyList()
+
+    return basePatterns + launcherPattern + rtPatterns +
            RepairUtilityBuilder.executableFilesPatterns(context) +
            extraExecutables +
            context.getExtraExecutablePattern(OsFamily.LINUX)
@@ -78,5 +74,12 @@ open class LinuxDistributionCustomizer {
    */
   open suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
     RepairUtilityBuilder.bundle(context = context, os = OsFamily.LINUX, arch = arch, distributionDir = targetDir)
+
+    @Suppress("DEPRECATION")
+    copyAdditionalFilesBlocking(context, targetDir, arch)
   }
+
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Please migrate the build script to Kotlin and override `copyAdditionalFiles`")
+  open fun copyAdditionalFilesBlocking(context: BuildContext, targetDir: Path, arch: JvmArchitecture) { }
 }

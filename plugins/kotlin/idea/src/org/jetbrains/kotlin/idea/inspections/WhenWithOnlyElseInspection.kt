@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.util.replaceWithBranchAndMoveCaret
 import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi.whenExpressionVisitor
@@ -42,7 +41,7 @@ class WhenWithOnlyElseInspection : AbstractKotlinInspection() {
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val whenExpression = descriptor.psiElement as? KtWhenExpression ?: return
-            whenExpression.replaceWithBranchAndMoveCaret(whenExpression.elseExpression ?: return, isUsedAsExpression)
+            whenExpression.replaceWithBranch(whenExpression.elseExpression ?: return, isUsedAsExpression)
         }
     }
 }

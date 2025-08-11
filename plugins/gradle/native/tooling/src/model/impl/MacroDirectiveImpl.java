@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl;
 
 import com.intellij.serialization.PropertyMapping;
@@ -28,8 +28,9 @@ public class MacroDirectiveImpl implements MacroDirective {
     this.name = name;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getValue() {
+  public String getValue() {
     return value;
   }
 

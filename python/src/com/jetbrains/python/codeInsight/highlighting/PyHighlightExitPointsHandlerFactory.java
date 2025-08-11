@@ -4,7 +4,6 @@ package com.jetbrains.python.codeInsight.highlighting;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactoryBase;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -12,7 +11,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReturnStatement;
 import org.jetbrains.annotations.NotNull;
 
-public final class PyHighlightExitPointsHandlerFactory extends HighlightUsagesHandlerFactoryBase implements DumbAware {
+public final class PyHighlightExitPointsHandlerFactory extends HighlightUsagesHandlerFactoryBase {
   @Override
   public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
     final PyReturnStatement returnStatement = PsiTreeUtil.getParentOfType(target, PyReturnStatement.class);

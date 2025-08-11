@@ -1,6 +1,6 @@
 // "Add parameter to function 'called'" "true"
 // WITH_STDLIB
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 
 fun caller() {
     called(<caret>setOf(1, 2, 3))

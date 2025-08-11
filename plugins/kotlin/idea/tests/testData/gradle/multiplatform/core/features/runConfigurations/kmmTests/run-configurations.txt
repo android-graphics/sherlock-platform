@@ -107,7 +107,6 @@ project.nativeTest
 
 
 Test configuration:
-- showing only modules matching project.*
 - Showing runConfiguration detail: name
 - Showing runConfiguration detail: type
 - Showing runConfiguration detail: tasks

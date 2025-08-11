@@ -1,4 +1,3 @@
-// PRIORITY: LOW
 // KT-12942: when to if changes semantics
 fun test(b: Boolean): String {
     <caret>when (b) {

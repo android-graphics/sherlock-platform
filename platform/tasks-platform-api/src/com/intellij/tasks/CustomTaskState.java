@@ -1,11 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks;
 
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class CustomTaskState {
+/**
+ * @author Mikhail Golubev
+ */
+public class CustomTaskState {
   private String myId = "";
   private String myPresentableName = "";
   private boolean myPredefined;
@@ -28,7 +30,8 @@ public final class CustomTaskState {
    * @see TaskRepository#setTaskState(Task, CustomTaskState)
    */
   @Attribute("id")
-  public @NotNull String getId() {
+  @NotNull
+  public String getId() {
     return myId;
   }
 
@@ -43,7 +46,8 @@ public final class CustomTaskState {
    * Text that describes this state and will be shown to user in UI (unlike ID it's not necessarily unique).
    */
   @Attribute("name")
-  public @NotNull String getPresentableName() {
+  @NotNull
+  public String getPresentableName() {
     return myPresentableName;
   }
 
@@ -77,7 +81,8 @@ public final class CustomTaskState {
    * @see #isPredefined()
    * @see TaskRepository#getAvailableTaskStates(Task)
    */
-  public static @NotNull CustomTaskState fromPredefined(@NotNull TaskState state) {
+  @NotNull
+  public static CustomTaskState fromPredefined(@NotNull TaskState state) {
     final CustomTaskState result = new CustomTaskState(state.name(), state.getPresentableName());
     result.setPredefined(true);
     return result;
@@ -90,7 +95,8 @@ public final class CustomTaskState {
    * @return predefined task state as described or {@code null} if such state doesn't exists or {@link #isPredefined()} returns false
    * @see #isPredefined()
    */
-  public @Nullable TaskState asPredefined() {
+  @Nullable
+  public TaskState asPredefined() {
     if (isPredefined()) {
       try {
         return TaskState.valueOf(getId());

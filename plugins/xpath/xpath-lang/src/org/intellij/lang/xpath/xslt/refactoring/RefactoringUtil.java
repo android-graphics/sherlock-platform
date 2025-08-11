@@ -88,7 +88,7 @@ public final class RefactoringUtil {
         return withParamTag;
     }
 
-    abstract static class DeepXPathVistor extends XmlRecursiveElementVisitor {
+    static abstract class DeepXPathVistor extends XmlRecursiveElementVisitor {
         protected DeepXPathVistor() {
         }
 

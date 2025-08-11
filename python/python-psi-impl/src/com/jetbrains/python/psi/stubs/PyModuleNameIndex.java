@@ -28,16 +28,19 @@ import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFO
 public final class PyModuleNameIndex extends ScalarIndexExtension<String> {
   public static final ID<String, Void> NAME = ID.create("Py.module.name");
 
+  @NotNull
   @Override
-  public @NotNull ID<String, Void> getName() {
+  public ID<String, Void> getName() {
     return NAME;
   }
 
+  @NotNull
   @Override
-  public @NotNull DataIndexer<String, Void, FileContent> getIndexer() {
+  public DataIndexer<String, Void, FileContent> getIndexer() {
     return new DataIndexer<>() {
+      @NotNull
       @Override
-      public @NotNull Map<String, Void> map(@NotNull FileContent inputData) {
+      public Map<String, Void> map(@NotNull FileContent inputData) {
         final VirtualFile file = inputData.getFile();
         final String name = file.getName();
         if (PyNames.INIT_DOT_PY.equals(name)) {
@@ -54,13 +57,15 @@ public final class PyModuleNameIndex extends ScalarIndexExtension<String> {
     };
   }
 
+  @NotNull
   @Override
-  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
+  public KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
+  @NotNull
   @Override
-  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
+  public FileBasedIndex.InputFilter getInputFilter() {
     return new FileTypeInputFilterPredicate(BEFORE_SUBSTITUTION, fileType -> fileType == PythonFileType.INSTANCE);
   }
 
@@ -74,11 +79,13 @@ public final class PyModuleNameIndex extends ScalarIndexExtension<String> {
     return 0;
   }
 
-  public static @NotNull Collection<String> getAllKeys(@NotNull Project project) {
+  @NotNull
+  public static Collection<String> getAllKeys(@NotNull Project project) {
     return FileBasedIndex.getInstance().getAllKeys(NAME, project);
   }
 
-  public static @NotNull List<PyFile> find(@NotNull String shortName, @NotNull Project project, boolean includeNonProjectItems) {
+  @NotNull
+  public static List<PyFile> find(@NotNull String shortName, @NotNull Project project, boolean includeNonProjectItems) {
     final GlobalSearchScope scope = includeNonProjectItems ? PySearchUtilBase.excludeSdkTestsScope(project)
                                                            : GlobalSearchScope.projectScope(project);
     return findByShortName(shortName, project, scope);
@@ -93,7 +100,8 @@ public final class PyModuleNameIndex extends ScalarIndexExtension<String> {
    * @param project   project where the search is performed
    * @param scope     search scope, limiting applicable virtual files
    */
-  public static @NotNull List<PyFile> findByShortName(@NotNull String shortName, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+  @NotNull
+  public static List<PyFile> findByShortName(@NotNull String shortName, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     final List<PyFile> results = new ArrayList<>();
     final Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, shortName, scope);
     for (VirtualFile virtualFile : files) {
@@ -118,7 +126,8 @@ public final class PyModuleNameIndex extends ScalarIndexExtension<String> {
    * @param scope   search scope, limiting applicable virtual files
    * @see QualifiedNameFinder#findImportableQNames(PsiElement, VirtualFile)
    */
-  public static @NotNull List<PyFile> findByQualifiedName(@NotNull QualifiedName qName, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+  @NotNull
+  public static List<PyFile> findByQualifiedName(@NotNull QualifiedName qName, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     String shortName = qName.getLastComponent();
     if (shortName == null) return Collections.emptyList();
     return ContainerUtil.filter(findByShortName(shortName, project, scope), file -> {

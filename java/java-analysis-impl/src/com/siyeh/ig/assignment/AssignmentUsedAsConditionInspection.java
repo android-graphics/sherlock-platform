@@ -32,7 +32,8 @@ import org.jetbrains.annotations.NotNull;
 public final class AssignmentUsedAsConditionInspection extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("assignment.used.as.condition.problem.descriptor");
   }
 
@@ -44,7 +45,8 @@ public final class AssignmentUsedAsConditionInspection extends BaseInspection {
   private static class AssignmentUsedAsConditionFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.x.with.y", "=", "==");
     }
 

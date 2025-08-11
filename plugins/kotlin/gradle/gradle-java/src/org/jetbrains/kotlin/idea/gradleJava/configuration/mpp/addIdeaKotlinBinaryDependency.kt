@@ -7,16 +7,16 @@ import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData
 import com.intellij.openapi.externalSystem.model.project.LibraryLevel
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
 import com.intellij.openapi.externalSystem.model.project.ProjectData
-import com.intellij.openapi.vfs.VirtualFileManager
-import org.jetbrains.kotlin.gradle.idea.tcs.*
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinBinaryDependency
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinResolvedBinaryDependency
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinUnresolvedBinaryDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.extras.*
+import org.jetbrains.kotlin.gradle.idea.tcs.isKotlinCompileBinaryType
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.ifNull
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_NAME
-import java.io.File
-import java.nio.file.Path
 
 fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDependency): DataNode<out LibraryDependencyData>? {
 
@@ -51,37 +51,22 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDepe
     if (dependency is IdeaKotlinResolvedBinaryDependency) {
         if (dependency.isKotlinCompileBinaryType) {
             dependency.classpath.forEach { file ->
-                addToDependencyNode(file, dependencyNode, LibraryPathType.BINARY)
+                dependencyNode.data.target.addPath(LibraryPathType.BINARY, file.absolutePath)
             }
         }
 
         dependency.sourcesClasspath.forEach { file ->
-            addToDependencyNode(file, dependencyNode, LibraryPathType.SOURCE)
+            dependencyNode.data.target.addPath(LibraryPathType.SOURCE, file.absolutePath)
         }
 
         dependency.documentationClasspath.forEach { file ->
-            addToDependencyNode(file, dependencyNode, LibraryPathType.DOC)
+            dependencyNode.data.target.addPath(LibraryPathType.DOC, file.absolutePath)
         }
     }
 
     return dependencyNode
 }
 
-private fun addToDependencyNode(
-    file: File,
-    dependencyNode: DataNode<out LibraryDependencyData>,
-    libraryPathType: LibraryPathType
-) {
-    refreshInVFSIfNecessary(file.toPath().toAbsolutePath())
-    dependencyNode.data.target.addPath(libraryPathType, file.absolutePath)
-}
-
-private fun refreshInVFSIfNecessary(absolutePath: Path) {
-    val virtualFileManager = VirtualFileManager.getInstance()
-    if (virtualFileManager.findFileByNioPath(absolutePath) == null) {
-        virtualFileManager.refreshAndFindFileByNioPath(absolutePath)
-    }
-}
 
 private fun buildNativeDistributionInternalLibraryName(dependency: IdeaKotlinBinaryDependency): String {
     return buildString {

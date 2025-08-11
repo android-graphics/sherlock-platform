@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.Disposable;
@@ -24,8 +24,9 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase impl
   protected JavaCodeInsightTestFixture myFixture;
   private @NotNull IndexingMode myIndexingMode = IndexingMode.SMART;
 
+  @NotNull
   @Override
-  public @NotNull Disposable getTestRootDisposable() {
+  public Disposable getTestRootDisposable() {
     return myFixture == null ? super.getTestRootDisposable() : myFixture.getTestRootDisposable();
   }
 
@@ -74,7 +75,8 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase impl
    *
    * @return relative path to the test data.
    */
-  protected @NonNls String getBasePath() {
+  @NonNls
+  protected String getBasePath() {
     return "";
   }
 
@@ -83,7 +85,8 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase impl
    *
    * @return absolute path to the test data.
    */
-  protected @NonNls String getTestDataPath() {
+  @NonNls
+  protected String getTestDataPath() {
     return PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath();
   }
 

@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -13,7 +12,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.util.coroutines.CoroutineScopeKt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -26,7 +24,6 @@ import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
-import kotlin.coroutines.EmptyCoroutineContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,15 +100,11 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     Disposable disposable = Disposer.newDisposable();
     point.registerExtension(provider, disposable);
     try {
-      Project project = getProject();
-      UsageViewImpl usageView = new UsageViewImpl(project, CoroutineScopeKt.childScope(((ComponentManagerEx)project).getCoroutineScope(),
-                                                                                       "UsageView",
-                                                                                       EmptyCoroutineContext.INSTANCE, true), presentation,
-                                                  UsageTarget.EMPTY_ARRAY, null);
+      UsageViewImpl usageView = new UsageViewImpl(getProject(), presentation, UsageTarget.EMPTY_ARRAY, null);
       Disposer.register(getTestRootDisposable(), usageView);
       usageView.appendUsagesInBulk(usages);
       UIUtil.dispatchAllInvocationEvents();
-      ProgressManager.getInstance().run(new Task.Modal(project, "Waiting", false) {
+      ProgressManager.getInstance().run(new Task.Modal(getProject(), "Waiting", false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           usageView.waitForUpdateRequestsCompletion();
@@ -145,7 +138,6 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     @NotNull
     public String getPresentableGroupText() { return String.valueOf(myPower); }
 
-    @Override
     public String toString() {
       return getPresentableGroupText();
     }
@@ -156,11 +148,9 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       return myPower - ((LogUsageGroup)o).myPower;
     }
 
-    @Override
     public boolean equals(Object o) {
       return o instanceof LogUsageGroup && myPower == ((LogUsageGroup)o).myPower;
     }
-    @Override
     public int hashCode() { return myPower; }
   }
 
@@ -173,7 +163,6 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
 
       @Override
       public int compareTo(@NotNull UsageGroup o) { return o == ODD ? -1 : 0; }
-      @Override
       public String toString() { return getPresentableGroupText(); }
     };
 
@@ -256,7 +245,6 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     public void highlightInEditor() {
     }
 
-    @Override
     public String toString() {
       return String.valueOf(myId);
     }

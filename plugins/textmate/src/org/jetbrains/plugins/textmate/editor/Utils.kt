@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.textmate.editor
 
+import com.intellij.formatting.IndentInfo
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 
 class Utils {

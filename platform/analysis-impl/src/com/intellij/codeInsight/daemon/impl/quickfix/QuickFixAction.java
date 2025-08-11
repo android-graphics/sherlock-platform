@@ -22,7 +22,7 @@ public final class QuickFixAction {
    */
   @Deprecated
   public static void registerQuickFixAction(@Nullable HighlightInfo info, @Nullable IntentionAction action) {
-    if (info != null && action != null) {
+    if (info != null) {
       info.registerFix(action, null, null, null, null);
     }
   }

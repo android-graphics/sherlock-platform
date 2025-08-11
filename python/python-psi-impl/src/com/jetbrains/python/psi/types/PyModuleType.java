@@ -38,7 +38,7 @@ import static com.jetbrains.python.psi.PyUtil.inSameFile;
 
 
 public class PyModuleType implements PyType { // Modules don't descend from object
-  private final @NotNull PyFile myModule;
+  @NotNull private final PyFile myModule;
 
   private static final ImmutableSet<String> MODULE_MEMBERS = ImmutableSet.of(
     "__name__", "__file__", "__path__", "__doc__", "__dict__", "__package__");
@@ -48,19 +48,22 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
 
-  public @NotNull PyFile getModule() {
+  @NotNull
+  public PyFile getModule() {
     return myModule;
   }
 
-  public @Nullable PyClassType getModuleClassType() {
+  @Nullable
+  public PyClassType getModuleClassType() {
     return PyClassTypeImpl.createTypeByQName(myModule, "types.ModuleType", false);
   }
 
+  @Nullable
   @Override
-  public @Nullable List<? extends RatedResolveResult> resolveMember(final @NotNull String name,
-                                                                    @Nullable PyExpression location,
-                                                                    @NotNull AccessDirection direction,
-                                                                    @NotNull PyResolveContext resolveContext) {
+  public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
+                                                          @Nullable PyExpression location,
+                                                          @NotNull AccessDirection direction,
+                                                          @NotNull PyResolveContext resolveContext) {
     if (MODULE_MEMBERS.contains(name)) {
       var type = getModuleClassType();
       if (type != null) {
@@ -70,11 +73,12 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     return resolveMemberInPackageOrModule(null, myModule, name, location, resolveContext);
   }
 
-  public static @Nullable List<? extends RatedResolveResult> resolveMemberInPackageOrModule(@Nullable PyImportedModule importedModule,
-                                                                                            @NotNull PsiFileSystemItem anchor,
-                                                                                            @NotNull String name,
-                                                                                            @Nullable PyExpression location,
-                                                                                            @NotNull PyResolveContext resolveContext) {
+  @Nullable
+  public static List<? extends RatedResolveResult> resolveMemberInPackageOrModule(@Nullable PyImportedModule importedModule,
+                                                                                  @NotNull PsiFileSystemItem anchor,
+                                                                                  @NotNull String name,
+                                                                                  @Nullable PyExpression location,
+                                                                                  @NotNull PyResolveContext resolveContext) {
 
 
     final PyFile module = PyUtil.as(PyUtil.turnDirIntoInit(anchor), PyFile.class);
@@ -230,7 +234,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     }
   }
 
-  private static @Nullable String findFirstComponentAfterPrefix(@NotNull QualifiedName qualifiedName, @NotNull QualifiedName prefix) {
+  @Nullable
+  private static String findFirstComponentAfterPrefix(@NotNull QualifiedName qualifiedName, @NotNull QualifiedName prefix) {
     if (qualifiedName.matchesPrefix(prefix) && qualifiedName.getComponentCount() > prefix.getComponentCount()) {
       return qualifiedName.removeHead(prefix.getComponentCount()).getFirstComponent();
     }
@@ -239,7 +244,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     }
   }
 
-  private static @NotNull List<? extends RatedResolveResult> convertDirsToInit(@NotNull List<? extends RatedResolveResult> ratedResolveList) {
+  @NotNull
+  private static List<? extends RatedResolveResult> convertDirsToInit(@NotNull List<? extends RatedResolveResult> ratedResolveList) {
     return ContainerUtil.map(ratedResolveList, result -> {
       final PsiElement element = result.getElement();
       if (element instanceof PsiDirectory) {
@@ -252,7 +258,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     });
   }
 
-  private static @Nullable PsiElement resolveByMembersProviders(PyFile module, String name, @NotNull PyResolveContext resolveContext) {
+  @Nullable
+  private static PsiElement resolveByMembersProviders(PyFile module, String name, @NotNull PyResolveContext resolveContext) {
     for (PyModuleMembersProvider provider : PyModuleMembersProvider.EP_NAME.getExtensionList()) {
       if (!(provider instanceof PyOverridingModuleMembersProvider)) {
         final PsiElement element = provider.resolveMember(module, name, resolveContext);
@@ -264,9 +271,10 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     return null;
   }
 
-  private static @Nullable PsiElement resolveByOverridingMembersProviders(@NotNull PyFile module,
-                                                                          @NotNull String name,
-                                                                          @NotNull PyResolveContext resolveContext) {
+  @Nullable
+  private static PsiElement resolveByOverridingMembersProviders(@NotNull PyFile module,
+                                                                @NotNull String name,
+                                                                @NotNull PyResolveContext resolveContext) {
     for (PyModuleMembersProvider provider : PyModuleMembersProvider.EP_NAME.getExtensionList()) {
       if (provider instanceof PyOverridingModuleMembersProvider) {
         final PsiElement element = provider.resolveMember(module, name, resolveContext);
@@ -279,7 +287,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
 
-  private static @NotNull List<QualifiedName> getImportedQNames(@NotNull PyImportElement element) {
+  @NotNull
+  private static List<QualifiedName> getImportedQNames(@NotNull PyImportElement element) {
     final List<QualifiedName> importedQNames = new ArrayList<>();
     final PyStatement stmt = element.getContainingImportStatement();
     final PyFromImportStatement fromImportStatement = ObjectUtils.tryCast(stmt, PyFromImportStatement.class);
@@ -336,7 +345,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     return importedQNames;
   }
 
-  private static @NotNull List<PyImportElement> getVisibleImports(@NotNull ScopeOwner owner) {
+  @NotNull
+  private static List<PyImportElement> getVisibleImports(@NotNull ScopeOwner owner) {
     final List<PyImportElement> visibleImports = new ArrayList<>();
     PyResolveUtil.scopeCrawlUp(new PsiScopeProcessor() {
       @Override
@@ -355,7 +365,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
    * @return a list of submodules of the specified module directory, either files or dirs, for easier naming; may contain file names
    * not suitable for import.
    */
-  private static @NotNull List<PsiFileSystemItem> getSubmodulesList(@Nullable PsiDirectory directory, @Nullable PsiElement anchor) {
+  @NotNull
+  private static List<PsiFileSystemItem> getSubmodulesList(@Nullable PsiDirectory directory, @Nullable PsiElement anchor) {
     final List<PsiFileSystemItem> result = new ArrayList<>();
 
     if (directory != null) { // just in case
@@ -398,11 +409,12 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     return result.toArray();
   }
 
-  public @NotNull List<LookupElement> getCompletionVariantsAsLookupElements(@NotNull PsiElement location,
-                                                                            @NotNull ProcessingContext context,
-                                                                            boolean wantAllSubmodules,
-                                                                            boolean suppressParentheses,
-                                                                            @NotNull TypeEvalContext typeEvalContext) {
+  @NotNull
+  public List<LookupElement> getCompletionVariantsAsLookupElements(@NotNull PsiElement location,
+                                                                   @NotNull ProcessingContext context,
+                                                                   boolean wantAllSubmodules,
+                                                                   boolean suppressParentheses,
+                                                                   @NotNull TypeEvalContext typeEvalContext) {
     final List<LookupElement> result = new ArrayList<>();
 
     final Set<String> namesAlready = context.get(CTX_NAMES);
@@ -463,9 +475,10 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     return result;
   }
 
-  private static @NotNull CompletionVariantsProcessor createCompletionVariantsProcessor(PsiElement location,
-                                                                                        boolean suppressParentheses,
-                                                                                        PointInImport point) {
+  @NotNull
+  private static CompletionVariantsProcessor createCompletionVariantsProcessor(PsiElement location,
+                                                                               boolean suppressParentheses,
+                                                                               PointInImport point) {
     final Condition<PsiElement> nodeFilter =
       psiElement -> !(psiElement instanceof PyImportElement) ||
                     PsiTreeUtil.getParentOfType(psiElement, PyImportStatementBase.class) instanceof PyFromImportStatement;
@@ -477,9 +490,10 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                            suppressParentheses);
   }
 
-  public static @NotNull List<LookupElement> collectImportedSubmodulesAsLookupElements(@NotNull PsiFileSystemItem pyPackage,
-                                                                                       @NotNull PsiElement location,
-                                                                                       final @Nullable Set<? super String> existingNames) {
+  @NotNull
+  public static List<LookupElement> collectImportedSubmodulesAsLookupElements(@NotNull PsiFileSystemItem pyPackage,
+                                                                              @NotNull PsiElement location,
+                                                                              @Nullable final Set<? super String> existingNames) {
 
 
     final List<PsiElement> elements = new ArrayList<>();
@@ -501,9 +515,10 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
 
-  public static @NotNull List<LookupElement> getSubModuleVariants(@Nullable PsiDirectory directory,
-                                                                  @NotNull PsiElement location,
-                                                                  @Nullable Set<? super String> namesAlready) {
+  @NotNull
+  public static List<LookupElement> getSubModuleVariants(@Nullable PsiDirectory directory,
+                                                         @NotNull PsiElement location,
+                                                         @Nullable Set<? super String> namesAlready) {
     final List<LookupElement> result = new ArrayList<>();
     for (PsiFileSystemItem item : getSubmodulesList(directory, location)) {
       if (item != location.getContainingFile().getOriginalFile()) {
@@ -517,7 +532,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     return result;
   }
 
-  public static @Nullable LookupElementBuilder buildFileLookupElement(PsiFile file, PsiFileSystemItem item, @Nullable Set<? super String> existingNames) {
+  @Nullable
+  public static LookupElementBuilder buildFileLookupElement(PsiFile file, PsiFileSystemItem item, @Nullable Set<? super String> existingNames) {
     final String s = FileUtilRt.getNameWithoutExtension(item.getName());
     if (!PyNames.isIdentifier(s)) return null;
     if (existingNames != null) {
@@ -548,7 +564,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     }
   }
 
-  public static @NotNull Set<String> getPossibleInstanceMembers() {
+  @NotNull
+  public static Set<String> getPossibleInstanceMembers() {
     return MODULE_MEMBERS;
   }
 
@@ -567,13 +584,5 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   @Override
   public int hashCode() {
     return Objects.hash(myModule);
-  }
-
-  @Override
-  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
-    if (visitor instanceof PyTypeVisitorExt<T> visitorExt) {
-      return visitorExt.visitPyModuleType(this);
-    }
-    return visitor.visitPyType(this);
   }
 }

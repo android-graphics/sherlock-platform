@@ -52,7 +52,8 @@ public class GitCommitsIterator implements Iterator<String> {
     return result;
   }
 
-  public @NotNull String getRemote() {
+  @NotNull
+  public String getRemote() {
     return remote;
   }
 

@@ -26,7 +26,8 @@ public final class PyListCompExpressionNavigator {
   private PyListCompExpressionNavigator() {
   }
 
-  public static @Nullable PyListCompExpression getPyListCompExpressionByVariable(final PsiElement element){
+  @Nullable
+  public static PyListCompExpression getPyListCompExpressionByVariable(final PsiElement element){
     final PyListCompExpression listCompExpression = PsiTreeUtil.getParentOfType(element, PyListCompExpression.class, false);
     if (listCompExpression == null){
       return null;

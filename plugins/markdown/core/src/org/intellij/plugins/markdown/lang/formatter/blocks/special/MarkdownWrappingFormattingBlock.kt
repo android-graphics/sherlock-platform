@@ -70,30 +70,32 @@ internal open class MarkdownWrappingFormattingBlock(
       result.add(block)
     }
   }
-}
 
-private fun splitTextForWrapping(text: String): Sequence<TextRange> {
-  return sequence {
-    var start = -1
-    var length = -1
-    for ((index, char) in text.withIndex()) {
-      if (char.isWhitespace()) {
+  companion object {
+    internal fun splitTextForWrapping(text: String): Sequence<TextRange> {
+      return sequence {
+        var start = -1
+        var length = -1
+        for ((index, char) in text.withIndex()) {
+          if (char.isWhitespace()) {
+            if (length > 0) {
+              yield(TextRange.from(start, length))
+            }
+            start = -1
+            length = -1
+          }
+          else {
+            if (start == -1) {
+              start = index
+              length = 0
+            }
+            length++
+          }
+        }
         if (length > 0) {
           yield(TextRange.from(start, length))
         }
-        start = -1
-        length = -1
       }
-      else {
-        if (start == -1) {
-          start = index
-          length = 0
-        }
-        length++
-      }
-    }
-    if (length > 0) {
-      yield(TextRange.from(start, length))
     }
   }
 }

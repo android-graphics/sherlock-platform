@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Couple;
@@ -29,22 +29,26 @@ public class GrMapTypeImpl extends GrMapType {
   }
 
   @Override
-  public @Nullable PsiType getTypeByStringKey(String key) {
+  @Nullable
+  public PsiType getTypeByStringKey(String key) {
     return myStringEntries.get(key);
   }
 
   @Override
-  public @NotNull Set<String> getStringKeys() {
+  @NotNull
+  public Set<String> getStringKeys() {
     return myStringEntries.keySet();
   }
 
+  @NotNull
   @Override
-  protected @NotNull List<Couple<PsiType>> getOtherEntries() {
+  protected List<Couple<PsiType>> getOtherEntries() {
     return myOtherEntries;
   }
 
+  @NotNull
   @Override
-  protected @NotNull LinkedHashMap<String, PsiType> getStringEntries() {
+  protected LinkedHashMap<String, PsiType> getStringEntries() {
     return myStringEntries;
   }
 

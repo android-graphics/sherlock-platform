@@ -32,12 +32,14 @@ import org.jetbrains.annotations.NotNull;
 public final class NonSerializableWithSerialVersionUIDFieldInspection extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "NonSerializableClassWithSerialVersionUID";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     if (aClass.isAnnotationType()) {
       return InspectionGadgetsBundle.message(

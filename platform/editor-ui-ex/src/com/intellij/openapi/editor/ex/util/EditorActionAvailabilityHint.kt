@@ -12,7 +12,8 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.util.ConcurrencyUtil
+import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -40,7 +41,7 @@ private val logger = logger<EditorActionAvailabilityHint>()
  *  ```
  */
 @Experimental
-class EditorActionAvailabilityHint @JvmOverloads constructor(val actionId: String, val condition: AvailabilityCondition, val backend: String = "remote") {
+class EditorActionAvailabilityHint(val actionId: String, val condition: AvailabilityCondition) {
 
   enum class AvailabilityCondition {
     CaretInside {
@@ -62,13 +63,16 @@ class EditorActionAvailabilityHint @JvmOverloads constructor(val actionId: Strin
  *
  * NB: when marking a range marker you have to ensure that you do it inside highlighter initialization block.
  * See the last parameter of [com.intellij.openapi.editor.ex.MarkupModelEx.addRangeHighlighterAndChangeAttributes]
- *
- * NB: this method is preserved to keep LLM plugin compatibility
  */
 @Experimental
-fun RangeHighlighter.addActionAvailabilityHint(vararg hints: EditorActionAvailabilityHint) {
-  doAddActionAvailabilityHint(this, *hints)
+fun RangeMarker.addActionAvailabilityHint(vararg hints: EditorActionAvailabilityHint) {
+  this as UserDataHolderEx? ?: run {
+    logger.error("Attempt to register ${EditorActionAvailabilityHint::class.simpleName} on ${RangeMarker::class.simpleName} which is not ${UserDataHolderEx::class.simpleName} ")
+    return
+  }
+  this.addActionAvailabilityHintImpl(*hints)
 }
+
 /**
  * Marks [Inlay] with [EditorActionAvailabilityHint]
  *
@@ -77,32 +81,21 @@ fun RangeHighlighter.addActionAvailabilityHint(vararg hints: EditorActionAvailab
  */
 @Experimental
 fun Inlay<*>.addActionAvailabilityHint(vararg hints: EditorActionAvailabilityHint) {
-  doAddActionAvailabilityHint(this, *hints)
-}
-@Experimental
-private fun doAddActionAvailabilityHint(marker:UserDataHolder, vararg newHints: EditorActionAvailabilityHint) {
-  var hints = ConcurrencyUtil.computeIfAbsent(marker, hintsKey) { ContainerUtil.createConcurrentList() }
-  for (newHint in newHints) {
-    val existingHint = hints.find { it.actionId == newHint.actionId }
-    if (existingHint != null) {
-      if (existingHint.condition != newHint.condition) {
-        logger.error("Availability hint for action '${newHint.actionId}' already exists")
-      }
-      continue
-    }
-
-    hints.add(newHint)
+  this as UserDataHolderEx? ?: run {
+    logger.error("Attempt to register ${EditorActionAvailabilityHint::class.simpleName} on ${Inlay::class.simpleName} which is not ${UserDataHolderEx::class.simpleName} ")
+    return
   }
+  this.addActionAvailabilityHintImpl(*hints)
 }
 
 @Experimental
 fun RangeHighlighter.clearAvailabilityHints() {
-  clearAvailabilityHintsImpl(this)
+  clearAvailabilityHintsImpl()
 }
 
 @Experimental
 fun Inlay<*>.clearAvailabilityHints() {
-  clearAvailabilityHintsImpl(this)
+  clearAvailabilityHintsImpl()
 }
 
 @get:Internal
@@ -122,34 +115,34 @@ val Inlay<*>.actionAvailabilityHints: List<EditorActionAvailabilityHint> get() {
  * Otherwise, returns `null` (means that there's no highlighters with a hint for [actionId]).
  */
 @Internal
-fun Editor.isActionAvailableByHint(offset: Int, actionId: String, backend: String = "remote"): Boolean? {
+fun Editor.isActionAvailableByHint(offset: Int, actionId: String): Boolean? {
   val markupModel = markupModel
   if (markupModel !is MarkupModelEx) {
     return null
   }
 
-  return markupModel.isActionAvailableByHint(offset, actionId, backend)
-         ?: document.isActionAvailableByHint(project, offset, actionId, backend)
+  return markupModel.isActionAvailableByHint(offset, actionId)
+         ?: document.isActionAvailableByHint(project, offset, actionId)
 }
 
 @Internal
-fun Document.isActionAvailableByHint(project: Project?, offset: Int, actionId: String, backend: String): Boolean? {
+fun Document.isActionAvailableByHint(project: Project?, offset: Int, actionId: String): Boolean? {
   val markupModel = DocumentMarkupModel.forDocument(this, project, false)
   if (markupModel !is MarkupModelEx) {
     return null
   }
 
-  return markupModel.isActionAvailableByHint(offset, actionId, backend)
+  return markupModel.isActionAvailableByHint(offset, actionId)
 }
 
 
 @Internal
-private fun MarkupModelEx.isActionAvailableByHint(offset: Int, actionId: String, backend: String): Boolean? {
+private fun MarkupModelEx.isActionAvailableByHint(offset: Int, actionId: String): Boolean? {
   val overlappingIterator = overlappingIterator(offset, offset)
   try {
     for (highlighterEx in overlappingIterator) {
       for (actionAvailabilityHint in highlighterEx.actionAvailabilityHints) {
-        if (actionAvailabilityHint.actionId == actionId && (actionAvailabilityHint.backend == "ANY" || actionAvailabilityHint.backend == backend)) {
+        if (actionAvailabilityHint.actionId == actionId) {
           return actionAvailabilityHint.condition.isAvailable(offset, highlighterEx)
         }
       }
@@ -161,8 +154,23 @@ private fun MarkupModelEx.isActionAvailableByHint(offset: Int, actionId: String,
   return null
 }
 
-private fun clearAvailabilityHintsImpl(marker:UserDataHolder) {
-  marker.putUserData(hintsKey, null)
+private fun UserDataHolderEx.addActionAvailabilityHintImpl(vararg newHints: EditorActionAvailabilityHint) {
+  var hints = getUserData(hintsKey)
+  if (hints == null) {
+    hints = ContainerUtil.createConcurrentList()
+    putUserDataIfAbsent(hintsKey, hints)
+  }
+  for (newHint in newHints) {
+    if (hints.any { it.actionId == newHint.actionId }) {
+      logger.error("Availability hint for action '${newHint.actionId}' already exists")
+      return
+    }
+    hints.add(newHint)
+  }
+}
+
+private fun UserDataHolder.clearAvailabilityHintsImpl() {
+  putUserData(hintsKey, null)
 }
 
 private val hintsKey = Key<MutableList<EditorActionAvailabilityHint>>("EditorActionOnRangeMarkerAvailabilityHints")

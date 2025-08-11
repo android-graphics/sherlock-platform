@@ -1,13 +1,8 @@
 package com.intellij.searchEverywhereMl.typos
 
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrector
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
-import com.intellij.ide.ui.IdeUiService
+import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.Processor
@@ -21,12 +16,10 @@ class SearchEverywhereTyposUITest : LightPlatformTestCase() {
                                                 listOf(MockSearchEverywhereContributor("Show Color Picker")),
                                                 { _ -> null},
                                                 MockSpellingCorrector())
-    // normally SearchEverywhereUI is registered against the baloon as parent disposable in SearchEverywhereManager
-    Disposer.register(testRootDisposable, searchEverywhereUI)
     val elements = PlatformTestUtil.waitForFuture(searchEverywhereUI.findElementsForPattern ("colop"))
     assert(elements.size == 2)
-    val seContext = IdeUiService.getInstance().createUiDataContext(searchEverywhereUI)
-    val selected = seContext.getData(PlatformDataKeys.SELECTED_ITEM)
+
+    val selected = searchEverywhereUI.getData(PlatformDataKeys.SELECTED_ITEM.name)
     Assert.assertEquals("Show Color Picker", selected)
   }
 }
@@ -37,6 +30,7 @@ private class MockSearchEverywhereContributor(private val elements: Collection<S
 
   override fun getSearchProviderId(): String = this::class.java.simpleName
   override fun getGroupName(): String = this::class.java.simpleName
+  override fun getDataForItem(element: String, dataId: String): Any? = null
   override fun getSortWeight(): Int = 0
   override fun showInFindResults(): Boolean = true
   override fun processSelectedItem(selected: String, modifiers: Int, searchText: String): Boolean = true

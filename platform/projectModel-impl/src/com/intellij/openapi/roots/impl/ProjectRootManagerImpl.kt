@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.application.*
@@ -23,9 +23,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.io.URLUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -38,11 +36,8 @@ private const val PROJECT_JDK_TYPE_ATTR = "project-jdk-type"
 private const val ATTRIBUTE_VERSION = "version"
 
 @State(name = "ProjectRootManager")
-@ApiStatus.Internal
-open class ProjectRootManagerImpl(
-  @JvmField val project: Project,
-  @JvmField protected val coroutineScope: CoroutineScope,
-) : ProjectRootManagerEx(), PersistentStateComponent<Element> {
+open class ProjectRootManagerImpl(val project: Project,
+                                  private val coroutineScope: CoroutineScope) : ProjectRootManagerEx(), PersistentStateComponent<Element> {
   private val projectJdkEventDispatcher = EventDispatcher.create(ProjectJdkListener::class.java)
   private var projectSdkName: String? = null
   private var projectSdkType: String? = null
@@ -170,7 +165,7 @@ open class ProjectRootManagerImpl(
   }
 
   @ApiStatus.Internal
-  @JvmField val fileTypesChanged: BatchSession<Boolean, Boolean> = object : BatchSession<Boolean, Boolean>(true) {
+  protected val fileTypesChanged: BatchSession<Boolean, Boolean> = object : BatchSession<Boolean, Boolean>(true) {
     override fun fireRootsChanged(change: Boolean): Boolean {
       return this@ProjectRootManagerImpl.fireRootsChanged(true, emptyList())
     }
@@ -240,7 +235,7 @@ open class ProjectRootManagerImpl(
   override fun orderEntries(): OrderEnumerator = ProjectOrderEnumerator(project, rootCache)
 
   @ApiStatus.Internal
-  override fun orderEntries(modules: Collection<Module>): OrderEnumerator = ModulesOrderEnumerator(project, modules)
+  override fun orderEntries(modules: Collection<Module>): OrderEnumerator = ModulesOrderEnumerator(modules)
 
   @ApiStatus.Internal
   override fun getContentRootsFromAllModules(): Array<VirtualFile> {
@@ -262,7 +257,7 @@ open class ProjectRootManagerImpl(
       return null
     }
 
-    val projectJdkTable = ProjectJdkTable.getInstance(project)
+    val projectJdkTable = ProjectJdkTable.getInstance()
     if (projectSdkType == null) {
       return projectJdkTable.findJdk(projectSdkName!!)
     }
@@ -343,10 +338,7 @@ open class ProjectRootManagerImpl(
     if (app != null) {
       val isStateLoaded = isStateLoaded
       if (stateChanged) {
-        coroutineScope.launch {
-          // make sure we execute it only after any current modality dialog
-          withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-          }
+        coroutineScope.launch(ModalityState.nonModal().asContextElement()) {
           applyState(isStateLoaded)
         }
       }
@@ -357,7 +349,7 @@ open class ProjectRootManagerImpl(
   private suspend fun applyState(isStateLoaded: Boolean) {
     if (isStateLoaded) {
       LOG.debug("Run write action for projectJdkChanged()")
-      backgroundWriteAction {
+      writeAction {
         projectJdkChanged()
       }
       return
@@ -382,7 +374,7 @@ open class ProjectRootManagerImpl(
 
     LOG.debug("Run write action for extension.projectSdkChanged(sdk)")
     val extensions = EP_NAME.getExtensions(project)
-    backgroundWriteAction {
+    writeAction {
       for (extension in extensions) {
         extension.projectSdkChanged(sdk)
       }

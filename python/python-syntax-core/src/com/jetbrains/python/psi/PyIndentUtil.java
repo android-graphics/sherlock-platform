@@ -50,8 +50,8 @@ import java.util.List;
  * @author Mikhail Golubev
  */
 public final class PyIndentUtil {
-  public static final @NonNls String TWO_SPACES = "  ";
-  public static final @NonNls String FOUR_SPACES = "    ";
+  @NonNls public static final String TWO_SPACES = "  ";
+  @NonNls public static final String FOUR_SPACES = "    ";
 
   private PyIndentUtil() {
   }
@@ -71,18 +71,21 @@ public final class PyIndentUtil {
     return stop;
   }
 
-  public static @NotNull String getLineIndent(@NotNull String line) {
+  @NotNull
+  public static String getLineIndent(@NotNull String line) {
     return line.substring(0, getLineIndentSize(line));
   }
 
   /**
    * Useful version of {@link #getLineIndent(String)} for custom character sequences like {@link com.jetbrains.python.toolbox.Substring}.
    */
-  public static @NotNull CharSequence getLineIndent(@NotNull CharSequence line) {
+  @NotNull
+  public static CharSequence getLineIndent(@NotNull CharSequence line) {
     return line.subSequence(0, getLineIndentSize(line));
   }
 
-  public static @NotNull String getElementIndent(@NotNull PsiElement anchor) {
+  @NotNull
+  public static String getElementIndent(@NotNull PsiElement anchor) {
     if (anchor instanceof PsiFile) {
       return "";
     }
@@ -101,7 +104,8 @@ public final class PyIndentUtil {
     }
   }
 
-  private static @NotNull String getExpectedBlockIndent(@NotNull PyAstStatementList anchor) {
+  @NotNull
+  private static String getExpectedBlockIndent(@NotNull PyAstStatementList anchor) {
     final String indentStep = getIndentFromSettings(anchor.getContainingFile());
     final PyAstStatementList parentBlock = PsiTreeUtil.getParentOfType(anchor, PyAstStatementList.class, true);
     if (parentBlock != null) {
@@ -110,7 +114,8 @@ public final class PyIndentUtil {
     return indentStep;
   }
 
-  private static @Nullable PyAstStatementList getAnchorStatementList(@NotNull PsiElement element) {
+  @Nullable
+  private static PyAstStatementList getAnchorStatementList(@NotNull PsiElement element) {
     PyAstStatementList statementList = null;
     // First whitespace right before the statement list (right after ":")
     if (element instanceof PsiWhiteSpace) {
@@ -142,21 +147,25 @@ public final class PyIndentUtil {
    * @see #getIndentSizeFromSettings(PsiFile)
    * @see #areTabsUsedForIndentation(PsiFile)
    */
-  public static @NotNull String getIndentFromSettings(@NotNull PsiFile file) {
+  @NotNull
+  public static String getIndentFromSettings(@NotNull PsiFile file) {
     final boolean useTabs = areTabsUsedForIndentation(file);
     return useTabs ? "\t" : StringUtil.repeatSymbol(' ', getIndentSizeFromSettings(file));
   }
 
-  public static @NotNull List<String> removeCommonIndent(@NotNull Iterable<String> lines, boolean ignoreFirstLine) {
+  @NotNull
+  public static List<String> removeCommonIndent(@NotNull Iterable<String> lines, boolean ignoreFirstLine) {
     return changeIndent(lines, ignoreFirstLine, "");
   }
 
-  public static @NotNull String removeCommonIndent(@NotNull String s, boolean ignoreFirstLine) {
+  @NotNull
+  public static String removeCommonIndent(@NotNull String s, boolean ignoreFirstLine) {
     final List<String> trimmed = removeCommonIndent(LineTokenizer.tokenizeIntoList(s, false, false), ignoreFirstLine);
     return StringUtil.join(trimmed, "\n");
   }
 
-  public static @NotNull String changeIndent(@NotNull String s, boolean ignoreFirstLine, String newIndent) {
+  @NotNull
+  public static String changeIndent(@NotNull String s, boolean ignoreFirstLine, String newIndent) {
     final List<String> trimmed = changeIndent(LineTokenizer.tokenizeIntoList(s, false, false), ignoreFirstLine, newIndent);
     return StringUtil.join(trimmed, "\n");
   }
@@ -164,7 +173,8 @@ public final class PyIndentUtil {
   /**
    * Note that all empty lines will be trimmed regardless of their actual indentation.
    */
-  public static @NotNull List<String> changeIndent(@NotNull Iterable<String> lines, boolean ignoreFirstLine, final String newIndent) {
+  @NotNull
+  public static List<String> changeIndent(@NotNull Iterable<String> lines, boolean ignoreFirstLine, final String newIndent) {
     final String oldIndent = findCommonIndent(lines, ignoreFirstLine);
     if (Iterables.isEmpty(lines)) {
       return Collections.emptyList();
@@ -184,7 +194,8 @@ public final class PyIndentUtil {
     return result;
   }
 
-  public static @NotNull String findCommonIndent(@NotNull String s, boolean ignoreFirstLine) {
+  @NotNull
+  public static String findCommonIndent(@NotNull String s, boolean ignoreFirstLine) {
     return findCommonIndent(LineTokenizer.tokenizeIntoList(s, false, false), ignoreFirstLine);
   }
 
@@ -196,7 +207,8 @@ public final class PyIndentUtil {
    *
    * @param ignoreFirstLine whether the first line should be considered (useful for multiline string literals)
    */
-  public static @NotNull String findCommonIndent(@NotNull Iterable<String> lines, boolean ignoreFirstLine) {
+  @NotNull
+  public static String findCommonIndent(@NotNull Iterable<String> lines, boolean ignoreFirstLine) {
     String minIndent = null;
     boolean allLinesEmpty = true;
     if (Iterables.isEmpty(lines)) {
@@ -228,7 +240,8 @@ public final class PyIndentUtil {
     return StringUtil.notNullize(minIndent);
   }
 
-  public static @NotNull String getLineIndent(@NotNull Document document, int lineNumber) {
+  @NotNull
+  public static String getLineIndent(@NotNull Document document, int lineNumber) {
     final TextRange lineRange = TextRange.create(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber));
     final String line = document.getText(lineRange);
     return getLineIndent(line);

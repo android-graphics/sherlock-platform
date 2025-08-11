@@ -38,9 +38,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
-/**
- * Utilities related to printf-like format string
- */
 public final class FormatDecode {
 
   private static final Pattern fsPattern = Pattern.compile(
@@ -149,7 +146,7 @@ public final class FormatDecode {
       final String width = matcher.group("width");
       final String precision = matcher.group("precision");
       final String dateSpec = matcher.group("dateSpec");
-      final @NonNls String conversion = matcher.group("conversion");
+      @NonNls final String conversion = matcher.group("conversion");
 
       int flagBits = 0;
       for (int j = 0; j < flags.length(); j++) {
@@ -542,8 +539,9 @@ public final class FormatDecode {
   public static class MultiValidator extends Validator {
     private final Set<Validator> validators = new HashSet<>(3);
 
+    @Nullable
     @Override
-    public @Nullable String getInvalidSpecifier(PsiType type) {
+    public String getInvalidSpecifier(PsiType type) {
       for (Validator validator : validators) {
         if (!validator.valid(type)) {
           return validator.getInvalidSpecifier(type);
@@ -577,7 +575,8 @@ public final class FormatDecode {
 
   public abstract static class Validator {
 
-    public @Nullable String getInvalidSpecifier(PsiType type){
+    @Nullable
+    public String getInvalidSpecifier(PsiType type){
       if (valid(type)) {
         return null;
       }
@@ -603,27 +602,6 @@ public final class FormatDecode {
       return null;
     }
   }
-
-  /**
-   * @param validators validators returned from {@link #decode(String, int)} or similar methods
-   * @return list of {@link FormatPlaceholder} objects
-   */
-  public static @NotNull List<@NotNull FormatPlaceholder> asPlaceholders(Validator @NotNull [] validators) {
-    List<FormatPlaceholder> result = new ArrayList<>();
-    for (int i = 0; i < validators.length; i++) {
-      FormatDecode.Validator metaValidator = validators[i];
-      if (metaValidator == null) continue;
-      Collection<FormatDecode.Validator> unpacked = metaValidator instanceof FormatDecode.MultiValidator multi ?
-                                                    multi.getValidators() : List.of(metaValidator);
-      for (FormatDecode.Validator validator : unpacked) {
-        TextRange stringRange = validator.getRange();
-        if (stringRange == null) continue;
-        record MyPlaceholder(int index, @NotNull TextRange range) implements FormatPlaceholder {}
-        result.add(new MyPlaceholder(i, stringRange));
-      }
-    }
-    return result;
-  } 
 
   public record Spec(@Nullable String posSpec ,
                      @Nullable String flags,
@@ -651,14 +629,16 @@ public final class FormatDecode {
       return myExpression;
     }
 
-    public static @Nullable FormatArgument extract(@NotNull PsiCallExpression expression, @NotNull List<String> methodNames, @NotNull List<String> classNames) {
+    @Nullable
+    public static FormatArgument extract(@NotNull PsiCallExpression expression, @NotNull List<String> methodNames, @NotNull List<String> classNames) {
       return extract(expression, methodNames, classNames, false);
     }
 
-    public static @Nullable FormatArgument extract(@NotNull PsiCallExpression expression,
-                                                   @NotNull List<String> methodNames,
-                                                   @NotNull List<String> classNames,
-                                                   boolean allowNotConstant) {
+    @Nullable
+    public static FormatArgument extract(@NotNull PsiCallExpression expression,
+                                         @NotNull List<String> methodNames,
+                                         @NotNull List<String> classNames,
+                                         boolean allowNotConstant) {
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) return null;
       PsiExpression[] arguments = argumentList.getExpressions();

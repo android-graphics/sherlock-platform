@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,30 +41,9 @@ public interface PyAstTypeParameter extends PyAstElement, PsiNameIdentifierOwner
     }
   }
 
-  default @Nullable PyAstExpression getBoundExpression() {
-    PsiElement element = StreamEx.of(getChildren())
-      .findFirst(child -> {
-        PsiElement e = PsiTreeUtil.skipWhitespacesBackward(child);
-        return e != null && e.getNode().getElementType() == PyTokenTypes.COLON;
-      })
-      .orElse(null);
-    if (element instanceof PyAstExpression expression) {
-      return expression;
-    }
-    return null;
-  }
-
-  default @Nullable PyAstExpression getDefaultExpression() {
-    PsiElement element = StreamEx.of(getChildren())
-      .findFirst(child -> {
-        PsiElement e = PsiTreeUtil.skipWhitespacesBackward(child);
-        return e != null && e.getNode().getElementType() == PyTokenTypes.EQ;
-      })
-      .orElse(null);
-    if (element instanceof PyAstExpression expression) {
-      return expression;
-    }
-    return null;
+  @Nullable
+  default PyAstExpression getBoundExpression() {
+    return PsiTreeUtil.getChildOfType(this, PyAstExpression.class);
   }
 
   /**
@@ -73,7 +51,8 @@ public interface PyAstTypeParameter extends PyAstElement, PsiNameIdentifierOwner
    * <p>
    * The text is taken from stub if the stub is presented.
    */
-  default @Nullable String getBoundExpressionText() {
+  @Nullable
+  default String getBoundExpressionText() {
     PyAstExpression boundExpression = getBoundExpression();
     if (boundExpression != null) {
       return boundExpression.getText();
@@ -82,16 +61,8 @@ public interface PyAstTypeParameter extends PyAstElement, PsiNameIdentifierOwner
     return null;
   }
 
-  default @Nullable String getDefaultExpressionText() {
-    PyAstExpression defaultExpression = getDefaultExpression();
-    if (defaultExpression != null) {
-      return defaultExpression.getText();
-    }
-
-    return null;
-  }
-
-  default @NotNull Kind getKind() {
+  @NotNull
+  default Kind getKind() {
     String paramText = getText();
     if (paramText.startsWith("**")) {
       return Kind.ParamSpec;
@@ -103,13 +74,15 @@ public interface PyAstTypeParameter extends PyAstElement, PsiNameIdentifierOwner
   }
 
   @Override
-  default @Nullable String getName() {
+  @Nullable
+  default String getName() {
     PsiElement identifier = getNameIdentifier();
     return identifier != null ? identifier.getText() : null;
   }
 
   @Override
-  default @Nullable PsiElement getNameIdentifier() {
+  @Nullable
+  default PsiElement getNameIdentifier() {
     ASTNode nameNode = getNode().findChildByType(PyTokenTypes.IDENTIFIER);
     return nameNode != null ? nameNode.getPsi() : null;
   }

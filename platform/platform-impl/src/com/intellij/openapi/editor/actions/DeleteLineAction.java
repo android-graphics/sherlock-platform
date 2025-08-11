@@ -10,14 +10,12 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.TextRange;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
-@ApiStatus.Internal
 public final class DeleteLineAction extends TextComponentEditorAction {
   public DeleteLineAction() {
     super(new Handler());
@@ -45,8 +43,9 @@ public final class DeleteLineAction extends TextComponentEditorAction {
 
     @Override
     public void executeWriteAction(final @NotNull Editor editor, Caret caret, DataContext dataContext) {
-      CommandProcessor.getInstance().setCurrentCommandGroupId(null);
+      CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
       CopyPasteManager.getInstance().stopKillRings();
+      final Document document = editor.getDocument();
 
       final List<Caret> carets = caret == null ? editor.getCaretModel().getAllCarets() : Collections.singletonList(caret);
 

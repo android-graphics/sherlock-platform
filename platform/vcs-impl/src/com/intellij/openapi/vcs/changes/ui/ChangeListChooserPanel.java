@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector;
 import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -38,7 +37,7 @@ public final class ChangeListChooserPanel extends JPanel {
   private final Project myProject;
   private String myLastTypedDescription;
   private boolean myNewNameSuggested = false;
-  private @Nullable ChangeListData myData;
+  @Nullable private ChangeListData myData;
 
   public ChangeListChooserPanel(final Project project, @NotNull Consumer<? super @Nullable String> okEnabledListener) {
     super(new BorderLayout());
@@ -65,8 +64,9 @@ public final class ChangeListChooserPanel extends JPanel {
       @Override
       protected NewEditChangelistPanel.ComponentWithTextFieldWrapper createComponentWithTextField(Project project) {
         return new ComponentWithTextFieldWrapper(myExistingListsCombo) {
+          @NotNull
           @Override
-          public @NotNull EditorTextField getEditorTextField() {
+          public EditorTextField getEditorTextField() {
             return myExistingListsCombo.getEditorTextField();
           }
         };
@@ -162,7 +162,8 @@ public final class ChangeListChooserPanel extends JPanel {
   /**
    * Method used as getResult, usually invoked inside doOkAction
    */
-  public @Nullable LocalChangeList getSelectedList(Project project) {
+  @Nullable
+  public LocalChangeList getSelectedList(Project project) {
     ChangeListManagerEx manager = ChangeListManagerEx.getInstanceEx(project);
     String changeListName = myListPanel.getChangeListName();
     LocalChangeList localChangeList = manager.findChangeList(changeListName);
@@ -172,9 +173,7 @@ public final class ChangeListChooserPanel extends JPanel {
       myListPanel.changelistCreatedOrChanged(localChangeList);
     }
     else {
-      if (!StringUtil.equals(localChangeList.getComment(), myListPanel.getDescription())) {
-        VcsStatisticsCollector.CHANGE_LIST_COMMENT_EDITED.log(project, VcsStatisticsCollector.EditChangeListPlace.OTHER);
-      }
+      //update description if changed
       manager.editComment(changeListName, myListPanel.getDescription());
     }
     rememberSettings(project, localChangeList.isDefault(), myListPanel.getMakeActiveCheckBox().isSelected());
@@ -260,7 +259,8 @@ public final class ChangeListChooserPanel extends JPanel {
       setEditor(compositeEditor);
     }
 
-    private @NotNull EditorTextField getEditorTextField() {
+    @NotNull
+    private EditorTextField getEditorTextField() {
       return myEditorTextField;
     }
   }

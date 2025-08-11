@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal.block
 import com.intellij.openapi.actionSystem.ActionPromoter
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.project.DumbAwareAction
@@ -21,8 +20,7 @@ abstract class TerminalPromotedDumbAwareAction : DumbAwareAction(), ActionPromot
   }
 }
 
-@ApiStatus.Internal
-abstract class TerminalPromotedEditorAction(handler: EditorActionHandler) : EditorAction(handler), ActionPromoter {
+internal abstract class TerminalPromotedEditorAction(handler: EditorActionHandler) : EditorAction(handler), ActionPromoter {
   /**
    * Prioritize terminal actions if there are actions with the same shortcuts.
    * It's safe because terminal actions are enabled only in the terminal.
@@ -31,8 +29,3 @@ abstract class TerminalPromotedEditorAction(handler: EditorActionHandler) : Edit
     return listOf(this)
   }
 }
-
-@ApiStatus.Internal
-abstract class TerminalFrontendEditorAction(
-  handler: EditorActionHandler
-) : TerminalPromotedEditorAction(handler), ActionRemoteBehaviorSpecification.Frontend

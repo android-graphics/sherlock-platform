@@ -10,11 +10,13 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 public interface PyAstSliceExpression extends PyAstExpression {
-  default @NotNull PyAstExpression getOperand() {
+  @NotNull
+  default PyAstExpression getOperand() {
     return childToPsiNotNull(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
 
-  default @Nullable PyAstSliceItem getSliceItem() {
+  @Nullable
+  default PyAstSliceItem getSliceItem() {
     return PsiTreeUtil.getChildOfType(this, PyAstSliceItem.class);
   }
 }

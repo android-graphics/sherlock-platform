@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.actions;
 
 import com.intellij.openapi.editor.Editor;
@@ -30,7 +30,8 @@ public final class ShowUsagesParameters {
     this.maxUsages = maxUsages;
   }
 
-  public @Nullable Editor getEditor() {
+  @Nullable
+  public Editor getEditor() {
     return editor;
   }
 
@@ -38,7 +39,8 @@ public final class ShowUsagesParameters {
     return maxUsages;
   }
 
-  public @NotNull RelativePoint getPopupPosition() {
+  @NotNull
+  public RelativePoint getPopupPosition() {
     return popupPosition;
   }
 

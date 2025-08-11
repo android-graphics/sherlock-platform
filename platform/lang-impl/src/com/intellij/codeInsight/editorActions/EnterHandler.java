@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -45,7 +45,7 @@ public class EnterHandler extends BaseEnterHandler {
   private static final Logger LOG = Logger.getInstance(EnterHandler.class);
 
   private final EditorActionHandler myOriginalHandler;
-  private static final Key<Language> CONTEXT_LANGUAGE = Key.create("EnterHandler.Language");
+  private final static Key<Language> CONTEXT_LANGUAGE = Key.create("EnterHandler.Language");
 
   public EnterHandler(EditorActionHandler originalHandler) {
     super(true);
@@ -172,9 +172,10 @@ public class EnterHandler extends BaseEnterHandler {
     }
   }
 
-  private static @NotNull DataContext getExtendedContext(@NotNull DataContext originalContext,
-                                                         @NotNull Project project,
-                                                         @NotNull Caret caret) {
+  @NotNull
+  private static DataContext getExtendedContext(@NotNull DataContext originalContext,
+                                                @NotNull Project project,
+                                                @NotNull Caret caret) {
     DataContext context = originalContext instanceof UserDataHolder ? originalContext : new DataContextWrapper(originalContext);
     ((UserDataHolder)context).putUserData(CONTEXT_LANGUAGE, PsiUtilBase.getLanguageInEditor(caret, project));
     return context;
@@ -549,7 +550,8 @@ public class EnterHandler extends BaseEnterHandler {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     }
 
-    private @Nullable PsiComment createComment(final CharSequence buffer, final CodeInsightSettings settings)
+    @Nullable
+    private PsiComment createComment(final CharSequence buffer, final CodeInsightSettings settings)
       throws IncorrectOperationException {
       myDocument.insertString(myOffset, buffer);
 
@@ -594,14 +596,15 @@ public class EnterHandler extends BaseEnterHandler {
       commentMarker.dispose();
     }
 
-    private @Nullable PsiComment createJavaDocStub(final CodeInsightSettings settings,
-                                                   final PsiComment comment,
-                                                   final Project project) {
+    @Nullable
+    private PsiComment createJavaDocStub(final CodeInsightSettings settings,
+                                            final PsiComment comment,
+                                            final Project project) {
       if (settings.JAVADOC_STUB_ON_ENTER) {
         final DocumentationProvider langDocumentationProvider =
           LanguageDocumentation.INSTANCE.forLanguage(comment.getParent().getLanguage());
 
-        final @Nullable CodeDocumentationProvider docProvider;
+        @Nullable final CodeDocumentationProvider docProvider;
         if (langDocumentationProvider instanceof CompositeDocumentationProvider) {
           docProvider = ((CompositeDocumentationProvider)langDocumentationProvider).getFirstCodeDocumentationProvider();
         } else {
@@ -613,7 +616,7 @@ public class EnterHandler extends BaseEnterHandler {
           if (docProvider.findExistingDocComment(comment) != comment) return comment;
           String docStub = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> docProvider.generateDocumentationContentStub(comment));
 
-          if (docStub != null && !docStub.isEmpty()) {
+          if (docStub != null && docStub.length() != 0) {
             myOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
             myOffset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
             myDocument.insertString(myOffset, docStub);
@@ -698,7 +701,8 @@ public class EnterHandler extends BaseEnterHandler {
   }
 
 
-  public static @Nullable Language getLanguage(@NotNull DataContext dataContext) {
+  @Nullable
+  public static Language getLanguage(@NotNull DataContext dataContext) {
     if (dataContext instanceof UserDataHolder) {
       return CONTEXT_LANGUAGE.get((UserDataHolder)dataContext);
     }

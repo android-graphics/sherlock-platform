@@ -1,34 +1,35 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
+package org.jetbrains.kotlin.idea.completion.contributors
 
-import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKinds
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
+import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.factories.TypeParameterLookupElementFactory
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KDocParameterNamePositionContext
 
 internal open class FirKDocParameterNameContributor(
-    parameters: KotlinFirCompletionParameters,
-    sink: LookupElementSink,
-    priority: Int = 0,
-) : FirCompletionContributorBase<KDocParameterNamePositionContext>(parameters, sink, priority) {
-
+    basicContext: FirBasicCompletionContext,
+    priority: Int,
+) : FirCompletionContributorBase<KDocParameterNamePositionContext>(basicContext, priority) {
     context(KaSession)
     override fun complete(
         positionContext: KDocParameterNamePositionContext,
         weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters
     ) {
         if (positionContext.explicitReceiver != null) return
 
@@ -40,31 +41,22 @@ internal open class FirKDocParameterNameContributor(
 
         getParametersForKDoc(ownerDeclarationSymbol)
             .filter { (it.symbol as KaNamedSymbol).name.asString() !in alreadyDocumentedParameters }
-            .flatMap { createLookupElements(weighingContext, it) }
-            .forEach(sink::addElement)
+            .forEach { addSymbolToCompletion(weighingContext, it) }
     }
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun createLookupElements(
-        weighingContext: WeighingContext,
-        symbolWithOrigin: KtSymbolWithOrigin,
-    ): Sequence<LookupElement> {
+    private fun addSymbolToCompletion(weighingContext: WeighingContext, symbolWithOrigin: KtSymbolWithOrigin) {
+        val symbol = symbolWithOrigin.symbol
         val origin = symbolWithOrigin.origin
-        return when (val symbol = symbolWithOrigin.symbol) {
-            is KaTypeParameterSymbol ->
-                TypeParameterLookupElementFactory.createLookup(symbol)
-                    .applyWeighs(weighingContext, KtSymbolWithOrigin(symbol, origin))
-                    .let { sequenceOf(it) }
-
-            is KaValueParameterSymbol -> createCallableLookupElements(
-                context = weighingContext,
-                signature = symbol.asSignature(),
-                options = CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),
-                symbolOrigin = origin,
+        when (symbol) {
+            is KaTypeParameterSymbol -> addClassifierSymbolToCompletion(symbol, weighingContext, origin, ImportStrategy.DoNothing)
+            is KaValueParameterSymbol -> addCallableSymbolToCompletion(
+                weighingContext,
+                symbol.asSignature(),
+                CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),
+                origin
             )
-
-            else -> emptySequence()
         }
     }
 
@@ -78,7 +70,7 @@ internal open class FirKDocParameterNameContributor(
         val valueParameters = when (ownerDeclarationSymbol) {
             is KaFunctionSymbol -> ownerDeclarationSymbol.valueParameters
 
-            is KaNamedClassSymbol -> {
+            is KaNamedClassOrObjectSymbol -> {
                 val primaryConstructor = ownerDeclarationSymbol.declaredMemberScope.constructors.firstOrNull { it.isPrimary }
                 primaryConstructor?.valueParameters.orEmpty()
             }

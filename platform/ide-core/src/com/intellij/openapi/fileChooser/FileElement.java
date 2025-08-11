@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -40,7 +40,8 @@ public class FileElement {
     return myName;
   }
 
-  public final @NotNull String getPath() {
+  @NotNull
+  public final String getPath() {
     if (myPath == null) {
       final StringBuilder sb = new StringBuilder();
       FileElement element = this;

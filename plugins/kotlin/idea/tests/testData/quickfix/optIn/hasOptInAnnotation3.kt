@@ -1,5 +1,4 @@
 // "Opt in for 'A' on 'root'" "true"
-// PRIORITY: HIGH
 @RequiresOptIn
 annotation class A
 
@@ -10,5 +9,5 @@ fun f1() {}
 fun root() {
     <caret>f1()
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$ModifyOptInAnnotationFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$ModifyOptInAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityUseOptInAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityUseOptInAnnotationFix

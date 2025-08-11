@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.progress
 
-import com.intellij.testFramework.assertErrorLogged
 import kotlinx.coroutines.*
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -11,10 +11,11 @@ class ProgressReporterTest {
 
   @Test
   fun `negative size`() {
-    assertErrorLogged<IllegalArgumentException> {
+    assertLogThrows<IllegalArgumentException> {
       progressReporterTest {
-        reportProgress(-1) {} // <- Logger.error()
-        reportProgress {} // keep progressReporterTest happy
+        reportProgress(-1) {
+          fail()
+        }
       }
     }
   }
@@ -29,10 +30,12 @@ class ProgressReporterTest {
   @ValueSource(ints = [-40, 146])
   @ParameterizedTest
   fun `work size must be greater or equal to 0 and less or equal to size`(workSize: Int) {
-    assertErrorLogged<IllegalArgumentException> {
-      progressReporterTest {
-        reportProgress { reporter ->
-          reporter.sizedStep(workSize) {} // <- Logger.error()
+    progressReporterTest {
+      reportProgress { reporter ->
+        assertLogThrows<IllegalArgumentException> {
+          reporter.sizedStep(workSize) {
+            fail()
+          }
         }
       }
     }
@@ -41,13 +44,15 @@ class ProgressReporterTest {
   @ValueSource(ints = [0, 10, 100])
   @ParameterizedTest
   fun `total size cannot exceed size`(size: Int) {
-    assertErrorLogged<IllegalArgumentException> {
-      progressReporterTest {
-        reportProgress(size) { reporter ->
-          reporter.indeterminateStep {} // ok
-          reporter.sizedStep(size + 1) {} // <- Logger.error()
-          reporter.indeterminateStep {} // ok
+    progressReporterTest {
+      reportProgress(size) { reporter ->
+        reporter.indeterminateStep {} // ok
+        assertLogThrows<IllegalArgumentException> {
+          reporter.sizedStep(size + 1) {
+            fail()
+          }
         }
+        reporter.indeterminateStep {} // ok
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -52,8 +52,9 @@ public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
     myShowDisabledActions = value;
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     myPresentation = presentation;
     update();
 
@@ -85,8 +86,9 @@ public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
     update(mySelection, myPresentation == null ? getTemplatePresentation() : myPresentation, false);
   }
 
+  @NotNull
   @Override
-  protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
+  protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
 
     for (final T item : myItems) {

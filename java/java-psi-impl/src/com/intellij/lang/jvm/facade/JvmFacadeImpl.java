@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm.facade;
 
 import com.intellij.lang.jvm.JvmClass;
@@ -12,9 +12,7 @@ import com.intellij.psi.impl.JavaPsiFacadeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,16 +33,16 @@ public final class JvmFacadeImpl implements JvmFacade {
   }
 
   @Override
-  public @Unmodifiable @NotNull List<? extends JvmClass> findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+  public @NotNull List<? extends JvmClass> findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     Map<String, List<JvmClass>> map = myClassCache.computeIfAbsent(scope, s -> CollectionFactory.createConcurrentWeakValueMap());
     return map.computeIfAbsent(qualifiedName, fqn -> doFindClassesWithJavaFacade(fqn, scope));
   }
 
-  private @Unmodifiable List<JvmClass> doFindClassesWithJavaFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+  private List<JvmClass> doFindClassesWithJavaFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     return sortByScope(findClassesWithJavaFacade(qualifiedName, scope), scope);
   }
 
-  private @Unmodifiable List<JvmClass> findClassesWithJavaFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+  private List<JvmClass> findClassesWithJavaFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     List<JvmClass> result = null;
 
     final List<JvmClass> ownClasses = findClassesWithoutJavaFacade(qualifiedName, scope);
@@ -65,7 +63,7 @@ public final class JvmFacadeImpl implements JvmFacade {
     return result == null ? Collections.emptyList() : result;
   }
 
-  public @Unmodifiable @NotNull List<JvmClass> findClassesWithoutJavaFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+  public @NotNull List<JvmClass> findClassesWithoutJavaFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     List<JvmClass> result = null;
     for (JvmElementProvider provider : filteredProviders()) {
       List<? extends JvmClass> providedClasses = provider.getClasses(qualifiedName, scope);
@@ -81,9 +79,10 @@ public final class JvmFacadeImpl implements JvmFacade {
     return result == null ? Collections.emptyList() : result;
   }
 
-  private static @Unmodifiable @NotNull List<JvmClass> sortByScope(@NotNull @Unmodifiable List<JvmClass> classes, @NotNull GlobalSearchScope scope) {
+  private static @NotNull List<JvmClass> sortByScope(@NotNull List<JvmClass> classes, @NotNull GlobalSearchScope scope) {
     if (classes.size() == 1) return classes;
-    return ContainerUtil.sorted(classes, JvmClassUtil.createScopeComparator(scope));
+    classes.sort(JvmClassUtil.createScopeComparator(scope));
+    return classes;
   }
 
   private static void assertNotNullClasses(@NotNull JvmElementProvider provider, @NotNull List<? extends JvmClass> classes) {
@@ -92,7 +91,7 @@ public final class JvmFacadeImpl implements JvmFacade {
     }
   }
 
-  private @Unmodifiable @NotNull List<JvmElementProvider> filteredProviders() {
+  private @NotNull List<JvmElementProvider> filteredProviders() {
     return myDumbService.filterByDumbAwareness(JvmElementProvider.EP_NAME.getExtensionList(myJavaPsiFacade.getProject()));
   }
 }

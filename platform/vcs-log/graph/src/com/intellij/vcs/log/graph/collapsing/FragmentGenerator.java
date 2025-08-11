@@ -6,7 +6,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.LiteLinearGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -16,38 +15,42 @@ import java.util.Set;
 public class FragmentGenerator {
 
   public static final class GreenFragment {
-    private final @Nullable Integer myUpRedNode;
-    private final @Nullable Integer myDownRedNode;
-    private final @Unmodifiable @NotNull Set<Integer> myMiddleGreenNodes;
+    @Nullable private final Integer myUpRedNode;
+    @Nullable private final Integer myDownRedNode;
+    @NotNull private final Set<Integer> myMiddleGreenNodes;
 
-    private GreenFragment(@Nullable Integer upRedNode, @Nullable Integer downRedNode, @NotNull @Unmodifiable Set<Integer> middleGreenNodes) {
+    private GreenFragment(@Nullable Integer upRedNode, @Nullable Integer downRedNode, @NotNull Set<Integer> middleGreenNodes) {
       myUpRedNode = upRedNode;
       myDownRedNode = downRedNode;
       myMiddleGreenNodes = middleGreenNodes;
     }
 
-    public @Nullable Integer getUpRedNode() {
+    @Nullable
+    public Integer getUpRedNode() {
       return myUpRedNode;
     }
 
-    public @Nullable Integer getDownRedNode() {
+    @Nullable
+    public Integer getDownRedNode() {
       return myDownRedNode;
     }
 
-    public @NotNull @Unmodifiable Set<Integer> getMiddleGreenNodes() {
+    @NotNull
+    public Set<Integer> getMiddleGreenNodes() {
       return myMiddleGreenNodes;
     }
   }
 
-  private final @NotNull LiteLinearGraph myGraph;
-  private final @NotNull Condition<? super Integer> myRedNodes;
+  @NotNull private final LiteLinearGraph myGraph;
+  @NotNull private final Condition<? super Integer> myRedNodes;
 
   public FragmentGenerator(@NotNull LiteLinearGraph graph, @NotNull Condition<? super Integer> redNodes) {
     myGraph = graph;
     myRedNodes = redNodes;
   }
 
-  public @NotNull Set<Integer> getMiddleNodes(final int upNode, final int downNode, boolean strict) {
+  @NotNull
+  public Set<Integer> getMiddleNodes(final int upNode, final int downNode, boolean strict) {
     Set<Integer> downWalk = getWalkNodes(upNode, false, integer -> integer > downNode);
     Set<Integer> upWalk = getWalkNodes(downNode, true, integer -> integer < upNode);
 
@@ -59,7 +62,8 @@ public class FragmentGenerator {
     return downWalk;
   }
 
-  public @Nullable Integer getNearRedNode(int startNode, int maxWalkSize, boolean isUp) {
+  @Nullable
+  public Integer getNearRedNode(int startNode, int maxWalkSize, boolean isUp) {
     if (myRedNodes.value(startNode)) return startNode;
 
     TreeSetNodeIterator walker = new TreeSetNodeIterator(startNode, isUp);
@@ -77,7 +81,8 @@ public class FragmentGenerator {
     return null;
   }
 
-  public @NotNull GreenFragment getGreenFragmentForCollapse(int startNode, int maxWalkSize) {
+  @NotNull
+  public GreenFragment getGreenFragmentForCollapse(int startNode, int maxWalkSize) {
     if (myRedNodes.value(startNode)) return new GreenFragment(null, null, Collections.emptySet());
     Integer upRedNode = getNearRedNode(startNode, maxWalkSize, true);
     Integer downRedNode = getNearRedNode(startNode, maxWalkSize, false);
@@ -93,7 +98,8 @@ public class FragmentGenerator {
     return new GreenFragment(upRedNode, downRedNode, middleNodes);
   }
 
-  private @NotNull Set<Integer> getWalkNodes(int startNode, boolean isUp, Condition<? super Integer> stopFunction) {
+  @NotNull
+  private Set<Integer> getWalkNodes(int startNode, boolean isUp, Condition<? super Integer> stopFunction) {
     Set<Integer> walkNodes = new HashSet<>();
 
     TreeSetNodeIterator walker = new TreeSetNodeIterator(startNode, isUp);
@@ -108,11 +114,13 @@ public class FragmentGenerator {
     return walkNodes;
   }
 
-  private @NotNull List<Integer> getNodes(int nodeIndex, boolean isUp) {
+  @NotNull
+  private List<Integer> getNodes(int nodeIndex, boolean isUp) {
     return myGraph.getNodes(nodeIndex, LiteLinearGraph.NodeFilter.filter(isUp));
   }
 
-  private static @NotNull Condition<Integer> createStopFunction(final int maxNodeCount) {
+  @NotNull
+  private static Condition<Integer> createStopFunction(final int maxNodeCount) {
     return new Condition<>() {
       private int count = maxNodeCount;
 

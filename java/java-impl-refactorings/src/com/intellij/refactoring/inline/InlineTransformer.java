@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.intention.impl.singlereturn.ConvertToSingleReturnAction;
@@ -102,7 +102,8 @@ public interface InlineTransformer {
    * @return a function which produces a transformer for given reference to the inlined method. 
    *        Should always succeed as fallback transformer which accepts any method is available.
    */
-  static @NotNull Function<PsiReference, InlineTransformer> getSuitableTransformer(PsiMethod method) {
+  @NotNull
+  static Function<PsiReference, InlineTransformer> getSuitableTransformer(PsiMethod method) {
     PsiReturnStatement[] returns = PsiUtil.findReturnStatements(method);
     PsiCodeBlock body = Objects.requireNonNull(method.getBody());
     if (!InlineMethodProcessor.checkBadReturns(returns, body)) {

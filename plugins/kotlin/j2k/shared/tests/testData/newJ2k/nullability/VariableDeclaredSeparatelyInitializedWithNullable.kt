@@ -6,10 +6,10 @@ class Same {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            val same: Same?
+            var same: Same?
             same = Same().returnNull()
 
-            val other: Other?
+            var other: Other?
             other = Other().returnNull()
 
             val otherWithAssignment = Other().returnNull()

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -33,8 +33,9 @@ public class XmlDeprecatedElementInspection extends XmlSuppressableInspectionToo
   @Language("RegExp")
   public String regexp = "(?i)deprecated.*";
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     Pattern pattern = Pattern.compile(regexp);
     return new XmlElementVisitor() {
       @Override

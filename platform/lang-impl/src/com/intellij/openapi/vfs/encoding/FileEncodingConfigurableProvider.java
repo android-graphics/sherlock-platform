@@ -4,9 +4,7 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
 public final class FileEncodingConfigurableProvider extends ConfigurableProvider {
   private final Project myProject;
 

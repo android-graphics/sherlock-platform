@@ -106,7 +106,7 @@ public class MockDirtyScope extends VcsModifiableDirtyScope {
   }
 
   @Override
-  public boolean belongsTo(@NotNull FilePath path) {
+  public boolean belongsTo(FilePath path) {
     if (myDirtyFiles.contains(path)) return true;
 
     for (FilePath parent : myDirtyDirs) {

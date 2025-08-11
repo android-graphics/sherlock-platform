@@ -20,8 +20,7 @@ class IJMapperEventLoggerProvider : StatisticsEventLoggerProvider(
   sendFrequencyMs = TimeUnit.HOURS.toMillis(1),
   maxFileSizeInBytes = 1 * 512, // enough to fill a log file with one entry of the state collector
   sendLogsOnIdeClose = true,
-  isCharsEscapingRequired = false,
-  useDefaultRecorderId = true
+  isCharsEscapingRequired = false
 ) {
 
   /**
@@ -29,7 +28,7 @@ class IJMapperEventLoggerProvider : StatisticsEventLoggerProvider(
    */
   override fun isRecordEnabled(): Boolean {
     val app = ApplicationManager.getApplication()
-    return !app.isUnitTestMode &&
+    return !app.isUnitTestMode && app.isEAP &&
            StatisticsUploadAssistant.isCollectAllowed() &&
            (ApplicationInfo.getInstance() == null || PlatformUtils.isJetBrainsProduct())
   }

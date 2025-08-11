@@ -1,49 +1,53 @@
 package com.intellij.openapi.rd.util
 
-import com.intellij.codeWithMe.assertClientIdConsistency
-import com.intellij.codeWithMe.currentThreadClientId
+import com.intellij.codeWithMe.ClientId
 import com.jetbrains.rd.framework.IRdDynamic
 import com.jetbrains.rd.framework.IRdEndpoint
-import com.jetbrains.rd.framework.util.toRdTask
+import com.jetbrains.rd.framework.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.ISource
 import com.jetbrains.rd.util.threading.SynchronousScheduler
 import com.jetbrains.rd.util.threading.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.*
+import com.jetbrains.rd.util.threading.coroutines.async
+import com.jetbrains.rd.util.threading.coroutines.launch
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.DelicateCoroutinesApi
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
+// TODO: remove when the same is merged in rd
 /**
+ * Consider using [setSuspendPreserveClientId] to propagate [ClientId] into [handler]
+ *
  * Sets suspend handler for the [IRdEndpoint].
  *
  * When a protocol call is occurred it starts a new coroutine passing [coroutineContext] and [coroutineStart] to it.
+ * [cancellationScheduler] and [handlerScheduler] are passed to [IRdEndpoint.set]
  * Coroutine dispatcher is being chosen in the following order: handlerScheduler (if not null) -> coroutineContext (if it has) -> this.protocol.scheduler (if not null) -> SynchronousScheduler
  */
 @ApiStatus.Internal
+@DelicateCoroutinesApi
 fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspend(
   coroutineContext: CoroutineContext = EmptyCoroutineContext,
   coroutineStart: CoroutineStart = CoroutineStart.DEFAULT,
+  cancellationScheduler: IScheduler? = null,
+  handlerScheduler: IScheduler? = null,
   handler: suspend (Lifetime, TReq) -> TRes
 ) {
-  val beforeAdviseClientId = currentThreadClientId
-  set(null, SynchronousScheduler) { lt, req ->
-    // use ?. to skip cases when beforeAdviseClientId == null, it's likely valid
-    beforeAdviseClientId?.assertClientIdConsistency("Inside set ($this)", fallbackToLocal = false)
-    val inAdviseClientId = currentThreadClientId
-    lt.coroutineScope.async(coroutineContext + getSuitableDispatcher(coroutineContext), coroutineStart) {
-      inAdviseClientId.assertClientIdConsistency("Inside async ($this)", fallbackToLocal = false)
+  set(cancellationScheduler, handlerScheduler) { lt, req ->
+    lt.async(coroutineContext + getSuitableDispatcher(handlerScheduler, coroutineContext), coroutineStart) {
       handler(lt, req)
     }.toRdTask()
   }
 }
 
 /**
- * Shortcut for [setSuspend]
+ * The same as [setSuspend] but add [ClientId] into [coroutineContext] to restore it in [handler]
  */
 @ApiStatus.Internal
-@Deprecated("Use `setSuspend` instead`", ReplaceWith("setSuspend(coroutineContext, coroutineStart, handler)"))
 fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspendPreserveClientId(
   coroutineContext: CoroutineContext = EmptyCoroutineContext,
   coroutineStart: CoroutineStart = CoroutineStart.DEFAULT,
@@ -51,10 +55,13 @@ fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspendPreserveClientId(
   handlerScheduler: IScheduler? = null,
   handler: suspend (Lifetime, TReq) -> TRes) {
   @OptIn(DelicateCoroutinesApi::class)
-  setSuspend(coroutineContext, coroutineStart, handler)
+  setSuspend( coroutineContext + ClientId.coroutineContext(), coroutineStart, cancellationScheduler, handlerScheduler, handler)
 }
 
+// TODO: remove when the same is merged in rd
 /**
+ * Consider using [adviseSuspendPreserveClientId] to propagate [ClientId] into [handler]
+ *
  * Sets suspend handler for the [ISource].
  *
  * When a protocol call is occurred it starts a new coroutine passing [coroutineContext] and [coroutineStart] to it.
@@ -62,37 +69,31 @@ fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspendPreserveClientId(
  * Coroutine dispatcher is being chosen in the following order: handlerScheduler (if not null) -> coroutineContext (if it has) -> this.protocol.scheduler (if not null) -> SynchronousScheduler
  */
 @ApiStatus.Internal
+@DelicateCoroutinesApi
 fun<T> ISource<T>.adviseSuspend(lifetime: Lifetime, coroutineContext: CoroutineContext = EmptyCoroutineContext, coroutineStart: CoroutineStart = CoroutineStart.DEFAULT, handler: suspend (T) -> Unit) {
-  val beforeAdviseClientId = currentThreadClientId
   advise(lifetime) {
-    // TODO: very very temporary hack to avoid assertions in some cases
-    // 1) TODO Moklev IJPL-173291 Dependency between RdSettingsStorageService and
-    //  settingsModel should be inversed to provide proper coroutine scopes where model operations are done
-    // 2) TODO: Dubov IJPL-173492 Inconsistent ClientId in `adviseSuspend` on a signal in `ConnectionStateProperty`
-    if (!this.toString().contains("ThinClient.SettingsModel.settingsChanges")
-        && !this.toString().contains("RdOptionalProperty: `<<not bound>>`")) {
-      // use ?. to skip cases when beforeAdviseClientId == null, it's likely valid
-      beforeAdviseClientId?.assertClientIdConsistency("Inside advise ($this)", fallbackToLocal = false)
-    }
-    val inAdviseClientId = currentThreadClientId
-    lifetime.coroutineScope.launch(coroutineContext + getSuitableDispatcher(coroutineContext), coroutineStart) {
-      inAdviseClientId.assertClientIdConsistency("Inside launch ($this)", fallbackToLocal = false)
+    lifetime.launch(coroutineContext + getSuitableDispatcher(null, coroutineContext), coroutineStart) {
       handler(it)
     }
   }
 }
 
 /**
- * Shortcut for [adviseSuspend]
+ * The same as [adviseSuspend] but adds ClientId into [coroutineContext] to restore it in [handler]
  */
 @ApiStatus.Internal
-@Deprecated("Use `adviseSuspend` instead", ReplaceWith("adviseSuspend(lifetime, coroutineContext, coroutineStart, handler)"))
 fun<T> ISource<T>.adviseSuspendPreserveClientId(lifetime: Lifetime, coroutineContext: CoroutineContext = EmptyCoroutineContext, coroutineStart: CoroutineStart = CoroutineStart.DEFAULT, handler: suspend (T) -> Unit) {
-  @OptIn(DelicateCoroutinesApi::class)
-  adviseSuspend(lifetime, coroutineContext, coroutineStart, handler)
+  advise(lifetime) {
+    lifetime.launch(coroutineContext + ClientId.coroutineContext() + getSuitableDispatcher(null, coroutineContext), coroutineStart) {
+      handler(it)
+    }
+  }
 }
 
-private fun Any.getSuitableDispatcher(context: CoroutineContext): CoroutineDispatcher {
+private fun Any.getSuitableDispatcher(handlerScheduler: IScheduler?, context: CoroutineContext): CoroutineDispatcher {
+  if (handlerScheduler != null) {
+    return handlerScheduler.asCoroutineDispatcher(allowInlining = true)
+  }
   @OptIn(ExperimentalStdlibApi::class)
   val contextDispatcher = context[CoroutineDispatcher.Key]
   if (contextDispatcher != null)

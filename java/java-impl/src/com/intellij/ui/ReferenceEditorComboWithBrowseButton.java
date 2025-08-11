@@ -31,7 +31,7 @@ public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseBut
     if (recentEntries != null) {
       setHistory(ArrayUtilRt.toStringArray(recentEntries));
     }
-    if (text != null && !text.isEmpty()) {
+    if (text != null && text.length() > 0) {
       prependItem(text);
     }
     else if (text != null) {

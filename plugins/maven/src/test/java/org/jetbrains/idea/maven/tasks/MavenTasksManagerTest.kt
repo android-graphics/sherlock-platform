@@ -3,8 +3,6 @@ package org.jetbrains.idea.maven.tasks
 
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
-import com.intellij.execution.process.BaseProcessHandler
-import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.maven.testFramework.MavenCompilingTestCase
 import kotlinx.coroutines.runBlocking
@@ -15,17 +13,17 @@ import org.junit.Test
 class MavenTasksManagerTest : MavenCompilingTestCase() {
   @Test
   fun `test run execute before build tasks`() = runBlocking {
-    createProjectSubDirs(".mvn") // for Maven to detect root project
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    val processResults = mutableListOf<ProcessResult>()
-    subscribeToMavenGoalExecution("clean", processResults)
+    val parametersList = mutableListOf<MavenRunnerParameters>()
+    subscribeToMavenGoalExecution("clean", parametersList)
     addCompileTask(projectPom.path, "clean")
-    compileModulesAndAssertExitCode(processResults, "project")
+    compileModules("project")
+    assertSize(1, parametersList)
   }
 
   @Test
@@ -62,10 +60,11 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                   """.trimIndent())
 
     importProjectAsync()
-    val processResults = mutableListOf<ProcessResult>()
-    subscribeToMavenGoalExecution("generate-sources", processResults)
+    val parametersList = mutableListOf<MavenRunnerParameters>()
+    subscribeToMavenGoalExecution("generate-sources", parametersList)
     addCompileTask(m1File.path, "generate-sources")
-    compileModulesAndAssertExitCode(processResults, "m1")
+    compileModules("m1")
+    assertSize(1, parametersList)
   }
 
   @Test
@@ -102,17 +101,16 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                   """.trimIndent())
 
     importProjectAsync()
-    val processResults = mutableListOf<ProcessResult>()
-    subscribeToMavenGoalExecution("generate-sources", processResults)
+    val parametersList = mutableListOf<MavenRunnerParameters>()
+    subscribeToMavenGoalExecution("generate-sources", parametersList)
     addCompileTask(m1File.path, "generate-sources")
     compileModules("m2")
-    assertSize(0, processResults)
+    assertSize(0, parametersList)
   }
 
   @Test
   fun `test group tasks by goal` () = runBlocking {
-    createProjectSubDirs(".mvn") // for Maven to detect root project
-    val p = createProjectPom("""
+    var p = createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
                   <version>1</version>
@@ -144,13 +142,14 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                   """.trimIndent())
 
     importProjectAsync()
-    val processResults = mutableListOf<ProcessResult>()
-    subscribeToMavenGoalExecution("generate-sources", processResults)
+    val parametersList = mutableListOf<MavenRunnerParameters>()
+    subscribeToMavenGoalExecution("generate-sources", parametersList)
     addCompileTask(m1File.path, "generate-sources")
     addCompileTask(m2File.path, "generate-sources")
-    compileModulesAndAssertExitCode(processResults, "m1", "m2")
+    compileModules("m1", "m2")
 
-    val parameters = processResults[0].runnerParameters
+    assertSize(1, parametersList)
+    val parameters = parametersList[0]
     assertEquals(p.path, parameters.workingDirPath + "/" + parameters.pomFileName)
     assertEquals(setOf("group:m1", "group:m2"), parameters.projectsCmdOptionValues.toSet())
   }
@@ -161,36 +160,15 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
     mavenTasksManager.addCompileTasks(listOf(task), MavenTasksManager.Phase.BEFORE_COMPILE)
   }
 
-  private fun subscribeToMavenGoalExecution(goal: String, processResults: MutableList<ProcessResult>) {
+  private fun subscribeToMavenGoalExecution(goal: String, parametersList: MutableList<MavenRunnerParameters>) {
     val connection = project.messageBus.connect()
     connection.subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
-      override fun processTerminated(executorIdLocal: String, environmentLocal: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
+      override fun processStartScheduled(executorIdLocal: String, environmentLocal: ExecutionEnvironment) {
         val runProfile = environmentLocal.runProfile
         if (runProfile is MavenRunConfiguration) {
-          val commandLine = (handler as BaseProcessHandler<*>).commandLine
-          processResults.add(ProcessResult(runProfile.runnerParameters, commandLine, exitCode))
+          parametersList.add(runProfile.runnerParameters)
         }
       }
     })
   }
-
-  private suspend fun compileModulesAndAssertExitCode(processResults: MutableList<ProcessResult>, vararg moduleNames: String) {
-    try {
-      compileModules(*moduleNames)
-      assertExitCode(processResults)
-    } catch (e: Throwable) {
-      assertExitCode(processResults)
-      throw e
-    }
-  }
-
-  private fun assertExitCode(processResults: MutableList<ProcessResult>) {
-    assertSize(1, processResults)
-    val processResult = processResults[0]
-    val exitCode = processResult.exitCode
-    val commandLine = processResult.commandLine
-    assertEquals("command failed with exit code $exitCode:\n$commandLine\n", 0, exitCode)
-  }
-
-  private data class ProcessResult(val runnerParameters: MavenRunnerParameters, val commandLine: String, val exitCode: Int)
 }

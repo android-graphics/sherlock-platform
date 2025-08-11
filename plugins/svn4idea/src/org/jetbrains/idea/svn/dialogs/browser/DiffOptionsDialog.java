@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.dialogs.browser;
 
@@ -42,7 +42,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
   private JLabel mySourceUrlLabel;
   private JPanel myMainPanel;
   private JLabel myErrorLabel;
-  private static final @NonNls String DEFAULT_PATCH_NAME = "diff.txt";
+  @NonNls private static final String DEFAULT_PATCH_NAME = "diff.txt";
 
   public DiffOptionsDialog(Project project, Url rootURL, Url url) {
     super(project, true);
@@ -67,7 +67,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     });
     myFileBrowser.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(final @NotNull DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         update();
       }
     });
@@ -80,7 +80,8 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
   }
 
   @Override
-  protected @NonNls String getDimensionServiceKey() {
+  @NonNls
+  protected String getDimensionServiceKey() {
     return "svn4idea.diff.options";
   }
 
@@ -131,7 +132,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
       getOKAction().setEnabled(false);
       return;
     }
-    if (myUnifiedDiffButton.isSelected() && (myFileBrowser.getText().isEmpty() || getTargetFile().getParentFile() == null)) {
+    if (myUnifiedDiffButton.isSelected() && (myFileBrowser.getText().length() == 0 || getTargetFile().getParentFile() == null)) {
       myErrorLabel.setText(message("diff.options.no.patch.file.error"));
       getOKAction().setEnabled(false);
       return;
@@ -145,7 +146,8 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     return myBrowser;
   }
 
-  private @Nullable File selectFile() {
+  @Nullable
+  private File selectFile() {
     FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor();
     fcd.setShowFileSystemRoots(true);
     fcd.setTitle(message("dialog.title.save.unified.diff"));

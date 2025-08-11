@@ -18,11 +18,13 @@ public class ShLazyBlockImpl extends ShLazyParseablePsiElement {
     super(node.getElementType(), node.getText());
   }
 
-  public @NotNull PsiElement getLeftCurly() {
+  @NotNull
+  public PsiElement getLeftCurly() {
     return findNotNullChildByType(LEFT_CURLY);
   }
 
-  public @Nullable PsiElement getRightCurly() {
+  @Nullable
+  public PsiElement getRightCurly() {
     return findChildByElementType(RIGHT_CURLY);
   }
 }

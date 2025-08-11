@@ -1,5 +1,5 @@
 // "Add parameter to function 'bar'" "true"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 fun bar(isObject: Boolean) {}
 
 fun test(isObject: Boolean) {

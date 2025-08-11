@@ -6,11 +6,9 @@ import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.indexing.roots.origin.ExternalEntityOrigin;
 import com.intellij.util.indexing.roots.origin.ExternalEntityOriginImpl;
 import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
 public final class ExternalEntityIndexableIteratorImpl extends SourceRootHolderIteratorBase {
 
   public ExternalEntityIndexableIteratorImpl(@NotNull EntityPointer<?> entityPointer,
@@ -25,8 +23,9 @@ public final class ExternalEntityIndexableIteratorImpl extends SourceRootHolderI
                                                                            "indexable.files.provider.scanning.additional.dependencies")));
   }
 
+  @NotNull
   @Override
-  public @NotNull ExternalEntityOrigin getOrigin() {
+  public ExternalEntityOrigin getOrigin() {
     return new ExternalEntityOriginImpl(myEntityPointer, roots);
   }
 }

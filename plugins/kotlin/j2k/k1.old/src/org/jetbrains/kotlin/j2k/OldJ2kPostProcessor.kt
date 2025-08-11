@@ -2,19 +2,24 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.codeStyle.CodeStyleManager
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.PieceOfCodePostProcessingTarget
@@ -54,14 +59,14 @@ class OldJ2kPostProcessor(private val formatCode: Boolean = true) : PostProcesso
 
         val disposable = KotlinPluginDisposable.getInstance(file.project)
 
-        disposable.coroutineScope.launch(Dispatchers.EDT) {
+        runBlocking(EDT.ModalityStateElement(ModalityState.defaultModalityState())) {
             do {
                 var modificationStamp: Long? = file.modificationStamp
                 val elementToActions: List<ActionData> = run {
                     @Suppress("DEPRECATION")
                     while (!Disposer.isDisposed(disposable)) {
                         try {
-                            return@run readAction {
+                            return@run runReadAction {
                                 collectAvailableActions(file, rangeMarker)
                             }
                         } catch (e: Exception) {
@@ -72,11 +77,11 @@ class OldJ2kPostProcessor(private val formatCode: Boolean = true) : PostProcesso
                     emptyList()
                 }
 
-                launch(Dispatchers.EDT) {
+                withContext(EDT) {
                     for ((element, action, _, writeActionNeeded) in elementToActions) {
                         if (element.isValid) {
                             if (writeActionNeeded) {
-                                edtWriteAction {
+                                runWriteAction {
                                     action()
                                 }
                             } else {
@@ -93,8 +98,8 @@ class OldJ2kPostProcessor(private val formatCode: Boolean = true) : PostProcesso
 
 
             if (formatCode) {
-                launch(Dispatchers.EDT) {
-                    edtWriteAction {
+                withContext(EDT) {
+                    runWriteAction {
                         val codeStyleManager = CodeStyleManager.getInstance(file.project)
                         if (rangeMarker != null) {
                             if (rangeMarker.isValid) {
@@ -164,7 +169,7 @@ class OldJ2kPostProcessor(private val formatCode: Boolean = true) : PostProcesso
     private fun rangeFilter(element: PsiElement, rangeMarker: RangeMarker?): RangeFilterResult {
         if (rangeMarker == null) return RangeFilterResult.PROCESS
         if (!rangeMarker.isValid) return RangeFilterResult.SKIP
-        val range = rangeMarker.textRange
+        val range = TextRange(rangeMarker.startOffset, rangeMarker.endOffset)
         val elementRange = element.textRange
         return when {
             range.contains(elementRange) -> RangeFilterResult.PROCESS

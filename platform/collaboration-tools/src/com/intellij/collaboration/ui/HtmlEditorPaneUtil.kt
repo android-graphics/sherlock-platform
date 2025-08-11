@@ -28,14 +28,13 @@ fun SimpleHtmlPane(
   additionalStyleSheet: StyleSheet? = null,
   addBrowserListener: Boolean = true,
   customImageLoader: AsyncHtmlImageLoader? = null,
-  baseUrl: URL? = null,
-  aClass: Class<*> = HtmlEditorPaneUtil::class.java,
+  baseUrl: URL? = null
 ): JEditorPane =
   JTextPane().apply {
     editorKit = HTMLEditorKitBuilder().withViewFactoryExtensions(
       ExtendableHTMLViewFactory.Extensions.WORD_WRAP,
       HtmlEditorPaneUtil.CONTENT_TOOLTIP,
-      HtmlEditorPaneUtil.inlineIconExtension(aClass),
+      HtmlEditorPaneUtil.INLINE_ICON_EXTENSION,
       HtmlEditorPaneUtil.IMAGES_EXTENSION
     ).apply {
       if (additionalStyleSheet != null) {
@@ -51,7 +50,7 @@ fun SimpleHtmlPane(
       addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
     }
     margin = JBInsets.emptyInsets()
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAATextInfoForSwingComponent())
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
 
     (caret as DefaultCaret).updatePolicy = DefaultCaret.NEVER_UPDATE
 
@@ -81,10 +80,7 @@ fun JEditorPane.setHtmlBody(@Language("HTML") body: String) {
     @Suppress("HardCodedStringLiteral")
     text = "<html><body>$body</body></html>"
   }
-  // JDK bug JBR-2256 - need to force height recalculation
-  if (height == 0) {
-    setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
-  }
+  setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
 }
 
 fun JEditorPane.onHyperlinkActivated(listener: (HyperlinkEvent) -> Unit) {
@@ -108,27 +104,12 @@ object HtmlEditorPaneUtil {
    *
    * Syntax is `<icon-inline src="..."/>`
    */
-  @Deprecated("Use inlineIconExtension(Class<*> aClass)")
-  val INLINE_ICON_EXTENSION: ExtendableHTMLViewFactory.Extension = inlineIconExtension()
+  val INLINE_ICON_EXTENSION: ExtendableHTMLViewFactory.Extension = InlineIconExtension
 
   /**
    * Handles image loading and scaling
    */
   val IMAGES_EXTENSION: ExtendableHTMLViewFactory.Extension = ScalingImageExtension
-
-  /**
-   * Show an icon inlined with the text
-   *
-   * Syntax is `<icon-inline src="..."/>`
-   *
-   * To use icons from an icon collection class, enter the fully qualified name of the icon field
-   * within the 'src' attribute.
-   * This will only find icon classes that are on the classpath of the given class.
-   *
-   * @param aClass Class used for its classloader to find reflexive icons on the classpath.
-   */
-  fun inlineIconExtension(aClass: Class<*> = InlineIconExtension::class.java): ExtendableHTMLViewFactory.Extension =
-    InlineIconExtension(aClass)
 }
 
 private object ContentTooltipExtension : ExtendableHTMLViewFactory.Extension {
@@ -148,20 +129,15 @@ private object ContentTooltipExtension : ExtendableHTMLViewFactory.Extension {
   }
 }
 
-/**
- * @param aClass Class used for its classloader to find reflexive icons on the classpath.
- */
-private class InlineIconExtension(private val aClass: Class<*>) : ExtendableHTMLViewFactory.Extension {
-  companion object {
-    const val ICON_INLINE_ELEMENT_NAME = "icon-inline" // NON-NLS
-  }
+private object InlineIconExtension : ExtendableHTMLViewFactory.Extension {
+  const val ICON_INLINE_ELEMENT_NAME = "icon-inline" // NON-NLS
 
   override fun invoke(elem: Element, view: View): View {
     if (ICON_INLINE_ELEMENT_NAME == elem.name) {
       val icon = elem.attributes.getAttribute(HTML.Attribute.SRC)?.let {
         val path = it as String
 
-        IconLoader.findIcon(path, aClass, true, false)
+        IconLoader.findIcon(path, ExtendableHTMLViewFactory::class.java, true, false)
       }
 
       if (icon != null) {

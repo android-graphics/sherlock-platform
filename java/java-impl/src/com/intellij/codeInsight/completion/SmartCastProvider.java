@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -93,7 +92,7 @@ final class SmartCastProvider {
     }
   }
 
-  static @Unmodifiable @NotNull List<ExpectedTypeInfo> getParenthesizedCastExpectationByOperandType(PsiElement position) {
+  static @NotNull List<ExpectedTypeInfo> getParenthesizedCastExpectationByOperandType(PsiElement position) {
     PsiElement parenthesisOwner = getParenthesisOwner(position);
     PsiExpression operand = getCastedExpression(parenthesisOwner);
     if (operand == null || !(parenthesisOwner.getParent() instanceof PsiParenthesizedExpression)) return Collections.emptyList();

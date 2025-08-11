@@ -1,4 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.platform.diagnostic.startUpPerformanceReporter
 
 import com.intellij.diagnostic.ActivityCategory
@@ -33,12 +35,12 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.invariantSeparatorsPathString
 
 private val LOG: Logger
   get() = logger<StartUpMeasurer>()
@@ -63,7 +65,7 @@ open class StartUpPerformanceReporter(private val coroutineScope: CoroutineScope
 
   override fun getMetrics(): Flow<Object2IntMap<String>> = lastMetrics
 
-  override fun getPluginCostMap(): Map<String, Object2LongMap<String>> = pluginCostMap ?: emptyMap()
+  override fun getPluginCostMap(): Map<String, Object2LongMap<String>> = pluginCostMap!!
 
   override fun getLastReport(): ByteBuffer? = lastReport
 
@@ -97,7 +99,7 @@ private suspend fun logAndClearStats(projectName: String, perfFilePath: String?)
   var end = -1L
 
   StartUpMeasurer.processAndClear(SystemProperties.getBooleanProperty("idea.collect.perf.after.first.project", false)) { item ->
-    // process it now to ensure that a thread will have a first name (because a report writer can process events in any order)
+    // process it now to ensure that thread will have a first name (because a report writer can process events in any order)
     threadNameManager.getThreadName(item)
 
     if (item.end == -1L) {
@@ -139,7 +141,11 @@ private suspend fun logAndClearStats(projectName: String, perfFilePath: String?)
     }
   }
 
-  w.write(startTime, serviceActivities, instantEvents, end, projectName)
+  w.write(timeOffset = startTime,
+          serviceActivities = serviceActivities,
+          instantEvents = instantEvents,
+          end = end,
+          projectName = projectName)
 
   val currentReport = w.toByteBuffer()
 
@@ -159,18 +165,16 @@ private suspend fun logAndClearStats(projectName: String, perfFilePath: String?)
   }
 
   for (instantEvent in instantEvents.filter { setOf("splash shown", "splash hidden").contains(it.name) }) {
-    val key = "event:${instantEvent.name}"
-    w.publicStatMetrics[key] = TimeUnit.NANOSECONDS.toMillis(instantEvent.start - StartUpMeasurer.getStartTime()).toInt()
+    w.publicStatMetrics.put("event:${instantEvent.name}",
+                            TimeUnit.NANOSECONDS.toMillis(instantEvent.start - StartUpMeasurer.getStartTime()).toInt())
   }
 
   return StartUpPerformanceReporterValues(pluginCostMap, currentReport, w.publicStatMetrics)
 }
 
-private class StartUpPerformanceReporterValues(
-  @JvmField val pluginCostMap: MutableMap<String, Object2LongOpenHashMap<String>>,
-  @JvmField val lastReport: ByteBuffer,
-  @JvmField val lastMetrics: Object2IntMap<String>,
-)
+private class StartUpPerformanceReporterValues(@JvmField val pluginCostMap: MutableMap<String, Object2LongOpenHashMap<String>>,
+                                               @JvmField val lastReport: ByteBuffer,
+                                               @JvmField val lastMetrics: Object2IntMap<String>)
 
 private fun computePluginCostMap(): MutableMap<String, Object2LongOpenHashMap<String>> {
   val result = HashMap(StartUpMeasurer.pluginCostMap)
@@ -198,7 +202,8 @@ private fun generateJarAccessLog(outFile: Path) {
     if (!source.startsWith(homeDir)) {
       continue
     }
-    builder.append(item.key).append(':').append(homeDir.relativize(source).invariantSeparatorsPathString)
+
+    builder.append(item.key).append(':').append(homeDir.relativize(source).toString().replace(File.separatorChar, '/'))
     builder.append('\n')
   }
   Files.createDirectories(outFile.parent)
@@ -206,7 +211,8 @@ private fun generateJarAccessLog(outFile: Path) {
 }
 
 private class HeadlessStartUpPerformanceService : StartUpPerformanceService {
-  override fun reportStatistics(project: Project) { }
+  override fun reportStatistics(project: Project) {
+  }
 
   override fun getPluginCostMap(): Map<String, Object2LongMap<String>> = emptyMap()
 

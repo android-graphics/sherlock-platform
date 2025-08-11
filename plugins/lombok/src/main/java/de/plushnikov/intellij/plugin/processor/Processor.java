@@ -34,11 +34,13 @@ public interface Processor {
   @NotNull
   Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation);
 
-  default @NotNull List<? super PsiElement> process(@NotNull PsiClass psiClass) {
+  @NotNull
+  default List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     return process(psiClass, null);
   }
 
-  default @NotNull List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
+  @NotNull
+  default List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
     return Collections.emptyList();
   }
 

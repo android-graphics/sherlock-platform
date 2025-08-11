@@ -1,15 +1,14 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.io.FileUtilRt;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.tools.*;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardLocation;
 import java.io.*;
 
-@ApiStatus.Internal
-public final class InputFileObject extends JpsFileObject {
+final class InputFileObject extends JpsFileObject {
   private final File myFile;
   private final String myEncoding;
   private final ValueSupplier<File, RuntimeException> myAbsFile;
@@ -58,12 +57,11 @@ public final class InputFileObject extends JpsFileObject {
     return myFile.delete();
   }
 
-  @Override
   protected String inferBinaryName(Iterable<? extends File> path, final boolean caseSensitiveFS) {
     final String fPath = myFile.getPath();
     for (File dir: path) {
       String dirPath = dir.getPath();
-      if (dirPath.isEmpty()) {
+      if (dirPath.length() == 0) {
         dirPath = System.getProperty("user.dir");
       }
       if (!fPath.regionMatches(!caseSensitiveFS, 0, dirPath, 0, dirPath.length())) {

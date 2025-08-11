@@ -19,14 +19,12 @@ import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.vcs.AnnotationProviderEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Objects;
 
-@ApiStatus.Internal
-public final class AnnotateVcsVirtualFileAction {
+public class AnnotateVcsVirtualFileAction {
   private static final Logger LOG = Logger.getInstance(AnnotateVcsVirtualFileAction.class);
 
   private static boolean isEnabled(@NotNull AnActionEvent e) {
@@ -74,7 +72,7 @@ public final class AnnotateVcsVirtualFileAction {
     }
   }
 
-  private static void doAnnotate(final @NotNull Project project, final @NotNull Editor editor, final @NotNull VirtualFile file) {
+  private static void doAnnotate(@NotNull final Project project, @NotNull final Editor editor, @NotNull final VirtualFile file) {
     final AnnotationData data = AnnotationData.extractFrom(project, file);
     assert data != null;
 
@@ -131,8 +129,7 @@ public final class AnnotateVcsVirtualFileAction {
     ProgressManager.getInstance().run(annotateTask);
   }
 
-  @ApiStatus.Internal
-  public static final class Provider implements AnnotateToggleAction.Provider {
+  public static class Provider implements AnnotateToggleAction.Provider {
     @Override
     public boolean isEnabled(AnActionEvent e) {
       return AnnotateVcsVirtualFileAction.isEnabled(e);

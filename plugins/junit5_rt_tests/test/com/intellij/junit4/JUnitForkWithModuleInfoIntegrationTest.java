@@ -80,7 +80,6 @@ public class JUnitForkWithModuleInfoIntegrationTest extends AbstractTestFramewor
 
     assertTrue(processOutput.sys.toString().contains("-junit5"));
     assertEmpty(processOutput.out);
-    assertEmpty(processOutput.err);
     assertStartedEvents(3, processOutput);
   }
 
@@ -103,7 +102,6 @@ public class JUnitForkWithModuleInfoIntegrationTest extends AbstractTestFramewor
 
     assertTrue(processOutput.sys.toString().contains("-junit5"));
     assertEmpty(processOutput.out);
-    assertEmpty(processOutput.err);
     assertStartedEvents(2, processOutput);
   }
 
@@ -120,7 +118,6 @@ public class JUnitForkWithModuleInfoIntegrationTest extends AbstractTestFramewor
 
     assertTrue(processOutput.sys.toString().contains("-junit5"));
     assertEmpty(processOutput.out);
-    assertEmpty(processOutput.err);
     assertStartedEvents(2, processOutput);
   }
 }

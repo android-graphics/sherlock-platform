@@ -154,7 +154,7 @@ public abstract class EditorAction extends AnAction implements DumbAware, LightE
     DataContext dataContext = e.getDataContext();
     Editor editor = getEditor(dataContext);
     if (editor == null) {
-      if (e.isFromContextMenu()) {
+      if (ActionPlaces.isPopupPlace(e.getPlace())) {
         presentation.setEnabledAndVisible(false);
       }
       else {

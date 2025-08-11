@@ -55,11 +55,15 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testShouldShowLogsOfMavenServerIfNotStarted() = runBlocking {
-    LoggedErrorProcessor.executeWith<RuntimeException>(loggedErrorProcessor("Maven server exception for tests")) {
-      MavenServerCMDState.withThrowExceptionOnServerStart {
+    try {
+      LoggedErrorProcessor.executeWith<RuntimeException>(loggedErrorProcessor("Maven server exception for tests")) {
+        MavenServerCMDState.setThrowExceptionOnNextServerStart()
         createAndImportProject()
         assertEvent { it.message.contains("Maven server exception for tests") }
       }
+    }
+    finally {
+      MavenServerCMDState.resetThrowExceptionOnNextServerStart()
     }
   }
 
@@ -78,7 +82,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     createProjectSubFile(".mvn/maven.config", "-aaaaT1")
     createAndImportProject()
     assertModules("test")
-    assertEvent { it.message.contains("Unrecognized option: -aaaaT1") || it.message.contains("Unable to parse maven.config") }
+    assertEvent { it.message.contains("Unrecognized option: -aaaaT1") }
   }
 
   private fun loggedErrorProcessor(search: String) = object : LoggedErrorProcessor() {

@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.codeVision.ui.popup.layouter
 
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
@@ -8,7 +7,6 @@ import java.awt.Rectangle
 /**
  * Algorithm to dock a rectangle to another (copy-paste from R# platform)
  */
-@ApiStatus.Internal
 class RectangleDocker(anchor: Rectangle, size: Dimension,
                       private val myAllowedDispositions: List<Anchoring2D>,
                       private val myScreen: Rectangle,

@@ -89,11 +89,13 @@ public class SuperBuilderHandler extends BuilderHandler {
     return true;
   }
 
-  public @NotNull String getBuilderClassName(@NotNull PsiClass psiClass) {
+  @NotNull
+  public String getBuilderClassName(@NotNull PsiClass psiClass) {
     return getBuilderClassName(psiClass, psiClass.getName());
   }
 
-  public @NotNull String getBuilderImplClassName(@NotNull PsiClass psiClass) {
+  @NotNull
+  public String getBuilderImplClassName(@NotNull PsiClass psiClass) {
     return getBuilderClassName(psiClass) + "Impl";
   }
 
@@ -143,7 +145,7 @@ public class SuperBuilderHandler extends BuilderHandler {
                                                             @NotNull PsiAnnotation psiAnnotation,
                                                             @NotNull PsiClassType psiTypeBaseWithGenerics) {
     final String builderMethodName = getBuilderMethodName(psiAnnotation);
-    if (builderMethodName.isEmpty() || hasStaticMethod(containingClass, builderMethodName)) {
+    if (builderMethodName.isEmpty() || hasMethod(containingClass, builderMethodName)) {
       return Optional.empty();
     }
 
@@ -168,7 +170,7 @@ public class SuperBuilderHandler extends BuilderHandler {
                                                                      @NotNull PsiClass builderImplClass,
                                                                      @NotNull PsiAnnotation psiAnnotation,
                                                                      @NotNull PsiClassType psiTypeBaseWithGenerics) {
-    if (!shouldGenerateToBuilderMethods(psiAnnotation) || hasMethod(containingClass, TO_BUILDER_METHOD_NAME, 0)) {
+    if (!shouldGenerateToBuilderMethods(psiAnnotation)) {
       return Optional.empty();
     }
 
@@ -204,7 +206,8 @@ public class SuperBuilderHandler extends BuilderHandler {
     return result;
   }
 
-  public @NotNull PsiClass createBuilderBaseClass(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+  @NotNull
+  public PsiClass createBuilderBaseClass(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     String builderClassName = getBuilderClassName(psiClass);
     String builderClassQualifiedName = psiClass.getQualifiedName() + "." + builderClassName;
 
@@ -266,8 +269,9 @@ public class SuperBuilderHandler extends BuilderHandler {
     return baseClassBuilder;
   }
 
-  private @NotNull List<BuilderInfo> createBuilderInfos(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation,
-                                                        @NotNull PsiClass baseClassBuilder) {
+  @NotNull
+  private List<BuilderInfo> createBuilderInfos(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation,
+                                               @NotNull PsiClass baseClassBuilder) {
     final List<BuilderInfo> builderInfos = createBuilderInfos(psiAnnotation, psiClass, null, baseClassBuilder);
     for (BuilderInfo builderInfo : builderInfos) {
       builderInfo.withBuilderChainResult("self()")
@@ -405,7 +409,8 @@ public class SuperBuilderHandler extends BuilderHandler {
     return result;
   }
 
-  public @NotNull PsiClass createBuilderImplClass(@NotNull PsiClass psiClass, @NotNull PsiClass psiBaseBuilderClass, PsiAnnotation psiAnnotation) {
+  @NotNull
+  public PsiClass createBuilderImplClass(@NotNull PsiClass psiClass, @NotNull PsiClass psiBaseBuilderClass, PsiAnnotation psiAnnotation) {
     String builderClassName = getBuilderImplClassName(psiClass);
     String builderClassQualifiedName = psiClass.getQualifiedName() + "." + builderClassName;
 
@@ -489,12 +494,14 @@ public class SuperBuilderHandler extends BuilderHandler {
     return result;
   }
 
-  public static @NotNull PsiClassType getTypeWithWildcardsForSuperBuilderTypeParameters(@NotNull PsiClass psiClass) {
+  @NotNull
+  public static PsiClassType getTypeWithWildcardsForSuperBuilderTypeParameters(@NotNull PsiClass psiClass) {
     final PsiWildcardType wildcardType = PsiWildcardType.createUnbounded(psiClass.getManager());
     return getTypeWithSpecificTypeParameters(psiClass, wildcardType, wildcardType);
   }
 
-  private static @NotNull PsiClassType getTypeWithSpecificTypeParameters(@NotNull PsiClass psiClass, PsiType @NotNull ... psiTypes) {
+  @NotNull
+  private static PsiClassType getTypeWithSpecificTypeParameters(@NotNull PsiClass psiClass, PsiType @NotNull ... psiTypes) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
     final PsiTypeParameter[] classTypeParameters = psiClass.getTypeParameters();
     final int substituteTypesCount = psiTypes.length;

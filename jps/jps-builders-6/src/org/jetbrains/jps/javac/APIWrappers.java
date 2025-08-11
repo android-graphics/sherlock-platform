@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.Pair;
@@ -51,7 +51,7 @@ public final class APIWrappers {
   }
 
   @ApiStatus.Internal
-  public static final class ProcessingContext {
+  public static class ProcessingContext {
     private final JpsJavacFileManager myFileManager;
     private Iterable<Processor> myAllProcessors = Collections.emptyList();
     private final Map<ProcessingEnvironment, ProcessingEnvironment> myWrappers = new HashMap<>(); // procEnv -> wrappedProcEnv
@@ -126,13 +126,11 @@ public final class APIWrappers {
     }
   }
 
-  @ApiStatus.Internal
-  public interface WrapperDelegateAccessor<T> {
+  interface WrapperDelegateAccessor<T> {
     T getWrapperDelegate();
   }
 
-  @ApiStatus.Internal
-  public abstract static class DynamicWrapper<T> implements WrapperDelegateAccessor<T> {
+  abstract static class DynamicWrapper<T> implements WrapperDelegateAccessor<T> {
 
     private final T myDelegate;
 
@@ -147,8 +145,7 @@ public final class APIWrappers {
   }
 
   @SuppressWarnings("unchecked")
-  @ApiStatus.Internal
-  public final static class DiagnosticListenerWrapper<T extends FileObject> extends DynamicWrapper<DiagnosticOutputConsumer> implements DiagnosticListener<T>{
+  static class DiagnosticListenerWrapper<T extends FileObject> extends DynamicWrapper<DiagnosticOutputConsumer> implements DiagnosticListener<T>{
     private final ProcessingContext myProcContext;
 
     DiagnosticListenerWrapper(ProcessingContext procContext, DiagnosticOutputConsumer delegate) {
@@ -166,8 +163,7 @@ public final class APIWrappers {
     }
   }
 
-  @ApiStatus.Internal
-  public static final class DiagnosticWrapper<T> extends DynamicWrapper<Diagnostic<T>> {
+  static class DiagnosticWrapper<T> extends DynamicWrapper<Diagnostic<T>> {
     private final ProcessingContext myProcContext;
 
     DiagnosticWrapper(ProcessingContext procContext, Diagnostic<T> delegate) {
@@ -176,26 +172,11 @@ public final class APIWrappers {
     }
 
     public String getMessage(Locale locale) {
-      try {
-        try {
-          return myProcContext.adjustMessage(getWrapperDelegate().getMessage(locale));
-        }
-        catch (Throwable e) {
-          // Diagnostic.getMessage() can cause unexpected exceptions while building the message based on a structured data contained in the disgnostic object
-          // For example, it may fail with a class name resolution error, if some symbols required to build a message are not resolvable at the moment
-          // Sometimes just repeating a call helps to get the actual diagnostic message
-          return myProcContext.adjustMessage(getWrapperDelegate().getMessage(locale));
-        }
-      }
-      catch (Throwable e) {
-        // fallback logic
-        return "Unexpected error: " + e.getClass() + ": " + e.getMessage();
-      }
+      return myProcContext.adjustMessage(getWrapperDelegate().getMessage(locale));
     }
   }
 
-  @ApiStatus.Internal
-  public static final class ProcessorWrapper extends DynamicWrapper<Processor> {
+  static class ProcessorWrapper extends DynamicWrapper<Processor> {
     private final ProcessingContext myProcessingContext;
     private boolean myCodeShown = false;
     private ProcessingEnvironment myProcessingEnv;
@@ -282,8 +263,7 @@ public final class APIWrappers {
     }
   }
 
-  @ApiStatus.Internal
-  public final static class ProcessingEnvironmentWrapper extends DynamicWrapper<ProcessingEnvironment> {
+  static class ProcessingEnvironmentWrapper extends DynamicWrapper<ProcessingEnvironment> {
     private final JpsJavacFileManager myFileManager;
     private Filer myFilerImpl;
 
@@ -302,8 +282,7 @@ public final class APIWrappers {
     }
   }
 
-  @ApiStatus.Internal
-  public final static class FilerWrapper extends DynamicWrapper<Filer> implements Filer {
+  static class FilerWrapper extends DynamicWrapper<Filer> implements Filer {
     private final JpsJavacFileManager myFileManager;
     private final Function<Element, String> convertToClassName;
 
@@ -427,7 +406,7 @@ public final class APIWrappers {
     }));
   }
 
-  private static final class ClassNameFinder implements Function<Element, String> {
+  private static class ClassNameFinder implements Function<Element, String> {
     private static final Method ourGetQualifiedNameMethod;
     private final Name myEmptyName;
 

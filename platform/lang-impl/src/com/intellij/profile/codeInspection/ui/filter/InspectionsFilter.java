@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.filter;
 
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
@@ -62,7 +62,7 @@ public abstract class InspectionsFilter {
     filterChanged();
   }
 
-  public void setSuitableInspectionsStates(final @Nullable Boolean suitableInspectionsStates) {
+  public void setSuitableInspectionsStates(@Nullable final Boolean suitableInspectionsStates) {
     mySuitableInspectionsStates = suitableInspectionsStates;
     filterChanged();
   }

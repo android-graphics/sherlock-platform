@@ -6,7 +6,6 @@ import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.compiler.server.CompilerConfigurationUtils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -80,7 +79,6 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   private final List<CompiledPattern> myCompiledPatterns = new ArrayList<>();
   private final List<CompiledPattern> myNegatedCompiledPatterns = new ArrayList<>();
   private boolean myWildcardPatternsInitialized = false;
-  private boolean myParallelCompilationOptionSetExplicitly = false;
   private final Project myProject;
   private final ExcludedEntriesConfiguration myExcludesConfiguration;
 
@@ -99,7 +97,8 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   // the map is calculated by module processor profiles list for faster access to module settings
   private Map<Module, ProcessorConfigProfile> myProcessorsProfilesMap = null;
 
-  private @Nullable String myBytecodeTargetLevel = null;  // null means same as effective language level
+  @Nullable
+  private String myBytecodeTargetLevel = null;  // null means same as effective language level
   private final Map<String, String> myModuleBytecodeTarget = new HashMap<>();
 
   public CompilerConfigurationImpl(@NotNull Project project) {
@@ -138,7 +137,8 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     }, project);
   }
 
-  private static @NotNull ExcludedEntriesConfiguration createExcludedEntriesConfiguration(@NotNull Project project) {
+  @NotNull
+  private static ExcludedEntriesConfiguration createExcludedEntriesConfiguration(@NotNull Project project) {
     final ExcludedEntriesConfiguration cfg = new ExcludedEntriesConfiguration(project.getMessageBus().syncPublisher(ExcludedEntriesListener.TOPIC));
     Disposer.register(project, cfg);
     project.getMessageBus().connect().subscribe(ExcludedEntriesListener.TOPIC, new ExcludedEntriesListener() {
@@ -166,15 +166,11 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     public int BUILD_PROCESS_HEAP_SIZE = DEFAULT_BUILD_PROCESS_HEAP_SIZE;
     public String BUILD_PROCESS_ADDITIONAL_VM_OPTIONS = "";
     public boolean USE_RELEASE_OPTION = true;
-    public @Nullable ParallelCompilationOption PARALLEL_COMPILATION_OPTION = null;
   }
 
   @Override
   public Element getState() {
     Element state = new Element("state");
-    if (!myParallelCompilationOptionSetExplicitly) {
-      myState.PARALLEL_COMPILATION_OPTION = null;
-    }
     XmlSerializer.serializeInto(myState, state, new SkipDefaultValuesSerializationFilters());
 
     if (!myAddNotNullAssertions) {
@@ -301,12 +297,8 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     }
   }
 
-  private void migrateParallelCompilationOption() {
-    if (isOldParallelCompilationEnabled()) myState.PARALLEL_COMPILATION_OPTION = ParallelCompilationOption.ENABLED;
-    else myState.PARALLEL_COMPILATION_OPTION = ParallelCompilationOption.AUTOMATIC;
-  }
-
-  private boolean isOldParallelCompilationEnabled() {
+  @Override
+  public boolean isParallelCompilationEnabled() {
     // returns parallel compilation flag first by looking into workspace.xml and then intellij.yaml
 
     //noinspection deprecation
@@ -319,43 +311,14 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   }
 
   @Override
-  public boolean isParallelCompilationEnabled() {
-    return switch (getParallelCompilationOption()) {
-        case ENABLED -> true;
-        case AUTOMATIC -> CompilerConfigurationUtils.isParallelCompilationAllowedWithCurrentSpecs();
-        case DISABLED -> false;
-      };
-  }
-
-  @Override
   public void setParallelCompilationEnabled(boolean enabled) {
-    ParallelCompilationOption option;
-    if (enabled) {
-      option = ParallelCompilationOption.ENABLED;
-    } else {
-      option = ParallelCompilationOption.DISABLED;
-    }
-
-    setParallelCompilationOption(option);
+    //noinspection deprecation
+    CompilerWorkspaceConfiguration.getInstance(myProject).PARALLEL_COMPILATION = enabled;
   }
 
   @Override
-  public @NotNull ParallelCompilationOption getParallelCompilationOption() {
-    if (myState.PARALLEL_COMPILATION_OPTION == null) migrateParallelCompilationOption();
-    return myState.PARALLEL_COMPILATION_OPTION;
-  }
-
-  @Override
-  public void setParallelCompilationOption(@NotNull ParallelCompilationOption option) {
-    ParallelCompilationOption oldOption = getParallelCompilationOption();
-    if (oldOption != option) {
-      myParallelCompilationOptionSetExplicitly = true;
-      myState.PARALLEL_COMPILATION_OPTION = option;
-    }
-  }
-
-  @Override
-  public @Nullable String getProjectBytecodeTarget() {
+  @Nullable
+  public String getProjectBytecodeTarget() {
     return myBytecodeTargetLevel;
   }
 
@@ -397,7 +360,8 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   }
 
   @Override
-  public @Nullable String getBytecodeTargetLevel(Module module) {
+  @Nullable
+  public String getBytecodeTargetLevel(Module module) {
     final String level = myModuleBytecodeTarget.get(module.getName());
     if (level != null) {
       return level.isEmpty() ? null : level;
@@ -419,33 +383,9 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull List<String> getAdditionalOptions() {
-    JpsJavaCompilerOptions settings = getJavaCompilerSettings();
-    if (settings != null) {
-      String options = settings.ADDITIONAL_OPTIONS_STRING;
-      if (!StringUtil.isEmptyOrSpaces(options)) {
-        return ParametersListUtil.parse(options);
-      }
-    }
-    return Collections.emptyList();
-  }
-
-  @Override
-  public void setAdditionalOptions(@NotNull List<String> options) {
-    JpsJavaCompilerOptions settings = getJavaCompilerSettings();
-    if (settings != null) {
-      String previous = settings.ADDITIONAL_OPTIONS_STRING;
-      String newValue = ParametersListUtil.join(options);
-      if (!newValue.equals(previous)) {
-        settings.ADDITIONAL_OPTIONS_STRING = newValue;
-        clearBuildManagerState(myProject);
-      }
-    }
-  }
-
-  @Override
-  public @NotNull List<String> getAdditionalOptions(@NotNull Module module) {
+  public List<String> getAdditionalOptions(@NotNull Module module) {
     JpsJavaCompilerOptions settings = getJavaCompilerSettings();
     if (settings != null) {
       String options = settings.ADDITIONAL_OPTIONS_OVERRIDE.getOrDefault(module.getName(), settings.ADDITIONAL_OPTIONS_STRING);
@@ -470,17 +410,6 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     if (!newValue.equals(previous)) {
       settings.ADDITIONAL_OPTIONS_OVERRIDE.put(module.getName(), newValue);
       clearBuildManagerState(myProject);
-    }
-  }
-
-  @Override
-  public void removeAdditionalOptions(@NotNull Module module) {
-    JpsJavaCompilerOptions settings = getJavaCompilerSettings();
-    if (settings != null) {
-      String previous = settings.ADDITIONAL_OPTIONS_OVERRIDE.remove(module.getName());
-      if (previous != null) {
-        clearBuildManagerState(myProject);
-      }
     }
   }
 
@@ -517,7 +446,8 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     return JAVAC_EXTERNAL_BACKEND;
   }
 
-  private @NotNull List<BackendCompiler> collectCompilers() {
+  @NotNull
+  private List<BackendCompiler> collectCompilers() {
     final List<BackendCompiler> compilers = new ArrayList<>();
     compilers.add(JAVAC_EXTERNAL_BACKEND);
     if (EclipseCompiler.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) {
@@ -599,7 +529,8 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     myAddNotNullAssertions = enabled;
   }
 
-  public @NotNull ProcessorConfigProfile getDefaultProcessorProfile() {
+  @NotNull
+  public ProcessorConfigProfile getDefaultProcessorProfile() {
     return myDefaultProcessorsProfile;
   }
 
@@ -607,7 +538,8 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     myDefaultProcessorsProfile.initFrom(profile);
   }
 
-  public @NotNull List<ProcessorConfigProfile> getModuleProcessorProfiles() {
+  @NotNull
+  public List<ProcessorConfigProfile> getModuleProcessorProfiles() {
     return Collections.unmodifiableList(myModuleProcessorProfiles);
   }
 
@@ -619,7 +551,8 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     myProcessorsProfilesMap = null;
   }
 
-  public @Nullable ProcessorConfigProfile findModuleProcessorProfile(@NotNull String name) {
+  @Nullable
+  public ProcessorConfigProfile findModuleProcessorProfile(@NotNull String name) {
     for (ProcessorConfigProfile profile : myModuleProcessorProfiles) {
       if (name.equals(profile.getName())) {
         return profile;
@@ -647,7 +580,8 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   }
 
   @Override
-  public @NotNull ProcessorConfigProfile getAnnotationProcessingConfiguration(Module module) {
+  @NotNull
+  public ProcessorConfigProfile getAnnotationProcessingConfiguration(Module module) {
     Map<Module, ProcessorConfigProfile> map = myProcessorsProfilesMap;
     if (map == null) {
       map = new HashMap<>();
@@ -684,7 +618,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     return false;
   }
 
-  private void addWildcardResourcePattern(final @NonNls String wildcardPattern) throws MalformedPatternException {
+  private void addWildcardResourcePattern(@NonNls final String wildcardPattern) throws MalformedPatternException {
     final CompiledPattern pattern = convertToRegexp(wildcardPattern);
     myWildcardPatterns.add(wildcardPattern);
     if (isPatternNegated(wildcardPattern)) {
@@ -822,9 +756,6 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   @Override
   public void loadState(@NotNull Element parentNode) {
     myState = XmlSerializer.deserialize(parentNode, State.class);
-    if (myState.PARALLEL_COMPILATION_OPTION != null) {
-      myParallelCompilationOptionSetExplicitly = true;
-    }
     if (!myProject.isDefault()) {
       for (Element option : parentNode.getChildren("option")) {
         if ("DEFAULT_COMPILER".equals(option.getAttributeValue("name"))) {

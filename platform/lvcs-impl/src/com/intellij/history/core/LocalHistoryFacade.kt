@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.history.core
 
 import com.intellij.history.ActivityId
@@ -7,59 +21,22 @@ import com.intellij.history.core.changes.*
 import com.intellij.history.core.tree.Entry
 import com.intellij.history.core.tree.RootEntry
 import com.intellij.history.integration.IdeaGateway
-import com.intellij.history.utils.LocalHistoryLog
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.nio.file.Path
+import java.util.regex.Pattern
 
-/**
- * Facade for managing local history operations.
- *
- * Provides methods for managing [com.intellij.history.core.changes.Change].
- * E.g., modifying content, renaming, changing read-only status, moving, and deleting.
- * It also allows adding and managing system and user labels and aggregate changes by [ActivityId]
- */
-open class LocalHistoryFacade internal constructor() {
-
-  internal val storageDir: Path
-    get() = Path.of(PathManager.getSystemPath(), "LocalHistory")
-
-  internal val changeList: ChangeList
-
-  init {
-    changeList = ChangeList(createStorage())
-  }
-
-  @ApiStatus.Internal
-  protected open fun createStorage(): ChangeListStorage {
-    var storage: ChangeListStorage
-    try {
-      storage = ChangeListStorageImpl(storageDir)
-    }
-    catch (e: Throwable) {
-      LocalHistoryLog.LOG.warn("cannot create storage, in-memory  implementation will be used", e)
-      storage = InMemoryChangeListStorage()
-    }
-
-    return storage
-  }
-
+open class LocalHistoryFacade(internal val changeList: ChangeList) {
   private val listeners: MutableList<Listener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
-  @get:ApiStatus.Internal
   @get:TestOnly
-  val changeListInTests: ChangeList get() = changeList
+  val changeListInTests get() = changeList
   internal val changes: Iterable<ChangeSet> get() = changeList.iterChanges()
 
   fun beginChangeSet() {
@@ -86,7 +63,6 @@ open class LocalHistoryFacade internal constructor() {
               else CreateFileChange(changeList.nextId(), path))
   }
 
-  @ApiStatus.Internal
   fun contentChanged(path: String, oldContent: Content, oldTimestamp: Long) {
     addChange(ContentChange(changeList.nextId(), path, oldContent, oldTimestamp))
   }
@@ -107,12 +83,10 @@ open class LocalHistoryFacade internal constructor() {
     addChange(DeleteChange(changeList.nextId(), path, deletedEntry))
   }
 
-  @ApiStatus.Internal
   fun putSystemLabel(name: @NlsContexts.Label String, projectId: String, color: Int): LabelImpl {
     return putLabel(PutSystemLabelChange(changeList.nextId(), name, projectId, color))
   }
 
-  @ApiStatus.Internal
   fun putUserLabel(name: @NlsContexts.Label String, projectId: String): LabelImpl {
     return putLabel(PutLabelChange(changeList.nextId(), name, projectId))
   }
@@ -152,9 +126,8 @@ open class LocalHistoryFacade internal constructor() {
     return ByteContent(false, entry.content.bytesIfAvailable)
   }
 
-  fun accept(v: ChangeVisitor): Unit = changeList.accept(v)
+  fun accept(v: ChangeVisitor) = changeList.accept(v)
 
-  @ApiStatus.Internal
   fun revertUpToChangeSet(root: RootEntry, changeSetId: Long, path: String, revertTarget: Boolean, warnOnFileNotFound: Boolean): String {
     var entryPath = path
     for (changeSet in changes) {
@@ -170,7 +143,6 @@ open class LocalHistoryFacade internal constructor() {
     return entryPath
   }
 
-  @ApiStatus.Internal
   fun revertUpToChange(root: RootEntry, changeId: Long, path: String, revertTarget: Boolean, warnOnFileNotFound: Boolean): String {
     var entryPath = path
     changeSetLoop@ for (changeSet in changes) {
@@ -211,8 +183,8 @@ open class LocalHistoryFacade internal constructor() {
   }
 
   abstract class Listener {
-    open fun changeAdded(c: Change): Unit = Unit
-    open fun changeSetFinished(changeSet: ChangeSet): Unit = Unit
+    open fun changeAdded(c: Change) = Unit
+    open fun changeSetFinished(changeSet: ChangeSet) = Unit
   }
 }
 
@@ -221,16 +193,14 @@ interface ChangeProcessor {
   fun process(changeSet: ChangeSet, change: Change, changePath: String)
 }
 
-@ApiStatus.Internal
-open class ChangeProcessorBase(
-  private val projectId: String?,
-  private val filter: HistoryPathFilter?,
-  private val consumer: (ChangeSet) -> Unit,
-) : ChangeProcessor {
+@ApiStatus.Experimental
+open class ChangeProcessorBase(private val projectId: String?, patternString: String?,
+                               private val consumer: (ChangeSet) -> Unit) : ChangeProcessor {
+  private val pattern = patternString.toPattern()
   private val processedChangesSets = mutableSetOf<Long>()
 
   override fun process(changeSet: ChangeSet, change: Change, changePath: String) {
-    if (!processedChangesSets.contains(changeSet.id) && change.matches(projectId, changePath, filter)) {
+    if (!processedChangesSets.contains(changeSet.id) && change.matches(projectId, changePath, pattern)) {
       processedChangesSets.add(changeSet.id)
       consumer(changeSet)
     }
@@ -238,12 +208,8 @@ open class ChangeProcessorBase(
 }
 
 @ApiStatus.Internal
-class ChangeAndPathProcessor(
-  projectId: String?,
-  filter: HistoryPathFilter?,
-  private val pathConsumer: (String) -> Unit,
-  changeConsumer: (ChangeSet) -> Unit,
-) : ChangeProcessorBase(projectId, filter, changeConsumer) {
+class ChangeAndPathProcessor(projectId: String?, patternString: String?, private val pathConsumer: (String) -> Unit,
+                             changeConsumer: (ChangeSet) -> Unit) : ChangeProcessorBase(projectId, patternString, changeConsumer) {
   override fun process(changeSet: ChangeSet, change: Change, changePath: String) {
     pathConsumer(changePath)
     super.process(changeSet, change, changePath)
@@ -251,8 +217,8 @@ class ChangeAndPathProcessor(
 }
 
 @ApiStatus.Experimental
-fun LocalHistoryFacade.collectChanges(projectId: String?, startPath: String, filter: HistoryPathFilter?, consumer: (ChangeSet) -> Unit) {
-  collectChanges(startPath, ChangeProcessorBase(projectId, filter, consumer))
+fun LocalHistoryFacade.collectChanges(projectId: String?, startPath: String, patternString: String?, consumer: (ChangeSet) -> Unit) {
+  collectChanges(startPath, ChangeProcessorBase(projectId, patternString, consumer))
 }
 
 @ApiStatus.Internal
@@ -285,47 +251,24 @@ fun LocalHistoryFacade.collectChanges(startPath: String, processor: ChangeProces
   }
 }
 
-@ApiStatus.Experimental
-class HistoryPathFilter private constructor(private val guessedProjectDir: String?, pathFilter: String) {
-  val matcher: MinusculeMatcher = NameUtil.buildMatcher("*$pathFilter").build()
-
-  /**
-   * If project dir is guessed, then matches part of [path] relative to it, otherwise only last [path] segment is matched
-   */
-  fun affectsMatching(path: String): Boolean {
-    val partToMatch =
-      if (guessedProjectDir != null && path.startsWith(guessedProjectDir)) path.substring(guessedProjectDir.length)
-      else Paths.getNameOf(path)
-    return matcher.matches(partToMatch)
-  }
-
-  companion object {
-    @JvmStatic
-    fun create(pathPattern: String?, project: Project): HistoryPathFilter? =
-      if (pathPattern == null) null else HistoryPathFilter(project.guessProjectDir()?.path, pathPattern)
-
-    @TestOnly
-    @JvmStatic
-    @JvmName("create")
-    internal fun create(guessedProjectDir: String?, pathPattern: String?): HistoryPathFilter? =
-      if (pathPattern == null) null else HistoryPathFilter(guessedProjectDir, pathPattern)
-  }
+internal fun String?.toPattern(): Pattern? {
+  if (this == null) return null
+  return Pattern.compile(NameUtil.buildRegexp(this, 0, true, true), Pattern.CASE_INSENSITIVE)
 }
 
-internal fun Change.matches(projectId: String?, path: String, pathFilter: HistoryPathFilter?): Boolean =
-  if (affectsPath(path) || affectsProject(projectId)) {
-    pathFilter?.let { affectsMatching(it) } ?: true
-  } else false
+internal fun Change.matches(projectId: String?, path: String, pattern: Pattern?): Boolean {
+  if (!affectsPath(path) && !affectsProject(projectId)) return false
+  if (pattern != null && !affectsMatching(pattern)) return false
+  return true
+}
 
 @ApiStatus.Internal
-fun LocalHistoryFacade.processContents(
-  gateway: IdeaGateway,
-  root: RootEntry,
-  startPath: String,
-  changeSets: Set<Long>,
-  before: Boolean,
-  processor: (Long, String?) -> Boolean,
-) {
+fun LocalHistoryFacade.processContents(gateway: IdeaGateway,
+                                       root: RootEntry,
+                                       startPath: String,
+                                       changeSets: Set<Long>,
+                                       before: Boolean,
+                                       processor: (Long, String?) -> Boolean) {
   val processContents = fun(changeSetId: Long, path: String): Boolean {
     if (!changeSets.contains(changeSetId)) return true
     val entry = root.findEntry(path)

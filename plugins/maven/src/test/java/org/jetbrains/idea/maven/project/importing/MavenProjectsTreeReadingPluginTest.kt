@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.importing
 
+import com.intellij.openapi.util.Pair
 import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
-import org.jetbrains.idea.maven.project.MavenPluginResolver
+import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.junit.Test
 
 class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
@@ -31,32 +33,42 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
     tree.addListener(listener, getTestRootDisposable())
     updateAll(projectPom, child)
     val parentProject = tree.findProject(projectPom)!!
-
-    resolve(project,
-            parentProject,
-            mavenGeneralSettings
-    )
-    val pluginResolver = MavenPluginResolver(tree)
-    val progressReporter = object : RawProgressReporter {}
-    pluginResolver.resolvePlugins(listOf(parentProject),
-                                  mavenEmbedderWrappers,
-                                  progressReporter,
-                                  MavenLogEventHandler)
-
+    val embeddersManager = MavenEmbeddersManager(project)
+    try {
+      val nativeProject = arrayOfNulls<NativeMavenProjectHolder>(1)
+      tree.addListener(object : MavenProjectsTree.Listener {
+        override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
+                                     nativeMavenProject: NativeMavenProjectHolder?) {
+          nativeProject[0] = nativeMavenProject
+        }
+      }, getTestRootDisposable())
+      resolve(project,
+              parentProject,
+              mavenGeneralSettings,
+              embeddersManager)
+      val pluginResolver = MavenPluginResolver(tree)
+      val progressReporter = object : RawProgressReporter {}
+      pluginResolver.resolvePlugins(listOf(MavenProjectWithHolder(parentProject, nativeProject[0]!!, MavenProjectChanges.ALL)),
+                                    embeddersManager,
+                                    progressReporter,
+                                    MavenLogEventHandler,
+                                    false)
+    }
+    finally {
+      embeddersManager.releaseInTests()
+    }
     assertEquals(
       log()
         .add("updated", "parent", "child")
         .add("deleted")
-        .add("resolved", "parent")
-        .add("plugins", "parent"),
+        .add("resolved", "parent"),
       listener.log)
-    tree.updateAll(false, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
+    tree.updateAll(false, mavenGeneralSettings, rawProgressReporter)
     assertEquals(
       log()
         .add("updated", "parent", "child")
         .add("deleted")
-        .add("resolved", "parent")
-        .add("plugins", "parent"),
+        .add("resolved", "parent"),
       listener.log)
   }
 }

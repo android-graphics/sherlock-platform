@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
@@ -137,7 +137,8 @@ public class FrameworkSupportOptionsComponent {
     return myMainPanel;
   }
 
-  public @Nullable LibraryCompositionSettings getLibraryCompositionSettings() {
+  @Nullable
+  public LibraryCompositionSettings getLibraryCompositionSettings() {
     if (myLibraryCompositionSettings == null && myLibraryOptionsPanel != null) {
       myLibraryCompositionSettings = myLibraryOptionsPanel.apply();
     }

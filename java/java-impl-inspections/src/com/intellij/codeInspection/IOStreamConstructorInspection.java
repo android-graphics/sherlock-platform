@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -223,7 +224,7 @@ public final class IOStreamConstructorInspection extends AbstractBaseJavaLocalIn
       if (occurrences.length < 2) return;
       // maybe we can reuse already created file.toPath() / Path.of(...) variable
       List<PsiVariable> pathVars = Arrays.stream(occurrences).map(o -> findVariableAssignedTo(o))
-        .filter(var -> var != null && ControlFlowUtil.isEffectivelyFinal(var, toPathConversion))
+        .filter(var -> var != null && HighlightControlFlowUtil.isEffectivelyFinal(var, toPathConversion, null))
         .toList();
       if (!pathVars.isEmpty()) {
         PsiCodeBlock body = containingMethod.getBody();
@@ -277,10 +278,11 @@ public final class IOStreamConstructorInspection extends AbstractBaseJavaLocalIn
       if (!(child instanceof PsiReferenceExpression)) return false;
       PsiVariable target = ObjectUtils.tryCast(((PsiReferenceExpression)child).resolve(), PsiVariable.class);
       if (!PsiUtil.isJvmLocalVariable(target)) return false;
-      return ControlFlowUtil.isEffectivelyFinal(target, context);
+      return HighlightControlFlowUtil.isEffectivelyFinal(target, context, null);
     }
 
-    private static @Nullable ControlFlow createControlFlow(@NotNull PsiCodeBlock block) {
+    @Nullable
+    private static ControlFlow createControlFlow(@NotNull PsiCodeBlock block) {
       try {
         LocalsOrMyInstanceFieldsControlFlowPolicy flowPolicy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
         return ControlFlowFactory.getInstance(block.getProject()).getControlFlow(block, flowPolicy);

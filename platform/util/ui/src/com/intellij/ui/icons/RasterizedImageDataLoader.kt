@@ -28,11 +28,21 @@ import javax.swing.Icon
 fun loadRasterizedIcon(path: String, expUIPath: String?, classLoader: ClassLoader, cacheKey: Int, flags: Int, toolTip: Supplier<String?>?): Icon {
   assert(!path.startsWith('/'))
   return CachedImageIcon(loader = RasterizedImageDataLoader(path = path,
-                                                            expUIPath = expUIPath,
+                                                            expUIPath = convertExpUIPath(path, expUIPath),
                                                             classLoaderRef = WeakReference(classLoader),
                                                             cacheKey = cacheKey,
                                                             flags = flags),
                          toolTip = toolTip)
+}
+
+private fun convertExpUIPath(path: String, expUIPath: String?): String? {
+  if (expUIPath == null) {
+    return null
+  }
+  if (expUIPath.endsWith("/")) {
+    return "$expUIPath$path"
+  }
+  return expUIPath
 }
 
 @Serializable

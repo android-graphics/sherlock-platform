@@ -159,12 +159,7 @@ internal class GitRebaseDialog(private val project: Project,
     val branch = branchField.item
 
     val newBase = if (GitRebaseOption.ONTO in selectedOptions) ontoField.getText() else null
-    val upstream = if (GitRebaseOption.ROOT in selectedOptions) {
-      GitRebaseParams.RebaseUpstream.Root
-    }
-    else {
-      GitRebaseParams.RebaseUpstream.fromRefString(upstreamField.getText().orEmpty())
-    }
+    val upstream = if (GitRebaseOption.ROOT !in selectedOptions) upstreamField.getText().orEmpty() else null
 
     return GitRebaseParams(gitVersion, branch, newBase, upstream, selectedOptions intersect REBASE_FLAGS)
   }

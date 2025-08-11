@@ -1,7 +1,0 @@
-class Foo {
-    object Bar
-}
-
-fun main() {
-    val bar = Foo.Bar
-}

@@ -1,4 +1,3 @@
-// PRIORITY: LOW
 annotation class A
 annotation class B
 

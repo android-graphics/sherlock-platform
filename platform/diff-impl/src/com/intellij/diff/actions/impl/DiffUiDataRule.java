@@ -20,10 +20,8 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.DataSnapshot;
 import com.intellij.openapi.actionSystem.UiDataRule;
 import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public class DiffUiDataRule implements UiDataRule {
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink, @NotNull DataSnapshot snapshot) {

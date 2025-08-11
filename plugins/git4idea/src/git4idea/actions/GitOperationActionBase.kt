@@ -18,7 +18,7 @@ import javax.swing.Icon
 
 abstract class GitOperationActionBase (
   private val repositoryState: Repository.State
-) : DumbAwareAction() {
+) : DumbAwareAction(), GitOngoingOperationAction {
   protected abstract val operationName: @Nls String
 
   override fun update(e: AnActionEvent) {
@@ -50,7 +50,8 @@ abstract class GitOperationActionBase (
     }
   }
 
-  abstract fun performInBackground(repository: GitRepository)
+  override fun isEnabled(repository: GitRepository): Boolean = repository.state == repositoryState
+
 
   private fun getAffectedRepositories(project: Project?): Collection<GitRepository> {
     if (project == null) return emptyList()

@@ -35,7 +35,6 @@ final class ThumbnailSelectInTarget implements SelectInTarget, DumbAware {
     }
   }
 
-  @Override
   public String toString() {
     return ImagesBundle.message("thumbnails.toolwindow.name");
   }

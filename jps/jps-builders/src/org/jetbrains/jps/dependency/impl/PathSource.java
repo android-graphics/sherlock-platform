@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
@@ -14,7 +13,8 @@ import java.io.IOException;
 
 public final class PathSource implements NodeSource {
 
-  private final @NotNull String myPath;
+  @NotNull
+  private final String myPath;
 
   public PathSource(@NotNull String path) {
     myPath = File.separatorChar != '/'? path.replace(File.separatorChar, '/') : path;
@@ -40,7 +40,8 @@ public final class PathSource implements NodeSource {
 
     final PathSource that = (PathSource)o;
 
-    if (Strings.areSameInstance(myPath, that.myPath)) {
+    //noinspection StringEquality,SSBasedInspection
+    if (myPath == that.myPath) {
       return true;
     }
     return SystemInfoRt.isFileSystemCaseSensitive? myPath.equals(that.myPath) : myPath.equalsIgnoreCase(that.myPath);

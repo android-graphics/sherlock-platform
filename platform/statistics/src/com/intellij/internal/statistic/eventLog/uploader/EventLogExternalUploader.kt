@@ -31,8 +31,8 @@ object EventLogExternalUploader {
   private const val UPLOADER_MAIN_CLASS = "com.intellij.internal.statistic.uploader.EventLogUploader"
 
   fun logPreviousExternalUploadResult(providers: List<StatisticsEventLoggerProvider>) {
-    val enableEventLogSystemCollectors = providers.filter { it.isSendEnabled() }.map { it.eventLogSystemLogger }
-    if (enableEventLogSystemCollectors.isEmpty()) {
+    val enabledProviders = providers.filter { it.isSendEnabled() }
+    if (enabledProviders.isEmpty()) {
       return
     }
 
@@ -40,7 +40,9 @@ object EventLogExternalUploader {
       val tempDir = getTempFile()
       if (tempDir.exists()) {
         val events = ExternalEventsLogger.parseEvents(tempDir)
-        enableEventLogSystemCollectors.forEach { logPreviousExternalUploadResultByRecorder(it, events) }
+        for (provider in enabledProviders) {
+          logPreviousExternalUploadResultByRecorder(provider.recorderId, events)
+        }
       }
       tempDir.deleteRecursively()
     }
@@ -49,44 +51,45 @@ object EventLogExternalUploader {
     }
   }
 
-  private fun logPreviousExternalUploadResultByRecorder(eventLogSystemCollector: EventLogSystemCollector, events: List<ExternalSystemEvent>) {
+  private fun logPreviousExternalUploadResultByRecorder(recorderId: String, events: List<ExternalSystemEvent>) {
     for (event in events) {
       val eventRecorderId = event.recorderId
-      if (eventRecorderId != eventLogSystemCollector.group.recorder && eventRecorderId != ExternalSystemEvent.ALL_RECORDERS) {
+      if (eventRecorderId != recorderId && eventRecorderId != ExternalSystemEvent.ALL_RECORDERS) {
         continue
       }
 
       when (event) {
         is ExternalUploadStartedEvent -> {
-          eventLogSystemCollector.logStartingExternalSend(event.timestamp)
+          EventLogSystemLogger.logStartingExternalSend(recorderId, event.timestamp)
         }
         is ExternalUploadSendEvent -> {
           val files = event.successfullySentFiles
           val errors = event.errors
-          eventLogSystemCollector.logFilesSend(event.total, event.succeed, event.failed, true, files, errors)
+          EventLogSystemLogger.logFilesSend(recorderId, event.total, event.succeed, event.failed, true, files, errors)
         }
         is ExternalUploadFinishedEvent -> {
-          eventLogSystemCollector.logExternalSendFinished(event.error, event.timestamp)
+          EventLogSystemLogger.logFinishedExternalSend(recorderId, event.error, event.timestamp)
         }
         is ExternalSystemErrorEvent -> {
-          eventLogSystemCollector.logLoadingConfigFailed(event.errorClass, event.timestamp)
+          EventLogSystemLogger.logSystemError(recorderId, event.event, event.errorClass, event.timestamp)
         }
       }
     }
   }
 
   fun startExternalUpload(recordersProviders: List<StatisticsEventLoggerProvider>, isTestConfig: Boolean, isTestSendEndpoint: Boolean) {
-    val enabledEventLoggerProviders = recordersProviders.filter { it.isSendEnabled() }
-    if (enabledEventLoggerProviders.isEmpty()) {
+    val enabledRecordersProviders = recordersProviders.filter { it.isSendEnabled() }
+    if (enabledRecordersProviders.isEmpty()) {
       LOG.info("Don't start external process because sending logs is disabled for all recorders")
       return
     }
-    enabledEventLoggerProviders.forEach { it.eventLogSystemLogger.logExternalSendCommandCreationStarted() }
+
+    val recorderIds = enabledRecordersProviders.map { it.recorderId }
+    EventLogSystemLogger.logCreatingExternalSendCommand(recorderIds)
     val application = EventLogInternalApplicationInfo(isTestConfig, isTestSendEndpoint)
     try {
-      val command = prepareUploadCommand(enabledEventLoggerProviders, application)
-      enabledEventLoggerProviders.forEach { it.eventLogSystemLogger.logExternalSendCommandCreationFinished(null) }
-
+      val command = prepareUploadCommand(enabledRecordersProviders, application)
+      EventLogSystemLogger.logFinishedCreatingExternalSendCommand(recorderIds, null)
       if (LOG.isDebugEnabled) {
         LOG.debug("Starting external process: '${command.joinToString(separator = " ")}'")
       }
@@ -95,7 +98,7 @@ object EventLogExternalUploader {
       LOG.info("Started external process for uploading event log")
     }
     catch (e: EventLogUploadException) {
-      enabledEventLoggerProviders.forEach { it.eventLogSystemLogger.logExternalSendCommandCreationFinished(e.errorType) }
+      EventLogSystemLogger.logFinishedCreatingExternalSendCommand(recorderIds, e.errorType)
       LOG.info(e)
     }
   }

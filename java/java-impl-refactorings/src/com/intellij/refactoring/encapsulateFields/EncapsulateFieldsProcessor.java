@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -24,7 +24,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -32,7 +31,8 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(EncapsulateFieldsProcessor.class);
 
   private PsiClass myClass;
-  private final @NotNull EncapsulateFieldsDescriptor myDescriptor;
+  @NotNull
+  private final EncapsulateFieldsDescriptor myDescriptor;
   private final FieldDescriptor[] myFieldDescriptors;
 
   private HashMap<String,PsiMethod> myNameToGetter;
@@ -57,13 +57,15 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Nullable
   @Override
-  protected @Nullable String getRefactoringId() {
+  protected String getRefactoringId() {
     return "refactoring.encapsulateFields";
   }
 
+  @Nullable
   @Override
-  protected @Nullable RefactoringEventData getBeforeData() {
+  protected RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
     final List<PsiElement> fields = new ArrayList<>();
     for (FieldDescriptor fieldDescriptor : myFieldDescriptors) {
@@ -73,8 +75,9 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return data;
   }
 
+  @Nullable
   @Override
-  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     RefactoringEventData data = new RefactoringEventData();
     List<PsiElement> elements = new ArrayList<>();
     if (myNameToGetter != null) {
@@ -88,12 +91,14 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  @NotNull
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new EncapsulateFieldsViewDescriptor(myFieldDescriptors.clone());
   }
 
   @Override
-  protected @NotNull String getCommandName() {
+  @NotNull
+  protected String getCommandName() {
     return JavaRefactoringBundle.message("encapsulate.fields.command.name", DescriptiveNameUtil.getDescriptiveName(myClass));
   }
 
@@ -122,7 +127,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
       }
       if (!getters.isEmpty() || !setters.isEmpty()) {
         final PsiField field = fieldDescriptor.getField();
-        for (PsiReference reference : ReferencesSearch.search(field).asIterable()) {
+        for (PsiReference reference : ReferencesSearch.search(field)) {
           final PsiElement place = reference.getElement();
           if (place instanceof PsiReferenceExpression) {
             final PsiExpression qualifierExpression = ((PsiReferenceExpression)place).getQualifierExpression();
@@ -198,7 +203,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
         while (containingClass != null && existing == null) {
           existing = containingClass.findMethodBySignature(prototype, true);
           if (existing != null) {
-            for (PsiReference reference : ReferencesSearch.search(existing).asIterable()) {
+            for (PsiReference reference : ReferencesSearch.search(existing)) {
               final PsiElement place = reference.getElement();
               if (place instanceof PsiReferenceExpression) {
                 final PsiExpression qualifierExpression = ((PsiReferenceExpression)place).getQualifierExpression();
@@ -244,8 +249,8 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
-  protected @Unmodifiable Iterable<? extends PsiReference> getFieldReferences(@NotNull PsiField field) {
-    return ReferencesSearch.search(field).asIterable();
+  protected Iterable<? extends PsiReference> getFieldReferences(@NotNull PsiField field) {
+    return ReferencesSearch.search(field);
   }
 
   @Override
@@ -284,7 +289,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     myNameToSetter = new HashMap<>();
 
     for (FieldDescriptor fieldDescriptor : myFieldDescriptors) {
-      final DocCommentPolicy commentPolicy = new DocCommentPolicy(myDescriptor.getJavadocPolicy());
+      final DocCommentPolicy<PsiDocComment> commentPolicy = new DocCommentPolicy<>(myDescriptor.getJavadocPolicy());
 
       PsiField field = fieldDescriptor.getField();
       final PsiDocComment docComment = field.getDocComment();

@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.lang.Language;
@@ -19,18 +18,21 @@ public class MockLanguageFileType extends LanguageFileType{
     myExtension = extension;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return getLanguage().getID();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
+  public String getDescription() {
     return "";
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDefaultExtension() {
+  public String getDefaultExtension() {
     return myExtension;
   }
 

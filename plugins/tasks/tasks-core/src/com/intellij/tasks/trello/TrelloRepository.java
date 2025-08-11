@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tasks.trello;
 
@@ -48,14 +48,16 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
 
   private static final Logger LOG = Logger.getInstance(TrelloRepository.class);
   static final TrelloBoard UNSPECIFIED_BOARD = new TrelloBoard() {
+    @NotNull
     @Override
-    public @NotNull String getName() {
+    public String getName() {
       return "-- from all boards --";
     }
   };
-  static final TrelloList UNSPECIFIED_LIST = new TrelloList() {
+  final static TrelloList UNSPECIFIED_LIST = new TrelloList() {
+    @NotNull
     @Override
-    public @NotNull String getName() {
+    public String getName() {
       return "-- from all lists --";
     }
   };
@@ -105,8 +107,9 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     return myIncludeAllCards == repository.myIncludeAllCards;
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseRepository clone() {
+  public BaseRepository clone() {
     return new TrelloRepository(this);
   }
 
@@ -116,13 +119,15 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     return ContainerUtil.map2Array(cards, Task.class, card -> new TrelloTask(card, this));
   }
 
+  @Nullable
   @Override
-  public @Nullable Task findTask(@NotNull String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
     final TrelloCard card = fetchCardById(id);
     return card != null ? new TrelloTask(card, this) : null;
   }
 
-  public @Nullable TrelloCard fetchCardById(@NotNull String id) throws Exception {
+  @Nullable
+  public TrelloCard fetchCardById(@NotNull String id) throws Exception {
     try {
       final URIBuilder url = new URIBuilder(getRestApiUrl("cards", id))
         .addParameter("actions", "commentCard")
@@ -136,7 +141,8 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     }
   }
 
-  public @Nullable TrelloUser getCurrentUser() {
+  @Nullable
+  public TrelloUser getCurrentUser() {
     return myCurrentUser;
   }
 
@@ -144,7 +150,8 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     myCurrentUser = currentUser;
   }
 
-  public @Nullable TrelloBoard getCurrentBoard() {
+  @Nullable
+  public TrelloBoard getCurrentBoard() {
     return myCurrentBoard;
   }
 
@@ -152,7 +159,8 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     myCurrentBoard = board != null && board.getId().equals(UNSPECIFIED_BOARD.getId()) ? UNSPECIFIED_BOARD : board;
   }
 
-  public @Nullable TrelloList getCurrentList() {
+  @Nullable
+  public TrelloList getCurrentList() {
     return myCurrentList;
   }
 
@@ -160,15 +168,17 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     myCurrentList = list != null && list.getId().equals(UNSPECIFIED_LIST.getId()) ? UNSPECIFIED_LIST : list;
   }
 
+  @Nullable
   @Override
-  public @Nullable String extractId(@NotNull String taskName) {
+  public String extractId(@NotNull String taskName) {
     return TrelloUtil.TRELLO_ID_PATTERN.matcher(taskName).matches() ? taskName : null;
   }
 
   /**
    * Request user information using supplied authorization token
    */
-  public @NotNull TrelloUser fetchUserByToken() throws Exception {
+  @NotNull
+  public TrelloUser fetchUserByToken() throws Exception {
     try {
       final URIBuilder url = new URIBuilder(getRestApiUrl("members", "me"))
         .addParameter("fields", TrelloUser.REQUIRED_FIELDS);
@@ -183,7 +193,8 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     }
   }
 
-  public @NotNull TrelloBoard fetchBoardById(@NotNull String id) throws Exception {
+  @NotNull
+  public TrelloBoard fetchBoardById(@NotNull String id) throws Exception {
     final URIBuilder url = new URIBuilder(getRestApiUrl("boards", id))
       .addParameter("fields", TrelloBoard.REQUIRED_FIELDS);
     try {
@@ -195,7 +206,8 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     }
   }
 
-  public @NotNull TrelloList fetchListById(@NotNull String id) throws Exception {
+  @NotNull
+  public TrelloList fetchListById(@NotNull String id) throws Exception {
     final URIBuilder url = new URIBuilder(getRestApiUrl("lists", id))
       .addParameter("fields", TrelloList.REQUIRED_FIELDS);
     try {
@@ -207,20 +219,23 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     }
   }
 
-  public @NotNull List<TrelloList> fetchBoardLists() throws Exception {
+  @NotNull
+  public List<TrelloList> fetchBoardLists() throws Exception {
     if (myCurrentBoard == null || myCurrentBoard == UNSPECIFIED_BOARD) {
       throw new IllegalStateException("Board not set");
     }
     return fetchBoardLists(myCurrentBoard.getId());
   }
 
-  private @NotNull List<TrelloList> fetchBoardLists(@NotNull String boardId) throws Exception {
+  @NotNull
+  private List<TrelloList> fetchBoardLists(@NotNull String boardId) throws Exception {
     final URIBuilder url = new URIBuilder(getRestApiUrl("boards", boardId, "lists"))
       .addParameter("fields", TrelloList.REQUIRED_FIELDS);
     return makeRequestAndDeserializeJsonResponse(url.build(), TrelloUtil.LIST_OF_LISTS_TYPE);
   }
 
-  public @NotNull List<TrelloBoard> fetchUserBoards() throws Exception {
+  @NotNull
+  public List<TrelloBoard> fetchUserBoards() throws Exception {
     if (myCurrentUser == null) {
       throw new IllegalStateException("User not set");
     }
@@ -230,7 +245,8 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     return makeRequestAndDeserializeJsonResponse(url.build(), TrelloUtil.LIST_OF_BOARDS_TYPE);
   }
 
-  public @NotNull List<TrelloCard> fetchCards(int limit, boolean withClosed) throws Exception {
+  @NotNull
+  public List<TrelloCard> fetchCards(int limit, boolean withClosed) throws Exception {
     boolean fromList = false;
     // choose most appropriate card provider
     String baseUrl;
@@ -286,7 +302,8 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     return cards;
   }
 
-  private @Nullable <T> T executeMethod(@NotNull HttpUriRequest method, @NotNull ResponseHandler<T> handler) throws Exception {
+  @Nullable
+  private <T> T executeMethod(@NotNull HttpUriRequest method, @NotNull ResponseHandler<T> handler) throws Exception {
     final HttpClient client = getHttpClient();
     final HttpResponse response = client.execute(method);
     final StatusLine statusLine = response.getStatusLine();
@@ -301,12 +318,14 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     return handler.handleResponse(response);
   }
 
-  private @NotNull <T> List<T> makeRequestAndDeserializeJsonResponse(@NotNull URI url, @NotNull TypeToken<List<T>> type) throws Exception {
+  @NotNull
+  private <T> List<T> makeRequestAndDeserializeJsonResponse(@NotNull URI url, @NotNull TypeToken<List<T>> type) throws Exception {
     final List<T> result = executeMethod(new HttpGet(url), new GsonMultipleObjectsDeserializer<>(TrelloUtil.GSON, type));
     return Objects.requireNonNull(result);
   }
 
-  private @Nullable <T> T makeRequestAndDeserializeJsonResponse(@NotNull URI url, @NotNull Class<T> cls) throws Exception {
+  @Nullable
+  private <T> T makeRequestAndDeserializeJsonResponse(@NotNull URI url, @NotNull Class<T> cls) throws Exception {
     return executeMethod(new HttpGet(url), new GsonSingleObjectDeserializer<>(TrelloUtil.GSON, cls));
   }
 
@@ -330,16 +349,18 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     myIncludeAllCards = includeAllCards;
   }
 
+  @Nullable
   @Override
-  public @Nullable CancellableConnection createCancellableConnection() {
+  public CancellableConnection createCancellableConnection() {
     return new HttpTestConnection(new HttpGet(getRestApiUrl("members", "me", "cards") + "?limit=1"));
   }
 
   /**
    * Add authorization token and developer key in any request to Trello's REST API
    */
+  @Nullable
   @Override
-  protected @Nullable HttpRequestInterceptor createRequestInterceptor() {
+  protected HttpRequestInterceptor createRequestInterceptor() {
     return new HttpRequestInterceptor() {
       @Override
       public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
@@ -364,11 +385,12 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
 
   @Override
   public boolean isConfigured() {
-    return super.isConfigured() && StringUtil.isNotEmpty(getPassword());
+    return super.isConfigured() && StringUtil.isNotEmpty(myPassword);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getRestApiPathPrefix() {
+  public String getRestApiPathPrefix() {
     return "/1";
   }
 
@@ -377,8 +399,9 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     return "https://api.trello.com";
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     final TrelloCard card = fetchCardById(task.getId());
     if (card != null) {
       final List<TrelloList> lists = fetchBoardLists(card.getIdBoard());

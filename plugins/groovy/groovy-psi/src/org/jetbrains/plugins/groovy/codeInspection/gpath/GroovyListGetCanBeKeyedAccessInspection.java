@@ -40,12 +40,14 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public final class GroovyListGetCanBeKeyedAccessInspection extends BaseInspection {
 
   @Override
-  protected @Nullable String buildErrorString(Object... args) {
+  @Nullable
+  protected String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.call.to.ref.can.be.keyed.access");
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
@@ -57,7 +59,8 @@ public final class GroovyListGetCanBeKeyedAccessInspection extends BaseInspectio
   private static class ReplaceWithPropertyAccessFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return GroovyBundle.message("intention.family.name.replace.with.keyed.access");
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.CodeStyleBundle;
@@ -144,7 +144,8 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
   }
 
 
-  private static @Nullable DirectoryFormattingOptions getDirectoryFormattingOptions(@NotNull Project project, @NotNull PsiDirectory dir) {
+  @Nullable
+  private static DirectoryFormattingOptions getDirectoryFormattingOptions(@NotNull Project project, @NotNull PsiDirectory dir) {
     LayoutDirectoryDialog dialog = new LayoutDirectoryDialog(
       project,
       CodeStyleBundle.message("process.reformat.code"),
@@ -216,7 +217,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
     processor.run();
   }
 
-  public static void registerScopeFilter(@NotNull AbstractLayoutCodeProcessor processor, final @Nullable SearchScope scope) {
+  public static void registerScopeFilter(@NotNull AbstractLayoutCodeProcessor processor, @Nullable final SearchScope scope) {
     if (scope == null) {
       return;
     }
@@ -232,7 +233,8 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
     processor.addFileFilter(file -> patternCondition.value(file.getNameSequence()));
   }
 
-  private static @NotNull Condition<CharSequence> getFileTypeMaskPattern(@Nullable String mask) {
+  @NotNull
+  private static Condition<CharSequence> getFileTypeMaskPattern(@Nullable String mask) {
     try {
       return FindInProjectUtil.createFileMaskCondition(mask);
     }
@@ -257,7 +259,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
   public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     boolean available = isActionAvailable(event);
-    if (event.isFromContextMenu()) {
+    if (ActionPlaces.isPopupPlace(event.getPlace())) {
       presentation.setEnabledAndVisible(available);
     }
     else {
@@ -322,7 +324,8 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
     return true;
   }
 
-  private static @Nullable ReformatFilesOptions getReformatFilesOptions(@NotNull Project project, VirtualFile @NotNull [] files) {
+  @Nullable
+  private static ReformatFilesOptions getReformatFilesOptions(@NotNull Project project, VirtualFile @NotNull [] files) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myTestOptions;
     }
@@ -333,7 +336,8 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
     return dialog;
   }
 
-  private static @Nullable ReformatFilesOptions getLayoutProjectOptions(@NotNull Project project, @Nullable Module module) {
+  @Nullable
+  private static ReformatFilesOptions getLayoutProjectOptions(@NotNull Project project, @Nullable Module module) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myTestOptions;
     }

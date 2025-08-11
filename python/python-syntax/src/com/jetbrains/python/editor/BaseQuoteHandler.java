@@ -123,8 +123,9 @@ public class BaseQuoteHandler implements MultiCharQuoteHandler {
     return false;
   }
 
+  @Nullable
   @Override
-  public @Nullable CharSequence getClosingQuote(@NotNull HighlighterIterator iterator, int offset) {
+  public CharSequence getClosingQuote(@NotNull HighlighterIterator iterator, int offset) {
     Document document = iterator.getDocument();
     CharSequence text = document.getCharsSequence();
     char theQuote = text.charAt(offset - 1);
@@ -164,15 +165,18 @@ public class BaseQuoteHandler implements MultiCharQuoteHandler {
     return getLiteralContentTokens().contains(iterator.getTokenType());
   }
 
-  protected @NotNull TokenSet getOpeningQuotesTokens() {
+  @NotNull
+  protected TokenSet getOpeningQuotesTokens() {
     return myPlainStringTokens;
   }
 
-  protected @NotNull TokenSet getClosingQuotesTokens() {
+  @NotNull
+  protected TokenSet getClosingQuotesTokens() {
     return myPlainStringTokens;
   }
 
-  protected @NotNull TokenSet getLiteralContentTokens() {
+  @NotNull
+  protected TokenSet getLiteralContentTokens() {
     return myPlainStringTokens;
   }
 }

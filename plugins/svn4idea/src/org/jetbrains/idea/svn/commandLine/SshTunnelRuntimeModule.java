@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -38,15 +38,18 @@ public class SshTunnelRuntimeModule extends BaseCommandRuntimeModule {
     }
   }
 
-  private @NotNull SvnConfiguration getConfiguration() {
+  @NotNull
+  private SvnConfiguration getConfiguration() {
     return myRuntime.getVcs().getSvnConfiguration();
   }
 
-  private @NotNull SvnConfigurationState getState() {
+  @NotNull
+  private SvnConfigurationState getState() {
     return getConfiguration().getState();
   }
 
-  private @NotNull String buildTunnelValue() {
+  @NotNull
+  private String buildTunnelValue() {
     String sshPath = getState().sshExecutablePath;
     sshPath = !isEmpty(sshPath) ? sshPath : getExecutablePath(getConfiguration().getSshTunnelSetting());
 
@@ -56,7 +59,8 @@ public class SshTunnelRuntimeModule extends BaseCommandRuntimeModule {
     return join(parameters, " ");
   }
 
-  private @NotNull GeneralCommandLine buildTunnelCommandLine(@NotNull String sshPath) {
+  @NotNull
+  private GeneralCommandLine buildTunnelCommandLine(@NotNull String sshPath) {
     GeneralCommandLine result = new GeneralCommandLine(sshPath);
     boolean isPuttyLinkClient = endsWithIgnoreCase(FileUtilRt.getNameWithoutExtension(sshPath), PUTTY_LINK_CLIENT_NAME);
     SvnConfigurationState state = getState();
@@ -79,7 +83,8 @@ public class SshTunnelRuntimeModule extends BaseCommandRuntimeModule {
     return result;
   }
 
-  public static @NotNull String getSshTunnelValue(@Nullable String tunnelSetting) {
+  @NotNull
+  public static String getSshTunnelValue(@Nullable String tunnelSetting) {
     tunnelSetting = !isEmpty(tunnelSetting) ? tunnelSetting : DEFAULT_SSH_TUNNEL_VALUE;
     String svnSshVariableName = getSvnSshVariableName(tunnelSetting);
     String svnSshVariableValue = EnvironmentUtil.getValue(svnSshVariableName);

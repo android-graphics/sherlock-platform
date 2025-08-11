@@ -1,4 +1,3 @@
-// PRIORITY: HIGH
 // INTENTION_TEXT: "Import members from 'kotlin.LazyThreadSafetyMode'"
 // WITH_STDLIB
 

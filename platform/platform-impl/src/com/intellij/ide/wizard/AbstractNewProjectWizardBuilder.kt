@@ -3,7 +3,6 @@ package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
-import com.intellij.ide.util.projectWizard.ProjectConfigurator
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter.Companion.NPW_PREFIX
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.MODIFIABLE_MODULE_MODEL_KEY
@@ -14,7 +13,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.observation.trackActivityBlocking
-import org.jetbrains.annotations.ApiStatus
+import java.util.function.Consumer
 import javax.swing.Icon
 
 abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
@@ -51,9 +50,8 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
     }
   }
 
-  @ApiStatus.Internal
-  override fun createProjectConfigurator(): ProjectConfigurator? {
-    return panel!!.step.createProjectConfigurator()
+  override fun createModuleConfigurator(): Consumer<Module>? {
+    return panel!!.step.createModuleConfigurator()
   }
 
   override fun cleanup() {

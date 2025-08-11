@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unnecessaryModuleDependency;
 
 import com.intellij.analysis.AnalysisScope;
@@ -22,7 +22,7 @@ import java.util.*;
 
 public final class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool {
   @Override
-  public RefGraphAnnotator getAnnotator(final @NotNull RefManager refManager) {
+  public RefGraphAnnotator getAnnotator(@NotNull final RefManager refManager) {
     return new UnnecessaryModuleDependencyAnnotator(refManager);
   }
 
@@ -99,7 +99,7 @@ public final class UnnecessaryModuleDependencyInspection extends GlobalInspectio
   }
 
   @Override
-  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity, @NotNull AnalysisScope scope, @NotNull InspectionManager manager, final @NotNull GlobalInspectionContext globalContext) {
+  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity, @NotNull AnalysisScope scope, @NotNull InspectionManager manager, @NotNull final GlobalInspectionContext globalContext) {
     if (refEntity instanceof RefModule refModule){
       final Module module = refModule.getModule();
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
@@ -153,23 +153,28 @@ public final class UnnecessaryModuleDependencyInspection extends GlobalInspectio
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable RemoveModuleDependencyFix getQuickFix(String hint) {
+  public RemoveModuleDependencyFix getQuickFix(String hint) {
     return new RemoveModuleDependencyFix(hint);
   }
 
   @Override
-  public @NotNull String getGroupDisplayName() {
+  @NotNull
+  public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
-  public @NotNull @NonNls String getShortName() {
+  @NotNull
+  @NonNls
+  public String getShortName() {
     return "UnnecessaryModuleDependencyInspection";
   }
 
+  @Nullable
   @Override
-  public @Nullable String getHint(@NotNull QuickFix fix) {
+  public String getHint(@NotNull QuickFix fix) {
     return fix instanceof RemoveModuleDependencyFix ? ((RemoveModuleDependencyFix)fix).myDependency : null;
   }
 
@@ -198,7 +203,8 @@ public final class UnnecessaryModuleDependencyInspection extends GlobalInspectio
     }
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return JavaAnalysisBundle.message("remove.dependency");
     }
 

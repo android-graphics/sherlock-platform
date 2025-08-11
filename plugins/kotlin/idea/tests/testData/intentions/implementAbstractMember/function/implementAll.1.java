@@ -1,1 +1,0 @@
-class JavaClass implements T<String> {}

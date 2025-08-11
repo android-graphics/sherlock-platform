@@ -17,6 +17,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.search.FilenameIndex;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService;
@@ -32,7 +33,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.CancellationException;
 
 import static com.intellij.serviceContainer.ComponentManagerImplKt.handleComponentError;
 import static com.intellij.util.indexing.FileBasedIndexDataInitialization.FileBasedIndexDataInitializationResult;
@@ -42,12 +42,17 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
 
   private boolean myCurrentVersionCorrupted;
 
-  private final @NotNull FileBasedIndexImpl myFileBasedIndex;
-  private final @NotNull RegisteredIndexes myRegisteredIndexes;
-  private final @NotNull IntSet myStaleIds = IntSets.synchronize(new IntOpenHashSet());
+  @NotNull
+  private final FileBasedIndexImpl myFileBasedIndex;
+  @NotNull
+  private final RegisteredIndexes myRegisteredIndexes;
+  @NotNull
+  private final IntSet myStaleIds = IntSets.synchronize(new IntOpenHashSet());
   private volatile OrphanDirtyFilesQueue myOrphanDirtyFilesQueue;
-  private final @NotNull IndexVersionRegistrationSink myRegistrationResultSink = new IndexVersionRegistrationSink();
-  private final @NotNull IndexConfiguration myState = new IndexConfiguration();
+  @NotNull
+  private final IndexVersionRegistrationSink myRegistrationResultSink = new IndexVersionRegistrationSink();
+  @NotNull
+  private final IndexConfiguration myState = new IndexConfiguration();
 
   FileBasedIndexDataInitialization(@NotNull FileBasedIndexImpl index, @NotNull RegisteredIndexes registeredIndexes) {
     super("file based index");
@@ -82,7 +87,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
           // FileBasedIndexImpl.registerIndexer may throw, then the line below will not be executed
           myRegisteredIndexes.registerIndexExtension(extension);
         }
-        catch (IOException | ProcessCanceledException e) {
+        catch (IOException | AlreadyDisposedException | ProcessCanceledException e) {
           LOG.warnWithDebug("Could not register indexing extension: " + extension + ". reason: " + e, e);
           ID.unloadId(extension.getName());
           throw e;
@@ -108,7 +113,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
     File[] projectQueueFiles = PersistentDirtyFilesQueue.getQueuesDir().toFile().listFiles();
     if (projectQueueFiles != null) {
       for (File file : projectQueueFiles) {
-        dirtyFiles.addAll(PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(file.toPath(), ManagingFS.getInstance().getCreationTimestamp()).getFileIds());
+        dirtyFiles.addAll(PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(file.toPath(), false, ManagingFS.getInstance().getCreationTimestamp()).getFileIds());
       }
     }
   }
@@ -138,7 +143,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
       ApplicationManager.getApplication().getService(AppIndexingDependenciesService.class).invalidateAllStamps("Indexes corrupted");
     }
 
-    myOrphanDirtyFilesQueue = PersistentDirtyFilesQueue.readOrphanDirtyFilesQueue(PersistentDirtyFilesQueue.getQueueFile(), ManagingFS.getInstance().getCreationTimestamp());
+    myOrphanDirtyFilesQueue = PersistentDirtyFilesQueue.readOrphanDirtyFilesQueue(PersistentDirtyFilesQueue.getQueueFile(), myCurrentVersionCorrupted, ManagingFS.getInstance().getCreationTimestamp());
     Collection<ThrowableRunnable<?>> tasks = initAssociatedDataForExtensions(myOrphanDirtyFilesQueue);
 
     PersistentIndicesConfiguration.loadConfiguration();
@@ -150,14 +155,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
   private static class ShutdownTaskAsDisposable implements Disposable {
     @Override
     public void dispose() {
-      try {
-        new FileBasedIndexImpl.ShutDownIndexesTask(/*byShutDownHook: */ false).run();
-      }
-      catch (CancellationException e) {
-        LOG.warn(
-          "Dispose of indexes was canceled. It is likely that the Application was already closed by the moment when indexes started initialize",
-          new RuntimeException(e));
-      }
+      new FileBasedIndexImpl.MyShutDownTask(false).run();
     }
   }
 
@@ -222,8 +220,9 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
       .notify(null);
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getInitializationFinishedMessage(@NotNull FileBasedIndexDataInitializationResult initializationResult) {
+  protected String getInitializationFinishedMessage(@NotNull FileBasedIndexDataInitializationResult initializationResult) {
     return "Initialized indexes: " + initializationResult.myState.getIndexIDs() + ".";
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntFilesProvider;
@@ -28,7 +28,8 @@ public abstract class AntDomFilesProviderImpl extends AntDomElement implements A
 
 
   @Override
-  public final @NotNull List<File> getFiles(Set<AntFilesProvider> processed) {
+  @NotNull
+  public final List<File> getFiles(Set<AntFilesProvider> processed) {
     if (processed.contains(this)) {
       return Collections.emptyList();
     }
@@ -53,26 +54,29 @@ public abstract class AntDomFilesProviderImpl extends AntDomElement implements A
     }
   }
 
-  protected @Nullable AntDomPattern getAntPattern() {
+  @Nullable
+  protected AntDomPattern getAntPattern() {
     return AntDomPattern.create(this, shouldHonorDefaultExcludes(), matchPatternsCaseSensitive());
   }
 
-  protected @NotNull List<File> getFiles(@Nullable AntDomPattern pattern, final Set<AntFilesProvider> processed) {
+  @NotNull
+  protected List<File> getFiles(@Nullable AntDomPattern pattern, final Set<AntFilesProvider> processed) {
     return Collections.emptyList();
   }
 
 
   private boolean shouldHonorDefaultExcludes() {
-    final @NonNls String value = getDefaultExcludes().getRawText();
+    @NonNls final String value = getDefaultExcludes().getRawText();
     return value == null || value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("true");
   }
 
   private boolean matchPatternsCaseSensitive() {
-    final @NonNls String value = getCaseSensitive().getRawText();
+    @NonNls final String value = getCaseSensitive().getRawText();
     return value == null || value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("true");
   }
 
-  protected @Nullable File getCanonicalFile(final String path) {
+  @Nullable
+  protected File getCanonicalFile(final String path) {
     if (path == null) {
       return null;
     }

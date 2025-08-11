@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -37,7 +37,6 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -46,7 +45,6 @@ import javax.swing.event.ListSelectionListener;
 import java.io.IOException;
 import java.util.List;
 
-@ApiStatus.Internal
 public final class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.Callback {
   private static final int CONTEXT_ONE_SIDE_LENGTH = 100;
   private static final long STATUS_TEXT_LIFE_TIME = 3000;
@@ -118,8 +116,9 @@ public final class LfeSearchManagerImpl implements LfeSearchManager, CloseSearch
     mySearchReplaceComponent.getSearchTextComponent().selectAll();
   }
 
+  @NotNull
   @Override
-  public @NotNull LargeFileEditor getLargeFileEditor() {
+  public LargeFileEditor getLargeFileEditor() {
     return largeFileEditor;
   }
 

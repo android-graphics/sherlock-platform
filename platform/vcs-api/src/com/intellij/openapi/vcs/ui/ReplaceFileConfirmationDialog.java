@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.CommonBundle;
@@ -23,7 +37,7 @@ import java.util.Collection;
 public class ReplaceFileConfirmationDialog {
   private final FileStatusManager myFileStatusManager;
   ProgressIndicator myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
-  private final @Nls String myActionName;
+  @Nls private final String myActionName;
 
   public ReplaceFileConfirmationDialog(Project project, @Nls String actionName) {
     myFileStatusManager = FileStatusManager.getInstance(project);
@@ -53,23 +67,28 @@ public class ReplaceFileConfirmationDialog {
 
   }
 
-  protected @NlsContexts.Button String getCancelButtonText() {
+  @NlsContexts.Button
+  protected String getCancelButtonText() {
     return CommonBundle.getCancelButtonText();
   }
 
-  private @NlsContexts.Button String createOverwriteButtonName(Collection modifiedFiles) {
+  @NlsContexts.Button
+  private String createOverwriteButtonName(Collection modifiedFiles) {
     return modifiedFiles.size() > 1 ? getOkButtonTextForFiles() : getOkButtonTextForOneFile();
   }
 
-  protected @NlsContexts.Button String getOkButtonTextForOneFile() {
+  @NlsContexts.Button
+  protected String getOkButtonTextForOneFile() {
     return VcsBundle.message("button.text.overwrite.modified.file");
   }
 
-  protected @NlsContexts.Button String getOkButtonTextForFiles() {
+  @NlsContexts.Button
+  protected String getOkButtonTextForFiles() {
     return VcsBundle.message("button.text.overwrite.modified.files");
   }
 
-  protected @NlsContexts.DialogMessage String createMessage(Collection modifiedFiles) {
+  @NlsContexts.DialogMessage
+  protected String createMessage(Collection modifiedFiles) {
     if (modifiedFiles.size() == 1) {
       VirtualFile virtualFile = ((VirtualFile)modifiedFiles.iterator().next());
       return VcsBundle.message("message.text.file.locally.modified",

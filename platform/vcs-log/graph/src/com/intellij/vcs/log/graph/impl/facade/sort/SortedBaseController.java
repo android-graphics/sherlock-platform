@@ -17,8 +17,8 @@ import java.util.List;
 import static com.intellij.util.containers.ContainerUtil.map;
 
 public class SortedBaseController implements LinearGraphController {
-  private final @NotNull SortIndexMap mySortIndexMap;
-  private final @NotNull LinearGraph mySortedGraph;
+  @NotNull private final SortIndexMap mySortIndexMap;
+  @NotNull private final LinearGraph mySortedGraph;
 
   public SortedBaseController(@NotNull PermanentGraphInfo<?> permanentGraphInfo, @NotNull SortIndexMap sortIndexMap) {
     mySortIndexMap = sortIndexMap;
@@ -27,23 +27,26 @@ public class SortedBaseController implements LinearGraphController {
     SortChecker.checkLinearGraph(mySortedGraph);
   }
 
-  public @NotNull SortIndexMap getBekIntMap() {
+  @NotNull
+  public SortIndexMap getBekIntMap() {
     return mySortIndexMap;
   }
 
+  @NotNull
   @Override
-  public @NotNull LinearGraph getCompiledGraph() {
+  public LinearGraph getCompiledGraph() {
     return mySortedGraph;
   }
 
+  @NotNull
   @Override
-  public @NotNull LinearGraphController.LinearGraphAnswer performLinearGraphAction(@NotNull LinearGraphController.LinearGraphAction action) {
+  public LinearGraphController.LinearGraphAnswer performLinearGraphAction(@NotNull LinearGraphController.LinearGraphAction action) {
     return LinearGraphUtils.DEFAULT_GRAPH_ANSWER;
   }
 
   public static class SortedLinearGraph implements LinearGraph {
-    private final @NotNull LinearGraph myLinearGraph;
-    private final @NotNull SortIndexMap mySortIndexMap;
+    @NotNull private final LinearGraph myLinearGraph;
+    @NotNull private final SortIndexMap mySortIndexMap;
 
     public SortedLinearGraph(@NotNull SortIndexMap sortIndexMap, @NotNull LinearGraph linearGraph) {
       myLinearGraph = linearGraph;
@@ -55,21 +58,24 @@ public class SortedBaseController implements LinearGraphController {
       return myLinearGraph.nodesCount();
     }
 
-    private @Nullable Integer getNodeIndex(@Nullable Integer nodeId) {
+    @Nullable
+    private Integer getNodeIndex(@Nullable Integer nodeId) {
       if (nodeId == null) return null;
 
       return mySortIndexMap.getSortedIndex(nodeId);
     }
 
+    @NotNull
     @Override
-    public @NotNull List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
+    public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
       return map(myLinearGraph.getAdjacentEdges(mySortIndexMap.getUsualIndex(nodeIndex), filter),
                  edge -> new GraphEdge(getNodeIndex(edge.getUpNodeIndex()), getNodeIndex(edge.getDownNodeIndex()), edge.getTargetId(),
                                        edge.getType()));
     }
 
+    @NotNull
     @Override
-    public @NotNull GraphNode getGraphNode(int nodeIndex) {
+    public GraphNode getGraphNode(int nodeIndex) {
       assert inRanges(nodeIndex);
 
       return new GraphNode(nodeIndex, GraphNodeType.USUAL);
@@ -81,8 +87,9 @@ public class SortedBaseController implements LinearGraphController {
       return mySortIndexMap.getUsualIndex(nodeIndex);
     }
 
+    @Nullable
     @Override
-    public @Nullable Integer getNodeIndex(int nodeId) {
+    public Integer getNodeIndex(int nodeId) {
       if (!inRanges(nodeId)) return null;
 
       return mySortIndexMap.getSortedIndex(nodeId);

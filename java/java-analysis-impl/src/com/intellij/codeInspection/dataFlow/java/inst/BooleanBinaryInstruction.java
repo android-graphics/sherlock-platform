@@ -112,7 +112,6 @@ public class BooleanBinaryInstruction extends ExpressionPushingInstruction {
 
   }
 
-  @Override
   public String toString() {
     return "BOOLEAN_OP " + myRelation;
   }

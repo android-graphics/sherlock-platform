@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.theoryinpractice.testng.inspection;
 
@@ -31,22 +31,26 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public final class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionTool {
+public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(UndeclaredTestInspection.class);
 
   @Override
-  public @Nls @NotNull String getGroupDisplayName() {
+  @Nls
+  @NotNull
+  public String getGroupDisplayName() {
     return TestNGUtil.TESTNG_GROUP_NAME;
   }
 
   @Override
-  public @NonNls @NotNull String getShortName() {
+  @NonNls
+  @NotNull
+  public String getShortName() {
     return "UndeclaredTests";
   }
 
   @Override
-  public ProblemDescriptor @Nullable [] checkClass(final @NotNull PsiClass aClass,
-                                                   final @NotNull InspectionManager manager,
+  public ProblemDescriptor @Nullable [] checkClass(@NotNull final PsiClass aClass,
+                                                   @NotNull final InspectionManager manager,
                                                    final boolean isOnTheFly) {
     if (TestNGUtil.hasTest(aClass) && PsiClassUtil.isRunnableClass(aClass, true)) {
       final Project project = aClass.getProject();
@@ -104,17 +108,19 @@ public final class UndeclaredTestInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return TestngBundle.message("inspection.undeclared.test.register", myClassName);
     }
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return TestngBundle.message("inspection.undeclared.test.register.test");
     }
 
     @Override
-    public void applyFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
       LOG.assertTrue(psiClass != null);
       final String testngXmlPath = new SuiteBrowser(project).showDialog();
@@ -160,12 +166,13 @@ public final class UndeclaredTestInspection extends AbstractBaseJavaLocalInspect
 
   private static class CreateTestngFix implements LocalQuickFix {
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return TestngBundle.message("inspection.undeclared.test.create.suite.fix");
     }
 
     @Override
-    public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
       final VirtualFile file = FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), project, null);
       if (file != null) {

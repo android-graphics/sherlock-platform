@@ -293,7 +293,7 @@ public final class PyOverrideImplementUtil {
         }
         statementBody.append(").").append(functionName);
 
-        if (!parameters.isEmpty() && !(baseMethodIsStatic || overridingNew)) {
+        if (parameters.size() > 0 && !(baseMethodIsStatic || overridingNew)) {
           parameters.remove(0);
         }
       }

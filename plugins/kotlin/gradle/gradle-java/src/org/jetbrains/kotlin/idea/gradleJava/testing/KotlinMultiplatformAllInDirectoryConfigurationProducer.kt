@@ -8,26 +8,22 @@ import com.intellij.openapi.project.modules
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.gradleJava.extensions.KotlinMultiplatformCommonProducersProvider
 import org.jetbrains.kotlin.idea.gradleJava.run.MultiplatformTestTasksChooser
-import org.jetbrains.kotlin.idea.gradleJava.run.isProvidedByMultiplatformProducer
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.plugins.gradle.execution.test.runner.AllInDirectoryGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.util.createTestWildcardFilter
 
 class KotlinMultiplatformAllInDirectoryConfigurationProducer
-    : AllInDirectoryGradleConfigurationProducer(), KotlinMultiplatformCommonProducersProvider {
+    : AllInDirectoryGradleConfigurationProducer() {
 
     private val mppTestTasksChooser = MultiplatformTestTasksChooser()
 
     override fun isPreferredConfiguration(self: ConfigurationFromContext, other: ConfigurationFromContext): Boolean {
         return !other.isProducedBy(KotlinMultiplatformAllInPackageConfigurationProducer::class.java) && super.isPreferredConfiguration(self, other)
-                && !other.isProvidedByMultiplatformProducer()
     }
 
     override fun shouldReplace(self: ConfigurationFromContext, other: ConfigurationFromContext): Boolean {
-        return !other.isProducedBy(KotlinMultiplatformAllInPackageConfigurationProducer::class.java) && super.shouldReplace(self, other) &&
-                !other.isProvidedByMultiplatformProducer()
+        return !other.isProducedBy(KotlinMultiplatformAllInPackageConfigurationProducer::class.java) && super.shouldReplace(self, other)
     }
 
     override fun findExistingConfiguration(context: ConfigurationContext): RunnerAndConfigurationSettings? {
@@ -38,7 +34,7 @@ class KotlinMultiplatformAllInDirectoryConfigurationProducer
         }
 
         val module = context.module ?: return null
-        if (module.platform.isCommon() || module.isMultiPlatformModule) {
+        if (module.platform.isCommon()) {
             return null
         }
 
@@ -58,9 +54,5 @@ class KotlinMultiplatformAllInDirectoryConfigurationProducer
         val tasks = mppTestTasksChooser.listAvailableTasks(listOf(element))
 
         return tasks.map { TestTasksToRun(it, wildcardFilter) }
-    }
-
-    override fun isProducedByCommonProducer(configuration: ConfigurationFromContext): Boolean {
-        return configuration.isProducedBy(this.javaClass)
     }
 }

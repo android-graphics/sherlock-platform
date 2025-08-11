@@ -53,7 +53,7 @@ data class PurityInferenceResult(internal val mutatesThis: Boolean,
   }
 
   private fun fromCalls(currentMethod: PsiMethod, body: () -> PsiCodeBlock): MutationSignature {
-    if (singleCall == null) return MutationSignature.transparent()
+    if (singleCall == null) return MutationSignature.pure()
 
     val psiCall : PsiCallExpression = singleCall.restoreExpression(body())
     val method = psiCall.resolveMethod()
@@ -64,7 +64,7 @@ data class PurityInferenceResult(internal val mutatesThis: Boolean,
       return MutationSignature.unknown()
     }
     val signature = MutationSignature.fromCall(psiCall)
-    if (signature.isPure ||
+    if (signature == MutationSignature.pure() ||
         signature == MutationSignature.pure().alsoMutatesThis() &&
         psiCall is PsiMethodCallExpression && ExpressionUtil.isEffectivelyUnqualified(psiCall.methodExpression)) {
       return if (currentMethod.isConstructor) MutationSignature.pure() else signature

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.findUsages;
 
 import com.intellij.ide.DataManager;
@@ -22,7 +22,8 @@ import java.util.Collection;
  */
 public abstract class FindUsagesHandler extends FindUsagesHandlerBase implements FindUsagesHandlerUi {
   // return this handler if you want to cancel the search
-  public static final @NotNull FindUsagesHandler NULL_HANDLER = new NullFindUsagesHandler();
+  @NotNull
+  public static final FindUsagesHandler NULL_HANDLER = new NullFindUsagesHandler();
 
   protected FindUsagesHandler(@NotNull PsiElement psiElement) {
     super(psiElement);
@@ -32,21 +33,24 @@ public abstract class FindUsagesHandler extends FindUsagesHandlerBase implements
   }
 
   @Override
-  public @NotNull AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
+  @NotNull
+  public AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
     return createDefaultFindUsagesDialog(isSingleFile, toShowInNewTab, mustOpenInNewTab, this);
   }
 
-  public static @NotNull AbstractFindUsagesDialog createDefaultFindUsagesDialog(boolean isSingleFile,
-                                                                                boolean toShowInNewTab,
-                                                                                boolean mustOpenInNewTab,
-                                                                                @NotNull FindUsagesHandlerBase handler) {
+  @NotNull
+  public static AbstractFindUsagesDialog createDefaultFindUsagesDialog(boolean isSingleFile,
+                                                                       boolean toShowInNewTab,
+                                                                       boolean mustOpenInNewTab,
+                                                                       @NotNull FindUsagesHandlerBase handler) {
     DataContext ctx = DataManager.getInstance().getDataContext();
     return new CommonFindUsagesDialog(handler.getPsiElement(), handler.getProject(), handler.getFindUsagesOptions(ctx), toShowInNewTab, mustOpenInNewTab, isSingleFile,
                                       handler);
   }
 
   @Override
-  public @Nullable String getHelpId() {
+  @Nullable
+  public String getHelpId() {
     return FindUsagesManager.getHelpID(myPsiElement);
   }
 
@@ -55,8 +59,9 @@ public abstract class FindUsagesHandler extends FindUsagesHandlerBase implements
       super(PsiUtilCore.NULL_PSI_ELEMENT, null);
     }
 
+    @NotNull
     @Override
-    public @NotNull AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
+    public AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
       throw new IncorrectOperationException();
     }
 
@@ -70,18 +75,21 @@ public abstract class FindUsagesHandler extends FindUsagesHandlerBase implements
       throw new IncorrectOperationException();
     }
 
+    @Nullable
     @Override
-    public @Nullable String getHelpId() {
+    public String getHelpId() {
       throw new IncorrectOperationException();
     }
 
+    @NotNull
     @Override
-    public @NotNull FindUsagesOptions getFindUsagesOptions() {
+    public FindUsagesOptions getFindUsagesOptions() {
       throw new IncorrectOperationException();
     }
 
+    @NotNull
     @Override
-    public @NotNull FindUsagesOptions getFindUsagesOptions(@Nullable DataContext dataContext) {
+    public FindUsagesOptions getFindUsagesOptions(@Nullable DataContext dataContext) {
       throw new IncorrectOperationException();
     }
 
@@ -99,8 +107,9 @@ public abstract class FindUsagesHandler extends FindUsagesHandlerBase implements
       throw new IncorrectOperationException();
     }
 
+    @Nullable
     @Override
-    protected @Nullable Collection<String> getStringsToSearch(@NotNull PsiElement element) {
+    protected Collection<String> getStringsToSearch(@NotNull PsiElement element) {
       throw new IncorrectOperationException();
     }
 
@@ -109,8 +118,9 @@ public abstract class FindUsagesHandler extends FindUsagesHandlerBase implements
       throw new IncorrectOperationException();
     }
 
+    @NotNull
     @Override
-    public @NotNull Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target, @NotNull SearchScope searchScope) {
+    public Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target, @NotNull SearchScope searchScope) {
       throw new IncorrectOperationException();
     }
   }

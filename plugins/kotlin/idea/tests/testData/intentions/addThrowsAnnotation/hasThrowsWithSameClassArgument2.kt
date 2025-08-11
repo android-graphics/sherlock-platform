@@ -1,5 +1,5 @@
 // WITH_STDLIB
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 // IS_APPLICABLE: false
 
 class FooException : Exception()

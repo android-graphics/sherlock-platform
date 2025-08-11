@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView.impl;
 
 import com.intellij.ide.structureView.StructureView;
@@ -32,8 +32,9 @@ import java.util.*;
 
 public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStructureViewBuilder {
 
-  public static @NotNull TemplateLanguageStructureViewBuilder create(@NotNull PsiFile psiFile,
-                                                                     @Nullable PairFunction<? super PsiFile, ? super Editor, ? extends StructureViewModel> modelFactory) {
+  @NotNull
+  public static TemplateLanguageStructureViewBuilder create(@NotNull PsiFile psiFile,
+                                                            @Nullable PairFunction<? super PsiFile, ? super Editor, ? extends StructureViewModel> modelFactory) {
     return new TemplateLanguageStructureViewBuilder(psiFile) {
       @Override
       protected TreeBasedStructureViewBuilder createMainBuilder(@NotNull PsiFile psi) {
@@ -43,8 +44,9 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
             return false;
           }
 
+          @NotNull
           @Override
-          public @NotNull StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+          public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
             return modelFactory.fun(psi, editor);
           }
         };
@@ -54,7 +56,8 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
 
   private final VirtualFile myVirtualFile;
   private final Project myProject;
-  private final Map<Language, @Nullable StructureViewBuilder> myLanguageToBuilderMap = new LinkedHashMap<>();
+
+  private final Map<Language, StructureViewBuilder> myLanguageToBuilderMap = new LinkedHashMap<>();
 
   protected TemplateLanguageStructureViewBuilder(PsiElement psiElement) {
     myProject = psiElement.getProject();
@@ -62,9 +65,11 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
 
     PsiFile file = psiElement.getContainingFile();
     if (file != null) {
-      for (Language language : getLanguages(file)) {
+      for (Language language : getLanguages(psiElement.getContainingFile())) {
         StructureViewBuilder builder = getBuilder(file, language);
-        myLanguageToBuilderMap.put(language, builder);
+        if (builder != null) {
+          myLanguageToBuilderMap.put(language, builder);
+        }
       }
     }
   }
@@ -75,11 +80,11 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
   }
 
   @Override
-  public @NotNull StructureView createStructureView(FileEditor fileEditor, @NotNull Project project) {
+  @NotNull
+  public StructureView createStructureView(FileEditor fileEditor, @NotNull Project project) {
     List<StructureViewComposite.StructureViewDescriptor> viewDescriptors = new ArrayList<>();
     for (Language language : myLanguageToBuilderMap.keySet()) {
       StructureViewBuilder builder = myLanguageToBuilderMap.get(language);
-      if (builder == null) continue;
       StructureView structureView = builder.createStructureView(fileEditor, project);
       String title = language.getDisplayName();
       Icon icon = ObjectUtils.notNull(LanguageUtil.getLanguageFileType(language), FileTypes.UNKNOWN).getIcon();
@@ -99,7 +104,8 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
   }
 
   @Override
-  public @NotNull StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+  @NotNull
+  public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
     List<StructureViewComposite.StructureViewDescriptor> viewDescriptors = new ArrayList<>();
     for (Language language : myLanguageToBuilderMap.keySet()) {
       StructureViewBuilder builder = myLanguageToBuilderMap.get(language);
@@ -113,7 +119,8 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
     return new StructureViewCompositeModel(psiFile, editor, viewDescriptors);
   }
 
-  private @NotNull JBIterable<Language> getLanguages(@Nullable PsiFile psiFile) {
+  @NotNull
+  private JBIterable<Language> getLanguages(@Nullable PsiFile psiFile) {
     if (psiFile == null) return JBIterable.empty();
     FileViewProvider viewProvider = psiFile.getViewProvider();
 
@@ -130,7 +137,8 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
       });
   }
 
-  private @Nullable StructureViewBuilder getBuilder(@NotNull PsiFile psiFile, @NotNull Language language) {
+  @Nullable
+  private StructureViewBuilder getBuilder(@NotNull PsiFile psiFile, @NotNull Language language) {
     FileViewProvider viewProvider = psiFile.getViewProvider();
     Language baseLanguage = viewProvider.getBaseLanguage();
     PsiFile psi = viewProvider.getPsi(language);
@@ -144,5 +152,6 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
     return true;
   }
 
-  protected abstract @Nullable TreeBasedStructureViewBuilder createMainBuilder(@NotNull PsiFile psi);
+  @Nullable
+  protected abstract TreeBasedStructureViewBuilder createMainBuilder(@NotNull PsiFile psi);
 }

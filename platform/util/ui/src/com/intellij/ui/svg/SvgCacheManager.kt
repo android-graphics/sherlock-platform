@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.InsecureHashBuilder
+import com.intellij.util.io.mvstore.compactMvStore
 import com.intellij.util.io.mvstore.createOrResetMvStore
 import com.intellij.util.io.mvstore.markMvStoreDbAsInvalid
 import com.intellij.util.io.mvstore.openOrResetMap
@@ -147,6 +148,12 @@ class SvgCacheManager private constructor(
   fun save() {
     if (!map.isClosed) {
       map.store.tryCommit()
+    }
+  }
+
+  fun compact() {
+    if (!map.isClosed) {
+      compactMvStore(map.store, ::thisLogger)
     }
   }
 

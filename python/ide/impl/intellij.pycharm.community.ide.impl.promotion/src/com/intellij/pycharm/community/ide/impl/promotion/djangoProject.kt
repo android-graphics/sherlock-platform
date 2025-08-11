@@ -10,14 +10,16 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoPages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.jetbrains.python.icons.PythonIcons
-import com.jetbrains.python.newProjectWizard.promotion.PromoProjectGenerator
+import com.jetbrains.python.newProject.PyNewProjectSettings
+import com.jetbrains.python.newProject.PythonProjectGenerator
+import com.jetbrains.python.newProject.PythonPromoProjectGenerator
 import javax.swing.Icon
 import javax.swing.JPanel
 
 @NlsSafe
 private const val DJANGO_NAME = "Django"
 
-internal class DjangoPromoProjectGenerator : PromoProjectGenerator(isPython = true) {
+internal class DjangoPromoProjectGenerator : PythonProjectGenerator<PyNewProjectSettings>(), PythonPromoProjectGenerator {
   override fun getName(): String {
     return DJANGO_NAME
   }

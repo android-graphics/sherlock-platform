@@ -189,7 +189,7 @@ public final class Strftime {
       }
     }
 
-    if (!buf.isEmpty()) {
+    if (buf.length() > 0) {
       char lastChar = buf.charAt(buf.length() - 1);
 
       if (lastChar != '\'' && inside) {

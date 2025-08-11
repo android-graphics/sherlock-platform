@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -59,10 +59,11 @@ public final class CollectionAddAllCanBeReplacedWithConstructorInspection extend
     mySettings.readSettings(node);
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
-                                                 boolean isOnTheFly,
-                                                 @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
+                                        boolean isOnTheFly,
+                                        @NotNull LocalInspectionToolSession session) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
@@ -230,13 +231,16 @@ public final class CollectionAddAllCanBeReplacedWithConstructorInspection extend
       this.methodName = methodName;
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getName() {
+    public String getName() {
       return QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.name", methodName);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.family.name");
     }
 

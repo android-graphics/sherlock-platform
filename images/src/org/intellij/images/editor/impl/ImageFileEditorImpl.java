@@ -59,7 +59,8 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
   }
 
   @Override
-  public @NotNull JComponent getComponent() {
+  @NotNull
+  public JComponent getComponent() {
     return imageEditor.getComponent();
   }
 
@@ -69,12 +70,14 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return NAME;
   }
 
   @Override
-  public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
+  @NotNull
+  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
     ImageZoomModel zoomModel = imageEditor.getZoomModel();
     return new ImageFileEditorState(
       imageEditor.isTransparencyChessboardVisible(),
@@ -130,12 +133,14 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
   }
 
   @Override
-  public @NotNull ImageEditor getImageEditor() {
+  @NotNull
+  public ImageEditor getImageEditor() {
     return imageEditor;
   }
 
+  @NotNull
   @Override
-  public @NotNull VirtualFile getFile() {
+  public VirtualFile getFile() {
     return imageEditor.getFile();
   }
 }

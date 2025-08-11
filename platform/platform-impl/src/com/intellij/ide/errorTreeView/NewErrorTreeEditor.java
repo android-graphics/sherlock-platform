@@ -8,7 +8,6 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -24,7 +23,6 @@ import java.util.EventObject;
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Internal
 public final class NewErrorTreeEditor extends AbstractCellEditor implements TreeCellEditor, MouseMotionListener {
 
   public static void install(Tree tree) {

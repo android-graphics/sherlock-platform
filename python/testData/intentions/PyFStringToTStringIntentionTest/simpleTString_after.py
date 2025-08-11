@@ -1,1 +1,0 @@
-s = f"Hel<caret>lo, {name}!"

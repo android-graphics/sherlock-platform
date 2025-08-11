@@ -21,7 +21,6 @@ import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil
 import com.intellij.vcs.log.impl.VcsProjectLog
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
 
@@ -172,7 +171,6 @@ internal class VcsLogBookmarksManagerListener(val project: Project) : BookmarksL
   }
 }
 
-@ApiStatus.Internal
 class VcsBookmarkRef(val bookmark: Bookmark, val type: BookmarkType, val text: @Nls String)
 
 internal interface VcsLogBookmarksListener : EventListener {

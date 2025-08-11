@@ -16,10 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -53,12 +50,14 @@ public final class ForLoopReplaceableByWhileInspection extends BaseInspection im
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "ForLoopReplaceableByWhile";
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "for.loop.replaceable.by.while.problem.descriptor");
   }
@@ -78,7 +77,8 @@ public final class ForLoopReplaceableByWhileInspection extends BaseInspection im
   private static class ReplaceForByWhileFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", PsiKeyword.WHILE);
     }
 

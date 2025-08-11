@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.psi.*;
@@ -35,10 +35,10 @@ public final class TypeWriter extends PsiTypeVisitor<Object> {
     writeType(builder, type, context, new GeneratorClassNameProvider());
   }
 
-  public static void writeType(final @NotNull StringBuilder builder,
+  public static void writeType(@NotNull final StringBuilder builder,
                                @Nullable PsiType type,
-                               final @NotNull PsiElement context,
-                               final @NotNull ClassNameProvider classNameProvider) {
+                               @NotNull final PsiElement context,
+                               @NotNull final ClassNameProvider classNameProvider) {
     if (type == null || PsiTypes.nullType().equals(type)) {
       builder.append(CommonClassNames.JAVA_LANG_OBJECT);
       return;

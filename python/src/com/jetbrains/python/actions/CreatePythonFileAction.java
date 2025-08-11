@@ -3,7 +3,6 @@ package com.jetbrains.python.actions;
 
 import com.intellij.ide.actions.CreateFileFromTemplateAction;
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
-import com.intellij.ide.actions.NewFileActionWithCategory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
@@ -12,7 +11,8 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.pyi.PyiFileType;
 import org.jetbrains.annotations.NotNull;
 
-public class CreatePythonFileAction extends CreateFileFromTemplateAction implements DumbAware, NewFileActionWithCategory {
+
+public class CreatePythonFileAction extends CreateFileFromTemplateAction implements DumbAware {
   public CreatePythonFileAction() {
     super(PyBundle.messagePointer("action.create.python.file.title"), PyBundle.messagePointer("action.create.python.file.description"), PythonFileType.INSTANCE.getIcon());
   }
@@ -29,10 +29,5 @@ public class CreatePythonFileAction extends CreateFileFromTemplateAction impleme
   @Override
   protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
     return PyBundle.message("create.python.file.script.action", newName);
-  }
-
-  @Override
-  public @NotNull String getCategory() {
-    return "Python";
   }
 }

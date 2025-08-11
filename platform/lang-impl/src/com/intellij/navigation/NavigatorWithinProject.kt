@@ -14,7 +14,9 @@ import com.intellij.ide.impl.getProjectOriginUrl
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.JBProtocolCommand
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -38,7 +40,6 @@ import com.intellij.util.text.nullize
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
 import java.util.regex.Pattern
@@ -96,7 +97,6 @@ sealed interface ProtocolOpenProjectResult {
   class Error(val message: String) : ProtocolOpenProjectResult
 }
 
-@ApiStatus.Internal
 data class LocationInFile(val line: Int, val column: Int)
 typealias LocationToOffsetConverter = (LocationInFile, Editor) -> Int
 
@@ -144,8 +144,10 @@ class NavigatorWithinProject(
     parseSelections()
   }
 
-  private fun convertLocationToOffset(locationInFile: LocationInFile, editor: Editor): Int {
-    return max(locationToOffset.invoke(locationInFile, editor), 0)
+  private suspend fun convertLocationToOffset(locationInFile: LocationInFile, editor: Editor): Int {
+    return withContext(Dispatchers.EDT) {
+      max(locationToOffset.invoke(locationInFile, editor), 0)
+    }
   }
 
   suspend fun navigate(keysPrefixesToNavigate: List<NavigationKeyPrefix>) {
@@ -198,9 +200,7 @@ class NavigatorWithinProject(
     withBackgroundProgress(project, IdeBundle.message("navigate.command.search.reference.progress.title", pathText)) {
       val virtualFile = findFileByStringPath(path) ?: return@withBackgroundProgress
       val textEditor = withContext(Dispatchers.EDT) {
-        writeIntentReadAction {
-          FileEditorManager.getInstance(project).openFile(virtualFile, true).filterIsInstance<TextEditor>().firstOrNull()
-        }
+        FileEditorManager.getInstance(project).openFile(virtualFile, true).filterIsInstance<TextEditor>().firstOrNull()
       } ?: return@withBackgroundProgress
       performEditorAction(textEditor, locationInFile)
     }
@@ -224,28 +224,24 @@ class NavigatorWithinProject(
 
   private suspend fun performEditorAction(textEditor: TextEditor, locationInFile: LocationInFile) {
     withContext(Dispatchers.EDT) {
-      writeIntentReadAction {
-        val editor = textEditor.editor
-        editor.caretModel.removeSecondaryCarets()
-        editor.caretModel.moveToOffset(convertLocationToOffset(locationInFile, editor))
-        editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
-        editor.selectionModel.removeSelection()
-        IdeFocusManager.getGlobalInstance().requestFocus(editor.contentComponent, true)
-      }
+      val editor = textEditor.editor
+      editor.caretModel.removeSecondaryCarets()
+      editor.caretModel.moveToOffset(convertLocationToOffset(locationInFile, editor))
+      editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
+      editor.selectionModel.removeSelection()
+      IdeFocusManager.getGlobalInstance().requestFocus(editor.contentComponent, true)
     }
     makeSelectionsVisible()
   }
 
   private suspend fun makeSelectionsVisible() {
     withContext(Dispatchers.EDT) {
-      writeIntentReadAction {
-        val editor = FileEditorManager.getInstance(project).selectedTextEditor
-        selections.forEach {
-          editor?.selectionModel?.setSelection(
-            convertLocationToOffset(it.first, editor),
-            convertLocationToOffset(it.second, editor)
-          )
-        }
+      val editor = FileEditorManager.getInstance(project).selectedTextEditor
+      selections.forEach {
+        editor?.selectionModel?.setSelection(
+          convertLocationToOffset(it.first, editor),
+          convertLocationToOffset(it.second, editor)
+        )
       }
     }
   }

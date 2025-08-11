@@ -2,6 +2,7 @@
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -17,6 +18,7 @@ import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -94,7 +96,8 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     myState.setEntries(entries);
   }
 
-  public @Nullable String urlFor(QualifiedName moduleQName, @Nullable PsiNamedElement element, String pyVersion) {
+  @Nullable
+  public String urlFor(QualifiedName moduleQName, @Nullable PsiNamedElement element, String pyVersion) {
     for (Map.Entry<String, String> entry : myState.getEntries().entrySet()) {
       if (moduleQName.matchesPrefix(QualifiedName.fromDottedString(entry.getKey()))) {
         return transformPattern(entry.getValue(), moduleQName, element, pyVersion);
@@ -113,8 +116,9 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     return pos >= 0 ? urlPattern.substring(0, pos) : urlPattern;
   }
 
-  private static @Nullable String transformPattern(@NotNull String urlPattern, QualifiedName moduleQName, @Nullable PsiNamedElement element,
-                                                   String pyVersion) {
+  @Nullable
+  private static String transformPattern(@NotNull String urlPattern, QualifiedName moduleQName, @Nullable PsiNamedElement element,
+                                         String pyVersion) {
     Map<String, String> macros = new HashMap<>();
     macros.put("element.name", element == null ? null : element.getName());
     PyClass pyClass = element == null ? null : PsiTreeUtil.getParentOfType(element, PyClass.class, false);
@@ -154,7 +158,8 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     return functionOrProp;
   }
 
-  private static @Nullable String transformPattern(@NotNull String urlPattern, Map<String, String> macroValues) {
+  @Nullable
+  private static String transformPattern(@NotNull String urlPattern, Map<String, String> macroValues) {
     for (Map.Entry<String, String> entry : macroValues.entrySet()) {
       if (entry.getValue() == null) {
         if (urlPattern.contains("{" + entry.getKey())) {

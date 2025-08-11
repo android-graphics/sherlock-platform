@@ -1,5 +1,0 @@
-expect enum class Complex {
-    FIRST;
-
-    abstract fun foo()
-}

@@ -35,23 +35,27 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 public final class GroovyUnnecessaryReturnInspection extends BaseInspection {
 
   @Override
-  protected @Nullable String buildErrorString(Object... args) {
+  @Nullable
+  protected String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.ref.is.unnecessary.as.last.statement.in.method.with.no.return.value");
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(@NotNull PsiElement location) {
+  @Nullable
+  protected LocalQuickFix buildFix(@NotNull PsiElement location) {
     return new UnnecessaryReturnFix();
   }
 
   private static class UnnecessaryReturnFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return GroovyBundle.message("intention.family.name.remove.unnecessary.return");
     }
 

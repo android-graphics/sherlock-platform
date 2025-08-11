@@ -1,10 +1,20 @@
 package com.michaelbaranov.microba.calendar.ui.basic;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
+import java.util.TimeZone;
+
+import javax.swing.JComboBox;
+import javax.swing.JPanel;
 
 class ModernCalendarPanel extends JPanel implements PropertyChangeListener {
 
@@ -20,17 +30,17 @@ class ModernCalendarPanel extends JPanel implements PropertyChangeListener {
 
   private TimeZone zone;
 
-  private final YearSpinnerModel yearSpinnerModel;
+  private YearSpinnerModel yearSpinnerModel;
 
-  private final NoGroupingSpinner yearSpinner;
+  private NoGroupingSpinner yearSpinner;
 
-  private final MonthComboBoxModel monthComboBoxModel;
+  private MonthComboBoxModel monthComboBoxModel;
 
-  private final MonthComboBoxRenderer monthComboBoxRenderer;
+  private MonthComboBoxRenderer monthComboBoxRenderer;
 
-  private final JComboBox monthCombo;
+  private JComboBox monthCombo;
 
-  private final Set<JComponent> focusableComponents = new HashSet<>();
+  private Set focusableComponents = new HashSet();
 
   public ModernCalendarPanel(Date aDate, Locale aLocale, TimeZone zone) {
     this.date = aDate;
@@ -60,7 +70,6 @@ class ModernCalendarPanel extends JPanel implements PropertyChangeListener {
     monthComboBoxModel
         .addPropertyChangeListener(new PropertyChangeListener() {
 
-          @Override
           public void propertyChange(PropertyChangeEvent evt) {
             if (evt.getPropertyName().equals(
                 MonthComboBoxModel.PROPERTY_NAME_DATE)) {
@@ -72,7 +81,6 @@ class ModernCalendarPanel extends JPanel implements PropertyChangeListener {
     yearSpinnerModel
         .addPropertyChangeListener(new PropertyChangeListener() {
 
-          @Override
           public void propertyChange(PropertyChangeEvent evt) {
             if (evt.getPropertyName().equals(
                 YearSpinnerModel.PROPERTY_NAME_DATE)) {
@@ -85,14 +93,12 @@ class ModernCalendarPanel extends JPanel implements PropertyChangeListener {
 
   }
 
-  @Override
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     monthCombo.setEnabled(enabled);
     yearSpinner.setEnabled(enabled);
   }
 
-  @Override
   public void setFocusable(boolean focusable) {
     super.setFocusable(focusable);
     monthCombo.setFocusable(focusable);
@@ -111,12 +117,10 @@ class ModernCalendarPanel extends JPanel implements PropertyChangeListener {
     yearSpinnerModel.setDate(date);
   }
 
-  @Override
   public Locale getLocale() {
     return locale;
   }
 
-  @Override
   public void setLocale(Locale locale) {
     Locale old = this.locale;
     this.locale = locale;
@@ -126,7 +130,7 @@ class ModernCalendarPanel extends JPanel implements PropertyChangeListener {
     firePropertyChange(PROPERTY_NAME_LOCALE, old, locale);
   }
 
-  public Collection<JComponent> getFocusableComponents() {
+  public Collection getFocusableComponents() {
     return focusableComponents;
   }
 
@@ -143,13 +147,13 @@ class ModernCalendarPanel extends JPanel implements PropertyChangeListener {
     firePropertyChange(PROPERTY_NAME_ZONE, old, zone);
   }
 
-  @Override
   public void propertyChange(PropertyChangeEvent evt) {
     if (evt.getPropertyName().equals("focusable")) {
       boolean value = ((Boolean) evt.getNewValue()).booleanValue();
       yearSpinner.setFocusable(value);
-      Component[] children = yearSpinner.getEditor().getComponents();
-      for (Component child : children) child.setFocusable(value);
+      Component children[] = yearSpinner.getEditor().getComponents();
+      for (int i = 0; i < children.length; i++)
+        children[i].setFocusable(value);
       monthCombo.setFocusable(value);
     }
     if (evt.getPropertyName().equals("enabled")) {

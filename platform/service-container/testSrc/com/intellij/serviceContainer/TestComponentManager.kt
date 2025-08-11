@@ -9,7 +9,6 @@ import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import org.jetbrains.annotations.TestOnly
@@ -20,10 +19,10 @@ val testPluginDescriptor: DefaultPluginDescriptor = DefaultPluginDescriptor("tes
 
 @OptIn(DelicateCoroutinesApi::class)
 @TestOnly
-class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled: Boolean = true, val parentScope: CoroutineScope = GlobalScope) :
+class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled: Boolean = true) :
   ComponentManagerImpl(
     parent = null,
-    parentScope = parentScope,
+    parentScope = GlobalScope,
     additionalContext = EmptyCoroutineContext,
   ) {
   init {
@@ -43,7 +42,6 @@ class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled:
 private class TestComponentStore : IComponentStore {
   override val storageManager: StateStorageManager
     get() = TODO("not implemented")
-  override val isStoreInitialized: Boolean = true
 
   override fun setPath(path: Path) {
   }

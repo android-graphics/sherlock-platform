@@ -9,12 +9,14 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.ide.impl.DisposableCachedValue
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -27,21 +29,22 @@ class ModuleRootComponentBridge(
   private val currentModule: Module
 ) : ModuleRootManagerEx(), Disposable, ModuleRootModelBridge {
 
-  override val moduleBridge: ModuleBridge
-    get() = currentModule as ModuleBridge
+  override val moduleBridge = currentModule as ModuleBridge
 
   private val orderRootsCache = OrderRootsCacheBridge(currentModule.project, currentModule)
 
-  private val modelValue = CachedValue { storage ->
-    RootModelBridgeImpl(
-      moduleEntity = moduleBridge.findModuleEntity(storage),
-      storage = moduleBridge.entityStorage,
-      itemUpdater = null,
-      // TODO
-      rootModel = this,
-      updater = null
-    )
-  }
+  private val modelValue = DisposableCachedValue(
+    { moduleBridge.entityStorage },
+    CachedValue { storage ->
+      RootModelBridgeImpl(
+        moduleEntity = moduleBridge.findModuleEntity(storage),
+        storage = moduleBridge.entityStorage,
+        itemUpdater = null,
+        // TODO
+        rootModel = this,
+        updater = null
+      )
+    }, "Root Model Bridge (${currentModule.name})", currentModule.project).also { Disposer.register(this, it) }
 
   internal val moduleLibraryTable: ModuleLibraryTableBridgeImpl = ModuleLibraryTableBridgeImpl(moduleBridge)
 
@@ -63,7 +66,7 @@ class ModuleRootComponentBridge(
   }
 
   private val model: RootModelBridgeImpl
-    get() = moduleBridge.entityStorage.cachedValue(modelValue)
+    get() = modelValue.value
 
   override val storage: EntityStorage
     get() = moduleBridge.entityStorage.current
@@ -86,7 +89,7 @@ class ModuleRootComponentBridge(
   }
 
   internal fun dropRootModelCache() {
-    moduleBridge.entityStorage.clearCachedValue(modelValue)
+    modelValue.dropCache()
   }
 
   override fun getModificationCountForTests(): Long = moduleBridge.entityStorage.version

@@ -5,8 +5,10 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.limits.FileSizeLimit;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.VfsTestUtil;
@@ -61,7 +63,7 @@ public class LoadTextUtilTest extends LightPlatformTestCase {
   }
 
   public void testVfsUtilLoadBytesMustIncludeBOMForBigRegularVirtualFile() throws IOException {
-    String text = "A".repeat(FileSizeLimit.getDefaultContentLoadLimit() + 1);
+    String text = "A".repeat(FileUtilRt.LARGE_FOR_CONTENT_LOADING+1);
     byte[] stringBytes = text.getBytes(StandardCharsets.UTF_16BE);
     byte[] expectedAllBytes = ArrayUtil.mergeArrays(CharsetToolkit.UTF16BE_BOM, stringBytes);
 
@@ -82,7 +84,7 @@ public class LoadTextUtilTest extends LightPlatformTestCase {
     assertVfsUtilVariousGettersAreConsistent(vFile, text, stringBytes, expectedAllBytes);
   }
   public void testVfsUtilLoadBytesMustIncludeBOMForBigLightVirtualFile() throws IOException {
-    String text = "A".repeat(FileSizeLimit.getDefaultContentLoadLimit() + 1);
+    String text = "A".repeat(FileUtilRt.LARGE_FOR_CONTENT_LOADING+1);
     byte[] stringBytes = text.getBytes(StandardCharsets.UTF_16BE);
     byte[] expectedAllBytes = ArrayUtil.mergeArrays(CharsetToolkit.UTF16BE_BOM, stringBytes);
     LightVirtualFile vFile = new LightVirtualFile("test.txt", PlainTextFileType.INSTANCE, text, StandardCharsets.UTF_16BE, 2);
@@ -95,7 +97,7 @@ public class LoadTextUtilTest extends LightPlatformTestCase {
     assertEquals(StandardCharsets.UTF_16BE, vFile.getCharset());
     assertEquals(text, VfsUtilCore.loadText(vFile));
     assertOrderedEquals(vFile.getInputStream().readAllBytes(), stringBytes);
-    if (VirtualFileUtil.isTooLarge(vFile)) {
+    if (FileUtilRt.isTooLarge(vFile.getLength())) {
       assertThrows(FileTooBigException.class, () -> vFile.contentsToByteArray());
     }
     else {

@@ -1,4 +1,5 @@
-// IGNORE_K2
+// FIR_IDENTICAL
+// FIR_COMPARISON
 class Some
 
 fun <T> Some.filter(predicate : (T) -> Boolean) = throw UnsupportedOperationException()

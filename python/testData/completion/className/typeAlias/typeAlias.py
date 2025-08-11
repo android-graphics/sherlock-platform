@@ -1,1 +1,0 @@
-xs: ExampleTy<caret>

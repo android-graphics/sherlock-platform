@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ApplicationManager
@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.testFramework.projectModel.library.MockCustomLibraryTableDescription
 import com.intellij.platform.testFramework.projectModel.library.NewMockCustomLibraryTableDescription
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
@@ -57,7 +56,7 @@ class CustomLibraryBridgeTest {
       }
     }
 
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(LocalEelDescriptor)
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
     globalWorkspaceModel.currentSnapshot.entities(LibraryEntity::class.java)
       .onEach { assertEquals(it.tableId, LibraryTableId.GlobalLibraryTableId("Mock")) }
       .onEach { assertTrue(libraryNames.contains(it.name)) }
@@ -175,7 +174,7 @@ class CustomLibraryBridgeTest {
     }
     assertEquals(firstLibraryName, customLibraryTable.libraries.single().name)
 
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(LocalEelDescriptor)
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
     assertEquals(1, globalWorkspaceModel.currentSnapshot.entities(LibraryEntity::class.java).toList().size)
 
     val mockCustomLibraryTableDescription = MockCustomLibraryTableDescription()

@@ -255,7 +255,6 @@ public class DefaultPicoContainer implements MutablePicoContainer {
       return componentInstance.getClass();
     }
 
-    @Override
     public String toString() {
       return getClass().getName() + "[" + getComponentKey() + "]";
     }

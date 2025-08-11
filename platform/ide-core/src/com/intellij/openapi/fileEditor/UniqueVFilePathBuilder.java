@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,13 +11,15 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class UniqueVFilePathBuilder {
   private static final UniqueVFilePathBuilder DUMMY_BUILDER = new UniqueVFilePathBuilder() {
+    @NotNull
     @Override
-    public @NotNull String getUniqueVirtualFilePath(@NotNull Project project, @NotNull VirtualFile vFile) {
+    public String getUniqueVirtualFilePath(@NotNull Project project, @NotNull VirtualFile vFile) {
       return vFile.getPresentableName();
     }
 
+    @NotNull
     @Override
-    public @NotNull String getUniqueVirtualFilePathWithinOpenedFileEditors(@NotNull Project project, @NotNull VirtualFile vFile) {
+    public String getUniqueVirtualFilePathWithinOpenedFileEditors(@NotNull Project project, @NotNull VirtualFile vFile) {
       return vFile.getPresentableName();
     }
   };
@@ -27,11 +29,14 @@ public abstract class UniqueVFilePathBuilder {
     return service != null ? service : DUMMY_BUILDER;
   }
 
-  public @NotNull @NlsSafe String getUniqueVirtualFilePath(@NotNull Project project, @NotNull VirtualFile vFile, @NotNull GlobalSearchScope scope) {
+  @NotNull
+  public @NlsSafe String getUniqueVirtualFilePath(@NotNull Project project, @NotNull VirtualFile vFile, @NotNull GlobalSearchScope scope) {
     return getUniqueVirtualFilePath(project, vFile);
   }
 
-  public abstract @NotNull @NlsSafe String getUniqueVirtualFilePath(@NotNull Project project, @NotNull VirtualFile vFile);
+  @NotNull
+  public abstract @NlsSafe String getUniqueVirtualFilePath(@NotNull Project project, @NotNull VirtualFile vFile);
 
-  public abstract @NotNull @NlsSafe String getUniqueVirtualFilePathWithinOpenedFileEditors(@NotNull Project project, @NotNull VirtualFile vFile);
+  @NotNull
+  public abstract @NlsSafe String getUniqueVirtualFilePathWithinOpenedFileEditors(@NotNull Project project, @NotNull VirtualFile vFile);
 }

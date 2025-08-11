@@ -29,7 +29,7 @@ internal suspend fun getPythonVersion(sdk: Sdk, request: TargetEnvironmentReques
 internal suspend fun getPythonVersion(commandLineBuilder: TargetedCommandLineBuilder,
                                       flavor: PythonSdkFlavor<*>,
                                       request: TargetEnvironmentRequest): String? {
-  commandLineBuilder.addParameter(PythonSdkFlavor.PYTHON_VERSION_ARG)
+  commandLineBuilder.addParameter(flavor.versionOption)
   val commandLine = commandLineBuilder.build()
   val result = request
     .prepareEnvironment(TargetProgressIndicator.EMPTY)
@@ -41,7 +41,7 @@ internal suspend fun getPythonVersion(commandLineBuilder: TargetedCommandLineBui
   val out = result.stdOut.decodeToString()
   Assert.assertEquals(err, 0, result.exitCode)
   val versionString = out.ifBlank { err }.trim()
-  return PythonSdkFlavor.getVersionStringFromOutput(versionString)
+  return flavor.getVersionStringFromOutput(versionString)
 }
 
 /**

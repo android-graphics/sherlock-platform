@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting.importing
 
@@ -9,12 +9,11 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.core.script.scriptConfigurationsSourceOfType
+import org.jetbrains.kotlin.idea.core.script.ScriptModel
+import org.jetbrains.kotlin.idea.core.script.configureGradleScriptsK2
 import org.jetbrains.kotlin.idea.gradle.scripting.importing.KotlinDslScriptModelResolverCommon
 import org.jetbrains.kotlin.idea.gradleJava.loadGradleDefinitions
-import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptConfigurationsSource
-import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsHolder
-import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptModel
+import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsSource
 import org.jetbrains.kotlin.idea.gradleJava.scripting.kotlinDslScriptsModelImportSupported
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptAdditionalTask
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptModelProvider
@@ -47,8 +46,8 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
     override suspend fun onModelFetchCompleted(context: ProjectResolverContext, storage: MutableEntityStorage) {
         val project = context.project()
         val taskId = context.externalSystemTaskId
-        val tasks = kotlinDslSyncListenerInstance?.tasks ?: return
-        val sync = synchronized(tasks) { tasks[taskId] }
+        val tasks = KotlinDslSyncListener.instance?.tasks
+        val sync = tasks?.let { synchronized(tasks) { tasks[taskId] } }
 
         blockingContext {
             for (buildModel in context.allBuilds) {
@@ -71,19 +70,17 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
             }
         }
 
-        if (sync != null && sync.models.isNotEmpty() && KotlinPluginModeProvider.isK2Mode()) {
+        if (sync != null && KotlinPluginModeProvider.isK2Mode()) {
             val definitions = loadGradleDefinitions(sync.workingDir, sync.gradleHome, sync.javaHome, project)
-            GradleScriptDefinitionsHolder.getInstance(project).updateDefinitions(definitions)
+            GradleScriptDefinitionsSource.getInstance(project)?.updateDefinitions(definitions)
 
-            val gradleScripts = sync.models.mapNotNullTo(mutableSetOf()) {
+            val scripts = sync.models.mapNotNullTo(mutableSetOf()) {
                 val path = Path.of(it.file)
                 VirtualFileManager.getInstance().findFileByNioPath(path)?.let { virtualFile ->
-                    GradleScriptModel(virtualFile, it.classPath, it.sourcePath, it.imports, sync.javaHome)
+                    ScriptModel(virtualFile, it.classPath, it.sourcePath, it.imports)
                 }
             }
-
-            project.scriptConfigurationsSourceOfType<GradleScriptConfigurationsSource>()
-                ?.updateDependenciesAndCreateModules(gradleScripts, storage)
+            configureGradleScriptsK2(project, scripts, sync.javaHome, storage)
         }
     }
 }

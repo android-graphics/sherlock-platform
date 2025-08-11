@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.chains;
 
 import com.intellij.diff.chains.SimpleDiffRequestChain.DiffRequestProducerWrapper;
@@ -27,7 +27,7 @@ public abstract class AsyncDiffRequestChain extends UserDataHolderBase implement
 
   private volatile ListSelection<? extends DiffRequestProducer> myRequests = null;
 
-  private @Nullable ProgressIndicator myIndicator;
+  @Nullable private ProgressIndicator myIndicator;
   private int myAssignments = 0;
 
   public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
@@ -47,8 +47,9 @@ public abstract class AsyncDiffRequestChain extends UserDataHolderBase implement
     return requests;
   }
 
+  @NotNull
   @RequiresBackgroundThread
-  public @NotNull ListSelection<? extends DiffRequestProducer> loadRequestsInBackground() {
+  public ListSelection<? extends DiffRequestProducer> loadRequestsInBackground() {
     try {
       return loadRequestProducers();
     }
@@ -75,8 +76,9 @@ public abstract class AsyncDiffRequestChain extends UserDataHolderBase implement
     assert myAssignments >= 0;
   }
 
+  @Nullable
   @RequiresEdt
-  private @Nullable ProgressIndicator startLoading() {
+  private ProgressIndicator startLoading() {
     if (myRequests != null) return null;
 
     return BackgroundTaskUtil.executeAndTryWait(indicator -> {
@@ -98,8 +100,9 @@ public abstract class AsyncDiffRequestChain extends UserDataHolderBase implement
     myDispatcher.getMulticaster().onRequestsLoaded();
   }
 
+  @NotNull
   @RequiresBackgroundThread
-  protected abstract @NotNull ListSelection<? extends DiffRequestProducer> loadRequestProducers() throws DiffRequestProducerException;
+  protected abstract ListSelection<? extends DiffRequestProducer> loadRequestProducers() throws DiffRequestProducerException;
 
   public interface Listener extends EventListener {
     @RequiresEdt

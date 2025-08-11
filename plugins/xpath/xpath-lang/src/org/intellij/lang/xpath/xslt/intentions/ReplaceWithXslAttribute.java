@@ -40,12 +40,14 @@ import java.util.List;
 
 public class ReplaceWithXslAttribute implements IntentionAction {
     @Override
-    public @NotNull String getText() {
+    @NotNull
+    public String getText() {
         return getFamilyName();
     }
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
         return XPathBundle.message("intention.family.name.replace.with.xsl.attribute");
     }
 
@@ -95,7 +97,7 @@ public class ReplaceWithXslAttribute implements IntentionAction {
             if (c == '{' && j < files.length) {
                 if (i < s.length() - 1 && s.charAt(i) != '{') {
                     final PsiFile f = files[j++];
-                    if (!builder.isEmpty()) {
+                    if (builder.length() > 0) {
                         chunks.add(Pair.create(builder.toString(), Boolean.FALSE));
                         builder.setLength(0);
                     }
@@ -110,7 +112,7 @@ public class ReplaceWithXslAttribute implements IntentionAction {
                 builder.append(c);
             }
         }
-        if (!builder.isEmpty()) {
+        if (builder.length() > 0) {
             chunks.add(Pair.create(builder.toString(), Boolean.FALSE));
         }
 
@@ -119,7 +121,7 @@ public class ReplaceWithXslAttribute implements IntentionAction {
         attrTag.setAttribute("name", attr.getName()); // local name?
 
         final String value = attr.getNamespace();
-        if (!value.isEmpty()) {
+        if (value.length() > 0) {
             attrTag.setAttribute("namespace", value);
         }
         for (Pair<String, Boolean> chunk : chunks) {

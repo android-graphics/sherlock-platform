@@ -2,12 +2,10 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.caches.CachesInvalidator;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Internal
 public class ExternalProjectsDataInvalidator extends CachesInvalidator {
   @Override
   public void invalidateCaches() {

@@ -28,7 +28,6 @@ import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
@@ -43,7 +42,6 @@ private inline fun Logger.debug(project: Project, lazyMessage: (project: String)
   }
 }
 
-@ApiStatus.Internal
 class ToolWindowSetInitializer(private val project: Project, private val manager: ToolWindowManagerImpl) {
   @Volatile
   private var isInitialized = false
@@ -81,7 +79,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
     }
   }
 
-  suspend fun initUi(reopeningEditorJob: Job, taskListDeferred: Deferred<List<RegisterToolWindowTaskData>>?) {
+  suspend fun initUi(reopeningEditorJob: Job, taskListDeferred: Deferred<List<RegisterToolWindowTask>>?) {
     try {
       val tasks = taskListDeferred?.await()
       LOG.debug(project) { "create and layout tool windows (project=$it, tasks=${tasks?.joinToString(separator = "\n")}" }
@@ -111,7 +109,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
   }
 
   private suspend fun createAndLayoutToolWindows(manager: ToolWindowManagerImpl,
-                                                 tasks: List<RegisterToolWindowTaskData>,
+                                                 tasks: List<RegisterToolWindowTask>,
                                                  reopeningEditorJob: Job) {
     val ep = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
       .getExtensionPoint<RegisterToolWindowTaskProvider>("com.intellij.registerToolWindowTaskProvider")
@@ -185,15 +183,6 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
       }
     }
 
-    // Ensure that the shortcuts of the actions registered above are included in tooltips.
-    span("stripeButton.updatePresentation executing$suffix") {
-      withContext(Dispatchers.EDT) {
-        for (result in entries) {
-          result.entry.stripeButton?.updatePresentation()
-        }
-      }
-    }
-
     span("postTask executing$suffix") {
       for (result in entries) {
         if (result.postTask != null) {
@@ -207,7 +196,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
 }
 
 internal data class PreparedRegisterToolWindowTask(
-  @JvmField val task: RegisterToolWindowTaskData,
+  @JvmField val task: RegisterToolWindowTask,
   @JvmField val isButtonNeeded: Boolean,
   @JvmField val existingInfo: WindowInfoImpl?,
 
@@ -246,9 +235,9 @@ private fun registerToolWindows(tasks: List<PreparedRegisterToolWindowTask>,
   return entries
 }
 
-private suspend fun addExtraTasks(tasks: List<RegisterToolWindowTaskData>,
+private suspend fun addExtraTasks(tasks: List<RegisterToolWindowTask>,
                                   project: Project,
-                                  ep: ExtensionPointImpl<RegisterToolWindowTaskProvider>): List<RegisterToolWindowTaskData> {
+                                  ep: ExtensionPointImpl<RegisterToolWindowTaskProvider>): List<RegisterToolWindowTask> {
   if (ep.size() == 0) {
     return tasks
   }
@@ -286,31 +275,32 @@ internal fun getToolWindowAnchor(factory: ToolWindowFactory?, bean: ToolWindowEP
   return factory?.anchor ?: ToolWindowAnchor.fromText(bean.anchor ?: ToolWindowAnchor.LEFT.toString())
 }
 
-private suspend fun beanToTask(project: Project, bean: ToolWindowEP, plugin: PluginDescriptor): RegisterToolWindowTaskData? {
+private suspend fun beanToTask(project: Project, bean: ToolWindowEP, plugin: PluginDescriptor): RegisterToolWindowTask? {
   val factory = bean.getToolWindowFactory(plugin)
   return if (factory.isApplicableAsync(project)) beanToTask(project = project, bean = bean, plugin = plugin, factory = factory) else null
 }
 
-private fun beanToTask(
-  project: Project,
-  bean: ToolWindowEP,
-  plugin: PluginDescriptor,
-  factory: ToolWindowFactory,
-) = RegisterToolWindowTaskData(
-  id = bean.id,
-  icon = findIconFromBean(bean = bean, factory = factory, pluginDescriptor = plugin),
-  anchor = getToolWindowAnchor(factory, bean),
-  sideTool = bean.secondary || (@Suppress("DEPRECATION") bean.side),
-  canCloseContent = bean.canCloseContents,
-  canWorkInDumbMode = DumbService.isDumbAware(factory),
-  shouldBeAvailable = factory.shouldBeAvailable(project),
-  contentFactory = factory,
-  stripeTitle = getStripeTitleSupplier(id = bean.id, project = project, pluginDescriptor = plugin),
-  pluginDescriptor = plugin,
-)
+private fun beanToTask(project: Project,
+                       bean: ToolWindowEP,
+                       plugin: PluginDescriptor,
+                       factory: ToolWindowFactory): RegisterToolWindowTask {
+  val task = RegisterToolWindowTask(
+    id = bean.id,
+    icon = findIconFromBean(bean = bean, factory = factory, pluginDescriptor = plugin),
+    anchor = getToolWindowAnchor(factory, bean),
+    sideTool = bean.secondary || (@Suppress("DEPRECATION") bean.side),
+    canCloseContent = bean.canCloseContents,
+    canWorkInDumbMode = DumbService.isDumbAware(factory),
+    shouldBeAvailable = factory.shouldBeAvailable(project),
+    contentFactory = factory,
+    stripeTitle = getStripeTitleSupplier(id = bean.id, project = project, pluginDescriptor = plugin),
+  )
+  task.pluginDescriptor = plugin
+  return task
+}
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal suspend fun computeToolWindowBeans(project: Project): List<RegisterToolWindowTaskData> {
+internal suspend fun computeToolWindowBeans(project: Project): List<RegisterToolWindowTask> {
   return coroutineScope {
     ToolWindowEP.EP_NAME.filterableLazySequence().map { item ->
       async {

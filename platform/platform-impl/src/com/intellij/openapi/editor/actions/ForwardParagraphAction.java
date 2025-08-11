@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.DocumentUtil.isLineEmpty;
@@ -15,7 +14,6 @@ import static com.intellij.util.DocumentUtil.isLineEmpty;
 /**
  * Emulates Emacs 'forward-paragraph' action
  */
-@ApiStatus.Internal
 public final class ForwardParagraphAction extends EditorAction {
   public ForwardParagraphAction() {
     super(new Handler(false));

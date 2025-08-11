@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,7 +42,7 @@ public final class ExtractMethodUtil {
                                     final Map<PsiMethodCallExpression, PsiMethod> ret) {
     final PsiMethod[] overloads = aClass.findMethodsByName(overloadName, false);
     for (final PsiMethod overload : overloads) {
-      for (final PsiReference ref : ReferencesSearch.search(overload).asIterable()) {
+      for (final PsiReference ref : ReferencesSearch.search(overload)) {
         final PsiElement element = ref.getElement();
         final PsiElement parent = element.getParent();
         if (parent instanceof PsiMethodCallExpression call) {
@@ -90,14 +90,14 @@ public final class ExtractMethodUtil {
     }
   }
 
-  public static void addCastsToEnsureResolveTarget(final @NotNull PsiMethod oldTarget, final @NotNull PsiMethodCallExpression call)
+  public static void addCastsToEnsureResolveTarget(@NotNull final PsiMethod oldTarget, @NotNull final PsiMethodCallExpression call)
     throws IncorrectOperationException {
     addCastsToEnsureResolveTarget(oldTarget, PsiSubstitutor.EMPTY, call);
   }
 
-  public static void addCastsToEnsureResolveTarget(final @NotNull PsiMethod oldTarget,
+  public static void addCastsToEnsureResolveTarget(@NotNull final PsiMethod oldTarget,
                                                    @NotNull PsiSubstitutor oldSubstitutor,
-                                                   final @NotNull PsiMethodCallExpression call)
+                                                   @NotNull final PsiMethodCallExpression call)
     throws IncorrectOperationException {
     final PsiMethod newTarget = call.resolveMethod();
     final PsiManager manager = oldTarget.getManager();

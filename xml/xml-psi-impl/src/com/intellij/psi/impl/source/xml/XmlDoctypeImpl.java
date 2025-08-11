@@ -203,7 +203,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   }
 
   protected PsiReference createUrlReference(final PsiElement dtdUrlElement) {
-    return new URLReference(this) {
+    return new URLReference(XmlDoctypeImpl.this) {
       @Override
       public @NotNull String getCanonicalText() {
         return extractValue(dtdUrlElement);

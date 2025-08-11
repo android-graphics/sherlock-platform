@@ -36,7 +36,8 @@ public final class AssertWithoutMessageInspection extends BaseInspection {
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("assert.without.message.problem.descriptor");
   }
 

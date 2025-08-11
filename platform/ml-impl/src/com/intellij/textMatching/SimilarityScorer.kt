@@ -2,9 +2,7 @@
 package com.intellij.textMatching
 
 import com.intellij.internal.ml.WordsSplitter
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 class SimilarityScorer(elements: List<String>, private val wordsSplitter: WordsSplitter = DEFAULT_SPLITTER) {
   private val allWords: List<List<String>> = elements.map { wordsSplitter.split(it) }
 

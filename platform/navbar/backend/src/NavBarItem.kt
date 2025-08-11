@@ -7,7 +7,6 @@ import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.navbar.NavBarItemPresentation
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.annotations.ApiStatus.Internal
 
 
 /**
@@ -56,6 +55,5 @@ interface NavBarItem {
   /**
    * Returns weight for this item for sorting when it is presented in navbar children popup
    */
-  @Internal
   fun weight(): Int = Int.MAX_VALUE
 }

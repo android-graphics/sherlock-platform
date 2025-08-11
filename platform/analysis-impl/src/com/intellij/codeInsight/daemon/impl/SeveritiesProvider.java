@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.List;
 
 public abstract class SeveritiesProvider {
@@ -15,9 +16,13 @@ public abstract class SeveritiesProvider {
   /**
    * @see com.intellij.openapi.editor.colors.TextAttributesKey#createTextAttributesKey(String, TextAttributes)
    */
-  public abstract @NotNull List<@NotNull HighlightInfoType> getSeveritiesHighlightInfoTypes();
+  public abstract @NotNull List<HighlightInfoType> getSeveritiesHighlightInfoTypes();
 
   public boolean isGotoBySeverityEnabled(HighlightSeverity minSeverity) {
     return minSeverity != HighlightSeverity.INFORMATION;
+  }
+
+  public Color getTrafficRendererColor(@NotNull TextAttributes textAttributes) {
+    return textAttributes.getErrorStripeColor();
   }
 }

@@ -202,7 +202,6 @@ public class XMLException extends Exception {
   /**
    * Returns a string representation of the exception.
    */
-  @Override
   public String toString() {
     return msg;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.psi.stubs.IStubElementType;
@@ -19,7 +19,8 @@ public abstract class GrStubElementType<S extends StubElement<?>, T extends Groo
   }
 
   @Override
-  public @NonNls @NotNull String getExternalId() {
+  @NonNls
+  public @NotNull String getExternalId() {
     return "gr." + super.toString();
   }
 }

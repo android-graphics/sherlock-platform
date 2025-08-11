@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -77,7 +77,8 @@ class ShredManager {
     return offset - (cutText.length() - cutTextWithoutBogusWords.length());
   }
 
-  private static @Nullable String extractShredText(@NotNull PsiLanguageInjectionHost.Shred shred) {
+  @Nullable
+  private static String extractShredText(@NotNull PsiLanguageInjectionHost.Shred shred) {
     PsiLiteralValue shredLiteralVal = ObjectUtils.tryCast(shred.getHost(), PsiLiteralValue.class);
     if (shredLiteralVal == null || shredLiteralVal.getValue() == null) return null;
     return String.valueOf(shredLiteralVal.getValue());
@@ -103,7 +104,8 @@ class ShredManager {
     }
 
     @Override
-    public @NotNull ShredInfo next() {
+    @NotNull
+    public ShredInfo next() {
       if (myShredIndex == -1) throw new IllegalStateException("Iterator doesn't contain any shreds");
       myShredIndex = findFirstNonEmptyShredIndex();
       if (myShredIndex == -1) throw new IllegalStateException("Iterator doesn't contain non-empty shreds");

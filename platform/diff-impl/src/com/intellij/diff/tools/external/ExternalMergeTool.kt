@@ -14,9 +14,7 @@ import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 object ExternalMergeTool {
   private val LOG = Logger.getInstance(ExternalMergeTool::class.java)
 

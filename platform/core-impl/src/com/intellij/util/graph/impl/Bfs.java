@@ -2,7 +2,6 @@
 package com.intellij.util.graph.impl;
 
 import com.intellij.util.graph.OutboundSemiGraph;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayDeque;
@@ -12,7 +11,6 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 
 
-@ApiStatus.Internal
 public final class Bfs {
 
   private Bfs() { }

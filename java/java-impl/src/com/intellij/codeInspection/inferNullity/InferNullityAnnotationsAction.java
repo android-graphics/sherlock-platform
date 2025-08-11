@@ -50,6 +50,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
+import com.intellij.util.LazyInitializer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SequentialModalProgressTask;
@@ -66,7 +67,10 @@ import java.util.*;
 public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   private static final String SUGGEST_ANNOTATION_DEPENDENCY = "java.suggest.annotation.dependency";
   private static final @NonNls String ANNOTATE_LOCAL_VARIABLES = "checkbox.annotate.local.variables";
-  private InferNullityAdditionalUi myUi;
+  private final LazyInitializer.@NotNull LazyValue<InferNullityAdditionalUi> myUi = LazyInitializer.create(InferNullityAdditionalUi::new);
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager
+    .getInstance()
+    .getNotificationGroup("Infer Nullity");
 
   public InferNullityAnnotationsAction() {
     super(JavaBundle.messagePointer("dialog.title.infer.nullity"), JavaBundle.messagePointer("action.title.infer.nullity.annotations"));
@@ -74,21 +78,6 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
 
   @Override
   protected void analyze(final @NotNull Project project, final @NotNull AnalysisScope scope) {
-    try {
-      doAnalysis(project, scope);
-    }
-    finally {
-      dispose();
-    }
-  }
-
-  @Override
-  protected void canceled() {
-    super.canceled();
-    dispose();
-  }
-
-  private void doAnalysis(@NotNull Project project, @NotNull AnalysisScope scope) {
     PropertiesComponent.getInstance().setValue(ANNOTATE_LOCAL_VARIABLES, isAnnotateLocalVariables());
 
     final ProgressManager progressManager = ProgressManager.getInstance();
@@ -247,7 +236,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   }
 
   protected boolean isAnnotateLocalVariables() {
-    return myUi.getCheckBox().isSelected();
+    return myUi.get().getCheckBox().isSelected();
   }
 
   private static @NotNull Runnable applyRunnable(final @NotNull Project project, final @NotNull Computable<UsageInfo[]> computable) {
@@ -284,8 +273,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
             if (command.myCount == 0) {
               NullityInferrer.nothingFoundMessage(project);
             } else {
-              getNotificationGroup().createNotification(JavaBundle.message("notification.content.added.annotations", command.myCount),
-                                                        NotificationType.INFORMATION)
+              NOTIFICATION_GROUP.createNotification(JavaBundle.message("notification.content.added.annotations", command.myCount),
+                                                    NotificationType.INFORMATION)
                 .notify(project);
             }
           }
@@ -298,11 +287,6 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
         action.finish();
       }
     };
-  }
-
-  private static NotificationGroup getNotificationGroup() {
-    return NotificationGroupManager.getInstance()
-      .getNotificationGroup("Infer Nullity");
   }
 
   protected void restartAnalysis(final @NotNull Project project, final @NotNull AnalysisScope scope) {
@@ -359,15 +343,11 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     };
   }
 
-  private void dispose() {
-    myUi = null;
-  }
-
   @Override
   protected @Nullable JComponent getAdditionalActionSettings(@NotNull Project project, BaseAnalysisActionDialog dialog) {
-    myUi = new InferNullityAdditionalUi();
-    myUi.getCheckBox().setSelected(PropertiesComponent.getInstance().getBoolean(ANNOTATE_LOCAL_VARIABLES));
-    return myUi.getPanel();
+    InferNullityAdditionalUi ui = myUi.get();
+    ui.getCheckBox().setSelected(PropertiesComponent.getInstance().getBoolean(ANNOTATE_LOCAL_VARIABLES));
+    return ui.getPanel();
   }
 
   /**

@@ -1,5 +1,4 @@
-// "Move to constructor parameters" "false"
-// ACTION: Convert to ordinary property
+// "class org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$MoveToConstructorParameters" "false"
 // ACTION: Make internal
 // ACTION: Make private
 // ACTION: Make protected

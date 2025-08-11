@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution;
 
 import com.intellij.execution.lineMarker.ExecutorAction;
@@ -17,8 +17,9 @@ import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.isFromGroo
  * @author Vladislav.Soroka
  */
 public final class GradleGroovyRunLineMarkerProvider extends RunLineMarkerContributor {
+  @Nullable
   @Override
-  public @Nullable Info getInfo(final @NotNull PsiElement element) {
+  public Info getInfo(@NotNull final PsiElement element) {
     if (!isFromGroovyGradleScript(element)) return null;
     String taskName = getTaskNameIfContains(element);
     if (!isNotEmpty(taskName)) return null;

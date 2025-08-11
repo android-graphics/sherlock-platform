@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.frame;
 
 import com.intellij.xdebugger.Obsolescent;
@@ -50,12 +50,14 @@ public abstract class XFullValueEvaluator {
 
   public boolean isEnabled() { return myIsEnabled; }
 
-  public @NotNull XFullValueEvaluator setShowValuePopup(boolean value) {
+  @NotNull
+  public XFullValueEvaluator setShowValuePopup(boolean value) {
     myShowValuePopup = value;
     return this;
   }
 
-  public @NotNull XFullValueEvaluator setIsEnabled(boolean value) {
+  @NotNull
+  public XFullValueEvaluator setIsEnabled(boolean value) {
     myIsEnabled = value;
     return this;
   }

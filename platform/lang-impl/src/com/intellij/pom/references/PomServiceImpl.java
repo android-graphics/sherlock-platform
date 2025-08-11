@@ -1,14 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom.references;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.pom.PomTarget;
+import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.PomTargetPsiElementImpl;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.pom.PomTarget;
+import com.intellij.openapi.project.Project;
 
-@ApiStatus.Internal
 public final class PomServiceImpl extends PomService {
   private final Project myProject;
 
@@ -16,8 +14,9 @@ public final class PomServiceImpl extends PomService {
     myProject = project;
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement convertToPsi(@NotNull PomTarget target) {
+  public PsiElement convertToPsi(@NotNull PomTarget target) {
     if (target instanceof PsiElement) {
       return (PsiElement)target;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.psi.PsiDirectory;
@@ -31,8 +31,8 @@ public interface CreateDirectoryCompletionContributor {
   Collection<Variant> getVariants(@NotNull PsiDirectory directory);
 
   final class Variant {
-    final @NotNull String path;
-    final @Nullable JpsModuleSourceRootType<?> rootType;
+    @NotNull final String path;
+    @Nullable final JpsModuleSourceRootType<?> rootType;
 
     /**
      * @param path absolute or relative path to a directory
@@ -43,11 +43,13 @@ public interface CreateDirectoryCompletionContributor {
       this.rootType = rootType;
     }
 
-    public @NotNull String getPath() {
+    @NotNull
+    public String getPath() {
       return path;
     }
 
-    public @Nullable JpsModuleSourceRootType<?> getRootType() {
+    @Nullable
+    public JpsModuleSourceRootType<?> getRootType() {
       return rootType;
     }
   }

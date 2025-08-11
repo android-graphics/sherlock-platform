@@ -13,7 +13,7 @@ publishing {
 }
 
 kotlin {
-    {{iosTargetPlaceholder}}
+    ios()
     jvm()
 
     sourceSets {

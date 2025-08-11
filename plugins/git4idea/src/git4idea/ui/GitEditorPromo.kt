@@ -48,7 +48,7 @@ private class GitEditorPromo : EditorNotificationProvider, DumbAware {
       panel.add(
         InplaceButton(IconButton(GitBundle.message("editor.promo.close.link"), AllIcons.Actions.Close, AllIcons.Actions.CloseHovered)) {
           PropertiesComponent.getInstance().setValue(PROMO_DISMISSED_KEY, true)
-          EditorNotifications.getInstance(project).removeNotificationsForProvider(this)
+          EditorNotifications.getInstance(project).updateNotifications(this)
         }, BorderLayout.EAST)
       panel
     }

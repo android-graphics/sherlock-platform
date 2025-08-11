@@ -10,19 +10,25 @@ import java.util.Map;
 @ApiStatus.Internal
 public final class ParameterHints {
 
-  private final List<PyParameterInfoUtils.ParameterDescription> myParameterDescriptors;
+  private final List<String> myHints;
   private final Map<Integer, EnumSet<ParameterFlag>> myFlags;
+  private final List<String> myAnnotations;
 
-  public ParameterHints(List<PyParameterInfoUtils.ParameterDescription> parameterDescriptors, Map<Integer, EnumSet<ParameterFlag>> flags) {
-    myParameterDescriptors = parameterDescriptors;
+  public ParameterHints(List<String> hints, Map<Integer, EnumSet<ParameterFlag>> flags, List<String> annotations) {
+    myHints = hints;
     myFlags = flags;
+    myAnnotations = annotations;
   }
 
-  public List<PyParameterInfoUtils.ParameterDescription> getParameterDescriptors() {
-    return myParameterDescriptors;
+  public List<String> getHints() {
+    return myHints;
   }
 
   public Map<Integer, EnumSet<ParameterFlag>> getFlags() {
     return myFlags;
+  }
+
+  public List<String> getAnnotations() {
+    return myAnnotations;
   }
 }

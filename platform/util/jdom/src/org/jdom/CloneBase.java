@@ -54,16 +54,13 @@
 
 package org.jdom;
 
-import org.jetbrains.annotations.ApiStatus;
-
 /**
  * This simple class just tidies up any cloneable classes. This method deals
  * with any CloneNotSupported exceptions. THis class is package private only.
  *
  * @author Rolf Lear
  */
-@ApiStatus.Internal
-public class CloneBase implements Cloneable {
+class CloneBase implements Cloneable {
   /**
    * Change the permission of the no-arg constructor from public to protected.
    * <p>

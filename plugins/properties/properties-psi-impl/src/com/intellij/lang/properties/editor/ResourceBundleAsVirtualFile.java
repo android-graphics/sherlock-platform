@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.ide.presentation.Presentation;
@@ -28,26 +28,29 @@ public final class ResourceBundleAsVirtualFile extends VirtualFile implements Vi
     myResourceBundle = resourceBundle;
   }
 
-  public @NotNull ResourceBundle getResourceBundle() {
+  @NotNull
+  public ResourceBundle getResourceBundle() {
     return myResourceBundle;
   }
 
   @Override
-  public @NotNull VirtualFileSystem getFileSystem() {
+  @NotNull
+  public VirtualFileSystem getFileSystem() {
     return LocalFileSystem.getInstance();
   }
 
   @Override
-  public @NotNull String getPath() {
+  @NotNull
+  public String getPath() {
     return getName();
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return myResourceBundle.isValid() ? myResourceBundle.getBaseName() : "";
   }
 
-  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -59,7 +62,6 @@ public final class ResourceBundleAsVirtualFile extends VirtualFile implements Vi
     return true;
   }
 
-  @Override
   public int hashCode() {
     return myResourceBundle.hashCode();
   }
@@ -103,13 +105,15 @@ public final class ResourceBundleAsVirtualFile extends VirtualFile implements Vi
     return EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
-  public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull String name) {
+  public VirtualFile createChildDirectory(Object requestor, @NotNull String name) {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
-  public @NotNull VirtualFile createChildData(Object requestor, @NotNull String name) {
+  public VirtualFile createChildData(Object requestor, @NotNull String name) {
     throw new UnsupportedOperationException();
   }
 
@@ -129,7 +133,8 @@ public final class ResourceBundleAsVirtualFile extends VirtualFile implements Vi
   }
 
   @Override
-  public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
+  @NotNull
+  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
     throw new UnsupportedOperationException();
   }
 

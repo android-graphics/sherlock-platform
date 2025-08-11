@@ -16,19 +16,25 @@ object ClientVersionUtil {
   private val sameDefaultPathsAsLocalIdesUsedSince: BuildNumber
     get() = BuildNumber("", 242, 13718)
 
-  fun isSeparateConfigSupported(clientBuild: BuildNumber): Boolean = 
-    clientBuild >= separateConfigSupportedSince || clientBuild.baselineVersion == 232 && clientBuild >= separateConfigSupportedSince232
+  fun isJBCSeparateConfigSupported(clientVersion: String): Boolean {
+    val clientBuild = BuildNumber.fromString(clientVersion)
+    return clientBuild != null && isSeparateConfigSupported(clientBuild)
+  }
 
   fun isClientUsesTheSamePathsAsLocalIde(clientVersion: String): Boolean {
     val clientBuild = BuildNumber.fromString(clientVersion)
     return clientBuild != null && clientBuild >= sameDefaultPathsAsLocalIdesUsedSince
   }
+  
+  private fun isSeparateConfigSupported(clientBuild: BuildNumber) = 
+    clientBuild >= separateConfigSupportedSince || clientBuild.baselineVersion == 232 && clientBuild >= separateConfigSupportedSince232
 
   /**
    * Returns value which should be assigned to 'JBC_SEPARATE_CONFIG' environment variable to explicitly enable or disable the "separate 
    * process per connection" mode.
    */
-  fun computeSeparateConfigEnvVariableValue(clientBuild: BuildNumber): String? {
+  fun computeSeparateConfigEnvVariableValue(clientVersion: String): String? {
+    val clientBuild = BuildNumber.fromString(clientVersion) ?: return null
     if (isSeparateConfigSupported(clientBuild) &&
         !(clientBuild >= separateConfigEnabledByDefaultSince ||
           clientBuild.baselineVersion == 232 && clientBuild >= separateConfigEnabledByDefaultSince232)) {

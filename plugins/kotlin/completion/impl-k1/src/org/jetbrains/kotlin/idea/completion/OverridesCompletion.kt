@@ -64,7 +64,6 @@ class OverridesCompletion(
                 lookupElement,
                 declaration,
                 text,
-                tailText = null,
                 isImplement,
                 icon,
                 baseClassName,

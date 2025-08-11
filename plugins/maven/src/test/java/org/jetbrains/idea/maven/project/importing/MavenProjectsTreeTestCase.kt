@@ -3,24 +3,22 @@ package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
-import com.intellij.testFramework.RunAll
-import com.intellij.util.ThrowableRunnable
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.IOException
+import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 
 abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() {
   private var myTree: MavenProjectsTree? = null
   protected val rawProgressReporter: RawProgressReporter = object : RawProgressReporter {}
-  protected lateinit var mavenEmbedderWrappers: MavenEmbedderWrappers
 
   val tree: MavenProjectsTree
     get() {
@@ -33,33 +31,21 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
     myTree = MavenProjectsManager.getInstance(project).getProjectsTree()
   }
 
-  override fun setUp() {
-    super.setUp()
-    mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
-  }
-
-  override fun tearDown() {
-    RunAll(
-      ThrowableRunnable { mavenEmbedderWrappers.close() },
-      ThrowableRunnable { super.tearDown() }
-    ).run()
-  }
-
-  protected suspend fun updateAll(vararg files: VirtualFile) {
+  protected suspend fun updateAll(vararg files: VirtualFile?) {
     updateAll(emptyList<String>(), *files)
   }
 
-  protected suspend fun updateAll(profiles: List<String?>?, vararg files: VirtualFile) {
+  protected suspend fun updateAll(profiles: List<String?>?, vararg files: VirtualFile?) {
     tree.resetManagedFilesAndProfiles(listOf(*files), MavenExplicitProfiles(profiles))
-    tree.updateAll(false, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
+    tree.updateAll(false, mavenGeneralSettings, rawProgressReporter)
   }
 
   protected suspend fun update(file: VirtualFile) {
-    tree.update(listOf(file), false, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
+    tree.update(listOf(file), false, mavenGeneralSettings, rawProgressReporter)
   }
 
   protected suspend fun deleteProject(file: VirtualFile) {
-    tree.delete(listOf(file), mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
+    tree.delete(listOf(file), mavenGeneralSettings, rawProgressReporter)
   }
 
   @Throws(IOException::class)
@@ -98,7 +84,8 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
       add(text, updated.map { it.mavenId.artifactId }.toSet())
     }
 
-    override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>) {
+    override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
+                                 nativeMavenProject: NativeMavenProjectHolder?) {
       add("resolved", setOf(projectWithChanges.first.mavenId.artifactId))
     }
 
@@ -113,18 +100,16 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
 
   protected suspend fun resolve(project: Project,
                                 mavenProject: MavenProject,
-                                generalSettings: MavenGeneralSettings
-  ) {
+                                generalSettings: MavenGeneralSettings,
+                                embeddersManager: MavenEmbeddersManager) {
     val resolver = MavenProjectResolver(project)
     val progressReporter = object : RawProgressReporter {}
-    val updateSnapshots = projectsManager.forceUpdateSnapshots || generalSettings.isAlwaysUpdateSnapshots
     resolver.resolve(true,
                      listOf(mavenProject),
                      tree,
                      tree.workspaceMap,
-                     generalSettings.effectiveRepositoryPath,
-                     updateSnapshots,
-                     mavenEmbedderWrappers,
+                     generalSettings,
+                     embeddersManager,
                      progressReporter,
                      MavenLogEventHandler)
   }

@@ -9,7 +9,10 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -147,5 +150,5 @@ public abstract class InspectionManager {
   public abstract @NotNull GlobalInspectionContext createNewGlobalContext();
 
   @ApiStatus.Internal
-  public abstract @Unmodifiable @NotNull List<ProblemDescriptor> defaultProcessFile(@NotNull LocalInspectionTool tool, @NotNull PsiFile file);
+  public abstract @NotNull List<ProblemDescriptor> defaultProcessFile(@NotNull LocalInspectionTool tool, @NotNull PsiFile file);
 }

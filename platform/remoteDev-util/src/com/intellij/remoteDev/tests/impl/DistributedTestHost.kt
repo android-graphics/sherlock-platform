@@ -2,34 +2,37 @@ package com.intellij.remoteDev.tests.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.codeWithMe.clientId
 import com.intellij.diagnostic.LoadingState
-import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.diagnostic.logs.DebugLogLevel
 import com.intellij.diagnostic.logs.LogCategory
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.rd.util.adviseSuspend
-import com.intellij.openapi.rd.util.setSuspend
+import com.intellij.openapi.rd.util.adviseSuspendPreserveClientId
+import com.intellij.openapi.rd.util.setSuspendPreserveClientId
 import com.intellij.openapi.ui.isFocusAncestor
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.platform.util.coroutines.limitedParallelism
 import com.intellij.remoteDev.tests.*
 import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
-import com.intellij.remoteDev.tests.modelGenerated.*
+import com.intellij.remoteDev.tests.modelGenerated.RdAgentType
+import com.intellij.remoteDev.tests.modelGenerated.RdProductType
+import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
+import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
 import com.intellij.ui.AppIcon
 import com.intellij.ui.WinFocusStealer
 import com.intellij.util.ui.EDT.isCurrentThreadEdt
@@ -38,23 +41,22 @@ import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.util.lifetime.EternalLifetime
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.viewNotNull
+import com.jetbrains.rd.util.threading.asRdScheduler
+import com.jetbrains.rd.util.threading.coroutines.asCoroutineDispatcher
+import com.jetbrains.rd.util.threading.coroutines.launch
 import com.jetbrains.rd.util.threading.coroutines.waitFor
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
 import java.awt.Frame
-import java.awt.KeyboardFocusManager
 import java.awt.Window
 import java.awt.image.BufferedImage
 import java.io.File
 import java.net.InetAddress
 import java.time.LocalTime
 import javax.imageio.ImageIO
-import javax.swing.JFrame
-import kotlin.coroutines.CoroutineContext
 import kotlin.reflect.full.createInstance
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
@@ -68,7 +70,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
       get() = Logger.getInstance(RdctTestFrameworkLoggerCategory.category + "Host")
 
     fun getDistributedTestPort(): Int? =
-      System.getProperty(DistributedTestsAgentConstants.protocolPortPropertyName)?.toIntOrNull()
+      System.getProperty(AgentConstants.protocolPortPropertyName)?.toIntOrNull()
 
     /**
      * ID of the plugin which contains test code.
@@ -89,8 +91,8 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
   init {
     val hostAddress =
-      System.getProperty(DistributedTestsAgentConstants.protocolHostPropertyName)?.let {
-        LOG.info("${DistributedTestsAgentConstants.protocolHostPropertyName} system property is set=$it, will try to get address from it.")
+      System.getProperty(AgentConstants.protocolHostPropertyName)?.let {
+        LOG.info("${AgentConstants.protocolHostPropertyName} system property is set=$it, will try to get address from it.")
         // this won't work when we do custom network setups as the default gateway will be overridden
         // val hostEntries = File("/etc/hosts").readText().lines()
         // val dockerInterfaceEntry = hostEntries.last { it.isNotBlank() }
@@ -103,14 +105,9 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     if (port != null) {
       LOG.info("Queue creating protocol on $hostAddress:$port")
       coroutineScope.launch {
-        val coroutineDumperOnTimeout = launch {
-          delay(20.seconds)
-          LOG.warn("LoadingState.COMPONENTS_LOADED has not occurred in 20 seconds: ${dumpCoroutines()}")
-        }
         while (!LoadingState.COMPONENTS_LOADED.isOccurred) {
           delay(10.milliseconds)
         }
-        coroutineDumperOnTimeout.cancel()
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           createProtocol(hostAddress, port)
         }
@@ -125,8 +122,8 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     // EternalLifetime.createNested() is used intentionally to make sure logger session's lifetime is not terminated before the actual application stop.
     val lifetime = EternalLifetime.createNested()
 
-    val wire = SocketWire.Client(lifetime, DistributedTestIdeScheduler, port, DistributedTestsAgentConstants.protocolName, hostAddress)
-    val protocol = Protocol(name = DistributedTestsAgentConstants.protocolName,
+    val wire = SocketWire.Client(lifetime, DistributedTestIdeScheduler, port, AgentConstants.protocolName, hostAddress)
+    val protocol = Protocol(name = AgentConstants.protocolName,
                             serializers = Serializers(),
                             identity = Identities(IdKind.Client),
                             scheduler = DistributedTestIdeScheduler,
@@ -139,9 +136,6 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
       val isNotRdHost = !(session.agentInfo.productType == RdProductType.REMOTE_DEVELOPMENT && session.agentInfo.agentType == RdAgentType.HOST)
 
       try {
-        @OptIn(ExperimentalCoroutinesApi::class)
-        val sessionBgtDispatcher = Dispatchers.Default.limitedParallelism(1, "Test session dispatcher: ${session.testClassName}::${session.testMethodName}")
-
         setUpTestLoggingFactory(sessionLifetime, session)
         val app = ApplicationManager.getApplication()
         if (session.testMethodName == null || session.testClassName == null) {
@@ -170,43 +164,42 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
           // Tell test we are running it inside an agent
           val agentInfo = AgentInfo(session.agentInfo, session.testClassName, session.testMethodName)
-          val (actionsMap, getComponentDataRequests) = testClassObject.initAgent(agentInfo)
+          val map = testClassObject.initAgent(agentInfo)
 
           // Play test method
           val testMethod = testClass.getMethod(session.testMethodName)
           testClassObject.performInit(testMethod)
           testMethod.invoke(testClassObject)
 
-          suspend fun <T> runNext(
-            actionTitle: String,
-            timeout: Duration,
-            coroutineContextGetter: () -> CoroutineContext,
-            requestFocusBeforeStart: Boolean?,
-            action: suspend AgentContext.() -> T,
-          ): T {
+          // Advice for processing events
+          session.runNextAction.setSuspendPreserveClientId { _, parameters ->
+            val actionTitle = parameters.title
+            val actionParameters = parameters.parameters
+            val queue = map[actionTitle] ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
+            val action = queue.remove()
+            val timeout = action.timeout
             try {
               assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local before test method starts" }
               LOG.info("'$actionTitle': received action execution request")
 
-              val providedCoroutineContext = coroutineContextGetter.invoke()
-              val clientId = providedCoroutineContext.clientId() ?: ClientId.current
+              val providedContext = action.coroutineContextGetter.invoke()
+              val clientId = providedContext.clientId() ?: ClientId.current
 
-              return withContext(providedCoroutineContext) {
+              return@setSuspendPreserveClientId withContext(providedContext + clientId.asContextElement()) {
                 assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when test method starts" }
-                if (!app.isHeadlessEnvironment && isNotRdHost && (requestFocusBeforeStart ?: isCurrentThreadEdt())) {
-                  requestFocus(silent = false)
+                if (!app.isHeadlessEnvironment && isNotRdHost && (action.requestFocusBeforeStart ?: isCurrentThreadEdt())) {
+                  requestFocus(actionTitle)
                 }
 
                 assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when after request focus" }
-
                 val agentContext = when (session.agentInfo.agentType) {
-                  RdAgentType.HOST -> HostAgentContextImpl(session.agentInfo, protocol, coroutineContext)
-                  RdAgentType.CLIENT -> ClientAgentContextImpl(session.agentInfo, protocol, coroutineContext)
-                  RdAgentType.GATEWAY -> GatewayAgentContextImpl(session.agentInfo, protocol, coroutineContext)
+                  RdAgentType.HOST -> HostAgentContextImpl(session.agentInfo, protocol)
+                  RdAgentType.CLIENT -> ClientAgentContextImpl(session.agentInfo, protocol)
+                  RdAgentType.GATEWAY -> GatewayAgentContextImpl(session.agentInfo, protocol)
                 }
 
                 val result = runLogged(actionTitle, timeout) {
-                   agentContext.action()
+                  action.action(agentContext, actionParameters)
                 }
 
                 // Assert state
@@ -220,58 +213,33 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
               throw ex
             }
           }
-
-          // Advice for processing events
-          session.runNextAction.setSuspend(sessionBgtDispatcher) { _, parameters ->
-            val actionTitle = parameters.title
-            val queue = actionsMap[actionTitle] ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
-            val agentAction = queue.remove()
-
-            return@setSuspend runNext(actionTitle, agentAction.timeout, agentAction.coroutineContextGetter, agentAction.requestFocusBeforeStart) {
-              agentAction.action.invoke(this, parameters.parameters)
-            }
-          }
-
-
-          session.runNextActionGetComponentData.setSuspend(sessionBgtDispatcher) { _, parameters ->
-            val actionTitle = parameters.title
-            val queue = getComponentDataRequests[actionTitle]
-                        ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
-            val agentActionGetComponentData = queue.remove()
-
-            return@setSuspend runNext(actionTitle, agentActionGetComponentData.timeout,
-                                      agentActionGetComponentData.coroutineContextGetter, agentActionGetComponentData.requestFocusBeforeStart) {
-              agentActionGetComponentData.action(this, parameters.parameters)
-            }
-          }
         }
-
-        session.isResponding.setSuspend(sessionBgtDispatcher) { _, _ ->
+        // actually doesn't really preserve clientId, not really important here
+        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
+        session.isResponding.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
           LOG.info("Answering for session is responding...")
           true
         }
 
-        session.getProductCodeAndVersion.setSuspend(sessionBgtDispatcher) { _, _ ->
-          ApplicationInfo.getInstance().build.let {
-            RdProductInfo(productCode = it.productCode, productVersion = it.asStringWithoutProductCode())
-          }
-        }
-
-        session.visibleFrameNames.setSuspend(sessionBgtDispatcher) { _, _ ->
+        // actually doesn't really preserve clientId, not really important here
+        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
+        session.visibleFrameNames.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
           Window.getWindows().filter { it.isShowing }.filterIsInstance<Frame>().map { it.title }.also {
             LOG.info("Visible frame names: ${it.joinToString(", ", "[", "]")}")
           }
         }
 
-        session.projectsNames.setSuspend(sessionBgtDispatcher) { _, _ ->
+        // actually doesn't really preserve clientId, not really important here
+        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
+        session.projectsNames.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
           ProjectManagerEx.getOpenProjects().map { it.name }.also {
             LOG.info("Projects: ${it.joinToString(", ", "[", "]")}")
           }
         }
 
-        suspend fun waitProjectInitialisedOrDisposed(project: Project) {
-          runLogged("Wait project '${project.name}' is initialised or disposed", 10.seconds) {
-            while (!(project.isInitialized || project.isDisposed)) {
+        suspend fun waitProjectInitialisedOrDisposed(it: Project) {
+          runLogged("Wait project '${it.name}' is initialised or disposed", 10.seconds) {
+            while (!it.isInitialized || it.isDisposed) {
               delay(1.seconds)
             }
           }
@@ -288,61 +256,53 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
             if (throwErrorIfModal) {
               LOG.error("Unexpected modality: " + ModalityState.current())
             }
-            LaterInvocator.forceLeaveAllModals("DistributedTestHost - leaveAllModals")
-            repeat(10) {
-              if (ModalityState.current() == ModalityState.nonModal()) {
-                return@withContext
-              }
-              delay(1.seconds)
-            }
-            LOG.error("Failed to close modal dialog: " + ModalityState.current())
+            LaterInvocator.forceLeaveAllModals()
+            IdeEventQueue.getInstance().flushQueue()
           }
         }
 
-        session.forceLeaveAllModals.setSuspend(sessionBgtDispatcher) { _, throwErrorIfModal ->
+        session.forceLeaveAllModals.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, throwErrorIfModal ->
           leaveAllModals(throwErrorIfModal)
         }
 
-        session.closeProjectIfOpened.setSuspend(sessionBgtDispatcher) { _, _ ->
-          try {
-            leaveAllModals(throwErrorIfModal = true)
-
-            ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
-            withContext(Dispatchers.EDT + NonCancellable) {
-              writeIntentReadAction {
-                ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false)
-              }
-            }
+        session.closeProjectIfOpened.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
+          leaveAllModals(throwErrorIfModal = true)
+          ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
+          withContext(Dispatchers.EDT + NonCancellable) {
+            ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false)
           }
-          catch (ce: CancellationException) {
-            LOG.info("closeProjectIfOpened was cancelled", ce)
-            throw ce
-          }
-
         }
         /**
          * Includes closing the project
          */
-        session.exitApp.adviseSuspend(lifetime, Dispatchers.EDT + NonCancellable) {
-          writeIntentReadAction {
+        session.exitApp.adviseOn(lifetime, Dispatchers.Default.asRdScheduler) {
+          lifetime.launch(Dispatchers.EDT + NonCancellable) {
             LOG.info("Exiting the application...")
             app.exit(/* force = */ false, /* exitConfirmed = */ true, /* restart = */ false)
           }
         }
 
-        session.requestFocus.setSuspend(Dispatchers.EDT + ModalityState.any().asContextElement()) { _, silent ->
-          requestFocus(silent)
+        // actually doesn't really preserve clientId, not really important here
+        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
+        session.requestFocus.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, actionTitle ->
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            requestFocus(actionTitle)
+          }
         }
 
-        session.makeScreenshot.setSuspend(sessionBgtDispatcher) { _, fileName ->
+        // actually doesn't really preserve clientId, not really important here
+        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
+        session.makeScreenshot.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, fileName ->
           makeScreenshot(fileName)
         }
 
-        session.projectsAreInitialised.setSuspend(sessionBgtDispatcher) { _, _ ->
+        // actually doesn't really preserve clientId, not really important here
+        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
+        session.projectsAreInitialised.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
           ProjectManagerEx.getOpenProjects().map { it.isInitialized }.all { true }
         }
 
-        session.showNotification.adviseSuspend(lifetime, Dispatchers.EDT) { notificationText ->
+        session.showNotification.adviseSuspendPreserveClientId(lifetime, Dispatchers.Default.asRdScheduler.asCoroutineDispatcher) { notificationText ->
           showNotification(notificationText)
         }
 
@@ -362,98 +322,59 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
   }
 
 
-  private suspend fun requestFocus(silent: Boolean): Boolean {
-    LOG.info("Requesting focus")
-
+  private suspend fun requestFocus(actionTitle: String): Boolean {
     val projects = ProjectManagerEx.getOpenProjects()
 
     if (projects.size > 1) {
-      LOG.info("Can't choose a project to focus. All projects: ${projects.joinToString(", ")}")
+      LOG.info("'$actionTitle': Can't choose a project to focus. All projects: ${projects.joinToString(", ")}")
       return false
     }
 
     val currentProject = projects.singleOrNull()
     return if (currentProject == null) {
-      requestFocusNoProject(silent)
+      requestFocusNoProject(actionTitle)
     }
     else {
-      requestFocusWithProjectIfNeeded(currentProject, silent)
+      requestFocusWithProject(currentProject, actionTitle)
     }
   }
 
-  private suspend fun requestFocusWithProjectIfNeeded(project: Project, silent: Boolean): Boolean {
+  private suspend fun requestFocusWithProject(project: Project, actionTitle: String): Boolean {
     val projectIdeFrame = WindowManager.getInstance().getFrame(project)
     if (projectIdeFrame == null) {
-      LOG.info("No frame yet, nothing to focus")
+      LOG.info("$actionTitle: No frame yet, nothing to focus")
       return false
     }
     else {
-      val frameName = "frame '${projectIdeFrame.name}'"
-
-      return if ((projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused) && !SystemInfo.isWindows) {
-        LOG.info("Frame '$frameName' is already focused")
-        true
+      val windowString = "window '${projectIdeFrame.name}'"
+      AppIcon.getInstance().requestFocus(projectIdeFrame)
+      if (projectIdeFrame.isFocusAncestor()) {
+        LOG.info("$actionTitle: Window '$windowString' is already focused")
+        return true
       }
       else {
-        requestFocusWithProject(projectIdeFrame, project, frameName, silent)
+        LOG.info("$actionTitle: Requesting project focus for '$windowString'")
+        ProjectUtil.focusProjectWindow(project, true)
+        waitFor(timeout = 5.seconds.toJavaDuration()) {
+          projectIdeFrame.isFocusAncestor()
+        }
+        return true
       }
     }
   }
 
-  private suspend fun requestFocusWithProject(projectIdeFrame: JFrame, project: Project, frameName: String, silent: Boolean): Boolean {
-    val logPrefix = "Requesting project focus for '$frameName'"
-    LOG.info(logPrefix)
-
-    AppIcon.getInstance().requestFocus(projectIdeFrame)
-    ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive = true)
-
-    return waitFor(timeout = 5.seconds.toJavaDuration()) {
-      projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused
-    }.also {
-      if (!it && !silent) {
-        LOG.error("$logPrefix: Couldn't wait for focus," +
-                  "component isFocused=" + projectIdeFrame.isFocused + " isFocusAncestor=" + projectIdeFrame.isFocusAncestor() +
-                  "\n" + getFocusStateDescription()
-        )
-      }
-      else {
-        LOG.info("$logPrefix is successful: $it")
-      }
-    }
-  }
-
-  private suspend fun requestFocusNoProject(silent: Boolean): Boolean {
-    val logPrefix = "Request for focus (no opened project case)"
-    LOG.info(logPrefix)
-
+  private suspend fun requestFocusNoProject(actionTitle: String): Boolean {
     val visibleWindows = Window.getWindows().filter { it.isShowing }
-    if (visibleWindows.size > 1) {
-      LOG.info("$logPrefix There are multiple windows, will focus them all. All windows: ${visibleWindows.joinToString(", ")}")
+    if (visibleWindows.size != 1) {
+      LOG.info("$actionTitle: There are multiple windows, will focus them all. All windows: ${visibleWindows.joinToString(", ")}")
     }
     visibleWindows.forEach {
       AppIcon.getInstance().requestFocus(it)
-    }
-    return waitFor(timeout = 5.seconds.toJavaDuration()) {
-      KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner != null
-    }.also {
-      if (!it && !silent) {
-        LOG.error("$logPrefix: Couldn't wait for focus" +
-                  "\n" + getFocusStateDescription())
-      }
-      else {
-        LOG.info("$logPrefix is successful: $it")
+      waitFor(timeout = 5.seconds.toJavaDuration()) {
+        it.isFocusAncestor()
       }
     }
-  }
-
-  private fun getFocusStateDescription(): String {
-    val keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
-
-    return "Actual focused component: " +
-           "\nfocusedWindow is " + keyboardFocusManager.focusedWindow +
-           "\nfocusOwner is " + keyboardFocusManager.focusOwner +
-           "\nactiveWindow is " + keyboardFocusManager.activeWindow +
-           "\npermanentFocusOwner is " + keyboardFocusManager.permanentFocusOwner
+    return true
   }
 
   private fun screenshotFile(actionName: String, suffix: String, timeStamp: LocalTime): File {
@@ -491,7 +412,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         return@withContext try {
           val windows = Window.getWindows().filter { it.height != 0 && it.width != 0 }.filter { it.isShowing }
           windows.forEachIndexed { index, window ->
-            val screenshotFile = if (window.isFocused) {
+            val screenshotFile = if (window.isFocusAncestor()) {
               screenshotFile(actionName, "_${index}_focusedWindow", timeStamp)
             }
             else {
@@ -511,10 +432,15 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 }
 
 @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
-private fun showNotification(text: String?) {
+private fun showNotification(text: String?): Notification? {
   if (ApplicationManager.getApplication().isHeadlessEnvironment || text.isNullOrBlank()) {
-    return
+    return null
   }
 
-  Notification("TestFramework", "Test Framework", text, NotificationType.INFORMATION).notify(null)
+  val notification = Notification("TestFramework",
+                                  "Test Framework",
+                                  text,
+                                  NotificationType.INFORMATION)
+  Notifications.Bus.notify(notification)
+  return notification
 }

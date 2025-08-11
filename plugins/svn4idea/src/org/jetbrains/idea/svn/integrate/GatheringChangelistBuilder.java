@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,10 +27,10 @@ public class GatheringChangelistBuilder extends EmptyChangelistBuilder {
 
   private static final Logger LOG = Logger.getInstance(GatheringChangelistBuilder.class);
 
-  private final @NotNull Set<VirtualFile> myCheckSet;
-  private final @NotNull List<Change> myChanges;
-  private final @NotNull UpdatedFilesReverseSide myFiles;
-  private final @NotNull SvnVcs myVcs;
+  @NotNull private final Set<VirtualFile> myCheckSet;
+  @NotNull private final List<Change> myChanges;
+  @NotNull private final UpdatedFilesReverseSide myFiles;
+  @NotNull private final SvnVcs myVcs;
 
   public GatheringChangelistBuilder(@NotNull SvnVcs vcs, @NotNull UpdatedFilesReverseSide files) {
     myVcs = vcs;
@@ -103,7 +103,8 @@ public class GatheringChangelistBuilder extends EmptyChangelistBuilder {
     return true;
   }
 
-  public @NotNull List<Change> getChanges() {
+  @NotNull
+  public List<Change> getChanges() {
     return myChanges;
   }
 }

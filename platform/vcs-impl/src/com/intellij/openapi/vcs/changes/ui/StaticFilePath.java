@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.FilePath;
@@ -25,34 +25,40 @@ public class StaticFilePath {
     return myPath.isDirectory();
   }
 
-  public @NotNull String getPath() {
+  @NotNull
+  public String getPath() {
     return myPath.getPath();
   }
 
-  public @NotNull String getKey() {
+  @NotNull
+  public String getKey() {
     return myKey;
   }
 
   /**
    * @deprecated Use {@link #resolve()} or {@link com.intellij.vcsUtil.VcsImplUtil#findValidParentAccurately}
    */
+  @Nullable
   @Deprecated
-  public @Nullable VirtualFile getVf() {
+  public VirtualFile getVf() {
     return null;
   }
 
-  public @NotNull FilePath getFilePath() {
+  @NotNull
+  public FilePath getFilePath() {
     return myPath;
   }
 
-  public @Nullable StaticFilePath getParent() {
+  @Nullable
+  public StaticFilePath getParent() {
     FilePath parentPath = myPath.getParentPath();
     if (parentPath == null) return null;
     String parentKey = myKey.substring(0, parentPath.getPath().length());
     return new StaticFilePath(parentPath, parentKey);
   }
 
-  public @Nullable VirtualFile resolve() {
+  @Nullable
+  public VirtualFile resolve() {
     return LocalFileSystem.getInstance().findFileByPath(getPath());
   }
 }

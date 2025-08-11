@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.*;
@@ -35,7 +35,8 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return JavaAnalysisBundle.message("annotate.overridden.methods.parameters", ClassUtil.extractClassName(myAnnotation));
   }
 
@@ -99,13 +100,14 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return JavaAnalysisBundle.message("annotate.overridden.methods.parameters.family.name");
   }
 
   public static boolean processModifiableInheritorsUnderProgress(@NotNull PsiMethod method, @NotNull Consumer<? super PsiMethod> consumer) {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      for (PsiMethod psiMethod : OverridingMethodsSearch.search(method).asIterable()) {
+      for (PsiMethod psiMethod : OverridingMethodsSearch.search(method)) {
         ReadAction.run(() -> {
           if (psiMethod.isPhysical() && !NullableStuffInspectionBase.shouldSkipOverriderAsGenerated(psiMethod)) {
             consumer.accept(psiMethod);

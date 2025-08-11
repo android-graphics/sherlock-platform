@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -19,7 +19,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -30,7 +29,6 @@ import java.util.List;
  *
  * @author Vladislav.Soroka
  */
-@ApiStatus.Internal
 public class RefreshExternalProjectAction extends ExternalSystemNodeAction<AbstractExternalEntityData> implements DumbAware {
   public RefreshExternalProjectAction() {
     super(AbstractExternalEntityData.class);
@@ -61,7 +59,7 @@ public class RefreshExternalProjectAction extends ExternalSystemNodeAction<Abstr
   }
 
   @Override
-  public void perform(final @NotNull Project project,
+  public void perform(@NotNull final Project project,
                       @NotNull ProjectSystemId projectSystemId,
                       @NotNull AbstractExternalEntityData externalEntityData,
                       @NotNull AnActionEvent e) {

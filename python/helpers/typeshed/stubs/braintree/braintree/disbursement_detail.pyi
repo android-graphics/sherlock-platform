@@ -1,10 +1,10 @@
-from decimal import Decimal
+from typing import Any
 
-from braintree.attribute_getter import AttributeGetter
+from braintree.attribute_getter import AttributeGetter as AttributeGetter
 
 class DisbursementDetail(AttributeGetter):
-    settlement_amount: Decimal | None
-    settlement_currency_exchange_rate: Decimal | None
+    settlement_amount: Any
+    settlement_currency_exchange_rate: Any
     def __init__(self, attributes) -> None: ...
     @property
     def is_valid(self): ...

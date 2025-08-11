@@ -12,23 +12,27 @@ import org.jetbrains.annotations.NotNull;
 
 public final class PyTypeHintParserDefinition extends PythonParserDefinition {
 
+  @NotNull
   @Override
-  public @NotNull TokenSet getCommentTokens() {
+  public TokenSet getCommentTokens() {
     return TokenSet.EMPTY;
   }
 
   @Override
-  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
+  @NotNull
+  public PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new PyTypeHintFile(viewProvider);
   }
 
   @Override
-  public @NotNull IFileElementType getFileNodeType() {
+  @NotNull
+  public IFileElementType getFileNodeType() {
     return PyTypeHintFileElementType.INSTANCE;
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiParser createParser(Project project) {
+  public PsiParser createParser(Project project) {
     return new PyTypeHintParser();
   }
 }

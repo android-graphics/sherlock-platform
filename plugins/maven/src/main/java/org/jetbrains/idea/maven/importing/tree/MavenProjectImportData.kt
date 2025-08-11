@@ -5,25 +5,21 @@ import com.intellij.pom.java.LanguageLevel
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.importing.tree.dependency.MavenImportDependency
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectModifications
+import org.jetbrains.idea.maven.project.MavenProjectChanges
 
-internal class ModuleData(
-  val moduleName: String,
-  val type: StandardMavenModuleType,
-  val sourceLanguageLevel: LanguageLevel?,
-) {
-  val isDefaultMainModule = type == StandardMavenModuleType.MAIN_ONLY
-  val isAdditionalMainModule = type == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL
-  val isMainModule = isDefaultMainModule || isAdditionalMainModule
-  val isTestModule = type == StandardMavenModuleType.TEST_ONLY
-  val isMainOrTestModule = isMainModule || isTestModule
+open class ModuleData(val moduleName: String,
+                      val type: StandardMavenModuleType,
+                      private val javaVersionHolder: MavenJavaVersionHolder) {
+  val sourceLanguageLevel: LanguageLevel?
+    get() = if (type == StandardMavenModuleType.TEST_ONLY) javaVersionHolder.testSourceLevel else javaVersionHolder.sourceLevel
 
   override fun toString(): String {
     return moduleName
   }
 }
 
-internal open class MavenModuleImportData(val mavenProject: MavenProject, val moduleData: ModuleData) {
+open class MavenModuleImportData(val mavenProject: MavenProject,
+                                 val moduleData: ModuleData) {
   override fun toString(): String {
     return moduleData.moduleName
   }
@@ -40,9 +36,33 @@ internal open class MavenModuleImportData(val mavenProject: MavenProject, val mo
   }
 }
 
-internal open class MavenTreeModuleImportData(
-  mavenProject: MavenProject,
-  moduleData: ModuleData,
-  val dependencies: List<MavenImportDependency<*>>,
-  val changes: MavenProjectModifications,
-) : MavenModuleImportData(mavenProject, moduleData)
+open class MavenTreeModuleImportData(mavenProject: MavenProject,
+                                     moduleData: ModuleData,
+                                     val dependencies: List<MavenImportDependency<*>>,
+                                     val changes: MavenProjectChanges) : MavenModuleImportData(mavenProject, moduleData) {
+}
+
+class MavenProjectImportData(val mavenProject: MavenProject,
+                             val moduleData: ModuleData,
+                             val changes: MavenProjectChanges,
+                             val splittedMainAndTestModules: SplittedMainAndTestModules?) {
+
+  override fun toString(): String {
+    return mavenProject.mavenId.toString()
+  }
+}
+
+class SplittedMainAndTestModules(val mainData: ModuleData, val testData: ModuleData) {
+  override fun toString(): String {
+    return "SplittedMainAndTestModules(mainData=$mainData, testData=$testData)"
+  }
+}
+
+class MavenModuleImportDataWithDependencies @JvmOverloads constructor(val moduleImportData: MavenProjectImportData,
+                                                                      val mainDependencies: List<MavenImportDependency<*>>,
+                                                                      val testDependencies: List<MavenImportDependency<*>> = emptyList()) {
+
+  override fun toString(): String {
+    return moduleImportData.mavenProject.mavenId.toString()
+  }
+}

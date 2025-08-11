@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.psi.stubs.StubElement;
@@ -24,8 +24,9 @@ public class GrPackageDefinitionElementType extends GrStubElementType<GrPackageD
     return new GrPackageDefinitionImpl(stub);
   }
 
+  @NotNull
   @Override
-  public @NotNull GrPackageDefinitionStub createStub(@NotNull GrPackageDefinition psi, StubElement parentStub) {
+  public GrPackageDefinitionStub createStub(@NotNull GrPackageDefinition psi, StubElement parentStub) {
     return new GrPackageDefinitionStub(parentStub, GroovyStubElementTypes.PACKAGE_DEFINITION, StringRef.fromString(psi.getPackageName()));
   }
 
@@ -34,8 +35,9 @@ public class GrPackageDefinitionElementType extends GrStubElementType<GrPackageD
     dataStream.writeName(stub.getPackageName());
   }
 
+  @NotNull
   @Override
-  public @NotNull GrPackageDefinitionStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public GrPackageDefinitionStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new GrPackageDefinitionStub(parentStub, GroovyStubElementTypes.PACKAGE_DEFINITION, dataStream.readName());
   }
 }

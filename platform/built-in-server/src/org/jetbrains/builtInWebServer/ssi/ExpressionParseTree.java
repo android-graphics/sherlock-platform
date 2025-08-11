@@ -79,7 +79,7 @@ final class ExpressionParseTree {
       return;
     }
     while (true) {
-      if (oppStack.isEmpty()) break;
+      if (oppStack.size() == 0) break;
       OppNode top = oppStack.get(0);
       // If the top is a spacer then don't pop
       // anything
@@ -226,7 +226,7 @@ final class ExpressionParseTree {
      */
     @Override
     public boolean evaluate() {
-      return !(getValue().isEmpty());
+      return !(getValue().length() == 0);
     }
 
 
@@ -294,7 +294,8 @@ final class ExpressionParseTree {
 
 
     @Override
-    public @NonNls String toString() {
+    @NonNls
+    public String toString() {
       return left + " NOT";
     }
   }
@@ -317,7 +318,8 @@ final class ExpressionParseTree {
 
 
     @Override
-    public @NonNls String toString() {
+    @NonNls
+    public String toString() {
       return left + " " + right + " AND";
     }
   }
@@ -340,7 +342,8 @@ final class ExpressionParseTree {
 
 
     @Override
-    public @NonNls String toString() {
+    @NonNls
+    public String toString() {
       return left + " " + right + " OR";
     }
   }
@@ -389,7 +392,8 @@ final class ExpressionParseTree {
 
 
     @Override
-    public @NonNls String toString() {
+    @NonNls
+    public String toString() {
       return left + " " + right + " EQ";
     }
   }
@@ -408,7 +412,8 @@ final class ExpressionParseTree {
 
 
     @Override
-    public @NonNls String toString() {
+    @NonNls
+    public String toString() {
       return left + " " + right + " GT";
     }
   }
@@ -427,7 +432,8 @@ final class ExpressionParseTree {
 
 
     @Override
-    public @NonNls String toString() {
+    @NonNls
+    public String toString() {
       return left + " " + right + " LT";
     }
   }

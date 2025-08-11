@@ -131,10 +131,9 @@ public class IntroduceHolderFix extends PsiUpdateModCommandQuickFix {
     for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(field, containingClass)) {
       reference.replace(holderReference);
     }
-    String suggestedHolderName = suggestHolderName(field);
     field.delete();
 
-    updater.rename(holderClass, Stream.of(holderClass.getName(), suggestedHolderName).distinct().toList());
+    updater.rename(holderClass, Stream.of(holderClass.getName(), suggestHolderName(field)).distinct().toList());
   }
 
   private static @NonNls String suggestHolderName(PsiField field) {

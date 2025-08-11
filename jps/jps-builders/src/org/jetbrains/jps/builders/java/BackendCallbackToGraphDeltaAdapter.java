@@ -1,16 +1,15 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
-import kotlin.metadata.*;
+import kotlinx.metadata.*;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.java.*;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -25,7 +24,6 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
   private final List<Pair<Node<?, ?>, Iterable<NodeSource>>> myNodes = new ArrayList<>();
   private final Map<NodeSource, Set<Usage>> mySelfUsages = new HashMap<>();
   private final GraphConfiguration myGraphConfig;
-  private final boolean reportMissingOutput = Boolean.parseBoolean(System.getProperty("jps.report.registered.unexistent.output"));
 
   BackendCallbackToGraphDeltaAdapter(GraphConfiguration graphConfig) {
     myGraphConfig = graphConfig;
@@ -33,9 +31,6 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
 
   @Override
   public void associate(String classFileName, Collection<String> sources, ClassReader cr, boolean isGenerated) {
-    if (reportMissingOutput && !classFileName.startsWith("$") && !new File(classFileName).exists()) {
-      throw new RuntimeException("Class file '" + classFileName + "' was registered but it does not exist");
-    }
     JvmClassNodeBuilder builder = JvmClassNodeBuilder.create(classFileName, cr, isGenerated);
 
     JvmNodeReferenceID nodeID = builder.getReferenceID();

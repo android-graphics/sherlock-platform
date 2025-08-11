@@ -30,14 +30,6 @@ public class UnnecessaryFullyQualifiedNameWithImplicitImportsFixTest extends Lig
     checkQuickFix(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.remove.quickfix"));
   }
 
-  public void testAlreadyImported() {
-    myFixture.addClass("""
-    package p;
-    public class Date {}""");
-    doTest();
-    checkQuickFix(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.remove.quickfix"));
-  }
-
   public void testSimpleImportJavaLangWithImplicitClassWithConflict() {
     myFixture.addClass("""
     package p;

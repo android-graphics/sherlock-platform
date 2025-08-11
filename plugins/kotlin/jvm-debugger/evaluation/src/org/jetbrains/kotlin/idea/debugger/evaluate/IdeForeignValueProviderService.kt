@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
-import com.intellij.debugger.engine.evaluation.AdditionalContextProvider
+import com.intellij.debugger.engine.evaluation.CodeFragmentFactoryContextWrapper
+import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.sun.jdi.Value
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinForeignValueProviderService
 import org.jetbrains.kotlin.psi.KtCodeFragment
 
@@ -9,7 +11,17 @@ internal class IdeForeignValueProviderService : KotlinForeignValueProviderServic
     override fun getForeignValues(codeFragment: KtCodeFragment): Map<String, String> {
         val project = codeFragment.project
         val context = codeFragment.context
-        val additionalContextElements = AdditionalContextProvider.getAllAdditionalContextElements(project, context)
-        return additionalContextElements.associate { it.name to it.jvmSignature }
+        val debugProcess = DebugContextProvider.getDebuggerContext(project, context)?.debugProcess ?: return emptyMap()
+        val valueMarkers = DebuggerUtilsImpl.getValueMarkers(debugProcess)?.allMarkers ?: return emptyMap()
+
+        return buildMap {
+            for ((value, markup) in valueMarkers) {
+                if (value is Value) {
+                    val valueName = markup.text + CodeFragmentFactoryContextWrapper.DEBUG_LABEL_SUFFIX
+                    val typeDescriptor = value.type().signature()
+                    put(valueName, typeDescriptor)
+                }
+            }
+        }
     }
 }

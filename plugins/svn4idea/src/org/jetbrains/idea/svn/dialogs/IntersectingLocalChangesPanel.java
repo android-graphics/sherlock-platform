@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.ide.DataManager;
@@ -36,9 +36,9 @@ import static com.intellij.util.ContentsUtil.addContent;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public final class IntersectingLocalChangesPanel {
-  private final @NotNull BorderLayoutPanel myPanel;
-  private final @NotNull List<? extends FilePath> myFiles;
-  private final @NotNull Project myProject;
+  @NotNull private final BorderLayoutPanel myPanel;
+  @NotNull private final List<? extends FilePath> myFiles;
+  @NotNull private final Project myProject;
 
   public IntersectingLocalChangesPanel(@NotNull Project project, @NotNull List<? extends FilePath> files) {
     myProject = project;
@@ -46,7 +46,8 @@ public final class IntersectingLocalChangesPanel {
     myPanel = createPanel(createLabel(), createTree());
   }
 
-  private @NotNull BorderLayoutPanel createPanel(@NotNull JLabel label, @NotNull JTree tree) {
+  @NotNull
+  private BorderLayoutPanel createPanel(@NotNull JLabel label, @NotNull JTree tree) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel();
 
     panel.setBackground(UIUtil.getTextFieldBackground());
@@ -71,7 +72,8 @@ public final class IntersectingLocalChangesPanel {
     return panel;
   }
 
-  private @NotNull SimpleTree createTree() {
+  @NotNull
+  private SimpleTree createTree() {
     SimpleTree tree = new SimpleTree(TreeModelBuilder.buildFromFilePaths(myProject, NoneChangesGroupingFactory.INSTANCE, myFiles)) {
       @Override
       protected void configureUiHelper(@NotNull TreeUIHelper helper) {
@@ -87,7 +89,8 @@ public final class IntersectingLocalChangesPanel {
     return tree;
   }
 
-  private static @NotNull JBLabel createLabel() {
+  @NotNull
+  private static JBLabel createLabel() {
     JBLabel label = new JBLabel(message("label.merge.local.changes.intersection")) {
       @Override
       public Dimension getPreferredSize() {

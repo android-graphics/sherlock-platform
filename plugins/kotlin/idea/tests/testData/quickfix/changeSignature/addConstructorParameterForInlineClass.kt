@@ -1,5 +1,5 @@
 // "Add parameter to constructor 'Foo'" "false"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 // ACTION: Convert property initializer to getter
 // ACTION: Convert to lazy property
 // ACTION: Create function 'Foo'

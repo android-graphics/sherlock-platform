@@ -18,11 +18,9 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.StatusText
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 import javax.swing.tree.DefaultTreeModel
 
-@ApiStatus.Internal
 class SavedPatchesChangesBrowser(project: Project, internal val isShowDiffWithLocal: () -> Boolean, parentDisposable: Disposable)
   : AsyncChangesBrowserBase(project, false, false), Disposable {
 
@@ -151,11 +149,9 @@ class SavedPatchesChangesBrowser(project: Project, internal val isShowDiffWithLo
       .let { ChangesUtil.getNavigatableArray(myProject, it) }
     sink[SavedPatchesUi.SAVED_PATCH_SELECTED_CHANGES] = changeObjects
 
-    sink[SavedPatchesUi.SAVED_PATCH_CHANGES] = getSavedPatchChanges()
+    sink[SavedPatchesUi.SAVED_PATCH_CHANGES] = VcsTreeModelData.all(myViewer)
+      .iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
   }
-
-  internal fun getSavedPatchChanges(): Iterable<SavedPatchesProvider.ChangeObject> = VcsTreeModelData.all(myViewer)
-    .iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
 
   override fun dispose() {
     shutdown()

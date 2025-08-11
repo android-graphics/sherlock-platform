@@ -11,8 +11,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.ast.docstring.DocStringUtilCore;
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
+import com.jetbrains.python.ast.docstring.DocStringUtilCore;
 import com.jetbrains.python.ast.impl.PyUtilCore;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +26,8 @@ public interface PyAstTargetExpression extends PyAstQualifiedExpression, PsiName
   PyAstTargetExpression[] EMPTY_ARRAY = new PyAstTargetExpression[0];
 
   @Override
-  default @Nullable String getName() {
+  @Nullable
+  default String getName() {
     ASTNode node = getNameElement();
     return node != null ? node.getText() : null;
   }
@@ -38,7 +39,8 @@ public interface PyAstTargetExpression extends PyAstQualifiedExpression, PsiName
   }
 
   @Override
-  default @Nullable ASTNode getNameElement() {
+  @Nullable
+  default ASTNode getNameElement() {
     return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
   }
 
@@ -58,8 +60,9 @@ public interface PyAstTargetExpression extends PyAstQualifiedExpression, PsiName
     throw new UnsupportedOperationException();
   }
 
+  @Nullable
   @Override
-  default @Nullable PyAstAnnotation getAnnotation() {
+  default PyAstAnnotation getAnnotation() {
     PsiElement topTarget = this;
     while (topTarget.getParent() instanceof PyAstParenthesizedExpression) {
       topTarget = topTarget.getParent();
@@ -80,8 +83,9 @@ public interface PyAstTargetExpression extends PyAstQualifiedExpression, PsiName
     return null;
   }
 
+  @Nullable
   @Override
-  default @Nullable PyAstExpression getQualifier() {
+  default PyAstExpression getQualifier() {
     ASTNode qualifier = getNode().findChildByType(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
     return qualifier != null ? (PyAstExpression)qualifier.getPsi() : null;
   }
@@ -92,7 +96,8 @@ public interface PyAstTargetExpression extends PyAstQualifiedExpression, PsiName
   }
 
   @Override
-  default @Nullable PyAstClass getContainingClass() {
+  @Nullable
+  default PyAstClass getContainingClass() {
     final PsiElement parent = PsiTreeUtil.getParentOfType(this, PyAstFunction.class, PyAstClass.class);
     if (parent instanceof PyAstClass) {
       return (PyAstClass)parent;
@@ -103,8 +108,9 @@ public interface PyAstTargetExpression extends PyAstQualifiedExpression, PsiName
     return null;
   }
 
+  @Nullable
   @Override
-  default @Nullable PyAstStringLiteralExpression getDocStringExpression() {
+  default PyAstStringLiteralExpression getDocStringExpression() {
     final PsiElement parent = getParent();
     if (parent instanceof PyAstAssignmentStatement || parent instanceof PyAstTypeDeclarationStatement) {
       final PsiElement nextSibling = PyPsiUtilsCore.getNextNonCommentSibling(parent, true);
@@ -126,14 +132,16 @@ public interface PyAstTargetExpression extends PyAstQualifiedExpression, PsiName
    *
    * @return the expression assigned to target via an enclosing assignment expression, or null.
    */
-  default @Nullable PyAstExpression findAssignedValue() {
+  @Nullable
+  default PyAstExpression findAssignedValue() {
     PyPsiUtilsCore.assertValid(this);
     return CachedValuesManager.getCachedValue(this,
                                               () -> CachedValueProvider.Result
                                                 .create(findAssignedValueInternal(), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
-  private @Nullable PyAstExpression findAssignedValueInternal() {
+  @Nullable
+  private PyAstExpression findAssignedValueInternal() {
     final PyAstAssignmentStatement assignment = PsiTreeUtil.getParentOfType(this, PyAstAssignmentStatement.class);
     if (assignment != null) {
       var mapping = assignment.getTargetsToValuesMapping();
@@ -160,7 +168,8 @@ public interface PyAstTargetExpression extends PyAstQualifiedExpression, PsiName
    *
    * This method does not access AST if underlying PSI is stub based.
    */
-  default @Nullable QualifiedName getAssignedQName() {
+  @Nullable
+  default QualifiedName getAssignedQName() {
     final PyAstExpression value = findAssignedValue();
     return value instanceof PyAstReferenceExpression ? ((PyAstReferenceExpression)value).asQualifiedName() : null;
   }
@@ -171,7 +180,8 @@ public interface PyAstTargetExpression extends PyAstQualifiedExpression, PsiName
    *
    * @return the name of the callee or null if the assigned value is not a call.
    */
-  default @Nullable QualifiedName getCalleeName() {
+  @Nullable
+  default QualifiedName getCalleeName() {
     final PyAstExpression value = findAssignedValue();
     return value instanceof PyAstCallExpression ? PyPsiUtilsCore.asQualifiedName(((PyAstCallExpression)value).getCallee()) : null;
   }
@@ -188,7 +198,8 @@ public interface PyAstTargetExpression extends PyAstQualifiedExpression, PsiName
   }
 
   @Override
-  default @Nullable String getDocStringValue() {
+  @Nullable
+  default String getDocStringValue() {
     return DocStringUtilCore.getDocStringValue(this);
   }
 
@@ -197,8 +208,9 @@ public interface PyAstTargetExpression extends PyAstQualifiedExpression, PsiName
     pyVisitor.visitPyTargetExpression(this);
   }
 
+  @Nullable
   @Override
-  default @Nullable PsiComment getTypeComment() {
+  default PsiComment getTypeComment() {
     PsiComment comment = null;
     final PyAstAssignmentStatement assignment = PsiTreeUtil.getParentOfType(this, PyAstAssignmentStatement.class);
     if (assignment != null) {

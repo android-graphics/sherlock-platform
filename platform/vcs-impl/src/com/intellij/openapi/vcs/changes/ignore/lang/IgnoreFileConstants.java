@@ -24,33 +24,35 @@
 
 package com.intellij.openapi.vcs.changes.ignore.lang;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * Class containing common constant variables.
  */
-@ApiStatus.Internal
 public final class IgnoreFileConstants {
   /**
    * New line character.
    */
-  public static final @NonNls String NEWLINE = "\n";
+  @NonNls
+  public static final String NEWLINE = "\n";
 
   /**
    * Hash sign.
    */
-  public static final @NonNls String HASH = "#";
+  @NonNls
+  public static final String HASH = "#";
 
   /**
    * Star sign.
    */
-  public static final @NonNls String STAR = "*";
+  @NonNls
+  public static final String STAR = "*";
 
   /**
    * Double star sign.
    */
-  public static final @NonNls String DOUBLESTAR = "**";
+  @NonNls
+  public static final String DOUBLESTAR = "**";
 
   private IgnoreFileConstants() {
   }

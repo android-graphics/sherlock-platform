@@ -30,9 +30,6 @@ public interface MavenDomProjectModelBase extends MavenDomElement {
   MavenDomModules getModules();
 
   @NotNull
-  MavenDomSubprojects getSubprojects();
-
-  @NotNull
   MavenDomRepositories getRepositories();
 
   @NotNull

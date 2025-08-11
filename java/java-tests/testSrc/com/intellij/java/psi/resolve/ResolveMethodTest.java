@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.java.psi.resolve;
 
 import com.intellij.psi.*;
@@ -27,39 +41,39 @@ public class ResolveMethodTest extends LightResolveTestCase {
 
   public void testShortVsInt() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
+    assertTrue(target instanceof PsiMethod);
     PsiParameter parm = ((PsiMethod)target).getParameterList().getParameters()[0];
     assertEquals(PsiTypes.intType(), parm.getType());
   }
 
   public void testSimple() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
+    assertTrue(target instanceof PsiMethod);
     assertEquals("method", ((PsiMethod) target).getName());
   }
 
   public void testIndexOf() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
+    assertTrue(target instanceof PsiMethod);
     PsiParameter parm = ((PsiMethod)target).getParameterList().getParameters()[0];
     assertEquals(PsiTypes.intType(), parm.getType());
   }
 
   public void testSuper1() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
+    assertTrue(target instanceof PsiMethod);
   }
 
   public void testInherit1() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
-    assertInstanceOf(target.getParent(), PsiClass.class);
+    assertTrue(target instanceof PsiMethod);
+    assertTrue(target.getParent() instanceof PsiClass);
     assertEquals("B", ((PsiClass)target.getParent()).getQualifiedName());
   }
 
   public void testNextMethod() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
+    assertTrue(target instanceof PsiMethod);
     assertEquals(PsiTypes.booleanType(), ((PsiMethod)target).getParameterList().getParameters()[1].getType());
   }
 
@@ -70,18 +84,18 @@ public class ResolveMethodTest extends LightResolveTestCase {
 
   public void testValueOf() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
+    assertTrue(target instanceof PsiMethod);
     assertEquals(PsiTypes.intType(), ((PsiMethod)target).getParameterList().getParameters()[0].getType());
   }
 
   public void testMethodFromAnonBase() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
+    assertTrue(target instanceof PsiMethod);
   }
 
   public void testSCR5859() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
+    assertTrue(target instanceof PsiMethod);
     PsiParameter[] parms = ((PsiMethod)target).getParameterList().getParameters();
     assertEquals("Derived", parms[0].getType().getPresentableText());
     assertEquals("Derived", parms[1].getType().getPresentableText());
@@ -89,60 +103,60 @@ public class ResolveMethodTest extends LightResolveTestCase {
 
   public void testPreferPublic() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
+    assertTrue(target instanceof PsiMethod);
     assertTrue(((PsiMethod)target).hasModifierProperty(PsiModifier.PUBLIC));
   }
 
   public void testRemove1() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
-    assertInstanceOf(target.getParent(), PsiClass.class);
+    assertTrue(target instanceof PsiMethod);
+    assertTrue(target.getParent() instanceof PsiClass);
     assertEquals("Remove1.A", ((PsiClass)target.getParent()).getQualifiedName());
   }
 
   public void testRemove2() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
-    assertInstanceOf(target.getParent(), PsiClass.class);
+    assertTrue(target instanceof PsiMethod);
+    assertTrue(target.getParent() instanceof PsiClass);
     assertEquals("java.util.AbstractCollection", ((PsiClass)target.getParent()).getQualifiedName());
   }
 
   public void testArray1() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
+    assertTrue(target instanceof PsiMethod);
   }
 
   public void testCycle1() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
-    assertInstanceOf(target.getParent(), PsiClass.class);
+    assertTrue(target instanceof PsiMethod);
+    assertTrue(target.getParent() instanceof PsiClass);
     assertEquals("Cycle1.C", ((PsiClass)target.getParent()).getQualifiedName());
   }
 
   public void testAnonymousSuper1() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
-    assertInstanceOf(target.getParent(), PsiClass.class);
+    assertTrue(target instanceof PsiMethod);
+    assertTrue(target.getParent() instanceof PsiClass);
     assertEquals("Test1.A", ((PsiClass)target.getParent()).getQualifiedName());
   }
 
   public void testBug7968() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
-    assertInstanceOf(target.getParent(), PsiClass.class);
+    assertTrue(target instanceof PsiMethod);
+    assertTrue(target.getParent() instanceof PsiClass);
     assertEquals("Bug7968.Bar", ((PsiClass)target.getParent()).getQualifiedName());
   }
 
   public void testInheranceWithExtendsConflict() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
-    assertInstanceOf(target.getParent(), PsiClass.class);
+    assertTrue(target instanceof PsiMethod);
+    assertTrue(target.getParent() instanceof PsiClass);
     assertEquals("B", ((PsiClass)target.getParent()).getQualifiedName());
   }
 
   public void testSout() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
+    assertTrue(target instanceof PsiMethod);
     assertEquals("println", ((PsiMethod)target).getName());
   }
 
@@ -150,7 +164,7 @@ public class ResolveMethodTest extends LightResolveTestCase {
   public void testSCR5134() throws Exception{
     PsiReference ref = configureByFile("method/SCR5134.java");
     PsiElement target = ref.resolve();
-    assertInstanceOf(target, PsiMethod.class);
+    assertTrue(target instanceof PsiMethod);
     PsiParameter parm = ((PsiMethod)target).getParameterList().getParameters()[0];
     assertTrue(parm.getType().getText().equals("Integer"));
   }
@@ -158,22 +172,22 @@ public class ResolveMethodTest extends LightResolveTestCase {
 
   public void testPartlyImplement1() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
-    assertInstanceOf(target.getParent(), PsiClass.class);
+    assertTrue(target instanceof PsiMethod);
+    assertTrue(target.getParent() instanceof PsiClass);
     assertEquals("A.Predicate", ((PsiClass)target.getParent()).getQualifiedName());
   }
 
   public void testTestOverloading1() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
-    assertInstanceOf(target.getParent(), PsiClass.class);
+    assertTrue(target instanceof PsiMethod);
+    assertTrue(target.getParent() instanceof PsiClass);
     assertEquals("B", ((PsiClass) target.getParent()).getName());
   }
 
 
   public void testSuperOfObject() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
+    assertTrue(target instanceof PsiMethod);
     final PsiMethod method = (PsiMethod)target;
     assertEquals("clone", method.getName());
     assertEquals(CommonClassNames.JAVA_LANG_OBJECT, method.getContainingClass().getQualifiedName());
@@ -182,14 +196,14 @@ public class ResolveMethodTest extends LightResolveTestCase {
 
   public void testStaticVSNonStatic() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
+    assertTrue(target instanceof PsiMethod);
     PsiMethod method = (PsiMethod) target;
     assertEquals(0, method.getParameterList().getParametersCount());
   }
 
   public void testClone() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
+    assertTrue(target instanceof PsiMethod);
   }
 
   public void testThrowWithoutNew() {
@@ -199,7 +213,7 @@ public class ResolveMethodTest extends LightResolveTestCase {
 
   public void testThrowWithoutNew2() {
     PsiElement target = advancedResolve().getElement();
-    assertInstanceOf(target, PsiClass.class);
+    assertTrue(target instanceof PsiClass);
   }
 
   public void testNotAccessibleAccessClass() {
@@ -210,7 +224,7 @@ public class ResolveMethodTest extends LightResolveTestCase {
   public void testInnerClass() {
     JavaResolveResult result = advancedResolve();
     assertNotNull(result.getElement());
-    assertInstanceOf(result,  MethodCandidateInfo.class);
+    assertTrue(result instanceof MethodCandidateInfo);
     assertFalse(result.isValidResult());
     assertFalse(((MethodCandidateInfo)result).isApplicable());
     final PsiClass aClass = ((PsiMethod)result.getElement()).getContainingClass();
@@ -220,7 +234,7 @@ public class ResolveMethodTest extends LightResolveTestCase {
   public void testPrivateInSuperInner() {
     JavaResolveResult result = advancedResolve();
     assertNotNull(result.getElement());
-    assertInstanceOf(result,  MethodCandidateInfo.class);
+    assertTrue(result instanceof MethodCandidateInfo);
     assertFalse(result.isValidResult());
     assertFalse(result.isStaticsScopeCorrect());
   }
@@ -228,7 +242,7 @@ public class ResolveMethodTest extends LightResolveTestCase {
   public void testPrivateInSuperInner1() {
     JavaResolveResult result = advancedResolve();
     assertNotNull(result.getElement());
-    assertInstanceOf(result,  MethodCandidateInfo.class);
+    assertTrue(result instanceof MethodCandidateInfo);
     assertTrue(result.isValidResult());
   }
 
@@ -247,14 +261,14 @@ public class ResolveMethodTest extends LightResolveTestCase {
 
   public void testImplementOrder() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
+    assertTrue(target instanceof PsiMethod);
     PsiMethod method = (PsiMethod) target;
     assertEquals("II", method.getContainingClass().getName());
   }
 
   public void testObjectVsInterface() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PsiMethod.class);
+    assertTrue(target instanceof PsiMethod);
     PsiMethod method = (PsiMethod) target;
     assertEquals("PublicCloneable", method.getContainingClass().getName());
   }

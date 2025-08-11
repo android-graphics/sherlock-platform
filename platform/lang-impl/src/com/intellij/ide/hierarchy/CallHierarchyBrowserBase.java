@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
@@ -23,7 +23,8 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   @Override
-  protected @Nullable JPanel createLegendPanel() {
+  @Nullable
+  protected JPanel createLegendPanel() {
     return null;
   }
 
@@ -40,17 +41,20 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   @Override
-  protected @NotNull String getActionPlace() {
+  @NotNull
+  protected String getActionPlace() {
     return ActionPlaces.CALL_HIERARCHY_VIEW_TOOLBAR;
   }
 
   @Override
-  protected @NotNull String getPrevOccurenceActionNameImpl() {
+  @NotNull
+  protected String getPrevOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.call.prev.occurence.name");
   }
 
   @Override
-  protected @NotNull String getNextOccurenceActionNameImpl() {
+  @NotNull
+  protected String getNextOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.call.next.occurence.name");
   }
 

@@ -1,5 +1,4 @@
 // PROBLEM: none
-// WITH_STDLIB
 import java.io.File
 
 fun test(file: File) {

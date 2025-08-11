@@ -1,13 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableAdapter;
@@ -18,6 +18,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -41,7 +42,7 @@ import java.util.List;
 /**
  * @author alex
  */
-public class RepositoryBrowserComponent extends JPanel implements Disposable, UiDataProvider {
+public class RepositoryBrowserComponent extends JPanel implements Disposable, DataProvider {
 
   private Tree myRepositoryTree;
   private final SvnVcs myVCS;
@@ -55,7 +56,8 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
     return myRepositoryTree;
   }
 
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myVCS.getProject();
   }
 
@@ -105,7 +107,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
     myRepositoryTree.setSelectionRow(0);
   }
 
-  public void expandNode(final @NotNull TreeNode treeNode) {
+  public void expandNode(@NotNull final TreeNode treeNode) {
     final TreeNode[] pathToNode = ((RepositoryTreeModel)myRepositoryTree.getModel()).getPathToRoot(treeNode);
 
     if ((pathToNode != null) && (pathToNode.length > 0)) {
@@ -114,7 +116,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
     }
   }
 
-  public Collection<TreeNode> getExpandedSubTree(final @NotNull TreeNode treeNode) {
+  public Collection<TreeNode> getExpandedSubTree(@NotNull final TreeNode treeNode) {
     final TreeNode[] pathToNode = ((RepositoryTreeModel)myRepositoryTree.getModel()).getPathToRoot(treeNode);
 
     final Enumeration<TreePath> expanded = myRepositoryTree.getExpandedDescendants(new TreePath(pathToNode));
@@ -129,7 +131,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
     return result;
   }
 
-  public boolean isExpanded(final @NotNull TreeNode treeNode) {
+  public boolean isExpanded(@NotNull final TreeNode treeNode) {
     final TreeNode[] pathToNode = ((RepositoryTreeModel)myRepositoryTree.getModel()).getPathToRoot(treeNode);
 
     return (pathToNode != null) && (pathToNode.length > 0) && myRepositoryTree.isExpanded(new TreePath(pathToNode));
@@ -143,7 +145,8 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
     ((RepositoryTreeModel)myRepositoryTree.getModel()).removeRoot(url);
   }
 
-  public @Nullable DirectoryEntry getSelectedEntry() {
+  @Nullable
+  public DirectoryEntry getSelectedEntry() {
     TreePath selection = myRepositoryTree.getSelectionPath();
     if (selection == null) {
       return null;
@@ -155,12 +158,14 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
     return null;
   }
 
-  public @Nullable String getSelectedURL() {
+  @Nullable
+  public String getSelectedURL() {
     Url selectedUrl = getSelectedSVNURL();
     return selectedUrl == null ? null : selectedUrl.toString();
   }
 
-  public @Nullable Url getSelectedSVNURL() {
+  @Nullable
+  public Url getSelectedSVNURL() {
     TreePath selection = myRepositoryTree.getSelectionPath();
     if (selection == null) {
       return null;
@@ -191,8 +196,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
     myRepositoryTree.setRootVisible(false);
     myRepositoryTree.setShowsRootHandles(true);
     JScrollPane scrollPane =
-      ScrollPaneFactory.createScrollPane(myRepositoryTree, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
-                                         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+      ScrollPaneFactory.createScrollPane(myRepositoryTree, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
     add(scrollPane, BorderLayout.CENTER);
     myRepositoryTree.setCellRenderer(new SvnRepositoryTreeCellRenderer());
     TreeSpeedSearch search = TreeSpeedSearch.installOn(myRepositoryTree, false, o -> {
@@ -207,7 +211,8 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
     EditSourceOnDoubleClickHandler.install(myRepositoryTree);
   }
 
-  public @Nullable RepositoryTreeNode getSelectedNode() {
+  @Nullable
+  public RepositoryTreeNode getSelectedNode() {
     TreePath selection = myRepositoryTree.getSelectionPath();
     if (selection != null && selection.getLastPathComponent() instanceof RepositoryTreeNode) {
       return (RepositoryTreeNode)selection.getLastPathComponent();
@@ -215,12 +220,13 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
     return null;
   }
 
-  public void setSelectedNode(final @NotNull TreeNode node) {
+  public void setSelectedNode(@NotNull final TreeNode node) {
     final TreeNode[] pathNodes = ((RepositoryTreeModel)myRepositoryTree.getModel()).getPathToRoot(node);
     myRepositoryTree.setSelectionPath(new TreePath(pathNodes));
   }
 
-  public @Nullable VirtualFile getSelectedVcsFile() {
+  @Nullable
+  public VirtualFile getSelectedVcsFile() {
     final RepositoryTreeNode node = getSelectedNode();
     if (node == null) return null;
 
@@ -237,7 +243,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
       SvnFileRevision revision =
         new SvnFileRevision(myVCS, Revision.UNDEFINED, Revision.HEAD, url, entry.getAuthor(), entry.getDate(), null, null);
 
-      return new VcsVirtualFile(node.getSVNDirEntry().getName(), revision);
+      return new VcsVirtualFile(node.getSVNDirEntry().getName(), revision, VcsFileSystem.getInstance());
     }
     else {
       return null;
@@ -245,24 +251,31 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
   }
 
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    Project project = myVCS.getProject();
-    if (project.isDefault()) return;
-    sink.set(CommonDataKeys.PROJECT, project);
-    VirtualFile vcsFile = getSelectedVcsFile();
-    if (vcsFile != null) {
+  @Nullable
+  public Object getData(@NotNull @NonNls String dataId) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+      final Project project = myVCS.getProject();
+      if (project.isDefault()) {
+        return null;
+      }
+      final VirtualFile vcsFile = getSelectedVcsFile();
+
       // do not return OpenFileDescriptor instance here as in that case SelectInAction will be enabled and its invocation (using keyboard)
       // will raise error - see IDEA-104113 - because of the following operations inside SelectInAction.actionPerformed():
       // - at first VcsVirtualFile content will be loaded which for svn results in showing progress dialog
       // - then DataContext from SelectInAction will still be accessed which results in error as current event count has already changed
       // (because of progress dialog)
-      sink.set(CommonDataKeys.NAVIGATABLE, new NavigatableAdapter() {
+      return vcsFile != null ? new NavigatableAdapter() {
         @Override
         public void navigate(boolean requestFocus) {
           navigate(project, vcsFile, requestFocus);
         }
-      });
+      } : null;
     }
+    else if (CommonDataKeys.PROJECT.is(dataId)) {
+      return myVCS.getProject();
+    }
+    return null;
   }
 
   @Override
@@ -273,7 +286,8 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
     ((RepositoryTreeModel)myRepositoryTree.getModel()).setDefaultExpanderFactory(expanderFactory);
   }
 
-  public @NotNull StatusText getStatusText() {
+  @NotNull
+  public StatusText getStatusText() {
     return myRepositoryTree.getEmptyText();
   }
 }

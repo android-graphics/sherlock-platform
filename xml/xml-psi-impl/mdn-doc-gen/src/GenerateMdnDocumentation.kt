@@ -340,7 +340,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
         "url" to "https://creativecommons.org/licenses/by-sa/2.5/",
       ),
       "author" to mapOf(
-        "name" to "Mozilla Contributors",
+        "name" to "Mozzila Contributors",
         "url" to "https://github.com/mdn/content"
       ),
       "lang" to BUILT_LANG,

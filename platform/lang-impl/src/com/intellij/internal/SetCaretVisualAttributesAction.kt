@@ -16,7 +16,6 @@ import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
-import org.jetbrains.annotations.ApiStatus
 
 internal class SetCaretVisualAttributesAction : AnAction(), DumbAware {
 
@@ -44,7 +43,6 @@ internal class SetCaretVisualAttributesAction : AnAction(), DumbAware {
   }
 }
 
-@ApiStatus.Internal
 @Suppress("DEPRECATION")
 class CaretVisualAttributesDialog(project: Project, attributes: CaretVisualAttributes?) : DialogWrapper(project) {
   private val colorChooser: CheckBoxWithColorChooser

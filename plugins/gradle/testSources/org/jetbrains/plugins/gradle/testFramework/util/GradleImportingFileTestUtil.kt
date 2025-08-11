@@ -19,7 +19,7 @@ fun GradleImportingTestCase.createSettingsFile(
   projectRoot.createSettingsFile(
     relativeModulePath = relativeModulePath,
     useKotlinDsl = useKotlinDsl,
-    content = settingsScript(configure)
+    configure = configure
   )
 }
 

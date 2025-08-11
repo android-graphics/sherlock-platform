@@ -14,9 +14,6 @@ import com.intellij.xdebugger.attach.XAttachHostProvider
 import com.intellij.xdebugger.impl.actions.AttachToProcessAction
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachHostSettingsProvider
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 
 internal class AttachToRemoteProcessView(private val project: Project,
                                          state: AttachDialogState,
@@ -50,11 +47,9 @@ internal class AttachToRemoteProcessView(private val project: Project,
 
   override suspend fun getHosts(): List<AttachHostAndProvider> {
     val dataHolder = UserDataHolderBase()
-    return coroutineScope {
-      attachHostProviders.map { provider ->
-        async { provider.getAvailableHostsAsync(project).map { AttachHostAndProvider(it, provider, project, dataHolder) } }
-      }.awaitAll()
-    }.flatten()
+    return attachHostProviders.flatMap { provider ->
+      provider.getAvailableHosts(project).map { AttachHostAndProvider(it, provider, project, dataHolder) }
+    }
   }
 
   override fun openSettings() {
@@ -98,7 +93,7 @@ internal class AttachToRemoteProcessView(private val project: Project,
   override fun getHostActions(hosts: Set<AttachHostItem>, selectHost: (host: AttachHostItem) -> Unit): List<AnAction> {
     val actions = mutableListOf<AnAction>()
 
-    for (providerAndHosts in hosts.filterIsInstance<AttachHostAndProvider>().groupBy { it.provider }.toList().sortedBy { it.first.getPresentationGroup().order }) {
+    for (providerAndHosts in hosts.filterIsInstance<AttachHostAndProvider>().groupBy { it.provider }.toList().sortedBy { it.first.presentationGroup.order }) {
       for (host in providerAndHosts.second) {
         actions.add(object : AnAction({ host.getPresentation() }, host.getIcon()) {
           override fun actionPerformed(e: AnActionEvent) {

@@ -4,6 +4,6 @@ package com.intellij.packaging.elements;
 import com.intellij.platform.workspace.storage.ExternalMappingKey;
 
 public final class PackagingExternalMapping {
-  public static final ExternalMappingKey<PackagingElement<?>> key =
+  public final static ExternalMappingKey<PackagingElement<?>> key =
     ExternalMappingKey.Companion.create("intellij.artifacts.packaging.elements");
 }

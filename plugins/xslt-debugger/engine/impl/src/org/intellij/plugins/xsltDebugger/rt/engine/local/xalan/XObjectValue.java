@@ -67,12 +67,10 @@ class XObjectValue implements Value {
     }
   }
 
-  @Override
   public Object getValue() {
     return myValue;
   }
 
-  @Override
   public Type getType() {
     try {
       return XPathType.valueOf(myTypeString.toUpperCase(Locale.ENGLISH));

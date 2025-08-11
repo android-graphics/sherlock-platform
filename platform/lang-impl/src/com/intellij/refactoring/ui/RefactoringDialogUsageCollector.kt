@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 
-internal object RefactoringDialogUsageCollector : CounterUsagesCollector() {
+object RefactoringDialogUsageCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("refactoring.dialog", 3)
 
   private val SELECTED = EventFields.Boolean("selected")

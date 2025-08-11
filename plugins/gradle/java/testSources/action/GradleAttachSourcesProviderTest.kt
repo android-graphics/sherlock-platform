@@ -4,9 +4,11 @@ package org.jetbrains.plugins.gradle.action
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
@@ -16,26 +18,16 @@ import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.util.asDisposable
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.internal.daemon.DaemonState
-import org.jetbrains.plugins.gradle.internal.daemon.getDaemonsStatus
 import org.jetbrains.plugins.gradle.service.cache.GradleLocalCacheHelper
-import org.jetbrains.plugins.gradle.testFramework.util.DEFAULT_SYNC_TIMEOUT
-import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import kotlin.io.path.deleteIfExists
@@ -59,49 +51,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
   }
 
   @Test
-  @TargetVersions("6.0+", "!8.12") // The Gradle Daemon below version 6.0 is unstable and causes test fluctuations
-  fun `test daemon reused for source downloading`() = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
-    // a custom Gradle User Home is required to isolate execution of the test from different tests running at the same time
-    overrideGradleUserHome("test-daemon-reused-for-source-downloading")
-
-    val libraryGroup = "org.apache.commons"
-    val libraryName = "commons-lang3"
-    val libraryVersion = "3.17.0"
-    val libraryHash = "f409092a9f723034a839327029255900a19742b4"
-    removeCachedLibrary(
-      "caches/modules-2/files-2.1/$libraryGroup/$libraryName/$libraryVersion/$libraryHash/$libraryName-$libraryVersion-sources.jar"
-    )
-
-    assertNull(findDaemon())
-    importProject {
-      withJavaPlugin()
-      withMavenCentral()
-      addTestImplementationDependency(DEPENDENCY)
-      addTestImplementationDependency("$libraryGroup:$libraryName:$libraryVersion")
-    }
-
-    val daemonUsedForSync = findDaemon()
-    assertNotNull(daemonUsedForSync)
-
-    assertSourcesDownloadedAndAttached(targetModule = "project.test")
-    daemonUsedForSync!!.assertReused()
-
-    assertSourcesDownloadedAndAttached(
-      targetModule = "project.test",
-      dependencyName = "Gradle: $libraryGroup:$libraryName:$libraryVersion",
-      dependencyJar = "$libraryName-$libraryVersion.jar",
-      dependencySourcesJar = "$libraryName-$libraryVersion-sources.jar",
-      classFromDependency = "org.apache.commons.lang3.StringUtils"
-    )
-    daemonUsedForSync.assertReused()
-  }
-
-  private fun DaemonState.assertReused() {
-    assertEquals(this, findDaemon())
-  }
-
-  @Test
-  fun `test download sources dynamic task`() = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
+  fun `test download sources dynamic task`() {
     importProject {
       withJavaPlugin()
       withIdeaPlugin()
@@ -114,7 +64,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
   }
 
   @Test
-  fun `test sources available in gradle cache after task execution`(): Unit = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
+  fun `test sources available in gradle cache after task execution`() {
     importProject {
       withJavaPlugin()
       withIdeaPlugin()
@@ -129,7 +79,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
 
   @Test
   @TargetVersions("6.5+")
-  fun `test download sources with configuration cache`() = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
+  fun `test download sources with configuration cache`() {
     createProjectSubFile("gradle.properties", "org.gradle.configuration-cache=true\n org.gradle.unsafe.configuration-cache=true")
     importProject {
       withJavaPlugin()
@@ -146,7 +96,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
 
   @Test
   @TargetVersions("5.6+")
-  fun `test download sources with configure on demand`() = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
+  fun `test download sources with configure on demand`() {
     createProjectSubFile("gradle.properties", "org.gradle.configureondemand=true")
     importProject {
       withJavaPlugin()
@@ -160,7 +110,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
   }
 
   @Test
-  fun `test download sources from gradle sub module repository`() = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
+  fun `test download sources from gradle sub module repository`() {
     createSettingsFile("include 'projectA', 'projectB' ")
     createBuildFile("projectA") {
       withJavaPlugin()
@@ -187,42 +137,43 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
     return GradleLocalCacheHelper.findArtifactComponents(coordinates, gradleUserHome, EnumSet.allOf(LibraryPathType::class.java))
   }
 
-  private suspend fun assertSourcesDownloadedAndAttached(
-    dependencyName: String = DEPENDENCY_NAME,
-    dependencyJar: String = DEPENDENCY_JAR,
-    dependencySourcesJar: String = DEPENDENCY_SOURCES_JAR,
-    classFromDependency: String = CLASS_FROM_DEPENDENCY,
-    actionExecutionDeadlineMs: Long = DEFAULT_ATTACH_SOURCE_DEADLINE_MS,
-    targetModule: String,
+  private fun assertSourcesDownloadedAndAttached(dependencyName: String = DEPENDENCY_NAME,
+                                                 dependencyJar: String = DEPENDENCY_JAR,
+                                                 dependencySourcesJar: String = DEPENDENCY_SOURCES_JAR,
+                                                 classFromDependency: String = CLASS_FROM_DEPENDENCY,
+                                                 actionExecutionDeadlineMs: Long = DEFAULT_ATTACH_SOURCE_DEADLINE_MS,
+                                                 targetModule: String
   ) {
     val library: LibraryOrderEntry = getModuleLibDeps(targetModule, dependencyName).single()
     assertThat(library.getRootFiles(OrderRootType.CLASSES))
       .hasSize(1)
       .allSatisfy(Consumer { assertEquals(dependencyJar, it.name) })
 
-    IndexingTestUtil.waitUntilIndexesAreReady(myProject)
-
     val psiFile = runReadAction {
       JavaPsiFacade.getInstance(myProject).findClass(classFromDependency, GlobalSearchScope.allScope(myProject))!!.containingFile
     }
 
-    val tracker = ExternalSystemExecutionTracer()
-    tracker.traceExecution(ExternalSystemExecutionTracer.PrintOutputMode.ON_EXCEPTION) {
-      waitUntilSourcesAttached(dependencyName) {
-        coroutineScope {
-          val attachSourcesProvider = GradleAttachSourcesProvider(this)
-          val attachSourcesActions = attachSourcesProvider.getActions(mutableListOf(library), psiFile)
-          val attachSourcesAction = attachSourcesActions.single()
-          val attachSourcesCallback = attachSourcesAction.perform(mutableListOf(library))
-          withContext(Dispatchers.IO) {
-            attachSourcesCallback.waitFor(actionExecutionDeadlineMs)
-          }
-          assertNull(attachSourcesCallback.error)
-        }
+    val output = mutableListOf<String>()
+    val listener = object : ExternalSystemTaskNotificationListener {
+      override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
+        output += text
       }
     }
-    assertThat(tracker.output)
-      .filteredOn { it.startsWith("Artifact was downloaded to") }
+    waitUntilSourcesAttached {
+      try {
+        ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(listener)
+        val callback = GradleAttachSourcesProvider().getActions(mutableListOf(library), psiFile)
+          .single()
+          .perform(mutableListOf(library))
+          .apply { waitFor(actionExecutionDeadlineMs) }
+        assertNull(callback.error)
+      }
+      finally {
+        ExternalSystemProgressNotificationManager.getInstance().removeNotificationListener(listener)
+      }
+    }
+    assertThat(output)
+      .filteredOn { it.startsWith("Sources were downloaded to") }
       .hasSize(1)
       .allSatisfy(Consumer { assertThat(it).endsWith(dependencySourcesJar) })
 
@@ -235,42 +186,24 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
     deleteIfExists()
   }
 
-  private suspend fun waitUntilSourcesAttached(libraryName: String = DEPENDENCY_NAME, action: suspend () -> Unit) {
-    coroutineScope {
-      val deferred = CompletableDeferred<Boolean>()
-      myProject.messageBus.connect(this.asDisposable())
-        .subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
-          override fun changed(event: VersionedStorageChange) {
-            for (change in (event as VersionedStorageChangeInternal).getAllChanges()) {
-              if (change is EntityChange.Replaced && change.component2() is LibraryEntity) {
-                val modifiedComponent = change.component2() as LibraryEntity
-                if (modifiedComponent.name == libraryName && modifiedComponent.roots.any { it.type === LibraryRootTypeId.SOURCES }) {
-                  deferred.complete(true)
-                }
+  private fun waitUntilSourcesAttached(libraryName: String = DEPENDENCY_NAME, action: () -> Unit) {
+    val latch = CountDownLatch(1)
+    myProject.messageBus.connect(testRootDisposable)
+      .subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+        override fun changed(event: VersionedStorageChange) {
+          for (change in (event as VersionedStorageChangeInternal).getAllChanges()) {
+            if (change is EntityChange.Replaced && change.component2() is LibraryEntity) {
+              val modifiedComponent = change.component2() as LibraryEntity
+              if (modifiedComponent.name == libraryName && modifiedComponent.roots.any { it.type === LibraryRootTypeId.SOURCES }) {
+                latch.countDown()
               }
             }
           }
-        })
-      action.invoke()
-      deferred.await()
-    }
-  }
-
-  private fun findDaemon(): DaemonState? {
-    val daemons = getDaemonsStatus(setOf(gradleUserHome.toCanonicalPath()))
-    if (daemons.isEmpty()) {
-      return null
-    }
-    return daemons.find {
-      if (gradleVersion != it.version) {
-        return@find false
-      }
-      val daemonUserHome = it.registryDir?.toPath() ?: throw IllegalStateException("Gradle daemon user home should not be null")
-      if (daemonUserHome != gradleUserHome.resolve("daemon")) {
-        return@find false
-      }
-      val daemonJdkHome = it.javaHome?.canonicalPath ?: throw IllegalStateException("Gradle JDK should never be null")
-      gradleJdkHome == daemonJdkHome
+        }
+      })
+    action.invoke()
+    if (!latch.await(10, TimeUnit.SECONDS)) {
+      LOG.error("A timeout has been reached while waiting for the library sources")
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.config.bean;
 
 import org.jetbrains.annotations.NotNull;
@@ -10,28 +10,36 @@ import java.util.Map;
 
 
 public class EventLogConfigVersions {
-  public @Nullable EventLogMajorVersionBorders majorBuildVersionBorders;
+  @Nullable
+  public EventLogMajorVersionBorders majorBuildVersionBorders;
 
-  public @Nullable Map<String, String> endpoints;
+  @Nullable
+  public Map<String, String> endpoints;
 
-  public @Nullable Map<String, String> options;
+  @Nullable
+  public Map<String, String> options;
 
-  public @Nullable List<EventLogConfigFilterCondition> releaseFilters;
+  @Nullable
+  public List<EventLogConfigFilterCondition> releaseFilters;
 
-  public @NotNull Map<String, String> getEndpoints() {
+  @NotNull
+  public Map<String, String> getEndpoints() {
     return endpoints != null ? endpoints : Collections.emptyMap();
   }
 
-  public @NotNull Map<String, String> getOptions() {
+  @NotNull
+  public Map<String, String> getOptions() {
     return options != null ? options : Collections.emptyMap();
   }
 
-  public @NotNull List<EventLogConfigFilterCondition> getFilters() {
+  @NotNull
+  public List<EventLogConfigFilterCondition> getFilters() {
     return releaseFilters != null ? releaseFilters : Collections.emptyList();
   }
 
   public static class EventLogConfigFilterCondition {
-    public @Nullable String releaseType;
+    @Nullable
+    public String releaseType;
 
     public int from = 0;
 

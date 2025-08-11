@@ -4,10 +4,8 @@ package com.intellij.slicer
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.panel
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.JCheckBox
 
-@ApiStatus.Internal
 class SliceForwardAdditionalUi {
   lateinit var myShowDerefs: JCheckBox
   val panel: DialogPanel = panel {

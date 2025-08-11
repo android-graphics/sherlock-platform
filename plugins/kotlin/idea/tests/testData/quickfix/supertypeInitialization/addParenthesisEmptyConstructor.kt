@@ -1,5 +1,4 @@
 // "Change to constructor invocation" "true"
-// PRIORITY: HIGH
 open class A() {}
 class B() : A<caret> {}
 

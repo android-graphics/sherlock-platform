@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.codeInsight.actions.CodeInsightAction;
@@ -7,13 +7,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public final class SliceBackwardAction extends CodeInsightAction {
+  @NotNull
   @Override
-  protected @NotNull SliceHandler getHandler() {
+  protected SliceHandler getHandler() {
     return SliceHandler.create(true);
   }
 
@@ -26,9 +25,6 @@ public final class SliceBackwardAction extends CodeInsightAction {
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (LanguageSlicing.getProvider(file) == null) {
-      return false;
-    }
-    if (editor.getSelectionModel().hasSelection()) {
       return false;
     }
     PsiElement expression = getHandler().getExpressionAtCaret(editor, file);

@@ -26,13 +26,15 @@ public class XPath2CastableImpl extends XPath2ElementImpl implements XPath2Casta
   }
 
   @Override
-  public @Nullable XPathType getTargetType() {
+  @Nullable
+  public XPathType getTargetType() {
     final XPath2TypeElement node = findChildByClass(XPath2TypeElement.class);
     return node != null ? node.getDeclaredType() : null;
   }
 
+  @NotNull
   @Override
-  public @NotNull XPathType getType() {
+  public XPathType getType() {
     return XPath2Type.BOOLEAN;
   }
 

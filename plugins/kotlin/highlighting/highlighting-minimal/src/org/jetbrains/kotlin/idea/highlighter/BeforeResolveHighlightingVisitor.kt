@@ -6,11 +6,9 @@ import com.intellij.codeHighlighting.RainbowHighlighter
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.highlighting.BeforeResolveHighlightingExtension
 import org.jetbrains.kotlin.idea.highlighter.visitor.AbstractHighlightingVisitor
 import org.jetbrains.kotlin.kdoc.parser.KDocKnownTag
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
@@ -20,7 +18,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class BeforeResolveHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHighlightingVisitor(holder), DumbAware {
+class BeforeResolveHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHighlightingVisitor(holder) {
     override fun visitElement(element: PsiElement) {
         val elementType = element.node.elementType
         val attributes = when {
@@ -70,7 +68,6 @@ class BeforeResolveHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHi
         val eq = argument.equalsToken ?: return
         val parent = argument.parent
         highlightName(argument.project,
-                      argument,
             TextRange(argumentName.startOffset, eq.endOffset),
             if (parent is KtValueArgumentList && parent.parent is KtAnnotationEntry)
                 KotlinHighlightInfoTypeSemanticNames.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES
@@ -105,9 +102,4 @@ class BeforeResolveHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHi
         highlightNamedDeclaration(function, KotlinHighlightInfoTypeSemanticNames.FUNCTION_DECLARATION)
         super.visitNamedFunction(function)
     }
-}
-
-class BeforeResolveHighlightingExtension : BeforeResolveHighlightingExtension {
-    override fun createVisitor(holder: HighlightInfoHolder): AbstractHighlightingVisitor =
-        BeforeResolveHighlightingVisitor(holder)
 }

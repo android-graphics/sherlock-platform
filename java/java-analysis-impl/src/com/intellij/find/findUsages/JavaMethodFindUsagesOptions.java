@@ -56,7 +56,6 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
     properties.setValue(prefix + "isSearchForBaseMethod", isSearchForBaseMethod, true);
   }
 
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!super.equals(o)) return false;
@@ -75,7 +74,6 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
     return true;
   }
 
-  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + (isOverridingMethods ? 1 : 0);

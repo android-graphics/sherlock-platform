@@ -1,91 +1,71 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation
 
-import com.intellij.cce.actions.DatasetContext
 import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
 import com.intellij.cce.interpreter.InterpretFilter
 import com.intellij.cce.interpreter.InterpretationHandlerImpl
+import com.intellij.cce.interpreter.Interpreter
+import com.intellij.cce.interpreter.InvokersFactory
 import com.intellij.cce.util.ExceptionsUtil
+import com.intellij.cce.util.FilesHelper
 import com.intellij.cce.util.Progress
+import com.intellij.cce.util.text
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.cce.workspace.info.FileErrorInfo
 import com.intellij.cce.workspace.info.FileSessionsInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
-import com.intellij.cce.workspace.storages.LogsSaver
-import com.intellij.cce.workspace.storages.asCompositeLogsSaver
-import com.intellij.cce.workspace.storages.logsSaverIf
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 import kotlin.math.roundToInt
+import kotlin.random.Random
 import kotlin.system.measureTimeMillis
 
 class ActionsInterpretationHandler(
   private val config: Config,
-  private val datasetContext: DatasetContext
-) {
-
+  private val language: String,
+  private val invokersFactory: InvokersFactory,
+  private val project: Project) : TwoWorkspaceHandler {
   companion object {
     val LOG = Logger.getInstance(ActionsInterpretationHandler::class.java)
   }
 
-  private fun createLogsSaver(workspace: EvaluationWorkspace): LogsSaver = listOf(
-    logsSaverIf(config.interpret.saveLogs) { workspace.statLogsSaver },
-    logsSaverIf(config.interpret.saveFusLogs) { workspace.fusLogsSaver }
-  ).asCompositeLogsSaver()
-
-  fun invoke(environment: EvaluationEnvironment, workspace: EvaluationWorkspace, indicator: Progress) {
+  override fun invoke(workspace1: EvaluationWorkspace, workspace2: EvaluationWorkspace, indicator: Progress) {
     var sessionsCount: Int
     val computingTime = measureTimeMillis {
-      sessionsCount = environment.sessionCount(datasetContext)
+      sessionsCount = workspace1.actionsStorage.computeSessionsCount()
     }
     LOG.info("Computing of sessions count took $computingTime ms")
     val interpretationConfig = config.interpret
-    val logsSaver = createLogsSaver(workspace)
     val handler = InterpretationHandlerImpl(indicator, sessionsCount, interpretationConfig.sessionsLimit)
     val filter =
       if (interpretationConfig.sessionProbability < 1)
         RandomInterpretFilter(interpretationConfig.sessionProbability, interpretationConfig.sessionSeed)
       else InterpretFilter.default()
-    val featuresStorage = if (interpretationConfig.saveFeatures) workspace.featuresStorage else FeaturesStorage.EMPTY
+    val interpreter = Interpreter(invokersFactory, handler, filter, config.interpret.order, project.basePath)
+    val featuresStorage = if (interpretationConfig.saveFeatures) workspace2.featuresStorage else FeaturesStorage.EMPTY
     LOG.info("Start interpreting actions")
     if (interpretationConfig.sessionProbability < 1) {
       val skippedSessions = (sessionsCount * (1.0 - interpretationConfig.sessionProbability)).roundToInt()
       println("During actions interpretation will be skipped about $skippedSessions sessions")
     }
-    var fileCount = 0
-    for (chunk in environment.chunks(datasetContext)) {
-      if (config.interpret.filesLimit?.let { it <= fileCount } == true) {
-        break
-      }
-
-      workspace.fullLineLogsStorage.enableLogging(chunk.name)
+    val files = workspace1.actionsStorage.getActionFiles()
+    for (file in files.shuffled(FILES_RANDOM)) {
+      val fileActions = workspace1.actionsStorage.getActions(file)
+      workspace2.fullLineLogsStorage.enableLogging(fileActions.path)
       try {
-        val sessions = logsSaver.invokeRememberingLogs {
-          chunk.evaluate(handler, filter, interpretationConfig.order) { session ->
-            featuresStorage.saveSession(session, chunk.name)
-          }
-        }
-
+        val sessions = interpreter.interpret(fileActions) { session -> featuresStorage.saveSession(session, fileActions.path) }
         if (sessions.isNotEmpty()) {
-          val sessionsInfo = FileSessionsInfo(
-            projectName = chunk.datasetName,
-            filePath = chunk.name,
-            text = chunk.presentationText,
-            sessions = sessions
-          )
-          workspace.sessionsStorage.saveSessions(sessionsInfo)
-          fileCount += 1
-        }
-        else {
-          if (chunk.sessionsExist) {
-            LOG.warn("No sessions collected from file: ${chunk.name}")
-          }
+          val fileText = FilesHelper.getFile(project, fileActions.path).text()
+          workspace2.sessionsStorage.saveSessions(FileSessionsInfo(config.projectName, fileActions.path, fileText, sessions))
+        } else {
+          LOG.warn("No sessions collected from file: $file")
         }
       }
       catch (e: Throwable) {
         try {
-          workspace.errorsStorage.saveError(
-            FileErrorInfo(chunk.name, e.message ?: "No Message", ExceptionsUtil.stackTraceToString(e))
+          workspace2.errorsStorage.saveError(
+            FileErrorInfo(fileActions.path, e.message ?: "No Message", ExceptionsUtil.stackTraceToString(e))
           )
         }
         catch (e2: Throwable) {
@@ -95,9 +75,11 @@ class ActionsInterpretationHandler(
       }
       if (handler.isCancelled() || handler.isLimitExceeded()) break
     }
-    logsSaver.save(config.actions?.language, config.interpret.trainTestSplit)
+    if (interpretationConfig.saveLogs) workspace2.logsStorage.save(SetupStatsCollectorStep.statsCollectorLogsDirectory(), language, interpretationConfig.trainTestSplit)
     SetupStatsCollectorStep.deleteLogs()
-    workspace.saveMetadata()
+    workspace2.saveMetadata()
     LOG.info("Interpreting actions completed")
   }
 }
+
+private val FILES_RANDOM = Random(42)

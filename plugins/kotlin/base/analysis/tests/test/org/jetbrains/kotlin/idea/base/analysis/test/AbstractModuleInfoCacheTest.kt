@@ -13,7 +13,6 @@ import com.intellij.testFramework.JavaModuleTestCase
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleProductionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
-import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.caches.project.IdeaModelInfosCache
 import java.io.File
 
@@ -42,7 +41,6 @@ abstract class AbstractModuleInfoCacheTest : JavaModuleTestCase() {
         }
     }
 
-    @OptIn(K1ModeProjectStructureApi::class)
     protected fun assertHasModules(vararg names: String) {
         val moduleInfos = buildList {
             val cache = project.service<IdeaModelInfosCache>()

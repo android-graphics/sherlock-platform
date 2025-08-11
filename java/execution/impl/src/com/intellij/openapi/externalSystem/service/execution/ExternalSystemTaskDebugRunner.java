@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.BuildView;
@@ -38,8 +38,9 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
 
   private static final String ATTACH_VM_FAILED = "ATTACH_VM_FAILED";
 
+  @NotNull
   @Override
-  public @NotNull String getRunnerId() {
+  public String getRunnerId() {
     return ExternalSystemConstants.DEBUG_RUNNER_ID;
   }
 
@@ -48,8 +49,9 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
     return profile instanceof ExternalSystemRunConfiguration && DefaultDebugExecutor.EXECUTOR_ID.equals(executorId);
   }
 
+  @Nullable
   @Override
-  protected @Nullable RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment)
+  protected RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment)
     throws ExecutionException {
     if (state instanceof ExternalSystemRunnableState runnableState) {
       int port = runnableState.getDebugPort();
@@ -78,7 +80,8 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
     return null;
   }
 
-  private static @Nullable RunContentDescriptor doGetRunContentDescriptor(
+  @Nullable
+  private static RunContentDescriptor doGetRunContentDescriptor(
     @NotNull ExternalSystemRunnableState state,
     @NotNull ExecutionEnvironment environment
   ) throws ExecutionException {
@@ -109,7 +112,8 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
     return descriptor;
   }
 
-  private static @NotNull XDebugProcess jvmProcessToDebug(
+  @NotNull
+  private static XDebugProcess jvmProcessToDebug(
     @NotNull XDebugSession session,
     ExternalSystemRunnableState state,
     @NotNull ExecutionEnvironment env
@@ -138,7 +142,8 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
     return JavaDebugProcess.create(session, debuggerSession);
   }
 
-  private static @Nullable RunContentDescriptor createProcessToDebug(
+  @Nullable
+  private static RunContentDescriptor createProcessToDebug(
     ExternalSystemRunnableState state,
     @NotNull ExecutionEnvironment env
   ) throws ExecutionException {
@@ -148,7 +153,8 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
     try {
       result = XDebuggerManager.getInstance(env.getProject()).startSession(env, new XDebugProcessStarter() {
         @Override
-        public @NotNull XDebugProcess start(@NotNull XDebugSession session) throws ExecutionException {
+        @NotNull
+        public XDebugProcess start(@NotNull XDebugSession session) throws ExecutionException {
           return jvmProcessToDebug(session, state, env);
         }
       }).getRunContentDescriptor();

@@ -15,17 +15,15 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.ranges.IntRange;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Pattern;
 
-@ApiStatus.Internal
-public final class TextContentImpl extends UserDataHolderBase implements TextContent {
+class TextContentImpl extends UserDataHolderBase implements TextContent {
   private final TextDomain domain;
-  public final List<TokenInfo> tokens;
+  final List<TokenInfo> tokens;
   private volatile String text;
   private volatile int[] tokenOffsets;
 
@@ -348,19 +346,10 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
 
   @Override
   public int[] markupOffsets() {
-    return excludedOffsets(TokenKind.markup);
-  }
-
-  @Override
-  public int[] unknownOffsets() {
-    return excludedOffsets(TokenKind.unknown);
-  }
-
-  private int[] excludedOffsets(TokenKind kind) {
     List<Integer> result = new ArrayList<>();
     int offset = 0;
     for (TokenInfo token : tokens) {
-      if (token instanceof PsiToken pt && pt.kind == kind) {
+      if (token instanceof PsiToken pt && pt.kind == TokenKind.markup) {
         result.add(offset);
       }
       offset += token.length();
@@ -396,8 +385,9 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
         return sb.charAt(index);
       }
 
+      @NotNull
       @Override
-      public @NotNull CharSequence subSequence(int start, int end) {
+      public CharSequence subSequence(int start, int end) {
         return sb.subSequence(start, end);
       }
 
@@ -432,8 +422,7 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
     return null;
   }
 
-  @ApiStatus.Internal
-  public abstract static class TokenInfo {
+  abstract static class TokenInfo {
     final String text;
 
     TokenInfo(String text) {
@@ -452,7 +441,7 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
 
   enum TokenKind { text, markup, unknown }
 
-  static final class PsiToken extends TokenInfo {
+  static class PsiToken extends TokenInfo {
     final PsiElement psi;
     final TextRange rangeInPsi;
     final TextRange rangeInFile;
@@ -522,7 +511,7 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
     }
   }
 
-  static final class WSTokenInfo extends TokenInfo {
+  static class WSTokenInfo extends TokenInfo {
     WSTokenInfo(char ws) { super(String.valueOf(ws)); }
 
     @Override

@@ -167,16 +167,16 @@ public abstract class LocalHistoryTestCase extends Assert {
   }
 
   public static @NotNull List<RevisionId> collectRevisionIds(@NotNull LocalHistoryFacade facade, @NotNull String path,
-                                                             @Nullable String projectId) {
-    List<RevisionId> revisionIds = ContainerUtil.map(collectChanges(facade, path, projectId, null),
+                                                             @Nullable String projectId, @Nullable String pattern) {
+    List<RevisionId> revisionIds = ContainerUtil.map(collectChanges(facade, path, projectId, pattern),
                                                      set -> new RevisionId.ChangeSet(set.getId()));
     return ContainerUtil.concat(Arrays.asList(RevisionId.Current.INSTANCE), revisionIds);
   }
 
   public static @NotNull List<ChangeSet> collectChanges(@NotNull LocalHistoryFacade facade, @NotNull String path,
-                                                        @Nullable String projectId, @Nullable HistoryPathFilter filter) {
+                                                        @Nullable String projectId, @Nullable String pattern) {
     List<ChangeSet> result = new ArrayList<>();
-    LocalHistoryFacadeKt.collectChanges(facade, projectId, path, filter, changeSet -> {
+    LocalHistoryFacadeKt.collectChanges(facade, projectId, path, pattern, changeSet -> {
       result.add(changeSet);
       return Unit.INSTANCE;
     });

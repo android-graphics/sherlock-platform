@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.intentions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.ui.TestInputDialog;
 import com.intellij.psi.PsiFile;
@@ -56,7 +55,6 @@ public class PyIntentionTest extends PyTestCase {
     final IntentionAction action = myFixture.findSingleIntention(hint);
     assertSdkRootsNotParsed(file);
     myFixture.launchAction(action);
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile("intentions/" + getTestName(true) + "_after.py", ignoreWhiteSpaces);
   }
 
@@ -67,7 +65,6 @@ public class PyIntentionTest extends PyTestCase {
     myFixture.configureByFile(filesPathPrefix + ".py");
     final IntentionAction action = myFixture.findSingleIntention(hint);
     myFixture.launchAction(action);
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(filesPathPrefix + ".py", directoryPath + "/" + filesPathPrefix + "_after.py", false);
   }
 

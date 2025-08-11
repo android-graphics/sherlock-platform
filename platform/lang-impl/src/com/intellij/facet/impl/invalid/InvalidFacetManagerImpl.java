@@ -27,9 +27,6 @@ public final class InvalidFacetManagerImpl extends InvalidFacetManager implement
 
   @Override
   public boolean isIgnored(@NotNull InvalidFacet facet) {
-    if (FacetIgnorer.isIgnoredByAnyEP(facet)) {
-      return true;
-    }
     return myState.getIgnoredFacets().contains(FacetPointersManager.constructId(facet));
   }
 

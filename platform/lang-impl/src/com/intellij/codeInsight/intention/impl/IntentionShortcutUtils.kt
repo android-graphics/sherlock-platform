@@ -7,15 +7,12 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.IntentionShortcuts.WRAPPER_PREFIX
-import com.intellij.codeInsight.intention.IntentionSource
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 
-@JvmOverloads
-fun IntentionAction.invokeAsAction(editor: Editor, file: PsiFile, intentionSource: IntentionSource = IntentionSource.OTHER) {
+fun IntentionAction.invokeAsAction(editor: Editor, file: PsiFile) {
   ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, this,
-                                                    CodeInsightBundle.message("intention.action.wrapper.name", familyName),
-                                                    intentionSource)
+                                                    CodeInsightBundle.message("intention.action.wrapper.name", familyName))
 }
 
 /** A unique identifier for an intention action starting with [WRAPPER_PREFIX] */

@@ -4,22 +4,21 @@
 package org.jetbrains.plugins.gradle.testFramework
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.components.service
-import com.intellij.openapi.externalSystem.settings.ProjectBuildClasspathManager
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
-import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
+import com.intellij.testFramework.utils.module.assertModules
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.testFramework.utils.vfs.getDirectory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
+import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.settings.TestRunner
 import org.jetbrains.plugins.gradle.testFramework.util.ModuleInfo
@@ -42,7 +41,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
       initProject(root, compositeInfo)
     }
     for (moduleInfo in projectInfo.modules) {
-      val moduleRoot = edtWriteAction {
+      val moduleRoot = writeAction {
         root.findOrCreateDirectory(moduleInfo.relativePath)
       }
       moduleInfo.filesConfiguration.createFiles(moduleRoot)
@@ -57,7 +56,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
       deleteProject(root, compositeInfo)
     }
     withContext(Dispatchers.EDT) {
-      edtWriteAction {
+      writeAction {
         for (moduleInfo in projectInfo.modules) {
           root.deleteRecursively(moduleInfo.relativePath)
         }
@@ -68,7 +67,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
   open fun assertProjectState(project: Project, vararg projectsInfo: ProjectInfo) {
     assertNotificationIsVisible(project, false)
     assertProjectStructure(project, *projectsInfo)
-    assertProjectClasspathSaved(project)
+    assertDefaultProjectLocalSettings(project)
     for (projectInfo in projectsInfo) {
       assertDefaultProjectSettings(project, projectInfo)
     }
@@ -85,9 +84,9 @@ abstract class GradleTestCase : GradleBaseTestCase() {
     )
   }
 
-  fun assertProjectClasspathSaved(project: Project) {
-    val cp = project.service<ProjectBuildClasspathManager>()
-    Assertions.assertFalse(cp.getProjectBuildClasspath().isEmpty()) {
+  fun assertDefaultProjectLocalSettings(project: Project) {
+    val localSettings = GradleLocalSettings.getInstance(project)
+    Assertions.assertFalse(localSettings.projectBuildClasspath.isEmpty()) {
       "Assert classpath entity is saved to the workspace model"
     }
   }
@@ -108,7 +107,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
     Assertions.assertEquals(projectSettings.externalProjectPath, externalProjectPath)
     Assertions.assertTrue(settings.storeProjectFilesExternally)
     Assertions.assertTrue(projectSettings.isResolveModulePerSourceSet)
-    Assertions.assertFalse(projectSettings.isResolveExternalAnnotations)
+    Assertions.assertTrue(projectSettings.isResolveExternalAnnotations)
     Assertions.assertTrue(projectSettings.delegatedBuild)
     Assertions.assertEquals(TestRunner.GRADLE, projectSettings.testRunner)
     Assertions.assertTrue(projectSettings.isUseQualifiedModuleNames)
@@ -171,7 +170,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
   }
 
   fun ModuleInfo.Builder.withSettingsFile(configure: GradleSettingScriptBuilder<*>.() -> Unit) {
-    filesConfiguration.withSettingsFile(gradleVersion, useKotlinDsl = useKotlinDsl, configure = configure)
+    filesConfiguration.withSettingsFile(useKotlinDsl = useKotlinDsl, configure = configure)
   }
 
   open fun ModuleInfo.Builder.withBuildFile(configure: GradleBuildScriptBuilder<*>.() -> Unit) {

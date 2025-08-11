@@ -15,9 +15,7 @@
  */
 package git4idea.cherrypick
 
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.vcs.VcsApplicationSettings
-import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.impl.HashImpl
 import git4idea.i18n.GitBundle
 import git4idea.test.*
@@ -38,14 +36,11 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
     checkout("feature")
     file.append("local\n")
 
-    cherryPick(commit, expectSuccess = false)
+    cherryPick(commit)
 
-    assertErrorNotification("Cherry-pick failed",
-                            "${shortHash(commit)} fix #1" +
-                            UIUtil.BR +
-                            GitBundle.message("warning.your.local.changes.would.be.overwritten.by", "cherry-pick", "shelve"),
-                            listOf(IdeBundle.message("action.show.files"),
-                                   GitBundle.message("apply.changes.save.and.retry.operation", "Shelve")))
+    assertErrorNotification("Cherry-pick failed", """
+      ${shortHash(commit)} fix #1 
+      """ + GitBundle.message("apply.changes.would.be.overwritten", "cherry-pick"))
   }
 
   protected fun `check untracked file conflicting with commit`() {
@@ -55,7 +50,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
     checkout("feature")
     file.create("untracked\n")
 
-    cherryPick(commit, expectSuccess = false)
+    cherryPick(commit)
 
     assertErrorNotification("Untracked Files Prevent Cherry-pick", """
       Move or commit them before cherry-pick""")
@@ -69,7 +64,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
 
     `do nothing on merge`()
 
-    cherryPick(commit, expectSuccess = false)
+    cherryPick(commit)
 
     `assert merge dialog was shown`()
   }
@@ -96,16 +91,14 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
     changeListManager.assertOnlyDefaultChangelist()
   }
 
-  protected fun cherryPick(vararg hashes: String, expectSuccess: Boolean = true) {
+  protected fun cherryPick(hashes: List<String>) {
     updateChangeListManager()
-    val details = readDetails(hashes.asList())
-    val gitCherryPicker = GitCherryPicker(this.project)
-    val cherryPickSuccess = gitCherryPicker.cherryPick(details)
-    if (expectSuccess) {
-      assertTrue(cherryPickSuccess)
-    } else {
-      assertFalse(cherryPickSuccess)
-    }
+    val details = readDetails(hashes)
+    GitCherryPicker(project).cherryPick(details)
+  }
+
+  protected fun cherryPick(vararg hashes: String) {
+    cherryPick(hashes.asList())
   }
 
   protected fun shortHash(hash: String) = HashImpl.build(hash).toShortString()

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.psi.PsiComment;
@@ -16,8 +16,9 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule implements UsageGroupingRuleEx {
+  @Nullable
   @Override
-  protected @Nullable UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+  protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     if (usage instanceof UsageWithType) {
       UsageType usageType = ((UsageWithType)usage).getUsageType();
       return usageType == null ? null : new UsageTypeGroup(usageType);
@@ -44,7 +45,8 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
     return null;
   }
 
-  private static @Nullable UsageType getUsageType(PsiElement element, UsageTarget @NotNull [] targets) {
+  @Nullable
+  private static UsageType getUsageType(PsiElement element, UsageTarget @NotNull [] targets) {
     if (element == null) return null;
 
     if (PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null) { return UsageType.COMMENT_USAGE; }
@@ -83,7 +85,8 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
     }
 
     @Override
-    public @NotNull String getPresentableGroupText() {
+    @NotNull
+    public String getPresentableGroupText() {
       return myUsageType.toString();
     }
 
@@ -92,14 +95,12 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
       return getPresentableGroupText().compareTo(usageGroup.getPresentableGroupText());
     }
 
-    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof UsageTypeGroup usageTypeGroup)) return false;
       return myUsageType.equals(usageTypeGroup.myUsageType);
     }
 
-    @Override
     public int hashCode() {
       return myUsageType.hashCode();
     }

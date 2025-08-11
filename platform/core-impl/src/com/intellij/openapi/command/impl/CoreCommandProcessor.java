@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.AccessToken;
@@ -24,8 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class CoreCommandProcessor extends CommandProcessorEx {
-  @ApiStatus.Internal
-  public static final class CommandDescriptor implements CommandToken {
+  private static class CommandDescriptor implements CommandToken {
     public final @NotNull Runnable myCommand;
     public final Project myProject;
     public @NlsContexts.Command String myName;
@@ -198,7 +197,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
                               boolean shouldRecordCommandForActiveDocument,
                               @Nullable Document document) {
     Application application = ApplicationManager.getApplication();
-    application.assertIsDispatchThread();
+    application.assertWriteIntentLockAcquired();
 
     if (CommandLog.LOG.isDebugEnabled()) {
       String currentCommandName;
@@ -215,32 +214,29 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     }
 
     if (myCurrentCommand != null) {
-      application.runWriteIntentReadAction(() -> { command.run(); return null; });
+      command.run();
       return;
     }
+    Throwable throwable = null;
     CommandDescriptor descriptor = new CommandDescriptor(command, project, name, groupId, undoConfirmationPolicy,
                                                          shouldRecordCommandForActiveDocument, document);
-    myCurrentCommand = descriptor;
-    application.runWriteIntentReadAction(() -> {
-      Throwable throwable = null;
-      try {
-        fireCommandStarted();
-        command.run();
+    try {
+      myCurrentCommand = descriptor;
+      fireCommandStarted();
+      command.run();
+    }
+    catch (Throwable th) {
+      throwable = th;
+    }
+    finally {
+      Throwable finalThrowable = throwable;
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        finishCommand(descriptor, finalThrowable);
+      });
+      if (finalThrowable instanceof ProcessCanceledException) {
+        throw (ProcessCanceledException)finalThrowable;
       }
-      catch (Throwable th) {
-        throwable = th;
-      }
-      finally {
-        Throwable finalThrowable = throwable;
-        ProgressManager.getInstance().executeNonCancelableSection(() -> {
-          finishCommand(descriptor, finalThrowable);
-        });
-        if (finalThrowable instanceof ProcessCanceledException) {
-          throw (ProcessCanceledException)finalThrowable;
-        }
-      }
-      return null;
-    });
+    }
   }
 
   @Override
@@ -277,6 +273,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   private void fireCommandFinished() {
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     CommandDescriptor currentCommand = myCurrentCommand;
     CommandEvent event = new CommandEvent(this, currentCommand.myCommand,
                                           currentCommand.myName,
@@ -299,7 +296,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void enterModal() {
-    ThreadingAssertions.assertEventDispatchThread();
+    ThreadingAssertions.assertWriteIntentReadAccess();
     CommandDescriptor currentCommand = myCurrentCommand;
     myInterruptedCommands.push(currentCommand);
     if (currentCommand != null) {
@@ -309,7 +306,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void leaveModal() {
-    ThreadingAssertions.assertEventDispatchThread();
+    ThreadingAssertions.assertWriteIntentReadAccess();
     CommandLog.LOG.assertTrue(myCurrentCommand == null, "Command must not run: " + myCurrentCommand);
 
     myCurrentCommand = myInterruptedCommands.pop();
@@ -461,6 +458,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   private void fireCommandStarted() {
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     CommandDescriptor currentCommand = myCurrentCommand;
     CommandEvent event = new CommandEvent(this,
                                           currentCommand.myCommand,

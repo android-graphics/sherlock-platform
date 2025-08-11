@@ -41,9 +41,7 @@ object ExtensionProcessingHelper {
         throw e
       }
       catch (e: Throwable) {
-        if (e::class.java.name != "com.intellij.openapi.project.IndexNotReadyException") {
-          logger<ExtensionPointImpl<*>>().error(e)
-        }
+        logger<ExtensionPointImpl<*>>().error(e)
       }
     }
     return null

@@ -137,15 +137,18 @@ public final class DirDiffElementImpl implements DirDiffElement {
     return myName;
   }
 
-  public @Nullable String getSourceName() {
+  @Nullable
+  public String getSourceName() {
     return mySource == null ? null : mySource.getName();
   }
 
-  public @Nullable String getSourcePresentableName() {
+  @Nullable
+  public String getSourcePresentableName() {
     return mySource == null ? null : mySource.getPresentableName();
   }
 
-  public @Nullable String getSourceSize() {
+  @Nullable
+  public String getSourceSize() {
     return mySourceLength < 0 ? null : String.valueOf(mySourceLength);
   }
 
@@ -158,15 +161,18 @@ public final class DirDiffElementImpl implements DirDiffElement {
     //return NONE;
   }
 
-  public @Nullable String getTargetName() {
+  @Nullable
+  public String getTargetName() {
     return myTarget == null ? null : myTarget.getName();
   }
 
-  public @Nullable String getTargetPresentableName() {
+  @Nullable
+  public String getTargetPresentableName() {
     return myTarget == null ? null : myTarget.getPresentableName();
   }
 
-  public @Nullable String getTargetSize() {
+  @Nullable
+  public String getTargetSize() {
     return myTargetLength < 0 ? null : String.valueOf(myTargetLength);
   }
 

@@ -1,8 +1,7 @@
 // "Add missing actual declarations" "true"
-// K2_ACTION: "Create actual in 'testModule_JVM'" "true"
-// K2_TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinNoActualForExpectInspection
+// IGNORE_K2
 
-expect class <caret>WithNested<T> {
+expect class <caret>WithNested {
     fun foo(): Int
 
     class Nested {

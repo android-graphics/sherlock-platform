@@ -3,8 +3,6 @@ package com.intellij.coverage.actions
 
 import com.intellij.coverage.CoverageIntegrationBaseTest
 import com.intellij.coverage.CoverageSuite
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.CheckedTreeNode
@@ -89,11 +87,9 @@ class SuiteChooserTest : CoverageIntegrationBaseTest() {
     val dialog = openChooserDialog()
     collectSuiteNodes(dialog)[ijSuite]!!.isChecked = true
 
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.Main) {
       waitSuiteProcessing {
-        WriteIntentReadAction.run {
-          dialog.doOKAction()
-        }
+        dialog.doOKAction()
       }
     }
 
@@ -120,11 +116,9 @@ class SuiteChooserTest : CoverageIntegrationBaseTest() {
     suiteNodes[ijSuite]!!.isChecked = true
     suiteNodes[xmlSuite]!!.isChecked = true
 
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.Main) {
       waitSuiteProcessing {
-        WriteIntentReadAction.run {
-          dialog.doOKAction()
-        }
+        dialog.doOKAction()
       }
     }
 
@@ -157,10 +151,8 @@ class SuiteChooserTest : CoverageIntegrationBaseTest() {
     val suiteNodes = collectSuiteNodes(dialog)
     suiteNodes[ijSuite]!!.isChecked = false
 
-    withContext(Dispatchers.EDT) {
-      WriteIntentReadAction.run {
-        dialog.doOKAction()
-      }
+    withContext(Dispatchers.Main) {
+      dialog.doOKAction()
     }
 
     val bundles = manager.activeSuites()
@@ -181,7 +173,7 @@ class SuiteChooserTest : CoverageIntegrationBaseTest() {
 
     Assert.assertFalse(manager.activeSuites().isEmpty())
 
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.Main) {
       val dialog = CoverageSuiteChooserDialog(myProject)
       dialog.NoCoverageAction().doAction(null)
       closeDialog(dialog)
@@ -192,10 +184,10 @@ class SuiteChooserTest : CoverageIntegrationBaseTest() {
   }
 
   private suspend fun openChooserDialog(): CoverageSuiteChooserDialog =
-    withContext(Dispatchers.EDT) { return@withContext CoverageSuiteChooserDialog(myProject) }
+    withContext(Dispatchers.Main) { return@withContext CoverageSuiteChooserDialog(myProject) }
 
   private suspend fun closeDialog(dialog: CoverageSuiteChooserDialog) {
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.Main) {
       Disposer.dispose(dialog.disposable)
     }
   }

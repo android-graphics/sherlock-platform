@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inheritanceToDelegation;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -68,11 +68,13 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     super.dispose();
   }
 
-  public @NotNull String getFieldName() {
+  @NotNull
+  public String getFieldName() {
     return myFieldNameField.getEnteredName();
   }
 
-  public @Nullable String getInnerClassName() {
+  @Nullable
+  public String getInnerClassName() {
     if (myInnerClassNameField != null) {
       return myInnerClassNameField.getEnteredName();
     }

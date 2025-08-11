@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.patterns;
 
@@ -19,10 +19,10 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
     super(PsiMethod.class);
   }
 
-  public PsiMethodPattern withParameterCount(final @NonNls int paramCount) {
+  public PsiMethodPattern withParameterCount(@NonNls final int paramCount) {
     return with(new PatternCondition<PsiMethod>("withParameterCount") {
       @Override
-      public boolean accepts(final @NotNull PsiMethod method, final ProcessingContext context) {
+      public boolean accepts(@NotNull final PsiMethod method, final ProcessingContext context) {
         return method.getParameterList().getParametersCount() == paramCount;
       }
     });
@@ -33,11 +33,11 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
    * @param inputTypes the array of FQN of the parameter types or wildcards.
    * The special values are:<bl><li>"?" - means any type</li><li>".." - instructs pattern to accept the rest of the arguments</li></bl>
    */
-  public PsiMethodPattern withParameters(final @NonNls String... inputTypes) {
+  public PsiMethodPattern withParameters(@NonNls final String... inputTypes) {
     final String[] types = inputTypes.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : inputTypes;
     return with(new PatternCondition<PsiMethod>("withParameters") {
       @Override
-      public boolean accepts(final @NotNull PsiMethod psiMethod, final ProcessingContext context) {
+      public boolean accepts(@NotNull final PsiMethod psiMethod, final ProcessingContext context) {
         final PsiParameterList parameterList = psiMethod.getParameterList();
         int dotsIndex = -1;
         while (++dotsIndex <types.length) {
@@ -66,11 +66,13 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
     });
   }
 
-  public @NotNull PsiMethodPattern definedInClass(final @NonNls String qname) {
+  @NotNull
+  public PsiMethodPattern definedInClass(@NonNls final String qname) {
     return definedInClass(PsiJavaPatterns.psiClass().withQualifiedName(qname));
   }
 
-  public @NotNull PsiMethodPattern definedInClass(final ElementPattern<? extends PsiClass> pattern) {
+  @NotNull
+  public PsiMethodPattern definedInClass(final ElementPattern<? extends PsiClass> pattern) {
     return with(new PatternConditionPlus<PsiMethod, PsiClass>("definedInClass", pattern) {
 
       @Override
@@ -92,7 +94,7 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
   public PsiMethodPattern constructor(final boolean isConstructor) {
     return with(new PatternCondition<PsiMethod>("constructor") {
       @Override
-      public boolean accepts(final @NotNull PsiMethod method, final ProcessingContext context) {
+      public boolean accepts(@NotNull final PsiMethod method, final ProcessingContext context) {
         return method.isConstructor() == isConstructor;
       }
     });
@@ -102,7 +104,7 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
   public PsiMethodPattern withThrowsList(final ElementPattern<?> pattern) {
     return with(new PatternCondition<PsiMethod>("withThrowsList") {
       @Override
-      public boolean accepts(final @NotNull PsiMethod method, final ProcessingContext context) {
+      public boolean accepts(@NotNull final PsiMethod method, final ProcessingContext context) {
         return pattern.accepts(method.getThrowsList());
       }
     });

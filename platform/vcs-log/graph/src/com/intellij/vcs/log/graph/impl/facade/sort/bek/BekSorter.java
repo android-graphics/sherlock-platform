@@ -12,11 +12,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public final class BekSorter {
-  private static final Logger LOG = Logger.getInstance(BekSorter.class);
+  private final static Logger LOG = Logger.getInstance(BekSorter.class);
 
-  public static @NotNull SortIndexMap createBekMap(@NotNull LinearGraph permanentGraph,
-                                                   @NotNull GraphLayoutImpl graphLayout,
-                                                   @NotNull TimestampGetter timestampGetter) {
+  @NotNull
+  public static SortIndexMap createBekMap(@NotNull LinearGraph permanentGraph,
+                                          @NotNull GraphLayoutImpl graphLayout,
+                                          @NotNull TimestampGetter timestampGetter) {
     BekBranchCreator bekBranchCreator = new BekBranchCreator(permanentGraph, graphLayout);
     Pair<List<BekBranch>, BekEdgeRestrictions> branches = bekBranchCreator.getResult();
 
@@ -24,6 +25,6 @@ public final class BekSorter {
     List<Integer> result = bekBranchMerger.getResult();
 
     LOG.assertTrue(result.size() == permanentGraph.nodesCount());
-    return new SortIndexMap(result);
+    return SortIndexMap.createFromSortedList(result);
   }
 }

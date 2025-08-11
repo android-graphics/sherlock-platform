@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.lang.stubs.impl;
 
 import com.intellij.lang.ASTNode;
@@ -24,8 +23,9 @@ public class MarkdownHeaderStubElementType extends MarkdownStubElementType<Markd
     super(debugName);
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement createElement(@NotNull ASTNode node) {
+  public PsiElement createElement(@NotNull ASTNode node) {
     return new MarkdownHeader(node);
   }
 
@@ -34,8 +34,9 @@ public class MarkdownHeaderStubElementType extends MarkdownStubElementType<Markd
     return new MarkdownHeader(stub, this);
   }
 
+  @NotNull
   @Override
-  public @NotNull MarkdownHeaderStubElement createStub(@NotNull MarkdownHeader psi, StubElement parentStub) {
+  public MarkdownHeaderStubElement createStub(@NotNull MarkdownHeader psi, StubElement parentStub) {
     return new MarkdownHeaderStubElement(parentStub, this, psi.getName(), psi.getAnchorText());
   }
 
@@ -50,8 +51,9 @@ public class MarkdownHeaderStubElementType extends MarkdownStubElementType<Markd
     dataStream.writeUTFFast(text);
   }
 
+  @NotNull
   @Override
-  public @NotNull MarkdownHeaderStubElement deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) {
+  public MarkdownHeaderStubElement deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) {
     String indexedName = null;
     String indexedAnchorReference = null;
     try {

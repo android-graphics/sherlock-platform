@@ -11,7 +11,6 @@ import com.intellij.openapi.keymap.KeymapGroup;
 import com.intellij.openapi.keymap.KeymapGroupFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.containers.ContainerUtil;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +26,8 @@ final class AntKeymapExtension implements KeymapExtension {
       ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
       final String actionIdPrefix = AntConfiguration.getActionIdPrefix(project);
       List<String> ids = actionManager.getActionIdList(actionIdPrefix);
-      for (final String id : ContainerUtil.sorted(ids)) {
+      ids.sort(null);
+      for (final String id : ids) {
         if (filtered != null && !filtered.value(actionManager.getActionOrStub(id))) {
           continue;
         }

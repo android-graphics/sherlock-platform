@@ -8,5 +8,3 @@
 fun some(): Any {
     FunctionReference::class
 }<caret>
-
-// IGNORE_K2

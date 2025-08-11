@@ -1,7 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.maven.model.impl;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -9,6 +8,7 @@ import org.jetbrains.jps.builders.BuildTargetRegistry;
 import org.jetbrains.jps.builders.TargetOutputIndex;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.JVMModuleBuildTarget;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
@@ -18,6 +18,7 @@ import org.jetbrains.jps.maven.model.JpsMavenModuleExtension;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,17 +26,18 @@ import java.util.stream.Collectors;
  * Class is used to provide implicit dependencies between modules. It is used in cases when one module uses other project modules as
  * annotation processors, which is possible using "annotationProcessorPaths" option of "maven-compiler-plugin"
  */
-@ApiStatus.Internal
 public final class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<BuildRootDescriptor> {
-  private final @NotNull MavenAnnotationProcessorTargetType myTargetType;
+  @NotNull
+  private final MavenAnnotationProcessorTargetType myTargetType;
 
   public MavenAnnotationProcessorTarget(@NotNull MavenAnnotationProcessorTargetType targetType, JpsModule module) {
     super(targetType, module);
     myTargetType = targetType;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPresentableName() {
+  public String getPresentableName() {
     return myTargetType.getTypeId() + ":" + myModule.getName();
   }
 
@@ -66,11 +68,18 @@ public final class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<B
                    .collect(Collectors.toList());
   }
 
+  @NotNull
   @Override
-  public @NotNull List<BuildRootDescriptor> computeRootDescriptors(@NotNull JpsModel model,
-                                                                   @NotNull ModuleExcludeIndex index,
-                                                                   @NotNull IgnoredFileIndex ignoredFileIndex,
-                                                                   @NotNull BuildDataPaths dataPaths) {
-    return List.of();
+  public List<BuildRootDescriptor> computeRootDescriptors(@NotNull JpsModel model,
+                                                          @NotNull ModuleExcludeIndex index,
+                                                          @NotNull IgnoredFileIndex ignoredFileIndex,
+                                                          @NotNull BuildDataPaths dataPaths) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public Collection<File> getOutputRoots(@NotNull CompileContext context) {
+    return Collections.emptyList();
   }
 }

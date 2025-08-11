@@ -2,7 +2,9 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.EditableModel;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -15,12 +17,11 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
   }
 
   @SuppressWarnings("UnusedParameters")
-  @Contract(mutates = "param1")
   public CollectionListModel(@NotNull List<T> items, boolean useListAsIs) {
     myItems = items;
   }
 
-  public CollectionListModel(@NotNull @Unmodifiable List<? extends T> items) {
+  public CollectionListModel(@NotNull List<? extends T> items) {
     myItems = new ArrayList<>(items);
   }
 

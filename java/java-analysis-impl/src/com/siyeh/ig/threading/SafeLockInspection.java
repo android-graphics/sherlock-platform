@@ -28,12 +28,14 @@ import org.jetbrains.annotations.NotNull;
 public final class SafeLockInspection extends BaseInspection { // todo extend ResourceInspection?
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "LockAcquiredButNotSafelyReleased";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     final PsiType type = expression.getType();
     assert type != null;
@@ -75,7 +77,7 @@ public final class SafeLockInspection extends BaseInspection { // todo extend Re
       else if (qualifierExpression instanceof PsiMethodCallExpression methodCallExpression) {
         final PsiReferenceExpression methodExpression1 =
           methodCallExpression.getMethodExpression();
-        final @NonNls String methodName =
+        @NonNls final String methodName =
           methodExpression1.getReferenceName();
         if ("readLock".equals(methodName)) {
           type = LockType.READ;
@@ -155,7 +157,7 @@ public final class SafeLockInspection extends BaseInspection { // todo extend Re
       PsiMethodCallExpression expression) {
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
-      final @NonNls String methodName =
+      @NonNls final String methodName =
         methodExpression.getReferenceName();
       if (!"lock".equals(methodName) &&
           !"lockInterruptibly".equals(methodName)) {
@@ -198,7 +200,7 @@ public final class SafeLockInspection extends BaseInspection { // todo extend Re
       super.visitMethodCallExpression(call);
       final PsiReferenceExpression methodExpression =
         call.getMethodExpression();
-      final @NonNls String methodName =
+      @NonNls final String methodName =
         methodExpression.getReferenceName();
       if (!"unlock".equals(methodName)) {
         return;
@@ -217,7 +219,7 @@ public final class SafeLockInspection extends BaseInspection { // todo extend Re
       else if (qualifier instanceof PsiMethodCallExpression methodCallExpression) {
         final PsiReferenceExpression methodExpression1 =
           methodCallExpression.getMethodExpression();
-        final @NonNls String methodName1 =
+        @NonNls final String methodName1 =
           methodExpression1.getReferenceName();
         if (type == LockType.READ && "readLock".equals(methodName1) ||
             type == LockType.WRITE &&

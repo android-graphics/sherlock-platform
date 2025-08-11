@@ -2,11 +2,10 @@
 package com.jetbrains.python.tools
 
 import com.jetbrains.python.PythonHelper
-import com.jetbrains.python.venvReader.VirtualEnvReader
+import com.jetbrains.python.sdk.PythonSdkUtil
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
-import kotlin.io.path.Path
 
 
 fun main() {
@@ -22,7 +21,7 @@ fun main() {
     }
     val sdkHome = python.absolutePath
 
-    val executable =  VirtualEnvReader.Instance.findPythonInPythonRoot(Path(sdkHome))?.toFile()
+    val executable = PythonSdkUtil.getPythonExecutable(sdkHome)?.let { File(it) }
 
     if (executable == null) {
       println("No python on $sdkHome")

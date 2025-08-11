@@ -4,12 +4,11 @@ package com.intellij.ide.browsers.actions
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.*
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 class OpenFileInDefaultBrowserAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val result = BaseOpenInBrowserAction.Handler.doUpdate(e) ?: return
@@ -27,7 +26,7 @@ class OpenFileInDefaultBrowserAction : DumbAwareAction() {
       presentation.icon = it.icon
     }
 
-    if (e.isFromContextMenu) {
+    if (ActionPlaces.isPopupPlace(e.place)) {
       presentation.isVisible = presentation.isEnabled
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.diff.DiffContext;
@@ -31,6 +31,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -53,7 +54,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,33 +61,35 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 
-@ApiStatus.Internal
-public final class AnnotateDiffViewerAction {
+public class AnnotateDiffViewerAction {
   private static final Logger LOG = Logger.getInstance(AnnotateDiffViewerAction.class);
   private static class Holder {
     private static final Key<boolean[]> ANNOTATIONS_SHOWN_KEY = Key.create("Diff.AnnotateAction.AnnotationShown");
 
-    private static final ViewerAnnotatorFactory<?>[] ANNOTATORS = new ViewerAnnotatorFactory[]{
+    private static final ViewerAnnotatorFactory[] ANNOTATORS = new ViewerAnnotatorFactory[]{
       new TwosideAnnotatorFactory(), new OnesideAnnotatorFactory(), new UnifiedAnnotatorFactory(),
       new ThreesideAnnotatorFactory(), new TextMergeAnnotatorFactory()
     };
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
-  private static @Nullable ViewerAnnotator getAnnotator(@NotNull DiffViewerBase viewer, @Nullable Editor editor) {
+  @Nullable
+  @SuppressWarnings("unchecked")
+  private static ViewerAnnotator getAnnotator(@NotNull DiffViewerBase viewer, @NotNull Editor editor) {
     for (ViewerAnnotatorFactory annotator : Holder.ANNOTATORS) {
       if (annotator.getViewerClass().isInstance(viewer)) return annotator.createAnnotator(viewer, editor);
     }
     return null;
   }
 
-  private static @Nullable EventData collectEventData(@NotNull AnActionEvent e) {
+  @Nullable
+  private static EventData collectEventData(@NotNull AnActionEvent e) {
     DiffViewerBase viewer = getViewer(e);
     if (viewer == null) return null;
     if (viewer.getProject() == null) return null;
     if (viewer.isDisposed()) return null;
 
     Editor editor = e.getData(CommonDataKeys.EDITOR);
+    if (editor == null) return null;
 
     ViewerAnnotator annotator = getAnnotator(viewer, editor);
     if (annotator == null) return null;
@@ -95,7 +97,8 @@ public final class AnnotateDiffViewerAction {
     return new EventData(viewer, annotator);
   }
 
-  private static @Nullable DiffViewerBase getViewer(@NotNull AnActionEvent e) {
+  @Nullable
+  private static DiffViewerBase getViewer(@NotNull AnActionEvent e) {
     DiffViewerBase diffViewer = ObjectUtils.tryCast(e.getData(DiffDataKeys.DIFF_VIEWER), DiffViewerBase.class);
     if (diffViewer != null) return diffViewer;
 
@@ -136,7 +139,7 @@ public final class AnnotateDiffViewerAction {
     }
   }
 
-  private static void doAnnotate(final @NotNull ViewerAnnotator annotator) {
+  private static void doAnnotate(@NotNull final ViewerAnnotator annotator) {
     final DiffViewerBase viewer = annotator.getViewer();
     final Project project = viewer.getProject();
     if (project == null) return;
@@ -172,14 +175,15 @@ public final class AnnotateDiffViewerAction {
           if (viewer.isDisposed()) return;
 
           annotator.showAnnotation(loader.getResult());
-        });
+        }, ProgressManager.getGlobalProgressIndicator().getModalityState());
       }
     });
   }
 
-  private static @Nullable FileAnnotationLoader createThreesideAnnotationsLoader(@NotNull Project project,
-                                                                                 @NotNull DiffRequest request,
-                                                                                 @NotNull ThreeSide side) {
+  @Nullable
+  private static FileAnnotationLoader createThreesideAnnotationsLoader(@NotNull Project project,
+                                                                       @NotNull DiffRequest request,
+                                                                       @NotNull ThreeSide side) {
     if (request instanceof ContentDiffRequest requestEx) {
       if (requestEx.getContents().size() == 3) {
         DiffContent content = side.select(requestEx.getContents());
@@ -191,9 +195,10 @@ public final class AnnotateDiffViewerAction {
     return null;
   }
 
-  private static @Nullable FileAnnotationLoader createTwosideAnnotationsLoader(@NotNull Project project,
-                                                                               @NotNull DiffRequest request,
-                                                                               @NotNull Side side) {
+  @Nullable
+  private static FileAnnotationLoader createTwosideAnnotationsLoader(@NotNull Project project,
+                                                                     @NotNull DiffRequest request,
+                                                                     @NotNull Side side) {
     Change change = request.getUserData(ChangeDiffRequestProducer.CHANGE_KEY);
     if (change != null) {
       ContentRevision revision = side.select(change.getBeforeRevision(), change.getAfterRevision());
@@ -222,7 +227,8 @@ public final class AnnotateDiffViewerAction {
     return null;
   }
 
-  private static @Nullable FileAnnotationLoader createAnnotationsLoader(@NotNull Project project, @NotNull DiffContent content) {
+  @Nullable
+  private static FileAnnotationLoader createAnnotationsLoader(@NotNull Project project, @NotNull DiffContent content) {
     if (content instanceof FileContent) {
       VirtualFile file = ((FileContent)content).getFile();
       AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
@@ -240,9 +246,10 @@ public final class AnnotateDiffViewerAction {
     return null;
   }
 
-  private static @Nullable FileAnnotationLoader doCreateAnnotationsLoader(@NotNull Project project,
-                                                                          @Nullable AbstractVcs vcs,
-                                                                          final @Nullable VirtualFile file) {
+  @Nullable
+  private static FileAnnotationLoader doCreateAnnotationsLoader(@NotNull Project project,
+                                                                @Nullable AbstractVcs vcs,
+                                                                @Nullable final VirtualFile file) {
     if (vcs == null || file == null) return null;
     final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
     if (annotationProvider == null) return null;
@@ -260,9 +267,10 @@ public final class AnnotateDiffViewerAction {
     };
   }
 
-  private static @Nullable FileAnnotationLoader doCreateAnnotationsLoader(@Nullable AbstractVcs vcs,
-                                                                          final @Nullable FilePath path,
-                                                                          final @Nullable VcsRevisionNumber revisionNumber) {
+  @Nullable
+  private static FileAnnotationLoader doCreateAnnotationsLoader(@Nullable AbstractVcs vcs,
+                                                                @Nullable final FilePath path,
+                                                                @Nullable final VcsRevisionNumber revisionNumber) {
     if (vcs == null || path == null || revisionNumber == null) return null;
     if (revisionNumber instanceof TextRevisionNumber ||
         revisionNumber == VcsRevisionNumber.NULL) {
@@ -280,8 +288,7 @@ public final class AnnotateDiffViewerAction {
     };
   }
 
-  @ApiStatus.Internal
-  public static final class MyDiffExtension extends DiffExtension {
+  public static class MyDiffExtension extends DiffExtension {
     @Override
     public void onViewerCreated(@NotNull DiffViewer diffViewer, @NotNull DiffContext context, @NotNull DiffRequest request) {
       if (diffViewer instanceof DiffViewerBase viewer) {
@@ -290,9 +297,8 @@ public final class AnnotateDiffViewerAction {
     }
   }
 
-  @SuppressWarnings("rawtypes")
   private static class MyDiffViewerListener extends DiffViewerListener {
-    private final @NotNull DiffViewerBase myViewer;
+    @NotNull private final DiffViewerBase myViewer;
 
     MyDiffViewerListener(@NotNull DiffViewerBase viewer) {
       myViewer = viewer;
@@ -343,16 +349,18 @@ public final class AnnotateDiffViewerAction {
 
   private static class TwosideAnnotatorFactory extends TwosideViewerAnnotatorFactory<TwosideTextDiffViewer> {
     @Override
-    public @NotNull Class<TwosideTextDiffViewer> getViewerClass() {
+    @NotNull
+    public Class<TwosideTextDiffViewer> getViewerClass() {
       return TwosideTextDiffViewer.class;
     }
 
     @Override
-    public @Nullable Side getCurrentSide(@NotNull TwosideTextDiffViewer viewer, @Nullable Editor editor) {
-      if (viewer.getEditor(Side.LEFT) == editor) return Side.LEFT;
-      if (viewer.getEditor(Side.RIGHT) == editor) return Side.RIGHT;
-      if (editor != null) return null; // disable with some unknown editor in context
-      return viewer.getCurrentSide(); // enable in SetEditorSettingsActionGroup on the diff toolbar
+    @Nullable
+    public Side getCurrentSide(@NotNull TwosideTextDiffViewer viewer, @NotNull Editor editor) {
+      Side side = null; // we can't just use getCurrentSide() here, popup can be called on unfocused editor
+      if (viewer.getEditor(Side.LEFT) == editor) side = Side.LEFT;
+      if (viewer.getEditor(Side.RIGHT) == editor) side = Side.RIGHT;
+      return side;
     }
 
     @Override
@@ -374,13 +382,15 @@ public final class AnnotateDiffViewerAction {
 
   private static class OnesideAnnotatorFactory extends TwosideViewerAnnotatorFactory<OnesideTextDiffViewer> {
     @Override
-    public @NotNull Class<OnesideTextDiffViewer> getViewerClass() {
+    @NotNull
+    public Class<OnesideTextDiffViewer> getViewerClass() {
       return OnesideTextDiffViewer.class;
     }
 
     @Override
-    public @Nullable Side getCurrentSide(@NotNull OnesideTextDiffViewer viewer, @Nullable Editor editor) {
-      if (editor != null && viewer.getEditor() != editor) return null;
+    @Nullable
+    public Side getCurrentSide(@NotNull OnesideTextDiffViewer viewer, @NotNull Editor editor) {
+      if (viewer.getEditor() != editor) return null;
       return viewer.getSide();
     }
 
@@ -405,13 +415,15 @@ public final class AnnotateDiffViewerAction {
 
   private static class UnifiedAnnotatorFactory extends TwosideViewerAnnotatorFactory<UnifiedDiffViewer> {
     @Override
-    public @NotNull Class<UnifiedDiffViewer> getViewerClass() {
+    @NotNull
+    public Class<UnifiedDiffViewer> getViewerClass() {
       return UnifiedDiffViewer.class;
     }
 
     @Override
-    public @Nullable Side getCurrentSide(@NotNull UnifiedDiffViewer viewer, @Nullable Editor editor) {
-      if (editor != null && viewer.getEditor() != editor) return null;
+    @Nullable
+    public Side getCurrentSide(@NotNull UnifiedDiffViewer viewer, @NotNull Editor editor) {
+      if (viewer.getEditor() != editor) return null;
       return viewer.getMasterSide();
     }
 
@@ -436,9 +448,9 @@ public final class AnnotateDiffViewerAction {
   }
 
   private static class UnifiedUpToDateLineNumberProvider implements UpToDateLineNumberProvider {
-    private final @NotNull UnifiedDiffViewer myViewer;
-    private final @NotNull Side mySide;
-    private final @NotNull UpToDateLineNumberProvider myLocalChangesProvider;
+    @NotNull private final UnifiedDiffViewer myViewer;
+    @NotNull private final Side mySide;
+    @NotNull private final UpToDateLineNumberProvider myLocalChangesProvider;
 
     UnifiedUpToDateLineNumberProvider(@NotNull UnifiedDiffViewer viewer, @NotNull Side side) {
       myViewer = viewer;
@@ -483,17 +495,19 @@ public final class AnnotateDiffViewerAction {
 
   private static class ThreesideAnnotatorFactory extends ThreesideViewerAnnotatorFactory<ThreesideTextDiffViewerEx> {
     @Override
-    public @NotNull Class<? extends ThreesideTextDiffViewerEx> getViewerClass() {
+    @NotNull
+    public Class<? extends ThreesideTextDiffViewerEx> getViewerClass() {
       return SimpleThreesideDiffViewer.class;
     }
 
     @Override
-    public @Nullable ThreeSide getCurrentSide(@NotNull ThreesideTextDiffViewerEx viewer, @Nullable Editor editor) {
-      if (viewer.getEditor(ThreeSide.LEFT) == editor) return ThreeSide.LEFT;
-      if (viewer.getEditor(ThreeSide.BASE) == editor) return ThreeSide.BASE;
-      if (viewer.getEditor(ThreeSide.RIGHT) == editor) return ThreeSide.RIGHT;
-      if (editor != null) return null; // disable with some unknown editor in context
-      return viewer.getCurrentSide(); // enable in SetEditorSettingsActionGroup on the diff toolbar
+    @Nullable
+    public ThreeSide getCurrentSide(@NotNull ThreesideTextDiffViewerEx viewer, @NotNull Editor editor) {
+      ThreeSide side = null; // we can't just use getCurrentSide() here, popup can be called on unfocused editor
+      if (viewer.getEditor(ThreeSide.LEFT) == editor) side = ThreeSide.LEFT;
+      if (viewer.getEditor(ThreeSide.BASE) == editor) side = ThreeSide.BASE;
+      if (viewer.getEditor(ThreeSide.RIGHT) == editor) side = ThreeSide.RIGHT;
+      return side;
     }
 
     @Override
@@ -515,19 +529,22 @@ public final class AnnotateDiffViewerAction {
 
   private static class TextMergeAnnotatorFactory extends ThreesideAnnotatorFactory {
     @Override
-    public @NotNull Class<? extends ThreesideTextDiffViewerEx> getViewerClass() {
+    @NotNull
+    public Class<? extends ThreesideTextDiffViewerEx> getViewerClass() {
       return MergeThreesideViewer.class;
     }
 
+    @Nullable
     @Override
-    public @Nullable ViewerAnnotator createAnnotator(@NotNull ThreesideTextDiffViewerEx viewer, @NotNull ThreeSide side) {
+    public ViewerAnnotator createAnnotator(@NotNull ThreesideTextDiffViewerEx viewer, @NotNull ThreeSide side) {
       if (side == ThreeSide.BASE) return null; // middle content is local Document, not the BASE one
       return super.createAnnotator(viewer, side);
     }
   }
 
-  private abstract static class TwosideViewerAnnotatorFactory<T extends DiffViewerBase> extends ViewerAnnotatorFactory<T> {
-    public abstract @Nullable Side getCurrentSide(@NotNull T viewer, @Nullable Editor editor);
+  private static abstract class TwosideViewerAnnotatorFactory<T extends DiffViewerBase> extends ViewerAnnotatorFactory<T> {
+    @Nullable
+    public abstract Side getCurrentSide(@NotNull T viewer, @NotNull Editor editor);
 
     public abstract boolean isAnnotationShown(@NotNull T viewer, @NotNull Side side);
 
@@ -536,7 +553,8 @@ public final class AnnotateDiffViewerAction {
     public abstract void hideAnnotation(@NotNull T viewer, @NotNull Side side);
 
     @Override
-    public @Nullable ViewerAnnotator createAnnotator(@NotNull T viewer, @Nullable Editor editor) {
+    @Nullable
+    public ViewerAnnotator createAnnotator(@NotNull T viewer, @NotNull Editor editor) {
       Side side = getCurrentSide(viewer, editor);
       if (side == null) return null;
       return createAnnotator(viewer, side);
@@ -565,14 +583,16 @@ public final class AnnotateDiffViewerAction {
       viewer.getRequest().putUserData(Holder.ANNOTATIONS_SHOWN_KEY, annotationsShown);
     }
 
-    public @Nullable ViewerAnnotator createAnnotator(@NotNull T viewer, @NotNull Side side) {
+    @Nullable
+    public ViewerAnnotator createAnnotator(@NotNull T viewer, @NotNull Side side) {
       TwosideViewerAnnotatorFactory<T> factory = this;
       Project project = viewer.getProject();
       assert project != null;
 
       return new ViewerAnnotator() {
+        @NotNull
         @Override
-        public @NotNull T getViewer() {
+        public T getViewer() {
           return viewer;
         }
 
@@ -591,21 +611,24 @@ public final class AnnotateDiffViewerAction {
           factory.hideAnnotation(viewer, side);
         }
 
+        @Nullable
         @Override
-        public @Nullable FileAnnotationLoader createAnnotationsLoader() {
+        public FileAnnotationLoader createAnnotationsLoader() {
           return createTwosideAnnotationsLoader(project, viewer.getRequest(), side);
         }
 
         @Override
-        public @NotNull BackgroundableActionLock getBackgroundableLock() {
+        @NotNull
+        public BackgroundableActionLock getBackgroundableLock() {
           return BackgroundableActionLock.getLock(viewer.getProject(), VcsBackgroundableActions.ANNOTATE, viewer, side);
         }
       };
     }
   }
 
-  private abstract static class ThreesideViewerAnnotatorFactory<T extends DiffViewerBase> extends ViewerAnnotatorFactory<T> {
-    public abstract @Nullable ThreeSide getCurrentSide(@NotNull T viewer, @Nullable Editor editor);
+  private static abstract class ThreesideViewerAnnotatorFactory<T extends DiffViewerBase> extends ViewerAnnotatorFactory<T> {
+    @Nullable
+    public abstract ThreeSide getCurrentSide(@NotNull T viewer, @NotNull Editor editor);
 
     public abstract boolean isAnnotationShown(@NotNull T viewer, @NotNull ThreeSide side);
 
@@ -614,7 +637,8 @@ public final class AnnotateDiffViewerAction {
     public abstract void hideAnnotation(@NotNull T viewer, @NotNull ThreeSide side);
 
     @Override
-    public @Nullable ViewerAnnotator createAnnotator(@NotNull T viewer, @Nullable Editor editor) {
+    @Nullable
+    public ViewerAnnotator createAnnotator(@NotNull T viewer, @NotNull Editor editor) {
       ThreeSide side = getCurrentSide(viewer, editor);
       if (side == null) return null;
       return createAnnotator(viewer, side);
@@ -648,7 +672,8 @@ public final class AnnotateDiffViewerAction {
       viewer.getRequest().putUserData(Holder.ANNOTATIONS_SHOWN_KEY, annotationsShown);
     }
 
-    public @Nullable ViewerAnnotator createAnnotator(@NotNull T viewer, @NotNull ThreeSide side) {
+    @Nullable
+    public ViewerAnnotator createAnnotator(@NotNull T viewer, @NotNull ThreeSide side) {
       ThreesideViewerAnnotatorFactory<T> factory = this;
       Project project = viewer.getProject();
       assert project != null;
@@ -656,8 +681,9 @@ public final class AnnotateDiffViewerAction {
       BackgroundableActionLock actionLock = BackgroundableActionLock.getLock(project, VcsBackgroundableActions.ANNOTATE, viewer, side);
 
       return new ViewerAnnotator() {
+        @NotNull
         @Override
-        public @NotNull T getViewer() {
+        public T getViewer() {
           return viewer;
         }
 
@@ -676,31 +702,36 @@ public final class AnnotateDiffViewerAction {
           factory.hideAnnotation(viewer, side);
         }
 
+        @Nullable
         @Override
-        public @Nullable FileAnnotationLoader createAnnotationsLoader() {
+        public FileAnnotationLoader createAnnotationsLoader() {
           return createThreesideAnnotationsLoader(project, viewer.getRequest(), side);
         }
 
         @Override
-        public @NotNull BackgroundableActionLock getBackgroundableLock() {
+        @NotNull
+        public BackgroundableActionLock getBackgroundableLock() {
           return actionLock;
         }
       };
     }
   }
 
-  private abstract static class ViewerAnnotatorFactory<T extends DiffViewerBase> {
-    public abstract @NotNull Class<? extends T> getViewerClass();
+  private static abstract class ViewerAnnotatorFactory<T extends DiffViewerBase> {
+    @NotNull
+    public abstract Class<? extends T> getViewerClass();
 
-    public abstract @Nullable ViewerAnnotator createAnnotator(@NotNull T viewer, @Nullable Editor editor);
+    @Nullable
+    public abstract ViewerAnnotator createAnnotator(@NotNull T viewer, @NotNull Editor editor);
 
     public abstract void showRememberedAnnotations(@NotNull T viewer);
 
     public abstract void rememberShownAnnotations(@NotNull T viewer);
   }
 
-  private abstract static class ViewerAnnotator {
-    public abstract @NotNull DiffViewerBase getViewer();
+  private static abstract class ViewerAnnotator {
+    @NotNull
+    public abstract DiffViewerBase getViewer();
 
     public abstract boolean isAnnotationShown();
 
@@ -708,26 +739,30 @@ public final class AnnotateDiffViewerAction {
 
     public abstract void hideAnnotation();
 
-    public abstract @Nullable FileAnnotationLoader createAnnotationsLoader();
+    @Nullable
+    public abstract FileAnnotationLoader createAnnotationsLoader();
 
-    public abstract @NotNull BackgroundableActionLock getBackgroundableLock();
+    @NotNull
+    public abstract BackgroundableActionLock getBackgroundableLock();
   }
 
   private abstract static class FileAnnotationLoader {
-    private final @NotNull AbstractVcs myVcs;
+    @NotNull private final AbstractVcs myVcs;
 
-    private @Nullable VcsException myException;
-    private @Nullable FileAnnotation myResult;
+    @Nullable private VcsException myException;
+    @Nullable private FileAnnotation myResult;
 
     FileAnnotationLoader(@NotNull AbstractVcs vcs) {
       myVcs = vcs;
     }
 
-    public @Nullable VcsException getException() {
+    @Nullable
+    public VcsException getException() {
       return myException;
     }
 
-    public @Nullable AnnotationData getResult() {
+    @Nullable
+    public AnnotationData getResult() {
       return myResult != null ? new AnnotationData(myVcs, myResult) : null;
     }
 
@@ -744,8 +779,8 @@ public final class AnnotateDiffViewerAction {
   }
 
   private static class AnnotationData {
-    public final @NotNull AbstractVcs vcs;
-    public final @NotNull FileAnnotation annotation;
+    @NotNull public final AbstractVcs vcs;
+    @NotNull public final FileAnnotation annotation;
 
     AnnotationData(@NotNull AbstractVcs vcs, @NotNull FileAnnotation annotation) {
       this.vcs = vcs;
@@ -754,8 +789,8 @@ public final class AnnotateDiffViewerAction {
   }
 
   private static class EventData {
-    public final @NotNull DiffViewerBase viewer;
-    public final @NotNull ViewerAnnotator annotator;
+    @NotNull public final DiffViewerBase viewer;
+    @NotNull public final ViewerAnnotator annotator;
 
     EventData(@NotNull DiffViewerBase viewer, @NotNull ViewerAnnotator annotator) {
       this.viewer = viewer;
@@ -763,8 +798,7 @@ public final class AnnotateDiffViewerAction {
     }
   }
 
-  @ApiStatus.Internal
-  public static final class Provider implements AnnotateToggleAction.Provider {
+  public static class Provider implements AnnotateToggleAction.Provider {
     @Override
     public boolean isEnabled(AnActionEvent e) {
       return AnnotateDiffViewerAction.isEnabled(e);

@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.uncheckedWarnings;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableArrayTypeFix;
@@ -15,7 +16,6 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
@@ -40,8 +40,8 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspectionTool {
-  public static final @NonNls String SHORT_NAME = "UNCHECKED_WARNING";
-  private static final @NonNls String ID = "unchecked";
+  @NonNls public static final String SHORT_NAME = "UNCHECKED_WARNING";
+  @NonNls private static final String ID = "unchecked";
   private static final Logger LOG = Logger.getInstance(UncheckedWarningLocalInspection.class);
   public boolean IGNORE_UNCHECKED_ASSIGNMENT;
   public boolean IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION;
@@ -78,18 +78,23 @@ public final class UncheckedWarningLocalInspection extends AbstractBaseJavaLocal
   }
 
   @Override
-  public @NotNull String getGroupDisplayName() {
+  @NotNull
+  public String getGroupDisplayName() {
     return "";
   }
 
   @Override
-  public @NotNull @NonNls String getShortName() {
+  @NotNull
+  @NonNls
+  public String getShortName() {
     return SHORT_NAME;
   }
 
   @Override
   @Pattern(VALID_ID_PATTERN)
-  public @NotNull @NonNls String getID() {
+  @NotNull
+  @NonNls
+  public String getID() {
     return ID;
   }
 
@@ -109,10 +114,11 @@ public final class UncheckedWarningLocalInspection extends AbstractBaseJavaLocal
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
-                                                 boolean isOnTheFly,
-                                                 @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
+                                        boolean isOnTheFly,
+                                        @NotNull LocalInspectionToolSession session) {
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(session.getFile());
     if (!JavaFeature.GENERICS.isSufficient(languageLevel)) return super.buildVisitor(holder, isOnTheFly, session);
 
@@ -159,7 +165,7 @@ public final class UncheckedWarningLocalInspection extends AbstractBaseJavaLocal
 
   private abstract class UncheckedWarningsVisitor extends JavaElementVisitor {
     private final boolean myOnTheFly;
-    private final @NotNull LanguageLevel myLanguageLevel;
+    @NotNull private final LanguageLevel myLanguageLevel;
 
     UncheckedWarningsVisitor(boolean onTheFly, @NotNull LanguageLevel level) {
       myOnTheFly = onTheFly;
@@ -364,7 +370,7 @@ public final class UncheckedWarningLocalInspection extends AbstractBaseJavaLocal
                                               PsiExpression expression, PsiType parameterType,
                                               PsiType itemType,
                                               @NotNull Supplier<? extends @NotNull LocalQuickFix @NotNull []> fixesSupplier) {
-      if (JavaErrorCollector.findSingleError(expression) != null) return;
+      if (GenericsHighlightUtil.checkGenericArrayCreation(expression, expression.getType()) != null) return;
       if (parameterType == null || itemType == null) return;
       if (!TypeConversionUtil.isAssignable(parameterType, itemType)) return;
       if (JavaGenericsUtil.isRawToGeneric(parameterType, itemType)) {
@@ -443,7 +449,8 @@ public final class UncheckedWarningLocalInspection extends AbstractBaseJavaLocal
       }
     }
 
-    private static @Nullable @InspectionMessage String getUncheckedCallDescription(PsiElement place, JavaResolveResult resolveResult) {
+    @Nullable
+    private static @InspectionMessage String getUncheckedCallDescription(PsiElement place, JavaResolveResult resolveResult) {
       final PsiElement element = resolveResult.getElement();
       if (!(element instanceof PsiMethod method)) return null;
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();

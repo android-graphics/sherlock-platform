@@ -7,7 +7,7 @@ class Test<T > {
 
   public void addListener(EventListener<? super T> listener) {
     EventListener<? extends Event> localListener = listener;
-    EventListener<? super Event>   localListener1 = <error descr="Incompatible types. Found: 'Test.EventListener<capture<? super T>>', required: 'Test.EventListener<? super Test.Event>'">listener</error>;
+    <error descr="Incompatible types. Found: 'Test.EventListener<capture<? super T>>', required: 'Test.EventListener<? super Test.Event>'">EventListener<? super Event>   localListener1 = listener;</error>
   }
 }
 

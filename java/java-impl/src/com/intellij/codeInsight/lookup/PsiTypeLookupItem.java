@@ -4,7 +4,6 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
-import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -23,7 +22,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -50,8 +48,6 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
   private final @NotNull PsiSubstitutor mySubstitutor;
   private boolean myAddArrayInitializer;
   private String myLocationString = "";
-  private final @Nullable Icon myIcon;
-  private final boolean myStrikeout;
   private final String myForcedPresentableName;
 
   private PsiTypeLookupItem(Object o, @NotNull @NonNls String lookupString, boolean diamond, int bracketsCount, InsertHandler<PsiTypeLookupItem> fixer,
@@ -62,18 +58,6 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
     myImportFixer = fixer;
     mySubstitutor = substitutor;
     myForcedPresentableName = o instanceof PsiClass && !lookupString.equals(((PsiClass)o).getName()) ? lookupString : null;
-    myIcon = DefaultLookupItemRenderer.getRawIcon(this);
-    myStrikeout = JavaElementLookupRenderer.isToStrikeout(this);
-  }
-
-  @Override
-  public boolean isToStrikeout() {
-    return myStrikeout;
-  }
-
-  @Override
-  public @Nullable Icon getIcon() {
-    return myIcon;
   }
 
   @Override
@@ -128,10 +112,10 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
     }
 
     PsiElement position = context.getFile().findElementAt(context.getStartOffset());
-    boolean insideTypeElement = false;
+    boolean insideVarDeclaration = false;
     if (position != null) {
-      insideTypeElement = position.getParent() instanceof PsiTypeElement ||
-                          position.getParent().getParent() instanceof PsiTypeElement;
+      insideVarDeclaration = position.getParent() instanceof PsiTypeElement typeElement &&
+                             typeElement.getParent() instanceof PsiVariable;
       int genericsStart = context.getTailOffset();
       context.getDocument().insertString(genericsStart, JavaCompletionUtil.escapeXmlIfNeeded(context, calcGenerics(position, context)));
       JavaCompletionUtil.shortenReference(context.getFile(), genericsStart - 1);
@@ -146,7 +130,7 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
         targetOffset += braces.length() + 1;
       } else {
         context.getDocument().insertString(targetOffset, braces);
-        targetOffset += insideTypeElement ? braces.length() : 1;
+        targetOffset += insideVarDeclaration ? braces.length() : 1;
         if (context.getCompletionChar() == '[') {
           context.setAddCompletionChar(false);
         }

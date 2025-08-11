@@ -1,3 +1,0 @@
-// My: to be implemented
-// DISABLE_ERRORS
-expect annotation class <caret>My(val x: Int, val y: Double) 

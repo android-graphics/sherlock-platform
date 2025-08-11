@@ -14,11 +14,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.sh.ShLanguage;
 import com.intellij.util.DocumentUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
-public abstract class ShBaseGenerateAction extends CodeInsightAction implements CodeInsightActionHandler {
+abstract class ShBaseGenerateAction extends CodeInsightAction implements CodeInsightActionHandler {
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return file.getLanguage().is(ShLanguage.INSTANCE);

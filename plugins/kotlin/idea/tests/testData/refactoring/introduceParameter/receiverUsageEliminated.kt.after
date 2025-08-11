@@ -1,3 +1,0 @@
-// WITH_DEFAULT_VALUE: false
-fun bar(strings: List<String>) = strings.map { it.toInt() }
-fun String.foo(): List<String> = TODO()

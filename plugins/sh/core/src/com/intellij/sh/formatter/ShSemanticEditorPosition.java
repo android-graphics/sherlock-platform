@@ -49,7 +49,8 @@ final class ShSemanticEditorPosition {
     return !myIterator.atEnd() ? myIterator.getStart() : -1;
   }
 
-  static @NotNull ShSemanticEditorPosition createEditorPosition(@NotNull Editor editor, int offset) {
+  @NotNull
+  static ShSemanticEditorPosition createEditorPosition(@NotNull Editor editor, int offset) {
     return new ShSemanticEditorPosition(editor, offset);
   }
 }

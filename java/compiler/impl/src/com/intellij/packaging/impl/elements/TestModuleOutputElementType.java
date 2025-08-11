@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.icons.AllIcons;
@@ -20,8 +20,9 @@ public final class TestModuleOutputElementType extends ModuleOutputElementTypeBa
     super("module-test-output", JavaCompilerBundle.messagePointer("element.type.name.module.test.output"));
   }
 
+  @NotNull
   @Override
-  public @NotNull TestModuleOutputPackagingElement createEmpty(@NotNull Project project) {
+  public TestModuleOutputPackagingElement createEmpty(@NotNull Project project) {
     return new TestModuleOutputPackagingElement(project);
   }
 
@@ -40,8 +41,9 @@ public final class TestModuleOutputElementType extends ModuleOutputElementTypeBa
     return AllIcons.Nodes.TestSourceFolder;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getElementText(@NotNull String moduleName) {
+  public String getElementText(@NotNull String moduleName) {
     return JavaCompilerBundle.message("node.text.0.test.compile.output", moduleName);
   }
 

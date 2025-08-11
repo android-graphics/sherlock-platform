@@ -85,7 +85,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
   }
 
   private @Nullable PrintElement findPrintElement(int row, @NotNull Point pointInCell) {
-    Collection<@NotNull PrintElement> printElements = myTable.getModel().getPrintElements(row);
+    Collection<? extends PrintElement> printElements = myTable.getVisibleGraph().getRowInfo(row).getPrintElements();
     return myGraphCellPainter.getElementUnderCursor(ScaleContext.create(myTable), printElements, pointInCell.x, pointInCell.y);
   }
 
@@ -125,7 +125,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
     if (answer.getCommitToJump() != null) {
       Integer row = myTable.getModel().getVisiblePack().getVisibleGraph().getVisibleRowIndex(answer.getCommitToJump());
       if (row != null && row >= 0 && answer.doJump()) {
-        myTable.jumpToGraphRow(row, true);
+        myTable.jumpToRow(row, true);
       }
       else if (e != null) {
         VcsLogUiUtil.showTooltip(myTable, new Point(e.getX() + 5, e.getY()), Balloon.Position.atRight,

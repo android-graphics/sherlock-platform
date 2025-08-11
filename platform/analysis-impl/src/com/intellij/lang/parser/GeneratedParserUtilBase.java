@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.parser;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -205,7 +205,11 @@ public class GeneratedParserUtilBase {
   @Contract(mutates = "param1")
   public static boolean consumeToken(PsiBuilder builder, IElementType token) {
     addVariantSmart(builder, token, true);
-    return consumeTokenFast(builder, token);
+    if (nextTokenIsFast(builder, token)) {
+      builder.advanceLexer();
+      return true;
+    }
+    return false;
   }
 
   public static boolean consumeTokenFast(PsiBuilder builder, IElementType token) {
@@ -893,8 +897,8 @@ public class GeneratedParserUtilBase {
     }
 
     @Override
-    public @NotNull List<? extends Production> getProductions() {
-      return myDelegate.getProductions();
+    public @NotNull List<PsiBuilderImpl.ProductionMarker> getProductions() {
+      return ((PsiBuilderImpl)myDelegate).getProductions();
     }
   }
 
@@ -968,7 +972,7 @@ public class GeneratedParserUtilBase {
       Arrays.sort(strings);
       count = 0;
       for (String s : strings) {
-        if (s.isEmpty()) continue;
+        if (s.length() == 0) continue;
         if (count++ > 0) {
           if (count > MAX_VARIANTS_TO_DISPLAY) {
             sb.append(" ").append(AnalysisBundle.message("parsing.error.and.ellipsis"));

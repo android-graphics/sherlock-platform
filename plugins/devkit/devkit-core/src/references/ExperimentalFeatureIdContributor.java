@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -54,8 +54,9 @@ final class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
       return "com.intellij.experimentalFeature";
     }
 
+    @NotNull
     @Override
-    public @NotNull String getUnresolvedMessagePattern() {
+    public String getUnresolvedMessagePattern() {
       return DevKitBundle.message("code.convert.experimental.feature.id.cannot.resolve", getValue());
     }
 
@@ -85,7 +86,8 @@ final class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
       return variants.toArray(LookupElement.EMPTY_ARRAY);
     }
 
-    private static @Nullable String getDescription(Extension extension) {
+    @Nullable
+    private static String getDescription(Extension extension) {
       final DomFixedChildDescription description = extension.getGenericInfo().getFixedChildDescription("description");
       if (description == null) return null;
       final DomElement element = ContainerUtil.getFirstItem(description.getValues(extension));

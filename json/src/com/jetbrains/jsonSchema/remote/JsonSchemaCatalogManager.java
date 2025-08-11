@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.remote;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Disposer;
@@ -32,11 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
-import java.util.regex.PatternSyntaxException;
 
 public final class JsonSchemaCatalogManager {
-  private static final Logger LOG = Logger.getInstance(JsonSchemaCatalogManager.class);
-
   static final String DEFAULT_CATALOG = "http://schemastore.org/api/json/catalog.json";
   static final String DEFAULT_CATALOG_HTTPS = "https://schemastore.org/api/json/catalog.json";
   private static final Set<String> SCHEMA_URL_PREFIXES_WITH_TOO_MANY_VARIANTS = Set.of(
@@ -185,21 +181,13 @@ public final class JsonSchemaCatalogManager {
       path = Paths.get(filePath);
     }
     catch (InvalidPathException e) {
-      LOG.debug("Unable to process invalid path '" + filePath + "'", e);
       return null;
     }
-
     for (FileMatcher matcher : matchers) {
-      try {
-        if (matcher.matches(path)) {
-          return matcher.myEntry.getUrl();
-        }
-      }
-      catch (PatternSyntaxException pse) {
-        LOG.warn("Unable to process matches for path '" + path + "' with matcher URL '" + matcher.myEntry.getUrl() + "'", pse);
+      if (matcher.matches(path)) {
+        return matcher.myEntry.getUrl();
       }
     }
-
     return null;
   }
 
@@ -239,7 +227,7 @@ public final class JsonSchemaCatalogManager {
       if (refinedFileMasks.size() == 1) {
         return FileSystems.getDefault().getPathMatcher("glob:" + ContainerUtil.getFirstItem(refinedFileMasks));
       }
-      if (!refinedFileMasks.isEmpty()) {
+      if (refinedFileMasks.size() > 0) {
         return FileSystems.getDefault().getPathMatcher("glob:{" + StringUtil.join(refinedFileMasks, ",") + "}");
       }
       return path -> false;

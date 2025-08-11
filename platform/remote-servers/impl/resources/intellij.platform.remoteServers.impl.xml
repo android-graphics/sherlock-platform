@@ -31,8 +31,7 @@
     <applicationService serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtensionsManager"/>
     <applicationConfigurable groupId="build"
                              id="RemoteServers"
-                             provider="com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurableProvider"
-                             bundle="messages.CloudBundle" key="configurable.display.name.clouds"/>
+                             provider="com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurableProvider"/>
     <search.optionContributor implementation="com.intellij.remoteServer.impl.configuration.RemoteServerSearchableOptionContributor"/>
     <programRunner implementation="com.intellij.remoteServer.impl.runtime.DeployToServerRunner" id="DeployToServer"/>
     <projectService serviceInterface="com.intellij.remoteServer.runtime.ui.RemoteServersView"
@@ -42,6 +41,7 @@
     <remoteServer.deploymentSource.type
       implementation="com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceType"/>
 
+    <!--suppress PluginXmlValidity -->
     <execution.syntheticConfigurationTypeProvider implementation="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar$Provider"/>
   </extensions>
 

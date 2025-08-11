@@ -52,7 +52,8 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
    */
   protected boolean myRebaseEditorShown = false;
 
-  private GitRebaseEditingResult myResult = null;
+  private boolean myCommitListCancelled;
+  private boolean myUnstructuredEditorCancelled;
   private final @NotNull GitRewordedCommitMessageProvider myRewordedCommitMessageProvider;
 
   public GitInteractiveRebaseEditorHandler(@NotNull Project project, @NotNull VirtualFile root) {
@@ -63,39 +64,38 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
 
   @Override
   public int editCommits(@NotNull File file) {
-    GitRebaseEditingResult result;
     try {
       if (myRebaseEditorShown) {
-        Charset encoding = GitConfigUtil.getCommitEncodingCharset(myProject, myRoot);
+        String encoding = GitConfigUtil.getCommitEncoding(myProject, myRoot);
         String originalMessage = FileUtil.loadFile(file, encoding);
         String newMessage = myRewordedCommitMessageProvider.getRewordedCommitMessage(myProject, myRoot, originalMessage);
         if (newMessage == null) {
-          boolean unstructuredEditorCancelled = !handleUnstructuredEditor(file);
-          result = unstructuredEditorCancelled ?
-                   GitRebaseEditingResult.UnstructuredEditorCancelled.INSTANCE :
-                   GitRebaseEditingResult.WasEdited.INSTANCE;
+          myUnstructuredEditorCancelled = !handleUnstructuredEditor(file);
+          return myUnstructuredEditorCancelled ? ERROR_EXIT_CODE : 0;
         }
-        else {
-          FileUtil.writeToFile(file, newMessage.getBytes(encoding));
-          result = GitRebaseEditingResult.WasEdited.INSTANCE;
-        }
+        FileUtil.writeToFile(file, newMessage.getBytes(Charset.forName(encoding)));
+        return 0;
       }
       else {
         setRebaseEditorShown();
         boolean success = handleInteractiveEditor(file);
-        result = success ? GitRebaseEditingResult.WasEdited.INSTANCE : GitRebaseEditingResult.CommitListEditorCancelled.INSTANCE;
+        if (success) {
+          return 0;
+        }
+        else {
+          myCommitListCancelled = true;
+          return ERROR_EXIT_CODE;
+        }
       }
     }
     catch (VcsException e) {
-      LOG.warn("Failed to load commit details for commits from git rebase file: " + file, e);
-      result = new GitRebaseEditingResult.Failed(e);
+      LOG.error("Failed to load commit details for commits from git rebase file: " + file, e);
+      return ERROR_EXIT_CODE;
     }
     catch (Exception e) {
       LOG.error("Failed to edit git rebase file: " + file, e);
-      result = new GitRebaseEditingResult.Failed(e);
+      return ERROR_EXIT_CODE;
     }
-    myResult = result;
-    return result.getExitCode();
   }
 
   protected boolean handleUnstructuredEditor(@NotNull File file) throws IOException {
@@ -211,7 +211,12 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
   }
 
   @Override
-  public @Nullable GitRebaseEditingResult getEditingResult() {
-    return myResult;
+  public boolean wasCommitListEditorCancelled() {
+    return myCommitListCancelled;
+  }
+
+  @Override
+  public boolean wasUnstructuredEditorCancelled() {
+    return myUnstructuredEditorCancelled;
   }
 }

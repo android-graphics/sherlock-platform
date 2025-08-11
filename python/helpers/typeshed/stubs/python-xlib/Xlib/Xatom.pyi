@@ -1,4 +1,4 @@
-from typing import Final
+from typing_extensions import Final
 
 PRIMARY: Final = 1
 SECONDARY: Final = 2

@@ -44,7 +44,6 @@ import java.util.Objects;
 
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.CommandLine;
 
-@ApiStatus.Internal
 public final class LightEditUtil {
   private static final String ENABLED_FILE_OPEN_KEY = "light.edit.file.open.enabled";
   private static final String OPEN_FILE_IN_PROJECT_HREF = "open_file_in_project";
@@ -239,7 +238,7 @@ public final class LightEditUtil {
 
   public static @NotNull AutoCloseable computeWithCommandLineOptions(boolean shouldWait, boolean lightEditMode) {
     ourCommandLineOptions.set(new LightEditCommandLineOptions(shouldWait, lightEditMode));
-    return () -> ourCommandLineOptions.remove();
+    return () -> ourCommandLineOptions.set(null);
   }
 
   public static void useCommandLineOptions(boolean shouldWait,
@@ -249,7 +248,7 @@ public final class LightEditUtil {
     Disposer.register(disposable, new Disposable() {
       @Override
       public void dispose() {
-        ourCommandLineOptions.remove();
+        ourCommandLineOptions.set(null);
       }
     });
   }

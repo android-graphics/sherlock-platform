@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcsUtil;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -11,12 +11,14 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.SystemIndependent;
 
@@ -64,7 +66,8 @@ public final class VcsFileUtil {
    * @param arguments the arguments to chunk
    * @return a list of lists of arguments
    */
-  public static @NotNull List<List<String>> chunkArguments(@NotNull List<String> arguments) {
+  @NotNull
+  public static List<List<String>> chunkArguments(@NotNull List<String> arguments) {
     return chunkArguments(arguments, 1);
   }
 
@@ -75,7 +78,8 @@ public final class VcsFileUtil {
    * @param groupSize size of argument groups that should be put in the same chunk
    * @return a list of lists of arguments
    */
-  public static @NotNull List<List<String>> chunkArguments(@NotNull List<String> arguments, int groupSize) {
+  @NotNull
+  public static List<List<String>> chunkArguments(@NotNull List<String> arguments, int groupSize) {
     assert arguments.size() % groupSize == 0 : "Arguments size should be divisible by group size";
 
     ArrayList<List<String>> rc = new ArrayList<>();
@@ -132,11 +136,11 @@ public final class VcsFileUtil {
     return chunkArguments(toRelativeFiles(root, files));
   }
 
-  public static String getRelativeFilePath(VirtualFile file, final @NotNull VirtualFile baseDir) {
+  public static String getRelativeFilePath(VirtualFile file, @NotNull final VirtualFile baseDir) {
     return getRelativeFilePath(file.getPath(), baseDir);
   }
 
-  public static String getRelativeFilePath(String file, final @NotNull VirtualFile baseDir) {
+  public static String getRelativeFilePath(String file, @NotNull final VirtualFile baseDir) {
     if (SystemInfo.isWindows) {
       file = file.replace('\\', '/');
     }
@@ -229,7 +233,8 @@ public final class VcsFileUtil {
    * @return a relative path
    * @throws IllegalArgumentException if path is not under root.
    */
-  public static @NotNull String relativePath(@NotNull FilePath root, @NotNull FilePath file) {
+  @NotNull
+  public static String relativePath(@NotNull FilePath root, @NotNull FilePath file) {
     return relativePath(root.getIOFile(), file.getIOFile());
   }
 
@@ -257,7 +262,7 @@ public final class VcsFileUtil {
    * @return a list of relative paths
    * @throws IllegalArgumentException if some path is not under root.
    */
-  public static List<String> toRelativePaths(@NotNull VirtualFile root, final @NotNull Collection<? extends FilePath> filePaths) {
+  public static List<String> toRelativePaths(@NotNull VirtualFile root, @NotNull final Collection<? extends FilePath> filePaths) {
     ArrayList<String> rc = new ArrayList<>(filePaths.size());
     for (FilePath path : filePaths) {
       rc.add(relativePath(root, path));
@@ -273,7 +278,7 @@ public final class VcsFileUtil {
    * @return a list of relative paths
    * @throws IllegalArgumentException if some path is not under root.
    */
-  public static List<String> toRelativeFiles(@NotNull VirtualFile root, final @NotNull Collection<? extends VirtualFile> files) {
+  public static List<String> toRelativeFiles(@NotNull VirtualFile root, @NotNull final Collection<? extends VirtualFile> files) {
     ArrayList<String> rc = new ArrayList<>(files.size());
     for (VirtualFile file : files) {
       rc.add(relativePath(root, file));
@@ -400,7 +405,8 @@ public final class VcsFileUtil {
    * @return unescaped path ready to be searched in the VFS or file system.
    * @throws IllegalArgumentException if the path is invalid
    */
-  public static @NotNull String unescapeGitPath(@NotNull String path) throws IllegalArgumentException {
+  @NotNull
+  public static String unescapeGitPath(@NotNull String path) throws IllegalArgumentException {
     final String QUOTE = "\"";
     if (path.startsWith(QUOTE) && path.endsWith(QUOTE)) {
       path = path.substring(1, path.length() - 1);
@@ -483,4 +489,11 @@ public final class VcsFileUtil {
     }
     return rc.toString();
   }
+
+  /**
+   * @deprecated Use {@link ChangesUtil#CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY}
+   */
+  @Deprecated(forRemoval = true)
+  public static final HashingStrategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY =
+    ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY;
 }

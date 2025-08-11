@@ -2,6 +2,7 @@
 package org.jetbrains.uast.test.java
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import junit.framework.TestCase
 
 abstract class AbstractJavaUastLightTest : LightJavaCodeInsightFixtureTestCase() {
   protected fun fail(message: String): Nothing {

@@ -13,17 +13,20 @@ public abstract class AsyncFutureFactory {
     return ApplicationManager.getApplication().getService(AsyncFutureFactory.class);
   }
 
-  public static @NotNull <V> AsyncFuture<V> wrap(V v) {
+  @NotNull
+  public static <V> AsyncFuture<V> wrap(V v) {
     final AsyncFutureResult<V> result = getInstance().createAsyncFutureResult();
     result.set(v);
     return result;
   }
 
-  public static @NotNull <V> AsyncFuture<V> wrapException(Throwable e) {
+  @NotNull
+  public static <V> AsyncFuture<V> wrapException(Throwable e) {
     final AsyncFutureResult<V> result = getInstance().createAsyncFutureResult();
     result.setException(e);
     return result;
   }
 
-  public abstract @NotNull <V> AsyncFutureResult<V> createAsyncFutureResult();
+  @NotNull
+  public abstract <V> AsyncFutureResult<V> createAsyncFutureResult();
 }

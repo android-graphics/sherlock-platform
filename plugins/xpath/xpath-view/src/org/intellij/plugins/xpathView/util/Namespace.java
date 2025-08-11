@@ -38,7 +38,6 @@ public final class Namespace implements Cloneable, Copyable<Namespace> {
         return uri;
     }
 
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -48,7 +47,6 @@ public final class Namespace implements Cloneable, Copyable<Namespace> {
         return !(uri != null ? !uri.equals(namespace.uri) : namespace.uri != null);
     }
 
-    @Override
     public int hashCode() {
         return (uri != null ? uri.hashCode() : 0);
     }

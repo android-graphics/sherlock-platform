@@ -40,7 +40,7 @@ import java.util.function.Consumer;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public final class JavaGenerateMemberCompletionContributor {
-  public static final Key<Boolean> GENERATE_ELEMENT = Key.create("GENERATE_ELEMENT");
+  static final Key<Boolean> GENERATE_ELEMENT = Key.create("GENERATE_ELEMENT");
 
   public static void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
     if (parameters.getCompletionType() != CompletionType.BASIC && parameters.getCompletionType() != CompletionType.SMART) {
@@ -302,8 +302,7 @@ public final class JavaGenerateMemberCompletionContributor {
     if (prototype.isDeprecated()) {
       element = element.withStrikeoutness(true);
     }
-    
-    element.putUserData(GENERATE_ELEMENT, generateByWizard);
+    element.putUserData(GENERATE_ELEMENT, true);
     return PrioritizedLookupElement.withPriority(element, -1);
   }
 

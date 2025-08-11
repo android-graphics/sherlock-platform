@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.api;
 
 import com.intellij.util.ReflectionUtil;
@@ -34,7 +34,8 @@ import java.util.Map;
 
 public abstract class ClientFactory {
 
-  protected @NotNull SvnVcs myVcs;
+  @NotNull
+  protected SvnVcs myVcs;
 
   protected AddClient addClient;
   protected AnnotateClient annotateClient;
@@ -62,7 +63,7 @@ public abstract class ClientFactory {
   protected CheckinClient myCheckinClient;
   protected RepositoryFeaturesClient myRepositoryFeaturesClient;
 
-  private final @NotNull Map<Class, Class> myClientImplementations = new HashMap<>();
+  @NotNull private final Map<Class, Class> myClientImplementations = new HashMap<>();
 
   protected ClientFactory(@NotNull SvnVcs vcs) {
     myVcs = vcs;
@@ -76,7 +77,8 @@ public abstract class ClientFactory {
   }
 
   @SuppressWarnings("unchecked")
-  protected @NotNull <T extends SvnClient> Class<? extends T> get(@NotNull Class<T> type) {
+  @NotNull
+  protected <T extends SvnClient> Class<? extends T> get(@NotNull Class<T> type) {
     Class<? extends T> implementation = myClientImplementations.get(type);
 
     if (implementation == null) {
@@ -89,118 +91,146 @@ public abstract class ClientFactory {
   /**
    * TODO: Provide more robust way for the default settings here - probably some default Command instance could be used.
    */
-  public @NotNull <T extends SvnClient> T create(@NotNull Class<T> type, boolean isActive) {
+  @NotNull
+  public <T extends SvnClient> T create(@NotNull Class<T> type, boolean isActive) {
     T client = prepare(ReflectionUtil.newInstance(get(type)));
     client.setIsActive(isActive);
 
     return client;
   }
 
-  public @NotNull AddClient createAddClient() {
+  @NotNull
+  public AddClient createAddClient() {
     return prepare(addClient);
   }
 
-  public @NotNull AnnotateClient createAnnotateClient() {
+  @NotNull
+  public AnnotateClient createAnnotateClient() {
     return prepare(annotateClient);
   }
 
-  public @NotNull ContentClient createContentClient() {
+  @NotNull
+  public ContentClient createContentClient() {
     return prepare(contentClient);
   }
 
-  public @NotNull HistoryClient createHistoryClient() {
+  @NotNull
+  public HistoryClient createHistoryClient() {
     return prepare(historyClient);
   }
 
-  public @NotNull RevertClient createRevertClient() {
+  @NotNull
+  public RevertClient createRevertClient() {
     return prepare(revertClient);
   }
 
-  public @NotNull StatusClient createStatusClient() {
+  @NotNull
+  public StatusClient createStatusClient() {
     return prepare(statusClient);
   }
 
-  public @NotNull InfoClient createInfoClient() {
+  @NotNull
+  public InfoClient createInfoClient() {
     return prepare(infoClient);
   }
 
   // TODO: Update this in same like other clients - move to corresponding package, rename clients
   // New instances should be always created by this method, as setXxx() methods are currently used in update logic
-  public abstract @NotNull UpdateClient createUpdateClient();
+  @NotNull
+  public abstract UpdateClient createUpdateClient();
 
-  public @NotNull DeleteClient createDeleteClient() {
+  @NotNull
+  public DeleteClient createDeleteClient() {
     return prepare(deleteClient);
   }
 
-  public @NotNull CopyMoveClient createCopyMoveClient() {
+  @NotNull
+  public CopyMoveClient createCopyMoveClient() {
     return prepare(copyMoveClient);
   }
 
-  public @NotNull ConflictClient createConflictClient() {
+  @NotNull
+  public ConflictClient createConflictClient() {
     return prepare(conflictClient);
   }
 
-  public @NotNull PropertyClient createPropertyClient() {
+  @NotNull
+  public PropertyClient createPropertyClient() {
     return prepare(propertyClient);
   }
 
-  public @NotNull MergeClient createMergeClient() {
+  @NotNull
+  public MergeClient createMergeClient() {
     return prepare(mergeClient);
   }
 
-  public @NotNull ChangeListClient createChangeListClient() {
+  @NotNull
+  public ChangeListClient createChangeListClient() {
     return prepare(changeListClient);
   }
 
-  public @NotNull CheckoutClient createCheckoutClient() {
+  @NotNull
+  public CheckoutClient createCheckoutClient() {
     return prepare(checkoutClient);
   }
 
-  public @NotNull LockClient createLockClient() {
+  @NotNull
+  public LockClient createLockClient() {
     return prepare(myLockClient);
   }
 
-  public @NotNull CleanupClient createCleanupClient() {
+  @NotNull
+  public CleanupClient createCleanupClient() {
     return prepare(myCleanupClient);
   }
 
-  public @NotNull RelocateClient createRelocateClient() {
+  @NotNull
+  public RelocateClient createRelocateClient() {
     return prepare(myRelocateClient);
   }
 
-  public @NotNull VersionClient createVersionClient() {
+  @NotNull
+  public VersionClient createVersionClient() {
     return prepare(myVersionClient);
   }
 
-  public @NotNull ImportClient createImportClient() {
+  @NotNull
+  public ImportClient createImportClient() {
     return prepare(myImportClient);
   }
 
-  public @NotNull ExportClient createExportClient() {
+  @NotNull
+  public ExportClient createExportClient() {
     return prepare(myExportClient);
   }
 
-  public @NotNull UpgradeClient createUpgradeClient() {
+  @NotNull
+  public UpgradeClient createUpgradeClient() {
     return prepare(myUpgradeClient);
   }
 
-  public @NotNull BrowseClient createBrowseClient() {
+  @NotNull
+  public BrowseClient createBrowseClient() {
     return prepare(myBrowseClient);
   }
 
-  public @NotNull DiffClient createDiffClient() {
+  @NotNull
+  public DiffClient createDiffClient() {
     return prepare(myDiffClient);
   }
 
-  public @NotNull CheckinClient createCheckinClient() {
+  @NotNull
+  public CheckinClient createCheckinClient() {
     return prepare(myCheckinClient);
   }
 
-  public @NotNull RepositoryFeaturesClient createRepositoryFeaturesClient() {
+  @NotNull
+  public RepositoryFeaturesClient createRepositoryFeaturesClient() {
     return prepare(myRepositoryFeaturesClient);
   }
 
-  protected @NotNull <T extends SvnClient> T prepare(@NotNull T client) {
+  @NotNull
+  protected <T extends SvnClient> T prepare(@NotNull T client) {
     client.setVcs(myVcs);
     client.setFactory(this);
     client.setIsActive(true);

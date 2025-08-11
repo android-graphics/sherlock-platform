@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -18,8 +18,9 @@ import org.jetbrains.annotations.Nullable;
 
 public final class StringConcatenationInMessageFormatCallInspection extends BaseInspection {
 
+  @NotNull
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("string.concatenation.in.message.format.call.problem.descriptor");
   }
 
@@ -39,12 +40,14 @@ public final class StringConcatenationInMessageFormatCallInspection extends Base
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return InspectionGadgetsBundle.message("string.concatenation.in.format.call.quickfix", variableName);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("string.concatenation.in.format.call.fix.family.name");
     }
 
@@ -82,7 +85,8 @@ public final class StringConcatenationInMessageFormatCallInspection extends Base
       binaryExpression.delete();
     }
 
-    private static @Nullable PsiExpression addParameter(PsiExpression expression, int parameterNumber) {
+    @Nullable
+    private static PsiExpression addParameter(PsiExpression expression, int parameterNumber) {
       if (expression instanceof PsiBinaryExpression binaryExpression) {
         final PsiExpression rhs = binaryExpression.getROperand();
         if (rhs == null) {
@@ -165,7 +169,7 @@ public final class StringConcatenationInMessageFormatCallInspection extends Base
 
     private static boolean isMessageFormatCall(PsiMethodCallExpression expression) {
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final @NonNls String referenceName = methodExpression.getReferenceName();
+      @NonNls final String referenceName = methodExpression.getReferenceName();
       if (!"format".equals(referenceName)) {
         return false;
       }

@@ -18,10 +18,6 @@ internal class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspecti
 
   override fun getDescription(): String = ProjectBundle.message("config.unknown.sdk.commandline.configure")
 
-  override fun shouldBeInvokedAlongsideActivityTracking(): Boolean {
-    return true
-  }
-
   override fun isApplicable(context: CommandLineInspectionProjectConfigurator.ConfiguratorContext): Boolean =
     !ApplicationManager.getApplication().isUnitTestMode
 
@@ -32,6 +28,7 @@ internal class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspecti
   override fun configureProject(project: Project, context: CommandLineInspectionProjectConfigurator.ConfiguratorContext) {
     configureUnknownSdks(project, context.progressIndicator)
   }
+
 }
 
 internal fun configureUnknownSdks(project: Project, indicator: ProgressIndicator) {
@@ -40,10 +37,7 @@ internal fun configureUnknownSdks(project: Project, indicator: ProgressIndicator
   }
   ApplicationManager.getApplication().assertIsNonDispatchThread()
 
-  fixUnknownSdks(project, indicator)
-}
 
-private fun fixUnknownSdks(project: Project, indicator: ProgressIndicator) {
   indicator.withPushPop {
     indicator.text = ProjectBundle.message("config.unknown.progress.scanning")
 

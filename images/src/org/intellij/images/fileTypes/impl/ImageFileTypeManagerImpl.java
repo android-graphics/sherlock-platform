@@ -31,7 +31,8 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
   }
 
   @Override
-  public @NotNull FileType getImageFileType() {
+  @NotNull
+  public FileType getImageFileType() {
     return ImageFileType.INSTANCE;
   }
 }

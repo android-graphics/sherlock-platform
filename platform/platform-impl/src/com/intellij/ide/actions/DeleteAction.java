@@ -45,7 +45,7 @@ public class DeleteAction extends AnAction implements DumbAware, LightEditCompat
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
 
-    if (e.isFromContextMenu()) {
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
       presentation.setText(IdeBundle.messagePointer("action.delete.ellipsis"));
     }
     else {
@@ -61,7 +61,7 @@ public class DeleteAction extends AnAction implements DumbAware, LightEditCompat
     }
 
     CopyAction.updateWithProvider(e, getDeleteProvider(e.getDataContext()), false, provider -> {
-      boolean isPopupPlace = e.isFromContextMenu();
+      boolean isPopupPlace = ActionPlaces.isPopupPlace(e.getPlace());
       boolean enabled = provider.canDeleteElement(e.getDataContext());
       presentation.setEnabled(enabled);
       presentation.setVisible(!isPopupPlace || enabled);

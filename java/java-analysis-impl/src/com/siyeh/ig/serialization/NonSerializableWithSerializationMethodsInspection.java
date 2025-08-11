@@ -28,7 +28,8 @@ import org.jetbrains.annotations.NotNull;
 public final class NonSerializableWithSerializationMethodsInspection extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "NonSerializableClassWithSerializationMethods";
   }
 
@@ -39,7 +40,8 @@ public final class NonSerializableWithSerializationMethodsInspection extends Bas
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final boolean hasReadObject = ((Boolean)infos[0]).booleanValue();
     final boolean hasWriteObject = ((Boolean)infos[1]).booleanValue();
     final PsiClass aClass = (PsiClass)infos[2];

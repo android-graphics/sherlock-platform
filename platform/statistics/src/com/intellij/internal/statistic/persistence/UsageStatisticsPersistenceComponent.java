@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.persistence;
 
 import com.intellij.ide.ConsentOptionsProvider;
@@ -44,7 +44,7 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
   }
 
   @Override
-  public void loadState(final @NotNull Element element) {
+  public void loadState(@NotNull final Element element) {
     try {
       setSentTime(Long.parseLong(element.getAttributeValue(LAST_TIME_ATTR, "0")));
     }
@@ -137,7 +137,8 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
     return isShowNotification && !ApplicationManager.getApplication().isInternal();
   }
 
-  private static @Nullable ConsentOptionsProvider getConsentOptionsProvider() {
+  @Nullable
+  private static ConsentOptionsProvider getConsentOptionsProvider() {
     return ApplicationManager.getApplication().getService(ConsentOptionsProvider.class);
   }
 

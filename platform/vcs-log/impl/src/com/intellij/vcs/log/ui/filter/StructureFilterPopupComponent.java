@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -43,12 +42,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.io.File;
 import java.util.*;
-import java.util.List;
 import java.util.function.Function;
 
 public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFilterCollection, FileFilterModel> {
@@ -185,7 +182,7 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
     List<SelectVisibleRootAction> rootActions = new ArrayList<>();
     if (myColorManager.hasMultiplePaths()) {
       for (VirtualFile root : ContainerUtil.sorted(roots, FILE_BY_NAME_COMPARATOR)) {
-        rootActions.add(new SelectVisibleRootAction(root));
+        rootActions.add(new SelectVisibleRootAction(root, rootActions));
       }
     }
     List<AnAction> structureActions = new ArrayList<>();
@@ -249,7 +246,9 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
     return path2Text(filePath, systemDependent, getAllRoots());
   }
 
-  public static @NotNull @NlsSafe String path2Text(@NotNull FilePath filePath, boolean systemDependent, Set<VirtualFile> roots) {
+  @NotNull
+  @NlsSafe
+  public static String path2Text(@NotNull FilePath filePath, boolean systemDependent, Set<VirtualFile> roots) {
     VirtualFile commonAncestor = VfsUtil.getCommonAncestor(roots);
     String path = null;
     if (commonAncestor != null) {
@@ -295,19 +294,16 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
   }
 
   private final class SelectVisibleRootAction extends DumbAwareToggleAction {
-    private final Icon mySelectedIcon;
-    private final Icon myDeselectedIcon;
-
+    final CheckboxIcon.WithColor myIcon;
     final VirtualFile myRoot;
+    final List<SelectVisibleRootAction> myAllActions;
 
-    SelectVisibleRootAction(@NotNull VirtualFile root) {
+    SelectVisibleRootAction(@NotNull VirtualFile root, @NotNull List<SelectVisibleRootAction> allActions) {
       super(null, root.getPresentableUrl(), null);
       getTemplatePresentation().setText(root.getName(), false);
       myRoot = root;
-
-      Color color = myColorManager.getRootColor(myRoot);
-      mySelectedIcon = CheckboxIcon.createAndScaleCheckbox(color, true);
-      myDeselectedIcon = CheckboxIcon.createAndScaleCheckbox(color, false);
+      myAllActions = allActions;
+      myIcon = CheckboxIcon.createAndScaleCheckbox(myColorManager.getRootColor(myRoot));
       getTemplatePresentation().setIcon(JBUIScale.scaleIcon(EmptyIcon.create(CHECKBOX_ICON_SIZE))); // see PopupFactoryImpl.calcMaxIconSize
     }
 
@@ -332,6 +328,9 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
       else {
         setVisible(myRoot, state);
       }
+      for (SelectVisibleRootAction action : myAllActions) {
+        action.updateIcon();
+      }
     }
 
     private static int getModifier() {
@@ -342,11 +341,15 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
 
-      boolean isSelected = isVisible(myRoot) && isEnabled();
-      e.getPresentation().setIcon(isSelected ? mySelectedIcon : myDeselectedIcon);
+      updateIcon();
+      e.getPresentation().setIcon(myIcon);
       var modifierText = InputEvent.getModifiersExText(getModifier() << 6);
       var tooltip = VcsLogBundle.message("vcs.log.filter.tooltip.click.to.see.only", modifierText, e.getPresentation().getText());
-      e.getPresentation().putClientProperty(ActionUtil.TOOLTIP_TEXT, tooltip);
+      e.getPresentation().putClientProperty(TOOL_TIP_TEXT_KEY, tooltip);
+    }
+
+    private void updateIcon() {
+      myIcon.prepare(isVisible(myRoot) && isEnabled());
     }
 
     private boolean isEnabled() {

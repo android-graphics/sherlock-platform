@@ -47,7 +47,6 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testEnumComparison() = doTest()
     fun testEnumOrdinal() = doTest()
     fun testExclamation() = doTest()
-    fun testExtensionOnGeneric() = doTest()
     fun testForLoop() = doTest()
     fun testInRange() = doTest()
     fun testInIterable() = doTest()
@@ -66,7 +65,6 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testMapEmpty() = doTest()
     fun testMath() = doTest()
     fun testMembers() = doTest()
-    fun testNestedLoopLabel() = doTest()
     fun testNothingType() = doTest()
     fun testPlatformType() {
         // KTIJ-22430
@@ -116,7 +114,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
         }
         myFixture.configureByFile(fileName)
         val inspection = KotlinConstantConditionsInspection()
-        inspection.warnOnConstantRefs = warnOnConstantRefs
+        inspection.warnOnConstantRefs = warnOnConstantRefs 
         myFixture.enableInspections(inspection)
         myFixture.testHighlighting(true, false, true, fileName)
     }

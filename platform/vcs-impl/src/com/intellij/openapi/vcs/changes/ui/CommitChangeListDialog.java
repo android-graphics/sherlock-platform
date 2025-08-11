@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.util.DiffPlaces;
@@ -7,15 +7,18 @@ import com.intellij.ide.HelpIdProvider;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsActions;
@@ -51,8 +54,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.VcsBundle.message;
@@ -88,35 +91,35 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   private static final float DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT = 0.6f;
   private static final boolean DETAILS_SHOW_OPTION_DEFAULT = true;
 
-  private final @NotNull Project myProject;
-  private final @NotNull CommitChangeListDialogWorkflow myWorkflow;
-  private final @NotNull EventDispatcher<CommitWorkflowUiStateListener> myStateEventDispatcher =
+  @NotNull private final Project myProject;
+  @NotNull private final CommitChangeListDialogWorkflow myWorkflow;
+  @NotNull private final EventDispatcher<CommitWorkflowUiStateListener> myStateEventDispatcher =
     EventDispatcher.create(CommitWorkflowUiStateListener.class);
-  private final @NotNull EventDispatcher<CommitExecutorListener> myExecutorEventDispatcher =
+  @NotNull private final EventDispatcher<CommitExecutorListener> myExecutorEventDispatcher =
     EventDispatcher.create(CommitExecutorListener.class);
-  private final @NotNull List<DataProvider> myDataProviders = new ArrayList<>();
-  private final @NotNull EventDispatcher<InclusionListener> myInclusionEventDispatcher = EventDispatcher.create(InclusionListener.class);
+  @NotNull private final List<DataProvider> myDataProviders = new ArrayList<>();
+  @NotNull private final EventDispatcher<InclusionListener> myInclusionEventDispatcher = EventDispatcher.create(InclusionListener.class);
 
-  private @NotNull @NlsContexts.Button String myDefaultCommitActionName = "";
-  private @Nullable CommitAction myCommitAction;
-  private final @NotNull List<CommitExecutorAction> myExecutorActions = new ArrayList<>();
+  @NotNull @NlsContexts.Button private String myDefaultCommitActionName = "";
+  @Nullable private CommitAction myCommitAction;
+  @NotNull private final List<CommitExecutorAction> myExecutorActions = new ArrayList<>();
 
-  private final @NotNull CommitOptionsPanel myCommitOptions;
-  private final @NotNull JComponent myCommitOptionsPanel;
-  private final @NotNull ChangeInfoCalculator myChangesInfoCalculator;
-  private final @NotNull JComponent myBrowserBottomPanel = createHorizontalBox();
-  private final @NotNull MyChangeProcessor myDiffDetails;
-  private final @NotNull CommitMessage myCommitMessageArea;
-  private final @NotNull CommitLegendPanel myLegend;
+  @NotNull private final CommitOptionsPanel myCommitOptions;
+  @NotNull private final JComponent myCommitOptionsPanel;
+  @NotNull private final ChangeInfoCalculator myChangesInfoCalculator;
+  @NotNull private final JComponent myBrowserBottomPanel = createHorizontalBox();
+  @NotNull private final MyChangeProcessor myDiffDetails;
+  @NotNull private final CommitMessage myCommitMessageArea;
+  @NotNull private final CommitLegendPanel myLegend;
 
-  private final @NotNull Splitter mySplitter;
-  private final @NotNull SplitterWithSecondHideable myDetailsSplitter;
-  private final @NotNull JBLabel myWarningLabel;
+  @NotNull private final Splitter mySplitter;
+  @NotNull private final SplitterWithSecondHideable myDetailsSplitter;
+  @NotNull private final JBLabel myWarningLabel;
 
-  private final @Nullable String myHelpId;
+  @Nullable private final String myHelpId;
 
-  private final @NotNull Alarm okButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
-  private final @NotNull Runnable myUpdateButtonsRunnable = () -> {
+  @NotNull private final Alarm myOKButtonUpdateAlarm = new Alarm();
+  @NotNull private final Runnable myUpdateButtonsRunnable = () -> {
     updateButtons();
     updateLegend();
   };
@@ -133,6 +136,19 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                                       @Nullable LocalChangeList initialChangeList,
                                       @Nullable CommitExecutor executor,
                                       @Nullable String comment) {
+    return commitChanges(project, null, included, initialChangeList, executor, comment);
+  }
+
+  /**
+   * @deprecated Prefer using {@link #commitWithExecutor} or {@link #commitVcsChanges}.
+   */
+  @Deprecated(forRemoval = true)
+  public static boolean commitChanges(@NotNull Project project,
+                                      @SuppressWarnings("unused") @Nullable Collection<? extends Change> ignored_parameter,
+                                      @NotNull Collection<?> included,
+                                      @Nullable LocalChangeList initialChangeList,
+                                      @Nullable CommitExecutor executor,
+                                      @Nullable String comment) {
     if (executor != null) {
       return commitWithExecutor(project, included, initialChangeList, executor, comment, null);
     }
@@ -141,7 +157,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
   }
 
-  private static @NotNull Set<AbstractVcs> getVcsesForLocalChanges(@NotNull Project project, boolean showVcsCommit) {
+  @NotNull
+  private static Set<AbstractVcs> getVcsesForLocalChanges(@NotNull Project project, boolean showVcsCommit) {
     Set<AbstractVcs> affectedVcses = new HashSet<>();
     ChangeListManager manager = ChangeListManager.getInstance(project);
 
@@ -223,11 +240,12 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       }
     }
 
-    SingleChangeListCommitWorkflow workflow = new SingleChangeListCommitWorkflow(project, affectedVcses, initialChangeList,
-                                                                                 executors, showVcsCommit, customResultHandler);
+    SingleChangeListCommitWorkflow workflow =
+      new SingleChangeListCommitWorkflow(project, affectedVcses, included, initialChangeList, executors, showVcsCommit,
+                                         comment, customResultHandler);
     CommitChangeListDialog dialog = new DefaultCommitChangeListDialog(workflow);
 
-    return new SingleChangeListCommitWorkflowHandler(workflow, dialog, comment, included).activate();
+    return new SingleChangeListCommitWorkflowHandler(workflow, dialog).activate();
   }
 
   public static void showNothingToCommitMessage(@NotNull Project project) {
@@ -236,7 +254,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   protected CommitChangeListDialog(@NotNull CommitChangeListDialogWorkflow workflow) {
-    super(workflow.getProject(), true, IdeModalityType.IDE);
+    super(workflow.getProject(), true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
     myWorkflow = workflow;
     myProject = myWorkflow.getProject();
     Disposer.register(getDisposable(), this);
@@ -255,8 +273,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
     mySplitter = new Splitter(true);
     boolean nonFocusable = !UISettings.getInstance().getDisableMnemonicsInControls(); // Or that won't be keyboard accessible at all
-    myCommitOptions = new CommitOptionsPanel(myProject, () -> getDefaultCommitActionName(), nonFocusable, false);
-    myCommitOptionsPanel = myCommitOptions.component;
+    myCommitOptions = new CommitOptionsPanel(myProject, () -> getDefaultCommitActionName(), nonFocusable);
+    myCommitOptionsPanel = myCommitOptions.getComponent();
     myWarningLabel = new JBLabel();
 
     JPanel mainPanel = new JPanel(new MyOptionsLayout(mySplitter, myCommitOptions, JBUIScale.scale(150), JBUIScale.scale(400)));
@@ -267,7 +285,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     myDetailsSplitter = createDetailsSplitter(rootPane);
   }
 
-  public abstract @NotNull CommitDialogChangesBrowser getBrowser();
+  @NotNull
+  public abstract CommitDialogChangesBrowser getBrowser();
 
   @Override
   public boolean activate() {
@@ -289,10 +308,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   private void beforeInit() {
-    //readaction is not enough
-    getBrowser().setInclusionChangedListener(() -> WriteIntentReadAction.run(
-      (Runnable)() -> myInclusionEventDispatcher.getMulticaster().inclusionChanged()
-    ));
+    getBrowser().setInclusionChangedListener(() -> myInclusionEventDispatcher.getMulticaster().inclusionChanged());
 
     addInclusionListener(() -> updateButtons(), this);
     getBrowser().getViewer().addSelectionListener(() -> {
@@ -331,7 +347,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     LaterInvocator.markTransparent(ModalityState.stateForComponent(getComponent()));
   }
 
-  private @NotNull SplitterWithSecondHideable createDetailsSplitter(@NotNull JPanel rootPane) {
+  @NotNull
+  private SplitterWithSecondHideable createDetailsSplitter(@NotNull JPanel rootPane) {
     SplitterWithSecondHideable.OnOffListener listener = new SplitterWithSecondHideable.OnOffListener() {
       @Override
       public void on(int hideableHeight) {
@@ -399,7 +416,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
   }
 
-  private @NotNull List<CommitExecutorAction> createExecutorActions(@NotNull List<? extends CommitExecutor> executors) {
+  @NotNull
+  private List<CommitExecutorAction> createExecutorActions(@NotNull List<? extends CommitExecutor> executors) {
     if (executors.isEmpty()) return emptyList();
     List<CommitExecutorAction> result = new ArrayList<>();
 
@@ -419,7 +437,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return result;
   }
 
-  private static @Nullable String getHelpId(@NotNull List<? extends CommitExecutor> executors) {
+  @Nullable
+  private static String getHelpId(@NotNull List<? extends CommitExecutor> executors) {
     return StreamEx.of(executors).select(HelpIdProvider.class).map(HelpIdProvider::getHelpId).nonNull().findFirst().orElse(null);
   }
 
@@ -454,8 +473,9 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
   }
 
+  @Nullable
   @Override
-  protected @Nullable String getHelpId() {
+  protected String getHelpId() {
     return myHelpId;
   }
 
@@ -482,8 +502,9 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
   }
 
+  @NotNull
   @Override
-  protected @NotNull Action getOKAction() {
+  protected Action getOKAction() {
     return myCommitAction != null ? myCommitAction : myExecutorActions.get(0);
   }
 
@@ -510,7 +531,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     myDisposed = true;
     Disposer.dispose(getBrowser());
     Disposer.dispose(myCommitMessageArea);
-    Disposer.dispose(okButtonUpdateAlarm);
+    Disposer.dispose(myOKButtonUpdateAlarm);
     super.dispose();
     Disposer.dispose(myDiffDetails);
     PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION_OPTION, mySplitter.getProportion(), SPLITTER_PROPORTION_OPTION_DEFAULT);
@@ -537,8 +558,9 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     super.doCancelAction();
   }
 
+  @NotNull
   @Override
-  protected @NotNull JComponent createCenterPanel() {
+  protected JComponent createCenterPanel() {
     return myDetailsSplitter.getComponent();
   }
 
@@ -546,18 +568,21 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return !getIncludedChanges().isEmpty() || !getIncludedUnversionedFiles().isEmpty();
   }
 
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myProject;
   }
 
   @Deprecated(forRemoval = true)
-  public @NotNull String getCommitMessage() {
+  @NotNull
+  public String getCommitMessage() {
     return myCommitMessageArea.getText();
   }
 
   // Used in plugins
   @SuppressWarnings("unused")
-  public @NotNull List<RefreshableOnComponent> getAdditionalComponents() {
+  @NotNull
+  public List<RefreshableOnComponent> getAdditionalComponents() {
     return SequencesKt.toList(CommitOptionsKt.getAllOptions(getCommitOptions()));
   }
 
@@ -568,8 +593,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       myCommitAction.setEnabled(enabled);
     }
     myExecutorActions.forEach(action -> action.updateEnabled(enabled));
-    okButtonUpdateAlarm.cancelAllRequests();
-    okButtonUpdateAlarm.addRequest(myUpdateButtonsRunnable, 300, ModalityState.stateForComponent(getBrowser()));
+    myOKButtonUpdateAlarm.cancelAllRequests();
+    myOKButtonUpdateAlarm.addRequest(myUpdateButtonsRunnable, 300, ModalityState.stateForComponent(getBrowser()));
   }
 
   private void updateLegend() {
@@ -580,7 +605,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   @Override
-  protected @NonNls String getDimensionServiceKey() {
+  @NonNls
+  protected String getDimensionServiceKey() {
     return DIMENSION_SERVICE_KEY;
   }
 
@@ -589,8 +615,9 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return myCommitMessageArea.getEditorField();
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent getComponent() {
+  public JComponent getComponent() {
     return mySplitter;
   }
 
@@ -599,26 +626,32 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return getPreferredFocusedComponent();
   }
 
+  @Nullable
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    DataSink.uiDataSnapshot(sink, getBrowser());
-    for (DataProvider provider : myDataProviders) {
-      DataSink.uiDataSnapshot(sink, provider);
-    }
+  public Object getData(@NotNull String dataId) {
+    return StreamEx.of(myDataProviders)
+      .map(provider -> provider.getData(dataId))
+      .nonNull()
+      .findFirst()
+      .orElseGet(() -> getBrowser().getData(dataId));
   }
 
+  @NotNull
   @Override
-  public @NotNull CommitMessageUi getCommitMessageUi() {
+  public CommitMessageUi getCommitMessageUi() {
     return myCommitMessageArea;
   }
 
+  @NotNull
   @Override
-  public @NotNull CommitOptionsUi getCommitOptionsUi() {
+  public CommitOptionsUi getCommitOptionsUi() {
     return myCommitOptions;
   }
 
+  @NotNull
   @Override
-  public @NotNull @NlsContexts.Button String getDefaultCommitActionName() {
+  @NlsContexts.Button
+  public String getDefaultCommitActionName() {
     return myDefaultCommitActionName;
   }
 
@@ -642,33 +675,39 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     getBrowser().updateDisplayedChangeLists();
   }
 
+  @NotNull
   @Override
-  public @NotNull LocalChangeList getChangeList() {
+  public LocalChangeList getChangeList() {
     return getBrowser().getSelectedChangeList();
   }
 
+  @NotNull
   @Override
-  public @NotNull List<Change> getDisplayedChanges() {
+  public List<Change> getDisplayedChanges() {
     return getBrowser().getDisplayedChanges();
   }
 
+  @NotNull
   @Override
-  public @NotNull List<Change> getIncludedChanges() {
+  public List<Change> getIncludedChanges() {
     return getBrowser().getIncludedChanges();
   }
 
+  @NotNull
   @Override
-  public @NotNull List<FilePath> getDisplayedUnversionedFiles() {
+  public List<FilePath> getDisplayedUnversionedFiles() {
     return getBrowser().getDisplayedUnversionedFiles();
   }
 
+  @NotNull
   @Override
-  public @NotNull List<FilePath> getIncludedUnversionedFiles() {
+  public List<FilePath> getIncludedUnversionedFiles() {
     return getBrowser().getIncludedUnversionedFiles();
   }
 
+  @NotNull
   @Override
-  public @NotNull InclusionModel getInclusionModel() {
+  public InclusionModel getInclusionModel() {
     return getBrowser().getViewer().getInclusionModel();
   }
 
@@ -701,7 +740,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
   }
 
-  private @NotNull CommitOptions getCommitOptions() {
+  @NotNull
+  private CommitOptions getCommitOptions() {
     return myWorkflow.getCommitOptions();
   }
 
@@ -720,7 +760,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   private class CommitExecutorAction extends AbstractAction {
-    private final @Nullable CommitExecutor myCommitExecutor;
+    @Nullable private final CommitExecutor myCommitExecutor;
 
     CommitExecutorAction(@NotNull AnAction anAction) {
       putValue(OptionAction.AN_ACTION, anAction);
@@ -769,13 +809,15 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       putContextUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true);
     }
 
+    @NotNull
     @Override
-    public @NotNull Iterable<Wrapper> iterateSelectedChanges() {
+    public Iterable<Wrapper> iterateSelectedChanges() {
       return wrap(getBrowser().getSelectedChanges(), getBrowser().getSelectedUnversionedFiles());
     }
 
+    @NotNull
     @Override
-    public @NotNull Iterable<Wrapper> iterateAllChanges() {
+    public Iterable<Wrapper> iterateAllChanges() {
       return wrap(getDisplayedChanges(), getDisplayedUnversionedFiles());
     }
 
@@ -784,8 +826,9 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       getBrowser().selectEntries(singletonList(change.getUserObject()));
     }
 
-    private static @NotNull Iterable<Wrapper> wrap(@NotNull Collection<? extends Change> changes,
-                                                   @NotNull Collection<? extends FilePath> unversioned) {
+    @NotNull
+    private static Iterable<Wrapper> wrap(@NotNull Collection<? extends Change> changes,
+                                          @NotNull Collection<? extends FilePath> unversioned) {
       return JBIterable.<Wrapper>empty()
         .append(JBIterable.from(changes).map(ChangeWrapper::new))
         .append(JBIterable.from(unversioned).map(UnversionedFileWrapper::new));
@@ -799,16 +842,16 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   private static class MyOptionsLayout extends AbstractLayoutManager {
-    private final @NotNull JComponent myPanel;
-    private final @NotNull CommitOptionsPanel myOptions;
-    private final @NotNull JComponent myOptionsPanel;
+    @NotNull private final JComponent myPanel;
+    @NotNull private final CommitOptionsPanel myOptions;
+    @NotNull private final JComponent myOptionsPanel;
     private final int myMinOptionsWidth;
     private final int myMaxOptionsWidth;
 
     MyOptionsLayout(@NotNull JComponent panel, @NotNull CommitOptionsPanel options, int minOptionsWidth, int maxOptionsWidth) {
       myPanel = panel;
       myOptions = options;
-      myOptionsPanel = options.component;
+      myOptionsPanel = options.getComponent();
       myMinOptionsWidth = minOptionsWidth;
       myMaxOptionsWidth = maxOptionsWidth;
     }

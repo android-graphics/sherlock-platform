@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -111,11 +111,13 @@ public class MethodReturnValueWatcher {
     }
   }
 
-  public @Nullable Method getLastExecutedMethod() {
+  @Nullable
+  public Method getLastExecutedMethod() {
     return myLastExecutedMethod;
   }
 
-  public @Nullable Value getLastMethodReturnValue() {
+  @Nullable
+  public Value getLastMethodReturnValue() {
     return myLastMethodReturnValue;
   }
 
@@ -151,7 +153,7 @@ public class MethodReturnValueWatcher {
     myThread = null;
   }
 
-  private void updateRequestState(final boolean enabled, final @Nullable ThreadReference thread) {
+  private void updateRequestState(final boolean enabled, @Nullable final ThreadReference thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       if (myEntryRequest != null) {
@@ -183,7 +185,8 @@ public class MethodReturnValueWatcher {
     return myEntryRequest;
   }
 
-  private @NotNull MethodExitRequest createExitRequest() {
+  @NotNull
+  private MethodExitRequest createExitRequest() {
     DebuggerManagerThreadImpl.assertIsManagerThread(); // to ensure EventRequestManager synchronization
     if (myExitRequest != null) {
       DebuggerUtilsAsync.deleteEventRequest(myRequestManager, myExitRequest);
@@ -192,7 +195,8 @@ public class MethodReturnValueWatcher {
     return myExitRequest;
   }
 
-  private @NotNull <T extends EventRequest> T prepareRequest(T request) {
+  @NotNull
+  private <T extends EventRequest> T prepareRequest(T request) {
     request.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD);
     if (myThread != null) {
       if (request instanceof MethodEntryRequest) {

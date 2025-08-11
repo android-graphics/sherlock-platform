@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.debugger.impl.RemoteConnectionBuilder;
@@ -44,8 +44,9 @@ public final class MavenApplicationConfigurationExecutionEnvironmentProvider imp
   }
 
   @Override
-  public @Nullable ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, @NotNull ExecuteRunConfigurationTask task,
-                                                                   @Nullable Executor executor) {
+  @Nullable
+  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, @NotNull ExecuteRunConfigurationTask task,
+                                                         @Nullable Executor executor) {
 
     ApplicationConfiguration applicationConfiguration = (ApplicationConfiguration)task.getRunProfile();
     ConfigurationFactory configurationFactory = new MavenExecConfigurationFactory(applicationConfiguration);
@@ -173,8 +174,9 @@ public final class MavenApplicationConfigurationExecutionEnvironmentProvider imp
       myApplicationConfiguration = applicationConfiguration;
     }
 
+    @NotNull
     @Override
-    public @NotNull RemoteConnectionCreator createRemoteConnectionCreator(JavaParameters javaParameters) {
+    public RemoteConnectionCreator createRemoteConnectionCreator(JavaParameters javaParameters) {
       return new RemoteConnectionCreator() {
 
         @Override
@@ -230,13 +232,15 @@ public final class MavenApplicationConfigurationExecutionEnvironmentProvider imp
       return "Maven";
     }
 
+    @NotNull
     @Override
-    public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new MyExecRunConfiguration(project, this, myApplicationConfiguration);
     }
 
+    @NotNull
     @Override
-    public @NotNull RunConfiguration createConfiguration(@Nullable String name, @NotNull RunConfiguration template) {
+    public RunConfiguration createConfiguration(@Nullable String name, @NotNull RunConfiguration template) {
       return new MyExecRunConfiguration(template.getProject(), this, myApplicationConfiguration);
     }
   }

@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.cucumber.java.run;
 
 import gherkin.formatter.Formatter;
@@ -80,7 +79,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
     beforeExampleSection = false;
     outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), uri + ":" + scenario.getLine(), getName(currentScenario));
 
-    while (!queue.isEmpty()) {
+    while (queue.size() > 0) {
       printLine(queue.poll());
     }
   }

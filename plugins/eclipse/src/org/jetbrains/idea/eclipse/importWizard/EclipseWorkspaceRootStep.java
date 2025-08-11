@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -36,18 +36,18 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
 
   public EclipseWorkspaceRootStep(final WizardContext context) {
     super(context);
-    myWorkspaceRootComponent.addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFolderDescriptor()
-      .withTitle(EclipseBundle.message("eclipse.import.title.select.workspace")));
+    myWorkspaceRootComponent.addBrowseFolderListener(EclipseBundle.message("eclipse.import.title.select.workspace"), "", null,
+                                                     FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
-    myDirComponent.addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFolderDescriptor()
-      .withTitle(EclipseBundle.message("eclipse.import.title.module.dir")));
+    myDirComponent.addBrowseFolderListener(EclipseBundle.message("eclipse.import.title.module.dir"), "", null,
+                                           FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     ActionListener listener = new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
         final boolean dedicated = rbModulesDedicated.isSelected();
         myDirComponent.setEnabled(dedicated);
-        if (dedicated && myDirComponent.getText().isEmpty()) {
+        if (dedicated && myDirComponent.getText().length() == 0) {
           final String remoteStorage = Options.getProjectStorageDir(context.getProject());
           myDirComponent.setText(remoteStorage != null ? remoteStorage : FileUtil.toSystemDependentName(myWorkspaceRootComponent.getText()));
         }

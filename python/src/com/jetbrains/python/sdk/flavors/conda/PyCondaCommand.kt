@@ -13,7 +13,7 @@ import com.jetbrains.python.pathValidation.validateExecutableFile
  * Encapsulates conda binary command to simplify target request creation
  */
 class PyCondaCommand(
-  val fullCondaPathOnTarget: FullPathOnTarget,
+  internal val fullCondaPathOnTarget: FullPathOnTarget,
   internal val targetConfig: TargetEnvironmentConfiguration?,
   internal val project: Project? = null,
   internal val indicator: TargetProgressIndicator = TargetProgressIndicator.EMPTY

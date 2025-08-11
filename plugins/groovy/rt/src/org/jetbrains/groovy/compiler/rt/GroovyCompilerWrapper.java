@@ -145,7 +145,6 @@ public class GroovyCompilerWrapper {
         }
       }
 
-      @Override
       @SuppressWarnings("RedundantMethodOverride")
       public void doPhaseOperation(CompilationUnit unit) throws CompilationFailedException {
         super.doPhaseOperation(unit);

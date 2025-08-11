@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.arrangement.match.tokens;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
@@ -58,9 +58,9 @@ public final class ArrangementRuleAliasesListEditor extends NamedItemsListEditor
   private static final BiPredicate<StdArrangementRuleAliasToken, StdArrangementRuleAliasToken>
     COMPARER = (o1, o2) -> Objects.equals(o1.getId(), o2.getId());
 
-  private final @NotNull Set<String> myUsedTokenIds;
-  private final @NotNull ArrangementStandardSettingsManager mySettingsManager;
-  private final @NotNull ArrangementColorsProvider myColorsProvider;
+  @NotNull private final Set<String> myUsedTokenIds;
+  @NotNull private final ArrangementStandardSettingsManager mySettingsManager;
+  @NotNull private final ArrangementColorsProvider myColorsProvider;
 
   ArrangementRuleAliasesListEditor(@NotNull ArrangementStandardSettingsManager settingsManager,
                                              @NotNull ArrangementColorsProvider colorsProvider,
@@ -84,8 +84,9 @@ public final class ArrangementRuleAliasesListEditor extends NamedItemsListEditor
     return !myUsedTokenIds.contains(item.getId());
   }
 
+  @Nls
   @Override
-  public @Nls String getDisplayName() {
+  public String getDisplayName() {
     return ApplicationBundle.message("configurable.ArrangementRuleAliasesListEditor.display.name");
   }
 
@@ -104,12 +105,13 @@ public final class ArrangementRuleAliasesListEditor extends NamedItemsListEditor
     return ApplicationBundle.message("label.new.alias.name");
   }
 
+  @Nullable
   @Override
-  public @Nullable String askForProfileName(@NlsContexts.DialogTitle String title) {
+  public String askForProfileName(@NlsContexts.DialogTitle String title) {
     return Messages.showInputDialog(getNewLabelText(), title, Messages.getQuestionIcon(), "", new InputValidator() {
       @Override
       public boolean checkInput(String s) {
-        return !s.isEmpty() && findByName(s) == null && Verifier.checkElementName(s) == null;
+        return s.length() > 0 && findByName(s) == null && Verifier.checkElementName(s) == null;
       }
 
       @Override

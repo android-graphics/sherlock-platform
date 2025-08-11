@@ -5,15 +5,13 @@ import com.intellij.codeHighlighting.Pass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -22,28 +20,21 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus.Internal
 
-class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar, DumbAware {
+class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
   @Suppress("CompanionObjectInExtension") // used in third party
   companion object {
     @RequiresReadLock
-    fun createPassForPreview(
-      file: PsiFile,
-      editor: Editor,
-      provider: InlayHintsProvider,
-      providerId: String,
-      optionsToEnabled: Map<String, Boolean>,
-      isDisabled: Boolean,
-    ): DeclarativeInlayHintsPass {
+    fun createPassForPreview(file: PsiFile,
+                             editor: Editor,
+                             provider: InlayHintsProvider,
+                             providerId: String,
+                             optionsToEnabled: Map<String, Boolean>,
+                             isDisabled: Boolean): DeclarativeInlayHintsPass {
       return DeclarativeInlayHintsPass(file, editor, listOf(InlayProviderPassInfo(provider, providerId, optionsToEnabled)), isPreview = true, isProviderDisabled = isDisabled)
     }
 
     fun getSuitableToFileProviders(file: PsiFile): List<InlayProviderInfo> {
-      val infos = InlayHintsProviderFactory.getProvidersForLanguage(file.language)
-      if (!DumbService.isDumb(file.project)) {
-        return infos
-      }
-
-      return infos.filter { DumbService.isDumbAware(it.provider) }
+      return InlayHintsProviderFactory.getProvidersForLanguage(file.language)
     }
 
     private val PSI_MODIFICATION_STAMP: Key<Long> = Key<Long>("declarative.inlays.psi.modification.stamp")
@@ -54,7 +45,7 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
 
     fun scheduleRecompute(editor: Editor, project: Project) {
       resetModificationStamp(editor)
-      DaemonCodeAnalyzerEx.getInstanceEx(project).restart("DeclarativeInlayHintsPassFactory.scheduleRecompute")
+      DaemonCodeAnalyzer.getInstance(project).restart()
     }
 
     internal fun updateModificationStamp(editor: Editor, project: Project) {
@@ -77,13 +68,13 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
     }
   }
 
-  override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): DeclarativeInlayHintsPass? {
+  override fun createHighlightingPass(file: PsiFile, editor: Editor): DeclarativeInlayHintsPass? {
     if (!Registry.`is`("inlays.declarative.hints")) return null
     if (editor.isOneLineMode) return null
-    if (!HighlightingLevelManager.getInstance(psiFile.project).shouldHighlight(psiFile)) return null
+    if (!HighlightingLevelManager.getInstance(file.project).shouldHighlight(file)) return null
 
     val stamp = editor.getUserData(PSI_MODIFICATION_STAMP)
-    val current = getCurrentModificationCount(psiFile.project)
+    val current = getCurrentModificationCount(file.project)
     if (current == stamp) {
       return null
     }
@@ -91,7 +82,7 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
     val declarativeInlayHintsSettings = DeclarativeInlayHintsSettings.getInstance()
     val enabledGlobally = InlayHintsSettings.instance().hintsEnabledGlobally()
     val passProviders = if (enabledGlobally) {
-      getSuitableToFileProviders(psiFile)
+      getSuitableToFileProviders(file)
         .filter {
           declarativeInlayHintsSettings.isProviderEnabled(it.providerId) ?: it.isEnabledByDefault
         }
@@ -110,7 +101,7 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
     } else {
       emptyList()
     }
-    return DeclarativeInlayHintsPass(psiFile, editor, passProviders, false)
+    return DeclarativeInlayHintsPass(file, editor, passProviders, false)
   }
 
   override fun registerHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar, project: Project) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -8,7 +8,6 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -33,11 +32,12 @@ import java.util.List;
 public final class ExtractLightMethodObjectHandler {
   private static final Logger LOG = Logger.getInstance(ExtractLightMethodObjectHandler.class);
 
-  public static @Nullable LightMethodObjectExtractedData extractLightMethodObject(final Project project,
-                                                                                  @Nullable PsiElement originalContext,
-                                                                                  final @NotNull PsiCodeFragment fragment,
-                                                                                  @NotNull String methodName,
-                                                                                  @Nullable JavaSdkVersion javaVersion) throws PrepareFailedException {
+  @Nullable
+  public static LightMethodObjectExtractedData extractLightMethodObject(final Project project,
+                                                                        @Nullable PsiElement originalContext,
+                                                                        @NotNull final PsiCodeFragment fragment,
+                                                                        @NotNull String methodName,
+                                                                        @Nullable JavaSdkVersion javaVersion) throws PrepareFailedException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     PsiElement[] elements = completeToStatementArray(fragment, elementFactory);
     if (elements == null) {
@@ -55,11 +55,6 @@ public final class ExtractLightMethodObjectHandler {
 
     final PsiFile copy = PsiFileFactory.getInstance(project)
       .createFileFromText(file.getName(), file.getFileType(), file.getText(), file.getModificationStamp(), false);
-
-    if (copy instanceof PsiJavaFile copyJavaFile && file instanceof PsiJavaFile originalJavaFile) {
-      LanguageLevel level = PsiUtil.getLanguageLevel(originalJavaFile);
-      PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(copyJavaFile, level);
-    }
 
     if (originalContext instanceof PsiKeyword && PsiModifier.PRIVATE.equals(originalContext.getText())) {
       final PsiNameIdentifierOwner identifierOwner = PsiTreeUtil.getParentOfType(originalContext, PsiNameIdentifierOwner.class);
@@ -264,7 +259,8 @@ public final class ExtractLightMethodObjectHandler {
                                               originalAnchor, useMagicAccessor);
   }
 
-  private static @Nullable PsiMethodCallExpression findCallExpression(@NotNull PsiFile copy, @NotNull PsiMethod method) {
+  @Nullable
+  private static PsiMethodCallExpression findCallExpression(@NotNull PsiFile copy, @NotNull PsiMethod method) {
     PsiMethodCallExpression[] result = new PsiMethodCallExpression[1];
     copy.accept(new JavaRecursiveElementVisitor() {
       @Override
@@ -277,7 +273,6 @@ public final class ExtractLightMethodObjectHandler {
             result[0] = expression;
           }
         }
-        super.visitMethodCallExpression(expression);
       }
     });
     return result[0];
@@ -317,15 +312,17 @@ public final class ExtractLightMethodObjectHandler {
 
   private static class LightExtractMethodObjectDialog implements AbstractExtractDialog {
     private final ExtractMethodObjectProcessor myProcessor;
-    private final @NotNull String myMethodName;
+    @NotNull
+    private final String myMethodName;
 
     LightExtractMethodObjectDialog(ExtractMethodObjectProcessor processor, @NotNull String methodName) {
       myProcessor = processor;
       myMethodName = methodName;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getChosenMethodName() {
+    public String getChosenMethodName() {
       return myMethodName;
     }
 
@@ -335,8 +332,9 @@ public final class ExtractLightMethodObjectHandler {
       return inputVariables.getInputVariables().toArray(new VariableData[0]);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getVisibility() {
+    public String getVisibility() {
       return PsiModifier.PACKAGE_LOCAL;
     }
 

@@ -1,5 +1,5 @@
 // "Add '== true'" "false"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 class Foo {
     fun bar() = ""
 }

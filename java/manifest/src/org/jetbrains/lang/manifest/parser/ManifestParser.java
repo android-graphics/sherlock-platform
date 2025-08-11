@@ -53,8 +53,9 @@ public class ManifestParser implements PsiParser {
     myRepository = HeaderParserRepository.getInstance();
   }
 
+  @NotNull
   @Override
-  public @NotNull ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
+  public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     builder.setDebugMode(ApplicationManager.getApplication().isUnitTestMode());
 
     PsiBuilder.Marker rootMarker = builder.mark();

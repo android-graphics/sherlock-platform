@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.projectRoots.Sdk;
@@ -28,7 +28,8 @@ public interface UnknownSdkLocalSdkFix extends UnknownSdkFixConfigurator {
    * @return version string that is short and enough to be shown in UI
    * @see #getVersionString()
    */
-  default @NotNull String getPresentableVersionString() {
+  @NotNull
+  default String getPresentableVersionString() {
     return getVersionString();
   }
 
@@ -43,7 +44,8 @@ public interface UnknownSdkLocalSdkFix extends UnknownSdkFixConfigurator {
    * A suggestion can be using another already registered {@link Sdk} as prototype,
    * The callee may use this to avoid creating duplicates
    */
-  default @Nullable Sdk getRegisteredSdkPrototype() {
+  @Nullable
+  default Sdk getRegisteredSdkPrototype() {
     return null;
   }
 }

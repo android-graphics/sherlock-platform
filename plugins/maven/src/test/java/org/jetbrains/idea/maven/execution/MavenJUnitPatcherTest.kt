@@ -15,15 +15,14 @@
  */
 package org.jetbrains.idea.maven.execution
 
+import com.intellij.execution.CantRunException
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.project.MavenProjectSettings
@@ -33,7 +32,8 @@ import java.nio.file.Paths
 import kotlin.io.path.name
 
 class MavenJUnitPatcherTest : MavenMultiVersionImportingTestCase() {
-  override fun setUp() = runBlocking {
+  @Throws(Exception::class)
+  override fun setUp() = runBlocking(Dispatchers.EDT){
     super.setUp()
     MavenProjectSettings.getInstance(project).testRunningSettings.isPassArgLine = true
     MavenProjectSettings.getInstance(project).testRunningSettings.isPassEnvironmentVariables = true
@@ -41,7 +41,8 @@ class MavenJUnitPatcherTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun ExcludeProjectDependencyInClassPathElement() = runBlocking {
+  @Throws(CantRunException::class)
+  fun ExcludeProjectDependencyInClassPathElement() = runBlocking(Dispatchers.EDT) {
     val m = createModulePom("m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
@@ -112,13 +113,14 @@ class MavenJUnitPatcherTest : MavenMultiVersionImportingTestCase() {
     assertEquals(listOf("dep/target/classes", "junit-4.0.jar", "m/target/classes").map(PathUtil::getLocalPath),
                  javaParameters.classPath.getPathList().map(pathTransformer).sorted())
 
-    patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
     assertEquals(listOf("junit-4.0.jar", "m/target/classes").map(PathUtil::getLocalPath),
                  javaParameters.classPath.getPathList().map(pathTransformer).sorted())
   }
 
   @Test
-  fun ExcludeClassPathElement() = runBlocking {
+  @Throws(CantRunException::class)
+  fun ExcludeClassPathElement() = runBlocking(Dispatchers.EDT){
     val excludeSpecifications = arrayOf(
       """
 <classpathDependencyExcludes>
@@ -181,7 +183,7 @@ org.jetbrains:annotations
       javaParameters.configureByModule(module, JavaParameters.CLASSES_AND_TESTS, IdeaTestUtil.getMockJdk18())
       assertEquals(excludeSpecification, mutableListOf("annotations-17.0.0.jar", "annotations-java5-17.0.0.jar"),
                    ContainerUtil.map(javaParameters.classPath.getPathList()) { path: String? -> File(path).getName() })
-      patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
+      mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
       val classPath = javaParameters.classPath.getPathList()
       assertEquals(excludeSpecification, listOf("annotations-java5-17.0.0.jar"),
                    ContainerUtil.map(classPath) { path: String? -> File(path).getName() })
@@ -189,7 +191,8 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ExcludeScope() = runBlocking {
+  @Throws(CantRunException::class)
+  fun ExcludeScope() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -229,14 +232,14 @@ org.jetbrains:annotations
     javaParameters.configureByModule(module, JavaParameters.CLASSES_AND_TESTS, IdeaTestUtil.getMockJdk18())
     assertEquals(mutableListOf("annotations-17.0.0.jar", "annotations-java5-17.0.0.jar"),
                  ContainerUtil.map(javaParameters.classPath.getPathList()) { path: String? -> File(path).getName() })
-    patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
     val classPath = javaParameters.classPath.getPathList()
     assertEquals(listOf("annotations-17.0.0.jar"),
                  ContainerUtil.map(classPath) { path: String? -> File(path).getName() })
   }
 
   @Test
-  fun AddClassPath() = runBlocking {
+  fun AddClassPath() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -264,13 +267,13 @@ org.jetbrains:annotations
 
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
-    patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
     val classPath = javaParameters.classPath.getPathList()
     assertEquals(mutableListOf("path/to/additional/resources", "path/to/additional/jar", "path/to/csv/jar1", "path/to/csv/jar2"), classPath)
   }
 
   @Test
-  fun ArgList() = runBlocking {
+  fun ArgList() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -299,13 +302,13 @@ org.jetbrains:annotations
 
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
-    patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
     assertEquals(mutableListOf("-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces"),
                  javaParameters.vmParametersList.getList())
   }
 
   @Test
-  fun IgnoreJaCoCoOption() = runBlocking {
+  fun IgnoreJaCoCoOption() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><build>
         <plugins>
@@ -334,13 +337,13 @@ org.jetbrains:annotations
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
     javaParameters.vmParametersList.addParametersString("-ea")
-    patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
     assertEquals(mutableListOf("-ea", "-Dmyprop=abc", "@{unresolved}"),
                  javaParameters.vmParametersList.getList())
   }
 
   @Test
-  fun ImplicitArgLine() = runBlocking {
+  fun ImplicitArgLine() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><properties>
         <argLine>-Dfoo=${'$'}{version}</argLine>
@@ -362,13 +365,13 @@ org.jetbrains:annotations
 
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
-    patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
     assertEquals(mutableListOf("-Dfoo=1"),
                  javaParameters.vmParametersList.getList())
   }
 
   @Test
-  fun VmPropertiesResolve() = runBlocking {
+  fun VmPropertiesResolve() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -398,7 +401,7 @@ org.jetbrains:annotations
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
     javaParameters.vmParametersList.addProperty("argLineApx", "-DsomeKey=someValue")
-    patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
     assertEquals(
       mutableListOf("-DargLineApx=-DsomeKey=someValue", "-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces",
                     "-DsomeKey=someValue"),
@@ -406,7 +409,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ArgLineLateReplacement() = runBlocking {
+  fun ArgLineLateReplacement() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -429,13 +432,13 @@ org.jetbrains:annotations
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
     javaParameters.vmParametersList.add("-ea")
-    patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
     assertEquals(mutableListOf("-ea", "-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces"),
                  javaParameters.vmParametersList.getList())
   }
 
   @Test
-  fun ArgLineLateReplacementParentProperty() = runBlocking {
+  fun ArgLineLateReplacementParentProperty() = runBlocking(Dispatchers.EDT) {
     createProjectPom(
       """
         <groupId>test</groupId>
@@ -484,14 +487,14 @@ org.jetbrains:annotations
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
     javaParameters.vmParametersList.add("-ea")
-    patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
     assertEquals(
       mutableListOf("-ea", "module.value", "parent.value"),
       javaParameters.vmParametersList.getList())
   }
 
   @Test
-  fun ArgLineRefersAnotherProperty() = runBlocking {
+  fun ArgLineRefersAnotherProperty() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -518,13 +521,13 @@ org.jetbrains:annotations
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
     javaParameters.vmParametersList.add("-ea")
-    patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
     assertEquals(mutableListOf("-ea", "-Xms256m", "-Xmx1524m", "-Duser.language=en"),
                  javaParameters.vmParametersList.getList())
   }
 
   @Test
-  fun ArgLineProperty() = runBlocking {
+  fun ArgLineProperty() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><properties>
       <argLine>-DsomeProp=Hello</argLine>
@@ -537,13 +540,13 @@ org.jetbrains:annotations
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
     javaParameters.vmParametersList.add("-ea")
-    patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
     assertEquals(mutableListOf("-ea", "-DsomeProp=Hello", "-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces"),
                  javaParameters.vmParametersList.getList())
   }
 
   @Test
-  fun ResolvePropertiesUsingAt() = runBlocking {
+  fun ResolvePropertiesUsingAt() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -571,353 +574,8 @@ org.jetbrains:annotations
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
     javaParameters.vmParametersList.add("-ea")
-    patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
     assertEquals(mutableListOf("-ea", "-Dfoo=bar"),
                  javaParameters.vmParametersList.getList())
-  }
-
-  @Test
-  fun `should replace test dependency on dependency with classifier`() = runBlocking {
-    Registry.get("maven.build.additional.jars").setValue("true", getTestRootDisposable())
-    val lib = createModulePom("library", """
-      <parent>
-        <groupId>test</groupId>
-        <artifactId>parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-    </parent>
-
-    <artifactId>library</artifactId>
-
-    <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.2</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>test-jar</goal>
-                        </goals>
-                        <configuration>
-                            <classifier>some-classifier</classifier>
-                            <skipIfEmpty>true</skipIfEmpty>
-                            <includes>
-                                <include>included/**</include>
-                            </includes>
-                            <excludes>
-                                <exclude>excluded/**</exclude>
-                            </excludes>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-""")
-
-    val app = createModulePom("application", """
-      <parent>
-        <groupId>test</groupId>
-        <artifactId>parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-    </parent>
-    <artifactId>application</artifactId>
-    <packaging>jar</packaging>
-    <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-    <dependencies>
-        <dependency>
-            <groupId>test</groupId>
-            <artifactId>library</artifactId>
-            <classifier>some-classifier</classifier>
-            <type>test-jar</type>
-            <scope>compile</scope>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
-    </dependencies>
-""")
-
-    importProjectAsync("""
-      <groupId>test</groupId>
-      <artifactId>parent</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
-      <packaging>pom</packaging>
-      <modules>
-          <module>library</module>
-          <module>application</module>
-      </modules>
-""")
-
-    val module = getModule("application")
-    val mavenJUnitPatcher = MavenJUnitPatcher()
-    val javaParameters = JavaParameters()
-    javaParameters.vmParametersList.add("-ea")
-    javaParameters.classPath.add(buildDir("application/target/classes"))
-    javaParameters.classPath.add(buildDir("application/target/test-classes"))
-    javaParameters.classPath.add(buildDir("library/target/classes"))
-    javaParameters.classPath.add(buildDir("library/target/test-classes"))
-    patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
-
-    val pathList = javaParameters.classPath.pathList.mapNotNull {
-      getRelativePath(projectPath, it)
-    }
-    assertOrderedEquals(
-      pathList,
-      "application/target/classes",
-      "application/target/test-classes",
-      "library/target/classes",
-      "library/target/test-classes-jar-some-classifier"
-    )
-  }
-
-
-  @Test
-  fun `should add classpath compile dependency on dependency with classifier if two classifiers are present`() = runBlocking {
-    Registry.get("maven.build.additional.jars").setValue("true", getTestRootDisposable())
-    val lib = createModulePom("library", """
-      <parent>
-        <groupId>test</groupId>
-        <artifactId>parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-    </parent>
-
-    <artifactId>library</artifactId>
-
-    <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.2</version>
-                <executions>
-                    <execution>
-                        <id>default-jar</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <excludes>
-                                <exclude>excluded-another/**</exclude>
-                            </excludes>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>some-execution</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <classifier>some-classifier</classifier>
-                            <skipIfEmpty>true</skipIfEmpty>
-                            <includes>
-                                <include>included/**</include>
-                            </includes>
-                            <excludes>
-                                <exclude>excluded/**</exclude>
-                            </excludes>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-""")
-
-    val app = createModulePom("application", """
-      <parent>
-        <groupId>test</groupId>
-        <artifactId>parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-    </parent>
-    <artifactId>application</artifactId>
-    <packaging>jar</packaging>
-    <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-    <dependencies>
-        <dependency>
-            <groupId>test</groupId>
-            <artifactId>library</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>test</groupId>
-            <artifactId>library</artifactId>
-            <classifier>some-classifier</classifier> 
-            <scope>compile</scope>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
-    </dependencies>
-""")
-
-    importProjectAsync("""
-      <groupId>test</groupId>
-      <artifactId>parent</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
-      <packaging>pom</packaging>
-      <modules>
-          <module>library</module>
-          <module>application</module>
-      </modules>
-""")
-
-    val module = getModule("application")
-    val mavenJUnitPatcher = MavenJUnitPatcher()
-    val javaParameters = JavaParameters()
-    javaParameters.vmParametersList.add("-ea")
-    javaParameters.classPath.add(buildDir("application/target/classes"))
-    javaParameters.classPath.add(buildDir("application/target/test-classes"))
-    javaParameters.classPath.add(buildDir("library/target/classes"))
-    patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
-
-    val pathList = javaParameters.classPath.pathList.mapNotNull {
-      getRelativePath(projectPath, it)
-    }
-    assertOrderedEquals(
-      pathList,
-      "application/target/classes",
-      "application/target/test-classes",
-      "library/target/classes",
-      "library/target/classes-jar-some-classifier",
-    )
-  }
-
-  @Test
-  fun `should replace classpath compile dependency on dependency with classifier`() = runBlocking {
-    Registry.get("maven.build.additional.jars").setValue("true", getTestRootDisposable())
-    val lib = createModulePom("library", """
-      <parent>
-        <groupId>test</groupId>
-        <artifactId>parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-    </parent>
-
-    <artifactId>library</artifactId>
-
-    <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.2</version>
-                <executions>
-                    <execution>
-                        <id>default-jar</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <excludes>
-                                <exclude>excluded-another/**</exclude>
-                            </excludes>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>some-execution</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <classifier>some-classifier</classifier>
-                            <skipIfEmpty>true</skipIfEmpty>
-                            <includes>
-                                <include>included/**</include>
-                            </includes>
-                            <excludes>
-                                <exclude>excluded/**</exclude>
-                            </excludes>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-""")
-
-    val app = createModulePom("application", """
-      <parent>
-        <groupId>test</groupId>
-        <artifactId>parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-    </parent>
-    <artifactId>application</artifactId>
-    <packaging>jar</packaging>
-    <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-    <dependencies>
-        <dependency>
-            <groupId>test</groupId>
-            <artifactId>library</artifactId>
-            <classifier>some-classifier</classifier> 
-            <scope>compile</scope>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
-    </dependencies>
-""")
-
-    importProjectAsync("""
-      <groupId>test</groupId>
-      <artifactId>parent</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
-      <packaging>pom</packaging>
-      <modules>
-          <module>library</module>
-          <module>application</module>
-      </modules>
-""")
-
-    val module = getModule("application")
-    val mavenJUnitPatcher = MavenJUnitPatcher()
-    val javaParameters = JavaParameters()
-    javaParameters.vmParametersList.add("-ea")
-    javaParameters.classPath.add(buildDir("application/target/classes"))
-    javaParameters.classPath.add(buildDir("application/target/test-classes"))
-    javaParameters.classPath.add(buildDir("library/target/classes"))
-    patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
-
-    val pathList = javaParameters.classPath.pathList.mapNotNull {
-      getRelativePath(projectPath, it)
-    }
-    assertOrderedEquals(
-      pathList,
-      "application/target/classes",
-      "application/target/test-classes",
-      "library/target/classes-jar-some-classifier",
-    )
-  }
-
-  private fun buildDir(path: String): String {
-    return Paths.get(projectPath.toString(), path).toCanonicalPath().toString()
-  }
-
-  private suspend fun patchJavaParameters(mavenJUnitPatcher: MavenJUnitPatcher, module: Module, javaParameters: JavaParameters) {
-    readAction { mavenJUnitPatcher.patchJavaParameters(module, javaParameters) }
   }
 }

@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.youtrack;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -49,8 +48,9 @@ public class YouTrackRepositoryEditor extends BaseRepositoryEditor<YouTrackRepos
     super.apply();
   }
 
+  @Nullable
   @Override
-  protected @Nullable JComponent createCustomPanel() {
+  protected JComponent createCustomPanel() {
     mySearchLabel = new JBLabel(TaskBundle.message("label.search"), SwingConstants.RIGHT);
     myDefaultSearch = new LanguageTextField(YouTrackLanguage.INSTANCE, myProject, myRepository.getDefaultSearch());
     installListener(myDefaultSearch);
@@ -58,7 +58,7 @@ public class YouTrackRepositoryEditor extends BaseRepositoryEditor<YouTrackRepos
   }
 
   @Override
-  public void setAnchor(final @Nullable JComponent anchor) {
+  public void setAnchor(@Nullable final JComponent anchor) {
     super.setAnchor(anchor);
     mySearchLabel.setAnchor(anchor);
   }

@@ -144,7 +144,9 @@ public final class FileGroup {
     for (final UpdatedFile file : myFiles) {
       Element path = new Element(PATH);
       path.setText(file.getPath());
-      path.setAttribute(VCS_ATTRIBUTE, file.getVcsName());
+      if (file.getVcsName() != null) {
+        path.setAttribute(VCS_ATTRIBUTE, file.getVcsName());
+      }
       if (file.getRevision() != null) {
         path.setAttribute(REVISION_ATTRIBUTE, file.getRevision());
       }
@@ -197,7 +199,6 @@ public final class FileGroup {
     return myUpdateName;
   }
 
-  @Override
   public String toString() {
     return myId + " " + myFiles.size() + " items: " + myFiles;
   }
@@ -214,7 +215,7 @@ public final class FileGroup {
   private static @Nullable VcsRevisionNumber getRevision(final ProjectLevelVcsManager vcsManager, final UpdatedFile file) {
     final String vcsName = file.getVcsName();
     final String revision = file.getRevision();
-    if (revision != null) {
+    if (vcsName != null && revision != null) {
       AbstractVcs vcs = vcsManager.findVcsByName(vcsName);
       if (vcs != null) {
         try {
@@ -231,7 +232,7 @@ public final class FileGroup {
   @ApiStatus.Internal
   public static final class UpdatedFile {
     private final String myPath;
-    private final @NotNull String myVcsName;
+    private final String myVcsName;
     private final String myRevision;
 
     UpdatedFile(final String path, final @NotNull VcsKey vcsKey, final String revision) {
@@ -250,7 +251,7 @@ public final class FileGroup {
       return myPath;
     }
 
-    public @NotNull String getVcsName() {
+    public String getVcsName() {
       return myVcsName;
     }
 

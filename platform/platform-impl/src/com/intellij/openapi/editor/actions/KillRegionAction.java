@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.ide.KillRingTransferable;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Stands for emacs <a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Other-Kill-Commands.html">kill-region</a> command.
@@ -11,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus;
  * <p/>
  * Thread-safe. 
  */
-@ApiStatus.Internal
 public final class KillRegionAction extends TextComponentEditorAction {
 
   public KillRegionAction() {

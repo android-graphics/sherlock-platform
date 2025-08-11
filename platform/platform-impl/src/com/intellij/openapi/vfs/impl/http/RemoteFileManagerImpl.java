@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpVirtualFileListener;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Url;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@ApiStatus.Internal
 public final class RemoteFileManagerImpl extends RemoteFileManager implements Disposable {
   private final LocalFileStorage myStorage;
 

@@ -20,15 +20,18 @@ public final class PyFunctionNameIndex extends StringStubIndexExtension<PyFuncti
   public static final StubIndexKey<String, PyFunction> KEY = StubIndexKey.createIndexKey("Py.function.shortName");
 
   @Override
-  public @NotNull StubIndexKey<String, PyFunction> getKey() {
+  @NotNull
+  public StubIndexKey<String, PyFunction> getKey() {
     return KEY;
   }
 
-  public static @NotNull Collection<PyFunction> find(String name, Project project, GlobalSearchScope scope) {
+  @NotNull
+  public static Collection<PyFunction> find(String name, Project project, GlobalSearchScope scope) {
     return StubIndex.getElements(KEY, name, project, scope, PyFunction.class);
   }
 
-  public static @NotNull Collection<PyFunction> find(String name, Project project) {
+  @NotNull
+  public static Collection<PyFunction> find(String name, Project project) {
     return StubIndex.getElements(KEY, name, project, ProjectScope.getAllScope(project), PyFunction.class);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.context;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -20,12 +20,15 @@ public abstract class WorkingContextProvider {
    *
    * @return provider's name
    */
-  public abstract @NotNull String getId();
+  @NotNull
+  public abstract String getId();
 
   /**
    * Short description (for UI).
    */
-  public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription();
+  @NotNull
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  public abstract String getDescription();
 
   /**
    * Saves a component's state.

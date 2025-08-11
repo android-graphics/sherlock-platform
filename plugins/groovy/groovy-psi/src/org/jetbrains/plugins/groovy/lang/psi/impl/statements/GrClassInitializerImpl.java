@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
@@ -42,7 +42,8 @@ public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrCl
   }
 
   @Override
-  public @NotNull GrOpenBlock getBlock() {
+  @NotNull
+  public GrOpenBlock getBlock() {
     return findNotNullChildByClass(GrOpenBlock.class);
   }
 
@@ -70,7 +71,8 @@ public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrCl
   }
 
   @Override
-  public @NotNull GrModifierList getModifierList() {
+  @NotNull
+  public GrModifierList getModifierList() {
     return findNotNullChildByClass(GrModifierList.class);
   }
 
@@ -79,13 +81,15 @@ public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrCl
     return getModifierList().hasModifierProperty(name);
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiCodeBlock getBody() {
+  public PsiCodeBlock getBody() {
     return PsiImplUtil.getOrCreatePsiCodeBlock(getBlock());
   }
 
+  @Nullable
   @Override
-  protected @Nullable Icon getElementIcon(int flags) {
+  protected Icon getElementIcon(int flags) {
     return IconManager
       .getInstance().createLayeredIcon(this, JetgroovyIcons.Groovy.ClassInitializer, ElementPresentationUtil.getFlags(this, false));
   }

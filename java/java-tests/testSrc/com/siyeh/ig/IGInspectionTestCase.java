@@ -16,6 +16,7 @@
 package com.siyeh.ig;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.JavaInspectionTestCase;
 
 /**

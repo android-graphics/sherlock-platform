@@ -39,8 +39,9 @@ public class PyFromImportSourceReference extends PyImportReference {
     assert myStatement != null;
   }
 
+  @NotNull
   @Override
-  protected @NotNull List<RatedResolveResult> resolveInner() {
+  protected List<RatedResolveResult> resolveInner() {
     List<PsiElement> targets = ResolveImportUtil.resolveFromImportStatementSource(myStatement, myElement.asQualifiedName());
     return ResolveImportUtil.rateResults(targets);
   }

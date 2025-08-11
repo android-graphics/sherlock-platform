@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.Disposable;
@@ -9,7 +23,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -22,7 +39,6 @@ import java.util.Iterator;
 /**
  * author: lesya
  */
-@ApiStatus.Internal
 public abstract class AbstractTreeNode extends DefaultMutableTreeNode {
   protected static final ArrayList<File> EMPTY_FILE_ARRAY = new ArrayList<>();
   DefaultTreeModel myTreeModel;
@@ -52,7 +68,8 @@ public abstract class AbstractTreeNode extends DefaultMutableTreeNode {
     myErrorText = errorText;
   }
 
-  public @Nls String getErrorText() {
+  @Nls
+  public String getErrorText() {
     return myErrorText;
   }
 
@@ -91,7 +108,8 @@ public abstract class AbstractTreeNode extends DefaultMutableTreeNode {
   public AbstractTreeNode() {
   }
 
-  public @Nls String getText() {
+  @Nls
+  public String getText() {
     @Nls StringBuilder result = new StringBuilder();
     result.append(getName());
     if (showStatistics()) {
@@ -102,23 +120,30 @@ public abstract class AbstractTreeNode extends DefaultMutableTreeNode {
     return result.toString();
   }
 
-  private static @Nls String getStatistics(int itemsCount) {
+  @Nls
+  private static String getStatistics(int itemsCount) {
     return VcsBundle.message("update.tree.node.size.statistics", itemsCount);
   }
 
-  protected abstract @Nls @NotNull String getName();
+  @Nls
+  @NotNull
+  protected abstract String getName();
 
   protected abstract int getItemsCount();
 
   protected abstract boolean showStatistics();
 
-  public abstract @NonNls Icon getIcon(boolean expanded);
+  @NonNls
+  public abstract Icon getIcon(boolean expanded);
 
-  public abstract @NotNull Collection<VirtualFile> getVirtualFiles();
+  @NotNull
+  public abstract Collection<VirtualFile> getVirtualFiles();
 
-  public abstract @NotNull Collection<File> getFiles();
+  @NotNull
+  public abstract Collection<File> getFiles();
 
-  public abstract @NotNull SimpleTextAttributes getAttributes();
+  @NotNull
+  public abstract SimpleTextAttributes getAttributes();
 
   public abstract boolean getSupportsDeletion();
 }

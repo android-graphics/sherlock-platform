@@ -3,8 +3,7 @@ package com.intellij.openapi.project.impl.navigation
 
 import com.intellij.navigation.LocationInFile
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -50,7 +49,7 @@ abstract class NavigationTestBase {
           navigationAction()
         }
         withContext(Dispatchers.EDT) {
-          writeIntentReadAction { checkAction() }
+          checkAction()
         }
       }
     }
@@ -61,7 +60,7 @@ abstract class NavigationTestBase {
     val basePath = Path.of(project.basePath!!)
     val moduleManager = ModuleManager.getInstance(project)
     val projectManager = ProjectRootManagerEx.getInstanceEx(project)
-    edtWriteAction {
+    writeAction {
       projectManager.mergeRootsChangesDuring {
         val newModule = moduleManager.newModule(
           basePath.resolve("navigationModule.iml").invariantSeparatorsPathString,

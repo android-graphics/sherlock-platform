@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -23,12 +23,13 @@ import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
 
-@ApiStatus.Internal
 public final class VirtualFilePointerContainerImpl extends TraceableDisposable implements VirtualFilePointerContainer, Disposable {
   private static final Logger LOG = Logger.getInstance(VirtualFilePointerContainer.class);
   private static final int UNINITIALIZED = -1;
@@ -46,8 +47,7 @@ public final class VirtualFilePointerContainerImpl extends TraceableDisposable i
   public static final @NonNls String JAR_DIRECTORY_ELEMENT = "jarDirectory";
   public static final @NonNls String RECURSIVE_ATTR = "recursive";
 
-  @ApiStatus.Internal
-  public VirtualFilePointerContainerImpl(@NotNull VirtualFilePointerManager manager,
+  VirtualFilePointerContainerImpl(@NotNull VirtualFilePointerManager manager,
                                   @NotNull Disposable parentDisposable,
                                   @Nullable VirtualFilePointerListener listener) {
     super(TRACE_CREATION && !ApplicationManagerEx.isInStressTest());
@@ -412,7 +412,7 @@ public final class VirtualFilePointerContainerImpl extends TraceableDisposable i
   }
 
   @Override
-  public @Unmodifiable @NotNull List<Pair<String, Boolean>> getJarDirectories() {
+  public @NotNull List<Pair<String, Boolean>> getJarDirectories() {
     List<Pair<String, Boolean>> jars = ContainerUtil.map(myJarDirectories, ptr -> Pair.create(ptr.getUrl(), false));
     List<Pair<String, Boolean>> recJars = ContainerUtil.map(myJarRecursiveDirectories, ptr -> Pair.create(ptr.getUrl(), true));
     return ContainerUtil.concat(jars, recJars);

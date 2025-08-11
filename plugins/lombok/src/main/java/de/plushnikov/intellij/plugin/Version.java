@@ -14,7 +14,7 @@ public interface Version {
   /**
    * Current version of lombok plugin
    */
-  @NonNls String LAST_LOMBOK_VERSION = "1.18.34";
+  @NonNls String LAST_LOMBOK_VERSION = "1.18.30";
 
   @NonNls String LAST_LOMBOK_VERSION_WITH_JPS_FIX = "1.18.16";
   @NonNls String LOMBOK_VERSION_WITH_JDK16_FIX = "1.18.20";
@@ -31,7 +31,8 @@ public interface Version {
     }
   }
 
-  static @Nullable String parseLombokVersion(@Nullable OrderEntry orderEntry) {
+  @Nullable
+  static String parseLombokVersion(@Nullable OrderEntry orderEntry) {
     String result = null;
     if (orderEntry != null) {
       final String presentableName = orderEntry.getPresentableName();

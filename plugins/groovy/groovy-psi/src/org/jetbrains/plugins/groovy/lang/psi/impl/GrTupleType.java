@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -36,8 +36,9 @@ public abstract class GrTupleType extends GrLiteralClassType {
     super(LanguageLevel.JDK_1_5, context);
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getJavaClassName() {
+  protected String getJavaClassName() {
     return CommonClassNames.JAVA_UTIL_LIST;
   }
 
@@ -47,7 +48,8 @@ public abstract class GrTupleType extends GrLiteralClassType {
   }
 
   @Override
-  public @NotNull String getInternalCanonicalText() {
+  @NotNull
+  public String getInternalCanonicalText() {
     List<PsiType> types = getComponentTypes();
 
     StringBuilder builder = new StringBuilder();
@@ -65,7 +67,6 @@ public abstract class GrTupleType extends GrLiteralClassType {
     return builder.toString();
   }
 
-  @Override
   public boolean equals(Object obj) {
     if (obj instanceof GrTupleType) {
       List<PsiType> componentTypes = getComponentTypes();
@@ -95,7 +96,8 @@ public abstract class GrTupleType extends GrLiteralClassType {
     return super.isAssignableFrom(type);
   }
 
-  public @NotNull List<PsiType> getComponentTypes() {
+  @NotNull
+  public List<PsiType> getComponentTypes() {
     return myComponents.getValue();
   }
 
@@ -103,10 +105,12 @@ public abstract class GrTupleType extends GrLiteralClassType {
     return getComponentTypes().toArray(PsiType.EMPTY_ARRAY);
   }
 
-  protected abstract @NotNull List<PsiType> inferComponents();
+  @NotNull
+  protected abstract List<PsiType> inferComponents();
 
+  @NotNull
   @Override
-  public @NotNull PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
+  public PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
     return new GrImmediateTupleType(getComponentTypes(), myFacade, getResolveScope());
   }
 }

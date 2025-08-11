@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
@@ -24,7 +24,6 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ClearableClassValue;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +35,6 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Infers classes of elements for inspection visitors to skip some of the PSI elements during inspection pass.
@@ -56,8 +54,8 @@ public final class InspectionVisitorOptimizer {
     myTargetPsiClasses = getTargetPsiClasses(elements);
   }
 
-  @ApiStatus.Internal
-  public static @NotNull @Unmodifiable List<? extends Class<?>> getAcceptingPsiTypes(@NotNull PsiElementVisitor visitor) {
+  @NotNull @Unmodifiable
+  static List<? extends Class<?>> getAcceptingPsiTypes(@NotNull PsiElementVisitor visitor) {
     if (!useOptimizedVisitors) return ALL_ELEMENTS_VISIT_LIST;
 
     List<? extends Class<?>> acceptingPsiTypes;
@@ -82,14 +80,6 @@ public final class InspectionVisitorOptimizer {
     return acceptingPsiTypes;
   }
 
-  private static final Function<Class<?>, Collection<Class<?>>> TARGET_PSI_CLASSES_INIT = aSuper -> {
-    List<Class<?>> c = new ArrayList<>(10);
-    if (!aSuper.isInterface() && !Modifier.isAbstract(aSuper.getModifiers())) { // PSI elements in the tree cannot be abstract
-      c.add(aSuper);
-    }
-    return c;
-  };
-
   private static @NotNull Map<Class<?>, Collection<Class<?>>> getTargetPsiClasses(@NotNull List<? extends PsiElement> elements) {
     if (!useOptimizedVisitors) return Collections.emptyMap();
 
@@ -102,7 +92,13 @@ public final class InspectionVisitorOptimizer {
       // this check guarantees that items are unique in value collections, so we can use simple lists inside
       if (uniqueElementClasses.add(elementClass)) {
         for (Class<?> aSuper : SELF_AND_SUPERS.get(elementClass)) {
-          Collection<Class<?>> classes = targetPsiClasses.computeIfAbsent(aSuper, TARGET_PSI_CLASSES_INIT);
+          Collection<Class<?>> classes = targetPsiClasses.computeIfAbsent(aSuper, aClass -> {
+            List<Class<?>> c = new ArrayList<>(10);
+            if (!aSuper.isInterface() && !Modifier.isAbstract(aSuper.getModifiers())) { // PSI elements in the tree cannot be abstract
+              c.add(aSuper);
+            }
+            return c;
+          });
           classes.add(elementClass);
         }
       }
@@ -133,14 +129,9 @@ public final class InspectionVisitorOptimizer {
     return accepts;
   }
 
-  @ApiStatus.Internal
-  public static void clearCache() {
-    SELF_AND_SUPERS.clear();
-  }
-
-  private static final ClearableClassValue<Class<?>[]> SELF_AND_SUPERS = new ClearableClassValue<>() {
+  private static final ClassValue<Class<?>[]> SELF_AND_SUPERS = new ClassValue<>() {
     @Override
-    public Class<?> @NotNull [] computeValueImpl(@NotNull Class<?> type) {
+    protected Class<?> @NotNull [] computeValue(@NotNull Class<?> type) {
       return getAllSupers(type);
     }
 
@@ -196,8 +187,7 @@ public final class InspectionVisitorOptimizer {
     acceptElements(elements, acceptingPsiTypes, element -> element.accept(elementVisitor));
   }
 
-  @ApiStatus.Internal
-  public void acceptElements(@NotNull List<? extends PsiElement> elements,
+  void acceptElements(@NotNull List<? extends PsiElement> elements,
                       @NotNull List<? extends Class<?>> acceptingPsiTypes,
                       @NotNull Consumer<? super PsiElement> consumer) {
     if (acceptingPsiTypes == ALL_ELEMENTS_VISIT_LIST) {

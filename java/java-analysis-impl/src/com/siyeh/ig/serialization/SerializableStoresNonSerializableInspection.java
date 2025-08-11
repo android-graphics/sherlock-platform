@@ -1,9 +1,23 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.siyeh.ig.serialization;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -17,8 +31,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class SerializableStoresNonSerializableInspection extends BaseInspection {
 
+  @NotNull
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  protected String buildErrorString(Object... infos) {
     final PsiElement classOrLambda = (PsiElement)infos[0];
     final PsiType type = (PsiType)infos[1];
     if (classOrLambda instanceof PsiClass aClass) {
@@ -71,7 +86,8 @@ public final class SerializableStoresNonSerializableInspection extends BaseInspe
     }
 
     private class LocalVariableReferenceFinder extends JavaRecursiveElementWalkingVisitor {
-      private final @NotNull PsiElement myClassOrLambda;
+      @NotNull
+      private final PsiElement myClassOrLambda;
 
       LocalVariableReferenceFinder(@NotNull PsiElement classOrLambda) {
         myClassOrLambda = classOrLambda;
@@ -94,7 +110,7 @@ public final class SerializableStoresNonSerializableInspection extends BaseInspe
         final PsiVariable variable = (PsiVariable)target;
         if (!variable.hasModifierProperty(PsiModifier.FINAL)) {
           if (!PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, variable) ||
-              !ControlFlowUtil.isEffectivelyFinal(variable, myClassOrLambda)) {
+              !HighlightControlFlowUtil.isEffectivelyFinal(variable, myClassOrLambda, expression)) {
             // don't warn on uncompilable code.
             return;
           }

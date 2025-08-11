@@ -71,7 +71,7 @@ public final class JsonReaderEx implements Closeable {
    * This is populated before a numeric value is parsed and used if that parsing
    * fails.
    */
-  private CharSequence peekedString;
+  private String peekedString;
 
   /*
    * The nesting stack. Using a manual array rather than an ArrayList saves 20%.
@@ -672,13 +672,13 @@ public final class JsonReaderEx implements Closeable {
     }
     String result;
     if (p == PEEKED_UNQUOTED_NAME) {
-      result = nextUnquotedValue().toString();
+      result = nextUnquotedValue();
     }
     else if (p == PEEKED_SINGLE_QUOTED_NAME) {
-      result = nextQuotedValue('\'').toString();
+      result = nextQuotedValue('\'');
     }
     else if (p == PEEKED_DOUBLE_QUOTED_NAME) {
-      result = nextQuotedValue('"').toString();
+      result = nextQuotedValue('"');
     }
     else {
       if (p != PEEKED_END_OBJECT && p != PEEKED_END_ARRAY) {
@@ -713,33 +713,20 @@ public final class JsonReaderEx implements Closeable {
     return nextString(false);
   }
 
-  public String nextString(boolean anyPrimitiveAsString) {
-    return nextCharSequence(anyPrimitiveAsString).toString();
-  }
-
-  public CharSequence nextCharSequence() {
-    return nextCharSequence(false);
-  }
-
   /**
    * Returns the {@link JsonToken#STRING string} value of the next token,
    * consuming it. If the next token is a number, this method will return its
    * string form.
-   * <p>
-   * Depending on the implementation of {@link CharSequence} for the {@link JsonReaderEx#sourceSequence}
-   * (and the input data, of course), this method can be more efficient,
-   * avoiding unnecessary allocations. This may be useful when the source JSON
-   * contains very long strings that are immediately transformed after parsing.
    *
    * @throws IllegalStateException if the next token is not a string or if
    *     this reader is closed.
    */
-  public CharSequence nextCharSequence(boolean anyPrimitiveAsString) {
+  public String nextString(boolean anyPrimitiveAsString) {
     int p = peeked;
     if (p == PEEKED_NONE) {
       p = doPeek();
     }
-    CharSequence result;
+    String result;
     if (p == PEEKED_UNQUOTED) {
       result = nextUnquotedValue();
     }
@@ -842,7 +829,7 @@ public final class JsonReaderEx implements Closeable {
 
     if (p == PEEKED_NUMBER) {
       int end = position + peekedNumberLength;
-      peekedString = sourceSequence.subSequence(position, end);
+      peekedString = sourceSequence.subSequence(position, end).toString();
       position = end;
     }
     else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED) {
@@ -856,7 +843,7 @@ public final class JsonReaderEx implements Closeable {
     }
 
     peeked = PEEKED_BUFFERED;
-    double result = Double.parseDouble(peekedString.toString()); // don't catch this NumberFormatException.
+    double result = Double.parseDouble(peekedString); // don't catch this NumberFormatException.
     if (!lenient && (Double.isNaN(result) || Double.isInfinite(result))) {
       throw createParseError("JSON forbids NaN and infinities: " + result);
     }
@@ -888,13 +875,13 @@ public final class JsonReaderEx implements Closeable {
 
     if (p == PEEKED_NUMBER) {
       int end = position + peekedNumberLength;
-      peekedString = sourceSequence.subSequence(position, end);
+      peekedString = sourceSequence.subSequence(position, end).toString();
       position = end;
     }
     else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED) {
-      peekedString = nextQuotedValue(p == PEEKED_SINGLE_QUOTED ? '\'' : '"').toString();
+      peekedString = nextQuotedValue(p == PEEKED_SINGLE_QUOTED ? '\'' : '"');
       try {
-        long result = Long.parseLong(peekedString.toString());
+        long result = Long.parseLong(peekedString);
         peeked = PEEKED_NONE;
         return result;
       }
@@ -907,7 +894,7 @@ public final class JsonReaderEx implements Closeable {
     }
 
     peeked = PEEKED_BUFFERED;
-    double asDouble = Double.parseDouble(peekedString.toString()); // don't catch this NumberFormatException.
+    double asDouble = Double.parseDouble(peekedString); // don't catch this NumberFormatException.
     long result = (long)asDouble;
     if (result != asDouble) { // Make sure no precision was lost casting to 'long'.
       throw new NumberFormatException("Expected a long but was " + peekedString
@@ -928,7 +915,7 @@ public final class JsonReaderEx implements Closeable {
    * @throws NumberFormatException if any unicode escape sequences are
    *     malformed.
    */
-  private CharSequence nextQuotedValue(char quote) {
+  private String nextQuotedValue(char quote) {
     // Like nextNonWhitespace, this uses locals 'p' and 'l' to save inner-loop field access.
     CharSequence in = this.sourceSequence;
 
@@ -942,7 +929,7 @@ public final class JsonReaderEx implements Closeable {
       if (c == quote) {
         position = p;
         if (builder == null) {
-          return in.subSequence(start, p - 1);
+          return in.subSequence(start, p - 1).toString();
         }
         else {
           return builder.append(in, start, p - 1).toString();
@@ -977,7 +964,7 @@ public final class JsonReaderEx implements Closeable {
   /**
    * Returns an unquoted value as a string.
    */
-  private CharSequence nextUnquotedValue() {
+  private String nextUnquotedValue() {
     int i = position;
     findNonLiteralCharacter:
     for (; i < limit; i++) {
@@ -1003,7 +990,7 @@ public final class JsonReaderEx implements Closeable {
       }
     }
 
-    CharSequence result = sourceSequence.subSequence(position, i);
+    String result = sourceSequence.subSequence(position, i).toString();
     position = i;
     return result;
   }
@@ -1092,13 +1079,13 @@ public final class JsonReaderEx implements Closeable {
 
     if (p == PEEKED_NUMBER) {
       int end = position + peekedNumberLength;
-      peekedString = sourceSequence.subSequence(position, end);
+      peekedString = sourceSequence.subSequence(position, end).toString();
       position = end;
     }
     else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED) {
       peekedString = nextQuotedValue(p == PEEKED_SINGLE_QUOTED ? '\'' : '"');
       try {
-        result = Integer.parseInt(peekedString.toString());
+        result = Integer.parseInt(peekedString);
         peeked = PEEKED_NONE;
         return result;
       }
@@ -1111,7 +1098,7 @@ public final class JsonReaderEx implements Closeable {
     }
 
     peeked = PEEKED_BUFFERED;
-    double asDouble = Double.parseDouble(peekedString.toString()); // don't catch this NumberFormatException.
+    double asDouble = Double.parseDouble(peekedString); // don't catch this NumberFormatException.
     result = (int)asDouble;
     if (result != asDouble) { // Make sure no precision was lost casting to 'int'.
       throw new NumberFormatException("Expected an int but was " + peekedString

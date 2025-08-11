@@ -34,7 +34,8 @@ import org.jetbrains.annotations.NotNull;
 public final class ConditionalExpressionWithIdenticalBranchesInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("conditional.expression.with.identical.branches.problem.descriptor");
   }
 
@@ -46,7 +47,8 @@ public final class ConditionalExpressionWithIdenticalBranchesInspection extends 
   private static class CollapseConditionalFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("conditional.expression.with.identical.branches.collapse.quickfix");
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.connection;
 
 import com.intellij.internal.statistic.config.EventLogOptions;
@@ -164,13 +164,15 @@ public class EventLogStatisticsService implements StatisticsService {
     return machineId;
   }
 
-  private static @NotNull EventLogBuildType getDefaultBuildType(boolean isEap) {
+  @NotNull
+  private static EventLogBuildType getDefaultBuildType(boolean isEap) {
     return isEap ? EventLogBuildType.EAP : EventLogBuildType.RELEASE;
   }
 
-  private static @NotNull String loadAndLogResponse(@NotNull DataCollectorDebugLogger logger,
-                                                    @NotNull StatsHttpResponse response,
-                                                    @NotNull File file) throws IOException {
+  @NotNull
+  private static String loadAndLogResponse(@NotNull DataCollectorDebugLogger logger,
+                                           @NotNull StatsHttpResponse response,
+                                           @NotNull File file) throws IOException {
     String message = response.readAsString();
     String content = message != null ? message : Integer.toString(response.getStatusCode());
 
@@ -180,7 +182,8 @@ public class EventLogStatisticsService implements StatisticsService {
     return content;
   }
 
-  private static @Nullable ValidationErrorInfo validate(@Nullable LogEventRecordRequest request, @NotNull File file) {
+  @Nullable
+  private static ValidationErrorInfo validate(@Nullable LogEventRecordRequest request, @NotNull File file) {
     if (request == null) {
       return new ValidationErrorInfo("File is empty or has invalid format: " + file.getName(), 1);
     }
@@ -206,7 +209,8 @@ public class EventLogStatisticsService implements StatisticsService {
     return null;
   }
 
-  protected static @NotNull List<EventLogFile> getLogFiles(@NotNull EventLogSendConfig config, @NotNull DataCollectorDebugLogger logger) {
+  @NotNull
+  protected static List<EventLogFile> getLogFiles(@NotNull EventLogSendConfig config, @NotNull DataCollectorDebugLogger logger) {
     try {
       return config.getFilesToSendProvider().getFilesToSend();
     }
@@ -250,7 +254,8 @@ public class EventLogStatisticsService implements StatisticsService {
       return myCode;
     }
 
-    private @NotNull String getMessage() {
+    @NotNull
+    private String getMessage() {
       return myError;
     }
   }
@@ -281,8 +286,9 @@ public class EventLogStatisticsService implements StatisticsService {
       myErrors.add(error);
     }
 
+    @NotNull
     @Override
-    public @NotNull StatisticsResult onFinished() {
+    public StatisticsResult onFinished() {
       if (myListener != null) {
         myListener.onLogsSend(mySuccessfullySentFiles, myErrors, myLocalFiles);
       }

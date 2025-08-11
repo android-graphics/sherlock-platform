@@ -48,8 +48,9 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     return GROUP;
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<MetricEvent> getMetrics() {
+  public Set<MetricEvent> getMetrics() {
     Set<MetricEvent> set = new HashSet<>();
 
     EditorSettingsExternalizable es = EditorSettingsExternalizable.getInstance();
@@ -347,8 +348,9 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
       return GROUP;
     }
 
+    @NotNull
     @Override
-    public @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
+    public Set<MetricEvent> getMetrics(@NotNull Project project) {
       Set<MetricEvent> set = new HashSet<>();
       CodeInsightWorkspaceSettings ciws = CodeInsightWorkspaceSettings.getInstance(project);
       CodeInsightWorkspaceSettings ciwsDefault = new CodeInsightWorkspaceSettings();

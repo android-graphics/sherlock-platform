@@ -6,7 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.registry.Registry
+import com.jetbrains.python.extensions.hasPython
 import com.jetbrains.python.packaging.PyPIPackageRanking
 import com.jetbrains.python.packaging.pip.PypiPackageCache
 import kotlinx.coroutines.Dispatchers
@@ -15,11 +15,12 @@ import kotlinx.coroutines.withContext
 class PythonPackagesUpdater : ProjectActivity {
 
   override suspend fun execute(project: Project) {
-    if (ApplicationManager.getApplication().isUnitTestMode || Registry.`is`("disable.python.cache.update")) return
+    if (ApplicationManager.getApplication().isUnitTestMode || !project.hasPython) return
     withContext(Dispatchers.IO) {
       thisLogger().debug("Updating PyPI cache and ranking")
       service<PyPIPackageRanking>().reload()
-      service<PypiPackageCache>().reloadCache()
+      service<PypiPackageCache>().loadCache()
     }
   }
+
 }

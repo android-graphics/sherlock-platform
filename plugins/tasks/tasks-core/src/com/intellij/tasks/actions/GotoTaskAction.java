@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
@@ -45,7 +45,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
   }
 
   @Override
-  protected void gotoActionPerformed(final @NotNull AnActionEvent e) {
+  protected void gotoActionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
     perform(project);
@@ -136,8 +136,9 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
+    @NotNull
     @Override
-    public @NotNull ListCellRenderer getListCellRenderer() {
+    public ListCellRenderer getListCellRenderer() {
       return myListCellRenderer;
     }
 

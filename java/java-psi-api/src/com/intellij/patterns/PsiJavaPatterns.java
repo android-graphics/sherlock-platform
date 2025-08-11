@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.patterns;
 
 import com.intellij.psi.*;
@@ -56,10 +70,10 @@ public class PsiJavaPatterns extends StandardPatterns{
     return psiLiteral(null);
   }
 
-  public static PsiJavaElementPattern.Capture<PsiLiteral> psiLiteral(final @Nullable ElementPattern<?> value) {
+  public static PsiJavaElementPattern.Capture<PsiLiteral> psiLiteral(@Nullable final ElementPattern<?> value) {
     return new PsiJavaElementPattern.Capture<>(new InitialPatternConditionPlus<PsiLiteral>(PsiLiteral.class) {
       @Override
-      public boolean accepts(final @Nullable Object o, final ProcessingContext context) {
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof PsiLiteral && (value == null || value.accepts(((PsiLiteral)o).getValue(), context));
       }
 
@@ -73,7 +87,7 @@ public class PsiJavaPatterns extends StandardPatterns{
   public static PsiJavaElementPattern.Capture<PsiNewExpression> psiNewExpression(final String @NotNull ... fqns) {
     return new PsiJavaElementPattern.Capture<>(new InitialPatternCondition<PsiNewExpression>(PsiNewExpression.class) {
       @Override
-      public boolean accepts(final @Nullable Object o, final ProcessingContext context) {
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         if (o instanceof PsiNewExpression) {
           PsiJavaCodeReferenceElement reference = ((PsiNewExpression)o).getClassOrAnonymousClassReference();
           if (reference != null) {
@@ -85,10 +99,10 @@ public class PsiJavaPatterns extends StandardPatterns{
     });
   }
 
-  public static PsiJavaElementPattern.Capture<PsiLiteralExpression> literalExpression(final @Nullable ElementPattern<?> value) {
+  public static PsiJavaElementPattern.Capture<PsiLiteralExpression> literalExpression(@Nullable final ElementPattern<?> value) {
     return new PsiJavaElementPattern.Capture<>(new InitialPatternConditionPlus<PsiLiteralExpression>(PsiLiteralExpression.class) {
       @Override
-      public boolean accepts(final @Nullable Object o, final ProcessingContext context) {
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof PsiLiteralExpression && (value == null || value.accepts(((PsiLiteralExpression)o).getValue(), context));
       }
 

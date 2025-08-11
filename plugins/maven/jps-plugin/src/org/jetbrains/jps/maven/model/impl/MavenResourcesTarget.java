@@ -1,10 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.maven.model.impl;
 
-import com.dynatrace.hash4j.hashing.HashSink;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.FileCollectionFactory;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
@@ -20,13 +19,13 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
  */
-@ApiStatus.Internal
-public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDescriptor> implements BuildTargetHashSupplier {
+public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDescriptor> {
   MavenResourcesTarget(@NotNull MavenResourcesTargetType type, @NotNull JpsModule module) {
     super(type, module);
   }
@@ -46,8 +45,9 @@ public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceR
     return true;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<MavenResourceRootDescriptor> computeRootDescriptors(@NotNull JpsModel model, @NotNull ModuleExcludeIndex index, @NotNull IgnoredFileIndex ignoredFileIndex, @NotNull BuildDataPaths dataPaths) {
+  public List<MavenResourceRootDescriptor> computeRootDescriptors(@NotNull JpsModel model, @NotNull ModuleExcludeIndex index, @NotNull IgnoredFileIndex ignoredFileIndex, @NotNull BuildDataPaths dataPaths) {
     // todo: should we honor ignored and excluded roots here?
     final List<MavenResourceRootDescriptor> result = new ArrayList<>();
 
@@ -69,7 +69,8 @@ public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceR
     return Collections.emptyList();
   }
 
-  public @Nullable MavenModuleResourceConfiguration getModuleResourcesConfiguration(BuildDataPaths dataPaths) {
+  @Nullable
+  public MavenModuleResourceConfiguration getModuleResourcesConfiguration(BuildDataPaths dataPaths) {
     final MavenProjectConfiguration projectConfig = JpsMavenExtensionService.getInstance().getMavenProjectConfiguration(dataPaths);
     if (projectConfig == null) return null;
     return projectConfig.moduleConfigurations.get(myModule.getName());
@@ -80,8 +81,9 @@ public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceR
     return ((MavenResourcesTargetType)getTargetType()).isTests();
   }
 
+  @Nullable
   @Override
-  public @Nullable MavenResourceRootDescriptor findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex) {
+  public MavenResourceRootDescriptor findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex) {
     for (MavenResourceRootDescriptor descriptor : rootIndex.getTargetRoots(this, null)) {
       if (descriptor.getRootId().equals(rootId)) {
         return descriptor;
@@ -90,13 +92,15 @@ public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceR
     return null;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPresentableName() {
+  public String getPresentableName() {
     return getTargetType().getTypeId() + ":" + myModule.getName();
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context) {
+  public Collection<File> getOutputRoots(@NotNull CompileContext context) {
     MavenModuleResourceConfiguration configuration =
       getModuleResourcesConfiguration(context.getProjectDescriptor().dataManager.getDataPaths());
     if (configuration == null) return Collections.emptyList();
@@ -112,11 +116,13 @@ public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceR
     return result;
   }
 
-  public @Nullable File getModuleOutputDir() {
+  @Nullable
+  public File getModuleOutputDir() {
     return JpsJavaExtensionService.getInstance().getOutputDirectory(myModule, isTests());
   }
 
-  public static @Nullable File getOutputDir(@Nullable File moduleOutput, ResourceRootConfiguration config, @Nullable String outputDirectory) {
+  @Nullable
+  public static File getOutputDir(@Nullable File moduleOutput, ResourceRootConfiguration config, @Nullable String outputDirectory) {
     if(outputDirectory != null) {
       moduleOutput = JpsPathUtil.urlToFile(outputDirectory);
     }
@@ -125,25 +131,20 @@ public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceR
       return null;
     }
     String targetPath = config.targetPath;
-    if (targetPath == null || targetPath.isBlank()) {
+    if (StringUtil.isEmptyOrSpaces(targetPath)) {
       return moduleOutput;
     }
-
-    File targetPathFile = new File(targetPath);
-    File outputFile = targetPathFile.isAbsolute() ? targetPathFile : new File(moduleOutput, targetPath);
-    return new File(FileUtilRt.toCanonicalPath(outputFile.getPath(), File.separatorChar, true));
+    final File targetPathFile = new File(targetPath);
+    final File outputFile = targetPathFile.isAbsolute() ? targetPathFile : new File(moduleOutput, targetPath);
+    return new File(FileUtil.toCanonicalPath(outputFile.getPath()));
   }
 
   @Override
-  public void computeConfigurationDigest(@NotNull ProjectDescriptor projectDescriptor, @NotNull HashSink hash) {
-    BuildDataPaths dataPaths = projectDescriptor.dataManager.getDataPaths();
-    MavenModuleResourceConfiguration configuration = getModuleResourcesConfiguration(dataPaths);
-    if (configuration == null) {
-      hash.putBoolean(false);
-    }
-    else {
-      hash.putBoolean(true);
-      configuration.computeConfigurationHash(isTests(), hash);
+  public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
+    final BuildDataPaths dataPaths = pd.getTargetsState().getDataPaths();
+    final MavenModuleResourceConfiguration configuration = getModuleResourcesConfiguration(dataPaths);
+    if (configuration != null) {
+      out.write(Integer.toHexString(configuration.computeConfigurationHash(isTests())));
     }
   }
 }

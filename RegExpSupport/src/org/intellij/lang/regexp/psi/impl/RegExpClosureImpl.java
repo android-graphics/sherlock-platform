@@ -36,14 +36,16 @@ public class RegExpClosureImpl extends RegExpElementImpl implements RegExpClosur
     }
 
     @Override
-    public @NotNull RegExpQuantifier getQuantifier() {
+    @NotNull
+    public RegExpQuantifier getQuantifier() {
         final ASTNode node = getNode().findChildByType(RegExpElementTypes.QUANTIFIER);
         assert node != null;
         return (RegExpQuantifier)node.getPsi();
     }
 
     @Override
-    public @NotNull RegExpAtom getAtom() {
+    @NotNull
+    public RegExpAtom getAtom() {
         final RegExpAtom atom = PsiTreeUtil.getChildOfType(this, RegExpAtom.class);
         assert atom != null;
         return atom;

@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -22,12 +22,14 @@ public final class LengthOneStringInIndexOfInspection extends BaseInspection imp
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "SingleCharacterStringConcatenation";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final PsiExpression literal = (PsiExpression)infos[0];
     final String replacement = getReplacement(literal);
     return InspectionGadgetsBundle.message("expression.can.be.replaced.no.quotes.problem.descriptor", literal.getText(), replacement);
@@ -47,7 +49,8 @@ public final class LengthOneStringInIndexOfInspection extends BaseInspection imp
     extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "length.one.strings.in.concatenation.replace.quickfix");
     }
@@ -60,7 +63,8 @@ public final class LengthOneStringInIndexOfInspection extends BaseInspection imp
     }
   }
 
-  private static @NotNull String getReplacement(PsiExpression expression) {
+  @NotNull
+  private static String getReplacement(PsiExpression expression) {
     final String text = expression.getText();
     final int length = text.length();
     final String character = text.substring(1, length - 1);
@@ -105,7 +109,7 @@ public final class LengthOneStringInIndexOfInspection extends BaseInspection imp
         return false;
       }
       final PsiReferenceExpression methodExpression = call.getMethodExpression();
-      final @NonNls String name = methodExpression.getReferenceName();
+      @NonNls final String name = methodExpression.getReferenceName();
       if (!HardcodedMethodConstants.INDEX_OF.equals(name) &&
           !HardcodedMethodConstants.LAST_INDEX_OF.equals(name)) {
         return false;

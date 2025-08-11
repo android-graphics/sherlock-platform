@@ -7,9 +7,7 @@ import com.intellij.ide.impl.dataRules.GetDataRule
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.IndexNotReadyException
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 class SearchTargetsDataRule : GetDataRule {
 
   override fun getData(dataProvider: DataProvider): Collection<SearchTarget>? {

@@ -1,2 +1,0 @@
-Constructor delegation reference 7 constructor(s: String): this(s.length)
-Supertype 5 A(1),

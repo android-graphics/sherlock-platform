@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal.block.output.highlighting
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.highlighter.HighlighterClient
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
-import com.intellij.util.concurrency.annotations.RequiresEdt
 
 /**
  * A `CompositeEditorHighlighter` combines multiple editor highlighters to allow for different highlighting behaviors.
@@ -16,14 +15,10 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
  *                                    at least two switchable highlighters are applicable
  * @property switchableEditorHighlighters List of switchable editor highlighters to combine in this composite highlighter
  */
-internal abstract class CompositeEditorHighlighter(
+open class CompositeEditorHighlighter(
   private val defaultEditorHighlighter: EditorHighlighter,
+  private val switchableEditorHighlighters: List<SwitchableEditorHighlighter>
 ) : EditorHighlighter {
-
-  protected abstract val switchableEditorHighlighters: List<SwitchableEditorHighlighter>
-    @RequiresEdt(generateAssertion = false)
-    get
-
   private var editor: HighlighterClient? = null
 
   /**

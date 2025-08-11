@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.icons.AllIcons;
@@ -21,10 +21,11 @@ import java.util.Comparator;
 public class PropertiesFileStructureViewModel extends TextEditorBasedStructureViewModel implements PropertiesGroupingStructureViewModel {
   private final GroupByWordPrefixes myByWordPrefixesGrouper;
   private volatile boolean myGroupingState = true;
-  public static final @NonNls String KIND_SORTER_ID = "KIND_SORTER";
+  @NonNls public static final String KIND_SORTER_ID = "KIND_SORTER";
   private static final Sorter KIND_SORTER = new Sorter() {
     @Override
-    public @NotNull Comparator getComparator() {
+    @NotNull
+    public Comparator getComparator() {
       return (o1, o2) -> {
         int weight1 = o1 instanceof PropertiesPrefixGroup ? 1 : 0;
         int weight2 = o2 instanceof PropertiesPrefixGroup ? 1 : 0;
@@ -38,13 +39,15 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
     }
 
     @Override
-    public @NotNull ActionPresentation getPresentation() {
+    @NotNull
+    public ActionPresentation getPresentation() {
       String name = StructureViewBundle.message("action.sort.by.type");
       return new ActionPresentationData(name, name, AllIcons.ObjectBrowser.SortByType);
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return KIND_SORTER_ID;
     }
   };
@@ -73,7 +76,8 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
   }
 
   @Override
-  public @NotNull StructureViewTreeElement getRoot() {
+  @NotNull
+  public StructureViewTreeElement getRoot() {
     return new PropertiesFileStructureViewElement((PropertiesFileImpl)getPsiFile(), () -> myGroupingState);
   }
 

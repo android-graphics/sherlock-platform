@@ -23,7 +23,8 @@ public class PySignature {
     myFunctionName = name;
   }
 
-  public @Nullable String getArgTypeQualifiedName(@NotNull String name) {
+  @Nullable
+  public String getArgTypeQualifiedName(@NotNull String name) {
     for (NamedParameter param : myArgs) {
       if (name.equals(param.getName())) {
         return param.getTypeQualifiedName();
@@ -32,15 +33,18 @@ public class PySignature {
     return null;
   }
 
-  public @NotNull String getFile() {
+  @NotNull
+  public String getFile() {
     return myFile;
   }
 
-  public @NotNull String getFunctionName() {
+  @NotNull
+  public String getFunctionName() {
     return myFunctionName;
   }
 
-  public @NotNull List<NamedParameter> getArgs() {
+  @NotNull
+  public List<NamedParameter> getArgs() {
     return myArgs;
   }
 
@@ -60,7 +64,8 @@ public class PySignature {
     return this;
   }
 
-  public @NotNull PySignature addAllArgs(@NotNull PySignature signature) {
+  @NotNull
+  public PySignature addAllArgs(@NotNull PySignature signature) {
     for (NamedParameter param : signature.getArgs()) {
       NamedParameter ourParam = getArgForName(param.getName());
       if (ourParam != null) {
@@ -73,7 +78,8 @@ public class PySignature {
     return this;
   }
 
-  private @Nullable NamedParameter getArgForName(String name) {
+  @Nullable
+  private NamedParameter getArgForName(String name) {
     for (NamedParameter param : myArgs) {
       if (param.getName().equals(name)) {
         return param;
@@ -83,7 +89,8 @@ public class PySignature {
     return null;
   }
 
-  public @Nullable String getReturnTypeQualifiedName() {
+  @Nullable
+  public String getReturnTypeQualifiedName() {
     return myReturnType != null ? myReturnType.getTypeQualifiedName() : null;
   }
 
@@ -98,7 +105,8 @@ public class PySignature {
       myTypes = parseTypes(type);
     }
 
-    private static @NotNull List<String> parseTypes(@NotNull String type) {
+    @NotNull
+    private static List<String> parseTypes(@NotNull String type) {
       if (type.startsWith(UNION_PREFIX) && type.endsWith("]")) {
         return new ArrayList<>(Arrays.asList(type.substring(UNION_PREFIX.length(), type.length() - 1).split("\\s*,\\s*")));
       }
@@ -121,7 +129,8 @@ public class PySignature {
       }
     }
 
-    private static @Nullable String noneTypeToNone(@Nullable String type) {
+    @Nullable
+    private static String noneTypeToNone(@Nullable String type) {
       return "NoneType".equals(type) ? "None" : type;
     }
 

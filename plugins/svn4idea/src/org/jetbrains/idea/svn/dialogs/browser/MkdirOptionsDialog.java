@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.project.Project;
@@ -31,7 +31,7 @@ public class MkdirOptionsDialog extends DialogWrapper {
   private ComboBox<String> myMessagesBox;
   private JPanel myMainPanel;
   private JLabel myRecentMessagesLabel;
-  private final @NotNull Url myOriginalURL;
+  @NotNull private final Url myOriginalURL;
 
   public MkdirOptionsDialog(Project project, @NotNull Url url) {
     super(project, true);
@@ -51,7 +51,7 @@ public class MkdirOptionsDialog extends DialogWrapper {
     myNameField.selectAll();
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(final @NotNull DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         Url newUrl = getNewFolderUrl();
 
         myURLLabel.setText(notNull(newUrl, myOriginalURL).toDecodedString());
@@ -78,7 +78,8 @@ public class MkdirOptionsDialog extends DialogWrapper {
   }
 
   @Override
-  protected @NonNls String getDimensionServiceKey() {
+  @NonNls
+  protected String getDimensionServiceKey() {
     return "svn4idea.mkdir.options";
   }
 
@@ -86,7 +87,8 @@ public class MkdirOptionsDialog extends DialogWrapper {
     return myCommitMessage.getText();
   }
 
-  public @Nullable Url getURL() {
+  @Nullable
+  public Url getURL() {
     if (getOKAction().isEnabled()) {
       try {
         return createUrl(myURLLabel.getText(), false);
@@ -102,7 +104,8 @@ public class MkdirOptionsDialog extends DialogWrapper {
   }
 
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  @Nullable
+  protected JComponent createCenterPanel() {
     return myMainPanel;
   }
 

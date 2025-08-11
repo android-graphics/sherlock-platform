@@ -97,8 +97,8 @@ class GradleProjectReferenceTest : GradleCodeInsightTestCase() {
 
   companion object {
 
-    private val FIXTURE_BUILDER = GradleTestFixtureBuilder.create("GradleProjectReferenceTest") { gradleVersion ->
-      withSettingsFile(gradleVersion) {
+    private val FIXTURE_BUILDER = GradleTestFixtureBuilder.create("GradleProjectReferenceTest") {
+      withSettingsFile {
         setProjectName("GradleProjectReferenceTest")
         include("child")
         include("child:foo")

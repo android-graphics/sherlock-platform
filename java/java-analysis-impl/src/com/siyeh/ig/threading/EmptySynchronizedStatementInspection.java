@@ -24,6 +24,7 @@ import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteUnnecessaryStatementFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,8 @@ import org.jetbrains.annotations.Nullable;
 public final class EmptySynchronizedStatementInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "empty.synchronized.statement.problem.descriptor");
   }

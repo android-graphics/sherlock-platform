@@ -225,7 +225,8 @@ public class PerformanceOfFileAccessWithFilePageCacheTest extends PerformanceOfF
     final long[] offsetsToRequest = IntStream.range(0, DIFFERENT_OFFSETS_TO_REQUEST)
       .mapToLong(i -> ThreadLocalRandom.current().nextLong(FILE_SIZE))
       .toArray();
-    try (PagedFileStorage pagedStorage = new PagedFileStorage(file.toPath(), storageContext, BUFFER_SIZE, true, true)) {
+    final PagedFileStorage pagedStorage = new PagedFileStorage(file.toPath(), storageContext, BUFFER_SIZE, true, true);
+    try {
       final Callable<Void> task = () -> {
         final ThreadLocalRandom rnd = ThreadLocalRandom.current();
         final int requestNo = rnd.nextInt(offsetsToRequest.length);
@@ -281,6 +282,9 @@ public class PerformanceOfFileAccessWithFilePageCacheTest extends PerformanceOfF
       final FilePageCacheStatistics statistics = pageCache.getStatistics();
       System.out.println(statistics);
     }
+    finally {
+      pagedStorage.close();
+    }
   }
 
   @Test
@@ -292,7 +296,8 @@ public class PerformanceOfFileAccessWithFilePageCacheTest extends PerformanceOfF
     final long[] offsetsToRequest = IntStream.range(0, DIFFERENT_OFFSETS_TO_REQUEST)
       .mapToLong(i -> ThreadLocalRandom.current().nextLong(FILE_SIZE))
       .toArray();
-    try (PagedFileStorage pagedStorage = new PagedFileStorage(file.toPath(), storageContext, BUFFER_SIZE, true, true)) {
+    final PagedFileStorage pagedStorage = new PagedFileStorage(file.toPath(), storageContext, BUFFER_SIZE, true, true);
+    try {
       final Callable<Void> task = () -> {
         final ThreadLocalRandom rnd = ThreadLocalRandom.current();
         final int requestNo = rnd.nextInt(offsetsToRequest.length);
@@ -351,6 +356,9 @@ public class PerformanceOfFileAccessWithFilePageCacheTest extends PerformanceOfF
       final FilePageCacheStatistics statistics = pageCache.getStatistics();
       System.out.println(statistics);
     }
+    finally {
+      pagedStorage.close();
+    }
   }
 
 
@@ -358,7 +366,8 @@ public class PerformanceOfFileAccessWithFilePageCacheTest extends PerformanceOfF
 
   private void readFileSequentiallyTwice(final @NotNull File file,
                                          final @NotNull ByteBuffer buffer) throws IOException {
-    try (PagedFileStorage pagedStorage = new PagedFileStorage(file.toPath(), storageContext, BUFFER_SIZE, true, true)) {
+    final PagedFileStorage pagedStorage = new PagedFileStorage(file.toPath(), storageContext, BUFFER_SIZE, true, true);
+    try {
       final long blocksCount = FILE_SIZE / BUFFER_SIZE;
       for (int turn = 0; turn < TWICE; turn++) {
         for (int blockNo = 0; blockNo < blocksCount; blockNo++) {
@@ -382,11 +391,15 @@ public class PerformanceOfFileAccessWithFilePageCacheTest extends PerformanceOfF
         }
       }
     }
+    finally {
+      pagedStorage.close();
+    }
   }
 
   private void readFileRandomlyApproximatelyTwice(final @NotNull File file,
                                                   final @NotNull ByteBuffer buffer) throws IOException {
-    try (PagedFileStorage pagedStorage = new PagedFileStorage(file.toPath(), storageContext, BUFFER_SIZE, true, true)) {
+    final PagedFileStorage pagedStorage = new PagedFileStorage(file.toPath(), storageContext, BUFFER_SIZE, true, true);
+    try {
       final ThreadLocalRandom rnd = ThreadLocalRandom.current();
       final long blocksCount = FILE_SIZE / BUFFER_SIZE;
       for (int i = 0; i < blocksCount * TWICE; i++) {
@@ -410,11 +423,15 @@ public class PerformanceOfFileAccessWithFilePageCacheTest extends PerformanceOfF
         }
       }
     }
+    finally {
+      pagedStorage.close();
+    }
   }
 
   private void writeFileSequentiallyTwice(final @NotNull File file,
                                           final @NotNull ByteBuffer buffer) throws IOException {
-    try (PagedFileStorage pagedStorage = new PagedFileStorage(file.toPath(), storageContext, BUFFER_SIZE, true, true)) {
+    final PagedFileStorage pagedStorage = new PagedFileStorage(file.toPath(), storageContext, BUFFER_SIZE, true, true);
+    try {
       final long blocksCount = FILE_SIZE / BUFFER_SIZE;
       for (int turn = 0; turn < TWICE; turn++) {
         for (int blockNo = 0; blockNo < blocksCount; blockNo++) {
@@ -437,11 +454,15 @@ public class PerformanceOfFileAccessWithFilePageCacheTest extends PerformanceOfF
         }
       }
     }
+    finally {
+      pagedStorage.close();
+    }
   }
 
   private void writeFileRandomlyApproximatelyTwice(final @NotNull File file,
                                                    final @NotNull ByteBuffer buffer) throws IOException {
-    try (PagedFileStorage pagedStorage = new PagedFileStorage(file.toPath(), storageContext, BUFFER_SIZE, true, true)) {
+    final PagedFileStorage pagedStorage = new PagedFileStorage(file.toPath(), storageContext, BUFFER_SIZE, true, true);
+    try {
       final ThreadLocalRandom rnd = ThreadLocalRandom.current();
       final long blocksCount = FILE_SIZE / BUFFER_SIZE;
       for (int i = 0; i < blocksCount * TWICE; i++) {
@@ -463,6 +484,9 @@ public class PerformanceOfFileAccessWithFilePageCacheTest extends PerformanceOfF
           pagedStorage.unlockWrite();
         }
       }
+    }
+    finally {
+      pagedStorage.close();
     }
   }
 }

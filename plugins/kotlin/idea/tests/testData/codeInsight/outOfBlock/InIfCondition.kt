@@ -1,5 +1,5 @@
 // OUT_OF_CODE_BLOCK: FALSE
-// ENABLE_WARNINGS
+// ENABLE-WARNINGS
 
 fun foo(count: Int): String {
     return if (count == 0) {

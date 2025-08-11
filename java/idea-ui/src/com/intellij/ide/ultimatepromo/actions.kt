@@ -37,8 +37,7 @@ internal abstract class UltimatePromoAction(private val pluginId: String) : Dumb
       return
     }
 
-    FUSEventSource.ACTIONS.openDownloadPageAndLog(e.project, PluginAdvertiserService.ideaUltimate.downloadUrl,
-                                                  PluginAdvertiserService.ideaUltimate, pluginId)
+    FUSEventSource.ACTIONS.openDownloadPageAndLog(e.project, PluginAdvertiserService.ideaUltimate.downloadUrl, pluginId)
   }
 }
 

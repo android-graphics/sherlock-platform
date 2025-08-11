@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -11,7 +11,7 @@ import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +25,7 @@ import java.util.List;
 public abstract class StatusText {
   public static final SimpleTextAttributes DEFAULT_ATTRIBUTES = SimpleTextAttributes.GRAYED_ATTRIBUTES;
 
-  private static final int DEFAULT_Y_GAP = 2;
+  private static final int Y_GAP = 2;
 
   private @Nullable Component myOwner;
   private @Nullable Component myMouseTarget;
@@ -37,8 +37,6 @@ public abstract class StatusText {
   private boolean myInLoadingPanel;
 
   private String myText = "";
-  private int yGap = DEFAULT_Y_GAP;
-  private boolean forceGapAfterLastLine = false;
 
   // Hardcoded layout manages two columns (primary and secondary) with vertically aligned components inside
   protected final class Column {
@@ -67,16 +65,15 @@ public abstract class StatusText {
 
     private final Rectangle boundsInColumn = new Rectangle();
     private final List<ActionListener> myClickListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-    private final int gapAfter;
 
-    Fragment(int gapAfter) {
-      this.gapAfter = gapAfter;
+    public Fragment() {
       myComponent.setOpaque(false);
       myComponent.setFont(StartupUiUtil.getLabelFont());
     }
   }
 
-  private final List<Column> columns = new ArrayList<>(List.of(new Column()));
+  private final Column myPrimaryColumn = new Column();
+  private final Column mySecondaryColumn = new Column();
   private boolean myHasActiveClickListeners; // calculated field for performance optimization
   private boolean myShowAboveCenter = true;
   private Font myFont = null;
@@ -144,11 +141,8 @@ public abstract class StatusText {
   }
 
   private void setFontImpl(Font font) {
-    for (var column : columns) {
-      for (var fragment : column.fragments) {
-        fragment.myComponent.setFont(font);
-      }
-    }
+    myPrimaryColumn.fragments.forEach(fragment -> fragment.myComponent.setFont(font));
+    mySecondaryColumn.fragments.forEach(fragment -> fragment.myComponent.setFont(font));
     myFont = font;
   }
 
@@ -211,19 +205,16 @@ public abstract class StatusText {
 
     Rectangle commonBounds = getTextComponentBound();
     if (commonBounds.contains(point)) {
-      for (int columnId = 0; columnId < columns.size(); columnId++) {
-        ActionListener listener = getListener(columnId, point, commonBounds);
-        if (listener != null) {
-          return listener;
-        }
-      }
+      ActionListener listener = getListener(myPrimaryColumn, point, commonBounds);
+      if (listener != null) return listener;
+      listener = getListener(mySecondaryColumn, point, commonBounds);
+      if (listener != null) return listener;
     }
     return null;
   }
 
-  private @Nullable ActionListener getListener(int columnId, Point point, Rectangle commonBounds) {
-    Point primaryLocation = getColumnLocation(columnId, commonBounds);
-    var column = columns.get(columnId);
+  private @Nullable ActionListener getListener(Column column, Point point, Rectangle commonBounds) {
+    Point primaryLocation = getColumnLocation(column == myPrimaryColumn, commonBounds);
     for (Fragment fragment : column.fragments) {
       Rectangle fragmentBounds = getFragmentBounds(column, primaryLocation, commonBounds, fragment);
       if (!fragmentBounds.contains(new Point(point.x, point.y))) continue;
@@ -270,9 +261,8 @@ public abstract class StatusText {
 
   public StatusText clear() {
     myText = "";
-    for (var column : columns) {
-      column.fragments.clear();
-    }
+    myPrimaryColumn.fragments.clear();
+    mySecondaryColumn.fragments.clear();
 
     myHasActiveClickListeners = false;
     repaintOwner();
@@ -298,16 +288,20 @@ public abstract class StatusText {
     }
 
     myText += text;
-    return appendText(0, Math.max(0, columns.get(0).fragments.size() - 1), null, text, attrs, listener);
+    return appendText(true, Math.max(0, myPrimaryColumn.fragments.size() - 1), text, attrs, listener);
   }
 
-  public StatusText appendText(int columnIndex,
-                               int rowIndex,
+  public StatusText appendText(boolean isPrimaryColumn, int row, @NlsContexts.StatusText String text, SimpleTextAttributes attrs, ActionListener listener) {
+    return appendText(isPrimaryColumn, row, null, text, attrs, listener);
+  }
+
+  public StatusText appendText(boolean isPrimaryColumn,
+                               int row,
                                @Nullable Icon icon,
                                @NlsContexts.StatusText String text,
-                               @NotNull SimpleTextAttributes attrs,
-                               @Nullable ActionListener listener) {
-    Fragment fragment = getOrCreateFragment(columnIndex, rowIndex);
+                               SimpleTextAttributes attrs,
+                               ActionListener listener) {
+    Fragment fragment = getOrCreateFragment(isPrimaryColumn, row);
     fragment.myComponent.setIcon(icon);
     fragment.myComponent.append(text, attrs);
     fragment.myClickListeners.add(listener);
@@ -317,18 +311,9 @@ public abstract class StatusText {
     return this;
   }
 
-  public StatusText appendText(int columnIndex,
-                               int rowIndex,
-                               @NlsContexts.StatusText String text,
-                               @NotNull SimpleTextAttributes attrs,
-                               @Nullable ActionListener listener) {
-    return appendText(columnIndex, rowIndex, null, text, attrs, listener);
-  }
-
   private void updateBounds() {
-    for (var column : columns) {
-      updateBounds(column);
-    }
+    updateBounds(myPrimaryColumn);
+    updateBounds(mySecondaryColumn);
   }
 
   private void updateBounds(Column column) {
@@ -338,13 +323,13 @@ public abstract class StatusText {
       Dimension d = fragment.myComponent.getPreferredSize();
       fragment.boundsInColumn.setBounds(0, size.height, d.width, d.height);
       size.height += d.height;
-      if (i != column.fragments.size() - 1 || forceGapAfterLastLine) size.height += JBUIScale.scale(fragment.gapAfter);
+      if (i > 0) size.height += JBUIScale.scale(Y_GAP);
       size.width = Math.max(size.width, d.width);
     }
     if (myCenterAlignText) {
       for (int i = 0; i < column.fragments.size(); i++) {
         Fragment fragment = column.fragments.get(i);
-        fragment.boundsInColumn.x += (size.width - fragment.boundsInColumn.width) / 2;
+        fragment.boundsInColumn.x += (size.width - fragment.boundsInColumn.width)/2;
       }
     }
     column.preferredSize.setSize(size);
@@ -354,42 +339,33 @@ public abstract class StatusText {
     return new Iterable<>() {
       @Override
       public @NotNull Iterator<JComponent> iterator() {
-        return columns.stream()
-          .flatMap(column -> column.fragments.stream())
-          .<JComponent>map(fragment -> fragment.myComponent)
-          .toList()
-          .iterator();
+        Iterable<JComponent> components = JBIterable.<Fragment>empty()
+          .append(myPrimaryColumn.fragments)
+          .append(mySecondaryColumn.fragments)
+          .map(it -> it.myComponent);
+
+        return components.iterator();
       }
     };
   }
 
-  private Fragment getOrCreateFragment(int columnIndex, int rowIndex) {
-    if (columns.size() < columnIndex) {
-      throw new IllegalStateException("Cannot add text to column " + columnIndex +
-                                      " as there are only " + columns.size() + " columns available");
-    }
-    if (columns.size() == columnIndex) {
-      var column = new Column();
-      column.fragments.add(new Fragment(yGap));
-      columns.add(column);
-      return column.fragments.get(0);
-    }
-    var column = columns.get(columnIndex);
-    if (column.fragments.size() < rowIndex) {
-      throw new IllegalStateException("Cannot add text to rowIndex " + rowIndex +
-                                      " as in column " + columnIndex +
-                                      " there are " + column.fragments.size() + " rows only");
+  private Fragment getOrCreateFragment(boolean isPrimaryColumn, int row) {
+    Column column = isPrimaryColumn ? myPrimaryColumn : mySecondaryColumn;
+    if (column.fragments.size() < row) {
+      throw new IllegalStateException("Cannot add text to row " + row +
+                                      " as in " + (isPrimaryColumn ? "left" : "right") +
+                                      " column there are " + column.fragments.size() + " rows only");
     }
     Fragment fragment;
-    if (column.fragments.size() == rowIndex) {
-      fragment = new Fragment(yGap);
+    if (column.fragments.size() == row) {
+      fragment = new Fragment();
       if (myFont != null) {
         fragment.myComponent.setFont(myFont);
       }
       column.fragments.add(fragment);
     }
     else {
-      fragment = column.fragments.get(rowIndex);
+      fragment = column.fragments.get(row);
     }
     return fragment;
   }
@@ -397,7 +373,7 @@ public abstract class StatusText {
   public @NotNull StatusText appendSecondaryText(@NotNull @NlsContexts.StatusText String text,
                                                  @NotNull SimpleTextAttributes attrs,
                                                  @Nullable ActionListener listener) {
-    return appendText(0, 1, null, text, attrs, listener);
+    return appendText(true, 1, text, attrs, listener);
   }
 
   public @NotNull StatusText appendLine(@NotNull @NlsContexts.StatusText String text) {
@@ -418,47 +394,7 @@ public abstract class StatusText {
       clear();
       myIsDefaultText = false;
     }
-    return appendText(0, columns.get(0).fragments.size(), icon, text, attrs, listener);
-  }
-
-  /**
-   * Sets the gap between the lines of text.
-   * <p>
-   * Affects all lines added <em>after</em> invocation of this method.
-   * Supposed to be used like this:
-   * <pre>{@code
-   * emptyText.withUnscaledGapAfter(5).appendLine("Some text");
-   * }</pre>
-   * Note that the value set persists until changed, so if the gap is needed for just one line,
-   * it has to be updated again after appending that line.
-   * For example:
-   * <pre>{@code
-   * emptyText.withUnscaledGapAfter(5).appendLine("Some text").withUnscaledGapAfter(2);
-   * }</pre>
-   * </p>
-   * <p>
-   * If this method is never called, the gap between lines will be 2 px.
-   * </p>
-   *
-   * @param gap the gap between lines, specified in pixels before applying any scaling factors
-   * @return {@code this} instance
-   */
-  public @NotNull StatusText withUnscaledGapAfter(int gap) {
-    this.yGap = gap;
-    return this;
-  }
-
-  /**
-   * Forces the vertical gap to appear even after the last line.
-   *
-   * @return {@code this} instance
-   * @deprecated exists only to emulate an old bug because there's a test that relies on that bug
-   */
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  public @NotNull StatusText forceGapAfterLastLine() {
-    this.forceGapAfterLastLine = true;
-    return this;
+    return appendText(true, myPrimaryColumn.fragments.size(), icon, text, attrs, listener);
   }
 
   public void paint(Component owner, Graphics g) {
@@ -491,43 +427,29 @@ public abstract class StatusText {
     viewport.repaint(textBoundsInViewport);
   }
 
-  private Point getColumnLocation(int columnIndex, Rectangle bounds) {
-    var column = columns.get(columnIndex);
-    if (columns.size() == 1) { // center
-      return new Point(bounds.x + (bounds.width - column.preferredSize.width) / 2, bounds.y);
+  private Point getColumnLocation(boolean isPrimary, Rectangle bounds) {
+    if (isPrimary && mySecondaryColumn.fragments.isEmpty()) {
+      return new Point(bounds.x + (bounds.width - myPrimaryColumn.preferredSize.width) / 2, bounds.y);
     }
-    else if (columnIndex == 0) { // stick to the left
+    else if (isPrimary) {
       return new Point(bounds.x, bounds.y);
     }
-    else if (columnIndex == columns.size() - 1) { // stick to the right
-      return new Point(bounds.x + bounds.width - column.preferredSize.width, bounds.y);
-    }
-    else { // calc appropriate location according to free space and sum of columns' width
-      var allColumnsWidth = columns.stream().mapToInt(it -> it.preferredSize.width).sum();
-      var gap = (bounds.width - allColumnsWidth) / (columns.size() - 1);
-      var prevColumnsWidth = columns.stream().limit(columnIndex).mapToInt(it -> it.preferredSize.width).sum();
-      return new Point(bounds.x + prevColumnsWidth + columnIndex * gap, bounds.y);
+    else {
+      return new Point(bounds.x + bounds.width - mySecondaryColumn.preferredSize.width, bounds.y);
     }
   }
 
   private void doPaintStatusText(@NotNull Graphics g, @NotNull Rectangle bounds) {
-    for (int columnId = 0; columnId < columns.size(); columnId++) {
-      paintColumnInBounds(columns.get(columnId), g, getColumnLocation(columnId, bounds), bounds);
-    }
+    paintColumnInBounds(myPrimaryColumn, g, getColumnLocation(true, bounds), bounds);
+    paintColumnInBounds(mySecondaryColumn, g, getColumnLocation(false, bounds), bounds);
   }
 
-  /**
-   * This was once valuable, but by the current moment, allegedly,
-   * only Math.min parts (here) make some sense. It's suggested to remove
-   * this method and e.g., allow override
-   * {@link #getFragmentBounds(Column, Point, Rectangle, Fragment)} instead.
-   */
   protected @NotNull Rectangle adjustComponentBounds(@NotNull JComponent component, @NotNull Rectangle bounds) {
     Dimension size = component.getPreferredSize();
     int width = Math.min(size.width, bounds.width);
     int height = Math.min(size.height, bounds.height);
 
-    if (columns.size() == 1) {
+    if (mySecondaryColumn.fragments.isEmpty()) {
       return new Rectangle(bounds.x + (bounds.width - width) / 2, bounds.y, width, height);
     }
     else {
@@ -567,17 +489,16 @@ public abstract class StatusText {
   }
 
   public @NotNull SimpleColoredComponent getComponent() {
-    return getOrCreateFragment(0, 0).myComponent;
+    return getOrCreateFragment(true, 0).myComponent;
   }
 
   public @NotNull SimpleColoredComponent getSecondaryComponent() {
-    return getOrCreateFragment(0, 1).myComponent;
+    return getOrCreateFragment(true, 1).myComponent;
   }
 
   public Dimension getPreferredSize() {
-    var allColumnsWidth = columns.stream().mapToInt(it -> it.preferredSize.width).sum();
-    var maxColumnHeight = columns.stream().mapToInt(it -> it.preferredSize.height).max().orElse(0);
-    return new Dimension(allColumnsWidth, maxColumnHeight);
+    return new Dimension(myPrimaryColumn.preferredSize.width + mySecondaryColumn.preferredSize.width,
+                         Math.max(myPrimaryColumn.preferredSize.height, mySecondaryColumn.preferredSize.height));
   }
 
   public static @NlsContexts.StatusText String getDefaultEmptyText() {
@@ -587,39 +508,14 @@ public abstract class StatusText {
   @Override
   public String toString() {
     StringBuilder text = new StringBuilder();
-    for (var column : columns) {
-      for (var fragment : column.fragments) {
-        if (!text.isEmpty()) text.append("\n");
-        text.append(fragment.myComponent);
-      }
+    for (Fragment fragment : myPrimaryColumn.fragments) {
+      if (!text.isEmpty()) text.append("\n");
+      text.append(fragment.myComponent);
+    }
+    for (Fragment fragment : mySecondaryColumn.fragments) {
+      if (!text.isEmpty()) text.append("\n");
+      text.append(fragment.myComponent);
     }
     return text.toString();
-  }
-
-  /**
-   * @deprecated There are no primary and secondary columns anymore, they're 0 and 1.
-   * Use {@link #appendText(int, int, String, SimpleTextAttributes, ActionListener)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public StatusText appendText(boolean isPrimaryColumn,
-                               int row,
-                               @NlsContexts.StatusText String text,
-                               SimpleTextAttributes attrs,
-                               ActionListener listener) {
-    return appendText(isPrimaryColumn ? 0 : 1, row, null, text, attrs, listener);
-  }
-
-  /**
-   * @deprecated There are no primary and secondary columns anymore, they're 0 and 1.
-   * Use {@link #appendText(int, int, Icon, String, SimpleTextAttributes, ActionListener)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public StatusText appendText(boolean isPrimaryColumn,
-                               int row,
-                               @Nullable Icon icon,
-                               @NlsContexts.StatusText String text,
-                               SimpleTextAttributes attrs,
-                               ActionListener listener) {
-    return appendText(isPrimaryColumn ? 0 : 1, row, icon, text, attrs, listener);
   }
 }

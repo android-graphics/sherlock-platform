@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.scroll.LatchingScroll;
@@ -18,7 +17,6 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
-import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,24 +37,25 @@ import java.lang.reflect.Field;
 import java.util.function.Supplier;
 
 public class JBScrollPane extends JScrollPane {
+
   /**
    * Supposed to be used as a client property key for scrollbar and indicates if this scrollbar should be ignored
    * when insets for {@code JScrollPane's} content are being calculated.
    * <p>
-   * Without this key scrollbar's width is included to content insets when content is {@code JList}.
-   * As a result, list items cannot intersect with the scrollbar.
+   * Without this key scrollbar's width is included to content insets when content is {@code JList}. As a result list items cannot intersect with
+   * scrollbar.
    * <p>
    * Please use as a marker for scrollbars, that should be transparent and shown over content.
    *
-   * @see ClientProperty#put(JComponent, Key, Object)
+   * @see UIUtil#putClientProperty(JComponent, Key, Object)
    */
   public static final Key<Boolean> IGNORE_SCROLLBAR_IN_INSETS = Key.create("IGNORE_SCROLLBAR_IN_INSETS");
 
   /**
-   * When set to {@link Boolean#TRUE} for a component then latching will be ignored.
+   * When set to {@link Boolean#TRUE} for component then latching will be ignored.
    *
    * @see LatchingScroll
-   * @see ClientProperty#put(JComponent, Key, Object)
+   * @see UIUtil#putClientProperty(JComponent, Key, Object)
    */
   public static final Key<Boolean> IGNORE_SCROLL_LATCHING = Key.create("IGNORE_SCROLL_LATCHING");
 
@@ -113,7 +112,7 @@ public class JBScrollPane extends JScrollPane {
   @Override
   public Color getBackground() {
     Color color = super.getBackground();
-    if (!myBackgroundRequested && EventQueue.isDispatchThread() && ScrollSettings.isBackgroundFromView.invoke()) {
+    if (!myBackgroundRequested && EventQueue.isDispatchThread() && ScrollSettings.isBackgroundFromView()) {
       if (!isBackgroundSet() || color instanceof UIResource) {
         Component child = getViewport();
         if (child != null) {
@@ -391,7 +390,7 @@ public class JBScrollPane extends JScrollPane {
 
   @Override
   protected void processMouseWheelEvent(MouseWheelEvent e) {
-    boolean hasAbsoluteDelta = ScrollSettings.isPixelPerfectEnabled.invoke();
+    boolean hasAbsoluteDelta = ScrollSettings.isPixelPerfectEnabled();
     myScrollSource = hasAbsoluteDelta ? ScrollSource.TOUCHPAD : ScrollSource.MOUSE_WHEEL;
     myWheelRotation = e.getPreciseWheelRotation();
     super.processMouseWheelEvent(e);
@@ -415,7 +414,7 @@ public class JBScrollPane extends JScrollPane {
     }
   }
 
-  public static class ViewportBorder extends LineBorder {
+  private static class ViewportBorder extends LineBorder {
     ViewportBorder(int thickness) {
       super(null, thickness);
     }
@@ -859,8 +858,10 @@ public class JBScrollPane extends JScrollPane {
         Component view = viewport.getView();
         if (view != null) {
           Point viewLocation = view.getLocation();
-          Dimension viewportExtentSize = calculatePreferredSize(viewport);
-          Dimension viewPreferredSize = calculatePreferredSize(view);
+          Dimension viewportExtentSize = viewport.getPreferredSize();
+          if (viewportExtentSize == null) viewportExtentSize = new Dimension();
+          Dimension viewPreferredSize = view.getPreferredSize();
+          if (viewPreferredSize == null) viewPreferredSize = new Dimension();
           if (view instanceof JComponent && !view.isPreferredSizeSet()) {
             JBInsets.removeFrom(viewPreferredSize, JBViewport.getViewInsets((JComponent)view));
           }
@@ -891,17 +892,6 @@ public class JBScrollPane extends JScrollPane {
       if (colHead != null && colHead.isVisible()) result.height += colHead.getPreferredSize().height;
 
       return result;
-    }
-
-    private static Dimension calculatePreferredSize(Component component) {
-      Dimension preferredSize = component.getPreferredSize();
-      if (preferredSize == null) preferredSize = new Dimension();
-      Dimension maximumSize = component.getMaximumSize();
-      if (maximumSize != null) {
-        preferredSize.width = Math.min(maximumSize.width, preferredSize.width);
-        preferredSize.height = Math.min(maximumSize.height, preferredSize.height);
-      }
-      return preferredSize;
     }
 
     private static boolean isOverlappingScrollBar(JScrollPane scrollPane) {
@@ -1013,11 +1003,11 @@ public class JBScrollPane extends JScrollPane {
    * @return {@code true} if the specified event is valid, {@code false} otherwise
    */
   public static boolean isScrollEvent(@NotNull MouseWheelEvent event) {
-    // event should not be consumed yet
+    // event should not be consumed already
     if (event.isConsumed()) return false;
     // any rotation expected (forward or backward)
     boolean ignore = event.getWheelRotation() == 0;
-    if (ignore && (ScrollSettings.isPixelPerfectEnabled.invoke() || ScrollSettings.isHighPrecisionEnabled.invoke())) {
+    if (ignore && (ScrollSettings.isPixelPerfectEnabled() || ScrollSettings.isHighPrecisionEnabled())) {
       double rotation = event.getPreciseWheelRotation();
       ignore = rotation == 0.0D || !Double.isFinite(rotation);
     }
@@ -1028,8 +1018,8 @@ public class JBScrollPane extends JScrollPane {
     ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK & // for horizontal scrolling
     ~InputEvent.BUTTON1_MASK & ~InputEvent.BUTTON1_DOWN_MASK; // for selection
 
-  @ApiStatus.Internal
-  public static RegionPainter<Float> getThumbPainter(@NotNull Supplier<? extends Component> supplier, @NotNull CoroutineScope coroutineScope) {
-    return new ScrollBarPainter.Thumb(supplier, SystemInfoRt.isMac, coroutineScope);
+  @ApiStatus.Experimental
+  public static RegionPainter<Float> getThumbPainter(@NotNull Supplier<? extends Component> supplier) {
+    return new ScrollBarPainter.Thumb(supplier, SystemInfo.isMac);
   }
 }

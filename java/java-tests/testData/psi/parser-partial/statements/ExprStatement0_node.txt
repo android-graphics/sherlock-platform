@@ -1,5 +1,8 @@
 test.java.file
-  DECLARATION_STATEMENT
-    VAR
+  EXPRESSION_STATEMENT
+    REFERENCE_EXPRESSION
+      REFERENCE_PARAMETER_LIST
+        <empty list>
+      IDENTIFIER
     ERROR_ELEMENT
       <empty list>

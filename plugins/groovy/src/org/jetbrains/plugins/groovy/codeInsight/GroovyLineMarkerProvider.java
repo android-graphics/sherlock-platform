@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -23,7 +23,6 @@ import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
@@ -45,8 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import javax.swing.*;
 import java.util.*;
 
-@ApiStatus.Internal
-public final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
+final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
   @Override
   public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
     if (DumbService.isDumb(element.getProject())) {

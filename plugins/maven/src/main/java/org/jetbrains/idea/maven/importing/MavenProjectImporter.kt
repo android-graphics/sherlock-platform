@@ -22,30 +22,28 @@ interface MavenProjectImporter {
   fun createdModules(): List<Module>
 
   companion object {
-    internal fun createStaticImporter(
-      project: Project,
-      projectsTree: MavenProjectsTree,
-      projectsToImport: List<MavenProject>,
-      modelsProvider: IdeModifiableModelsProvider,
-      importingSettings: MavenImportingSettings,
-      parentImportingActivity: StructuredIdeActivity,
-    ): MavenProjectImporter {
+    @JvmStatic
+    fun createStaticImporter(project: Project,
+                             projectsTree: MavenProjectsTree,
+                             projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
+                             modelsProvider: IdeModifiableModelsProvider,
+                             importingSettings: MavenImportingSettings,
+                             parentImportingActivity: StructuredIdeActivity): MavenProjectImporter {
 
-      val importer = StaticWorkspaceProjectImporter(projectsTree, projectsToImport,
+      val importer = StaticWorkspaceProjectImporter(projectsTree, projectsToImportWithChanges,
                                                     importingSettings, modelsProvider, project)
       return wrapWithFUS(project, parentImportingActivity, importer)
     }
 
-    internal fun createImporter(
-      project: Project,
-      projectsTree: MavenProjectsTree,
-      projectsToImport: List<MavenProject>,
-      modelsProvider: IdeModifiableModelsProvider,
-      importingSettings: MavenImportingSettings,
-      previewModule: Module?,
-      parentImportingActivity: StructuredIdeActivity,
-    ): MavenProjectImporter {
-      val importer = createImporter(project, projectsTree, projectsToImport,
+    @JvmStatic
+    fun createImporter(project: Project,
+                       projectsTree: MavenProjectsTree,
+                       projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
+                       modelsProvider: IdeModifiableModelsProvider,
+                       importingSettings: MavenImportingSettings,
+                       previewModule: Module?,
+                       parentImportingActivity: StructuredIdeActivity): MavenProjectImporter {
+      val importer = createImporter(project, projectsTree, projectsToImportWithChanges,
                                     modelsProvider, importingSettings, previewModule)
       return wrapWithFUS(project, parentImportingActivity, importer)
     }
@@ -109,15 +107,13 @@ interface MavenProjectImporter {
       }
     }
 
-    private fun createImporter(
-      project: Project,
-      projectsTree: MavenProjectsTree,
-      projectsToImport: List<MavenProject>,
-      modelsProvider: IdeModifiableModelsProvider,
-      importingSettings: MavenImportingSettings,
-      previewModule: Module?,
-    ): MavenProjectImporter {
-      return WorkspaceProjectImporter(projectsTree, projectsToImport, importingSettings, modelsProvider, project)
+    private fun createImporter(project: Project,
+                               projectsTree: MavenProjectsTree,
+                               projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
+                               modelsProvider: IdeModifiableModelsProvider,
+                               importingSettings: MavenImportingSettings,
+                               previewModule: Module?): MavenProjectImporter {
+      return WorkspaceProjectImporter(projectsTree, projectsToImportWithChanges, importingSettings, modelsProvider, project)
     }
 
     @JvmStatic

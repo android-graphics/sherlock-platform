@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
@@ -30,8 +29,9 @@ public final class JavaReflectionInvocationInspection extends AbstractBaseJavaLo
 
   private static final String INVOKE = "invoke";
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCall) {
@@ -65,11 +65,10 @@ public final class JavaReflectionInvocationInspection extends AbstractBaseJavaLo
       getRequiredMethodArguments(methodCall.getMethodExpression().getQualifierExpression(), argumentOffset, methodPredicate);
     if (requiredTypes != null) {
       final PsiExpressionList argumentList = methodCall.getArgumentList();
-      final Arguments actualArguments = getActualMethodArguments(argumentList.getExpressions(), argumentOffset,
+      final Arguments actualArguments = getActualMethodArguments(argumentList.getExpressions(), argumentOffset, 
                                                                  MethodCallUtils.isVarArgCall(methodCall));
       if (actualArguments != null) {
-        PsiExpression[] actualExpressions = actualArguments.expressions;
-        if (requiredTypes.size() != actualExpressions.length) {
+        if (requiredTypes.size() != actualArguments.expressions.length) {
           if (actualArguments.varargAsArray) {
             final PsiExpression[] expressions = argumentList.getExpressions();
             final PsiElement element = expressions.length == argumentOffset + 1 ? expressions[argumentOffset] : argumentList;
@@ -77,15 +76,8 @@ public final class JavaReflectionInvocationInspection extends AbstractBaseJavaLo
               "inspection.reflection.invocation.item.count", requiredTypes.size()));
           }
           else {
-            if (actualExpressions.length > 0) {
-              TextRange range =
-                actualExpressions[0].getTextRangeInParent().union(actualExpressions[actualExpressions.length - 1].getTextRangeInParent());
-              holder.registerProblem(argumentList, range, JavaBundle.message(
-                "inspection.reflection.invocation.reflective.argument.count", requiredTypes.size()));
-            } else {
-              holder.registerProblem(argumentList, JavaBundle.message(
-                "inspection.reflection.invocation.reflective.argument.count", requiredTypes.size()));
-            }
+            holder.registerProblem(argumentList, JavaBundle.message(
+              "inspection.reflection.invocation.argument.count", requiredTypes.size() + argumentOffset));
           }
           return;
         }
@@ -93,7 +85,7 @@ public final class JavaReflectionInvocationInspection extends AbstractBaseJavaLo
         for (int i = 0; i < requiredTypes.size(); i++) {
           final ReflectiveType requiredType = getReflectiveType(requiredTypes.get(i));
           if (requiredType != null) {
-            final PsiExpression argument = actualExpressions[i];
+            final PsiExpression argument = actualArguments.expressions[i];
             if (argument != null) {
               PsiType actualType = argument.getType();
               if (TypeUtils.isJavaLangObject(actualType) && !requiredType.isAssignableFrom(actualType) &&
@@ -115,7 +107,7 @@ public final class JavaReflectionInvocationInspection extends AbstractBaseJavaLo
                   final PsiExpression[] expressions = argumentList.getExpressions();
                   final PsiElement element = expressions.length == argumentOffset + 1 ? expressions[argumentOffset] : argumentList;
                   holder.registerProblem(element, JavaBundle.message(
-                    "inspection.reflection.invocation.array.not.assignable", actualExpressions.length));
+                    "inspection.reflection.invocation.array.not.assignable", actualArguments.expressions.length));
                   break;
                 }
               }
@@ -126,9 +118,10 @@ public final class JavaReflectionInvocationInspection extends AbstractBaseJavaLo
     }
   }
 
-  private static @Nullable List<PsiExpression> getRequiredMethodArguments(@Nullable PsiExpression qualifier,
-                                                                          int argumentOffset,
-                                                                          @NotNull Predicate<? super PsiMethodCallExpression> methodPredicate) {
+  @Nullable
+  private static List<PsiExpression> getRequiredMethodArguments(@Nullable PsiExpression qualifier,
+                                                                int argumentOffset,
+                                                                @NotNull Predicate<? super PsiMethodCallExpression> methodPredicate) {
     final PsiExpression definition = findDefinition(PsiUtil.skipParenthesizedExprDown(qualifier));
     if (definition instanceof PsiMethodCallExpression definitionCall && methodPredicate.test(definitionCall)) {
       return JavaLangClassMemberReference.getReflectionMethodArguments(definitionCall, argumentOffset);
@@ -136,7 +129,8 @@ public final class JavaReflectionInvocationInspection extends AbstractBaseJavaLo
     return null;
   }
 
-  static @Nullable Arguments getActualMethodArguments(PsiExpression[] arguments, int argumentOffset, boolean isVarArgCall) {
+  @Nullable
+  static Arguments getActualMethodArguments(PsiExpression[] arguments, int argumentOffset, boolean isVarArgCall) {
     if (!isVarArgCall) {
       if (arguments.length == argumentOffset + 1) {
         final List<PsiExpression> expressions = getVarargs(arguments[argumentOffset]);
@@ -157,7 +151,8 @@ public final class JavaReflectionInvocationInspection extends AbstractBaseJavaLo
     return null;
   }
 
-  private static @Nullable PsiExpression unwrapDisambiguatingCastToObject(@Nullable PsiExpression expression) {
+  @Nullable
+  private static PsiExpression unwrapDisambiguatingCastToObject(@Nullable PsiExpression expression) {
     if (expression instanceof PsiTypeCastExpression typeCast) {
       final PsiTypeElement castElement = typeCast.getCastType();
       if (castElement != null && castElement.getType().equalsToText(JAVA_LANG_OBJECT)) {

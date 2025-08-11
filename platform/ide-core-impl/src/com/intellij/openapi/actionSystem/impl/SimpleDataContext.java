@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,13 +17,19 @@ public final class SimpleDataContext extends CustomizedDataContext {
   private SimpleDataContext(@NotNull Map<String, Object> map,
                             @Nullable DataContext parent) {
     super(Objects.requireNonNullElseGet(parent, () -> IdeUiService.getInstance()
-            .createUiDataContext((Component)map.get(PlatformCoreDataKeys.CONTEXT_COMPONENT.getName()))),
+            .createUiDataContext(PlatformCoreDataKeys.CONTEXT_COMPONENT
+                                   .getData((DataProvider)dataId -> getData(dataId, map)))),
           (EdtNoGetDataProvider)sink -> {
             for (String dataId : map.keySet()) {
               sink.set(DataKey.create(dataId),
                        Objects.requireNonNullElse(map.get(dataId), EXPLICIT_NULL));
             }
           }, false);
+  }
+
+  private static @Nullable Object getData(@NotNull String dataId, @NotNull Map<String, Object> map) {
+    return map.containsKey(dataId) ?
+           Objects.requireNonNullElse(map.get(dataId), EXPLICIT_NULL) : null;
   }
 
   /** @deprecated use {@link SimpleDataContext#getSimpleContext(DataKey, Object, DataContext)} instead. */

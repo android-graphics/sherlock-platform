@@ -117,7 +117,7 @@ public class RemoteServer {
     }
     catch (Throwable e) {
       e.printStackTrace(System.err);
-      System.exit(2);
+      System.exit(1);
     }
   }
 
@@ -235,13 +235,11 @@ public class RemoteServer {
 
   @SuppressWarnings("UnusedDeclaration")
   public static class Jndi implements InitialContextFactory, InvocationHandler {
-    @Override
     @NotNull
     public Context getInitialContext(Hashtable<?, ?> environment) {
       return (Context)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Context.class}, this);
     }
 
-    @Override
     @Nullable
     public Object invoke(Object proxy, @NotNull Method method, Object[] args) throws Throwable {
       if (Object.class.equals(method.getDeclaringClass())) {

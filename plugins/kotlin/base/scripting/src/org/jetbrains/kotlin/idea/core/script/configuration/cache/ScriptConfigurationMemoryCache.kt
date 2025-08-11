@@ -19,6 +19,9 @@ internal open class ScriptConfigurationMemoryCache(val project: Project) : Scrip
         return memoryCache.get(file)
     }
 
+    override fun getAnyLoadedScript(): ScriptCompilationConfigurationWrapper? =
+        memoryCache.entrySet().firstOrNull()?.value?.loaded?.configuration
+
     @Synchronized
     override fun setApplied(file: VirtualFile, configurationSnapshot: ScriptConfigurationSnapshot) {
         val old = memoryCache[file] ?: ScriptConfigurationState()

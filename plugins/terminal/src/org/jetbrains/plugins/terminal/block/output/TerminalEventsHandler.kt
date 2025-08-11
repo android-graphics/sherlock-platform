@@ -1,13 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.output
 
-import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
 
-@ApiStatus.Internal
-interface TerminalEventsHandler {
+internal interface TerminalEventsHandler {
   fun keyTyped(e: KeyEvent) {}
   fun keyPressed(e: KeyEvent) {}
 

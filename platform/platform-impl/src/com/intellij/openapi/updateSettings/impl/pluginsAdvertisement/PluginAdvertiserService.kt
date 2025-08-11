@@ -17,7 +17,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
@@ -56,7 +55,7 @@ sealed interface PluginAdvertiserService {
     @JvmStatic
     fun getSuggestedCommercialIdeCode(activeProductCode: String): String? {
       return when (activeProductCode) {
-        "IC", "AI" -> "IU"
+        "IC", "AS" -> "IU"
         "PC" -> "PY"
         else -> null
       }
@@ -75,8 +74,8 @@ sealed interface PluginAdvertiserService {
     )
 
     @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
-    val pyCharmProfessional: SuggestedIde = SuggestedIde(
-      name = "PyCharm",
+    val pyCharmProfessional = SuggestedIde(
+      name = "PyCharm Professional",
       productCode = "PY",
       defaultDownloadUrl = "https://www.jetbrains.com/pycharm/download/",
       platformSpecificDownloadUrlTemplate = "https://www.jetbrains.com/pycharm/download/download-thanks.html?platform={type}",
@@ -104,25 +103,16 @@ sealed interface PluginAdvertiserService {
       "PC" to "pycharm_ce",
       "PE" to "pycharm_edu",
       "WS" to "webstorm",
-      "PS" to "phpstorm",
       "GO" to "go",
       "CL" to "clion",
       "RD" to "rider",
       "RM" to "ruby",
       "RR" to "rust",
-      "AI" to "androidstudio",
-      "QA" to "aqua",
-      "DB" to "datagrip"
+      "AS" to "androidstudio"
     )
 
     internal const val EXECUTABLE_DEPENDENCY_KIND: String = "executable"
     internal const val DEPENDENCY_SUPPORT_TYPE: String = "dependencySupport"
-
-    val reservedIdeExtensions : Set<String> = setOf(
-      "*.c", "*.cs", "*.cpp", "*.css", "*.js",
-      "*.groovy", "*.kt", "*.php", "*.rs",
-      "*.ruby", "*.scala", "*.sql", "*.ts", "*.java"
-    )
   }
 
   suspend fun run(
@@ -150,7 +140,9 @@ open class PluginAdvertiserServiceImpl(
   private val cs: CoroutineScope,
 ) : PluginAdvertiserService {
 
-  private val notificationManager = SingletonNotificationManager(getPluginSuggestionNotificationGroup().displayId, NotificationType.INFORMATION)
+  companion object {
+    private val notificationManager = SingletonNotificationManager(notificationGroup.displayId, NotificationType.INFORMATION)
+  }
 
   override suspend fun run(
     customPlugins: List<PluginNode>,
@@ -248,7 +240,7 @@ open class PluginAdvertiserServiceImpl(
       fun putFeature(data: PluginData) {
         val pluginId = data.pluginId
         if (ignoredPluginSuggestionState.isIgnored(pluginId) && !includeIgnored) { // globally ignored
-          thisLogger().info("Plugin is ignored by user, suggestion will not be shown: $pluginId")
+          LOG.info("Plugin is ignored by user, suggestion will not be shown: $pluginId")
           return
         }
 
@@ -398,9 +390,8 @@ open class PluginAdvertiserServiceImpl(
       FUSEventSource.NOTIFICATION.logPluginSuggested(project, plugin.id)
     }
 
-    val promoteDisabledPlugins = if (PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)) emptyList() else disabledDescriptors
-    val (notificationMessage, notificationActions) = if (suggestionPlugins.isNotEmpty() || promoteDisabledPlugins.isNotEmpty()) {
-      val action = if (promoteDisabledPlugins.isEmpty()) {
+    val (notificationMessage, notificationActions) = if (suggestionPlugins.isNotEmpty() || disabledDescriptors.isNotEmpty()) {
+      val action = if (disabledDescriptors.isEmpty()) {
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.configure.plugins")) {
           FUSEventSource.NOTIFICATION.logConfigurePlugins(project)
 
@@ -408,7 +399,7 @@ open class PluginAdvertiserServiceImpl(
         }
       }
       else {
-        val title = if (promoteDisabledPlugins.size == 1)
+        val title = if (disabledDescriptors.size == 1)
           IdeBundle.message("plugins.advertiser.action.enable.plugin")
         else
           IdeBundle.message("plugins.advertiser.action.enable.plugins")
@@ -416,20 +407,20 @@ open class PluginAdvertiserServiceImpl(
         NotificationAction.createSimpleExpiring(title) {
           cs.launch(Dispatchers.EDT) {
             FUSEventSource.NOTIFICATION.logEnablePlugins(
-              promoteDisabledPlugins.map { it.pluginId.idString },
+              disabledDescriptors.map { it.pluginId.idString },
               project,
             )
 
-            PluginBooleanOptionDescriptor.togglePluginState(promoteDisabledPlugins, true)
+            PluginBooleanOptionDescriptor.togglePluginState(disabledDescriptors, true)
           }
         }
       }
 
       val notificationActions = listOf(
         action,
-        createIgnoreUnknownFeaturesAction(suggestionPlugins, promoteDisabledPlugins, allUnknownFeatures, dependencies),
+        createIgnoreUnknownFeaturesAction(suggestionPlugins, disabledDescriptors, allUnknownFeatures, dependencies),
       )
-      val messagePresentation = getAddressedMessagePresentation(suggestionPlugins, promoteDisabledPlugins, featuresMap)
+      val messagePresentation = getAddressedMessagePresentation(suggestionPlugins, disabledDescriptors, featuresMap)
 
       Pair(messagePresentation, notificationActions)
     }
@@ -443,14 +434,13 @@ open class PluginAdvertiserServiceImpl(
           tryUltimate(pluginId = null, suggestedIde = ideaUltimate, project, FUSEventSource.NOTIFICATION)
         },
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.ignore.ultimate")) {
-          FUSEventSource.NOTIFICATION.ignoreUltimateAndLog(project)
+          FUSEventSource.NOTIFICATION.doIgnoreUltimateAndLog(project)
         },
       )
     }
     else {
       if (includeIgnored) {
-        getPluginSuggestionNotificationGroup()
-          .createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
+        notificationGroup.createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
           .setDisplayId("advertiser.no.plugins")
           .notify(project)
       }
@@ -674,13 +664,9 @@ fun tryUltimate(
   val eventSource = fusEventSource ?: FUSEventSource.EDITOR
   if (Registry.`is`("ide.try.ultimate.automatic.installation") && project != null) {
     eventSource.logTryUltimate(project, pluginId)
-    project.service<UltimateInstallationService>().install(pluginId, suggestedIde, eventSource)
-  }
-  else {
-    fallback?.invoke() ?: eventSource.openDownloadPageAndLog(project = project,
-                                                             url = suggestedIde.defaultDownloadUrl,
-                                                             suggestedIde = suggestedIde,
-                                                             pluginId = pluginId)
+    project.service<UltimateInstallationService>().install(pluginId, suggestedIde)
+  } else {
+    fallback?.invoke() ?: eventSource.openDownloadPageAndLog(project = project, url = suggestedIde.defaultDownloadUrl, pluginId = pluginId)
   }
 }
 

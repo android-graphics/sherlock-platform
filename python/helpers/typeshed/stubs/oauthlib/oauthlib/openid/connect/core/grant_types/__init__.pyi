@@ -7,4 +7,3 @@ from .dispatchers import (
 )
 from .hybrid import HybridGrant as HybridGrant
 from .implicit import ImplicitGrant as ImplicitGrant
-from .refresh_token import RefreshTokenGrant as RefreshTokenGrant

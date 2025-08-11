@@ -30,12 +30,14 @@ import org.jetbrains.annotations.NotNull;
 public final class NoExplicitFinalizeCallsInspection extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "FinalizeCalledExplicitly";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "finalize.called.explicitly.problem.descriptor");
   }

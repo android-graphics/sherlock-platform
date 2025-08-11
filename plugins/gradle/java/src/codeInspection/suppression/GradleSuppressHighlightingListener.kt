@@ -8,11 +8,9 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 
 class GradleSuppressHighlightingListener : ExternalSystemTaskNotificationListener {
 
-  override fun onSuccess(proojecPath: String, id: ExternalSystemTaskId) =
-    processAllProjects(id, GradleSuspendTypecheckingService::resumeHighlighting)
+  override fun onSuccess(id: ExternalSystemTaskId) = processAllProjects(id, GradleSuspendTypecheckingService::resumeHighlighting)
 
-  override fun onFailure(proojecPath: String, id: ExternalSystemTaskId, exception: Exception) =
-    processAllProjects(id, GradleSuspendTypecheckingService::suspendHighlighting)
+  override fun onFailure(id: ExternalSystemTaskId, e: Exception) = processAllProjects(id, GradleSuspendTypecheckingService::suspendHighlighting)
 
   private fun processAllProjects(id: ExternalSystemTaskId, action: GradleSuspendTypecheckingService.(String) -> Unit) {
     val project = id.findProject() ?: return

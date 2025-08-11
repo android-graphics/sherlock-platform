@@ -4,7 +4,6 @@ class a implements Runnable {
         f(this);
     }
 
-    @Override
     public void run() {
 
     }

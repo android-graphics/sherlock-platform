@@ -73,15 +73,18 @@ public final class PyUtilCore {
    * @param targets target elements.
    * @return the list of flattened expressions.
    */
-  public static @NotNull List<PyAstExpression> flattenedParensAndTuples(PyAstExpression... targets) {
+  @NotNull
+  public static List<PyAstExpression> flattenedParensAndTuples(PyAstExpression... targets) {
     return unfoldParentheses(targets, new ArrayList<>(targets.length), false, false);
   }
 
-  public static @NotNull List<PyAstExpression> flattenedParensAndLists(PyAstExpression... targets) {
+  @NotNull
+  public static List<PyAstExpression> flattenedParensAndLists(PyAstExpression... targets) {
     return unfoldParentheses(targets, new ArrayList<>(targets.length), true, true);
   }
 
-  public static @NotNull List<PyAstExpression> flattenedParensAndStars(PyAstExpression... targets) {
+  @NotNull
+  public static List<PyAstExpression> flattenedParensAndStars(PyAstExpression... targets) {
     return unfoldParentheses(targets, new ArrayList<>(targets.length), false, true);
   }
 
@@ -125,7 +128,8 @@ public final class PyUtilCore {
     });
   }
 
-  public static @Nullable <T> T updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Function<? super Document, ? extends T> func) {
+  @Nullable
+  public static <T> T updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Function<? super Document, ? extends T> func) {
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(anchor.getProject());
     // manager.getDocument(anchor.getContainingFile()) doesn't work with intention preview
     final Document document = anchor.getContainingFile().getViewProvider().getDocument();
@@ -145,13 +149,15 @@ public final class PyUtilCore {
     return name.length() > 4 && name.startsWith("__") && name.endsWith("__");
   }
 
-  public static @Nullable PyAstLoopStatement getCorrespondingLoop(@NotNull PsiElement breakOrContinue) {
+  @Nullable
+  public static PyAstLoopStatement getCorrespondingLoop(@NotNull PsiElement breakOrContinue) {
     return breakOrContinue instanceof PyAstContinueStatement || breakOrContinue instanceof PyAstBreakStatement
            ? getCorrespondingLoopImpl(breakOrContinue)
            : null;
   }
 
-  private static @Nullable PyAstLoopStatement getCorrespondingLoopImpl(@NotNull PsiElement element) {
+  @Nullable
+  private static PyAstLoopStatement getCorrespondingLoopImpl(@NotNull PsiElement element) {
     final PyAstLoopStatement loop = PsiTreeUtil.getParentOfType(element, PyAstLoopStatement.class, true, AstScopeOwner.class);
 
     if (loop instanceof PyAstStatementWithElse && PsiTreeUtil.isAncestor(((PyAstStatementWithElse)loop).getElsePart(), element, true)) {
@@ -185,26 +191,7 @@ public final class PyUtilCore {
     if (function == null) return false;
 
     final String name = function.getName();
-    return (PyNames.INIT.equals(name) ||
-            PyNames.NEW.equals(name)) && function.getContainingClass() != null;
-  }
-
-  /**
-   * @return true if passed {@code element} is a method (this means a function inside a class) named {@code __init__},
-   * {@code __init_subclass__}, or {@code __new__}.
-   * @see PyUtil#isInitMethod(PsiElement)
-   * @see PyUtil#isNewMethod(PsiElement)
-   * @see PyUtil#turnConstructorIntoClass(PyFunction)
-   */
-  @Contract("null -> false")
-  public static boolean isConstructorLikeMethod(@Nullable PsiElement element) {
-    final PyAstFunction function = ObjectUtils.tryCast(element, PyAstFunction.class);
-    if (function == null) return false;
-
-    final String name = function.getName();
-    return (PyNames.INIT_SUBCLASS.equals(name) ||
-            PyNames.INIT.equals(name) ||
-            PyNames.NEW.equals(name)) && function.getContainingClass() != null;
+    return (PyNames.INIT.equals(name) || PyNames.NEW.equals(name)) && function.getContainingClass() != null;
   }
 
   public static boolean isStringLiteral(@Nullable PyAstStatement stmt) {
@@ -227,7 +214,8 @@ public final class PyUtilCore {
     return name == null ? 0 : name.startsWith("__") ? 2 : name.startsWith(PyNames.UNDERSCORE) ? 1 : 0;
   }
 
-  public static @Nullable List<String> strListValue(PyAstExpression value) {
+  @Nullable
+  public static List<String> strListValue(PyAstExpression value) {
     while (value instanceof PyAstParenthesizedExpression) {
       value = ((PyAstParenthesizedExpression)value).getContainedExpression();
     }
@@ -260,11 +248,13 @@ public final class PyUtilCore {
    * Returns the line comment that immediately precedes statement list of the given compound statement. Python parser ensures
    * that it follows the statement header, i.e. it's directly after the colon, not on its own line.
    */
-  public static @Nullable PsiComment getCommentOnHeaderLine(@NotNull PyAstStatementListContainer container) {
+  @Nullable
+  public static PsiComment getCommentOnHeaderLine(@NotNull PyAstStatementListContainer container) {
     return ObjectUtils.tryCast(getHeaderEndAnchor(container), PsiComment.class);
   }
 
-  public static @NotNull PsiElement getHeaderEndAnchor(@NotNull PyAstStatementListContainer container) {
+  @NotNull
+  public static PsiElement getHeaderEndAnchor(@NotNull PyAstStatementListContainer container) {
     final PyAstStatementList statementList = container.getStatementList();
     return Objects.requireNonNull(PsiTreeUtil.skipWhitespacesBackward(statementList));
   }
@@ -280,7 +270,8 @@ public final class PyUtilCore {
    *
    * @see #getTypeCommentValueRange(String)
    */
-  public static @Nullable String getTypeCommentValue(@NotNull String text) {
+  @Nullable
+  public static String getTypeCommentValue(@NotNull String text) {
     final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
     if (m.matches()) {
       return StringUtil.nullize(m.group(1).trim());
@@ -293,7 +284,8 @@ public final class PyUtilCore {
    *
    * @see #getTypeCommentValue(String)
    */
-  public static @Nullable TextRange getTypeCommentValueRange(@NotNull String text) {
+  @Nullable
+  public static TextRange getTypeCommentValueRange(@NotNull String text) {
     final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
     if (m.matches()) {
       final String hint = getTypeCommentValue(text);

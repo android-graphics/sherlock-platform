@@ -17,8 +17,9 @@ import java.util.Collection;
 import java.util.Collections;
 
 public final class PyiClassMembersProvider extends PyClassMembersProviderBase implements PyOverridingAncestorsClassMembersProvider {
+  @NotNull
   @Override
-  public @NotNull Collection<PyCustomMember> getMembers(@NotNull PyClassType classType, PsiElement location, @NotNull TypeEvalContext context) {
+  public Collection<PyCustomMember> getMembers(@NotNull PyClassType classType, PsiElement location, @NotNull TypeEvalContext context) {
     final PyClass cls = classType.getPyClass();
     final PsiElement pythonStub = PyiUtil.getPythonStub(cls);
     if (pythonStub instanceof PyClass) {
@@ -27,11 +28,12 @@ public final class PyiClassMembersProvider extends PyClassMembersProviderBase im
     return Collections.emptyList();
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement resolveMember(@NotNull PyClassType type,
-                                            @NotNull String name,
-                                            @Nullable PsiElement location,
-                                            @NotNull PyResolveContext resolveContext) {
+  public PsiElement resolveMember(@NotNull PyClassType type,
+                                  @NotNull String name,
+                                  @Nullable PsiElement location,
+                                  @NotNull PyResolveContext resolveContext) {
     final PyClass cls = type.getPyClass();
     final PsiElement pythonStub = PyiUtil.getPythonStub(cls);
     if (pythonStub instanceof PyClass) {

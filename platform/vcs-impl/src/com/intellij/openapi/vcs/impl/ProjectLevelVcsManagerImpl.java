@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -49,7 +49,6 @@ import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcs.console.VcsConsoleTabService;
 import com.intellij.vcsUtil.VcsImplUtil;
 import kotlin.Pair;
-import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -65,11 +64,12 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   private final NewMappings myMappings;
   private final Project myProject;
 
-  private static final @NonNls String ELEMENT_MAPPING = "mapping";
-  private static final @NonNls String ATTRIBUTE_DIRECTORY = "directory";
-  private static final @NonNls String ATTRIBUTE_VCS = "vcs";
-  private static final @NonNls String ELEMENT_ROOT_SETTINGS = "rootSettings";
-  private static final @NonNls String ATTRIBUTE_CLASS = "class";
+  @NonNls private static final String ELEMENT_MAPPING = "mapping";
+  @NonNls private static final String ATTRIBUTE_DIRECTORY = "directory";
+  @NonNls private static final String ATTRIBUTE_VCS = "vcs";
+  @NonNls private static final String ATTRIBUTE_DEFAULT_PROJECT = "defaultProject";
+  @NonNls private static final String ELEMENT_ROOT_SETTINGS = "rootSettings";
+  @NonNls private static final String ATTRIBUTE_CLASS = "class";
 
   private boolean myMappingsLoaded;
 
@@ -77,10 +77,13 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   private final Set<ActionKey> myBackgroundRunningTasks = ConcurrentCollectionFactory.createConcurrentSet();
 
-  public ProjectLevelVcsManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
-    myProject = project;
+  private final FileIndexFacade myExcludedIndex;
 
-    myMappings = new NewMappings(myProject, this, coroutineScope);
+  public ProjectLevelVcsManagerImpl(@NotNull Project project) {
+    myProject = project;
+    myExcludedIndex = FileIndexFacade.getInstance(project);
+
+    myMappings = new NewMappings(myProject, this);
   }
 
   @Override
@@ -353,6 +356,8 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       // ignore per-module VCS settings if the mapping table was loaded from .ipr
       return;
     }
+
+    OptionsAndConfirmationsHolder.getInstance(myProject).markHasVcsConfiguration();
     myMappings.setMapping(FileUtil.toSystemIndependentName(path), activeVcsName);
   }
 
@@ -377,6 +382,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @Override
   public void setDirectoryMappings(@NotNull List<VcsDirectoryMapping> items) {
+    OptionsAndConfirmationsHolder.getInstance(myProject).markHasVcsConfiguration();
     myMappings.setDirectoryMappings(items);
   }
 
@@ -507,6 +513,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public void loadState(@NotNull Element element) {
     final List<VcsDirectoryMapping> mappingsList = new ArrayList<>();
+    boolean haveNonEmptyMappings = false;
     for (Element child : element.getChildren(ELEMENT_MAPPING)) {
       String vcsName = child.getAttributeValue(ATTRIBUTE_VCS);
       String directory = child.getAttributeValue(ATTRIBUTE_DIRECTORY);
@@ -533,7 +540,12 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       VcsDirectoryMapping mapping = new VcsDirectoryMapping(directory, vcsName, rootSettings);
       mappingsList.add(mapping);
 
-      myMappingsLoaded |= !mapping.isDefaultMapping();
+      haveNonEmptyMappings |= !mapping.isDefaultMapping();
+    }
+    boolean defaultProject = Boolean.TRUE.toString().equals(element.getAttributeValue(ATTRIBUTE_DEFAULT_PROJECT));
+    // run autodetection if there's no VCS in default project and
+    if (haveNonEmptyMappings || !defaultProject) {
+      myMappingsLoaded = true;
     }
     myMappings.setDirectoryMappingsFromConfig(mappingsList);
   }
@@ -541,6 +553,9 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public @NotNull Element getState() {
     Element element = new Element("state");
+    if (myProject.isDefault()) {
+      element.setAttribute(ATTRIBUTE_DEFAULT_PROJECT, Boolean.TRUE.toString());
+    }
     for (VcsDirectoryMapping mapping : getDirectoryMappings()) {
       VcsRootSettings rootSettings = mapping.getRootSettings();
       if (rootSettings == null && mapping.isDefaultMapping() && mapping.isNoneMapping()) {
@@ -564,6 +579,19 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       element.addContent(child);
     }
     return element;
+  }
+
+  /**
+   * Returns 'true' during initial project setup, ie:
+   * <ul>
+   * <li> There are no explicitly configured mappings ({@link #setDirectoryMapping} vs {@link #setAutoDirectoryMappings})
+   * <li> There are no mappings inherited from "Default Project" configuration (excluding &lt;Project&gt; mappings) ({@link #myMappingsLoaded})
+   * <li> Project was not reopened a second time ({@link #ATTRIBUTE_DEFAULT_PROJECT})
+   * </ul>
+   */
+  public boolean needAutodetectMappings() {
+    return !myMappingsLoaded &&
+           !OptionsAndConfirmationsHolder.getInstance(myProject).haveLegacyVcsConfiguration();
   }
 
   /**
@@ -663,13 +691,11 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       return false;
     }
     return ReadAction.compute(() -> {
-      if (!vf.isValid()) return false;
-      FileIndexFacade fileIndex = FileIndexFacade.getInstance(myProject);
       boolean isUnderProject = isFileInBaseDir(vf) ||
                                isInDirectoryBasedRoot(vf) ||
                                hasExplicitMapping(vf) ||
-                               fileIndex.isInContent(vf) ||
-                               (!Registry.is("ide.hide.excluded.files") && fileIndex.isExcludedFile(vf));
+                               myExcludedIndex.isInContent(vf) ||
+                               (!Registry.is("ide.hide.excluded.files") && myExcludedIndex.isExcludedFile(vf));
       return isUnderProject && !isIgnored(vf);
     });
   }
@@ -678,13 +704,12 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   public boolean isIgnored(@NotNull VirtualFile vf) {
     return ReadAction.compute(() -> {
       if (myProject.isDisposed() || myProject.isDefault()) return false;
-      if (!vf.isValid()) return false;
 
       if (Registry.is("ide.hide.excluded.files")) {
-        return FileIndexFacade.getInstance(myProject).isExcludedFile(vf);
+        return myExcludedIndex.isExcludedFile(vf);
       }
       else {
-        return FileIndexFacade.getInstance(myProject).isUnderIgnored(vf);
+        return myExcludedIndex.isUnderIgnored(vf);
       }
     });
   }
@@ -696,7 +721,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
       if (Registry.is("ide.hide.excluded.files")) {
         VirtualFile vf = VcsImplUtil.findValidParentAccurately(filePath);
-        return vf != null && FileIndexFacade.getInstance(myProject).isExcludedFile(vf);
+        return vf != null && myExcludedIndex.isExcludedFile(vf);
       }
       else {
         // WARN: might differ from 'myExcludedIndex.isUnderIgnored' if whole content root is under folder with 'ignored' name.

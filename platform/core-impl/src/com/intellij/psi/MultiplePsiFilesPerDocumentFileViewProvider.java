@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
  */
 package com.intellij.psi;
 
-import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
@@ -22,7 +21,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -72,11 +70,6 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
       }
       file = createPsiFileImpl(target);
       if (file == null) return null;
-      if (file.getLanguage() != target) {
-        throw PluginException.createByClass(new IllegalStateException("Inconsistent view provider implementation: " + this + " (" + getClass() + "). " +
-                                            "Its createPsiFileImpl('"+ target + "') returned "
-                                            + file + "(" + file.getClass() + ") with unexpected getLanguage()='" + file.getLanguage()+"'"), getClass());
-      }
       if (myOriginal != null) {
         PsiFile originalFile = myOriginal.getPsi(target);
         if (originalFile != null) {
@@ -98,7 +91,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
   }
 
   @Override
-  public final @Unmodifiable @NotNull List<PsiFile> getCachedPsiFiles() {
+  public final @NotNull List<PsiFile> getCachedPsiFiles() {
     return ContainerUtil.mapNotNull(myRoots.keySet(), this::getCachedPsi);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.openapi.externalSystem.model.Key;
@@ -13,12 +13,16 @@ import java.util.Collection;
 import java.util.List;
 
 public final class EarConfigurationModelData extends AbstractExternalEntityData implements ArtifactConfiguration {
-  public static final @NotNull Key<EarConfigurationModelData> KEY =
+  @NotNull
+  public static final Key<EarConfigurationModelData> KEY =
     Key.create(EarConfigurationModelData.class, WebConfigurationModelData.KEY.getProcessingWeight() + 1);
 
-  private final @NotNull List<Ear> ears;
-  private final @NotNull Collection<DependencyData<?>> deployDependencies;
-  private final @NotNull Collection<DependencyData<?>> earlibDependencies;
+  @NotNull
+  private final List<Ear> ears;
+  @NotNull
+  private final Collection<DependencyData<?>> deployDependencies;
+  @NotNull
+  private final Collection<DependencyData<?>> earlibDependencies;
 
   @PropertyMapping({"owner", "ears", "deployDependencies", "earlibDependencies"})
   public EarConfigurationModelData(@NotNull ProjectSystemId owner,
@@ -42,15 +46,18 @@ public final class EarConfigurationModelData extends AbstractExternalEntityData 
   }
 
   @Override
-  public @NotNull List<Ear> getArtifacts() {
+  @NotNull
+  public List<Ear> getArtifacts() {
     return ears;
   }
 
-  public @NotNull Collection<DependencyData<?>> getDeployDependencies() {
+  @NotNull
+  public Collection<DependencyData<?>> getDeployDependencies() {
     return deployDependencies;
   }
 
-  public @NotNull Collection<DependencyData<?>> getEarlibDependencies() {
+  @NotNull
+  public Collection<DependencyData<?>> getEarlibDependencies() {
     return earlibDependencies;
   }
 

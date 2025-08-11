@@ -7,6 +7,7 @@ import com.intellij.util.xmlb.SettingsInternalApi
 import kotlinx.serialization.json.JsonElement
 import org.jetbrains.annotations.ApiStatus.*
 import java.nio.file.Path
+import java.util.*
 
 @NonExtendable
 interface SettingsController {

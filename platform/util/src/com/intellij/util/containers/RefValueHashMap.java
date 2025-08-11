@@ -2,7 +2,6 @@
 package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +10,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 @Debug.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "childrenArray()")
-abstract class RefValueHashMap<K, V> implements Map<K, V>, ReferenceQueueable {
+abstract class RefValueHashMap<K, V> implements Map<K, V> {
   private final Map<K, MyReference<K, V>> myMap;
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
@@ -26,22 +25,18 @@ abstract class RefValueHashMap<K, V> implements Map<K, V>, ReferenceQueueable {
 
   protected abstract MyReference<K,V> createReference(@NotNull K key, V value, @NotNull ReferenceQueue<? super V> queue);
 
-  @ApiStatus.Internal
-  @Override
-  public boolean processQueue() {
-    boolean removed = false;
+  private void processQueue() {
     while (true) {
       //noinspection unchecked
       MyReference<K,V> ref = (MyReference<K,V>)myQueue.poll();
       if (ref == null) {
-        break;
+        return;
       }
       K key = ref.getKey();
       if (myMap.get(key) == ref) {
-        removed |= myMap.remove(key, ref);
+        myMap.remove(key);
       }
     }
-    return removed;
   }
 
   @Override

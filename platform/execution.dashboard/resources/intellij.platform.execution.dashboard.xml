@@ -42,9 +42,6 @@
       </action>
       <action id="RunDashboard.Stop" icon="AllIcons.Actions.Suspend" use-shortcut-of="Stop"
               class="com.intellij.platform.execution.dashboard.actions.StopAction"/>
-      <separator/>
-      <reference ref="ExpandAll"/>
-      <reference ref="CollapseAll"/>
     </group>
     <group id="RunDashboardPopup">
       <action id="RunDashboard.EditConfiguration" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSourceInNewWindow"
@@ -61,8 +58,6 @@
       <action id="RunDashboard.OpenRunningConfigInNewTab"
               class="com.intellij.platform.execution.dashboard.actions.OpenRunningConfigInNewTabAction"/>
       <separator/>
-      <action id="RunDashboard.ClearConsole" icon="AllIcons.General.Delete"
-              class="com.intellij.platform.execution.dashboard.actions.ClearConsoleAction"/>
       <action id="RunDashboard.ClearContent" icon="AllIcons.Actions.Cancel"
               class="com.intellij.platform.execution.dashboard.actions.ClearContentAction"/>
       <action id="RunDashboard.RestoreConfiguration" icon="AllIcons.Actions.Rollback"
@@ -85,15 +80,11 @@
       <group id="RunDashboard.Filter" class="com.intellij.platform.execution.dashboard.actions.RunDashboardFilterActionGroup"/>
       <add-to-group group-id="ServiceView.ViewOptions"/>
     </group>
-    <action id="RunDashboard.AddConfiguration" class="com.intellij.platform.execution.dashboard.actions.AddRunConfigurationAction">
+    <action id="RunDashboard.AddType" class="com.intellij.platform.execution.dashboard.actions.AddRunConfigurationTypeAction">
       <add-to-group group-id="ServiceView.AddService"/>
     </action>
-    <reference ref="RunDashboard.RestoreHiddenConfigurations">
-      <add-to-group group-id="ServiceView.AddService" anchor="after" relative-to-action="RunDashboard.AddConfiguration"/>
+    <reference id="RunDashboard.RestoreHiddenConfigurations">
+      <add-to-group group-id="ServiceView.AddService" anchor="after" relative-to-action="RunDashboard.AddType"/>
     </reference>
-    <action id="RunDashboard.DoubleClickRun"
-            class="com.intellij.platform.execution.dashboard.actions.RunDashboardDoubleClickRunAction">
-      <add-to-group group-id="ServiceView.Gear"/>
-    </action>
   </actions>
 </idea-plugin>

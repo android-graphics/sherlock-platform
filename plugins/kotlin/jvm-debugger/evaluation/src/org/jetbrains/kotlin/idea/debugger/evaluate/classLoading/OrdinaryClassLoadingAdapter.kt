@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.classLoading
 
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.impl.ClassLoadingUtils
-import com.intellij.debugger.impl.DebuggerUtilsEx.enableCollection
 import com.intellij.debugger.impl.DebuggerUtilsEx.mirrorOfByteArray
 import com.intellij.debugger.impl.DebuggerUtilsEx.mirrorOfString
 import com.intellij.openapi.projectRoots.JavaSdkVersion
@@ -87,8 +86,7 @@ class OrdinaryClassLoadingAdapter : ClassLoadingAdapter {
     }
 
     override fun isApplicable(context: ExecutionContext, info: ClassLoadingAdapter.Companion.ClassInfoForEvaluator): Boolean {
-        return info.isCompilingEvaluatorPreferred && context.classLoader != null
-                && !DexDebugFacility.isDex(context.evaluationContext.virtualMachineProxy.virtualMachine)
+        return info.isCompilingEvaluatorPreferred && context.classLoader != null && !DexDebugFacility.isDex(context.debugProcess)
     }
 
     override fun loadClasses(context: ExecutionContext, classes: Collection<ClassToLoad>): ClassLoaderReference {
@@ -140,16 +138,15 @@ class OrdinaryClassLoadingAdapter : ClassLoadingAdapter {
             val vm = context.vm
             val classLoaderType = classLoader.referenceType() as ClassType
             val defineMethod = classLoaderType.concreteMethodByName("defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;")
-            val nameObj = mirrorOfString(name, context.evaluationContext)
-            val byteArray = mirrorOfByteArray(bytes, context.evaluationContext)
-            val args = listOf(nameObj, byteArray, vm.mirrorOf(0), vm.mirrorOf(bytes.size))
-            try {
-                context.invokeMethod(classLoader, defineMethod, args)
-            }
-            finally {
-                enableCollection(nameObj)
-                enableCollection(byteArray)
-            }
+            val nameObj = mirrorOfString(name, vm, context.evaluationContext)
+
+            val args = listOf(
+                nameObj,
+                mirrorOfByteArray(bytes, context.evaluationContext),
+                vm.mirrorOf(0),
+                vm.mirrorOf(bytes.size)
+            )
+            context.invokeMethod(classLoader, defineMethod, args)
         } catch (e: Exception) {
             throw EvaluateException("Error during class $name definition: $e", e)
         }

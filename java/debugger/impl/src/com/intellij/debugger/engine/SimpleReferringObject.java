@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerContext;
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.project.Project;
@@ -16,14 +15,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 
 public class SimpleReferringObject implements ReferringObject {
-  private final @NotNull ObjectReference myReference;
+  @NotNull private final ObjectReference myReference;
 
   public SimpleReferringObject(@NotNull ObjectReference reference) {
     myReference = reference;
   }
 
+  @NotNull
   @Override
-  public @NotNull ValueDescriptorImpl createValueDescription(@NotNull Project project, @NotNull Value referee) {
+  public ValueDescriptorImpl createValueDescription(@NotNull Project project, @NotNull Value referee) {
     return new ValueDescriptorImpl(project, myReference) {
       @Override
       public Value calcValue(EvaluationContextImpl evaluationContext) {
@@ -32,7 +32,7 @@ public class SimpleReferringObject implements ReferringObject {
 
       @Override
       public String getName() {
-        return JavaDebuggerBundle.message("ref");
+        return "Ref";
       }
 
 
@@ -43,18 +43,21 @@ public class SimpleReferringObject implements ReferringObject {
     };
   }
 
+  @Nullable
   @Override
-  public @Nullable String getNodeName(int order) {
+  public String getNodeName(int order) {
     return "Referrer " + order;
   }
 
+  @NotNull
   @Override
-  public @NotNull ObjectReference getReference() {
+  public ObjectReference getReference() {
     return myReference;
   }
 
+  @NotNull
   @Override
-  public @NotNull Function<XValueNode, XValueNode> getNodeCustomizer() {
+  public Function<XValueNode, XValueNode> getNodeCustomizer() {
     return Function.identity();
   }
 }

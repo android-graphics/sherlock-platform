@@ -12,13 +12,14 @@ import org.jetbrains.idea.svn.properties.PropertyValue
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.TableCellRenderer
 
-internal class PropertiesTableView : TableView<PropertyData>(PropertiesTableModel()) {
+private class PropertiesTableView : TableView<PropertyData>(PropertiesTableModel()) {
   fun setProperties(properties: List<PropertyData>) {
     tableViewModel.items = properties
   }
 }
 
 private class PropertiesTableModel : ListTableModel<PropertyData>(PropertyNameColumn, PropertyValueColumn)
+
 private object PropertyNameColumn : ColumnInfo<PropertyData, String>(message("column.name.property.name")) {
   override fun valueOf(item: PropertyData): String = item.name
 }

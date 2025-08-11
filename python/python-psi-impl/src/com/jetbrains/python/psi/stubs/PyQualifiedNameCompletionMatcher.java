@@ -107,9 +107,10 @@ public final class PyQualifiedNameCompletionMatcher {
     }
   }
 
-  private static @Nullable QualifiedName findCanonicalImportPath(@NotNull PyElement element,
-                                                                 @NotNull QualifiedName moduleQualifiedName,
-                                                                 @NotNull PsiFile currentFile) {
+  @Nullable
+  private static QualifiedName findCanonicalImportPath(@NotNull PyElement element,
+                                                       @NotNull QualifiedName moduleQualifiedName,
+                                                       @NotNull PsiFile currentFile) {
     QualifiedName canonicalImportPath;
     if (moduleQualifiedName.getComponentCount() != 1) {
       canonicalImportPath = QualifiedNameFinder.findCanonicalImportPath(element, currentFile);
@@ -129,11 +130,13 @@ public final class PyQualifiedNameCompletionMatcher {
       myElement = element;
     }
 
-    public @NotNull QualifiedName getQualifiedName() {
+    @NotNull
+    public QualifiedName getQualifiedName() {
       return myQualifiedName;
     }
 
-    public @NotNull PyElement getElement() {
+    @NotNull
+    public PyElement getElement() {
       return myElement;
     }
   }
@@ -195,7 +198,8 @@ public final class PyQualifiedNameCompletionMatcher {
     }
   }
 
-  private static @Nullable QualifiedName findQualifiedNameInClosestRoot(@NotNull VirtualFile file, @NotNull Project project) {
+  @Nullable
+  private static QualifiedName findQualifiedNameInClosestRoot(@NotNull VirtualFile file, @NotNull Project project) {
     // TODO Come up with a better API for exposing these internals
     Ref<QualifiedName> result = Ref.create();
     //noinspection ResultOfMethodCallIgnored

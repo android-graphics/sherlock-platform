@@ -1,11 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.psi.*;
 import com.intellij.uast.UastHintedVisitorAdapter;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.uast.UCallExpression;
@@ -16,8 +15,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import java.util.List;
 import java.util.Objects;
 
-@ApiStatus.Internal
-public final class UnspecifiedActionsPlaceInspection extends DevKitUastInspectionBase {
+final class UnspecifiedActionsPlaceInspection extends DevKitUastInspectionBase {
 
   private static final boolean SKIP_CHILDREN = true;
 
@@ -27,7 +25,8 @@ public final class UnspecifiedActionsPlaceInspection extends DevKitUastInspectio
   public static final String CREATE_ACTION_POPUP_MENU_METHOD_NAME = "createActionPopupMenu";
 
   @Override
-  public @NotNull PsiElementVisitor buildInternalVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  @NotNull
+  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
 
       @Override
@@ -77,8 +76,9 @@ public final class UnspecifiedActionsPlaceInspection extends DevKitUastInspectio
     return false;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getShortName() {
+  public String getShortName() {
     return "UnspecifiedActionsPlace";
   }
 }

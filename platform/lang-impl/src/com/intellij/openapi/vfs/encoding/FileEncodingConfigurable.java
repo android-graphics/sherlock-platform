@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vfs.encoding;
 
@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
@@ -32,8 +31,8 @@ import java.awt.*;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 final class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
 
@@ -76,7 +75,8 @@ final class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   }
 
   @Override
-  public @NotNull String getId() {
+  @NotNull
+  public String getId() {
     return "File.Encoding";
   }
 
@@ -101,8 +101,9 @@ final class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
     renderer.append(encodingText + (result == null ? "" : " (" + EncodingUtil.reasonToString(result, file) + ")"), attributes);
   }
 
+  @NotNull
   @Override
-  protected @NotNull ActionGroup createActionListGroup(@Nullable Object target, @NotNull Consumer<? super Charset> onChosen) {
+  protected ActionGroup createActionListGroup(@Nullable Object target, @NotNull Consumer<? super Charset> onChosen) {
     VirtualFile file = target instanceof VirtualFile ? (VirtualFile)target : null;
     byte[] b = null;
     try {
@@ -132,13 +133,15 @@ final class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
     return target != null ? super.getNullValueText(target) : IdeBundle.message("encoding.name.system.default", CharsetToolkit.getDefaultSystemCharset().displayName());
   }
 
+  @NotNull
   @Override
-  protected @NotNull Collection<Charset> getValueVariants(@Nullable Object target) {
+  protected Collection<Charset> getValueVariants(@Nullable Object target) {
     return Arrays.asList(CharsetToolkit.getAvailableCharsets());
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent createComponent() {
+  public JComponent createComponent() {
     final class PropertiesCharsetValue implements Value<Charset> {
       @Override
       public void commit() {}
@@ -154,20 +157,12 @@ final class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
       }
     }
 
-    final String nullTextValue = IdeBundle.message("encoding.name.properties.default", getDefaultCharset().displayName());
+    final String nullTextValue = IdeBundle.message("encoding.name.properties.default", StandardCharsets.ISO_8859_1.displayName());
     JComponent tablePanel = super.createComponent();
     Dimension size = tablePanel.getPreferredSize();
     tablePanel.setPreferredSize(new Dimension(400, size.height));
     return ui.createContent(tablePanel,
                             createActionPanel(new PerFileConfigurableComboBoxAction(new PropertiesCharsetValue(), null, nullTextValue)));
-  }
-
-  private static @NotNull Charset getDefaultCharset() {
-    if(Registry.is("properties.file.encoding.legacy.support", true)) {
-      return StandardCharsets.ISO_8859_1;
-    } else {
-      return StandardCharsets.UTF_8;
-    }
   }
 
   @Override
@@ -192,7 +187,8 @@ final class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
     return !same;
   }
 
-  private static @NotNull String getCharsetName(@Nullable Charset c) {
+  @NotNull
+  private static String getCharsetName(@Nullable Charset c) {
     return c == null ? "" : c.name();
   }
 
@@ -221,11 +217,13 @@ final class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
       ((VirtualFile)target).isDirectory() || EncodingUtil.checkCanConvertAndReload((VirtualFile)target) == null);
   }
 
-  private static @NotNull PerFileMappingsEx<Charset> createMappings(@NotNull Project project) {
+  @NotNull
+  private static PerFileMappingsEx<Charset> createMappings(@NotNull Project project) {
     EncodingProjectManagerImpl prjManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(project);
     return new PerFileMappingsEx<>() {
+      @NotNull
       @Override
-      public @NotNull Map<VirtualFile, Charset> getMappings() {
+      public Map<VirtualFile, Charset> getMappings() {
         return new HashMap<>(prjManager.getAllMappings());
       }
 
@@ -244,8 +242,9 @@ final class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
         throw new UnsupportedOperationException();
       }
 
+      @Nullable
       @Override
-      public @Nullable Charset getDefaultMapping(@Nullable VirtualFile file) {
+      public Charset getDefaultMapping(@Nullable VirtualFile file) {
         return prjManager.getEncoding(file, true);
       }
     };

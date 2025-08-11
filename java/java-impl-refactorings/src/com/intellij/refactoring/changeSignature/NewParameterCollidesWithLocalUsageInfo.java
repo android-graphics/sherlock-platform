@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;

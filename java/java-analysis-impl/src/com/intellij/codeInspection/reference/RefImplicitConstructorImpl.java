@@ -38,8 +38,9 @@ public final class RefImplicitConstructorImpl extends RefMethodImpl implements R
     return getOwnerClass().isValid();
   }
 
+  @NotNull
   @Override
-  public synchronized @NotNull String getAccessModifier() {
+  public synchronized String getAccessModifier() {
     return getOwnerClass().getAccessModifier();
   }
 
@@ -48,13 +49,15 @@ public final class RefImplicitConstructorImpl extends RefMethodImpl implements R
     RefJavaUtil.getInstance().setAccessModifier(getOwnerClass(), am);
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement getPsiElement() {
+  public PsiElement getPsiElement() {
     return getOwnerClass().getPsiElement();
   }
 
   @Override
-  public @Nullable PsiFile getContainingFile() {
+  @Nullable
+  public PsiFile getContainingFile() {
     return ((RefClassImpl)getOwnerClass()).getContainingFile();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.DebugProcess;
@@ -13,7 +13,8 @@ final class MemoryAgentInitializer {
   private static final Key<MemoryAgent> MEMORY_AGENT_KEY = Key.create("MEMORY_AGENT_KEY");
   private static final Logger LOG = Logger.getInstance(MemoryAgentInitializer.class);
 
-  static @NotNull MemoryAgent getAgent(@NotNull EvaluationContextImpl evaluationContext) {
+  @NotNull
+  static MemoryAgent getAgent(@NotNull EvaluationContextImpl evaluationContext) {
     MemoryAgent agent = evaluationContext.getDebugProcess().getUserData(MEMORY_AGENT_KEY);
     return agent == null ? initializeAgent(evaluationContext) : agent;
   }

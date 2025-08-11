@@ -12,7 +12,6 @@ import com.intellij.util.indexing.roots.AdditionalLibraryIndexableAddedFilesIter
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +21,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-@ApiStatus.Internal
 public final class AdditionalLibraryRootsListenerHelperImpl implements AdditionalLibraryRootsListenerHelper {
   @Override
   public void handleAdditionalLibraryRootsChanged(@NotNull Project project,
@@ -66,7 +64,7 @@ public final class AdditionalLibraryRootsListenerHelperImpl implements Additiona
     List<IndexableFilesIterator> indexableFilesIterators =
       Collections.singletonList(new AdditionalLibraryIndexableAddedFilesIterator(presentableLibraryName, rootsToIndex, libraryNameForDebug));
 
-    new UnindexedFilesScanner(project, indexableFilesIterators, "On updated roots of library '" + presentableLibraryName + "'").
+    new UnindexedFilesScanner(project, indexableFilesIterators, null, "On updated roots of library '" + presentableLibraryName + "'").
       queue();
   }
 }

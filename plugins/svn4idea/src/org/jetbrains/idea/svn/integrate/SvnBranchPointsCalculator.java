@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.application.PathManager;
@@ -28,9 +28,9 @@ public class SvnBranchPointsCalculator {
 
   private static final Logger LOG = Logger.getInstance(SvnBranchPointsCalculator.class);
 
-  private final @NotNull SmallMapSerializer<Url, TreeMap<String, BranchCopyData>> myPersistentMap;
-  private final @NotNull Object myPersistenceLock = new Object();
-  private final @NotNull SvnVcs myVcs;
+  @NotNull private final SmallMapSerializer<Url, TreeMap<String, BranchCopyData>> myPersistentMap;
+  @NotNull private final Object myPersistenceLock = new Object();
+  @NotNull private final SvnVcs myVcs;
 
   public SvnBranchPointsCalculator(@NotNull SvnVcs vcs) {
     myVcs = vcs;
@@ -40,7 +40,8 @@ public class SvnBranchPointsCalculator {
     myPersistentMap = new SmallMapSerializer<>(file, DECODED_URL_DESCRIPTOR, new BranchDataExternalizer());
   }
 
-  public @Nullable WrapperInvertor getBestHit(@NotNull Url repoUrl, @NotNull Url sourceUrl, @NotNull Url targetUrl) {
+  @Nullable
+  public WrapperInvertor getBestHit(@NotNull Url repoUrl, @NotNull Url sourceUrl, @NotNull Url targetUrl) {
     synchronized (myPersistenceLock) {
       WrapperInvertor result = null;
       TreeMap<String, BranchCopyData> map = myPersistentMap.get(repoUrl);
@@ -84,7 +85,8 @@ public class SvnBranchPointsCalculator {
     }
   }
 
-  private static @Nullable BranchCopyData getBranchData(@NotNull NavigableMap<String, BranchCopyData> map, @NotNull Url url) {
+  @Nullable
+  private static BranchCopyData getBranchData(@NotNull NavigableMap<String, BranchCopyData> map, @NotNull Url url) {
     Map.Entry<String, BranchCopyData> branchData = map.floorEntry(url.toString());
     return branchData != null && url.toString().startsWith(branchData.getKey()) ? branchData.getValue() : null;
   }
@@ -107,7 +109,8 @@ public class SvnBranchPointsCalculator {
     }
 
     @Override
-    public @NotNull TreeMap<String, BranchCopyData> read(@NotNull DataInput in) throws IOException {
+    @NotNull
+    public TreeMap<String, BranchCopyData> read(@NotNull DataInput in) throws IOException {
       TreeMap<String, BranchCopyData> result = new TreeMap<>();
       int size = in.readInt();
 
@@ -118,7 +121,8 @@ public class SvnBranchPointsCalculator {
       return result;
     }
 
-    private static @NotNull BranchCopyData readCopyPoint(@NotNull DataInput in) throws IOException {
+    @NotNull
+    private static BranchCopyData readCopyPoint(@NotNull DataInput in) throws IOException {
       Url source = ENCODED_URL_DESCRIPTOR.read(in);
       Url target = ENCODED_URL_DESCRIPTOR.read(in);
       long sourceRevision = in.readLong();
@@ -159,7 +163,8 @@ public class SvnBranchPointsCalculator {
     }
   }
 
-  public @Nullable WrapperInvertor calculateCopyPoint(@NotNull Url repoUrl, @NotNull Url sourceUrl, @NotNull Url targetUrl)
+  @Nullable
+  public WrapperInvertor calculateCopyPoint(@NotNull Url repoUrl, @NotNull Url sourceUrl, @NotNull Url targetUrl)
     throws VcsException {
     WrapperInvertor result = getBestHit(repoUrl, sourceUrl, targetUrl);
 
@@ -199,8 +204,8 @@ public class SvnBranchPointsCalculator {
   }
 
   public static class BranchCopyData {
-    private final @NotNull Url mySource;
-    private final @NotNull Url myTarget;
+    @NotNull private final Url mySource;
+    @NotNull private final Url myTarget;
     private final long mySourceRevision;
     private final long myTargetRevision;
 
@@ -216,7 +221,8 @@ public class SvnBranchPointsCalculator {
       return "source: " + mySource + "@" + mySourceRevision + " target: " + myTarget + "@" + myTargetRevision;
     }
 
-    public @NotNull Url getSource() {
+    @NotNull
+    public Url getSource() {
       return mySource;
     }
 
@@ -224,7 +230,8 @@ public class SvnBranchPointsCalculator {
       return mySourceRevision;
     }
 
-    public @NotNull Url getTarget() {
+    @NotNull
+    public Url getTarget() {
       return myTarget;
     }
 

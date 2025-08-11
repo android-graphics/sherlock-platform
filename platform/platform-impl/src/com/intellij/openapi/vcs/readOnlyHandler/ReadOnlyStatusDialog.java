@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.ide.IdeBundle;
@@ -14,7 +14,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.list.TargetPopup;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.OptionsDialog;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,7 +23,6 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiStatus.Internal
 public final class ReadOnlyStatusDialog extends OptionsDialog {
   private static final SimpleTextAttributes BOLD_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.foreground());
@@ -36,7 +34,6 @@ public final class ReadOnlyStatusDialog extends OptionsDialog {
   private JRadioButton myUsingFileSystemRadioButton;
   private JRadioButton myUsingVcsRadioButton;
   private JComboBox<String> myChangelist;
-  private JCheckBox myMakeChangeListActive;
   private List<PresentableFileInfo> myFiles;
 
   public ReadOnlyStatusDialog(Project project, @NotNull List<PresentableFileInfo> files) {
@@ -80,7 +77,7 @@ public final class ReadOnlyStatusDialog extends OptionsDialog {
         HandleType handleType = info.getSelectedHandleType();
         List<String> changelists = handleType.getChangelists();
         String defaultChangelist = handleType.getDefaultChangelist();
-        myChangelist.setModel(new CollectionComboBoxModel<>(new ArrayList<>(changelists), defaultChangelist));
+        myChangelist.setModel(new CollectionComboBoxModel<>(changelists, defaultChangelist));
 
         myChangelist.setRenderer(new ColoredListCellRenderer<>() {
           @Override
@@ -149,7 +146,7 @@ public final class ReadOnlyStatusDialog extends OptionsDialog {
 
     List<PresentableFileInfo> files = new ArrayList<>(myFiles);
     String changelist = (String)myChangelist.getSelectedItem();
-    ReadonlyStatusHandlerImpl.processFiles(files, changelist, myMakeChangeListActive.isSelected());
+    ReadonlyStatusHandlerImpl.processFiles(files, changelist);
 
     if (files.isEmpty()) {
       super.doOKAction();

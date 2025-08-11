@@ -1,4 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
 import com.intellij.ide.IdeBundle
@@ -8,7 +9,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.OverridingMethodsSearch
-import com.intellij.psi.util.JavaPsiRecordUtil
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -54,7 +54,6 @@ fun PsiElement.removeOverrideModifier() {
 fun PsiMethod.cleanUpOverrides() {
     val superMethods = findSuperMethods(true)
     for (overridingMethod in OverridingMethodsSearch.search(this, true).findAll()) {
-        if (JavaPsiRecordUtil.getRecordComponentForAccessor(overridingMethod) != null) continue;
         val currentSuperMethods = overridingMethod.findSuperMethods(true).asSequence() + superMethods.asSequence()
         if (currentSuperMethods.all { superMethod -> superMethod.unwrapped == unwrapped }) {
             overridingMethod.unwrapped?.removeOverrideModifier()
@@ -94,7 +93,6 @@ private fun collectParametersHierarchy(method: PsiMethod, parameter: PsiParamete
             .filter { it !in visited }
             .forEach { queue.offer(it) }
         OverridingMethodsSearch.search(currentMethod)
-            .asIterable()
             .filter { it !in visited }
             .forEach { queue.offer(it) }
     }

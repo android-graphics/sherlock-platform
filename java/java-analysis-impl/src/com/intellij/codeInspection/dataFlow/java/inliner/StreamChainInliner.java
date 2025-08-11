@@ -201,8 +201,11 @@ public class StreamChainInliner implements CallInliner {
   }
 
   static class UnknownTerminalStep extends Step {
-    UnknownTerminalStep(PsiMethodCallExpression call) {
+    private final boolean myNotNullResult;
+
+    UnknownTerminalStep(PsiMethodCallExpression call, boolean notNullResult) {
       super(call, null, null);
+      myNotNullResult = notNullResult;
     }
 
     @Override
@@ -219,6 +222,12 @@ public class StreamChainInliner implements CallInliner {
     void iteration(CFGBuilder builder) {
       // Stream variable is on stack
       builder.pop().flushFields();
+    }
+
+    @NotNull
+    @Override
+    Nullability getNullability() {
+      return myNotNullResult ? Nullability.NOT_NULL : super.getNullability();
     }
   }
 
@@ -1028,7 +1037,7 @@ public class StreamChainInliner implements CallInliner {
 
   private static Step createTerminalStep(PsiMethodCallExpression call) {
     Step step = TERMINAL_STEP_MAPPER.mapFirst(call);
-    return step == null ? new UnknownTerminalStep(call) : step;
+    return step == null ? new UnknownTerminalStep(call, false) : step;
   }
 
   private static Step createTerminalFromCollector(PsiMethodCallExpression call) {
@@ -1063,7 +1072,7 @@ public class StreamChainInliner implements CallInliner {
       }
     }
 
-    return new UnknownTerminalStep(call);
+    return new UnknownTerminalStep(call, NOT_NULL_COLLECTORS.test(collectorCall));
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.JavaUiBundle;
@@ -39,7 +39,8 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
   private ModuleNameLocationComponent myModuleNameLocationComponent;
 
   private final WizardContext myWizardContext;
-  private @Nullable ModuleWizardStep mySettingsStep;
+  @Nullable
+  private ModuleWizardStep mySettingsStep;
 
   public ProjectSettingsStep(WizardContext context) {
 
@@ -215,12 +216,14 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
   }
 
   @Override
-  public @NotNull JTextField getModuleNameField() {
+  @NotNull
+  public JTextField getModuleNameField() {
     return getNameComponent();
   }
 
+  @Nullable
   @Override
-  public @Nullable ModuleNameLocationSettings getModuleNameLocationSettings() {
+  public ModuleNameLocationSettings getModuleNameLocationSettings() {
     return myWizardContext.isCreatingNewProject() ? new NewProjectNameLocationSettings(myNamePathComponent, myModuleNameLocationComponent)
                                                   : myModuleNameLocationComponent;
   }
@@ -236,7 +239,8 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
   }
 
   @TestOnly
-  public @Nullable ModuleWizardStep getSettingsStep() {
+  @Nullable
+  public ModuleWizardStep getSettingsStep() {
     return mySettingsStep;
   }
 

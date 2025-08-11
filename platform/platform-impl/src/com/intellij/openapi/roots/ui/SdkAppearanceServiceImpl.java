@@ -12,7 +12,6 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +20,6 @@ import javax.swing.*;
 import static com.intellij.ui.SimpleTextAttributes.GRAY_ATTRIBUTES;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 
-@ApiStatus.Internal
 public final class SdkAppearanceServiceImpl extends SdkAppearanceService {
   @Override
   public @NotNull CellAppearanceEx forNullSdk(boolean selected) {

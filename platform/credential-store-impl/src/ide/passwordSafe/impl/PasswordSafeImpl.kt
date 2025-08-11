@@ -108,7 +108,7 @@ abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : Pa
     currentProvider.set(attributes, credentials)
     if (attributes.isPasswordMemoryOnly && !credentials?.password.isNullOrEmpty()) {
       // we must store because otherwise on get will be no password
-      memoryHelperProvider.value.set(CredentialAttributes(attributes.serviceName, attributes.userName), credentials)
+      memoryHelperProvider.value.set(attributes.toPasswordStoreable(), credentials)
     }
     else if (memoryHelperProvider.isInitialized()) {
       memoryHelperProvider.value.set(attributes, null)
@@ -117,9 +117,7 @@ abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : Pa
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?, memoryOnly: Boolean) {
     if (memoryOnly) {
-      memoryHelperProvider.value.set(
-        if (attributes.isPasswordMemoryOnly) CredentialAttributes(attributes.serviceName, attributes.userName) else attributes,
-        credentials)
+      memoryHelperProvider.value.set(attributes.toPasswordStoreable(), credentials)
       // remove to ensure that on getPassword we will not return some value from the default provider
       currentProvider.set(attributes, null)
     }
@@ -259,4 +257,8 @@ fun createKeePassStore(dbFile: Path, mainPasswordFile: Path): PasswordSafe {
     keepassDb = store.dbFile.toString()
   })
   return TestPasswordSafeImpl(settings, store)
+}
+
+private fun CredentialAttributes.toPasswordStoreable(): CredentialAttributes {
+  return if (isPasswordMemoryOnly) CredentialAttributes(serviceName, userName, requestor) else this
 }

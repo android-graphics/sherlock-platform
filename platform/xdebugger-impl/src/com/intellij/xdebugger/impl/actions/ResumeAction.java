@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.execution.actions.ChooseDebugConfigurationPopupAction;
@@ -15,7 +15,7 @@ import java.awt.event.KeyEvent;
 
 public class ResumeAction extends XDebuggerActionBase implements DumbAware {
   @Override
-  protected boolean isEnabled(@NotNull AnActionEvent e) {
+  protected boolean isEnabled(AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return false;
 
@@ -28,7 +28,7 @@ public class ResumeAction extends XDebuggerActionBase implements DumbAware {
   }
 
   @Override
-  protected boolean isHidden(@NotNull AnActionEvent event) {
+  protected boolean isHidden(AnActionEvent event) {
     if (!PauseAction.isPauseResumeMerged()) {
       return super.isHidden(event);
     }
@@ -46,7 +46,8 @@ public class ResumeAction extends XDebuggerActionBase implements DumbAware {
   }
 
   @Override
-  protected @NotNull DebuggerActionHandler getHandler(final @NotNull DebuggerSupport debuggerSupport) {
+  @NotNull
+  protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {
     return debuggerSupport.getResumeActionHandler();
   }
 }

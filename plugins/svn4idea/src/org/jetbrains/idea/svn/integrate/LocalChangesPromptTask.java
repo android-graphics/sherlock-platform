@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,8 +41,8 @@ public class LocalChangesPromptTask extends BaseMergeTask {
 
   private static final Logger LOG = Logger.getInstance(LocalChangesPromptTask.class);
 
-  private final @Nullable List<SvnChangeList> myChangeListsToMerge;
-  private final @NotNull Runnable myCallback;
+  @Nullable private final List<SvnChangeList> myChangeListsToMerge;
+  @NotNull private final Runnable myCallback;
 
   public LocalChangesPromptTask(@NotNull QuickMerge mergeProcess,
                                 @Nullable List<SvnChangeList> changeListsToMerge,
@@ -52,7 +52,8 @@ public class LocalChangesPromptTask extends BaseMergeTask {
     myCallback = callback;
   }
 
-  private @Nullable File getLocalPath(@NotNull String repositoryRelativePath) {
+  @Nullable
+  private File getLocalPath(@NotNull String repositoryRelativePath) {
     try {
       Url url = append(myMergeContext.getWcInfo().getRepoUrl(), repositoryRelativePath);
 
@@ -112,14 +113,16 @@ public class LocalChangesPromptTask extends BaseMergeTask {
     }
   }
 
-  private @Nullable Intersection getChangesIntersection(@NotNull List<LocalChangeList> localChangeLists,
-                                                        @NotNull List<SvnChangeList> changeListsToMerge) {
+  @Nullable
+  private Intersection getChangesIntersection(@NotNull List<LocalChangeList> localChangeLists,
+                                              @NotNull List<SvnChangeList> changeListsToMerge) {
     Set<FilePath> pathsToMerge = collectPaths(changeListsToMerge);
 
     return !changeListsToMerge.isEmpty() ? getChangesIntersection(localChangeLists, change -> hasPathToMerge(change, pathsToMerge)) : null;
   }
 
-  private @NotNull Set<FilePath> collectPaths(@NotNull List<SvnChangeList> lists) {
+  @NotNull
+  private Set<FilePath> collectPaths(@NotNull List<SvnChangeList> lists) {
     return lists.stream()
       .flatMap(list -> list.getAffectedPaths().stream())
       .map(this::getLocalPath)
@@ -128,11 +131,13 @@ public class LocalChangesPromptTask extends BaseMergeTask {
       .collect(toSet());
   }
 
-  private static @NotNull Intersection getAllChangesIntersection(@NotNull List<LocalChangeList> localChangeLists) {
+  @NotNull
+  private static Intersection getAllChangesIntersection(@NotNull List<LocalChangeList> localChangeLists) {
     return getChangesIntersection(localChangeLists, alwaysTrue());
   }
 
-  private static @NotNull Intersection getChangesIntersection(@NotNull List<LocalChangeList> changeLists, @NotNull Condition<Change> filter) {
+  @NotNull
+  private static Intersection getChangesIntersection(@NotNull List<LocalChangeList> changeLists, @NotNull Condition<Change> filter) {
     Intersection result = new Intersection();
 
     for (LocalChangeList changeList : changeLists) {

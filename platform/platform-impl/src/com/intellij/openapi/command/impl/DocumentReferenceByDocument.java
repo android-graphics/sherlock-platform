@@ -4,11 +4,9 @@ package com.intellij.openapi.command.impl;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
 public final class DocumentReferenceByDocument implements DocumentReference {
   private final Document myDocument;
 

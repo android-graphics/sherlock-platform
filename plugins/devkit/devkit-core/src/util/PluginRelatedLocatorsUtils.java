@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.project.Project;
@@ -16,7 +16,8 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import java.util.Collection;
 
 public final class PluginRelatedLocatorsUtils {
-  public static @NotNull GlobalSearchScope getCandidatesScope(@NotNull Project project) {
+  @NotNull
+  public static GlobalSearchScope getCandidatesScope(@NotNull Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project)
         .uniteWith(LibraryScopeCache.getInstance(project).getLibrariesOnlyScope());

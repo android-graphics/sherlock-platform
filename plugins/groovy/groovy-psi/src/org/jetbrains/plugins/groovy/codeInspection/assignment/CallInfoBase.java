@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.openapi.util.NullableLazyValue;
@@ -23,8 +23,9 @@ public abstract class CallInfoBase<T extends GrCall> implements CallInfo<T> {
 
   protected abstract PsiType @Nullable [] inferArgTypes();
 
+  @Nullable
   @Override
-  public @Nullable GrArgumentList getArgumentList() {
+  public GrArgumentList getArgumentList() {
     return myCall.getArgumentList();
   }
 
@@ -33,8 +34,9 @@ public abstract class CallInfoBase<T extends GrCall> implements CallInfo<T> {
     return myArgTypes.getValue();
   }
 
+  @NotNull
   @Override
-  public @NotNull T getCall() {
+  public T getCall() {
     return myCall;
   }
 }

@@ -21,7 +21,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import java.util.Locale
 
 @Service(Service.Level.PROJECT)
 class CompilerDriverUnknownSdkTracker(
@@ -96,7 +95,7 @@ class CompilerDriverUnknownSdkTracker(
       modules.size)
     )
 
-    message.append(HtmlChunk.ul().children(actionsWithFix.sortedBy { it.actionDetailedText.lowercase(Locale.getDefault()) }.map { fix ->
+    message.append(HtmlChunk.ul().children(actionsWithFix.sortedBy { it.actionDetailedText.toLowerCase() }.map { fix ->
       var li = HtmlChunk.li().addText(fix.actionDetailedText)
       fix.actionTooltipText?.let {
         li = li.addText(it)
@@ -106,7 +105,7 @@ class CompilerDriverUnknownSdkTracker(
 
     if (actionsWithoutFix.isNotEmpty()) {
       message.append(JavaCompilerBundle.message("dialog.message.error.jdk.not.specified.with.noFix"))
-      message.append(HtmlChunk.ul().children(actionsWithoutFix.sortedBy { it.notificationText.lowercase(Locale.getDefault()) }.map { fix ->
+      message.append(HtmlChunk.ul().children(actionsWithoutFix.sortedBy { it.notificationText.toLowerCase() }.map { fix ->
         HtmlChunk.li().addText(fix.notificationText)
       }))
     }

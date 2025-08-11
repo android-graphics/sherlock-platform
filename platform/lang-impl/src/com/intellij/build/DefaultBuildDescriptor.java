@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.build;
 
 import com.intellij.build.events.BuildEventsNls;
@@ -15,7 +29,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -89,8 +102,9 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull Object getId() {
+  public Object getId() {
     return myId;
   }
 
@@ -99,13 +113,15 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
     return myGroupId;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getTitle() {
+  public String getTitle() {
     return myTitle;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getWorkingDir() {
+  public String getWorkingDir() {
     return myWorkingDir;
   }
 
@@ -115,22 +131,26 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
   }
 
   @ApiStatus.Experimental
-  public @NotNull List<AnAction> getActions() {
+  @NotNull
+  public List<AnAction> getActions() {
     return Collections.unmodifiableList(myActions);
   }
 
   @ApiStatus.Experimental
-  public @NotNull List<AnAction> getRestartActions() {
+  @NotNull
+  public List<AnAction> getRestartActions() {
     return Collections.unmodifiableList(myRestartActions);
   }
 
   @ApiStatus.Experimental
-  public @Unmodifiable @NotNull List<AnAction> getContextActions(@NotNull ExecutionNode node) {
+  @NotNull
+  public List<AnAction> getContextActions(@NotNull ExecutionNode node) {
     return ContainerUtil.map(myContextActions, function -> function.apply(node));
   }
 
   @ApiStatus.Experimental
-  public @NotNull List<Filter> getExecutionFilters() {
+  @NotNull
+  public List<Filter> getExecutionFilters() {
     return Collections.unmodifiableList(myExecutionFilters);
   }
 
@@ -172,15 +192,18 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
     myAutoFocusContent = autoFocusContent;
   }
 
-  public @Nullable BuildProcessHandler getProcessHandler() {
+  @Nullable
+  public BuildProcessHandler getProcessHandler() {
     return myProcessHandler;
   }
 
-  public @Nullable ExecutionEnvironment getExecutionEnvironment() {
+  @Nullable
+  public ExecutionEnvironment getExecutionEnvironment() {
     return myExecutionEnvironment;
   }
 
-  public @Nullable Supplier<? extends RunContentDescriptor> getContentDescriptorSupplier() {
+  @Nullable
+  public Supplier<? extends RunContentDescriptor> getContentDescriptorSupplier() {
     return myContentDescriptorSupplier;
   }
 

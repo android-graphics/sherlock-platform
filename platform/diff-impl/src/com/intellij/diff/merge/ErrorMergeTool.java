@@ -15,8 +15,9 @@ import java.awt.event.ActionEvent;
 public class ErrorMergeTool implements MergeTool {
   public static final ErrorMergeTool INSTANCE = new ErrorMergeTool();
 
+  @NotNull
   @Override
-  public @NotNull MergeViewer createComponent(@NotNull MergeContext context, @NotNull MergeRequest request) {
+  public MergeViewer createComponent(@NotNull MergeContext context, @NotNull MergeRequest request) {
     return new MyViewer(context, request);
   }
 
@@ -26,10 +27,10 @@ public class ErrorMergeTool implements MergeTool {
   }
 
   private static class MyViewer implements MergeViewer {
-    private final @NotNull MergeContext myMergeContext;
-    private final @NotNull MergeRequest myMergeRequest;
+    @NotNull private final MergeContext myMergeContext;
+    @NotNull private final MergeRequest myMergeRequest;
 
-    private final @NotNull JPanel myPanel;
+    @NotNull private final JPanel myPanel;
 
     MyViewer(@NotNull MergeContext context, @NotNull MergeRequest request) {
       myMergeContext = context;
@@ -39,23 +40,27 @@ public class ErrorMergeTool implements MergeTool {
       myPanel.add(DiffUtil.createMessagePanel(DiffBundle.message("error.message.cannot.show.merge")), BorderLayout.CENTER);
     }
 
+    @NotNull
     @Override
-    public @NotNull JComponent getComponent() {
+    public JComponent getComponent() {
       return myPanel;
     }
 
+    @Nullable
     @Override
-    public @Nullable JComponent getPreferredFocusedComponent() {
+    public JComponent getPreferredFocusedComponent() {
       return null;
     }
 
+    @NotNull
     @Override
-    public @NotNull ToolbarComponents init() {
+    public ToolbarComponents init() {
       return new ToolbarComponents();
     }
 
+    @Nullable
     @Override
-    public @Nullable Action getResolveAction(final @NotNull MergeResult result) {
+    public Action getResolveAction(@NotNull final MergeResult result) {
       if (result == MergeResult.RESOLVED) return null;
 
       String caption = MergeUtil.getResolveActionTitle(result, myMergeRequest, myMergeContext);

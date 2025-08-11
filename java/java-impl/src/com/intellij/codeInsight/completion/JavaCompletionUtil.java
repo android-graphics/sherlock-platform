@@ -7,10 +7,11 @@ import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -58,7 +59,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -114,7 +114,7 @@ public final class JavaCompletionUtil {
     item.putUserData(ALL_METHODS_ATTRIBUTE, ContainerUtil.map(methods, method -> SmartPointerManager.getInstance(method.getProject()).createSmartPsiElementPointer(method)));
   }
 
-  public static @Unmodifiable List<PsiMethod> getAllMethods(@NotNull LookupElement item) {
+  public static List<PsiMethod> getAllMethods(@NotNull LookupElement item) {
     List<SmartPsiElementPointer<PsiMethod>> pointers = item.getUserData(ALL_METHODS_ATTRIBUTE);
     if (pointers == null) return null;
 
@@ -466,14 +466,6 @@ public final class JavaCompletionUtil {
     return type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
   }
 
-  public static boolean insertSemicolonAfter(@NotNull PsiLambdaExpression lambdaExpression) {
-    return lambdaExpression.getBody() instanceof PsiCodeBlock || insertSemicolon(lambdaExpression.getParent());
-  }
-
-  static boolean insertSemicolon(PsiElement parent) {
-    return !(parent instanceof PsiExpressionList) && !(parent instanceof PsiExpression);
-  }
-
   static class JavaLookupElementHighlighter {
     private final @NotNull PsiElement myPlace;
     private final @Nullable VirtualFile myOriginalFile;
@@ -519,11 +511,11 @@ public final class JavaCompletionUtil {
           }
           if (PsiUtil.isAvailable(JavaFeature.MODULES, myPlace)) {
             final PsiJavaModule currentModule =
-              ReadAction.compute(() -> JavaPsiModuleUtil.findDescriptorByFile(myOriginalFile, myPlace.getProject()));
+              ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByFile(myOriginalFile, myPlace.getProject()));
             if (currentModule != null) {
-              final PsiJavaModule targetModule = ReadAction.compute(() -> JavaPsiModuleUtil.findDescriptorByElement(psiClass));
+              final PsiJavaModule targetModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByElement(psiClass));
               if (targetModule != null && targetModule != currentModule &&
-                  !JavaPsiModuleUtil.reads(currentModule, targetModule)) {
+                  !JavaModuleGraphUtil.reads(currentModule, targetModule)) {
                 LookupElementDecorator<LookupElement> element = generator.apply(presentation -> presentation.setItemTextForeground(JBColor.RED));
                 return PrioritizedLookupElement.withExplicitProximity(element, -1);
               }
@@ -573,7 +565,7 @@ public final class JavaCompletionUtil {
     return false;
   }
 
-  static @Unmodifiable @NotNull Iterable<? extends LookupElement> createLookupElements(@NotNull CompletionElement completionElement, @NotNull PsiJavaReference reference) {
+  static @NotNull Iterable<? extends LookupElement> createLookupElements(@NotNull CompletionElement completionElement, @NotNull PsiJavaReference reference) {
     Object completion = completionElement.getElement();
     assert !(completion instanceof LookupElement);
 
@@ -889,7 +881,7 @@ public final class JavaCompletionUtil {
           if (parent instanceof PsiMethodCallExpression) {
             parent = parent.getParent();
           }
-          if (parent instanceof PsiLambdaExpression lambda && !insertSemicolonAfter(lambda)) {
+          if (parent instanceof PsiLambdaExpression && !LambdaHighlightingUtil.insertSemicolonAfter((PsiLambdaExpression)parent)) {
             insertAdditionalSemicolon = false;
           }
           if (parent instanceof PsiExpressionStatement && parent.getParent() instanceof PsiForStatement forStatement &&

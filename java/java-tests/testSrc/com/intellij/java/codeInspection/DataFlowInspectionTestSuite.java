@@ -22,7 +22,6 @@ import org.junit.platform.suite.api.Suite;
   DataFlowInspectionHeavyTest.class,
   DataFlowInspectionAncientTest.class,
   DataFlowInspectionCancellingTest.class,
-  DataFlowInspectionPrimitivesInPatternsTest.class,
   ContractCheckTest.class,
   HardcodedContractsTest.class,
   DataFlowRangeAnalysisTest.class,

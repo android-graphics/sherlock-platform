@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeCook.deductive.resolver;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -64,7 +64,7 @@ public final class ResolverTree {
     final Set<PsiTypeVariable> mySet = new HashSet<>();
 
     @Override
-    public Object visitTypeVariable(final @NotNull PsiTypeVariable var) {
+    public Object visitTypeVariable(@NotNull final PsiTypeVariable var) {
       mySet.add(var);
 
       return null;
@@ -190,13 +190,15 @@ public final class ResolverTree {
     }
 
     final DFSTBuilder<PsiTypeVariable> dfstBuilder = new DFSTBuilder<>(new Graph<>() {
+      @NotNull
       @Override
-      public @NotNull Collection<PsiTypeVariable> getNodes() {
+      public Collection<PsiTypeVariable> getNodes() {
         return nodes;
       }
 
+      @NotNull
       @Override
-      public @NotNull Iterator<PsiTypeVariable> getIn(final PsiTypeVariable n) {
+      public Iterator<PsiTypeVariable> getIn(final PsiTypeVariable n) {
         final Set<PsiTypeVariable> in = ins.get(n);
 
         if (in == null) {
@@ -206,8 +208,9 @@ public final class ResolverTree {
         return in.iterator();
       }
 
+      @NotNull
       @Override
-      public @NotNull Iterator<PsiTypeVariable> getOut(final PsiTypeVariable n) {
+      public Iterator<PsiTypeVariable> getOut(final PsiTypeVariable n) {
         final Set<PsiTypeVariable> out = outs.get(n);
 
         if (out == null) {

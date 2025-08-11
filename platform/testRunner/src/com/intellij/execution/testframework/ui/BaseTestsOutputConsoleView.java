@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.filters.Filter;
@@ -51,7 +51,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   }
 
   @Override
-  public void print(final @NotNull String text, final @NotNull ConsoleViewContentType contentType) {
+  public void print(@NotNull final String text, @NotNull final ConsoleViewContentType contentType) {
     printNew(printer -> printer.print(text, contentType));
   }
 
@@ -88,22 +88,22 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   }
 
   @Override
-  public void performWhenNoDeferredOutput(final @NotNull Runnable runnable) {
+  public void performWhenNoDeferredOutput(@NotNull final Runnable runnable) {
     myConsole.performWhenNoDeferredOutput(runnable);
   }
 
   @Override
-  public void setHelpId(final @NotNull String helpId) {
+  public void setHelpId(@NotNull final String helpId) {
     myConsole.setHelpId(helpId);
   }
 
   @Override
-  public void addMessageFilter(final @NotNull Filter filter) {
+  public void addMessageFilter(@NotNull final Filter filter) {
     myConsole.addMessageFilter(filter);
   }
 
   @Override
-  public void printHyperlink(final @NotNull String hyperlinkText, final HyperlinkInfo info) {
+  public void printHyperlink(@NotNull final String hyperlinkText, final HyperlinkInfo info) {
     printNew(new HyperLink(hyperlinkText, info));
   }
 
@@ -117,8 +117,9 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
     return myPrinter != null && myPrinter.canPause() && myConsole.canPause();
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent getComponent() {
+  public JComponent getComponent() {
     return myTestResultsPanel;
   }
 
@@ -135,7 +136,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   }
 
   @Override
-  public void addChangeListener(final @NotNull ChangeListener listener, final @NotNull Disposable parent) {
+  public void addChangeListener(@NotNull final ChangeListener listener, @NotNull final Disposable parent) {
     if (myConsole instanceof ObservableConsoleView) {
       ((ObservableConsoleView)myConsole).addChangeListener(listener, parent);
     }
@@ -146,7 +147,8 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
     return AnAction.EMPTY_ARRAY;
   }
 
-  public @NotNull ConsoleView getConsole() {
+  @NotNull
+  public ConsoleView getConsole() {
     return myConsole;
   }
 
@@ -164,8 +166,9 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
     return myProperties;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getHelpId() {
+  public String getHelpId() {
     return "reference.runToolWindow.testResultsTab";
   }
 }

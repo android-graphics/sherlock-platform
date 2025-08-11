@@ -165,12 +165,9 @@ public final class HintUtil {
     return hintComponent instanceof HintLabel ? ((HintLabel)hintComponent).getIcon() : null;
   }
 
-  public static @NotNull SimpleColoredComponent createInformationComponent() {
-    return fillInformationComponent(new SimpleColoredComponent());
-  }
-
-  @ApiStatus.Internal
-  public static @NotNull SimpleColoredComponent fillInformationComponent(SimpleColoredComponent component) {
+  public static @NotNull SimpleColoredComponent
+  createInformationComponent() {
+    SimpleColoredComponent component = new SimpleColoredComponent();
     component.setTransparentIconBackground(true);
     return installInformationProperties(component);
   }

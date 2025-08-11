@@ -22,8 +22,8 @@ private class LaunchIdeBuilderImpl : LaunchIdeBuilder {
   private lateinit var ideFrontendResult: IdeFrontendBuilderImpl.Result
   private lateinit var ideBackendInEnvDescription: IdeBackendInEnvDescription
 
-  override fun frontend(product: Product, init: IdeFrontendBuilder.() -> Unit) {
-    ideFrontendResult = IdeFrontendBuilderImpl(product).let {
+  override fun frontend(init: IdeFrontendBuilder.() -> Unit) {
+    ideFrontendResult = IdeFrontendBuilderImpl().let {
       it.init()
       it.build()
     }
@@ -61,7 +61,7 @@ private class LaunchIdeBuilderImpl : LaunchIdeBuilder {
     logger.info("Starting IDE frontend")
     val (ideFrontendLocalProcessResult, ideFrontendDebugPort) =
       withContext(CoroutineName("IDE Frontend Launcher")) {
-        runIdeFrontendLocally(ideFrontendResult.product, ideLifespanScope)
+        runIdeFrontendLocally(ideLifespanScope)
       }
     handleLocalProcessOutput(
       ideFrontendLocalProcessResult.processWrapper.processOutputInfo,
@@ -155,10 +155,10 @@ private abstract class IdeBuilderImpl : IdeBuilder {
   }
 }
 
-private class IdeFrontendBuilderImpl(private val product: Product) : IdeBuilderImpl(), IdeFrontendBuilder {
-  fun build(): Result = Result(product, attachDebuggerCallback)
+private class IdeFrontendBuilderImpl : IdeBuilderImpl(), IdeFrontendBuilder {
+  fun build(): Result = Result(attachDebuggerCallback)
 
-  data class Result(val product: Product, val attachDebuggerCallback: (suspend (Int) -> Unit)?)
+  data class Result(val attachDebuggerCallback: (suspend (Int) -> Unit)?)
 }
 
 private class DockerBuilderImpl : DockerBuilder {

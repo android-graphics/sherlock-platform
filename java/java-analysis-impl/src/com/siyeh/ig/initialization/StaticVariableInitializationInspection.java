@@ -37,12 +37,14 @@ public final class StaticVariableInitializationInspection extends BaseInspection
   public boolean m_ignorePrimitives = false;
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "StaticVariableMayNotBeInitialized";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("static.variable.may.not.be.initialized.problem.descriptor");
   }
 

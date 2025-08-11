@@ -24,7 +24,7 @@ public class UndeclaredTestsInspectionTest extends JavaInspectionTestCase {
   protected void setUp() {
     UIUtil.invokeAndWaitIfNeeded(() -> {
       try {
-        super.setUp();
+        UndeclaredTestsInspectionTest.super.setUp();
       }
       catch (Exception e) {
         throw new RuntimeException(e);
@@ -37,7 +37,7 @@ public class UndeclaredTestsInspectionTest extends JavaInspectionTestCase {
   protected void tearDown() {
     UIUtil.invokeAndWaitIfNeeded(() -> {
       try {
-        super.tearDown();
+        UndeclaredTestsInspectionTest.super.tearDown();
       }
       catch (Exception e) {
         throw new RuntimeException(e);

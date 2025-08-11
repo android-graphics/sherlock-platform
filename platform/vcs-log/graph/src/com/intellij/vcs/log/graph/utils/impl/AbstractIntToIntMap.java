@@ -17,9 +17,7 @@
 package com.intellij.vcs.log.graph.utils.impl;
 
 import com.intellij.vcs.log.graph.utils.IntToIntMap;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
 public abstract class AbstractIntToIntMap implements IntToIntMap {
 
   @Override

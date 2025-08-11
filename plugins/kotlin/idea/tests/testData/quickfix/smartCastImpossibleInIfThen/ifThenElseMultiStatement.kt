@@ -2,7 +2,7 @@
 // ACTION: Add non-null asserted (x!!) call
 // ACTION: Enable option 'Local variable types' for 'Types' inlay hints
 // ACTION: Introduce local variable
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 class Test {
     var x: String? = ""
 

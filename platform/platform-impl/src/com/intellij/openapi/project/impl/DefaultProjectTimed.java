@@ -7,10 +7,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.TimedReference;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public abstract class DefaultProjectTimed extends TimedReference<Project> {
   private final @NotNull DefaultProject myParentDisposable;
 

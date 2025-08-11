@@ -1,10 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
@@ -15,6 +14,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.*;
 
 @ApiStatus.Internal
-public final class GridImpl extends Wrapper implements Grid, Disposable, UiDataProvider {
+public final class GridImpl extends Wrapper implements Grid, Disposable, DataProvider {
   private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter(false, true);
   private final Splitter mySplitter = new Splitter(true);
 
@@ -37,7 +37,7 @@ public final class GridImpl extends Wrapper implements Grid, Disposable, UiDataP
 
   private final ViewContextEx myViewContext;
 
-  public GridImpl(@NotNull ViewContextEx viewContext, String sessionName) {
+  public GridImpl(ViewContextEx viewContext, String sessionName) {
     myViewContext = viewContext;
 
     Disposer.register(myViewContext, this);
@@ -167,7 +167,7 @@ public final class GridImpl extends Wrapper implements Grid, Disposable, UiDataP
   }
 
   public ActionCallback restoreLastUiState() {
-    final ActionCallback result = new ActionCallback(myPlaceInGrid2Cell.size());
+    final ActionCallback result = new ActionCallback(myPlaceInGrid2Cell.values().size());
     for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
       cell.restoreLastUiState().notifyWhenDone(result);
     }
@@ -217,7 +217,7 @@ public final class GridImpl extends Wrapper implements Grid, Disposable, UiDataP
   }
 
   @ApiStatus.Internal
-  public static final class Placeholder extends Wrapper implements NullableComponent {
+  static final class Placeholder extends Wrapper implements NullableComponent {
     private ContentProvider myContentProvider;
     private JComponent myComponent;
 
@@ -369,12 +369,12 @@ public final class GridImpl extends Wrapper implements Grid, Disposable, UiDataP
     myTopSplit.setLastSize((int)(proportion * (float)(componentSize - 2 * myTopSplit.getDividerWidth())));
   }
 
-  public @NotNull ViewContextEx getViewContext() {
-    return myViewContext;
+  public List<Content> getAttachedContents() {
+    return new ArrayList<>(getContents());
   }
 
   @Override
-  public @NotNull List<Content> getContents() {
+  public List<Content> getContents() {
     return myContents;
   }
 
@@ -388,8 +388,14 @@ public final class GridImpl extends Wrapper implements Grid, Disposable, UiDataP
   }
 
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(ViewContext.CONTEXT_KEY, myViewContext);
-    sink.set(ViewContext.CONTENT_KEY, myContents.toArray(new Content[0]));
+  public @Nullable Object getData(final @NotNull @NonNls String dataId) {
+    if (ViewContext.CONTEXT_KEY.is(dataId)) {
+      return myViewContext;
+    }
+    else if (ViewContext.CONTENT_KEY.is(dataId)) {
+      List<Content> contents = getContents();
+      return contents.toArray(new Content[0]);
+    }
+    return null;
   }
 }

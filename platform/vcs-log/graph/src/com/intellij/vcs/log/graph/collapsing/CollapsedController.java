@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.collapsing;
 
 import com.intellij.vcs.log.graph.api.LinearGraph;
@@ -18,18 +18,19 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class CollapsedController extends CascadeController {
-  private @NotNull CollapsedGraph myCollapsedGraph;
+  @NotNull private CollapsedGraph myCollapsedGraph;
 
   public CollapsedController(@NotNull LinearGraphController delegateLinearGraphController,
-                             final @NotNull PermanentGraphInfo<?> permanentGraphInfo,
+                             @NotNull final PermanentGraphInfo<?> permanentGraphInfo,
                              @Nullable Set<Integer> idsOfVisibleBranches) {
     super(delegateLinearGraphController, permanentGraphInfo);
     UnsignedBitSet initVisibility = GraphUtilKt.getReachableNodes(permanentGraphInfo.getLinearGraph(), idsOfVisibleBranches);
     myCollapsedGraph = CollapsedGraph.newInstance(getDelegateController().getCompiledGraph(), initVisibility);
   }
 
+  @NotNull
   @Override
-  protected @NotNull LinearGraphAnswer delegateGraphChanged(@NotNull LinearGraphAnswer delegateAnswer) {
+  protected LinearGraphAnswer delegateGraphChanged(@NotNull LinearGraphAnswer delegateAnswer) {
     if (delegateAnswer.getGraphChanges() != null) {
       LinearGraph delegateGraph = getDelegateController().getCompiledGraph();
       myCollapsedGraph = CollapsedGraph.updateInstance(myCollapsedGraph, delegateGraph);
@@ -74,26 +75,31 @@ public class CollapsedController extends CascadeController {
     CollapsedActionManager.expandNodes(myCollapsedGraph, nodesToShow);
   }
 
+  @Nullable
   @Override
-  protected @Nullable LinearGraphAnswer performAction(@NotNull LinearGraphAction action) {
+  protected LinearGraphAnswer performAction(@NotNull LinearGraphAction action) {
     return CollapsedActionManager.performAction(this, action);
   }
 
+  @NotNull
   @Override
-  public @NotNull LinearGraph getCompiledGraph() {
+  public LinearGraph getCompiledGraph() {
     return myCollapsedGraph.getCompiledGraph();
   }
 
-  protected @NotNull CollapsedGraph getCollapsedGraph() {
+  @NotNull
+  protected CollapsedGraph getCollapsedGraph() {
     return myCollapsedGraph;
   }
 
+  @Nullable
   @Override
-  protected @Nullable GraphElement convertToDelegate(@NotNull GraphElement graphElement) {
+  protected GraphElement convertToDelegate(@NotNull GraphElement graphElement) {
     return convertToDelegate(graphElement, myCollapsedGraph);
   }
 
-  public static @Nullable GraphElement convertToDelegate(@NotNull GraphElement graphElement, CollapsedGraph collapsedGraph) {
+  @Nullable
+  public static GraphElement convertToDelegate(@NotNull GraphElement graphElement, CollapsedGraph collapsedGraph) {
     if (graphElement instanceof GraphEdge) {
       Integer upIndex = ((GraphEdge)graphElement).getUpNodeIndex();
       Integer downIndex = ((GraphEdge)graphElement).getDownNodeIndex();

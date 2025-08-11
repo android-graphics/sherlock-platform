@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.diff.impl.settings;
 
@@ -48,13 +48,13 @@ import static com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffS
  * The panel from the Settings, that allows to see changes to diff/merge coloring scheme right away.
  */
 @ApiStatus.Internal
-public final class DiffPreviewPanel implements PreviewPanel {
+class DiffPreviewPanel implements PreviewPanel {
   private final JPanel myPanel;
   private final MyViewer myViewer;
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
-  public DiffPreviewPanel() {
+  DiffPreviewPanel() {
     myViewer = new MyViewer();
     myViewer.init();
 
@@ -92,30 +92,33 @@ public final class DiffPreviewPanel implements PreviewPanel {
     }
   }
 
-  private static final class SampleRequest extends ContentDiffRequest {
+  private static class SampleRequest extends ContentDiffRequest {
     private final List<DiffContent> myContents;
 
     SampleRequest() {
       myContents = Arrays.asList(DiffPreviewProvider.getContents());
     }
 
+    @NotNull
     @Override
-    public @NotNull List<DiffContent> getContents() {
+    public List<DiffContent> getContents() {
       return myContents;
     }
 
+    @NotNull
     @Override
-    public @NotNull List<String> getContentTitles() {
+    public List<String> getContentTitles() {
       return Arrays.asList(null, null, null);
     }
 
+    @Nullable
     @Override
-    public @NotNull String getTitle() {
+    public String getTitle() {
       return DiffBundle.message("merge.color.options.dialog.title");
     }
   }
 
-  private static final class SampleContext extends DiffContext {
+  private static class SampleContext extends DiffContext {
     SampleContext() {
       TextDiffSettings settings = new TextDiffSettings();
       settings.setHighlightPolicy(HighlightPolicy.BY_WORD);
@@ -125,8 +128,9 @@ public final class DiffPreviewPanel implements PreviewPanel {
       putUserData(TextDiffSettings.KEY, settings);
     }
 
+    @Nullable
     @Override
-    public @Nullable Project getProject() {
+    public Project getProject() {
       return null;
     }
 
@@ -146,12 +150,12 @@ public final class DiffPreviewPanel implements PreviewPanel {
   }
 
   @Override
-  public void addListener(final @NotNull ColorAndFontSettingsListener listener) {
+  public void addListener(@NotNull final ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
   }
 
   private final class EditorMouseListener implements EditorMouseMotionListener {
-    private final @NotNull ThreeSide mySide;
+    @NotNull private final ThreeSide mySide;
 
     private EditorMouseListener(@NotNull ThreeSide side) {
       mySide = side;
@@ -168,7 +172,7 @@ public final class DiffPreviewPanel implements PreviewPanel {
   }
 
   private final class EditorClickListener implements CaretListener, com.intellij.openapi.editor.event.EditorMouseListener {
-    private final @NotNull ThreeSide mySide;
+    @NotNull private final ThreeSide mySide;
 
     private EditorClickListener(@NotNull ThreeSide side) {
       mySide = side;
@@ -201,7 +205,8 @@ public final class DiffPreviewPanel implements PreviewPanel {
     }
   }
 
-  private @Nullable SimpleThreesideDiffChange getChange(@NotNull ThreeSide side, int line) {
+  @Nullable
+  private SimpleThreesideDiffChange getChange(@NotNull ThreeSide side, int line) {
     for (SimpleThreesideDiffChange change : myViewer.getChanges()) {
       int startLine = change.getStartLine(side);
       int endLine = change.getEndLine(side);
@@ -212,7 +217,8 @@ public final class DiffPreviewPanel implements PreviewPanel {
     return null;
   }
 
-  private @Nullable FoldRegion getFoldRegion(@NotNull ThreeSide side, int line) {
+  @Nullable
+  private FoldRegion getFoldRegion(@NotNull ThreeSide side, int line) {
     EditorEx editor = myViewer.getEditor(side);
     DocumentEx document = editor.getDocument();
     for (FoldRegion region : editor.getFoldingModel().getAllFoldRegions()) {
@@ -233,12 +239,13 @@ public final class DiffPreviewPanel implements PreviewPanel {
     Disposer.dispose(myViewer);
   }
 
+  @NotNull
   @TestOnly
-  public @NotNull SimpleThreesideDiffViewer testGetViewer() {
+  public SimpleThreesideDiffViewer testGetViewer() {
     return myViewer;
   }
 
-  private static final class MyViewer extends SimpleThreesideDiffViewer {
+  private static class MyViewer extends SimpleThreesideDiffViewer {
     MyViewer() {super(new SampleContext(), new SampleRequest());}
 
     @Override

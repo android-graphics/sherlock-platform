@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.util.Function;
@@ -15,10 +15,10 @@ public class CompositeArrangementSettingsToken {
   private static final Function<ArrangementSettingsToken, CompositeArrangementSettingsToken> WRAPPER =
     token -> new CompositeArrangementSettingsToken(token, deduceRole(token), Collections.emptyList());
 
-  private final @NotNull List<CompositeArrangementSettingsToken> myChildren = new ArrayList<>();
+  @NotNull private final List<CompositeArrangementSettingsToken> myChildren = new ArrayList<>();
 
-  private final @NotNull ArrangementSettingsToken  myToken;
-  private final @NotNull StdArrangementTokenUiRole myRole;
+  @NotNull private final ArrangementSettingsToken  myToken;
+  @NotNull private final StdArrangementTokenUiRole myRole;
 
   /**
    * Creates new {@code CompositeArrangementSettingsToken} object with no nested tokens.
@@ -63,7 +63,8 @@ public class CompositeArrangementSettingsToken {
     myChildren.addAll(children);
   }
 
-  private static @NotNull StdArrangementTokenUiRole deduceRole(@NotNull ArrangementSettingsToken token) {
+  @NotNull
+  private static StdArrangementTokenUiRole deduceRole(@NotNull ArrangementSettingsToken token) {
     final StdArrangementTokenUiRole role = token instanceof StdArrangementSettingsToken ?
                                      ((StdArrangementSettingsToken)token).getTokenType().getUiRole() : null;
     if (role == null) {
@@ -72,15 +73,18 @@ public class CompositeArrangementSettingsToken {
     return role;
   }
 
-  public @NotNull List<CompositeArrangementSettingsToken> getChildren() {
+  @NotNull
+  public List<CompositeArrangementSettingsToken> getChildren() {
     return myChildren;
   }
 
-  public @NotNull ArrangementSettingsToken getToken() {
+  @NotNull
+  public ArrangementSettingsToken getToken() {
     return myToken;
   }
 
-  public @NotNull StdArrangementTokenUiRole getRole() {
+  @NotNull
+  public StdArrangementTokenUiRole getRole() {
     return myRole;
   }
 

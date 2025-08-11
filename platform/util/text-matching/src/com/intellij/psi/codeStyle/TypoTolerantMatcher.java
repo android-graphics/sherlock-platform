@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
@@ -7,13 +7,19 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FList;
 import com.intellij.util.text.NameUtilCore;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.BitSet;
+import java.util.Iterator;
 import java.util.List;
 
-@ApiStatus.Internal
-public final class TypoTolerantMatcher extends MinusculeMatcher {
+final class TypoTolerantMatcher extends MinusculeMatcher {
+
+  //heuristics: 15 can take 10-20 ms in some cases, while 10 works in 1-5 ms
+  private static final int TYPO_AWARE_PATTERN_LIMIT = 13;
+
   private final char[] myPattern;
   private final String myHardSeparators;
   private final NameUtil.MatchingCaseSensitivity myOptions;
@@ -35,8 +41,7 @@ public final class TypoTolerantMatcher extends MinusculeMatcher {
    * @param hardSeparators A string of characters (empty by default). Lowercase humps don't work for parts separated by any of these characters.
    * Need either an explicit uppercase letter or the same separator character in prefix
    */
-  @VisibleForTesting
-  public TypoTolerantMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, @NotNull String hardSeparators) {
+  TypoTolerantMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, @NotNull String hardSeparators) {
     myOptions = options;
     myPattern = Strings.trimEnd(pattern, "* ").toCharArray();
     myHardSeparators = hardSeparators;
@@ -208,6 +213,11 @@ public final class TypoTolerantMatcher extends MinusculeMatcher {
     return fragments != null && isStartMatch(fragments);
   }
 
+  public static boolean isStartMatch(@NotNull Iterable<? extends TextRange> fragments) {
+    Iterator<? extends TextRange> iterator = fragments.iterator();
+    return !iterator.hasNext() || iterator.next().getStartOffset() == 0;
+  }
+
   @Override
   public boolean matches(@NotNull String name) {
     return matchingFragments(name) != null;
@@ -226,6 +236,9 @@ public final class TypoTolerantMatcher extends MinusculeMatcher {
     boolean ascii = AsciiUtils.isAscii(name);
     FList<TextRange> ranges = new Session(name, false, ascii).matchingFragments();
     if (ranges != null) return ranges;
+
+    //do not apply typo aware matching for long patterns, it can take too much time
+    if (myPattern.length > TYPO_AWARE_PATTERN_LIMIT) return null;
 
     return new Session(name, true, ascii).matchingFragments();
   }
@@ -299,6 +312,8 @@ public final class TypoTolerantMatcher extends MinusculeMatcher {
           return null;
         }
       }
+
+      if (myPattern.length > TYPO_AWARE_PATTERN_LIMIT) return null;
 
       return matchWildcards(0, 0, new ErrorState());
     }

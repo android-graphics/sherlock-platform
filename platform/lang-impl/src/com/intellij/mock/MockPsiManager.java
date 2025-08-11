@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.mock;
 
-import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -16,7 +15,6 @@ import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,30 +36,20 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
   }
 
   @Override
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myProject;
   }
 
   @Override
-  public @Nullable PsiFile findFile(@NotNull VirtualFile file) {
-    return null;
-  }
-
-  @ApiStatus.Internal
-  @Override
-  public @Nullable PsiFile findFile(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
+  public PsiFile findFile(@NotNull VirtualFile file) {
     return null;
   }
 
   @Override
-  public @Nullable
+  @Nullable
+  public
   FileViewProvider findViewProvider(@NotNull VirtualFile file) {
-    return null;
-  }
-
-  @ApiStatus.Internal
-  @Override
-  public @Nullable FileViewProvider findViewProvider(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
     return null;
   }
 
@@ -92,7 +80,8 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
   }
 
   @Override
-  public @NotNull PsiModificationTracker getModificationTracker() {
+  @NotNull
+  public PsiModificationTracker getModificationTracker() {
     if (myPsiModificationTracker == null) {
       myPsiModificationTracker = new PsiModificationTrackerImpl(myProject);
     }
@@ -167,7 +156,8 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
   }
 
   @Override
-  public @NotNull FileManager getFileManager() {
+  @NotNull
+  public FileManager getFileManager() {
     if (myMockFileManager == null) {
       myMockFileManager = new MockFileManager(this);
     }
@@ -175,11 +165,11 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
   }
 
   @Override
-  public void beforeChildRemoval(final @NotNull PsiTreeChangeEventImpl event) {
+  public void beforeChildRemoval(@NotNull final PsiTreeChangeEventImpl event) {
   }
 
   @Override
-  public void beforeChildReplacement(final @NotNull PsiTreeChangeEventImpl event) {
+  public void beforeChildReplacement(@NotNull final PsiTreeChangeEventImpl event) {
   }
 
   @Override

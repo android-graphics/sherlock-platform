@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates.github;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -33,11 +33,13 @@ public final class GithubTagInfo {
     return new GithubTagInfo(name, zipballUrl);
   }
 
-  public @NotNull @NlsSafe String getName() {
+  @NotNull
+  public @NlsSafe String getName() {
     return myName;
   }
 
-  public @NotNull String getZipballUrl() {
+  @NotNull
+  public String getZipballUrl() {
     return myZipballUrl;
   }
 
@@ -49,14 +51,16 @@ public final class GithubTagInfo {
     return myRecentTag;
   }
 
-  public @NotNull Version getVersion() {
+  @NotNull
+  public Version getVersion() {
     if (myVersion == null) {
       myVersion = createVersionComponents();
     }
     return myVersion;
   }
 
-  private @NotNull Version createVersionComponents() {
+  @NotNull
+  private Version createVersionComponents() {
     String tagName = myName;
     if (tagName.startsWith("v.")) { //NON-NLS
       tagName = tagName.substring(2);
@@ -165,7 +169,8 @@ public final class GithubTagInfo {
     }
   }
 
-  public static @Nullable GithubTagInfo tryCast(@Nullable Object o) {
+  @Nullable
+  public static GithubTagInfo tryCast(@Nullable Object o) {
     return ObjectUtils.tryCast(o, GithubTagInfo.class);
   }
 

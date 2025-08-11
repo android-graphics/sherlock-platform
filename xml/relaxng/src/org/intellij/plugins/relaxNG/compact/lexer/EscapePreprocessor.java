@@ -53,7 +53,7 @@ final class EscapePreprocessor extends FilterReader {
 
   @Override
   public int read() throws IOException {
-    if (!myQueuedChars.isEmpty()) {
+    if (myQueuedChars.size() > 0) {
       return consume();
     }
     final int i = super.read();
@@ -115,7 +115,7 @@ final class EscapePreprocessor extends FilterReader {
   }
 
   private int consume() {
-    if (!myQueuedChars.isEmpty()) {
+    if (myQueuedChars.size() > 0) {
       myOffset++;
       return myQueuedChars.removeInt(0);
     }

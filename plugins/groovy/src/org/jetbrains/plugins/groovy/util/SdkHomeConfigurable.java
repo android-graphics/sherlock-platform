@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -43,12 +43,13 @@ public abstract class SdkHomeConfigurable implements SearchableConfigurable {
     contentPanel.add(new JLabel(GroovyBundle.message("framework.0.home.label", myFrameworkName)), BorderLayout.WEST);
     myPathField = new TextFieldWithBrowseButton();
     contentPanel.add(myPathField);
-    myPathField.addBrowseFolderListener(myProject, new FileChooserDescriptor(false, true, false, false, false, false) {
-      @Override
-      public boolean isFileSelectable(@Nullable VirtualFile file) {
-        return file != null && isSdkHome(file);
-      }
-    }.withTitle(GroovyBundle.message("select.framework.0.home.title", myFrameworkName)));
+    myPathField
+      .addBrowseFolderListener(GroovyBundle.message("select.framework.0.home.title", myFrameworkName), "", myProject, new FileChooserDescriptor(false, true, false, false, false, false) {
+        @Override
+        public boolean isFileSelectable(@Nullable VirtualFile file) {
+          return file != null && isSdkHome(file);
+        }
+      });
     return myPanel;
   }
 
@@ -92,7 +93,8 @@ public abstract class SdkHomeConfigurable implements SearchableConfigurable {
   }
 
   @Override
-  public @NotNull String getId() {
+  @NotNull
+  public String getId() {
     return getHelpTopic();
   }
 

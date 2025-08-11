@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.dnd.*;
@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ChangesTreeDnDSupport implements DnDDropHandler, DnDTargetChecker {
-  protected final @NotNull ChangesTree myTree;
+  @NotNull protected final ChangesTree myTree;
 
   public ChangesTreeDnDSupport(@NotNull ChangesTree tree) {
     myTree = tree;
@@ -39,13 +39,15 @@ public abstract class ChangesTreeDnDSupport implements DnDDropHandler, DnDTarget
       .install();
   }
 
-  protected @NotNull DnDImage createDraggedImage(@NotNull DnDActionInfo info) {
+  @NotNull
+  protected DnDImage createDraggedImage(@NotNull DnDActionInfo info) {
     int count = getSelectionCount(myTree);
     String imageText = VcsBundle.message("vcs.dnd.image.text.n.files", count);
     return createDragImage(myTree, imageText);
   }
 
-  protected abstract @Nullable DnDDragStartBean createDragStartBean(@NotNull DnDActionInfo info);
+  @Nullable
+  protected abstract DnDDragStartBean createDragStartBean(@NotNull DnDActionInfo info);
 
   protected abstract boolean canHandleDropEvent(@NotNull DnDEvent aEvent, @Nullable ChangesBrowserNode<?> dropNode);
 
@@ -65,7 +67,8 @@ public abstract class ChangesTreeDnDSupport implements DnDDropHandler, DnDTarget
     return false;
   }
 
-  protected @Nullable ChangesBrowserNode<?> getDropNode(DnDEvent aEvent) {
+  @Nullable
+  protected ChangesBrowserNode<?> getDropNode(DnDEvent aEvent) {
     return getDropRootNode(myTree, aEvent);
   }
 
@@ -89,7 +92,8 @@ public abstract class ChangesTreeDnDSupport implements DnDDropHandler, DnDTarget
     }
   }
 
-  public static @Nullable ChangesBrowserNode<?> getDropRootNode(@NotNull ChangesTree tree, @NotNull DnDEvent event) {
+  @Nullable
+  public static ChangesBrowserNode<?> getDropRootNode(@NotNull ChangesTree tree, @NotNull DnDEvent event) {
     RelativePoint dropPoint = event.getRelativePoint();
     Point onTree = dropPoint.getPoint(tree);
     TreePath dropPath = TreeUtil.getPathForLocation(tree, onTree.x, onTree.y);
@@ -117,7 +121,8 @@ public abstract class ChangesTreeDnDSupport implements DnDDropHandler, DnDTarget
     return true;
   }
 
-  public static @NotNull DnDImage createDragImage(@NotNull Tree tree, @NotNull @Nls String imageText) {
+  @NotNull
+  public static DnDImage createDragImage(@NotNull Tree tree, @NotNull @Nls String imageText) {
     Image image = DnDAwareTree.getDragImage(tree, imageText, null).getFirst();
     return new DnDImage(image, new Point(-image.getWidth(null), -image.getHeight(null)));
   }

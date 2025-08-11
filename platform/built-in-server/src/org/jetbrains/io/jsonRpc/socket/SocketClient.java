@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io.jsonRpc.socket;
 
 import io.netty.buffer.ByteBuf;
@@ -14,8 +13,9 @@ public class SocketClient extends Client {
     super(channel);
   }
 
+  @NotNull
   @Override
-  public @NotNull ChannelFuture send(@NotNull ByteBuf message) {
+  public ChannelFuture send(@NotNull ByteBuf message) {
     if (channel.isOpen()) {
       ByteBuf lengthBuffer = channel.alloc().ioBuffer(4);
       lengthBuffer.writeInt(message.readableBytes());

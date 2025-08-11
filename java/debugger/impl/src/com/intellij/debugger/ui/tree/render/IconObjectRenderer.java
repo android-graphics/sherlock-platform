@@ -38,7 +38,7 @@ final class IconObjectRenderer extends CompoundRendererProvider {
 
       if (!Registry.is("debugger.auto.fetch.icons") || DebuggerUtilsImpl.isRemote(debugProcess)) return null;
 
-      ((EvaluationContextImpl)evaluationContext).getManagerThread().schedule(new SuspendContextCommandImpl(evalContext.getSuspendContext()) {
+      debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(evalContext.getSuspendContext()) {
         @Override
         public void contextAction(@NotNull SuspendContextImpl suspendContext) {
           String getterName = AllIcons.Debugger.Value.getIconHeight() <= 16 ? "iconToBytesPreviewNormal" : "iconToBytesPreviewRetina";

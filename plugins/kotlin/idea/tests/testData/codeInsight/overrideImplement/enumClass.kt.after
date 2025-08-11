@@ -6,5 +6,3 @@ enum class Foo {
         <selection><caret>return super.toString()</selection>
     }
 }
-
-// MEMBER: "toString(): String"

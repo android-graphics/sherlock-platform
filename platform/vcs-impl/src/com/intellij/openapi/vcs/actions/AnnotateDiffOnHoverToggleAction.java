@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -15,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 class AnnotateDiffOnHoverToggleAction extends ToggleAction implements DumbAware {
   private static final String KEY_ID = "SHOW_DIFF_ON_HOVER";
 
-  private final @Nullable LineModificationDetailsProvider myProvider;
+  @Nullable private final LineModificationDetailsProvider myProvider;
 
   AnnotateDiffOnHoverToggleAction(@NotNull FileAnnotation annotation) {
     super(VcsBundle.messagePointer("action.annotate.show.diff.preview.on.hover.text"));

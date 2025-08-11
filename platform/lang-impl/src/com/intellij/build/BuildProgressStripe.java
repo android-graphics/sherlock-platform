@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.openapi.Disposable;
@@ -13,7 +13,8 @@ import java.awt.*;
 
 @ApiStatus.Internal
 final class BuildProgressStripe extends JBPanel {
-  private final @NotNull JBPanel myPanel;
+  @NotNull
+  private final JBPanel myPanel;
   private final NotNullLazyValue<ProgressBarLoadingDecorator> myCreateLoadingDecorator;
   private ProgressBarLoadingDecorator myDecorator;
 

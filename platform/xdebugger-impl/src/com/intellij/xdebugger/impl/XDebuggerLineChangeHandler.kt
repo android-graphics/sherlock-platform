@@ -13,7 +13,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 internal class XDebuggerLineChangeHandler(
@@ -58,7 +57,6 @@ internal class XDebuggerLineChangeHandler(
   private data class LineChangedEvent(val editor: Editor, val position: XSourcePositionImpl)
 }
 
-@ApiStatus.Internal
 open class XDebuggerLineChangeIconProvider(val project: Project) {
   open suspend fun getIcon(position: XSourcePositionImpl, editor: Editor): Icon? {
     return readAction {

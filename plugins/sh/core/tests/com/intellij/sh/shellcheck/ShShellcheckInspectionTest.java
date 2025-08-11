@@ -21,9 +21,9 @@ public class ShShellcheckInspectionTest extends BasePlatformTestCase {
   public void setUp() throws Exception {
     super.setUp();
     InspectionProfileImpl.INIT_INSPECTIONS = true;
-    ShShellcheckTestUtil.downloadShellcheck(getProject());
+    ShShellcheckTestUtil.downloadShellcheck();
     assertTrue("Failed to download proper shellcheck executable",
-               ShShellcheckUtil.isExecutionValidPath(ShSettings.getShellcheckPath(getProject())));
+               ShShellcheckUtil.isExecutionValidPath(ShSettings.getShellcheckPath()));
   }
 
   @Override

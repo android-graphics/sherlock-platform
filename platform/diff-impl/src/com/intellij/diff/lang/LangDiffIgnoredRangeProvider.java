@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.lang;
 
 import com.intellij.diff.contents.DiffContent;
@@ -19,7 +19,8 @@ import java.util.List;
 public abstract class LangDiffIgnoredRangeProvider implements DiffIgnoredRangeProvider {
   protected abstract boolean accepts(@NotNull Project project, @NotNull Language language);
 
-  protected abstract @NotNull List<TextRange> computeIgnoredRanges(@NotNull Project project, @NotNull CharSequence text, @NotNull Language language);
+  @NotNull
+  protected abstract List<TextRange> computeIgnoredRanges(@NotNull Project project, @NotNull CharSequence text, @NotNull Language language);
 
   @Override
   public final boolean accepts(@Nullable Project project, @NotNull DiffContent content) {
@@ -29,8 +30,9 @@ public abstract class LangDiffIgnoredRangeProvider implements DiffIgnoredRangePr
     return accepts(project, language);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<TextRange> getIgnoredRanges(@Nullable Project project, @NotNull CharSequence text, @NotNull DiffContent content) {
+  public List<TextRange> getIgnoredRanges(@Nullable Project project, @NotNull CharSequence text, @NotNull DiffContent content) {
     assert project != null;
     Language language = getLanguage(project, content);
     assert language != null;
@@ -38,7 +40,8 @@ public abstract class LangDiffIgnoredRangeProvider implements DiffIgnoredRangePr
     return computeIgnoredRanges(project, text, language);
   }
 
-  private static @Nullable Language getLanguage(@NotNull Project project, @NotNull DiffContent content) {
+  @Nullable
+  private static Language getLanguage(@NotNull Project project, @NotNull DiffContent content) {
     Language language = content.getUserData(DiffUserDataKeys.LANGUAGE);
     if (language != null) return language;
 

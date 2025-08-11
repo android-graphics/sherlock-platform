@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.modcommand.ModPsiUpdater;
@@ -6,9 +6,9 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
@@ -19,7 +19,8 @@ public final class AddThisQualifierFix extends PsiUpdateModCommandQuickFix {
 
   private AddThisQualifierFix() {}
 
-  public static @Nullable AddThisQualifierFix buildFix(PsiExpression expressionToQualify, PsiMember memberAccessed) {
+  @Nullable
+  public static AddThisQualifierFix buildFix(PsiExpression expressionToQualify, PsiMember memberAccessed) {
     if (!isThisQualifierPossible(expressionToQualify, memberAccessed)) {
       return null;
     }
@@ -34,13 +35,13 @@ public final class AddThisQualifierFix extends PsiUpdateModCommandQuickFix {
     if (memberClass == null) {
       return false;
     }
-    PsiClass containingClass = PsiUtil.getContainingClass(memberAccessExpression);
+    PsiClass containingClass = ClassUtils.getContainingClass(memberAccessExpression);
     if (InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
       // unqualified this.
       return true;
     }
     do {
-      containingClass = PsiUtil.getContainingClass(containingClass);
+      containingClass = ClassUtils.getContainingClass(containingClass);
     }
     while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true));
     // qualified this needed, which is not possible on anonymous class.
@@ -48,7 +49,8 @@ public final class AddThisQualifierFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return InspectionGadgetsBundle.message("add.this.qualifier.quickfix");
   }
 
@@ -61,7 +63,7 @@ public final class AddThisQualifierFix extends PsiUpdateModCommandQuickFix {
     final PsiExpression thisQualifier = ExpressionUtils.getEffectiveQualifier(expression);
     if (!(thisQualifier instanceof PsiThisExpression)) return;
     CommentTracker commentTracker = new CommentTracker();
-    final @NonNls String newExpression = commentTracker.text(thisQualifier) + "." + commentTracker.text(expression);
+    @NonNls final String newExpression = commentTracker.text(thisQualifier) + "." + commentTracker.text(expression);
     PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression, commentTracker);
   }
 }

@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.youtrack.lang;
 
 import com.intellij.extapi.psi.PsiFileBase;
@@ -14,8 +13,9 @@ public class YouTrackFile extends PsiFileBase {
     super(viewProvider, YouTrackLanguage.INSTANCE);
   }
 
+  @NotNull
   @Override
-  public @NotNull FileType getFileType() {
+  public FileType getFileType() {
     return YouTrackFileType.INSTANCE;
   }
 }

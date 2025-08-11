@@ -17,8 +17,8 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiKeyword;
@@ -32,12 +32,14 @@ import org.jetbrains.annotations.NotNull;
 public final class UnnecessarySuperConstructorInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "UnnecessaryCallToSuper";
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.super.constructor.problem.descriptor");
   }
 
@@ -49,7 +51,8 @@ public final class UnnecessarySuperConstructorInspection extends BaseInspection 
   private static class UnnecessarySuperConstructorFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.super.constructor.remove.quickfix");
     }
 

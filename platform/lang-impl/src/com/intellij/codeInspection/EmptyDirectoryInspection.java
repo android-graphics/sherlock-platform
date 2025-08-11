@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -16,14 +16,12 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-@ApiStatus.Internal
 public final class EmptyDirectoryInspection extends GlobalInspectionTool {
 
   @SuppressWarnings("PublicField")
@@ -79,7 +77,8 @@ public final class EmptyDirectoryInspection extends GlobalInspectionTool {
     }, globalSearchScope);
   }
 
-  private static @Nullable String getPathRelativeToModule(VirtualFile file, Project project) {
+  @Nullable
+  private static String getPathRelativeToModule(VirtualFile file, Project project) {
     final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
     final VirtualFile[] contentRoots = rootManager.getContentRootsFromAllModules();
     for (VirtualFile otherRoot : contentRoots) {
@@ -100,14 +99,16 @@ public final class EmptyDirectoryInspection extends GlobalInspectionTool {
       this.name = name;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getName() {
+    public String getName() {
       return LangBundle.message(
         "empty.directories.delete.quickfix", name);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return LangBundle.message("empty.directories.delete.quickfix", "");
     }
 

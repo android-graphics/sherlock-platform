@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl.artifacts;
 
 import com.intellij.lang.ant.AntBundle;
@@ -54,7 +54,7 @@ public class AntArtifactProperties extends ArtifactProperties<AntArtifactExtensi
   }
 
   @Override
-  public void onBuildFinished(@NotNull Artifact artifact, final @NotNull CompileContext compileContext) {
+  public void onBuildFinished(@NotNull Artifact artifact, @NotNull final CompileContext compileContext) {
     if (myPostProcessing) {
       runAntTarget(compileContext, artifact);
     }
@@ -113,7 +113,8 @@ public class AntArtifactProperties extends ArtifactProperties<AntArtifactExtensi
     myExtensionProperties.myTargetName = targetName;
   }
 
-  public @Nullable AntBuildTarget findTarget(final AntConfiguration antConfiguration) {
+  @Nullable
+  public AntBuildTarget findTarget(final AntConfiguration antConfiguration) {
     String fileUrl = getFileUrl();
     String targetName = getTargetName();
     if (fileUrl == null || targetName == null) return null;

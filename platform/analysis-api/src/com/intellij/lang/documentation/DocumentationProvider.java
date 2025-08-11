@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation;
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
@@ -15,7 +15,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -83,7 +82,7 @@ public interface DocumentationProvider {
    * For {@link ExternalDocumentationProvider}, first URL, yielding non-empty result in
    * {@link ExternalDocumentationProvider#fetchExternalDocumentation(Project, PsiElement, List, boolean)} will be used.
    */
-  default @Unmodifiable @Nullable List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
+  default @Nullable List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     return null;
   }
 

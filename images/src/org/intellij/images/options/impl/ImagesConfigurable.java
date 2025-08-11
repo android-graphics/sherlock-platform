@@ -100,7 +100,9 @@ public final class ImagesConfigurable extends BaseConfigurable implements Search
   }
 
   @Override
-  public @NotNull @NonNls String getId() {
+  @NotNull
+  @NonNls
+  public String getId() {
     return "Images";
   }
 }

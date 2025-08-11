@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.ui.CheckboxTree;
@@ -17,9 +17,11 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public final class PushLogTreeUtil {
-  public static final @NonNls String EDIT_MODE_PROP = "tree.edit.mode";
+  @NonNls
+  public static final String EDIT_MODE_PROP = "tree.edit.mode";
 
-  public static @Nullable Object getTagAtForRenderer(CheckboxTree.CheckboxTreeCellRenderer renderer, MouseEvent e) {
+  @Nullable
+  public static Object getTagAtForRenderer(CheckboxTree.CheckboxTreeCellRenderer renderer, MouseEvent e) {
     JTree tree = (JTree)e.getSource();
     Object tag = null;
     final TreePath path = tree.getPathForLocation(e.getX(), e.getY());

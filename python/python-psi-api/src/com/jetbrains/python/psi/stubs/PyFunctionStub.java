@@ -4,7 +4,7 @@ package com.jetbrains.python.psi.stubs;
 import com.intellij.psi.stubs.NamedStub;
 import com.jetbrains.python.psi.PyFunction;
 
-public interface PyFunctionStub extends NamedStub<PyFunction>, PyAnnotationOwnerStub, PyTypeCommentOwnerStub, PyVersionSpecificStub {
+public interface PyFunctionStub extends NamedStub<PyFunction>, PyAnnotationOwnerStub, PyTypeCommentOwnerStub {
   String getDocString();
   String getDeprecationMessage();
   boolean isAsync();

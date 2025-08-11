@@ -44,7 +44,6 @@ public class GotoInstruction extends Instruction {
     return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, stateBefore)};
   }
 
-  @Override
   public String toString() {
     return "GOTO " + getOffset();
   }

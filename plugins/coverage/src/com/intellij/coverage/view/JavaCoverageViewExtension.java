@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.*;
@@ -49,7 +49,8 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     return "";
   }
 
-  private @Nullable PackageAnnotator.SummaryCoverageInfo getSummaryCoverageForNodeValue(AbstractTreeNode<?> node) {
+  @Nullable
+  private PackageAnnotator.SummaryCoverageInfo getSummaryCoverageForNodeValue(AbstractTreeNode<?> node) {
     CoverageClassStructure structure = myAnnotator.getStructure();
     if (structure == null) return null;
     CoverageNodeInfo info = structure.getNodeInfo(getNodeId(node));
@@ -57,7 +58,8 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     return info.getCounter();
   }
 
-  private static @NotNull String getNodeId(AbstractTreeNode<?> node) {
+  @NotNull
+  private static String getNodeId(AbstractTreeNode<?> node) {
     return node instanceof CoverageListRootNode ? CoverageClassStructure.ROOT_ID : ((JavaCoverageNode)node).getQualifiedName();
   }
 
@@ -86,8 +88,9 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     return super.getVirtualFile(object);
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement getParentElement(PsiElement element) {
+  public PsiElement getParentElement(PsiElement element) {
     if (element instanceof PsiClass) {
       final PsiDirectory containingDirectory = element.getContainingFile().getContainingDirectory();
       return containingDirectory != null ? JavaDirectoryService.getInstance().getPackage(containingDirectory) : null;
@@ -95,8 +98,9 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     return ((PsiPackage)element).getParentPackage();
   }
 
+  @NotNull
   @Override
-  public @NotNull AbstractTreeNode<?> createRootNode() {
+  public AbstractTreeNode<?> createRootNode() {
     final PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage("");
     return new JavaCoverageRootNode(myProject, Objects.requireNonNull(aPackage), mySuitesBundle);
   }

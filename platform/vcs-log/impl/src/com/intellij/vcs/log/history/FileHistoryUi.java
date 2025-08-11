@@ -16,18 +16,16 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
-import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder;
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter;
-import com.intellij.vcs.log.ui.highlighters.VcsLogCommitsHighlighter;
+import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +39,6 @@ import java.util.function.Predicate;
 import static com.intellij.ui.JBColor.namedColor;
 
 public class FileHistoryUi extends AbstractVcsLogUi {
-  private final @NotNull VirtualFile myRoot;
   private final @NotNull FilePath myPath;
   private final @Nullable Hash myRevision;
 
@@ -50,7 +47,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   private final @NotNull FileHistoryFilterUi myFilterUi;
   private final @NotNull FileHistoryPanel myFileHistoryPanel;
 
-  @ApiStatus.Internal
   public FileHistoryUi(@NotNull VcsLogData logData,
                        @NotNull FileHistoryUiProperties uiProperties,
                        @NotNull VisiblePackRefresher refresher,
@@ -64,7 +60,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
     assert !path.isDirectory();
 
-    myRoot = root;
     myPath = path;
     myRevision = revision;
 
@@ -82,8 +77,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     });
     myFileHistoryPanel = new FileHistoryPanel(this, myFileHistoryModel, myFilterUi, logData, path, root, myColorManager, this);
 
-    getTable().addHighlighter(LOG_HIGHLIGHTER_FACTORY_EP.findExtensionOrFail(
-      VcsLogCommitsHighlighter.Factory.class).createHighlighter(getLogData(), this));
+    getTable().addHighlighter(LOG_HIGHLIGHTER_FACTORY_EP.findExtensionOrFail(MyCommitsHighlighter.Factory.class).createHighlighter(getLogData(), this));
     if (myRevision != null) {
       getTable().addHighlighter(new RevisionHistoryHighlighter(myLogData.getStorage(), myRevision, root));
     }
@@ -112,7 +106,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   /**
    * @deprecated use {@link FileHistoryModel#getPathInCommit(Hash)} or {@link FileHistoryPaths#filePath(VcsLogDataPack, int)}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public @Nullable FilePath getPathInCommit(@NotNull Hash hash) {
     return myFileHistoryModel.getPathInCommit(hash);
   }
@@ -138,15 +132,9 @@ public class FileHistoryUi extends AbstractVcsLogUi {
         }));
     }
     actions.add(NotificationAction.createSimple(VcsLogBundle.message("file.history.commit.not.found.view.in.log.link"), () -> {
-      Hash hash = getCommitHash(commitId);
-      if (hash != null) {
-        VcsLogNavigationUtil.jumpToRevisionAsync(myProject, myRoot, (Hash)commitId, null);
-      }
-      else {
-        VcsLogContentUtil.runInMainLog(myProject, ui -> {
-          ui.jumpTo(commitId, rowGetter, SettableFuture.create(), false, true);
-        });
-      }
+      VcsLogContentUtil.runInMainLog(myProject, ui -> {
+        ui.jumpTo(commitId, rowGetter, SettableFuture.create(), false, true);
+      });
     }));
     VcsNotifier.getInstance(myProject).notifyWarning(VcsLogNotificationIdsHolder.COMMIT_NOT_FOUND, "", text,
                                                      actions.toArray(NotificationAction[]::new));
@@ -156,7 +144,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     return myPath.equals(targetPath) && Objects.equals(myRevision, targetRevision);
   }
 
-  @ApiStatus.Internal
   @Override
   public @NotNull FileHistoryFilterUi getFilterUi() {
     return myFilterUi;
@@ -183,7 +170,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     return myFileHistoryPanel.getToolbar();
   }
 
-  @ApiStatus.Internal
   @Override
   public @NotNull FileHistoryUiProperties getProperties() {
     return myUiProperties;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.diagnostic.PluginException;
@@ -26,15 +26,15 @@ final class CommonCodeStyleSettingsManager {
   private volatile Map<String, CommonCodeStyleSettings> myCommonSettingsMap;
   private volatile Map<String, Element> myUnknownSettingsMap;
 
-  private final @NotNull CodeStyleSettings myParentSettings;
+  @NotNull private final CodeStyleSettings myParentSettings;
 
-  static final @NonNls String COMMON_SETTINGS_TAG = "codeStyleSettings";
+  @NonNls static final String COMMON_SETTINGS_TAG = "codeStyleSettings";
   private static final String LANGUAGE_ATTR = "language";
 
   private static final Logger LOG = Logger.getInstance(CommonCodeStyleSettingsManager.class);
 
   private static class DefaultsHolder {
-    private static final CommonCodeStyleSettings SETTINGS = new CommonCodeStyleSettings(Language.ANY);
+    private final static CommonCodeStyleSettings SETTINGS = new CommonCodeStyleSettings(Language.ANY);
     static {
       SETTINGS.initIndentOptions();
       SETTINGS.setRootSettings(CodeStyleSettings.getDefaults());
@@ -61,7 +61,8 @@ final class CommonCodeStyleSettingsManager {
     return DefaultsHolder.SETTINGS;
   }
 
-  private @NotNull Map<String, CommonCodeStyleSettings> getCommonSettingsMap() {
+  @NotNull
+  private Map<String, CommonCodeStyleSettings> getCommonSettingsMap() {
     Map<String, CommonCodeStyleSettings> commonSettingsMap = myCommonSettingsMap;
     if (commonSettingsMap == null) {
       synchronized (this) {
@@ -83,7 +84,8 @@ final class CommonCodeStyleSettingsManager {
    * @param langName The display name of the language whose settings must be returned.
    * @return Common code style settings for the given language or a new instance with default values if not found.
    */
-  public @NotNull CommonCodeStyleSettings getCommonSettings(@NotNull String langName) {
+  @NotNull
+  public CommonCodeStyleSettings getCommonSettings(@NotNull String langName) {
     Map<String, CommonCodeStyleSettings> map = getCommonSettingsMap();
     for (Language language : Language.getRegisteredLanguages()) {
       if (langName.equals(language.getDisplayName())) {
@@ -131,7 +133,8 @@ final class CommonCodeStyleSettingsManager {
     }
   }
 
-  public @NotNull CommonCodeStyleSettingsManager clone(@NotNull CodeStyleSettings parentSettings) {
+  @NotNull
+  public CommonCodeStyleSettingsManager clone(@NotNull CodeStyleSettings parentSettings) {
     synchronized (this) {
       CommonCodeStyleSettingsManager settingsManager = new CommonCodeStyleSettingsManager(parentSettings);
       if (myCommonSettingsMap != null && !myCommonSettingsMap.isEmpty()) {
@@ -171,7 +174,8 @@ final class CommonCodeStyleSettingsManager {
     }
   }
 
-  private static @Nullable CommonCodeStyleSettings safelyGetDefaults(LanguageCodeStyleProvider provider) {
+  @Nullable
+  private static CommonCodeStyleSettings safelyGetDefaults(LanguageCodeStyleProvider provider) {
     Ref<CommonCodeStyleSettings> defaultSettingsRef =
       RecursionManager.doPreventingRecursion(provider, true, () -> new Ref<>(provider.getDefaultCommonSettings()));
     if (defaultSettingsRef == null) {
@@ -187,7 +191,8 @@ final class CommonCodeStyleSettingsManager {
     }
   }
 
-  private static @Nullable CommonCodeStyleSettings readExternal(@NotNull LanguageCodeStyleProvider provider, @NotNull Element commonSettingsElement) {
+  @Nullable
+  private static CommonCodeStyleSettings readExternal(@NotNull LanguageCodeStyleProvider provider, @NotNull Element commonSettingsElement) {
     CommonCodeStyleSettings settings = safelyGetDefaults(provider);
     if (settings != null) {
       settings.readExternal(commonSettingsElement);

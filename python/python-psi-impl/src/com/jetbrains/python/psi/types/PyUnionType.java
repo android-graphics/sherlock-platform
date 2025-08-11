@@ -21,17 +21,19 @@ import java.util.function.Function;
 
 public class PyUnionType implements PyType {
 
-  private final @NotNull LinkedHashSet<@Nullable PyType> myMembers;
+  @NotNull
+  private final LinkedHashSet<@Nullable PyType> myMembers;
 
   PyUnionType(@NotNull LinkedHashSet<@Nullable PyType> members) {
     myMembers = new LinkedHashSet<>(members);
   }
 
   @Override
-  public @Nullable List<? extends RatedResolveResult> resolveMember(@NotNull String name,
-                                                                    @Nullable PyExpression location,
-                                                                    @NotNull AccessDirection direction,
-                                                                    @NotNull PyResolveContext resolveContext) {
+  @Nullable
+  public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
+                                                          @Nullable PyExpression location,
+                                                          @NotNull AccessDirection direction,
+                                                          @NotNull PyResolveContext resolveContext) {
     SmartList<RatedResolveResult> ret = new SmartList<>();
     boolean allNulls = true;
     for (PyType member : myMembers) {
@@ -82,11 +84,13 @@ public class PyUnionType implements PyType {
     }
   }
 
-  public static @Nullable PyType union(@Nullable PyType type1, @Nullable PyType type2) {
+  @Nullable
+  public static PyType union(@Nullable PyType type1, @Nullable PyType type2) {
     return union(Arrays.asList(type1, type2));
   }
 
-  public static @Nullable PyType union(@NotNull Collection<@Nullable PyType> members) {
+  @Nullable
+  public static PyType union(@NotNull Collection<@Nullable PyType> members) {
     if (members.size() < 2) {
       return ContainerUtil.getFirstItem(members);
     }
@@ -105,7 +109,8 @@ public class PyUnionType implements PyType {
     }
   }
 
-  public static @Nullable PyType createWeakType(@Nullable PyType type) {
+  @Nullable
+  public static PyType createWeakType(@Nullable PyType type) {
     if (type == null) {
       return null;
     }
@@ -117,7 +122,8 @@ public class PyUnionType implements PyType {
     return union(type, null);
   }
 
-  public static @Nullable PyType toNonWeakType(@Nullable PyType type) {
+  @Nullable
+  public static PyType toNonWeakType(@Nullable PyType type) {
     return type instanceof PyUnionType ? ((PyUnionType)type).excludeNull() : type;
   }
 
@@ -129,11 +135,13 @@ public class PyUnionType implements PyType {
    * @see PyTypeUtil#toStream(PyType)
    * @see PyUnionType#map(Function)
    */
-  public @NotNull Collection<@Nullable PyType> getMembers() {
+  @NotNull
+  public Collection<PyType> getMembers() {
     return Collections.unmodifiableCollection(myMembers);
   }
 
-  public @Nullable PyType map(@NotNull Function<@Nullable PyType, @Nullable PyType> mapper) {
+  @Nullable
+  public PyType map(@NotNull Function<@Nullable PyType, @Nullable PyType> mapper) {
     return union(ContainerUtil.map(getMembers(), t -> mapper.apply(t)));
   }
 
@@ -144,7 +152,8 @@ public class PyUnionType implements PyType {
    *                If type is null only null will be excluded from the union.
    * @return union with excluded types
    */
-  public @Nullable PyType exclude(@Nullable PyType type, @NotNull TypeEvalContext context) {
+  @Nullable
+  public PyType exclude(@Nullable PyType type, @NotNull TypeEvalContext context) {
     if (type == null) return excludeNull();
 
     final List<PyType> members = new ArrayList<>();
@@ -161,7 +170,8 @@ public class PyUnionType implements PyType {
    *
    * @see PyUnionType#toNonWeakType(PyType)
    */
-  public @Nullable PyType excludeNull() {
+  @Nullable
+  public PyType excludeNull() {
     return !isWeak() ? this : union(ContainerUtil.skipNulls(getMembers()));
   }
 
@@ -181,14 +191,5 @@ public class PyUnionType implements PyType {
   @Override
   public String toString() {
     return "PyUnionType: " + getName();
-  }
-
-
-  @Override
-  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
-    if (visitor instanceof PyTypeVisitorExt<T> visitorExt) {
-      return visitorExt.visitPyUnionType(this);
-    }
-    return visitor.visitPyType(this);
   }
 }

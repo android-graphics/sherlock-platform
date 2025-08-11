@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleMainPanel;
@@ -35,7 +35,8 @@ public class CodeStyleConfigurableWrapper
   }
 
   @Override
-  public @Nls String getDisplayName() {
+  @Nls
+  public String getDisplayName() {
     String displayName = myProvider.getConfigurableDisplayName();
     if (displayName != null) return displayName;
 
@@ -107,12 +108,14 @@ public class CodeStyleConfigurableWrapper
   }
 
   @Override
-  public @NotNull String getId() {
+  @NotNull
+  public String getId() {
     return getConfigurableId(getDisplayName());
   }
 
+  @NotNull
   @Override
-  public @NotNull Class<?> getOriginalClass() {
+  public Class<?> getOriginalClass() {
     return myProvider.getClass();
   }
 
@@ -135,8 +138,9 @@ public class CodeStyleConfigurableWrapper
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<String> processListOptions() {
+  public Set<String> processListOptions() {
     return getOptionIndexer().processListOptions();
   }
 
@@ -145,7 +149,8 @@ public class CodeStyleConfigurableWrapper
     return getOptionIndexer().processListOptionsWithPaths();
   }
 
-  private @NotNull OptionsContainingConfigurable getOptionIndexer() {
+  @NotNull
+  private OptionsContainingConfigurable getOptionIndexer() {
     if (myPanel == null) {
       myPanel = new CodeStyleMainPanel(myOwner.getModel(), myFactory, canBeShared());
     }
@@ -167,12 +172,14 @@ public class CodeStyleConfigurableWrapper
     return List.of(myOwner);
   }
 
-  @Override
-  public @Nullable Runnable enableSearch(String option) {
-    return myPanel != null ? () -> myPanel.highlightOptions(option) : null;
+  @NotNull
+  public static String getConfigurableId(String configurableDisplayName) {
+    return "preferences.sourceCode." + configurableDisplayName;
   }
 
-  public static @NotNull String getConfigurableId(String configurableDisplayName) {
-    return "preferences.sourceCode." + configurableDisplayName;
+  @Nullable
+  @Override
+  public Runnable enableSearch(String option) {
+    return myPanel != null ? () -> myPanel.highlightOptions(option) : null;
   }
 }

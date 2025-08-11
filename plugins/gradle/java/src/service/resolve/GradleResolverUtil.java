@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.resolve;
 
 import com.intellij.openapi.util.RecursionManager;
@@ -41,10 +41,11 @@ public final class GradleResolverUtil {
     return argsCount;
   }
 
-  public static @Nullable GrLightMethodBuilder createMethodWithClosure(@NotNull String name,
-                                                                       @Nullable String returnType,
-                                                                       @Nullable String closureTypeParameter,
-                                                                       @NotNull PsiElement place) {
+  @Nullable
+  public static GrLightMethodBuilder createMethodWithClosure(@NotNull String name,
+                                                             @Nullable String returnType,
+                                                             @Nullable String closureTypeParameter,
+                                                             @NotNull PsiElement place) {
     PsiClassType closureType;
     PsiClass closureClass =
       JavaPsiFacade.getInstance(place.getProject()).findClass(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, place.getResolveScope());
@@ -79,7 +80,8 @@ public final class GradleResolverUtil {
     return methodWithClosure;
   }
 
-  public static @Nullable PsiElement findParent(@NotNull PsiElement element, int level) {
+  @Nullable
+  public static PsiElement findParent(@NotNull PsiElement element, int level) {
     PsiElement parent = element;
     do {
       parent = parent.getParent();
@@ -88,7 +90,8 @@ public final class GradleResolverUtil {
     return parent;
   }
 
-  public static @Nullable <T extends PsiElement> T findParent(@NotNull PsiElement element, Class<T> clazz) {
+  @Nullable
+  public static <T extends PsiElement> T findParent(@NotNull PsiElement element, Class<T> clazz) {
     PsiElement parent = element;
     do {
       parent = parent.getParent();
@@ -105,7 +108,8 @@ public final class GradleResolverUtil {
     return methodName != null && aClass != null && aClass.findMethodsByName(methodName, true).length != 0;
   }
 
-  public static @Nullable PsiType getTypeOf(final @Nullable GrExpression expression) {
+  @Nullable
+  public static PsiType getTypeOf(@Nullable final GrExpression expression) {
     if (expression == null) return null;
     return RecursionManager.doPreventingRecursion(expression, true, () -> expression.getNominalType());
   }

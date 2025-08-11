@@ -7,14 +7,8 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
-
-@OptIn(ExperimentalCoroutinesApi::class)
-private val limitedDispatcher = Dispatchers.Default.limitedParallelism(2)
 
 /**
  *
@@ -31,13 +25,8 @@ interface EditorTabTitleProvider : DumbAware {
 
   @Experimental
   suspend fun getEditorTabTitleAsync(project: Project, file: VirtualFile): @NlsContexts.TabTitle String? {
-    // Limit the parallelism of calculating the tab title.
-    // Because it is quite extensively used when tabs are restored during project opening.
-    // While implementations may perform long-running blocking operations, that may block all the threads of the coroutine pool.
-    return withContext(limitedDispatcher) {
-      blockingContext {
-        getEditorTabTitle(project, file)
-      }
+    return blockingContext {
+      getEditorTabTitle(project, file)
     }
   }
 

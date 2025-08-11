@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.findUsages;
 
 import org.jetbrains.annotations.NotNull;
@@ -9,7 +9,8 @@ public interface FindUsagesHandlerUi {
   AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab);
 
 
-  default @Nullable String getHelpId() {
+  @Nullable
+  default String getHelpId() {
     return null;
   }
 }

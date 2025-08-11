@@ -1,3 +1,3 @@
-from braintree.resource import Resource
+from braintree.resource import Resource as Resource
 
 class IbanBankAccount(Resource): ...

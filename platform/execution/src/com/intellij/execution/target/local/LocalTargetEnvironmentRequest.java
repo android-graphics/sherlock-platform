@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target.local;
 
 import com.intellij.execution.ExecutionException;
@@ -39,33 +39,39 @@ public class LocalTargetEnvironmentRequest extends BaseTargetEnvironmentRequest 
       new HashSet<>(getLocalPortBindings()));
   }
 
-  private @NotNull GeneralCommandLine.ParentEnvironmentType myParentEnvironmentType = GeneralCommandLine.ParentEnvironmentType.CONSOLE;
+  @NotNull
+  private GeneralCommandLine.ParentEnvironmentType myParentEnvironmentType = GeneralCommandLine.ParentEnvironmentType.CONSOLE;
 
+  @NotNull
   @Override
-  public @NotNull TargetPlatform getTargetPlatform() {
+  public TargetPlatform getTargetPlatform() {
     return TargetPlatform.CURRENT;
   }
 
+  @Nullable
   @Override
-  public @Nullable TargetEnvironmentConfiguration getConfiguration() {
+  public TargetEnvironmentConfiguration getConfiguration() {
     return null;
   }
 
   @Override
-  public @NotNull Volume getDefaultVolume() {
+  @NotNull
+  public Volume getDefaultVolume() {
     if (myDefaultVolume == null) {
       myDefaultVolume = createTempVolume();
     }
     return myDefaultVolume;
   }
 
-  private @NotNull Volume createTempVolume() {
+  @NotNull
+  private Volume createTempVolume() {
     String id = nextSyntheticId();
     return myUploadRoots.computeIfAbsent(id, path -> new LocalUploadVolume(this, id));
   }
 
+  @NotNull
   @Override
-  public @NotNull LocalTargetEnvironment prepareEnvironment(@NotNull TargetProgressIndicator progressIndicator) throws ExecutionException {
+  public LocalTargetEnvironment prepareEnvironment(@NotNull TargetProgressIndicator progressIndicator) throws ExecutionException {
     LocalTargetEnvironment environment = new LocalTargetEnvironment(this);
     environmentPrepared(environment, progressIndicator);
     return environment;
@@ -93,8 +99,9 @@ public class LocalTargetEnvironmentRequest extends BaseTargetEnvironmentRequest 
       myVolumeId = volumeId;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getVolumeId() {
+    public String getVolumeId() {
       return myVolumeId;
     }
 
@@ -103,8 +110,9 @@ public class LocalTargetEnvironmentRequest extends BaseTargetEnvironmentRequest 
       return myRequest.getTargetPlatform().getPlatform();
     }
 
+    @NotNull
     @Override
-    public @NotNull TargetValue<String> createUpload(@NotNull String localPath) {
+    public TargetValue<String> createUpload(@NotNull String localPath) {
       return TargetValue.fixed(localPath);
     }
   }

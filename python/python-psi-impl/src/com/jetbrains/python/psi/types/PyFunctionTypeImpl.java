@@ -39,8 +39,8 @@ public class PyFunctionTypeImpl implements PyFunctionType {
     return new PyFunctionTypeImpl(callable, parameters);
   }
 
-  private final @NotNull PyCallable myCallable;
-  private final @NotNull List<PyCallableParameter> myParameters;
+  @NotNull private final PyCallable myCallable;
+  @NotNull private final List<PyCallableParameter> myParameters;
 
   /**
    * @deprecated Use {@link PyFunctionTypeImpl#create(PyCallable, TypeEvalContext)}
@@ -55,18 +55,21 @@ public class PyFunctionTypeImpl implements PyFunctionType {
     myParameters = parameters;
   }
 
+  @Nullable
   @Override
-  public @Nullable PyType getReturnType(@NotNull TypeEvalContext context) {
+  public PyType getReturnType(@NotNull TypeEvalContext context) {
     return context.getReturnType(myCallable);
   }
 
+  @Nullable
   @Override
-  public @Nullable PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
+  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
     return myCallable.getCallType(context, callSite);
   }
 
+  @Nullable
   @Override
-  public @Nullable List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
+  public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     return myParameters;
   }
 
@@ -99,7 +102,8 @@ public class PyFunctionTypeImpl implements PyFunctionType {
     return delegate.getCompletionVariants(completionPrefix, location, context);
   }
 
-  private @Nullable PyClassType selectCallableType(@Nullable PyExpression location, @NotNull TypeEvalContext context) {
+  @Nullable
+  private PyClassType selectCallableType(@Nullable PyExpression location, @NotNull TypeEvalContext context) {
     final String className;
     if (location instanceof PyReferenceExpression && isBoundMethodReference((PyReferenceExpression)location, context)) {
       className = PyNames.TYPES_METHOD_TYPE;
@@ -152,22 +156,19 @@ public class PyFunctionTypeImpl implements PyFunctionType {
   }
 
   @Override
-  public @NotNull PyCallable getCallable() {
+  @NotNull
+  public PyCallable getCallable() {
     return myCallable;
   }
 
   @Override
-  public @NotNull PyFunctionType dropSelf(@NotNull TypeEvalContext context) {
+  @NotNull
+  public PyFunctionType dropSelf(@NotNull TypeEvalContext context) {
     final List<PyCallableParameter> parameters = getParameters(context);
 
     if (!ContainerUtil.isEmpty(parameters) && parameters.get(0).isSelf()) {
       return new PyFunctionTypeImpl(myCallable, ContainerUtil.subList(parameters, 1));
     }
     return this;
-  }
-
-  @Override
-  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
-    return visitor.visitPyFunctionType(this);
   }
 }

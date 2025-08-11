@@ -1,5 +1,6 @@
 from decimal import Decimal
-from typing import Any, Literal
+from typing import Any
+from typing_extensions import Literal
 
 from markupsafe import Markup
 from wtforms.fields import Field, FormField, SelectFieldBase, StringField

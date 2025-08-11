@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.FindBundle;
-import com.intellij.find.FindUsagesSettings;
+import com.intellij.find.FindSettings;
 import com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode;
 import com.intellij.ide.util.scopeChooser.ScopeService;
 import com.intellij.lang.findUsages.LanguageFindUsages;
@@ -59,14 +59,16 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 
 /**
  * see {@link com.intellij.find.impl.FindManagerImpl#getFindUsagesManager()}
@@ -82,7 +84,7 @@ public final class FindUsagesManager {
   }
 
   private static final Key<String> KEY_START_USAGE_AGAIN = Key.create("KEY_START_USAGE_AGAIN");
-  private static final @NonNls String VALUE_START_USAGE_AGAIN = "START_AGAIN";
+  @NonNls private static final String VALUE_START_USAGE_AGAIN = "START_AGAIN";
   private final Project myProject;
 
   private LastSearchData myLastSearchInFileData; // EDT only
@@ -155,42 +157,44 @@ public final class FindUsagesManager {
     myLastSearchInFileData = new LastSearchData(primaryElements, secondaryElements, findUsagesOptions);
   }
 
-  public @Nullable FindUsagesHandler getFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
+  @Nullable
+  public FindUsagesHandler getFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
     return getFindUsagesHandler(element, forHighlightUsages ? OperationMode.HIGHLIGHT_USAGES : OperationMode.DEFAULT);
   }
 
-  public @Nullable FindUsagesHandler getFindUsagesHandler(@NotNull PsiElement element, @NotNull OperationMode operationMode) {
-    return getFindUsagesHandler(element, factory -> factory.createFindUsagesHandler(element, operationMode));
+  @Nullable
+  public FindUsagesHandler getFindUsagesHandler(@NotNull PsiElement element, @NotNull OperationMode operationMode) {
+    for (FindUsagesHandlerFactory factory : FindUsagesHandlerFactory.EP_NAME.getExtensions(myProject)) {
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-353115, EA-841437")) {
+        if (!factory.canFindUsages(element)) continue;
+      }
+      FindUsagesHandler handler = factory.createFindUsagesHandler(element, operationMode);
+      if (handler == FindUsagesHandler.NULL_HANDLER) return null;
+      if (handler != null) {
+        return handler;
+      }
+    }
+    return null;
   }
 
-  public @Nullable FindUsagesHandler getNewFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
-    return getFindUsagesHandler(element, factory -> {
+  @Nullable
+  public FindUsagesHandler getNewFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
+    for (FindUsagesHandlerFactory factory : FindUsagesHandlerFactory.EP_NAME.getExtensionList(myProject)) {
+      if (!factory.canFindUsages(element)) {
+        continue;
+      }
+
       Class<? extends FindUsagesHandlerFactory> aClass = factory.getClass();
       FindUsagesHandlerFactory copy = myProject.instantiateClass(aClass, factory.pluginDescriptor.getPluginId());
-      return copy.createFindUsagesHandler(element, forHighlightUsages);
-    });
-  }
-
-  private @Nullable FindUsagesHandler getFindUsagesHandler(
-    @NotNull PsiElement element,
-    @NotNull Function<FindUsagesHandlerFactory, FindUsagesHandler> createHandler
-  ) {
-    return ReadAction.compute(() -> {
-      for (FindUsagesHandlerFactory factory : FindUsagesHandlerFactory.EP_NAME.getExtensionList(myProject)) {
-        try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162401 IDEA-353115")) {
-          if (!factory.canFindUsages(element)) continue;
-        }
-        FindUsagesHandler handler;
-        try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162401")) {
-          handler = createHandler.apply(factory);
-        }
-        if (handler == FindUsagesHandler.NULL_HANDLER) return null;
-        if (handler != null) {
-          return handler;
-        }
+      FindUsagesHandler handler = copy.createFindUsagesHandler(element, forHighlightUsages);
+      if (handler == FindUsagesHandler.NULL_HANDLER) {
+        return null;
       }
-      return null;
-    });
+      if (handler != null) {
+        return handler;
+      }
+    }
+    return null;
   }
 
   public void findUsages(@NotNull PsiElement psiElement, @Nullable PsiFile scopeFile, FileEditor editor, boolean showDialog, @Nullable("null means default (stored in options)") SearchScope searchScope) {
@@ -219,9 +223,7 @@ public final class FindUsagesManager {
 
     clearFindingNextUsageInFile();
 
-    try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162399")) {
-      startFindUsages(findUsagesOptions, handler, scopeFile, editor);
-    }
+    startFindUsages(findUsagesOptions, handler, scopeFile, editor);
   }
 
   public void startFindUsages(@NotNull PsiElement psiElement, @NotNull FindUsagesOptions findUsagesOptions) {
@@ -251,7 +253,7 @@ public final class FindUsagesManager {
                          editor);
     }
     else {
-      boolean skipResultsWithOneUsage = FindUsagesSettings.getInstance().isSkipResultsWithOneUsage();
+      boolean skipResultsWithOneUsage = FindSettings.getInstance().isSkipResultsWithOneUsage();
       findUsages(primaryElements, secondaryElements, handler, findUsagesOptions, skipResultsWithOneUsage);
     }
   }
@@ -273,12 +275,13 @@ public final class FindUsagesManager {
     }
   }
 
-  public static @NotNull ProgressIndicator startProcessUsages(@NotNull FindUsagesHandlerBase handler,
-                                                              PsiElement @NotNull [] primaryElements,
-                                                              PsiElement @NotNull [] secondaryElements,
-                                                              @NotNull Processor<? super Usage> processor,
-                                                              @NotNull FindUsagesOptions findUsagesOptions,
-                                                              @NotNull Runnable onComplete) {
+  @NotNull
+  public static ProgressIndicator startProcessUsages(@NotNull FindUsagesHandlerBase handler,
+                                                     PsiElement @NotNull [] primaryElements,
+                                                     PsiElement @NotNull [] secondaryElements,
+                                                     @NotNull Processor<? super Usage> processor,
+                                                     @NotNull FindUsagesOptions findUsagesOptions,
+                                                     @NotNull Runnable onComplete) {
     ProgressIndicator indicator = new ProgressIndicatorBase();
     startProcessUsages(indicator, handler, primaryElements, secondaryElements, processor, findUsagesOptions, onComplete);
     return indicator;
@@ -305,7 +308,7 @@ public final class FindUsagesManager {
   }
 
   public static void startProcessUsages(@NotNull ProgressIndicator indicator,
-                                        final @NotNull Project project,
+                                        @NotNull final Project project,
                                         @NotNull UsageSearcher usageSearcher,
                                         @NotNull Processor<? super Usage> processor,
                                         @NotNull Runnable onComplete) {
@@ -320,20 +323,21 @@ public final class FindUsagesManager {
     ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(task, indicator, onComplete);
   }
 
-  public @NotNull UsageViewPresentation createPresentation(@NotNull FindUsagesHandlerBase handler, @NotNull FindUsagesOptions findUsagesOptions) {
+  @NotNull
+  public UsageViewPresentation createPresentation(@NotNull FindUsagesHandlerBase handler, @NotNull FindUsagesOptions findUsagesOptions) {
     PsiElement element = handler.getPsiElement();
     LOG.assertTrue(element.isValid());
-    return createPresentation(element, findUsagesOptions, FindUsagesSettings.getInstance().isShowResultsInSeparateView());
+    return createPresentation(element, findUsagesOptions, FindSettings.getInstance().isShowResultsInSeparateView());
   }
 
   private void setOpenInNewTab(boolean toOpenInNewTab) {
     if (!mustOpenInNewTab()) {
-      FindUsagesSettings.getInstance().setShowResultsInSeparateView(toOpenInNewTab);
+      FindSettings.getInstance().setShowResultsInSeparateView(toOpenInNewTab);
     }
   }
 
   private boolean shouldOpenInNewTab() {
-    return mustOpenInNewTab() || FindUsagesSettings.getInstance().isShowResultsInSeparateView();
+    return mustOpenInNewTab() || FindSettings.getInstance().isShowResultsInSeparateView();
   }
 
   private boolean mustOpenInNewTab() {
@@ -345,7 +349,8 @@ public final class FindUsagesManager {
   /**
    * @throws PsiInvalidElementAccessException when the searcher can't be created (i.e. because element was invalidated)
    */
-  private static @NotNull UsageSearcher createUsageSearcher(PsiElement2UsageTargetAdapter @NotNull [] primaryTargets,
+  @NotNull
+  private static UsageSearcher createUsageSearcher(PsiElement2UsageTargetAdapter @NotNull [] primaryTargets,
                                                    PsiElement2UsageTargetAdapter @NotNull [] secondaryTargets,
                                                    @NotNull FindUsagesHandlerBase handler,
                                                    @NotNull FindUsagesOptions options,
@@ -496,9 +501,10 @@ public final class FindUsagesManager {
     return usageView;
   }
 
-  private static @NotNull UsageViewPresentation createPresentation(@NotNull PsiElement psiElement,
-                                                                   @NotNull FindUsagesOptions options,
-                                                                   boolean toOpenInNewTab) {
+  @NotNull
+  private static UsageViewPresentation createPresentation(@NotNull PsiElement psiElement,
+                                                          @NotNull FindUsagesOptions options,
+                                                          boolean toOpenInNewTab) {
     String usagesString = options.generateUsagesString();
     String longName = UsageViewUtil.getLongName(psiElement);
     UsageViewPresentation presentation = new UsageViewPresentation();
@@ -559,13 +565,15 @@ public final class FindUsagesManager {
     }.queue();
   }
 
-  private static @NotNull @NlsContexts.HintText String getNoUsagesFoundMessage(@NotNull PsiElement psiElement, @NotNull String fileName) {
+  @NotNull
+  private static @NlsContexts.HintText String getNoUsagesFoundMessage(@NotNull PsiElement psiElement, @NotNull String fileName) {
     String elementType = UsageViewUtil.getType(psiElement);
     String elementName = UsageViewUtil.getShortName(psiElement);
     return FindBundle.message("find.usages.of.element_type.element_name.not.found.in.scope.message", elementType, elementName, fileName);
   }
 
-  private static @NotNull @NlsContexts.HintText String getNoUsagesFoundMessage(@NotNull PsiElement psiElement) {
+  @NotNull
+  private static @NlsContexts.HintText String getNoUsagesFoundMessage(@NotNull PsiElement psiElement) {
     String elementType = UsageViewUtil.getType(psiElement);
     String elementName = UsageViewUtil.getShortName(psiElement);
     return FindBundle.message("find.usages.of.element_type.element_name.not.found.message", elementType, elementName);
@@ -575,7 +583,8 @@ public final class FindUsagesManager {
     StatusBar.Info.set("", myProject);
   }
 
-  private static @NotNull @NlsContexts.HintText String getSearchAgainMessage(@NotNull PsiElement element, @NotNull FileSearchScope direction) {
+  @NotNull
+  private static @NlsContexts.HintText String getSearchAgainMessage(@NotNull PsiElement element, @NotNull FileSearchScope direction) {
     String message = getNoUsagesFoundMessage(element);
     if (direction == FileSearchScope.AFTER_CARET) {
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT);
@@ -653,8 +662,9 @@ public final class FindUsagesManager {
     return foundUsage.get();
   }
 
-  private static @NotNull PsiElement2UsageTargetAdapter convertToUsageTarget(@NotNull PsiElement elementToSearch,
-                                                                             @NotNull FindUsagesOptions findUsagesOptions) {
+  @NotNull
+  private static PsiElement2UsageTargetAdapter convertToUsageTarget(@NotNull PsiElement elementToSearch,
+                                                                    @NotNull FindUsagesOptions findUsagesOptions) {
     if (elementToSearch instanceof NavigationItem) {
       return new PsiElement2UsageTargetAdapter(elementToSearch, findUsagesOptions, false);
     }
@@ -686,13 +696,14 @@ public final class FindUsagesManager {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  @ApiStatus.Internal
-  public @NotNull UsageHistory getHistory() {
+  @NotNull
+  public UsageHistory getHistory() {
     return myHistory;
   }
 
 
-  public static @NotNull GlobalSearchScope getMaximalScope(@NotNull FindUsagesHandlerBase handler) {
+  @NotNull
+  public static GlobalSearchScope getMaximalScope(@NotNull FindUsagesHandlerBase handler) {
     PsiElement element = handler.getPsiElement();
     Project project = element.getProject();
     PsiFile file = element.getContainingFile();

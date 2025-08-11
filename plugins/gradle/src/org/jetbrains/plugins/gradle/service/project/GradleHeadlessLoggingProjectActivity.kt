@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project
 
 import com.intellij.openapi.application.PathManager
@@ -14,6 +14,7 @@ import com.intellij.util.application
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.io.createParentDirectories
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationListener
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManager
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsTaskId
@@ -37,16 +38,20 @@ class GradleHeadlessLoggingProjectActivity(val scope: CoroutineScope) : ProjectA
   private fun addTaskNotificationListener(progressManager: ExternalSystemProgressNotificationManager) {
     val listener = LoggingNotificationListener()
     progressManager.addNotificationListener(listener)
-    scope.awaitCancellationAndInvoke {
-      progressManager.removeNotificationListener(listener)
+    scope.launch {
+      awaitCancellationAndInvoke {
+        progressManager.removeNotificationListener(listener)
+      }
     }
   }
 
   private fun addStateNotificationListener(project: Project, progressManager: ExternalSystemProgressNotificationManager) {
     val notificationListener = StateNotificationListener(project, scope)
     progressManager.addNotificationListener(notificationListener)
-    scope.awaitCancellationAndInvoke {
-      progressManager.removeNotificationListener(notificationListener)
+    scope.launch {
+      awaitCancellationAndInvoke {
+        progressManager.removeNotificationListener(notificationListener)
+      }
     }
   }
 
@@ -55,8 +60,10 @@ class GradleHeadlessLoggingProjectActivity(val scope: CoroutineScope) : ProjectA
     val externalAnnotationsProgressListener = StateExternalAnnotationNotificationListener()
 
     externalAnnotationsNotificationManager.addNotificationListener(externalAnnotationsProgressListener)
-    scope.awaitCancellationAndInvoke {
-      externalAnnotationsNotificationManager.removeNotificationListener(externalAnnotationsProgressListener)
+    scope.launch {
+      awaitCancellationAndInvoke {
+        externalAnnotationsNotificationManager.removeNotificationListener(externalAnnotationsProgressListener)
+      }
     }
   }
 
@@ -75,7 +82,7 @@ class GradleHeadlessLoggingProjectActivity(val scope: CoroutineScope) : ProjectA
     private val project: Project, private val scope: CoroutineScope
   ) : ExternalSystemTaskNotificationListener {
 
-    override fun onSuccess(projectPath: String, id: ExternalSystemTaskId) {
+    override fun onSuccess(id: ExternalSystemTaskId) {
       if (!id.isGradleProjectResolveTask()) return
       HeadlessLogging.logMessage(gradlePrefix + "Gradle resolve stage finished with success: ${id.ideProjectId}")
 
@@ -103,19 +110,19 @@ class GradleHeadlessLoggingProjectActivity(val scope: CoroutineScope) : ProjectA
         })
     }
 
-    override fun onFailure(projectPath: String, id: ExternalSystemTaskId, exception: Exception) {
+    override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
       if (!id.isGradleProjectResolveTask()) return
-      HeadlessLogging.logFatalError(exception)
+      HeadlessLogging.logFatalError(e)
     }
 
-    override fun onCancel(projectPath: String, id: ExternalSystemTaskId) {
+    override fun onCancel(id: ExternalSystemTaskId) {
       if (!id.isGradleProjectResolveTask()) return
       HeadlessLogging.logWarning(gradlePrefix + "Gradle resolve stage canceled ${id.ideProjectId}")
     }
 
-    override fun onStart(projectPath: String, id: ExternalSystemTaskId) {
+    override fun onStart(id: ExternalSystemTaskId, workingDir: String) {
       if (!id.isGradleProjectResolveTask()) return
-      HeadlessLogging.logMessage(gradlePrefix + "Gradle resolve stage started ${id.ideProjectId}, working dir: $projectPath")
+      HeadlessLogging.logMessage(gradlePrefix + "Gradle resolve stage started ${id.ideProjectId}, working dir: $workingDir")
     }
   }
 

@@ -24,8 +24,8 @@ import java.awt.*;
 public abstract class MergeWindow {
   private static final Logger LOG = Logger.getInstance(MergeWindow.class);
 
-  private final @Nullable Project myProject;
-  private final @NotNull DiffDialogHints myHints;
+  @Nullable private final Project myProject;
+  @NotNull private final DiffDialogHints myHints;
 
   private MergeRequestProcessor myProcessor;
   private WindowWrapper myWrapper;
@@ -67,7 +67,8 @@ public abstract class MergeWindow {
     myWrapper.show();
   }
 
-  private @NotNull MergeRequestProcessor createProcessor() {
+  @NotNull
+  private MergeRequestProcessor createProcessor() {
     return new MergeRequestProcessor(myProject) {
       @Override
       public void closeDialog() {
@@ -79,8 +80,9 @@ public abstract class MergeWindow {
         myWrapper.setTitle(title);
       }
 
+      @Nullable
       @Override
-      protected @Nullable JRootPane getRootPane() {
+      protected JRootPane getRootPane() {
         RootPaneContainer container = ObjectUtils.tryCast(myWrapper.getWindow(), RootPaneContainer.class);
         return container != null ? container.getRootPane() : null;
       }
@@ -104,7 +106,7 @@ public abstract class MergeWindow {
   }
 
   public static class ForRequest extends MergeWindow {
-    private final @NotNull MergeRequest myMergeRequest;
+    @NotNull private final MergeRequest myMergeRequest;
 
     public ForRequest(@Nullable Project project, @NotNull MergeRequest mergeRequest, @NotNull DiffDialogHints hints) {
       super(project, hints);
@@ -119,7 +121,7 @@ public abstract class MergeWindow {
   }
 
   public static class ForProducer extends MergeWindow {
-    private final @NotNull MergeRequestProducer myMergeRequestProducer;
+    @NotNull private final MergeRequestProducer myMergeRequestProducer;
 
     public ForProducer(@Nullable Project project, @NotNull MergeRequestProducer mergeRequestProducer, @NotNull DiffDialogHints hints) {
       super(project, hints);

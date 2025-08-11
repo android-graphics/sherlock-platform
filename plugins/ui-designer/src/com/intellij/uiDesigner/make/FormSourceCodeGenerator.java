@@ -63,9 +63,8 @@ public final class FormSourceCodeGenerator {
 
   private boolean myNeedGetMessageFromBundle;
 
-  private static final ElementPattern<PsiExpressionStatement> ourSuperCallPattern =
-    PsiJavaPatterns.psiExpressionStatement().withFirstChild(
-      PlatformPatterns.psiElement(PsiMethodCallExpression.class).withFirstChild(PlatformPatterns.psiElement().withText(PsiKeyword.SUPER)));
+  private static final ElementPattern ourSuperCallPattern = PsiJavaPatterns.psiExpressionStatement().withFirstChild(PlatformPatterns.psiElement(PsiMethodCallExpression.class).withFirstChild(
+    PlatformPatterns.psiElement().withText(PsiKeyword.SUPER)));
 
   static {
     ourComponentLayoutCodeGenerators.put(LwSplitPane.class, new SplitPaneLayoutSourceGenerator());
@@ -123,11 +122,6 @@ public final class FormSourceCodeGenerator {
     final PsiPropertiesProvider propertiesProvider = new PsiPropertiesProvider(module);
 
     final Document doc = FileDocumentManager.getInstance().getDocument(formFile);
-    if (doc == null) {
-      LOG.warn("Unable to get document for " + formFile.getPath());
-      return;
-    }
-
     final LwRootContainer rootContainer;
     try {
       rootContainer = Utils.getRootContainer(doc.getText(), propertiesProvider);
@@ -404,7 +398,7 @@ public final class FormSourceCodeGenerator {
           return;
         }
         if (psiElement instanceof PsiField field) {
-          if (field.getContainingClass() == classToBind) {
+          if (field.getContainingClass().equals(classToBind)) {
             if (Utils.isBoundField(rootContainer, field.getName())) {
               result.set(Boolean.TRUE);
             }
@@ -544,16 +538,16 @@ public final class FormSourceCodeGenerator {
 
     String methodText =
       "private String " + methodName + "(String path, String key) {\n" +
-      " java.util.ResourceBundle bundle;\n" +
+      " ResourceBundle bundle;\n" +
       "try {\n" +
       "    Class<?> thisClass = this.getClass();\n" +
       "    if (" + fieldName + " == null) {\n" +
       "        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass(\"" + dynamicBundleClassName + "\");\n" +
       "        " + fieldName + " = dynamicBundleClass.getMethod(\"getBundle\", String.class, Class.class);\n" +
       "    }\n" +
-      "    bundle = (java.util.ResourceBundle)" + fieldName + ".invoke(null, path, thisClass);\n" +
+      "    bundle = (ResourceBundle)" + fieldName + ".invoke(null, path, thisClass);\n" +
       "} catch (Exception e) {\n" +
-      "    bundle = java.util.ResourceBundle.getBundle(path);\n" +
+      "    bundle = ResourceBundle.getBundle(path);\n" +
       "}\n" +
       "return bundle.getString(key);\n" +
       "}";
@@ -728,13 +722,11 @@ public final class FormSourceCodeGenerator {
 
       final String propertyClass = property.getPropertyClassName();
       if (propertyClass.equals(Color.class.getName())) {
-        //noinspection DataFlowIssue
         ColorDescriptor descriptor = (ColorDescriptor) value;
         if (!descriptor.isColorSet()) continue;
       }
 
       if (propertyClass.equals(Font.class.getName())) {
-        //noinspection DataFlowIssue
         pushFontProperty(variable, (FontDescriptor) value, property.getReadMethodName(), property.getWriteMethodName());
         continue;
       }
@@ -742,58 +734,45 @@ public final class FormSourceCodeGenerator {
       startMethodCall(variable, property.getWriteMethodName());
 
       if (propertyClass.equals(Dimension.class.getName())) {
-        //noinspection DataFlowIssue
         newDimension((Dimension)value);
       }
       else if (propertyClass.equals(Integer.class.getName())) {
-        //noinspection DataFlowIssue
         push(((Integer)value).intValue());
       }
       else if (propertyClass.equals(Double.class.getName())) {
-        //noinspection DataFlowIssue
         push(((Double)value).doubleValue());
       }
       else if (propertyClass.equals(Float.class.getName())) {
-        //noinspection DataFlowIssue
         push(((Float)value).floatValue());
       }
       else if (propertyClass.equals(Long.class.getName())) {
-        //noinspection DataFlowIssue
         push(((Long) value).longValue());
       }
       else if (propertyClass.equals(Short.class.getName())) {
-        //noinspection DataFlowIssue
         push(((Short) value).shortValue());
       }
       else if (propertyClass.equals(Byte.class.getName())) {
-        //noinspection DataFlowIssue
         push(((Byte) value).byteValue());
       }
       else if (propertyClass.equals(Character.class.getName())) {
-        //noinspection DataFlowIssue
         push(((Character) value).charValue());
       }
       else if (propertyClass.equals(Boolean.class.getName())) {
-        //noinspection DataFlowIssue
         push(((Boolean)value).booleanValue());
       }
       else if (propertyClass.equals(Rectangle.class.getName())) {
-        //noinspection DataFlowIssue
         newRectangle((Rectangle)value);
       }
       else if (propertyClass.equals(Insets.class.getName())) {
-        //noinspection DataFlowIssue
         newInsets((Insets)value);
       }
       else if (propertyClass.equals(String.class.getName())) {
         push((String)value);
       }
       else if (propertyClass.equals(Color.class.getName())) {
-        //noinspection DataFlowIssue
         pushColor((ColorDescriptor) value);
       }
       else if (propertyClass.equals(Icon.class.getName())) {
-        //noinspection DataFlowIssue
         pushIcon((IconDescriptor) value);
       }
       else if (property instanceof LwIntroEnumProperty) {
@@ -936,18 +915,11 @@ public final class FormSourceCodeGenerator {
       titledBorderFactoryDescriptor  = findIdeBorderFactoryClass(scope);
       container.getDelegeeClientProperties().put(AsmCodeGenerator.ourBorderFactoryClientProperty, titledBorderFactoryDescriptor);
     }
-
-    String titledBorderFactoryDescriptorValue = getStringDescriptionValue(titledBorderFactoryDescriptor);
-    boolean isCustomFactory = titledBorderFactoryDescriptorValue != null && !titledBorderFactoryDescriptorValue.isEmpty();
+    boolean isCustomFactory = titledBorderFactoryDescriptor != null && !titledBorderFactoryDescriptor.getValue().isEmpty();
 
     return isCustomFactory ?
-           titledBorderFactoryDescriptorValue.replace('$', '.') :
+           titledBorderFactoryDescriptor.getValue().replace('$', '.') :
            BorderFactory.class.getName();
-  }
-
-  @Nullable
-  private static String getStringDescriptionValue(@Nullable StringDescriptor descriptor) {
-    return descriptor == null ? null : descriptor.getValue();
   }
 
   private @Nullable StringDescriptor findIdeBorderFactoryClass(GlobalSearchScope scope) {
@@ -1005,10 +977,11 @@ public final class FormSourceCodeGenerator {
   }
 
   private void generateClientProperties(final LwComponent component, final String variable) throws CodeGenerationException {
-    HashMap<String, Object> props = component.getDelegeeClientProperties();
-    for (final Map.Entry<String, Object> e : props.entrySet()) {
+    HashMap props = component.getDelegeeClientProperties();
+    for (final Object o : props.entrySet()) {
+      Map.Entry e = (Map.Entry)o;
       startMethodCall(variable, "putClientProperty");
-      push(e.getKey());
+      push((String) e.getKey());
 
       Object value = e.getValue();
       if (value instanceof StringDescriptor) {

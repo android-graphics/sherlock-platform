@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.impl.VcsRootIterator;
@@ -19,15 +19,16 @@ import static com.intellij.openapi.progress.ProgressManager.checkCanceled;
 
 public class ForNestedRootChecker {
 
-  private final @NotNull SvnVcs myVcs;
-  private final @NotNull VcsRootIterator myRootIterator;
+  @NotNull private final SvnVcs myVcs;
+  @NotNull private final VcsRootIterator myRootIterator;
 
   public ForNestedRootChecker(@NotNull SvnVcs vcs) {
     myVcs = vcs;
     myRootIterator = new VcsRootIterator(vcs.getProject(), vcs);
   }
 
-  public @NotNull List<Node> getAllNestedWorkingCopies(@NotNull VirtualFile root) {
+  @NotNull
+  public List<Node> getAllNestedWorkingCopies(@NotNull VirtualFile root) {
     LinkedList<Node> result = new LinkedList<>();
     LinkedList<VirtualFile> workItems = new LinkedList<>();
 
@@ -55,12 +56,12 @@ public class ForNestedRootChecker {
 
   private static final class VcsFileResolver {
 
-    private final @NotNull SvnVcs myVcs;
-    private final @NotNull VirtualFile myFile;
-    private final @NotNull File myIoFile;
-    private final @NotNull VirtualFile myRoot;
-    private @Nullable Info myInfo;
-    private @Nullable SvnBindException myError;
+    @NotNull private final SvnVcs myVcs;
+    @NotNull private final VirtualFile myFile;
+    @NotNull private final File myIoFile;
+    @NotNull private final VirtualFile myRoot;
+    @Nullable private Info myInfo;
+    @Nullable private SvnBindException myError;
 
     private VcsFileResolver(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull VirtualFile root) {
       myVcs = vcs;
@@ -69,7 +70,8 @@ public class ForNestedRootChecker {
       myRoot = root;
     }
 
-    public @Nullable Node resolve() {
+    @Nullable
+    public Node resolve() {
       runInfo();
 
       return processInfo();
@@ -95,7 +97,8 @@ public class ForNestedRootChecker {
       return myFile.findChild(SvnUtil.SVN_ADMIN_DIR_NAME) != null;
     }
 
-    private @Nullable Node processInfo() {
+    @Nullable
+    private Node processInfo() {
       Node result = null;
 
       if (myError != null) {

@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Disposer
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.*
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 
 class PyTargetsIntrospectionFacade(val sdk: Sdk, val project: Project) {
   private val pyRequest: HelpersAwareTargetEnvironmentRequest =
@@ -35,11 +34,11 @@ class PyTargetsIntrospectionFacade(val sdk: Sdk, val project: Project) {
     val cmdBuilder = TargetedCommandLineBuilder(targetEnvRequest)
     sdk.configureBuilderToRunPythonOnTarget(cmdBuilder)
     val sdkFlavor = sdk.sdkFlavor
-    cmdBuilder.addParameter(PythonSdkFlavor.PYTHON_VERSION_ARG)
+    cmdBuilder.addParameter(sdkFlavor.versionOption)
     val cmd = cmdBuilder.build()
 
     val environment = targetEnvRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
-    return PythonSdkFlavor.getVersionStringFromOutput(cmd.execute(environment, indicator))
+    return sdkFlavor.getVersionStringFromOutput(cmd.execute(environment, indicator))
   }
 
   @Throws(ExecutionException::class)

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
 import com.intellij.ide.util.ElementsChooser;
@@ -14,6 +14,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
@@ -25,7 +26,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -56,9 +56,13 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
   }
 
   private static ExcludedEntriesConfigurable createExcludedConfigurable(@NotNull Project project) {
-    var index = project.isDefault() ? null : ProjectRootManager.getInstance(project).getFileIndex();
-    var descriptor = new FileChooserDescriptor(true, true, false, false, false, true)
-      .withFileFilter(file -> index == null || !index.isExcluded(file));
+    ProjectFileIndex index = project.isDefault() ? null : ProjectRootManager.getInstance(project).getFileIndex();
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true) {
+      @Override
+      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+        return super.isFileVisible(file, showHiddenFiles) && (index == null || !index.isExcluded(file));
+      }
+    };
 
     List<VirtualFile> allContentRoots = new ArrayList<>();
     for (final Module module: ModuleManager.getInstance(project).getModules()) {
@@ -70,7 +74,8 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
   }
 
   @Override
-  public @NotNull String getId() {
+  @NotNull
+  public String getId() {
     return "project.validation";
   }
 
@@ -136,7 +141,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
     myExcludedConfigurable.reset();
   }
 
-  private @Unmodifiable List<Validator> getMarkedValidators(@NotNull List<Validator> validators) {
+  private List<Validator> getMarkedValidators(@NotNull List<Validator> validators) {
     return ContainerUtil.mapNotNull(validators, (NullableFunction<Validator, Validator>)validator -> myConfiguration.isSelected(validator) ? validator : null);
   }
 
@@ -153,7 +158,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
   private void createUIComponents() {
     myValidators = new ElementsChooser<>(true) {
       @Override
-      protected String getItemText(final @NotNull Validator validator) {
+      protected String getItemText(@NotNull final Validator validator) {
         return validator.getDescription();
       }
     };

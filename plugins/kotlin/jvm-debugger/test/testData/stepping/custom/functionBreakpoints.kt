@@ -112,14 +112,6 @@ class Impl : M(), I {
 //FunctionBreakpoint!
 @Deprecated("foo bar") fun withAnnotation() = 3
 
-class Context
-
-context(Context)
-//FunctionBreakpoint!
-fun funWithContext() {
-    println()
-}
-
 fun main() {
     A()
     B()
@@ -153,8 +145,4 @@ fun main() {
     impl.f4()
 
     withAnnotation()
-
-    Context().run {
-        funWithContext()
-    }
 }

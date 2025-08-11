@@ -28,13 +28,15 @@ public class XsltContextProvider extends XsltContextProviderBase {
     super(contextElement);
   }
 
+  @NotNull
   @Override
-  public @NotNull ContextType getContextType() {
+  public ContextType getContextType() {
     return TYPE;
   }
 
   @Override
-  public @NotNull FunctionContext createFunctionContext() {
+  @NotNull
+  public FunctionContext createFunctionContext() {
     return XsltFunctionContext.getInstance();
   }
 }

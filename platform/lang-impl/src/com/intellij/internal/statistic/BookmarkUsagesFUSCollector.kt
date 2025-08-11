@@ -11,9 +11,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 class BookmarkUsagesFUSCollector : ProjectUsagesCollector() {
   private val group: EventLogGroup = EventLogGroup("bookmarks", 3)
 
@@ -43,7 +41,6 @@ class BookmarkUsagesFUSCollector : ProjectUsagesCollector() {
   }
 }
 
-@ApiStatus.Internal
 object BookmarkCounterCollector : CounterUsagesCollector() {
   enum class MnemonicType { Number, Letter, None }
 

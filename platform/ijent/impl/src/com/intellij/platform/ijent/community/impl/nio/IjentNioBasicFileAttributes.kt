@@ -1,19 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
-import com.intellij.openapi.util.io.CaseSensitivityAttribute
-import com.intellij.openapi.util.io.FileAttributes
-import com.intellij.platform.eel.fs.EelFileInfo
-import com.intellij.platform.eel.fs.EelFileInfo.Type.*
-import com.intellij.platform.eel.fs.EelPosixFileInfo
-import com.intellij.platform.eel.fs.EelPosixFileInfo.Type.Symlink
-import com.intellij.platform.eel.fs.EelWindowsFileInfo
+import com.intellij.platform.ijent.fs.IjentFileInfo
+import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
+import com.intellij.platform.ijent.fs.IjentPosixFileInfo
+import com.intellij.platform.ijent.fs.IjentPosixFileInfo.Type.Symlink
+import com.intellij.platform.ijent.fs.IjentWindowsFileInfo
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.attribute.*
 import java.nio.file.attribute.PosixFilePermission.*
 import java.time.Instant
 import java.util.*
 
-internal class IjentNioBasicFileAttributes(private val fileInfo: EelFileInfo) : BasicFileAttributes {
+internal class IjentNioBasicFileAttributes(private val fileInfo: IjentFileInfo) : BasicFileAttributes {
   override fun lastModifiedTime(): FileTime =
     FileTime.from(fileInfo.lastModifiedTime?.toInstant() ?: Instant.MIN)
 
@@ -58,22 +57,23 @@ internal class IjentNioBasicFileAttributes(private val fileInfo: EelFileInfo) : 
 
   override fun fileKey(): Any =
     when (fileInfo) {
-      is EelPosixFileInfo -> EelUnixFileKey(dev = fileInfo.inodeDev, ino = fileInfo.inodeIno)
-      is EelWindowsFileInfo -> TODO()
+      is IjentPosixFileInfo -> IjentUnixFileKey(dev = fileInfo.inodeDev, ino = fileInfo.inodeIno)
+      is IjentWindowsFileInfo -> TODO()
     }
 }
 
 /** Similar to `sun.nio.fs.UnixFileKey` */
-internal data class EelUnixFileKey(val dev: Long, val ino: Long)
+internal data class IjentUnixFileKey(val dev: Long, val ino: Long)
 
+@VisibleForTesting
 class IjentNioPosixFileAttributes(
-  internal val fileInfo: EelPosixFileInfo,
-) : CaseSensitivityAttribute, PosixFileAttributes, BasicFileAttributes by IjentNioBasicFileAttributes(fileInfo) {
+  private val fileInfo: IjentPosixFileInfo,
+) : PosixFileAttributes, BasicFileAttributes by IjentNioBasicFileAttributes(fileInfo) {
   override fun owner(): UserPrincipal =
-    EelPosixUserPrincipal(fileInfo.permissions.owner)
+    IjentPosixUserPrincipal(fileInfo.permissions.owner)
 
   override fun group(): GroupPrincipal =
-    EelPosixGroupPrincipal(fileInfo.permissions.group)
+    IjentPosixGroupPrincipal(fileInfo.permissions.group)
 
   override fun permissions(): Set<PosixFilePermission> {
     val permissions = entries.filter { pfp ->
@@ -91,39 +91,18 @@ class IjentNioPosixFileAttributes(
     }
     return if (permissions.isEmpty()) EnumSet.noneOf(PosixFilePermission::class.java) else EnumSet.copyOf(permissions)
   }
-
-  override fun getCaseSensitivity(): FileAttributes.CaseSensitivity = when (val type = fileInfo.type) {
-    is Directory -> when (type.sensitivity) {
-      EelFileInfo.CaseSensitivity.SENSITIVE -> FileAttributes.CaseSensitivity.SENSITIVE
-      EelFileInfo.CaseSensitivity.INSENSITIVE -> FileAttributes.CaseSensitivity.INSENSITIVE
-      EelFileInfo.CaseSensitivity.UNKNOWN -> FileAttributes.CaseSensitivity.UNKNOWN
-    }
-    else -> throw IllegalStateException("Cannot ask for case sensitivity of $type")
-  }
 }
 
-class EelPosixUserPrincipal(val uid: Int) : UserPrincipal {
+class IjentPosixUserPrincipal(val uid: Int) : UserPrincipal {
   override fun getName(): String {
     // TODO Here should be returned a user name
     return uid.toString()
   }
-
-  override fun toString(): String = "EelPosixUserPrincipal(uid=$uid)"
-
-  override fun equals(other: Any?): Boolean = other is EelPosixUserPrincipal && uid == other.uid
-
-  override fun hashCode(): Int = uid.hashCode()
 }
 
-class EelPosixGroupPrincipal(val gid: Int) : GroupPrincipal {
+class IjentPosixGroupPrincipal(val gid: Int) : GroupPrincipal {
   override fun getName(): String {
     // TODO Here should be returned a user name
     return gid.toString()
   }
-
-  override fun toString(): String = "EelPosixGroupPrincipal(gid=$gid)"
-
-  override fun equals(other: Any?): Boolean = other is EelPosixGroupPrincipal && gid == other.gid
-
-  override fun hashCode(): Int = gid.hashCode()
 }

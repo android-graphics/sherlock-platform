@@ -25,8 +25,8 @@ fun buildCodeToInline(
 ): CodeToInline? {
     val expressionMapper: (KtExpression) -> Pair<KtExpression?, List<KtExpression>>? = if (isBlockBody) {
         fun(bodyOrInitializer: KtExpression): Pair<KtExpression?, List<KtExpression>>? {
-
-            val statements = (bodyOrInitializer as? KtBlockExpression)?.statements ?: listOf(bodyOrInitializer)
+            bodyOrInitializer as KtBlockExpression
+            val statements = bodyOrInitializer.statements
 
             val returnStatements = bodyOrInitializer.collectDescendantsOfType<KtReturnExpression> {
                 val function = it.getStrictParentOfType<KtFunction>()

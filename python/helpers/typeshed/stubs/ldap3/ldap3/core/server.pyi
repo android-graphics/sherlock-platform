@@ -1,5 +1,6 @@
 from _typeshed import Incomplete
-from typing import Any, Literal
+from typing import Any
+from typing_extensions import Literal
 
 unix_socket_available: bool
 

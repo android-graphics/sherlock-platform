@@ -5,7 +5,7 @@ import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
-import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.graph.GraphColorManagerImpl
 import com.intellij.vcs.log.graph.GraphCommit
@@ -16,11 +16,9 @@ import com.intellij.vcs.log.graph.impl.print.GraphColorGetterByHeadFactory
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.jetbrains.annotations.NonNls
 
-open class DataPack internal constructor(
-  refsModel: RefsModel, val permanentGraph: PermanentGraph<Int>,
-  providers: Map<VirtualFile, VcsLogProvider>,
-  full: Boolean,
-) : DataPackBase(providers, refsModel, full) {
+open class DataPack internal constructor(refsModel: RefsModel, val permanentGraph: PermanentGraph<Int>,
+                                         providers: Map<VirtualFile, VcsLogProvider>,
+                                         full: Boolean) : DataPackBase(providers, refsModel, full) {
   override fun toString(): @NonNls String {
     return "{DataPack. " + permanentGraph.allCommits.size + " commits in " + myLogProviders.keys.size + " roots}"
   }
@@ -34,10 +32,8 @@ open class DataPack internal constructor(
                                    EmptyPermanentGraph.getInstance(), emptyMap(), false)
 
     @JvmStatic
-    fun build(
-      commits: List<GraphCommit<Int>>, refs: Map<VirtualFile, CompressedRefs>, providers: Map<VirtualFile, VcsLogProvider>,
-      storage: VcsLogStorage, full: Boolean,
-    ): DataPack {
+    fun build(commits: List<GraphCommit<Int>>, refs: Map<VirtualFile, CompressedRefs>, providers: Map<VirtualFile, VcsLogProvider>,
+              storage: VcsLogStorage, full: Boolean): DataPack {
       val refsModel = RefsModel.create(refs, getHeads(commits), storage, providers)
       val permanentGraph = buildPermanentGraph(commits, refsModel, providers, storage)
 
@@ -46,20 +42,16 @@ open class DataPack internal constructor(
   }
 }
 
-class SmallDataPack private constructor(
-  refsModel: RefsModel, permanentGraph: PermanentGraph<Int>,
-  providers: Map<VirtualFile, VcsLogProvider>,
-) :
+class SmallDataPack private constructor(refsModel: RefsModel, permanentGraph: PermanentGraph<Int>,
+                                        providers: Map<VirtualFile, VcsLogProvider>) :
   DataPack(refsModel, permanentGraph, providers, false) {
 
   companion object {
     @JvmStatic
-    fun build(
-      commits: List<GraphCommit<Int>>,
-      refs: Map<VirtualFile, CompressedRefs>,
-      providers: Map<VirtualFile, VcsLogProvider>,
-      storage: VcsLogStorage,
-    ): DataPack {
+    fun build(commits: List<GraphCommit<Int>>,
+              refs: Map<VirtualFile, CompressedRefs>,
+              providers: Map<VirtualFile, VcsLogProvider>,
+              storage: VcsLogStorage): DataPack {
       val refsModel = RefsModel.create(refs, getHeads(commits), storage, providers)
       val permanentGraph = buildPermanentGraph(commits, refsModel, providers, storage)
 
@@ -68,10 +60,8 @@ class SmallDataPack private constructor(
   }
 }
 
-private fun buildPermanentGraph(
-  commits: List<GraphCommit<Int>>, refsModel: RefsModel, providers: Map<VirtualFile, VcsLogProvider>,
-  storage: VcsLogStorage,
-): PermanentGraph<Int> {
+private fun buildPermanentGraph(commits: List<GraphCommit<Int>>, refsModel: RefsModel, providers: Map<VirtualFile, VcsLogProvider>,
+                                storage: VcsLogStorage): PermanentGraph<Int> {
   if (commits.isEmpty()) return EmptyPermanentGraph.getInstance()
 
   val headCommitsComparator = HeadCommitsComparator(refsModel, providers.mapValues { it.value.referenceManager }) { commitIndex ->
@@ -79,9 +69,9 @@ private fun buildPermanentGraph(
   }
   val branches = refsModel.branches.mapTo(HashSet()) { storage.getCommitIndex(it.commitHash, it.root) }
 
-  val tracer = getInstance().getTracer(VcsScope)
-  return tracer.spanBuilder(VcsTelemetrySpan.LogData.BuildingGraph.getName()).use { span ->
-    PermanentGraphImpl.newInstance(commits, GraphColorGetterByHeadFactory(GraphColorManagerImpl(refsModel)), headCommitsComparator, branches)
+  return computeWithSpan(getInstance().getTracer(VcsScope), VcsTelemetrySpan.LogData.BuildingGraph.getName()) {
+    PermanentGraphImpl.newInstance(commits, GraphColorGetterByHeadFactory(GraphColorManagerImpl(refsModel)), headCommitsComparator,
+                                   branches)
   }
 }
 

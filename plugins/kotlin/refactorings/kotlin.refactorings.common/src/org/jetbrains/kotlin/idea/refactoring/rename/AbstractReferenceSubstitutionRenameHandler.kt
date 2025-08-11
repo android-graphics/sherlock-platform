@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.CustomizedDataContext
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -50,8 +49,9 @@ abstract class AbstractReferenceSubstitutionRenameHandler(
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?, dataContext: DataContext) {
         val elementToRename = getElementToRename(dataContext) ?: return
-        val wrappingContext = CustomizedDataContext.withSnapshot(dataContext) { sink ->
-            sink.lazy(CommonDataKeys.PSI_ELEMENT) { elementToRename }
+        val wrappingContext = DataContext { id ->
+            if (CommonDataKeys.PSI_ELEMENT.`is`(id)) return@DataContext elementToRename
+            dataContext.getData(id)
         }
         // Can't provide new name for inplace refactoring in unit test mode
         if (!isUnitTestMode() && delegateHandler.isAvailableOnDataContext(wrappingContext)) {

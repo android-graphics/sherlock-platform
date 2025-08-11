@@ -34,8 +34,9 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     super(node);
   }
 
+  @NotNull
   @Override
-  public @NotNull PythonLanguage getLanguage() {
+  public PythonLanguage getLanguage() {
     return (PythonLanguage)PythonFileType.INSTANCE.getLanguage();
   }
 
@@ -81,7 +82,8 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     return findReferenceAt(this, offset);
   }
 
-  protected static @Nullable <T extends StubBasedPsiElement<? extends PyTypeCommentOwnerStub> & PyTypeCommentOwner>
+  @Nullable
+  protected static <T extends StubBasedPsiElement<? extends PyTypeCommentOwnerStub> & PyTypeCommentOwner>
   String getTypeCommentAnnotationFromStubOrPsi(@NotNull T elem) {
     final PyTypeCommentOwnerStub stub = elem.getStub();
     if (stub != null) {
@@ -99,7 +101,8 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     return super.getStubOrPsiParentOfType(parentClass);
   }
 
-  static @Nullable PsiReference findReferenceAt(@NotNull PsiElement target, int offset) {
+  @Nullable
+  static PsiReference findReferenceAt(@NotNull PsiElement target, int offset) {
     PsiElement element = target.findElementAt(offset);
     if (element == null || element instanceof OuterLanguageElement) return null;
     offset = target.getTextRange().getStartOffset() + offset - element.getTextRange().getStartOffset();
@@ -124,7 +127,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
 
   private static void addReferences(int offset,
                                     @NotNull PsiElement element,
-                                    final @NotNull Collection<PsiReference> outReferences,
+                                    @NotNull final Collection<PsiReference> outReferences,
                                     @NotNull PyResolveContext resolveContext) {
     final PsiReference[] references;
     if (element instanceof PyReferenceOwner owner) {

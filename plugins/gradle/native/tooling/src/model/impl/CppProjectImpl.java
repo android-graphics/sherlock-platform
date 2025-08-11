@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl;
 
 import org.jetbrains.annotations.Nullable;
@@ -13,8 +13,10 @@ import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppTestSuite;
 @Deprecated
 @SuppressWarnings("DeprecatedIsStillUsed")
 public final class CppProjectImpl implements CppProject {
-  private @Nullable CppComponent mainComponent;
-  private @Nullable CppTestSuite testComponent;
+  @Nullable
+  private CppComponent mainComponent;
+  @Nullable
+  private CppTestSuite testComponent;
 
   public CppProjectImpl() {
   }
@@ -30,8 +32,9 @@ public final class CppProjectImpl implements CppProject {
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable CppComponent getMainComponent() {
+  public CppComponent getMainComponent() {
     return mainComponent;
   }
 
@@ -39,8 +42,9 @@ public final class CppProjectImpl implements CppProject {
     this.mainComponent = mainComponent;
   }
 
+  @Nullable
   @Override
-  public @Nullable CppTestSuite getTestComponent() {
+  public CppTestSuite getTestComponent() {
     return testComponent;
   }
 

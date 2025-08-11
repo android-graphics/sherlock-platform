@@ -19,10 +19,10 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -54,7 +54,8 @@ public class EqualityToEqualsFix extends PsiUpdateModCommandQuickFix {
     myNegated = negated;
   }
 
-  public static @Nullable EqualityToEqualsFix buildFix(PsiBinaryExpression expression) {
+  @Nullable
+  public static EqualityToEqualsFix buildFix(PsiBinaryExpression expression) {
     final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
     final Nullability nullability = NullabilityUtil.getExpressionNullability(expression.getLOperand(), true);
     if (nullability == Nullability.NULLABLE) return null;
@@ -77,19 +78,23 @@ public class EqualityToEqualsFix extends PsiUpdateModCommandQuickFix {
     return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
+  @Nls
+  @NotNull
   @Override
-  public @Nls @NotNull String getName() {
+  public String getName() {
     return getFixName(myNegated);
   }
 
-  public static @NotNull @IntentionFamilyName String getFixName(boolean negated) {
+  @NotNull
+  public static @IntentionFamilyName String getFixName(boolean negated) {
     return negated
            ? CommonQuickFixBundle.message("fix.replace.x.with.y", "!=", "!equals()")
            : CommonQuickFixBundle.message("fix.replace.x.with.y", "==", "equals()");
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return getFixName(false);
   }
 
@@ -105,7 +110,7 @@ public class EqualityToEqualsFix extends PsiUpdateModCommandQuickFix {
       return;
     }
     CommentTracker commentTracker = new CommentTracker();
-    final @NonNls StringBuilder newExpression = new StringBuilder();
+    @NonNls final StringBuilder newExpression = new StringBuilder();
     if (JavaTokenType.NE.equals(expression.getOperationTokenType())) {
       newExpression.append('!');
     }

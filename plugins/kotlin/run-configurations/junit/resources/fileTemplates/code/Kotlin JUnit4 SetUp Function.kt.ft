@@ -1,4 +1,0 @@
-@org.junit.Before
-fun setUp() {
-  ${BODY}
-}

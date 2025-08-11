@@ -54,7 +54,6 @@ public class ControlFlowGraph {
     }
   }
 
-  @Override
   public String toString() {
     if (blocks == null) return "Empty";
 
@@ -162,6 +161,28 @@ public class ControlFlowGraph {
     //return ranges.isEmpty() ? null : ranges;
   }
 
+  //	public String getExceptionsUniqueString(BasicBlock handler, BasicBlock block) {
+  //
+  //		List<ExceptionRangeCFG> ranges = getExceptionRange(handler, block);
+  //
+  //		if(ranges == null) {
+  //			return null;
+  //		} else {
+  //			Set<String> setExceptionStrings = new HashSet<String>();
+  //			for(ExceptionRangeCFG range : ranges) {
+  //				setExceptionStrings.add(range.getExceptionType());
+  //			}
+  //
+  //			String ret = "";
+  //			for(String exception : setExceptionStrings) {
+  //				ret += exception;
+  //			}
+  //
+  //			return ret;
+  //		}
+  //	}
+
+
   // *****************************************************************************
   // private methods
   // *****************************************************************************
@@ -174,9 +195,6 @@ public class ControlFlowGraph {
     VBStyleCollection<BasicBlock, Integer> colBlocks = createBasicBlocks(states, instrseq, mapInstrBlocks);
 
     blocks = colBlocks;
-    first = blocks.get(0);
-
-    last = new BasicBlock(++last_id);
 
     connectBlocks(colBlocks, mapInstrBlocks);
 
@@ -699,6 +717,10 @@ public class ControlFlowGraph {
   }
 
   private void setFirstAndLastBlocks() {
+
+    first = blocks.get(0);
+
+    last = new BasicBlock(++last_id);
 
     for (BasicBlock block : blocks) {
       if (block.getSuccessors().isEmpty()) {

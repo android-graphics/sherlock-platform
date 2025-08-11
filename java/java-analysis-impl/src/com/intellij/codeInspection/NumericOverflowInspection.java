@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -13,9 +14,11 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInspection.options.OptPane.checkbox;
-import static com.intellij.codeInspection.options.OptPane.pane;
+import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public final class NumericOverflowInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Key<String> HAS_OVERFLOW_IN_CHILD = Key.create("HAS_OVERFLOW_IN_CHILD");
@@ -28,18 +31,22 @@ public final class NumericOverflowInspection extends AbstractBaseJavaLocalInspec
       checkbox("ignoreLeftShiftWithNegativeResult", JavaAnalysisBundle.message("ignore.operation.which.results.in.negative.value")));
   }
 
+  @Nls
+  @NotNull
   @Override
-  public @Nls @NotNull String getGroupDisplayName() {
+  public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.numeric.issues");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getShortName() {
+  public String getShortName() {
     return "NumericOverflow";
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {

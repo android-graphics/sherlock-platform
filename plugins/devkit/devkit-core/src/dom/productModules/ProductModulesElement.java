@@ -4,7 +4,6 @@ package org.jetbrains.idea.devkit.dom.productModules;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.ContentDescriptor;
 import org.jetbrains.idea.devkit.dom.impl.productModules.IntellijModuleConverter;
 import org.jetbrains.idea.devkit.dom.impl.productModules.PluginXmlFileConverter;
 import org.jetbrains.idea.devkit.dom.impl.productModules.ProductModulesXmlFileConverter;
@@ -41,7 +40,7 @@ public interface ProductModulesElement extends DomElement {
   @Convert(IntellijModuleConverter.class)
   interface MainRootModuleElement extends GenericDomValue<IntellijModuleSymbol> {
     @Required
-    @NotNull GenericAttributeValue<ContentDescriptor.ModuleDescriptor.ModuleLoadingRule> getLoading();
+    @NotNull GenericAttributeValue<ModuleImportanceAttributeValue> getImportance();
   }
 
   interface BundledPluginElements extends DomElement {
@@ -51,5 +50,11 @@ public interface ProductModulesElement extends DomElement {
   
   @Convert(PluginXmlFileConverter.class)
   interface BundledPluginElement extends GenericDomValue<IntellijModuleSymbol> {
+  }
+  
+  enum ModuleImportanceAttributeValue {
+    functional,
+    optional,
+    service
   }
 }

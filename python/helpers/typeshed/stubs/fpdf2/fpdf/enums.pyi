@@ -1,12 +1,11 @@
 from enum import Enum, Flag, IntEnum, IntFlag
-from typing import Literal
-from typing_extensions import Self
+from typing_extensions import Literal, Self
 
 from .syntax import Name
 
 class SignatureFlag(IntEnum):
-    SIGNATURES_EXIST = 1
-    APPEND_ONLY = 2
+    SIGNATURES_EXIST: int
+    APPEND_ONLY: int
 
 class CoerciveEnum(Enum):
     @classmethod
@@ -21,73 +20,55 @@ class CoerciveIntFlag(IntFlag):
     def coerce(cls, value: Self | str | int) -> Self: ...
 
 class WrapMode(CoerciveEnum):
-    WORD = "WORD"
-    CHAR = "CHAR"
+    WORD: str
+    CHAR: str
 
 class CharVPos(CoerciveEnum):
-    SUP = "SUP"
-    SUB = "SUB"
-    NOM = "NOM"
-    DENOM = "DENOM"
-    LINE = "LINE"
+    SUP: str
+    SUB: str
+    NOM: str
+    DENOM: str
+    LINE: str
 
 class Align(CoerciveEnum):
-    C = "CENTER"
-    X = "X_CENTER"
-    L = "LEFT"
-    R = "RIGHT"
-    J = "JUSTIFY"
-
-class VAlign(CoerciveEnum):
-    M = "MIDDLE"
-    T = "TOP"
-    B = "BOTTOM"
+    C: str
+    X: str
+    L: str
+    R: str
+    J: str
 
 class TextEmphasis(CoerciveIntFlag):
-    NONE = 0
-    B = 1
-    I = 2
-    U = 4
+    B: int
+    I: int
+    U: int
 
     @property
     def style(self) -> str: ...
 
 class MethodReturnValue(CoerciveIntFlag):
-    PAGE_BREAK = 1
-    LINES = 2
-    HEIGHT = 4
+    PAGE_BREAK: int
+    LINES: int
+    HEIGHT: int
 
 class TableBordersLayout(CoerciveEnum):
-    ALL = "ALL"
-    NONE = "NONE"
-    INTERNAL = "INTERNAL"
-    MINIMAL = "MINIMAL"
-    HORIZONTAL_LINES = "HORIZONTAL_LINES"
-    NO_HORIZONTAL_LINES = "NO_HORIZONTAL_LINES"
-    SINGLE_TOP_LINE = "SINGLE_TOP_LINE"
+    ALL: str
+    NONE: str
+    INTERNAL: str
+    MINIMAL: str
+    HORIZONTAL_LINES: str
+    NO_HORIZONTAL_LINES: str
+    SINGLE_TOP_LINE: str
 
 class TableCellFillMode(CoerciveEnum):
-    NONE = "NONE"
-    ALL = "ALL"
-    ROWS = "ROWS"
-    COLUMNS = "COLUMNS"
-    EVEN_ROWS = "EVEN_ROWS"
-    EVEN_COLUMNS = "EVEN_COLUMNS"
-
-    def should_fill_cell(self, i: int, j: int) -> bool: ...
-
-class TableSpan(CoerciveEnum):
-    ROW = "ROW"
-    COL = "COL"
-
-class TableHeadingsDisplay(CoerciveIntEnum):
-    NONE = 0
-    ON_TOP_OF_EVERY_PAGE = 1
+    NONE: str
+    ALL: str
+    ROWS: str
+    COLUMNS: str
 
 class RenderStyle(CoerciveEnum):
-    D = "DRAW"
-    F = "FILL"
-    DF = "DRAW_FILL"
+    D: str
+    F: str
+    DF: str
     @property
     def operator(self) -> str: ...
     @property
@@ -96,179 +77,162 @@ class RenderStyle(CoerciveEnum):
     def is_fill(self) -> bool: ...
 
 class TextMode(CoerciveIntEnum):
-    FILL = 0
-    STROKE = 1
-    FILL_STROKE = 2
-    INVISIBLE = 3
-    FILL_CLIP = 4
-    STROKE_CLIP = 5
-    FILL_STROKE_CLIP = 6
-    CLIP = 7
+    FILL: int
+    STROKE: int
+    FILL_STROKE: int
+    INVISIBLE: int
+    FILL_CLIP: int
+    STROKE_CLIP: int
+    FILL_STROKE_CLIP: int
+    CLIP: int
 
 class XPos(CoerciveEnum):
-    LEFT = "LEFT"
-    RIGHT = "RIGHT"
-    START = "START"
-    END = "END"
-    WCONT = "WCONT"
-    CENTER = "CENTER"
-    LMARGIN = "LMARGIN"
-    RMARGIN = "RMARGIN"
+    LEFT: str
+    RIGHT: str
+    START: str
+    END: str
+    WCONT: str
+    CENTER: str
+    LMARGIN: str
+    RMARGIN: str
 
 class YPos(CoerciveEnum):
-    TOP = "TOP"
-    LAST = "LAST"
-    NEXT = "NEXT"
-    TMARGIN = "TMARGIN"
-    BMARGIN = "BMARGIN"
-
-class Angle(CoerciveIntEnum):
-    NORTH = 90
-    EAST = 0
-    SOUTH = 270
-    WEST = 180
-    NORTHEAST = 45
-    SOUTHEAST = 315
-    SOUTHWEST = 225
-    NORTHWEST = 135
+    TOP: str
+    LAST: str
+    NEXT: str
+    TMARGIN: str
+    BMARGIN: str
 
 class PageLayout(CoerciveEnum):
-    SINGLE_PAGE = Name("SinglePage")
-    ONE_COLUMN = Name("OneColumn")
-    TWO_COLUMN_LEFT = Name("TwoColumnLeft")
-    TWO_COLUMN_RIGHT = Name("TwoColumnRight")
-    TWO_PAGE_LEFT = Name("TwoPageLeft")
-    TWO_PAGE_RIGHT = Name("TwoPageRight")
+    SINGLE_PAGE: Name
+    ONE_COLUMN: Name
+    TWO_COLUMN_LEFT: Name
+    TWO_COLUMN_RIGHT: Name
+    TWO_PAGE_LEFT: Name
+    TWO_PAGE_RIGHT: Name
 
 class PageMode(CoerciveEnum):
-    USE_NONE = Name("UseNone")
-    USE_OUTLINES = Name("UseOutlines")
-    USE_THUMBS = Name("UseThumbs")
-    FULL_SCREEN = Name("FullScreen")
-    USE_OC = Name("UseOC")
-    USE_ATTACHMENTS = Name("UseAttachments")
+    USE_NONE: Name
+    USE_OUTLINES: Name
+    USE_THUMBS: Name
+    FULL_SCREEN: Name
+    USE_OC: Name
+    USE_ATTACHMENTS: Name
 
 class TextMarkupType(CoerciveEnum):
-    HIGHLIGHT = Name("Highlight")
-    UNDERLINE = Name("Underline")
-    SQUIGGLY = Name("Squiggly")
-    STRIKE_OUT = Name("StrikeOut")
+    HIGHLIGHT: Name
+    UNDERLINE: Name
+    SQUIGGLY: Name
+    STRIKE_OUT: Name
 
 class BlendMode(CoerciveEnum):
-    NORMAL = Name("Normal")
-    MULTIPLY = Name("Multiply")
-    SCREEN = Name("Screen")
-    OVERLAY = Name("Overlay")
-    DARKEN = Name("Darken")
-    LIGHTEN = Name("Lighten")
-    COLOR_DODGE = Name("ColorDodge")
-    COLOR_BURN = Name("ColorBurn")
-    HARD_LIGHT = Name("HardLight")
-    SOFT_LIGHT = Name("SoftLight")
-    DIFFERENCE = Name("Difference")
-    EXCLUSION = Name("Exclusion")
-    HUE = Name("Hue")
-    SATURATION = Name("Saturation")
-    COLOR = Name("Color")
-    LUMINOSITY = Name("Luminosity")
+    NORMAL: Name
+    MULTIPLY: Name
+    SCREEN: Name
+    OVERLAY: Name
+    DARKEN: Name
+    LIGHTEN: Name
+    COLOR_DODGE: Name
+    COLOR_BURN: Name
+    HARD_LIGHT: Name
+    SOFT_LIGHT: Name
+    DIFFERENCE: Name
+    EXCLUSION: Name
+    HUE: Name
+    SATURATION: Name
+    COLOR: Name
+    LUMINOSITY: Name
 
 class AnnotationFlag(CoerciveIntEnum):
-    INVISIBLE = 1
-    HIDDEN = 2
-    PRINT = 4
-    NO_ZOOM = 8
-    NO_ROTATE = 16
-    NO_VIEW = 32
-    READ_ONLY = 64
-    LOCKED = 128
-    TOGGLE_NO_VIEW = 256
-    LOCKED_CONTENTS = 512
+    INVISIBLE: int
+    HIDDEN: int
+    PRINT: int
+    NO_ZOOM: int
+    NO_ROTATE: int
+    NO_VIEW: int
+    READ_ONLY: int
+    LOCKED: int
+    TOGGLE_NO_VIEW: int
+    LOCKED_CONTENTS: int
 
 class AnnotationName(CoerciveEnum):
-    NOTE = Name("Note")
-    COMMENT = Name("Comment")
-    HELP = Name("Help")
-    PARAGRAPH = Name("Paragraph")
-    NEW_PARAGRAPH = Name("NewParagraph")
-    INSERT = Name("Insert")
+    NOTE: Name
+    COMMENT: Name
+    HELP: Name
+    PARAGRAPH: Name
+    NEW_PARAGRAPH: Name
+    INSERT: Name
 
 class FileAttachmentAnnotationName(CoerciveEnum):
-    PUSH_PIN = Name("PushPin")
-    GRAPH_PUSH_PIN = Name("GraphPushPin")
-    PAPERCLIP_TAG = Name("PaperclipTag")
+    PUSH_PIN: Name
+    GRAPH_PUSH_PIN: Name
+    PAPERCLIP_TAG: Name
 
 class IntersectionRule(CoerciveEnum):
-    NONZERO = "nonzero"
-    EVENODD = "evenodd"
+    NONZERO: str
+    EVENODD: str
 
 class PathPaintRule(CoerciveEnum):
-    STROKE = "S"
-    FILL_NONZERO = "f"
-    FILL_EVENODD = "f*"
-    STROKE_FILL_NONZERO = "B"
-    STROKE_FILL_EVENODD = "B*"
-    DONT_PAINT = "n"
-    AUTO = "auto"
+    STROKE: str
+    FILL_NONZERO: str
+    FILL_EVENODD: str
+    STROKE_FILL_NONZERO: str
+    STROKE_FILL_EVENODD: str
+    DONT_PAINT: str
+    AUTO: str
 
 class ClippingPathIntersectionRule(CoerciveEnum):
-    NONZERO = "W"
-    EVENODD = "W*"
+    NONZERO: str
+    EVENODD: str
 
 class StrokeCapStyle(CoerciveIntEnum):
-    BUTT = 0
-    ROUND = 1
-    SQUARE = 2
+    BUTT: int
+    ROUND: int
+    SQUARE: int
 
 class StrokeJoinStyle(CoerciveIntEnum):
-    MITER = 0
-    ROUND = 1
-    BEVEL = 2
+    MITER: int
+    ROUND: int
+    BEVEL: int
 
 class PDFStyleKeys(Enum):
-    FILL_ALPHA = Name("ca")
-    BLEND_MODE = Name("BM")
-    STROKE_ALPHA = Name("CA")
-    STROKE_ADJUSTMENT = Name("SA")
-    STROKE_WIDTH = Name("LW")
-    STROKE_CAP_STYLE = Name("LC")
-    STROKE_JOIN_STYLE = Name("LJ")
-    STROKE_MITER_LIMIT = Name("ML")
-    STROKE_DASH_PATTERN = Name("D")
+    FILL_ALPHA: Name
+    BLEND_MODE: Name
+    STROKE_ALPHA: Name
+    STROKE_ADJUSTMENT: Name
+    STROKE_WIDTH: Name
+    STROKE_CAP_STYLE: Name
+    STROKE_JOIN_STYLE: Name
+    STROKE_MITER_LIMIT: Name
+    STROKE_DASH_PATTERN: Name
 
 class Corner(CoerciveEnum):
-    TOP_RIGHT = "TOP_RIGHT"
-    TOP_LEFT = "TOP_LEFT"
-    BOTTOM_RIGHT = "BOTTOM_RIGHT"
-    BOTTOM_LEFT = "BOTTOM_LEFT"
+    TOP_RIGHT: str
+    TOP_LEFT: str
+    BOTTOM_RIGHT: str
+    BOTTOM_LEFT: str
 
 class FontDescriptorFlags(Flag):
-    FIXED_PITCH = 1
-    SYMBOLIC = 4
-    ITALIC = 64
-    FORCE_BOLD = 262144
+    FIXED_PITCH: int
+    SYMBOLIC: int
+    ITALIC: int
+    FORCE_BOLD: int
 
 class AccessPermission(IntFlag):
-    PRINT_LOW_RES = 4
-    MODIFY = 8
-    COPY = 16
-    ANNOTATION = 32
-    FILL_FORMS = 256
-    COPY_FOR_ACCESSIBILITY = 512
-    ASSEMBLE = 1024
-    PRINT_HIGH_RES = 2048
+    PRINT_LOW_RES: int
+    MODIFY: int
+    COPY: int
+    ANNOTATION: int
+    FILL_FORMS: int
+    COPY_FOR_ACCESSIBILITY: int
+    ASSEMBLE: int
+    PRINT_HIGH_RES: int
     @classmethod
     def all(cls) -> int: ...
     @classmethod
     def none(cls) -> Literal[0]: ...
 
 class EncryptionMethod(Enum):
-    NO_ENCRYPTION = 0
-    RC4 = 1
-    AES_128 = 2
-    AES_256 = 3
-
-class TextDirection(CoerciveEnum):
-    LTR = "LTR"
-    RTL = "RTL"
-    TTB = "TTB"
-    BTT = "BTT"
+    NO_ENCRYPTION: int
+    RC4: int
+    AES_128: int

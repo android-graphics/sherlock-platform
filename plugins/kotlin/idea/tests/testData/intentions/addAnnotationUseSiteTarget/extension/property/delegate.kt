@@ -1,5 +1,5 @@
-// NO_OPTION: PROPERTY_DELEGATE_FIELD|Add use-site target 'delegate'
-// CHOSEN_OPTION: RECEIVER|Add use-site target 'receiver'
+// CHOOSE_USE_SITE_TARGET: delegate
+// IS_APPLICABLE: false
 
 @Target(AnnotationTarget.TYPE, AnnotationTarget.VALUE_PARAMETER)
 annotation class C

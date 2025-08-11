@@ -1,4 +1,4 @@
-// CHOSEN_OPTION: RECEIVER|Add use-site target 'receiver'
+// CHOOSE_USE_SITE_TARGET: receiver
 
 @Target(AnnotationTarget.TYPE, AnnotationTarget.VALUE_PARAMETER)
 annotation class C

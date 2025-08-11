@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.panels;
 
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBValue;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -247,7 +246,7 @@ public final class VerticalLayout implements LayoutManager2 {
     }
   }
 
-  public @Unmodifiable @NotNull List<? extends Component> getComponents() {
+  public @NotNull List<? extends Component> getComponents() {
     return ContainerUtil.concat(myTop, myCenter, myBottom);
   }
 }

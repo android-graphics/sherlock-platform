@@ -4,9 +4,14 @@ package org.jetbrains.kotlin.idea.completion.impl.k2
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.getDefaultImports
-import org.jetbrains.kotlin.idea.base.util.isImported
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.isExtensionCall
 import org.jetbrains.kotlin.name.FqName
@@ -15,26 +20,16 @@ import org.jetbrains.kotlin.resolve.ImportPath
 
 @ApiStatus.Internal
 class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
-    private val defaultImports: Set<ImportPath>
-    private val excludedImports: List<FqName>
+    private val analyzerServices = originalKtFile.platform.findAnalyzerServices(project)
+    private val defaultImports = analyzerServices
+        .getDefaultImports(originalKtFile.languageVersionSettings, includeLowPriorityImports = true).toSet()
 
-    init {
-        val imports = originalKtFile.getDefaultImports(useSiteModule = null)
-        defaultImports = imports.defaultImports.mapTo(mutableSetOf()) { it.importPath }
-        excludedImports = imports.excludedFromDefaultImports.map { it.fqName }
-    }
-
+    private val excludedImports = analyzerServices.excludedImports
 
     context(KaSession)
     fun detectImportStrategyForCallableSymbol(symbol: KaCallableSymbol, isFunctionalVariableCall: Boolean = false): ImportStrategy {
-        val hasStablePath = when ((symbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol)?.classKind) {
-            KaClassKind.ENUM_CLASS,
-            KaClassKind.OBJECT,
-            KaClassKind.COMPANION_OBJECT -> true
-
-            else -> false
-        }
-        if (symbol.location == KaSymbolLocation.CLASS && !hasStablePath) return ImportStrategy.DoNothing
+        val containingClassIsObject = symbol.originalContainingClassForOverride?.classKind?.isObject == true
+        if (symbol.symbolKind == KaSymbolKind.CLASS_MEMBER && !containingClassIsObject) return ImportStrategy.DoNothing
 
         val callableId = symbol.callableId?.asSingleFqName() ?: return ImportStrategy.DoNothing
 

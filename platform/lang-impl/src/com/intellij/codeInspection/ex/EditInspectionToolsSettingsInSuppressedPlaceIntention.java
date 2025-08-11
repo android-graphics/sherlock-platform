@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -13,25 +13,26 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
 public final class EditInspectionToolsSettingsInSuppressedPlaceIntention implements IntentionAction {
   private String myDisplayName;
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return InspectionsBundle.message("edit.options.of.reporter.inspection.family");
   }
 
   @Override
-  public @NotNull String getText() {
+  @NotNull
+  public String getText() {
     return InspectionsBundle.message("edit.inspection.options", myDisplayName);
   }
 
-  private static @Nullable String getSuppressedId(Editor editor, PsiFile file) {
+  @Nullable
+  private static String getSuppressedId(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     while (element != null && !(element instanceof PsiFile)) {
@@ -68,7 +69,8 @@ public final class EditInspectionToolsSettingsInSuppressedPlaceIntention impleme
     return suppressedId != null;
   }
 
-  private static @Nullable InspectionToolWrapper getTool(final Project project, final PsiFile file, final String suppressId) {
+  @Nullable
+  private static InspectionToolWrapper getTool(final Project project, final PsiFile file, final String suppressId) {
     if (suppressId == null) return null;
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
     final InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.data;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -25,15 +25,16 @@ import java.util.Collection;
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public final class CompositeBuildDataService extends AbstractProjectDataService<CompositeBuildData, Project> {
 
+  @NotNull
   @Override
-  public @NotNull Key<CompositeBuildData> getTargetDataKey() {
+  public Key<CompositeBuildData> getTargetDataKey() {
     return CompositeBuildData.KEY;
   }
 
   @Override
   public void importData(final @NotNull Collection<? extends DataNode<CompositeBuildData>> toImport,
                          @Nullable ProjectData projectData,
-                         final @NotNull Project project,
+                         @NotNull final Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider) {
     if (toImport.isEmpty()) {
       if (projectData != null) {

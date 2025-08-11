@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -20,7 +20,8 @@ public class JavaVersionService {
     return PsiUtil.getLanguageLevel(element).isAtLeast(version.getMaxLanguageLevel());
   }
 
-  public @Nullable JavaSdkVersion getJavaSdkVersion(@NotNull PsiElement element) {
+  @Nullable
+  public JavaSdkVersion getJavaSdkVersion(@NotNull PsiElement element) {
     return JavaSdkVersion.fromLanguageLevel(PsiUtil.getLanguageLevel(element));
   }
 

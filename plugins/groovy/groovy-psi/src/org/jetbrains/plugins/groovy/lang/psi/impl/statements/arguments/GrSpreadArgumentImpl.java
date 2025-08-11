@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 
 import com.intellij.lang.ASTNode;
@@ -18,8 +18,9 @@ public class GrSpreadArgumentImpl extends GroovyPsiElementImpl implements GrSpre
     super(node);
   }
 
+  @NotNull
   @Override
-  public @NotNull GrExpression getArgument() {
+  public GrExpression getArgument() {
     return findNotNullChildByClass(GrExpression.class);
   }
 

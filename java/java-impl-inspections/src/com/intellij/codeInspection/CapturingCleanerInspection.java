@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
@@ -25,8 +25,9 @@ public final class CapturingCleanerInspection extends AbstractBaseJavaLocalInspe
     "java.lang.ref.Cleaner", "register"
   ).parameterCount(2);
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!PsiUtil.isLanguageLevel9OrHigher(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
@@ -72,8 +73,9 @@ public final class CapturingCleanerInspection extends AbstractBaseJavaLocalInspe
       }
 
 
-      private static @Nullable PsiElement getElementCapturingThis(@NotNull PsiExpression runnableExpr,
-                                                                  @NotNull PsiClass trackedClass) {
+      @Nullable
+      private static PsiElement getElementCapturingThis(@NotNull PsiExpression runnableExpr,
+                                                        @NotNull PsiClass trackedClass) {
         if (runnableExpr instanceof PsiMethodReferenceExpression methodReference) {
           if (PsiMethodReferenceUtil.isStaticallyReferenced(methodReference)) return null;
 

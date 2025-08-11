@@ -33,7 +33,6 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.test.GitPlatformTest.ConfigScope.GLOBAL
 import git4idea.test.GitPlatformTest.ConfigScope.SYSTEM
 import java.nio.file.Path
-import java.util.Locale
 
 abstract class GitPlatformTest : VcsPlatformTest() {
   protected lateinit var repositoryManager: GitRepositoryManager
@@ -275,7 +274,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     SYSTEM,
     GLOBAL;
 
-    fun param() = "--${name.lowercase(Locale.getDefault())}"
+    fun param() = "--${name.toLowerCase()}"
   }
 
   protected fun withPartialTracker(file: VirtualFile, newContent: String? = null, task: (Document, PartialLocalLineStatusTracker) -> Unit) {

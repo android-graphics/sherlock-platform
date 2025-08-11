@@ -27,7 +27,8 @@ public final class NonSerializableObjectBoundToHttpSessionInspection
   extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.serializable.object.bound.to.http.session.problem.descriptor");
   }

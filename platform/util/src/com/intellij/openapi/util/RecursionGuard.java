@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,8 +11,6 @@ import java.util.List;
  * A helper object for {@link RecursionManager}. It's obtained from {@link RecursionManager#createGuard(String)}.
  */
 public abstract class RecursionGuard<Key> {
-  RecursionGuard() {
-  }
 
   /**
    * Run the given computation, unless it's already running in this thread.
@@ -34,6 +33,13 @@ public abstract class RecursionGuard<Key> {
   public abstract @Nullable <T, E extends Throwable> T computePreventingRecursion(@NotNull Key key,
                                                                         boolean memoize,
                                                                         @NotNull ThrowableComputable<T, E> computation) throws E;
+
+  /** @deprecated Use {@link RecursionManager#markStack()} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public @NotNull StackStamp markStack() {
+    return RecursionManager.markStack();
+  }
 
   /**
    * Note: if you make decisions based on the result of this method, you'd better couple it with {@link #prohibitResultCaching},

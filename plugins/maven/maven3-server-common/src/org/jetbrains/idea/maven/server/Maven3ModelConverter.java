@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.util.ReflectionUtilRt;
@@ -22,7 +22,8 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 public class Maven3ModelConverter {
-  public static @NotNull MavenModel convertModel(Model model, File localRepository) {
+  @NotNull
+  public static MavenModel convertModel(Model model, File localRepository) {
     if(model.getBuild() == null) {
       model.setBuild(new Build());
     }
@@ -30,6 +31,9 @@ public class Maven3ModelConverter {
     return convertModel(model,
                         asSourcesList(build.getSourceDirectory()),
                         asSourcesList(build.getTestSourceDirectory()),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
                         localRepository);
   }
 
@@ -37,10 +41,14 @@ public class Maven3ModelConverter {
     return directory == null ? Collections.emptyList() : Collections.singletonList(directory);
   }
 
-  public static @NotNull MavenModel convertModel(Model model,
-                                                 List<String> sources,
-                                                 List<String> testSources,
-                                                 File localRepository) {
+  @NotNull
+  public static MavenModel convertModel(Model model,
+                                        List<String> sources,
+                                        List<String> testSources,
+                                        Collection<? extends Artifact> dependencies,
+                                        Collection<? extends DependencyNode> dependencyTree,
+                                        Collection<? extends Artifact> extensions,
+                                        File localRepository) {
     MavenModel result = new MavenModel();
     result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
 
@@ -52,15 +60,14 @@ public class Maven3ModelConverter {
     result.setPackaging(model.getPackaging());
     result.setName(model.getName());
     result.setProperties(model.getProperties() == null ? new Properties() : model.getProperties());
-    result.setPlugins(convertPlugins(model, Collections.emptyList()));
+    result.setPlugins(convertPlugins(model));
 
     Map<Artifact, MavenArtifact> convertedArtifacts = new HashMap<Artifact, MavenArtifact>();
-    result.setExtensions(convertArtifacts(Collections.emptyList(), convertedArtifacts, localRepository));
-    result.setDependencies(convertArtifacts(Collections.emptyList(), convertedArtifacts, localRepository));
-    result.setDependencyTree(convertDependencyNodes(null, Collections.emptyList(), convertedArtifacts, localRepository));
+    result.setExtensions(convertArtifacts(extensions, convertedArtifacts, localRepository));
+    result.setDependencies(convertArtifacts(dependencies, convertedArtifacts, localRepository));
+    result.setDependencyTree(convertDependencyNodes(null, dependencyTree, convertedArtifacts, localRepository));
 
     result.setRemoteRepositories(convertRepositories(model.getRepositories()));
-    result.setRemotePluginRepositories(convertRepositories(model.getPluginRepositories()));
     result.setProfiles(convertProfiles(model.getProfiles()));
     result.setModules(model.getModules());
 
@@ -239,7 +246,7 @@ public class Maven3ModelConverter {
     return result;
   }
 
-  protected static List<MavenPlugin> convertPlugins(Model mavenModel, Collection<? extends Artifact> pluginArtifacts) {
+  public static List<MavenPlugin> convertPlugins(Model mavenModel) {
     List<MavenPlugin> result = new ArrayList<MavenPlugin>();
     Build build = mavenModel.getBuild();
 
@@ -247,7 +254,7 @@ public class Maven3ModelConverter {
       List<Plugin> plugins = build.getPlugins();
       if (plugins != null) {
         for (Plugin each : plugins) {
-          result.add(convertPlugin(false, each, pluginArtifacts));
+          result.add(convertPlugin(false, each));
         }
       }
     }
@@ -255,7 +262,7 @@ public class Maven3ModelConverter {
     return result;
   }
 
-  private static MavenPlugin convertPlugin(boolean isDefault, Plugin plugin, Collection<? extends Artifact> pluginArtifacts) {
+  private static MavenPlugin convertPlugin(boolean isDefault, Plugin plugin) {
     List<MavenPlugin.Execution> executions = new ArrayList<MavenPlugin.Execution>(plugin.getExecutions().size());
     for (PluginExecution each : plugin.getExecutions()) {
       executions.add(convertExecution(each));
@@ -266,26 +273,13 @@ public class Maven3ModelConverter {
       deps.add(new MavenId(each.getGroupId(), each.getArtifactId(), each.getVersion()));
     }
 
-    String pluginVersion = getPluginVersion(plugin, pluginArtifacts);
     return new MavenPlugin(plugin.getGroupId(),
                            plugin.getArtifactId(),
-                           pluginVersion,
+                           plugin.getVersion(),
                            isDefault,
                            "true".equals(plugin.getExtensions()),
                            convertConfiguration(plugin.getConfiguration()),
                            executions, deps);
-  }
-
-  private static String getPluginVersion(Plugin plugin, Collection<? extends Artifact> pluginArtifacts) {
-    String pluginVersion = plugin.getVersion();
-    if (null != pluginVersion) return pluginVersion;
-    if (null == plugin.getGroupId() || null == plugin.getArtifactId()) return null;
-    for (Artifact each : pluginArtifacts) {
-      if (plugin.getGroupId().equals(each.getGroupId()) && plugin.getArtifactId().equals(each.getArtifactId())) {
-        return each.getVersion();
-      }
-    }
-    return null;
   }
 
   public static MavenPlugin.Execution convertExecution(PluginExecution execution) {
@@ -406,7 +400,8 @@ public class Maven3ModelConverter {
            || Xpp3Dom.class.isAssignableFrom(clazz);
   }
 
-  public static @NotNull Model toNativeModel(MavenModel model) {
+  @NotNull
+  public static Model toNativeModel(MavenModel model) {
     Model result = new Model();
     result.setArtifactId(model.getMavenId().getArtifactId());
     result.setGroupId(model.getMavenId().getGroupId());

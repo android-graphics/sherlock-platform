@@ -34,7 +34,6 @@ final class MyEditorState implements FileEditorState{
     return mySelectedComponentIds;
   }
 
-  @Override
   public boolean equals(final Object o){
     if (this == o) return true;
     if (!(o instanceof MyEditorState state)) return false;
@@ -45,7 +44,6 @@ final class MyEditorState implements FileEditorState{
     return true;
   }
 
-  @Override
   public int hashCode(){
     return Long.hashCode(myDocumentModificationStamp);
   }

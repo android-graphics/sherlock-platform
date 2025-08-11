@@ -31,7 +31,8 @@ import org.jetbrains.annotations.NotNull;
 public final class ComparatorNotSerializableInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("comparator.not.serializable.problem.descriptor");
   }
 

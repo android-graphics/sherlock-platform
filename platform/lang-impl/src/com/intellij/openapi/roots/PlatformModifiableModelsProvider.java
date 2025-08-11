@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.facet.FacetManager;
@@ -8,31 +8,30 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dennis.Ushakov
  */
-@ApiStatus.Internal
 public final class PlatformModifiableModelsProvider implements ModifiableModelsProvider {
   @Override
-  public ModifiableRootModel getModuleModifiableModel(final @NotNull Module module) {
+  public ModifiableRootModel getModuleModifiableModel(@NotNull final Module module) {
     return ModuleRootManager.getInstance(module).getModifiableModel();
   }
 
   @Override
-  public void commitModuleModifiableModel(final @NotNull ModifiableRootModel model) {
+  public void commitModuleModifiableModel(@NotNull final ModifiableRootModel model) {
     model.commit();
   }
 
   @Override
-  public void disposeModuleModifiableModel(final @NotNull ModifiableRootModel model) {
+  public void disposeModuleModifiableModel(@NotNull final ModifiableRootModel model) {
     model.dispose();
   }
 
+  @NotNull
   @Override
-  public @NotNull ModifiableFacetModel getFacetModifiableModel(@NotNull Module module) {
+  public ModifiableFacetModel getFacetModifiableModel(@NotNull Module module) {
     return FacetManager.getInstance(module).createModifiableModel();
   }
 
@@ -41,8 +40,9 @@ public final class PlatformModifiableModelsProvider implements ModifiableModelsP
     model.commit();
   }
 
+  @NotNull
   @Override
-  public @NotNull LibraryTable.ModifiableModel getLibraryTableModifiableModel() {
+  public LibraryTable.ModifiableModel getLibraryTableModifiableModel() {
     return LibraryTablesRegistrar.getInstance().getLibraryTable().getModifiableModel();
   }
 

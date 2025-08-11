@@ -52,7 +52,7 @@ public final class InconsistentLanguageLevelInspection extends GlobalInspectionT
                                        dependantModule.getName(), dependantLanguageLevel.getShortText()),
             module,
             new UnnecessaryModuleDependencyInspection.RemoveModuleDependencyFix(dependantModule.getName()),
-            (QuickFix<?>)QuickFixFactory.getInstance().createShowModulePropertiesFix(module));
+            (QuickFix)QuickFixFactory.getInstance().createShowModulePropertiesFix(module));
           return new CommonProblemDescriptor[] {problemDescriptor};
         }
       }
@@ -66,12 +66,16 @@ public final class InconsistentLanguageLevelInspection extends GlobalInspectionT
   }
 
   @Override
-  public @Nls @NotNull String getGroupDisplayName() {
+  @Nls
+  @NotNull
+  public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.modularization.issues");
   }
 
   @Override
-  public @NonNls @NotNull String getShortName() {
+  @NonNls
+  @NotNull
+  public String getShortName() {
     return "InconsistentLanguageLevel";
   }
 }

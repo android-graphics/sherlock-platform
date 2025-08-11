@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit2.inspection;
 
@@ -29,7 +29,8 @@ public final class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
   public boolean ADD_JUNIT_TO_ENTRIES = true;
 
   @Override
-  public @NotNull String getDisplayName() {
+  @NotNull
+  public String getDisplayName() {
     return JUnitBundle.message("unused.declaration.junit.test.entry.point");
   }
 

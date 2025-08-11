@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.openapi.util.ColoredItem;
@@ -24,11 +24,13 @@ public class ScopeDescriptor implements ColoredItem {
     return myScope == null ? null : myScope.getDisplayName();
   }
 
-  public @Nullable Icon getIcon() {
+  @Nullable
+  public Icon getIcon() {
     return myScope == null ? null : myScope.getIcon();
   }
 
-  public @Nullable SearchScope getScope() {
+  @Nullable
+  public SearchScope getScope() {
     return myScope;
   }
 
@@ -36,8 +38,9 @@ public class ScopeDescriptor implements ColoredItem {
     return Comparing.equal(myScope, scope);
   }
 
+  @Nullable
   @Override
-  public @Nullable Color getColor() {
+  public Color getColor() {
     return myScope instanceof ColoredItem ? ((ColoredItem)myScope).getColor() : null;
   }
 }

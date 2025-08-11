@@ -6,8 +6,6 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.SettingsSavingComponent
-import com.intellij.ide.plugins.DEPENDENCY_SUPPORT_FEATURE
-import com.intellij.ide.plugins.FILE_HANDLER_KIND
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.advertiser.PluginData
@@ -16,9 +14,7 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileTypes.FileNameMatcher
 import com.intellij.openapi.fileTypes.FileType
@@ -27,12 +23,8 @@ import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.fileTypes.impl.DetectedByContentFileType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.features.AnsiHighlighterDetector
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.features.FileHandlerFeatureDetector
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Strings
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.settings.CacheTag
 import com.intellij.platform.settings.SettingsController
 import com.intellij.platform.settings.objectSerializer
@@ -43,18 +35,14 @@ import com.intellij.util.containers.mapSmartSet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
-private val LOG: Logger = fileLogger()
-
-private val PLUGIN_FILE_HANDLERS_DETECTED_KEY: Key<Boolean> = Key.create("PLUGIN_FILE_HANDLER_DETECTED")
-
-// an ordered list of handlers; cannot be contributed by plugins
-private val fileHandlerDetectors: Collection<FileHandlerFeatureDetector> = listOf(
-  AnsiHighlighterDetector()
+internal data class PluginAdvertiserExtensionsData(
+  // Either extension or file name. Depends on which of the two properties has more priority for advertising plugins for this specific file.
+  @JvmField val extensionOrFileName: String,
+  @JvmField val plugins: Set<PluginData> = emptySet(),
 )
 
 /**
@@ -65,7 +53,6 @@ private val fileHandlerDetectors: Collection<FileHandlerFeatureDetector> = listO
 @Serializable
 private data class PluginAdvertiserExtensionsState(@JvmField val plugins: LinkedHashMap<String, PluginData> = LinkedHashMap())
 
-@ApiStatus.Internal
 @Service(Service.Level.APP)
 class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
   companion object {
@@ -101,10 +88,10 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
 
   // Stores the marketplace plugins that support given filenames/extensions and are known to be compatible with
   // the current IDE build.
-  // key: extensionOrFileName | file-handler:<ID>
-  private val cache = Caffeine.newBuilder()
+  private val cache = Caffeine
+    .newBuilder()
     .expireAfterWrite(1, TimeUnit.HOURS)
-    .build<String, PluginAdvertiserSuggestion>()
+    .build<String, PluginAdvertiserExtensionsData>()
 
   fun createExtensionDataProvider(project: Project): ExtensionDataProvider = ExtensionDataProvider(project)
 
@@ -136,52 +123,17 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
       return false
     }
 
-    updateCache(extensionOrFileName, emptySet()) // if network fails we will have empty results here and do not ask again for the same file
-
-    return withContext(Dispatchers.IO) {
+    withContext(Dispatchers.IO) {
       val compatiblePlugins = requestCompatiblePlugins(extensionOrFileName, knownExtensions.get(extensionOrFileName))
-      if (compatiblePlugins.isEmpty()) return@withContext false
-
       updateCache(extensionOrFileName, compatiblePlugins)
-
-      LOG.debug("Found compatible plugins for files '$extensionOrFileName': ${compatiblePlugins.joinToString { it.pluginIdString }}")
-
-      return@withContext true
     }
+
+    return true
   }
 
   @VisibleForTesting
   fun updateCache(extensionOrFileName: String, compatiblePlugins: Set<PluginData>) {
-    cache.put(extensionOrFileName, PluginAdvertisedByFileName(extensionOrFileName, compatiblePlugins))
-  }
-
-  internal suspend fun updateCompatibleFileHandlers(force: Boolean = false): Boolean {
-    val knownDependencies = PluginFeatureCacheService.getInstance().dependencies.get()
-    if (knownDependencies == null) {
-      LOG.debug("No known dependencies loaded")
-      return false
-    }
-
-    var refreshedCompatiblePlugins = false
-    for (h in fileHandlerDetectors) {
-      val implementationName = "${FILE_HANDLER_KIND}:${h.id}"
-
-      if (!force && cache.getIfPresent(implementationName) != null) continue // already filled cache in this session
-
-      // if network fails we will have empty results here and do not ask again for the same file
-      cache.put(implementationName, PluginAdvertisedByFileContent(h, emptySet()))
-
-      withContext(Dispatchers.IO) {
-        val compatiblePlugins = requestCompatiblePlugins(implementationName, knownDependencies.get(implementationName))
-        cache.put(implementationName, PluginAdvertisedByFileContent(h, compatiblePlugins))
-
-        LOG.debug("Found compatible handlers '${h.id}': ${compatiblePlugins.joinToString { it.pluginIdString }}")
-
-        refreshedCompatiblePlugins = true
-      }
-    }
-
-    return refreshedCompatiblePlugins
+    cache.put(extensionOrFileName, PluginAdvertiserExtensionsData(extensionOrFileName, compatiblePlugins))
   }
 
   inner class ExtensionDataProvider(private val project: Project) {
@@ -198,51 +150,10 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
       cache.invalidate(extensionOrFileName)
     }
 
-    private fun getByFilenameOrExt(fileNameOrExtension: String): PluginAdvertiserSuggestion? {
+    private fun getByFilenameOrExt(fileNameOrExtension: String): PluginAdvertiserExtensionsData? {
       return pluginCache.get(fileNameOrExtension)?.let {
-        PluginAdvertisedByFileName(extensionOrFileName = fileNameOrExtension, plugins = java.util.Set.of(it))
+        PluginAdvertiserExtensionsData(extensionOrFileName = fileNameOrExtension, plugins = java.util.Set.of(it))
       }
-    }
-
-    internal fun requestExtensionData(file: VirtualFile): PluginAdvertiserSuggestion? {
-      val fileName = file.name
-      val fileType = file.fileType
-
-      if (file.getUserData(PLUGIN_FILE_HANDLERS_DETECTED_KEY) != false) {
-        val pluginMap = PluginFeatureCacheService.getInstance().dependencies.get()
-        if (pluginMap != null) {
-          val ignoredPluginSuggestions = GlobalIgnoredPluginSuggestionState.getInstance()
-
-          for (detector in fileHandlerDetectors) {
-            if (detector.isSupported(file)) {
-              val implementationName = "${FILE_HANDLER_KIND}:${detector.id}"
-              val unknownFeature = UnknownFeature(DEPENDENCY_SUPPORT_FEATURE, implementationName)
-
-              if (!UnknownFeaturesCollector.getInstance(project).isIgnored(unknownFeature)) {
-                val fromCache = (cache.getIfPresent(implementationName) as? PluginAdvertisedByFileContent)?.plugins
-                if (fromCache == null) return null // no compatible plugins info yet, need a round-trip to Marketplace
-
-                val compatibleOnlyPlugins = fromCache.map { it.pluginIdString }
-
-                val suitable = pluginMap.get(implementationName)
-                  .filterNot { ignoredPluginSuggestions.isIgnored(it.pluginId) }
-                  .filter { compatibleOnlyPlugins.contains(it.pluginIdString) }
-                  .toSet()
-
-                if (suitable.isNotEmpty()) {
-                  return PluginAdvertisedByFileContent(detector, suitable)
-                }
-              }
-
-              break // assume no conflicts in detectors
-            }
-          }
-
-          file.putCopyableUserData(PLUGIN_FILE_HANDLERS_DETECTED_KEY, false)
-        }
-      }
-
-      return requestExtensionData(fileName, fileType)
     }
 
     /**
@@ -253,20 +164,21 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
      * The return value of null indicates that the locally available data is not enough to produce a suggestion,
      * and we need to fetch up-to-date data from the marketplace.
      */
-    @VisibleForTesting
-    internal fun requestExtensionData(fileName: String, fileType: FileType): PluginAdvertiserSuggestion? {
+    internal fun requestExtensionData(fileName: String, fileType: FileType): PluginAdvertiserExtensionsData? {
+      fun noSuggestions() = PluginAdvertiserExtensionsData(fileName, emptySet())
+
       val fullExtension = getFullExtension(fileName)
       if (fullExtension != null && isIgnored(fullExtension)) {
         LOG.debug { "Extension '$fullExtension' is ignored in project '${project.name}'" }
-        return NoSuggestions
+        return noSuggestions()
       }
       if (isIgnored(fileName)) {
         LOG.debug { "File '$fileName' is ignored in project '${project.name}'" }
-        return NoSuggestions
+        return noSuggestions()
       }
 
       if (fullExtension == null && fileType is FakeFileType) {
-        return NoSuggestions
+        return noSuggestions()
       }
 
       // Check if there's an installed plugin matching the exact file name
@@ -283,11 +195,11 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
       val plugin = findEnabledPlugin(knownExtensions.get(fileName).mapTo(HashSet()) { it.pluginIdString })
       if (plugin != null) {
         // Plugin supporting the exact file name is installed and enabled, no advertiser is needed
-        return NoSuggestions
+        return noSuggestions()
       }
 
       val pluginsForExactFileName = cache.getIfPresent(fileName)
-      if (pluginsForExactFileName is PluginAdvertisedByFileName && pluginsForExactFileName.plugins.isNotEmpty()) {
+      if (pluginsForExactFileName != null && pluginsForExactFileName.plugins.isNotEmpty()) {
         return pluginsForExactFileName
       }
       if (knownExtensions.get(fileName).isNotEmpty()) {
@@ -316,7 +228,7 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
         }
 
         // no extension and no plugins matching the exact name
-        return NoSuggestions
+        return noSuggestions()
       }
       return null
     }

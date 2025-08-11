@@ -22,7 +22,8 @@ public class PyImportElementStubImpl extends StubBase<PyImportElement> implement
   }
 
   @Override
-  public @Nullable QualifiedName getImportedQName() {
+  @Nullable
+  public QualifiedName getImportedQName() {
     return myImportedQName;
   }
 
@@ -33,9 +34,6 @@ public class PyImportElementStubImpl extends StubBase<PyImportElement> implement
 
   @Override
   public String toString() {
-    return "PyImportElementStubImpl{" +
-           "myImportedQName=" + myImportedQName +
-           ", myAsName='" + myAsName + '\'' +
-           '}';
+    return "PyImportElementStub(importedQName=" + myImportedQName + " asName=" + myAsName + ")";
   }
 }

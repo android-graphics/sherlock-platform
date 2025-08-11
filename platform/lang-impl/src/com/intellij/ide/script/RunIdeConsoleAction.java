@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.script;
 
 import com.intellij.execution.ExecutionBundle;
@@ -45,7 +45,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +62,6 @@ import java.util.Objects;
 /**
  * @author gregsh
  */
-@ApiStatus.Internal
 public final class RunIdeConsoleAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(RunIdeConsoleAction.class);
 
@@ -92,7 +90,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
   }
 
   static void chooseScriptEngineAndRun(@NotNull AnActionEvent e,
-                                       @NotNull List<IdeScriptEngineManager.EngineInfo> infos,
+                                       @NotNull List<? extends IdeScriptEngineManager.EngineInfo> infos,
                                        @NotNull Consumer<? super IdeScriptEngineManager.EngineInfo> onChosen) {
     if (infos.size() == 1) {
       onChosen.consume(infos.iterator().next());
@@ -204,7 +202,8 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     ensureOutputIsRedirected(engine, descriptor);
   }
 
-  private static @Nullable String getProfileText(@NotNull VirtualFile file) {
+  @Nullable
+  private static String getProfileText(@NotNull VirtualFile file) {
     try {
       VirtualFile folder = file.getParent();
       VirtualFile profileChild = folder == null ? null : folder.findChild(".profile." + file.getExtension());
@@ -215,7 +214,8 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     return null;
   }
 
-  private static @NotNull String getCommandText(@NotNull Project project, @NotNull Editor editor) {
+  @NotNull
+  private static String getCommandText(@NotNull Project project, @NotNull Editor editor) {
     TextRange selectedRange = EditorUtil.getSelectionInAnyMode(editor);
     Document document = editor.getDocument();
     if (!selectedRange.isEmpty()) {
@@ -251,9 +251,10 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     RunContentManager.getInstance(consoleView.getProject()).toFrontRunContent(executor, descriptor);
   }
 
-  private static @NotNull RunContentDescriptor getConsoleView(@NotNull Project project,
-                                                              @NotNull VirtualFile file,
-                                                              @NotNull IdeScriptEngineManager.EngineInfo engineInfo) {
+  @NotNull
+  private static RunContentDescriptor getConsoleView(@NotNull Project project,
+                                                     @NotNull VirtualFile file,
+                                                     @NotNull IdeScriptEngineManager.EngineInfo engineInfo) {
     for (RunContentDescriptor existing : RunContentManager.getInstance(project).getAllDescriptors()) {
       Content content = existing.getAttachedContent();
       if (content == null) continue;
@@ -366,7 +367,8 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
       myAnsiEscapeDecoder = new AnsiEscapeDecoder();
     }
 
-    public @Nullable RunContentDescriptor getDescriptor() {
+    @Nullable
+    public RunContentDescriptor getDescriptor() {
       return myDescriptor.get();
     }
 

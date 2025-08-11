@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -10,20 +10,19 @@ import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vcs.impl.CurrentRevisionProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-@ApiStatus.Internal
 public final class VcsCurrentRevisionProxy implements ByteBackedContentRevision {
-  private final @NotNull DiffProvider myDiffProvider;
-  private final @NotNull VirtualFile myFile;
-  private final @NotNull Project myProject;
-  private final @NotNull VcsKey myVcsKey;
+  @NotNull private final DiffProvider myDiffProvider;
+  @NotNull private final VirtualFile myFile;
+  @NotNull private final Project myProject;
+  @NotNull private final VcsKey myVcsKey;
 
-  public static @Nullable VcsCurrentRevisionProxy create(@NotNull VirtualFile file, @NotNull Project project) {
+  @Nullable
+  public static VcsCurrentRevisionProxy create(@NotNull VirtualFile file, @NotNull Project project) {
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
     if (vcs != null) {
       DiffProvider diffProvider = vcs.getDiffProvider();
@@ -45,7 +44,8 @@ public final class VcsCurrentRevisionProxy implements ByteBackedContentRevision 
   }
 
   @Override
-  public @Nullable String getContent() throws VcsException {
+  @Nullable
+  public String getContent() throws VcsException {
     return ContentRevisionCache.getAsString(getContentAsBytes(), getFile(), myFile.getCharset());
   }
 
@@ -55,12 +55,14 @@ public final class VcsCurrentRevisionProxy implements ByteBackedContentRevision 
   }
 
   @Override
-  public @NotNull FilePath getFile() {
+  @NotNull
+  public FilePath getFile() {
     return VcsUtil.getFilePath(myFile);
   }
 
   @Override
-  public @NotNull VcsRevisionNumber getRevisionNumber() {
+  @NotNull
+  public VcsRevisionNumber getRevisionNumber() {
     try {
       return getVcsRevision().first;
     }
@@ -69,7 +71,8 @@ public final class VcsCurrentRevisionProxy implements ByteBackedContentRevision 
     }
   }
 
-  private @NotNull Pair<VcsRevisionNumber, byte[]> getVcsRevision() throws VcsException {
+  @NotNull
+  private Pair<VcsRevisionNumber, byte[]> getVcsRevision() throws VcsException {
     try {
       return ContentRevisionCache.getOrLoadCurrentAsBytes(myProject, getFile(), myVcsKey,
                                                           new CurrentRevisionProvider() {
@@ -89,7 +92,8 @@ public final class VcsCurrentRevisionProxy implements ByteBackedContentRevision 
     }
   }
 
-  private @NotNull VcsRevisionNumber getCurrentRevisionNumber() throws VcsException {
+  @NotNull
+  private VcsRevisionNumber getCurrentRevisionNumber() throws VcsException {
     VcsRevisionNumber currentRevision = myDiffProvider.getCurrentRevision(myFile);
 
     if (currentRevision == null) {
@@ -99,7 +103,8 @@ public final class VcsCurrentRevisionProxy implements ByteBackedContentRevision 
     return currentRevision;
   }
 
-  private @NotNull Pair<VcsRevisionNumber, byte[]> loadContent() throws VcsException {
+  @NotNull
+  private Pair<VcsRevisionNumber, byte[]> loadContent() throws VcsException {
     VcsRevisionNumber currentRevision = getCurrentRevisionNumber();
     ContentRevision contentRevision = myDiffProvider.createFileContent(currentRevision, myFile);
 

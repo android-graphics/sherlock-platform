@@ -6,9 +6,13 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splittable
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.SquareStripeButton
@@ -171,7 +175,10 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
       (button.getComponent() as SquareStripeButton).setOrUpdateShowName(myCustomWidth > 0)
     }
 
+    val parent = myComponent.parent
+    parent.revalidate()
     myComponent.revalidate()
+    parent.repaint()
   }
 
   override fun asComponent(): Component {
@@ -183,9 +190,9 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
     return myComponent.parent
   }
 
-  override fun getMinProportion(first: Boolean): Float = 0f
+  override fun getMinProportion(first: Boolean) = 0f
 
-  override fun getOrientation(): Boolean = false
+  override fun getOrientation() = false
 
   override fun setOrientation(verticalSplit: Boolean) {
   }
@@ -196,8 +203,20 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
   }
 
   companion object {
+    private var myKeyListener: RegistryValueListener? = null
+
     fun enabled(): Boolean {
-      return true
+      if (myKeyListener == null) {
+        myKeyListener = object : RegistryValueListener {
+          override fun afterValueChanged(value: RegistryValue) {
+            if (!value.asBoolean()) {
+              setShowNames(false)
+            }
+          }
+        }
+        Registry.get("toolwindow.enable.show.names").addListener(myKeyListener!!, ApplicationManager.getApplication())
+      }
+      return Registry.`is`("toolwindow.enable.show.names", true)
     }
 
     fun isShowNames(): Boolean = enabled() && UISettings.getInstance().showToolWindowsNames

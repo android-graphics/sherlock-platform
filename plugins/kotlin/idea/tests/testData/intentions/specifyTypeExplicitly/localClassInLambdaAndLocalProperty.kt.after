@@ -1,5 +1,0 @@
-fun foo() {
-    class A
-    val a: () -> A = { A() }
-}
-// AFTER-WARNING: Variable 'a' is never used

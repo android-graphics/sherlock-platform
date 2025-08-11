@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.load.java.propertyNameByGetMethodName
@@ -26,7 +25,7 @@ import org.jetbrains.kotlin.nj2k.types.JKType
  * This conversion tries to merge sets of overloaded methods or constructors into a single method/constructor
  * with default parameters and `JvmOverloads` annotation.
  */
-class DefaultArgumentsConversion(context: ConverterContext) : RecursiveConversion(context) {
+class DefaultArgumentsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKClassBody) return recurse(element)

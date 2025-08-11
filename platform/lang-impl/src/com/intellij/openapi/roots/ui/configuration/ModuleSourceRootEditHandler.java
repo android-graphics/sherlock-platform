@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -28,7 +28,8 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
     myRootType = rootType;
   }
 
-  public static @Nullable <P extends JpsElement> ModuleSourceRootEditHandler<P> getEditHandler(@NotNull JpsModuleSourceRootType<P> type) {
+  @Nullable
+  public static <P extends JpsElement> ModuleSourceRootEditHandler<P> getEditHandler(@NotNull JpsModuleSourceRootType<P> type) {
     //noinspection unchecked
     return EP_NAME.getExtensionList().stream().filter(editor -> editor.getRootType().equals(type)).findFirst().orElse(null);
   }
@@ -37,43 +38,60 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
     return myRootType;
   }
 
-  public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getRootTypeName();
+  @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
+  public abstract String getRootTypeName();
 
-  public @NotNull @Nls String getFullRootTypeName() {
+  @NotNull
+  public @Nls String getFullRootTypeName() {
     return ProjectBundle.message("module.paths.root.node", getRootTypeName());
   }
 
-  public abstract @NotNull Icon getRootIcon();
+  @NotNull
+  public abstract Icon getRootIcon();
 
-  public @NotNull Icon getRootIcon(@NotNull P properties) {
+  @NotNull
+  public Icon getRootIcon(@NotNull P properties) {
     return getRootIcon();
   }
 
-  public @Nullable Icon getRootFileLayerIcon() {
+  @Nullable
+  public Icon getRootFileLayerIcon() {
     return null;
   }
 
-  public abstract @Nullable Icon getFolderUnderRootIcon();
+  @Nullable
+  public abstract Icon getFolderUnderRootIcon();
 
-  public abstract @Nullable CustomShortcutSet getMarkRootShortcutSet();
+  @Nullable
+  public abstract CustomShortcutSet getMarkRootShortcutSet();
 
-  public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getRootsGroupTitle();
+  @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
+  public abstract String getRootsGroupTitle();
 
-  public abstract @NotNull Color getRootsGroupColor();
+  @NotNull
+  public abstract Color getRootsGroupColor();
 
 
-  public @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getMarkRootButtonText() {
+  @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
+  public String getMarkRootButtonText() {
     return getRootTypeName();
   }
 
-  public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getUnmarkRootButtonText();
+  @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
+  public abstract String getUnmarkRootButtonText();
 
-  public @Nullable @NlsSafe String getPropertiesString(@NotNull P properties) {
+  @Nullable
+  public @NlsSafe String getPropertiesString(@NotNull P properties) {
     return null;
   }
 
-  public @Nullable JComponent createPropertiesEditor(@NotNull SourceFolder folder, @NotNull JComponent parentComponent,
-                                                     @NotNull ContentRootPanel.ActionCallback callback) {
+  @Nullable
+  public JComponent createPropertiesEditor(@NotNull SourceFolder folder, @NotNull JComponent parentComponent,
+                                           @NotNull ContentRootPanel.ActionCallback callback) {
     return null;
   }
 }

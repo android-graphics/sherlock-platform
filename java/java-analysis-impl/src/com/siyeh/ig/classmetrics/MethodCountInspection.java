@@ -41,7 +41,8 @@ public final class MethodCountInspection extends BaseInspection {
   public boolean ignoreOverridingMethods = false;
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "ClassWithTooManyMethods";
   }
 
@@ -56,7 +57,8 @@ public final class MethodCountInspection extends BaseInspection {
 
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final Integer count = (Integer)infos[0];
     return InspectionGadgetsBundle.message("too.many.methods.problem.descriptor", count);
   }

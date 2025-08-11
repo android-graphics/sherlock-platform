@@ -41,7 +41,9 @@ public abstract class BaseInspection extends LocalInspectionTool {
 
   public @NotNull Set<String> explicitlyEnabledFileTypes = new HashSet<>();
 
-  protected @Nullable @InspectionMessage String buildErrorString(Object... args) {
+  @Nullable
+  @InspectionMessage
+  protected String buildErrorString(Object... args) {
     return null;
   }
 
@@ -61,18 +63,21 @@ public abstract class BaseInspection extends LocalInspectionTool {
       "fileType", GrInspectionUIUtil.getFileTypeController(explicitlyEnabledFileTypes));
   }
 
-  protected @NotNull OptPane getGroovyOptionsPane() {
+  @NotNull
+  protected OptPane getGroovyOptionsPane() {
     return OptPane.EMPTY;
   }
 
-  protected @Nullable LocalQuickFix buildFix(@NotNull PsiElement location) {
+  @Nullable
+  protected LocalQuickFix buildFix(@NotNull PsiElement location) {
     return null;
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                                 boolean isOnTheFly,
-                                                 @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                        boolean isOnTheFly,
+                                        @NotNull LocalInspectionToolSession session) {
     BaseInspectionVisitor visitor = buildVisitor();
     visitor.initialize(this, holder, isOnTheFly);
     return new GroovyPsiElementVisitor(visitor) {
@@ -85,9 +90,11 @@ public abstract class BaseInspection extends LocalInspectionTool {
     };
   }
 
-  protected abstract @NotNull BaseInspectionVisitor buildVisitor();
+  @NotNull
+  protected abstract BaseInspectionVisitor buildVisitor();
 
-  public static @Nls(capitalization = Nls.Capitalization.Sentence) String getProbableBugs() {
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  public static String getProbableBugs() {
     return GroovyBundle.message("inspection.bugs");
   }
 }

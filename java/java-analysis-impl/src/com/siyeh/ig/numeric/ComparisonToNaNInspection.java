@@ -35,7 +35,8 @@ import org.jetbrains.annotations.NotNull;
 public final class ComparisonToNaNInspection extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final PsiBinaryExpression comparison = (PsiBinaryExpression)infos[0];
     final IElementType tokenType = comparison.getOperationTokenType();
     if (tokenType.equals(JavaTokenType.NE)) {
@@ -60,7 +61,8 @@ public final class ComparisonToNaNInspection extends BaseInspection {
   private static class ComparisonToNaNFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "isNaN()");
     }
 
@@ -97,7 +99,7 @@ public final class ComparisonToNaNInspection extends BaseInspection {
       else {
         negationText = "!";
       }
-      final @NonNls String newExpressionText = negationText + typeText + ".isNaN(" + operandText + ')';
+      @NonNls final String newExpressionText = negationText + typeText + ".isNaN(" + operandText + ')';
 
       PsiReplacementUtil.replaceExpression(comparison, newExpressionText, commentTracker);
     }
@@ -137,7 +139,7 @@ public final class ComparisonToNaNInspection extends BaseInspection {
     if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
       return false;
     }
-    final @NonNls String referenceName = referenceExpression.getReferenceName();
+    @NonNls final String referenceName = referenceExpression.getReferenceName();
     if (!"NaN".equals(referenceName)) {
       return false;
     }

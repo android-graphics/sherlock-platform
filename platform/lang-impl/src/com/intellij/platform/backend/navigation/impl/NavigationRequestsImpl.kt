@@ -1,10 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.backend.navigation.impl
 
-import com.intellij.codeInsight.multiverse.CodeInsightContext
-import com.intellij.codeInsight.multiverse.CodeInsightContextManager
-import com.intellij.codeInsight.multiverse.anyContext
-import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
 import com.intellij.codeInsight.navigation.shouldOpenAsNative
 import com.intellij.ide.util.EditSourceUtil
 import com.intellij.openapi.editor.LazyRangeMarkerFactory
@@ -24,10 +20,6 @@ import com.intellij.util.concurrency.ThreadingAssertions
 
 private class NavigationRequestsImpl : NavigationRequests {
   override fun sourceNavigationRequest(project: Project, file: VirtualFile, offset: Int, elementRange: TextRange?): NavigationRequest? {
-    return sharedSourceNavigationRequest(project, file, anyContext(), offset, elementRange)
-  }
-
-  override fun sharedSourceNavigationRequest(project: Project, file: VirtualFile, context: CodeInsightContext, offset: Int, elementRange: TextRange?): NavigationRequest? {
     ThreadingAssertions.assertReadAccess()
     ThreadingAssertions.assertBackgroundThread()
     if (!file.isValid) {
@@ -46,8 +38,7 @@ private class NavigationRequestsImpl : NavigationRequests {
     else {
       null
     }
-
-    return SharedSourceNavigationRequest(file, context, offsetMarker, elementRangeMarker)
+    return SourceNavigationRequest(file, offsetMarker, elementRangeMarker)
   }
 
   override fun directoryNavigationRequest(directory: PsiDirectory): NavigationRequest? {
@@ -88,32 +79,12 @@ private class NavigationRequestsImpl : NavigationRequests {
         DirectoryNavigationRequest(navigationElement)
       }
       else -> {
-        val project = element.project
-        if (isSharedSourceSupportEnabled(project)) {
-          val navigationFileViewProvider = navigationElement.containingFile?.viewProvider
-
-          val context = if (isSharedSourceSupportEnabled(project) && navigationFileViewProvider != null) {
-            val contextManager = CodeInsightContextManager.getInstance(navigationElement.project)
-            contextManager.getCodeInsightContext(navigationFileViewProvider)
-          }
-          else anyContext()
-
-          sharedSourceNavigationRequest(
-            project = project,
-            file = virtualFile,
-            context = context,
-            offset = navigationElement.textOffset, // this triggers decompiler if [virtualFile] corresponds to a .class file
-            elementRange = navigationElement.textRange,
-          )
-        }
-        else {
-          sourceNavigationRequest(
-            project = project,
-            file = virtualFile,
-            offset = navigationElement.textOffset, // this triggers decompiler if [virtualFile] corresponds to a .class file
-            elementRange = navigationElement.textRange,
-          )
-        }
+        sourceNavigationRequest(
+          project = navigationElement.project,
+          file = virtualFile,
+          offset = navigationElement.textOffset, // this triggers decompiler if [virtualFile] corresponds to a .class file
+          elementRange = navigationElement.textRange,
+        )
       }
     }
   }

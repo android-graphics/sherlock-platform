@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.externalSystem.JavaProjectData;
@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.model.project.ProjectSdkData;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
@@ -47,12 +46,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * @deprecated Use the open and link project utility function
- *
- * @see JavaGradleProjectImportBuilder
+ * @deprecated Use {@link JavaGradleProjectImportBuilder} instead
  */
 @Deprecated
-@ApiStatus.Internal
 public final class GradleProjectImportBuilder extends AbstractExternalProjectImportBuilder<ImportFromGradleControl> {
   private static final Logger LOG = Logger.getInstance(GradleProjectImportBuilder.class);
 
@@ -73,8 +69,9 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
              new Throwable());
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return GradleBundle.message("gradle.name");
   }
 
@@ -83,8 +80,9 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
     return GradleIcons.Gradle;
   }
 
+  @Nullable
   @Override
-  protected @Nullable Sdk resolveProjectJdk(@NotNull WizardContext context) {
+  protected Sdk resolveProjectJdk(@NotNull WizardContext context) {
     JavaSdk javaSdkType = JavaSdk.getInstance();
     ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
 
@@ -135,11 +133,11 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
   }
 
   @Override
-  protected ExternalProjectRefreshCallback createFinalImportCallback(final @NotNull Project project,
+  protected ExternalProjectRefreshCallback createFinalImportCallback(@NotNull final Project project,
                                                                      @NotNull ExternalProjectSettings projectSettings) {
     return new ExternalProjectRefreshCallback() {
       @Override
-      public void onSuccess(final @Nullable DataNode<ProjectData> externalProject) {
+      public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
         if (externalProject == null) return;
         Runnable selectDataTask = () -> {
           ExternalProjectDataSelectorDialog dialog = new ExternalProjectDataSelectorDialog(
@@ -199,23 +197,17 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
     if (javaProjectNode != null) {
       JavaProjectData data = javaProjectNode.getData();
       context.setCompilerOutputDirectory(data.getCompileOutputPath());
-    }
-
-    DataNode<ProjectSdkData> projectSdkNode = ExternalSystemApiUtil.find(node, ProjectSdkData.KEY);
-    if (projectSdkNode != null) {
-      ProjectSdkData data = projectSdkNode.getData();
-      String sdkName = data.getSdkName();
-      if (sdkName != null) {
-        Sdk sdk = ProjectJdkTable.getInstance().findJdk(sdkName);
-        if (sdk != null) {
-          context.setProjectJdk(sdk);
-        }
+      JavaSdkVersion version = data.getJdkVersion();
+      Sdk jdk = JavaSdkVersionUtil.findJdkByVersion(version);
+      if (jdk != null) {
+        context.setProjectJdk(jdk);
       }
     }
   }
 
+  @NotNull
   @Override
-  protected @NotNull File getExternalProjectConfigToUse(@NotNull File file) {
+  protected File getExternalProjectConfigToUse(@NotNull File file) {
     return file.isDirectory() ? file : file.getParentFile();
   }
 
@@ -224,8 +216,9 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
     return sdk == JavaSdk.getInstance();
   }
 
+  @Nullable
   @Override
-  public @Nullable Project createProject(String name, String path) {
+  public Project createProject(String name, String path) {
     return ExternalProjectsManagerImpl.setupCreatedProject(super.createProject(name, path));
   }
 

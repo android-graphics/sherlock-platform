@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.NlsContexts;
@@ -24,6 +23,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-public class CommittedChangeListPanel extends JPanel implements UiDataProvider {
+public class CommittedChangeListPanel extends JPanel implements DataProvider {
   private final Project myProject;
 
   private final JLabel myDescriptionLabel;
@@ -112,7 +112,8 @@ public class CommittedChangeListPanel extends JPanel implements UiDataProvider {
     myCommitMessageArea.setCaretPosition(0);
   }
 
-  private @NotNull @Nls String getChangelistCommentHtml() {
+  @NotNull
+  private @Nls String getChangelistCommentHtml() {
     return IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, myChangeList.getComment().trim());
   }
 
@@ -131,23 +132,33 @@ public class CommittedChangeListPanel extends JPanel implements UiDataProvider {
     myDescriptionLabel.setVisible(description != null);
   }
 
-  public @NotNull JComponent getPreferredFocusedComponent() {
+  @NotNull
+  public JComponent getPreferredFocusedComponent() {
     return myChangesBrowser.getPreferredFocusedComponent();
   }
 
-  public @NotNull CommittedChangesBrowser getChangesBrowser() {
+  @NotNull
+  public CommittedChangesBrowser getChangesBrowser() {
     return myChangesBrowser;
   }
 
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    AbstractVcs vcs = myChangeList.getVcs();
-    sink.set(VcsDataKeys.CHANGES, myChanges.toArray(Change.EMPTY_CHANGE_ARRAY));
-    sink.set(VcsDataKeys.VCS, vcs == null ? null : vcs.getKeyInstanceMethod());
-    sink.set(VcsDataKeys.CHANGE_LISTS, new ChangeList[]{myChangeList});
+  public Object getData(@NotNull @NonNls final String dataId) {
+    if (VcsDataKeys.CHANGES.is(dataId)) {
+      return myChanges.toArray(Change.EMPTY_CHANGE_ARRAY);
+    }
+    if (VcsDataKeys.VCS.is(dataId)) {
+      AbstractVcs vcs = myChangeList.getVcs();
+      return vcs == null ? null : vcs.getKeyInstanceMethod();
+    }
+    if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
+      return new ChangeList[]{myChangeList};
+    }
+    return null;
   }
 
-  public static @NotNull CommittedChangeListImpl createChangeList(@NotNull Collection<Change> changes) {
+  @NotNull
+  public static CommittedChangeListImpl createChangeList(@NotNull Collection<Change> changes) {
     return new CommittedChangeListImpl("", "", "", -1, new Date(0), changes);
   }
 
@@ -156,8 +167,9 @@ public class CommittedChangeListPanel extends JPanel implements UiDataProvider {
       super(project);
     }
 
+    @NotNull
     @Override
-    protected @NotNull List<AnAction> createPopupMenuActions() {
+    protected List<AnAction> createPopupMenuActions() {
       return ContainerUtil.append(
         super.createPopupMenuActions(),
         ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER)

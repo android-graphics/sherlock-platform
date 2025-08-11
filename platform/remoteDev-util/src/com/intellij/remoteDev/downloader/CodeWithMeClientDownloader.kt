@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
@@ -22,8 +21,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.RemoteDevUtilBundle
@@ -32,12 +29,13 @@ import com.intellij.remoteDev.util.*
 import com.intellij.util.PlatformUtils
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.EdtScheduler
+import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.io.BaseOutputReader
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpRequests.HttpStatusException
 import com.intellij.util.system.CpuArch
+import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.withFragment
 import com.intellij.util.withQuery
 import com.jetbrains.infra.pgpVerifier.JetBrainsPgpConstants
@@ -62,10 +60,10 @@ import java.nio.file.attribute.FileTime
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.*
 import kotlin.math.min
-import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Experimental
 object CodeWithMeClientDownloader {
@@ -76,26 +74,12 @@ object CodeWithMeClientDownloader {
 
   private val config get () = service<JetBrainsClientDownloaderConfigurationProvider>()
 
-  internal fun parseProductInfo(productInfoPath: Path): ProductInfo? {
-    if (!productInfoPath.exists()) {
-      LOG.warn("$productInfoPath does not exist")
-      return null
-    }
-    try {
-      return ProductInfo.fromJson(productInfoPath.readText())
-    }
-    catch (e: IOException) {
-      LOG.warn("Failed to parse $productInfoPath: $e", e)
-      return null
-    }
-  }
-
   private fun isJbrSymlink(file: Path): Boolean = file.name == "jbr" && isSymlink(file)
   private fun isSymlink(file: Path): Boolean = FileSystemUtil.getAttributes(file.toFile())?.isSymLink == true
 
   val cwmJbrManifestFilter: (Path) -> Boolean = { !it.isDirectory() || isSymlink(it) }
 
-  fun getJetBrainsClientManifestFilter(clientBuildNumber: BuildNumber): (Path) -> Boolean {
+  fun getJetBrainsClientManifestFilter(clientBuildNumber: String): (Path) -> Boolean {
     val universalFilter: (Path) -> Boolean = if (isClientWithBundledJre(clientBuildNumber)) {
       { !it.isDirectory() || isSymlink(it) }
     } else {
@@ -109,10 +93,8 @@ object CodeWithMeClientDownloader {
     }
   }
 
-  private val minimumClientBuildWithBundledJre = BuildNumber("", 223, 4374)
-  fun isClientWithBundledJre(clientBuildNumber: BuildNumber): Boolean {
-    return clientBuildNumber.isSnapshot || clientBuildNumber > minimumClientBuildWithBundledJre
-  }
+  private const val minimumClientBuildWithBundledJre = "223.4374"
+  fun isClientWithBundledJre(clientBuildNumber: String) = clientBuildNumber.contains("SNAPSHOT") || VersionComparatorUtil.compare(clientBuildNumber, minimumClientBuildWithBundledJre) >= 0
 
   @ApiStatus.Internal
   class DownloadableFileData(
@@ -158,27 +140,31 @@ object CodeWithMeClientDownloader {
     }
   }
 
-  private fun getClientDistributionName(clientBuildNumber: BuildNumber) = when {
-    clientBuildNumber.isSnapshot -> "JetBrainsClient"
-    clientBuildNumber < BuildNumber("", 211, 6167) -> "IntelliJClient"
-    clientBuildNumber < BuildNumber("", 213, 5318) -> "CodeWithMeGuest"
+  private fun getClientDistributionName(clientBuildVersion: String) = when {
+    clientBuildVersion.contains("SNAPSHOT") -> "JetBrainsClient"
+    VersionComparatorUtil.compare(clientBuildVersion, "211.6167") < 0 -> "IntelliJClient"
+    VersionComparatorUtil.compare(clientBuildVersion, "213.5318") < 0 -> "CodeWithMeGuest"
     else -> "JetBrainsClient"
   }
 
-  fun createSessionInfo(hostBuildNumber: BuildNumber, jreBuild: String?, unattendedMode: Boolean): JetBrainsClientDownloadInfo {
-    val isSnapshot = hostBuildNumber.isSnapshot
+  fun createSessionInfo(clientBuildVersion: String, jreBuild: String?, unattendedMode: Boolean): JetBrainsClientDownloadInfo {
+    val buildNumber = requireNotNull(BuildNumber.fromStringOrNull(clientBuildVersion)) { "Invalid build version: $clientBuildVersion" }
+
+    val isSnapshot = buildNumber.isSnapshot
     if (isSnapshot) {
       LOG.warn("Thin client download from sources may result in failure due to different sources on host and client, " +
                "don't forget to update your locally built archive")
     }
 
-    val bundledJre = isClientWithBundledJre(hostBuildNumber)
+    val bundledJre = isClientWithBundledJre(clientBuildVersion)
     val jreBuildToDownload = if (bundledJre) {
       null
     }
     else {
-      jreBuild ?: error("JRE build number must be passed for client build number < ${hostBuildNumber.asStringWithoutProductCode()}")
+      jreBuild ?: error("JRE build number must be passed for client build number < $clientBuildVersion")
     }
+
+    val hostBuildNumber = buildNumber.asStringWithoutProductCode()
 
     val platformSuffix = if (jreBuildToDownload != null) when {
       SystemInfo.isLinux && CpuArch.isIntel64() -> "-no-jbr.tar.gz"
@@ -198,10 +184,10 @@ object CodeWithMeClientDownloader {
       else -> null
     } ?: error("Current platform is not supported: OS ${SystemInfo.OS_NAME} ARCH ${SystemInfo.OS_ARCH}")
 
-    val clientDistributionName = getClientDistributionName(hostBuildNumber)
+    val clientDistributionName = getClientDistributionName(clientBuildVersion)
 
     val clientBuildNumber = if (isSnapshot && config.downloadLatestBuildFromCDNForSnapshotHost) getLatestBuild(hostBuildNumber) else hostBuildNumber
-    val clientDownloadUrl = "${config.clientDownloadUrl.toString().trimEnd('/')}/$clientDistributionName-${clientBuildNumber.asStringWithoutProductCode()}$platformSuffix"
+    val clientDownloadUrl = "${config.clientDownloadUrl.toString().trimEnd('/')}/$clientDistributionName-$clientBuildNumber$platformSuffix"
 
     val jreDownloadUrl = if (jreBuildToDownload != null) {
       val platformString = when {
@@ -240,7 +226,6 @@ object CodeWithMeClientDownloader {
 
     val sessionInfo = JetBrainsClientDownloadInfo(
       hostBuildNumber = hostBuildNumber,
-      clientBuildNumber = clientBuildNumber,
       compatibleClientUrl = clientDownloadUrl,
       compatibleJreUrl = jreDownloadUrl,
       downloadPgpPublicKeyUrl = pgpPublicKeyUrl
@@ -250,24 +235,16 @@ object CodeWithMeClientDownloader {
     return sessionInfo
   }
 
-  private fun getLatestBuild(hostBuildNumber: BuildNumber): BuildNumber {
-    val latestBuildTxtFileName = "${hostBuildNumber.baselineVersion}-LAST-BUILD.txt"
-    val latestBuildTxtUri = URI("${config.clientDownloadUrl.toASCIIString().trimEnd('/')}/$latestBuildTxtFileName")
+  private fun getLatestBuild(hostBuildNumber: String): String {
+    val majorVersion = hostBuildNumber.substringBefore('.')
+    val latestBuildTxtFileName = "$majorVersion-LAST-BUILD.txt"
+    val latestBuildTxtUri = "${config.clientDownloadUrl.toASCIIString().trimEnd('/')}/$latestBuildTxtFileName"
 
     val tempFile = Files.createTempFile(latestBuildTxtFileName, "")
     return try {
-      if (application.isDispatchThread) {
-        runWithModalProgressBlocking(ModalTaskOwner.guess(), RemoteDevUtilBundle.getMessage("launcher.get.client.info")) {
-          coroutineToIndicator {
-            downloadWithRetries(latestBuildTxtUri, tempFile, ProgressManager.getInstance().progressIndicator)
-          }
-        }
+      downloadWithRetries(URI(latestBuildTxtUri), tempFile, EmptyProgressIndicator()).let {
+        tempFile.readText().trim()
       }
-      else {
-        downloadWithRetries(latestBuildTxtUri, tempFile, EmptyProgressIndicator())
-      }
-      val buildNumberString = tempFile.readText().trim()
-      BuildNumber.fromStringOrNull(buildNumberString) ?: error("Invalid build number: $buildNumberString")
     }
     finally {
       Files.deleteIfExists(tempFile)
@@ -276,24 +253,13 @@ object CodeWithMeClientDownloader {
 
   private val currentlyDownloading = ConcurrentHashMap<Path, CompletableFuture<Boolean>>()
 
-  @Deprecated("Use downloadFrontend() instead")
-  fun downloadClientAndJdk(clientBuildVersion: String, progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
-    val clientBuildNumber = BuildNumber.fromStringOrNull(clientBuildVersion) ?: return null
-    val installation = downloadFrontend(clientBuildNumber, progressIndicator) ?: return null
-    return ExtractedJetBrainsClientData(installation.installationHome, (installation as? StandaloneFrontendInstallation)?.jreDir, 
-                                        installation.buildNumber.asStringWithoutProductCode()) 
-  }
-  
   @ApiStatus.Experimental
-  fun downloadFrontend(clientBuildNumber: BuildNumber, progressIndicator: ProgressIndicator): FrontendInstallation? {
+  fun downloadClientAndJdk(clientBuildVersion: String,
+                           progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
-    val customSnapshotInstallation = createCustomFrontendSnapshotInstallation(clientBuildNumber)
-    if (customSnapshotInstallation != null) {
-      return customSnapshotInstallation
-    }
 
     val jdkBuildProgressIndicator = progressIndicator.createSubProgress(0.1)
-    val jdkBuild = if (isClientWithBundledJre(clientBuildNumber)) {
+    val jdkBuild = if (isClientWithBundledJre(clientBuildVersion)) {
       jdkBuildProgressIndicator.fraction = 1.0
       null
     } else {
@@ -301,8 +267,8 @@ object CodeWithMeClientDownloader {
       LOG.info("Downloading Thin Client jdk-build.txt")
       jdkBuildProgressIndicator.text = RemoteDevUtilBundle.message("thinClientDownloader.checking")
 
-      val clientDistributionName = getClientDistributionName(clientBuildNumber)
-      val clientJdkDownloadUrl = "${config.clientDownloadUrl}$clientDistributionName-${clientBuildNumber.asStringWithoutProductCode()}-jdk-build.txt"
+      val clientDistributionName = getClientDistributionName(clientBuildVersion)
+      val clientJdkDownloadUrl = "${config.clientDownloadUrl}$clientDistributionName-$clientBuildVersion-jdk-build.txt"
       LOG.info("Downloading from $clientJdkDownloadUrl")
 
       val tempFile = Files.createTempFile("jdk-build", "txt")
@@ -316,12 +282,12 @@ object CodeWithMeClientDownloader {
       }
     }
 
-    val sessionInfo = createSessionInfo(clientBuildNumber, jdkBuild, true)
-    return downloadFrontendAndJdk(sessionInfo, progressIndicator.createSubProgress(0.9))
+    val sessionInfo = createSessionInfo(clientBuildVersion, jdkBuild, true)
+    return downloadClientAndJdk(sessionInfo, progressIndicator.createSubProgress(0.9))
   }
 
   /**
-   * @param clientBuildNumber build number without product code
+   * @param clientBuildVersion format: 213.1337[.23]
    * @param jreBuild format: 11_0_11b1536.1
    * where 11_0_11 is jdk version, b1536.1 is the build version
    * @returns Pair(path/to/thin/client, path/to/jre)
@@ -329,60 +295,60 @@ object CodeWithMeClientDownloader {
    * Update this method (any jdk-related stuff) together with:
    *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
    */
-  fun downloadFrontendAndJdk(clientBuildNumber: BuildNumber,
-                             jreBuild: String?,
-                             progressIndicator: ProgressIndicator): FrontendInstallation {
+  fun downloadClientAndJdk(clientBuildVersion: String,
+                           jreBuild: String?,
+                           progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
-    val sessionInfo = createSessionInfo(clientBuildNumber, jreBuild, true)
-    return downloadFrontendAndJdk(sessionInfo, progressIndicator)
+    val sessionInfo = createSessionInfo(clientBuildVersion, jreBuild, true)
+    return downloadClientAndJdk(sessionInfo, progressIndicator)
   }
 
   fun isClientDownloaded(
-    clientBuildNumber: BuildNumber,
+    clientBuildVersion: String,
   ): Boolean {
-    val clientUrl = createSessionInfo(clientBuildNumber, null, true).compatibleClientUrl
+    val clientUrl = createSessionInfo(clientBuildVersion, null, true).compatibleClientUrl
     val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
     val guestData = DownloadableFileData.build(
       url = URI.create(clientUrl),
       tempDir = tempDir,
       cachesDir = config.clientCachesDir,
-      includeInManifest = getJetBrainsClientManifestFilter(clientBuildNumber),
+      includeInManifest = getJetBrainsClientManifestFilter(clientBuildVersion),
     )
     return isAlreadyDownloaded(guestData)
   }
 
-  fun extractedClientData(clientBuildNumber: BuildNumber): StandaloneFrontendInstallation? {
-    if (!isClientDownloaded(clientBuildNumber)) {
+  fun extractedClientData(clientBuildVersion: String): ExtractedJetBrainsClientData? {
+    if (!isClientDownloaded(clientBuildVersion)) {
       return null
     }
-    val clientUrl = createSessionInfo(clientBuildNumber, null, true).compatibleClientUrl
+    val clientUrl = createSessionInfo(clientBuildVersion, null, true).compatibleClientUrl
     val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
     val guestData = DownloadableFileData.build(
       url = URI.create(clientUrl),
       tempDir = tempDir,
       cachesDir = config.clientCachesDir,
-      includeInManifest = getJetBrainsClientManifestFilter(clientBuildNumber),
+      includeInManifest = getJetBrainsClientManifestFilter(clientBuildVersion),
     )
-    return StandaloneFrontendInstallation(installationHome = guestData.targetPath, jreDir = null, buildNumber = clientBuildNumber)
+    return ExtractedJetBrainsClientData(clientDir = guestData.targetPath, jreDir = null, version = clientBuildVersion)
   }
 
 
-  suspend fun downloadFrontendAndJdk(sessionInfoResponse: JetBrainsClientDownloadInfo): FrontendInstallation {
+  suspend fun downloadClientAndJdk(sessionInfoResponse: JetBrainsClientDownloadInfo): ExtractedJetBrainsClientData {
     return withProgressText(RemoteDevUtilBundle.message("launcher.get.client.info")) {
       coroutineToIndicator {
-        downloadFrontendAndJdk(sessionInfoResponse, ProgressManager.getInstance().progressIndicator)
+        downloadClientAndJdk(sessionInfoResponse, ProgressManager.getInstance().progressIndicator)
       }
     }
   }
 
-  fun downloadFrontendAndJdk(sessionInfoResponse: JetBrainsClientDownloadInfo,
-                             progressIndicator: ProgressIndicator): FrontendInstallation {
+  fun downloadClientAndJdk(sessionInfoResponse: JetBrainsClientDownloadInfo,
+                           progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
-    val embeddedClientLauncher = createEmbeddedClientLauncherIfAvailable(sessionInfoResponse.clientBuildNumber)
+    val embeddedClientLauncher = createEmbeddedClientLauncherIfAvailable(sessionInfoResponse.hostBuildNumber)
     if (embeddedClientLauncher != null) {
-      return EmbeddedFrontendInstallation(embeddedClientLauncher)
+      return ExtractedJetBrainsClientData(Path(PathManager.getHomePath()), null, sessionInfoResponse.hostBuildNumber)
     }
 
     val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
@@ -393,7 +359,7 @@ object CodeWithMeClientDownloader {
       url = clientUrl,
       tempDir = tempDir,
       cachesDir = config.clientCachesDir,
-      includeInManifest = getJetBrainsClientManifestFilter(sessionInfoResponse.clientBuildNumber),
+      includeInManifest = getJetBrainsClientManifestFilter(sessionInfoResponse.hostBuildNumber),
     )
 
     val jdkUrl = sessionInfoResponse.compatibleJreUrl?.let { URI(it) }
@@ -561,7 +527,7 @@ object CodeWithMeClientDownloader {
       if (!guestSucceeded || !jdkSucceeded) error("Guest or jdk was not downloaded")
 
       LOG.info("Download of guest and jdk succeeded")
-      return StandaloneFrontendInstallation(installationHome = guestData.targetPath, jreDir = jdkData?.targetPath, buildNumber = sessionInfoResponse.clientBuildNumber)
+      return ExtractedJetBrainsClientData(clientDir = guestData.targetPath, jreDir = jdkData?.targetPath, version = sessionInfoResponse.hostBuildNumber)
     }
     catch(e: ProcessCanceledException) {
       LOG.info("Download was canceled")
@@ -577,9 +543,9 @@ object CodeWithMeClientDownloader {
     }
   }
 
-  internal fun createEmbeddedClientLauncherIfAvailable(expectedClientBuildNumber: BuildNumber): EmbeddedClientLauncher? {
+  internal fun createEmbeddedClientLauncherIfAvailable(expectedClientBuildNumber: String): EmbeddedClientLauncher? {
     if (Registry.`is`("rdct.use.embedded.client") || Registry.`is`("rdct.always.use.embedded.client")) {
-      val hostBuildNumberString = expectedClientBuildNumber.withoutProductCode()
+      val hostBuildNumberString = BuildNumber.fromStringOrNull(expectedClientBuildNumber)?.withoutProductCode()
       val currentIdeBuildNumber = ApplicationInfo.getInstance().build.withoutProductCode()
       LOG.debug("Host build number: $hostBuildNumberString, current IDE build number: $currentIdeBuildNumber")
       if (hostBuildNumberString == currentIdeBuildNumber || Registry.`is`("rdct.always.use.embedded.client")) {
@@ -594,13 +560,6 @@ object CodeWithMeClientDownloader {
       }
     }
     return null
-  }
-  
-  internal fun createCustomFrontendSnapshotInstallation(hostBuildNumber: BuildNumber): FrontendInstallation? {
-    if (!hostBuildNumber.isSnapshot) return null
-    val path = Registry.stringValue("rdct.path.to.custom.snapshot.frontend.installation").trim()
-    if (path.isEmpty()) return null
-    return StandaloneFrontendInstallation(Path(path), hostBuildNumber, jreDir = null)
   }
 
   private fun isAlreadyDownloaded(fileData: DownloadableFileData): Boolean {
@@ -680,23 +639,29 @@ object CodeWithMeClientDownloader {
   }
 
   private fun findLauncher(guestRoot: Path, launcherNames: List<String>): JetBrainsClientLauncherData {
-    val launcherPath = findInInstallation(guestRoot, launcherNames.map { Path.of("bin", it) })
-    return JetBrainsClientLauncherData(launcherPath, listOf(launcherPath.toString()))
+    val launcher = launcherNames.firstNotNullOfOrNull {
+      val launcherRelative = Path.of("bin", it)
+      val launcher = findLauncher(guestRoot, launcherRelative)
+      launcher?.let {
+        JetBrainsClientLauncherData(launcher, listOf(launcher.toString()))
+      }
+    }
+
+    return launcher ?: error("Could not find launchers (${launcherNames.joinToString { "'$it'" }}) under $guestRoot")
   }
 
-  private fun findInInstallation(guestRoot: Path, relativePathsToFind: List<Path>): Path {
+  private fun findLauncher(guestRoot: Path, launcherName: Path): Path? {
     // maxDepth 2 for macOS's .app/Contents
     Files.walk(guestRoot, 2).use {
       for (dir in it) {
-        for (fileToFind in relativePathsToFind) {
-          val candidate = dir.resolve(fileToFind)
-          if (candidate.exists()) {
-            return candidate
-          }
+        val candidate = dir.resolve(launcherName)
+        if (candidate.exists()) {
+          return candidate
         }
       }
     }
-    return error("Could not find any of (${relativePathsToFind.joinToString { "'$it'" }}) under $guestRoot")
+
+    return null
   }
 
   private fun findLauncherUnderCwmGuestRoot(guestRoot: Path): JetBrainsClientLauncherData {
@@ -720,10 +685,7 @@ object CodeWithMeClientDownloader {
         }
 
         val shLauncherNames = listOf("jetbrains_client.sh", "cwm_guest.sh", "intellij_client.sh")
-        val eligibleLaunchers = 
-          if (Registry.`is`("rdct.use.native.client.launcher.on.linux")) listOf("jetbrains_client") + shLauncherNames
-          else shLauncherNames
-        return findLauncher(guestRoot, eligibleLaunchers)
+        return findLauncher(guestRoot, shLauncherNames)
       }
 
       else -> error("Unsupported OS: ${SystemInfo.OS_NAME}")
@@ -733,69 +695,49 @@ object CodeWithMeClientDownloader {
   internal fun createLauncherDataForMacOs(app: Path) =
     JetBrainsClientLauncherData(app, listOf("open", "-n", "-W", "-a", app.pathString, "--args"))
 
-  fun processBeforeRunHooks(frontendInstallation: FrontendInstallation) {
-    val productInfoRelPath = listOf(Path.of(ApplicationEx.PRODUCT_INFO_FILE_NAME), Path.of(ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC))
-    val productInfoPath = findInInstallation(frontendInstallation.installationHome, productInfoRelPath)
-    val productInfo = checkNotNull(parseProductInfo(productInfoPath))
-    val configPaths = FrontendConfigPaths.fromProductInfo(productInfo)
-    ConfigureClientHook.EP.extensionList.forEach { e -> e.beforeRun(frontendInstallation, productInfo, configPaths) }
-  }
-
   /**
    * Launches client and returns process's lifetime (which will be terminated on process exit)
    */
-  fun runFrontendProcess(
+  fun runCwmGuestProcessFromDownload(
     lifetime: Lifetime,
     url: String,
-    frontendInstallation: FrontendInstallation,
-    enableBeforeRunHooks: Boolean = true,
+    extractedJetBrainsClientData: ExtractedJetBrainsClientData
   ): Lifetime {
-    if (enableBeforeRunHooks) {
-      try {
-        processBeforeRunHooks(frontendInstallation)
-      }
-      catch (e: Throwable) {
-        LOG.error("Could not process hooks before launching client $frontendInstallation", e)
+    if (extractedJetBrainsClientData.clientDir == Path(PathManager.getHomePath())) {
+      //todo: refactor this code to generalize ExtractedJetBrainsClientData and pass EmbeddedClientLauncher instance here explicitly
+      return EmbeddedClientLauncher.create()!!.launch(url, lifetime, NotificationBasedEmbeddedClientErrorReporter(null))
+    }
+    
+    val launcherData = findLauncherUnderCwmGuestRoot(extractedJetBrainsClientData.clientDir)
+
+    if (extractedJetBrainsClientData.jreDir != null) {
+      createSymlinkToJdkFromGuest(extractedJetBrainsClientData.clientDir, extractedJetBrainsClientData.jreDir)
+    }
+
+    // Update mtime on JRE & CWM Guest roots. The cleanup process will use it later.
+    if (config.clientVersionManagementEnabled) {
+      listOfNotNull(extractedJetBrainsClientData.clientDir, extractedJetBrainsClientData.jreDir).forEach { path ->
+        Files.setLastModifiedTime(path, FileTime.fromMillis(System.currentTimeMillis()))
       }
     }
-    when (frontendInstallation) {
-      is EmbeddedFrontendInstallation -> {
-        return frontendInstallation.frontendLauncher.launch(url, lifetime, NotificationBasedEmbeddedClientErrorReporter(null))
-      }
-      is StandaloneFrontendInstallation -> {
-        val launcherData = findLauncherUnderCwmGuestRoot(frontendInstallation.installationHome)
 
-        if (frontendInstallation.jreDir != null) {
-          createSymlinkToJdkFromGuest(frontendInstallation.installationHome, frontendInstallation.jreDir)
-        }
-
-        // Update mtime on JRE & CWM Guest roots. The cleanup process will use it later.
-        if (config.clientVersionManagementEnabled) {
-          listOfNotNull(frontendInstallation.installationHome, frontendInstallation.jreDir).forEach { path ->
-            Files.setLastModifiedTime(path, FileTime.fromMillis(System.currentTimeMillis()))
-          }
-        }
-
-        return runJetBrainsClientProcess(launcherData,
-                                         workingDirectory = frontendInstallation.installationHome,
-                                         clientBuild = frontendInstallation.buildNumber,
-                                         url, lifetime)
-
-      }
-    }
+    return runJetBrainsClientProcess(launcherData, 
+                                     workingDirectory = extractedJetBrainsClientData.clientDir,
+                                     clientVersion = extractedJetBrainsClientData.version, 
+                                     url, lifetime)
   }
 
   internal fun runJetBrainsClientProcess(launcherData: JetBrainsClientLauncherData,
                                          workingDirectory: Path,
-                                         clientBuild: BuildNumber,
+                                         clientVersion: String,
                                          url: String,
                                          lifetime: Lifetime): Lifetime {
-    return runJetBrainsClientProcess(launcherData, workingDirectory, clientBuild, url, emptyList(), lifetime)
+    return runJetBrainsClientProcess(launcherData, workingDirectory, clientVersion, url, emptyList(),  lifetime)
   }
 
   internal fun runJetBrainsClientProcess(launcherData: JetBrainsClientLauncherData,
                                          workingDirectory: Path,
-                                         clientBuild: BuildNumber,
+                                         clientVersion: String,
                                          url: String,
                                          extraArguments: List<String>,
                                          lifetime: Lifetime): Lifetime {
@@ -804,9 +746,8 @@ object CodeWithMeClientDownloader {
 
     val vmOptionsFile = if (SystemInfoRt.isMac) {
       // macOS stores vmoptions file inside .app file – we can't edit it
-      // TODO it's incorrect
       Paths.get(
-        PathManager.getDefaultConfigPathFor(PlatformUtils.JETBRAINS_CLIENT_PREFIX + clientBuild.asStringWithoutProductCode()),
+        PathManager.getDefaultConfigPathFor(PlatformUtils.JETBRAINS_CLIENT_PREFIX + clientVersion),
         "jetbrains_client.vmoptions"
       )
     } else if (SystemInfoRt.isWindows) launcherData.executable.resolveSibling("jetbrains_client64.exe.vmoptions")
@@ -814,7 +755,7 @@ object CodeWithMeClientDownloader {
     service<JetBrainsClientDownloaderConfigurationProvider>().patchVmOptions(vmOptionsFile, URI(url))
 
     val clientEnvironment = mutableMapOf<String, String>()
-    val separateConfigOption = ClientVersionUtil.computeSeparateConfigEnvVariableValue(clientBuild)
+    val separateConfigOption = ClientVersionUtil.computeSeparateConfigEnvVariableValue(clientVersion)
     if (separateConfigOption != null) {
       clientEnvironment["JBC_SEPARATE_CONFIG"] = separateConfigOption
     }
@@ -893,7 +834,7 @@ object CodeWithMeClientDownloader {
               if ((System.currentTimeMillis() - lastProcessStartTime) < 10_000 && lifetime.isAlive) {
                 if (attemptCount > 0) {
                   LOG.info("Previous attempt to start guest process failed, will try again in one second")
-                  EdtScheduler.getInstance().schedule(1.seconds, ModalityState.any()) { doRunProcess() }
+                  EdtScheduledExecutorService.getInstance().schedule({ doRunProcess() }, ModalityState.any(), 1, TimeUnit.SECONDS)
                 }
                 else {
                   LOG.warn("Running client process failed after specified number of attempts")
@@ -1002,8 +943,11 @@ object CodeWithMeClientDownloader {
     return jbrDirectory
   }
 
-  fun versionsMatch(hostBuildNumber: BuildNumber, localBuildNumber: BuildNumber): Boolean {
+  fun versionsMatch(hostBuildNumberString: String, localBuildNumberString: String): Boolean {
     try {
+      val hostBuildNumber = BuildNumber.fromString(hostBuildNumberString)!!
+      val localBuildNumber = BuildNumber.fromString(localBuildNumberString)!!
+
       // Any guest in that branch compatible with SNAPSHOT version (it's used by IDEA developers mostly)
       if ((localBuildNumber.isSnapshot || hostBuildNumber.isSnapshot) && hostBuildNumber.baselineVersion == localBuildNumber.baselineVersion) {
         return true
@@ -1012,7 +956,7 @@ object CodeWithMeClientDownloader {
       return hostBuildNumber.asStringWithoutProductCode() == localBuildNumber.asStringWithoutProductCode()
     }
     catch (t: Throwable) {
-      LOG.error("Error comparing versions $hostBuildNumber and $localBuildNumber: ${t.message}", t)
+      LOG.error("Error comparing versions $hostBuildNumberString and $localBuildNumberString: ${t.message}", t)
       return false
     }
   }

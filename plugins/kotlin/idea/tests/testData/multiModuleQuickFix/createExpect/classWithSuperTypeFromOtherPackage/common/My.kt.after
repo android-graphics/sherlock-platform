@@ -1,5 +1,5 @@
 // My: to be implemented
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 package my
 
 import other.Another

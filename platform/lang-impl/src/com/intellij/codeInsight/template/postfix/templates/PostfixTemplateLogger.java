@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-final class PostfixTemplateLogger extends CounterUsagesCollector {
+public final class PostfixTemplateLogger extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("completion.postfix", 59);
   private static final @NonNls String CUSTOM = "custom";
   private static final @NonNls String NO_PROVIDER = "no.provider";
@@ -37,7 +37,7 @@ final class PostfixTemplateLogger extends CounterUsagesCollector {
     return GROUP;
   }
 
-  static void log(final @NotNull PostfixTemplate template, final @NotNull PsiElement context) {
+  static void log(@NotNull final PostfixTemplate template, @NotNull final PsiElement context) {
     final ArrayList<EventPair<?>> events = new ArrayList<>(4);
     events.add(LANGUAGE.with(context.getLanguage()));
     if (template.isBuiltin()) {
@@ -54,9 +54,10 @@ final class PostfixTemplateLogger extends CounterUsagesCollector {
     EXPANDED.log(context.getProject(), events);
   }
 
-  static final class PostfixTemplateValidator extends CustomValidationRule {
+  public static final class PostfixTemplateValidator extends CustomValidationRule {
+    @NotNull
     @Override
-    public @NotNull String getRuleId() {
+    public String getRuleId() {
       return "completion_template";
     }
 
@@ -65,8 +66,9 @@ final class PostfixTemplateLogger extends CounterUsagesCollector {
       return getRuleId().equals(ruleId) || "completion_provider_template".equals(ruleId);
     }
 
+    @NotNull
     @Override
-    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if (StringUtil.equals(data, CUSTOM) || StringUtil.equals(data, NO_PROVIDER)) return ValidationResultType.ACCEPTED;
 
       final Language lang = getLanguage(context);
@@ -92,9 +94,10 @@ final class PostfixTemplateLogger extends CounterUsagesCollector {
       return StringUtil.equals(data, provider) || StringUtil.equals(data, template);
     }
 
-    private static @NotNull Pair<PostfixTemplate, PostfixTemplateProvider> findPostfixTemplate(@NotNull Language lang,
-                                                                                               @NotNull String providerId,
-                                                                                               @NotNull String templateId) {
+    @NotNull
+    private static Pair<PostfixTemplate, PostfixTemplateProvider> findPostfixTemplate(@NotNull Language lang,
+                                                                                      @NotNull String providerId,
+                                                                                      @NotNull String templateId) {
       if (!StringUtil.equals(providerId, NO_PROVIDER)) {
         final PostfixTemplateProvider provider = findProviderById(providerId, lang);
         final PostfixTemplate template = provider != null ? findTemplateById(provider, templateId) : null;
@@ -111,7 +114,8 @@ final class PostfixTemplateLogger extends CounterUsagesCollector {
       return Pair.empty();
     }
 
-    private static @Nullable PostfixTemplateProvider findProviderById(@NotNull String id, @NotNull Language lang) {
+    @Nullable
+    private static PostfixTemplateProvider findProviderById(@NotNull String id, @NotNull Language lang) {
       for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(lang)) {
         if (StringUtil.equals(provider.getId(), id)) {
           return provider;
@@ -120,7 +124,8 @@ final class PostfixTemplateLogger extends CounterUsagesCollector {
       return null;
     }
 
-    private static @Nullable PostfixTemplate findTemplateById(@NotNull PostfixTemplateProvider provider, @NotNull String id) {
+    @Nullable
+    private static PostfixTemplate findTemplateById(@NotNull PostfixTemplateProvider provider, @NotNull String id) {
       for (PostfixTemplate template : provider.getTemplates()) {
         if (StringUtil.equals(template.getId(), id)) {
           return template;

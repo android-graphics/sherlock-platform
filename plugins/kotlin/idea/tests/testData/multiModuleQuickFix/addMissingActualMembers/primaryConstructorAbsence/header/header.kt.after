@@ -1,5 +1,5 @@
-// DISABLE_ERRORS
-
+// DISABLE-ERRORS
+// IGNORE_K2
 
 expect class WithPrimaryConstructor(x: Int, s: String) {
     fun bar(x: String)

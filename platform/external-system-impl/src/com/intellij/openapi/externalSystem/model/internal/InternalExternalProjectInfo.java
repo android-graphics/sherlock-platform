@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.internal;
 
 import com.intellij.openapi.application.ApplicationInfo;
@@ -11,9 +11,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class InternalExternalProjectInfo implements ExternalProjectInfo {
-  private final @NotNull ProjectSystemId projectSystemId;
-  private final @NotNull String externalProjectPath;
-  private final @Nullable DataNode<ProjectData> externalProjectStructure;
+  @NotNull
+  private final ProjectSystemId projectSystemId;
+  @NotNull
+  private final String externalProjectPath;
+  @Nullable
+  private final DataNode<ProjectData> externalProjectStructure;
 
   private long lastSuccessfulImportTimestamp = -1;
   private long lastImportTimestamp = -1;
@@ -39,22 +42,26 @@ public final class InternalExternalProjectInfo implements ExternalProjectInfo {
   }
 
   @Override
-  public @NotNull ProjectSystemId getProjectSystemId() {
+  @NotNull
+  public ProjectSystemId getProjectSystemId() {
     return projectSystemId;
   }
 
   @Override
-  public @NotNull String getExternalProjectPath() {
+  @NotNull
+  public String getExternalProjectPath() {
     return externalProjectPath;
   }
 
   @SuppressWarnings("ConstantConditions")
-  public @Nullable String getNullSafeExternalProjectPath() {
+  @Nullable
+  public String getNullSafeExternalProjectPath() {
     return externalProjectPath;
   }
 
   @Override
-  public @Nullable DataNode<ProjectData> getExternalProjectStructure() {
+  @Nullable
+  public DataNode<ProjectData> getExternalProjectStructure() {
     return externalProjectStructure;
   }
 

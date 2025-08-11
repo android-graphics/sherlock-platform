@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration;
 
@@ -78,7 +78,8 @@ public abstract class ContentRootPanel extends JPanel {
     myModuleSourceRootEditHandlers = moduleSourceRootEditHandlers;
   }
 
-  protected abstract @Nullable ContentEntry getContentEntry();
+  @Nullable
+  protected abstract ContentEntry getContentEntry();
 
   public void initUI() {
     myHeader = createHeader();
@@ -186,7 +187,8 @@ public abstract class ContentRootPanel extends JPanel {
     return groupPanel;
   }
 
-  protected @Nullable JComponent createRootPropertiesEditor(ModuleSourceRootEditHandler<?> editor, SourceFolder folder) {
+  @Nullable
+  protected JComponent createRootPropertiesEditor(ModuleSourceRootEditHandler<?> editor, SourceFolder folder) {
     return null;
   }
 

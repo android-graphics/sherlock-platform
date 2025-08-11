@@ -20,7 +20,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.psi.impl.IncompleteModelUtil.isIncompleteModel
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
@@ -52,10 +51,6 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
 
         val psiFile = PsiManager.getInstance(project).findFile(file) as? KtFile ?: return null
         if (psiFile.language !== KotlinLanguage.INSTANCE) {
-            return null
-        }
-
-        if (isIncompleteModel(psiFile)) {
             return null
         }
 

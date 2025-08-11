@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util;
 
 import com.intellij.diff.tools.holders.EditorHolder;
@@ -30,9 +30,9 @@ import java.util.List;
 
 public class DiffSplitter extends JBSplitter {
 
-  private @Nullable Painter myPainter;
-  private @Nullable AnAction myTopAction;
-  private @Nullable AnAction myBottomAction;
+  @Nullable private Painter myPainter;
+  @Nullable private AnAction myTopAction;
+  @Nullable private AnAction myBottomAction;
 
   public DiffSplitter() {
     setDividerWidth(JBUIScale.scale(Registry.intValue("diff.divider.width")));
@@ -110,7 +110,8 @@ public class DiffSplitter extends JBSplitter {
     void paint(@NotNull Graphics g, @NotNull JComponent divider);
   }
 
-  private static @Nullable JComponent createActionComponent(final @Nullable AnAction action) {
+  @Nullable
+  private static JComponent createActionComponent(@Nullable final AnAction action) {
     if (action == null) return null;
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("DiffSplitter", new DefaultActionGroup(action), true);

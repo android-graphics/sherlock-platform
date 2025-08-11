@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageUtil;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElement;
@@ -12,7 +11,6 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiMarkdownCodeBlock;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +37,7 @@ public class PsiMarkdownCodeBlockImpl extends CompositePsiElement implements Psi
   public @Nullable Language getCodeLanguage() {
     String languageInfo = getLanguageInfo();
     if (languageInfo == null) return getLanguage();
-    return LanguageUtil.findRegisteredLanguage(languageInfo);
+    return Language.findLanguageByID(languageInfo);
   }
 
   @Override
@@ -53,19 +51,12 @@ public class PsiMarkdownCodeBlockImpl extends CompositePsiElement implements Psi
 
     while (child != null) {
       IElementType i = child.getElementType();
-      if (i != JavaDocTokenType.DOC_CODE_FENCE &&
-          i != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS &&
-          i != JavaDocTokenType.DOC_INLINE_CODE_FENCE) {
+      if (i != JavaDocTokenType.DOC_CODE_FENCE && i != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
         builder.append(child.getText());
       }
       child = child.getTreeNext();
     }
     return builder.toString();
-  }
-
-  @Override
-  public boolean isInline() {
-    return getFirstChildNode().getElementType() == JavaDocTokenType.DOC_INLINE_CODE_FENCE;
   }
 
   private @Nullable String getLanguageInfo() {
@@ -75,13 +66,8 @@ public class PsiMarkdownCodeBlockImpl extends CompositePsiElement implements Psi
 
   /** @return True if the block has language info. It doesn't always translate to a {@link com.intellij.lang.Language} */
   private boolean hasLanguageInfo() {
-    if (isInline()) return false;
-
     PsiElement[] children = getChildren();
     if (children.length < 2) return false;
-    // If the code block is written on only one line (why), there is no language info as well
-    if (findChildByType(TokenSet.WHITE_SPACE) == null) return false;
-
     PsiElement languageInfoChild = children[1];
     if (languageInfoChild.getNode().getElementType() != JavaDocTokenType.DOC_COMMENT_DATA) return false;
     return !languageInfoChild.getText().trim().isEmpty();

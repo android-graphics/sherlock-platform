@@ -29,9 +29,7 @@ package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.Strings;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.VisibleForTesting;
 
 /**
  * A pruned and optimized version of javolution.text.Text
@@ -54,8 +52,7 @@ import org.jetbrains.annotations.VisibleForTesting;
  * @author Wilfried Middleton
  * @version 5.3, January 10, 2007
  */
-@ApiStatus.Internal
-public final class ImmutableText extends ImmutableCharSequence implements CharArrayExternalizable, CharSequenceWithStringHash {
+final class ImmutableText extends ImmutableCharSequence implements CharArrayExternalizable, CharSequenceWithStringHash {
   /**
    * Holds the default size for primitive blocks of characters.
    */
@@ -68,8 +65,7 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
 
   // visible for tests
   // Here (String | CompositeNode | ByteArrayCharSequence) is stored
-  @VisibleForTesting
-  public final @NotNull CharSequence myNode;
+  final @NotNull CharSequence myNode;
 
   private ImmutableText(@NotNull CharSequence node) {
     myNode = node;
@@ -393,11 +389,10 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
     return (shorter.length() << 1) < longer.length() && longer instanceof CompositeNode;
   }
 
-  @ApiStatus.Internal
-  public static final class CompositeNode implements CharSequence {
+  static final class CompositeNode implements CharSequence {
     final int count;
-    public final CharSequence head;
-    public final CharSequence tail;
+    final CharSequence head;
+    final CharSequence tail;
 
     CompositeNode(@NotNull CharSequence head, @NotNull CharSequence tail) {
       count = head.length() + tail.length();

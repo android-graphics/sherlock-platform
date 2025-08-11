@@ -45,8 +45,9 @@ import org.jetbrains.lang.manifest.psi.impl.ManifestFileImpl;
  * @author Robert F. Beeger (robert@beeger.net)
  */
 public final class ManifestParserDefinition implements ParserDefinition {
+  @NotNull
   @Override
-  public @NotNull Lexer createLexer(Project project) {
+  public Lexer createLexer(Project project) {
     return new ManifestLexer();
   }
 
@@ -60,23 +61,27 @@ public final class ManifestParserDefinition implements ParserDefinition {
     return ManifestElementType.FILE;
   }
 
+  @NotNull
   @Override
-  public @NotNull TokenSet getWhitespaceTokens() {
+  public TokenSet getWhitespaceTokens() {
     return TokenSet.EMPTY;
   }
 
+  @NotNull
   @Override
-  public @NotNull TokenSet getCommentTokens() {
+  public TokenSet getCommentTokens() {
     return TokenSet.EMPTY;
   }
 
+  @NotNull
   @Override
-  public @NotNull TokenSet getStringLiteralElements() {
+  public TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement createElement(ASTNode node) {
+  public PsiElement createElement(ASTNode node) {
     IElementType type = node.getElementType();
     if (type instanceof ManifestElementType) {
       return ((ManifestElementType)type).createPsi(node);

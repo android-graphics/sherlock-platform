@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.context;
 
 import com.intellij.openapi.project.Project;
@@ -19,13 +19,15 @@ import static com.intellij.configurationStore.XmlSerializer.serialize;
  * @author Dmitry Avdeev
  */
 final class XDebuggerWatchesProvider extends WorkingContextProvider {
+  @NotNull
   @Override
-  public @NotNull String getId() {
+  public String getId() {
     return "watches";
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
+  public String getDescription() {
     return TaskBundle.message("debugger.watches");
   }
 
@@ -39,7 +41,8 @@ final class XDebuggerWatchesProvider extends WorkingContextProvider {
     }
   }
 
-  private static @NotNull XDebuggerWatchesManager getWatchManager(@NotNull Project project) {
+  @NotNull
+  private static XDebuggerWatchesManager getWatchManager(@NotNull Project project) {
     return ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).getWatchesManager();
   }
 

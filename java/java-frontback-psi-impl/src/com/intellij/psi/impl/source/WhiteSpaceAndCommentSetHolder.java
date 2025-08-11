@@ -3,12 +3,9 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.WhitespacesAndCommentsBinder;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.JavaFeature;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -30,22 +27,16 @@ public class WhiteSpaceAndCommentSetHolder {
   private WhiteSpaceAndCommentSetHolder() {
   }
 
-  private final WhitespacesAndCommentsBinder PRECEDING_COMMENT_BINDER_WITH_MARKDOWN = new PrecedingWhitespacesAndCommentsBinder(false, true);
-  private final WhitespacesAndCommentsBinder SPECIAL_PRECEDING_COMMENT_BINDER_WITH_MARKDOWN = new PrecedingWhitespacesAndCommentsBinder(true, true);
-  private final WhitespacesAndCommentsBinder PRECEDING_COMMENT_BINDER_WITHOUT_MARKDOWN = new PrecedingWhitespacesAndCommentsBinder(false, false);
-  private final WhitespacesAndCommentsBinder SPECIAL_PRECEDING_COMMENT_BINDER_WITHOUT_MARKDOWN = new PrecedingWhitespacesAndCommentsBinder(true, false);
+  private final WhitespacesAndCommentsBinder PRECEDING_COMMENT_BINDER = new PrecedingWhitespacesAndCommentsBinder(false);
+  private final WhitespacesAndCommentsBinder SPECIAL_PRECEDING_COMMENT_BINDER = new PrecedingWhitespacesAndCommentsBinder(true);
   private final WhitespacesAndCommentsBinder TRAILING_COMMENT_BINDER = new TrailingWhitespacesAndCommentsBinder();
 
-  public WhitespacesAndCommentsBinder getPrecedingCommentBinder(@NotNull LanguageLevel myLanguageLevel) {
-    return JavaFeature.MARKDOWN_COMMENT.isSufficient(myLanguageLevel)
-           ? PRECEDING_COMMENT_BINDER_WITH_MARKDOWN
-           : PRECEDING_COMMENT_BINDER_WITHOUT_MARKDOWN;
+  public WhitespacesAndCommentsBinder getPrecedingCommentBinder() {
+    return PRECEDING_COMMENT_BINDER;
   }
 
-  public WhitespacesAndCommentsBinder getSpecialPrecedingCommentBinder(@NotNull LanguageLevel myLanguageLevel) {
-    return JavaFeature.MARKDOWN_COMMENT.isSufficient(myLanguageLevel)
-           ? SPECIAL_PRECEDING_COMMENT_BINDER_WITH_MARKDOWN
-           : SPECIAL_PRECEDING_COMMENT_BINDER_WITHOUT_MARKDOWN;
+  public WhitespacesAndCommentsBinder getSpecialPrecedingCommentBinder() {
+    return SPECIAL_PRECEDING_COMMENT_BINDER;
   }
 
   public WhitespacesAndCommentsBinder getTrailingCommentBinder() {
@@ -63,11 +54,9 @@ public class WhiteSpaceAndCommentSetHolder {
 
   private static class PrecedingWhitespacesAndCommentsBinder implements WhitespacesAndCommentsBinder {
     private final boolean myAfterEmptyImport;
-    private final boolean mySupportMarkdown;
 
-    PrecedingWhitespacesAndCommentsBinder(final boolean afterImport, final boolean supportMarkdown) {
+    PrecedingWhitespacesAndCommentsBinder(final boolean afterImport) {
       this.myAfterEmptyImport = afterImport;
-      this.mySupportMarkdown = supportMarkdown;
     }
 
     @Override
@@ -76,25 +65,8 @@ public class WhiteSpaceAndCommentSetHolder {
       if (tokens.isEmpty()) return 0;
 
       // 1. bind doc comment
-      // now there are markdown comments.
-      if (mySupportMarkdown) {
-        //collect everything
-        for (int idx = tokens.size() - 1; idx >= 0; idx--) {
-          if (BasicJavaAstTreeUtil.is(tokens.get(idx), BASIC_DOC_COMMENT)) return idx;
-        }
-      }
-      else {
-        // To preserve previous orders, let's try to find the first non-markdown comment (and skip markdown comments).
-        // If there is no non-markdown, take the first markdown
-        for (int idx = tokens.size() - 1; idx >= 0; idx--) {
-          if (BasicJavaAstTreeUtil.is(tokens.get(idx), BASIC_DOC_COMMENT) && !isDocMarkdownComment(idx, getter)) {
-            return idx;
-          }
-        }
-
-        for (int idx = tokens.size() - 1; idx >= 0; idx--) {
-          if (BasicJavaAstTreeUtil.is(tokens.get(idx), BASIC_DOC_COMMENT)) return idx;
-        }
+      for (int idx = tokens.size() - 1; idx >= 0; idx--) {
+        if (BasicJavaAstTreeUtil.is(tokens.get(idx), BASIC_DOC_COMMENT)) return idx;
       }
 
       // 2. bind plain comments
@@ -117,11 +89,6 @@ public class WhiteSpaceAndCommentSetHolder {
       }
 
       return result;
-    }
-
-    private static boolean isDocMarkdownComment(int idx, @NotNull TokenTextGetter getter) {
-      CharSequence sequence = getter.get(idx);
-      return sequence.length() >= 3 && "///".equals(sequence.subSequence(0, 3).toString());
     }
   }
 

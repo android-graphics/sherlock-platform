@@ -42,7 +42,8 @@ public class XPathParameterInfoHandler implements ParameterInfoHandler<XPathFunc
         return call;
     }
 
-    private static @Nullable XPathFunctionCall findFunctionCall(PsiFile psiFile, int offset) {
+    @Nullable
+    private static XPathFunctionCall findFunctionCall(PsiFile psiFile, int offset) {
         PsiElement e = psiFile.findElementAt(offset);
         while (e != null) {
             final XPathFunctionCall call = PsiTreeUtil.getParentOfType(e, XPathFunctionCall.class);

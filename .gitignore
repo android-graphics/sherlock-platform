@@ -3,10 +3,8 @@
 .gradle
 .idea/gradle_extensions.xml
 .idea/libraries/Gradle__*.xml
-.idea/mavenHomeManager.xml
 .idea/shelf
 .idea/workspace.xml
-.jqwik-database
 /.diff
 /config
 /out

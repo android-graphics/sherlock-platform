@@ -1,5 +1,4 @@
 // PROBLEM: none
-// K2_ERROR: No parameter with name 'c' found.
 // ERROR: Cannot find a parameter with this name: c
 fun test() {
     class Test{

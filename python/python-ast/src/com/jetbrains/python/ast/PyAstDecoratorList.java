@@ -30,7 +30,8 @@ public interface PyAstDecoratorList extends PyAstElement {
    */
   PyAstDecorator @NotNull [] getDecorators();
 
-  default @Nullable PyAstDecorator findDecorator(String name) {
+  @Nullable
+  default PyAstDecorator findDecorator(String name) {
     final PyAstDecorator[] decorators = getDecorators();
     for (PyAstDecorator decorator : decorators) {
       final QualifiedName qName = decorator.getQualifiedName();

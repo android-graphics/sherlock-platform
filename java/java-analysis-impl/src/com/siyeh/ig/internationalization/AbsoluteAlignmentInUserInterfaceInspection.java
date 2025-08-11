@@ -18,6 +18,7 @@ import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public final class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspection {
@@ -50,8 +51,9 @@ public final class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspec
     "Y_AXIS", "PAGE_AXIS"
   );
 
+  @NotNull
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  protected String buildErrorString(Object... infos) {
     final String className = (String)infos[0];
     final String shortClassName = className.substring(className.lastIndexOf('.') + 1);
     return InspectionGadgetsBundle.message("absolute.alignment.in.user.interface.problem.descriptor", shortClassName);
@@ -72,14 +74,16 @@ public final class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspec
       myReplacement = replacement;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getName() {
+    public String getName() {
       final String shortClassName = myClassName.substring(myClassName.lastIndexOf('.') + 1);
       return CommonQuickFixBundle.message("fix.replace.with.x", shortClassName + "." + myReplacement);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("absolute.alignment.in.user.interface.fix.family.name");
     }
 

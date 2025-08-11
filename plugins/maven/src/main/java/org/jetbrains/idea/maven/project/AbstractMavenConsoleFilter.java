@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.execution.filters.Filter;
@@ -32,8 +32,9 @@ public abstract class AbstractMavenConsoleFilter implements Filter {
 
   protected abstract boolean lightCheck(String line);
 
+  @Nullable
   @Override
-  public @Nullable Result applyFilter(@NotNull String line, int entireLength) {
+  public Result applyFilter(@NotNull String line, int entireLength) {
     if (!lightCheck(line)) return null;
 
     Matcher matcher = myPattern.matcher(line);

@@ -67,7 +67,6 @@ class Test(unittest.TestCase):
         socket_names = get_socket_names(2, close=True)
         return [socket_name[1] for socket_name in socket_names]
 
-    @pytest.mark.xfail(reason="PCQA-697")
     def test_server(self):
         # Just making sure that the singleton is created in this thread.
         from _pydev_bundle.pydev_ipython_console_011 import get_pydev_ipython_frontend

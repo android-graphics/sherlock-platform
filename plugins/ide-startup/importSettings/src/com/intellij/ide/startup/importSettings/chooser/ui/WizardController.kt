@@ -9,7 +9,7 @@ import com.intellij.ide.startup.importSettings.wizard.themeChooser.ThemeChooserP
 import com.intellij.util.ui.accessibility.ScreenReader
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 
-internal sealed interface WizardController : BaseController {
+interface WizardController : BaseController {
   companion object {
     fun createController(
       dialog: OnboardingDialog,
@@ -34,7 +34,7 @@ internal sealed interface WizardController : BaseController {
   fun cancelPluginInstallation()
 }
 
-internal class WizardControllerImpl(dialog: OnboardingDialog,
+class WizardControllerImpl(dialog: OnboardingDialog,
                            override val service: StartupWizardService,
                            override val goBackAction: (() -> Unit)?) : WizardController, BaseControllerImpl(dialog) {
 

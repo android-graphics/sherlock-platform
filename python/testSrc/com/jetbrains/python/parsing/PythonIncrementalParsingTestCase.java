@@ -13,7 +13,6 @@ import java.io.IOException;
 public abstract class PythonIncrementalParsingTestCase extends PyTestCase {
 
   private static final String STATEMENTS_REGISTRY_KEY = "python.statement.lists.incremental.reparse";
-  private static final String AST_LEAVES_REGISTRY_KEY = "python.ast.leaves.incremental.reparse";
 
   protected @NotNull String getFileExtension() {
     return ".py";
@@ -40,7 +39,6 @@ public abstract class PythonIncrementalParsingTestCase extends PyTestCase {
                         boolean checkInitialTreeForErrors,
                         boolean checkFinalTreeForErrors) {
     boolean statementListsRegistryFlag = Registry.is(STATEMENTS_REGISTRY_KEY);
-    boolean leavesRegistryFlag = Registry.is(AST_LEAVES_REGISTRY_KEY);
 
     var sourceFileName = sourceFileBaseName + "/" + sourceFileBaseName + getFileExtension();
     myFixture.configureByFile(sourceFileName);
@@ -48,7 +46,6 @@ public abstract class PythonIncrementalParsingTestCase extends PyTestCase {
     String newText;
     try {
       Registry.get(STATEMENTS_REGISTRY_KEY).setValue(true);
-      Registry.get(AST_LEAVES_REGISTRY_KEY).setValue(true);
 
       newText = FileUtil.loadFile(new File(getTestDataPath(), newTextFileName)).replace("\r", "");
       ParsingTestUtil.testIncrementalParsing(myFixture.getFile(), newText, getAnswersFilePath(),
@@ -60,7 +57,6 @@ public abstract class PythonIncrementalParsingTestCase extends PyTestCase {
     }
     finally {
       Registry.get(STATEMENTS_REGISTRY_KEY).setValue(statementListsRegistryFlag);
-      Registry.get(AST_LEAVES_REGISTRY_KEY).setValue(leavesRegistryFlag);
     }
   }
 

@@ -28,15 +28,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 
 class MockGitRepository(private val project: Project, private val root: VirtualFile) : GitRepository {
-  var currentBranch: GitLocalBranch? = null
-    @JvmName("currentBranch_") get
-  var state: Repository.State = Repository.State.NORMAL
-    @JvmName("state_") get
-  var remotes: Collection<GitRemote> = emptyList()
-    @JvmName("remotes_") get
-  var tagHolder: GitTagHolder? = null
-    @JvmName("tagHolder_") get
-
   override fun getGitDir(): VirtualFile {
     throw UnsupportedOperationException()
   }
@@ -57,13 +48,17 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
     throw UnsupportedOperationException()
   }
 
-  override fun getCurrentBranch(): GitLocalBranch? = currentBranch
-
-  override fun getBranches(): GitBranchesCollection {
-    return GitBranchesCollection(emptyMap(), emptyMap(), emptyList())
+  override fun getCurrentBranch(): GitLocalBranch? {
+    throw UnsupportedOperationException()
   }
 
-  override fun getRemotes(): Collection<GitRemote> = remotes
+  override fun getBranches(): GitBranchesCollection {
+    throw UnsupportedOperationException()
+  }
+
+  override fun getRemotes(): Collection<GitRemote> {
+    throw UnsupportedOperationException()
+  }
 
   override fun getBranchTrackInfos(): Collection<GitBranchTrackInfo> {
     throw UnsupportedOperationException()
@@ -77,7 +72,9 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
     throw UnsupportedOperationException()
   }
 
-  override fun isOnBranch(): Boolean = currentBranch != null
+  override fun isOnBranch(): Boolean {
+    throw UnsupportedOperationException()
+  }
 
   override fun getRoot(): VirtualFile {
     return root
@@ -91,9 +88,13 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
     return project
   }
 
-  override fun getState(): Repository.State = state
+  override fun getState(): Repository.State {
+    throw UnsupportedOperationException()
+  }
 
-  override fun getCurrentBranchName(): String? = currentBranch?.name
+  override fun getCurrentBranchName(): String? {
+    throw UnsupportedOperationException()
+  }
 
   override fun getVcs(): GitVcs {
     throw UnsupportedOperationException()
@@ -104,11 +105,11 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
   }
 
   override fun getCurrentRevision(): String? {
-    return "0".repeat(40)
+    throw UnsupportedOperationException()
   }
 
   override fun isFresh(): Boolean {
-    return false
+    throw UnsupportedOperationException()
   }
 
   override fun update() {
@@ -128,7 +129,7 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
   }
 
   override fun getTagHolder(): GitTagHolder {
-    return tagHolder ?: GitTagHolder(this)
+    return GitTagHolder(this)
   }
 
   override fun dispose() {

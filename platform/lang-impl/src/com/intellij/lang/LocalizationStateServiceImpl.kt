@@ -14,6 +14,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.util.*
 
 private const val DEFAULT_LOCALE = "en"
 
@@ -30,8 +31,13 @@ internal class LocalizationStateServiceImpl : LocalizationStateService, Persiste
     logger<ConfigImportHelper>().info("[i18n] Localization property from registry is $localizationProperty")
     if (!localizationProperty.isNullOrEmpty()) {
       EarlyAccessRegistryManager.setString(LocalizationUtil.LOCALIZATION_KEY, "")
+      if (localizationProperty != Locale.ENGLISH.toLanguageTag()) {
         localizationState.selectedLocale = localizationProperty
         logger<ConfigImportHelper>().info("[i18n] Language defined from registry: $localizationProperty")
+      }
+      else {
+        logger<ConfigImportHelper>().info("[i18n] Language defined from registry is English. Skipped")
+      }
     }
   }
 

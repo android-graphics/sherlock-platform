@@ -1,1 +1,0 @@
-Expected declaration 'property test' would be moved to a platform module.

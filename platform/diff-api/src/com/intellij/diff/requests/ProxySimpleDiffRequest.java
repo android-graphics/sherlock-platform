@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.requests;
 
 import com.intellij.diff.contents.DiffContent;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class ProxySimpleDiffRequest extends SimpleDiffRequest {
-  private final @NotNull UserDataHolder myDataHolder;
+  @NotNull private final UserDataHolder myDataHolder;
 
   public ProxySimpleDiffRequest(@Nullable @NlsContexts.DialogTitle String title,
                                 @NotNull List<DiffContent> contents,
@@ -26,8 +26,9 @@ public class ProxySimpleDiffRequest extends SimpleDiffRequest {
   public final void onAssigned(boolean isAssigned) {
   }
 
+  @Nullable
   @Override
-  public @Nullable <T> T getUserData(@NotNull Key<T> key) {
+  public <T> T getUserData(@NotNull Key<T> key) {
     return myDataHolder.getUserData(key);
   }
 

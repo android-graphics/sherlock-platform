@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -30,7 +30,8 @@ import java.util.stream.Collectors;
 public final class ComparableImplementedButEqualsNotOverriddenInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("comparable.implemented.but.equals.not.overridden.problem.descriptor");
   }
 
@@ -47,8 +48,10 @@ public final class ComparableImplementedButEqualsNotOverriddenInspection extends
   }
 
   private static class GenerateEqualsMethodFix extends PsiUpdateModCommandQuickFix {
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("comparable.implemented.but.equals.not.overridden.fix.generate.equals.name");
     }
 
@@ -78,8 +81,10 @@ public final class ComparableImplementedButEqualsNotOverriddenInspection extends
     // (see CompareToAndEqualsNotPairedVisitor#visitClass below).
     private static final @NonNls String NOTE = " * Note: this class has a natural ordering that is inconsistent with equals.\n";
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("comparable.implemented.but.equals.not.overridden.fix.add.note.name");
     }
 

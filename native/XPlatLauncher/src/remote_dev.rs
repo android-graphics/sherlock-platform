@@ -6,16 +6,18 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, IsTerminal, Write};
 use std::path::{Path, PathBuf};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 #[allow(unused_imports)]
 use log::{debug, error, info};
 
 use crate::*;
 use crate::docker::is_running_in_docker;
 
+#[allow(dead_code)]
 pub struct RemoteDevLaunchConfiguration {
     default: DefaultLaunchConfiguration,
-    started_via_remote_dev_launcher: bool,
+    launcher_name: String,
+    ij_starter_command: String,
 }
 
 impl LaunchConfiguration for RemoteDevLaunchConfiguration {
@@ -36,22 +38,6 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
         #[cfg(target_os = "linux")]
         if is_wsl2() && !parse_bool_env_var("REMOTE_DEV_SERVER_ALLOW_IPV6_ON_WSL2", false)? {
             vm_options.push("-Djava.net.preferIPv4Stack=true".to_string())
-        }
-
-        if let Some(command) = self.get_args().get(0) {
-            match command.as_str() {
-                "remoteDevStatus" | "cwmHostStatus" => {
-                    vm_options.retain(|opt| {
-                        if opt.starts_with("-agentlib:jdwp=") {
-                            info!("Dropping debug option to prevent startup failure due to port conflict: {}", opt);
-                            false
-                        } else {
-                            true
-                        }
-                    });
-                }
-                _ => {}
-            }
         }
 
         Ok(vm_options)
@@ -79,12 +65,12 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
 
 impl RemoteDevLaunchConfiguration {
     #[allow(clippy::new_ret_no_self)]
-    pub fn new(exe_path: &Path, args: Vec<String>, started_via_remote_dev_launcher: bool) -> Result<Box<dyn LaunchConfiguration>> {
+    pub fn new(exe_path: &Path, args: Vec<String>) -> Result<Box<dyn LaunchConfiguration>> {
         let (_, default_cfg_args) = Self::parse_remote_dev_args(&args)?;
 
         let default_cfg = DefaultLaunchConfiguration::new(exe_path, default_cfg_args)?;
 
-        let configuration = Self::create(default_cfg, started_via_remote_dev_launcher)?;
+        let configuration = Self::create(exe_path, default_cfg)?;
         Ok(Box::new(configuration))
     }
 
@@ -178,10 +164,17 @@ impl RemoteDevLaunchConfiguration {
         Ok(project_path)
     }
 
-    fn create(default: DefaultLaunchConfiguration, started_via_remote_dev_launcher: bool) -> Result<Self> {
+    fn create(exe_path: &Path, default: DefaultLaunchConfiguration) -> Result<Self> {
+        let ij_starter_command = default.args[0].to_string();
+
+        let launcher_name = exe_path.file_name()
+            .ok_or(anyhow!("Invalid executable path: {exe_path:?}"))?
+            .to_string_lossy().to_string();
+
         let config = RemoteDevLaunchConfiguration {
             default,
-            started_via_remote_dev_launcher,
+            launcher_name,
+            ij_starter_command,
         };
 
         Ok(config)
@@ -214,8 +207,22 @@ impl RemoteDevLaunchConfiguration {
             // ("jdk.lang.Process.launchMechanism", "vfork"),
         ];
 
-        if self.started_via_remote_dev_launcher {
-            remote_dev_properties.push(("ide.started.from.remote.dev.launcher", "true"))
+        if parse_bool_env_var("REMOTE_DEV_SERVER_JCEF_ENABLED", false)? {
+            let _ = self.setup_jcef();
+
+            remote_dev_properties.push(("ide.browser.jcef.gpu.disable", "true"));
+            remote_dev_properties.push(("ide.browser.jcef.log.level", "warning"));
+            remote_dev_properties.push(("idea.suppress.statistics.report", "true"));
+        } else {
+            if let Ok(trace_var) = env::var("REMOTE_DEV_SERVER_TRACE") {
+                if !trace_var.is_empty() {
+                    info!("JCEF support is disabled. Set REMOTE_DEV_SERVER_JCEF_ENABLED=true to enable");
+                }
+            }
+
+            // Disable JCEF support for now since it does not work in headless environment now
+            // Also see IDEA-241709
+            remote_dev_properties.push(("ide.browser.jcef.enabled", "false"));
         }
 
         match parse_bool_env_var_optional("REMOTE_DEV_JDK_DETECTION")? {
@@ -285,6 +292,16 @@ impl RemoteDevLaunchConfiguration {
         writer.flush()?;
 
         Ok(path)
+    }
+
+    #[cfg(target_os = "linux")]
+    fn setup_jcef(&self) -> Result<()> {
+        bail!("XVFB workarounds from linux are not ported yet");
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    fn setup_jcef(&self) -> Result<()> {
+        Ok(())
     }
 }
 
@@ -416,6 +433,7 @@ impl std::fmt::Display for RemoteDevEnvVars {
 fn get_remote_dev_env_vars() -> RemoteDevEnvVars {
     RemoteDevEnvVars(vec![
         RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_TRACE".to_string(), description: "set to any value to get more debug output from the startup script".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_JCEF_ENABLED".to_string(), description: "set to '1' to enable JCEF (embedded Chromium) in IDE".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS".to_string(), description: "set to '0' to skip using bundled X11 and other Linux libraries from plugins/remote-dev-server/self-contained. Use everything from the system. by default bundled libraries are used".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_TRUST_PROJECTS".to_string(), description: "set to any value to skip project trust warning (will execute build scripts automatically)".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_NEW_UI_ENABLED".to_string(), description: "set to '1' to start with forced enabled new UI".to_string()},
@@ -463,15 +481,11 @@ fn init_env_vars(ide_home_path: &Path) -> Result<()> {
     }
 
     for (key, value) in remote_dev_env_var_values {
-        let backup_key = format!("INTELLIJ_ORIGINAL_ENV_{key}");
         if let Ok(old_value) = env::var(key) {
+            let backup_key = format!("INTELLIJ_ORIGINAL_ENV_{key}");
             debug!("'{key}' has already been assigned the value {old_value}, overriding to {value}. \
                         Old value will be preserved for child processes.");
             env::set_var(backup_key, old_value)
-        }
-        else {
-            debug!("'{key}' was set to {value}. It will be unset for child processes.");
-            env::set_var(backup_key, "")
         }
 
         env::set_var(key, value)
@@ -480,7 +494,6 @@ fn init_env_vars(ide_home_path: &Path) -> Result<()> {
     Ok(())
 }
 
-#[cfg(target_os = "linux")]
 fn parse_bool_env_var(var_name: &str, default: bool) -> Result<bool> {
     Ok(parse_bool_env_var_optional(var_name)?.unwrap_or(default))
 }
@@ -524,9 +537,6 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
 
     debug!("Loading self-contained libraries");
 
-    let full_set = parse_bool_env_var("REMOTE_DEV_SERVER_FULL_SELF_CONTAINED_LIBS", false)?;
-    debug!("Using full set of libraries: {full_set}");
-
     let self_contained_dir = &ide_home_dir.join("plugins/remote-dev-server/selfcontained/");
     if !self_contained_dir.is_dir() {
         error!("Self-contained dir not found at {self_contained_dir:?}. Only OS-provided libraries will be used.");
@@ -538,26 +548,14 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
         bail!("Self-contained dir is present at {self_contained_dir:?}, but lib dir is missing at {libs_dir:?}")
     }
 
-    let lib_load_order_file = &self_contained_dir.join(if full_set { "lib-load-order" } else { "lib-load-order-limited" });
+    let lib_load_order_file = &self_contained_dir.join("lib-load-order");
     if !lib_load_order_file.is_file() {
         bail!("Self-contained dir is present at {self_contained_dir:?}, but load order file is missing at {lib_load_order_file:?}")
     }
 
     let mut provided_libs = BTreeSet::new();
-    let filter_extensions = vec![
-        "hmac".to_string()
-    ];
-
     for f in fs::read_dir(libs_dir)? {
-        let entry = f?;
-        let file_name = entry.file_name();
-        let file_extension = entry.path().extension().map(|ext| ext.to_string_lossy().to_string());
-
-        if file_extension.is_some_and(|ext| filter_extensions.contains(&ext)) {
-            debug!("Filter the file by extension '{file_name:?}'");
-            continue;
-        }
-
+        let file_name = f?.file_name();
         if !provided_libs.insert(file_name.clone()) {
             bail!("Two files with the same name '{file_name:?}' in {libs_dir:?}")
         }
@@ -603,21 +601,19 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
         }
     }
 
-    if full_set {
-        if !provided_libs.is_empty() {
-            let error: Vec<String> = provided_libs
-                .iter()
-                .map(|os| os.to_string_lossy().to_string())
-                .collect();
-            let joined = error.join(", ");
-            bail!("Libs were provided but not loaded: {joined}")
-        }
+    if !provided_libs.is_empty() {
+        let error: Vec<String> = provided_libs
+            .iter()
+            .map(|os| os.to_string_lossy().to_string())
+            .collect();
+        let joined = error.join(", ");
+        bail!("Libs were provided but not loaded: {joined}")
+    }
 
-        // we should have more detailed logs in this count,
-        // but just to be safe we'll do this simple assertion
-        if ordered_libs_to_load.len() != provided_libs_initial_len {
-            bail!("Library count mismatch");
-        }
+    // we should have more detailed logs in this count,
+    // but just to be safe we'll do this simple assertion
+    if ordered_libs_to_load.len() != provided_libs_initial_len {
+        bail!("Library count mismatch");
     }
 
     debug!("All self-contained libraries ({}) were loaded", ordered_libs_to_load.len());

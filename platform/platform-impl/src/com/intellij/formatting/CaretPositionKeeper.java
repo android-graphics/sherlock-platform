@@ -11,7 +11,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.MathUtil;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
  * Formatter removes such white spaces, i.e. keeps only line feed symbol. But we want to preserve caret position then.
  * So, if 'virtual space in editor' is enabled, we save target visual column. Caret indent is ensured otherwise
  */
-@ApiStatus.Internal
 public final class CaretPositionKeeper {
 
   Editor myEditor;

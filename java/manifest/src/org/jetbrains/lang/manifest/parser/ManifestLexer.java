@@ -79,8 +79,9 @@ public class ManifestLexer extends LexerBase {
     return myDefaultState ? 0 : 1;
   }
 
+  @Nullable
   @Override
-  public @Nullable IElementType getTokenType() {
+  public IElementType getTokenType() {
     return myTokenType;
   }
 
@@ -99,8 +100,9 @@ public class ManifestLexer extends LexerBase {
     return myEndOffset;
   }
 
+  @NotNull
   @Override
-  public @NotNull CharSequence getBufferSequence() {
+  public CharSequence getBufferSequence() {
     return myBuffer;
   }
 

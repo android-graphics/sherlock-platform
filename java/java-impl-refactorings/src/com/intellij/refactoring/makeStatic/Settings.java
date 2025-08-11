@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.makeStatic;
 
@@ -115,7 +115,8 @@ public final class Settings {
     return myDelegate;
   }
 
-  public @Nullable String getNameForField(PsiField field) {
+  @Nullable
+  public String getNameForField(PsiField field) {
     if (myFieldToNameMapping != null) {
       return myFieldToNameMapping.get(field);
     }

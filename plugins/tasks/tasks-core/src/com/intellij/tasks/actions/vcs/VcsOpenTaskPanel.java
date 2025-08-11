@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.tasks.actions.vcs;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -164,7 +178,8 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
     return myTaskManager.getChangelistName(task);
   }
 
-  private @NotNull String getBranchName(Task task) {
+  @NotNull
+  private String getBranchName(Task task) {
     String branchName = myTaskManager.suggestBranchName(task, StringUtil.notNullize(TaskSettings.getInstance().REPLACE_SPACES));
     if (myVcsTaskHandler != null)
       myVcsTaskHandler.cleanUpBranchName(branchName);
@@ -184,8 +199,9 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
     myChangelistName.setEnabled(myCreateChangelist.isSelected());
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent getPanel() {
+  public JComponent getPanel() {
     return myPanel;
   }
 
@@ -228,8 +244,9 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable ValidationInfo validate() {
+  public ValidationInfo validate() {
     if (myCreateBranch.isSelected()) {
       String branchName = myBranchName.getText().trim();
       if (branchName.isEmpty()) {
@@ -255,8 +272,9 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable JComponent getPreferredFocusedComponent() {
+  public JComponent getPreferredFocusedComponent() {
     if (myCreateBranch.isSelected()) {
       return myBranchName;
     }

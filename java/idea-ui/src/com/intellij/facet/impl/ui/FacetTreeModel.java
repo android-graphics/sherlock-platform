@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package com.intellij.facet.impl.ui;
 
@@ -44,11 +58,13 @@ public class FacetTreeModel {
     myParents.remove(info);
   }
 
-  public @Nullable FacetInfo getParent(@NotNull FacetInfo info) {
+  @Nullable
+  public FacetInfo getParent(@NotNull FacetInfo info) {
     return root2Null(myParents.get(info));
   }
 
-  public @NotNull List<FacetInfo> getChildren(@Nullable FacetInfo info) {
+  @NotNull
+  public List<FacetInfo> getChildren(@Nullable FacetInfo info) {
     final List<FacetInfo> list = myParents.getKeysByValue(null2Root(info));
     if (list == null) {
       return Collections.emptyList();
@@ -60,7 +76,8 @@ public class FacetTreeModel {
     return getChildren(null);
   }
 
-  public @Nullable FacetInfo findNearestFacet(@NotNull FacetInfo info) {
+  @Nullable
+  public FacetInfo findNearestFacet(@NotNull FacetInfo info) {
     final FacetInfo parent = getParent(info);
     final List<FacetInfo> children = getChildren(parent);
     int index = children.indexOf(info);

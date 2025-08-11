@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.stubs.index;
 
@@ -15,7 +15,8 @@ public final class GrAnonymousClassIndex extends StringStubIndexExtension<GrAnon
   public static final StubIndexKey<String, GrAnonymousClassDefinition> KEY = StubIndexKey.createIndexKey("gr.anonymous.class");
 
   @Override
-  public @NotNull StubIndexKey<String, GrAnonymousClassDefinition> getKey() {
+  @NotNull
+  public StubIndexKey<String, GrAnonymousClassDefinition> getKey() {
     return KEY;
   }
 

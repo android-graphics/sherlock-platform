@@ -20,8 +20,10 @@ public abstract class AbstractReplaceVariableWithExplicitTypeIntentionAction ext
     this.variableClassName = variableClassName;
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NotNull
   @Override
-  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return LombokBundle.message("replace.0.with.explicit.type.lombok", StringUtil.getShortName(variableClassName));
   }
 

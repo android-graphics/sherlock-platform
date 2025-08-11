@@ -21,7 +21,8 @@ public final class LombokRenameMethodProcessor extends RenamePsiElementProcessor
   }
 
   @Override
-  public @Nullable PsiElement substituteElementToRename(@NotNull PsiElement elem, @Nullable Editor editor) {
+  @Nullable
+  public PsiElement substituteElementToRename(@NotNull PsiElement elem, @Nullable Editor editor) {
     return elem.getNavigationElement();
   }
 }

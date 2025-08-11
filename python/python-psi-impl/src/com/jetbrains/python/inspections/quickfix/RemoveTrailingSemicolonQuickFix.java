@@ -10,7 +10,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class RemoveTrailingSemicolonQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.remove.trailing.semicolon");
   }
 

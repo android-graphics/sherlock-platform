@@ -261,7 +261,7 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     List<HighlightInfo> errors = highlightErrors();
     myWolfTheProblemSolver.waitForFilesQueuedForInvalidationAreProcessed();
     assertTrue(myWolfTheProblemSolver.isProblemFile(virtualFile));
-    assertSize(1, errors);
+    assertEquals(1, errors.size());
     type(';');
     errors = highlightErrors();
     assertEmpty(errors);

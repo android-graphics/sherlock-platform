@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.google.common.base.MoreObjects;
@@ -27,10 +27,10 @@ public class FirstInBranch {
 
   private static final Logger LOG = Logger.getInstance(FirstInBranch.class);
 
-  private final @NotNull SvnVcs myVcs;
-  private final @NotNull Url myAbsoluteBranchUrl;
-  private final @NotNull Url myAbsoluteTrunkUrl;
-  private final @NotNull Url myRepositoryRoot;
+  @NotNull private final SvnVcs myVcs;
+  @NotNull private final Url myAbsoluteBranchUrl;
+  @NotNull private final Url myAbsoluteTrunkUrl;
+  @NotNull private final Url myRepositoryRoot;
 
   public FirstInBranch(@NotNull SvnVcs vcs, @NotNull Url repositoryRoot, @NotNull Url branchUrl, @NotNull Url trunkUrl) {
     myVcs = vcs;
@@ -39,7 +39,8 @@ public class FirstInBranch {
     myAbsoluteTrunkUrl = trunkUrl;
   }
 
-  public @Nullable CopyData run() throws VcsException {
+  @Nullable
+  public CopyData run() throws VcsException {
     Target trunk = Target.on(myAbsoluteTrunkUrl, Revision.HEAD);
     Target branch = Target.on(myAbsoluteBranchUrl, Revision.HEAD);
     CopyData result = find(new BranchPoint(trunk), new BranchPoint(branch), true);
@@ -49,7 +50,8 @@ public class FirstInBranch {
     return result;
   }
 
-  private @Nullable CopyData find(@NotNull BranchPoint trunk, @NotNull BranchPoint branch, boolean isBranchFromTrunk) throws VcsException {
+  @Nullable
+  private CopyData find(@NotNull BranchPoint trunk, @NotNull BranchPoint branch, boolean isBranchFromTrunk) throws VcsException {
     CopyData result = null;
 
     debug(trunk, branch, isBranchFromTrunk);
@@ -102,9 +104,9 @@ public class FirstInBranch {
   }
 
   private final class BranchPoint {
-    private final @NotNull Target myTarget;
-    private @Nullable LogEntry myEntry;
-    private @Nullable LogEntryPath myPath;
+    @NotNull private final Target myTarget;
+    @Nullable private LogEntry myEntry;
+    @Nullable private LogEntryPath myPath;
 
     private BranchPoint(@NotNull Target target) {
       myTarget = target;
@@ -130,7 +132,8 @@ public class FirstInBranch {
       }
     }
 
-    private @NotNull Pair<LogEntry, LogEntryPath> getCopyPoint() throws VcsException {
+    @NotNull
+    private Pair<LogEntry, LogEntryPath> getCopyPoint() throws VcsException {
       HistoryClient client = myVcs.getFactory(myTarget).createHistoryClient();
       Ref<LogEntry> entry = Ref.create();
 
@@ -154,7 +157,8 @@ public class FirstInBranch {
       return Objects.requireNonNull(myPath).getCopyPath() != null;
     }
 
-    private @NotNull String copyPath() throws VcsException {
+    @NotNull
+    private String copyPath() throws VcsException {
       init();
       return Objects.requireNonNull(myPath).getCopyPath();
     }
@@ -164,11 +168,13 @@ public class FirstInBranch {
       return Objects.requireNonNull(myPath).getCopyRevision();
     }
 
-    private @NotNull Target copyTarget() throws VcsException {
+    @NotNull
+    private Target copyTarget() throws VcsException {
       return Target.on(append(myRepositoryRoot, copyPath()), Revision.of(copyRevision()));
     }
 
-    private @NotNull String relativePath() {
+    @NotNull
+    private String relativePath() {
       return ensureStartSlash(getRelativeUrl(myRepositoryRoot, myTarget.getUrl()));
     }
 
@@ -177,7 +183,8 @@ public class FirstInBranch {
       return Objects.requireNonNull(myEntry).getRevision();
     }
 
-    private @NotNull CopyData toCopyData(boolean isBranchFromTrunk) throws VcsException {
+    @NotNull
+    private CopyData toCopyData(boolean isBranchFromTrunk) throws VcsException {
       return new CopyData(copyRevision(), revision(), isBranchFromTrunk);
     }
   }

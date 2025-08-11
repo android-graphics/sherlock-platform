@@ -154,7 +154,6 @@ public final class SyntaxTable implements Cloneable {
     myHasBraces = hasBraces;
   }
 
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof SyntaxTable)) return false;
@@ -181,7 +180,6 @@ public final class SyntaxTable implements Cloneable {
     return true;
   }
 
-  @Override
   public int hashCode() {
     return myKeywords1.hashCode();
   }

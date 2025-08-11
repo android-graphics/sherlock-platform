@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -9,8 +9,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public final class VcsRoot {
-  private final @Nullable AbstractVcs myVcs;
-  private final @NotNull VirtualFile myPath;
+  @Nullable private final AbstractVcs myVcs;
+  @NotNull private final VirtualFile myPath;
 
   private int hashcode;
 
@@ -19,11 +19,13 @@ public final class VcsRoot {
     myPath = path;
   }
 
-  public @Nullable AbstractVcs getVcs() {
+  @Nullable
+  public AbstractVcs getVcs() {
     return myVcs;
   }
 
-  public @NotNull VirtualFile getPath() {
+  @NotNull
+  public VirtualFile getPath() {
     return myPath;
   }
 
@@ -36,7 +38,6 @@ public final class VcsRoot {
     return Objects.equals(myPath, root.myPath) && Objects.equals(myVcs, root.myVcs);
   }
 
-  @Override
   public int hashCode() {
     if (hashcode == 0) {
       hashcode = myVcs != null ? myVcs.hashCode() : 0;
@@ -45,8 +46,9 @@ public final class VcsRoot {
     return hashcode;
   }
 
+  @NonNls
   @Override
-  public @NonNls String toString() {
+  public String toString() {
     return String.format("VcsRoot{vcs=%s, path=%s}", myVcs, myPath);
   }
 }

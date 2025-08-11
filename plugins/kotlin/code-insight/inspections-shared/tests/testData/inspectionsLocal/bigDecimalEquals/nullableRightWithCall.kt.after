@@ -1,5 +1,0 @@
-import java.math.BigDecimal
-
-fun foo(decimal: BigDecimal?) {
-    decimal?.compareTo(BigDecimal(1)) == 0
-}

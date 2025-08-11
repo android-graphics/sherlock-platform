@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -17,7 +18,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class GotoTestOrCodeAction extends BaseCodeInsightAction {
   @Override
-  protected @NotNull CodeInsightActionHandler getHandler(){
+  @NotNull
+  protected CodeInsightActionHandler getHandler(){
     return new GotoTestOrCodeHandler();
   }
 
@@ -25,7 +27,7 @@ public class GotoTestOrCodeAction extends BaseCodeInsightAction {
   public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(false);
-    if (TestFinderHelper.getFinders().isEmpty()) {
+    if (TestFinderHelper.getFinders().size() == 0) {
       return;
     }
 
@@ -41,7 +43,7 @@ public class GotoTestOrCodeAction extends BaseCodeInsightAction {
     if (TestFinderHelper.findSourceElement(element) == null) return;
 
     presentation.setEnabledAndVisible(true);
-    boolean useShortName = e.isFromMainMenu() || e.isFromContextMenu();
+    boolean useShortName = ActionPlaces.MAIN_MENU.equals(e.getPlace()) || ActionPlaces.isPopupPlace(e.getPlace());
     if (TestFinderHelper.isTest(element)) {
       presentation.setText(useShortName ? ActionsBundle.messagePointer("action.GotoTestSubject.MainMenu.text") : ActionsBundle.messagePointer("action.GotoTestSubject.text"));
       presentation.setDescription(ActionsBundle.messagePointer("action.GotoTestSubject.description"));

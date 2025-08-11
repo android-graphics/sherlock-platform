@@ -35,7 +35,8 @@ public class CreateParameterFix extends AddParamBase {
     }
 
     @Override
-    public @NotNull String getText() {
+    @NotNull
+    public String getText() {
         return XPathBundle.message("intention.name.create.parameter", myReference.getReferencedName());
     }
 

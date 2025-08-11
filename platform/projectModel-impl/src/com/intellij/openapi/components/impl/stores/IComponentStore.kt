@@ -15,7 +15,6 @@ import java.nio.file.Path
 @Internal
 interface IComponentStore {
   val storageManager: StateStorageManager
-  val isStoreInitialized: Boolean
 
   fun setPath(path: Path)
 

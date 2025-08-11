@@ -171,7 +171,7 @@ public final class TagsTestDataUtil {
         public String getName() {
             return highlightInfo.getSeverity().equals(HighlightSeverity.INFORMATION)
                    ? "info"
-                   : highlightInfo.getSeverity().getName().toLowerCase(Locale.ROOT);
+                   : highlightInfo.getSeverity().toString().toLowerCase(Locale.ROOT);
         }
 
         @NotNull

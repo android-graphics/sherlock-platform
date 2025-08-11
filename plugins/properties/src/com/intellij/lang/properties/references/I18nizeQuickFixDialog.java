@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.references;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -53,8 +53,8 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.text.Normalizer;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuickFixModel {
@@ -108,7 +108,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   }
 
   public I18nizeQuickFixDialog(@NotNull Project project,
-                               final @NotNull PsiFile context,
+                               @NotNull final PsiFile context,
                                @NotNull String defaultPropertyValue,
                                DialogCustomization customization
                                ) {
@@ -116,7 +116,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   }
 
   protected I18nizeQuickFixDialog(@NotNull Project project,
-                                  final @NotNull PsiFile context,
+                                  @NotNull final PsiFile context,
                                   @NotNull String defaultPropertyValue,
                                   DialogCustomization customization,
                                   boolean ancestorResponsible) {
@@ -173,7 +173,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     });
 
 
-    final @NonNls String KEY = "I18NIZE_DIALOG_USE_RESOURCE_BUNDLE";
+    @NonNls final String KEY = "I18NIZE_DIALOG_USE_RESOURCE_BUNDLE";
     final boolean useBundleByDefault =
       !PropertiesComponent.getInstance().isValueSet(KEY) || PropertiesComponent.getInstance().isTrueValue(KEY);
     myUseResourceBundle.setSelected(useBundleByDefault);
@@ -243,7 +243,8 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     return myKey;
   }
 
-  protected @NotNull List<IProperty> getExistingProperties(String value) {
+  @NotNull
+  protected List<IProperty> getExistingProperties(String value) {
     if(!myCustomization.suggestExistingProperties) {
       return Collections.emptyList();
     }
@@ -296,7 +297,8 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     }
   }
 
-  public static @NotNull String generateDefaultPropertyKey(@NotNull String rawValue) {
+  @NotNull
+  public static String generateDefaultPropertyKey(@NotNull String rawValue) {
     String value = PATTERN.matcher(Normalizer.normalize(rawValue, Normalizer.Form.NFD)).replaceAll("");
     String defaultKey;
     final StringBuilder result = new StringBuilder();
@@ -321,7 +323,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
         insertDotBeforeNextWord = true;
       }
       else {
-        if (!result.isEmpty()) {
+        if (result.length() > 0) {
           insertDotBeforeNextWord = true;
         }
       }
@@ -432,7 +434,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
       for (PropertiesFile propertiesFile : myCustomization.propertiesFiles) {
         final VirtualFile virtualFile = propertiesFile.getVirtualFile();
         if (virtualFile != null) {
-          list.add(FileUtil.toSystemDependentName(virtualFile.getPath()));
+          list.add(virtualFile.getPath());
         }
       }
       return list;
@@ -444,7 +446,8 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     return I18nUtil.defaultSuggestPropertiesFiles(myProject, myContextModules);
   }
 
-  protected @Nullable PropertiesFile getPropertiesFile() {
+  @Nullable
+  protected PropertiesFile getPropertiesFile() {
     String path = getPropertiesFilePath();
     if (path == null) return null;
     return getPropertyFileByPath(FileUtil.toSystemIndependentName(path));
@@ -454,7 +457,8 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     return (String)myPropertiesFile.getSelectedItem();
   }
 
-  private @Nullable PropertiesFile getPropertyFileByPath(String path) {
+  @Nullable
+  private PropertiesFile getPropertyFileByPath(String path) {
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
     return virtualFile != null
            ? PropertiesImplUtil.getPropertiesFile(PsiManager.getInstance(myProject).findFile(virtualFile))

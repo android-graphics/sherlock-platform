@@ -2,6 +2,7 @@
 package com.intellij.openapi.application
 
 import com.intellij.openapi.application.ApplicationManager.getApplication
+import com.intellij.openapi.application.WriteDelayDiagnostics.WriteDelayDiagnosticsHandler
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal

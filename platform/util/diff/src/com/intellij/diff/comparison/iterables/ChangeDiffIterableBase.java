@@ -25,18 +25,20 @@ abstract class ChangeDiffIterableBase implements DiffIterable {
     return myLength2;
   }
 
+  @NotNull
   @Override
-  public @NotNull Iterator<Range> changes() {
+  public Iterator<Range> changes() {
     return new ChangedIterator(createChangeIterable());
   }
 
+  @NotNull
   @Override
-  public @NotNull Iterator<Range> unchanged() {
+  public Iterator<Range> unchanged() {
     return new UnchangedIterator(createChangeIterable(), myLength1, myLength2);
   }
 
   private static final class ChangedIterator implements Iterator<Range> {
-    private final @NotNull ChangeIterable myIterable;
+    @NotNull private final ChangeIterable myIterable;
 
     private ChangedIterator(@NotNull ChangeIterable iterable) {
       myIterable = iterable;
@@ -56,7 +58,7 @@ abstract class ChangeDiffIterableBase implements DiffIterable {
   }
 
   private static final class UnchangedIterator implements Iterator<Range> {
-    private final @NotNull ChangeIterable myIterable;
+    @NotNull private final ChangeIterable myIterable;
     private final int myLength1;
     private final int myLength2;
 
@@ -107,7 +109,8 @@ abstract class ChangeDiffIterableBase implements DiffIterable {
     }
   }
 
-  protected abstract @NotNull ChangeIterable createChangeIterable();
+  @NotNull
+  protected abstract ChangeIterable createChangeIterable();
 
   protected interface ChangeIterable {
     boolean valid();

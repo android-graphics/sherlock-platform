@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
@@ -33,16 +33,17 @@ import java.util.Objects;
 
 public abstract class PostfixTemplateEditorBase<Condition extends PostfixTemplateExpressionCondition> implements PostfixTemplateEditor {
 
-  protected final @NotNull PostfixTemplateProvider myProvider;
-  protected final @NotNull Editor myTemplateEditor;
-  protected final @NotNull JBList<Condition> myExpressionTypesList;
-  protected final @NotNull DefaultListModel<Condition> myExpressionTypesListModel;
+  @NotNull protected final PostfixTemplateProvider myProvider;
+  @NotNull protected final Editor myTemplateEditor;
+  @NotNull protected final JBList<Condition> myExpressionTypesList;
+  @NotNull protected final DefaultListModel<Condition> myExpressionTypesListModel;
 
-  protected final @NotNull JBCheckBox myApplyToTheTopmostJBCheckBox;
-  protected final @NotNull JPanel myEditTemplateAndConditionsPanel;
+  @NotNull protected final JBCheckBox myApplyToTheTopmostJBCheckBox;
+  @NotNull protected final JPanel myEditTemplateAndConditionsPanel;
 
   protected final class AddConditionAction extends DumbAwareAction {
-    private final @NotNull Condition myCondition;
+    @NotNull
+    private final Condition myCondition;
 
     public AddConditionAction(Condition condition) {
       super(condition.getPresentableName());
@@ -83,11 +84,13 @@ public abstract class PostfixTemplateEditorBase<Condition extends PostfixTemplat
     myEditTemplateAndConditionsPanel = content.panel;
   }
 
-  protected static @NotNull Editor createEditor(@Nullable Project project, @NotNull Document document) {
+  @NotNull
+  protected static Editor createEditor(@Nullable Project project, @NotNull Document document) {
     return TemplateEditorUtil.createEditor(false, document, project);
   }
 
-  private static @NotNull Editor createSimpleEditor() {
+  @NotNull
+  private static Editor createSimpleEditor() {
     return createEditor(null, EditorFactory.getInstance().createDocument(""));
   }
 

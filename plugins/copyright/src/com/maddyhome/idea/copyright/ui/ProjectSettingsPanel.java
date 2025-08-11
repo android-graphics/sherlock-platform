@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.copyright.CopyrightBundle;
@@ -20,9 +20,9 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
-import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.*;
 import com.maddyhome.idea.copyright.CopyrightProfile;
@@ -36,8 +36,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class ProjectSettingsPanel {
   private final Project myProject;
@@ -78,7 +78,7 @@ public class ProjectSettingsPanel {
     myScopeMappingTable.setShowGrid(false);
 
     reloadCopyrightProfiles();
-    myProfilesComboBox.setRenderer(BuilderKt.textListCellRenderer(CopyrightBundle.message("copyright.no.text"), CopyrightProfile::getName));
+    myProfilesComboBox.setRenderer(SimpleListCellRenderer.create(CopyrightBundle.message("copyright.no.text"), CopyrightProfile::getName));
 
     myScopesLink.setVisible(!myProject.isDefault());
     myScopesLink.setHyperlinkText(CopyrightBundle.message("copyright.select.scopes.label"));
@@ -319,7 +319,8 @@ public class ProjectSettingsPanel {
         private PackageSetChooserCombo myScopeChooser;
 
         @Override
-        public @Nullable Object getCellEditorValue() {
+        @Nullable
+        public Object getCellEditorValue() {
           return myScopeChooser.getSelectedScope();
         }
 
@@ -352,7 +353,7 @@ public class ProjectSettingsPanel {
     }
   }
 
-  private abstract static class MyColumnInfo<T> extends ColumnInfo<ScopeSetting, T> {
+  private static abstract class MyColumnInfo<T> extends ColumnInfo<ScopeSetting, T> {
     protected MyColumnInfo(final @NlsContexts.ColumnName String name) {
       super(name);
     }

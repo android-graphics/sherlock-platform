@@ -39,12 +39,14 @@ import org.jetbrains.annotations.Nullable;
 public final class IncrementDecrementUsedAsExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "ValueOfIncrementOrDecrementUsed";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final Object info = infos[0];
     if (info instanceof PsiPostfixExpression postfixExpression) {
       final IElementType tokenType = postfixExpression.getOperationTokenType();
@@ -72,7 +74,8 @@ public final class IncrementDecrementUsedAsExpressionInspection extends BaseInsp
   }
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  @Nullable
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     if (PsiTreeUtil.getParentOfType(expression, PsiCodeBlock.class, true, PsiMember.class) == null) {
       return null;
@@ -90,14 +93,16 @@ public final class IncrementDecrementUsedAsExpressionInspection extends BaseInsp
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return InspectionGadgetsBundle.message(
         "increment.decrement.used.as.expression.quickfix",
         elementText);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("increment.decrement.used.as.expression.fix.family.name");
     }
 

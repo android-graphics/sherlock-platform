@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.internal.daemon;
 
 import com.intellij.icons.AllIcons;
@@ -36,8 +36,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
 import java.util.List;
-
-import static org.jetbrains.plugins.gradle.internal.daemon.GradleDaemonServicesKt.*;
 
 /**
  * @author Vladislav.Soroka
@@ -119,10 +117,10 @@ public class DaemonsUi implements Disposable {
   private void updateDaemonsList() {
     Runnable updateDaemons = () -> {
       Set<String> gradleUserHomes = GradleConnectorService.getKnownGradleUserHomes(myProject);
-      List<DaemonState> daemonStateList = ContainerUtil.filter(getDaemonsStatus(gradleUserHomes),
+      List<DaemonState> daemonStateList = ContainerUtil.filter(GradleDaemonServices.getDaemonsStatus(gradleUserHomes),
                                                                state -> myShowStopped || state.getToken() != null);
       ApplicationManager.getApplication().invokeLater(() -> {
-        myTableModel.setItems(new ArrayList<>(daemonStateList));
+        myTableModel.setItems(daemonStateList);
         myContent.stopLoading();
         invalidateActions();
       });
@@ -150,41 +148,48 @@ public class DaemonsUi implements Disposable {
   }
   protected ListTableModel<DaemonState> createListModel() {
     final ColumnInfo<DaemonState, String> pidColumn = new TableColumn(GradleBundle.message("column.name.daemon.PID"), 80) {
+      @Nullable
       @Override
-      public @Nullable String valueOf(DaemonState daemonState) {
+      public String valueOf(DaemonState daemonState) {
         return String.valueOf(daemonState.getPid());
       }
 
+      @Nullable
       @Override
-      public @Nullable Comparator<DaemonState> getComparator() {
+      public Comparator<DaemonState> getComparator() {
         return Comparator.comparing(DaemonState::getPid);
       }
     };
     final ColumnInfo<DaemonState, String> statusColumn = new TableColumn(GradleBundle.message("column.name.daemon.status"), 100) {
+      @Nullable
       @Override
-      public @Nullable String valueOf(DaemonState daemonState) {
+      public String valueOf(DaemonState daemonState) {
         return daemonState.getStatus();
       }
 
+      @Nullable
       @Override
-      public @Nullable Comparator<DaemonState> getComparator() {
+      public Comparator<DaemonState> getComparator() {
         return Comparator.comparing(DaemonState::getStatus);
       }
     };
     final ColumnInfo<DaemonState, String> timeColumn = new TableColumn(GradleBundle.message("column.name.daemon.timestamp"), 150) {
+      @NotNull
       @Override
-      public @NotNull String valueOf(DaemonState daemonState) {
+      public String valueOf(DaemonState daemonState) {
         return DateFormatUtil.formatPrettyDateTime(daemonState.getTimestamp());
       }
 
+      @Nullable
       @Override
-      public @Nullable Comparator<DaemonState> getComparator() {
+      public Comparator<DaemonState> getComparator() {
         return Comparator.comparing(DaemonState::getTimestamp);
       }
     };
     final ColumnInfo<DaemonState, String> infoColumn = new TableColumn(GradleBundle.message("column.name.daemon.info"), -1) {
+      @NotNull
       @Override
-      public @NotNull String valueOf(DaemonState daemonState) {
+      public String valueOf(DaemonState daemonState) {
         return daemonState.getVersion() != null ? daemonState.getVersion() : StringUtil.capitalize(daemonState.getReason());
       }
     };
@@ -197,7 +202,7 @@ public class DaemonsUi implements Disposable {
     private final int myWidth;
     private DefaultTableCellRenderer myRenderer;
 
-    TableColumn(final @NlsContexts.ColumnName String name, int width) {
+    TableColumn(@NlsContexts.ColumnName final String name, int width) {
       super(name);
       myWidth = width;
     }
@@ -251,7 +256,7 @@ public class DaemonsUi implements Disposable {
     public void actionPerformed(@NotNull ActionEvent e) {
       GradleActionsUsagesCollector.trigger(myProject, GradleActionsUsagesCollector.STOP_ALL_DAEMONS);
       ApplicationManager.getApplication().invokeLater(() -> {
-        stopDaemons(GradleConnectorService.getKnownGradleUserHomes(myProject));
+        GradleDaemonServices.stopDaemons(GradleConnectorService.getKnownGradleUserHomes(myProject));
         updateDaemonsList();
       });
     }
@@ -275,7 +280,7 @@ public class DaemonsUi implements Disposable {
       GradleActionsUsagesCollector.trigger(myProject, GradleActionsUsagesCollector.STOP_SELECTED_DAEMONS);
       List<DaemonState> selectedObjects = myTable.getSelectedObjects();
       ApplicationManager.getApplication().invokeLater(() -> {
-        stopDaemons(GradleConnectorService.getKnownGradleUserHomes(myProject), selectedObjects);
+        GradleDaemonServices.stopDaemons(GradleConnectorService.getKnownGradleUserHomes(myProject), selectedObjects);
         updateDaemonsList();
       });
     }
@@ -296,7 +301,7 @@ public class DaemonsUi implements Disposable {
     public void actionPerformed(@NotNull ActionEvent e) {
       GradleActionsUsagesCollector.trigger(myProject, GradleActionsUsagesCollector.GRACEFUL_STOP_ALL_DAEMONS);
       ApplicationManager.getApplication().invokeLater(() -> {
-        gracefulStopDaemons(GradleConnectorService.getKnownGradleUserHomes(myProject));
+        GradleDaemonServices.gracefulStopDaemons(GradleConnectorService.getKnownGradleUserHomes(myProject));
         updateDaemonsList();
       });
     }
@@ -321,8 +326,9 @@ public class DaemonsUi implements Disposable {
 
     MyDialogWrapper() {super(true);}
 
+    @Nullable
     @Override
-    protected @Nullable JComponent createNorthPanel() {
+    protected JComponent createNorthPanel() {
       JPanel panel = new JPanel(new BorderLayout());
       JLabel infoLabel = new JLabel(XmlStringUtil.wrapInHtml(
         GradleBundle.message("daemons.started.by.are.displayed", ApplicationNamesInfo.getInstance().getFullProductName())));

@@ -5,7 +5,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -45,18 +44,20 @@ public interface VcsLogFilterCollection {
   @NotNull
   Collection<VcsLogFilter> getFilters();
 
-  default @NotNull @Unmodifiable List<VcsLogDetailsFilter> getDetailsFilters() {
+  @NotNull
+  default List<VcsLogDetailsFilter> getDetailsFilters() {
     return ContainerUtil.findAll(getFilters(), VcsLogDetailsFilter.class);
   }
 
   class FilterKey<T extends VcsLogFilter> {
-    private final @NotNull String myName;
+    @NotNull private final String myName;
 
     public FilterKey(@NotNull String name) {
       myName = name;
     }
 
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return myName;
     }
 
@@ -78,7 +79,8 @@ public interface VcsLogFilterCollection {
     }
 
     @Override
-    public @NonNls String toString() {
+    @NonNls
+    public String toString() {
       return myName + " filter";
     }
   }

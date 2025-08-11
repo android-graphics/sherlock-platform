@@ -1,4 +1,4 @@
 // My: to be implemented
-// DISABLE_ERRORS
-
+// DISABLE-ERRORS
+// IGNORE_K2
 package my

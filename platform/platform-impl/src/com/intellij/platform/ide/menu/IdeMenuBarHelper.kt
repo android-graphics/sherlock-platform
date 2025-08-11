@@ -9,7 +9,10 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
 import com.intellij.openapi.actionSystem.impl.*
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -171,13 +174,13 @@ private suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
   val dataManager = serviceAsync<DataManager>()
   return withContext(CoroutineName("expandMainActionGroup")) {
     val targetComponent = windowManager.getFocusedComponent(frame) ?: menuBar
-    val dataContext =  writeIntentReadAction { dataManager.getDataContext(targetComponent) }
+    val dataContext = dataManager.getDataContext(targetComponent)
     Utils.expandActionGroupSuspend(
       group = mainActionGroup,
       presentationFactory = presentationFactory,
       dataContext = dataContext,
       place = ActionPlaces.MAIN_MENU,
-      uiKind = ActionUiKind.MAIN_MENU,
+      isToolbarAction = false,
       fastTrack = isFirstUpdate,
     )
   }.filterIsInstance<ActionGroup>()
@@ -189,8 +192,9 @@ suspend fun createIdeMainMenuActionGroup(): ActionGroup? {
     CustomActionsSchema.getInstanceAsync().getCorrectedActionAsync(IdeActions.GROUP_MAIN_MENU)
   } ?: return null
   return object : ActionGroupWrapper(group) {
-    override fun postProcessVisibleChildren(e: AnActionEvent, visibleChildren: List<AnAction>): List<AnAction> {
-      return super.postProcessVisibleChildren(e, visibleChildren)
+    override fun postProcessVisibleChildren(visibleChildren: List<AnAction>,
+                                            updateSession: UpdateSession): List<AnAction?> {
+      return super.postProcessVisibleChildren(visibleChildren, updateSession)
         .filterIsInstance<ActionGroup>()
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -14,8 +14,6 @@ import com.intellij.ui.treeStructure.CachingSimpleNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ObjectUtils;
-import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +29,7 @@ import java.util.List;
 import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
 import static org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure.MavenStructureDisplayMode.*;
 
-@ApiStatus.Internal
-public abstract class MavenSimpleNode extends CachingSimpleNode implements MavenNode {
+abstract class MavenSimpleNode extends CachingSimpleNode implements MavenNode {
   private MavenSimpleNode myParent;
   private MavenProjectsStructure.ErrorLevel myErrorLevel = MavenProjectsStructure.ErrorLevel.NONE;
   private MavenProjectsStructure.ErrorLevel myTotalErrorLevel = null;
@@ -188,7 +185,6 @@ public abstract class MavenSimpleNode extends CachingSimpleNode implements Maven
     return new SimpleTextAttributes(from.getBgColor(), from.getFgColor(), waveColor, style);
   }
 
-  @Language("devkit-action-id")
   @Nullable
   @NonNls
   String getActionId() {
@@ -201,11 +197,13 @@ public abstract class MavenSimpleNode extends CachingSimpleNode implements Maven
     return null;
   }
 
-  public @Nullable VirtualFile getVirtualFile() {
+  @Nullable
+  public VirtualFile getVirtualFile() {
     return null;
   }
 
-  public @Nullable Navigatable getNavigatable() {
+  @Nullable
+  public Navigatable getNavigatable() {
     return MavenNavigationUtil.createNavigatableForPom(getProject(), getVirtualFile());
   }
 

@@ -3,17 +3,37 @@ package git4idea.actions.branch
 
 import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.containers.tail
 import git4idea.GitBranch
-import git4idea.actions.branch.GitBranchActionsUtil.getAffectedRepositories
+import git4idea.GitTag
 import git4idea.branch.GitBranchUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 
 object GitBranchActionsUtil {
+  /**
+   * See [getAffectedRepositories] for retrieving actual affected repositories
+   */
+  @JvmField
+  val REPOSITORIES_KEY = DataKey.create<List<GitRepository>>("Git.Repositories")
+
+  /**
+   * See [getRepositoriesForTopLevelActions] for retrieving selected
+   * ([GitBranchUtil.guessRepositoryForOperation] or [GitBranchUtil.guessWidgetRepository]) repository or all affected repositories
+   */
+  @JvmField
+  val SELECTED_REPO_KEY = DataKey.create<GitRepository>("Git.Selected.Repository")
+
+  @JvmField
+  val BRANCHES_KEY = DataKey.create<List<GitBranch>>("Git.Branches")
+
+  @JvmField
+  val TAGS_KEY = DataKey.create<List<GitTag>>("Git.Tags")
+
   @JvmStatic
   fun calculateNewBranchInitialName(branch: GitBranch): @NlsSafe String {
     return calculateNewBranchInitialName(branch.name, branch.isRemote)
@@ -51,7 +71,7 @@ object GitBranchActionsUtil {
     val project = e.project ?: return emptyList()
 
     if (isTopLevelAction(e) && !userWantsSyncControl(project)) {
-      return e.getData(GitBranchActionsDataKeys.SELECTED_REPOSITORY)?.let(::listOf).orEmpty()
+      return e.getData(SELECTED_REPO_KEY)?.let(::listOf).orEmpty()
     }
 
     return getAffectedRepositories(e)
@@ -66,16 +86,13 @@ object GitBranchActionsUtil {
   fun getAffectedRepositories(e: AnActionEvent): List<GitRepository> {
     val project = e.project ?: return emptyList()
 
-    val repositoriesInContext = e.getData(GitBranchActionsDataKeys.AFFECTED_REPOSITORIES).orEmpty()
+    val repositoriesInContext = e.getData(REPOSITORIES_KEY).orEmpty()
 
     if (repositoriesInContext.isNotEmpty()) {
       return repositoriesInContext
     }
 
-    val allRepositories = GitRepositoryManager.getInstance(project).repositories
-    if (allRepositories.size == 1 || userWantsSyncControl(project)) {
-      return allRepositories
-    }
+    if (userWantsSyncControl(project)) return GitRepositoryManager.getInstance(project).repositories
 
     return GitBranchUtil.guessRepositoryForOperation(project, e.dataContext)?.let(::listOf).orEmpty()
   }

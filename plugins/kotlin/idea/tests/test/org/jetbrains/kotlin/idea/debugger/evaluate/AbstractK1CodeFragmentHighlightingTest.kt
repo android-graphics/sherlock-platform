@@ -26,35 +26,17 @@ abstract class AbstractCodeFragmentHighlightingTest : AbstractKotlinHighlightVis
             val fileText = FileUtil.loadFile(File(filePath), true)
             val file = myFixture.file as KtFile
             InTextDirectivesUtils.findListWithPrefixes(fileText, "// IMPORT: ").forEach {
-                doImport(file, it)
+                val descriptor = file.resolveImportReference(FqName(it)).singleOrNull()
+                    ?: error("Could not resolve descriptor to import: $it")
+                ImportInsertHelper.getInstance(project).importDescriptor(file, descriptor)
             }
         }
 
         checkHighlighting(filePath)
     }
 
-    protected open fun doImport(file: KtFile, importName: String) {}
-
-    protected open fun checkHighlighting(filePath: String) {
-        myFixture.checkHighlighting(true, false, false)
-    }
-}
-
-abstract class AbstractK1CodeFragmentHighlightingTest : AbstractCodeFragmentHighlightingTest() {
-    override fun doImport(file: KtFile, importName: String) {
-        val descriptor = file.resolveImportReference(FqName(importName)).singleOrNull()
-            ?: error("Could not resolve descriptor to import: $importName")
-        ImportInsertHelper.getInstance(project).importDescriptor(file, descriptor)
-    }
-
-    override fun checkHighlighting(filePath: String) {
-        val inspectionName =
-            inspectionDirectives.firstNotNullOfOrNull {
-                InTextDirectivesUtils.findStringWithPrefixes(
-                    File(filePath).readText(),
-                    "// $it: "
-                )
-            }
+    private fun checkHighlighting(filePath: String) {
+        val inspectionName = InTextDirectivesUtils.findStringWithPrefixes(File(filePath).readText(), "// INSPECTION_CLASS: ")
         if (inspectionName != null) {
             val inspection = Class.forName(inspectionName).getDeclaredConstructor().newInstance() as InspectionProfileEntry
             myFixture.enableInspections(inspection)
@@ -66,12 +48,8 @@ abstract class AbstractK1CodeFragmentHighlightingTest : AbstractCodeFragmentHigh
             return
         }
 
-        super.checkHighlighting(filePath)
+        myFixture.checkHighlighting(true, false, false)
     }
-
-    private val inspectionDirectives: List<String> =
-        buildList {
-            if (isFirPlugin) this += "K2INSPECTION_CLASS"
-            this += "INSPECTION_CLASS"
-        }
 }
+
+abstract class AbstractK1CodeFragmentHighlightingTest : AbstractCodeFragmentHighlightingTest()

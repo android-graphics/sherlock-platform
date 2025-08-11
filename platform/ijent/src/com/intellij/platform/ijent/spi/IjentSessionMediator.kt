@@ -1,15 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
-import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.Cancellation
-import com.intellij.openapi.progress.Cancellation.ensureActive
-import com.intellij.platform.ijent.IjentUnavailableException
-import com.intellij.platform.ijent.coroutineNameAppended
+import com.intellij.openapi.diagnostic.*
+import com.intellij.platform.ijent.IjentApplicationScope
+import com.intellij.platform.ijent.IjentId
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.awaitExit
 import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -17,10 +13,10 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.takeWhile
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
-import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -29,19 +25,8 @@ import kotlin.time.toKotlinDuration
 /**
  * A wrapper for a [Process] that runs IJent. The wrapper logs stderr lines, waits for the exit code, terminates the process in case
  * of problems in the IDE.
- *
- * [processExit] never throws. When it completes, it either means that the process has finished, or that the whole scope of IJent processes
- * is canceled.
- *
- * [ijentProcessScope] should be used by the [com.intellij.platform.ijent.IjentApi] implementation for launching internal coroutines.
- * No matter if IJent exits expectedly or not, an attempt to do anything with [ijentProcessScope] after the IJent has exited
- * throws [IjentUnavailableException].
  */
-class IjentSessionMediator private constructor(
-  val ijentProcessScope: CoroutineScope,
-  val process: Process,
-  val processExit: Deferred<Unit>,
-) {
+class IjentSessionMediator private constructor(val scope: CoroutineScope, val process: Process) {
   enum class ExpectedErrorCode {
     /** During initialization, even a sudden successful exit is an error. */
     NO,
@@ -57,142 +42,64 @@ class IjentSessionMediator private constructor(
   var expectedErrorCode = ExpectedErrorCode.NO
 
   companion object {
-    /**
-     * See the docs of [IjentSessionMediator].
-     *
-     * [ijentLabel] is used only for logging.
-     *
-     * Beware that [parentScope] receives [IjentUnavailableException.CommunicationFailure] if IJent _suddenly_ exits, f.i., after SIGKILL.
-     * Nothing happens with [parentScope] if IJent exits expectedly, f.i., after [com.intellij.platform.ijent.IjentApi.close].
-     */
+    /** See the docs of [IjentSessionMediator] */
     @OptIn(DelicateCoroutinesApi::class)
-    fun create(parentScope: CoroutineScope, process: Process, ijentLabel: String): IjentSessionMediator {
-      // TODO What about https://youtrack.jetbrains.com/issue/IJPL-156891 ?
-
-      require(parentScope.coroutineContext[Job] != null) {
-        "Scope $parentScope has no Job"
-      }
-      val context = IjentThreadPool.asCoroutineDispatcher()
-      val ijentProcessScope = run {
-        // Prevents from logging the error by the default exception handler.
-        // Errors are logged explicitly in this function.
-        val dummyExceptionHandler = CoroutineExceptionHandler { _, err -> /* nothing */ }
-
-        // This supervisor scope exists only to prevent automatic propagation of IjentUnavailableException to the parent scope.
-        // Instead, there's a logic below that decides if a specific IjentUnavailableException should be propagated to the parent scope.
-        val trickySupervisorScope = parentScope.childScope(ijentLabel, context + dummyExceptionHandler, supervisor = true)
-
-        val ijentProcessScope = trickySupervisorScope.childScope(ijentLabel, supervisor = false)
-
-        ijentProcessScope.coroutineContext.job.invokeOnCompletion { err ->
-          trickySupervisorScope.cancel()
-
-          if (err != null) {
-            val propagateToParentScope = when (err) {
-              is IjentUnavailableException -> when (err) {
-                is IjentUnavailableException.ClosedByApplication -> false
-                is IjentUnavailableException.CommunicationFailure -> !err.exitedExpectedly
-              }
-              else -> true
-            }
-
-            if (propagateToParentScope) {
-              try {
-                err.addSuppressed(Throwable("Rethrown from here"))
-                parentScope.launch(start = CoroutineStart.UNDISPATCHED) {
-                  throw err
-                }
-              }
-              catch (_: Throwable) {
-                // It seems that the scope has already been canceled with something else.
-              }
-            }
-
-            // TODO Callers should be able to define their own exception handlers.
-            logIjentError(ijentLabel, err)
-          }
-        }
-
-        ijentProcessScope
-      }
-
+    fun create(process: Process, ijentId: IjentId): IjentSessionMediator {
       val lastStderrMessages = MutableSharedFlow<String?>(
-        replay = 30,
-        extraBufferCapacity = 0,
+        replay = 0,
+        extraBufferCapacity = 30,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
       )
+
+      val connectionScope = IjentApplicationScope.instance().childScope("ijent $ijentId > connection scope", supervisor = false)
 
       // stderr logger should outlive the current scope. In case if an error appears, the scope is cancelled immediately, but the whole
       // intention of the stderr logger is to write logs of the remote process, which come from the remote machine to the local one with
       // a delay.
-      GlobalScope.launch(blockingDispatcher + ijentProcessScope.coroutineNameAppended("stderr logger")) {
-        ijentProcessStderrLogger(process, ijentLabel, lastStderrMessages)
+      GlobalScope.launch(blockingDispatcher + CoroutineName("ijent $ijentId > stderr logger")) {
+        ijentProcessStderrLogger(process, ijentId, lastStderrMessages)
       }
 
-      val processExit = CompletableDeferred<Unit>()
+      val mediator = IjentSessionMediator(connectionScope, process)
 
-      val mediator = IjentSessionMediator(ijentProcessScope, process, processExit)
-
-      val awaiterScope = ijentProcessScope.launch(context = context + ijentProcessScope.coroutineNameAppended("exit awaiter scope")) {
-        ijentProcessExitAwaiter(ijentLabel, mediator, lastStderrMessages)
+      val awaiterScope = IjentApplicationScope.instance().launch(CoroutineName("ijent $ijentId > exit awaiter scope")) {
+        ijentProcessExitAwaiter(ijentId, mediator, lastStderrMessages)
       }
 
-      val finalizerScope = ijentProcessScope.launch(context = context + ijentProcessScope.coroutineNameAppended("finalizer scope")) {
-        ijentProcessFinalizer(ijentLabel, mediator)
+      val finalizerScope = connectionScope.launch(CoroutineName("ijent $ijentId > finalizer scope")) {
+        ijentProcessFinalizer(ijentId, mediator)
       }
 
-      awaiterScope.invokeOnCompletion { err ->
-        processExit.complete(Unit)
-        finalizerScope.cancel(if (err != null) CancellationException(err.message, err) else null)
+      awaiterScope.invokeOnCompletion {
+        finalizerScope.cancel()
+      }
+
+      finalizerScope.invokeOnCompletion {
+        connectionScope.cancel()
       }
 
       return mediator
     }
+
+    @VisibleForTesting
+    val lastStderrMessagesTimeout = 5.seconds // A random timeout.
   }
 }
 
-private val loggedErrors = Collections.newSetFromMap(ContainerUtil.createConcurrentWeakMap<Throwable, Boolean>())
-
-private fun logIjentError(ijentLabel: String, exception: Throwable) {
-  // The logger can create new services, and since this function is called inside an already failed coroutine context,
-  // service creation would be impossible without `executeInNonCancelableSection`.
-  Cancellation.executeInNonCancelableSection {
-    when (exception) {
-      is IjentUnavailableException -> when (exception) {
-        is IjentUnavailableException.ClosedByApplication -> Unit
-
-        is IjentUnavailableException.CommunicationFailure -> {
-          if (!exception.exitedExpectedly && loggedErrors.add(exception)) {
-            LOG.error("Exception in connection with IJent $ijentLabel: ${exception.message}", exception)
-          }
-        }
-      }
-
-      is CancellationException -> Unit
-
-      else -> {
-        if (loggedErrors.add(exception)) {
-          LOG.error("Unexpected error during communnication with IJent $ijentLabel", exception)
-        }
-      }
-    }
-  }
-}
-
-private suspend fun ijentProcessStderrLogger(process: Process, ijentLabel: String, lastStderrMessages: MutableSharedFlow<String?>) {
+private suspend fun ijentProcessStderrLogger(process: Process, ijentId: IjentId, lastStderrMessages: MutableSharedFlow<String?>) {
   try {
     process.errorStream.reader().useLines { lines ->
       for (line in lines) {
         yield()
         if (line.isNotEmpty()) {
-          logIjentStderr(ijentLabel, line)
+          logIjentStderr(ijentId, line)
           lastStderrMessages.emit(line)
         }
       }
     }
   }
   catch (err: IOException) {
-    LOG.debug { "$ijentLabel bootstrap got an error: $err" }
+    LOG.debug { "$ijentId bootstrap got an error: $err" }
   }
   finally {
     lastStderrMessages.emit(null)
@@ -210,13 +117,13 @@ private val ijentLogMessageRegex = Regex(
   RegexOption.COMMENTS,
 )
 
-private fun logIjentStderr(ijentLabel: String, line: String) {
+private fun logIjentStderr(ijentId: IjentId, line: String) {
   val hostDateTime = ZonedDateTime.now()
 
   val (rawRemoteDateTime, level, message) =
     ijentLogMessageRegex.matchEntire(line)?.destructured
     ?: run {
-      LOG.info("$ijentLabel log: $line")
+      LOG.debug { "$ijentId log: $line" }
       return
     }
 
@@ -224,7 +131,7 @@ private fun logIjentStderr(ijentLabel: String, line: String) {
     java.time.Duration.between(ZonedDateTime.parse(rawRemoteDateTime), hostDateTime).toKotlinDuration()
   }
   catch (_: DateTimeParseException) {
-    LOG.debug { "$ijentLabel log: $line" }
+    LOG.debug { "$ijentId log: $line" }
     return
   }
 
@@ -237,7 +144,7 @@ private fun logIjentStderr(ijentLabel: String, line: String) {
   }
 
   logger(buildString {
-    append(ijentLabel)
+    append(ijentId)
     append(" log: ")
     if (dateTimeDiff.absoluteValue > 50.milliseconds) {  // The timeout is taken at random.
       append(rawRemoteDateTime)
@@ -249,16 +156,14 @@ private fun logIjentStderr(ijentLabel: String, line: String) {
   })
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 private suspend fun ijentProcessExitAwaiter(
-  ijentLabel: String,
+  ijentId: IjentId,
   mediator: IjentSessionMediator,
   lastStderrMessages: MutableSharedFlow<String?>,
-): Nothing {
-  while (!mediator.process.waitFor(1, TimeUnit.SECONDS)) {
-    ensureActive()
-  }
-  val exitCode = mediator.process.exitValue()
-  LOG.debug { "IJent process $ijentLabel exited with code $exitCode" }
+) {
+  val exitCode = mediator.process.awaitExit()
+  LOG.debug { "IJent process $ijentId exited with code $exitCode" }
 
   val isExitExpected = when (mediator.expectedErrorCode) {
     IjentSessionMediator.ExpectedErrorCode.NO -> false
@@ -266,24 +171,24 @@ private suspend fun ijentProcessExitAwaiter(
     IjentSessionMediator.ExpectedErrorCode.ANY -> true
   }
 
-  throw if (isExitExpected) {
-    IjentUnavailableException.CommunicationFailure("IJent process exited successfully").apply { exitedExpectedly = true }
-  }
-  else {
-    val stderr = StringBuilder()
-    // This code blocks the whole coroutine scope, so it should
-    withContext(NonCancellable) {
-      val timeoutResult: Unit? = withTimeoutOrNull(1.seconds) {
-        collectLines(lastStderrMessages, stderr)
+  if (!isExitExpected) {
+    // This coroutine must be bound to something that outlives `coroutineScope`, in order to not block its cancellation and
+    // to not truncate the last lines of the logs, which are usually the most important.
+    GlobalScope.launch {
+      val stderr = StringBuilder()
+      try {
+        withTimeout(IjentSessionMediator.lastStderrMessagesTimeout) {
+          collectLines(lastStderrMessages, stderr)
+        }
       }
-      if (timeoutResult == null) {
-        stderr.append("\n<didn't collect the whole stderr>")
+      finally {
+        // There's `LOG.error(message, Attachment)`, but it doesn't work well with `LoggedErrorProcessor.executeAndReturnLoggedError`.
+        LOG.error(RuntimeExceptionWithAttachments(
+          "The process $ijentId suddenly exited with the code $exitCode",
+          Attachment("stderr", stderr.toString()),
+        ))
       }
     }
-    IjentUnavailableException.CommunicationFailure(
-      "The process $ijentLabel suddenly exited with the code $exitCode",
-      Attachment("stderr", stderr.toString()),
-    )
   }
 }
 
@@ -298,41 +203,31 @@ private suspend fun collectLines(lastStderrMessages: SharedFlow<String?>, stderr
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-private suspend fun ijentProcessFinalizer(ijentLabel: String, mediator: IjentSessionMediator): Nothing {
+private suspend fun ijentProcessFinalizer(ijentId: IjentId, mediator: IjentSessionMediator) {
   try {
     awaitCancellation()
   }
   catch (err: Exception) {
-    val actualErrors = generateSequence(err, Throwable::cause).filterTo(mutableListOf()) { it !is CancellationException }
-
-    val existingIjentUnavailableException = actualErrors.filterIsInstance<IjentUnavailableException>().firstOrNull()
-    if (existingIjentUnavailableException != null) {
-      throw existingIjentUnavailableException
-    }
-
-    val cause = actualErrors.firstOrNull() ?: err
-    val message =
-      if (cause is CancellationException) "The coroutine scope of $ijentLabel was cancelled"
-      else "IJent communication terminated due to an error"
-    throw IjentUnavailableException.ClosedByApplication(message, cause)
+    LOG.debug(err) { "$ijentId is going to be terminated due to receiving an error" }
+    throw err
   }
   finally {
     mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ANY
     val process = mediator.process
     if (process.isAlive) {
-      GlobalScope.launch(Dispatchers.IO + CoroutineName("$ijentLabel destruction")) {
+      GlobalScope.launch(Dispatchers.IO + CoroutineName("$ijentId destruction")) {
         try {
           process.waitFor(5, TimeUnit.SECONDS)  // A random timeout.
         }
         finally {
           if (process.isAlive) {
-            LOG.warn("The process $ijentLabel is still alive, it will be killed")
+            LOG.warn("The process $ijentId is still alive, it will be killed")
             process.destroy()
           }
         }
       }
       GlobalScope.launch(Dispatchers.IO) {
-        LOG.debug { "Closing stdin of $ijentLabel" }
+        LOG.debug { "Closing stdin of $ijentId" }
         process.outputStream.close()
       }
     }

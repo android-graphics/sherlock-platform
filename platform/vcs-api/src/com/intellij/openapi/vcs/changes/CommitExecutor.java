@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -41,7 +41,9 @@ public interface CommitExecutor {
    * @see CommitWorkflowHandler#getExecutor(String)
    * @see com.intellij.openapi.vcs.changes.actions.BaseCommitExecutorAction
    */
-  default @Nullable @NonNls String getId() {
+  @Nullable
+  @NonNls
+  default String getId() {
     return null;
   }
 
@@ -76,7 +78,8 @@ public interface CommitExecutor {
    * @deprecated Prefer overriding {@link #createCommitSession(CommitContext)}
    */
   @Deprecated
-  default @NotNull CommitSession createCommitSession() {
+  @NotNull
+  default CommitSession createCommitSession() {
     throw new AbstractMethodError();
   }
 
@@ -84,7 +87,8 @@ public interface CommitExecutor {
    * Prepare for the commit operation.
    * Return {@link CommitSession#VCS_COMMIT} to delegate to the 'default' VCS commit.
    */
-  default @NotNull CommitSession createCommitSession(@NotNull CommitContext commitContext) {
+  @NotNull
+  default CommitSession createCommitSession(@NotNull CommitContext commitContext) {
     return createCommitSession();
   }
 }

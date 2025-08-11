@@ -47,10 +47,11 @@ public final class RepositoryHelper {
   private static final String ULTIMATE_MODULE = "com.intellij.modules.ultimate";
 
   /**
-   * Returns a list of configured custom plugin repository hosts.
+   * Returns a list of configured plugin hosts.
+   * Note that the list always ends with {@code null} element denoting the main plugin repository (Marketplace).
    */
-  public static @NotNull List<@NotNull String> getCustomPluginRepositoryHosts() {
-    var hosts = new ArrayList<>(UpdateSettings.getInstance().getStoredPluginHosts());
+  public static @NotNull List<@Nullable String> getPluginHosts() {
+    var hosts = new ArrayList<>(UpdateSettings.getInstance().getPluginHosts());
 
     var pluginHosts = System.getProperty("idea.plugin.hosts");
     if (pluginHosts != null) {
@@ -69,17 +70,13 @@ public final class RepositoryHelper {
       hosts.add(pluginsUrl);
     }
 
-    ContainerUtil.removeDuplicates(hosts);
-    return hosts;
-  }
+    @SuppressWarnings("removal") var fromContributors = CustomPluginRepoContributor.getRepositoriesFromContributors();
+    hosts.addAll(fromContributors);
 
-  /**
-   * Returns a list of configured plugin hosts.
-   * Note that the list always ends with {@code null} element denoting the main plugin repository (Marketplace).
-   */
-  public static @NotNull List<@Nullable String> getPluginHosts() {
-    List<@Nullable String> hosts = getCustomPluginRepositoryHosts();
-    hosts.add(null); // main plugin repository
+    ContainerUtil.removeDuplicates(hosts);
+
+    hosts.add(null);  // main plugin repository
+
     return hosts;
   }
 
@@ -218,7 +215,8 @@ public final class RepositoryHelper {
     var ids = new HashSet<PluginId>();
     var result = new ArrayList<PluginNode>();
 
-    for (var host : getCustomPluginRepositoryHosts()) {
+    for (var host : getPluginHosts()) {
+      if (host == null) continue;
       try {
         var plugins = loadPlugins(host, null, indicator);
         for (var plugin : plugins) {

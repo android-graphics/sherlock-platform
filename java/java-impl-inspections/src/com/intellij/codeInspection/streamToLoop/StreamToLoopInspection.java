@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -101,7 +101,8 @@ public final class StreamToLoopInspection extends AbstractBaseJavaLocalInspectio
     };
   }
 
-  static @Nullable Operation createOperationFromCall(ChainVariable outVar, PsiMethodCallExpression call, boolean supportUnknownSources) {
+  @Nullable
+  static Operation createOperationFromCall(ChainVariable outVar, PsiMethodCallExpression call, boolean supportUnknownSources) {
     PsiMethod method = call.resolveMethod();
     if(method == null) return null;
     PsiClass aClass = method.getContainingClass();
@@ -142,7 +143,8 @@ public final class StreamToLoopInspection extends AbstractBaseJavaLocalInspectio
     return true;
   }
 
-  static @Nullable List<OperationRecord> extractIterableForEach(PsiMethodCallExpression terminalCall) {
+  @Nullable
+  static List<OperationRecord> extractIterableForEach(PsiMethodCallExpression terminalCall) {
     if (!ITERABLE_FOREACH.test(terminalCall) || !ExpressionUtils.isVoidContext(terminalCall)) return null;
     PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(terminalCall.getMethodExpression());
     if (qualifier == null) return null;
@@ -166,7 +168,8 @@ public final class StreamToLoopInspection extends AbstractBaseJavaLocalInspectio
     return Arrays.asList(sourceRecord, terminalRecord);
   }
 
-  static @Nullable List<OperationRecord> extractMapForEach(PsiMethodCallExpression terminalCall) {
+  @Nullable
+  static List<OperationRecord> extractMapForEach(PsiMethodCallExpression terminalCall) {
     if (!MAP_FOREACH.test(terminalCall) || !ExpressionUtils.isVoidContext(terminalCall)) return null;
     PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(terminalCall.getMethodExpression());
     if (qualifier == null) return null;
@@ -197,9 +200,10 @@ public final class StreamToLoopInspection extends AbstractBaseJavaLocalInspectio
     return Arrays.asList(sourceRecord, terminalRecord);
   }
 
-  static @Nullable List<OperationRecord> extractOperations(ChainVariable outVar,
-                                                           PsiMethodCallExpression terminalCall,
-                                                           boolean supportUnknownSources) {
+  @Nullable
+  static List<OperationRecord> extractOperations(ChainVariable outVar,
+                                                 PsiMethodCallExpression terminalCall,
+                                                 boolean supportUnknownSources) {
     List<OperationRecord> operations = new ArrayList<>();
     PsiMethodCallExpression currentCall = terminalCall;
     ChainVariable lastVar = outVar;
@@ -236,7 +240,8 @@ public final class StreamToLoopInspection extends AbstractBaseJavaLocalInspectio
   }
 
   @Contract("null -> null")
-  static @Nullable TerminalOperation getTerminal(List<? extends OperationRecord> operations) {
+  @Nullable
+  static TerminalOperation getTerminal(List<? extends OperationRecord> operations) {
     if (operations == null || operations.isEmpty()) return null;
     OperationRecord record = operations.get(operations.size()-1);
     if(record.myOperation instanceof TerminalOperation) {
@@ -252,13 +257,15 @@ public final class StreamToLoopInspection extends AbstractBaseJavaLocalInspectio
       myMessage = message;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getName() {
+    public String getName() {
       return myMessage;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaBundle.message("quickfix.family.replace.stream.api.chain.with.loop");
     }
 

@@ -6,7 +6,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -15,7 +14,6 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 
-@ApiStatus.Internal
 public final class FileStatusColorsTable extends JBTable {
 
   public FileStatusColorsTable() {

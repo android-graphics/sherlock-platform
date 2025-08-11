@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.difftool;
 
 import com.intellij.diff.DiffContext;
@@ -22,8 +22,9 @@ import javax.swing.*;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnPhantomChangeDiffRequestProvider implements ChangeDiffRequestProvider {
+  @NotNull
   @Override
-  public @NotNull ThreeState isEquals(@NotNull Change change1, @NotNull Change change2) {
+  public ThreeState isEquals(@NotNull Change change1, @NotNull Change change2) {
     return ThreeState.UNSURE;
   }
 
@@ -32,30 +33,33 @@ public class SvnPhantomChangeDiffRequestProvider implements ChangeDiffRequestPro
     return change instanceof ConflictedSvnChange && ((ConflictedSvnChange)change).isPhantom();
   }
 
+  @NotNull
   @Override
-  public @NotNull DiffRequest process(@NotNull ChangeDiffRequestProducer presentable,
-                                      @NotNull UserDataHolder context,
-                                      @NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+  public DiffRequest process(@NotNull ChangeDiffRequestProducer presentable,
+                             @NotNull UserDataHolder context,
+                             @NotNull ProgressIndicator indicator) throws ProcessCanceledException {
     indicator.checkCanceled();
     return new SvnPhantomDiffRequest(presentable.getChange());
   }
 
   public static class SvnPhantomDiffRequest extends DiffRequest {
-    private final @NotNull Change myChange;
+    @NotNull private final Change myChange;
 
     public SvnPhantomDiffRequest(@NotNull Change change) {
       myChange = change;
     }
 
+    @Nullable
     @Override
-    public @Nullable String getTitle() {
+    public String getTitle() {
       return ChangeDiffRequestProducer.getRequestTitle(myChange);
     }
   }
 
   public static class SvnPhantomDiffTool implements FrameDiffTool {
+    @NotNull
     @Override
-    public @NotNull String getName() {
+    public String getName() {
       return message("svn.phantom.changes.viewer");
     }
 
@@ -64,21 +68,25 @@ public class SvnPhantomChangeDiffRequestProvider implements ChangeDiffRequestPro
       return request instanceof SvnPhantomDiffRequest;
     }
 
+    @NotNull
     @Override
-    public @NotNull DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
+    public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
       return new DiffViewer() {
+        @NotNull
         @Override
-        public @NotNull JComponent getComponent() {
+        public JComponent getComponent() {
           return UIVcsUtil.infoPanel(message("label.svn.phantom.change"), message("text.svn.phantom.change"));
         }
 
+        @Nullable
         @Override
-        public @Nullable JComponent getPreferredFocusedComponent() {
+        public JComponent getPreferredFocusedComponent() {
           return null;
         }
 
+        @NotNull
         @Override
-        public @NotNull ToolbarComponents init() {
+        public ToolbarComponents init() {
           return new ToolbarComponents();
         }
 

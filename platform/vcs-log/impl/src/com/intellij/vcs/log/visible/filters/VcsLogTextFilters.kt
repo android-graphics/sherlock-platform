@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NonNls
 import java.util.*
 import java.util.regex.Pattern
 
-@ApiStatus.Internal
 @ApiStatus.Experimental
 interface VcsLogTextFilterWithMatches : VcsLogTextFilter {
   override fun matches(message: String): Boolean {

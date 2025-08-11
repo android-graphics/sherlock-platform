@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -24,10 +24,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool {
 
-  private static final @NonNls String XML = "xml";
+  @NonNls private static final String XML = "xml";
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new XmlElementVisitor() {
 
       private Boolean isXml;
@@ -173,7 +174,9 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
   }
 
   @Override
-  public @NotNull @NonNls String getShortName() {
+  @NotNull
+  @NonNls
+  public String getShortName() {
     return "XmlUnboundNsPrefix";
   }
 }

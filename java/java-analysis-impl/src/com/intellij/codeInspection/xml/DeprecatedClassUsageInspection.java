@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.xml;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
@@ -18,10 +18,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class DeprecatedClassUsageInspection extends XmlSuppressableInspectionTool {
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
-                                                 boolean isOnTheFly,
-                                                 @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
+                                        boolean isOnTheFly,
+                                        @NotNull LocalInspectionToolSession session) {
     return new XmlElementVisitor() {
       @Override
       public void visitXmlTag(@NotNull XmlTag tag) {
@@ -54,13 +55,16 @@ public final class DeprecatedClassUsageInspection extends XmlSuppressableInspect
     return true;
   }
 
+  @Nls
+  @NotNull
   @Override
-  public @Nls @NotNull String getGroupDisplayName() {
+  public String getGroupDisplayName() {
     return JavaAnalysisBundle.message("deprecated.class.usage.group.xml");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getShortName() {
+  public String getShortName() {
     return "DeprecatedClassUsageInspection";
   }
 }

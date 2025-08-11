@@ -34,12 +34,14 @@ public final class GroovyAccessToStaticFieldLockedOnInstanceInspection
     extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return GroovyBundle.message("inspection.message.access.to.static.field.locked.on.instance.data");
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

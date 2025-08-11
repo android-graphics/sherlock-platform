@@ -1,4 +1,4 @@
-# $Id: __init__.py 9426 2023-07-03 12:38:54Z milde $
+# $Id: __init__.py 7621 2013-03-04 13:20:49Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -8,13 +8,15 @@ This package contains directive implementation modules.
 
 __docformat__ = 'reStructuredText'
 
-import re
 import codecs
-from importlib import import_module
+import re
+import sys
 
-from docutils import nodes, parsers
-from docutils.utils import split_escaped_whitespace, escape2null
+from docutils import nodes
 from docutils.parsers.rst.languages import en as _fallback_language_module
+
+if sys.version_info < (2,5):
+    from docutils._compat import __import__
 
 
 _directive_registry = {
@@ -40,7 +42,7 @@ _directive_registry = {
       'pull-quote': ('body', 'PullQuote'),
       'compound': ('body', 'Compound'),
       'container': ('body', 'Container'),
-      # 'questions': ('body', 'question_list'),
+      #'questions': ('body', 'question_list'),
       'table': ('tables', 'RSTTable'),
       'csv-table': ('tables', 'CSVTable'),
       'list-table': ('tables', 'ListTable'),
@@ -50,11 +52,11 @@ _directive_registry = {
       'sectnum': ('parts', 'Sectnum'),
       'header': ('parts', 'Header'),
       'footer': ('parts', 'Footer'),
-      # 'footnotes': ('parts', 'footnotes'),
-      # 'citations': ('parts', 'citations'),
+      #'footnotes': ('parts', 'footnotes'),
+      #'citations': ('parts', 'citations'),
       'target-notes': ('references', 'TargetNotes'),
-      'meta': ('misc', 'Meta'),
-      # 'imagemap': ('html', 'imagemap'),
+      'meta': ('html', 'Meta'),
+      #'imagemap': ('html', 'imagemap'),
       'raw': ('misc', 'Raw'),
       'include': ('misc', 'Include'),
       'replace': ('misc', 'Replace'),
@@ -64,15 +66,13 @@ _directive_registry = {
       'default-role': ('misc', 'DefaultRole'),
       'title': ('misc', 'Title'),
       'date': ('misc', 'Date'),
-      'restructuredtext-test-directive': ('misc', 'TestDirective'),
-      }
+      'restructuredtext-test-directive': ('misc', 'TestDirective'),}
 """Mapping of directive name to (module name, class name).  The
 directive name is canonical & must be lowercase.  Language-dependent
 names are defined in the ``language`` subpackage."""
 
 _directives = {}
 """Cache of imported directives."""
-
 
 def directive(directive_name, language_module, document):
     """
@@ -114,7 +114,7 @@ def directive(directive_name, language_module, document):
         # Error handling done by caller.
         return None, messages
     try:
-        module = import_module('docutils.parsers.rst.directives.'+modulename)
+        module = __import__(modulename, globals(), locals(), level=1)
     except ImportError as detail:
         messages.append(document.reporter.error(
             'Error importing directive module "%s" (directive "%s"):\n%s'
@@ -132,20 +132,12 @@ def directive(directive_name, language_module, document):
         return None, messages
     return directive, messages
 
-
 def register_directive(name, directive):
     """
     Register a nonstandard application-defined directive function.
     Language lookups are not needed for such functions.
     """
     _directives[name] = directive
-
-
-# conversion functions for `Directive.option_spec`
-# ------------------------------------------------
-#
-# see also `parsers.rst.Directive` in ../__init__.py.
-
 
 def flag(argument):
     """
@@ -159,7 +151,6 @@ def flag(argument):
     else:
         return None
 
-
 def unchanged_required(argument):
     """
     Return the argument text, unchanged.
@@ -171,7 +162,6 @@ def unchanged_required(argument):
         raise ValueError('argument required but none supplied')
     else:
         return argument  # unchanged!
-
 
 def unchanged(argument):
     """
@@ -185,7 +175,6 @@ def unchanged(argument):
     else:
         return argument  # unchanged!
 
-
 def path(argument):
     """
     Return the path argument unwrapped (with newlines removed).
@@ -196,12 +185,12 @@ def path(argument):
     if argument is None:
         raise ValueError('argument required but none supplied')
     else:
-        return ''.join(s.strip() for s in argument.splitlines())
-
+        path = ''.join([s.strip() for s in argument.splitlines()])
+        return path
 
 def uri(argument):
     """
-    Return the URI argument with unescaped whitespace removed.
+    Return the URI argument with whitespace removed.
     (Directive option conversion function.)
 
     Raise ``ValueError`` if no argument is found.
@@ -209,10 +198,8 @@ def uri(argument):
     if argument is None:
         raise ValueError('argument required but none supplied')
     else:
-        parts = split_escaped_whitespace(escape2null(argument))
-        return ' '.join(''.join(nodes.unescape(part).split())
-                        for part in parts)
-
+        uri = ''.join(argument.split())
+        return uri
 
 def nonnegative_int(argument):
     """
@@ -224,11 +211,9 @@ def nonnegative_int(argument):
         raise ValueError('negative value; must be positive or zero')
     return value
 
-
 def percentage(argument):
     """
     Check for an integer percentage value with optional percent sign.
-    (Directive option conversion function.)
     """
     try:
         argument = argument.rstrip(' %')
@@ -236,16 +221,13 @@ def percentage(argument):
         pass
     return nonnegative_int(argument)
 
-
 length_units = ['em', 'ex', 'px', 'in', 'cm', 'mm', 'pt', 'pc']
-
 
 def get_measure(argument, units):
     """
     Check for a positive argument of one of the units and return a
     normalized string of the form "<value><unit>" (without space in
     between).
-    (Directive option conversion function.)
 
     To be called from directive option conversion functions.
     """
@@ -255,18 +237,15 @@ def get_measure(argument, units):
     except (AttributeError, ValueError):
         raise ValueError(
             'not a positive measure of one of the following units:\n%s'
-            % ' '.join('"%s"' % i for i in units))
+            % ' '.join(['"%s"' % i for i in units]))
     return match.group(1) + match.group(2)
-
 
 def length_or_unitless(argument):
     return get_measure(argument, length_units + [''])
 
-
 def length_or_percentage_or_unitless(argument, default=''):
     """
     Return normalized string of a length or percentage unit.
-    (Directive option conversion function.)
 
     Add <default> if there is no unit. Raise ValueError if the argument is not
     a positive measure of one of the valid CSS units (or without unit).
@@ -289,7 +268,6 @@ def length_or_percentage_or_unitless(argument, default=''):
             # raise ValueError with list of valid units:
             return get_measure(argument, length_units + ['%'])
 
-
 def class_option(argument):
     """
     Convert the argument into a list of ID-compatible strings and return it.
@@ -308,10 +286,8 @@ def class_option(argument):
         class_names.append(class_name)
     return class_names
 
-
 unicode_pattern = re.compile(
     r'(?:0x|x|\\x|U\+?|\\u)([0-9a-f]+)$|&#x([0-9a-f]+);$', re.IGNORECASE)
-
 
 def unicode_code(code):
     r"""
@@ -337,10 +313,9 @@ def unicode_code(code):
     except OverflowError as detail:
         raise ValueError('code too large (%s)' % detail)
 
-
 def single_char_or_unicode(argument):
     """
-    A single character is returned as-is.  Unicode character codes are
+    A single character is returned as-is.  Unicode characters codes are
     converted as in `unicode_code`.  (Directive option conversion function.)
     """
     char = unicode_code(argument)
@@ -348,7 +323,6 @@ def single_char_or_unicode(argument):
         raise ValueError('%r invalid; must be a single character or '
                          'a Unicode code' % char)
     return char
-
 
 def single_char_or_whitespace_or_unicode(argument):
     """
@@ -363,7 +337,6 @@ def single_char_or_whitespace_or_unicode(argument):
         char = single_char_or_unicode(argument)
     return char
 
-
 def positive_int(argument):
     """
     Converts the argument into an integer.  Raises ValueError for negative,
@@ -373,7 +346,6 @@ def positive_int(argument):
     if value < 1:
         raise ValueError('negative or zero value; must be positive')
     return value
-
 
 def positive_int_list(argument):
     """
@@ -389,10 +361,9 @@ def positive_int_list(argument):
         entries = argument.split()
     return [positive_int(entry) for entry in entries]
 
-
 def encoding(argument):
     """
-    Verifies the encoding argument by lookup.
+    Verfies the encoding argument by lookup.
     (Directive option conversion function.)
 
     Raises ValueError for unknown encodings.
@@ -402,7 +373,6 @@ def encoding(argument):
     except LookupError:
         raise ValueError('unknown encoding: "%s"' % argument)
     return argument
-
 
 def choice(argument, values):
     """
@@ -430,37 +400,6 @@ def choice(argument, values):
         raise ValueError('"%s" unknown; choose from %s'
                          % (argument, format_values(values)))
 
-
 def format_values(values):
-    return '%s, or "%s"' % (', '.join('"%s"' % s for s in values[:-1]),
+    return '%s, or "%s"' % (', '.join(['"%s"' % s for s in values[:-1]]),
                             values[-1])
-
-
-def value_or(values, other):
-    """
-    Directive option conversion function.
-
-    The argument can be any of `values` or `argument_type`.
-    """
-    def auto_or_other(argument):
-        if argument in values:
-            return argument
-        else:
-            return other(argument)
-    return auto_or_other
-
-
-def parser_name(argument):
-    """
-    Return a docutils parser whose name matches the argument.
-    (Directive option conversion function.)
-
-    Return `None`, if the argument evaluates to `False`.
-    Raise `ValueError` if importing the parser module fails.
-    """
-    if not argument:
-        return None
-    try:
-        return parsers.get_parser_class(argument)
-    except ImportError as err:
-        raise ValueError(str(err))

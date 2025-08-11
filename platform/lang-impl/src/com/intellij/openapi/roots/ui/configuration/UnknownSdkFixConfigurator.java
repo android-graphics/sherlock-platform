@@ -2,10 +2,8 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.projectRoots.Sdk;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public interface UnknownSdkFixConfigurator {
   /**
    * Configures created SDK before it will be added to SdkTable.

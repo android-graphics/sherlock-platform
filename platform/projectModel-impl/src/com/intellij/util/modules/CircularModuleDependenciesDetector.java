@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.modules;
 
 import com.intellij.openapi.module.Module;
@@ -17,15 +17,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class CircularModuleDependenciesDetector {
-  private static @NotNull <T extends ModuleRootModel> Graph<T> createGraphGenerator(@NotNull Map<Module, T> models) {
+  @NotNull
+  private static <T extends ModuleRootModel> Graph<T> createGraphGenerator(@NotNull Map<Module, T> models) {
     return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<>() {
+      @NotNull
       @Override
-      public @NotNull Collection<T> getNodes() {
+      public Collection<T> getNodes() {
         return models.values();
       }
 
+      @NotNull
       @Override
-      public @NotNull Iterator<T> getIn(final ModuleRootModel model) {
+      public Iterator<T> getIn(final ModuleRootModel model) {
         final List<T> dependencies = new ArrayList<>();
         model.orderEntries().compileOnly().forEachModule(module -> {
           T depModel = models.get(module);
@@ -39,13 +42,15 @@ public final class CircularModuleDependenciesDetector {
     }));
   }
 
-  private static @NotNull <T extends ModuleRootModel> Collection<Chunk<T>> buildChunks(@NotNull Map<Module, T> models) {
+  @NotNull
+  private static <T extends ModuleRootModel> Collection<Chunk<T>> buildChunks(@NotNull Map<Module, T> models) {
     return GraphAlgorithms.getInstance().computeSCCGraph(createGraphGenerator(models)).getNodes();
   }
   /**
    * @return pair of modules which become circular after adding dependency, or null if all remains OK
    */
-  public static @Nullable Couple<Module> addingDependencyFormsCircularity(@NotNull Module currentModule, @NotNull Module toDependOn) {
+  @Nullable
+  public static Couple<Module> addingDependencyFormsCircularity(@NotNull Module currentModule, @NotNull Module toDependOn) {
     assert currentModule != toDependOn;
     // whatsa lotsa of @&#^%$ codes-a!
 

@@ -57,8 +57,9 @@ public final class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaL
     return CallMatcher.anyOf(matchers);
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethod(@NotNull PsiMethod method) {
@@ -182,8 +183,9 @@ public final class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaL
       return ourAllowedInstanceCalls.contains(call.getMethodExpression().getReferenceName());
     }
 
-    private static @Nullable("When use not allows unboxing") Integer afterBoxingRemovalReferenceBoostedImpact(@NotNull PsiReferenceExpression expression,
-                                                                                                              @NotNull BoxingInfo boxingInfo) {
+    @Nullable("When use not allows unboxing")
+    private static Integer afterBoxingRemovalReferenceBoostedImpact(@NotNull PsiReferenceExpression expression,
+                                                             @NotNull BoxingInfo boxingInfo) {
       Integer impact = afterBoxingRemovalReferenceImpact(expression, boxingInfo);
       if (impact == null) return null;
       final LocalSearchScope scope = tryCast(boxingInfo.myVariable.getUseScope(), LocalSearchScope.class);
@@ -199,8 +201,9 @@ public final class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaL
       return impact;
     }
 
-    private static @Nullable("When use does not allow unboxing") Integer afterBoxingRemovalReferenceImpact(@NotNull PsiReferenceExpression expression,
-                                                                                                           @NotNull BoxingInfo boxingInfo) {
+    @Nullable("When use does not allow unboxing")
+    private static Integer afterBoxingRemovalReferenceImpact(@NotNull PsiReferenceExpression expression,
+                                                             @NotNull BoxingInfo boxingInfo) {
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression).getParent();
       PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(expression);
       if (call != null) {
@@ -235,8 +238,9 @@ public final class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaL
       return 0;
     }
 
-    private static @Nullable("When use not allows unboxing") Integer expressionListImpactAfterBoxingRemoval(@NotNull PsiExpressionList expressionList,
-                                                                                                            @NotNull PsiReferenceExpression reference) {
+    @Nullable("When use not allows unboxing")
+    private static Integer expressionListImpactAfterBoxingRemoval(@NotNull PsiExpressionList expressionList,
+                                                                  @NotNull PsiReferenceExpression reference) {
       PsiElement grandParent = expressionList.getParent();
       if (!(grandParent instanceof PsiCallExpression callExpression)) return null;
       PsiExpression[] arguments = expressionList.getExpressions();
@@ -279,8 +283,9 @@ public final class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaL
       return isRelational ? 0 : 1;
     }
 
-    private static @Nullable("When use does not allow unboxing") Integer polyadicExpressionImpactAfterBoxingRemoval(@NotNull PsiPolyadicExpression polyadic,
-                                                                                                                    PsiReferenceExpression reference) {
+    @Nullable("When use does not allow unboxing")
+    private static Integer polyadicExpressionImpactAfterBoxingRemoval(@NotNull PsiPolyadicExpression polyadic,
+                                                                      PsiReferenceExpression reference) {
       final PsiExpression[] operands = polyadic.getOperands();
       final IElementType tokenType = polyadic.getOperationTokenType();
 
@@ -322,13 +327,17 @@ public final class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaL
   }
 
   private static class ConvertWrapperTypeToPrimitive extends PsiUpdateModCommandQuickFix {
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
     @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
+    public String getName() {
       return getFamilyName();
     }
 
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
     @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaBundle.message("inspection.wrapper.type.may.be.primitive.fix.name");
     }
 

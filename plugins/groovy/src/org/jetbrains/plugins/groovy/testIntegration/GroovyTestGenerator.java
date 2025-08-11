@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.testIntegration;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -40,8 +40,9 @@ import java.util.Set;
  */
 public final class GroovyTestGenerator implements TestGenerator {
 
+  @Nullable
   @Override
-  public @Nullable PsiElement generateTest(final Project project, final CreateTestDialog d) {
+  public PsiElement generateTest(final Project project, final CreateTestDialog d) {
     return WriteAction.compute(() -> {
       final PsiClass test = (PsiClass)PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
         (Computable<PsiElement>)() -> {
@@ -106,7 +107,8 @@ public final class GroovyTestGenerator implements TestGenerator {
     extendsClause.add(superClassRef);
   }
 
-  private static @Nullable PsiClass findClass(Project project, String fqName) {
+  @Nullable
+  private static PsiClass findClass(Project project, String fqName) {
     GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     return JavaPsiFacade.getInstance(project).findClass(fqName, scope);
   }

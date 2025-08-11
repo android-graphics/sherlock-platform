@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package com.intellij.ide.macro;
 
@@ -12,13 +26,15 @@ import org.jetbrains.annotations.NotNull;
 public class FileDirPathFromParentMacro extends Macro implements MacroWithParams{
 
   private static final String PATH_DELIMITER = "/";
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return "FileDirPathFromParent";
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
+  public String getDescription() {
     return IdeCoreBundle.message("macro.file.directory.from.parent");
   }
 
@@ -81,7 +97,8 @@ public class FileDirPathFromParentMacro extends Macro implements MacroWithParams
     return -1;
   }
 
-  private static @NotNull String surroundWithSlashes(@NotNull String path) {
+  @NotNull
+  private static String surroundWithSlashes(@NotNull String path) {
     if (path.isEmpty()) {
       return PATH_DELIMITER;
     }

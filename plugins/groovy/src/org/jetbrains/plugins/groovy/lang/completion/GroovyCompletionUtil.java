@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -111,7 +111,8 @@ public final class GroovyCompletionUtil {
     return isSlowCompletionEnabled;
   }
 
-  public static @Nullable PsiElement nearestLeftSibling(PsiElement elem) {
+  @Nullable
+  public static PsiElement nearestLeftSibling(PsiElement elem) {
     elem = elem.getPrevSibling();
     while (elem != null &&
            (elem instanceof PsiWhiteSpace ||
@@ -122,7 +123,8 @@ public final class GroovyCompletionUtil {
     return elem;
   }
 
-  public static @Nullable PsiElement nearestLeftLeaf(PsiElement elem) {
+  @Nullable
+  public static PsiElement nearestLeftLeaf(PsiElement elem) {
     elem = PsiTreeUtil.prevLeaf(elem);
     while (elem != null &&
            (elem instanceof PsiWhiteSpace ||
@@ -152,7 +154,8 @@ public final class GroovyCompletionUtil {
     return (previousLeaf == null || SEPARATORS.contains(previousLeaf.getNode().getElementType()));
   }
 
-  public static @Nullable PsiElement getLeafByOffset(int offset, PsiElement element) {
+  @Nullable
+  public static PsiElement getLeafByOffset(int offset, PsiElement element) {
     if (offset < 0) {
       return null;
     }
@@ -672,7 +675,8 @@ public final class GroovyCompletionUtil {
     return false;
   }
 
-  public static @Nullable PsiType getQualifierType(@Nullable PsiElement qualifier) {
+  @Nullable
+  public static PsiType getQualifierType(@Nullable PsiElement qualifier) {
     PsiType qualifierType = qualifier instanceof GrExpression ? ((GrExpression)qualifier).getType() : null;
     if (ResolveUtil.resolvesToClass(qualifier)) {
       PsiType type = ResolveUtil.unwrapClassType(qualifierType);

@@ -18,7 +18,10 @@ import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.CollectionFactory;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
@@ -214,7 +217,6 @@ public final class SmartPointerManagerImpl extends SmartPointerManager implement
     return SmartPsiElementPointerImpl.pointsToTheSameElementAs(pointer1, pointer2);
   }
 
-  @ApiStatus.Internal
   public void updatePointers(@NotNull Document document, @NotNull FrozenDocument frozen, @NotNull List<? extends DocumentEvent> events) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     SmartPointerTracker list = file == null ? null : getTracker(file);

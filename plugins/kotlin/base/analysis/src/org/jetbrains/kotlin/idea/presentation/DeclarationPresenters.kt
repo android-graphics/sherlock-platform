@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.NewUI
+import com.intellij.ui.ExperimentalUI
 import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -91,37 +91,19 @@ open class KotlinFunctionPresentation(
 ) : KotlinDefaultNamedDeclarationPresentation(function) {
     override fun getPresentableText(): String {
         return buildString {
-            val receiverTypeText = getTrimmedTypeText(function.receiverTypeReference)
-            if (receiverTypeText.isNotEmpty()) {
-                append("$receiverTypeText.")
+            function.receiverTypeReference?.getTypeText()?.let {
+                append(StringUtil.getShortName(it))
+                append(".")
             }
 
             name?.let { append(it) }
 
             append("(")
             append(function.valueParameters.joinToString {
-                val typeReference = it.typeReference
-                (if (it.isVarArg) "vararg " else "") + getTrimmedTypeText(typeReference)
+                (if (it.isVarArg) "vararg " else "") + StringUtil.getShortName(it.typeReference?.getTypeText() ?: "")
             })
             append(")")
         }
-    }
-
-    private fun getTrimmedTypeText(typeReference: KtTypeReference?): String {
-        val typeElement = typeReference?.typeElement
-        val typeText = when (typeElement) {
-            null -> ""
-            is KtFunctionType -> typeReference.getShortTypeText()
-            else -> {
-                val stub = typeReference.stub
-                if (stub != null || typeElement is KtNullableType && typeElement.innerType is KtFunctionType) {
-                    typeReference.getShortTypeText()
-                } else {
-                   StringUtil.getShortName(typeReference.getTypeText())
-                }
-            }
-        }
-        return typeText
     }
 
     override fun getLocationString(): String? {
@@ -142,16 +124,16 @@ class KtFunctionPresenter : ItemPresentationProvider<KtFunction> {
     }
 }
 
-internal fun getPresentationInContainer(param: Any): String {
-    if (NewUI.isEnabled() && !ApplicationManager.getApplication().isUnitTestMode) {
+private fun getPresentationInContainer(param: Any): String {
+    if (ExperimentalUI.isNewUI() && !ApplicationManager.getApplication().isUnitTestMode) {
         return KotlinBundle.message("presentation.text.in.container.paren.no.brackets", param)
     } else {
         return KotlinBundle.message("presentation.text.in.container.paren", param)
     }
 }
 
-internal fun getPresentationText(param: Any): String {
-    if (NewUI.isEnabled() && !ApplicationManager.getApplication().isUnitTestMode) {
+private fun getPresentationText(param: Any): String {
+    if (ExperimentalUI.isNewUI() && !ApplicationManager.getApplication().isUnitTestMode) {
         return KotlinBundle.message("presentation.text.paren.no.brackets", param)
     } else {
         return KotlinBundle.message("presentation.text.paren", param)

@@ -18,5 +18,3 @@ class Foo {
 }
 
 fun bar(i: Int, f: Foo) {}
-
-

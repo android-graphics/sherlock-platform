@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -66,7 +66,8 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   private final String myNewVisibility;
   private final boolean myGenerateAccessors;
   private final List<PsiField> enumConstants;
-  private final @NotNull String newClassName;
+  @NotNull
+  private final String newClassName;
   private final String delegateFieldName;
   private final boolean requiresBackpointer;
   private boolean delegationRequired;
@@ -140,7 +141,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   }
 
   @Override
-  protected boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, @Nls String> conflicts = new MultiMap<>();
     myExtractEnumProcessor.findEnumConstantConflicts(refUsages);
     if (!DestinationFolderComboBox.isAccessible(myProject, sourceClass.getContainingFile().getVirtualFile(),
@@ -179,7 +180,8 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     return showConflicts(conflicts, refUsages.get());
   }
 
-  private @NotNull String getQualifiedName() {
+  @NotNull
+  private String getQualifiedName() {
     return extractInnerClass
            ? sourceClass.getQualifiedName() + '.' + newClassName
            : StringUtil.getQualifiedName(newPackageName, newClassName);
@@ -220,7 +222,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final Project project = sourceClass.getProject();
     final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(sourceClass.getContainingFile());
 
-    final String baseName = settings.FIELD_NAME_PREFIX.isEmpty() ? StringUtil.decapitalize(newClassName) : newClassName;
+    final String baseName = settings.FIELD_NAME_PREFIX.length() == 0 ? StringUtil.decapitalize(newClassName) : newClassName;
     String name = settings.FIELD_NAME_PREFIX + baseName + settings.FIELD_NAME_SUFFIX;
     if (!existsFieldWithName(name) && !PsiNameHelper.getInstance(project).isKeyword(name)) {
       return name;
@@ -247,12 +249,14 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   }
 
   @Override
-  protected @NotNull @NlsContexts.Command String getCommandName() {
+  @NotNull
+  protected @NlsContexts.Command String getCommandName() {
     return RefactorJBundle.message("extracted.class.command.name", newClassName);
   }
 
   @Override
-  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usageInfos) {
+  @NotNull
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usageInfos) {
     return new ExtractClassUsageViewDescriptor(sourceClass);
   }
 
@@ -427,9 +431,9 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final PsiManager manager = sourceClass.getManager();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
-    final @NonNls StringBuilder fieldBuffer = new StringBuilder();
+    @NonNls final StringBuilder fieldBuffer = new StringBuilder();
     final String delegateVisibility = calculateDelegateVisibility();
-    if (!delegateVisibility.isEmpty()) fieldBuffer.append(delegateVisibility).append(' ');
+    if (delegateVisibility.length() > 0) fieldBuffer.append(delegateVisibility).append(' ');
     fieldBuffer.append("final ");
     final String fullyQualifiedName = getQualifiedName();
     fieldBuffer.append(fullyQualifiedName);
@@ -463,7 +467,8 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     }
   }
 
-  private @NonNls String calculateDelegateVisibility() {
+  @NonNls
+  private String calculateDelegateVisibility() {
     for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.PUBLIC) && !field.hasModifierProperty(PsiModifier.STATIC)) {
         return "public";
@@ -509,7 +514,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final PsiManager psiManager = innerClass.getManager();
     final Project project = psiManager.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final Iterable<PsiReference> calls = ReferencesSearch.search(innerClass, scope).asIterable();
+    final Iterable<PsiReference> calls = ReferencesSearch.search(innerClass, scope);
     final String innerName = innerClass.getQualifiedName();
     assert innerName != null;
     final String sourceClassQualifiedName = sourceClass.getQualifiedName();
@@ -534,7 +539,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final PsiManager psiManager = method.getManager();
     final Project project = psiManager.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final Iterable<PsiReference> calls = ReferencesSearch.search(method, scope).asIterable();
+    final Iterable<PsiReference> calls = ReferencesSearch.search(method, scope);
     for (PsiReference reference : calls) {
       final PsiElement referenceElement = reference.getElement();
       final PsiElement parent = referenceElement.getParent();
@@ -567,7 +572,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final PsiManager psiManager = method.getManager();
     final Project project = psiManager.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final Iterable<PsiReference> calls = ReferencesSearch.search(method, scope).asIterable();
+    final Iterable<PsiReference> calls = ReferencesSearch.search(method, scope);
     final String fullyQualifiedName = getQualifiedName();
     for (PsiReference reference : calls) {
       final PsiElement referenceElement = reference.getElement();
@@ -628,7 +633,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     }
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
 
-    for (PsiReference reference : ReferencesSearch.search(field, scope).asIterable()) {
+    for (PsiReference reference : ReferencesSearch.search(field, scope)) {
       final PsiElement element = reference.getElement();
       if (isInMovedElement(element)) {
         continue;

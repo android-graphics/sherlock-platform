@@ -26,7 +26,8 @@ public class ShFunctionDeclarationProcessor implements PsiScopeProcessor {
     return false;
   }
 
-  public @Nullable ShFunctionDefinition getFunction() {
+  @Nullable
+  public ShFunctionDefinition getFunction() {
     return myResult;
   }
 }

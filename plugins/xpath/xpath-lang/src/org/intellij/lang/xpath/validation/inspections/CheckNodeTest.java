@@ -35,7 +35,8 @@ import java.text.MessageFormat;
 import java.util.Set;
 
 public class CheckNodeTest extends XPathInspection {
-    private static final @NonNls String SHORT_NAME = "CheckNodeTest";
+    @NonNls
+    private static final String SHORT_NAME = "CheckNodeTest";
 
     @Override
     protected Visitor createVisitor(InspectionManager manager, boolean isOnTheFly) {
@@ -43,7 +44,9 @@ public class CheckNodeTest extends XPathInspection {
     }
 
   @Override
-  public @NotNull @NonNls String getShortName() {
+    @NotNull
+    @NonNls
+    public String getShortName() {
         return SHORT_NAME;
     }
 
@@ -57,7 +60,7 @@ public class CheckNodeTest extends XPathInspection {
       return language == XPathFileType.XPATH.getLanguage() || language == XPathFileType.XPATH2.getLanguage();
     }
 
-    static final class MyVisitor extends Visitor {
+    final static class MyVisitor extends Visitor {
         MyVisitor(InspectionManager manager, boolean isOnTheFly) {
             super(manager, isOnTheFly);
         }
@@ -149,9 +152,9 @@ public class CheckNodeTest extends XPathInspection {
               }
             } else if (allowDefaultNamespace) {
               final String namespaceURI = namespaceContext.getDefaultNamespace(context);
-              b = b && (element.getNamespaceURI().equals(namespaceURI) || (element.getNamespaceURI().isEmpty() && namespaceURI == null));
+              b = b && (element.getNamespaceURI().equals(namespaceURI) || (element.getNamespaceURI().length() == 0 && namespaceURI == null));
             } else {
-              b = b && element.getNamespaceURI().isEmpty();
+              b = b && element.getNamespaceURI().length() == 0;
             }
           return b;
         }

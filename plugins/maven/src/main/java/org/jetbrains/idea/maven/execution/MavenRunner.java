@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.process.ProcessAdapter;
@@ -28,7 +28,8 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
     return project.getService(MavenRunner.class);
   }
 
-  public static @Nullable MavenRunner getInstanceIfCreated(@NotNull Project project) {
+  @Nullable
+  public static MavenRunner getInstanceIfCreated(@NotNull Project project) {
     return project.getServiceIfCreated(MavenRunner.class);
   }
 
@@ -41,7 +42,8 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
   }
 
   @Override
-  public @NotNull MavenRunnerSettings getState() {
+  @NotNull
+  public MavenRunnerSettings getState() {
     return mySettings;
   }
 
@@ -72,7 +74,7 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
   public boolean runBatch(List<MavenRunnerParameters> commands,
                           @Nullable MavenGeneralSettings coreSettings,
                           @Nullable MavenRunnerSettings runnerSettings,
-                          final @Nullable String action,
+                          @Nullable final String action,
                           @Nullable ProgressIndicator indicator) {
     return runBatch(commands, coreSettings, runnerSettings, action, indicator, null);
   }
@@ -80,7 +82,7 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
   public boolean runBatch(List<MavenRunnerParameters> commands,
                           @Nullable MavenGeneralSettings coreSettings,
                           @Nullable MavenRunnerSettings runnerSettings,
-                          final @Nullable String action,
+                          @Nullable final String action,
                           @Nullable ProgressIndicator indicator,
                           @Nullable Consumer<? super ProcessHandler> onAttach) {
     return runBatch(commands, coreSettings, runnerSettings, action, indicator, onAttach, false);
@@ -89,7 +91,7 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
   public boolean runBatch(List<MavenRunnerParameters> commands,
                           @Nullable MavenGeneralSettings coreSettings,
                           @Nullable MavenRunnerSettings runnerSettings,
-                          final @Nullable String action,
+                          @Nullable final String action,
                           @Nullable ProgressIndicator indicator,
                           @Nullable Consumer<? super ProcessHandler> onAttach,
                           boolean isDelegateBuild) {

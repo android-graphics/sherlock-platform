@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
@@ -11,8 +10,6 @@ import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinMavenArtifactD
 import java.io.File
 
 private val VERSION_UNTIL_OLD_FAT_JAR_IS_AVAILABLE = IdeKotlinVersion.get("1.7.20")
-
-private val LOG = logger<LazyKotlinJpsPluginClasspathDownloader>()
 
 class LazyKotlinJpsPluginClasspathDownloader(private val version: String) :
     LazyFileOutputProducer<Unit, LazyKotlinJpsPluginClasspathDownloader.Context> {
@@ -43,20 +40,14 @@ class LazyKotlinJpsPluginClasspathDownloader(private val version: String) :
             ?: emptyList()
     }
 
-    fun getDownloadedIfUpToDateOrEmpty(): List<File> {
-        LOG.debug("Requested download for version $version")
-        LOG.debug("Found standalone compiler version ${KotlinPluginLayout.standaloneCompilerVersion}")
-
-        return if (IdeKotlinVersion.get(version).isStandaloneCompilerVersion) {
-            LOG.debug("Using standalone compiler version ${KotlinPluginLayout.standaloneCompilerVersion}")
+    fun getDownloadedIfUpToDateOrEmpty() =
+        if (IdeKotlinVersion.get(version).isStandaloneCompilerVersion) {
             KotlinPluginLayout.jpsPluginClasspath
         } else {
-            LOG.debug("Starting download for version $version")
             newDownloader.getDownloadedIfUpToDateOrEmpty().takeIf { it.isNotEmpty() }
                 ?: oldDownloader?.getDownloadedIfUpToDateOrEmpty()
                 ?: emptyList()
         }
-    }
 
     fun lazyDownload(computationContext: Context) = lazyProduceOutput(Unit, computationContext)
 

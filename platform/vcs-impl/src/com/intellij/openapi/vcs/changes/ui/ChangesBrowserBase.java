@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.DiffDialogHints;
@@ -23,7 +23,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -43,7 +42,7 @@ public abstract class ChangesBrowserBase extends JPanel implements UiCompatibleD
   public static final DataKey<ChangesBrowserBase> DATA_KEY =
     DataKey.create("com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase");
 
-  protected final @NotNull Project myProject;
+  @NotNull protected final Project myProject;
 
   protected final ChangesTree myViewer;
 
@@ -54,8 +53,8 @@ public abstract class ChangesBrowserBase extends JPanel implements UiCompatibleD
   private final JScrollPane myViewerScrollPane;
   private final AnAction myShowDiffAction;
 
-  private @Nullable Runnable myInclusionChangedListener;
-  private @Nullable DiffPreview myDiffPreview;
+  @Nullable private Runnable myInclusionChangedListener;
+  @Nullable private DiffPreview myDiffPreview;
 
 
   protected ChangesBrowserBase(@NotNull Project project,
@@ -77,7 +76,8 @@ public abstract class ChangesBrowserBase extends JPanel implements UiCompatibleD
     myShowDiffAction = new MyShowDiffAction();
   }
 
-  protected @NotNull ChangesTree createTreeList(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
+  @NotNull
+  protected ChangesTree createTreeList(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
     return new ChangesBrowserTreeList(this, project, showCheckboxes, highlightProblems);
   }
 
@@ -112,7 +112,8 @@ public abstract class ChangesBrowserBase extends JPanel implements UiCompatibleD
     DiffUtil.recursiveRegisterShortcutSet(myToolBarGroup, this, null);
   }
 
-  protected @NotNull Border createViewerBorder() {
+  @NotNull
+  protected Border createViewerBorder() {
     return IdeBorderFactory.createBorder(SideBorder.ALL);
   }
 
@@ -141,14 +142,17 @@ public abstract class ChangesBrowserBase extends JPanel implements UiCompatibleD
     return myToolbarAnchor == SwingConstants.LEFT || myToolbarAnchor == SwingConstants.RIGHT;
   }
 
-  protected @NotNull JComponent createToolbarComponent() {
+  @NotNull
+  protected JComponent createToolbarComponent() {
     return myToolbar.getComponent();
   }
 
-  protected abstract @NotNull DefaultTreeModel buildTreeModel();
+  @NotNull
+  protected abstract DefaultTreeModel buildTreeModel();
 
 
-  protected @Nullable ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object userObject) {
+  @Nullable
+  protected ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object userObject) {
     if (userObject instanceof Change) {
       return ChangeDiffRequestProducer.create(myProject, (Change)userObject);
     }
@@ -156,19 +160,23 @@ public abstract class ChangesBrowserBase extends JPanel implements UiCompatibleD
   }
 
 
-  protected @Nullable JComponent createHeaderPanel() {
+  @Nullable
+  protected JComponent createHeaderPanel() {
     return null;
   }
 
-  protected @NotNull JComponent createCenterPanel() {
+  @NotNull
+  protected JComponent createCenterPanel() {
     return myViewerScrollPane;
   }
 
-  protected @NotNull @Unmodifiable List<AnAction> createToolbarActions() {
+  @NotNull
+  protected List<AnAction> createToolbarActions() {
     return Collections.singletonList(myShowDiffAction);
   }
 
-  protected @NotNull List<AnAction> createLastToolbarActions() {
+  @NotNull
+  protected List<AnAction> createLastToolbarActions() {
     List<AnAction> result = new ArrayList<>();
     result.add(Separator.getInstance());
     result.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP));
@@ -179,7 +187,8 @@ public abstract class ChangesBrowserBase extends JPanel implements UiCompatibleD
     return result;
   }
 
-  protected @NotNull @Unmodifiable List<AnAction> createPopupMenuActions() {
+  @NotNull
+  protected List<AnAction> createPopupMenuActions() {
     List<AnAction> actions = new ArrayList<>();
     actions.add(myShowDiffAction);
     ContainerUtil.addIfNotNull(actions, ActionManager.getInstance().getAction("Diff.ShowStandaloneDiff"));
@@ -187,7 +196,8 @@ public abstract class ChangesBrowserBase extends JPanel implements UiCompatibleD
     return actions;
   }
 
-  protected @NotNull List<AnAction> createDiffActions() {
+  @NotNull
+  protected List<AnAction> createDiffActions() {
     return Collections.emptyList();
   }
 
@@ -218,23 +228,28 @@ public abstract class ChangesBrowserBase extends JPanel implements UiCompatibleD
   }
 
 
-  public @NotNull JComponent getPreferredFocusedComponent() {
+  @NotNull
+  public JComponent getPreferredFocusedComponent() {
     return myViewer.getPreferredFocusedComponent();
   }
 
-  public @NotNull ActionToolbar getToolbar() {
+  @NotNull
+  public ActionToolbar getToolbar() {
     return myToolbar;
   }
 
-  public @NotNull JScrollPane getViewerScrollPane() {
+  @NotNull
+  public JScrollPane getViewerScrollPane() {
     return myViewerScrollPane;
   }
 
-  public @NotNull ChangesTree getViewer() {
+  @NotNull
+  public ChangesTree getViewer() {
     return myViewer;
   }
 
-  public @NotNull ChangesGroupingPolicyFactory getGrouping() {
+  @NotNull
+  public ChangesGroupingPolicyFactory getGrouping() {
     return myViewer.getGrouping();
   }
 
@@ -246,7 +261,8 @@ public abstract class ChangesBrowserBase extends JPanel implements UiCompatibleD
   }
 
 
-  public @NotNull AnAction getDiffAction() {
+  @NotNull
+  public AnAction getDiffAction() {
     return myShowDiffAction;
   }
 
@@ -255,7 +271,8 @@ public abstract class ChangesBrowserBase extends JPanel implements UiCompatibleD
     return ContainerUtil.exists(selection.getList(), entry -> getDiffRequestProducer(entry) != null);
   }
 
-  protected @Nullable DiffPreview getShowDiffActionPreview() {
+  @Nullable
+  protected DiffPreview getShowDiffActionPreview() {
     return myDiffPreview;
   }
 
@@ -358,7 +375,7 @@ public abstract class ChangesBrowserBase extends JPanel implements UiCompatibleD
   }
 
   private static class ChangesBrowserTreeList extends ChangesTree {
-    private final @NotNull ChangesBrowserBase myBrowser;
+    @NotNull private final ChangesBrowserBase myBrowser;
 
     ChangesBrowserTreeList(@NotNull ChangesBrowserBase browser,
                            @NotNull Project project,

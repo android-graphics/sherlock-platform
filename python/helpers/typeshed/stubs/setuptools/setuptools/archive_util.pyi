@@ -1,5 +1,5 @@
 from _typeshed import Incomplete
-from collections.abc import Callable
+from typing import Any
 
 from ._distutils.errors import DistutilsError
 
@@ -21,4 +21,4 @@ def unpack_directory(filename, extract_dir, progress_filter=...) -> None: ...
 def unpack_zipfile(filename, extract_dir, progress_filter=...) -> None: ...
 def unpack_tarfile(filename, extract_dir, progress_filter=...): ...
 
-extraction_drivers: tuple[Callable[..., Incomplete], ...]
+extraction_drivers: Any

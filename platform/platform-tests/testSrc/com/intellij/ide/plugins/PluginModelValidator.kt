@@ -5,7 +5,6 @@ package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
-import com.intellij.ide.plugins.PluginValidationError
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PathManager.getHomePath
 import com.intellij.util.getErrorsAsString
@@ -42,10 +41,9 @@ private val moduleSkipList = java.util.Set.of(
   "intellij.android.device-explorer", /* android plugin doesn't follow new plugin model yet, $modulename$.xml is not a module descriptor */
   "intellij.bigdatatools.plugin.spark", /* Spark Scala depends on Scala, Scala is not in monorepo*/
   "kotlin.highlighting.shared",
-  "intellij.platform.syntax.psi", /* syntax.psi is not yet a real module because it's a part of Core */
 )
 
-class PluginModelValidator(sourceModules: List<Module>, private val skipUnresolvedOptionalContentModules: Boolean = false) {
+class PluginModelValidator(sourceModules: List<Module>) {
   sealed interface Module {
     val name: String
 
@@ -274,7 +272,7 @@ class PluginModelValidator(sourceModules: List<Module>, private val skipUnresolv
           }
 
           val dependency = pluginIdToInfo[id]
-          if (!id.startsWith("com.intellij.modules.") && !id.startsWith("com.intellij.platform.experimental.") && dependency == null) {
+          if (!id.startsWith("com.intellij.modules.") && dependency == null) {
             _errors.add(PluginValidationError(
               "Plugin not found: $id",
               getErrorInfo(),
@@ -403,19 +401,9 @@ class PluginModelValidator(sourceModules: List<Module>, private val skipUnresolv
         ))
         continue
       }
-
-      val moduleLoadingRule = child.getAttributeValue("loading")
-      if (moduleLoadingRule != null && moduleLoadingRule !in arrayOf("required", "embedded", "optional", "on-demand")) {
+      if (child.attributes.size > 1) {
         _errors.add(PluginValidationError(
-          "Unknown value for 'loading' attribute: $moduleLoadingRule. Supported values are 'required', 'embedded', 'optional' and 'on-demand'.",
-          getErrorInfo(),
-        ))
-        continue
-      }
-
-      if (child.attributes.size > 2) {
-        _errors.add(PluginValidationError(
-          "Unknown attributes: ${child.attributes.entries.filter { it.key != "name" || it.key != "loading" }}",
+          "Unknown attributes: ${child.attributes.entries.filter { it.key != "name" }}",
           getErrorInfo(),
         ))
         continue
@@ -430,15 +418,7 @@ class PluginModelValidator(sourceModules: List<Module>, private val skipUnresolv
       }
 
       // ignore null - getModule reports error
-      val moduleDescriptorFileInfo = getModuleDescriptorFileInfo(
-        moduleName = moduleName,
-        moduleLoadingRule = moduleLoadingRule,
-        referencingModuleInfo = referencingModuleInfo,
-        sourceModuleNameToFileInfo = sourceModuleNameToFileInfo
-      )
-      if (moduleDescriptorFileInfo == null) {
-        continue
-      }
+      val moduleDescriptorFileInfo = getModuleDescriptorFileInfo(moduleName, referencingModuleInfo, sourceModuleNameToFileInfo) ?: continue
 
       val moduleDescriptor = requireNotNull(moduleDescriptorFileInfo.moduleDescriptor) {
         "No module descriptor ($moduleDescriptorFileInfo)"
@@ -493,12 +473,9 @@ class PluginModelValidator(sourceModules: List<Module>, private val skipUnresolv
     return moduleInfo
   }
 
-  private fun getModuleDescriptorFileInfo(
-    moduleName: String,
-    moduleLoadingRule: String?,
-    referencingModuleInfo: ModuleInfo,
-    sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>
-  ): ModuleDescriptorFileInfo? {
+  private fun getModuleDescriptorFileInfo(moduleName: String,
+                                          referencingModuleInfo: ModuleInfo,
+                                          sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>): ModuleDescriptorFileInfo? {
     var module = sourceModuleNameToFileInfo.get(moduleName)
     if (module != null) {
       return module
@@ -513,9 +490,6 @@ class PluginModelValidator(sourceModules: List<Module>, private val skipUnresolv
     val prefix = referencingModuleInfo.sourceModuleName + "/"
     if (!moduleName.startsWith(prefix)) {
       val i = moduleName.indexOf("/")
-      if (moduleLoadingRule != "required" && moduleLoadingRule != "embedded" && skipUnresolvedOptionalContentModules && i == -1) {
-        return null
-      }
       val message = if (i > -1) "$moduleName can only be accessed from ${moduleName.substring(0, i)}" else  "Cannot find module $moduleName"
       _errors.add(PluginValidationError(message,
         getErrorInfo(),
@@ -624,10 +598,14 @@ class PluginModelValidator(sourceModules: List<Module>, private val skipUnresolv
       return
     }
 
-    fileInfo.moduleDescriptorFile = moduleDescriptorFile
-    fileInfo.moduleDescriptor = moduleDescriptor
-    fileInfo.pluginDescriptorFile = pluginDescriptorFile
-    fileInfo.pluginDescriptor = pluginDescriptor
+    if (pluginDescriptor == null) {
+      fileInfo.moduleDescriptorFile = moduleDescriptorFile
+      fileInfo.moduleDescriptor = moduleDescriptor
+    }
+    else {
+      fileInfo.pluginDescriptorFile = pluginDescriptorFile
+      fileInfo.pluginDescriptor = pluginDescriptor
+    }
   }
 }
 

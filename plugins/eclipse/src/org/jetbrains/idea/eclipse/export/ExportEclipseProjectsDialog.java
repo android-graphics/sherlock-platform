@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse.export;
 
 import com.intellij.ide.util.ElementsChooser;
@@ -31,9 +31,8 @@ public class ExportEclipseProjectsDialog extends DialogWrapper {
     setTitle(EclipseBundle.message("eclipse.export.dialog.title"));
     init();
     myUserLibrariesTF.setText(project.getBasePath() + File.separator + project.getName() + ".userlibraries");
-    myUserLibrariesTF.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
-      .withTitle(EclipseBundle.message("button.browse.dialog.title.locate.user.libraries"))
-      .withDescription(EclipseBundle.message("button.browse.dialog.description.locate.user.libraries.file")));
+    myUserLibrariesTF.addBrowseFolderListener(EclipseBundle.message("button.browse.dialog.title.locate.user.libraries"), EclipseBundle
+      .message("button.browse.dialog.description.locate.user.libraries.file"), project, FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
     myExportProjectLibrariesCb.setSelected(true);
     myExportProjectLibrariesCb.addActionListener(new ActionListener() {
       @Override
@@ -45,14 +44,15 @@ public class ExportEclipseProjectsDialog extends DialogWrapper {
   }
 
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  @Nullable
+  protected JComponent createCenterPanel() {
     return contentPane;
   }
 
   private void createUIComponents() {
     moduleChooser = new ElementsChooser<>(true) {
       @Override
-      protected String getItemText(final @NotNull Module module) {
+      protected String getItemText(@NotNull final Module module) {
         return module.getName();
       }
     };
@@ -66,7 +66,8 @@ public class ExportEclipseProjectsDialog extends DialogWrapper {
     return moduleChooser.getMarkedElements();
   }
 
-  public @Nullable File getUserLibrariesFile() {
+  @Nullable
+  public File getUserLibrariesFile() {
     return myExportProjectLibrariesCb.isSelected() ? new File(myUserLibrariesTF.getText()) : null;
   }
 }

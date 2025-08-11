@@ -20,25 +20,27 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.maven.testFramework.MavenExecutionTestCase
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.concurrency.Semaphore
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
+import java.io.File
 import java.io.IOException
 import javax.swing.SwingUtilities
-import kotlin.io.path.exists
 
 class MavenExecutionTest : MavenExecutionTestCase() {
   
   @Test
   fun testExternalExecutor() = runBlocking {
-    edt<IOException> {
+    if (!hasMavenInstallation()) return@runBlocking
+
+    UsefulTestCase.edt<IOException> {
       WriteAction.runAndWait<IOException> { VfsUtil.saveText(createProjectSubFile("src/main/java/A.java"), "public class A {}") }
       PsiDocumentManager.getInstance(project).commitAllDocuments()
     }
@@ -51,16 +53,18 @@ class MavenExecutionTest : MavenExecutionTestCase() {
                            """.trimIndent())
     }
 
-    assertFalse(projectPath.resolve("target").exists())
+    assertFalse(File(projectPath, "target").exists())
 
-    execute(MavenRunnerParameters(true, projectPath.toCanonicalPath(), null as String?, mutableListOf("compile"), emptyList()))
+    execute(MavenRunnerParameters(true, projectPath, null as String?, mutableListOf("compile"), emptyList()))
 
-    assertTrue(projectPath.resolve("target").exists())
+    assertTrue(File(projectPath, "target").exists())
   }
 
   @Test
   fun testUpdatingExcludedFoldersAfterExecution() = runBlocking {
-    edtWriteAction {
+    if (!hasMavenInstallation()) return@runBlocking
+
+    writeAction {
       createStdProjectFolders()
     }
     importProjectAsync("""
@@ -68,20 +72,20 @@ class MavenExecutionTest : MavenExecutionTestCase() {
                       <artifactId>project</artifactId>
                       <version>1</version>
                       """.trimIndent())
-    edtWriteAction {
+    writeAction {
       createProjectSubDirs("target/generated-sources/foo", "target/bar")
     }
 
     assertModules("project")
     assertExcludes("project", "target")
 
-    val params = MavenRunnerParameters(true, projectPath.toCanonicalPath(), null as String?, mutableListOf("compile"), emptyList())
+    val params = MavenRunnerParameters(true, projectPath, null as String?, mutableListOf("compile"), emptyList())
     execute(params)
 
     SwingUtilities.invokeAndWait {}
 
     assertSources("project", "src/main/java")
-    assertResources("project", *defaultResources())
+    assertResources("project", "src/main/resources")
 
     assertExcludes("project", "target")
   }
@@ -89,7 +93,7 @@ class MavenExecutionTest : MavenExecutionTestCase() {
   private fun execute(params: MavenRunnerParameters) {
     val sema = Semaphore()
     sema.down()
-    edt<RuntimeException> {
+    UsefulTestCase.edt<RuntimeException> {
       MavenRunConfigurationType.runConfiguration(
         project, params, mavenGeneralSettings,
         MavenRunnerSettings(),
@@ -101,9 +105,8 @@ class MavenExecutionTest : MavenExecutionTestCase() {
 
             override fun processTerminated(event: ProcessEvent) {
               sema.up()
-              edt<RuntimeException> {
-                Disposer.dispose(descriptor)
-              }
+              UsefulTestCase.edt<RuntimeException>(
+                { Disposer.dispose(descriptor) })
             }
           })
         }, false)

@@ -36,20 +36,25 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.dev.psiViewer.PsiViewerDialog.initTree;
 
 public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
-  private final @NotNull JComponent myComponent;
-  private final @NotNull Tree myBlockTree;
-  private final @NotNull Project myProject;
-  private final @NotNull PsiTreeUpdater myUpdater;
-  private volatile @Nullable HashMap<PsiElement, BlockTreeNode> myPsiToBlockMap;
+  @NotNull
+  private final JComponent myComponent;
+  @NotNull
+  private final Tree myBlockTree;
+  @NotNull
+  private final Project myProject;
+  @NotNull
+  private final PsiTreeUpdater myUpdater;
+  @Nullable
+  private volatile HashMap<PsiElement, BlockTreeNode> myPsiToBlockMap;
   private AsyncTreeModel myTreeModel;
   private Disposable myTreeModelDisposable = Disposer.newDisposable();
 
@@ -77,8 +82,9 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent getComponent() {
+  public JComponent getComponent() {
     return myComponent;
   }
 
@@ -123,10 +129,11 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     BlockTreeNode rootNode = new BlockTreeNode(rootBlock, null);
     StructureTreeModel treeModel = new StructureTreeModel<>(blockTreeStructure, myTreeModelDisposable);
     initMap(rootNode, rootElement);
+    assert myPsiToBlockMap != null;
 
     PsiElement rootPsi = rootNode.getBlock() instanceof ASTBlock ?
                          ((ASTBlock)rootNode.getBlock()).getNode().getPsi() : rootElement;
-    BlockTreeNode blockNode = Objects.requireNonNull(myPsiToBlockMap).get(rootPsi);
+    BlockTreeNode blockNode = myPsiToBlockMap.get(rootPsi);
 
     if (blockNode == null) {
       PsiViewerDialog.LOG.error("PsiViewer: rootNode not found\nCurrent language: " + rootElement.getContainingFile().getLanguage(),
@@ -147,7 +154,8 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
   }
 
 
-  private @Nullable BlockTreeNode findBlockNode(PsiElement element) {
+  @Nullable
+  private BlockTreeNode findBlockNode(PsiElement element) {
     HashMap<PsiElement, BlockTreeNode> psiToBlockMap = myPsiToBlockMap;
 
     BlockTreeNode result = psiToBlockMap == null ? null : psiToBlockMap.get(element);
@@ -159,7 +167,8 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
   }
 
 
-  private @NotNull TreeVisitor createVisitor(@NotNull BlockTreeNode currentBlockNode) {
+  @NotNull
+  private TreeVisitor createVisitor(@NotNull BlockTreeNode currentBlockNode) {
     Function<Object, BlockTreeNode> converter = el -> el instanceof DefaultMutableTreeNode ?
                                                       (BlockTreeNode)((DefaultMutableTreeNode)el).getUserObject() :
                                                       null;
@@ -196,7 +205,8 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
   }
 
   public class BlockTreeSelectionListener implements TreeSelectionListener {
-    private final @NotNull PsiElement myRootElement;
+    @NotNull
+    private final PsiElement myRootElement;
 
     public BlockTreeSelectionListener(@NotNull PsiElement rootElement) {
       myRootElement = rootElement;
@@ -238,7 +248,8 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     }
   }
 
-  private @Nullable BlockTreeNode findBlockNode(TextRange range) {
+  @Nullable
+  private BlockTreeNode findBlockNode(TextRange range) {
     if (myTreeModel == null || !myComponent.isVisible()) {
       return null;
     }
@@ -263,7 +274,8 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     }
   }
 
-  private static @Nullable Block buildBlocks(@NotNull PsiElement rootElement) {
+  @Nullable
+  private static Block buildBlocks(@NotNull PsiElement rootElement) {
     FormattingModelBuilder formattingModelBuilder = LanguageFormatting.INSTANCE.forContext(rootElement);
     CodeStyleSettings settings = CodeStyle.getSettings(rootElement.getContainingFile());
     if (formattingModelBuilder != null) {
@@ -277,7 +289,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
   }
 
   private void initMap(BlockTreeNode rootBlockNode, PsiElement psiEl) {
-    HashMap<PsiElement, BlockTreeNode> psiToBlockMap = new HashMap<>();
+    myPsiToBlockMap = new HashMap<>();
     JBTreeTraverser<BlockTreeNode> traverser = JBTreeTraverser.of(BlockTreeNode::getChildren);
     for (BlockTreeNode block : traverser.withRoot(rootBlockNode)) {
       PsiElement currentElem = null;
@@ -292,22 +304,21 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
           InjectedLanguageUtil
             .findElementAtNoCommit(psiEl.getContainingFile(), block.getBlock().getTextRange().getStartOffset());
       }
-      psiToBlockMap.put(currentElem, block);
+      myPsiToBlockMap.put(currentElem, block);
 
       //nested PSI elements with same ranges will be mapped to one blockNode
       //    assert currentElem != null;      //for Scala-language plugin etc it can be null, because formatterBlocks is not instance of ASTBlock
       TextRange curTextRange = currentElem.getTextRange();
       PsiElement parentElem = currentElem.getParent();
-      while (parentElem != null && parentElem.getTextRange() != null && parentElem.getTextRange().equals(curTextRange)) {
-        psiToBlockMap.put(parentElem, block);
+      while (parentElem != null && parentElem.getTextRange().equals(curTextRange)) {
+        myPsiToBlockMap.put(parentElem, block);
         parentElem = parentElem.getParent();
       }
     }
-
-    myPsiToBlockMap = psiToBlockMap;
   }
 
-  private @Nullable DefaultMutableTreeNode getRoot() {
+  @Nullable
+  private DefaultMutableTreeNode getRoot() {
     return (DefaultMutableTreeNode)myBlockTree.getModel().getRoot();
   }
 }

@@ -6,10 +6,8 @@ import com.intellij.execution.multilaunch.state.ExecutableSnapshot
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class ExecutableFactory(private val project: Project) {
   companion object {

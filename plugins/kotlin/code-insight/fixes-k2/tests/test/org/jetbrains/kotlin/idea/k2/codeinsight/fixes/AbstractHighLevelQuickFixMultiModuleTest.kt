@@ -12,6 +12,4 @@ abstract class AbstractHighLevelQuickFixMultiModuleTest : AbstractQuickFixMultiM
         if (firAfter != null) return firAfter
         return editedFile.containingDirectory?.findFile(editedFile.name + ".after")
     }
-
-    override val actionPrefix: String = "K2_ACTION:"
 }

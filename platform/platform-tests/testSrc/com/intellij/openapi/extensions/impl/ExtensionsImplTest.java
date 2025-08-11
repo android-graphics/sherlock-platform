@@ -9,7 +9,6 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Test;
@@ -152,21 +151,5 @@ public class ExtensionsImplTest {
     IdeaPluginDescriptorImpl pluginDescriptor =
       PluginDescriptorTestKt.readDescriptorForTest(Path.of(""), true, moduleXml.getBytes(StandardCharsets.UTF_8), id);
     pluginDescriptor.registerExtensions(area.getNameToPointMap(), pluginDescriptor.appContainerDescriptor, null);
-  }
-
-  private static final class TestExtensionClassOne {
-    @Tag("text")
-    public String myText;
-
-    TestExtensionClassOne() {
-    }
-
-    TestExtensionClassOne(String text) {
-      myText = text;
-    }
-
-    public String getText() {
-      return myText;
-    }
   }
 }

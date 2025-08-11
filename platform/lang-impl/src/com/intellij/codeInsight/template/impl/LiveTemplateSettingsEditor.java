@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -36,9 +36,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -50,10 +48,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
-@ApiStatus.Internal
 public final class LiveTemplateSettingsEditor extends JPanel {
   private final TemplateImpl myTemplate;
   private final Runnable myNodeChanged;
@@ -184,7 +181,8 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     myTemplate.parseSegments();
   }
 
-  private @NotNull JComponent createNorthPanel() {
+  @NotNull
+  private JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
     GridBag gb = new GridBag().setDefaultInsets(4, 4, 4, 4).setDefaultWeightY(1).setDefaultFill(GridBagConstraints.BOTH);
@@ -271,7 +269,8 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     return panel;
   }
 
-  private @NotNull List<TemplateContextType> getApplicableContexts() {
+  @NotNull
+  private List<TemplateContextType> getApplicableContexts() {
     List<TemplateContextType> result = new ArrayList<>();
     for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
       if (myContext.isEnabled(type)) {
@@ -303,7 +302,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
         if (type instanceof EverywhereContextType) {
           ownName = CodeInsightBundle.message("dialog.edit.template.context.other");
         }
-        if (!sb.isEmpty()) {
+        if (sb.length() > 0) {
           sb.append(oldPrefix.equals(prefix) ? ", " : "; ");
         }
         if (!oldPrefix.equals(prefix)) {
@@ -316,7 +315,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
       String contexts = CodeInsightBundle.message("dialog.edit.template.applicable.in.contexts", sb.toString());
       change.setText(CodeInsightBundle.message("link.change.context"));
 
-      final boolean noContexts = sb.isEmpty();
+      final boolean noContexts = sb.length() == 0;
       if (noContexts) {
         contexts = CodeInsightBundle.message("dialog.edit.template.no.applicable.contexts");
         ctxLabel.setIcon(AllIcons.General.BalloonWarning);
@@ -359,7 +358,8 @@ public final class LiveTemplateSettingsEditor extends JPanel {
       .getPanel();
   }
 
-  private static @NotNull @NlsContexts.Label String presentableName(TemplateContextType type) {
+  @NotNull
+  private static @NlsContexts.Label String presentableName(TemplateContextType type) {
     return UIUtil.removeMnemonic(type.getPresentableName());
   }
 
@@ -430,7 +430,8 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     return Pair.create(panel, checkboxTree);
   }
 
-  private static @Unmodifiable @NotNull List<TemplateContextType> sortContexts(Collection<? extends TemplateContextType> contextTypes) {
+  @NotNull
+  private static List<TemplateContextType> sortContexts(Collection<? extends TemplateContextType> contextTypes) {
     return ContainerUtil.sorted(contextTypes, (o1, o2) -> StringUtil.compare(presentableName(o1), presentableName(o2), true));
   }
 
@@ -575,7 +576,8 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.findInstanceByComponent(myKeyField).requestFocus(myKeyField, true), modalityState), modalityState), modalityState);
   }
 
-  private @NotNull Map<String, Variable> parseVariables() {
+  @NotNull
+  private Map<String, Variable> parseVariables() {
     Map<String,Variable> map = TemplateImplUtil.parseVariables(myTemplateEditor.getDocument().getCharsSequence());
     map.keySet().removeAll(TemplateImpl.INTERNAL_VARS_SET);
     return map;

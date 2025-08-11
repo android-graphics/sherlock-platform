@@ -46,7 +46,8 @@ public final class UnnecessaryParenthesesInspection extends BaseInspection imple
   public boolean ignoreParenthesesOnLambdaParameter = false;
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.parentheses.problem.descriptor");
   }
 
@@ -67,7 +68,8 @@ public final class UnnecessaryParenthesesInspection extends BaseInspection imple
   private class UnnecessaryParenthesesFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.parentheses.remove.quickfix");
     }
 

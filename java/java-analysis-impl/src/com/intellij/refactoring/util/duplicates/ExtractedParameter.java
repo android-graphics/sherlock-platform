@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.psi.*;
@@ -8,15 +22,14 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
 public class ExtractedParameter {
-  public final @NotNull PsiType myType;
-  public final @NotNull ExtractableExpressionPart myPattern;
-  public final @NotNull ExtractableExpressionPart myCandidate;
-  public final @NotNull Set<PsiExpression> myPatternUsages = new HashSet<>();
+  @NotNull public final PsiType myType;
+  @NotNull public final ExtractableExpressionPart myPattern;
+  @NotNull public final ExtractableExpressionPart myCandidate;
+  @NotNull public final Set<PsiExpression> myPatternUsages = new HashSet<>();
 
   public ExtractedParameter(@NotNull ExtractableExpressionPart patternPart,
                             @NotNull ExtractableExpressionPart candidatePart,
@@ -38,13 +51,15 @@ public class ExtractedParameter {
     return true;
   }
 
-  public @NotNull ExtractedParameter copyWithCandidateUsage(@NotNull PsiExpression candidateUsage) {
+  @NotNull
+  public ExtractedParameter copyWithCandidateUsage(@NotNull PsiExpression candidateUsage) {
     ExtractedParameter result = new ExtractedParameter(myPattern, ExtractableExpressionPart.fromUsage(candidateUsage, myType), myType);
     result.myPatternUsages.addAll(myPatternUsages);
     return result;
   }
 
-  public @NotNull String getLocalVariableTypeText() {
+  @NotNull
+  public String getLocalVariableTypeText() {
     PsiType type = GenericsUtil.getVariableTypeByExpressionType(myType);
     return type.getCanonicalText();
   }
@@ -82,7 +97,7 @@ public class ExtractedParameter {
     return result;
   }
 
-  private static boolean containsModifiedField(PsiElement @NotNull [] elements, @NotNull @Unmodifiable Set<PsiVariable> variables) {
+  private static boolean containsModifiedField(PsiElement @NotNull [] elements, @NotNull Set<PsiVariable> variables) {
     Set<PsiField> fields = StreamEx.of(variables)
       .select(PsiField.class)
       .filter(field -> !field.hasModifierProperty(PsiModifier.FINAL))

@@ -3,6 +3,7 @@ package org.jetbrains.debugger.sourcemap
 
 import com.intellij.openapi.editor.Document
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
 @ApiStatus.Internal
 interface Mappings {
@@ -107,7 +108,7 @@ abstract class MappingList(mappings: List<MappingEntry>) : Mappings {
   }
 
   fun getEndOffset(mapping: MappingEntry, lineStartOffset: Int, document: Document): Int {
-    val nextMapping = getNextOnTheSameLine(mappings.binarySearch(mapping, comparator))
+    val nextMapping = getNextOnTheSameLine(Collections.binarySearch(mappings, mapping, comparator))
     return if (nextMapping == null) document.getLineEndOffset(getLine(mapping)) else lineStartOffset + getColumn(nextMapping)
   }
 
@@ -115,8 +116,24 @@ abstract class MappingList(mappings: List<MappingEntry>) : Mappings {
 
   // entries will be iterated in this list order
   fun getMappingsInLine(line: Int): Iterable<MappingEntry> {
-    val middle = mappings.binarySearchBy(line) { getLine(it) }
-    if (middle < 0) {
+    var low = 0
+    var high = mappings.size - 1
+    var middle: Int = -1
+
+    loop@ while (low <= high) {
+      middle = (low + high).ushr(1)
+      val mapping = mappings[middle]
+      val mappingLine = getLine(mapping)
+      when {
+        line == mappingLine -> {
+          break@loop
+        }
+        line > mappingLine -> low = middle + 1
+        else -> high = middle - 1
+      }
+    }
+
+    if (middle == -1) {
       return emptyList()
     }
 
@@ -137,22 +154,6 @@ abstract class MappingList(mappings: List<MappingEntry>) : Mappings {
     val mappingsInLine = getMappingsInLine(line)
     return entryProcessor.processIterable(mappingsInLine)
   }
-}
-
-internal class SourceMappingList(mappings: List<MappingEntry>) : MappingList(mappings) {
-
-  override fun getLine(mapping: MappingEntry) = mapping.sourceLine
-
-  override fun getColumn(mapping: MappingEntry) = mapping.sourceColumn
-}
-
-internal class GeneratedMappingList(mappings: List<MappingEntry>) : MappingList(mappings) {
-
-  override fun getLine(mapping: MappingEntry) = mapping.generatedLine
-
-  override fun getColumn(mapping: MappingEntry) = mapping.generatedColumn
-
-  override fun getNext(mapping: MappingEntry): MappingEntry? = mapping.nextGenerated
 }
 
 @ApiStatus.Internal

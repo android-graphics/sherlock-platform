@@ -1,5 +1,4 @@
 // "Opt in for 'AliasMarker' on 'AliasMarkerUsage'" "true"
-// PRIORITY: HIGH
 // RUNTIME_WITH_SCRIPT_RUNTIME
 // ACTION: Add full qualifier
 // ACTION: Introduce import alias
@@ -15,4 +14,4 @@ class AliasTarget
 
 typealias AliasMarkerUsage = <caret>AliasTarget
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityUseOptInAnnotationFix

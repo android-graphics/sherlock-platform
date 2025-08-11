@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.framework;
 
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
@@ -29,8 +29,9 @@ public abstract class FrameworkTypeEx extends FrameworkType implements PossiblyD
    * Puts it under another framework.
    * @see #getUnderlyingFrameworkTypeId()
    */
+  @Nullable
   @Contract(pure = true)
-  public @Nullable FrameworkGroup<?> getParentGroup() {
+  public FrameworkGroup<?> getParentGroup() {
     return null;
   }
 
@@ -38,13 +39,15 @@ public abstract class FrameworkTypeEx extends FrameworkType implements PossiblyD
    * Puts it under framework group.
    * @see #getParentGroup()
    */
+  @Nullable
   @Contract(pure = true)
-  public @Nullable String getUnderlyingFrameworkTypeId() {
+  public String getUnderlyingFrameworkTypeId() {
     return null;
   }
 
+  @NotNull
   @Contract(pure = true)
-  public abstract @NotNull FrameworkSupportInModuleProvider createProvider();
+  public abstract FrameworkSupportInModuleProvider createProvider();
 
   @Contract(pure = true)
   public <V extends FrameworkVersion> List<V> getVersions() {

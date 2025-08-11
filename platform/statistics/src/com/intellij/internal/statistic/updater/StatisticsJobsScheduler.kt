@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.updater
 
-import com.intellij.ide.ApplicationActivity
+import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.StatisticsNotificationManager
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProviders
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
@@ -24,7 +24,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 @InternalIgnoreDependencyViolation
-private class StatisticsJobsScheduler : ApplicationActivity {
+private class StatisticsJobsScheduler : ApplicationInitializedListener {
   private val sendJobs = ConcurrentHashMap<String, Job>()
 
   init {
@@ -33,30 +33,12 @@ private class StatisticsJobsScheduler : ApplicationActivity {
     }
   }
 
-  override suspend fun execute() {
-    coroutineScope {
-      if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(StatisticsEventLoggerProvider.EP_NAME)) {
-        StatisticsEventLoggerProvider.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<StatisticsEventLoggerProvider> {
-          override fun extensionAdded(extension: StatisticsEventLoggerProvider, pluginDescriptor: PluginDescriptor) {
-            launch {
-              launchStatisticsSendJob(extension, this)
-
-              if (extension.isLoggingEnabled()) {
-                IntellijSensitiveDataValidator.getInstance(extension.recorderId).update()
-              }
-            }
-          }
-
-          override fun extensionRemoved(extension: StatisticsEventLoggerProvider, pluginDescriptor: PluginDescriptor) {
-            sendJobs.remove(extension.recorderId)?.cancel()
-          }
-        })
-      }
-
+  override suspend fun execute(asyncScope: CoroutineScope) {
+    asyncScope.launch {
       launch {
         delay(10.seconds)
 
-        serviceAsync<StatisticsNotificationManager>().showNotificationIfNeeded()
+        ApplicationManager.getApplication().getService(StatisticsNotificationManager::class.java)?.showNotificationIfNeeded()
       }
       launch {
         checkPreviousExternalUploadResult()
@@ -67,10 +49,28 @@ private class StatisticsJobsScheduler : ApplicationActivity {
       launch {
         runValidationRulesUpdate()
       }
-
-      // we use `launch` in StatisticsEventLoggerProvider - we need scope
-      awaitCancellation()
     }
+
+    if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(StatisticsEventLoggerProvider.EP_NAME)) {
+      StatisticsEventLoggerProvider.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<StatisticsEventLoggerProvider> {
+        override fun extensionAdded(extension: StatisticsEventLoggerProvider, pluginDescriptor: PluginDescriptor) {
+          asyncScope.launch {
+            launchStatisticsSendJob(extension, this)
+
+            if (extension.isLoggingEnabled()) {
+              blockingContext {
+                IntellijSensitiveDataValidator.getInstance(extension.recorderId).update()
+              }
+            }
+          }
+        }
+
+        override fun extensionRemoved(extension: StatisticsEventLoggerProvider, pluginDescriptor: PluginDescriptor) {
+          sendJobs.remove(extension.recorderId)?.cancel()
+        }
+      })
+    }
+
   }
 
   private suspend fun runEventLogStatisticsService() {
@@ -84,10 +84,8 @@ private class StatisticsJobsScheduler : ApplicationActivity {
     }
   }
 
-  private fun launchStatisticsSendJob(provider: StatisticsEventLoggerProvider, coroutineScope: CoroutineScope) {
-    if (!provider.isSendEnabled()) {
-      return
-    }
+  private suspend fun launchStatisticsSendJob(provider: StatisticsEventLoggerProvider, coroutineScope: CoroutineScope) {
+    if (!provider.isSendEnabled()) return
 
     val job = coroutineScope.launch {
       delay((5 * 60).seconds)
@@ -116,11 +114,13 @@ private suspend fun runValidationRulesUpdate() {
   }
 }
 
-fun updateValidationRules() {
+suspend fun updateValidationRules() {
   val providers = getEventLogProviders()
   for (provider in providers) {
     if (provider.isLoggingEnabled()) {
-      IntellijSensitiveDataValidator.getInstance(provider.recorderId).update()
+      blockingContext {
+        IntellijSensitiveDataValidator.getInstance(provider.recorderId).update()
+      }
     }
   }
 }

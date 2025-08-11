@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.ConfigurationException;
@@ -93,7 +93,8 @@ public abstract class AbstractSvnUpdatePanel {
     }
   }
 
-  private @Nullable Url getUrlFor(final @NotNull FilePath root) {
+  @Nullable
+  private Url getUrlFor(@NotNull final FilePath root) {
     final Info info = myVCS.getInfo(root.getIOFile());
     return info != null ? info.getUrl() : null;
   }

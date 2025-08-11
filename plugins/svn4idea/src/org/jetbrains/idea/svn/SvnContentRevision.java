@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn;
 
@@ -23,7 +23,7 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnContentRevision extends SvnBaseContentRevision implements ByteBackedContentRevision {
 
-  private final @NotNull Revision myRevision;
+  @NotNull private final Revision myRevision;
   /**
    * this flag is necessary since SVN would not do remote request only if constant Revision.BASE
    * -> usual current revision content class can't be used
@@ -36,19 +36,22 @@ public class SvnContentRevision extends SvnBaseContentRevision implements ByteBa
     myUseBaseRevision = useBaseRevision;
   }
 
-  public static @NotNull SvnContentRevision createBaseRevision(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull Status status) {
+  @NotNull
+  public static SvnContentRevision createBaseRevision(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull Status status) {
     Revision revision = status.getRevision().isValid() ? status.getRevision() : status.getCommitInfo().getRevision();
     return createBaseRevision(vcs, file, revision);
   }
 
-  public static @NotNull SvnContentRevision createBaseRevision(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull Revision revision) {
+  @NotNull
+  public static SvnContentRevision createBaseRevision(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull Revision revision) {
     if (file.getFileType().isBinary()) {
       return new SvnBinaryContentRevision(vcs, file, revision, true);
     }
     return new SvnContentRevision(vcs, file, revision, true);
   }
 
-  public static @NotNull SvnContentRevision createRemote(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull Revision revision) {
+  @NotNull
+  public static SvnContentRevision createRemote(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull Revision revision) {
     if (file.getFileType().isBinary()) {
       return new SvnBinaryContentRevision(vcs, file, revision, false);
     }
@@ -56,7 +59,8 @@ public class SvnContentRevision extends SvnBaseContentRevision implements ByteBa
   }
 
   @Override
-  public @Nullable String getContent() throws VcsException {
+  @Nullable
+  public String getContent() throws VcsException {
     return ContentRevisionCache.getAsString(getContentAsBytes(), myFile, null);
   }
 
@@ -98,12 +102,13 @@ public class SvnContentRevision extends SvnBaseContentRevision implements ByteBa
   }
 
   @Override
-  public @NotNull VcsRevisionNumber getRevisionNumber() {
+  @NotNull
+  public VcsRevisionNumber getRevisionNumber() {
     return new SvnRevisionNumber(myRevision);
   }
 
-  @Override
-  public @NonNls String toString() {
+  @NonNls
+  public String toString() {
     return myFile.getPath();
   }
 }

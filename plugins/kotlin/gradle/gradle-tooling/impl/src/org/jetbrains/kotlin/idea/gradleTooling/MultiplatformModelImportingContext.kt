@@ -4,16 +4,11 @@ package org.jetbrains.kotlin.idea.gradleTooling
 
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyResolver
 import org.gradle.api.Project
-import org.gradle.api.plugins.ExtraPropertiesExtension
 import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.ENABLE_KGP_DEPENDENCY_RESOLUTION
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinExtensionReflection
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinMultiplatformImportReflection
-import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
-import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
-import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
-import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
+import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.tooling.core.Interner
-import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 
 interface HasDependencyResolver {
@@ -91,8 +86,7 @@ internal val MultiplatformModelImportingContext.isHMPPEnabled: Boolean
 
 internal fun Project.readProperty(propertyId: String): Boolean? =
     try {
-        (project.extensions.extraProperties.getOrNull(propertyId) as? String)?.toBoolean()
-            ?: providers.gradleProperty(propertyId).orNull?.toBoolean()
+        (findProperty(propertyId) as? String)?.toBoolean()
     } catch (e: Exception) {
         logger.error("Error while trying to read property $propertyId from project $project", e)
         null
@@ -106,12 +100,7 @@ internal enum class GradleImportProperties(val id: String, val defaultValue: Boo
     IMPORT_ORPHAN_SOURCE_SETS("import_orphan_source_sets", true),
     ENABLE_KGP_DEPENDENCY_RESOLUTION("kotlin.mpp.import.enableKgpDependencyResolution", true),
     LEGACY_TEST_SOURCE_SET_DETECTION("kotlin.mpp.import.legacyTestSourceSetDetection", false),
-    GRADLE_ISOLATED_PROJECTS("org.gradle.unsafe.isolated-projects", false),
     ;
-}
-
-internal enum class KotlinGradlePluginVersionKeyVersion(val version: KotlinToolingVersion) {
-    KGP_WITH_ISOLATED_PROJECTS_SUPPORT(KotlinToolingVersion("2.1.20")),
 }
 
 internal fun MultiplatformModelImportingContext.useKgpDependencyResolution(): Boolean {
@@ -197,8 +186,4 @@ internal class MultiplatformModelImportingContextImpl(
         sourceSetToParticipatedCompilations[sourceSet]
 
     override fun sourceSetByName(name: String): KotlinSourceSet? = sourceSetsByName[name]
-}
-
-private fun ExtraPropertiesExtension.getOrNull(name: String): Any? {
-    return if (has(name)) get(name) else null
 }

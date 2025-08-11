@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinPropertyShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.FunctionImportedFromObject

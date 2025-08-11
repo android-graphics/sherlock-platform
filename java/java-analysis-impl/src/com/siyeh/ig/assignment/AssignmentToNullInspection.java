@@ -36,7 +36,8 @@ public final class AssignmentToNullInspection extends BaseInspection {
   public boolean ignoreAssignmentsToFields = false;
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("assignment.to.null.problem.descriptor");
   }
 

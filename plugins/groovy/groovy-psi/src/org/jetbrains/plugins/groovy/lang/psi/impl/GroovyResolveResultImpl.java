@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.psi.PsiClassType;
@@ -55,13 +55,15 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
     myIsApplicable = isApplicable;
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiSubstitutor getContextSubstitutor() {
+  public PsiSubstitutor getContextSubstitutor() {
     return mySubstitutor;
   }
 
   @Override
-  public @NotNull PsiSubstitutor getSubstitutor() {
+  @NotNull
+  public PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
   }
 
@@ -81,7 +83,8 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
   }
 
   @Override
-  public @NotNull PsiElement getElement() {
+  @NotNull
+  public PsiElement getElement() {
     return myElement;
   }
 
@@ -115,7 +118,8 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
   }
 
   @Override
-  public @Nullable PsiElement getCurrentFileResolveContext() {
+  @Nullable
+  public PsiElement getCurrentFileResolveContext() {
     return myCurrentFileResolveContext;
   }
 
@@ -124,20 +128,23 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
     return myIsInvokedOnProperty;
   }
 
+  @Nullable
   @Override
-  public @Nullable SpreadState getSpreadState() {
+  public SpreadState getSpreadState() {
     return mySpreadState;
   }
 
   @Override
-  public @NonNls String toString() {
+  @NonNls
+  public String toString() {
     return "GroovyResolveResultImpl{" +
            "myElement=" + myElement +
            ", mySubstitutor=" + mySubstitutor +
            '}';
   }
 
-  public static @NotNull GroovyResolveResult from(@NotNull PsiClassType.ClassResolveResult classResolveResult) {
+  @NotNull
+  public static GroovyResolveResult from(@NotNull PsiClassType.ClassResolveResult classResolveResult) {
     if (classResolveResult.getElement() == null) return EmptyGroovyResolveResult.INSTANCE;
     return new GroovyResolveResultImpl(
       classResolveResult.getElement(),

@@ -17,7 +17,6 @@ import kotlin.math.min
 /**
  * A view model for a diff view which contents will be computed later
  */
-@ApiStatus.Obsolete
 interface ComputedDiffViewModel {
   /**
    * Loaded state of producers.
@@ -29,7 +28,6 @@ interface ComputedDiffViewModel {
 /**
  * A view model representing a list of [ChangeDiffRequestChain.Producer] with selection
  */
-@ApiStatus.Obsolete
 class DiffProducersViewModel private constructor(initialState: State) {
   internal constructor() : this(State(emptyList(), -1))
 

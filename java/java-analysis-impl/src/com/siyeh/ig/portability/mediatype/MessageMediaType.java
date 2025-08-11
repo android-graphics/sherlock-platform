@@ -38,7 +38,6 @@ public enum MessageMediaType {
     this.contentType = contentType;
   }
 
-  @Override
   public String toString() {
     return contentType;
   }

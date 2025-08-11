@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.distribution
 
 import com.intellij.openapi.application.ex.ClipboardUtil
@@ -72,10 +72,6 @@ class DistributionComboBox(
       val index = collectionModel.getElementIndex(Item.SpecifyDistributionAction)
       collectionModel.add(index, Item.ListLoading)
     }
-  }
-
-  fun hasLoadingItem(): Boolean {
-    return collectionModel.contains(Item.ListLoading)
   }
 
   fun removeLoadingItem() {
@@ -153,6 +149,8 @@ class DistributionComboBox(
       override fun setText(component: DistributionComboBox, text: String) = setSelectedDistributionUiPath(text)
     }
     val selectFolderAction = BrowseFolderRunnable<DistributionComboBox>(
+      info.fileChooserTitle,
+      info.fileChooserDescription,
       project,
       info.fileChooserDescriptor,
       this,

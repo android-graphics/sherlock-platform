@@ -7,7 +7,7 @@ import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.Nullable;
 
 
-public interface PyFromImportStatementStub extends StubElement<PyFromImportStatement>, PyVersionSpecificStub {
+public interface PyFromImportStatementStub extends StubElement<PyFromImportStatement> {
   @Nullable
   QualifiedName getImportSourceQName();
 

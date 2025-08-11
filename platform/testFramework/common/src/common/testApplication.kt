@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "RAW_RUN_BLOCKING")
 
 package com.intellij.testFramework.common
@@ -43,11 +43,12 @@ import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase
 import com.intellij.openapi.vfs.newvfs.ManagingFS
-import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
-import com.intellij.platform.ide.bootstrap.*
-import com.intellij.platform.ide.bootstrap.kernel.startClientKernel
+import com.intellij.platform.ide.bootstrap.callAppInitialized
+import com.intellij.platform.ide.bootstrap.getAppInitializedListeners
+import com.intellij.platform.ide.bootstrap.initConfigurationStore
+import com.intellij.platform.ide.bootstrap.preloadCriticalServices
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiManager
@@ -65,17 +66,13 @@ import com.intellij.util.WalkingState
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
-import com.intellij.util.ref.IgnoredTraverseEntry
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
-import com.intellij.util.ui.UIUtil
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import com.intellij.platform.ide.bootstrap.kernel.startServerKernel
-import com.intellij.util.PlatformUtils
 import sun.awt.AWTAutoShutdown
 import java.time.Duration
 import java.util.concurrent.TimeUnit
@@ -123,10 +120,11 @@ fun loadApp(setupEventQueue: Runnable) {
   // if BB in classpath
   enableCoroutineDump()
   CoroutineDumpState.install()
-  JBR.getJstack()?.includeInfoFrom { """
-$COROUTINE_DUMP_HEADER
-${dumpCoroutines(stripDump = false)}
-""" // dumpCoroutines is multiline, trimIndent won't work
+  JBR.getJstack()?.includeInfoFrom {
+    """
+    $COROUTINE_DUMP_HEADER
+    ${dumpCoroutines(stripDump = false)}
+    """.trimIndent()
   }
   val isHeadless = UITestUtil.getAndSetHeadlessProperty()
   AppMode.setHeadlessInTestMode(isHeadless)
@@ -138,7 +136,6 @@ ${dumpCoroutines(stripDump = false)}
   loadAppInUnitTestMode(isHeadless)
 }
 
-@OptIn(DelicateCoroutinesApi::class)
 @TestOnly
 private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   val loadedModuleFuture = PluginManagerCore.initPluginFuture
@@ -150,16 +147,7 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
     AWTAutoShutdown.getInstance().notifyThreadBusy(awtBusyThread)
   }
 
-  val kernelStarted = runBlocking {
-    if (PlatformUtils.isJetBrainsClient()) {
-      startClientKernel(GlobalScope)
-    }
-    else {
-      startServerKernel(GlobalScope)
-    }
-  }
-
-  val app = ApplicationImpl(kernelStarted.coroutineContext, isHeadless)
+  val app = ApplicationImpl(isHeadless)
   Disposer.register(app) {
     AWTAutoShutdown.getInstance().notifyThreadFree(awtBusyThread)
   }
@@ -224,7 +212,7 @@ private suspend fun preloadServicesAndCallAppInitializedListeners(app: Applicati
     }
 
     @Suppress("TestOnlyProblems")
-    callAppInitialized(getAppInitializedListeners(app))
+    callAppInitialized(getAppInitializedListeners(app), app.getCoroutineScope())
 
     LoadingState.setCurrentState(LoadingState.COMPONENTS_LOADED)
   }
@@ -338,14 +326,8 @@ fun Application.cleanupApplicationCaches() {
 @TestOnly
 @Internal
 fun assertNonDefaultProjectsAreNotLeaked() {
-  assertNonDefaultProjectsAreNotLeaked(emptyList())
-}
-
-@TestOnly
-@Internal
-fun assertNonDefaultProjectsAreNotLeaked(ignoredTraverseEntries : List<IgnoredTraverseEntry>) {
   try {
-    LeakHunter.checkNonDefaultProjectLeakWithIgnoredEntries(ignoredTraverseEntries)
+    LeakHunter.checkNonDefaultProjectLeak()
   }
   catch (e: AssertionError) {
     publishHeapDump(LEAKED_PROJECTS)
@@ -369,15 +351,6 @@ fun waitForAppLeakingThreads(application: Application, timeout: Long, timeUnit: 
 
   val stubIndex = application.serviceIfCreated<StubIndex>() as? StubIndexImpl
   stubIndex?.waitUntilStubIndexedInitialized()
-
-  while (RefreshQueueImpl.isRefreshInProgress() || RefreshQueueImpl.isEventProcessingInProgress()) {
-    if (EDT.isCurrentThreadEdt()) {
-      EDT.dispatchAllInvocationEvents()
-    }
-    else {
-      UIUtil.pump()
-    }
-  }
 }
 
 @TestOnly

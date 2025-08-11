@@ -14,12 +14,10 @@ public interface DebuggerColors {
   TextAttributesKey EVALUATED_EXPRESSION_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("EVALUATED_EXPRESSION_ATTRIBUTES");
   TextAttributesKey EVALUATED_EXPRESSION_EXECUTION_LINE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("EVALUATED_EXPRESSION_EXECUTION_LINE_ATTRIBUTES");
 
-  int BREAKPOINT_HIGHLIGHTER_LAYER = HighlighterLayer.ADDITIONAL_SYNTAX - 20;
+  int BREAKPOINT_HIGHLIGHTER_LAYER = HighlighterLayer.ADDITIONAL_SYNTAX + 1;
 
   Key<Boolean> BREAKPOINT_HIGHLIGHTER_KEY = Key.create("BREAKPOINT_HIGHLIGHTER_KEY");
-
-  // Define the execution line highlighter layer to be less that smart step into one (for the smart step into highlighter it is HighlighterLayer.SELECTION - 1)
-  int EXECUTION_LINE_HIGHLIGHTERLAYER = HighlighterLayer.SELECTION - 2;
+  int EXECUTION_LINE_HIGHLIGHTERLAYER = HighlighterLayer.SELECTION - 1;
   TextAttributesKey INLINED_VALUES = TextAttributesKey.createTextAttributesKey("DEBUGGER_INLINED_VALUES");
   TextAttributesKey INLINED_VALUES_MODIFIED = TextAttributesKey.createTextAttributesKey("DEBUGGER_INLINED_VALUES_MODIFIED");
   TextAttributesKey INLINED_VALUES_EXECUTION_LINE = TextAttributesKey.createTextAttributesKey("DEBUGGER_INLINED_VALUES_EXECUTION_LINE");

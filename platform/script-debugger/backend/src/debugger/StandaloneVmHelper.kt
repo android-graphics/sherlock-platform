@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger
 
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.io.addChannelListener
 import com.intellij.util.io.shutdownIfOio
 import io.netty.channel.Channel
@@ -13,6 +12,7 @@ import org.jetbrains.concurrency.errorIfNotMessage
 import org.jetbrains.concurrency.nullPromise
 import org.jetbrains.jsonProtocol.Request
 import org.jetbrains.rpc.CONNECTION_CLOSED_MESSAGE
+import org.jetbrains.rpc.LOG
 import org.jetbrains.rpc.MessageProcessor
 
 @ApiStatus.Internal
@@ -56,7 +56,7 @@ open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: 
       messageProcessor.send(disconnectRequest)
         .onError {
           if (it.message != CONNECTION_CLOSED_MESSAGE) {
-            thisLogger().errorIfNotMessage(it)
+            LOG.errorIfNotMessage(it)
           }
         }
       // we don't wait response because 1) no response to "disconnect" message (V8 for example) 2) closed message manager just ignore any incoming messages

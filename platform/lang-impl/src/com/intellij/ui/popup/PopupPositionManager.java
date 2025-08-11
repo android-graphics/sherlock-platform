@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.lookup.LookupEvent;
@@ -38,13 +38,13 @@ public final class PopupPositionManager {
   }
 
   public static void positionPopupInBestPosition(final JBPopup hint,
-                                                 final @Nullable Editor editor,
+                                                 @Nullable final Editor editor,
                                                  @Nullable DataContext dataContext) {
     positionPopupInBestPosition(hint, editor, dataContext, DEFAULT_POSITION_ORDER);
   }
 
   public static void positionPopupInBestPosition(final JBPopup hint,
-                                                 final @Nullable Editor editor,
+                                                 @Nullable final Editor editor,
                                                  @Nullable DataContext dataContext,
                                                  Position @NotNull ... relationToExistingPopup) {
     final LookupEx lookup = LookupManager.getActiveLookup(editor);
@@ -97,7 +97,8 @@ public final class PopupPositionManager {
     return null;
   }
 
-  private static @Nullable PositionAdjuster createPositionAdjuster(JBPopup hint) {
+  @Nullable
+  private static PositionAdjuster createPositionAdjuster(JBPopup hint) {
     final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (focusOwner == null) return null;
 

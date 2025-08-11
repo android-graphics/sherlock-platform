@@ -1,5 +1,5 @@
 // "Add non-null asserted (arg!!) call" "true"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 
 fun foo(arg: String?) {
     if (arg == null) {

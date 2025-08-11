@@ -1,5 +1,5 @@
 // FIR_IDENTICAL
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 interface A {
     fun f(x: Iterable<IADW>.() -> PPPP): XXX<Int, YYY>
 }
@@ -7,8 +7,3 @@ interface A {
 class X : A {
     <caret>
 }
-
-// MEMBER: "f(x: Iterable<IADW>.() -> PPPP): XXX<Int, YYY>"
-// MEMBER: "equals(other: Any?): Boolean"
-// MEMBER: "hashCode(): Int"
-// MEMBER: "toString(): String"

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,8 +20,7 @@ import org.jetbrains.annotations.Nullable;
   name = "ExportableFileTemplateSettings",
   storages = @Storage(FileTemplateSettings.EXPORTABLE_SETTINGS_FILE)
 )
-@ApiStatus.Internal
-public class FileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element> {
+class FileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(FileTemplateSettings.class);
   static final String EXPORTABLE_SETTINGS_FILE = "file.template.settings.xml";
 
@@ -37,8 +35,9 @@ public class FileTemplateSettings extends FileTemplatesLoader implements Persist
     super(project);
   }
 
+  @NotNull
   @Override
-  public @NotNull Element getState() {
+  public Element getState() {
     Element element = new Element("fileTemplateSettings");
 
     for (FTManager manager : getAllManagers()) {
@@ -73,7 +72,8 @@ public class FileTemplateSettings extends FileTemplatesLoader implements Persist
     return shouldSave || ContainerUtil.or(template.getChildren(), child -> shouldSave((FileTemplateBase)child));
   }
 
-  private static @NotNull Element saveTemplate(FileTemplateBase template) {
+  @NotNull
+  private static Element saveTemplate(FileTemplateBase template) {
     final Element templateElement = new Element(ELEMENT_TEMPLATE);
     templateElement.setAttribute(ATTRIBUTE_NAME, template.getQualifiedName());
     if (!template.getFileName().isEmpty()) {

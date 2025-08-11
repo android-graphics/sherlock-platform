@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -19,8 +19,8 @@ import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 
 public class NestedCopiesBuilder implements StatusReceiver {
 
-  private final @NotNull Set<NestedCopyInfo> myCopies;
-  private final @NotNull SvnVcs myVcs;
+  @NotNull private final Set<NestedCopyInfo> myCopies;
+  @NotNull private final SvnVcs myVcs;
 
   public NestedCopiesBuilder(@NotNull SvnVcs vcs) {
     myVcs = vcs;
@@ -70,7 +70,8 @@ public class NestedCopiesBuilder implements StatusReceiver {
   public void finish() {
   }
 
-  public @NotNull Set<NestedCopyInfo> getCopies() {
+  @NotNull
+  public Set<NestedCopyInfo> getCopies() {
     return myCopies;
   }
 }

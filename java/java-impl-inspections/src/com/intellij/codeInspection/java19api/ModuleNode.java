@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -16,19 +16,20 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 
 import java.util.*;
 
-final class ModuleNode implements Comparable<ModuleNode> {
-  private final @Nullable Module myModule;
-  private final @NotNull Set<String> myDeclaredPackages;
-  private final @NotNull Set<String> myRequiredPackages;
-  private final @NotNull Map<ModuleNode, Set<DependencyType>> myDependencies = new TreeMap<>();
-  private final @NotNull Set<String> myExports = new TreeSet<>();
-  private final @Nullable PsiJavaModule myDescriptor;
-  private final @NotNull String myName;
+import static org.jetbrains.jps.model.java.JavaSourceRootType.SOURCE;
+
+class ModuleNode implements Comparable<ModuleNode> {
+  @Nullable private final Module myModule;
+  @NotNull private final Set<String> myDeclaredPackages;
+  @NotNull private final Set<String> myRequiredPackages;
+  @NotNull private final Map<ModuleNode, Set<DependencyType>> myDependencies = new TreeMap<>();
+  @NotNull private final Set<String> myExports = new TreeSet<>();
+  @Nullable private final PsiJavaModule myDescriptor;
+  @NotNull private final String myName;
 
   ModuleNode(@NotNull Module module,
              @NotNull Set<String> declaredPackages,
@@ -90,7 +91,8 @@ final class ModuleNode implements Comparable<ModuleNode> {
     return myDescriptor;
   }
 
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return myName;
   }
 
@@ -145,12 +147,13 @@ final class ModuleNode implements Comparable<ModuleNode> {
 
   private static boolean isSourceFolder(@NotNull SourceFolder folder) {
     final JpsModuleSourceRoot sourceRoot = folder.getJpsElement();
-    if (sourceRoot.getRootType() != JavaSourceRootType.SOURCE) return false;
+    if (sourceRoot.getRootType() != SOURCE) return false;
     if (!(sourceRoot.getProperties() instanceof JavaSourceRootProperties javaProperties)) return false;
     return !javaProperties.isForGeneratedSources();
   }
 
-  private static @Nullable PsiJavaModule findDescriptor(@NotNull Module module, @Nullable VirtualFile root) {
+  @Nullable
+  private static PsiJavaModule findDescriptor(@NotNull Module module, @Nullable VirtualFile root) {
     return JavaModuleGraphUtil.findDescriptorByFile(root, module.getProject());
   }
 

@@ -30,8 +30,9 @@ import java.util.Set;
 
 public final class PyExceptClausesOrderInspection extends PyInspection {
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 

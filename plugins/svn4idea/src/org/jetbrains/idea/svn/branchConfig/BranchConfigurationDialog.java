@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.branchConfig;
 
@@ -38,12 +38,12 @@ public class BranchConfigurationDialog extends DialogWrapper {
   private JPanel myTopPanel;
   private TextFieldWithBrowseButton myTrunkLocationTextField;
   private final JBList<Url> myBranchLocationsList;
-  private final @NotNull SortedListModel<Url> myBranchLocationsModel = new SortedListModel<>(comparing(Url::toDecodedString));
+  @NotNull private final SortedListModel<Url> myBranchLocationsModel = new SortedListModel<>(comparing(Url::toDecodedString));
   private JPanel myListPanel;
-  private final @NotNull NewRootBunch mySvnBranchConfigManager;
-  private final @NotNull VirtualFile myRoot;
-  private final @NotNull Url myRootUrl;
-  private final @NotNull SvnBranchConfigurationNew myConfiguration;
+  @NotNull private final NewRootBunch mySvnBranchConfigManager;
+  @NotNull private final VirtualFile myRoot;
+  @NotNull private final Url myRootUrl;
+  @NotNull private final SvnBranchConfigurationNew myConfiguration;
   private Url myTrunkUrl;
 
   public BranchConfigurationDialog(@NotNull Project project,
@@ -80,8 +80,9 @@ public class BranchConfigurationDialog extends DialogWrapper {
     myListPanel.add(wrapLocationsWithToolbar(project, rootUrl), BorderLayout.CENTER);
   }
 
+  @Nullable
   @Override
-  protected @Nullable ValidationInfo doValidate() {
+  protected ValidationInfo doValidate() {
     try {
       myTrunkUrl = createUrl(myTrunkLocationTextField.getText(), false);
     }
@@ -104,11 +105,12 @@ public class BranchConfigurationDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-  private @NotNull JPanel wrapLocationsWithToolbar(@NotNull Project project, @NotNull Url rootUrl) {
+  @NotNull
+  private JPanel wrapLocationsWithToolbar(@NotNull Project project, @NotNull Url rootUrl) {
     return ToolbarDecorator.createDecorator(myBranchLocationsList)
       .setAddAction(new AnActionButtonRunnable() {
 
-        private @Nullable Url usedRootUrl;
+        @Nullable private Url usedRootUrl;
 
         @Override
         public void run(AnActionButton button) {
@@ -142,12 +144,14 @@ public class BranchConfigurationDialog extends DialogWrapper {
   }
 
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  @Nullable
+  protected JComponent createCenterPanel() {
     return myTopPanel;
   }
 
   @Override
-  protected @NonNls String getDimensionServiceKey() {
+  @NonNls
+  protected String getDimensionServiceKey() {
     return "Subversion.BranchConfigurationDialog";
   }
 

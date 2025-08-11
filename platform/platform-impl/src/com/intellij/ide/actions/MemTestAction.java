@@ -9,7 +9,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.MemTester;
 import com.intellij.util.SystemProperties;
 import com.sun.management.OperatingSystemMXBean;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -18,7 +17,6 @@ import java.lang.management.ManagementFactory;
 /**
  * @author Konstantin Bulenkov
  */
-@ApiStatus.Internal
 public final class MemTestAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

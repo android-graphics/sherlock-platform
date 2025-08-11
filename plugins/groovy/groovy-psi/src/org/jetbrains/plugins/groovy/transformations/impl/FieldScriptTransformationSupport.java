@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.openapi.project.Project;
@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 import static org.jetbrains.plugins.groovy.util.GrFileIndexUtil.isGroovySourceFile;
 
 public final class FieldScriptTransformationSupport implements AstTransformationSupport {
-  private static final @NlsSafe String FIELD = "Field";
+  @NlsSafe private static final String FIELD = "Field";
 
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tools;
 
 import com.intellij.execution.ExecutionException;
@@ -47,8 +47,9 @@ public class ToolRunProfile implements ModuleRunProfile{
     //}
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return expandMacrosInName(myTool, myContext);
   }
 
@@ -71,7 +72,7 @@ public class ToolRunProfile implements ModuleRunProfile{
   }
 
   @Override
-  public RunProfileState getState(final @NotNull Executor executor, final @NotNull ExecutionEnvironment env) {
+  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
     final Project project = env.getProject();
     if (myCommandLine == null) {
       // can return null if creation of cmd line has been cancelled
@@ -84,7 +85,8 @@ public class ToolRunProfile implements ModuleRunProfile{
       }
 
       @Override
-      protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
+      @NotNull
+      protected OSProcessHandler startProcess() throws ExecutionException {
         final GeneralCommandLine commandLine = createCommandLine();
         final OSProcessHandler processHandler = new ColoredProcessHandler(commandLine);
         ProcessTerminatedListener.attach(processHandler);
@@ -92,7 +94,8 @@ public class ToolRunProfile implements ModuleRunProfile{
       }
 
       @Override
-      public @NotNull ExecutionResult execute(final @NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
+      @NotNull
+      public ExecutionResult execute(@NotNull final Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
         final ExecutionResult result = super.execute(executor, runner);
         final ProcessHandler processHandler = result.getProcessHandler();
         if (processHandler != null) {

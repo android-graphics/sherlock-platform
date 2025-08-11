@@ -1,5 +1,4 @@
 // "Make 'bar' private" "true"
-// PRIORITY: HIGH
 // ACTION: Convert member to extension
 // ACTION: Convert to block body
 // ACTION: Enable option 'Function return types' for 'Types' inlay hints
@@ -16,4 +15,3 @@ class First {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPrivateFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeVisibilityFixFactories$ChangeToPrivateModCommandAction

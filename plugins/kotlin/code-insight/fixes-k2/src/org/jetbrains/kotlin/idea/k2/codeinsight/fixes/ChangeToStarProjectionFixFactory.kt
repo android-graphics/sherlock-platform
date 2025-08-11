@@ -3,9 +3,9 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
@@ -38,7 +38,8 @@ internal object ChangeToStarProjectionFixFactory {
         listOf(quickFix)
     }
 
-    private fun KaSession.getQuickFix(element: PsiElement): ChangeToStarProjectionFix? {
+    context(KaSession)
+    private fun getQuickFix(element: PsiElement): ChangeToStarProjectionFix? {
         val (binaryExpr, typeReference, typeElement) = StarProjectionUtils.getChangeToStarProjectionFixInfo(element) ?: return null
 
         if (binaryExpr?.operationReference?.isAsKeyword() == true) {
@@ -58,7 +59,7 @@ internal object ChangeToStarProjectionFixFactory {
 
                 is KtQualifiedExpression ->
                     if (KtPsiUtil.safeDeparenthesize(parent.receiverExpression) == binaryExpr)
-                        parent.resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.receiverParameter?.returnType
+                        parent.resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.receiverParameter?.type
                     else
                         null
 

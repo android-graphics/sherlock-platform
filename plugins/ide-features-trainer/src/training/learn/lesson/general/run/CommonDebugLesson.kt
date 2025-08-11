@@ -28,7 +28,6 @@ import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
 import org.assertj.swing.fixture.JComboBoxFixture
-import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.dsl.*
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
@@ -411,7 +410,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
           val line = editor.offsetToVisualLine(position.startOffset, true)
           val actionButtonSize = InlayRunToCursorEditorListener.ACTION_BUTTON_SIZE
           val y = editor.visualLineToY(line)
-          return@l Rectangle(JBUI.scale(InlayRunToCursorEditorListener.negativeInlayPanelShift(false) - 1), y - JBUI.scale(1),
+          return@l Rectangle(JBUI.scale(InlayRunToCursorEditorListener.NEGATIVE_INLAY_PANEL_SHIFT - 1), y - JBUI.scale(1),
                              JBUI.scale(actionButtonSize + 2), JBUI.scale(actionButtonSize + 2))
         }
       }
@@ -455,7 +454,7 @@ fun LessonContext.clearBreakpoints() {
   }
 }
 
-fun LessonContext.runSample(@Language("devkit-action-id") actionId: String, @Nls message: String) {
+fun LessonContext.runSample(actionId: String, @Nls message: String) {
   task {
     text(message, LearningBalloonConfig(Balloon.Position.below, 0, duplicateMessage = true))
     checkToolWindowState(actionId, true)

@@ -31,7 +31,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -39,13 +38,13 @@ import java.util.Map;
 
 class AddLibraryDependencyFix extends OrderEntryFix {
   private final Module myCurrentModule;
-  private final @Unmodifiable Map<Library, String> myLibraries;
+  private final Map<Library, String> myLibraries;
   private final DependencyScope myScope;
   private final boolean myExported;
 
   AddLibraryDependencyFix(@NotNull PsiReference reference,
                           @NotNull Module currentModule,
-                          @Unmodifiable @NotNull Map<Library, String> libraries,
+                          @NotNull Map<Library, String> libraries,
                           @NotNull DependencyScope scope,
                           boolean exported) {
     super(reference);

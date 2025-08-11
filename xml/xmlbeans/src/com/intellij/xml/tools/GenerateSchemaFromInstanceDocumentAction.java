@@ -2,10 +2,7 @@
 package com.intellij.xml.tools;
 
 import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -51,7 +48,7 @@ final class GenerateSchemaFromInstanceDocumentAction extends AnAction {
     final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     final boolean enabled = isAcceptableFile(file);
     e.getPresentation().setEnabled(enabled);
-    if (e.isFromContextMenu()) {
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
       e.getPresentation().setVisible(enabled);
     }
   }

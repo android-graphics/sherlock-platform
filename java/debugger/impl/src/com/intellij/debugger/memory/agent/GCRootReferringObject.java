@@ -1,13 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.DebuggerContext;
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.ReferringObject;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiExpression;
+import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
@@ -26,12 +26,13 @@ public class GCRootReferringObject implements ReferringObject {
     this.myKind = kind;
   }
 
+  @NotNull
   @Override
-  public @NotNull ValueDescriptorImpl createValueDescription(@NotNull Project project, @NotNull Value referee) {
+  public ValueDescriptorImpl createValueDescription(@NotNull Project project, @NotNull Value referee) {
     return new ValueDescriptorImpl(project, null) {
       @Override
       public String getName() {
-        return JavaDebuggerBundle.message("ref");
+        return "Ref";
       }
 
       @Override
@@ -46,19 +47,22 @@ public class GCRootReferringObject implements ReferringObject {
     };
   }
 
+  @NotNull
   @Override
-  public final @NotNull Function<XValueNode, XValueNode> getNodeCustomizer() {
+  public final Function<XValueNode, XValueNode> getNodeCustomizer() {
     return node -> new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
       @Override
-      public void applyPresentation(@Nullable Icon icon, final @NotNull XValuePresentation valuePresenter, boolean hasChildren) {
+      public void applyPresentation(@Nullable Icon icon, @NotNull final XValuePresentation valuePresenter, boolean hasChildren) {
         node.setPresentation(icon, new XValuePresentation() {
+          @NotNull
           @Override
-          public @NotNull String getSeparator() {
+          public String getSeparator() {
             return ": ";
           }
 
+          @Nullable
           @Override
-          public @Nullable String getType() {
+          public String getType() {
             return null;
           }
 
@@ -70,24 +74,32 @@ public class GCRootReferringObject implements ReferringObject {
           }
         }, hasChildren);
       }
+
+      @Override
+      public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
+      }
     };
   }
 
-  public @NotNull MemoryAgentReferenceKind getKind() {
+  @NotNull
+  public MemoryAgentReferenceKind getKind() {
     return myKind;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getNodeName(int order) {
+  public String getNodeName(int order) {
     return "Root";
   }
 
+  @Nullable
   @Override
-  public @Nullable ObjectReference getReference() {
+  public ObjectReference getReference() {
     return null;
   }
 
-  protected @Nullable String getAdditionalInfo() {
+  @Nullable
+  protected String getAdditionalInfo() {
     return null;
   }
 }

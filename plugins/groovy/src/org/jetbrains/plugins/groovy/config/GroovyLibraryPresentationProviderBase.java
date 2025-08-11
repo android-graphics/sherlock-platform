@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.roots.libraries.LibraryKind;
@@ -46,18 +46,23 @@ public abstract class GroovyLibraryPresentationProviderBase extends LibraryPrese
 
   public abstract boolean managesLibrary(final VirtualFile[] libraryFiles);
 
-  public abstract @Nullable @Nls String getLibraryVersion(final VirtualFile[] libraryFiles);
+  @Nullable
+  @Nls
+  public abstract String getLibraryVersion(final VirtualFile[] libraryFiles);
 
   @Override
-  public abstract @NotNull Icon getIcon(GroovyLibraryProperties properties);
+  @NotNull
+  public abstract Icon getIcon(GroovyLibraryProperties properties);
 
   public abstract boolean isSDKHome(@NotNull VirtualFile file);
 
   public abstract @Nullable String getSDKVersion(String path);
 
-  public abstract @NotNull @Nls String getLibraryCategoryName();
+  @NotNull @Nls public abstract String getLibraryCategoryName();
 
-  public @NotNull @NlsSafe String getLibraryPrefix() {
+  @NotNull
+  @NlsSafe
+  public String getLibraryPrefix() {
     return StringUtil.toLowerCase(getLibraryCategoryName());
   }
 

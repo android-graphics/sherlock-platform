@@ -5,4 +5,3 @@ class Foo<T> : <caret>String.(T) -> Unit {
     }
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertExtensionToFunctionTypeFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertExtensionToFunctionTypeFix

@@ -12,14 +12,16 @@ import com.intellij.sh.psi.ShLiteral;
 import org.jetbrains.annotations.NotNull;
 
 public final class ShElementGenerator {
-  public static @NotNull ShLiteral createLiteral(@NotNull Project project, @NotNull String command) {
+  @NotNull
+  public static ShLiteral createLiteral(@NotNull Project project, @NotNull String command) {
     PsiFile file = createTempFile(project, command);
     ShLiteral literal = PsiTreeUtil.findChildOfType(file, ShLiteral.class);
     assert literal != null;
     return literal;
   }
 
-  public static @NotNull PsiElement createFunctionIdentifier(@NotNull Project project, @NotNull String functionName) {
+  @NotNull
+  public static PsiElement createFunctionIdentifier(@NotNull Project project, @NotNull String functionName) {
     PsiFile file = createTempFile(project, functionName + "() {  }");
     ShFunctionDefinition functionDefinition = PsiTreeUtil.findChildOfType(file, ShFunctionDefinition.class);
     assert functionDefinition != null;
@@ -28,7 +30,8 @@ public final class ShElementGenerator {
     return word;
   }
 
-  private static @NotNull PsiFile createTempFile(@NotNull Project project, @NotNull String contents) {
+  @NotNull
+  private static PsiFile createTempFile(@NotNull Project project, @NotNull String contents) {
     return PsiFileFactory.getInstance(project).createFileFromText("dummy_file." + ShFileType.INSTANCE.getDefaultExtension(),
                                                                   ShFileType.INSTANCE, contents);
   }

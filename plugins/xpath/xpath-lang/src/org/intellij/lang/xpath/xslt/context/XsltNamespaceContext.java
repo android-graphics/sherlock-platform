@@ -45,19 +45,22 @@ public class XsltNamespaceContext implements NamespaceContext {
         return getNamespaceUriStatic(prefix, context);
     }
 
-    public static @Nullable String getNamespaceUriStatic(String prefix, XmlElement context) {
+    @Nullable
+    public static String getNamespaceUriStatic(String prefix, XmlElement context) {
         final XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class);
         return tag != null ? tag.getNamespaceByPrefix(prefix) : null;
     }
 
     @Override
-    public @Nullable String getPrefixForURI(String uri, XmlElement context) {
+    @Nullable
+    public String getPrefixForURI(String uri, XmlElement context) {
         final XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class);
         return tag != null ? tag.getPrefixByNamespace(uri) : null;
     }
 
     @Override
-    public @NotNull Collection<String> getKnownPrefixes(XmlElement context) {
+    @NotNull
+    public Collection<String> getKnownPrefixes(XmlElement context) {
         return getPrefixes(context);
     }
 
@@ -84,11 +87,13 @@ public class XsltNamespaceContext implements NamespaceContext {
     }
 
     @Override
-    public @Nullable PsiElement resolve(String prefix, XmlElement context) {
+    @Nullable
+    public PsiElement resolve(String prefix, XmlElement context) {
         return resolvePrefix(prefix, context);
     }
 
-    public static @Nullable PsiElement resolvePrefix(final String prefix, XmlElement context) {
+    @Nullable
+    public static PsiElement resolvePrefix(final String prefix, XmlElement context) {
         final String name = "xmlns:" + prefix;
 
         XmlTag parent = PsiTreeUtil.getParentOfType(context, XmlTag.class);

@@ -1,6 +1,5 @@
 // "Remove redundant 'if' statement" "false"
 // ACTION: Expand boolean expression to 'if else'
-// ACTION: Introduce local variable
 // ACTION: Remove braces from all 'if' statements
 // IGNORE_K2
 fun bar(value: Int): Boolean {

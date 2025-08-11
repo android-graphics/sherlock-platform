@@ -1,13 +1,12 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.rels;
 
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 
 import java.util.HashSet;
@@ -22,11 +21,8 @@ public class MethodWrapper {
   public final Set<String> setOuterVarNames = new HashSet<>();
 
   public DirectGraph graph;
-  public List<VarVersion> synthParameters;
+  public List<VarVersionPair> synthParameters;
   public boolean decompiledWithErrors;
-  @Nullable
-  public String decompiledWithErrorsMessage;
-
 
   public MethodWrapper(RootStatement root, VarProcessor varproc, StructMethod methodStruct, CounterContainer counter) {
     this.root = root;

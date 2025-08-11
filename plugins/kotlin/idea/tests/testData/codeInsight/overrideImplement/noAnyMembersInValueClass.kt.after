@@ -5,5 +5,3 @@ value class V(val v: Int) {
         return super.toString()
     }
 }
-
-// MEMBER: "toString(): String"

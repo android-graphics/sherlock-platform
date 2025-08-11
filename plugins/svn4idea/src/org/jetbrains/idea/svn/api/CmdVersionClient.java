@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.api;
 
 import com.intellij.execution.process.ProcessOutput;
@@ -19,12 +19,14 @@ public class CmdVersionClient extends BaseSvnClient implements VersionClient {
   private static final Pattern VERSION = Pattern.compile("^(\\d+)\\.(\\d+)\\.(\\d+)");
   private static final int COMMAND_TIMEOUT = 30 * 1000;
 
+  @NotNull
   @Override
-  public @NotNull Version getVersion() throws SvnBindException {
+  public Version getVersion() throws SvnBindException {
     return parseVersion(runCommand(true));
   }
 
-  public @NotNull ProcessOutput runCommand(boolean quiet) throws SvnBindException {
+  @NotNull
+  public ProcessOutput runCommand(boolean quiet) throws SvnBindException {
     Command command = new Command(SvnCommandName.version);
     if (quiet) {
     command.put("--quiet");
@@ -33,7 +35,8 @@ public class CmdVersionClient extends BaseSvnClient implements VersionClient {
     return newRuntime(myVcs).runLocal(command, COMMAND_TIMEOUT).getProcessOutput();
   }
 
-  private static @NotNull Version parseVersion(@NotNull ProcessOutput output) throws SvnBindException {
+  @NotNull
+  private static Version parseVersion(@NotNull ProcessOutput output) throws SvnBindException {
     // TODO: This or similar check should likely go to CommandRuntime - to be applied for all commands
     if (output.isTimeout()) {
       throw new SvnBindException(message("error.could.not.get.svn.version", output.getExitCode(), output.getStderr()));
@@ -42,7 +45,8 @@ public class CmdVersionClient extends BaseSvnClient implements VersionClient {
     return parseVersion(output.getStdout());
   }
 
-  public static @NotNull Version parseVersion(@NlsSafe @NotNull String versionText) throws SvnBindException {
+  @NotNull
+  public static Version parseVersion(@NlsSafe @NotNull String versionText) throws SvnBindException {
     Version result = null;
     Exception cause = null;
 

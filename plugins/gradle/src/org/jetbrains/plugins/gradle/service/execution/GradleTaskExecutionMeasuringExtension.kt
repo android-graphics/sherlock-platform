@@ -12,15 +12,16 @@ import org.gradle.tooling.events.ProgressListener
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.plugins.gradle.service.execution.statistics.GradleTaskExecutionHandler
 import org.jetbrains.plugins.gradle.service.execution.statistics.GradleTaskExecutionListener
-import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
+import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension
+import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import java.lang.ref.WeakReference
 
-class GradleTaskExecutionMeasuringExtension : GradleExecutionHelperExtension {
+class GradleTaskExecutionMeasuringExtension : GradleOperationHelperExtension {
 
   override fun prepareForExecution(id: ExternalSystemTaskId,
                                    operation: LongRunningOperation,
-                                   settings: GradleExecutionSettings,
+                                   gradleExecutionSettings: GradleExecutionSettings,
                                    buildEnvironment: BuildEnvironment?) {
     val gradleVersion = buildEnvironment?.gradle?.gradleVersion
     if (gradleVersion == null || GradleVersionUtil.isGradleOlderThan(gradleVersion, "5.1")) {
@@ -34,7 +35,10 @@ class GradleTaskExecutionMeasuringExtension : GradleExecutionHelperExtension {
     operation.addProgressListener(ProgressListener { router.route(it) }, OperationType.TASK)
     ExternalSystemProgressNotificationManager.getInstance()
       .addNotificationListener(id, object : ExternalSystemTaskNotificationListener {
-        override fun onEnd(proojecPath: String, id: ExternalSystemTaskId) = router.flush()
+        override fun onEnd(id: ExternalSystemTaskId) = router.flush()
       })
   }
+
+  override fun prepareForSync(operation: LongRunningOperation, resolverCtx: ProjectResolverContext) = Unit
+
 }

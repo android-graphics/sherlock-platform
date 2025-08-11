@@ -48,16 +48,16 @@ public class BindingTest {
     private static java.lang.reflect.Method $$$cachedGetBundleMethod$$$ = null;
 
     private String $$$getMessageFromBundle$$$(String path, String key) {
-        java.util.ResourceBundle bundle;
+        ResourceBundle bundle;
         try {
             Class<?> thisClass = this.getClass();
             if ($$$cachedGetBundleMethod$$$ == null) {
                 Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
                 $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
             }
-            bundle = (java.util.ResourceBundle) $$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+            bundle = (ResourceBundle) $$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
         } catch (Exception e) {
-            bundle = java.util.ResourceBundle.getBundle(path);
+            bundle = ResourceBundle.getBundle(path);
         }
         return bundle.getString(key);
     }

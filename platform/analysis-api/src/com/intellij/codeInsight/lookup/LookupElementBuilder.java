@@ -13,7 +13,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -165,7 +164,7 @@ public final class LookupElementBuilder extends LookupElement {
   }
 
   @Contract(pure=true)
-  public @NotNull LookupElementBuilder withLookupStrings(@NotNull @Unmodifiable Collection<String> another) {
+  public @NotNull LookupElementBuilder withLookupStrings(@NotNull Collection<String> another) {
     Set<String> set = new HashSet<>(myAllLookupStrings.size() + another.size());
     set.addAll(myAllLookupStrings);
     set.addAll(another);

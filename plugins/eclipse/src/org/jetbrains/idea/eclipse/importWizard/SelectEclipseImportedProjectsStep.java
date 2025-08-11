@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.eclipse.importWizard;
 
@@ -65,7 +65,8 @@ class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<Strin
   }
 
   @Override
-  protected @Nullable Icon getElementIcon(final String item) {
+  @Nullable
+  protected Icon getElementIcon(final String item) {
     return isInConflict(item) ? AllIcons.Actions.Cancel : null;
   }
 
@@ -92,7 +93,8 @@ class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<Strin
   }
 
   @Override
-  public @NonNls String getHelpId() {
+  @NonNls
+  public String getHelpId() {
     return "reference.dialogs.new.project.import.eclipse.page2";
   }
 }

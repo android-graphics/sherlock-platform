@@ -36,7 +36,8 @@ import static com.jetbrains.python.psi.PyUtil.as;
 
 public class DictCreationQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.dict.creation");
   }
 

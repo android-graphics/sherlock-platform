@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Pair;
@@ -39,12 +39,14 @@ public abstract class CustomAnnotationChecker {
 
   public boolean checkApplicability(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {return false;}
 
-  static @Nullable @InspectionMessage String checkAnnotationApplicable(@NotNull GrAnnotation annotation, @Nullable PsiAnnotationOwner owner) {
+  @Nullable
+  @InspectionMessage
+  static String checkAnnotationApplicable(@NotNull GrAnnotation annotation, @Nullable PsiAnnotationOwner owner) {
     if (!(owner instanceof PsiElement)) return null;
     PsiElement ownerToUse = owner instanceof PsiModifierList ? ((PsiElement)owner).getParent() : (PsiElement)owner;
     PsiAnnotation.TargetType[] elementTypeFields = GrAnnotationImpl.getApplicableElementTypeFields(ownerToUse);
     if (elementTypeFields.length != 0 && !GrAnnotationImpl.isAnnotationApplicableTo(annotation, elementTypeFields)) {
-      String annotationTargetText = JavaPsiBundle.message("annotation.target." + elementTypeFields[0]);
+      String annotationTargetText = JavaAnalysisBundle.message("annotation.target." + elementTypeFields[0]);
       GrCodeReferenceElement ref = annotation.getClassReference();
       return JavaErrorBundle.message("annotation.not.applicable", ref.getText(), annotationTargetText);
     }

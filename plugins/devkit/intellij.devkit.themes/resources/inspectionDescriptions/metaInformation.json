@@ -1,8 +1,0 @@
-{
-  "inspections": [
-    {
-      "id": "UnregisteredNamedColor",
-      "codeQualityCategory": "Sanity"
-    }
-  ]
-}

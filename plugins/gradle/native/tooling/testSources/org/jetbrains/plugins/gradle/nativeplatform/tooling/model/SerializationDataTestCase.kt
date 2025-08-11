@@ -51,7 +51,6 @@ abstract class SerializationDataTestCase {
     type = string
     isTest = boolean
     isJvmTest = boolean
-    isInherited = boolean
   }
 
   private fun <B : CppBinaryImpl> B.configure() = apply {
@@ -170,10 +169,8 @@ abstract class SerializationDataTestCase {
     if (expected == null || actual == null) return
     assertEquals(expected.description, actual.description)
     assertEquals(expected.group, actual.group)
-    assertEquals(expected.isJvm, actual.isJvm)
     assertEquals(expected.isTest, actual.isTest)
     assertEquals(expected.isJvmTest, actual.isJvmTest)
-    assertEquals(expected.isInherited, actual.isInherited)
     assertEquals(expected.name, actual.name)
     assertEquals(expected.qName, actual.qName)
     assertEquals(expected.type, actual.type)

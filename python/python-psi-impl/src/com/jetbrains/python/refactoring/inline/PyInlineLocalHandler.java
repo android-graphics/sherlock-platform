@@ -92,7 +92,8 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
     return !content.contains("'") && !content.contains("\"") && !content.contains("\\");
   }
 
-  private static @NotNull List<PyStringElement> getStringElements(@NotNull PyExpression expression) {
+  @NotNull
+  private static List<PyStringElement> getStringElements(@NotNull PyExpression expression) {
     List<PyStringElement> result = new ArrayList<>();
     for (var stringLiteralExpr : PsiTreeUtil.findChildrenOfAnyType(expression, false, PyStringLiteralExpression.class)) {
       result.addAll(stringLiteralExpr.getStringElements());
@@ -100,7 +101,8 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
     return result;
   }
 
-  private static @NotNull PyExpression replaceQuotesInExpression(@NotNull PyExpression expression, char desiredQuote) {
+  @NotNull
+  private static PyExpression replaceQuotesInExpression(@NotNull PyExpression expression, char desiredQuote) {
     var expressionCopy = (PyExpression)expression.copy();
     var valueStringElements = getStringElements(expressionCopy);
     for (var valueStringElement : valueStringElements) {
@@ -206,9 +208,9 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
   }
 
   public static void invoke(
-    final @NotNull Project project,
-    final @NotNull Editor editor,
-    final @NotNull PyTargetExpression local,
+    @NotNull final Project project,
+    @NotNull final Editor editor,
+    @NotNull final PyTargetExpression local,
     @Nullable PyReferenceExpression refExpr,
     boolean replaceJustOneOccurrence
   ) {
@@ -389,7 +391,7 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
           final PyStatement expression = getAssignmentByLeftPart((PyElement)candidates.get(0).getElement());
           return Pair.create(expression, false);
         }
-        return Pair.create(null, !candidates.isEmpty());
+        return Pair.create(null, candidates.size() > 0);
       }
       catch (PyDefUseUtil.InstructionNotFoundException ignored) {
       }
@@ -401,12 +403,14 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
     return lValue != null ? Pair.create(getAssignmentByLeftPart(lValue), false) : EMPTY_DEF_RESULT;
   }
 
-  private static @Nullable PyStatement getAssignmentByLeftPart(PyElement candidate) {
+  @Nullable
+  private static PyStatement getAssignmentByLeftPart(PyElement candidate) {
     final PsiElement parent = candidate.getParent();
     return parent instanceof PyAssignmentStatement || parent instanceof PyAugAssignmentStatement ? (PyStatement)parent : null;
   }
 
-  private static @Nullable PyExpression getValue(@Nullable PyStatement def) {
+  @Nullable
+  private static PyExpression getValue(@Nullable PyStatement def) {
     if (def == null) return null;
     if (def instanceof PyAssignmentStatement) {
       return ((PyAssignmentStatement)def).getAssignedValue();
@@ -414,7 +418,8 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
     return ((PyAugAssignmentStatement)def).getValue();
   }
 
-  private static @Nullable PyExpression getObject(@Nullable PyStatement def) {
+  @Nullable
+  private static PyExpression getObject(@Nullable PyStatement def) {
     if (def == null) return null;
     if (def instanceof PyAssignmentStatement) {
       return ((PyAssignmentStatement)def).getTargets()[0];
@@ -422,7 +427,8 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
     return ((PyAugAssignmentStatement)def).getTarget();
   }
 
-  private static @NotNull PyExpression prepareValue(@NotNull PyStatement def, @NotNull String localName, @NotNull Project project) {
+  @NotNull
+  private static PyExpression prepareValue(@NotNull PyStatement def, @NotNull String localName, @NotNull Project project) {
     final PyExpression value = getValue(def);
     assert value != null;
     if (def instanceof PyAugAssignmentStatement expression) {

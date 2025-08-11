@@ -32,12 +32,10 @@ public final class ArrayItemData extends DescriptorData<ArrayElementDescriptorIm
     return new ArrayItemDisplayKeyImpl(myIndex);
   }
 
-  @Override
   public boolean equals(Object object) {
     return object instanceof ArrayItemData && myArray.equals(((ArrayItemData)object).myArray) && ((ArrayItemData)object).myIndex == myIndex;
   }
 
-  @Override
   public int hashCode() {
     return myArray.hashCode() + myIndex;
   }
@@ -49,12 +47,10 @@ public final class ArrayItemData extends DescriptorData<ArrayElementDescriptorIm
       myIndex = index;
     }
 
-    @Override
     public boolean equals(Object o) {
       return o instanceof ArrayItemDisplayKeyImpl && ((ArrayItemDisplayKeyImpl)o).myIndex == myIndex;
     }
 
-    @Override
     public int hashCode() {
       return 0;
     }

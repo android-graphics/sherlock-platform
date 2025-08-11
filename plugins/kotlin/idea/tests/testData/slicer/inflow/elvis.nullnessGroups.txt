@@ -1,3 +1,0 @@
-[NotNull Values]
-5 	<bold>result</bold> (in testNullCheckConditionalAssignment())
-5 		<bold>result</bold> (in testNullCheckConditionalAssignment())

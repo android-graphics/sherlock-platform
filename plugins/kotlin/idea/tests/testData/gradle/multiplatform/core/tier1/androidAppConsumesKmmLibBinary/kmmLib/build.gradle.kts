@@ -16,8 +16,8 @@ publishing {
 {{default_android_block}}
 
 kotlin {
-    {{iosTargetPlaceHolder}}
-    {{androidTargetPlaceholder}} {
+    ios()
+    android {
         publishLibraryVariants("release", "debug")
     }
 }

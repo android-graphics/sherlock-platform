@@ -20,13 +20,11 @@ import com.jetbrains.python.PythonHelpersLocator;
 import kotlin.text.Regex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 
-import static com.jetbrains.python.venvReader.ResolveUtilKt.tryResolvePath;
 import static com.jetbrains.python.sdk.WinAppxToolsKt.getAppxFiles;
 import static com.jetbrains.python.sdk.WinAppxToolsKt.getAppxProduct;
 
@@ -70,7 +68,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   @Override
   public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(final @Nullable Module module, final @Nullable UserDataHolder context) {
     Set<String> candidates = new TreeSet<>();
-    findInCandidatePaths(candidates, "python.exe", "pypy.exe");
+    findInCandidatePaths(candidates, "python.exe", "jython.bat", "pypy.exe");
     findInstallations(candidates, "python.exe", PythonHelpersLocator.getCommunityHelpersRoot().getParent().toString());
     return ContainerUtil.map(candidates, Path::of);
   }
@@ -89,33 +87,33 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   public boolean sdkSeemsValid(@NotNull Sdk sdk,
                                PyFlavorData.@NotNull Empty flavorData,
                                @Nullable TargetEnvironmentConfiguration targetConfig) {
-    if (super.sdkSeemsValid(sdk, flavorData, targetConfig) || targetConfig != null) {
+    if (super.sdkSeemsValid(sdk, flavorData, targetConfig)) {
+      return true;
+    }
+    if (targetConfig != null) {
       // non-local, cant check for appx
       return true;
     }
-
-    var path = tryResolvePath(sdk.getHomePath());
-    return path != null && isLocalPathValidPython(path);
+    var path = sdk.getHomePath();
+    return path != null && isLocalPathValidPython(Path.of(path));
   }
 
   @Override
-  public boolean isValidSdkPath(final @NotNull String pathStr) {
-    if (super.isValidSdkPath(pathStr)) {
+  public boolean isValidSdkHome(final @NotNull String path) {
+    if (super.isValidSdkHome(path)) {
       return true;
     }
 
-    var path = tryResolvePath(pathStr);
-    return path != null && isLocalPathValidPython(path);
+    return isLocalPathValidPython(Path.of(path));
   }
 
   private boolean isLocalPathValidPython(@NotNull Path path) {
-    String pathStr = path.toString();
-    if (myAppxCache.getValue().contains(pathStr)) {
+    if (myAppxCache.getValue().contains(path.toString())) {
       return true;
     }
 
     String product = getAppxProduct(path);
-    return product != null && product.contains(APPX_PRODUCT) && isValidSdkPath(pathStr);
+    return product != null && product.contains(APPX_PRODUCT) && isValidSdkPath(path.toFile());
   }
 
   @Override
@@ -154,7 +152,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
     }
   }
 
-  private static @Unmodifiable @NotNull Set<String> getPythonsFromStore() {
+  private static @NotNull Set<String> getPythonsFromStore() {
     return ContainerUtil.map2Set(getAppxFiles(APPX_PRODUCT, PYTHON_EXE), file -> file.toAbsolutePath().toString());
   }
 

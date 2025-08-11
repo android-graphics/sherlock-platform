@@ -38,25 +38,27 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Set;
 
 public abstract class DownloadManager {
-  private final Project project;
-  private final ProgressIndicator progress;
-  private final String resourcePath;
+  private static final ExternalResourceManager resourceManager = ExternalResourceManager.getInstance();
+
+  private final Project myProject;
+  private final ProgressIndicator myProgress;
+  private final String myResourcePath;
 
   public DownloadManager(Project project, ProgressIndicator progress) {
-    this.project = project;
-    this.progress = progress;
+    myProject = project;
+    myProgress = progress;
 
-    resourcePath = PathManager.getSystemPath() + File.separatorChar + "extResources";
+    myResourcePath = PathManager.getSystemPath() + File.separatorChar + "extResources";
     //noinspection ResultOfMethodCallIgnored
-    new File(resourcePath).mkdirs();
+    new File(myResourcePath).mkdirs();
   }
 
-  public void fetch(@NotNull String location) throws DownloadException {
-    if (!location.equals(ExternalResourceManager.getInstance().getResourceLocation(location, project))) {
+  public void fetch(@NotNull final String location) throws DownloadException {
+    if (!location.equals(resourceManager.getResourceLocation(location, myProject))) {
       return;
     }
 
-    progress.setText(XPathBundle.message("progress.text.downloading", location));
+    myProgress.setText(XPathBundle.message("progress.text.downloading", location));
 
     File file = null;
     try {
@@ -66,33 +68,32 @@ public abstract class DownloadManager {
           String name = Integer.toHexString(System.identityHashCode(this)) + "_" +
                         Integer.toHexString(location.hashCode()) + "_" +
                         location.substring(location.lastIndexOf('/') + 1);
-          return request.saveToFile(new File(resourcePath, name.lastIndexOf('.') == -1 ? name + ".xml" : name), progress);
+          return request.saveToFile(new File(myResourcePath, name.lastIndexOf('.') == -1 ? name + ".xml" : name), myProgress);
         }
       });
 
       try {
         //noinspection unchecked
-        Set<String>[] resourceDependencies = new Set[1];
-        VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+        final Set<String>[] resourceDependencies = new Set[1];
+        final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
         if (vf != null) {
-          PsiFile psiFile = PsiManager.getInstance(project).findFile(vf);
+          PsiFile psiFile = PsiManager.getInstance(myProject).findFile(vf);
           if (psiFile != null && isAccepted(psiFile)) {
             resourceDependencies[0] = getResourceDependencies(psiFile);
-            ExternalResourceManager.getInstance().addResource(location, file.getAbsolutePath());
+            resourceManager.addResource(location, file.getAbsolutePath());
           }
           else {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              Messages.showErrorDialog(project,
-                                       XPathBundle.message("dialog.message.not.valid.file", vf.getPresentableUrl()),
-                                       XPathBundle.message("dialog.title.download.problem"));
-            }, project.getDisposed());
+            ApplicationManager.getApplication().invokeLater(
+              () -> Messages.showErrorDialog(myProject,
+                                             XPathBundle.message("dialog.message.not.valid.file", vf.getPresentableUrl()),
+                                             XPathBundle.message("dialog.title.download.problem")), myProject.getDisposed());
           }
         }
 
         if (resourceDependencies[0] != null) {
           for (String s : resourceDependencies[0]) {
-            progress.checkCanceled();
-            progress.setFraction(0);
+            myProgress.checkCanceled();
+            myProgress.setFraction(0);
             fetch(s);
           }
         }
@@ -118,7 +119,7 @@ public abstract class DownloadManager {
       throw new DownloadException(location, e);
     }
     finally {
-      if (file != null && location.equals(ExternalResourceManager.getInstance().getResourceLocation(location, project))) {
+      if (file != null && location.equals(resourceManager.getResourceLocation(location, myProject))) {
         // something went wrong. get rid of the file
         FileUtil.delete(file);
       }

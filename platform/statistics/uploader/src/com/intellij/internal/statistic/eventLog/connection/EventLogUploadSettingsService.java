@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.connection;
 
 import com.intellij.internal.statistic.config.EventLogExternalSendSettings;
@@ -10,10 +10,7 @@ import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
 import com.intellij.internal.statistic.eventLog.filters.*;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.concurrent.TimeUnit;
 
@@ -23,7 +20,8 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   private static final String METADATA = "metadata";
   private static final String DICTIONARY = "dictionary";
 
-  private final @NotNull EventLogApplicationInfo myApplicationInfo;
+  @NotNull
+  private final EventLogApplicationInfo myApplicationInfo;
 
   public EventLogUploadSettingsService(@NotNull String recorderId, @NotNull EventLogApplicationInfo appInfo) {
     this(recorderId, appInfo, TimeUnit.MINUTES.toMillis(10));
@@ -33,26 +31,29 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
                                        @NotNull EventLogApplicationInfo appInfo,
                                        long settingsCacheTimeoutMs) {
     super(
-      () -> getConfigUrl(recorderId, appInfo.getProductCode(), appInfo.getTemplateUrl(), appInfo.isTestConfig()),
+      getConfigUrl(recorderId, appInfo.getProductCode(), appInfo.getTemplateUrl(), appInfo.isTestConfig()),
       recorderId, appInfo, settingsCacheTimeoutMs
     );
     myApplicationInfo = appInfo;
   }
 
-  private static @NotNull String getConfigUrl(@NotNull String recorderId, @NotNull String productCode, @NotNull String templateUrl, boolean isTestConfig) {
+  @NotNull
+  private static String getConfigUrl(@NotNull String recorderId, @NotNull String productCode, @NotNull String templateUrl, boolean isTestConfig) {
     if (isTestConfig) {
       return String.format(templateUrl, "test/" + recorderId, productCode);
     }
     return String.format(templateUrl, recorderId, productCode);
   }
 
+  @Nullable
   @Override
-  public @Nullable String getServiceUrl() {
+  public String getServiceUrl() {
     return getEndpointValue(SEND);
   }
 
   @Override
-  public @Nullable String getDictionaryServiceUrl() {
+  @Nullable
+  public String getDictionaryServiceUrl() {
     return getEndpointValue(DICTIONARY);
   }
 
@@ -68,12 +69,14 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   }
 
   @Override
-  public @NotNull LogEventFilter getBaseEventFilter() {
+  @NotNull
+  public LogEventFilter getBaseEventFilter() {
     return new LogEventMetadataFilter(notNull(loadApprovedGroupsRules(), EventGroupsFilterRules.empty()));
   }
 
   @Override
-  public @NotNull LogEventFilter getEventFilter(@NotNull LogEventFilter base, @NotNull EventLogBuildType type) {
+  @NotNull
+  public LogEventFilter getEventFilter(@NotNull LogEventFilter base, @NotNull EventLogBuildType type) {
     final EventLogSendConfiguration configuration = getConfiguration(type);
     if (configuration == null) {
       DataCollectorDebugLogger logger = myApplicationInfo.getLogger();
@@ -99,14 +102,17 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
     return myApplicationInfo;
   }
 
-  protected @Nullable EventGroupsFilterRules<EventLogBuild> loadApprovedGroupsRules() {
+  @Nullable
+  protected EventGroupsFilterRules<EventLogBuild> loadApprovedGroupsRules() {
     final String productUrl = getMetadataProductUrl();
     if (productUrl == null) return null;
     EventLogConnectionSettings settings = myApplicationInfo.getConnectionSettings();
     return EventLogMetadataUtils.loadAndParseGroupsFilterRules(productUrl, settings);
   }
 
-  public @NonNls @Nullable String getMetadataProductUrl() {
+  @NonNls
+  @Nullable
+  public String getMetadataProductUrl() {
     String baseMetadataUrl = getEndpointValue(METADATA);
     if (baseMetadataUrl == null) return null;
     return baseMetadataUrl + myApplicationInfo.getBaselineVersion() + "/" + myApplicationInfo.getProductCode() + ".json";

@@ -16,12 +16,10 @@
 package com.intellij.diagnostic.hprof.classstore
 
 import com.intellij.diagnostic.hprof.parser.Type
-import com.intellij.diagnostic.hprof.util.IDMapper
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import org.jetbrains.annotations.ApiStatus
+import java.util.function.LongUnaryOperator
 
-@ApiStatus.Internal
 class ClassStore(private val classes: Long2ObjectMap<ClassDefinition>) {
   private val stringToClassDefinition = HashMap<String, ClassDefinition>()
   private val classDefinitionToShortPrettyName = HashSet<ClassDefinition>()
@@ -142,11 +140,10 @@ class ClassStore(private val classes: Long2ObjectMap<ClassDefinition>) {
     }
   }
 
-  fun createStoreWithRemappedIDs(idMapper: IDMapper): ClassStore {
-    fun map(id: Long): Long = idMapper.getID(id)
+  fun createStoreWithRemappedIDs(remappingFunction: LongUnaryOperator): ClassStore {
     val newClasses = Long2ObjectOpenHashMap<ClassDefinition>()
     for (classDefinition in classes.values) {
-      newClasses.put(map(classDefinition.id), classDefinition.copyWithRemappedIDs(idMapper))
+      newClasses.put(remappingFunction.applyAsLong(classDefinition.id), classDefinition.copyWithRemappedIDs(remappingFunction))
     }
     return ClassStore(newClasses)
   }

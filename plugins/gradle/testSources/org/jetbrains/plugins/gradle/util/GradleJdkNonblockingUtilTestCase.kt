@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkNonblockingUtilTestCase
-import com.intellij.testFramework.common.timeoutRunBlocking
 
 abstract class GradleJdkNonblockingUtilTestCase : ExternalSystemJdkNonblockingUtilTestCase() {
   lateinit var externalProjectPath: String
@@ -13,7 +12,6 @@ abstract class GradleJdkNonblockingUtilTestCase : ExternalSystemJdkNonblockingUt
     externalProjectPath = GradleJdkResolutionTestCase.createUniqueTempDirectory()
   }
 
-  override fun nonblockingResolveJdkInfo(jdkReference: String?) = timeoutRunBlocking {
-    sdkLookupProvider.resolveGradleJvmInfo(project, externalProjectPath, jdkReference)
-  }
+  override fun nonblockingResolveJdkInfo(jdkReference: String?) =
+    sdkLookupProvider.nonblockingResolveGradleJvmInfo(project, externalProjectPath, jdkReference)
 }

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class ApplicationMetricDto<T : Number>(
+data class ApplicationMetricDto(
   /**
    * Metric name.
    */
@@ -13,13 +13,13 @@ data class ApplicationMetricDto<T : Number>(
   /**
    * Used for "duration" metrics.
    */
-  val d: T? = null,
+  val d: Long? = null,
   /**
    * Used for "counter" metrics.
    */
-  val c: T? = null,
+  val c: Long? = null,
 
-  val v: T? = d ?: c
+  val v: Long? = d ?: c
 ) {
   init {
     require((d != null) xor (c != null))

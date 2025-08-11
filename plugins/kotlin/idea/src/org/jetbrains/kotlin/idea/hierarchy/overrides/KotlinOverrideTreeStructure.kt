@@ -10,7 +10,8 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.util.ArrayUtil
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.util.useScope
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
+import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
+import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
@@ -24,7 +25,7 @@ class KotlinOverrideTreeStructure(project: Project, declaration: KtCallableDecla
     override fun buildChildren(nodeDescriptor: HierarchyNodeDescriptor): Array<Any> {
         val baseElement = baseElement.element ?: return ArrayUtil.EMPTY_OBJECT_ARRAY
         val psiElement = nodeDescriptor.psiElement ?: return ArrayUtil.EMPTY_OBJECT_ARRAY
-        val subclasses = KotlinFindUsagesSupport.searchInheritors(psiElement, psiElement.useScope(), false).toList()
+        val subclasses = HierarchySearchRequest(psiElement, psiElement.useScope(), false).searchInheritors().findAll()
         return subclasses.mapNotNull {
             val subclass = it.unwrapped ?: return@mapNotNull null
             KotlinOverrideHierarchyNodeDescriptor(nodeDescriptor, subclass, baseElement)

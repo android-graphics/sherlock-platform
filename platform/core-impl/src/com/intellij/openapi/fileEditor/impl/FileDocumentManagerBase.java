@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,10 +10,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.FileContentUtilCore;
@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public abstract class FileDocumentManagerBase extends FileDocumentManager {
   public static final Key<Document> HARD_REF_TO_DOCUMENT_KEY = Key.create("HARD_REF_TO_DOCUMENT_KEY");
@@ -56,7 +55,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
       return null;
     }
 
-    boolean tooLarge = FileSizeLimit.isTooLarge(file.getLength(), file.getExtension());
+    boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
     if (file.getFileType().isBinary() && tooLarge) {
       return null;
     }
@@ -99,8 +98,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
       .fileDocumentBindingChanged(document, oldFile, newFile);
   }
 
-  @ApiStatus.Internal
-  public static void setDocumentTooLarge(@NotNull Document document, boolean tooLarge) {
+  protected static void setDocumentTooLarge(@NotNull Document document, boolean tooLarge) {
     document.putUserData(BIG_FILE_PREVIEW, tooLarge ? Boolean.TRUE : null);
   }
 
@@ -178,38 +176,26 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   }
 
   @Override
-  @ApiStatus.Internal
-  public void reloadFileTypes(@NotNull Set<FileType> fileTypes) {
-    List<VirtualFile> supported = ContainerUtil.filter(myDocumentCache.keySet(), file -> fileTypes.contains(file.getFileType()));
-    FileContentUtilCore.reparseFiles(supported);
-  }
-
-  @Override
   public boolean isPartialPreviewOfALargeFile(@NotNull Document document) {
     return document.getUserData(BIG_FILE_PREVIEW) == Boolean.TRUE;
   }
 
-  @ApiStatus.Internal
-  public void unbindFileFromDocument(@NotNull VirtualFile file, @NotNull Document document) {
+  void unbindFileFromDocument(@NotNull VirtualFile file, @NotNull Document document) {
     myDocumentCache.remove(file);
     file.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
     document.putUserData(FILE_KEY, null);
     fireFileBindingChanged(document, file, null);
   }
 
-  @ApiStatus.Internal
-  public static boolean isBinaryWithoutDecompiler(@NotNull VirtualFile file) {
+  protected static boolean isBinaryWithoutDecompiler(@NotNull VirtualFile file) {
     FileType type = file.getFileType();
     return type.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(type) == null;
   }
 
-  @ApiStatus.Internal
-  public static int getPreviewCharCount(@NotNull VirtualFile file) {
+  protected static int getPreviewCharCount(@NotNull VirtualFile file) {
     Charset charset = EncodingManager.getInstance().getEncoding(file, false);
     float bytesPerChar = charset == null ? 2 : charset.newEncoder().averageBytesPerChar();
-
-    int largeFilePreviewSize = FileSizeLimit.getPreviewLimit(file.getExtension());
-    return (int)(largeFilePreviewSize / bytesPerChar);
+    return (int)(FileUtilRt.LARGE_FILE_PREVIEW_SIZE / bytesPerChar);
   }
 
   private void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {
@@ -221,7 +207,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   }
 
   @ApiStatus.Internal
-  public void clearDocumentCache() {
+  protected void clearDocumentCache() {
     myDocumentCache.clear();
   }
 

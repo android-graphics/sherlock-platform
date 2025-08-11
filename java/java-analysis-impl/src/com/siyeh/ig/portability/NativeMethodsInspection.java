@@ -25,12 +25,14 @@ import org.jetbrains.annotations.NotNull;
 public final class NativeMethodsInspection extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "NativeMethod";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "native.method.problem.descriptor");
   }

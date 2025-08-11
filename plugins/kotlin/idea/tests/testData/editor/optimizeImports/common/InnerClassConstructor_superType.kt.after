@@ -1,7 +1,0 @@
-package test
-
-open class Outer {
-    inner open class InnerBase
-
-    inner class InnerChild : InnerBase()
-}

@@ -1,3 +1,0 @@
-public void m(Date value) {
-  LocalDate.ofInstant(value.toInstant(), <spot></spot>)
-}

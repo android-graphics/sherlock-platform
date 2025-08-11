@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.canBeFinal;
 
 import com.intellij.analysis.AnalysisScope;
@@ -28,7 +28,7 @@ public final class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
   public boolean REPORT_CLASSES;
   public boolean REPORT_METHODS;
   public boolean REPORT_FIELDS = true;
-  public static final @NonNls String SHORT_NAME = "CanBeFinal";
+  @NonNls public static final String SHORT_NAME = "CanBeFinal";
 
   private boolean isReportClasses() {
     return REPORT_CLASSES;
@@ -52,17 +52,18 @@ public final class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
   }
 
   @Override
-  public @Nullable RefGraphAnnotator getAnnotator(final @NotNull RefManager refManager) {
+  @Nullable
+  public RefGraphAnnotator getAnnotator(@NotNull final RefManager refManager) {
     return new CanBeFinalAnnotator(refManager);
   }
 
 
   @Override
-  public CommonProblemDescriptor @Nullable [] checkElement(final @NotNull RefEntity refEntity,
-                                                           final @NotNull AnalysisScope scope,
-                                                           final @NotNull InspectionManager manager,
-                                                           final @NotNull GlobalInspectionContext globalContext,
-                                                           final @NotNull ProblemDescriptionsProcessor processor) {
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull final RefEntity refEntity,
+                                                           @NotNull final AnalysisScope scope,
+                                                           @NotNull final InspectionManager manager,
+                                                           @NotNull final GlobalInspectionContext globalContext,
+                                                           @NotNull final ProblemDescriptionsProcessor processor) {
     if (refEntity instanceof final RefJavaElement refElement) {
       if (refElement instanceof RefParameter) return null;
       if (!refElement.isReferenced()) return null;
@@ -101,16 +102,16 @@ public final class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
   }
 
   @Override
-  protected boolean queryExternalUsagesRequests(final @NotNull RefManager manager,
-                                                final @NotNull GlobalJavaInspectionContext globalContext,
-                                                final @NotNull ProblemDescriptionsProcessor problemsProcessor) {
+  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager,
+                                                @NotNull final GlobalJavaInspectionContext globalContext,
+                                                @NotNull final ProblemDescriptionsProcessor problemsProcessor) {
     for (RefElement entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints(manager)) {
       problemsProcessor.ignoreElement(entryPoint);
     }
 
     manager.iterate(new RefJavaVisitor() {
       @Override
-      public void visitMethod(final @NotNull RefMethod refMethod) {
+      public void visitMethod(@NotNull final RefMethod refMethod) {
         if (problemsProcessor.getDescriptions(refMethod) == null) return;
         if (!refMethod.isStatic() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) &&
             !(refMethod instanceof RefImplicitConstructor)) {
@@ -123,7 +124,7 @@ public final class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
       }
 
       @Override
-      public void visitClass(final @NotNull RefClass refClass) {
+      public void visitClass(@NotNull final RefClass refClass) {
         if (problemsProcessor.getDescriptions(refClass) == null) return;
         if (!refClass.isAnonymous() && !PsiModifier.PRIVATE.equals(refClass.getAccessModifier())) {
           globalContext.enqueueDerivedClassesProcessor(refClass, inheritor -> {
@@ -135,7 +136,7 @@ public final class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
       }
 
       @Override
-      public void visitField(final @NotNull RefField refField) {
+      public void visitField(@NotNull final RefField refField) {
         if (problemsProcessor.getDescriptions(refField) == null) return;
         if (PsiModifier.PRIVATE.equals(refField.getAccessModifier())) return;
         globalContext.enqueueFieldUsagesProcessor(refField, new GlobalJavaInspectionContext.UsagesProcessor() {
@@ -158,17 +159,20 @@ public final class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
 
 
   @Override
-  public @Nullable QuickFix<ProblemDescriptor> getQuickFix(final String hint) {
+  @Nullable
+  public QuickFix<ProblemDescriptor> getQuickFix(final String hint) {
     return new AcceptSuggested(null);
   }
 
   @Override
-  public @NotNull String getGroupDisplayName() {
+  @NotNull
+  public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
-  public @NotNull String getShortName() {
+  @NotNull
+  public String getShortName() {
     return SHORT_NAME;
   }
 
@@ -180,7 +184,8 @@ public final class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
     }
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return JavaAnalysisBundle.message("inspection.can.be.final.accept.quickfix");
     }
 

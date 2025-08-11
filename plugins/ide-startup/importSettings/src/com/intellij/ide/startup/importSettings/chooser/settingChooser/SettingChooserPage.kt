@@ -26,17 +26,13 @@ import java.awt.Component
 import java.awt.Dimension
 import javax.swing.*
 
-internal sealed class SettingChooserPage(
-  private val provider: ActionsDataProvider<*>,
-  val product: SettingsContributor,
-  controller: ImportSettingsController,
-) : OnboardingPage {
+abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
+                                  val product: SettingsContributor,
+                                  controller: ImportSettingsController) : OnboardingPage {
   companion object {
-    internal fun createPage(
-      provider: ActionsDataProvider<*>,
-      product: Product,
-      controller: ImportSettingsController,
-    ): OnboardingPage {
+    fun createPage(provider: ActionsDataProvider<*>,
+                   product: Product,
+                   controller: ImportSettingsController): OnboardingPage {
       if (provider is SyncActionsDataProvider && provider.productService.baseProduct(product.id)) {
         return SyncSettingChooserPage(provider, product, controller)
       }
@@ -85,6 +81,7 @@ internal sealed class SettingChooserPage(
 
             provider.getComment(product)?.let { addTxt ->
               row {
+                @Suppress("HardCodedStringLiteral") // IDEA-255051
                 comment(addTxt).customize(
                   UnscaledGaps(top = 3))
               }
@@ -117,7 +114,6 @@ internal sealed class SettingChooserPage(
         add(ScrollSnapToFocused(listPane, this@SettingChooserPage).apply {
           viewport.isOpaque = false
           background = JBColor.namedColor("WelcomeScreen.Details.background", JBColor(Color.white, Color(0x313335)))
-          accessibleContext.accessibleName = ImportSettingsBundle.message("choose.settings.title.accessible.name", provider.getText(product))
 
           SwingUtilities.invokeLater {
             this.requestFocus()
@@ -137,7 +133,7 @@ internal sealed class SettingChooserPage(
     }
 }
 
-private class ConfigurableSettingChooserPage<T : BaseService>(
+class ConfigurableSettingChooserPage<T : BaseService>(
   val provider: ActionsDataProvider<T>,
   product: Product,
   controller: ImportSettingsController
@@ -200,7 +196,7 @@ private class ConfigurableSettingChooserPage<T : BaseService>(
   }
 }
 
-private class SyncSettingChooserPage(val provider: SyncActionsDataProvider,
+class SyncSettingChooserPage(val provider: SyncActionsDataProvider,
                              product: SettingsContributor,
                              controller: ImportSettingsController) : SettingChooserPage(provider, product, controller) {
 

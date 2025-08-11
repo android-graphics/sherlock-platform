@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -30,7 +30,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -63,7 +62,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   protected @Nullable Project getProject() { return myProject; }
 
   @Override
-  public @Unmodifiable @NotNull Map<VirtualFile, T> getMappings() {
+  public @NotNull Map<VirtualFile, T> getMappings() {
     synchronized (myMappings) {
       ensureStateLoaded();
       cleanup();
@@ -71,8 +70,8 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     }
   }
 
-  private @Unmodifiable @NotNull Map<VirtualFile, T> doGetMappings() {
-    return ContainerUtil.map2Map(myMappings.keySet(), it -> Pair.create(it, myMappings.get(it).value()));
+  private @NotNull Map<VirtualFile, T> doGetMappings() {
+    return Collections.unmodifiableMap(ContainerUtil.map2Map(myMappings.keySet(), it -> Pair.create(it, myMappings.get(it).value())));
   }
 
   private void cleanup() {
@@ -229,7 +228,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     }
   }
 
-  public abstract @Unmodifiable @NotNull List<T> getAvailableValues();
+  public abstract @NotNull List<T> getAvailableValues();
 
   protected abstract @Nullable String serialize(@NotNull T t);
 

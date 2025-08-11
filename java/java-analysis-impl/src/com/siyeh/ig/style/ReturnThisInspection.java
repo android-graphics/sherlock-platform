@@ -24,12 +24,14 @@ import org.jetbrains.annotations.NotNull;
 public final class ReturnThisInspection extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "ReturnOfThis";
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "return.this.problem.descriptor");
   }

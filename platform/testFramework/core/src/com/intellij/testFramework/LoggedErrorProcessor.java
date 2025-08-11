@@ -63,15 +63,7 @@ public class LoggedErrorProcessor {
   }
 
   public enum Action {
-    LOG,
-    STDERR,
-    /**
-     * Since re-throwing behavior is obsolete, this should be named `REPORT_AS_SEPARATE_FAILURE`.
-     * TODO consider introducing another constant with a proper name
-     *
-     * @see TestLoggerKt#rethrowLoggedErrorsIn(ThrowableRunnable)
-     */
-    RETHROW;
+    LOG, STDERR, RETHROW;
     public static final EnumSet<Action> ALL = EnumSet.allOf(Action.class);
     public static final EnumSet<Action> NONE = EnumSet.noneOf(Action.class);
   }

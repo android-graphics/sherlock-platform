@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -9,7 +9,10 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import icons.MavenIcons;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -24,8 +27,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
 import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
 
-@ApiStatus.Internal
-public final class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
+class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
   private static final URL ERROR_ICON_URL = MavenProjectsStructure.class.getResource("/general/error.png");
 
   private final MavenProject myMavenProject;
@@ -90,8 +92,8 @@ public final class ProjectNode extends ProjectsGroupNode implements MavenProject
   }
 
   void updateProject() {
-    var level = getErrors().isEmpty() ? MavenProjectsStructure.ErrorLevel.NONE : MavenProjectsStructure.ErrorLevel.ERROR;
-    setErrorLevel(level);
+    setErrorLevel(
+      myMavenProject.getCacheProblems().isEmpty() ? MavenProjectsStructure.ErrorLevel.NONE : MavenProjectsStructure.ErrorLevel.ERROR);
     myLifecycleNode.updateGoalsList();
     myPluginsNode.updatePlugins(myMavenProject);
 
@@ -108,10 +110,6 @@ public final class ProjectNode extends ProjectsGroupNode implements MavenProject
     myTooltipCache = makeDescription();
 
     myMavenProjectsStructure.updateFrom(getParent());
-  }
-
-  private List<MavenProjectProblem> getErrors() {
-    return myMavenProject.getProblems().stream().filter(MavenProjectProblem::isError).toList();
   }
 
   public void updateIgnored() {
@@ -163,7 +161,8 @@ public final class ProjectNode extends ProjectsGroupNode implements MavenProject
     return super.getPlainAttributes();
   }
 
-  private @NlsContexts.DetailedDescription String makeDescription() {
+  @NlsContexts.DetailedDescription
+  private String makeDescription() {
     StringBuilder desc = new StringBuilder();
 
     desc.append("<html>")
@@ -191,7 +190,7 @@ public final class ProjectNode extends ProjectsGroupNode implements MavenProject
   }
 
   private void appendProblems(StringBuilder desc) {
-    List<MavenProjectProblem> problems = getErrors();
+    List<MavenProjectProblem> problems = myMavenProject.getCacheProblems();
     if (problems.isEmpty()) return;
 
     desc.append("<tr>" +
@@ -271,7 +270,9 @@ public final class ProjectNode extends ProjectsGroupNode implements MavenProject
   }
 
   @Override
-  protected @Nullable @NonNls String getMenuId() {
+  @Nullable
+  @NonNls
+  protected String getMenuId() {
     return "Maven.NavigatorProjectMenu";
   }
 }

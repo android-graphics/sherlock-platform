@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.application.ModalityState;
@@ -22,8 +22,8 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnInteractiveAuthenticationProvider implements AuthenticationProvider {
   private static final Logger LOG = Logger.getInstance(SvnInteractiveAuthenticationProvider.class);
-  private final @NotNull SvnVcs myVcs;
-  private final @NotNull Project myProject;
+  @NotNull private final SvnVcs myVcs;
+  @NotNull private final Project myProject;
   private static final ThreadLocal<MyCallState> myCallState = new ThreadLocal<>();
   private final SvnAuthenticationManager myManager;
 
@@ -34,7 +34,7 @@ public class SvnInteractiveAuthenticationProvider implements AuthenticationProvi
   }
 
   public static void clearCallState() {
-    myCallState.remove();
+    myCallState.set(null);
   }
 
   public static boolean wasCalled() {

@@ -34,8 +34,8 @@ import java.util.function.Function;
  */
 public sealed interface ModCommand
   permits ModChooseAction, ModChooseMember, ModCompositeCommand, ModCopyToClipboard, ModCreateFile, ModDeleteFile, ModDisplayMessage,
-          ModHighlight, ModNavigate, ModNothing, ModOpenUrl, ModShowConflicts, ModStartRename, ModStartTemplate, ModUpdateFileText,
-          ModUpdateReferences, ModUpdateSystemOptions {
+          ModHighlight, ModNavigate, ModNothing, ModStartRename, ModShowConflicts, ModStartTemplate, ModUpdateReferences,
+          ModUpdateFileText, ModUpdateSystemOptions {
 
   /**
    * @return true if the command does nothing
@@ -83,14 +83,6 @@ public sealed interface ModCommand
    */
   static @NotNull ModCommand copyToClipboard(@NotNull String content) {
     return new ModCopyToClipboard(content);
-  }
-
-  /**
-   * @param url the URL to open
-   * @return a ModCommand instance representing the action of opening the URL
-   */
-  static @NotNull ModCommand openUrl(@NotNull String url) {
-    return new ModOpenUrl(url);
   }
 
   /**
@@ -254,7 +246,7 @@ public sealed interface ModCommand
    */
   static @NotNull <T extends PsiElement> ModCommandAction psiBasedStep(
     @NotNull T element,
-    final @NotNull @IntentionName String title,
+    @NotNull @IntentionName final String title,
     @NotNull Function<@NotNull T, @NotNull ModCommand> function,
     @NotNull Function<@NotNull T, @NotNull TextRange> range) {
     return new PsiBasedModCommandAction<T>(element) {
@@ -287,7 +279,7 @@ public sealed interface ModCommand
    */
   static @NotNull <T extends PsiElement> ModCommandAction psiUpdateStep(
     @NotNull T element,
-    final @NotNull @IntentionName String title,
+    @NotNull @IntentionName final String title,
     @NotNull BiConsumer<@NotNull T, @NotNull ModPsiUpdater> action,
     @NotNull Function<@NotNull T, @NotNull TextRange> range) {
     return new PsiUpdateModCommandAction<T>(element) {
@@ -324,7 +316,7 @@ public sealed interface ModCommand
    */
   static @NotNull <T extends PsiElement> ModCommandAction psiUpdateStep(
     @NotNull T element,
-    final @NotNull @IntentionName String title,
+    @NotNull @IntentionName final String title,
     @NotNull BiConsumer<@NotNull T, @NotNull ModPsiUpdater> action) {
     return psiUpdateStep(element, title, action, PsiElement::getTextRange);
   }

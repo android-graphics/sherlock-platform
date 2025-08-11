@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.ui;
 
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -34,22 +34,33 @@ import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 public class ImageComponent extends JComponent {
   public static final int IMAGE_INSETS = 2;
 
-  public static final @NonNls String TRANSPARENCY_CHESSBOARD_CELL_SIZE_PROP = "TransparencyChessboard.cellSize";
-  public static final @NonNls String TRANSPARENCY_CHESSBOARD_WHITE_COLOR_PROP = "TransparencyChessboard.whiteColor";
-  public static final @NonNls String TRANSPARENCY_CHESSBOARD_BLACK_COLOR_PROP = "TransparencyChessboard.blackColor";
-  private static final @NonNls String TRANSPARENCY_CHESSBOARD_VISIBLE_PROP = "TransparencyChessboard.visible";
-  private static final @NonNls String GRID_LINE_ZOOM_FACTOR_PROP = "Grid.lineZoomFactor";
-  private static final @NonNls String GRID_LINE_SPAN_PROP = "Grid.lineSpan";
-  private static final @NonNls String GRID_LINE_COLOR_PROP = "Grid.lineColor";
-  private static final @NonNls String GRID_VISIBLE_PROP = "Grid.visible";
-  private static final @NonNls String FILE_SIZE_VISIBLE_PROP = "FileSize.visible";
-  private static final @NonNls String FILE_NAME_VISIBLE_PROP = "FileName.visible";
+  @NonNls
+  public static final String TRANSPARENCY_CHESSBOARD_CELL_SIZE_PROP = "TransparencyChessboard.cellSize";
+  @NonNls
+  public static final String TRANSPARENCY_CHESSBOARD_WHITE_COLOR_PROP = "TransparencyChessboard.whiteColor";
+  @NonNls
+  public static final String TRANSPARENCY_CHESSBOARD_BLACK_COLOR_PROP = "TransparencyChessboard.blackColor";
+  @NonNls
+  private static final String TRANSPARENCY_CHESSBOARD_VISIBLE_PROP = "TransparencyChessboard.visible";
+  @NonNls
+  private static final String GRID_LINE_ZOOM_FACTOR_PROP = "Grid.lineZoomFactor";
+  @NonNls
+  private static final String GRID_LINE_SPAN_PROP = "Grid.lineSpan";
+  @NonNls
+  private static final String GRID_LINE_COLOR_PROP = "Grid.lineColor";
+  @NonNls
+  private static final String GRID_VISIBLE_PROP = "Grid.visible";
+  @NonNls
+  private static final String FILE_SIZE_VISIBLE_PROP = "FileSize.visible";
+  @NonNls
+  private static final String FILE_NAME_VISIBLE_PROP = "FileName.visible";
 
   /**
    * @see #getUIClassID
    * @see #readObject
    */
-  private static final @NonNls String uiClassID = "ImageComponentUI";
+  @NonNls
+  private static final String uiClassID = "ImageComponentUI";
 
   private final ImageDocument document = new ImageDocumentImpl(this);
   private final Grid grid = new Grid();
@@ -201,7 +212,8 @@ public class ImageComponent extends JComponent {
     return grid.isVisible();
   }
 
-  public @Nullable String getDescription() {
+  @Nullable
+  public String getDescription() {
     BufferedImage image = getDocument().getValue();
     if (image != null) {
       return ImagesBundle.message("icon.dimensions", image.getWidth(), image.getHeight(), image.getColorModel().getPixelSize());
@@ -266,8 +278,9 @@ public class ImageComponent extends JComponent {
       return getValue(scale);
     }
 
+    @Nullable
     @Override
-    public @Nullable Rectangle getBounds(double scale) {
+    public Rectangle getBounds(double scale) {
       ScaleContext ctx = ScaleContext.create(myComponent);
       ctx.setScale(OBJ_SCALE.of(scale));
       return cachedBounds.getOrProvide(ctx);

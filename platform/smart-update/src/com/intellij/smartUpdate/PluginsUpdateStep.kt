@@ -12,9 +12,9 @@ import org.jetbrains.annotations.Nls
 import java.util.function.Consumer
 import javax.swing.JComponent
 
-private const val PLUGINS_UPDATE = "plugins.update"
+const val PLUGINS_UPDATE = "plugins.update"
 
-internal class PluginsUpdateStep: SmartUpdateStep {
+class PluginsUpdateStep: SmartUpdateStep {
   override val id = PLUGINS_UPDATE
   override val stepName = SmartUpdateBundle.message("update.plugins")
 

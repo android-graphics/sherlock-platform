@@ -6,6 +6,7 @@ import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.profilers.Profiler
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
+import java.util.*
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 

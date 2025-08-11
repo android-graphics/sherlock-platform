@@ -51,13 +51,14 @@ public class MavenIndicesTestFixture {
   }
 
   public void setUpBeforeImport() throws Exception {
-    myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, ArrayUtil.append(myExtraRepoDirs, myLocalRepoDir));
+    myRepositoryHelper = new MavenCustomRepositoryHelper(myDir.toFile(), ArrayUtil.append(myExtraRepoDirs, myLocalRepoDir));
 
     for (String each : myExtraRepoDirs) {
       addToRepository(each);
     }
 
-    MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(myRepositoryHelper.getTestData(myLocalRepoDir).toString());
+    MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(
+      myRepositoryHelper.getTestDataPath(myLocalRepoDir));
     Registry.get("maven.skip.gav.update.in.unit.test.mode").setValue(false, myTestRootDisposable);
   }
 

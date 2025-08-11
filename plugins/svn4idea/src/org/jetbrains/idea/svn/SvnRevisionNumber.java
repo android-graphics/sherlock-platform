@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.history.LongRevisionNumber;
@@ -10,14 +10,16 @@ import org.jetbrains.idea.svn.api.Revision;
  * @author alex
  */
 public class SvnRevisionNumber implements VcsRevisionNumber, LongRevisionNumber {
-  private final @NotNull Revision myRevision;
+  @NotNull
+  private final Revision myRevision;
 
   public SvnRevisionNumber(@NotNull Revision revision) {
     myRevision = revision;
   }
 
+  @NotNull
   @Override
-  public @NotNull String asString() {
+  public String asString() {
     return myRevision.toString();
   }
 
@@ -42,11 +44,11 @@ public class SvnRevisionNumber implements VcsRevisionNumber, LongRevisionNumber 
     return Revision.GENERAL_ORDER.compare(myRevision, rev);
   }
 
-  public @NotNull Revision getRevision() {
+  @NotNull
+  public Revision getRevision() {
     return myRevision;
   }
 
-  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -57,12 +59,10 @@ public class SvnRevisionNumber implements VcsRevisionNumber, LongRevisionNumber 
 
   }
 
-  @Override
   public int hashCode() {
     return myRevision.hashCode();
   }
 
-  @Override
   public String toString() {
     return myRevision.toString();
   }

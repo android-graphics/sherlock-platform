@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,9 +44,10 @@ public final class VcsSynchronousProgressWrapper {
     return notCanceled;
   }
 
-  public static @Nullable <T> T compute(@NotNull ThrowableComputable<T, ? extends VcsException> computable,
-                                        @NotNull Project project,
-                                        @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
+  @Nullable
+  public static <T> T compute(@NotNull ThrowableComputable<T, ? extends VcsException> computable,
+                              @NotNull Project project,
+                              @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
     final Ref<T> ref = new Ref<>();
     boolean notCanceled = wrap(() -> ref.set(computable.compute()), project, title);
     return notCanceled ? ref.get() : null;

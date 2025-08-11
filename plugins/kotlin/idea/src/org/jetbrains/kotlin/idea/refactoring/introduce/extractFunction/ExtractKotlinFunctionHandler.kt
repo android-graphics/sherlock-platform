@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction
 
-import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
@@ -98,18 +97,6 @@ class ExtractKotlinFunctionHandler(
         }
 
         override fun supportConfigurableOptions(): Boolean = false
-    }
-
-    override fun restart(
-        templateState: TemplateState,
-        file: KtFile,
-        restartInplace: Boolean
-    ): Boolean {
-        if (helper is InplaceExtractionHelper) {
-            helper.restart(templateState, file, restartInplace)
-            return true
-        }
-        return false
     }
 
     override fun doInvoke(

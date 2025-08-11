@@ -1,1 +1,0 @@
-com/intellij/codeInsight/inline/completion/logs/InlineCompletionUsageTracker$ShownEvents$FinishType

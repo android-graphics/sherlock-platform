@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.convertToInstanceMethod;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
@@ -11,7 +10,6 @@ import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodDialog
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,12 +27,10 @@ public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase
   protected void doAction() {
     final Object targetVariable = myList.getSelectedValue();
     LOG.assertTrue(targetVariable != null);
-    final ConvertToInstanceMethodProcessor processor = 
-      new ConvertToInstanceMethodProcessor(myMethod.getProject(),
-                                           myMethod, 
-                                           targetVariable instanceof PsiParameter ? (PsiParameter)targetVariable : null,
-                                           myVisibilityPanel.getVisibility());
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !verifyTargetClass(processor.getTargetClass())) return;
+    final ConvertToInstanceMethodProcessor processor = new ConvertToInstanceMethodProcessor(myMethod.getProject(),
+                                                                                            myMethod, targetVariable instanceof PsiParameter ? (PsiParameter)targetVariable : null,
+                                                                                            myVisibilityPanel.getVisibility());
+    if (!verifyTargetClass(processor.getTargetClass())) return;
     invokeRefactoring(processor);
   }
 
@@ -67,10 +63,5 @@ public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase
       }
     }.installOn(variableChooser);
     return variableChooser;
-  }
-  
-  @TestOnly
-  public void setVisibility(String visibility) {
-    myVisibilityPanel.setVisibility(visibility);
   }
 }

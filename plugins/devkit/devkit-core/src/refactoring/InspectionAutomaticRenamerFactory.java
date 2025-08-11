@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.refactoring;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -12,6 +12,7 @@ import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
@@ -24,9 +25,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.inspections.DescriptionType;
-import org.jetbrains.idea.devkit.inspections.DescriptionTypeResolver;
-import org.jetbrains.idea.devkit.inspections.DescriptionTypeResolverKeys;
+import org.jetbrains.idea.devkit.inspections.InspectionDescriptionInfo;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.Collection;
@@ -48,12 +49,14 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
     String inspectionClassName = inspectionClass.getName();
     return inspectionClassName != null &&
            inspectionClassName.endsWith(INSPECTION_CLASS_SUFFIX) &&
-           DescriptionType.INSPECTION.matches(inspectionClass) &&
+           InheritanceUtil.isInheritor(inspectionClass, DescriptionType.INSPECTION.getClassName()) &&
            !isGetShortNameMethodOverridden(inspectionClass);
   }
 
+  @Nls
+  @Nullable
   @Override
-  public @Nls String getOptionName() {
+  public String getOptionName() {
     return DevKitBundle.message("inspection.renamer.option.name");
   }
 
@@ -67,9 +70,25 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
     PropertiesComponent.getInstance().setValue(PROPERTY_RENAME_DESCRIPTION_AND_SHORT_NAME, enabled);
   }
 
+  @NotNull
   @Override
-  public @NotNull AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages) {
+  public AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages) {
     return new InspectionAutomaticRenamer((PsiClass)element, newName);
+  }
+
+
+  /**
+   * @return inspection description file name without extension.
+   */
+  @NotNull
+  private static String getDescriptionFileName(String inspectionClassName) {
+    return StringUtil.trimEnd(inspectionClassName, INSPECTION_CLASS_SUFFIX);
+  }
+
+  @Nullable
+  private static XmlAttribute getInspectionShortNameAttribute(PsiClass inspectionClass) {
+    Extension extension = InspectionDescriptionInfo.findExtension(inspectionClass);
+    return extension == null ? null : extension.getXmlTag().getAttribute("shortName");
   }
 
   private static boolean isGetShortNameMethodOverridden(PsiClass inspectionClass) {
@@ -77,13 +96,7 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
     if (module == null) {
       return false;
     }
-
-    DescriptionTypeResolver resolver = DescriptionType.INSPECTION.createDescriptionTypeResolver(module, inspectionClass);
-    return isGetShortNameMethodOverridden(resolver);
-  }
-
-  private static boolean isGetShortNameMethodOverridden(DescriptionTypeResolver resolver) {
-    return resolver.getUserData(DescriptionTypeResolverKeys.INSPECTION_SHORT_NAME_METHOD) != null;
+    return InspectionDescriptionInfo.create(module, inspectionClass).getShortNameMethod() != null;
   }
 
 
@@ -96,13 +109,12 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
         return;
       }
 
-      DescriptionTypeResolver resolver = DescriptionType.INSPECTION.createDescriptionTypeResolver(module, inspectionClass);
-      if (Boolean.FALSE == resolver.getUserData(DescriptionTypeResolverKeys.INSPECTION_SHORT_NAME_IN_XML) ||
-          isGetShortNameMethodOverridden(resolver)) {
+      InspectionDescriptionInfo descriptionInfo = InspectionDescriptionInfo.create(module, inspectionClass);
+      if (!descriptionInfo.isShortNameInXml() || descriptionInfo.getShortNameMethod() != null) {
         return;
       }
 
-      PsiFile descriptionFile = resolver.resolveDescriptionFile();
+      PsiFile descriptionFile = descriptionInfo.getDescriptionFile();
       if (descriptionFile == null) {
         return;
       }
@@ -118,7 +130,7 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
         return;
       }
 
-      XmlAttribute shortNameAttribute = getInspectionShortNameAttribute(resolver);
+      XmlAttribute shortNameAttribute = getInspectionShortNameAttribute(inspectionClass);
       if (shortNameAttribute == null) {
         return;
       }
@@ -142,13 +154,15 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
     }
 
 
+    @Nls
     @Override
-    public @Nls String getDialogTitle() {
+    public String getDialogTitle() {
       return DevKitBundle.message("inspection.renamer.dialog.title");
     }
 
+    @Nls
     @Override
-    public @Nls String getDialogDescription() {
+    public String getDialogDescription() {
       return DevKitBundle.message("inspection.renamer.dialog.description");
     }
 
@@ -178,13 +192,13 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
         if (module == null) {
           continue;
         }
-        DescriptionTypeResolver resolver = DescriptionType.INSPECTION.createDescriptionTypeResolver(module, inspectionClass);
-        PsiFile descriptionFile = resolver.resolveDescriptionFile();
+        InspectionDescriptionInfo descriptionInfo = InspectionDescriptionInfo.create(module, inspectionClass);
+        PsiFile descriptionFile = descriptionInfo.getDescriptionFile();
         if (descriptionFile == null) {
           continue;
         }
 
-        XmlAttribute shortNameAttribute = getInspectionShortNameAttribute(resolver);
+        XmlAttribute shortNameAttribute = getInspectionShortNameAttribute(inspectionClass);
         if (shortNameAttribute == null) {
           continue;
         }
@@ -208,17 +222,6 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
                                            newName));
         break;
       }
-    }
-
-    /**
-     * @return inspection description file name without extension.
-     */
-    private static @NotNull String getDescriptionFileName(String inspectionClassName) {
-      return StringUtil.trimEnd(inspectionClassName, INSPECTION_CLASS_SUFFIX);
-    }
-
-    private static @Nullable XmlAttribute getInspectionShortNameAttribute(DescriptionTypeResolver resolver) {
-      return resolver.getUserData(DescriptionTypeResolverKeys.INSPECTION_SHORT_NAME_XML_ATTRIBUTE);
     }
   }
 }

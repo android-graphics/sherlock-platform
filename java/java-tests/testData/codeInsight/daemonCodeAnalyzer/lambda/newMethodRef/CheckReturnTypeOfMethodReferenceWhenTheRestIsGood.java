@@ -16,6 +16,6 @@ class Test {
   }
 
   public void failure() {
-    consume(this::<error descr="Unhandled exception: java.lang.Exception">produce</error>);
+    consume(<error descr="Unhandled exception: java.lang.Exception">this::produce</error>);
   }
 }

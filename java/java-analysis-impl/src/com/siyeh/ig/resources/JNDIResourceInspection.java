@@ -26,7 +26,8 @@ import org.jetbrains.annotations.NotNull;
 public final class JNDIResourceInspection extends ResourceInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "JNDIResourceOpenedButNotSafelyClosed";
   }
 
@@ -34,7 +35,7 @@ public final class JNDIResourceInspection extends ResourceInspection {
   protected boolean isResourceCreation(PsiExpression expression) {
     if (expression instanceof PsiMethodCallExpression methodCallExpression) {
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      final @NonNls String methodName = methodExpression.getReferenceName();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if ("list".equals(methodName) || "listBindings".equals(methodName)) {
         final PsiExpression qualifier = methodExpression.getQualifierExpression();
         if (qualifier == null) {

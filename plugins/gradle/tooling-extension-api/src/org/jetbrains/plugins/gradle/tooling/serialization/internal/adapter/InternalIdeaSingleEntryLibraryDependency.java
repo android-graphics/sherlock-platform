@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.GradleModuleVersion;
@@ -11,20 +11,22 @@ import java.io.File;
 
 @ApiStatus.Internal
 public final class InternalIdeaSingleEntryLibraryDependency extends InternalIdeaDependency implements IdeaSingleEntryLibraryDependency {
-  private final @NotNull File myFile;
-  private @Nullable File mySource;
-  private @Nullable File myJavadoc;
+  @NotNull private final File myFile;
+  @Nullable private File mySource;
+  @Nullable private File myJavadoc;
   private InternalGradleModuleVersion myModuleVersion;
 
   public InternalIdeaSingleEntryLibraryDependency(@NotNull File file) {myFile = file;}
 
+  @NotNull
   @Override
-  public @NotNull File getFile() {
+  public File getFile() {
     return myFile;
   }
 
+  @Nullable
   @Override
-  public @Nullable File getSource() {
+  public File getSource() {
     return mySource;
   }
 
@@ -32,8 +34,9 @@ public final class InternalIdeaSingleEntryLibraryDependency extends InternalIdea
     mySource = source;
   }
 
+  @Nullable
   @Override
-  public @Nullable File getJavadoc() {
+  public File getJavadoc() {
     return myJavadoc;
   }
 

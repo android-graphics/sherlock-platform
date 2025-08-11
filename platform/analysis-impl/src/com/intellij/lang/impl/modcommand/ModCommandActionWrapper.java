@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl.modcommand;
 
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
@@ -19,10 +19,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.NewUiValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.List;
@@ -31,13 +29,12 @@ import java.util.Objects;
 /**
  * A bridge from {@link ModCommandAction} to {@link IntentionAction} interface.
  */
-@ApiStatus.Internal
-public final class ModCommandActionWrapper implements IntentionAction, PriorityAction, Iconable, IntentionActionWithFixAllOption,
-                                                                   CustomizableIntentionAction, ReportingClassSubstitutor, PossiblyDumbAware {
+/*package*/ final class ModCommandActionWrapper implements IntentionAction, PriorityAction, Iconable, IntentionActionWithFixAllOption,
+                                                           CustomizableIntentionAction, ReportingClassSubstitutor, PossiblyDumbAware {
   private final @NotNull ModCommandAction myModAction;
   private @Nullable Presentation myPresentation;
 
-  public ModCommandActionWrapper(@NotNull ModCommandAction modAction, @Nullable Presentation presentation) {
+  ModCommandActionWrapper(@NotNull ModCommandAction modAction, @Nullable Presentation presentation) {
     this.myModAction = modAction;
     this.myPresentation = presentation;
   }
@@ -114,7 +111,7 @@ public final class ModCommandActionWrapper implements IntentionAction, PriorityA
   }
 
   @Override
-  public @Unmodifiable @NotNull List<RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull List<RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
     if (myPresentation == null) return List.of();
     return ContainerUtil.map(myPresentation.rangesToHighlight(), range -> new RangeToHighlight(file, range.range(), range.highlightKey()));
   }

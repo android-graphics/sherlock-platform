@@ -11,14 +11,13 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitRevisionNumber
 import java.util.*
 
-internal class GitBranchComparisonResultImpl(
-  private val project: Project,
-  private val vcsRoot: VirtualFile,
-  override val baseSha: String,
-  override val mergeBaseSha: String,
-  override val commits: List<GitCommitShaWithPatches>,
-  private val headPatches: List<FilePatch>,
-) : GitBranchComparisonResult {
+internal class GitBranchComparisonResultImpl(private val project: Project,
+                                             private val vcsRoot: VirtualFile,
+                                             override val baseSha: String,
+                                             override val mergeBaseSha: String,
+                                             override val commits: List<GitCommitShaWithPatches>,
+                                             private val headPatches: List<FilePatch>)
+  : GitBranchComparisonResult {
 
   override val headSha: String = commits.last().sha
 
@@ -59,7 +58,8 @@ internal class GitBranchComparisonResultImpl(
             val afterPath = patch.afterName
 
             val historyBefore = beforePath?.let { fileHistoriesByLastKnownFilePath.remove(it) }
-            val fileHistory = (historyBefore ?: startNewHistory(commitsHashes, previousCommitSha, beforePath)).apply {
+            val fileHistory = (historyBefore ?: MutableLinearGitFileHistory(commitsHashes)).apply {
+              append(previousCommitSha, beforePath)
               append(commitSha, patch)
             }
             val path = (afterPath ?: beforePath)!!
@@ -98,11 +98,6 @@ internal class GitBranchComparisonResultImpl(
       }
     }
   }
-
-  private fun startNewHistory(commitsHashes: List<String>, startCommitSha: String, startFilePath: String?) =
-    MutableLinearGitFileHistory(commitsHashes).apply {
-      append(startCommitSha, startFilePath)
-    }
 
   private fun createChangeFromPatch(beforeRef: String, afterRef: String, patch: FilePatch): RefComparisonChange {
     val beforePath = if (patch.isNewFile) null else VcsUtil.getFilePath(vcsRoot, patch.beforeName)

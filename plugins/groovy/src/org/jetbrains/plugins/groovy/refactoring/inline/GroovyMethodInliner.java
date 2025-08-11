@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
@@ -62,7 +62,8 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   }
 
   @Override
-  public @Nullable MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
+  @Nullable
+  public MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
     PsiElement element = reference.getElement();
     if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression call)) {
       final MultiMap<PsiElement, String> map = new MultiMap<>();
@@ -73,7 +74,8 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     return collectConflicts(call, infos);
   }
 
-  private static @NotNull MultiMap<PsiElement, String> collectConflicts(@NotNull GrCallExpression call, @NotNull Collection<GroovyInlineMethodUtil.ReferenceExpressionInfo> infos) {
+  @NotNull
+  private static MultiMap<PsiElement, String> collectConflicts(@NotNull GrCallExpression call, @NotNull Collection<GroovyInlineMethodUtil.ReferenceExpressionInfo> infos) {
     MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
     for (GroovyInlineMethodUtil.ReferenceExpressionInfo info : infos) {
@@ -125,7 +127,8 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     }
   }
 
-  private static @Nullable Editor getCurrentEditorIfApplicable(@NotNull PsiElement element) {
+  @Nullable
+  private static Editor getCurrentEditorIfApplicable(@NotNull PsiElement element) {
     final Project project = element.getProject();
     final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
 
@@ -137,11 +140,12 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     return null;
   }
 
-  static @Nullable RangeMarker inlineReferenceImpl(@NotNull GrCallExpression call,
-                                                   @NotNull GrMethod method,
-                                                   boolean resultOfCallExplicitlyUsed,
-                                                   boolean isTailMethodCall,
-                                                   @Nullable Editor editor) {
+  @Nullable
+  static RangeMarker inlineReferenceImpl(@NotNull GrCallExpression call,
+                                         @NotNull GrMethod method,
+                                         boolean resultOfCallExplicitlyUsed,
+                                         boolean isTailMethodCall,
+                                         @Nullable Editor editor) {
     try {
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(call.getProject());
       final Project project = call.getProject();
@@ -298,7 +302,8 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     return null;
   }
 
-  private static @NotNull String generateQualifierName(@NotNull GrCallExpression call, @Nullable GrMethod method, final @NotNull Project project, @NotNull GrExpression qualifier) {
+  @NotNull
+  private static String generateQualifierName(@NotNull GrCallExpression call, @Nullable GrMethod method, @NotNull final Project project, @NotNull GrExpression qualifier) {
     String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(qualifier, new NameValidator() {
       @Override
       public String validateName(String name, boolean increaseNumber) {
@@ -331,7 +336,8 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   /**
    * Prepare temporary method with non-conflicting local names
    */
-  private static @NotNull GrMethod prepareNewMethod(@NotNull GrCallExpression call, @NotNull GrMethod method, @Nullable GrExpression qualifier) throws IncorrectOperationException {
+  @NotNull
+  private static GrMethod prepareNewMethod(@NotNull GrCallExpression call, @NotNull GrMethod method, @Nullable GrExpression qualifier) throws IncorrectOperationException {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
 
     if (method instanceof GrReflectedMethod) {
@@ -388,7 +394,8 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
    *
    * @return null if method has more or less than one return statement or has void type
    */
-  static @Nullable GrExpression getAloneResultExpression(@NotNull GrMethod method) {
+  @Nullable
+  static GrExpression getAloneResultExpression(@NotNull GrMethod method) {
     GrOpenBlock body = method.getBlock();
     assert body != null;
     GrStatement[] statements = body.getStatements();

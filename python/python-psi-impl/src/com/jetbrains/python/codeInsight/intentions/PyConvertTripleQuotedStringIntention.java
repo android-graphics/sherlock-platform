@@ -37,7 +37,8 @@ public final class PyConvertTripleQuotedStringIntention extends PsiUpdateModComm
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.triple.quoted.string");
   }
 
@@ -148,11 +149,13 @@ public final class PyConvertTripleQuotedStringIntention extends PsiUpdateModComm
     }
   }
 
-  private static @NotNull String convertToValidSubString(@NotNull String content, char newQuote, boolean isMultiline) {
+  @NotNull
+  private static String convertToValidSubString(@NotNull String content, char newQuote, boolean isMultiline) {
     return isMultiline ? StringUtil.escapeChar(content, newQuote) : content;
   }
 
-  private static @NotNull List<StringNodeInfo> extractStringNodesInfo(@NotNull PyStringLiteralExpression expression) {
+  @NotNull
+  private static List<StringNodeInfo> extractStringNodesInfo(@NotNull PyStringLiteralExpression expression) {
     return ContainerUtil.map(expression.getStringNodes(), node -> new StringNodeInfo(node));
   }
 }

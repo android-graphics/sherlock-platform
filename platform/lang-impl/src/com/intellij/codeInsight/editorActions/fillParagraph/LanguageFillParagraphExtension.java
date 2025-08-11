@@ -2,9 +2,7 @@
 package com.intellij.codeInsight.editorActions.fillParagraph;
 
 import com.intellij.lang.LanguageExtension;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
 public final class LanguageFillParagraphExtension extends LanguageExtension<ParagraphFillHandler> {
   public static final LanguageFillParagraphExtension INSTANCE = new LanguageFillParagraphExtension();
 

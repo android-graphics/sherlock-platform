@@ -48,8 +48,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -147,7 +147,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @Override
-  public @Nullable Module getModule(@NotNull String name) {
+  @Nullable
+  public Module getModule(@NotNull String name) {
     if (myModuleModel == null) return null;
 
     final Module moduleByName = myModuleModel.findModuleByName(name);
@@ -157,7 +158,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return myModuleModel.getModuleToBeRenamed(name); //if module was renamed
   }
 
-  public @Nullable ModuleEditor getModuleEditor(Module module) {
+  @Nullable
+  public ModuleEditor getModuleEditor(Module module) {
     return myModuleEditors.get(module);
   }
 
@@ -166,7 +168,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return getOrCreateModuleEditor(module).getRootModel();
   }
 
-  public @NotNull ModuleEditor getOrCreateModuleEditor(@NotNull Module module) {
+  @NotNull
+  public ModuleEditor getOrCreateModuleEditor(@NotNull Module module) {
     String moduleName = module.getName();
     LOG.assertTrue(getModule(moduleName) != null, "Module " + moduleName + " has been deleted");
     ModuleEditor editor = getModuleEditor(module);
@@ -176,7 +179,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return editor;
   }
 
-  private @NotNull ModuleEditor doCreateModuleEditor(@NotNull Module module) {
+  @NotNull
+  private ModuleEditor doCreateModuleEditor(@NotNull Module module) {
     final ModuleEditor moduleEditor = new HeaderHidingTabbedModuleEditor(myProject, this, module) {
       @Override
       public ProjectFacetsConfigurator getFacetsConfigurator() {
@@ -190,8 +194,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return moduleEditor;
   }
 
+  @NotNull
   @Override
-  public @NotNull FacetModel getFacetModel(@NotNull Module module) {
+  public FacetModel getFacetModel(@NotNull Module module) {
     return myFacetsConfigurator.getOrCreateModifiableModel(module);
   }
 
@@ -367,7 +372,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
 
-  private @Nullable List<Module> addModule(Producer<@Nullable AbstractProjectWizard> createWizardAction) {
+  @Nullable
+  private List<Module> addModule(Producer<@Nullable AbstractProjectWizard> createWizardAction) {
     var wizard = createWizardAction.produce();
     if (null == wizard) return null;
 
@@ -379,7 +385,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
   }
 
-  private @Nullable List<Module> doAddModule(@NotNull AbstractProjectWizard wizard) {
+  @Nullable
+  private List<Module> doAddModule(@NotNull AbstractProjectWizard wizard) {
     var builder = runWizard(wizard);
     if (null == builder) return null;
 
@@ -403,12 +410,14 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return modules;
   }
 
-  public @Nullable List<Module> addImportModule(Component parent) {
+  @Nullable
+  public List<Module> addImportModule(Component parent) {
     if (myProject.isDefault()) return null;
     return addModule(() -> createImportModuleWizard(parent));
   }
 
-  public @Nullable List<Module> addNewModule(@Nullable String defaultPath) {
+  @Nullable
+  public List<Module> addNewModule(@Nullable String defaultPath) {
     if (myProject.isDefault()) return null;
     return addModule(() -> createNewModuleWizard(defaultPath));
   }
@@ -426,7 +435,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
   }
 
-  public @Nullable Module addModule(final ModuleBuilder moduleBuilder) {
+  @Nullable
+  public Module addModule(final ModuleBuilder moduleBuilder) {
     final Module module = createModule(moduleBuilder);
     if (module != null) {
       ApplicationManager.getApplication().runWriteAction(() -> {
@@ -437,7 +447,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return module;
   }
 
-  private @Nullable ProjectBuilder runWizard(@Nullable AbstractProjectWizard wizard) {
+  @Nullable
+  private ProjectBuilder runWizard(@Nullable AbstractProjectWizard wizard) {
     if (wizard == null) return null;
 
     if (wizard.getStepCount() == 0) {
@@ -454,11 +465,13 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return wizard.getBuilder(myProject);
   }
 
-  private @Nullable AbstractProjectWizard createImportModuleWizard(Component dialogParent) {
+  @Nullable
+  private AbstractProjectWizard createImportModuleWizard(Component dialogParent) {
     return ImportModuleAction.selectFileAndCreateWizard(myProject, dialogParent);
   }
 
-  private @NotNull AbstractProjectWizard createNewModuleWizard(@Nullable String defaultPath) {
+  @NotNull
+  private AbstractProjectWizard createNewModuleWizard(@Nullable String defaultPath) {
     var wizardFactory = ApplicationManager.getApplication().getService(NewProjectWizardFactory.class);
     return wizardFactory.create(myProject, this, defaultPath);
   }
@@ -524,13 +537,13 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return myModified || myFacetsConfigurator.isModified();
   }
 
-  public static boolean showArtifactSettings(@NotNull Project project, final @Nullable Artifact artifact) {
+  public static boolean showArtifactSettings(@NotNull Project project, @Nullable final Artifact artifact) {
     final ProjectStructureConfigurable configurable = ProjectStructureConfigurable.getInstance(project);
     return ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.select(artifact, true));
   }
 
-  public static boolean showFacetSettingsDialog(final @NotNull Facet facet,
-                                                final @Nullable String tabNameToSelect) {
+  public static boolean showFacetSettingsDialog(@NotNull final Facet facet,
+                                                @Nullable final String tabNameToSelect) {
     final Project project = facet.getModule().getProject();
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(project);
     return ShowSettingsUtil.getInstance().editConfigurable(project, config, () -> {
@@ -544,7 +557,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     });
   }
 
-  public static boolean showDialog(@NotNull Project project, final @Nullable String moduleToSelect, final @Nullable String editorNameToSelect) {
+  public static boolean showDialog(@NotNull Project project, @Nullable final String moduleToSelect, @Nullable final String editorNameToSelect) {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(project);
     return ShowSettingsUtil.getInstance().editConfigurable(project, config, () -> config.select(moduleToSelect, editorNameToSelect, true));
   }

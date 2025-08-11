@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -15,13 +15,15 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Supplier;
 
-@ApiStatus.Internal
-public abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterModel<Filter>>
+abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterModel<Filter>>
   extends FilterPopupComponent<Filter, Model> {
 
   private static final int MAX_FILTER_VALUE_LENGTH = 20;
@@ -46,7 +48,7 @@ public abstract class MultipleValueFilterPopupComponent<Filter, Model extends Fi
     myUiProperties.addRecentlyFilteredGroup(myName, parseLocalizedValues(values));
   }
 
-  protected abstract @Unmodifiable @NotNull List<String> getAllValues();
+  protected abstract @NotNull List<String> getAllValues();
 
   protected abstract @Nullable Filter createFilter(@NotNull List<String> values);
 
@@ -94,7 +96,6 @@ public abstract class MultipleValueFilterPopupComponent<Filter, Model extends Fi
    * If a filter popup supports some special syntax, it can redefine this method which will be provided to
    * {@link TextCompletionProvider#getPrefix}.
    */
-  @ApiStatus.Internal
   protected @Nullable MultilinePopupBuilder.CompletionPrefixProvider getCompletionPrefixProvider() {
     return null;
   }

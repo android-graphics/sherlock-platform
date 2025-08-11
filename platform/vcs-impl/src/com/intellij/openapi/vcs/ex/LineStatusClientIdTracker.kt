@@ -20,17 +20,17 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-internal fun showClientIdGutterIconRenderer(project: Project): Boolean {
+fun showClientIdGutterIconRenderer(project: Project): Boolean {
   return LineStatusClientIdRenderer.getInstance(project) != null
 }
 
-internal fun createClientIdGutterIconRenderer(project: Project, clientIds: List<ClientId>): GutterIconRenderer? {
+fun createClientIdGutterIconRenderer(project: Project, clientIds: List<ClientId>): GutterIconRenderer? {
   if (clientIds.isEmpty()) return null
   val renderer = LineStatusClientIdRenderer.getInstance(project) ?: return null
   return ClientIdGutterIconRenderer(clientIds, renderer)
 }
 
-internal fun createClientIdGutterPopupPanel(project: Project, clientIds: List<ClientId>): JComponent? {
+fun createClientIdGutterPopupPanel(project: Project, clientIds: List<ClientId>): JComponent? {
   if (clientIds.isEmpty()) return null
   val renderer = LineStatusClientIdRenderer.getInstance(project) ?: return null
 

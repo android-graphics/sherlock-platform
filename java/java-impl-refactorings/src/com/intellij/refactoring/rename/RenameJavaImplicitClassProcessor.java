@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.lang.LangBundle;
@@ -26,20 +26,22 @@ import java.util.Optional;
 public class RenameJavaImplicitClassProcessor extends RenamePsiFileProcessor {
 
   @Override
-  public boolean canProcessElement(final @NotNull PsiElement element) {
+  public boolean canProcessElement(@NotNull final PsiElement element) {
     return JavaImplicitClassUtil.isFileWithImplicitClass(element);
   }
 
+  @NotNull
   @Override
-  public @NotNull RenameDialog createRenameDialog(@NotNull Project project,
-                                                  final @NotNull PsiElement element,
-                                                  @Nullable PsiElement nameSuggestionContext,
-                                                  @Nullable Editor editor) {
+  public RenameDialog createRenameDialog(@NotNull Project project,
+                                         @NotNull final PsiElement element,
+                                         @Nullable PsiElement nameSuggestionContext,
+                                         @Nullable Editor editor) {
     return new RenameJavaImplicitClassRenameDialog(project, element, nameSuggestionContext, editor);
   }
 
   public static class RenameJavaImplicitClassRenameDialog extends PsiFileRenameDialog {
-    private final @Nullable String myExtension;
+    @Nullable
+    private final String myExtension;
 
     private RenameJavaImplicitClassRenameDialog(@NotNull Project project, @NotNull PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
       super(project, element, nameSuggestionContext, editor);

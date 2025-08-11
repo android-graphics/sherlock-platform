@@ -112,7 +112,6 @@ public final class ChangeRevision extends Revision {
     return myAffectedFiles;
   }
 
-  @Override
   public String toString() {
     return getClass().getSimpleName() + ": " + myChangeToRevert;
   }

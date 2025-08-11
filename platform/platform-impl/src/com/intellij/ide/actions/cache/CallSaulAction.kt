@@ -3,6 +3,7 @@ package com.intellij.ide.actions.cache
 
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service

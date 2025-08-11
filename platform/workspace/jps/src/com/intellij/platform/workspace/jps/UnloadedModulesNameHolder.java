@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.jps;
 
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public interface UnloadedModulesNameHolder {
@@ -10,7 +9,7 @@ public interface UnloadedModulesNameHolder {
   UnloadedModulesNameHolder DUMMY = new UnloadedModulesNameHolder() {
 
     @Override
-    public boolean isUnloaded(@NotNull String name) {
+    public boolean isUnloaded(String name) {
       return false;
     }
 
@@ -20,7 +19,7 @@ public interface UnloadedModulesNameHolder {
     }
   };
 
-  boolean isUnloaded(@NotNull String name);
+  boolean isUnloaded(String name);
 
   boolean hasUnloaded();
 }

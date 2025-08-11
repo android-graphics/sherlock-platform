@@ -41,8 +41,9 @@ public class SingleInspectionCommand extends AbstractCommand {
     super(text, line);
   }
 
+  @NotNull
   @Override
-  protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
+  protected Promise<Object> _execute(@NotNull final PlaybackContext context) {
     final ActionCallback actionCallback = new ActionCallbackProfilerStopper();
     final String[] commandArguments = extractCommandArgument(PREFIX).split("\\s+", 2);
     String shortInspectionName = commandArguments[0];

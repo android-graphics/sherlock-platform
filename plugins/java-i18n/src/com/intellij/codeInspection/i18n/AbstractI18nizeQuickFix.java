@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -24,7 +24,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UElement;
@@ -37,8 +36,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@ApiStatus.Internal
-public abstract class AbstractI18nizeQuickFix<T extends UExpression> implements LocalQuickFix, I18nQuickFixHandler<T>, HighPriorityAction {
+abstract class AbstractI18nizeQuickFix<T extends UExpression> implements LocalQuickFix, I18nQuickFixHandler<T>, HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(I18nizeQuickFix.class);
   private static final Set<String> AUXILIARY_WORDS = Set.of("is", "the", "of", "and", "a", "an");
   private final NlsInfo.Localized myInfo;
@@ -76,11 +74,11 @@ public abstract class AbstractI18nizeQuickFix<T extends UExpression> implements 
   }
 
   @Override
-  public final void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
+  public final void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     doFix(descriptor, project);
   }
 
-  protected abstract void doReplacement(@NotNull PsiFile psiFile,
+  abstract protected void doReplacement(@NotNull PsiFile psiFile,
                                         Editor editor,
                                         T literalExpression,
                                         String i18nizedText) throws IncorrectOperationException;
@@ -115,7 +113,8 @@ public abstract class AbstractI18nizeQuickFix<T extends UExpression> implements 
     generationPlugin.replace(uElement, uElement, UElement.class);
   }
 
-  protected @NotNull I18nizeQuickFixDialog.DialogCustomization getCustomization(String value) {
+  @NotNull
+  protected I18nizeQuickFixDialog.DialogCustomization getCustomization(String value) {
     return new I18nizeQuickFixDialog.DialogCustomization(null, true, false, null, getSuggestedName(value, myInfo));
   }
 

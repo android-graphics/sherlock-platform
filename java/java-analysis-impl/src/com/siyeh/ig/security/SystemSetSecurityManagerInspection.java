@@ -28,12 +28,14 @@ import org.jetbrains.annotations.NotNull;
 public final class SystemSetSecurityManagerInspection extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "CallToSystemSetSecurityManager";
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "system.set.security.manager.problem.descriptor");
   }
@@ -60,7 +62,7 @@ public final class SystemSetSecurityManagerInspection extends BaseInspection {
       PsiMethodCallExpression expression) {
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
-      final @NonNls String methodName =
+      @NonNls final String methodName =
         methodExpression.getReferenceName();
       if (!"setSecurityManager".equals(methodName)) {
         return false;

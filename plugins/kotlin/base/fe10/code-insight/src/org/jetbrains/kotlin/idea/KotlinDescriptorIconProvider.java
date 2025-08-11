@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea;
 
@@ -23,7 +23,8 @@ public final class KotlinDescriptorIconProvider {
     private KotlinDescriptorIconProvider() {
     }
 
-    public static @Nullable Icon getIcon(@NotNull DeclarationDescriptor descriptor, @Nullable PsiElement declaration, @Iconable.IconFlags int flags) {
+    @Nullable
+    public static Icon getIcon(@NotNull DeclarationDescriptor descriptor, @Nullable PsiElement declaration, @Iconable.IconFlags int flags) {
         if (declaration != null && !(declaration instanceof KtElement)) {
             return declaration.getIcon(flags);
         }

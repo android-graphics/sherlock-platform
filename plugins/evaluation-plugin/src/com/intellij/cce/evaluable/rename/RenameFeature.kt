@@ -18,7 +18,7 @@ import com.intellij.openapi.project.Project
 
 class RenameFeature : EvaluableFeatureBase<RenameStrategy>("rename") {
 
-  override fun getGenerateActionsProcessor(strategy: RenameStrategy, project: Project): GenerateActionsProcessor =
+  override fun getGenerateActionsProcessor(strategy: RenameStrategy): GenerateActionsProcessor =
     RenameGenerateActionsProcessor(strategy)
 
   override fun getFeatureInvoker(project: Project, language: Language, strategy: RenameStrategy): FeatureInvoker =

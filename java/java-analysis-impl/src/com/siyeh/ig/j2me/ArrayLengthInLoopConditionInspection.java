@@ -27,7 +27,8 @@ import java.util.Objects;
 public final class ArrayLengthInLoopConditionInspection extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "array.length.in.loop.condition.problem.descriptor");
   }

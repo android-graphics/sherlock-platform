@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.impl.httpclient;
 
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -59,7 +59,8 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
     super(other);
   }
 
-  protected @NotNull HttpClient getHttpClient() {
+  @NotNull
+  protected HttpClient getHttpClient() {
     HttpClientBuilder builder = HttpClients.custom()
       .setDefaultRequestConfig(createRequestConfig())
       .setSSLContext(CertificateManager.getInstance().getSslContext())
@@ -75,11 +76,13 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
    *
    * @return specific request interceptor or null by default
    */
-  protected @Nullable HttpRequestInterceptor createRequestInterceptor() {
+  @Nullable
+  protected HttpRequestInterceptor createRequestInterceptor() {
     return null;
   }
 
-  private @NotNull CredentialsProvider createCredentialsProvider() {
+  @NotNull
+  private CredentialsProvider createCredentialsProvider() {
     CredentialsProvider provider = new BasicCredentialsProvider();
     // Basic authentication
     if (isUseHttpAuthentication()) {
@@ -93,7 +96,8 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
     return provider;
   }
 
-  protected @NotNull RequestConfig createRequestConfig() {
+  @NotNull
+  protected RequestConfig createRequestConfig() {
     TaskSettings tasksSettings = TaskSettings.getInstance();
     RequestConfig.Builder builder = RequestConfig.custom()
       .setConnectTimeout(3000)
@@ -111,7 +115,8 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
    *
    * @return server's REST API path prefix
    */
-  public @NotNull String getRestApiPathPrefix() {
+  @NotNull
+  public String getRestApiPathPrefix() {
     return "";
   }
 
@@ -124,7 +129,8 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
    *
    * @return described URL
    */
-  public @NotNull String getRestApiUrl(Object @NotNull ... parts) {
+  @NotNull
+  public String getRestApiUrl(Object @NotNull ... parts) {
     StringBuilder builder = new StringBuilder(getUrl());
     builder.append(getRestApiPathPrefix());
     if (!builder.isEmpty() && builder.charAt(builder.length() - 1) == '/') {

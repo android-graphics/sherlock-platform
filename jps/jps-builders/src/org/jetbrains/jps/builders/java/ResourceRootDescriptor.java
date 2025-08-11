@@ -1,9 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.util.io.FileFilters;
-import com.intellij.openapi.util.io.FileUtilRt;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.incremental.ResourcesTarget;
@@ -13,17 +12,13 @@ import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.nio.file.Path;
 import java.util.Set;
 
-@ApiStatus.Internal
 public class ResourceRootDescriptor extends BuildRootDescriptor {
-  private final @NotNull File root;
-  // absolute and normalized
-  public final @NotNull Path rootFile;
+  private final @NotNull File myRoot;
   private final @NotNull ResourcesTarget myTarget;
   private final @NotNull String myPackagePrefix;
-  private final @NotNull Set<Path> myExcludes;
+  private final @NotNull Set<File> myExcludes;
   protected final FileFilter myFilterForExcludedPatterns;
 
   /**
@@ -34,18 +29,17 @@ public class ResourceRootDescriptor extends BuildRootDescriptor {
   public ResourceRootDescriptor(@NotNull File root,
                                 @NotNull ResourcesTarget target,
                                 @NotNull String packagePrefix,
-                                @NotNull Set<Path> excludes) {
+                                @NotNull Set<File> excludes) {
     this(root, target, packagePrefix, excludes, FileFilters.EVERYTHING);
   }
 
   public ResourceRootDescriptor(@NotNull File root,
                                 @NotNull ResourcesTarget target,
                                 @NotNull String packagePrefix,
-                                @NotNull Set<Path> excludes,
+                                @NotNull Set<File> excludes,
                                 @NotNull FileFilter filterForExcludedPatterns) {
     myPackagePrefix = packagePrefix;
-    this.root = root;
-    this.rootFile = root.toPath().toAbsolutePath().normalize();
+    myRoot = root;
     myTarget = target;
     myExcludes = excludes;
     myFilterForExcludedPatterns = filterForExcludedPatterns;
@@ -53,11 +47,11 @@ public class ResourceRootDescriptor extends BuildRootDescriptor {
 
   @Override
   public @NotNull File getRootFile() {
-    return root;
+    return myRoot;
   }
 
   @Override
-  public @NotNull Set<Path> getExcludedRoots() {
+  public @NotNull Set<File> getExcludedRoots() {
     return myExcludes;
   }
 
@@ -72,18 +66,23 @@ public class ResourceRootDescriptor extends BuildRootDescriptor {
 
   @Override
   public @NotNull FileFilter createFileFilter() {
-    JpsProject project = getTarget().getModule().getProject();
-    JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).getCompilerExcludes();
+    final JpsProject project = getTarget().getModule().getProject();
+    final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).getCompilerExcludes();
     return file -> !excludes.isExcluded(file) && myFilterForExcludedPatterns.accept(file);
   }
 
   @Override
   public String toString() {
-    return "ResourceRootDescriptor{target='" + myTarget + '\'' + ", root=" + root + '}';
+    return "ResourceRootDescriptor{target='" + myTarget + '\'' + ", root=" + myRoot + '}';
+  }
+
+  @Override
+  public boolean canUseFileCache() {
+    return true;
   }
 
   @Override
   public @NotNull String getRootId() {
-    return FileUtilRt.toSystemIndependentName(root.getPath());
+    return FileUtil.toSystemIndependentName(myRoot.getPath());
   }
 }

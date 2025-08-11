@@ -3,8 +3,6 @@
 
 package org.jetbrains.intellij.build.productRunner
 
-import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
-import com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.dev.BuildRequest
@@ -48,13 +46,6 @@ private class DevModeProductRunner(
   private val classPath: Collection<String>,
 ) : IntellijProductRunner {
   override suspend fun runProduct(args: List<String>, additionalVmProperties: VmProperties, timeout: Duration) {
-    val multiRoutingFsBootClassPath: List<String> =
-      if (isIjentWslFsEnabledByDefaultForProduct(context.productProperties.platformPrefix))
-        listOf(
-          "-Xbootclasspath/a:${homePath}/out/classes/production/$IJENT_BOOT_CLASSPATH_MODULE"
-        )
-      else
-        listOf()
     runApplicationStarter(
       context = context,
       classpath = classPath,
@@ -63,7 +54,6 @@ private class DevModeProductRunner(
       homePath = homePath,
       vmProperties = additionalVmProperties + getIdeSystemProperties(homePath),
       isFinalClassPath = true,
-      vmOptions = multiRoutingFsBootClassPath,
     )
   }
 }

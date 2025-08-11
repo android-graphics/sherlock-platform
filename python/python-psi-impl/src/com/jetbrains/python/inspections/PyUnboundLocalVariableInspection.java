@@ -15,7 +15,6 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
-import com.jetbrains.python.codeInsight.controlflow.PyDataFlow;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -36,7 +35,8 @@ import java.util.Set;
 
 public final class PyUnboundLocalVariableInspection extends PyInspection {
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, final @NotNull LocalInspectionToolSession session) {
+  @NotNull
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull final LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -65,9 +65,6 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
       }
       // Ignore import subelements
       if (PsiTreeUtil.getParentOfType(node, PyImportStatementBase.class) != null) {
-        return;
-      }
-      if (PyDataFlow.isUnreachable(node, myTypeEvalContext)) {
         return;
       }
       final String name = node.getReferencedName();
@@ -124,6 +121,9 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
           return;
         }
         if (resolvedUnderWithStatement(node, resolved) || resolvedUnderAssignmentExpressionAndCondition(node, resolved)) {
+          return;
+        }
+        if (PyInspectionsUtil.hasAnyInterruptedControlFlowPaths(node, myTypeEvalContext)) {
           return;
         }
         if (owner instanceof PyFile) {

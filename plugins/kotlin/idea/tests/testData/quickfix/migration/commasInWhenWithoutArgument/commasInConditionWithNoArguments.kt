@@ -10,4 +10,3 @@ fun test(i: Int, j: Int) {
     }
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CommaInWhenConditionWithoutArgumentFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CommaInWhenConditionWithoutArgumentFix

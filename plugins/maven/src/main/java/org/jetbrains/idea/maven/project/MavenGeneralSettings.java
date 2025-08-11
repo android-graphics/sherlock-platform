@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.Disposable;
@@ -18,14 +18,13 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.config.MavenConfig;
 import org.jetbrains.idea.maven.config.MavenConfigParser;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
-import org.jetbrains.idea.maven.utils.MavenEelUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.MavenWslUtil;
 
-import java.nio.file.Path;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNullElse;
 import static org.jetbrains.idea.maven.config.MavenConfigSettings.*;
@@ -52,7 +51,7 @@ public class MavenGeneralSettings implements Cloneable {
   MavenExecutionOptions.ChecksumPolicy checksumPolicy = MavenExecutionOptions.ChecksumPolicy.NOT_SET;
   private MavenExecutionOptions.FailureMode failureBehavior = MavenExecutionOptions.FailureMode.NOT_SET;
 
-  private transient Path myEffectiveLocalRepositoryCache;
+  private transient File myEffectiveLocalRepositoryCache;
   private transient MavenConfig mavenConfigCache;
 
   private int myBulkUpdateLevel = 0;
@@ -94,7 +93,8 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   @Property
-  public @NotNull MavenExecutionOptions.ChecksumPolicy getChecksumPolicy() {
+  @NotNull
+  public MavenExecutionOptions.ChecksumPolicy getChecksumPolicy() {
     return checksumPolicy;
   }
 
@@ -107,7 +107,8 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   @Property
-  public @NotNull MavenExecutionOptions.FailureMode getFailureBehavior() {
+  @NotNull
+  public MavenExecutionOptions.FailureMode getFailureBehavior() {
     return failureBehavior;
   }
 
@@ -123,13 +124,15 @@ public class MavenGeneralSettings implements Cloneable {
    * @deprecated use {@link #getOutputLevel()}
    */
   @Transient
+  @NotNull
   @Deprecated(forRemoval = true)
-  public @NotNull MavenExecutionOptions.LoggingLevel getLoggingLevel() {
+  public MavenExecutionOptions.LoggingLevel getLoggingLevel() {
     return getOutputLevel();
   }
 
   @Property
-  public @NotNull MavenExecutionOptions.LoggingLevel getOutputLevel() {
+  @NotNull
+  public MavenExecutionOptions.LoggingLevel getOutputLevel() {
     return outputLevel;
   }
 
@@ -153,13 +156,15 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   /**
-   * @deprecated This method mix paths to maven home and labels like "Use bundled maven" and should be avoided
+   * @deprecated
+   * This method mix paths to maven home and labels like "Use bundled maven" and should be avoided
    * use {@link #getMavenHomeType getMavenHomeType} instead
    */
-  //to be removed in IDEA-338870
+  @Nullable
   @Deprecated(forRemoval = true)
   @ApiStatus.ScheduledForRemoval
-  public @Nullable String getMavenHome() {
+  //to be removed in IDEA-338870
+  public String getMavenHome() {
     if (myForPersistence) {
       return DEFAULT_MAVEN.getTitle(); //avoid saving data for this deprecated field
     }
@@ -167,13 +172,14 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   /**
-   * @deprecated This method mix paths to maven home and labels like "Use bundled maven" and should be avoided
+   * @deprecated
+   * This method mix paths to maven home and labels like "Use bundled maven" and should be avoided
    * use {@link #setMavenHomeType setMavenHomeType} instead
    */
   @Deprecated(forRemoval = true)
   @ApiStatus.ScheduledForRemoval
   //to be removed in IDEA-338870
-  public void setMavenHome(final @NotNull String mavenHome) {
+  public void setMavenHome(@NotNull final String mavenHome) {
     //noinspection HardCodedStringLiteral
     setMavenHome(resolveMavenHomeType(mavenHome), true);
   }
@@ -186,23 +192,23 @@ public class MavenGeneralSettings implements Cloneable {
     return BundledMaven3.INSTANCE;
   }
 
-  public void setMavenHomeType(final @NotNull MavenHomeType mavenHome) {
+  public void setMavenHomeType(@NotNull final MavenHomeType mavenHome) {
     setMavenHome(mavenHome, true);
   }
 
   @TestOnly
   @Deprecated(forRemoval = true)
-  public void setMavenHomeNoFire(final @NotNull String mavenHome) {
+  public void setMavenHomeNoFire(@NotNull final String mavenHome) {
     //noinspection HardCodedStringLiteral
     setMavenHome(resolveMavenHomeType(mavenHome), false);
   }
 
   @TestOnly
-  public void setMavenHomeNoFire(final @NotNull MavenHomeType mavenHome) {
+  public void setMavenHomeNoFire(@NotNull final MavenHomeType mavenHome) {
     setMavenHome(mavenHome, false);
   }
 
-  private void setMavenHome(final @NotNull MavenHomeType mavenHome, boolean fireChanged) {
+  private void setMavenHome(@NotNull final MavenHomeType mavenHome, boolean fireChanged) {
     MavenHomeType mavenHomeToSet = mavenHome;
     if (!Objects.equals(this.mavenHomeType, mavenHomeToSet)) {
       this.mavenHomeType = mavenHomeToSet;
@@ -212,7 +218,8 @@ public class MavenGeneralSettings implements Cloneable {
     }
   }
 
-  public @NotNull String getUserSettingsFile() {
+  @NotNull
+  public String getUserSettingsFile() {
     return mavenSettingsFile;
   }
 
@@ -225,26 +232,26 @@ public class MavenGeneralSettings implements Cloneable {
     }
   }
 
-  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
+  /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
   @Deprecated(forRemoval = true)
-  public @Nullable Path getEffectiveUserSettingsIoFile() {
-    return MavenEelUtil.getUserSettings(myProject, getUserSettingsFile(), getMavenConfig());
+  public @Nullable File getEffectiveUserSettingsIoFile() {
+    return MavenWslUtil.getUserSettings(myProject, getUserSettingsFile(), getMavenConfig());
   }
 
-  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
+  /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
   @Deprecated
-  public @Nullable Path getEffectiveGlobalSettingsIoFile() {
-    return MavenEelUtil.getGlobalSettings(myProject, staticOrBundled(getMavenHomeType()), getMavenConfig());
+  public @Nullable File getEffectiveGlobalSettingsIoFile() {
+    return MavenWslUtil.getGlobalSettings(myProject, staticOrBundled(getMavenHomeType()), getMavenConfig());
   }
 
-  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
+  /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
   @Deprecated(forRemoval = true)
   public @Nullable VirtualFile getEffectiveUserSettingsFile() {
-    Path file = getEffectiveUserSettingsIoFile();
-    return file == null ? null : LocalFileSystem.getInstance().findFileByNioFile(file);
+    File file = getEffectiveUserSettingsIoFile();
+    return file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file);
   }
 
-  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
+  /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
   @Deprecated(forRemoval = true)
   public List<VirtualFile> getEffectiveSettingsFiles() {
     List<VirtualFile> result = new ArrayList<>(2);
@@ -255,14 +262,15 @@ public class MavenGeneralSettings implements Cloneable {
     return result;
   }
 
-  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
+  /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
   @Deprecated(forRemoval = true)
   public @Nullable VirtualFile getEffectiveGlobalSettingsFile() {
-    Path file = getEffectiveGlobalSettingsIoFile();
-    return file == null ? null : LocalFileSystem.getInstance().findFileByNioFile(file);
+    File file = getEffectiveGlobalSettingsIoFile();
+    return file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file);
   }
 
-  public @NotNull String getLocalRepository() {
+  @NotNull
+  public String getLocalRepository() {
     return overriddenLocalRepository;
   }
 
@@ -278,27 +286,16 @@ public class MavenGeneralSettings implements Cloneable {
     }
   }
 
-  private Path doGetEffectiveRepositoryPath(Supplier<Path> producer) {
-    Path result = myEffectiveLocalRepositoryCache;
+  /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
+  @Deprecated(forRemoval = true)
+  public File getEffectiveLocalRepository() {
+    File result = myEffectiveLocalRepositoryCache;
     if (result != null) return result;
 
-    result = producer.get();
+    result =
+      MavenWslUtil.getLocalRepo(myProject, overriddenLocalRepository, staticOrBundled(mavenHomeType), mavenSettingsFile, getMavenConfig());
     myEffectiveLocalRepositoryCache = result;
     return result;
-  }
-
-  public Path getEffectiveRepositoryPathUnderModalProgress() {
-    return doGetEffectiveRepositoryPath(() -> {
-      return MavenEelUtil.getLocalRepoUnderModalProgress(myProject, overriddenLocalRepository, staticOrBundled(mavenHomeType),
-                                                         mavenSettingsFile, getMavenConfig());
-    });
-  }
-
-  public Path getEffectiveRepositoryPath() {
-    return doGetEffectiveRepositoryPath(() -> {
-      return MavenEelUtil.getLocalRepo(myProject, overriddenLocalRepository, staticOrBundled(mavenHomeType), mavenSettingsFile,
-                                       getMavenConfig());
-    });
   }
 
 
@@ -357,7 +354,8 @@ public class MavenGeneralSettings implements Cloneable {
     }
   }
 
-  public @Nullable String getThreads() {
+  @Nullable
+  public String getThreads() {
     return threads;
   }
 
@@ -380,7 +378,6 @@ public class MavenGeneralSettings implements Cloneable {
     }
   }
 
-  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -405,7 +402,6 @@ public class MavenGeneralSettings implements Cloneable {
     return true;
   }
 
-  @Override
   public int hashCode() {
     int result;
     result = (workOffline ? 1 : 0);

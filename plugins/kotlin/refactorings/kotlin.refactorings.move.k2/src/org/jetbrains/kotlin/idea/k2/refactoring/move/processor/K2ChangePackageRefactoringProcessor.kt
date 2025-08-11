@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2ChangePackageDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkNonUpdatableUsages
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 class K2ChangePackageRefactoringProcessor(private val descriptor: K2ChangePackageDescriptor) : BaseRefactoringProcessor(descriptor.project) {
     override fun getCommandName(): String = KotlinBundle.message(
@@ -23,13 +25,13 @@ class K2ChangePackageRefactoringProcessor(private val descriptor: K2ChangePackag
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor = descriptor.usageViewDescriptor()
 
-    protected override fun findUsages(): Array<UsageInfo> {
+    override fun findUsages(): Array<UsageInfo> {
         return descriptor.files.flatMap {
             it.findUsages(descriptor.searchInComments, descriptor.searchForText, descriptor.target)
         }.toTypedArray()
     }
 
-    protected override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
+    override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         val usages = refUsages.get()
         val conflicts = ActionUtil.underModalProgress(
             descriptor.project,
@@ -41,16 +43,25 @@ class K2ChangePackageRefactoringProcessor(private val descriptor: K2ChangePackag
                 usages.filterIsInstance<MoveRenameUsageInfo>()
             )
         }
-        return showConflicts(conflicts, usages)
+        val toContinue = showConflicts(conflicts, usages)
+        if (!toContinue) return false
+        val movedDeclarations = descriptor.files.flatMap { file ->
+            file.declarations.filterIsInstance<KtNamedDeclaration>().flatMap { topLevelDecl ->
+                topLevelDecl.withChildDeclarations()
+            }
+        }
+        unMarkNonUpdatableUsages(movedDeclarations)
+        refUsages.set(usages.toList().filterUpdatable(movedDeclarations).toTypedArray())
+        return true
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun performRefactoring(usages: Array<out UsageInfo>) = allowAnalysisOnEdt {
         val files = descriptor.files
         files.forEach { it.updatePackageDirective(descriptor.target) }
-        val oldToNewMap: MutableMap<PsiElement, PsiElement> = files.associateWith { it }.toMutableMap()
-        files.forEach { file -> file.allDeclarationsToUpdate.forEach { decl -> oldToNewMap[decl] = decl } }
-        retargetUsagesAfterMove(usages.toList(), oldToNewMap)
+        val oldToNewMap = files.flatMap { it.allDeclarationsToUpdate }.associateWith { it }
+        @Suppress("UNCHECKED_CAST")
+        retargetUsagesAfterMove(usages.toList(), oldToNewMap as Map<PsiElement, PsiElement>)
     }
 
     override fun getBeforeData(): RefactoringEventData = RefactoringEventData().apply {

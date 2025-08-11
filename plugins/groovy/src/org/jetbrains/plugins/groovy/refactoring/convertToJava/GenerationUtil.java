@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -127,12 +127,13 @@ public final class GenerationUtil {
     invokeMethodByResolveResult(caller, call, methodName, exprs, namedArgs, closureArgs, expressionGenerator, psiContext);
   }
 
-  public static @NotNull GroovyResolveResult resolveMethod(@Nullable GrExpression caller,
-                                                           @NotNull String methodName,
-                                                           GrExpression @NotNull [] exprs,
-                                                           GrNamedArgument @NotNull [] namedArgs,
-                                                           GrClosableBlock @NotNull [] closureArgs,
-                                                           @NotNull GroovyPsiElement psiContext) {
+  @NotNull
+  public static GroovyResolveResult resolveMethod(@Nullable GrExpression caller,
+                                                   @NotNull String methodName,
+                                                   GrExpression @NotNull [] exprs,
+                                                   GrNamedArgument @NotNull [] namedArgs,
+                                                   GrClosableBlock @NotNull [] closureArgs,
+                                                   @NotNull GroovyPsiElement psiContext) {
     GroovyResolveResult call = EmptyGroovyResolveResult.INSTANCE;
 
     final PsiType type;
@@ -218,7 +219,8 @@ public final class GenerationUtil {
     writeStatement(builder, statementBuilder, statement, statementContext);
   }
 
-  static @Nullable PsiClass findAccessibleSuperClass(@NotNull PsiElement context, @NotNull PsiClass initialClass) {
+  @Nullable
+  static PsiClass findAccessibleSuperClass(@NotNull PsiElement context, @NotNull PsiClass initialClass) {
     Set<PsiClass> visitedClasses = new HashSet<>();
     PsiClass curClass = initialClass;
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
@@ -257,7 +259,7 @@ public final class GenerationUtil {
 
   static void writeParameterList(@NotNull StringBuilder text,
                                  PsiParameter @NotNull [] parameters,
-                                 final @NotNull ClassNameProvider classNameProvider,
+                                 @NotNull final ClassNameProvider classNameProvider,
                                  @Nullable ExpressionContext context) {
     Set<String> usedNames = new HashSet<>();
     text.append('(');
@@ -477,7 +479,7 @@ public final class GenerationUtil {
     return name;
   }
 
-  public static boolean isCastNeeded(@NotNull GrExpression qualifier, final @NotNull PsiMember member, ExpressionContext context) {
+  public static boolean isCastNeeded(@NotNull GrExpression qualifier, @NotNull final PsiMember member, ExpressionContext context) {
     PsiType declared = getDeclaredType(qualifier, context);
     if (declared == null) return false;
 
@@ -534,7 +536,8 @@ public final class GenerationUtil {
     }
   }
 
-  public static @Nullable PsiType getDeclaredType(@Nullable GrExpression expression, ExpressionContext context) {
+  @Nullable
+  public static PsiType getDeclaredType(@Nullable GrExpression expression, ExpressionContext context) {
     if (expression instanceof GrReferenceExpression) {
       final GroovyResolveResult resolveResult = ((GrReferenceExpression)expression).advancedResolve();
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
@@ -633,7 +636,8 @@ public final class GenerationUtil {
     buffer.append("super");
   }
 
-  static @Nullable PsiElement getWrappingImplicitClass(@NotNull PsiElement place) {
+  @Nullable
+  static PsiElement getWrappingImplicitClass(@NotNull PsiElement place) {
     PsiElement parent = place.getParent();
 
     while (parent != null) {

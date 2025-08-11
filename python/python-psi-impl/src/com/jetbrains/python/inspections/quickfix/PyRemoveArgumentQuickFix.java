@@ -15,12 +15,13 @@ import org.jetbrains.annotations.NotNull;
 public class PyRemoveArgumentQuickFix extends PsiUpdateModCommandQuickFix {
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.remove.argument");
   }
 
   @Override
-  public void applyFix(final @NotNull Project project, final @NotNull PsiElement element, final @NotNull ModPsiUpdater updater) {
+  public void applyFix(@NotNull final Project project, @NotNull final PsiElement element, @NotNull final ModPsiUpdater updater) {
     if (!(element instanceof PyExpression expression)) return;
     final PsiElement nextSibling = PsiTreeUtil.skipWhitespacesForward(expression);
     final PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(expression);

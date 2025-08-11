@@ -24,20 +24,24 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.platform.ide.menu.IdeJMenuBar
+import com.intellij.platform.ide.menu.collectGlobalMenu
 import com.intellij.platform.ide.menu.createIdeMainMenuActionGroup
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupImpl
-import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
-import java.awt.Insets
 import java.awt.event.ActionEvent
 import java.awt.event.HierarchyEvent
 import java.awt.event.KeyEvent
+import java.lang.Runnable
 import javax.swing.*
 
 private val LOG = logger<MainMenuButton>()
@@ -45,7 +49,7 @@ private val LOG = logger<MainMenuButton>()
 private const val MAIN_MENU_ACTION_ID = "MainMenuButton.ShowMenu"
 
 @ApiStatus.Internal
-class MainMenuButton(coroutineScope: CoroutineScope, icon: Icon = AllIcons.General.WindowsMenu_20x20, getItemToSelect: () -> Int) {
+class MainMenuButton(coroutineScope: CoroutineScope) {
 
   internal var expandableMenu: ExpandableMenu? = null
     set(value) {
@@ -53,7 +57,7 @@ class MainMenuButton(coroutineScope: CoroutineScope, icon: Icon = AllIcons.Gener
       updateSubMenuShortcutsManager()
     }
 
-  private val menuAction = ShowMenuAction(icon, getItemToSelect)
+  private val menuAction = ShowMenuAction()
   private var disposable: Disposable? = null
   private var shortcutsChangeConnection: MessageBusConnection? = null
   private val subMenuShortcutsManager = SubMenuShortcutsManager()
@@ -91,6 +95,9 @@ class MainMenuButton(coroutineScope: CoroutineScope, icon: Icon = AllIcons.Gener
       finally {
         uninstall()
       }
+    }
+    collectGlobalMenu(coroutineScope) { globalMenuPresent ->
+      button.isVisible = !globalMenuPresent
     }
   }
 
@@ -149,11 +156,13 @@ class MainMenuButton(coroutineScope: CoroutineScope, icon: Icon = AllIcons.Gener
   }
 
   @ApiStatus.Internal
-  inner class ShowMenuAction(icon: Icon, val getItemToSelect: () -> Int) : LightEditCompatible, DumbAwareAction(IdeBundle.messagePointer("main.toolbar.menu.button"), icon) {
+  inner class ShowMenuAction : LightEditCompatible, DumbAwareAction(
+    IdeBundle.messagePointer("main.toolbar.menu.button"),
+    AllIcons.General.WindowsMenu_20x20) {
 
     override fun actionPerformed(e: AnActionEvent) {
       if (expandableMenu?.isEnabled() == true) {
-        expandableMenu!!.switchState(itemInd = getItemToSelect.invoke())
+        expandableMenu!!.switchState()
       } else {
         showPopup(e.dataContext)
       }
@@ -184,7 +193,7 @@ class MainMenuButton(coroutineScope: CoroutineScope, icon: Icon = AllIcons.Gener
     }
   }
 
-  private inner class ShowSubMenuAction(private val actionMenu: ActionMenu) : AbstractAction() {
+  private inner class ShowSubMenuAction(actionMenu: ActionMenu) : AbstractAction() {
 
     private val actionToShow = actionMenu.anAction
     private val keyStroke = KeyStroke.getKeyStroke(actionMenu.mnemonic, KeyEvent.ALT_DOWN_MASK)
@@ -194,7 +203,7 @@ class MainMenuButton(coroutineScope: CoroutineScope, icon: Icon = AllIcons.Gener
     override fun actionPerformed(e: ActionEvent?) {
       if (!UISettings.getInstance().disableMnemonics) {
         if (expandableMenu?.isEnabled() == true) {
-          expandableMenu!!.switchState(actionMenu)
+          expandableMenu!!.switchState(actionToShow)
         } else {
           val component = IdeFocusManager.getGlobalInstance().focusOwner ?: button
           showPopup(DataManager.getInstance().getDataContext(component), actionToShow)
@@ -279,13 +288,6 @@ private fun createMenuButton(action: AnAction): ActionButton {
                                      ActionPlaces.MAIN_MENU, { ActionToolbar.experimentalToolbarMinimumButtonSize() }) {
     override fun getDataContext(): DataContext {
       return runCatching { DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200) }.getOrNull() ?: super.getDataContext()
-    }
-
-    // Dynamically adjusts the insets of the component based on its height. This approach ensures alignment with the menu
-    override fun getInsets(): Insets? {
-      val ins = super.getInsets()
-      val topBottomInset = this.height / scale(8)
-      return JBUI.insets(topBottomInset,ins.left,  topBottomInset, ins.right)
     }
   }
 

@@ -18,7 +18,7 @@ import com.jetbrains.rd.util.lifetime.intersect
 import java.awt.*
 import javax.swing.*
 
-internal class WizardProgressPage(val progress: PluginImportProgress, val controller: WizardController) : OnboardingPage {
+class WizardProgressPage(val progress: PluginImportProgress, val controller: WizardController) : OnboardingPage {
   override val stage: StartupWizardStage = StartupWizardStage.WizardProgressPage
 
   private val lifetime = controller.lifetime.createNested().intersect(this.createLifetime())

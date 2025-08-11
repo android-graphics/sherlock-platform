@@ -58,7 +58,7 @@ public final class WebpNativeLibHelper {
     return sJniLibLoaded;
   }
 
-  private static synchronized void loadNativeLibrary() {
+  private synchronized static void loadNativeLibrary() {
     if (sJniLibLoadAttempted) {
       // Already attempted to load, nothing to do here.
       return;

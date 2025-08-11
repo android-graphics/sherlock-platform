@@ -3,7 +3,6 @@ package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.daemon.impl.IndentsPass;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -301,7 +300,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   private void runIndentsPass() {
-    IndentsPass indentsPass = ActionUtil.underModalProgress(getProject(), "", ()->new IndentsPass(getProject(), getEditor(), getFile()));
+    IndentsPass indentsPass = new IndentsPass(getProject(), getEditor(), getFile());
     indentsPass.doCollectInformation(new EmptyProgressIndicator());
     indentsPass.doApplyInformationToEditor();
   }

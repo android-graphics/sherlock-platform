@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
-import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -87,21 +86,20 @@ internal class VcsLogStatusBarProgress(project: Project, logProviders: Map<Virtu
     }
   }
 
-  inner class MyProgressIndicator : ProgressIndicatorBase() {
+  inner class MyProgressIndicator : AbstractProgressIndicatorExBase() {
     internal val taskInfo = MyTaskInfo()
 
     init {
       setOwnerTask(taskInfo)
       dontStartActivity()
+    }
 
-      addStateDelegate(object : AbstractProgressIndicatorExBase() {
-        override fun cancel() {
-          val bigRepositoriesList = VcsLogBigRepositoriesList.getInstance()
-          roots.forEach { bigRepositoriesList.addRepository(it) }
-          text2 = VcsLogBundle.message("vcs.log.status.bar.indexing.cancel.cancelling")
-          LOG.info("Indexing for ${roots.map { it.presentableUrl }} was cancelled from the status bar.")
-        }
-      })
+    override fun cancel() {
+      val bigRepositoriesList = VcsLogBigRepositoriesList.getInstance()
+      roots.forEach { bigRepositoriesList.addRepository(it) }
+      text2 = VcsLogBundle.message("vcs.log.status.bar.indexing.cancel.cancelling")
+      LOG.info("Indexing for ${roots.map { it.presentableUrl }} was cancelled from the status bar.")
+      super.cancel()
     }
   }
 

@@ -10,11 +10,13 @@ import org.jetbrains.annotations.Nullable;
 
 public final class PsiTypeUtil {
 
-  public static @NotNull PsiType extractOneElementType(@NotNull PsiType psiType, @NotNull PsiManager psiManager) {
+  @NotNull
+  public static PsiType extractOneElementType(@NotNull PsiType psiType, @NotNull PsiManager psiManager) {
     return extractOneElementType(psiType, psiManager, CommonClassNames.JAVA_LANG_ITERABLE, 0);
   }
 
-  public static @NotNull PsiType extractOneElementType(@NotNull PsiType psiType, @NotNull PsiManager psiManager, final String superClass, final int paramIndex) {
+  @NotNull
+  public static PsiType extractOneElementType(@NotNull PsiType psiType, @NotNull PsiManager psiManager, final String superClass, final int paramIndex) {
     PsiType oneElementType = substituteTypeParameter(psiType, superClass, paramIndex);
     if (null == oneElementType) {
       oneElementType = getJavaLangObject(psiManager);
@@ -30,11 +32,13 @@ public final class PsiTypeUtil {
     return oneElementType;
   }
 
-  public static @NotNull PsiType extractAllElementType(@NotNull PsiType psiType, @NotNull PsiManager psiManager) {
+  @NotNull
+  public static PsiType extractAllElementType(@NotNull PsiType psiType, @NotNull PsiManager psiManager) {
     return extractAllElementType(psiType, psiManager, CommonClassNames.JAVA_LANG_ITERABLE, 0);
   }
 
-  public static @NotNull PsiType extractAllElementType(@NotNull PsiType psiType, @NotNull PsiManager psiManager, final String superClass, final int paramIndex) {
+  @NotNull
+  public static PsiType extractAllElementType(@NotNull PsiType psiType, @NotNull PsiManager psiManager, final String superClass, final int paramIndex) {
     PsiType oneElementType = substituteTypeParameter(psiType, superClass, paramIndex);
 
     if (null == oneElementType || Comparing.equal(getJavaLangObject(psiManager), oneElementType)) {
@@ -44,11 +48,13 @@ public final class PsiTypeUtil {
     }
   }
 
-  private static @NotNull PsiClassType getJavaLangObject(@NotNull PsiManager psiManager) {
+  @NotNull
+  private static PsiClassType getJavaLangObject(@NotNull PsiManager psiManager) {
     return PsiType.getJavaLangObject(psiManager, GlobalSearchScope.allScope(psiManager.getProject()));
   }
 
-  public static @NotNull PsiType createCollectionType(@NotNull PsiManager psiManager, final String collectionQualifiedName, PsiType @NotNull... psiTypes) {
+  @NotNull
+  public static PsiType createCollectionType(@NotNull PsiManager psiManager, final String collectionQualifiedName, PsiType @NotNull... psiTypes) {
     final Project project = psiManager.getProject();
     final GlobalSearchScope globalsearchscope = GlobalSearchScope.allScope(project);
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
@@ -61,7 +67,8 @@ public final class PsiTypeUtil {
     }
   }
 
-  public static @Nullable String getQualifiedName(@NotNull PsiType psiType) {
+  @Nullable
+  public static String getQualifiedName(@NotNull PsiType psiType) {
     final PsiClass psiFieldClass = PsiUtil.resolveClassInType(psiType);
     return psiFieldClass != null ? psiFieldClass.getQualifiedName() : null;
   }

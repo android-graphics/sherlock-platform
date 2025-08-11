@@ -20,7 +20,8 @@ public final class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
   public static final StubIndexKey<String, PyClass> KEY = StubIndexKey.createIndexKey("Py.class.shortName");
 
   @Override
-  public @NotNull StubIndexKey<String, PyClass> getKey() {
+  @NotNull
+  public StubIndexKey<String, PyClass> getKey() {
     return KEY;
   }
 

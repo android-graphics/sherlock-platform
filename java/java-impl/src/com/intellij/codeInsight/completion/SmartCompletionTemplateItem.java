@@ -1,4 +1,3 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.TypedLookupItem;
@@ -28,7 +27,7 @@ public class SmartCompletionTemplateItem extends LiveTemplateLookupElementImpl i
     int segmentsCount = template.getSegmentsCount();
 
     for (int j = segmentsCount - 1; j >= 0; j--) {
-      if (template.getSegmentName(j).equals(Template.END)) {
+      if (template.getSegmentName(j).equals(TemplateImpl.END)) {
         continue;
       }
 

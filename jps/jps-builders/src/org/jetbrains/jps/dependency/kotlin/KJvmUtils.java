@@ -1,9 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.kotlin;
 
-import kotlin.metadata.*;
-import kotlin.metadata.jvm.JvmExtensionsKt;
-import kotlin.metadata.jvm.JvmMethodSignature;
+import kotlinx.metadata.*;
+import kotlinx.metadata.jvm.JvmExtensionsKt;
+import kotlinx.metadata.jvm.JvmMethodSignature;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.ReferenceID;
@@ -38,11 +38,13 @@ final class KJvmUtils {
     return meta != null? meta.getKmProperties() : Collections.emptyList();
   }
 
-  static @Nullable String getKotlinName(JvmNodeReferenceID cls, Utils utils) {
+  @Nullable
+  static String getKotlinName(JvmNodeReferenceID cls, Utils utils) {
     return find(map(utils.getNodes(cls, JvmClass.class), c -> getKotlinName(c)), Objects::nonNull);
   }
 
-  static @Nullable String getKotlinName(JvmClass cls) {
+  @Nullable
+  static String getKotlinName(JvmClass cls) {
     KmDeclarationContainer container = getDeclarationContainer(cls);
     if (container instanceof KmPackage) {
       return cls.getPackageName();
@@ -90,10 +92,6 @@ final class KJvmUtils {
 
   static @Nullable KotlinMeta getKotlinMeta(Node<?, ?> node) {
     return node instanceof JVMClassNode? (KotlinMeta)find(((JVMClassNode<?, ?>)node).getMetadata(), mt -> mt instanceof KotlinMeta) : null;
-  }
-
-  static boolean isInlinable(KmProperty prop) {
-    return Attributes.isConst(prop) || Attributes.isInline(prop.getGetter()) || (prop.getSetter() != null && Attributes.isInline(prop.getSetter()));
   }
 
   static boolean isPrivate(KmProperty prop) {

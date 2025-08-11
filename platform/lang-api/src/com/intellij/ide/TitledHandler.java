@@ -3,6 +3,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.util.NlsActions;
+import org.jetbrains.annotations.Nls;
 
 
 public interface TitledHandler {

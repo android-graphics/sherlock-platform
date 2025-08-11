@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.unassignedVariable;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -37,8 +37,9 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class UnassignedVariableAccessInspection extends GroovyLocalInspectionBase {
 
+  @NotNull
   @Override
-  public @NotNull String getShortName() {
+  public String getShortName() {
     // used to enable inspection in tests
     // remove when inspection class will match its short name
     return "GroovyVariableNotAssigned";

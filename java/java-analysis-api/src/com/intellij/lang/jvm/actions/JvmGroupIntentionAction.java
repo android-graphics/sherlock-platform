@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm.actions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -34,7 +34,9 @@ public interface JvmGroupIntentionAction extends IntentionAction {
    * <p>
    * This method is accessed only if {@link #isAvailable} returned {@code true}.
    */
-  default @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getGroupDisplayText() {
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NotNull
+  default String getGroupDisplayText() {
     return getActionGroup().getDisplayText(getRenderData());
   }
 
@@ -45,7 +47,8 @@ public interface JvmGroupIntentionAction extends IntentionAction {
    * <p>
    * This method is accessed only if {@link #isAvailable} returned {@code true}.
    */
-  default @Nullable JvmActionGroup.RenderData getRenderData() {
+  @Nullable
+  default JvmActionGroup.RenderData getRenderData() {
     return null;
   }
 

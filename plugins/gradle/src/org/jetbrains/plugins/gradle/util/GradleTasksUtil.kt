@@ -50,7 +50,7 @@ private fun getGradleTaskNodesMap(project: Project): Map<String, MultiMap<String
   val tasks = LinkedHashMap<String, MultiMap<String, DataNode<TaskData>>>()
   for (projectTaskData in findGradleTasks(project)) {
     val projectTasks = MultiMap.createOrderedSet<String, DataNode<TaskData>>()
-    val modulePaths = GradlePathPrefixTree.createMap<String>()
+    val modulePaths = GradlePathPrefixTreeFactory.createMap<String>()
     for (moduleTaskData in projectTaskData.modulesTaskData) {
       modulePaths[moduleTaskData.gradlePath] = moduleTaskData.externalModulePath
       projectTasks.putValues(moduleTaskData.gradlePath, moduleTaskData.tasks)

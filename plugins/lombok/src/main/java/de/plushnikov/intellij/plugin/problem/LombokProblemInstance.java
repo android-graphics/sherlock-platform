@@ -14,7 +14,8 @@ import java.util.function.Supplier;
 public class LombokProblemInstance implements LombokProblem {
 
   private final ProblemHighlightType highlightType;
-  private final @InspectionMessage String message;
+  @InspectionMessage
+  private final String message;
   private LocalQuickFix[] quickFixes;
 
   public LombokProblemInstance(@InspectionMessage String message, ProblemHighlightType highlightType) {
@@ -39,7 +40,8 @@ public class LombokProblemInstance implements LombokProblem {
   }
 
   @Override
-  public @InspectionMessage String getMessage() {
+  @InspectionMessage
+  public String getMessage() {
     return message;
   }
 

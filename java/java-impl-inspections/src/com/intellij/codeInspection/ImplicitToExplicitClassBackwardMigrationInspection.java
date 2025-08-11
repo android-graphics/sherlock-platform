@@ -6,6 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
@@ -27,8 +28,9 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
     return Set.of(JavaFeature.IMPLICIT_CLASSES);
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitImplicitClass(@NotNull PsiImplicitClass aClass) {
@@ -39,6 +41,10 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
           return;
         }
         String message = JavaBundle.message("inspection.implicit.to.explicit.class.backward.migration.name");
+        if (isInfoMode()) {
+          holder.registerProblem(aClass, message, new ReplaceWithExplicitClassFix());
+          return;
+        }
 
         PsiMethod method = PsiMethodUtil.findMainMethod(aClass);
         if (method == null) {
@@ -50,14 +56,20 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
         }
         holder.registerProblem(identifier, message, new ReplaceWithExplicitClassFix());
       }
+
+      private boolean isInfoMode() {
+        return InspectionProjectProfileManager.isInformationLevel(SHORT_NAME, holder.getFile());
+      }
     };
   }
 
 
   private static class ReplaceWithExplicitClassFix extends PsiUpdateModCommandQuickFix {
 
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
     @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaBundle.message("inspection.implicit.to.explicit.class.backward.migration.fix.name");
     }
 

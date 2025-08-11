@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.fileTemplates;
 
@@ -21,14 +21,15 @@ import java.util.Map;
 
 public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandler {
   @Override
-  public boolean handlesTemplate(final @NotNull FileTemplate template) {
+  public boolean handlesTemplate(@NotNull final FileTemplate template) {
     return true;
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement createFromTemplate(final @NotNull Project project, final @NotNull PsiDirectory directory, String fileName, final @NotNull FileTemplate template,
-                                                final @NotNull String templateText,
-                                                final @NotNull Map<String, Object> props) throws IncorrectOperationException {
+  public PsiElement createFromTemplate(@NotNull final Project project, @NotNull final PsiDirectory directory, String fileName, @NotNull final FileTemplate template,
+                                       @NotNull final String templateText,
+                                       @NotNull final Map<String, Object> props) throws IncorrectOperationException {
     fileName = checkAppendExtension(fileName, template);
 
     if (FileTypeManager.getInstance().isFileIgnored(fileName)) {
@@ -68,8 +69,9 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
     return true;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getErrorMessage() {
+  public String getErrorMessage() {
     return IdeBundle.message("title.cannot.create.file");
   }
 

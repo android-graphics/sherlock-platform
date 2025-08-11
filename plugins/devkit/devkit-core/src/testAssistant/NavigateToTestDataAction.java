@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -26,7 +26,9 @@ import org.jetbrains.uast.*;
 import java.util.Collections;
 import java.util.List;
 
-public final class NavigateToTestDataAction extends AnAction implements TestTreeViewAction {
+
+public class NavigateToTestDataAction extends AnAction implements TestTreeViewAction {
+
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
@@ -56,7 +58,8 @@ public final class NavigateToTestDataAction extends AnAction implements TestTree
     }
   }
 
-  static @NotNull List<TestDataFile> findTestDataFiles(@NotNull DataContext dataContext, @NotNull Project project, boolean shouldGuess) {
+  @NotNull
+  static List<TestDataFile> findTestDataFiles(@NotNull DataContext dataContext, @NotNull Project project, boolean shouldGuess) {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       List<TestDataFile> fileNames = tryFindTestDataFiles(dataContext);
       if (fileNames.isEmpty() && shouldGuess) {
@@ -70,7 +73,8 @@ public final class NavigateToTestDataAction extends AnAction implements TestTree
     }, DevKitBundle.message("testdata.searching"), true, project);
   }
 
-  private static @NotNull List<TestDataFile> tryFindTestDataFiles(@NotNull DataContext context) {
+  @NotNull
+  private static List<TestDataFile> tryFindTestDataFiles(@NotNull DataContext context) {
     final PsiMethod method = ReadAction.compute(() -> findTargetMethod(context));
     if (method == null) {
       PsiClass parametrizedTestClass = ReadAction.compute(() -> findParametrizedClass(context));
@@ -84,27 +88,19 @@ public final class NavigateToTestDataAction extends AnAction implements TestTree
       return collector.collectTestDataReferences(method);
     }
 
-    List<TestDataFile> result = ReadAction.compute(() -> {
-     final Location<?> location = Location.DATA_KEY.getData(context);
-     if (location instanceof PsiMemberParameterizedLocation) {
-       PsiClass parametrizedTestClass = findParametrizedClass(context);
-       if (parametrizedTestClass != null) {
-         String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(parametrizedTestClass);
-         String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
-         String baseFileName = StringUtil.trimEnd(StringUtil.trimStart(paramSetName, "["), "]");
-         return TestDataGuessByExistingFilesUtil.suggestTestDataFiles(baseFileName, testDataPath, parametrizedTestClass);
-       }
-     }
+    return ReadAction.compute(() -> {
+      final Location<?> location = Location.DATA_KEY.getData(context);
+      if (location instanceof PsiMemberParameterizedLocation) {
+        PsiClass parametrizedTestClass = findParametrizedClass(context);
+        if (parametrizedTestClass != null) {
+          String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(parametrizedTestClass);
+          String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
+          String baseFileName = StringUtil.trimEnd(StringUtil.trimStart(paramSetName, "["), "]");
+          return TestDataGuessByExistingFilesUtil.suggestTestDataFiles(baseFileName, testDataPath, parametrizedTestClass);
+        }
+      }
       return Collections.emptyList();
     });
-
-    if (result.isEmpty()) {
-      String testDataPath = ReadAction.compute(() -> TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass()));
-      final TestDataReferenceCollector collector = new TestDataReferenceCollector(testDataPath, name);
-      return collector.collectTestDataReferences(method);
-    } else {
-      return result;
-    }
   }
 
   @Override
@@ -112,7 +108,8 @@ public final class NavigateToTestDataAction extends AnAction implements TestTree
     e.getPresentation().setEnabledAndVisible(findTargetMethod(e.getDataContext()) != null || findParametrizedClass(e.getDataContext()) != null);
   }
 
-  static @Nullable PsiClass findParametrizedClass(@NotNull DataContext context) {
+  @Nullable
+  static PsiClass findParametrizedClass(@NotNull DataContext context) {
     PsiElement element = context.getData(CommonDataKeys.PSI_ELEMENT);
     UClass uClass = UastContextKt.getUastParentOfType(element, UClass.class);
     if (uClass == null) return null;
@@ -124,7 +121,8 @@ public final class NavigateToTestDataAction extends AnAction implements TestTree
     return type != null && type.equalsToText(TestFrameworkConstants.PARAMETERIZED_ANNOTATION_QUALIFIED_NAME) ? uClass.getJavaPsi() : null;
   }
 
-  private static @Nullable PsiMethod findTargetMethod(@NotNull DataContext context) {
+  @Nullable
+  private static PsiMethod findTargetMethod(@NotNull DataContext context) {
     final Location<?> location = Location.DATA_KEY.getData(context);
     if (location != null) {
       UMethod method = UastContextKt.getUastParentOfType(location.getPsiElement(), UMethod.class, false);

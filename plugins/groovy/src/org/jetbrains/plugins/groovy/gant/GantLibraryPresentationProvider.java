@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.openapi.roots.OrderRootType;
@@ -30,13 +30,15 @@ public final class GantLibraryPresentationProvider extends GroovyLibraryPresenta
   }
 
   @Override
-  public @Nls String getLibraryVersion(final VirtualFile[] libraryFiles) {
+  @Nls
+  public String getLibraryVersion(final VirtualFile[] libraryFiles) {
     String version = GantUtils.getGantVersionOrNull(GantUtils.getGantLibraryHome(libraryFiles));
     return version == null ? GroovyBundle.message("undefined.library.version") : version;
   }
 
   @Override
-  public @NotNull Icon getIcon(GroovyLibraryProperties properties) {
+  @NotNull
+  public Icon getIcon(GroovyLibraryProperties properties) {
     return JetgroovyIcons.Groovy.Gant_sdk;
   }
 
@@ -50,8 +52,10 @@ public final class GantLibraryPresentationProvider extends GroovyLibraryPresenta
     return GantUtils.getGantVersionOrNull(path);
   }
 
+  @Nls
+  @NotNull
   @Override
-  public @Nls @NotNull String getLibraryCategoryName() {
+  public String getLibraryCategoryName() {
     return GroovyBundle.message("framework.gant");
   }
 

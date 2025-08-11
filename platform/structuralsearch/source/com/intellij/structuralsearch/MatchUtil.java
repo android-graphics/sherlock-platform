@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,6 +14,10 @@ public final class MatchUtil {
   private static final String REG_EXP_META_CHARS = ".$|()[]{}^?*+\\";
   private static final Pattern ACCENTS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 
+  public static boolean isTypedVariable(@NotNull String name) {
+    return name.length() > 1 && name.charAt(0) == '$' && name.charAt(name.length() - 1) == '$';
+  }
+
   public static boolean containsRegExpMetaChar(String s) {
     return s.chars().anyMatch(MatchUtil::isRegExpMetaChar);
   }
@@ -22,7 +26,8 @@ public final class MatchUtil {
     return REG_EXP_META_CHARS.indexOf(ch) >= 0;
   }
 
-  public static @NotNull String shieldRegExpMetaChars(@NotNull String word) {
+  @NotNull
+  public static String shieldRegExpMetaChars(@NotNull String word) {
     return shieldRegExpMetaChars(word, new StringBuilder(word.length())).toString();
   }
 
@@ -35,7 +40,8 @@ public final class MatchUtil {
     return result;
   }
 
-  public static @NotNull StringBuilder shieldRegExpMetaChars(String word, StringBuilder out) {
+  @NotNull
+  public static StringBuilder shieldRegExpMetaChars(String word, StringBuilder out) {
     for (int i = 0, length = word.length(); i < length; ++i) {
       if (isRegExpMetaChar(word.charAt(i))) {
         out.append("\\");
@@ -56,7 +62,8 @@ public final class MatchUtil {
     return patterns;
   }
 
-  public static @NotNull String normalizeWhiteSpace(@NotNull String text) {
+  @NotNull
+  public static String normalizeWhiteSpace(@NotNull String text) {
     text = text.trim();
     final StringBuilder result = new StringBuilder();
     boolean white = false;
@@ -76,11 +83,13 @@ public final class MatchUtil {
     return result.toString();
   }
 
-  public static @NotNull String stripAccents(@NotNull String input) {
+  @NotNull
+  public static String stripAccents(@NotNull String input) {
     return ACCENTS.matcher(Normalizer.normalize(input, Normalizer.Form.NFD)).replaceAll("");
   }
 
-  public static @NotNull String normalize(@NotNull String text) {
+  @NotNull
+  public static String normalize(@NotNull String text) {
     return stripAccents(normalizeWhiteSpace(text));
   }
 }

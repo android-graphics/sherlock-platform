@@ -29,7 +29,6 @@ public final class MapSerializerUtil {
   }
 
   public static final EscapeInfoProvider STD_ESCAPER = new EscapeInfoProvider() {
-    @Override
     public char escape(final char c) {
       switch (c) {
         case '\n': return 'n';
@@ -46,7 +45,6 @@ public final class MapSerializerUtil {
       }
     }
 
-    @Override
     public char escapeCharacter() {
       return '|';
     }

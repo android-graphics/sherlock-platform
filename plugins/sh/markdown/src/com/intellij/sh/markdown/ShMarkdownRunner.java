@@ -18,12 +18,13 @@ import com.intellij.sh.ShLanguage;
 import com.intellij.sh.run.ShConfigurationType;
 import com.intellij.sh.run.ShRunner;
 import com.intellij.terminal.TerminalExecutionConsole;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.BaseOutputReader;
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class ShMarkdownRunner implements MarkdownRunner {
+public class ShMarkdownRunner implements MarkdownRunner {
   @Override
   public boolean isApplicable(Language language) {
     return language != null && language.is(ShLanguage.INSTANCE);
@@ -46,8 +47,9 @@ final class ShMarkdownRunner implements MarkdownRunner {
     return true;
   }
 
+  @NotNull
   @Override
-  public @NotNull String title() {
+  public String title() {
     return ShBundle.message("sh.markdown.runner.title");
   }
 
@@ -60,7 +62,8 @@ final class ShMarkdownRunner implements MarkdownRunner {
     return new DefaultExecutionResult(console, processHandler);
   }
 
-  private static @NotNull GeneralCommandLine createCommandLineForScript(Project project, String workingDirectory, String command) {
+  @NotNull
+  private static GeneralCommandLine createCommandLineForScript(Project project, String workingDirectory, String command) {
     PtyCommandLine commandLine = new PtyCommandLine();
     commandLine.withConsoleMode(false);
     commandLine.withInitialColumns(120);
@@ -73,7 +76,8 @@ final class ShMarkdownRunner implements MarkdownRunner {
   }
 
 
-  private static @NotNull ProcessHandler createProcessHandler(GeneralCommandLine commandLine) throws ExecutionException {
+  @NotNull
+  private static ProcessHandler createProcessHandler(GeneralCommandLine commandLine) throws ExecutionException {
     return new KillableProcessHandler(commandLine) {
       @Override
       protected @NotNull BaseOutputReader.Options readerOptions() {

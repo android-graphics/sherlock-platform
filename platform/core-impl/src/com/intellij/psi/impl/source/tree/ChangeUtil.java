@@ -4,7 +4,6 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -42,10 +41,7 @@ public final class ChangeUtil {
 
   private static void encodeInformation(TreeElement element, ASTNode original, Map<Object, Object> state) {
     for (TreeCopyHandler handler : TreeCopyHandler.EP_NAME.getExtensionList()) {
-      try {
-        handler.encodeInformation(element, original, state);
-      }
-      catch (IndexNotReadyException ignore) { }
+      handler.encodeInformation(element, original, state);
     }
 
     if (original instanceof CompositeElement) {

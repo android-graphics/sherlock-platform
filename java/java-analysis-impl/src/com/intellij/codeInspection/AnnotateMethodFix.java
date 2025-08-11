@@ -1,11 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandQuickFix;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
@@ -50,7 +48,8 @@ public class AnnotateMethodFix extends ModCommandQuickFix {
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     if (myAnnotateSelf) {
       if (myAnnotateOverriddenMethods) {
         return JavaAnalysisBundle.message("inspection.annotate.overridden.method.and.self.quickfix.name",
@@ -63,7 +62,8 @@ public class AnnotateMethodFix extends ModCommandQuickFix {
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     if (myAnnotateSelf) {
       if (myAnnotateOverriddenMethods) {
         return JavaAnalysisBundle.message("inspection.annotate.overridden.method.and.self.quickfix.family.name");
@@ -85,7 +85,7 @@ public class AnnotateMethodFix extends ModCommandQuickFix {
     }
 
     if (myAnnotateOverriddenMethods) {
-      for (PsiMethod inheritor : OverridingMethodsSearch.search(method).asIterable()) {
+      for (PsiMethod inheritor : OverridingMethodsSearch.search(method)) {
         if (AnnotationUtil.isAnnotatingApplicable(inheritor, myAnnotation) &&
             !AnnotationUtil.isAnnotated(inheritor, myAnnotation, CHECK_EXTERNAL | CHECK_TYPE)) {
           toAnnotate.add(inheritor);

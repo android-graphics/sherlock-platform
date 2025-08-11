@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.gradle.model.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +32,9 @@ public final class GradleResourcesTargetType extends ModuleBasedBuildTargetType<
     return myIsTests;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<GradleResourcesTarget> computeAllTargets(@NotNull JpsModel model) {
+  public List<GradleResourcesTarget> computeAllTargets(@NotNull JpsModel model) {
     final List<GradleResourcesTarget> targets = new ArrayList<>();
     for (JpsModule module : model.getProject().getModules()) {
       if (JpsGradleExtensionService.getInstance().getExtension(module) != null) {
@@ -43,15 +44,17 @@ public final class GradleResourcesTargetType extends ModuleBasedBuildTargetType<
     return targets;
   }
 
+  @NotNull
   @Override
-  public @NotNull BuildTargetLoader<GradleResourcesTarget> createLoader(@NotNull JpsModel model) {
+  public BuildTargetLoader<GradleResourcesTarget> createLoader(@NotNull JpsModel model) {
     final Map<String, JpsModule> modules = new HashMap<>();
     for (JpsModule module : model.getProject().getModules()) {
       modules.put(module.getName(), module);
     }
     return new BuildTargetLoader<GradleResourcesTarget>() {
+      @Nullable
       @Override
-      public @Nullable GradleResourcesTarget createTarget(@NotNull String targetId) {
+      public GradleResourcesTarget createTarget(@NotNull String targetId) {
         final JpsModule module = modules.get(targetId);
         return module != null ? new GradleResourcesTarget(GradleResourcesTargetType.this, module) : null;
       }

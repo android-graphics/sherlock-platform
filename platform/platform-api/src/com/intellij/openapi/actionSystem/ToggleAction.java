@@ -1,8 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.NlsActions.ActionDescription;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,8 +48,7 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
 
   @Override
   @NotNull
-  @ApiStatus.Internal
-  public Presentation createTemplatePresentation() {
+  Presentation createTemplatePresentation() {
     Presentation presentation = super.createTemplatePresentation();
     presentation.setKeepPopupOnPerform(KeepPopupOnPerform.IfPreferred);
     return presentation;
@@ -85,8 +83,8 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     boolean selected = isSelected(e);
     Presentation presentation = e.getPresentation();
     Toggleable.setSelected(presentation, selected);
-    if (e.getUiKind() instanceof ActionUiKind.Popup o && !o.isSearchPopup()) {
-      // force showing check marks instead of toggle icons
+    if (e.isFromContextMenu()) {
+      // force showing check marks instead of toggle icons in the context menu
       presentation.setIcon(null);
     }
   }

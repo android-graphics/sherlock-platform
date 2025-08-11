@@ -4,7 +4,6 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -15,8 +14,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -45,9 +44,7 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
     final SdkModificator modificator = sdk.getSdkModificator();
     assertNotNull(modificator);
     modificator.addRoot(myRoot, OrderRootType.CLASSES);
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      modificator.commitChanges();
-    });
+    modificator.commitChanges();
   }
 
   @Override
@@ -57,9 +54,7 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
       final SdkModificator modificator = sdk.getSdkModificator();
       assertNotNull(modificator);
       modificator.removeRoot(myRoot, OrderRootType.CLASSES);
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        modificator.commitChanges();
-      });
+      modificator.commitChanges();
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -146,7 +141,7 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
 
   private void doPerformanceTestResettingCaches(@NotNull String text, ThrowableRunnable<Throwable> runnable) {
     PsiManager psiManager = myFixture.getPsiManager();
-    Benchmark.newBenchmark(text, runnable)
+    PerformanceTestUtil.newPerformanceTest(text, runnable)
       .setup(() -> {
         psiManager.dropPsiCaches();
         psiManager.dropResolveCaches();

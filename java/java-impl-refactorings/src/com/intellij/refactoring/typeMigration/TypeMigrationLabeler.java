@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -51,7 +51,7 @@ public class TypeMigrationLabeler {
 
   private final TypeMigrationRules myRules;
   private final Function<? super PsiElement, ? extends PsiType> myMigrationRootTypeFunction;
-  private final @Nullable Set<PsiElement> myAllowedRoots;
+  @Nullable private final Set<PsiElement> myAllowedRoots;
   private TypeEvaluator myTypeEvaluator;
   private final LinkedHashMap<PsiElement, Object> myConversions;
   private final Map<Pair<SmartPsiElementPointer<PsiElement>, PsiType>, TypeMigrationUsageInfo> myFailedConversions;
@@ -78,7 +78,7 @@ public class TypeMigrationLabeler {
                               Project project) {
     myRules = rules;
     myMigrationRootTypeFunction = migrationRootTypeFunction;
-    myAllowedRoots = allowedRoots == null ? null : Collections.unmodifiableSet(new HashSet<>(Arrays.asList(allowedRoots)));
+    myAllowedRoots = allowedRoots == null ? null : ContainerUtil.immutableSet(allowedRoots);
 
     myConversions = new LinkedHashMap<>();
     myFailedConversions = new LinkedHashMap<>();
@@ -137,7 +137,8 @@ public class TypeMigrationLabeler {
       LOG.assertTrue(element != null);
       return new UsageInfo(element) {
         @Override
-        public @Nullable String getTooltipText() {
+        @Nullable
+        public String getTooltipText() {
           if (element instanceof PsiExpression expression) {
             final PsiType type = expression.isValid() ? expression.getType() : null;
             if (type == null) return null;
@@ -203,8 +204,9 @@ public class TypeMigrationLabeler {
   private TypeMigrationUsageInfo[] sortMigratedUsages(TypeMigrationUsageInfo[] infos) {
     final DFSTBuilder<TypeMigrationUsageInfo> builder = new DFSTBuilder<>(GraphGenerator.generate(
       new InboundSemiGraph<>() {
+        @NotNull
         @Override
-        public @NotNull Collection<TypeMigrationUsageInfo> getNodes() {
+        public Collection<TypeMigrationUsageInfo> getNodes() {
           final Set<TypeMigrationUsageInfo> infos = new HashSet<>();
           for (Map.Entry<TypeMigrationUsageInfo, HashSet<Pair<TypeMigrationUsageInfo, PsiType>>> entry : myRootsTree.entrySet()) {
             infos.add(entry.getKey());
@@ -213,8 +215,9 @@ public class TypeMigrationLabeler {
           return infos;
         }
 
+        @NotNull
         @Override
-        public @NotNull Iterator<TypeMigrationUsageInfo> getIn(TypeMigrationUsageInfo n) {
+        public Iterator<TypeMigrationUsageInfo> getIn(TypeMigrationUsageInfo n) {
           final HashSet<Pair<TypeMigrationUsageInfo, PsiType>> rawNodes = myRootsTree.get(n);
           if (rawNodes == null) {
             return Collections.emptyIterator();
@@ -274,7 +277,8 @@ public class TypeMigrationLabeler {
     return new MigrationProducer(conversions);
   }
 
-  public @Nullable <T> T getSettings(Class<T> aClass) {
+  @Nullable
+  public <T> T getSettings(Class<T> aClass) {
     return myRules.getConversionSettings(aClass);
   }
 
@@ -412,7 +416,8 @@ public class TypeMigrationLabeler {
     return myMigratedUsages;
   }
 
-  public @Nullable Set<PsiElement> getTypeUsages(TypeMigrationUsageInfo element, TypeMigrationUsageInfo currentRoot) {
+  @Nullable
+  public Set<PsiElement> getTypeUsages(TypeMigrationUsageInfo element, TypeMigrationUsageInfo currentRoot) {
     return myRootUsagesTree.get(Pair.create(element, currentRoot));
   }
 
@@ -687,7 +692,8 @@ public class TypeMigrationLabeler {
     }
   }
 
-  private static @NotNull Set<PsiTypeParameter> getTypeParameters(@NotNull PsiType type) {
+  @NotNull
+  private static Set<PsiTypeParameter> getTypeParameters(@NotNull PsiType type) {
     if (type instanceof PsiClassType) {
       PsiTypesUtil.TypeParameterSearcher searcher = new PsiTypesUtil.TypeParameterSearcher();
       type.accept(searcher);
@@ -696,7 +702,8 @@ public class TypeMigrationLabeler {
     return Collections.emptySet();
   }
 
-  private @Nullable String isMethodNameCanBeChanged(PsiMethod method) {
+  @Nullable
+  private String isMethodNameCanBeChanged(PsiMethod method) {
     if (myCurrentRoot == null) {
       return null;
     }
@@ -748,7 +755,8 @@ public class TypeMigrationLabeler {
   }
 
 
-  public static @Nullable PsiType getElementType(PsiElement resolved) {
+  @Nullable
+  public static PsiType getElementType(PsiElement resolved) {
     if (resolved instanceof PsiVariable) {
       return ((PsiVariable)resolved).getType();
     }
@@ -1076,7 +1084,7 @@ public class TypeMigrationLabeler {
 
   public static List<PsiReference> filterReferences(PsiClass psiClass, Query<? extends PsiReference> memberReferences) {
     final List<PsiReference> refs = new ArrayList<>();
-    for (PsiReference memberReference : memberReferences.asIterable()) {
+    for (PsiReference memberReference : memberReferences) {
       if (psiClass == null) {
         refs.add(memberReference);
       } else {

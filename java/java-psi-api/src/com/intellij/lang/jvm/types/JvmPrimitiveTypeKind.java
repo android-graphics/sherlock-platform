@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm.types;
 
 import org.jetbrains.annotations.Contract;
@@ -34,17 +34,20 @@ public final class JvmPrimitiveTypeKind {
   }
 
   @Contract(pure = true)
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return myName;
   }
 
   @Contract(pure = true)
-  public @NotNull String getBoxedFqn() {
+  @NotNull
+  public String getBoxedFqn() {
     return myBoxedFqn;
   }
 
   @Contract(pure = true)
-  public @NotNull String getBinaryName() {
+  @NotNull
+  public String getBinaryName() {
     return myBinaryName;
   }
 
@@ -64,17 +67,20 @@ public final class JvmPrimitiveTypeKind {
   }
 
   @Contract(value = "null -> null", pure = true)
-  public static @Nullable JvmPrimitiveTypeKind getKindByName(@Nullable String name) {
+  @Nullable
+  public static JvmPrimitiveTypeKind getKindByName(@Nullable String name) {
     return ourNameToKind.get(name);
   }
 
   @Contract(value = "null -> null", pure = true)
-  public static @Nullable JvmPrimitiveTypeKind getKindByFqn(@Nullable String fqn) {
+  @Nullable
+  public static JvmPrimitiveTypeKind getKindByFqn(@Nullable String fqn) {
     return ourFqnToKind.get(fqn);
   }
 
   @Contract(pure = true)
-  public static @NotNull Collection<String> getBoxedFqns() {
+  @NotNull
+  public static Collection<String> getBoxedFqns() {
     return Collections.unmodifiableCollection(ourFqnToKind.keySet());
   }
 }

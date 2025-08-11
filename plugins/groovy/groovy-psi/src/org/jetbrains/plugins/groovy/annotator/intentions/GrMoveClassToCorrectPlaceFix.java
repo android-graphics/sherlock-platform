@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -30,13 +30,15 @@ public class GrMoveClassToCorrectPlaceFix extends Intention {
     LOG.assertTrue(!myClass.isAnonymous());
   }
 
+  @NotNull
   @Override
-  public @NotNull String getText() {
+  public String getText() {
     return GroovyBundle.message("move.class.0.from.method", myClass.getName());
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return GroovyBundle.message("move.class.from.method.family.name");
   }
 
@@ -83,8 +85,9 @@ public class GrMoveClassToCorrectPlaceFix extends Intention {
     myClass.delete();
   }
 
+  @NotNull
   @Override
-  protected @NotNull PsiElementPredicate getElementPredicate() {
+  protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {

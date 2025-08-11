@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.EvaluatingComputable;
@@ -8,10 +8,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class DebuggerComputableValue {
   private boolean myComputed;
-  private @Nullable Value myValue;
-  private @Nullable EvaluateException myException;
+  @Nullable private Value myValue;
+  @Nullable private EvaluateException myException;
 
-  private final @NotNull EvaluatingComputable<? extends Value> myComputable;
+  @NotNull private final EvaluatingComputable<? extends Value> myComputable;
 
   public DebuggerComputableValue(@NotNull EvaluatingComputable<? extends Value> computable) {
     myComputable = computable;
@@ -30,7 +30,8 @@ public class DebuggerComputableValue {
     return res;
   }
 
-  public @Nullable Value getValue() throws EvaluateException {
+  @Nullable
+  public Value getValue() throws EvaluateException {
     if (!myComputed) {
       try {
         myValue = myComputable.compute();

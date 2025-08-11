@@ -16,12 +16,10 @@
 
 package com.intellij.refactoring.classMembers;
 
-import com.intellij.psi.PsiElement;
-
 /**
  * @author Dennis.Ushakov
  */
-public interface ClassMembersRefactoringSupport<C extends PsiElement> {
-  DependentMembersCollectorBase<?, ? extends C> createDependentMembersCollector(C clazz, C superClass);
-  boolean isProperMember(MemberInfoBase<?> member);
+public interface ClassMembersRefactoringSupport {
+  DependentMembersCollectorBase createDependentMembersCollector(Object clazz, Object superClass);
+  boolean isProperMember(MemberInfoBase member);
 }

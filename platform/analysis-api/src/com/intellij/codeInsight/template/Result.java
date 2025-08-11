@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NonNls;
 public interface Result {
   boolean equalsToText (@NonNls String text, PsiElement context);
 
-  @Override
   String toString();
 
   void handleFocused(final PsiFile psiFile, final Document document, final int segmentStart, final int segmentEnd);

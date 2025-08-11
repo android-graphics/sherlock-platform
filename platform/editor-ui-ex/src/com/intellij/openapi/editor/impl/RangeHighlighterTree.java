@@ -1,14 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-@ApiStatus.Internal
-public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
+final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
   private final MarkupModelImpl myMarkupModel;
 
   RangeHighlighterTree(@NotNull MarkupModelImpl markupModel) {
@@ -21,7 +19,7 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
   }
 
   @Override
-  protected boolean keepIntervalOnWeakReference(@NotNull RangeHighlighterEx interval) {
+  protected boolean keepIntervalsOnWeakReferences() {
     return false;
   }
 
@@ -31,8 +29,7 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
   }
 
   @Override
-  @ApiStatus.Internal
-  public void correctMax(@NotNull IntervalNode<RangeHighlighterEx> node, int deltaUpToRoot) {
+  void correctMax(@NotNull IntervalNode<RangeHighlighterEx> node, int deltaUpToRoot) {
     super.correctMax(node, deltaUpToRoot);
     ((RHNode)node).recalculateRenderFlags();
   }
@@ -61,10 +58,9 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
     return new RHNode(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
   }
 
-  @ApiStatus.Internal
-  public static final class RHNode extends RMNode<RangeHighlighterEx> {
+  static class RHNode extends RMNode<RangeHighlighterEx> {
     private static final byte RENDERED_IN_GUTTER_FLAG = STICK_TO_RIGHT_FLAG << 1;
-    public static final byte IS_PERSISTENT = (byte)(RENDERED_IN_GUTTER_FLAG << 1);
+    static final byte IS_PERSISTENT = (byte)(RENDERED_IN_GUTTER_FLAG << 1);
 
     final int myLayer;
 
@@ -99,7 +95,7 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
     }
 
     private void recalculateRenderFlagsUp() {
-      getTreeLock().writeLock().lock();
+      getTree().l.writeLock().lock();
       try {
         RHNode n = this;
         while (n != null) {
@@ -110,12 +106,12 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
         }
       }
       finally {
-        getTreeLock().writeLock().unlock();
+        getTree().l.writeLock().unlock();
       }
     }
 
     @Override
-    public void addInterval(@NotNull RangeHighlighterEx h) {
+    void addInterval(@NotNull RangeHighlighterEx h) {
       super.addInterval(h);
       if (!isRenderedInGutter() && h.isRenderedInGutter()) {
         recalculateRenderFlagsUp();
@@ -127,7 +123,7 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
     }
 
     @Override
-    public void removeIntervalInternal(int i) {
+    void removeIntervalInternal(int i) {
       RangeHighlighterEx h = intervals.get(i).get();
       boolean recalculateFlags = h.isRenderedInGutter();
       super.removeIntervalInternal(i);
@@ -136,12 +132,12 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
   }
 
   @Override
-  public void fireBeforeRemoved(@NotNull RangeHighlighterEx marker) {
+  void fireBeforeRemoved(@NotNull RangeHighlighterEx marker) {
     myMarkupModel.fireBeforeRemoved(marker);
   }
 
   @Override
-  public void fireAfterRemoved(@NotNull RangeHighlighterEx marker) {
+  void fireAfterRemoved(@NotNull RangeHighlighterEx marker) {
     myMarkupModel.fireAfterRemoved(marker);
   }
 }

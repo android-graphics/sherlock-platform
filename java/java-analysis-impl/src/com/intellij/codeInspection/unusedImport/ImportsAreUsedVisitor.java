@@ -17,6 +17,7 @@ package com.intellij.codeInspection.unusedImport;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,7 +99,8 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
     }
   }
 
-  private @Nullable PsiImportStatementBase findImport(@NotNull PsiMember member, List<? extends PsiImportStatementBase> importStatements) {
+  @Nullable
+  private PsiImportStatementBase findImport(@NotNull PsiMember member, List<? extends PsiImportStatementBase> importStatements) {
     final String memberQualifiedName;
     final String memberPackageName;
     final PsiClass containingClass = member.getContainingClass();
@@ -116,7 +118,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
     if (memberPackageName == null) {
       return null;
     }
-    ImportUtils.OnDemandImportConflict conflicts = ImportUtils.findOnDemandImportConflict(memberQualifiedName, myFile);
+    final boolean hasOnDemandImportConflict = ImportUtils.hasOnDemandImportConflict(memberQualifiedName, myFile);
     for (PsiImportStatementBase importStatement : importStatements) {
       if (!importStatement.isOnDemand()) {
         final PsiJavaCodeReferenceElement reference = importStatement.getImportReference();
@@ -131,12 +133,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
         }
       }
       else {
-        if (importStatement instanceof PsiImportModuleStatement && conflicts.hasConflictForModules()) {
-          continue;
-        }
-        if (!(importStatement instanceof PsiImportModuleStatement) &&
-            importStatement.isOnDemand() &&
-            conflicts.hasConflictForOnDemand()) {
+        if (hasOnDemandImportConflict) {
           continue;
         }
         if (importStatement instanceof PsiImportModuleStatement psiImportModuleStatement &&
@@ -154,15 +151,8 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
         else if (target instanceof PsiClass aClass) {
           // a regular import statement does NOT import inner classes from super classes, but a static import does
           if (importStatement instanceof PsiImportStaticStatement) {
-            if (member.hasModifierProperty(PsiModifier.STATIC)) {
-              PsiManager manager = aClass.getManager();
-              if (manager.areElementsEquivalent(aClass, containingClass) ||
-                  (containingClass != null &&
-                   //impossible to reference to static methods in interfaces via inheritances
-                   !(member instanceof PsiMethod && containingClass.isInterface()) &&
-                   aClass.isInheritor(containingClass, true))) {
-                return importStatement;
-              }
+            if (member.hasModifierProperty(PsiModifier.STATIC) && InheritanceUtil.isInheritorOrSelf(aClass, containingClass, true)) {
+              return importStatement;
             }
           }
           else if (importStatement instanceof PsiImportStatement && member instanceof PsiClass && aClass.equals(containingClass)) {

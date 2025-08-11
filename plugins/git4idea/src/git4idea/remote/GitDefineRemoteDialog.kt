@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remote
 
 import com.intellij.openapi.application.EDT
@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
@@ -44,7 +43,6 @@ class GitDefineRemoteDialog(
 
   private val nameField = JBTextField(initialName, 30)
   private val urlField = ExtendableTextField(initialUrl, 30)
-  private val fetchCheckBox = CheckBox(message("remotes.fetch.remote.text"), selected = true)
   private val loadingExtension = ExtendableTextComponent.Extension { AnimatedIcon.Default.INSTANCE }
 
   private var urlAccessError: ValidationInfo? = null
@@ -56,7 +54,6 @@ class GitDefineRemoteDialog(
 
   val remoteName: String get() = nameField.text.orEmpty().trim()
   val remoteUrl: String get() = urlField.text.orEmpty().trim()
-  val shouldFetch: Boolean get() = fetchCheckBox.isSelected
 
   override fun getPreferredFocusedComponent(): JComponent =
     if (nameField.text.isNullOrEmpty()) nameField else urlField
@@ -73,9 +70,6 @@ class GitDefineRemoteDialog(
           .align(AlignX.FILL)
           .validationOnApply { urlNotBlank() ?: urlAccessError }
           .applyToComponent { clearUrlAccessErrorOnTextChanged() }
-      }
-      row {
-        cell(fetchCheckBox)
       }
     }
 

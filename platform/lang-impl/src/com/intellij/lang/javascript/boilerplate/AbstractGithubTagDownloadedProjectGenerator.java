@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.javascript.boilerplate;
 
 import com.intellij.ide.BrowserUtil;
@@ -18,6 +18,7 @@ import com.intellij.platform.templates.github.GithubTagInfo;
 import com.intellij.platform.templates.github.ZipUtil;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -31,26 +32,33 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
 
   private static final Logger LOG = Logger.getInstance(AbstractGithubTagDownloadedProjectGenerator.class);
 
+  @NotNull
+  @Nls
   @Override
-  public final @NotNull @Nls String getName() {
+  public final String getName() {
     return getDisplayName();
   }
 
-  protected abstract @NotNull @Nls String getDisplayName();
+  @NotNull
+  protected abstract @Nls String getDisplayName();
 
-  public abstract @NotNull String getGithubUserName();
+  @NotNull
+  public abstract String getGithubUserName();
 
-  public abstract @NotNull String getGithubRepositoryName();
+  @NotNull
+  public abstract String getGithubRepositoryName();
 
   @Override
-  public abstract @Nullable String getDescription();
+  @Nullable
+  public abstract String getDescription();
 
   private @NlsContexts.ProgressTitle String getTitle() {
     return getDisplayName();
   }
 
+  @Nullable
   @Override
-  public @Nullable String getHelpId() {
+  public String getHelpId() {
     return "create.from.template." + getGithubUserName() + "." + getGithubRepositoryName();
   }
 
@@ -59,7 +67,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
   }
 
   @Override
-  public void generateProject(final @NotNull Project project, final @NotNull VirtualFile baseDir,
+  public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @NotNull GithubTagInfo tag, @NotNull Module module) {
     try {
       unpackToDir(project, VfsUtilCore.virtualToIoFile(baseDir), tag);
@@ -70,9 +78,15 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
     ApplicationManager.getApplication().runWriteAction(() -> baseDir.refresh(true, true));
   }
 
+  @NotNull
   @Override
-  public @NotNull GithubProjectGeneratorPeer createPeer() {
+  public GithubProjectGeneratorPeer createPeer() {
     return new GithubProjectGeneratorPeer(this);
+  }
+
+  @Override
+  public boolean isPrimaryGenerator() {
+    return PlatformUtils.isWebStorm();
   }
 
   private void unpackToDir(@Nullable Project project,
@@ -127,13 +141,16 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
     ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir, getPathConvertor(), true);
   }
 
-  protected @Nullable NullableFunction<String, String> getPathConvertor() {
+  @Nullable
+  protected NullableFunction<String, String> getPathConvertor() {
     return null;
   }
 
-  public abstract @Nullable String getPrimaryZipArchiveUrlForDownload(@NotNull GithubTagInfo tag);
+  @Nullable
+  public abstract String getPrimaryZipArchiveUrlForDownload(@NotNull GithubTagInfo tag);
 
-  private @NotNull File getCacheFile(@NotNull GithubTagInfo tag) {
+  @NotNull
+  private File getCacheFile(@NotNull GithubTagInfo tag) {
     String fileName = URLUtil.encodeURIComponent(tag.getName() + ".zip");
     return GithubDownloadUtil.findCacheFile(getGithubUserName(), getGithubRepositoryName(), fileName);
   }

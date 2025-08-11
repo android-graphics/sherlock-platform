@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.lang.ASTFactory;
@@ -100,11 +100,13 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return node.getText();
   }
 
-  public @Nullable ASTNode getKeyNode() {
+  @Nullable
+  public ASTNode getKeyNode() {
     return getNode().findChildByType(PropertiesTokenTypes.KEY_CHARACTERS);
   }
 
-  public @Nullable ASTNode getValueNode() {
+  @Nullable
+  public ASTNode getValueNode() {
     return getNode().findChildByType(PropertiesTokenTypes.VALUE_CHARACTERS);
   }
 
@@ -118,7 +120,8 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
   }
 
   @Override
-  public @Nullable String getUnescapedValue() {
+  @Nullable
+  public String getUnescapedValue() {
     return unescape(getValue());
   }
 
@@ -212,7 +215,8 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return result;
   }
 
-  public static @Nullable TextRange trailingSpaces(String s) {
+  @Nullable
+  public static TextRange trailingSpaces(String s) {
     if (s == null) {
       return null;
     }
@@ -296,12 +300,14 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
   }
 
   @Override
-  public @Nullable String getUnescapedKey() {
+  @Nullable
+  public String getUnescapedKey() {
     return unescape(getKey());
   }
 
+  @Nullable
   @Override
-  protected @Nullable Icon getElementIcon(@IconFlags int flags) {
+  protected Icon getElementIcon(@IconFlags int flags) {
     return PlatformIcons.PROPERTY_ICON;
   }
 
@@ -336,7 +342,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
    * @param property the property to get the upper edge for
    * @return the property itself or the first {@link PsiComment} node that is related to the property
    */
-  static PsiElement getEdgeOfProperty(final @NotNull Property property) {
+  static PsiElement getEdgeOfProperty(@NotNull final Property property) {
     PsiElement prev = property;
     for (PsiElement node = property.getPrevSibling(); node != null; node = node.getPrevSibling()) {
       if (node instanceof Property) break;
@@ -358,17 +364,19 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
         text.append("\n");
       }
     }
-    if (text.isEmpty()) return null;
+    if (text.length() == 0) return null;
     return text.toString();
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getPsiElement() {
+  public PsiElement getPsiElement() {
     return this;
   }
 
   @Override
-  public @NotNull SearchScope getUseScope() {
+  @NotNull
+  public SearchScope getUseScope() {
     // property ref can occur in any file
     return GlobalSearchScope.allScope(getProject());
   }
@@ -403,8 +411,9 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return new PropertyManipulator().handleContentChange(this, text);
   }
 
+  @NotNull
   @Override
-  public @NotNull LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
+  public LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
     return new PropertyImplEscaper(this);
   }
 

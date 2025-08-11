@@ -16,10 +16,9 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 
 @ApiStatus.Internal
 class KotlinDeclarationNameValidator(
-  private val visibleDeclarationsContext: KtElement,
-  private val checkVisibleDeclarationsContext: Boolean,
-  private val target: KotlinNameSuggestionProvider.ValidatorTarget,
-  private val excludedDeclarations: List<KtDeclaration> = emptyList(),
+    private val visibleDeclarationsContext: KtElement,
+    private val checkVisibleDeclarationsContext: Boolean,
+    private val target: KotlinNameSuggestionProvider.ValidatorTarget,
 ) {
 
     init {
@@ -56,22 +55,21 @@ class KotlinDeclarationNameValidator(
             KotlinNameSuggestionProvider.ValidatorTarget.PROPERTY, KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE, KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER, KotlinNameSuggestionProvider.ValidatorTarget.FUNCTION -> {
                 val scope =
                     visibleDeclarationsContext.containingKtFile.scopeContext(visibleDeclarationsContext).compositeScope()
-                val containingClassSymbol = lazy(LazyThreadSafetyMode.NONE) { visibleDeclarationsContext.containingClass()?.classSymbol }
-                scope.callables(identifier).filterIsInstance<KaVariableSymbol>().any {
-                    it.psi !in excludedDeclarations && !it.isExtension && (containingClassSymbol.value?.let { cl -> it.isVisibleInClass(cl) } != false)
+                val containingClassSymbol = lazy(LazyThreadSafetyMode.NONE) { visibleDeclarationsContext.containingClass()?.getClassOrObjectSymbol() }
+                scope.getCallableSymbols(identifier).filterIsInstance<KaVariableSymbol>().any {
+                    !it.isExtension && (containingClassSymbol.value?.let { cl -> it.isVisibleInClass(cl) } != false)
                 }
             }
             KotlinNameSuggestionProvider.ValidatorTarget.CLASS -> {
                 val scope =
                   visibleDeclarationsContext.containingKtFile.scopeContext(visibleDeclarationsContext).compositeScope()
-                scope.classifiers(identifier).any { it.psi !in excludedDeclarations }
+                scope.getClassifierSymbols(identifier).any()
             }
             else -> false
         }
     }
 
     private fun KtNamedDeclaration.isConflicting(name: Name): Boolean {
-        if (this in excludedDeclarations) return false
         if (nameAsName != name) return false
         if (this is KtCallableDeclaration && receiverTypeReference != null) return false
 

@@ -2,12 +2,10 @@
 package com.intellij.lang;
 
 import com.intellij.codeInsight.editorActions.QuoteHandler;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author gregsh
  */
-@ApiStatus.Internal
 public final class LanguageQuoteHandling extends LanguageExtension<QuoteHandler> {
   public static final LanguageQuoteHandling INSTANCE = new LanguageQuoteHandling();
 

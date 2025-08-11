@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import com.intellij.compiler.impl.CompileDriver
 import com.intellij.testFramework.assertEqualsToFile
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
@@ -33,12 +32,7 @@ abstract class AbstractKotlinCompilerReferenceTest : KotlinCompilerReferenceTest
         runCatching {
             val allFiles = listOf(mainFile) + Path(testDataFilePath).listDirectoryEntries().map { it.name }.minus(mainFile)
             myFixture.configureByFiles(*allFiles.toTypedArray())
-            project.putUserData(CompileDriver.TIMEOUT, 100_000)
-            try {
-                rebuildProject()
-            } finally {
-                project.putUserData(CompileDriver.TIMEOUT, null)
-            }
+            rebuildProject()
 
             val actualUsages = getReferentFilesForElementUnderCaret()
             assertEqualsToFile(

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.analysis.JvmAnalysisBundle;
@@ -34,7 +34,8 @@ import static com.intellij.codeInsight.ExternalAnnotationsManager.AnnotationPlac
 
 class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
 
-  private final @NotNull TaintValueFactory myTaintValueFactory;
+  @NotNull
+  private final TaintValueFactory myTaintValueFactory;
 
   protected MarkAsSafeFix(@NotNull PsiElement sourcePsi,
                           @NotNull TaintValueFactory taintValueFactory) {
@@ -69,7 +70,8 @@ class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
     markAsSafe(project, elements, myTaintValueFactory);
   }
 
-  private @Nullable List<PsiElement> getElementsToMark(@NotNull UExpression uExpression) {
+  @Nullable
+  private List<PsiElement> getElementsToMark(@NotNull UExpression uExpression) {
     TaintAnalyzer taintAnalyzer = new TaintAnalyzer(myTaintValueFactory);
     try {
       TaintValue taintValue = taintAnalyzer.analyzeExpression(uExpression, false, TaintValue.TAINTED);
@@ -164,7 +166,8 @@ class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
     run(project, placedElement, taintValueFactory);
   }
 
-  private static @NotNull String getRepresentText(@NotNull PsiElement element) {
+  @NotNull
+  private static String getRepresentText(@NotNull PsiElement element) {
     if (element instanceof JvmNamedElement jvmNamedElement && jvmNamedElement.getName() != null) {
       return jvmNamedElement.getName();
     }
@@ -242,7 +245,8 @@ class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
     });
   }
 
-  static @Nullable PsiElement getSourcePsi(@NotNull PsiElement element) {
+  @Nullable
+  static PsiElement getSourcePsi(@NotNull PsiElement element) {
     if (element.isPhysical()) {
       return element;
     }
@@ -260,7 +264,8 @@ class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
     return sourcePsi;
   }
 
-  private static @Nullable PsiFile fileToAnnotate(@NotNull PsiElement element) {
+  @Nullable
+  private static PsiFile fileToAnnotate(@NotNull PsiElement element) {
     PsiElement sourcePsi = getSourcePsi(element);
     if (sourcePsi == null) return null;
     return sourcePsi.getContainingFile();

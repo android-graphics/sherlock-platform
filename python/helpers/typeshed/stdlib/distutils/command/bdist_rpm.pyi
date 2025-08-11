@@ -1,12 +1,12 @@
-from typing import Any, ClassVar
+from typing import Any
 
 from ..cmd import Command
 
 class bdist_rpm(Command):
     description: str
-    user_options: ClassVar[list[tuple[str, str | None, str]]]
-    boolean_options: ClassVar[list[str]]
-    negative_opt: ClassVar[dict[str, str]]
+    user_options: Any
+    boolean_options: Any
+    negative_opt: Any
     bdist_base: Any
     rpm_base: Any
     dist_dir: Any

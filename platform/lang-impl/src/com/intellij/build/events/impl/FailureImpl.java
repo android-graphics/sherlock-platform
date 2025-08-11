@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.events.impl;
 
 import com.intellij.build.events.BuildEventsNls;
@@ -19,9 +19,12 @@ public class FailureImpl implements Failure {
   private final @BuildEventsNls.Message String myMessage;
   private final @BuildEventsNls.Description String myDescription;
   private final List<? extends Failure> myCauses;
-  private final @Nullable Throwable myError;
-  private final @Nullable Notification myNotification;
-  private final @Nullable Navigatable myNavigatable;
+  @Nullable
+  private final Throwable myError;
+  @Nullable
+  private final Notification myNotification;
+  @Nullable
+  private final Navigatable myNavigatable;
 
   public FailureImpl(@BuildEventsNls.Message String message, Throwable error) {
     this(message, null, Collections.emptyList(), error, null, null);
@@ -58,18 +61,21 @@ public class FailureImpl implements Failure {
     myNavigatable = navigatable;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getMessage() {
+  public String getMessage() {
     return myMessage;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getDescription() {
+  public String getDescription() {
     return myDescription;
   }
 
+  @Nullable
   @Override
-  public @Nullable Throwable getError() {
+  public Throwable getError() {
     return myError;
   }
 
@@ -78,13 +84,15 @@ public class FailureImpl implements Failure {
     return myCauses;
   }
 
+  @Nullable
   @Override
-  public @Nullable Notification getNotification() {
+  public Notification getNotification() {
     return myNotification;
   }
 
+  @Nullable
   @Override
-  public @Nullable Navigatable getNavigatable() {
+  public Navigatable getNavigatable() {
     return myNavigatable;
   }
 }

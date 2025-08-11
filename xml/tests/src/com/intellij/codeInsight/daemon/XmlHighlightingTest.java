@@ -43,7 +43,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -790,6 +790,10 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(new VirtualFile[]{findVirtualFile(getFullRelativeTestName()), findVirtualFile(BASE_PATH + location)}, false, false);
   }
 
+  public void testMavenValidation() throws Exception {
+    doTest(getFullRelativeTestName(), false, false);
+  }
+
   public void testResolveEntityUrl() throws Throwable {
     doTest(new VirtualFile[] {
       findVirtualFile(getFullRelativeTestName()),
@@ -1236,8 +1240,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
                     IntStream.range(0, 10000).mapToObj(i -> "<!ENTITY pnct" + i + " \"x\">\n").collect(Collectors.joining()) +
                     "]>\n" +
                     "<rules/>");
-    Benchmark
-      .newBenchmark("highlighting", () -> doHighlighting())
+    PerformanceTestUtil
+      .newPerformanceTest("highlighting", () -> doHighlighting())
       .setup(() -> getPsiManager().dropPsiCaches())
       .start();
   }
@@ -2072,7 +2076,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
                                               );
     assertEquals(2, list.size());
 
-    list = ContainerUtil.sorted(list, Comparator.comparingInt(o -> o.getRangeInElement().getLength()));
+    Collections.sort(list, Comparator.comparingInt(o -> o.getRangeInElement().getLength()));
 
     assertEquals("https://www.jetbrains.com/ruby/download", getReferenceText(list.get(0)));
     assertTrue(list.get(0).getElement() instanceof XmlAttributeValue);

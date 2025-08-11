@@ -43,7 +43,6 @@ public final class HistoryElement implements Copyable<HistoryElement> {
         namespaces = Collections.emptySet();
     }
 
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -53,7 +52,6 @@ public final class HistoryElement implements Copyable<HistoryElement> {
         return !(expression != null ? !expression.equals(that.expression) : that.expression != null);
     }
 
-    @Override
     public int hashCode() {
         return (expression != null ? expression.hashCode() : 0);
     }

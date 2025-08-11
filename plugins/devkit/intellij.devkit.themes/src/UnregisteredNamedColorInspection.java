@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -15,7 +15,6 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.JBColor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +27,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import java.util.Collection;
 import java.util.List;
 
-@ApiStatus.Internal
-public final class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
+final class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
 
   private static final String JB_COLOR_FQN = JBColor.class.getCanonicalName();
   private static final String NAMED_COLOR_METHOD_NAME = "namedColor";
@@ -77,7 +75,8 @@ public final class UnregisteredNamedColorInspection extends DevKitUastInspection
     return containingClass != null && JB_COLOR_FQN.equals(containingClass.getQualifiedName());
   }
 
-  private static @Nullable String getKey(@NotNull UCallExpression expression) {
+  @Nullable
+  private static String getKey(@NotNull UCallExpression expression) {
     List<UExpression> arguments = expression.getValueArguments();
     if (arguments.isEmpty()) return null;
     UExpression firstArgument = arguments.get(0);
@@ -96,8 +95,10 @@ public final class UnregisteredNamedColorInspection extends DevKitUastInspection
     ProblemHolderUtilKt.registerUProblem(holder, expression,
                                          DevKitThemesBundle.message("inspections.unregistered.named.color", key), new LocalQuickFix() {
 
+        @Nls(capitalization = Nls.Capitalization.Sentence)
+        @NotNull
         @Override
-        public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
+        public String getFamilyName() {
           return DevKitThemesBundle.message("inspections.unregistered.named.color.fix.navigate.theme.metadata.file");
         }
 

@@ -1,6 +1,5 @@
 // "Insert 'super()' call" "true"
 // ERROR: No value passed for parameter 'x'
-// K2_AFTER_ERROR: No value passed for parameter 'x'.
 
 open class B(val x: Int)
 

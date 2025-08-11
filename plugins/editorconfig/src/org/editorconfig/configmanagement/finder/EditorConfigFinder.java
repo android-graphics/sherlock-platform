@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.finder;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,7 +23,8 @@ public final class EditorConfigFinder {
     }
   }
 
-  private static @Nullable VirtualFile getEditorConfigUnder(@NotNull VirtualFile dir) {
+  @Nullable
+  private static VirtualFile getEditorConfigUnder(@NotNull VirtualFile dir) {
     for (VirtualFile file : dir.getChildren()) {
       if (isEditorConfig(file)) {
         return file;

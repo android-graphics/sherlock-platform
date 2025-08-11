@@ -64,7 +64,8 @@ public class EditSdkDialog extends DialogWrapper {
       myInterpreterPathTextField.addActionListener(targetListener);
     }
     else {
-      myInterpreterPathTextField.addBrowseFolderListener(project, PythonSdkType.getInstance().getHomeChooserDescriptor().withTitle(label));
+      myInterpreterPathTextField.addBrowseFolderListener(label, null, project,
+                                                         PythonSdkType.getInstance().getHomeChooserDescriptor());
     }
     myRemoveAssociationLabel.setVisible(false);
     final PythonSdkFlavor sdkFlavor = PythonSdkFlavor.getPlatformIndependentFlavor(homePath);

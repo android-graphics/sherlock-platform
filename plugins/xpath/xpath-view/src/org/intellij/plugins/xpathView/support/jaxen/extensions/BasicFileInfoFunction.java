@@ -37,10 +37,11 @@ public abstract class BasicFileInfoFunction extends FunctionImplementation imple
     }
 
     @Override
-    @SuppressWarnings({"RawUseOfParameterizedType"})
-    public @Nullable Object call(Context context, List list) throws FunctionCallException {
+    @Nullable
+    @SuppressWarnings({ "RawUseOfParameterizedType" })
+    public Object call(Context context, List list) throws FunctionCallException {
         final Object arg;
-        if (list.isEmpty()) {
+        if (list.size() == 0) {
             arg = context.getNodeSet().get(0);
         } else {
             final Object o = list.get(0);
@@ -55,5 +56,6 @@ public abstract class BasicFileInfoFunction extends FunctionImplementation imple
         return extractInfo(psiFile);
     }
 
-    protected abstract @Nullable Object extractInfo(PsiFile psiFile);
+    @Nullable
+    protected abstract Object extractInfo(PsiFile psiFile);
 }

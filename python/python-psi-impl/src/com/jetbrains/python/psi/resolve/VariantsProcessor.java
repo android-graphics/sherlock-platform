@@ -22,15 +22,19 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
 
   protected final PsiElement myContext;
 
-  protected final @Nullable Condition<PsiElement> myNodeFilter;
+  @Nullable
+  protected final Condition<PsiElement> myNodeFilter;
 
-  protected final @Nullable Condition<String> myNameFilter;
+  @Nullable
+  protected final Condition<String> myNameFilter;
 
   protected final boolean myPlainNamesOnly; // if true, add insert handlers to known things like functions
 
-  private @Nullable Set<String> myAllowedNames;
+  @Nullable
+  private Set<String> myAllowedNames;
 
-  private final @NotNull Set<String> mySeenNames = new HashSet<>();
+  @NotNull
+  private final Set<String> mySeenNames = new HashSet<>();
 
   public VariantsProcessor(PsiElement context) {
     this(context, null, null, false);

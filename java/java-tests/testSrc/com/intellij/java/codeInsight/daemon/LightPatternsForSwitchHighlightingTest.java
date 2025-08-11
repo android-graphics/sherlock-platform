@@ -202,10 +202,6 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     doTest();
   }
 
-  public void testDoubleInnerPermitClass() {
-    doTest();
-  }
-
   public void testSwitchWithPrimitivesNotAllowed() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22, this::doTest);
   }

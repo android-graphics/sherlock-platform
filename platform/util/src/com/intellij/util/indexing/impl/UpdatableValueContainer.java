@@ -36,7 +36,6 @@ public abstract class UpdatableValueContainer<T> extends ValueContainer<T> {
     needsCompacting = value;
   }
 
-  //TODO RC: why saveTo() is a method of UpdatableValueContainer, and not general ValueContainer?
   public abstract void saveTo(@NotNull DataOutput out,
                               @NotNull DataExternalizer<? super T> externalizer) throws IOException;
 }

@@ -1,7 +1,0 @@
-fragment projectForSnippets on Project {
-  name
-  fullPath
-  userPermissions {
-    createSnippet
-  }
-}

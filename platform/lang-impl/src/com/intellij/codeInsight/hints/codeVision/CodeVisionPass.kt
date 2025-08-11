@@ -35,7 +35,6 @@ import kotlin.system.measureTimeMillis
  * particular [com.intellij.codeInsight.codeVision.CodeVisionProvider] has to be invalidated.
  * Host relaunches it and takes the result of this pass from the cache.
  */
-@Internal
 class CodeVisionPass(
   rootElement: PsiElement,
   private val editor: Editor

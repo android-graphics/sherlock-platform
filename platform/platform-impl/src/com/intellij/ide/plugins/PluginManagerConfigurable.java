@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -14,10 +14,9 @@ import com.intellij.ide.plugins.enums.SortBy;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.ranking.MarketplaceLocalRanker;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
+import com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerSearchResultFeatureProvider;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.idea.AppMode;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,22 +33,24 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.updateSettings.impl.*;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserStartupActivityKt;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.LicensingFacade;
+import com.intellij.ui.RelativeFont;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
@@ -60,7 +61,6 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.*;
@@ -72,8 +72,8 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -81,11 +81,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static com.intellij.ide.plugins.PluginManagerCoreKt.pluginRequiresUltimatePluginButItsDisabled;
 import static com.intellij.ide.plugins.newui.PluginsViewCustomizerKt.getPluginsViewCustomizer;
-import static com.intellij.util.containers.ContainerUtil.exists;
 
-@ApiStatus.Internal
 public final class PluginManagerConfigurable
   implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider {
 
@@ -151,10 +148,6 @@ public final class PluginManagerConfigurable
   private boolean myForceShowInstalledTabForTag = false;
   private boolean myShowMarketplaceTab;
 
-  private Boolean myPluginsAutoUpdateEnabled;
-
-  private Disposable myDisposer = Disposer.newDisposable();
-
   /**
    * @deprecated Use {@link PluginManagerConfigurable#PluginManagerConfigurable()}
    */
@@ -196,7 +189,6 @@ public final class PluginManagerConfigurable
       String query = (index == MARKETPLACE_TAB ? myInstalledTab : myMarketplaceTab).getSearchQuery();
       (index == MARKETPLACE_TAB ? myMarketplaceTab : myInstalledTab).setSearchQuery(query);
     });
-    createGearGotIt();
 
     myUpdateAll.setVisible(false);
     myUpdateAllBundled.setVisible(false);
@@ -280,36 +272,6 @@ public final class PluginManagerConfigurable
 
   private @NotNull DefaultActionGroup createGearActions() {
     DefaultActionGroup actions = new DefaultActionGroup();
-    if (PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed()) {
-      UpdateOptions state = UpdateSettings.getInstance().getState();
-      myPluginsAutoUpdateEnabled = state.isPluginsAutoUpdateEnabled();
-
-      MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect(myDisposer);
-      connect.subscribe(PluginAutoUpdateListener.Companion.getTOPIC(), new PluginAutoUpdateListener() {
-        @Override
-        public void settingsChanged() {
-          myPluginsAutoUpdateEnabled = state.isPluginsAutoUpdateEnabled();
-        }
-      });
-
-      actions.add(new DumbAwareToggleAction(IdeBundle.message("updates.plugins.autoupdate.settings.action")) {
-        @Override
-        public boolean isSelected(@NotNull AnActionEvent e) {
-          return myPluginsAutoUpdateEnabled;
-        }
-
-        @Override
-        public void setSelected(@NotNull AnActionEvent e, boolean state) {
-          myPluginsAutoUpdateEnabled = state;
-        }
-
-        @Override
-        public @NotNull ActionUpdateThread getActionUpdateThread() {
-          return ActionUpdateThread.EDT;
-        }
-      });
-      actions.addSeparator();
-    }
     actions.add(new DumbAwareAction(IdeBundle.message("plugin.manager.repositories")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -361,21 +323,6 @@ public final class PluginManagerConfigurable
       });
     }
     return actions;
-  }
-
-  private void createGearGotIt() {
-    if (!PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed() ||
-        UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled() ||
-        AppMode.isRemoteDevHost()) {
-      return;
-    }
-
-    String title = IdeBundle.message("plugin.manager.plugins.auto.update.title");
-    GotItTooltip tooltip = new GotItTooltip(title, IdeBundle.message("plugin.manager.plugins.auto.update.description"), myDisposer);
-    tooltip.withHeader(title);
-    tooltip.show((JComponent)myTabHeaderComponent.getComponent(1), (component, balloon) -> {
-      return new Point(component.getWidth() / 2, ((JComponent)component).getVisibleRect().height);
-    });
   }
 
   private static void showRightBottomPopup(@NotNull Component component, @NotNull @Nls String title, @NotNull ActionGroup group) {
@@ -438,7 +385,7 @@ public final class PluginManagerConfigurable
       @Override
       protected void createSearchTextField(int flyDelay) {
         super.createSearchTextField(250);
-        searchTextField.setHistoryPropertyName("MarketplacePluginsSearchHistory");
+        mySearchTextField.setHistoryPropertyName("MarketplacePluginsSearchHistory");
       }
 
       @Override
@@ -455,7 +402,7 @@ public final class PluginManagerConfigurable
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
                                                                      @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModel, descriptor, group, searchListener, true);
+            return new ListPluginComponent(myPluginModel, descriptor, group, mySearchListener, true);
           }
         };
 
@@ -526,7 +473,7 @@ public final class PluginManagerConfigurable
               LOG.info("Main plugin repository is not available ('" + e.getMessage() + "'). Please check your network settings.");
             }
 
-            for (String host : RepositoryHelper.getCustomPluginRepositoryHosts()) {
+            for (String host : UpdateSettings.getInstance().getPluginHosts()) {
               List<PluginNode> allDescriptors = customRepositoriesMap.get(host);
               if (allDescriptors != null) {
                 String groupName = IdeBundle.message("plugins.configurable.repository.0", host);
@@ -599,14 +546,14 @@ public final class PluginManagerConfigurable
 
       @Override
       protected @NotNull SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
-        SearchUpDownPopupController marketplaceController = new SearchUpDownPopupController(searchTextField) {
+        SearchUpDownPopupController marketplaceController = new SearchUpDownPopupController(mySearchTextField) {
           @Override
           protected @NotNull List<String> getAttributes() {
             List<String> attributes = new ArrayList<>();
             attributes.add(SearchWords.TAG.getValue());
             attributes.add(SearchWords.SORT_BY.getValue());
             attributes.add(SearchWords.VENDOR.getValue());
-            if (!RepositoryHelper.getCustomPluginRepositoryHosts().isEmpty()) {
+            if (!UpdateSettings.getInstance().getPluginHosts().isEmpty()) {
               attributes.add(SearchWords.REPOSITORY.getValue());
             }
             attributes.add(SearchWords.STAFF_PICKS.getValue());
@@ -662,19 +609,19 @@ public final class PluginManagerConfigurable
                 }
                 yield myVendorsSorted;
               }
-              case REPOSITORY -> RepositoryHelper.getCustomPluginRepositoryHosts();
+              case REPOSITORY -> UpdateSettings.getInstance().getPluginHosts();
               case INTERNAL, SUGGESTED, STAFF_PICKS -> null;
             };
           }
 
           @Override
           protected void showPopupForQuery() {
-            showSearchPanel(searchTextField.getText());
+            showSearchPanel(mySearchTextField.getText());
           }
 
           @Override
           protected void handleEnter() {
-            if (!searchTextField.getText().isEmpty()) {
+            if (!mySearchTextField.getText().isEmpty()) {
               handleTrigger("marketplace.suggest.popup.enter");
             }
           }
@@ -784,7 +731,7 @@ public final class PluginManagerConfigurable
           }
 
           List<String> queries = new ArrayList<>();
-          new SearchQueryParser.Marketplace(searchTextField.getText()) { // FIXME: it's unused - why hasn't it been removed?
+          new SearchQueryParser.Marketplace(mySearchTextField.getText()) { // FIXME: it's unused - why hasn't it been removed?
             @Override
             protected void addToSearchQuery(@NotNull String query) {
               queries.add(query);
@@ -809,7 +756,7 @@ public final class PluginManagerConfigurable
           }
 
           String query = StringUtil.join(queries, " ");
-          searchTextField.setTextIgnoreEvents(query);
+          mySearchTextField.setTextIgnoreEvents(query);
           if (query.isEmpty()) {
             myMarketplaceTab.hideSearchPanel();
           }
@@ -825,7 +772,7 @@ public final class PluginManagerConfigurable
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
                                                                      @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModel, descriptor, group, searchListener, true);
+            return new ListPluginComponent(myPluginModel, descriptor, group, mySearchListener, true);
           }
         };
 
@@ -942,7 +889,7 @@ public final class PluginManagerConfigurable
                   }
                 }
 
-                PluginManagerUsageCollector.INSTANCE.performMarketplaceSearch(
+                PluginManagerUsageCollector.performMarketplaceSearch(
                   ProjectUtil.getActiveProject(), parser, result.descriptors, searchIndex, pluginToScore);
               }
               catch (IOException e) {
@@ -962,7 +909,7 @@ public final class PluginManagerConfigurable
 
       @Override
       protected void onSearchReset() {
-        PluginManagerUsageCollector.INSTANCE.searchReset();
+        PluginManagerUsageCollector.searchReset();
       }
     };
   }
@@ -979,14 +926,14 @@ public final class PluginManagerConfigurable
       protected void createSearchTextField(int flyDelay) {
         super.createSearchTextField(flyDelay);
 
-        JBTextField textField = searchTextField.getTextEditor();
+        JBTextField textField = mySearchTextField.getTextEditor();
         textField.putClientProperty("search.extension", ExtendableTextComponent.Extension
           .create(AllIcons.Actions.More, AllIcons.Actions.More, IdeBundle.message("plugins.configurable.search.options"), // TODO: icon
                   () -> showRightBottomPopup(textField, IdeBundle.message("plugins.configurable.show"), myInstalledSearchGroup)));
         textField.putClientProperty("JTextField.variant", null);
         textField.putClientProperty("JTextField.variant", "search");
 
-        searchTextField.setHistoryPropertyName("InstalledPluginsSearchHistory");
+        mySearchTextField.setHistoryPropertyName("InstalledPluginsSearchHistory");
       }
 
       @Override
@@ -1003,7 +950,7 @@ public final class PluginManagerConfigurable
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
                                                                      @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModel, descriptor, group, searchListener, false);
+            return new ListPluginComponent(myPluginModel, descriptor, group, mySearchListener, false);
           }
         };
 
@@ -1127,12 +1074,12 @@ public final class PluginManagerConfigurable
 
       @Override
       protected void onSearchReset() {
-        PluginManagerUsageCollector.INSTANCE.searchReset();
+        PluginManagerUsageCollector.searchReset();
       }
 
       @Override
       protected @NotNull SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
-        SearchUpDownPopupController installedController = new SearchUpDownPopupController(searchTextField) {
+        SearchUpDownPopupController installedController = new SearchUpDownPopupController(mySearchTextField) {
           @Override
           protected @NotNull @NonNls List<String> getAttributes() {
             return Arrays
@@ -1159,7 +1106,7 @@ public final class PluginManagerConfigurable
 
           @Override
           protected void showPopupForQuery() {
-            showSearchPanel(searchTextField.getText());
+            showSearchPanel(mySearchTextField.getText());
           }
         };
 
@@ -1170,7 +1117,7 @@ public final class PluginManagerConfigurable
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
                                                                      @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModel, descriptor, group, searchListener, false);
+            return new ListPluginComponent(myPluginModel, descriptor, group, mySearchListener, false);
           }
         };
 
@@ -1179,7 +1126,7 @@ public final class PluginManagerConfigurable
 
         myInstalledSearchCallback = updateAction -> {
           List<String> queries = new ArrayList<>();
-          new SearchQueryParser.Installed(searchTextField.getText()) {
+          new SearchQueryParser.Installed(mySearchTextField.getText()) {
             @Override
             protected void addToSearchQuery(@NotNull String query) {
               queries.add(query);
@@ -1210,7 +1157,7 @@ public final class PluginManagerConfigurable
             myInstalledSearchSetState = false;
 
             String query = StringUtil.join(queries, " ");
-            searchTextField.setTextIgnoreEvents(query);
+            mySearchTextField.setTextIgnoreEvents(query);
             if (query.isEmpty()) {
               myInstalledTab.hideSearchPanel();
             }
@@ -1394,7 +1341,6 @@ public final class PluginManagerConfigurable
     addGroup(groups, groupName, PluginsGroupType.SUGGESTED, "", plugins, group -> false);
   }
 
-
   private final class ComparablePluginsGroup extends PluginsGroup
     implements Comparable<ComparablePluginsGroup> {
 
@@ -1410,7 +1356,7 @@ public final class PluginManagerConfigurable
       rightAction = new LinkLabelButton<>("",
                                           null,
                                           (__, ___) -> setEnabledState());
-      rightAction.setVisible(hasPluginsForEnableDisable(descriptors));
+
       titleWithEnabled(myPluginModel);
     }
 
@@ -1427,32 +1373,12 @@ public final class PluginManagerConfigurable
     }
 
     private void setEnabledState() {
-      setState(myPluginModel, descriptors, myIsEnable);
-    }
-
-    /** Returns true, if in descriptors list not only Ultimate plugins while we are on Core license.
-     * (Any plugin exists, for which we can change the enabled / disable state) */
-    private static boolean hasPluginsForEnableDisable(List<? extends IdeaPluginDescriptor> descriptors){
-      var idMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
-      return exists(descriptors, descriptor -> !pluginRequiresUltimatePluginButItsDisabled(descriptor.getPluginId(), idMap));
-    }
-  }
-
-  /** Modifies the state of the plugin list, excluding Ultimate plugins when the Ultimate license is not active. */
-  private static void setState(MyPluginModel pluginModel, Collection<IdeaPluginDescriptor> descriptors, boolean isEnable) {
-    if (descriptors.isEmpty()) return;
-
-    var idMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
-    var suitableDescriptors = descriptors.stream().
-      filter(descriptor -> !pluginRequiresUltimatePluginButItsDisabled(descriptor.getPluginId(), idMap)).toList();
-
-    if (suitableDescriptors.isEmpty()) return;
-
-    if (isEnable) {
-      pluginModel.enable(suitableDescriptors);
-    }
-    else {
-      pluginModel.disable(suitableDescriptors);
+      if (myIsEnable) {
+        myPluginModel.enable(descriptors);
+      }
+      else {
+        myPluginModel.disable(descriptors);
+      }
     }
   }
 
@@ -1781,7 +1707,6 @@ public final class PluginManagerConfigurable
 
     private MarketplaceSortByAction(@NotNull SortBy option) {
       super(option.getPresentableNameSupplier());
-      getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
       myOption = option;
     }
 
@@ -1843,7 +1768,6 @@ public final class PluginManagerConfigurable
 
     private InstalledSearchOptionAction(@NotNull InstalledSearchOption option) {
       super(option.myPresentableNameSupplier);
-      getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
       myOption = option;
     }
 
@@ -1920,7 +1844,14 @@ public final class PluginManagerConfigurable
         }
       }
 
-      setState(myPluginModel, descriptors, myEnable);
+      if (!descriptors.isEmpty()) {
+        if (myEnable) {
+          myPluginModel.enable(descriptors);
+        }
+        else {
+          myPluginModel.disable(descriptors);
+        }
+      }
     }
   }
 
@@ -1950,7 +1881,7 @@ public final class PluginManagerConfigurable
     if (showAllPredicate.test(group)) {
       group.rightAction = new LinkLabelButton<>(IdeBundle.message("plugins.configurable.show.all"),
                                                 null,
-                                                myMarketplaceTab.searchListener,
+                                                myMarketplaceTab.mySearchListener,
                                                 showAllQuery);
       group.rightAction.setBorder(JBUI.Borders.emptyRight(5));
     }
@@ -2014,11 +1945,6 @@ public final class PluginManagerConfigurable
 
     pluginsState.runShutdownCallback();
     pluginsState.resetChangesAppliedWithoutRestart();
-
-    if (myDisposer != null) {
-      Disposer.dispose(myDisposer);
-      myDisposer = null;
-    }
   }
 
   @Override
@@ -2028,23 +1954,11 @@ public final class PluginManagerConfigurable
 
   @Override
   public boolean isModified() {
-    if (myPluginsAutoUpdateEnabled != null &&
-        UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled() != myPluginsAutoUpdateEnabled) {
-      return true;
-    }
     return myPluginModel.isModified();
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    if (myPluginsAutoUpdateEnabled != null) {
-      UpdateOptions state = UpdateSettings.getInstance().getState();
-      if (state.isPluginsAutoUpdateEnabled() != myPluginsAutoUpdateEnabled) {
-        state.setPluginsAutoUpdateEnabled(myPluginsAutoUpdateEnabled);
-        ApplicationManager.getApplication().getService(PluginAutoUpdateService.class).onSettingsChanged$intellij_platform_ide_impl();
-      }
-    }
-
     if (myPluginModel.apply(myCardPanel)) return;
 
     if (myPluginModel.createShutdownCallback) {
@@ -2059,10 +1973,15 @@ public final class PluginManagerConfigurable
 
   @Override
   public void reset() {
-    if (myPluginsAutoUpdateEnabled != null) {
-      myPluginsAutoUpdateEnabled = UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled();
-    }
     myPluginModel.clear(myCardPanel);
+  }
+
+  /**
+   * @deprecated Please use {@link #select(Collection)}.
+   */
+  @Deprecated(since = "2020.2", forRemoval = true)
+  public void select(@NotNull IdeaPluginDescriptor @NotNull ... descriptors) {
+    select(ContainerUtil.newHashSet(descriptors));
   }
 
   private void select(@NotNull Set<? extends IdeaPluginDescriptor> descriptors) {

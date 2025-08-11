@@ -1,12 +1,12 @@
 from _typeshed import Incomplete
-from typing import Final
 
-from braintree.resource import Resource
+from braintree.configuration import Configuration as Configuration
+from braintree.resource import Resource as Resource
+from braintree.successful_result import SuccessfulResult as SuccessfulResult
 
 class DocumentUpload(Resource):
     class Kind:
-        EvidenceDocument: Final = "evidence_document"
-
+        EvidenceDocument: str
     @staticmethod
     def create(params: Incomplete | None = None): ...
     @staticmethod

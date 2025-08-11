@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations
 
 import com.intellij.codeInspection.ProblemHighlightType
@@ -50,35 +50,29 @@ internal class UseExpressionBodyInspection :
 
     override fun isApplicableByPsi(element: KtDeclarationWithBody): Boolean = element.isConvertableToExpressionBody()
 
-    override fun getApplicableRanges(element: KtDeclarationWithBody): List<TextRange> {
-        fun KtExpression.toHighlight(): PsiElement? = when (this) {
-            is KtReturnExpression -> returnKeyword
-            is KtCallExpression -> calleeExpression
-            is KtQualifiedExpression -> selectorExpression?.toHighlight()
-            is KtObjectLiteralExpression -> objectDeclaration.getObjectKeyword()
-            else -> this
-        }
-
-        return ApplicabilityRange.multiple(element) { declaration: KtDeclarationWithBody ->
+    override fun getApplicableRanges(element: KtDeclarationWithBody): List<TextRange> =
+        ApplicabilityRange.single(element) { declaration: KtDeclarationWithBody ->
             val bodyBlockExpression = declaration.bodyBlockExpression
-            val toHighlightElement = bodyBlockExpression?.statements?.singleOrNull()?.toHighlight()
-            val rangeElements = if (toHighlightElement == null) {
-                listOf(bodyBlockExpression)
-            } else {
-                listOf(toHighlightElement, bodyBlockExpression.lBrace)
+
+            fun KtExpression.toHighlight(): PsiElement? = when (this) {
+                is KtReturnExpression -> returnKeyword
+                is KtCallExpression -> calleeExpression
+                is KtQualifiedExpression -> selectorExpression?.toHighlight()
+                is KtObjectLiteralExpression -> objectDeclaration.getObjectKeyword()
+                else -> this
             }
 
-            rangeElements.filterNotNull()
+            bodyBlockExpression?.statements?.singleOrNull()?.toHighlight() ?: bodyBlockExpression
         }
-    }
 
     override fun getProblemHighlightType(
         element: KtDeclarationWithBody, context: Context
     ): ProblemHighlightType = context.highlightType
 
-    override fun KaSession.prepareContext(element: KtDeclarationWithBody): Context? {
+    context(KaSession)
+    override fun prepareContext(element: KtDeclarationWithBody): Context? {
         val valueStatement = element.findValueStatement() ?: return null
-        val requireType = valueStatement.expressionType?.isNothingType == true
+        val requireType = valueStatement.expressionType?.isNothing == true
         return when {
             valueStatement !is KtReturnExpression -> Context(KotlinBundle.message("block.body"), INFORMATION)
             valueStatement.returnedExpression is KtWhenExpression -> Context(KotlinBundle.message("return.when"), INFORMATION)
@@ -90,10 +84,9 @@ internal class UseExpressionBodyInspection :
     context(KaSession)
     private fun KtDeclarationWithBody.findValueStatement(): KtExpression? {
         val statements = bodyBlockExpression?.statements
-        if (statements.isNullOrEmpty()) {
+        if (statements == null || statements.isEmpty()) {
             return KtPsiFactory(project).createExpression("Unit")
         }
-
         val statement = statements.singleOrNull() ?: return null
         when (statement) {
             is KtReturnExpression -> {
@@ -107,8 +100,8 @@ internal class UseExpressionBodyInspection :
                 if (statement is KtBinaryExpression && statement.operationToken in KtTokens.ALL_ASSIGNMENTS) return null
 
                 val expressionType = statement.expressionType ?: return null
-                val isUnit = expressionType.isUnitType
-                if (!isUnit && !expressionType.isNothingType) return null
+                val isUnit = expressionType.isUnit
+                if (!isUnit && !expressionType.isNothing) return null
                 if (isUnit) {
                     if (statement.hasResultingIfWithoutElse()) {
                         return null
@@ -135,7 +128,7 @@ internal class UseExpressionBodyInspection :
     override fun createQuickFix(
         element: KtDeclarationWithBody,
         context: Context,
-    ): KotlinModCommandQuickFix<KtDeclarationWithBody> = object : KotlinModCommandQuickFix<KtDeclarationWithBody>() {
+    ) = object : KotlinModCommandQuickFix<KtDeclarationWithBody>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("convert.to.expression.body.fix.text")

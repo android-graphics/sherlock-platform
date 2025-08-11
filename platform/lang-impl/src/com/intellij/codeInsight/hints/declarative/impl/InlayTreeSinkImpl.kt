@@ -31,7 +31,7 @@ class InlayTreeSinkImpl(
                                @NlsContexts.HintText tooltip: String?,
                                hintFormat: HintFormat,
                                builder: PresentationTreeBuilder.() -> Unit) {
-    val b = PresentationTreeBuilderImpl.createRoot(position)
+    val b = PresentationTreeBuilderImpl.createRoot()
     b.builder()
     val tree = b.complete()
     if (tree.size == 0) {

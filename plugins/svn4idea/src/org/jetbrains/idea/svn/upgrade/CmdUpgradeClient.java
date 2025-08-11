@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.upgrade;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -69,7 +69,8 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
       return createEvent(new File(path), createAction(statusMessage));
     }
 
-    public static @Nullable EventAction createAction(@NotNull String code) {
+    @Nullable
+    public static EventAction createAction(@NotNull String code) {
       EventAction result = null;
 
       if (UPGRADED_CODE.equals(code)) {
@@ -82,8 +83,8 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
 
   private static final class UpgradeLineCommandListener extends LineCommandAdapter {
 
-    private final @NotNull FileStatusResultParser parser;
-    private final @NotNull AtomicReference<VcsException> exception;
+    @NotNull private final FileStatusResultParser parser;
+    @NotNull private final AtomicReference<VcsException> exception;
 
     private UpgradeLineCommandListener(@NotNull FileStatusResultParser parser) {
       this.parser = parser;

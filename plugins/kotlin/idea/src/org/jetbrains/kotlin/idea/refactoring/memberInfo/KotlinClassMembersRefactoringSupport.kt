@@ -15,22 +15,22 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 
-class KotlinClassMembersRefactoringSupport : ClassMembersRefactoringSupport<PsiNamedElement> {
+class KotlinClassMembersRefactoringSupport : ClassMembersRefactoringSupport {
     override fun isProperMember(memberInfo: MemberInfoBase<*>): Boolean {
         val member = memberInfo.member
         return member is KtNamedFunction || member is KtProperty || (member is KtParameter && member.isPropertyParameter()) || (member is KtClassOrObject && memberInfo.overrides == null)
     }
 
-    override fun createDependentMembersCollector(clazz: PsiNamedElement, superClass: PsiNamedElement?): DependentMembersCollectorBase<*, PsiNamedElement> {
+    override fun createDependentMembersCollector(clazz: Any, superClass: Any?): DependentMembersCollectorBase<*, *> {
         return object : DependentMembersCollectorBase<KtNamedDeclaration, PsiNamedElement>(
             clazz as KtClassOrObject,
-            superClass
+            superClass as PsiNamedElement?
         ) {
             override fun collect(member: KtNamedDeclaration) {
                 member.accept(
                     object : KtTreeVisitorVoid() {
                         private val pullUpData =
-                            superClass?.let { KotlinPullUpData(clazz as KtClassOrObject, it, emptyList()) }
+                            superClass?.let { KotlinPullUpData(clazz as KtClassOrObject, it as PsiNamedElement, emptyList()) }
 
                         private val possibleContainingClasses =
                             listOf(clazz) + ((clazz as? KtClass)?.companionObjects ?: emptyList())

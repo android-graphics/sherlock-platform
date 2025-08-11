@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.chainsSearch.context;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -60,7 +60,8 @@ public final class ChainSearchTarget {
            this;
   }
 
-  public static @Nullable ChainSearchTarget create(PsiType type) {
+  @Nullable
+  public static ChainSearchTarget create(PsiType type) {
     if (type instanceof PsiArrayType) {
       return create((PsiArrayType)type);
     }
@@ -70,7 +71,8 @@ public final class ChainSearchTarget {
     return null;
   }
 
-  private static @Nullable ChainSearchTarget create(PsiArrayType arrayType) {
+  @Nullable
+  private static ChainSearchTarget create(PsiArrayType arrayType) {
     // only 1-dim arrays accepted
     PsiType componentType = arrayType.getComponentType();
     PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(componentType);
@@ -80,7 +82,8 @@ public final class ChainSearchTarget {
     return new ChainSearchTarget(targetQName, new byte[] {SignatureData.ARRAY_ONE_DIM}, arrayType);
   }
 
-  private static @Nullable ChainSearchTarget create(PsiClassType classType) {
+  @Nullable
+  private static ChainSearchTarget create(PsiClassType classType) {
     PsiClass resolvedClass = PsiUtil.resolveClassInClassTypeOnly(classType);
     if (resolvedClass == null) return null;
     byte iteratorKind = SignatureData.ZERO_DIM;

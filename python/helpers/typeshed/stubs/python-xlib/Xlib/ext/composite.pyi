@@ -1,9 +1,8 @@
-from _typeshed import Unused
 from collections.abc import Callable
-from typing import Any, Final
-from typing_extensions import TypeAlias
+from typing import Any
+from typing_extensions import Final, TypeAlias
 
-from Xlib._typing import ErrorHandler
+from Xlib._typing import ErrorHandler, Unused
 from Xlib.display import Display
 from Xlib.protocol import rq
 from Xlib.xobject import drawable, resource

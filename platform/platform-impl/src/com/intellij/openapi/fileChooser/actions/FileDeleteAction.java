@@ -28,7 +28,7 @@ import java.nio.file.Path;
 
 public final class FileDeleteAction extends FileChooserAction {
   /** @deprecated please use {@link FileDeleteAction#FileDeleteAction(String, String, Icon)} instead */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public FileDeleteAction() { }
 
   @SuppressWarnings("unused")

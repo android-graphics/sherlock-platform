@@ -19,10 +19,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
 import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchInplaceEditor;
 import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
-import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,22 +32,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@ApiStatus.Internal
 public final class XDebuggerWatchesManager {
-  /**
-   * Maps configuration name to a list of watches.
-   *
-   * @see XDebugSessionImpl#computeConfigurationName()
-   */
-  private final Map<String, List<XWatch>> watches = new ConcurrentHashMap<>();
-  /**
-   * Maps file URL to a set of inline watches.
-   */
+  private final Map<String, List<XExpression>> watches = new ConcurrentHashMap<>();
   private final Map<String, Set<InlineWatch>> inlineWatches = new ConcurrentHashMap<>();
   private final MergingUpdateQueue myInlinesUpdateQueue;
   private final Project myProject;
 
-  public XDebuggerWatchesManager(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
+  public XDebuggerWatchesManager(@NotNull Project project) {
     myProject = project;
     EditorEventMulticaster editorEventMulticaster = EditorFactory.getInstance().getEventMulticaster();
     editorEventMulticaster.addDocumentListener(new MyDocumentListener(), project);
@@ -57,36 +48,19 @@ public final class XDebuggerWatchesManager {
         getDocumentInlines(document).forEach(InlineWatch::setMarker);
       }
     });
-    myInlinesUpdateQueue = MergingUpdateQueue.Companion.edtMergingUpdateQueue("XInlineWatches", 300, coroutineScope);
+    myInlinesUpdateQueue = new MergingUpdateQueue("XInlineWatches", 300, true, null, project);
   }
 
-  public @NotNull List<XWatch> getWatchEntries(String configurationName) {
-    return ContainerUtil.notNullize(watches.get(configurationName));
+  public @NotNull List<XExpression> getWatches(String confName) {
+    return ContainerUtil.notNullize(watches.get(confName));
   }
 
-  public void setWatchEntries(@NotNull String configurationName, @NotNull List<XWatch> watchList) {
-    if (watchList.isEmpty()) {
-      watches.remove(configurationName);
-    }
-    else {
-      watches.put(configurationName, watchList);
-    }
-  }
-
-  public @NotNull List<XExpression> getWatches(String configurationName) {
-    return ContainerUtil.map(ContainerUtil.notNullize(watches.get(configurationName)), XWatch::getExpression);
-  }
-
-  /**
-   * @deprecated Use {@link XDebuggerWatchesManager#setWatchEntries(String, List)} instead
-   */
-  @Deprecated
   public void setWatches(@NotNull String configurationName, @NotNull List<XExpression> expressions) {
     if (expressions.isEmpty()) {
       watches.remove(configurationName);
     }
     else {
-      watches.put(configurationName, ContainerUtil.map(expressions, XWatchImpl::new));
+      watches.put(configurationName, expressions);
     }
   }
 
@@ -121,23 +95,14 @@ public final class XDebuggerWatchesManager {
     for (ConfigurationState configurationState : state.getExpressions()) {
       List<WatchState> expressionStates = configurationState.getExpressionStates();
       if (!ContainerUtil.isEmpty(expressionStates)) {
-        watches.put(configurationState.getName(), ContainerUtil.mapNotNull(expressionStates, watchState -> {
-          XExpression expression = watchState.toXExpression();
-          if (expression == null) return null;
-          if (!watchState.getCanBePaused()) {
-            return new XAlwaysEvaluatedWatch(expression);
-          }
-          XWatchImpl watch = new XWatchImpl(expression);
-          watch.setPaused(watchState.isPaused());
-          return watch;
-        }));
+        watches.put(configurationState.getName(), ContainerUtil.mapNotNull(expressionStates, XExpressionState::toXExpression));
       }
     }
 
     VirtualFileManager fileManager = VirtualFileManager.getInstance();
     XDebuggerUtil debuggerUtil = XDebuggerUtil.getInstance();
     for (InlineWatchState inlineWatchState : state.getInlineExpressionStates()) {
-      if (inlineWatchState.getFileUrl() == null || inlineWatchState.getWatchState() == null) continue;
+      if (inlineWatchState == null || inlineWatchState.getFileUrl() == null || inlineWatchState.getWatchState() == null) continue;
 
       VirtualFile file = fileManager.findFileByUrl(inlineWatchState.getFileUrl());
       XSourcePosition position = debuggerUtil.createPosition(file, inlineWatchState.getLine());
@@ -175,11 +140,16 @@ public final class XDebuggerWatchesManager {
 
   private class MyDocumentListener implements DocumentListener {
     @Override
-    public void documentChanged(final @NotNull DocumentEvent e) {
+    public void documentChanged(@NotNull final DocumentEvent e) {
       final Document document = e.getDocument();
       Collection<InlineWatch> inlines = getDocumentInlines(document);
       if (!inlines.isEmpty()) {
-        myInlinesUpdateQueue.queue(Update.create(document, () -> updateInlines(document)));
+        myInlinesUpdateQueue.queue(new Update(document) {
+          @Override
+          public void run() {
+            updateInlines(document);
+          }
+        });
       }
     }
   }
@@ -223,7 +193,8 @@ public final class XDebuggerWatchesManager {
       .map(t -> (XInlineWatchesView)t.getWatchesView());
   }
 
-  public @NotNull Collection<InlineWatch> getDocumentInlines(Document document) {
+  @NotNull
+  public Collection<InlineWatch> getDocumentInlines(Document document) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null) {
       Set<InlineWatch> inlineWatches = this.inlineWatches.get(file.getUrl());

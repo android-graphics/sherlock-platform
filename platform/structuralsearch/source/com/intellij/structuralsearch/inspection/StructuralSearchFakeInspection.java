@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -29,6 +29,7 @@ import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,9 +39,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public final class StructuralSearchFakeInspection extends LocalInspectionTool {
+/**
+ * @author Bas Leijdekkers
+ */
+public class StructuralSearchFakeInspection extends LocalInspectionTool {
+
   private Configuration myMainConfiguration;
-  private final @NotNull List<Configuration> myConfigurations;
+  @NotNull private final List<Configuration> myConfigurations;
 
   public StructuralSearchFakeInspection(@NotNull Collection<@NotNull Configuration> configurations) {
     if (configurations.isEmpty()) throw new IllegalArgumentException();
@@ -57,13 +62,16 @@ public final class StructuralSearchFakeInspection extends LocalInspectionTool {
     myMainConfiguration = myConfigurations.get(0);
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NotNull
   @Override
-  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getDisplayName() {
+  public String getDisplayName() {
     return myMainConfiguration.getName();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getShortName() {
+  public String getShortName() {
     return myMainConfiguration.getUuid();
   }
 
@@ -80,8 +88,9 @@ public final class StructuralSearchFakeInspection extends LocalInspectionTool {
     return ContainerUtil.exists(myConfigurations, c -> c instanceof ReplaceConfiguration);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getID() {
+  public String getID() {
     final HighlightDisplayKey key = HighlightDisplayKey.find(getShortName());
     if (key != null) {
       return key.getID(); // to avoid using a new suppress id before it is registered.
@@ -91,17 +100,20 @@ public final class StructuralSearchFakeInspection extends LocalInspectionTool {
   }
 
   @Override
-  public @NotNull String getAlternativeID() {
+  public @Nullable String getAlternativeID() {
     return SSBasedInspection.SHORT_NAME;
   }
 
+  @Nullable
   @Override
-  public @NotNull String getMainToolId() {
+  public String getMainToolId() {
     return SSBasedInspection.SHORT_NAME;
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NotNull
   @Override
-  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getGroupDisplayName() {
+  public String getGroupDisplayName() {
     return SSRBundle.message("structural.search.group.name");
   }
 
@@ -110,8 +122,9 @@ public final class StructuralSearchFakeInspection extends LocalInspectionTool {
     return InspectionProfileUtil.getGroup();
   }
 
+  @Nullable
   @Override
-  public @NotNull String getStaticDescription() {
+  public String getStaticDescription() {
     final String description = myMainConfiguration.getDescription();
     if (StringUtil.isEmpty(description)) {
       return SSRBundle.message("no.description.message");
@@ -192,9 +205,9 @@ public final class StructuralSearchFakeInspection extends LocalInspectionTool {
 
   private void performMove(@NotNull JList<Configuration> list, boolean up) {
     final MyListModel model = (MyListModel)list.getModel();
+    final List<Configuration> values = list.getSelectedValuesList();
     final Comparator<Configuration> c = Comparator.comparingInt(Configuration::getOrder);
-    final List<Configuration> values = ContainerUtil.sorted(list.getSelectedValuesList(),
-    up ? c : c.reversed());
+    values.sort(up ? c : c.reversed());
     final int[] indices = new int[values.size()];
     for (int i = 0, size = values.size(); i < size; i++) {
       final Configuration value = values.get(i);
@@ -209,7 +222,8 @@ public final class StructuralSearchFakeInspection extends LocalInspectionTool {
     saveChangesToProfile(list);
   }
 
-  private static @NotNull Configuration moveMetaData(@NotNull Configuration source, @NotNull Configuration target) {
+  @NotNull
+  private static Configuration moveMetaData(@NotNull Configuration source, @NotNull Configuration target) {
     if (source == target) return source;
     target.setDescription(source.getDescription());
     target.setSuppressId(source.getSuppressId());
@@ -287,7 +301,8 @@ public final class StructuralSearchFakeInspection extends LocalInspectionTool {
   }
 
   private final class AddTemplateAction extends DumbAwareAction {
-    private final @NotNull JList<Configuration> myList;
+    @NotNull
+    private final JList<Configuration> myList;
     private final boolean myReplace;
 
     private AddTemplateAction(@NotNull JList<Configuration> list, boolean replace) {

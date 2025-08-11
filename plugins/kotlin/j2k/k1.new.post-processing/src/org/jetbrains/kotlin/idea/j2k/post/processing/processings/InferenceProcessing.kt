@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeCalculatorImpl
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ByInfoSuperFunctionsProvider
@@ -15,13 +16,13 @@ import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.mutability.*
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.nullability.*
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.ElementsBasedPostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
+import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.psi.KtElement
 
 internal abstract class InferenceProcessing : ElementsBasedPostProcessing() {
-    override fun runProcessing(elements: List<PsiElement>, converterContext: ConverterContext) {
+    override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
         val kotlinElements = elements.filterIsInstance<KtElement>()
         if (kotlinElements.isEmpty()) return
         val resolutionFacade = runReadAction {
@@ -32,10 +33,11 @@ internal abstract class InferenceProcessing : ElementsBasedPostProcessing() {
 
     abstract fun createInferenceFacade(
         resolutionFacade: ResolutionFacade,
-        converterContext: ConverterContext
+        converterContext: NewJ2kConverterContext
     ): InferenceFacade
 
-    override fun computeApplier(elements: List<PsiElement>, converterContext: ConverterContext): PostProcessingApplier {
+    context(KaSession)
+    override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
         error("Not supported in K1 J2K")
     }
 }
@@ -43,7 +45,7 @@ internal abstract class InferenceProcessing : ElementsBasedPostProcessing() {
 internal class NullabilityInferenceProcessing : InferenceProcessing() {
     override fun createInferenceFacade(
         resolutionFacade: ResolutionFacade,
-        converterContext: ConverterContext
+        converterContext: NewJ2kConverterContext
     ): InferenceFacade = InferenceFacade(
         NullabilityContextCollector(resolutionFacade, converterContext),
         ConstraintsCollectorAggregator(
@@ -65,7 +67,7 @@ internal class NullabilityInferenceProcessing : InferenceProcessing() {
 internal class MutabilityInferenceProcessing : InferenceProcessing() {
     override fun createInferenceFacade(
         resolutionFacade: ResolutionFacade,
-        converterContext: ConverterContext
+        converterContext: NewJ2kConverterContext
     ): InferenceFacade = InferenceFacade(
         MutabilityContextCollector(resolutionFacade, converterContext),
         ConstraintsCollectorAggregator(

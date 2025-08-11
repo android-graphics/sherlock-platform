@@ -6,7 +6,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProviderImpl
-import com.intellij.testFramework.common.timeoutRunBlocking
 
 abstract class ExternalSystemJdkNonblockingUtilTestCase : ExternalSystemJdkUtilTestCase() {
 
@@ -20,9 +19,7 @@ abstract class ExternalSystemJdkNonblockingUtilTestCase : ExternalSystemJdkUtilT
 
   open fun nonblockingResolveJdkInfo(jdkReference: String?): SdkInfo {
     val projectSdk = ProjectRootManager.getInstance(project).projectSdk
-    return timeoutRunBlocking {
-      sdkLookupProvider.resolveJdkInfo(project, projectSdk, jdkReference)
-    }
+    return sdkLookupProvider.nonblockingResolveJdkInfo(projectSdk, jdkReference)
   }
 
   fun assertSdkInfo(versionString: String, homePath: String, actualJdkReference: String?) {

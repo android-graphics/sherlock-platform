@@ -10,7 +10,6 @@ import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,15 +23,15 @@ import java.util.List;
  * @author Plushnikov Michail
  */
 public abstract class AbstractLogProcessor extends AbstractClassProcessor {
-  @ApiStatus.Internal
-  public enum LoggerInitializerParameter {
+  enum LoggerInitializerParameter {
     TYPE,
     NAME,
     TOPIC,
     NULL,
     UNKNOWN;
 
-    static @NotNull LoggerInitializerParameter find(@NotNull String parameter) {
+    @NotNull
+    static LoggerInitializerParameter find(@NotNull String parameter) {
       return switch (parameter) {
         case "TYPE" -> TYPE;
         case "NAME" -> NAME;
@@ -52,7 +51,8 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     return Collections.singleton(getLoggerName(psiClass));
   }
 
-  public static @NotNull String getLoggerName(@NotNull PsiClass psiClass) {
+  @NotNull
+  public static String getLoggerName(@NotNull PsiClass psiClass) {
     return ConfigDiscovery.getInstance().getStringLombokConfigProperty(ConfigKey.LOG_FIELDNAME, psiClass);
   }
 
@@ -63,17 +63,20 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
   /**
    * Nullable because it can be called before validation.
    */
-  public abstract @Nullable String getLoggerType(@NotNull PsiClass psiClass);
+  @Nullable
+  public abstract String getLoggerType(@NotNull PsiClass psiClass);
 
   /**
    * Call only after validation.
    */
-  abstract @NotNull String getLoggerInitializer(@NotNull PsiClass psiClass);
+  @NotNull
+  abstract String getLoggerInitializer(@NotNull PsiClass psiClass);
 
   /**
    * Call only after validation.
    */
-  abstract @NotNull List<LoggerInitializerParameter> getLoggerInitializerParameters(@NotNull PsiClass psiClass, boolean topicPresent);
+  @NotNull
+  abstract List<LoggerInitializerParameter> getLoggerInitializerParameters(@NotNull PsiClass psiClass, boolean topicPresent);
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
@@ -127,13 +130,14 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     return loggerField;
   }
 
-  private @NotNull String createLoggerInitializeParameters(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+  @NotNull
+  private String createLoggerInitializeParameters(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     final StringBuilder parametersBuilder = new StringBuilder();
     final String topic = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "topic", "");
     final boolean topicPresent = !StringUtil.isEmptyOrSpaces(topic);
     final List<LoggerInitializerParameter> loggerInitializerParameters = getLoggerInitializerParameters(psiClass, topicPresent);
     for (LoggerInitializerParameter loggerInitializerParameter : loggerInitializerParameters) {
-      if (!parametersBuilder.isEmpty()) {
+      if (parametersBuilder.length() > 0) {
         parametersBuilder.append(", ");
       }
       switch (loggerInitializerParameter) {

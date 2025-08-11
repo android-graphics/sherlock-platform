@@ -1,11 +1,10 @@
-from _typeshed import Incomplete
+from typing import Any
 
-from braintree.resource import Resource
-from braintree.subscription import Subscription
+from braintree.resource import Resource as Resource
 
 class AndroidPayCard(Resource):
-    is_expired: Incomplete
-    subscriptions: list[Subscription]
+    is_expired: Any
+    subscriptions: Any
     def __init__(self, gateway, attributes) -> None: ...
     @property
     def expiration_date(self): ...
@@ -13,9 +12,3 @@ class AndroidPayCard(Resource):
     def last_4(self): ...
     @property
     def card_type(self): ...
-    @staticmethod
-    def signature(): ...
-    @staticmethod
-    def card_signature(): ...
-    @staticmethod
-    def network_token_signature(): ...

@@ -1,13 +1,14 @@
 from enum import IntEnum
-from typing import ClassVar, Literal
+from typing import ClassVar
+from typing_extensions import Literal
 
 from .ImageFile import ImageFile
 
 MAGIC: bytes
 
 class Format(IntEnum):
-    DXT1 = 0
-    UNCOMPRESSED = 1
+    DXT1: int
+    UNCOMPRESSED: int
 
 class FtexImageFile(ImageFile):
     format: ClassVar[Literal["FTEX"]]

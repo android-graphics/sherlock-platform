@@ -10,6 +10,7 @@ import com.intellij.completion.ml.util.RelevanceUtil
 import com.intellij.completion.ml.util.idString
 import com.intellij.stats.completion.LookupEntryInfo
 import com.intellij.stats.completion.LookupState
+import com.intellij.util.SlowOperations
 
 class LookupStateManager(private val shouldLogElementFeatures: Boolean) {
   private val elementToId = mutableMapOf<String, Int>()
@@ -18,6 +19,12 @@ class LookupStateManager(private val shouldLogElementFeatures: Boolean) {
   private var currentSessionFactors: Map<String, String> = emptyMap()
 
   fun update(lookup: LookupImpl, factorsUpdated: Boolean): LookupState {
+    return SlowOperations.allowSlowOperations<LookupState, Throwable> {
+      doUpdate(lookup, factorsUpdated)
+    }
+  }
+
+  private fun doUpdate(lookup: LookupImpl, factorsUpdated: Boolean): LookupState {
     val ids = mutableListOf<Int>()
     val newIds = mutableSetOf<Int>()
 

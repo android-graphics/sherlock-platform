@@ -56,7 +56,8 @@ interface ExpressionImportWeigher {
                 else -> Empty
             }
 
-        private fun KaSession.calculateReceiverTypes(element: KtNameReferenceExpression): List<KaType> {
+        context(KaSession)
+        private fun calculateReceiverTypes(element: KtNameReferenceExpression): List<KaType> {
             val receiverExpression = element.getParentOfType<KtQualifiedExpression>(false)?.receiverExpression
 
             return if (receiverExpression != null) {
@@ -71,7 +72,8 @@ interface ExpressionImportWeigher {
             }
         }
 
-        private fun KaSession.calculateValueArgumentTypes(element: KtNameReferenceExpression): List<KaType?> {
+        context(KaSession)
+        private fun calculateValueArgumentTypes(element: KtNameReferenceExpression): List<KaType?> {
             val callExpression = element.getParentOfType<KtCallElement>(strict = false)
             val valueArgumentList = callExpression?.valueArgumentList ?: return emptyList()
 
@@ -140,7 +142,8 @@ internal class CallExpressionImportWeigher(
         }
     }
 
-    private fun KaSession.calculateWeight(
+    context(KaSession)
+    private fun calculateWeight(
         symbolToBeImported: KaCallableSymbol,
         presentReceiverTypes: List<KaType>,
         presentValueArgumentTypes: List<KaType?>,
@@ -200,7 +203,8 @@ internal class CallExpressionImportWeigher(
         return weight
     }
 
-    private fun KaSession.calculateCallExtensionsWeight(symbolToBeImported: KaCallableSymbol): Int =
+    context(KaSession)
+    private fun calculateCallExtensionsWeight(symbolToBeImported: KaCallableSymbol): Int =
         with(KotlinAutoImportCallableWeigher) { weigh(symbolToBeImported, element) }
 }
 

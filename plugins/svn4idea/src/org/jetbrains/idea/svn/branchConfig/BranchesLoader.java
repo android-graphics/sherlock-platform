@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.project.Project;
@@ -22,11 +22,11 @@ import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChan
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class BranchesLoader implements Runnable {
-  private final @NotNull Project myProject;
-  private final @NotNull NewRootBunch myBunch;
-  private final @NotNull VirtualFile myRoot;
-  private final @NotNull Url myUrl;
-  private final @NotNull InfoReliability myInfoReliability;
+  @NotNull private final Project myProject;
+  @NotNull private final NewRootBunch myBunch;
+  @NotNull private final VirtualFile myRoot;
+  @NotNull private final Url myUrl;
+  @NotNull private final InfoReliability myInfoReliability;
   private final boolean myPassive;
 
   public BranchesLoader(@NotNull Project project,
@@ -54,7 +54,8 @@ public class BranchesLoader implements Runnable {
     }
   }
 
-  public @NotNull List<SvnBranchItem> loadBranches() throws VcsException {
+  @NotNull
+  public List<SvnBranchItem> loadBranches() throws VcsException {
     SvnVcs vcs = SvnVcs.getInstance(myProject);
     List<SvnBranchItem> result = new LinkedList<>();
     Target target = Target.on(myUrl);
@@ -73,7 +74,8 @@ public class BranchesLoader implements Runnable {
     }
   }
 
-  private static @NotNull DirectoryEntryConsumer createConsumer(final @NotNull List<SvnBranchItem> result) {
+  @NotNull
+  private static DirectoryEntryConsumer createConsumer(@NotNull final List<SvnBranchItem> result) {
     return entry -> {
       if (entry.getDate() != null) {
         result.add(new SvnBranchItem(entry.getUrl(), entry.getDate().getTime(), entry.getRevision()));

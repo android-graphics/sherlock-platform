@@ -33,7 +33,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelInFileOrScript
-import java.lang.Boolean.getBoolean
 
 private val defaultHandlerActions = object : MoveKotlinDeclarationsHandlerActions {
 
@@ -73,12 +72,7 @@ private val defaultHandlerActions = object : MoveKotlinDeclarationsHandlerAction
         freezeTargets,
         moveToPackage,
         moveCallback
-    ).let {
-        if (getBoolean("ide.performance.skip.refactoring.dialogs"))
-            it.performOKAction()
-        else
-            it.show()
-    }
+    ).show()
 
     override fun invokeKotlinSelectNestedClassChooser(nestedClass: KtClassOrObject, targetContainer: PsiElement?) =
         KotlinSelectNestedClassRefactoringDialog.chooseNestedClassRefactoring(nestedClass, targetContainer)
@@ -88,12 +82,7 @@ private val defaultHandlerActions = object : MoveKotlinDeclarationsHandlerAction
         initialDirectory: PsiDirectory?,
         elements: List<PsiFileSystemItem>,
         moveCallback: MoveCallback?
-    ) = KotlinAwareMoveFilesOrDirectoriesDialog(project, initialDirectory, elements, moveCallback).let {
-        if (getBoolean("ide.performance.skip.refactoring.dialogs"))
-            it.performOKAction()
-        else
-            it.show()
-    }
+    ) = KotlinAwareMoveFilesOrDirectoriesDialog(project, initialDirectory, elements, moveCallback).show()
 }
 
 class MoveKotlinDeclarationsHandler internal constructor(private val handlerActions: MoveKotlinDeclarationsHandlerActions) :
@@ -184,7 +173,7 @@ class MoveKotlinDeclarationsHandler internal constructor(private val handlerActi
             }
             val initialTargetDirectory = MoveFilesOrDirectoriesUtil.resolveToDirectory(project, initialTargetElement)
 
-            if (!getBoolean("ide.performance.skip.refactoring.dialogs") && !isUnitTestMode() &&
+            if (!isUnitTestMode() &&
                 elementsToSearch.any { it.isExpectDeclaration() || it.isEffectivelyActual() }
             ) {
                 val message =

@@ -6,7 +6,6 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.icons.IconReplacer;
 import com.intellij.ui.icons.IconWithOverlay;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +17,6 @@ import java.util.Objects;
 /**
  * @author Konstantin Bulenkov
  */
-@ApiStatus.Internal
 public final class InvalidRunConfigurationIcon extends IconWithOverlay {
   public InvalidRunConfigurationIcon(@NotNull Icon runConfigurationIcon) {
     this(runConfigurationIcon, AllIcons.RunConfigurations.InvalidConfigurationLayer);

@@ -3,7 +3,6 @@ package git4idea.index.vfs
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -25,18 +24,12 @@ import org.jetbrains.annotations.NonNls
 import java.io.*
 import java.util.*
 
-class GitIndexVirtualFile(
-  private val project: Project,
-  val root: VirtualFile,
-  val filePath: FilePath,
-) : VirtualFile(), VirtualFilePathWrapper {
-  init {
-    putUserData(FileDocumentManagerBase.TRACK_NON_PHYSICAL, true)
-  }
-
-  @Volatile
-  internal var data: CachedData? = null // null: the file was not loaded yet
-
+class GitIndexVirtualFile(private val project: Project,
+                          val root: VirtualFile,
+                          val filePath: FilePath,
+                          @Volatile internal var hash: Hash?,
+                          @Volatile internal var length: Long,
+                          @Volatile internal var isExecutable: Boolean) : VirtualFile(), VirtualFilePathWrapper {
   @Volatile
   private var modificationStamp = LocalTimeCounter.currentTime()
 
@@ -45,14 +38,13 @@ class GitIndexVirtualFile(
   override fun getChildren(): Array<VirtualFile> = EMPTY_ARRAY
   override fun isWritable(): Boolean = true
   override fun isDirectory(): Boolean = false
-  override fun isValid(): Boolean = !project.isDisposed && (data == null || data?.hash != null)
+  override fun isValid(): Boolean = hash != null && !project.isDisposed
   override fun getName(): String = filePath.name
   override fun getPresentableName(): String = GitBundle.message("stage.vfs.presentable.file.name", filePath.name)
   override fun getPath(): String = encode(project, root, filePath)
   override fun getPresentablePath(): String = filePath.path
   override fun enforcePresentableName(): Boolean = true
-  internal val isExecutable: Boolean get() = data?.isExecutable ?: false
-  override fun getLength(): Long = data?.length ?: 0
+  override fun getLength(): Long = length
   override fun getTimeStamp(): Long = 0
   override fun getModificationStamp(): Long = modificationStamp
   override fun getFileType(): FileType = filePath.virtualFile?.fileType ?: super.getFileType()
@@ -60,18 +52,17 @@ class GitIndexVirtualFile(
     LOG.error("Refreshing index files is not supported (called for $this). Use GitIndexFileSystemRefresher to refresh.")
   }
 
-  internal fun setInitialData(newHash: Hash?, newLength: Long, newExecutable: Boolean) {
-    data = CachedData(newHash, newLength, newExecutable)
-  }
-
   @RequiresWriteLock
   internal fun setDataFromRefresh(newHash: Hash?, newLength: Long, newExecutable: Boolean) {
-    data = CachedData(newHash, newLength, newExecutable)
+    hash = newHash
+    length = newLength
+    isExecutable = newExecutable
   }
 
   @RequiresWriteLock
   internal fun setDataFromWrite(newHash: Hash, newLength: Long, newModificationStamp: Long) {
-    data = CachedData(newHash, newLength, isExecutable)
+    hash = newHash
+    length = newLength
     modificationStamp = newModificationStamp
   }
 
@@ -94,10 +85,6 @@ class GitIndexVirtualFile(
 
   @Throws(IOException::class)
   override fun contentsToByteArray(): ByteArray {
-    if (data == null) {
-      GitIndexFileSystemRefresher.getInstance(project).initialRefresh(listOf(this))
-    }
-
     try {
       if (ApplicationManager.getApplication().isDispatchThread) {
         return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<ByteArray, IOException> {
@@ -160,8 +147,6 @@ class GitIndexVirtualFile(
       return path.substringAfterLast(SEPARATOR).replace('/', File.separatorChar)
     }
   }
-
-  internal data class CachedData(val hash: Hash?, val length: Long, val isExecutable: Boolean)
 }
 
 internal fun VirtualFile.filePath(): FilePath {

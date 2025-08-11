@@ -71,7 +71,7 @@ public final class GetterProcessor extends AbstractClassProcessor {
   }
 
   private static void validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
-    if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isRecord()) {
+    if (psiClass.isAnnotationType() || psiClass.isInterface()) {
       builder.addErrorMessage("inspection.message.getter.only.supported.on.class.enum.or.field.type");
       builder.markFailed();
     }
@@ -93,7 +93,8 @@ public final class GetterProcessor extends AbstractClassProcessor {
     }
   }
 
-  public @NotNull Collection<PsiMethod> createFieldGetters(@NotNull PsiClass psiClass, @NotNull String methodModifier, @Nullable String nameHint) {
+  @NotNull
+  public Collection<PsiMethod> createFieldGetters(@NotNull PsiClass psiClass, @NotNull String methodModifier, @Nullable String nameHint) {
     Collection<PsiMethod> result = new ArrayList<>();
 
     final Collection<PsiField> getterFields = filterGetterFields(psiClass);
@@ -103,10 +104,12 @@ public final class GetterProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  private @NotNull Collection<PsiField> filterGetterFields(@NotNull PsiClass psiClass) {
+  @NotNull
+  private Collection<PsiField> filterGetterFields(@NotNull PsiClass psiClass) {
     final Collection<PsiField> getterFields = new ArrayList<>();
 
-    Collection<PsiMethod> classMethods = filterToleratedElements(PsiClassUtil.collectClassMethodsIntern(psiClass));
+    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
+    filterToleratedElements(classMethods);
 
     final GetterFieldProcessor fieldProcessor = getGetterFieldProcessor();
     final AccessorsInfo.AccessorsValues classAccessorsValues = AccessorsInfo.getAccessorsValues(psiClass);
@@ -131,10 +134,8 @@ public final class GetterProcessor extends AbstractClassProcessor {
       createGetter &= PsiAnnotationSearchUtil.isNotAnnotatedWith(psiField, fieldProcessor.getSupportedAnnotationClasses());
       //Skip fields that start with $
       createGetter &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
-
-      final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField, classAccessorsValues);
-      createGetter &= accessorsInfo.acceptsFieldName(psiField.getName());
       //Skip fields if a method with same name and arguments count already exists
+      final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField, classAccessorsValues);
       final Collection<String> methodNames =
         LombokUtils.toAllGetterNames(accessorsInfo, psiField.getName(), PsiTypes.booleanType().equals(psiField.getType()));
       for (String methodName : methodNames) {
@@ -148,8 +149,8 @@ public final class GetterProcessor extends AbstractClassProcessor {
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
     final PsiClass containingClass = psiField.getContainingClass();
     if (null != containingClass) {
-      final Collection<PsiMethod> classMethods = filterToleratedElements(PsiClassUtil.collectClassMethodsIntern(containingClass));
-
+      final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(containingClass);
+      filterToleratedElements(classMethods);
 
       final AccessorsInfo.AccessorsValues classAccessorsValues = AccessorsInfo.getAccessorsValues(containingClass);
       final GetterFieldProcessor fieldProcessor = getGetterFieldProcessor();

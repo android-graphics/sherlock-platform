@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.alignment;
 
 import com.intellij.formatting.Alignment;
@@ -110,7 +110,8 @@ public abstract class AlignmentStrategy {
    * @param childType     target child type
    * @return              alignment to use
    */
-  public @Nullable Alignment getAlignment(@Nullable IElementType childType) {
+  @Nullable
+  public Alignment getAlignment(@Nullable IElementType childType) {
     return getAlignment(null, childType);
   }
 
@@ -121,7 +122,8 @@ public abstract class AlignmentStrategy {
    * @param childType     child type to use for filtering (if not {@code null})
    * @return              alignment to use for the given arguments
    */
-  public abstract @Nullable Alignment getAlignment(@Nullable IElementType parentType, @Nullable IElementType childType);
+  @Nullable
+  public abstract Alignment getAlignment(@Nullable IElementType parentType, @Nullable IElementType childType);
 
   /**
    * Stands for {@link AlignmentStrategy} implementation that is configured to return single pre-configured {@link Alignment} object
@@ -141,7 +143,8 @@ public abstract class AlignmentStrategy {
     }
 
     @Override
-    public @Nullable Alignment getAlignment(@Nullable IElementType parentType, @Nullable IElementType childType) {
+    @Nullable
+    public Alignment getAlignment(@Nullable IElementType parentType, @Nullable IElementType childType) {
       return myFilterElementTypes.contains(childType) ^ myIgnoreFilterTypes ? myAlignment : null;
     }
   }

@@ -2,25 +2,19 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.platform.util.coroutines.CoroutineScopeKt;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.sun.jdi.Location;
@@ -29,8 +23,6 @@ import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
-import kotlin.coroutines.EmptyCoroutineContext;
-import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
@@ -49,13 +41,9 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   private final DebugProcessImpl myDebugProcess;
   private final int mySuspendPolicy;
-  private final VirtualMachineProxyImpl myVirtualMachine;
-  private final @NotNull DebuggerManagerThreadImpl myDebuggerManagerThread;
 
   private ThreadReferenceProxyImpl myThread;
   boolean myIsVotedForResume = true;
-
-  private @Nullable Object myLightThreadFilter = null;
 
   protected int myVotesToVote;
   protected Set<ThreadReferenceProxyImpl> myResumedThreads;
@@ -63,6 +51,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   protected final Set<ThreadReferenceProxyImpl> myNotExecutableThreads = new HashSet<>();
 
   // There may be several events for the same break-point. So let's use custom processing if any of them is wanted it.
+  protected boolean myIsCustomSuspendLogic = false;
   protected boolean mySuspendAllSwitchedContext = false;
 
   private EventSet myEventSet;
@@ -70,17 +59,10 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   protected volatile boolean myIsGoingToResume;
 
   private final ConcurrentLinkedQueue<SuspendContextCommandImpl> myPostponedCommands = new ConcurrentLinkedQueue<>();
-
-  /**
-   * These commands are started but can be switched to another dispatcher, so they are not present in DMT.
-   * However, they should be canceled on context resume, so they are tracked via this set.
-   */
-  private final Set<SuspendContextCommandImpl> myUnfinishedCommands = ConcurrentCollectionFactory.createConcurrentSet();
   public volatile boolean myInProgress;
   private final HashSet<ObjectReference> myKeptReferences = new HashSet<>();
   private EvaluationContextImpl myEvaluationContext = null;
   private int myFrameCount = -1;
-  private final CoroutineScope myCoroutineScope;
 
   private JavaExecutionStack myActiveExecutionStack;
 
@@ -105,39 +87,9 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
                      long debugId) {
     myDebugProcess = debugProcess;
     mySuspendPolicy = suspendPolicy;
-    // Save the VM related to this suspend context, as a VM may be changed due to reattach
-    //noinspection UsagesOfObsoleteApi
-    myVirtualMachine = debugProcess.getVirtualMachineProxy();
-    //noinspection UsagesOfObsoleteApi
-    myDebuggerManagerThread = debugProcess.getManagerThread();
     myVotesToVote = eventVotes;
     myEventSet = set;
     myDebugId = debugId;
-
-    CoroutineScope dmtScope = myDebuggerManagerThread.getCoroutineScope();
-    myCoroutineScope = CoroutineScopeKt.childScope(dmtScope, "SuspendContextImpl " + debugId, EmptyCoroutineContext.INSTANCE, true);
-    CheckedDisposable disposable = debugProcess.disposable;
-    if (disposable.isDisposed()) {
-      // could be due to VM death
-      Disposer.dispose(this);
-    }
-    else {
-      Disposer.register(disposable, this);
-    }
-  }
-
-  public @NotNull VirtualMachineProxyImpl getVirtualMachineProxy() {
-    return myVirtualMachine;
-  }
-
-  /**
-   * Returns coroutine scope tied to the lifetime of this suspend context.
-   * <p>
-   * The scope is canceled when this suspend context is resumed.
-   */
-  @ApiStatus.Experimental
-  public @NotNull CoroutineScope getCoroutineScope() {
-    return myCoroutineScope;
   }
 
   protected void setEventSet(EventSet eventSet) {
@@ -148,7 +100,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   public void setThread(@Nullable ThreadReference thread) {
     assertCanBeUsed();
-    ThreadReferenceProxyImpl threadProxy = myVirtualMachine.getThreadReferenceProxy(thread);
+    ThreadReferenceProxyImpl threadProxy = myDebugProcess.getVirtualMachineProxy().getThreadReferenceProxy(thread);
     assertInLog(myThread == null || myThread == threadProxy,
                 () -> "Invalid thread setting in " + this + ": myThread = " + myThread + ", thread = " + thread);
     setThread(threadProxy);
@@ -169,7 +121,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   }
 
   private void setThread(@Nullable ThreadReferenceProxyImpl threadProxy) {
-    if (threadProxy != null && myThread != threadProxy && !myDebugProcess.disposable.isDisposed()) { // do not add more than once
+    if (threadProxy != null && myThread != threadProxy) { // do not add more than once
       threadProxy.addListener(myListener, this);
     }
     myThread = threadProxy;
@@ -177,7 +129,6 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   @Override
   public void dispose() {
-    kotlinx.coroutines.CoroutineScopeKt.cancel(myCoroutineScope, null);
   }
 
   int getCachedThreadFrameCount() {
@@ -192,7 +143,8 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     return myFrameCount;
   }
 
-  public @Nullable Location getLocation() {
+  @Nullable
+  public Location getLocation() {
     // getting location from the event set is much faster than obtaining the frame and getting it from there
     if ((myActiveExecutionStack == null || myActiveExecutionStack.getThreadProxy() == myThread) && myEventSet != null) {
       LocatableEvent event = StreamEx.of(myEventSet).select(LocatableEvent.class).findFirst().orElse(null);
@@ -232,9 +184,6 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
       cancelAllPostponed();
       if (callResume) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Resuming " + this);
-        }
         resumeImpl();
       }
     }
@@ -258,12 +207,14 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   }
 
 
-  public @Nullable EventSet getEventSet() {
+  @Nullable
+  public EventSet getEventSet() {
     return myEventSet;
   }
 
   @Override
-  public @NotNull DebugProcessImpl getDebugProcess() {
+  @NotNull
+  public DebugProcessImpl getDebugProcess() {
     return myDebugProcess;
   }
 
@@ -301,8 +252,9 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable ThreadReferenceProxyImpl getThread() {
+  public ThreadReferenceProxyImpl getThread() {
     if (myActiveExecutionStack != null) {
       return myActiveExecutionStack.getThreadProxy();
     }
@@ -320,27 +272,6 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   public int getSuspendPolicy() {
     return mySuspendPolicy;
   }
-
-  public String getSuspendPolicyFromRequestors() {
-    if (mySuspendPolicy == EventRequest.SUSPEND_ALL) {
-      return DebuggerSettings.SUSPEND_ALL;
-    }
-    if (myEventSet != null) {
-      return RequestManagerImpl.hasSuspendAllRequestor(myEventSet) ? DebuggerSettings.SUSPEND_ALL : asStrPolicy();
-    }
-
-    return asStrPolicy();
-  }
-
-  private String asStrPolicy() {
-    return switch (mySuspendPolicy) {
-      case EventRequest.SUSPEND_ALL -> DebuggerSettings.SUSPEND_ALL;
-      case EventRequest.SUSPEND_EVENT_THREAD -> DebuggerSettings.SUSPEND_THREAD;
-      case EventRequest.SUSPEND_NONE -> DebuggerSettings.SUSPEND_NONE;
-      default -> throw new IllegalStateException("Cannot convert number " + mySuspendPolicy);
-    };
-  }
-
 
   @SuppressWarnings("unused")
   public void doNotResumeHack() {
@@ -383,17 +314,6 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     myEvaluationContext = evaluationContext;
   }
 
-  @ApiStatus.Internal
-  public @Nullable Object getLightThreadFilter() {
-    return myLightThreadFilter;
-  }
-
-  @ApiStatus.Internal
-  public void setLightThreadFilter(@Nullable Object lightThreadFilter) {
-    myLightThreadFilter = lightThreadFilter;
-  }
-
-  @Override
   public String toString() {
     return "{" + myDebugId + "} " + "SP=" + getSuspendPolicyString() + " " + oldToString();
   }
@@ -422,9 +342,8 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     return myThread != null ? myThread.toString() : JavaDebuggerBundle.message("string.null.context");
   }
 
-  String toAttachmentString() {
+  Attachment toAttachment() {
     StringBuilder sb = new StringBuilder();
-    sb.append("------------------\ncontext ").append(this).append(":\n");
     sb.append("myDebugId = ").append(myDebugId).append("\n");
     sb.append("myThread = ").append(myThread).append("\n");
     sb.append("Suspend policy = ").append(getSuspendPolicyString()).append("\n");
@@ -449,13 +368,14 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     }
 
     sb.append("mySuspendAllSwitchedContext = ").append(mySuspendAllSwitchedContext).append("\n");
+    sb.append("myIsCustomSuspendLogic = ").append(myIsCustomSuspendLogic).append("\n");
     sb.append("myPostponedCommands: ").append(myPostponedCommands.size()).append("\n");
     sb.append("myKeptReferences: ").append(myKeptReferences.size()).append("\n");
     sb.append("myIsVotedForResume = ").append(myIsVotedForResume).append("\n");
     sb.append("myVotesToVote = ").append(myVotesToVote).append("\n");
     sb.append("myIsResumed = ").append(myIsResumed).append("\n");
     sb.append("myIsGoingToResume = ").append(myIsGoingToResume).append("\n");
-    return sb.toString();
+    return new Attachment("context " + this, sb.toString());
   }
 
   private String getSuspendPolicyString() {
@@ -476,14 +396,6 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     }
   }
 
-  public final void addUnfinishedCommand(final SuspendContextCommandImpl command) {
-    myUnfinishedCommands.add(command);
-  }
-
-  public final void removeUnfinishedCommand(final SuspendContextCommandImpl command) {
-    myUnfinishedCommands.remove(command);
-  }
-
   public final void postponeCommand(final SuspendContextCommandImpl command) {
     if (!isResumed()) {
       // Important! when postponing increment the holds counter, so that the action is not released too early.
@@ -500,26 +412,15 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     for (SuspendContextCommandImpl postponed = pollPostponedCommand(); postponed != null; postponed = pollPostponedCommand()) {
       postponed.notifyCancelled();
     }
-    DebuggerCommandImpl currentCommand = DebuggerManagerThreadImpl.getCurrentCommand();
-    for (var it = myUnfinishedCommands.iterator(); it.hasNext(); ) {
-      SuspendContextCommandImpl command = it.next();
-      if (currentCommand != command) {
-        command.cancelCommandScope();
-        it.remove();
-      }
-      else {
-        command.cancelCommandScopeOnSuspend();
-        // do not remove itself
-      }
-    }
   }
 
   public final SuspendContextCommandImpl pollPostponedCommand() {
     return myPostponedCommands.poll();
   }
 
+  @Nullable
   @Override
-  public @Nullable JavaExecutionStack getActiveExecutionStack() {
+  public JavaExecutionStack getActiveExecutionStack() {
     return myActiveExecutionStack;
   }
 
@@ -530,9 +431,6 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
       setThread(activeThread);
     }
     if (activeThread != null) {
-      if (mySuspendPolicy == EventRequest.SUSPEND_EVENT_THREAD && activeThread != myThread) {
-        logError("Thread " + activeThread + " was set as active into " + this);
-      }
       myActiveExecutionStack = new JavaExecutionStack(activeThread, myDebugProcess, myThread == activeThread);
       myActiveExecutionStack.initTopFrame();
     }
@@ -541,7 +439,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   @Override
   public void computeExecutionStacks(final XExecutionStackContainer container) {
     assertCanBeUsed();
-    getManagerThread().schedule(new SuspendContextCommandImpl(this) {
+    myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(this) {
       final Set<ThreadReferenceProxyImpl> myAddedThreads = new HashSet<>();
 
       @Override
@@ -555,7 +453,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
         CompletableFuture.completedFuture(pausedThreads)
           .thenCompose(tds -> addThreads(tds, THREAD_NAME_COMPARATOR, false))
           .thenCompose(res -> res
-                              ? suspendContext.getVirtualMachineProxy().allThreadsAsync()
+                              ? getDebugProcess().getVirtualMachineProxy().allThreadsAsync()
                               : CompletableFuture.completedFuture(Collections.emptyList()))
           .thenAccept(tds -> addThreads(tds, THREADS_SUSPEND_AND_NAME_COMPARATOR, true))
           .exceptionally(throwable -> DebuggerUtilsAsync.logError(throwable));
@@ -602,9 +500,5 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     if (!value) {
       myDebugProcess.logError(supplier.get());
     }
-  }
-
-  public @NotNull DebuggerManagerThreadImpl getManagerThread() {
-    return myDebuggerManagerThread;
   }
 }

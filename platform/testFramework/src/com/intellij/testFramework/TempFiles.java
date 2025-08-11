@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,23 +23,28 @@ public final class TempFiles {
     myFilesToDelete = filesToDelete;
   }
 
-  public @NotNull VirtualFile createVFile(@NotNull String prefix) {
+  @NotNull
+  public VirtualFile createVFile(@NotNull String prefix) {
     return getVFileByFile(createTempFile(prefix));
   }
 
-  public @NotNull VirtualFile createVFile(@NotNull String prefix, String postfix) {
+  @NotNull
+  public VirtualFile createVFile(@NotNull String prefix, String postfix) {
     return getVFileByFile(createTempFile(prefix, postfix));
   }
 
-  public @NotNull File createTempFile(@NotNull String prefix) {
+  @NotNull
+  public File createTempFile(@NotNull String prefix) {
     return createTempFile(prefix, null);
   }
 
-  public @NotNull File createTempFile(@NotNull String prefix, String suffix) {
+  @NotNull
+  public File createTempFile(@NotNull String prefix, String suffix) {
     return createTempFile(prefix, suffix, true);
   }
 
-  public @NotNull File createTempFile(@NotNull String prefix, String suffix, boolean isRefreshVfs) {
+  @NotNull
+  public File createTempFile(@NotNull String prefix, String suffix, boolean isRefreshVfs) {
     try {
       File tempFile = FileUtilRt.createTempFile(prefix, suffix, false);
       tempFileCreated(tempFile.toPath());
@@ -61,11 +66,13 @@ public final class TempFiles {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
   }
 
-  public @NotNull File createTempDir() {
+  @NotNull
+  public File createTempDir() {
     return createTempDir("dir");
   }
 
-  private @NotNull File createTempDir(@NotNull String prefix) {
+  @NotNull
+  private File createTempDir(@NotNull String prefix) {
     try {
       File dir = FileUtil.createTempDirectory(prefix, "test",false);
       tempFileCreated(dir.toPath());
@@ -77,11 +84,13 @@ public final class TempFiles {
     }
   }
 
-  public @NotNull VirtualFile createTempVDir() {
+  @NotNull
+  public VirtualFile createTempVDir() {
     return createTempVDir("dir");
   }
 
-  public @NotNull VirtualFile createTempVDir(@NotNull String prefix) {
+  @NotNull
+  public VirtualFile createTempVDir(@NotNull String prefix) {
     return getVFileByFile(createTempDir(prefix));
   }
 
@@ -91,7 +100,8 @@ public final class TempFiles {
     }
   }
 
-  public @NotNull VirtualFile createVFile(@NotNull VirtualFile parentDir, @NotNull String name, @NotNull String text) {
+  @NotNull
+  public VirtualFile createVFile(@NotNull VirtualFile parentDir, @NotNull String name, @NotNull String text) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<>() {
       @Override
       public VirtualFile compute() {

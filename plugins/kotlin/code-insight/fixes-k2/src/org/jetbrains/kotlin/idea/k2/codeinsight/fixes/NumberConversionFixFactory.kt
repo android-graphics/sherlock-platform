@@ -50,13 +50,13 @@ internal fun prepareNumberConversionElementContext(
             renderer = KaTypeRendererForSource.WITH_SHORT_NAMES,
             position = Variance.INVARIANT,
         ),
-        fromInt = fromType.isIntType,
-        fromChar = fromType.isCharType,
-        fromFloatOrDouble = fromType.isFloatType || fromType.isDoubleType,
+        fromInt = fromType.isInt,
+        fromChar = fromType.isChar,
+        fromFloatOrDouble = fromType.isFloat || fromType.isDouble,
         fromNullable = fromType.nullability.isNullable,
-        toChar = toType.isCharType,
-        toInt = toType.isIntType,
-        toByteOrShort = toType.isByteType || toType.isShortType,
+        toChar = toType.isChar,
+        toInt = toType.isInt,
+        toByteOrShort = toType.isByte || toType.isShort,
     )
 }
 
@@ -64,11 +64,11 @@ context(KaSession)
 internal fun isNumberConversionAvailable(
     fromType: KaType,
     toType: KaType,
-): Boolean = !fromType.semanticallyEquals(toType) && fromType.isNumberOrCharType() && toType.isNumberOrCharType()
+): Boolean = fromType != toType && fromType.isNumberOrCharType() && toType.isNumberOrCharType()
 
 context(KaSession)
 internal fun KaType.isNumberOrCharType(): Boolean {
     return with(withNullability(KaTypeNullability.NON_NULLABLE)) {
-        isNumberOrUNumberType(this) || isCharType
+        isNumberOrUNumberType() || isChar
     }
 }

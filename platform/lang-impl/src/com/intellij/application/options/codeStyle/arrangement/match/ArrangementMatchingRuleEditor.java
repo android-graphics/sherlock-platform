@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -33,19 +33,19 @@ import java.util.*;
  */
 public final class ArrangementMatchingRuleEditor extends JPanel implements ArrangementUiComponent.Listener {
 
-  private final @NotNull Map<ArrangementSettingsToken, ArrangementUiComponent> myComponents =
+  @NotNull private final Map<ArrangementSettingsToken, ArrangementUiComponent> myComponents =
     new HashMap<>();
-  private final @NotNull List<MultiRowFlowPanel>                               myRows       = new ArrayList<>();
+  @NotNull private final List<MultiRowFlowPanel>                               myRows       = new ArrayList<>();
 
-  private final @NotNull ArrangementMatchingRulesControl    myControl;
-  private final @NotNull ArrangementStandardSettingsManager mySettingsManager;
-  private final @NotNull ArrangementColorsProvider          myColorsProvider;
+  @NotNull private final ArrangementMatchingRulesControl    myControl;
+  @NotNull private final ArrangementStandardSettingsManager mySettingsManager;
+  @NotNull private final ArrangementColorsProvider          myColorsProvider;
 
   private int myRow = -1;
   private int        myLabelWidth;
 
-  private @Nullable JComponent myDefaultFocusRequestor;
-  private @Nullable JComponent myFocusRequestor;
+  @Nullable private JComponent myDefaultFocusRequestor;
+  @Nullable private JComponent myFocusRequestor;
 
   private boolean mySkipStateChange;
 
@@ -167,7 +167,8 @@ public final class ArrangementMatchingRuleEditor extends JPanel implements Arran
     addRowIfNecessary(panel);
   }
 
-  private @NotNull MultiRowFlowPanel addRowIfNecessary(@NotNull MultiRowFlowPanel panel) {
+  @NotNull
+  private MultiRowFlowPanel addRowIfNecessary(@NotNull MultiRowFlowPanel panel) {
     if (panel.getComponentCount() <= 0) {
       return panel;
     }
@@ -185,7 +186,8 @@ public final class ArrangementMatchingRuleEditor extends JPanel implements Arran
     }
   }
 
-  private @Nullable Pair<ArrangementMatchCondition, ArrangementSettingsToken> buildCondition() {
+  @Nullable
+  private Pair<ArrangementMatchCondition, ArrangementSettingsToken> buildCondition() {
     List<ArrangementMatchCondition> conditions = new ArrayList<>();
     ArrangementSettingsToken orderType = null;
     for (ArrangementUiComponent component : myComponents.values()) {

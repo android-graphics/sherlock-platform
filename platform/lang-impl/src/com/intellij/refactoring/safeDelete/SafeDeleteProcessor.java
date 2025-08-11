@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -62,7 +62,8 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  @NotNull
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new SafeDeleteUsageViewDescriptor(myElements);
   }
 
@@ -408,8 +409,9 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   private @Command String myCachedCommandName;
+  @NotNull
   @Override
-  protected @NotNull String getCommandName() {
+  protected String getCommandName() {
     if (myCachedCommandName == null) {
       myCachedCommandName = calcCommandName();
     }
@@ -450,7 +452,7 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
   public static boolean validElement(@NotNull PsiElement element) {
     if (element instanceof PsiFile) return true;
     if (!element.isPhysical()) return false;
-    RefactoringSupportProvider provider = LanguageRefactoringSupport.getInstance().forContext(element);
+    RefactoringSupportProvider provider = LanguageRefactoringSupport.INSTANCE.forContext(element);
     return provider != null && provider.isSafeDeleteAvailable(element);
   }
 

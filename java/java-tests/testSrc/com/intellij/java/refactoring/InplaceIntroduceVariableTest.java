@@ -24,7 +24,6 @@ import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
@@ -35,14 +34,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
-
 public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTest {
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
-  }
-
   @Nullable
   @Override
   protected PsiExpression getExpressionFromEditor() {
@@ -342,10 +334,6 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testPatternUsedInSubsequentCondition() {
-    doTest(null);
-  }
-  
-  public void testNoExternalTypeAnnotations() {
     doTest(null);
   }
   

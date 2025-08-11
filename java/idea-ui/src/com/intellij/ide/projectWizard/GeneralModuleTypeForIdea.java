@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.IdeBundle;
@@ -123,8 +123,9 @@ public final class GeneralModuleTypeForIdea extends GeneralModuleType {
     };
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @Override
-  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getDescription() {
+  public @NotNull String getDescription() {
     return IdeBundle.message("general.module.type.description");
   }
 }

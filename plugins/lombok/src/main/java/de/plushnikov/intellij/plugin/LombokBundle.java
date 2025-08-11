@@ -13,7 +13,8 @@ import java.util.function.Supplier;
  * {@link ResourceBundle}/localization utils for the lombok plugin.
  */
 public final class LombokBundle extends DynamicBundle {
-  public static final @NonNls String PATH_TO_BUNDLE = "messages.LombokBundle";
+  @NonNls
+  public static final String PATH_TO_BUNDLE = "messages.LombokBundle";
   private static final LombokBundle ourInstance = new LombokBundle();
 
   private LombokBundle() {
@@ -24,8 +25,9 @@ public final class LombokBundle extends DynamicBundle {
     return ourInstance.getMessage(key, params);
   }
 
-  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key,
-                                                              Object @NotNull ... params) {
+  @NotNull
+  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key,
+                                                     Object @NotNull ... params) {
     return ourInstance.getLazyMessage(key, params);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class DebuggerTreeNodeImpl
@@ -28,7 +28,6 @@ import javax.swing.*;
 import javax.swing.tree.MutableTreeNode;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTreeNode, NodeDescriptorProvider, MutableTreeNode {
   private Icon myIcon;
@@ -55,7 +54,6 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
     return myTree;
   }
 
-  @Override
   public String toString() {
     return myText != null ? myText.toString() : "";
   }
@@ -110,7 +108,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
       myIcon = DebuggerTreeRenderer.getDescriptorIcon(MessageDescriptor.EVALUATING);
       myText = DebuggerTreeRenderer.getDescriptorText(context, MessageDescriptor.EVALUATING, false);
 
-      Objects.requireNonNull(context.getManagerThread()).schedule(new DebuggerContextCommandImpl(context) {
+      context.getDebugProcess().getManagerThread().invoke(new DebuggerContextCommandImpl(context) {
         @Override
         public void threadAction(@NotNull SuspendContextImpl suspendContext) {
           runnable.run();
@@ -220,13 +218,15 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
     myProperties.put(key, data);
   }
 
-  public static @NotNull DebuggerTreeNodeImpl createNodeNoUpdate(DebuggerTree tree, NodeDescriptor descriptor) {
+  @NotNull
+  public static DebuggerTreeNodeImpl createNodeNoUpdate(DebuggerTree tree, NodeDescriptor descriptor) {
     DebuggerTreeNodeImpl node = new DebuggerTreeNodeImpl(tree, descriptor);
     node.updateCaches();
     return node;
   }
 
-  protected static @NotNull DebuggerTreeNodeImpl createNode(DebuggerTree tree, NodeDescriptorImpl descriptor, EvaluationContextImpl evaluationContext) {
+  @NotNull
+  protected static DebuggerTreeNodeImpl createNode(DebuggerTree tree, NodeDescriptorImpl descriptor, EvaluationContextImpl evaluationContext) {
     final DebuggerTreeNodeImpl node = new DebuggerTreeNodeImpl(tree, descriptor);
     descriptor.updateRepresentationNoNotify(evaluationContext, new DescriptorLabelListener() {
       @Override

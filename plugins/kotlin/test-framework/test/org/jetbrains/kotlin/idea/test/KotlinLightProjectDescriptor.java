@@ -10,12 +10,10 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.workspaceModel.ide.legacyBridge.impl.java.JavaModuleTypeUtils.JAVA_MODULE_ENTITY_TYPE_ID_NAME;
 
 public class KotlinLightProjectDescriptor extends LightProjectDescriptor {
-
     protected KotlinLightProjectDescriptor() {
     }
     
@@ -28,7 +26,7 @@ public class KotlinLightProjectDescriptor extends LightProjectDescriptor {
     }
 
     @Override
-    public @Nullable Sdk getSdk() {
+    public Sdk getSdk() {
         return IdeaTestUtil.getMockJdk18();
     }
 

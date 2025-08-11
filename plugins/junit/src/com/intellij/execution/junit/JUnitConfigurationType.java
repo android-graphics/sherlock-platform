@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.junit;
 
@@ -24,7 +24,8 @@ public final class JUnitConfigurationType implements ConfigurationType {
   public JUnitConfigurationType() {
     myFactory = new ConfigurationFactory(this) {
       @Override
-      public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+      @NotNull
+      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new JUnitConfiguration("", project, this);
       }
 
@@ -40,8 +41,9 @@ public final class JUnitConfigurationType implements ConfigurationType {
     };
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDisplayName() {
+  public String getDisplayName() {
     return JUnitBundle.message("junit.configuration.display.name");
   }
 
@@ -66,12 +68,14 @@ public final class JUnitConfigurationType implements ConfigurationType {
   }
 
   @Override
-  public @NotNull String getId() {
+  @NotNull
+  public String getId() {
     return "JUnit";
   }
 
+  @NotNull
   @Override
-  public @NotNull String getTag() {
+  public String getTag() {
     String id = getId();
     return id.equals("JUnit") ? "junit" : id;
   }
@@ -85,7 +89,8 @@ public final class JUnitConfigurationType implements ConfigurationType {
     return myFactory;
   }
 
-  public static @NotNull JUnitConfigurationType getInstance() {
+  @NotNull
+  public static JUnitConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(JUnitConfigurationType.class);
   }
 }

@@ -2,7 +2,6 @@
 package com.intellij.cce.metric
 
 import com.intellij.cce.core.*
-import com.intellij.cce.evaluable.AIA_HAS_SYNTAX_ERRORS
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
@@ -10,9 +9,9 @@ class CodeGenerationMetricsTest {
   @Test
   fun `test correct results`() {
     doTest(sessions = listOf(
-      session(singleSuggestion(result = "not-empty"), withSyntaxErrors = false),
-      session(singleSuggestion(result = "not-empty-2"), withSyntaxErrors = false),
-      session(singleSuggestion(result = "not-empty-3"), withSyntaxErrors = false),
+      session(result = "not-empty", withSyntaxErrors = false),
+      session(result = "not-empty-2", withSyntaxErrors = false),
+      session(result = "not-empty-3", withSyntaxErrors = false),
     ), listOf(
       WithoutSyntaxErrorsSessionRatio() to 1.0,
       NotEmptyResultsRatio() to 1.0
@@ -22,10 +21,10 @@ class CodeGenerationMetricsTest {
   @Test
   fun `test incorrect results`() {
     doTest(sessions = listOf(
-      session(singleSuggestion(result = ""), withSyntaxErrors = true),
-      session(singleSuggestion(result = ""), withSyntaxErrors = true),
-      session(singleSuggestion(result = "with-errors"), withSyntaxErrors = true),
-      session(singleSuggestion(result = "with-errors-2"), withSyntaxErrors = true),
+      session(result = "", withSyntaxErrors = true),
+      session(result = "", withSyntaxErrors = true),
+      session(result = "with-errors", withSyntaxErrors = true),
+      session(result = "with-errors-2", withSyntaxErrors = true),
     ), listOf(
       WithoutSyntaxErrorsSessionRatio() to 0.0,
       NotEmptyResultsRatio() to 0.5
@@ -35,23 +34,13 @@ class CodeGenerationMetricsTest {
   @Test
   fun `test mixed results`() {
     doTest(sessions = listOf(
-      session(singleSuggestion(result = ""), withSyntaxErrors = true),
-      session(singleSuggestion(result = "not-empty"), withSyntaxErrors = false),
-      session(singleSuggestion(result = "not-empty-2"), withSyntaxErrors = false),
-      session(singleSuggestion(result = "with errors"), withSyntaxErrors = true),
+      session(result = "", withSyntaxErrors = true),
+      session(result = "not-empty", withSyntaxErrors = false),
+      session(result = "not-empty-2", withSyntaxErrors = false),
+      session(result = "with errors", withSyntaxErrors = true),
     ), listOf(
       WithoutSyntaxErrorsSessionRatio() to 0.5,
       NotEmptyResultsRatio() to 0.75
-    ))
-  }
-
-  @Test
-  fun `test session without suggestions`() {
-    doTest(sessions = listOf(
-      session(emptyList(), withSyntaxErrors = true),
-    ), listOf(
-      WithoutSyntaxErrorsSessionRatio() to 0.0,
-      NotEmptyResultsRatio() to 0.0
     ))
   }
 
@@ -61,20 +50,20 @@ class CodeGenerationMetricsTest {
     }
   }
 
-  private fun singleSuggestion(result: String): List<Suggestion> = listOf(Suggestion(result, result, SuggestionSource.INTELLIJ))
-
-  private fun session(suggestions: List<Suggestion>, withSyntaxErrors: Boolean): Session {
+  private fun session(result: String, withSyntaxErrors: Boolean): Session {
     val session = Session(0, "", 0, TokenProperties.UNKNOWN)
     session.addLookup(Lookup(
       prefix = "",
       offset = 0,
-      suggestions = suggestions,
+      suggestions = listOf(Suggestion(result, result, SuggestionSource.INTELLIJ)),
       latency = 0,
       features = null,
       selectedPosition = 0,
       isNew = true,
-      additionalInfo = mapOf(AIA_HAS_SYNTAX_ERRORS to withSyntaxErrors)
+      additionalInfo = mapOf(HasSyntaxErrorsProperty to withSyntaxErrors)
     ))
     return session
   }
 }
+
+private const val HasSyntaxErrorsProperty = "has_syntax_errors"

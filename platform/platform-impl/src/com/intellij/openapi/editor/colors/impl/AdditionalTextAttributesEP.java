@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.colors.impl;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,7 +15,6 @@ public final class AdditionalTextAttributesEP implements PluginAware {
   private AdditionalTextAttributesEP() {
   }
 
-  @ApiStatus.Internal
   public AdditionalTextAttributesEP(PluginDescriptor pluginDescriptor) {
     this.pluginDescriptor = pluginDescriptor;
   }
@@ -32,7 +30,6 @@ public final class AdditionalTextAttributesEP implements PluginAware {
 
   transient PluginDescriptor pluginDescriptor;
 
-  @ApiStatus.Internal
   @Override
   public void setPluginDescriptor(@NotNull PluginDescriptor value) {
     pluginDescriptor = value;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -86,13 +86,17 @@ public final class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLo
       myChangesSemantics = changesSemantics;
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getName() {
+    public String getName() {
       return getFamilyName() + (myChangesSemantics ? JavaBundle.message("quickfix.text.suffix.may.change.semantics") : "");
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaBundle.message("quickfix.family.replace.with.optional.of.nullable.chain");
     }
 
@@ -157,7 +161,8 @@ public final class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLo
     }
 
     @Contract("null -> null")
-    public static @Nullable TernaryNullCheck from(@Nullable PsiConditionalExpression ternary) {
+    @Nullable
+    public static TernaryNullCheck from(@Nullable PsiConditionalExpression ternary) {
       if (ternary == null) return null;
       PsiExpression condition = ternary.getCondition();
       boolean isNull = true;

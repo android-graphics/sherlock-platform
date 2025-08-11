@@ -15,11 +15,8 @@
  */
 package com.intellij.util.xml;
 
-import org.jetbrains.annotations.Unmodifiable;
-
 import java.util.List;
 
 public interface MergedObject<V> {
-  @Unmodifiable
   List<V> getImplementations();
 }

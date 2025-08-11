@@ -33,6 +33,5 @@ public interface TestGenerator {
   /**
    * should return text to show in dialog
    */
-  @Override
   String toString();
 }

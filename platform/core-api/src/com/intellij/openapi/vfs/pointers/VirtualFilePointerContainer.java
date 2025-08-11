@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -90,6 +89,5 @@ public interface VirtualFilePointerContainer {
    * Returns list of (directory url, isRecursive) which were added via {@link #addJarDirectory(String, boolean)} }
    */
   @NotNull
-  @Unmodifiable
   List<Pair<String, Boolean>> getJarDirectories();
 }

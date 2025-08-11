@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.psi.*;
@@ -84,7 +84,8 @@ final class ReusedLocalVariablesFinder {
     return result;
   }
 
-  private static @Nullable ReusedLocalVariablesFinder createFinder(@NotNull PsiElement fragmentEnd) {
+  @Nullable
+  private static ReusedLocalVariablesFinder createFinder(@NotNull PsiElement fragmentEnd) {
     PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(fragmentEnd, PsiStatement.class);
     if (nextStatement == null) {
       return null;

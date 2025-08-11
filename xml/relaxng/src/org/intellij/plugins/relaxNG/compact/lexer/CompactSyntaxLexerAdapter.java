@@ -110,7 +110,7 @@ public final class CompactSyntaxLexerAdapter extends LexerBase {
   }
 
   private Token nextToken() {
-    if (!myTokenQueue.isEmpty()) {
+    if (myTokenQueue.size() > 0) {
       return myTokenQueue.removeFirst();
     }
 
@@ -126,8 +126,9 @@ public final class CompactSyntaxLexerAdapter extends LexerBase {
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull CharSequence getBufferSequence() {
+  public CharSequence getBufferSequence() {
     return myBuffer;
   }
 
@@ -156,7 +157,8 @@ public final class CompactSyntaxLexerAdapter extends LexerBase {
   }
 
   @Override
-  public @Nullable IElementType getTokenType() {
+  @Nullable
+  public IElementType getTokenType() {
     if (myCurrentToken == null) {
       return null;
     } else {

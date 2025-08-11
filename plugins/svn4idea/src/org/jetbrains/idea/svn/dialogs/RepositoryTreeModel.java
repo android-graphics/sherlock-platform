@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.Disposable;
@@ -109,11 +109,13 @@ public class RepositoryTreeModel extends DefaultTreeModel implements Disposable 
     return myCacheLoader;
   }
 
-  public @NotNull Expander getLazyLoadingExpander() {
+  @NotNull
+  public Expander getLazyLoadingExpander() {
     return myDefaultExpanderFactory.fun(myBrowser);
   }
 
-  public @NotNull Expander getSelectionKeepingExpander() {
+  @NotNull
+  public Expander getSelectionKeepingExpander() {
     return new KeepingSelectionExpander(myBrowser);
   }
 
@@ -121,7 +123,8 @@ public class RepositoryTreeModel extends DefaultTreeModel implements Disposable 
     myDefaultExpanderFactory = defaultExpanderFactory;
   }
 
-  public @Nullable RepositoryTreeNode findByUrl(final RepositoryTreeNode oldNode) {
+  @Nullable
+  public RepositoryTreeNode findByUrl(final RepositoryTreeNode oldNode) {
     if (oldNode.getParent() == null) {
       return oldNode;
     }
@@ -162,7 +165,8 @@ public class RepositoryTreeModel extends DefaultTreeModel implements Disposable 
     return (RepositoryTreeNode) root;
   }
 
-  private static @Nullable RepositoryTreeNode getChild(final RepositoryTreeNode node, final Url url) {
+  @Nullable
+  private static RepositoryTreeNode getChild(final RepositoryTreeNode node, final Url url) {
     final List<RepositoryTreeNode> children = node.getAlreadyLoadedChildren();
     for (RepositoryTreeNode child : children) {
       if (child.getURL().equals(url)) {

@@ -14,12 +14,10 @@ public interface ChangeListGroupingStrategy {
   @Nls
   String getGroupName(CommittedChangeList changeList);
   Comparator<CommittedChangeList> getComparator();
-  @Override
   @Nls
   String toString();
 
   ChangeListGroupingStrategy USER = new ChangeListGroupingStrategy() {
-    @Override
     public String toString() {
       return VcsBundle.message("user.group.title");
     }

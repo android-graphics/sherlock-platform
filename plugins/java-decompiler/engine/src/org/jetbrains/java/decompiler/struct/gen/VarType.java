@@ -1,10 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct.gen;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 
-import java.util.Map;
 import java.util.Objects;
 
 public class VarType implements Type {  // TODO: optimize switch
@@ -52,7 +50,7 @@ public class VarType implements Type {  // TODO: optimize switch
     this(type, arrayDim, value, getFamily(type, arrayDim), getStackSize(type, arrayDim), false);
   }
 
-  protected VarType(int type, int arrayDim, String value, int typeFamily, int stackSize, boolean falseBoolean) {
+  private VarType(int type, int arrayDim, String value, int typeFamily, int stackSize, boolean falseBoolean) {
     this.type = type;
     this.arrayDim = arrayDim;
     this.value = value;
@@ -149,7 +147,7 @@ public class VarType implements Type {  // TODO: optimize switch
     };
   }
 
-  protected static int getStackSize(int type, int arrayDim) {
+  private static int getStackSize(int type, int arrayDim) {
     if (arrayDim > 0) {
       return 1;
     }
@@ -161,7 +159,7 @@ public class VarType implements Type {  // TODO: optimize switch
     };
   }
 
-  protected static int getFamily(int type, int arrayDim) {
+  private static int getFamily(int type, int arrayDim) {
     if (arrayDim > 0) {
       return CodeConstants.TYPE_FAMILY_OBJECT;
     }
@@ -178,7 +176,7 @@ public class VarType implements Type {  // TODO: optimize switch
     };
   }
 
-  public @NotNull VarType decreaseArrayDim() {
+  public VarType decreaseArrayDim() {
     if (getArrayDim() > 0) {
       return new VarType(getType(), getArrayDim() - 1, getValue());
     }
@@ -248,15 +246,6 @@ public class VarType implements Type {  // TODO: optimize switch
     }
 
     return res;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = 1;
-    result = 37 * result + type;
-    result = 37 * result + arrayDim;
-    result = 37 * result + (value == null ? 0 : value.hashCode());
-    return result;
   }
 
   @Override
@@ -383,16 +372,5 @@ public class VarType implements Type {  // TODO: optimize switch
       case 'U' -> CodeConstants.TYPE_UNKNOWN;
       default -> throw new IllegalArgumentException("Invalid type: " + c);
     };
-  }
-
-  public boolean isGeneric() {
-    return false;
-  }
-
-  public VarType remap(Map<VarType, VarType> map) {
-    if (map.containsKey(this)) {
-      return map.get(this);
-    }
-    return this;
   }
 }

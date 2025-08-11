@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInspection.BatchQuickFix;
@@ -36,7 +36,7 @@ import org.jetbrains.uast.generate.UastElementFactory;
 
 import java.util.*;
 
-public final class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickFix {
+public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickFix {
   private static final Logger LOG = Logger.getInstance(I18nizeBatchQuickFix.class);
 
 
@@ -237,7 +237,8 @@ public final class I18nizeBatchQuickFix extends I18nizeQuickFix implements Batch
     return null;
   }
 
-  private static @Nullable String suggestKeyByPlace(String value, @NotNull UExpression expression) {
+  @Nullable
+  private static String suggestKeyByPlace(String value, @NotNull UExpression expression) {
     List<UExpression> usages = I18nInspection.findIndirectUsages(expression, true);
     if (usages.isEmpty()) {
       usages = Collections.singletonList(expression);

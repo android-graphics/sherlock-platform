@@ -20,10 +20,8 @@ public abstract class DescriptorData<T extends NodeDescriptor> implements Descri
 
   protected abstract T createDescriptorImpl(@NotNull Project project);
 
-  @Override
   public abstract boolean equals(Object object);
 
-  @Override
   public abstract int hashCode();
 
   public abstract DisplayKey<T> getDisplayKey();

@@ -27,7 +27,6 @@ package org.jetbrains.lang.manifest.psi;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -39,7 +38,6 @@ public interface ManifestFile extends PsiFile {
    * Returns all sections of the file.
    */
   @NotNull
-  @Unmodifiable
   List<Section> getSections();
 
   /**
@@ -52,7 +50,6 @@ public interface ManifestFile extends PsiFile {
    * Returns all headers from the main section in this file.
    */
   @NotNull
-  @Unmodifiable
   List<Header> getHeaders();
 
   /**

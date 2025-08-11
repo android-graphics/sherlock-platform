@@ -18,15 +18,17 @@ import javax.swing.*;
  * @author konstantin.aleev
  */
 public final class FolderDashboardGroupingRule implements RunDashboardGroupingRule {
-  private static final @NonNls String NAME = "FolderDashboardGroupingRule";
+  @NonNls private static final String NAME = "FolderDashboardGroupingRule";
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return NAME;
   }
 
+  @Nullable
   @Override
-  public @Nullable RunDashboardGroup getGroup(AbstractTreeNode<?> node) {
+  public RunDashboardGroup getGroup(AbstractTreeNode<?> node) {
     if (node instanceof RunDashboardRunConfigurationNode) {
       RunnerAndConfigurationSettings configurationSettings = ((RunDashboardRunConfigurationNode)node).getConfigurationSettings();
       String folderName = configurationSettings.getFolderName();

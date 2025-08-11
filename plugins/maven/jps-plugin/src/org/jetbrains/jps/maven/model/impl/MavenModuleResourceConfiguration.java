@@ -1,15 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.maven.model.impl;
 
-import com.dynatrace.hash4j.hashing.HashFunnel;
-import com.dynatrace.hash4j.hashing.HashSink;
-import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,19 +14,30 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-@ApiStatus.Internal
-public final class MavenModuleResourceConfiguration {
-  @Tag("id") public @NotNull MavenIdBean id;
+public class MavenModuleResourceConfiguration {
+  @NotNull
+  @Tag("id")
+  public MavenIdBean id;
 
-  @Tag("parentId") public @Nullable MavenIdBean parentId;
+  @Nullable
+  @Tag("parentId")
+  public MavenIdBean parentId;
 
-  @Tag("directory") public @NotNull String directory;
+  @NotNull
+  @Tag("directory")
+  public String directory;
 
-  @Tag("manifest") public @Nullable String manifest;
+  @Nullable
+  @Tag("manifest")
+  public String manifest;
 
-  @Tag("classpath") public @Nullable String classpath;
+  @Nullable
+  @Tag("classpath")
+  public String classpath;
 
-  @Tag("delimiters-pattern") public @NotNull String delimitersPattern;
+  @NotNull
+  @Tag("delimiters-pattern")
+  public String delimitersPattern;
 
   @Tag("model-map")
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
@@ -74,44 +81,33 @@ public final class MavenModuleResourceConfiguration {
     return Collections.unmodifiableSet(result);
   }
 
-  public void computeConfigurationHash(boolean forTestResources, @NotNull HashSink hash) {
-    computeModuleConfigurationHash(hash);
+  public int computeConfigurationHash(boolean forTestResources) {
+    int result = computeModuleConfigurationHash();
 
-    List<ResourceRootConfiguration> _resources = forTestResources? testResources : resources;
+    final List<ResourceRootConfiguration> _resources = forTestResources? testResources : resources;
+    result = 31 * result;
     for (ResourceRootConfiguration resource : _resources) {
-      resource.computeConfigurationHash(hash);
+      result += resource.computeConfigurationHash();
     }
-    hash.putInt(_resources.size());
+    return result;
   }
 
-  public void computeModuleConfigurationHash(@NotNull HashSink hash) {
-    hash.putInt(parentId == null ? 0 : parentId.hashCode());
-    hash.putString(directory);
-    hashNullableString(manifest, hash);
-    hashNullableString(classpath, hash);
-    hash.putString(delimitersPattern);
-
-    hash.putUnorderedIterable(filteringExclusions, HashFunnel.forString(), Hashing.komihash5_0());
-
-    hashNullableString(escapeString, hash);
-    hashNullableString(outputDirectory, hash);
-    hashNullableString(testOutputDirectory, hash);
-
-    HashFunnel<Map.Entry<String, String>> entryHashFunnel = HashFunnel.forEntry(HashFunnel.forString(), HashFunnel.forString());
-    hash.putUnorderedIterable(modelMap.entrySet(), entryHashFunnel, Hashing.komihash5_0());
-    hash.putUnorderedIterable(properties.entrySet(), entryHashFunnel, Hashing.komihash5_0());
-
-    hash.putBoolean(escapeWindowsPaths);
-    hash.putBoolean(overwrite);
-  }
-
-  private static void hashNullableString(@Nullable String s, @NotNull HashSink hash) {
-    if (s == null) {
-      hash.putInt(-1);
-    }
-    else {
-      hash.putString(s);
-    }
+  public int computeModuleConfigurationHash() {
+    int result = id.hashCode();
+    result = 31 * result + (parentId != null ? parentId.hashCode() : 0);
+    result = 31 * result + directory.hashCode();
+    result = 31 * result + (manifest != null ? manifest.hashCode() : 0);
+    result = 31 * result + (classpath != null ? classpath.hashCode() : 0);
+    result = 31 * result + delimitersPattern.hashCode();
+    result = 31 * result + modelMap.hashCode();
+    result = 31 * result + properties.hashCode();
+    result = 31 * result + filteringExclusions.hashCode();
+    result = 31 * result + (escapeString != null ? escapeString.hashCode() : 0);
+    result = 31 * result + (outputDirectory != null ? outputDirectory.hashCode() : 0);
+    result = 31 * result + (testOutputDirectory != null ? testOutputDirectory.hashCode() : 0);
+    result = 31 * result + (escapeWindowsPaths ? 1 : 0);
+    result = 31 * result + (overwrite ? 1 : 0);
+    return result;
   }
 
   @Override

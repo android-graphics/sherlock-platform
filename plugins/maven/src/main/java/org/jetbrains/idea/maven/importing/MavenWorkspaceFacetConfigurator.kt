@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.util.ConcurrencyUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.*
 import org.jetbrains.idea.maven.project.MavenProject
@@ -15,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 private val FACET_DETECTION_DISABLED_KEY = Key.create<ConcurrentHashMap<MavenWorkspaceFacetConfigurator, Boolean>>("FACET_DETECTION_DISABLED_KEY")
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
   fun isApplicable(mavenProject: MavenProject): Boolean
   fun isFacetDetectionDisabled(project: Project): Boolean
@@ -44,7 +43,8 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
   }
 
   private fun isFacetDetectionDisabled(context: Context<*>): Boolean {
-    return ConcurrencyUtil.computeIfAbsent(context, FACET_DETECTION_DISABLED_KEY, { ConcurrentHashMap()}).computeIfAbsent(this) { isFacetDetectionDisabled(context.project) }
+    context.putUserDataIfAbsent(FACET_DETECTION_DISABLED_KEY, ConcurrentHashMap())
+    return FACET_DETECTION_DISABLED_KEY[context].computeIfAbsent(this) { isFacetDetectionDisabled(context.project) }
   }
 
   override fun configureMavenProject(context: MutableMavenProjectContext) {
@@ -76,10 +76,9 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
     fun mavenModuleTypeOrder(type: MavenModuleType): Int = when (type) {
       StandardMavenModuleType.SINGLE_MODULE -> 0
       StandardMavenModuleType.MAIN_ONLY -> 1
-      StandardMavenModuleType.MAIN_ONLY_ADDITIONAL -> 2
-      StandardMavenModuleType.TEST_ONLY -> 3
-      StandardMavenModuleType.COMPOUND_MODULE -> 4
-      StandardMavenModuleType.AGGREGATOR -> 5
+      StandardMavenModuleType.TEST_ONLY -> 2
+      StandardMavenModuleType.COMPOUND_MODULE -> 3
+      StandardMavenModuleType.AGGREGATOR -> 4
     }
 
     val mavenProjectToModuleName = mavenProjectsWithModules.associateBy({ it.mavenProject }, {

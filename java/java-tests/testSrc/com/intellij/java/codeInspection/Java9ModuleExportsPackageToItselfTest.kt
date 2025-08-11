@@ -15,6 +15,7 @@
  */
 package com.intellij.java.codeInspection
 
+import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.codeInspection.java19modules.Java9ModuleExportsPackageToItselfInspection
 import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase

@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -89,7 +91,8 @@ public class GroovyMethodDescriptor {
     public String methodContributor;
   }
 
-  public @Nullable List<String> getParams() {
+  @Nullable
+  public List<String> getParams() {
     if (params != null) {
       assert (checkParamsType == null || checkParamsType);
       
@@ -111,7 +114,8 @@ public class GroovyMethodDescriptor {
     }
   }
 
-  public @Nullable Map<String, NamedArgumentDescriptor> getArgumentsMap() {
+  @Nullable
+  public Map<String, NamedArgumentDescriptor> getArgumentsMap() {
     if (myArguments == null && namedArgs == null) {
       assert isNamedArgsShowFirst == null;
       return null;

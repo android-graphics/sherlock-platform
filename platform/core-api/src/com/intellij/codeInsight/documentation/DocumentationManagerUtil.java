@@ -1,21 +1,23 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 
-public final class DocumentationManagerUtil {
+public class DocumentationManagerUtil {
+  public static DocumentationManagerUtil getInstance() {
+    return ApplicationManager.getApplication().getService(DocumentationManagerUtil.class);
+  }
 
-  private DocumentationManagerUtil() { }
-
-  /**
-   * Appends a hyperlink to the specified element to the specified string buffer.
-   *
-   * @param buffer    the target buffer.
-   * @param refText   the hyperlink reference text
-   * @param label     the label for the hyperlink
-   * @param plainLink if false, the label of the link is wrapped in the &lt;code&gt; tag.
-   */
-  public static void createHyperlink(StringBuilder buffer, String refText, String label, boolean plainLink) {
+  @SuppressWarnings({"HardCodedStringLiteral", "UnusedParameters"})
+  protected void createHyperlinkImpl(
+    StringBuilder buffer,
+    PsiElement refElement,
+    String refText,
+    String label,
+    boolean plainLink,
+    boolean isRendered
+  ) {
     buffer.append("<a href=\"");
     buffer.append(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL); // :-)
     buffer.append(refText);
@@ -30,22 +32,14 @@ public final class DocumentationManagerUtil {
     buffer.append("</a>");
   }
 
-  /**
-   * @deprecated use {@link #createHyperlink(StringBuilder, String, String, boolean)}
-   */
-  @Deprecated
-  public static void createHyperlink(StringBuilder buffer,
-                                     String refText,
-                                     String label,
-                                     boolean plainLink,
-                                     @SuppressWarnings("unused") boolean isRendered) {
-    createHyperlink(buffer, refText, label, plainLink);
+  public static void createHyperlink(StringBuilder buffer, String refText, String label, boolean plainLink) {
+    getInstance().createHyperlinkImpl(buffer, null, refText, label, plainLink, false);
   }
 
-  /**
-   * @deprecated use {@link #createHyperlink(StringBuilder, String, String, boolean)}
-   */
-  @Deprecated
+  public static void createHyperlink(StringBuilder buffer, String refText, String label, boolean plainLink, boolean isRendered) {
+    getInstance().createHyperlinkImpl(buffer, null, refText, label, plainLink, isRendered);
+  }
+
   public static void createHyperlink(
     StringBuilder buffer,
     PsiElement refElement,
@@ -53,21 +47,26 @@ public final class DocumentationManagerUtil {
     String label,
     boolean plainLink
   ) {
-    createHyperlink(buffer, refText, label, plainLink);
+    getInstance().createHyperlinkImpl(buffer, refElement, refText, label, plainLink, false);
   }
 
   /**
-   * @deprecated use {@link #createHyperlink(StringBuilder, String, String, boolean)}
+   * Appends a hyperlink to the specified element to the specified string buffer.
+   *
+   * @param buffer     the target buffer.
+   * @param refElement the element to which the link is generated.
+   * @param refText    the hyperlink reference text
+   * @param label      the label for the hyperlink
+   * @param plainLink  if false, the label of the link is wrapped in the &lt;code&gt; tag.
    */
-  @Deprecated
   public static void createHyperlink(
     StringBuilder buffer,
-    @SuppressWarnings("unused") PsiElement refElement,
+    PsiElement refElement,
     String refText,
     String label,
     boolean plainLink,
-    @SuppressWarnings("unused") boolean isRendered
+    boolean isRendered
   ) {
-    createHyperlink(buffer, refText, label, plainLink);
+    getInstance().createHyperlinkImpl(buffer, refElement, refText, label, plainLink, isRendered);
   }
 }

@@ -1,4 +1,4 @@
-from typing import Final
+from typing_extensions import Final
 
 XK_blank: Final = 0x9DF
 XK_soliddiamond: Final = 0x9E0

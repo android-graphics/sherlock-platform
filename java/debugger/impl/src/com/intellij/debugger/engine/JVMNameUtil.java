@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerManager;
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -33,7 +32,8 @@ public final class JVMNameUtil {
 
   public static final String CONSTRUCTOR_NAME = "<init>";
 
-  public static @Nullable String getPrimitiveSignature(String typeName) {
+  @Nullable
+  public static String getPrimitiveSignature(String typeName) {
     if (PsiTypes.booleanType().getCanonicalText().equals(typeName)) {
       return "Z";
     }
@@ -210,20 +210,9 @@ public final class JVMNameUtil {
       // If there are more than one available, try to match by name
       if (allClasses.size() > 1) {
         String name = ReadAction.compute(() -> getClassVMName(getClassAt(mySourcePosition)));
-        if (name != null) {
-          for (ReferenceType aClass : allClasses) {
+        for (ReferenceType aClass : allClasses) {
           if (Objects.equals(aClass.name(), name)) {
-              return name;
-            }
-          }
-        }
-        else { // most probably local class - prefer a class with a longer name :)
-          String matchingTypeName = allClasses.stream()
-            .map(ReferenceType::name)
-            .max(Comparator.comparing(String::length))
-            .orElse(null);
-          if (matchingTypeName != null) {
-            return matchingTypeName;
+            return name;
           }
         }
       }
@@ -240,7 +229,8 @@ public final class JVMNameUtil {
     }
   }
 
-  public static @NotNull JVMName getJVMRawText(String qualifiedName) {
+  @NotNull
+  public static JVMName getJVMRawText(String qualifiedName) {
     return new JVMRawText(qualifiedName);
   }
 
@@ -262,7 +252,8 @@ public final class JVMNameUtil {
     }
   }
 
-  public static @NotNull JVMName getJVMQualifiedName(@NotNull PsiClass psiClass) {
+  @NotNull
+  public static JVMName getJVMQualifiedName(@NotNull PsiClass psiClass) {
     final String name = getClassVMName(psiClass);
     if (name != null) {
       return getJVMRawText(name);
@@ -272,7 +263,8 @@ public final class JVMNameUtil {
     }
   }
 
-  public static @Nullable JVMName getContextClassJVMQualifiedName(@Nullable SourcePosition pos) {
+  @Nullable
+  public static JVMName getContextClassJVMQualifiedName(@Nullable SourcePosition pos) {
     final PsiClass psiClass = getClassAt(pos);
     if (psiClass == null) {
       return null;
@@ -284,7 +276,8 @@ public final class JVMNameUtil {
     return new JVMClassAt(pos);
   }
 
-  public static @Nullable String getNonAnonymousClassName(@NotNull PsiClass aClass) {
+  @Nullable
+  public static String getNonAnonymousClassName(@NotNull PsiClass aClass) {
     if (PsiUtil.isLocalOrAnonymousClass(aClass)) {
       return null;
     }
@@ -306,19 +299,23 @@ public final class JVMNameUtil {
     return DebuggerManager.getInstance(aClass.getProject()).getVMClassQualifiedName(aClass);
   }
 
-  public static @NotNull JVMName getJVMConstructorSignature(@Nullable PsiMethod method, @Nullable PsiClass declaringClass) {
+  @NotNull
+  public static JVMName getJVMConstructorSignature(@Nullable PsiMethod method, @Nullable PsiClass declaringClass) {
     return getJVMSignature(method, true, declaringClass);
   }
 
-  public static @NotNull JVMName getJVMSignature(@NotNull PsiMethod method) {
+  @NotNull
+  public static JVMName getJVMSignature(@NotNull PsiMethod method) {
     return getJVMSignature(method, method.isConstructor(), method.getContainingClass());
   }
 
-  public static @NotNull String getJVMMethodName(@NotNull PsiMethod method) {
+  @NotNull
+  public static String getJVMMethodName(@NotNull PsiMethod method) {
     return method.isConstructor() ? CONSTRUCTOR_NAME : method.getName();
   }
 
-  private static @NotNull JVMName getJVMSignature(@Nullable PsiMethod method, boolean constructor, @Nullable PsiClass declaringClass) {
+  @NotNull
+  private static JVMName getJVMSignature(@Nullable PsiMethod method, boolean constructor, @Nullable PsiClass declaringClass) {
     JVMNameBuffer signature = new JVMNameBuffer();
     signature.append("(");
 
@@ -348,7 +345,8 @@ public final class JVMNameUtil {
     return signature.toName();
   }
 
-  public static @Nullable PsiClass getClassAt(@Nullable SourcePosition position) {
+  @Nullable
+  public static PsiClass getClassAt(@Nullable SourcePosition position) {
     if (position == null) {
       return null;
     }
@@ -356,7 +354,8 @@ public final class JVMNameUtil {
     return element != null && element.isValid() ? PsiTreeUtil.getParentOfType(element, PsiClass.class, false) : null;
   }
 
-  public static @Nullable String getSourcePositionClassDisplayName(DebugProcessImpl debugProcess, @Nullable SourcePosition position) {
+  @Nullable
+  public static String getSourcePositionClassDisplayName(DebugProcessImpl debugProcess, @Nullable SourcePosition position) {
     if (position == null) {
       return null;
     }
@@ -427,7 +426,8 @@ public final class JVMNameUtil {
     return calcClassDisplayName(parent) + "$" + classIndex.get();
   }
 
-  public static @Nullable String getSourcePositionPackageDisplayName(DebugProcessImpl debugProcess, @Nullable SourcePosition position) {
+  @Nullable
+  public static String getSourcePositionPackageDisplayName(DebugProcessImpl debugProcess, @Nullable SourcePosition position) {
     if (position == null) {
       return null;
     }
@@ -478,7 +478,8 @@ public final class JVMNameUtil {
     return PsiTreeUtil.getTopmostParentOfType(psiClass, PsiClass.class);
   }
 
-  public static @Nullable String getClassVMName(@Nullable PsiClass containingClass) {
+  @Nullable
+  public static String getClassVMName(@Nullable PsiClass containingClass) {
     // no support for local classes for now
     if (containingClass == null) return null;
     if (containingClass instanceof PsiAnonymousClass) {

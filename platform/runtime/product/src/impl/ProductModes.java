@@ -19,12 +19,13 @@ final class ProductModes {
    */
   public static @NotNull RuntimeModuleId getIncompatibleRootModule(@NotNull ProductMode mode) {
     switch (mode) {
-      case FRONTEND: return RuntimeModuleId.module("intellij.platform.backend");
+      case FRONTEND: return RuntimeModuleId.module("intellij.platform.localIde");
       
-      case MONOLITH: return RuntimeModuleId.module("intellij.platform.frontend.split");
+      //this module doesn't exist yet, it will be added when we need to use it
+      case LOCAL_IDE: return RuntimeModuleId.module("intellij.platform.frontend");
 
-      //currently we use the same modules in 'backend' and 'monolith' modes, in the future we may disable some UI-only modules in 'backend' mode
-      case BACKEND: return RuntimeModuleId.module("intellij.platform.frontend.split");
+      //currently we use the same modules in 'backend' and 'localIde' modes, in the future we may disable some UI-only modules in 'backend' mode
+      case BACKEND: return RuntimeModuleId.module("intellij.platform.frontend");
     }
     throw new AssertionError(mode);
   }

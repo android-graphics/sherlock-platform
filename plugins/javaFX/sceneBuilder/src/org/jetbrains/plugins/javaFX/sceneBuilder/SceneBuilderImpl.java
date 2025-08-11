@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.sceneBuilder;// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 import com.intellij.openapi.application.ReadAction;
@@ -159,7 +159,7 @@ public class SceneBuilderImpl implements SceneBuilder {
       final LanguageLevel ideLanguageLevel = ideJdkVersion != null ? ideJdkVersion.getMaxLanguageLevel() : null;
       final Query<PsiClass> query = ClassInheritorsSearch.search(nodeClass, scope, true, true, false);
       final Set<PsiClass> result = new HashSet<>();
-      query.asIterable().forEach(psiClass -> {
+      query.forEach(psiClass -> {
         if (psiClass.hasModifierProperty(PsiModifier.PUBLIC) &&
             !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
             !isBuiltInComponent(psiClass) &&
@@ -176,7 +176,8 @@ public class SceneBuilderImpl implements SceneBuilder {
     return prepareCustomComponents(psiClasses);
   }
 
-  private @NotNull List<JavaFXPlatformHelper.CustomComponent> prepareCustomComponents(Collection<PsiClass> psiClasses) {
+  @NotNull
+  private List<JavaFXPlatformHelper.CustomComponent> prepareCustomComponents(Collection<PsiClass> psiClasses) {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
     final GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
     final Map<String, BuiltinComponent> builtinComponents =
@@ -203,7 +204,8 @@ public class SceneBuilderImpl implements SceneBuilder {
     return customComponents;
   }
 
-  private @Nullable String getComponentModuleName(@NotNull PsiClass psiClass) {
+  @Nullable
+  private String getComponentModuleName(@NotNull PsiClass psiClass) {
     final VirtualFile vFile = PsiUtilCore.getVirtualFile(psiClass);
     if (vFile == null) return null;
     final Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(vFile);
@@ -357,7 +359,8 @@ public class SceneBuilderImpl implements SceneBuilder {
     return true;
   }
 
-  private static @NotNull URLClassLoader createProjectContentClassLoader(Project project, @NotNull ClassLoader parentClassLoader) {
+  @NotNull
+  private static URLClassLoader createProjectContentClassLoader(Project project, @NotNull ClassLoader parentClassLoader) {
     final List<String> pathList = ReadAction.compute(() ->
                                                        OrderEnumerator.orderEntries(project).productionOnly().withoutSdk().recursively()
                                                          .getPathsList().getPathList());
@@ -402,7 +405,8 @@ public class SceneBuilderImpl implements SceneBuilder {
     return Collections.emptyList();
   }
 
-  private static @NotNull Map<String, BuiltinComponent> loadBuiltinComponents(Predicate<? super String> psiClassExists) {
+  @NotNull
+  private static Map<String, BuiltinComponent> loadBuiltinComponents(Predicate<? super String> psiClassExists) {
     final Map<String, BuiltinComponent> components = new HashMap<>();
     for (LibraryItem item : JavaFXPlatformHelper.getBuiltinLibraryItems()) {
       final Ref<String> refQualifiedName = new Ref<>();

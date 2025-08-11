@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.execution;
 
 import com.intellij.execution.Executor;
@@ -13,8 +13,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class RunAnythingRunProfile implements RunProfile {
-  private final @NotNull String myOriginalCommand;
-  private final @NotNull GeneralCommandLine myCommandLine;
+  @NotNull private final String myOriginalCommand;
+  @NotNull private final GeneralCommandLine myCommandLine;
 
   public RunAnythingRunProfile(@NotNull GeneralCommandLine commandLine,
                                @NotNull String originalCommand) {
@@ -22,26 +22,31 @@ public class RunAnythingRunProfile implements RunProfile {
     myOriginalCommand = originalCommand;
   }
 
+  @Nullable
   @Override
-  public @Nullable RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
+  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
     return new RunAnythingRunProfileState(environment, myOriginalCommand);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return myOriginalCommand;
   }
 
-  public @NotNull String getOriginalCommand() {
+  @NotNull
+  public String getOriginalCommand() {
     return myOriginalCommand;
   }
 
-  public @NotNull GeneralCommandLine getCommandLine() {
+  @NotNull
+  public GeneralCommandLine getCommandLine() {
     return myCommandLine;
   }
 
+  @Nullable
   @Override
-  public @Nullable Icon getIcon() {
-    return AllIcons.Actions.RunAnything;
+  public Icon getIcon() {
+    return AllIcons.Actions.Run_anything;
   }
 }

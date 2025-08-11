@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -26,7 +25,6 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
@@ -34,7 +32,6 @@ import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBBox;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -74,8 +71,9 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   private static final String RECENT_KEYS = "ReplaceConstructorWithBuilder.RECENT_KEYS";
   private static final String SETTER_PREFIX_KEY = "ConstructorWithBuilder.SetterPrefix";
 
+
   protected ReplaceConstructorWithBuilderDialog(@NotNull Project project, PsiMethod[] constructors) {
-    super(project, false, true);
+    super(project, false);
     myConstructors = constructors;
     myParametersMap = new LinkedHashMap<>();
     mySetterPrefix = PropertiesComponent.getInstance(project).getValue(SETTER_PREFIX_KEY, "set");
@@ -97,49 +95,25 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
 
     final String className;
     final String packageName;
-    boolean createNewBuilder = myCreateBuilderClassRadioButton.isSelected();
-    if (createNewBuilder) {
+    if (myCreateBuilderClassRadioButton.isSelected()) {
       className = myNewClassName.getText().trim();
       packageName = myPackageTextField.getText().trim();
     } else {
       final String fqName = myExistentClassTF.getText().trim();
       className = StringUtil.getShortName(fqName);
       packageName = StringUtil.getPackageName(fqName);
+      final PsiClass builderClass = JavaPsiFacade.getInstance(myProject).findClass(StringUtil.getQualifiedName(packageName, className), GlobalSearchScope.projectScope(myProject));
+      if (builderClass != null && !CommonRefactoringUtil.checkReadOnlyStatus(myProject, builderClass)) return;
     }
-    final PsiClass builderClass = JavaPsiFacade.getInstance(myProject)
-      .findClass(StringUtil.getQualifiedName(packageName, className), GlobalSearchScope.projectScope(myProject));
-    if (!createNewBuilder) {
-      if (builderClass == null) {
-        String message = JavaRefactoringBundle.message("replace.constructor.builder.error.selected.class.was.not.found",
-                                                       CommonRefactoringUtil.htmlEmphasize(className));
-        showErrorDialog(message);
-        return;
-      }
-      if (builderClass == myConstructors[0].getContainingClass()) {
-        showErrorDialog(JavaRefactoringBundle.message("replace.constructor.builder.error.builder.class.cannot.be.the.same",
-                                                      CommonRefactoringUtil.htmlEmphasize(className)));
-        return;
-      }
-    }
-    else if (builderClass != null) {
-      showErrorDialog(JavaRefactoringBundle.message("replace.constructor.builder.error.class.with.chosen.name.already.exist",
-                                                    CommonRefactoringUtil.htmlEmphasize(className),
-                                                    CommonRefactoringUtil.htmlEmphasize(packageName)));
-      return;
-    }
-    if (!createNewBuilder && !CommonRefactoringUtil.checkReadOnlyStatus(myProject, builderClass)) return;
-    MoveDestination destination =
-      ((DestinationFolderComboBox)myDestinationCb).selectDirectory(new PackageWrapper(myConstructors[0].getManager(), packageName), false);
     invokeRefactoring(new ReplaceConstructorWithBuilderProcessor(getProject(), myConstructors, myParametersMap, className, packageName,
-                                                                 destination, createNewBuilder, isOpenInEditor()));
+                                                                 ((DestinationFolderComboBox)myDestinationCb).selectDirectory(new PackageWrapper(myConstructors[0].getManager(), packageName), false),
+                                                                 myCreateBuilderClassRadioButton.isSelected()));
   }
 
-  private void showErrorDialog(@NlsContexts.DialogMessage String message) {
-    Messages.showErrorDialog(getRootPane(), message, JavaRefactoringBundle.message("replace.constructor.with.builder"));
-  }
 
+  @Nullable
   @Override
-  protected @Nullable JComponent createNorthPanel() {
+  protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(new JLabel(JavaRefactoringBundle.message("constructor.with.builder.parameters.to.pass.to.the.builder.title")), BorderLayout.CENTER);
 
@@ -152,16 +126,17 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     }).setAsSecondary(true);
 
     panel.add(ActionManager.getInstance().createActionToolbar("ReplaceConstructorWithBuilder", actionGroup, true).getComponent(), BorderLayout.EAST);
-    final JBBox box = JBBox.createHorizontalBox();
+    final Box box = Box.createHorizontalBox();
     box.add(panel);
     box.add(Box.createHorizontalGlue());
     return box;
   }
 
   private void applyNewSetterPrefix() {
-    String message = JavaRefactoringBundle.message("constructor.with.builder.new.setter.prefix.dialog.message");
-    String title = JavaRefactoringBundle.message("constructor.with.builder.rename.setters.prefix.action.name");
-    final String setterPrefix = Messages.showInputDialog(myTable, message, title, null, mySetterPrefix, new MySetterPrefixInputValidator());
+    final String setterPrefix = Messages.showInputDialog(myTable, JavaRefactoringBundle
+                                                           .message("constructor.with.builder.new.setter.prefix.dialog.message"), JavaRefactoringBundle
+                                                           .message("constructor.with.builder.rename.setters.prefix.action.name"), null,
+                                                         mySetterPrefix, new MySetterPrefixInputValidator());
     if (setterPrefix != null) {
       mySetterPrefix = setterPrefix;
       PropertiesComponent.getInstance(myProject).setValue(SETTER_PREFIX_KEY, setterPrefix);
@@ -232,16 +207,14 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     }
     if (myCreateBuilderClassRadioButton.isSelected()) {
       final String className = myNewClassName.getText().trim();
-      if (className.isEmpty()) throw new ConfigurationException(null);
-      if (!nameHelper.isQualifiedName(className)) throw new ConfigurationException(
+      if (className.length() == 0 || !nameHelper.isQualifiedName(className)) throw new ConfigurationException(
         JavaRefactoringBundle.message("replace.constructor.builder.error.invalid.builder.class.name", className));
       final String packageName = myPackageTextField.getText().trim();
-      if (!packageName.isEmpty() && !nameHelper.isQualifiedName(packageName)) throw new ConfigurationException(
+      if (packageName.length() > 0 && !nameHelper.isQualifiedName(packageName)) throw new ConfigurationException(
         JavaRefactoringBundle.message("replace.constructor.builder.error.invalid.builder.package.name", packageName));
     } else {
       final String qualifiedName = myExistentClassTF.getText().trim();
-      if (qualifiedName.isEmpty()) throw new ConfigurationException(null);
-      if (!nameHelper.isQualifiedName(qualifiedName)) throw new ConfigurationException(
+      if (qualifiedName.length() == 0 || !nameHelper.isQualifiedName(qualifiedName)) throw new ConfigurationException(
         JavaRefactoringBundle.message("replace.constructor.builder.error.invalid.builder.qualified.class.name", qualifiedName));
     }
   }
@@ -405,8 +378,9 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
       return checkInput(inputString);
     }
 
+    @Nullable
     @Override
-    public @Nullable String getErrorText(String inputString) {
+    public String getErrorText(String inputString) {
       if (StringUtil.isEmpty(inputString)) {
         return null;
       }

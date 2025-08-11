@@ -2,10 +2,7 @@
 package com.intellij.internal.statistic.utils;
 
 import com.intellij.ide.ConsentOptionsProvider;
-import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo;
-import com.intellij.internal.statistic.eventLog.EventLogInternalSendConfig;
-import com.intellij.internal.statistic.eventLog.ExternalEventLogSettings;
-import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
+import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener;
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService;
 import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsService;
@@ -18,8 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-
-import static com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProvider;
 
 public final class StatisticsUploadAssistant {
   private static final String IDEA_HEADLESS_ENABLE_STATISTICS = "idea.headless.enable.statistics";
@@ -83,7 +78,8 @@ public final class StatisticsUploadAssistant {
     return externalEventLogSettings != null && externalEventLogSettings.forceDisableCollectionConsent();
   }
 
-  public static @NlsContexts.DetailedDescription @Nullable String getConsentWarning() {
+  @NlsContexts.DetailedDescription
+  public static @Nullable String getConsentWarning() {
     ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
     return externalEventLogSettings == null ? null : externalEventLogSettings.getConsentWarning();
   }
@@ -107,8 +103,9 @@ public final class StatisticsUploadAssistant {
                              int totalLocalFiles) {
         int success = successfullySentFiles.size();
         int failed = errors.size();
-        getEventLogProvider(recorderId).getEventLogSystemLogger$intellij_platform_statistics()
-          .logFilesSend(totalLocalFiles, success, failed, false, successfullySentFiles, errors);
+        EventLogSystemLogger.logFilesSend(
+          recorderId, totalLocalFiles, success, failed, false, successfullySentFiles, errors
+        );
       }
     };
 

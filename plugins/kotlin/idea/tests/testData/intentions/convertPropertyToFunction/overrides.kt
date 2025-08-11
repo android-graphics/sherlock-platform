@@ -1,6 +1,5 @@
 // AFTER-WARNING: Variable 'a' is never used
 // AFTER-WARNING: Variable 'b' is never used
-// PRIORITY: LOW
 package test
 
 interface T {

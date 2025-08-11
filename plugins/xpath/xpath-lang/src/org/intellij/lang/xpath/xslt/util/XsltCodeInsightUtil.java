@@ -41,7 +41,8 @@ public final class XsltCodeInsightUtil {
     private XsltCodeInsightUtil() {
     }
 
-    public static @Nullable XmlTag getTemplateTag(@NotNull PsiElement location, boolean isExpression, boolean requireName) {
+    @Nullable
+    public static XmlTag getTemplateTag(@NotNull PsiElement location, boolean isExpression, boolean requireName) {
         PsiElement p = isExpression ? location.getContainingFile().getContext() : location;
         while ((p = PsiTreeUtil.getParentOfType(p, XmlTag.class)) != null) {
             final XmlTag _p = ((XmlTag)p);
@@ -50,16 +51,19 @@ public final class XsltCodeInsightUtil {
         return null;
     }
 
-    public static @Nullable XmlTag getTemplateTag(@NotNull PsiElement location, boolean isExpression) {
+    @Nullable
+    public static XmlTag getTemplateTag(@NotNull PsiElement location, boolean isExpression) {
         return getTemplateTag(location, isExpression, false);
     }
 
-    public static @Nullable XsltTemplate getTemplate(@NotNull PsiElement location, boolean isExpression) {
+    @Nullable
+    public static XsltTemplate getTemplate(@NotNull PsiElement location, boolean isExpression) {
         final XmlTag templateTag = getTemplateTag(location, isExpression);
         return templateTag != null ? XsltElementFactory.getInstance().wrapElement(templateTag, XsltTemplate.class) : null;
     }
 
-    public static @Nullable PsiElement findFirstRealTagChild(@NotNull XmlTag xmlTag) {
+    @Nullable
+    public static PsiElement findFirstRealTagChild(@NotNull XmlTag xmlTag) {
         final PsiElement[] child = new PsiElement[1];
         xmlTag.processElements(new PsiElementProcessor() {
             @Override
@@ -76,7 +80,8 @@ public final class XsltCodeInsightUtil {
         return child[0];
     }
 
-    public static @Nullable XPathExpression getXPathExpression(XsltElement xsltElement, String attributeName) {
+    @Nullable
+    public static XPathExpression getXPathExpression(XsltElement xsltElement, String attributeName) {
         final XmlAttribute attribute = xsltElement.getTag().getAttribute(attributeName, null);
         if (attribute != null) {
             final PsiFile[] files = XsltSupport.getFiles(attribute);
@@ -94,11 +99,13 @@ public final class XsltCodeInsightUtil {
         return PsiEquivalenceUtil.areElementsEquivalent(x1, x2);
     }
 
-    public static @Nullable XmlTag findLastParam(XmlTag templateTag) {
+    @Nullable
+    public static XmlTag findLastParam(XmlTag templateTag) {
         return SyntaxTraverser.psiTraverser(templateTag).filter(XmlTag.class).filter(XsltSupport::isParam).last();
     }
 
-  public static @NotNull TextRange getRangeInsideHostingFile(XPathElement expr) {
+  @NotNull
+    public static TextRange getRangeInsideHostingFile(XPathElement expr) {
         final PsiLanguageInjectionHost host = PsiTreeUtil.getContextOfType(expr, PsiLanguageInjectionHost.class, true);
         assert host != null;
         final List<Pair<PsiElement,TextRange>> psi = InjectedLanguageManager.getInstance(host.getProject()).getInjectedPsiFiles(host);
@@ -112,7 +119,8 @@ public final class XsltCodeInsightUtil {
         return null;
     }
 
-    public static @NotNull TextRange getRangeInsideHost(XPathElement expr) {
+    @NotNull
+    public static TextRange getRangeInsideHost(XPathElement expr) {
         final PsiLanguageInjectionHost host = PsiTreeUtil.getContextOfType(expr, PsiLanguageInjectionHost.class, true);
         assert host != null;
         final List<Pair<PsiElement,TextRange>> psi = InjectedLanguageManager.getInstance(host.getProject()).getInjectedPsiFiles(host);
@@ -217,14 +225,16 @@ public final class XsltCodeInsightUtil {
       return tag;
     }
 
-    public static @Nullable PsiElement getUsageBlock(XPathExpression reference) {
+    @Nullable
+    public static PsiElement getUsageBlock(XPathExpression reference) {
         final XmlTag template = getTemplateTag(reference, true);
         final XmlTag tag = PsiTreeUtil.getContextOfType(reference, XmlTag.class, true);
         assert tag != null;
         return template != null ? template.getNavigationElement() : tag.getParentTag();
     }
 
-    public static @NotNull XmlDocument getDocument(@NotNull XmlElement element) {
+    @NotNull
+    public static XmlDocument getDocument(@NotNull XmlElement element) {
         final XmlDocument document = PsiTreeUtil.getParentOfType(element, XmlDocument.class, false);
         assert document != null;
         return document;
@@ -234,7 +244,8 @@ public final class XsltCodeInsightUtil {
         return getDocument(element.getTag());
     }
 
-  public static @Nullable XPathType getDeclaredType(XmlTag element) {
+  @Nullable
+  public static XPathType getDeclaredType(XmlTag element) {
     final XmlAttribute typeAttr = element.getAttribute("as");
     final XPathType returnType;
     if (typeAttr != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HectorComponent;
@@ -20,12 +20,13 @@ import org.jetbrains.annotations.NotNull;
 public class AntChangeContextLocalFix implements LocalQuickFix {
 
   @Override
-  public @NotNull String getName() {
+  @NotNull public String getName() {
     return AntBundle.message("intention.configure.highlighting.text");
   }
 
   @Override
-  public final @NotNull String getFamilyName() {
+  @NotNull
+  public final String getFamilyName() {
     return AntBundle.message("intention.configure.highlighting.family.name");
   }
 

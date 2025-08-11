@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.util.Pair;
@@ -17,7 +17,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public interface CommittedChangesProvider<T extends CommittedChangeList, U extends ChangeBrowserSettings> {
-  default @NotNull U createDefaultSettings() {
+  @NotNull
+  default U createDefaultSettings() {
     //noinspection unchecked
     return (U)new ChangeBrowserSettings();
   }
@@ -28,7 +29,8 @@ public interface CommittedChangesProvider<T extends CommittedChangeList, U exten
   @Nullable
   RepositoryLocation getLocationFor(@NotNull FilePath root);
 
-  default @Nullable VcsCommittedListsZipper getZipper() {
+  @Nullable
+  default VcsCommittedListsZipper getZipper() {
     return null;
   }
 
@@ -42,7 +44,8 @@ public interface CommittedChangesProvider<T extends CommittedChangeList, U exten
 
   ChangeListColumn @NotNull [] getColumns();
 
-  default @Nullable VcsCommittedViewAuxiliary createActions(@NotNull DecoratorManager manager, @Nullable RepositoryLocation location) {
+  @Nullable
+  default VcsCommittedViewAuxiliary createActions(@NotNull DecoratorManager manager, @Nullable RepositoryLocation location) {
     return null;
   }
 
@@ -57,7 +60,8 @@ public interface CommittedChangesProvider<T extends CommittedChangeList, U exten
   @Nullable
   Pair<T, FilePath> getOneList(VirtualFile file, VcsRevisionNumber number) throws VcsException;
 
-  default @Nullable RepositoryLocation getForNonLocal(@NotNull VirtualFile file) {
+  @Nullable
+  default RepositoryLocation getForNonLocal(@NotNull VirtualFile file) {
     return null;
   }
 

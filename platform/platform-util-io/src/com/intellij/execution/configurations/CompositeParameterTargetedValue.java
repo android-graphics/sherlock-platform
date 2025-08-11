@@ -5,7 +5,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.Promise;
 
 import java.io.File;
@@ -31,32 +30,38 @@ public class CompositeParameterTargetedValue {
     addLocalPart(value);
   }
 
-  public @NotNull CompositeParameterTargetedValue addLocalPart(@NotNull String value) {
+  @NotNull
+  public CompositeParameterTargetedValue addLocalPart(@NotNull String value) {
     myValues.add(new ParameterTargetValuePart.Const(value));
     return this;
   }
 
-  public @NotNull CompositeParameterTargetedValue addPathPart(@NotNull String localPath) {
+  @NotNull
+  public CompositeParameterTargetedValue addPathPart(@NotNull String localPath) {
     myValues.add(new ParameterTargetValuePart.Path(localPath));
     return this;
   }
 
-  public @NotNull CompositeParameterTargetedValue addPathSeparator() {
+  @NotNull
+  public CompositeParameterTargetedValue addPathSeparator() {
     myValues.add(ParameterTargetValuePart.PathSeparator.INSTANCE);
     return this;
   }
 
-  public @NotNull CompositeParameterTargetedValue addPathPart(@NotNull File file) {
+  @NotNull
+  public CompositeParameterTargetedValue addPathPart(@NotNull File file) {
     myValues.add(new ParameterTargetValuePart.Path(file));
     return this;
   }
 
-  public @NotNull CompositeParameterTargetedValue addTargetPart(@NotNull String localValue, @NotNull Promise<String> remoteValue) {
+  @NotNull
+  public CompositeParameterTargetedValue addTargetPart(@NotNull String localValue, @NotNull Promise<String> remoteValue) {
     myValues.add(new ParameterTargetValuePart.PromiseValue(localValue, remoteValue));
     return this;
   }
 
-  public @NotNull String getLocalValue() {
+  @NotNull
+  public String getLocalValue() {
     if (myValues.isEmpty()) return "";
     if (myValues.size() == 1) return myValues.get(0).getLocalValue();
     StringBuilder value = new StringBuilder();
@@ -66,7 +71,8 @@ public class CompositeParameterTargetedValue {
     return value.toString();
   }
 
-  public @NotNull List<ParameterTargetValuePart> getParts() {
+  @NotNull
+  public List<ParameterTargetValuePart> getParts() {
     return Collections.unmodifiableList(myValues);
   }
 
@@ -79,8 +85,9 @@ public class CompositeParameterTargetedValue {
     return myValues.toString();
   }
 
+  @NotNull
   @Contract(pure = true)
-  public static @NotNull @Unmodifiable Collection<? extends CompositeParameterTargetedValue> targetizeParameters(List<String> parameters) {
+  public static Collection<? extends CompositeParameterTargetedValue> targetizeParameters(List<String> parameters) {
     return ContainerUtil.map(parameters, parameter -> new CompositeParameterTargetedValue(parameter));
   }
 }

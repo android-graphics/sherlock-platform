@@ -1,6 +1,7 @@
 from collections.abc import Mapping, Set as AbstractSet
 from datetime import datetime
-from typing import Any, Literal, overload
+from typing import Any, overload
+from typing_extensions import Literal
 
 from ..date import _DetectLanguagesFunction
 

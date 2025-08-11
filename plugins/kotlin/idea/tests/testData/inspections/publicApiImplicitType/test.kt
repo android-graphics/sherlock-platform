@@ -27,13 +27,3 @@ private class Your {
 
     val x = ""
 }
-
-interface I {
-    fun a()
-}
-
-fun main(array: Array<String>) {
-    array.map { s ->
-
-    }
-}

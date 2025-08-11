@@ -52,8 +52,9 @@ public final class PyiTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     final PsiElement pythonStub = PyiUtil.getPythonStub(callable);
     if (pythonStub instanceof PyCallable) {
       final PyType type = context.getReturnType((PyCallable)pythonStub);
@@ -82,8 +83,9 @@ public final class PyiTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+  public PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
     final PyClass classStub = as(PyiUtil.getPythonStub(cls), PyClass.class);
     if (classStub != null) {
       return new PyTypingTypeProvider().getGenericType(classStub, context);
@@ -91,8 +93,9 @@ public final class PyiTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
+  @NotNull
   @Override
-  public @NotNull Map<PyType, PyType> getGenericSubstitutions(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+  public Map<PyType, PyType> getGenericSubstitutions(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
     final PyClass classStub = as(PyiUtil.getPythonStub(cls), PyClass.class);
     if (classStub != null) {
       return new PyTypingTypeProvider().getGenericSubstitutions(classStub, context);

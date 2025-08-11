@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity;
@@ -50,7 +50,8 @@ final class JavaResourceRootPropertiesIndexableEntityProvider implements Indexab
     return getAddedEntityIteratorBuilders(entity, project);
   }
 
-  private static @NotNull Pair<VirtualFileUrl, ModuleEntity> getDataForBuilders(@NotNull JavaResourceRootPropertiesEntity entity) {
+  @NotNull
+  private static Pair<VirtualFileUrl, ModuleEntity> getDataForBuilders(@NotNull JavaResourceRootPropertiesEntity entity) {
     SourceRootEntity sourceRootEntity = entity.getSourceRoot();
     return new Pair<>(sourceRootEntity.getUrl(), sourceRootEntity.getContentRoot().getModule());
   }

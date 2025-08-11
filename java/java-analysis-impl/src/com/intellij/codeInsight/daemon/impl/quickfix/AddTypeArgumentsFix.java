@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -26,7 +26,8 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
   }
 
   @Override
-  public @NotNull String getText(@NotNull PsiExpressionList list) {
+  @NotNull
+  public String getText(@NotNull PsiExpressionList list) {
     if (list.getExpressionCount() == 1) {
       return QuickFixBundle.message("add.type.arguments.single.argument.text");
     }
@@ -46,16 +47,18 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
     }
 
     @Override
-    public boolean areTypesConvertible(final @NotNull PsiType exprType, final @NotNull PsiType parameterType, final @NotNull PsiElement context) {
+    public boolean areTypesConvertible(@NotNull final PsiType exprType, @NotNull final PsiType parameterType, @NotNull final PsiElement context) {
       return !(exprType instanceof PsiPrimitiveType) && !(parameterType instanceof PsiPrimitiveType) || TypeConversionUtil.boxingConversionApplicable(exprType, parameterType);
     }
   }
 
-  public static @Nullable PsiExpression addTypeArguments(@NotNull PsiExpression expression, @Nullable PsiType toType) {
+  @Nullable
+  public static PsiExpression addTypeArguments(@NotNull PsiExpression expression, @Nullable PsiType toType) {
     return addTypeArguments(expression, toType, true);
   }
 
-  public static @Nullable PsiExpression addTypeArguments(@NotNull PsiExpression expression, @Nullable PsiType toType, boolean withShortening) {
+  @Nullable
+  public static PsiExpression addTypeArguments(@NotNull PsiExpression expression, @Nullable PsiType toType, boolean withShortening) {
     if (!PsiUtil.isAvailable(JavaFeature.GENERICS, expression)) return null;
 
     PsiExpression orig = expression;

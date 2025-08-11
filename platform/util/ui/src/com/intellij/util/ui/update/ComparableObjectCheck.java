@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.update;
 
+import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
 
 
 public final class ComparableObjectCheck {
@@ -21,7 +21,7 @@ public final class ComparableObjectCheck {
     if (his.length == 0) {
       return false;
     }
-    return Arrays.deepEquals(my, his);
+    return ArrayUtil.areEqual(my, his, Comparing::equal);
   }
 
   public static int hashCode(ComparableObject me, int superCode) {

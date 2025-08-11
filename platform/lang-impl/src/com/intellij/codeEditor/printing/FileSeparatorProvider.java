@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeEditor.printing;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl;
 import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
-import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
@@ -20,7 +19,8 @@ import java.util.Comparator;
 import java.util.List;
 
 final class FileSeparatorProvider {
-  static @NotNull List<LineMarkerInfo<?>> getFileSeparators(@NotNull PsiFile file, @NotNull Document document) {
+  @NotNull
+  static List<LineMarkerInfo<?>> getFileSeparators(@NotNull PsiFile file, @NotNull Document document) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     List<LineMarkerInfo<?>> result = new ArrayList<>();
@@ -28,8 +28,7 @@ final class FileSeparatorProvider {
     DaemonProgressIndicator indicator = new DaemonProgressIndicator();
 
     ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-      // todo ijpl-339 figure out what is the correct context here
-      HighlightingSessionImpl.runInsideHighlightingSession(file, FileViewProviderUtil.getCodeInsightContext(file), null, ProperTextRange.create(file.getTextRange()), false, __ -> {
+      HighlightingSessionImpl.runInsideHighlightingSession(file, null, ProperTextRange.create(file.getTextRange()), false, __ -> {
         for (LineMarkerInfo<?> lineMarkerInfo : LineMarkersPass.queryLineMarkers(file, document)) {
           if (lineMarkerInfo.separatorColor != null) {
             result.add(lineMarkerInfo);

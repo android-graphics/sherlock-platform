@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -26,10 +26,10 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class VcsContextWrapper implements VcsContext {
-  protected final @NotNull DataContext myContext;
+  @NotNull protected final DataContext myContext;
   protected final int myModifiers;
-  private final @NotNull String myPlace;
-  private final @Nullable @NlsActions.ActionText String myActionName;
+  @NotNull private final String myPlace;
+  @Nullable private final @NlsActions.ActionText String myActionName;
 
   public VcsContextWrapper(@NotNull DataContext context,
                            int modifiers,
@@ -41,31 +41,37 @@ public class VcsContextWrapper implements VcsContext {
     myActionName = actionName;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPlace() {
+  public String getPlace() {
     return myPlace;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getActionName() {
+  public String getActionName() {
     return myActionName;
   }
 
-  public static @NotNull VcsContext createCachedInstanceOn(@NotNull AnActionEvent event) {
+  @NotNull
+  public static VcsContext createCachedInstanceOn(@NotNull AnActionEvent event) {
     return new CachedVcsContext(createInstanceOn(event));
   }
 
-  public static @NotNull VcsContextWrapper createInstanceOn(@NotNull AnActionEvent event) {
+  @NotNull
+  public static VcsContextWrapper createInstanceOn(@NotNull AnActionEvent event) {
     return new VcsContextWrapper(event.getDataContext(), event.getModifiers(), event.getPlace(), event.getPresentation().getText());
   }
 
+  @Nullable
   @Override
-  public @Nullable Project getProject() {
+  public Project getProject() {
     return CommonDataKeys.PROJECT.getData(myContext);
   }
 
+  @Nullable
   @Override
-  public @Nullable VirtualFile getSelectedFile() {
+  public VirtualFile getSelectedFile() {
     return VcsContextUtil.selectedFilesIterable(myContext).first();
   }
 
@@ -74,13 +80,15 @@ public class VcsContextWrapper implements VcsContext {
     return VcsContextUtil.selectedFilesIterable(myContext).toList().toArray(VirtualFile[]::new);
   }
 
+  @NotNull
   @Override
-  public @NotNull Stream<VirtualFile> getSelectedFilesStream() {
+  public Stream<VirtualFile> getSelectedFilesStream() {
     return StreamEx.of(VcsContextUtil.selectedFilesIterable(myContext).iterator());
   }
 
+  @NotNull
   @Override
-  public @NotNull List<FilePath> getSelectedUnversionedFilePaths() {
+  public List<FilePath> getSelectedUnversionedFilePaths() {
     Iterable<FilePath> result = ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY.getData(myContext);
 
     return JBIterable.from(result).toList();
@@ -96,8 +104,9 @@ public class VcsContextWrapper implements VcsContext {
     return Arrays.asList(getSelectedFiles());
   }
 
+  @Nullable
   @Override
-  public @Nullable File getSelectedIOFile() {
+  public File getSelectedIOFile() {
     FilePath filePath = getSelectedFilePath();
     return filePath != null ? filePath.getIOFile() : null;
   }
@@ -112,8 +121,9 @@ public class VcsContextWrapper implements VcsContext {
     return myModifiers;
   }
 
+  @Nullable
   @Override
-  public @Nullable FilePath getSelectedFilePath() {
+  public FilePath getSelectedFilePath() {
     return VcsContextUtil.selectedFilePathsIterable(myContext).first();
   }
 
@@ -122,8 +132,9 @@ public class VcsContextWrapper implements VcsContext {
     return getSelectedFilePathsStream().toArray(FilePath[]::new);
   }
 
+  @NotNull
   @Override
-  public @NotNull Stream<FilePath> getSelectedFilePathsStream() {
+  public Stream<FilePath> getSelectedFilePathsStream() {
     return StreamEx.of(VcsContextUtil.selectedFilePathsIterable(myContext).iterator());
   }
 

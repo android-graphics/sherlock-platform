@@ -19,7 +19,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -28,7 +30,6 @@ import java.util.*;
 
 import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.*;
 
-@ApiStatus.Internal
 public final class ChangesCacheFile {
   private static final Logger LOG = Logger.getInstance(ChangesCacheFile.class);
   private static final int VERSION = 7;
@@ -43,7 +44,7 @@ public final class ChangesCacheFile {
   private final CachingCommittedChangesProvider myChangesProvider;
   private final ProjectLevelVcsManager myVcsManager;
   private final FilePath myRootPath;
-  private final @NotNull RepositoryLocation myLocation;
+  @NotNull private final RepositoryLocation myLocation;
   private Date myFirstCachedDate;
   private Date myLastCachedDate;
   private long myFirstCachedChangelist;
@@ -51,7 +52,7 @@ public final class ChangesCacheFile {
   private int myIncomingCount;
   private boolean myHaveCompleteHistory;
   private boolean myHeaderLoaded;
-  private static final @NonNls String INDEX_EXTENSION = ".index";
+  @NonNls private static final String INDEX_EXTENSION = ".index";
   private static final int INDEX_ENTRY_SIZE = 3*8+2;
   private static final int HEADER_SIZE = 46;
 
@@ -81,7 +82,8 @@ public final class ChangesCacheFile {
     myHeaderLoaded = false;
   }
 
-  public @NotNull RepositoryLocation getLocation() {
+  @NotNull
+  public RepositoryLocation getLocation() {
     return myLocation;
   }
 
@@ -123,14 +125,13 @@ public final class ChangesCacheFile {
     }
   }
 
-  @Contract(mutates = "this,param1")
   public List<CommittedChangeList> writeChanges(final List<? extends CommittedChangeList> changes) throws IOException {
     // the list and index are sorted in direct chronological order
     changes.sort(CommittedChangeListByDateComparator.ASCENDING);
     return writeChanges(changes, null);
   }
 
-  public List<CommittedChangeList> writeChanges(final List<? extends CommittedChangeList> changes, final @Nullable List<Boolean> present) throws IOException {
+  public List<CommittedChangeList> writeChanges(final List<? extends CommittedChangeList> changes, @Nullable final List<Boolean> present) throws IOException {
     assert present == null || present.size() == changes.size();
 
     List<CommittedChangeList> result = new ArrayList<>(changes.size());
@@ -394,7 +395,8 @@ public final class ChangesCacheFile {
     }
 
     @Override
-    public @Nullable ChangesBunch next() {
+    @Nullable
+    public ChangesBunch next() {
       try {
         final int size;
         if (myOffset < bunchSize) {
@@ -438,7 +440,8 @@ public final class ChangesCacheFile {
     }
   }
 
-  public @NotNull List<CommittedChangeList> readChanges(final ChangeBrowserSettings settings, final int maxCount) throws IOException {
+  @NotNull
+  public List<CommittedChangeList> readChanges(final ChangeBrowserSettings settings, final int maxCount) throws IOException {
     final List<CommittedChangeList> result = new ArrayList<>();
     final ChangeBrowserSettings.Filter filter = settings.createFilter();
     openStreams();
@@ -741,7 +744,8 @@ public final class ChangesCacheFile {
     data.accountedChanges = result;
   }
 
-  private @NonNls File getPartialPath(final long offset) {
+  @NonNls
+  private File getPartialPath(final long offset) {
     return new File(file + "." + offset + ".partial");
   }
 
@@ -1133,7 +1137,6 @@ public final class ChangesCacheFile {
     public CommittedChangeList changeList;
     public Set<Change> accountedChanges;
 
-    @Unmodifiable
     List<Change> getChangesToProcess() {
       return ContainerUtil.filter(changeList.getChanges(), change -> !accountedChanges.contains(change));
     }

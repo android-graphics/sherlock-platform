@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.psi.codeStyle;
 
 import com.intellij.application.options.codeStyle.OptionTableWithPreviewPanel;
@@ -28,8 +28,9 @@ public class PropertiesCodeStyleSettingsPanel extends OptionTableWithPreviewPane
     addOption("ALIGN_GROUP_FIELD_DECLARATIONS", PropertiesBundle.message("align.properties.in.column.code.style.option"));
   }
 
+  @Nullable
   @Override
-  public @Nullable Language getDefaultLanguage() {
+  public Language getDefaultLanguage() {
     return PropertiesLanguage.INSTANCE;
   }
 }

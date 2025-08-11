@@ -28,7 +28,8 @@ import org.jetbrains.annotations.NotNull;
 public final class CollectionAddedToSelfInspection extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final String methodName = (String)infos[0];
     return InspectionGadgetsBundle.message("collection.added.to.self.problem.descriptor", methodName);
   }
@@ -51,7 +52,7 @@ public final class CollectionAddedToSelfInspection extends BaseInspection {
       super.visitMethodCallExpression(call);
       final PsiReferenceExpression methodExpression =
         call.getMethodExpression();
-      final @NonNls String methodName = methodExpression.getReferenceName();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if ("equals".equals(methodName)) {
         return; // object method
       }

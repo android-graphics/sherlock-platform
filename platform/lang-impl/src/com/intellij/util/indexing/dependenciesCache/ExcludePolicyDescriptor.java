@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.dependenciesCache;
 
 import com.intellij.openapi.module.Module;
@@ -18,13 +18,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 final class ExcludePolicyDescriptor {
-  private final @NotNull Class<? extends DirectoryIndexExcludePolicy> policyClass;
+  @NotNull
+  private final Class<? extends DirectoryIndexExcludePolicy> policyClass;
   private final String[] excludedRootUrls;
-  final @NotNull Set<VirtualFile> excludedFromSdkRoots;
+  @NotNull final Set<VirtualFile> excludedFromSdkRoots;
 
-  private static @NotNull ExcludePolicyDescriptor create(@NotNull DirectoryIndexExcludePolicy policy,
-                                                         @NotNull Set<? extends Sdk> sdks,
-                                                         @NotNull Set<? extends VirtualFile> sdkRoots) {
+  @NotNull
+  static ExcludePolicyDescriptor create(@NotNull DirectoryIndexExcludePolicy policy,
+                                        @NotNull Set<? extends Sdk> sdks,
+                                        @NotNull Set<? extends VirtualFile> sdkRoots) {
     String[] excludedRootUrls = policy.getExcludeUrlsForProject();
     if (excludedRootUrls.length == 0) excludedRootUrls = ArrayUtil.EMPTY_STRING_ARRAY;
     Function<Sdk, List<VirtualFile>> strategy = policy.getExcludeSdkRootsStrategy();
@@ -55,8 +57,11 @@ final class ExcludePolicyDescriptor {
     this.excludedFromSdkRoots = excludedFromSdkRoots;
   }
 
-  public @NotNull Set<VirtualFile> getExcludedRoots() {
-    return Set.copyOf(ContainerUtil.mapNotNull(excludedRootUrls, url -> VirtualFileManager.getInstance().findFileByUrl(url)));
+  @NotNull
+  public Set<VirtualFile> getExcludedRoots() {
+    return Set.copyOf(ContainerUtil.mapNotNull(excludedRootUrls, url -> {
+      return VirtualFileManager.getInstance().findFileByUrl(url);
+    }));
   }
 
   @Override
@@ -90,7 +95,8 @@ final class ExcludePolicyDescriptor {
            '}';
   }
 
-  static @NotNull List<ExcludePolicyDescriptor> collectDescriptors(@NotNull Project project) {
+  @NotNull
+  public static List<ExcludePolicyDescriptor> collectDescriptors(@NotNull Project project) {
     Set<Sdk> sdks = new HashSet<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       Sdk sdk = ModuleRootManager.getInstance(module).getSdk();

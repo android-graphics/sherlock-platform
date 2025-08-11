@@ -8,7 +8,7 @@ import javax.swing.UIManager
 import javax.swing.border.EmptyBorder
 
 
-@Deprecated("Use Kotlin UI DSL 2, for description use {@link com.intellij.ui.dsl.builder.Cell#comment}", level = DeprecationLevel.HIDDEN)
+@Deprecated("Use Kotlin UI DSL 2, for description use {@link com.intellij.ui.dsl.builder.Cell#comment}")
 class CheckBoxWithDescription(val checkBox: JCheckBox, description: String?) : JPanel() {
   init {
     layout = BorderLayout()

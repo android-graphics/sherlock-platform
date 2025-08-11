@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
@@ -32,9 +32,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 public final class TopHitSEContributor implements SearchEverywhereContributor<Object> {
@@ -51,13 +50,15 @@ public final class TopHitSEContributor implements SearchEverywhereContributor<Ob
     mySearchStringSetter = setter;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getSearchProviderId() {
+  public String getSearchProviderId() {
     return TopHitSEContributor.class.getSimpleName();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getGroupName() {
+  public String getGroupName() {
     return IdeBundle.message("search.everywhere.group.name.top.hit");
   }
 
@@ -77,8 +78,9 @@ public final class TopHitSEContributor implements SearchEverywhereContributor<Ob
     fill(pattern, consumer);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<SearchEverywhereCommandInfo> getSupportedCommands() {
+  public List<SearchEverywhereCommandInfo> getSupportedCommands() {
     List<SearchEverywhereCommandInfo> res = new ArrayList<>();
     final HashSet<String> found = new HashSet<>();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
@@ -94,6 +96,11 @@ public final class TopHitSEContributor implements SearchEverywhereContributor<Ob
   }
 
   @Override
+  public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
+    return null;
+  }
+
+  @Override
   public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String text) {
     if (selected instanceof BooleanOptionDescription option) {
       option.setOptionState(!option.isOptionEnabled());
@@ -106,7 +113,7 @@ public final class TopHitSEContributor implements SearchEverywhereContributor<Ob
     }
 
     if (isActionValue(selected) || isSetting(selected)) {
-      GotoActionAction.openOptionOrPerformAction(selected, "", myProject, myContextComponent, modifiers, null);
+      GotoActionAction.openOptionOrPerformAction(selected, "", myProject, myContextComponent, modifiers);
       return true;
     }
 
@@ -118,8 +125,9 @@ public final class TopHitSEContributor implements SearchEverywhereContributor<Ob
     return TOP_HIT_ELEMENT_PRIORITY;
   }
 
+  @NotNull
   @Override
-  public @NotNull ListCellRenderer<? super Object> getElementsRenderer() {
+  public ListCellRenderer<? super Object> getElementsRenderer() {
     return new TopHitRenderer(myProject);
   }
 
@@ -269,7 +277,8 @@ public final class TopHitSEContributor implements SearchEverywhereContributor<Ob
     return o instanceof OptionDescription;
   }
 
-  private static @Nls String getSettingText(OptionDescription value) {
+  @Nls
+  private static String getSettingText(OptionDescription value) {
     String hit = value.getHit();
     if (hit == null) {
       hit = value.getOption();

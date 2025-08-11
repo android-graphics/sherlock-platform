@@ -12,7 +12,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiAnnotation
-import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiField
 import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.devkit.dom.Extension
@@ -137,8 +136,7 @@ fun toLevel(name: String): Service.Level? {
 }
 
 internal fun isService(uClass: UClass): Boolean {
-  if (!ExtensionUtil.isExtensionPointImplementationCandidate(uClass.javaPsi)) return false
-  return isLightService(uClass.javaPsi) || isServiceRegisteredInXml(uClass)
+  return isLightService(uClass) || isServiceRegisteredInXml(uClass)
 }
 
 internal fun isServiceRegisteredInXml(uClass: UClass): Boolean {
@@ -157,8 +155,8 @@ internal fun isServiceRegisteredInXml(uClass: UClass): Boolean {
   return false
 }
 
-internal fun isLightService(psiClass: PsiClass) : Boolean {
-  return psiClass.hasAnnotation(Service::class.java.canonicalName)
+internal fun isLightService(uClass: UClass): Boolean {
+  return uClass.findAnnotation(Service::class.java.canonicalName) != null
 }
 
 fun getProjectLevelFQN(): String = "${Service.Level::class.java.canonicalName}.${Service.Level.PROJECT}"

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,7 +29,7 @@ public class Sandbox implements ValidatableSdkAdditionalData {
   private Sdk myJavaSdk;
 
   private LocalFileSystem.WatchRequest mySandboxRoot;
-  private static final @NonNls String SDK = "sdk";
+  @NonNls private static final String SDK = "sdk";
 
   public Sandbox(String sandboxHome, Sdk javaSdk, Sdk currentJdk) {
     mySandboxHome = sandboxHome;
@@ -82,7 +82,8 @@ public class Sandbox implements ValidatableSdkAdditionalData {
     }
   }
 
-  public @Nullable Sdk getJavaSdk() {
+  @Nullable
+  public Sdk getJavaSdk() {
     final ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
     if (myJavaSdk == null) {
       if (myJavaSdkName != null) {

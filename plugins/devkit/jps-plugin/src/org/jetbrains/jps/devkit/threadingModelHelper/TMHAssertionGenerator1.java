@@ -1,14 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
 import java.util.Set;
 
-@ApiStatus.Internal
-public class TMHAssertionGenerator1 implements TMHAssertionGenerator {
+class TMHAssertionGenerator1 implements TMHAssertionGenerator {
   private static final String DEFAULT_APPLICATION_MANAGER_CLASS_NAME = "com/intellij/openapi/application/ApplicationManager";
   private static final String DEFAULT_APPLICATION_CLASS_NAME = "com/intellij/openapi/application/Application";
 
@@ -54,7 +52,7 @@ public class TMHAssertionGenerator1 implements TMHAssertionGenerator {
         myAssetionMethod.getDescriptor(), true);
   }
 
-  static final class AnnotationChecker extends AnnotationVisitor {
+  static class AnnotationChecker extends AnnotationVisitor {
     private boolean myShouldGenerateAssertion = true;
     private final Runnable myOnShouldGenerateAssertion;
 
@@ -79,8 +77,7 @@ public class TMHAssertionGenerator1 implements TMHAssertionGenerator {
   }
 
   // TODO avoid hardcoding annotation names
-  @ApiStatus.Internal
-  public static final class AssertEdt extends TMHAssertionGenerator1 {
+  static class AssertEdt extends TMHAssertionGenerator1 {
     private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresEdt";
 
     AssertEdt() {
@@ -98,8 +95,7 @@ public class TMHAssertionGenerator1 implements TMHAssertionGenerator {
     }
   }
 
-  @ApiStatus.Internal
-  public static final class AssertBackgroundThread extends TMHAssertionGenerator1 {
+  static class AssertBackgroundThread extends TMHAssertionGenerator1 {
     private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresBackgroundThread";
 
     AssertBackgroundThread() {
@@ -117,8 +113,7 @@ public class TMHAssertionGenerator1 implements TMHAssertionGenerator {
     }
   }
 
-  @ApiStatus.Internal
-  public static final class AssertReadAccess extends TMHAssertionGenerator1 {
+  static class AssertReadAccess extends TMHAssertionGenerator1 {
     private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresReadLock";
 
     AssertReadAccess() {
@@ -138,8 +133,7 @@ public class TMHAssertionGenerator1 implements TMHAssertionGenerator {
     }
   }
 
-  @ApiStatus.Internal
-  public static final class AssertWriteAccess extends TMHAssertionGenerator1 {
+  static class AssertWriteAccess extends TMHAssertionGenerator1 {
     private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresWriteLock";
 
     AssertWriteAccess() {
@@ -159,8 +153,7 @@ public class TMHAssertionGenerator1 implements TMHAssertionGenerator {
     }
   }
 
-  @ApiStatus.Internal
-  public static final class AssertNoReadAccess extends TMHAssertionGenerator1 {
+  static class AssertNoReadAccess extends TMHAssertionGenerator1 {
     private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresReadLockAbsence";
 
     AssertNoReadAccess() {

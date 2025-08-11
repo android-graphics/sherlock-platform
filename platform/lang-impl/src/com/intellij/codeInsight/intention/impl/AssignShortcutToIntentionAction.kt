@@ -7,10 +7,8 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey
 
-@ApiStatus.Internal
 abstract class AbstractEditIntentionShortcutAction(protected val intention: IntentionAction,
                                                    @PropertyKey(resourceBundle = CodeInsightBundle.BUNDLE) private val textKey: String)
   : IntentionAction, LowPriorityAction {
@@ -23,7 +21,6 @@ abstract class AbstractEditIntentionShortcutAction(protected val intention: Inte
 }
 
 /** Action shown in each intention's submenu to allow assigning a keyboard shortcut for it */
-@ApiStatus.Internal
 class AssignShortcutToIntentionAction(intention: IntentionAction)
   : AbstractEditIntentionShortcutAction(intention, "assign.intention.shortcut") {
 

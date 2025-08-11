@@ -3,9 +3,7 @@ package com.intellij.refactoring.changeSignature.inplace;
 
 import com.intellij.lang.LanguageExtension;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
 public final class LanguageChangeSignatureDetectors extends LanguageExtension<LanguageChangeSignatureDetector<ChangeInfo>> {
   public static final LanguageChangeSignatureDetectors INSTANCE = new LanguageChangeSignatureDetectors();
 

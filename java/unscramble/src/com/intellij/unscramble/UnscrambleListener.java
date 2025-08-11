@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ClipboardAnalyzeListener;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +35,21 @@ class UnscrambleListener extends ClipboardAnalyzeListener {
 
   @Override
   public boolean canHandle(@NotNull String value) {
-    return UnscrambleUtils.isStackTrace(value);
+    value = UnscrambleDialog.normalizeText(value);
+    int linesCount = 0;
+    for (String line : value.split("\n")) {
+      line = line.trim();
+      if (line.length() == 0) continue;
+      line = StringUtil.trimEnd(line, "\r");
+      if (STACKTRACE_LINE.matcher(line).matches()) {
+        linesCount++;
+      }
+      else {
+        linesCount = 0;
+      }
+      if (linesCount > 2) return true;
+    }
+    return false;
   }
 
   @Override

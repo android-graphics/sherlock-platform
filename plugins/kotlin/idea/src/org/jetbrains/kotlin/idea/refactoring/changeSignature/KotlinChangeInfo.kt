@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
@@ -15,7 +15,12 @@ import com.intellij.util.VisibilityUtil
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.descriptors.DescriptorVisibility
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
@@ -255,7 +260,7 @@ open class KotlinChangeInfo(
 
             for (caller in value) {
                 add(caller)
-                OverridingMethodsSearch.search(caller.getRepresentativeLightMethod() ?: continue).asIterable().forEach(::add)
+                OverridingMethodsSearch.search(caller.getRepresentativeLightMethod() ?: continue).forEach(::add)
             }
 
             propagationTargetUsageInfos = result.toList()

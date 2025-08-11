@@ -2,7 +2,6 @@
 package com.intellij.ide.actionsOnSave.impl
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.SaveDocumentAction
@@ -218,9 +217,7 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
   private suspend fun runActionsOnSave(projectDocuments: List<Document>) {
     val projectActionsOnSave = EP_NAME.extensionList.filter { it.isEnabledForProject(project) }
 
-    writeIntentReadAction {
-      projectActionsOnSave.forEach { it.processDocuments(project, projectDocuments.toTypedArray()) }
-    }
+    projectActionsOnSave.forEach { it.processDocuments(project, projectDocuments.toTypedArray()) }
 
     val documentUpdatingActionsOnSave = projectActionsOnSave.filterIsInstance<DocumentUpdatingActionOnSave>()
     if (documentUpdatingActionsOnSave.isNotEmpty()) {
@@ -231,7 +228,7 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
       }
     }
     else {
-      writeIntentReadAction { projectDocuments.forEach(FileDocumentManager.getInstance()::saveDocument) }
+      projectDocuments.forEach(FileDocumentManager.getInstance()::saveDocument)
     }
   }
 
@@ -332,7 +329,7 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
         }
       }
 
-      edtWriteAction {
+      writeAction {
         // All Actions on Save have completed successfully for the document, so need to save it.
         // Otherwise, users would see unsaved documents after pressing Ctrl+S/Cmd+S, which would be unexpected.
         FileDocumentManager.getInstance().saveDocument(document)
@@ -343,10 +340,7 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
     }
   }
 
-  private object ActionOnSaveContextElement : AbstractCoroutineContextElement(Key), IntelliJContextElement {
-
-    override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
-
+  private object ActionOnSaveContextElement : AbstractCoroutineContextElement(Key) {
     object Key : CoroutineContext.Key<ActionOnSaveContextElement>
   }
 

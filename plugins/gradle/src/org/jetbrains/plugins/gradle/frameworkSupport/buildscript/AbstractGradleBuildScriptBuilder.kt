@@ -7,96 +7,95 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
-import org.jetbrains.plugins.gradle.util.GradleEnvironment
 import kotlin.apply as applyKt
 
 @ApiStatus.NonExtendable
-abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>(
-  gradleVersion: GradleVersion,
-) : AbstractGradleBuildScriptBuilderCore<Self>(gradleVersion),
-    GradleBuildScriptBuilder<Self> {
+@Suppress("MemberVisibilityCanBePrivate")
+abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>>(
+  gradleVersion: GradleVersion
+) : AbstractGradleBuildScriptBuilderCore<BSB>(gradleVersion), GradleBuildScriptBuilder<BSB> {
 
-  protected val kotlinVersion: String = getKotlinVersion(gradleVersion)
-  protected val groovyVersion: String = getGroovyVersion()
-  protected val junit4Version: String = getJunit4Version()
-  protected val junit5Version: String = getJunit5Version()
+  protected val kotlinVersion = getKotlinVersion(gradleVersion)
+  protected val groovyVersion = getGroovyVersion()
+  protected val junit4Version = getJunit4Version()
+  protected val junit5Version = getJunit5Version()
 
-  override fun addGroup(group: String): Self =
+  override fun addGroup(group: String) =
     withPrefix { assign("group", group) }
 
-  override fun addVersion(version: String): Self =
+  override fun addVersion(version: String) =
     withPrefix { assign("version", version) }
 
-  override fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit): Self =
-    configureTask("test", "Test", configure)
-
-  override fun addDependency(scope: String, dependency: String, sourceSet: String?): Self =
+  override fun addDependency(scope: String, dependency: String, sourceSet: String?) =
     addDependency(scope, string(dependency), sourceSet)
 
-  override fun addDependency(scope: String, dependency: Expression, sourceSet: String?): Self = apply {
+  override fun addDependency(scope: String, dependency: Expression, sourceSet: String?) = apply {
     val dependencyScope = if (sourceSet == null) scope else sourceSet + StringUtil.capitalize(scope)
     withDependency { call(dependencyScope, dependency) }
   }
 
-  override fun addApiDependency(dependency: String, sourceSet: String?): Self =
+  override fun addApiDependency(dependency: String, sourceSet: String?) =
     addApiDependency(string(dependency), sourceSet)
 
-  override fun addApiDependency(dependency: Expression, sourceSet: String?): Self =
+  override fun addApiDependency(dependency: Expression, sourceSet: String?) = apply {
     addDependency("api", dependency, sourceSet)
+  }
 
-  override fun addCompileOnlyDependency(dependency: String, sourceSet: String?): Self =
+  override fun addCompileOnlyDependency(dependency: String, sourceSet: String?) =
     addCompileOnlyDependency(string(dependency), sourceSet)
 
-  override fun addCompileOnlyDependency(dependency: Expression, sourceSet: String?): Self =
+  override fun addCompileOnlyDependency(dependency: Expression, sourceSet: String?) =
     addDependency("compileOnly", dependency, sourceSet)
 
-  override fun addImplementationDependency(dependency: String, sourceSet: String?): Self =
+  override fun addImplementationDependency(dependency: String, sourceSet: String?) =
     addImplementationDependency(string(dependency), sourceSet)
 
-  override fun addImplementationDependency(dependency: Expression, sourceSet: String?): Self =
+  override fun addImplementationDependency(dependency: Expression, sourceSet: String?) = apply {
     addDependency("implementation", dependency, sourceSet)
+  }
 
-  override fun addRuntimeOnlyDependency(dependency: String, sourceSet: String?): Self =
+  override fun addRuntimeOnlyDependency(dependency: String, sourceSet: String?) =
     addRuntimeOnlyDependency(string(dependency), sourceSet)
 
-  override fun addRuntimeOnlyDependency(dependency: Expression, sourceSet: String?): Self =
+  override fun addRuntimeOnlyDependency(dependency: Expression, sourceSet: String?) = apply {
     addDependency("runtimeOnly", dependency, sourceSet)
+  }
 
-  override fun addTestImplementationDependency(dependency: String): Self =
+  override fun addTestImplementationDependency(dependency: String) =
     addImplementationDependency(dependency, sourceSet = "test")
 
-  override fun addTestImplementationDependency(dependency: Expression): Self =
+  override fun addTestImplementationDependency(dependency: Expression) =
     addImplementationDependency(dependency, sourceSet = "test")
 
-  override fun addTestRuntimeOnlyDependency(dependency: String): Self =
+  override fun addTestRuntimeOnlyDependency(dependency: String) =
     addRuntimeOnlyDependency(dependency, sourceSet = "test")
 
-  override fun addTestRuntimeOnlyDependency(dependency: Expression): Self =
+  override fun addTestRuntimeOnlyDependency(dependency: Expression) =
     addRuntimeOnlyDependency(dependency, sourceSet = "test")
 
-  override fun addBuildScriptClasspath(dependency: String): Self =
+  override fun addBuildScriptClasspath(dependency: String) =
     addBuildScriptClasspath(string(dependency))
 
-  override fun addBuildScriptClasspath(dependency: Expression): Self =
+  override fun addBuildScriptClasspath(dependency: Expression) =
     withBuildScriptDependency { call("classpath", dependency) }
 
-  override fun withBuildScriptMavenCentral(): Self =
+  override fun withBuildScriptMavenCentral() =
     withBuildScriptRepository { mavenCentral() }
 
-  override fun withMavenCentral(): Self =
+  override fun withMavenCentral() =
     withRepository { mavenCentral() }
 
-  override fun applyPlugin(plugin: String): Self =
+  override fun applyPlugin(plugin: String) =
     withPrefix {
       call("apply", "plugin" to plugin)
     }
 
-  override fun applyPluginFrom(path: String): Self =
+  override fun applyPluginFrom(path: String) =
     withPrefix {
       call("apply", "from" to path)
     }
 
-  override fun withPlugin(id: String, version: String?): Self =
+  override fun withPlugin(id: String, version: String?) =
     withPlugin {
       when (version) {
         null -> call("id", id)
@@ -104,43 +103,36 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
       }
     }
 
-  override fun withJavaPlugin(): Self =
+  override fun withJavaPlugin() =
     withPlugin("java")
 
-  override fun withJavaLibraryPlugin(): Self =
+  override fun withJavaLibraryPlugin() =
     withPlugin("java-library")
 
-  override fun withIdeaPlugin(): Self =
+  override fun withIdeaPlugin() =
     withPlugin("idea")
 
-  override fun withKotlinJvmPlugin(): Self =
-    withKotlinJvmPlugin(kotlinVersion)
+  override fun withKotlinJvmPlugin() = withKotlinJvmPlugin(kotlinVersion)
 
-  override fun withKotlinJsPlugin(): Self =
+  override fun withKotlinJsPlugin() =
     withPlugin("org.jetbrains.kotlin.js", kotlinVersion)
 
-  override fun withKotlinMultiplatformPlugin(): Self =
+  override fun withKotlinMultiplatformPlugin() =
     withPlugin("org.jetbrains.kotlin.multiplatform", kotlinVersion)
 
-  override fun withKotlinJvmToolchain(jvmTarget: Int): Self =
+  override fun withKotlinJvmToolchain(jvmTarget: Int): BSB = apply {
     withPostfix {
       call("kotlin") {
         // We use a code here to force the generator to use parenthesis in Groovy, to be in-line with the documentation
         code("jvmToolchain($jvmTarget)")
       }
     }
-
-  override fun withKotlinDsl(): Self = apply {
-    withMavenCentral()
-    withPlugin {
-      code("`kotlin-dsl`")
-    }
   }
 
-  override fun withGroovyPlugin(): Self =
+  override fun withGroovyPlugin() =
     withGroovyPlugin(groovyVersion)
 
-  override fun withGroovyPlugin(version: String): Self = apply {
+  override fun withGroovyPlugin(version: String): BSB = apply {
     withPlugin("groovy")
     withMavenCentral()
     if (isGroovyApacheSupported(version)) {
@@ -155,8 +147,8 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
     mainClass: String?,
     mainModule: String?,
     executableDir: String?,
-    defaultJvmArgs: List<String>?,
-  ): Self = apply {
+    defaultJvmArgs: List<String>?
+  ) = apply {
     withPlugin("application")
     withPostfix {
       callIfNotEmpty("application") {
@@ -168,19 +160,19 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
     }
   }
 
-  override fun withJUnit(): Self = apply {
+  override fun withJUnit() = apply {
     when (isJunit5Supported(gradleVersion)) {
       true -> withJUnit5()
       else -> withJUnit4()
     }
   }
 
-  override fun withJUnit4(): Self = apply {
+  override fun withJUnit4() = apply {
     withMavenCentral()
     addTestImplementationDependency("junit:junit:$junit4Version")
   }
 
-  override fun withJUnit5(): Self = apply {
+  override fun withJUnit5() = apply {
     assert(isJunit5Supported(gradleVersion))
     withMavenCentral()
     when (isPlatformDependencySupported(gradleVersion)) {
@@ -199,7 +191,7 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
     }
   }
 
-  override fun targetCompatibility(level: String): Self = apply {
+  override fun targetCompatibility(level: String) = apply {
     if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.2")) {
       withPostfix {
         assign("targetCompatibility", level)
@@ -212,7 +204,7 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
     }
   }
 
-  override fun sourceCompatibility(level: String): Self = apply {
+  override fun sourceCompatibility(level: String) = apply {
     if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.2")) {
       withPostfix {
         assign("sourceCompatibility", level)
@@ -231,13 +223,7 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
   override fun project(name: String, configuration: String): Expression =
     call("project", "path" to name, "configuration" to configuration)
 
-  override fun ScriptTreeBuilder.mavenCentral(): ScriptTreeBuilder = applyKt {
-    val mavenRepositoryUrl = GradleEnvironment.Urls.MAVEN_REPOSITORY_URL
-    if (mavenRepositoryUrl != null) {
-      mavenRepository(mavenRepositoryUrl)
-    }
-    else {
-      call("mavenCentral")
-    }
+  override fun ScriptTreeBuilder.mavenCentral() = applyKt {
+    call("mavenCentral")
   }
 }

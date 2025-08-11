@@ -17,9 +17,7 @@ package com.jetbrains.python.sdk;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.projectRoots.Sdk;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
 public interface PySdkComparator {
   ExtensionPointName<PySdkComparator> EP_NAME = ExtensionPointName.create("Pythonid.pythonSdkComparator");
 

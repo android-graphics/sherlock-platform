@@ -1,4 +1,4 @@
-from typing import Final
+from typing_extensions import Final
 
 XK_BackSpace: Final = 0xFF08
 XK_Tab: Final = 0xFF09

@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.newui.PluginDetailsPageComponent;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -54,8 +53,8 @@ public final class InstallAndEnableTask extends Task.Modal {
       List<PluginNode> marketplacePlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(myPluginIds);
       myCustomPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(indicator);
 
-      List<IdeaPluginDescriptor> descriptors = new ArrayList<>(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins, myCustomPlugins, true));
-      descriptors.removeIf(descriptor -> !myPluginIds.contains(descriptor.getPluginId()));
+      List<IdeaPluginDescriptor> descriptors =
+        new ArrayList<>(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins, myCustomPlugins, true));
 
       if (myShowDialog) {
         MarketplaceRequests marketplace = MarketplaceRequests.getInstance();
@@ -94,7 +93,7 @@ public final class InstallAndEnableTask extends Task.Modal {
       }
     }
     catch (Exception e) {
-      Logger.getInstance(InstallAndEnableTask.class).info(e);
+      PluginsAdvertiser.getLog().info(e);
     }
   }
 

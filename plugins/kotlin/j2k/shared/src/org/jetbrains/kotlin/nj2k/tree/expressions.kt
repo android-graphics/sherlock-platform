@@ -17,7 +17,6 @@ abstract class JKExpression : JKAnnotationMemberValue(), PsiOwner by PsiOwnerImp
     protected abstract val expressionType: JKType?
 
     open fun calculateType(typeFactory: JKTypeFactory): JKType? {
-        if (expressionType != null) return expressionType
         val psiType = (psi as? PsiExpression)?.type ?: return null
         return typeFactory.fromPsiType(psiType)
     }
@@ -225,18 +224,6 @@ class JKCallExpressionImpl(
 ) : JKCallExpression() {
     override var typeArgumentList by child(typeArgumentList)
     override var arguments by child(arguments)
-
-    override fun calculateType(typeFactory: JKTypeFactory): JKType? {
-        if (expressionType != null) return expressionType
-
-        // If the call is qualified, we may not save its original PSI in this node,
-        // instead we save it in the parent JKQualifiedExpression
-        val psiType = ((parent as? JKQualifiedExpression)?.psi as? PsiExpression)?.type
-            ?: (this.psi as? PsiExpression)?.type
-            ?: return null
-        return typeFactory.fromPsiType(psiType)
-    }
-
     override fun accept(visitor: JKVisitor) = visitor.visitCallExpressionImpl(this)
 }
 

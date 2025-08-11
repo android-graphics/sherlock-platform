@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath;
 
 import com.intellij.lang.PsiBuilder;
@@ -369,7 +369,8 @@ public class XPath2Parser extends XPathParser {
     return false;
   }
 
-  private @Nullable IElementType parseItemOrEmptySequenceType(PsiBuilder builder) {
+  @Nullable
+  private IElementType parseItemOrEmptySequenceType(PsiBuilder builder) {
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == XPath2TokenTypes.ITEM || tokenType == XPath2TokenTypes.EMPTY_SEQUENCE) {
       final PsiBuilder.Marker mark = builder.mark();

@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -34,7 +34,8 @@ public final class ManualArrayToCollectionCopyInspection extends BaseInspection 
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "manual.array.to.collection.copy.problem.descriptor");
   }
@@ -80,7 +81,8 @@ public final class ManualArrayToCollectionCopyInspection extends BaseInspection 
     return (PsiArrayAccessExpression)deparenthesizedArgument;
   }
 
-  private static @Nullable PsiStatement getBody(PsiLoopStatement forStatement) {
+  @Nullable
+  private static PsiStatement getBody(PsiLoopStatement forStatement) {
     PsiStatement body = forStatement.getBody();
     while (body instanceof PsiBlockStatement blockStatement) {
       final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
@@ -94,7 +96,8 @@ public final class ManualArrayToCollectionCopyInspection extends BaseInspection 
     extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "Collections.addAll(...,...)");
     }
 
@@ -161,7 +164,7 @@ public final class ManualArrayToCollectionCopyInspection extends BaseInspection 
         return "java.util.Collections.addAll(" + collectionText + ',' + arrayText + ");";
       }
       else {
-        final @NonNls StringBuilder buffer = new StringBuilder();
+        @NonNls final StringBuilder buffer = new StringBuilder();
         buffer.append(collectionText);
         buffer.append('.');
         buffer.append("addAll(java.util.Arrays.asList(");
@@ -201,7 +204,8 @@ public final class ManualArrayToCollectionCopyInspection extends BaseInspection 
       return qualifier != null ? qualifier.getText() : null;
     }
 
-    private static @Nullable String getIndexOffset(PsiExpression expression, PsiLocalVariable variable) {
+    @Nullable
+    private static String getIndexOffset(PsiExpression expression, PsiLocalVariable variable) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
       if (expression == null) {
         return null;
@@ -431,7 +435,7 @@ public final class ManualArrayToCollectionCopyInspection extends BaseInspection 
       }
       final PsiMethod method = methodCallExpression.resolveMethod();
       if (method == null) return false;
-      final @NonNls String name = method.getName();
+      @NonNls final String name = method.getName();
       if (!name.equals("add")) return false;
       final PsiClass containingClass = method.getContainingClass();
       return InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_COLLECTION);

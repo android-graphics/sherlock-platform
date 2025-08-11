@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -54,7 +54,7 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
     return psiClass;
   }
 
-  private PsiClass addClass(final @NonNls String rootPath, @NonNls @NotNull @Language("JAVA") String classText) {
+  private PsiClass addClass(@NonNls final String rootPath, @NonNls @NotNull @Language("JAVA") String classText) {
     final String qName =
       ReadAction.compute(() -> {
         final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
@@ -67,14 +67,16 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
   }
 
   @Override
-  public @NotNull PsiClass findClass(final @NotNull @NonNls String name) {
+  @NotNull
+  public PsiClass findClass(@NotNull @NonNls final String name) {
     PsiClass aClass = getJavaFacade().findClass(name, GlobalSearchScope.allScope(getProject()));
     Assert.assertNotNull("Class " + name + " not found", aClass);
     return aClass;
   }
 
   @Override
-  public @NotNull PsiPackage findPackage(final @NotNull @NonNls String name) {
+  @NotNull
+  public PsiPackage findPackage(@NotNull @NonNls final String name) {
     final PsiPackage aPackage = getJavaFacade().findPackage(name);
     Assert.assertNotNull("Package " + name + " not found", aPackage);
     return aPackage;

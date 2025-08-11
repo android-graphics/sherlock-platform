@@ -9,7 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 
 public final class LineOffsetsImpl implements LineOffsets {
-  public static @NotNull LineOffsets create(@NotNull CharSequence text) {
+  @NotNull
+  public static LineOffsets create(@NotNull CharSequence text) {
     IntList ends = new IntArrayList();
 
     int index = 0;

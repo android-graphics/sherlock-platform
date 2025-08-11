@@ -16,6 +16,7 @@
 package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
+import com.intellij.pom.java.LanguageLevel;
 
 public class ExtractMethodIntentionActionTest extends LightIntentionActionTestCase {
   @Override

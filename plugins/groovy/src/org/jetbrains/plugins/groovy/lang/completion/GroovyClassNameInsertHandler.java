@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -23,7 +23,8 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesPr
  * @author Maxim.Medvedev
  */
 public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceElement> {
-  private static @Nullable GrNewExpression findNewExpression(@Nullable PsiElement position) {
+  @Nullable
+  private static GrNewExpression findNewExpression(@Nullable PsiElement position) {
     if (position == null) return null;
     final PsiElement reference = position.getParent();
     if (!(reference instanceof GrCodeReferenceElement)) return null;

@@ -45,34 +45,39 @@ public class ax {
    }
 
    static {
-      char[] var17;
       String[] var10000;
+      int var1;
+      int var2;
+      char[] var10003;
+      char[] var10004;
+      char[] var4;
+      int var10005;
+      int var10006;
+      char var10007;
+      byte var10008;
       label51: {
          var10000 = new String[2];
-         char[] var10003 = "}|".toCharArray();
-         int var10005 = var10003.length;
-         int var1 = 0;
-         var17 = var10003;
-         int var5 = var10005;
-         char[] var29;
-         int var10006;
+         var10003 = "}|".toCharArray();
+         var10005 = var10003.length;
+         var1 = 0;
+         var10004 = var10003;
+         var2 = var10005;
          if (var10005 <= 1) {
-            var29 = var10003;
+            var4 = var10003;
             var10006 = var1;
          } else {
-            var17 = var10003;
-            var5 = var10005;
+            var10004 = var10003;
+            var2 = var10005;
             if (var10005 <= var1) {
                break label51;
             }
 
-            var29 = var10003;
+            var4 = var10003;
             var10006 = var1;
          }
 
          while(true) {
-            char var10007 = var29[var10006];
-            byte var10008;
+            var10007 = var4[var10006];
             switch (var1 % 5) {
                case 0:
                   var10008 = 16;
@@ -90,80 +95,77 @@ public class ax {
                   var10008 = 86;
             }
 
-            var29[var10006] = (char)(var10007 ^ var10008);
+            var4[var10006] = (char)(var10007 ^ var10008);
             ++var1;
-            if (var5 == 0) {
-               var10006 = var5;
-               var29 = var17;
+            if (var2 == 0) {
+               var10006 = var2;
+               var4 = var10004;
             } else {
-               if (var5 <= var1) {
+               if (var2 <= var1) {
                   break;
                }
 
-               var29 = var17;
+               var4 = var10004;
                var10006 = var1;
             }
          }
       }
 
-      var10000[0] = (new String(var17)).intern();
-      char[] var9 = "}|".toCharArray();
-      int var36 = var9.length;
-      int var2 = 0;
-      var17 = var9;
-      int var12 = var36;
-      char[] var39;
-      int var46;
-      if (var36 <= 1) {
-         var39 = var9;
-         var46 = var2;
+      var10000[0] = (new String(var10004)).intern();
+      var10003 = "}|".toCharArray();
+      var10005 = var10003.length;
+      var1 = 0;
+      var10004 = var10003;
+      var2 = var10005;
+      if (var10005 <= 1) {
+         var4 = var10003;
+         var10006 = var1;
       } else {
-         var17 = var9;
-         var12 = var36;
-         if (var36 <= var2) {
-            var10000[1] = (new String(var9)).intern();
+         var10004 = var10003;
+         var2 = var10005;
+         if (var10005 <= var1) {
+            var10000[1] = (new String(var10003)).intern();
             b = var10000;
             return;
          }
 
-         var39 = var9;
-         var46 = var2;
+         var4 = var10003;
+         var10006 = var1;
       }
 
       while(true) {
-         char var47 = var39[var46];
-         byte var48;
-         switch (var2 % 5) {
+         var10007 = var4[var10006];
+         switch (var1 % 5) {
             case 0:
-               var48 = 16;
+               var10008 = 16;
                break;
             case 1:
-               var48 = 15;
+               var10008 = 15;
                break;
             case 2:
-               var48 = 44;
+               var10008 = 44;
                break;
             case 3:
-               var48 = 84;
+               var10008 = 84;
                break;
             default:
-               var48 = 86;
+               var10008 = 86;
          }
 
-         var39[var46] = (char)(var47 ^ var48);
-         ++var2;
-         if (var12 == 0) {
-            var46 = var12;
-            var39 = var17;
+         var4[var10006] = (char)(var10007 ^ var10008);
+         ++var1;
+         if (var2 == 0) {
+            var10006 = var2;
+            var4 = var10004;
          } else {
-            if (var12 <= var2) {
-               var10000[1] = (new String(var17)).intern();
+            if (var2 <= var1) {
+               var10000[1] = (new String(var10004)).intern();
                b = var10000;
                return;
             }
 
-            var39 = var17;
-            var46 = var2;
+            var4 = var10004;
+            var10006 = var1;
          }
       }
    }

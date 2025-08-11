@@ -17,7 +17,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.completionMlRanking" />
-    <orderEntry type="module" module-name="intellij.platform.ide.internal" />
     <orderEntry type="module-library">
       <library name="completion-ranking-kotlin" type="repository">
         <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-kotlin:0.4.0">

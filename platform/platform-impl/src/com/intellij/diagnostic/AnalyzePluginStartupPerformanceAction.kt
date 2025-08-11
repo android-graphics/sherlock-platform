@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.ide.IdeBundle
@@ -30,10 +30,12 @@ internal class AnalyzePluginStartupPerformanceAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.project != null && StartUpPerformanceService.getInstance().getPluginCostMap().isNotEmpty()
+    e.presentation.isEnabled = e.project != null
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }
 
 private data class PluginStartupCostEntry(
@@ -85,7 +87,6 @@ private class PluginStartupCostDialog(private val project: Project) : DialogWrap
       override fun valueOf(item: PluginStartupCostEntry) =
         item.pluginName + (if (item.pluginId in pluginsToDisable) " (will be disabled)" else "")
     }
-    @Suppress("DialogTitleCapitalization")
     val costColumn = object : ColumnInfo<PluginStartupCostEntry, Int>(IdeBundle.message("column.name.startup.time.ms")) {
       override fun valueOf(item: PluginStartupCostEntry) = TimeUnit.NANOSECONDS.toMillis(item.cost).toInt()
     }
@@ -122,9 +123,12 @@ private class PluginStartupCostDialog(private val project: Project) : DialogWrap
 
   override fun doOKAction() {
     super.doOKAction()
-    DisablePluginsDialog.confirmDisablePlugins(
+    IdeErrorsDialog.confirmDisablePlugins(
       project,
-      pluginsToDisable.mapNotNull { PluginManagerCore.getPlugin(PluginId.getId(it)) }
+      pluginsToDisable.asSequence()
+        .map(PluginId::getId)
+        .mapNotNull(PluginManagerCore::getPlugin)
+        .toList(),
     )
   }
 

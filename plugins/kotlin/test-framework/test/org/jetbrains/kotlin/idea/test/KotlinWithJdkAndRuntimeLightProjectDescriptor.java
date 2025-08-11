@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.test;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader;
 
@@ -13,9 +12,11 @@ import java.io.File;
 import java.util.List;
 
 public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndLibraryProjectDescriptor {
-
     public static final KotlinWithJdkAndRuntimeLightProjectDescriptor JDK_AND_RUNTIME_LIGHT_PROJECT_DESCRIPTOR =
-            new KotlinWithJdkAndRuntimeLightProjectDescriptor();
+      new KotlinWithJdkAndRuntimeLightProjectDescriptor(
+        List.of(TestKotlinArtifacts.getKotlinStdlib()),
+        List.of(TestKotlinArtifacts.getKotlinStdlibSources())
+      );
 
     private static final KotlinWithJdkAndRuntimeLightProjectDescriptor JDK8_AND_RUNTIME_LIGHT_PROJECT_DESCRIPTOR =
       new KotlinWithJdkAndRuntimeLightProjectDescriptor(
@@ -44,7 +45,6 @@ public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndL
         List.of(TestKotlinArtifacts.getKotlinStdlib(), TestKotlinArtifacts.getKotlinReflect()),
         List.of(TestKotlinArtifacts.getKotlinStdlibSources())
       );
-
     private static final KotlinWithJdkAndRuntimeLightProjectDescriptor FULL_JDK_DESCRIPTOR =
             new KotlinWithJdkAndRuntimeLightProjectDescriptor() {
                 @Override
@@ -54,21 +54,24 @@ public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndL
             };
 
     public KotlinWithJdkAndRuntimeLightProjectDescriptor() {
-        this(List.of(TestKotlinArtifacts.getKotlinStdlib()),
-             List.of(TestKotlinArtifacts.getKotlinStdlibSources()));
+        super(
+                List.of(TestKotlinArtifacts.getKotlinStdlib()),
+                List.of(TestKotlinArtifacts.getKotlinStdlibSources()),
+                null
+        );
     }
 
     public KotlinWithJdkAndRuntimeLightProjectDescriptor(
             @NotNull List<? extends File> libraryFiles,
             @NotNull List<? extends File> librarySourceFiles
     ) {
-        this(libraryFiles, librarySourceFiles, null);
+        super(libraryFiles, librarySourceFiles, null);
     }
 
     public KotlinWithJdkAndRuntimeLightProjectDescriptor(
             @NotNull List<? extends File> libraryFiles,
             @NotNull List<? extends File> librarySourceFiles,
-            @Nullable LanguageLevel languageLevel
+            @NotNull LanguageLevel languageLevel
     ) {
         super(libraryFiles, librarySourceFiles, languageLevel);
     }

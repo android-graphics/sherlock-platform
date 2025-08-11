@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -6,20 +6,30 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCoreUtil;
 import com.intellij.openapi.editor.LogicalPosition;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
 public abstract class EditorMacro extends Macro {
   private final String myName;
+  private final @Nls String myDescription;
 
-  public EditorMacro(@NotNull String name) {
+  public EditorMacro(@NotNull String name, @NotNull @Nls String description) {
     myName = name;
+    myDescription = description;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return myName;
+  }
+
+  @NotNull
+  @Override
+  public String getDescription() {
+    return myDescription;
   }
 
   @Override
@@ -43,7 +53,8 @@ public abstract class EditorMacro extends Macro {
     return getColumnNumber(editor, offset);
   }
 
-  protected static @NotNull String getColumnNumber(Editor editor, int offset) {
+  @NotNull
+  protected static String getColumnNumber(Editor editor, int offset) {
     int lineNumber = getLineNumber(editor, offset);
     int lineStart = editor.getDocument().getLineStartOffset(lineNumber);
     return String.valueOf(offset - lineStart + 1);
@@ -53,5 +64,6 @@ public abstract class EditorMacro extends Macro {
     return editor.getDocument().getLineNumber(offset);
   }
 
-  protected abstract @Nullable String expand(Editor editor);
+  @Nullable
+  protected abstract String expand(Editor editor);
 }

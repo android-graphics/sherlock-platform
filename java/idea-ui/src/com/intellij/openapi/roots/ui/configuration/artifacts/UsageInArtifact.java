@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.roots.libraries.Library;
@@ -80,8 +79,9 @@ public class UsageInArtifact extends ProjectStructureElementUsage {
     return myOriginalArtifact.getArtifactType().getIcon();
   }
 
+  @Nullable
   @Override
-  public @Nullable String getPresentableLocationInElement() {
+  public String getPresentableLocationInElement() {
     return "[" + myParentPath + "]";
   }
 

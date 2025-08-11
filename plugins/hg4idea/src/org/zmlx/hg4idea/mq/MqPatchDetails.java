@@ -1,13 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.mq;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.log.HgBaseLogParser;
 
@@ -31,20 +28,21 @@ public class MqPatchDetails {
       myId = id;
     }
 
-    public @NlsContexts.ColumnName String getColumnName() {
+    @NlsContexts.ColumnName
+    public String getColumnName() {
       return HgBundle.message(myId);
     }
   }
 
-  private final @NotNull Map<MqPatchEnum, String> myPatchDetailsPresentationMap = new EnumMap<>(MqPatchEnum.class);
+  @NotNull private final Map<MqPatchEnum, String> myPatchDetailsPresentationMap = new EnumMap<>(MqPatchEnum.class);
 
-  private final @Nullable String myNodeId;
-  private final @Nullable String myParent;
-  private final @Nullable Date myDate;
-  private final @Nullable VirtualFile myRoot;
-  private final @Nullable String myBranch;
-  private final @Nullable String myMessage;
-  private final @Nullable String myUser;
+  @Nullable private final String myNodeId;
+  @Nullable private final String myParent;
+  @Nullable private final Date myDate;
+  @Nullable private final VirtualFile myRoot;
+  @Nullable private final String myBranch;
+  @Nullable private final String myMessage;
+  @Nullable private final String myUser;
 
   public static final MqPatchDetails EMPTY_PATCH_DETAILS = new MqPatchDetails(null, null, null, null, null, null, null);
 
@@ -65,27 +63,33 @@ public class MqPatchDetails {
     createPresentationModel();
   }
 
-  public @Nullable String getNodeId() {
+  @Nullable
+  public String getNodeId() {
     return myNodeId;
   }
 
-  public @Nullable String getParent() {
+  @Nullable
+  public String getParent() {
     return myParent;
   }
 
-  public @Nullable Date getDate() {
+  @Nullable
+  public Date getDate() {
     return myDate;
   }
 
-  public @Nullable String getBranch() {
+  @Nullable
+  public String getBranch() {
     return myBranch;
   }
 
-  public @Nullable String getMessage() {
+  @Nullable
+  public String getMessage() {
     return myMessage;
   }
 
-  public @Nullable String getUser() {
+  @Nullable
+  public String getUser() {
     return myUser;
   }
 
@@ -100,7 +104,8 @@ public class MqPatchDetails {
     }
   }
 
-  public @Nullable String getPresentationDataFor(MqPatchEnum field) {
+  @Nullable
+  public String getPresentationDataFor(MqPatchEnum field) {
     return myPatchDetailsPresentationMap.get(field);
   }
 }

@@ -14,6 +14,6 @@ class Main {
   }
 
   {
-    perform<error descr="Ambiguous method call: both 'Main.perform(Runnable)' and 'Main.perform(TRunnable<Throwable>)' match">(() -> {})</error>;
+    <error descr="Ambiguous method call: both 'Main.perform(Runnable)' and 'Main.perform(TRunnable<Throwable>)' match">perform</error>(() -> {});
   }
 }

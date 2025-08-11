@@ -25,5 +25,5 @@ public interface PropertiesProvider {
    * @return key - property name (String), value - LwProperty. If class cannot be inspected for some reason,
    * returns null 
    */
-  HashMap<String, LwIntrospectedProperty> getLwProperties(String className);
+  HashMap getLwProperties(String className);
 }

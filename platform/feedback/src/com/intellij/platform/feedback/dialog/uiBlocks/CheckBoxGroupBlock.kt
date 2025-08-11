@@ -20,13 +20,11 @@ import javax.swing.event.ChangeListener
 class CheckBoxGroupBlock(
   @NlsContexts.Label private val myGroupLabel: String,
   private val myItemsData: List<CheckBoxItemData>,
-  private val myJsonGroupName: String,
-) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
+  private val myJsonGroupName: String) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
 
   private var requireAnswer = false
   private var myIncludeOtherTextField = false
   private var myOtherProperty: String = ""
-  private var myOtherTextfieldPlaceholderText: String = ""
 
   private var otherCheckBox: JBCheckBox? = null
   private var otherTextField: JBTextField? = null
@@ -91,7 +89,7 @@ class CheckBoxGroupBlock(
               .align(Align.FILL)
               .enabledIf(otherCheckBox!!.selected)
               .applyToComponent {
-                emptyText.text = myOtherTextfieldPlaceholderText
+                emptyText.text = CommonFeedbackBundle.message("dialog.feedback.checkboxGroup.other.placeholder")
                 otherTextField = this
 
                 addFocusListener(object : FocusListener {
@@ -157,11 +155,8 @@ class CheckBoxGroupBlock(
     }
   }
 
-  fun addOtherTextField(
-    placeholderText: String = CommonFeedbackBundle.message("dialog.feedback.checkboxGroup.other.placeholder"),
-  ): CheckBoxGroupBlock {
+  fun addOtherTextField(): CheckBoxGroupBlock {
     myIncludeOtherTextField = true
-    myOtherTextfieldPlaceholderText = placeholderText
     return this
   }
 

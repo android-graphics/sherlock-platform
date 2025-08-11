@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
@@ -70,15 +70,18 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
     return grouped.keySet().stream().noneMatch(manager::isExternal);
   }
 
-  protected abstract @NotNull AbstractRepositoryManager<Repo> getRepositoryManager(@NotNull Project project);
+  @NotNull
+  protected abstract AbstractRepositoryManager<Repo> getRepositoryManager(@NotNull Project project);
 
-  protected abstract @Nullable Repo getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root);
+  @Nullable
+  protected abstract Repo getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root);
 
   /**
    * Collects no more than VcsLogUtil.MAX_SELECTED_COMMITS and groups them by repository.
    * To use only during update.
    */
-  private @Nullable MultiMap<Repo, Hash> groupFirstPackOfCommits(@NotNull Project project, @NotNull VcsLogCommitSelection selection) {
+  @Nullable
+  private MultiMap<Repo, Hash> groupFirstPackOfCommits(@NotNull Project project, @NotNull VcsLogCommitSelection selection) {
     MultiMap<Repo, CommitId> commitIds = groupCommits(project, ContainerUtil.getFirstItems(selection.getCommits(), MAX_SELECTED_COMMITS),
                                                       CommitId::getRoot);
     if (commitIds == null) return null;
@@ -90,9 +93,10 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
     return hashes;
   }
 
-  private @Nullable <T> MultiMap<Repo, T> groupCommits(@NotNull Project project,
-                                                       @NotNull Collection<? extends T> commits,
-                                                       @NotNull Function<? super T, ? extends VirtualFile> rootGetter) {
+  @Nullable
+  private <T> MultiMap<Repo, T> groupCommits(@NotNull Project project,
+                                             @NotNull Collection<? extends T> commits,
+                                             @NotNull Function<? super T, ? extends VirtualFile> rootGetter) {
     MultiMap<Repo, T> map = MultiMap.create();
     for (T commit : commits) {
       Repo root = getRepositoryForRoot(project, rootGetter.fun(commit));

@@ -1,5 +1,5 @@
 // LANGUAGE_VERSION: 1.4
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 // PROBLEM: none
 
 annotation class Ann(val x: Int)

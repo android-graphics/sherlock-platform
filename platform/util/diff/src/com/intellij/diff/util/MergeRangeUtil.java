@@ -21,10 +21,11 @@ public final class MergeRangeUtil {
 
   private MergeRangeUtil() { }
 
-  public static @NotNull MergeConflictType getMergeType(@NotNull Predicate<? super ThreeSide> emptiness,
-                                                        @NotNull BiPredicate<? super ThreeSide, ? super ThreeSide> equality,
-                                                        @Nullable BiPredicate<? super ThreeSide, ? super ThreeSide> trueEquality,
-                                                        @NotNull BooleanSupplier conflictResolver) {
+  @NotNull
+  public static MergeConflictType getMergeType(@NotNull Predicate<? super ThreeSide> emptiness,
+                                               @NotNull BiPredicate<? super ThreeSide, ? super ThreeSide> equality,
+                                               @Nullable BiPredicate<? super ThreeSide, ? super ThreeSide> trueEquality,
+                                               @NotNull BooleanSupplier conflictResolver) {
     boolean isLeftEmpty = emptiness.test(ThreeSide.LEFT);
     boolean isBaseEmpty = emptiness.test(ThreeSide.BASE);
     boolean isRightEmpty = emptiness.test(ThreeSide.RIGHT);
@@ -78,20 +79,22 @@ public final class MergeRangeUtil {
     }
   }
 
-  public static @NotNull MergeConflictType getLineThreeWayDiffType(@NotNull MergeLineFragment fragment,
-                                                                   @NotNull List<? extends CharSequence> sequences,
-                                                                   @NotNull List<? extends LineOffsets> lineOffsets,
-                                                                   @NotNull ComparisonPolicy policy) {
+  @NotNull
+  public static MergeConflictType getLineThreeWayDiffType(@NotNull MergeLineFragment fragment,
+                                                          @NotNull List<? extends CharSequence> sequences,
+                                                          @NotNull List<? extends LineOffsets> lineOffsets,
+                                                          @NotNull ComparisonPolicy policy) {
     return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
                         (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2),
                         null,
                         () -> canResolveLineConflict(fragment, sequences, lineOffsets));
   }
 
-  public static @NotNull MergeConflictType getLineMergeType(@NotNull MergeLineFragment fragment,
-                                                            @NotNull List<? extends CharSequence> sequences,
-                                                            @NotNull List<? extends LineOffsets> lineOffsets,
-                                                            @NotNull ComparisonPolicy policy) {
+  @NotNull
+  public static MergeConflictType getLineMergeType(@NotNull MergeLineFragment fragment,
+                                                   @NotNull List<? extends CharSequence> sequences,
+                                                   @NotNull List<? extends LineOffsets> lineOffsets,
+                                                   @NotNull ComparisonPolicy policy) {
     return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
                         (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2),
                         (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, ComparisonPolicy.DEFAULT, side1, side2),
@@ -139,9 +142,10 @@ public final class MergeRangeUtil {
     return fragment.getStartLine(side) == fragment.getEndLine(side);
   }
 
-  public static @NotNull MergeConflictType getWordMergeType(@NotNull MergeWordFragment fragment,
-                                                            @NotNull List<? extends CharSequence> texts,
-                                                            @NotNull ComparisonPolicy policy) {
+  @NotNull
+  public static MergeConflictType getWordMergeType(@NotNull MergeWordFragment fragment,
+                                                   @NotNull List<? extends CharSequence> texts,
+                                                   @NotNull ComparisonPolicy policy) {
     return getMergeType((side) -> isWordMergeIntervalEmpty(fragment, side),
                         (side1, side2) -> compareWordMergeContents(fragment, texts, policy, side1, side2),
                         null,
@@ -170,16 +174,18 @@ public final class MergeRangeUtil {
     return fragment.getStartOffset(side) == fragment.getEndOffset(side);
   }
 
-  public static @NotNull MergeConflictType getLineLeftToRightThreeSideDiffType(@NotNull MergeLineFragment fragment,
-                                                                               @NotNull List<? extends CharSequence> sequences,
-                                                                               @NotNull List<? extends LineOffsets> lineOffsets,
-                                                                               @NotNull ComparisonPolicy policy) {
+  @NotNull
+  public static MergeConflictType getLineLeftToRightThreeSideDiffType(@NotNull MergeLineFragment fragment,
+                                                                      @NotNull List<? extends CharSequence> sequences,
+                                                                      @NotNull List<? extends LineOffsets> lineOffsets,
+                                                                      @NotNull ComparisonPolicy policy) {
     return getLeftToRightDiffType((side) -> isLineMergeIntervalEmpty(fragment, side),
                                   (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2));
   }
 
-  private static @NotNull MergeConflictType getLeftToRightDiffType(@NotNull Predicate<? super ThreeSide> emptiness,
-                                                                   @NotNull BiPredicate<? super ThreeSide, ? super ThreeSide> equality) {
+  @NotNull
+  private static MergeConflictType getLeftToRightDiffType(@NotNull Predicate<? super ThreeSide> emptiness,
+                                                          @NotNull BiPredicate<? super ThreeSide, ? super ThreeSide> equality) {
     boolean isLeftEmpty = emptiness.test(ThreeSide.LEFT);
     boolean isBaseEmpty = emptiness.test(ThreeSide.BASE);
     boolean isRightEmpty = emptiness.test(ThreeSide.RIGHT);

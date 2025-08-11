@@ -16,7 +16,7 @@ import git4idea.repo.GitRepository
 import java.nio.file.Files
 
 abstract class GitSingleRepoTest : GitPlatformTest() {
-  lateinit var repo: GitRepository
+  protected lateinit var repo: GitRepository
 
   override fun setUp() {
     super.setUp()

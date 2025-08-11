@@ -3,10 +3,11 @@ package com.intellij.collaboration.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.progress.util.ProgressIndicatorBase
+import com.intellij.openapi.progress.StandardProgressIndicator
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.util.EventDispatcher
 
-class ListenableProgressIndicator : ProgressIndicatorBase() {
+class ListenableProgressIndicator : AbstractProgressIndicatorExBase(), StandardProgressIndicator {
   private val eventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
   override fun isReuseable() = true
@@ -15,4 +16,7 @@ class ListenableProgressIndicator : ProgressIndicatorBase() {
   fun addAndInvokeListener(disposable: Disposable, listener: () -> Unit) {
     SimpleEventListener.addAndInvokeListener(eventDispatcher, disposable, listener)
   }
+
+  override fun cancel() = super.cancel()
+  override fun isCanceled() = super.isCanceled()
 }

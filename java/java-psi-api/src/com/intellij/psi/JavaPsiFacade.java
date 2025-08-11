@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.project.Project;
@@ -25,7 +25,8 @@ public abstract class JavaPsiFacade {
    *
    * @return the PSI class, or {@code null} if no class with such name is found.
    */
-  public abstract @Nullable PsiClass findClass(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
+  @Nullable
+  public abstract PsiClass findClass(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 
   /**
    * Searches the specified scope within the project for classes with the specified full-qualified
@@ -36,37 +37,34 @@ public abstract class JavaPsiFacade {
   public abstract PsiClass @NotNull [] findClasses(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 
   /**
-   * Returns {@code true} if the specified scope contains the class with the specified fully qualified name, and {@code false} otherwise.
-   * This method is equivalent to {@code findClass(...) != null} and {@code findClasses(...).length > 0} checks, but in big projects it
-   * may work much faster, because it doesn't need to sort entries if multiple classes with the specified name are present in the scope.
-   */
-  public abstract boolean hasClass(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
-
-  /**
    * Searches the project for the package with the specified full-qualified name and returns one
    * if it is found.
    *
    * @return the PSI package, or {@code null} if no package with such name is found.
    */
-  public abstract @Nullable PsiPackage findPackage(@NonNls @NotNull String qualifiedName);
+  @Nullable
+  public abstract PsiPackage findPackage(@NonNls @NotNull String qualifiedName);
 
   /**
    * Searches the scope for a unique Java module with the given name.
    */
-  public abstract @Nullable PsiJavaModule findModule(@NotNull String moduleName, @NotNull GlobalSearchScope scope);
+  @Nullable
+  public abstract PsiJavaModule findModule(@NotNull String moduleName, @NotNull GlobalSearchScope scope);
 
   /**
    * Searches the scope for Java modules with the given name.
    * In dumb mode this method returns an empty list.
    * Supports DumbModeAccessType, in this case the values are not cached
    */
-  public abstract @NotNull Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope);
+  @NotNull
+  public abstract Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope);
 
   /**
    * Returns the element factory for the project, which can be used to
    * create instances of Java elements.
    */
-  public abstract @NotNull PsiElementFactory getElementFactory();
+  @NotNull
+  public abstract PsiElementFactory getElementFactory();
 
   /**
    * Returns the factory for the project, which can be used to create instances of certain Java constructs from their textual
@@ -76,13 +74,15 @@ public abstract class JavaPsiFacade {
    *
    * @return the parser facade.
    */
-  public abstract @NotNull PsiJavaParserFacade getParserFacade();
+  @NotNull
+  public abstract PsiJavaParserFacade getParserFacade();
 
   /**
    * Returns the resolve helper for the project, which can be used to resolve references
    * and check accessibility of elements.
    */
-  public abstract @NotNull PsiResolveHelper getResolveHelper();
+  @NotNull
+  public abstract PsiResolveHelper getResolveHelper();
 
   /**
    * Returns the name helper for the project, which can be used to validate
@@ -92,14 +92,16 @@ public abstract class JavaPsiFacade {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  public abstract @NotNull PsiNameHelper getNameHelper();
+  @NotNull
+  public abstract PsiNameHelper getNameHelper();
 
   /**
    * Returns the constant expression evaluator for the project.
    *
    * @return the evaluator instance.
    */
-  public abstract @NotNull PsiConstantEvaluationHelper getConstantEvaluationHelper();
+  @NotNull
+  public abstract PsiConstantEvaluationHelper getConstantEvaluationHelper();
 
   /**
    * Checks if the specified package name is part of the package prefix for
@@ -117,7 +119,8 @@ public abstract class JavaPsiFacade {
    */
   public abstract boolean arePackagesTheSame(@NotNull PsiElement element1, @NotNull PsiElement element2);
 
-  public abstract @NotNull Project getProject();
+  @NotNull
+  public abstract Project getProject();
 
   public abstract boolean isConstantExpression(@NotNull PsiExpression expression);
 }

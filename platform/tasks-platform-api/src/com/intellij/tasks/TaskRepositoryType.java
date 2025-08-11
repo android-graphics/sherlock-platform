@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks;
 
 import com.intellij.openapi.Disposable;
@@ -10,7 +10,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -29,7 +28,7 @@ public abstract class TaskRepositoryType<T extends TaskRepository> implements Ta
     return EP_NAME.getExtensionList();
   }
 
-  public static @Unmodifiable @NotNull List<Class<?>> getRepositoryClasses() {
+  public static @NotNull List<Class<?>> getRepositoryClasses() {
     return ContainerUtil.map(getRepositoryTypes(), TaskRepositoryType::getRepositoryClass);
   }
 
@@ -38,25 +37,31 @@ public abstract class TaskRepositoryType<T extends TaskRepository> implements Ta
   }
 
   @Override
-  public abstract @NotNull String getName();
+  @NotNull
+  public abstract String getName();
 
   @Override
-  public abstract @NotNull Icon getIcon();
+  @NotNull
+  public abstract Icon getIcon();
 
-  public @Nullable @Nls String getAdvertiser() { return null; }
+  @Nullable
+  public @Nls String getAdvertiser() { return null; }
 
-  public abstract @NotNull TaskRepositoryEditor createEditor(T repository, Project project, Consumer<? super T> changeListener);
+  @NotNull
+  public abstract TaskRepositoryEditor createEditor(T repository, Project project, Consumer<? super T> changeListener);
 
   public List<TaskRepositorySubtype> getAvailableSubtypes() {
     return Collections.singletonList(this);
   }
 
-  public @NotNull TaskRepository createRepository(TaskRepositorySubtype subtype) {
+  @NotNull
+  public TaskRepository createRepository(TaskRepositorySubtype subtype) {
     return subtype.createRepository();
   }
 
   @Override
-  public abstract @NotNull TaskRepository createRepository();
+  @NotNull
+  public abstract TaskRepository createRepository();
 
   public abstract Class<T> getRepositoryClass();
 

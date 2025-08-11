@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
@@ -32,12 +32,14 @@ public class GrClassTypeElementImpl extends GroovyPsiElementImpl implements GrCl
   }
 
   @Override
-  public @NotNull GrCodeReferenceElement getReferenceElement() {
+  @NotNull
+  public GrCodeReferenceElement getReferenceElement() {
     return findNotNullChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
 
   @Override
-  public @NotNull PsiType getType() {
+  @NotNull
+  public PsiType getType() {
     return new GrClassReferenceType(getReferenceElement());
   }
 

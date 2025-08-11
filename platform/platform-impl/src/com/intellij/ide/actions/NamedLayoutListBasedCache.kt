@@ -2,6 +2,7 @@
 package com.intellij.ide.actions
 
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
+import com.intellij.util.containers.toArray
 
 internal class NamedLayoutListBasedCache<T>(
   private val baseList: List<T>,

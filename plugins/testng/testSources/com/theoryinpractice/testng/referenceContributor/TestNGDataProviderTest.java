@@ -17,7 +17,7 @@ public class TestNGDataProviderTest extends LightJavaCodeInsightFixtureTestCase 
   protected void setUp() {
     UIUtil.invokeAndWaitIfNeeded(() -> {
       try {
-        super.setUp();
+        TestNGDataProviderTest.super.setUp();
       }
       catch (Exception e) {
         throw new RuntimeException(e);
@@ -30,7 +30,7 @@ public class TestNGDataProviderTest extends LightJavaCodeInsightFixtureTestCase 
   protected void tearDown() {
     UIUtil.invokeAndWaitIfNeeded(() -> {
       try {
-        super.tearDown();
+        TestNGDataProviderTest.super.tearDown();
       }
       catch (Exception e) {
         throw new RuntimeException(e);

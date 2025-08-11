@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.DefaultExecutionResult;
@@ -25,8 +25,9 @@ final class AntRunProfileState implements RunProfileState {
     myEnvironment = environment;
   }
 
+  @Nullable
   @Override
-  public @Nullable ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) {
+  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) {
     final RunProfile profile = myEnvironment.getRunProfile();
     if (profile instanceof AntRunConfiguration runConfig) {
       if (runConfig.getTarget() == null) {
@@ -38,8 +39,9 @@ final class AntRunProfileState implements RunProfileState {
       }
 
       return new DefaultExecutionResult(new ExecutionConsole() {
+        @NotNull
         @Override
-        public @NotNull JComponent getComponent() {
+        public JComponent getComponent() {
           return processHandler.getUserData(MESSAGE_VIEW);
         }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.editor.Editor;
@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ex.ChangedLines;
 import com.intellij.openapi.vcs.ex.ChangesBlock;
 import com.intellij.openapi.vcs.ex.Range;
@@ -20,7 +19,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IntPair;
 import com.intellij.util.ui.JBUI;
 import kotlin.Unit;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,47 +30,36 @@ import java.util.List;
 
 import static com.intellij.diff.util.DiffDrawUtil.lineToY;
 
-/**
- * "Triangle" means the marker for the deleted block. In the new UI its shape is different
- */
 public final class LineStatusMarkerDrawUtil {
-  public static @NotNull List<Range> getSelectedRanges(@NotNull List<? extends Range> ranges, @NotNull Editor editor, int y) {
+  @NotNull
+  public static List<Range> getSelectedRanges(@NotNull List<? extends Range> ranges, @NotNull Editor editor, int y) {
     int lineHeight = editor.getLineHeight();
-    int triangleGap = getTriangleAimGap(editor);
+    int triangleGap = lineHeight / 3;
 
     Rectangle clip = new Rectangle(0, y - lineHeight, editor.getComponent().getWidth(), lineHeight * 2);
     List<ChangesBlock<Unit>> blocks = VisibleRangeMerger.merge(editor, ranges, clip);
 
     List<Range> result = new ArrayList<>();
     for (ChangesBlock<Unit> block : blocks) {
-      if (isBlockUnderY(block, y, triangleGap)) {
+      ChangedLines<Unit> firstChange = block.changes.get(0);
+      ChangedLines<Unit> lastChange = block.changes.get(block.changes.size() - 1);
+
+      int startY = firstChange.y1;
+      int endY = lastChange.y2;
+
+      // "empty" range for deleted block
+      if (firstChange.y1 == firstChange.y2) {
+        startY -= triangleGap;
+      }
+      if (lastChange.y1 == lastChange.y2) {
+        endY += triangleGap;
+      }
+
+      if (startY <= y && endY > y) {
         result.addAll(block.ranges);
       }
     }
     return result;
-  }
-
-  private static boolean isBlockUnderY(ChangesBlock<?> block, int y, int triangleGap) {
-    if (y == -1) return false;
-
-    ChangedLines<?> firstChange = block.changes.get(0);
-    ChangedLines<?> lastChange = block.changes.get(block.changes.size() - 1);
-
-    int startY = firstChange.y1;
-    int endY = lastChange.y2;
-
-    // "empty" range for deleted block
-    if (firstChange.y1 == firstChange.y2) {
-      startY -= triangleGap;
-    }
-    if (lastChange.y1 == lastChange.y2) {
-      endY += triangleGap;
-    }
-
-    if (startY <= y && endY > y) {
-      return true;
-    }
-    return false;
   }
 
   public static Rectangle calcBounds(@NotNull List<? extends Range> ranges, @NotNull Editor editor, int lineNum) {
@@ -108,59 +95,23 @@ public final class LineStatusMarkerDrawUtil {
                                   @NotNull LineStatusMarkerColorScheme colorScheme,
                                   int framingBorder) {
     List<ChangesBlock<DefaultLineFlags>> blocks = VisibleRangeMerger.merge(editor, ranges, flagsProvider, g.getClipBounds());
-    EditorGutterComponentEx gutterComponentEx = ((EditorEx)editor).getGutterComponentEx();
-
-    GroupedBlocks groupedBlocks = groupBlocks(editor, gutterComponentEx, blocks);
-
-    for (ChangesBlock<DefaultLineFlags> block : groupedBlocks.unhoveredBlocks()) {
-      paintChangedLines((Graphics2D)g, editor, block.changes, colorScheme, framingBorder, false);
-    }
-
-    for (ChangesBlock<DefaultLineFlags> block : groupedBlocks.hoveredBlocks()) {
-      paintChangedLines((Graphics2D)g, editor, block.changes, colorScheme, framingBorder, true);
-    }
-  }
-
-  @ApiStatus.Internal
-  public static @NotNull LineStatusMarkerDrawUtil.GroupedBlocks groupBlocks(@NotNull Editor editor,
-                                                                            EditorGutterComponentEx gutterComponentEx,
-                                                                            List<ChangesBlock<DefaultLineFlags>> blocks) {
-    List<ChangesBlock<DefaultLineFlags>> hoveredBlocks = new ArrayList<>();
-    List<ChangesBlock<DefaultLineFlags>> unhoveredBlocks = new ArrayList<>();
-
-    int triangleGap = getTriangleAimGap(editor);
-    int y = gutterComponentEx.getHoveredFreeMarkersY();
-
     for (ChangesBlock<DefaultLineFlags> block : blocks) {
-      if (isBlockUnderY(block, y, triangleGap)) {
-        hoveredBlocks.add(block);
-      }
-      else {
-        unhoveredBlocks.add(block);
-      }
+      paintChangedLines((Graphics2D)g, editor, block.changes, colorScheme, framingBorder);
     }
-    GroupedBlocks groupedBlocks = new GroupedBlocks(hoveredBlocks, unhoveredBlocks);
-    return groupedBlocks;
-  }
-
-  @ApiStatus.Internal
-  public record GroupedBlocks(List<ChangesBlock<DefaultLineFlags>> hoveredBlocks, List<ChangesBlock<DefaultLineFlags>> unhoveredBlocks) {
   }
 
   public static void paintChangedLines(@NotNull Graphics2D g,
                                        @NotNull Editor editor,
                                        @NotNull List<? extends ChangedLines<DefaultLineFlags>> block,
-                                       int framingBorder,
-                                       boolean isHovered) {
-    paintChangedLines(g, editor, block, LineStatusMarkerColorScheme.DEFAULT, framingBorder, isHovered);
+                                       int framingBorder) {
+    paintChangedLines(g, editor, block, LineStatusMarkerColorScheme.DEFAULT, framingBorder);
   }
 
   public static void paintChangedLines(@NotNull Graphics2D g,
                                        @NotNull Editor editor,
                                        @NotNull List<? extends ChangedLines<DefaultLineFlags>> block,
                                        @NotNull LineStatusMarkerColorScheme colorScheme,
-                                       int framingBorder,
-                                       boolean isHovered) {
+                                       int framingBorder) {
     Color borderColor = LineStatusMarkerColorScheme.DEFAULT.getBorderColor(editor);
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     Color gutterBackgroundColor = gutter.getBackground();
@@ -187,8 +138,13 @@ public final class LineStatusMarkerDrawUtil {
         int start = change.y1;
         int end = change.y2;
         Color gutterColor = colorScheme.getColor(editor, change.type);
-        int x1 = isHovered ? x - getHoveredMarkerExtraWidth() : x;
-        paintRect(g, gutterColor, null, x1, start, endX, end);
+        int line = gutter.getHoveredFreeMarkersLine();
+        if (isRangeHovered(editor, line, x, start, end)) {
+          paintRect(g, gutterColor, null, x - 1, start, endX + 2, end);
+        }
+        else {
+          paintRect(g, gutterColor, null, x, start, endX, end);
+        }
       }
     }
 
@@ -212,8 +168,7 @@ public final class LineStatusMarkerDrawUtil {
         int start = change.y1;
         if (!change.flags.isIgnored) {
           Color gutterColor = colorScheme.getColor(editor, change.type);
-          int x1 = isHovered ? x - getHoveredMarkerExtraWidth() : x;
-          paintTriangle(g, editor, gutterColor, borderColor, x1, endX, start);
+          paintTriangle(g, editor, gutterColor, borderColor, x, endX, start);
         }
         else {
           Color ignoredBorderColor = borderColor != null ? borderColor : colorScheme.getIgnoredBorderColor(editor, change.type);
@@ -238,7 +193,7 @@ public final class LineStatusMarkerDrawUtil {
     List<ChangesBlock<DefaultLineFlags>> blocks = VisibleRangeMerger.merge(editor, Collections.singletonList(range), flagsProvider,
                                                                            g.getClipBounds());
     for (ChangesBlock<DefaultLineFlags> block : blocks) {
-      paintChangedLines((Graphics2D)g, editor, block.changes, framingBorder, false);
+      paintChangedLines((Graphics2D)g, editor, block.changes, framingBorder);
     }
   }
 
@@ -259,16 +214,14 @@ public final class LineStatusMarkerDrawUtil {
     }
   }
 
-  public static @NotNull IntPair getGutterArea(@NotNull Editor editor) {
+  @NotNull
+  public static IntPair getGutterArea(@NotNull Editor editor) {
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     if (ExperimentalUI.isNewUI()) {
       int x = gutter.getExtraLineMarkerFreePaintersAreaOffset();
-      int width = Registry.intValue("gutter.vcs.changes.width", 4, 4, 6);
-      x += JBUI.scale(1); // leave 1px for brace highlighters
-      if (width < 5) {
-        x += JBUI.scale(2); //IDEA-286352
-      }
-      int areaWidth = scaleWithEditor(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", width)), editor);
+      x += 1; // leave 1px for brace highlighters
+      x += 2; //IDEA-286352
+      int areaWidth = scaleWithEditor(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", 4)), editor);
       return new IntPair(x, x + areaWidth);
     }
     else {
@@ -316,7 +269,7 @@ public final class LineStatusMarkerDrawUtil {
 
   public static void paintTriangle(@NotNull Graphics2D g, @NotNull Editor editor, @Nullable Color color, @Nullable Color borderColor,
                                    int x1, int x2, int y) {
-    int size = getTriangleHeight(editor);
+    int size = scaleWithEditor(JBUIScale.scale(4), editor);
     if (y < size) y = size;
 
     if (ExperimentalUI.isNewUI()) {
@@ -349,30 +302,13 @@ public final class LineStatusMarkerDrawUtil {
     }
   }
 
-  private static int getTriangleHeight(@NotNull Editor editor) {
-    int unscaled = ExperimentalUI.isNewUI() ? 5 : 4;
-    return scaleWithEditor(unscaled, editor);
-  }
-
-  private static int getTriangleAimGap(@NotNull Editor editor) {
-    return editor.getLineHeight() / 3;
-  }
-
-  /**
-   * Used only for the new UI
-   *
-   * @see EditorGutterComponentImpl#updateFreePainters
-   */
-  private static int getHoveredMarkerExtraWidth() {
-    return JBUI.scale(3);
-  }
-
   private static int scaleWithEditor(float v, @NotNull Editor editor) {
     float scale = editor instanceof EditorImpl ? ((EditorImpl)editor).getScale() : 1.0f;
     return PaintUtil.RoundingMode.ROUND.round(v * scale);
   }
 
-  public static @Nullable Color getErrorStripeColor(byte type) {
+  @Nullable
+  public static Color getErrorStripeColor(byte type) {
     return LineStatusMarkerColorScheme.DEFAULT.getErrorStripeColor(type);
   }
 

@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.pydev.transport;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,12 +17,12 @@ public abstract class BaseDebuggerTransport implements DebuggerTransport {
 
   protected final Object mySocketObject = new Object();
 
-  protected final @NotNull RemoteDebugger myDebugger;
+  @NotNull protected final RemoteDebugger myDebugger;
 
   protected BaseDebuggerTransport(@NotNull RemoteDebugger debugger) {myDebugger = debugger;}
 
   @Override
-  public boolean sendFrame(final @NotNull ProtocolFrame frame) {
+  public boolean sendFrame(@NotNull final ProtocolFrame frame) {
     logFrame(frame, true);
 
     try {

@@ -34,7 +34,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -47,7 +46,7 @@ import java.util.Map;
 
 public final class AutoUnboxingInspection extends BaseInspection {
 
-  static final @NonNls Map<String, String> s_unboxingMethods = Map.of(
+  @NonNls static final Map<String, String> s_unboxingMethods = Map.of(
     "byte", "byteValue",
     "short", "shortValue",
     "int", "intValue",
@@ -59,12 +58,14 @@ public final class AutoUnboxingInspection extends BaseInspection {
   );
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("auto.unboxing.problem.descriptor");
   }
 
   @Override
-  public @Nullable LocalQuickFix buildFix(Object... infos) {
+  @Nullable
+  public LocalQuickFix buildFix(Object... infos) {
     if (infos.length == 0 || !isFixApplicable((PsiExpression)infos[0])) {
       return null;
     }
@@ -110,7 +111,8 @@ public final class AutoUnboxingInspection extends BaseInspection {
   private static class AutoUnboxingFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("auto.unboxing.make.unboxing.explicit.quickfix");
     }
 
@@ -288,14 +290,33 @@ public final class AutoUnboxingInspection extends BaseInspection {
               PsiTypes.floatType().equals(type));
     }
 
-    private static @NonNls String computeConstantBooleanText(PsiExpression expression) {
+    @NonNls
+    private static String computeConstantBooleanText(PsiExpression expression) {
       if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
         return null;
       }
-
-      Boolean bool = BoolUtils.fromBoxedConstantReference(referenceExpression);
-      if (bool == null) return null;
-      return bool.toString();
+      final PsiElement target = referenceExpression.resolve();
+      if (!(target instanceof PsiField field)) {
+        return null;
+      }
+      final PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null) {
+        return null;
+      }
+      final String qualifiedName = containingClass.getQualifiedName();
+      if (!CommonClassNames.JAVA_LANG_BOOLEAN.equals(qualifiedName)) {
+        return null;
+      }
+      @NonNls final String name = field.getName();
+      if ("TRUE".equals(name)) {
+        return "true";
+      }
+      else if ("FALSE".equals(name)) {
+        return "false";
+      }
+      else {
+        return null;
+      }
     }
   }
 

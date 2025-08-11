@@ -1,13 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.pinned.items
 
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
-import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.VisibleForTesting
 
-@Internal
-@VisibleForTesting
 fun XValueNodeImpl?.isPinned(pinToTopManager: XDebuggerPinToTopManager): Boolean {
     val container = this?.valueContainer
     if (container is PinToTopMemberValue) {
@@ -23,7 +18,7 @@ fun XValueNodeImpl?.isPinned(pinToTopManager: XDebuggerPinToTopManager): Boolean
     return false
 }
 
-internal fun XValueNodeImpl?.canBePinned(): Boolean {
+fun XValueNodeImpl?.canBePinned(): Boolean {
     val container = this?.valueContainer
     if (container is PinToTopMemberValue) {
         return container.canBePinned() && this.getPinInfo() != null
@@ -31,7 +26,7 @@ internal fun XValueNodeImpl?.canBePinned(): Boolean {
     return false
 }
 
-internal fun XValueNodeImpl?.getPinInfo() : PinnedItemInfo? {
+fun XValueNodeImpl?.getPinInfo() : PinnedItemInfo? {
     val container = this?.valueContainer
     if (container is PinToTopMemberValue) {
         val parentTag = container.customParentTag ?: parentPinToTopValue?.tag
@@ -43,6 +38,6 @@ internal fun XValueNodeImpl?.getPinInfo() : PinnedItemInfo? {
     return null
 }
 
-internal val XValueNodeImpl?.parentPinToTopValue: PinToTopParentValue? get() {
+val XValueNodeImpl?.parentPinToTopValue: PinToTopParentValue? get() {
     return ((this?.parent as? XValueContainerNode<*>)?.valueContainer as? PinToTopParentValue)
 }

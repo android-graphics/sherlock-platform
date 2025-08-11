@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.compiler.impl.UpdateResourcesBuildContributor;
@@ -11,7 +11,8 @@ import java.util.List;
 
 public final class MavenUpdateResourcesBuildContributor implements UpdateResourcesBuildContributor {
   @Override
-  public @NotNull List<? extends ModuleBasedBuildTargetType<?>> getResourceTargetTypes() {
+  @NotNull
+  public List<? extends ModuleBasedBuildTargetType<?>> getResourceTargetTypes() {
     return Arrays.asList(MavenResourcesTargetType.PRODUCTION, MavenResourcesTargetType.TEST);
   }
 }

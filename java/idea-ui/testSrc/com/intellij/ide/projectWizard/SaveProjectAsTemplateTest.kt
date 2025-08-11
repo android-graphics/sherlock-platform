@@ -10,7 +10,6 @@ import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory
 import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.module.BasePackageParameterFactory
 import com.intellij.openapi.module.Module
@@ -101,13 +100,11 @@ public class Bar {
     rootFile.createParentDirectories().createFile()
     val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(rootFile)
     withContext(Dispatchers.EDT) {
-      writeIntentReadAction {
-        assertThat(file).isNotNull
-        HeavyPlatformTestCase.setFileText(file!!, initialText)
-        PsiDocumentManager.getInstance(project).commitAllDocuments()
-        val basePackage = BasePackageParameterFactory().detectParameterValue(project)
-        assertEquals("foo", basePackage)
-      }
+      assertThat(file).isNotNull
+      HeavyPlatformTestCase.setFileText(file!!, initialText)
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      val basePackage = BasePackageParameterFactory().detectParameterValue(project)
+      assertEquals("foo", basePackage)
     }
 
     val zipFile = ArchivedTemplatesFactory.getTemplateFile("foo")
@@ -117,11 +114,9 @@ public class Bar {
     assertThat(zipFile.fileName.toString()).isEqualTo("foo.zip")
     assertThat(Files.size(zipFile)).isGreaterThan(0)
     val fromTemplate = withContext(Dispatchers.EDT) {
-      writeIntentReadAction {
-        createProject { step ->
-          if (step is ProjectTypeStep) {
-            assertTrue(step.setSelectedTemplate("foo", null))
-          }
+      createProject { step ->
+        if (step is ProjectTypeStep) {
+          assertTrue(step.setSelectedTemplate("foo", null))
         }
       }
     }

@@ -3,15 +3,15 @@
 class A<in I> {
     private val bar: I
 
-    private fun baz(): I = null!!
+    private fun foo(): I = null!!
 
 
     fun test() {
         with(A()) {
-            ba<caret>
+            <caret>
         }
     }
 }
 
 // INVOCATION_COUNT: 1
-// EXIST: bar, baz
+// EXIST: bar, foo

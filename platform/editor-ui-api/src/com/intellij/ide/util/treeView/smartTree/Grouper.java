@@ -3,7 +3,6 @@ package com.intellij.ide.util.treeView.smartTree;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -25,6 +24,5 @@ public interface Grouper extends TreeAction {
    * @return the collection of groups
    */
   @NotNull
-  @Unmodifiable
   Collection<Group> group(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<TreeElement> children);
 }

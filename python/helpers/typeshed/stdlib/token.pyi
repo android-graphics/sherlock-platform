@@ -8,7 +8,6 @@ __all__ = [
     "CIRCUMFLEX",
     "CIRCUMFLEXEQUAL",
     "COLON",
-    "COLONEQUAL",
     "COMMA",
     "DEDENT",
     "DOT",
@@ -60,8 +59,6 @@ __all__ = [
     "STAREQUAL",
     "STRING",
     "TILDE",
-    "TYPE_COMMENT",
-    "TYPE_IGNORE",
     "VBAR",
     "VBAREQUAL",
     "tok_name",
@@ -69,8 +66,9 @@ __all__ = [
     "NL",
     "COMMENT",
 ]
-if sys.version_info < (3, 13):
-    __all__ += ["ASYNC", "AWAIT"]
+
+if sys.version_info >= (3, 8):
+    __all__ += ["ASYNC", "AWAIT", "COLONEQUAL", "TYPE_COMMENT", "TYPE_IGNORE"]
 
 if sys.version_info >= (3, 10):
     __all__ += ["SOFT_KEYWORD"]
@@ -131,7 +129,7 @@ AT: int
 RARROW: int
 ELLIPSIS: int
 ATEQUAL: int
-if sys.version_info < (3, 13):
+if sys.version_info >= (3, 8):
     AWAIT: int
     ASYNC: int
 OP: int
@@ -142,10 +140,11 @@ tok_name: dict[int, str]
 COMMENT: int
 NL: int
 ENCODING: int
-TYPE_COMMENT: int
-TYPE_IGNORE: int
-COLONEQUAL: int
-EXACT_TOKEN_TYPES: dict[str, int]
+if sys.version_info >= (3, 8):
+    TYPE_COMMENT: int
+    TYPE_IGNORE: int
+    COLONEQUAL: int
+    EXACT_TOKEN_TYPES: dict[str, int]
 if sys.version_info >= (3, 10):
     SOFT_KEYWORD: int
 

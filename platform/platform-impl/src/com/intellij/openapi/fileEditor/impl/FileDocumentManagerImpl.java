@@ -3,8 +3,8 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
@@ -37,7 +37,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
@@ -79,7 +78,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   private static final Logger LOG = Logger.getInstance(FileDocumentManagerImpl.class);
 
   public static final Key<Object> NOT_RELOADABLE_DOCUMENT_KEY = new Key<>("NOT_RELOADABLE_DOCUMENT_KEY");
-  private static final Key<Boolean> FORCE_SAVE_DOCUMENT_KEY = new Key<>("FORCE_SAVE_DOCUMENT_KEY");
 
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
   private static final Key<Boolean> MUST_RECOMPUTE_FILE_TYPE = Key.create("Must recompute file type");
@@ -101,7 +99,9 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     @Override
     public void documentChanged(@NotNull DocumentEvent e) {
       Document document = e.getDocument();
-      markDocumentUnsaved(document, false);
+      if (!ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.ExternalDocumentChange.class)) {
+        myUnsavedDocuments.add(document);
+      }
       Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
       Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
       VirtualFile virtualFile = getFile(document);
@@ -204,19 +204,9 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     int totalSize = 0;
     for (Document document : documents) {
       totalSize += document.getTextLength();
-      if (totalSize > FileSizeLimit.getDefaultContentLoadLimit()) return true;
+      if (totalSize > FileUtilRt.LARGE_FOR_CONTENT_LOADING) return true;
     }
     return false;
-  }
-
-  @ApiStatus.Internal
-  public void markDocumentUnsaved(Document document, boolean force) {
-    if (!ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.ExternalDocumentChange.class)) {
-      myUnsavedDocuments.add(document);
-      if (force) {
-        document.putUserData(FORCE_SAVE_DOCUMENT_KEY, Boolean.TRUE);
-      }
-    }
   }
 
   @Override
@@ -243,7 +233,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         VirtualFile file = getFile(document);
         if (file == null) continue;
         unbindFileFromDocument(file, document);
-        document.putUserData(FORCE_SAVE_DOCUMENT_KEY, null);
       }
       myUnsavedDocuments.clear();
       myMultiCaster.unsavedDocumentsDropped();
@@ -436,7 +425,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
       String text = document.getText();
       String lineSeparator = getLineSeparator(document, file);
-
       if (!lineSeparator.equals("\n")) {
         text = StringUtil.convertLineSeparators(text, lineSeparator);
       }
@@ -445,8 +433,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       LoadTextUtil.write(project, file, this, text, document.getModificationStamp());
 
       myUnsavedDocuments.remove(document);
-      document.putUserData(FORCE_SAVE_DOCUMENT_KEY, null);
-
       LOG.assertTrue(!myUnsavedDocuments.contains(document));
       myTrailingSpacesStripper.clearLineModificationFlags(document);
     });
@@ -465,17 +451,11 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   private void removeFromUnsaved(@NotNull Document document) {
     myUnsavedDocuments.remove(document);
-    document.putUserData(FORCE_SAVE_DOCUMENT_KEY, null);
-
     myMultiCaster.unsavedDocumentDropped(document);
     LOG.assertTrue(!myUnsavedDocuments.contains(document));
   }
 
   private static boolean isSaveNeeded(@NotNull Document document, @NotNull VirtualFile file) throws IOException {
-    if (document.getUserData(FORCE_SAVE_DOCUMENT_KEY)== Boolean.TRUE) {
-      return true;
-    }
-
     if (file.getFileType().isBinary() || document.getTextLength() > 1000 * 1000) {    // don't compare if the file is too big
       return true;
     }
@@ -726,7 +706,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   @Override
   public void reloadFromDisk(@NotNull Document document, @Nullable Project project) {
-    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+    try (AccessToken ignored = ClientId.withClientId(ClientId.getLocalId())) {
       ThreadingAssertions.assertEventDispatchThread();
 
       VirtualFile file = getFile(document);
@@ -770,9 +750,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         myMultiCaster.fileWithNoDocumentChanged(file);
         myMultiCaster.afterDocumentUnbound(file, document);
       }
-
       myUnsavedDocuments.remove(document);
-      document.putUserData(FORCE_SAVE_DOCUMENT_KEY, null);
     }
   }
 

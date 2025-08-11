@@ -26,5 +26,3 @@ class A(val x: String) {
 A("hoho").sum(12)
 
 // IGNORE_LOG_ERRORS
-
-// See KT-74004

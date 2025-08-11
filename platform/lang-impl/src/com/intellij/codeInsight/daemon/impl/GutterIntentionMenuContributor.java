@@ -2,9 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -43,10 +41,7 @@ public final class GutterIntentionMenuContributor implements IntentionMenuContri
       .flatMap(r -> {
         ActionGroup group = r.getPopupMenuActions();
         List<AnAction> clickActions = Arrays.asList(r.getClickAction(), r.getMiddleButtonClickAction(), r.getRightButtonClickAction());
-        if (group == null) return clickActions.stream();
-        AnAction[] children = group instanceof DefaultActionGroup o ? o.getChildren(ActionManager.getInstance()) :
-                              group.getChildren(null);
-        return ContainerUtil.append(clickActions, children).stream();
+        return (group == null ? clickActions : ContainerUtil.append(clickActions, group.getChildren(null))).stream();
       })
       .filter(Objects::nonNull)
       .collect(Collectors.toCollection(LinkedHashSet::new));

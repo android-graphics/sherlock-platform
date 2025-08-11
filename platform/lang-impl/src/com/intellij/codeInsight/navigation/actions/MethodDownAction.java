@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.navigation.actions;
 
@@ -16,8 +16,9 @@ public final class MethodDownAction extends BaseCodeInsightAction implements Dum
     setEnabledInModalContext(true);
   }
 
+  @NotNull
   @Override
-  protected @NotNull CodeInsightActionHandler getHandler() {
+  protected CodeInsightActionHandler getHandler() {
     return new MethodDownHandler();
   }
 
@@ -27,7 +28,7 @@ public final class MethodDownAction extends BaseCodeInsightAction implements Dum
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
     return MethodUpAction.checkValidForFile(file);
   }
 }

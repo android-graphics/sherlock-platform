@@ -3,10 +3,9 @@ package com.jetbrains.performancePlugin.remotedriver.fixtures
 import com.intellij.driver.model.TreePathToRowListWithCheckboxState
 import com.intellij.driver.model.TreePathToRowListWithCheckboxStateList
 import com.intellij.util.ui.tree.TreeUtil
-import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextCellRendererReader
+import com.jetbrains.performancePlugin.remotedriver.dataextractor.JTreeTextCellReader
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.computeOnEdt
 import org.assertj.swing.core.Robot
-import org.assertj.swing.driver.BasicJTreeCellReader
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JCheckBox
@@ -17,7 +16,7 @@ import javax.swing.tree.TreePath
 
 class JCheckboxTreeFixture(private val robot: Robot, private val component: JTree) : JTreeTextFixture(robot, component) {
 
-  private val textCellReader = BasicJTreeCellReader(TextCellRendererReader())
+  private val textCellReader = JTreeTextCellReader()
 
   fun getCheckBoxForNode(fileTreePath: TreePath): JCheckBox {
     val node = fileTreePath.lastPathComponent as DefaultMutableTreeNode
@@ -30,15 +29,13 @@ class JCheckboxTreeFixture(private val robot: Robot, private val component: JTre
   }
 
   private fun TreePath.toStringList(): List<String> {
-    return computeOnEdt {
-      val nodes = path.map { textCellReader.valueAt(component, it) ?: "" }.toMutableList()
+    val nodes = path.map { textCellReader.valueAt(component, it) ?: "" }.toMutableList()
 
-      if (!component.isRootVisible) {
-        nodes.removeAt(0)
-      }
-
-      return@computeOnEdt nodes
+    if (!component.isRootVisible) {
+      nodes.removeAt(0)
     }
+
+    return nodes
   }
 
   fun collectCheckboxes(): TreePathToRowListWithCheckboxStateList {

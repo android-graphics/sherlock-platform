@@ -1,3 +1,0 @@
-MODULE common { platform=[JVM, JS, Native]; root=common }
-
-common -> STDLIB_COMMON, KOTLIN_SDK { kind=DEPENDENCY }

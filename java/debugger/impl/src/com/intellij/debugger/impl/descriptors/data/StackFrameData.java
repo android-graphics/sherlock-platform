@@ -28,7 +28,6 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl> {
     return new StackFrameDescriptorImpl(myFrame, myMethodsTracker);
   }
 
-  @Override
   public boolean equals(Object object) {
     if (!(object instanceof StackFrameData)) {
       return false;
@@ -36,7 +35,6 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl> {
     return ((StackFrameData)object).myFrame == myFrame;
   }
 
-  @Override
   public int hashCode() {
     return myFrame.hashCode();
   }
@@ -53,7 +51,6 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl> {
       myContextKey = contextKey;
     }
 
-    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -65,7 +62,6 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl> {
       return true;
     }
 
-    @Override
     public int hashCode() {
       return myContextKey == null ? 0 : myContextKey.hashCode();
     }

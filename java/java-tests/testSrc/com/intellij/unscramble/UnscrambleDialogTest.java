@@ -6,7 +6,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.io.File;
@@ -26,7 +25,6 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    UIUtil.dispatchAllInvocationEvents();
     try {
       Disposer.dispose(myContent);
     }

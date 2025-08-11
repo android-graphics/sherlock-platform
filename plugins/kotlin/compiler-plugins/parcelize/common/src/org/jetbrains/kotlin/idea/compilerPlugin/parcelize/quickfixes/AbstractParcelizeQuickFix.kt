@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.quickFixesPsiBasedFactory
 import org.jetbrains.kotlin.psi.KtElement

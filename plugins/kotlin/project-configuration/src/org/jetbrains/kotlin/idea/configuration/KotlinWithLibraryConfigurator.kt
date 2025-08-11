@@ -1,6 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-@file:OptIn(UnsafeCastFunction::class)
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration
 
@@ -11,14 +9,15 @@ import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
@@ -26,19 +25,15 @@ import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.roots.libraries.LibraryType
 import com.intellij.psi.PsiElement
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
-import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.replaceLanguageFeature
 import org.jetbrains.kotlin.idea.base.platforms.StdlibDetectorFacility
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
-import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.base.util.findLibrary
 import org.jetbrains.kotlin.idea.base.util.hasKotlinFilesInTestsOnly
+import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.ui.CreateLibraryDialogWithModules
 import org.jetbrains.kotlin.idea.facet.*
@@ -49,7 +44,6 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread
 import org.jetbrains.kotlin.idea.versions.forEachAllUsedLibraries
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected constructor() : KotlinProjectConfigurator {
@@ -83,23 +77,6 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
     @JvmSuppressWildcards
     override fun configure(project: Project, excludeModules: Collection<Module>) {
         configureAndGetConfiguredModules(project, excludeModules)
-    }
-
-    override fun canRunAutoConfig(): Boolean = true
-
-    override suspend fun calculateAutoConfigSettings(module: Module): AutoConfigurationSettings? {
-        if (getStatus(module.toModuleGroup()) != ConfigureKotlinStatus.CAN_BE_CONFIGURED) return null
-        // The Kotlin version is ignored in the runAutoConfig function, we always use the bundled version.
-        return AutoConfigurationSettings(module, KotlinPluginLayout.standaloneCompilerVersion)
-    }
-
-    override suspend fun runAutoConfig(settings: AutoConfigurationSettings) {
-        // Note: For the JPS configurator we simply add Kotlin to the entire project as this is
-        // how it was done before auto-configuration was introduced.
-        if (settings.module.project.isDisposed) return
-        withContext(Dispatchers.EDT) {
-            configure(settings.module.project, excludeModules = emptyList())
-        }
     }
 
     @JvmSuppressWildcards
@@ -359,10 +336,8 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         val facetSettings = KotlinFacetSettingsProvider.getInstance(module.project)?.getInitializedSettings(module)
         if (facetSettings != null) {
             ModuleRootModificationUtil.updateModel(module) {
-                feature.sinceVersion?.let { sinceVersion ->
-                    facetSettings.apiLevel = sinceVersion
-                    facetSettings.languageLevel = sinceVersion
-                }
+                facetSettings.apiLevel = feature.sinceVersion
+                facetSettings.languageLevel = feature.sinceVersion
                 facetSettings.compilerSettings?.apply {
                     additionalArguments = additionalArguments.replaceLanguageFeature(
                         feature,
@@ -371,9 +346,6 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
                         separator = " ",
                         quoted = false
                     )
-                }
-                KotlinFacet.get(module)?.let { kotlinFacet ->
-                    FacetManager.getInstance(module).facetConfigurationChanged(kotlinFacet)
                 }
             }
         }
@@ -443,8 +415,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         )
     }
 
-    override val canAddModuleWideOptIn: Boolean
-        get() = true
+    override val canAddModuleWideOptIn: Boolean = true
 
     override fun addModuleWideOptIn(module: Module, annotationFqName: FqName, compilerArgument: String) {
         module.addCompilerArgumentToKotlinFacet(compilerArgument)

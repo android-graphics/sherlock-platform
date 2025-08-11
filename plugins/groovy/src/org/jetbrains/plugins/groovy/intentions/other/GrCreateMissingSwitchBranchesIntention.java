@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.other;
 
 import com.intellij.modcommand.ActionContext;
@@ -8,8 +8,8 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
@@ -46,14 +46,16 @@ public final class GrCreateMissingSwitchBranchesIntention extends GrPsiUpdateInt
     }
   }
 
-  private static @Nullable PsiElement findAnchor(PsiElement element) {
+  @Nullable
+  private static PsiElement findAnchor(PsiElement element) {
     final PsiElement last = element.getLastChild();
     if (last != null && last.getNode().getElementType() == GroovyTokenTypes.mRCURLY) return last;
     return null;
   }
 
+  @NotNull
   @Override
-  protected @NotNull PsiElementPredicate getElementPredicate() {
+  protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {

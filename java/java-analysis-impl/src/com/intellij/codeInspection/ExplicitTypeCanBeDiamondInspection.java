@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
@@ -21,8 +21,10 @@ import java.util.Set;
 public final class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(ExplicitTypeCanBeDiamondInspection.class);
 
+  @Nls
+  @NotNull
   @Override
-  public @Nls @NotNull String getGroupDisplayName() {
+  public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
@@ -31,8 +33,9 @@ public final class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLo
     return true;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getShortName() {
+  public String getShortName() {
     return "Convert2Diamond";
   }
 
@@ -41,8 +44,9 @@ public final class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLo
     return Set.of(JavaFeature.DIAMOND_TYPES);
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitNewExpression(@NotNull PsiNewExpression expression) {
@@ -51,8 +55,10 @@ public final class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLo
           LOG.assertTrue(classReference != null);
           final PsiReferenceParameterList parameterList = classReference.getParameterList();
           LOG.assertTrue(parameterList != null);
-          if (PsiTreeUtil.findChildOfType(parameterList, PsiAnnotation.class) != null) {
-            return;
+          for (PsiTypeElement typeElement : parameterList.getTypeParameterElements()) {
+            if (typeElement.getAnnotations().length > 0) {
+              return;
+            }
           }
           final PsiElement firstChild = parameterList.getFirstChild();
           final PsiElement lastChild = parameterList.getLastChild();
@@ -65,8 +71,9 @@ public final class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLo
   }
 
   private static class ReplaceWithDiamondFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionsBundle.message("quickfix.family.replace.with.diamond");
     }
 

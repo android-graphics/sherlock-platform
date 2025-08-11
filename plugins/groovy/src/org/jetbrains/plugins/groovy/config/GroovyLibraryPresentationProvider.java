@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.roots.OrderRootType;
@@ -33,7 +33,8 @@ public final class GroovyLibraryPresentationProvider extends GroovyLibraryPresen
   }
 
   @Override
-  public @Nls String getLibraryVersion(final VirtualFile[] libraryFiles) {
+  @Nls
+  public String getLibraryVersion(final VirtualFile[] libraryFiles) {
     String jarVersion = JarVersionDetectionUtil.detectJarVersion(SOME_GROOVY_CLASS, Arrays.asList(libraryFiles));
     if (jarVersion != null) {
       return jarVersion;
@@ -50,7 +51,8 @@ public final class GroovyLibraryPresentationProvider extends GroovyLibraryPresen
   }
 
   @Override
-  public @NotNull Icon getIcon(GroovyLibraryProperties properties) {
+  @NotNull
+  public Icon getIcon(GroovyLibraryProperties properties) {
     return JetgroovyIcons.Groovy.Groovy_16x16;
   }
 
@@ -87,8 +89,10 @@ public final class GroovyLibraryPresentationProvider extends GroovyLibraryPresen
     return GroovyConfigUtils.getInstance().getSDKVersionOrNull(path);
   }
 
+  @Nls
+  @NotNull
   @Override
-  public @Nls @NotNull String getLibraryCategoryName() {
+  public String getLibraryCategoryName() {
     return GroovyBundle.message("language.groovy");
   }
 }

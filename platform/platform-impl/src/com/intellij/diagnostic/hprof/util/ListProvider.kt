@@ -15,9 +15,6 @@
  */
 package com.intellij.diagnostic.hprof.util
 
-import org.jetbrains.annotations.ApiStatus
-
-@ApiStatus.Internal
 interface ListProvider {
   fun createUByteList(name: String, size: Long): UByteList
   fun createUShortList(name: String, size: Long): UShortList

@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.mantis;
 
 import com.intellij.tasks.Comment;
@@ -47,8 +46,9 @@ public class MantisTask extends Task {
           return data1.getText();
         }
 
+        @Nullable
         @Override
-        public @Nullable String getAuthor() {
+        public String getAuthor() {
           return data1.getReporter().getName();
         }
 
@@ -72,18 +72,21 @@ public class MantisTask extends Task {
     myComments = Comment.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getId() {
+  public String getId() {
     return myId;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getSummary() {
+  public String getSummary() {
     return mySummary;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getDescription() {
+  public String getDescription() {
     return myDescription;
   }
 
@@ -92,23 +95,27 @@ public class MantisTask extends Task {
     return myComments;
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getIcon() {
+  public Icon getIcon() {
     return TasksCoreIcons.Mantis;
   }
 
+  @NotNull
   @Override
-  public @NotNull TaskType getType() {
+  public TaskType getType() {
     return TaskType.OTHER;
   }
 
+  @Nullable
   @Override
-  public @Nullable Date getUpdated() {
+  public Date getUpdated() {
     return myUpdated;
   }
 
+  @Nullable
   @Override
-  public @Nullable Date getCreated() {
+  public Date getCreated() {
     return myCreated;
   }
 
@@ -132,13 +139,15 @@ public class MantisTask extends Task {
     return myRepository;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getProject() {
+  public String getProject() {
     return myProjectName;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getNumber() {
+  public String getNumber() {
     return getId();
   }
 }

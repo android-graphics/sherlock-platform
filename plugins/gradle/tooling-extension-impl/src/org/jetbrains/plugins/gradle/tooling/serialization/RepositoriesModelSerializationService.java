@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
@@ -8,7 +8,7 @@ import com.amazon.ion.system.IonReaderBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.MavenRepositoryModel;
 import org.jetbrains.plugins.gradle.model.RepositoryModels;
-import org.jetbrains.plugins.gradle.tooling.internal.DefaultRepositoryModels;
+import org.jetbrains.plugins.gradle.tooling.internal.DefaultRepositoriesModel;
 import org.jetbrains.plugins.gradle.tooling.internal.MavenRepositoryModelImpl;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap.SimpleObjectFactory;
@@ -95,17 +95,18 @@ public class RepositoriesModelSerializationService implements SerializationServi
     });
   }
 
-  private static @Nullable RepositoryModels read(final IonReader reader, final ReadContext context) {
+  @Nullable
+  private static RepositoryModels read(final IonReader reader, final ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
 
     RepositoryModels model =
-      context.objectMap.computeIfAbsent(readInt(reader, OBJECT_ID_FIELD), new SimpleObjectFactory<DefaultRepositoryModels>() {
+      context.objectMap.computeIfAbsent(readInt(reader, OBJECT_ID_FIELD), new SimpleObjectFactory<DefaultRepositoriesModel>() {
 
         @Override
-        public DefaultRepositoryModels create() {
+        public DefaultRepositoriesModel create() {
           List<MavenRepositoryModel> repositories = readRepositories(reader, context);
-          return new DefaultRepositoryModels(repositories);
+          return new DefaultRepositoriesModel(repositories);
         }
       });
     reader.stepOut();
@@ -124,7 +125,8 @@ public class RepositoriesModelSerializationService implements SerializationServi
     return list;
   }
 
-  private static @Nullable MavenRepositoryModel readRepositoryModel(final IonReader reader, ReadContext context) {
+  @Nullable
+  private static MavenRepositoryModel readRepositoryModel(final IonReader reader, ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
     MavenRepositoryModel dependency =
@@ -139,7 +141,7 @@ public class RepositoriesModelSerializationService implements SerializationServi
   }
 
   private static class ReadContext {
-    private final IntObjectMap<DefaultRepositoryModels> objectMap = new IntObjectMap<>();
+    private final IntObjectMap<DefaultRepositoriesModel> objectMap = new IntObjectMap<>();
     private final IntObjectMap<MavenRepositoryModel> repositoryMap = new IntObjectMap<>();
   }
 

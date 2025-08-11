@@ -1,9 +1,8 @@
 // "Add initializer" "true"
 // ERROR: Val cannot be reassigned
-// K2_AFTER_ERROR: 'val' cannot be reassigned.
 // COMPILER_ARGUMENTS: -XXLanguage:-ProhibitOpenValDeferredInitialization
 open class Foo {
-    open <caret>val foo: Int
+    <caret>open val foo: Int
         get() = field
 
     init {

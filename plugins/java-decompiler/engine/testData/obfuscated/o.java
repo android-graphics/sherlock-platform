@@ -49,7 +49,12 @@ public class o {
          throw var7;
       }
 
-      for(String var5 : var1) {
+      String[] var2 = var1;
+      int var3 = var1.length;
+
+      for(int var4 = 0; var4 < var3; ++var4) {
+         String var5 = var2[var4];
+
          try {
             if (this.a.equals(var5)) {
                return b((Object)null);
@@ -207,14 +212,14 @@ public class o {
 
       try {
          if (var1.isAssignableFrom(this.a.getClass())) {
-            return (E)(this.a);
+            return (Enum)this.a;
          }
       } catch (Exception var5) {
          throw var5;
       }
 
       try {
-         return (E)Enum.valueOf(var1, String.valueOf(this.a));
+         return Enum.valueOf(var1, String.valueOf(this.a));
       } catch (Exception var3) {
          return null;
       }
@@ -333,32 +338,37 @@ public class o {
    }
 
    static {
-      char[] var17;
+      char[] var10000;
+      int var1;
+      char[] var10001;
+      int var10002;
+      int var2;
+      int var10003;
+      char[] var4;
+      char var10004;
+      byte var10005;
       label51: {
-         char[] var10000 = "\t!\"\u0000r>`/\u0001s<%>\u001a=>/vN".toCharArray();
-         int var10002 = var10000.length;
-         int var1 = 0;
-         var17 = var10000;
-         int var5 = var10002;
-         char[] var29;
-         int var10003;
+         var10000 = "\t!\"\u0000r>`/\u0001s<%>\u001a=>/vN".toCharArray();
+         var10002 = var10000.length;
+         var1 = 0;
+         var10001 = var10000;
+         var2 = var10002;
          if (var10002 <= 1) {
-            var29 = var10000;
+            var4 = var10000;
             var10003 = var1;
          } else {
-            var17 = var10000;
-            var5 = var10002;
+            var10001 = var10000;
+            var2 = var10002;
             if (var10002 <= var1) {
                break label51;
             }
 
-            var29 = var10000;
+            var4 = var10000;
             var10003 = var1;
          }
 
          while(true) {
-            char var10004 = var29[var10003];
-            byte var10005;
+            var10004 = var4[var10003];
             switch (var1 % 5) {
                case 0:
                   var10005 = 74;
@@ -376,78 +386,75 @@ public class o {
                   var10005 = 29;
             }
 
-            var29[var10003] = (char)(var10004 ^ var10005);
+            var4[var10003] = (char)(var10004 ^ var10005);
             ++var1;
-            if (var5 == 0) {
-               var10003 = var5;
-               var29 = var17;
+            if (var2 == 0) {
+               var10003 = var2;
+               var4 = var10001;
             } else {
-               if (var5 <= var1) {
+               if (var2 <= var1) {
                   break;
                }
 
-               var29 = var17;
+               var4 = var10001;
                var10003 = var1;
             }
          }
       }
 
-      c = (new String(var17)).intern();
-      char[] var9 = "\u0016$gFAd\u001c(E4u".toCharArray();
-      int var36 = var9.length;
-      int var2 = 0;
-      var17 = var9;
-      int var12 = var36;
-      char[] var39;
-      int var46;
-      if (var36 <= 1) {
-         var39 = var9;
-         var46 = var2;
+      c = (new String(var10001)).intern();
+      var10000 = "\u0016$gFAd\u001c(E4u".toCharArray();
+      var10002 = var10000.length;
+      var1 = 0;
+      var10001 = var10000;
+      var2 = var10002;
+      if (var10002 <= 1) {
+         var4 = var10000;
+         var10003 = var1;
       } else {
-         var17 = var9;
-         var12 = var36;
-         if (var36 <= var2) {
-            b = Pattern.compile((new String(var9)).intern());
+         var10001 = var10000;
+         var2 = var10002;
+         if (var10002 <= var1) {
+            b = Pattern.compile((new String(var10000)).intern());
             return;
          }
 
-         var39 = var9;
-         var46 = var2;
+         var4 = var10000;
+         var10003 = var1;
       }
 
       while(true) {
-         char var47 = var39[var46];
-         byte var48;
-         switch (var2 % 5) {
+         var10004 = var4[var10003];
+         switch (var1 % 5) {
             case 0:
-               var48 = 74;
+               var10005 = 74;
                break;
             case 1:
-               var48 = 64;
+               var10005 = 64;
                break;
             case 2:
-               var48 = 76;
+               var10005 = 76;
                break;
             case 3:
-               var48 = 110;
+               var10005 = 110;
                break;
             default:
-               var48 = 29;
+               var10005 = 29;
          }
 
-         var39[var46] = (char)(var47 ^ var48);
-         ++var2;
-         if (var12 == 0) {
-            var46 = var12;
-            var39 = var17;
+         var4[var10003] = (char)(var10004 ^ var10005);
+         ++var1;
+         if (var2 == 0) {
+            var10003 = var2;
+            var4 = var10001;
          } else {
-            if (var12 <= var2) {
-               b = Pattern.compile((new String(var17)).intern());
+            if (var2 <= var1) {
+               b = Pattern.compile((new String(var10001)).intern());
                return;
             }
 
-            var39 = var17;
-            var46 = var2;
+            var4 = var10001;
+            var10003 = var1;
          }
       }
    }

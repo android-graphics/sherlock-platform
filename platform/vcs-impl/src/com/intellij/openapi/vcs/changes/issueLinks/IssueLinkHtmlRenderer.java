@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.issueLinks;
 
 import com.intellij.openapi.project.Project;
@@ -21,16 +21,20 @@ public final class IssueLinkHtmlRenderer {
   /**
    * WARNING: hard codes current LaF into the text foreground.
    */
-  public static @Nls @NotNull String formatTextIntoHtml(@NotNull Project project, @NotNull @Nls String c) {
+  @Nls
+  @NotNull
+  public static String formatTextIntoHtml(@NotNull Project project, @NotNull @Nls String c) {
     // todo: use com.intellij.openapi.util.text.HtmlBuilder
     return "<html><head>" + UIUtil.getCssFontDeclaration(StartupUiUtil.getLabelFont(), UIUtil.getLabelForeground(), // NON-NLS
                                                          JBUI.CurrentTheme.Link.Foreground.ENABLED, null) + "</head><body>" + // NON-NLS
            formatTextWithLinks(project, c) + "</body></html>"; // NON-NLS
   }
 
-  public static @NotNull @Nls String formatTextWithLinks(@NotNull Project project,
-                                                         @NotNull @Nls String str,
-                                                         @NotNull Convertor<@Nls ? super String, @Nls String> convertor) {
+  @NotNull
+  @Nls
+  public static String formatTextWithLinks(@NotNull Project project,
+                                           @NotNull @Nls String str,
+                                           @NotNull Convertor<@Nls ? super String, @Nls String> convertor) {
     if (StringUtil.isEmpty(str)) return "";
     @Nls StringBuilder commentBuilder = new StringBuilder();
     String comment = XmlStringUtil.escapeString(VcsUtil.trimCommitMessageToSaneSize(str), false);
@@ -45,7 +49,9 @@ public final class IssueLinkHtmlRenderer {
     return commentBuilder.toString().replace("\n", UIUtil.BR);
   }
 
-  public static @NotNull @Nls String formatTextWithLinks(@NotNull Project project, @NotNull @Nls String c) {
+  @NotNull
+  @Nls
+  public static String formatTextWithLinks(@NotNull Project project, @NotNull @Nls String c) {
     return formatTextWithLinks(project, c, Convertor.self());
   }
 }

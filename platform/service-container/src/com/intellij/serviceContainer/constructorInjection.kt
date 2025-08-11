@@ -18,6 +18,7 @@ import java.nio.file.Path
 import kotlin.Any
 import kotlin.Array
 import kotlin.Boolean
+import kotlin.Comparator
 import kotlin.Pair
 import kotlin.RuntimeException
 import kotlin.Suppress

@@ -3,9 +3,6 @@
  */
 package com.intellij.psi.impl;
 
-import org.jetbrains.annotations.ApiStatus;
-
-@ApiStatus.Internal
 @FunctionalInterface
 public interface BooleanRunnable {
   boolean run();

@@ -25,7 +25,6 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -35,12 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
-import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
-
 public final class SwitchUtils {
-
-  public static final CallMatcher STRING_IS_EMPTY = instanceCall(JAVA_LANG_STRING, "isEmpty").parameterCount(0);
 
   private SwitchUtils() {}
 
@@ -95,7 +89,8 @@ public final class SwitchUtils {
    * @param block the switch block
    * @return a list of switch branches consisting of either {@link PsiSwitchLabelStatementBase} or {@link PsiCaseLabelElement}
    */
-  public static @NotNull List<PsiElement> getSwitchBranches(@NotNull PsiSwitchBlock block) {
+  @NotNull
+  public static List<PsiElement> getSwitchBranches(@NotNull PsiSwitchBlock block) {
     final PsiCodeBlock body = block.getBody();
     if (body == null) return Collections.emptyList();
     List<PsiElement> result = new SmartList<>();
@@ -172,13 +167,6 @@ public final class SwitchUtils {
     if (primitiveTypesInPatternsSufficient && isComparisonWithPrimitives(expression, switchExpression, existingCaseValues)) {
       return true;
     }
-
-    if (expression instanceof PsiMethodCallExpression methodCallExpression && STRING_IS_EMPTY.test(methodCallExpression) &&
-        EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(
-          (methodCallExpression).getMethodExpression().getQualifierExpression(), switchExpression)) {
-      return existingCaseValues.add("");
-    }
-
     if (!(expression instanceof PsiPolyadicExpression polyadicExpression)) {
       return false;
     }
@@ -403,7 +391,8 @@ public final class SwitchUtils {
   }
 
   @Contract("null -> null")
-  public static @Nullable PsiExpression getSwitchSelectorExpression(PsiExpression expression) {
+  @Nullable
+  public static PsiExpression getSwitchSelectorExpression(PsiExpression expression) {
     if (expression == null) return null;
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
     final PsiExpression selectorExpression = getPossibleSwitchSelectorExpression(expression, languageLevel);
@@ -429,10 +418,6 @@ public final class SwitchUtils {
     if (PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, expression)) {
       final PsiExpression patternSwitchExpression = findPatternSwitchExpression(expression);
       if (patternSwitchExpression != null) return patternSwitchExpression;
-    }
-    if (expression instanceof PsiMethodCallExpression methodCallExpression &&
-        STRING_IS_EMPTY.test(methodCallExpression)) {
-      return methodCallExpression.getMethodExpression().getQualifierExpression();
     }
     if (!(expression instanceof PsiPolyadicExpression polyadicExpression)) {
       return null;
@@ -567,7 +552,8 @@ public final class SwitchUtils {
    * @return either default switch label statement {@link PsiSwitchLabelStatementBase}, or {@link PsiDefaultCaseLabelElement},
    * or null, if nothing was found.
    */
-  public static @Nullable PsiElement findDefaultElement(@NotNull PsiSwitchBlock switchBlock) {
+  @Nullable
+  public static PsiElement findDefaultElement(@NotNull PsiSwitchBlock switchBlock) {
     PsiCodeBlock body = switchBlock.getBody();
     if (body == null) return null;
     for (PsiStatement statement : body.getStatements()) {
@@ -584,7 +570,8 @@ public final class SwitchUtils {
    * @return either default switch label statement {@link PsiSwitchLabelStatementBase}, or {@link PsiDefaultCaseLabelElement},
    * or null, if nothing was found.
    */
-  public static @Nullable PsiElement findDefaultElement(@NotNull PsiSwitchLabelStatementBase label) {
+  @Nullable
+  public static PsiElement findDefaultElement(@NotNull PsiSwitchLabelStatementBase label) {
     if (label.isDefaultCase()) return label;
     PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
     if (labelElementList == null) return null;
@@ -618,7 +605,6 @@ public final class SwitchUtils {
         StringBuilder builder = new StringBuilder();
         builder.append(createPatternCaseText(instanceOf));
         boolean needAppendWhen = PsiUtil.isAvailable(JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS, expression);
-        if (!needAppendWhen) return null; // impossible to support old style guarded with '&&'
         for (PsiExpression operand : operands) {
           if (operand != instanceOf) {
             builder.append(needAppendWhen ? " when " : " && ").append(operand.getText());
@@ -640,7 +626,8 @@ public final class SwitchUtils {
    * @param expression the PsiPolyadicExpression representing the expression to analyze
    * @return the switch case text with compared primitives, or null if it cannot be generated
    */
-  private static @Nullable String getSwitchCaseTextWithComparedPrimitives(@NotNull PsiPolyadicExpression expression) {
+  @Nullable
+  private static String getSwitchCaseTextWithComparedPrimitives(@NotNull PsiPolyadicExpression expression) {
     PsiExpression switchSelector = findSelectorWithComparedPrimitives(expression);
     if (switchSelector == null) return null;
     PsiType switchSelectorType = switchSelector.getType();
@@ -795,7 +782,8 @@ public final class SwitchUtils {
    * @return list of enum constants which are targets of the specified label; empty list if the supplied element is not a switch label,
    * or it is not an enum switch.
    */
-  public static @NotNull List<PsiEnumConstant> findEnumConstants(PsiSwitchLabelStatementBase label) {
+  @NotNull
+  public static List<PsiEnumConstant> findEnumConstants(PsiSwitchLabelStatementBase label) {
     if (label == null) {
       return Collections.emptyList();
     }

@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
+import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.LayoutData
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.ui.ComponentUtil
@@ -17,9 +18,10 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Point
+import java.awt.Rectangle
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.JComponent
@@ -30,17 +32,14 @@ import kotlin.math.max
 abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: ToolWindowAnchor) : JBPanel<ToolWindowToolbar>() {
   lateinit var defaults: List<String>
 
-  internal abstract val bottomStripe: AbstractDroppableStripe
-  internal abstract val topStripe: AbstractDroppableStripe
+  internal abstract val bottomStripe: StripeV2
+  internal abstract val topStripe: StripeV2
 
   internal abstract val moreButton: MoreSquareStripeButton
 
   private val myResizeManager = ResizeStripeManager(this)
 
-  private var hasVisibleButtons = false
-  private val visibleButtonsListeners = mutableListOf<() -> Unit>()
-
-  protected open fun init() {
+  protected fun init() {
     layout = myResizeManager.createLayout()
     isOpaque = true
     background = JBUI.CurrentTheme.ToolWindow.background()
@@ -56,31 +55,6 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
     topWrapper.add(topStripe, BorderLayout.NORTH)
     add(topWrapper, BorderLayout.NORTH)
     add(bottomStripe, BorderLayout.SOUTH)
-
-    topStripe.addButtonAddedRemovedListener { updateVisibleButtons() }
-    bottomStripe.addButtonAddedRemovedListener { updateVisibleButtons() }
-    moreButton.addComponentListener(object : ComponentAdapter() {
-      override fun componentShown(e: ComponentEvent?) {
-        updateVisibleButtons()
-      }
-
-      override fun componentHidden(e: ComponentEvent?) {
-        updateVisibleButtons()
-      }
-    })
-    updateVisibleButtons()
-  }
-
-  private fun updateVisibleButtons() {
-    val hasVisibleButtons = hasButtons() || moreButton.isVisible
-    if (this.hasVisibleButtons != hasVisibleButtons) {
-      this.hasVisibleButtons = hasVisibleButtons
-      visibleButtonsListeners.forEach { it() }
-    }
-  }
-
-  internal fun addVisibleButtonsListener(listener: () -> Unit) {
-    this.visibleButtonsListeners.add(listener)
   }
 
   fun initMoreButton(project: Project) {
@@ -124,8 +98,6 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
 
   fun hasButtons(): Boolean = topStripe.getButtons().isNotEmpty() || bottomStripe.getButtons().isNotEmpty()
 
-  fun hasVisibleButtons(): Boolean = hasVisibleButtons
-
   fun reset() {
     topStripe.reset()
     bottomStripe.reset()
@@ -166,10 +138,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
   internal class StripeV2(private val toolBar: ToolWindowToolbar,
                           paneId: String,
                           override val anchor: ToolWindowAnchor,
-                          override val split: Boolean = false,
-                          layout : LayoutManager = VerticalFlowLayout(0, 0)
-  ) : AbstractDroppableStripe(paneId, layout) {
-    var bottomAnchorDropAreaComponent: JComponent? = null
+                          override val split: Boolean = false) : AbstractDroppableStripe(paneId, VerticalFlowLayout(0, 0)) {
     override val isNewStripes: Boolean
       get() = true
 
@@ -262,7 +231,8 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
         return Rectangle(locationOnScreen.x  - toolWindowSize, locationOnScreen.y, toolWindowSize, size.height)
       }
       if (anchor == ToolWindowAnchor.BOTTOM) {
-        val pane = bottomAnchorDropAreaComponent ?: rootPane
+        val rootPane = rootPane
+        val pane = if (rootPane is IdeRootPane) rootPane.getToolWindowPane() else rootPane
         val rootBounds = Rectangle(pane.locationOnScreen, pane.size)
         val toolWindowHeight = getFirstVisibleToolWindowSize(false)
         return Rectangle(rootBounds.x, rootBounds.y + rootBounds.height - toolWindowHeight, rootBounds.width, toolWindowHeight)

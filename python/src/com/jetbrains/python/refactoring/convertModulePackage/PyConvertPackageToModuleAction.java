@@ -112,7 +112,7 @@ public class PyConvertPackageToModuleAction extends PyBaseConvertModulePackageAc
           initPyVFile.move(this, parentDirVFile);
         }
         else {
-          PyClassRefactoringUtil.getOrCreateFile(parentDirVFile.getPath() + "/" + moduleName, pyPackage.getProject(), false);
+          PyClassRefactoringUtil.getOrCreateFile(parentDirVFile.getPath() + "/" + moduleName, pyPackage.getProject());
         }
         pyPackage.getVirtualFile().delete(this);
       }

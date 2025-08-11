@@ -33,7 +33,8 @@ public class BasicModuleParser {
     myJavaElementTypeContainer = parser.getJavaElementTypeFactory().getContainer();
   }
 
-  public @Nullable PsiBuilder.Marker parse(@NotNull PsiBuilder builder) {
+  @Nullable
+  public PsiBuilder.Marker parse(@NotNull PsiBuilder builder) {
     PsiBuilder.Marker module = builder.mark();
 
     PsiBuilder.Marker firstAnnotation = myParser.getDeclarationParser().parseAnnotations(builder);
@@ -50,7 +51,7 @@ public class BasicModuleParser {
       mapAndAdvance(builder, JavaTokenType.OPEN_KEYWORD);
       text = builder.getTokenText();
     }
-    BasicJavaParserUtil.done(modifierList, myJavaElementTypeContainer.MODIFIER_LIST, builder, myWhiteSpaceAndCommentSetHolder);
+    BasicJavaParserUtil.done(modifierList, myJavaElementTypeContainer.MODIFIER_LIST, myWhiteSpaceAndCommentSetHolder);
 
     if (PsiKeyword.MODULE.equals(text)) {
       mapAndAdvance(builder, JavaTokenType.MODULE_KEYWORD);
@@ -84,7 +85,7 @@ public class BasicModuleParser {
       parseModuleContent(builder);
     }
 
-    BasicJavaParserUtil.done(module, myJavaElementTypeContainer.MODULE, builder, myWhiteSpaceAndCommentSetHolder);
+    BasicJavaParserUtil.done(module, myJavaElementTypeContainer.MODULE, myWhiteSpaceAndCommentSetHolder);
 
     if (builder.getTokenType() != null) {
       parseExtras(builder, JavaPsiBundle.message("unexpected.tokens"));
@@ -185,7 +186,7 @@ public class BasicModuleParser {
       }
       break;
     }
-    BasicJavaParserUtil.done(modifierList, myJavaElementTypeContainer.MODIFIER_LIST, builder, myWhiteSpaceAndCommentSetHolder);
+    BasicJavaParserUtil.done(modifierList, myJavaElementTypeContainer.MODIFIER_LIST, myWhiteSpaceAndCommentSetHolder);
 
     if (parseNameRef(builder) != null) {
       semicolon(builder);
@@ -210,7 +211,8 @@ public class BasicModuleParser {
     return parsePackageStatement(builder, statement, myJavaElementTypeContainer.OPENS_STATEMENT);
   }
 
-  private @NotNull PsiBuilder.Marker parsePackageStatement(PsiBuilder builder, PsiBuilder.Marker statement, IElementType type) {
+  @NotNull
+  private PsiBuilder.Marker parsePackageStatement(PsiBuilder builder, PsiBuilder.Marker statement, IElementType type) {
     boolean hasError = false;
 
     if (parseClassOrPackageRef(builder) != null) {

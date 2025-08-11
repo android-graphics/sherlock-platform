@@ -8,6 +8,7 @@ from _locale import (
     LC_NUMERIC as LC_NUMERIC,
     LC_TIME as LC_TIME,
     localeconv as localeconv,
+    setlocale as setlocale,
     strcoll as strcoll,
     strxfrm as strxfrm,
 )
@@ -15,7 +16,7 @@ from _locale import (
 # This module defines a function "str()", which is why "str" can't be used
 # as a type annotation or type alias.
 from builtins import str as _str
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from decimal import Decimal
 from typing import Any
 
@@ -96,6 +97,7 @@ __all__ = [
     "getpreferredencoding",
     "Error",
     "setlocale",
+    "resetlocale",
     "localeconv",
     "strcoll",
     "strxfrm",
@@ -120,9 +122,6 @@ if sys.version_info >= (3, 11):
 if sys.version_info < (3, 12):
     __all__ += ["format"]
 
-if sys.version_info < (3, 13):
-    __all__ += ["resetlocale"]
-
 if sys.platform != "win32":
     __all__ += ["LC_MESSAGES"]
 
@@ -132,12 +131,9 @@ def getdefaultlocale(
     envvars: tuple[_str, ...] = ("LC_ALL", "LC_CTYPE", "LANG", "LANGUAGE")
 ) -> tuple[_str | None, _str | None]: ...
 def getlocale(category: int = ...) -> tuple[_str | None, _str | None]: ...
-def setlocale(category: int, locale: _str | Iterable[_str | None] | None = None) -> _str: ...
 def getpreferredencoding(do_setlocale: bool = True) -> _str: ...
 def normalize(localename: _str) -> _str: ...
-
-if sys.version_info < (3, 13):
-    def resetlocale(category: int = ...) -> None: ...
+def resetlocale(category: int = ...) -> None: ...
 
 if sys.version_info < (3, 12):
     def format(

@@ -8,24 +8,29 @@ import org.jetbrains.annotations.NotNull;
 
 class PyTypeHintFileType extends PythonFileType {
 
-  public static final @NotNull PyTypeHintFileType INSTANCE = new PyTypeHintFileType();
+  @NotNull
+  public static final PyTypeHintFileType INSTANCE = new PyTypeHintFileType();
 
   private PyTypeHintFileType() {
     super(PyTypeHintDialect.INSTANCE);
   }
 
+  @NotNull
   @Override
-  public @NotNull @NonNls String getName() {
+  @NonNls
+  public String getName() {
     return "PythonTypeHint";
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
+  public String getDescription() {
     return PyPsiBundle.message("filetype.python.type.hint.description");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDefaultExtension() {
+  public String getDefaultExtension() {
     return "typeHint";
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.codeInspection.duplicatePropertyInspection;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -33,7 +33,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processors;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import org.jetbrains.annotations.Nls;
@@ -179,7 +178,7 @@ public final class DuplicatePropertyInspection extends GlobalSimpleInspectionToo
         progress.setText2(PropertiesBundle.message("duplicate.property.value.progress.indicator.text", value));
         progress.checkCanceled();
       }
-      if (value.isEmpty()) continue;
+      if (value.length() == 0) continue;
       StringSearcher searcher = new StringSearcher(value, true, true);
       @Nls StringBuilder message = new StringBuilder();
       final int[] duplicatesCount = {0};
@@ -295,8 +294,9 @@ public final class DuplicatePropertyInspection extends GlobalSimpleInspectionToo
                                         PsiSearchHelper searchHelper,
                                         GlobalSearchScope scope,
                                         final Set<? super PsiFile> resultFiles) {
-    final List<String> words = ContainerUtil.sorted(StringUtil.getWordsIn(stringToFind),(o1, o2) -> o2.length() - o1.length());
+    final List<String> words = StringUtil.getWordsIn(stringToFind);
     if (words.isEmpty()) return;
+    words.sort((o1, o2) -> o2.length() - o1.length());
     for (String word : words) {
       final Set<PsiFile> files = new HashSet<>();
       searchHelper.processAllFilesWithWord(word, scope, Processors.cancelableCollectProcessor(files), true);
@@ -311,12 +311,14 @@ public final class DuplicatePropertyInspection extends GlobalSimpleInspectionToo
   }
 
   @Override
-  public @NotNull String getGroupDisplayName() {
+  @NotNull
+  public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.properties.files");
   }
 
   @Override
-  public @NotNull String getShortName() {
+  @NotNull
+  public String getShortName() {
     return "DuplicatePropertyInspection";
   }
 

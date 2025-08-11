@@ -16,7 +16,8 @@ import org.jetbrains.annotations.NotNull;
 
 public final class PySplitIfIntention extends PyBaseIntentionAction {
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.split.if");
   }
 

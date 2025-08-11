@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.diff;
 
 import com.intellij.openapi.project.Project;
@@ -24,7 +24,7 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
 
   private final @DialogTitle @NotNull StringBuilder titleBuilder = new StringBuilder();
-  private final @NotNull List<Change> changes = new ArrayList<>();
+  @NotNull private final List<Change> changes = new ArrayList<>();
 
   public DirectoryWithBranchComparer(@NotNull Project project,
                                      @NotNull VirtualFile virtualFile,
@@ -44,11 +44,13 @@ public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
     changes.addAll(getClientFactory().createDiffClient().compare(target1, target2));
   }
 
-  private @NotNull ClientFactory getClientFactory() {
+  @NotNull
+  private ClientFactory getClientFactory() {
     return getClientFactory(myVcs, virtualToIoFile(myVirtualFile));
   }
 
-  public static @NotNull ClientFactory getClientFactory(@NotNull SvnVcs vcs, @NotNull File file) {
+  @NotNull
+  public static ClientFactory getClientFactory(@NotNull SvnVcs vcs, @NotNull File file) {
     // TODO: Fix for svn 1.7 and lower as svn 1.7 command line "--summarize" option for "diff" command does not support comparing working
     // TODO: copy directories with repository directories
     return vcs.getFactory(file);

@@ -10,7 +10,6 @@ import com.intellij.psi.ResolvingHint;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -32,7 +31,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
    * @param context context
    * @return reference completion variants
    */
-  public abstract @Unmodifiable @NotNull Collection<? extends T> getVariants(@NotNull ConvertContext context);
+  public abstract @NotNull Collection<? extends T> getVariants(@NotNull ConvertContext context);
 
   /**
    * @return additional reference variants. They won't resolve to anywhere, but won't be highlighted as errors.
@@ -96,7 +95,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
   }
 
   @Override
-  public boolean canResolveTo(@NotNull Class<? extends PsiElement> elementClass) {
+  public boolean canResolveTo(Class<? extends PsiElement> elementClass) {
     return true;
   }
 

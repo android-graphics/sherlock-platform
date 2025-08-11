@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -23,9 +23,11 @@ public abstract class GroovyApplicabilityProvider {
   /**
    * @return null if provider could not be applied in this case
    */
-  public abstract @Nullable Applicability isApplicable(@NotNull List<Argument> arguments, @NotNull PsiMethod method);
+  @Nullable
+  public abstract Applicability isApplicable(@NotNull List<Argument> arguments, @NotNull PsiMethod method);
 
-  public static @Nullable Applicability checkProviders(@NotNull List<Argument> arguments, @NotNull PsiMethod method) {
+  @Nullable
+  public static Applicability checkProviders(@NotNull List<Argument> arguments, @NotNull PsiMethod method) {
     for (GroovyApplicabilityProvider applicabilityProvider : EP_NAME.getExtensions()) {
       Applicability result = applicabilityProvider.isApplicable(arguments, method);
       if (result != null) return result;
@@ -34,7 +36,8 @@ public abstract class GroovyApplicabilityProvider {
   }
 
   @Deprecated(forRemoval = true)
-  public static @Nullable Applicability checkProviders(PsiType @NotNull [] argumentTypes, @NotNull PsiMethod method) {
+  @Nullable
+  public static Applicability checkProviders(PsiType @NotNull [] argumentTypes, @NotNull PsiMethod method) {
     return checkProviders(ContainerUtil.map(argumentTypes, JustTypeArgument::new), method);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -32,7 +32,8 @@ public class GeneratedLocation implements Location {
     return myMethod;
   }
 
-  public @NotNull String methodName() {
+  @NotNull
+  public String methodName() {
     return myMethodName;
   }
 
@@ -101,7 +102,6 @@ public class GeneratedLocation implements Location {
     return Long.compare(codeIndex(), o.codeIndex());
   }
 
-  @Override
   public String toString() {
     return myReferenceType.name() + "." + myMethodName + ":" + myLineNumber;
   }

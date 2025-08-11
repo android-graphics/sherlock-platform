@@ -2,25 +2,21 @@ package org.jetbrains.jps.maven.model;
 
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.serialization.JpsProjectData;
-import org.junit.jupiter.api.Test;
+import org.jetbrains.jps.model.serialization.JpsSerializationTestCase;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-public class JpsMavenModuleSerializationTest {
-  @Test
+public class JpsMavenModuleSerializationTest extends JpsSerializationTestCase {
   public void testLoadProject() {
-    JpsProjectData projectData = JpsProjectData.loadFromTestData("plugins/maven/jps-plugin/testData/compiler/classpathTest", getClass());
-    List<JpsModule> modules = projectData.getProject().getModules();
+    loadProject("plugins/maven/jps-plugin/testData/compiler/classpathTest");
+    List<JpsModule> modules = myProject.getModules();
     assertEquals(3, modules.size());
-    JpsModule dep = modules.get(0);
-    assertEquals("dep", dep.getName());
-    JpsModule depTest = modules.get(1);
-    assertEquals("dep-test", depTest.getName());
-    JpsModule main = modules.get(2);
+    JpsModule main = modules.get(0);
     assertEquals("main", main.getName());
+    JpsModule dep = modules.get(1);
+    assertEquals("dep", dep.getName());
+    JpsModule depTest = modules.get(2);
+    assertEquals("dep-test", depTest.getName());
 
     for (JpsModule module : modules) {
       assertNotNull(getService().getExtension(module));

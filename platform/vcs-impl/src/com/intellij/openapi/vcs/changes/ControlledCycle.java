@@ -1,17 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-@ApiStatus.Internal
 public final class ControlledCycle {
   private static final Logger LOG = Logger.getInstance(ControlledCycle.class);
 
@@ -23,7 +21,7 @@ public final class ControlledCycle {
 
   public ControlledCycle(@NotNull Project project,
                          final Supplier<Boolean> callback,
-                         final @NotNull String name,
+                         @NotNull final String name,
                          final int refreshInterval) {
     myRefreshInterval = refreshInterval;
     myActive = new AtomicBoolean(false);

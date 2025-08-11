@@ -90,7 +90,6 @@ public class LoggingHandlerImpl extends LoggingHandlerBase implements LoggingHan
     return myClosed;
   }
 
-  @Override
   public void close() {
     myClosed = true;
   }

@@ -7,7 +7,7 @@ plugins {
 
 kotlin {
     ios()
-    {{androidTargetPlaceholder}}
+    android()
 
     sourceSets {
         val commonMain by getting {

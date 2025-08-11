@@ -99,5 +99,5 @@ internal class IncomingChangesViewProvider(private val project: Project) : Chang
   }
 }
 
-internal fun isIncomingChangesAvailable(vcs: AbstractVcs): Boolean =
+fun isIncomingChangesAvailable(vcs: AbstractVcs): Boolean =
   vcs.cachingCommittedChangesProvider?.supportsIncomingChanges() == true

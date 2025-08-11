@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.chains.DiffRequestProducer;
@@ -18,13 +18,11 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
 
-@ApiStatus.Internal
 public abstract class CommonBinaryFilePatchInProgress<T extends FilePatch> extends AbstractFilePatchInProgress<T> {
   protected CommonBinaryFilePatchInProgress(T patch, Collection<VirtualFile> autoBases, VirtualFile baseDir) {
     super(patch, autoBases, baseDir);
@@ -42,12 +40,15 @@ public abstract class CommonBinaryFilePatchInProgress<T extends FilePatch> exten
     return myNewContentRevision;
   }
 
-  protected abstract @NotNull BinaryContentRevision createNewContentRevision(@NotNull FilePath newFilePath);
+  @NotNull
+  protected abstract BinaryContentRevision createNewContentRevision(@NotNull FilePath newFilePath);
 
-  protected abstract @NotNull Change createChange(Project project);
+  @NotNull
+  protected abstract Change createChange(Project project);
 
+  @NotNull
   @Override
-  public @NotNull DiffRequestProducer getDiffRequestProducers(final Project project, final PatchReader baseContents) {
+  public DiffRequestProducer getDiffRequestProducers(final Project project, final PatchReader baseContents) {
     return new DiffRequestProducer() {
       @Override
       public @NotNull DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)

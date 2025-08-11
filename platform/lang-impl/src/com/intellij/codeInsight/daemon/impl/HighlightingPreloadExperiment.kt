@@ -4,11 +4,9 @@ package com.intellij.codeInsight.daemon.impl
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
-import org.jetbrains.annotations.ApiStatus
 
 private const val GROUPS = 4
 
-@ApiStatus.Internal
 class HighlightingPreloadExperiment {
   val isExperimentEnabled = StatisticsUploadAssistant.isSendAllowed()
                             && ApplicationManager.getApplication().isEAP

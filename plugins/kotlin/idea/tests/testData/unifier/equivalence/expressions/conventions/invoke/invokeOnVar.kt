@@ -1,4 +1,4 @@
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 fun Int.invoke() = this + 1
 
 val x = 1

@@ -27,10 +27,6 @@ public class JsonSchemaDocumentationTest extends JsonBySchemaDocumentationBaseTe
     doTest(true, "json");
   }
 
-  public void testMarkdownDescription() throws Exception {
-    doTest(true, "json");
-  }
-
   public void testHtmlDescription() throws Exception {
     doTest(true, "json");
   }

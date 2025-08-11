@@ -4,20 +4,11 @@ package com.intellij.refactoring.extractMethod.newImpl
 import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInsight.PsiEquivalenceUtil
+import com.intellij.codeInsight.generation.GenerateMembersUtil
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix
-import com.intellij.codeInsight.template.impl.TemplateState
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.command.impl.FinishMarkAction
-import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Conditions
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsContexts.Command
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
@@ -33,9 +24,6 @@ import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
 import com.intellij.refactoring.introduceField.ElementToWorkOn
 import com.intellij.util.CommonJavaRefactoringUtil
-import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 object ExtractMethodHelper {
 
@@ -229,7 +217,7 @@ object ExtractMethodHelper {
 
   fun guessMethodName(options: ExtractOptions): List<String> {
     val project = options.project
-    val variableNames: MutableSet<String> = LinkedHashSet()
+    val initialMethodNames: MutableSet<String> = LinkedHashSet()
     val codeStyleManager = JavaCodeStyleManager.getInstance(project) as JavaCodeStyleManagerImpl
     val returnType = options.dataOutput.type
 
@@ -237,7 +225,7 @@ object ExtractMethodHelper {
     if (expression != null || returnType !is PsiPrimitiveType) {
       codeStyleManager.suggestVariableName(VariableKind.FIELD, null, expression, returnType).names
         .forEach { name ->
-          variableNames += codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD)
+          initialMethodNames += codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD)
         }
     }
 
@@ -247,13 +235,19 @@ object ExtractMethodHelper {
       val propertyName = codeStyleManager.variableNameToPropertyName(outVariable.name!!, outKind)
       val names = codeStyleManager.suggestVariableName(VariableKind.FIELD, propertyName, null, outVariable.type).names
       names.forEach { name ->
-        variableNames += codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD)
+        initialMethodNames += codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD)
       }
     }
 
-    val prefix = if (returnType == PsiTypes.booleanType()) "is" else "get"
-    return variableNames.filter { PsiNameHelper.getInstance(project).isIdentifier(it) }
-      .map { variableName -> "$prefix${StringUtil.capitalize(variableName)}" }
+    val normalizedType = (returnType as? PsiEllipsisType)?.toArrayType() ?: returnType
+    val field = JavaPsiFacade.getElementFactory(project).createField("fieldNameToReplace", normalizedType)
+    fun suggestGetterName(name: String): String {
+      field.name = name
+      return GenerateMembersUtil.suggestGetterName(field)
+    }
+
+    return initialMethodNames.filter { PsiNameHelper.getInstance(project).isIdentifier(it) }
+      .map { propertyName -> suggestGetterName(propertyName) }
   }
 
   fun replacePsiRange(source: List<PsiElement>, target: List<PsiElement>): List<PsiElement> {
@@ -285,18 +279,6 @@ object ExtractMethodHelper {
     }
   }
 
-  fun mergeWriteCommands(editor: Editor, disposable: Disposable, commandName: @Command String) {
-    val project = editor.project ?: return
-    val startMarkAction = WriteCommandAction.writeCommandAction(project).withName(commandName).compute<StartMarkAction, RuntimeException> {
-      StartMarkAction.start(editor, project, commandName)
-    }
-    Disposer.register(disposable) {
-      WriteCommandAction.writeCommandAction(project).withName(commandName).run<RuntimeException > {
-        FinishMarkAction.finish(project, editor, startMarkAction)
-      }
-    }
-  }
-
   private fun getPhysicalPsiRange(expression: PsiExpression?): PsiRange? {
     val range: TextRange = expression?.getUserData(ElementToWorkOn.TEXT_RANGE)?.textRange ?: return null
     val parent: PsiElement = expression.getUserData(ElementToWorkOn.PARENT) ?: return null
@@ -309,31 +291,4 @@ object ExtractMethodHelper {
   }
 
   private data class PsiRange(val parent: PsiElement, val firstChild: PsiElement, val lastChild: PsiElement)
-
-  @RequiresWriteLock
-  fun renameTemplate(templateState: TemplateState?, name: String) {
-    if (templateState == null) return
-    val range = templateState.currentVariableRange ?: return
-    templateState.editor.document.replaceString(range.startOffset, range.endOffset, name)
-    templateState.update()
-  }
-
-  internal suspend fun runWithDumbEditor(editor: Editor, action: suspend () -> Unit) {
-    val editorImpl = editor as? EditorImpl
-    if (editorImpl == null) {
-      action.invoke()
-      return
-    }
-    withContext(Dispatchers.EDT) {
-      editorImpl.startDumb()
-    }
-    try {
-      action.invoke()
-    }
-    finally {
-      withContext(Dispatchers.EDT) {
-        editor.stopDumbLater()
-      }
-    }
-  }
 }

@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.caches
 
-import com.intellij.lang.Language
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
@@ -26,7 +25,6 @@ import org.jetbrains.kotlin.asJava.defaultImplsChild
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.asJava.getAccessorLightMethods
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
-import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
@@ -337,9 +335,5 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
         val size: Int get() = set.size
 
         fun toArray(a: Array<T>): Array<T> = set.toArray(a)
-    }
-
-    override fun getLanguage(): Language {
-        return KotlinLanguage.INSTANCE
     }
 }

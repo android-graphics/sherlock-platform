@@ -3,31 +3,22 @@ package com.jetbrains.python.packaging.toolwindow
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.ui.JBColor
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.packaging.repository.InstalledPyPackagedRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import com.jetbrains.python.packaging.toolwindow.model.*
-import com.jetbrains.python.packaging.toolwindow.packages.PyPackagingTableGroup
-import com.jetbrains.python.packaging.toolwindow.packages.table.PyPackagesTable
-import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import java.awt.Rectangle
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTable
 
-class PyPackagingTablesView(
-  private val project: Project,
-  private val container: JPanel,
-  private val controller: PyPackagingToolWindowPanel,
-) {
-  private val repositories: MutableList<PyPackagingTableGroup> = mutableListOf()
+class PyPackagingTablesView(private val project: Project,
+                            private val container: JPanel,
+                            private val controller: PyPackagingToolWindowPanel) {
+  private val repositories: MutableList<PyPackagingTableGroup<DisplayablePackage>> = mutableListOf()
   private val installedPackages = PyPackagingTableGroup(
-    InstalledPyPackagedRepository(),
-    PyPackagesTable(project, this, controller))
+    object : PyPackageRepository(message("python.toolwindow.packages.installed.label"), "", "") {},
+             PyPackagesTable(project, PyPackagesTableModel(), this, controller))
   private val invalidRepositories: MutableMap<String, JPanel> = mutableMapOf()
-
   init {
     installedPackages.addTo(container)
     installedPackages.expand()
@@ -35,10 +26,8 @@ class PyPackagingTablesView(
 
   fun showSearchResult(installed: List<InstalledPackage>, repoData: List<PyPackagesViewData>) {
     updatePackages(installed, repoData)
-
     installedPackages.expand()
     installedPackages.updateHeaderText(installed.size)
-
     val tableToData = repositories.map { repo -> repo to repoData.find { it.repository.name == repo.name }!! }
     tableToData.forEach { (table, data) ->
       table.updateHeaderText(data.packages.size + data.moreItems)
@@ -51,23 +40,19 @@ class PyPackagingTablesView(
       ?.let { selectPackage(it.second) }
   }
 
-  fun resetSearch(installed: List<InstalledPackage>, repoData: List<PyPackagesViewData>, currentSdk: Sdk?) {
+  fun resetSearch(installed: List<InstalledPackage>, repoData: List<PyPackagesViewData>) {
     updatePackages(installed, repoData)
-
     installedPackages.expand()
-    installedPackages.setSdkToHeader(currentSdk?.name)
-
+    installedPackages.updateHeaderText(null)
     repositories.forEach {
       it.collapse()
       it.updateHeaderText(null)
     }
-
     container.scrollRectToVisible(Rectangle(0, 0))
   }
 
   private fun updatePackages(installed: List<InstalledPackage>, repoData: List<PyPackagesViewData>) {
     installedPackages.table.items = installed
-
     val (validRepoData, invalid) = repoData.partition { it !is PyInvalidRepositoryViewData }
 
     for (data in validRepoData) {
@@ -77,13 +62,11 @@ class PyPackagingTablesView(
       if (existingRepo != null) {
         // recreate order of the repositories -- it might have changed in the package manager (e.g. Sdk switch)
         existingRepo.removeFrom(container)
-        val selectedItem = existingRepo.table.selectedItem()
         existingRepo.items = withExpander
         existingRepo.addTo(container)
-        selectedItem?.let { existingRepo.table.selectPackage(it) }
       }
       else {
-        val newTable = PyPackagesTable(project, this, controller)
+        val newTable = PyPackagesTable(project, PyPackagesTableModel(), this, controller)
         newTable.items = withExpander
 
         val newTableGroup = PyPackagingTableGroup(data.repository, newTable)
@@ -116,20 +99,12 @@ class PyPackagingTablesView(
           foreground = JBColor.RED
           icon = AllIcons.General.Error
         }
-        it to PyPackagesUiComponents.headerPanel(label, null)
+        it to headerPanel(label, null)
       }
       .forEach {
         invalidRepositories[it.first] = it.second
       }
     invalidRepositories.forEach { container.add(it.value) }
-  }
-
-  fun selectPackage(packageName: String) {
-    val repos = getRepos()
-    for (repo in repos) {
-      val pyPackage = repo.items.firstOrNull { it.name == packageName } ?: continue
-      repo.table.selectPackage(pyPackage)
-    }
   }
 
   private fun selectPackage(matchData: PyPackagesViewData) {
@@ -139,7 +114,7 @@ class PyPackagingTablesView(
     tableWithMatch.setRowSelectionInterval(exactMatch, exactMatch)
   }
 
-  fun removeSelectionNotFormTable(table: JTable) {
+  fun requestSelection(table: JTable) {
     if (table != installedPackages.table) installedPackages.table.clearSelection()
     repositories.asSequence()
       .filter { it.table != table }
@@ -153,7 +128,7 @@ class PyPackagingTablesView(
       installedPackages.table -> repositories.firstOrNull()
       else -> {
         val currentIndex = repositories.indexOfFirst { it.table == currentTable }
-        if (currentIndex + 1 != repositories.size) repositories[currentIndex + 1]
+        if (currentIndex + 1 != repositories.size)  repositories[currentIndex + 1]
         else return
       }
     }
@@ -188,15 +163,4 @@ class PyPackagingTablesView(
       }
     }
   }
-
-  fun getSelectedPackages(): List<DisplayablePackage> {
-    val repos = getRepos()
-    return repos.flatMap { it.table.selectedItems() }
-  }
-
-  fun collapseAll() {
-    getRepos().forEach { it.collapse() }
-  }
-
-  private fun getRepos() = listOf(installedPackages) + repositories
 }

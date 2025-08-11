@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.CommonBundle;
@@ -15,8 +15,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.modcommand.ModUpdateFileText;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -56,7 +54,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -147,10 +144,10 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   }
 
   @Override
-  protected boolean buildTemplateAndStart(@NotNull Collection<PsiReference> refs,
+  protected boolean buildTemplateAndStart(final @NotNull Collection<PsiReference> refs,
                                           @NotNull Collection<Pair<PsiElement, TextRange>> stringUsages,
-                                          @NotNull PsiElement scope,
-                                          @NotNull PsiFile containingFile) {
+                                          final @NotNull PsiElement scope,
+                                          final @NotNull PsiFile containingFile) {
     PsiFile fileCopy = (PsiFile)containingFile.copy();
     try {
       myElementInCopy = PsiTreeUtil.findSameElementInCopy(myElementToRename, fileCopy);
@@ -277,11 +274,12 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     return selectAll != null && selectAll.booleanValue();
   }
 
-  protected @NotNull VariableInplaceRenamer createInplaceRenamerToRestart(PsiNamedElement variable, Editor editor, String initialName) {
+  @NotNull
+  protected VariableInplaceRenamer createInplaceRenamerToRestart(PsiNamedElement variable, Editor editor, String initialName) {
     return new VariableInplaceRenamer(variable, editor, myProject, initialName, myOldName);
   }
 
-  protected void performOnInvalidIdentifier(String newName, LinkedHashSet<String> nameSuggestions) {
+  protected void performOnInvalidIdentifier(final String newName, final LinkedHashSet<String> nameSuggestions) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       tryRollback();
       return;
@@ -366,13 +364,11 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
               highlighter.dispose();
             }
             startDumbIfPossible();
-            int offsetBefore = myEditor.getCaretModel().getOffset();
             try {
               tryRollback();
               PsiNamedElement var = getVariable();
               if (var != null) {
                 createInplaceRenamerToRestart(var, myEditor, myInsertedName).performInplaceRefactoring(myNameSuggestions);
-                myEditor.getCaretModel().moveToOffset(offsetBefore);
               }
             }
             finally {
@@ -396,11 +392,6 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
 
   private @Nullable RangeHighlighter highlightConflictingElement(PsiElement conflictingElement) {
     if (conflictingElement != null) {
-      try {
-        conflictingElement = PsiTreeUtil.findSameElementInCopy(conflictingElement, myScope.getContainingFile());
-      }
-      catch (IllegalStateException ignored) {
-      }
       TextRange range = conflictingElement.getTextRange();
       if (conflictingElement instanceof PsiNameIdentifierOwner owner) {
         PsiElement identifier = owner.getNameIdentifier();
@@ -442,8 +433,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
         if (elementToRename != null && isRenamerFactoryApplicable(renamerFactory, elementToRename)) {
           final List<UsageInfo> usages = new ArrayList<>();
           final AutomaticRenamer renamer =
-            ActionUtil.underModalProgress(myProject, RefactoringBundle.message("progress.title.prepare.additional.searcher"), 
-                                          () -> renamerFactory.createRenamer(elementToRename, newName, new ArrayList<>()));
+            renamerFactory.createRenamer(elementToRename, newName, new ArrayList<>());
           if (renamer.hasAnythingToRename()) {
             if (!ApplicationManager.getApplication().isUnitTestMode()) {
               final AutomaticRenamingDialog renamingDialog = new AutomaticRenamingDialog(myProject, renamer);
@@ -471,8 +461,11 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
                 }
               }
             };
-            ApplicationManager.getApplication().invokeLater(
-              () -> WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(performAutomaticRename));
+            if (ApplicationManager.getApplication().isUnitTestMode()) {
+              WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(performAutomaticRename);
+            } else {
+              ApplicationManager.getApplication().invokeLater(() -> WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(performAutomaticRename));
+            }
           }
         }
       }
@@ -508,7 +501,8 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     }
   }
 
-  protected boolean isRenamerFactoryApplicable(@NotNull AutomaticRenamerFactory renamerFactory, @NotNull PsiNamedElement elementToRename) {
+  protected boolean isRenamerFactoryApplicable(@NotNull AutomaticRenamerFactory renamerFactory,
+                                               @NotNull PsiNamedElement elementToRename) {
     return renamerFactory.isApplicable(elementToRename);
   }
 
@@ -532,11 +526,9 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
         .finishOnUiThread(ModalityState.nonModal(), problem -> {
           if (problem == null) {
             if (mySnapshot != null) {
-              WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> mySnapshot.apply(myInsertedName));
+              ApplicationManager.getApplication().runWriteAction(() -> mySnapshot.apply(myInsertedName));
             }
-            try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) { // IJPL-162114
-              performRefactoringRename(myInsertedName, myMarkAction);
-            }
+            performRefactoringRename(myInsertedName, myMarkAction);
           }
           else {
             problem.showUI();

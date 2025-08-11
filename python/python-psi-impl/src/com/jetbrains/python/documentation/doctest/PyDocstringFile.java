@@ -30,8 +30,9 @@ public class PyDocstringFile extends PyFileImpl implements PyExpressionCodeFragm
     super(viewProvider, PyDocstringLanguageDialect.getInstance());
   }
 
+  @NotNull
   @Override
-  public @NotNull FileType getFileType() {
+  public FileType getFileType() {
     return PyDocstringFileType.INSTANCE;
   }
 

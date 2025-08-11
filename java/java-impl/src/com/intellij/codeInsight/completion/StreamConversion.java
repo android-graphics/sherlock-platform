@@ -22,7 +22,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.stream.Collector;
@@ -32,7 +31,7 @@ import static com.intellij.psi.CommonClassNames.*;
 
 final class StreamConversion {
 
-  static @Unmodifiable List<LookupElement> addToStreamConversion(PsiReferenceExpression ref, CompletionParameters parameters) {
+  static List<LookupElement> addToStreamConversion(PsiReferenceExpression ref, CompletionParameters parameters) {
     PsiExpression qualifier = ref.getQualifierExpression();
     if (qualifier == null) return Collections.emptyList();
 
@@ -65,10 +64,10 @@ final class StreamConversion {
     return Collections.emptyList();
   }
 
-  private static @Unmodifiable @NotNull List<LookupElement> generateStreamSuggestions(CompletionParameters parameters,
-                                                                                      PsiExpression qualifier,
-                                                                                      String changedQualifier,
-                                                                                      Consumer<InsertionContext> beforeInsertion) {
+  private static @NotNull List<LookupElement> generateStreamSuggestions(CompletionParameters parameters,
+                                                                        PsiExpression qualifier,
+                                                                        String changedQualifier,
+                                                                        Consumer<InsertionContext> beforeInsertion) {
     String refText = changedQualifier + ".x";
     PsiExpression expr = PsiElementFactory.getInstance(qualifier.getProject()).createExpressionFromText(refText, qualifier);
     if (!(expr instanceof PsiReferenceExpression)) {
@@ -235,7 +234,7 @@ final class StreamConversion {
     }
 
     @Override
-    public @Unmodifiable Set<String> getAllLookupStrings() {
+    public Set<String> getAllLookupStrings() {
       return ContainerUtil.newHashSet(myLookupString, myMethodName);
     }
 

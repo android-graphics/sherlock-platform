@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.api;
 
 import org.jetbrains.annotations.NotNull;
@@ -69,8 +68,9 @@ public class CmdClientFactory extends ClientFactory {
     put(InfoClient.class, CmdInfoClient.class);
   }
 
+  @NotNull
   @Override
-  public @NotNull UpdateClient createUpdateClient() {
+  public UpdateClient createUpdateClient() {
     return prepare(new CmdUpdateClient());
   }
 }

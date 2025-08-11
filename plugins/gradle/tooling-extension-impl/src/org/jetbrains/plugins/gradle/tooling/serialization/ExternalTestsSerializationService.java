@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
@@ -96,7 +96,8 @@ public final class ExternalTestsSerializationService implements SerializationSer
     });
   }
 
-  private static @Nullable ExternalTestsModel read(final IonReader reader, final ReadContext context) {
+  @Nullable
+  private static ExternalTestsModel read(final IonReader reader, final ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
     ExternalTestsModel model =
@@ -124,7 +125,8 @@ public final class ExternalTestsSerializationService implements SerializationSer
     return list;
   }
 
-  private static @Nullable ExternalTestSourceMapping readTestSourceMapping(final IonReader reader, ReadContext context) {
+  @Nullable
+  private static ExternalTestSourceMapping readTestSourceMapping(final IonReader reader, ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
     ExternalTestSourceMapping dependency =

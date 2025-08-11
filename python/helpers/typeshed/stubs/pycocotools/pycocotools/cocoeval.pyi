@@ -1,6 +1,5 @@
 from _typeshed import Incomplete
-from typing import Literal, TypedDict
-from typing_extensions import TypeAlias
+from typing_extensions import Literal, TypeAlias, TypedDict
 
 from .coco import COCO
 

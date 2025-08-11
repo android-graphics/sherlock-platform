@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.events;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -17,9 +17,11 @@ import java.util.List;
 
 @Internal
 public abstract class IndexedFilesListener implements AsyncFileListener {
-  private final @NotNull VfsEventsMerger myEventMerger = new VfsEventsMerger();
+  @NotNull
+  private final VfsEventsMerger myEventMerger = new VfsEventsMerger();
 
-  public @NotNull VfsEventsMerger getEventMerger() {
+  @NotNull
+  public VfsEventsMerger getEventMerger() {
     return myEventMerger;
   }
 
@@ -62,7 +64,8 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
   }
 
   @Override
-  public @NotNull ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+  @NotNull
+  public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
     Int2ObjectMap<VirtualFile> deletedFiles = new Int2ObjectOpenHashMap<>();
     for (VFileEvent event : events) {
       if (event instanceof VFileDeleteEvent) {

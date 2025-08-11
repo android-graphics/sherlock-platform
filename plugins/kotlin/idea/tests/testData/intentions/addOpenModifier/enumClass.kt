@@ -1,4 +1,3 @@
-// PRIORITY: LOW
 enum class E {
     SINGLE;
 

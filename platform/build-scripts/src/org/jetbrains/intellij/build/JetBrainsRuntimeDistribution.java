@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build;
 
 import org.jetbrains.annotations.NotNull;
@@ -21,13 +21,15 @@ public enum JetBrainsRuntimeDistribution {
   /**
    * Distinguishes artifacts of different JBR distributions
    */
-  public final @NotNull String classifier;
+  @NotNull
+  public final String classifier;
 
   JetBrainsRuntimeDistribution(@NotNull String classifier) {
     this.classifier = classifier;
   }
 
-  public @NotNull String getArtifactPrefix() {
+  @NotNull
+  public String getArtifactPrefix() {
     if (classifier.isEmpty()) {
       return "jbr-";
     }

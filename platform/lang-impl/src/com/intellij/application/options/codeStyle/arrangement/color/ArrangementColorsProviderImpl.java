@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.color;
 
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -7,7 +7,6 @@ import com.intellij.psi.codeStyle.arrangement.std.ArrangementColorsAware;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,23 +14,22 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-@ApiStatus.Internal
 public final class ArrangementColorsProviderImpl implements ArrangementColorsProvider {
 
-  private final @NotNull Map<ArrangementSettingsToken, TextAttributes> myNormalAttributesCache   =
+  @NotNull private final Map<ArrangementSettingsToken, TextAttributes> myNormalAttributesCache   =
     new HashMap<>();
-  private final @NotNull Map<ArrangementSettingsToken, TextAttributes> mySelectedAttributesCache =
+  @NotNull private final Map<ArrangementSettingsToken, TextAttributes> mySelectedAttributesCache =
     new HashMap<>();
 
-  private final @NotNull TextAttributes myDefaultNormalAttributes   = new TextAttributes();
-  private final @NotNull TextAttributes myDefaultSelectedAttributes = new TextAttributes();
-  private final @NotNull Color myDefaultNormalBorderColor;
-  private final @NotNull Color myDefaultSelectedBorderColor;
+  @NotNull private final TextAttributes myDefaultNormalAttributes   = new TextAttributes();
+  @NotNull private final TextAttributes myDefaultSelectedAttributes = new TextAttributes();
+  @NotNull private final Color myDefaultNormalBorderColor;
+  @NotNull private final Color myDefaultSelectedBorderColor;
 
-  private final @Nullable ArrangementColorsAware myColorsAware;
+  @Nullable private final ArrangementColorsAware myColorsAware;
 
-  private @Nullable Color myCachedNormalBorderColor;
-  private @Nullable Color myCachedSelectedBorderColor;
+  @Nullable private Color myCachedNormalBorderColor;
+  @Nullable private Color myCachedSelectedBorderColor;
 
   public ArrangementColorsProviderImpl(@Nullable ArrangementColorsAware colorsAware) {
     myColorsAware = colorsAware;
@@ -49,8 +47,9 @@ public final class ArrangementColorsProviderImpl implements ArrangementColorsPro
     myDefaultSelectedBorderColor = selectionBorderColor;
   }
 
+  @NotNull
   @Override
-  public @NotNull Color getBorderColor(boolean selected) {
+  public Color getBorderColor(boolean selected) {
     final Color cached;
     if (selected) {
       cached = myCachedSelectedBorderColor;
@@ -78,8 +77,9 @@ public final class ArrangementColorsProviderImpl implements ArrangementColorsPro
     return result;
   }
 
+  @NotNull
   @Override
-  public @NotNull TextAttributes getTextAttributes(@NotNull ArrangementSettingsToken token, boolean selected) {
+  public TextAttributes getTextAttributes(@NotNull ArrangementSettingsToken token, boolean selected) {
     final TextAttributes cached;
     if (selected) {
       cached = mySelectedAttributesCache.get(token);

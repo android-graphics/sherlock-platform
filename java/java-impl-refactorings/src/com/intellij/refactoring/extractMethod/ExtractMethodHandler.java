@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -59,12 +59,12 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     selectAndPass(project, editor, file, selectedValue -> invokeOnElements(project, editor, file, selectedValue));
   }
 
   public static void
-  selectAndPass(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file, @NotNull Consumer<? super PsiElement[]> callback) {
+  selectAndPass(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file, @NotNull Consumer<? super PsiElement[]> callback) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (!editor.getSelectionModel().hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();
@@ -196,12 +196,13 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     }
   }
 
-  private static @Nullable ExtractMethodProcessor getProcessor(final PsiElement[] elements,
-                                                               final Project project,
-                                                               final PsiFile file,
-                                                               final Editor editor,
-                                                               final boolean showErrorMessages,
-                                                               final @Nullable Consumer<? super ExtractMethodProcessor> pass) {
+  @Nullable
+  private static ExtractMethodProcessor getProcessor(final PsiElement[] elements,
+                                                     final Project project,
+                                                     final PsiFile file,
+                                                     final Editor editor,
+                                                     final boolean showErrorMessages,
+                                                     final @Nullable Consumer<? super ExtractMethodProcessor> pass) {
     if (elements == null || elements.length == 0) {
       if (showErrorMessages) {
         String message = RefactoringBundle
@@ -259,18 +260,20 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     }
   }
 
-  public static @Nullable ExtractMethodProcessor getProcessor(final Project project,
-                                                              final PsiElement[] elements,
-                                                              final PsiFile file,
-                                                              final boolean openEditor) {
+  @Nullable
+  public static ExtractMethodProcessor getProcessor(final Project project,
+                                                    final PsiElement[] elements,
+                                                    final PsiFile file,
+                                                    final boolean openEditor) {
     return getProcessor(elements, project, file, openEditor ? openEditor(file) : null, false, null);
   }
 
-  public static boolean invokeOnElements(final Project project, final @NotNull ExtractMethodProcessor processor, final PsiFile file, final boolean directTypes) {
+  public static boolean invokeOnElements(final Project project, @NotNull final ExtractMethodProcessor processor, final PsiFile file, final boolean directTypes) {
     return invokeOnElements(project, openEditor(file), processor, directTypes);
   }
 
-  public static @Nullable Editor openEditor(final @NotNull PsiFile file) {
+  @Nullable
+  public static Editor openEditor(@NotNull final PsiFile file) {
     final Project project = file.getProject();
     final VirtualFile virtualFile = file.getVirtualFile();
     LOG.assertTrue(virtualFile != null);

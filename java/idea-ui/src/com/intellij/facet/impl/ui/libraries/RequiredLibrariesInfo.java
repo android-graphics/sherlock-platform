@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.facet.impl.ui.libraries;
 
@@ -26,11 +26,13 @@ public class RequiredLibrariesInfo {
     myLibraryInfos.addAll(new ArrayList<>(Arrays.asList(libs)));
   }
 
-  public @Nullable RequiredClassesNotFoundInfo checkLibraries(VirtualFile[] libraryFiles) {
+  @Nullable
+  public RequiredClassesNotFoundInfo checkLibraries(VirtualFile[] libraryFiles) {
     return checkLibraries(Arrays.asList(libraryFiles));
   }
 
-  public @Nullable RequiredClassesNotFoundInfo checkLibraries(List<? extends VirtualFile> libraryFiles) {
+  @Nullable
+  public RequiredClassesNotFoundInfo checkLibraries(List<? extends VirtualFile> libraryFiles) {
     List<LibraryInfo> infos = new ArrayList<>();
     List<String> classes = new ArrayList<>();
 
@@ -66,7 +68,8 @@ public class RequiredLibrariesInfo {
     return new RequiredClassesNotFoundInfo(ArrayUtilRt.toStringArray(classes), infos.toArray(LibraryInfo.EMPTY_ARRAY));
   }
 
-  public static @Nullable String md5(@NotNull VirtualFile file) {
+  @Nullable
+  public static String md5(@NotNull VirtualFile file) {
     try {
       MessageDigest md5 = DigestUtil.md5();
       md5.update(file.contentsToByteArray());

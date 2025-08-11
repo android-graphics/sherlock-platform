@@ -25,7 +25,8 @@ public class PySyntaxHighlighterFactoryBase extends SyntaxHighlighterFactory {
   });
 
   @Override
-  public @NotNull SyntaxHighlighter getSyntaxHighlighter(final @Nullable Project project, final @Nullable VirtualFile virtualFile) {
+  @NotNull
+  public SyntaxHighlighter getSyntaxHighlighter(@Nullable final Project project, @Nullable final VirtualFile virtualFile) {
     final LanguageLevel level = getLanguageLevel(project, virtualFile);
     if (useConsoleLexer(project, virtualFile)) {
       return myConsoleMap.get(level);
@@ -36,7 +37,8 @@ public class PySyntaxHighlighterFactoryBase extends SyntaxHighlighterFactory {
   /**
    * Returns a syntax highlighter for Python console.
    */
-  public @NotNull SyntaxHighlighter getConsoleSyntaxHighlighter(final @Nullable Project project, final @Nullable VirtualFile virtualFile) {
+  @NotNull
+  public SyntaxHighlighter getConsoleSyntaxHighlighter(@Nullable final Project project, @Nullable final VirtualFile virtualFile) {
     final LanguageLevel level = getLanguageLevel(project, virtualFile);
     return myConsoleMap.get(level);
   }
@@ -44,15 +46,16 @@ public class PySyntaxHighlighterFactoryBase extends SyntaxHighlighterFactory {
   /**
    * Returns a syntax highlighter targeting the specified version of Python.
    */
-  public @NotNull SyntaxHighlighter getSyntaxHighlighterForLanguageLevel(@NotNull LanguageLevel level) {
+  @NotNull
+  public SyntaxHighlighter getSyntaxHighlighterForLanguageLevel(@NotNull LanguageLevel level) {
     return myMap.get(level);
   }
 
-  protected LanguageLevel getLanguageLevel(final @Nullable Project project, final @Nullable VirtualFile virtualFile) {
+  protected LanguageLevel getLanguageLevel(@Nullable final Project project, @Nullable final VirtualFile virtualFile) {
     return LanguageLevel.getDefault();
   }
 
-  protected boolean useConsoleLexer(final @Nullable Project project, final @Nullable VirtualFile virtualFile) {
+  protected boolean useConsoleLexer(@Nullable final Project project, @Nullable final VirtualFile virtualFile) {
     return false;
   }
 }

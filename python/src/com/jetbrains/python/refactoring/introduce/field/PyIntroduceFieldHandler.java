@@ -357,7 +357,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
           else if (initPlace == InitPlace.SET_UP) {
             addFieldToSetUp(pyClass, callback);
           }
-          if (!myOperation.getOccurrences().isEmpty()) {
+          if (myOperation.getOccurrences().size() > 0) {
             initializer.delete();
           }
           else {

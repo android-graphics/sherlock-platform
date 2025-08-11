@@ -16,10 +16,7 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.psi.xml.XmlElementType.*;
-import static com.intellij.psi.xml.XmlTokenType.*;
-
-public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttributeDecl {
+public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttributeDecl, XmlElementType {
   private static final Logger LOG = Logger.getInstance(XmlAttributeDeclImpl.class);
   private static final @NonNls String ID_ATT = "ID";
   private static final @NonNls String IDREF_ATT = "IDREF";

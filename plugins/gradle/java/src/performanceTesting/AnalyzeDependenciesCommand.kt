@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.performanceTesting
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.externalSystem.dependency.analyzer.DAModule
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerManager
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerViewImpl
@@ -10,7 +9,6 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.playback.PlaybackContext
-import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
@@ -37,7 +35,7 @@ class AnalyzeDependenciesCommand(text: String, line: Int) : PerformanceCommandCo
         "Module $moduleName not found")
       val systemId = ProjectSystemId.findById(providerId) ?: throw IllegalArgumentException("Provider $providerId not found")
       val dependencyAnalyzerManager = DependencyAnalyzerManager.getInstance(project)
-      val dependencyAnalyzerView = writeIntentReadAction { dependencyAnalyzerManager.getOrCreate(systemId) as DependencyAnalyzerViewImpl }
+      val dependencyAnalyzerView = dependencyAnalyzerManager.getOrCreate(systemId) as DependencyAnalyzerViewImpl
       dependencyAnalyzerView.setSelectedDependency(module, DAModule(moduleName))
       withTimeout(20.seconds) {
         while (dependencyAnalyzerView.getDependencies().isEmpty()) {
@@ -47,13 +45,9 @@ class AnalyzeDependenciesCommand(text: String, line: Int) : PerformanceCommandCo
       val expected = (ModuleRootManager.getInstance(module) as ModuleRootComponentBridge)
         .storage
         .entities(LibraryEntity::class.java)
-        .filter { it.entitySource is JpsImportedEntitySource }
         // Gradle: org.junit.jupiter:junit-jupiter:5.9.1 -> org.junit.jupiter:junit-jupiter:5.9.1
         // Maven: org.junit.jupiter:junit-jupiter:5.9.1 -> org.junit.jupiter:junit-jupiter:5.9.1
-        .map {
-          println("Lib entity $it")
-          it.name.replace("Gradle: ", "").replace("Maven: ", "")
-        }.toList()
+        .map { it.name.replace("Gradle: ", "").replace("Maven: ", "") }.toList()
       val actual = dependencyAnalyzerView.getDependencies()
         .map { it.data.toString() }
         .toSet()

@@ -1,7 +1,4 @@
 // ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3)-javaagent
-// REGISTRY: debugger.async.stacks.coroutines=false
-
-
 
 package stepOutCoroutineScope
 
@@ -44,3 +41,7 @@ fun main() {
 
 // EXPRESSION: counter
 // RESULT: 3: I
+
+// REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
+// REGISTRY: debugger.always.suspend.thread.before.switch=true
+// REGISTRY: debugger.async.stacks.coroutines=false

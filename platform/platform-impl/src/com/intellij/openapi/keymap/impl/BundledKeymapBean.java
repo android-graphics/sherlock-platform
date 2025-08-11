@@ -3,10 +3,8 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.ApiStatus;
 
 public final class BundledKeymapBean {
-  @ApiStatus.Internal
   public static final ExtensionPointName<BundledKeymapBean> EP_NAME = new ExtensionPointName<>("com.intellij.bundledKeymap");
 
   /**
@@ -20,8 +18,4 @@ public final class BundledKeymapBean {
    */
   @Attribute
   public String file;
-
-  @ApiStatus.Internal
-  public BundledKeymapBean() {
-  }
 }

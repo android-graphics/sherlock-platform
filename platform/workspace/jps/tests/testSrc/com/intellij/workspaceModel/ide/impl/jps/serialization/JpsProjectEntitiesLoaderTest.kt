@@ -23,7 +23,6 @@ import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_E
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Test
 import java.io.File
-import java.io.IOException
 
 class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
   @Test
@@ -49,13 +48,10 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
       </module>
     """.trimIndent())
 
-    try {
-      WriteAction.computeAndWait<Module, Exception> { ModuleManager.getInstance(project).loadModule(moduleFile) }
-      fail("Should throw, because this module only declares additional module components, not the module itself")
-    }
-    catch (e: IOException) {
-      assertTrue(e.message!!.startsWith("The file only declares additional module components"))
-    }
+    val module = WriteAction.computeAndWait<Module, Exception> { ModuleManager.getInstance(project).loadModule(moduleFile) }
+    val orderEntries = ModuleRootManager.getInstance(module).orderEntries
+    assertEquals(1, orderEntries.size)
+    assertTrue(orderEntries[0] is ModuleSourceOrderEntry)
   }
 
   @Test

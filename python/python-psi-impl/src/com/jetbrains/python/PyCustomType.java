@@ -46,15 +46,18 @@ import java.util.*;
  */
 public final class PyCustomType implements PyClassLikeType {
 
-  private final @NotNull List<PyClassLikeType> myTypesToMimic;
+  @NotNull
+  private final List<PyClassLikeType> myTypesToMimic;
 
-  private final @Nullable Processor<PyElement> myFilter;
+  @Nullable
+  private final Processor<PyElement> myFilter;
 
   private final boolean myInstanceType;
 
   private final boolean myTypesToMimicAsSuperTypes;
 
-  private final @Nullable String myQualifiedName;
+  @Nullable
+  private final String myQualifiedName;
 
 
   /**
@@ -84,7 +87,8 @@ public final class PyCustomType implements PyClassLikeType {
   /**
    * @return class we mimic (if any). Check class manual for more info.
    */
-  public @NotNull List<PyClassLikeType> getTypesToMimic() {
+  @NotNull
+  public List<PyClassLikeType> getTypesToMimic() {
     return myTypesToMimic;
   }
 
@@ -93,37 +97,42 @@ public final class PyCustomType implements PyClassLikeType {
     return !myInstanceType;
   }
 
+  @NotNull
   @Override
-  public @NotNull PyClassLikeType toInstance() {
+  public PyClassLikeType toInstance() {
     return myInstanceType
            ? this
            : new PyCustomType(myQualifiedName, myFilter, true, myTypesToMimicAsSuperTypes, myTypesToMimic.toArray(new PyClassLikeType[0]));
   }
 
 
+  @NotNull
   @Override
-  public @NotNull PyClassLikeType toClass() {
+  public PyClassLikeType toClass() {
     return myInstanceType
            ? new PyCustomType(myQualifiedName, myFilter, false, myTypesToMimicAsSuperTypes, myTypesToMimic.toArray(new PyClassLikeType[0]))
            : this;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getClassQName() {
+  public String getClassQName() {
     return myQualifiedName;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context) {
+  public List<PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context) {
     return myTypesToMimicAsSuperTypes ? myTypesToMimic : Collections.emptyList();
   }
 
+  @NotNull
   @Override
-  public @NotNull List<? extends RatedResolveResult> resolveMember(@NotNull String name,
-                                                                   @Nullable PyExpression location,
-                                                                   @NotNull AccessDirection direction,
-                                                                   @NotNull PyResolveContext resolveContext,
-                                                                   boolean inherited) {
+  public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
+                                                          @Nullable PyExpression location,
+                                                          @NotNull AccessDirection direction,
+                                                          @NotNull PyResolveContext resolveContext,
+                                                          boolean inherited) {
     final List<RatedResolveResult> globalResult = new ArrayList<>();
 
     // Delegate calls to classes, we mimic but filter if filter is set.
@@ -142,8 +151,9 @@ public final class PyCustomType implements PyClassLikeType {
     return ContainerUtil.and(myTypesToMimic, PyClassLikeType::isValid);
   }
 
+  @Nullable
   @Override
-  public @Nullable PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context, boolean inherited) {
+  public PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context, boolean inherited) {
     if (inherited) {
       PyClassLikeType typeToMimic = ContainerUtil.getFirstItem(myTypesToMimic);
       if (typeToMimic != null) {
@@ -160,26 +170,30 @@ public final class PyCustomType implements PyClassLikeType {
            ContainerUtil.or(myTypesToMimic, PyCallableType::isCallable);
   }
 
+  @Nullable
   @Override
-  public @Nullable PyType getReturnType(@NotNull TypeEvalContext context) {
+  public PyType getReturnType(@NotNull TypeEvalContext context) {
     return myInstanceType ? null : toInstance();
   }
 
+  @Nullable
   @Override
-  public @Nullable PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
+  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
     return getReturnType(context);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<? extends RatedResolveResult> resolveMember(@NotNull String name,
-                                                                   @Nullable PyExpression location,
-                                                                   @NotNull AccessDirection direction,
-                                                                   @NotNull PyResolveContext resolveContext) {
+  public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
+                                                          @Nullable PyExpression location,
+                                                          @NotNull AccessDirection direction,
+                                                          @NotNull PyResolveContext resolveContext) {
     return resolveMember(name, location, direction, resolveContext, true);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<PyClassLikeType> getAncestorTypes(@NotNull TypeEvalContext context) {
+  public List<PyClassLikeType> getAncestorTypes(@NotNull TypeEvalContext context) {
     if (!myTypesToMimicAsSuperTypes) return Collections.emptyList();
 
     final Set<PyClassLikeType> result = new LinkedHashSet<>();
@@ -204,8 +218,9 @@ public final class PyCustomType implements PyClassLikeType {
   }
 
 
+  @Nullable
   @Override
-  public @Nullable String getName() {
+  public String getName() {
     if (myQualifiedName != null) {
       return QualifiedName.fromDottedString(myQualifiedName).getLastComponent();
     }
@@ -235,21 +250,6 @@ public final class PyCustomType implements PyClassLikeType {
     for (PyClassLikeType type : myTypesToMimic) {
       type.assertValid(message);
     }
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof PyCustomType type)) return false;
-    return myInstanceType == type.myInstanceType &&
-           myTypesToMimicAsSuperTypes == type.myTypesToMimicAsSuperTypes &&
-           Objects.equals(myTypesToMimic, type.myTypesToMimic) &&
-           Objects.equals(myQualifiedName, type.myQualifiedName);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(myInstanceType, myTypesToMimicAsSuperTypes, myQualifiedName, myTypesToMimic);
   }
 
 
@@ -289,8 +289,9 @@ public final class PyCustomType implements PyClassLikeType {
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
+  public Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
     final Set<String> result = new LinkedHashSet<>();
 
     for (PyClassLikeType type : myTypesToMimic) {

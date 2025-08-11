@@ -7,6 +7,7 @@ class A {
 
     @Override
     public final boolean equals(Object o) {
+        if (this == o) return true;
         if (!(o instanceof A)) return false;
 
         final A a = (A) o;

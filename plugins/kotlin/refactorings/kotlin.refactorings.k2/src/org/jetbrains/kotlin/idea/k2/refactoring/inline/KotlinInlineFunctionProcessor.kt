@@ -31,20 +31,12 @@ class KotlinInlineFunctionProcessor(
     project = project,
 ) {
     override fun createReplacementStrategy(): UsageReplacementStrategy? {
-        return createUsageReplacementStrategyForFunction(declaration, editor, fallbackToSuperCall = false)
+        val codeToInline = createCodeToInlineForFunction(declaration, editor, fallbackToSuperCall = false) ?: return null
+        return CallableUsageReplacementStrategy(codeToInline, inlineSetter = false)
     }
     override fun unwrapSpecialUsage(usage: KtReferenceExpression): KtSimpleNameExpression? {
         return fullyExpandCall(usage)
     }
-}
-
-fun createUsageReplacementStrategyForFunction(
-    function: KtNamedFunction,
-    editor: Editor?,
-    fallbackToSuperCall: Boolean = false,
-): UsageReplacementStrategy? {
-    val codeToInline = createCodeToInlineForFunction(function, editor, fallbackToSuperCall = fallbackToSuperCall) ?: return null
-    return CallableUsageReplacementStrategy(codeToInline, inlineSetter = false)
 }
 
 fun createCodeToInlineForFunction(

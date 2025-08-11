@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.youtrack;
 
 import com.google.gson.Gson;
@@ -51,17 +51,20 @@ public final class YouTrackIntellisense {
   private static final Map<Pair<String, Integer>, Response> ourCache =
     Collections.synchronizedMap(new FixedHashMap<>(CACHE_SIZE));
 
-  private static @NotNull TextAttributes getAttributeByStyleClass(@NotNull String styleClass) {
+  @NotNull
+  private static TextAttributes getAttributeByStyleClass(@NotNull String styleClass) {
     final TextAttributes attr = TEXT_ATTRIBUTES.get(styleClass);
     return attr == null ? TEXT.getDefaultAttributes() : attr;
   }
 
-  public @NotNull List<HighlightRange> fetchHighlighting(@NotNull String query, int caret) throws Exception {
+  @NotNull
+  public List<HighlightRange> fetchHighlighting(@NotNull String query, int caret) throws Exception {
     LOG.debug("Requesting highlighting");
     return fetch(query, caret, true).getHighlightRanges();
   }
 
-  public @NotNull List<CompletionItem> fetchCompletion(@NotNull String query, int caret) throws Exception {
+  @NotNull
+  public List<CompletionItem> fetchCompletion(@NotNull String query, int caret) throws Exception {
     LOG.debug("Requesting completion");
     return fetch(query, caret, false).getCompletionItems();
   }
@@ -72,7 +75,8 @@ public final class YouTrackIntellisense {
     myRepository = repository;
   }
 
-  private @NotNull Response fetch(@NotNull String query, int caret, boolean ignoreCaret) throws Exception {
+  @NotNull
+  private Response fetch(@NotNull String query, int caret, boolean ignoreCaret) throws Exception {
     LOG.debug("Query: '" + query + "' caret at: " + caret);
     final Pair<String, Integer> lookup = Pair.create(query, caret);
     Response response = null;
@@ -121,11 +125,13 @@ public final class YouTrackIntellisense {
     private List<HighlightRange> styleRanges;
     private List<CompletionItem> suggestions;
 
-    public @NotNull List<HighlightRange> getHighlightRanges() {
+    @NotNull
+    public List<HighlightRange> getHighlightRanges() {
       return styleRanges;
     }
 
-    public @NotNull List<CompletionItem> getCompletionItems() {
+    @NotNull
+    public List<CompletionItem> getCompletionItems() {
       return suggestions;
     }
   }
@@ -138,15 +144,18 @@ public final class YouTrackIntellisense {
     private int length;
     private String style;
 
-    public @NotNull String getStyleClass() {
+    @NotNull
+    public String getStyleClass() {
       return StringUtil.notNullize(style);
     }
 
-    public @NotNull TextRange getTextRange() {
+    @NotNull
+    public TextRange getTextRange() {
       return TextRange.from(start, length);
     }
 
-    public @NotNull TextAttributes getTextAttributes() {
+    @NotNull
+    public TextAttributes getTextAttributes() {
       return getAttributeByStyleClass(style);
     }
   }
@@ -164,27 +173,33 @@ public final class YouTrackIntellisense {
     private String description;
     private String option;
 
-    public @NotNull TextRange getMatchRange() {
+    @NotNull
+    public TextRange getMatchRange() {
       return TextRange.create(matchingStart, matchingEnd);
     }
 
-    public @NotNull TextRange getCompletionRange() {
+    @NotNull
+    public TextRange getCompletionRange() {
       return TextRange.create(completionStart, completionEnd);
     }
 
-    public @NotNull String getDescription() {
+    @NotNull
+    public String getDescription() {
       return description;
     }
 
-    public @NotNull String getSuffix() {
+    @NotNull
+    public String getSuffix() {
       return StringUtil.notNullize(suffix);
     }
 
-    public @NotNull String getPrefix() {
+    @NotNull
+    public String getPrefix() {
       return StringUtil.notNullize(prefix);
     }
 
-    public @NotNull String getOption() {
+    @NotNull
+    public String getOption() {
       return option;
     }
   }

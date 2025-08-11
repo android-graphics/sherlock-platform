@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -21,8 +21,9 @@ import java.io.Reader;
 public class AntTestContentHandler extends DefaultHandler {
   public static final class AntTestOutputExtension implements ImportTestOutputExtension {
 
+    @Nullable
     @Override
-    public @Nullable DefaultHandler createHandler(@NotNull Reader reader, GeneralTestEventsProcessor processor) {
+    public DefaultHandler createHandler(@NotNull Reader reader, GeneralTestEventsProcessor processor) {
       final String[] rooName = new String[]{null};
       NanoXmlUtil.parse(reader, new NanoXmlBuilder() {
         @Override

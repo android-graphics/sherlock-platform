@@ -1,5 +1,0 @@
-- name: lib/restructuredtext.jar
-  modules:
-  - name: intellij.restructuredtext
-  contentModules:
-  - name: intellij.restructuredtext.python

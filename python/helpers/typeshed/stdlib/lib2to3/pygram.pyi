@@ -1,3 +1,5 @@
+import sys
+
 from .pgen2.grammar import Grammar
 
 class Symbols:
@@ -110,5 +112,6 @@ class pattern_symbols(Symbols):
 
 python_grammar: Grammar
 python_grammar_no_print_statement: Grammar
-python_grammar_no_print_and_exec_statement: Grammar
+if sys.version_info >= (3, 8):
+    python_grammar_no_print_and_exec_statement: Grammar
 pattern_grammar: Grammar

@@ -3,7 +3,7 @@ package com.intellij.openapi.project
 
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.IncompleteDependenciesService.DependenciesState
 import com.intellij.testFramework.LightPlatformTestCase
@@ -90,11 +90,11 @@ class IncompleteDependenciesModeStatisticsCollectorTest : LightPlatformTestCase(
     val duration: Long = 100
     val events = FUCollectorTestCase.collectLogEvents(testRootDisposable) {
       runBlocking(Dispatchers.EDT) {
-        val token1 = edtWriteAction { project.service<IncompleteDependenciesService>().enterIncompleteState(this@IncompleteDependenciesModeStatisticsCollectorTest) }
-        val token2 = edtWriteAction { project.service<IncompleteDependenciesService>().enterIncompleteState(this@IncompleteDependenciesModeStatisticsCollectorTest) }
+        val token1 = writeAction { project.service<IncompleteDependenciesService>().enterIncompleteState(this@IncompleteDependenciesModeStatisticsCollectorTest) }
+        val token2 = writeAction { project.service<IncompleteDependenciesService>().enterIncompleteState(this@IncompleteDependenciesModeStatisticsCollectorTest) }
         delay(duration)
-        edtWriteAction { token1.finish() }
-        edtWriteAction { token2.finish() }
+        writeAction { token1.finish() }
+        writeAction { token2.finish() }
       }
     }
 
@@ -111,8 +111,8 @@ class IncompleteDependenciesModeStatisticsCollectorTest : LightPlatformTestCase(
   }
 
   private suspend fun performInIncompleteMode(action: suspend () -> Unit) {
-    val token = edtWriteAction { project.service<IncompleteDependenciesService>().enterIncompleteState(this@IncompleteDependenciesModeStatisticsCollectorTest) }
+    val token = writeAction { project.service<IncompleteDependenciesService>().enterIncompleteState(this@IncompleteDependenciesModeStatisticsCollectorTest) }
     action()
-    edtWriteAction { token.finish() }
+    writeAction { token.finish() }
   }
 }

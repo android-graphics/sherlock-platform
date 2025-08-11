@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.Disposable;
@@ -14,7 +14,8 @@ import javax.swing.*;
 public abstract class AbstractModuleBuilder extends ProjectBuilder {
   public abstract Icon getNodeIcon();
 
-  public abstract @Nullable @NonNls String getBuilderId();
+  @Nullable
+  public abstract @NonNls String getBuilderId();
 
   public abstract ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider);
 
@@ -22,16 +23,19 @@ public abstract class AbstractModuleBuilder extends ProjectBuilder {
     return ModuleWizardStep.EMPTY_ARRAY;
   }
 
-  public @Nullable ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+  @Nullable
+  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
     return null;
   }
 
-  public @Nullable ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep step) { return null; }
+  @Nullable
+  public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep step) { return null; }
 
   /**
    * Custom UI to be shown on the first wizard page
    */
-  public @Nullable ModuleWizardStep getCustomOptionsStep(WizardContext context, Disposable parentDisposable) {
+  @Nullable
+  public ModuleWizardStep getCustomOptionsStep(WizardContext context, Disposable parentDisposable) {
     return null;
   }
 

@@ -4,6 +4,7 @@ package com.intellij.facet.mock
 
 import com.intellij.facet.FacetType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.util.Disposer
 

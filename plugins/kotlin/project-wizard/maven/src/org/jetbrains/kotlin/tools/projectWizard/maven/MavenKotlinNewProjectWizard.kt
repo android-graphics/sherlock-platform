@@ -3,8 +3,10 @@ package org.jetbrains.kotlin.tools.projectWizard.maven
 
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeFinished
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
-import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
+import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -17,6 +19,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.whenStateChangedFromUi
+import com.intellij.util.io.createDirectories
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard.Companion.DEFAULT_KOTLIN_VERSION
@@ -28,8 +31,9 @@ import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizar
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard.Companion.getKotlinWizardVersion
 import org.jetbrains.kotlin.tools.projectWizard.addMultiPlatformLink
+import org.jetbrains.kotlin.tools.projectWizard.wizard.AssetsKotlinNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
-import org.jetbrains.kotlin.tools.projectWizard.wizard.withKotlinSampleCode
+import java.nio.file.Path
 
 internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
@@ -56,6 +60,11 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
         override var addSampleCode by addSampleCodeProperty
 
+        override val generateOnboardingTipsProperty = propertyGraph.property(AssetsJavaNewProjectWizardStep.proposeToGenerateOnboardingTipsByDefault())
+            .bindBooleanStorage(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME)
+
+        override var generateOnboardingTips by generateOnboardingTipsProperty
+
         private fun setupSampleCodeUI(builder: Panel) {
             builder.row {
                 checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
@@ -65,10 +74,22 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
             }
         }
 
+        private fun setupSampleCodeWithOnBoardingTipsUI(builder: Panel) {
+            builder.indent {
+                row {
+                    checkBox(UIBundle.message("label.project.wizard.new.project.generate.onboarding.tips"))
+                        .bindSelected(generateOnboardingTipsProperty)
+                        .whenStateChangedFromUi { logAddSampleOnboardingTipsChanged(it) }
+                        .onApply { logAddSampleOnboardingTipsFinished(generateOnboardingTips) }
+                }
+            }.enabledIf(addSampleCodeProperty)
+        }
+
         override fun setupSettingsUI(builder: Panel) {
             setupJavaSdkUI(builder)
             setupParentsUI(builder)
             setupSampleCodeUI(builder)
+            setupSampleCodeWithOnBoardingTipsUI(builder)
             if (context.isCreatingNewProject) {
                 addMultiPlatformLink(builder)
             }
@@ -109,20 +130,37 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
         }
     }
 
-    private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
+    private class AssetsStep(private val parent: Step) : AssetsKotlinNewProjectWizardStep(parent) {
+
+        private fun shouldAddOnboardingTips(): Boolean = parent.addSampleCode && parent.generateOnboardingTips
+
         override fun setupAssets(project: Project) {
             if (context.isCreatingNewProject) {
                 addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
             }
-
-            addEmptyDirectoryAsset(SRC_MAIN_KOTLIN_PATH)
-            addEmptyDirectoryAsset(SRC_MAIN_RESOURCES_PATH)
-            addEmptyDirectoryAsset(SRC_TEST_KOTLIN_PATH)
-            addEmptyDirectoryAsset(SRC_TEST_RESOURCES_PATH)
-
+            createKotlinContentRoots()
             if (parent.addSampleCode) {
-                withKotlinSampleCode(project, SRC_MAIN_KOTLIN_PATH, parent.groupId, shouldOpenFile = false)
+                withKotlinSampleCode(SRC_MAIN_KOTLIN_PATH, parent.groupId, shouldAddOnboardingTips(), shouldOpenFile = false)
             }
+        }
+
+        private fun createKotlinContentRoots() {
+            val directories = listOf(
+                "$outputDirectory/$SRC_MAIN_KOTLIN_PATH",
+                "$outputDirectory/$SRC_MAIN_RESOURCES_PATH",
+                "$outputDirectory/$SRC_TEST_KOTLIN_PATH",
+                "$outputDirectory/$SRC_TEST_RESOURCES_PATH",
+            )
+            directories.forEach {
+                Path.of(it).createDirectories()
+            }
+        }
+
+        override fun setupProject(project: Project) {
+            if (shouldAddOnboardingTips()) {
+                prepareOnboardingTips(project)
+            }
+            super.setupProject(project)
         }
     }
 }

@@ -9,8 +9,6 @@ import java.util.*
  */
 @ApiStatus.Internal
 interface LineStatusTrackerListener : EventListener {
-  fun onBecomingValid() {}
-
   /**
    * Fired when lines at [LineStatusTrackerI.getRanges] are changed
    */

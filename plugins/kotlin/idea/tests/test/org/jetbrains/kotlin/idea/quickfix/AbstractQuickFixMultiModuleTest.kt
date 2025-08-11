@@ -17,7 +17,6 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest.Companion.K1_TOOL_DIRECTIVE
@@ -54,7 +53,10 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
         val actionFile = project.findFileWithCaret()
         val virtualFilePath = actionFile.virtualFile!!.toNioPath()
 
-        val ignoreDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
+        val ignoreDirective = when (pluginMode) {
+            KotlinPluginMode.K1 -> IgnoreTests.DIRECTIVES.IGNORE_K1
+            KotlinPluginMode.K2 -> IgnoreTests.DIRECTIVES.IGNORE_K2
+        }
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(virtualFilePath, ignoreDirective) {
             val directiveFileText = actionFile.text
@@ -64,11 +66,20 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
         }
     }
 
-    protected open val actionPrefix: String? = null
+    private fun VirtualFile.toIOFile(): File? {
+        val paths = mutableListOf<String>()
+        var vFile: VirtualFile? = this
+        while (vFile != null) {
+            vFile.sourceIOFile()?.let {
+                return File(it, paths.reversed().joinToString("/"))
+            }
+            paths.add(vFile.name)
+            vFile = vFile.parent
+        }
+        return null
+    }
 
     private fun doQuickFixTest(dirPath: String) {
-        KotlinTestHelpers.registerChooserInterceptor(testRootDisposable)
-
         val actionFile = project.findFileWithCaret()
         val virtualFile = actionFile.virtualFile!!
         val mainFile = virtualFile.toIOFile()?.takeIf(File::exists) ?: error("unable to lookup source io file")
@@ -81,7 +92,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
         project.executeCommand("") {
             var expectedErrorMessage = ""
             try {
-                val actionHint = ActionHint.parse(actionFile, actionFileText, actionPrefix?.let { ".*//(?: $it)?" } ?: "//", true)
+                val actionHint = ActionHint.parse(actionFile, actionFileText)
                 val text = actionHint.expectedText
 
                 val actionShouldBeAvailable = actionHint.shouldPresent()
@@ -110,11 +121,9 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                         editor,
                         actionShouldBeAvailable,
                         actionFileName,
-                        actionHint,
                         this::availableActions,
                         this::doHighlighting,
-                        pluginMode = pluginMode,
-                        shouldBeAvailableAfterExecution = InTextDirectivesUtils.isDirectiveDefined(actionFile.text, "// SHOULD_BE_AVAILABLE_AFTER_EXECUTION")
+                        InTextDirectivesUtils.isDirectiveDefined(actionFile.text, "// SHOULD_BE_AVAILABLE_AFTER_EXECUTION")
                     )
 
                     TypeAccessibilityChecker.testLog.toString()
@@ -169,7 +178,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
             setActiveEditor(editedFile.findExistingEditor() ?: createEditor(editedFile.virtualFile))
             try {
                 checkResultByFile(afterFileInTestData.relativeTo(File(testDataPath)).path)
-            } catch (_: FileComparisonFailedError) {
+            } catch (e: FileComparisonFailedError) {
                 KotlinTestUtils.assertEqualsToFile(afterFileInTestData, editor)
             }
         }

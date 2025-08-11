@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.openapi.project.Project;
@@ -8,7 +8,8 @@ import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.Nullable;
 
 public final class CollectionUtil {
-  public static @Nullable PsiClassType createSimilarCollection(@Nullable PsiType collection, Project project, PsiType... itemType) {
+  @Nullable
+  public static PsiClassType createSimilarCollection(@Nullable PsiType collection, Project project, PsiType... itemType) {
     if (InheritanceUtil.isInheritor(collection, CommonClassNames.JAVA_UTIL_SORTED_SET)) {
       return createCollection(project, CommonClassNames.JAVA_UTIL_SORTED_SET, itemType);
     }
@@ -37,7 +38,8 @@ public final class CollectionUtil {
     return createCollection(project, "java.util.ArrayList", itemType);
   }
 
-  private static @Nullable PsiClassType createCollection(Project project, String collectionName, PsiType... item) {
+  @Nullable
+  private static PsiClassType createCollection(Project project, String collectionName, PsiType... item) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiClass collection =
       JavaPsiFacade.getInstance(project).findClass(collectionName, GlobalSearchScope.allScope(project));

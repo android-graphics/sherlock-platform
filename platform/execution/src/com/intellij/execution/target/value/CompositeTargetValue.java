@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target.value;
 
 import com.intellij.util.Function;
@@ -11,7 +11,7 @@ import java.util.Collection;
 
 class CompositeTargetValue<S, T> implements TargetValue<T> {
   private final @NotNull Collection<? extends TargetValue<S>> myValues;
-  private final @NotNull Function<? super Collection<S>, ? extends T> myMapper;
+  @NotNull private final Function<? super Collection<S>, ? extends T> myMapper;
 
   CompositeTargetValue(@NotNull Collection<? extends TargetValue<S>> values, @NotNull Function<? super Collection<S>, ? extends T> mapper) {
     myValues = values;

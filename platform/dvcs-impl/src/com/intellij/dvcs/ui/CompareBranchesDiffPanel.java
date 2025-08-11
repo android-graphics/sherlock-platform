@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.branch.DvcsBranchUtil;
@@ -35,7 +35,6 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -44,7 +43,7 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 
-public class CompareBranchesDiffPanel extends JPanel implements UiDataProvider {
+public class CompareBranchesDiffPanel extends JPanel implements DataProvider {
   public static final DataKey<CompareBranchesDiffPanel> DATA_KEY = DataKey.create("com.intellij.dvcs.ui.CompareBranchesDiffPanel");
 
   private final @NlsSafe String myBranchName;
@@ -52,7 +51,7 @@ public class CompareBranchesDiffPanel extends JPanel implements UiDataProvider {
   private final @NlsSafe String myCurrentBranchName;
   private final DvcsCompareSettings myVcsSettings;
 
-  private @Nullable CommitCompareInfo myCompareInfo;
+  @Nullable private CommitCompareInfo myCompareInfo;
 
   private final JEditorPane myLabel;
   private final MyChangesBrowser myChangesBrowser;
@@ -100,7 +99,8 @@ public class CompareBranchesDiffPanel extends JPanel implements UiDataProvider {
     refreshView(false);
   }
 
-  public @NotNull ChangesBrowserBase getChangesBrowser() {
+  @NotNull
+  public ChangesBrowserBase getChangesBrowser() {
     return myChangesBrowser;
   }
 
@@ -159,13 +159,17 @@ public class CompareBranchesDiffPanel extends JPanel implements UiDataProvider {
     myLabel.setEnabled(true);
   }
 
-  public @NotNull JComponent getPreferredFocusComponent() {
+  @NotNull
+  public JComponent getPreferredFocusComponent() {
     return myChangesBrowser.getPreferredFocusedComponent();
   }
 
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(DATA_KEY, this);
+  public @Nullable Object getData(@NotNull String dataId) {
+    if (DATA_KEY.is(dataId)) {
+      return this;
+    }
+    return null;
   }
 
   private static class MyChangesBrowser extends SimpleAsyncChangesBrowser {
@@ -174,16 +178,18 @@ public class CompareBranchesDiffPanel extends JPanel implements UiDataProvider {
       setChangesToDisplay(changes);
     }
 
+    @NotNull
     @Override
-    protected @NotNull @Unmodifiable List<AnAction> createToolbarActions() {
+    protected List<AnAction> createToolbarActions() {
       return ContainerUtil.append(
         super.createToolbarActions(),
         ActionManager.getInstance().getAction("Vcs.GetVersion")
       );
     }
 
+    @NotNull
     @Override
-    protected @NotNull @Unmodifiable List<AnAction> createPopupMenuActions() {
+    protected List<AnAction> createPopupMenuActions() {
       return ContainerUtil.append(
         super.createPopupMenuActions(),
         ActionManager.getInstance().getAction("Vcs.GetVersion")

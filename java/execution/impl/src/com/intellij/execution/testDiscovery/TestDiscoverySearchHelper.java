@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -92,7 +92,8 @@ public final class TestDiscoverySearchHelper {
     });
   }
 
-  private static @NotNull List<VirtualFile> getAffectedFiles(String changeListName, Project project) {
+  @NotNull
+  private static List<VirtualFile> getAffectedFiles(String changeListName, Project project) {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if ("All".equals(changeListName)) {
       return changeListManager.getAffectedFiles();
@@ -115,7 +116,8 @@ public final class TestDiscoverySearchHelper {
     return Collections.emptyList();
   }
 
-  private static @NotNull LinkedHashSet<String> collectPatterns(PsiMethod psiMethod, byte frameworkId) {
+  @NotNull
+  private static LinkedHashSet<String> collectPatterns(PsiMethod psiMethod, byte frameworkId) {
     LinkedHashSet<String> patterns = new LinkedHashSet<>();
     final PsiClass containingClass = psiMethod.getContainingClass();
     if (containingClass != null) {

@@ -15,11 +15,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class NotNullFieldNotInitializedInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testNotNullFieldNotInitialized() { doTest(); }
-  public void testNotNullFieldInitializedIndirectly() { doTest(); }
   public void testNotNullFieldInitializedInLambda() { doTest(); }
   public void testNotNullFieldNotInitializedInOneConstructor() { doTest(); }
   public void testTypeUseNotNullField() {
-    DataFlowInspectionTestCase.setupTypeUseAnnotations("typeUse", myFixture);
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
   public void testNotNullByDefaultFieldNotInitialized() {

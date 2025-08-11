@@ -54,8 +54,9 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable JComponent createComponent() {
+  public JComponent createComponent() {
     return myMainPanel;
   }
 

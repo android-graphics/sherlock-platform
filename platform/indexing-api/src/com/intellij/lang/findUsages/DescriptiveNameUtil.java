@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.findUsages;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -15,12 +15,14 @@ public final class DescriptiveNameUtil {
   private DescriptiveNameUtil() {
   }
 
-  public static @NotNull @NlsSafe String getMetaDataName(@NotNull PsiMetaData metaData) {
+  @NotNull
+  public static @NlsSafe String getMetaDataName(@NotNull PsiMetaData metaData) {
     String name = metaData.getName();
     return StringUtil.isEmpty(name) ? "''" : name;
   }
 
-  public static @NotNull @NlsSafe String getDescriptiveName(@NotNull PsiElement psiElement) {
+  @NotNull
+  public static @NlsSafe String getDescriptiveName(@NotNull PsiElement psiElement) {
     PsiUtilCore.ensureValid(psiElement);
 
     if (psiElement instanceof PsiMetaOwner psiMetaOwner) {

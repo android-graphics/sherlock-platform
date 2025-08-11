@@ -11,7 +11,6 @@ import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.packaging.PyPIPackageCache
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkUtil
 
@@ -25,7 +24,7 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("python.packages", 8)
+  private val GROUP = EventLogGroup("python.packages", 6)
 
   //full list is stored in metadata, see FUS-1218 for more details
   private val PYTHON_PACKAGE_INSTALLED = registerPythonSpecificEvent(GROUP,

@@ -37,7 +37,8 @@ public abstract class AbstractMatchingVisitor {
                              new FilteringNodeIterator(new ArrayBackedNodeIterator(element2), getNodeFilter()));
   }
 
-  protected abstract @NotNull NodeFilter getNodeFilter();
+  @NotNull
+  protected abstract NodeFilter getNodeFilter();
 
   public boolean matchOptionally(@Nullable PsiElement element1, @Nullable PsiElement element2) {
     return element1 == null && isLeftLooseMatching() ||

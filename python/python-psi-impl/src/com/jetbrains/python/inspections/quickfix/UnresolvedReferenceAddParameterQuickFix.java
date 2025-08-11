@@ -30,12 +30,14 @@ public class UnresolvedReferenceAddParameterQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return PyPsiBundle.message("QFIX.unresolved.reference.add.param", myName);
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.unresolved.reference.add.param");
   }
 

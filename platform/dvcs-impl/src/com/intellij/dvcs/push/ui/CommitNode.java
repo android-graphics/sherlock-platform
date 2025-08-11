@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -22,7 +22,7 @@ public class CommitNode extends DefaultMutableTreeNode implements CustomRendered
   private static final ExtensionPointName<CommitNodeUiRenderExtension> COMMIT_NODE_RENDERER_EP =
     ExtensionPointName.create("com.intellij.commitNodeUiRenderExtension");
 
-  private final @NotNull Project myProject;
+  @NotNull private final Project myProject;
 
   public CommitNode(@NotNull Project project, @NotNull VcsFullCommitDetails commit) {
     super(commit, false);
@@ -44,8 +44,9 @@ public class CommitNode extends DefaultMutableTreeNode implements CustomRendered
                                !(parent instanceof RepositoryNode) || ((RepositoryNode)parent).isChecked()));
   }
 
+  @Nls
   @Override
-  public @Nls String getTooltip() {
+  public String getTooltip() {
     String hash = DvcsUtil.getShortHash(getUserObject().getId().toString());
     String date = DvcsUtil.getDateString(getUserObject());
     String author = VcsUserUtil.getShortPresentation(getUserObject().getAuthor());

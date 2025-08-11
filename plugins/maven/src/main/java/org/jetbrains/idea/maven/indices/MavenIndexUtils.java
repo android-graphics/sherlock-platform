@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
@@ -13,12 +13,7 @@ import org.jetbrains.idea.maven.model.RepositoryKind;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,9 +36,10 @@ public final class MavenIndexUtils {
 
   private MavenIndexUtils() { }
 
-  public static @Nullable IndexPropertyHolder readIndexProperty(Path dir) throws MavenIndexException {
+  @Nullable
+  public static IndexPropertyHolder readIndexProperty(File dir) throws MavenIndexException {
     Properties props = new Properties();
-    try (InputStream s = Files.newInputStream(dir.resolve(INDEX_INFO_FILE))) {
+    try (FileInputStream s = new FileInputStream(new File(dir, INDEX_INFO_FILE))) {
       props.load(s);
     }
     catch (FileNotFoundException e) {
@@ -92,7 +88,7 @@ public final class MavenIndexUtils {
     if (index.getDataDirName() != null) props.setProperty(DATA_DIR_NAME_KEY, index.getDataDirName());
     if (index.getFailureMessage() != null) props.setProperty(FAILURE_MESSAGE_KEY, index.getFailureMessage());
 
-    try (OutputStream s = Files.newOutputStream(index.getDir().resolve(INDEX_INFO_FILE))) {
+    try (FileOutputStream s = new FileOutputStream(new File(index.getDir(), INDEX_INFO_FILE))) {
       props.store(s, null);
     }
     catch (IOException e) {
@@ -100,15 +96,17 @@ public final class MavenIndexUtils {
     }
   }
 
-  public static @Nullable MavenRepositoryInfo getLocalRepository(Project project) {
+  @Nullable
+  public static MavenRepositoryInfo getLocalRepository(Project project) {
     if (project.isDisposed()) return null;
-    Path repository = MavenProjectsManager.getInstance(project).getRepositoryPath();
+    File repository = MavenProjectsManager.getInstance(project).getLocalRepository();
     return repository == null
            ? null
-           : new MavenRepositoryInfo(LOCAL_REPOSITORY_ID, LOCAL_REPOSITORY_ID, repository.toString(), RepositoryKind.LOCAL);
+           : new MavenRepositoryInfo(LOCAL_REPOSITORY_ID, LOCAL_REPOSITORY_ID, repository.getPath(), RepositoryKind.LOCAL);
   }
 
-  public static @NotNull List<MavenRemoteRepository> getRemoteRepositoriesNoResolve(Project project) {
+  @NotNull
+  public static List<MavenRemoteRepository> getRemoteRepositoriesNoResolve(Project project) {
 
     if (project.isDisposed()) {
       return Collections.emptyList();
@@ -132,7 +130,8 @@ public final class MavenIndexUtils {
       .collect(groupingBy(r -> r.getUrl(), mapping(r -> r.getId(), Collectors.toSet())));
   }
 
-  public static @NotNull String normalizePathOrUrl(@NotNull String pathOrUrl) {
+  @NotNull
+  public static String normalizePathOrUrl(@NotNull String pathOrUrl) {
     pathOrUrl = pathOrUrl.trim();
     pathOrUrl = FileUtil.toSystemIndependentName(pathOrUrl);
     while (pathOrUrl.endsWith("/")) {
@@ -152,7 +151,7 @@ public final class MavenIndexUtils {
   }
 
   public static class IndexPropertyHolder {
-    final Path dir;
+    final File dir;
     final RepositoryKind kind;
     final Set<String> repositoryIds;
     final String repositoryPathOrUrl;
@@ -160,7 +159,7 @@ public final class MavenIndexUtils {
     final String dataDirName;
     final String failureMessage;
 
-    IndexPropertyHolder(Path dir,
+    IndexPropertyHolder(File dir,
                         RepositoryKind kind,
                         Set<String> repositoryIds,
                         String url,
@@ -176,7 +175,7 @@ public final class MavenIndexUtils {
       this.failureMessage = message;
     }
 
-    IndexPropertyHolder(Path dir,
+    IndexPropertyHolder(File dir,
                         RepositoryKind kind,
                         Set<String> repositoryIds,
                         String url) {

@@ -15,11 +15,9 @@
  */
 package com.intellij.ui.colorpicker
 
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.JButton
 
-@ApiStatus.Internal
 class ColorPipetteButton(private val colorPickerModel: ColorPickerModel, private val pipette: ColorPipette) : JButton() {
 
   init {

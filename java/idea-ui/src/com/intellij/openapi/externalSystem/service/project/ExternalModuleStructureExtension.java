@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,10 +33,13 @@ import java.util.Map;
 public final class ExternalModuleStructureExtension extends ModuleStructureExtension {
 
   private static final Logger LOG = Logger.getInstance(ExternalModuleStructureExtension.class);
-  private @Nullable Project myProject;
+  @Nullable
+  private Project myProject;
   private boolean isExternalSystemsInvolved;
-  private @Nullable Map<String, Pair<ProjectSystemId, ExternalProjectSettings>> myExternalProjectsToRestore;
-  private @Nullable Map<String, ProjectSystemId> myOrphanProjectsCandidates;
+  @Nullable
+  private Map<String, Pair<ProjectSystemId, ExternalProjectSettings>> myExternalProjectsToRestore;
+  @Nullable
+  private Map<String, ProjectSystemId> myOrphanProjectsCandidates;
 
   @Override
   public void reset(Project project) {
@@ -130,7 +133,8 @@ public final class ExternalModuleStructureExtension extends ModuleStructureExten
     myExternalProjectsToRestore = getLinkedProjects(myProject);
   }
 
-  private static @Nullable ModulesConfigurator getModulesConfigurator(Project project) {
+  @Nullable
+  private static ModulesConfigurator getModulesConfigurator(Project project) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return null;
     final ProjectStructureConfigurable structureConfigurable = ProjectStructureConfigurable.getInstance(project);
     StructureConfigurableContext context = structureConfigurable.isUiInitialized() ? structureConfigurable.getContext() : null;

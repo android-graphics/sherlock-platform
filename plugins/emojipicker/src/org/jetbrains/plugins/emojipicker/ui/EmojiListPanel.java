@@ -213,7 +213,7 @@ final class EmojiListPanel extends JBScrollPane {
     private static final int NO_LABEL_PADDING = 12;
     private static final int LABEL_HEIGHT = 32;
     private EmojiCategory myCategory;
-    private final @Nls String myName;
+    @Nls private final String myName;
     private final Insets myPadding;
 
     private Category(EmojiCategory category) {

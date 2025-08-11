@@ -13,25 +13,23 @@ class ModuleSourceRootGroup(
     val sourceRootModules: List<Module>
 )
 
-class ModuleSourceRootMap private constructor(val modules: Collection<Module>) {
+class ModuleSourceRootMap(val modules: Collection<Module>) {
     private val baseModuleByExternalPath: Map<String, Module>
 
+    @Suppress("JoinDeclarationAndAssignment")
     private val allModulesByExternalPath: Map<String, List<Module>>
 
     constructor(project: Project) : this(project.modules.asList())
 
     init {
-        val cache = ModuleExternalDetailsCache()
-
         allModulesByExternalPath = modules
-            .asSequence()
-            .filter { cache.getExternalProjectPathOrNull(it) != null && cache.getExternalProjectIdOrNull(it) != null }
-            .groupBy { cache.getExternalProjectPath(it) }
+            .filter { it.externalProjectPath != null && it.externalProjectId != null }
+            .groupBy { it.externalProjectPath!! }
 
         baseModuleByExternalPath = allModulesByExternalPath
             .mapValues { (_, modules) ->
                 modules.reduce { m1, m2 ->
-                    if (isSourceRootPrefix(cache.getExternalProjectId(m2), cache.getExternalProjectId(m1))) m2 else m1
+                    if (isSourceRootPrefix(m2.externalProjectId!!, m1.externalProjectId!!)) m2 else m1
                 }
             }
     }

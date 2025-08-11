@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.psi.stubs.IStubElementType;
@@ -27,11 +27,13 @@ public class GrImportStatementStub extends StubBase<GrImportStatement> implement
     myFlags = flags;
   }
 
-  public @Nullable String getFqn() {
+  @Nullable
+  public String getFqn() {
     return myFqn;
   }
 
-  public @Nullable String getAliasName() {
+  @Nullable
+  public String getAliasName() {
     return myAliasName;
   }
 

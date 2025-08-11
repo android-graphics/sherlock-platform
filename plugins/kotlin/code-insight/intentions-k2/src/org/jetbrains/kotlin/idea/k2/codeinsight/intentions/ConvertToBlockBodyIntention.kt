@@ -21,7 +21,8 @@ internal class ConvertToBlockBodyIntention :
 
     override fun isApplicableByPsi(element: KtDeclarationWithBody): Boolean = ConvertToBlockBodyUtils.isConvertibleByPsi(element)
 
-    override fun KaSession.prepareContext(element: KtDeclarationWithBody): ConvertToBlockBodyContext? =
+    context(KaSession)
+    override fun prepareContext(element: KtDeclarationWithBody): ConvertToBlockBodyContext? =
         ConvertToBlockBodyUtils.createContext(element, ShortenReferencesFacility.getInstance(), reformat = true)
 
     override fun invoke(

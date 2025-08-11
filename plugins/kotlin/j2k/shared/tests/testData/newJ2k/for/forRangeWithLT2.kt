@@ -1,3 +1,3 @@
-for (i in 0..<N) {
+for (i in 0 until N) {
     println(i)
 }

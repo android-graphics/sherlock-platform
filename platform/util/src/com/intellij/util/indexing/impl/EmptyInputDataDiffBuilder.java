@@ -1,15 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.StorageException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-@ApiStatus.Internal
 public final class EmptyInputDataDiffBuilder<Key, Value> extends DirectInputDataDiffBuilder<Key, Value> {
   public EmptyInputDataDiffBuilder(int inputId) {
     super(inputId);
@@ -22,19 +20,21 @@ public final class EmptyInputDataDiffBuilder<Key, Value> extends DirectInputData
 
   @Override
   public boolean differentiate(@NotNull Map<Key, Value> newData,
-                               @NotNull UpdatedEntryProcessor<? super Key, ? super Value> changesProcessor) throws StorageException {
-    return processAllKeyValuesAsAdded(myInputId, newData, changesProcessor);
+                               final @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor,
+                               @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updateProcessor,
+                               @NotNull RemovedKeyProcessor<? super Key> removeProcessor) throws StorageException {
+    return processAllKeyValuesAsAdded(myInputId, newData, addProcessor);
   }
 
   public static <Key, Value> boolean processAllKeyValuesAsAdded(int inputId,
                                                                 @NotNull Map<Key, Value> addedData,
-                                                                @NotNull UpdatedEntryProcessor<? super Key, ? super Value> changesProcessor)
+                                                                final @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor)
     throws StorageException {
     boolean[] anyAdded = {false};
     try {
       addedData.forEach((key, value) -> {
         try {
-          changesProcessor.added(key, value, inputId);
+          addProcessor.process(key, value, inputId);
         }
         catch (StorageException e) {
           throw new RuntimeException(e);
@@ -54,11 +54,10 @@ public final class EmptyInputDataDiffBuilder<Key, Value> extends DirectInputData
 
   public static <Key, Value> boolean processAllKeyValuesAsRemoved(int inputId,
                                                                   @NotNull Map<Key, Value> removedData,
-                                                                  @NotNull UpdatedEntryProcessor<? super Key, ? super Value> changesProcessor)
-    throws StorageException {
+                                                                  @NotNull RemovedKeyProcessor<? super Key> removedProcessor) throws StorageException {
     boolean anyRemoved = false;
     for (Key key : removedData.keySet()) {
-      changesProcessor.removed(key, inputId);
+      removedProcessor.process(key, inputId);
       anyRemoved = true;
     }
     return anyRemoved;

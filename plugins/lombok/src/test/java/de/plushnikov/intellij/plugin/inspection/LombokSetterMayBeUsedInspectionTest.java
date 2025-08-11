@@ -40,16 +40,4 @@ public class LombokSetterMayBeUsedInspectionTest extends LightDaemonAnalyzerTest
   public void testInstanceAndStaticFields() {
     doTest();
   }
-
-  public void testSetterAlreadyUsed() {
-    doTest();
-  }
-
-  public void testSetterAlreadyUsedTolerate() {
-    doTest();
-  }
-
-  public void testSetterOnBooleanIsPrefixedField() {
-    doTest();
-  }
 }

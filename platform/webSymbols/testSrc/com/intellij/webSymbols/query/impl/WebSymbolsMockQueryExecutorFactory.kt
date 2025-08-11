@@ -20,25 +20,23 @@ class WebSymbolsMockQueryExecutorFactory : WebSymbolsQueryExecutorFactory {
   val context: MutableMap<ContextKind, ContextName> = mutableMapOf()
 
   override fun create(location: PsiElement?, allowResolve: Boolean): WebSymbolsQueryExecutor =
-    WebSymbolsQueryExecutorImpl(location, scopeList,
+    WebSymbolsQueryExecutorImpl(scopeList,
                                 WebSymbolNamesProviderImpl(
-                                  context[KIND_FRAMEWORK],
-                                  context[KIND_FRAMEWORK]?.let { framework ->
-                                    scopeList.filterIsInstance<WebTypesMockScopeImpl>().map {
-                                      it.getNameConversionRulesProvider(framework).getNameConversionRules()
-                                    }
-                                  } ?: emptyList(),
-                                  createModificationTracker(
-                                    scopeList.filterIsInstance<WebTypesMockScopeImpl>().map { it.createPointer() })),
+                             context[KIND_FRAMEWORK],
+                             context[KIND_FRAMEWORK]?.let { framework ->
+                               scopeList.filterIsInstance<WebTypesMockScopeImpl>().map {
+                                 it.getNameConversionRulesProvider(framework).getNameConversionRules()
+                               }
+                             } ?: emptyList(),
+                             createModificationTracker(
+                               scopeList.filterIsInstance<WebTypesMockScopeImpl>().map { it.createPointer() })),
                                 WebSymbolsQueryResultsCustomizerFactory.getQueryResultsCustomizer(location, WebSymbolsContext.create(context)),
                                 WebSymbolsContext.create(context),
                                 allowResolve)
 
-  override fun addScope(
-    scope: WebSymbolsScope,
-    contextDirectory: VirtualFile?,
-    disposable: Disposable,
-  ) {
+  override fun addScope(scope: WebSymbolsScope,
+                        contextDirectory: VirtualFile?,
+                        disposable: Disposable) {
     scopeList.add(scope)
   }
 

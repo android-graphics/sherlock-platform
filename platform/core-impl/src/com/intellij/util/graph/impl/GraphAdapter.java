@@ -2,7 +2,6 @@
 package com.intellij.util.graph.impl;
 
 import com.intellij.util.graph.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +11,6 @@ import java.util.Optional;
 import java.util.Set;
 
 
-@ApiStatus.Internal
 public final class GraphAdapter {
 
   private GraphAdapter() { }

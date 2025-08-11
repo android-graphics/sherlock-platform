@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.dataflow;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -24,7 +25,6 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.FileTypeUtils;
@@ -152,7 +152,8 @@ public final class TooBroadScopeInspection extends BaseInspection {
         return true;
       }
       final PsiElement context = PsiUtil.getVariableCodeBlock(variable, referenceExpression);
-      return context != null && !(variable instanceof PsiField) && ControlFlowUtil.isEffectivelyFinal(variable, context);
+      return context != null && !(variable instanceof PsiField) &&
+             HighlightControlFlowUtil.isEffectivelyFinal(variable, context, referenceExpression);
     }
     if (expression instanceof PsiPolyadicExpression polyadicExpression) {
       for (PsiExpression operand : polyadicExpression.getOperands()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -93,7 +93,8 @@ public class GrAccessibilityChecker {
     return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
-  public @Nullable HighlightInfo checkCodeReferenceElement(@NotNull GrCodeReferenceElement ref) {
+  @Nullable
+  public HighlightInfo checkCodeReferenceElement(@NotNull GrCodeReferenceElement ref) {
     HighlightInfo.Builder builder = checkReferenceImpl(ref);
     return builder==null?null:builder.create();
   }
@@ -151,7 +152,8 @@ public class GrAccessibilityChecker {
     }
   }
 
-  public @Nullable HighlightInfo checkReferenceExpression(@NotNull GrReferenceExpression ref) {
+  @Nullable
+  public HighlightInfo checkReferenceExpression(@NotNull GrReferenceExpression ref) {
     HighlightInfo.Builder builder = checkReferenceImpl(ref);
     return builder==null?null:builder.create();
   }
@@ -189,9 +191,10 @@ public class GrAccessibilityChecker {
     return null;
   }
 
-  private static @NotNull Pair<HighlightInfo.Builder,HighlightSeverity> createAnnotationForRef(@NotNull GrReferenceElement<?> ref,
-                                                                                               boolean strongError,
-                                                                                               @DetailedDescription @NotNull String message) {
+  @NotNull
+  private static Pair<HighlightInfo.Builder,HighlightSeverity> createAnnotationForRef(@NotNull GrReferenceElement<?> ref,
+                                                      boolean strongError,
+                                                      @DetailedDescription @NotNull String message) {
     HighlightDisplayLevel displayLevel = strongError ? HighlightDisplayLevel.ERROR
                                                      : GroovyAccessibilityInspection.getHighlightDisplayLevel(ref.getProject(), ref);
     return Pair.create(GrInspectionUtil.createAnnotationForRef(ref, displayLevel, message), displayLevel.getSeverity());

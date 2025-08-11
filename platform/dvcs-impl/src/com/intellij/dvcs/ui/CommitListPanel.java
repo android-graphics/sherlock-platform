@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -34,7 +33,7 @@ import java.util.ListIterator;
  *
  * @author Kirill Likhodedov
  */
-public class CommitListPanel extends JPanel implements UiDataProvider {
+public class CommitListPanel extends JPanel implements DataProvider {
 
   private final List<VcsFullCommitDetails> myCommits;
   private final TableView<VcsFullCommitDetails> myTable;
@@ -96,17 +95,23 @@ public class CommitListPanel extends JPanel implements UiDataProvider {
     diffAction.registerCustomShortcutSet(diffAction.getShortcutSet(), myTable);
   }
 
+  @Nullable
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
+  public Object getData(@NotNull String dataId) {
     // Make changes available for diff action
-    int[] rows = myTable.getSelectedRows();
-    if (rows.length == 1) {
-      sink.set(VcsDataKeys.CHANGES, myCommits.get(rows[0])
-        .getChanges().toArray(Change.EMPTY_CHANGE_ARRAY));
+    if (VcsDataKeys.CHANGES.is(dataId)) {
+      int[] rows = myTable.getSelectedRows();
+      if (rows.length != 1) return null;
+      int row = rows[0];
+
+      VcsFullCommitDetails commit = myCommits.get(row);
+      return commit.getChanges().toArray(Change.EMPTY_CHANGE_ARRAY);
     }
+    return null;
   }
 
-  public @NotNull JComponent getPreferredFocusComponent() {
+  @NotNull
+  public JComponent getPreferredFocusComponent() {
     return myTable;
   }
 
@@ -195,7 +200,7 @@ public class CommitListPanel extends JPanel implements UiDataProvider {
 
   private abstract static class CommitColumnInfo extends ColumnInfo<VcsFullCommitDetails, String> {
 
-    private final @NotNull String myMaxString;
+    @NotNull private final String myMaxString;
 
     CommitColumnInfo(@NotNull @NlsContexts.ColumnName String name, @NotNull String maxString) {
       super(name);

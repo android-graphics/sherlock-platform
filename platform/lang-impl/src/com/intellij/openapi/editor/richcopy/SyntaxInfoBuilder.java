@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -31,12 +31,13 @@ import java.util.Comparator;
 public final class SyntaxInfoBuilder {
   private SyntaxInfoBuilder() { }
 
-  static @NotNull MyMarkupIterator createMarkupIterator(@NotNull EditorHighlighter highlighter,
-                                                        @NotNull CharSequence text,
-                                                        @NotNull EditorColorsScheme schemeToUse,
-                                                        @Nullable MarkupModel markupModel,
-                                                        int startOffsetToUse,
-                                                        int endOffset) {
+  @NotNull
+  static MyMarkupIterator createMarkupIterator(@NotNull EditorHighlighter highlighter,
+                                               @NotNull CharSequence text,
+                                               @NotNull EditorColorsScheme schemeToUse,
+                                               @Nullable MarkupModel markupModel,
+                                               int startOffsetToUse,
+                                               int endOffset) {
 
     CompositeRangeIterator iterator =  new CompositeRangeIterator(
       schemeToUse,
@@ -103,15 +104,18 @@ public final class SyntaxInfoBuilder {
       return myCurrentFontStyle;
     }
 
-    public @NotNull String getFontFamilyName() {
+    @NotNull
+    public String getFontFamilyName() {
       return mySegmentIterator.getCurrentFontFamilyName();
     }
 
-    public @Nullable Color getForegroundColor() {
+    @Nullable
+    public Color getForegroundColor() {
       return myCurrentForegroundColor;
     }
 
-    public @Nullable Color getBackgroundColor() {
+    @Nullable
+    public Color getBackgroundColor() {
       return myCurrentBackgroundColor;
     }
 
@@ -529,13 +533,13 @@ public final class SyntaxInfoBuilder {
 
     private final SyntaxInfo.Builder builder;
 
-    private final @NotNull CharSequence myText;
-    private final @NotNull Color        myDefaultForeground;
-    private final @NotNull Color        myDefaultBackground;
+    @NotNull private final CharSequence myText;
+    @NotNull private final Color        myDefaultForeground;
+    @NotNull private final Color        myDefaultBackground;
 
-    private @Nullable Color  myBackground;
-    private @Nullable Color  myForeground;
-    private @Nullable String myFontFamilyName;
+    @Nullable private Color  myBackground;
+    @Nullable private Color  myForeground;
+    @Nullable private String myFontFamilyName;
 
     private final int myIndentSymbolsToStrip;
 
@@ -683,7 +687,8 @@ public final class SyntaxInfoBuilder {
       builder.addText(position + myOffsetShift, position + myOffsetShift + 1);
     }
 
-    public @NotNull SyntaxInfo finish() {
+    @NotNull
+    public SyntaxInfo finish() {
       return builder.build();
     }
   }

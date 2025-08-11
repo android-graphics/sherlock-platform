@@ -54,8 +54,4 @@ public final class EventLogOptions {
     }
     return -1;
   }
-
-  public Map<String, String> getAllOptions() {
-    return myOptions;
-  }
 }

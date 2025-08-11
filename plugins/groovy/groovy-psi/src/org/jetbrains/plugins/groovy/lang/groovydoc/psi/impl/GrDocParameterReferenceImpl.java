@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
@@ -70,13 +70,15 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
     return candidates.toArray(ResolveResult.EMPTY_ARRAY);
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getElement() {
+  public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
-  public @NotNull TextRange getRangeInElement() {
+  public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());
   }
 
@@ -86,14 +88,16 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
   }
 
   @Override
-  public @Nullable PsiElement resolve() {
+  @Nullable
+  public PsiElement resolve() {
     final ResolveResult[] results = multiResolve(false);
     if (results.length != 1) return null;
     return results[0].getElement();
   }
 
   @Override
-  public @NotNull String getCanonicalText() {
+  @NotNull
+  public String getCanonicalText() {
     return getName();
   }
 
@@ -140,7 +144,8 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
   }
 
   @Override
-  public @NotNull GrDocTagValueToken getReferenceNameElement() {
+  @NotNull
+  public GrDocTagValueToken getReferenceNameElement() {
     GrDocTagValueToken token = findChildByClass(GrDocTagValueToken.class);
     assert token != null;
     return token;

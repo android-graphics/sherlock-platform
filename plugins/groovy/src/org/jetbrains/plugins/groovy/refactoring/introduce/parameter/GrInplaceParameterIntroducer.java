@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.openapi.application.WriteAction;
@@ -176,7 +176,8 @@ public final class GrInplaceParameterIntroducer extends GrAbstractInplaceIntrodu
     return ArrayUtil.getLastElement(owner.getParameters());
   }
 
-  private static @NotNull GrExpressionWrapper createExpressionWrapper(@NotNull GrIntroduceContext context) {
+  @NotNull
+  private static GrExpressionWrapper createExpressionWrapper(@NotNull GrIntroduceContext context) {
     GrExpression expression = context.getExpression();
     GrVariable var = context.getVar();
     assert expression != null || var != null ;
@@ -185,10 +186,11 @@ public final class GrInplaceParameterIntroducer extends GrAbstractInplaceIntrodu
     return new GrExpressionWrapper(initializer);
   }
 
+  @Nullable
   @Override
-  protected @Nullable GrIntroduceParameterSettings getInitialSettingsForInplace(@NotNull GrIntroduceContext context,
-                                                                                @NotNull OccurrencesChooser.ReplaceChoice choice,
-                                                                                String[] names) {
+  protected GrIntroduceParameterSettings getInitialSettingsForInplace(@NotNull GrIntroduceContext context,
+                                                                      @NotNull OccurrencesChooser.ReplaceChoice choice,
+                                                                      String[] names) {
     GrExpression expression = context.getExpression();
     GrVariable var = context.getVar();
     PsiType type = var != null ? var.getDeclaredType() :

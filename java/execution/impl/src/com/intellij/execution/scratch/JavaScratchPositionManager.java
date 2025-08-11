@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.execution.scratch;
 
 import com.intellij.debugger.NoDataException;
@@ -18,7 +32,6 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -26,28 +39,31 @@ import java.util.List;
  * @author Eugene Zhuravlev
  */
 public class JavaScratchPositionManager extends PositionManagerImpl{
-  private final @NotNull VirtualFile myScratchFile;
+  private final VirtualFile myScratchFile;
 
-  public JavaScratchPositionManager(@NotNull DebugProcessImpl debugProcess, @NotNull VirtualFile scratchFile) {
+  public JavaScratchPositionManager(DebugProcessImpl debugProcess, VirtualFile scratchFile) {
     super(debugProcess);
     myScratchFile = scratchFile;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
+  public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
     checkPosition(position);
     return super.locationsOfLine(type, position);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<ClassPrepareRequest> createPrepareRequests(@NotNull ClassPrepareRequestor requestor,
-                                                                  @NotNull SourcePosition position) throws NoDataException {
+  public List<ClassPrepareRequest> createPrepareRequests(@NotNull ClassPrepareRequestor requestor,
+                                                         @NotNull SourcePosition position) throws NoDataException {
     checkPosition(position);
     return super.createPrepareRequests(requestor, position);
   }
 
+  @NotNull
   @Override
-  public @NotNull @Unmodifiable List<ReferenceType> getAllClasses(@NotNull SourcePosition position) throws NoDataException {
+  public List<ReferenceType> getAllClasses(@NotNull SourcePosition position) throws NoDataException {
     checkPosition(position);
     return super.getAllClasses(position);
   }
@@ -58,8 +74,9 @@ public class JavaScratchPositionManager extends PositionManagerImpl{
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable SourcePosition getSourcePosition(Location location) throws NoDataException {
+  public SourcePosition getSourcePosition(Location location) throws NoDataException {
     final SourcePosition position = super.getSourcePosition(location);
     if (position == null) {
       throw NoDataException.INSTANCE; // delegate to other managers
@@ -67,9 +84,10 @@ public class JavaScratchPositionManager extends PositionManagerImpl{
     return position;
   }
 
+  @Nullable
   @Override
-  protected @Nullable PsiFile getPsiFileByLocation(Project project, Location location) {
-    if (location == null || !myScratchFile.isValid()) {
+  protected PsiFile getPsiFileByLocation(Project project, Location location) {
+    if (location == null) {
       return null;
     }
     final ReferenceType refType = location.declaringType();

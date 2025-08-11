@@ -245,7 +245,6 @@ public class FastSparseSetFactory<E> {
     }
 
 
-    @Override
     public boolean equals(Object o) {
       if (o == this) return true;
       if (!(o instanceof FastSparseSet)) return false;
@@ -328,7 +327,6 @@ public class FastSparseSetFactory<E> {
       return set;
     }
 
-    @Override
     public String toString() {
       return toPlainSet().toString();
     }

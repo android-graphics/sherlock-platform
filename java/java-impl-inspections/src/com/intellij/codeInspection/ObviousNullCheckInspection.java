@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -26,8 +26,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public final class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionTool {
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -53,8 +54,19 @@ public final class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspe
     };
   }
 
-  record NullCheckParameter(int myIndex, boolean myNull, boolean myReturnsParameter) {
-    static @Nullable NullCheckParameter fromCall(PsiMethodCallExpression call) {
+  static class NullCheckParameter {
+    int myIndex;
+    boolean myNull;
+    boolean myReturnsParameter;
+
+    NullCheckParameter(int index, boolean aNull, boolean returnsParameter) {
+      myIndex = index;
+      myNull = aNull;
+      myReturnsParameter = returnsParameter;
+    }
+
+    @Nullable
+    static NullCheckParameter fromCall(PsiMethodCallExpression call) {
       PsiMethod method = call.resolveMethod();
       if (method == null || method.isConstructor()) return null;
       if (!JavaMethodContractUtil.isPure(method)) return null;
@@ -65,9 +77,9 @@ public final class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspe
       ContractReturnValue firstReturn = contract.getReturnValue();
       ContractValue condition = ContainerUtil.getOnlyItem(contract.getConditions());
       if (condition == null) return null;
-      if (firstReturn instanceof ParameterReturnValue parameterReturnValue) {
+      if (firstReturn instanceof ParameterReturnValue) {
         // first contract is like "!null -> param1"; ignore other contracts
-        int index = parameterReturnValue.getParameterNumber();
+        int index = ((ParameterReturnValue)firstReturn).getParameterNumber();
         int nullIndex = condition.getNullCheckedArgument(false).orElse(-1);
         if (nullIndex != index) return null;
         return new NullCheckParameter(nullIndex, false, true);
@@ -86,25 +98,21 @@ public final class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspe
       boolean returnsParameter = false;
       if (contracts.size() == 2) {
         ContractReturnValue returnValue = JavaMethodContractUtil.getNonFailingReturnValue(contracts);
-        if (returnValue instanceof ParameterReturnValue result && result.getParameterNumber() == nullIndex) {
+        if (returnValue instanceof ParameterReturnValue && ((ParameterReturnValue)returnValue).getParameterNumber() == nullIndex) {
           returnsParameter = true;
         } else {
           return null;
         }
-      }
-      if (!returnsParameter && !PsiTypes.voidType().equals(method.getReturnType())) {
-        // Method returns something that differs from the parameter: it's not a simple null-check method.
-        // If its result is nevertheless not used, then it's a job of IgnoreResultOfCallInspection to 
-        // report it.
-        return null;
       }
       return new NullCheckParameter(nullIndex, isNull, returnsParameter);
     }
   }
 
   public static class RemoveExcessiveNullComparisonFix extends PsiUpdateModCommandQuickFix {
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
     @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaBundle.message("inspection.redundant.null.check.fix.notnull.family.name");
     }
 
@@ -119,8 +127,10 @@ public final class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspe
   }
 
   public static class RemoveNullCheckFix extends PsiUpdateModCommandQuickFix {
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaBundle.message("inspection.redundant.null.check.fix.family.name");
     }
 

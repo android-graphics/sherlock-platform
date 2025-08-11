@@ -1,3 +1,0 @@
-5 val v = <bold>this</bold> (in Int.extensionFun())
-4 	open fun <bold>Int</bold>.extensionFun() { (in Int.extensionFun())
-9 		<bold>1</bold>.extensionFun() (in Base.baseF())

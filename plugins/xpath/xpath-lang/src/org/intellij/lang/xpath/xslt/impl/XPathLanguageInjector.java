@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-final class XPathLanguageInjector implements MultiHostInjector {
+public class XPathLanguageInjector implements MultiHostInjector {
     private static final Key<Pair<String, TextRange[]>> CACHED_FILES = Key.create("CACHED_FILES");
 
     public XPathLanguageInjector() {
@@ -124,7 +124,8 @@ final class XPathLanguageInjector implements MultiHostInjector {
     }
 
   @Override
-  public @NotNull List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
+  @NotNull
+  public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return Collections.singletonList(XmlAttributeValue.class);
   }
 

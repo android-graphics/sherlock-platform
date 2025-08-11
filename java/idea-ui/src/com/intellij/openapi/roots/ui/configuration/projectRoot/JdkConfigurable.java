@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
@@ -68,7 +70,9 @@ public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> im
   }
 
   @Override
-  public @Nullable @NonNls String getHelpTopic() {
+  @Nullable
+  @NonNls
+  public String getHelpTopic() {
     return ((SdkType) myProjectJdk.getSdkType()).getHelpTopic();
   }
 
@@ -99,12 +103,12 @@ public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> im
   }
 
   @Override
-  public ActionCallback navigateTo(final @Nullable Place place, final boolean requestFocus) {
+  public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
     return mySdkEditor.navigateTo(place, requestFocus);
   }
 
   @Override
-  public void queryPlace(final @NotNull Place place) {
+  public void queryPlace(@NotNull final Place place) {
     mySdkEditor.queryPlace(place);
   }
 }

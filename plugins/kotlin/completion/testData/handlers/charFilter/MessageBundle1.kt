@@ -11,4 +11,3 @@ fun test() {
 // ELEMENT: foo.bar
 // CHARS: 'foo\n'
 // FIR_COMPARISON
-// FIR_IDENTICAL

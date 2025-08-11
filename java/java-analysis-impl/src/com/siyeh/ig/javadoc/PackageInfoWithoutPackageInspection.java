@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
@@ -20,13 +20,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class PackageInfoWithoutPackageInspection extends BaseInspection {
 
+  @NotNull
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("package.info.without.package.problem.descriptor");
   }
 
+  @Nullable
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new PackageInfoWithoutPackageFix((String)infos[0]);
   }
 
@@ -38,13 +40,15 @@ public final class PackageInfoWithoutPackageInspection extends BaseInspection {
       myPackageName = packageName;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getName() {
+    public String getName() {
       return InspectionGadgetsBundle.message("package.info.without.package.quickfix", myPackageName);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("package.info.without.package.family.quickfix");
     }
 
@@ -71,7 +75,7 @@ public final class PackageInfoWithoutPackageInspection extends BaseInspection {
 
     @Override
     public void visitJavaFile(@NotNull PsiJavaFile file) {
-      final @NonNls String name = file.getName();
+      @NonNls final String name = file.getName();
       if (!PsiPackage.PACKAGE_INFO_FILE.equals(name)) {
         return;
       }

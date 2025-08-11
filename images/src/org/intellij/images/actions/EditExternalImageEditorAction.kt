@@ -16,7 +16,10 @@ import com.intellij.ui.dsl.builder.panel
 import org.intellij.images.ImagesBundle
 import javax.swing.JComponent
 
-internal class EditExternalImageEditorAction: DumbAwareAction() {
+/**
+ * @author Konstantin Bulenkov
+ */
+class EditExternalImageEditorAction: DumbAwareAction() {
   companion object {
     const val EXT_PATH_KEY = "Images.ExternalEditorPath"
 

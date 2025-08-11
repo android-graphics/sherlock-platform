@@ -15,10 +15,8 @@
  */
 package com.intellij.codeInsight.completion;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
-@ApiStatus.Internal
 public interface
   CodeCompletionFeatures {
   @NonNls String EXCLAMATION_FINISH = "editing.completion.finishByExclamation";

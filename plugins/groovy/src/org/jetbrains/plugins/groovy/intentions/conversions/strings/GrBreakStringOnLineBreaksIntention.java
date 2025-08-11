@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
 import com.intellij.lang.ASTNode;
@@ -28,8 +28,9 @@ public final class GrBreakStringOnLineBreaksIntention extends GrPsiUpdateIntenti
     ((GrExpression)element).replaceWithExpression(newExpr, true);
   }
 
+  @NotNull
   @Override
-  protected @NotNull PsiElementPredicate getElementPredicate() {
+  protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {

@@ -4,20 +4,17 @@ package org.jetbrains.kotlin.j2k.k2
 
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.asTextRange
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
-import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.FileBasedPostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
+import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.reflect.KClass
 
@@ -28,16 +25,17 @@ internal class K2DiagnosticBasedPostProcessingGroup(
     private val diagnosticToProcessing: Map<KClass<out KaDiagnosticWithPsi<*>>, K2DiagnosticBasedProcessing<KaDiagnosticWithPsi<*>>> =
         diagnosticBasedProcessings.associateBy({ it.diagnosticClass }, { it })
 
-    override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: ConverterContext) {
+    override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext) {
         error("Not supported in K2 J2K")
     }
 
+    context(KaSession)
     override fun computeApplier(
         file: KtFile,
         allFiles: List<KtFile>,
         rangeMarker: RangeMarker?,
-        converterContext: ConverterContext
-    ): PostProcessingApplier = analyze(file) {
+        converterContext: NewJ2kConverterContext
+    ): PostProcessingApplier {
         // TODO: for copy-paste conversion, try to restrict the analysis range, like in K1 J2K
         //  (see org.jetbrains.kotlin.idea.j2k.post.processing.DiagnosticBasedPostProcessingGroup.analyzeFileRange)
         val diagnostics = file.collectDiagnostics(filter = ONLY_COMMON_CHECKERS)
@@ -50,7 +48,7 @@ internal class K2DiagnosticBasedPostProcessingGroup(
             }
         }
 
-        Applier(processingDataList, file.project)
+        return Applier(processingDataList)
     }
 
     context(KaSession)
@@ -65,13 +63,11 @@ internal class K2DiagnosticBasedPostProcessingGroup(
         return ProcessingData(fix, element.createSmartPointer())
     }
 
-    private class Applier(private val processingDataList: List<ProcessingData>, private val project: Project) : PostProcessingApplier {
+    private class Applier(private val processingDataList: List<ProcessingData>) : PostProcessingApplier {
         override fun apply() {
-            CodeStyleManager.getInstance(project).performActionWithFormatterDisabled {
-                for ((fix, pointer) in processingDataList) {
-                    val element = pointer.element ?: continue
-                    fix.apply(element)
-                }
+            for ((fix, pointer) in processingDataList) {
+                val element = pointer.element ?: continue
+                fix.apply(element)
             }
         }
     }
@@ -97,7 +93,7 @@ internal class K2QuickFixDiagnosticBasedProcessing<DIAGNOSTIC : KaDiagnosticWith
 
     context(KaSession)
     override fun createFix(diagnostic: DIAGNOSTIC): K2DiagnosticFix? {
-        val quickfix = with(fixFactory) { createQuickFixes(diagnostic).singleOrNull() } ?: return null
+        val quickfix = fixFactory.createQuickFixes(diagnostic).singleOrNull() ?: return null
         return object : K2DiagnosticFix {
             override fun apply(element: PsiElement) {
                 quickfix.invoke(element.project, null, element.containingFile)
@@ -113,10 +109,7 @@ internal class K2AddExclExclDiagnosticBasedProcessing<DIAGNOSTIC : KaDiagnosticW
 
     context(KaSession)
     override fun createFix(diagnostic: DIAGNOSTIC): K2DiagnosticFix? {
-        val addExclExclCallFix =
-            with(fixFactory) {
-                createQuickFixes(diagnostic).firstOrNull { it is AddExclExclCallFix }
-            } ?: return null
+        val addExclExclCallFix = fixFactory.createQuickFixes(diagnostic).firstOrNull { it is AddExclExclCallFix } ?: return null
         return object : K2DiagnosticFix {
             override fun apply(element: PsiElement) {
                 addExclExclCallFix.invoke(element.project, null, element.containingFile)

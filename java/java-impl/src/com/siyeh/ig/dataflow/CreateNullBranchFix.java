@@ -26,15 +26,8 @@ import java.util.Objects;
 
 public final class CreateNullBranchFix extends BaseSwitchFix {
 
-  private final boolean myStartTemplate;
-
   public CreateNullBranchFix(@NotNull PsiSwitchBlock block) {
-    this(block, true);
-  }
-
-  public CreateNullBranchFix(@NotNull PsiSwitchBlock block, boolean startTemplate) {
     super(block);
-    myStartTemplate = startTemplate;
   }
 
   @Override
@@ -68,9 +61,7 @@ public final class CreateNullBranchFix extends BaseSwitchFix {
       .stream()
       .map(text -> factory.createStatementFromText(text, body))
       .forEach(statement -> body.addBefore(statement, anchor));
-    if (myStartTemplate) {
-      CreateDefaultBranchFix.startTemplateOnStatement(PsiTreeUtil.getPrevSiblingOfType(anchor, PsiStatement.class), updater);
-    }
+    CreateDefaultBranchFix.startTemplateOnStatement(PsiTreeUtil.getPrevSiblingOfType(anchor, PsiStatement.class), updater);
   }
 
   private static @Nullable PsiElement findUnconditionalLabel(@NotNull PsiSwitchBlock switchBlock) {

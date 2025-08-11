@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
@@ -13,7 +13,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.PopupHandler;
@@ -36,7 +35,7 @@ import java.util.Objects;
 
 import static com.intellij.ui.render.RenderingHelper.SHRINK_LONG_RENDERER;
 
-public abstract class TestTreeView extends Tree implements UiCompatibleDataProvider, CopyProvider {
+public abstract class TestTreeView extends Tree implements DataProvider, CopyProvider {
   public static final DataKey<TestFrameworkRunningModel> MODEL_DATA_KEY = DataKey.create("testFrameworkModel.dataId");
 
   private TestFrameworkRunningModel myModel;
@@ -53,7 +52,8 @@ public abstract class TestTreeView extends Tree implements UiCompatibleDataProvi
     return myModel;
   }
 
-  public @Nullable AbstractTestProxy getSelectedTest() {
+  @Nullable
+  public AbstractTestProxy getSelectedTest() {
     TreePath[] paths = getSelectionPaths();
     if (paths != null && paths.length > 1) return null;
     final TreePath selectionPath = getSelectionPath();
@@ -84,55 +84,78 @@ public abstract class TestTreeView extends Tree implements UiCompatibleDataProvi
   }
 
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    TreePath[] paths = getSelectionPaths();
+  public Object getData(@NotNull final String dataId) {
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+      return this;
+    }
+
+    if (AbstractTestProxy.DATA_KEYS.is(dataId)) {
+      TreePath[] paths = getSelectionPaths();
+      if (paths != null) {
+        return Arrays.stream(paths)
+          .map(path -> getSelectedTest(path))
+          .filter(Objects::nonNull)
+          .toArray(AbstractTestProxy[]::new);
+      }
+    }
+    if (MODEL_DATA_KEY.is(dataId)) {
+      return myModel;
+    }
     TreePath selectionPath = getSelectionPath();
-    sink.set(PlatformDataKeys.COPY_PROVIDER, this);
-    if (selectionPath == null) return;
-
-    sink.set(MODEL_DATA_KEY, myModel);
-
-    AbstractTestProxy[] testProxies = Arrays.stream(Objects.requireNonNull(paths))
-      .map(path -> getSelectedTest(path))
-      .filter(Objects::nonNull)
-      .toArray(AbstractTestProxy[]::new);
-    sink.set(AbstractTestProxy.DATA_KEYS, testProxies);
-
+    if (selectionPath == null) return null;
     AbstractTestProxy testProxy = getSelectedTest(selectionPath);
-    if (testProxy == null) return;
+    if (testProxy == null) return null;
 
-    sink.set(AbstractTestProxy.DATA_KEY, testProxy);
-    if (testProxy instanceof Navigatable o) {
-      sink.set(CommonDataKeys.NAVIGATABLE, o);
-    }
-    RunProfile configuration = myModel.getProperties().getConfiguration();
-    if (configuration instanceof RunConfiguration o) {
-      sink.set(RunConfiguration.DATA_KEY, o);
+    if (AbstractTestProxy.DATA_KEY.is(dataId) || CommonDataKeys.NAVIGATABLE.is(dataId)) {
+      return testProxy;
     }
 
-    Project project = myModel.getProperties().getProject();
-    TestFrameworkRunningModel model = myModel;
-    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      TestFrameworkRunningModel model = myModel;
+      return (DataProvider)slowId -> getSlowData(slowId, testProxy, model);
+    }
+    if (RunConfiguration.DATA_KEY.is(dataId)) {
+      RunProfile configuration = myModel.getProperties().getConfiguration();
+      if (configuration instanceof RunConfiguration) {
+        return configuration;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private Object getSlowData(@NotNull String dataId,
+                             @NotNull AbstractTestProxy testProxy,
+                             @NotNull TestFrameworkRunningModel model) {
+    Project project = model.getProperties().getProject();
+
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       Location<?> location = testProxy.getLocation(project, model.getProperties().getScope());
       PsiElement psiElement = location != null ? location.getPsiElement() : null;
       return psiElement == null || !psiElement.isValid() ? null : psiElement;
-    });
-    sink.lazy(Location.DATA_KEY, () -> {
+    }
+    else if (Location.DATA_KEY.is(dataId)) {
       return testProxy.getLocation(project, model.getProperties().getScope());
-    });
-    sink.lazy(Location.DATA_KEYS, () -> {
-      return Arrays.stream(testProxies)
+    }
+    else if (Location.DATA_KEYS.is(dataId)) {
+      AbstractTestProxy[] proxies = AbstractTestProxy.DATA_KEYS.getData(this);
+      return proxies == null ? null : Arrays.stream(proxies)
         .map(p -> p.getLocation(project, model.getProperties().getScope()))
         .filter(Objects::nonNull)
         .toArray(Location[]::new);
-    });
-    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
-      return Arrays.stream(testProxies)
+    }
+    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      AbstractTestProxy[] proxies = AbstractTestProxy.DATA_KEYS.getData(this);
+      return proxies == null ? null : Arrays.stream(proxies)
         .map(p -> p.getLocation(project, model.getProperties().getScope()))
         .filter(Objects::nonNull).map(l -> l.getPsiElement())
         .toArray(PsiElement[]::new);
-    });
+    }
+
+    return null;
   }
+
 
   @Override
   public void performCopy(@NotNull DataContext dataContext) {
@@ -172,15 +195,11 @@ public abstract class TestTreeView extends Tree implements UiCompatibleDataProvi
     PopupHandler.installPopupMenu(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
     HintUpdateSupply.installHintUpdateSupply(this, obj -> {
       Object userObject = TreeUtil.getUserObject(obj);
-      Object element = userObject instanceof NodeDescriptor<?> o ? o.getElement() : null;
-      if (!(element instanceof AbstractTestProxy testProxy)) {
-        return null;
+      Object element = userObject instanceof NodeDescriptor? ((NodeDescriptor<?>)userObject).getElement() : null;
+      if (element instanceof AbstractTestProxy) {
+        return (PsiElement)getSlowData(CommonDataKeys.PSI_ELEMENT.getName(), (AbstractTestProxy)element, myModel);
       }
-      TestFrameworkRunningModel model = myModel;
-      Project project = model.getProperties().getProject();
-      Location<?> location = testProxy.getLocation(project, model.getProperties().getScope());
-      PsiElement psiElement = location != null ? location.getPsiElement() : null;
-      return psiElement == null || !psiElement.isValid() ? null : psiElement;
+      return null;
     });
   }
 

@@ -26,7 +26,8 @@ public final class RootFileValidityChecker {
     return true;
   }
 
-  public static @Nullable VirtualFile correctRoot(@NotNull VirtualFile file, @NotNull Object container, @Nullable Object containerProvider) {
+  @Nullable
+  public static VirtualFile correctRoot(@NotNull VirtualFile file, @NotNull Object container, @Nullable Object containerProvider) {
     if (!ensureValid(file, container, containerProvider)) {
       return null;
     }

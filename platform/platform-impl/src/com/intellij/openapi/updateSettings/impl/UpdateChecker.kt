@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
@@ -7,6 +7,7 @@ import com.intellij.ide.externalComponents.ExternalComponentSource
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.*
@@ -22,14 +23,11 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.ActionCallback
-import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.updateSettings.impl.UpdateChecker.MACHINE_ID_DISABLED_PROPERTY
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
-import com.intellij.util.Url
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -53,6 +51,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import javax.swing.JComponent
+import kotlin.Result
 import kotlin.concurrent.withLock
 
 private enum class NotificationKind { PLATFORM, PLUGINS, EXTERNAL }
@@ -63,6 +62,7 @@ private const val DISABLED_UPDATE = "disabled_update.txt"
 private const val DISABLED_PLUGIN_UPDATE = "plugin_disabled_updates.txt"
 private const val PRODUCT_DATA_TTL_MIN = 5L
 
+private var machineIdInitialized = false
 private val shownNotifications = MultiMap<NotificationKind, Notification>()
 
 @Service
@@ -70,7 +70,10 @@ private class UpdateCheckerHelper(private val coroutineScope: CoroutineScope) {
   @OptIn(ExperimentalCoroutinesApi::class)
   private val limitedDispatcher = Dispatchers.IO.limitedParallelism(1)
 
-  fun updateAndShowResult(showResults: Boolean): ActionCallback {
+  /**
+   * For scheduled update checks.
+   */
+  fun updateAndShowResult(showResults: Boolean = false): ActionCallback {
     val callback = ActionCallback()
     coroutineScope.launch(limitedDispatcher) {
       doUpdateAndShowResult(
@@ -93,12 +96,11 @@ private class UpdateCheckerHelper(private val coroutineScope: CoroutineScope) {
  * See XML file by [ApplicationInfoEx.getUpdateUrls] for reference.
  */
 object UpdateChecker {
-  internal const val MACHINE_ID_DISABLED_PROPERTY: String = "machine.id.disabled"
-  internal const val MACHINE_ID_PARAMETER: String = "mid"
+  const val MACHINE_ID_DISABLED_PROPERTY: String = "machine.id.disabled"
+  const val MACHINE_ID_PARAMETER: String = "mid"
 
   private val productDataLock = ReentrantLock()
-  private var productDataUrl: Url? = null
-  private var productDataCache: SoftReference<Product?>? = null
+  private var productDataCache: SoftReference<Result<Product?>>? = null
   private val ourUpdatedPlugins: MutableMap<PluginId, PluginDownloader> = HashMap()
 
   /**
@@ -106,6 +108,19 @@ object UpdateChecker {
    * Has no effect on non-bundled plugins.
    */
   val excludedFromUpdateCheckPlugins: HashSet<String> = hashSetOf()
+
+  init {
+    UpdateRequestParameters.addParameter("build", ApplicationInfo.getInstance().build.asString())
+    UpdateRequestParameters.addParameter("uid", PermanentInstallationID.get())
+    UpdateRequestParameters.addParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
+    if (ExternalUpdateManager.ACTUAL != null) {
+      val name = if (ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) "Toolbox" else ExternalUpdateManager.ACTUAL.toolName
+      UpdateRequestParameters.addParameter("manager", name)
+    }
+    if (ApplicationInfoEx.getInstanceEx().isEAP) {
+      UpdateRequestParameters.addParameter("eap", "")
+    }
+  }
 
   @JvmStatic
   fun getNotificationGroup(): NotificationGroup =
@@ -124,11 +139,10 @@ object UpdateChecker {
    */
   @JvmStatic
   fun updateAndShowResult(): ActionCallback =
-    service<UpdateCheckerHelper>().updateAndShowResult(showResults = true)
+    service<UpdateCheckerHelper>().updateAndShowResult()
 
-  @ApiStatus.Internal
   fun getUpdates(): ActionCallback =
-    service<UpdateCheckerHelper>().updateAndShowResult(showResults = false)
+    service<UpdateCheckerHelper>().updateAndShowResult(false)
 
   /**
    * For manual update checks (Help | Check for Updates, Settings | Updates | Check Now)
@@ -176,48 +190,40 @@ object UpdateChecker {
       }
     }
     catch (e: Exception) {
-      val attachTrace = when {
-        LOG.isDebugEnabled -> true
-        e is IOException -> false
-        e is CancellationException -> false
-        else -> true
-      }
-      LOG.info("failed to load update data (${e.javaClass.name}: ${e.message})", if (attachTrace) e else null)
+      LOG.info("failed to load update data (${e.javaClass.name}: ${e.message})", if (e !is IOException || LOG.isDebugEnabled) e else null)
       return PlatformUpdates.ConnectionError(e)
     }
   }
 
   @JvmStatic
   @Throws(IOException::class, JDOMException::class)
-  fun loadProductData(indicator: ProgressIndicator?): Product? {
-    val url = ExternalProductResourceUrls.getInstance().updateMetadataUrl ?: return null
-
-    return productDataLock.withLock {
+  fun loadProductData(indicator: ProgressIndicator?): Product? =
+    productDataLock.withLock {
       val cached = productDataCache?.get()
-      if (cached != null && url == productDataUrl) cached
-      else {
+      if (cached != null) return@withLock cached.getOrThrow()
+      val url = ExternalProductResourceUrls.getInstance().updateMetadataUrl ?: return@withLock null
+
+      val result = runCatching {
         LOG.debug { "loading ${url}" }
-        val product = HttpRequests.request(url)
-          .productNameAsUserAgent()
+        HttpRequests.request(url)
           .connect { JDOMUtil.load(it.getReader(indicator)) }
           .let { parseUpdateData(it) }
           ?.also {
             if (it.disableMachineId) {
               PropertiesComponent.getInstance().setValue(MACHINE_ID_DISABLED_PROPERTY, true)
+              UpdateRequestParameters.removeParameter(MACHINE_ID_PARAMETER)
             }
           }
-        productDataCache = SoftReference(product)
-        productDataUrl = url
-        AppExecutorUtil.getAppScheduledExecutorService().schedule(this::clearProductDataCache, PRODUCT_DATA_TTL_MIN, TimeUnit.MINUTES)
-        product
       }
+
+      productDataCache = SoftReference(result)
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(this::clearProductDataCache, PRODUCT_DATA_TTL_MIN, TimeUnit.MINUTES)
+      return@withLock result.getOrThrow()
     }
-  }
 
   private fun clearProductDataCache() {
     if (productDataLock.tryLock(1, TimeUnit.MILLISECONDS)) {  // a longer time means loading now, no much sense in clearing
       productDataCache = null
-      productDataUrl = null
       productDataLock.unlock()
     }
   }
@@ -250,8 +256,8 @@ object UpdateChecker {
   ): InternalPluginResults {
     indicator?.text = IdeBundle.message("updates.checking.plugins")
     if (!PluginEnabler.HEADLESS.isIgnoredDisabledPlugins) {
-      val brokenPlugins = MarketplaceRequests.getBrokenPlugins(ApplicationInfo.getInstance().build)
-      if (!brokenPlugins.isNullOrEmpty()) {
+      val brokenPlugins = MarketplaceRequests.getInstance().getBrokenPlugins(ApplicationInfo.getInstance().build)
+      if (brokenPlugins.isNotEmpty()) {
         updateBrokenPlugins(brokenPlugins)
       }
     }
@@ -493,7 +499,10 @@ object UpdateChecker {
   @JvmStatic
   fun saveDisabledToUpdatePlugins() {
     runCatching {
-      PluginManagerCore.writePluginIdsToFile(PathManager.getConfigDir().resolve(DISABLED_UPDATE), disabledToUpdate.asSequence())
+      PluginManagerCore.writePluginIdsToFile(
+        /* path = */ PathManager.getConfigDir().resolve(DISABLED_UPDATE),
+        /* pluginIds = */ disabledToUpdate,
+      )
     }.onFailure {
       LOG.error(it)
     }
@@ -565,7 +574,7 @@ object UpdateChecker {
     }
 
     val dialog = when (checkForUpdateResult) {
-      is PlatformUpdates.Loaded -> PlatformUpdateDialog.createTestDialog(project, checkForUpdateResult, patchFile)
+      is PlatformUpdates.Loaded -> UpdateInfoDialog(project, checkForUpdateResult, patchFile)
       else -> NoUpdatesDialog(true)
     }
 
@@ -606,6 +615,14 @@ private fun doUpdateAndShowResult(
   indicator: ProgressIndicator? = null,
   callback: ActionCallback? = null,
 ): (() -> Unit)? {
+  if (!PropertiesComponent.getInstance().getBoolean(MACHINE_ID_DISABLED_PROPERTY, false) && !machineIdInitialized) {
+    machineIdInitialized = true
+    val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates", "")
+    if (machineId != null) {
+      UpdateRequestParameters.addParameter(UpdateChecker.MACHINE_ID_PARAMETER, machineId)
+    }
+  }
+
   val updateSettings = customSettings ?: UpdateSettings.getInstance()
 
   val platformUpdates = UpdateChecker.getPlatformUpdates(updateSettings, indicator)
@@ -661,11 +678,11 @@ private fun doUpdateAndShowResult(
   // TODO revise this
   val pluginAutoUpdateService = service<PluginAutoUpdateService>()
   if (platformUpdates !is PlatformUpdates.Loaded) {
-    pluginAutoUpdateService.onPluginUpdatesChecked(updatesForPlugins)
+    pluginAutoUpdateService.onPluginUpdatesCheck(updatesForPlugins)
   } else {
     if (pluginAutoUpdateService.isAutoUpdateEnabled()) {
       val (pluginUpdates, _) = UpdateChecker.getInternalPluginUpdates(indicator = indicator)
-      pluginAutoUpdateService.onPluginUpdatesChecked(nonIgnored(pluginUpdates.allEnabled))
+      pluginAutoUpdateService.onPluginUpdatesCheck(nonIgnored(pluginUpdates.allEnabled))
     }
   }
 
@@ -685,7 +702,7 @@ private fun doUpdateAndShowResult(
       showResults(
         project = project,
         platformUpdates = platformUpdates,
-        updatesForPlugins = updatesForPlugins,
+        updatedPlugins = updatesForPlugins,
         incompatiblePlugins = pluginUpdates.incompatible,
         showNotification = userInitiated || WelcomeFrame.getInstance() != null,
         forceDialog = forceDialog,
@@ -815,7 +832,7 @@ private fun showUpdatePluginsNotification(updatesForPlugins: List<PluginDownload
 private fun showResults(
   project: Project?,
   platformUpdates: PlatformUpdates.Loaded,
-  updatesForPlugins: List<PluginDownloader>,
+  updatedPlugins: List<PluginDownloader>,
   incompatiblePlugins: Collection<IdeaPluginDescriptor>,
   showNotification: Boolean,
   forceDialog: Boolean,
@@ -826,11 +843,11 @@ private fun showResults(
   }
 
   val showUpdateDialog = {
-    PlatformUpdateDialog(
+    UpdateInfoDialog(
       project,
       platformUpdates,
       showSettingsLink,
-      updatesForPlugins,
+      updatedPlugins,
       incompatiblePlugins,
     ).show()
   }
@@ -839,7 +856,7 @@ private fun showResults(
     showUpdateDialog()
   }
   else {
-    UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatesForPlugins, incompatiblePlugins)
+    UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatedPlugins, incompatiblePlugins)
 
     if (showNotification) {
       IdeUpdateUsageTriggerCollector.NOTIFICATION_SHOWN.log(project)

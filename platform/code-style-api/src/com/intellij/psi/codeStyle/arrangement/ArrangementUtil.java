@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.lang.Language;
@@ -30,7 +30,8 @@ public final class ArrangementUtil {
   private ArrangementUtil() {
   }
 
-  public static @Nullable ArrangementSettings getArrangementSettings(@NotNull CodeStyleSettings settings, @NotNull Language language) {
+  @Nullable
+  public static ArrangementSettings getArrangementSettings(@NotNull CodeStyleSettings settings, @NotNull Language language) {
     ArrangementSettings arrangementSettings = settings.getCommonSettings(language).getArrangementSettings();
     if (arrangementSettings != null) {
       return arrangementSettings;
@@ -45,7 +46,8 @@ public final class ArrangementUtil {
 
   //region Serialization
 
-  public static @Nullable ArrangementSettings readExternal(@NotNull Element element, @NotNull Language language) {
+  @Nullable
+  public static ArrangementSettings readExternal(@NotNull Element element, @NotNull Language language) {
     ArrangementSettingsSerializer serializer = getSerializer(language);
     if (serializer == null) {
       LOG.warn("Can't find serializer for language: " + language.getDisplayName() + "(" + language.getID() + ")");
@@ -65,14 +67,16 @@ public final class ArrangementUtil {
     serializer.serialize(settings, element);
   }
 
-  private static @Nullable ArrangementSettingsSerializer getSerializer(@NotNull Language language) {
+  @Nullable
+  private static ArrangementSettingsSerializer getSerializer(@NotNull Language language) {
     Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(language);
     return rearranger == null ? null : rearranger.getSerializer();
   }
 
   //endregion
 
-  public static @NotNull ArrangementMatchCondition combine(ArrangementMatchCondition @NotNull ... nodes) {
+  @NotNull
+  public static ArrangementMatchCondition combine(ArrangementMatchCondition @NotNull ... nodes) {
     final ArrangementCompositeMatchCondition result = new ArrangementCompositeMatchCondition();
     final ArrangementMatchConditionVisitor visitor = new ArrangementMatchConditionVisitor() {
       @Override
@@ -135,7 +139,8 @@ public final class ArrangementUtil {
    * @param document      target document against which the ranges are built
    * @return              expanded range if possible; {@code null} otherwise
    */
-  public static @NotNull TextRange expandToLineIfPossible(@NotNull TextRange initialRange, @NotNull Document document) {
+  @NotNull
+  public static TextRange expandToLineIfPossible(@NotNull TextRange initialRange, @NotNull Document document) {
     CharSequence text = document.getCharsSequence();
     String ws = " \t";
 
@@ -154,7 +159,8 @@ public final class ArrangementUtil {
   }
   //endregion
 
-  public static @Nullable ArrangementSettingsToken parseType(@NotNull ArrangementMatchCondition condition) throws IllegalArgumentException {
+  @Nullable
+  public static ArrangementSettingsToken parseType(@NotNull ArrangementMatchCondition condition) throws IllegalArgumentException {
     final Ref<ArrangementSettingsToken> result = new Ref<>();
     condition.invite(new ArrangementMatchConditionVisitor() {
       @Override
@@ -189,7 +195,8 @@ public final class ArrangementUtil {
     return result;
   }
 
-  public static @NotNull Map<ArrangementSettingsToken, Object> extractTokens(@NotNull ArrangementMatchCondition condition) {
+  @NotNull
+  public static Map<ArrangementSettingsToken, Object> extractTokens(@NotNull ArrangementMatchCondition condition) {
     final Map<ArrangementSettingsToken, Object> result = new HashMap<>();
     condition.invite(new ArrangementMatchConditionVisitor() {
       @Override
@@ -216,7 +223,8 @@ public final class ArrangementUtil {
     return result;
   }
 
-  public static @Nullable ArrangementEntryMatcher buildMatcher(@NotNull ArrangementMatchCondition condition) {
+  @Nullable
+  public static ArrangementEntryMatcher buildMatcher(@NotNull ArrangementMatchCondition condition) {
     final Ref<ArrangementEntryMatcher> result = new Ref<>();
     final Stack<CompositeArrangementEntryMatcher> composites = new Stack<>();
     ArrangementMatchConditionVisitor visitor = new ArrangementMatchConditionVisitor() {
@@ -254,7 +262,8 @@ public final class ArrangementUtil {
     return result.get();
   }
 
-  public static @Nullable ArrangementEntryMatcher buildMatcher(@NotNull ArrangementAtomMatchCondition condition) {
+  @Nullable
+  public static ArrangementEntryMatcher buildMatcher(@NotNull ArrangementAtomMatchCondition condition) {
     if (StdArrangementTokenType.ENTRY_TYPE.is(condition.getType())) {
       return new ByTypeArrangementEntryMatcher(condition);
     }
@@ -272,7 +281,8 @@ public final class ArrangementUtil {
     }
   }
 
-  public static @NotNull List<CompositeArrangementSettingsToken> flatten(@NotNull CompositeArrangementSettingsToken base) {
+  @NotNull
+  public static List<CompositeArrangementSettingsToken> flatten(@NotNull CompositeArrangementSettingsToken base) {
     List<CompositeArrangementSettingsToken> result = new ArrayList<>();
     Queue<CompositeArrangementSettingsToken> toProcess = ContainerUtil.newLinkedList(base);
     while (!toProcess.isEmpty()) {
@@ -284,7 +294,8 @@ public final class ArrangementUtil {
   }
 
   //region Arrangement Sections
-  public static @NotNull List<StdArrangementMatchRule> collectMatchRules(@NotNull List<? extends ArrangementSectionRule> sections) {
+  @NotNull
+  public static List<StdArrangementMatchRule> collectMatchRules(@NotNull List<? extends ArrangementSectionRule> sections) {
     final List<StdArrangementMatchRule> matchRules = new ArrayList<>();
     for (ArrangementSectionRule section : sections) {
       matchRules.addAll(section.getMatchRules());

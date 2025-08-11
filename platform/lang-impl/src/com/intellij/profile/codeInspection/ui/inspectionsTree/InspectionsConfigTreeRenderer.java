@@ -67,7 +67,8 @@ public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer 
     return component;
   }
 
-  private static @Nullable @NlsContexts.Label String getHint(final Descriptor descriptor) {
+  @Nullable
+  private static @NlsContexts.Label String getHint(final Descriptor descriptor) {
     final InspectionToolWrapper toolWrapper = descriptor.getToolWrapper();
 
     if (toolWrapper instanceof LocalInspectionToolWrapper ||

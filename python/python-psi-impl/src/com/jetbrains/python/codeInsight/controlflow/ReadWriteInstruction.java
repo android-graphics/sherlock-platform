@@ -28,11 +28,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ReadWriteInstruction extends InstructionImpl {
-  private static InstructionTypeCallback instructionTypeCallback(@Nullable PsiElement element) {
-    return element instanceof PyExpression expression
-           ? context -> Ref.create(context.getType(expression))
-           : context -> Ref.create(null);
-  }
+  final InstructionTypeCallback EXPR_TYPE = new InstructionTypeCallback() {
+    @Nullable
+    @Override
+    public Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor) {
+      return Ref.create(myElement instanceof PyExpression ? context.getType((PyExpression)myElement) : null);
+    }
+  };
 
   public enum ACCESS {
     READ(true, false, false, false),
@@ -85,11 +87,11 @@ public final class ReadWriteInstruction extends InstructionImpl {
                                final PsiElement element,
                                final String name,
                                final ACCESS access,
-                               final @Nullable InstructionTypeCallback getType) {
+                               @Nullable final InstructionTypeCallback getType) {
     super(builder, element);
     myName = name;
     myAccess = access;
-    myGetType = getType != null ? getType : instructionTypeCallback(element);
+    myGetType = getType != null ? getType : EXPR_TYPE;
   }
 
   public String getName() {
@@ -126,12 +128,15 @@ public final class ReadWriteInstruction extends InstructionImpl {
     return new ReadWriteInstruction(builder, element, name, ACCESS.ASSERTTYPE, getType);
   }
 
-  public @Nullable Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor) {
-    return myGetType.getType(context);
+  @Nullable
+  public Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor) {
+    return myGetType.getType(context, anchor);
   }
 
+  @NotNull
+  @NonNls
   @Override
-  public @NotNull @NonNls String getElementPresentation() {
+  public String getElementPresentation() {
     return myAccess + " ACCESS: " + myName;
   }
 }

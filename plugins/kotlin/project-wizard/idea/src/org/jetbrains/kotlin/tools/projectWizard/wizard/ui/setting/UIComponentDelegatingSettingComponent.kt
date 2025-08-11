@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting
 
+import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingReference
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingType

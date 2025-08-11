@@ -11,13 +11,10 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.serialization.PropertyMapping;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,41 +26,45 @@ public final class JavaProjectData extends AbstractExternalEntityData {
 
   private static final Pattern JDK_VERSION_PATTERN = Pattern.compile(".*1.(\\d+).*");
 
-  private @Nullable JavaSdkVersion jdkVersion;
+  private boolean isSetJdkVersion = false;
+  private @NotNull JavaSdkVersion jdkVersion;
 
   private @NotNull String compileOutputPath;
-  private @Nullable LanguageLevel languageLevel;
+  private @NotNull LanguageLevel languageLevel;
   private @Nullable String targetBytecodeVersion;
 
-  private @NotNull List<String> compilerArguments;
+  public JavaProjectData(@NotNull ProjectSystemId owner, @NotNull String compileOutputPath) {
+    this(owner, compileOutputPath, null, null);
+  }
 
-  /**
-   * @deprecated use {@link #JavaProjectData(ProjectSystemId, String, LanguageLevel, String, List)} instead
-   */
-  @Deprecated
+  @PropertyMapping({"owner", "compileOutputPath", "languageLevel", "targetBytecodeVersion"})
   public JavaProjectData(
     @NotNull ProjectSystemId owner,
     @NotNull String compileOutputPath,
     @Nullable LanguageLevel languageLevel,
     @Nullable String targetBytecodeVersion
   ) {
-    this(owner, compileOutputPath, languageLevel, targetBytecodeVersion, Collections.emptyList());
+    this(owner, compileOutputPath, null, languageLevel, targetBytecodeVersion);
   }
 
-  @PropertyMapping({"owner", "compileOutputPath", "languageLevel", "targetBytecodeVersion", "compilerArguments"})
+  /**
+   * @deprecated use {@link JavaProjectData#JavaProjectData(ProjectSystemId, String, LanguageLevel, String)} instead
+   */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public JavaProjectData(
     @NotNull ProjectSystemId owner,
     @NotNull String compileOutputPath,
+    @Nullable JavaSdkVersion jdkVersion,
     @Nullable LanguageLevel languageLevel,
-    @Nullable String targetBytecodeVersion,
-    @NotNull List<String> compilerArguments
+    @Nullable String targetBytecodeVersion
   ) {
     super(owner);
 
     this.compileOutputPath = compileOutputPath;
-    this.languageLevel = languageLevel;
+    this.jdkVersion = jdkVersion != null ? jdkVersion : JavaSdkVersion.fromLanguageLevel(LanguageLevel.HIGHEST);
+    this.languageLevel = languageLevel != null ? languageLevel : LanguageLevel.HIGHEST;
     this.targetBytecodeVersion = targetBytecodeVersion;
-    this.compilerArguments = compilerArguments;
   }
 
   public @NotNull String getCompileOutputPath() {
@@ -77,26 +78,21 @@ public final class JavaProjectData extends AbstractExternalEntityData {
   /**
    * @deprecated use {@link ProjectSdkData#getSdkName()} instead
    */
-  @Deprecated(forRemoval = true) // used externally
+  @Deprecated(forRemoval = true)
   public @NotNull JavaSdkVersion getJdkVersion() {
-    return ObjectUtils.notNull(jdkVersion, JavaSdkVersion.fromLanguageLevel(LanguageLevel.HIGHEST));
+    return jdkVersion;
   }
 
-  /**
-   * @deprecated needed to support backward compatibility
-   */
   @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public void setJdkName(@Nullable String jdk) {
-    jdkVersion = resolveSdkVersion(jdk);
+  public boolean isSetJdkVersion() {
+    return isSetJdkVersion;
   }
 
   /**
    * @deprecated needed to support backward compatibility
    */
   @Deprecated(forRemoval = true)
-  private static @Nullable JavaSdkVersion resolveSdkVersion(@Nullable String jdk) {
+  public static @Nullable JavaSdkVersion resolveSdkVersion(@Nullable String jdk) {
     if (jdk == null) {
       return null;
     }
@@ -125,10 +121,6 @@ public final class JavaProjectData extends AbstractExternalEntityData {
     return null;
   }
 
-  /**
-   * @deprecated needed to support backward compatibility
-   */
-  @Deprecated(forRemoval = true)
   private static @Nullable JavaSdkVersion resolveSdkVersion(int version) {
     if (version < 0 || version >= JavaSdkVersion.values().length) {
       LOG.warn(String.format(
@@ -146,7 +138,7 @@ public final class JavaProjectData extends AbstractExternalEntityData {
   }
 
   public @NotNull LanguageLevel getLanguageLevel() {
-    return ObjectUtils.notNull(languageLevel, LanguageLevel.HIGHEST);
+    return languageLevel;
   }
 
   public void setLanguageLevel(@NotNull LanguageLevel level) {
@@ -168,22 +160,13 @@ public final class JavaProjectData extends AbstractExternalEntityData {
     this.targetBytecodeVersion = targetBytecodeVersion;
   }
 
-  public @NotNull List<String> getCompilerArguments() {
-    return compilerArguments;
-  }
-
-  public void setCompilerArguments(@NotNull List<String> compilerArguments) {
-    this.compilerArguments = compilerArguments;
-  }
-
   @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + Objects.hashCode(jdkVersion);
-    result = 31 * result + Objects.hashCode(languageLevel);
+    result = 31 * result + languageLevel.hashCode();
     result = 31 * result + Objects.hashCode(targetBytecodeVersion);
     result = 31 * result + compileOutputPath.hashCode();
-    result = 31 * result + compilerArguments.hashCode();
     return result;
   }
 
@@ -199,7 +182,6 @@ public final class JavaProjectData extends AbstractExternalEntityData {
     if (Objects.equals(jdkVersion, project.jdkVersion)) return false;
     if (Objects.equals(languageLevel, project.languageLevel)) return false;
     if (Objects.equals(targetBytecodeVersion, project.targetBytecodeVersion)) return false;
-    if (Objects.equals(compilerArguments, project.compilerArguments)) return false;
 
     return true;
   }

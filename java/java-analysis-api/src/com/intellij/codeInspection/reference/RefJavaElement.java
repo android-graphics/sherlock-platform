@@ -10,7 +10,6 @@ import java.util.Collection;
 
 public interface RefJavaElement extends RefElement {
 
-  @Override
   @Deprecated
   default PsiElement getElement() {
     throw new UnsupportedOperationException();

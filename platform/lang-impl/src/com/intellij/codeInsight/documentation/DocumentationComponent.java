@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -54,12 +55,14 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.MathUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,8 +80,12 @@ import java.util.List;
  * @deprecated Unused in v2 implementation. Unsupported: use at own risk.
  */
 @Deprecated(forRemoval = true)
-public class DocumentationComponent extends JPanel implements Disposable, UiCompatibleDataProvider, WidthBasedLayout {
+public class DocumentationComponent extends JPanel implements Disposable, DataProvider, WidthBasedLayout {
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
+  static final DataProvider HELP_DATA_PROVIDER =
+    dataId -> PlatformCoreDataKeys.HELP_ID.is(dataId)
+              ? "reference.toolWindows.Documentation"
+              : null;
 
   public static final ColorKey COLOR_KEY = EditorColors.DOCUMENTATION_COLOR;
   public static final Color SECTION_COLOR = Gray.get(0x90);
@@ -128,7 +135,10 @@ public class DocumentationComponent extends JPanel implements Disposable, UiComp
     @NotNull PsiElement element,
     @NotNull Disposable disposable
   ) {
-    DocumentationRequest request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element)); // old API fallback
+    DocumentationRequest request;
+    try (AccessToken ignored = SlowOperations.allowSlowOperations(SlowOperations.GENERIC)) {
+      request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element)); // old API fallback
+    }
     return DocumentationUtil.documentationComponent(project, request, disposable);
   }
 
@@ -285,6 +295,9 @@ public class DocumentationComponent extends JPanel implements Disposable, UiComp
     else if (myManager.myToolWindow != null) {
       Disposer.register(myManager.myToolWindow.getContentManager(), this);
     }
+    DataManager.registerDataProvider(myEditorPane, HELP_DATA_PROVIDER);
+    DataManager.registerDataProvider(myScrollPane, HELP_DATA_PROVIDER);
+
     updateControlState();
   }
 
@@ -343,16 +356,19 @@ public class DocumentationComponent extends JPanel implements Disposable, UiComp
   }
 
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(PlatformCoreDataKeys.HELP_ID, "reference.toolWindows.Documentation");
-    // Javadocs often contain &nbsp; symbols (non-breakable white space). We don't want to copy them as is and replace
-    // with raw white spaces. See IDEA-86633 for more details.
-    String selectedText = myEditorPane.getSelectedText();
-    sink.set(DocumentationManager.SELECTED_QUICK_DOC_TEXT,
-             selectedText == null ? null : selectedText.replace((char)160, ' '));
+  public Object getData(@NotNull @NonNls String dataId) {
+    if (DocumentationManager.SELECTED_QUICK_DOC_TEXT.is(dataId)) {
+      // Javadocs often contain &nbsp; symbols (non-breakable white space). We don't want to copy them as is and replace
+      // with raw white spaces. See IDEA-86633 for more details.
+      String selectedText = myEditorPane.getSelectedText();
+      return selectedText == null ? null : selectedText.replace((char)160, ' ');
+    }
+
+    return null;
   }
 
-  public static @NotNull FontSize getQuickDocFontSize() {
+  @NotNull
+  public static FontSize getQuickDocFontSize() {
     return DocumentationFontSize.getDocumentationFontSize();
   }
 
@@ -388,7 +404,8 @@ public class DocumentationComponent extends JPanel implements Disposable, UiComp
     return myEditorPane;
   }
 
-  public @Nullable PsiElement getElement() {
+  @Nullable
+  public PsiElement getElement() {
     return myElement != null ? myElement.getElement() : null;
   }
 

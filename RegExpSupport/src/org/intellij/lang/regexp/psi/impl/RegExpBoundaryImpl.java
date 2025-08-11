@@ -28,7 +28,8 @@ public class RegExpBoundaryImpl extends RegExpElementImpl implements RegExpBound
     }
 
     @Override
-    public @NotNull Type getType() {
+    @NotNull
+    public Type getType() {
         final IElementType type = getNode().getFirstChildNode().getElementType();
         if (type == RegExpTT.CARET) {
             return Type.LINE_START;

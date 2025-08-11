@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.checkin;
 
@@ -43,7 +43,8 @@ public abstract class CheckinHandler {
    *
    * @see com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
    */
-  public @Nullable RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
+  @Nullable
+  public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
     return null;
   }
 
@@ -52,14 +53,16 @@ public abstract class CheckinHandler {
    *
    * @see com.intellij.openapi.options.UiDslUnnamedConfigurable
    */
-  public @Nullable UnnamedConfigurable getBeforeCheckinSettings() {
+  @Nullable
+  public UnnamedConfigurable getBeforeCheckinSettings() {
     return tryCast(getBeforeCheckinConfigurationPanel(), UnnamedConfigurable.class);
   }
 
   /**
    * Returns the panel which is inserted in the "After Commit" group of the commit options panel.
    */
-  public @Nullable RefreshableOnComponent getAfterCheckinConfigurationPanel(final Disposable parentDisposable) {
+  @Nullable
+  public RefreshableOnComponent getAfterCheckinConfigurationPanel(final Disposable parentDisposable) {
     return null;
   }
 
@@ -74,7 +77,8 @@ public abstract class CheckinHandler {
    * @param executor the commit executor, or {@code null} if the standard commit operation is executed.
    * @return the code indicating whether the check-in operation should be performed or aborted.
    */
-  public @Nullable ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
+  @Nullable
+  public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
     return beforeCheckin();
   }
 

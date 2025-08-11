@@ -26,7 +26,6 @@ import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.UsefulTestCase.assertNotEmpty
-import com.intellij.testFramework.propertyBased.MadTestingUtil.assertNoErrorLoggedIn
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.ui.EmptyIcon
@@ -74,7 +73,7 @@ class ArtifactsPropertyTest {
 
     PropertyChecker.checkScenarios {
       codeMaker = CodeMaker()
-      assertNoErrorLoggedIn(ImperativeCommand {
+      ImperativeCommand {
         try {
           it.executeCommands(Generator.sampledFrom(
             RenameArtifact(),
@@ -121,7 +120,7 @@ class ArtifactsPropertyTest {
           it.logMessage("------- Code -------")
           it.logMessage(codeMaker.get())
         }
-      })
+      }
     }
   }
 

@@ -10,10 +10,8 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public final class CommentJoinLinesHandler implements JoinRawLinesHandlerDelegate {
 
   @Override

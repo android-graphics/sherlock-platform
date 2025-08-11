@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.AsyncFileListener;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
@@ -144,16 +145,19 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
     }
   }
 
-  private static @Nullable PsiDirectory getDirectory(@NotNull Project project, @NotNull RootType rootType) {
+  @Nullable
+  private static PsiDirectory getDirectory(@NotNull Project project, @NotNull RootType rootType) {
     VirtualFile virtualFile = getVirtualFile(rootType);
     return virtualFile == null ? null : PsiManager.getInstance(project).findDirectory(virtualFile);
   }
 
   public static @Nullable VirtualFile getVirtualFile(@NotNull RootType rootType) {
-    return ScratchFileService.getInstance().getVirtualFile(rootType);
+    String path = ScratchFileService.getInstance().getRootPath(rootType);
+    return LocalFileSystem.getInstance().findFileByPath(path);
   }
 
-  private static @Nullable AbstractTreeNode<?> createRootTypeNode(@NotNull Project project, @NotNull RootType rootType, @NotNull ViewSettings settings) {
+  @Nullable
+  private static AbstractTreeNode<?> createRootTypeNode(@NotNull Project project, @NotNull RootType rootType, @NotNull ViewSettings settings) {
     if (rootType.isHidden()) return null;
     MyRootNode node = new MyRootNode(project, rootType, settings);
     return node.isEmpty() ? null : node;
@@ -222,8 +226,9 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
       return ScratchUtil.isScratch(file);
     }
 
+    @NotNull
     @Override
-    public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
+    public Collection<? extends AbstractTreeNode<?>> getChildren() {
       List<AbstractTreeNode<?>> list = new ArrayList<>();
       Project project = Objects.requireNonNull(getProject());
       for (RootType rootType : RootType.getAllRootTypes()) {
@@ -249,7 +254,8 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
       super(project, type, settings);
     }
 
-    public @NotNull RootType getRootType() {
+    @NotNull
+    public RootType getRootType() {
       return Objects.requireNonNull(getValue());
     }
 
@@ -258,8 +264,9 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
       return getValue().containsFile(file);
     }
 
+    @Nullable
     @Override
-    public @Nullable VirtualFile getVirtualFile() {
+    public VirtualFile getVirtualFile() {
       return ScratchTreeStructureProvider.getVirtualFile(getRootType());
     }
 
@@ -268,13 +275,15 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
       return ScratchFileService.getInstance().getRootPath(getRootType());
     }
 
+    @NotNull
     @Override
-    public @NotNull Collection<VirtualFile> getRoots() {
+    public Collection<VirtualFile> getRoots() {
       return getDefaultRootsFor(getVirtualFile());
     }
 
+    @NotNull
     @Override
-    public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
+    public Collection<? extends AbstractTreeNode<?>> getChildren() {
       //noinspection ConstantConditions
       return getDirectoryChildrenImpl(getProject(), getDirectory(), getSettings(), this);
     }
@@ -312,10 +321,11 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
       return !getRootType().isIgnored(getProject(), item.getVirtualFile());
     }
 
-    static @NotNull Collection<AbstractTreeNode<?>> getDirectoryChildrenImpl(@NotNull Project project,
-                                                                             @Nullable PsiDirectory directory,
-                                                                             @NotNull ViewSettings settings,
-                                                                             @NotNull PsiFileSystemItemFilter filter) {
+    @NotNull
+    static Collection<AbstractTreeNode<?>> getDirectoryChildrenImpl(@NotNull Project project,
+                                                                 @Nullable PsiDirectory directory,
+                                                                 @NotNull ViewSettings settings,
+                                                                 @NotNull PsiFileSystemItemFilter filter) {
       final List<AbstractTreeNode<?>> result = new ArrayList<>();
       PsiElementProcessor<PsiFileSystemItem> processor = new PsiElementProcessor<>() {
         @Override

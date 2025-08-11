@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -16,16 +16,15 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.introduce.IntroduceTarget;
 import com.intellij.refactoring.introduce.PsiIntroduceTarget;
-import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -60,7 +59,6 @@ public final class IntroduceTargetChooser {
   }
 
   public static <T extends PsiElement> void showChooser(@NotNull Editor editor,
-                                                        @Unmodifiable
                                                         @NotNull List<? extends T> expressions,
                                                         @NotNull Pass<? super T> callback,
                                                         @NotNull Function<? super T, String> renderer,
@@ -125,16 +123,24 @@ public final class IntroduceTargetChooser {
           highlighter.getAndSet(null).dropHighlight();
         }
       })
-      .setRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<>() {
+      .setRenderer(new DefaultListCellRenderer() {
         @Override
-        public String getTextFor(T value) {
-          String text = value.render();
+        public Component getListCellRendererComponent(JList list,
+                                                      Object value,
+                                                      int index,
+                                                      boolean isSelected,
+                                                      boolean cellHasFocus) {
+          Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          //noinspection unchecked
+          IntroduceTarget expr = (T)value;
+          String text = expr.render();
           int firstNewLinePos = text.indexOf('\n');
           String trimmedText = text.substring(0, firstNewLinePos != -1 ? firstNewLinePos : Math.min(100, text.length()));
           if (trimmedText.length() != text.length()) trimmedText += " ...";
-          return trimmedText;
+          setText(trimmedText);
+          return rendererComponent;
         }
-      }));
+      });
     if (southComponent != null && builder instanceof PopupChooserBuilder) {
       ((PopupChooserBuilder<T>)builder).setSouthComponent(southComponent);
     }
@@ -156,13 +162,15 @@ public final class IntroduceTargetChooser {
       myText = text;
     }
 
+    @NotNull
     @Override
-    public @NotNull TextRange getTextRange() {
+    public TextRange getTextRange() {
       return myTextRange;
     }
 
+    @NotNull
     @Override
-    public @NotNull String render() {
+    public String render() {
       return myText;
     }
 

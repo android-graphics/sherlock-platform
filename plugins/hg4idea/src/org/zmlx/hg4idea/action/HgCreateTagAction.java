@@ -32,10 +32,10 @@ import static org.zmlx.hg4idea.HgNotificationIdsHolder.TAG_CREATION_FAILED;
 
 public class HgCreateTagAction extends HgAbstractGlobalSingleRepoAction {
 
-  public void execute(final @NotNull Project project,
+  public void execute(@NotNull final Project project,
                       @NotNull Collection<HgRepository> repositories,
                       @Nullable HgRepository selectedRepo,
-                      final @Nullable String reference) {
+                      @Nullable final String reference) {
     final HgTagDialog dialog = new HgTagDialog(project, repositories, selectedRepo);
     if (dialog.showAndGet()) {
       try {
@@ -59,7 +59,7 @@ public class HgCreateTagAction extends HgAbstractGlobalSingleRepoAction {
   }
 
   @Override
-  protected void execute(final @NotNull Project project,
+  protected void execute(@NotNull final Project project,
                          @NotNull Collection<HgRepository> repositories,
                          @Nullable HgRepository selectedRepo, @NotNull DataContext dataContext) {
     execute(project, repositories, selectedRepo, "");

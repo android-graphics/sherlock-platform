@@ -2,16 +2,14 @@
 package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressWindowTestCase
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.component1
-import com.intellij.openapi.util.component2
-import com.intellij.openapi.util.use
+import com.intellij.openapi.util.*
+import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.SkipInHeadlessEnvironment
@@ -25,7 +23,12 @@ class BackgroundableProcessIndicatorTest : ProgressWindowTestCase<Pair<Task.Back
 
   override fun setUp(): Unit = super.setUp().also {
     assumeFalse("Cannot run headless", ApplicationManager.getApplication().isHeadlessEnvironment)
-    statusBar = IdeStatusBarImpl((project as ComponentManagerEx).getCoroutineScope(), { null }, false)
+    val frameHelper = ProjectFrameHelper(IdeFrameImpl())
+    Disposer.register(testRootDisposable) {
+      frameHelper.dispose()
+    }
+    frameHelper.init()
+    statusBar = frameHelper.statusBar as IdeStatusBarImpl
   }
 
   override fun Pair<Task.Backgroundable, BackgroundableProcessIndicator>.use(block: () -> Unit) {

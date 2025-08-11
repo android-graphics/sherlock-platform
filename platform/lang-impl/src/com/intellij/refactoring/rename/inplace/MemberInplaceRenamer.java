@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -78,8 +78,9 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     showDialogAdvertisement("RenameElement");
   }
 
+  @NotNull
   @Override
-  protected @NotNull VariableInplaceRenamer createInplaceRenamerToRestart(PsiNamedElement variable, Editor editor, String initialName) {
+  protected VariableInplaceRenamer createInplaceRenamerToRestart(PsiNamedElement variable, Editor editor, String initialName) {
     return new MemberInplaceRenamer(variable, getSubstituted(), editor, initialName, myOldName);
   }
 
@@ -108,37 +109,24 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected PsiElement getNameIdentifier() {
-    PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
-
-    if (currentFile != null) {
-      //for multiPSI files, try to get psi for required language
-      Language language = myElementToRename.getLanguage();
-      List<@NotNull PsiFile> psiFiles = currentFile.getViewProvider().getAllFiles();
-      Optional<@NotNull PsiFile> psiFile = psiFiles.stream().filter(fileLang -> fileLang.getLanguage().isKindOf(language)).findFirst();
-      if (psiFile.isPresent()) {
-        currentFile = psiFile.get();
-      }
-    }
-
-    if (currentFile == myElementToRename.getContainingFile()) {
+    final PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    if (currentFile == myElementToRename.getContainingFile()){
       return super.getNameIdentifier();
     }
-
-    if (currentFile == null) {
-      return null;
-    }
-
-    int offset = myEditor.getCaretModel().getOffset();
-    offset = TargetElementUtil.adjustOffset(currentFile, myEditor.getDocument(), offset);
-    final PsiElement elementAt = currentFile.findElementAt(offset);
-    if (elementAt != null) {
-      final PsiElement referenceExpression = elementAt.getParent();
-      if (referenceExpression != null) {
-        final PsiReference reference = referenceExpression.getReference();
-        if (reference != null && reference.resolve() == myElementToRename) {
-          return elementAt;
+    if (currentFile != null) {
+      int offset = myEditor.getCaretModel().getOffset();
+      offset = TargetElementUtil.adjustOffset(currentFile, myEditor.getDocument(), offset);
+      final PsiElement elementAt = currentFile.findElementAt(offset);
+      if (elementAt != null) {
+        final PsiElement referenceExpression = elementAt.getParent();
+        if (referenceExpression != null) {
+          final PsiReference reference = referenceExpression.getReference();
+          if (reference != null && reference.resolve() == myElementToRename) {
+            return elementAt;
+          }
         }
       }
+      return null;
     }
     return null;
   }
@@ -176,12 +164,6 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   protected boolean notSameFile(@Nullable VirtualFile file, @NotNull PsiFile containingFile) {
     final PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     if (currentFile == null) return true;
-
-    //MultiViewFileProviders should be the same
-    if (currentFile.getViewProvider().getPsi(containingFile.getLanguage()) == containingFile) {
-      return false;
-    }
-
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(containingFile.getProject());
     return manager.getTopLevelFile(containingFile) != manager.getTopLevelFile(currentFile);
   }
@@ -336,7 +318,8 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     ((EditorImpl)InjectedLanguageEditorUtil.getTopLevelEditor(myEditor)).stopDumbLater();
   }
 
-  public @Nullable PsiElement getSubstituted() {
+  @Nullable
+  public PsiElement getSubstituted() {
     if (mySubstituted != null && mySubstituted.isValid()){
       if (mySubstituted instanceof PsiNameIdentifierOwner) {
         if (Comparing.strEqual(myOldName, ((PsiNameIdentifierOwner)mySubstituted).getName())) return mySubstituted;
@@ -389,8 +372,9 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
             elementProcessor.isToSearchForTextOccurrences(element) && TextOccurrencesUtil.isSearchTextOccurrencesEnabled(element));
     }
 
+    @Nullable
     @Override
-    protected @Nullable String getRefactoringId() {
+    protected String getRefactoringId() {
       return "refactoring.inplace.rename";
     }
 

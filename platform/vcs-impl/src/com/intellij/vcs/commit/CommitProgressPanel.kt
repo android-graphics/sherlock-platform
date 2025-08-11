@@ -34,6 +34,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.util.Alarm
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.HtmlPanel
 import com.intellij.util.ui.JBDimension
@@ -227,7 +228,6 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
   }
 
   override fun documentChanged(event: DocumentEvent) = clearError()
-
   override fun inclusionChanged() = clearError()
 
   protected fun update() {
@@ -242,11 +242,7 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
           // it may get interrupted to read the newly focused component.
           if (announceCommitErrorAlarm == null) {
             announceCommitErrorAlarm =
-              SingleAlarm.singleEdtAlarm(
-                task = { AccessibleAnnouncerUtil.announce(label, label.text, false) },
-                delay = 500,
-                parentDisposable = this,
-              )
+              SingleAlarm({ AccessibleAnnouncerUtil.announce(label, label.text, false) }, 500, this, Alarm.ThreadToUse.SWING_THREAD)
           }
           announceCommitErrorAlarm?.cancelAndRequest()
         }

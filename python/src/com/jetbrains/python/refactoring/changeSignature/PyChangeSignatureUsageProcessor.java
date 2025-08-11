@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.openapi.module.Module;
@@ -17,8 +17,6 @@ import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.ast.PyAstSingleStarParameter;
-import com.jetbrains.python.ast.PyAstSlashParameter;
 import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
@@ -44,7 +42,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     if (info instanceof PyChangeInfo) {
       final PyFunction targetFunction = ((PyChangeInfo)info).getMethod();
       final List<UsageInfo> usages = PyPsiIndexUtil.findUsages(targetFunction, true);
-      if (!PyUtil.isConstructorLikeMethod(targetFunction)) {
+      if (!PyUtil.isInitOrNewMethod(targetFunction)) {
         final Query<PyFunction> search = PyOverridingMethodsSearch.search(targetFunction, true);
         for (PyFunction override : search.findAll()) {
           usages.add(new UsageInfo(override));
@@ -149,7 +147,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     List<PyParameterInfo> newParamInfos = Arrays.asList(changeInfo.getNewParameters());
     
     final int posVarargIndex = ContainerUtil.indexOf(newParamInfos, info -> isPositionalVarargName(info.getName()));
-    final int posOnlyMarkerIndex = ContainerUtil.indexOf(newParamInfos, info -> PyAstSlashParameter.TEXT.equals(info.getName()));
+    final int posOnlyMarkerIndex = ContainerUtil.indexOf(newParamInfos, info -> PySlashParameter.TEXT.equals(info.getName()));
     final boolean posVarargEmpty = posVarargIndex != -1 && oldParamIndexToArgs.get(newParamInfos.get(posVarargIndex).getOldIndex()).isEmpty();
     List<PyExpression> notInsertedVariadicKeywordArgs =
       new ArrayList<>(ContainerUtil.filter(call.getArguments(), a -> a instanceof PyStarArgument && ((PyStarArgument)a).isKeyword()));
@@ -164,11 +162,11 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       final boolean defaultShouldBeInlined = beforePositionalOnlyMarker &&
                                              ContainerUtil.exists(newParamInfos.subList(paramIndex + 1, posOnlyMarkerIndex),
                                                                   i -> !i.isNew() && !oldParamIndexToArgs.get(i.getOldIndex()).isEmpty());
-      if (paramName.equals(PyAstSingleStarParameter.TEXT)) {
+      if (paramName.equals(PySingleStarParameter.TEXT)) {
         keywordArgsRequired = true;
         continue;
       }
-      if (paramName.equals(PyAstSlashParameter.TEXT)) {
+      if (paramName.equals(PySlashParameter.TEXT)) {
         continue;
       }
       final String paramDefault = StringUtil.notNullize(info.getDefaultValue());
@@ -234,7 +232,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   }
 
   private static boolean isPositionalVarargName(@NotNull String paramName) {
-    return !isKeywordVarargName(paramName) && !paramName.equals(PyAstSingleStarParameter.TEXT) && paramName.startsWith("*");
+    return !isKeywordVarargName(paramName) && !paramName.equals(PySingleStarParameter.TEXT) && paramName.startsWith("*");
   }
 
   private static boolean isKeywordVarargName(@NotNull String paramName) {

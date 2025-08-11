@@ -1,5 +1,5 @@
 from _typeshed import Incomplete
-from typing import Final
+from typing_extensions import Final
 
 from pyasn1.type.constraint import ConstraintsIntersection, ValueRangeConstraint
 from pyasn1.type.namedtype import NamedTypes

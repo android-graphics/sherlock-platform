@@ -43,7 +43,7 @@ enum class DslLabelType {
 }
 
 @ApiStatus.Internal
-class DslLabel(@ApiStatus.Internal val type: DslLabelType) : JEditorPane() {
+class DslLabel(private val type: DslLabelType) : JEditorPane() {
 
   var action: HyperlinkEventAction? = null
 
@@ -55,10 +55,8 @@ class DslLabel(@ApiStatus.Internal val type: DslLabelType) : JEditorPane() {
 
   var limitPreferredSize: Boolean = false
 
-  @ApiStatus.Internal
   @Nls
-  var userText: String? = null
-    private set
+  private var userText: String? = null
 
   init {
     contentType = UIUtil.HTML_MIME

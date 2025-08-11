@@ -8,7 +8,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -61,7 +60,7 @@ public final class ModelMergerUtil {
     return (Collection<V>)processor.getResults();
   }
 
-  public static @Unmodifiable @NotNull <T> List<T> getImplementations(T element) {
+  public static @NotNull <T> List<T> getImplementations(T element) {
     if (element instanceof MergedObject) {
       final MergedObject<T> mergedObject = (MergedObject<T>)element;
       return mergedObject.getImplementations();

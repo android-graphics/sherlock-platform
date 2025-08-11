@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -9,9 +9,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public final class PatchFileHeaderInfo {
-  private final @NotNull @NlsSafe String myMessage;
-  private final @Nullable VcsUser myAuthor;
-  private final @Nullable String myBaseRevision;
+  @NotNull private final @NlsSafe String myMessage;
+  @Nullable private final VcsUser myAuthor;
+  @Nullable private final String myBaseRevision;
 
   PatchFileHeaderInfo(@NotNull @NlsSafe String message, @Nullable VcsUser author, @Nullable String revision) {
     myMessage = message;
@@ -19,15 +19,19 @@ public final class PatchFileHeaderInfo {
     myBaseRevision = revision;
   }
 
-  public @NotNull @NlsSafe String getMessage() {
+  @NotNull
+  @NlsSafe
+  public String getMessage() {
     return myMessage;
   }
 
-  public @Nullable VcsUser getAuthor() {
+  @Nullable
+  public VcsUser getAuthor() {
     return myAuthor;
   }
 
-  public @Nullable String getBaseRevision() {
+  @Nullable
+  public String getBaseRevision() {
     return myBaseRevision;
   }
 

@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.EventListener;
 import java.util.List;
@@ -24,7 +23,7 @@ public abstract class DomElementAnnotationsManager {
 
   public abstract @NotNull DomElementsProblemsHolder getCachedProblemHolder(DomElement element);
 
-  public abstract @Unmodifiable List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager, DomElementProblemDescriptor problemDescriptor);
+  public abstract List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager, DomElementProblemDescriptor problemDescriptor);
 
   public abstract boolean isHighlightingFinished(final DomElement[] domElements);
 
@@ -41,7 +40,7 @@ public abstract class DomElementAnnotationsManager {
    * @param inspection inspection to run on the given file element
    * @return collected DOM problem descriptors
    */
-  public abstract @Unmodifiable @NotNull <T extends DomElement> List<DomElementProblemDescriptor> checkFileElement(@NotNull DomFileElement<T> element,
+  public abstract @NotNull <T extends DomElement> List<DomElementProblemDescriptor> checkFileElement(@NotNull DomFileElement<T> element,
                                                                                             @NotNull DomElementsInspection<T> inspection,
                                                                                             boolean onTheFly);
 

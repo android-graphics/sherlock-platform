@@ -4,7 +4,6 @@ package com.intellij.ui;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -15,7 +14,6 @@ import java.awt.event.KeyEvent;
 /**
  * @author gregsh
  */
-@ApiStatus.Internal
 public abstract class TableSpeedSearchBase<Comp extends JTable> extends SpeedSearchBase<Comp> {
 
   private static final Key<Cell> SELECTION_BEFORE_KEY = Key.create("SpeedSearch.selectionBeforeSearch");

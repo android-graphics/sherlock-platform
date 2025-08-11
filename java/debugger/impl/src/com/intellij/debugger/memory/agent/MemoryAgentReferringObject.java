@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.ReferringObject;
+import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
@@ -13,7 +14,7 @@ import javax.swing.*;
 import java.util.function.Function;
 
 public abstract class MemoryAgentReferringObject implements ReferringObject {
-  protected final @NotNull ObjectReference myReference;
+  @NotNull protected final ObjectReference myReference;
   protected final boolean myIsWeakSoftReachable;
 
   public MemoryAgentReferringObject(@NotNull ObjectReference reference, boolean isWeakSoftReachable) {
@@ -21,19 +22,22 @@ public abstract class MemoryAgentReferringObject implements ReferringObject {
     this.myIsWeakSoftReachable = isWeakSoftReachable;
   }
 
+  @NotNull
   @Override
-  public final @NotNull Function<XValueNode, XValueNode> getNodeCustomizer() {
+  public final Function<XValueNode, XValueNode> getNodeCustomizer() {
     return node -> new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
       @Override
-      public void applyPresentation(@Nullable Icon icon, final @NotNull XValuePresentation valuePresenter, boolean hasChildren) {
+      public void applyPresentation(@Nullable Icon icon, @NotNull final XValuePresentation valuePresenter, boolean hasChildren) {
         node.setPresentation(icon, new XValuePresentation() {
+          @NotNull
           @Override
-          public @NotNull String getSeparator() {
+          public String getSeparator() {
             return MemoryAgentReferringObject.this.getSeparator();
           }
 
+          @Nullable
           @Override
-          public @Nullable String getType() {
+          public String getType() {
             return null;
           }
 
@@ -51,11 +55,17 @@ public abstract class MemoryAgentReferringObject implements ReferringObject {
           }
         }, hasChildren);
       }
+
+      @Override
+      public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
+      }
     };
   }
 
+  @NotNull
   @Override
-  public @NotNull ObjectReference getReference() { return myReference; }
+  public ObjectReference getReference() { return myReference; }
 
-  public @NotNull String getSeparator() { return " = "; }
+  @NotNull
+  public String getSeparator() { return " = "; }
 }

@@ -1,11 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.DumbAware;
@@ -39,8 +36,9 @@ public class EditBreakpointAction extends XDebuggerActionBase implements DumbAwa
     }
   }
 
+  @NotNull
   @Override
-  protected @NotNull DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
+  protected DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
     return debuggerSupport.getEditBreakpointAction();
   }
 }

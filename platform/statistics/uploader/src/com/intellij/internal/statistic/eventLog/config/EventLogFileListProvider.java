@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.config;
 
 import com.intellij.internal.statistic.eventLog.EventLogFile;
@@ -20,8 +20,9 @@ public class EventLogFileListProvider implements FilesToSendProvider {
       collect(Collectors.toList());
   }
 
+  @NotNull
   @Override
-  public @NotNull List<EventLogFile> getFilesToSend() {
+  public List<EventLogFile> getFilesToSend() {
     return myFiles;
   }
 }

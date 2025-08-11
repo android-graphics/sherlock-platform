@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.Segment;
@@ -9,7 +9,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.TextRangeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -93,7 +92,7 @@ public final class FormatTextRanges implements FormattingRangesInfo {
   }
 
   @Override
-  public @Unmodifiable @NotNull List<TextRange> getTextRanges() {
+  public @NotNull List<TextRange> getTextRanges() {
     return ContainerUtil.sorted(ContainerUtil.map(myRanges, FormatTextRange::getTextRange), Segment.BY_START_OFFSET_THEN_END_OFFSET);
   }
 
@@ -108,7 +107,7 @@ public final class FormatTextRanges implements FormattingRangesInfo {
   @Override
   public @Nullable TextRange getBoundRange() {
     List<TextRange> ranges = getTextRanges();
-    return !ranges.isEmpty() ?
+    return ranges.size() > 0 ?
            new TextRange(ranges.get(0).getStartOffset(), ranges.get(ranges.size() - 1).getEndOffset()) :
            null;
   }

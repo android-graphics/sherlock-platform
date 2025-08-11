@@ -4,5 +4,5 @@ def f(**kwargs):
         foo: bar
 
     Returns:
-        None: 
+        object: 
     """

@@ -1,4 +1,4 @@
-<idea-plugin>
+<<weak_warning descr="Plugin should provide 'pluginIcon.svg' (Documentation)">idea-plugin</weak_warning>>
   <id>foo</id>
   <vendor>JetBrains</vendor>
   <version>1.0</version>

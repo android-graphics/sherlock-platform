@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
@@ -54,10 +54,10 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   @Override
-  public boolean processDeclarations(final @NotNull PsiScopeProcessor processor,
-                                     final @NotNull ResolveState state,
-                                     final @Nullable PsiElement lastParent,
-                                     final @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
+                                     @NotNull final ResolveState state,
+                                     @Nullable final PsiElement lastParent,
+                                     @NotNull final PsiElement place) {
     if (lastParent == null) return true;
 
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
@@ -89,7 +89,8 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   @Override
-  public @Nullable PsiElement getArrow() {
+  @Nullable
+  public PsiElement getArrow() {
     return findPsiChildByType(GroovyTokenTypes.mCLOSABLE_BLOCK_OP);
   }
 
@@ -100,7 +101,8 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
 
   @Override
-  public @NotNull GrParameterListImpl getParameterList() {
+  @NotNull
+  public GrParameterListImpl getParameterList() {
     final GrParameterListImpl childByClass = findChildByClass(GrParameterListImpl.class);
     assert childByClass != null;
     return childByClass;
@@ -131,7 +133,8 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   @Override
-  public @Nullable PsiType getNominalType() {
+  @Nullable
+  public PsiType getNominalType() {
     return getType();
   }
 
@@ -144,8 +147,9 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     );
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiType getOwnerType() {
+  public PsiType getOwnerType() {
     return CachedValuesManager.getCachedValue(this, () -> create(doGetOwnerType(this), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
@@ -155,11 +159,13 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   @Override
-  public @Nullable PsiType getReturnType() {
+  @Nullable
+  public PsiType getReturnType() {
     return TypeInferenceHelper.getCurrentContext().getCachedValue(this, GrClosableBlockImpl::doGetReturnType);
   }
 
-  private static @Nullable PsiType doGetReturnType(GrClosableBlockImpl t) {
+  @Nullable
+  private static PsiType doGetReturnType(GrClosableBlockImpl t) {
     return GroovyPsiManager.inferType(t, new MethodTypeInferencer(t));
   }
 
@@ -173,8 +179,9 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return !(getParent() instanceof GrStringInjection);
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getLBrace() {
+  public PsiElement getLBrace() {
     return Objects.requireNonNull(super.getLBrace());
   }
 }

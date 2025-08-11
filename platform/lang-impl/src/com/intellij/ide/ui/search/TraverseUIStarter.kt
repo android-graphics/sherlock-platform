@@ -16,25 +16,20 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.ide.ui.search.SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML_NAME
 import com.intellij.idea.AppMode
-import com.intellij.l10n.LocalizationUtil
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
-import com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession
-import com.intellij.openapi.actionSystem.impl.Utils
-import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSearch
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModernApplicationStarter
-import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel
 import com.intellij.openapi.options.*
 import com.intellij.openapi.options.ex.ConfigurableWrapper
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.ReflectionUtil
@@ -49,6 +44,7 @@ import java.nio.charset.CodingErrorAction
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.system.exitProcess
 
 /**
  * Used in installer's "build searchable options" step.
@@ -58,29 +54,28 @@ import java.util.*
  *
  * Pass `true` as the second parameter to have searchable options split by modules.
  */
-class TraverseUIStarter : ModernApplicationStarter() {
+private class TraverseUIStarter : ModernApplicationStarter() {
   override suspend fun start(args: List<String>) {
-    TraverseUIMode.getInstance().setActive(true)
     try {
       doBuildSearchableOptions(
         options = LinkedHashMap(),
         outputPath = Path.of(args[1]).toAbsolutePath().normalize(),
       )
-      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true)
+      exitProcess(0)
     }
     catch (e: Throwable) {
       try {
         println("Searchable options index builder failed")
         e.printStackTrace()
       }
-      catch (_: Throwable) {
+      catch (ignored: Throwable) {
       }
-      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1)
+      exitProcess(-1)
     }
   }
 }
 
-private suspend fun addOptions(
+private fun addOptions(
   originalConfigurable: SearchableConfigurable,
   options: Map<SearchableConfigurable, Set<SearchableOptionEntry>>,
   roots: MutableMap<OptionSetId, MutableList<ConfigurableEntry>>,
@@ -157,11 +152,8 @@ private suspend fun saveResults(outDir: Path, roots: Map<OptionSetId, List<Confi
         hash.putString(module.pluginId.idString)
         hash.putString(module.moduleName ?: "")
 
-        require(LocalizationUtil.getLocaleOrNullForDefault() == null) {
-          "Locale must be default"
-        }
         val fileName = (if (module.moduleName == null) "p-${module.pluginId.idString}" else "m-${module.moduleName}") +
-                       "-" + SEARCHABLE_OPTIONS_XML_NAME + ".json"
+                       "-" + SearchableOptionsRegistrar.getSearchableOptionsName() + ".json"
         val file = outDir.resolve(fileName)
         try {
           Files.newBufferedWriter(file).use { writer ->
@@ -269,23 +261,14 @@ private fun processTemplates(
   }
 }
 
-private suspend fun processOptionsContainingConfigurable(configurable: OptionsContainingConfigurable, configurableElement: ConfigurableEntry) {
-  withContext(Dispatchers.EDT) {
-    try {
-      val optionPaths = configurable.processListOptions()
-      val result = TreeSet<SearchableOptionEntry>()
-      wordsToOptionDescriptors(optionPaths = optionPaths, path = null, result = result)
-      for ((path, optionPath) in configurable.processListOptionsWithPaths()) {
-        wordsToOptionDescriptors(optionPaths = optionPath, path = path, result = result)
-      }
-      configurableElement.entries.addAll(result)
-    }
-    finally {
-      if (configurable is UnnamedConfigurable) {
-        configurable.disposeUIResources()
-      }
-    }
+private fun processOptionsContainingConfigurable(configurable: OptionsContainingConfigurable, configurableElement: ConfigurableEntry) {
+  val optionPaths = configurable.processListOptions()
+  val result = TreeSet<SearchableOptionEntry>()
+  wordsToOptionDescriptors(optionPaths = optionPaths, path = null, result = result)
+  for ((path, optionPath) in configurable.processListOptionsWithPaths()) {
+    wordsToOptionDescriptors(optionPaths = optionPath, path = path, result = result)
   }
+  configurableElement.entries.addAll(result)
 }
 
 private fun wordsToOptionDescriptors(optionPaths: Set<String>, path: String?, result: MutableSet<SearchableOptionEntry>) {
@@ -299,23 +282,15 @@ private fun processKeymap(): Map<OptionSetId, Set<SearchableOptionEntry>> {
   val actionManager = ActionManager.getInstance() as ActionManagerImpl
   val actionToPluginId = getActionToPluginId(actionManager)
   val componentName = "ActionManager"
-  val event = AnActionEvent.createEvent(DataContext.EMPTY_CONTEXT, null, ActionPlaces.ACTION_SEARCH, ActionUiKind.SEARCH_POPUP, null)
-  Utils.initUpdateSession(event)
-  runBlockingCancellable {
-    runUpdateSessionForActionSearch(event.updateSession) {
-      for (action in actionManager.actions(canReturnStub = false)) {
-        val module = getModuleByAction(action, actionToPluginId, event)
-        synchronized(map) {
-          val options = map.computeIfAbsent(module) { TreeSet() }
-          action.templatePresentation.text?.takeIf { it.isNotBlank() }?.let {
-            options.add(SearchableOptionEntry(hit = it, path = componentName))
-          }
+  for (action in actionManager.actions(canReturnStub = false)) {
+    val module = getModuleByAction(action, actionToPluginId)
+    val options = map.computeIfAbsent(module) { TreeSet() }
+    action.templatePresentation.text?.takeIf { it.isNotBlank() }?.let {
+      options.add(SearchableOptionEntry(hit = it, path = componentName))
+    }
 
-          action.templatePresentation.description?.takeIf { it.isNotBlank() }?.let {
-            options.add(SearchableOptionEntry(hit = it, path = componentName))
-          }
-        }
-      }
+    action.templatePresentation.description?.takeIf { it.isNotBlank() }?.let {
+      options.add(SearchableOptionEntry(hit = it, path = componentName))
     }
   }
   return map
@@ -331,8 +306,7 @@ private fun getActionToPluginId(actionManager: ActionManagerImpl): Map<String, P
   return actionToPluginId
 }
 
-private suspend fun getModuleByAction(rootAction: AnAction, actionToPluginId: Map<String, PluginId>, event: AnActionEvent): OptionSetId {
-  val session = event.updateSession as SuspendingUpdateSession
+private fun getModuleByAction(rootAction: AnAction, actionToPluginId: Map<String, PluginId>): OptionSetId {
   val actions = ArrayDeque<AnAction>()
   actions.add(rootAction)
   while (!actions.isEmpty()) {
@@ -342,12 +316,12 @@ private suspend fun getModuleByAction(rootAction: AnAction, actionToPluginId: Ma
       return module
     }
     if (action is ActionGroup) {
-      actions.addAll(session.childrenSuspend(action))
+      actions.addAll(action.getChildren(null))
     }
   }
 
-  val rootActionId = actionToPluginId.get(event.actionManager.getId(rootAction)) ?: return CORE_SET_ID
-  val pluginDescriptor = PluginManagerCore.getPlugin(rootActionId) ?: return CORE_SET_ID
+  val pluginDescriptor = actionToPluginId.get(ActionManager.getInstance().getId(rootAction))?.let { PluginManagerCore.getPlugin(it) }
+                         ?: return CORE_SET_ID
   return getSetIdByPluginDescriptor(pluginDescriptor)
 }
 
@@ -380,7 +354,7 @@ private suspend fun doBuildSearchableOptions(
 
   val defaultProject = serviceAsync<ProjectManager>().defaultProject
   withContext(Dispatchers.EDT) {
-    writeIntentReadAction {
+    blockingContext {
       for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
         extension.beforeStart()
       }
@@ -416,91 +390,82 @@ private fun processConfigurables(
   options: MutableMap<SearchableConfigurable, Set<SearchableOptionEntry>>,
 ) {
   for (configurable in configurables) {
-    try {
-      if (configurable !is SearchableConfigurable) {
-        continue
-      }
+    if (configurable !is SearchableConfigurable) {
+      continue
+    }
 
-      val configurableOptions = TreeSet<SearchableOptionEntry>()
-      options.put(configurable, configurableOptions)
+    val configurableOptions = TreeSet<SearchableOptionEntry>()
+    options.put(configurable, configurableOptions)
 
-      for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
-        extension.beforeConfigurable(configurable, configurableOptions)
-      }
+    for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
+      extension.beforeConfigurable(configurable, configurableOptions)
+    }
 
-      if (configurable is MasterDetails) {
-        configurable.initUi()
-        collectSearchItemsForComponentWithLabel(
-          configurable = configurable,
-          configurableOptions = configurableOptions,
-          component = configurable.master,
+    if (configurable is MasterDetails) {
+      configurable.initUi()
+      collectSearchItemsForComponentWithLabel(
+        configurable = configurable,
+        configurableOptions = configurableOptions,
+        component = configurable.master,
+      )
+      collectSearchItemsForComponentWithLabel(
+        configurable = configurable,
+        configurableOptions = configurableOptions,
+        component = configurable.details.component,
+      )
+    }
+    else {
+      configurable.createComponent()?.let { component ->
+        processUiLabel(
+          title = configurable.displayName,
+          configurableOptions = null,
+          path = null,
+          i18n = false,
+          rawList = configurableOptions,
         )
-        collectSearchItemsForComponentWithLabel(
-          configurable = configurable,
-          configurableOptions = configurableOptions,
-          component = configurable.details.component,
+        collectSearchItemsForComponent(
+          component = component,
+          configurableOptions = null,
+          path = null,
+          i18n = false,
+          rawList = configurableOptions,
         )
       }
-      else {
-        configurable.createComponent()?.let { component ->
-          processUiLabel(
-            title = configurable.displayName,
-            configurableOptions = null,
-            path = null,
-            i18n = false,
-            rawList = configurableOptions,
-          )
-          collectSearchItemsForComponent(
-            component = component,
-            configurableOptions = null,
-            path = null,
-            i18n = false,
-            rawList = configurableOptions,
-          )
-        }
 
-        val unwrapped = unwrapConfigurable(configurable)
-        if (unwrapped is CompositeConfigurable<*>) {
-          val children = unwrapped.configurables
-          for (child in children) {
-            try {
-              val childConfigurableOptions = TreeSet<SearchableOptionEntry>()
-              options.put(SearchableConfigurableAdapter(configurable, child), childConfigurableOptions)
+      val unwrapped = unwrapConfigurable(configurable)
+      if (unwrapped is CompositeConfigurable<*>) {
+        unwrapped.disposeUIResources()
+        val children = unwrapped.configurables
+        for (child in children) {
+          val childConfigurableOptions = TreeSet<SearchableOptionEntry>()
+          options.put(SearchableConfigurableAdapter(configurable, child), childConfigurableOptions)
 
-              if (child is SearchableConfigurable) {
-                processUiLabel(
-                  title = child.displayName,
-                  configurableOptions = null,
-                  path = null,
-                  i18n = false,
-                  rawList = childConfigurableOptions,
-                )
-              }
-              child.createComponent()?.let { component ->
-                collectSearchItemsForComponent(
-                  component = component,
-                  configurableOptions = null,
-                  path = null,
-                  i18n = false,
-                  rawList = childConfigurableOptions,
-                )
-              }
-
-              configurableOptions.removeAll(childConfigurableOptions)
-            }
-            finally {
-              child.disposeUIResources()
-            }
+          if (child is SearchableConfigurable) {
+            processUiLabel(
+              title = child.displayName,
+              configurableOptions = null,
+              path = null,
+              i18n = false,
+              rawList = childConfigurableOptions,
+            )
           }
-        }
-      }
+          child.createComponent()?.let { component ->
+            collectSearchItemsForComponent(
+              component = component,
+              configurableOptions = null,
+              path = null,
+              i18n = false,
+              rawList = childConfigurableOptions,
+            )
+          }
 
-      for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
-        extension.afterConfigurable(configurable, configurableOptions)
+          configurableOptions.removeAll(childConfigurableOptions)
+        }
       }
     }
-    finally {
-      configurable.disposeUIResources()
+
+    for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
+      extension.afterConfigurable(configurable, configurableOptions)
     }
   }
 }

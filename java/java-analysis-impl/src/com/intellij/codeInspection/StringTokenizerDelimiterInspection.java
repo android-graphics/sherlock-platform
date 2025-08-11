@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -18,11 +18,14 @@ import java.util.Set;
  * @author Dmitry Batkovich
  */
 public final class StringTokenizerDelimiterInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final @NonNls String NEXT_TOKEN = "nextToken";
-  private static final @NonNls String STRING_TOKENIZER = "java.util.StringTokenizer";
+  @NonNls
+  private final static String NEXT_TOKEN = "nextToken";
+  @NonNls
+  private final static String STRING_TOKENIZER = "java.util.StringTokenizer";
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitCallExpression(@NotNull PsiCallExpression callExpression) {
@@ -62,13 +65,14 @@ public final class StringTokenizerDelimiterInspection extends AbstractBaseJavaLo
     }
   }
 
-  private static final class ReplaceDelimitersWithUnique extends PsiUpdateModCommandAction<PsiLiteralExpression> {
+  private final static class ReplaceDelimitersWithUnique extends PsiUpdateModCommandAction<PsiLiteralExpression> {
     ReplaceDelimitersWithUnique(@NotNull PsiLiteralExpression element) {
       super(element);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaAnalysisBundle.message("replace.stringtokenizer.delimiters.parameter.with.unique.symbols");
     }
 

@@ -16,7 +16,6 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -49,24 +48,7 @@ public class ExpressionEvaluatorImpl implements ExpressionEvaluator {
         throw EvaluateExceptionUtil.NULL_STACK_FRAME;
       }
 
-      EvaluationContextImpl evaluationContextImpl = (EvaluationContextImpl)context;
-
-      final Object value;
-      if (evaluationContextImpl.isMayRetryEvaluation()) {
-        value = DebuggerUtils.getInstance().processCollectibleValue(
-          () -> myEvaluator.evaluate(evaluationContextImpl),
-          r -> {
-            if (r instanceof Value v) {
-              evaluationContextImpl.keep(v);
-            }
-            return r;
-          },
-          context
-        );
-      }
-      else {
-        value = myEvaluator.evaluate(evaluationContextImpl);
-      }
+      Object value = myEvaluator.evaluate((EvaluationContextImpl)context);
 
       if (value != null && !(value instanceof Value)) {
         throw EvaluateExceptionUtil

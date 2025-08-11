@@ -30,8 +30,9 @@ public final class DanglingJavadocInspection extends BaseInspection {
 
   public boolean ignoreCopyright = true;
 
+  @NotNull
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("dangling.javadoc.problem.descriptor");
   }
 
@@ -62,8 +63,10 @@ public final class DanglingJavadocInspection extends BaseInspection {
       myMarkdownComment = markdownComment;
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return myMarkdownComment
              ? InspectionGadgetsBundle.message("dangling.javadoc.convert.line.comment.quickfix")
              : InspectionGadgetsBundle.message("dangling.javadoc.convert.quickfix");
@@ -101,8 +104,10 @@ public final class DanglingJavadocInspection extends BaseInspection {
 
   private static class DeleteCommentFix extends PsiUpdateModCommandQuickFix {
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("dangling.javadoc.delete.quickfix");
     }
 
@@ -122,7 +127,7 @@ public final class DanglingJavadocInspection extends BaseInspection {
     @Override
     public void visitDocComment(@NotNull PsiDocComment comment) {
       super.visitDocComment(comment);
-      if (JavaDocUtil.shouldRunInspectionOnOldMarkdownComment(comment) && JavaDocUtil.isDanglingDocComment(comment, ignoreCopyright)) {
+      if (JavaDocUtil.isDanglingDocComment(comment, ignoreCopyright)) {
         registerError(comment.getFirstChild(), comment.isMarkdownComment());
       }
     }

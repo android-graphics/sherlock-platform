@@ -273,8 +273,6 @@ public final class CollapseIntoLoopAction implements ModCommandAction {
       PsiElement parent = st.getParent();
       if (!(parent instanceof PsiCodeBlock)) return false;
       if (parent.getParent() instanceof PsiSwitchBlock) return false;
-      PsiElement lastChild = st.getLastChild();
-      if (lastChild instanceof PsiErrorElement) return false;
       return !ControlFlowUtils.statementContainsNakedBreak(st) && !ControlFlowUtils.statementContainsNakedContinue(st);
     }
   }

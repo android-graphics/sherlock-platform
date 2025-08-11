@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.scratch;
 
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
@@ -26,8 +26,9 @@ public final class JavaScratchConfigurationType extends SimpleConfigurationType 
     return false;
   }
 
+  @NotNull
   @Override
-  public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+  public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
     return new JavaScratchConfiguration("", project, this);
   }
 
@@ -41,7 +42,8 @@ public final class JavaScratchConfigurationType extends SimpleConfigurationType 
     return "reference.dialogs.rundebug.Java Scratch";
   }
 
-  public static @NotNull JavaScratchConfigurationType getInstance() {
+  @NotNull
+  public static JavaScratchConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(JavaScratchConfigurationType.class);
   }
 }

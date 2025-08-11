@@ -33,10 +33,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static com.intellij.util.concurrency.AppJavaExecutorUtil.createBoundedTaskExecutor;
+import static com.intellij.util.concurrency.AppJavaExecutorUtil.createSingleTaskApplicationPoolExecutor;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
-@ApiStatus.Internal
 public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   @SuppressWarnings("LoggerInitializedWithForeignClass") private static final Logger LOG = Logger.getInstance(RefreshQueue.class);
 
@@ -49,8 +48,8 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private int myActivityCounter;
 
   public RefreshQueueImpl(@NotNull CoroutineScope coroutineScope) {
-    myQueue = createBoundedTaskExecutor("RefreshQueue Pool", coroutineScope);
-    myEventProcessingQueue = createBoundedTaskExecutor("Async Refresh Event Processing", coroutineScope);
+    myQueue = createSingleTaskApplicationPoolExecutor("RefreshQueue Pool", coroutineScope);
+    myEventProcessingQueue = createSingleTaskApplicationPoolExecutor("Async Refresh Event Processing", coroutineScope);
   }
 
   void execute(@NotNull RefreshSessionImpl session) {
@@ -58,15 +57,12 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
     if (session.isAsynchronous()) {
       queueSession(session, session.getModality());
     }
-    else if ((app = ApplicationManagerEx.getApplicationEx()).isWriteIntentLockAcquired() && EDT.isCurrentThreadEdt()) {
+    else if ((app = ApplicationManagerEx.getApplicationEx()).isWriteIntentLockAcquired()) {
       ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
       var events = runRefreshSession(session, -1L);
       fireEvents(events, session);
     }
-    else if (EDT.isCurrentThreadEdt()) {
-      LOG.error("Do not perform a synchronous refresh on naked EDT (without WIL) (causes deadlocks if there are events to fire)");
-    }
-    else if (app.holdsReadLock()) {
+    else if (app.holdsReadLock() || EDT.isCurrentThreadEdt()) {
       LOG.error("Do not perform a synchronous refresh under read lock (causes deadlocks if there are events to fire)");
     }
     else {
@@ -82,7 +78,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
     }
     else {
       var queuedAt = System.nanoTime();
-      myQueue.execute(() -> {
+      myQueue.schedule(() -> {
         var timeInQueue = NANOSECONDS.toMillis(System.nanoTime() - queuedAt);
         startIndicator(IdeCoreBundle.message("file.synchronize.progress"));
         var events = new AtomicReference<Collection<VFileEvent>>();
@@ -131,7 +127,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
           VfsUsageCollector.logEventProcessing(
             evTimeInQueue.longValue(), NANOSECONDS.toMillis(evListenerTime.longValue()), evRetries.intValue(), t, data.second.size());
         })
-        .submit(myEventProcessingQueue)
+        .submit(myEventProcessingQueue::schedule)
         .onProcessed(__ -> stopIndicator())
         .onError(t -> {
           if (!myRefreshIndicator.isCanceled()) {
@@ -221,6 +217,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   @ApiStatus.Internal
+  @TestOnly
   public static boolean isEventProcessingInProgress() {
     var refreshQueue = (RefreshQueueImpl)getInstance();
     return !refreshQueue.myEventProcessingQueue.isEmpty();

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
@@ -38,9 +38,9 @@ public class StructuralSearchTemplateDocumentationProvider extends AbstractDocum
   }
 
   private static class ConfigurationElement extends FakePsiElement {
-    private final @NotNull Configuration myConfiguration;
-    private final @NotNull PsiManager myPsiManager;
-    private final @NotNull DummyHolder myDummyHolder;
+    @NotNull private final Configuration myConfiguration;
+    @NotNull private final PsiManager myPsiManager;
+    @NotNull private final DummyHolder myDummyHolder;
 
     ConfigurationElement(@NotNull Configuration configuration, @NotNull PsiManager psiManager) {
       myConfiguration = configuration;
@@ -48,7 +48,8 @@ public class StructuralSearchTemplateDocumentationProvider extends AbstractDocum
       myDummyHolder = DummyHolderFactory.createHolder(myPsiManager, null);
     }
 
-    public @NotNull Configuration getConfiguration() {
+    @NotNull
+    public Configuration getConfiguration() {
       return myConfiguration;
     }
 
@@ -65,8 +66,9 @@ public class StructuralSearchTemplateDocumentationProvider extends AbstractDocum
           return myConfiguration.getName();
         }
 
+        @Nullable
         @Override
-        public @Nullable Icon getIcon(boolean unused) {
+        public Icon getIcon(boolean unused) {
           return null;
         }
       };

@@ -17,9 +17,7 @@ internal fun reloadAllRepositoryLibraries(project: Project) {
   libraries
     .asSequence()
     .filterIsInstance<LibraryEx>()
-    .map { RepositoryUtils.reloadDependencies(project, it).then {
-      // NOP, to make collectResults accept the correct type (Unit)
-    } }
+    .map { RepositoryUtils.reloadDependencies(project, it) }
     .toList()
     .collectResults()
     .onSuccess {

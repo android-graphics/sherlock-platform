@@ -4,7 +4,6 @@ package com.intellij.conversion.impl;
 import com.intellij.conversion.*;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -16,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@ApiStatus.Internal
 public final class ConversionRunner {
   private final String providerId;
   private final ConverterProvider myProvider;

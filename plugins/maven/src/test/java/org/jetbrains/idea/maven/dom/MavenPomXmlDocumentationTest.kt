@@ -2,13 +2,14 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.maven.testFramework.MavenDomTestCase
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.EDT
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenPomXmlDocumentationTest : MavenDomTestCase() {
   @Test
-  fun testDocumentation() = runBlocking {
+  fun testDocumentation() = runBlocking(Dispatchers.EDT) {
     createProjectPom(
       """
         <groupId>test</groupId>
@@ -32,17 +33,13 @@ class MavenPomXmlDocumentationTest : MavenDomTestCase() {
                     scm&apos;s <code>child.scm.connection.inherit.append.path="false"</code><br>Version  :&nbsp;4.0.0+
                     """.trimIndent()
 
-    configTest(projectPom)
     val originalElement = getElementAtCaret(projectPom)
     val documentationManager = DocumentationManager.getInstance(project)
+    val targetElement = documentationManager.findTargetElement(editor, testPsiFile, originalElement)
 
-    val generatedText = readAction {
-      val targetElement = documentationManager.findTargetElement(fixture.editor, fixture.file, originalElement)
-      val provider = DocumentationManager.getProviderFromElement(targetElement)
-      provider.generateDoc(targetElement, originalElement)
-    }
+    val provider = DocumentationManager.getProviderFromElement(targetElement)
 
-
-    assertEquals(expectedText.replace(" +".toRegex(), " "), generatedText!!.replace(" +".toRegex(), " "))
+    assert(
+      expectedText.replace(" +".toRegex(), " ") == provider.generateDoc(targetElement, originalElement)!!.replace(" +".toRegex(), " "))
   }
 }

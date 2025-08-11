@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,7 +30,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
     this(project, preselect, true, true);
   }
 
-  public PackageSetChooserCombo(final Project project, final @Nullable String preselect, final boolean enableBrowseButton, final boolean useCombo) {
+  public PackageSetChooserCombo(final Project project, @Nullable final String preselect, final boolean enableBrowseButton, final boolean useCombo) {
     super(useCombo ? new JComboBox() : new JBComboBoxTableCellEditorComponent(), null);
     myProject = project;
 
@@ -141,7 +141,8 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
     return model.toArray(NamedScope.EMPTY_ARRAY);
   }
 
-  public @Nullable NamedScope getSelectedScope() {
+  @Nullable
+  public NamedScope getSelectedScope() {
     final JComponent component = getChildComponent();
     if (component instanceof JComboBox) {
       int idx = ((JComboBox<?>)component).getSelectedIndex();
@@ -167,7 +168,8 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
     }
 
     @Override
-    protected @Nullable JComponent createCenterPanel() {
+    @Nullable
+    protected JComponent createCenterPanel() {
       return myPanel.getPanel();
     }
 

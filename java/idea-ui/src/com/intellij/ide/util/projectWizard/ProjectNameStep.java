@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.core.CoreBundle;
@@ -97,13 +97,13 @@ public final class ProjectNameStep extends ModuleWizardStep {
   @Override
   public boolean validate() throws ConfigurationException {
     String name = myNamePathComponent.getNameValue();
-    if (name.isEmpty()) {
+    if (name.length() == 0) {
       ApplicationNamesInfo info = ApplicationNamesInfo.getInstance();
       throw new ConfigurationException(JavaUiBundle.message("prompt.new.project.file.name", info.getFullProductName(), myWizardContext.getPresentationName()));
     }
 
     final String projectFileDirectory = getProjectFileDirectory();
-    if (projectFileDirectory.isEmpty()) {
+    if (projectFileDirectory.length() == 0) {
       throw new ConfigurationException(JavaUiBundle.message("prompt.enter.project.file.location", myWizardContext.getPresentationName()));
     }
 
@@ -134,7 +134,8 @@ public final class ProjectNameStep extends ModuleWizardStep {
     return shouldContinue;
   }
 
-  public @NonNls String getProjectFilePath() {
+  @NonNls
+  public String getProjectFilePath() {
     return getProjectFileDirectory() + "/" + myNamePathComponent.getNameValue()/*myTfProjectName.getText().trim()*/ +
       (myWizardContext.getProject() == null ? ProjectFileType.DOT_DEFAULT_EXTENSION : ModuleFileType.DOT_DEFAULT_EXTENSION);
   }

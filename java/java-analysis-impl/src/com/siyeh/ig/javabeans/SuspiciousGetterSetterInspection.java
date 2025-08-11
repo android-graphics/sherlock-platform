@@ -1,7 +1,22 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.siyeh.ig.javabeans;
 
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -13,9 +28,11 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInspection.options.OptPane.checkbox;
-import static com.intellij.codeInspection.options.OptPane.pane;
+import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
  * @author Bas Leijdekkers
@@ -25,8 +42,9 @@ public final class SuspiciousGetterSetterInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean onlyWarnWhenFieldPresent = false;
 
+  @NotNull
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  protected String buildErrorString(Object... infos) {
     return ((Boolean)infos[0]).booleanValue()
            ? InspectionGadgetsBundle.message("suspicious.setter.problem.descriptor", infos[1])
            : InspectionGadgetsBundle.message("suspicious.getter.problem.descriptor", infos[1]);

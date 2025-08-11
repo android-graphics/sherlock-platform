@@ -12,9 +12,9 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
@@ -22,10 +22,10 @@ import org.jdom.Element
 import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.completion.test.KotlinCompletionTestCase
-import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
+import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously
+import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.core.script.getScriptReports
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationTest.Companion.useDefaultTemplate
 import org.jetbrains.kotlin.idea.test.*
@@ -36,7 +36,6 @@ import org.jetbrains.kotlin.test.TestJdkKind
 import org.jetbrains.kotlin.test.util.projectLibrary
 import java.io.File
 import java.nio.file.Paths
-import java.util.Locale
 import kotlin.script.dependencies.Environment
 import kotlin.script.experimental.api.ScriptDiagnostic
 
@@ -105,7 +104,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
         }
 
         // If script is inside module
-        if (module != null && mainScriptFile.parentFile.name.lowercase(Locale.getDefault()).contains("module")) {
+        if (module != null && mainScriptFile.parentFile.name.toLowerCase().contains("module")) {
             module.addDependency(
                 projectLibrary(
                     "script-runtime",
@@ -326,7 +325,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
     }
 
     protected fun checkHighlighting(file: KtFile = myFile as KtFile) {
-        val reports = getScriptReports(file)
+        val reports = IdeScriptReportSink.getReports(file)
         val isFatalErrorPresent = reports.any { it.severity == ScriptDiagnostic.Severity.FATAL }
         assert(isFatalErrorPresent || file.shouldHighlightFile()) {
             "Highlighting is switched off for ${file.virtualFile.path}\n" +
@@ -355,7 +354,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
         }
 
         addExtensionPointInTest(
-            SCRIPT_DEFINITIONS_SOURCES,
+            ScriptDefinitionContributor.EP_NAME,
             project,
             provider,
             testRootDisposable

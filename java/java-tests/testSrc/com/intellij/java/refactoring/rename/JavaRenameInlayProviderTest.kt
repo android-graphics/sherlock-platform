@@ -252,11 +252,11 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
 
     project.service<CodeVisionHost>().calculateCodeVisionSync(editor, testRootDisposable)
 
-    val actualText = InlayDumpUtil.dumpInlays(
+    val actualText = InlayDumpUtil.dumpHintsInternal(
       file.text,
-      editor,
       { it.renderer is CodeVisionInlayRenderer },
-      { _, inlay -> inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation } }
+      { _, inlay -> inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation } },
+      file, editor, myFixture.getDocument(myFixture.file!!)
     )
 
     assertEquals(after, actualText)

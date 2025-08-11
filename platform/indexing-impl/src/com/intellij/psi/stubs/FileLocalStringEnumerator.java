@@ -16,12 +16,12 @@ import java.util.ArrayList;
 import java.util.function.UnaryOperator;
 
 @ApiStatus.Internal
-public final class FileLocalStringEnumerator implements AbstractStringEnumerator {
+final class FileLocalStringEnumerator implements AbstractStringEnumerator {
   @SuppressWarnings("SSBasedInspection")
   private final Object2IntOpenHashMap<String> myEnumerates;
   private final ArrayList<String> myStrings = new ArrayList<>();
 
-  public FileLocalStringEnumerator(boolean forSavingStub) {
+  FileLocalStringEnumerator(boolean forSavingStub) {
     myEnumerates = forSavingStub ? new Object2IntOpenHashMap<>() : null;
   }
 
@@ -45,7 +45,7 @@ public final class FileLocalStringEnumerator implements AbstractStringEnumerator
     return myStrings.get(idx - 1);
   }
 
-  public void write(@NotNull DataOutput stream) throws IOException {
+  void write(@NotNull DataOutput stream) throws IOException {
     assert myEnumerates != null;
     DataInputOutputUtil.writeINT(stream, myStrings.size());
     for(String s: myStrings) {
@@ -78,7 +78,7 @@ public final class FileLocalStringEnumerator implements AbstractStringEnumerator
     }
   }
 
-  public void read(@NotNull DataInput stream) throws IOException {
+  void read(@NotNull DataInput stream) throws IOException {
     int numberOfStrings = DataInputOutputUtil.readINT(stream);
     myStrings.ensureCapacity(myStrings.size() + numberOfStrings);
     for (int i = 0; i < numberOfStrings; i++) {

@@ -7,7 +7,10 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,13 +20,12 @@ import java.util.Map;
  * To use inside unit-tests, provide an instance of {@link TestDialogBuilder.TestAnswers}
  * in {@link AnActionEvent#getDataContext()} with the key {@link TestDialogBuilder.TestAnswers#KEY}.
  */
-@ApiStatus.Internal
 @TestOnly
 public final class TestDialogBuilder implements CreateFileFromTemplateDialog.Builder {
   private final TestAnswers myAnswers;
   private InputValidator myValidator;
 
-  public TestDialogBuilder(@NotNull TestDialogBuilder.TestAnswers answers) {
+  TestDialogBuilder(@NotNull TestDialogBuilder.TestAnswers answers) {
     myAnswers = answers;
   }
 

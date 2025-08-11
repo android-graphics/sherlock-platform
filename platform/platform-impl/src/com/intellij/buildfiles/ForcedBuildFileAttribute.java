@@ -49,14 +49,13 @@ public final class ForcedBuildFileAttribute {
 
 
   public static void forceFileToFramework(VirtualFile file, String frameworkId, boolean value) {
-    // belongs to another framework - do not override!
+    //belongs to other framework - do not override!
     String existingFrameworkId = getFrameworkIdOfBuildFile(file);
     if (!StringUtil.isEmpty(existingFrameworkId) && !frameworkId.equals(existingFrameworkId)) {
       return;
     }
 
-    if (value) {
-      // write a framework
+    if (value) {//write framework
       forceBuildFile(file, frameworkId);
     }
     else {

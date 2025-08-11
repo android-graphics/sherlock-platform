@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.options;
 
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -6,11 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.TableSpeedSearch;
-import com.intellij.ui.TableUtil;
-import com.intellij.ui.ToolbarDecorator;
-import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
+import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtilRt;
@@ -101,7 +97,7 @@ public class TargetOptionsComponent extends JPanel {
   private static ComboBox<String> createTargetOptionsCombo() {
     ComboBox<String> combo = new ComboBox<>(KNOWN_TARGETS);
     combo.insertItemAt(null, 0);
-    combo.setRenderer(BuilderKt.textListCellRenderer(JavaCompilerBundle.message("settings.same.as.language.level"), String::toString));
+    combo.setRenderer(SimpleListCellRenderer.create(JavaCompilerBundle.message("settings.same.as.language.level"), String::toString));
     return combo;
   }
 
@@ -123,7 +119,8 @@ public class TargetOptionsComponent extends JPanel {
     myCbProjectTargetLevel.setSelectedItem(level);
   }
 
-  public @Nullable String getProjectBytecodeTarget() {
+  @Nullable
+  public String getProjectBytecodeTarget() {
     String item = (String)myCbProjectTargetLevel.getSelectedItem();
     if (item == null) return item;
     return item.trim();

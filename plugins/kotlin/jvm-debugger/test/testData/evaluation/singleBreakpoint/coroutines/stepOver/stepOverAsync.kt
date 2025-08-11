@@ -18,3 +18,4 @@ fun main() = runBlocking<Unit> {
 }
 
 // STEP_OVER: 6
+// REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true

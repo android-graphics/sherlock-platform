@@ -1,5 +1,0 @@
-fun mmm() {
-    println(
-        JavaClass.message()
-    )
-}

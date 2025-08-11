@@ -5,11 +5,11 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -39,7 +39,8 @@ public final class UnnecessaryToStringCallInspection extends BaseInspection impl
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.tostring.call.problem.descriptor");
   }
 
@@ -57,15 +58,17 @@ public final class UnnecessaryToStringCallInspection extends BaseInspection impl
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       if (replacementText == null) {
-        return InspectionGadgetsBundle.message("inspection.remove.redundant.call.fix.name", "toString");
+        return InspectionGadgetsBundle.message("inspection.redundant.string.remove.fix.name", "toString");
       }
       return CommonQuickFixBundle.message("fix.replace.with.x", replacementText);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return CommonQuickFixBundle.message("fix.simplify");
     }
 
@@ -112,7 +115,7 @@ public final class UnnecessaryToStringCallInspection extends BaseInspection impl
   private static boolean isRedundantToString(PsiMethodCallExpression call) {
     if (call == null) return false;
     PsiReferenceExpression methodExpression = call.getMethodExpression();
-    final @NonNls String referenceName = methodExpression.getReferenceName();
+    @NonNls final String referenceName = methodExpression.getReferenceName();
     if (!"toString".equals(referenceName) || !call.getArgumentList().isEmpty()) return false;
     final PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodExpression);
     if (qualifier == null) {

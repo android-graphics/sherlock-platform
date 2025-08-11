@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -48,16 +49,16 @@ public final class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspec
   }
 
   @Override
-  protected @NotNull LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new LambdaToAnonymousFix();
   }
 
   public static PsiAnonymousClass doFix(@NotNull Project project, @NotNull PsiLambdaExpression lambdaExpression) {
     final PsiParameter[] paramListCopy = ((PsiParameterList)lambdaExpression.getParameterList().copy()).getParameters();
     final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
-    if (functionalInterfaceType == null) return null;
+    LOG.assertTrue(functionalInterfaceType != null);
     final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
-    if (method == null) return null;
+    LOG.assertTrue(method != null);
 
     final String blockText = getBodyText(lambdaExpression);
     if (blockText == null) return null;

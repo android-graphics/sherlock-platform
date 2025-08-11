@@ -1,4 +1,5 @@
-from typing import Any, ClassVar, Literal
+from typing import Any, ClassVar
+from typing_extensions import Literal
 
 FIELDNAME: Any
 

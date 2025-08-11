@@ -11,15 +11,16 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.MultiMap;
 import junit.framework.TestCase;
 import kotlin.collections.ArraysKt;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.asJava.LightClassUtilsKt;
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.test.util.ReferenceUtils;
@@ -41,22 +42,26 @@ public final class NavigationTestUtils {
     }
 
     public static void assertGotoDataMatching(Editor editor, GotoTargetHandler.GotoData gotoData, boolean renderModule) {
-        assertGotoDataMatching(editor, gotoData, renderModule, getExpectedReferences(editor.getDocument().getText(), "// REF:"));
-    }
-
-    public static void assertGotoDataMatching(
-            Editor editor,
-            GotoTargetHandler.GotoData gotoData,
-            boolean renderModule,
-            List<String> expectedReferences
-    ) {
         String documentText = editor.getDocument().getText();
+        // Get expected references from the tested document
+        List<String> expectedReferences = InTextDirectivesUtils.findListWithPrefixes(documentText, "// REF:");
+        for (int i = 0; i < expectedReferences.size(); i++) {
+            String expectedText = expectedReferences.get(i);
+            expectedText = expectedText.replace("\\n", "\n");
+            if (!expectedText.startsWith("<")) {
+                expectedText = PathUtil.toSystemDependentName(expectedText).replace("//", "/");
+            }
+            expectedReferences.set(i, expectedText);
+        }
+
+        Collections.sort(expectedReferences);
 
         if (gotoData != null) {
             List<PsiElement> targets;
             if (InTextDirectivesUtils.isDirectiveDefined(documentText, "// DISTINCT_REF")) {
                 targets = ArraysKt.distinctBy(gotoData.targets, LightClassUtilsKt::getUnwrapped);
-            } else {
+            }
+            else {
                 targets = Arrays.asList(gotoData.targets);
             }
             // Transform given reference result to strings
@@ -67,26 +72,10 @@ public final class NavigationTestUtils {
 
             // Compare
             UsefulTestCase.assertOrderedEquals(Ordering.natural().sortedCopy(psiElements), expectedReferences);
-        } else {
+        }
+        else {
             UsefulTestCase.assertOrderedEquals(Collections.emptyList(), expectedReferences);
         }
-    }
-
-    public static @NotNull List<String> getExpectedReferences(String documentText, String referencePrefix) {
-        // Get expected references from the tested document
-        List<String> expectedReferences = InTextDirectivesUtils.findListWithPrefixes(documentText, referencePrefix);
-        for (int i = 0; i < expectedReferences.size(); i++) {
-            String expectedText = expectedReferences.get(i);
-            expectedText = expectedText.replace("\\n", "\n");
-            if (!expectedText.startsWith("<")) {
-                expectedText = PathUtil.toSystemDependentName(expectedText).replace("//", "/");
-            }
-            expectedReferences.set(i, expectedText);
-        }
-
-        expectedReferences.removeIf(String::isEmpty);
-        Collections.sort(expectedReferences);
-        return expectedReferences;
     }
 
     public static String getNavigateElementsText(Project project, Collection<? extends PsiElement> navigableElements) {

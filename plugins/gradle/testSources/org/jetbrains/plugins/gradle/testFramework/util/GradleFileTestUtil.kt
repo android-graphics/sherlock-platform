@@ -13,12 +13,12 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfiguration
+import org.jetbrains.plugins.gradle.testFramework.util.buildscript.TestGradleBuildScriptBuilder
 
 private fun settingsScript(
-  gradleVersion: GradleVersion,
   useKotlinDsl: Boolean = false,
   configure: GradleSettingScriptBuilder<*>.() -> Unit
-) = GradleSettingScriptBuilder.create(gradleVersion, useKotlinDsl)
+) = GradleSettingScriptBuilder.create(useKotlinDsl)
   .apply(configure)
   .generate()
 
@@ -26,20 +26,19 @@ private fun buildScript(
   gradleVersion: GradleVersion,
   useKotlinDsl: Boolean = false,
   configure: GradleBuildScriptBuilder<*>.() -> Unit
-) = GradleBuildScriptBuilder.create(gradleVersion, useKotlinDsl)
+) = TestGradleBuildScriptBuilder.create(gradleVersion, useKotlinDsl)
   .apply(configure)
   .generate()
 
 @RequiresWriteLock
 fun VirtualFile.createSettingsFile(
-  gradleVersion: GradleVersion,
   relativeModulePath: String = ".",
   useKotlinDsl: Boolean = false,
   configure: GradleSettingScriptBuilder<*>.() -> Unit
 ) = createSettingsFile(
   relativeModulePath = relativeModulePath,
   useKotlinDsl = useKotlinDsl,
-  content = settingsScript(gradleVersion, useKotlinDsl, configure)
+  content = settingsScript(useKotlinDsl, configure)
 )
 
 @RequiresWriteLock
@@ -97,14 +96,13 @@ fun VirtualFile.getBuildFile(
 }
 
 fun TestFilesConfiguration.withSettingsFile(
-  gradleVersion: GradleVersion,
   relativeModulePath: String = ".",
   useKotlinDsl: Boolean = false,
   configure: GradleSettingScriptBuilder<*>.() -> Unit
 ) = withSettingsFile(
   relativeModulePath = relativeModulePath,
   useKotlinDsl = useKotlinDsl,
-  content = settingsScript(gradleVersion, useKotlinDsl, configure)
+  content = settingsScript(useKotlinDsl, configure)
 )
 
 fun TestFilesConfiguration.withBuildFile(

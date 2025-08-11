@@ -1,4 +1,3 @@
-from _typeshed import FileDescriptorOrPath
 from logging import Logger
 from typing import Any
 
@@ -26,4 +25,4 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
     @staticmethod
     def convert_errno(e: int) -> int: ...
     @staticmethod
-    def set_file_attr(filename: FileDescriptorOrPath, attr: SFTPAttributes) -> None: ...
+    def set_file_attr(filename: str, attr: SFTPAttributes) -> None: ...

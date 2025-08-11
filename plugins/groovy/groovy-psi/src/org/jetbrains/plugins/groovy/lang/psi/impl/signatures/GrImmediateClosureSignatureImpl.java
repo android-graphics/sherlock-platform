@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,9 +21,9 @@ public class GrImmediateClosureSignatureImpl implements GrSignature {
 
   private final boolean myIsVarargs;
   private final boolean myCurried;
-  private final @Nullable PsiType myReturnType;
+  @Nullable private final PsiType myReturnType;
   private final GrClosureParameter @NotNull [] myParameters;
-  private final @NotNull PsiSubstitutor mySubstitutor;
+  @NotNull private final PsiSubstitutor mySubstitutor;
 
   public GrImmediateClosureSignatureImpl(PsiParameter @NotNull [] parameters,
                                          @Nullable PsiType returnType,
@@ -61,12 +61,14 @@ public class GrImmediateClosureSignatureImpl implements GrSignature {
 
 
   @Override
-  public @Nullable PsiType getReturnType() {
+  @Nullable
+  public PsiType getReturnType() {
     return myReturnType;
   }
 
   @Override
-  public @NotNull PsiSubstitutor getSubstitutor() {
+  @NotNull
+  public PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
   }
 
@@ -103,9 +105,10 @@ public class GrImmediateClosureSignatureImpl implements GrSignature {
     return myCurried;
   }
 
-  public static @Nullable GrSignature getLeastUpperBound(@NotNull GrSignature signature1,
-                                                         @NotNull GrSignature signature2,
-                                                         @NotNull PsiManager manager) {
+  @Nullable
+  public static GrSignature getLeastUpperBound(@NotNull GrSignature signature1,
+                                               @NotNull GrSignature signature2,
+                                               @NotNull PsiManager manager) {
     GrClosureParameter[] parameters1 = signature1.getParameters();
     GrClosureParameter[] parameters2 = signature2.getParameters();
 

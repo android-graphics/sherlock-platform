@@ -3,6 +3,7 @@ package org.editorconfig.language.psi
 
 import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.psi.FileViewProvider
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.childrenOfType
 import org.editorconfig.language.EditorConfigLanguage
 import org.editorconfig.language.filetype.EditorConfigFileConstants

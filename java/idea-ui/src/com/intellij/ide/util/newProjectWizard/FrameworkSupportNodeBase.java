@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.diagnostic.PluginException;
@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,9 +17,9 @@ import java.util.List;
 
 public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> extends CheckedTreeNode {
   private static final Logger LOG = Logger.getInstance(FrameworkSupportNodeBase.class);
-  private final FrameworkSupportNodeBase<?> myParentNode;
+  private final FrameworkSupportNodeBase myParentNode;
 
-  public FrameworkSupportNodeBase(T userObject, final FrameworkSupportNodeBase<?> parentNode) {
+  public FrameworkSupportNodeBase(T userObject, final FrameworkSupportNodeBase parentNode) {
     super(userObject);
     setChecked(false);
     myParentNode = parentNode;
@@ -29,14 +28,12 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public T getUserObject() {
     return (T)super.getUserObject();
   }
 
-  @Contract(mutates = "param1")
-  public static void sortByName(@Nullable List<? extends FrameworkSupportNodeBase<?>> nodes, final @Nullable Comparator<? super FrameworkSupportNodeBase<?>> comparator) {
+  public static void sortByName(@Nullable List<? extends FrameworkSupportNodeBase> nodes, @Nullable final Comparator<? super FrameworkSupportNodeBase> comparator) {
     if (nodes == null) return;
 
     nodes.sort((o1, o2) -> {
@@ -51,17 +48,19 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
       return o1.getTitle().compareToIgnoreCase(o2.getTitle());
     });
     for (FrameworkSupportNodeBase<?> node : nodes) {
-      @SuppressWarnings("unchecked") 
-      List<FrameworkSupportNodeBase<?>> children = (List<FrameworkSupportNodeBase<?>>)(List<?>)node.children;
+      @SuppressWarnings({"unchecked", "rawtypes"})
+      List<FrameworkSupportNodeBase<?>> children = (List)node.children;
       sortByName(children, null);
     }
   }
 
-  protected final @NotNull @NlsContexts.Label String getTitle() {
+  @NotNull
+  protected final @NlsContexts.Label String getTitle() {
     return getUserObject().getPresentableName();
   }
 
-  public final @NotNull Icon getIcon() {
+  @NotNull
+  public final Icon getIcon() {
     Icon icon = getUserObject().getIcon();
     //noinspection ConstantConditions
     if (icon == null) {
@@ -72,16 +71,18 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
     return icon;
   }
 
-  public final @NotNull String getId() {
+  @NotNull
+  public final String getId() {
     return getUserObject().getId();
   }
 
-  @SuppressWarnings("unchecked")
-  public @NotNull List<FrameworkSupportNodeBase<?>> getChildren() {
-    return children != null ? (List<FrameworkSupportNodeBase<?>>)(List<?>)children : Collections.emptyList();
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  @NotNull
+  public List<FrameworkSupportNodeBase> getChildren() {
+    return children != null ? (List)children : Collections.emptyList();
   }
 
-  public FrameworkSupportNodeBase<?> getParentNode() {
+  public FrameworkSupportNodeBase getParentNode() {
     return myParentNode;
   }
 }

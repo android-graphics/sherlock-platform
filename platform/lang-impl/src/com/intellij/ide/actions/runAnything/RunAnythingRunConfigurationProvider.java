@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
@@ -13,7 +13,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -54,7 +53,7 @@ public final class RunAnythingRunConfigurationProvider extends com.intellij.ide.
   }
 
   @Override
-  public @Unmodifiable @NotNull List<RunAnythingContext> getExecutionContexts(@NotNull DataContext dataContext) {
+  public @NotNull List<RunAnythingContext> getExecutionContexts(@NotNull DataContext dataContext) {
     return ContainerUtil.emptyList();
   }
 }

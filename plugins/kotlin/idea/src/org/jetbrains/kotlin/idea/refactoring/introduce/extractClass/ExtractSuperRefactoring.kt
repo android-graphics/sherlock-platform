@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractClass
 
@@ -58,6 +58,9 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 
 data class ExtractSuperInfo(
     val originalClass: KtClassOrObject,
@@ -66,7 +69,7 @@ data class ExtractSuperInfo(
     val targetFileName: String,
     val newClassName: String,
     val isInterface: Boolean,
-    val docPolicy: DocCommentPolicy
+    val docPolicy: DocCommentPolicy<*>
 )
 
 class ExtractSuperRefactoring(
@@ -154,10 +157,10 @@ class ExtractSuperRefactoring(
                 runReadAction {
                     val usages = LinkedHashSet<UsageInfo>()
                     for (element in elementsToMove) {
-                        ReferencesSearch.search(element).asIterable().mapTo(usages) { MoveRenameUsageInfo(it, element) }
+                        ReferencesSearch.search(element).mapTo(usages) { MoveRenameUsageInfo(it, element) }
                         if (element is KtCallableDeclaration) {
                             element.toLightMethods().flatMapTo(usages) {
-                                MethodReferencesSearch.search(it).asIterable().map { reference -> MoveRenameUsageInfo(reference, element) }
+                                MethodReferencesSearch.search(it).map { reference -> MoveRenameUsageInfo(reference, element) }
                             }
                         }
                     }

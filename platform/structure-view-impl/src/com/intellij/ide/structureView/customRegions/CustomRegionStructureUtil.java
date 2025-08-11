@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView.customRegions;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -17,7 +17,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -39,7 +38,7 @@ public final class CustomRegionStructureUtil {
       return value instanceof PsiElement ? getTextRange((PsiElement)value) : null;
     });
     Collection<CustomRegionTreeElement> customRegions = collectCustomRegions(rootElement, childrenRanges);
-    if (!customRegions.isEmpty()) {
+    if (customRegions.size() > 0) {
       List<StructureViewTreeElement> result = new ArrayList<>(customRegions);
       for (StructureViewTreeElement element : physicalElements) {
         ProgressManager.checkCanceled();
@@ -73,7 +72,7 @@ public final class CustomRegionStructureUtil {
     return element.getTextRange();
   }
 
-  private static Collection<CustomRegionTreeElement> collectCustomRegions(@NotNull PsiElement rootElement, @NotNull @Unmodifiable Set<? extends TextRange> ranges) {
+  private static Collection<CustomRegionTreeElement> collectCustomRegions(@NotNull PsiElement rootElement, @NotNull Set<? extends TextRange> ranges) {
     TextRange rootRange = getTextRange(rootElement);
     Iterator<PsiElement> iterator = SyntaxTraverser.psiTraverser(rootElement)
       .filter(element -> isCustomRegionCommentCandidate(element) &&
@@ -107,7 +106,8 @@ public final class CustomRegionStructureUtil {
     return customRegions;
   }
 
-  static @Nullable CustomFoldingProvider getProvider(@NotNull PsiElement element) {
+  @Nullable
+  static CustomFoldingProvider getProvider(@NotNull PsiElement element) {
     ASTNode node = element.getNode();
     if (node != null) {
       for (CustomFoldingProvider provider : CustomFoldingProvider.getAllProviders()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.frameworkSupport;
 
 import com.intellij.framework.FrameworkTypeEx;
@@ -16,22 +16,26 @@ public final class KotlinDslGradleGroovyFrameworkSupportProvider extends KotlinD
 
   public static final String ID = "groovy";
 
+  @NotNull
   @Override
-  public @NotNull FrameworkTypeEx getFrameworkType() {
+  public FrameworkTypeEx getFrameworkType() {
     return new FrameworkTypeEx(ID) {
+      @NotNull
       @Override
-      public @NotNull FrameworkSupportInModuleProvider createProvider() {
+      public FrameworkSupportInModuleProvider createProvider() {
         return KotlinDslGradleGroovyFrameworkSupportProvider.this;
       }
 
+      @NotNull
       @Override
-      public @NotNull String getPresentableName() {
+      public String getPresentableName() {
         //noinspection HardCodedStringLiteral
         return "Groovy"; //NON-NLS
       }
 
+      @NotNull
       @Override
-      public @NotNull Icon getIcon() {
+      public Icon getIcon() {
         return JetgroovyIcons.Groovy.Groovy_16x16;
       }
     };

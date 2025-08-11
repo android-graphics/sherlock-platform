@@ -48,7 +48,8 @@ public final class Diff {
     return doBuildChanges(ints1, ints2, new ChangeBuilder(startShift));
   }
 
-  public static @Nullable Change buildChanges(int @NotNull [] array1, int @NotNull [] array2) throws FilesTooBigForDiffException {
+  @Nullable
+  public static Change buildChanges(int @NotNull [] array1, int @NotNull [] array2) throws FilesTooBigForDiffException {
     final int startShift = getStartShift(array1, array2);
     final int endCut = getEndCut(array1, array2, startShift);
 
@@ -61,7 +62,8 @@ public final class Diff {
     return doBuildChanges(ints1, ints2, new ChangeBuilder(startShift));
   }
 
-  private static @Nullable Ref<Change> doBuildChangesFast(int length1, int length2, int startShift, int endCut) {
+  @Nullable
+  private static Ref<Change> doBuildChangesFast(int length1, int length2, int startShift, int endCut) {
     int trimmedLength1 = length1 - startShift - endCut;
     int trimmedLength2 = length2 - startShift - endCut;
     if (trimmedLength1 != 0 && trimmedLength2 != 0) return null;
@@ -228,8 +230,8 @@ public final class Diff {
       //System.err.println(line0+","+line1+","+inserted+","+deleted);
     }
 
-    @Override
-    public @NonNls String toString() {
+    @NonNls
+    public String toString() {
       return "change[" + "inserted=" + inserted + ", deleted=" + deleted + ", line0=" + line0 + ", line1=" + line1 + "]";
     }
 

@@ -17,7 +17,6 @@ import com.intellij.util.Java11Shim
 import com.intellij.util.ThreeState
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
@@ -648,11 +647,11 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
         try {
           (listener as ExtensionPointAdapter<T>).extensionListChanged()
         }
-        catch (ce: CancellationException) {
-          LOG.warn("Cancellation while notifying `${listener}`", ce)
+        catch (e: ProcessCanceledException) {
+          throw e
         }
         catch (e: Throwable) {
-          LOG.error("Exception while notifying `$listener`", e)
+          LOG.error(e)
         }
       }
       else {
@@ -672,11 +671,11 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
               }
             }
           }
-          catch (ce: CancellationException) {
-            LOG.warn("Cancellation while notifying `$listener`", ce)
+          catch (e: ProcessCanceledException) {
+            throw e
           }
           catch (e: Throwable) {
-            LOG.error("Exception while notifying `$listener`", e)
+            LOG.error(e)
           }
         }
       }
@@ -845,7 +844,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
       newAdapters[index] = item
     }
     for (descriptor in descriptors) {
-      if (descriptor.os == null || descriptor.os.isSuitableForOs()) {
+      if (descriptor.os == null || componentManager.isSuitableForOs(descriptor.os)) {
         newAdapters[newSize++] = createAdapter(descriptor = descriptor, pluginDescriptor = pluginDescriptor, componentManager = componentManager)
       }
     }

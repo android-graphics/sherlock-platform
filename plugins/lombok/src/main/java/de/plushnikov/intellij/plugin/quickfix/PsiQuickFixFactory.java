@@ -25,7 +25,8 @@ public final class PsiQuickFixFactory {
     return new AddAnnotationFix(annotationFQN, psiClass, attributes, ExternalAnnotationsManager.AnnotationPlace.IN_CODE);
   }
 
-  public static @NotNull AddAnnotationFix createAddAnnotationFix(@NotNull String annotationFQN, @NotNull PsiModifierListOwner targetForAnnotation) {
+  @NotNull
+  public static AddAnnotationFix createAddAnnotationFix(@NotNull String annotationFQN, @NotNull PsiModifierListOwner targetForAnnotation) {
     return new AddAnnotationFix(annotationFQN, targetForAnnotation, PsiNameValuePair.EMPTY_ARRAY,
                                 ExternalAnnotationsManager.AnnotationPlace.IN_CODE);
   }

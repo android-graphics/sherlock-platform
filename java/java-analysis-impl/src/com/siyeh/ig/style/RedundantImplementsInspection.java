@@ -17,9 +17,9 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -38,12 +38,14 @@ public final class RedundantImplementsInspection extends BaseInspection implemen
   public boolean ignoreCloneable = false;
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "RedundantInterfaceDeclaration";
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("redundant.implements.problem.descriptor");
   }
 
@@ -62,7 +64,8 @@ public final class RedundantImplementsInspection extends BaseInspection implemen
   private static class RedundantImplementsFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("redundant.implements.remove.quickfix");
     }
 

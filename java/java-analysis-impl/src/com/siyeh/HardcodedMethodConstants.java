@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh;
 
 import com.intellij.psi.CommonClassNames;
 import org.jetbrains.annotations.NonNls;
 
-public final @NonNls class HardcodedMethodConstants {
+@NonNls
+public final class HardcodedMethodConstants {
   public static final String CLONE = "clone";
   public static final String CLOSE = "close";
   public static final String COMPARE_TO = "compareTo";

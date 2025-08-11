@@ -79,7 +79,8 @@ public final class XPathLanguage extends Language {
 
     public static class XPathFindUsagesProvider implements FindUsagesProvider {
         @Override
-        public @Nullable WordsScanner getWordsScanner() {
+        @Nullable
+        public WordsScanner getWordsScanner() {
             return new SimpleWordsScanner();
         }
 
@@ -89,12 +90,14 @@ public final class XPathLanguage extends Language {
         }
 
         @Override
-        public @Nullable String getHelpId(@NotNull PsiElement psiElement) {
+        @Nullable
+        public String getHelpId(@NotNull PsiElement psiElement) {
             return null;
         }
 
         @Override
-        public @NotNull String getType(@NotNull PsiElement element) {
+        @NotNull
+        public String getType(@NotNull PsiElement element) {
           if (element instanceof XPathFunction) {
             return XPathBundle.message("find.usages.type.function");
           } else if (element instanceof XPathVariable) {
@@ -105,7 +108,8 @@ public final class XPathLanguage extends Language {
         }
 
         @Override
-        public @NotNull @NlsSafe String getDescriptiveName(@NotNull PsiElement element) {
+        @NotNull
+        public @NlsSafe String getDescriptiveName(@NotNull PsiElement element) {
             if (element instanceof PsiNamedElement) {
                 final String name = ((PsiNamedElement)element).getName();
                 if (name != null) return name;
@@ -114,7 +118,8 @@ public final class XPathLanguage extends Language {
         }
 
         @Override
-        public @NotNull @NlsSafe String getNodeText(@NotNull PsiElement element, boolean useFullName) {
+        @NotNull
+        public @NlsSafe String getNodeText(@NotNull PsiElement element, boolean useFullName) {
             if (useFullName) {
                 if (element instanceof NavigationItem navigationItem) {
                   final ItemPresentation presentation = navigationItem.getPresentation();
@@ -169,7 +174,8 @@ public final class XPathLanguage extends Language {
 
     public static class XPathSyntaxHighlighterFactory extends SingleLazyInstanceSyntaxHighlighterFactory {
         @Override
-        protected @NotNull SyntaxHighlighter createHighlighter() {
+        @NotNull
+        protected SyntaxHighlighter createHighlighter() {
             return new XPathHighlighter(false);
         }
     }

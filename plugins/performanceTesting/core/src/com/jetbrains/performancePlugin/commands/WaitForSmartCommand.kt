@@ -1,7 +1,5 @@
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
@@ -11,6 +9,8 @@ import com.intellij.util.Alarm
 import kotlinx.coroutines.CompletableDeferred
 
 class WaitForSmartCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+  private val alarm = Alarm()
+
   companion object {
     const val PREFIX: String = CMD_PREFIX + "waitForSmart"
 
@@ -34,18 +34,17 @@ class WaitForSmartCommand(text: String, line: Int) : PlaybackCommandCoroutineAda
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val alarm = Alarm(context.project.service<CodeAnalysisStateListener>().cs)
     val completion = CompletableDeferred<Unit>()
-    completeWhenSmartModeIsLongEnough(context.project, completion, alarm)
+    completeWhenSmartModeIsLongEnough(context.project, completion)
     completion.await()
   }
 
-  private fun completeWhenSmartModeIsLongEnough(project: Project, completion: CompletableDeferred<Unit>, alarm: Alarm) {
+  private fun completeWhenSmartModeIsLongEnough(project: Project, completion: CompletableDeferred<Unit>) {
     DumbService.getInstance(project).runWhenSmart {
       alarm.addRequest(
         {
-          if (runReadAction { isDumb(project) }) {
-            completeWhenSmartModeIsLongEnough(project, completion, alarm)
+          if (isDumb(project)) {
+            completeWhenSmartModeIsLongEnough(project, completion)
           }
           else {
             completion.complete(Unit)

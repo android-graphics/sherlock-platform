@@ -49,7 +49,8 @@ public final class UnnecessarySemicolonInspection extends BaseInspection impleme
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.semicolon.problem.descriptor");
   }
 
@@ -66,7 +67,8 @@ public final class UnnecessarySemicolonInspection extends BaseInspection impleme
   public static class UnnecessarySemicolonFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.semicolon.remove.quickfix");
     }
 

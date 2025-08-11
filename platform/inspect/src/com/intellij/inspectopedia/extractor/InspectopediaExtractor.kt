@@ -12,9 +12,9 @@ import com.intellij.codeInspection.options.*
 import com.intellij.ide.plugins.PluginManagerCore.getPluginSet
 import com.intellij.inspectopedia.extractor.data.Inspection
 import com.intellij.inspectopedia.extractor.data.OptionsPanelInfo
+import com.intellij.inspectopedia.extractor.utils.HtmlUtils
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ModernApplicationStarter
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.ProjectManager
@@ -50,12 +50,12 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
     }
     catch (e: IOException) {
       LOG.error("Output directory does not exist and could not be created")
-      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
+      exitProcess(-1)
     }
 
     if (!Files.isDirectory(outputPath) || !Files.isWritable(outputPath)) {
       LOG.error("Output path is invalid")
-      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
+      exitProcess(-1)
     }
 
     try {
@@ -77,7 +77,7 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
         val wrapper = scopeToolState.tool
         val extension = wrapper.extension
         val pluginId = extension?.pluginDescriptor?.pluginId?.idString ?: ideName
-        val description = wrapper.loadDescription()?.split("<!-- tooltip end -->")?.map { it.trim() }?.filter { it.isNotEmpty() }?.toList()
+        val description = wrapper.loadDescription()?.splitToSequence("<!-- tooltip end -->")?.map { it.trim() }?.filter { it.isEmpty() }?.toList()
                           ?: emptyList()
 
         var panelInfo: List<OptionsPanelInfo>? = null
@@ -95,9 +95,8 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
 
         try {
           val language = wrapper.language
-          val extraState = inspectionExtraState.inspections.get(wrapper.id)
           availablePlugins.get(pluginId)!!.inspections.add(Inspection(
-            id = wrapper.tool.alternativeID ?: wrapper.id,
+            id = wrapper.shortName,
             name = wrapper.displayName,
             severity = wrapper.defaultLevel.name,
             language = language,
@@ -108,14 +107,13 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
             isCleanup = wrapper.isCleanupTool,
             isEnabledDefault = wrapper.isEnabledByDefault,
             options = panelInfo,
-            cweIds = extraState?.cweIds,
-            codeQualityCategory = extraState?.codeQualityCategory,
+            cweIds = inspectionExtraState.inspections.get(wrapper.id)?.cweIds,
           ))
         }
         catch (e: Throwable) {
           System.err.println("Error while processing ${wrapper.extension}")
           e.printStackTrace()
-          ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
+          exitProcess(-1)
         }
       }
 
@@ -141,9 +139,9 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
     }
     catch (e: Exception) {
       e.printStackTrace()
-      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
+      exitProcess(-1)
     }
-    ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true )
+    exitProcess(0)
   }
 }
 
@@ -191,14 +189,14 @@ private fun retrievePanelStructure(component: OptComponent, controller: OptionCo
 }
 
 @Suppress("unused")
-private data class Plugins(
+data class Plugins(
   @JvmField val plugins: List<Plugin>,
   @JvmField val ideCode: String,
   @JvmField val ideName: String,
   @JvmField val ideVersion: String,
 )
 
-private data class Plugin(
+data class Plugin(
   @JvmField val id: String,
   @JvmField val name: String,
   @JvmField val version: String?,

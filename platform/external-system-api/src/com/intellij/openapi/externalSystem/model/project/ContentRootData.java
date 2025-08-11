@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -14,9 +14,9 @@ import java.io.Serializable;
 import java.util.*;
 
 public final class ContentRootData extends AbstractExternalEntityData {
-  private final @NotNull Map<ExternalSystemSourceType, Collection<SourceRoot>> data = new HashMap<>();
+  @NotNull private final Map<ExternalSystemSourceType, Collection<SourceRoot>> data = new HashMap<>();
 
-  private final @NotNull String rootPath;
+  @NotNull private final String rootPath;
 
   /**
    * Creates new {@code GradleContentRootImpl} object.
@@ -33,7 +33,8 @@ public final class ContentRootData extends AbstractExternalEntityData {
    * @param type      target dir type
    * @return          directories of the target type configured for the current content root
    */
-  public @NotNull Collection<SourceRoot> getPaths(@NotNull ExternalSystemSourceType type) {
+  @NotNull
+  public Collection<SourceRoot> getPaths(@NotNull ExternalSystemSourceType type) {
     final Collection<SourceRoot> result = data.get(type);
     return result == null ? Collections.emptyList() : result;
   }
@@ -72,7 +73,8 @@ public final class ContentRootData extends AbstractExternalEntityData {
     }
   }
 
-  public @NotNull String getRootPath() {
+  @NotNull
+  public String getRootPath() {
     return rootPath;
   }
 
@@ -89,9 +91,11 @@ public final class ContentRootData extends AbstractExternalEntityData {
   }
 
   public static class SourceRoot implements Serializable {
-    private final @NotNull String path;
+    @NotNull
+    private final String path;
 
-    private final @Nullable String packagePrefix;
+    @Nullable
+    private final String packagePrefix;
 
     public SourceRoot(@NotNull String path, @Nullable String prefix) {
       this.path = path;
@@ -104,11 +108,13 @@ public final class ContentRootData extends AbstractExternalEntityData {
       packagePrefix = "";
     }
 
-    public @NotNull String getPath() {
+    @NotNull
+    public String getPath() {
       return path;
     }
 
-    public @Nullable String getPackagePrefix() {
+    @Nullable
+    public String getPackagePrefix() {
       return packagePrefix;
     }
 

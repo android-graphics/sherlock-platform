@@ -209,9 +209,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
       FileEditor[] editors = fileEditorManager.getEditors(myNewVirtualFile);
       if (editors.length == 0) {
         EditorWindow currentWindow = fileEditorManager.getCurrentWindow();
-        if (currentWindow != null) {
-          splittedWindow = currentWindow.split(JSplitPane.VERTICAL_SPLIT, false, myNewVirtualFile, true);
-        }
+        splittedWindow = Objects.requireNonNull(currentWindow).split(JSplitPane.VERTICAL_SPLIT, false, myNewVirtualFile, true);
       }
       Editor editor = fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myNewVirtualFile, injectedOffset), true);
       // fold missing values

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
@@ -25,10 +25,11 @@ import java.util.List;
 public class RunConfigurationModule implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance(RunConfigurationModule.class);
 
-  private static final @NonNls String ELEMENT = "module";
-  private static final @NonNls String ATTRIBUTE = "name";
+  @NonNls private static final String ELEMENT = "module";
+  @NonNls private static final String ATTRIBUTE = "name";
 
-  private @Nullable ModulePointer myModulePointer;
+  @Nullable
+  private ModulePointer myModulePointer;
 
   private final Project myProject;
 
@@ -70,16 +71,19 @@ public class RunConfigurationModule implements JDOMExternalizable {
     }
   }
 
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myProject;
   }
 
+  @Nullable
   @Transient
-  public @Nullable Module getModule() {
+  public Module getModule() {
     return myModulePointer != null ? myModulePointer.getModule() : null;
   }
 
-  public @Nullable Module findModule(@NotNull String moduleName) {
+  @Nullable
+  public Module findModule(@NotNull String moduleName) {
     if (myProject.isDisposed()) {
       return null;
     }
@@ -97,7 +101,8 @@ public class RunConfigurationModule implements JDOMExternalizable {
   }
 
   @Attribute("name")
-  public @NotNull String getModuleName() {
+  @NotNull
+  public String getModuleName() {
     return myModulePointer != null ? myModulePointer.getModuleName() : "";
   }
 

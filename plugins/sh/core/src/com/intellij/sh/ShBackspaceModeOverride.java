@@ -6,8 +6,9 @@ import com.intellij.codeInsight.editorActions.SmartBackspaceMode;
 import org.jetbrains.annotations.NotNull;
 
 final class ShBackspaceModeOverride extends BackspaceModeOverride {
+  @NotNull
   @Override
-  public @NotNull SmartBackspaceMode getBackspaceMode(@NotNull SmartBackspaceMode modeFromSettings) {
+  public SmartBackspaceMode getBackspaceMode(@NotNull SmartBackspaceMode modeFromSettings) {
     return SmartBackspaceMode.INDENT;
   }
 }

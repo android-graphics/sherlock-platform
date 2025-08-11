@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
 import com.intellij.build.events.BuildEventsNls;
@@ -42,7 +42,8 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
   private T myConsoleView;
 
-  private final @NotNull Project myProject;
+  @NotNull
+  private final Project myProject;
 
   private ProcessBackedConsoleExecuteActionHandler myConsoleExecuteActionHandler;
 
@@ -124,7 +125,8 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     showConsole(defaultExecutor, contentDescriptor);
   }
 
-  protected @Nullable Icon getConsoleIcon() {
+  @Nullable
+  protected Icon getConsoleIcon() {
     return null;
   }
 
@@ -151,7 +153,8 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
   protected abstract T createConsoleView();
 
-  protected abstract @Nullable Process createProcess() throws ExecutionException;
+  @Nullable
+  protected abstract Process createProcess() throws ExecutionException;
 
   protected abstract OSProcessHandler createProcessHandler(final Process process);
 
@@ -197,13 +200,15 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return new ConsoleExecuteAction(myConsoleView, consoleExecuteActionHandler, emptyAction, consoleExecuteActionHandler);
   }
 
-  protected abstract @NotNull ProcessBackedConsoleExecuteActionHandler createExecuteActionHandler();
+  @NotNull
+  protected abstract ProcessBackedConsoleExecuteActionHandler createExecuteActionHandler();
 
   public T getConsoleView() {
     return myConsoleView;
   }
 
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myProject;
   }
 

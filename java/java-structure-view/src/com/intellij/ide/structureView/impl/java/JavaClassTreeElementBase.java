@@ -96,7 +96,6 @@ public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends
     return isInherited() ? "" : DEFAULT_LOCATION_SUFFIX;
   }
 
-  @Override
   public boolean equals(final Object o) {
     if (!super.equals(o)) return false;
     final JavaClassTreeElementBase that = (JavaClassTreeElementBase)o;

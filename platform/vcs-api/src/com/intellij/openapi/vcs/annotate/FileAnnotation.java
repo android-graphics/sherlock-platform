@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,7 +33,7 @@ import java.util.*;
 public abstract class FileAnnotation {
   private static final Logger LOG = Logger.getInstance(FileAnnotation.class);
 
-  private final @NotNull Project myProject;
+  @NotNull private final Project myProject;
 
   private boolean myIsClosed;
   private Runnable myCloser;
@@ -43,11 +43,13 @@ public abstract class FileAnnotation {
     myProject = project;
   }
 
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myProject;
   }
 
-  public @Nullable VcsKey getVcsKey() {
+  @Nullable
+  public VcsKey getVcsKey() {
     return null;
   }
 
@@ -58,7 +60,8 @@ public abstract class FileAnnotation {
    * If annotations are called on a specific revision, it can be corresponding {@link com.intellij.openapi.vcs.vfs.VcsVirtualFile}.
    * Note: file content might differ from content in annotated revision {@link #getAnnotatedContent}.
    */
-  public @Nullable VirtualFile getFile() {
+  @Nullable
+  public VirtualFile getFile() {
     return null;
   }
 
@@ -68,7 +71,9 @@ public abstract class FileAnnotation {
    * It might differ from {@code getFile()} content. Ex: annotations for a local file, that has non-committed changes.
    * In this case {@link UpToDateLineNumberProvider} will be used to transfer lines between local and annotated revisions.
    */
-  public abstract @Nullable @NonNls String getAnnotatedContent();
+  @Nullable
+  @NonNls
+  public abstract String getAnnotatedContent();
 
 
   /**
@@ -77,7 +82,8 @@ public abstract class FileAnnotation {
    * This information might be used to close annotations on local file if current revision was changed,
    * and invocation of AnnotationProvider on this file will produce different results - see {@link #isBaseRevisionChanged}.
    */
-  public abstract @Nullable VcsRevisionNumber getCurrentRevision();
+  @Nullable
+  public abstract VcsRevisionNumber getCurrentRevision();
 
   /**
    * @param number current revision number {@link DiffProvider#getCurrentRevision(VirtualFile)}
@@ -117,9 +123,13 @@ public abstract class FileAnnotation {
    * The tooltip that is shown over annotation.
    * Typically, this is a detailed info about related revision. ex: long revision number, commit message
    */
-  public abstract @Nullable @NlsContexts.Tooltip String getToolTip(int lineNumber);
+  @Nullable
+  @NlsContexts.Tooltip
+  public abstract String getToolTip(int lineNumber);
 
-  public @Nullable @NlsContexts.Tooltip String getHtmlToolTip(int lineNumber) {
+  @Nullable
+  @NlsContexts.Tooltip
+  public String getHtmlToolTip(int lineNumber) {
     String toolTip = getToolTip(lineNumber);
     return XmlStringUtil.escapeString(toolTip);
   }
@@ -127,20 +137,23 @@ public abstract class FileAnnotation {
   /**
    * @return last revision that modified this line.
    */
-  public abstract @Nullable VcsRevisionNumber getLineRevisionNumber(int lineNumber);
+  @Nullable
+  public abstract VcsRevisionNumber getLineRevisionNumber(int lineNumber);
 
   /**
    * @return time of the last modification of this line.
    * Typically, this is a timestamp associated with {@link #getLineRevisionNumber}
    */
-  public abstract @Nullable Date getLineDate(int lineNumber);
+  @Nullable
+  public abstract Date getLineDate(int lineNumber);
 
 
   /**
    * @return revisions that are mentioned in the annotations, from newest to oldest
    * Can be used to sort revisions, if they can't be sorted by {@code Date} or show file modification number for a revision.
    */
-  public abstract @Nullable List<VcsFileRevision> getRevisions();
+  @Nullable
+  public abstract List<VcsFileRevision> getRevisions();
 
 
   /**
@@ -152,7 +165,8 @@ public abstract class FileAnnotation {
    * when "show merge sources" is turned on, {@link #getLineRevisionNumber} returns merge source revision,
    * while {@link #originalRevision} returns merge revision.
    */
-  public @Nullable AnnotationSourceSwitcher getAnnotationSourceSwitcher() {
+  @Nullable
+  public AnnotationSourceSwitcher getAnnotationSourceSwitcher() {
     return null;
   }
 
@@ -161,7 +175,8 @@ public abstract class FileAnnotation {
    * @see #getAnnotationSourceSwitcher()
    * @see #getLineRevisionNumber(int)
    */
-  public @Nullable VcsRevisionNumber originalRevision(int lineNumber) {
+  @Nullable
+  public VcsRevisionNumber originalRevision(int lineNumber) {
     return getLineRevisionNumber(lineNumber);
   }
 
@@ -173,7 +188,7 @@ public abstract class FileAnnotation {
   /**
    * Notify that annotations should be closed
    */
-  public final synchronized void close() {
+  public synchronized final void close() {
     myIsClosed = true;
     if (myCloser != null) {
       myCloser.run();
@@ -191,14 +206,14 @@ public abstract class FileAnnotation {
    * @param newFileAnnotation annotations to be shown or `null` to load annotations again
    */
   @RequiresEdt
-  public final synchronized void reload(@Nullable FileAnnotation newFileAnnotation) {
+  public synchronized final void reload(@Nullable FileAnnotation newFileAnnotation) {
     if (myReloader != null) myReloader.consume(newFileAnnotation);
   }
 
   /**
    * @see #close()
    */
-  public final synchronized void setCloser(@NotNull Runnable closer) {
+  public synchronized final void setCloser(@NotNull Runnable closer) {
     if (myIsClosed) return;
     myCloser = closer;
   }
@@ -206,33 +221,39 @@ public abstract class FileAnnotation {
   /**
    * @see #reload(FileAnnotation)
    */
-  public final synchronized void setReloader(@Nullable Consumer<? super FileAnnotation> reloader) {
+  public synchronized final void setReloader(@Nullable Consumer<? super FileAnnotation> reloader) {
     if (myIsClosed) return;
     myReloader = reloader;
   }
 
 
-  public @Nullable CurrentFileRevisionProvider getCurrentFileRevisionProvider() {
+  @Nullable
+  public CurrentFileRevisionProvider getCurrentFileRevisionProvider() {
     return createDefaultCurrentFileRevisionProvider(this);
   }
 
-  public @Nullable PreviousFileRevisionProvider getPreviousFileRevisionProvider() {
+  @Nullable
+  public PreviousFileRevisionProvider getPreviousFileRevisionProvider() {
     return createDefaultPreviousFileRevisionProvider(this);
   }
 
-  public @Nullable AuthorsMappingProvider getAuthorsMappingProvider() {
+  @Nullable
+  public AuthorsMappingProvider getAuthorsMappingProvider() {
     return createDefaultAuthorsMappingProvider(this);
   }
 
-  public @Nullable RevisionsOrderProvider getRevisionsOrderProvider() {
+  @Nullable
+  public RevisionsOrderProvider getRevisionsOrderProvider() {
     return createDefaultRevisionsOrderProvider(this);
   }
 
-  public @Nullable RevisionChangesProvider getRevisionsChangesProvider() {
+  @Nullable
+  public RevisionChangesProvider getRevisionsChangesProvider() {
     return createDefaultRevisionsChangesProvider(this);
   }
 
-  public @Nullable LineModificationDetailsProvider getLineModificationDetailsProvider() {
+  @Nullable
+  public LineModificationDetailsProvider getLineModificationDetailsProvider() {
     return null;
   }
 
@@ -274,7 +295,8 @@ public abstract class FileAnnotation {
     return DateFormatUtil.formatPrettyDate(date);
   }
 
-  private static @Nullable CurrentFileRevisionProvider createDefaultCurrentFileRevisionProvider(@NotNull FileAnnotation annotation) {
+  @Nullable
+  private static CurrentFileRevisionProvider createDefaultCurrentFileRevisionProvider(@NotNull FileAnnotation annotation) {
     List<VcsFileRevision> revisions = annotation.getRevisions();
     if (revisions == null) return null;
 
@@ -295,7 +317,8 @@ public abstract class FileAnnotation {
     };
   }
 
-  private static @Nullable PreviousFileRevisionProvider createDefaultPreviousFileRevisionProvider(@NotNull FileAnnotation annotation) {
+  @Nullable
+  private static PreviousFileRevisionProvider createDefaultPreviousFileRevisionProvider(@NotNull FileAnnotation annotation) {
     List<VcsFileRevision> revisions = annotation.getRevisions();
     if (revisions == null) return null;
 
@@ -314,20 +337,23 @@ public abstract class FileAnnotation {
     VcsFileRevision lastRevision = ContainerUtil.getFirstItem(revisions);
 
     return new PreviousFileRevisionProvider() {
+      @Nullable
       @Override
-      public @Nullable VcsFileRevision getPreviousRevision(int lineNumber) {
+      public VcsFileRevision getPreviousRevision(int lineNumber) {
         LOG.assertTrue(lineNumber >= 0 && lineNumber < lineToRevision.size());
         return lineToRevision.get(lineNumber);
       }
 
+      @Nullable
       @Override
-      public @Nullable VcsFileRevision getLastRevision() {
+      public VcsFileRevision getLastRevision() {
         return lastRevision;
       }
     };
   }
 
-  private static @Nullable AuthorsMappingProvider createDefaultAuthorsMappingProvider(@NotNull FileAnnotation annotation) {
+  @Nullable
+  private static AuthorsMappingProvider createDefaultAuthorsMappingProvider(@NotNull FileAnnotation annotation) {
     List<VcsFileRevision> revisions = annotation.getRevisions();
     if (revisions == null) return null;
 
@@ -340,7 +366,8 @@ public abstract class FileAnnotation {
     return () -> authorsMapping;
   }
 
-  private static @Nullable RevisionsOrderProvider createDefaultRevisionsOrderProvider(@NotNull FileAnnotation annotation) {
+  @Nullable
+  private static RevisionsOrderProvider createDefaultRevisionsOrderProvider(@NotNull FileAnnotation annotation) {
     List<VcsFileRevision> revisions = annotation.getRevisions();
     if (revisions == null) return null;
 
@@ -350,7 +377,8 @@ public abstract class FileAnnotation {
     return () -> orderedRevisions;
   }
 
-  private static @Nullable RevisionChangesProvider createDefaultRevisionsChangesProvider(@NotNull FileAnnotation annotation) {
+  @Nullable
+  private static RevisionChangesProvider createDefaultRevisionsChangesProvider(@NotNull FileAnnotation annotation) {
     VirtualFile file = annotation.getFile();
     if (file == null) return null;
 

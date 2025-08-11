@@ -2,10 +2,13 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.settingsRepository.SyncType
 
 internal object IcsActionsLogger : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP

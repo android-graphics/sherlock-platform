@@ -20,8 +20,6 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
-import com.intellij.util.io.URLUtil.HTTPS_PROTOCOL
-import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
 
@@ -115,7 +113,7 @@ class IssueNavigationConfigurable(private val project: Project)
     if (dlg.showAndGet()) {
       val editedLink = dlg.link
       link.issueRegexp = editedLink.issueRegexp
-      link.linkRegexp = editedLink.linkRegexp.addHttpsIfUrlPrefixMissing()
+      link.linkRegexp = editedLink.linkRegexp
       model.fireTableDataChanged()
     }
   }
@@ -131,7 +129,6 @@ class IssueNavigationConfigurable(private val project: Project)
       if (!s.endsWith("/")) {
         s += "/"
       }
-      s = s.addHttpsIfUrlPrefixMissing()
       model.addRow(IssueNavigationLink("[A-Z]+\\-\\d+", s + "issue/$0"))
       model.fireTableDataChanged()
     }
@@ -148,14 +145,10 @@ class IssueNavigationConfigurable(private val project: Project)
       if (!s.endsWith("/")) {
         s += "/"
       }
-      s = s.addHttpsIfUrlPrefixMissing()
       model.addRow(IssueNavigationLink("[A-Z]+\\-\\d+", s + "browse/$0"))
       model.fireTableDataChanged()
     }
   }
-
-  private fun String.addHttpsIfUrlPrefixMissing(): String =
-    if (this.contains(SCHEME_SEPARATOR)) this else "$HTTPS_PROTOCOL$SCHEME_SEPARATOR$this"
 
   private inner class AddIssueNavigationLinkAction(val model: ListTableModel<IssueNavigationLink>)
     : DumbAwareAction(VcsBundle.messagePointer("issue.link.add.title")) {

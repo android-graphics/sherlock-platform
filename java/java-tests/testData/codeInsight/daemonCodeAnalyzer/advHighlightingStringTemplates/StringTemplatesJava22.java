@@ -19,12 +19,12 @@ class X {
   }
 
   void wrongType(String foo) {
-    String s = <error descr="Incompatible types. Found: 'java.lang.StringTemplate', required: 'java.lang.String'">StringTemplate.RAW."""
+    <error descr="Incompatible types. Found: 'java.lang.StringTemplate', required: 'java.lang.String'">String s = StringTemplate.RAW."""
       this: \{foo}
       """;</error>
 
     var x = (java.io.Serializable & StringTemplate.Processor<String, RuntimeException>)null;
-    java.util.ArrayList v = <error descr="Incompatible types. Found: 'java.lang.String', required: 'java.util.ArrayList'">x."asdf";</error>
+    <error descr="Incompatible types. Found: 'java.lang.String', required: 'java.util.ArrayList'">java.util.ArrayList v = x."asdf";</error>
     String t = x."reticulation";
   }
 
@@ -119,7 +119,7 @@ class X {
   }
   
   public static void voidExpression() {
-    String a = STR."\{<error descr="Expression with the 'void' type is not allowed as a string template embedded expression">voidExpression()</error>}";
+    String a = STR."\{<error descr="Expression with type 'void' not allowed as string template embedded expression">voidExpression()</error>}";
     System.out.println(a);
   }
 

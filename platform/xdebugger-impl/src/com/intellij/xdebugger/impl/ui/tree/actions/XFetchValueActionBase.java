@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -68,7 +68,8 @@ public abstract class XFetchValueActionBase extends DumbAwareAction {
     }
   }
 
-  protected @NotNull ValueCollector createCollector(@NotNull AnActionEvent e) {
+  @NotNull
+  protected ValueCollector createCollector(@NotNull AnActionEvent e) {
     return new ValueCollector(XDebuggerTree.getTree(e.getDataContext()));
   }
 
@@ -128,7 +129,7 @@ public abstract class XFetchValueActionBase extends DumbAwareAction {
       return index;
     }
 
-    public void evaluationComplete(final int index, final @NotNull String value) {
+    public void evaluationComplete(final int index, @NotNull final String value) {
       AppUIUtil.invokeOnEdt(() -> {
         values.set(index, value);
         finish();

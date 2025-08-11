@@ -20,7 +20,6 @@ public final class InternalBuildIdentifier implements BuildIdentifier, Serializa
     return this.rootDir;
   }
 
-  @Override
   public String toString() {
     return "build=" + this.rootDir.getPath();
   }

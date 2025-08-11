@@ -12,7 +12,6 @@ public class PsiClassInitializerStubImpl extends StubBase<PsiClassInitializer> i
     super(parent, JavaStubElementTypes.CLASS_INITIALIZER);
   }
 
-  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "PsiClassInitializerStub";

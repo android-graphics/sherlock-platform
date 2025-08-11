@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.internal;
 
 import org.gradle.internal.impldep.com.google.common.base.Objects;
@@ -17,13 +17,15 @@ public class AnnotationProcessingModelImpl implements AnnotationProcessingModel,
     this.configs = configs;
   }
 
+  @NotNull
   @Override
-  public @NotNull Map<String, AnnotationProcessingConfig> allConfigs() {
+  public Map<String, AnnotationProcessingConfig> allConfigs() {
     return configs;
   }
 
+  @Nullable
   @Override
-  public @Nullable AnnotationProcessingConfig bySourceSetName(@NotNull String sourceSetName) {
+  public AnnotationProcessingConfig bySourceSetName(@NotNull String sourceSetName) {
     return configs.get(sourceSetName);
   }
 

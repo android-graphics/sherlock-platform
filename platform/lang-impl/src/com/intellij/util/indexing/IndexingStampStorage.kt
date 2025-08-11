@@ -12,7 +12,6 @@ import java.io.Closeable
 import java.io.IOException
 
 
-@ApiStatus.Internal
 sealed interface IndexingStampStorage : Closeable {
 
   @Throws(IOException::class)
@@ -21,7 +20,6 @@ sealed interface IndexingStampStorage : Closeable {
   fun readTimestamps(fileId: Int): TimestampsImmutable?
 }
 
-@ApiStatus.Internal
 @VisibleForTesting
 class IndexingStampStorageOverRegularAttributes : IndexingStampStorage {
   companion object {

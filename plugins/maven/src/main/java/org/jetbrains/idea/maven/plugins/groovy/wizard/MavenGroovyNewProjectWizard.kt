@@ -47,7 +47,7 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     private val addSampleCodeProperty = propertyGraph.property(true)
       .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
 
-    var addSampleCode: Boolean by addSampleCodeProperty
+    private var addSampleCode by addSampleCodeProperty
 
     private fun setupGroovySdkUI(builder: Panel) {
       builder.row(GroovyBundle.message("label.groovy.sdk")) {
@@ -86,6 +86,7 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
         groovySdk.getVersion()?.let { groovySdkVersion ->
           builder.groovySdkVersion = groovySdkVersion
         }
+        builder.createSampleCode = addSampleCode
       }
     }
 
@@ -128,20 +129,11 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     }
   }
 
-  private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
+  private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
 
     override fun setupAssets(project: Project) {
       if (context.isCreatingNewProject) {
         addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
-      }
-
-      addEmptyDirectoryAsset("src/main/groovy")
-      addEmptyDirectoryAsset("src/main/resources")
-      addEmptyDirectoryAsset("src/test/groovy")
-      addEmptyDirectoryAsset("src/test/resources")
-
-      if (parent.addSampleCode) {
-        withGroovySampleCode("src/main/groovy", parent.groupId)
       }
     }
   }

@@ -22,6 +22,7 @@ import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeMethodFinalFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -31,13 +32,15 @@ import org.jetbrains.annotations.Nullable;
 public final class DesignForExtensionInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "design.for.extension.problem.descriptor");
   }
 
+  @Nullable
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiMethod method = (PsiMethod)infos[0];
     if (MethodUtils.isOverridden(method)) {
       return null;

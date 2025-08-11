@@ -7,12 +7,12 @@ import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.sh.utils.ProjectUtil;
 import com.intellij.ui.EditorNotifications;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -25,8 +25,8 @@ import java.util.Set;
 import java.util.TreeSet;
 
 public final class ShShellcheckInspection extends LocalInspectionTool implements ExternalAnnotatorBatchInspection {
-  public static final @NonNls String SHORT_NAME = "ShellCheck";
-  private static final @NonNls String SHELLCHECK_SETTINGS_TAG = "shellcheck_settings";
+  @NonNls public static final String SHORT_NAME = "ShellCheck";
+  @NonNls private static final String SHELLCHECK_SETTINGS_TAG = "shellcheck_settings";
   private static final String DELIMITER = ",";
   private final Set<@NlsSafe String> myDisabledInspections = new TreeSet<>();
   private JComponent myOptionsPanel;
@@ -36,8 +36,9 @@ public final class ShShellcheckInspection extends LocalInspectionTool implements
     return SuppressQuickFix.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getShortName() {
+  public String getShortName() {
     return SHORT_NAME;
   }
 
@@ -57,14 +58,15 @@ public final class ShShellcheckInspection extends LocalInspectionTool implements
     }
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      Project project = ProjectUtil.getProject(myOptionsPanel);
+      Project project = ProjectUtil.guessCurrentProject(myOptionsPanel);
       EditorNotifications editorNotifications = EditorNotifications.getInstance(project);
       editorNotifications.updateAllNotifications();
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable JComponent createOptionsPanel() {
+  public JComponent createOptionsPanel() {
     myOptionsPanel = new ShellcheckOptionsPanel(getDisabledInspections(), this::onInspectionChange).getPanel();
     return myOptionsPanel;
   }
@@ -87,7 +89,8 @@ public final class ShShellcheckInspection extends LocalInspectionTool implements
     }
   }
 
-  static @NotNull ShShellcheckInspection findShShellcheckInspection(@NotNull PsiElement element) {
+  @NotNull
+  static ShShellcheckInspection findShShellcheckInspection(@NotNull PsiElement element) {
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
     ShShellcheckInspection tool = (ShShellcheckInspection)profile.getUnwrappedTool(SHORT_NAME, element);
     return tool == null ? new ShShellcheckInspection() : tool;

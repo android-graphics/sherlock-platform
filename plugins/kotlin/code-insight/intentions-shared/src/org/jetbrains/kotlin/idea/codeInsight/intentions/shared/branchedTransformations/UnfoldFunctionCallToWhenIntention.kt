@@ -23,7 +23,8 @@ internal class UnfoldFunctionCallToWhenIntention :
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean = canUnfold<KtWhenExpression>(element)
 
-    override fun KaSession.prepareContext(element: KtCallExpression) {
+    context(KaSession)
+    override fun prepareContext(element: KtCallExpression) {
     }
 
     override fun invoke(

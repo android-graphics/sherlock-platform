@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +19,6 @@ import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.im.InputMethodRequests;
 
 /**
  * Due to many bugs and "features" of the default {@link JComboBox} we provide our own "patch".
@@ -32,9 +30,6 @@ import java.awt.im.InputMethodRequests;
  * As the result of our patch, combo box has an internal wrapper for {@link ComboBoxEditor}.
  * It means that {@link #getEditor()} method always returns not the same value you set by {@link #setEditor(ComboBoxEditor)} method.
  * Moreover, adding and removing of action listeners isn't supported by the wrapper.
- * To enable speed search see {@link #setSwingPopup}
- *
- * @see com.intellij.ui.speedSearch.SpeedSearch#installSupplyTo(JComponent, boolean) - to support non-latin speed search input
  */
 public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventListener {
 
@@ -218,8 +213,6 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
   /**
    * The {@code false} parameter value enables JBPopup instead of
    * the default ComboBox popup.
-   * <p>
-   * E.g., to enable speed search in the popup, set {@code swingPopup} to {@code false}
    *
    * @param swingPopup {@code false} to enable JBPopup
    * @see ComboBoxPopupState
@@ -383,16 +376,6 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
       if (myDelegate != null) {
         myDelegate.setItem(obj);
       }
-    }
-  }
-
-  @Override
-  public InputMethodRequests getInputMethodRequests() {
-    SpeedSearchSupply supply = SpeedSearchSupply.getSupply(this, true);
-    if (supply == null) {
-      return null;
-    } else {
-      return supply.getInputMethodRequests();
     }
   }
 }

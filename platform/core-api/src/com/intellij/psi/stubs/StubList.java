@@ -1,11 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -16,8 +15,7 @@ import java.util.function.IntUnaryOperator;
 /**
  * A storage for stub-related data, shared by all stubs in one file. More memory-efficient, than keeping the same data in stub objects themselves.
  */
-@ApiStatus.Internal
-public abstract class StubList extends AbstractList<StubBase<?>> {
+abstract class StubList extends AbstractList<StubBase<?>> {
   /** A list to hold ids of stub children at contiguous ranges, to avoid allocating separate lists in each parent stub */
   private final MostlyUShortIntList myJoinedChildrenList;
 
@@ -43,8 +41,8 @@ public abstract class StubList extends AbstractList<StubBase<?>> {
     myJoinedChildrenList.add(0); // indices in this list should be non-zero
   }
 
-  @NotNull IElementType getStubElementType(int id) {
-    return IElementType.find(getStubTypeIndex(id));
+  IStubElementType<?, ?> getStubType(int id) {
+    return (IStubElementType<?, ?>)IElementType.find(getStubTypeIndex(id));
   }
 
   short getStubTypeIndex(int id) {
@@ -67,7 +65,7 @@ public abstract class StubList extends AbstractList<StubBase<?>> {
     return myStubData.get(childrenCountIndex(id));
   }
 
-  void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IElementType type) {
+  void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IStubElementType<?, ?> type) {
     int stubId = size();
     stub.id = stubId;
 
@@ -135,8 +133,7 @@ public abstract class StubList extends AbstractList<StubBase<?>> {
     myTempState.prepareForChildren(parentId, childrenCount);
   }
 
-  @ApiStatus.Internal
-  public abstract @Nullable StubBase<?> getCachedStub(int index);
+  abstract @Nullable StubBase<?> getCachedStub(int index);
 
   List<StubBase<?>> getChildrenStubs(int id) {
     int count = getChildrenCount(id);
@@ -171,7 +168,7 @@ public abstract class StubList extends AbstractList<StubBase<?>> {
   }
 
   @Nullable
-  <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(int id, @NotNull IElementType elementType) {
+  <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(int id, @NotNull IStubElementType<S, P> elementType) {
     int count = getChildrenCount(id);
     int start = getChildrenStart(id);
     switch (getChildrenStorage(start)) {
@@ -181,7 +178,7 @@ public abstract class StubList extends AbstractList<StubBase<?>> {
     }
   }
 
-  private @Nullable <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(IElementType elementType,
+  private @Nullable <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(IStubElementType<S, P> elementType,
                                                                                            IntUnaryOperator idList,
                                                                                            int start, int end) {
     for (int i = start; i < end; ++i) {
@@ -199,8 +196,7 @@ public abstract class StubList extends AbstractList<StubBase<?>> {
    * with all stubs re-targeted to that copy.
    */
   @NotNull
-  @ApiStatus.Internal
-  public StubList finalizeLoadingStage() {
+  StubList finalizeLoadingStage() {
     if (myTempState != null) {
       myTempState = null;
       myJoinedChildrenList.trimToSize();
@@ -211,8 +207,7 @@ public abstract class StubList extends AbstractList<StubBase<?>> {
 
   @NotNull
   @Unmodifiable
-  @ApiStatus.Internal
-  public List<StubElement<?>> toPlainList() {
+  List<StubElement<?>> toPlainList() {
     //noinspection unchecked
     return (List)this;
   }
@@ -323,15 +318,14 @@ final class MaterialStubList extends StubList {
   }
 
   @Override
-  void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IElementType type) {
+  void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IStubElementType<?, ?> type) {
     super.addStub(stub, parent, type);
     myPlainList.add(stub);
   }
 
   @NotNull
   @Override
-  @ApiStatus.Internal
-  public StubList finalizeLoadingStage() {
+  StubList finalizeLoadingStage() {
     if (!isChildrenLayoutOptimal()) {
       return createOptimizedCopy();
     }
@@ -361,7 +355,7 @@ final class MaterialStubList extends StubList {
 
     for (int i = 0; i < copy.size(); i++) {
       StubBase<?> stub = copy.get(i);
-      stub.setStubList(copy);
+      stub.myStubList = copy;
       stub.id = i;
     }
 
@@ -380,8 +374,7 @@ final class MaterialStubList extends StubList {
 
   @Nullable
   @Override
-  @ApiStatus.Internal
-  public StubBase<?> getCachedStub(int index) {
+  StubBase<?> getCachedStub(int index) {
     return get(index);
   }
 }

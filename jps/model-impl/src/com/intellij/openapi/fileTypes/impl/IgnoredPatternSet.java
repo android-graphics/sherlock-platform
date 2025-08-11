@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -18,7 +18,7 @@ public final class IgnoredPatternSet {
     masks = new LinkedHashSet<>();
   }
 
-  public IgnoredPatternSet(@NotNull List<String> masks) {
+  IgnoredPatternSet(@NotNull List<String> masks) {
     FileNameMatcherFactory fileNameMatcherFactory = null;
     this.masks = new LinkedHashSet<>(masks.size());
     for (String ignoredFile : masks) {
@@ -32,8 +32,7 @@ public final class IgnoredPatternSet {
     }
   }
 
-  @ApiStatus.Internal
-  public @NotNull Set<String> getIgnoreMasks() {
+  @NotNull Set<String> getIgnoreMasks() {
     return Collections.unmodifiableSet(masks);
   }
 
@@ -46,8 +45,7 @@ public final class IgnoredPatternSet {
     }
   }
 
-  @ApiStatus.Internal
-  public void addIgnoreMask(@NotNull String ignoredFile) {
+  void addIgnoreMask(@NotNull String ignoredFile) {
     if (ignorePatterns.findAssociatedFileType(ignoredFile) == null) {
       masks.add(ignoredFile);
       ignorePatterns.addAssociation(FileNameMatcherFactory.getInstance().createMatcher(ignoredFile), Boolean.TRUE);
@@ -64,8 +62,7 @@ public final class IgnoredPatternSet {
     return StringUtilRt.endsWith(fileName, FileUtil.ASYNC_DELETE_EXTENSION);
   }
 
-  @ApiStatus.Internal
-  public void clearPatterns() {
+  void clearPatterns() {
     masks.clear();
     ignorePatterns.removeAllAssociations(Boolean.TRUE);
   }

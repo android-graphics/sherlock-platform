@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.ginq.ast
 
 import com.intellij.psi.PsiElement
@@ -36,7 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
  *
  * (**See:** org.apache.groovy.ginq.dsl.expression.GinqExpression)
  */
-internal data class GinqExpression(
+data class GinqExpression(
   val from: GinqFromFragment,
   val joins: List<GinqJoinFragment>,
   val where: GinqWhereFragment?,
@@ -108,27 +108,23 @@ data class GinqGroupByFragment(
 
 data class AliasedExpression(val expression: GrExpression, val alias: GrClassTypeElement?)
 
-internal data class GinqOrderByFragment(
+data class GinqOrderByFragment(
   override val keyword: PsiElement,
   val sortingFields: List<Ordering>,
 ) : GinqQueryFragment
 
-internal sealed interface Ordering {
+sealed interface Ordering {
   val orderKw: PsiElement?
   val nullsKw: PsiElement?
   val sorter: GrExpression
 
-  data class Asc(
-    override val orderKw: PsiElement?,
-    override val nullsKw: PsiElement?,
-    override val sorter: GrExpression,
-  ) : Ordering
+  data class Asc internal constructor(override val orderKw: PsiElement?,
+                                      override val nullsKw: PsiElement?,
+                                      override val sorter: GrExpression) : Ordering
 
-  data class Desc(
-    override val orderKw: PsiElement?,
-    override val nullsKw: PsiElement?,
-    override val sorter: GrExpression,
-  ) : Ordering
+  data class Desc internal constructor(override val orderKw: PsiElement?,
+                                       override val nullsKw: PsiElement?,
+                                       override val sorter: GrExpression) : Ordering
 }
 
 data class GinqLimitFragment(
@@ -137,13 +133,13 @@ data class GinqLimitFragment(
   val size: GrExpression?,
 ) : GinqQueryFragment
 
-internal data class GinqSelectFragment(
+data class GinqSelectFragment(
   override val keyword: PsiElement,
   val distinct: GrReferenceExpression?,
   val projections: List<AggregatableAliasedExpression>,
 ) : GinqQueryFragment
 
-internal data class AggregatableAliasedExpression(
+data class AggregatableAliasedExpression(
   val aggregatedExpression: GrExpression,
   val windows: List<GinqWindowFragment>,
   val alias: GrClassTypeElement?,
@@ -156,7 +152,7 @@ internal data class AggregatableAliasedExpression(
  *      [rows <lower>, <upper> | range <lower>, <upper>]]
  * )
  */
-internal data class GinqWindowFragment(
+data class GinqWindowFragment(
   val qualifier: GrExpression,
   val overKw: PsiElement,
   val partitionKw: PsiElement?,

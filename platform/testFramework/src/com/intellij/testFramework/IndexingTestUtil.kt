@@ -12,11 +12,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.indexing.UnindexedFilesScannerExecutorImpl
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
 import org.junit.Assert
 import kotlin.time.Duration.Companion.seconds
 
@@ -63,24 +61,21 @@ class IndexingTestUtil(private val project: Project) {
     }
 
     if (ApplicationManager.getApplication().isDispatchThread) {
-      do {
-        PlatformTestUtil.waitWithEventsDispatching("Indexing timeout", { !shouldWait() }, 600)
+      val scope = GlobalScope.childScope("Indexing waiter", Dispatchers.IO)
+      val waiting = scope.launch { suspendUntilIndexesAreReady() }
+      try {
+        PlatformTestUtil.waitWithEventsDispatching("Indexing timeout", { !waiting.isActive }, 600)
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue() // make sure that all the scheduled write actions are executed
       }
-      while (dispatchAllEventsInIdeEventQueue()) // make sure that all the scheduled write actions are executed
+      finally {
+        waiting.cancel()
+      }
     }
     else {
       runBlockingMaybeCancellable {
         suspendUntilIndexesAreReady()
       }
     }
-  }
-
-  private fun dispatchAllEventsInIdeEventQueue(): Boolean {
-    var hasDispatchedEvents = false
-    while (PlatformTestUtil.dispatchNextEventIfAny() != null) {
-      hasDispatchedEvents = true
-    }
-    return hasDispatchedEvents
   }
 
   private fun shouldWait(): Boolean {

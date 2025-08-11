@@ -214,7 +214,6 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
     });
   }
 
-  @Override
   public String toString() {
     return getCondition().toString();
   }

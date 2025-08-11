@@ -1,10 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -31,12 +30,10 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Query;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -66,11 +63,13 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
 
   protected abstract M[] findDeepestSuperMethods(M method);
 
-  protected @NlsContexts.Label String getEmptyCalleeText() {
+  @NlsContexts.Label
+  protected String getEmptyCalleeText() {
     return "";
   }
 
-  protected @NlsContexts.Label String getEmptyCallerText() {
+  @NlsContexts.Label
+  protected String getEmptyCallerText() {
     return "";
   }
 
@@ -108,11 +107,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
         if (path != null) {
           final MemberNodeBase<M> node = (MemberNodeBase)path.getLastPathComponent();
           myAlarm.cancelAllRequests();
-          myAlarm.addRequest(() -> {
-            try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162969")) {
-              updateEditorTexts(node);
-            }
-          }, 300);
+          myAlarm.addRequest(() -> updateEditorTexts(node), 300);
         }
       }
     };
@@ -175,9 +170,9 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return node;
   }
 
-  protected @Unmodifiable Collection<PsiElement> findElementsToHighlight(M caller, PsiElement callee) {
+  protected Collection<PsiElement> findElementsToHighlight(M caller, PsiElement callee) {
     Query<PsiReference> references = ReferencesSearch.search(callee, new LocalSearchScope(caller), false);
-    return ContainerUtil.mapNotNull(references.asIterable(), psiReference -> psiReference.getElement());
+    return ContainerUtil.mapNotNull(references, psiReference -> psiReference.getElement());
   }
 
   @Override
@@ -205,7 +200,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return "";
   }
 
-  private int getStartOffset(final @NotNull M method) {
+  private int getStartOffset(@NotNull final M method) {
     final PsiFile file = method.getContainingFile();
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
     return document.getLineStartOffset(document.getLineNumber(method.getTextRange().getStartOffset()));
@@ -227,7 +222,9 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return splitter;
   }
 
-  protected @NotNull @Nls String getCalleeEditorTitle() {
+  @NotNull
+  @Nls
+  protected String getCalleeEditorTitle() {
     return RefactoringBundle.message("caller.chooser.callee.method");
   }
 
@@ -329,8 +326,9 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return myTree;
   }
 
+  @Nullable
   @Override
-  protected @Nullable String getDimensionServiceKey() {
+  protected String getDimensionServiceKey() {
     return "caller.chooser.dialog";
   }
 }

@@ -1,5 +1,0 @@
-import org.jetbrains.jps.builders.java.dependencyView.MockAnnotation;
-
-@MockAnnotation(enumParam = MockAnnotation.EnumParam.VALUE_3)
-public class D8 {
-}

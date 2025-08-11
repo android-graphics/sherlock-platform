@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.idea.completion.lookups
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -14,21 +15,26 @@ import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinCompletionImplK2Bundle
+import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionalTypeParameters
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.types.Variance
 
 internal object TailTextProvider {
-
     context(KaSession)
-    fun getTailText(
-        signature: KaCallableSignature<*>,
-    ): String = buildString {
-        // use unsubstituted type when rendering receiver type of extension
-        val symbol = signature.symbol
-        symbol.receiverType?.let { renderReceiverType(it) }
+    fun getTailText(signature: KaCallableSignature<*>, options: CallableInsertionOptions): String = buildString {
+        if (signature is KaFunctionSignature<*>) {
+            if (insertLambdaBraces(signature, options)) {
+                append(" {...} ")
+            }
+            append(renderFunctionParameters(signature))
+        }
 
-        symbol.getContainerPresentation(isFunctionalVariableCall = false)?.let { append(it) }
+        // use unsubstituted type when rendering receiver type of extension
+        signature.symbol.receiverType?.let { renderReceiverType(it) }
+
+        signature.symbol.getContainerPresentation(isFunctionalVariableCall = false)?.let { append(it) }
     }
 
     context(KaSession)
@@ -68,7 +74,7 @@ internal object TailTextProvider {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun StringBuilder.renderReceiverType(receiverType: KaType) {
-        val renderedType = receiverType.renderVerbose()
+        val renderedType = receiverType.render(CompletionShortNamesRenderer.rendererVerbose, position = Variance.INVARIANT)
         append(KotlinCompletionImplK2Bundle.message("presentation.tail.for.0", renderedType))
     }
 
@@ -91,7 +97,23 @@ internal object TailTextProvider {
     }
 
     private fun FqName.asStringForTailText(): String =
-        if (isRoot) "<root>" else render()
+        if (isRoot) "<root>" else asString()
+
+    context(KaSession)
+    fun insertLambdaBraces(symbol: KaFunctionSignature<*>, options: CallableInsertionOptions): Boolean {
+        val lambdaBracesAreDisabledByInsertionStrategy = when (options.insertionStrategy) {
+            is CallableInsertionStrategy.AsCall,
+            is CallableInsertionStrategy.WithSuperDisambiguation -> false
+
+            is CallableInsertionStrategy.AsIdentifier,
+            is CallableInsertionStrategy.WithCallArgs,
+            is CallableInsertionStrategy.AsIdentifierCustom -> true
+        }
+        if (lambdaBracesAreDisabledByInsertionStrategy) return false
+
+        val singleParam = symbol.valueParameters.singleOrNull()
+        return singleParam != null && !singleParam.symbol.hasDefaultValue && singleParam.returnType is KaFunctionType
+    }
 
     context(KaSession)
     fun insertLambdaBraces(symbol: KaFunctionType): Boolean {

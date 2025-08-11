@@ -1,1 +1,0 @@
-Usages of nested declarations from non-Kotlin code won't be processed

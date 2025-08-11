@@ -35,7 +35,8 @@ public class DocstringQuickFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     if (myMissingParam != null) {
       final PyNamedParameter param = myMissingParam.getElement();
       if (param == null) {
@@ -52,7 +53,8 @@ public class DocstringQuickFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.docstring");
   }
 

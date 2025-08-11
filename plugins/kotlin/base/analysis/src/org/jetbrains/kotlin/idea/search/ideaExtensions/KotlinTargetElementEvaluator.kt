@@ -41,12 +41,7 @@ abstract class KotlinTargetElementEvaluator : TargetElementEvaluatorEx2(), Targe
         return super.isAcceptableNamedParent(parent)
     }
 
-    override fun includeSelfInGotoImplementation(element: PsiElement): Boolean {
-        if (element is KtCallableDeclaration && !element.hasBody()) {
-            return false
-        }
-        return !(element is KtClass && element.isAbstract())
-    }
+    override fun includeSelfInGotoImplementation(element: PsiElement): Boolean = !(element is KtClass && element.isAbstract())
 
     override fun adjustReferenceOrReferencedElement(
       file: PsiFile,

@@ -7,7 +7,7 @@
 // ACTION: Opt in for 'B' on 'SomeImplementation'
 // ACTION: Propagate 'B' opt-in requirement to 'SomeImplementation'
 // RUNTIME_WITH_SCRIPT_RUNTIME
-// LANGUAGE_VERSION: 2.1
+@file:OptIn(ExperimentalSubclassOptIn::class)
 
 @RequiresOptIn
 annotation class A

@@ -34,8 +34,9 @@ import org.jetbrains.annotations.NotNull;
  * User : catherine
  */
 public final class PythonSpaceHandler extends TypedHandlerDelegate {
+  @NotNull
   @Override
-  public @NotNull Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     if (c == ' ' && codeInsightSettings.JAVADOC_STUB_ON_ENTER) {
       int offset = editor.getCaretModel().getOffset();

@@ -7,9 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 interface ActiveChangeListTracker {
   companion object {
     @JvmStatic
@@ -26,7 +24,6 @@ interface ActiveChangeListTracker {
   fun runUnderChangeList(changelistId: String, task: Runnable)
 }
 
-@ApiStatus.Internal
 open class ActiveChangeListTrackerImpl(val project: Project) : ActiveChangeListTracker {
   companion object {
     private val LOG = logger<ActiveChangeListTracker>()

@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -18,7 +18,8 @@ import org.jetbrains.annotations.Nullable;
 public final class NewStringBufferWithCharArgumentInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "new.string.buffer.with.char.argument.problem.descriptor");
   }
@@ -29,7 +30,8 @@ public final class NewStringBufferWithCharArgumentInspection extends BaseInspect
   }
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  @Nullable
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiExpression argument = (PsiExpression)infos[0];
     if (!(argument instanceof PsiLiteralExpression)) {
       return null;
@@ -41,7 +43,8 @@ public final class NewStringBufferWithCharArgumentInspection extends BaseInspect
     extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "new.string.buffer.with.char.argument.quickfix");
     }

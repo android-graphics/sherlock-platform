@@ -4,5 +4,5 @@ package org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2IntentionTest
 
 abstract class AbstractSharedK2IntentionTest : AbstractK2IntentionTest() {
-    override fun intentionFileName(): String = ".intention"
+    override fun intentionFileName() = ".intention"
 }

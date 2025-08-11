@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner.history;
 
 import com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor;
@@ -30,7 +30,8 @@ public interface ImportTestOutputExtension {
   @Nullable
   DefaultHandler createHandler(final Reader reader, GeneralTestEventsProcessor processor) throws IOException;
 
-  static @NotNull DefaultHandler findHandler(final Supplier<? extends Reader> readerSupplier, GeneralTestEventsProcessor processor) {
+  @NotNull
+  static DefaultHandler findHandler(final Supplier<? extends Reader> readerSupplier, GeneralTestEventsProcessor processor) {
     for (ImportTestOutputExtension extension : EP_NAME.getExtensionList()) {
       Reader reader = readerSupplier.get();
       if (reader == null) continue;

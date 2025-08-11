@@ -1,4 +1,4 @@
-from typing import Final
+from typing_extensions import Final
 
 XK_Thai_kokai: Final = 0xDA1
 XK_Thai_khokhai: Final = 0xDA2

@@ -49,38 +49,45 @@ public final class PyPsiFacadeImpl extends PyPsiFacade {
     myProject = project;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<PsiElement> resolveQualifiedName(@NotNull QualifiedName name, @NotNull PyQualifiedNameResolveContext context) {
+  public List<PsiElement> resolveQualifiedName(@NotNull QualifiedName name, @NotNull PyQualifiedNameResolveContext context) {
     return PyResolveImportUtil.resolveQualifiedName(name, context);
   }
 
+  @NotNull
   @Override
-  public @NotNull PyQualifiedNameResolveContext createResolveContextFromFoothold(@NotNull PsiElement foothold) {
+  public PyQualifiedNameResolveContext createResolveContextFromFoothold(@NotNull PsiElement foothold) {
     return PyResolveImportUtil.fromFoothold(foothold);
   }
 
+  @NotNull
   @Override
-  public @NotNull PyClassType createClassType(@NotNull PyClass pyClass, boolean isDefinition) {
+  public PyClassType createClassType(@NotNull PyClass pyClass, boolean isDefinition) {
     return new PyClassTypeImpl(pyClass, isDefinition);
   }
 
+  @Nullable
   @Override
-  public @Nullable PyType createUnionType(@NotNull Collection<PyType> members) {
+  public PyType createUnionType(@NotNull Collection<PyType> members) {
     return PyUnionType.union(members);
   }
 
+  @Nullable
   @Override
-  public @Nullable PyType createTupleType(@NotNull List<PyType> members, @NotNull PsiElement anchor) {
+  public PyType createTupleType(@NotNull List<PyType> members, @NotNull PsiElement anchor) {
     return PyTupleType.create(anchor, members);
   }
 
+  @Nullable
   @Override
-  public @Nullable PyType parseTypeAnnotation(@NotNull String annotation, @NotNull PsiElement anchor) {
+  public PyType parseTypeAnnotation(@NotNull String annotation, @NotNull PsiElement anchor) {
     return PyTypeParser.getTypeByName(anchor, annotation);
   }
 
+  @Nullable
   @Override
-  public @Nullable PyClass createClassByQName(final @NotNull String qName, final @NotNull PsiElement anchor) {
+  public PyClass createClassByQName(@NotNull final String qName, @NotNull final PsiElement anchor) {
     final QualifiedName qualifiedName = QualifiedName.fromDottedString(qName);
     // Only built-in classes can be found by their unqualified names.
     if (qualifiedName.getComponentCount() == 1) {
@@ -98,13 +105,15 @@ public final class PyPsiFacadeImpl extends PyPsiFacade {
       .orElse(null);
   }
 
+  @Nullable
   @Override
-  public @Nullable String findShortestImportableName(@NotNull VirtualFile targetFile, @NotNull PsiElement anchor) {
+  public String findShortestImportableName(@NotNull VirtualFile targetFile, @NotNull PsiElement anchor) {
     return QualifiedNameFinder.findShortestImportableName(anchor, targetFile);
   }
 
+  @NotNull
   @Override
-  public @NotNull LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
+  public LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory directory) {
       return PythonLanguageLevelPusher.getLanguageLevelForVirtualFile(directory.getProject(), directory.getVirtualFile());
     }

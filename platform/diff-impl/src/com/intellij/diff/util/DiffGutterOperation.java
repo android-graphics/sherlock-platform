@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.diff.tools.util.KeyboardModifierListener;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class DiffGutterOperation {
-  private final @NotNull RangeHighlighter myHighlighter;
+  @NotNull private final RangeHighlighter myHighlighter;
 
   public DiffGutterOperation(@NotNull Editor editor, int offset) {
     myHighlighter = editor.getMarkupModel().addRangeHighlighter(null, offset, offset,
@@ -37,7 +37,7 @@ public abstract class DiffGutterOperation {
   }
 
   public static final class Simple extends DiffGutterOperation {
-    private final @NotNull RendererBuilder myBuilder;
+    @NotNull private final RendererBuilder myBuilder;
 
     public Simple(@NotNull Editor editor, int offset,
                   @NotNull RendererBuilder builder) {
@@ -53,9 +53,9 @@ public abstract class DiffGutterOperation {
   }
 
   public static final class WithModifiers extends DiffGutterOperation {
-    private final @NotNull ModifiersRendererBuilder myBuilder;
+    @NotNull private final ModifiersRendererBuilder myBuilder;
 
-    private final @NotNull KeyboardModifierListener myModifierProvider;
+    @NotNull private final KeyboardModifierListener myModifierProvider;
     private boolean myCtrlPressed;
     private boolean myShiftPressed;
     private boolean myAltPressed;

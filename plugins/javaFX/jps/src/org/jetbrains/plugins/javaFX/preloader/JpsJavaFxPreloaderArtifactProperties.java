@@ -18,8 +18,9 @@ public class JpsJavaFxPreloaderArtifactProperties extends JpsElementBase<JpsJava
     myState.setPreloaderClass(state.myPreloaderClass);
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsJavaFxPreloaderArtifactProperties createCopy() {
+  public JpsJavaFxPreloaderArtifactProperties createCopy() {
     return new JpsJavaFxPreloaderArtifactProperties(myState);
   }
 

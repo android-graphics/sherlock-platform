@@ -19,7 +19,6 @@ public class PackagesPaneSelectInTarget extends ProjectViewSelectInTarget implem
     super(project);
   }
 
-  @Override
   public String toString() {
     return IdeBundle.message("select.in.packages");
   }

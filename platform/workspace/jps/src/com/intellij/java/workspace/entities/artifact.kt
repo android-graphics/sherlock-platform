@@ -5,6 +5,11 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
@@ -16,9 +21,6 @@ data class ArtifactId(val name: @NlsSafe String) : SymbolicEntityId<ArtifactEnti
     get() = name
 }
 
-/**
- * See [com.intellij.packaging.artifacts.LegacyBridgeJpsArtifactEntitySourceFactory]
- */
 interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
   val name: String
 

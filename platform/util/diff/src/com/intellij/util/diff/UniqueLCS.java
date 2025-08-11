@@ -1,14 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.diff;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Arrays;
 
-@ApiStatus.Internal
-public final class UniqueLCS {
+final class UniqueLCS {
   private final int[] myFirst;
   private final int[] mySecond;
 

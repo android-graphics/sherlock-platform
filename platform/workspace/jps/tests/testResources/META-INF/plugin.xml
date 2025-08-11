@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin use-idea-classloader="true">
   <id>com.intellij.workspace.ide.tests</id>
   <name>com.intellij.workspace.ide.tests</name>
 

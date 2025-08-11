@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -20,8 +20,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
-import static com.intellij.testFramework.TestLoggerKt.assertErrorLogged;
 
 public class FoldingTest extends AbstractEditorTest {
   private FoldingModelEx myModel;
@@ -87,15 +85,14 @@ public class FoldingTest extends AbstractEditorTest {
 
   public void testAddEmptyRegion() {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    assertErrorLogged(Throwable.class, () -> {
-      FoldRegion region = null;
-      try {
-        region = myModel.addFoldRegion(5, 5, "...");
-      }
-      catch (AssertionError ignored) {
-      }
-      assertNull(region);
-    });
+
+    FoldRegion region = null;
+    try {
+      region = myModel.addFoldRegion(5, 5, "...");
+    }
+    catch (AssertionError ignored) {
+    }
+    assertNull(region);
   }
 
   public void testCollapsedRegionQueries() {

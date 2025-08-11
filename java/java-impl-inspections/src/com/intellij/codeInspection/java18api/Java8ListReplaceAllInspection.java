@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -17,7 +18,6 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.CommonJavaInlineUtil;
@@ -69,7 +69,7 @@ public final class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalIn
         if (variable == null) return false;
         PsiExpression initializer = variable.getInitializer();
         PsiExpression index = container.extractIndexFromGetExpression(initializer);
-        return ExpressionUtils.isReferenceTo(index, counter) && ControlFlowUtil.isEffectivelyFinal(variable, body);
+        return ExpressionUtils.isReferenceTo(index, counter) && HighlightControlFlowUtil.isEffectivelyFinal(variable, body, null);
       }
 
       private static boolean isMultilineLambda(PsiStatement body, PsiStatement[] statements) {
@@ -114,8 +114,10 @@ public final class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalIn
   }
 
   private static class ReplaceWithReplaceAllQuickFix extends PsiUpdateModCommandQuickFix {
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return QuickFixBundle.message("java.8.list.replaceall.inspection.fix.name");
     }
 
@@ -158,21 +160,23 @@ public final class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalIn
       CodeStyleManager.getInstance(project).reformat(result);
     }
 
-    private static @NotNull List<PsiMethodCallExpression> collectGetCalls(PsiStatement body,
-                                                                          IndexedContainer container,
-                                                                          PsiLocalVariable counter) {
+    @NotNull
+    private static List<PsiMethodCallExpression> collectGetCalls(PsiStatement body,
+                                                                 IndexedContainer container,
+                                                                 PsiLocalVariable counter) {
       return StreamEx.of(PsiTreeUtil.findChildrenOfType(body, PsiMethodCallExpression.class))
         .filter(call -> ExpressionUtils.isReferenceTo(container.extractIndexFromGetExpression(call), counter)).toList();
     }
 
-    private static @NotNull String generateParameterName(PsiStatement body, List<PsiMethodCallExpression> getCalls) {
+    @NotNull
+    private static String generateParameterName(PsiStatement body, List<PsiMethodCallExpression> getCalls) {
       if (getCalls.isEmpty()) return "ignored";
       return new VariableNameGenerator(body, VariableKind.PARAMETER).byExpression(getCalls.get(0)).generate(true);
     }
 
     private static void inlineVariable(PsiLocalVariable variable, PsiStatement body) {
       if (variable == null) return;
-      if (!ControlFlowUtil.isEffectivelyFinal(variable, body)) return;
+      if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, body, null)) return;
       List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable, body);
       PsiExpression initializer = variable.getInitializer();
       if (initializer == null) return;
@@ -192,13 +196,15 @@ public final class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalIn
     }
   }
 
-  private static @Nullable PsiMethodCallExpression getLastMethodCall(PsiStatement[] statements) {
+  @Nullable
+  private static PsiMethodCallExpression getLastMethodCall(PsiStatement[] statements) {
     PsiExpressionStatement expressionStatement = tryCast(ArrayUtil.getLastElement(statements), PsiExpressionStatement.class);
     if (expressionStatement == null) return null;
     return tryCast(expressionStatement.getExpression(), PsiMethodCallExpression.class);
   }
 
-  private static @Nullable PsiLocalVariable getVariableToInline(PsiStatement statement, PsiStatement body) {
+  @Nullable
+  private static PsiLocalVariable getVariableToInline(PsiStatement statement, PsiStatement body) {
     PsiLocalVariable localVariable = IteratorDeclaration.getDeclaredVariable(statement);
     if (localVariable == null) return null;
     List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(localVariable, body);

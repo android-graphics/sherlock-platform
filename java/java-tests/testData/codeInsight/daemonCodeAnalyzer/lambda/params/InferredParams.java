@@ -12,31 +12,31 @@ class Foo {
   I ii = (final <error descr="Cannot resolve symbol 'k'">k</error><error descr="Identifier expected">)</error>->{};
   I ii1 = (k)->{
     int i = k;
-    String s = <error descr="Incompatible types. Found: 'int', required: 'java.lang.String'">k</error>;
+    <error descr="Incompatible types. Found: 'int', required: 'java.lang.String'">String s = k;</error>
   };
   
   A<String> a = (ab) -> {
     String s = ab;
-    int i = <error descr="Incompatible types. Found: 'java.lang.String', required: 'int'">ab</error>;
+    <error descr="Incompatible types. Found: 'java.lang.String', required: 'int'">int i = ab;</error>
   };
 
   {
     A<String> a1;
     a1 = (ab)->{
       String s = ab;
-      int i = <error descr="Incompatible types. Found: 'java.lang.String', required: 'int'">ab</error>;
+      <error descr="Incompatible types. Found: 'java.lang.String', required: 'int'">int i = ab;</error>
     };
   }
   
   A<Integer> bazz() {
     bar((o) -> {
       String s = o;
-      int i = <error descr="Incompatible types. Found: 'java.lang.String', required: 'int'">o</error>;
+      <error descr="Incompatible types. Found: 'java.lang.String', required: 'int'">int i = o;</error>
     });
     return (i) -> {
       Integer k = i;
       int n = i;
-      String s = <error descr="Incompatible types. Found: 'java.lang.Integer', required: 'java.lang.String'">i</error>;
+      <error descr="Incompatible types. Found: 'java.lang.Integer', required: 'java.lang.String'">String s = i;</error>
     };
   }
 

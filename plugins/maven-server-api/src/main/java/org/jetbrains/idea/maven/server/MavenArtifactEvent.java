@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +14,7 @@ public class MavenArtifactEvent implements Serializable {
   }
 
   private final MavenServerConsoleIndicator.ResolveType myResolveType;
-  private final @NotNull ArtifactEventType myArtifactEventType;
+  @NotNull private final ArtifactEventType myArtifactEventType;
   private final String myDependencyId;
   private final String myErrorMessage;
   private final String myStackTrace;
@@ -35,7 +35,8 @@ public class MavenArtifactEvent implements Serializable {
     return myResolveType;
   }
 
-  public @NotNull ArtifactEventType getArtifactEventType() {
+  @NotNull
+  public ArtifactEventType getArtifactEventType() {
     return myArtifactEventType;
   }
 

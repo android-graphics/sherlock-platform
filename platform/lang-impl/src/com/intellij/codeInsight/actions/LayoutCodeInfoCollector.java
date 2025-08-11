@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.util.NlsContexts.HintText;
@@ -10,7 +10,8 @@ public final class LayoutCodeInfoCollector {
   private @HintText String rearrangeCodeNotification = null;
   private @HintText String secondFormatNotification = null;
 
-  public @HintText String getOptimizeImportsNotification() {
+  @HintText
+  public String getOptimizeImportsNotification() {
     return optimizeImportsNotification;
   }
 
@@ -18,7 +19,8 @@ public final class LayoutCodeInfoCollector {
     this.optimizeImportsNotification = optimizeImportsNotification;
   }
 
-  public @HintText String getReformatCodeNotification() {
+  @HintText
+  public String getReformatCodeNotification() {
     return reformatCodeNotification;
   }
 
@@ -26,7 +28,8 @@ public final class LayoutCodeInfoCollector {
     this.reformatCodeNotification = reformatCodeNotification;
   }
 
-  public @HintText String getRearrangeCodeNotification() {
+  @HintText
+  public String getRearrangeCodeNotification() {
     return rearrangeCodeNotification;
   }
 
@@ -39,7 +42,8 @@ public final class LayoutCodeInfoCollector {
            || reformatCodeNotification != null;
   }
 
-  public @HintText String getSecondFormatNotification() {
+  @HintText
+  public String getSecondFormatNotification() {
     return secondFormatNotification;
   }
 

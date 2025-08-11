@@ -14,7 +14,7 @@ public final class RefPackageImpl extends RefEntityImpl implements RefPackage {
   }
 
   @Override
-  public void accept(final @NotNull RefVisitor visitor) {
+  public void accept(@NotNull final RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor javaVisitor) {
       ReadAction.run(() -> javaVisitor.visitPackage(this));
     } else {

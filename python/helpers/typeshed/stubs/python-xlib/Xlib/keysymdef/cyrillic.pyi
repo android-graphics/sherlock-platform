@@ -1,4 +1,4 @@
-from typing import Final
+from typing_extensions import Final
 
 XK_Serbian_dje: Final = 0x6A1
 XK_Macedonia_gje: Final = 0x6A2

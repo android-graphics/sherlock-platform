@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.module
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.ide.projectView.actions.MarkRootsManager
+import com.intellij.ide.projectView.actions.MarkRootActionBase
 import com.intellij.ide.starters.local.*
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.shared.*
@@ -36,9 +36,6 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import java.util.function.Supplier
 import javax.swing.Icon
 
-@JvmField
-internal val DEVKIT_NEWLY_GENERATED_PROJECT: Key<Boolean> = Key.create("devkit.newly.generated.project")
-
 internal class IdePluginModuleBuilder : StarterModuleBuilder() {
 
   private val PLUGIN_TYPE_KEY: Key<PluginType> = Key.create("ide.plugin.type")
@@ -51,7 +48,7 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
 
   override fun getProjectTypes(): List<StarterProjectType> = emptyList()
   override fun getTestFrameworks(): List<StarterTestRunner> = emptyList()
-  override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_21.toJavaVersion()
+  override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_17.toJavaVersion()
 
   override fun getLanguages(): List<StarterLanguage> {
     return listOf(KOTLIN_STARTER_LANGUAGE) // Java and Kotlin both are available out of the box
@@ -71,7 +68,7 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
     return IdePluginInitialStep(contextProvider)
   }
 
-  override fun isSuitableSdkType(sdkType: SdkTypeId): Boolean {
+  override fun isSuitableSdkType(sdkType: SdkTypeId?): Boolean {
     if (getPluginType() == PluginType.PLUGIN) {
       return super.isSuitableSdkType(sdkType)
     }
@@ -83,9 +80,6 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
     // manually set, we do not show the second page with libraries
     starterContext.starter = starterContext.starterPack.starters.first()
     starterContext.starterDependencyConfig = loadDependencyConfig()[starterContext.starter?.id]
-
-    // disable aggressive error highlighting in plugin.xml
-    module.project.putUserData(DEVKIT_NEWLY_GENERATED_PROJECT, true)
 
     super.setupModule(module)
   }
@@ -154,7 +148,7 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
       val resourceRootPath = "$contentEntryPath/resources" //NON-NLS
       val contentRoot = LocalFileSystem.getInstance().findFileByPath(contentEntryPath) ?: return
 
-      val contentEntry = MarkRootsManager.findContentEntry(modifiableRootModel, contentRoot)
+      val contentEntry = MarkRootActionBase.findContentEntry(modifiableRootModel, contentRoot)
       contentEntry?.addSourceFolder(VfsUtilCore.pathToUrl(resourceRootPath), JavaResourceRootType.RESOURCE)
     }
   }

@@ -3,13 +3,9 @@
   <id>ByteCodeViewer</id>
   <category>Other Tools</category>
   <description>
-    <![CDATA[
-      Shows the bytecode of a compiled Java class file in the ASM format.
-      <br>
-      To view the bytecode, select a <code>.java</code> or <code>.class</code> file and open <b>View | Show Bytecode</b>.
-      <br>
-      If you select a <code>.java</code> file, make sure that you've compiled it before triggering "Show Bytecode" action.
-     ]]>
+    <![CDATA[Shows the bytecode of a compiled Java class file.<p>
+
+To view the bytecode, select a class file and open <b>View | Show Bytecode</b>.]]>
   </description>
   <vendor>JetBrains</vendor>
 
@@ -25,10 +21,10 @@
 
   <actions>
     <group id="ByeCodeViewerGroup">
-      <action id="BytecodeViewer" class="com.intellij.byteCodeViewer.ShowBytecodeAction"/>
+      <action id="ByteCodeViewer" class="com.intellij.byteCodeViewer.ShowByteCodeAction"/>
       <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickJavaDoc"/>
     </group>
   </actions>
 
-  <resource-bundle>messages.BytecodeViewerBundle</resource-bundle>
+  <resource-bundle>messages.JavaByteCodeViewerBundle</resource-bundle>
 </idea-plugin>

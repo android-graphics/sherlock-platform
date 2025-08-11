@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.action.tokens;
 
 import com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleDownAction;
@@ -8,9 +8,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class MoveArrangementAliasRuleDownAction extends MoveArrangementMatchingRuleDownAction {
+/**
+ * @author Svetlana.Zemlyanskaya
+ */
+public final class MoveArrangementAliasRuleDownAction extends MoveArrangementMatchingRuleDownAction {
   @Override
-  protected @Nullable ArrangementMatchingRulesControl getRulesControl(@NotNull AnActionEvent e) {
+  @Nullable
+  protected ArrangementMatchingRulesControl getRulesControl(@NotNull AnActionEvent e) {
     return e.getData(ArrangementRuleAliasControl.KEY);
   }
 }

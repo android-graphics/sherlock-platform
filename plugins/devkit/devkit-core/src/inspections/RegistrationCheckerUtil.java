@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -25,6 +24,7 @@ import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.ActionType;
 import org.jetbrains.idea.devkit.util.ComponentType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.*;
 
@@ -41,7 +41,8 @@ final class RegistrationCheckerUtil {
   /**
    * @return the classes that the given {@code psiClass} is registered as, e.g., PsiClass representing AnAction, ProjectComponent, etc.
    */
-  static @Nullable Set<PsiClass> getRegistrationTypes(@NotNull PsiClass psiClass, @NotNull RegistrationType registrationType) {
+  @Nullable
+  static Set<PsiClass> getRegistrationTypes(@NotNull PsiClass psiClass, @NotNull RegistrationType registrationType) {
     final Project project = psiClass.getProject();
     final PsiFile psiFile = psiClass.getContainingFile();
 
@@ -54,7 +55,7 @@ final class RegistrationCheckerUtil {
 
     final RegistrationTypeFinder finder = new RegistrationTypeFinder(psiClass, registrationType);
 
-    if (IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
+    if (PsiUtil.isIdeaProject(project)) {
       return checkIdeaProject(project, finder);
     }
 
@@ -73,12 +74,14 @@ final class RegistrationCheckerUtil {
     return null;
   }
 
-  private static @Nullable Set<PsiClass> checkIdeaProject(Project project, RegistrationTypeFinder finder) {
+  @Nullable
+  private static Set<PsiClass> checkIdeaProject(Project project, RegistrationTypeFinder finder) {
     finder.processScope(GlobalSearchScopesCore.projectProductionScope(project));
     return finder.getTypes();
   }
 
-  private static @Nullable Set<PsiClass> checkModule(Module module, RegistrationTypeFinder finder) {
+  @Nullable
+  private static Set<PsiClass> checkModule(Module module, RegistrationTypeFinder finder) {
     final DomFileElement<IdeaPlugin> pluginXml = getPluginXmlFile(module);
     if (pluginXml == null) {
       return null;
@@ -130,7 +133,8 @@ final class RegistrationCheckerUtil {
     return finder.getTypes();
   }
 
-  private static @Nullable DomFileElement<IdeaPlugin> getPluginXmlFile(Module module) {
+  @Nullable
+  private static DomFileElement<IdeaPlugin> getPluginXmlFile(Module module) {
     XmlFile pluginXml = PluginModuleType.getPluginXml(module);
     if (pluginXml == null) {
       return null;

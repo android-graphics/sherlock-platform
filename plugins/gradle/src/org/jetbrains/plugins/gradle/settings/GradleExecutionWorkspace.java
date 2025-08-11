@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +24,8 @@ public class GradleExecutionWorkspace implements Serializable {
   private static final long serialVersionUID = 1L;
   private static final Logger LOG = Logger.getInstance(GradleExecutionWorkspace.class);
 
-  private final @NotNull List<GradleBuildParticipant> myBuildParticipants = new ArrayList<>();
+  @NotNull
+  private final List<GradleBuildParticipant> myBuildParticipants = new ArrayList<>();
   private Map<String, List<Pair<DataNode<ModuleData>, IdeaModule>>> myModuleNameIndex = Collections.emptyMap();
   private Map<String, Pair<DataNode<ModuleData>, IdeaModule>> myModuleIdIndex;
 
@@ -32,11 +33,13 @@ public class GradleExecutionWorkspace implements Serializable {
     myBuildParticipants.add(participant);
   }
 
-  public @NotNull List<GradleBuildParticipant> getBuildParticipants() {
+  @NotNull
+  public List<GradleBuildParticipant> getBuildParticipants() {
     return Collections.unmodifiableList(myBuildParticipants);
   }
 
-  public @Nullable ModuleData findModuleDataByArtifacts(Collection<File> artifacts) {
+  @Nullable
+  public ModuleData findModuleDataByArtifacts(Collection<File> artifacts) {
     ModuleData result = null;
     for (GradleBuildParticipant buildParticipant : myBuildParticipants) {
       result = buildParticipant.findModuleDataByArtifacts(artifacts);
@@ -45,7 +48,8 @@ public class GradleExecutionWorkspace implements Serializable {
     return result;
   }
 
-  public @Nullable ModuleData findModuleDataByGradleModuleName(@NotNull String moduleName) {
+  @Nullable
+  public ModuleData findModuleDataByGradleModuleName(@NotNull String moduleName) {
     ModuleData result = null;
 
     List<Pair<DataNode<ModuleData>, IdeaModule>> possiblePairs = myModuleNameIndex.get(moduleName);
@@ -68,8 +72,9 @@ public class GradleExecutionWorkspace implements Serializable {
   }
 
   @SuppressWarnings("unused")
+  @Nullable
   @ApiStatus.Experimental
-  public @Nullable ModuleData findModuleDataByModuleId(@NotNull String moduleId) {
+  public ModuleData findModuleDataByModuleId(@NotNull String moduleId) {
     final Pair<DataNode<ModuleData>, IdeaModule> pair = myModuleIdIndex.get(moduleId);
     if (pair != null) {
       return pair.first.getData();
@@ -77,8 +82,9 @@ public class GradleExecutionWorkspace implements Serializable {
     return null;
   }
 
-  public @Nullable ModuleData findModuleDataByModule(@NotNull ProjectResolverContext resolverContext,
-                                                     @NotNull IdeaModule dependencyModule) {
+  @Nullable
+  public ModuleData findModuleDataByModule(@NotNull ProjectResolverContext resolverContext,
+                                           @NotNull IdeaModule dependencyModule) {
     final String id = GradleProjectResolverUtil.getModuleId(resolverContext, dependencyModule);
     final Pair<DataNode<ModuleData>, IdeaModule> pair = myModuleIdIndex.get(id);
     if (pair != null) {

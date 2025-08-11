@@ -28,7 +28,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.java.generate.exception.GenerateCodeException;
 
 import javax.swing.*;
@@ -233,7 +232,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
                                                             boolean copyJavadocCheckbox,
                                                             Project project) {
     MemberChooser<ClassMember> chooser =
-      new MemberChooser<>(members, allowEmptySelection, true, project, getHeaderPanel(project), getOptionControls(project)) {
+      new MemberChooser<>(members, allowEmptySelection, true, project, getHeaderPanel(project), getOptionControls()) {
         @Override
         protected @Nullable String getHelpId() {
           return GenerateMembersHandlerBase.this.getHelpId();
@@ -248,10 +247,6 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     return null;
   }
 
-  protected JComponent @Nullable [] getOptionControls(@Nullable Project project) {
-    return getOptionControls();
-  }
-
   protected JComponent @Nullable [] getOptionControls() {
     return null;
   }
@@ -260,7 +255,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     return null;
   }
 
-  protected @Unmodifiable @NotNull List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
+  protected @NotNull List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     ArrayList<GenerationInfo> array = new ArrayList<>();
     for (ClassMember member : members) {
       GenerationInfo[] prototypes = generateMemberPrototypes(aClass, member);

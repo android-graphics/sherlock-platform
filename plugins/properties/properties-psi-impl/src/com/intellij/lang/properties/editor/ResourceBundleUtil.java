@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.lang.properties.IProperty;
@@ -26,7 +26,8 @@ public final class ResourceBundleUtil {
    * @return              {@link ResourceBundle resource bundle} related to the given context if any;
    *                      {@code null} otherwise
    */
-  public static @Nullable ResourceBundle getResourceBundleFromDataContext(@NotNull DataContext dataContext) {
+  @Nullable
+  public static ResourceBundle getResourceBundleFromDataContext(@NotNull DataContext dataContext) {
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if (element instanceof IProperty) return null; //rename property
     final ResourceBundle[] bundles = ResourceBundle.ARRAY_DATA_KEY.getData(dataContext);

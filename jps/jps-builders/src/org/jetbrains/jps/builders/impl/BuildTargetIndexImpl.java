@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.tracing.Tracer;
@@ -7,7 +7,6 @@ import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -15,7 +14,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.*;
 
-@ApiStatus.Internal
 public final class BuildTargetIndexImpl implements BuildTargetIndex {
   private final BuildTargetRegistry myRegistry;
   private final BuildRootIndexImpl myBuildRootIndex;
@@ -33,6 +31,7 @@ public final class BuildTargetIndexImpl implements BuildTargetIndex {
     initializeChunks(context);
     return myTargetChunks;
   }
+
 
   private synchronized void initializeChunks(@NotNull CompileContext context) {
     if (myTargetChunks != null) {

@@ -4,7 +4,6 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -26,19 +25,16 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
 import com.intellij.util.ui.JBUI.Borders.*
 import com.intellij.util.ui.JBUI.Panels.simplePanel
-import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil.*
-import com.intellij.vcsUtil.VcsUIUtil
 import com.intellij.vcsUtil.VcsUtil.getFilePath
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.await
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 import kotlin.coroutines.coroutineContext
 import kotlin.properties.Delegates.observable
 
-class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, private val changesViewHost: ChangesViewPanel)
+class ChangesViewCommitPanel(project: Project, private val changesViewHost: ChangesViewPanel)
   : NonModalCommitPanel(project), ChangesViewCommitWorkflowUi {
 
   private val changesView get() = changesViewHost.changesView
@@ -73,10 +69,7 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, p
       support.installSearch(commitMessage.editorField, commitMessage.editorField)
     }
 
-    changesView.setInclusionListener {
-      //readaction is not enough
-      WriteIntentReadAction.run { fireInclusionChanged () }
-    }
+    changesView.setInclusionListener { fireInclusionChanged() }
     changesView.isShowCheckboxes = true
     changesViewHost.statusComponent =
       CommitStatusPanel(this).apply {
@@ -131,7 +124,6 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, p
     changesView.isShowCheckboxes = true
     isVisible = true
     commitActionsPanel.isActive = true
-    changesViewHost.statusComponent?.isVisible = true
 
     toolbar.updateActionsImmediately()
 
@@ -149,7 +141,6 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, p
     changesView.isShowCheckboxes = false
     isVisible = false
     commitActionsPanel.isActive = false
-    changesViewHost.statusComponent?.isVisible = false
 
     toolbar.updateActionsImmediately()
   }
@@ -183,14 +174,9 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, p
     path?.let { selectPath(changesView, it, false) }
   }
 
-  override fun showCommitOptions(popup: JBPopup, isFromToolbar: Boolean, dataContext: DataContext) {
-    if (isFromToolbar && !isToolbarHorizontal) {
-      VcsUIUtil.showPopupAbove(popup, this, scale(COMMIT_OPTIONS_POPUP_MINIMUM_SIZE))
-    }
-    else {
-      super.showCommitOptions(popup, isFromToolbar, dataContext)
-    }
-  }
+  override fun showCommitOptions(popup: JBPopup, isFromToolbar: Boolean, dataContext: DataContext) =
+    if (isFromToolbar && !isToolbarHorizontal) popup.showAbove(this@ChangesViewCommitPanel)
+    else super.showCommitOptions(popup, isFromToolbar, dataContext)
 
   override fun setCompletionContext(changeLists: List<LocalChangeList>) {
     commitMessage.setChangesSupplier(ChangeListChangesSupplier(changeLists))

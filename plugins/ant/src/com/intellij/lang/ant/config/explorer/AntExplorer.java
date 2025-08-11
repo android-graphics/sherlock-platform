@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.execution.ExecutionBundle;
@@ -28,8 +28,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
@@ -71,10 +71,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
-public final class AntExplorer extends SimpleToolWindowPanel implements Disposable {
+public final class AntExplorer extends SimpleToolWindowPanel implements DataProvider, Disposable {
   private Project myProject;
   private Tree myTree;
   private final AntBuildFilePropertiesAction myAntBuildFilePropertiesAction;
@@ -271,9 +271,9 @@ public final class AntExplorer extends SimpleToolWindowPanel implements Disposab
           ignoredFiles.add(e.getFile());
         }
       }
-      if (!ignoredFiles.isEmpty()) {
+      if (ignoredFiles.size() != 0) {
         String messageText;
-        final @NlsSafe StringBuilder message = new StringBuilder();
+        @NlsSafe final StringBuilder message = new StringBuilder();
         String separator = "";
         for (final VirtualFile virtualFile : ignoredFiles) {
           message.append(separator);
@@ -413,12 +413,14 @@ public final class AntExplorer extends SimpleToolWindowPanel implements Disposab
     return getCurrentBuildFile();
   }
 
-  private @Nullable AntBuildFileBase getCurrentBuildFile() {
+  @Nullable
+  private AntBuildFileBase getCurrentBuildFile() {
     final AntBuildFileNodeDescriptor descriptor = getCurrentBuildFileNodeDescriptor();
     return (AntBuildFileBase)((descriptor == null) ? null : descriptor.getBuildFile());
   }
 
-  private @NotNull Collection<AntBuildFileBase> getSelectedBuildFiles() {
+  @NotNull
+  private Collection<AntBuildFileBase> getSelectedBuildFiles() {
     if (myTree == null) {
       return Collections.emptyList();
     }
@@ -444,7 +446,8 @@ public final class AntExplorer extends SimpleToolWindowPanel implements Disposab
     return result;
   }
 
-  private @Nullable AntBuildFileNodeDescriptor getCurrentBuildFileNodeDescriptor() {
+  @Nullable
+  private AntBuildFileNodeDescriptor getCurrentBuildFileNodeDescriptor() {
     final Tree tree = myTree;
     if (tree == null) {
       return null;
@@ -509,7 +512,11 @@ public final class AntExplorer extends SimpleToolWindowPanel implements Disposab
     TreePath[] paths = tree.getSelectionPaths();
     TreePath leadPath = tree.getLeadSelectionPath();
     AntBuildFile currentBuildFile = getCurrentBuildFile();
-    sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
+    sink.set(PlatformCoreDataKeys.BGT_DATA_PROVIDER, id -> getSlowData(id, paths, leadPath, currentBuildFile));
+  }
+
+  private Object getSlowData(@NotNull @NonNls String dataId, final TreePath @Nullable [] paths, @Nullable TreePath leadPath, @Nullable AntBuildFile currentBuildFile) {
+    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       final List<VirtualFile> virtualFiles = collectAntFiles(buildFile -> {
         final VirtualFile virtualFile = buildFile.getVirtualFile();
         if (virtualFile != null && virtualFile.isValid()) {
@@ -518,12 +525,12 @@ public final class AntExplorer extends SimpleToolWindowPanel implements Disposab
         return null;
       }, paths);
       return virtualFiles == null? null : virtualFiles.toArray(VirtualFile.EMPTY_ARRAY);
-    });
-    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
+    }
+    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       final List<PsiElement> elements = collectAntFiles(AntBuildFile::getAntFile, paths);
-      return elements == null ? null : elements.toArray(PsiElement.EMPTY_ARRAY);
-    });
-    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
+      return elements == null? null : elements.toArray(PsiElement.EMPTY_ARRAY);
+    }
+    else if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       if (leadPath != null) {
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode)leadPath.getLastPathComponent();
         if (node != null) {
@@ -541,8 +548,8 @@ public final class AntExplorer extends SimpleToolWindowPanel implements Disposab
           return new OpenFileDescriptor(myProject, file);
         }
       }
-      return null;
-    });
+    }
+    return null;
   }
 
   private static <T> List<T> collectAntFiles(final Function<? super AntBuildFile, ? extends T> function, final TreePath @Nullable [] paths) {
@@ -571,7 +578,16 @@ public final class AntExplorer extends SimpleToolWindowPanel implements Disposab
   }
 
   public static FileChooserDescriptor createXmlDescriptor() {
-    return FileChooserDescriptorFactory.createMultipleFilesNoJarsDescriptor().withExtensionFilter(XmlFileType.INSTANCE);
+    return new FileChooserDescriptor(true, false, false, false, false, true){
+      @Override
+      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+        boolean b = super.isFileVisible(file, showHiddenFiles);
+        if (!file.isDirectory()) {
+          b &= FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE);
+        }
+        return b;
+      }
+    };
   }
 
   private static final class NodeRenderer extends ColoredTreeCellRenderer {

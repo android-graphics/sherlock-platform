@@ -42,7 +42,8 @@ public interface RefParameter extends RefJavaElement {
    * @deprecated Use {@link RefParameter#getActualConstValue()) instead
    */
   @Deprecated(forRemoval = true)
-  default @Nullable String getActualValueIfSame() {
+  @Nullable
+  default String getActualValueIfSame() {
     throw new UnsupportedOperationException();
   }
 
@@ -54,7 +55,8 @@ public interface RefParameter extends RefJavaElement {
    *
    * @return the parameter value or null if it's different or impossible to determine.
    */
-  default @Nullable Object getActualConstValue() {
+  @Nullable
+  default Object getActualConstValue() {
     //noinspection deprecation
     return getActualValueIfSame();
   }

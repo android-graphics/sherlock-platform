@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl.nodes;
 
@@ -20,7 +20,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
@@ -32,12 +31,15 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     super(project, value, viewSettings);
   }
 
-  protected abstract @NotNull AbstractTreeNode createModuleNode(@NotNull Module module) throws
+  @NotNull
+  protected abstract AbstractTreeNode createModuleNode(@NotNull Module module) throws
                                                                       InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException;
-  protected abstract @NotNull ModuleGroupNode createModuleGroupNode(@NotNull ModuleGroup moduleGroup);
+  @NotNull
+  protected abstract ModuleGroupNode createModuleGroupNode(@NotNull ModuleGroup moduleGroup);
 
   @Override
-  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
+  @NotNull
+  public Collection<AbstractTreeNode<?>> getChildren() {
     final Collection<ModuleGroup> childGroups = getValue().childGroups(getProject());
     final List<AbstractTreeNode<?>> result = new ArrayList<>();
     for (final ModuleGroup childGroup : childGroups) {
@@ -56,8 +58,9 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     return result;
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<VirtualFile> getRoots() {
+  public Collection<VirtualFile> getRoots() {
     Collection<AbstractTreeNode<?>> children = getChildren();
     Set<VirtualFile> result = new HashSet<>();
     for (AbstractTreeNode each : children) {
@@ -117,7 +120,8 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     return getValue() != null;
   }
 
-  protected abstract @Unmodifiable @NotNull List<Module> getModulesByFile(@NotNull VirtualFile file);
+  @NotNull
+  protected abstract List<Module> getModulesByFile(@NotNull VirtualFile file);
 
   @Override
   public void update(@NotNull PresentationData presentation) {
@@ -125,7 +129,8 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     presentation.setIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
   }
 
-  private @NotNull String getPresentableName() {
+  @NotNull
+  private String getPresentableName() {
     return StringUtil.join(getRelativeGroupPath(), ".");
   }
 

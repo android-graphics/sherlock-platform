@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -44,17 +44,23 @@ public abstract class Macro {
    * @return the name that this macro is referenced by (without wrapping '$' characters).
    * If the name is {@code MyMacroName}, then it is referenced as {@code $MyMacroName$}.
    */
-  public abstract @NonNls @NotNull String getName();
+  @NonNls
+  @NotNull
+  public abstract String getName();
 
   /**
    * @return a short macro description presented in the macro selection dialog.
    * The description is displayed in a single line, next to the macro name on the macro list.
    */
-  public abstract @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getDescription();
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NotNull
+  public abstract String getDescription();
   
-  public abstract @Nullable String expand(@NotNull DataContext dataContext) throws ExecutionCancelledException;
+  @Nullable
+  public abstract String expand(@NotNull DataContext dataContext) throws ExecutionCancelledException;
 
-  public @Nullable String expand(@NotNull DataContext dataContext, String @NotNull ... args) throws ExecutionCancelledException{
+  @Nullable
+  public String expand(@NotNull DataContext dataContext, String @NotNull ... args) throws ExecutionCancelledException{
     return expand(dataContext);
   }
 
@@ -78,7 +84,8 @@ public abstract class Macro {
     return getRangeForSuffix(s, start, next);
   }
 
-  protected @Nullable TextRange getRangeForSuffix(@NotNull CharSequence s, int start, int next) {
+  @Nullable
+  protected TextRange getRangeForSuffix(@NotNull CharSequence s, int start, int next) {
     return switch (s.charAt(next)) {
       case '$' -> TextRange.create(start, next + 1);
       case '(' -> {
@@ -96,15 +103,18 @@ public abstract class Macro {
     return expand(context);
   }
 
-  protected static @NotNull String getPath(@NotNull VirtualFile file) {
+  @NotNull
+  protected static String getPath(@NotNull VirtualFile file) {
     return file.getPath().replace('/', File.separatorChar);
   }
 
-  static @NotNull File getIOFile(@NotNull VirtualFile file) {
+  @NotNull
+  static File getIOFile(@NotNull VirtualFile file) {
     return new File(getPath(file));
   }
 
-  protected static @Nullable VirtualFile getVirtualDirOrParent(@NotNull DataContext dataContext) {
+  @Nullable
+  protected static VirtualFile getVirtualDirOrParent(@NotNull DataContext dataContext) {
     VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (vFile != null && !vFile.isDirectory()) {
       vFile = vFile.getParent();
@@ -126,13 +136,15 @@ public abstract class Macro {
       return myValue;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getDescription() {
+    public String getDescription() {
       return myDelegate.getDescription();
     }
 
+    @NotNull
     @Override
-    public @NotNull String getName() {
+    public String getName() {
       return myDelegate.getName();
     }
   }

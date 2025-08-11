@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.util.Comparing;
@@ -32,18 +32,21 @@ final class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaMo
     myLanguageLevel = original.myLanguageLevel;
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsJavaModuleExtensionImpl createCopy() {
+  public JpsJavaModuleExtensionImpl createCopy() {
     return new JpsJavaModuleExtensionImpl(this);
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsUrlList getAnnotationRoots() {
+  public JpsUrlList getAnnotationRoots() {
     return myContainer.getChild(ANNOTATIONS_ROOTS_ROLE);
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsUrlList getJavadocRoots() {
+  public JpsUrlList getJavadocRoots() {
     return myContainer.getChild(JAVADOC_ROOTS_ROLE);
   }
 

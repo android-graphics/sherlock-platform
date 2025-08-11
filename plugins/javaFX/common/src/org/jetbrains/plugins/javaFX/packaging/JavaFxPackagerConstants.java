@@ -5,10 +5,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public final class JavaFxPackagerConstants {
-  public static final @NonNls String UPDATE_MODE_BACKGROUND = "background";
-  public static final @NonNls String UPDATE_MODE_ALWAYS = "always";
-  public static final @NonNls String DEFAULT_HEIGHT = "400";
-  public static final @NonNls String DEFAULT_WEIGHT = "600";
+  @NonNls public static final String UPDATE_MODE_BACKGROUND = "background";
+  @NonNls public static final String UPDATE_MODE_ALWAYS = "always";
+  @NonNls public static final String DEFAULT_HEIGHT = "400";
+  @NonNls public static final String DEFAULT_WEIGHT = "600";
 
   public enum NativeBundles {
     none, all, deb, dmg, exe, image, msi, rpm;
@@ -37,7 +37,8 @@ public final class JavaFxPackagerConstants {
       myIsVerbose = isVerbose;
     }
 
-    public @NotNull String getCmdLineParam() {
+    @NotNull
+    public String getCmdLineParam() {
       return myCmdLineParam;
     }
 

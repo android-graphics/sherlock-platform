@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffDialogHints;
@@ -12,11 +12,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ShowDiffContext {
-  private final @NotNull DiffDialogHints myDialogHints;
+  @NotNull private final DiffDialogHints myDialogHints;
 
-  private @Nullable List<AnAction> myActions;
-  private @Nullable Map<Key<?>, Object> myChainContext;
-  private @Nullable Map<Change, Map<Key<?>, Object>> myRequestContext;
+  @Nullable private List<AnAction> myActions;
+  @Nullable private Map<Key<?>, Object> myChainContext;
+  @Nullable private Map<Change, Map<Key<?>, Object>> myRequestContext;
 
   public ShowDiffContext() {
     this(DiffDialogHints.DEFAULT);
@@ -26,20 +26,24 @@ public class ShowDiffContext {
     myDialogHints = dialogHints;
   }
 
-  public @NotNull DiffDialogHints getDialogHints() {
+  @NotNull
+  public DiffDialogHints getDialogHints() {
     return myDialogHints;
   }
 
-  public @NotNull List<AnAction> getActions() {
+  @NotNull
+  public List<AnAction> getActions() {
     if (myActions == null) return Collections.emptyList();
     return myActions;
   }
 
-  public @NotNull Map<Key<?>, Object> getChainContext() {
+  @NotNull
+  public Map<Key<?>, Object> getChainContext() {
     return ContainerUtil.notNullize(myChainContext);
   }
 
-  public @NotNull Map<Key<?>, Object> getChangeContext(@NotNull Change change) {
+  @NotNull
+  public Map<Key<?>, Object> getChangeContext(@NotNull Change change) {
     if (myRequestContext == null) return Collections.emptyMap();
     Map<Key<?>, Object> map = myRequestContext.get(change);
     return map == null ? Collections.emptyMap() : map;

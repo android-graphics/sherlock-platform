@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -12,7 +12,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +19,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 
-@ApiStatus.Internal
 public class VcsPushAction extends DumbAwareAction {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -39,8 +37,9 @@ public class VcsPushAction extends DumbAwareAction {
     new VcsPushDialog(project, DvcsUtil.sortRepositories(repositories), selectedRepo).show();
   }
 
-  private static @NotNull Collection<Repository> collectRepositories(@NotNull VcsRepositoryManager vcsRepositoryManager,
-                                                                     VirtualFile @Nullable [] files) {
+  @NotNull
+  private static Collection<Repository> collectRepositories(@NotNull VcsRepositoryManager vcsRepositoryManager,
+                                                            VirtualFile @Nullable [] files) {
     if (files == null) return Collections.emptyList();
     Collection<Repository> repositories = new HashSet<>();
     for (VirtualFile file : files) {

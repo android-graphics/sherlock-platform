@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.build.*;
@@ -64,16 +64,18 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 public final class GradleTestsExecutionConsoleManager
   implements ExternalSystemExecutionConsoleManager<GradleTestsExecutionConsole, ProcessHandler> {
 
+  @NotNull
   @Override
-  public @NotNull ProjectSystemId getExternalSystemId() {
+  public ProjectSystemId getExternalSystemId() {
     return GradleConstants.SYSTEM_ID;
   }
 
+  @Nullable
   @Override
-  public @Nullable GradleTestsExecutionConsole attachExecutionConsole(@NotNull Project project,
-                                                                      @NotNull ExternalSystemTask task,
-                                                                      @Nullable ExecutionEnvironment env,
-                                                                      @Nullable ProcessHandler processHandler) {
+  public GradleTestsExecutionConsole attachExecutionConsole(@NotNull Project project,
+                                                            @NotNull ExternalSystemTask task,
+                                                            @Nullable ExecutionEnvironment env,
+                                                            @Nullable ProcessHandler processHandler) {
     if (env == null) return null;
     RunConfiguration configuration;
     SMTRunnerConsoleProperties consoleProperties = null;
@@ -286,7 +288,7 @@ public final class GradleTestsExecutionConsoleManager
   }
 
   @Override
-  public AnAction[] getRestartActions(final @NotNull GradleTestsExecutionConsole consoleView) {
+  public AnAction[] getRestartActions(@NotNull final GradleTestsExecutionConsole consoleView) {
     JavaRerunFailedTestsAction rerunFailedTestsAction =
       new GradleRerunFailedTestsAction(consoleView);
     rerunFailedTestsAction.setModelProvider(() -> consoleView.getResultsViewer());

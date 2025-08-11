@@ -12,7 +12,6 @@ public final class OffsetKey {
     myMovableToRight = movableToRight;
   }
 
-  @Override
   public String toString() {
     return myName;
   }

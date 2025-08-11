@@ -29,10 +29,11 @@ import org.jetbrains.annotations.Nullable;
 
 public final class PyDefaultArgumentInspection extends PyInspection {
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                                 boolean isOnTheFly,
-                                                 @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                        boolean isOnTheFly,
+                                        @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.gradle.model.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,10 +15,8 @@ import org.jetbrains.jps.incremental.resources.ResourcesBuilder;
 import org.jetbrains.jps.incremental.resources.StandardResourceBuilderEnabler;
 import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
-import org.jetbrains.jps.model.java.impl.JpsJavaAwareProject;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -45,13 +43,15 @@ public final class JpsGradleExtensionServiceImpl extends JpsGradleExtensionServi
     });
   }
 
+  @Nullable
   @Override
-  public @Nullable JpsGradleModuleExtension getExtension(@NotNull JpsModule module) {
+  public JpsGradleModuleExtension getExtension(@NotNull JpsModule module) {
     return module.getContainer().getChild(JpsGradleModuleExtensionImpl.ROLE);
   }
 
   @Override
-  public @NotNull JpsGradleModuleExtension getOrCreateExtension(@NotNull JpsModule module, @Nullable String moduleType) {
+  @NotNull
+  public JpsGradleModuleExtension getOrCreateExtension(@NotNull JpsModule module, @Nullable String moduleType) {
     JpsGradleModuleExtension extension = module.getContainer().getChild(JpsGradleModuleExtensionImpl.ROLE);
     if (extension == null) {
       extension = new JpsGradleModuleExtensionImpl(moduleType);
@@ -72,25 +72,24 @@ public final class JpsGradleExtensionServiceImpl extends JpsGradleExtensionServi
 
   @Override
   public boolean isProductionOnTestDependency(@NotNull JpsDependencyElement dependency) {
-    JpsProject project = dependency.getContainingModule().getProject();
-    if (project instanceof JpsJavaAwareProject) {
-      return ((JpsJavaAwareProject)project).isProductionOnTestDependency(dependency);
-    }
     JpsSimpleElement<Boolean> child = dependency.getContainer().getChild(PRODUCTION_ON_TEST_ROLE);
     return child != null && child.getData();
   }
 
   @Override
   public boolean hasGradleProjectConfiguration(@NotNull BuildDataPaths paths) {
-    return myConfigFileExists.get(paths.getDataStorageDir().resolve(GradleProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH).toFile());
+    return myConfigFileExists.get(new File(paths.getDataStorageRoot(), GradleProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH));
   }
 
+  @NotNull
   @Override
-  public @NotNull GradleProjectConfiguration getGradleProjectConfiguration(BuildDataPaths paths) {
-    return getGradleProjectConfiguration(paths.getDataStorageDir().toFile());
+  public GradleProjectConfiguration getGradleProjectConfiguration(BuildDataPaths paths) {
+    final File dataStorageRoot = paths.getDataStorageRoot();
+    return getGradleProjectConfiguration(dataStorageRoot);
   }
 
-  public @NotNull GradleProjectConfiguration getGradleProjectConfiguration(@NotNull File dataStorageRoot) {
+  @NotNull
+  public GradleProjectConfiguration getGradleProjectConfiguration(@NotNull File dataStorageRoot) {
     final File configFile = new File(dataStorageRoot, GradleProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
     GradleProjectConfiguration config;
     synchronized (myLoadedConfigs) {

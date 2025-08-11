@@ -34,12 +34,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 public final class GroovyAssignmentToMethodParameterInspection extends BaseInspection {
 
   @Override
-  protected @Nullable String buildErrorString(Object... args) {
+  @Nullable
+  protected String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.assignment.to.method.parameter");
   }
 
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  @NotNull
+  public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

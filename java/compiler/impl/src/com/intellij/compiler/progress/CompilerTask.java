@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress;
 
 import com.intellij.compiler.CompilerManagerImpl;
@@ -32,8 +32,10 @@ import java.util.concurrent.TimeUnit;
 
 public final class CompilerTask extends Task.Backgroundable {
   private static final String APP_ICON_ID = "compiler";
-  private final @NotNull Object myContentId;
-  private @NotNull Object mySessionId;
+  @NotNull
+  private final Object myContentId;
+  @NotNull
+  private Object mySessionId;
   private final boolean myModal;
   private final boolean myHeadlessMode;
   private final boolean myForceAsyncExecution;
@@ -73,7 +75,8 @@ public final class CompilerTask extends Task.Backgroundable {
     }
   }
 
-  public @NotNull Object getSessionId() {
+  @NotNull
+  public Object getSessionId() {
     return mySessionId;
   }
 
@@ -81,7 +84,8 @@ public final class CompilerTask extends Task.Backgroundable {
     mySessionId = sessionId;
   }
 
-  public @NotNull Object getContentId() {
+  @NotNull
+  public Object getContentId() {
     return myContentId;
   }
 
@@ -112,8 +116,9 @@ public final class CompilerTask extends Task.Backgroundable {
     return myIndicator;
   }
 
+  @NotNull
   @Override
-  public @NotNull NotificationInfo getNotificationInfo() {
+  public NotificationInfo getNotificationInfo() {
     return new NotificationInfo(myErrorCount > 0 ? "Compiler (errors)" : "Compiler (success)",
                                 JavaCompilerBundle.message("compilation.finished"),
                                 JavaCompilerBundle.message("0.errors.1.warnings", myErrorCount, myWarningCount), true);

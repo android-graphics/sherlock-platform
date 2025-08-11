@@ -41,7 +41,6 @@ interface P3Support {
   suspend fun openInChildProcess(projectStoreBaseDir: Path)
 }
 
-@Internal
 @Experimental
 object DisabledP3Support : P3Support {
   override fun isEnabled(): Boolean = false

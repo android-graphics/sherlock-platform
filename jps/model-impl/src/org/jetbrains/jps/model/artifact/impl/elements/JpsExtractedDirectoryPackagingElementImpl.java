@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.artifact.impl.elements;
 
 import org.jetbrains.annotations.NotNull;
@@ -15,8 +15,9 @@ class JpsExtractedDirectoryPackagingElementImpl extends JpsFileCopyPackagingElem
     myPathInJar = pathInJar;
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsExtractedDirectoryPackagingElementImpl createElementCopy() {
+  public JpsExtractedDirectoryPackagingElementImpl createElementCopy() {
     return new JpsExtractedDirectoryPackagingElementImpl(myFilePath, myPathInJar);
   }
 

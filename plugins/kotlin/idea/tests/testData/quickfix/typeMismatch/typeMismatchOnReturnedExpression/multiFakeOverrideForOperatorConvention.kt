@@ -3,7 +3,6 @@
 // ACTION: Replace overloaded operator with function call
 // ACTION: Expand boolean expression to 'if else'
 // ERROR: Type mismatch: inferred type is Boolean but Int was expected
-// K2_AFTER_ERROR: Return type mismatch: expected 'Int', actual 'Boolean'.
 interface A {
     operator fun contains(i: Int): Boolean
 }

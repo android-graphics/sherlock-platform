@@ -1,17 +1,17 @@
 from re import Pattern
-from typing import ClassVar
+from typing import Any
 
 from markdown.blockprocessors import BlockProcessor
 from markdown.extensions import Extension
 from markdown.inlinepatterns import InlineProcessor
 
-class AbbrExtension(Extension): ...
+ABBR_REF_RE: Pattern[str]
 
-class AbbrPreprocessor(BlockProcessor):
-    RE: ClassVar[Pattern[str]]
+class AbbrExtension(Extension): ...
+class AbbrPreprocessor(BlockProcessor): ...
 
 class AbbrInlineProcessor(InlineProcessor):
-    title: str
-    def __init__(self, pattern: str, title: str) -> None: ...
+    title: Any
+    def __init__(self, pattern, title) -> None: ...
 
-def makeExtension(**kwargs) -> AbbrExtension: ...
+def makeExtension(**kwargs): ...

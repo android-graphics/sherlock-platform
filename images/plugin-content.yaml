@@ -1,3 +1,0 @@
-- name: lib/platform-images.jar
-  modules:
-  - name: intellij.platform.images

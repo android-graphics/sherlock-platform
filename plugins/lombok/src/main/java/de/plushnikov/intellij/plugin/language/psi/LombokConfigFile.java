@@ -14,8 +14,9 @@ public class LombokConfigFile extends PsiFileBase {
     super(viewProvider, LombokConfigLanguage.INSTANCE);
   }
 
+  @NotNull
   @Override
-  public @NotNull FileType getFileType() {
+  public FileType getFileType() {
     return LombokConfigFileType.INSTANCE;
   }
 

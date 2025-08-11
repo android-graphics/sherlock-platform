@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.editor.Editor;
@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,9 +20,8 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-@ApiStatus.Internal
 public class AspectAnnotationFieldGutter extends AnnotationFieldGutter {
-  protected final @NotNull LineAnnotationAspect myAspect;
+  @NotNull protected final LineAnnotationAspect myAspect;
   private final boolean myIsGutterAction;
 
   public AspectAnnotationFieldGutter(@NotNull FileAnnotation annotation,
@@ -49,8 +47,9 @@ public class AspectAnnotationFieldGutter extends AnnotationFieldGutter {
     return value;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getToolTip(final int line, final Editor editor) {
+  public String getToolTip(final int line, final Editor editor) {
     String text = myAspect.getTooltipText(line);
     if (text != null) return text;
     return isAvailable() ? myAnnotation.getHtmlToolTip(line) : null;
@@ -78,15 +77,17 @@ public class AspectAnnotationFieldGutter extends AnnotationFieldGutter {
     return super.getStyle(line, editor);
   }
 
+  @Nullable
   @Override
-  public @Nullable ColorKey getColor(int line, Editor editor) {
+  public ColorKey getColor(int line, Editor editor) {
     ColorKey color = myAspect.getColor(line);
     if (color != null) return color;
     return super.getColor(line, editor);
   }
 
+  @Nullable
   @Override
-  public @Nullable Color getBgColor(int line, Editor editor) {
+  public Color getBgColor(int line, Editor editor) {
     Color color = myAspect.getBgColor(line);
     if (color != null) return color;
     return super.getBgColor(line, editor);
@@ -97,8 +98,9 @@ public class AspectAnnotationFieldGutter extends AnnotationFieldGutter {
     return myAspect.isShowByDefault();
   }
 
+  @Nullable
   @Override
-  public @Nullable String getID() {
+  public String getID() {
     return myAspect.getId();
   }
 

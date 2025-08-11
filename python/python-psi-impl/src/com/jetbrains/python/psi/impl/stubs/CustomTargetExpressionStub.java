@@ -19,7 +19,7 @@ import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.Nullable;
 
 
-public interface CustomTargetExpressionStub extends PyCustomStub {
+public interface CustomTargetExpressionStub extends PyCustomStub<CustomTargetExpressionStubType> {
 
   @Nullable
   QualifiedName getCalleeName();

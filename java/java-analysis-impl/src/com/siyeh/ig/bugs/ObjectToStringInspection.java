@@ -31,8 +31,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInspection.options.OptPane.checkbox;
-import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public final class ObjectToStringInspection extends BaseInspection {
   public boolean IGNORE_NONNLS = false;
@@ -50,7 +49,8 @@ public final class ObjectToStringInspection extends BaseInspection {
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("default.tostring.call.problem.descriptor");
   }
 
@@ -92,7 +92,7 @@ public final class ObjectToStringInspection extends BaseInspection {
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final @NonNls String name = methodExpression.getReferenceName();
+      @NonNls final String name = methodExpression.getReferenceName();
       if (HardcodedMethodConstants.TO_STRING.equals(name)) {
         if (!expression.getArgumentList().isEmpty()) {
           return;

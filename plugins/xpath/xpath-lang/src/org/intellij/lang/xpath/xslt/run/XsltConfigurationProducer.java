@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.intellij.lang.xpath.xslt.run;
 
@@ -35,7 +35,8 @@ public class XsltConfigurationProducer extends LazyRunConfigurationProducer<Xslt
     return file != null && file.getVirtualFile().getPath().replace('/', File.separatorChar).equals(configuration.getXsltFile());
   }
 
-  private static @Nullable XmlFile getXsltFile(ConfigurationContext context) {
+  @Nullable
+  private static XmlFile getXsltFile(ConfigurationContext context) {
     final XmlFile file = PsiTreeUtil.getParentOfType(context.getPsiLocation(), XmlFile.class, false);
     if (file != null && file.isPhysical() && XsltSupport.isXsltFile(file)) {
       return file;
@@ -43,8 +44,9 @@ public class XsltConfigurationProducer extends LazyRunConfigurationProducer<Xslt
     return null;
   }
 
+  @NotNull
   @Override
-  public @NotNull ConfigurationFactory getConfigurationFactory() {
+  public ConfigurationFactory getConfigurationFactory() {
     return XsltRunConfigType.getInstance().getConfigurationFactories()[0];
   }
 }

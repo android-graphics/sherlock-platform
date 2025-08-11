@@ -30,14 +30,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 public final class GroovyUnusedCatchParameterInspection extends BaseInspection {
 
+  @NotNull
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
 
-    private static final @NlsSafe String IGNORED = "ignored";
+    @NlsSafe private static final String IGNORED = "ignored";
 
     @Override
     public void visitCatchClause(@NotNull GrCatchClause catchClause) {

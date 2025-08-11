@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
@@ -25,8 +25,9 @@ public class SimpleAsyncChangesBrowser extends AsyncChangesBrowserBase {
   }
 
 
+  @NotNull
   @Override
-  protected final @NotNull AsyncChangesTreeModel getChangesTreeModel() {
+  protected final AsyncChangesTreeModel getChangesTreeModel() {
     return SimpleAsyncChangesTreeModel.create(grouping -> {
       return TreeModelBuilder.buildFromChanges(myProject, grouping, myChanges, myChangeNodeDecorator);
     });
@@ -53,15 +54,18 @@ public class SimpleAsyncChangesBrowser extends AsyncChangesBrowserBase {
   }
 
 
-  public @NotNull List<Change> getAllChanges() {
+  @NotNull
+  public List<Change> getAllChanges() {
     return VcsTreeModelData.all(myViewer).userObjects(Change.class);
   }
 
-  public @NotNull List<Change> getSelectedChanges() {
+  @NotNull
+  public List<Change> getSelectedChanges() {
     return VcsTreeModelData.selected(myViewer).userObjects(Change.class);
   }
 
-  public @NotNull List<Change> getIncludedChanges() {
+  @NotNull
+  public List<Change> getIncludedChanges() {
     return VcsTreeModelData.included(myViewer).userObjects(Change.class);
   }
 }

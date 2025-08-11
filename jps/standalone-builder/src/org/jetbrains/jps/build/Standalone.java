@@ -22,7 +22,6 @@ import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -33,7 +32,7 @@ public final class Standalone {
   @Argument(value = "config", prefix = "--", description = "Path to directory containing global options (idea.config.path)")
   public String configPath;
 
-  @Argument(value = "script", prefix = "--", description = "Path to Groovy script which will be used to initialize global options (deprecated)")
+  @Argument(value = "script", prefix = "--", description = "Path to Groovy script which will be used to initialize global options")
   public String initializationScriptPath;
 
   @Argument(value = "cache-dir", prefix = "--", description = "Path to directory to store build caches")
@@ -102,7 +101,6 @@ public final class Standalone {
     ParameterizedRunnable<JpsModel> initializer = null;
     String scriptPath = initializationScriptPath;
     if (scriptPath != null) {
-      System.err.println("--script argument is deprecated, use --config instead or configure options in code and call Standalone.runBuild method");
       File scriptFile = new File(scriptPath);
       if (!scriptFile.isFile()) {
         System.err.println("Script '" + scriptPath + "' not found");
@@ -119,12 +117,19 @@ public final class Standalone {
     JpsModelLoaderImpl loader = new JpsModelLoaderImpl(projectPath, globalOptionsPath, false, initializer);
     Set<String> modulesSet = Set.of(modules);
     List<String> artifactsList = Arrays.asList(artifacts);
-    File dataStorageRoot = cacheDirPath == null ? Utils.getDataStorageRoot(projectPath) : new File(cacheDirPath);
+    File dataStorageRoot;
+    if (cacheDirPath != null) {
+      dataStorageRoot = new File(cacheDirPath);
+    }
+    else {
+      dataStorageRoot = Utils.getDataStorageRoot(projectPath);
+    }
 
     ConsoleMessageHandler consoleMessageHandler = new ConsoleMessageHandler();
     long start = System.nanoTime();
     try {
-      runBuild(loader, dataStorageRoot, !incremental, modulesSet, allModules, artifactsList, allArtifacts, true, consoleMessageHandler);
+      runBuild(loader, dataStorageRoot, !incremental, modulesSet, allModules, artifactsList, allArtifacts, true,
+               consoleMessageHandler);
     }
     catch (Throwable t) {
       System.err.println("Internal error: " + t.getMessage());
@@ -141,15 +146,10 @@ public final class Standalone {
     runBuild(loader, dataStorageRoot, forceBuild, modulesSet, allModules, artifactsList, false, includeTests, messageHandler);
   }
 
-  public static void runBuild(@NotNull JpsModelLoader loader,
-                              @NotNull File dataStorageRoot,
-                              boolean forceBuild,
-                              @NotNull Set<String> modulesSet,
-                              boolean allModules,
-                              @NotNull List<String> artifactsList,
-                              boolean allArtifacts,
-                              boolean includeTests,
-                              @NotNull MessageHandler messageHandler) throws Exception {
+  public static void runBuild(@NotNull JpsModelLoader loader, @NotNull File dataStorageRoot, boolean forceBuild,
+                              @NotNull Set<String> modulesSet, boolean allModules, 
+                              @NotNull List<String> artifactsList, boolean allArtifacts, 
+                              boolean includeTests, @NotNull MessageHandler messageHandler) throws Exception {
     List<TargetTypeBuildScope> scopes = new ArrayList<>();
     for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
       if (includeTests || !type.isTests()) {
@@ -174,57 +174,24 @@ public final class Standalone {
       scopes.add(builder.addAllTargetId(artifactsList).build());
     }
 
-    runBuild(loader, dataStorageRoot.toPath(), Collections.emptyMap(), messageHandler, scopes, true, CanceledStatus.NULL);
+    runBuild(loader, dataStorageRoot, messageHandler, scopes, true);
   }
 
-  /**
-   * @deprecated Use {@link #runBuild(JpsModelLoader, Path, Map, MessageHandler, List, boolean, CanceledStatus)}
-   */
-  @Deprecated
-  public static void runBuild(@NotNull JpsModelLoader loader,
-                              @NotNull File dataStorageRoot,
-                              @NotNull MessageHandler messageHandler,
-                              @NotNull List<TargetTypeBuildScope> scopes,
-                              boolean includeDependenciesToScope) throws Exception {
-    runBuild(loader,
-             dataStorageRoot.toPath(),
-             Collections.emptyMap(),
-             messageHandler,
-             scopes,
-             includeDependenciesToScope,
-             CanceledStatus.NULL);
+  public static void runBuild(@NotNull JpsModelLoader loader, @NotNull File dataStorageRoot, @NotNull MessageHandler messageHandler, 
+                              @NotNull List<TargetTypeBuildScope> scopes, boolean includeDependenciesToScope) throws Exception {
+    runBuild(loader, dataStorageRoot, Collections.emptyMap(), messageHandler, scopes, includeDependenciesToScope);
   }
 
-  /**
-   * @deprecated Use {@link #runBuild(JpsModelLoader, Path, Map, MessageHandler, List, boolean, CanceledStatus)}
-   */
-  @Deprecated
   public static void runBuild(@NotNull JpsModelLoader loader, @NotNull File dataStorageRoot,
                               @NotNull Map<String, String> buildParameters,
                               @NotNull MessageHandler messageHandler, @NotNull List<TargetTypeBuildScope> scopes,
                               boolean includeDependenciesToScope) throws Exception {
-    runBuild(loader, dataStorageRoot.toPath(), buildParameters, messageHandler, scopes, includeDependenciesToScope, CanceledStatus.NULL);
+    runBuild(loader, dataStorageRoot, buildParameters, messageHandler, scopes, includeDependenciesToScope, CanceledStatus.NULL);
   }
 
-  /**
-   * @deprecated Use {@link #runBuild(JpsModelLoader, Path, Map, MessageHandler, List, boolean, CanceledStatus)}
-   */
-  @Deprecated
-  public static void runBuild(@NotNull JpsModelLoader loader,
-                                @NotNull File dataStorageRoot,
-                                @NotNull Map<String, String> buildParameters,
-                                @NotNull MessageHandler messageHandler,
-                                @NotNull List<TargetTypeBuildScope> scopes,
-                                boolean includeDependenciesToScope,
-                                @NotNull CanceledStatus canceledStatus) throws Exception {
-    runBuild(loader, dataStorageRoot.toPath(), buildParameters, messageHandler, scopes, includeDependenciesToScope, canceledStatus);
-  }
-
-  public static void runBuild(@NotNull JpsModelLoader loader,
-                              @NotNull Path dataStorageRoot,
+  public static void runBuild(@NotNull JpsModelLoader loader, @NotNull File dataStorageRoot,
                               @NotNull Map<String, String> buildParameters,
-                              @NotNull MessageHandler messageHandler,
-                              @NotNull List<TargetTypeBuildScope> scopes,
+                              @NotNull MessageHandler messageHandler, @NotNull List<TargetTypeBuildScope> scopes,
                               boolean includeDependenciesToScope,
                               @NotNull CanceledStatus canceledStatus) throws Exception {
     final LowMemoryWatcherManager memWatcher = new LowMemoryWatcherManager(SharedThreadPool.getInstance());

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
+import org.jetbrains.plugins.textmate.plist.PlistReader;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -21,11 +22,12 @@ import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
 import static org.jetbrains.plugins.textmate.Constants.*;
+import static org.jetbrains.plugins.textmate.plist.PListValue.*;
 
 /**
  * @deprecated use `{@link VSCBundleReaderKt#readVSCBundle}`
  */
-@Deprecated(forRemoval = true)
+@Deprecated
 public class VSCBundle extends Bundle {
   private final Map<String, Collection<String>> grammarToExtensions = new LinkedHashMap<>();
   private final Map<String, Collection<String>> configToScopes = new HashMap<>();
@@ -36,8 +38,9 @@ public class VSCBundle extends Bundle {
     super(name, bundle, BundleType.VSCODE);
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<File> getGrammarFiles() {
+  public Collection<File> getGrammarFiles() {
     loadExtensions();
     //noinspection SSBasedInspection
     return grammarToExtensions.keySet().stream().map((path) -> new File(bundleFile, path)).collect(Collectors.toList());
@@ -145,24 +148,36 @@ public class VSCBundle extends Bundle {
     catch (Exception ignored) {}
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<File> getPreferenceFiles() {
+  public Collection<File> getPreferenceFiles() {
     loadExtensions();
     //noinspection SSBasedInspection
     return configToScopes.keySet().stream().map(config -> new File(bundleFile, config)).collect(Collectors.toList());
   }
 
-  private static @NotNull Plist loadLanguageConfig(File languageConfig) throws IOException {
+  @Override
+  public List<Map.Entry<String, Plist>> loadPreferenceFile(@NotNull File file, @NotNull PlistReader plistReader) throws IOException {
+    Plist fromJson = loadLanguageConfig(file);
+    //noinspection SSBasedInspection
+    return configToScopes.get(FileUtilRt.toSystemIndependentName(
+      Objects.requireNonNull(FileUtilRt.getRelativePath(bundleFile, file)))).stream()
+      .map(scope -> Map.entry(scope, fromJson))
+      .collect(Collectors.toList());
+  }
+
+  @NotNull
+  private static Plist loadLanguageConfig(File languageConfig) throws IOException {
     try {
       Object json = createJsonReader().readValue(new FileReader(languageConfig, StandardCharsets.UTF_8), Object.class);
-      Map<String, PListValue> map = new HashMap<>();
+      Plist settings = new Plist();
       if (json instanceof Map) {
-        map.put(HIGHLIGHTING_PAIRS_KEY, loadBrackets((Map)json, "brackets"));
-        map.put(SMART_TYPING_PAIRS_KEY, loadBrackets((Map)json, "surroundingPairs"));
-        map.put(SHELL_VARIABLES_KEY, PListValue.Companion.array(loadComments((Map)json)));
-        map.put(INDENTATION_RULES, PListValue.Companion.dict(loadIndentationRules((Map)json)));
+        settings.setEntry(HIGHLIGHTING_PAIRS_KEY, loadBrackets((Map)json, "brackets"));
+        settings.setEntry(SMART_TYPING_PAIRS_KEY, loadBrackets((Map)json, "surroundingPairs"));
+        settings.setEntry(SHELL_VARIABLES_KEY, array(loadComments((Map)json)));
+        settings.setEntry(INDENTATION_RULES, dict(loadIndentationRules((Map)json)));
       }
-      return new Plist(map);
+      return settings;
     }
     catch (FileNotFoundException e) {
       return Plist.EMPTY_PLIST;
@@ -180,10 +195,10 @@ public class VSCBundle extends Bundle {
     List<PListValue> pairs = new ArrayList<>();
     for (Object bracket : (ArrayList)brackets) {
       if (bracket instanceof ArrayList && ((ArrayList<?>)bracket).size() == 2) {
-        pairs.add(PListValue.Companion.array(PListValue.Companion.string(((ArrayList<?>)bracket).get(0).toString()), PListValue.Companion.string(((ArrayList<?>)bracket).get(1).toString())));
+        pairs.add(array(string(((ArrayList<?>)bracket).get(0).toString()), string(((ArrayList<?>)bracket).get(1).toString())));
       }
     }
-    return PListValue.Companion.array(pairs);
+    return array(pairs);
   }
 
   private static List<PListValue> loadComments(Map json) {
@@ -206,7 +221,7 @@ public class VSCBundle extends Bundle {
   }
 
   private static Plist loadIndentationRules(Map json) {
-    Map<String, PListValue> patterns = new HashMap<>();
+    Plist patterns = new Plist();
     Object rules = json.get("indentationRules");
     if (rules instanceof Map) {
       loadIndentationPattern(patterns, rules, INCREASE_INDENT_PATTERN, "increaseIndentPattern");
@@ -214,21 +229,21 @@ public class VSCBundle extends Bundle {
       loadIndentationPattern(patterns, rules, INDENT_NEXT_LINE_PATTERN, "indentNextLinePattern");
       loadIndentationPattern(patterns, rules, UNINDENTED_LINE_PATTERN, "unIndentedLinePattern");
     }
-    return new Plist(patterns);
+    return patterns;
   }
 
-  private static void loadIndentationPattern(Map<String, PListValue> patterns, Object rules, String name, String key) {
+  private static void loadIndentationPattern(Plist patterns, Object rules, String name, String key) {
     Object value = ((Map<?, ?>)rules).get(key);
     if (value instanceof String) {
-      patterns.put(name, PListValue.Companion.string((String)value));
+      patterns.setEntry(name, string((String)value));
     }
   }
 
   private static PListValue variable(String name, String value) {
-    Map<String, PListValue> variable = new HashMap<>();
-    variable.put(NAME_KEY, PListValue.Companion.string(name));
-    variable.put(VALUE_KEY, PListValue.Companion.string(value));
-    return PListValue.Companion.dict(new Plist(variable));
+    Plist variable = new Plist();
+    variable.setEntry(NAME_KEY, string(name));
+    variable.setEntry(VALUE_KEY, string(value));
+    return dict(variable);
   }
 
   private static ObjectMapper createJsonReader() {

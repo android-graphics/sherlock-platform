@@ -1,3 +1,0 @@
-public void m(Date value) {
-  <spot>value</spot>$key
-}

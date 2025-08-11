@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
 import com.intellij.execution.BeforeRunTask;
@@ -52,15 +52,17 @@ public final class MakeProjectStepBeforeRun extends BeforeRunTaskProvider<MakePr
   }
 
   @Override
-  public boolean executeTask(@NotNull DataContext context, final @NotNull RunConfiguration configuration, final @NotNull ExecutionEnvironment env, @NotNull MakeProjectBeforeRunTask task) {
+  public boolean executeTask(@NotNull DataContext context, @NotNull final RunConfiguration configuration, @NotNull final ExecutionEnvironment env, @NotNull MakeProjectBeforeRunTask task) {
     return CompileStepBeforeRun.doMake(myProject, configuration, env, false, true);
   }
 
-  public static @Nullable RunConfiguration getRunConfiguration(final CompileContext context) {
+  @Nullable
+  public static RunConfiguration getRunConfiguration(final CompileContext context) {
     return getRunConfiguration(context.getCompileScope());
   }
 
-  public static @Nullable RunConfiguration getRunConfiguration(final CompileScope compileScope) {
+  @Nullable
+  public static RunConfiguration getRunConfiguration(final CompileScope compileScope) {
     return compileScope.getUserData(CompilerManager.RUN_CONFIGURATION_KEY);
   }
 

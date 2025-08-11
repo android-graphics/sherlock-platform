@@ -15,7 +15,14 @@ fun <T> Collection<T>.toGroovyListLiteral(map: T.() -> String): String {
 }
 
 fun String.toGroovyStringLiteral(): String {
-  return replace("\\", "\\\\")
-    .replace("'", "\\'")
-    .let { "'$it'" }
+  val stringBuilder = StringBuilder()
+  for (ch in toCharArray()) {
+    when (ch) {
+      '\\' -> stringBuilder.append("\\\\")
+      '\'' -> stringBuilder.append("\\'")
+      '$' -> stringBuilder.append("\\$")
+      else -> stringBuilder.append(ch)
+    }
+  }
+  return "'$stringBuilder'"
 }

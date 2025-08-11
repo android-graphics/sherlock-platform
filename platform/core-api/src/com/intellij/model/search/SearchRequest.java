@@ -1,13 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search;
 
 import com.intellij.psi.search.SearchScope;
-import org.jetbrains.annotations.ApiStatus.Internal;
-import org.jetbrains.annotations.ApiStatus.NonExtendable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@NonExtendable
 public interface SearchRequest {
 
   /**
@@ -27,7 +24,6 @@ public interface SearchRequest {
    * @return string to search for text occurrences,
    * which might contain references to the specified target
    */
-  @Internal
   @NotNull String getSearchString();
 
   /**
@@ -51,7 +47,6 @@ public interface SearchRequest {
    * @return the scope where references to this target might occur
    * or {@code null} if there are no scope reductions to apply
    */
-  @Internal
   default @Nullable SearchScope getSearchScope() {
     return null;
   }
@@ -62,7 +57,6 @@ public interface SearchRequest {
    * @return the scope where references to this target might occur in the injected fragments
    * or {@code null} if there are no scope reductions to apply
    */
-  @Internal
   default @Nullable SearchScope getInjectionSearchScope() {
     return getSearchScope();
   }

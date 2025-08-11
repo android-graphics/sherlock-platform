@@ -19,7 +19,8 @@ public final class ShTextOccurrencesUtil {
   private ShTextOccurrencesUtil() {
   }
 
-  public static @Nullable TextRange findTextRangeOfIdentifierAtCaret(@NotNull Editor editor) {
+  @Nullable
+  public static TextRange findTextRangeOfIdentifierAtCaret(@NotNull Editor editor) {
     Caret caret = editor.getCaretModel().getPrimaryCaret();
     if (caret.hasSelection()) {
       TextRange textRange = TextRange.create(caret.getSelectionStart(), caret.getSelectionEnd());
@@ -35,9 +36,10 @@ public final class ShTextOccurrencesUtil {
     return ch == '_' || Character.isLetterOrDigit(ch);
   }
 
-  public static @NotNull Collection<TextRange> findAllOccurrences(@NotNull CharSequence documentText,
-                                                                  @NotNull CharSequence textToFind,
-                                                                  boolean matchExactWordsOnly) {
+  @NotNull
+  public static Collection<TextRange> findAllOccurrences(@NotNull CharSequence documentText,
+                                                         @NotNull CharSequence textToFind,
+                                                         boolean matchExactWordsOnly) {
     CollectConsumer<TextRange> consumer = new CollectConsumer<>();
     consumeAllOccurrences(documentText, textToFind, matchExactWordsOnly, consumer);
     return consumer.getResult();

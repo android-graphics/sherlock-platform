@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi;
 
 import com.jetbrains.python.ast.PyAstLambdaExpression;
@@ -9,17 +9,20 @@ import org.jetbrains.annotations.Nullable;
 
 public interface PyLambdaExpression extends PyAstLambdaExpression, PyExpression, PyCallable, ScopeOwner {
   @Override
-  default @Nullable PyExpression getBody() {
+  @Nullable
+  default PyExpression getBody() {
     return (PyExpression)PyAstLambdaExpression.super.getBody();
   }
 
   @Override
-  default @NotNull PyParameterList getParameterList() {
+  @NotNull
+  default PyParameterList getParameterList() {
     return (PyParameterList)PyAstLambdaExpression.super.getParameterList();
   }
 
   @Override
-  default @Nullable PyFunction asMethod() {
+  @Nullable
+  default PyFunction asMethod() {
     return (PyFunction)PyAstLambdaExpression.super.asMethod();
   }
 }

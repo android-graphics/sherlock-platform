@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.gist.storage;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -54,7 +54,8 @@ import java.util.NoSuchElementException;
  */
 @ApiStatus.Internal
 public abstract class GistStorage {
-  public static @NotNull GistStorage getInstance() {
+  @NotNull
+  public static GistStorage getInstance() {
     return ApplicationManager.getApplication().getService(GistStorage.class);
   }
 
@@ -68,7 +69,8 @@ public abstract class GistStorage {
    * @return the gist object, where {@link Gist#getGlobalData}/{@link Gist#getProjectData(Project, VirtualFile, int)} can
    * later be used to retrieve the data stored
    */
-  public abstract @NotNull <Data> Gist<Data> newGist(@NotNull @NonNls String id,
+  @NotNull
+  public abstract <Data> Gist<Data> newGist(@NotNull @NonNls String id,
                                             int version,
                                             @NotNull DataExternalizer<Data> externalizer);
 

@@ -35,12 +35,14 @@ public final class SystemExitInspection extends BaseInspection {
   public boolean ignoreInMainMethod = false;
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "CallToSystemExit";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final String className = (String)infos[0];
     return InspectionGadgetsBundle.message("system.exit.call.problem.descriptor", className);
   }
@@ -62,7 +64,7 @@ public final class SystemExitInspection extends BaseInspection {
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final @NonNls String methodName = methodExpression.getReferenceName();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"exit".equals(methodName) && !"halt".equals(methodName)) {
         return;
       }

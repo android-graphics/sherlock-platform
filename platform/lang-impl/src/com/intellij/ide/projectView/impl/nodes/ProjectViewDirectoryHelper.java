@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ProjectViewSettings;
@@ -28,7 +28,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 
@@ -55,12 +54,14 @@ public class ProjectViewDirectoryHelper {
   }
 
 
-  public @Nullable String getLocationString(@NotNull PsiDirectory psiDirectory) {
+  @Nullable
+  public String getLocationString(@NotNull PsiDirectory psiDirectory) {
     boolean includeUrl = ProjectRootsUtil.isModuleContentRoot(psiDirectory);
     return getLocationString(psiDirectory, includeUrl, false);
   }
 
-  public @Nullable String getLocationString(@NotNull PsiDirectory psiDirectory, boolean includeUrl, boolean includeRootType) {
+  @Nullable
+  public String getLocationString(@NotNull PsiDirectory psiDirectory, boolean includeUrl, boolean includeRootType) {
     StringBuilder result = new StringBuilder();
 
     final VirtualFile directory = psiDirectory.getVirtualFile();
@@ -83,11 +84,11 @@ public class ProjectViewDirectoryHelper {
     }
 
     if (includeUrl) {
-      if (!result.isEmpty()) result.append(",").append(FontUtil.spaceAndThinSpace());
+      if (result.length() > 0) result.append(",").append(FontUtil.spaceAndThinSpace());
       result.append(FileUtil.getLocationRelativeToUserHome(directory.getPresentableUrl()));
     }
 
-    return result.isEmpty() ? null : result.toString();
+    return result.length() == 0 ? null : result.toString();
   }
 
 
@@ -102,7 +103,8 @@ public class ProjectViewDirectoryHelper {
     return true;
   }
 
-  public @Nullable String getNodeName(ViewSettings settings, Object parentValue, PsiDirectory directory) {
+  @Nullable
+  public String getNodeName(ViewSettings settings, Object parentValue, PsiDirectory directory) {
     return directory.getName();
   }
 
@@ -173,16 +175,18 @@ public class ProjectViewDirectoryHelper {
     return true;
   }
 
-  public @NotNull Collection<AbstractTreeNode<?>> getDirectoryChildren(final PsiDirectory psiDirectory,
-                                                                       final ViewSettings settings,
-                                                                       final boolean withSubDirectories) {
+  @NotNull
+  public Collection<AbstractTreeNode<?>> getDirectoryChildren(final PsiDirectory psiDirectory,
+                                                           final ViewSettings settings,
+                                                           final boolean withSubDirectories) {
     return getDirectoryChildren(psiDirectory, settings, withSubDirectories, null);
   }
 
-  public @NotNull Collection<AbstractTreeNode<?>> getDirectoryChildren(PsiDirectory psiDirectory,
-                                                                       ViewSettings settings,
-                                                                       boolean withSubDirectories,
-                                                                       @Nullable PsiFileSystemItemFilter filter) {
+  @NotNull
+  public Collection<AbstractTreeNode<?>> getDirectoryChildren(PsiDirectory psiDirectory,
+                                                              ViewSettings settings,
+                                                              boolean withSubDirectories,
+                                                              @Nullable PsiFileSystemItemFilter filter) {
     List<AbstractTreeNode<?>> children = new ArrayList<>();
     if (!psiDirectory.isValid()) return children;
     Project project = psiDirectory.getProject();
@@ -222,7 +226,8 @@ public class ProjectViewDirectoryHelper {
     return children;
   }
 
-  public @NotNull List<VirtualFile> getTopLevelRoots() {
+  @NotNull
+  public List<VirtualFile> getTopLevelRoots() {
     List<VirtualFile> topLevelContentRoots = new ArrayList<>();
     ProjectRootManager prm = ProjectRootManager.getInstance(myProject);
 
@@ -248,7 +253,6 @@ public class ProjectViewDirectoryHelper {
   }
 
   @NotNull
-  @Unmodifiable
   List<VirtualFile> getTopLevelModuleRoots(Module module, ViewSettings settings) {
     return ContainerUtil.filter(ModuleRootManager.getInstance(module).getContentRoots(), root -> {
       if (!shouldBeShown(root, settings)) return false;
@@ -395,7 +399,8 @@ public class ProjectViewDirectoryHelper {
     }
   }
 
-  public @NotNull Collection<AbstractTreeNode<?>> createFileAndDirectoryNodes(@NotNull List<? extends VirtualFile> files, ViewSettings viewSettings) {
+  @NotNull
+  public Collection<AbstractTreeNode<?>> createFileAndDirectoryNodes(@NotNull List<? extends VirtualFile> files, ViewSettings viewSettings) {
     final List<AbstractTreeNode<?>> children = new ArrayList<>(files.size());
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     for (final VirtualFile virtualFile : files) {
@@ -404,9 +409,10 @@ public class ProjectViewDirectoryHelper {
     return children;
   }
 
-  protected @Nullable AbstractTreeNode<?> doCreateNode(@NotNull VirtualFile virtualFile,
-                                                       @NotNull PsiManager psiManager,
-                                                       @Nullable ViewSettings viewSettings) {
+  @Nullable
+  protected AbstractTreeNode<?> doCreateNode(@NotNull VirtualFile virtualFile,
+                                             @NotNull PsiManager psiManager,
+                                             @Nullable ViewSettings viewSettings) {
     if (virtualFile.isDirectory()) {
       PsiDirectory directory = psiManager.findDirectory(virtualFile);
       if (directory != null) {

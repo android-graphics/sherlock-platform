@@ -78,7 +78,12 @@ fun <T> prepareThreadContext(action: (CoroutineContext) -> T): T {
   }
   val currentContext = prepareCurrentThreadContext()
   return resetThreadContext().use {
-    action(currentContext)
+    if (Cancellation.isInNonCancelableSection()) {
+      action(currentContext.minusKey(Job))
+    }
+    else {
+      action(currentContext)
+    }
   }
 }
 
@@ -87,16 +92,12 @@ fun <T> prepareThreadContext(action: (CoroutineContext) -> T): T {
  * or a child coroutine is started and failed
  */
 internal fun <T> prepareIndicatorThreadContext(indicator: ProgressIndicator, action: (CoroutineContext) -> T): T {
-  val currentlyInstalledContext = currentThreadContext()
-  val context = currentlyInstalledContext.minusKey(Job) +
+  val context = prepareCurrentThreadContext().minusKey(Job) +
                 (ProgressManager.getInstance().currentProgressModality?.asContextElement() ?: EmptyCoroutineContext)
-  if (currentlyInstalledContext[Job] == NonCancellable) {
+  if (Cancellation.isInNonCancelableSection()) {
     return ProgressManager.getInstance().silenceGlobalIndicator {
       resetThreadContext().use {
-        // we define a non-cancellable section as a scope of computation having a NonCancellable job.
-        // therefore, to maintain further speculation about non-cancellable sections, we need to provide the NonCancellable job here
-        val modifiedContext = context + NonCancellable
-        action(modifiedContext)
+        action(context)
       }
     }
   }

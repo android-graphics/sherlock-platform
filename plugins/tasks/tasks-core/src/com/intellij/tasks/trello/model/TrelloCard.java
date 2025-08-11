@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2019 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package com.intellij.tasks.trello.model;
 
@@ -26,7 +40,8 @@ public class TrelloCard extends TrelloModel {
 
   private String idBoard, idList, idShort;
   private List<String> idMembers;
-  private @NotNull String name = "";
+  @NotNull
+  private String name = "";
   @SerializedName("desc")
   private String description;
   private String url;
@@ -53,25 +68,30 @@ public class TrelloCard extends TrelloModel {
     return String.format("TrelloCard(id='%s', name='%s')", getId(), name);
   }
 
-  public @NotNull String getIdBoard() {
+  @NotNull
+  public String getIdBoard() {
     return idBoard;
   }
 
-  public @NotNull String getIdList() {
+  @NotNull
+  public String getIdList() {
     return idList;
   }
 
-  public @NotNull String getIdShort() {
+  @NotNull
+  public String getIdShort() {
     return idShort;
   }
 
-  public @NotNull List<String> getIdMembers() {
+  @NotNull
+  public List<String> getIdMembers() {
     return idMembers;
   }
 
+  @NotNull
   @Attribute("name")
   @Override
-  public @NotNull @NlsSafe String getName() {
+  public @NlsSafe String getName() {
     return name;
   }
 
@@ -80,11 +100,13 @@ public class TrelloCard extends TrelloModel {
     this.name = name;
   }
 
-  public @NotNull @NlsSafe String getDescription() {
+  @NotNull
+  public @NlsSafe String getDescription() {
     return description;
   }
 
-  public @NotNull String getUrl() {
+  @NotNull
+  public String getUrl() {
     return url;
   }
 
@@ -92,18 +114,21 @@ public class TrelloCard extends TrelloModel {
     return closed;
   }
 
-  public @NotNull List<TrelloLabel> getLabels() {
+  @NotNull
+  public List<TrelloLabel> getLabels() {
     return labels;
   }
 
-  public @NotNull List<TrelloCommentAction> getComments() {
+  @NotNull
+  public List<TrelloCommentAction> getComments() {
     return comments;
   }
 
   /**
    * @return colors of labels with special {@link LabelColor#NO_COLOR} value excluded
    */
-  public @NotNull Set<LabelColor> getColors() {
+  @NotNull
+  public Set<LabelColor> getColors() {
     if (labels == null || labels.isEmpty()) {
       return EnumSet.noneOf(LabelColor.class);
     }
@@ -122,7 +147,8 @@ public class TrelloCard extends TrelloModel {
     isVisible = visible;
   }
 
-  public @Nullable Date getDateLastActivity() {
+  @Nullable
+  public Date getDateLastActivity() {
     return dateLastActivity;
   }
 }

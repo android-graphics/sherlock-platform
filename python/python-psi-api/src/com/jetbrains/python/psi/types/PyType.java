@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.Key;
@@ -9,7 +9,6 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +27,8 @@ public interface PyType {
    * Typical examples are target expressions in LHS of assignments in {@code TypeVar} and named tuple definitions, as well as
    * class definitions themselves for plain class and generic types.
    */
-  default @Nullable PyQualifiedNameOwner getDeclarationElement() {
+  @Nullable
+  default PyQualifiedNameOwner getDeclarationElement() {
     return null;
   }
 
@@ -42,8 +42,8 @@ public interface PyType {
    *         or a list of elements that define the name, a la multiResolve().
    */
   @Nullable
-  List<? extends RatedResolveResult> resolveMember(@NotNull String name, final @Nullable PyExpression location,
-                                                   final @NotNull AccessDirection direction, final @NotNull PyResolveContext resolveContext);
+  List<? extends RatedResolveResult> resolveMember(@NotNull String name, @Nullable final PyExpression location,
+                                                   @NotNull final AccessDirection direction, @NotNull final PyResolveContext resolveContext);
 
   /**
    * Proposes completion variants from type's attributes.
@@ -73,13 +73,4 @@ public interface PyType {
   boolean isBuiltin();
 
   void assertValid(String message);
-
-  /**
-   * For nullable {@code PyType} instance use {@link PyTypeVisitor#visit(PyType, PyTypeVisitor)}
-   * to visit {@code null} values with {@link PyTypeVisitor#visitUnknownType()}.
-   */
-  @ApiStatus.Experimental
-  default <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
-    return visitor.visitPyType(this);
-  }
 }

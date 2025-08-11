@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -14,10 +14,10 @@ import java.io.File;
 // TODO: provides RepositoryLocation
 public class Node {
 
-  private final @NotNull VirtualFile myFile;
-  private final @NotNull Url myUrl;
-  private final @NotNull Url myRepositoryUrl;
-  private final @Nullable SvnBindException myError;
+  @NotNull private final VirtualFile myFile;
+  @NotNull private final Url myUrl;
+  @NotNull private final Url myRepositoryUrl;
+  @Nullable private final SvnBindException myError;
 
   public Node(@NotNull VirtualFile file, @NotNull Url url, @NotNull Url repositoryUrl) {
     this(file, url, repositoryUrl, null);
@@ -30,23 +30,28 @@ public class Node {
     myError = error;
   }
 
-  public @NotNull VirtualFile getFile() {
+  @NotNull
+  public VirtualFile getFile() {
     return myFile;
   }
 
-  public @NotNull File getIoFile() {
+  @NotNull
+  public File getIoFile() {
     return VfsUtilCore.virtualToIoFile(getFile());
   }
 
-  public @NotNull Url getUrl() {
+  @NotNull
+  public Url getUrl() {
     return myUrl;
   }
 
-  public @NotNull Url getRepositoryRootUrl() {
+  @NotNull
+  public Url getRepositoryRootUrl() {
     return myRepositoryUrl;
   }
 
-  public @Nullable SvnBindException getError() {
+  @Nullable
+  public SvnBindException getError() {
     return myError;
   }
 

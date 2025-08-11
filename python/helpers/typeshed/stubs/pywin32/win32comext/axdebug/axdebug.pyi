@@ -1,10 +1,7 @@
 # Can't generate with stubgen because:
 # "ImportError: DLL load failed while importing axdebug: The specified module could not be found."
+# https://github.com/python/mypy/issues/13822
 import _win32typing
-
-def GetStackAddress(*args): ...  # incomplete
-def GetThreadStateHandle(*args): ...  # incomplete
-def SetThreadStateTrace(*args): ...  # incomplete
 
 APPBREAKFLAG_DEBUGGER_BLOCK: int
 APPBREAKFLAG_DEBUGGER_HALT: int
@@ -78,6 +75,9 @@ APPBREAKFLAG_STEPTYPE_MACHINE: int
 APPBREAKFLAG_STEPTYPE_MASK: int
 APPBREAKFLAG_STEPTYPE_SOURCE: int
 
+def GetStackAddress(*args, **kwargs): ...  # incomplete
+def GetThreadStateHandle(*args, **kwargs): ...  # incomplete
+
 IID_IActiveScriptDebug: _win32typing.PyIID
 IID_IActiveScriptErrorDebug: _win32typing.PyIID
 IID_IActiveScriptSiteDebug: _win32typing.PyIID
@@ -120,3 +120,5 @@ IID_IProvideExpressionContexts: _win32typing.PyIID
 IID_IRemoteDebugApplication: _win32typing.PyIID
 IID_IRemoteDebugApplicationEvents: _win32typing.PyIID
 IID_IRemoteDebugApplicationThread: _win32typing.PyIID
+
+def SetThreadStateTrace(*args, **kwargs): ...  # incomplete

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.intention;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -72,7 +72,7 @@ public final class CheckRegExpForm {
   /**
    * @deprecated Use {{@link Keys#CHECK_REG_EXP_EDITOR} instead.
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static final Key<Boolean> CHECK_REG_EXP_EDITOR = Keys.CHECK_REG_EXP_EDITOR;
 
   public static final class Keys {
@@ -488,11 +488,13 @@ public final class CheckRegExpForm {
     label.setToolTipText(tooltip);
   }
 
-  public @NotNull JComponent getPreferredFocusedComponent() {
+  @NotNull
+  public JComponent getPreferredFocusedComponent() {
     return mySampleText;
   }
 
-  public @NotNull JPanel getRootPanel() {
+  @NotNull
+  public JPanel getRootPanel() {
     return myRootPanel;
   }
 
@@ -515,7 +517,7 @@ public final class CheckRegExpForm {
     return isMatchingText(regExpFile, regExpFile.getText(), sampleText);
   }
 
-  private static RegExpMatchResult isMatchingText(final @NotNull PsiFile regExpFile, String regExpText, @NotNull String sampleText) {
+  private static RegExpMatchResult isMatchingText(@NotNull final PsiFile regExpFile, String regExpText, @NotNull String sampleText) {
     final Language regExpFileLanguage = regExpFile.getLanguage();
     final RegExpMatcherProvider matcherProvider = RegExpMatcherProvider.EP.forLanguage(regExpFileLanguage);
     if (matcherProvider != null) {

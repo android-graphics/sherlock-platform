@@ -33,7 +33,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -43,15 +42,17 @@ import java.util.function.Predicate;
  */
 public abstract class CompatibilityVisitor extends PyAnnotator {
 
-  private static final @NotNull Set<String> PYTHON2_PREFIXES = Sets.newHashSet("R", "U", "UR", "B", "BR");
+  @NotNull
+  private static final Set<String> PYTHON2_PREFIXES = Sets.newHashSet("R", "U", "UR", "B", "BR");
 
-  private static final @NotNull Set<String> PYTHON34_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB");
+  @NotNull
+  private static final Set<String> PYTHON34_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB");
 
-  private static final @NotNull Set<String> PYTHON36_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF");
+  @NotNull
+  private static final Set<String> PYTHON36_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF");
 
-  private static final @NotNull Set<String> PYTHON314_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF", "T", "TR", "RT");
-
-  protected @NotNull List<LanguageLevel> myVersionsToProcess;
+  @NotNull
+  protected List<LanguageLevel> myVersionsToProcess;
 
   public CompatibilityVisitor(@NotNull List<LanguageLevel> versionsToProcess) {
     myVersionsToProcess = versionsToProcess;
@@ -277,18 +278,16 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
   }
 
-  private static @NotNull Set<String> getSupportedStringPrefixes(@NotNull LanguageLevel level) {
+  @NotNull
+  private static Set<String> getSupportedStringPrefixes(@NotNull LanguageLevel level) {
     if (level.isPython2()) {
       return PYTHON2_PREFIXES;
     }
     else if (level.isOlderThan(LanguageLevel.PYTHON36)) {
       return PYTHON34_PREFIXES;
     }
-    else if (level.isOlderThan(LanguageLevel.PYTHON314)) {
-      return PYTHON36_PREFIXES;
-    }
     else {
-      return PYTHON314_PREFIXES;
+      return PYTHON36_PREFIXES;
     }
   }
 
@@ -871,7 +870,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       expression.replace(newExpression);
     }
 
-    private static @Unmodifiable @NotNull List<String> collectUnionTypes(@Nullable PyExpression expression) {
+    private static @NotNull List<String> collectUnionTypes(@Nullable PyExpression expression) {
       if (expression == null) return Collections.emptyList();
       if (expression instanceof PyBinaryExpression) {
         final List<String> leftTypes = collectUnionTypes(((PyBinaryExpression)expression).getLeftExpression());

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tasks.actions;
 
@@ -48,11 +48,12 @@ public final class TaskSearchSupport {
                                                 int limit,
                                                 boolean forceRequest,
                                                 final boolean withClosed,
-                                                final @NotNull ProgressIndicator cancelled) {
+                                                @NotNull final ProgressIndicator cancelled) {
     try {
       TaskManager manager = TaskManager.getManager(project);
       List<Task> tasks = manager.getIssues(pattern, offset, limit, withClosed, cancelled, forceRequest);
-      return ContainerUtil.sorted(tasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
+      ContainerUtil.sort(tasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
+      return tasks;
     }
     catch (RequestFailedException e) {
       notifyAboutConnectionFailure(e, project);

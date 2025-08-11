@@ -190,7 +190,6 @@ public final class WrapImpl extends Wrap {
     return (myFlags & ACTIVE_MASK) != 0;
   }
 
-  @Override
   public String toString() {
     return getType().toString();
   }

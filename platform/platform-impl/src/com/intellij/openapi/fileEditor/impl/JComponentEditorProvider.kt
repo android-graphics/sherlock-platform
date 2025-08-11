@@ -1,12 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
-import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager.Companion.getInstance
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -15,8 +13,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import javax.swing.JComponent
-
-private const val JCOMPONENT_EDITOR_ID = "jcomponent-editor"
 
 /**
  * To open any of your JComponent descendant, call
@@ -49,7 +45,7 @@ internal class JComponentEditorProvider : FileEditorProvider, DumbAware {
 
   override fun acceptRequiresReadAction() = false
 
-  override fun getEditorTypeId(): String = JCOMPONENT_EDITOR_ID
+  override fun getEditorTypeId(): String = "jcomponent-editor"
 
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 }
@@ -62,10 +58,6 @@ object JComponentEditorProviderUtils {
                  fileType: FileType = JComponentFileType.INSTANCE): Array<FileEditor> {
     val file = LightVirtualFile(title, fileType, "")
     file.putUserData(JCOMPONENT_KEY, component)
-    val app = ApplicationManager.getApplication()
-    if (app.isHeadlessEnvironment || app.isUnitTestMode) {
-      file.putUserData(FileEditorProvider.KEY, getInstance().getProvider(JCOMPONENT_EDITOR_ID))
-    }
     return FileEditorManager.getInstance(project).openFile(file, true)
   }
 

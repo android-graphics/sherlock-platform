@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.externalSystem.testFramework;
 
 import com.intellij.execution.ExecutionException;
@@ -28,38 +28,44 @@ public class TestExternalSystemManager
     executionSettings = new TestExternalSystemExecutionSettings();
   }
 
+  @NotNull
   @Override
-  public @NotNull ProjectSystemId getSystemId() {
+  public ProjectSystemId getSystemId() {
     return ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID;
   }
 
+  @NotNull
   @Override
-  public @NotNull Function<Project, TestExternalSystemSettings> getSettingsProvider() {
+  public Function<Project, TestExternalSystemSettings> getSettingsProvider() {
     return project -> getSystemSettings();
   }
 
+  @NotNull
   @Override
-  public @NotNull Function<Project, TestExternalSystemLocalSettings> getLocalSettingsProvider() {
+  public Function<Project, TestExternalSystemLocalSettings> getLocalSettingsProvider() {
     return project -> getLocalSettings();
   }
 
+  @NotNull
   @Override
-  public @NotNull Function<Pair<Project, String>, TestExternalSystemExecutionSettings> getExecutionSettingsProvider() {
+  public Function<Pair<Project, String>, TestExternalSystemExecutionSettings> getExecutionSettingsProvider() {
     return pair -> getExecutionSettings();
   }
 
+  @NotNull
   @Override
-  public @NotNull Class<? extends ExternalSystemProjectResolver<TestExternalSystemExecutionSettings>> getProjectResolverClass() {
+  public Class<? extends ExternalSystemProjectResolver<TestExternalSystemExecutionSettings>> getProjectResolverClass() {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public @NotNull Class<? extends ExternalSystemTaskManager<TestExternalSystemExecutionSettings>> getTaskManagerClass() {
+  public Class<? extends ExternalSystemTaskManager<TestExternalSystemExecutionSettings>> getTaskManagerClass() {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
-  public @NotNull FileChooserDescriptor getExternalProjectDescriptor() {
+  public FileChooserDescriptor getExternalProjectDescriptor() {
     throw new UnsupportedOperationException();
   }
 

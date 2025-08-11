@@ -5,7 +5,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -14,7 +13,7 @@ public final class GenerateAccessorProviderRegistrar {
 
   public static final ExtensionPointName<NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>> EP_NAME = ExtensionPointName.create("com.intellij.generateAccessorProvider");
 
-  static synchronized @Unmodifiable List<EncapsulatableClassMember> getEncapsulatableClassMembers(final PsiClass psiClass) {
+  static synchronized List<EncapsulatableClassMember> getEncapsulatableClassMembers(final PsiClass psiClass) {
     return ContainerUtil.concat(EP_NAME.getExtensionList(), s -> s.fun(psiClass));
   }
 }

@@ -43,8 +43,9 @@ public final class PyPropertyDefinitionInspection extends PyInspection {
 
   private static final ImmutableList<String> SUFFIXES = ImmutableList.of(PyNames.SETTER, PyNames.DELETER);
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -207,7 +208,8 @@ public final class PyPropertyDefinitionInspection extends PyInspection {
       }
     }
 
-    private static @Nullable PsiElement getFunctionMarkingElement(PyFunction node) {
+    @Nullable
+    private static PsiElement getFunctionMarkingElement(PyFunction node) {
       if (node == null) return null;
       final ASTNode nameNode = node.getNameNode();
       PsiElement markable = node;

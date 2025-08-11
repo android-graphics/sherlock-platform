@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer;
 
 import com.intellij.designer.palette.PaletteToolWindowManager;
@@ -16,8 +16,9 @@ public abstract class AbstractToolWindowManager extends LightToolWindowManager {
     super(project);
   }
 
+  @Nullable
   @Override
-  protected @Nullable DesignerEditorPanelFacade getDesigner(FileEditor editor) {
+  protected DesignerEditorPanelFacade getDesigner(FileEditor editor) {
     if (editor instanceof DesignerEditor designerEditor) {
       return designerEditor.getDesignerPanel();
     }
@@ -36,7 +37,8 @@ public abstract class AbstractToolWindowManager extends LightToolWindowManager {
     };
   }
 
-  protected static @Nullable DesignerCustomizations getCustomizations() {
+  @Nullable
+  protected static DesignerCustomizations getCustomizations() {
     return DesignerCustomizations.EP_NAME.findExtension(DesignerCustomizations.class);
   }
 }

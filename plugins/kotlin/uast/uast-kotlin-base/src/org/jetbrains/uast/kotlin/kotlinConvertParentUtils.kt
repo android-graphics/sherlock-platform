@@ -66,8 +66,7 @@ internal fun convertParentImpl(
                             ?: parent
 
             AnnotationUseSiteTarget.FIELD ->
-                parent = (parentUnwrapped as? KtAnnotation)?.parent
-                    ?: (parentUnwrapped as? KtProperty)
+                parent = (parentUnwrapped as? KtProperty)
                     ?: (parentUnwrapped as? KtParameter)
                         ?.takeIf { it.isPropertyParameter() }
                         ?.let(LightClassUtil::getLightClassBackingField)
@@ -236,21 +235,8 @@ internal fun convertParentImpl(
     return result
 }
 
-/**
- * This is much faster than [KtBlockExpression.getStatements] + [List.lastOrNull]
- */
-private fun KtBlockExpression.lastStatementOrNull(): KtExpression? {
-    var currentChild = lastChild
-    while (currentChild != null && currentChild !is KtExpression) {
-        currentChild = currentChild.prevSibling
-    }
-
-    return currentChild
-}
-
 private fun PsiElement.canBeImplicitReturnIn(body: KotlinULambdaExpression.Body): Boolean {
-    val lastStatement = body.sourcePsi.lastStatementOrNull() ?: return false
-
+    val lastStatement = body.sourcePsi.statements.lastOrNull() ?: return false
     // It is _explicit_ return so we skip
     if (lastStatement is KtReturnExpression) return false
 

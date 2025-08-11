@@ -26,8 +26,9 @@ import com.jetbrains.python.psi.PyNumericLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceOctalNumericLiteralQuickFix extends PsiUpdateModCommandQuickFix {
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.replace.octal.numeric.literal");
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmModifier;
@@ -21,8 +21,9 @@ public interface PsiJvmModifiersOwner extends PsiModifierListOwner, JvmModifiers
     return PsiModifierListOwner.super.getAnnotations();
   }
 
+  @Nullable
   @Override
-  default @Nullable PsiAnnotation getAnnotation(@NotNull @NonNls String fqn) {
+  default PsiAnnotation getAnnotation(@NotNull @NonNls String fqn) {
     return PsiModifierListOwner.super.getAnnotation(fqn);
   }
 
@@ -36,8 +37,9 @@ public interface PsiJvmModifiersOwner extends PsiModifierListOwner, JvmModifiers
     return PsiModifierListOwner.super.hasModifier(modifier);
   }
 
+  @Nullable
   @Override
-  default @Nullable PsiElement getSourceElement() {
+  default PsiElement getSourceElement() {
     return this;
   }
 }

@@ -2,9 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.util.messages.Topic
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 interface SEHeaderActionListener {
     fun performed(event: SearchEverywhereActionEvent)
 

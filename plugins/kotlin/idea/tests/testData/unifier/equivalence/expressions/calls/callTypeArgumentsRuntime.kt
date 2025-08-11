@@ -1,5 +1,5 @@
 // IGNORE_K2
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 class A
 class B
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -13,7 +13,6 @@ import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -63,12 +62,15 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   }
 
   @Override
-  public @NotNull GrAnnotationArgumentList getParameterList() {
+  @NotNull
+  public GrAnnotationArgumentList getParameterList() {
     return getRequiredStubOrPsiChild(GroovyEmptyStubElementTypes.ANNOTATION_ARGUMENT_LIST);
   }
 
   @Override
-  public @Nullable @NonNls String getQualifiedName() {
+  @Nullable
+  @NonNls
+  public String getQualifiedName() {
     final GrAnnotationStub stub = getStub();
     if (stub != null) {
       return stub.getPsiElement().getQualifiedName();
@@ -81,7 +83,8 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   }
 
   @Override
-  public @Nullable PsiJavaCodeReferenceElement getNameReferenceElement() {
+  @Nullable
+  public PsiJavaCodeReferenceElement getNameReferenceElement() {
     final GroovyResolveResult resolveResult = getClassReference().advancedResolve();
 
     final PsiElement resolved = resolveResult.getElement();
@@ -91,12 +94,14 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   }
 
   @Override
-  public @Nullable PsiAnnotationMemberValue findAttributeValue(@Nullable String attributeName) {
+  @Nullable
+  public PsiAnnotationMemberValue findAttributeValue(@Nullable String attributeName) {
     return PsiImplUtil.findAttributeValue(this, attributeName);
   }
 
   @Override
-  public @Nullable PsiAnnotationMemberValue findDeclaredAttributeValue(final @NonNls String attributeName) {
+  @Nullable
+  public PsiAnnotationMemberValue findDeclaredAttributeValue(@NonNls final String attributeName) {
     return PsiImplUtil.findDeclaredAttributeValue(this, attributeName);
   }
 
@@ -107,7 +112,8 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   }
 
   @Override
-  public @NotNull GrCodeReferenceElement getClassReference() {
+  @NotNull
+  public GrCodeReferenceElement getClassReference() {
     final GrAnnotationStub stub = getStub();
     if (stub != null) {
       return stub.getPsiElement().getClassReference();
@@ -117,7 +123,8 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   }
 
   @Override
-  public @NotNull String getShortName() {
+  @NotNull
+  public String getShortName() {
     final GrAnnotationStub stub = getStub();
     if (stub != null) {
       return PsiAnnotationImpl.getAnnotationShortName(stub.getText());
@@ -129,7 +136,8 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   }
 
   @Override
-  public @Nullable PsiAnnotationOwner getOwner() {
+  @Nullable
+  public PsiAnnotationOwner getOwner() {
     PsiElement parent = getParent();
     return parent instanceof PsiAnnotationOwner ? (PsiAnnotationOwner)parent : null;
   }
@@ -148,21 +156,21 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   public static TargetType @NotNull [] getApplicableElementTypeFields(PsiElement owner) {
     if (owner instanceof PsiClass aClass) {
       if (aClass.isAnnotationType()) {
-        return addTypeUseIfApplicable(owner, TargetType.ANNOTATION_TYPE, TargetType.TYPE);
+        return new TargetType[]{TargetType.ANNOTATION_TYPE, TargetType.TYPE};
       }
       else if (aClass instanceof GrTypeParameter) {
-        return addTypeUseIfApplicable(owner, TargetType.TYPE_PARAMETER);
+        return new TargetType[]{TargetType.TYPE_PARAMETER};
       }
       else {
-        return addTypeUseIfApplicable(owner, TargetType.TYPE);
+        return new TargetType[]{TargetType.TYPE};
       }
     }
     if (owner instanceof GrMethod) {
       if (((PsiMethod)owner).isConstructor()) {
-        return addTypeUseIfApplicable(owner, TargetType.CONSTRUCTOR);
+        return new TargetType[]{TargetType.CONSTRUCTOR};
       }
       else {
-        return addTypeUseIfApplicable(owner, TargetType.METHOD);
+        return new TargetType[]{TargetType.METHOD};
       }
     }
     if (owner instanceof GrVariableDeclaration) {
@@ -171,14 +179,14 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
         return TargetType.EMPTY_ARRAY;
       }
       if (variables[0] instanceof GrField || ResolveUtil.isScriptField(variables[0])) {
-        return addTypeUseIfApplicable(owner, TargetType.FIELD);
+        return new TargetType[]{TargetType.FIELD};
       }
       else {
-        return addTypeUseIfApplicable(owner, TargetType.LOCAL_VARIABLE);
+        return new TargetType[]{TargetType.LOCAL_VARIABLE};
       }
     }
     if (owner instanceof GrParameter) {
-      return addTypeUseIfApplicable(owner, TargetType.PARAMETER);
+      return new TargetType[]{TargetType.PARAMETER};
     }
     if (owner instanceof GrPackageDefinition) {
       return new TargetType[]{TargetType.PACKAGE};
@@ -192,18 +200,6 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
 
 
     return TargetType.EMPTY_ARRAY;
-  }
-
-  private static TargetType[] addTypeUseIfApplicable(@NotNull PsiElement element, TargetType @NotNull ... baseTargetTypeArray) {
-    if (GroovyConfigUtils.isAtLeastGroovy40(element)) {
-      int length = baseTargetTypeArray.length;
-      TargetType[] newTargetTypeArray = new TargetType[length + 1];
-      System.arraycopy(baseTargetTypeArray, 0, newTargetTypeArray, 0, length);
-      newTargetTypeArray[length] = TargetType.TYPE_USE;
-      return newTargetTypeArray;
-    } else {
-      return baseTargetTypeArray;
-    }
   }
 
   public static boolean isAnnotationApplicableTo(GrAnnotation annotation, TargetType @NotNull ... elementTypeFields) {

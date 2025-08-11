@@ -9,7 +9,8 @@ import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil.DEFAULT_RECORDER
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil.STATISTICS_NOTIFICATION_GROUP_ID
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
-import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.getConfig
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.rollOver
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -46,7 +47,7 @@ internal class RecordStateStatisticsEventLogAction(private val recorderId: Strin
     val message = StatisticsBundle.message("stats.collecting.feature.usages.in.event.log")
     ProgressManager.getInstance().run(object : Backgroundable(project, message, false) {
       override fun run(indicator: ProgressIndicator) {
-        FeatureUsageLogger.getInstance().rollOver()
+        rollOver()
         val state = FusStatesRecorder.recordStateAndWait(project, recorderId)
         if (state == null) {
           StatisticsDevKitUtil.showNotification(project, NotificationType.ERROR, StatisticsBundle.message("stats.failed.recording.state"))
@@ -59,7 +60,7 @@ internal class RecordStateStatisticsEventLogAction(private val recorderId: Strin
   }
 
   private fun showNotification(project: Project) {
-    val logFile = FeatureUsageLogger.getInstance().getConfig().getActiveLogFile()
+    val logFile = getConfig().getActiveLogFile()
     val virtualFile = if (logFile != null) LocalFileSystem.getInstance().findFileByIoFile(logFile.file) else null
     ApplicationManager.getApplication().invokeLater {
       val notification = Notification(STATISTICS_NOTIFICATION_GROUP_ID, "Finished collecting and recording events",

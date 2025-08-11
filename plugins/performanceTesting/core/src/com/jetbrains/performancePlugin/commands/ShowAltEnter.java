@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
@@ -42,8 +42,9 @@ public final class ShowAltEnter extends AbstractCommand implements Disposable {
     super(text, line);
   }
 
+  @NotNull
   @Override
-  protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
+  protected Promise<Object> _execute(@NotNull PlaybackContext context) {
     ActionCallback actionCallback = new ActionCallbackProfilerStopper();
     String extractCommandList = extractCommandArgument(PREFIX);
     String[] commandList = extractCommandList.split("\\|");
@@ -55,7 +56,7 @@ public final class ShowAltEnter extends AbstractCommand implements Disposable {
       if (editor != null) {
         PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         if (psiFile != null) {
-          TraceKt.use(PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME), span -> {
+          TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, SPAN_NAME, span -> {
             CachedIntentions intentions = ShowIntentionActionsHandler.calcCachedIntentions(project, editor, psiFile);
             if (!actionName.isEmpty()) {
               List<IntentionActionWithTextCaching> combined = new ArrayList<>();
@@ -69,7 +70,7 @@ public final class ShowAltEnter extends AbstractCommand implements Disposable {
                 singleIntention = combined.stream().filter(s -> s.getAction().getText().startsWith(actionName)).findFirst();
               if (singleIntention.isEmpty()) {
                 actionCallback.reject(actionName + " is not found among " + combined);
-                return null;
+                return;
               }
               if (invoke) {
                 singleIntention.ifPresent(
@@ -79,7 +80,6 @@ public final class ShowAltEnter extends AbstractCommand implements Disposable {
             if (!invoke || actionName.isEmpty()) {
               IntentionHintComponent.showIntentionHint(project, psiFile, editor, true, intentions);
             }
-            return null;
           });
           if(!actionCallback.isRejected()){
             actionCallback.setDone();

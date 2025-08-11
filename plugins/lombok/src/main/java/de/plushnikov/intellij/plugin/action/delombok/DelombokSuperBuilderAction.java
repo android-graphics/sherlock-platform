@@ -5,7 +5,8 @@ import org.jetbrains.annotations.NotNull;
 
 public final class DelombokSuperBuilderAction extends AbstractDelombokAction {
   @Override
-  protected @NotNull DelombokHandler createHandler() {
+  @NotNull
+  protected DelombokHandler createHandler() {
     LombokProcessorManager manager = LombokProcessorManager.getInstance();
     return new DelombokHandler(true,
                                manager.getSuperBuilderPreDefinedInnerClassFieldProcessor(),

@@ -1,5 +1,0 @@
-{
-    "modules": [
-        { "name": "A", "dependencies": [{"name": "A", "exported": true}]}
-    ]
-}

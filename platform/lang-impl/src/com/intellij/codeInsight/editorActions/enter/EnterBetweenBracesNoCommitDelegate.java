@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions.enter;
 
 import com.intellij.codeInsight.editorActions.EnterHandler;
@@ -38,7 +38,8 @@ public abstract class EnterBetweenBracesNoCommitDelegate extends EnterBetweenBra
                                           offset);
   }
 
-  public static @NotNull HighlighterIterator createBeforeIterator(@NotNull Editor editor, int caretOffset) {
+  @NotNull
+  public static HighlighterIterator createBeforeIterator(@NotNull Editor editor, int caretOffset) {
     return editor.getHighlighter().createIterator(caretOffset == 0 ? 0 : caretOffset - 1);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
@@ -55,7 +55,7 @@ public abstract class CoverageEngine {
    * @param conf Run Configuration
    * @return True if this engine supports coverage for a given run configuration
    */
-  public abstract boolean isApplicableTo(final @NotNull RunConfigurationBase<?> conf);
+  public abstract boolean isApplicableTo(@NotNull final RunConfigurationBase<?> conf);
 
   /**
    * Creates coverage enabled configuration for given RunConfiguration. It is supposed that one run configuration may be associated
@@ -64,7 +64,8 @@ public abstract class CoverageEngine {
    * @param conf Run Configuration
    * @return Coverage enabled configuration with engine-specific settings
    */
-  public abstract @NotNull CoverageEnabledConfiguration createCoverageEnabledConfiguration(final @NotNull RunConfigurationBase<?> conf);
+  @NotNull
+  public abstract CoverageEnabledConfiguration createCoverageEnabledConfiguration(@NotNull final RunConfigurationBase<?> conf);
 
 
   /**
@@ -104,7 +105,8 @@ public abstract class CoverageEngine {
    * @deprecated Use {@link CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long)}
    */
   @Deprecated
-  public abstract @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageRunner runner,
+  @Nullable
+  public abstract CoverageSuite createCoverageSuite(@NotNull CoverageRunner runner,
                                                     @NotNull String name,
                                                     @NotNull CoverageFileProvider fileProvider,
                                                     String @Nullable [] filters,
@@ -118,7 +120,8 @@ public abstract class CoverageEngine {
    * @deprecated Use {@link CoverageEngine#createCoverageSuite(CoverageEnabledConfiguration)}
    */
   @Deprecated
-  public abstract @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageRunner covRunner,
+  @Nullable
+  public abstract CoverageSuite createCoverageSuite(@NotNull CoverageRunner covRunner,
                                                     @NotNull String name,
                                                     @NotNull CoverageFileProvider coverageDataFileProvider,
                                                     @NotNull CoverageEnabledConfiguration config);
@@ -128,7 +131,8 @@ public abstract class CoverageEngine {
    * <p/>
    * This method is used to read a suite from persistent storage.
    */
-  public abstract @Nullable CoverageSuite createEmptyCoverageSuite(@NotNull CoverageRunner coverageRunner);
+  @Nullable
+  public abstract CoverageSuite createEmptyCoverageSuite(@NotNull CoverageRunner coverageRunner);
 
   /**
    * Coverage annotator which annotates smth(e.g. Project view nodes / editor) with coverage information
@@ -136,7 +140,8 @@ public abstract class CoverageEngine {
    * @param project Project
    * @return Annotator
    */
-  public abstract @NotNull CoverageAnnotator getCoverageAnnotator(Project project);
+  @NotNull
+  public abstract CoverageAnnotator getCoverageAnnotator(Project project);
 
   /**
    * Determines if coverage information should be displayed for a given file.
@@ -145,7 +150,7 @@ public abstract class CoverageEngine {
    * @param psiFile file
    * @return false if coverage N/A for given file
    */
-  public boolean coverageEditorHighlightingApplicableTo(final @NotNull PsiFile psiFile) {
+  public boolean coverageEditorHighlightingApplicableTo(@NotNull final PsiFile psiFile) {
     return true;
   }
 
@@ -156,7 +161,7 @@ public abstract class CoverageEngine {
    * @param suite   Coverage suite
    * @return true if included in coverage
    */
-  public boolean acceptedByFilters(final @NotNull PsiFile psiFile, final @NotNull CoverageSuitesBundle suite) {
+  public boolean acceptedByFilters(@NotNull final PsiFile psiFile, @NotNull final CoverageSuitesBundle suite) {
     return true;
   }
 
@@ -166,9 +171,10 @@ public abstract class CoverageEngine {
    * @return files
    */
   @ApiStatus.Internal
-  public @NotNull Set<File> getCorrespondingOutputFiles(final @NotNull PsiFile srcFile,
-                                               final @Nullable Module module,
-                                               final @NotNull CoverageSuitesBundle suite) {
+  @NotNull
+  public Set<File> getCorrespondingOutputFiles(@NotNull final PsiFile srcFile,
+                                               @Nullable final Module module,
+                                               @NotNull final CoverageSuitesBundle suite) {
     final VirtualFile virtualFile = srcFile.getVirtualFile();
     return virtualFile == null ? Collections.emptySet() : Collections.singleton(VfsUtilCore.virtualToIoFile(virtualFile));
   }
@@ -179,8 +185,8 @@ public abstract class CoverageEngine {
    * @return True, if should stop and wait for compilation (e.g., for Java). False if we can ignore output (e.g., for Ruby)
    */
   @ApiStatus.Internal
-  public boolean recompileProjectAndRerunAction(final @NotNull Module module, final @NotNull CoverageSuitesBundle suite,
-                                                final @NotNull Runnable chooseSuiteAction) {
+  public boolean recompileProjectAndRerunAction(@NotNull final Module module, @NotNull final CoverageSuitesBundle suite,
+                                                @NotNull final Runnable chooseSuiteAction) {
     return false;
   }
 
@@ -189,8 +195,9 @@ public abstract class CoverageEngine {
    * E.g., java class qualified name by *.class file of some Java class in corresponding source file
    */
   @ApiStatus.Internal
-  protected @Nullable String getQualifiedName(final @NotNull File outputFile,
-                                    final @NotNull PsiFile sourceFile) {
+  @Nullable
+  protected String getQualifiedName(@NotNull final File outputFile,
+                                 @NotNull final PsiFile sourceFile) {
     return null;
   }
 
@@ -199,7 +206,8 @@ public abstract class CoverageEngine {
    * (The concept of "qualified name" is specific to each coverage engine, but it should be
    * a valid parameter for {@link com.intellij.rt.coverage.data.ProjectData#getClassData(String)}).
    */
-  public @NotNull Set<String> getQualifiedNames(final @NotNull PsiFile sourceFile) {
+  @NotNull
+  public Set<String> getQualifiedNames(@NotNull final PsiFile sourceFile) {
     return Collections.emptySet();
   }
 
@@ -208,10 +216,10 @@ public abstract class CoverageEngine {
    * E.g., file wasn't touched by coverage util
    */
   @ApiStatus.Internal
-  public boolean includeUntouchedFileInCoverage(final @NotNull String qualifiedName,
-                                                final @NotNull File outputFile,
-                                                final @NotNull PsiFile sourceFile,
-                                                final @NotNull CoverageSuitesBundle suite) {
+  public boolean includeUntouchedFileInCoverage(@NotNull final String qualifiedName,
+                                                @NotNull final File outputFile,
+                                                @NotNull final PsiFile sourceFile,
+                                                @NotNull final CoverageSuitesBundle suite) {
     return false;
   }
 
@@ -221,8 +229,9 @@ public abstract class CoverageEngine {
    * @return List (probably empty) of code lines or null if all lines should be marked as uncovered
    */
   @ApiStatus.Internal
-  public @Nullable List<Integer> collectSrcLinesForUntouchedFile(final @NotNull File classFile,
-                                                       final @NotNull CoverageSuitesBundle suite) {
+  @Nullable
+  public List<Integer> collectSrcLinesForUntouchedFile(@NotNull final File classFile,
+                                                       @NotNull final CoverageSuitesBundle suite) {
     return null;
   }
 
@@ -270,15 +279,16 @@ public abstract class CoverageEngine {
     return false;
   }
 
-  public void generateReport(final @NotNull Project project,
-                             final @NotNull DataContext dataContext,
-                             final @NotNull CoverageSuitesBundle currentSuite) {
+  public void generateReport(@NotNull final Project project,
+                             @NotNull final DataContext dataContext,
+                             @NotNull final CoverageSuitesBundle currentSuite) {
   }
 
   @ApiStatus.Internal
-  public @NotNull ExportToHTMLDialog createGenerateReportDialog(final @NotNull Project project,
-                                                                final @NotNull DataContext dataContext,
-                                                                final @NotNull CoverageSuitesBundle currentSuite) {
+  @NotNull
+  public ExportToHTMLDialog createGenerateReportDialog(@NotNull final Project project,
+                                                       @NotNull final DataContext dataContext,
+                                                       @NotNull final CoverageSuitesBundle currentSuite) {
     final ExportToHTMLDialog dialog = new ExportToHTMLDialog(project, true);
     dialog.setTitle(CoverageBundle.message("generate.coverage.report.for", currentSuite.getPresentableName()));
     final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
@@ -307,10 +317,10 @@ public abstract class CoverageEngine {
 
   @ApiStatus.Internal
   public CoverageLineMarkerRenderer getLineMarkerRenderer(int lineNumber,
-                                                          final @Nullable String className,
-                                                          final @NotNull TreeMap<Integer, LineData> lines,
+                                                          @Nullable final String className,
+                                                          @NotNull final TreeMap<Integer, LineData> lines,
                                                           final boolean coverageByTestApplicable,
-                                                          final @NotNull CoverageSuitesBundle coverageSuite,
+                                                          @NotNull final CoverageSuitesBundle coverageSuite,
                                                           final Function<? super Integer, Integer> newToOldConverter,
                                                           final Function<? super Integer, Integer> oldToNewConverter,
                                                           boolean subCoverageActive) {
@@ -328,7 +338,8 @@ public abstract class CoverageEngine {
   }
 
   @ApiStatus.Internal
-  public @NotNull CoverageEditorAnnotator createSrcFileAnnotator(PsiFile file, Editor editor) {
+  @NotNull
+  public CoverageEditorAnnotator createSrcFileAnnotator(PsiFile file, Editor editor) {
     return new CoverageEditorAnnotatorImpl(file, editor);
   }
 
@@ -366,7 +377,7 @@ public abstract class CoverageEngine {
   }
 
   @ApiStatus.Internal
-  public boolean canHavePerTestCoverage(final @NotNull RunConfigurationBase<?> conf) {
+  public boolean canHavePerTestCoverage(@NotNull final RunConfigurationBase<?> conf) {
     return false;
   }
 
@@ -387,7 +398,7 @@ public abstract class CoverageEngine {
   }
 
   @ApiStatus.Internal
-  public List<PsiElement> findTestsByNames(final String @NotNull [] testNames, final @NotNull Project project) {
+  public List<PsiElement> findTestsByNames(final String @NotNull [] testNames, @NotNull final Project project) {
     return Collections.emptyList();
   }
 
@@ -395,7 +406,8 @@ public abstract class CoverageEngine {
    * To support per test coverage. Return file name which contains traces for a given test
    */
   @ApiStatus.Internal
-  public @Nullable String getTestMethodName(final @NotNull PsiElement element, final @NotNull AbstractTestProxy testProxy) {
+  @Nullable
+  public String getTestMethodName(@NotNull final PsiElement element, @NotNull final AbstractTestProxy testProxy) {
     return null;
   }
 
@@ -415,8 +427,9 @@ public abstract class CoverageEngine {
   /**
    * @deprecated Is not used
    */
-  @Deprecated(forRemoval = true)
-  public @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageRunner covRunner,
+  @Deprecated
+  @Nullable
+  public CoverageSuite createCoverageSuite(@NotNull CoverageRunner covRunner,
                                            @NotNull String name,
                                            @NotNull CoverageFileProvider coverageDataFileProvider,
                                            String @Nullable [] filters,

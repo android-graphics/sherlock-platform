@@ -14,8 +14,9 @@ public class TextMateFile extends PsiFileBase {
     super(provider, TextMateLanguage.LANGUAGE);
   }
 
+  @NotNull
   @Override
-  public @NotNull FileType getFileType() {
+  public FileType getFileType() {
     return TextMateFileType.INSTANCE;
   }
 

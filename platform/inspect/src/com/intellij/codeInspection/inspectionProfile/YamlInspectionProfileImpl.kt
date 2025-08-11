@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -18,7 +18,6 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.scope.packageSet.*
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.File
 import java.io.Reader
 import java.nio.file.FileSystems
@@ -31,35 +30,26 @@ private const val SCOPE_PREFIX = "scope#"
 
 private val LOG = logger<YamlInspectionProfileImpl>()
 
-private class YamlInspectionConfigImpl(
-  override val inspection: String,
-  override val enabled: Boolean?,
-  override val severity: String?,
-  override val ignore: List<String>,
-  override val options: Map<String, String>,
-) : YamlInspectionConfig
+class YamlInspectionConfigImpl(override val inspection: String,
+                               override val enabled: Boolean?,
+                               override val severity: String?,
+                               override val ignore: List<String>,
+                               override val options: Map<String, String>) : YamlInspectionConfig
 
-private class YamlGroupConfigImpl(
-  override val group: String,
-  override val enabled: Boolean?,
-  override val severity: String?,
-  override val ignore: List<String>,
-) : YamlGroupConfig
+class YamlGroupConfigImpl(override val group: String,
+                          override val enabled: Boolean?,
+                          override val severity: String?,
+                          override val ignore: List<String>) : YamlGroupConfig
 
-private class YamlInspectionGroupImpl(
-  override val groupId: String,
-  val inspections: Set<String>
-) : YamlInspectionGroup {
+class YamlInspectionGroupImpl(override val groupId: String, val inspections: Set<String>) : YamlInspectionGroup {
   override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
     return tool.shortName in inspections
   }
 }
 
-private class YamlCompositeGroupImpl(
-  override val groupId: String,
-  private val groupProvider: InspectionGroupProvider,
-  private val groupRules: List<String>,
-) : YamlInspectionGroup {
+class YamlCompositeGroupImpl(override val groupId: String,
+                             private val groupProvider: InspectionGroupProvider,
+                             private val groupRules: List<String>) : YamlInspectionGroup {
   override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
     for (groupRule in groupRules.asReversed().filter { it.isNotEmpty() }) {
       val groupId = groupRule.removePrefix("!")
@@ -71,7 +61,7 @@ private class YamlCompositeGroupImpl(
   }
 }
 
-private class CompositeGroupProvider : InspectionGroupProvider {
+class CompositeGroupProvider : InspectionGroupProvider {
 
   private val providers = mutableListOf<InspectionGroupProvider>()
 
@@ -84,29 +74,28 @@ private class CompositeGroupProvider : InspectionGroupProvider {
   }
 }
 
-@Internal
-class YamlInspectionProfileImpl private constructor(
-  override val profileName: String?,
-  override val inspectionToolsSupplier: InspectionToolsSupplier,
-  override val inspectionProfileManager: BaseInspectionProfileManager,
-  override val baseProfile: InspectionProfileImpl,
-  override val configurations: List<YamlBaseConfig>,
-  override val groups: List<YamlInspectionGroup>,
-  private val groupProvider: InspectionGroupProvider,
-) : YamlInspectionProfile, InspectionGroupProvider {
+class YamlInspectionProfileImpl private constructor(override val profileName: String?,
+                                                    override val inspectionToolsSupplier: InspectionToolsSupplier,
+                                                    override val inspectionProfileManager: BaseInspectionProfileManager,
+                                                    override val baseProfile: InspectionProfileImpl,
+                                                    override val configurations: List<YamlBaseConfig>,
+                                                    override val groups: List<YamlInspectionGroup>,
+                                                    private val groupProvider: InspectionGroupProvider) : YamlInspectionProfile, InspectionGroupProvider {
+
   companion object {
     @JvmStatic
-    fun loadFromYamlRaw(
-      yaml: YamlInspectionProfileRaw,
-      baseProfile: InspectionProfileImpl,
-      toolsSupplier: InspectionToolsSupplier,
-      profileManager: BaseInspectionProfileManager
+    fun loadFrom(reader: Reader,
+                 includeReaders: (Path) -> Reader,
+                 toolsSupplier: InspectionToolsSupplier,
+                 profileManager: BaseInspectionProfileManager
     ): YamlInspectionProfileImpl {
-      val configurations = yaml.inspections.map(::createInspectionConfig)
+      val profile = readConfig(reader, includeReaders)
+      val baseProfile = findBaseProfile(profileManager, profile.baseProfile)
+      val configurations = profile.inspections.map(::createInspectionConfig)
       val groupProvider = CompositeGroupProvider()
-      groupProvider.addProvider(InspectionGroupProviderEP.createDynamicGroupProvider())
+      groupProvider.addProvider(InspectionGroupProvider.createDynamicGroupProvider())
 
-      val groups = yaml.groups.map { group -> createGroup(groupProvider, group) }
+      val groups = profile.groups.map { group -> createGroup(groupProvider, group) }
       val customGroupProvider = object : InspectionGroupProvider {
         val groupMap = groups.associateBy { group -> group.groupId }
         override fun findGroup(groupId: String): YamlInspectionGroup? {
@@ -116,24 +105,13 @@ class YamlInspectionProfileImpl private constructor(
       groupProvider.addProvider(customGroupProvider)
 
       return YamlInspectionProfileImpl(
-        yaml.name,
+        profile.name,
         toolsSupplier,
         profileManager,
         baseProfile,
         configurations,
         groups,
         groupProvider)
-    }
-
-    @JvmStatic
-    fun loadFrom(reader: Reader,
-                 includeReaders: (Path) -> Reader,
-                 toolsSupplier: InspectionToolsSupplier,
-                 profileManager: BaseInspectionProfileManager
-    ): YamlInspectionProfileImpl {
-      val profile = readConfig(reader, includeReaders)
-      val baseProfile = findBaseProfile(profileManager, profile.baseProfile)
-      return loadFromYamlRaw(profile, baseProfile, toolsSupplier, profileManager)
     }
 
     @JvmStatic

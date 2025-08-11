@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.api;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,11 +14,14 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class FileStatusResultParser {
 
-  private final @NotNull Pattern myLinePattern;
+  @NotNull
+  private final Pattern myLinePattern;
 
-  private final @Nullable ProgressTracker handler;
+  @Nullable
+  private final ProgressTracker handler;
 
-  private final @NotNull Convertor<Matcher, ProgressEvent> myConvertor;
+  @NotNull
+  private final Convertor<Matcher, ProgressEvent> myConvertor;
 
   public FileStatusResultParser(@NotNull Pattern linePattern,
                                 @Nullable ProgressTracker handler,

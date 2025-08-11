@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -88,8 +88,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
-import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AffectedMembersCache;
@@ -298,7 +298,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitReferenceExpression(final @NotNull GrReferenceExpression referenceExpression) {
+  public void visitReferenceExpression(@NotNull final GrReferenceExpression referenceExpression) {
     checkStringNameIdentifier(referenceExpression);
     checkThisOrSuperReferenceExpression(referenceExpression, myHolder);
     checkFinalFieldAccess(referenceExpression);
@@ -762,7 +762,8 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     }
   }
 
-  private static @Nullable PsiMethod getDefaultConstructor(PsiClass clazz) {
+  @Nullable
+  private static PsiMethod getDefaultConstructor(PsiClass clazz) {
     final String className = clazz.getName();
     if (className == null) return null;
     final PsiMethod[] byName = clazz.findMethodsByName(className, true);
@@ -822,7 +823,8 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     }
   }
 
-  private static @Nullable TextRange getEllipsisRange(GrVariable variable) {
+  @Nullable
+  private static TextRange getEllipsisRange(GrVariable variable) {
     if (variable instanceof GrParameter) {
       final PsiElement dots = ((GrParameter)variable).getEllipsisDots();
       if (dots != null) {
@@ -832,7 +834,8 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     return null;
   }
 
-  private static @Nullable TextRange getTypeRange(GrVariable variable) {
+  @Nullable
+  private static TextRange getTypeRange(GrVariable variable) {
     GrTypeElement typeElement = variable.getTypeElementGroovy();
     if (typeElement == null) return null;
 
@@ -1099,12 +1102,14 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     }
   }
 
-  private static @Nullable @InspectionMessage String checkSuperMethodSignature(@NotNull PsiMethod superMethod,
-                                                                               @NotNull MethodSignatureBackedByPsiMethod superMethodSignature,
-                                                                               @NotNull PsiType superReturnType,
-                                                                               @NotNull PsiMethod method,
-                                                                               @NotNull MethodSignatureBackedByPsiMethod methodSignature,
-                                                                               @NotNull PsiType returnType) {
+  @Nullable
+  @InspectionMessage
+  private static String checkSuperMethodSignature(@NotNull PsiMethod superMethod,
+                                                  @NotNull MethodSignatureBackedByPsiMethod superMethodSignature,
+                                                  @NotNull PsiType superReturnType,
+                                                  @NotNull PsiMethod method,
+                                                  @NotNull MethodSignatureBackedByPsiMethod methodSignature,
+                                                  @NotNull PsiType returnType) {
     PsiType substitutedSuperReturnType = substituteSuperReturnType(superMethodSignature, methodSignature, superReturnType);
 
     if (returnType.equals(substitutedSuperReturnType)) return null;
@@ -1131,9 +1136,10 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     return GroovyBundle.message("return.type.is.incompatible", presentation, qName, basePresentation, baseQName);
   }
 
-  private static @NotNull PsiType substituteSuperReturnType(@NotNull MethodSignatureBackedByPsiMethod superMethodSignature,
-                                                            @NotNull MethodSignatureBackedByPsiMethod methodSignature,
-                                                            @NotNull PsiType superReturnType) {
+  @NotNull
+  private static PsiType substituteSuperReturnType(@NotNull MethodSignatureBackedByPsiMethod superMethodSignature,
+                                                   @NotNull MethodSignatureBackedByPsiMethod methodSignature,
+                                                   @NotNull PsiType superReturnType) {
     PsiType substitutedSuperReturnType;
     if (!superMethodSignature.isRaw() && superMethodSignature.equals(methodSignature)) { //see 8.4.5
       PsiSubstitutor unifyingSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature,
@@ -1148,12 +1154,16 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     return substitutedSuperReturnType;
   }
 
-  private static @NotNull @NlsSafe String getQNameOfMember(@NotNull PsiMember member) {
+  @NotNull
+  @NlsSafe
+  private static String getQNameOfMember(@NotNull PsiMember member) {
     final PsiClass aClass = member.getContainingClass();
     return getQName(aClass);
   }
 
-  private static @NotNull @NlsSafe String getQName(@Nullable PsiClass aClass) {
+  @NotNull
+  @NlsSafe
+  private static String getQName(@Nullable PsiClass aClass) {
     if (aClass instanceof PsiAnonymousClass) {
       return GroovyBundle.message("anonymous.class.derived.from.0", ((PsiAnonymousClass)aClass).getBaseClassType().getCanonicalText());
     }
@@ -1645,7 +1655,8 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     }
   }
 
-  private static @Nullable GrLoopStatement findFirstLoop(GrFlowInterruptingStatement statement) {
+  @Nullable
+  private static GrLoopStatement findFirstLoop(GrFlowInterruptingStatement statement) {
     return PsiTreeUtil.getParentOfType(statement, GrLoopStatement.class, true, GrClosableBlock.class, GrMember.class, GroovyFile.class);
   }
 
@@ -1761,11 +1772,12 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     }
   }
 
-  @Contract(pure = true)
-  private static @NotNull AnnotationBuilder registerMakeAbstractMethodNotAbstractFix(AnnotationBuilder builder,
-                                                                                     GrMethod method,
-                                                                                     boolean makeClassAbstract,
-                                                                                     @InspectionMessage String message, TextRange range) {
+  @NotNull
+  @Contract(pure=true)
+  private static AnnotationBuilder registerMakeAbstractMethodNotAbstractFix(AnnotationBuilder builder,
+                                                                            GrMethod method,
+                                                                            boolean makeClassAbstract,
+                                                                            @InspectionMessage String message, TextRange range) {
     if (method.getBlock() == null) {
       builder = builder.withFix(QuickFixFactory.getInstance().createAddMethodBodyFix(method));
     }
@@ -1878,7 +1890,8 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     }
   }
 
-  private static @NotNull PsiElement getModifierOrList(@NotNull GrModifierList modifiersList, @GrModifier.GrModifierConstant final String modifier) {
+  @NotNull
+  private static PsiElement getModifierOrList(@NotNull GrModifierList modifiersList, @GrModifier.GrModifierConstant final String modifier) {
     PsiElement m = modifiersList.getModifier(modifier);
     return m != null ? m : modifiersList;
   }
@@ -2108,7 +2121,8 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     return defaultScope;
   }
 
-  private static @NlsSafe String getPackageName(GrTypeDefinition typeDefinition) {
+  @NlsSafe
+  private static String getPackageName(GrTypeDefinition typeDefinition) {
     final PsiFile file = typeDefinition.getContainingFile();
     String packageName = "<default package>";
     if (file instanceof GroovyFile) {

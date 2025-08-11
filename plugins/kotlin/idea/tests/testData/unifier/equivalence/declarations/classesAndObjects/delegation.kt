@@ -1,5 +1,5 @@
 // IGNORE_K2
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 fun foo() {
     interface T
     open class Z(p: Int): T;

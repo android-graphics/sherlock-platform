@@ -9,7 +9,7 @@ import java.util.Collection;
 
 public abstract class JavaSourceTransformer {
   
-  public abstract static class TransformError extends IOException {
+  public static abstract class TransformError extends IOException {
     protected TransformError(String message) {
       super(message);
     }

@@ -6,23 +6,22 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
 public abstract class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
-  protected final @Unmodifiable @NotNull Set<String> myNames;
+  protected final @NotNull Set<String> myNames;
 
-  public CreateMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, @NotNull @Unmodifiable Set<String> names) {
+  public CreateMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, @NotNull Set<String> names) {
     super(block);
     myNames = names;
   }
 
   @Override
   protected String getText(@NotNull PsiSwitchBlock switchBlock) {
-    return CreateSwitchBranchesUtil.getActionName(myNames);
+    return CreateSwitchBranchesUtil.getActionName(myNames.stream().sorted().toList());
   }
 
   @Override
@@ -42,10 +41,10 @@ public abstract class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
     CreateSwitchBranchesUtil.createTemplate(switchBlock, addedLabels, updater);
   }
 
-  protected @Unmodifiable @NotNull Set<String> getNames(@NotNull PsiSwitchBlock switchBlock) {
+  protected @NotNull Set<String> getNames(@NotNull PsiSwitchBlock switchBlock) {
     return myNames;
   }
 
-  protected abstract @Unmodifiable @NotNull List<String> getAllNames(@NotNull PsiClass aClass, @NotNull PsiSwitchBlock switchBlock);
-  protected abstract @NotNull Function<PsiSwitchLabelStatementBase, @Unmodifiable List<String>> getCaseExtractor();
+  protected abstract @NotNull List<String> getAllNames(@NotNull PsiClass aClass, @NotNull PsiSwitchBlock switchBlock);
+  protected abstract @NotNull Function<PsiSwitchLabelStatementBase, List<String>> getCaseExtractor();
 }

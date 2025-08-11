@@ -19,12 +19,9 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.SystemProperties
-import com.intellij.util.concurrency.EdtScheduler
+import com.intellij.util.Alarm
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.PositionTracker
-import kotlinx.coroutines.Job
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
@@ -39,7 +36,6 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import javax.swing.event.AncestorEvent
 
-@ApiStatus.Internal
 @Service(Service.Level.APP)
 class GotItTooltipService {
   val isFirstRun: Boolean = checkFirstRun()
@@ -71,19 +67,16 @@ class GotItTooltipService {
  * The description of the tooltip can contain inline shortcuts, icons and links.
  * See [GotItTextBuilder] doc for more info.
  */
-class GotItTooltip @ApiStatus.Internal constructor(@NonNls val id: String,
-                                                   private val gotItBuilder: GotItComponentBuilder,
-                                                   parentDisposable: Disposable? = null) : ToolbarActionTracker<Balloon>() {
+class GotItTooltip internal constructor(@NonNls val id: String,
+                                        private val gotItBuilder: GotItComponentBuilder,
+                                        parentDisposable: Disposable? = null) : ToolbarActionTracker<Balloon>() {
   private var timeout: Int = -1
   private var maxCount = 1
   private var onBalloonCreated: (Balloon) -> Unit = {}
 
   // Ease the access (remove private or val to var) if fine-tuning is needed.
   private val savedCount: (String) -> Int = { PropertiesComponent.getInstance().getInt(it, 0) }
-  var showCondition: (String) -> Boolean = {
-    !SystemProperties.getBooleanProperty("ide.integration.test.disable.got.it.tooltips", false) &&
-    savedCount(it) in 0 until maxCount
-  }
+  var showCondition: (String) -> Boolean = { savedCount(it) in 0 until maxCount }
 
   private val gotIt: (String) -> Unit = {
     val count = savedCount(it)
@@ -92,7 +85,7 @@ class GotItTooltip @ApiStatus.Internal constructor(@NonNls val id: String,
   }
   private var onGotIt: () -> Unit = {}
 
-  private var hideBalloonJob : Job? = null
+  private val alarm = Alarm()
   private var balloon: Balloon? = null
   private var nextToShow: GotItTooltip? = null // Next tooltip in the global queue
   private var pendingRefresh = false
@@ -503,11 +496,11 @@ class GotItTooltip @ApiStatus.Internal constructor(@NonNls val id: String,
       .build(parentDisposable = this)
 
     if (timeout > 0) {
-      hideBalloonJob?.cancel()
-      hideBalloonJob = EdtScheduler.getInstance().schedule(timeout) {
-        balloon.hide(true)
-        GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.Timeout)
-      }
+      alarm.cancelAllRequests()
+      alarm.addRequest({
+                         balloon.hide(true)
+                         GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.Timeout)
+                       }, timeout)
     }
 
     return balloon

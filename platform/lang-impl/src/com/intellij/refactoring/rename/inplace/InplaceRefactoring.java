@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -18,7 +18,6 @@ import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -70,7 +69,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Query;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.NotNullList;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NonNls;
@@ -85,8 +83,8 @@ import java.util.*;
 
 public abstract class InplaceRefactoring {
   protected static final Logger LOG = Logger.getInstance(VariableInplaceRenamer.class);
-  protected static final @NonNls String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
-  protected static final @NonNls String OTHER_VARIABLE_NAME = "OtherVariable";
+  @NonNls protected static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
+  @NonNls protected static final String OTHER_VARIABLE_NAME = "OtherVariable";
   public static final Key<Boolean> INPLACE_RENAME_ALLOWED = Key.create("EditorInplaceRenameAllowed");
   public static final Key<InplaceRefactoring> INPLACE_RENAMER = Key.create("EditorInplaceRenamer");
   public static final Key<Boolean> INTRODUCE_RESTART = Key.create("INTRODUCE_RESTART");
@@ -109,11 +107,14 @@ public abstract class InplaceRefactoring {
 
   protected RangeMarker myCaretRangeMarker;
 
+
   protected Balloon myBalloon;
   protected @NlsContexts.Command String myTitle;
   protected RelativePoint myTarget;
 
-  public InplaceRefactoring(@NotNull Editor editor, @Nullable PsiNamedElement elementToRename, @NotNull Project project) {
+  public InplaceRefactoring(@NotNull Editor editor,
+                            @Nullable PsiNamedElement elementToRename,
+                            @NotNull Project project) {
     this(editor, elementToRename, project, elementToRename != null ? elementToRename.getName() : null,
          elementToRename != null ? elementToRename.getName() : null);
   }
@@ -138,7 +139,8 @@ public abstract class InplaceRefactoring {
       myInitialName = initialName;
       PsiFile containingFile = myElementToRename.getContainingFile();
       FileViewProvider viewProvider = containingFile.getViewProvider();
-      if (!notSameFile(getTopLevelVirtualFile(viewProvider), containingFile) && myElementToRename.getTextRange() != null) {
+      if (!notSameFile(getTopLevelVirtualFile(viewProvider), containingFile)
+          && myElementToRename.getTextRange() != null) {
         myRenameOffset = myEditor.getDocument().createRangeMarker(myElementToRename.getTextRange());
         myRenameOffset.setGreedyToRight(true);
         myRenameOffset.setGreedyToLeft(true);
@@ -152,10 +154,9 @@ public abstract class InplaceRefactoring {
     Document oldDocument = startMarkAction.getDocument();
     if (oldDocument != editor.getDocument()) {
       int exitCode = Messages.showYesNoDialog(project, message,
-                                              RefactoringBundle.getCannotRefactorMessage(null),
-                                              RefactoringBundle.message("inplace.refactoring.continue.started"),
-                                              RefactoringBundle.message("inplace.refactoring.abandon.started"),
-                                              Messages.getErrorIcon());
+                                                    RefactoringBundle.getCannotRefactorMessage(null),
+                                                    RefactoringBundle.message("inplace.refactoring.continue.started"),
+                                                    RefactoringBundle.message("inplace.refactoring.abandon.started"), Messages.getErrorIcon());
       navigateToStarted(oldDocument, project, exitCode, startMarkAction.getCommandName());
     }
     else {
@@ -166,6 +167,7 @@ public abstract class InplaceRefactoring {
   public void setAdvertisementText(@NlsContexts.PopupAdvertisement String advertisementText) {
     myAdvertisementText = advertisementText;
   }
+
 
   public boolean performInplaceRefactoring(@Nullable LinkedHashSet<String> nameSuggestions) {
     if (myEditor instanceof ImaginaryEditor && myEditor.getUserData(INPLACE_RENAME_ALLOWED) != Boolean.TRUE) return false;
@@ -215,7 +217,7 @@ public abstract class InplaceRefactoring {
 
     List<Pair<PsiElement, TextRange>> stringUsages = new NotNullList<>();
     collectAdditionalElementsToRename(stringUsages);
-    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) { // IJPL-162116
+    try {
       return buildTemplateAndStart(references, stringUsages, scope, containingFile);
     }
     catch (Throwable e) {
@@ -244,10 +246,12 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  protected @Nullable PsiElement checkLocalScope() {
+  @Nullable
+  protected PsiElement checkLocalScope() {
     SearchScope searchScope = PsiSearchHelper.getInstance(myElementToRename.getProject()).getUseScope(myElementToRename);
-    if (searchScope instanceof LocalSearchScope local) {
-      return PsiTreeUtil.findCommonParent(getElements(local));
+    if (searchScope instanceof LocalSearchScope) {
+      PsiElement[] elements = getElements((LocalSearchScope)searchScope);
+      return PsiTreeUtil.findCommonParent(elements);
     }
 
     return null;
@@ -257,7 +261,7 @@ public abstract class InplaceRefactoring {
     PsiElement[] elements = searchScope.getScope();
     FileViewProvider provider = myElementToRename.getContainingFile().getViewProvider();
     for (PsiElement element : elements) {
-      if (!(element instanceof PsiFile f) || f.getViewProvider() != provider) {
+      if (!(element instanceof PsiFile) || ((PsiFile)element).getViewProvider() != provider) {
         return elements;
       }
     }
@@ -346,10 +350,9 @@ public abstract class InplaceRefactoring {
       Document oldDocument = e.getDocument();
       if (oldDocument != myEditor.getDocument()) {
         int exitCode = Messages.showYesNoCancelDialog(myProject, e.getMessage(), getCommandName(),
-                                                      RefactoringBundle.message("inplace.refactoring.navigate.to.started"),
-                                                      RefactoringBundle.message("inplace.refactoring.abandon.started"),
-                                                      RefactoringBundle.message("inplace.refactoring.cancel.current"),
-                                                      Messages.getErrorIcon());
+                                                            RefactoringBundle.message("inplace.refactoring.navigate.to.started"),
+                                                            RefactoringBundle.message("inplace.refactoring.abandon.started"),
+                                                            RefactoringBundle.message("inplace.refactoring.cancel.current"), Messages.getErrorIcon());
         navigateToAlreadyStarted(oldDocument, exitCode);
         return true;
       }
@@ -457,7 +460,8 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  private static @NotNull Map<TextRange, TextAttributesKey> variableHighlights(@NotNull Template template, @NotNull TemplateState templateState) {
+  @NotNull
+  private static Map<TextRange, TextAttributesKey> variableHighlights(@NotNull Template template, @NotNull TemplateState templateState) {
     Map<TextRange, TextAttributesKey> rangesToHighlight = new HashMap<>();
     for (int i = 0; i < templateState.getSegmentsCount(); i++) {
       TextRange segmentOffset = templateState.getSegmentRange(i);
@@ -477,7 +481,9 @@ public abstract class InplaceRefactoring {
     return rangesToHighlight;
   }
 
-  static void restoreOldCaretPositionAndSelection(@NotNull Editor editor, int restoredCaretOffset, @NotNull Runnable restoreSelection) {
+  static void restoreOldCaretPositionAndSelection(@NotNull Editor editor,
+                                                  int restoredCaretOffset,
+                                                  @NotNull Runnable restoreSelection) {
     //move to old offset
     Runnable runnable = () -> {
       editor.getCaretModel().moveToOffset(restoredCaretOffset);
@@ -527,20 +533,21 @@ public abstract class InplaceRefactoring {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(oldDocument);
     if (file != null) {
       VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile instanceof VirtualFileWindow w) {
-        virtualFile = w.getDelegate();
+      if (virtualFile instanceof VirtualFileWindow) {
+        virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
       }
       if (virtualFile != null) {
         FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(virtualFile);
         for (FileEditor editor : editors) {
-          if (editor instanceof TextEditor e) {
-            Editor textEditor = e.getEditor();
+          if (editor instanceof TextEditor) {
+            Editor textEditor = ((TextEditor)editor).getEditor();
             TemplateState templateState = TemplateManagerImpl.getTemplateState(textEditor);
             if (templateState != null) {
               if (exitCode == Messages.YES) {
                 TextRange range = templateState.getVariableRange(PRIMARY_VARIABLE_NAME);
                 if (range != null) {
-                  PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, range.getStartOffset()).navigate(true);
+                  PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, range.getStartOffset())
+                                      .navigate(true);
                   return;
                 }
               }
@@ -555,8 +562,9 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  protected @Nullable PsiElement getNameIdentifier() {
-    return myElementToRename instanceof PsiNameIdentifierOwner o ? o.getNameIdentifier() : null;
+  @Nullable
+  protected PsiElement getNameIdentifier() {
+    return myElementToRename instanceof PsiNameIdentifierOwner ? ((PsiNameIdentifierOwner)myElementToRename).getNameIdentifier() : null;
   }
 
   public static EditorEx createPreviewComponent(Project project, FileType languageFileType) {
@@ -585,12 +593,16 @@ public abstract class InplaceRefactoring {
     return previewEditor;
   }
 
-  protected @Nullable StartMarkAction startRename() throws StartMarkAction.AlreadyStartedException {
+  @Nullable
+  protected StartMarkAction startRename() throws StartMarkAction.AlreadyStartedException {
     return startMarkAction(myProject, myEditor, getCommandName());
   }
 
-  static @NotNull StartMarkAction startMarkAction(@NotNull Project project, @NotNull Editor editor, @NlsContexts.Command String commandName)
-    throws StartMarkAction.AlreadyStartedException {
+  static @NotNull StartMarkAction startMarkAction(
+    @NotNull Project project,
+    @NotNull Editor editor,
+    @NlsContexts.Command String commandName
+  ) throws StartMarkAction.AlreadyStartedException {
     StartMarkAction[] markAction = new StartMarkAction[1];
     StartMarkAction.AlreadyStartedException[] ex = new StartMarkAction.AlreadyStartedException[1];
     CommandProcessor.getInstance().executeCommand(project, () -> {
@@ -605,7 +617,8 @@ public abstract class InplaceRefactoring {
     return markAction[0];
   }
 
-  protected @Nullable PsiNamedElement getVariable() {
+  @Nullable
+  protected PsiNamedElement getVariable() {
     // todo we can use more specific class, shouldn't we?
     //Class clazz = myElementToRename != null? myElementToRename.getClass() : PsiNameIdentifierOwner.class;
     if (myElementToRename != null && myElementToRename.isValid()) {
@@ -641,10 +654,12 @@ public abstract class InplaceRefactoring {
     PsiFile myEditorFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     // Note, that myEditorFile can be different from myElement.getContainingFile() e.g. in injections: myElement declaration in one
     // file / usage in another !
-    PsiFile file = myEditorFile != null ? myEditorFile : myElementToRename.getContainingFile();
-    PsiReference reference = file.findReferenceAt(myEditor.getCaretModel().getOffset());
-    if (reference instanceof PsiMultiReference multiRef) {
-      for (PsiReference ref : multiRef.getReferences()) {
+    PsiReference reference = (myEditorFile != null ?
+                                    myEditorFile : myElementToRename.getContainingFile())
+      .findReferenceAt(myEditor.getCaretModel().getOffset());
+    if (reference instanceof PsiMultiReference) {
+      PsiReference[] references = ((PsiMultiReference)reference).getReferences();
+      for (PsiReference ref : references) {
         addReferenceIfNeeded(refs, ref);
       }
     }
@@ -659,7 +674,7 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  protected void showDialogAdvertisement(@org.intellij.lang.annotations.Language("devkit-action-id") @NonNls @Nullable String actionId) {
+  protected void showDialogAdvertisement(@NonNls @Nullable String actionId) {
     Shortcut shortcut = KeymapUtil.getPrimaryShortcut(actionId);
     if (shortcut != null) {
       setAdvertisementText(RefactoringBundle.message("inplace.refactoring.advertisement.text", KeymapUtil.getShortcutText(shortcut)));
@@ -718,9 +733,11 @@ public abstract class InplaceRefactoring {
       myHighlighters = null;
     }
     myEditor.putUserData(INPLACE_RENAMER, null);
-    if (myBalloon != null && !isRestart()) {
-      myBalloon.hide();
-    }
+    if (myBalloon != null) {
+           if (!isRestart()) {
+             myBalloon.hide();
+           }
+         }
   }
 
   protected void addHighlights(@NotNull Map<TextRange, TextAttributes> ranges,
@@ -730,8 +747,8 @@ public abstract class InplaceRefactoring {
     for (Map.Entry<TextRange, TextAttributes> entry : ranges.entrySet()) {
       TextRange range = entry.getKey();
       TextAttributes attributes = entry.getValue();
-      if (attributes instanceof TextAttributesWithKey t) {
-        TextAttributesKey attributesKey = t.getTextAttributesKey();
+      if (attributes instanceof TextAttributesWithKey) {
+        TextAttributesKey attributesKey = ((TextAttributesWithKey)attributes).getTextAttributesKey();
         highlightManager.addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributesKey, 0, highlighters);
       }
       else {
@@ -752,7 +769,10 @@ public abstract class InplaceRefactoring {
    */
   protected void performCleanup() {}
 
-  private void addVariable(PsiReference reference, PsiElement selectedElement, TemplateBuilderImpl builder, int offset) {
+  private void addVariable(PsiReference reference,
+                           PsiElement selectedElement,
+                           TemplateBuilderImpl builder,
+                           int offset) {
     PsiElement element = reference.getElement();
     if (element == selectedElement && checkRangeContainsOffset(offset, reference.getRangeInElement(), element)) {
       Expression expression = createTemplateExpression(selectedElement);
@@ -764,11 +784,16 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  private void addVariable(PsiElement element, PsiElement selectedElement, TemplateBuilderImpl builder) {
+  private void addVariable(PsiElement element,
+                           PsiElement selectedElement,
+                           TemplateBuilderImpl builder) {
     addVariable(element, null, selectedElement, builder);
   }
 
-  private void addVariable(PsiElement element, @Nullable TextRange textRange, PsiElement selectedElement, TemplateBuilderImpl builder) {
+  private void addVariable(PsiElement element,
+                           @Nullable TextRange textRange,
+                           PsiElement selectedElement,
+                           TemplateBuilderImpl builder) {
     if (element == selectedElement) {
       Expression expression = createTemplateExpression(myElementToRename);
       builder.replaceElement(element, getRangeToRename(element), PRIMARY_VARIABLE_NAME, expression, shouldStopAtLookupExpression(expression));
@@ -779,11 +804,13 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  protected @NotNull TextRange getRangeToRename(@NotNull PsiElement element) {
+  @NotNull
+  protected TextRange getRangeToRename(@NotNull PsiElement element) {
     return new TextRange(0, element.getTextLength());
   }
 
-  protected @NotNull TextRange getRangeToRename(@NotNull PsiReference reference) {
+  @NotNull
+  protected TextRange getRangeToRename(@NotNull PsiReference reference) {
     return reference.getRangeInElement();
   }
 
@@ -795,9 +822,11 @@ public abstract class InplaceRefactoring {
     return LanguageNamesValidation.isIdentifier(language, newName, myProject);
   }
 
-  protected static @NotNull VirtualFile getTopLevelVirtualFile(@NotNull FileViewProvider fileViewProvider) {
+  @NotNull
+  protected static VirtualFile getTopLevelVirtualFile(@NotNull FileViewProvider fileViewProvider) {
     VirtualFile file = fileViewProvider.getVirtualFile();
-    return file instanceof VirtualFileWindow w ? w.getDelegate() : file;
+    if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
+    return file;
   }
 
   protected PsiElement getSelectedInEditorElement(@Nullable PsiElement nameIdentifier,
@@ -856,7 +885,8 @@ public abstract class InplaceRefactoring {
     return editor != null ? editor.getUserData(INPLACE_RENAMER) : null;
   }
 
-  protected boolean startsOnTheSameElements(Editor editor, RefactoringActionHandler handler, PsiElement[] element) {
+  protected boolean startsOnTheSameElements(Editor editor, RefactoringActionHandler handler,
+                                            PsiElement[] element) {
     return element.length == 1 && startsOnTheSameElement(handler, element[0]);
   }
 
@@ -867,7 +897,8 @@ public abstract class InplaceRefactoring {
   protected void releaseResources() {
   }
 
-  protected @Nullable JComponent getComponent() {
+  @Nullable
+  protected JComponent getComponent() {
     return null;
   }
 
@@ -1002,8 +1033,8 @@ public abstract class InplaceRefactoring {
         if (!bind) {
           try {
             Editor editor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
-            if (editor instanceof EditorImpl e) {
-              e.stopDumbLater();
+            if (editor instanceof EditorImpl) {
+              ((EditorImpl)editor).stopDumbLater();
             }
           }
           finally {

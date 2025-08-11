@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.ide.structureView.impl.StructureNodeRenderer;
@@ -37,8 +37,8 @@ public class MethodListDlg extends DialogWrapper {
     myWholePanel.add(ScrollPaneFactory.createScrollPane(myList));
     myList.setCellRenderer(new ColoredListCellRenderer<>() {
       @Override
-      protected void customizeCellRenderer(final @NotNull JList<? extends PsiMethod> list,
-                                           final @NotNull PsiMethod psiMethod,
+      protected void customizeCellRenderer(@NotNull final JList<? extends PsiMethod> list,
+                                           @NotNull final PsiMethod psiMethod,
                                            final int index,
                                            final boolean selected,
                                            final boolean hasFocus) {
@@ -104,8 +104,9 @@ public class MethodListDlg extends DialogWrapper {
     return myWholePanel;
   }
 
+  @Nullable
   @Override
-  public @Nullable JComponent getPreferredFocusedComponent() {
+  public JComponent getPreferredFocusedComponent() {
     return myList;
   }
 

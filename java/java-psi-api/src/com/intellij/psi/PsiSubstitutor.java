@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Key;
@@ -105,8 +105,9 @@ public interface PsiSubstitutor {
    * @param map a map which contains additional mappings
    * @return the new substitutor instance.
    */
+  @NotNull
   @Contract(pure = true)
-  default @NotNull PsiSubstitutor putAll(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
+  default PsiSubstitutor putAll(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
     return putAll(createSubstitutor(map));
   }
 
@@ -124,7 +125,8 @@ public interface PsiSubstitutor {
    * @param map a map to create a substitutor from
    * @return a substitutor backed by the supplied map
    */
-  static @NotNull PsiSubstitutor createSubstitutor(@Nullable Map<? extends PsiTypeParameter, ? extends PsiType> map) {
+  @NotNull
+  static PsiSubstitutor createSubstitutor(@Nullable Map<? extends PsiTypeParameter, ? extends PsiType> map) {
     if (map == null || map.isEmpty()) return EMPTY;
     return EMPTY.putAll(map);
   }

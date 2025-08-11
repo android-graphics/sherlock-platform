@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.*
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
+import java.util.*
 
 internal class PlantUMLCodeFenceDownloadLineMarkerProvider : CodeFenceDownloadLineMarkerProvider() {
   override fun shouldProcessElement(element: PsiElement): Boolean {

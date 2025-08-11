@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.icons.AllIcons;
@@ -19,9 +19,10 @@ import java.util.List;
 
 public final class ArtifactsSourceItemsProvider extends PackagingSourceItemsProvider {
   @Override
-  public @NotNull Collection<? extends PackagingSourceItem> getSourceItems(@NotNull ArtifactEditorContext editorContext,
-                                                                           @NotNull Artifact artifact,
-                                                                           @Nullable PackagingSourceItem parent) {
+  @NotNull
+  public Collection<? extends PackagingSourceItem> getSourceItems(@NotNull ArtifactEditorContext editorContext,
+                                                                  @NotNull Artifact artifact,
+                                                                  @Nullable PackagingSourceItem parent) {
     if (parent == null) {
       if (!ArtifactElementType.getAvailableArtifacts(editorContext, artifact, true).isEmpty()) {
         return Collections.singletonList(new ArtifactsGroupSourceItem());
@@ -42,23 +43,23 @@ public final class ArtifactsSourceItemsProvider extends PackagingSourceItemsProv
       super(false);
     }
 
-    @Override
     public boolean equals(Object obj) {
       return obj instanceof ArtifactsGroupSourceItem;
     }
 
-    @Override
     public int hashCode() {
       return 0;
     }
 
+    @NotNull
     @Override
-    public @NotNull SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
+    public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
       return new ArtifactsGroupPresentation();
     }
 
     @Override
-    public @NotNull List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
+    @NotNull
+    public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
       return Collections.emptyList();
     }
 

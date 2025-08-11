@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unusedReturnValue;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -27,12 +27,14 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
   }
 
   @Override
-  public @NotNull String getGroupDisplayName() {
+  @NotNull
+  public String getGroupDisplayName() {
     return myGlobal.getGroupDisplayName();
   }
 
   @Override
-  public @NotNull String getShortName() {
+  @NotNull
+  public String getShortName() {
     return myGlobal.getShortName();
   }
 

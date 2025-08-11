@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -86,7 +86,8 @@ public abstract class BaseRefactoringAction extends AnAction {
     return false;
   }
 
-  protected abstract @Nullable RefactoringActionHandler getHandler(@NotNull DataContext dataContext);
+  @Nullable
+  protected abstract RefactoringActionHandler getHandler(@NotNull DataContext dataContext);
 
   @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
@@ -255,7 +256,9 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
   }
 
-  protected @NlsActions.ActionText @Nullable String getActionName(@NotNull DataContext dataContext) {
+  @NlsActions.ActionText
+  @Nullable
+  protected String getActionName(@NotNull DataContext dataContext) {
     return null;
   }
 
@@ -272,7 +275,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     return false;
   }
 
-  public static PsiElement getElementAtCaret(final @NotNull Editor editor, final PsiFile file) {
+  public static PsiElement getElementAtCaret(@NotNull final Editor editor, final PsiFile file) {
     return CommonRefactoringUtil.getElementAtCaret(editor, file);
   }
 

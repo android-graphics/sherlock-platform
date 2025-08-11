@@ -7,17 +7,18 @@ import com.intellij.ide.startup.importSettings.TransferableIdeId
 import com.intellij.ide.startup.importSettings.controllers.TransferSettingsController
 import com.intellij.ide.startup.importSettings.controllers.TransferSettingsListener
 import com.intellij.ide.startup.importSettings.data.*
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.models.PluginFeature
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.models.SettingsPreferencesKind
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsPerformContext
-import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.PluginInstallationState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.containers.nullize
 import com.intellij.util.text.nullize
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
@@ -61,8 +62,6 @@ class SettingTransferProductService(
     get() = when (productId) {
       TransferableIdeId.DummyIde -> ""
       TransferableIdeId.VSCode -> ""
-      TransferableIdeId.Cursor -> ""
-      TransferableIdeId.Windsurf -> ""
       TransferableIdeId.VisualStudio -> "Visual Studio"
       TransferableIdeId.VisualStudioForMac -> "Visual Studio for Mac"
     }
@@ -131,7 +130,7 @@ class SettingTransferProductService(
       return importData
     }
     catch(t: Throwable) {
-      if (t is CancellationException) {
+      if (t is CancellationException || t is ProcessCanceledException) {
         throw t
       }
 

@@ -33,4 +33,4 @@ internal object ReplacePrimitiveCastWithNumberConversionFixFactory {
 }
 
 context(KaSession)
-fun KaType.isPrimitiveNumberType(): Boolean = isPrimitive && !isBooleanType
+fun KaType.isPrimitiveNumberType(): Boolean = isPrimitive && !isBoolean

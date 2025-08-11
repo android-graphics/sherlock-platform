@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.properties;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -26,11 +26,12 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
 
   private static final Logger LOG = Logger.getInstance(CmdPropertyClient.class);
 
+  @Nullable
   @Override
-  public @Nullable PropertyValue getProperty(@NotNull Target target,
-                                             @NotNull String property,
-                                             boolean revisionProperty,
-                                             @Nullable Revision revision)
+  public PropertyValue getProperty(@NotNull Target target,
+                                   @NotNull String property,
+                                   boolean revisionProperty,
+                                   @Nullable Revision revision)
     throws SvnBindException {
     List<String> parameters = new ArrayList<>();
 
@@ -126,7 +127,8 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     return e.contains(ErrorCode.BASE) && e.contains(ErrorCode.PROPERTY_NOT_FOUND);
   }
 
-  private @NotNull PropertiesMap collectPropertiesToDelete(@NotNull File file) throws SvnBindException {
+  @NotNull
+  private PropertiesMap collectPropertiesToDelete(@NotNull File file) throws SvnBindException {
     final PropertiesMap result = new PropertiesMap();
 
     list(Target.on(file), null, Depth.EMPTY, new PropertyConsumer() {
@@ -186,7 +188,8 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     CommandUtil.put(parameters, verbose, "--verbose");
   }
 
-  private static @Nullable PropertyData parseSingleProperty(Target target, @NotNull CommandExecutor command) throws SvnBindException {
+  @Nullable
+  private static PropertyData parseSingleProperty(Target target, @NotNull CommandExecutor command) throws SvnBindException {
     final PropertyData[] data = new PropertyData[1];
     PropertyConsumer handler = new PropertyConsumer() {
       @Override
@@ -254,7 +257,8 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     }
   }
 
-  private static @Nullable PropertyData create(@NotNull String property, @Nullable String value) {
+  @Nullable
+  private static PropertyData create(@NotNull String property, @Nullable String value) {
     PropertyData result = null;
 
     // such behavior is required to compatibility with SVNKit as some logic in merge depends on

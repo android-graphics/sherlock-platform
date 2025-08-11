@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.compiler.options;
 
@@ -33,7 +33,8 @@ public class ExcludeFromValidationAction extends AnAction {
     pair.getFirst().addExcludeEntryDescription(description);
   }
 
-  private static @Nullable Pair<ExcludesConfiguration, VirtualFile> getExcludedConfigurationAndFile(final AnActionEvent event, Project project) {
+  @Nullable
+  private static Pair<ExcludesConfiguration, VirtualFile> getExcludedConfigurationAndFile(final AnActionEvent event, Project project) {
     Navigatable navigatable = event.getData(CommonDataKeys.NAVIGATABLE);
     if (project == null) return null;
     final VirtualFile file;

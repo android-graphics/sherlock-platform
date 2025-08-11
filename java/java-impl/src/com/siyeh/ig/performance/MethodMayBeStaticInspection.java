@@ -32,6 +32,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jdom.Element;
@@ -142,7 +143,7 @@ public final class MethodMayBeStaticInspection extends BaseInspection {
       if (m_ignoreEmptyMethods && MethodUtils.isEmpty(method)) {
         return;
       }
-      final PsiClass containingClass = PsiUtil.getContainingClass(method);
+      final PsiClass containingClass = ClassUtils.getContainingClass(method);
       if (containingClass == null) {
         return;
       }

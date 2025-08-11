@@ -32,7 +32,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +44,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Supplier;
 
-@ApiStatus.Internal
 public class FontEditorPreview implements PreviewPanel{
   private static final String PREVIEW_TEXT_KEY = "FontPreviewText";
 
@@ -103,8 +101,8 @@ public class FontEditorPreview implements PreviewPanel{
       String originalGroupId = editor.getContextMenuGroupId();
       AnAction originalGroup = originalGroupId == null ? null : ActionManager.getInstance().getAction(originalGroupId);
       DefaultActionGroup group = new DefaultActionGroup();
-      if (originalGroup instanceof ActionGroup o) {
-        group.addAll(o);
+      if (originalGroup instanceof ActionGroup) {
+        group.addAll(((ActionGroup)originalGroup).getChildren(null));
       }
       if (restoreAction != null) {
         group.add(restoreAction);

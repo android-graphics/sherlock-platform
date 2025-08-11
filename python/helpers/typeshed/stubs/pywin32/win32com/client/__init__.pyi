@@ -1,6 +1,5 @@
 from _typeshed import Incomplete
-from typing import Final
-from typing_extensions import TypeAlias
+from typing_extensions import Final, TypeAlias
 
 import _win32typing
 from win32com.client import dynamic as dynamic, gencache as gencache

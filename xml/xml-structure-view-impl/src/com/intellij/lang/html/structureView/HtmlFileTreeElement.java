@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.lang.html.structureView;
 
 import com.intellij.ide.structureView.StructureViewFactoryEx;
@@ -14,7 +28,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,7 +43,8 @@ class HtmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
   }
 
   @Override
-  public @NotNull @Unmodifiable Collection<StructureViewTreeElement> getChildrenBase() {
+  @NotNull
+  public Collection<StructureViewTreeElement> getChildrenBase() {
     if (isHtml5SectionsMode()) {
       return Collections.emptyList(); // Html5SectionsNodeProvider will return its structure
     }
@@ -87,7 +101,8 @@ class HtmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
   }
 
   @Override
-  public @Nullable String getPresentableText() {
+  @Nullable
+  public String getPresentableText() {
     return toString(); // root element is not visible
   }
 }

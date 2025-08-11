@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.lang.properties;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,7 +12,6 @@ import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -30,7 +31,8 @@ public class CustomResourceBundleState {
   public String myBaseName;
 
   @Transient
-  public @NotNull String getBaseName() {
+  @NotNull
+  public String getBaseName() {
     return myBaseName;
   }
 
@@ -38,11 +40,12 @@ public class CustomResourceBundleState {
     return myFileUrls;
   }
 
-  public @Unmodifiable List<VirtualFile> getFiles(final @NotNull VirtualFileManager manager) {
+  public List<VirtualFile> getFiles(@NotNull final VirtualFileManager manager) {
     return ContainerUtil.mapNotNull(getFileUrls(), url -> manager.findFileByUrl(url));
   }
 
-  public @Nullable CustomResourceBundleState removeNonExistentFiles(final VirtualFileManager virtualFileManager) {
+  @Nullable
+  public CustomResourceBundleState removeNonExistentFiles(final VirtualFileManager virtualFileManager) {
     final List<String> existentFiles = ContainerUtil.filter(myFileUrls, url -> virtualFileManager.findFileByUrl(url) != null);
     if (existentFiles.isEmpty()) {
       return null;

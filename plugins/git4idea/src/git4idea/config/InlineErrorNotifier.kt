@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config
 
 import com.intellij.ide.plugins.newui.TwoLineProgressIndicator
@@ -14,7 +14,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.util.concurrency.EdtScheduler
+import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
 import org.jetbrains.annotations.Nls.Capitalization.Title
 import org.jetbrains.annotations.NotNull
+import java.util.concurrent.TimeUnit
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
@@ -117,12 +118,12 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
     }
 
     progressShown = true
-    EdtScheduler.getInstance().schedule(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, modalityState) {
+    EdtScheduledExecutorService.getInstance().schedule({
       if (progressShown) {
         container.addToLeft(pi.component)
         panelToValidate?.validate()
       }
-    }
+    }, modalityState, DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong(), TimeUnit.MILLISECONDS)
 
     return pi
   }

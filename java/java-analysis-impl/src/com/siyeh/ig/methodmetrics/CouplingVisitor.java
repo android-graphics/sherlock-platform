@@ -149,7 +149,7 @@ class CouplingVisitor extends JavaRecursiveElementWalkingVisitor {
     if (baseType.equalsToText(qualifiedName)) {
       return;
     }
-    final @NonNls String baseTypeName = baseType.getCanonicalText();
+    @NonNls final String baseTypeName = baseType.getCanonicalText();
     if (!m_includeJavaClasses &&
         (baseTypeName.startsWith("java.") ||
          baseTypeName.startsWith("javax."))) {

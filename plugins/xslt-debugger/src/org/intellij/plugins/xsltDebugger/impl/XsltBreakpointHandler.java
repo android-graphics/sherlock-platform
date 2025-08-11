@@ -1,11 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.xsltDebugger.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -28,10 +28,10 @@ import org.intellij.plugins.xsltDebugger.rt.engine.DebuggerStoppedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XBreakpointProperties>> {
+public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XBreakpointProperties>> {
   private final XsltDebugProcess myXsltDebugProcess;
 
-  public XsltBreakpointHandler(XsltDebugProcess xsltDebugProcess, final Class<XsltBreakpointType> typeClass) {
+  public XsltBreakpointHandler(XsltDebugProcess xsltDebugProcess, final Class<? extends XsltBreakpointType> typeClass) {
     super(typeClass);
     myXsltDebugProcess = xsltDebugProcess;
   }
@@ -70,7 +70,7 @@ public final class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpo
   }
 
   public static String getFileURL(VirtualFile file) {
-    return VfsUtilCore.virtualToIoFile(file).toURI().toASCIIString();
+    return VfsUtil.virtualToIoFile(file).toURI().toASCIIString();
   }
 
   @Override
@@ -153,7 +153,8 @@ public final class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpo
     return -1;
   }
 
-  public static @Nullable PsiElement findContextElement(Project project, @Nullable XSourcePosition position) {
+  @Nullable
+  public static PsiElement findContextElement(Project project, @Nullable XSourcePosition position) {
     if (position == null) {
       return null;
     }

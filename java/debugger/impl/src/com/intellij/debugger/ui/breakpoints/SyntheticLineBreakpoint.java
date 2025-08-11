@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -70,10 +70,6 @@ public class SyntheticLineBreakpoint extends LineBreakpoint<JavaLineBreakpointPr
   }
 
   @Override
-  void scheduleReload() {
-  }
-
-  @Override
   protected boolean isVisible() {
     return false;
   }
@@ -83,8 +79,9 @@ public class SyntheticLineBreakpoint extends LineBreakpoint<JavaLineBreakpointPr
     return true;
   }
 
+  @NotNull
   @Override
-  protected @NotNull JavaLineBreakpointProperties getProperties() {
+  protected JavaLineBreakpointProperties getProperties() {
     return myProperties;
   }
 
@@ -92,13 +89,14 @@ public class SyntheticLineBreakpoint extends LineBreakpoint<JavaLineBreakpointPr
   protected void fireBreakpointChanged() {
   }
 
+  @Nullable
   @Override
-  protected @Nullable JavaLineBreakpointType getXBreakpointType() {
+  protected JavaLineBreakpointType getXBreakpointType() {
     return XDebuggerUtil.getInstance().findBreakpointType(JavaLineBreakpointType.class);
   }
 
   @Override
-  protected boolean isMuted(final @NotNull DebugProcessImpl debugProcess) {
+  protected boolean isMuted(@NotNull final DebugProcessImpl debugProcess) {
     return false;  // always enabled
   }
 }

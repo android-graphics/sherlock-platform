@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -25,7 +25,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -33,12 +32,12 @@ import java.util.*;
 public final class PsiImplementationViewSession implements ImplementationViewSession {
   private static final Logger LOG = Logger.getInstance(PsiImplementationViewSession.class);
 
-  private final @NotNull Project myProject;
-  private final @Nullable PsiElement myElement;
+  @NotNull private final Project myProject;
+  @Nullable private final PsiElement myElement;
   private final PsiElement[] myImpls;
   private final String myText;
-  private final @Nullable Editor myEditor;
-  private final @Nullable VirtualFile myFile;
+  @Nullable private final Editor myEditor;
+  @Nullable private final VirtualFile myFile;
   private final boolean myIsSearchDeep;
   private final boolean myAlwaysIncludeSelf;
 
@@ -57,22 +56,26 @@ public final class PsiImplementationViewSession implements ImplementationViewSes
     myAlwaysIncludeSelf = alwaysIncludeSelf;
   }
 
+  @NotNull
   @Override
-  public @NotNull ImplementationViewSessionFactory getFactory() {
+  public ImplementationViewSessionFactory getFactory() {
     return ImplementationViewSessionFactory.EP_NAME.findExtensionOrFail(PsiImplementationSessionViewFactory.class);
   }
 
   @Override
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myProject;
   }
 
-  public @Nullable PsiElement getElement() {
+  @Nullable
+  public PsiElement getElement() {
     return myElement;
   }
 
   @Override
-  public @NotNull List<ImplementationViewElement> getImplementationElements() {
+  @NotNull
+  public List<ImplementationViewElement> getImplementationElements() {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       return ReadAction.compute(() -> ContainerUtil.map(myImpls, PsiImplementationViewElement::new));
     }, ImplementationSearcher.getSearchingForImplementations(), true, myProject);
@@ -84,12 +87,14 @@ public final class PsiImplementationViewSession implements ImplementationViewSes
   }
 
   @Override
-  public @Nullable Editor getEditor() {
+  @Nullable
+  public Editor getEditor() {
     return myEditor;
   }
 
   @Override
-  public @Nullable VirtualFile getFile() {
+  @Nullable
+  public VirtualFile getFile() {
     return myFile;
   }
 
@@ -129,7 +134,8 @@ public final class PsiImplementationViewSession implements ImplementationViewSes
     return PsiUtilCore.toPsiElementArray(unique);
   }
 
-  public static @NotNull ImplementationSearcher createImplementationsSearcher(final boolean searchDeep) {
+  @NotNull
+  public static ImplementationSearcher createImplementationsSearcher(final boolean searchDeep) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new ImplementationSearcher() {
         @Override
@@ -182,9 +188,10 @@ public final class PsiImplementationViewSession implements ImplementationViewSes
     });
   }
 
+  @NotNull
   @Override
-  public @Unmodifiable @NotNull List<ImplementationViewElement> searchImplementationsInBackground(@NotNull ProgressIndicator indicator,
-                                                                                                  final @NotNull Processor<? super ImplementationViewElement> processor) {
+  public List<ImplementationViewElement> searchImplementationsInBackground(@NotNull ProgressIndicator indicator,
+                                                                           @NotNull final Processor<? super ImplementationViewElement> processor) {
     final ImplementationSearcher.BackgroundableImplementationSearcher implementationSearcher =
       new ImplementationSearcher.BackgroundableImplementationSearcher() {
         @Override
@@ -215,14 +222,16 @@ public final class PsiImplementationViewSession implements ImplementationViewSes
     return ContainerUtil.map(psiElements, psiElement -> ReadAction.compute(() -> new PsiImplementationViewElement(psiElement)));
   }
 
-  public static @Nullable Editor getEditor(@NotNull DataContext dataContext) {
+  @Nullable
+  public static Editor getEditor(@NotNull DataContext dataContext) {
     return CommonDataKeys.EDITOR.getData(dataContext);
   }
 
-  public static @Nullable PsiImplementationViewSession create(@NotNull DataContext dataContext,
-                                                              @NotNull Project project,
-                                                              boolean searchDeep,
-                                                              boolean alwaysIncludeSelf) {
+  @Nullable
+  public static PsiImplementationViewSession create(@NotNull DataContext dataContext,
+                                                    @NotNull Project project,
+                                                    boolean searchDeep,
+                                                    boolean alwaysIncludeSelf) {
     PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     Editor editor = getEditor(dataContext);
     Pair<PsiElement, PsiReference> pair = getElementAndReference(dataContext, project, file, editor);
@@ -265,10 +274,11 @@ public final class PsiImplementationViewSession implements ImplementationViewSes
                                             searchDeep, alwaysIncludeSelf);
   }
 
-  public static @Nullable Pair<PsiElement, PsiReference> getElementAndReference(@NotNull DataContext dataContext,
-                                                                                @NotNull Project project,
-                                                                                @Nullable PsiFile file,
-                                                                                @Nullable Editor editor) {
+  @Nullable
+  public static Pair<PsiElement, PsiReference> getElementAndReference(@NotNull DataContext dataContext,
+                                                                      @NotNull Project project,
+                                                                      @Nullable PsiFile file,
+                                                                      @Nullable Editor editor) {
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     element = getElement(project, file, editor, element);
 

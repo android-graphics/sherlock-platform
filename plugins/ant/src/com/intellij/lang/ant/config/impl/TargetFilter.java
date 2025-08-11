@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.config.AntBuildTarget;
@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public final class TargetFilter implements JDOMExternalizable, Externalizer.SkippableValue {
-  private static final @NonNls String FILTER_TARGET_NAME = "targetName";
-  private static final @NonNls String FILTER_IS_VISIBLE = "isVisible";
+  @NonNls private static final String FILTER_TARGET_NAME = "targetName";
+  @NonNls private static final String FILTER_IS_VISIBLE = "isVisible";
   private @NlsSafe String myTargetName;
   private boolean myVisible;
   private @Nls String myDescription = "";
@@ -61,7 +61,8 @@ public final class TargetFilter implements JDOMExternalizable, Externalizer.Skip
     myDescription = target.getNotEmptyDescription();
   }
 
-  public static @NotNull TargetFilter fromTarget(AntBuildTarget target) {
+  @NotNull
+  public static TargetFilter fromTarget(AntBuildTarget target) {
     TargetFilter filter = new TargetFilter(target.getName(), target.isDefault());
     filter.myDescription = target.getNotEmptyDescription();
     filter.myVisible = (filter.myDescription != null);

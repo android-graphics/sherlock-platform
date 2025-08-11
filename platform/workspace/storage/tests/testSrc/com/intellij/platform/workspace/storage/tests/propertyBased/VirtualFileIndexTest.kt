@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.tests.propertyBased
 
 import com.intellij.platform.workspace.storage.impl.EntityId
@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.testFramework.propertyBased.MadTestingUtil.assertNoErrorLoggedIn
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
@@ -24,7 +23,7 @@ class VirtualFileIndexTest {
   @Test
   fun `property test`() {
     PropertyChecker.checkScenarios {
-      assertNoErrorLoggedIn(ImperativeCommand { env ->
+      ImperativeCommand { env ->
         val index = VirtualFileIndex.MutableVirtualFileIndex.from(VirtualFileIndex())
 
         val immutables = ArrayList<VirtualFileIndex>()
@@ -36,7 +35,7 @@ class VirtualFileIndexTest {
           RemoveByIdValue(index),
           ToImmutable(index, immutables),
         ))
-      })
+      }
     }
   }
 

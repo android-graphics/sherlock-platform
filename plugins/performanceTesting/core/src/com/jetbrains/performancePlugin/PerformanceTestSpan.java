@@ -8,9 +8,9 @@ import io.opentelemetry.context.Scope;
 
 public final class PerformanceTestSpan {
   public static final String SPAN_NAME = "performance_test";
-  public static final IJTracer TRACER = TelemetryManager.getInstance().getTracer(
+  public final static IJTracer TRACER = TelemetryManager.getInstance().getTracer(
     new com.intellij.platform.diagnostic.telemetry.Scope("performance-plugin", null));
-  public static final IJTracer WARMUP_TRACER = new WarmupIJTracer(TRACER);
+  public final static IJTracer WARMUP_TRACER = new WarmupIJTracer(TRACER);
   private static Span performanceTestSpan;
   private static Scope performanceScope;
 

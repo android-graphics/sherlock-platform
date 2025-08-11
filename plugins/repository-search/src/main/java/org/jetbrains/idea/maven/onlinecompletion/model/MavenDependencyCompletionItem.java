@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.onlinecompletion.model;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.reposearch.RepositoryArtifactData;
 
 @ApiStatus.Experimental
 public class MavenDependencyCompletionItem extends MavenId {
@@ -62,7 +63,8 @@ public class MavenDependencyCompletionItem extends MavenId {
     this(coord, null);
   }
 
-  public @Nullable Type getType() {
+  @Nullable
+  public Type getType() {
     return myType;
   }
 

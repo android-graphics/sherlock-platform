@@ -11,17 +11,15 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptController
-import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptModel
 import org.jetbrains.plugins.terminal.block.ui.getDisposed
 import org.jetbrains.plugins.terminal.block.ui.invokeLater
+import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptController
+import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptModel
 
-@ApiStatus.Internal
-class CommandHistoryPresenter(
+internal class CommandHistoryPresenter(
   private val project: Project,
   private val editor: Editor,
-  private val promptController: TerminalPromptController,
+  private val promptController: TerminalPromptController
 ) {
   private val promptModel: TerminalPromptModel
     get() = promptController.model
@@ -70,7 +68,6 @@ class CommandHistoryPresenter(
 
     if (lookup.showLookup()) {
       lookup.ensureSelectionVisible(false)
-      project.messageBus.syncPublisher(CommandHistoryListener.TOPIC).commandHistoryShown(promptModel)
     }
     else thisLogger().error("Failed to show command history")
   }
@@ -86,8 +83,6 @@ class CommandHistoryPresenter(
       invokeLater(editor.getDisposed()) {
         promptModel.commandText = commandToRestore
         editor.caretModel.moveToOffset(editor.document.textLength)
-
-        project.messageBus.syncPublisher(CommandHistoryListener.TOPIC).commandHistoryAborted(promptModel)
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.util;
 
 import com.intellij.util.ArrayUtilRt;
@@ -32,7 +32,7 @@ public class IntObjectMap<T> {
     void fill(T object);
   }
 
-  public abstract static class SimpleObjectFactory<T> implements ObjectFactory<T> {
+  public static abstract class SimpleObjectFactory<T> implements ObjectFactory<T> {
     public abstract T create();
 
     @Override

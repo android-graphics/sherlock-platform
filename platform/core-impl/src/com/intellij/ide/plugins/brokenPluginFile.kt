@@ -22,8 +22,8 @@ import java.nio.file.Paths
 private val LOG: Logger
   get() = Logger.getInstance("#com.intellij.ide.plugins.PluginManager")
 
-internal fun getUpdatedBrokenPluginFile(configDir: Path? = null): Path =
-  Paths.get(configDir?.toString() ?: PathManager.getConfigPath(), "updatedBrokenPlugins.db")
+internal val updatedBrokenPluginFile: Path
+  get() = Paths.get(PathManager.getConfigPath(), "updatedBrokenPlugins.db")
 
 private var brokenPluginVersions: Reference<Map<PluginId, Set<String>>>? = null
 
@@ -50,12 +50,7 @@ internal fun getBrokenPluginVersions(): Map<PluginId, Set<String>> {
 @Internal
 fun updateBrokenPlugins(brokenPlugins: Map<PluginId, Set<String>>) {
   brokenPluginVersions = SoftReference(brokenPlugins)
-  writeBrokenPlugins(brokenPlugins)
-}
-
-@Internal
-fun writeBrokenPlugins(brokenPlugins: Map<PluginId, Set<String>>, configDir: Path? = null) {
-  val updatedBrokenPluginFile = getUpdatedBrokenPluginFile(configDir)
+  val updatedBrokenPluginFile = updatedBrokenPluginFile
   try {
     DataOutputStream(BufferedOutputStream(Files.newOutputStream(updatedBrokenPluginFile), 32_000)).use { out ->
       out.write(2)
@@ -77,17 +72,9 @@ fun writeBrokenPlugins(brokenPlugins: Map<PluginId, Set<String>>, configDir: Pat
   }
 }
 
-@Internal
-fun dropInMemoryBrokenPluginsCache() {
-  if (brokenPluginVersions != null) {
-    LOG.info("Broken plugins will be reloaded from disk")
-  }
-  brokenPluginVersions = null
-}
-
 private fun readBrokenPluginFile(): Map<PluginId, Set<String>> {
   var result: Map<PluginId, Set<String>>? = null
-  val updatedBrokenPluginFile = getUpdatedBrokenPluginFile()
+  val updatedBrokenPluginFile = updatedBrokenPluginFile
   if (Files.exists(updatedBrokenPluginFile)) {
     result = tryReadBrokenPluginsFile(updatedBrokenPluginFile)
     if (result != null) {

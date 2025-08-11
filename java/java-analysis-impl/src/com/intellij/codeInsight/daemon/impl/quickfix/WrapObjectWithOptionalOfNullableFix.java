@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.Nullability;
@@ -36,8 +36,9 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix {
     super(list, i, toType, fixerActionFactory);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getText(@NotNull PsiExpressionList list) {
+  public String getText(@NotNull PsiExpressionList list) {
     if (list.getExpressionCount() == 1) {
       return QuickFixBundle.message("wrap.with.optional.single.parameter.text");
     }
@@ -65,8 +66,10 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix {
       myType = type;
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return QuickFixBundle.message("wrap.with.optional.single.parameter.text");
     }
 
@@ -84,13 +87,14 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix {
 
   public static class MyFixerActionFactory extends ArgumentFixerActionFactory {
 
+    @Nullable
     @Override
-    protected @Nullable PsiExpression getModifiedArgument(final PsiExpression expression, final PsiType toType) throws IncorrectOperationException {
+    protected PsiExpression getModifiedArgument(final PsiExpression expression, final PsiType toType) throws IncorrectOperationException {
       return getModifiedExpression(expression);
     }
 
     @Override
-    public boolean areTypesConvertible(final @NotNull PsiType exprType, final @NotNull PsiType parameterType, final @NotNull PsiElement context) {
+    public boolean areTypesConvertible(@NotNull final PsiType exprType, @NotNull final PsiType parameterType, @NotNull final PsiElement context) {
       return parameterType.isConvertibleFrom(exprType) || areConvertible(exprType, parameterType);
     }
 
@@ -119,7 +123,8 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix {
     return TypeConversionUtil.isAssignable(optionalTypeParameter, exprType);
   }
 
-  private static @NotNull PsiExpression getModifiedExpression(PsiExpression expression) {
+  @NotNull
+  private static PsiExpression getModifiedExpression(PsiExpression expression) {
     final Project project = expression.getProject();
     final Nullability nullability = NullabilityUtil.getExpressionNullability(expression, true);
     String methodName = nullability == Nullability.NOT_NULL ? "of" : "ofNullable";

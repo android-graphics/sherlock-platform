@@ -30,7 +30,6 @@ public abstract class ColumnInfo<Item, Aspect> {
     return null;
   }
 
-  @Override
   public String toString() {
     return getName();
   }

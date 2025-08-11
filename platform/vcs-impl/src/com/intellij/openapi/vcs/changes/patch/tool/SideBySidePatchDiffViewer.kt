@@ -2,9 +2,9 @@
 package com.intellij.openapi.vcs.changes.patch.tool
 
 import com.intellij.diff.DiffContext
-import com.intellij.diff.DiffViewerEx
 import com.intellij.diff.EditorDiffViewer
 import com.intellij.diff.FrameDiffTool
+import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.actions.impl.FocusOppositePaneAction
 import com.intellij.diff.actions.impl.SetEditorSettingsAction
 import com.intellij.diff.comparison.ByWord
@@ -41,13 +41,14 @@ import com.intellij.ui.DirtyUI
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import it.unimi.dsi.fastutil.ints.IntConsumer
 import it.unimi.dsi.fastutil.ints.IntList
+import org.jetbrains.annotations.NonNls
 import java.awt.Graphics
 import javax.swing.JComponent
 
 internal class SideBySidePatchDiffViewer(
   private val diffContext: DiffContext,
-  private val diffRequest: PatchDiffRequest,
-) : DiffViewerEx, EditorDiffViewer {
+  private val diffRequest: PatchDiffRequest
+) : DiffViewer, DataProvider, EditorDiffViewer {
   private val project: Project? = diffContext.getProject()
 
   private val panel: SimpleDiffPanel
@@ -94,16 +95,7 @@ internal class SideBySidePatchDiffViewer(
     contentPanel.setTitles(titles)
     contentPanel.setPainter(MyDividerPainter())
 
-    panel = object : SimpleDiffPanel(contentPanel, diffContext) {
-      override fun uiDataSnapshot(sink: DataSink) {
-        super.uiDataSnapshot(sink)
-        sink[CommonDataKeys.PROJECT] = project
-        sink[DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE] = prevNextDifferenceIterable
-        sink[DiffDataKeys.CURRENT_EDITOR] = currentEditor
-        sink[DiffDataKeys.CURRENT_CHANGE_RANGE] = prevNextDifferenceIterable
-          .getCurrentLineRangeByLine(currentEditor.getCaretModel().logicalPosition.line)
-      }
-    }
+    panel = SimpleDiffPanel(contentPanel, this, diffContext)
 
     syncScrollable = MySyncScrollable()
     syncScrollSupport = TwosideSyncScrollSupport(editors, syncScrollable)
@@ -119,9 +111,6 @@ internal class SideBySidePatchDiffViewer(
     editorSettingsAction = SetEditorSettingsAction(textSettings, editors)
     editorSettingsAction.setSyncScrollSupport(syncScrollSupport)
     editorSettingsAction.applyDefaults()
-
-    listenTypingAttempts(diffContext, editor1)
-    listenTypingAttempts(diffContext, editor2)
   }
 
   override fun getComponent(): JComponent = panel
@@ -133,8 +122,6 @@ internal class SideBySidePatchDiffViewer(
   override fun getCurrentEditor(): EditorEx = currentSide.select(editors)
 
   override fun getEditors(): List<Editor> = editors
-
-  override fun getDifferenceIterable(): PrevNextDifferenceIterable = prevNextDifferenceIterable
 
   val editor1: EditorEx get() = editors[0]
   val editor2: EditorEx get() = editors[1]
@@ -248,6 +235,23 @@ internal class SideBySidePatchDiffViewer(
     group.add(Separator.getInstance())
     group.add(ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_TOOLBAR))
     return group
+  }
+
+  override fun getData(dataId: @NonNls String): Any? {
+    if (CommonDataKeys.PROJECT.`is`(dataId)) {
+      return project
+    }
+    if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.`is`(dataId)) {
+      return prevNextDifferenceIterable
+    }
+    if (DiffDataKeys.CURRENT_EDITOR.`is`(dataId)) {
+      return currentEditor
+    }
+    if (DiffDataKeys.CURRENT_CHANGE_RANGE.`is`(dataId)) {
+      val line = currentEditor.getCaretModel().logicalPosition.line
+      return prevNextDifferenceIterable.getCurrentLineRangeByLine(line)
+    }
+    return null
   }
 
   private inner class MyPrevNextDifferenceIterable : PrevNextDifferenceIterableBase<PatchSideChange>() {

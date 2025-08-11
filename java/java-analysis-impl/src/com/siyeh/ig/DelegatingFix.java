@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig;
 
 import com.intellij.codeInsight.intention.PriorityAction;
@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -53,8 +54,9 @@ public class DelegatingFix extends InspectionGadgetsFix implements Iconable, Pri
     return delegate instanceof Iconable ? ((Iconable)delegate).getIcon(flags) : null;
   }
 
+  @NotNull
   @Override
-  public @NotNull Priority getPriority() {
+  public Priority getPriority() {
     return delegate instanceof PriorityAction ? ((PriorityAction)delegate).getPriority() : Priority.NORMAL;
   }
 

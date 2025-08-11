@@ -24,7 +24,8 @@ import org.jetbrains.annotations.NotNull;
 public final class MethodWithMultipleLoopsInspection extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final Integer negationCount = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "method.with.multiple.loops.problem.descriptor", negationCount);

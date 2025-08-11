@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduce.inplace;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -87,7 +87,8 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
     myExprMarker = exprMarker;
   }
 
-  public @Nullable E getExpr() {
+  @Nullable
+  public E getExpr() {
     return myExpr != null && myExpr.isValid() && myExpr.isPhysical() ? myExpr : null;
   }
 
@@ -124,8 +125,9 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
     return false;
   }
 
+  @NlsContexts.Command 
   @Override
-  protected @NlsContexts.Command String getCommandName() {
+  protected String getCommandName() {
     return myTitle;
   }
 
@@ -169,7 +171,8 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
       return createLookupItems(myName, context, getElement());
     }
 
-    public @Nullable PsiNamedElement getElement() {
+    @Nullable
+    public PsiNamedElement getElement() {
       return myPointer.getElement();
     }
 

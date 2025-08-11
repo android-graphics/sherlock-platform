@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JButton
@@ -17,21 +16,13 @@ internal class ProjectJdkConfigurableUi {
 
   fun panel(project: Project, jdkModel: ProjectSdksModel): JPanel = panel {
     row {
-      val component = if (Registry.`is`("java.home.finder.use.eel"))
-        JdkComboBox.createCombobox(project,
-                                   jdkModel,
-                                   SimpleJavaSdkType.notSimpleJavaSdkType(),
-                                   filterSdkByEel(project),
-                                   filterSdkSuggestionByEel(project),
-                                   null)
-      else
+      jdkComboBox = cell(
         JdkComboBox.createCombobox(project,
                                    jdkModel,
                                    SimpleJavaSdkType.notSimpleJavaSdkType(),
                                    WslSdkFilter.filterSdkByWsl(project),
                                    WslSdkFilter.filterSdkSuggestionByWsl(project),
-                                   null)
-      jdkComboBox = cell(component)
+                                   null))
         .resizableColumn()
         .align(AlignX.FILL)
         .component

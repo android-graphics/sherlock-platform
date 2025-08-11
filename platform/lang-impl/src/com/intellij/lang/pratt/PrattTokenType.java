@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.pratt;
 
 import com.intellij.lang.LangBundle;
@@ -12,12 +12,13 @@ import org.jetbrains.annotations.Nullable;
 public class PrattTokenType extends IElementType {
 
 
-  public PrattTokenType(final @NotNull @NonNls String debugName,
-                        final @Nullable Language language) {
+  public PrattTokenType(@NotNull @NonNls final String debugName,
+                        @Nullable final Language language) {
     super(debugName, language);
   }
 
-  public @NotNull @NlsContexts.ParsingError String getExpectedText(final PrattBuilder builder) {
+  @NotNull
+  public @NlsContexts.ParsingError String getExpectedText(final PrattBuilder builder) {
     return LangBundle.message("0.expected", toString());
   }
 

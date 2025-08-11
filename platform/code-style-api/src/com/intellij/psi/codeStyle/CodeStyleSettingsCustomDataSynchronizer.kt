@@ -62,12 +62,7 @@ abstract class CodeStyleSettingsCustomDataSynchronizer<T : CustomCodeStyleSettin
 
       try {
         common.writeExternal(commonSettingsElement, provider)
-        val customSettingsInstance = provider.createCustomSettings(CodeStyleSettings.getDefaults())
-        if (customSettingsInstance != null) {
-          custom.writeExternal(customSettingsElement, customSettingsInstance)
-        } else {
-          LOG.warn("Unable to create custom settings instance for ${language.id}, provider.id=$id. Custom Settings will not be written")
-        }
+        custom.writeExternal(customSettingsElement, provider.createCustomSettings(CodeStyleSettings.getDefaults()))
       }
       catch (e: Exception) {
         if (e is CancellationException) throw e
@@ -107,12 +102,7 @@ abstract class CodeStyleSettingsCustomDataSynchronizer<T : CustomCodeStyleSettin
 
     try {
       common.applyFromExternal(commonSettingsElement, provider.defaultCommonSettings)
-      val customSettingsInstance = provider.createCustomSettings(CodeStyleSettings.getDefaults())
-      if (customSettingsInstance != null) {
-        custom.applyFromExternal(customSettingsElement, customSettingsInstance)
-      } else {
-        LOG.warn("Unable to create custom settings instance for ${language.id}, provider.id=$id. Custom Settings will not be applied")
-      }
+      custom.applyFromExternal(customSettingsElement, provider.createCustomSettings(CodeStyleSettings.getDefaults()))
 
       CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile)
     }

@@ -60,14 +60,16 @@ public final class RncTokenTypes {
     }
   }
 
-  public static @NotNull IElementType get(int i) {
+  @NotNull
+  public static IElementType get(int i) {
     assert !ourTokenTypes.isEmpty();
     final IElementType type = ourTokenTypes.get(i);
     assert type != null : "Unknown token kind: " + i;
     return type;
   }
 
-  private static @NotNull IElementType get(final String name) {
+  @NotNull
+  private static IElementType get(final String name) {
     assert !ourTokenTypes.isEmpty();
     for (IElementType iElementType : ourTokenTypes.values()) {
       if (iElementType.toString().equals(name)) {

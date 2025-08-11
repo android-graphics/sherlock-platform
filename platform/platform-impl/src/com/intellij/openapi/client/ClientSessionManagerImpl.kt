@@ -4,16 +4,14 @@ package com.intellij.openapi.client
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 
 
 @Suppress("NonDefaultConstructor")
 @Internal
-open class ClientAppSessionsManager(application: Application, scope: CoroutineScope) : ClientSessionsManager<ClientAppSession>(scope) {
+open class ClientAppSessionsManager(application: Application) : ClientSessionsManager<ClientAppSession>() {
   init {
     @Suppress("LeakingThis")
     registerLocalSession(application)
@@ -30,7 +28,7 @@ open class ClientAppSessionsManager(application: Application, scope: CoroutineSc
 }
 
 @Internal
-open class ClientProjectSessionsManager(project: Project, scope: CoroutineScope) : ClientSessionsManager<ClientProjectSession>(scope) {
+open class ClientProjectSessionsManager(project: Project) : ClientSessionsManager<ClientProjectSession>() {
   init {
     @Suppress("LeakingThis")
     registerLocalSession(project)
@@ -42,17 +40,7 @@ open class ClientProjectSessionsManager(project: Project, scope: CoroutineScope)
     }
     else if (project.isDefault) {
       (project.actualComponentManager as? ClientAwareComponentManager)?.let { componentManager ->
-        val projectImpl = componentManager as? Project
-        // real DefaultProjectImpl instance is accessible via DefaultProject.actualComponentManager
-        // in the injection scenario exactly DefaultProjectImpl is passed, so we want to use it here also
-        val projectToPass = if (projectImpl == null) {
-          thisLogger().error("Underlying component should be DefaultProjectImpl, but was ${componentManager.javaClass.name}")
-          project
-        }
-        else {
-          projectImpl
-        }
-        registerSession(componentManager, LocalProjectSessionImpl(componentManager, projectToPass))
+        registerSession(project, LocalProjectSessionImpl(componentManager, project))
       }
     }
   }

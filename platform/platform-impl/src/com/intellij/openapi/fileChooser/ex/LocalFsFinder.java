@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.execution.wsl.WSLDistribution;
@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.SystemProperties;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,9 +166,9 @@ public final class LocalFsFinder implements Finder {
 
     @Override
     public boolean isAccepted(LookupFile file) {
-      if (file instanceof VfsFile vfsFile) {
-        VirtualFile vFile = vfsFile.getFile();
-        return myDescriptor.isFileVisible(vFile, myShowHidden);
+      if (file instanceof VfsFile) {
+        VirtualFile vFile = ((VfsFile)file).getFile();
+        return vFile != null && myDescriptor.isFileVisible(vFile, myShowHidden);
       }
       else {
         return false;
@@ -177,8 +176,7 @@ public final class LocalFsFinder implements Finder {
     }
   }
 
-  @ApiStatus.Internal
-  public abstract static class LookupFileWithMacro implements LookupFile {
+  private abstract static class LookupFileWithMacro implements LookupFile {
     private String myMacro;
 
     @Override

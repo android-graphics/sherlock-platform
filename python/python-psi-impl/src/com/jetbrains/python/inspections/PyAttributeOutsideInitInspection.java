@@ -45,10 +45,11 @@ import java.util.*;
  */
 public final class PyAttributeOutsideInitInspection extends PyInspection {
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                                 boolean isOnTheFly,
-                                                 @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                        boolean isOnTheFly,
+                                        @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -149,7 +150,8 @@ public final class PyAttributeOutsideInitInspection extends PyInspection {
            !containingClass.isSubclass("django.db.models.base.Model", context);
   }
 
-  private static @Nullable Collection<PyTargetExpression> getSetterTargetExpressions(@NotNull Property property) {
+  @Nullable
+  private static Collection<PyTargetExpression> getSetterTargetExpressions(@NotNull Property property) {
     if (!property.getSetter().isDefined() || property.getSetter().value() == null) {
       return null;
     }

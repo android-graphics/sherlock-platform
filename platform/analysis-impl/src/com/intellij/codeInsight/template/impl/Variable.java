@@ -114,7 +114,6 @@ public class Variable implements Cloneable {
     return new Variable(myName, myExpressionString, myDefaultValueString, myAlwaysStopAt);
   }
 
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof Variable variable)) return false;
@@ -128,7 +127,6 @@ public class Variable implements Cloneable {
     return true;
   }
 
-  @Override
   public int hashCode() {
     int result;
     result = myName.hashCode();

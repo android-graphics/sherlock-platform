@@ -13,18 +13,20 @@ import org.jetbrains.jps.backwardRefs.SignatureData;
 import java.util.*;
 
 public final class ChainSearcher {
-  public static @NotNull List<OperationChain> search(int pathMaximalLength,
-                                                     ChainSearchTarget searchTarget,
-                                                     int maxResultSize,
-                                                     ChainCompletionContext context,
-                                                     CompilerReferenceServiceEx compilerReferenceServiceEx) {
+  @NotNull
+  public static List<OperationChain> search(int pathMaximalLength,
+                                            ChainSearchTarget searchTarget,
+                                            int maxResultSize,
+                                            ChainCompletionContext context,
+                                            CompilerReferenceServiceEx compilerReferenceServiceEx) {
     SearchInitializer initializer = createInitializer(searchTarget, compilerReferenceServiceEx, context);
     return search(compilerReferenceServiceEx, initializer, pathMaximalLength, maxResultSize, context);
   }
 
-  private static @NotNull SearchInitializer createInitializer(ChainSearchTarget target,
-                                                              CompilerReferenceServiceEx referenceServiceEx,
-                                                              ChainCompletionContext context) {
+  @NotNull
+  private static SearchInitializer createInitializer(ChainSearchTarget target,
+                                                     CompilerReferenceServiceEx referenceServiceEx,
+                                                     ChainCompletionContext context) {
     SortedSet<ChainOpAndOccurrences<? extends RefChainOperation>> operations = new TreeSet<>();
     for (byte kind : target.getArrayKind()) {
       SortedSet<ChainOpAndOccurrences<MethodCall>> methods = referenceServiceEx.findMethodReferenceOccurrences(target.getClassQName(), kind, context);
@@ -41,11 +43,12 @@ public final class ChainSearcher {
     return new SearchInitializer(operations, context);
   }
 
-  private static @NotNull List<OperationChain> search(CompilerReferenceServiceEx referenceServiceEx,
-                                                      SearchInitializer initializer,
-                                                      int chainMaxLength,
-                                                      int maxResultSize,
-                                                      ChainCompletionContext context) {
+  @NotNull
+  private static List<OperationChain> search(CompilerReferenceServiceEx referenceServiceEx,
+                                             SearchInitializer initializer,
+                                             int chainMaxLength,
+                                             int maxResultSize,
+                                             ChainCompletionContext context) {
     LinkedList<OperationChain> q = initializer.getChainQueue();
 
     List<OperationChain> result = new ArrayList<>();

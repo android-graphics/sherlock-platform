@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.editorActions.enter;
 
 import com.intellij.application.options.CodeStyle;
@@ -65,7 +79,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     myWorksWithFormatter = worksWithFormatter;
   }
 
-  protected Result shouldSkipWithResult(final @NotNull PsiFile file, final @NotNull Editor editor, final @NotNull DataContext dataContext) {
+  protected Result shouldSkipWithResult(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return Result.Continue;
@@ -98,11 +112,11 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
 
   @Override
   public Result preprocessEnter(
-    final @NotNull PsiFile file,
-    final @NotNull Editor editor,
-    final @NotNull Ref<Integer> caretOffset,
+    @NotNull final PsiFile file,
+    @NotNull final Editor editor,
+    @NotNull final Ref<Integer> caretOffset,
     final @NotNull Ref<Integer> caretAdvance,
-    final @NotNull DataContext dataContext,
+    @NotNull final DataContext dataContext,
     final EditorActionHandler originalHandler)
   {
     Result res = shouldSkipWithResult(file, editor, dataContext);
@@ -156,14 +170,14 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
   }
 
   protected String getNewIndent(
-    final @NotNull PsiFile file,
-    final @NotNull Document document,
-    final @NotNull CharSequence oldIndent)
+    @NotNull final PsiFile file,
+    @NotNull final Document document,
+    @NotNull final CharSequence oldIndent)
   {
     CharSequence nonEmptyIndent = oldIndent;
     final CharSequence editorCharSequence = document.getCharsSequence();
     final int nLines = document.getLineCount();
-    for (int line = 0; line < nLines && nonEmptyIndent.isEmpty(); ++line) {
+    for (int line = 0; line < nLines && nonEmptyIndent.length() == 0; ++line) {
       final int lineStart = document.getLineStartOffset(line);
       final int indentEnd = EditorActionUtil.findFirstNonSpaceOffsetOnTheLine(document, line);
       if (lineStart < indentEnd) {
@@ -171,8 +185,8 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
       }
     }
 
-    final boolean usesSpacesForIndentation = !nonEmptyIndent.isEmpty() && nonEmptyIndent.charAt(nonEmptyIndent.length() - 1) == ' ';
-    final boolean firstIndent = nonEmptyIndent.isEmpty();
+    final boolean usesSpacesForIndentation = nonEmptyIndent.length() > 0 && nonEmptyIndent.charAt(nonEmptyIndent.length() - 1) == ' ';
+    final boolean firstIndent = nonEmptyIndent.length() == 0;
 
     final CodeStyleSettings currentSettings = CodeStyle.getSettings(file);
     final CommonCodeStyleSettings.IndentOptions indentOptions = currentSettings.getIndentOptions(file.getFileType());
@@ -198,7 +212,8 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     return result;
   }
 
-  protected @Nullable IElementType getNonWhitespaceElementType(final HighlighterIterator iterator, int currentLineStartOffset, final int prevLineStartOffset) {
+  @Nullable
+  protected IElementType getNonWhitespaceElementType(final HighlighterIterator iterator, int currentLineStartOffset, final int prevLineStartOffset) {
     while (!iterator.atEnd() && iterator.getEnd() >= currentLineStartOffset && iterator.getStart() >= prevLineStartOffset) {
       final IElementType tokenType = iterator.getTokenType();
       if (!myWhitespaceTokens.contains(tokenType)) {

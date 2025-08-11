@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -28,13 +27,15 @@ public abstract class TextFieldCompletionProvider implements TextCompletionProvi
     myCaseInsensitivity = caseInsensitivity;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getPrefix(@NotNull String text, int offset) {
+  public String getPrefix(@NotNull String text, int offset) {
     return getPrefix(text.substring(0, offset));
   }
 
+  @NotNull
   @Override
-  public @NotNull CompletionResultSet applyPrefixMatcher(@NotNull CompletionResultSet result, @NotNull String prefix) {
+  public CompletionResultSet applyPrefixMatcher(@NotNull CompletionResultSet result, @NotNull String prefix) {
     CompletionResultSet activeResult = result;
 
     if (!activeResult.getPrefixMatcher().getPrefix().equals(prefix)) {
@@ -48,8 +49,9 @@ public abstract class TextFieldCompletionProvider implements TextCompletionProvi
     return activeResult;
   }
 
+  @Nullable
   @Override
-  public @Nullable CharFilter.Result acceptChar(char c) {
+  public CharFilter.Result acceptChar(char c) {
     return null;
   }
 
@@ -80,12 +82,14 @@ public abstract class TextFieldCompletionProvider implements TextCompletionProvi
     return myCaseInsensitivity;
   }
 
-  protected @NotNull String getPrefix(@NotNull String currentTextPrefix) {
+  @NotNull
+  protected String getPrefix(@NotNull String currentTextPrefix) {
     return currentTextPrefix;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getAdvertisement() {
+  public String getAdvertisement() {
     return null;
   }
 
@@ -94,13 +98,15 @@ public abstract class TextFieldCompletionProvider implements TextCompletionProvi
                                                 @NotNull String prefix,
                                                 @NotNull CompletionResultSet result);
 
-  public @NotNull EditorTextField createEditor(Project project) {
+  @NotNull
+  public EditorTextField createEditor(Project project) {
     return createEditor(project, true, null);
   }
 
-  public @NotNull EditorTextField createEditor(Project project,
-                                               final boolean shouldHaveBorder,
-                                               final @Nullable Consumer<? super Editor> editorConstructionCallback) {
+  @NotNull
+  public EditorTextField createEditor(Project project,
+                                      final boolean shouldHaveBorder,
+                                      final @Nullable Consumer<? super Editor> editorConstructionCallback) {
     return new EditorTextField(createDocument(project, ""), project, PlainTextLanguage.INSTANCE.getAssociatedFileType()) {
       @Override
       protected boolean shouldHaveBorder() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
 public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccessorMethod {
-  private final @NotNull GrField myProperty;
+  @NotNull private final GrField myProperty;
 
   private final boolean myIsSetter;
 
@@ -90,7 +90,8 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
   }
 
   @Override
-  public @Nullable PsiType getInferredReturnType() {
+  @Nullable
+  public PsiType getInferredReturnType() {
     if (myIsSetter) return PsiTypes.voidType();
     return myProperty.getTypeGroovy();
   }
@@ -116,7 +117,8 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
   }
 
   @Override
-  public @NotNull GrField getProperty() {
+  @NotNull
+  public GrField getProperty() {
     return myProperty;
   }
 
@@ -129,8 +131,9 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
     return getManager().areElementsEquivalent(myProperty, ((GrAccessorMethod)another).getProperty());
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getPrototype() {
+  public PsiElement getPrototype() {
     return getProperty();
   }
 

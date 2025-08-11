@@ -13,8 +13,7 @@ typealias FileModCount = Int
 fun IndexingRequestIdAndFileModCount.toFileModCount(): FileModCount = this.toInt()
 @ApiStatus.Internal
 fun FileModCount.withIndexingRequestId(indexingRequestId: Int): IndexingRequestIdAndFileModCount {
-  // https://stackoverflow.com/a/12772968 FileModCount shouldn't be negative but let's combine numbers properly
-  return (indexingRequestId.toLong() shl 32) or (0xffffffffL and this.toLong())
+  return indexingRequestId.toLong().shl(32) + this
 }
 
 @ApiStatus.Internal

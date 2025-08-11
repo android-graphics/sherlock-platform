@@ -1,4 +1,4 @@
-from typing import Final
+from typing_extensions import Final
 
 XK_kra: Final = 0x3A2
 XK_kappa: Final = 0x3A2

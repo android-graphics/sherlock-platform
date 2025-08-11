@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
 /**
@@ -40,7 +39,12 @@ internal object PreferContextualCallablesWeigher {
     fun addWeight(lookupElement: LookupElement, symbol: KaCallableSymbol, contextualSymbolsCache: WeighingContext.ContextualSymbolsCache) {
         if (symbol !is KaNamedSymbol || symbol.name !in contextualSymbolsCache) return
 
-        val symbolsToCheck = symbol.allOverriddenSymbolsWithSelf
+        val symbolsToCheck = sequence {
+            yield(symbol)
+
+            // compute and check overridden symbols only if `symbol` is not suitable
+            yieldAll(symbol.allOverriddenSymbols)
+        }
 
         lookupElement.isContextualCallable = symbolsToCheck.any { contextualSymbolsCache.symbolIsPresentInContext(it) }
     }

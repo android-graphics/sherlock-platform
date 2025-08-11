@@ -97,8 +97,9 @@ public class GraphDataInputImpl implements GraphDataInput {
     return myDelegate.readLine();
   }
 
+  @NotNull
   @Override
-  public @NotNull String readUTF() throws IOException {
+  public String readUTF() throws IOException {
     return IOUtil.readUTF(myDelegate);
   }
 

@@ -11,8 +11,9 @@ import java.util.List;
 
 @ApiStatus.Experimental
 public interface PyAstImportStatement extends PyAstImportStatementBase, PyAstImplicitImportNameDefiner {
+  @NotNull
   @Override
-  default @NotNull List<String> getFullyQualifiedObjectNames() {
+  default List<String> getFullyQualifiedObjectNames() {
     return getImportElementNames(getImportElements());
   }
 
@@ -21,7 +22,8 @@ public interface PyAstImportStatement extends PyAstImportStatementBase, PyAstImp
    * @param elements import elements
    * @return list of qualified names
    */
-  static @NotNull List<String> getImportElementNames(final PyAstImportElement @NotNull ... elements) {
+  @NotNull
+  static List<String> getImportElementNames(final PyAstImportElement @NotNull ... elements) {
     final List<String> result = new ArrayList<>(elements.length);
     for (final PyAstImportElement element : elements) {
       final QualifiedName qName = element.getImportedQName();

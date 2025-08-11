@@ -1,11 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeEditor.printing;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
 public final class LineWrapper {
   public static IntList calcBreakOffsets(char[] text, int startOffset, int endOffset, boolean lineStart, double x, double clipX,
                                          WidthProvider widthProvider) {
@@ -68,8 +66,7 @@ public final class LineWrapper {
     return endOffset;
   }
 
-  @ApiStatus.Internal
-  public interface WidthProvider {
+  interface WidthProvider {
     double getWidth(char[] text, int start, int count, double x);
   }
 }

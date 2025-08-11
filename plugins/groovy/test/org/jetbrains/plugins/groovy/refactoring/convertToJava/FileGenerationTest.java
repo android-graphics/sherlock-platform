@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -15,7 +16,7 @@ public class FileGenerationTest extends LightGroovyTestCase {
   private void doTest() {
     final String testName = getTestName(true);
     final PsiFile file = myFixture.configureByFile(testName + ".groovy");
-    assertInstanceOf(file, GroovyFile.class);
+    UsefulTestCase.assertInstanceOf(file, GroovyFile.class);
 
     new ConvertToJavaProcessor(getProject(), (GroovyFile)file).run();
 
@@ -105,16 +106,16 @@ public class FileGenerationTest extends LightGroovyTestCase {
 
   public void testReferenceExpressionsToClass() {
     myFixture.addClass("""
+
                          package foo;
-                         
-                         public enum A {
-                           Const
-                         }
-                         """);
+
+public enum A {
+  Const
+}""");
     doTest();
   }
 
-  public void testTupleInReturn() {doTest(); }
+public void testTupleInReturn() {doTest(); }
 
   public void testStaticMethods() { doTest(); }
 
@@ -138,6 +139,8 @@ public class FileGenerationTest extends LightGroovyTestCase {
 
   @Override
   public final String getBasePath() {
-    return TestUtils.getTestDataPath() + "refactoring/convertGroovyToJava/file";
+    return basePath;
   }
+
+  private final String basePath = TestUtils.getTestDataPath() + "refactoring/convertGroovyToJava/file";
 }

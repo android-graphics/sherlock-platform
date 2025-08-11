@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
@@ -17,10 +17,8 @@ import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Collection;
-import java.util.Set;
 
 
 public class ProjectFileIndexFacade extends FileIndexFacade {
@@ -36,7 +34,7 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
-  public boolean isInContent(final @NotNull VirtualFile file) {
+  public boolean isInContent(@NotNull final VirtualFile file) {
     return myFileIndex.isInContent(file);
   }
 
@@ -66,14 +64,8 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
-  public boolean isExcludedFile(final @NotNull VirtualFile file) {
+  public boolean isExcludedFile(@NotNull final VirtualFile file) {
     return myFileIndex.isExcluded(file);
-  }
-  
-  @ApiStatus.Internal
-  @Override
-  public boolean isUnderSourceRootOfType(@NotNull VirtualFile file, @NotNull Set<?> rootTypes) {
-    return myFileIndex.isUnderSourceRootOfType(file, (Set<? extends JpsModuleSourceRootType<?>>)rootTypes);
   }
 
   @Override
@@ -81,13 +73,14 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
     return myFileIndex.isUnderIgnored(file);
   }
 
+  @Nullable
   @Override
-  public @Nullable Module getModuleForFile(@NotNull VirtualFile file) {
+  public Module getModuleForFile(@NotNull VirtualFile file) {
     return myFileIndex.getModuleForFile(file);
   }
 
   @Override
-  public boolean isValidAncestor(final @NotNull VirtualFile baseDir, @NotNull VirtualFile childDir) {
+  public boolean isValidAncestor(@NotNull final VirtualFile baseDir, @NotNull VirtualFile childDir) {
     if (!childDir.isDirectory()) {
       childDir = childDir.getParent();
     }
@@ -100,13 +93,15 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull ModificationTracker getRootModificationTracker() {
+  public ModificationTracker getRootModificationTracker() {
     return ProjectRootManager.getInstance(myProject);
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions() {
+  public Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions() {
     return ModuleManager.getInstance(myProject).getUnloadedModuleDescriptions();
   }
 

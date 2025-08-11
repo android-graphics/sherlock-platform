@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.gant.ant;
 
 import com.intellij.lang.ant.AntIntrospector;
@@ -29,12 +29,13 @@ final class AntBuilderMethod extends LightMethodBuilder {
     myFile = file;
     myAntClass = antClass;
     setModifiers(PsiModifier.PUBLIC);
-    setBaseIcon(AntIcons.AntTask);
+    setBaseIcon(AntIcons.Task);
     setMethodReturnType(() -> PsiType.getJavaLangObject(getManager(), getResolveScope()));
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getNavigationElement() {
+  public PsiElement getNavigationElement() {
     if (myAntClass != null) {
       final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(myAntClass.getName(), myFile.getResolveScope());
       if (psiClass != null) {
@@ -70,12 +71,13 @@ final class AntBuilderMethod extends LightMethodBuilder {
     return true;
   }
 
-  static @NotNull List<LightMethodBuilder> methods(@NotNull PsiFile file,
-                                                   @NotNull String name,
-                                                   @Nullable Class<?> antClass,
-                                                   @NotNull PsiType mapType,
-                                                   @NotNull PsiType stringType,
-                                                   @NotNull PsiType closureType) {
+  @NotNull
+  static List<LightMethodBuilder> methods(@NotNull PsiFile file,
+                                          @NotNull String name,
+                                          @Nullable Class<?> antClass,
+                                          @NotNull PsiType mapType,
+                                          @NotNull PsiType stringType,
+                                          @NotNull PsiType closureType) {
     // (Map, String, Closure)
     // (Map, String)
     AntBuilderMethod method = new AntBuilderMethod(file, name, antClass);

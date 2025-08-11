@@ -25,15 +25,9 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import java.util.*;
 
 /**
- * Deprecated.
- * Use {@link org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator} instead.
- * <p>
- * Extension point for customizing maven module import process.
- * @deprecated MavenImporter is a part of the legacy import mechanism, which was deprecated and removed from the Maven plugin.
- * MavenWorkspaceConfigurator is the new alternative.
+ * Extension point for customization maven module import process.
  */
 @SuppressWarnings("DeprecatedIsStillUsed")
-@Deprecated
 public abstract class MavenImporter {
   public static final ExtensionPointName<MavenImporter> EXTENSION_POINT_NAME = ExtensionPointName.create("org.jetbrains.idea.maven.importer");
 

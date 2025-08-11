@@ -13,7 +13,6 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.testFramework.rethrowLoggedErrorsIn
 import com.intellij.util.IdempotenceChecker
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
@@ -167,7 +166,7 @@ class JavaPsiTest : LightJavaCodeInsightFixtureTestCase() {
     assert(values[10] == "\n\t\"\'\\")
   }
 
-  fun testIdempotenceCheckerUnderstandsTypeEquivalence(): Unit = rethrowLoggedErrorsIn {
+  fun testIdempotenceCheckerUnderstandsTypeEquivalence() {
     val immediate = elementFactory.createType(myFixture.findClass(String::class.java.name), PsiSubstitutor.EMPTY)
     val ref = elementFactory.createTypeFromText(String::class.java.name, null)
     assert(immediate == ref)

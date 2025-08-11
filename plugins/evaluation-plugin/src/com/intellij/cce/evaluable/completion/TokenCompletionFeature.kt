@@ -16,7 +16,7 @@ import com.intellij.openapi.project.Project
 
 class TokenCompletionFeature : EvaluableFeatureBase<CompletionStrategy>("token-completion") {
 
-  override fun getGenerateActionsProcessor(strategy: CompletionStrategy, project: Project): GenerateActionsProcessor =
+  override fun getGenerateActionsProcessor(strategy: CompletionStrategy): GenerateActionsProcessor =
     CompletionGenerateActionsProcessor(strategy)
 
   override fun getFeatureInvoker(project: Project, language: Language, strategy: CompletionStrategy): FeatureInvoker =

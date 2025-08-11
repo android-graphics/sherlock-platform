@@ -30,8 +30,10 @@ import java.util.*;
 
 
 public class PyBlockEvaluator {
-  private final @NotNull PyEvaluationResult myEvaluationResult = new PyEvaluationResult();
-  private final @NotNull PyEvaluationContext myContext;
+  @NotNull
+  private final PyEvaluationResult myEvaluationResult = new PyEvaluationResult();
+  @NotNull
+  private final PyEvaluationContext myContext;
   private final Set<PyFile> myVisitedFiles;
   private final Set<String> myDeclarationsToTrack = new HashSet<>();
   private String myCurrentFilePath;
@@ -43,7 +45,7 @@ public class PyBlockEvaluator {
    *                          for more info
    * @see PyEvaluationContext
    */
-  public PyBlockEvaluator(final @NotNull PyEvaluationContext evaluationContext) {
+  public PyBlockEvaluator(@NotNull final PyEvaluationContext evaluationContext) {
     this(new HashSet<>(), evaluationContext);
   }
 
@@ -54,7 +56,7 @@ public class PyBlockEvaluator {
     this(new PyEvaluationContext());
   }
 
-  private PyBlockEvaluator(final @NotNull Set<PyFile> visitedFiles, final @NotNull PyEvaluationContext evaluationContext) {
+  private PyBlockEvaluator(@NotNull final Set<PyFile> visitedFiles, @NotNull final PyEvaluationContext evaluationContext) {
     myVisitedFiles = visitedFiles;
     myContext = evaluationContext;
   }
@@ -118,17 +120,20 @@ public class PyBlockEvaluator {
     return myEvaluationResult.myNamespace.get(name);
   }
 
-  public @Nullable String getValueAsString(String name) {
+  @Nullable
+  public String getValueAsString(String name) {
     Object value = myEvaluationResult.myNamespace.get(name);
     return value instanceof String ? (String)value : null;
   }
 
-  public @Nullable List getValueAsList(String name) {
+  @Nullable
+  public List getValueAsList(String name) {
     Object value = myEvaluationResult.myNamespace.get(name);
     return value instanceof List ? (List)value : null;
   }
 
-  public @NotNull List<String> getValueAsStringList(String name) {
+  @NotNull
+  public List<String> getValueAsStringList(String name) {
     Object value = myEvaluationResult.myNamespace.get(name);
     if (value instanceof List valueList) {
       for (Object o : valueList) {
@@ -157,7 +162,8 @@ public class PyBlockEvaluator {
     myEvaluateCollectionItems = evaluateCollectionItems;
   }
 
-  public @NotNull List<PyExpression> getDeclarations(final @NotNull String name) {
+  @NotNull
+  public List<PyExpression> getDeclarations(@NotNull final String name) {
     return myEvaluationResult.getDeclarations(name);
   }
 
@@ -165,7 +171,8 @@ public class PyBlockEvaluator {
    * @return so-called context. You may pass it to any instance of {@link PyBlockEvaluator}
    * to make instances share their cache
    */
-  public @NotNull PyEvaluationContext getContext() {
+  @NotNull
+  public PyEvaluationContext getContext() {
     return myContext;
   }
 

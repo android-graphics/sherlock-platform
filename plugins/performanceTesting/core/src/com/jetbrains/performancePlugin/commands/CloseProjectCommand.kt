@@ -1,7 +1,6 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
@@ -23,9 +22,7 @@ class CloseProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAda
       // prevent the script from stopping on project close
       context.setProject(null)
 
-      writeIntentReadAction {
-        ProjectManager.getInstance().closeAndDispose(project)
-      }
+      ProjectManager.getInstance().closeAndDispose(project)
     }
   }
 }

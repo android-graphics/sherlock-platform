@@ -1,6 +1,0 @@
-// INPLACE_VARIABLE_NAME: function
-class A
-
-fun test() {
-    val function = A::toString
-}

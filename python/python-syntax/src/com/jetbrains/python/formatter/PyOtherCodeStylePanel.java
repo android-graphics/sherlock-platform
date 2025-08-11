@@ -9,7 +9,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.ui.PresentableEnumUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.formatter.PyCodeStyleSettings.DictAlignment;
@@ -20,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 
 public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
@@ -29,17 +30,27 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
   private JBCheckBox myUseContinuationIndentForParameters;
   private JBCheckBox myUseContinuationIndentForArguments;
   private JBCheckBox myUseContinuationIndentForCollectionsAndComprehensions;
-  private ComboBox<DictAlignment> myDictAlignmentCombo;
+  private ComboBox myDictAlignmentCombo;
   private JPanel myPreviewPanel;
-  private JBCheckBox myFormatInjectedFragments;
-  private JBCheckBox myAddIndentInsideInjections;
 
   protected PyOtherCodeStylePanel(CodeStyleSettings settings) {
     super(PythonLanguage.getInstance(), null, settings);
     addPanelToWatch(myPanel);
     installPreviewPanel(myPreviewPanel);
 
-    PresentableEnumUtil.fill(myDictAlignmentCombo, DictAlignment.class);
+    for (DictAlignment alignment : DictAlignment.values()) {
+      //noinspection unchecked
+      myDictAlignmentCombo.addItem(alignment);
+    }
+
+    myDictAlignmentCombo.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          somethingChanged();
+        }
+      }
+    });
 
     myAddTrailingBlankLineCheckbox.addActionListener(new ActionListener() {
       @Override
@@ -61,20 +72,6 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
         somethingChanged();
       }
     });
-
-    myFormatInjectedFragments.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        somethingChanged();
-      }
-    });
-
-    myAddIndentInsideInjections.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        somethingChanged();
-      }
-    });
   }
 
   @Override
@@ -87,8 +84,9 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     return 80;
   }
 
+  @NotNull
   @Override
-  protected @NotNull FileType getFileType() {
+  protected FileType getFileType() {
     return PythonFileType.INSTANCE;
   }
 
@@ -110,8 +108,6 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     myUseContinuationIndentForParameters.setSelected(pySettings.USE_CONTINUATION_INDENT_FOR_PARAMETERS);
     myUseContinuationIndentForArguments.setSelected(pySettings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS);
     myUseContinuationIndentForCollectionsAndComprehensions.setSelected(pySettings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS);
-    myFormatInjectedFragments.setSelected(pySettings.FORMAT_INJECTED_FRAGMENTS);
-    myAddIndentInsideInjections.setSelected(pySettings.ADD_INDENT_INSIDE_INJECTIONS);
   }
 
   @Override
@@ -122,8 +118,6 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     customSettings.USE_CONTINUATION_INDENT_FOR_PARAMETERS = useContinuationIndentForParameters();
     customSettings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS = useContinuationIndentForArguments();
     customSettings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = useContinuationIndentForCollectionLiterals();
-    customSettings.FORMAT_INJECTED_FRAGMENTS = formatInjectedFragments();
-    customSettings.ADD_INDENT_INSIDE_INJECTIONS = addIndentInsideInjections();
   }
 
   @Override
@@ -133,9 +127,7 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
            customSettings.BLANK_LINE_AT_FILE_END != ensureTrailingBlankLine() || 
            customSettings.USE_CONTINUATION_INDENT_FOR_PARAMETERS != useContinuationIndentForParameters() ||
            customSettings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS != useContinuationIndentForArguments() ||
-           customSettings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS != useContinuationIndentForCollectionLiterals() ||
-           customSettings.FORMAT_INJECTED_FRAGMENTS != formatInjectedFragments() ||
-           customSettings.ADD_INDENT_INSIDE_INJECTIONS != addIndentInsideInjections();
+           customSettings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS != useContinuationIndentForCollectionLiterals();
   }
 
   @Override
@@ -143,7 +135,8 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     return myPanel;
   }
 
-  private static @NotNull PyCodeStyleSettings getCustomSettings(@NotNull CodeStyleSettings settings) {
+  @NotNull
+  private static PyCodeStyleSettings getCustomSettings(@NotNull CodeStyleSettings settings) {
     return settings.getCustomSettings(PyCodeStyleSettings.class);
   }
 
@@ -161,14 +154,6 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
 
   private boolean useContinuationIndentForArguments() {
     return myUseContinuationIndentForArguments.isSelected();
-  }
-
-  private boolean formatInjectedFragments() {
-    return myFormatInjectedFragments.isSelected();
-  }
-
-  private boolean addIndentInsideInjections() {
-    return myAddIndentInsideInjections.isSelected();
   }
 
   protected boolean useContinuationIndentForCollectionLiterals() {

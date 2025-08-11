@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.move.moveInner;
 
@@ -28,8 +28,9 @@ class MoveInnerViewDescriptor implements UsageViewDescriptor {
     return JavaRefactoringBundle.message("move.inner.class.to.be.moved");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getCodeReferencesText(int usagesCount, int filesCount) {
+  public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 }

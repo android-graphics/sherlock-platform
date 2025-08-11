@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.integrations.maven;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,7 +38,8 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 final class ImportMavenRepositoriesTask {
-  private final @NotNull MavenRemoteRepository mavenCentralRemoteRepository;
+  @NotNull
+  private final MavenRemoteRepository mavenCentralRemoteRepository;
 
   private final Project myProject;
 
@@ -104,8 +105,9 @@ final class ImportMavenRepositoriesTask {
     MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList();
   }
 
-  private static @NotNull Collection<? extends GrClosableBlock> findClosableBlocks(final @NotNull PsiElement element,
-                                                                                   final String @NotNull ... blockNames) {
+  @NotNull
+  private static Collection<? extends GrClosableBlock> findClosableBlocks(@NotNull final PsiElement element,
+                                                                          final String @NotNull ... blockNames) {
     List<GrMethodCall> methodCalls = PsiTreeUtil.getChildrenOfTypeAsList(element, GrMethodCall.class);
     return ContainerUtil.mapNotNull(methodCalls, call -> {
       if (call == null || call.getClosureArguments().length != 1) return null;
@@ -115,7 +117,8 @@ final class ImportMavenRepositoriesTask {
     });
   }
 
-  private @NotNull Collection<? extends MavenRemoteRepository> findMavenRemoteRepositories(@Nullable GrClosableBlock repositoriesBlock) {
+  @NotNull
+  private Collection<? extends MavenRemoteRepository> findMavenRemoteRepositories(@Nullable GrClosableBlock repositoriesBlock) {
     Set<MavenRemoteRepository> myRemoteRepositories = new HashSet<>();
     for (GrMethodCall repo : PsiTreeUtil
       .getChildrenOfTypeAsList(repositoriesBlock, GrMethodCall.class)) {
@@ -174,7 +177,8 @@ final class ImportMavenRepositoriesTask {
     return myRemoteRepositories;
   }
 
-  private static @Nullable URI resolveUriFromSimpleExpression(@Nullable GrExpression expression) {
+  @Nullable
+  private static URI resolveUriFromSimpleExpression(@Nullable GrExpression expression) {
     if (expression == null) return null;
 
     try {

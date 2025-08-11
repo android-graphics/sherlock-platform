@@ -30,9 +30,10 @@ public final class PyStructuredDocstringFormatter {
   private PyStructuredDocstringFormatter() {
   }
 
-  public static @Nullable PyDocumentationBuilder.DocstringFormatterRequest formatDocstring(@NotNull PsiElement element,
-                                                                                           @NotNull PyDocumentationBuilder.DocstringFormatterRequest docstringFormatterRequest,
-                                                                                           @NotNull List<String> flags) {
+  @Nullable
+  public static PyDocumentationBuilder.DocstringFormatterRequest formatDocstring(@NotNull PsiElement element,
+                                                                                 @NotNull PyDocumentationBuilder.DocstringFormatterRequest docstringFormatterRequest,
+                                                                                 @NotNull List<String> flags) {
     Module module = DocStringParser.getModuleForElement(element);
     if (module == null) return new PyDocumentationBuilder.DocstringFormatterRequest();
 
@@ -59,10 +60,11 @@ public final class PyStructuredDocstringFormatter {
     }
   }
 
-  private static @NotNull String runDocstringFormatterService(@NotNull List<String> flags,
-                                                              @NotNull Module module,
-                                                              @NotNull DocStringFormat format,
-                                                              @NotNull String docstring) {
+  @NotNull
+  private static String runDocstringFormatterService(@NotNull List<String> flags,
+                                                     @NotNull Module module,
+                                                     @NotNull DocStringFormat format,
+                                                     @NotNull String docstring) {
     String result = null;
     try {
       result = ApplicationUtil.runWithCheckCanceled(

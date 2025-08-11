@@ -1,4 +1,0 @@
-----------IdeDelegateTrustManager----------
-----------RESPONSE----------
-1
-----------ERROR----------

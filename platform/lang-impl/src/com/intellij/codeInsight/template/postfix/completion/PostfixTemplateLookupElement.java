@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -13,9 +13,12 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public class PostfixTemplateLookupElement extends CustomLiveTemplateLookupElement {
-  private final @NotNull PostfixTemplate myTemplate;
-  private final @NotNull String myTemplateKey;
-  private final @NotNull PostfixTemplateProvider myProvider;
+  @NotNull
+  private final PostfixTemplate myTemplate;
+  @NotNull
+  private final String myTemplateKey;
+  @NotNull
+  private final PostfixTemplateProvider myProvider;
 
 
   public PostfixTemplateLookupElement(@NotNull PostfixLiveTemplate liveTemplate,
@@ -29,11 +32,13 @@ public class PostfixTemplateLookupElement extends CustomLiveTemplateLookupElemen
     myProvider = provider;
   }
 
-  public @NotNull PostfixTemplate getPostfixTemplate() {
+  @NotNull
+  public PostfixTemplate getPostfixTemplate() {
     return myTemplate;
   }
 
-  public @NotNull PostfixTemplateProvider getProvider() {
+  @NotNull
+  public PostfixTemplateProvider getProvider() {
     return myProvider;
   }
 

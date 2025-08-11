@@ -1,4 +1,3 @@
-// PRIORITY: HIGH
 // AFTER-WARNING: The expression is unused
 
 import A.*

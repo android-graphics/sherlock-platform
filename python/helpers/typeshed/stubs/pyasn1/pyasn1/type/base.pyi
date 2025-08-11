@@ -1,5 +1,6 @@
 from _typeshed import Incomplete, Unused
-from typing import NoReturn, final, type_check_only
+from typing import NoReturn, type_check_only
+from typing_extensions import final
 
 from pyasn1.type import constraint, namedtype
 from pyasn1.type.tag import TagSet
@@ -64,7 +65,7 @@ class NoValue:
     __imul__ = list.__imul__
     __index__ = int.__index__
     # self instead of cls
-    __init_subclass__ = plug  # pyright: ignore[reportAssignmentType]
+    __init_subclass__ = plug  # pyright: ignore[reportGeneralTypeIssues]
     __int__ = int.__int__
     __invert__ = int.__invert__
     __ior__ = plug

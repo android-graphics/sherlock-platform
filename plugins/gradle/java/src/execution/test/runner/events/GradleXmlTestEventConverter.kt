@@ -18,7 +18,7 @@ object GradleXmlTestEventConverter {
     val className = eventXml.testClassName
     val methodName = eventXml.testName
     val displayName = eventXml.testDisplayName
-    return TestOperationDescriptor(displayName, eventTime, suiteName, className, methodName)
+    return TestOperationDescriptorImpl(displayName, eventTime, suiteName, className, methodName)
   }
 
   @JvmStatic
@@ -28,10 +28,10 @@ object GradleXmlTestEventConverter {
     val endTime = eventXml.eventTestResultEndTime.toLong()
     val resultType = TestEventResult.fromValue(eventXml.testEventResultType)
     if (resultType == TestEventResult.SUCCESS) {
-      return SuccessResult(startTime, endTime, false)
+      return SuccessResultImpl(startTime, endTime, false)
     }
     if (resultType == TestEventResult.SKIPPED) {
-      return SkippedResult(startTime, endTime)
+      return SkippedResultImpl(startTime, endTime)
     }
     if (resultType == TestEventResult.FAILURE) {
       val failureType = eventXml.eventTestResultFailureType
@@ -54,22 +54,22 @@ object GradleXmlTestEventConverter {
             expectedFilePath, actualFilePath
           )
         }
-        return FailureResult(startTime, endTime, listOf(failure))
+        return FailureResultImpl(startTime, endTime, listOf(failure))
       }
       if ("assertionFailed" == failureType) {
         val failure = TestFailure(exceptionName, message, stackTrace, description, emptyList(), false)
-        return FailureResult(startTime, endTime, listOf(failure))
+        return FailureResultImpl(startTime, endTime, listOf(failure))
       }
       if ("error" == failureType) {
         val failure = TestFailure(exceptionName, message, stackTrace, description, emptyList(), true)
-        return FailureResult(startTime, endTime, listOf(failure))
+        return FailureResultImpl(startTime, endTime, listOf(failure))
       }
       LOG.error("Undefined test failure type: $failureType")
-      val failure = Failure(message, stackTrace, emptyList())
-      return FailureResult(startTime, endTime, listOf(failure))
+      val failure = FailureImpl(message, stackTrace, emptyList())
+      return FailureResultImpl(startTime, endTime, listOf(failure))
     }
     LOG.error("Undefined test result type: $resultType")
-    return OperationResult(startTime, endTime)
+    return DefaultOperationResult(startTime, endTime)
   }
 
   @JvmStatic

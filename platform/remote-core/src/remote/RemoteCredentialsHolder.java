@@ -6,6 +6,7 @@ import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -21,6 +22,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
 
   public static final String HOST = "HOST";
   public static final String PORT = "PORT";
+  public static final String ANONYMOUS = "ANONYMOUS";
   public static final String USERNAME = "USERNAME";
   public static final String PASSWORD = "PASSWORD";
   public static final String USE_KEY_PAIR = "USE_KEY_PAIR";
@@ -192,6 +194,29 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     myUserName = StringUtil.isEmpty(userName) ? null : userName;
   }
 
+  private void setSerializedPassword(@Nullable String serializedPassword) {
+    if (!StringUtil.isEmpty(serializedPassword)) {
+      //noinspection deprecation
+      myPassword = PasswordUtil.decodePassword(serializedPassword);
+      myStorePassword = true;
+    }
+    else {
+      myPassword = null;
+    }
+  }
+
+  private void setSerializedPassphrase(@Nullable String serializedPassphrase) {
+    if (!StringUtil.isEmpty(serializedPassphrase)) {
+      //noinspection deprecation
+      myPassphrase = PasswordUtil.decodePassword(serializedPassphrase);
+      myStorePassphrase = true;
+    }
+    else {
+      myPassphrase = "";
+      myStorePassphrase = false;
+    }
+  }
+
   public void copyRemoteCredentialsTo(@NotNull MutableRemoteCredentials to) {
     copyRemoteCredentials(this, to);
   }
@@ -218,12 +243,14 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     setHost(element.getAttributeValue(HOST));
     setLiteralPort(element.getAttributeValue(PORT));
     setSerializedUserName(element.getAttributeValue(USERNAME));
+    setSerializedPassword(element.getAttributeValue(PASSWORD));
     setPrivateKeyFile(StringUtil.nullize(element.getAttributeValue(PRIVATE_KEY_FILE)));
+    setSerializedPassphrase(element.getAttributeValue(PASSPHRASE));
     // true by default for all IDEs except DataGrip due to historical reasons
     setOpenSshConfigUsageForced(Boolean.parseBoolean(StringUtil.defaultIfEmpty(element.getAttributeValue(USE_OPENSSH_CONFIG),
                                                                                String.valueOf(!PlatformUtils.isDataGrip()))));
-    var useKeyPair = Boolean.parseBoolean(element.getAttributeValue(USE_KEY_PAIR));
-    var useAuthAgent = Boolean.parseBoolean(element.getAttributeValue(USE_AUTH_AGENT));
+    boolean useKeyPair = Boolean.parseBoolean(element.getAttributeValue(USE_KEY_PAIR));
+    boolean useAuthAgent = Boolean.parseBoolean(element.getAttributeValue(USE_AUTH_AGENT));
     if (useKeyPair) {
       myAuthType = AuthType.KEY_PAIR;
     }
@@ -235,10 +262,10 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
       myAuthType = AuthType.PASSWORD;
     }
     // try to load credentials from PasswordSafe
-    var attributes = createAttributes(false);
-    var credentials = PasswordSafe.getInstance().get(attributes);
+    CredentialAttributes attributes = createAttributes(false);
+    Credentials credentials = PasswordSafe.getInstance().get(attributes);
     if (credentials != null) {
-      var memoryOnly = PasswordSafe.getInstance().isPasswordStoredOnlyInMemory(attributes, credentials);
+      final boolean memoryOnly = PasswordSafe.getInstance().isPasswordStoredOnlyInMemory(attributes, credentials);
       if (myAuthType == AuthType.KEY_PAIR) {
         setPassword(null);
         setStorePassword(false);
@@ -259,6 +286,12 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
         setStorePassphrase(false);
       }
     }
+
+    boolean isAnonymous = Boolean.parseBoolean(element.getAttributeValue(ANONYMOUS));
+    if (isAnonymous) {
+      setSerializedUserName("anonymous");
+      setSerializedPassword("user@example.com");
+    }
   }
 
   /**
@@ -277,10 +310,10 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     // the old `USE_AUTH_AGENT` attribute is used to avoid settings migration
     rootElement.setAttribute(USE_AUTH_AGENT, Boolean.toString(myAuthType == AuthType.OPEN_SSH));
 
-    var memoryOnly = myAuthType == AuthType.KEY_PAIR && !isStorePassphrase() ||
-                     myAuthType == AuthType.PASSWORD && !isStorePassword() ||
-                     myAuthType == AuthType.OPEN_SSH;
-    var password = switch (myAuthType) {
+    boolean memoryOnly = myAuthType == AuthType.KEY_PAIR && !isStorePassphrase() ||
+                         myAuthType == AuthType.PASSWORD && !isStorePassword() ||
+                         myAuthType == AuthType.OPEN_SSH;
+    String password = switch (myAuthType) {
       case KEY_PAIR -> getPassphrase();
       case PASSWORD -> getPassword();
       default -> null;
@@ -292,8 +325,8 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   }
 
   private CredentialAttributes createAttributes(boolean memoryOnly) {
-    var serviceName = SERVICE_NAME_PREFIX + getCredentialsString(this) + '(' + CREDENTIAL_ATTRIBUTES_QUALIFIERS.get(myAuthType) + ')';
-    return new CredentialAttributes(serviceName, getUserName(), memoryOnly);
+    String serviceName = SERVICE_NAME_PREFIX + getCredentialsString(this) + '(' + CREDENTIAL_ATTRIBUTES_QUALIFIERS.get(myAuthType) + ')';
+    return new CredentialAttributes(serviceName, getUserName(), null, memoryOnly);
   }
 
   @Override
@@ -301,7 +334,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    var holder = (RemoteCredentialsHolder)o;
+    RemoteCredentialsHolder holder = (RemoteCredentialsHolder)o;
 
     if (!myLiteralPort.equals(holder.myLiteralPort)) return false;
     if (myStorePassword != holder.myStorePassword) return false;

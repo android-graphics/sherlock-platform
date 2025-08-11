@@ -53,8 +53,9 @@ public class ChangeCompareModeGroup extends ComboBoxAction implements ShortcutPr
     return ActionUpdateThread.EDT;
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     final JLabel label = new JLabel(DiffBundle.message("compare.by"));
     label.setDisplayedMnemonicIndex(0);
     myButton = (JButton)super.createCustomComponent(presentation, place).getComponent(0);
@@ -63,8 +64,9 @@ public class ChangeCompareModeGroup extends ComboBoxAction implements ShortcutPr
       .withBorder(JBUI.Borders.empty(2, 6, 2, 0));
   }
 
+  @NotNull
   @Override
-  protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
+  protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
     return myGroup;
   }
 

@@ -8,7 +8,6 @@ import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +21,6 @@ import java.net.URL;
 /**
  * @author Alexander Lobas
  */
-@ApiStatus.Internal
 public final class HiDPIPluginLogoIcon extends PluginLogoIcon {
   private static Icon cachedErrorLogo2x;
 

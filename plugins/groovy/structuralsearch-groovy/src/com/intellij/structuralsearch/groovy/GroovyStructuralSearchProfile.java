@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.groovy;
 
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -32,8 +32,9 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
     return new String[]{"_$_____"};
   }
 
+  @NotNull
   @Override
-  public @NotNull List<PatternContext> getPatternContexts() {
+  public List<PatternContext> getPatternContexts() {
     return PATTERN_CONTEXTS;
   }
 
@@ -42,8 +43,9 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
     return language == GroovyLanguage.INSTANCE;
   }
 
+  @NotNull
   @Override
-  protected @NotNull TokenSet getVariableDelimiters() {
+  protected TokenSet getVariableDelimiters() {
     return VARIABLE_DELIMITERS;
   }
 
@@ -52,13 +54,15 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
     return new GroovyCodeFragment(project, text);
   }
 
+  @NotNull
   @Override
-  public @NotNull Class<? extends TemplateContextType> getTemplateContextTypeClass() {
+  public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
     return GroovyTemplateContextType.Generic.class;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getContext(@NotNull String pattern, @Nullable Language language, String contextId) {
+  public String getContext(@NotNull String pattern, @Nullable Language language, String contextId) {
     return CLASS_CONTEXT.getId().equals(contextId)
            ? "class AAAAA { " + PATTERN_PLACEHOLDER + " }"
            : PATTERN_PLACEHOLDER;

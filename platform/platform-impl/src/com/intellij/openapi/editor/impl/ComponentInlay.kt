@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.EditorEx
@@ -32,28 +31,14 @@ import kotlin.math.min
  */
 @Experimental
 internal object ComponentInlayManager {
-  fun <T : Component> add(
-    editor: Editor,
-    offset: Int,
-    properties: InlayProperties,
-    renderer: ComponentInlayRenderer<T>,
-  ): Inlay<ComponentInlayRenderer<T>>? {
-    val inlay = when (renderer.alignment) {
-      ComponentInlayAlignment.INLINE_COMPONENT -> {
-        editor.inlayModel.addInlineElement(offset, properties, renderer)
-      }
-      else -> {
-        editor.inlayModel.addBlockElement(offset, properties, renderer)
-      }
-    }
-
-    if (inlay != null) {
+  fun <T : Component> add(editor: Editor,
+                          offset: Int,
+                          properties: InlayProperties,
+                          renderer: ComponentInlayRenderer<T>): Inlay<ComponentInlayRenderer<T>>? =
+    editor.inlayModel.addBlockElement(offset, properties, renderer)?.also {
       @Suppress("UNCHECKED_CAST")
-      ComponentInlaysContainer.addInlay(inlay as Inlay<ComponentInlayRenderer<*>>)
+      ComponentInlaysContainer.addInlay(it as Inlay<ComponentInlayRenderer<*>>)
     }
-
-    return inlay
-  }
 }
 
 /**
@@ -224,8 +209,8 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     }
 
     // Step 1.2: Update all inlays in a single batch for performance reasons
-    // Do it as a write intent read action, because inlay callbacks may access the document model and acquire write intent read locks
-    WriteIntentReadAction.run<Throwable> {
+    // Do it as read action, because inlay callbacks may access document model
+    ReadAction.run<Throwable> {
       editor.inlayModel.execute(true) {
         for (inlay in inlays) {
           inlay.renderer.let {
@@ -261,19 +246,8 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
           component.isVisible = true
           val alignment = inlay.renderer.alignment
 
-          componentBounds.x = when (alignment) {
-            // x in inlay bounds contains left gap of content, which we do not need
-            ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN -> contentXInViewport
-            ComponentInlayAlignment.INLINE_COMPONENT -> editor.offsetToXY(inlay.offset).x
-            else -> 0
-          }
-          if (alignment == ComponentInlayAlignment.INLINE_COMPONENT) {
-            componentBounds.height = component.preferredSize.height
-          }
-
-          if (alignment == ComponentInlayAlignment.INLINE_COMPONENT) {
-            componentBounds.y = componentBounds.y + editor.lineHeight / 2 - componentBounds.height / 2
-          }
+          // x in inlay bounds contains left gap of content, which we do not need
+          componentBounds.x = if (alignment == ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN) contentXInViewport else 0
 
           if (alignment == ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH || alignment == ComponentInlayAlignment.FIT_CONTENT_WIDTH) {
             componentBounds.width = bounds.width

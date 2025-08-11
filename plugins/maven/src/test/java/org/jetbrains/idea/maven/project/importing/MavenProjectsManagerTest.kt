@@ -5,13 +5,11 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.actions.DeleteAction
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.actionSystem.CustomizedDataContext
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.LibraryOrderEntry
@@ -34,6 +32,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.project.actions.MavenModuleDeleteProvider
 import org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction
 import org.jetbrains.idea.maven.project.projectRoot.MavenModuleStructureExtension
+import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.junit.Test
 
 class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
@@ -127,7 +126,8 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   fun testDoNotScheduleResolveOfInvalidProjectsDeleted() = runBlocking {
     val called = BooleanArray(1)
     projectsManager.addProjectsTreeListener(object : MavenProjectsTree.Listener {
-      override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>) {
+      override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
+                                   nativeMavenProject: NativeMavenProjectHolder?) {
         called[0] = true
       }
     })
@@ -252,7 +252,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     assertModules("project")
     assertSources("project", "src/main/java")
     assertModuleLibDeps("project", "Maven: junit:junit:4.0")
-    edtWriteAction {
+    writeAction {
       val model = ModuleRootManager.getInstance(getModule("project")).getModifiableModel()
       val contentRoot = model.getContentEntries()[0]
       for (eachSourceFolders in contentRoot.getSourceFolders()) {
@@ -295,7 +295,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     val module = getModule("m")
     assertNotNull(module)
     assertFalse(projectsManager.isIgnored(projectsManager.findProject(m)!!))
-    edtWriteAction {
+    writeAction {
       ModuleManager.getInstance(project).disposeModule(module)
     }
     assertNull(ModuleManager.getInstance(project).findModuleByName("m"))
@@ -356,7 +356,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     val module = getModule("m")
     assertNotNull(module)
     assertFalse(projectsManager.isIgnored(projectsManager.findProject(m)!!))
-    edtWriteAction {
+    writeAction {
       ModuleDeleteProvider.detachModules(project, arrayOf(module))
     }
     assertNull(ModuleManager.getInstance(project).findModuleByName("m"))
@@ -400,9 +400,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     configConfirmationForYesAnswer()
     val action = DeleteAction()
     withContext(Dispatchers.EDT) {
-      writeIntentReadAction {
-        action.actionPerformed(TestActionEvent.createTestEvent(action, createTestModuleDataContext(module1)))
-      }
+      action.actionPerformed(TestActionEvent.createTestEvent(action, createTestModuleDataContext(module1)))
     }
     updateAllProjects()
     assertModuleModuleDeps("m2")
@@ -479,13 +477,12 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     UsefulTestCase.assertSize(1, projectsManager.getRootProjects())
     UsefulTestCase.assertEmpty(projectsManager.getIgnoredFilesPaths())
 
-    updateProjectPom("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     <packaging>pom</packaging>
                     """.trimIndent())
-    updateAllProjects()
     assertModules("project")
     UsefulTestCase.assertSize(1, projectsManager.getRootProjects())
     UsefulTestCase.assertEmpty(projectsManager.getIgnoredFilesPaths())
@@ -514,12 +511,11 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     assertModules("project", "project.main", "project.test")
     UsefulTestCase.assertSize(1, projectsManager.getRootProjects())
     UsefulTestCase.assertEmpty(projectsManager.getIgnoredFilesPaths())
-    updateProjectPom("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    updateAllProjects()
     assertModules("project")
     UsefulTestCase.assertSize(1, projectsManager.getRootProjects())
     UsefulTestCase.assertEmpty(projectsManager.getIgnoredFilesPaths())
@@ -538,10 +534,10 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     projectsManager.addProjectsTreeListener(object : MavenProjectsTree.Listener {
       override fun projectsUpdated(updated: List<Pair<MavenProject, MavenProjectChanges>>, deleted: List<MavenProject>) {
         for (each in updated) {
-          log.append("updated: ").append(each.first.displayName).append(" ")
+          log.append("updated: ").append(each.first.getDisplayName()).append(" ")
         }
         for (each in deleted) {
-          log.append("deleted: ").append(each.displayName).append(" ")
+          log.append("deleted: ").append(each.getDisplayName()).append(" ")
         }
       }
     })
@@ -568,7 +564,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
           </modules>
       </project>""".trimIndent())
 
-    val child1Pom = createProjectSubFile("maven-parent/child1/pom.xml", """
+    createProjectSubFile("maven-parent/child1/pom.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
       <project xmlns="http://maven.apache.org/POM/4.0.0"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -582,17 +578,14 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
           <artifactId>child1</artifactId>
       </project>
       """.trimIndent())
-    refreshFiles(listOf(mavenParentPom, child1Pom))
-    edtWriteAction { ModuleManager.getInstance(project).newModule("non-maven", JAVA_MODULE_ENTITY_TYPE_ID_NAME) }
+    writeAction { ModuleManager.getInstance(project).newModule("non-maven", JAVA_MODULE_ENTITY_TYPE_ID_NAME) }
     importProjectAsync(mavenParentPom)
     assertEquals(3, ModuleManager.getInstance(project).modules.size)
     configConfirmationForYesAnswer()
     val action = RemoveManagedFilesAction()
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        writeIntentReadAction {
-          action.actionPerformed(TestActionEvent.createTestEvent(action, createTestDataContext(mavenParentPom)))
-        }
+        action.actionPerformed(TestActionEvent.createTestEvent(action, createTestDataContext(mavenParentPom)))
       }
     }
     assertEquals(1, ModuleManager.getInstance(project).modules.size)
@@ -729,10 +722,17 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   companion object {
     private fun createTestModuleDataContext(vararg modules: Module): DataContext {
       val defaultContext = DataManager.getInstance().getDataContext()
-      return CustomizedDataContext.withSnapshot(defaultContext) { sink ->
-        sink[LangDataKeys.MODULE_CONTEXT_ARRAY] = modules
-        sink[ProjectView.UNLOADED_MODULES_CONTEXT_KEY] = listOf() // UnloadedModuleDescription
-        sink[PlatformDataKeys.DELETE_ELEMENT_PROVIDER] = MavenModuleDeleteProvider()
+      return DataContext { dataId: String? ->
+        if (LangDataKeys.MODULE_CONTEXT_ARRAY.`is`(dataId)) {
+          return@DataContext modules
+        }
+        if (ProjectView.UNLOADED_MODULES_CONTEXT_KEY.`is`(dataId)) {
+          return@DataContext listOf<Any>() // UnloadedModuleDescription
+        }
+        if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId)) {
+          return@DataContext MavenModuleDeleteProvider()
+        }
+        defaultContext.getData(dataId!!)
       }
     }
   }

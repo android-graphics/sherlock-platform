@@ -10,9 +10,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorComposite
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 class KeepTabOpenAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent) {
     val (window, composite) = getActionState(e) ?: return

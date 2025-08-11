@@ -25,7 +25,8 @@ internal class ConfigureIcsAction : DumbAwareAction() {
       var urlTextField: TextFieldWithBrowseButton by Delegates.notNull()
       val panel = panel {
         row(icsMessage("settings.upstream.url")) {
-          urlTextField = textFieldWithBrowseButton(FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(icsMessage("configure.ics.choose.local.repository.dialog.title")))
+          urlTextField = textFieldWithBrowseButton(browseDialogTitle = icsMessage("configure.ics.choose.local.repository.dialog.title"),
+                                                   fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
             .text(icsManager.repositoryManager.getUpstream() ?: "")
             .align(AlignX.FILL)
             .component

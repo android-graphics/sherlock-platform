@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.NotNullComputable;
@@ -48,18 +48,21 @@ public class GroovyMethodResultImpl extends GroovyResolveResultImpl implements G
     });
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiMethod getElement() {
+  public PsiMethod getElement() {
     return (PsiMethod)super.getElement();
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiSubstitutor getSubstitutor() {
+  public PsiSubstitutor getSubstitutor() {
     return mySubstitutorComputer.compute();
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiSubstitutor getPartialSubstitutor() {
+  public PsiSubstitutor getPartialSubstitutor() {
     return super.getSubstitutor();
   }
 

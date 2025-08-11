@@ -101,6 +101,7 @@ public abstract class JavaTestFramework implements JvmTestFramework {
         .computeWithAlternativeResolveEnabled((ThrowableComputable<T, Throwable>)() -> callable.call());
     }
     catch (IndexNotReadyException e) {
+      LOG.error(e);
       return defaultValue;
     }
   }
@@ -126,10 +127,6 @@ public abstract class JavaTestFramework implements JvmTestFramework {
   protected abstract boolean isTestClass(PsiClass clazz, boolean canBePotential);
 
   protected boolean isUnderTestSources(PsiClass clazz) {
-    return isUnderTestSources((PsiElement)clazz);
-  }
-
-  protected boolean isUnderTestSources(PsiElement clazz) {
     PsiFile psiFile = clazz.getContainingFile();
     VirtualFile vFile = psiFile.getVirtualFile();
     if (vFile == null) return false;

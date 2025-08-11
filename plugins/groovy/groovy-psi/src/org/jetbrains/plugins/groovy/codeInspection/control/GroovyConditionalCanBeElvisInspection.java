@@ -45,7 +45,8 @@ public final class GroovyConditionalCanBeElvisInspection extends BaseInspection 
   public LocalQuickFix buildFix(@NotNull PsiElement location) {
     return new PsiUpdateModCommandQuickFix() {
       @Override
-      public @NotNull String getFamilyName() {
+      @NotNull
+      public String getFamilyName() {
         return GroovyBundle.message("intention.family.name.convert.conditional.expression.to.elvis");
       }
 
@@ -180,8 +181,9 @@ public final class GroovyConditionalCanBeElvisInspection extends BaseInspection 
     return false;
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

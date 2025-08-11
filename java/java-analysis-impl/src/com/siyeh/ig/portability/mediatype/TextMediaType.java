@@ -71,7 +71,6 @@ public enum TextMediaType {
     this.contentType = contentType;
   }
 
-  @Override
   public String toString() {
     return contentType;
   }

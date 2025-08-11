@@ -18,13 +18,15 @@ public final class JpsProjectSerializationDataExtensionImpl extends JpsElementBa
     myBaseDirectory = baseDirectory;
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsProjectSerializationDataExtensionImpl createCopy() {
+  public JpsProjectSerializationDataExtensionImpl createCopy() {
     return new JpsProjectSerializationDataExtensionImpl(myBaseDirectory);
   }
 
+  @NotNull
   @Override
-  public @NotNull File getBaseDirectory() {
+  public File getBaseDirectory() {
     return myBaseDirectory.toFile();
   }
 }

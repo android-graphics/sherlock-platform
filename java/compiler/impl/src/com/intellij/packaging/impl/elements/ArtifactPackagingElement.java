@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.java.workspace.entities.ArtifactId;
@@ -30,7 +30,7 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
   private static final Logger LOG = Logger.getInstance(ArtifactPackagingElement.class);
   private final Project myProject;
   private ArtifactPointer myArtifactPointer;
-  public static final @NonNls String ARTIFACT_NAME_ATTRIBUTE = "artifact-name";
+  @NonNls public static final String ARTIFACT_NAME_ATTRIBUTE = "artifact-name";
 
   public ArtifactPackagingElement(@NotNull Project project) {
     super(ArtifactElementType.ARTIFACT_ELEMENT_TYPE);
@@ -66,7 +66,8 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
   }
 
   @Override
-  public @NotNull PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
+  @NotNull
+  public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DelegatedPackagingElementPresentation(new ArtifactElementPresentation(myArtifactPointer, context));
   }
 
@@ -96,11 +97,13 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
            && myArtifactPointer.equals(((ArtifactPackagingElement)element).myArtifactPointer);
   }
 
-  public @Nullable Artifact findArtifact(@NotNull PackagingElementResolvingContext context) {
+  @Nullable
+  public Artifact findArtifact(@NotNull PackagingElementResolvingContext context) {
     return myArtifactPointer != null ? myArtifactPointer.findArtifact(context.getArtifactModel()) : null;
   }
 
-  public @Nullable String getArtifactName() {
+  @Nullable
+  public String getArtifactName() {
     return myArtifactPointer != null ? myArtifactPointer.getArtifactName() : null;
   }
 

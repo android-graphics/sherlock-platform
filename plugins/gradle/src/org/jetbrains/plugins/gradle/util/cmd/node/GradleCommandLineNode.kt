@@ -6,8 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface GradleCommandLineNode {
 
-  val tokens: List<String>
-
   val text: String
-    get() = tokens.joinToString(" ")
+
+  val tokens: List<String>
 }

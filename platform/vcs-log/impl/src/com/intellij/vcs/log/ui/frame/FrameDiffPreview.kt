@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.ui.frame
 
 import com.intellij.diff.impl.DiffEditorViewer
-import com.intellij.diff.tools.combined.CombinedDiffRegistry
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.invokeLater
@@ -18,13 +17,11 @@ import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 import kotlin.math.roundToInt
 
-internal abstract class FrameDiffPreview(
-  val uiProperties: VcsLogUiProperties,
-  mainComponent: JComponent,
-  @NonNls splitterProportionKey: String,
-  defaultProportion: Float = 0.7f,
-  parentDisposable: Disposable,
-) : Disposable {
+internal abstract class FrameDiffPreview(uiProperties: VcsLogUiProperties,
+                                         mainComponent: JComponent,
+                                         @NonNls splitterProportionKey: String,
+                                         defaultProportion: Float = 0.7f,
+                                         parentDisposable: Disposable) : Disposable {
   private val previewDiffSplitter: Splitter = OnePixelSplitter(uiProperties[MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT],
                                                                splitterProportionKey, defaultProportion)
 
@@ -38,15 +35,14 @@ internal abstract class FrameDiffPreview(
 
     uiProperties.onPropertyChange(this) { p ->
       if (CommonUiProperties.SHOW_DIFF_PREVIEW == p) {
-        updateDiffPreviewState()
+        showDiffPreview(uiProperties[CommonUiProperties.SHOW_DIFF_PREVIEW])
       }
       else if (MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT == p) {
         changeDiffPreviewOrientation(uiProperties[MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT])
       }
     }
-    CombinedDiffRegistry.addStateListener({ updateDiffPreviewState(forceRecreate = true) }, this)
+    invokeLater { showDiffPreview(uiProperties[CommonUiProperties.SHOW_DIFF_PREVIEW]) }
 
-    invokeLater { updateDiffPreviewState() }
     Disposer.register(parentDisposable, this)
   }
 
@@ -63,20 +59,13 @@ internal abstract class FrameDiffPreview(
     return diffViewer?.preferredFocusedComponent
   }
 
-  private fun updateDiffPreviewState(forceRecreate: Boolean = false) {
+  private fun showDiffPreview(state: Boolean) {
     if (isDisposed) return
-    val shouldBeShown = uiProperties[CommonUiProperties.SHOW_DIFF_PREVIEW]
 
     val isShown = diffViewer != null
-    if (!forceRecreate && shouldBeShown == isShown) return
+    if (state == isShown) return
 
-    if (diffViewer != null) {
-      previewDiffSplitter.secondComponent = null
-      Disposer.dispose(diffViewer!!.disposable)
-      diffViewer = null
-    }
-
-    if (shouldBeShown) {
+    if (state) {
       val newDiffViewer = createViewer()
       val component = newDiffViewer.component
       previewDiffSplitter.secondComponent = component
@@ -85,6 +74,11 @@ internal abstract class FrameDiffPreview(
       component.minimumSize = JBUI.size(defaultMinimumSize.width.coerceAtMost((actionButtonSize.width * 1.5f).roundToInt()),
                                         defaultMinimumSize.height.coerceAtMost((actionButtonSize.height * 1.5f).roundToInt()))
       diffViewer = newDiffViewer
+    }
+    else {
+      previewDiffSplitter.secondComponent = null
+      Disposer.dispose(diffViewer!!.disposable)
+      diffViewer = null
     }
   }
 

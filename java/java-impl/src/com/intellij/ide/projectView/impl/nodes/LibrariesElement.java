@@ -23,7 +23,6 @@ public class LibrariesElement {
     return myProject;
   }
 
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     return o instanceof LibrariesElement librariesElement &&
@@ -31,7 +30,6 @@ public class LibrariesElement {
            myProject.equals(librariesElement.myProject);
   }
 
-  @Override
   public int hashCode() {
     int result;
     result = (myModule != null ? myModule.hashCode() : 0);

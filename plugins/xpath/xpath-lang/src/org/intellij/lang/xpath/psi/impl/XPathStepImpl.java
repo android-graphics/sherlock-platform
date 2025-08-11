@@ -33,7 +33,8 @@ public class XPathStepImpl extends XPathElementImpl implements XPathStep {
   }
 
   @Override
-  public @NotNull XPathType getType() {
+  @NotNull
+  public XPathType getType() {
     if (getNode().getElementType() == XPath2ElementTypes.CONTEXT_ITEM) {
       final XPathPredicate predicate = PsiTreeUtil.getParentOfType(this, XPathPredicate.class);
       if (predicate != null) {
@@ -66,7 +67,8 @@ public class XPathStepImpl extends XPathElementImpl implements XPathStep {
     }
   }
 
-  private @Nullable <T extends PsiElement> T findFromXPath2FilterExpr(IElementType type, Class<T> clazz) {
+  @Nullable
+  private <T extends PsiElement> T findFromXPath2FilterExpr(IElementType type, Class<T> clazz) {
     final XPathExpression f = getPreviousStep();
     if (f instanceof XPathFilterExpression) {
       final ASTNode node = f.getNode();
@@ -97,7 +99,8 @@ public class XPathStepImpl extends XPathElementImpl implements XPathStep {
   }
 
   @Override
-  public @Nullable XPathExpression getPreviousStep() {
+  @Nullable
+  public XPathExpression getPreviousStep() {
     final XPathExpression[] nodes = findChildrenByClass(XPathExpression.class);
 
     if (nodes.length > 0) {
@@ -107,7 +110,8 @@ public class XPathStepImpl extends XPathElementImpl implements XPathStep {
   }
 
   @Override
-  public @Nullable XPathExpression getStep() {
+  @Nullable
+  public XPathExpression getStep() {
     final XPathExpression[] nodes = findChildrenByClass(XPathExpression.class);
 
     if (nodes.length > 1) {

@@ -6,20 +6,20 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.LibraryId;
 import com.intellij.platform.workspace.jps.entities.ModuleId;
-import com.intellij.platform.workspace.jps.entities.SdkId;
 import com.intellij.platform.workspace.storage.EntityPointer;
 import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,14 +39,12 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
 
 import static com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
 
-@ApiStatus.Internal
 @ApiStatus.Experimental
 public final class ReincludedRootsUtil {
   private static final Logger LOG = Logger.getInstance(ReincludedRootsUtil.class);
@@ -54,8 +52,9 @@ public final class ReincludedRootsUtil {
   private ReincludedRootsUtil() {
   }
 
-  public static @NotNull Collection<IndexableIteratorBuilder> createBuildersForReincludedFiles(@NotNull Project project,
-                                                                                               @NotNull Collection<VirtualFile> reincludedRoots) {
+  @NotNull
+  public static Collection<IndexableIteratorBuilder> createBuildersForReincludedFiles(@NotNull Project project,
+                                                                                      @NotNull Collection<VirtualFile> reincludedRoots) {
     if (reincludedRoots.isEmpty()) return Collections.emptyList();
     return classifyFiles(project, reincludedRoots).createAllBuilders(project);
   }
@@ -76,8 +75,9 @@ public final class ReincludedRootsUtil {
     Collection<IndexableIteratorBuilder> createAllBuilders(@NotNull Project project);
   }
 
-  public static @NotNull Classifier classifyFiles(@NotNull Project project,
-                                                  @NotNull Collection<VirtualFile> files) {
+  @NotNull
+  public static Classifier classifyFiles(@NotNull Project project,
+                                         @NotNull Collection<VirtualFile> files) {
     return new CustomizableRootsBuilder(project, files);
   }
 
@@ -88,7 +88,7 @@ public final class ReincludedRootsUtil {
     private final List<ContentRootData<?>> filesFromContent = new ArrayList<>();
     private final List<ExternalRootData<?>> filesFromExternal = new ArrayList<>();
     private final List<CustomKindRootData<?>> filesFromCustomKind = new ArrayList<>();
-    private final MultiMap<SdkId, VirtualFile> filesFromSdks = MultiMap.createSet();
+    private final MultiMap<Sdk, VirtualFile> filesFromSdks = MultiMap.createSet();
     private final MultiMap<LibraryId, VirtualFile> sourceFilesFromLibraries = MultiMap.createSet();
     private final MultiMap<LibraryId, VirtualFile> classFilesFromLibraries = MultiMap.createSet();
     private final List<VirtualFile> filesFromIndexableSetContributors = new ArrayList<>();
@@ -133,9 +133,9 @@ public final class ReincludedRootsUtil {
         }
 
         //here we have WorkspaceFileKind.EXTERNAL or WorkspaceFileKind.EXTERNAL_SOURCE
-        SdkId sdkId = WorkspaceFileSetRecognizer.INSTANCE.getSdkId(fileSet);
-        if (sdkId != null) {
-          addSdkFile(sdkId, file);
+        Sdk sdk = WorkspaceFileSetRecognizer.INSTANCE.getSdk(fileSet);
+        if (sdk != null) {
+          addSdkFile(sdk, file);
           continue;
         }
 
@@ -184,8 +184,8 @@ public final class ReincludedRootsUtil {
       pointers.add(entityPointer);
     }
 
-    private void addSdkFile(SdkId sdkId, VirtualFile file) {
-      filesFromSdks.putValue(sdkId, file);
+    private void addSdkFile(Sdk sdk, VirtualFile file) {
+      filesFromSdks.putValue(sdk, file);
     }
 
     private void addLibraryFile(LibraryId id, VirtualFile file, boolean isSource) {
@@ -200,8 +200,8 @@ public final class ReincludedRootsUtil {
     private record ModuleRootData<E extends WorkspaceEntity>(@NotNull EntityPointer<E> entityPointer,
                                                              @NotNull ModuleId moduleId,
                                                              @NotNull VirtualFileUrl url) {
-      private @NotNull Collection<IndexableIteratorBuilder> createBuilders(@Unmodifiable Map<EntityPointer<?>, WorkspaceEntity> referenceMap,
-                                                                           @Unmodifiable Map<Class<WorkspaceEntity>, CustomizingIndexingPresentationContributor<?>> contributorMap) {
+      private @NotNull Collection<IndexableIteratorBuilder> createBuilders(Map<EntityPointer<?>, WorkspaceEntity> referenceMap,
+                                                                           Map<Class<WorkspaceEntity>, CustomizingIndexingPresentationContributor<?>> contributorMap) {
         IndexableIteratorPresentation presentation = findPresentation(entityPointer, referenceMap, contributorMap);
         if (presentation == null) {
           return IndexableIteratorBuilders.INSTANCE.forModuleRootsFileBased(moduleId, IndexingUrlRootHolder.Companion.fromUrl(url));
@@ -236,8 +236,8 @@ public final class ReincludedRootsUtil {
 
     private record CustomKindRootData<E extends WorkspaceEntity>(@NotNull EntityPointer<E> entityPointer,
                                                                  @NotNull VirtualFileUrl fileUrl) {
-      public @NotNull Collection<IndexableIteratorBuilder> createBuilders(@Unmodifiable Map<EntityPointer<?>, WorkspaceEntity> referenceMap,
-                                                                          @Unmodifiable Map<Class<WorkspaceEntity>, CustomizingIndexingPresentationContributor<?>> contributorMap) {
+      public @NotNull Collection<IndexableIteratorBuilder> createBuilders(Map<EntityPointer<?>, WorkspaceEntity> referenceMap,
+                                                                          Map<Class<WorkspaceEntity>, CustomizingIndexingPresentationContributor<?>> contributorMap) {
         IndexableIteratorPresentation customization = findPresentation(entityPointer, referenceMap, contributorMap);
         return IndexableIteratorBuilders.INSTANCE.forCustomKindEntity(entityPointer, IndexingUrlRootHolder.Companion.fromUrl(fileUrl),
                                                                       customization);
@@ -245,7 +245,8 @@ public final class ReincludedRootsUtil {
     }
 
     @Override
-    public @NotNull Collection<IndexableIteratorBuilder> createBuildersFromWorkspaceFiles() {
+    @NotNull
+    public Collection<IndexableIteratorBuilder> createBuildersFromWorkspaceFiles() {
       Map<EntityPointer<?>, WorkspaceEntity> referenceMap =
         ContainerUtil.map2MapNotNull(pointers, ref -> Pair.create(ref, ref.resolve(entityStorage)));
 
@@ -274,8 +275,8 @@ public final class ReincludedRootsUtil {
         result.addAll(IndexableIteratorBuilders.INSTANCE.
                         forLibraryEntity(entry.getKey(), true, entry.getValue(), Collections.emptyList()));
       }
-      for (Map.Entry<SdkId, Collection<VirtualFile>> entry : filesFromSdks.entrySet()) {
-        result.add(IndexableIteratorBuilders.INSTANCE.forSdk(entry.getKey(), entry.getValue()));
+      for (Map.Entry<Sdk, Collection<VirtualFile>> entry : filesFromSdks.entrySet()) {
+        result.addAll(IndexableIteratorBuilders.INSTANCE.forSdk(entry.getKey(), entry.getValue()));
       }
       for (ExternalRootData<?> data : filesFromExternal) {
         result.addAll(data.createBuilders(referenceMap, customizingContributorsMap));
@@ -313,7 +314,8 @@ public final class ReincludedRootsUtil {
       return result;
     }
 
-    private @NotNull Collection<IndexableIteratorBuilder> createBuildersFromFilesFromAdditionalLibraryRootsProviders(@NotNull Project project) {
+    @NotNull
+    private Collection<IndexableIteratorBuilder> createBuildersFromFilesFromAdditionalLibraryRootsProviders(@NotNull Project project) {
       if (filesFromAdditionalLibraryRootsProviders.isEmpty()) return Collections.emptyList();
       List<IndexableIteratorBuilder> result = new ArrayList<>();
       List<VirtualFile> rootsFromLibs = new ArrayList<>(filesFromAdditionalLibraryRootsProviders);
@@ -348,9 +350,10 @@ public final class ReincludedRootsUtil {
     }
   }
 
-  private static @Nullable <E extends WorkspaceEntity> IndexableIteratorPresentation findPresentation(@NotNull EntityPointer<E> reference,
-                                                                                                      @NotNull @Unmodifiable Map<EntityPointer<?>, WorkspaceEntity> referenceMap,
-                                                                                                      @NotNull @Unmodifiable Map<Class<WorkspaceEntity>, CustomizingIndexingPresentationContributor<?>> contributorMap) {
+  @Nullable
+  private static <E extends WorkspaceEntity> IndexableIteratorPresentation findPresentation(@NotNull EntityPointer<E> reference,
+                                                                                            @NotNull Map<EntityPointer<?>, WorkspaceEntity> referenceMap,
+                                                                                            @NotNull Map<Class<WorkspaceEntity>, CustomizingIndexingPresentationContributor<?>> contributorMap) {
     E entity = (E)referenceMap.get(reference);
     if (entity == null) {
       return null;
@@ -360,12 +363,14 @@ public final class ReincludedRootsUtil {
     return contributor == null ? null : contributor.customizeIteratorPresentation(entity);
   }
 
-  private static @NotNull Set<VirtualFile> collectAndRemoveFilesUnder(Collection<VirtualFile> fileToCheck, Set<VirtualFile> roots) {
+  @NotNull
+  private static Set<VirtualFile> collectAndRemoveFilesUnder(Collection<VirtualFile> fileToCheck, Set<VirtualFile> roots) {
     return collectAndRemove(fileToCheck, file -> VfsUtilCore.isUnder(file, roots));
   }
 
-  private static @NotNull Set<VirtualFile> collectAndRemove(@NotNull Collection<VirtualFile> fileToCheck,
-                                                            @NotNull Predicate<VirtualFile> predicateToRemove) {
+  @NotNull
+  private static Set<VirtualFile> collectAndRemove(@NotNull Collection<VirtualFile> fileToCheck,
+                                                   @NotNull Predicate<VirtualFile> predicateToRemove) {
     Iterator<VirtualFile> iterator = fileToCheck.iterator();
     Set<VirtualFile> roots = new HashSet<>();
     while (iterator.hasNext()) {

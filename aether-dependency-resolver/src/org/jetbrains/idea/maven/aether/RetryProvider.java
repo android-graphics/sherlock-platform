@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.aether;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Random;
@@ -18,8 +17,8 @@ public final class RetryProvider {
 
   private static final Retry DISABLED_SINGLETON = new Retry() {
     @Override
-    public <R> R retry(@NotNull ThrowableComputable<? extends R, ? extends Exception> computable, @NotNull Logger logger) throws Exception {
-      return computable.compute();
+    public <R> R retry(@NotNull ThrowingSupplier<? extends R> supplier, @NotNull Logger logger) throws Exception {
+      return supplier.get();
     }
   };
 
@@ -45,10 +44,11 @@ public final class RetryProvider {
       throw new IllegalArgumentException(
         "Wrong arguments provided: initialDelayMs=" + initialDelayMs + "backoffLimitMs=" + backoffLimitMs + " maxAttempts=" + maxAttempts);
     }
+
     return new Retry() {
       @Override
-      public <R> R retry(@NotNull ThrowableComputable<? extends R, ? extends Exception> computable, @NotNull Logger logger) throws Exception {
-        return exponentialBackOffRetry(initialDelayMs, backoffLimitMs, maxAttempts, computable, logger);
+      public <R> R retry(@NotNull ThrowingSupplier<? extends R> supplier, @NotNull Logger logger) throws Exception {
+        return exponentialBackOffRetry(initialDelayMs, backoffLimitMs, maxAttempts, supplier, logger);
       }
     };
   }
@@ -66,7 +66,7 @@ public final class RetryProvider {
    * @param initialDelayMs Delay before the first retry after fail in milliseconds.
    * @param backoffLimitMs Limit of delay should not grow upper than in milliseconds.
    * @param maxAttempts    Max attempts to do a job.
-   * @param computable       Supplies that does some possibly throwing work.
+   * @param supplier       Supplies that does some possibly throwing work.
    * @param logger         Messages logger.
    * @param <R>            Supplier result type.
    * @return Result from supplier.
@@ -75,13 +75,13 @@ public final class RetryProvider {
   private static <R> R exponentialBackOffRetry(long initialDelayMs,
                                                long backoffLimitMs,
                                                int maxAttempts,
-                                               @NotNull ThrowableComputable<? extends R, ? extends Exception> computable,
+                                               @NotNull ThrowingSupplier<? extends R> supplier,
                                                @NotNull Logger logger) throws Exception {
     long effectiveDelay = initialDelayMs;
 
     for (int i = 1; i <= maxAttempts; i++) {
       try {
-        return computable.compute();
+        return supplier.get();
       }
       catch (Exception e) {
         if (i == maxAttempts) {

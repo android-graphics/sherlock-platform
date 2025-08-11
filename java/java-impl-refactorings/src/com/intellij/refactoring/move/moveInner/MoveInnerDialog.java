@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -59,7 +59,7 @@ public class MoveInnerDialog extends MoveDialogBase {
   private SuggestedNameInfo mySuggestedNameInfo;
   private final PsiClass myOuterClass;
 
-  private static final @NonNls String RECENTS_KEY = "MoveInnerDialog.RECENTS_KEY";
+  @NonNls private static final String RECENTS_KEY = "MoveInnerDialog.RECENTS_KEY";
 
   @Override
   protected @NotNull String getRefactoringId() {
@@ -87,11 +87,13 @@ public class MoveInnerDialog extends MoveDialogBase {
     return myCbSearchForTextOccurences.isSelected();
   }
 
-  public @NotNull String getClassName() {
+  @NotNull
+  public String getClassName() {
     return myClassNameField.getText().trim();
   }
 
-  public @Nullable String getParameterName() {
+  @Nullable
+  public String getParameterName() {
     if (myParameterField != null) {
       return myParameterField.getEnteredName();
     }
@@ -104,7 +106,8 @@ public class MoveInnerDialog extends MoveDialogBase {
     return myCbPassOuterClass.isSelected();
   }
 
-  public @NotNull PsiClass getInnerClass() {
+  @NotNull
+  public PsiClass getInnerClass() {
     return myInnerClass;
   }
 
@@ -180,7 +183,8 @@ public class MoveInnerDialog extends MoveDialogBase {
     return null;
   }
 
-  private @Nullable PsiElement getTargetContainer() {
+  @Nullable
+  private PsiElement getTargetContainer() {
     if (myTargetContainer instanceof PsiDirectory psiDirectory) {
       PsiPackage oldPackage = getTargetPackage();
       String name = oldPackage == null ? "" : oldPackage.getQualifiedName();
@@ -278,7 +282,7 @@ public class MoveInnerDialog extends MoveDialogBase {
 
         if (message == null) {
           final String packageName = getPackageName();
-          if (!packageName.isEmpty() && !PsiNameHelper.getInstance(myProject).isQualifiedName(packageName)) {
+          if (packageName.length() > 0 && !PsiNameHelper.getInstance(myProject).isQualifiedName(packageName)) {
             message = RefactoringMessageUtil.getIncorrectIdentifierMessage(packageName);
           }
         }
@@ -330,7 +334,8 @@ public class MoveInnerDialog extends MoveDialogBase {
                                                              RefactoringBundle.message("choose.destination.package"));
   }
 
-  private @Nullable PsiPackage getTargetPackage() {
+  @Nullable
+  private PsiPackage getTargetPackage() {
     if (myTargetContainer instanceof PsiDirectory directory) {
       return JavaDirectoryService.getInstance().getPackage(directory);
     }

@@ -7,12 +7,13 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_8
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK1Mode
-import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.conversions.ReplaceType.REPLACE_SELECTOR
 import org.jetbrains.kotlin.nj2k.conversions.ReplaceType.REPLACE_WITH_QUALIFIER
-import org.jetbrains.kotlin.nj2k.symbols.*
+import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedField
+import org.jetbrains.kotlin.nj2k.symbols.deepestFqName
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType.INT
 import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType.STRING
@@ -20,15 +21,7 @@ import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-/**
- * Converts some JDK method calls to Kotlin stdlib equivalents.
- * For example, `java.lang.String.strip` -> `kotlin.text.trim`.
- *
- * Note: when the Kotlin replacement function is overloaded, and the overloads contain parameters with primitive types,
- * it's better to specify the full signature of the right overload.
- * Otherwise, the symbol provider may return a different overload, and `ImplicitCastsConversion` may try to add incorrect casts later.
- */
-class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(context) {
+class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     private val conversions: Map<String, List<Conversion>> =
         ConversionsHolder(symbolProvider, typeFactory).getConversions()
 
@@ -119,17 +112,18 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
     ) : ResultBuilder {
         context(KaSession)
         override fun build(from: JKExpression): JKExpression {
-            val methodSymbol = provideMethodSymbol(fqName, parameterTypesFqNames)
-            val type = determineNewExpressionType(methodSymbol, from)
-
+            val methodSymbol = if (parameterTypesFqNames == null) {
+                symbolProvider.provideMethodSymbol(fqName)
+            } else {
+                symbolProvider.provideMethodSymbolWithExactSignature(fqName, parameterTypesFqNames)
+            }
             return when (from) {
                 is JKCallExpression -> {
                     JKCallExpressionImpl(
                         methodSymbol,
                         argumentsProvider(from::arguments.detached()),
                         from::typeArgumentList.detached(),
-                        type,
-                        canMoveLambdaOutsideParentheses
+                        canMoveLambdaOutsideParentheses = canMoveLambdaOutsideParentheses
                     )
                 }
 
@@ -137,18 +131,16 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
                     JKCallExpressionImpl(
                         methodSymbol,
                         JKArgumentList(),
-                        JKTypeArgumentList(),
-                        type
+                        JKTypeArgumentList()
                     )
 
-                is JKMethodAccessExpression -> JKMethodAccessExpression(methodSymbol, type)
+                is JKMethodAccessExpression -> JKMethodAccessExpression(methodSymbol)
                 is JKNewExpression ->
                     JKCallExpressionImpl(
                         methodSymbol,
                         argumentsProvider(from::arguments.detached()),
                         JKTypeArgumentList(),
-                        type,
-                        canMoveLambdaOutsideParentheses
+                        canMoveLambdaOutsideParentheses = canMoveLambdaOutsideParentheses
                     )
 
                 else -> error("Bad conversion")
@@ -158,43 +150,40 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
 
     private inner class FieldBuilder(private val fqName: String) : ResultBuilder {
         context(KaSession)
-        override fun build(from: JKExpression): JKExpression {
-            if (from !is JKCallExpression && from !is JKFieldAccessExpression) error("Bad conversion")
-            val symbol = symbolProvider.provideFieldSymbol(fqName)
-            val type = determineNewExpressionType(symbol, from)
-            return JKFieldAccessExpression(symbol, type).withFormattingFrom(from)
-        }
+        override fun build(from: JKExpression): JKExpression =
+            when (from) {
+                is JKCallExpression ->
+                    JKFieldAccessExpression(
+                        symbolProvider.provideFieldSymbol(fqName)
+                    ).withFormattingFrom(from)
+
+                is JKFieldAccessExpression ->
+                    JKFieldAccessExpression(
+                        symbolProvider.provideFieldSymbol(fqName)
+                    ).withFormattingFrom(from)
+
+                else -> error("Bad conversion")
+            }
     }
 
-    private inner class ExtensionMethodBuilder(
-        private val fqName: String,
-        private val parameterTypesFqNames: List<String>?,
-    ) : ResultBuilder {
+    private inner class ExtensionMethodBuilder(private val fqName: String) : ResultBuilder {
         context(KaSession)
-        override fun build(from: JKExpression): JKExpression {
-            if (from !is JKCallExpression) error("Bad conversion")
+        override fun build(from: JKExpression): JKExpression =
+            when (from) {
+                is JKCallExpression -> {
+                    val arguments = from.arguments::arguments.detached()
+                    JKQualifiedExpression(
+                        arguments.first()::value.detached().parenthesizeIfCompoundExpression(),
+                        JKCallExpressionImpl(
+                            symbolProvider.provideMethodSymbol(fqName),
+                            JKArgumentList(arguments.drop(1)),
+                            from::typeArgumentList.detached()
+                        )
+                    ).withFormattingFrom(from)
+                }
 
-            // Before transforming the call to an extension function call,
-            // we need to handle the implicit cast on the first argument.
-            // Otherwise, it won't be handled later in the conversion pipeline,
-            // since it won't be an argument anymore, but a call receiver.
-            ImplicitCastsConversion(context).applyToElement(from)
-
-            val methodSymbol = provideMethodSymbol(fqName, parameterTypesFqNames)
-            val arguments = from.arguments::arguments.detached()
-            val type = determineNewExpressionType(methodSymbol, from)
-
-            return JKQualifiedExpression(
-                arguments.first()::value.detached().parenthesizeIfCompoundExpression(),
-                JKCallExpressionImpl(
-                    methodSymbol,
-                    JKArgumentList(arguments.drop(1)),
-                    from::typeArgumentList.detached(),
-                    type
-                ),
-                type
-            ).withFormattingFrom(from)
-        }
+                else -> error("Bad conversion")
+            }
     }
 
     private inner class CustomExpressionBuilder(val builder: (JKExpression) -> JKExpression) : ResultBuilder {
@@ -205,30 +194,9 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
     private fun Conversion.createBuilder(): ResultBuilder = when (to) {
         is Method -> MethodBuilder(to.fqName, to.parameterTypesFqNames, argumentsProvider ?: { it }, to.canMoveLambdaOutsideParentheses)
         is Field -> FieldBuilder(to.fqName)
-        is ExtensionMethod -> ExtensionMethodBuilder(to.fqName, to.parameterTypesFqNames)
+        is ExtensionMethod -> ExtensionMethodBuilder(to.fqName)
         is CustomExpression -> CustomExpressionBuilder(to.expressionBuilder)
         else -> error("Bad conversion")
-    }
-
-    // Usually, the types of original and replacement expressions should be semantically the same,
-    // but this is not always the case with number types (ex. with java.lang.Math vs. kotlin.math methods)
-    context(KaSession)
-    private fun determineNewExpressionType(newSymbol: JKSymbol, originalExpression: JKExpression): JKType? {
-        val symbolType = when (newSymbol) {
-            is JKMethodSymbol -> newSymbol.returnType
-            is JKFieldSymbol -> newSymbol.fieldType
-            else -> null
-        }
-        return symbolType ?: originalExpression.calculateType(typeFactory)
-    }
-
-    context(KaSession)
-    private fun provideMethodSymbol(fqName: String, parameterTypesFqNames: List<String>?): JKMethodSymbol {
-        return if (parameterTypesFqNames == null) {
-            symbolProvider.provideMethodSymbol(fqName)
-        } else {
-            symbolProvider.provideMethodSymbolWithExactSignature(fqName, parameterTypesFqNames)
-        }
     }
 }
 
@@ -281,10 +249,7 @@ private data class NewExpression(override val fqName: String) : SymbolInfo
 
 private data class Field(override val fqName: String) : SymbolInfo
 
-private data class ExtensionMethod(
-    override val fqName: String,
-    val parameterTypesFqNames: List<String>? = null
-) : SymbolInfo
+private data class ExtensionMethod(override val fqName: String) : SymbolInfo
 
 private data class CustomExpression(val expressionBuilder: (JKExpression) -> JKExpression) : Info
 
@@ -529,21 +494,8 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         Method("java.lang.String.strip") convertTo Method("kotlin.text.trim") withByArgumentsFilter { it.isEmpty() },
         Method("java.lang.String.stripLeading") convertTo Method("kotlin.text.trimStart") withByArgumentsFilter { it.isEmpty() },
         Method("java.lang.String.stripTrailing") convertTo Method("kotlin.text.trimEnd") withByArgumentsFilter { it.isEmpty() },
-
-        Method("java.lang.String.indexOf")
-                convertTo Method("kotlin.text.indexOf", parameterTypesFqNames = listOf("kotlin.String", "kotlin.Int", "kotlin.Boolean"))
-                withByArgumentsFilter { it.firstOrNull()?.calculateType(typeFactory)?.isStringType() == true },
-        Method("java.lang.String.indexOf")
-                convertTo Method("kotlin.text.indexOf", parameterTypesFqNames = listOf("kotlin.Char", "kotlin.Int", "kotlin.Boolean"))
-                withByArgumentsFilter { it.firstOrNull()?.calculateType(typeFactory)?.isStringType() == false },
-
-        Method("java.lang.String.lastIndexOf")
-                convertTo Method("kotlin.text.lastIndexOf", parameterTypesFqNames = listOf("kotlin.String", "kotlin.Int", "kotlin.Boolean"))
-                withByArgumentsFilter { it.firstOrNull()?.calculateType(typeFactory)?.isStringType() == true },
-        Method("java.lang.String.lastIndexOf")
-                convertTo Method("kotlin.text.lastIndexOf", parameterTypesFqNames = listOf("kotlin.Char", "kotlin.Int", "kotlin.Boolean"))
-                withByArgumentsFilter { it.firstOrNull()?.calculateType(typeFactory)?.isStringType() == false },
-
+        Method("java.lang.String.indexOf") convertTo Method("kotlin.text.indexOf"),
+        Method("java.lang.String.lastIndexOf") convertTo Method("kotlin.text.lastIndexOf"),
         Method("java.lang.String.getBytes") convertTo Method("kotlin.text.toByteArray")
                 withByArgumentsFilter { it.singleOrNull()?.calculateType(typeFactory)?.isStringType() == true }
                 withArgumentsProvider { arguments ->
@@ -558,11 +510,7 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         Method("java.lang.String.valueOf") convertTo ExtensionMethod("kotlin.Any.toString") withReplaceType REPLACE_WITH_QUALIFIER
                 withByArgumentsFilter { it.isNotEmpty() && it.first().calculateType(typeFactory)?.isArrayType() == false },
 
-        Method("java.lang.String.getChars") convertTo Method(
-            "kotlin.text.toCharArray",
-            parameterTypesFqNames = listOf("kotlin.CharArray", "kotlin.Int", "kotlin.Int", "kotlin.Int")
-        )
-                withByArgumentsFilter { it.size == 4 }
+        Method("java.lang.String.getChars") convertTo Method("kotlin.text.toCharArray") withByArgumentsFilter { it.size == 4 }
                 withArgumentsProvider { argumentList ->
             val srcBeginArgument = argumentList.arguments[0]::value.detached()
             val srcEndArgument = argumentList.arguments[1]::value.detached()
@@ -574,18 +522,9 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
                 withByArgumentsFilter { it.isNotEmpty() && it.first().calculateType(typeFactory)?.isArrayType() == true },
         Method("java.lang.String.copyValueOf") convertTo Method("kotlin.String") withReplaceType REPLACE_WITH_QUALIFIER
                 withByArgumentsFilter { it.isNotEmpty() && it.first().calculateType(typeFactory)?.isArrayType() == true },
-
-        Method("java.lang.String.replaceAll")
-                convertTo Method("kotlin.text.replace", parameterTypesFqNames = listOf("kotlin.text.Regex", "kotlin.String"))
-                withArgumentsProvider ::convertFirstArgumentToRegex,
-
-        Method("java.lang.String.replaceFirst")
-                convertTo Method("kotlin.text.replaceFirst", parameterTypesFqNames = listOf("kotlin.text.Regex", "kotlin.String"))
-                withArgumentsProvider ::convertFirstArgumentToRegex,
-
-        Method("java.lang.String.equalsIgnoreCase")
-                convertTo Method("kotlin.text.equals", parameterTypesFqNames = listOf("kotlin.String", "kotlin.Boolean"))
-                withArgumentsProvider { arguments ->
+        Method("java.lang.String.replaceAll") convertTo Method("kotlin.text.replace") withArgumentsProvider ::convertFirstArgumentToRegex,
+        Method("java.lang.String.replaceFirst") convertTo Method("kotlin.text.replaceFirst") withArgumentsProvider ::convertFirstArgumentToRegex,
+        Method("java.lang.String.equalsIgnoreCase") convertTo Method("kotlin.text.equals") withArgumentsProvider { arguments ->
             JKArgumentList(
                 arguments::arguments.detached() + JKNamedArgument(
                     JKLiteralExpression("true", JKLiteralExpression.LiteralType.BOOLEAN),
@@ -660,8 +599,7 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
                     // limit is not a constant, need to make it non-negative
                     val limitArgument = arguments.arguments.last()::value.detached().callOn(
                         symbolProvider.provideMethodSymbol("kotlin.ranges.coerceAtLeast"),
-                        listOf(JKLiteralExpression("0", JKLiteralExpression.LiteralType.INT)),
-                        expressionType = typeFactory.types.int
+                        listOf(JKLiteralExpression("0", JKLiteralExpression.LiteralType.INT))
                     )
                     listOf(JKArgumentImpl(patternArgument), JKArgumentImpl(limitArgument))
                 }
@@ -689,8 +627,7 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
                     listOf(
                         JKLambdaExpression(
                             JKKtItExpression(typeFactory.types.string).callOn(
-                                symbolProvider.provideMethodSymbol("kotlin.text.isEmpty"),
-                                expressionType = typeFactory.types.boolean
+                                symbolProvider.provideMethodSymbol("kotlin.text.isEmpty")
                             ).asStatement()
                         )
                     ),
@@ -816,49 +753,13 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
     )
 
     private val mathConversions: List<Conversion> = listOf(
-        Method("java.lang.Math.abs")
-                convertTo Method("kotlin.math.abs", parameterTypesFqNames = listOf("kotlin.Int"))
-                withByArgumentsFilter {
-            val type = it.firstOrNull()?.calculateType(typeFactory)?.asPrimitiveType() ?: return@withByArgumentsFilter false
-            type.isInt() || type.isShort() || type.isByte()
-        }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.lang.Math.abs")
-                convertTo Method("kotlin.math.abs", parameterTypesFqNames = listOf("kotlin.Long"))
-                withByArgumentsFilter { it.firstOrNull()?.calculateType(typeFactory)?.asPrimitiveType()?.isLong() == true }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.lang.Math.abs")
-                convertTo Method("kotlin.math.abs", parameterTypesFqNames = listOf("kotlin.Float"))
-                withByArgumentsFilter { it.firstOrNull()?.calculateType(typeFactory)?.asPrimitiveType()?.isFloat() == true }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.lang.Math.abs")
-                convertTo Method("kotlin.math.abs", parameterTypesFqNames = listOf("kotlin.Double"))
-                withByArgumentsFilter { it.firstOrNull()?.calculateType(typeFactory)?.asPrimitiveType()?.isDouble() == true }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
+        Method("java.lang.Math.abs") convertTo Method("kotlin.math.abs") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.acos") convertTo Method("kotlin.math.acos") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.asin") convertTo Method("kotlin.math.asin") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.atan") convertTo Method("kotlin.math.atan") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.atan2") convertTo Method("kotlin.math.atan2") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.cbrt") convertTo Method("kotlin.math.cbrt") withReplaceType REPLACE_WITH_QUALIFIER sinceKotlin KOTLIN_1_8,
         Method("java.lang.Math.ceil") convertTo Method("kotlin.math.ceil") withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.lang.Math.copySign")
-                convertTo ExtensionMethod("kotlin.math.withSign", parameterTypesFqNames = listOf("kotlin.Float"))
-                withByArgumentsFilter { arguments ->
-            val types = getTwoPrimitiveArgumentTypes(arguments) ?: return@withByArgumentsFilter false
-            types.none { it.isDouble() }
-        }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.lang.Math.copySign")
-                convertTo ExtensionMethod("kotlin.math.withSign", parameterTypesFqNames = listOf("kotlin.Double"))
-                withByArgumentsFilter { arguments ->
-            val types = getTwoPrimitiveArgumentTypes(arguments) ?: return@withByArgumentsFilter false
-            types.any { it.isDouble() }
-        }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
         Method("java.lang.Math.cos") convertTo Method("kotlin.math.cos") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.cosh") convertTo Method("kotlin.math.cosh") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.exp") convertTo Method("kotlin.math.exp") withReplaceType REPLACE_WITH_QUALIFIER,
@@ -869,91 +770,21 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         Method("java.lang.Math.log") convertTo Method("kotlin.math.ln") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.log1p") convertTo Method("kotlin.math.ln1p") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.log10") convertTo Method("kotlin.math.log10") withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.lang.Math.max") convertTo Method("kotlin.math.max", parameterTypesFqNames = listOf("kotlin.Int", "kotlin.Int"))
-                withByArgumentsFilter { arguments ->
-            val types = getTwoPrimitiveArgumentTypes(arguments) ?: return@withByArgumentsFilter false
-            types.none { it.isLong() || it.isFloatingPoint() }
-        }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.lang.Math.max") convertTo Method("kotlin.math.max", parameterTypesFqNames = listOf("kotlin.Long", "kotlin.Long"))
-                withByArgumentsFilter { arguments ->
-            val types = getTwoPrimitiveArgumentTypes(arguments) ?: return@withByArgumentsFilter false
-            types.any { it.isLong() } && types.none { it.isFloatingPoint() }
-        }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.lang.Math.max") convertTo Method("kotlin.math.max", parameterTypesFqNames = listOf("kotlin.Float", "kotlin.Float"))
-                withByArgumentsFilter { arguments ->
-            val types = getTwoPrimitiveArgumentTypes(arguments) ?: return@withByArgumentsFilter false
-            types.any { it.isFloat() } && types.none { it.isDouble() }
-        }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.lang.Math.max") convertTo Method("kotlin.math.max", parameterTypesFqNames = listOf("kotlin.Double", "kotlin.Double"))
-                withByArgumentsFilter { arguments ->
-            val types = getTwoPrimitiveArgumentTypes(arguments) ?: return@withByArgumentsFilter false
-            types.any { it.isDouble() }
-        }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.lang.Math.min") convertTo Method("kotlin.math.min", parameterTypesFqNames = listOf("kotlin.Int", "kotlin.Int"))
-                withByArgumentsFilter { arguments ->
-            val types = getTwoPrimitiveArgumentTypes(arguments) ?: return@withByArgumentsFilter false
-            types.none { it.isLong() || it.isFloatingPoint() }
-        }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.lang.Math.min") convertTo Method("kotlin.math.min", parameterTypesFqNames = listOf("kotlin.Long", "kotlin.Long"))
-                withByArgumentsFilter { arguments ->
-            val types = getTwoPrimitiveArgumentTypes(arguments) ?: return@withByArgumentsFilter false
-            types.any { it.isLong() } && types.none { it.isFloatingPoint() }
-        }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.lang.Math.min") convertTo Method("kotlin.math.min", parameterTypesFqNames = listOf("kotlin.Float", "kotlin.Float"))
-                withByArgumentsFilter { arguments ->
-            val types = getTwoPrimitiveArgumentTypes(arguments) ?: return@withByArgumentsFilter false
-            types.any { it.isFloat() } && types.none { it.isDouble() }
-        }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.lang.Math.min") convertTo Method("kotlin.math.min", parameterTypesFqNames = listOf("kotlin.Double", "kotlin.Double"))
-                withByArgumentsFilter { arguments ->
-            val types = getTwoPrimitiveArgumentTypes(arguments) ?: return@withByArgumentsFilter false
-            types.any { it.isDouble() }
-        }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
+        Method("java.lang.Math.max") convertTo Method("kotlin.math.max") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.min") convertTo Method("kotlin.math.min") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.nextDown") convertTo ExtensionMethod("kotlin.math.nextDown") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.nextAfter") convertTo ExtensionMethod("kotlin.math.nextTowards") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.nextUp") convertTo ExtensionMethod("kotlin.math.nextUp") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.pow") convertTo ExtensionMethod("kotlin.math.pow") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.rint") convertTo Method("kotlin.math.round") withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.lang.Math.signum")
-                convertTo Method("kotlin.math.sign", parameterTypesFqNames = listOf("kotlin.Float"))
-                withByArgumentsFilter { it.firstOrNull()?.calculateType(typeFactory)?.asPrimitiveType()?.isDouble() == false }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
-        Method("java.lang.Math.signum")
-                convertTo Method("kotlin.math.sign", parameterTypesFqNames = listOf("kotlin.Double"))
-                withByArgumentsFilter { it.firstOrNull()?.calculateType(typeFactory)?.asPrimitiveType()?.isDouble() == true }
-                withReplaceType REPLACE_WITH_QUALIFIER,
-
+        Method("java.lang.Math.signum") convertTo Method("kotlin.math.sign") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.sin") convertTo Method("kotlin.math.sin") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.sinh") convertTo Method("kotlin.math.sinh") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.sqrt") convertTo Method("kotlin.math.sqrt") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.tan") convertTo Method("kotlin.math.tan") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Math.tanh") convertTo Method("kotlin.math.tanh") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Math.copySign") convertTo ExtensionMethod("kotlin.math.withSign") withReplaceType REPLACE_WITH_QUALIFIER,
     )
-
-    private fun getTwoPrimitiveArgumentTypes(arguments: List<JKExpression>): List<JKJavaPrimitiveType>? {
-        if (arguments.size != 2) return null
-        val firstType = arguments[0].calculateType(typeFactory)?.asPrimitiveType() ?: return null
-        val secondType = arguments[1].calculateType(typeFactory)?.asPrimitiveType() ?: return null
-        return listOf(firstType, secondType)
-    }
 
     private fun primitiveToStringWithRadix(): CustomExpression = CustomExpression { expression ->
         val arguments = (expression as JKCallExpression).arguments::arguments.detached()
@@ -966,13 +797,11 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         } else {
             radix.callOn(
                 symbolProvider.provideMethodSymbol("kotlin.ranges.coerceIn"),
-                listOf(JKLiteralExpression("2", INT), JKLiteralExpression("36", INT)),
-                expressionType = typeFactory.types.int
+                listOf(JKLiteralExpression("2", INT), JKLiteralExpression("36", INT))
             )
         }
         val newArguments = listOf(JKArgumentImpl(newRadix))
-        receiver.callOn(symbolProvider.provideMethodSymbol("kotlin.text.toString"), newArguments, expressionType = typeFactory.types.string)
-            .withFormattingFrom(expression)
+        receiver.callOn(symbolProvider.provideMethodSymbol("kotlin.text.toString"), newArguments).withFormattingFrom(expression)
     }
 
     private fun primitiveToStringWithRadixArgumentsFilter(arguments: List<JKExpression>): Boolean {
@@ -1044,14 +873,10 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         return JKArgumentList(listOf(JKArgumentImpl(first)) + detachedArguments.drop(1))
     }
 
-    private fun JKExpression.callOn(
-        symbol: JKMethodSymbol,
-        arguments: List<JKArgument> = emptyList(),
-        expressionType: JKType? = null
-    ) = JKQualifiedExpression(
+    private fun JKExpression.callOn(symbol: JKMethodSymbol, arguments: List<JKArgument> = emptyList()) =
+        JKQualifiedExpression(
             this.parenthesizeIfCompoundExpression(),
-            JKCallExpressionImpl(symbol, JKArgumentList(arguments), JKTypeArgumentList(), expressionType),
-            expressionType
+            JKCallExpressionImpl(symbol, JKArgumentList(arguments), JKTypeArgumentList())
         )
 
     private fun isSystemOutCall(expression: JKExpression): Boolean =

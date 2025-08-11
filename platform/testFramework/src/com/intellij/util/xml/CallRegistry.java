@@ -45,7 +45,6 @@ public class CallRegistry<T> {
     clear();
   }
 
-  @Override
   public String toString() {
     return myActual.toString();
   }

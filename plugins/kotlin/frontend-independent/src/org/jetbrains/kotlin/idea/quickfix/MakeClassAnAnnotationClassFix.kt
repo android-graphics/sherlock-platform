@@ -4,12 +4,14 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 
-class MakeClassAnAnnotationClassFix(element: KtClass) : PsiUpdateModCommandAction<KtClass>(element) {
+class MakeClassAnAnnotationClassFix(
+    element: KtClass,
+) : KotlinPsiUpdateModCommandAction.ElementBased<KtClass, Unit>(element, Unit) {
 
     override fun getFamilyName(): String =
         KotlinBundle.message("make.class.an.annotation.class")
@@ -24,6 +26,7 @@ class MakeClassAnAnnotationClassFix(element: KtClass) : PsiUpdateModCommandActio
     override fun invoke(
         actionContext: ActionContext,
         element: KtClass,
+        elementContext: Unit,
         updater: ModPsiUpdater,
     ) {
         element.addModifier(KtTokens.ANNOTATION_KEYWORD)

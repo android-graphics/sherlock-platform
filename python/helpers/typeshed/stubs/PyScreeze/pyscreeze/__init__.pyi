@@ -1,8 +1,7 @@
-import sys
-from _typeshed import ConvertibleToFloat, Incomplete, StrOrBytesPath, Unused
+from _typeshed import Incomplete, ReadableBuffer, StrOrBytesPath, Unused
 from collections.abc import Callable, Generator
-from typing import Final, NamedTuple, TypeVar, overload
-from typing_extensions import ParamSpec, TypeAlias
+from typing import NamedTuple, SupportsFloat, TypeVar, overload
+from typing_extensions import Final, ParamSpec, SupportsIndex, TypeAlias
 
 from PIL import Image
 
@@ -12,17 +11,10 @@ _R = TypeVar("_R")
 # But can't import either, because pyscreeze does not declare them as dependencies, stub_uploader won't let it.
 _MatLike: TypeAlias = Incomplete
 
-PILLOW_VERSION: Final[tuple[int, int, int]]
+useOpenCV: Final[bool]
 RUNNING_PYTHON_2: Final = False
-SCROT_EXISTS: Final[bool]
-GNOMESCREENSHOT_EXISTS: Final[bool]
-
-if sys.platform == "linux":
-    RUNNING_X11: Final[bool]
-    RUNNING_WAYLAND: Final[bool]
-
-# Meant to be overridable as a setting
-GRAYSCALE_DEFAULT: bool
+GRAYSCALE_DEFAULT: Final = False
+scrotExists: Final[bool]
 # Meant to be overridable for backward-compatibility
 USE_IMAGE_NOT_FOUND_EXCEPTION: bool
 
@@ -56,7 +48,7 @@ def locate(
     limit: Unused = 1,
     region: tuple[int, int, int, int] | None = None,
     step: int = 1,
-    confidence: ConvertibleToFloat = 0.999,
+    confidence: SupportsFloat | SupportsIndex | str | ReadableBuffer = 0.999,
 ) -> Box | None: ...
 
 # _locateAll_pillow
@@ -82,7 +74,7 @@ def locateOnScreen(
     limit: Unused = 1,
     region: tuple[int, int, int, int] | None = None,
     step: int = 1,
-    confidence: ConvertibleToFloat = 0.999,
+    confidence: SupportsFloat | SupportsIndex | str | ReadableBuffer = 0.999,
 ) -> Box | None: ...
 
 # _locateAll_pillow
@@ -107,7 +99,7 @@ def locateAllOnScreen(
     limit: int = 1000,
     region: tuple[int, int, int, int] | None = None,
     step: int = 1,
-    confidence: ConvertibleToFloat = 0.999,
+    confidence: SupportsFloat | SupportsIndex | str | ReadableBuffer = 0.999,
 ) -> Generator[Box, None, None]: ...
 
 # _locateAll_pillow
@@ -132,7 +124,7 @@ def locateCenterOnScreen(
     limit: Unused = 1,
     region: tuple[int, int, int, int] | None = None,
     step: int = 1,
-    confidence: ConvertibleToFloat = 0.999,
+    confidence: SupportsFloat | SupportsIndex | str | ReadableBuffer = 0.999,
 ) -> Point | None: ...
 
 # _locateAll_pillow
@@ -159,7 +151,7 @@ def locateOnWindow(
     grayscale: bool | None = None,
     limit: Unused = 1,
     step: int = 1,
-    confidence: ConvertibleToFloat = 0.999,
+    confidence: SupportsFloat | SupportsIndex | str | ReadableBuffer = 0.999,
 ) -> Box | None: ...
 
 # _locateAll_pillow
@@ -181,16 +173,7 @@ def pixelMatchesColor(
     x: int, y: int, expectedRGBColor: tuple[int, int, int] | tuple[int, int, int, int], tolerance: int = 0
 ) -> bool: ...
 def pixel(x: int, y: int) -> tuple[int, int, int]: ...
-
-if sys.platform == "win32":
-    def screenshot(
-        imageFilename: StrOrBytesPath | None = None, region: tuple[int, int, int, int] | None = None, allScreens: bool = False
-    ) -> Image.Image: ...
-
-else:
-    def screenshot(
-        imageFilename: StrOrBytesPath | None = None, region: tuple[int, int, int, int] | None = None
-    ) -> Image.Image: ...
+def screenshot(imageFilename: StrOrBytesPath | None = None, region: tuple[int, int, int, int] | None = None) -> Image.Image: ...
 
 # _locateAll_opencv
 @overload
@@ -201,7 +184,7 @@ def locateAll(
     limit: int = 1000,
     region: tuple[int, int, int, int] | None = None,
     step: int = 1,
-    confidence: ConvertibleToFloat = 0.999,
+    confidence: SupportsFloat | SupportsIndex | str | ReadableBuffer = 0.999,
 ) -> Generator[Box, None, None]: ...
 
 # _locateAll_pillow

@@ -1,2 +1,0 @@
-Indirect outer instances won't be extracted: a
-Indirect outer instances won't be extracted: this@Test2

@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.indexing.FileIndexingStateWithExplanation;
+import com.intellij.util.indexing.FileIndexingState;
 import com.intellij.util.indexing.IndexInfrastructure;
 import com.intellij.util.indexing.impl.perFileVersion.IntFileAttribute;
 import com.intellij.util.io.PersistentStringEnumerator;
@@ -71,16 +71,15 @@ final class CompositeBinaryBuilderMap {
     VERSION_STAMP.writeInt(fileId, 0);
   }
 
-  FileIndexingStateWithExplanation isUpToDateState(int fileId, @NotNull VirtualFile file) throws IOException {
+  FileIndexingState isUpToDateState(int fileId, @NotNull VirtualFile file) throws IOException {
     int indexedVersion = VERSION_STAMP.readInt(fileId);
 
     if (indexedVersion == 0) {
-      return FileIndexingStateWithExplanation.notIndexed();
+      return FileIndexingState.NOT_INDEXED;
     }
 
     int actualVersion = getBuilderCumulativeVersion(file);
-    return actualVersion == indexedVersion ? FileIndexingStateWithExplanation.upToDate() : FileIndexingStateWithExplanation.outdated(
-      () -> "actual version (" + actualVersion + ") != indexedVersion (" + indexedVersion + ")");
+    return actualVersion == indexedVersion ? FileIndexingState.UP_TO_DATE : FileIndexingState.OUT_DATED;
   }
 
   private int getBuilderCumulativeVersion(@NotNull VirtualFile file) {

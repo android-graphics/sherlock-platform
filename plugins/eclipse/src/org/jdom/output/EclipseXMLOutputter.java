@@ -1129,7 +1129,9 @@ public final class EclipseXMLOutputter extends BaseXmlOutputter implements Clone
 
   // Determine if a string ends with a XML whitespace.
   private boolean endsWithWhite(String str) {
-    if ((str != null) && (str.length() > 0) && isWhitespace(str.charAt(str.length() - 1))) {
+    if ((str != null) &&
+        (str.length() > 0) &&
+        isWhitespace(str.charAt(str.length() - 1))) {
       return true;
     }
     return false;
@@ -1154,7 +1156,7 @@ public final class EclipseXMLOutputter extends BaseXmlOutputter implements Clone
    * @param str <code>String</code> input to escape.
    * @return <code>String</code> with escaped content.
    */
-  private static String escapeAttributeEntities(String str) {
+  public String escapeAttributeEntities(String str) {
     StringBuffer buffer;
     char ch;
     String entity;
@@ -1329,9 +1331,8 @@ public final class EclipseXMLOutputter extends BaseXmlOutputter implements Clone
    */
   public String toString() {
     StringBuilder buffer = new StringBuilder();
-    String lineSeparator = userFormat.getLineSeparator();
-    for (int i = 0; i < lineSeparator.length(); i++) {
-      char ch = lineSeparator.charAt(i);
+    for (int i = 0; i < userFormat.lineSeparator.length(); i++) {
+      char ch = userFormat.lineSeparator.charAt(i);
       switch (ch) {
         case '\r':
           buffer.append("\\r");
@@ -1350,6 +1351,7 @@ public final class EclipseXMLOutputter extends BaseXmlOutputter implements Clone
 
     return (
       "XMLOutputter[omitDeclaration = " + false + ", " +
+      "encoding = " + CharsetToolkit.UTF8 + ", " +
       "omitEncoding = " + false + ", " +
       "indent = '" + "\t" + "'" + ", " +
       "expandEmptyElements = " + userFormat.expandEmptyElements + ", " +

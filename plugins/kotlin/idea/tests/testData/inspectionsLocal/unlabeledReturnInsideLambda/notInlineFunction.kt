@@ -1,5 +1,5 @@
 // PROBLEM: none
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 fun foo(f: () -> Unit) {}
 
 fun test(): Int {

@@ -11,11 +11,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.openapi.project.impl.ProjectServiceInitializer
+import com.intellij.openapi.project.impl.projectInitListeners
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.DirectoryIndex
-import com.intellij.platform.project.ProjectEntitiesStorage
 import com.intellij.serviceContainer.ComponentManagerImpl
 import kotlinx.coroutines.launch
 import java.io.File
@@ -33,16 +32,15 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) :
   init {
     registerComponents()
     customizeRegisteredComponents()
-    componentStore.setPath(projectPath, null)
+    componentStore.setPath(projectPath, false, null)
     runUnderModalProgressIfIsEdt {
-      val project = this@LightEditProjectImpl
-      ProjectServiceInitializer.initEssential(project)
-      ProjectEntitiesStorage.getInstance().createEntity(project)
-      schedulePreloadServices(project)
+      schedulePreloadServices(this@LightEditProjectImpl)
       launch {
-        project.createComponentsNonBlocking()
+        this@LightEditProjectImpl.createComponentsNonBlocking()
       }
-      ProjectServiceInitializer.initNonEssential(project)
+      projectInitListeners {
+        it.execute(this@LightEditProjectImpl, workspaceIndexReady = {})
+      }
     }
   }
 

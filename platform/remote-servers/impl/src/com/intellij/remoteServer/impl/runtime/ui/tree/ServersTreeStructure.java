@@ -44,7 +44,6 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
 import icons.RemoteServersIcons;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -346,7 +345,6 @@ public final class ServersTreeStructure {
              : null;
     }
 
-    @ApiStatus.Internal
     protected @Nullable DeploymentLogManagerImpl getLogManager() {
       return (DeploymentLogManagerImpl)myConnection.getLogManager(myProject, getDeployment());
     }
@@ -403,7 +401,6 @@ public final class ServersTreeStructure {
     }
   }
 
-  @ApiStatus.Internal
   public static class DeploymentLogNode extends AbstractTreeNode<LoggingHandlerBase> implements ServersTreeNode, LogProvidingNode {
     private final @NotNull DeploymentNodeImpl myDeploymentNode;
 

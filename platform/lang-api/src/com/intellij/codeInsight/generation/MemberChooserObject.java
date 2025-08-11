@@ -26,9 +26,7 @@ public interface MemberChooserObject {
 
   @NlsContexts.Label @NotNull String getText();
 
-  @Override
   boolean equals(Object o);
 
-  @Override
   int hashCode();
 }

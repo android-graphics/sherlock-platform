@@ -1,2 +1,2 @@
-def foo(x, y) -> None:
+def foo(x, y) -> object:
     pass

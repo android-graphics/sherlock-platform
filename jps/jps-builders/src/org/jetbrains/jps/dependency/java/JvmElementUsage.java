@@ -1,7 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
@@ -9,8 +8,8 @@ import org.jetbrains.jps.dependency.Usage;
 
 import java.io.IOException;
 
-@ApiStatus.Internal
-public abstract class JvmElementUsage implements Usage {
+abstract class JvmElementUsage implements Usage {
+
   private final @NotNull JvmNodeReferenceID myOwner;
 
   JvmElementUsage(@NotNull JvmNodeReferenceID owner) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.icons.AllIcons;
@@ -24,8 +24,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public final class PropertyGroup implements Group, ColoredItemPresentation, AccessLevelProvider, WeighedItem {
-  private final @NotNull String myPropertyName;
-  private final @NotNull String myTypeText;
+  @NotNull private final String myPropertyName;
+  @NotNull private final String myTypeText;
 
   private SmartPsiElementPointer<?> myFieldPointer;
   private SmartPsiElementPointer<?> myGetterPointer;
@@ -78,12 +78,14 @@ public final class PropertyGroup implements Group, ColoredItemPresentation, Acce
   }
 
   @Override
-  public @NotNull Collection<TreeElement> getChildren() {
+  @NotNull
+  public Collection<TreeElement> getChildren() {
     return myChildren;
   }
 
   @Override
-  public @NotNull ItemPresentation getPresentation() {
+  @NotNull
+  public ItemPresentation getPresentation() {
     return this;
   }
 
@@ -122,13 +124,11 @@ public final class PropertyGroup implements Group, ColoredItemPresentation, Acce
     return myPropertyName + ": " + myTypeText;
   }
 
-  @Override
   public String toString() {
     return myPropertyName;
   }
 
 
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof PropertyGroup)) return false;
@@ -136,7 +136,6 @@ public final class PropertyGroup implements Group, ColoredItemPresentation, Acce
     return myPropertyName.equals(((PropertyGroup)o).myPropertyName) && myTypeText.equals(((PropertyGroup)o).myTypeText);
   }
 
-  @Override
   public int hashCode() {
     return myPropertyName.hashCode() * 31 + myTypeText.hashCode();
   }
@@ -204,7 +203,7 @@ public final class PropertyGroup implements Group, ColoredItemPresentation, Acce
     return isDeprecated(getField()) && isDeprecated(getGetter()) && isDeprecated(getSetter());
   }
 
-  private static boolean isDeprecated(final @Nullable PsiDocCommentOwner element) {
+  private static boolean isDeprecated(@Nullable final PsiDocCommentOwner element) {
     try {
       return element != null && element.isValid() && element.isDeprecated();
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +15,8 @@ public final class TestFileSystemBuilder {
     myParent = parent;
   }
 
-  public @NotNull TestFileSystemItem build() {
+  @NotNull
+  public TestFileSystemItem build() {
     TestFileSystemBuilder builder = this;
     while (builder.myParent != null) {
       builder = builder.myParent;
@@ -23,24 +24,28 @@ public final class TestFileSystemBuilder {
     return builder.myItem;
   }
 
-  public @NotNull TestFileSystemBuilder dir(String name) {
+  @NotNull
+  public TestFileSystemBuilder dir(String name) {
     final TestFileSystemItem item = new TestFileSystemItem(name, false, true);
     myItem.addChild(item);
     return new TestFileSystemBuilder(item, this);
   }
 
-  public @NotNull TestFileSystemBuilder archive(String name) {
+  @NotNull
+  public TestFileSystemBuilder archive(String name) {
     final TestFileSystemItem item = new TestFileSystemItem(name, true, false);
     myItem.addChild(item);
     return new TestFileSystemBuilder(item, this);
   }
 
-  public @NotNull TestFileSystemBuilder file(String name) {
+  @NotNull
+  public TestFileSystemBuilder file(String name) {
     myItem.addChild(new TestFileSystemItem(name, false, false));
     return this;
   }
 
-  public @NotNull TestFileSystemBuilder file(String name, String content) {
+  @NotNull
+  public TestFileSystemBuilder file(String name, String content) {
     myItem.addChild(new TestFileSystemItem(name, false, false, content));
     return this;
   }
@@ -49,7 +54,8 @@ public final class TestFileSystemBuilder {
     return myParent;
   }
 
-  public static @NotNull TestFileSystemBuilder fs() {
+  @NotNull
+  public static TestFileSystemBuilder fs() {
     return new TestFileSystemBuilder(new TestFileSystemItem("root", false, true), null);
   }
 }

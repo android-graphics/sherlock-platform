@@ -1,11 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.Navigatable;
 import icons.MavenIcons;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,10 +13,12 @@ import javax.swing.*;
 
 import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
 
-@ApiStatus.Internal
-public final class RepositoryNode extends MavenSimpleNode {
-  private final @NlsSafe String myId;
-  private final @NlsSafe String myUrl;
+class RepositoryNode extends MavenSimpleNode {
+  
+  @NlsSafe
+  private final String myId;
+  @NlsSafe
+  private final String myUrl;
   private final boolean myLocal;
 
   RepositoryNode(MavenProjectsStructure structure, RepositoriesNode parent, String id, String url, boolean local) {
@@ -30,7 +31,8 @@ public final class RepositoryNode extends MavenSimpleNode {
     setNameAndTooltip(presentation, myId, null, myLocal ? getPresentablePath(myUrl) : myUrl);
   }
 
-  private @NotNull Icon getDefaultIcon() {
+  @NotNull
+  private Icon getDefaultIcon() {
     return myLocal ? MavenIcons.MavenRepoLocal : MavenIcons.MavenRepoRemote;
   }
 
@@ -44,7 +46,8 @@ public final class RepositoryNode extends MavenSimpleNode {
   }
 
   @Override
-  protected @NonNls String getMenuId() {
+  @NonNls
+  protected String getMenuId() {
     return "Maven.RepositoryMenu";
   }
 
@@ -60,8 +63,9 @@ public final class RepositoryNode extends MavenSimpleNode {
     return myLocal;
   }
 
+  @Nullable
   @Override
-  public @Nullable Navigatable getNavigatable() {
+  public Navigatable getNavigatable() {
     return null;
   }
 }

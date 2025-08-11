@@ -25,7 +25,6 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -132,14 +131,8 @@ public final class ProtectedMemberInFinalClassInspection extends BaseInspection 
       if (containingClass == null || !containingClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
-      if (containingClass.hasModifierProperty(PsiModifier.PROTECTED)) {
-        return;
-      }
-      if (!IncompleteModelUtil.isHierarchyResolved(containingClass)) {
-        return;
-      }
-      if (member instanceof PsiMethod method && !method.isConstructor() &&
-          !PsiSuperMethodImplUtil.getHierarchicalMethodSignature(method).getSuperSignatures().isEmpty()) {
+      if (member instanceof PsiMethod && !((PsiMethod)member).isConstructor() &&
+          !PsiSuperMethodImplUtil.getHierarchicalMethodSignature((PsiMethod)member).getSuperSignatures().isEmpty()) {
         return;
       }
       registerModifierError(PsiModifier.PROTECTED, member);

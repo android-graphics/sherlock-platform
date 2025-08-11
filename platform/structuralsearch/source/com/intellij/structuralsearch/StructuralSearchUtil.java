@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -59,15 +59,18 @@ public final class StructuralSearchUtil {
     cache.clear();
   }
 
-  public static @Nullable StructuralSearchProfile getProfileByPsiElement(@NotNull PsiElement element) {
+  @Nullable
+  public static StructuralSearchProfile getProfileByPsiElement(@NotNull PsiElement element) {
     return getProfileByLanguage(element.getLanguage());
   }
 
-  public static @Nullable StructuralSearchProfile getProfileByFileType(@Nullable LanguageFileType fileType) {
+  @Nullable
+  public static StructuralSearchProfile getProfileByFileType(@Nullable LanguageFileType fileType) {
     return (fileType == null) ? null : getProfileByLanguage(fileType.getLanguage());
   }
 
-  public static @Nullable StructuralSearchProfile getProfileByLanguage(@NotNull Language language) {
+  @Nullable
+  public static StructuralSearchProfile getProfileByLanguage(@NotNull Language language) {
     final String id = language.getID();
     if (cache.containsKey(id)) {
       return cache.get(id);
@@ -117,7 +120,8 @@ public final class StructuralSearchUtil {
            : StructuralSearchProfile.EP_NAME.getExtensions();
   }
 
-  public static @NotNull LanguageFileType getDefaultFileType() {
+  @NotNull
+  public static LanguageFileType getDefaultFileType() {
     if (ourDefaultFileType == null) {
       for (StructuralSearchProfile profile : getProfiles()) {
         ourDefaultFileType = profile.getDefaultFileType(ourDefaultFileType);

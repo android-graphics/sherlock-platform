@@ -23,7 +23,6 @@ import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * User : ktisha
@@ -71,7 +70,7 @@ public class PyDocstringParsingContext extends ParsingContext {
     }
 
     @Override
-    public @NotNull IElementType filter(@NotNull IElementType source, int start, int end, @NotNull CharSequence text) {
+    public IElementType filter(IElementType source, int start, int end, CharSequence text) {
       if (source == PyTokenTypes.DOT && CharArrayUtil.regionMatches(text, start, end, "..."))
         return PyDocstringTokenTypes.DOTS;
       if (source == PyTokenTypes.GTGT && CharArrayUtil.regionMatches(text, start, end, ">>>"))

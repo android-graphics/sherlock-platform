@@ -1,11 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.util.SingleAlarm
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.NonNls
@@ -13,23 +14,18 @@ import java.awt.GraphicsEnvironment
 import javax.swing.SwingUtilities
 import kotlin.time.Duration.Companion.microseconds
 
-abstract class Animator @JvmOverloads constructor(
-  private val name: @NonNls String?,
-  private val totalFrames: Int,
-  private val cycleDuration: Int,
-  private val isRepeatable: Boolean,
-  @JvmField protected val isForward: Boolean = true,
-  coroutineScope: CoroutineScope? = null,
-) {
+abstract class Animator @JvmOverloads constructor(private val name: @NonNls String?,
+                                                  private val totalFrames: Int,
+                                                  private val cycleDuration: Int,
+                                                  private val isRepeatable: Boolean,
+                                                  @JvmField protected val isForward: Boolean = true,
+                                                  coroutineScope: CoroutineScope? = null) : Disposable {
   private var ticker: Job? = null
   private var currentFrame = 0
   private var startTime: Long = 0
   private var startDeltaTime: Long = 0
   private var initialStep = false
-  private val coroutineScope = coroutineScope ?: CoroutineScope(SupervisorJob() +
-                                                                Dispatchers.Default +
-                                                                ModalityState.defaultModalityState().asContextElement() +
-                                                                ClientId.coroutineContext())
+  private val coroutineScope = coroutineScope ?: CoroutineScope(SupervisorJob() + Dispatchers.Default + ClientId.coroutineContext())
 
   @Obsolete
   fun isForward(): Boolean = isForward
@@ -122,11 +118,7 @@ abstract class Animator @JvmOverloads constructor(
       animationDone()
     }
     else if (ticker == null) {
-      var context = SingleAlarm.getEdtDispatcher()
-      if (ApplicationManager.getApplication() != null) {
-        context += ModalityState.any().asContextElement()
-      }
-      ticker = coroutineScope.launch(context) {
+      ticker = coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         while (true) {
           onTick()
           delay((cycleDuration * 1000L / totalFrames).microseconds)
@@ -137,7 +129,7 @@ abstract class Animator @JvmOverloads constructor(
 
   abstract fun paintNow(frame: Int, totalFrames: Int, cycle: Int)
 
-  open fun dispose() {
+  override fun dispose() {
     stopTicker()
     coroutineScope.cancel()
     isDisposed = true

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.ExecutableValidator;
@@ -41,7 +41,7 @@ public final class SvnExecutableChecker extends ExecutableValidator implements D
     "^.*cannot set .* locale.*please check that your locale name is correct$",
     Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
 
-  private final @NotNull SvnVcs myVcs;
+  @NotNull private final SvnVcs myVcs;
 
   public SvnExecutableChecker(@NotNull Project project) {
     super(project,
@@ -67,8 +67,9 @@ public final class SvnExecutableChecker extends ExecutableValidator implements D
     return SvnApplicationSettings.getInstance().getCommandLinePath();
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getConfigurableDisplayName() {
+  protected String getConfigurableDisplayName() {
     return SvnConfigurable.getGroupDisplayName();
   }
 
@@ -96,7 +97,8 @@ public final class SvnExecutableChecker extends ExecutableValidator implements D
   }
 
   @Override
-  protected @Nullable Notification validate(@NotNull String executable) {
+  @Nullable
+  protected Notification validate(@NotNull String executable) {
     Notification result = createDefaultNotification();
 
     // Necessary executable path will be taken from settings while command execution
@@ -117,13 +119,15 @@ public final class SvnExecutableChecker extends ExecutableValidator implements D
     return result;
   }
 
-  private @Nullable Notification validateVersion(@NotNull Version version) {
+  @Nullable
+  private Notification validateVersion(@NotNull Version version) {
     return !myVcs.isSupportedByCommandLine(WorkingCopyFormat.from(version))
            ? new ExecutableNotValidNotification(message("subversion.executable.too.old", version))
            : null;
   }
 
-  private @Nullable Notification validateLocale() throws SvnBindException {
+  @Nullable
+  private Notification validateLocale() throws SvnBindException {
     ProcessOutput versionOutput = getVersionClient().runCommand(false);
     Notification result = null;
 
@@ -144,7 +148,8 @@ public final class SvnExecutableChecker extends ExecutableValidator implements D
     return result;
   }
 
-  private @Nullable Version getConfiguredClientVersion() {
+  @Nullable
+  private Version getConfiguredClientVersion() {
     Version result = null;
 
     try {
@@ -157,7 +162,8 @@ public final class SvnExecutableChecker extends ExecutableValidator implements D
     return result;
   }
 
-  private @NotNull CmdVersionClient getVersionClient() {
+  @NotNull
+  private CmdVersionClient getVersionClient() {
     return (CmdVersionClient)myVcs.getCommandLineFactory().createVersionClient();
   }
 

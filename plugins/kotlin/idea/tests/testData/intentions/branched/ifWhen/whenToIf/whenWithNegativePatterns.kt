@@ -1,4 +1,3 @@
-// PRIORITY: LOW
 fun test(obj: Any): String {
     return <caret>when (obj) {
         !is Iterable<*> -> "not iterable"

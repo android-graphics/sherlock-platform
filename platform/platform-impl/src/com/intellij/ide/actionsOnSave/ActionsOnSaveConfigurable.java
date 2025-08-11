@@ -28,7 +28,8 @@ import javax.swing.event.AncestorEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public final class ActionsOnSaveConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   public static final class ActionsOnSaveConfigurableProvider extends ConfigurableProvider {
@@ -158,7 +159,7 @@ public final class ActionsOnSaveConfigurable implements SearchableConfigurable, 
   private void updateTable() {
     Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myTable));
     if (settings == null) {
-      myTable.getListTableModel().setItems(new ArrayList<>());
+      myTable.getListTableModel().setItems(Collections.emptyList());
       LOG.error("Settings not found");
       return;
     }
@@ -167,7 +168,7 @@ public final class ActionsOnSaveConfigurable implements SearchableConfigurable, 
       myActionOnSaveContext = new ActionOnSaveContext(myProject, settings, myDisposable);
     }
 
-    ArrayList<ActionOnSaveInfo> infos = ActionOnSaveInfoProvider.getAllActionOnSaveInfos(myActionOnSaveContext);
+    List<ActionOnSaveInfo> infos = ActionOnSaveInfoProvider.getAllActionOnSaveInfos(myActionOnSaveContext);
     myTable.getListTableModel().setItems(infos);
   }
 

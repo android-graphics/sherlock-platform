@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.rest.model;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -12,34 +11,46 @@ import java.util.List;
  * @author Mikhail Golubev
  */
 public abstract class JiraIssue {
-  @Override
   public String toString() {
     return String.format("JiraIssue(key=%s, summary='%s')", getKey(), getSummary());
   }
 
-  public abstract @NotNull String getKey();
+  @NotNull
+  public abstract String getKey();
 
-  public abstract @NotNull String getIssueUrl();
+  @NotNull
+  public abstract String getIssueUrl();
 
-  public abstract @NotNull @NlsSafe String getSummary();
+  @NotNull
+  public abstract @NlsSafe String getSummary();
 
-  public abstract @Nullable @NlsSafe String getDescription();
+  @Nullable
+  public abstract @NlsSafe String getDescription();
 
-  public abstract @NotNull Date getCreated();
+  @NotNull
+  public abstract Date getCreated();
 
-  public abstract @NotNull Date getUpdated();
+  @NotNull
+  public abstract Date getUpdated();
 
-  public abstract @Nullable Date getResolutionDate();
+  @Nullable
+  public abstract Date getResolutionDate();
 
-  public abstract @Nullable Date getDueDate();
+  @Nullable
+  public abstract Date getDueDate();
 
-  public abstract @NotNull JiraIssueType getIssueType();
+  @NotNull
+  public abstract JiraIssueType getIssueType();
 
-  public abstract @Nullable JiraUser getAssignee();
+  @Nullable
+  public abstract JiraUser getAssignee();
 
-  public abstract @Nullable JiraUser getReporter();
+  @Nullable
+  public abstract JiraUser getReporter();
 
-  public abstract @NotNull List<JiraComment> getComments();
+  @NotNull
+  public abstract List<JiraComment> getComments();
 
-  public abstract @NotNull JiraStatus getStatus();
+  @NotNull
+  public abstract JiraStatus getStatus();
 }

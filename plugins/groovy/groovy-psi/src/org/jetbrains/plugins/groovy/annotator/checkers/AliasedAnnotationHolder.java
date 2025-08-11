@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.psi.PsiElement;
@@ -9,7 +9,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 final class AliasedAnnotationHolder {
 
-  static @NotNull PsiElement findCodeElement(@NotNull PsiElement elt, @NotNull GrAnnotation alias, @NotNull GrCodeReferenceElement aliasReference) {
+  @NotNull
+  static PsiElement findCodeElement(@NotNull PsiElement elt, @NotNull GrAnnotation alias, @NotNull GrCodeReferenceElement aliasReference) {
     if (PsiTreeUtil.isAncestor(alias, elt, true)) {
       return elt;
     }

@@ -36,4 +36,9 @@ interface ClientGraphicsEnvironment {
 
     return distance
   }
+
+  // TODO(ampivovarov): place for your font's logic?
+  // fun getAllFonts(): Array<Font>
+  // fun getAvailableFontFamilyNames(): Array<String>
+  // fun getAvailableFontFamilyNames(requestedLocale: Locale): Array<String>
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.editor;
 
 import com.intellij.codeInsight.editorActions.CopyPasteReferenceProcessor;
@@ -147,7 +147,8 @@ public final class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceP
   }
 
 
-  private static @Nullable PsiMember findMember(ReferenceData refData, PsiClass refClass) {
+  @Nullable
+  private static PsiMember findMember(ReferenceData refData, PsiClass refClass) {
     PsiField field = refClass.findFieldByName(refData.staticMemberName, true);
     if (field != null) {
       return field;

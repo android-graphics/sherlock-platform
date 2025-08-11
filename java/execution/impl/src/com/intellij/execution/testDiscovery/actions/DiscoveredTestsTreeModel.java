@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.ide.util.JavaAnonymousClassesHelper;
@@ -103,7 +103,8 @@ final class DiscoveredTestsTreeModel extends BaseTreeModel<Object> implements In
     return myInvoker;
   }
 
-  public static @Nullable String getClassName(@NotNull PsiClass c) {
+  @Nullable
+  public static String getClassName(@NotNull PsiClass c) {
     if (c instanceof PsiAnonymousClass) {
       PsiClass containingClass = PsiTreeUtil.getParentOfType(c, PsiClass.class);
       if (containingClass != null) {
@@ -129,8 +130,9 @@ final class DiscoveredTestsTreeModel extends BaseTreeModel<Object> implements In
     return myTests.size();
   }
 
-  public abstract static class Node<Psi extends PsiMember> {
-    private final @NotNull SmartPsiElementPointer<Psi> myPointer;
+  public static abstract class Node<Psi extends PsiMember> {
+    @NotNull
+    private final SmartPsiElementPointer<Psi> myPointer;
     private final String myName;
     private final Icon myIcon;
 
@@ -174,7 +176,8 @@ final class DiscoveredTestsTreeModel extends BaseTreeModel<Object> implements In
       myIcon = psi.getIcon(Iconable.ICON_FLAG_READ_STATUS);
     }
 
-    public @NotNull SmartPsiElementPointer<Psi> getPointer() {
+    @NotNull
+    public SmartPsiElementPointer<Psi> getPointer() {
       return myPointer;
     }
 

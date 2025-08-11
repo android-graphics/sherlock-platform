@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.ant.model.impl;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -26,18 +26,21 @@ import java.io.File;
 import java.util.*;
 
 public final class JpsAntModelSerializerExtension extends JpsModelSerializerExtension {
+  @NotNull
   @Override
-  public @NotNull List<? extends JpsGlobalExtensionSerializer> getGlobalExtensionSerializers() {
+  public List<? extends JpsGlobalExtensionSerializer> getGlobalExtensionSerializers() {
     return Collections.singletonList(new JpsGlobalAntConfigurationSerializer());
   }
 
+  @NotNull
   @Override
-  public @NotNull List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
+  public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
     return Arrays.asList(new JpsProjectAntConfigurationSerializer(), new JpsWorkspaceAntConfigurationSerializer());
   }
 
+  @NotNull
   @Override
-  public @NotNull List<? extends JpsArtifactExtensionSerializer<?>> getArtifactExtensionSerializers() {
+  public List<? extends JpsArtifactExtensionSerializer<?>> getArtifactExtensionSerializers() {
     return Arrays.asList(new JpsAntArtifactExtensionSerializer("ant-postprocessing", JpsAntArtifactExtensionImpl.POSTPROCESSING_ROLE),
                          new JpsAntArtifactExtensionSerializer("ant-preprocessing", JpsAntArtifactExtensionImpl.PREPROCESSING_ROLE));
   }
@@ -54,7 +57,8 @@ public final class JpsAntModelSerializerExtension extends JpsModelSerializerExte
     }
   }
 
-  private static @Nullable String getValueAttribute(Element buildFileTag, final String childName) {
+  @Nullable
+  private static String getValueAttribute(Element buildFileTag, final String childName) {
     Element child = buildFileTag.getChild(childName);
     return child != null ? child.getAttributeValue("value") : null;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.Configurable;
@@ -105,7 +105,8 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
     }
   }
 
-  private static @Nullable Url getSourceUrl(final SvnVcs vcs, final File root) {
+  @Nullable
+  private static Url getSourceUrl(final SvnVcs vcs, final File root) {
     final Info svnInfo = vcs.getInfo(root);
     return svnInfo != null ? svnInfo.getUrl() : null;
   }

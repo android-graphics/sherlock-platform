@@ -57,7 +57,7 @@ internal class PlatformReadWriteActionSupport : ReadWriteActionSupport {
           return readResult.value
         }
         is ReadResult.WriteAction -> {
-          val writeResult = edtWriteAction {
+          val writeResult = writeAction {
             // Start of this Write Action increase count of write actions by one
             val writeStamp = AsyncExecutionServiceImpl.getWriteActionCounter() - 1
             if (stamp == writeStamp) {

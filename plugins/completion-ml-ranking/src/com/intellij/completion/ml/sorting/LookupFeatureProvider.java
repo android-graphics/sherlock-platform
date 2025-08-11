@@ -13,7 +13,8 @@ import java.util.Map;
 public interface LookupFeatureProvider {
   LanguageExtension<LookupFeatureProvider> EP_NAME = new LanguageExtension<>("com.intellij.completion.ml.lookupFeatures");
 
-  static @NotNull List<LookupFeatureProvider> forLanguage(Language language) {
+  @NotNull
+  static List<LookupFeatureProvider> forLanguage(Language language) {
     return EP_NAME.allForLanguageOrAny(language);
   }
 

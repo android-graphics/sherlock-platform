@@ -1,4 +1,0 @@
-<inspection_tool class="HasPlatformTypeInspection">
-  <option name="publicAPIOnly" value="false" />
-  <option name="reportPlatformArguments" value="true" />
-</inspection_tool>

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
 import com.intellij.openapi.editor.HighlighterColors;
@@ -33,11 +33,13 @@ public final class TextChunk {
     myText = text;
   }
 
-  public @NotNull TextAttributes getAttributes() {
+  @NotNull
+  public TextAttributes getAttributes() {
     return TextAttributes.fromFlyweight(myAttributes);
   }
 
-  public @NotNull @NlsSafe String getText() {
+  @NotNull
+  public @NlsSafe String getText() {
     return myText;
   }
 
@@ -50,11 +52,13 @@ public final class TextChunk {
    * @deprecated always returns {@code null}
    */
   @Deprecated
-  public @Nullable UsageType getType() {
+  @Nullable
+  public UsageType getType() {
     return null;
   }
 
-  public @NotNull SimpleTextAttributes getSimpleAttributesIgnoreBackground() {
+  @NotNull
+  public SimpleTextAttributes getSimpleAttributesIgnoreBackground() {
     SimpleTextAttributes simples = SimpleTextAttributes.fromTextAttributes(getAttributes());
     simples = new SimpleTextAttributes(null, simples.getFgColor(), simples.getWaveColor(), simples.getStyle());
     return simples;

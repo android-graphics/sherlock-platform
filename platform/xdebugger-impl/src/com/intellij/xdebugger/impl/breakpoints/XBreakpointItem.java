@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.application.ModalityState;
@@ -64,7 +64,9 @@ class XBreakpointItem extends BreakpointItem {
     return XBreakpointUtil.getShortText(myBreakpoint);
   }
 
-  private @Nullable @Nls String getUserDescription() {
+  @Nullable
+  @Nls
+  private String getUserDescription() {
     return ((XBreakpointBase<?, ?, ?>)myBreakpoint).getUserDescription();
   }
 
@@ -79,7 +81,8 @@ class XBreakpointItem extends BreakpointItem {
   }
 
   @Override
-  public @Nls String footerText() {
+  @Nls
+  public String footerText() {
     return null;
   }
 

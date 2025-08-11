@@ -12,15 +12,16 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
 
 public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance(ExtendsListFix.class);
 
-  // we don't modify this class
-  @SafeFieldForPreview protected final @Nullable SmartPsiElementPointer<PsiClass> myClassToExtendFromPointer;
+  @Nullable
+  @SafeFieldForPreview // we don't modify this class
+  protected final SmartPsiElementPointer<PsiClass> myClassToExtendFromPointer;
   private final boolean myToAdd;
   @SafeFieldForPreview // we don't modify PSI referenced from this type
   private final PsiClassType myTypeToExtendFrom;
@@ -43,7 +44,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     myToAdd = toAdd;
     myTypeToExtendFrom = aClass instanceof PsiTypeParameter ? typeToExtendFrom : (PsiClassType)GenericsUtil.eliminateWildcards(typeToExtendFrom);
 
-    @PropertyKey(resourceBundle = QuickFixBundle.BUNDLE) String messageKey;
+    @NonNls final String messageKey;
     if (classToExtendFrom != null && aClass.isInterface() == classToExtendFrom.isInterface() || aClass instanceof PsiTypeParameter) {
       messageKey = toAdd ? "add.class.to.extends.list" : "remove.class.from.extends.list";
     }
@@ -59,12 +60,14 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
   }
 
   @Override
-  public @NotNull String getText() {
+  @NotNull
+  public String getText() {
     return myName;
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return QuickFixBundle.message("change.extends.list.family");
   }
 
@@ -150,8 +153,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
       else {
         anchor = referenceElements[position - 1];
       }
-      PsiJavaCodeReferenceElement classReferenceElement = JavaPsiFacade.getElementFactory(project)
-        .createReferenceElementByType(myTypeToExtendFrom.annotate(TypeAnnotationProvider.EMPTY));
+      PsiJavaCodeReferenceElement classReferenceElement = JavaPsiFacade.getElementFactory(project).createReferenceElementByType(myTypeToExtendFrom);
       PsiElement element;
       if (anchor == null) {
         if (referenceElements.length == 0) {

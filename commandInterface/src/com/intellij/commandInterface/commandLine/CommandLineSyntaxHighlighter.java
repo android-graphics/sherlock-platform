@@ -7,6 +7,8 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.commandInterface.commandLine.CommandLineElementTypes;
+import com.intellij.commandInterface.commandLine._CommandLineLexer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -31,8 +33,9 @@ public final class CommandLineSyntaxHighlighter implements SyntaxHighlighter {
     );
   }
 
+  @NotNull
   @Override
-  public @NotNull Lexer getHighlightingLexer() {
+  public Lexer getHighlightingLexer() {
     return new FlexAdapter(new _CommandLineLexer());
   }
 

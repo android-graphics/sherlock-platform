@@ -26,18 +26,21 @@ import java.util.List;
  */
 @ApiStatus.Experimental
 public interface PyAstPlainStringElement extends PyAstStringElement {
+  @NotNull
   @Override
-  default @NotNull List<Pair<TextRange, String>> getDecodedFragments() {
+  default List<Pair<TextRange, String>> getDecodedFragments() {
     return new PyStringLiteralDecoder(this).decodeContent();
   }
 
+  @NotNull
   @Override
-  default @NotNull TextRange getContentRange() {
+  default TextRange getContentRange() {
     return PyStringLiteralUtil.getContentRange(getText());
   }
 
+  @NotNull
   @Override
-  default @NotNull String getQuote() {
+  default String getQuote() {
     return getText().substring(getPrefixLength(), getContentRange().getStartOffset());
   }
 
@@ -50,11 +53,6 @@ public interface PyAstPlainStringElement extends PyAstStringElement {
 
   @Override
   default boolean isFormatted() {
-    return false;
-  }
-
-  @Override
-  default boolean isTemplate() {
     return false;
   }
 }

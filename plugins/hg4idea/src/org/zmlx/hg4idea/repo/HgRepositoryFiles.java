@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.repo;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,21 +32,22 @@ public final class HgRepositoryFiles {
   public static final @NonNls String HGIGNORE = ".hgignore";
 
 
-  private final @NotNull String myBranchHeadsPath;
-  private final @NotNull String myBranchHeadsDirPath;
-  private final @NotNull String myMergePath;
-  private final @NotNull String myRebasePath;
-  private final @NotNull String myBranchPath;
-  private final @NotNull String myDirstatePath;
-  private final @NotNull String myBookmarksPath;
-  private final @NotNull String myTagsPath;
-  private final @NotNull String myLocalTagsPath;
-  private final @NotNull String myCurrentBookmarkPath;
-  private final @NotNull String myMQDirPath;
-  private final @NotNull String myConfigHgrcPath;
-  private final @NotNull String myHgIgnorePath;
+  @NotNull private final String myBranchHeadsPath;
+  @NotNull private final String myBranchHeadsDirPath;
+  @NotNull private final String myMergePath;
+  @NotNull private final String myRebasePath;
+  @NotNull private final String myBranchPath;
+  @NotNull private final String myDirstatePath;
+  @NotNull private final String myBookmarksPath;
+  @NotNull private final String myTagsPath;
+  @NotNull private final String myLocalTagsPath;
+  @NotNull private final String myCurrentBookmarkPath;
+  @NotNull private final String myMQDirPath;
+  @NotNull private final String myConfigHgrcPath;
+  @NotNull private final String myHgIgnorePath;
 
-  public static @NotNull HgRepositoryFiles getInstance(@NotNull VirtualFile hgDir) {
+  @NotNull
+  public static HgRepositoryFiles getInstance(@NotNull VirtualFile hgDir) {
     return new HgRepositoryFiles(hgDir);
   }
 
@@ -67,22 +68,26 @@ public final class HgRepositoryFiles {
     myHgIgnorePath = repoDir.getPath() + slash(HGIGNORE);
   }
 
-  private static @NotNull String slash(@NotNull String s) {
+  @NotNull
+  private static String slash(@NotNull String s) {
     return "/" + s;
   }
 
   /**
    * Returns subdirectories of .hg which we are interested in - they should be watched by VFS.
    */
-  static @NotNull Collection<String> getSubDirRelativePaths() {
+  @NotNull
+  static Collection<String> getSubDirRelativePaths() {
     return Arrays.asList(slash(BRANCHHEADS), slash(MERGE));
   }
 
-  public @NotNull String getBranchHeadsDirPath() {
+  @NotNull
+  public String getBranchHeadsDirPath() {
     return myBranchHeadsDirPath;
   }
 
-  public @NotNull String getMQDirPath() {
+  @NotNull
+  public String getMQDirPath() {
     return myMQDirPath;
   }
 

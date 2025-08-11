@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -41,43 +41,43 @@ import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
-class ApplyPatchViewer implements Disposable {
-  private final @Nullable Project myProject;
-  private final @NotNull DiffContext myContext;
-  private final @NotNull ApplyPatchRequest myPatchRequest;
+class ApplyPatchViewer implements DataProvider, Disposable {
+  @Nullable private final Project myProject;
+  @NotNull private final DiffContext myContext;
+  @NotNull private final ApplyPatchRequest myPatchRequest;
 
-  private final @NotNull TextEditorHolder myResultHolder;
-  private final @NotNull TextEditorHolder myPatchHolder;
-  private final @NotNull EditorEx myResultEditor;
-  private final @NotNull EditorEx myPatchEditor;
+  @NotNull private final TextEditorHolder myResultHolder;
+  @NotNull private final TextEditorHolder myPatchHolder;
+  @NotNull private final EditorEx myResultEditor;
+  @NotNull private final EditorEx myPatchEditor;
 
-  private final @NotNull SimpleDiffPanel myPanel;
-  private final @NotNull TwosideContentPanel myContentPanel;
+  @NotNull private final SimpleDiffPanel myPanel;
+  @NotNull private final TwosideContentPanel myContentPanel;
 
-  private final @NotNull MyModel myModel;
+  @NotNull private final MyModel myModel;
 
-  private final @NotNull FocusTrackerSupport<Side> myFocusTrackerSupport;
-  private final @NotNull MyPrevNextDifferenceIterable myPrevNextDifferenceIterable;
-  private final @NotNull StatusPanel myStatusPanel;
-  private final @NotNull MyFoldingModel myFoldingModel;
+  @NotNull private final FocusTrackerSupport<Side> myFocusTrackerSupport;
+  @NotNull private final MyPrevNextDifferenceIterable myPrevNextDifferenceIterable;
+  @NotNull private final StatusPanel myStatusPanel;
+  @NotNull private final MyFoldingModel myFoldingModel;
 
-  private final @NotNull SetEditorSettingsAction myEditorSettingsAction;
+  @NotNull private final SetEditorSettingsAction myEditorSettingsAction;
 
   // Changes with known AppliedTo. Ordered as in result-editor
-  private final @NotNull List<ApplyPatchChange> myResultChanges = new ArrayList<>();
+  @NotNull private final List<ApplyPatchChange> myResultChanges = new ArrayList<>();
   // All changes. Ordered as in patch-editor
-  private final @NotNull List<ApplyPatchChange> myPatchChanges = new ArrayList<>();
+  @NotNull private final List<ApplyPatchChange> myPatchChanges = new ArrayList<>();
   // All changes. Ordered as in result-editor. Non-applied changes are at the very beginning with model ranges [-1. -1)
-  private final @NotNull List<ApplyPatchChange> myModelChanges = new ArrayList<>();
+  @NotNull private final List<ApplyPatchChange> myModelChanges = new ArrayList<>();
 
   private boolean myDisposed;
 
@@ -117,14 +117,7 @@ class ApplyPatchViewer implements Disposable {
 
     myContentPanel = TwosideContentPanel.createFromHolders(holders);
     myContentPanel.setTitles(titleComponents);
-    myPanel = new SimpleDiffPanel(myContentPanel, myContext) {
-      @Override
-      public void uiDataSnapshot(@NotNull DataSink sink) {
-        super.uiDataSnapshot(sink);
-        sink.set(CommonDataKeys.PROJECT, myProject);
-        sink.set(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE, myPrevNextDifferenceIterable);
-      }
-    };
+    myPanel = new SimpleDiffPanel(myContentPanel, this, myContext);
 
     myModel = new MyModel(myProject, myResultEditor.getDocument());
 
@@ -148,7 +141,8 @@ class ApplyPatchViewer implements Disposable {
     ProxyUndoRedoAction.register(myProject, myResultEditor, myContentPanel);
   }
 
-  protected @NotNull List<AnAction> createToolbarActions() {
+  @NotNull
+  protected List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<>();
 
     if (!isReadOnly()) {
@@ -162,7 +156,8 @@ class ApplyPatchViewer implements Disposable {
     return group;
   }
 
-  private @NotNull List<AnAction> createEditorPopupActions() {
+  @NotNull
+  private List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<>();
 
     if (!isReadOnly()) {
@@ -195,11 +190,13 @@ class ApplyPatchViewer implements Disposable {
     return !DiffUtil.canMakeWritable(myResultEditor.getDocument());
   }
 
-  public @NotNull MyModel getModel() {
+  @NotNull
+  public MyModel getModel() {
     return myModel;
   }
 
-  public @NotNull List<ApplyPatchChange> getModelChanges() {
+  @NotNull
+  public List<ApplyPatchChange> getModelChanges() {
     return myModelChanges;
   }
 
@@ -207,39 +204,60 @@ class ApplyPatchViewer implements Disposable {
     return myDisposed;
   }
 
-  public @NotNull StatusPanel getStatusPanel() {
+  @NotNull
+  public StatusPanel getStatusPanel() {
     return myStatusPanel;
   }
 
-  public @NotNull JComponent getComponent() {
+  @NotNull
+  public JComponent getComponent() {
     return myPanel;
   }
 
-  public @Nullable JComponent getPreferredFocusedComponent() {
+  @Nullable
+  public JComponent getPreferredFocusedComponent() {
     return myResultEditor.getContentComponent();
   }
 
-  public @NotNull EditorEx getResultEditor() {
+  @NotNull
+  public EditorEx getResultEditor() {
     return myResultEditor;
   }
 
-  public @NotNull EditorEx getPatchEditor() {
+  @NotNull
+  public EditorEx getPatchEditor() {
     return myPatchEditor;
   }
 
-  public @NotNull Side getCurrentSide() {
+  @NotNull
+  public Side getCurrentSide() {
     return myFocusTrackerSupport.getCurrentSide();
   }
 
-  public @NotNull List<ApplyPatchChange> getPatchChanges() {
+  @NotNull
+  public List<ApplyPatchChange> getPatchChanges() {
     return myPatchChanges;
   }
 
-  public @NotNull TextDiffSettings getTextSettings() {
+  @Nullable
+  @Override
+  public Object getData(@NotNull @NonNls String dataId) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
+      return myProject;
+    }
+    else if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) {
+      return myPrevNextDifferenceIterable;
+    }
+    return null;
+  }
+
+  @NotNull
+  public TextDiffSettings getTextSettings() {
     return TextDiffSettings.getSettings("ApplyPatch"); //NON-NLS
   }
 
-  public @NotNull FoldingModelSupport.Settings getFoldingModelSettings() {
+  @NotNull
+  public FoldingModelSupport.Settings getFoldingModelSettings() {
     TextDiffSettings settings = getTextSettings();
     return new FoldingModelSupport.Settings(settings.getContextRange(), settings.isExpandByDefault());
   }
@@ -327,7 +345,7 @@ class ApplyPatchViewer implements Disposable {
     myPatchEditor.getGutterComponentEx().revalidateMarkup();
 
 
-    if (!myResultChanges.isEmpty()) {
+    if (myResultChanges.size() > 0) {
       scrollToChange(myResultChanges.get(0), Side.LEFT, true);
     }
   }
@@ -372,7 +390,7 @@ class ApplyPatchViewer implements Disposable {
   }
 
   public boolean executeCommand(@Nullable @NlsContexts.Command String commandName,
-                                final @NotNull Runnable task) {
+                                @NotNull final Runnable task) {
     return myModel.executeMergeCommand(commandName, null, UndoConfirmationPolicy.DEFAULT, false, null, task);
   }
 
@@ -387,8 +405,9 @@ class ApplyPatchViewer implements Disposable {
       change.reinstallHighlighters();
     }
 
+    @NotNull
     @Override
-    protected @NotNull ApplyPatchChange.State storeChangeState(int index) {
+    protected ApplyPatchChange.State storeChangeState(int index) {
       ApplyPatchChange change = myModelChanges.get(index);
       return change.storeState();
     }
@@ -508,7 +527,7 @@ class ApplyPatchViewer implements Disposable {
     }
 
     @Override
-    public void actionPerformed(final @NotNull AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
       final Side side = Side.fromValue(Arrays.asList(myResultEditor, myPatchEditor), editor);
       if (editor == null || side == null) return;
@@ -528,8 +547,9 @@ class ApplyPatchViewer implements Disposable {
       });
     }
 
+    @NotNull
     @RequiresEdt
-    private @NotNull @Unmodifiable List<ApplyPatchChange> getSelectedChanges(@NotNull Side side) {
+    private List<ApplyPatchChange> getSelectedChanges(@NotNull Side side) {
       EditorEx editor = side.select(myResultEditor, myPatchEditor);
       BitSet lines = DiffUtil.getSelectedLines(editor);
       return ContainerUtil.filter(myModelChanges, change -> isChangeSelected(change, lines, side));
@@ -639,13 +659,15 @@ class ApplyPatchViewer implements Disposable {
   //
 
   private class MyPrevNextDifferenceIterable extends PrevNextDifferenceIterableBase<ApplyPatchChange> {
+    @NotNull
     @Override
-    protected @NotNull @Unmodifiable List<ApplyPatchChange> getChanges() {
-      return ContainerUtil.filter(getCurrentSide().select(myResultChanges, myPatchChanges), it -> !it.isResolved());
+    protected List<ApplyPatchChange> getChanges() {
+      return getCurrentSide().select(myResultChanges, myPatchChanges);
     }
 
+    @NotNull
     @Override
-    protected @NotNull EditorEx getEditor() {
+    protected EditorEx getEditor() {
       return getCurrentSide().select(myResultEditor, myPatchEditor);
     }
 
@@ -711,8 +733,9 @@ class ApplyPatchViewer implements Disposable {
   }
 
   private class MyStatusPanel extends StatusPanel {
+    @Nullable
     @Override
-    protected @Nullable String getMessage() {
+    protected String getMessage() {
       int totalUnresolved = 0;
       int alreadyApplied = 0;
       int notApplied = 0;

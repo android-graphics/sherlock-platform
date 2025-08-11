@@ -93,7 +93,6 @@ final class AttributeBinding implements NestedBinding {
     }
   }
 
-  @Override
   public String toString() {
     return "AttributeBinding(name=" + name + ")";
   }

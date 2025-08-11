@@ -32,13 +32,15 @@ import java.util.*;
 public final class PluginIdModuleIndex extends PluginXmlIndexBase<String, Void> {
   private static final ID<String, Void> NAME = ID.create("PluginIdModuleIndex");
 
+  @NotNull
   @Override
-  public @NotNull ID<String, Void> getName() {
+  public ID<String, Void> getName() {
     return NAME;
   }
 
+  @NotNull
   @Override
-  public @NotNull DataExternalizer<Void> getValueExternalizer() {
+  public DataExternalizer<Void> getValueExternalizer() {
     return VoidDataExternalizer.INSTANCE;
   }
 
@@ -52,8 +54,9 @@ public final class PluginIdModuleIndex extends PluginXmlIndexBase<String, Void> 
     return ContainerUtil.newHashMap(ids, Collections.nCopies(ids.size(), null));
   }
 
+  @NotNull
   @Override
-  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
+  public KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 

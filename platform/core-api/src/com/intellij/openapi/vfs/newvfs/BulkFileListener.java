@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

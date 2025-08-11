@@ -79,11 +79,11 @@ public class JBCefJSQueryPoolSizePropTest {
       return null;
     });
 
-    invokeAndWaitForLatch(latchBefore, "executeJavaScript -> wait js callback 'before'", () -> {
+    invokeAndWaitForLatch(latchBefore, () -> {
       browser.getCefBrowser().executeJavaScript(jsQuery_before.inject("'query_before'"), "about:blank", 0);
     });
 
-    invokeAndWaitForLatch(latchAfter, "executeJavaScript -> wait js callback 'after'", () -> {
+    invokeAndWaitForLatch(latchAfter, () -> {
       browser.getCefBrowser().executeJavaScript(jsQuery_after.inject("'query_after'"), "about:blank", 0);
     });
   }

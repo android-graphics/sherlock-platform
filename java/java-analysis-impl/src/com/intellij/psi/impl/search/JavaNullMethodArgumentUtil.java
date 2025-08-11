@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,7 +12,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,12 +23,6 @@ import java.util.Objects;
 public final class JavaNullMethodArgumentUtil {
   private static final Logger LOG = Logger.getInstance(JavaNullMethodArgumentUtil.class);
 
-  /**
-   * Returns true if a given method accepts null as an argument. Calls that resolve to overridden methods are ignored.
-   *
-   * @param method target method
-   * @param argumentIdx argument index (zero-based)
-   */
   public static boolean hasNullArgument(@NotNull PsiMethod method, final int argumentIdx) {
     final boolean[] result = {false};
     searchNullArgument(method, argumentIdx, expression -> {
@@ -39,13 +32,6 @@ public final class JavaNullMethodArgumentUtil {
     return result[0];
   }
 
-  /**
-   * Looks for method calls that pass null to a given method. Calls that resolve to overridden methods are not processed.
-   *  
-   * @param method target method
-   * @param argumentIdx argument index (zero-based)
-   * @param nullArgumentProcessor a processor that accepts null literals passed as a specified argument to a specified method calls.
-   */
   public static void searchNullArgument(@NotNull PsiMethod method, final int argumentIdx, @NotNull Processor<? super PsiExpression> nullArgumentProcessor) {
     final PsiParameter parameter = Objects.requireNonNull(method.getParameterList().getParameter(argumentIdx));
     if (parameter.getType() instanceof PsiEllipsisType) {
@@ -71,28 +57,23 @@ public final class JavaNullMethodArgumentUtil {
 
     GlobalSearchScope scope = GlobalSearchScope.filesScope(method.getProject(), candidateFiles);
     MethodReferencesSearch.search(method, scope, true).forEach(ref -> {
-      PsiExpressionList argumentList = getCallArgumentList(ref.getElement());
-      PsiExpression argument = getCallArgument(argumentList, argumentIdx);
+      PsiExpression argument = getCallArgument(ref, argumentIdx);
       if (argument instanceof PsiLiteralExpression && argument.textMatches(PsiKeyword.NULL)) {
-        if (argumentList.getParent() instanceof PsiMethodCallExpression methodCall) {
-          PsiMethod target = methodCall.resolveMethod();
-          // Could be resolved to overriding method
-          if (target == null || !target.isEquivalentTo(method)) return true;
-        }
         return nullArgumentProcessor.process(argument);
       }
       return true;
     });
   }
 
-  @Contract("null, _ -> null")
-  private static @Nullable PsiExpression getCallArgument(@Nullable PsiExpressionList argumentList, int argumentIdx) {
-    if (argumentList == null) return null;
-    PsiExpression[] arguments = argumentList.getExpressions();
+  @Nullable
+  private static PsiExpression getCallArgument(PsiReference ref, int argumentIdx) {
+    PsiExpressionList argumentList = getCallArgumentList(ref.getElement());
+    PsiExpression[] arguments = argumentList == null ? PsiExpression.EMPTY_ARRAY : argumentList.getExpressions();
     return argumentIdx < arguments.length ? arguments[argumentIdx] : null;
   }
 
-  private static @Nullable PsiExpressionList getCallArgumentList(@Nullable PsiElement psi) {
+  @Nullable
+  private static PsiExpressionList getCallArgumentList(@Nullable PsiElement psi) {
     PsiElement parent = psi == null ? null :psi.getParent();
     if (parent instanceof PsiCallExpression) {
       return ((PsiCallExpression)parent).getArgumentList();
@@ -103,7 +84,8 @@ public final class JavaNullMethodArgumentUtil {
     return null;
   }
 
-  private static @NotNull Collection<VirtualFile> getFilesWithPotentialNullPassingCalls(@NotNull PsiMethod method, int parameterIndex) {
+  @NotNull
+  private static Collection<VirtualFile> getFilesWithPotentialNullPassingCalls(@NotNull PsiMethod method, int parameterIndex) {
     final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     final CommonProcessors.CollectProcessor<VirtualFile> collector = new CommonProcessors.CollectProcessor<>(new ArrayList<>());
     GlobalSearchScope searchScope = GlobalSearchScopeUtil.toGlobalSearchScope(method.getUseScope(), method.getProject());

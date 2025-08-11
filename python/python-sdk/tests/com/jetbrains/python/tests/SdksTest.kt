@@ -13,6 +13,11 @@ class SdksTest {
     assert(SdksKeeper.pythonReleasesByLanguageLevel().isNotEmpty())
   }
 
+  @Test
+  fun testPyPy() {
+    val releases = SdksKeeper.pythonReleasesByLanguageLevel()[LanguageLevel.PYTHON310]
+    assert(releases!!.any { it.product == Product.PyPy })
+  }
 
   @Test
   fun testCPythonAvailableFor311and312() {

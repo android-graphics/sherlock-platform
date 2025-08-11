@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -24,8 +24,9 @@ public class CompositeChangeListFilteringStrategy implements ChangeListFiltering
     return null;
   }
 
+  @NotNull
   @Override
-  public @NotNull CommittedChangesFilterKey getKey() {
+  public CommittedChangesFilterKey getKey() {
     throw new UnsupportedOperationException();
   }
 
@@ -86,7 +87,8 @@ public class CompositeChangeListFilteringStrategy implements ChangeListFiltering
   }
 
   @Override
-  public @NotNull List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
+  @NotNull
+  public List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
     return setFilterBaseImpl(changeLists, false);
   }
 

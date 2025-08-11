@@ -8,7 +8,7 @@ class Test {
     }
 
     void foo() {
-        List<Class<? extends Serializable>> l = <warning descr="Unchecked generics array creation for varargs parameter">this.<error descr="Incompatible types. Found: 'java.util.List<java.lang.Class<? extends java.io.Serializable & java.lang.Comparable<? extends java.io.Serializable & java.lang.Comparable<?>>>>', required: 'java.util.List<java.lang.Class<? extends java.io.Serializable>>'">asList</error></warning>(String.class, Integer.class);
+        <error descr="Incompatible types. Found: 'java.util.List<java.lang.Class<? extends java.io.Serializable & java.lang.Comparable<? extends java.io.Serializable & java.lang.Comparable<?>>>>', required: 'java.util.List<java.lang.Class<? extends java.io.Serializable>>'">List<Class<? extends Serializable>> l = <warning descr="Unchecked generics array creation for varargs parameter">this.asList</warning>(String.class, Integer.class);</error>
         l.size();
         List<? extends Object> objects = this.asList(new String(), new Integer(0));
         objects.size();
@@ -146,9 +146,9 @@ class IDEADEV25515 {
     }
 
     public static final
-    List<Class<? extends Serializable>> SIMPLE_TYPES =
-<error descr="Incompatible types. Found: 'java.util.List<java.lang.Class<? extends java.io.Serializable & java.lang.Comparable<? extends java.io.Serializable & java.lang.Comparable<?>>>>', required: 'java.util.List<java.lang.Class<? extends java.io.Serializable>>'"><warning descr="Unchecked generics array creation for varargs parameter">asList</warning></error>(String.class, Integer.class ,Long.class, Double.class, /*Date.class,*/
-Boolean.class, Boolean.TYPE /*,String[].class */ /*,BigDecimal.class*/);
+    <error descr="Incompatible types. Found: 'java.util.List<java.lang.Class<? extends java.io.Serializable & java.lang.Comparable<? extends java.io.Serializable & java.lang.Comparable<?>>>>', required: 'java.util.List<java.lang.Class<? extends java.io.Serializable>>'">List<Class<? extends Serializable>> SIMPLE_TYPES =
+<warning descr="Unchecked generics array creation for varargs parameter">asList</warning>(String.class, Integer.class ,Long.class, Double.class, /*Date.class,*/
+Boolean.class, Boolean.TYPE /*,String[].class */ /*,BigDecimal.class*/);</error>
 
 
       public static final List<Class<? extends Serializable>> SIMPLE_TYPES_INFERRED =
@@ -160,7 +160,7 @@ Boolean.class, Boolean.TYPE /*,String[].class */ /*,BigDecimal.class*/);
 ///////////////////////
 class Axx {
   <T extends Runnable> T a() {
-    String s = <error descr="Incompatible types. Found: 'java.lang.Runnable', required: 'java.lang.String'">a</error>();
+    <error descr="Incompatible types. Found: 'java.lang.Runnable', required: 'java.lang.String'">String s = a();</error>
     s.hashCode();
     return null;
   }

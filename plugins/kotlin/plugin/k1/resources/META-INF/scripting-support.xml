@@ -1,11 +1,5 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptDefinitionsSource"
-            interface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource"
-            area="IDEA_PROJECT"
-            dynamic="true"/>
-
     <extensionPoint qualifiedName="org.jetbrains.kotlin.scratchFileLanguageProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.kotlin.idea.scratch.ScratchFileLanguageProvider"/>
     </extensionPoint>
@@ -40,22 +34,22 @@
     <syntheticResolveExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptingResolveExtension"/>
     <extraImportsProviderExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptExtraImportsProviderExtension"/>
 
-    <scriptDefinitionsSource
+    <scriptDefinitionContributor
             id="ScriptTemplatesFromCompilerSettingsProvider"
             implementation="org.jetbrains.kotlin.idea.script.ScriptTemplatesFromCompilerSettingsProvider"/>
 
-    <scriptDefinitionsSource
+    <scriptDefinitionContributor
             id="BridgeScriptDefinitionsContributor"
             implementation="org.jetbrains.kotlin.idea.script.BridgeScriptDefinitionsContributor"/>
 
-    <scriptDefinitionsSource
+    <scriptDefinitionContributor
             id="ScriptTemplatesFromDependenciesProvider"
             implementation="org.jetbrains.kotlin.idea.script.ScriptTemplatesFromDependenciesProvider"/>
 
-    <scriptDefinitionsSource id="ConsoleScriptDefinitionContributor"
-                                 implementation="org.jetbrains.kotlin.console.ConsoleScriptDefinitionSource"/>
+    <scriptDefinitionContributor id="ConsoleScriptDefinitionContributor"
+                                 implementation="org.jetbrains.kotlin.console.ConsoleScriptDefinitionContributor"/>
 
-    <scriptDefinitionsSource id="ScriptDefinitionForExtensionAndIdeConsoleRootsSource"
+    <scriptDefinitionContributor id="ScriptDefinitionForExtensionAndIdeConsoleRootsSource"
                                  implementation="org.jetbrains.kotlin.jsr223.ScriptDefinitionForExtensionAndIdeConsoleRootsSource"/>
 
     <scriptDefinitionsProvider id="MainKtsScriptDefinitionProvider"

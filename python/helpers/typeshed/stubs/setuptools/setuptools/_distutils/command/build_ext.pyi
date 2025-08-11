@@ -1,6 +1,4 @@
-from _typeshed import Incomplete, Unused
-from collections.abc import Callable
-from typing import ClassVar
+from _typeshed import Incomplete
 
 from ..cmd import Command
 from ..extension import Extension
@@ -8,9 +6,9 @@ from ..extension import Extension
 class build_ext(Command):
     description: str
     sep_by: Incomplete
-    user_options: ClassVar[list[tuple[str, str | None, str]]]
-    boolean_options: ClassVar[list[str]]
-    help_options: ClassVar[list[tuple[str, str | None, str, Callable[[], Unused]]]]
+    user_options: Incomplete
+    boolean_options: Incomplete
+    help_options: Incomplete
     extensions: Incomplete
     build_lib: Incomplete
     plat_name: Incomplete

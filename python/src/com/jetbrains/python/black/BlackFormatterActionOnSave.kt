@@ -8,7 +8,6 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -27,9 +26,9 @@ import org.jetbrains.annotations.Nls
 class BlackFormatterActionOnSave : ActionOnSave() {
 
   companion object {
-    val LOG: Logger = thisLogger()
-    const val BLACK_ACTION_ON_SAVE_ERROR_NOTIFICATION_GROUP_ID: String = "Black action on save error"
-    const val BLACK_ACTION_ON_SAVE_FILE_IGNORED_NOTIFICATION_GROUP_ID: String = "Black action on save file ignored"
+    val LOG = thisLogger()
+    const val BLACK_ACTION_ON_SAVE_ERROR_NOTIFICATION_GROUP_ID = "Black action on save error"
+    const val BLACK_ACTION_ON_SAVE_FILE_IGNORED_NOTIFICATION_GROUP_ID = "Black action on save file ignored"
   }
 
   override fun isEnabledForProject(project: Project): Boolean = Registry.`is`("black.formatter.support.enabled")
@@ -78,7 +77,7 @@ class BlackFormatterActionOnSave : ActionOnSave() {
               processedFiles++
               indicator.fraction = processedFiles / descriptors.size.toDouble()
               indicator.text = PyBundle.message("black.processing.file.name", descriptor.virtualFile.name)
-              val request = BlackFormattingRequest.File(descriptor.virtualFile, descriptor.document.text)
+              val request = BlackFormattingRequest.File(descriptor.document.text, descriptor.virtualFile)
               val response = executor.getBlackFormattingResponse(request, BlackFormatterExecutor.BLACK_DEFAULT_TIMEOUT)
               if (!indicator.isCanceled) {
                 applyChanges(project, descriptor, response)

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -40,29 +40,34 @@ import java.util.concurrent.ExecutionException;
  */
 @Deprecated
 public abstract class DockablePopupManager<T extends JComponent & Disposable> {
-  private static final Logger LOG = Logger.getInstance(DockablePopupManager.class);
+  private final static Logger LOG = Logger.getInstance(DockablePopupManager.class);
   protected ToolWindow myToolWindow;
   private Runnable myAutoUpdateRequest;
   private boolean myAutoUpdateMuted;
-  protected final @NotNull Project myProject;
+  @NotNull protected final Project myProject;
 
   public DockablePopupManager(@NotNull Project project) {
     myProject = project;
   }
 
-  protected abstract @NonNls String getShowInToolWindowProperty();
+  @NonNls
+  protected abstract String getShowInToolWindowProperty();
 
-  protected abstract @NonNls String getAutoUpdateEnabledProperty();
+  @NonNls
+  protected abstract String getAutoUpdateEnabledProperty();
 
   protected boolean getAutoUpdateDefault() {
     return false;
   }
 
-  protected abstract @Nls String getAutoUpdateTitle();
+  @Nls
+  protected abstract String getAutoUpdateTitle();
 
-  protected abstract @Nls String getRestorePopupDescription();
+  @Nls
+  protected abstract String getRestorePopupDescription();
 
-  protected abstract @Nls String getAutoUpdateDescription();
+  @Nls
+  protected abstract String getAutoUpdateDescription();
 
   protected abstract T createComponent();
 
@@ -225,7 +230,8 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     return new AnAction[]{createRestorePopupAction(), toggleAutoUpdateAction};
   }
 
-  protected @NotNull AnAction createRestorePopupAction() {
+  @NotNull
+  protected AnAction createRestorePopupAction() {
     return new DumbAwareAction(CodeInsightBundle.messagePointer("action.AnActionButton.text.open.as.popup"), () -> getRestorePopupDescription(),
                                (Icon)null) {
       @Override

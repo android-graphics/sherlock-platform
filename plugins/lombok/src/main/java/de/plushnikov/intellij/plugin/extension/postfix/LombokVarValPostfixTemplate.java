@@ -12,7 +12,7 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class LombokVarValPostfixTemplate extends PostfixTemplateWithExpressionSelector {
+public class LombokVarValPostfixTemplate extends PostfixTemplateWithExpressionSelector {
 
   private final String selectedTypeFQN;
 

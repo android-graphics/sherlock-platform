@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -54,7 +54,7 @@ public final class SourceCodeChecker {
     if (suspendContext == null) {
       return;
     }
-    suspendContext.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+    suspendContext.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
 
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
@@ -86,7 +86,7 @@ public final class SourceCodeChecker {
         DebuggerUtilsEx.isLambda(method)) {
       return CompletableFuture.completedFuture(ThreeState.UNSURE);
     }
-    return DebuggerUtilsAsync.allLineLocations(method).thenApply(locations -> {
+    return DebuggerUtilsAsync.allLineLocationsAsync(method).thenApply(locations -> {
       if (ContainerUtil.isEmpty(locations)) {
         return ThreeState.UNSURE;
       }
@@ -125,22 +125,20 @@ public final class SourceCodeChecker {
           }
           if (!res) {
             VirtualFile virtualFile = position.getFile().getVirtualFile();
-            if (virtualFile != null) {
-              AppUIUtil.invokeOnEdt(() -> {
-                if (!project.isDisposed()) {
-                  FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
-                  if (editor instanceof TextEditor) {
-                    HintManager.getInstance().showErrorHint(((TextEditor)editor).getEditor(),
-                                                            JavaDebuggerBundle.message("warning.source.code.not.match"));
-                  }
-                  else {
-                    XDebuggerManagerImpl.getNotificationGroup()
-                      .createNotification(JavaDebuggerBundle.message("warning.source.code.not.match"), NotificationType.WARNING)
-                      .notify(project);
-                  }
+            AppUIUtil.invokeOnEdt(() -> {
+              if (!project.isDisposed()) {
+                FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
+                if (editor instanceof TextEditor) {
+                  HintManager.getInstance().showErrorHint(((TextEditor)editor).getEditor(),
+                                                          JavaDebuggerBundle.message("warning.source.code.not.match"));
                 }
-              });
-            }
+                else {
+                  XDebuggerManagerImpl.getNotificationGroup()
+                    .createNotification(JavaDebuggerBundle.message("warning.source.code.not.match"), NotificationType.WARNING)
+                    .notify(project);
+                }
+              }
+            });
             return ThreeState.NO;
           }
           return ThreeState.YES;
@@ -171,7 +169,7 @@ public final class SourceCodeChecker {
     for (ReferenceType type : types) {
       i++;
       try {
-        for (Location loc : DebuggerUtilsAsync.allLineLocationsSync(type)) {
+        for (Location loc : type.allLineLocations()) {
           SourcePosition position =
             ReadAction.compute(() -> {
               try {

@@ -15,8 +15,6 @@
  */
 package org.jetbrains.idea.maven.model;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,8 +23,8 @@ import java.util.List;
 public class MavenBuild extends MavenBuildBase implements Serializable {
   private String myOutputDirectory;
   private String myTestOutputDirectory;
-  private List<@NotNull String> mySources;
-  private List<@NotNull String> myTestSources;
+  private List<String> mySources;
+  private List<String> myTestSources;
 
   public String getOutputDirectory() {
     return myOutputDirectory;
@@ -44,29 +42,29 @@ public class MavenBuild extends MavenBuildBase implements Serializable {
     myTestOutputDirectory = testOutputDirectory;
   }
 
-  public @NotNull List<@NotNull String> getSources() {
+  public List<String> getSources() {
     return mySources == null ? Collections.emptyList() : mySources;
   }
 
-  public void setSources(@NotNull List<@NotNull String> sources) {
-    mySources = new ArrayList<>(sources);
+  public void setSources(List<String> sources) {
+    mySources = new ArrayList<String>(sources);
   }
 
-  public void addSource(@NotNull String source) {
-    if (mySources == null) mySources = new ArrayList<>();
+  public void addSource(String source) {
+    if (mySources == null) mySources = new ArrayList<String>();
     mySources.add(source);
   }
 
-  public @NotNull List<@NotNull String> getTestSources() {
+  public List<String> getTestSources() {
     return myTestSources == null ? Collections.emptyList() : myTestSources;
   }
 
-  public void setTestSources(@NotNull List<@NotNull String> testSources) {
-    myTestSources = new ArrayList<>(testSources);
+  public void setTestSources(List<String> testSources) {
+    myTestSources = new ArrayList<String>(testSources);
   }
 
-  public void addTestSource(@NotNull String source) {
-    if (myTestSources == null) myTestSources = new ArrayList<>();
+  public void addTestSource(String source) {
+    if (myTestSources == null) myTestSources = new ArrayList<String>();
     myTestSources.add(source);
   }
 }

@@ -101,7 +101,6 @@ fun Lifetime.launchOnUi(
  *
  * @deprecated Use application/project/client/plugin level [CoroutineScope] and [lifetimedCoroutineScope].
  */
-@ApiStatus.ScheduledForRemoval
 @Deprecated("Use application/project/client/plugin level CoroutineScope. See KDoc for details.")
 fun Lifetime.launchOnUiNonModal(
   context: CoroutineContext = EmptyCoroutineContext,
@@ -174,7 +173,6 @@ fun Lifetime.launchBackground(
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(applicationThreadPool + ModalityState.defaultModalityState().asContextElement() + context, start, action)
 
-@ApiStatus.ScheduledForRemoval
 @Deprecated("Use launch with a specific IO dispatcher for your purposes.")
 fun Lifetime.launchSyncIOBackground(
   start: CoroutineStart = CoroutineStart.DEFAULT,
@@ -262,7 +260,6 @@ fun <T> Lifetime.startOnUiAsync(
  *
  * @deprecated Use application/project/client/plugin level [CoroutineScope] and [lifetimedCoroutineScope].
  */
-@ApiStatus.ScheduledForRemoval
 @Deprecated("Use application/project/client/plugin level CoroutineScope. See KDoc for details.")
 fun <T> Lifetime.startOnUiNonModalAsync(
   context: CoroutineContext = EmptyCoroutineContext,
@@ -270,7 +267,6 @@ fun <T> Lifetime.startOnUiNonModalAsync(
   action: suspend CoroutineScope.() -> T
 ): Deferred<T> = async(uiDispatcher + context, start, action)
 
-@ApiStatus.ScheduledForRemoval
 @Deprecated("Do not use this method")
 fun <T> Lifetime.startOnUiAllowInliningAsync(
   context: CoroutineContext = EmptyCoroutineContext,
@@ -343,7 +339,6 @@ fun <T> Lifetime.startBackgroundAsync(
   action: suspend CoroutineScope.() -> T
 ): Deferred<T> = async(applicationThreadPool + ModalityState.defaultModalityState().asContextElement() + context, start, action)
 
-@ApiStatus.ScheduledForRemoval
 @Deprecated("Use async with a specific IO dispatcher for your purposes.")
 fun <T> Lifetime.startSyncIOBackgroundAsync(
   context: CoroutineContext = EmptyCoroutineContext,
@@ -351,7 +346,6 @@ fun <T> Lifetime.startSyncIOBackgroundAsync(
   action: () -> T
 ): Deferred<T> = async(processIODispatcher + context, start) { action() }
 
-@ApiStatus.ScheduledForRemoval
 @Deprecated("Use launch with a specific dispatcher for your purposes")
 fun <T> Lifetime.startNonUrgentBackgroundAsync(
   context: CoroutineContext = EmptyCoroutineContext,
@@ -366,14 +360,12 @@ fun CoroutineScope.launchChildOnUi(
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(Dispatchers.EDT, start, action)
 
-@ApiStatus.ScheduledForRemoval
 @Deprecated("Do not use this method")
 fun CoroutineScope.launchChildOnUiAllowInlining(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(uiDispatcherWithInlining, start, action)
 
-@ApiStatus.ScheduledForRemoval
 @Deprecated("Use async with a specific IO dispatcher for your purposes.")
 fun CoroutineScope.launchChildSyncIOBackground(
   start: CoroutineStart = CoroutineStart.DEFAULT,
@@ -386,14 +378,12 @@ fun CoroutineScope.launchChildBackground(
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(applicationThreadPool, start, action)
 
-@ApiStatus.ScheduledForRemoval
 @Deprecated("Use launch with a specific dispatcher for your purposes")
 fun CoroutineScope.launchChildNonUrgentBackground(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(nonUrgentDispatcher, start, action)
 
-@ApiStatus.ScheduledForRemoval
 @Deprecated("Use async(Dispatchers.EDT)", ReplaceWith("async(Dispatchers.EDT, start, action)", "kotlinx.coroutines.async", "kotlinx.coroutines.Dispatchers",
                                                       "com.intellij.openapi.application.EDT"))
 fun <T> CoroutineScope.startChildOnUiAsync(
@@ -401,14 +391,12 @@ fun <T> CoroutineScope.startChildOnUiAsync(
   action: suspend CoroutineScope.() -> T
 ): Deferred<T> = async(uiDispatcher, start, action)
 
-@ApiStatus.ScheduledForRemoval
 @Deprecated("Do not use this method")
 fun <T> CoroutineScope.startChildOnUiAllowInliningAsync(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> T
 ): Deferred<T> = async(uiDispatcherWithInlining, start, action)
 
-@ApiStatus.ScheduledForRemoval
 @Deprecated("Use async with a specific IO dispatcher for your purposes.")
 fun <T> CoroutineScope.startChildSyncIOBackgroundAsync(
   start: CoroutineStart = CoroutineStart.DEFAULT,
@@ -421,7 +409,6 @@ fun <T> CoroutineScope.startChildBackgroundAsync(
   action: suspend CoroutineScope.() -> T
 ) = async(applicationThreadPool, start, action)
 
-@ApiStatus.ScheduledForRemoval
 @Deprecated("Use async with a specific dispatcher for your purposes")
 fun <T> CoroutineScope.startChildNonUrgentBackgroundAsync(
   start: CoroutineStart = CoroutineStart.DEFAULT,
@@ -433,7 +420,6 @@ fun <T> CoroutineScope.startChildNonUrgentBackgroundAsync(
 suspend fun <T> withUiContext(lifetime: Lifetime = Lifetime.Eternal, action: suspend CoroutineScope.() -> T): T =
   withContext(lifetime, uiDispatcher, action)
 
-@ApiStatus.ScheduledForRemoval
 @Deprecated("Do not use this method")
 suspend fun <T> withUiAllowInliningContext(lifetime: Lifetime = Lifetime.Eternal, action: suspend CoroutineScope.() -> T): T =
   withContext(lifetime, uiDispatcherWithInlining, action)
@@ -458,7 +444,6 @@ suspend fun <T> withLongBackgroundContext(lifetime: Lifetime = Lifetime.Eternal,
 suspend fun <T> withBackgroundContext(lifetime: Lifetime = Lifetime.Eternal, action: suspend CoroutineScope.() -> T): T =
   withContext(lifetime, applicationThreadPool, action)
 
-@ApiStatus.ScheduledForRemoval
 @Deprecated("Use withContext with a specific dispatcher for your purposes")
 suspend fun <T> withNonUrgentBackgroundContext(lifetime: Lifetime = Lifetime.Eternal, action: suspend CoroutineScope.() -> T): T =
   withContext(lifetime, nonUrgentDispatcher, action)

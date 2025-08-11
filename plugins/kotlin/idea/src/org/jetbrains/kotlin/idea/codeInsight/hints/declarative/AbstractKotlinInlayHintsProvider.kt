@@ -81,7 +81,7 @@ abstract class AbstractKotlinInlayHintsProvider(private vararg val hintTypes: Hi
                         text(detail.text,
                              detail.element.createSmartPointer().let {
                                  InlayActionData(
-                                     PsiPointerInlayActionPayload(pointer = it),
+                                     PsiPointerInlayActionPayload(it),
                                      PsiPointerInlayActionNavigationHandler.HANDLER_ID
                                  )
                              })

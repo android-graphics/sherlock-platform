@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.template.impl;
 
@@ -18,12 +18,12 @@ public class TemplateSegments {
     myDocument = document;
   }
 
-  public int getSegmentStart(int i) {
+  int getSegmentStart(int i) {
     RangeMarker rangeMarker = mySegments.get(i);
     return rangeMarker.getStartOffset();
   }
 
-  public int getSegmentEnd(int i) {
+  int getSegmentEnd(int i) {
     RangeMarker rangeMarker = mySegments.get(i);
     return rangeMarker.getEndOffset();
   }

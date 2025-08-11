@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ide.ui.UISettings;
@@ -14,7 +14,6 @@ import com.intellij.util.ui.EmptyIcon;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
@@ -33,8 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-@ApiStatus.Internal
-public final class NST {
+final class NST {
   private static final Logger LOG = Logger.getInstance(NST.class);
   // NOTE: JNA is stateless (doesn't have any limitations of multithreading use)
   private static NSTLibrary nstLibrary = null;

@@ -5,7 +5,6 @@ import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,13 +17,13 @@ public final class HtmlMarkdownUtils {
   }
 
   @Contract(pure = true)
-  public static @NotNull String toHtml(@NotNull @Nls String markdownText) {
+  public static @NotNull String toHtml(@NotNull String markdownText) {
     return DocMarkdownToHtmlConverter.convert(DefaultProjectFactory.getInstance().getDefaultProject(), markdownText);
   }
 
 
   @Contract(pure = true)
-  public static @NotNull String toHtml(@NotNull @Nls String markdownText, boolean convertTagCodeBlocks) {
+  public static @NotNull String toHtml(@NotNull String markdownText, boolean convertTagCodeBlocks) {
     return DocMarkdownToHtmlConverter.convert(DefaultProjectFactory.getInstance().getDefaultProject(), markdownText);
   }
 

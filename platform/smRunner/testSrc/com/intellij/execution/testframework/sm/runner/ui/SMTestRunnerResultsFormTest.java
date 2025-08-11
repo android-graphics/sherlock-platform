@@ -11,7 +11,7 @@ import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.ListSelection;
-import com.intellij.openapi.progress.util.ProgressBarUtil;
+import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.PlatformTestUtil;
 
@@ -389,7 +389,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     myResultsViewer.onCustomProgressTestFailed();
     assertEquals(1, myResultsViewer.getFailedTestCount());
 
-    assertEquals(ProgressBarUtil.FAILED_VALUE, myResultsViewer.getTestsStatus());
+    assertEquals(ColorProgressBar.RED, myResultsViewer.getTestsStatusColor());
   }
 
   public void testProgressBar_Ignored() {
@@ -401,7 +401,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     assertEquals(0, myResultsViewer.getFailedTestCount());
     assertEquals(1, myResultsViewer.getIgnoredTestCount());
 
-    assertEquals(ProgressBarUtil.PASSED_VALUE, myResultsViewer.getTestsStatus());
+    assertEquals(ColorProgressBar.GREEN, myResultsViewer.getTestsStatusColor());
   }
 
   public void testCustomProgress_Terminated() {
@@ -412,7 +412,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
 
     myResultsViewer.onTestingFinished(myTestsRootNode);
 
-    assertEquals(ProgressBarUtil.PASSED_VALUE, myResultsViewer.getTestsStatus());
+    assertEquals(ColorProgressBar.GREEN, myResultsViewer.getTestsStatusColor());
   }
 
   public void testCustomProgress_Terminated_SmthFailed() {
@@ -424,7 +424,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     myResultsViewer.onTestStarted(createTestProxy("some_test2", myTestsRootNode));
     myResultsViewer.onTestingFinished(myTestsRootNode);
 
-    assertEquals(ProgressBarUtil.FAILED_VALUE, myResultsViewer.getTestsStatus());
+    assertEquals(ColorProgressBar.RED, myResultsViewer.getTestsStatusColor());
   }
 
   public void testCustomProgress_UnSetCount() {

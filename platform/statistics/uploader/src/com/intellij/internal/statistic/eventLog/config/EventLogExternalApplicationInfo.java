@@ -1,9 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.config;
 
-import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
-import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
-import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo;
+import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.connection.EventLogBasicConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import org.jetbrains.annotations.NotNull;
@@ -56,8 +54,9 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
     return myTemplateUrl;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getProductCode() {
+  public String getProductCode() {
     return myProductCode;
   }
 
@@ -71,8 +70,9 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
     return myBaselineVersion;
   }
 
+  @NotNull
   @Override
-  public @NotNull EventLogConnectionSettings getConnectionSettings() {
+  public EventLogConnectionSettings getConnectionSettings() {
     return myConnectionSettings;
   }
 
@@ -96,8 +96,9 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
     return myIsEAP;
   }
 
+  @NotNull
   @Override
-  public @NotNull DataCollectorDebugLogger getLogger() {
+  public DataCollectorDebugLogger getLogger() {
     return myLogger;
   }
 

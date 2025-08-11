@@ -1,7 +1,7 @@
-from openpyxl.worksheet.worksheet import Worksheet
+from _typeshed import Incomplete
 
 class WorksheetCopy:
-    source: Worksheet
-    target: Worksheet
-    def __init__(self, source_worksheet: Worksheet, target_worksheet: Worksheet) -> None: ...
+    source: Incomplete
+    target: Incomplete
+    def __init__(self, source_worksheet, target_worksheet) -> None: ...
     def copy_worksheet(self) -> None: ...

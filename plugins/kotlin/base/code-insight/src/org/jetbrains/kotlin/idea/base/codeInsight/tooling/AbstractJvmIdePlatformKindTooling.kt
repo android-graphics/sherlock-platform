@@ -12,7 +12,6 @@ import com.intellij.testIntegration.TestFramework
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
-import org.jetbrains.kotlin.idea.util.RunConfigurationUtils
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFunction
@@ -23,9 +22,9 @@ import org.jetbrains.kotlin.utils.PathUtil
 import javax.swing.Icon
 
 abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
-    override val kind: JvmIdePlatformKind = JvmIdePlatformKind
+    override val kind = JvmIdePlatformKind
 
-    override val mavenLibraryIds: List<String> = listOf(
+    override val mavenLibraryIds = listOf(
       PathUtil.KOTLIN_JAVA_STDLIB_NAME,
       PathUtil.KOTLIN_JAVA_RUNTIME_JRE7_NAME,
       PathUtil.KOTLIN_JAVA_RUNTIME_JDK7_NAME,
@@ -33,12 +32,12 @@ abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
       PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME
     )
 
-    override val gradlePluginId: String get() = "kotlin-platform-jvm"
+    override val gradlePluginId = "kotlin-platform-jvm"
     override val gradlePlatformIds: List<KotlinPlatform> get() = listOf(KotlinPlatform.JVM, KotlinPlatform.ANDROID)
 
-    override val libraryKind: PersistentLibraryKind<*>? get() = null
+    override val libraryKind: PersistentLibraryKind<*>? = null
 
-    override fun acceptsAsEntryPoint(function: KtFunction): Boolean = true
+    override fun acceptsAsEntryPoint(function: KtFunction) = true
 
     override fun getTestIcon(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): Icon? {
         val calculatedTestFrameworkValue = declaration.getUserData(TEST_FRAMEWORK_NAME_KEY)
@@ -75,25 +74,16 @@ abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
         } ?: return null
 
         return when (declaration) {
-            is KtClassOrObject -> listOf("$URL_SUITE_PREFIX$qualifiedName")
-            is KtNamedFunction -> {
-                val urlList = listOf(
-                    "$URL_TEST_PREFIX$qualifiedName/${declaration.name}",
-                    "$URL_TEST_PREFIX$qualifiedName.${declaration.name}"
-                )
-                if (RunConfigurationUtils.isGradleRunConfiguration(declaration)) {
-                    urlList + "$URL_SUITE_PREFIX$qualifiedName/${declaration.name}"
-                } else {
-                    urlList
-                }
-            }
+            is KtClassOrObject -> listOf("java:suite://$qualifiedName")
+            is KtNamedFunction -> listOf(
+                "java:test://$qualifiedName/${declaration.name}",
+                "java:test://$qualifiedName.${declaration.name}"
+            )
             else -> null
         }
     }
 
     private companion object {
-        private const val URL_TEST_PREFIX = "java:test://"
-        private const val URL_SUITE_PREFIX = "java:suite://"
-        val TEST_FRAMEWORK_NAME_KEY: Key<CachedValue<String>?> = Key.create<CachedValue<String>>("TestFramework:name")
+        val TEST_FRAMEWORK_NAME_KEY = Key.create<CachedValue<String>>("TestFramework:name")
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.history.LocalHistory;
@@ -27,10 +27,10 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnTreeConflictResolver {
 
-  private final @NotNull SvnVcs myVcs;
-  private final @NotNull FilePath myPath;
-  private final @Nullable FilePath myRevertPath;
-  private final @NotNull VcsDirtyScopeManager myDirtyScopeManager;
+  @NotNull private final SvnVcs myVcs;
+  @NotNull private final FilePath myPath;
+  @Nullable private final FilePath myRevertPath;
+  @NotNull private final VcsDirtyScopeManager myDirtyScopeManager;
 
   public SvnTreeConflictResolver(@NotNull SvnVcs vcs, @NotNull FilePath path, @Nullable FilePath revertPath) {
     myVcs = vcs;
@@ -111,7 +111,8 @@ public class SvnTreeConflictResolver {
     }
   }
 
-  private @NotNull Set<File> getDescendantsWithAddedStatus(@NotNull File ioFile) throws SvnBindException {
+  @NotNull
+  private Set<File> getDescendantsWithAddedStatus(@NotNull File ioFile) throws SvnBindException {
     final Set<File> result = new HashSet<>();
     StatusClient statusClient = myVcs.getFactory(ioFile).createStatusClient();
 

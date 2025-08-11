@@ -51,7 +51,8 @@ public final class ClassMayBeInterfaceInspection extends BaseInspection {
   public boolean reportClassesWithNonAbstractMethods = false;
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("class.may.be.interface.problem.descriptor");
   }
 
@@ -76,7 +77,8 @@ public final class ClassMayBeInterfaceInspection extends BaseInspection {
   private static class ClassMayBeInterfaceFix extends ModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("class.may.be.interface.convert.quickfix");
     }
 
@@ -87,7 +89,7 @@ public final class ClassMayBeInterfaceInspection extends BaseInspection {
       final SearchScope searchScope = interfaceClass.getUseScope();
       final List<PsiClass> elements = new ArrayList<>();
       elements.add(interfaceClass);
-      for (final PsiClass inheritor : ClassInheritorsSearch.search(interfaceClass, searchScope, false).asIterable()) {
+      for (final PsiClass inheritor : ClassInheritorsSearch.search(interfaceClass, searchScope, false)) {
         elements.add(inheritor);
       }
       return ModCommand.psiUpdate(interfaceClass, (cls, updater) -> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -10,7 +10,6 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +22,6 @@ import java.util.Collections;
 /**
  * author: lesya
  */
-@ApiStatus.Internal
 public class FileTreeNode extends FileOrDirectoryTreeNode {
   private static final Collection<VirtualFile> EMPTY_VIRTUAL_FILE_ARRAY = new ArrayList<>();
 
@@ -63,15 +61,17 @@ public class FileTreeNode extends FileOrDirectoryTreeNode {
     return false;
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<VirtualFile> getVirtualFiles() {
+  public Collection<VirtualFile> getVirtualFiles() {
     VirtualFile virtualFile = getFilePointer().getFile();
     if (virtualFile == null) return EMPTY_VIRTUAL_FILE_ARRAY;
     return Collections.singleton(virtualFile);
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<File> getFiles() {
+  public Collection<File> getFiles() {
     if (getFilePointer().getFile() == null) {
       return Collections.singleton(myFile);
     }

@@ -41,7 +41,8 @@ internal class LambdaToAnonymousFunctionIntention :
         KotlinBundle.message("convert.to.anonymous.function"),
     )
 
-    override fun KaSession.prepareContext(element: KtLambdaExpression): LambdaToFunctionContext? {
+    context(KaSession)
+    override fun prepareContext(element: KtLambdaExpression): LambdaToFunctionContext? {
         val declarationSymbol = element.functionLiteral.symbol as? KaAnonymousFunctionSymbol ?: return null
         if (declarationSymbol.valueParameters.any { it.returnType is KaErrorType }) return null
 

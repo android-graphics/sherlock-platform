@@ -5,6 +5,8 @@ import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.statistics.Engine
+import com.intellij.debugger.statistics.StatisticsStorage.Companion.createSteppingToken
+import com.intellij.debugger.statistics.SteppingAction
 import com.intellij.openapi.diagnostic.Logger
 import com.sun.jdi.request.StepRequest
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle.message
@@ -33,8 +35,8 @@ object KotlinStepActionFactory {
 
                 override fun contextAction(suspendContext: SuspendContextImpl) {
                     if (suspendContext.location?.let { isInSuspendMethod(it) } == true) {
-                        applyThreadFilter(getThreadFilterFromContext(suspendContext))
                         CoroutineBreakpointFacility.installResumeBreakpointInCurrentMethod(suspendContext)
+                        applyThreadFilter(getThreadFilterFromContext(suspendContext))
                     }
                     super.contextAction(suspendContext)
                 }
@@ -55,7 +57,7 @@ object KotlinStepActionFactory {
                     return hint
                 }
 
-                override fun getEngine() = Engine.KOTLIN
+                override fun createCommandToken() = createSteppingToken(SteppingAction.STEP_OVER, Engine.KOTLIN)
             }
         }
     }
@@ -82,7 +84,7 @@ object KotlinStepActionFactory {
                     return getThreadFilterFromContextForStepping(suspendContext) ?: super.getThreadFilterFromContext(suspendContext)
                 }
 
-                override fun getEngine() = Engine.KOTLIN
+                override fun createCommandToken() = createSteppingToken(SteppingAction.STEP_INTO, Engine.KOTLIN)
             }
         }
     }
@@ -107,22 +109,21 @@ object KotlinStepActionFactory {
                     return hint
                 }
 
-                override fun getEngine() = Engine.KOTLIN
+                override fun createCommandToken() = createSteppingToken(SteppingAction.STEP_INTO, Engine.KOTLIN)
             }
         }
     }
 
     fun createStepOutCommand(
         debugProcess: DebugProcessImpl,
-        suspendContext: SuspendContextImpl?,
-        filter: MethodFilter? = null,
+        suspendContext: SuspendContextImpl?
     ): DebugProcessImpl.StepOutCommand {
         return with(debugProcess) {
-            object : DebugProcessImpl.StepOutCommand(suspendContext, StepRequest.STEP_LINE, filter) {
+            object : DebugProcessImpl.StepOutCommand(suspendContext, StepRequest.STEP_LINE) {
                 override fun contextAction(suspendContext: SuspendContextImpl) {
                     if (suspendContext.location?.let { isInSuspendMethod(it) } == true) {
-                        applyThreadFilter(getThreadFilterFromContext(suspendContext))
                         CoroutineBreakpointFacility.installResumeBreakpointInCallerMethod(suspendContext)
+                        applyThreadFilter(getThreadFilterFromContext(suspendContext))
                     }
                     super.contextAction(suspendContext)
                 }
@@ -132,12 +133,11 @@ object KotlinStepActionFactory {
                     stepThread: ThreadReferenceProxyImpl,
                     parentHint: RequestHint?
                 ): RequestHint {
-                    val resumeLocation = StackFrameInterceptor.instance?.callerLocation(suspendContext)
-                    val suspendReturnLocation = if (suspendContext.location?.let { isInSuspendMethod(it) } == true) {
-                        getLocationOfCoroutineSuspendReturn(resumeLocation)
-                    } else null
+                    val suspendReturnIndex = if (suspendContext.location?.let { isInSuspendMethod(it) } == true) {
+                        getLocationOfCoroutineSuspendReturn(StackFrameInterceptor.instance?.callerLocation(suspendContext))
+                    } else -1
                     val hint: RequestHint =
-                        KotlinStepOutRequestHint(suspendReturnLocation, stepThread, suspendContext, StepRequest.STEP_MIN, StepRequest.STEP_OUT, filter, parentHint)
+                        KotlinStepOutRequestHint(suspendReturnIndex, stepThread, suspendContext, StepRequest.STEP_MIN, StepRequest.STEP_OUT, null, parentHint)
                     hint.isIgnoreFilters = debugProcess.session.shouldIgnoreSteppingFilters()
                     return hint
                 }
@@ -146,7 +146,7 @@ object KotlinStepActionFactory {
                     return getThreadFilterFromContextForStepping(suspendContext) ?: super.getThreadFilterFromContext(suspendContext)
                 }
 
-                override fun getEngine() = Engine.KOTLIN
+                override fun createCommandToken() = createSteppingToken(SteppingAction.STEP_OUT, Engine.KOTLIN)
             }
         }
     }

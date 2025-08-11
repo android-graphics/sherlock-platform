@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.Nullability;
@@ -125,7 +125,8 @@ public final class ReorderingUtils {
     return and(ThreeState.UNSURE, () -> canExtract(ancestor, expressionParent));
   }
 
-  private static @NotNull ThreeState and(ThreeState state, Supplier<? extends ThreeState> conjunct) {
+  @NotNull
+  private static ThreeState and(ThreeState state, Supplier<? extends ThreeState> conjunct) {
     if (state == ThreeState.NO) return ThreeState.NO;
     ThreeState state2 = conjunct.get();
     if (state2 == ThreeState.NO) return ThreeState.NO;
@@ -133,7 +134,8 @@ public final class ReorderingUtils {
     return ThreeState.YES;
   }
 
-  private static @NotNull ThreeState canMoveToStart(PsiPolyadicExpression polyadicExpression, int operandIndex) {
+  @NotNull
+  private static ThreeState canMoveToStart(PsiPolyadicExpression polyadicExpression, int operandIndex) {
     if (operandIndex == 0) return ThreeState.YES;
     IElementType tokenType = polyadicExpression.getOperationTokenType();
     if (tokenType != JavaTokenType.ANDAND && tokenType != JavaTokenType.OROR) return ThreeState.UNSURE;
@@ -359,7 +361,8 @@ public final class ReorderingUtils {
     ContractFailExceptionProblem::from
   );
 
-  static @NotNull List<ExceptionProblem> fromExpression(PsiExpression expression) {
+  @NotNull
+  static List<ExceptionProblem> fromExpression(PsiExpression expression) {
     List<ExceptionProblem> problems = new ArrayList<>();
     for (Function<PsiExpression, ExceptionProblem> extractor : PROBLEM_EXTRACTORS) {
       ExceptionProblem exceptionProblem = extractor.apply(expression);

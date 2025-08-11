@@ -3,11 +3,9 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
 public final class CreateNewConfigurationAction extends CreateAction {
   @Override
   protected @Nullable RunnerAndConfigurationSettings findExisting(@NotNull ConfigurationContext context) {

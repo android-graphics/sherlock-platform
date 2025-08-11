@@ -62,7 +62,7 @@ public class VFSInitializationBenchmark {
     @TearDown
     public void tearDown() throws Exception {
       if (connectionToClose != null) {
-        connectionToClose.close();
+        PersistentFSConnector.disconnect(connectionToClose);
         connectionToClose = null;
       }
       if (temporaryFolder != null) {
@@ -91,7 +91,7 @@ public class VFSInitializationBenchmark {
     if (cachesDir != null) {
       PersistentFSConnection connection = initVFS(cachesDir, version);
       context.connectionToClose = connection;
-      int maxAllocatedID = connection.records().maxAllocatedID();
+      int maxAllocatedID = connection.getRecords().maxAllocatedID();
       assert maxAllocatedID > 100_000 : "maxAllocatedID" + maxAllocatedID + " is too low, probably already existing files are dummy?";
     }
   }
@@ -105,10 +105,10 @@ public class VFSInitializationBenchmark {
       context.connectionToClose = connection;
       
       Supplier<InvertedNameIndex> invertedNameIndexLazy = FSRecordsImpl.asyncFillInvertedNameIndex(
-        connection.records()
+        connection.getRecords()
       );
 
-      int maxAllocatedID = connection.records().maxAllocatedID();
+      int maxAllocatedID = connection.getRecords().maxAllocatedID();
       assert maxAllocatedID > 100_000 : "maxAllocatedID" + maxAllocatedID + " is too low, probably already existing files are dummy?";
 
       //wait for index to fill up:
@@ -124,17 +124,17 @@ public class VFSInitializationBenchmark {
       PersistentFSConnection connection = initVFS(cachesDir, version);
       context.connectionToClose = connection;
 
-      int maxAllocatedID = connection.records().maxAllocatedID();
+      int maxAllocatedID = connection.getRecords().maxAllocatedID();
       assert maxAllocatedID > 100_000 : "maxAllocatedID" + maxAllocatedID + " is too low, probably already existing files are dummy?";
 
       //force name-to-id index loading:
-      connection.names().tryEnumerate("abc");
+      connection.getNames().tryEnumerate("abc");
     }
   }
 
   private static PersistentFSConnection initVFS(Path cachesDir,
                                                 int version) {
-    VFSInitializationResult initResult = PersistentFSConnector.connect(
+    VFSInitializationResult initResult = PersistentFSConnector.connectWithoutVfsLog(
       cachesDir,
       version
     );

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -19,26 +19,35 @@ import java.util.Map;
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 
+@SuppressWarnings("JavadocReference")
 public class ModuleData extends AbstractNamedData implements Named, ExternalConfigPathAware, Identifiable {
-  private final @NotNull Map<ExternalSystemSourceType, String> compileOutputPaths = new HashMap<>();
-  private final @NotNull Map<ExternalSystemSourceType, String> externalCompilerOutputPaths = new HashMap<>();
-  private @Nullable Map<String, String> properties;
-  private final @NotNull String id;
-  private final @NotNull String moduleTypeId;
-  private final @NotNull String externalConfigPath;
-  private final @NotNull String moduleFileDirectoryPath;
-  private @Nullable String group;
-  private @Nullable String version;
-  private @Nullable String description;
-  private @NotNull List<File> artifacts;
+  @NotNull private final Map<ExternalSystemSourceType, String> compileOutputPaths = new HashMap<>();
+  @NotNull private final Map<ExternalSystemSourceType, String> externalCompilerOutputPaths = new HashMap<>();
+  @Nullable private Map<String, String> properties;
+  @NotNull private final String id;
+  @NotNull private final String moduleTypeId;
+  @NotNull private final String externalConfigPath;
+  @NotNull private final String moduleFileDirectoryPath;
+  @Nullable private String group;
+  @Nullable private String version;
+  @Nullable private String description;
+  @NotNull private List<File> artifacts;
   private String @Nullable [] ideModuleGroup;
 
-  private @Nullable String productionModuleId;
-  private @NotNull String moduleName;
+  @Nullable private String sourceCompatibility;
+  @Nullable private String targetCompatibility;
+  @Nullable private String sdkName;
 
-  private @NotNull ModuleNameDeduplicationStrategy moduleNameDeduplicationStrategy = ModuleNameDeduplicationStrategy.DEFAULT;
+  private boolean isSetSourceCompatibility = false;
+  private boolean isSetTargetCompatibility = false;
+  private boolean isSetSdkName = false;
 
-  @Property(allowedTypes = {LibraryData.class, ProjectId.class}) private @Nullable ProjectCoordinate publication;
+  @Nullable private String productionModuleId;
+  @NotNull private String moduleName;
+
+  @Nullable
+  @Property(allowedTypes = {LibraryData.class, ProjectId.class})
+  private ProjectCoordinate publication;
 
   private boolean inheritProjectCompileOutputPath = true;
   private boolean useExternalCompilerOutput;
@@ -75,21 +84,25 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     this.moduleName = externalName;
   }
 
+  @NotNull
   @Override
-  public @NotNull @NlsSafe String getId() {
+  public @NlsSafe String getId() {
     return id;
   }
 
-  public @NotNull String getModuleTypeId() {
+  @NotNull
+  public String getModuleTypeId() {
     return moduleTypeId;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getLinkedExternalProjectPath() {
+  public String getLinkedExternalProjectPath() {
     return externalConfigPath;
   }
 
-  public @NotNull String getModuleFileDirectoryPath() {
+  @NotNull
+  public String getModuleFileDirectoryPath() {
     return moduleFileDirectoryPath;
   }
 
@@ -97,7 +110,8 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
    * @return an internal id of production module corresponding to a test-only module, this information is used to populate
    * {@link com.intellij.openapi.roots.TestModuleProperties}
    */
-  public @Nullable String getProductionModuleId() {
+  @Nullable
+  public String getProductionModuleId() {
     return productionModuleId;
   }
 
@@ -121,7 +135,8 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
    *              {@link com.intellij.externalSystem.JavaProjectData#getCompileOutputPath() project compile output path} should be used if current module
    *              doesn't provide specific compile output path
    */
-  public @Nullable String getCompileOutputPath(@NotNull ExternalSystemSourceType type) {
+  @Nullable
+  public String getCompileOutputPath(@NotNull ExternalSystemSourceType type) {
     //noinspection ConstantConditions
     return useExternalCompilerOutput && externalCompilerOutputPaths != null
            ? externalCompilerOutputPaths.get(type)
@@ -140,7 +155,8 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     this.useExternalCompilerOutput = useExternalCompilerOutput;
   }
 
-  public @Nullable String getGroup() {
+  @Nullable
+  public String getGroup() {
     return group;
   }
 
@@ -148,7 +164,8 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     this.group = group;
   }
 
-  public @Nullable ProjectCoordinate getPublication() {
+  @Nullable
+  public ProjectCoordinate getPublication() {
     return publication;
   }
 
@@ -156,7 +173,8 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     this.publication = publication;
   }
 
-  public @Nullable String getVersion() {
+  @Nullable
+  public String getVersion() {
     return version;
   }
 
@@ -164,7 +182,8 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     this.version = version;
   }
 
-  public @Nullable @NlsSafe String getDescription() {
+  @Nullable
+  public @NlsSafe String getDescription() {
     return description;
   }
 
@@ -172,7 +191,8 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     this.description = description;
   }
 
-  public @NotNull List<File> getArtifacts() {
+  @NotNull
+  public List<File> getArtifacts() {
     return artifacts;
   }
 
@@ -197,7 +217,101 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     this.ideModuleGroup = ideModuleGroup;
   }
 
-  public @Nullable String getProperty(String key) {
+  /**
+   * @deprecated use {@link JavaModuleData#getLanguageLevel} instead
+   */
+  @Nullable
+  @Deprecated
+  public String getSourceCompatibility() {
+    return sourceCompatibility;
+  }
+
+  /**
+   * @deprecated use {@link JavaModuleData#setLanguageLevel} instead
+   */
+  @Deprecated
+  public void setSourceCompatibility(@Nullable String sourceCompatibility) {
+    this.isSetSourceCompatibility = true;
+    this.sourceCompatibility = sourceCompatibility;
+  }
+
+  /**
+   * @deprecated use {@link JavaModuleData#getTargetBytecodeVersion} instead
+   */
+  @Nullable
+  @Deprecated(forRemoval = true)
+  public String getTargetCompatibility() {
+    return targetCompatibility;
+  }
+
+  /**
+   * @deprecated use {@link JavaModuleData#setTargetBytecodeVersion} instead
+   */
+  @Deprecated(forRemoval = true)
+  public void setTargetCompatibility(@Nullable String targetCompatibility) {
+    this.isSetTargetCompatibility = true;
+    this.targetCompatibility = targetCompatibility;
+  }
+
+  /**
+   * @deprecated use {@link ModuleSdkData#getSdkName} instead
+   */
+  @Nullable
+  @Deprecated(forRemoval = true)
+  public String getSdkName() {
+    return sdkName;
+  }
+
+  /**
+   * @deprecated use {@link ModuleSdkData#setSdkName} instead
+   */
+  @Deprecated(forRemoval = true)
+  public void setSdkName(@Nullable String sdkName) {
+    this.isSetSdkName = true;
+    this.sdkName = sdkName;
+  }
+
+  // Remove it in version 2021.1
+  //<editor-fold desc="Backward compatibility preserving methods">
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
+  public void internalSetSourceCompatibility(@Nullable String sourceCompatibility) {
+    this.sourceCompatibility = sourceCompatibility;
+  }
+
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
+  public void internalSetTargetCompatibility(@Nullable String targetCompatibility) {
+    this.targetCompatibility = targetCompatibility;
+  }
+
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
+  public void internalSetSdkName(@Nullable String sdkName) {
+    this.sdkName = sdkName;
+  }
+
+  @Deprecated
+  @SuppressWarnings("MissingDeprecatedAnnotation")
+  public boolean isSetSourceCompatibility() {
+    return isSetSourceCompatibility;
+  }
+
+  @Deprecated
+  @SuppressWarnings("MissingDeprecatedAnnotation")
+  public boolean isSetTargetCompatibility() {
+    return isSetTargetCompatibility;
+  }
+
+  @Deprecated
+  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
+  public boolean isSetSdkName() {
+    return isSetSdkName;
+  }
+  //</editor-fold>
+
+  @Nullable
+  public String getProperty(String key) {
     return properties != null ? properties.get(key) : null;
   }
 
@@ -208,7 +322,8 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     properties.put(key, value);
   }
 
-  public @NotNull String getModuleName() {
+  @NotNull
+  public String getModuleName() {
     return moduleName;
   }
 
@@ -216,7 +331,8 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     this.moduleName = moduleName;
   }
 
-  public @NotNull String getIdeGrouping() {
+  @NotNull
+  public String getIdeGrouping() {
     if (ideModuleGroup != null) {
       return join(ideModuleGroup, ".");
     } else {
@@ -224,7 +340,8 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     }
   }
 
-  public @Nullable String getIdeParentGrouping() {
+  @Nullable
+  public String getIdeParentGrouping() {
     if (ideModuleGroup != null) {
       return nullize(join(ArrayUtil.remove(ideModuleGroup, ideModuleGroup.length - 1), "."));
     } else {
@@ -238,14 +355,6 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     }
   }
 
-  public @NotNull ModuleNameDeduplicationStrategy getModuleNameDeduplicationStrategy() {
-    return moduleNameDeduplicationStrategy;
-  }
-
-  public void setModuleNameDeduplicationStrategy(@NotNull ModuleNameDeduplicationStrategy moduleNameDeduplicationStrategy) {
-    this.moduleNameDeduplicationStrategy = moduleNameDeduplicationStrategy;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof ModuleData that)) return false;
@@ -257,6 +366,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     if (!moduleTypeId.equals(that.moduleTypeId)) return false;
     if (version != null ? !version.equals(that.version) : that.version != null) return false;
     if (description != null ? !description.equals(that.description) : that.description != null) return false;
+    if (sdkName != null ? !sdkName.equals(that.sdkName) : that.sdkName != null) return false;
 
     return true;
   }
@@ -270,6 +380,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     result = 31 * result + (group != null ? group.hashCode() : 0);
     result = 31 * result + (version != null ? version.hashCode() : 0);
     result = 31 * result + (description != null ? description.hashCode() : 0);
+    result = 31 * result + (sdkName != null ? sdkName.hashCode() : 0);
     return result;
   }
 

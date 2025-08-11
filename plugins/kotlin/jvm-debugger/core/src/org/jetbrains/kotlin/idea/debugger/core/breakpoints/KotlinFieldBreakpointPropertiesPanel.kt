@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.components.JBBox
 import com.intellij.util.ui.DialogUtil
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
@@ -39,7 +38,7 @@ class KotlinFieldBreakpointPropertiesPanel : XBreakpointCustomPropertiesPanel<XL
             this.add(panel)
         }
 
-        val watchBox = JBBox.createVerticalBox()
+        val watchBox = Box.createVerticalBox()
         watchBox.addNewPanelForCheckBox(myWatchInitializationCheckBox)
         watchBox.addNewPanelForCheckBox(myWatchAccessCheckBox)
         watchBox.addNewPanelForCheckBox(myWatchModificationCheckBox)

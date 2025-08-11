@@ -2,15 +2,12 @@ package com.intellij.codeInsight.codeVision.ui.renderers
 
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
-import com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo
 import com.intellij.openapi.editor.Inlay
 import com.intellij.util.DocumentUtil
 import com.intellij.util.text.CharArrayUtil
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import java.awt.Rectangle
 
-@ApiStatus.Internal
 class BlockCodeVisionInlayRenderer : CodeVisionInlayRendererBase(){
   override fun calculateCodeVisionEntryBounds(element: CodeVisionEntry): Rectangle? {
     val hoveredEntryBounds = painter.hoveredEntryBounds(inlay.editor, inlayState(inlay), inlay.getUserData(CodeVisionListData.KEY), element)
@@ -36,8 +33,8 @@ class BlockCodeVisionInlayRenderer : CodeVisionInlayRendererBase(){
     val lineStartOffset = DocumentUtil.getLineStartOffset(inlay.offset, editor.document)
 
     val shiftForward = CharArrayUtil.shiftForward(editor.document.immutableCharSequence, lineStartOffset, " \t")
-    val vfmtRightShift = VirtualFormattingInlaysInfo.measureVirtualFormattingInlineInlays(editor, shiftForward, shiftForward)
-    return editor.offsetToXY(shiftForward, false, false).x + vfmtRightShift
+
+    return editor.offsetToXY(shiftForward, true, false).x
   }
 
   override fun getPoint(inlay: Inlay<*>, targetPoint: Point): Point {

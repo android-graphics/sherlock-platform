@@ -1,4 +1,4 @@
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 // AFTER-WARNING: Parameter 'i' is never used
 // AFTER-WARNING: Parameter 'j' is never used
 class A(i: Int, j: Int) {

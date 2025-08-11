@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntSupport;
@@ -21,7 +35,7 @@ import java.util.*;
  */
 public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
 
-  protected static <K, V> void cacheResult(final @Nullable DomElement context, final Key<Map<K, V>> cacheKind, K key, V value) {
+  protected static <K, V> void cacheResult(@Nullable final DomElement context, final Key<Map<K, V>> cacheKind, K key, V value) {
     if (context != null) {
       Map<K, V> cachemap = cacheKind.get(context);
       if (cachemap == null) {
@@ -178,11 +192,13 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
     }
   }
 
-  protected @Nullable AntDomTarget getTargetByName(@NonNls String effectiveName) {
+  @Nullable
+  protected AntDomTarget getTargetByName(@NonNls String effectiveName) {
     return myTargetsResolveMap.get(effectiveName);
   }
 
-  public final @NotNull Map<String, AntDomTarget> getDiscoveredTargets() {
+  @NotNull
+  public final Map<String, AntDomTarget> getDiscoveredTargets() {
     return Collections.unmodifiableMap(myTargetsResolveMap);
   }
 
@@ -274,7 +290,6 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
       myDisplayName = displayName;
     }
 
-    @Override
     public String toString() {
       return myDisplayName;
     }
@@ -295,14 +310,16 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
       return targetReferenceText;
     }
 
-    public @NotNull InclusionKind getCurrentInclusionKind() {
+    @NotNull
+    public InclusionKind getCurrentInclusionKind() {
       if (myPrefixes.isEmpty()) {
         return InclusionKind.TOPLEVEL;
       }
       return myPrefixes.getLast().getSecond();
     }
 
-    public @NotNull String getFQPrefix() {
+    @NotNull
+    public String getFQPrefix() {
       if (myCurrentPrefix != null) {
         return myCurrentPrefix;
       }
@@ -316,7 +333,8 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
       return myCurrentPrefix = buf.toString();
     }
 
-    public @NotNull String getShortPrefix() {
+    @NotNull
+    public String getShortPrefix() {
       return myPrefixes.isEmpty()? "" : myPrefixes.getLast().getFirst();
     }
 

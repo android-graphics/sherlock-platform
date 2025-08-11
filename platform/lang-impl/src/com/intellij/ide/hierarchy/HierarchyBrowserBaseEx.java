@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
@@ -137,7 +137,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
       OccurenceNavigatorSupport occurenceNavigatorSupport = new OccurenceNavigatorSupport(tree) {
         @Override
-        protected @Nullable Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
+        @Nullable
+        protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
           HierarchyNodeDescriptor descriptor = getDescriptor(node);
           if (descriptor != null) {
             PsiElement psiElement = getOpenFileElementFromDescriptor(descriptor);
@@ -148,13 +149,15 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
           return null;
         }
 
+        @NotNull
         @Override
-        public @NotNull String getNextOccurenceActionName() {
+        public String getNextOccurenceActionName() {
           return getNextOccurenceActionNameImpl();
         }
 
+        @NotNull
         @Override
-        public @NotNull String getPreviousOccurenceActionName() {
+        public String getPreviousOccurenceActionName() {
           return getPrevOccurenceActionNameImpl();
         }
       };
@@ -177,16 +180,22 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     buildUi(createToolbar(getActionPlace(), HELP_ID).getComponent(), contentPanel);
   }
 
-  protected @Nullable PsiElement getOpenFileElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
+  @Nullable
+  protected PsiElement getOpenFileElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
     return getElementFromDescriptor(descriptor);
   }
 
   @Override
-  protected abstract @Nullable PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor);
+  @Nullable
+  protected abstract PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor);
 
-  protected abstract @ActionText @NotNull String getPrevOccurenceActionNameImpl();
+  @ActionText
+  @NotNull
+  protected abstract String getPrevOccurenceActionNameImpl();
 
-  protected abstract @ActionText @NotNull String getNextOccurenceActionNameImpl();
+  @ActionText
+  @NotNull
+  protected abstract String getNextOccurenceActionNameImpl();
 
   protected abstract void createTrees(@NotNull Map<? super @Nls String, ? super JTree> trees);
 
@@ -199,7 +208,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
    * Put (scope type -> presentable name) pairs into a map.
    * This map is used in {@link #changeView(String, boolean)} method to get a proper localization in UI.
    */
-  protected @NotNull Map<String, Supplier<@Nls String>> getPresentableNameMap() {
+  @NotNull
+  protected Map<String, Supplier<@Nls String>> getPresentableNameMap() {
     Map<String, Supplier<String>> map = new HashMap<>();
     map.put(SCOPE_PROJECT, () -> ProjectProductionScope.INSTANCE.getPresentableName());
     map.put(SCOPE_CLASS, () -> LangBundle.message("this.class.scope.name"));
@@ -210,7 +220,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
 
-  protected abstract @Nullable JPanel createLegendPanel();
+  @Nullable
+  protected abstract JPanel createLegendPanel();
 
   protected abstract boolean isApplicableElement(@NotNull PsiElement element);
 
@@ -218,20 +229,25 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     return isApplicableElement(element);
   }
 
-  protected abstract @Nullable HierarchyTreeStructure createHierarchyTreeStructure(@NotNull String type, @NotNull PsiElement psiElement);
+  @Nullable
+  protected abstract HierarchyTreeStructure createHierarchyTreeStructure(@NotNull String type, @NotNull PsiElement psiElement);
 
-  protected abstract @Nullable Comparator<NodeDescriptor<?>> getComparator();
+  @Nullable
+  protected abstract Comparator<NodeDescriptor<?>> getComparator();
 
-  protected abstract @NotNull String getActionPlace();
+  @NotNull
+  protected abstract String getActionPlace();
 
-  protected @Nullable Color getFileColorForNode(Object node) {
+  @Nullable
+  protected Color getFileColorForNode(Object node) {
     if (node instanceof HierarchyNodeDescriptor) {
       return ((HierarchyNodeDescriptor)node).getBackgroundColorCached();
     }
     return null;
   }
 
-  protected final @NotNull JTree createTree(boolean dndAware) {
+  @NotNull
+  protected final JTree createTree(boolean dndAware) {
     Tree tree;
 
     if (dndAware) {
@@ -411,7 +427,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     TreeUtil.promiseExpand(tree, visitor(descriptor));
   }
 
-  private @NotNull TreeVisitor visitor(@NotNull HierarchyNodeDescriptor descriptor) {
+  @NotNull
+  private TreeVisitor visitor(@NotNull HierarchyNodeDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     if (element == null) return path -> TreeVisitor.Action.INTERRUPT;
     PsiManager psiManager = element.getManager();
@@ -426,7 +443,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     };
   }
 
-  protected @Nullable @NlsContexts.TabTitle String getContentDisplayName(@Nls @NotNull String typeName, @NotNull PsiElement element) {
+  @Nullable
+  protected @NlsContexts.TabTitle String getContentDisplayName(@Nls @NotNull String typeName, @NotNull PsiElement element) {
     if (element instanceof PsiNamedElement) {
       return MessageFormat.format(typeName, ((PsiNamedElement)element).getName());
     }
@@ -448,7 +466,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     return getOccurrenceNavigator().hasNextOccurence();
   }
 
-  private @NotNull OccurenceNavigator getOccurrenceNavigator() {
+  @NotNull
+  private OccurenceNavigator getOccurrenceNavigator() {
     Sheet sheet = myCurrentSheet.get();
     OccurenceNavigator navigator = sheet == null ? null : sheet.myOccurenceNavigator;
     return navigator == null ? EMPTY : navigator;
@@ -469,17 +488,20 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     return getOccurrenceNavigator().goPreviousOccurence();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getNextOccurenceActionName() {
+  public String getNextOccurenceActionName() {
     return getOccurrenceNavigator().getNextOccurenceActionName();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPreviousOccurenceActionName() {
+  public String getPreviousOccurenceActionName() {
     return getOccurrenceNavigator().getPreviousOccurenceActionName();
   }
 
-  public @NotNull StructureTreeModel<?> getTreeModel(@NotNull String viewType) {
+  @NotNull
+  public StructureTreeModel<?> getTreeModel(@NotNull String viewType) {
     ThreadingAssertions.assertEventDispatchThread();
     return myType2Sheet.get(viewType).myStructureTreeModel;
   }
@@ -653,7 +675,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       }
     }
 
-    protected @Nls String correctViewType(@NotNull HierarchyBrowserBaseEx browser, @Nls String viewType) {
+    @Nls
+    protected String correctViewType(@NotNull HierarchyBrowserBaseEx browser, @Nls String viewType) {
       return viewType;
     }
 
@@ -747,7 +770,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
 
     @Override
-    protected final @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
+    @NotNull
+    protected final DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
       DefaultActionGroup group = new DefaultActionGroup();
 
       for(NamedScope namedScope: getValidScopes()) {
@@ -768,8 +792,9 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       ApplicationManager.getApplication().invokeLater(() -> doRefresh(true), __ -> isDisposed());
     }
 
+    @NotNull
     @Override
-    public final @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+    public final JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
       JPanel panel = new JPanel(new GridBagLayout());
       panel.add(new JLabel(IdeBundle.message("label.scope")),
                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.insetsLeft(5), 0, 0));

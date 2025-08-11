@@ -122,10 +122,6 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     return jdkChangeListener.hasDependencyOn(sdk)
   }
 
-  override fun hasDependencyOn(sdk: SdkId): Boolean {
-    return jdkChangeListener.hasDependencyOn(sdk)
-  }
-
   fun workspaceModelChanged(event: VersionedStorageChange) = changedListenerTimeMs.addMeasuredTime {
     if (project.isDisposed) return
 
@@ -198,7 +194,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
 
   override fun dispose() {
     if (project.isDefault) return
-
+    
     //there is no need to send events since the project will be disposed anyway
     libraryTablesListener.unsubscribe(false)
     jdkChangeListener.unsubscribe(false)
@@ -487,20 +483,12 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     }
 
     fun hasDependencyOn(jdk: Sdk): Boolean {
-      return hasDependencyOn(SdkId(jdk.name, jdk.sdkType.name))
+      return sdkDependencies.get(SdkDependency(SdkId(jdk.name, jdk.sdkType.name))).isNotEmpty()
+             || isProjectSdk(jdk) && hasProjectSdkDependency()
     }
 
-    fun hasDependencyOn(sdk: SdkId): Boolean {
-      return sdkDependencies.get(SdkDependency(sdk)).isNotEmpty()
-             || isProjectSdk(sdk) && (hasProjectSdkDependency() || watchedSdks.isEmpty())
-    }
-
-    private fun isProjectSdk(jdk: Sdk) = isProjectSdk(jdk.name, jdk.sdkType.name)
-
-    private fun isProjectSdk(sdkId: SdkId) = isProjectSdk(sdkId.name, sdkId.type)
-
-    private fun isProjectSdk(sdkName: String, sdkType: String) =
-      sdkName == projectRootManager.projectSdkName && sdkType == projectRootManager.projectSdkTypeName
+    private fun isProjectSdk(jdk: Sdk) =
+      jdk.name == projectRootManager.projectSdkName && jdk.sdkType.name == projectRootManager.projectSdkTypeName
 
     fun unsubscribe(fireEvents: Boolean) {
       watchedSdks.forEach { sdk ->

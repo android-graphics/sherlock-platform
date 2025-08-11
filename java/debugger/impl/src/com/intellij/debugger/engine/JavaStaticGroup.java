@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -37,8 +37,9 @@ public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvid
     myNodeManager = nodeManager;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getComment() {
+  public String getComment() {
     String res = NodeRendererSettings.getInstance().getClassRenderer().renderTypeName(myStaticDescriptor.getType().name());
     if (!StringUtil.isEmpty(res)) {
       return " members of " + res;
@@ -46,13 +47,15 @@ public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvid
     return res;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getSeparator() {
+  public String getSeparator() {
     return "";
   }
 
+  @Nullable
   @Override
-  public @Nullable Icon getIcon() {
+  public Icon getIcon() {
     return AllIcons.Nodes.Static;
   }
 
@@ -62,7 +65,7 @@ public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvid
   }
 
   @Override
-  public void computeChildren(final @NotNull XCompositeNode node) {
+  public void computeChildren(@NotNull final XCompositeNode node) {
     JavaValue.scheduleCommand(myEvaluationContext, node, new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {

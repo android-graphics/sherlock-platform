@@ -121,8 +121,3 @@ interface Dubious {
   public static void x() {
   }
 }
-class Yield {
-  static void yield() {
-    Yield.yield();
-  }
-}

@@ -1,12 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * A download suggestion to fix a missing SDK by downloading it
@@ -30,15 +28,9 @@ public interface UnknownSdkDownloadableSdkFix extends UnknownSdkFixConfigurator 
    * @return version string that is short and enough to be shown in UI
    * @see #getVersionString()
    */
-  default @NotNull String getPresentableVersionString() {
+  @NotNull
+  default String getPresentableVersionString() {
     return getVersionString();
-  }
-
-  /**
-   * @return reason why a SDK lookup was initiated
-   */
-  default @Nullable @Nls String getSdkLookupReason() {
-    return null;
   }
 
   /**

@@ -34,13 +34,15 @@ public class RemoveModifierFix extends PsiUpdateModCommandQuickFix {
     this.modifierText = modifierText;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return InspectionGadgetsBundle.message("remove.modifier.fix.family.name");
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return InspectionGadgetsBundle.message("remove.modifier.quickfix",
                                            modifierText);
   }

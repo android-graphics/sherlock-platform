@@ -7,7 +7,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xmlb.Constants;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +46,6 @@ public final class JDOMExternalizer {
   /**
    * @deprecated Use {@link XmlSerializer} instead.
    */
-  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static void write(Element root, String name, int value) {
     write(root, name, Integer.toString(value));

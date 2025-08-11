@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.move;
 
@@ -27,7 +27,6 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -169,7 +168,8 @@ public final class MoveHandler implements RefactoringActionHandler {
     }
   }
 
-  private static @Nullable MoveHandlerDelegate findDelegate(PsiElement @NotNull [] elements, @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
+  @Nullable
+  private static MoveHandlerDelegate findDelegate(PsiElement @NotNull [] elements, @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
     for (MoveHandlerDelegate delegate: MoveHandlerDelegate.EP_NAME.getExtensionList()) {
       if (delegate.canMove(elements, targetContainer, reference)) {
         return delegate;
@@ -179,7 +179,8 @@ public final class MoveHandler implements RefactoringActionHandler {
     return null;
   }
 
-  public static @Nullable @NlsActions.ActionText String getActionName(@NotNull DataContext dataContext) {
+  @Nullable
+  public static @NlsActions.ActionText String getActionName(@NotNull DataContext dataContext) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
     if (editor != null) {
       Project project = dataContext.getData(CommonDataKeys.PROJECT);
@@ -223,7 +224,8 @@ public final class MoveHandler implements RefactoringActionHandler {
     return null;
   }
 
-  private static @Unmodifiable @NotNull List<MoveHandlerDelegate> findHandlersForLanguage(@NotNull PsiElement element) {
+  @NotNull
+  private static List<MoveHandlerDelegate> findHandlersForLanguage(@NotNull PsiElement element) {
     return ContainerUtil.filter(MoveHandlerDelegate.EP_NAME.getExtensionList(),
                                 (delegate) -> delegate.supportsLanguage(element.getLanguage()));
   }

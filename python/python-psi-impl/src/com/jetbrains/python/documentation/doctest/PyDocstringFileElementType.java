@@ -27,8 +27,9 @@ public class PyDocstringFileElementType extends PyFileElementType {
     super(language);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getExternalId() {
+  public String getExternalId() {
     return "PyDocstring.FILE";
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.completion;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -65,8 +65,9 @@ final class PostfixTemplatesCompletionProvider extends CompletionProvider<Comple
       return name.equalsIgnoreCase(myPrefix);
     }
 
+    @NotNull
     @Override
-    public @NotNull PrefixMatcher cloneWithPrefix(@NotNull String prefix) {
+    public PrefixMatcher cloneWithPrefix(@NotNull String prefix) {
       return new MyPrefixMatcher(prefix);
     }
   }

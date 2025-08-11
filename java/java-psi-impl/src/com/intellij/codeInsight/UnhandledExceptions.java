@@ -4,7 +4,6 @@ package com.intellij.codeInsight;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,16 +15,8 @@ import java.util.function.Predicate;
  * A container for information about unhandled exceptions thrown from a block of code
  */
 public class UnhandledExceptions {
-  /**
-   * An empty container: no exceptions are thrown
-   */
-  public static final UnhandledExceptions EMPTY = new UnhandledExceptions(Collections.emptySet(), false);
-
-  /**
-   * A container that assumes possible unknown exceptions from unresolved methods 
-   * and no explicitly thrown exceptions
-   */
-  public static final UnhandledExceptions UNKNOWN = new UnhandledExceptions(Collections.emptySet(), true);
+  static final UnhandledExceptions EMPTY = new UnhandledExceptions(Collections.emptySet(), false);
+  static final UnhandledExceptions UNKNOWN = new UnhandledExceptions(Collections.emptySet(), true);
 
   private final Set<PsiClassType> exceptions;
   private final boolean hasUnresolvedCalls;
@@ -70,7 +61,8 @@ public class UnhandledExceptions {
    * @param other UnhandledExceptions container to merge with
    * @return merged container
    */
-  public @NotNull UnhandledExceptions merge(@NotNull UnhandledExceptions other) {
+  @NotNull
+  UnhandledExceptions merge(@NotNull UnhandledExceptions other) {
     boolean unresolvedCalls = hasUnresolvedCalls || other.hasUnresolvedCalls;
     if (exceptions.isEmpty()) return other.withUnresolvedCalls(unresolvedCalls);
     if (other.exceptions.isEmpty()) return this.withUnresolvedCalls(unresolvedCalls);
@@ -107,7 +99,7 @@ public class UnhandledExceptions {
     else if (element instanceof PsiCodeBlock &&
              element.getParent() instanceof PsiMethod &&
              ((PsiMethod)element.getParent()).isConstructor() &&
-             JavaPsiConstructorUtil.findThisOrSuperCallInConstructor((PsiMethod)element.getParent()) == null) {
+             !firstStatementIsConstructorCall((PsiCodeBlock)element)) {
       // there is implicit parent constructor call
       final PsiMethod constructor = (PsiMethod)element.getParent();
       final PsiClass aClass = constructor.getContainingClass();
@@ -171,6 +163,17 @@ public class UnhandledExceptions {
     return reference != null && reference.resolve() instanceof PsiClass;
   }
 
+  private static boolean firstStatementIsConstructorCall(@NotNull PsiCodeBlock constructorBody) {
+    final PsiStatement[] statements = constructorBody.getStatements();
+    if (statements.length == 0) return false;
+    if (!(statements[0] instanceof PsiExpressionStatement)) return false;
+
+    final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+    if (!(expression instanceof PsiMethodCallExpression)) return false;
+    final PsiMethod method = (PsiMethod)((PsiMethodCallExpression)expression).getMethodExpression().resolve();
+    return method != null && method.isConstructor();
+  }
+
   /**
    * @param method method to check
    * @return unhandled exception that should be declared as thrown from a given method 
@@ -195,14 +198,6 @@ public class UnhandledExceptions {
     return result;
   }
 
-  /**
-   * @param element Java code element (e.g., expression, or code block)
-   * @return the unhandled exceptions thrown from a given element
-   */
-  public static @NotNull UnhandledExceptions collect(@NotNull PsiElement element) {
-    return collect(element, element, true);
-  }
-
   static @NotNull UnhandledExceptions collect(@NotNull PsiElement element,
                                               @Nullable PsiElement topElement,
                                               boolean includeSelfCalls) {
@@ -214,26 +209,5 @@ public class UnhandledExceptions {
                                                        return method == PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
                                                      };
     return collect(element, topElement, callFilter);
-  }
-
-  /**
-   * @param statement try-statement to collect unhandled exceptions from its body
-   * @return exceptions unhandled in try statement body and resource declarations; they are still could be handled by declared
-   * catch sections on the same try statement. The primary purpose of this method is to check whether catch sections are correct.
-   */
-  public static @NotNull UnhandledExceptions fromTryStatement(@NotNull PsiTryStatement statement) {
-    UnhandledExceptions thrownTypes = EMPTY;
-
-    PsiCodeBlock tryBlock = statement.getTryBlock();
-    if (tryBlock != null) {
-      thrownTypes = thrownTypes.merge(collect(tryBlock));
-    }
-
-    PsiResourceList resources = statement.getResourceList();
-    if (resources != null) {
-      thrownTypes = thrownTypes.merge(collect(resources));
-    }
-
-    return thrownTypes;
   }
 }

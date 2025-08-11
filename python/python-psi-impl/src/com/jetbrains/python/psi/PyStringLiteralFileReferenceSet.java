@@ -46,7 +46,8 @@ public class PyStringLiteralFileReferenceSet extends RootFileReferenceSet {
     }
   }
 
-  private @NotNull List<FileReference> getFileReferences(@NotNull PyStringLiteralExpression expression) {
+  @NotNull
+  private List<FileReference> getFileReferences(@NotNull PyStringLiteralExpression expression) {
     final String value = expression.getStringValue();
     final Matcher matcher = DELIMITERS.matcher(value);
     int start = 0;

@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.ref;
 
 import com.intellij.psi.PsiChildLink;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public final class InstanceofLink<Parent extends PsiElement, Child extends PsiElement, CastTo extends Child> extends PsiChildLink<Parent, CastTo> {
   private final PsiChildLink<Parent, Child> myDelegate;
@@ -23,7 +23,8 @@ public final class InstanceofLink<Parent extends PsiElement, Child extends PsiEl
   }
 
   @Override
-  public @NotNull CastTo createChild(@NotNull Parent parent) throws IncorrectOperationException {
+  @NotNull
+  public CastTo createChild(@NotNull Parent parent) throws IncorrectOperationException {
     return (CastTo) myDelegate.createChild(parent);
   }
 

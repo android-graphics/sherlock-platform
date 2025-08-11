@@ -22,8 +22,9 @@ public abstract class LombokRedundantModifierInspection extends LombokJavaInspec
     this.redundantModifiersInfo = redundantModifiersInfo;
   }
 
+  @NotNull
   @Override
-  protected @NotNull PsiElementVisitor createVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  protected PsiElementVisitor createVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new LombokRedundantModifiersVisitor(holder);
   }
 

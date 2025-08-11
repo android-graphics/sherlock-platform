@@ -1,4 +1,4 @@
-// IGNORE_K2
+// FIR_COMPARISON
 // NAME_COUNT_TO_USE_STAR_IMPORT: 2
 import p1.plus
 import p2.v1

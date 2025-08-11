@@ -218,8 +218,7 @@ class JavaUastApiTest : AbstractJavaUastTest() {
     val psiFile = myFixture.configureByFile("Simple/Record.java")
     val psiClass = (psiFile as PsiJavaFile).classes[0]
     val uClass = psiClass.toUElementOfType<UClass>()
-    TestCase.assertTrue(uClass!!.isRecord)
-    val constructor = uClass.methods.single { it.isConstructor }
+    val constructor = uClass!!.methods.single { it.isConstructor }
     assertInstanceOf(constructor.javaPsi, LightRecordCanonicalConstructor::class.java)
     TestCase.assertEquals(constructor, constructor.javaPsi.toUElement())
     assertInstanceOf(constructor.sourcePsi, PsiRecordHeader::class.java)
@@ -314,7 +313,7 @@ class JavaUastApiTest : AbstractJavaUastTest() {
         import java.lang.annotation.Target;
         @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
         @interface MyNullable {}
-
+        
         class Test {
           @MyNullable String test() {
             return null;

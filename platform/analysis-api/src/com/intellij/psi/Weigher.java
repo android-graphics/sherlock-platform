@@ -21,7 +21,6 @@ public abstract class Weigher<T, Location> {
     myDebugName = debugName;
   }
 
-  @Override
   public String toString() {
     return myDebugName == null ? super.toString() : myDebugName;
   }

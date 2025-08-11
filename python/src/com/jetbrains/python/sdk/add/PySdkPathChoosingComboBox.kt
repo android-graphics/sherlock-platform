@@ -30,9 +30,7 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.add.v1.PySdkListCellRendererExt
-import com.jetbrains.python.sdk.add.v1.asComboBoxItem
-import com.jetbrains.python.sdk.add.v1.createDetectedSdk
+import com.jetbrains.python.sdk.add.target.createDetectedSdk
 import com.jetbrains.python.ui.targetPathEditor.ManualPathEntryDialog
 import java.awt.event.ActionListener
 import java.util.function.Supplier
@@ -46,12 +44,10 @@ import javax.swing.plaf.basic.BasicComboBoxEditor
  * To fill this box in async mode use [addInterpretersAsync]
  *
  */
-class PySdkPathChoosingComboBox @JvmOverloads constructor(
-  sdks: List<Sdk> = emptyList(),
-  suggestedFile: VirtualFile? = null,
-  private val newPySdkComboBoxItem: NewPySdkComboBoxItem? = null,
-  targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null,
-) :
+class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = emptyList(),
+                                                          suggestedFile: VirtualFile? = null,
+                                                          private val newPySdkComboBoxItem: NewPySdkComboBoxItem? = null,
+                                                          targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null) :
   ComponentWithBrowseButton<ComboBoxWithWidePopup<PySdkComboBoxItem>>(ComboBoxWithWidePopup(buildSdkArray(sdks, newPySdkComboBoxItem)),
                                                                       null) {
 
@@ -112,11 +108,8 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(
   val selectedItem: PySdkComboBoxItem?
     get() = childComponent.selectedItem as? PySdkComboBoxItem
 
-  internal val selectedSdkIfExists: Sdk?
-    get() = childComponent.selectedItem?.let { it as ExistingPySdkComboBoxItem }?.sdk
-
-  var selectedSdk: Sdk
-    get() = selectedSdkIfExists!!
+  var selectedSdk: Sdk?
+    get() = (childComponent.selectedItem as? ExistingPySdkComboBoxItem)?.sdk
     /**
      * Does nothing if [selectedSdk] is absent in the items in the combobox.
      */

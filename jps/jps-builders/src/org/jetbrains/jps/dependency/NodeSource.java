@@ -7,12 +7,9 @@ package org.jetbrains.jps.dependency;
  */
 public interface NodeSource extends ExternalizableGraphElement {
 
-  @Override
   boolean equals(Object other);
 
-  @Override
   int hashCode();
 
-  @Override
   String toString();
 }

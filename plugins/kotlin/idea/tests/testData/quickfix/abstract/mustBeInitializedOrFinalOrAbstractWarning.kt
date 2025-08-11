@@ -1,6 +1,5 @@
 // "Make 'x' 'abstract'" "true"
 // ERROR: Val cannot be reassigned
-// K2_AFTER_ERROR: 'val' cannot be reassigned.
 // COMPILER_ARGUMENTS: -XXLanguage:+ProhibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor -XXLanguage:+ProhibitOpenValDeferredInitialization
 open class Foo {
     constructor()

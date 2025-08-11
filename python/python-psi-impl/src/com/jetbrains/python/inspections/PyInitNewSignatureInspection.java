@@ -25,10 +25,11 @@ import java.util.List;
  */
 public final class PyInitNewSignatureInspection extends PyInspection {
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                                 boolean isOnTheFly,
-                                                 @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                        boolean isOnTheFly,
+                                        @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -60,7 +61,8 @@ public final class PyInitNewSignatureInspection extends PyInspection {
       }
     }
 
-    private @NotNull List<PyFunction> findComplementaryMethods(@NotNull PyClass cls, @NotNull PyFunction original) {
+    @NotNull
+    private List<PyFunction> findComplementaryMethods(@NotNull PyClass cls, @NotNull PyFunction original) {
       final String complementaryName = PyUtil.isNewMethod(original) ? PyNames.INIT : PyNames.NEW;
       final List<PyFunction> complementaryMethods = cls.multiFindMethodByName(complementaryName, true, myTypeEvalContext);
 

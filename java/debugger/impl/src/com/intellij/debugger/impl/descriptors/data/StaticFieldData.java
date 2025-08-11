@@ -18,7 +18,6 @@ public final class StaticFieldData extends DescriptorData<FieldDescriptorImpl> {
     return new FieldDescriptorImpl(project, null, myField);
   }
 
-  @Override
   public boolean equals(Object object) {
     if (!(object instanceof StaticFieldData fieldData)) {
       return false;
@@ -26,7 +25,6 @@ public final class StaticFieldData extends DescriptorData<FieldDescriptorImpl> {
     return (fieldData.myField == myField);
   }
 
-  @Override
   public int hashCode() {
     return myField.hashCode();
   }

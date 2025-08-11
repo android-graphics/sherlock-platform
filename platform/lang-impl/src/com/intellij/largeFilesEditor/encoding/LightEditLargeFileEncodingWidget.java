@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.encoding;
 
 import com.intellij.ide.lightEdit.LightEditService;
@@ -7,11 +7,9 @@ import com.intellij.ide.lightEdit.LightEditorListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
 public final class LightEditLargeFileEncodingWidget extends LargeFileEncodingWidget implements LightEditorListener {
 
   public static final String WIDGET_ID = "light.edit.large.file.encoding.widget";
@@ -32,7 +30,8 @@ public final class LightEditLargeFileEncodingWidget extends LargeFileEncodingWid
   }
 
   @Override
-  public @NotNull StatusBarWidget copy() {
+  @NotNull
+  public StatusBarWidget copy() {
     return new LightEditLargeFileEncodingWidget(getProject());
   }
 

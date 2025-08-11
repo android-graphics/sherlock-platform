@@ -35,13 +35,15 @@ public class RemovePrefixQuickFix extends PsiUpdateModCommandQuickFix {
     myPrefix = prefix;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return PyPsiBundle.message("QFIX.remove.string.prefix", myPrefix);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.remove.string.prefix");
   }
 

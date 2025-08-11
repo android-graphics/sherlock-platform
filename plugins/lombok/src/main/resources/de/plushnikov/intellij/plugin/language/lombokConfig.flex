@@ -13,43 +13,33 @@ import de.plushnikov.intellij.plugin.language.psi.LombokConfigTypes;
 %unicode
 %function advance
 %type IElementType
+%eof{  return;
+%eof}
 
-EOL= \n | \r | \r\n
-WHITESPACE=[\ \t\f]+
-MULTILINE_WHITESPACE=[\ \n\r\t\f]*{EOL}
-
-NOT_WHITESPACE=[^\n\r\f\t\ ]
-
-STRING_TAIL=[^\r\n]*
-COMMENT=#{STRING_TAIL}
-
+CRLF= \n | \r | \r\n
+WHITE_SPACE_CHAR=[\ \n\r\t\f]
+END_OF_LINE_COMMENT=("#")[^\r\n]*
 CLEAR="clear"
 KEY_CHARACTER=([:letter:] | [:digit:] | ".")+
-SEPARATOR="="
-SIGN="+"|"-"
-VALUE_CHARACTER={NOT_WHITESPACE} | {NOT_WHITESPACE}{STRING_TAIL}{NOT_WHITESPACE}
+SEPARATOR=[\ \t]* [=] [\ \t]*
+SIGN=[\ \t]*[\-\+]
+VALUE_CHARACTER=[^:=\n\r\f\\] | "\\"{CRLF} | "\\". | :
 
 %state IN_VALUE
 %state IN_KEY_VALUE_SEPARATOR
 
 %%
 
-{COMMENT}        { return LombokConfigTypes.COMMENT; }
-{MULTILINE_WHITESPACE} { yybegin(YYINITIAL); return TokenType.WHITE_SPACE; }
+<YYINITIAL> {END_OF_LINE_COMMENT}        { yybegin(YYINITIAL); return LombokConfigTypes.COMMENT; }
 
-<YYINITIAL> {
-                {CLEAR}            { yybegin(YYINITIAL); return LombokConfigTypes.CLEAR; }
-                {KEY_CHARACTER}    { yybegin(IN_KEY_VALUE_SEPARATOR); return LombokConfigTypes.KEY; }
-            }
+<YYINITIAL> {CLEAR}                      { yybegin(YYINITIAL); return LombokConfigTypes.CLEAR; }
 
-<IN_KEY_VALUE_SEPARATOR> {
-                {SIGN}          { yybegin(IN_KEY_VALUE_SEPARATOR); return LombokConfigTypes.SIGN; }
-                {SEPARATOR}     { yybegin(IN_VALUE); return LombokConfigTypes.SEPARATOR; }
-            }
+<YYINITIAL> {KEY_CHARACTER}+             { yybegin(IN_KEY_VALUE_SEPARATOR); return LombokConfigTypes.KEY; }
+<IN_KEY_VALUE_SEPARATOR> {SIGN}          { yybegin(IN_KEY_VALUE_SEPARATOR); return LombokConfigTypes.SIGN; }
+<IN_KEY_VALUE_SEPARATOR> {SEPARATOR}     { yybegin(IN_VALUE); return LombokConfigTypes.SEPARATOR; }
+<IN_VALUE> {VALUE_CHARACTER}+            { yybegin(YYINITIAL); return LombokConfigTypes.VALUE; }
 
-<IN_VALUE> {
-                {VALUE_CHARACTER} { yybegin(YYINITIAL); return LombokConfigTypes.VALUE; }
-}
-
-{WHITESPACE}                      { return TokenType.WHITE_SPACE; }
-[^]                               { return TokenType.BAD_CHARACTER; }
+<IN_KEY_VALUE_SEPARATOR> {CRLF}{WHITE_SPACE_CHAR}*  { yybegin(YYINITIAL); return TokenType.WHITE_SPACE; }
+<IN_VALUE> {CRLF}{WHITE_SPACE_CHAR}*     { yybegin(YYINITIAL); return TokenType.WHITE_SPACE; }
+{WHITE_SPACE_CHAR}+                      { return TokenType.WHITE_SPACE; }
+.                                        { return TokenType.BAD_CHARACTER; }

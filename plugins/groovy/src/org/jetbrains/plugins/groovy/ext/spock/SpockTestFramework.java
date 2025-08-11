@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.ext.spock;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -22,8 +22,9 @@ import static com.intellij.psi.util.InheritanceUtil.isInheritor;
 public final class SpockTestFramework extends GroovyTestFramework implements DumbAware {
   private static final ExternalLibraryDescriptor SPOCK_DESCRIPTOR = new ExternalLibraryDescriptor("org.spockframework", "spock-core");
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return "Spock";
   }
 
@@ -37,8 +38,9 @@ public final class SpockTestFramework extends GroovyTestFramework implements Dum
     return SPOCK_DESCRIPTOR;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDefaultSuperClass() {
+  public String getDefaultSuperClass() {
     return SpockUtils.SPEC_CLASS_NAME;
   }
 
@@ -52,8 +54,9 @@ public final class SpockTestFramework extends GroovyTestFramework implements Dum
     return new FileTemplateDescriptor("Spock cleanup Method.groovy");
   }
 
+  @NotNull
   @Override
-  public @NotNull FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
+  public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("Spock Test Method.groovy");
   }
 
@@ -78,7 +81,8 @@ public final class SpockTestFramework extends GroovyTestFramework implements Dum
     }, false);
   }
 
-  private @Nullable PsiMethod findSpecificMethod(@NotNull PsiClass clazz, String methodName) {
+  @Nullable
+  private PsiMethod findSpecificMethod(@NotNull PsiClass clazz, String methodName) {
     return callWithAlternateResolver(clazz.getProject(), () -> {
       if (!isTestClass(clazz, false)) return null;
 
@@ -89,13 +93,15 @@ public final class SpockTestFramework extends GroovyTestFramework implements Dum
     }, null);
   }
 
+  @Nullable
   @Override
-  protected @Nullable PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
+  protected PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
     return findSpecificMethod(clazz, SpockConstants.SETUP_METHOD_NAME);
   }
 
+  @Nullable
   @Override
-  protected @Nullable PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
+  protected PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
     return findSpecificMethod(clazz, SpockConstants.CLEANUP_METHOD_NAME);
   }
 

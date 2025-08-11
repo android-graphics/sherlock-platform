@@ -8,7 +8,6 @@ import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -26,7 +25,7 @@ public class PatternPackageReferenceSet extends PackageReferenceSet {
   }
 
   @Override
-  public @Unmodifiable Collection<PsiPackage> resolvePackageName(final @Nullable PsiPackage context, final String packageName) {
+  public Collection<PsiPackage> resolvePackageName(final @Nullable PsiPackage context, final String packageName) {
     if (context == null) return Collections.emptySet();
 
     if (packageName.contains("*")) {

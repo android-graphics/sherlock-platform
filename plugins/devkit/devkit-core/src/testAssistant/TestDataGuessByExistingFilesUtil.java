@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -30,10 +30,8 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
@@ -43,8 +41,7 @@ import java.util.*;
  * There is a possible case that particular test class is not properly configured with test annotations but uses test data files.
  * This class contains utility methods for guessing test data files location and name patterns from existing one.
  */
-@ApiStatus.Internal
-public final class TestDataGuessByExistingFilesUtil {
+final class TestDataGuessByExistingFilesUtil {
   private static final Logger LOG = Logger.getInstance(TestDataGuessByExistingFilesUtil.class);
 
   private TestDataGuessByExistingFilesUtil() {
@@ -58,7 +55,8 @@ public final class TestDataGuessByExistingFilesUtil {
    * @param testDataPath test data path if present (e.g. obtained from @TestDataPath annotation value)
    * @return List of existing test data files for the given test if it's possible to guess them; empty List otherwise
    */
-  static @NotNull List<TestDataFile> collectTestDataByExistingFiles(@NotNull PsiMethod psiMethod, @Nullable String testDataPath) {
+  @NotNull
+  static List<TestDataFile> collectTestDataByExistingFiles(@NotNull PsiMethod psiMethod, @Nullable String testDataPath) {
     Application application = ApplicationManager.getApplication();
     if (!application.isUnitTestMode() && application.isHeadlessEnvironment()) {
       // shouldn't be invoked under these conditions anyway, just for additional safety
@@ -69,7 +67,8 @@ public final class TestDataGuessByExistingFilesUtil {
     return ReadAction.compute(() -> buildDescriptorFromExistingTestData(psiMethod, testDataPath).restoreFiles());
   }
 
-  static @NotNull List<TestDataFile> guessTestDataName(PsiMethod method) {
+  @NotNull
+  static List<TestDataFile> guessTestDataName(PsiMethod method) {
     String testName = getTestName(method);
     if (testName == null) return Collections.emptyList();
     PsiClass psiClass = method.getContainingClass();
@@ -92,11 +91,13 @@ public final class TestDataGuessByExistingFilesUtil {
     return Collections.emptyList();
   }
 
-  private static @NotNull List<TestDataFile> guessTestDataBySiblingTest(PsiMethod psiMethod, String testDataBasePath, String testName) {
+  @NotNull
+  private static List<TestDataFile> guessTestDataBySiblingTest(PsiMethod psiMethod, String testDataBasePath, String testName) {
     return buildDescriptorFromExistingTestData(psiMethod, testDataBasePath).generateByTemplates(testName, null);
   }
 
-  private static @Nullable String getTestName(@NotNull PsiMethod method) {
+  @Nullable
+  private static String getTestName(@NotNull PsiMethod method) {
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(method, PsiClass.class);
     if (psiClass == null) {
       return null;
@@ -111,18 +112,21 @@ public final class TestDataGuessByExistingFilesUtil {
     return getTestName(method.getName());
   }
 
-  public static @NotNull String getTestName(@NotNull String methodName) {
+  @NotNull
+  public static String getTestName(@NotNull String methodName) {
     return StringUtil.trimStart(methodName, "test");
   }
 
-  private static @NotNull TestDataDescriptor buildDescriptorFromExistingTestData(@NotNull PsiMethod method, @Nullable String testDataPath) {
+  @NotNull
+  private static TestDataDescriptor buildDescriptorFromExistingTestData(@NotNull PsiMethod method, @Nullable String testDataPath) {
     return CachedValuesManager.getCachedValue(method,
                                               () -> new CachedValueProvider.Result<>(
                                                 buildDescriptor(method, testDataPath),
                                                 PsiModificationTracker.MODIFICATION_COUNT));
   }
 
-  private static @NotNull TestDataDescriptor buildDescriptor(@NotNull PsiMethod psiMethod, @Nullable String testDataPath) {
+  @NotNull
+  private static TestDataDescriptor buildDescriptor(@NotNull PsiMethod psiMethod, @Nullable String testDataPath) {
     PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class);
     String testName = getTestName(psiMethod);
     if (testName == null || psiClass == null) return TestDataDescriptor.NOTHING_FOUND;
@@ -135,9 +139,10 @@ public final class TestDataGuessByExistingFilesUtil {
     return buildDescriptor(testName, psiClass, testDataPath).restoreFiles();
   }
 
-  private static @NotNull TestDataDescriptor buildDescriptor(@NotNull String testName,
-                                                             @NotNull PsiClass psiClass,
-                                                             @Nullable String testDataPath) {
+  @NotNull
+  private static TestDataDescriptor buildDescriptor(@NotNull String testName,
+                                                    @NotNull PsiClass psiClass,
+                                                    @Nullable String testDataPath) {
     String normalizedTestDataPath = testDataPath == null ? null : StringUtil.trimEnd(StringUtil.trimEnd(testDataPath, "/"), "\\");
 
     // PhpStorm has tests that use '$' symbol as a file path separator, e.g. 'test$while_stmt$declaration' test
@@ -222,7 +227,7 @@ public final class TestDataGuessByExistingFilesUtil {
     }
 
     List<TestLocationDescriptor> descriptors = ContainerUtil.flatten(descriptorsByFileNames.values());
-    descriptors = filterDirsFromOtherModules(descriptors);
+    filterDirsFromOtherModules(descriptors);
     return new TestDataDescriptor(descriptors);
   }
 
@@ -238,17 +243,18 @@ public final class TestDataGuessByExistingFilesUtil {
     return processor.getResults();
   }
 
-  private static @Unmodifiable @NotNull List<TestLocationDescriptor> filterDirsFromOtherModules(@Unmodifiable List<TestLocationDescriptor> descriptorsByFileNames) {
+  private static void filterDirsFromOtherModules(List<TestLocationDescriptor> descriptorsByFileNames) {
     if (descriptorsByFileNames.size() < 2) {
-      return descriptorsByFileNames;
+      return;
     }
     if (!ContainerUtil.exists(descriptorsByFileNames, descriptor -> descriptor.isFromCurrentModule)) {
-      return descriptorsByFileNames;
+      return;
     }
-    return ContainerUtil.filter(descriptorsByFileNames, d -> d.isFromCurrentModule);
+    descriptorsByFileNames.removeIf(d -> !d.isFromCurrentModule);
   }
 
-  private static @Nullable String getSimpleClassName(@NotNull PsiClass psiClass) {
+  @Nullable
+  private static String getSimpleClassName(@NotNull PsiClass psiClass) {
     String result = psiClass.getQualifiedName();
     if (result == null) {
       return null;
@@ -412,18 +418,20 @@ public final class TestDataGuessByExistingFilesUtil {
 
     private final List<TestLocationDescriptor> myDescriptors = new ArrayList<>();
 
-    TestDataDescriptor(@Unmodifiable Collection<TestLocationDescriptor> descriptors) {
+    TestDataDescriptor(Collection<TestLocationDescriptor> descriptors) {
       myDescriptors.addAll(descriptors);
     }
 
-    public @NotNull @Unmodifiable List<TestDataFile> restoreFiles() {
+    @NotNull
+    public List<TestDataFile> restoreFiles() {
       return ContainerUtil.mapNotNull(myDescriptors, d -> {
         PsiFile file = ReadAction.compute(() -> d.filePointer.getElement());
         return file == null ? null : new TestDataFile.Existing(file.getVirtualFile());
       });
     }
 
-    public @NotNull List<TestDataFile> generateByTemplates(@NotNull String testName, @Nullable String root) {
+    @NotNull
+    public List<TestDataFile> generateByTemplates(@NotNull String testName, @Nullable String root) {
       List<TestDataFile> result = new ArrayList<>();
       if (StringUtil.isEmpty(testName)) {
         return result;

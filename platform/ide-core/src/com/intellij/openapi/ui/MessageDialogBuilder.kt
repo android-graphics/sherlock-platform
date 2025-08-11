@@ -23,7 +23,6 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
   protected var icon: Icon? = null
   protected var doNotAskOption: DoNotAskOption? = null
   @NonNls protected var helpId: String? = null
-  @NonNls protected var invocationPlace: String? = null
 
   protected abstract fun getThis(): T
 
@@ -86,17 +85,6 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
     return getThis()
   }
 
-  /**
-   * Please provide invocation place to clarify the purpose of dialog in statistic.
-   * You should register your invocation place in plugin.xml as extension point
-   * See also: com.intellij.internal.statistic.collectors.fus.ui.InvocationPlaceEP
-   */
-  @ApiStatus.Internal
-  fun invocationPlace(invocationPlace: @NonNls String): T {
-    this.invocationPlace = invocationPlace
-    return getThis()
-  }
-
   class YesNo internal constructor(title: String, message: String) : MessageDialogBuilder<YesNo>(title, message) {
     override fun getThis(): YesNo = this
 
@@ -118,9 +106,8 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
       val yesText = yesText ?: CommonBundle.getYesButtonText()
       val noText = noText ?: CommonBundle.getNoButtonText()
       return MessagesService.getInstance().showMessageDialog(
-        project = project, parentComponent = parentComponent, message = message, title = title, options = arrayOf(yesText, noText),
-        icon = icon, doNotAskOption = doNotAskOption, alwaysUseIdeaUI = true, helpId = helpId, invocationPlace = invocationPlace,
-        exitActionTypes = arrayOf(ExitActionType.YES, ExitActionType.NO)
+        project = project, parentComponent = parentComponent, message = message, title = title, icon = icon,
+        options = arrayOf(yesText, noText), doNotAskOption = doNotAskOption, helpId = helpId, alwaysUseIdeaUI = true
       ) == YES
     }
   }
@@ -153,8 +140,7 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
       val options = arrayOf(yesText, noText, cancelText)
       val choice = MessagesService.getInstance().showMessageDialog(
         project = project, parentComponent = parentComponent, message = message, title = title, options = options,
-        icon = icon, doNotAskOption = doNotAskOption, alwaysUseIdeaUI = true, helpId = helpId, invocationPlace = invocationPlace,
-        exitActionTypes = arrayOf(ExitActionType.YES, ExitActionType.NO, ExitActionType.CANCEL))
+        icon = icon, doNotAskOption = doNotAskOption, helpId = helpId, alwaysUseIdeaUI = true)
       return when (choice) {
         0 -> YES
         1 -> NO
@@ -193,7 +179,7 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
       val result = MessagesService.getInstance().showMessageDialog(
         project = project, parentComponent = parentComponent, message = message, title = title, options = options,
         defaultOptionIndex = defaultOptionIndex, focusedOptionIndex = focusedOptionIndex,
-        icon = icon, doNotAskOption = doNotAskOption, alwaysUseIdeaUI = true, helpId = helpId, invocationPlace = invocationPlace)
+        icon = icon, doNotAskOption = doNotAskOption, helpId = helpId, alwaysUseIdeaUI = true)
       return if (result < 0) null else buttons[result]
     }
   }
@@ -214,7 +200,6 @@ class OkCancelDialogBuilder internal constructor(title: String, message: String)
     val noText = noText ?: CommonBundle.getCancelButtonText()
     return MessagesService.getInstance().showMessageDialog(
       project = project, parentComponent = parentComponent, message = message, title = title, options = arrayOf(yesText, noText),
-      icon = icon, doNotAskOption = doNotAskOption, alwaysUseIdeaUI = true, helpId = helpId, invocationPlace = invocationPlace,
-      exitActionTypes = arrayOf(ExitActionType.YES, ExitActionType.NO)) == 0
+      icon = icon, doNotAskOption = doNotAskOption, helpId = helpId, alwaysUseIdeaUI = true) == 0
   }
 }

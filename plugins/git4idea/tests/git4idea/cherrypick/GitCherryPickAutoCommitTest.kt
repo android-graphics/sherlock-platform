@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.cherrypick
 
-import com.intellij.ide.IdeBundle
 import git4idea.i18n.GitBundle
 import git4idea.test.*
 import org.junit.Test
@@ -70,7 +69,7 @@ class GitCherryPickAutoCommitTest(private val createChangelistAutomatically: Boo
     val commit = repo.prepareConflict()
     `do nothing on merge`()
 
-    cherryPick(commit, expectSuccess = false)
+    cherryPick(commit)
 
     `assert merge dialog was shown`()
 
@@ -99,7 +98,7 @@ class GitCherryPickAutoCommitTest(private val createChangelistAutomatically: Boo
     `mark as resolved on merge`()
     vcsHelper.onCommit { false }
 
-    cherryPick(commit, expectSuccess = false)
+    cherryPick(commit)
 
     `assert merge dialog was shown`()
     `assert commit dialog was shown`()
@@ -136,11 +135,11 @@ class GitCherryPickAutoCommitTest(private val createChangelistAutomatically: Boo
     checkout("feature")
     common.append("on feature\n")
 
-    cherryPick(commit1, commit2, commit3, expectSuccess = false)
+    cherryPick(commit1, commit2, commit3)
 
     assertErrorNotification("Cherry-pick failed", """
       ${shortHash(commit2)} appended common
-      """ + GitBundle.message("warning.your.local.changes.would.be.overwritten.by", "cherry-pick", "shelve") + """
+      """ + GitBundle.message("apply.changes.would.be.overwritten", "cherry-pick") + """
       """ + GitBundle.message("apply.changes.operation.successful.for.commits", "cherry-pick", 1) + """
       ${shortHash(commit1)} fix #1""")
 
@@ -158,7 +157,7 @@ class GitCherryPickAutoCommitTest(private val createChangelistAutomatically: Boo
     common.append("on feature\n").addCommit("appended on feature").hash()
     `do nothing on merge`()
 
-    cherryPick(commit1, commit2, commit3, expectSuccess = false)
+    cherryPick(commit1, commit2, commit3)
 
     `assert merge dialog was shown`()
     assertLastMessage("fix #1")
@@ -194,19 +193,5 @@ class GitCherryPickAutoCommitTest(private val createChangelistAutomatically: Boo
       ${shortHash(commit1)} fix #1
       ${shortHash(commit3)} fix #2
       ${shortHash(emptyCommit)} was skipped, because all changes have already been applied.""")
-  }
-
-  @Test
-  fun `staged changes prevent cherry-pick`() {
-    val commit = file("a.txt").create().addCommit("fix #1").hash()
-    file("b.txt").create().add()
-
-    cherryPick(commit, expectSuccess = false)
-
-    assertErrorNotification("Cherry-pick failed",
-                            GitBundle.message("warning.your.local.changes.would.be.overwritten.by", "cherry-pick", "shelve"),
-                            listOf(IdeBundle.message("action.show.files"),
-                                   GitBundle.message("apply.changes.save.and.retry.operation", "Shelve"))
-    )
   }
 }

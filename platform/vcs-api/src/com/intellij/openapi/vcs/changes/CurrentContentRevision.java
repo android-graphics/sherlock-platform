@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ReadAction;
@@ -22,7 +22,9 @@ public class CurrentContentRevision implements ByteBackedContentRevision {
   }
 
   @Override
-  public @Nullable @NonNls String getContent() {
+  @Nullable
+  @NonNls
+  public String getContent() {
     final VirtualFile vFile = getVirtualFile();
     if (vFile == null) {
       return null;
@@ -45,30 +47,34 @@ public class CurrentContentRevision implements ByteBackedContentRevision {
     }
   }
 
-  public @Nullable VirtualFile getVirtualFile() {
+  @Nullable
+  public VirtualFile getVirtualFile() {
     VirtualFile vFile = myFile.getVirtualFile();
     return vFile == null || !vFile.isValid() ? null : vFile;
   }
 
   @Override
-  public @NotNull FilePath getFile() {
+  @NotNull
+  public FilePath getFile() {
     return myFile;
   }
 
   @Override
-  public @NotNull VcsRevisionNumber getRevisionNumber() {
+  @NotNull
+  public VcsRevisionNumber getRevisionNumber() {
     return VcsRevisionNumber.NULL;
   }
 
-  public static @NotNull ContentRevision create(@NotNull FilePath file) {
+  @NotNull
+  public static ContentRevision create(@NotNull FilePath file) {
     if (file.getFileType().isBinary()) {
       return new CurrentBinaryContentRevision(file);
     }
     return new CurrentContentRevision(file);
   }
 
-  @Override
-  public @NonNls String toString() {
+  @NonNls
+  public String toString() {
     return "CurrentContentRevision:" + myFile;
   }
 }

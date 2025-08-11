@@ -27,7 +27,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_BOOLEAN;
 public class AssertJInliner implements CallInliner {
   private static final String[] METHOD_NAMES =
     {"isNotNull", "isNull", "isPresent", "isNotEmpty", "isNotBlank", "isNotPresent", "isEmpty", "isTrue", "isFalse",
-      "contains", "containsSame", "containsInstanceOf", "hasOnlyElementsOfType",
+      "hasOnlyElementsOfType",
       "hasOnlyElementsOfTypes", "have", "haveAtLeast", "haveAtLeastOne", "haveAtMost", "haveExactly", "hasSize", "hasSizeBetween",
       "hasSizeGreaterThan", "hasSizeLessThan", "hasSizeGreaterThanOrEqualTo", "hasSizeLessThanOrEqualTo"};
   private static final CallMatcher ASSERT = CallMatcher.anyOf(
@@ -43,7 +43,6 @@ public class AssertJInliner implements CallInliner {
   private static final CallMatcher ASSERT_THAT = CallMatcher.anyOf(
     CallMatcher.staticCall("org.assertj.core.api.BDDAssertions", "then").parameterCount(1),
     CallMatcher.staticCall("org.assertj.core.api.Assertions", "assertThat").parameterCount(1),
-    CallMatcher.instanceCall("org.assertj.core.api.WithAssertions", "assertThat").parameterCount(1),
     CallMatcher.staticCall("com.google.common.truth.Truth", "assertThat").parameterCount(1),
     CallMatcher.staticCall("com.google.common.truth.StandardSubjectBuilder", "that").parameterCount(1)
   );
@@ -80,7 +79,7 @@ public class AssertJInliner implements CallInliner {
         "haveExactly", "hasOnlyElementsOfType", "hasOnlyElementsOfTypes" ->
         builder.ensure(RelationType.NE, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
       case "isNull" -> builder.ensure(RelationType.EQ, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
-      case "isPresent", "isNotEmpty", "isNotBlank", "contains", "containsSame", "containsInstanceOf" -> {
+      case "isPresent", "isNotEmpty", "isNotBlank" -> {
         builder.ensure(RelationType.NE, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
         if (container) {
           builder.unwrap(field);

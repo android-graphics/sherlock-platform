@@ -4,6 +4,7 @@ package com.jetbrains.python.ast;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -19,27 +20,32 @@ import java.util.List;
 
 @ApiStatus.Experimental
 public interface PyAstPrefixExpression extends PyAstQualifiedExpression, PyAstReferenceOwner, PyAstCallSiteExpression {
+  @Nullable
   @Override
-  default @Nullable PyAstExpression getReceiver(@Nullable PyAstCallable resolvedCallee) {
+  default PyAstExpression getReceiver(@Nullable PyAstCallable resolvedCallee) {
     return getOperand();
   }
 
+  @NotNull
   @Override
-  default @NotNull List<PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
+  default List<PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
     return Collections.emptyList();
   }
 
-  default @Nullable PyAstExpression getOperand() {
+  @Nullable
+  default PyAstExpression getOperand() {
     return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
 
-  default @Nullable PsiElement getPsiOperator() {
+  @Nullable
+  default PsiElement getPsiOperator() {
     final ASTNode node = getNode();
-    final ASTNode child = node.findChildByType(PyTokenTypes.UNARY_OPS);
+    final ASTNode child = node.findChildByType(PyElementTypes.UNARY_OPS);
     return child != null ? child.getPsi() : null;
   }
 
-  default @NotNull PyElementType getOperator() {
+  @NotNull
+  default PyElementType getOperator() {
     final PsiElement op = getPsiOperator();
     assert op != null;
     return (PyElementType)op.getNode().getElementType();
@@ -50,8 +56,9 @@ public interface PyAstPrefixExpression extends PyAstQualifiedExpression, PyAstRe
     return getOperand();
   }
 
+  @Nullable
   @Override
-  default @Nullable QualifiedName asQualifiedName() {
+  default QualifiedName asQualifiedName() {
     return PyPsiUtilsCore.asQualifiedName(this);
   }
 

@@ -61,7 +61,6 @@ public final class ComponentPtr{
     myComponent= (RadComponent)FormEditingUtil.findComponent(container,myId);
   }
 
-  @Override
   public boolean equals(final Object obj){
     if(!(obj instanceof ComponentPtr)){
       return false;
@@ -69,7 +68,6 @@ public final class ComponentPtr{
     return myId.equals(((ComponentPtr)obj).myId);
   }
 
-  @Override
   public int hashCode(){
     return myId.hashCode();
   }

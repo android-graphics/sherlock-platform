@@ -33,11 +33,12 @@ import static com.intellij.openapi.project.ProjectUtil.isProjectOrWorkspaceFile;
 
 @ApiStatus.Internal
 public final class MergeUtil {
-  public static @NotNull Action createSimpleResolveAction(@NotNull MergeResult result,
-                                                          @NotNull MergeRequest request,
-                                                          @NotNull MergeContext context,
-                                                          @NotNull MergeViewer viewer,
-                                                          boolean contentWasModified) {
+  @NotNull
+  public static Action createSimpleResolveAction(@NotNull MergeResult result,
+                                                 @NotNull MergeRequest request,
+                                                 @NotNull MergeContext context,
+                                                 @NotNull MergeViewer viewer,
+                                                 boolean contentWasModified) {
     String caption = getResolveActionTitle(result, request, context);
     return new AbstractAction(caption) {
       @Override
@@ -50,7 +51,9 @@ public final class MergeUtil {
     };
   }
 
-  public static @Nls @NotNull String getResolveActionTitle(@NotNull MergeResult result, @Nullable MergeRequest request, @Nullable MergeContext context) {
+  @Nls
+  @NotNull
+  public static String getResolveActionTitle(@NotNull MergeResult result, @Nullable MergeRequest request, @Nullable MergeContext context) {
     Function<MergeResult, @Nls String> getter = DiffUtil.getUserData(request, context, DiffUserDataKeysEx.MERGE_ACTION_CAPTIONS);
     String message = getter != null ? getter.fun(result) : null;
     if (message != null) return message;
@@ -63,7 +66,8 @@ public final class MergeUtil {
     });
   }
 
-  public static @NotNull List<String> notNullizeContentTitles(@NotNull List<String> mergeContentTitles) {
+  @NotNull
+  public static List<String> notNullizeContentTitles(@NotNull List<String> mergeContentTitles) {
     String left = StringUtil.notNullize(ThreeSide.LEFT.select(mergeContentTitles), DiffBundle.message("merge.version.title.our"));
     String base = StringUtil.notNullize(ThreeSide.BASE.select(mergeContentTitles), DiffBundle.message("merge.version.title.base"));
     String right = StringUtil.notNullize(ThreeSide.RIGHT.select(mergeContentTitles), DiffBundle.message("merge.version.title.their"));
@@ -71,14 +75,15 @@ public final class MergeUtil {
   }
 
   public static class ProxyDiffContext extends DiffContext {
-    private final @NotNull MergeContext myMergeContext;
+    @NotNull private final MergeContext myMergeContext;
 
     public ProxyDiffContext(@NotNull MergeContext mergeContext) {
       myMergeContext = mergeContext;
     }
 
+    @Nullable
     @Override
-    public @Nullable Project getProject() {
+    public Project getProject() {
       return myMergeContext.getProject();
     }
 
@@ -97,8 +102,9 @@ public final class MergeUtil {
       myMergeContext.requestFocusInWindow();
     }
 
+    @Nullable
     @Override
-    public @Nullable <T> T getUserData(@NotNull Key<T> key) {
+    public <T> T getUserData(@NotNull Key<T> key) {
       return myMergeContext.getUserData(key);
     }
 

@@ -10,7 +10,6 @@ import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.K2IntroduceVariableHandler.getCandidateContainers
-import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.IntroduceRefactoringException
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHelper
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableService
@@ -19,7 +18,12 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.findElement
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtTypeAlias
 
 internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project) : KotlinIntroduceVariableService {
     override fun findElement(
@@ -33,8 +37,15 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
             ?: findStringTemplateOrStringTemplateEntryExpression(file, startOffset, endOffset, elementKind)
             ?: findStringTemplateFragment(file, startOffset, endOffset, elementKind)
 
-        if (element is KtElement && isNonExtractableQualifier(element)) {
-            element = null
+        if (element is KtExpression) {
+            val qualifiedExpression = element.parent as? KtDotQualifiedExpression
+            if (qualifiedExpression != null && qualifiedExpression.receiverExpression == element) {
+                val resolved = ((element as? KtDotQualifiedExpression)?.selectorExpression ?: element).mainReference?.resolve()
+                if (resolved is PsiPackage || resolved is PsiClass ||
+                    resolved is KtTypeAlias || resolved is KtClassOrObject && resolved.getDeclarationKeyword()?.elementType != KtTokens.OBJECT_KEYWORD) {
+                    element = null
+                }
+            }
         }
 
         if (element == null) {
@@ -65,35 +76,18 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
         occurrencesToReplace: List<KtExpression>?
     ) {
         K2IntroduceVariableHandler.doRefactoringWithSelectedTargetContainer(
-            project = project,
-            editor = editor,
-            expression = expressionToExtract,
+            project, editor,
+            expressionToExtract,
             // TODO: fix occurence container (currently it is not used in K2-implementation)
-            containers = KotlinIntroduceVariableHelper.Containers(container, container),
-            isVar = KotlinCommonRefactoringSettings.getInstance().INTRODUCE_DECLARE_WITH_VAR,
+            KotlinIntroduceVariableHelper.Containers(container, container),
+            isVar = false,
         )
     }
 
     override fun hasUnitType(element: KtExpression): Boolean {
         return analyzeInModalWindow(element, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             val expressionType = element.expressionType
-            expressionType == null || expressionType.isUnitType
-        } || isNonExtractableQualifier(element)
-    }
-
-    private fun isNonExtractableQualifier(element: KtElement): Boolean {
-        val isQualifier = when (val parent = element.parent) {
-            is KtDotQualifiedExpression -> parent.receiverExpression == element
-            is KtDoubleColonExpression -> parent.receiverExpression == element
-            else -> false
+            expressionType == null || expressionType.isUnit
         }
-        if (!isQualifier) return false
-
-        val resolved = ((element as? KtDotQualifiedExpression)?.selectorExpression ?: element).mainReference?.resolve()
-
-        return resolved is PsiPackage ||
-                resolved is PsiClass ||
-                resolved is KtTypeAlias ||
-                resolved is KtClassOrObject && resolved.getDeclarationKeyword()?.elementType != KtTokens.OBJECT_KEYWORD
     }
 }

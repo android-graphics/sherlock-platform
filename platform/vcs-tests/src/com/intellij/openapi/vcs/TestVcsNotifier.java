@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.notification.ActionCenter;
@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -23,7 +22,8 @@ public final class TestVcsNotifier extends VcsNotifier {
     return ContainerUtil.getLastItem(getNotifications());
   }
 
-  public @Nullable Notification findExpectedNotification(@NotNull Notification expectedNotification) {
+  @Nullable
+  public Notification findExpectedNotification(@NotNull Notification expectedNotification) {
     return ContainerUtil.find(getNotifications(), notification ->
       expectedNotification.getType().equals(notification.getType()) &&
       expectedNotification.getTitle().equals(notification.getTitle()) &&
@@ -31,7 +31,8 @@ public final class TestVcsNotifier extends VcsNotifier {
     );
   }
 
-  public @NotNull @Unmodifiable List<Notification> getNotifications() {
+  @NotNull
+  public List<Notification> getNotifications() {
     List<NotificationGroup> vcsGroups
       = Arrays.asList(toolWindowNotification(), importantNotification(), standardNotification(), silentNotification());
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
@@ -40,7 +40,8 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
   }
 
   @Override
-  public @Nullable PsiClass getContainingClassElement() {
+  @Nullable
+  public PsiClass getContainingClassElement() {
     final PsiClassType containingClassType = JavaPsiFacade.getInstance(getProject()).getElementFactory().
         createTypeByFQClassName(myContainingClassName, ProjectScope.getAllScope(getProject()));
 
@@ -72,7 +73,8 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
   }
 
   @Override
-  public @NotNull SearchScope getUseScope() {
+  @NotNull
+  public SearchScope getUseScope() {
     return GlobalSearchScope.projectScope(myProject);
   }
 
@@ -143,7 +145,8 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
   }
 
   @Override
-  public @Nullable Icon getIcon(boolean open) {
+  @Nullable
+  public Icon getIcon(boolean open) {
     return JetgroovyIcons.Groovy.Property;
   }
 
@@ -172,8 +175,9 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
     throw new IncorrectOperationException();
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiType getType() {
+  public PsiType getType() {
     PsiType type = super.getType();
     if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) {
       return TypesUtil.getJavaLangObject(this);

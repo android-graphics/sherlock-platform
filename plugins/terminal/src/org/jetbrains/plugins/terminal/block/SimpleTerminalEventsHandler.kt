@@ -296,11 +296,15 @@ internal open class SimpleTerminalEventsHandler(
   }
 
   private fun sendUserInput(data: String) {
-    session.terminalOutputStream.sendString(data, true)
+    session.terminalStarterFuture.thenAccept {
+      it?.sendString(data, true)
+    }
   }
 
   private fun sendUserInput(bytes: ByteArray) {
-    session.terminalOutputStream.sendBytes(bytes, true)
+    session.terminalStarterFuture.thenAccept {
+      it?.sendBytes(bytes, true)
+    }
   }
 
   companion object {

@@ -26,13 +26,6 @@ public final class RecordUtil {
 
   private RecordUtil() { }
 
-  public static boolean hasValueModifier(@NotNull LighterAST tree, @NotNull LighterASTNode modList) {
-    for (LighterASTNode child : tree.getChildren(modList)) {
-      if (child.getTokenType() == JavaTokenType.VALUE_KEYWORD) return true;
-    }
-    return false;
-  }
-
   public static boolean isDeprecatedByAnnotation(@NotNull LighterAST tree, @NotNull LighterASTNode modList) {
     for (final LighterASTNode child : tree.getChildren(modList)) {
       if (child.getTokenType() == JavaElementType.ANNOTATION) {

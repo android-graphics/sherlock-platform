@@ -14,7 +14,6 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -22,7 +21,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-@ApiStatus.Internal
 public class BreakpointEditor {
   public JPanel getMainPanel() {
     return myMainPanel;

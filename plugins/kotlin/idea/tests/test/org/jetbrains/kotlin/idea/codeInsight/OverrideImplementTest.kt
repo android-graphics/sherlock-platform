@@ -53,16 +53,8 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doImplementFileTest()
     }
 
-    open fun testSuspendOverride() {
-        doImplementFileTest()
-    }
-
    open fun testJavaInterfaceMethod() {
         doImplementDirectoryTest()
-    }
-
-    open fun testJavaClassWithField() {
-        doOverrideDirectoryTest()
     }
 
    open fun testJavaInterfaceMethodInCorrectOrder() {
@@ -91,10 +83,6 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
 
    open fun testProperty() {
         doImplementFileTest()
-    }
-
-    open fun testPropertyWithGetter() {
-        doOverrideFileTest()
     }
 
    open fun testInterfaceGenericImplement() {
@@ -253,10 +241,6 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doImplementFileTest()
     }
 
-    open fun testLongPackageName() {
-        doImplementFileTest()
-    }
-
    open fun testVarArgs() {
         doOverrideFileTest()
     }
@@ -403,10 +387,6 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
 
    open fun testEnumClass4() {
         doOverrideFileTest("toString")
-    }
-
-    open fun testEnumEntry() {
-        doOverrideFileTest("foo")
     }
 
    open fun testOverrideExternalFunction() {

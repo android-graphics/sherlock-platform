@@ -9,7 +9,6 @@ import com.jetbrains.performancePlugin.profilers.Profiler;
 import com.jetbrains.performancePlugin.profilers.ProfilersController;
 import com.jetbrains.performancePlugin.ui.FinishScriptDialog;
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
-import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -17,13 +16,12 @@ import java.util.ArrayList;
 public final class ProjectIndexingComponent implements DumbService.DumbModeListener {
   public static final String PROFILE_INDEXING_COMPONENT = "performancePlugin.isProfileIndexing";
   public static final String PROFILE_WITH_ASYNC = "performancePlugin.isProfileIndexingWithAsync";
-  private final @NotNull Project project;
+  @NotNull private final Project project;
   private static final int TIMEOUT = 500;
-  private final Alarm alarm;
+  private final Alarm myAlarm = new Alarm();
 
-  ProjectIndexingComponent(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
+  ProjectIndexingComponent(@NotNull Project project) {
     this.project = project;
-    alarm = new Alarm(coroutineScope, Alarm.ThreadToUse.SWING_THREAD);
   }
 
   @Override
@@ -43,27 +41,25 @@ public final class ProjectIndexingComponent implements DumbService.DumbModeListe
     }
   }
 
-  private void runScriptAfterDumb(@NotNull Project project) {
-    DumbService.getInstance(project).smartInvokeLater(() -> {
-      alarm.addRequest(() -> {
-        if (DumbService.isDumb(project)) {
-          runScriptAfterDumb(project);
-        }
-        else {
-          ProfilersController.getInstance();
-          if (Profiler.isAnyProfilingStarted()) {
-            try {
-              ProfilersController.getInstance().getCurrentProfilerHandler().stopProfiling(new ArrayList<>());
-              ProfilersController.getInstance().setStoppedByScript(true);
-            }
-            catch (Exception e) {
-              new ActionCallbackProfilerStopper().setRejected();
-            }
-            ApplicationManager.getApplication().invokeLater(() -> new FinishScriptDialog(project).show());
+  private void runScriptAfterDumb(Project project) {
+    DumbService.getInstance(project).smartInvokeLater(() -> myAlarm.addRequest(() -> {
+      if (DumbService.isDumb(project)) {
+        runScriptAfterDumb(project);
+      }
+      else {
+        ProfilersController.getInstance();
+        if (Profiler.isAnyProfilingStarted()) {
+          try {
+            ProfilersController.getInstance().getCurrentProfilerHandler().stopProfiling(new ArrayList<>());
+            ProfilersController.getInstance().setStoppedByScript(true);
           }
+          catch (Exception e) {
+            new ActionCallbackProfilerStopper().setRejected();
+          }
+          ApplicationManager.getApplication().invokeLater(() -> new FinishScriptDialog(project).show());
         }
-      }, TIMEOUT);
-    });
+      }
+    }, TIMEOUT));
   }
 
   private boolean isProfilingEnabled() {

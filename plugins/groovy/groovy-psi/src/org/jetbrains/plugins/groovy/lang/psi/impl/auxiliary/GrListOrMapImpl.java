@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary;
 
 import com.intellij.lang.ASTNode;
@@ -47,7 +47,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap, Ps
   }
 
   @Override
-  public ASTNode addInternal(@NotNull ASTNode first, @NotNull ASTNode last, ASTNode anchor, Boolean before) {
+  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
     if (getInitializers().length == 0) {
       return super.addInternal(first, last, getNode().getFirstChildNode(), false);
     }
@@ -82,13 +82,15 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap, Ps
     return getInitializers().length == 0 && getNamedArguments().length == 0;
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getLBrack() {
+  public PsiElement getLBrack() {
     return findNotNullChildByType(GroovyTokenTypes.mLBRACK);
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement getRBrack() {
+  public PsiElement getRBrack() {
     return findChildByType(GroovyTokenTypes.mRBRACK);
   }
 
@@ -124,8 +126,9 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap, Ps
     return getConstructorReference();
   }
 
+  @Nullable
   @Override
-  public @Nullable GroovyConstructorReference getConstructorReference() {
+  public GroovyConstructorReference getConstructorReference() {
     return myConstructorReference.resolveClass() != null ? myConstructorReference : null;
   }
 
@@ -135,8 +138,9 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap, Ps
     myNamedArguments = null;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<? extends PsiElement> getComponents() {
+  public List<? extends PsiElement> getComponents() {
     return PsiTreeUtil.getChildrenOfAnyType(this, GrExpression.class, GrNamedArgument.class);
   }
 }

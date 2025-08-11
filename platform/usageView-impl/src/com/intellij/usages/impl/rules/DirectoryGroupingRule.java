@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -60,8 +60,9 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     this.compactMiddleDirectories = compactMiddleDirectories;
   }
 
+  @Nullable
   @Override
-  protected @Nullable UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+  protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     if (usage instanceof UsageInFile usageInFile) {
       VirtualFile file = usageInFile.getFile();
       if (file != null) {
@@ -114,7 +115,8 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     }
 
     @Override
-    public @NotNull String getPresentableGroupText() {
+    @NotNull
+    public String getPresentableGroupText() {
 
       if (compactMiddleDirectories) {
         List<String> parentPathList = CompactGroupHelper.pathToPathList(myDir.getPath());
@@ -175,20 +177,19 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
       return getPresentableGroupText().compareToIgnoreCase(usageGroup.getPresentableGroupText());
     }
 
-    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof DirectoryGroup)) return false;
       return myDir.equals(((DirectoryGroup)o).myDir);
     }
 
-    @Override
     public int hashCode() {
       return myDir.hashCode();
     }
 
+    @Nullable
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
         return myDir;
       }

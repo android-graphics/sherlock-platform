@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.psi.PsiNameHelper;
@@ -46,7 +46,8 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
   }
 
   @Override
-  public @NotNull GrTypeDefinitionStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  @NotNull
+  public GrTypeDefinitionStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     String name = dataStream.readNameString();
     String qname = dataStream.readNameString();
     byte flags = dataStream.readByte();

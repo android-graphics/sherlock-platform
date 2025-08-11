@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.model.gotosymbol;
 
@@ -26,7 +26,6 @@ import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -55,7 +54,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
       CachedValueProvider.Result.create(calcAcceptableModules(project), PsiModificationTracker.MODIFICATION_COUNT), false);
   }
 
-  protected @Unmodifiable @NotNull Collection<Module> calcAcceptableModules(@NotNull Project project) {
+  protected @NotNull Collection<Module> calcAcceptableModules(@NotNull Project project) {
     return ContainerUtil.findAll(ModuleManager.getInstance(project).getModules(), module -> acceptModule(module));
   }
 
@@ -174,7 +173,6 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
       return myPsiElement.isValid();
     }
 
-    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -187,7 +185,6 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
       return true;
     }
 
-    @Override
     public int hashCode() {
       int result;
       result = myPsiElement.hashCode();

@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 from re import Pattern
-from typing import Literal, overload
+from typing import overload
+from typing_extensions import Literal
 
 # class is entirely undocumented
 class FileList:
@@ -23,11 +24,7 @@ class FileList:
     def include_pattern(self, pattern: str | Pattern[str], *, is_regex: Literal[True, 1]) -> bool: ...
     @overload
     def include_pattern(
-        self,
-        pattern: str | Pattern[str],
-        anchor: bool | Literal[0, 1] = 1,
-        prefix: str | None = None,
-        is_regex: bool | Literal[0, 1] = 0,
+        self, pattern: str | Pattern[str], anchor: bool | Literal[0, 1] = 1, prefix: str | None = None, is_regex: int = 0
     ) -> bool: ...
     @overload
     def exclude_pattern(
@@ -37,11 +34,7 @@ class FileList:
     def exclude_pattern(self, pattern: str | Pattern[str], *, is_regex: Literal[True, 1]) -> bool: ...
     @overload
     def exclude_pattern(
-        self,
-        pattern: str | Pattern[str],
-        anchor: bool | Literal[0, 1] = 1,
-        prefix: str | None = None,
-        is_regex: bool | Literal[0, 1] = 0,
+        self, pattern: str | Pattern[str], anchor: bool | Literal[0, 1] = 1, prefix: str | None = None, is_regex: int = 0
     ) -> bool: ...
 
 def findall(dir: str = ".") -> list[str]: ...
@@ -54,5 +47,5 @@ def translate_pattern(
 def translate_pattern(pattern: str | Pattern[str], *, is_regex: Literal[True, 1]) -> Pattern[str]: ...
 @overload
 def translate_pattern(
-    pattern: str | Pattern[str], anchor: bool | Literal[0, 1] = 1, prefix: str | None = None, is_regex: bool | Literal[0, 1] = 0
+    pattern: str | Pattern[str], anchor: bool | Literal[0, 1] = 1, prefix: str | None = None, is_regex: int = 0
 ) -> Pattern[str]: ...

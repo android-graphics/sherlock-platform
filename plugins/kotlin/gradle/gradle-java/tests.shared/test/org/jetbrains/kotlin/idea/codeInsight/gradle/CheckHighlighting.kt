@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -30,7 +29,7 @@ data class HighlightingCheck(
     private val testLineMarkerTargetIcons: Boolean = false,
     private val severityLevel: HighlightSeverity = HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING,
     private val correspondingFilePostfix: String = "",
-    private val postprocessActualTestData: (String, Editor) -> String = { s, _ -> s }
+    private val postprocessActualTestData: (String) -> String = { it }
 ) {
 
     private val checker = CodeMetaInfoTestCase(

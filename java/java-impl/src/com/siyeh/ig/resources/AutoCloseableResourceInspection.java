@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.resources;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -28,7 +28,10 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,8 +65,7 @@ public final class AutoCloseableResourceInspection extends ResourceInspection {
                   "org.springframework.context.ConfigurableApplicationContext",
                   "io.micronaut.context.ApplicationContext");
 
-  @ApiStatus.Internal
-  public final MethodMatcher myMethodMatcher;
+  final MethodMatcher myMethodMatcher;
   final List<String> ignoredTypes = new ArrayList<>(DEFAULT_IGNORED_TYPES);
   @SuppressWarnings("PublicField")
   public boolean ignoreFromMethodCall = false;

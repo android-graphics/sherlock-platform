@@ -6,10 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import com.intellij.webSymbols.ContextKind
-import com.intellij.webSymbols.ContextName
 import com.intellij.webSymbols.WebSymbolsScope
-import com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorBuilderImpl
 import org.jetbrains.annotations.TestOnly
 
 /**
@@ -22,24 +19,6 @@ interface WebSymbolsQueryExecutorFactory : Disposable {
   @TestOnly
   fun addScope(scope: WebSymbolsScope, contextDirectory: VirtualFile?, disposable: Disposable)
 
-  interface WebSymbolsQueryExecutorBuilder {
-    fun addRootScope(scope: WebSymbolsScope): WebSymbolsQueryExecutorBuilder
-
-    fun addRootScopes(scope: List<WebSymbolsScope>): WebSymbolsQueryExecutorBuilder
-
-    fun addCustomizer(customizer: WebSymbolsQueryResultsCustomizer): WebSymbolsQueryExecutorBuilder
-
-    fun addNameConversionRules(rules: WebSymbolNameConversionRules): WebSymbolsQueryExecutorBuilder
-
-    fun setFramework(framework: String): WebSymbolsQueryExecutorBuilder
-
-    fun addWebSymbolsContext(kind: ContextKind, name: ContextName?): WebSymbolsQueryExecutorBuilder
-
-    fun allowResolve(allowResolve: Boolean): WebSymbolsQueryExecutorBuilder
-
-    fun create(): WebSymbolsQueryExecutor
-  }
-
   companion object {
 
     @JvmStatic
@@ -47,13 +26,6 @@ interface WebSymbolsQueryExecutorFactory : Disposable {
 
     fun create(location: PsiElement, allowResolve: Boolean = true): WebSymbolsQueryExecutor =
       getInstance(location.project).create(location, allowResolve)
-
-    fun createCustom(): WebSymbolsQueryExecutorBuilder =
-      WebSymbolsQueryExecutorBuilderImpl()
-
-    fun createCustom(setup: WebSymbolsQueryExecutorBuilder.() -> Unit): WebSymbolsQueryExecutor =
-      WebSymbolsQueryExecutorBuilderImpl()
-        .let { setup(it); it.create() }
 
   }
 

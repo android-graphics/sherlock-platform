@@ -13,7 +13,7 @@ import java.util.function.BiConsumer;
  * Concurrent strong key:K -> soft value:V map
  * Null keys are NOT allowed
  * Null values are NOT allowed
- * Use {@link CollectionFactory#createConcurrentSoftValueMap()} to create
+ * Use {@link CollectionFactory#createConcurrentSoftValueMap()} to create this
  */
 final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
 

@@ -84,7 +84,7 @@ public final class PyTestCreator implements TestCreator {
     if (!fileName.endsWith(".py")) {
       fileName = fileName + "." + PythonFileType.INSTANCE.getDefaultExtension();
     }
-    PyFile psiFile = PyClassRefactoringUtil.getOrCreateFile(model.getTargetDir() + "/" + fileName, project, false);
+    final PyFile psiFile = PyClassRefactoringUtil.getOrCreateFile(model.getTargetDir() + "/" + fileName, project);
 
     final String className = model.getClassName();
     final List<String> methods = model.getMethods();

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -15,6 +15,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.ChangeModifierFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,8 @@ public final class ClassInitializerMayBeStaticInspection extends BaseInspection 
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "class.initializer.may.be.static.problem.descriptor");
   }
@@ -49,7 +51,7 @@ public final class ClassInitializerMayBeStaticInspection extends BaseInspection 
         return;
       }
       final PsiClass containingClass =
-        PsiUtil.getContainingClass(initializer);
+        ClassUtils.getContainingClass(initializer);
       if (containingClass == null || containingClass instanceof PsiAnonymousClass) {
         return;
       }

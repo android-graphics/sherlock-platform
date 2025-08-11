@@ -1,7 +1,7 @@
 // "Replace 'if' expression with safe access expression" "false"
 // ACTION: Add non-null asserted (x!!) call
 // ACTION: Introduce local variable
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 class Test {
     var x: String? = ""
 

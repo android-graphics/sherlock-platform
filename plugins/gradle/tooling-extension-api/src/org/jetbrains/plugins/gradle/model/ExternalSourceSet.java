@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,8 +18,7 @@ public interface ExternalSourceSet extends Serializable {
   @NotNull
   String getName();
 
-  @Nullable
-  File getJavaToolchainHome();
+  boolean isPreview();
 
   @Nullable
   String getSourceCompatibility();
@@ -28,13 +26,11 @@ public interface ExternalSourceSet extends Serializable {
   @Nullable
   String getTargetCompatibility();
 
-  @NotNull
-  List<String> getCompilerArguments();
+  @Nullable
+  File getJavaToolchainHome();
 
-  @NotNull
   Collection<File> getArtifacts();
 
-  @NotNull
   Collection<ExternalDependency> getDependencies();
 
   @NotNull

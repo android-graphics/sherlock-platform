@@ -210,7 +210,8 @@ public final class JUnitStarter {
   private static void junitVersionChecks(String agentName) throws ClassNotFoundException {
     Class.forName("junit.framework.ComparisonFailure");
     getAgentClass(agentName);
-    Class.forName("junit.textui.TestRunner");
+    //noinspection UnnecessaryFullyQualifiedName
+    new junit.textui.TestRunner().setPrinter(null);
   }
 
   private static int prepareStreamsAndStart(String[] args,

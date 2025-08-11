@@ -22,10 +22,8 @@ public interface ErrorStripTooltipRendererProvider {
   @Nullable
   @RequiresBackgroundThread
   TooltipRenderer calcTooltipRenderer(@NotNull Collection<? extends RangeHighlighter> highlighters);
-
   @NotNull
   TooltipRenderer calcTooltipRenderer(@NlsContexts.Tooltip @NotNull String text);
-
   @NotNull
   TooltipRenderer calcTooltipRenderer(@NlsContexts.Tooltip @NotNull String text, int width);
 

@@ -22,7 +22,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConvertDocstringQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.convert.single.quoted.docstring");
   }
 

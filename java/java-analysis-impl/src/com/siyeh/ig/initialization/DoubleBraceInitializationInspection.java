@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.initialization;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -22,13 +22,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class DoubleBraceInitializationInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
+  @NotNull
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("double.brace.initialization.display.name");
   }
 
+  @Nullable
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     final PsiElement parent = PsiTreeUtil.skipParentsOfType(aClass, PsiNewExpression.class, PsiParenthesizedExpression.class);
     if (!(parent instanceof PsiVariable) && !(parent instanceof PsiAssignmentExpression)) {
@@ -44,8 +46,9 @@ public final class DoubleBraceInitializationInspection extends BaseInspection im
 
   private static class DoubleBraceInitializationFix extends PsiUpdateModCommandQuickFix {
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("double.brace.initialization.quickfix");
     }
 

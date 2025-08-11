@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.ide.actions;
 
 import com.intellij.ide.actions.QualifiedNameProvider;
@@ -9,13 +9,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class PropertiesQualifiedNameProvider implements QualifiedNameProvider {
+  @Nullable
   @Override
-  public @Nullable PsiElement adjustElementToCopy(@NotNull PsiElement element) {
+  public PsiElement adjustElementToCopy(@NotNull PsiElement element) {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getQualifiedName(@NotNull PsiElement element) {
+  public String getQualifiedName(@NotNull PsiElement element) {
     return element instanceof Property ? ((Property)element).getKey() : null;
   }
 

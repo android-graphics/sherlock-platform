@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.*;
@@ -22,10 +24,11 @@ public final class FromStringHintProcessor extends SignatureHintProcessor {
     return "groovy.transform.stc.FromString";
   }
 
+  @NotNull
   @Override
-  public @NotNull List<PsiType[]> inferExpectedSignatures(final @NotNull PsiMethod method,
-                                                          final @NotNull PsiSubstitutor substitutor,
-                                                          String @NotNull [] options) {
+  public List<PsiType[]> inferExpectedSignatures(@NotNull final PsiMethod method,
+                                                 @NotNull final PsiSubstitutor substitutor,
+                                                 String @NotNull [] options) {
     PsiElement context = createContext(method);
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
     return ContainerUtil.map(options, value -> {
@@ -43,7 +46,8 @@ public final class FromStringHintProcessor extends SignatureHintProcessor {
     });
   }
 
-  public static @NotNull PsiElement createContext(@NotNull PsiMethod method) {
+  @NotNull
+  public static PsiElement createContext(@NotNull PsiMethod method) {
     return new FromStringLightElement(method);
   }
 }

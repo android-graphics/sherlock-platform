@@ -15,59 +15,75 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 
 public final class ModifierChooser {
-  /**
-   * ArrayOfModifiers contains
-   * @param modifiers which can't be use together.
-   * @param allowToUse when modifiers are applicable, if null they can be used always
-   */
-  private record ArrayOfModifiers(@NotNull String @NotNull[] modifiers,
-                                  @Nullable Predicate<@NotNull PsiElement> allowToUse){
-    private ArrayOfModifiers(@NotNull String @NotNull[] modifiers) {
-      this(modifiers, (Predicate<PsiElement>)null);
-    }
-    private ArrayOfModifiers(@NotNull String @NotNull[] modifiers, @NotNull JavaFeature feature) {
-      this(modifiers, v->PsiUtil.isAvailable(feature, v));
-    }
-  }
-
-  private static final ArrayOfModifiers[] CLASS_MODIFIERS = {
-    new ArrayOfModifiers(new String[]{PsiKeyword.PUBLIC}),
-    new ArrayOfModifiers(new String[]{PsiKeyword.FINAL, PsiKeyword.ABSTRACT})
+  private static final String[][] CLASS_MODIFIERS = {
+    {PsiKeyword.PUBLIC},
+    {PsiKeyword.FINAL, PsiKeyword.ABSTRACT}
   };
 
   private static final String[] CLASS_MODIFIERS_WITH_SEALED = {
     PsiKeyword.PUBLIC, PsiKeyword.FINAL, PsiKeyword.SEALED, PsiKeyword.NON_SEALED, PsiKeyword.ABSTRACT
   };
 
-  private static final ArrayOfModifiers[] CLASS_MEMBER_MODIFIERS = {
-    new ArrayOfModifiers(new String[]{PsiKeyword.PUBLIC, PsiKeyword.PROTECTED, PsiKeyword.PRIVATE}),
-    new ArrayOfModifiers(new String[]{PsiKeyword.STATIC}),
-    new ArrayOfModifiers(new String[]{PsiKeyword.FINAL, PsiKeyword.ABSTRACT}),
-    new ArrayOfModifiers(new String[]{PsiKeyword.SEALED, PsiKeyword.NON_SEALED}, JavaFeature.SEALED_CLASSES),
-    new ArrayOfModifiers(new String[]{PsiKeyword.NATIVE}),
-    new ArrayOfModifiers(new String[]{PsiKeyword.SYNCHRONIZED}),
-    new ArrayOfModifiers(new String[]{PsiKeyword.STRICTFP}, el -> !PsiUtil.isAvailable(JavaFeature.ALWAYS_STRICTFP, el)),
-    new ArrayOfModifiers(new String[]{PsiKeyword.VOLATILE}),
-    new ArrayOfModifiers(new String[]{PsiKeyword.TRANSIENT})
+  private static final String[][] CLASS_MEMBER_MODIFIERS = {
+    {PsiKeyword.PUBLIC, PsiKeyword.PROTECTED, PsiKeyword.PRIVATE},
+    {PsiKeyword.STATIC},
+    {PsiKeyword.FINAL, PsiKeyword.ABSTRACT},
+    {PsiKeyword.NATIVE},
+    {PsiKeyword.SYNCHRONIZED},
+    {PsiKeyword.STRICTFP},
+    {PsiKeyword.VOLATILE},
+    {PsiKeyword.TRANSIENT}
   };
 
-  private static final ArrayOfModifiers[] FILE_MEMBER_MODIFIERS = {
-    new ArrayOfModifiers(new String[]{PsiKeyword.PUBLIC}),
-    new ArrayOfModifiers(new String[]{PsiKeyword.FINAL, PsiKeyword.ABSTRACT}),
-    new ArrayOfModifiers(new String[]{PsiKeyword.STRICTFP}, el -> !PsiUtil.isAvailable(JavaFeature.ALWAYS_STRICTFP, el)),
-    new ArrayOfModifiers(new String[]{PsiKeyword.SEALED, PsiKeyword.NON_SEALED}, JavaFeature.SEALED_CLASSES)
+  private static final String[][] FILE_MEMBER_MODIFIERS = {
+    {PsiKeyword.PUBLIC},
+    {PsiKeyword.FINAL, PsiKeyword.ABSTRACT},
+    {PsiKeyword.STRICTFP},
   };
 
-  private static final ArrayOfModifiers[] INTERFACE_MEMBER_MODIFIERS = {
-    new ArrayOfModifiers(new String[]{PsiKeyword.PUBLIC, PsiKeyword.PROTECTED},
-                         el -> !PsiUtil.isAvailable(JavaFeature.PRIVATE_INTERFACE_METHODS, el)),
-    new ArrayOfModifiers(new String[]{PsiKeyword.PUBLIC, PsiKeyword.PROTECTED, PsiKeyword.PRIVATE}, JavaFeature.PRIVATE_INTERFACE_METHODS),
-    new ArrayOfModifiers(new String[]{PsiKeyword.FINAL, PsiKeyword.ABSTRACT}),
-    new ArrayOfModifiers(new String[]{PsiKeyword.STATIC, PsiKeyword.DEFAULT}, JavaFeature.STATIC_INTERFACE_CALLS),
-    new ArrayOfModifiers(new String[]{PsiKeyword.SEALED, PsiKeyword.NON_SEALED}, JavaFeature.SEALED_CLASSES)
+  private static final String[][] FILE_MEMBER_MODIFIERS_WITH_SEALED = {
+    {PsiKeyword.PUBLIC},
+    {PsiKeyword.FINAL, PsiKeyword.ABSTRACT},
+    {PsiKeyword.SEALED, PsiKeyword.NON_SEALED},
+    {PsiKeyword.STRICTFP},
+  };
+
+  private static final String[][] CLASS_MEMBER_MODIFIERS_WITH_SEALED = {
+    {PsiKeyword.PUBLIC, PsiKeyword.PROTECTED, PsiKeyword.PRIVATE},
+    {PsiKeyword.STATIC},
+    {PsiKeyword.FINAL, PsiKeyword.ABSTRACT},
+    {PsiKeyword.SEALED, PsiKeyword.NON_SEALED},
+    {PsiKeyword.NATIVE},
+    {PsiKeyword.SYNCHRONIZED},
+    {PsiKeyword.STRICTFP},
+    {PsiKeyword.VOLATILE},
+    {PsiKeyword.TRANSIENT}
+  };
+
+  private static final String[][] INTERFACE_MEMBER_MODIFIERS_WITH_SEALED = {
+    {PsiKeyword.PUBLIC, PsiKeyword.PROTECTED, PsiKeyword.PRIVATE},
+    {PsiKeyword.STATIC, PsiKeyword.DEFAULT},
+    {PsiKeyword.FINAL, PsiKeyword.ABSTRACT},
+    {PsiKeyword.SEALED, PsiKeyword.NON_SEALED}
+  };
+
+  private static final String[][] INTERFACE_MEMBER_MODIFIERS_WITH_PRIVATE = {
+    {PsiKeyword.PUBLIC, PsiKeyword.PROTECTED, PsiKeyword.PRIVATE},
+    {PsiKeyword.STATIC, PsiKeyword.DEFAULT},
+    {PsiKeyword.FINAL, PsiKeyword.ABSTRACT}
+  };
+
+  private static final String[][] INTERFACE_MEMBER_MODIFIERS_WITH_DEFAULT = {
+    {PsiKeyword.PUBLIC, PsiKeyword.PROTECTED},
+    {PsiKeyword.STATIC, PsiKeyword.DEFAULT},
+    {PsiKeyword.FINAL, PsiKeyword.ABSTRACT}
+  };
+
+  private static final String[][] INTERFACE_MEMBER_MODIFIERS = {
+    {PsiKeyword.PUBLIC, PsiKeyword.PROTECTED},
+    {PsiKeyword.FINAL, PsiKeyword.ABSTRACT}
   };
 
   static String[] getKeywords(@NotNull PsiElement position) {
@@ -78,28 +94,19 @@ public final class ModifierChooser {
 
     PsiElement scope = position.getParent();
     while (scope != null) {
-      if (scope instanceof PsiJavaFile ||
-          scope instanceof PsiClass ||
-          scope.getParent() instanceof PsiImplicitClass) {
+      if (scope instanceof PsiJavaFile) {
         return addJavaFileMemberModifiers(list, position);
       }
-      if (scope.getParent() instanceof PsiClass psiClass) {
-        PsiIdentifier identifier = psiClass.getNameIdentifier();
-        if (identifier == null ||
-            identifier.getTextRange().getStartOffset() < scope.getTextRange().getStartOffset()) {
-          return addMemberModifiers(list, psiClass.isInterface(), psiClass);
-        }
+      if (scope instanceof PsiClass) {
+        return addMemberModifiers(list, ((PsiClass)scope).isInterface(), scope);
       }
+
       scope = scope.getParent();
       if (scope instanceof PsiDirectory) break;
     }
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
-  /**
-   * @deprecated: it is not used.
-   */
-  @Deprecated(forRemoval = true)
   public static String[] addClassModifiers(PsiModifierList list, @NotNull PsiElement scope) {
     if (PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, scope)) {
       if (list == null) {
@@ -128,7 +135,7 @@ public final class ModifierChooser {
         return ArrayUtilRt.toStringArray(ret);
       }
     }
-    return addKeywords(list, CLASS_MODIFIERS, scope);
+    return addKeywords(list, CLASS_MODIFIERS);
   }
 
   private static void addIfNotPresent(String modifier, PsiModifierList list, List<String> ret) {
@@ -142,23 +149,42 @@ public final class ModifierChooser {
         (position.getContainingFile() instanceof PsiJavaFile javaFile && javaFile.getPackageStatement() == null)) {
       return addMemberModifiers(list, false, position);
     }
-    return addKeywords(list, FILE_MEMBER_MODIFIERS, position);
+    return addKeywords(list,
+                       PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, position) ?
+                       FILE_MEMBER_MODIFIERS_WITH_SEALED : FILE_MEMBER_MODIFIERS);
   }
 
   public static String[] addMemberModifiers(PsiModifierList list, final boolean inInterface, @NotNull PsiElement position) {
-    return addKeywords(list, inInterface ? INTERFACE_MEMBER_MODIFIERS : CLASS_MEMBER_MODIFIERS, position);
+    return addKeywords(list, inInterface ? getInterfaceMemberModifiers(position) : getClassMemberModifiers(position));
   }
 
-  private static String[] addKeywords(PsiModifierList list, ArrayOfModifiers[] keywordSets, @NotNull PsiElement position) {
+  private static String[][] getInterfaceMemberModifiers(@NotNull PsiElement list) {
+    if (PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, list)) {
+      return INTERFACE_MEMBER_MODIFIERS_WITH_SEALED;
+    }
+    if (PsiUtil.isAvailable(JavaFeature.PRIVATE_INTERFACE_METHODS, list)) {
+      return INTERFACE_MEMBER_MODIFIERS_WITH_PRIVATE;
+    }
+    if (PsiUtil.isAvailable(JavaFeature.STATIC_INTERFACE_CALLS, list)) {
+      return INTERFACE_MEMBER_MODIFIERS_WITH_DEFAULT;
+    }
+    return INTERFACE_MEMBER_MODIFIERS;
+  }
+
+  private static String[][] getClassMemberModifiers(@NotNull PsiElement list) {
+    if (PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, list)) {
+      return CLASS_MEMBER_MODIFIERS_WITH_SEALED;
+    }
+    return CLASS_MEMBER_MODIFIERS;
+  }
+
+  private static String[] addKeywords(PsiModifierList list, String[][] keywordSets) {
     final List<String> ret = new ArrayList<>();
     for (int i = 0; i < keywordSets.length; i++) {
-      final ArrayOfModifiers keywords = keywordSets[keywordSets.length - i - 1];
-      if (keywords.allowToUse() != null && !keywords.allowToUse().test(position)) {
-        continue;
-      }
+      final String[] keywords = keywordSets[keywordSets.length - i - 1];
       boolean containModifierFlag = false;
       if (list != null) {
-        for (@PsiModifier.ModifierConstant String keyword : keywords.modifiers()) {
+        for (@PsiModifier.ModifierConstant String keyword : keywords) {
           if (list.hasExplicitModifier(keyword)) {
             containModifierFlag = true;
             break;
@@ -166,14 +192,14 @@ public final class ModifierChooser {
         }
       }
       if (!containModifierFlag) {
-        ContainerUtil.addAll(ret, keywords.modifiers());
+        ContainerUtil.addAll(ret, keywords);
       }
     }
     return ArrayUtilRt.toStringArray(ret);
   }
 
   public static @Nullable PsiModifierList findModifierList(@NotNull PsiElement element) {
-    if (element.getParent() instanceof PsiModifierList) {
+    if(element.getParent() instanceof PsiModifierList) {
       return (PsiModifierList)element.getParent();
     }
 

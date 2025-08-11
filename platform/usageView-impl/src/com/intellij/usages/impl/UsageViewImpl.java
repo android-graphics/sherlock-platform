@@ -7,11 +7,14 @@ import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
+import com.intellij.ide.impl.DataValidators;
 import com.intellij.lang.Language;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -45,8 +48,8 @@ import com.intellij.usages.impl.rules.UsageFilteringRules;
 import com.intellij.usages.rules.*;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.AppJavaExecutorUtil;
-import com.intellij.util.concurrency.CoroutineDispatcherBackedExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,8 +62,6 @@ import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import kotlinx.coroutines.CoroutineScope;
-import kotlinx.coroutines.JobKt;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -73,10 +74,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -88,12 +88,11 @@ public class UsageViewImpl implements UsageViewEx {
   private final int myUniqueIdentifier;
   private static final GroupNode.NodeComparator COMPARATOR = new GroupNode.NodeComparator();
   private static final Logger LOG = Logger.getInstance(UsageViewImpl.class);
-  public static final @NonNls String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";
+  @NonNls public static final String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";
 
   private final UsageNodeTreeBuilder myBuilder;
-  private final @NotNull CoroutineScope coroutineScope;
   private MyPanel myRootPanel; // accessed in EDT only
-  private MyTree myTree; // accessed in EDT only
+  private JTree myTree; // accessed in EDT only
   private final ScheduledFuture<?> myFireEventsFuture;
   private Content myContent;
 
@@ -101,12 +100,17 @@ public class UsageViewImpl implements UsageViewEx {
   private final UsageTarget[] myTargets;
   private UsageGroupingRule[] myGroupingRules;
   private final UsageFilteringRuleState myFilteringRulesState = UsageFilteringRuleStateService.createFilteringRuleState();
-  private final Supplier<? extends UsageSearcher> myUsageSearcherFactory;
+  private final Factory<? extends UsageSearcher> myUsageSearcherFactory;
   private final @NotNull Project myProject;
 
   private volatile boolean mySearchInProgress = true;
   private final ExporterToTextFile myTextFileExporter = new ExporterToTextFile(this, getUsageViewSettings());
-  private final SingleAlarm updateAlarm;
+  private final SingleAlarm myUpdateAlarm = new SingleAlarm(() -> {
+    if (isDisposed()) {
+      return;
+    }
+    updateImmediately();
+  }, 300, this);
 
   private final ExclusionHandlerEx<DefaultMutableTreeNode> myExclusionHandler;
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<>();
@@ -117,15 +121,11 @@ public class UsageViewImpl implements UsageViewEx {
   private volatile boolean isDisposed;
   private volatile boolean myChangesDetected;
   private @Nullable GroupNode myAutoSelectedGroupNode;
-  private final AtomicReference<@NotNull Set<UsageInfo>> myNonDisposableUsageInfos = new AtomicReference<>(Collections.emptySet());
 
   public static final Comparator<Usage> USAGE_COMPARATOR_BY_FILE_AND_OFFSET = (o1, o2) -> {
     if (o1 == o2) return 0;
-    if (o1 == null) return -1;
-    if (o2 == null) return 1;
-    if (o1 == NullUsage.INSTANCE) return -1;
-    if (o2 == NullUsage.INSTANCE) return 1;
-
+    if (o1 == NullUsage.INSTANCE || o1 == null) return -1;
+    if (o2 == NullUsage.INSTANCE || o2 == null) return 1;
     int c = compareByFileAndOffset(o1, o2);
     if (c != 0) return c;
     return o1.toString().compareTo(o2.toString());
@@ -148,21 +148,29 @@ public class UsageViewImpl implements UsageViewEx {
     return VfsUtilCore.compareByPath(file1, file2);
   }
 
-  public static final @NonNls String HELP_ID = "ideaInterface.find";
+  @NonNls public static final String HELP_ID = "ideaInterface.find";
   private UsageContextPanel myCurrentUsageContextPanel; // accessed in EDT only
   private final List<UsageContextPanel> myAllUsageContextPanels = new ArrayList<>(); // accessed in EDT only
   private UsageContextPanel.Provider myCurrentUsageContextProvider; // accessed in EDT only
 
   private JPanel myCentralPanel; // accessed in EDT only
 
-  private final @NotNull GroupNode myRoot;
+  @NotNull
+  private final GroupNode myRoot;
   private final UsageViewTreeModelBuilder myModel;
   private Splitter myPreviewSplitter; // accessed in EDT only
   private volatile ProgressIndicator associatedProgress; // the progress that current find usages is running under
 
+  // true if usages tree is currently expanding or collapsing,
+  // either at the end of find usages thanks to the 'expand usages after find' setting, or
+  // because the user pressed 'expand all' or 'collapse all' button. During this, some ugly hacks applied
+  // to speed up the expanding (see getExpandedDescendants() here and UsageViewTreeCellRenderer.customizeCellRenderer()
+  private boolean myExpandingCollapsing;
   private final UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
-  private @Nullable Action myRerunAction;
-  private final CoroutineDispatcherBackedExecutor updateRequests;
+  @Nullable private Action myRerunAction;
+  private final ExecutorService updateRequests = AppExecutorUtil
+    .createBoundedApplicationPoolExecutor("Usage View Update Requests", AppExecutorUtil.getAppExecutorService(),
+                                          JobSchedulerImpl.getJobPoolParallelism(), this);
   private final List<ExcludeListener> myExcludeListeners = ContainerUtil.createConcurrentList();
   private final Set<Pair<Class<? extends PsiReference>, Language>> myReportedReferenceClasses
     = ConcurrentCollectionFactory.createConcurrentSet();
@@ -185,11 +193,9 @@ public class UsageViewImpl implements UsageViewEx {
 
   @ApiStatus.Internal
   public UsageViewImpl(@NotNull Project project,
-                       @NotNull CoroutineScope coroutineScope,
                        @NotNull UsageViewPresentation presentation,
                        UsageTarget @NotNull [] targets,
-                       @Nullable Supplier<? extends UsageSearcher> usageSearcherFactory) {
-    this.coroutineScope = coroutineScope;
+                       @Nullable Factory<? extends UsageSearcher> usageSearcherFactory) {
     // fire events every 50 ms, not more often to batch requests
     myUniqueIdentifier = COUNTER.getAndIncrement();
     myFireEventsFuture =
@@ -212,7 +218,7 @@ public class UsageViewImpl implements UsageViewEx {
 
     myUsageViewTreeCellRenderer = new UsageViewTreeCellRenderer(this);
     if (!myPresentation.isDetachedMode()) {
-      UIUtil.invokeLaterIfNeeded(() -> WriteIntentReadAction.run((Runnable)this::initInEDT));
+      UIUtil.invokeLaterIfNeeded(() -> ReadAction.run(this::initInEDT));
     }
     myExclusionHandler = new ExclusionHandlerEx<>() {
       @Override
@@ -297,13 +303,6 @@ public class UsageViewImpl implements UsageViewEx {
         }
       }
     };
-    updateRequests = AppJavaExecutorUtil
-      .createBoundedTaskExecutor("Usage View Update Requests", coroutineScope, JobSchedulerImpl.getJobPoolParallelism());
-    updateAlarm = SingleAlarm.singleEdtAlarm(300, coroutineScope, () -> {
-      if (!isDisposed()) {
-        updateImmediately();
-      }
-    });
   }
 
   @Override
@@ -312,7 +311,7 @@ public class UsageViewImpl implements UsageViewEx {
   public int getId() {
     return myUniqueIdentifier;
   }
-
+  
   @ApiStatus.Internal
   public JTree getTree() {
     return myTree;
@@ -321,7 +320,38 @@ public class UsageViewImpl implements UsageViewEx {
   private void initInEDT() {
     ThreadingAssertions.assertEventDispatchThread();
     if (isDisposed()) return;
-    myTree = new MyTree(myModel);
+    myTree = new Tree(myModel) {
+      {
+        ToolTipManager.sharedInstance().registerComponent(this);
+      }
+
+      @Override
+      public boolean isRootVisible() {
+        return false;  // to avoid re-building model when it calls setRootVisible(true)
+      }
+
+      @Override
+      public String getToolTipText(MouseEvent e) {
+        TreePath path = getPathForLocation(e.getX(), e.getY());
+        if (path != null) {
+          if (getCellRenderer() instanceof UsageViewTreeCellRenderer) {
+            return UsageViewTreeCellRenderer.getTooltipFromPresentation(path.getLastPathComponent());
+          }
+        }
+        return null;
+      }
+
+      @Override
+      public boolean isPathEditable(@NotNull TreePath path) {
+        return path.getLastPathComponent() instanceof UsageViewTreeModelBuilder.TargetsRootNode;
+      }
+
+      // hack to avoid quadratic expandAll()
+      @Override
+      public Enumeration<TreePath> getExpandedDescendants(TreePath parent) {
+        return myExpandingCollapsing ? Collections.emptyEnumeration() : super.getExpandedDescendants(parent);
+      }
+    };
     myTree.setName("UsageViewTree");
 
     myRootPanel = new MyPanel(myTree);
@@ -391,7 +421,8 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @ApiStatus.Internal
-  public @NotNull UsageViewSettings getUsageViewSettings() {
+  @NotNull
+  public UsageViewSettings getUsageViewSettings() {
     return UsageViewSettings.getInstance();
   }
 
@@ -424,16 +455,19 @@ public class UsageViewImpl implements UsageViewEx {
    * and has to be applied to the swing children list including affected nodes and the type of the change
    */
   static class NodeChange {
-    private final @NotNull NodeChangeType nodeChangeType;
+    @NotNull
+    private final NodeChangeType nodeChangeType;
     /**
      * The one that was replaced or removed, or a parent for the added node
      */
-    private final @NotNull Node parentNode;
+    @NotNull
+    private final Node parentNode;
 
     /**
      * The one that was added or the one that replaced the first
      */
-    private final @Nullable Node childNode;
+    @Nullable
+    private final Node childNode;
 
     NodeChange(@NotNull NodeChangeType nodeChangeType, @NotNull Node parentNode, @Nullable Node childNode) {
       this.nodeChangeType = nodeChangeType;
@@ -770,7 +804,7 @@ public class UsageViewImpl implements UsageViewEx {
         TreePath path = event.getPath();
         Object component = path.getLastPathComponent();
         if (component instanceof Node node) {
-          if (!myTree.myExpandingCollapsing && node.needsUpdate()) {
+          if (!myExpandingCollapsing && node.needsUpdate()) {
             List<Node> toUpdate = new ArrayList<>();
             checkNodeValidity(node, path, toUpdate);
             queueUpdateBulk(toUpdate, EmptyRunnable.getInstance());
@@ -793,7 +827,8 @@ public class UsageViewImpl implements UsageViewEx {
     }, true);
   }
 
-  private @NotNull JComponent createActionsToolbar() {
+  @NotNull
+  private JComponent createActionsToolbar() {
     ThreadingAssertions.assertEventDispatchThread();
 
     DefaultActionGroup group = new DefaultActionGroup() {
@@ -823,7 +858,8 @@ public class UsageViewImpl implements UsageViewEx {
     return toUsageViewToolbar(group);
   }
 
-  private @NotNull JComponent toUsageViewToolbar(@NotNull DefaultActionGroup group) {
+  @NotNull
+  private JComponent toUsageViewToolbar(@NotNull DefaultActionGroup group) {
     ThreadingAssertions.assertEventDispatchThread();
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR, group, false);
     actionToolbar.setTargetComponent(myRootPanel);
@@ -1025,7 +1061,6 @@ public class UsageViewImpl implements UsageViewEx {
    *
    * @param actions to sort
    */
-  @Contract(mutates = "param1")
   protected void sortGroupingActions(@NotNull List<? extends AnAction> actions) {
     actions.sort((o1, o2) -> Comparing.compare(o1.getTemplateText(), o2.getTemplateText()));
   }
@@ -1038,12 +1073,6 @@ public class UsageViewImpl implements UsageViewEx {
   private boolean rulesChanged; // accessed in EDT only
 
   private void rulesChanged() {
-    try (AccessToken ignore = SlowOperations.knownIssue("IJPL-164976")) {
-      rulesChangedImpl();
-    }
-  }
-
-  private void rulesChangedImpl() {
     ThreadingAssertions.assertEventDispatchThread();
     if (!shouldTreeReactNowToRuleChanges()) {
       rulesChanged = true;
@@ -1109,26 +1138,16 @@ public class UsageViewImpl implements UsageViewEx {
     ThreadingAssertions.assertEventDispatchThread();
     //always expand the last level group
     DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTree.getModel().getRoot();
-    try {
-      if (myTree != null) {
-        myTree.suspendExpandCollapseAccessibilityAnnouncements();
-      }
-      for (int i = root.getChildCount() - 1; i >= 0; i--) {
-        DefaultMutableTreeNode child = (DefaultMutableTreeNode)root.getChildAt(i);
-        if (child instanceof GroupNode) {
-          TreePath treePath = new TreePath(child.getPath());
-          myTree.expandPath(treePath);
-        }
-      }
-      myTree.getSelectionModel().clearSelection();
-      for (UsageState usageState : states) {
-        usageState.restore();
+    for (int i = root.getChildCount() - 1; i >= 0; i--) {
+      DefaultMutableTreeNode child = (DefaultMutableTreeNode)root.getChildAt(i);
+      if (child instanceof GroupNode) {
+        TreePath treePath = new TreePath(child.getPath());
+        myTree.expandPath(treePath);
       }
     }
-    finally {
-      if (myTree != null) {
-        myTree.resumeExpandCollapseAccessibilityAnnouncements();
-      }
+    myTree.getSelectionModel().clearSelection();
+    for (UsageState usageState : states) {
+      usageState.restore();
     }
   }
 
@@ -1145,12 +1164,12 @@ public class UsageViewImpl implements UsageViewEx {
     ThreadingAssertions.assertEventDispatchThread();
     fireEvents();  // drain all remaining insertion events in the queue
 
-    myTree.myExpandingCollapsing = true;
+    myExpandingCollapsing = true;
     try {
       task.run();
     }
     finally {
-      myTree.myExpandingCollapsing = false;
+      myExpandingCollapsing = false;
     }
   }
 
@@ -1179,7 +1198,8 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myProject;
   }
 
@@ -1292,15 +1312,16 @@ public class UsageViewImpl implements UsageViewEx {
   public void waitForUpdateRequestsCompletion() {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
-      updateRequests.waitAllTasksExecuted(10, TimeUnit.MINUTES);
+      ((BoundedTaskExecutor)updateRequests).waitAllTasksExecuted(10, TimeUnit.MINUTES);
     }
     catch (Exception e) {
       LOG.error(e);
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull CompletableFuture<?> appendUsagesInBulk(@NotNull Collection<? extends Usage> usages) {
+  public CompletableFuture<?> appendUsagesInBulk(@NotNull Collection<? extends Usage> usages) {
     CompletableFuture<Object> result = new CompletableFuture<>();
     addUpdateRequest(() -> ReadAction.run(() -> {
       try {
@@ -1422,7 +1443,8 @@ public class UsageViewImpl implements UsageViewEx {
       .forEach(myExclusionHandler::excludeNode);
   }
 
-  private @NotNull Stream<UsageNode> usagesToNodes(@NotNull Stream<? extends Usage> usages) {
+  @NotNull
+  private Stream<UsageNode> usagesToNodes(@NotNull Stream<? extends Usage> usages) {
     return usages
       .map(myUsageNodes::get)
       .filter(node -> node != NULL_NODE && node != null);
@@ -1439,14 +1461,16 @@ public class UsageViewImpl implements UsageViewEx {
     if (paths.length != 0) myTree.scrollPathToVisible(paths[0]);
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent getPreferredFocusableComponent() {
+  public JComponent getPreferredFocusableComponent() {
     ThreadingAssertions.assertEventDispatchThread();
     return myTree != null ? myTree : getComponent();
   }
 
   @Override
-  public @NotNull JComponent getComponent() {
+  @NotNull
+  public JComponent getComponent() {
     ThreadingAssertions.assertEventDispatchThread();
     return myRootPanel == null ? new JLabel() : myRootPanel;
   }
@@ -1479,7 +1503,8 @@ public class UsageViewImpl implements UsageViewEx {
 
   private void queueUpdateBulk(@NotNull List<? extends Node> toUpdate, @NotNull Runnable onCompletedInEdt) {
     if (toUpdate.isEmpty() || isDisposed()) return;
-    ReadAction.nonBlocking((Callable<?>)() -> {
+    ReadAction
+      .nonBlocking(() -> {
         for (Node node : toUpdate) {
           try {
             node.update(edtFireTreeNodesChangedQueue);
@@ -1487,7 +1512,6 @@ public class UsageViewImpl implements UsageViewEx {
           catch (IndexNotReadyException ignore) {
           }
         }
-        return null;
       })
       .expireWith(this)
       .finishOnUiThread(ModalityState.defaultModalityState(), __ -> onCompletedInEdt.run())
@@ -1568,7 +1592,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   void updateLater() {
-    updateAlarm.cancelAndRequest();
+    myUpdateAlarm.cancelAndRequest();
   }
 
   @Override
@@ -1586,52 +1610,26 @@ public class UsageViewImpl implements UsageViewEx {
 
   @Override
   public void dispose() {
-    try {
-      ThreadingAssertions.assertEventDispatchThread();
-      disposeUsageContextPanels();
-      isDisposed = true;
-      updateAlarm.cancelAllRequests();
-      fusRunnable = null; // Release reference to this
+    ThreadingAssertions.assertEventDispatchThread();
+    disposeUsageContextPanels();
+    isDisposed = true;
+    myUpdateAlarm.cancelAllRequests();
+    fusRunnable = null; // Release reference to this
 
-      cancelCurrentSearch();
-      myRerunAction = null;
-      if (myTree != null) {
-        ToolTipManager.sharedInstance().unregisterComponent(myTree);
-      }
-      disposeSmartPointers();
+    cancelCurrentSearch();
+    myRerunAction = null;
+    if (myTree != null) {
+      ToolTipManager.sharedInstance().unregisterComponent(myTree);
     }
-    finally {
-      JobKt.getJob(coroutineScope.getCoroutineContext()).cancel(null);
-    }
-  }
-
-  /**
-   * Prevents the specified usage infos from being disposed on view dispose
-   * <p>
-   *   Used by Show Usages, as navigation to the selected usage happens after the popup is disposed.
-   *   Not disposing usage infos is leak-safe, as disposing only involves getting rid of smart pointers,
-   *   which is not mandatory.
-   *   Still, when we have hundreds or thousands of usages, it's beneficial to dispose not needed ones,
-   *   which means not selected ones, which in most cases is all of them but one.
-   *   Therefore, this method is called to specify the selected usages (usually one), which then may
-   *   (but not have to) be used to navigate to the usage(s).
-   * </p>
-   * @param usageInfos the set of usage infos which won't be disposed with the vew
-   */
-  @ApiStatus.Internal
-  public void setNonDisposableUsageInfos(@NotNull Set<UsageInfo> usageInfos) {
-    myNonDisposableUsageInfos.set(usageInfos);
+    disposeSmartPointers();
   }
 
   private void disposeSmartPointers() {
-    var nonDisposableUsageInfos = myNonDisposableUsageInfos.get();
     List<SmartPsiElementPointer<?>> smartPointers = new ArrayList<>();
     for (Usage usage : myUsageNodes.keySet()) {
       if (usage instanceof UsageInfo2UsageAdapter) {
-        var usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
-        if (!nonDisposableUsageInfos.contains(usageInfo)) {
-          smartPointers.add(usageInfo.getSmartPointer());
-        }
+        SmartPsiElementPointer<?> pointer = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getSmartPointer();
+        smartPointers.add(pointer);
       }
     }
 
@@ -1760,8 +1758,9 @@ public class UsageViewImpl implements UsageViewEx {
     return true;
   }
 
+  @NotNull
   @Override
-  public @NotNull UsageViewPresentation getPresentation() {
+  public UsageViewPresentation getPresentation() {
     return myPresentation;
   }
 
@@ -1769,7 +1768,7 @@ public class UsageViewImpl implements UsageViewEx {
   public boolean canPerformReRun() {
     if (myRerunAction != null && myRerunAction.isEnabled()) return allTargetsAreValid();
     try {
-      return myUsageSearcherFactory != null && allTargetsAreValid() && myUsageSearcherFactory.get() != null;
+      return myUsageSearcherFactory != null && allTargetsAreValid() && myUsageSearcherFactory.create() != null;
     }
     catch (PsiInvalidElementAccessException e) {
       return false;
@@ -1783,7 +1782,8 @@ public class UsageViewImpl implements UsageViewEx {
            !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(readOnlyUsages).hasReadonlyFiles();
   }
 
-  private @NotNull Set<Usage> getReadOnlyUsages() {
+  @NotNull
+  private Set<Usage> getReadOnlyUsages() {
     Set<Usage> result = new HashSet<>();
     Set<Map.Entry<Usage, UsageNode>> usages = myUsageNodes.entrySet();
     for (Map.Entry<Usage, UsageNode> entry : usages) {
@@ -1796,7 +1796,8 @@ public class UsageViewImpl implements UsageViewEx {
     return result;
   }
 
-  private @NotNull Set<VirtualFile> getReadOnlyUsagesFiles() {
+  @NotNull
+  private Set<VirtualFile> getReadOnlyUsagesFiles() {
     Set<Usage> usages = getReadOnlyUsages();
     Set<VirtualFile> result = new HashSet<>();
     for (Usage usage : usages) {
@@ -1818,7 +1819,8 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @Override
-  public @NotNull Set<Usage> getExcludedUsages() {
+  @NotNull
+  public Set<Usage> getExcludedUsages() {
     Set<Usage> result = new HashSet<>();
     for (Map.Entry<Usage, UsageNode> entry : myUsageNodes.entrySet()) {
       UsageNode node = entry.getValue();
@@ -1835,53 +1837,53 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
 
-  private @Nullable Node getSelectedNode() {
+  @Nullable
+  private Node getSelectedNode() {
     ThreadingAssertions.assertEventDispatchThread();
     TreePath path = myTree.getLeadSelectionPath();
     Object node = path == null ? null : path.getLastPathComponent();
     return node instanceof Node ? (Node)node : null;
   }
 
-  private @NotNull List<TreeNode> selectedNodes() {
-    return selectedNodes(myTree);
-  }
-
-  private static @NotNull List<TreeNode> selectedNodes(@NotNull MyTree tree) {
+  @NotNull
+  private List<TreeNode> selectedNodes() {
     ThreadingAssertions.assertEventDispatchThread();
-    TreePath[] selectionPaths = tree.getSelectionPaths();
-    return selectionPaths == null
-           ? Collections.emptyList()
-           : ContainerUtil.mapNotNull(selectionPaths, p -> ObjectUtils.tryCast(p.getLastPathComponent(), TreeNode.class));
+    TreePath[] selectionPaths = myTree.getSelectionPaths();
+    return selectionPaths == null ? Collections.emptyList() : ContainerUtil.mapNotNull(selectionPaths, p-> ObjectUtils.tryCast(p.getLastPathComponent(), TreeNode.class));
   }
 
-  private @NotNull JBIterable<TreeNode> traverseNodesRecursively(@NotNull List<TreeNode> roots) {
-    return TreeUtil.treeNodeTraverser(null).withRoots(roots).traverse();
+  private @NotNull List<@NotNull TreeNode> allSelectedNodes() {
+    return TreeUtil.treeNodeTraverser(null).withRoots(selectedNodes()).traverse().toList();
   }
 
   @Override
-  public @NotNull Set<Usage> getSelectedUsages() {
+  @NotNull
+  public Set<Usage> getSelectedUsages() {
     ThreadingAssertions.assertEventDispatchThread();
     return new HashSet<>(allUsagesRecursive(selectedNodes()));
   }
 
-  private static @Unmodifiable @NotNull List<@NotNull Usage> allUsagesRecursive(@NotNull List<? extends TreeNode> selection) {
+  private static @NotNull List<@NotNull Usage> allUsagesRecursive(@NotNull List<? extends TreeNode> selection) {
     return TreeUtil.treeNodeTraverser(null).withRoots(selection).traverse()
       .filterMap(o -> o instanceof UsageNode ? ((UsageNode)o).getUsage() : null).toList();
   }
 
   @Override
-  public @NotNull Set<Usage> getUsages() {
+  @NotNull
+  public Set<Usage> getUsages() {
     return myUsageNodes.keySet();
   }
 
   @Override
-  public @NotNull List<Usage> getSortedUsages() {
+  @NotNull
+  public List<Usage> getSortedUsages() {
     List<Usage> usages = new ArrayList<>(getUsages());
     usages.sort(USAGE_COMPARATOR_BY_FILE_AND_OFFSET);
     return usages;
   }
 
-  private @Nullable Navigatable getNavigatableForNode(@NotNull DefaultMutableTreeNode node, boolean allowRequestFocus) {
+  @Nullable
+  private Navigatable getNavigatableForNode(@NotNull DefaultMutableTreeNode node, boolean allowRequestFocus) {
     Object userObject = node.getUserObject();
     if (userObject instanceof Navigatable navigatable) {
       return navigatable.canNavigate() ? new Navigatable() {
@@ -1910,8 +1912,9 @@ public class UsageViewImpl implements UsageViewEx {
     return myModel.areTargetsValid();
   }
 
-  private final class MyPanel extends JPanel implements UiDataProvider, OccurenceNavigator, Disposable {
-    private @Nullable OccurenceNavigatorSupport mySupport;
+  private final class MyPanel extends JPanel implements DataProvider, OccurenceNavigator, Disposable {
+    @Nullable private OccurenceNavigatorSupport mySupport;
+    private final CopyProvider myCopyProvider;
 
     private MyPanel(@NotNull JTree tree) {
       mySupport = new OccurenceNavigatorSupport(tree) {
@@ -1919,19 +1922,32 @@ public class UsageViewImpl implements UsageViewEx {
         protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
           if (node.getChildCount() > 0) return null;
           if (node instanceof Node && ((Node)node).isExcluded()) return null;
-          try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162332")) {
-            return getNavigatableForNode(node, !myPresentation.isReplaceMode());
-          }
+          return getNavigatableForNode(node, !myPresentation.isReplaceMode());
         }
 
+        @NotNull
         @Override
-        public @NotNull String getNextOccurenceActionName() {
+        public String getNextOccurenceActionName() {
           return UsageViewBundle.message("action.next.occurrence");
         }
 
+        @NotNull
         @Override
-        public @NotNull String getPreviousOccurenceActionName() {
+        public String getPreviousOccurenceActionName() {
           return UsageViewBundle.message("action.previous.occurrence");
+        }
+      };
+      myCopyProvider = new TextCopyProvider() {
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
+
+        @Nullable
+        @Override
+        public Collection<String> getTextLinesToCopy() {
+          List<String> lines = ContainerUtil.mapNotNull(selectedNodes(), o -> o instanceof Node ? ((Node)o).getNodeText() : null);
+          return lines.isEmpty() ? null : lines;
         }
       };
     }
@@ -1975,125 +1991,98 @@ public class UsageViewImpl implements UsageViewEx {
       return mySupport != null ? mySupport.goPreviousOccurence() : null;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getNextOccurenceActionName() {
+    public String getNextOccurenceActionName() {
       return mySupport != null ? mySupport.getNextOccurenceActionName() : "";
     }
 
+    @NotNull
     @Override
-    public @NotNull String getPreviousOccurenceActionName() {
+    public String getPreviousOccurenceActionName() {
       return mySupport != null ? mySupport.getPreviousOccurenceActionName() : "";
     }
 
+    @Nullable
     @Override
-    public void uiDataSnapshot(@NotNull DataSink sink) {
-      List<TreeNode> selection = selectedNodes();
-
-      sink.set(CommonDataKeys.PROJECT, myProject);
-      sink.set(USAGE_VIEW_KEY, UsageViewImpl.this);
-      sink.set(PlatformCoreDataKeys.HELP_ID, HELP_ID);
-      sink.set(ExclusionHandler.EXCLUSION_HANDLER, myExclusionHandler);
-      sink.set(PlatformDataKeys.EXPORTER_TO_TEXT_FILE, myTextFileExporter);
-      sink.set(CommonDataKeys.NAVIGATABLE_ARRAY, ContainerUtil.mapNotNull(
-        selection, n -> ObjectUtils.tryCast(TreeUtil.getUserObject(n), Navigatable.class))
-        .toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY));
-      var targets = ContainerUtil.mapNotNull(
-        selection, o -> o instanceof UsageTargetNode oo ? oo.getTarget() : null);
-      sink.set(USAGE_TARGETS_KEY, targets.isEmpty() ? null : targets.toArray(UsageTarget.EMPTY_ARRAY));
-
-      DataSink.uiDataSnapshot(sink, TreeUtil.getUserObject(getSelectedNode()));
-
-      List<TreeNode> selectedNodes = selectedNodes();
-      sink.lazy(USAGES_KEY, () -> {
-        return selectedUsages(traverseNodesRecursively(selectedNodes))
-          .toArray(Usage.EMPTY_ARRAY);
-      });
-      sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
-        return selectedUsages(traverseNodesRecursively(selectedNodes))
-          .filter(PsiElementUsage.class)
-          .filterMap(usage -> usage.getElement())
-          .toArray(PsiElement.EMPTY_ARRAY);
-      });
-      sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
-        return traverseNodesRecursively(selectedNodes)
-          .filterMap(o -> o instanceof UsageNode oo ? oo.getUsage() :
-                          o instanceof UsageTargetNode oo ? oo.getTarget() : null)
-          .flatMap(o -> o instanceof UsageInFile oo ? ContainerUtil.createMaybeSingletonList(oo.getFile()) :
-                        o instanceof UsageInFiles oo ? Arrays.asList(oo.getFiles()) :
-                        o instanceof UsageTarget oo
-                        ? Arrays.asList(ObjectUtils.notNull(oo.getFiles(), VirtualFile.EMPTY_ARRAY))
-                        : Collections.emptyList())
-          .filter(VirtualFile::isValid)
-          .unique()
-          .toArray(VirtualFile.EMPTY_ARRAY);
-      });
-    }
-  }
-
-  private static class MyTree extends Tree implements UiDataProvider {
-
-    // true if usages tree is currently expanding or collapsing,
-    // either at the end of find usages thanks to the 'expand usages after find' setting, or
-    // because the user pressed 'expand all' or 'collapse all' button. During this, some ugly hacks applied
-    // to speed up the expanding (see getExpandedDescendants() here and UsageViewTreeCellRenderer.customizeCellRenderer()
-    boolean myExpandingCollapsing;
-
-    final CopyProvider myCopyProvider = new TextCopyProvider() {
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.EDT;
+    public Object getData(@NotNull String dataId) {
+      if (CommonDataKeys.PROJECT.is(dataId)) {
+        return myProject;
       }
-
-      @Override
-      public @Nullable Collection<String> getTextLinesToCopy() {
-        List<String> lines = ContainerUtil.mapNotNull(selectedNodes(MyTree.this), o -> o instanceof Node ? ((Node)o).getNodeText() : null);
-        return lines.isEmpty() ? null : lines;
+      else if (USAGE_VIEW_KEY.is(dataId)) {
+        return UsageViewImpl.this;
       }
-    };
-
-    MyTree(UsageViewTreeModelBuilder model) {
-      super(model);
-      ToolTipManager.sharedInstance().registerComponent(this);
-    }
-
-    @Override
-    public boolean isRootVisible() {
-      return false;  // to avoid re-building model when it calls setRootVisible(true)
-    }
-
-    @Override
-    public String getToolTipText(MouseEvent e) {
-      TreePath path = getPathForLocation(e.getX(), e.getY());
-      if (path != null) {
-        if (getCellRenderer() instanceof UsageViewTreeCellRenderer) {
-          return UsageViewTreeCellRenderer.getTooltipFromPresentation(path.getLastPathComponent());
+      else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
+        return HELP_ID;
+      }
+      else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+        return myCopyProvider;
+      }
+      else if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) {
+        return myExclusionHandler;
+      }
+      else if (PlatformDataKeys.EXPORTER_TO_TEXT_FILE.is(dataId)) {
+        return myTextFileExporter;
+      }
+      else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+        return ContainerUtil.mapNotNull(selectedNodes(), n-> ObjectUtils.tryCast(TreeUtil.getUserObject(n), Navigatable.class))
+          .toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+      }
+      else if (USAGE_TARGETS_KEY.is(dataId)) {
+        var targets = ContainerUtil.mapNotNull(
+          selectedNodes(),
+          o -> o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null
+        );
+        return targets.isEmpty() ? null : targets.toArray(UsageTarget.EMPTY_ARRAY);
+      }
+      else {
+        DataProvider selectedProvider = ObjectUtils.tryCast(TreeUtil.getUserObject(getSelectedNode()), DataProvider.class);
+        if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+          List<TreeNode> selectedNodes = allSelectedNodes();
+          DataProvider selectedBgtProvider = selectedProvider == null ? null : PlatformCoreDataKeys.BGT_DATA_PROVIDER.getData(selectedProvider);
+          return CompositeDataProvider.compose(slowId -> getSlowData(slowId, selectedNodes), selectedBgtProvider);
+        }
+        Object nodeData = selectedProvider != null ? selectedProvider.getData(dataId) : null;
+        if (nodeData != null) {
+          return DataValidators.validOrNull(nodeData, dataId, selectedProvider);
         }
       }
       return null;
     }
-
-    @Override
-    public boolean isPathEditable(@NotNull TreePath path) {
-      return path.getLastPathComponent() instanceof UsageViewTreeModelBuilder.TargetsRootNode;
-    }
-
-    // hack to avoid quadratic expandAll()
-    @Override
-    public Enumeration<TreePath> getExpandedDescendants(TreePath parent) {
-      return myExpandingCollapsing ? Collections.emptyEnumeration() : super.getExpandedDescendants(parent);
-    }
-
-    @Override
-    public void uiDataSnapshot(@NotNull DataSink sink) {
-      sink.set(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
-    }
   }
 
-  private static @NotNull JBIterable<Usage> selectedUsages(@NotNull JBIterable<@NotNull TreeNode> selectedNodes) {
-    return selectedNodes
-      .filter(UsageNode.class)
-      .map(node -> node.getUsage())
-      .unique();
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull List<@NotNull TreeNode> selectedNodes) {
+    if (USAGES_KEY.is(dataId)) {
+      return selectedUsages(selectedNodes)
+        .toArray(n -> n == 0 ? Usage.EMPTY_ARRAY : new Usage[n]);
+    }
+    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      return selectedUsages(selectedNodes)
+        .filter(usage -> usage instanceof PsiElementUsage)
+        .map(usage -> ((PsiElementUsage)usage).getElement())
+        .filter(element -> element != null)
+        .toArray(PsiElement.ARRAY_FACTORY::create);
+    }
+    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+      return JBIterable.from(selectedNodes)
+        .filterMap(o -> o instanceof UsageNode ? ((UsageNode)o).getUsage() :
+                        o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null)
+        .flatMap(o -> o instanceof UsageInFile ? ContainerUtil.createMaybeSingletonList(((UsageInFile)o).getFile()) :
+                      o instanceof UsageInFiles ? Arrays.asList(((UsageInFiles)o).getFiles()) :
+                      o instanceof UsageTarget ? Arrays.asList(ObjectUtils.notNull(((UsageTarget)o).getFiles(), VirtualFile.EMPTY_ARRAY)) :
+                      Collections.emptyList())
+        .filter(VirtualFile::isValid)
+        .unique()
+        .toArray(VirtualFile.EMPTY_ARRAY);
+    }
+    return null;
+  }
+
+  private static @NotNull Stream<@NotNull Usage> selectedUsages(@NotNull List<@NotNull TreeNode> selectedNodes) {
+    return selectedNodes.stream()
+      .filter(node -> node instanceof UsageNode)
+      .map(node -> ((UsageNode)node).getUsage())
+      .distinct();
   }
 
   private final class ButtonPanel extends JPanel {
@@ -2254,12 +2243,14 @@ public class UsageViewImpl implements UsageViewEx {
       .collect(Collectors.toCollection(HashSet::new));
   }
 
-  public @NotNull GroupNode getRoot() {
+  @NotNull
+  public GroupNode getRoot() {
     return myRoot;
   }
 
   @TestOnly
-  public @NotNull String getNodeText(@NotNull TreeNode node) {
+  @NotNull
+  public String getNodeText(@NotNull TreeNode node) {
     return myUsageViewTreeCellRenderer.getPlainTextForNode(node);
   }
 
@@ -2305,7 +2296,8 @@ public class UsageViewImpl implements UsageViewEx {
     void excludeNodeSilently(@NotNull Node node);
   }
 
-  public static @Nullable KeyboardShortcut getShowUsagesWithSettingsShortcut() {
+  @Nullable
+  public static KeyboardShortcut getShowUsagesWithSettingsShortcut() {
     return UsageViewUtil.getShowUsagesWithSettingsShortcut();
   }
 }

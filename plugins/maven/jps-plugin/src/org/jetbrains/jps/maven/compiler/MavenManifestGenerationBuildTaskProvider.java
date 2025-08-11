@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.maven.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,19 +26,18 @@ import org.jetbrains.jps.model.ex.JpsElementBase;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-public final class MavenManifestGenerationBuildTaskProvider extends ArtifactBuildTaskProvider {
+public class MavenManifestGenerationBuildTaskProvider extends ArtifactBuildTaskProvider {
+  @NotNull
   @Override
-  public @NotNull List<? extends BuildTask> createArtifactBuildTasks(@NotNull JpsArtifact artifact,
-                                                                     @NotNull ArtifactBuildPhase buildPhase) {
+  public List<? extends BuildTask> createArtifactBuildTasks(@NotNull JpsArtifact artifact,
+                                                            @NotNull ArtifactBuildPhase buildPhase) {
     String artifactName = artifact.getName();
     if (buildPhase == ArtifactBuildPhase.PRE_PROCESSING && (artifactName.endsWith(" exploded") || artifactName.endsWith("ejb-client"))
         && artifact.getRootElement() instanceof JpsArtifactRootElement) {
@@ -95,16 +94,12 @@ public final class MavenManifestGenerationBuildTaskProvider extends ArtifactBuil
         final JpsFileCopyPackagingElement fileCopyPackagingElement = (JpsFileCopyPackagingElement)element;
 
         final String filePath = fileCopyPackagingElement.getFilePath();
-        Path skinnyManifest = Path.of(filePath);
-        if (!skinnyManifest.endsWith("SKINNY_MANIFEST.MF")) {
-          return true;
-        }
+        final File skinnyManifest = new File(filePath);
+        if (!"SKINNY_MANIFEST.MF".equals(skinnyManifest.getName())) return true;
 
-        final String skinnyWarModuleName = skinnyManifest.getParent().getParent().getFileName().toString();
+        final String skinnyWarModuleName = skinnyManifest.getParentFile().getParentFile().getName();
         final MavenModuleResourceConfiguration warConfiguration = projectConfiguration.moduleConfigurations.get(skinnyWarModuleName);
-        if (warConfiguration == null || warConfiguration.classpath == null) {
-          return true;
-        }
+        if (warConfiguration == null || warConfiguration.classpath == null) return true;
 
         try {
           final byte[] warManifestData = Base64.getDecoder().decode(warConfiguration.manifest);
@@ -121,9 +116,9 @@ public final class MavenManifestGenerationBuildTaskProvider extends ArtifactBuil
           final Attributes warManifestMainAttributes = warManifest.getMainAttributes();
           warManifestMainAttributes.putValue("Class-Path", StringUtil.join(skinnyWarClasspath, " "));
 
-          Path skinnyManifestTargetFile = null;
-          Files.createDirectories(skinnyManifest.getParent());
-          try (OutputStream outputStream = Files.newOutputStream(skinnyManifest)) {
+          File skinnyManifestTargetFile = null;
+          FileUtil.createParentDirs(skinnyManifest);
+          try (FileOutputStream outputStream = new FileOutputStream(skinnyManifest)) {
             warManifest.write(outputStream);
 
             if (fileCopyPackagingElement instanceof JpsElementBase) {
@@ -139,7 +134,7 @@ public final class MavenManifestGenerationBuildTaskProvider extends ArtifactBuil
                   final String outputPath = ((JpsArtifact)parent).getOutputPath();
                   if (outputPath != null) {
                     pathParts.addFirst(outputPath);
-                    skinnyManifestTargetFile = Path.of(String.join("/", pathParts));
+                    skinnyManifestTargetFile = new File(StringUtil.join(pathParts, "/"));
                     break;
                   }
                 }
@@ -149,14 +144,12 @@ public final class MavenManifestGenerationBuildTaskProvider extends ArtifactBuil
           }
 
           if (skinnyManifestTargetFile != null) {
-            Files.createDirectories(skinnyManifestTargetFile.getParent());
-            FileUtil.copy(skinnyManifest.toFile(), skinnyManifestTargetFile.toFile());
+            FileUtil.createParentDirs(skinnyManifestTargetFile);
+            FileUtil.copy(skinnyManifest, skinnyManifestTargetFile);
           }
 
           FSOperations.markDirtyIfNotDeleted(context, CompilationRound.NEXT, skinnyManifest);
-          if (skinnyManifestTargetFile != null) {
-            FSOperations.markDirtyIfNotDeleted(context, CompilationRound.NEXT, skinnyManifestTargetFile);
-          }
+          FSOperations.markDirtyIfNotDeleted(context, CompilationRound.NEXT, skinnyManifestTargetFile);
         }
         catch (IOException e) {
           LOG.debug(e);
@@ -166,7 +159,8 @@ public final class MavenManifestGenerationBuildTaskProvider extends ArtifactBuil
       });
     }
 
-    private static @Nullable String getModuleName(@NotNull String artifactName) {
+    @Nullable
+    private static String getModuleName(@NotNull String artifactName) {
       return StringUtil.substringBefore(artifactName, ":");
     }
   }

@@ -16,7 +16,6 @@ public final class TailTypes {
       return tailOffset;
     }
 
-    @Override
     public String toString() {
       return "UNKNOWN";
     }
@@ -28,7 +27,6 @@ public final class TailTypes {
       return tailOffset;
     }
 
-    @Override
     public String toString() {
       return "NONE";
     }
@@ -81,7 +79,6 @@ public final class TailTypes {
       return moveCaret(editor, tailOffset, 3);
     }
 
-    @Override
     public String toString() {
       return "COND_EXPR_COLON";
     }

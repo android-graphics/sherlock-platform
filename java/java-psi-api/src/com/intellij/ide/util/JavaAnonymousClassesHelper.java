@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.util.Key;
@@ -17,7 +17,8 @@ public final class JavaAnonymousClassesHelper {
   private static final Key<ParameterizedCachedValue<Map<PsiAnonymousClass, String>, PsiClass>> ANONYMOUS_CLASS_NAME = Key.create("ANONYMOUS_CLASS_NAME");
   private static final AnonClassProvider ANON_CLASS_PROVIDER = new AnonClassProvider();
 
-  public static @Nullable String getName(@NotNull PsiAnonymousClass cls) {
+  @Nullable
+  public static String getName(@NotNull PsiAnonymousClass cls) {
     final PsiClass upper = PsiTreeUtil.getParentOfType(cls, PsiClass.class);
     if (upper == null) {
       return null;

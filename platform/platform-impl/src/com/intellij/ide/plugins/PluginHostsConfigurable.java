@@ -25,7 +25,10 @@ import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +41,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public final class PluginHostsConfigurable implements Configurable.NoScroll, Configurable, Configurable.SingleEditorConfiguration {
+public final class PluginHostsConfigurable implements Configurable.NoScroll, Configurable {
   private final ListTableModel<UrlInfo> myModel = new ListTableModel<>() {
     @Override
     public void addRow() {
@@ -273,11 +276,6 @@ public final class PluginHostsConfigurable implements Configurable.NoScroll, Con
     for (UrlInfo item : myModel.getItems()) {
       list.add(item.name);
     }
-  }
-
-  @Override
-  public @NotNull Dimension getDialogInitialSize() {
-    return JBUI.DialogSizes.medium();
   }
 
   private static @NotNull String correctRepositoryRule(@NotNull String input) {

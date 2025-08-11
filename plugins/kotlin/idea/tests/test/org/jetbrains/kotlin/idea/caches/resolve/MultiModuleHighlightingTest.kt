@@ -13,12 +13,10 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.PsiModificationTrackerImpl
 import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.kotlin.analyzer.ResolverForModuleComputationTracker
-import org.jetbrains.kotlin.base.fe10.analysis.ResolutionAnchorCacheServiceImpl
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.base.fe10.analysis.ResolutionAnchorCacheService
+import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.withLibraryToSourceAnalysis
-import org.jetbrains.kotlin.idea.caches.resolve.util.ResolutionAnchorCacheState
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinModuleOutOfCodeBlockModificationTracker
 import org.jetbrains.kotlin.idea.completion.test.withComponentRegistered
@@ -253,7 +251,7 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
         val resolutionAnchorService = ResolutionAnchorCacheService.getInstance(project).safeAs<ResolutionAnchorCacheServiceImpl>()
             ?: error("Anchor service missing")
 
-        val oldResolutionAnchorMappingState = ResolutionAnchorCacheState.getInstance(project).myState
+        val oldResolutionAnchorMappingState = resolutionAnchorService.state
 
         try {
             resolutionAnchorService.setAnchors(anchors)
@@ -261,7 +259,7 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
                 block()
             }
         } finally {
-            ResolutionAnchorCacheState.getInstance(project).loadState(oldResolutionAnchorMappingState)
+            resolutionAnchorService.loadState(oldResolutionAnchorMappingState)
         }
     }
 

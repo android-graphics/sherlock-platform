@@ -2,7 +2,6 @@
 package com.intellij.notification.impl;
 
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Alexander Lobas
@@ -19,10 +18,6 @@ public final class NotificationParentGroupBean {
 
   @Attribute("titlePrefix")
   public String titlePrefix;
-
-  @ApiStatus.Internal
-  public NotificationParentGroupBean() {
-  }
 
   @Override
   public String toString() {

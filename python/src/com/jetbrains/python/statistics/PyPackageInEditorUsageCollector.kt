@@ -8,7 +8,6 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PythonFileType
-import com.jetbrains.python.packaging.normalizePackageName
 
 class PyPackageInEditorUsageCollector : ProjectUsagesCollector() {
   override fun getMetrics(project: Project): Set<MetricEvent> {
@@ -31,7 +30,7 @@ class PyPackageInEditorUsageCollector : ProjectUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("python.packages.in.editor", 5)
+  private val GROUP = EventLogGroup("python.packages.in.editor", 3)
   private val HAS_SDK = EventFields.Boolean("has_sdk")
   private val PYTHON_PACKAGES_IN_EDITOR = GROUP.registerVarargEvent("python.packages.used",
                                                                     PACKAGE_FIELD,

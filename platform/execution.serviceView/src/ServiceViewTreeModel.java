@@ -26,8 +26,9 @@ final class ServiceViewTreeModel extends BaseTreeModel<Object> implements Invoke
     myModel = model;
   }
 
+  @NotNull
   @Override
-  public @NotNull Invoker getInvoker() {
+  public Invoker getInvoker() {
     return myModel.getInvoker();
   }
 

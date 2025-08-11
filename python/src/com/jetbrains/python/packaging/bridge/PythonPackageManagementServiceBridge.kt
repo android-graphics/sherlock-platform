@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.CatchingConsumer
@@ -16,53 +15,88 @@ import com.intellij.webcore.packaging.RepoPackage
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.packaging.common.*
+import com.jetbrains.python.packaging.conda.*
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.packagesByRepository
+import com.jetbrains.python.packaging.management.runPackagingTool
+import com.jetbrains.python.packaging.pip.PipPythonPackageManager
 import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
-import com.jetbrains.python.sdk.conda.isConda
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
-class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPackageManagementService(project, sdk), Disposable {
+class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackageManagementService(project, sdk), Disposable {
 
-  private val scope = project.service<PyPackagingToolWindowService>().serviceScope
+  private val scope = CoroutineScope(Dispatchers.IO)
 
   private val manager: PythonPackageManager
     get() = PythonPackageManager.forSdk(project, sdk)
 
-  var useConda: Boolean = true
+  var useConda = true
+
   val isConda: Boolean
-    get() = sdk.isConda()
+    get() = manager is CondaPackageManager
+
 
   override fun getInstalledPackagesList(): List<InstalledPackage> {
-    if (manager.installedPackages.isEmpty()) runBlockingCancellable {
+    if (manager.installedPackages.isEmpty()) runBlocking {
       manager.reloadPackages()
     }
+    if (isConda) {
+      if (useConda) {
+       return manager.installedPackages.asSequence()
+         .filterIsInstance<CondaPackage>()
+         .filter { it.installedWithPip != useConda }
+         .map { InstalledPackage(it.name, it.version) }
+         .toList()
+      }
+      else {
+        return runBlocking {
+          val result = runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
+            val output = manager.runPackagingTool("list", emptyList(), PyBundle.message("python.packaging.list.progress"))
 
+            val packages = output.lineSequence()
+              .filter { it.isNotBlank() }
+              .map {
+                val line = it.split("\t")
+                PythonPackage(line[0], line[1])
+              }
+              .sortedWith(compareBy(PythonPackage::name))
+              .toList()
+            Result.success(packages)
+          }
+          return@runBlocking if (result.isSuccess)  {
+             result.getOrThrow().map { InstalledPackage(it.name, it.version) }
+          } else emptyList()
+        }
+      }
+    }
     return manager.installedPackages.map { InstalledPackage(it.name, it.version) }
   }
 
   override fun getAllPackages(): List<RepoPackage> {
-    val packagesWithRepositories = manager.repositoryManager.packagesByRepository()
-    return packagesWithRepositories
-      .flatMap { (repository, packages) ->
-        packages.asSequence().map { pkg ->
-          createRepoPackage(pkg, repository)
-        }
-      }
-      .toList()
-  }
-
-  private fun createRepoPackage(pkg: String, repository: PyPackageRepository): RepoPackage {
-    val repositoryUrl = when {
-      repository.isCustom -> repository.repositoryUrl
-      else -> null
+    if (isConda && useConda) {
+      val settings = PyPackagingSettings.getInstance(project)
+      val cache = service<CondaPackageCache>()
+      return manager
+        .repositoryManager
+        .packagesFromRepository(CondaPackageRepository)
+        .asSequence()
+        .map { RepoPackage(it, null, settings.selectLatestVersion(cache[it] ?: emptyList())) }
+        .toMutableList()
     }
-    return RepoPackage(pkg, repositoryUrl, null)
+
+    val hasRepositories = manager
+      .repositoryManager
+      .repositories
+      .any { it !is PyPIPackageRepository && it !is CondaPackageRepository }
+
+    return manager
+      .repositoryManager
+      .packagesByRepository()
+      .filterNot { it.first is CondaPackageRepository }
+      .flatMap { (repo, pkgs) -> pkgs.asSequence().map { RepoPackage(it, if (hasRepositories) repo.repositoryUrl else null) } }
+      .toMutableList()
   }
 
   override fun getAllPackagesCached(): List<RepoPackage> {
@@ -70,8 +104,8 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
   }
 
   override fun reloadAllPackages(): List<RepoPackage> {
-    return runBlockingCancellable {
-      manager.repositoryManager.refreshCaches()
+    return runBlocking {
+      manager.repositoryManager.refreshCashes()
       allPackages
     }
   }
@@ -90,7 +124,7 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
         val specification = specForPackage(repoPackage.name, version, repository)
         runningUnderOldUI = true
         listener.operationStarted(specification.name)
-        val result = manager.installPackage(specification, emptyList(), withBackgroundProgress = true)
+        val result = manager.installPackage(specification)
         val exception = if (result.isFailure) mutableListOf(result.exceptionOrNull() as ExecutionException) else null
         listener.operationFinished(specification.name,
                                    toErrorDescription(exception, mySdk, specification.name))
@@ -109,11 +143,7 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
         manager
           .installedPackages
           .filter { it.name.lowercase() in namesToDelete }
-          .forEach {
-            runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
-              manager.uninstallPackage(it)
-            }
-          }
+          .forEach { manager.uninstallPackage(it) }
 
         listener.operationFinished(namesToDelete.first(), null)
       }
@@ -149,12 +179,15 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
     }
   }
 
-  private fun findRepositoryForPackage(name: String): PyPackageRepository =
-    manager
+  private fun findRepositoryForPackage(name: String): PyPackageRepository {
+    if (manager is CondaPackageManager && useConda) return CondaPackageRepository
+    return manager
       .repositoryManager
       .packagesByRepository()
+      .filterNot { it.first is CondaPackageRepository || it.first is PyPIPackageRepository }
       .firstOrNull { (_, packages) -> name in packages }
       ?.first ?: PyPIPackageRepository
+  }
 
   private fun buildDescription(details: PythonPackageDetails): String {
     return buildString {
@@ -186,8 +219,16 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
     }
   }
 
-  private fun specForPackage(packageName: String, version: String? = null, repository: PyPackageRepository? = null): PythonPackageSpecification =
-    PythonSimplePackageSpecification(packageName, version, repository ?: findRepositoryForPackage(packageName))
+  private fun specForPackage(packageName: String, version: String? = null, repository: PyPackageRepository? = null): PythonPackageSpecification {
+    return when(manager) {
+      is PipPythonPackageManager -> PythonSimplePackageSpecification(packageName, version, repository ?: findRepositoryForPackage(packageName))
+      is CondaPackageManager -> when {
+        useConda -> CondaPackageSpecification(packageName, version)
+        else -> PythonSimplePackageSpecification(packageName, version, repository ?: findRepositoryForPackage(packageName))
+      }
+      else -> error("Unknown package manager")
+    }
+  }
 
   override fun shouldFetchLatestVersionsForOnlyInstalledPackages(): Boolean = !(isConda && useConda)
 
@@ -196,6 +237,6 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
   }
 
   companion object {
-    var runningUnderOldUI: Boolean = false
+    var runningUnderOldUI = false
   }
 }

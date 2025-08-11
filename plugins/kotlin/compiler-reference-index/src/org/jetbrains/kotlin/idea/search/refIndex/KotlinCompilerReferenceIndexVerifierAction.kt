@@ -1,6 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
-@file:OptIn(UnsafeCastFunction::class)
 
 package org.jetbrains.kotlin.idea.search.refIndex
 
@@ -26,7 +25,6 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.util.codeUsageScope
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.search.toHumanReadableString
-import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinCompilerReferenceIndexVerifierAction : AnAction(

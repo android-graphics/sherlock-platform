@@ -55,8 +55,9 @@ public final class ManifestTokenType extends IElementType implements ILeafElemen
     super(debugName, ManifestLanguage.INSTANCE);
   }
 
+  @NotNull
   @Override
-  public @NotNull ASTNode createLeafNode(@NotNull CharSequence text) {
+  public ASTNode createLeafNode(CharSequence text) {
     return new ManifestTokenImpl(this, text);
   }
 }

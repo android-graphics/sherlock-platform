@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -32,11 +32,12 @@ import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.lang.reflect.Type;
 
-final class DomUIFactoryImpl extends DomUIFactory {
+public class DomUIFactoryImpl extends DomUIFactory {
+
   private final ClassMap<Function<DomWrapper<String>, BaseControl>> myCustomControlCreators = new ClassMap<>();
   private final ClassMap<Function<DomElement, TableCellEditor>> myCustomCellEditorCreators = new ClassMap<>();
 
-  DomUIFactoryImpl() {
+  public DomUIFactoryImpl() {
     final Function<DomElement, TableCellEditor> booleanCreator = domElement -> new BooleanTableCellEditor();
     registerCustomCellEditor(Boolean.class, booleanCreator);
     registerCustomCellEditor(boolean.class, booleanCreator);
@@ -59,7 +60,7 @@ final class DomUIFactoryImpl extends DomUIFactory {
   }
 
   @Override
-  public @NotNull UserActivityWatcher createEditorAwareUserActivityWatcher() {
+  public final @NotNull UserActivityWatcher createEditorAwareUserActivityWatcher() {
     return new UserActivityWatcher() {
       private final DocumentListener myListener = new DocumentListener() {
         @Override

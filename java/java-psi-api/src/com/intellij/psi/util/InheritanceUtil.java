@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Condition;
@@ -51,7 +51,7 @@ public final class InheritanceUtil {
   }
 
   @Contract("null, _ -> false")
-  public static boolean isInheritor(@Nullable PsiType type, final @NotNull @NonNls String baseClassName) {
+  public static boolean isInheritor(@Nullable PsiType type, @NotNull @NonNls final String baseClassName) {
     if (type instanceof PsiClassType) {
       PsiUtil.ensureValidType(type);
       return isInheritor(((PsiClassType)type).resolve(), baseClassName);
@@ -129,10 +129,11 @@ public final class InheritanceUtil {
     return findEnclosingInstanceInScope(aClass, scope, isSuperClassAccepted, isTypeParamsAccepted) != null;
   }
 
-  public static @Nullable PsiClass findEnclosingInstanceInScope(@NotNull PsiClass aClass,
-                                                                PsiElement scope,
-                                                                @NotNull Condition<? super PsiClass> isSuperClassAccepted,
-                                                                boolean isTypeParamsAccepted) {
+  @Nullable
+  public static PsiClass findEnclosingInstanceInScope(@NotNull PsiClass aClass,
+                                                      PsiElement scope,
+                                                      @NotNull Condition<? super PsiClass> isSuperClassAccepted,
+                                                      boolean isTypeParamsAccepted) {
     PsiManager manager = aClass.getManager();
     PsiElement place = scope;
     while (place != null && !(place instanceof PsiFile)) {
@@ -172,7 +173,8 @@ public final class InheritanceUtil {
     return true;
   }
 
-  private static @Nullable PsiClass getCircularClass(@NotNull PsiClass aClass, @NotNull Collection<? super PsiClass> usedClasses) {
+  @Nullable
+  private static PsiClass getCircularClass(@NotNull PsiClass aClass, @NotNull Collection<? super PsiClass> usedClasses) {
     if (usedClasses.contains(aClass)) {
       return aClass;
     }
@@ -194,8 +196,9 @@ public final class InheritanceUtil {
     return null;
   }
 
-  private static @Nullable PsiClass getCircularClassInner(@Nullable PsiElement superType,
-                                                          @NotNull Collection<? super PsiClass> usedClasses) {
+  @Nullable
+  private static PsiClass getCircularClassInner(@Nullable PsiElement superType,
+                                                @NotNull Collection<? super PsiClass> usedClasses) {
     while (superType instanceof PsiClass) {
       if (!CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass)superType).getQualifiedName())) {
         PsiClass circularClass = getCircularClass((PsiClass)superType, usedClasses);
@@ -212,7 +215,8 @@ public final class InheritanceUtil {
    * @param aClass a class to check
    * @return a class which is a part of the inheritance loop; null if no circular inheritance was detected
    */
-  public static @Nullable PsiClass getCircularClass(@NotNull PsiClass aClass) {
+  @Nullable
+  public static PsiClass getCircularClass(@NotNull PsiClass aClass) {
     return getCircularClass(aClass, new HashSet<>());
   }
 }

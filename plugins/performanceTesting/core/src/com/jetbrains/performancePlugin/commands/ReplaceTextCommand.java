@@ -35,7 +35,7 @@ public class ReplaceTextCommand extends AbstractCommand {
   protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     final AsyncPromise<Object> result = new AsyncPromise<>();
     Options options = new Options();
-    Args.parse(options, extractCommandArgument(PREFIX).split(" "), false);
+    Args.parse(options, extractCommandArgument(PREFIX).split(" "));
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {

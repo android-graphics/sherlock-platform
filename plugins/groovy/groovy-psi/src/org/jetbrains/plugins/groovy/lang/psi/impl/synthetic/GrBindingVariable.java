@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,7 +24,7 @@ import javax.swing.*;
 public class GrBindingVariable extends GrLightVariable implements GrVariable {
   private final GroovyFile myFile;
 
-  public GrBindingVariable(final @NotNull GroovyFile file, @NotNull String name) {
+  public GrBindingVariable(@NotNull final GroovyFile file, @NotNull String name) {
     super(file.getManager(), name, CommonClassNames.JAVA_LANG_OBJECT, file);
     myFile = file;
   }
@@ -34,13 +34,15 @@ public class GrBindingVariable extends GrLightVariable implements GrVariable {
     return myFile;
   }
 
+  @Nullable
   @Override
-  public @Nullable Icon getIcon(int flags) {
+  public Icon getIcon(int flags) {
     return JetgroovyIcons.Groovy.Variable;
   }
 
+  @Nullable
   @Override
-  public @Nullable GrExpression getInitializerGroovy() {
+  public GrExpression getInitializerGroovy() {
     return null;
   }
 
@@ -49,18 +51,21 @@ public class GrBindingVariable extends GrLightVariable implements GrVariable {
     throw new UnsupportedOperationException();
   }
 
+  @Nullable
   @Override
-  public @Nullable GrTypeElement getTypeElementGroovy() {
+  public GrTypeElement getTypeElementGroovy() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiType getTypeGroovy() {
+  public PsiType getTypeGroovy() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiType getDeclaredType() {
+  public PsiType getDeclaredType() {
     return null;
   }
 
@@ -70,8 +75,9 @@ public class GrBindingVariable extends GrLightVariable implements GrVariable {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getNameIdentifierGroovy() {
+  public PsiElement getNameIdentifierGroovy() {
     return GroovyPsiElementFactory.getInstance(getProject()).createReferenceNameFromText(getName());
   }
 

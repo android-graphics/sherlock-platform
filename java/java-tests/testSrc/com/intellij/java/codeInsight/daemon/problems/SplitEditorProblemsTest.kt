@@ -7,7 +7,6 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
@@ -32,7 +31,7 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
   override fun setUp() {
     super.setUp()
     val project = project
-    project.putUserData(FileEditorManagerKeys.ALLOW_IN_LIGHT_PROJECT, true)
+    project.putUserData(FileEditorManagerImpl.ALLOW_IN_LIGHT_PROJECT, true)
     project.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
     manager = FileEditorManagerImpl(project, (project as ComponentManagerEx).getCoroutineScope().childScope()).also { it.initDockableContentFactory() }
     project.replaceService(FileEditorManager::class.java, manager!!, testRootDisposable)

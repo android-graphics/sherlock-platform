@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl.toplevel;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -62,7 +61,8 @@ public class Context {
     myFilters.add(cl);
   }
 
-  public @NotNull ContextFilter getFilter() {
+  @NotNull
+  public ContextFilter getFilter() {
     if (myFilters.size() == 1) {
       return myFilters.get(0);
     }

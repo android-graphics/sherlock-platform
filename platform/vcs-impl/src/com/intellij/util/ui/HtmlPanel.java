@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -96,11 +96,14 @@ public abstract class HtmlPanel extends JEditorPane implements HyperlinkListener
     }
   }
 
-  protected @NotNull Font getBodyFont() {
+  @NotNull
+  protected Font getBodyFont() {
     return FontUtil.getCommitMessageFont();
   }
 
-  protected abstract @NotNull @Nls String getBody();
+  @NotNull
+  @Nls
+  protected abstract String getBody();
 
   @Override
   public void updateUI() {

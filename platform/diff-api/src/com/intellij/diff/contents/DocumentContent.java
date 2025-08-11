@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.diff.contents;
 
 import com.intellij.diff.util.LineCol;
@@ -26,37 +40,43 @@ public interface DocumentContent extends DiffContent {
    * This file could be used for better syntax highlighting.
    * Some file types can't be highlighted properly depending only on their FileType (ex: SQL dialects, PHP templates).
    */
-  default @Nullable VirtualFile getHighlightFile() { return null; }
+  @Nullable
+  default VirtualFile getHighlightFile() { return null; }
 
   /**
    * Provides a way to open given text place in editor
    */
-  default @Nullable Navigatable getNavigatable(@NotNull LineCol position) { return null; }
+  @Nullable
+  default Navigatable getNavigatable(@NotNull LineCol position) { return null; }
 
   /**
    * @return original file line separator, used to display differences in separators.
    * {@code null} means it is 'Undefined/Not applicable' and will not be compared.
    */
-  default @Nullable LineSeparator getLineSeparator() { return null; }
+  @Nullable
+  default LineSeparator getLineSeparator() { return null; }
 
   /**
    * @return original file charset, used to display differences in files charsets.
    * {@code null} means it is 'Undefined/Not applicable' and will not be compared.
    * @see #hasBom()
    */
-  default @Nullable Charset getCharset() { return null; }
+  @Nullable
+  default Charset getCharset() { return null; }
 
   /**
    * @return original file byte order mark, used to display differences in files charsets.
    * {@code null} means it is 'Undefined/Not applicable' and will not be compared.
    */
-  default @Nullable Boolean hasBom() { return null; }
+  @Nullable
+  default Boolean hasBom() { return null; }
 
   /**
    * @deprecated isn't called by the platform anymore
    */
+  @Nullable
   @Deprecated(forRemoval = true)
-  default @Nullable OpenFileDescriptor getOpenFileDescriptor(int offset) {
+  default OpenFileDescriptor getOpenFileDescriptor(int offset) {
     LineCol position = LineCol.fromOffset(getDocument(), offset);
     return ObjectUtils.tryCast(getNavigatable(position), OpenFileDescriptor.class);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
@@ -9,8 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public final class DefaultPostfixTemplateEditor implements PostfixTemplateEditor {
-  private final @NotNull PostfixTemplateProvider myTemplateProvider;
-  private final @NotNull PostfixTemplate myTemplateToEdit;
+  @NotNull private final PostfixTemplateProvider myTemplateProvider;
+  @NotNull
+  private final PostfixTemplate myTemplateToEdit;
 
   public DefaultPostfixTemplateEditor(@NotNull PostfixTemplateProvider templateProvider, @NotNull PostfixTemplate templateToEdit) {
     myTemplateProvider = templateProvider;
@@ -18,13 +19,15 @@ public final class DefaultPostfixTemplateEditor implements PostfixTemplateEditor
                                                                         : templateToEdit;
   }
 
+  @NotNull
   @Override
-  public @NotNull PostfixTemplate createTemplate(@NotNull String templateId, @NotNull String templateName) {
+  public PostfixTemplate createTemplate(@NotNull String templateId, @NotNull String templateName) {
     return new PostfixTemplateWrapper(templateId, templateName, "." + templateName, myTemplateToEdit, myTemplateProvider);
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent getComponent() {
+  public JComponent getComponent() {
     return new JBPanel();
   }
 

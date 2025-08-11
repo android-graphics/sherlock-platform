@@ -112,8 +112,9 @@ final class PyTypeCheckerInspectionProblemRegistrar {
     }
   }
 
-  private static @NotNull @InspectionMessage String getSingleCalleeProblemMessage(@NotNull PyTypeCheckerInspection.AnalyzeArgumentResult argumentResult,
-                                                                                  @NotNull TypeEvalContext context) {
+  @NotNull
+  private static @InspectionMessage String getSingleCalleeProblemMessage(@NotNull PyTypeCheckerInspection.AnalyzeArgumentResult argumentResult,
+                                                                         @NotNull TypeEvalContext context) {
     final PyType actualType = argumentResult.getActualType();
     final PyType expectedType = argumentResult.getExpectedType();
 
@@ -184,7 +185,8 @@ final class PyTypeCheckerInspectionProblemRegistrar {
     }
   }
 
-  private static @NotNull PsiElement getMultiCalleeElementToHighlight(@NotNull PyCallSiteExpression callSite) {
+  @NotNull
+  private static PsiElement getMultiCalleeElementToHighlight(@NotNull PyCallSiteExpression callSite) {
     if (callSite instanceof PyCallExpression call) {
       final PyArgumentList argumentList = call.getArgumentList();
 
@@ -205,10 +207,11 @@ final class PyTypeCheckerInspectionProblemRegistrar {
     }
   }
 
-  private static @NotNull @InspectionMessage String getMultiCalleeProblemMessage(@NotNull List<PyType> argumentTypes,
-                                                                                 @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
-                                                                                 @NotNull TypeEvalContext context,
-                                                                                 boolean isOnTheFly) {
+  @NotNull
+  private static @InspectionMessage String getMultiCalleeProblemMessage(@NotNull List<PyType> argumentTypes,
+                                                                        @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
+                                                                        @NotNull TypeEvalContext context,
+                                                                        boolean isOnTheFly) {
     final String actualTypesRepresentation = getMultiCalleeActualTypesRepresentation(argumentTypes, context);
     final String expectedTypesRepresentation = getMultiCalleePossibleExpectedTypesRepresentation(calleesResults, context, isOnTheFly);
 
@@ -230,7 +233,8 @@ final class PyTypeCheckerInspectionProblemRegistrar {
     return holder != null && holder.isOnTheFly();
   }
 
-  private static @Nullable Set<String> getAttributes(@NotNull PyType type, @NotNull TypeEvalContext context) {
+  @Nullable
+  private static Set<String> getAttributes(@NotNull PyType type, @NotNull TypeEvalContext context) {
     if (type instanceof PyStructuralType) {
       return ((PyStructuralType)type).getAttributeNames();
     }
@@ -240,17 +244,19 @@ final class PyTypeCheckerInspectionProblemRegistrar {
     return null;
   }
 
-  private static @NotNull @NlsSafe String getMultiCalleeActualTypesRepresentation(@NotNull List<PyType> argumentTypes,
-                                                                                  @NotNull TypeEvalContext context) {
+  @NotNull
+  private static @NlsSafe String getMultiCalleeActualTypesRepresentation(@NotNull List<PyType> argumentTypes,
+                                                                         @NotNull TypeEvalContext context) {
     return argumentTypes
       .stream()
       .map(type -> PythonDocumentationProvider.getTypeName(type, context))
       .collect(Collectors.joining(", ", "(", ")"));
   }
 
-  private static @NotNull @NlsSafe String getMultiCalleePossibleExpectedTypesRepresentation(@NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
-                                                                                            @NotNull TypeEvalContext context,
-                                                                                            boolean isOnTheFly) {
+  @NotNull
+  private static @NlsSafe String getMultiCalleePossibleExpectedTypesRepresentation(@NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
+                                                                                   @NotNull TypeEvalContext context,
+                                                                                   boolean isOnTheFly) {
     return calleesResults
       .stream()
       .map(calleeResult -> {
@@ -260,8 +266,9 @@ final class PyTypeCheckerInspectionProblemRegistrar {
       .collect(Collectors.joining(isOnTheFly ? "<br>" : " "));
   }
 
-  private static @NotNull String getMultiCalleeExpectedTypesRepresentation(@NotNull List<PyTypeCheckerInspection.AnalyzeArgumentResult> calleeResults,
-                                                                           @NotNull TypeEvalContext context) {
+  @NotNull
+  private static String getMultiCalleeExpectedTypesRepresentation(@NotNull List<PyTypeCheckerInspection.AnalyzeArgumentResult> calleeResults,
+                                                                  @NotNull TypeEvalContext context) {
     return calleeResults
       .stream()
       .map(argumentResult -> ObjectUtils.chooseNotNull(argumentResult.getExpectedTypeAfterSubstitution(), argumentResult.getExpectedType()))

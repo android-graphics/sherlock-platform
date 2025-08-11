@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,8 +42,9 @@ public final class InvertBooleanProcessor extends BaseRefactoringProcessor {
     final boolean canRename =
       namedElement instanceof PsiNamedElement && !Objects.equals(((PsiNamedElement)namedElement).getName(), myNewName);
     myRenameProcessor = canRename ? new RenameProcessor(project, namedElement, newName, false, false) {
+      @NotNull
       @Override
-      protected @NotNull ConflictsDialog createConflictsDialog(@NotNull MultiMap<PsiElement, String> conflicts, final UsageInfo @Nullable [] usages) {
+      protected ConflictsDialog createConflictsDialog(@NotNull MultiMap<PsiElement, String> conflicts, final UsageInfo @Nullable [] usages) {
         return new ConflictsDialog(myProject, conflicts, usages == null ? null : () -> InvertBooleanProcessor.this.execute(usages), false, true);
       }
 
@@ -58,7 +59,8 @@ public final class InvertBooleanProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  @NotNull
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new InvertBooleanUsageViewDescriptor(myElement);
   }
 
@@ -166,8 +168,9 @@ public final class InvertBooleanProcessor extends BaseRefactoringProcessor {
     myDelegate.invertElementInitializer(myElement);
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getCommandName() {
+  protected String getCommandName() {
     return InvertBooleanHandler.getRefactoringName();
   }
 }

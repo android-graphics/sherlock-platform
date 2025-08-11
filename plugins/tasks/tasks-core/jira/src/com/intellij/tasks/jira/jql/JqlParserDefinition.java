@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.jira.jql;
 
 import com.intellij.lang.ASTNode;
@@ -19,8 +19,9 @@ import org.jetbrains.annotations.NotNull;
 public class JqlParserDefinition implements ParserDefinition {
   private static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType(JqlLanguage.INSTANCE);
 
+  @NotNull
   @Override
-  public @NotNull Lexer createLexer(Project project) {
+  public Lexer createLexer(Project project) {
     return new JqlLexer();
   }
 
@@ -34,23 +35,27 @@ public class JqlParserDefinition implements ParserDefinition {
     return FILE_ELEMENT_TYPE;
   }
 
+  @NotNull
   @Override
-  public @NotNull TokenSet getWhitespaceTokens() {
+  public TokenSet getWhitespaceTokens() {
     return JqlTokenTypes.WHITESPACES;
   }
 
+  @NotNull
   @Override
-  public @NotNull TokenSet getCommentTokens() {
+  public TokenSet getCommentTokens() {
     return TokenSet.EMPTY;
   }
 
+  @NotNull
   @Override
-  public @NotNull TokenSet getStringLiteralElements() {
+  public TokenSet getStringLiteralElements() {
     return TokenSet.create(JqlTokenTypes.STRING_LITERAL);
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement createElement(ASTNode node) {
+  public PsiElement createElement(ASTNode node) {
     return JqlElementTypes.Factory.createElement(node);
   }
 

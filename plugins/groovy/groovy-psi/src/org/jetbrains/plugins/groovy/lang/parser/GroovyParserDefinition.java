@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.parser;
 
@@ -33,7 +33,8 @@ public final class GroovyParserDefinition implements ParserDefinition {
   public static final IStubFileElementType GROOVY_FILE = new GrStubFileElementType(GroovyLanguage.INSTANCE);
 
   @Override
-  public @NotNull Lexer createLexer(Project project) {
+  @NotNull
+  public Lexer createLexer(Project project) {
     return new GroovyLexer();
   }
 
@@ -48,17 +49,20 @@ public final class GroovyParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public @NotNull TokenSet getCommentTokens() {
+  @NotNull
+  public TokenSet getCommentTokens() {
     return TokenSets.COMMENTS_TOKEN_SET;
   }
 
   @Override
-  public @NotNull TokenSet getStringLiteralElements() {
+  @NotNull
+  public TokenSet getStringLiteralElements() {
     return TokenSets.STRING_LITERALS;
   }
 
   @Override
-  public @NotNull PsiElement createElement(ASTNode node) {
+  @NotNull
+  public PsiElement createElement(ASTNode node) {
     return GroovyPsiCreator.createElement(node);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -41,8 +41,7 @@ public final class ClasspathCache {
     }
   }
 
-  @ApiStatus.Internal
-  public static final class LoaderDataBuilder implements IndexRegistrar {
+  static final class LoaderDataBuilder implements IndexRegistrar {
     final StrippedLongSet classPackageHashes = new StrippedLongSet();
     final StrippedLongSet resourcePackageHashes = new StrippedLongSet();
 

@@ -24,7 +24,7 @@
         <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinBuildProcessParametersProvider"/>
 
         <projectService serviceInterface="org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunner"
-                        serviceImplementation="org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunnerK1"/>
+                        serviceImplementation="org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunner"/>
 
         <framework.type implementation="org.jetbrains.kotlin.idea.framework.JavaFrameworkType"/>
 
@@ -53,6 +53,8 @@
 
         <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.versions.UnsupportedAbiVersionNotificationPanelProvider"/>
 
+        <scratch.creationHelper language="kotlin"
+                                implementationClass="org.jetbrains.kotlin.idea.scratch.KtScratchFileCreationHelper"/>
         <runLineMarkerContributor language="kotlin"
                                   implementationClass="org.jetbrains.kotlin.idea.scratch.actions.ScratchRunLineMarkerContributor"/>
 
@@ -80,6 +82,11 @@
                    description="Whether to use Psi Source type checking optimization"
                    defaultValue="true"
                    restartRequired="true"/>
+
+      <registryKey key="kotlin.jps.instrument.bytecode"
+                   description="Enable bytecode instrumentation for Kotlin classes"
+                   defaultValue="false"
+                   restartRequired="false"/>
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.uast">
@@ -103,6 +110,7 @@
         <ultraLightClassModifierExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.AllOpenUltraLightClassModifierExtension"/>
 
         <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.IdeNoArgComponentContainerContributor"/>
+        <expressionCodegenExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.IdeNoArgExpressionCodegenExtension"/>
         <ultraLightClassModifierExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.NoArgUltraLightClassModifierExtension"/>
         <defaultErrorMessages implementation="org.jetbrains.kotlin.noarg.diagnostic.DefaultErrorMessagesNoArg"/>
 

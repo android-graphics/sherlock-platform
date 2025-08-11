@@ -146,7 +146,8 @@ public final class InspectionTree extends Tree {
     return null;
   }
 
-  public @Nullable InspectionToolWrapper<?,?> getSelectedToolWrapper(boolean allowDummy) {
+  @Nullable
+  public InspectionToolWrapper<?,?> getSelectedToolWrapper(boolean allowDummy) {
     return getSelectedToolWrapper(allowDummy, getSelectionPaths());
   }
 
@@ -198,7 +199,8 @@ public final class InspectionTree extends Tree {
     return resultWrapper;
   }
 
-  public static @Nullable InspectionToolWrapper<?, ?> findWrapper(Object[] selectedNode) {
+  @Nullable
+  public static InspectionToolWrapper<?, ?> findWrapper(Object[] selectedNode) {
     InspectionToolWrapper<?, ?> resultWrapper = null;
     for (Object node : selectedNode) {
       if (node instanceof InspectionGroupNode) {
@@ -342,10 +344,11 @@ public final class InspectionTree extends Tree {
     return BatchModeDescriptorsUtil.flattenDescriptors(getSelectedDescriptorPacks(false, null, false, null));
   }
 
-  public @NotNull List<CommonProblemDescriptor[]> getSelectedDescriptorPacks(boolean sortedByPosition,
-                                                                             @Nullable Set<? super VirtualFile> readOnlyFilesSink,
-                                                                             boolean allowResolved,
-                                                                             TreePath[] paths) {
+  @NotNull
+  public List<CommonProblemDescriptor[]> getSelectedDescriptorPacks(boolean sortedByPosition,
+                                                                    @Nullable Set<? super VirtualFile> readOnlyFilesSink,
+                                                                    boolean allowResolved,
+                                                                    TreePath[] paths) {
     if (paths == null) {
       ThreadingAssertions.assertEventDispatchThread();
       paths = getSelectionPaths();
@@ -366,10 +369,11 @@ public final class InspectionTree extends Tree {
      return BatchModeDescriptorsUtil.flattenDescriptors(descriptors);
   }
   
-  private @NotNull List<CommonProblemDescriptor[]> getSelectedDescriptors(boolean sortedByPosition,
-                                                                          @Nullable Set<? super VirtualFile> readOnlyFilesSink,
-                                                                          boolean allowResolved,
-                                                                          @NotNull List<? extends InspectionTreeNode> nodes) {
+  @NotNull
+  private List<CommonProblemDescriptor[]> getSelectedDescriptors(boolean sortedByPosition,
+                                                                 @Nullable Set<? super VirtualFile> readOnlyFilesSink,
+                                                                 boolean allowResolved,
+                                                                 @NotNull List<? extends InspectionTreeNode> nodes) {
     MultiMap<Object, CommonProblemDescriptor> parentToChildNode = new MultiMap<>();
     TreeTraversal.PLAIN_BFS.traversal(
         nodes,
@@ -414,10 +418,11 @@ public final class InspectionTree extends Tree {
     return myModel.createInspectionNode(toolWrapper, myView.getCurrentProfile(), parent);
   }
 
-  private @NotNull InspectionTreeNode getToolParentNode(@NotNull InspectionToolWrapper<?,?> toolWrapper,
-                                                        @NotNull HighlightDisplayLevel errorLevel,
-                                                        boolean groupedBySeverity,
-                                                        boolean isSingleInspectionRun) {
+  @NotNull
+  private InspectionTreeNode getToolParentNode(@NotNull InspectionToolWrapper<?,?> toolWrapper,
+                                               @NotNull HighlightDisplayLevel errorLevel,
+                                               boolean groupedBySeverity,
+                                               boolean isSingleInspectionRun) {
     //synchronize
     if (!groupedBySeverity && isSingleInspectionRun) {
       return myModel.getRoot();
@@ -555,7 +560,8 @@ public final class InspectionTree extends Tree {
     return false;
   }
 
-  public @NotNull GlobalInspectionContextImpl getContext() {
+  @NotNull
+  public GlobalInspectionContextImpl getContext() {
     return myView.getGlobalInspectionContext();
   }
 
@@ -570,7 +576,8 @@ public final class InspectionTree extends Tree {
     return ArrayUtilRt.toStringArray(path);
   }
 
-  private static @Nullable Object getVirtualFileOrEntity(@Nullable RefEntity entity) {
+  @Nullable
+  private static Object getVirtualFileOrEntity(@Nullable RefEntity entity) {
     if (entity instanceof RefElement) {
       SmartPsiElementPointer<?> pointer = ((RefElement)entity).getPointer();
       if (pointer != null) {
@@ -583,7 +590,8 @@ public final class InspectionTree extends Tree {
     return entity;
   }
 
-  public static @Nullable PsiElement getSelectedElement(@NotNull AnActionEvent e) {
+  @Nullable
+  public static PsiElement getSelectedElement(@NotNull AnActionEvent e) {
     PsiElement element = e.getData(CommonDataKeys.PSI_ELEMENT);
     if (element != null) {
       return element;
@@ -645,13 +653,15 @@ public final class InspectionTree extends Tree {
       }
     }
     
+    @NotNull
     @Override
-    public @NotNull String getNextOccurenceActionName() {
+    public String getNextOccurenceActionName() {
       return InspectionsBundle.message(ExperimentalUI.isNewUI() ? "inspection.action.go.next.new" : "inspection.action.go.next");
     }
 
+    @NotNull
     @Override
-    public @NotNull String getPreviousOccurenceActionName() {
+    public String getPreviousOccurenceActionName() {
       return InspectionsBundle.message(ExperimentalUI.isNewUI() ? "inspection.action.go.prev.new" : "inspection.action.go.prev");
     }
 
@@ -734,7 +744,8 @@ public final class InspectionTree extends Tree {
       return node instanceof ProblemDescriptionNode;
     }
 
-    private static @Nullable Navigatable createDescriptorForNode(@NotNull InspectionTreeNode node) {
+    @Nullable
+    private static Navigatable createDescriptorForNode(@NotNull InspectionTreeNode node) {
       if (node.isExcluded()) return null;
       if (node instanceof RefElementNode refNode) {
         final RefEntity element = refNode.getElement();
@@ -753,11 +764,13 @@ public final class InspectionTree extends Tree {
       return null;
     }
 
-    private static @Nullable Navigatable navigate(final CommonProblemDescriptor descriptor) {
+    @Nullable
+    private static Navigatable navigate(final CommonProblemDescriptor descriptor) {
       return InspectionResultsView.getSelectedNavigatable(descriptor);
     }
 
-    private static @Nullable Navigatable getOpenFileDescriptor(final @NotNull RefElement refElement) {
+    @Nullable
+    private static Navigatable getOpenFileDescriptor(final @NotNull RefElement refElement) {
       PsiElement psiElement = refElement.getPsiElement();
       if (psiElement == null) return null;
       final PsiFile containingFile = psiElement.getContainingFile();

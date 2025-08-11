@@ -22,8 +22,9 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
       import org.jetbrains.annotations.NotNull;
 
       class Foo {
+        @NotNull
         @Contract(pure = true)
-        static @NotNull String f<caret>oo() {
+        static String f<caret>oo() {
           return "s";
         }
       }""");

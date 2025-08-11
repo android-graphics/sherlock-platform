@@ -25,12 +25,13 @@ public class PyMakeMethodStaticQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.make.static");
   }
 
   @Override
-  public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     final PyFunction problemFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     if (problemFunction == null) return;
@@ -60,7 +61,7 @@ public class PyMakeMethodStaticQuickFix implements LocalQuickFix {
     PyUtil.addDecorator(function, "@" + PyNames.STATICMETHOD);
   }
 
-  private static void updateUsage(final @NotNull PyReferenceExpression element) {
+  private static void updateUsage(@NotNull final PyReferenceExpression element) {
     final PyExpression qualifier = element.getQualifier();
     if (qualifier == null) return;
     final PsiReference reference = qualifier.getReference();
@@ -71,7 +72,7 @@ public class PyMakeMethodStaticQuickFix implements LocalQuickFix {
     }
   }
 
-  private static void updateArgumentList(final @NotNull PyReferenceExpression element) {
+  private static void updateArgumentList(@NotNull final PyReferenceExpression element) {
     final PyCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
     if (callExpression == null) return;
     final PyArgumentList argumentList = callExpression.getArgumentList();

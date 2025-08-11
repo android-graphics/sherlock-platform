@@ -104,8 +104,8 @@ class GradleResolveTest: GradleCodeInsightTestCase() {
   }
 
   companion object {
-    private val BUILD_SRC_FIXTURE = GradleTestFixtureBuilder.create("GradleResolveTest-buildSrc") { gradleVersion ->
-      withSettingsFile(gradleVersion) {
+    private val BUILD_SRC_FIXTURE = GradleTestFixtureBuilder.create("GradleResolveTest-buildSrc") {
+      withSettingsFile {
         setProjectName("GradleResolveTest-buildSrc")
       }
       withFile("buildSrc/src/main/java/MyTask.java", """

@@ -2,16 +2,20 @@
 
 package org.jetbrains.kotlin.idea.base.platforms
 
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
+import org.jetbrains.kotlin.utils.LibraryUtils
 import org.jetbrains.kotlin.utils.PathUtil
+import java.io.File
 import java.util.regex.Pattern
 
 @ApiStatus.Internal
 object KotlinJavaScriptStdlibDetectorFacility : StdlibDetectorFacility() {
+    private val IS_JS_LIBRARY_STD_LIB = Key.create<Boolean>("IS_JS_LIBRARY_STD_LIB")
     private val KOTLIN_JS_LIBRARY_KLIB_PATTERN = Pattern.compile("kotlin-stdlib-js.*\\.klib")
 
     override val supportedLibraryKind: KotlinLibraryKind
@@ -19,7 +23,6 @@ object KotlinJavaScriptStdlibDetectorFacility : StdlibDetectorFacility() {
 
     override fun getStdlibJar(roots: List<VirtualFile>): VirtualFile? {
         for (root in roots) {
-            // KLIBs fall under the JAR file system as well
             if (root.fileSystem.protocol !== StandardFileSystems.JAR_PROTOCOL) continue
 
             val name = root.url.substringBefore("!/").substringAfterLast('/')
@@ -30,7 +33,16 @@ object KotlinJavaScriptStdlibDetectorFacility : StdlibDetectorFacility() {
                 || KOTLIN_JS_LIBRARY_KLIB_PATTERN.matcher(name).matches()
             ) {
                 val jar = VfsUtilCore.getVirtualFileForJar(root) ?: continue
-                return jar
+                var isJSStdLib = jar.getUserData(IS_JS_LIBRARY_STD_LIB)
+                if (isJSStdLib == null) {
+                    isJSStdLib = KOTLIN_JS_LIBRARY_KLIB_PATTERN.matcher(name).matches()
+                            || LibraryUtils.isKotlinJavascriptStdLibrary(File(jar.path))
+                    jar.putUserData(IS_JS_LIBRARY_STD_LIB, isJSStdLib)
+                }
+
+                if (isJSStdLib) {
+                    return jar
+                }
             }
         }
 

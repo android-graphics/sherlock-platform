@@ -62,7 +62,8 @@ public final class FieldMayBeStaticInspection extends BaseInspection {
     return new ChangeModifierFix(PsiModifier.STATIC);
   }
 
-  private static final class FieldMayBeStaticVisitor extends BaseInspectionVisitor {
+  private static class FieldMayBeStaticVisitor extends BaseInspectionVisitor {
+
     @Override
     public void visitField(@NotNull PsiField field) {
       if (field.hasModifierProperty(PsiModifier.STATIC)) {

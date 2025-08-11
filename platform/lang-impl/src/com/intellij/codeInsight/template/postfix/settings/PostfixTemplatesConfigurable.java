@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.application.options.editor.EditorOptionsProvider;
@@ -22,31 +22,34 @@ import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ToolbarDecorator;
-import com.intellij.ui.components.JBPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
-@ApiStatus.Internal
 @SuppressWarnings("rawtypes")
 public final class PostfixTemplatesConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll,
                                                            Configurable.WithEpDependencies {
   public static final Comparator<PostfixTemplate> TEMPLATE_COMPARATOR = Comparator.comparing(PostfixTemplate::getKey);
 
-  private @Nullable PostfixTemplatesCheckboxTree myCheckboxTree;
+  @Nullable
+  private PostfixTemplatesCheckboxTree myCheckboxTree;
 
-  private final @NotNull PostfixTemplatesSettings myTemplatesSettings;
+  @NotNull
+  private final PostfixTemplatesSettings myTemplatesSettings;
 
-  private @Nullable PostfixDescriptionPanel myInnerPostfixDescriptionPanel;
+  @Nullable
+  private PostfixDescriptionPanel myInnerPostfixDescriptionPanel;
 
   private final PostfixTemplatesConfigurableUi myUi = new PostfixTemplatesConfigurableUi();
   private final Alarm myUpdateDescriptionPanelAlarm = new Alarm();
@@ -66,12 +69,14 @@ public final class PostfixTemplatesConfigurable implements SearchableConfigurabl
     myUi.getDescriptionPanel().setLayout(new BorderLayout());
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<BaseExtensionPointName<?>> getDependencies() {
+  public Collection<BaseExtensionPointName<?>> getDependencies() {
     return Collections.singleton(LanguagePostfixTemplate.EP_NAME);
   }
 
-  private static @Unmodifiable @NotNull List<PostfixTemplateProvider> getProviders() {
+  @NotNull
+  private static List<PostfixTemplateProvider> getProviders() {
     List<LanguageExtensionPoint> list = LanguagePostfixTemplate.EP_NAME.getExtensionList();
     return ContainerUtil.map(list, el -> (PostfixTemplateProvider)el.getInstance());
   }
@@ -133,27 +138,32 @@ public final class PostfixTemplatesConfigurable implements SearchableConfigurabl
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull String getId() {
+  public String getId() {
     return "reference.settingsdialog.IDE.editor.postfix.templates";
   }
 
+  @Nullable
   @Override
-  public @Nullable String getHelpTopic() {
+  public String getHelpTopic() {
     return getId();
   }
 
+  @Nls
   @Override
-  public @Nls String getDisplayName() {
+  public String getDisplayName() {
     return CodeInsightBundle.message("configurable.PostfixTemplatesConfigurable.display.name");
   }
 
-  public @Nullable PostfixTemplatesCheckboxTree getTemplatesTree() {
+  @Nullable
+  public PostfixTemplatesCheckboxTree getTemplatesTree() {
     return myCheckboxTree;
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent createComponent() {
+  public JComponent createComponent() {
     if (null == myInnerPostfixDescriptionPanel) {
       myInnerPostfixDescriptionPanel = new PostfixDescriptionPanel();
       myUi.getDescriptionPanel().add(myInnerPostfixDescriptionPanel.getComponent());
@@ -162,9 +172,7 @@ public final class PostfixTemplatesConfigurable implements SearchableConfigurabl
       createTree();
     }
 
-    JBPanel panel = (JBPanel)myUi.getPanel();
-    panel.withMinimumWidth(500);
-    return panel;
+    return myUi.getPanel();
   }
 
   @Override
@@ -197,7 +205,8 @@ public final class PostfixTemplatesConfigurable implements SearchableConfigurabl
     }
   }
 
-  private static @NotNull MultiMap<PostfixTemplateProvider, PostfixTemplate> getProviderToTemplatesMap() {
+  @NotNull
+  private static MultiMap<PostfixTemplateProvider, PostfixTemplate> getProviderToTemplatesMap() {
     MultiMap<PostfixTemplateProvider, PostfixTemplate> templatesMap = MultiMap.create();
 
     for (LanguageExtensionPoint<?> extension : LanguagePostfixTemplate.EP_NAME.getExtensionList()) {

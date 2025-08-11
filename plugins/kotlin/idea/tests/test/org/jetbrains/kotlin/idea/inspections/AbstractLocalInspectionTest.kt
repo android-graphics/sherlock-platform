@@ -6,6 +6,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.intention.EmptyIntentionAction
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.modcommand.ActionContext
@@ -14,7 +15,6 @@ import com.intellij.modcommand.ModCommandExecutor
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
@@ -23,18 +23,14 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.io.write
 import com.intellij.util.lang.JavaVersion
+import junit.framework.TestCase
 import org.jdom.Element
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
 import org.jetbrains.kotlin.idea.intentions.computeOnBackground
-import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
-import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.AFTER_ERROR_DIRECTIVE
-import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
@@ -72,13 +68,13 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
         if (candidateFiles.isEmpty()) {
             throw AssertionError(
-                "$inspectionFileName file is not found for " + testDataFile +
+                ".inspection file is not found for " + testDataFile +
                         "\nAdd it to base directory of test data. It should contain fully-qualified name of inspection class."
             )
         }
         if (candidateFiles.size > 1) {
             throw AssertionError(
-                "Several $inspectionFileName files are available for " + testDataFile +
+                "Several .inspection files are available for " + testDataFile +
                         "\nPlease remove some of them\n" + candidateFiles
             )
         }
@@ -89,21 +85,10 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
     protected open fun doTest(path: String) {
         val mainFile = File(dataFilePath(fileName()))
-
-        val inspection: LocalInspectionTool = try {
-            createInspection(mainFile)
-        } catch (e: Throwable) {
-            val shouldBeIgnored =
-                InTextDirectivesUtils.isDirectiveDefined(FileUtil.loadFile(mainFile), IgnoreTests.DIRECTIVES.of(pluginMode))
-            if (shouldBeIgnored) {
-                return
-            } else {
-                throw e
-            }
-        }
+        val inspection = createInspection(mainFile)
 
         val fileText = FileUtil.loadFile(mainFile, true)
-        assertTrue("\"<caret>\" is missing in file \"$mainFile\"", fileText.contains("<caret>"))
+        TestCase.assertTrue("\"<caret>\" is missing in file \"$mainFile\"", fileText.contains("<caret>"))
 
         withCustomCompilerOptions(fileText, project, module) {
             val minJavaVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// MIN_JAVA_VERSION: ")?.toInt()
@@ -111,16 +96,15 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
                 return@withCustomCompilerOptions
             }
 
+            checkForUnexpectedErrors()
 
             val extraFileNames = findExtraFilesForTest(mainFile)
 
             myFixture.configureByFiles(*(listOf(mainFile.name) + extraFileNames).toTypedArray()).first()
 
-            val ktFile = myFixture.file as KtFile
-            if (ktFile.isScript()) {
-                ScriptConfigurationManager.updateScriptDependenciesSynchronously(ktFile)
+            if ((myFixture.file as? KtFile)?.isScript() == true) {
+                ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
             }
-            checkForUnexpectedErrors(mainFile, ktFile, fileText, beforeCheck = true)
 
             doTestFor(mainFile, inspection, fileText)
 
@@ -133,7 +117,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
       These "extra" file names should be of the form: "xxx.1.blah", "xxx.2.foo", "xxx.3.xml" etc.
       I.e., they should start with the main file name, followed by sequential number 1,2,3..., followed by any extension.
      */
-    protected fun findExtraFilesForTest(mainFile: File): List<String> {
+    private fun findExtraFilesForTest(mainFile: File): List<String> {
         var i = 1
         val extraFileNames = mutableListOf<String>()
         extraFileLoop@ while (true) {
@@ -162,38 +146,16 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         return extraFileNames
     }
 
-    private fun checkForUnexpectedErrors(mainFile: File, ktFile: KtFile, fileText: String, beforeCheck: Boolean) {
-        if (beforeCheck) {
-            val skipErrorsBeforeCheck = InTextDirectivesUtils.findLinesWithPrefixesRemoved(
-                fileText,
-                *skipErrorsBeforeCheckDirectives.toTypedArray()
-            ).isNotEmpty()
-            if (!skipErrorsBeforeCheck) {
-                checkForErrorsBefore(mainFile, ktFile, fileText)
-            }
-        } else {
-            val skipErrorsAfterCheck = InTextDirectivesUtils.findLinesWithPrefixesRemoved(
-                fileText,
-                *skipErrorsAfterCheckDirectives.toTypedArray()
-            ).isNotEmpty()
-            if (!skipErrorsAfterCheck) {
-                checkForErrorsAfter(mainFile, ktFile, fileText)
-            }
+    private fun checkForUnexpectedErrors() {
+        val ktFile = file as? KtFile ?: return
+        val fileText = ktFile.text
+        if (!InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER")) {
+            checkForUnexpectedErrors(fileText)
         }
     }
 
-    protected open val skipErrorsBeforeCheckDirectives: List<String> =
-        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_BEFORE")
-
-    protected open val skipErrorsAfterCheckDirectives: List<String> =
-        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_AFTER")
-
-    protected open fun checkForErrorsBefore(mainFile: File, ktFile: KtFile, fileText: String) {
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
-    }
-
-    protected open fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, directive = AFTER_ERROR_DIRECTIVE)
+    protected open fun checkForUnexpectedErrors(fileText: String) {
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(file as KtFile)
     }
 
     protected fun runInspectionWithFixesAndCheck(
@@ -221,12 +183,14 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
         val highlightInfos = collectHighlightInfos()
 
-        val message = if (problemExpected)
-            "Expected at least one problem at caret, but got none"
-        else
-            "No problems should have been detected at caret, but got ${highlightInfos.size} problems:\n " +
-                    "${highlightInfos.joinToString(separator = "\n")}"
-        assertTrue(message, problemExpected == highlightInfos.isNotEmpty())
+        assertTrue(
+            if (!problemExpected)
+                "No problems should be detected at caret\n" +
+                        "Detected problems: ${highlightInfos.joinToString { it.description }}"
+            else
+                "Expected at least one problem at caret",
+            problemExpected == highlightInfos.isNotEmpty()
+        )
 
         if (!problemExpected || highlightInfos.isEmpty()) return false
 
@@ -250,16 +214,16 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             )
         }
 
-        val allLocalFixActions: MutableList<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> = mutableListOf()
+        val allLocalFixActions:MutableList<IntentionAction> = ArrayList()
         highlightInfos.forEach { info ->
-            info.findRegisteredQuickFix<Any?> { desc, fixRange ->
-                allLocalFixActions.add(desc to fixRange)
+            info.findRegisteredQuickFix<Any?> { desc, _ ->
+                allLocalFixActions.add(desc.action)
                 null
             }
         }
 
         if (allLocalFixActions.isNotEmpty()) {
-            val actions = allLocalFixActions.map { it.first.action.text }
+            val actions = allLocalFixActions.map { it.text }
             noLocalFixTextStrings.forEach {
                 assertTrue(
                     "Expected no `$it` fix action",
@@ -271,21 +235,20 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         val localFixActions = if (localFixTextString == null || localFixTextString == "none") {
             allLocalFixActions
         } else {
-            allLocalFixActions
-                .filter { fix -> fix.first.action.text == localFixTextString }
-                .selectActionsWithMostSpecificRanges()
+            allLocalFixActions.filter { fix -> fix.text == localFixTextString }
         }
 
-        val availableDescription = allLocalFixActions.joinToString { "'${it.first.action.text}'" }
+        val availableDescription = allLocalFixActions.joinToString { "'${it.text}'" }
 
         val fixDescription = localFixTextString?.let { "with specified text '$localFixTextString'" } ?: ""
         if (localFixTextString != "none") {
-            assertTrue("Fix '$fixDescription' not found among ${allLocalFixActions.size} actions available:\n $availableDescription",
+            assertTrue(
+              "Fix $fixDescription not found in actions available:\n $availableDescription",
               localFixActions.isNotEmpty()
             )
         }
 
-        val localFixAction = localFixActions.singleOrNull { it.first.action !is EmptyIntentionAction }?.first?.action
+        val localFixAction = localFixActions.singleOrNull { it !is EmptyIntentionAction }
         if (localFixTextString == "none") {
             assertTrue("Expected no fix action, actual: `${localFixAction?.text}`", localFixAction == null)
             return false
@@ -332,48 +295,6 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         }
     }
 
-    /**
-     * Selects and returns a list of [HighlightInfo.IntentionActionDescriptor] with the most specific ranges.
-     *
-     * The method sorts the given actions by their start and end offsets, ensuring that within
-     * equal start offsets, the smaller range is preferred.
-     * It then iterates through the sorted list to remove any actions whose ranges are fully
-     * contained within the ranges of other actions, effectively choosing the most specific
-     * range for each set of overlapping ranges.
-     */
-    private fun List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>>.selectActionsWithMostSpecificRanges(): List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> {
-        val originalActions = this
-
-        val sortedActions = originalActions
-            .sortedWith(compareBy({ it.second.startOffset }, { it.second.endOffset })) // sort by ranges
-            .distinctBy { it.second.startOffset } // if start offsets are equals, the first range is the best possible
-
-        val mostSpecificActions = mutableListOf<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>>()
-
-        for (action in sortedActions) {
-            val last = mostSpecificActions.lastOrNull()
-
-            if (last == null) {
-                mostSpecificActions += action
-                continue
-            }
-
-            if (last.second.contains(action.second)) {
-                // this range is more specific
-                mostSpecificActions.removeLast()
-                mostSpecificActions += action
-            } else {
-                require(last.second.startOffset < action.second.startOffset)
-                require(last.second.endOffset < action.second.endOffset)
-
-                // this range only intersects with the previous; it should be considered on its own
-                mostSpecificActions += action
-            }
-        }
-
-        return mostSpecificActions
-    }
-
     protected open fun passesToIgnore(): IntArray {
         return intArrayOf(
             Pass.LINE_MARKERS,
@@ -387,7 +308,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
     }
 
     protected open fun doTestFor(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.of(pluginMode), "after") {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_K1, "after") {
             doTestForInternal(mainFile, inspection, fileText)
         }
     }
@@ -422,7 +343,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
                 noLocalFixTextStrings,
             )
         ) {
-            assertFalse("${afterFileAbsolutePath.fileName} should not exist as no action could be applied:\n$afterFileAbsolutePath", Files.exists(afterFileAbsolutePath))
+            assertFalse("${afterFileAbsolutePath.fileName} should not exist as no action could be applied", Files.exists(afterFileAbsolutePath))
             return
         }
 
@@ -430,14 +351,14 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         dispatchAllEventsInIdeEventQueue()
         try {
             myFixture.checkResultByFile("${afterFileAbsolutePath.fileName}")
-        } catch (_: FileComparisonFailedError) {
+        } catch (e: FileComparisonFailedError) {
             KotlinTestUtils.assertEqualsToFile(
                 File(testDataDirectory, "${afterFileAbsolutePath.fileName}"),
                 editor.document.text
             )
         }
 
-        checkForUnexpectedErrors(mainFile, file as KtFile, fileText, beforeCheck = false)
+        checkForUnexpectedErrors()
     }
 
     private fun createAfterFileIfItDoesNotExist(path: Path) {

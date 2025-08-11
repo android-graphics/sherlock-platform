@@ -5,15 +5,11 @@ import java.util.concurrent.Callable
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
-internal class TestElement(val value: String) : AbstractCoroutineContextElement(TestElementKey), IntelliJContextElement {
-  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
-}
+internal class TestElement(val value: String) : AbstractCoroutineContextElement(TestElementKey)
 
 internal object TestElementKey : CoroutineContext.Key<TestElement>
 
-internal class TestElement2(val value: String) : AbstractCoroutineContextElement(TestElement2Key), IntelliJContextElement {
-  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
-}
+internal class TestElement2(val value: String) : AbstractCoroutineContextElement(TestElement2Key)
 
 internal object TestElement2Key : CoroutineContext.Key<TestElement2>
 

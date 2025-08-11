@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
@@ -29,11 +29,13 @@ public abstract class PyPackageManager implements Disposable {
   /**
    * @param sdk must not be disposed if {@link Disposable}
    */
-  public static @NotNull PyPackageManager getInstance(@NotNull Sdk sdk) {
+  @NotNull
+  public static PyPackageManager getInstance(@NotNull Sdk sdk) {
     return PyPackageManagers.getInstance().forSdk(sdk);
   }
 
-  private final @NotNull Sdk mySdk;
+  @NotNull
+  private final Sdk mySdk;
 
   protected PyPackageManager(@NotNull Sdk sdk) {
     mySdk = sdk;
@@ -51,7 +53,8 @@ public abstract class PyPackageManager implements Disposable {
     return manager.shouldSubscribeToLocalChanges();
   }
 
-  protected final @NotNull Sdk getSdk() {
+  @NotNull
+  protected final Sdk getSdk() {
     return mySdk;
   }
 
@@ -72,13 +75,17 @@ public abstract class PyPackageManager implements Disposable {
 
   public abstract void refresh();
 
-  public abstract @NotNull String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException;
+  @NotNull
+  public abstract String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException;
 
-  public abstract @Nullable List<PyPackage> getPackages();
+  @Nullable
+  public abstract List<PyPackage> getPackages();
 
-  public abstract @NotNull List<PyPackage> refreshAndGetPackages(boolean alwaysRefresh) throws ExecutionException;
+  @NotNull
+  public abstract List<PyPackage> refreshAndGetPackages(boolean alwaysRefresh) throws ExecutionException;
 
-  public abstract @Nullable List<PyRequirement> getRequirements(@NotNull Module module);
+  @Nullable
+  public abstract List<PyRequirement> getRequirements(@NotNull Module module);
 
   /**
    * @param line requirement description
@@ -87,7 +94,8 @@ public abstract class PyPackageManager implements Disposable {
    * @see <a href="https://www.python.org/dev/peps/pep-0508/">PEP-508</a>
    * @see <a href="https://www.python.org/dev/peps/pep-0440/">PEP-440</a>
    */
-  public abstract @Nullable PyRequirement parseRequirement(@NotNull String line);
+  @Nullable
+  public abstract PyRequirement parseRequirement(@NotNull String line);
 
   /**
    * @param text requirements descriptions
@@ -97,7 +105,8 @@ public abstract class PyPackageManager implements Disposable {
    * @see <a href="https://www.python.org/dev/peps/pep-0508/">PEP-508</a>
    * @see <a href="https://www.python.org/dev/peps/pep-0440/">PEP-440</a>
    */
-  public abstract @NotNull List<PyRequirement> parseRequirements(@NotNull String text);
+  @NotNull
+  public abstract List<PyRequirement> parseRequirements(@NotNull String text);
 
   /**
    * @param file file containing requirements descriptions.
@@ -108,9 +117,11 @@ public abstract class PyPackageManager implements Disposable {
    * @see <a href="https://www.python.org/dev/peps/pep-0508/">PEP-508</a>
    * @see <a href="https://www.python.org/dev/peps/pep-0440/">PEP-440</a>
    */
-  public abstract @NotNull List<PyRequirement> parseRequirements(@NotNull VirtualFile file);
+  @NotNull
+  public abstract List<PyRequirement> parseRequirements(@NotNull VirtualFile file);
 
-  public abstract @NotNull Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws ExecutionException;
+  @NotNull
+  public abstract Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws ExecutionException;
 
   public interface Listener {
     void packagesRefreshed(@NotNull Sdk sdk);

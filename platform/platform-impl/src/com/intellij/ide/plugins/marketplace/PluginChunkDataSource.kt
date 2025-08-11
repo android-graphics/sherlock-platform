@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpRequests
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.Chunk
-import org.jetbrains.annotations.ApiStatus
 import java.io.BufferedInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
@@ -18,7 +17,6 @@ private const val MAX_STRING_LENGTH: Int = 1024
 
 private val LOG = logger<PluginChunkDataSource>()
 
-@ApiStatus.Internal
 class PluginChunkDataSource(
   oldBlockMap: BlockMap,
   newBlockMap: BlockMap,

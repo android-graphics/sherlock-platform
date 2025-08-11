@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.annotator;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -23,30 +23,27 @@ import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.Arrays;
 
-public final class MavenDomAnnotator implements DomElementsAnnotator {
+public class MavenDomAnnotator implements DomElementsAnnotator {
   @Override
   public void annotate(DomElement element, DomElementAnnotationHolder holder) {
     if (element instanceof MavenDomProjectModel) {
       addProblems(element, (MavenDomProjectModel)element, holder,
-                  false,
                   MavenProjectProblem.ProblemType.STRUCTURE,
                   MavenProjectProblem.ProblemType.SETTINGS_OR_PROFILES);
     }
     else if (element instanceof MavenDomParent) {
       addProblems(element, DomUtil.getParentOfType(element, MavenDomProjectModel.class, true), holder,
-                  true,
                   MavenProjectProblem.ProblemType.PARENT);
     }
   }
 
   private static void addProblems(DomElement element, MavenDomProjectModel model, DomElementAnnotationHolder holder,
-                                  boolean addWarnings, MavenProjectProblem.ProblemType... types) {
+                                  MavenProjectProblem.ProblemType... types) {
     MavenProject mavenProject = MavenDomUtil.findProject(model);
     if (mavenProject != null) {
       for (MavenProjectProblem each : mavenProject.getProblems()) {
         MavenProjectProblem.ProblemType type = each.getType();
         if (!Arrays.asList(types).contains(type)) continue;
-        if (!addWarnings && !each.isError()) continue;
         VirtualFile problemFile = LocalFileSystem.getInstance().findFileByPath(each.getPath());
 
         LocalQuickFix[] fixes = LocalQuickFix.EMPTY_ARRAY;
@@ -66,12 +63,14 @@ public final class MavenDomAnnotator implements DomElementsAnnotator {
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return MavenDomBundle.message("fix.open.file", myFile.getName());
     }
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return MavenDomBundle.message("inspection.group");
     }
 

@@ -4,7 +4,6 @@ package com.intellij.spellchecker.inspections;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
@@ -30,8 +29,6 @@ public abstract class BaseSplitter implements Splitter {
     if (tooShort) {
       return;
     }
-
-    ProgressManager.checkCanceled();
     consumer.consume(found);
   }
 
@@ -78,12 +75,10 @@ public abstract class BaseSplitter implements Splitter {
     int from = range.getStartOffset();
     int till;
     boolean addLast = true;
-
     try {
       Matcher matcher = toExclude.matcher(newBombedCharSequence(text, range));
       while (matcher.find()) {
-        ProgressManager.checkCanceled();
-
+        checkCancelled();
         TextRange found = matcherRange(range, matcher);
         till = found.getStartOffset();
         if (range.getEndOffset() - found.getEndOffset() < MIN_RANGE_LENGTH) {
@@ -109,47 +104,32 @@ public abstract class BaseSplitter implements Splitter {
       }
       return toCheck;
     }
-    catch (TooLongBombedMatchingException e) {
+    catch (ProcessCanceledException e) {
       return Collections.singletonList(range);
     }
   }
 
-  private static final int PROCESSING_TIME_LIMIT_MS = 500;
-
-  /**
-   * @throws TooLongBombedMatchingException in case processing is longer than {@link #PROCESSING_TIME_LIMIT_MS}
-   */
   protected static CharSequence newBombedCharSequence(String text, TextRange range) {
     return newBombedCharSequence(range.substring(text));
   }
 
-  /**
-   * @throws TooLongBombedMatchingException in case processing is longer than {@link #PROCESSING_TIME_LIMIT_MS}
-   */
-  protected static CharSequence newBombedCharSequence(String substring) {
+  protected static CharSequence newBombedCharSequence(final String substring) {
+    final long myTime = System.currentTimeMillis() + 500;
     return new StringUtil.BombedCharSequence(substring) {
-      final long myTime = System.currentTimeMillis() + PROCESSING_TIME_LIMIT_MS;
-
       @Override
       protected void checkCanceled() {
+        //todo[anna] if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
         long l = System.currentTimeMillis();
         if (l >= myTime) {
-          throw new TooLongBombedMatchingException();
+          throw new ProcessCanceledException();
         }
       }
     };
   }
 
-  /**
-   * @deprecated Use {@link ProgressManager#checkCanceled()}.
-   */
-  @Deprecated(forRemoval = true)
   public static void checkCancelled() {
     if (ApplicationManager.getApplication() != null) {
       ProgressIndicatorProvider.checkCanceled();
     }
-  }
-
-  public static class TooLongBombedMatchingException extends ProcessCanceledException {
   }
 }

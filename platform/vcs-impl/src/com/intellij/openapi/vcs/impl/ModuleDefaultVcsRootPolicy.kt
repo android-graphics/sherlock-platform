@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.openapi.application.runReadAction
@@ -10,15 +10,13 @@ import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.project.stateStore
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 open class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPolicy(project) {
   init {
     project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, MyModulesListener())
   }
 
-  override fun getDefaultVcsRootsCandidates(): Collection<VirtualFile> {
+  override fun getDefaultVcsRoots(): Collection<VirtualFile> {
     val result = mutableSetOf<VirtualFile>()
 
     val baseDir = myProject.baseDir

@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.perf.synthetic
 
-import org.jetbrains.kotlin.j2k.copyPaste.ConvertJavaCopyPasteProcessor
+import org.jetbrains.kotlin.idea.conversion.copy.ConvertJavaCopyPasteProcessor
 
 abstract class AbstractPerformanceNewJavaToKotlinCopyPasteConversionTest :
     AbstractPerformanceJavaToKotlinCopyPasteConversionTest(newJ2K = true) {
@@ -12,7 +12,7 @@ abstract class AbstractPerformanceNewJavaToKotlinCopyPasteConversionTest :
         // this is a performance test rather validation test
         if (!noConversionExpected) {
             kotlin.test.assertEquals(
-                noConversionExpected, !ConvertJavaCopyPasteProcessor.Util.conversionPerformed,
+                noConversionExpected, !ConvertJavaCopyPasteProcessor.conversionPerformed,
                 if (noConversionExpected) "Conversion to Kotlin should not be suggested" else "No conversion to Kotlin suggested"
             )
         }

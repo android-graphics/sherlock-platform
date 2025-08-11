@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -30,8 +30,9 @@ import java.util.List;
  */
 public final class GroovyRangeTypeCheckInspection extends BaseInspection {
 
+  @NotNull
   @Override
-  protected @NotNull BaseInspectionVisitor buildVisitor() {
+  protected BaseInspectionVisitor buildVisitor() {
     return new MyVisitor();
   }
 
@@ -71,13 +72,16 @@ public final class GroovyRangeTypeCheckInspection extends BaseInspection {
           }
         }
 
+        @NotNull
         @Override
-        public @NotNull String getName() {
+        public String getName() {
           return GroovyBundle.message("fix.class", psiClass.getName());
         }
 
+        @Nls
+        @NotNull
         @Override
-        public @Nls @NotNull String getFamilyName() {
+        public String getFamilyName() {
           return GroovyBundle.message("intention.family.name.fix.range.class");
         }
       };
@@ -106,8 +110,8 @@ public final class GroovyRangeTypeCheckInspection extends BaseInspection {
   }
 
   private static class MyVisitor extends BaseInspectionVisitor {
-    private static final @NlsSafe String CALL_NEXT = "next()";
-    private static final @NlsSafe String CALL_PREVIOUS = "previous()";
+    @NlsSafe private static final String CALL_NEXT = "next()";
+    @NlsSafe private static final String CALL_PREVIOUS = "previous()";
 
     @Override
     public void visitRangeExpression(@NotNull GrRangeExpression range) {

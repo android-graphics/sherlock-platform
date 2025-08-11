@@ -16,8 +16,8 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -33,12 +33,14 @@ public final class MakeFieldStaticFinalFix extends PsiUpdateModCommandQuickFix {
     this.fieldName = fieldName;
   }
 
-  public static @NotNull LocalQuickFix buildFixUnconditional(
+  @NotNull
+  public static LocalQuickFix buildFixUnconditional(
     @NotNull PsiField field) {
     return new MakeFieldStaticFinalFix(field.getName());
   }
 
-  public static @Nullable LocalQuickFix buildFix(PsiField field) {
+  @Nullable
+  public static LocalQuickFix buildFix(PsiField field) {
     final PsiExpression initializer = field.getInitializer();
     if (initializer == null) {
       return null;
@@ -50,13 +52,15 @@ public final class MakeFieldStaticFinalFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return InspectionGadgetsBundle.message(
       "make.static.final.quickfix", fieldName);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return InspectionGadgetsBundle.message("make.field.static.final.fix.family.name");
   }
 

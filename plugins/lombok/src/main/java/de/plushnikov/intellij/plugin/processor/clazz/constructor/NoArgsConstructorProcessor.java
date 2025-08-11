@@ -8,6 +8,7 @@ import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
+import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,17 +46,19 @@ public final class NoArgsConstructorProcessor extends AbstractConstructorClassPr
     return result;
   }
 
-  public @NotNull Collection<PsiMethod> createNoArgsConstructor(@NotNull PsiClass psiClass,
-                                                                @NotNull String methodVisibility,
-                                                                @NotNull PsiAnnotation psiAnnotation) {
+  @NotNull
+  public Collection<PsiMethod> createNoArgsConstructor(@NotNull PsiClass psiClass,
+                                                       @NotNull String methodVisibility,
+                                                       @NotNull PsiAnnotation psiAnnotation) {
     final boolean forceConstructorWithJavaDefaults = isForceConstructor(psiAnnotation);
     return createNoArgsConstructor(psiClass, methodVisibility, psiAnnotation, forceConstructorWithJavaDefaults);
   }
 
-  public @NotNull Collection<PsiMethod> createNoArgsConstructor(@NotNull PsiClass psiClass,
-                                                                @NotNull String methodVisibility,
-                                                                @NotNull PsiAnnotation psiAnnotation,
-                                                                boolean withJavaDefaults) {
+  @NotNull
+  public Collection<PsiMethod> createNoArgsConstructor(@NotNull PsiClass psiClass,
+                                                       @NotNull String methodVisibility,
+                                                       @NotNull PsiAnnotation psiAnnotation,
+                                                       boolean withJavaDefaults) {
     final Collection<PsiField> params = getConstructorFields(psiClass, withJavaDefaults);
     return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, withJavaDefaults, params);
   }
@@ -89,7 +92,8 @@ public final class NoArgsConstructorProcessor extends AbstractConstructorClassPr
     return LombokPsiElementUsage.NONE;
   }
 
-  private @NotNull Collection<PsiField> getConstructorFields(PsiClass containingClass, boolean forceConstructorWithJavaDefaults) {
+  @NotNull
+  private Collection<PsiField> getConstructorFields(PsiClass containingClass, boolean forceConstructorWithJavaDefaults) {
     Collection<PsiField> params;
     if (forceConstructorWithJavaDefaults) {
       params = getRequiredFields(containingClass);

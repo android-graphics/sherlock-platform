@@ -1,1 +1,0 @@
-enum class Foo{BAR, BAZ}

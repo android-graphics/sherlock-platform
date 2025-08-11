@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
@@ -37,7 +37,6 @@ import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ref.GCWatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -244,24 +243,8 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
 
   private void gcPsi(VirtualFile file) {
     PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
-
-    //don't store cached psi file into a local variable, otherwise it won't be gc-ed!
-    int originalIdentity = identity(getCachedPsiFile(psiManager, file));
-
-    GCWatcher.tracking(getCachedPsiFile(psiManager, file)).ensureCollected();
-
-    // storing the current value into a local variable to ensure identity check is correct
-    PsiFile newCachedFile = getCachedPsiFile(psiManager, file);
-    assertTrue(newCachedFile == null ||
-               identity(newCachedFile) != originalIdentity);
-  }
-
-  private static @Nullable PsiFile getCachedPsiFile(@NotNull PsiManagerEx psiManager, @NotNull VirtualFile file) {
-    return psiManager.getFileManager().getCachedPsiFile(file);
-  }
-
-  private static int identity(@Nullable Object o) {
-    return o == null ? 0 : System.identityHashCode(o);
+    GCWatcher.tracking(psiManager.getFileManager().getCachedPsiFile(file)).ensureCollected();
+    assertNull(psiManager.getFileManager().getCachedPsiFile(file));
   }
 
   public void testClassShouldNotDisappearWithoutEvents_NoDocument() {
@@ -280,9 +263,9 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
 
   private void gcPsiAndDocument(VirtualFile file) {
     PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
-    GCWatcher.tracking(FileDocumentManager.getInstance().getCachedDocument(file), getCachedPsiFile(psiManager, file)).ensureCollected();
+    GCWatcher.tracking(FileDocumentManager.getInstance().getCachedDocument(file), psiManager.getFileManager().getCachedPsiFile(file)).ensureCollected();
     assertNull(FileDocumentManager.getInstance().getCachedDocument(file));
-    assertNull(getCachedPsiFile(psiManager, file));
+    assertNull(psiManager.getFileManager().getCachedPsiFile(file));
   }
 
   public void testClassShouldNotAppearWithoutEvents_NoPsiDirectory() throws IOException {

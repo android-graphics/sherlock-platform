@@ -66,14 +66,14 @@ import static com.intellij.util.FontUtil.spaceAndThinSpace;
 public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBase {
   private static final int SHOW_CONFLICTS_EXIT_CODE = 4;
   private static final int MAX_CONFLICTS_SHOWN = 20;
-  private static final @NonNls String EXPAND_LINK = "expand";
+  @NonNls private static final String EXPAND_LINK = "expand";
 
   protected final String[] myConflictDescriptions;
   protected final MultiMap<PsiElement, String> myElementConflictDescription;
   private final Project myProject;
   private final Runnable myDoRefactoringRunnable;
   private final boolean myCanShowConflictsInView;
-  private @NlsContexts.Command String myCommandName;
+  @NlsContexts.Command private String myCommandName;
   private JTree myTree;
   private final boolean myUpdatedDialog;
 
@@ -192,15 +192,15 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
       previewPanel.add(previewTitle, BorderLayout.NORTH);
       previewPanel.add(usagePreviewPanel, BorderLayout.CENTER);
 
-      class MySplitter extends OnePixelSplitter implements UiDataProvider {
+      class MySplitter extends OnePixelSplitter implements DataProvider {
 
         MySplitter() {
           super(true, "conflicts.dialog.splitter", 0.4f);
         }
 
         @Override
-        public void uiDataSnapshot(@NotNull DataSink sink) {
-          sink.set(UsageView.USAGE_VIEW_SETTINGS_KEY, usageView.getUsageViewSettings());
+        public @Nullable Object getData(@NotNull String dataId) {
+          return UsageView.USAGE_VIEW_SETTINGS_KEY.is(dataId) ? usageView.getUsageViewSettings() : null;
         }
       }
       Splitter splitter = new MySplitter();
@@ -301,7 +301,8 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
     return list;
   }
 
-  private static @NotNull UsageViewPresentation createPresentation() {
+  @NotNull
+  private static UsageViewPresentation createPresentation() {
     UsageViewPresentation presentation = new UsageViewPresentation();
     String codeUsagesString = RefactoringBundle.message("conflicts.tab.name");
     presentation.setCodeUsagesString(codeUsagesString);
@@ -317,14 +318,15 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
       for (@NlsContexts.Tooltip String conflictDescription : myElementConflictDescription.get(element)) {
         UsagePresentation usagePresentation = new ConflictPresentation(conflictDescription);
         UsageInfo usageInfo = new UsageInfo(element) {
-          @Override
-          public @NlsSafe String getTooltipText() {
+          @Override @NlsSafe
+          public String getTooltipText() {
             return myUpdatedDialog ? "<html><body style='width: 300px'>" + usagePresentation.getPlainText() + "</body></html>" : null;
           }
         };
         Usage usage = new UsageInfo2UsageAdapter(usageInfo) {
+          @NotNull
           @Override
-          public @NotNull UsagePresentation getPresentation() {
+          public UsagePresentation getPresentation() {
             return usagePresentation;
           }
         };
@@ -485,7 +487,8 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
     }
 
     @Override
-    public @Nullable Icon getIcon() {
+    @Nullable
+    public Icon getIcon() {
       return null;
     }
 
@@ -495,7 +498,8 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
     }
 
     @Override
-    public @NotNull String getPlainText() {
+    @NotNull
+    public String getPlainText() {
       return myConflictDescription;
     }
   }

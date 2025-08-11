@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -11,7 +11,6 @@ import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -34,8 +33,7 @@ import java.util.List;
  * (in any thread) {@code boolean canSilentlyChange = result.canIReally(isFileInContent, extensionsAllowToChangeFileSilently);}
  * </pre>
  */
-@ApiStatus.Internal
-public final class CanISilentlyChange {
+final class CanISilentlyChange {
   private static boolean canUndo(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     ThreadingAssertions.assertEventDispatchThread();
     List<FileEditor> editors = FileEditorManager.getInstance(project).getEditorList(virtualFile);
@@ -52,13 +50,12 @@ public final class CanISilentlyChange {
     return false;
   }
 
-  @ApiStatus.Internal
-  public enum Result {
+  enum Result {
     UH_HUH, // yes
     UH_UH,  // no
     ONLY_WHEN_IN_CONTENT;
     // can call from any thread
-    public boolean canIReally(boolean isInContent, @NotNull ThreeState extensionsAllowToChangeFileSilently) {
+    boolean canIReally(boolean isInContent, @NotNull ThreeState extensionsAllowToChangeFileSilently) {
       return switch (this) {
         case UH_HUH -> extensionsAllowToChangeFileSilently != ThreeState.NO;
         case UH_UH -> false;
@@ -67,8 +64,7 @@ public final class CanISilentlyChange {
     }
   }
 
-  @ApiStatus.Internal
-  public static @NotNull Result thisFile(@NotNull PsiFileSystemItem file) {
+  static @NotNull Result thisFile(@NotNull PsiFileSystemItem file) {
     ThreadingAssertions.assertEventDispatchThread();
     Project project = file.getProject();
     VirtualFile virtualFile = file.getVirtualFile();

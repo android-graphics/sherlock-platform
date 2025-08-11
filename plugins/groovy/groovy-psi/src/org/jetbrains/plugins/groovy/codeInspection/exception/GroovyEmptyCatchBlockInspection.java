@@ -38,10 +38,11 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 public final class GroovyEmptyCatchBlockInspection extends BaseInspection {
   public boolean myIgnore = true;
   public boolean myCountCommentsAsContent = true;
-  private static final @NlsSafe String NEW_NAME = "ignored";
+  @NlsSafe private static final String NEW_NAME = "ignored";
 
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  @NotNull
+  public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

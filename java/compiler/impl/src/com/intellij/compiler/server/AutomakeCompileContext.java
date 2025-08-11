@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -37,8 +37,9 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
     myAnnotationProcessingEnabled = CompilerConfiguration.getInstance(project).isAnnotationProcessorsEnabled();
   }
 
+  @NotNull
   @Override
-  public @NotNull Project getProject() {
+  public Project getProject() {
     return myProject;
   }
 
@@ -89,8 +90,9 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
     return myMessages.getMessageCount(category);
   }
 
+  @NotNull
   @Override
-  public @NotNull ProgressIndicator getProgressIndicator() {
+  public ProgressIndicator getProgressIndicator() {
     return myIndicator;
   }
 
@@ -103,8 +105,9 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
     return false;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getRebuildReason() {
+  public String getRebuildReason() {
     return null;
   }
 
@@ -114,7 +117,7 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
   }
 
   @Override
-  public VirtualFile getModuleOutputDirectory(final @NotNull Module module) {
+  public VirtualFile getModuleOutputDirectory(@NotNull final Module module) {
     return CompilerPaths.getModuleOutputDirectory(module, false);
   }
 

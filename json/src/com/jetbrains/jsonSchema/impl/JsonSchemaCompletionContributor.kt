@@ -34,7 +34,6 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.injection.Injectable
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.endOffset
-import com.intellij.psi.util.parents
 import com.intellij.ui.IconManager.Companion.getInstance
 import com.intellij.ui.PlatformIcons
 import com.intellij.util.ObjectUtils
@@ -42,7 +41,7 @@ import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
-import com.jetbrains.jsonSchema.extension.JsonSchemaCompletionCustomizer
+import com.jetbrains.jsonSchema.extension.JsonSchemaCompletionHandlerProvider
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
 import com.jetbrains.jsonSchema.extension.JsonSchemaNestedCompletionsTreeProvider.Companion.getNestedCompletionsData
 import com.jetbrains.jsonSchema.extension.SchemaType
@@ -109,12 +108,6 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       insideStringLiteral = isInsideQuotedString
     }
 
-    private val completionCustomizer by lazy {
-      JsonSchemaCompletionCustomizer.EXTENSION_POINT_NAME.extensionList
-        .filter { it.isApplicable(originalPosition.containingFile) }
-        .singleOrNull()
-    }
-
 
     fun work() {
       if (psiWalker == null) return
@@ -136,13 +129,8 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       JsonSchemaResolver(myProject, rootSchema, position, schemaExpansionRequest)
         .resolve()
         .forEach { schema ->
-          schema.collectNestedCompletions(myProject, nestedCompletionsNode) { path, subSchema ->
-            if (completionCustomizer?.acceptsPropertyCompletionItem(subSchema, completionPsiElement) == false)
-              CompletionNextStep.Stop
-            else {
-              processSchema(subSchema, isName, knownNames, path)
-              CompletionNextStep.Continue
-            }
+          schema.collectNestedCompletions(myProject, nestedCompletionsNode, null) { path, subSchema ->
+            processSchema(subSchema, isName, knownNames, path)
           }
         }
 
@@ -180,7 +168,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       for (o in anEnum) {
         if (o !is String) continue
         completionVariants.add(LookupElementBuilder.create(StringUtil.unquoteString(
-          if (!shouldWrapInQuotes(o, false)) o else (psiWalker?.escapeInvalidIdentifier(o) ?: StringUtil.wrapWithDoubleQuote(o))
+          if (!shouldWrapInQuotes(o, false)) o else StringUtil.wrapWithDoubleQuote(o)
         )))
       }
     }
@@ -195,9 +183,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         .forEach { name ->
           knownNames.add(name)
           val propertySchema = checkNotNull(schema.getPropertyByName(name))
-          if (completionCustomizer?.acceptsPropertyCompletionItem(propertySchema, completionPsiElement) != false) {
-            addPropertyVariant(name, propertySchema, completionPath, adapter?.nameValueAdapter)
-          }
+          addPropertyVariant(name, propertySchema, completionPath, adapter?.nameValueAdapter)
         }
     }
 
@@ -207,25 +193,26 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       suggestValuesForSchemaVariants(schema.allOf, isSurelyValue, completionPath)
 
       if (schema.enum != null && completionPath == null) {
+        // custom insert handlers are currently applicable only to enum values but can be extended later to cover more cases
+        val customHandlers = JsonSchemaCompletionHandlerProvider.EXTENSION_POINT_NAME.extensionList
         val metadata = schema.enumMetadata
         val isEnumOrderSensitive = schema.readChildNodeValue(X_INTELLIJ_ENUM_ORDER_SENSITIVE).toBoolean()
         val anEnum = schema.enum
-        val filtered = filteredByDefault + getEnumItemsToSkip()
         for (i in anEnum!!.indices) {
           val o = anEnum[i]
           if (insideStringLiteral && o !is String) continue
           val variant = o.toString()
-          if (!filtered.contains(variant) && !filtered.contains(StringUtil.unquoteString(variant))) {
+          if (!filtered.contains(variant)) {
             val valueMetadata = metadata?.get(StringUtil.unquoteString(variant))
             val description = valueMetadata?.get("description")
             val deprecated = valueMetadata?.get("deprecationMessage")
             val order = if (isEnumOrderSensitive) i else null
-            val handler = completionCustomizer?.createHandlerForEnumValue(schema, variant, completionPsiElement)
+            val handlers = customHandlers.mapNotNull { p -> p.createHandlerForEnumValue(schema, variant) }.toList()
             addValueVariant(
               key = variant,
               description = description,
               deprecated = deprecated != null,
-              handler = handler,
+              handler = handlers.singleOrNull(),
               order = order
             )
           }
@@ -243,24 +230,6 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
           }
         }
       }
-      else if (psiWalker?.hasObjectArrayAmbivalence() == true) {
-        schema.itemsSchema?.let { itemsSchema ->
-          suggestValues(itemsSchema, false, completionPath)
-        }
-      }
-    }
-
-    private fun getEnumItemsToSkip(): Set<String> {
-      // if the parent is an array, and it assumes unique items, we don't suggest the same enum items again
-      val position = psiWalker?.findPosition(psiWalker.findElementToCheck(completionPsiElement), false)
-      val containerSchema = position?.trimTail(1)?.let { JsonSchemaResolver(myProject, rootSchema, it, null) }?.resolve()?.singleOrNull()
-      return if (psiWalker != null && containerSchema?.isUniqueItems == true) {
-        val parentArray = completionPsiElement.parents(false).firstNotNullOfOrNull {
-          psiWalker.createValueAdapter(it)?.asArray
-        }
-        parentArray?.elements.orEmpty().map { StringUtil.unquoteString(it.delegate.text) }.toSet()
-      }
-      else emptySet()
     }
 
     fun suggestSpecialValues(type: JsonSchemaType?) {
@@ -400,7 +369,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
 
     fun shouldWrapInQuotes(key: String?, isValue: Boolean): Boolean {
       return wrapInQuotes && psiWalker != null &&
-             (isValue && psiWalker.requiresValueQuotes() || !isValue && psiWalker.requiresNameQuotes() || key != null && !psiWalker.isValidIdentifier(key,
+             (isValue && psiWalker.requiresValueQuotes() || !isValue && psiWalker.requiresNameQuotes() || !psiWalker.isValidIdentifier(key,
                                                                                                                                        myProject))
     }
 
@@ -412,15 +381,13 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       var schemaObject = jsonSchemaObject
       val variants = JsonSchemaResolver(myProject, schemaObject, JsonPointerPosition(), sourcePsiAdapter).resolve()
       schemaObject = ObjectUtils.coalesce(variants.firstOrNull(), schemaObject)
-      propertyKey = if (!shouldWrapInQuotes(propertyKey, false)) propertyKey else (psiWalker?.escapeInvalidIdentifier(propertyKey) ?: StringUtil.wrapWithDoubleQuote(propertyKey))
-
-      val extraLookupStrings = jsonSchemaObject.metadata?.firstOrNull { it.key == "aliases" }?.values.orEmpty()
+      propertyKey = if (!shouldWrapInQuotes(propertyKey, false)) propertyKey else StringUtil.wrapWithDoubleQuote(propertyKey)
 
       val builder = LookupElementBuilder.create(propertyKey)
         .withPresentableText(completionPath?.let { it.prefix() + "." + key }
                              ?: key.takeIf { psiWalker?.requiresNameQuotes() == false }
                              ?: propertyKey)
-        .withLookupStrings(listOfNotNull(completionPath?.let { it.prefix() + "." + key }, propertyKey) + completionPath?.accessor().orEmpty() + extraLookupStrings)
+        .withLookupStrings(listOfNotNull(completionPath?.let { it.prefix() + "." + key }, propertyKey) + completionPath?.accessor().orEmpty())
         .withTypeText(getDocumentationOrTypeName(schemaObject), true)
         .withIcon(getIcon(JsonSchemaObjectReadingUtils.guessType(schemaObject)))
         .withInsertHandler(choosePropertyInsertHandler(completionPath, variants, schemaObject))
@@ -460,7 +427,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       }
 
       return createDefaultPropertyInsertHandler(completionPath, !schemaObject.enum.isNullOrEmpty(),
-                                                schemaObject.typeVariants)
+                                                schemaObject.type)
     }
 
     private fun getDocumentationOrTypeName(schemaObject: JsonSchemaObject): String? {
@@ -475,7 +442,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
 
     private fun createDefaultPropertyInsertHandler(completionPath: SchemaPath? = null,
                                                    hasEnumValues: Boolean = false,
-                                                   valueTypes: Set<JsonSchemaType>? = null): InsertHandler<LookupElement> {
+                                                   valueType: JsonSchemaType? = null): InsertHandler<LookupElement> {
       return object : InsertHandler<LookupElement> {
         override fun handleInsert(context: InsertionContext, item: LookupElement) {
           ApplicationManager.getApplication().assertWriteAccessAllowed()
@@ -496,9 +463,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
           while (offset < docChars.length && Character.isWhitespace(docChars[offset])) {
             offset++
           }
-          val propertyValueSeparator =
-            valueTypes?.firstNotNullOfOrNull { psiWalker!!.getPropertyValueSeparator(it).takeIf { it.isNotBlank() } }
-            ?: psiWalker!!.getPropertyValueSeparator(valueTypes?.singleOrNull())
+          val propertyValueSeparator = psiWalker!!.getPropertyValueSeparator(valueType)
           if (hasValue) {
             // fix colon for YAML and alike
             if (offset < docChars.length && !isSeparatorAtOffset(docChars, offset, propertyValueSeparator)) {
@@ -552,7 +517,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
 
     companion object {
       // some schemas provide an empty array or an empty object in enum values...
-      private val filteredByDefault = setOf("[]", "{}", "[ ]", "{ }")
+      private val filtered = setOf("[]", "{}", "[ ]", "{ }")
       private val commonAbbreviations = listOf("e.g.", "i.e.")
 
       private fun findFirstSentence(sentence: String): String {
@@ -902,8 +867,3 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
     }
   }
 }
-
-class JsonSchemaMetadataEntry(
-  val key: String,
-  val values: List<String>
-)

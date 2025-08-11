@@ -1,9 +1,6 @@
-import sys
-from _typeshed import StrOrBytesPath
 from collections.abc import Iterator, MutableMapping
 from types import TracebackType
-from typing import Literal
-from typing_extensions import Self, TypeAlias
+from typing_extensions import Literal, Self, TypeAlias
 
 __all__ = ["open", "whichdb", "error"]
 
@@ -93,10 +90,5 @@ class _error(Exception): ...
 
 error: tuple[type[_error], type[OSError]]
 
-if sys.version_info >= (3, 11):
-    def whichdb(filename: StrOrBytesPath) -> str | None: ...
-    def open(file: StrOrBytesPath, flag: _TFlags = "r", mode: int = 0o666) -> _Database: ...
-
-else:
-    def whichdb(filename: str) -> str | None: ...
-    def open(file: str, flag: _TFlags = "r", mode: int = 0o666) -> _Database: ...
+def whichdb(filename: str) -> str: ...
+def open(file: str, flag: _TFlags = "r", mode: int = 0o666) -> _Database: ...

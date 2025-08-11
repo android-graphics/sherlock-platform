@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
-import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
 
 private class ForcePushAction : PushActionBase() {
@@ -24,18 +23,10 @@ private class ForcePushAction : PushActionBase() {
 
   override fun getDescription(ui: VcsPushUi, enabled: Boolean): String? {
     val prohibitedTarget = getProhibitedTarget(ui)
-    val configurablePath = getProhibitedTargetConfigurablePath(ui)
-    if (!enabled && prohibitedTarget != null) {
-      var message = DvcsBundle.message("action.force.push.is.prohibited.description", prohibitedTarget.presentation)
-      if (configurablePath != null) {
-        message += UIUtil.BR + DvcsBundle.message("action.force.push.is.prohibited.settings.link", configurablePath)
-      }
-      return message
+    return if (!enabled && prohibitedTarget != null) {
+      DvcsBundle.message("action.force.push.is.prohibited.description", prohibitedTarget.presentation)
     }
-    if (configurablePath != null) {
-      return DvcsBundle.message("action.force.push.is.prohibited.settings.link", configurablePath)
-    }
-    return null
+    else null
   }
 
   private fun confirmForcePush(project: Project, ui: VcsPushUi): Boolean {

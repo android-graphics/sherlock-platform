@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.icons.AllIcons;
@@ -10,17 +10,13 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.AddToGroup;
 import org.jetbrains.idea.devkit.dom.Group;
 import org.jetbrains.idea.devkit.dom.Reference;
-import org.jetbrains.idea.devkit.references.ActionOrGroupIdReference;
 import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.UField;
 import org.jetbrains.uast.UastContextKt;
@@ -30,33 +26,35 @@ import javax.swing.*;
 public class ActionOrGroupPresentationProvider extends PresentationProvider<ActionOrGroup> {
 
   @Override
-  public @Nullable Icon getIcon(@Nullable ActionOrGroup actionOrGroup) {
+  @Nullable
+  public Icon getIcon(@Nullable ActionOrGroup actionOrGroup) {
     return getIconForActionOrGroup(actionOrGroup);
   }
 
   public static class ForReference extends PresentationProvider<Reference> {
 
+    @Nullable
     @Override
-    public @Nullable Icon getIcon(Reference reference) {
-      //noinspection deprecation
+    public Icon getIcon(Reference reference) {
       if (DomUtil.hasXml(reference.getId())) {
-        //noinspection deprecation
-        return getIconForActionOrGroup(resolveActionOrGroup(reference.getId()));
+        return getIconForActionOrGroup(reference.getId().getValue());
       }
 
-      return getIconForActionOrGroup(resolveActionOrGroup(reference.getRef()));
+      return getIconForActionOrGroup(reference.getRef().getValue());
     }
   }
 
   public static class ForAddToGroup extends PresentationProvider<AddToGroup> {
 
+    @Nullable
     @Override
-    public @Nullable Icon getIcon(AddToGroup addToGroup) {
-      return getIconForActionOrGroup(resolveActionOrGroup(addToGroup.getGroupId()));
+    public Icon getIcon(AddToGroup addToGroup) {
+      return getIconForActionOrGroup(addToGroup.getGroupId().getValue());
     }
   }
 
-  private static @Nullable Icon getIconForActionOrGroup(@Nullable ActionOrGroup actionOrGroup) {
+  @Nullable
+  private static Icon getIconForActionOrGroup(@Nullable ActionOrGroup actionOrGroup) {
     if (actionOrGroup == null || !DomUtil.hasXml(actionOrGroup.getIcon())) {
       return actionOrGroup instanceof Group ? AllIcons.Actions.GroupByPackage : null;
     }
@@ -84,25 +82,8 @@ public class ActionOrGroupPresentationProvider extends PresentationProvider<Acti
     return null;
   }
 
-  private static @Nullable ActionOrGroup resolveActionOrGroup(@Nullable GenericDomValue<String> actionOrGroupReferenceDomElement) {
-    if (actionOrGroupReferenceDomElement == null) return null;
-    XmlElement xmlElement = actionOrGroupReferenceDomElement.getXmlElement();
-    if (xmlElement == null) return null;
-
-    for (PsiReference reference : xmlElement.getReferences()) {
-      if (reference instanceof ActionOrGroupIdReference) {
-        PsiElement resolve = reference.resolve();
-        DomElement domElement = DomUtil.getDomElement(resolve);
-        if (domElement instanceof ActionOrGroup actionOrGroup) {
-          return actionOrGroup;
-        }
-        break;
-      }
-    }
-    return null;
-  }
-
-  private static @Nullable Icon getIconFromReference(@NotNull PsiReference reference) {
+  @Nullable
+  private static Icon getIconFromReference(@NotNull PsiReference reference) {
     PsiElement resolved = reference.resolve();
     if (!(resolved instanceof PsiField)) {
       return null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.initialization;
 
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -19,12 +19,6 @@ public class InstanceVariableInitializationInspectionTest extends LightJavaCodeI
   }
 
   private void doTest() {
-    myFixture.addClass("""
-                         package junit.framework;
-                         public class TestCase {
-                           protected void setUp() throws Exception {}
-                         }
-                         """);
     myFixture.enableInspections(new InstanceVariableInitializationInspection());
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
@@ -32,4 +26,5 @@ public class InstanceVariableInitializationInspectionTest extends LightJavaCodeI
   public void testInstanceVariableInitialization() {
     doTest();
   }
+
 }

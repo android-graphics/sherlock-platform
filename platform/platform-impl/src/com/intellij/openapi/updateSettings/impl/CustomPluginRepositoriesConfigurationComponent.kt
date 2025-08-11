@@ -9,7 +9,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.util.xmlb.annotations.XCollection
-import org.jetbrains.annotations.ApiStatus
 
 
 internal class ConfigurationScriptPluginRepositoriesProvider : UpdateSettingsProvider {
@@ -30,8 +29,7 @@ internal class CustomPluginRepositoriesConfigurationComponent(val project: Proje
     get() = state.repositories
 }
 
-@ApiStatus.Internal
 class PluginsConfiguration : BaseState() {
   @get:XCollection
-  val repositories: MutableList<String> by list<String>()
+  val repositories by list<String>()
 }

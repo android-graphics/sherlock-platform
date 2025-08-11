@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.openapi.module.Module;
@@ -20,7 +20,8 @@ public final class ScratchesSearchScope extends GlobalSearchScope implements Vir
     "SCRATCHES_SCOPE_KEY",
     project -> new ScratchesSearchScope(project));
 
-  public static @NotNull GlobalSearchScope getScratchesScope(@NotNull Project project) {
+  @NotNull
+  public static GlobalSearchScope getScratchesScope(@NotNull Project project) {
     return SCRATCHES_SCOPE_KEY.getValue(project);
   }
 
@@ -28,8 +29,9 @@ public final class ScratchesSearchScope extends GlobalSearchScope implements Vir
     super(project);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDisplayName() {
+  public String getDisplayName() {
     return ScratchesNamedScope.scratchesAndConsoles();
   }
 

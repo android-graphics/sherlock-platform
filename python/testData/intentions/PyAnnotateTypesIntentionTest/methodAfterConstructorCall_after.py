@@ -3,7 +3,7 @@ class MyClass:
         pass
 
     def method(self, x):
-        # type: (object) -> None
+        # type: (object) -> object
         pass
 
 

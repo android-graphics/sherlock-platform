@@ -21,11 +21,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
-import static com.intellij.platform.eel.provider.utils.EelPathUtils.getNioPath;
 
 final class ShRunFileAction extends DumbAwareAction {
   static final String ID = "runShellFileAction";
@@ -52,9 +50,8 @@ final class ShRunFileAction extends DumbAwareAction {
         @NlsSafe String defaultShell = ShConfigurationType.getDefaultShell(project);
         String shebang = ShShebangParserUtil.getShebangExecutable((ShFile)file);
         if (shebang != null) {
-          final var eelDescriptor = getEelDescriptor(project);
           Pair<String, String> result = parseInterpreterAndOptions(shebang);
-          runConfiguration.setInterpreterPath(getNioPath(result.first, eelDescriptor).toString());
+          runConfiguration.setInterpreterPath(result.first);
           runConfiguration.setInterpreterOptions(result.second);
         } else {
           runConfiguration.setInterpreterPath(defaultShell);

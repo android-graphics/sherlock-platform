@@ -3,13 +3,10 @@ package com.intellij.sh.shellcheck;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.settings.ShSettings;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.URI;
@@ -25,26 +22,24 @@ import static com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY;
 final class ShShellcheckTestUtil {
   private static final Logger LOG = Logger.getInstance(ShShellcheckTestUtil.class);
 
-  static void downloadShellcheck(@NotNull Project project) throws IOException, InterruptedException {
+  static void downloadShellcheck() throws IOException, InterruptedException {
     Path directory = getShellcheckTestDir();
     NioFiles.createDirectories(directory);
 
-    final var localEel = EelProviderUtil.getLocalEel();
-
-    Path shellcheck = directory.resolve(spellcheckBin(localEel.getPlatform()));
+    Path shellcheck = directory.resolve(SHELLCHECK_BIN);
     if (Files.exists(shellcheck)) {
-      String path = ShSettings.getShellcheckPath(project);
+      String path = ShSettings.getShellcheckPath();
       String shellcheckPath = shellcheck.toString();
       if (path.equals(shellcheckPath)) {
         LOG.debug("Shellcheck already downloaded");
       }
       else {
-        ShSettings.setShellcheckPath(project, shellcheckPath);
+        ShSettings.setShellcheckPath(shellcheckPath);
       }
       return;
     }
 
-    String link = getShellcheckDistributionLink(localEel.getPlatform());
+    String link = getShellcheckDistributionLink();
     HttpRequest request = HttpRequest.newBuilder().uri(URI.create(link)).build();
     HttpResponse<Path> response = HttpClient.newBuilder()
       .followRedirects(HttpClient.Redirect.NORMAL)
@@ -53,10 +48,10 @@ final class ShShellcheckTestUtil {
       .send(request, HttpResponse.BodyHandlers.ofFile(directory.resolve("shellcheck.tgz")));
     LOG.info("Getting " + link + ", status code: " + response.statusCode());
     Path archive = response.body();
-    String path = decompressShellcheck(archive.toFile(), directory.toFile(), localEel.getPlatform());
+    String path = decompressShellcheck(archive.toFile(), directory.toFile());
     if (!path.isEmpty()) {
       NioFiles.setExecutable(Path.of(path));
-      ShSettings.setShellcheckPath(project, path);
+      ShSettings.setShellcheckPath(path);
     }
   }
 

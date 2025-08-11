@@ -3,9 +3,7 @@
 
 package com.intellij.openapi.util.io
 
-import com.intellij.openapi.util.io.CanonicalPathPrefixTree.CanonicalPathElement
-import com.intellij.util.containers.prefixTree.PrefixTreeFactory
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
 import java.io.IOException
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -40,7 +38,6 @@ fun Path.getResolvedPath(relativePath: String): Path {
  *  * for [this] = `/1/2/3/4/5` and [relativePath] = `a/b`,
  *    returns pair with base path = `/1/2/3/4/5` and relative path = `a/b`.
  */
-@ApiStatus.Internal
 fun Path.relativizeToClosestAncestor(relativePath: String): Pair<Path, Path> {
   val normalizedPath = getResolvedPath(relativePath)
   val normalizedBasePath = checkNotNull(FileUtil.findAncestor(this, normalizedPath)) {
@@ -54,7 +51,6 @@ fun Path.relativizeToClosestAncestor(relativePath: String): Pair<Path, Path> {
   return normalizedBasePath to normalizedRelativePath
 }
 
-@ApiStatus.Internal
 fun Path.findOrCreateFile(): Path {
   parent?.createDirectories()
   if (!exists()) {
@@ -66,7 +62,6 @@ fun Path.findOrCreateFile(): Path {
   return this
 }
 
-@ApiStatus.Internal
 fun Path.findOrCreateDirectory(): Path {
   createDirectories()
   if (!isDirectory()) {
@@ -75,19 +70,15 @@ fun Path.findOrCreateDirectory(): Path {
   return this
 }
 
-@ApiStatus.Internal
 fun Path.findOrCreateFile(relativePath: String): Path {
   return getResolvedPath(relativePath).findOrCreateFile()
 }
 
-@ApiStatus.Internal
 fun Path.findOrCreateDirectory(relativePath: String): Path {
   return getResolvedPath(relativePath).findOrCreateDirectory()
 }
 
 @Deprecated("Do not use", level = DeprecationLevel.ERROR)
-@ApiStatus.ScheduledForRemoval
-@ApiStatus.Internal
 fun String.toNioPath(): Path {
   return Paths.get(FileUtilRt.toSystemDependentName(this))
 }
@@ -101,27 +92,16 @@ fun String.toNioPathOrNull(): Path? {
   }
 }
 
-@ApiStatus.Internal
-object PathPrefixTree : PrefixTreeFactory<Path, Path> {
-  override fun convertToList(element: Path): List<Path> {
-    return element.toList()
+object NioPathPrefixTreeFactory : AbstractPrefixTreeFactory<Path, String>() {
+
+  override fun convertToList(element: Path): List<String> {
+    return element.map { it.pathString }
   }
 }
 
-@ApiStatus.Internal
-object CanonicalPathPrefixTree : PrefixTreeFactory<String, CanonicalPathElement> {
+object CanonicalPathPrefixTreeFactory : AbstractPrefixTreeFactory<String, String>() {
 
-  override fun convertToList(element: String): List<CanonicalPathElement> {
-    return element.removeSuffix("/").split("/").map(::CanonicalPathElement)
-  }
-
-  @ApiStatus.Internal
-  class CanonicalPathElement(private val keyElement: String) {
-
-    override fun equals(other: Any?): Boolean =
-      FileUtil.pathsEqual(keyElement, (other as? CanonicalPathElement)?.keyElement)
-
-    override fun hashCode(): Int =
-      FileUtil.pathHashCode(keyElement)
+  override fun convertToList(element: String): List<String> {
+    return element.removeSuffix("/").split("/")
   }
 }

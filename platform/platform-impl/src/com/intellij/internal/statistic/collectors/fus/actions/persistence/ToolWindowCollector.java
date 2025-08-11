@@ -24,7 +24,6 @@ import com.intellij.openapi.wm.ext.LibraryDependentToolWindow;
 import com.intellij.openapi.wm.impl.WindowInfoImpl;
 import com.intellij.toolWindow.ToolWindowEventSource;
 import kotlin.Unit;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +47,6 @@ import static com.intellij.openapi.wm.ToolWindowId.*;
  *   in plugin.xml {@link #EP_NAME} or here in {@link ToolWindowCollector#toolwindowAllowList}
  * </p>
  */
-@ApiStatus.Internal
 public final class ToolWindowCollector {
   private static final ExtensionPointName<ToolWindowAllowlistEP> EP_NAME = new ExtensionPointName<>("com.intellij.toolWindowAllowlist");
 

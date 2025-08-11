@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.relaxNG.model.resolve;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -26,16 +26,19 @@ import java.util.Map;
 public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
   public static final ID<String, Void> NAME = ID.create("RelaxSymbolIndex");
 
+  @NotNull
   @Override
-  public @NotNull ID<String, Void> getName() {
+  public ID<String, Void> getName() {
     return NAME;
   }
 
+  @NotNull
   @Override
-  public @NotNull DataIndexer<String, Void, FileContent> getIndexer() {
+  public DataIndexer<String, Void, FileContent> getIndexer() {
     return new DataIndexer<>() {
       @Override
-      public @NotNull Map<String, Void> map(@NotNull FileContent inputData) {
+      @NotNull
+      public Map<String, Void> map(@NotNull FileContent inputData) {
         final HashMap<String, Void> map = new HashMap<>();
         if (inputData.getFileType() == XmlFileType.INSTANCE) {
           CharSequence inputDataContentAsText = inputData.getContentAsText();
@@ -61,7 +64,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
                   attributeHandler = new NanoXmlBuilder() {
                     @Override
                     public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) {
-                      if ("name".equals(key) && (nsURI == null || nsURI.isEmpty()) && value != null) {
+                      if ("name".equals(key) && (nsURI == null || nsURI.length() == 0) && value != null) {
                         map.put(value, null);
                       }
                     }
@@ -100,13 +103,15 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
     };
   }
 
+  @NotNull
   @Override
-  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
+  public KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
+  @NotNull
   @Override
-  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
+  public FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE, RncFileType.getInstance()) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {

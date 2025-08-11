@@ -1,7 +1,7 @@
 def func2(x):
     """
 
-    :rtype: Any
+    :rtype: object
     """
     y = func1(x.keys())
     return y.startswith('foo')

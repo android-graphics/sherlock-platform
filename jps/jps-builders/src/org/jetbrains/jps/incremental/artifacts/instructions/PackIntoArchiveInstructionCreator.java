@@ -1,14 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-@ApiStatus.Internal
 public final class PackIntoArchiveInstructionCreator extends ArtifactCompilerInstructionCreatorBase {
   private final DestinationInfo myJarDestination;
   private final JarInfo myJarInfo;
@@ -23,7 +21,7 @@ public final class PackIntoArchiveInstructionCreator extends ArtifactCompilerIns
   }
 
   @Override
-  protected @NotNull DestinationInfo createDirectoryDestination() {
+  protected @Nullable DestinationInfo createDirectoryDestination() {
     return new JarDestinationInfo(myPathInJar, myJarInfo, myJarDestination);
   }
 
@@ -38,7 +36,7 @@ public final class PackIntoArchiveInstructionCreator extends ArtifactCompilerIns
   }
 
   private String childPathInJar(String fileName) {
-    return myPathInJar.isEmpty() ? fileName : myPathInJar + "/" + fileName;
+    return myPathInJar.length() == 0 ? fileName : myPathInJar + "/" + fileName;
   }
 
   @Override

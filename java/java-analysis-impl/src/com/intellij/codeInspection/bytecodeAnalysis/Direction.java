@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +26,8 @@ public abstract class Direction {
    * @return Direction object
    * @see #asInt()
    */
-  static @NotNull Direction fromInt(int directionKey) {
+  @NotNull
+  static Direction fromInt(int directionKey) {
     if (directionKey < CONCRETE_DIRECTIONS_OFFSET) {
       return ourConcreteDirections.get(directionKey);
     }
@@ -71,7 +72,8 @@ public abstract class Direction {
     return asInt() == ((Direction)obj).asInt();
   }
 
-  private static @NotNull Direction explicitDirection(String name) {
+  @NotNull
+  private static Direction explicitDirection(String name) {
     return new Direction() {
       @Override
       int asInt() {
@@ -124,7 +126,7 @@ public abstract class Direction {
     }
   }
 
-  abstract static class ParamValueBasedDirection extends ParamIdBasedDirection {
+  static abstract class ParamValueBasedDirection extends ParamIdBasedDirection {
     final Value inValue;
 
     ParamValueBasedDirection(int paramIndex, Value inValue) {

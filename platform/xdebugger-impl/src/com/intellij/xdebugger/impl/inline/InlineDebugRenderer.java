@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,7 +32,6 @@ import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerExecutionPointManager;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
-import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
@@ -41,16 +40,13 @@ import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
-@ApiStatus.Internal
 public final class InlineDebugRenderer extends InlineDebugRendererBase {
   public static final String NAME_VALUE_SEPARATION = XDebuggerInlayUtil.INLINE_HINTS_DELIMETER + " ";
   public static final String INDENT = "  ";
@@ -62,9 +58,8 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
   private final XSourcePosition myPosition;
   private SimpleColoredText myPresentation;
 
-  public InlineDebugRenderer(XValueNodeImpl valueNode, @NotNull VirtualFile file, int line, @NotNull XDebugSession session) {
-    // We cannot pass any XSourcePosition object here, check EA-841896
-    myPosition = XSourcePositionImpl.create(file, line);
+  public InlineDebugRenderer(XValueNodeImpl valueNode, @NotNull XSourcePosition position, @NotNull XDebugSession session) {
+    myPosition = position;
     mySession = session;
     myCustomNode = valueNode instanceof InlineWatchNodeImpl;
     myValueNode = valueNode;
@@ -90,7 +85,7 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
     return LinePainter.isFullLineHighlighter(mySession, myPosition.getFile(), myPosition.getLine(), false);
   }
 
-  @Override
+
   public void onClick(Inlay inlay, @NotNull EditorMouseEvent event) {
     int x = event.getMouseEvent().getX();
     boolean isRemoveIconClick = myCustomNode && x >= myRemoveXCoordinate;
@@ -132,7 +127,8 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
     }
   }
 
-  public static @NotNull Pair<XValue, String> getXValueDescriptor(@NotNull XValueNodeImpl xValueNode) {
+  @NotNull
+  public static Pair<XValue, String> getXValueDescriptor(@NotNull XValueNodeImpl xValueNode) {
     String name = "valueName";
     XValue container = xValueNode.getValueContainer();
     if (container instanceof XNamedValue) {
@@ -142,7 +138,8 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
   }
 
   @Override
-  public @NotNull SimpleColoredText getPresentation() {
+  @NotNull
+  public SimpleColoredText getPresentation() {
     return myPresentation;
   }
 
@@ -162,12 +159,6 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
 
   XSourcePosition getPosition() {
     return myPosition;
-  }
-
-  @Override
-  protected @Nullable Icon getIcon() {
-    Icon icon = myValueNode.getInlayIcon();
-    return icon == null ? super.getIcon() : icon;
   }
 
   /**
@@ -193,11 +184,12 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
       return coloredText;
     }
 
-    private static @NotNull InlineDebugRenderer.LinePainter.VariableText computeVariablePresentationWithChanges(@NlsSafe String name,
-                                                                                                                SimpleColoredText text,
-                                                                                                                TextAttributes attributes,
-                                                                                                                int lineNumber,
-                                                                                                                Map<Variable, VariableValue> oldValues) {
+    @NotNull
+    private static InlineDebugRenderer.LinePainter.VariableText computeVariablePresentationWithChanges(@NlsSafe String name,
+                                                                                                       SimpleColoredText text,
+                                                                                                       TextAttributes attributes,
+                                                                                                       int lineNumber,
+                                                                                                       Map<Variable, VariableValue> oldValues) {
       final VariableText res = new VariableText();
       res.add(new LineExtensionInfo(name, attributes));
 
@@ -228,7 +220,8 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
       return res;
     }
 
-    public static @NotNull Map<Variable, VariableValue> getOldValues(@NotNull Project project) {
+    @NotNull
+    public static Map<Variable, VariableValue> getOldValues(@NotNull Project project) {
       Map<Variable, VariableValue> oldValues = project.getUserData(CACHE);
       if (oldValues == null) {
         oldValues = new HashMap<>();
@@ -250,7 +243,8 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
       return executionPointManager.isFullLineHighlighterAt(file, lineNumber, project, isToCheckTopFrameOnly);
     }
 
-    public static @Nullable SimpleColoredText createPresentation(@NotNull XValueNodeImpl value) {
+    @Nullable
+    public static SimpleColoredText createPresentation(@NotNull XValueNodeImpl value) {
       SimpleColoredText text = new SimpleColoredText();
       XValueTextRendererImpl renderer = new XValueTextRendererImpl(text);
       final XValuePresentation presentation = value.getValuePresentation();
@@ -380,7 +374,8 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
         return text.contains(XDebuggerUIConstants.getCollectingDataMessage());
       }
 
-      private static @Nullable Couple<String> getArrayWrapper(@Nullable String s) {
+      @Nullable
+      private static Couple<String> getArrayWrapper(@Nullable String s) {
         if (s == null) {
           return null;
         }

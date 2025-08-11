@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
 import com.intellij.facet.frameworks.beans.Artifact;
@@ -18,7 +18,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.io.File;
@@ -33,12 +32,12 @@ import java.util.zip.ZipInputStream;
  */
 @Tag("template")
 public abstract class ArchivedProjectTemplate implements ProjectTemplate {
-  public static final @NonNls String INPUT_FIELD = "input-field";
-  public static final @NonNls String TEMPLATE = "template";
-  public static final @NonNls String INPUT_DEFAULT = "default";
+  @NonNls public static final String INPUT_FIELD = "input-field";
+  @NonNls public static final String TEMPLATE = "template";
+  @NonNls public static final String INPUT_DEFAULT = "default";
 
   protected final @NlsContexts.Label String myDisplayName;
-  private final @Nullable String myCategory;
+  @Nullable private final String myCategory;
 
   private List<WizardInputField<?>> myInputFields = Collections.emptyList();
   private List<String> myFrameworks = new ArrayList<>();
@@ -49,8 +48,9 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     myCategory = category;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return myDisplayName;
   }
 
@@ -61,12 +61,14 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
 
   protected abstract ModuleType<?> getModuleType();
 
+  @NotNull
   @Override
-  public @NotNull ModuleBuilder createModuleBuilder() {
+  public ModuleBuilder createModuleBuilder() {
     return new TemplateModuleBuilder(this, null, null);
   }
 
-  public @NotNull List<WizardInputField<?>> getInputFields() {
+  @NotNull
+  public List<WizardInputField<?>> getInputFields() {
     return myInputFields;
   }
 
@@ -80,9 +82,10 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     myArtifacts = artifacts;
   }
 
+  @NotNull
   @Property(surroundWithTag = false)
   @XCollection(elementName = "framework", valueAttributeName = "")
-  public @NotNull List<String> getFrameworks() {
+  public List<String> getFrameworks() {
     return myFrameworks;
   }
 
@@ -90,8 +93,9 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     myFrameworks = frameworks;
   }
 
+  @Nullable
   @Override
-  public @Nullable ValidationInfo validateSettings() {
+  public ValidationInfo validateSettings() {
     return null;
   }
 
@@ -99,13 +103,14 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     filesToRefresh.add(dir);
   }
 
-  public abstract static class StreamProcessor<T> {
+  public static abstract class StreamProcessor<T> {
     public abstract T consume(@NotNull ZipInputStream stream) throws IOException;
   }
 
   public abstract <T> T processStream(@NotNull StreamProcessor<T> consumer) throws IOException;
 
-  public @Nullable String getCategory() {
+  @Nullable
+  public String getCategory() {
     return myCategory;
   }
 
@@ -114,7 +119,7 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     myInputFields = getFields(element);
   }
 
-  private static @Unmodifiable List<WizardInputField<?>> getFields(Element templateElement) {
+  private static List<WizardInputField<?>> getFields(Element templateElement) {
     return ContainerUtil
       .mapNotNull(templateElement.getChildren(INPUT_FIELD), element -> {
         ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(element.getText());

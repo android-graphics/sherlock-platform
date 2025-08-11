@@ -57,7 +57,8 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
       var urlField: TextFieldWithBrowseButton by notNull()
       val panel = panel {
         row(IcsBundle.message("readonly.sources.configuration.url.label")) {
-          urlField = textFieldWithBrowseButton(FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(IcsBundle.message("readonly.sources.configuration.repository.chooser")))
+          urlField = textFieldWithBrowseButton(IcsBundle.message("readonly.sources.configuration.repository.chooser"),
+                                               fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
             .columns(COLUMNS_LARGE)
             .component
         }

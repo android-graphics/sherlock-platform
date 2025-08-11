@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -26,11 +26,14 @@ public abstract class SmartStepTarget {
     myExpressionLines = expressionLines;
   }
 
-  public @Nullable PsiElement getHighlightElement() {
+  @Nullable
+  public PsiElement getHighlightElement() {
     return myHighlightElement;
   }
 
-  public @Nullable @NlsSafe String getLabel() {
+  @Nullable
+  @NlsSafe
+  public String getLabel() {
     return myLabel;
   }
 
@@ -38,7 +41,8 @@ public abstract class SmartStepTarget {
     return myNeedBreakpointRequest;
   }
 
-  public @Nullable Range<Integer> getCallingExpressionLines() {
+  @Nullable
+  public Range<Integer> getCallingExpressionLines() {
     return myExpressionLines;
   }
 
@@ -46,15 +50,19 @@ public abstract class SmartStepTarget {
     myExpressionLines = expressionLines;
   }
 
-  public @Nullable Icon getIcon() {
+  @Nullable
+  public Icon getIcon() {
     return null;
   }
 
-  public @Nullable String getClassName() {
+  @Nullable
+  public String getClassName() {
     return null;
   }
 
-  public @NotNull @NlsSafe String getPresentation() {
+  @NotNull
+  @NlsSafe
+  public String getPresentation() {
     return StringUtil.notNullize(getLabel());
   }
 

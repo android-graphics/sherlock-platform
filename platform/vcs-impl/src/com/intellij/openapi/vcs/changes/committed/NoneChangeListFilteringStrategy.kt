@@ -3,13 +3,11 @@ package com.intellij.openapi.vcs.changes.committed
 
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.event.ChangeListener
 
 private val NONE_FILTER_KEY = CommittedChangesFilterKey("None", CommittedChangesFilterPriority.NONE)
 
-@ApiStatus.Internal
 object NoneChangeListFilteringStrategy : ChangeListFilteringStrategy {
   override fun getKey(): CommittedChangesFilterKey = NONE_FILTER_KEY
 

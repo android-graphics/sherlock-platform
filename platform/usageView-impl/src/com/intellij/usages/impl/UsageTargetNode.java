@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.usages.UsageTarget;
@@ -25,12 +25,14 @@ class UsageTargetNode extends Node {
     return false;
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getNodeText() {
+  protected String getNodeText() {
     return ObjectUtils.notNull(getTarget().getPresentation().getPresentableText(), "");
   }
 
-  public @NotNull UsageTarget getTarget() {
+  @NotNull
+  public UsageTarget getTarget() {
     return (UsageTarget)getUserObject();
   }
 

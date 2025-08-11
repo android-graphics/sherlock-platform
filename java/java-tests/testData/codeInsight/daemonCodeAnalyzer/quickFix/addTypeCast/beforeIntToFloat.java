@@ -1,4 +1,4 @@
-// "Convert argument to 'float'" "true-preview"
+// "Cast argument to 'float'" "true-preview"
 class a {
  void test(Float f) {}
  

@@ -16,7 +16,10 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.uast.*;
 
 import java.io.File;
@@ -61,7 +64,8 @@ public final class PsiUtil {
     return false;
   }
 
-  public static @Nullable PsiMethod findNearestMethod(String name, @Nullable PsiClass cls) {
+  @Nullable
+  public static PsiMethod findNearestMethod(String name, @Nullable PsiClass cls) {
     if (cls == null) return null;
     for (PsiMethod method : cls.findMethodsByName(name, false)) {
       if (method.getParameterList().isEmpty()) {
@@ -71,7 +75,8 @@ public final class PsiUtil {
     return findNearestMethod(name, cls.getSuperClass());
   }
 
-  public static @Nullable PsiAnnotation findAnnotation(final Class<?> annotationClass, PsiMember... members) {
+  @Nullable
+  public static PsiAnnotation findAnnotation(final Class<?> annotationClass, PsiMember... members) {
     for (PsiMember member : members) {
       if (member == null) continue;
 
@@ -81,9 +86,10 @@ public final class PsiUtil {
     return null;
   }
 
-  public static @Nullable String getAnnotationStringAttribute(final PsiAnnotation annotation,
-                                                              final String name,
-                                                              String defaultValueIfEmpty) {
+  @Nullable
+  public static String getAnnotationStringAttribute(final PsiAnnotation annotation,
+                                                    final String name,
+                                                    String defaultValueIfEmpty) {
     final String value = AnnotationUtil.getDeclaredStringAttributeValue(annotation, name);
     return StringUtil.defaultIfEmpty(value, defaultValueIfEmpty);
   }
@@ -93,17 +99,21 @@ public final class PsiUtil {
     return ObjectUtils.notNull(AnnotationUtil.getBooleanAttributeValue(annotation, name), Boolean.FALSE);
   }
 
-  /**
-   * @deprecated Use {@linkplain IntelliJProjectUtil#isIntelliJPlatformProject(Project)} instead
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @ApiStatus.Internal
-  @Deprecated
   public static boolean isIdeaProject(@Nullable Project project) {
     return IntelliJProjectUtil.isIntelliJPlatformProject(project);
   }
 
-  public static @Nullable UExpression getReturnedExpression(PsiMethod method) {
+  /**
+   * @deprecated Use {@linkplain IntelliJProjectUtil#markAsIntelliJPlatformProject(Project, Boolean)} instead
+   */
+  @TestOnly
+  @Deprecated
+  public static void markAsIdeaProject(@NotNull Project project, boolean value) {
+    IntelliJProjectUtil.markAsIntelliJPlatformProject(project, value);
+  }
+
+  @Nullable
+  public static UExpression getReturnedExpression(PsiMethod method) {
     UMethod uMethod = UastContextKt.toUElement(method, UMethod.class);
     if (uMethod == null) return null;
 
@@ -136,11 +146,11 @@ public final class PsiUtil {
   }
 
   @RequiresReadLock
-  public static boolean isPluginProject(final @NotNull Project project) {
+  public static boolean isPluginProject(@NotNull final Project project) {
     return JavaLibraryUtil.hasLibraryClass(project, IDE_PROJECT_MARKER_CLASS);
   }
 
-  public static boolean isPluginModule(final @NotNull Module module) {
+  public static boolean isPluginModule(@NotNull final Module module) {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
       boolean foundMarkerClass = JavaPsiFacade.getInstance(module.getProject())
                                    .findClass(IDE_PROJECT_MARKER_CLASS,
@@ -153,7 +163,6 @@ public final class PsiUtil {
     return isPluginProject(element.getProject()) && DescriptorUtil.isPluginXml(element.getContainingFile());
   }
 
-  @ApiStatus.Internal
   public static boolean isPathToIntelliJIdeaSources(String path) {
     for (String file : IDEA_PROJECT_MARKER_FILES) {
       if (new File(path, file).isFile()) return true;

@@ -81,9 +81,4 @@ public class PyiResolveTest extends PyMultiFileResolveTestCase {
     QualifiedName internalCanonicalImportPath = QualifiedNameFinder.findCanonicalImportPath(internalClass, null);
     assertEquals(QualifiedName.fromDottedString("pkg.mod"), internalCanonicalImportPath);
   }
-
-  // PY-77940
-  public void testUnderscoredName() {
-    assertResolvesTo(PyTargetExpression.class, "_Placeholder");
-  }
 }

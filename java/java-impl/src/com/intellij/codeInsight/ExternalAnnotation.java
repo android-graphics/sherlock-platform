@@ -7,18 +7,38 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 /**
  * Wrapper for info about external annotation.
- * @param owner Annotation owner
- * @param annotationFQName Annotation name
- * @param values Annotation content
  */
-public record ExternalAnnotation(@NotNull PsiModifierListOwner owner, @NotNull String annotationFQName, PsiNameValuePair @Nullable [] values) {
+public class ExternalAnnotation {
 
-  private static final Logger LOG = Logger.getInstance(ExternalAnnotation.class);
+  private static final Logger LOG = Logger.getInstance(ExternalAnnotation.class); 
 
-  public ExternalAnnotation {
+  /**
+   * Annotation owner
+   */
+  private final @NotNull PsiModifierListOwner owner;
+
+  /**
+   * Annotation name
+   */
+  private final @NotNull String annotationFQName;
+
+  /**
+   * Annotation content
+   */
+  private final PsiNameValuePair @Nullable [] values;
+
+  public ExternalAnnotation(@NotNull PsiModifierListOwner owner,
+                            @NotNull String annotationFQName,
+                            PsiNameValuePair @Nullable [] values) {
     LOG.assertTrue(canBeExternallyAnnotated(owner), "Unable to annotate externally element of type " + owner.getClass());
+    this.owner = owner;
+    this.annotationFQName = annotationFQName;
+    this.values = values;
   }
 
   private static boolean canBeExternallyAnnotated(@Nullable PsiModifierListOwner owner) {
@@ -32,7 +52,41 @@ public record ExternalAnnotation(@NotNull PsiModifierListOwner owner, @NotNull S
     return false;
   }
 
+  public @NotNull PsiModifierListOwner getOwner() {
+    return owner;
+  }
+
+  public @NotNull String getAnnotationFQName() {
+    return annotationFQName;
+  }
+
   public PsiNameValuePair[] getValues() {
-    return values();
+    return values;
+  }
+
+  @Override
+  public String toString() {
+    return "ExternalAnnotation{" +
+           "owner=" + owner +
+           ", annotationFQName='" + annotationFQName + '\'' +
+           ", values=" + Arrays.toString(values) +
+           '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    ExternalAnnotation that = (ExternalAnnotation)o;
+    return Objects.equals(owner, that.owner) &&
+           Objects.equals(annotationFQName, that.annotationFQName) &&
+           Arrays.equals(values, that.values);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hash(owner, annotationFQName);
+    result = 31 * result + Arrays.hashCode(values);
+    return result;
   }
 }

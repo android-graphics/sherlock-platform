@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.context;
 
 import com.intellij.lang.Language;
@@ -25,7 +25,8 @@ public abstract class XsltContextProviderExtensionBase extends ContextProviderEx
   protected abstract boolean acceptsLanguage(Language language);
 
   @Override
-  public @NotNull ContextProvider getContextProvider(XPathFile file) {
+  @NotNull
+  public ContextProvider getContextProvider(XPathFile file) {
     final XmlElement xmlElement = (XmlElement)file.getContext();
     assert xmlElement != null;
     return create(xmlElement);

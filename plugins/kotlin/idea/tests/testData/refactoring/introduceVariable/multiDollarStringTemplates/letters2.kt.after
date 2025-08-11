@@ -1,5 +1,0 @@
-// INPLACE_VARIABLE_NAME: my
-fun test() {
-    val my = "My"
-    $$"$${my}FooBar"
-}

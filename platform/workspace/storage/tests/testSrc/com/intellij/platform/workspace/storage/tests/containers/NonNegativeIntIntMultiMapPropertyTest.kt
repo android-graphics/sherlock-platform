@@ -3,7 +3,6 @@ package com.intellij.platform.workspace.storage.tests.containers
 
 import com.intellij.platform.workspace.storage.impl.containers.MutableNonNegativeIntIntMultiMap
 import com.intellij.platform.workspace.storage.impl.containers.NonNegativeIntIntMultiMap
-import com.intellij.testFramework.propertyBased.MadTestingUtil.assertNoErrorLoggedIn
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
@@ -16,7 +15,7 @@ class NonNegativeIntIntMultiMapPropertyTest {
   @Test
   fun propertyTest() {
     PropertyChecker.checkScenarios {
-      assertNoErrorLoggedIn(ImperativeCommand { env ->
+      ImperativeCommand { env ->
         val myMap = MutableNonNegativeIntIntMultiMap.ByList()
         val workingMap = MultiMap<Int, Int>()
 
@@ -27,7 +26,7 @@ class NonNegativeIntIntMultiMapPropertyTest {
           RemoveKeyValue(myMap, workingMap),
           ToImmutable(myMap, workingMap)
         ))
-      })
+      }
     }
   }
 

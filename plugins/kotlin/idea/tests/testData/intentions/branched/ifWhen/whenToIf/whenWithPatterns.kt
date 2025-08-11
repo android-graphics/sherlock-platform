@@ -1,4 +1,3 @@
-// PRIORITY: LOW
 class Klass<T>
 
 fun test(obj: Any): String {

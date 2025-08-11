@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.typing;
 
 import com.intellij.openapi.util.Key;
@@ -15,11 +15,12 @@ public final class PredefinedReturnType implements GrCallTypeCalculator {
 
   public static final Key<PsiType> PREDEFINED_RETURN_TYPE_KEY = Key.create("PREDEFINED_RETURN_TYPE_KEY");
 
+  @Nullable
   @Override
-  public @Nullable PsiType getType(@Nullable PsiType receiver,
-                                   @NotNull PsiMethod method,
-                                   @Nullable List<? extends Argument> arguments,
-                                   @NotNull PsiElement context) {
+  public PsiType getType(@Nullable PsiType receiver,
+                         @NotNull PsiMethod method,
+                         @Nullable List<? extends Argument> arguments,
+                         @NotNull PsiElement context) {
     return method.getUserData(PREDEFINED_RETURN_TYPE_KEY);
   }
 }

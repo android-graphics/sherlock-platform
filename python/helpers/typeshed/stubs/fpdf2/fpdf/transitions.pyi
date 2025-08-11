@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Literal
+from typing_extensions import Literal
 
 class Transition(ABC):
     @abstractmethod

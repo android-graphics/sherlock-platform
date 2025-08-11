@@ -3,6 +3,8 @@ package com.jetbrains.python.ast;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -18,7 +20,8 @@ public interface PyAstElement extends NavigatablePsiElement {
     return PyPsiUtilsCore.nodesToPsi(nodes, array);
   }
 
-  default @Nullable <T extends PyAstElement> T childToPsi(TokenSet filterSet, int index) {
+  @Nullable
+  default <T extends PyAstElement> T childToPsi(TokenSet filterSet, int index) {
     final ASTNode[] nodes = getNode().getChildren(filterSet);
     if (nodes.length <= index) {
       return null;
@@ -27,7 +30,8 @@ public interface PyAstElement extends NavigatablePsiElement {
     return (T)nodes[index].getPsi();
   }
 
-  default @Nullable <T extends PyAstElement> T childToPsi(IElementType elType) {
+  @Nullable
+  default <T extends PyAstElement> T childToPsi(IElementType elType) {
     final ASTNode node = getNode().findChildByType(elType);
     if (node == null) {
       return null;
@@ -37,13 +41,15 @@ public interface PyAstElement extends NavigatablePsiElement {
     return (T)node.getPsi();
   }
 
-  default @Nullable <T extends PyAstElement> T childToPsi(@NotNull TokenSet elTypes) {
+  @Nullable
+  default <T extends PyAstElement> T childToPsi(@NotNull TokenSet elTypes) {
     final ASTNode node = getNode().findChildByType(elTypes);
     //noinspection unchecked
     return node != null ? (T)node.getPsi() : null;
   }
 
-  default @NotNull <T extends PyAstElement> T childToPsiNotNull(TokenSet filterSet, int index) {
+  @NotNull
+  default <T extends PyAstElement> T childToPsiNotNull(TokenSet filterSet, int index) {
     final PyAstElement child = childToPsi(filterSet, index);
     if (child == null) {
       throw new RuntimeException("child must not be null: expression text " + getText());
@@ -52,7 +58,8 @@ public interface PyAstElement extends NavigatablePsiElement {
     return (T)child;
   }
 
-  default @NotNull <T extends PyAstElement> T childToPsiNotNull(IElementType elType) {
+  @NotNull
+  default <T extends PyAstElement> T childToPsiNotNull(IElementType elType) {
     final PyAstElement child = childToPsi(elType);
     if (child == null) {
       throw new RuntimeException("child must not be null; expression text " + getText());

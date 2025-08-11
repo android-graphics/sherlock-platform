@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
@@ -39,9 +39,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author Rustam Vishnyakov
  */
 public final class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
+  @NotNull
   @Override
-  public @NotNull CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings,
-                                                           @NotNull CodeStyleSettings modelSettings) {
+  public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings,
+                                                  @NotNull CodeStyleSettings modelSettings) {
     return new CodeStyleAbstractConfigurable(baseSettings, modelSettings, GroovyBundle.message("language.groovy")) {
       @Override
       protected @NotNull CodeStyleAbstractPanel createPanel(@NotNull CodeStyleSettings settings) {
@@ -60,8 +61,9 @@ public final class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeS
     return new GroovyCodeStyleSettings(settings);
   }
 
+  @NotNull
   @Override
-  public @NotNull Language getLanguage() {
+  public Language getLanguage() {
     return GroovyLanguage.INSTANCE;
   }
 
@@ -436,7 +438,7 @@ public final class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeS
       }
 
       @Override
-      public void reset(final @NotNull CodeStyleSettings settings, final @NotNull CommonCodeStyleSettings.IndentOptions options) {
+      public void reset(@NotNull final CodeStyleSettings settings, @NotNull final CommonCodeStyleSettings.IndentOptions options) {
         super.reset(settings, options);
         myLabelIndent.setValue(options.LABEL_INDENT_SIZE);
         if (options.LABEL_INDENT_ABSOLUTE) {
@@ -478,9 +480,10 @@ public final class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeS
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject,
-                                                      @NotNull Field field) {
+  public CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject,
+                                            @NotNull Field field) {
     if (PackageEntryTable.class.isAssignableFrom(field.getType())) {
       return new JavaPackageEntryTableAccessor(codeStyleObject, field);
     }

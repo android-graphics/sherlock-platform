@@ -15,8 +15,5 @@
  */
 package com.intellij.psi;
 
-import org.jetbrains.annotations.ApiStatus;
-
-@ApiStatus.Internal
 public interface IgnorePsiEventsMarker {
 }

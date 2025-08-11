@@ -10,9 +10,10 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtWhenExpression
+import org.jetbrains.kotlin.renderer.render
 
 object AddRemainingWhenBranchesUtils {
-    class ElementContext(
+    class Context(
         val whenMissingCases: List<WhenMissingCase>,
         val enumToStarImport: ClassId?,
     )
@@ -23,13 +24,13 @@ object AddRemainingWhenBranchesUtils {
 
     fun addRemainingWhenBranches(
         whenExpression: KtWhenExpression,
-        elementContext: ElementContext,
+        context: Context,
     ) {
-        generateWhenBranches(whenExpression, elementContext.whenMissingCases)
+        generateWhenBranches(whenExpression, context.whenMissingCases)
         shortenReferences(
             whenExpression,
             callableShortenStrategy = {
-                if (it.callableId?.classId == elementContext.enumToStarImport) {
+                if (it.callableId?.classId == context.enumToStarImport) {
                     ShortenStrategy.SHORTEN_AND_STAR_IMPORT
                 } else {
                     ShortenStrategy.DO_NOT_SHORTEN
@@ -57,7 +58,19 @@ object AddRemainingWhenBranchesUtils {
         val elseBranch = element.entries.find { it.isElse }
         (whenCloseBrace.prevSibling as? PsiWhiteSpace)?.replace(psiFactory.createNewLine())
         for (case in missingCases) {
-            val branchConditionText = case.branchConditionText
+            val branchConditionText = when (case) {
+                WhenMissingCase.Unknown,
+                WhenMissingCase.NullIsMissing,
+                is WhenMissingCase.BooleanIsMissing,
+                is WhenMissingCase.ConditionTypeIsExpect -> case.branchConditionText
+                is WhenMissingCase.IsTypeCheckIsMissing ->
+                    if (case.isSingleton) {
+                        ""
+                    } else {
+                        "is "
+                    } + case.classId.asSingleFqName().render()
+                is WhenMissingCase.EnumCheckIsMissing -> case.callableId.asSingleFqName().render()
+            }
             val entry = psiFactory.createWhenEntry("$branchConditionText -> TODO()")
             if (elseBranch != null) {
                 element.addBefore(entry, elseBranch)

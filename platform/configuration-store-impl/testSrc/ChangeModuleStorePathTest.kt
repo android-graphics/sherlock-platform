@@ -2,8 +2,9 @@
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.impl.stores.stateStore
@@ -23,6 +24,7 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.Function
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -33,7 +35,7 @@ import kotlin.io.path.isRegularFile
 import kotlin.io.path.readText
 import kotlin.properties.Delegates
 
-internal val Module.storage: FileBasedStorage
+private val Module.storage: FileBasedStorage
   get() = (stateStore.storageManager as StateStorageManagerImpl).getCachedFileStorages(listOf(StoragePathMacros.MODULE_FILE)).first()
 
 @RunsInActiveStoreMode
@@ -97,7 +99,7 @@ class ChangeModuleStorePathTest {
     val oldName = module.name
     val newName = "foo"
 
-    edtWriteAction {
+    writeAction {
       projectRule.project.modifyModules { renameModule(module, newName) }
     }
     assertModuleFileRenamed(newName, oldFile)
@@ -118,8 +120,10 @@ class ChangeModuleStorePathTest {
 
     val oldName = module.name
     val newName = "foo.dot"
-    edtWriteAction {
-      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(oldFile)!!.rename(null, "${newName}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
+    withContext(Dispatchers.EDT) {
+      ApplicationManager.getApplication().runWriteAction {
+        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(oldFile)!!.rename(null, "${newName}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
+      }
     }
     assertModuleFileRenamed(newName, oldFile)
     assertThat(oldModuleNames).containsOnly(oldName)
@@ -160,8 +164,10 @@ class ChangeModuleStorePathTest {
       val storage = module.storage
       val oldFile = storage.file
       val parentVirtualDir = storage.getVirtualFile()!!.parent
-      edtWriteAction {
-        updateDirectoryAction(parentVirtualDir)
+      withContext(Dispatchers.EDT) {
+        writeAction {
+          updateDirectoryAction(parentVirtualDir)
+        }
       }
 
       val newFile = parentVirtualDir.toNioPath().resolve("${module.name}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
@@ -179,7 +185,7 @@ class ChangeModuleStorePathTest {
     val imlFile = module.storage.getVirtualFile()!!
     val oldFile = imlFile.toNioPath()
     val moduleName = module.name
-    edtWriteAction {
+    writeAction { 
       imlFile.move(null, tempDirManager.newVirtualDirectory("newParent"))
     }
     val newFile = imlFile.toNioPath()
@@ -194,7 +200,7 @@ class ChangeModuleStorePathTest {
     val storage = module.storage
     val parentVirtualDir = storage.getVirtualFile()!!.parent
     val src = VfsTestUtil.createDir(parentVirtualDir, "foo")
-    edtWriteAction {
+    writeAction {
       PsiTestUtil.addSourceContentToRoots(module, src, false)
     }
 
@@ -203,7 +209,7 @@ class ChangeModuleStorePathTest {
     val rootManager = module.rootManager as ModuleRootManagerEx
     val stateModificationCount = rootManager.modificationCountForTests
 
-    edtWriteAction {
+    writeAction {
       src.rename(null, "bar.dot")
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.project.Project;
@@ -112,7 +112,7 @@ public final class JavaResolveUtil {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
 
     if (effectiveAccessLevel == PsiUtil.ACCESS_LEVEL_PROTECTED) {
-      if (facade.arePackagesTheSame((memberClass == null) ? member : memberClass, place)) {
+      if (facade.arePackagesTheSame(member, place)) {
         return true;
       }
       if (memberClass == null) {
@@ -162,14 +162,17 @@ public final class JavaResolveUtil {
       }
     }
 
-    if (!facade.arePackagesTheSame((memberClass == null) ? member : memberClass, place)) return false;
+    if (!facade.arePackagesTheSame(member, place)) return false;
+    //if (modifierList.hasModifierProperty(PsiModifier.STATIC)) return true;
     // maybe inheritance lead through package-private class in other package ?
     final PsiClass placeClass = getContextClass(place);
     if (memberClass == null || placeClass == null) return true;
     // check only classes since interface members are public,  and if placeClass is interface,
     // then its members are static, and cannot refer to non-static members of memberClass
     if (memberClass.isInterface() || placeClass.isInterface()) return true;
-    PsiClass clazz = accessObjectClass != null ? accessObjectClass : placeClass.getSuperClass(); //may start from super class
+    PsiClass clazz = accessObjectClass != null ?
+                     accessObjectClass :
+                     placeClass.getSuperClass(); //may start from super class
     if (clazz != null && clazz.isInheritor(memberClass, true)) {
       PsiClass superClass = clazz;
       while (!manager.areElementsEquivalent(superClass, memberClass)) {
@@ -336,7 +339,6 @@ public final class JavaResolveUtil {
     if (classHint != null && !classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) return true;
 
     List<PsiPackageAccessibilityStatement> exports = getExportedPackages(place, module);
-    if (PsiTreeUtil.isAncestor(module, place, false)) return true;
     for (PsiPackageAccessibilityStatement export : exports) {
       PsiJavaCodeReferenceElement aPackage = export.getPackageReference();
       if (aPackage == null) continue;

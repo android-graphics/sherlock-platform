@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.vcs.changes.committed.ChangesBunch;
@@ -71,8 +71,9 @@ public abstract class CachedProvider implements BunchProvider {
   }
 
   @Override
-  public @Nullable Fragment getEarliestBunchInInterval(final long earliestRevision, final long oldestRevision, final int desirableSize,
-                                                       final boolean includeYoungest, final boolean includeOldest) {
+  @Nullable
+  public Fragment getEarliestBunchInInterval(final long earliestRevision, final long oldestRevision, final int desirableSize,
+                                             final boolean includeYoungest, final boolean includeOldest) {
     if ((earliestRevision > getEarliestRevision()) || (earliestRevision == -1)) {
       if (myAlreadyReaded == null) {
         return null;
@@ -124,8 +125,9 @@ public abstract class CachedProvider implements BunchProvider {
     return myHadBeenAccessed;
   }
 
-  private @Nullable Fragment createFromLoaded(final ChangesBunch loadedBunch, final long earliestRevision, final long oldestRevision,
-                                              final int desirableSize, final boolean includeYoungest, final boolean includeOldest, final boolean consistent) {
+  @Nullable
+  private Fragment createFromLoaded(final ChangesBunch loadedBunch, final long earliestRevision, final long oldestRevision,
+                                    final int desirableSize, final boolean includeYoungest, final boolean includeOldest, final boolean consistent) {
     boolean consistentWithPrevious = loadedBunch.isConsistentWithPrevious();
     boolean consistentWithYounger = consistent;
 

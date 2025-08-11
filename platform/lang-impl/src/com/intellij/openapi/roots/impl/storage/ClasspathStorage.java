@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.openapi.module.Module;
@@ -11,7 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
 public final class ClasspathStorage {
-  public static @Nullable ClasspathStorageProvider getProvider(@NotNull String type) {
+  @Nullable
+  public static ClasspathStorageProvider getProvider(@NotNull String type) {
     if (type.equals(ClassPathStorageUtil.DEFAULT_STORAGE)) {
       return null;
     }
@@ -24,7 +25,8 @@ public final class ClasspathStorage {
     return null;
   }
 
-  public static @NotNull String getStorageRootFromOptions(@NotNull Module module) {
+  @NotNull
+  public static String getStorageRootFromOptions(@NotNull Module module) {
     String moduleRoot = ModuleUtilCore.getModuleDirPath(module);
     String storageRef = module.getOptionValue(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE);
     if (storageRef == null) {

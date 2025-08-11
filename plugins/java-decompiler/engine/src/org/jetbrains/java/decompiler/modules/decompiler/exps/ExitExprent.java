@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -11,15 +10,15 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.attr.StructExceptionsAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
-import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.BitSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class ExitExprent extends Exprent {
 
@@ -29,21 +28,19 @@ public class ExitExprent extends Exprent {
   private final int exitType;
   private Exprent value;
   private final VarType retType;
-  private final MethodDescriptor methodDescriptor;
 
-  public ExitExprent(int exitType, Exprent value, VarType retType, BitSet bytecodeOffsets, MethodDescriptor methodDescriptor) {
+  public ExitExprent(int exitType, Exprent value, VarType retType, Set<Integer> bytecodeOffsets) {
     super(EXPRENT_EXIT);
     this.exitType = exitType;
     this.value = value;
     this.retType = retType;
-    this.methodDescriptor = methodDescriptor;
 
     addBytecodeOffsets(bytecodeOffsets);
   }
 
   @Override
   public Exprent copy() {
-    return new ExitExprent(exitType, value == null ? null : value.copy(), retType, bytecode, methodDescriptor);
+    return new ExitExprent(exitType, value == null ? null : value.copy(), retType, bytecode);
   }
 
   @Override
@@ -59,7 +56,8 @@ public class ExitExprent extends Exprent {
   }
 
   @Override
-  public List<Exprent> getAllExprents(List<Exprent> lst) {
+  public List<Exprent> getAllExprents() {
+    List<Exprent> lst = new ArrayList<>();
     if (value != null) {
       lst.add(value);
     }
@@ -74,12 +72,8 @@ public class ExitExprent extends Exprent {
       TextBuffer buffer = new TextBuffer("return");
 
       if (retType.getType() != CodeConstants.TYPE_VOID) {
-        VarType ret = retType;
-        if (methodDescriptor != null && methodDescriptor.genericInfo != null && methodDescriptor.genericInfo.returnType != null) {
-          ret = methodDescriptor.genericInfo.returnType;
-        }
         buffer.append(' ');
-        ExprProcessor.getCastedExprent(value, ret, buffer, indent, false, false, false, false, tracer);
+        ExprProcessor.getCastedExprent(value, retType, buffer, indent, false, tracer);
       }
 
       return buffer;
@@ -145,17 +139,6 @@ public class ExitExprent extends Exprent {
   public VarType getRetType() {
     return retType;
   }
-
-  public MethodDescriptor getMethodDescriptor() {
-    return this.methodDescriptor;
-  }
-
-  @Override
-  public void fillBytecodeRange(@Nullable BitSet values) {
-    measureBytecode(values, value);
-    measureBytecode(values);
-  }
-
 
   // *****************************************************************************
   // IMatchable implementation

@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.platforms.library.JSLibraryType
 import org.jetbrains.kotlin.idea.projectConfiguration.JSLibraryStdDescription
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
+import org.jetbrains.kotlin.js.JavaScript
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 
@@ -30,7 +31,7 @@ open class KotlinJsModuleConfigurator : KotlinWithLibraryConfigurator<DummyLibra
     override val presentableText: String
         get() = KotlinProjectConfigurationBundle.message("language.name.javascript")
 
-    override fun isConfigured(module: Module): Boolean = hasKotlinJsLegacyRuntimeInScope(module)
+    override fun isConfigured(module: Module) = hasKotlinJsLegacyRuntimeInScope(module)
 
     override val libraryName: String
         get() = JSLibraryStdDescription.LIBRARY_NAME
@@ -52,7 +53,7 @@ open class KotlinJsModuleConfigurator : KotlinWithLibraryConfigurator<DummyLibra
         get() = KotlinJavaScriptStdlibDetectorFacility
 
     companion object {
-        const val NAME = "js"
+        const val NAME = JavaScript.LOWER_NAME
     }
 
     /**

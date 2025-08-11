@@ -1,9 +1,6 @@
-from _typeshed import Unused
 from collections.abc import Callable, Mapping
-from typing import Literal
-from typing_extensions import TypeVarTuple, Unpack
-
-_Ts = TypeVarTuple("_Ts")
+from typing import Any
+from typing_extensions import Literal
 
 def get_host_platform() -> str: ...
 def get_platform() -> str: ...
@@ -17,22 +14,17 @@ def subst_vars(s: str, local_vars: Mapping[str, str]) -> None: ...
 def grok_environment_error(exc: object, prefix: str = ...) -> str: ...
 def split_quoted(s: str) -> list[str]: ...
 def execute(
-    func: Callable[[Unpack[_Ts]], Unused],
-    args: tuple[Unpack[_Ts]],
-    msg: str | None = ...,
-    verbose: bool = False,
-    dry_run: bool = False,
+    func: Callable[..., object], args: tuple[Any, ...], msg: str | None = ..., verbose: bool = ..., dry_run: bool = ...
 ) -> None: ...
 def strtobool(val: str) -> Literal[0, 1]: ...
 def byte_compile(
     py_files: list[str],
     optimize: int = ...,
-    force: bool = False,
+    force: bool = ...,
     prefix: str | None = ...,
     base_dir: str | None = ...,
-    verbose: bool = True,
-    dry_run: bool = False,
+    verbose: bool = ...,
+    dry_run: bool = ...,
     direct: bool | None = ...,
 ) -> None: ...
 def rfc822_escape(header: str) -> str: ...
-def is_mingw() -> bool: ...

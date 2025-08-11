@@ -15,10 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiExpressionList;
-import com.intellij.psi.PsiNewExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -29,12 +26,14 @@ public final class StringBufferMustHaveInitialCapacityInspection
   extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "StringBufferWithoutInitialCapacity";
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "string.buffer.must.have.initial.capacity.problem.descriptor");
   }

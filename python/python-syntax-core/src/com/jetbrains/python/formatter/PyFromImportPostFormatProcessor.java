@@ -17,8 +17,7 @@ import com.jetbrains.python.ast.PyAstFromImportStatement;
 import com.jetbrains.python.ast.PyAstImportElement;
 import com.jetbrains.python.ast.PyAstRecursiveElementVisitor;
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyAstElementGenerator;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -26,13 +25,15 @@ import java.util.Collections;
 import java.util.List;
 
 final class PyFromImportPostFormatProcessor implements PostFormatProcessor {
+  @NotNull
   @Override
-  public @NotNull PsiElement processElement(@NotNull PsiElement source, @NotNull CodeStyleSettings settings) {
+  public PsiElement processElement(@NotNull PsiElement source, @NotNull CodeStyleSettings settings) {
     return new Visitor(settings).processElement(source);
   }
 
+  @NotNull
   @Override
-  public @NotNull TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings) {
+  public TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings) {
     return new Visitor(settings).processTextRange(source, rangeToReformat);
   }
 
@@ -68,14 +69,16 @@ final class PyFromImportPostFormatProcessor implements PostFormatProcessor {
       }
     }
 
-    public @NotNull PsiElement processElement(@NotNull PsiElement element) {
+    @NotNull
+    public PsiElement processElement(@NotNull PsiElement element) {
       // For some reason smart pointers don't work for non-physical (in particular, generated) elements
       myRootElement = element;
       findAndReplaceFromImports(element);
       return myRootElement;
     }
 
-    public @NotNull TextRange processTextRange(@NotNull PsiFile file, @NotNull TextRange range) {
+    @NotNull
+    public TextRange processTextRange(@NotNull PsiFile file, @NotNull TextRange range) {
       myHelper.setResultTextRange(range);
       findAndReplaceFromImports(file);
       return myHelper.getResultTextRange();
@@ -95,7 +98,8 @@ final class PyFromImportPostFormatProcessor implements PostFormatProcessor {
       }
     }
 
-    private @NotNull PyAstFromImportStatement replaceFromImport(@NotNull PyAstFromImportStatement fromImport) {
+    @NotNull
+    private PyAstFromImportStatement replaceFromImport(@NotNull PyAstFromImportStatement fromImport) {
       final PyAstImportElement[] allNames = fromImport.getImportElements();
       final PyAstImportElement firstName = allNames[0];
       final PyAstElementGenerator generator = PyAstElementGenerator.getInstance(fromImport.getProject());

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.lang.Language;
@@ -65,18 +65,21 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
     return getParameterIndex(parameter);
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement getLParen() {
+  public PsiElement getLParen() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement getRParen() {
+  public PsiElement getRParen() {
     return null;
   }
 
+  @NotNull
   @Override
-  public @NotNull TextRange getParametersRange() {
+  public TextRange getParametersRange() {
     throw new IllegalStateException();
   }
 
@@ -111,7 +114,8 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
 
   }
 
-  public @NotNull GrParameter removeParameter(int index) {
+  @NotNull
+  public GrParameter removeParameter(int index) {
     GrParameter removed = myParameters.remove(index);
     myCachedParameters = null;
     return removed;

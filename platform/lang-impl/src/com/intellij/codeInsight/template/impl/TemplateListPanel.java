@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -42,8 +42,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.codeInsight.template.impl.TemplateContext.getDifference;
 import static com.intellij.codeInsight.template.impl.TemplateContext.getDifferenceType;
@@ -127,7 +127,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
     myUpdateNeeded = true;
   }
 
-  private static @NotNull List<TemplateGroup> getSortedGroups(TemplateSettings templateSettings) {
+  @NotNull
+  private static List<TemplateGroup> getSortedGroups(TemplateSettings templateSettings) {
     List<TemplateGroup> groups = new ArrayList<>(templateSettings.getTemplateGroups());
 
     groups.sort((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
@@ -228,7 +229,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
     updateTemplateDetails(true, false);
   }
 
-  public @Nullable JComponent getPreferredFocusedComponent() {
+  @Nullable
+  public JComponent getPreferredFocusedComponent() {
     if (getTemplate(getSingleSelectedIndex()) != null) {
       return myCurrentTemplateEditor.getKeyField();
     }
@@ -314,7 +316,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
     myDetailsPanel.add(myCurrentTemplateEditor, TEMPLATE_SETTINGS);
   }
 
-  private @Nullable TemplateImpl getTemplate(int row) {
+  @Nullable
+  private TemplateImpl getTemplate(int row) {
     JTree tree = myTree;
     TreePath path = tree.getPathForRow(row);
     if (path != null) {
@@ -327,7 +330,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return null;
   }
 
-  private @Nullable TemplateGroup getGroup(int row) {
+  @Nullable
+  private TemplateGroup getGroup(int row) {
     TreePath path = myTree.getPathForRow(row);
     if (path != null) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
@@ -358,7 +362,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
     TreeUtil.selectPaths(myTree, toSelect);
   }
 
-  private @Nullable DefaultMutableTreeNode getNode(final int row) {
+  @Nullable
+  private DefaultMutableTreeNode getNode(final int row) {
     JTree tree = myTree;
     TreePath path = tree.getPathForRow(row);
     if (path != null) {
@@ -369,7 +374,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
   }
 
-  private @Nullable TemplateGroup getTemplateGroup(final String groupName) {
+  @Nullable
+  private TemplateGroup getTemplateGroup(final String groupName) {
     for (TemplateGroup group : myTemplateGroups) {
       if (group.getName().equals(groupName)) return group;
     }
@@ -482,7 +488,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener(){
       @Override
-      public void valueChanged(final @NotNull TreeSelectionEvent e) {
+      public void valueChanged(@NotNull final TreeSelectionEvent e) {
         TemplateSettings templateSettings = TemplateSettings.getInstance();
         TemplateImpl template = getTemplate(getSingleSelectedIndex());
         if (template != null) {
@@ -543,7 +549,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       })
       .install();
 
-    if (!myTemplateGroups.isEmpty()) {
+    if (myTemplateGroups.size() > 0) {
       myTree.setSelectionInterval(0, 0);
     }
 
@@ -648,7 +654,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
     popup.show(button.getPreferredPopupPoint());
   }
 
-  private @Nullable TemplateGroup getDropGroup(DnDEvent event) {
+  @Nullable
+  private TemplateGroup getDropGroup(DnDEvent event) {
     Point point = event.getPointOn(myTree);
     return getGroup(myTree.getRowForLocation(point.x, point.y));
   }
@@ -800,7 +807,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
     PopupHandler.installPopupMenu(myTree, group, "TemplateTreePopup");
   }
 
-  private @Nullable TemplateGroup getSingleSelectedGroup() {
+  @Nullable
+  private TemplateGroup getSingleSelectedGroup() {
     return getGroup(getSingleSelectedIndex());
   }
 
@@ -959,7 +967,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     Objects.requireNonNull(SpeedSearchSupply.getSupply(myTree, true)).findAndSelectElement(searchQuery);
   }
 
-  private void selectTemplate(final @Nullable String groupName, final @Nullable String templateKey) {
+  private void selectTemplate(@Nullable final String groupName, @Nullable final String templateKey) {
     TreeUtil.traverseDepth(myTreeRoot, node -> {
       Object o = ((DefaultMutableTreeNode)node).getUserObject();
       if (templateKey == null && o instanceof TemplateGroup && Objects.equals(groupName, ((TemplateGroup)o).getName()) ||

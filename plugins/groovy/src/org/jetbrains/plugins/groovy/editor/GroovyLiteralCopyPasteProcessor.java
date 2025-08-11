@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.editor;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -29,8 +29,9 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 public final class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProcessor {
 
+  @Nullable
   @Override
-  protected @Nullable TextRange getEscapedRange(@NotNull PsiElement token) {
+  protected TextRange getEscapedRange(@NotNull PsiElement token) {
     final ASTNode node = token.getNode();
     if (node == null) return null;
 
@@ -46,14 +47,16 @@ public final class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPast
     return null;
   }
 
+  @Nullable
   @Override
-  protected @Nullable String unescape(String s, PsiElement token) {
+  protected String unescape(String s, PsiElement token) {
     StringKind stringKind = getStringKindByToken(token);
     return stringKind == null ? null : stringKind.unescape(s);
   }
 
+  @NotNull
   @Override
-  public @NotNull String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
+  public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
     if (!isSupportedFile(file)) {
       return text;
     }
@@ -111,7 +114,8 @@ public final class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPast
     }
   }
 
-  private static @NotNull String escape(@NotNull StringKind kind, @NotNull String s) {
+  @NotNull
+  private static String escape(@NotNull StringKind kind, @NotNull String s) {
     if (s.isEmpty()) {
       return s;
     }
@@ -137,7 +141,8 @@ public final class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPast
   }
 
   @VisibleForTesting
-  public static @Nullable StringKind findStringKind(PsiFile file, int startOffset, int endOffset) {
+  @Nullable
+  public static StringKind findStringKind(PsiFile file, int startOffset, int endOffset) {
     if (startOffset == endOffset) {
       return findStringKind(file, startOffset);
     }
@@ -149,7 +154,8 @@ public final class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPast
     return null;
   }
 
-  private static @Nullable StringKind findStringKind(@NotNull PsiFile file, int offset) {
+  @Nullable
+  private static StringKind findStringKind(@NotNull PsiFile file, int offset) {
     final PsiElement leaf = file.findElementAt(offset);
     if (leaf == null) {
       return null;
@@ -244,7 +250,8 @@ public final class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPast
     return getStringKindByContentTokenType(leaf, leafType);
   }
 
-  private static @Nullable StringKind getStringKindByStringElement(@NotNull PsiElement templateStringElement) {
+  @Nullable
+  private static StringKind getStringKindByStringElement(@NotNull PsiElement templateStringElement) {
     IElementType elementType = templateStringElement.getNode().getElementType();
     if (elementType == GSTRING) {
       return isMultiline(templateStringElement) ? StringKind.TRIPLE_DOUBLE_QUOTED : StringKind.DOUBLE_QUOTED;
@@ -264,7 +271,8 @@ public final class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPast
     }
   }
 
-  private static @Nullable StringKind getStringKindByContentTokenType(PsiElement leaf, IElementType contentTokenType) {
+  @Nullable
+  private static StringKind getStringKindByContentTokenType(PsiElement leaf, IElementType contentTokenType) {
     if (contentTokenType == GSTRING_CONTENT) {
       PsiElement parent = leaf.getParent(); // template string content
       PsiElement gParent = parent.getParent(); // template string element
@@ -292,7 +300,8 @@ public final class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPast
     return templateStringElement.getFirstChild().textMatches("\"\"\"");
   }
 
-  private static @Nullable StringKind getStringKindByToken(@NotNull PsiElement token) {
+  @Nullable
+  private static StringKind getStringKindByToken(@NotNull PsiElement token) {
     IElementType leafType = token.getNode().getElementType();
     if (leafType == STRING_SQ) {
       return StringKind.SINGLE_QUOTED;
@@ -314,8 +323,9 @@ public final class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPast
     throw new IllegalStateException("must not be called");
   }
 
+  @NotNull
   @Override
-  protected @NotNull String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
+  protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
     throw new IllegalStateException("must not be called");
   }
 
@@ -324,8 +334,9 @@ public final class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPast
     throw new IllegalStateException("must not be called");
   }
 
+  @NotNull
   @Override
-  protected @NotNull String escapeTextBlock(@NotNull String text, int offset, boolean escapeStartQuote, boolean escapeEndQuote) {
+  protected String escapeTextBlock(@NotNull String text, int offset, boolean escapeStartQuote, boolean escapeEndQuote) {
     throw new IllegalStateException("must not be called");
   }
 
@@ -345,7 +356,8 @@ public final class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPast
   }
 
   @Override
-  protected @Nullable PsiElement findLiteralTokenType(PsiFile file, int selectionStart, int selectionEnd) {
+  @Nullable
+  protected PsiElement findLiteralTokenType(PsiFile file, int selectionStart, int selectionEnd) {
     throw new IllegalStateException("must not be called");
   }
 }

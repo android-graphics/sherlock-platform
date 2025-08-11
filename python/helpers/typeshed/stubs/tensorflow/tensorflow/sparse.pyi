@@ -2,11 +2,10 @@ from _typeshed import Incomplete
 from abc import ABCMeta
 from typing_extensions import TypeAlias
 
-from tensorflow import Tensor, TensorShape
-from tensorflow._aliases import TensorCompatible
+from tensorflow import Tensor, TensorShape, _TensorCompatible
 from tensorflow.dtypes import DType
 
-_SparseTensorCompatible: TypeAlias = TensorCompatible | SparseTensor
+_SparseTensorCompatible: TypeAlias = _TensorCompatible | SparseTensor
 
 class SparseTensor(metaclass=ABCMeta):
     @property
@@ -20,7 +19,7 @@ class SparseTensor(metaclass=ABCMeta):
     @property
     def dtype(self) -> DType: ...
     name: str
-    def __init__(self, indices: TensorCompatible, values: TensorCompatible, dense_shape: TensorCompatible) -> None: ...
+    def __init__(self, indices: _TensorCompatible, values: _TensorCompatible, dense_shape: _TensorCompatible) -> None: ...
     def get_shape(self) -> TensorShape: ...
     # Many arithmetic operations are not directly supported. Some have alternatives like tf.sparse.add instead of +.
     def __div__(self, y: _SparseTensorCompatible) -> SparseTensor: ...

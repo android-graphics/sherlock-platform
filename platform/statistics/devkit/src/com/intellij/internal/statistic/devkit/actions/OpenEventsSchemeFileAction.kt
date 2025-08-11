@@ -19,20 +19,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import java.nio.file.Path
 
-internal class OpenEventsSchemeFileAction : DumbAwareAction {
-  private val recorderId: String
-
-  @Suppress("unused")
-  constructor() {
-    this.recorderId = StatisticsDevKitUtil.DEFAULT_RECORDER
-  }
-
-  @Suppress("ActionPresentationInstantiatedInCtor")
-  constructor(recorderId: String) : super(StatisticsBundle.message("stats.open.0.scheme.file", recorderId),
-                                          ActionsBundle.message("action.OpenEventsSchemeFileAction.description"),
-                                          AllIcons.FileTypes.Config) {
-    this.recorderId = recorderId
-  }
+internal class OpenEventsSchemeFileAction(private val recorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
+  : DumbAwareAction(StatisticsBundle.message("stats.open.0.scheme.file", recorderId),
+                    ActionsBundle.message("group.OpenEventsSchemeFileAction.description"),
+                    AllIcons.FileTypes.Config) {
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -43,10 +33,10 @@ internal class OpenEventsSchemeFileAction : DumbAwareAction {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    Manager.openFileInEditor(Manager.getEventsSchemeFile(recorderId), project)
+    openFileInEditor(getEventsSchemeFile(recorderId), project)
   }
 
-  internal object Manager {
+  companion object {
     fun openFileInEditor(file: Path, project: Project) {
       val virtualFile = VfsUtil.findFile(file, true)
       if (virtualFile == null) {

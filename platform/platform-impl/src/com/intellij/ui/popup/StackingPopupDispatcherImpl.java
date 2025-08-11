@@ -22,7 +22,6 @@ import java.awt.event.*;
 import java.util.Collection;
 import java.util.stream.Stream;
 
-@ApiStatus.Internal
 public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher implements AWTEventListener, KeyEventDispatcher {
 
   private final Stack<JBPopup> myStack = new Stack<>();

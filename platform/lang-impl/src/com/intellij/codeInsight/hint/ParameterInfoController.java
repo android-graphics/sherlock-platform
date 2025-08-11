@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -13,10 +13,8 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ScrollType;
@@ -36,7 +34,6 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBUI;
@@ -44,8 +41,6 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
-import javax.accessibility.Accessible;
-import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
@@ -114,7 +109,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
           @Override
           public void run() {
             if (activeLookup != null) {
-              WriteIntentReadAction.run((Runnable)ParameterInfoController.this::updateComponent);
+              updateComponent();
             }
           }
         });
@@ -296,16 +291,9 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
             })
               .withDocumentsCommitted(myProject)
               .expireWhen(
-                () -> {
-                  try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162829")) {
-                    return !myKeepOnHintHidden &&
-                           !myHint.isVisible() &&
-                           myLateShowHintCallback == null &&
-                           !ApplicationManager.getApplication().isHeadlessEnvironment() ||
-                           getCurrentOffset() != context.getOffset() ||
-                           !elementForUpdating.isValid();
-                  }
-                })
+                () -> !myKeepOnHintHidden && !myHint.isVisible() && myLateShowHintCallback == null && !ApplicationManager.getApplication().isHeadlessEnvironment() ||
+                      getCurrentOffset() != context.getOffset() ||
+                      !elementForUpdating.isValid())
               .expireWith(this),
             element -> {
               if (element != null && continuation != null) {
@@ -518,11 +506,12 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
       myEditor = editor;
     }
 
-    private @NotNull Pair<Point, Short> getBestPointPosition(LightweightHint hint,
-                                                             PsiElement list,
-                                                             int offset,
-                                                             VisualPosition pos,
-                                                             short preferredPosition) {
+    @NotNull
+    private Pair<Point, Short> getBestPointPosition(LightweightHint hint,
+                                                    PsiElement list,
+                                                    int offset,
+                                                    VisualPosition pos,
+                                                    short preferredPosition) {
       if (list != null) {
         TextRange range = list.getTextRange();
         TextRange rangeWithoutParens = TextRange.from(range.getStartOffset() + 1, Math.max(range.getLength() - 2, 0));
@@ -596,24 +585,6 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
     @Override
     public String toString() {
       return getComponentCount() == 0 ? "<empty>" : getComponent(0).toString();
-    }
-
-    @Override
-    public AccessibleContext getAccessibleContext() {
-      if (accessibleContext == null) {
-        accessibleContext = new AccessibleJPanel() {
-          @Override
-          public Accessible getAccessibleParent() {
-            Container parent = getParent();
-            if (parent instanceof Accessible accessible) {
-              return accessible;
-            }
-            return super.getAccessibleParent();
-          }
-        };
-      }
-
-      return accessibleContext;
     }
   }
 }

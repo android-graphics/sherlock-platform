@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ide.plugins.newui
@@ -96,7 +96,6 @@ object PluginLogo {
     service<PluginLogoLoader>().endBatchMode()
   }
 
-  @JvmName("getDefault")
   internal fun getDefault(): PluginLogoIconProvider {
     if (Default == null) {
       Default = if (AllIcons.Plugins.PluginLogo is CachedImageIcon) {
@@ -156,7 +155,6 @@ private fun tryLoadIcon(zipFile: IntelliJZipFile, light: Boolean): PluginLogoIco
   }
   catch (e: Throwable) {
     LOG.warn("Cannot load plugin icon (zipFile=$zipFile, pluginIconFileName=$pluginIconFileName)")
-    LOG.debug(e)
     return null
   }
 }
@@ -347,8 +345,7 @@ private fun tryLoadIcon(iconFile: Path): PluginLogoIconProvider? {
     throw e
   }
   catch (e: Throwable) {
-    LOG.warn("Cannot load plugin icon (file=$iconFile)")
-    LOG.debug(e)
+    LOG.warn("Cannot load plugin icon (file=$iconFile)", e)
   }
   return null
 }

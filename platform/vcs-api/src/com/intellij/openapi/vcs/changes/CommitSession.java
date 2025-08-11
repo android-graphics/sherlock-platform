@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.ui.ValidationInfo;
@@ -22,13 +22,23 @@ public interface CommitSession {
   };
 
   /**
+   * @deprecated Since version 7.0, implement {@link #getAdditionalConfigurationUI(Collection, String)} instead
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated(forRemoval = true)
+  @Nullable
+  default JComponent getAdditionalConfigurationUI() {
+    return null;
+  }
+
+  /**
    * Show dialog with additional options before running pre-commit checks.
    *
    * @see com.intellij.openapi.vcs.changes.ui.SessionDialog
-   * @see com.intellij.openapi.ui.DialogPanel
    */
-  default @Nullable JComponent getAdditionalConfigurationUI(@NotNull Collection<? extends Change> changes, @Nullable @NlsSafe String commitMessage) {
-    return null;
+  @Nullable
+  default JComponent getAdditionalConfigurationUI(@NotNull Collection<? extends Change> changes, @Nullable @NlsSafe String commitMessage) {
+    return getAdditionalConfigurationUI();
   }
 
   /**
@@ -49,7 +59,9 @@ public interface CommitSession {
   /**
    * @return the ID of the help topic to show for the {@link #getAdditionalConfigurationUI} dialog.
    */
-  default @Nullable @NonNls String getHelpId() {
+  @Nullable
+  @NonNls
+  default String getHelpId() {
     return null;
   }
 

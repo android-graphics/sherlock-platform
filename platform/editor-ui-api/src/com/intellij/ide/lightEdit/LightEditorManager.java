@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -33,7 +32,6 @@ public interface LightEditorManager {
   Collection<VirtualFile> getOpenFiles();
 
   @NotNull
-  @Unmodifiable
   Collection<LightEditorInfo> getEditors(@NotNull VirtualFile virtualFile);
 
   boolean isFileOpen(@NotNull VirtualFile file);

@@ -37,13 +37,15 @@ public final class PyReadWriteAccessDetector extends ReadWriteAccessDetector {
     return element instanceof PyTargetExpression || element.getParent() instanceof PyDelStatement;
   }
 
+  @NotNull
   @Override
-  public @NotNull Access getReferenceAccess(@NotNull PsiElement referencedElement, @NotNull PsiReference reference) {
+  public Access getReferenceAccess(@NotNull PsiElement referencedElement, @NotNull PsiReference reference) {
     return getExpressionAccess(reference.getElement());
   }
 
+  @NotNull
   @Override
-  public @NotNull Access getExpressionAccess(@NotNull PsiElement expression) {
+  public Access getExpressionAccess(@NotNull PsiElement expression) {
     if (isDeclarationWriteAccess(expression)) {
       return Access.Write;
     }

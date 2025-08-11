@@ -21,7 +21,6 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.PrintStream;
@@ -30,7 +29,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-@ApiStatus.Internal
 @SuppressWarnings("HardCodedStringLiteral")
 public final class ScanSourceCommentsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ScanSourceCommentsAction.class);

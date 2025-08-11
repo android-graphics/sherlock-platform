@@ -8,14 +8,10 @@ import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
-import com.intellij.openapi.application.isLockStoredInContext
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.progress.*
-import com.intellij.platform.util.progress.internalCreateRawHandleFromContextStepIfExistsAndFresh
-import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -37,15 +33,14 @@ private val LOG = Logger.getInstance("#com.intellij.openapi.progress")
  * This function might suspend if the coroutine is paused,
  * or yield if the coroutine has a lower priority while a higher priority task is running.
  *
- * @throws CancellationException if the coroutine is canceled. The exception is also thrown if the coroutine is canceled while suspended.
+ * @throws CancellationException if the coroutine is canceled; the exception is also thrown if coroutine is canceled while suspended
  * @see ensureActive
  * @see coroutineSuspender
  */
 suspend fun checkCanceled() {
   val ctx = coroutineContext
   ctx.ensureActive() // standard check first
-  val coroutineSuspender = ctx[CoroutineSuspenderElementKey]?.coroutineSuspender
-  (coroutineSuspender as? CoroutineSuspenderImpl)?.checkPaused() // will suspend if paused
+  ctx[CoroutineSuspenderElementKey]?.checkPaused() // will suspend if paused
 }
 
 /**
@@ -140,19 +135,19 @@ fun <T> runBlockingCancellable(compensateParallelism: Boolean, action: suspend C
 }
 
 private fun <T> runBlockingCancellable(allowOrphan: Boolean, compensateParallelism: Boolean, action: suspend CoroutineScope.() -> T): T {
-  assertBackgroundThreadAndNoWriteAction()
+  assertBackgroundThreadOrWriteAction()
   return prepareThreadContext { ctx ->
-    if (!allowOrphan && ctx[Job] == null) {
+    if (!allowOrphan && ctx[Job] == null && !Cancellation.isInNonCancelableSection()) {
       LOG.error(IllegalStateException("There is no ProgressIndicator or Job in this thread, the current job is not cancellable."))
     }
     try {
       if (compensateParallelism) {
         @OptIn(InternalCoroutinesApi::class)
-        IntellijCoroutines.runBlockingWithParallelismCompensation(ctx + getLockPermitContext(), action)
+        IntellijCoroutines.runBlockingWithParallelismCompensation(ctx + readActionContext(), action)
       }
       else {
         @Suppress("RAW_RUN_BLOCKING")
-        runBlocking(ctx + getLockPermitContext(), action)
+        runBlocking(ctx + readActionContext(), action)
       }
     }
     catch (pce: ProcessCanceledException) {
@@ -200,13 +195,13 @@ fun <T> runBlockingMaybeCancellable(compensateParallelism: Boolean, action: susp
 @Internal
 @RequiresBlockingContext
 fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
-  assertBackgroundThreadAndNoWriteAction()
+  assertBackgroundThreadOrWriteAction()
   return prepareIndicatorThreadContext(indicator) { ctx ->
     val context = ctx +
                   CoroutineName("indicator run blocking")
     try {
       @Suppress("RAW_RUN_BLOCKING")
-      runBlocking(context + getLockPermitContext(), action)
+      runBlocking(context + readActionContext(), action)
     }
     catch (pce: ProcessCanceledException) {
       throw pce
@@ -322,7 +317,7 @@ suspend fun <T> blockingContextScope(action: () -> T): T {
  * the coroutines spawned on the service scope are not controlled by the code that spawned them.
  */
 @RequiresBlockingContext
-fun currentThreadCoroutineScope(): CoroutineScope {
+fun currentThreadCoroutineScope() : CoroutineScope {
   val threadContext = prepareCurrentThreadContext()
   if (threadContext[Job] == null) {
     LOG.error(IllegalStateException(
@@ -330,7 +325,6 @@ fun currentThreadCoroutineScope(): CoroutineScope {
         | If the transition from coroutines to blocking code happens in the same stack frame as the call to this function, the transition should use `blockingContext`.
         | If the transition occurs in the different stack frame, then the transition should use `blockingContextScope` to set up a `Job` on this frame.""".trimMargin()))
   }
-  @Suppress("SSBasedInspection")
   return CoroutineScope(threadContext)
 }
 
@@ -369,7 +363,7 @@ internal fun <T> blockingContextInner(currentContext: CoroutineContext, action: 
  * @see runBlockingCancellable
  * @see ProgressManager.runProcess
  */
-@ApiStatus.Experimental
+@Internal
 suspend fun <T> coroutineToIndicator(action: () -> T): T {
   val ctx = coroutineContext
   return contextToIndicator(ctx, action)
@@ -406,7 +400,7 @@ fun <T> blockingContextToIndicator(action: () -> T): T {
   return try {
     contextToIndicator(ctx, action)
   }
-  catch (pce: ProcessCanceledException) {
+  catch (pce : ProcessCanceledException) {
     throw pce
   }
   catch (ce: CancellationException) {
@@ -464,22 +458,14 @@ fun <T> jobToIndicator(job: Job, indicator: ProgressIndicator, action: () -> T):
   }
 }
 
-private fun assertBackgroundThreadAndNoWriteAction() {
+private fun assertBackgroundThreadOrWriteAction() {
   if (!EDT.isCurrentThreadEdt()) {
     return
   }
 
   val app = ApplicationManager.getApplication()
-  if (!app.isDispatchThread || (app.isUnitTestMode && !Registry.`is`("ide.run.blocking.cancellable.assert.in.tests", false))) {
+  if (!app.isDispatchThread || app.isWriteAccessAllowed || app.isUnitTestMode) {
     return // OK
-  }
-
-  if (app.isWriteAccessAllowed && !app.isTopmostReadAccessAllowed) {
-    LOG.error(IllegalStateException(
-      "'runBlockingCancellable' is forbidden in the Write Action because it may start a long-running computation. This can cause UI freezes.\n" +
-      "Consider running this 'runBlockingCancellable' under a read action outside your Write Action'"
-    ))
-    return
   }
 
   LOG.error(IllegalStateException(
@@ -490,29 +476,10 @@ private fun assertBackgroundThreadAndNoWriteAction() {
 
 @IntellijInternalApi
 @Internal
-fun getLockPermitContext(forSharing: Boolean = false): CoroutineContext {
-  return getLockPermitContext(currentThreadContext(), forSharing)
-}
-
-@IntellijInternalApi
-@Internal
-fun getLockPermitContext(baseContext: CoroutineContext, forSharing: Boolean): CoroutineContext {
+fun readActionContext(): CoroutineContext {
   val application = ApplicationManager.getApplication()
-  return if (application != null) {
-    if (isLockStoredInContext) {
-      if (EDT.isCurrentThreadEdt()) {
-        application.getLockStateAsCoroutineContext(baseContext, forSharing) + LockLeakedFromEDTMarker
-      }
-      else {
-        application.getLockStateAsCoroutineContext(baseContext, forSharing)
-      }
-    }
-    else if (application.isReadAccessAllowed) {
-      RunBlockingUnderReadActionMarker
-    }
-    else {
-      EmptyCoroutineContext
-    }
+  return if (application != null && application.isReadAccessAllowed) {
+    RunBlockingUnderReadActionMarker
   }
   else {
     EmptyCoroutineContext
@@ -521,33 +488,12 @@ fun getLockPermitContext(baseContext: CoroutineContext, forSharing: Boolean): Co
 
 @IntellijInternalApi
 @Internal
-fun closeLockPermitContext(ctx: CoroutineContext) {
-  if (!isLockStoredInContext) {
-    return
-  }
-  ApplicationManager.getApplication().returnPermitFromContextElement(ctx.minusKey(LockLeakedFromEDTMarker))
-}
-
-@IntellijInternalApi
-@Internal
 fun CoroutineContext.isRunBlockingUnderReadAction(): Boolean {
-  return if (isLockStoredInContext) {
-    val application = ApplicationManager.getApplication()
-    application != null && application.hasLockStateInContext(this) && this[LockLeakedFromEDTMarker] == null
-  }
-  else {
-    this[RunBlockingUnderReadActionMarker] != null
-  }
+  return this[RunBlockingUnderReadActionMarker] != null
 }
 
 private object RunBlockingUnderReadActionMarker
   : CoroutineContext.Element,
     CoroutineContext.Key<RunBlockingUnderReadActionMarker> {
-  override val key: CoroutineContext.Key<*> get() = this
-}
-
-private object LockLeakedFromEDTMarker
-  : CoroutineContext.Element,
-    CoroutineContext.Key<LockLeakedFromEDTMarker> {
   override val key: CoroutineContext.Key<*> get() = this
 }

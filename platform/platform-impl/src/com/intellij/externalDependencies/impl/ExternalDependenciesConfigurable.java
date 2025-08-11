@@ -28,7 +28,6 @@ import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +38,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
-@ApiStatus.Internal
 public final class ExternalDependenciesConfigurable implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance(ExternalDependenciesConfigurable.class);
   private final ExternalDependenciesManager myDependenciesManager;

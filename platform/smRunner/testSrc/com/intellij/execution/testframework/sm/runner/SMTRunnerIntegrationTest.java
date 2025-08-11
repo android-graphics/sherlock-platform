@@ -8,10 +8,12 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
+import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.Locale;
 
 public class SMTRunnerIntegrationTest extends LightPlatformTestCase {
@@ -55,40 +57,40 @@ public class SMTRunnerIntegrationTest extends LightPlatformTestCase {
   public void testMultiTestings() {
     notifyStdoutLineAvailable("##teamcity[enteredTheMatrix]");
     notifyStdoutLineAvailable("##teamcity[testingStarted]");
-    assertState(0, 0, 0, "passed");
+    assertState(0, 0, 0, ColorProgressBar.GREEN);
     notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='1' parentNodeId='0' name='sum-test.js']");
-    assertState(0, 0, 1, "passed");
+    assertState(0, 0, 1, ColorProgressBar.GREEN);
     notifyStdoutLineAvailable("##teamcity[testStarted nodeId='2' parentNodeId='1' name='x']");
     notifyStdoutLineAvailable("##teamcity[testFinished nodeId='2' duration='2']");
-    assertState(1, 0, 1, "passed");
+    assertState(1, 0, 1, ColorProgressBar.GREEN);
     notifyStdoutLineAvailable("##teamcity[testSuiteFinished nodeId='1']");
     notifyStdoutLineAvailable("##teamcity[testingFinished]");
-    assertState(1, 0, 1, "passed");
+    assertState(1, 0, 1, ColorProgressBar.GREEN);
     notifyStdoutLineAvailable("##teamcity[testingStarted]");
-    assertState(0, 0, 0, "passed");
+    assertState(0, 0, 0, ColorProgressBar.GREEN);
   }
 
   public void testFailedThenSuccessTestings() {
     notifyStdoutLineAvailable("##teamcity[enteredTheMatrix]");
     notifyStdoutLineAvailable("##teamcity[testingStarted]");
     notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='1' parentNodeId='0' name='sum-test.js']");
-    assertState(0, 0, 1, "passed");
+    assertState(0, 0, 1, ColorProgressBar.GREEN);
     notifyStdoutLineAvailable("##teamcity[testStarted nodeId='2' parentNodeId='1' name='x']");
-    assertState(0, 0, 1, "passed");
+    assertState(0, 0, 1, ColorProgressBar.GREEN);
     notifyStdoutLineAvailable("##teamcity[testFailed nodeId='2' message='Failed' duration='2']");
-    assertState(1, 1, 1, "failed");
+    assertState(1, 1, 1, ColorProgressBar.RED);
     notifyStdoutLineAvailable("##teamcity[testSuiteFinished nodeId='1']");
     notifyStdoutLineAvailable("##teamcity[testingFinished]");
-    assertState(1, 1, 1, "failed");
+    assertState(1, 1, 1, ColorProgressBar.RED);
     notifyStdoutLineAvailable("##teamcity[testingStarted]");
-    assertState(0, 0, 0, "passed");
+    assertState(0, 0, 0, ColorProgressBar.GREEN);
 
     notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='1' parentNodeId='0' name='sum-test.js']");
     notifyStdoutLineAvailable("##teamcity[testStarted nodeId='2' parentNodeId='1' name='x']");
     notifyStdoutLineAvailable("##teamcity[testFinished nodeId='2' duration='2']");
     notifyStdoutLineAvailable("##teamcity[testSuiteFinished nodeId='1']");
     notifyStdoutLineAvailable("##teamcity[testingFinished]");
-    assertState(1, 0, 1, "passed");
+    assertState(1, 0, 1, ColorProgressBar.GREEN);
   }
 
   public void testSuitePassedFailedIgnored() {
@@ -102,24 +104,24 @@ public class SMTRunnerIntegrationTest extends LightPlatformTestCase {
     {
       notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='1' parentNodeId='0' name='test1']");
       topLevelChildrenCount++;
-      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, "passed");
+      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
       notifyStdoutLineAvailable("##teamcity[testFinished nodeId='1']");
-      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, "passed");
+      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
     }
     {
       notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='2' parentNodeId='0' name='test2']");
       topLevelChildrenCount++;
-      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, "passed");
+      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
       notifyStdoutLineAvailable("##teamcity[testFailed nodeId='2' message='failed']");
       failedTests++;
-      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, "failed");
+      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, ColorProgressBar.RED);
     }
     {
       notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='3' parentNodeId='0' name='test3']");
       topLevelChildrenCount++;
-      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, "failed");
+      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, ColorProgressBar.RED);
       notifyStdoutLineAvailable("##teamcity[testIgnored nodeId='3']");
-      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, "failed");
+      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, ColorProgressBar.RED);
     }
 
     notifyStdoutLineAvailable("##teamcity[testingFinished]");
@@ -135,57 +137,57 @@ public class SMTRunnerIntegrationTest extends LightPlatformTestCase {
       // empty suite1 with ignored state
       notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='1' parentNodeId='0' name='suite1']");
       ++topLevelChildrenCount;
-      assertState(0, 0, ignoredTests, topLevelChildrenCount, "passed");
+      assertState(0, 0, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
       notifyStdoutLineAvailable("##teamcity[testIgnored nodeId='1' name='suite1']");
-      assertState(0, 0, ignoredTests, topLevelChildrenCount, "passed");
+      assertState(0, 0, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
     }
     {
       // non-empty suite2 with ignored test21
       notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='2' parentNodeId='0' name='suite2']");
       ++topLevelChildrenCount;
-      assertState(0, 0, ignoredTests, topLevelChildrenCount, "passed");
+      assertState(0, 0, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
       {
         notifyStdoutLineAvailable("##teamcity[testStarted nodeId='21' parentNodeId='2' name='test21']");
-        assertState(0, 0, ignoredTests, topLevelChildrenCount, "passed");
+        assertState(0, 0, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
         notifyStdoutLineAvailable("##teamcity[testIgnored nodeId='21' name='test21']");
         ++ignoredTests;
-        assertState(ignoredTests, 0, ignoredTests, topLevelChildrenCount, "passed");
+        assertState(ignoredTests, 0, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
       }
       notifyStdoutLineAvailable("##teamcity[testSuiteFinished nodeId='2']");
-      assertState(ignoredTests, 0, ignoredTests, topLevelChildrenCount, "passed");
+      assertState(ignoredTests, 0, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
     }
 
     notifyStdoutLineAvailable("##teamcity[testingFinished]");
   }
 
-  private void assertState(int finishedTests, int failedTests, int topLevelChildrenCount, String status) {
+  private void assertState(int finishedTests, int failedTests, int topLevelChildrenCount, @NotNull Color statusColor) {
     assertState(finishedTests,
                 failedTests,
                 0,
                 topLevelChildrenCount,
-                status);
+                statusColor);
   }
 
   private void assertState(int finishedTests,
                            int failedTests,
                            int ignoredTests,
                            int topLevelChildrenCount,
-                           String status) {
-    assertEquals(stringify(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, status),
+                           @NotNull Color statusColor) {
+    assertEquals(stringify(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, statusColor),
                  stringify(myResultsViewer.getFinishedTestCount(),
                            myResultsViewer.getFailedTestCount(),
                            myResultsViewer.getIgnoredTestCount(),
                            myRootNode.getChildren().size(),
-                           myResultsViewer.getTestsStatus()));
+                           myResultsViewer.getTestsStatusColor()));
   }
 
   private static String stringify(int finishedTests,
                                   int failedTests,
                                   int ignoredTests,
                                   int topLevelChildrenCount,
-                                  String status) {
+                                  @NotNull Color statusColor) {
     return String.format(Locale.US, "finishedTests=%d failedTests=%d ignoredTests=%d topLevelChildrenCount=%d color=%s",
-                         finishedTests, failedTests, ignoredTests, topLevelChildrenCount, status);
+                         finishedTests, failedTests, ignoredTests, topLevelChildrenCount, statusColor);
   }
 
   private void notifyStdoutLineAvailable(@NotNull String line) {

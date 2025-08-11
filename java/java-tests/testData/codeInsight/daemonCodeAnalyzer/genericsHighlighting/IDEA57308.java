@@ -8,6 +8,6 @@ interface IB{
 }
 class C {
     <T extends IA & IB> void bar(T x, A<String[]> y){
-        int z = x.<error descr="Incompatible types. Found: 'void', required: 'int'">foo</error>(y);
+        <error descr="Incompatible types. Found: 'void', required: 'int'">int z = x.foo(y);</error>
     }
 }

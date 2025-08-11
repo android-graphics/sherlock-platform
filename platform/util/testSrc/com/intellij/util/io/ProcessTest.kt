@@ -11,15 +11,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import org.mockito.Mockito
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.`when`
-import java.io.*
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.milliseconds
@@ -32,40 +30,6 @@ import kotlin.time.Duration.Companion.seconds
 class ProcessTest {
   @Nested
   inner class copyToAsync {
-
-    /**
-     * Ensures it rethrows [IOException] thrown by [InputStream.read] or [OutputStream.write]
-     */
-    @ParameterizedTest
-    @ValueSource(booleans = [true, false])
-    fun ioExceptionTest(writeThrows: Boolean): Unit = timeoutRunBlocking {
-      val error = "some error"
-
-      val brokenInput = mock<InputStream>()
-      `when`(brokenInput.read(Mockito.any<ByteArray>(), Mockito.anyInt(), Mockito.anyInt())).thenThrow(IOException(error))
-      `when`(brokenInput.readNBytes(Mockito.any<ByteArray>(), Mockito.anyInt(), Mockito.anyInt())).thenThrow(IOException(error))
-
-      val brokenOutput = mock<OutputStream>()
-      `when`(brokenOutput.write(Mockito.anyInt())).thenThrow(IOException(error))
-      `when`(brokenOutput.write(Mockito.any<ByteArray>(), Mockito.anyInt(), Mockito.anyInt())).thenThrow(IOException(error))
-
-      val (input, output) = if (writeThrows) {
-        Pair(ByteArrayInputStream(ByteArray(42)), brokenOutput)
-      }
-      else {
-        Pair(brokenInput, ByteArrayOutputStream())
-      }
-
-      try {
-        input.copyToAsync(output)
-      }
-      catch (e: IOException) {
-        Assertions.assertEquals(error, e.localizedMessage)
-        return@timeoutRunBlocking
-      }
-      Assertions.fail<RuntimeException>("No exception thrown")
-    }
-
     @Test
     fun `simple copying`(): Unit = timeoutRunBlocking(timeout = 3.seconds) {
       val outputStream = ByteArrayOutputStream()

@@ -12,7 +12,6 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import java.util.function.BiFunction
 import kotlin.io.path.absolute
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.nameWithoutExtension
@@ -73,18 +72,14 @@ internal object TestsDurationBucketingUtils {
     val groupsPerPackages = buckets.flatMap { it.items }.groupBy { it.packageName }
 
     val filters = buckets.mapIndexed { index, bucket ->
-      val packageClassesForCurrentBucket: MutableMap<String, BucketClassFilter?> = HashMap(bucket.items.map { it.packageName }.distinct().count())
-      bucket.items.forEach {
-        if (groupsPerPackages.getValue(it.packageName).size == 1) {
-          packageClassesForCurrentBucket[it.packageName] = null
-          return@forEach
+      val packageClassesForCurrentBucket = bucket.items.associate {
+        val packageGroups = groupsPerPackages.getValue(it.packageName).sortedBy { it.groupIndex }
+        val bucketClassFilter = if (packageGroups.size == 1) null
+        else {
+          // All unknown tests from package will use the fallback bucketing strategy to spread them 'evenly'
+          BucketClassFilter(it.classes.mapTo(LinkedHashSet(it.classes.size)) { it.key })
         }
-        // We might have multiple BucketClassFilter for the same package, combine them
-        val classNames = it.classes.mapTo(LinkedHashSet(it.classes.size)) { cls -> cls.key }
-        packageClassesForCurrentBucket.compute(it.packageName, BiFunction { _, previous ->
-          if (previous == null) return@BiFunction BucketClassFilter(classNames)
-          BucketClassFilter(previous.classes + classNames)
-        })
+        Pair(it.packageName, bucketClassFilter)
       }
       BucketFilter(index, packageClassesForCurrentBucket)
     }

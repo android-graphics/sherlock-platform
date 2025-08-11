@@ -44,7 +44,8 @@ public final class RenameUtil {
   private RenameUtil() {
   }
 
-  public static @NotNull ASTNode createIdentifierNode(PsiManager manager, String name) throws IncorrectOperationException {
+  @NotNull
+  public static ASTNode createIdentifierNode(PsiManager manager, String name) throws IncorrectOperationException {
     if (isKeyword(name)) {
       name = "\\" + name;
     } else if (!isIdentifier(name)) {
@@ -97,7 +98,8 @@ public final class RenameUtil {
     return astNode;
   }
 
-  private static @NotNull ASTNode findFirstGrammarNode(RncFile file) {
+  @NotNull
+  private static ASTNode findFirstGrammarNode(RncFile file) {
     final RncGrammar grammar = file.getGrammar();
     assert grammar != null;
     final ASTNode grammarNode = grammar.getNode();

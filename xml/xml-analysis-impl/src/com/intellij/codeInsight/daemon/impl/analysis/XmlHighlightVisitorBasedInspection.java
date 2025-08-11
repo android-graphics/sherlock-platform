@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -14,17 +14,18 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class XmlHighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
+  @NotNull
   @Override
-  public @NotNull HighlightDisplayLevel getDefaultLevel() {
+  public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
   @Override
-  public void checkFile(final @NotNull PsiFile file,
-                        final @NotNull InspectionManager manager,
+  public void checkFile(@NotNull final PsiFile file,
+                        @NotNull final InspectionManager manager,
                         @NotNull ProblemsHolder problemsHolder,
-                        final @NotNull GlobalInspectionContext globalContext,
-                        final @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+                        @NotNull final GlobalInspectionContext globalContext,
+                        @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     HighlightInfoHolder myHolder = new HighlightInfoHolder(file) {
       @Override
       public boolean add(@Nullable HighlightInfo info) {
@@ -58,13 +59,16 @@ public class XmlHighlightVisitorBasedInspection extends GlobalSimpleInspectionTo
 
   }
 
+  @Nls
+  @NotNull
   @Override
-  public @Nls @NotNull String getGroupDisplayName() {
+  public String getGroupDisplayName() {
     return getGeneralGroupName();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getShortName() {
+  public String getShortName() {
     return "XmlHighlighting";
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
@@ -11,17 +11,29 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
 public abstract class ChangeListManager implements ChangeListModification {
-  public static @NotNull ChangeListManager getInstance(@NotNull Project project) {
+  @NotNull
+  public static ChangeListManager getInstance(@NotNull Project project) {
     if (project.isDefault()) throw new IllegalArgumentException("Can't create ChangeListManager for default project");
     return project.getService(ChangeListManager.class);
   }
+
+  /**
+   * Schedule an update for file statuses.
+   *
+   * @deprecated Method does nothing by itself, use {@link VcsDirtyScopeManager} instead.
+   */
+  @Deprecated(forRemoval = true)
+  public abstract void scheduleUpdate();
 
   /**
    * Invoke callback when current CLM refresh is completed, without any visible progress.
@@ -93,14 +105,17 @@ public abstract class ChangeListManager implements ChangeListModification {
   /**
    * @deprecated Use {@link #getChangeLists()} instead.
    */
+  @NotNull
   @Deprecated
-  public @NotNull List<LocalChangeList> getChangeListsCopy() {
+  public List<LocalChangeList> getChangeListsCopy() {
     return getChangeLists();
   }
 
-  public abstract @NotNull @Unmodifiable List<LocalChangeList> getChangeLists();
+  @NotNull
+  public abstract List<LocalChangeList> getChangeLists();
 
-  public abstract @NotNull Collection<Change> getAllChanges();
+  @NotNull
+  public abstract Collection<Change> getAllChanges();
 
   /**
    * Currently active change list.
@@ -110,17 +125,21 @@ public abstract class ChangeListManager implements ChangeListModification {
    * @see #setDefaultChangeList(LocalChangeList)
    * @see com.intellij.openapi.vcs.impl.PartialChangesUtil#computeUnderChangeListSync
    */
-  public abstract @NotNull LocalChangeList getDefaultChangeList();
+  @NotNull
+  public abstract LocalChangeList getDefaultChangeList();
 
-  public abstract @NotNull @NlsSafe String getDefaultListName();
+  @NotNull
+  public abstract @NlsSafe String getDefaultListName();
 
 
   /**
    * @return all files that belong to some changelist (have an associated {@link Change}).
    */
-  public abstract @NotNull List<File> getAffectedPaths();
+  @NotNull
+  public abstract List<File> getAffectedPaths();
 
-  public abstract @NotNull List<VirtualFile> getAffectedFiles();
+  @NotNull
+  public abstract List<VirtualFile> getAffectedFiles();
 
   /**
    * @return if a file belongs to some changelist
@@ -130,49 +149,63 @@ public abstract class ChangeListManager implements ChangeListModification {
   /**
    * @see LocalChangeList#getName()
    */
-  public abstract @Nullable LocalChangeList findChangeList(@NlsSafe String name);
+  @Nullable
+  public abstract LocalChangeList findChangeList(@NlsSafe String name);
 
   /**
    * @see LocalChangeList#getId()
    */
-  public abstract @Nullable LocalChangeList getChangeList(@Nullable @NonNls String id);
+  @Nullable
+  public abstract LocalChangeList getChangeList(@Nullable @NonNls String id);
 
 
-  public abstract @NotNull List<LocalChangeList> getChangeLists(@NotNull Change change);
+  @NotNull
+  public abstract List<LocalChangeList> getChangeLists(@NotNull Change change);
 
-  public abstract @NotNull List<LocalChangeList> getChangeLists(@NotNull VirtualFile file);
+  @NotNull
+  public abstract List<LocalChangeList> getChangeLists(@NotNull VirtualFile file);
 
-  public abstract @Nullable LocalChangeList getChangeList(@NotNull Change change);
+  @Nullable
+  public abstract LocalChangeList getChangeList(@NotNull Change change);
 
-  public abstract @Nullable LocalChangeList getChangeList(@NotNull VirtualFile file);
+  @Nullable
+  public abstract LocalChangeList getChangeList(@NotNull VirtualFile file);
 
-  public abstract @Nullable @NlsSafe String getChangeListNameIfOnlyOne(Change[] changes);
-
-
-  public abstract @Nullable Change getChange(@NotNull VirtualFile file);
-
-  public abstract @Nullable Change getChange(FilePath file);
+  @Nullable
+  public abstract @NlsSafe String getChangeListNameIfOnlyOne(Change[] changes);
 
 
-  public abstract @NotNull FileStatus getStatus(@NotNull FilePath file);
+  @Nullable
+  public abstract Change getChange(@NotNull VirtualFile file);
 
-  public abstract @NotNull FileStatus getStatus(@NotNull VirtualFile file);
+  @Nullable
+  public abstract Change getChange(FilePath file);
+
+
+  @NotNull
+  public abstract FileStatus getStatus(@NotNull FilePath file);
+
+  @NotNull
+  public abstract FileStatus getStatus(@NotNull VirtualFile file);
 
   public abstract boolean isUnversioned(@NotNull VirtualFile file);
 
-  public abstract @NotNull List<FilePath> getUnversionedFilesPaths();
+  @NotNull
+  public abstract List<FilePath> getUnversionedFilesPaths();
 
   /**
    * @return All the changes under a given path (inc. from other VCS roots)
    * @see com.intellij.vcsUtil.VcsImplUtil#filterChangesUnderFiles
    */
-  public abstract @NotNull Collection<Change> getChangesIn(@NotNull VirtualFile dir);
+  @NotNull
+  public abstract Collection<Change> getChangesIn(@NotNull VirtualFile dir);
 
   /**
    * @return All the changes under a given path (inc. from other VCS roots)
    * @see com.intellij.vcsUtil.VcsImplUtil#filterChangesUnder
    */
-  public abstract @NotNull Collection<Change> getChangesIn(@NotNull FilePath path);
+  @NotNull
+  public abstract Collection<Change> getChangesIn(@NotNull FilePath path);
 
   /**
    * Check if a directory has modified children in {@link #getAllChanges().
@@ -181,7 +214,8 @@ public abstract class ChangeListManager implements ChangeListModification {
    * {@code ThreeState.UNSURE} if directory has non-immediate modified child (depth > 1),
    * {@code ThreeState.NO} if directory has no modified children.
    */
-  public abstract @NotNull ThreeState haveChangesUnder(@NotNull VirtualFile vf);
+  @NotNull
+  public abstract ThreeState haveChangesUnder(@NotNull VirtualFile vf);
 
 
   /**
@@ -203,7 +237,8 @@ public abstract class ChangeListManager implements ChangeListModification {
   @Deprecated(forRemoval = true)
   public abstract void registerCommitExecutor(@NotNull CommitExecutor executor);
 
-  public abstract @NotNull List<CommitExecutor> getRegisteredExecutors();
+  @NotNull
+  public abstract List<CommitExecutor> getRegisteredExecutors();
 
   public abstract void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<? extends Change> changes);
 
@@ -229,7 +264,8 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   public abstract boolean isIgnoredFile(@NotNull FilePath file);
 
-  public abstract @NotNull List<FilePath> getIgnoredFilePaths();
+  @NotNull
+  public abstract List<FilePath> getIgnoredFilePaths();
 
   /**
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
@@ -248,14 +284,16 @@ public abstract class ChangeListManager implements ChangeListModification {
    *
    * @see FileStatus#HIJACKED
    */
-  public abstract @NotNull List<VirtualFile> getModifiedWithoutEditing();
+  @NotNull
+  public abstract List<VirtualFile> getModifiedWithoutEditing();
 
   /**
    * Files that were checked-out from another branch, different from the rest of the repository (ex: in Subversion).
    *
    * @see FileStatus#SWITCHED
    */
-  public abstract @Nullable @NlsSafe String getSwitchedBranch(@NotNull VirtualFile file);
+  @Nullable
+  public abstract @NlsSafe String getSwitchedBranch(@NotNull VirtualFile file);
 
   /**
    * Whether {@link ChangeListManager} updating is temporally disabled to preserve changes-to-changelist mapping during a complex operation.
@@ -263,7 +301,8 @@ public abstract class ChangeListManager implements ChangeListModification {
    *
    * @see com.intellij.openapi.vcs.changes.ChangeListManagerEx#freeze(String)
    */
-  public abstract @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String isFreezed();
+  @Nullable
+  public abstract @Nls(capitalization = Nls.Capitalization.Sentence) String isFreezed();
 
   /**
    * Show an error message if the manager is frozen and action cannot be performed.

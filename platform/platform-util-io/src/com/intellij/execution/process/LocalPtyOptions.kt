@@ -3,7 +3,6 @@ package com.intellij.execution.process
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
 class LocalPtyOptions private constructor(val consoleMode: Boolean,
@@ -24,7 +23,6 @@ class LocalPtyOptions private constructor(val consoleMode: Boolean,
     @JvmStatic
     fun defaults(): LocalPtyOptions = LocalPtyOptions(false, false, -1, -1, shouldUseWinConPty())
 
-    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use [defaults] instead", ReplaceWith("LocalPtyOptions.defaults()"))
     @JvmField
     val DEFAULT: LocalPtyOptions = LocalPtyOptions(false, false, -1, -1, false)

@@ -29,7 +29,6 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.coroutineScopeMethodType
 import com.intellij.serviceContainer.emptyConstructorMethodType
 import com.intellij.serviceContainer.findConstructorOrNull
-import com.intellij.util.application
 import com.intellij.util.messages.MessageBus
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.NonNls
@@ -58,7 +57,6 @@ internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerE
 
     public override fun init(project: Project) {
       (project as DefaultProjectImpl).init()
-      application.messageBus.syncPublisher(DefaultProjectListener.TOPIC).defaultProjectImplCreated(project)
     }
   }
 

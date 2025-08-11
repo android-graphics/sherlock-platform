@@ -168,6 +168,16 @@ public abstract class HighlightManager {
    * @deprecated Use the overload with TextAttributesKey
    */
   @Deprecated(forRemoval = true)
+  public abstract void addOccurrenceHighlights(@NotNull Editor editor,
+                                               PsiElement @NotNull [] elements,
+                                               @NotNull TextAttributes attributes,
+                                               boolean hideByTextChange,
+                                               @Nullable Collection<? super RangeHighlighter> outHighlighters);
+
+  /**
+   * @deprecated Use the overload with TextAttributesKey
+   */
+  @Deprecated(forRemoval = true)
   public abstract void addOccurrenceHighlight(@NotNull Editor editor,
                                               int start,
                                               int end,

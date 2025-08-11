@@ -1,6 +1,6 @@
 // "Create object 'Foo'" "true"
-// DISABLE_ERRORS
-// IGNORE_K2
+// DISABLE-ERRORS
+
 open class B
 
 class A {

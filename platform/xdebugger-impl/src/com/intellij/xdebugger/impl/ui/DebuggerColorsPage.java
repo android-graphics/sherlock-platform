@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -21,12 +21,14 @@ import java.util.Map;
 
 public class DebuggerColorsPage implements ColorSettingsPage, DisplayPrioritySortable {
   @Override
-  public @NotNull String getDisplayName() {
+  @NotNull
+  public String getDisplayName() {
     return XDebuggerBundle.message("xdebugger.colors.page.name");
   }
 
   @Override
-  public @Nullable Icon getIcon() {
+  @Nullable
+  public Icon getIcon() {
     return AllIcons.Actions.StartDebugger;
   }
 
@@ -53,17 +55,21 @@ public class DebuggerColorsPage implements ColorSettingsPage, DisplayPrioritySor
   }
 
   @Override
-  public @NotNull SyntaxHighlighter getHighlighter() {
+  @NotNull
+  public SyntaxHighlighter getHighlighter() {
     return new PlainSyntaxHighlighter();
   }
 
   @Override
-  public @NonNls @NotNull String getDemoText() {
+  @NonNls
+  @NotNull
+  public String getDemoText() {
     return " ";
   }
 
   @Override
-  public @Nullable Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
+  @Nullable
+  public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return null;
   }
 

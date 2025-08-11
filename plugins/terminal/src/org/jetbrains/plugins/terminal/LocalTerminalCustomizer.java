@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,14 +44,6 @@ public abstract class LocalTerminalCustomizer {
    * @return configurable for customizer-specific options
    */
   public @Nullable UnnamedConfigurable getConfigurable(@NotNull Project project) {
-    return null;
-  }
-
-  /**
-   * @return settings that will be shown together with other New Terminal settings.
-   */
-  @ApiStatus.Experimental
-  public @Nullable UnnamedConfigurable getBlockTerminalConfigurable(@NotNull Project project) {
     return null;
   }
 

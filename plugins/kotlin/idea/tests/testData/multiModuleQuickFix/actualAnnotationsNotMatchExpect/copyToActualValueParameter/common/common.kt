@@ -1,4 +1,4 @@
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 @Target(AnnotationTarget.VALUE_PARAMETER)
 annotation class Ann
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
@@ -37,12 +37,14 @@ public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForSta
   }
 
   @Override
-  public @Nullable GrForClause getClause() {
+  @Nullable
+  public GrForClause getClause() {
     return findChildByClass(GrForClause.class);
   }
 
   @Override
-  public @Nullable GrStatement getBody() {
+  @Nullable
+  public GrStatement getBody() {
     return findChildByClass(GrStatement.class);
   }
 

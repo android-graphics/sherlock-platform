@@ -121,7 +121,6 @@ public final class ZipShort implements Cloneable {
    * @param o an object to compare
    * @return true if the objects are equal
    */
-  @Override
   public boolean equals(Object o) {
     if (!(o instanceof ZipShort)) {
       return false;
@@ -134,7 +133,6 @@ public final class ZipShort implements Cloneable {
    *
    * @return the value stored in the ZipShort
    */
-  @Override
   public int hashCode() {
     return value;
   }

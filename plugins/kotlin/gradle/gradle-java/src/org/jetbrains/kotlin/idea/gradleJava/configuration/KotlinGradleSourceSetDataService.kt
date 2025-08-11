@@ -12,7 +12,6 @@ import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.LibraryData
 import com.intellij.openapi.externalSystem.model.project.ModuleData
-import com.intellij.openapi.externalSystem.model.project.ModuleSdkData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService
@@ -30,7 +29,6 @@ import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
-import org.jetbrains.kotlin.idea.base.externalSystem.find
 import org.jetbrains.kotlin.idea.base.externalSystem.findAll
 import org.jetbrains.kotlin.idea.base.platforms.*
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
@@ -119,8 +117,7 @@ class KotlinGradleSourceSetDataService : AbstractProjectDataService<GradleSource
             KotlinJpsPluginSettings.importKotlinJpsVersionFromExternalBuildSystem(
                 project,
                 maxCompilerVersion.rawVersion,
-                isDelegatedToExtBuild = GradleProjectSettings.isDelegatedBuildEnabled(project, projectData?.linkedExternalProjectPath),
-                externalSystemId = GradleConstants.GRADLE_NAME
+                isDelegatedToExtBuild = GradleProjectSettings.isDelegatedBuildEnabled(project, projectData?.linkedExternalProjectPath)
             )
         }
     }
@@ -256,9 +253,9 @@ fun configureFacetByGradleModule(
 
     val platformKind = detectPlatformKindByPlugin(moduleNode) ?: detectPlatformByLibrary(moduleNode)
     val kotlinGradleSourceSetDataNode = kotlinGradleProjectDataNode.findAll(KotlinGradleSourceSetData.KEY)
-        .firstOrNull { it.data.sourceSetName == sourceSetName } ?: return null
+        .firstOrNull { it.data.sourceSetName == sourceSetName }
 
-    val compilerVersion = kotlinGradleSourceSetDataNode.data?.kotlinPluginVersion?.let(IdeKotlinVersion::opt)
+    val compilerVersion = kotlinGradleSourceSetDataNode?.data?.kotlinPluginVersion?.let(IdeKotlinVersion::opt)
     // required for GradleFacetImportTest.{testCommonImportByPlatformPlugin, testKotlinAndroidPluginDetection}
         ?: KotlinGradleFacade.getInstance()?.findKotlinPluginVersion(moduleNode)
 
@@ -284,8 +281,7 @@ fun configureFacetByGradleModule(
     if (sourceSetNode == null) {
         ideModule.sourceSetName = sourceSetName
     }
-    val sdkNode = sourceSetNode?.find(ModuleSdkData.KEY)
-    ideModule.hasExternalSdkConfiguration = sdkNode?.data?.sdkName != null
+    ideModule.hasExternalSdkConfiguration = sourceSetNode?.data?.sdkName != null
 
     val kotlinGradleSourceSetData = kotlinGradleSourceSetDataNode?.data
 

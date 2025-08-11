@@ -1,4 +1,3 @@
-// PROBLEM: none
 // IS_APPLICABLE: false
 fun foo() {
     val x = bar<caret><Any>("x")

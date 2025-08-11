@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.*;
@@ -121,7 +121,8 @@ public final class GrLightModifierList extends LightElement implements GrModifie
   }
 
   @Override
-  public @NotNull GrLightAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+  @NotNull
+  public GrLightAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     final GrLightAnnotation annotation = new GrLightAnnotation(getManager(), getLanguage(), qualifiedName, this);
     myAnnotations.add(annotation);
     return annotation;
@@ -166,7 +167,7 @@ public final class GrLightModifierList extends LightElement implements GrModifie
       }
     }
 
-    if (!buffer.isEmpty()) {
+    if (buffer.length() > 0) {
       buffer.delete(buffer.length() - 1, buffer.length());
     }
     return buffer.toString();
@@ -177,8 +178,9 @@ public final class GrLightModifierList extends LightElement implements GrModifie
     return PsiElement.EMPTY_ARRAY;
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement getModifier(@GrModifier.GrModifierConstant @NotNull @NonNls String name) {
+  public PsiElement getModifier(@GrModifier.GrModifierConstant @NotNull @NonNls String name) {
     return null;
   }
 

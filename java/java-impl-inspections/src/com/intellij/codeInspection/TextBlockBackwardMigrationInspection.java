@@ -28,8 +28,9 @@ public final class TextBlockBackwardMigrationInspection extends AbstractBaseJava
     return Set.of(JavaFeature.TEXT_BLOCKS);
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
@@ -45,8 +46,10 @@ public final class TextBlockBackwardMigrationInspection extends AbstractBaseJava
 
   private static class ReplaceWithRegularStringLiteralFix extends PsiUpdateModCommandQuickFix {
 
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
     @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaBundle.message("inspection.replace.with.regular.string.literal.fix");
     }
 
@@ -68,7 +71,8 @@ public final class TextBlockBackwardMigrationInspection extends AbstractBaseJava
       });
     }
 
-    private static @NotNull String convertToConcatenation(@NotNull String text) {
+    @NotNull
+    private static String convertToConcatenation(@NotNull String text) {
       if (text.isEmpty()) return "\"\"";
       StringJoiner joiner = new StringJoiner(" +\n");
       String[] lines = getTextBlockLines(text).split("\n", -1);
@@ -81,7 +85,8 @@ public final class TextBlockBackwardMigrationInspection extends AbstractBaseJava
       return joiner.toString();
     }
 
-    private static @NotNull String getTextBlockLines(@NotNull String text) {
+    @NotNull
+    private static String getTextBlockLines(@NotNull String text) {
       int length = text.length();
       StringBuilder result = new StringBuilder(length);
       int i = 0;

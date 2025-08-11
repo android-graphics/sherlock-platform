@@ -1,4 +1,4 @@
-# $Id: components.py 9037 2022-03-05 23:31:10Z milde $
+# $Id: components.py 4564 2006-05-21 20:44:42Z wiemann $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -6,9 +6,9 @@
 Docutils component-related transforms.
 """
 
-from docutils.transforms import Transform
-
 __docformat__ = 'reStructuredText'
+
+from docutils.transforms import Transform
 
 
 class Filter(Transform):
@@ -26,29 +26,21 @@ class Filter(Transform):
     ``details['nodes']`` (a list of nodes); otherwise, the "pending" element
     is removed.
 
-    For example, up to version 0.17, the reStructuredText "meta"
-    directive created a "pending" element containing a "meta" element
-    (in ``pending.details['nodes']``).
-    Only writers (``pending.details['component'] == 'writer'``)
-    supporting the "html", "latex", or "odf" formats
-    (``pending.details['format'] == 'html,latex,odf'``) included the
-    "meta" element; it was deleted from the output of all other writers.
-
-    This transform is no longer used by Docutils, it may be removed in future.
+    For example, the reStructuredText "meta" directive creates a "pending"
+    element containing a "meta" element (in ``pending.details['nodes']``).
+    Only writers (``pending.details['component'] == 'writer'``) supporting the
+    "html" format (``pending.details['format'] == 'html'``) will include the
+    "meta" element; it will be deleted from the output of all other writers.
     """
-    # TODO: clean up or keep this for 3rd party (or possible future) use?
-    # (GM 2021-05-18)
 
     default_priority = 780
 
     def apply(self):
         pending = self.startnode
-        component_type = pending.details['component']  # 'reader' or 'writer'
-        formats = (pending.details['format']).split(',')
+        component_type = pending.details['component'] # 'reader' or 'writer'
+        format = pending.details['format']
         component = self.document.transformer.components[component_type]
-        for format in formats:
-            if component.supports(format):
-                pending.replace_self(pending.details['nodes'])
-                break
+        if component.supports(format):
+            pending.replace_self(pending.details['nodes'])
         else:
             pending.parent.remove(pending)

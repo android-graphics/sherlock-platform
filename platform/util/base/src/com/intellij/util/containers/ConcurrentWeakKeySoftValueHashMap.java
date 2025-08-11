@@ -21,7 +21,7 @@ import java.util.function.Supplier;
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval
-public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K, V>, ReferenceQueueable {
+public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K, V> {
   private final ConcurrentMap<KeyReference<K,V>, ValueReference<K,V>> myMap;
   final ReferenceQueue<K> myKeyQueue = new ReferenceQueue<>();
   final ReferenceQueue<V> myValueQueue = new ReferenceQueue<>();
@@ -57,6 +57,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
   }
 
   public interface ValueReference<K, V> extends Supplier<V> {
+    @NotNull
     KeyReference<K,V> getKeyReference(); // no strong references
 
     @Override
@@ -101,7 +102,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
   }
 
   static final class SoftValue<K, V> extends SoftReference<V> implements ValueReference<K,V> {
-   volatile KeyReference<K, V> myKeyReference; // can't make it final because of circular dependency of KeyReference to ValueReference
+   volatile @NotNull KeyReference<K, V> myKeyReference; // can't make it final because of circular dependency of KeyReference to ValueReference
    private SoftValue(@NotNull V value, @NotNull ReferenceQueue<? super V> queue) {
      super(value, queue);
    }
@@ -120,7 +121,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
    }
 
    @Override
-   public KeyReference<K, V> getKeyReference() {
+   public @NotNull KeyReference<K, V> getKeyReference() {
      return myKeyReference;
    }
  }
@@ -133,7 +134,6 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
       ((SoftValue<K, V>)valueReference).myKeyReference = keyReference;
     }
     ObjectUtilsRt.reachabilityFence(k);
-    ObjectUtilsRt.reachabilityFence(v); // to avoid queueing in myValueQueue before setting its myKeyReference to not-null value
     return keyReference;
   }
 
@@ -154,7 +154,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
   @Override
   public void clear() {
     myMap.clear();
-    processQueue();
+    processQueues();
   }
 
   /////////////////////////////
@@ -236,7 +236,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     }
     finally {
       hardKey.clear();
-      processQueue();
+      processQueues();
     }
   }
 
@@ -252,13 +252,11 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     KeyReference<K, V> keyReference = createKeyReference(key, value);
     ValueReference<K,V> valueReference = keyReference.getValueReference();
     ValueReference<K, V> prevValReference = myMap.put(keyReference, valueReference);
-    processQueue();
+    processQueues();
     return prevValReference == null ? null : prevValReference.get();
   }
 
-  @ApiStatus.Internal
-  @Override
-  public boolean processQueue() {
+  private boolean processQueues() {
     boolean removed = false;
     KeyReference<K,V> keyReference;
     //noinspection unchecked
@@ -271,11 +269,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     //noinspection unchecked
     while ((valueReference = (ValueReference<K, V>)myValueQueue.poll()) != null) {
       keyReference = valueReference.getKeyReference();
-      // keyReference could be null when createValueReference() was called and abandoned immediately, e.g. in replace(K, V)
-      // in this case just ignore this ref, it's not in the map anyway
-      if (keyReference != null) {
-        removed |= myMap.remove(keyReference, valueReference);
-      }
+      removed |= myMap.remove(keyReference, valueReference);
     }
 
     return removed;
@@ -313,7 +307,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     }
     finally {
       hardKey.clear();
-      processQueue();
+      processQueues();
     }
   }
 
@@ -339,46 +333,31 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
         prev = oldVal;
         break;
       }
-      processQueue();
+      processQueues();
     }
-    processQueue();
+    processQueues();
     return prev;
   }
 
   @Override
   public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
-    HardKey<K, V> oldKeyReference = createHardKey(key);
-    ValueReference<K, V> oldValueReference;
-    try {
-      oldValueReference = createValueReference(oldValue, myValueQueue);
-      ValueReference<K, V> newValueReference = createValueReference(newValue, myValueQueue);
+    KeyReference<K, V> oldKeyReference = createKeyReference(key, oldValue);
+    ValueReference<K, V> oldValueReference = oldKeyReference.getValueReference();
+    KeyReference<K, V> newKeyReference = createKeyReference(key, newValue);
+    ValueReference<K, V> newValueReference = newKeyReference.getValueReference();
 
-      boolean replaced = myMap.replace(oldKeyReference, oldValueReference, newValueReference);
-      processQueue();
-      return replaced;
-    }
-    finally {
-      oldKeyReference.clear();
-      // we must not let these values got into a ref queue while performing operations with them
-      ObjectUtilsRt.reachabilityFence(oldValue);
-      ObjectUtilsRt.reachabilityFence(newValue);
-    }
+    boolean replaced = myMap.replace(oldKeyReference, oldValueReference, newValueReference);
+    processQueues();
+    return replaced;
   }
 
   @Override
   public V replace(@NotNull K key, @NotNull V value) {
-    HardKey<K, V> keyReference = createHardKey(key);
-    try {
-      ValueReference<K, V> valueReference = createValueReference(value, myValueQueue);
-      ValueReference<K, V> result = myMap.replace(keyReference, valueReference);
-      V prev = result == null ? null : result.get();
-      processQueue();
-      return prev;
-    }
-    finally {
-      keyReference.clear();
-      // we must not let these values got into a ref queue while performing operations with them
-      ObjectUtilsRt.reachabilityFence(value);
-    }
+    KeyReference<K, V> keyReference = createKeyReference(key, value);
+    ValueReference<K, V> valueReference = keyReference.getValueReference();
+    ValueReference<K, V> result = myMap.replace(keyReference, valueReference);
+    V prev = result == null ? null : result.get();
+    processQueues();
+    return prev;
   }
 }

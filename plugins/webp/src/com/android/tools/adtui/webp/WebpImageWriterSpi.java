@@ -215,7 +215,8 @@ public final class WebpImageWriterSpi extends ImageWriterSpi {
       stream.write(encoded);
     }
 
-    private static @NotNull Raster getRaster(@NotNull IIOImage image) {
+    @NotNull
+    private static Raster getRaster(@NotNull IIOImage image) {
       boolean rasterOnly = image.hasRaster();
       if (rasterOnly) {
         return image.getRaster();

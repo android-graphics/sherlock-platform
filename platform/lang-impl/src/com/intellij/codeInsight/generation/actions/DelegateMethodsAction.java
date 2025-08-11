@@ -13,19 +13,18 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public final class DelegateMethodsAction extends BaseCodeInsightAction implements DumbAware {
 
+  @NotNull
   @Override
-  protected @NotNull CodeInsightActionHandler getHandler() {
+  protected CodeInsightActionHandler getHandler() {
     return new DelegateMethodsHandler();
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
     Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
     final LanguageCodeInsightActionHandler codeInsightActionHandler = CodeInsightActions.DELEGATE_METHODS.forLanguage(language);
     if (codeInsightActionHandler != null) {
@@ -35,7 +34,7 @@ public final class DelegateMethodsAction extends BaseCodeInsightAction implement
   }
 
   @Override
-  public void update(final @NotNull AnActionEvent event) {
+  public void update(@NotNull final AnActionEvent event) {
     if (CodeInsightActions.DELEGATE_METHODS.hasAnyExtensions()) {
       event.getPresentation().setVisible(true);
       super.update(event);

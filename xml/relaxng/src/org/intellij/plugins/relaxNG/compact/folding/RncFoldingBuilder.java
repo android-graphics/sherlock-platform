@@ -42,7 +42,7 @@ public class RncFoldingBuilder implements FoldingBuilder {
     final ArrayList<FoldingDescriptor> regions = new ArrayList<>();
     process(node, document, regions);
 
-    return !regions.isEmpty()
+    return regions.size() > 0
            ? regions.toArray(FoldingDescriptor.EMPTY_ARRAY)
            : FoldingDescriptor.EMPTY_ARRAY;
   }
@@ -113,7 +113,8 @@ public class RncFoldingBuilder implements FoldingBuilder {
     }
   }
 
-  private static @Nullable ASTNode checkNodeAndSiblings(@Nullable ASTNode node, TokenSet tokens, ArrayList<? super FoldingDescriptor> regions, Document document) {
+  @Nullable
+  private static ASTNode checkNodeAndSiblings(@Nullable ASTNode node, TokenSet tokens, ArrayList<? super FoldingDescriptor> regions, Document document) {
     if (node != null && tokens.contains(node.getElementType())) {
       final ASTNode start = node;
       ASTNode end = start;

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -44,18 +44,17 @@ public class JavaModuleElementType extends JavaStubElementType<PsiJavaModuleStub
   @Override
   public @NotNull PsiJavaModuleStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     LighterASTNode ref = LightTreeUtil.requiredChildOfType(tree, node, JavaElementType.MODULE_REFERENCE);
-    return new PsiJavaModuleStubImpl(parentStub, JavaSourceUtil.getReferenceText(tree, ref), 0);
+    return new PsiJavaModuleStubImpl(parentStub, JavaSourceUtil.getReferenceText(tree, ref));
   }
 
   @Override
   public void serialize(@NotNull PsiJavaModuleStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
-    dataStream.writeVarInt(stub.getResolution());
   }
 
   @Override
   public @NotNull PsiJavaModuleStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    return new PsiJavaModuleStubImpl(parentStub, dataStream.readNameString(), dataStream.readVarInt());
+    return new PsiJavaModuleStubImpl(parentStub, dataStream.readNameString());
   }
 
   @Override

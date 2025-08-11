@@ -1,10 +1,9 @@
 from _typeshed import Incomplete
 from collections.abc import Iterable, Iterator
-from typing import Any, ClassVar, Literal, TypedDict, type_check_only
-from typing_extensions import Self
+from typing import ClassVar
+from typing_extensions import Self, TypedDict
 
 from pkg_resources import Environment
-from setuptools.package_index import PackageIndex
 
 from .. import Command, SetuptoolsDeprecationWarning
 
@@ -13,11 +12,11 @@ __all__ = ["easy_install", "PthDistributions", "extract_wininst_cfg", "get_exe_p
 class easy_install(Command):
     description: str
     command_consumes_arguments: bool
-    user_options: ClassVar[list[tuple[str, str | None, str]]]
-    boolean_options: ClassVar[list[str]]
-    negative_opt: ClassVar[dict[str, str]]
-    create_index: ClassVar[type[PackageIndex]]
-    user: bool
+    user_options: Incomplete
+    boolean_options: Incomplete
+    negative_opt: Incomplete
+    create_index: Incomplete
+    user: int
     zip_ok: Incomplete
     install_dir: Incomplete
     index_url: Incomplete
@@ -37,22 +36,22 @@ class easy_install(Command):
     install_data: Incomplete
     install_base: Incomplete
     install_platbase: Incomplete
-    install_userbase: str | None
-    install_usersite: str | None
+    install_userbase: Incomplete
+    install_usersite: Incomplete
     no_find_links: Incomplete
     package_index: Incomplete
     pth_file: Incomplete
     site_dirs: Incomplete
     installed_projects: Incomplete
-    verbose: bool | Literal[0, 1]
+    verbose: Incomplete
     def initialize_options(self) -> None: ...
     def delete_blockers(self, blockers) -> None: ...
-    config_vars: dict[str, Any]
+    config_vars: Incomplete
     script_dir: Incomplete
-    all_site_dirs: list[str]
-    shadow_path: list[str]
-    local_index: Environment
-    outputs: list[Incomplete]
+    all_site_dirs: Incomplete
+    shadow_path: Incomplete
+    local_index: Incomplete
+    outputs: Incomplete
     def finalize_options(self) -> None: ...
     def expand_basedirs(self) -> None: ...
     def expand_dirs(self) -> None: ...
@@ -90,8 +89,8 @@ class easy_install(Command):
     def unpack_and_compile(self, egg_path, destination): ...
     def byte_compile(self, to_compile) -> None: ...
     def create_home_path(self) -> None: ...
-    INSTALL_SCHEMES: ClassVar[dict[str, dict[str, str]]]
-    DEFAULT_SCHEME: ClassVar[dict[str, str]]
+    INSTALL_SCHEMES: Incomplete
+    DEFAULT_SCHEME: Incomplete
 
 def extract_wininst_cfg(dist_filename): ...
 def get_exe_prefixes(exe_filename): ...
@@ -99,7 +98,7 @@ def get_exe_prefixes(exe_filename): ...
 class PthDistributions(Environment):
     dirty: bool
     filename: Incomplete
-    sitedirs: list[str]
+    sitedirs: Incomplete
     basedir: Incomplete
     paths: list[str]
     def __init__(self, filename, sitedirs=()) -> None: ...
@@ -109,16 +108,15 @@ class PthDistributions(Environment):
     def make_relative(self, path): ...
 
 class RewritePthDistributions(PthDistributions):
-    prelude: str
-    postlude: str
+    prelude: Incomplete
+    postlude: Incomplete
 
-@type_check_only
 class _SplitArgs(TypedDict, total=False):
     comments: bool
     posix: bool
 
 class CommandSpec(list[str]):
-    options: list[str]
+    options: list[Incomplete]
     split_args: ClassVar[_SplitArgs]
     @classmethod
     def best(cls) -> type[CommandSpec]: ...

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.actions.styling;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression;
@@ -142,7 +142,8 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
     });
   }
 
-  private static @Nullable Pair<PsiFile, Editor> getFileAndEditor(@NotNull AnActionEvent e) {
+  @Nullable
+  private static Pair<PsiFile, Editor> getFileAndEditor(@NotNull AnActionEvent e) {
     final Editor editor = MarkdownActionUtil.findMarkdownEditor(e);
     final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     if (editor == null || psiFile == null || !psiFile.isValid()) {
@@ -170,7 +171,8 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
     });
   }
 
-  public static @NotNull Pair<PsiElement, PsiElement> createLinkDeclarationAndReference(Project project, PsiElement link, String referenceText) {
+  @NotNull
+  public static Pair<PsiElement, PsiElement> createLinkDeclarationAndReference(Project project, PsiElement link, String referenceText) {
     String text = null;
     String title = null;
     String url = getUrl(link);
@@ -201,7 +203,8 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
     return MarkdownPsiElementFactory.createLinkDeclarationAndReference(project, url, text, title, referenceText);
   }
 
-  public static @Nullable String getUrl(@NotNull PsiElement link) {
+  @Nullable
+  public static String getUrl(@NotNull PsiElement link) {
     String url = null;
     IElementType type = PsiUtilCore.getElementType(link);
     if (type == AUTOLINK) {
@@ -290,8 +293,8 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
   }
 
   @SuppressWarnings("Duplicates")
-  private static void highlightInEditor(final @NotNull Project project,
-                                        final @NotNull Editor editor,
+  private static void highlightInEditor(@NotNull final Project project,
+                                        @NotNull final Editor editor,
                                         @NotNull Map<PsiElement, RangeHighlighter> highlighterMap,
                                         @NotNull PsiElement element) {
     final List<RangeHighlighter> highlighters = new ArrayList<>();
@@ -305,10 +308,10 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
   }
 
   private static final class DuplicatesFinder extends TemplateEditingAdapter {
-    private final @NotNull String myUrl;
-    private final @NotNull PsiFile myFile;
-    private final @NotNull Editor myEditor;
-    private final @Nullable String myTitleText;
+    @NotNull private final String myUrl;
+    @NotNull private final PsiFile myFile;
+    @NotNull private final Editor myEditor;
+    @Nullable private final String myTitleText;
 
     private DuplicatesFinder(@NotNull PsiFile file, @NotNull Editor editor, @NotNull String url, String titleText) {
       myUrl = url;

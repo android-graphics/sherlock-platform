@@ -11,7 +11,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -114,7 +113,7 @@ public final class ActiveRules {
     return rules.toArray(UsageGroupingRule.EMPTY_ARRAY);
   }
 
-  private abstract static class GroupingRuleExWrapper implements UsageGroupingRuleEx {
+  private static abstract class GroupingRuleExWrapper implements UsageGroupingRuleEx {
     private final UsageGroupingRule myGroupingRule;
 
     protected GroupingRuleExWrapper(@NotNull UsageGroupingRule rule) {
@@ -127,7 +126,8 @@ public final class ActiveRules {
     }
 
     @Override
-    public @NotNull @Unmodifiable List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+    @NotNull
+    public List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
       return myGroupingRule.getParentGroupsFor(usage, targets);
     }
 

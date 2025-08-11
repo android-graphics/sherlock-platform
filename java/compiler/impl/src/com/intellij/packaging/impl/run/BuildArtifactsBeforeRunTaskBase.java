@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.run;
 
 import com.intellij.execution.BeforeRunTask;
@@ -18,7 +18,7 @@ import java.util.List;
 public abstract class BuildArtifactsBeforeRunTaskBase<Self extends BuildArtifactsBeforeRunTaskBase<?>>
   extends BeforeRunTask<Self> {
 
-  public static final @NonNls String NAME_ATTRIBUTE = "name";
+  @NonNls public static final String NAME_ATTRIBUTE = "name";
 
   private List<ArtifactPointer> myArtifactPointers = new ArrayList<>();
   private final Project myProject;
@@ -83,7 +83,6 @@ public abstract class BuildArtifactsBeforeRunTaskBase<Self extends BuildArtifact
     myArtifactPointers.remove(pointer);
   }
 
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -97,7 +96,6 @@ public abstract class BuildArtifactsBeforeRunTaskBase<Self extends BuildArtifact
     return true;
   }
 
-  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + myArtifactPointers.hashCode();

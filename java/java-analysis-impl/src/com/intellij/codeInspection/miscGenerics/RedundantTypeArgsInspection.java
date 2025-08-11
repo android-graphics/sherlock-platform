@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.*;
@@ -26,17 +26,19 @@ public final class RedundantTypeArgsInspection extends GenericsInspectionToolBas
   public static final String SHORT_NAME = "RedundantTypeArguments";
 
   @Override
-  public @NotNull String getGroupDisplayName() {
+  @NotNull
+  public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.verbose.or.redundant.code.constructs");
   }
 
   @Override
-  public @NotNull String getShortName() {
+  @NotNull
+  public String getShortName() {
     return SHORT_NAME;
   }
 
   @Override
-  public ProblemDescriptor[] getDescriptions(@NotNull PsiElement place, final @NotNull InspectionManager inspectionManager, boolean isOnTheFly) {
+  public ProblemDescriptor[] getDescriptions(@NotNull PsiElement place, @NotNull final InspectionManager inspectionManager, boolean isOnTheFly) {
     final List<ProblemDescriptor> problems = new ArrayList<>();
     place.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
@@ -163,7 +165,8 @@ public final class RedundantTypeArgsInspection extends GenericsInspectionToolBas
 
   private static class MyQuickFixAction extends PsiUpdateModCommandQuickFix {
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return JavaAnalysisBundle.message("inspection.redundant.type.remove.quickfix");
     }
 

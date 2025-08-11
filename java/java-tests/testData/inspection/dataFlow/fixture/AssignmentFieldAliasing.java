@@ -5,16 +5,6 @@ class App {
         System.out.println("Impossible");
       }
     }
-    System.out.println(a.field);
-  }
-
-  void test1(A a, A b) {
-    if(a.field != b.field) {
-      // Not supported anymore, as `field` is flushed :( 
-      if(a == b) {
-        System.out.println("Impossible");
-      }
-    }
   }
 
   public static void main(String[] args) {

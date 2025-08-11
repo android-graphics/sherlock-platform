@@ -1,22 +1,20 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
-import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Collection;
 import java.util.Set;
 
-@ApiStatus.Internal
-public abstract class UpdateTask<Type> {
+abstract class UpdateTask<Type> {
   private final Semaphore myUpdateSemaphore = new Semaphore();
   private final Set<Type> myItemsBeingIndexed = ConcurrentCollectionFactory.createConcurrentSet();
   private static final boolean DEBUG = false;
 
-  public final boolean processAll(Collection<? extends Type> itemsToProcess, Project project) {
+  final boolean processAll(Collection<? extends Type> itemsToProcess, Project project) {
     if (DEBUG) trace("enter processAll");
     try {
       boolean hasMoreToProcess;
@@ -48,7 +46,7 @@ public abstract class UpdateTask<Type> {
         do {
           ProgressManager.checkCanceled();
         }
-        while (!myUpdateSemaphore.waitFor(100));
+        while (!myUpdateSemaphore.waitFor(500));
         if (DEBUG) if (hasMoreToProcess) trace("reiterating");
       }
       while (hasMoreToProcess);
@@ -71,8 +69,7 @@ public abstract class UpdateTask<Type> {
     return false;
   }
 
-  @ApiStatus.Internal
-  protected abstract void doProcess(Type item, Project project);
+  abstract void doProcess(Type item, Project project);
 
   protected static void trace(String s) {
     System.out.println(Thread.currentThread() + " " + s);

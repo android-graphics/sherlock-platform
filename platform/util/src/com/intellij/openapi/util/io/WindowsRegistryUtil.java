@@ -15,7 +15,6 @@ import java.util.List;
 
 /** @deprecated please use {@link com.sun.jna.platform.win32.Advapi32Util JNA} instead. */
 @Deprecated
-@ApiStatus.Internal
 public final class WindowsRegistryUtil {
   private WindowsRegistryUtil() { }
 

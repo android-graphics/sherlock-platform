@@ -1,4 +1,3 @@
-import sys
 from _typeshed import StrPath
 from collections.abc import Iterable
 
@@ -14,15 +13,7 @@ def addsitedir(sitedir: str, known_paths: set[str] | None = None) -> None: ...
 def addsitepackages(known_paths: set[str] | None, prefixes: Iterable[str] | None = None) -> set[str] | None: ...  # undocumented
 def addusersitepackages(known_paths: set[str] | None) -> set[str] | None: ...  # undocumented
 def check_enableusersite() -> bool | None: ...  # undocumented
-
-if sys.version_info >= (3, 13):
-    def gethistoryfile() -> str: ...  # undocumented
-
 def enablerlcompleter() -> None: ...  # undocumented
-
-if sys.version_info >= (3, 13):
-    def register_readline() -> None: ...  # undocumented
-
 def execsitecustomize() -> None: ...  # undocumented
 def execusercustomize() -> None: ...  # undocumented
 def getsitepackages(prefixes: Iterable[str] | None = None) -> list[str]: ...

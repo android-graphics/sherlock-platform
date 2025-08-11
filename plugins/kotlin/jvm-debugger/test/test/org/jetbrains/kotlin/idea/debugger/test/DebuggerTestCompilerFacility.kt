@@ -29,8 +29,6 @@ import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
-import java.nio.file.Path
-import kotlin.io.path.absolutePathString
 
 data class TestCompileConfiguration(
     val lambdasGenerationScheme: JvmClosureGenerationScheme,
@@ -50,7 +48,6 @@ open class DebuggerTestCompilerFacility(
     protected val mainFiles: TestFilesByLanguageAndPlatform
     private val libraryFiles: TestFilesByLanguageAndPlatform
     private val mavenArtifacts = mutableListOf<String>()
-    private val compilerPlugins = mutableListOf<String>()
 
     init {
         if (compileConfig.languageVersion?.usesK2 == true && compileConfig.lambdasGenerationScheme != JvmClosureGenerationScheme.INDY) {
@@ -79,12 +76,6 @@ open class DebuggerTestCompilerFacility(
     fun addDependencies(libraryPaths: List<String>) {
         for (libraryPath in libraryPaths) {
             mavenArtifacts.add(libraryPath)
-        }
-    }
-
-    fun addCompilerPlugin(pluginPaths: List<Path>) {
-        pluginPaths.forEach { path ->
-            compilerPlugins.add(path.absolutePathString())
         }
     }
 
@@ -150,7 +141,7 @@ open class DebuggerTestCompilerFacility(
         IndexingTestUtil.waitUntilIndexesAreReady(project)
 
         if (kotlinJvm.isNotEmpty() || kotlinCommon.isNotEmpty()) {
-            val options = getCompileOptionsForMainSources(jvmSrcDir, commonSrcDir, module.name)
+            val options = getCompileOptionsForMainSources(jvmSrcDir, commonSrcDir)
             doWriteAction {
                 compileKotlinFilesWithCliCompiler(jvmSrcDir, commonSrcDir, classesDir, libClassesDir, options)
             }
@@ -193,16 +184,13 @@ open class DebuggerTestCompilerFacility(
         ).compile()
     }
 
-    fun getCompilerPlugins(): List<String> = compilerPlugins
-
-    protected open fun getCompileOptionsForMainSources(jvmSrcDir: File, commonSrcDir: File, moduleName: String): List<String> {
-        return getCompilerOptionsCommonForLibAndSource() + "-module-name=$moduleName"
+    protected open fun getCompileOptionsForMainSources(jvmSrcDir: File, commonSrcDir: File): List<String> {
+        return getCompilerOptionsCommonForLibAndSource()
     }
 
     private fun getCompilerOptionsCommonForLibAndSource(): List<String> {
         val options = mutableListOf(
             "-Xlambdas=${compileConfig.lambdasGenerationScheme.description}",
-            "-Xcontext-receivers",
         )
         if (compileConfig.languageVersion != null) {
             options.add("-language-version=${compileConfig.languageVersion}")
@@ -210,11 +198,6 @@ open class DebuggerTestCompilerFacility(
         if (compileConfig.useInlineScopes) {
             options.add("-Xuse-inline-scopes-numbers")
         }
-
-        if (compilerPlugins.isNotEmpty()) {
-            options.add("-Xplugin=${compilerPlugins.joinToString(",")}")
-        }
-
         options.addAll(compileConfig.enabledLanguageFeatures.map { "-XXLanguage:+$it" })
         return options
     }
@@ -334,7 +317,6 @@ private fun splitByLanguage(files: List<TestFileWithModule>): TestFilesByLanguag
                     is DebuggerTestModule.Common -> kotlinCommon
                     is DebuggerTestModule.Jvm -> kotlinJvm
                 }
-
             "kts" -> kotlinScripts
             "java" -> java
             else -> resources

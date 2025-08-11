@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.util.TextBuffer;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 
-import java.util.BitSet;
 import java.util.List;
 
 public class AssertExprent extends Exprent {
@@ -15,12 +15,6 @@ public class AssertExprent extends Exprent {
   public AssertExprent(List<? extends Exprent> parameters) {
     super(EXPRENT_ASSERT);
     this.parameters = parameters;
-  }
-
-  @Override
-  protected List<Exprent> getAllExprents(List<Exprent> list) {
-    list.addAll(this.parameters);
-    return list;
   }
 
   @Override
@@ -44,11 +38,5 @@ public class AssertExprent extends Exprent {
     }
 
     return buffer;
-  }
-
-  @Override
-  public void fillBytecodeRange(@Nullable BitSet values) {
-    measureBytecode(values, parameters);
-    measureBytecode(values);
   }
 }

@@ -84,7 +84,6 @@ internal class IntentionPreviewEditorsPanel(val editors: List<EditorEx>) : JPane
       }
 
       editor.backgroundColor = EditorColorsManager.getInstance().globalScheme.defaultBackground
-      editor.scrollPane.verticalScrollBar.isOpaque = false
       editor.colorsScheme.setColor(EditorColors.LINE_NUMBER_ON_CARET_ROW_COLOR,
                                    editor.colorsScheme.getColor(EditorColors.LINE_NUMBERS_COLOR))
 

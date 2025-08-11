@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.project.IntelliJProjectConfiguration;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
@@ -64,7 +63,7 @@ public final class RepositoryTestLibrary implements TestLibrary {
     RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(coordinates, true);
     Collection<OrderRoot> roots = JarRepositoryManager.loadDependenciesModal(project, libraryProperties, false, false, null,
                                                                              ContainerUtil.append(getRemoteRepositoryDescriptions(), additional));
-    UsefulTestCase.assertNotEmpty(roots);
+    assert !roots.isEmpty();
     return roots;
   }
 

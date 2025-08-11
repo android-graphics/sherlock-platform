@@ -1,11 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.Presentation;
-import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.modcommand.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +30,8 @@ public final class PyTransformConditionalExpressionIntention extends PsiUpdateMo
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.transform.into.if.else.statement");
   }
 

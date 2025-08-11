@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
@@ -26,7 +26,8 @@ public abstract class XmlElementFactory {
    * @return the created element.
    * @throws IncorrectOperationException if the creation failed for some reason.
    */
-  public abstract @NotNull XmlText createDisplayText(@NotNull @NonNls String s) throws IncorrectOperationException;
+  @NotNull
+  public abstract XmlText createDisplayText(@NotNull @NonNls String s) throws IncorrectOperationException;
 
   /**
    * Creates an XHTML tag with the specified text.
@@ -35,7 +36,8 @@ public abstract class XmlElementFactory {
    * @return the created tag instance.
    * @throws IncorrectOperationException if the text does not specify a valid XML fragment.
    */
-  public abstract @NotNull XmlTag createXHTMLTagFromText(@NotNull @NonNls String s) throws IncorrectOperationException;
+  @NotNull
+  public abstract XmlTag createXHTMLTagFromText(@NotNull @NonNls String s) throws IncorrectOperationException;
 
   /**
    * Creates an HTML tag with the specified text.
@@ -44,7 +46,8 @@ public abstract class XmlElementFactory {
    * @return the created tag instance.
    * @throws IncorrectOperationException if the text does not specify a valid XML fragment.
    */
-  public abstract @NotNull XmlTag createHTMLTagFromText(@NotNull @NonNls String s) throws IncorrectOperationException;
+  @NotNull
+  public abstract XmlTag createHTMLTagFromText(@NotNull @NonNls String s) throws IncorrectOperationException;
 
   /**
    * Creates an XML tag with the specified text.
@@ -54,7 +57,8 @@ public abstract class XmlElementFactory {
    * @throws IncorrectOperationException if the text does not specify a valid XML fragment.
    * @see #createTagFromText(CharSequence text, Language language)
    */
-  public abstract @NotNull XmlTag createTagFromText(@NotNull @NonNls CharSequence text) throws IncorrectOperationException;
+  @NotNull
+  public abstract XmlTag createTagFromText(@NotNull @NonNls CharSequence text) throws IncorrectOperationException;
 
   /**
    * Creates XML like tag with the specified text and language.
@@ -65,7 +69,8 @@ public abstract class XmlElementFactory {
    * @throws IncorrectOperationException if the text does not specify a valid XML fragment.
    * @see #createTagFromText(CharSequence)
    */
-  public abstract @NotNull XmlTag createTagFromText(@NotNull @NonNls CharSequence text, @NotNull Language language) throws IncorrectOperationException;
+  @NotNull
+  public abstract XmlTag createTagFromText(@NotNull @NonNls CharSequence text, @NotNull Language language) throws IncorrectOperationException;
 
   /**
    * Creates an XML attribute with the specified name and value.
@@ -75,7 +80,8 @@ public abstract class XmlElementFactory {
    * @return the created attribute instance.
    * @throws IncorrectOperationException if either {@code name} or {@code value} are not valid.
    */
-  public abstract @NotNull XmlAttribute createXmlAttribute(@NotNull @NonNls String name, @NotNull String value) throws IncorrectOperationException;
+  @NotNull
+  public abstract XmlAttribute createXmlAttribute(@NotNull @NonNls String name, @NotNull String value) throws IncorrectOperationException;
 
   /**
    * Creates an attribute with the specified name and value  with given context.
@@ -86,7 +92,8 @@ public abstract class XmlElementFactory {
    * @return the created attribute instance.
    * @throws IncorrectOperationException if either {@code name} or {@code value} are not valid.
    */
-  public abstract @NotNull XmlAttribute createAttribute(@NotNull @NonNls String name, @NotNull String value, @Nullable PsiElement context) throws IncorrectOperationException;
+  @NotNull
+  public abstract XmlAttribute createAttribute(@NotNull @NonNls String name, @NotNull String value, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates an attribute with the specified name and value quoted with given quotes and with given context.
@@ -98,6 +105,7 @@ public abstract class XmlElementFactory {
    * @return the created attribute instance.
    * @throws IncorrectOperationException if either {@code name} or {@code value} are not valid.
    */
-  public abstract @NotNull XmlAttribute createAttribute(@NotNull @NonNls String name, @NotNull String value, @Nullable Character quoteStyle,
+  @NotNull
+  public abstract XmlAttribute createAttribute(@NotNull @NonNls String name, @NotNull String value, @Nullable Character quoteStyle,
                                                @Nullable PsiElement context) throws IncorrectOperationException;
 }

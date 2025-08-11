@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.PinActiveTabAction
+import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -328,7 +329,7 @@ internal class SingleContentLayout(
   ) : NonOpaquePanel(),
       TabsListener,
       PropertyChangeListener,
-      UiDataProvider,
+      DataProvider,
       MorePopupAware,
       Disposable
   {
@@ -508,8 +509,7 @@ internal class SingleContentLayout(
       }
     }
 
-    private inner class MyContentTabLabel(content: SubContent, layout: TabContentLayout)
-      : ContentTabLabel(content, layout), UiDataProvider {
+    private inner class MyContentTabLabel(content: SubContent, layout: TabContentLayout) : ContentTabLabel(content, layout), DataProvider {
 
       init {
         addMouseListener(popupHandler)
@@ -525,9 +525,11 @@ internal class SingleContentLayout(
         }
       }
 
-      override fun uiDataSnapshot(sink: DataSink) {
-        sink[JBTabsEx.NAVIGATION_ACTIONS_KEY] = jbTabs as? JBTabsEx
-        DataSink.uiDataSnapshot(sink, retrieveInfo(this).component)
+      override fun getData(dataId: String): Any? {
+        if (JBTabsEx.NAVIGATION_ACTIONS_KEY.`is`(dataId)) {
+          return jbTabs
+        }
+        return DataManagerImpl.getDataProviderEx(retrieveInfo(this).component)?.getData(dataId)
       }
 
       override fun getContent(): SubContent {
@@ -535,8 +537,11 @@ internal class SingleContentLayout(
       }
     }
 
-    override fun uiDataSnapshot(sink: DataSink) {
-      sink[MorePopupAware.KEY] = this
+    override fun getData(dataId: String): Any? {
+      if (MorePopupAware.KEY.`is`(dataId)) {
+        return this
+      }
+      return null
     }
 
     override fun canShowMorePopup(): Boolean {

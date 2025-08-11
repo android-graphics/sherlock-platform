@@ -7,8 +7,8 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.colors.EditorColorsManager
 
 object KnownColorSchemes {
-  val Light: BundledEditorColorScheme? = findScheme("Light")
-  val Darcula: BundledEditorColorScheme? = findScheme("Dark")
+  val Light: BundledEditorColorScheme? = findScheme("IntelliJ Light")
+  val Darcula: BundledEditorColorScheme? = findScheme("Darcula")
   val HighContrast: BundledEditorColorScheme? = findScheme("High contrast")
 
   private fun findScheme(name: String): BundledEditorColorScheme? = BundledEditorColorScheme.fromManager(name) ?: run {

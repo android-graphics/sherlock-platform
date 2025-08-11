@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.execution.ExecutionBundle;
@@ -21,9 +21,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,19 +33,24 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> extends JPanel
-  implements ConsoleView, ObservableConsoleView, UiCompatibleDataProvider {
+public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> extends JPanel implements ConsoleView,
+                                                                                                       ObservableConsoleView,
+                                                                                                       DataProvider {
+  private final static String PRIMARY_CONSOLE_PANEL = "PRIMARY_CONSOLE_PANEL";
+  private final static String SECONDARY_CONSOLE_PANEL = "SECONDARY_CONSOLE_PANEL";
 
-  private static final String PRIMARY_CONSOLE_PANEL = "PRIMARY_CONSOLE_PANEL";
-  private static final String SECONDARY_CONSOLE_PANEL = "SECONDARY_CONSOLE_PANEL";
-
-  private final @NotNull S myPrimaryConsoleView;
-  private final @NotNull T mySecondaryConsoleView;
-  private final @Nullable String myStateStorageKey;
+  @NotNull
+  private final S myPrimaryConsoleView;
+  @NotNull
+  private final T mySecondaryConsoleView;
+  @Nullable
+  private final String myStateStorageKey;
 
   private boolean myPrimary;
-  private @Nullable ProcessHandler myProcessHandler;
-  private final @NotNull SwitchDuplexConsoleViewAction mySwitchConsoleAction;
+  @Nullable
+  private ProcessHandler myProcessHandler;
+  @NotNull
+  private final SwitchDuplexConsoleViewAction mySwitchConsoleAction;
   private boolean myDisableSwitchConsoleActionOnProcessEnd = true;
   private final Collection<DuplexConsoleListener> myListeners = new CopyOnWriteArraySet<>();
 
@@ -117,11 +122,13 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     return myPrimary;
   }
 
-  public @NotNull S getPrimaryConsoleView() {
+  @NotNull
+  public S getPrimaryConsoleView() {
     return myPrimaryConsoleView;
   }
 
-  public @NotNull T getSecondaryConsoleView() {
+  @NotNull
+  public T getSecondaryConsoleView() {
     return mySecondaryConsoleView;
   }
 
@@ -223,8 +230,9 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     myPrimaryConsoleView.allowHeavyFilters();
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent getComponent() {
+  public JComponent getComponent() {
     return this;
   }
 
@@ -248,13 +256,20 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     }
   }
 
+  @Nullable
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    ConsoleView consoleView = getSubConsoleView(isPrimaryConsoleEnabled());
-    DataSink.uiDataSnapshot(sink, consoleView);
+  public Object getData(@NotNull @NonNls String dataId) {
+    final ConsoleView consoleView = getSubConsoleView(isPrimaryConsoleEnabled());
+    if (consoleView instanceof DataProvider) {
+      return ((DataProvider)consoleView).getData(dataId);
+    }
+    else {
+      return null;
+    }
   }
 
-  public @NotNull Presentation getSwitchConsoleActionPresentation() {
+  @NotNull
+  public Presentation getSwitchConsoleActionPresentation() {
     return mySwitchConsoleAction.getTemplatePresentation();
   }
 
@@ -262,7 +277,8 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     myDisableSwitchConsoleActionOnProcessEnd = disableSwitchConsoleActionOnProcessEnd;
   }
 
-  private @Unmodifiable @NotNull List<AnAction> mergeConsoleActions(@NotNull List<? extends AnAction> actions1, @NotNull Collection<? extends AnAction> actions2) {
+  @NotNull
+  private List<AnAction> mergeConsoleActions(@NotNull List<? extends AnAction> actions1, @NotNull Collection<? extends AnAction> actions2) {
     return ContainerUtil.map(actions1, action1 -> {
       final AnAction action2 = ContainerUtil.find(actions2, action -> action1.getClass() == action.getClass()
                                                                       && StringUtil.equals(action1.getTemplatePresentation().getText(),
@@ -299,12 +315,12 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     }
 
     @Override
-    public boolean isSelected(final @NotNull AnActionEvent event) {
+    public boolean isSelected(@NotNull final AnActionEvent event) {
       return !isPrimaryConsoleEnabled();
     }
 
     @Override
-    public void setSelected(final @NotNull AnActionEvent event, final boolean flag) {
+    public void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       enableConsole(!flag);
       setStoredState(!flag);
       ApplicationManager.getApplication().invokeLater(() -> update(event));
@@ -334,8 +350,10 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   }
 
   private static class MergedToggleAction extends ToggleAction implements DumbAware {
-    private final @NotNull ToggleAction myAction1;
-    private final @NotNull ToggleAction myAction2;
+    @NotNull
+    private final ToggleAction myAction1;
+    @NotNull
+    private final ToggleAction myAction2;
 
     private MergedToggleAction(@NotNull ToggleAction action1, @NotNull ToggleAction action2) {
       myAction1 = action1;
@@ -361,8 +379,10 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   }
 
   private static final class MergedAction extends AnAction implements DumbAware {
-    private final @NotNull AnAction myAction1;
-    private final @NotNull AnAction myAction2;
+    @NotNull
+    private final AnAction myAction1;
+    @NotNull
+    private final AnAction myAction2;
 
     private MergedAction(@NotNull AnAction action1, @NotNull AnAction action2) {
       myAction1 = action1;

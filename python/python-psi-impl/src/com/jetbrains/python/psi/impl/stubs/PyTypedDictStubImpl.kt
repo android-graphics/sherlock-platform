@@ -11,6 +11,8 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.stubs.PyTypedDictFieldStub
 import com.jetbrains.python.psi.stubs.PyTypedDictStub
+import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_FIELDS_PARAMETER
+import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_NAME_PARAMETER
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL_PARAMETER
 import java.io.IOException
 import java.util.*
@@ -20,7 +22,7 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
                                               override val fields: List<PyTypedDictFieldStub>,
                                               override val isRequired: Boolean = true) : PyTypedDictStub {
 
-  override fun getTypeClass(): Class<PyTypedDictStubType> {
+  override fun getTypeClass(): Class<out CustomTargetExpressionStubType<*>> {
     return PyTypedDictStubType::class.java
   }
 
@@ -33,7 +35,7 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
 
     for ((name, type, isReadOnly) in fields) {
       stream.writeName(name)
-      stream.writeName(type)
+      stream.writeName(type.orElse(null))
       stream.writeBoolean(isReadOnly)
     }
   }
@@ -56,18 +58,24 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
 
     fun create(expression: PyCallExpression): PyTypedDictStub? {
       val calleeReference = expression.callee as? PyReferenceExpression ?: return null
-      val calleeName = getCalleeName(calleeReference) ?: return null
 
-      val arguments = expression.arguments
-      val typeName = PyResolveUtil.resolveStrArgument(arguments.getOrNull(0)) ?: return null
+      val calleeName = getCalleeName(calleeReference)
 
-      val fieldsArg = PyPsiUtils.flattenParens(arguments.getOrNull(1))
-      val fields = if (fieldsArg is PyDictLiteralExpression) getTypedDictFieldsFromDictLiteral(fieldsArg) else emptyList()
+      if (calleeName != null) {
+        val name = PyResolveUtil.resolveStrArgument(expression, 0, TYPED_DICT_NAME_PARAMETER) ?: return null
 
-      return PyTypedDictStubImpl(calleeName,
-                                 typeName,
-                                 fields,
-                                 PyEvaluator.evaluateAsBoolean(expression.getKeywordArgument(TYPED_DICT_TOTAL_PARAMETER), true))
+        val fieldsArgument = expression.getArgument(1, TYPED_DICT_FIELDS_PARAMETER, PyDictLiteralExpression::class.java) ?: return null
+
+        val fields = getTypingTDFieldsFromIterable(fieldsArgument)
+        if (fields != null) {
+          return PyTypedDictStubImpl(calleeName,
+                                     name,
+                                     fields,
+                                     PyEvaluator.evaluateAsBoolean(expression.getKeywordArgument(TYPED_DICT_TOTAL_PARAMETER), true))
+        }
+      }
+
+      return null
     }
 
     @Throws(IOException::class)
@@ -105,21 +113,27 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
         val readOnly = stream.readBoolean()
 
         if (name != null) {
-          fields.add(PyTypedDictFieldStub(name, type, readOnly))
+          fields.add(PyTypedDictFieldStub(name, Optional.ofNullable(type), readOnly))
         }
       }
 
       return fields
     }
 
-    private fun getTypedDictFieldsFromDictLiteral(expression: PyDictLiteralExpression): List<PyTypedDictFieldStub> {
-      val result = mutableListOf<PyTypedDictFieldStub>()
-      expression.elements.forEach {
-        val key = it.key
-        if (key is PyStringLiteralExpression) {
-          result.add(PyTypedDictFieldStub(key.stringValue, it.value?.text, true))
-        }
+    private fun getTypingTDFieldsFromIterable(fields: PySequenceExpression): List<PyTypedDictFieldStub>? {
+      val result = ArrayList<PyTypedDictFieldStub>()
+
+      fields.elements.forEach {
+        if (it !is PyKeyValueExpression) return null
+
+        val name: PyExpression = it.key
+        val type: PyExpression? = it.value
+
+        if (name !is PyStringLiteralExpression) return null
+
+        result.add(PyTypedDictFieldStub(name.stringValue, Optional.ofNullable(type?.text), true))
       }
+
       return result
     }
   }

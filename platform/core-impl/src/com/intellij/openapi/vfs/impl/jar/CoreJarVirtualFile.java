@@ -51,7 +51,7 @@ final class CoreJarVirtualFile extends VirtualFile {
   @Override
   public @NotNull String getPath() {
     if (myParent == null) {
-      return FileUtil.toSystemIndependentName(myHandler.getPath().toString()) + "!/";
+      return FileUtil.toSystemIndependentName(myHandler.getFile().getPath()) + "!/";
     }
 
     String parentPath = myParent.getPath();

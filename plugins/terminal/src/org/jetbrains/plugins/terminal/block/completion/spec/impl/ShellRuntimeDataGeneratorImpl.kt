@@ -1,9 +1,14 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.completion.spec.impl
 
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
+import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 
-internal class ShellRuntimeDataGeneratorImpl<T : Any>(
+internal interface ShellCacheableDataGenerator<T> : ShellRuntimeDataGenerator<T> {
+  fun getCacheKey(context: ShellRuntimeContext): String?
+}
+
+internal class ShellRuntimeDataGeneratorImpl<T>(
   private val debugName: String?,
   private val cacheKeyFunc: (ShellRuntimeContext) -> String?,
   private val generatorFunc: suspend (ShellRuntimeContext) -> T
@@ -17,6 +22,6 @@ internal class ShellRuntimeDataGeneratorImpl<T : Any>(
   }
 
   override fun toString(): String {
-    return "ShellRuntimeDataGeneratorImpl(debugName=$debugName)"
+    return "IJShellRuntimeDataGenerator${debugName?.let { ": $debugName" } ?: ""}"
   }
 }

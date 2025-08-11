@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionToolSession;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -30,10 +28,11 @@ import static com.jetbrains.python.psi.PyUtil.as;
 
 public final class PyDocstringTypesInspection extends PyInspection {
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                                 boolean isOnTheFly,
-                                                 @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                        boolean isOnTheFly,
+                                        @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -85,7 +84,8 @@ public final class PyDocstringTypesInspection extends PyInspection {
       }
     }
 
-    private @Nullable String getShortestImportableName(@Nullable PsiElement anchor, @NotNull String type) {
+    @Nullable
+    private String getShortestImportableName(@Nullable PsiElement anchor, @NotNull String type) {
       final PyType pyType = PyTypeParser.getTypeByName(anchor, type, myTypeEvalContext);
       if (pyType instanceof PyClassType) {
         return ((PyClassType)pyType).getPyClass().getQualifiedName();
@@ -99,7 +99,8 @@ public final class PyDocstringTypesInspection extends PyInspection {
       }
     }
 
-    private static @Nullable String getPrintableName(@Nullable PyType type) {
+    @Nullable
+    private static String getPrintableName(@Nullable PyType type) {
       if (type instanceof PyUnionType) {
         return StreamEx
           .of(((PyUnionType)type).getMembers())
@@ -133,13 +134,15 @@ public final class PyDocstringTypesInspection extends PyInspection {
       myNewType = type;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getName() {
+    public String getName() {
       return PyPsiBundle.message("INSP.docstring.types.change.type", myParamName, myTypeSubstring.getValue(), myNewType);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return PyPsiBundle.message("INSP.docstring.types.fix.docstring");
     }
 

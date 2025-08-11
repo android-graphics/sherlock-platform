@@ -3,8 +3,6 @@ package com.jetbrains.jsonSchema.impl.tree
 
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
-import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature
-import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver
@@ -13,7 +11,6 @@ import com.jetbrains.jsonSchema.impl.light.nodes.inheritBaseSchemaIfNeeded
 internal class IfThenElseBranchOperation(schemaObject: JsonSchemaObject, expansionRequest: JsonSchemaNodeExpansionRequest?, private val jsonSchemaService: JsonSchemaService) : Operation(schemaObject, expansionRequest) {
   override fun map(visited: MutableSet<JsonSchemaObject>) {
     if (visited.contains(mySourceNode)) return
-    JsonSchemaHighlightingSessionStatisticsCollector.getInstance().reportSchemaUsageFeature(JsonSchemaFusCountedFeature.IfElseExpanded);
 
     val effectiveBranches = computeEffectiveIfThenElseBranches(myExpansionRequest, mySourceNode)
       ?.mapNotNull {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -6,7 +6,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import org.jetbrains.annotations.Nullable;
 
 public class ReturnEvaluator implements Evaluator {
-  private final @Nullable Evaluator myReturnValueEvaluator;
+  @Nullable private final Evaluator myReturnValueEvaluator;
 
   public ReturnEvaluator(@Nullable Evaluator returnValueEvaluator) {
     myReturnValueEvaluator = returnValueEvaluator;
@@ -15,7 +15,7 @@ public class ReturnEvaluator implements Evaluator {
   @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Object returnValue = myReturnValueEvaluator == null ?
-                         context.getVirtualMachineProxy().mirrorOfVoid() :
+                         context.getDebugProcess().getVirtualMachineProxy().mirrorOfVoid() :
                          myReturnValueEvaluator.evaluate(context);
     throw new ReturnException(returnValue);
   }

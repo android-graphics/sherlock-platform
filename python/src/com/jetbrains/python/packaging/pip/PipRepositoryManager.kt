@@ -5,8 +5,5 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-internal class PipRepositoryManager(
-  override val project: Project,
-  @Deprecated("Don't use sdk from here") override val sdk: Sdk,
-) : PipBasedRepositoryManager()
+@ApiStatus.Experimental
+class PipRepositoryManager(project: Project, sdk: Sdk) : PipBasedRepositoryManager(project, sdk)

@@ -38,22 +38,21 @@ public class JavaTextExtractor extends TextExtractor {
     .removingIndents(" \t").removingLineSuffixes(" \t");
 
   @Override
-  public @NotNull List<TextContent> buildTextContents(@NotNull PsiElement root, @NotNull Set<TextContent.TextDomain> allowedDomains) {
+  public TextContent buildTextContent(@NotNull PsiElement root, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     if (allowedDomains.contains(DOCUMENTATION)) {
       if (root instanceof PsiDocComment) {
-        return HtmlUtilsKt.excludeHtml(javadocBuilder.excluding(e -> e instanceof PsiDocTagImpl).build(root, DOCUMENTATION));
+        return HtmlUtilsKt.removeHtml(javadocBuilder.excluding(e -> e instanceof PsiDocTagImpl).build(root, DOCUMENTATION));
       }
       if (root instanceof PsiDocTagImpl) {
-        return HtmlUtilsKt.excludeHtml(javadocBuilder.build(root, DOCUMENTATION));
+        return HtmlUtilsKt.removeHtml(javadocBuilder.build(root, DOCUMENTATION));
       }
     }
 
     if (root instanceof PsiCommentImpl && allowedDomains.contains(COMMENTS)) {
       List<PsiElement> roots = PsiUtilsKt.getNotSoDistantSimilarSiblings(root, e ->
         JAVA_PLAIN_COMMENT_BIT_SET.contains(PsiUtilCore.getElementType(e)));
-      return ContainerUtil.createMaybeSingletonList(
-        TextContent.joinWithWhitespace('\n', ContainerUtil.mapNotNull(roots, c ->
-          TextContentBuilder.FromPsi.removingIndents(" \t*/").removingLineSuffixes(" \t").build(c, COMMENTS))));
+      return TextContent.joinWithWhitespace('\n', ContainerUtil.mapNotNull(roots, c ->
+        TextContentBuilder.FromPsi.removingIndents(" \t*/").removingLineSuffixes(" \t").build(c, COMMENTS)));
     }
 
     if (root instanceof PsiLiteralExpression &&
@@ -67,13 +66,13 @@ public class JavaTextExtractor extends TextExtractor {
             ContainerUtil.map(Text.allOccurrences(Pattern.compile("(?<=\n)" + "\\s{" + indent + "}"), content), Exclusion::exclude));
         }
         content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(Pattern.compile("\\\\\n"), content), Exclusion::exclude));
-        return ContainerUtil.createMaybeSingletonList(content.trimWhitespace());
+        return content.trimWhitespace();
       }
 
-      return ContainerUtil.createMaybeSingletonList(content);
+      return content;
     }
 
-    return List.of();
+    return null;
   }
 
 }

@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageTarget
@@ -59,7 +58,7 @@ class FindImplicitNothingAction : AnAction() {
             progressIndicator?.text2 = file.virtualFile.path
 
             val resolutionFacade = file.getResolutionFacade()
-            file.acceptChildren(object : KtVisitorVoid(),PsiRecursiveVisitor {
+            file.acceptChildren(object : KtVisitorVoid() {
                 override fun visitKtElement(element: KtElement) {
                     ProgressManager.checkCanceled()
                     element.acceptChildren(this)

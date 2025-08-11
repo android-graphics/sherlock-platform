@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
@@ -41,7 +41,8 @@ public class BreakConverter {
     }
   }
 
-  private @NotNull List<PsiBreakStatement> collectBreaks() {
+  @NotNull
+  private List<PsiBreakStatement> collectBreaks() {
     List<PsiBreakStatement> breaks = new ArrayList<>();
     mySwitchBlock.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
@@ -126,7 +127,8 @@ public class BreakConverter {
     return false;
   }
 
-  public static @Nullable BreakConverter from(PsiSwitchBlock switchStatement) {
+  @Nullable
+  public static BreakConverter from(PsiSwitchBlock switchStatement) {
     String replacement = switchStatement instanceof PsiSwitchStatement ? getReplacement((PsiStatement)switchStatement) : null;
     if (replacement == null) {
       class Visitor extends JavaRecursiveElementWalkingVisitor {

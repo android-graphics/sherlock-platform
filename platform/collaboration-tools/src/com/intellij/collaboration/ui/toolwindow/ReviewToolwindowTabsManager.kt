@@ -3,7 +3,7 @@ package com.intellij.collaboration.ui.toolwindow
 
 import com.intellij.collaboration.async.cancelledWith
 import com.intellij.collaboration.async.launchNow
-import com.intellij.openapi.actionSystem.EdtNoGetDataProvider
+import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -50,13 +50,16 @@ private class ReviewToolwindowTabsManager<
 ) {
   private val contentManager = toolwindow.contentManager
   private val projectVm = reviewToolwindowViewModel.projectVm
-  private val cs = parentCs.childScope(Dispatchers.EDT)
+  private val cs = parentCs.childScope(Dispatchers.Main)
 
   init {
-    contentManager.addDataProvider(EdtNoGetDataProvider { sink ->
-      sink[ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_PROJECT_VM] = projectVm.value
-      sink[ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_VM] = reviewToolwindowViewModel
-    })
+    contentManager.addDataProvider {
+      when {
+        ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_PROJECT_VM.`is`(it) -> projectVm.value
+        ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_VM.`is`(it) -> reviewToolwindowViewModel
+        else -> null
+      }
+    }
 
     cs.launchNow {
       projectVm.collectLatest { vm ->
@@ -85,13 +88,13 @@ private class ReviewToolwindowTabsManager<
   }
 
   private suspend fun manageProjectTabs(projectVm: PVM) {
-    val mainContent = createMainTabContent(projectVm)
+    val listContent = createReviewListContent(projectVm)
     withContext(NonCancellable) {
-      contentManager.addContent(mainContent)
-      contentManager.setSelectedContent(mainContent)
+      contentManager.addContent(listContent)
+      contentManager.setSelectedContent(listContent)
     }
-    refreshReviewListOnTabSelection(projectVm, contentManager, mainContent)
-    refreshListOnToolwindowShow(projectVm, toolwindow, mainContent)
+    refreshReviewListOnTabSelection(projectVm.listVm, contentManager, listContent)
+    refreshListOnToolwindowShow(projectVm.listVm, toolwindow, listContent)
 
     currentCoroutineContext().ensureActive()
 
@@ -115,7 +118,7 @@ private class ReviewToolwindowTabsManager<
     projectVm.tabs.collect { tabsState ->
       contentManager.removeContentManagerListener(syncListener)
       contentManager.contents.forEach { content ->
-        if (content !== mainContent) {
+        if (content !== listContent) {
           val tab = content.getUserData(REVIEW_TAB_KEY)
           if (tab == null || !tabsState.tabs.containsKey(tab)) {
             contentManager.removeContent(content, true)
@@ -130,7 +133,7 @@ private class ReviewToolwindowTabsManager<
         }
       }
 
-      val contentToSelect = tabsState.selectedTab?.let(::findTabContent) ?: mainContent
+      val contentToSelect = tabsState.selectedTab?.let(::findTabContent) ?: listContent
       contentManager.setSelectedContent(contentToSelect, true)
       contentManager.addContentManagerListener(syncListener)
     }
@@ -148,7 +151,7 @@ private class ReviewToolwindowTabsManager<
     contentManager.addContent(content)
   }
 
-  private fun createMainTabContent(projectVm: PVM): Content =
+  private fun createReviewListContent(projectVm: PVM): Content =
     createDisposableContent(createTabDebugName(projectVm.projectName)) { content, contentCs ->
       content.isCloseable = false
       content.displayName = projectVm.projectName
@@ -179,36 +182,35 @@ private class ReviewToolwindowTabsManager<
 
   private val REVIEW_TAB_KEY: Key<T> = Key.create("com.intellij.collaboration.toolwindow.review.tab")
   private val REVIEW_TAB_VM_KEY: Key<TVM> = Key.create("com.intellij.collaboration.toolwindow.review.tab.vm")
-
-  private fun refreshReviewListOnTabSelection(projectVm: PVM, contentManager: ContentManager, content: Content) {
-    val listener = object : ContentManagerListener {
-      override fun selectionChanged(event: ContentManagerEvent) {
-        if (event.operation == ContentManagerEvent.ContentOperation.add && event.content === content) {
-          // tab selected
-          projectVm.refresh()
-        }
-      }
-    }
-    contentManager.addContentManagerListener(listener)
-    Disposer.register(content) {
-      contentManager.removeContentManagerListener(listener)
-    }
-  }
-
-  private fun refreshListOnToolwindowShow(projectVm: PVM, toolwindow: ToolWindow, content: Content) {
-    toolwindow.project.messageBus.connect(content)
-      .subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-        override fun toolWindowShown(shownToolwindow: ToolWindow) {
-          if (shownToolwindow.id == toolwindow.id) {
-            val selectedContent = shownToolwindow.contentManager.selectedContent
-            if (selectedContent === content) {
-              projectVm.refresh()
-            }
-          }
-        }
-      })
-  }
 }
 
 private fun createTabDebugName(name: String) = "Review Toolwindow Tab [$name]"
 
+private fun refreshReviewListOnTabSelection(listVm: ReviewListViewModel, contentManager: ContentManager, content: Content) {
+  val listener = object : ContentManagerListener {
+    override fun selectionChanged(event: ContentManagerEvent) {
+      if (event.operation == ContentManagerEvent.ContentOperation.add && event.content === content) {
+        // tab selected
+        listVm.refresh()
+      }
+    }
+  }
+  contentManager.addContentManagerListener(listener)
+  Disposer.register(content) {
+    contentManager.removeContentManagerListener(listener)
+  }
+}
+
+private fun refreshListOnToolwindowShow(listVm: ReviewListViewModel, toolwindow: ToolWindow, content: Content) {
+  toolwindow.project.messageBus.connect(content)
+    .subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      override fun toolWindowShown(shownToolwindow: ToolWindow) {
+        if (shownToolwindow.id == toolwindow.id) {
+          val selectedContent = shownToolwindow.contentManager.selectedContent
+          if (selectedContent === content) {
+            listVm.refresh()
+          }
+        }
+      }
+    })
+}

@@ -1,11 +1,12 @@
-# $Id: es.py 9452 2023-09-27 00:11:54Z milde $
+# -*- coding: utf-8 -*-
+# $Id: es.py 4572 2006-05-25 20:48:37Z richieadler $
 # Author: Marcelo Huerta San Martín <richieadler@users.sourceforge.net>
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
-# Two files must be translated for each language: one in docutils/languages,
-# the other in docutils/parsers/rst/languages.
+# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
+# translated for each language: one in docutils/languages, the other in
+# docutils/parsers/rst/languages.
 
 """
 Spanish-language mappings for language-dependent features of Docutils.
@@ -16,19 +17,19 @@ __docformat__ = 'reStructuredText'
 labels = {
       'author': 'Autor',
       'authors': 'Autores',
-      'organization': 'Organización',
-      'address': 'Dirección',
+      'organization': 'Organizaci\u00f3n',
+      'address': 'Direcci\u00f3n',
       'contact': 'Contacto',
-      'version': 'Versión',
-      'revision': 'Revisión',
+      'version': 'Versi\u00f3n',
+      'revision': 'Revisi\u00f3n',
       'status': 'Estado',
       'date': 'Fecha',
       'copyright': 'Copyright',
       'dedication': 'Dedicatoria',
       'abstract': 'Resumen',
-      'attention': '¡Atención!',
-      'caution': '¡Precaución!',
-      'danger': '¡PELIGRO!',
+      'attention': '\u00a1Atenci\u00f3n!',
+      'caution': '\u00a1Precauci\u00f3n!',
+      'danger': '\u00a1PELIGRO!',
       'error': 'Error',
       'hint': 'Sugerencia',
       'important': 'Importante',
@@ -41,11 +42,11 @@ labels = {
 bibliographic_fields = {
       'autor': 'author',
       'autores': 'authors',
-      'organización': 'organization',
-      'dirección': 'address',
+      'organizaci\u00f3n': 'organization',
+      'direcci\u00f3n': 'address',
       'contacto': 'contact',
-      'versión': 'version',
-      'revisión': 'revision',
+      'versi\u00f3n': 'version',
+      'revisi\u00f3n': 'revision',
       'estado': 'status',
       'fecha': 'date',
       'copyright': 'copyright',

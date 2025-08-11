@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.module.Module;
@@ -17,7 +16,7 @@ import javax.swing.*;
 public class UsageInModuleClasspath extends ProjectStructureElementUsage {
   private final StructureConfigurableContext myContext;
   private final ModuleProjectStructureElement myContainingElement;
-  private final @Nullable DependencyScope myScope;
+  @Nullable private final DependencyScope myScope;
   private final ProjectStructureElement mySourceElement;
   private final Module myModule;
 
@@ -81,8 +80,9 @@ public class UsageInModuleClasspath extends ProjectStructureElementUsage {
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable String getPresentableLocationInElement() {
+  public String getPresentableLocationInElement() {
     return myScope != null && myScope != DependencyScope.COMPILE ? "[" + StringUtil.decapitalize(myScope.getDisplayName()) + "]" : null;
   }
 

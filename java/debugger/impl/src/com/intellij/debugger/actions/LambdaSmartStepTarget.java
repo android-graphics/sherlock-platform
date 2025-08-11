@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.psi.PsiElement;
@@ -43,13 +43,15 @@ public class LambdaSmartStepTarget extends SmartStepTarget {
     return myAsync;
   }
 
+  @Nullable
   @Override
-  public @Nullable Icon getIcon() {
+  public Icon getIcon() {
     return myLambda.getIcon(0);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPresentation() {
+  public String getPresentation() {
     String typeText = PsiFormatUtil.formatType(myLambda.getType(), 0, PsiSubstitutor.EMPTY);
     String label = getLabel();
     return label != null ? label + typeText : typeText;

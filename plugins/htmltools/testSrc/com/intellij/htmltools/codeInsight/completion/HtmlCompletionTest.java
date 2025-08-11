@@ -35,9 +35,7 @@ import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -522,8 +520,7 @@ public class HtmlCompletionTest extends BasePlatformTestCase {
     checkDuplicates(myFixture.getCompletionVariants("/scriptTypeDuplicates.html"), "module");
   }
 
-  protected void checkDuplicates(@Unmodifiable List<String> variants, String... tags) {
-    variants = new ArrayList<>(variants);
+  protected void checkDuplicates(List<String> variants, String... tags) {
     for (String tag : tags) {
       assertTrue("Not in list " + tag, variants.remove(tag));
       assertFalse("Duplicate " + tag, variants.contains(tag));

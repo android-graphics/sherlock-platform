@@ -2,6 +2,7 @@
 package git4idea.roots;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -11,17 +12,14 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
+import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
-import git4idea.repo.GitModulesFileReader;
-import git4idea.repo.GitRepositoryFiles;
-import git4idea.repo.GitSubmoduleInfo;
+import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Path;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CancellationException;
 
 final class GitRootChecker extends VcsRootChecker {
   @Override
@@ -58,14 +56,23 @@ final class GitRootChecker extends VcsRootChecker {
   @Override
   public @NotNull List<VirtualFile> suggestDependentRoots(@NotNull VirtualFile vcsRoot) {
     try {
-      Path submoduleFile = vcsRoot.toNioPath().resolve(GitRepositoryFiles.SUBMODULES_FILE);
-      Collection<GitSubmoduleInfo> submoduleInfos = new GitModulesFileReader().read(submoduleFile);
+      GitLineHandler handler = new GitLineHandler(null, vcsRoot, GitCommand.SUBMODULE_HELPER);
+      handler.addParameters("list");
+      GitCommandResult result = Git.getInstance().runCommand(handler);
+      if (!result.success()) return Collections.emptyList();
 
-      return ContainerUtil.mapNotNull(submoduleInfos, info -> {
-        return VcsUtil.getFilePath(vcsRoot, info.getPath()).getVirtualFile();
-      });
+      List<VirtualFile> submodules = new ArrayList<>();
+      for (String line : result.getOutput()) {
+        StringScanner scanner = new StringScanner(line);
+        scanner.tabToken(); // mode, sha, stage
+        String path = scanner.line(); // relative path
+
+        ContainerUtil.addIfNotNull(submodules, VcsUtil.getFilePath(vcsRoot, path).getVirtualFile());
+      }
+
+      return submodules;
     }
-    catch (CancellationException e) {
+    catch (ProcessCanceledException e) {
       throw e;
     }
     catch (Exception e) {

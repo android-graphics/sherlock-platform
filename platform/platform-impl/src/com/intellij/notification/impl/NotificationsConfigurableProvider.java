@@ -3,9 +3,7 @@ package com.intellij.notification.impl;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
 public final class NotificationsConfigurableProvider extends ConfigurableProvider {
   @Override
   public boolean canCreateConfigurable() {

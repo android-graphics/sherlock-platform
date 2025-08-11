@@ -30,7 +30,8 @@ import org.jetbrains.annotations.NotNull;
 public class AddSerialVersionUIDFix extends PsiUpdateModCommandQuickFix {
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return InspectionGadgetsBundle.message("add.serialversionuidfield.quickfix");
   }
 
@@ -47,7 +48,8 @@ public class AddSerialVersionUIDFix extends PsiUpdateModCommandQuickFix {
     aClass.add(field);
   }
 
-  public static @NonNls String generateSerialVersionUIDFieldText(long serialVersionUID) {
+  @NonNls
+  public static String generateSerialVersionUIDFieldText(long serialVersionUID) {
     return "private static final long serialVersionUID = " + serialVersionUID + "L;";
   }
 

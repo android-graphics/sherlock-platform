@@ -30,22 +30,19 @@ interface WebSymbolsContext {
       WebSymbolsContextProviderExtensionCollector(ExtensionPointName("com.intellij.webSymbols.context"))
 
     @JvmField
-    val KIND_FRAMEWORK: String = "framework"
+    val KIND_FRAMEWORK = "framework"
 
     @JvmField
-    val VALUE_NONE: String = "none"
+    val VALUE_NONE = "none"
 
     @JvmField
-    val WEB_SYMBOLS_CONTEXT_FILE: String = ".ws-context"
+    val WEB_SYMBOLS_CONTEXT_FILE = ".ws-context"
 
     @JvmField
-    val PKG_MANAGER_NODE_PACKAGES: String = "node-packages"
+    val PKG_MANAGER_NODE_PACKAGES = "node-packages"
 
     @JvmField
-    val PKG_MANAGER_RUBY_GEMS: String = "ruby-gems"
-
-    @JvmField
-    val PKG_MANAGER_SYMFONY_BUNDLES: String = "symfony-bundles"
+    val PKG_MANAGER_RUBY_GEMS = "ruby-gems"
 
     @JvmStatic
     fun get(kind: ContextKind, location: VirtualFile, project: Project): ContextName? =

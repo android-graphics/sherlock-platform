@@ -18,8 +18,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ShLineIndentProvider implements LineIndentProvider {
+  @Nullable
   @Override
-  public @Nullable String getLineIndent(@NotNull Project project, @NotNull Editor editor, @Nullable Language language, int offset) {
+  public String getLineIndent(@NotNull Project project, @NotNull Editor editor, @Nullable Language language, int offset) {
     if (offset > 0) {
       ShSemanticEditorPosition position = getPosition(editor, offset - 1);
       if (position.isAt(ShTypes.LINEFEED) || position.isAt(ShTokenTypes.WHITESPACE)) {
@@ -64,7 +65,8 @@ public class ShLineIndentProvider implements LineIndentProvider {
     }
   }
 
-  private static @NotNull String getIndentString(@NotNull Editor editor, int offset, boolean shouldExpand) {
+  @NotNull
+  private static String getIndentString(@NotNull Editor editor, int offset, boolean shouldExpand) {
     CodeStyleSettings settings = CodeStyle.getSettings(editor);
     CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(ShFileType.INSTANCE);
     CharSequence docChars = editor.getDocument().getCharsSequence();

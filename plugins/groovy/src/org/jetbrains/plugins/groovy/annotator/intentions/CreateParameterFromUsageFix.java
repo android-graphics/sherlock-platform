@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -59,13 +59,15 @@ public class CreateParameterFromUsageFix extends Intention implements MethodOrCl
     return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, method.getText(), copy.getText());
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return GroovyBundle.message("create.parameter.from.usage.family.name");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getText() {
+  public String getText() {
     return GroovyBundle.message("create.parameter.from.usage", myName);
   }
 
@@ -86,8 +88,9 @@ public class CreateParameterFromUsageFix extends Intention implements MethodOrCl
     return element instanceof GrExpression;
   }
 
+  @NotNull
   @Override
-  protected @NotNull PsiElementPredicate getElementPredicate() {
+  protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
@@ -96,7 +99,7 @@ public class CreateParameterFromUsageFix extends Intention implements MethodOrCl
     };
   }
 
-  private void findScope(final @NotNull GrReferenceExpression ref, final @NotNull Editor editor, final Project project) {
+  private void findScope(@NotNull final GrReferenceExpression ref, @NotNull final Editor editor, final Project project) {
     PsiElement place = ref;
     final List<GrMethod> scopes = new ArrayList<>();
     while (true) {
@@ -128,7 +131,7 @@ public class CreateParameterFromUsageFix extends Intention implements MethodOrCl
     final List<PsiType> types = GroovyExpectedTypesProvider.getDefaultExpectedTypes(ref);
 
     PsiType unboxed = types.isEmpty() ? null : TypesUtil.unboxPrimitiveTypeWrapper(types.get(0));
-    final @NotNull PsiType type = unboxed != null ? unboxed : PsiType.getJavaLangObject(ref.getManager(), ref.getResolveScope());
+    @NotNull final PsiType type = unboxed != null ? unboxed : PsiType.getJavaLangObject(ref.getManager(), ref.getResolveScope());
 
     if (method instanceof GrMethod) {
       GrMethodDescriptor descriptor = new GrMethodDescriptor((GrMethod)method);

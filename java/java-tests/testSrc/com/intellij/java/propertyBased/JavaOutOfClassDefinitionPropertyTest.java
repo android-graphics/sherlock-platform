@@ -3,7 +3,6 @@ package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -23,7 +22,6 @@ import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.ImperativeCommand;
 import org.jetbrains.jetCheck.PropertyChecker;
@@ -74,7 +72,6 @@ public class JavaOutOfClassDefinitionPropertyTest extends LightJavaCodeInsightFi
     myFixture.getEditor().getCaretModel().moveToOffset(offset);
     IntentionAction intention = myFixture.findSingleIntention("Move member into class");
     myFixture.launchAction(intention);
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 
   private boolean moveMemberFromClass(@NotNull Project project, @NotNull PsiClass psiClass, @NotNull PsiMember psiMember) {
@@ -126,7 +123,6 @@ public class JavaOutOfClassDefinitionPropertyTest extends LightJavaCodeInsightFi
     return className.equals(psiClass.getName()) ? psiClass : null;
   }
 
-  @Unmodifiable
   private static @NotNull List<PsiMember> findMembers(@NotNull PsiClass psiClass) {
     Collection<? extends PsiMember> children = PsiTreeUtil.getChildrenOfAnyType(psiClass, PsiMethod.class, PsiField.class);
     return ContainerUtil.filter(children, c -> (c instanceof PsiField field && !isMultipleFieldsDeclaration(field) ||

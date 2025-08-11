@@ -20,12 +20,11 @@ abstract class InlineBannerBase(
   messageText: @Nls String,
 ) : JBPanel<InlineBannerBase>() {
 
-  open var status: EditorNotificationPanel.Status = status
+  protected open var status: EditorNotificationPanel.Status = status
     set(value) {
-      field = value
-      background = value.background
+      background = status.background
 
-      revalidate()
+      field = value
       repaint()
     }
 

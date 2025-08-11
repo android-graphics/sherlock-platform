@@ -11,6 +11,6 @@ fun main(args: Array<String>) {
     println(a.field)
 }
 
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 
 

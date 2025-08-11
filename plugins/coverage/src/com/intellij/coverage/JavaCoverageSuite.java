@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.openapi.application.ReadAction;
@@ -20,16 +20,19 @@ import java.util.Collections;
 import java.util.List;
 
 public class JavaCoverageSuite extends BaseCoverageSuite {
-  private static final @NonNls String FILTER = "FILTER";
-  private static final @NonNls String EXCLUDED_FILTER = "EXCLUDED_FILTER";
-  private static final @NonNls String COVERAGE_RUNNER = "RUNNER";
+  @NonNls
+  private static final String FILTER = "FILTER";
+  @NonNls
+  private static final String EXCLUDED_FILTER = "EXCLUDED_FILTER";
+  @NonNls
+  private static final String COVERAGE_RUNNER = "RUNNER";
   private final CoverageEngine myCoverageEngine;
   private String @Nullable [] myIncludeFilters;
   private String @Nullable [] myExcludePatterns;
   private boolean mySkipUnloadedClassesAnalysis;
 
   //read external only
-  public JavaCoverageSuite(final @NotNull CoverageEngine coverageEngine) {
+  public JavaCoverageSuite(@NotNull final CoverageEngine coverageEngine) {
     super();
     myCoverageEngine = coverageEngine;
   }
@@ -43,7 +46,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
                            final boolean branchCoverage,
                            final boolean trackTestFolders,
                            final CoverageRunner coverageRunner,
-                           final @NotNull CoverageEngine coverageEngine,
+                           @NotNull final CoverageEngine coverageEngine,
                            final Project project) {
     super(name, project, coverageRunner, coverageDataFileProvider, lastCoverageTimeStamp);
     myCoverageEngine = coverageEngine;

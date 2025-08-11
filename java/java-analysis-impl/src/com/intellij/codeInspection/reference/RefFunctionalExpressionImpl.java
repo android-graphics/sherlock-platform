@@ -11,7 +11,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.uast.*;
 
 import java.util.Collection;
@@ -82,7 +81,8 @@ public final class RefFunctionalExpressionImpl extends RefJavaElementImpl implem
   }
 
   @Override
-  public @NotNull Collection<? extends RefOverridable> getDerivedReferences() {
+  @NotNull
+  public Collection<? extends RefOverridable> getDerivedReferences() {
     return Collections.emptyList();
   }
 
@@ -91,14 +91,16 @@ public final class RefFunctionalExpressionImpl extends RefJavaElementImpl implem
     throw new AssertionError("Should not be called!");
   }
 
+  @NotNull
   @Override
-  public synchronized @NotNull @Unmodifiable List<RefParameter> getParameters() {
+  public synchronized List<RefParameter> getParameters() {
     LOG.assertTrue(isInitialized());
     return ContainerUtil.filterIsInstance(getChildren(), RefParameter.class);
   }
 
+  @Nullable
   @Override
-  public @Nullable UExpression getUastElement() {
+  public UExpression getUastElement() {
     return UastContextKt.toUElement(getPsiElement(), UExpression.class);
   }
 

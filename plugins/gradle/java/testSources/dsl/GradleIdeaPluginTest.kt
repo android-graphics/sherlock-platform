@@ -69,7 +69,7 @@ class GradleIdeaPluginTest : GradleCodeInsightTestCase() {
   companion object {
 
     private val IDEA_PLUGIN_PROJECT = GradleTestFixtureBuilder.create("GradleIdeaPluginTest") { gradleVersion ->
-      withSettingsFile(gradleVersion) {
+      withSettingsFile {
         setProjectName("GradleIdeaPluginTest")
       }
       withBuildFile(gradleVersion) {

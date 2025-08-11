@@ -1,15 +1,13 @@
 // FIR_IDENTICAL
 // FIR_COMPARISON
-fun String.cforString() {}
+fun String.forString(){}
 
-fun cglobalFun() {}
+fun globalFun(){}
 
 fun String?.foo() {
-    c<caret>
+    <caret>
 }
 
-// EXIST: { lookupString: "cglobalFun", attributes: "", icon: "Function"}
+// EXIST: { lookupString: "globalFun", attributes: "", icon: "Function"}
 // EXIST: { lookupString: "compareTo", attributes: "grayed", icon: "Function"}
-// EXIST: { lookupString: "cforString", attributes: "grayed", icon: "Function"}
-// todo too many items!
-// todo remove c prefix
+// EXIST: { lookupString: "forString", attributes: "grayed", icon: "Function"}

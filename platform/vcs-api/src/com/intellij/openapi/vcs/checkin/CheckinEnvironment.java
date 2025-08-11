@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.util.NlsContexts.DetailedDescription;
@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vcs.changes.PseudoMap;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NullableFunction;
@@ -29,7 +30,8 @@ import java.util.Set;
  */
 public interface CheckinEnvironment {
 
-  default @Nullable RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
+  @Nullable
+  default RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
     //noinspection deprecation
     return createAdditionalOptionsPanel(commitPanel, commitContext.getAdditionalDataConsumer());
   }
@@ -39,17 +41,18 @@ public interface CheckinEnvironment {
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
-  default @Nullable RefreshableOnComponent createAdditionalOptionsPanel(@NotNull CheckinProjectPanel panel,
+  @Nullable
+  default RefreshableOnComponent createAdditionalOptionsPanel(@NotNull CheckinProjectPanel panel,
                                                               @NotNull PairConsumer<Object, Object> additionalDataConsumer) {
+    // for compatibility with external plugins
+    if (additionalDataConsumer instanceof PseudoMap) {
+      return createCommitOptions(panel, ((PseudoMap<?, ?>)additionalDataConsumer).getCommitContext());
+    }
     return null;
   }
 
-  /**
-   * @deprecated implementations returning non-null messages should be replaced with
-   * {@link com.intellij.openapi.vcs.changes.ui.CommitMessageProvider}.
-   */
-  @Deprecated(forRemoval = true)
-  default @Nullable @NlsSafe String getDefaultMessageFor(FilePath @NotNull [] filesToCheckin) {
+  @Nullable
+  default @NlsSafe String getDefaultMessageFor(FilePath @NotNull [] filesToCheckin) {
     return null;
   }
 
@@ -60,14 +63,16 @@ public interface CheckinEnvironment {
   @Nls(capitalization = Nls.Capitalization.Title)
   String getCheckinOperationName();
 
-  default @Nullable List<VcsException> commit(@NotNull List<? extends Change> changes, @NotNull @NlsSafe String preparedComment) {
+  @Nullable
+  default List<VcsException> commit(@NotNull List<? extends Change> changes, @NotNull @NlsSafe String preparedComment) {
     return commit(changes, preparedComment, new CommitContext(), new HashSet<>());
   }
 
-  default @Nullable List<VcsException> commit(@NotNull List<? extends Change> changes,
-                                              @NotNull @NlsSafe String commitMessage,
-                                              @NotNull CommitContext commitContext,
-                                              @NotNull Set<? super @DetailedDescription String> feedback) {
+  @Nullable
+  default List<VcsException> commit(@NotNull List<? extends Change> changes,
+                                    @NotNull @NlsSafe String commitMessage,
+                                    @NotNull CommitContext commitContext,
+                                    @NotNull Set<? super @DetailedDescription String> feedback) {
     //noinspection deprecation
     return commit(changes, commitMessage, commitContext.getAdditionalData(), feedback);
   }
@@ -77,7 +82,8 @@ public interface CheckinEnvironment {
    */
   @SuppressWarnings("unused")
   @Deprecated
-  default @Nullable List<VcsException> commit(@NotNull List<? extends Change> changes,
+  @Nullable
+  default List<VcsException> commit(@NotNull List<? extends Change> changes,
                                     @NotNull String preparedComment,
                                     @NotNull NullableFunction<Object, Object> parametersHolder,
                                     @NotNull Set<? super @DetailedDescription String> feedback) {
@@ -103,7 +109,8 @@ public interface CheckinEnvironment {
    */
   boolean isRefreshAfterCommitNeeded();
 
-  default @Nullable PostCommitChangeConverter getPostCommitChangeConverter() {
+  @Nullable
+  default PostCommitChangeConverter getPostCommitChangeConverter() {
     return null;
   }
 }

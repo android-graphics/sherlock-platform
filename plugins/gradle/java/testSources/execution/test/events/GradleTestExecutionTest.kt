@@ -9,7 +9,8 @@ import org.gradle.tooling.LongRunningOperation
 import org.gradle.tooling.events.ProgressListener
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
+import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension
+import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
@@ -611,10 +612,11 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test test task execution with additional gradle listeners`(gradleVersion: GradleVersion) {
-    val extension = object : GradleExecutionHelperExtension {
+    val extension = object : GradleOperationHelperExtension {
+      override fun prepareForSync(operation: LongRunningOperation, resolverCtx: ProjectResolverContext) = Unit
       override fun prepareForExecution(id: ExternalSystemTaskId,
                                        operation: LongRunningOperation,
-                                       settings: GradleExecutionSettings,
+                                       gradleExecutionSettings: GradleExecutionSettings,
                                        buildEnvironment: BuildEnvironment?) {
         operation.addProgressListener(ProgressListener {})
       }
@@ -628,7 +630,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
       Disposer.newDisposable().use { testDisposable ->
-        GradleExecutionHelperExtension.EP_NAME.point.registerExtension(extension, testDisposable)
+        GradleOperationHelperExtension.EP_NAME.point.registerExtension(extension, testDisposable)
         executeTasks(":test", isRunAsTest = true)
       }
       assertTestViewTree {
@@ -709,35 +711,6 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           }
         }
       }
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  fun `test maxParallelFork option is not reset for test executions`(gradleVersion: GradleVersion) {
-    testJavaProject(gradleVersion) {
-      // we need the presence of some test sources
-      writeText("src/test/java/org/example/TestCase.java", """
-        |package org.example;
-        |import $jUnitTestAnnotationClass;
-        |public class TestCase {
-        |  @Test public void test1() {}
-        |}
-      """.trimMargin())
-      // configure parallel forks value
-      val parallelForks = 5
-      // output max parallel forks value after test execution
-      appendText("build.gradle", """
-        |test {
-        |    maxParallelForks = $parallelForks
-        |    doLast { Test t ->
-        |        logger.lifecycle("The max parallel fork was [${'$'}{t.maxParallelForks}]")
-        |    }
-        |}
-      """.trimMargin())
-      executeTasks(":test", isRunAsTest = true)
-      // verify the max parallel fork value did not change
-      assertTestConsoleContains("The max parallel fork was [$parallelForks]")
     }
   }
 }

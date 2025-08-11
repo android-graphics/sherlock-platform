@@ -28,7 +28,8 @@ public class XPathStringImpl extends XPathElementImpl implements XPathString {
   }
 
   @Override
-  public @NotNull XPathType getType() {
+  @NotNull
+  public XPathType getType() {
     return XPathType.STRING;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.Executor;
@@ -15,6 +15,7 @@ import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.ide.actions.runAnything.ui.RunAnythingScrollingUtil;
+import com.intellij.ide.actions.searcheverywhere.GroupTitleRenderer;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
@@ -60,7 +61,6 @@ import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -81,7 +81,7 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public final class RunAnythingPopupUI extends BigPopupUI {
   public static final int SEARCH_FIELD_COLUMNS = 25;
-  public static final Icon UNKNOWN_CONFIGURATION_ICON = AllIcons.Actions.RunAnything;
+  public static final Icon UNKNOWN_CONFIGURATION_ICON = AllIcons.Actions.Run_anything;
   static final String RUN_ANYTHING = "RunAnything";
   public static final KeyStroke DOWN_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0);
   public static final KeyStroke UP_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0);
@@ -89,7 +89,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
   private static final String HELP_PLACEHOLDER = "?";
   private boolean myIsUsedTrigger;
   private volatile ActionCallback myCurrentWorker;
-  private final @Nullable VirtualFile myVirtualFile;
+  @Nullable private final VirtualFile myVirtualFile;
   private JLabel myTextFieldTitle;
   private boolean myIsItemSelected;
   private volatile boolean myShiftIsPressed;
@@ -104,7 +104,8 @@ public final class RunAnythingPopupUI extends BigPopupUI {
   private final ExecutorService myExecutorService =
     SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Run Anything list building");
 
-  public @Nullable String getUserInputText() {
+  @Nullable
+  public String getUserInputText() {
     return myResultsList.getSelectedIndex() >= 0 ? myLastInputText : mySearchField.getText();
   }
 
@@ -217,12 +218,13 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     triggerUsed();
   }
 
-  public static @NotNull ActionCallback insert(@NotNull RunAnythingGroup group,
-                                               @NotNull RunAnythingSearchListModel listModel,
-                                               @NotNull DataContext dataContext,
-                                               @NotNull String pattern,
-                                               int index,
-                                               int itemsNumberToInsert) {
+  @NotNull
+  public static ActionCallback insert(@NotNull RunAnythingGroup group,
+                                      @NotNull RunAnythingSearchListModel listModel,
+                                      @NotNull DataContext dataContext,
+                                      @NotNull String pattern,
+                                      int index,
+                                      int itemsNumberToInsert) {
     ActionCallback callback = new ActionCallback();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       List<RunAnythingItem> items = ContainerUtil.filterIsInstance(listModel.getItems(), RunAnythingItem.class);
@@ -260,11 +262,13 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     return callback;
   }
 
-  private @NotNull Project getProject() {
+  @NotNull
+  private Project getProject() {
     return myProject;
   }
 
-  private @Nullable Module getModule() {
+  @Nullable
+  private Module getModule() {
     if (myModule != null) {
       return myModule;
     }
@@ -288,7 +292,8 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     return null;
   }
 
-  private @NotNull VirtualFile getWorkDirectory() {
+  @NotNull
+  private VirtualFile getWorkDirectory() {
     if (myAltIsPressed) {
       if (myVirtualFile != null) {
         VirtualFile file = myVirtualFile.isDirectory() ? myVirtualFile : myVirtualFile.getParent();
@@ -309,7 +314,8 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     return getBaseDirectory(getModule());
   }
 
-  private @NotNull VirtualFile getBaseDirectory(@Nullable Module module) {
+  @NotNull
+  private VirtualFile getBaseDirectory(@Nullable Module module) {
     VirtualFile projectBaseDir = getProject().getBaseDir();
     if (module == null) {
       return projectBaseDir;
@@ -323,7 +329,8 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     return firstContentRoot;
   }
 
-  public @Nullable VirtualFile getFirstContentRoot(final @NotNull Module module) {
+  @Nullable
+  public VirtualFile getFirstContentRoot(@NotNull final Module module) {
     if (module.isDisposed()) return null;
     return ArrayUtil.getFirstElement(ModuleRootManager.getInstance(module).getContentRoots());
   }
@@ -333,7 +340,8 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     return model != null && model.isMoreIndex(index);
   }
 
-  public static @Nullable RunAnythingSearchListModel getSearchingModel(@NotNull JBList list) {
+  @Nullable
+  public static RunAnythingSearchListModel getSearchingModel(@NotNull JBList list) {
     ListModel model = list.getModel();
     return model instanceof RunAnythingSearchListModel ? (RunAnythingSearchListModel)model : null;
   }
@@ -447,7 +455,8 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     myTextFieldTitle.setForeground(foregroundColor);
   }
 
-  private @NotNull DataContext getDataContext() {
+  @NotNull
+  private DataContext getDataContext() {
     return SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, getProject())
       .add(CommonDataKeys.VIRTUAL_FILE, getWorkDirectory())
@@ -510,7 +519,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     StatusText statusText = textEditor.getEmptyText();
     statusText.setShowAboveCenter(false);
     statusText.setText(leftText, SimpleTextAttributes.GRAY_ATTRIBUTES);
-    statusText.appendText(1, 0, null, rightText, SimpleTextAttributes.GRAY_ATTRIBUTES, null);
+    statusText.appendText(false, 0, rightText, SimpleTextAttributes.GRAY_ATTRIBUTES, null);
     statusText.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
   }
 
@@ -571,7 +580,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
   }
 
 
-  public void setAdText(final @NlsContexts.PopupAdvertisement @NotNull String s) {
+  public void setAdText(@NlsContexts.PopupAdvertisement @NotNull final String s) {
     myHintLabel.clearAdvertisements();
     myHintLabel.addAdvertisement(s, null);
   }
@@ -580,15 +589,17 @@ public final class RunAnythingPopupUI extends BigPopupUI {
    * @deprecated this is an internal method, must not be used outside the class
    */
   @SuppressWarnings("DataFlowIssue")
-  @Deprecated(forRemoval = true)
-  public static @NotNull Executor getExecutor() {
+  @Deprecated
+  @NotNull
+  public static Executor getExecutor() {
     final Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
     final Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
 
     return !SHIFT_IS_PRESSED.get() ? runExecutor : debugExecutor;
   }
   
-  private @NotNull Executor getCurrentExecutor() {
+  @NotNull
+  private Executor getCurrentExecutor() {
     Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
     return myShiftIsPressed && debugExecutor != null ? debugExecutor : DefaultRunExecutor.getRunExecutorInstance();
   }
@@ -652,7 +663,8 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     }
   }
 
-  public static @NotNull String trimHelpPattern(@NotNull String pattern) {
+  @NotNull
+  public static String trimHelpPattern(@NotNull String pattern) {
     return isHelpMode(pattern) ? pattern.substring(HELP_PLACEHOLDER.length()) : pattern;
   }
 
@@ -686,8 +698,9 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     initMySearchField();
   }
 
+  @NotNull
   @Override
-  public @NotNull JBList<Object> createList() {
+  public JBList<Object> createList() {
     RunAnythingSearchListModel listModel = new RunAnythingMainListModel();
     addListDataListener(listModel);
 
@@ -740,13 +753,15 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     });
   }
 
+  @NotNull
   @Override
-  protected @NotNull ListCellRenderer<Object> createCellRenderer() {
+  protected ListCellRenderer<Object> createCellRenderer() {
     return new MyListRenderer();
   }
 
+  @NotNull
   @Override
-  protected @NotNull JComponent createHeader() {
+  protected JComponent createHeader() {
     createTextFieldTitle();
 
     JPanel result = new JPanel();
@@ -761,8 +776,9 @@ public final class RunAnythingPopupUI extends BigPopupUI {
         myAvailableExecutingContexts.addAll(executionContexts);
       }
 
+      @NotNull
       @Override
-      public @NotNull List<RunAnythingContext> getAvailableContexts() {
+      public List<RunAnythingContext> getAvailableContexts() {
         return myAvailableExecutingContexts;
       }
 
@@ -771,8 +787,9 @@ public final class RunAnythingPopupUI extends BigPopupUI {
         mySelectedExecutingContext = context;
       }
 
+      @Nullable
       @Override
-      public @Nullable RunAnythingContext getSelectedContext() {
+      public RunAnythingContext getSelectedContext() {
         return mySelectedExecutingContext;
       }
     };
@@ -808,12 +825,15 @@ public final class RunAnythingPopupUI extends BigPopupUI {
   }
 
   @Override
-  protected @NotNull @Nls String getAccessibleName() {
+  @NotNull
+  @Nls
+  protected String getAccessibleName() {
     return IdeBundle.message("run.anything.accessible.name");
   }
 
+  @NotNull
   @Override
-  protected @NotNull ExtendableTextField createSearchField() {
+  protected ExtendableTextField createSearchField() {
     ExtendableTextField searchField = super.createSearchField();
 
     Consumer<? super ExtendableTextComponent.Extension> extensionConsumer = (extension) -> searchField.addExtension(extension);
@@ -826,14 +846,15 @@ public final class RunAnythingPopupUI extends BigPopupUI {
   public void dispose() {}
 
   private final class RunAnythingShowFilterAction extends ShowFilterAction {
-    private final @NotNull Collection<RunAnythingGroup> myTemplateGroups;
+    @NotNull private final Collection<RunAnythingGroup> myTemplateGroups;
 
     private RunAnythingShowFilterAction() {
       myTemplateGroups = RunAnythingCompletionGroup.createCompletionGroups();
     }
 
+    @NotNull
     @Override
-    public @NotNull String getDimensionServiceKey() {
+    public String getDimensionServiceKey() {
       return "RunAnythingAction_Filter_Popup";
     }
 
@@ -874,40 +895,9 @@ public final class RunAnythingPopupUI extends BigPopupUI {
       return res;
     }
 
-    private @Unmodifiable @NotNull List<RunAnythingGroup> getVisibleGroups() {
+    @NotNull
+    private List<RunAnythingGroup> getVisibleGroups() {
       return ContainerUtil.filter(myTemplateGroups, group -> RunAnythingCache.getInstance(myProject).isGroupVisible(group));
-    }
-  }
-
-  private static class GroupTitleRenderer extends CellRendererPanel {
-
-    final SimpleColoredComponent titleLabel = new SimpleColoredComponent();
-
-    GroupTitleRenderer() {
-      setLayout(new BorderLayout());
-      SeparatorComponent separatorComponent = new SeparatorComponent(
-        titleLabel.getPreferredSize().height / 2, JBUI.CurrentTheme.BigPopup.listSeparatorColor(), null);
-
-      JPanel topPanel = JBUI.Panels.simplePanel(5, 0)
-        .addToCenter(separatorComponent)
-        .addToLeft(titleLabel)
-        .withBorder(JBUI.Borders.empty(1, 7))
-        .withBackground(ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.BACKGROUND : UIUtil.getListBackground());
-      add(topPanel, BorderLayout.NORTH);
-    }
-
-    public GroupTitleRenderer withDisplayedData(@Nls String title, Component itemContent) {
-      titleLabel.clear();
-      titleLabel.append(title, new SimpleTextAttributes(
-        SimpleTextAttributes.STYLE_SMALLER, JBUI.CurrentTheme.BigPopup.listTitleLabelForeground()));
-      Component prevContent = ((BorderLayout)getLayout()).getLayoutComponent(BorderLayout.CENTER);
-      if (prevContent != null) {
-        remove(prevContent);
-      }
-      add(itemContent, BorderLayout.CENTER);
-      accessibleContext = itemContent.getAccessibleContext();
-
-      return this;
     }
   }
 }

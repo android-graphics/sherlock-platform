@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Editor;
@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,8 +36,7 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
     getTree().addInterval((T)this, offset, offset, false, false, relatesToPrecedingText, 0);
   }
 
-  @ApiStatus.Internal
-  public abstract RangeMarkerTree<T> getTree();
+  abstract RangeMarkerTree<T> getTree();
 
   @Override
   public @NotNull Editor getEditor() {

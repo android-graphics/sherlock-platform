@@ -9,7 +9,6 @@ import com.intellij.ui.TableActions
 import com.intellij.ui.plaf.beg.*
 import com.intellij.ui.scale.JBUIScale.getSystemFontData
 import com.intellij.util.ui.getFontWithFallback
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Font
 import java.awt.Insets
@@ -21,8 +20,7 @@ import javax.swing.plaf.metal.MetalLookAndFeel
 /**
  * @author Konstantin Bulenkov
  */
-@ApiStatus.Internal
-class IdeaLaf(private val customFontDefaults: Map<Any, Any?>?) : MetalLookAndFeel() {
+internal class IdeaLaf(private val customFontDefaults: Map<Any, Any?>?) : MetalLookAndFeel() {
   public override fun initComponentDefaults(defaults: UIDefaults) {
     super.initComponentDefaults(defaults)
 

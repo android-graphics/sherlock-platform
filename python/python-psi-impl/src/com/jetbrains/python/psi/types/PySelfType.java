@@ -36,7 +36,8 @@ public final class PySelfType implements PyTypeParameterType {
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return "Self";
   }
 
@@ -45,7 +46,8 @@ public final class PySelfType implements PyTypeParameterType {
     return myScopeClassType.getPyClass();
   }
 
-  public @NotNull PyClassLikeType getScopeClassType() {
+  @NotNull
+  public PyClassLikeType getScopeClassType() {
     return myScopeClassType;
   }
 
@@ -74,13 +76,5 @@ public final class PySelfType implements PyTypeParameterType {
   @Override
   public void assertValid(String message) {
 
-  }
-
-  @Override
-  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
-    if (visitor instanceof PyTypeVisitorExt<T> visitorExt) {
-      return visitorExt.visitPySelfType(this);
-    }
-    return visitor.visitPyType(this);
   }
 }

@@ -26,12 +26,14 @@ import org.jetbrains.annotations.NotNull;
 public final class SynchronizeOnLockInspection extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "SynchroniziationOnLockObject";
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     final String type = (String)infos[0];
     return InspectionGadgetsBundle.message(
       "synchronize.on.lock.problem.descriptor", type);

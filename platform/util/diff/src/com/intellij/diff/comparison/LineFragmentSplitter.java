@@ -14,15 +14,15 @@ import java.util.List;
  * Given matchings on words, split initial line block into 'logically different' line blocks
  */
 class LineFragmentSplitter {
-  private final @NotNull CharSequence myText1;
-  private final @NotNull CharSequence myText2;
+  @NotNull private final CharSequence myText1;
+  @NotNull private final CharSequence myText2;
 
-  private final @NotNull List<? extends InlineChunk> myWords1;
-  private final @NotNull List<? extends InlineChunk> myWords2;
-  private final @NotNull FairDiffIterable myIterable;
-  private final @NotNull CancellationChecker myIndicator;
+  @NotNull private final List<? extends InlineChunk> myWords1;
+  @NotNull private final List<? extends InlineChunk> myWords2;
+  @NotNull private final FairDiffIterable myIterable;
+  @NotNull private final CancellationChecker myIndicator;
 
-  private final @NotNull List<WordBlock> myResult = new ArrayList<>();
+  @NotNull private final List<WordBlock> myResult = new ArrayList<>();
 
   LineFragmentSplitter(@NotNull CharSequence text1,
                        @NotNull CharSequence text2,
@@ -45,7 +45,8 @@ class LineFragmentSplitter {
   // indexes here are a bit tricky
   // -1 - the beginning of file, words.size() - end of file, everything in between - InlineChunks (words or newlines)
 
-  public @NotNull List<WordBlock> run() {
+  @NotNull
+  public List<WordBlock> run() {
     boolean hasEqualWords = false;
     for (Range range : myIterable.iterateUnchanged()) {
       int count = range.end1 - range.start1;
@@ -92,7 +93,8 @@ class LineFragmentSplitter {
     last2 = end2;
   }
 
-  private @NotNull PendingChunk createChunk(int start1, int start2, int end1, int end2, boolean hasEqualWords) {
+  @NotNull
+  private PendingChunk createChunk(int start1, int start2, int end1, int end2, boolean hasEqualWords) {
     int startOffset1 = getOffset(myWords1, myText1, start1);
     int startOffset2 = getOffset(myWords2, myText2, start2);
     int endOffset1 = getOffset(myWords1, myText1, end1);
@@ -115,7 +117,8 @@ class LineFragmentSplitter {
     return false;
   }
 
-  private static @NotNull PendingChunk mergeChunks(@NotNull PendingChunk chunk1, @NotNull PendingChunk chunk2) {
+  @NotNull
+  private static PendingChunk mergeChunks(@NotNull PendingChunk chunk1, @NotNull PendingChunk chunk2) {
     WordBlock block1 = chunk1.block;
     WordBlock block2 = chunk2.block;
     WordBlock newBlock = new WordBlock(new Range(block1.words.start1, block2.words.end1, block1.words.start2, block2.words.end2),
@@ -164,8 +167,8 @@ class LineFragmentSplitter {
   //
 
   public static class WordBlock {
-    public final @NotNull Range words;
-    public final @NotNull Range offsets;
+    @NotNull public final Range words;
+    @NotNull public final Range offsets;
 
     public WordBlock(@NotNull Range words, @NotNull Range offsets) {
       this.words = words;
@@ -174,7 +177,7 @@ class LineFragmentSplitter {
   }
 
   private static class PendingChunk {
-    public final @NotNull WordBlock block;
+    @NotNull public final WordBlock block;
     public final boolean hasEqualWords;
     public final boolean hasWordsInside;
     public final boolean isEqualIgnoreWhitespaces;

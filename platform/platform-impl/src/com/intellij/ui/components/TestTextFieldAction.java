@@ -11,7 +11,6 @@ import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.components.panels.HorizontalLayout;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,7 +19,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
-@ApiStatus.Internal
 @SuppressWarnings("HardCodedStringLiteral")
 public final class TestTextFieldAction extends DumbAwareAction {
   private JFrame frame;

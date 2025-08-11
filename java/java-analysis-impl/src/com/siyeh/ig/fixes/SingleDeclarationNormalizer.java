@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes;
 
 import com.intellij.psi.*;
@@ -83,7 +83,8 @@ final class SingleDeclarationNormalizer {
     return true;
   }
 
-  private static @NotNull Map<Integer, Set<String>> getFieldAnnotations(@NotNull PsiElement startElement) {
+  @NotNull
+  private static Map<Integer, Set<String>> getFieldAnnotations(@NotNull PsiElement startElement) {
     Int2ObjectMap<Set<String>> result = new Int2ObjectOpenHashMap<>();
     int dimensionCounter = 0;
     PsiElement nextSibling = PsiTreeUtil.skipWhitespacesAndCommentsForward(startElement);

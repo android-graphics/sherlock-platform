@@ -8,7 +8,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -43,8 +45,8 @@ class KotlinWhenSurrounder : KotlinExpressionSurrounder() {
         }
 
         if (remainingBranches != null) {
-            val elementContext = AddRemainingWhenBranchesUtils.ElementContext(remainingBranches, enumToStarImport = null)
-            AddRemainingWhenBranchesUtils.addRemainingWhenBranches(whenExpression, elementContext)
+            val context = AddRemainingWhenBranchesUtils.Context(remainingBranches, enumToStarImport = null)
+            AddRemainingWhenBranchesUtils.addRemainingWhenBranches(whenExpression, context)
             whenExpression.entries.also {
                 //remove `b -> {}` fake branch
                 it.first().delete()

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -56,7 +56,8 @@ public class NewLibraryEditor extends LibraryEditorBase {
   }
 
   @Override
-  public @Nullable LibraryType<?> getType() {
+  @Nullable
+  public LibraryType<?> getType() {
     return myType;
   }
 
@@ -151,7 +152,7 @@ public class NewLibraryEditor extends LibraryEditorBase {
   }
 
   @Override
-  public void addJarDirectory(final @NotNull String url, boolean recursive, @NotNull OrderRootType rootType) {
+  public void addJarDirectory(@NotNull final String url, boolean recursive, @NotNull OrderRootType rootType) {
     addRoot(url, rootType);
     (recursive ? myJarDirectoryRecursiveUrls : myJarDirectoryUrls).putValue(rootType, url);
   }

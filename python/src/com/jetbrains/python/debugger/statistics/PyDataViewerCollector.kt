@@ -9,24 +9,15 @@ import com.intellij.openapi.project.Project
 
 object PyDataViewerCollector : CounterUsagesCollector() {
 
-  private val GROUP = EventLogGroup("python.dataview", 4)
+  private val GROUP = EventLogGroup("python.dataview", 3)
 
-  /* Fields */
   private val DATA_TYPE_FIELD = EventFields.Enum<DataType>("type")
   private val DIMENSIONS_FIELD = EventFields.Enum<DataDimensions>("dimensions")
   private val ROWS_COUNT_FIELD = RoundedIntEventField("rows_count")
   private val COLUMNS_COUNT_FIELD = RoundedIntEventField("columns_count")
-  private val IS_NEW_TABLE_FIELD = EventFields.Boolean("is_new_table")
 
-  /* Events */
-  private val DATA_OPENED_EVENT = GROUP.registerVarargEvent("data.opened",
-                                                            DATA_TYPE_FIELD,
-                                                            DIMENSIONS_FIELD,
-                                                            ROWS_COUNT_FIELD,
-                                                            COLUMNS_COUNT_FIELD,
-                                                            IS_NEW_TABLE_FIELD)
-  val SLICING_APPLIED_EVENT = GROUP.registerEvent("slicing.applied", IS_NEW_TABLE_FIELD)
-  val FORMATTING_APPLIED_EVENT = GROUP.registerEvent("formatting.applied", IS_NEW_TABLE_FIELD)
+  private val DATA_OPENED_EVENT = GROUP.registerVarargEvent("data.opened", DATA_TYPE_FIELD, DIMENSIONS_FIELD, ROWS_COUNT_FIELD, COLUMNS_COUNT_FIELD)
+  val SLICING_APPLIED_EVENT = GROUP.registerEvent("slicing.applied")
 
   enum class DataType(private val typeName: String?) {
     ARRAY("ndarray"),
@@ -70,27 +61,11 @@ object PyDataViewerCollector : CounterUsagesCollector() {
 
   override fun getGroup() = GROUP
 
-  fun logDataOpened(
-    project: Project?,
-    type: String?,
-    dimensions: Int?,
-    rowsCount: Int,
-    columnsCount: Int,
-    isNewTable: Boolean,
-  ) {
+  fun logDataOpened(project: Project?, type: String?, dimensions: Int?, rowsCount: Int, columnsCount: Int) {
     DATA_OPENED_EVENT.log(project,
                           DATA_TYPE_FIELD.with(DataType.getDataType(type)),
                           DIMENSIONS_FIELD.with(DataDimensions.getDataDimensions(dimensions)),
                           ROWS_COUNT_FIELD.with(rowsCount),
-                          COLUMNS_COUNT_FIELD.with(columnsCount),
-                          IS_NEW_TABLE_FIELD.with(isNewTable))
-  }
-
-  fun logDataSlicingApplied(isNewTable: Boolean) {
-    SLICING_APPLIED_EVENT.log(isNewTable)
-  }
-
-  fun logDataFormattingApplied(isNewTable: Boolean) {
-    FORMATTING_APPLIED_EVENT.log(isNewTable)
+                          COLUMNS_COUNT_FIELD.with(columnsCount))
   }
 }

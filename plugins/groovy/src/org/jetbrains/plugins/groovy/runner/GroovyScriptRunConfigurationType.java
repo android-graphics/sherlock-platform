@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -20,8 +20,9 @@ public final class GroovyScriptRunConfigurationType implements ConfigurationType
     myConfigurationFactory = new GroovyFactory(this);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDisplayName() {
+  public String getDisplayName() {
     return GroovyBundle.message("script.runner.display.name");
   }
 
@@ -36,11 +37,14 @@ public final class GroovyScriptRunConfigurationType implements ConfigurationType
   }
 
   @Override
-  public @NonNls @NotNull String getId() {
+  @NonNls
+  @NotNull
+  public String getId() {
     return "GroovyScriptRunConfiguration";
   }
 
-  public @NotNull ConfigurationFactory getConfigurationFactory() {
+  @NotNull
+  public ConfigurationFactory getConfigurationFactory() {
     return myConfigurationFactory;
   }
 
@@ -68,8 +72,9 @@ public final class GroovyScriptRunConfigurationType implements ConfigurationType
       return "Groovy";
     }
 
+    @NotNull
     @Override
-    public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new GroovyScriptRunConfiguration("Groovy Script", project, this);
     }
   }

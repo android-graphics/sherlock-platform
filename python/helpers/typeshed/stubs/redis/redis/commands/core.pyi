@@ -1,8 +1,9 @@
 import builtins
-from _typeshed import Incomplete, SupportsItems
+from _typeshed import Incomplete
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterable, Iterator, Mapping, Sequence
 from datetime import datetime, timedelta
-from typing import Any, Generic, Literal, TypeVar, overload
+from typing import Any, Generic, TypeVar, overload
+from typing_extensions import Literal
 
 from ..asyncio.client import Redis as AsyncRedis
 from ..client import _CommandOptions, _Key, _Value
@@ -862,8 +863,7 @@ class StreamCommands:
     def xadd(
         self,
         name: KeyT,
-        # Only accepts dict objects, but for variance reasons we use a looser annotation
-        fields: SupportsItems[bytes | memoryview | str | float, Any],
+        fields: Mapping[bytes | memoryview | str | float, bytes | memoryview | str | float],
         id: str | int | bytes | memoryview = "*",
         maxlen=None,
         approximate: bool = True,
@@ -929,8 +929,7 @@ class AsyncStreamCommands:
     async def xadd(
         self,
         name: KeyT,
-        # Only accepts dict objects, but for variance reasons we use a looser annotation
-        fields: SupportsItems[bytes | memoryview | str | float, Any],
+        fields: Mapping[bytes | memoryview | str | float, bytes | memoryview | str | float],
         id: str | int | bytes | memoryview = "*",
         maxlen=None,
         approximate: bool = True,
@@ -1491,7 +1490,7 @@ class AsyncScriptCommands(Generic[_StrType]):
     async def script_flush(self, sync_type: Incomplete | None = None): ...
     async def script_kill(self): ...
     async def script_load(self, script): ...
-    def register_script(self, script: ScriptTextT) -> AsyncScript: ...
+    def register_script(self, script: ScriptTextT) -> AsyncScript: ...  # type: ignore[override]
 
 class GeoCommands:
     def geoadd(self, name, values, nx: bool = False, xx: bool = False, ch: bool = False): ...
@@ -1706,6 +1705,7 @@ class DataAccessCommands(
     SetCommands[_StrType],
     StreamCommands,
     SortedSetCommands[_StrType],
+    Generic[_StrType],
 ): ...
 class AsyncDataAccessCommands(
     AsyncBasicKeyCommands[_StrType],
@@ -1717,6 +1717,7 @@ class AsyncDataAccessCommands(
     AsyncSetCommands[_StrType],
     AsyncStreamCommands,
     AsyncSortedSetCommands[_StrType],
+    Generic[_StrType],
 ): ...
 class CoreCommands(
     ACLCommands[_StrType],
@@ -1726,6 +1727,7 @@ class CoreCommands(
     ModuleCommands,
     PubSubCommands,
     ScriptCommands[_StrType],
+    Generic[_StrType],
 ): ...
 class AsyncCoreCommands(
     AsyncACLCommands[_StrType],
@@ -1736,4 +1738,5 @@ class AsyncCoreCommands(
     AsyncPubSubCommands,
     AsyncScriptCommands[_StrType],
     AsyncFunctionCommands,
+    Generic[_StrType],
 ): ...

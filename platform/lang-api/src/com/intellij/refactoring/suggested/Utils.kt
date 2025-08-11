@@ -9,7 +9,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.annotations.ApiStatus
 
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Deprecated("Use TextRange(offset, offset + DocumentEvent.oldLength) directly")
@@ -17,8 +16,6 @@ val DocumentEvent.oldRange: TextRange
   get() = TextRange(offset, offset + oldLength)
 
 @Suppress("DeprecatedCallableAddReplaceWith")
-@get:ApiStatus.ScheduledForRemoval
-@get:Deprecated("Use TextRange(offset, offset + DocumentEvent.newLength) directly")
 @Deprecated("Use TextRange(offset, offset + DocumentEvent.newLength) directly")
 val DocumentEvent.newRange: TextRange
   get() = TextRange(offset, offset + newLength)

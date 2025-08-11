@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -152,7 +152,8 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
       myIndents.add(new StringContentIndent(model.myBaseIndent, contentRange.getStartOffset(), contentRange.getEndOffset()));
     }
 
-    private @Nullable TextRange getContentRange(@NotNull TextRange blockRange) {
+    @Nullable
+    private TextRange getContentRange(@NotNull TextRange blockRange) {
       int nStartLine = myDocument.getLineNumber(blockRange.getStartOffset()) + 1;
       int nEndLine = myDocument.getLineNumber(blockRange.getEndOffset());
       TextRange lastLineRange = new TextRange(myDocument.getLineStartOffset(nEndLine), myDocument.getLineEndOffset(nEndLine));
@@ -178,7 +179,8 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
         myRange = range;
       }
 
-      private static @Nullable TextBlockModel create(@Nullable PsiLiteralExpression expression) {
+      @Nullable
+      private static TextBlockModel create(@Nullable PsiLiteralExpression expression) {
         if (expression == null || !expression.isTextBlock()) return null;
         int baseIndent = getIndent(expression);
         if (baseIndent == -1) return null;
@@ -200,7 +202,8 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
         return indent;
       }
 
-      private static @Nullable IndentType findIndentType(String @NotNull [] lines, int indent) {
+      @Nullable
+      private static IndentType findIndentType(String @NotNull [] lines, int indent) {
         IndentType indentType = null;
         for (int i = 0; i < lines.length; i++) {
           String line = lines[i];
@@ -228,8 +231,9 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
         SPACES,
         TABS;
 
+        @Nullable
         @Contract(pure = true)
-        private static @Nullable IndentType of(char c) {
+        private static IndentType of(char c) {
           if (c == ' ') return SPACES;
           if (c == '\t') return TABS;
           return null;

@@ -8,3 +8,4 @@ enum class EnumClass {
     }
 }
 
+// IGNORE_K2

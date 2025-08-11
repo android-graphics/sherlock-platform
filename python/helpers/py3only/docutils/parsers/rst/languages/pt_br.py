@@ -1,11 +1,11 @@
-# $Id: pt_br.py 9452 2023-09-27 00:11:54Z milde $
+# $Id: pt_br.py 7119 2011-09-02 13:00:23Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
-# Two files must be translated for each language: one in docutils/languages,
-# the other in docutils/parsers/rst/languages.
+# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
+# translated for each language: one in docutils/languages, the other in
+# docutils/parsers/rst/languages.
 
 """
 Brazilian Portuguese-language mappings for language-dependent features of
@@ -17,94 +17,92 @@ __docformat__ = 'reStructuredText'
 
 directives = {
       # language-dependent: fixed
-      'atenção': 'attention',
+      'aten\u00E7\u00E3o': 'attention',
       'cuidado': 'caution',
       'code (translation required)': 'code',
       'perigo': 'danger',
       'erro': 'error',
-      'sugestão': 'hint',
+      'sugest\u00E3o': 'hint',
       'importante': 'important',
       'nota': 'note',
       'dica': 'tip',
       'aviso': 'warning',
-      'advertência': 'admonition',
-      'exortação': 'admonition',  # sic! advice/advisory/remark, not reprimand
+      'exorta\u00E7\u00E3o': 'admonition',
       'barra-lateral': 'sidebar',
-      'tópico': 'topic',
+      't\u00F3pico': 'topic',
       'bloco-de-linhas': 'line-block',
       'literal-interpretado': 'parsed-literal',
       'rubrica': 'rubric',
-      'epígrafo': 'epigraph',
+      'ep\u00EDgrafo': 'epigraph',
       'destaques': 'highlights',
-      'citação-destacada': 'pull-quote',
+      'cita\u00E7\u00E3o-destacada': 'pull-quote',
       'compound (translation required)': 'compound',
       'container (translation required)': 'container',
-      # 'perguntas': 'questions',
-      # 'qa': 'questions',
-      # 'faq': 'questions',
+      #'perguntas': 'questions',
+      #'qa': 'questions',
+      #'faq': 'questions',
       'table (translation required)': 'table',
       'csv-table (translation required)': 'csv-table',
       'list-table (translation required)': 'list-table',
       'meta': 'meta',
       'math (translation required)': 'math',
-      # 'imagemap': 'imagemap',
+      #'imagemap': 'imagemap',
       'imagem': 'image',
       'figura': 'figure',
-      'inclusão': 'include',
+      'inclus\u00E3o': 'include',
       'cru': 'raw',
-      'substituição': 'replace',
+      'substitui\u00E7\u00E3o': 'replace',
       'unicode': 'unicode',
       'data': 'date',
       'classe': 'class',
       'role (translation required)': 'role',
       'default-role (translation required)': 'default-role',
       'title (translation required)': 'title',
-      'índice': 'contents',
+      '\u00EDndice': 'contents',
       'numsec': 'sectnum',
-      'numeração-de-seções': 'sectnum',
+      'numera\u00E7\u00E3o-de-se\u00E7\u00F5es': 'sectnum',
       'header (translation required)': 'header',
       'footer (translation required)': 'footer',
-      # 'notas-de-rorapé': 'footnotes',
-      # 'citações': 'citations',
-      'links-no-rodapé': 'target-notes',
+      #u'notas-de-rorap\u00E9': 'footnotes',
+      #u'cita\u00E7\u00F5es': 'citations',
+      'links-no-rodap\u00E9': 'target-notes',
       'restructuredtext-test-directive': 'restructuredtext-test-directive'}
 """Brazilian Portuguese name to registered (in directives/__init__.py)
 directive name mapping."""
 
 roles = {
     # language-dependent: fixed
-    'abbreviação': 'abbreviation',
+    'abbrevia\u00E7\u00E3o': 'abbreviation',
     'ab': 'abbreviation',
-    'acrônimo': 'acronym',
+    'acr\u00F4nimo': 'acronym',
     'ac': 'acronym',
     'code (translation required)': 'code',
-    'índice-remissivo': 'index',
+    '\u00EDndice-remissivo': 'index',
     'i': 'index',
     'subscrito': 'subscript',
     'sub': 'subscript',
     'sobrescrito': 'superscript',
     'sob': 'superscript',
-    'referência-a-título': 'title-reference',
-    'título': 'title-reference',
+    'refer\u00EAncia-a-t\u00EDtulo': 'title-reference',
+    't\u00EDtulo': 'title-reference',
     't': 'title-reference',
-    'referência-a-pep': 'pep-reference',
+    'refer\u00EAncia-a-pep': 'pep-reference',
     'pep': 'pep-reference',
-    'referência-a-rfc': 'rfc-reference',
+    'refer\u00EAncia-a-rfc': 'rfc-reference',
     'rfc': 'rfc-reference',
-    'ênfase': 'emphasis',
+    '\u00EAnfase': 'emphasis',
     'forte': 'strong',
     'literal': 'literal',
-    'math (translation required)': 'math',  # translation required?
-    'referência-por-nome': 'named-reference',
-    'referência-anônima': 'anonymous-reference',
-    'referência-a-nota-de-rodapé': 'footnote-reference',
-    'referência-a-citação': 'citation-reference',
-    'referência-a-substituição': 'substitution-reference',
+    'math (translation required)': 'math',               # translation required?
+    'refer\u00EAncia-por-nome': 'named-reference',
+    'refer\u00EAncia-an\u00F4nima': 'anonymous-reference',
+    'refer\u00EAncia-a-nota-de-rodap\u00E9': 'footnote-reference',
+    'refer\u00EAncia-a-cita\u00E7\u00E3o': 'citation-reference',
+    'refer\u00EAncia-a-substitui\u00E7\u00E3o': 'substitution-reference',
     'alvo': 'target',
-    'referência-a-uri': 'uri-reference',
+    'refer\u00EAncia-a-uri': 'uri-reference',
     'uri': 'uri-reference',
     'url': 'uri-reference',
-    'cru': 'raw',
-    }
+    'cru': 'raw',}
 """Mapping of Brazilian Portuguese role names to canonical role names
 for interpreted text."""

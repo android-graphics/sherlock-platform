@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Visible commit graph row data
  */
 public interface RowInfo<Id> {
 

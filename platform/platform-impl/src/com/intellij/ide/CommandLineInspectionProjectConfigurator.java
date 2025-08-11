@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.ide.impl.PatchProjectUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -9,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.function.Predicate;
@@ -16,13 +18,7 @@ import java.util.function.Predicate;
 /**
  * Extension point that helps prepare project for opening in headless or automated environments.
  * Implementation must be stateless.
- * Consider using {@link com.intellij.platform.backend.observation.ActivityTracker}
- *
- * This interface is obsolete and is not going to be maintained.
- * Its primary use is in the script `inspect.sh`, where it is used to prepare project for inspections.
- * We provide an additional method {@link CommandLineInspectionProjectConfigurator#shouldBeInvokedAlongsideActivityTracking()}
- * that enables a configurator to run before the tracker-based configuration process. If you need time to migrate from configurators,
- * you may temporarily enable your configurator.
+ * Consider using com.intellij.platform.backend.observation.ActivityTracker
  */
 @ApiStatus.Obsolete(since = "2024.1")
 public interface CommandLineInspectionProjectConfigurator {
@@ -73,15 +69,6 @@ public interface CommandLineInspectionProjectConfigurator {
   @NotNull
   @Nls(capitalization = Nls.Capitalization.Sentence)
   String getDescription();
-
-  /**
-   * Makes this configurator available for running with activity trackers.
-   * It is preferable that this method returns {@code false}, which would mean that the logic here would not be invoked
-   * during configuration process.
-   */
-  default boolean shouldBeInvokedAlongsideActivityTracking() {
-    return false;
-  }
 
   /**
    * @return true if any additional configuration is required to inspect the project at the given path.

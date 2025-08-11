@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
@@ -18,7 +18,6 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.util.SequentialTask;
 import one.util.streamex.EntryStream;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,9 +31,9 @@ import static com.intellij.modcommand.ModCommandExecutor.BatchExecutionResult;
 import static com.intellij.modcommand.ModCommandExecutor.Result;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
-@ApiStatus.Internal
 public abstract class PerformFixesModalTask implements SequentialTask {
-  protected final @NotNull Project myProject;
+  @NotNull
+  protected final Project myProject;
   private final List<CommonProblemDescriptor[]> myDescriptorPacks;
   private final PsiDocumentManager myDocumentManager;
   private final PostprocessReformattingAspect myReformattingAspect;

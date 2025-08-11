@@ -1,12 +1,14 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerTestCase;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
@@ -23,7 +25,7 @@ import javax.swing.tree.TreeNode;
 import java.util.*;
 
 public abstract class DescriptorTestCase extends DebuggerTestCase {
-  private final Map<Object, NodeDescriptorText> myDescriptorLog = new LinkedHashMap<>();
+  private final Map<NodeDescriptorImpl, NodeDescriptorText> myDescriptorLog = new LinkedHashMap<>();
 
   public DescriptorTestCase() {
     super();
@@ -67,11 +69,12 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
 
   @Override
   protected void resume(final SuspendContextImpl suspendContext) {
+    final DebugProcessImpl localProcess = suspendContext.getDebugProcess();
     invokeRatherLater(new SuspendContextCommandImpl(suspendContext) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         flushDescriptors();
-        DescriptorTestCase.super.resume(suspendContext);
+        localProcess.getManagerThread().schedule(localProcess.createResumeCommand(suspendContext, Priority.LOW));
       }
     });
   }
@@ -96,18 +99,16 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
     }
   }
 
-  protected void logDescriptor(Object descriptor, String text) {
+  protected void logDescriptor(NodeDescriptorImpl descriptor, String text) {
     myDescriptorLog.computeIfAbsent(descriptor, k -> new NodeDescriptorText()).appendText(text);
   }
 
-  protected void logDescriptorLabel(Object descriptor, String label) {
+  protected void logDescriptorLabel(NodeDescriptorImpl descriptor, String label) {
     myDescriptorLog.computeIfAbsent(descriptor, k -> new NodeDescriptorText()).myLabel = label;
   }
 
   protected void flushDescriptors() {
-    myDescriptorLog.entrySet().stream()
-      .sorted(Map.Entry.comparingByKey(Comparator.comparing(Object::toString)))
-      .forEach(entry -> entry.getValue().print());
+    myDescriptorLog.forEach((descriptor, text) -> text.print());
     myDescriptorLog.clear();
   }
 

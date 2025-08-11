@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.psi.PsiElement;
@@ -24,7 +24,8 @@ public class MatchContext {
   private MatchResultImpl result;
   private CompiledPattern pattern;
   private MatchOptions options;
-  private final @NotNull GlobalMatchingVisitor matcher;
+  @NotNull
+  private final GlobalMatchingVisitor matcher;
   private boolean shouldRecursivelyMatch = true;
 
   private final Stack<List<PsiElement>> mySavedMatchedNodes = new Stack<>();
@@ -87,7 +88,8 @@ public class MatchContext {
     }
   }
 
-  public @NotNull MatchResultImpl getResult() {
+  @NotNull
+  public MatchResultImpl getResult() {
     if (result==null) result = new MatchResultImpl();
     return result;
   }

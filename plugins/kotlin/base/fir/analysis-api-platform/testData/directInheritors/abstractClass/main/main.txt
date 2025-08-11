@@ -1,2 +1,0 @@
-test/KotlinInheritor
-test/KotlinInheritor.NestedKotlinInheritor

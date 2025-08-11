@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.psi.PsiMethod;
@@ -23,13 +23,15 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
 
 public final class GrEqualsBetweenInconvertibleTypesInspection extends BaseInspection {
 
+  @NotNull
   @Override
-  protected @NotNull BaseInspectionVisitor buildVisitor() {
+  protected BaseInspectionVisitor buildVisitor() {
     return new MyVisitor();
   }
 
+  @NotNull
   @Override
-  protected @NotNull String buildErrorString(Object... args) {
+  protected String buildErrorString(Object... args) {
     return GroovyBundle.message("equals.between.inconvertible.types.tooltip", args[0], args[1], args[2]);
   }
 

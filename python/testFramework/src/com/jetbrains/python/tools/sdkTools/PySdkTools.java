@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.tools.sdkTools;
 
 import com.intellij.execution.ExecutionException;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,21 +48,24 @@ public final class PySdkTools {
    * @param sdkCreationType SDK creation strategy (see {@link SdkCreationType} doc)
    * @return sdk
    */
-  public static @NotNull Sdk createTempSdk(final @NotNull VirtualFile sdkHome,
-                                  final @NotNull SdkCreationType sdkCreationType,
-                                  final @Nullable Module module,
+  @NotNull
+  public static Sdk createTempSdk(@NotNull final VirtualFile sdkHome,
+                                  @NotNull final SdkCreationType sdkCreationType,
+                                  @Nullable final Module module,
                                   @Nullable Disposable parentDisposable
   )
     throws InvalidSdkException {
     final Ref<Sdk> ref = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       // sdkHome guarantees SDK name uniqueness. SdkUtil can't do that since no current SDK are provided.
-      final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), null, sdkHome.getPath());
+      final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), true, null, sdkHome.getPath());
       Assert.assertNotNull("Failed to create SDK on " + sdkHome, sdk);
 
+      // Env might be conda, so we look for conda binary and configure it as conda
+      // Consider migrating to `conda` tag
+      PyCondaSdkFixKt.fixPythonCondaSdk(sdk, PySdkExtKt.getOrCreateAdditionalData(sdk));
       ref.set(sdk);
     });
-
     final Sdk sdk = ref.get();
     if (sdk != null) {
       ApplicationManager.getApplication().invokeAndWait(() -> SdkConfigurationUtil.addSdk(sdk));
@@ -89,9 +93,9 @@ public final class PySdkTools {
    * @param module       module to associate with (if provided)
    * @throws InvalidSdkException bas sdk
    */
-  public static void generateTempSkeletonsOrPackages(final @NotNull Sdk sdk,
+  public static void generateTempSkeletonsOrPackages(@NotNull final Sdk sdk,
                                                      final boolean addSkeletons,
-                                                     final @Nullable Module module)
+                                                     @Nullable final Module module)
     throws InvalidSdkException, ExecutionException {
     Project project = null;
 

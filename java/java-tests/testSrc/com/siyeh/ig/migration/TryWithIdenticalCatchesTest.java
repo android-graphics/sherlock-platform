@@ -3,6 +3,8 @@ package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.siyeh.InspectionGadgetsBundle;

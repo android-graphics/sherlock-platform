@@ -20,7 +20,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -28,14 +27,14 @@ import java.util.function.Predicate;
 
 public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor {
 
-  private final @Unmodifiable @NotNull Collection<? extends PsiVariable> variables;
+  @NotNull private final Collection<? extends PsiVariable> variables;
   private final boolean recurseIntoClasses;
   private final boolean checkUnaryExpressions;
   private final Predicate<? super PsiAssignmentExpression> mySkipFilter;
   private boolean assigned = false;
   private PsiElement excludedElement = null;
 
-  public VariableAssignedVisitor(@NotNull @Unmodifiable Collection<? extends PsiVariable> variables, boolean recurseIntoClasses) {
+  public VariableAssignedVisitor(@NotNull Collection<? extends PsiVariable> variables, boolean recurseIntoClasses) {
     this.variables = variables;
     checkUnaryExpressions = true;
     this.recurseIntoClasses = recurseIntoClasses;

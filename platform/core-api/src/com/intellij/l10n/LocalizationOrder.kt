@@ -2,6 +2,7 @@
 package com.intellij.l10n
 
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 @ApiStatus.Internal
 enum class LocalizationOrder {
@@ -13,7 +14,7 @@ enum class LocalizationOrder {
   DEFAULT_PLATFORM; //name.properties
 
   companion object {
-    fun getLocalizationOrder(orderedPaths: List<String>, bundlePath: String): LocalizationOrder? {
+    fun getLocalizationOrder(orderedPaths: List<Path?>, bundlePath: Path): LocalizationOrder? {
       return when (orderedPaths.size) {
         1 ->  DEFAULT_PLATFORM
         3 -> {

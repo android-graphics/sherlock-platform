@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.util;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -17,13 +17,14 @@ public class PsiTypeCanonicalLookupElement extends LookupElement {
   private final PsiType myType;
   private final String myPresentableText;
 
-  public PsiTypeCanonicalLookupElement(final @NotNull PsiType type) {
+  public PsiTypeCanonicalLookupElement(@NotNull final PsiType type) {
     myType = type;
     myPresentableText = myType.getPresentableText();
   }
 
+  @NotNull
   @Override
-  public @NotNull Object getObject() {
+  public Object getObject() {
     final PsiClass psiClass = getPsiClass();
     if (psiClass != null) {
       return psiClass;
@@ -31,7 +32,8 @@ public class PsiTypeCanonicalLookupElement extends LookupElement {
     return super.getObject();
   }
 
-  public @Nullable PsiClass getPsiClass() {
+  @Nullable
+  public PsiClass getPsiClass() {
     return PsiUtil.resolveClassInType(myType);
   }
 
@@ -45,7 +47,8 @@ public class PsiTypeCanonicalLookupElement extends LookupElement {
   }
 
   @Override
-  public @NotNull String getLookupString() {
+  @NotNull
+  public String getLookupString() {
     return myPresentableText;
   }
 

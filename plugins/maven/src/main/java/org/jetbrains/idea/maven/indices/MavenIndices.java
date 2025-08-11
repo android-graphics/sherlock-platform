@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.Disposable;
@@ -17,9 +31,6 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
@@ -66,31 +77,22 @@ public class MavenIndices implements Disposable {
     return oldIndices;
   }
 
-  private static @NotNull List<MavenIndexUtils.IndexPropertyHolder> readCurrentIndexFileProperty(@NotNull Path indicesDir) {
-    Path[] indices;
-    try {
-      indices = Files.list(indicesDir).toArray(Path[]::new);
-    }
-    catch (IOException e) {
-      return Collections.emptyList();
-    }
+  @NotNull
+  private static List<MavenIndexUtils.IndexPropertyHolder> readCurrentIndexFileProperty(@NotNull File indicesDir) {
+    File[] indices = indicesDir.listFiles();
+    if (indices == null) return Collections.emptyList();
     Arrays.sort(indices);
 
     ArrayList<MavenIndexUtils.IndexPropertyHolder> result = new ArrayList<>();
-    for (Path each : indices) {
-      if (!Files.isDirectory(each)) continue;
+    for (File each : indices) {
+      if (!each.isDirectory()) continue;
 
       try {
         MavenIndexUtils.IndexPropertyHolder propertyHolder = MavenIndexUtils.readIndexProperty(each);
         result.add(propertyHolder);
       }
       catch (Exception e) {
-        try {
-          Files.delete(each);
-        }
-        catch (IOException ex) {
-          MavenLog.LOG.warn(ex);
-        }
+        FileUtil.delete(each);
         MavenLog.LOG.warn(e);
       }
     }
@@ -101,31 +103,27 @@ public class MavenIndices implements Disposable {
     return myIndexHolder.getIndices();
   }
 
-  public @NotNull MavenIndexHolder getIndexHolder() {
+  @NotNull
+  public MavenIndexHolder getIndexHolder() {
     if (isDisposed) {
       throw new AlreadyDisposedException("Index was already disposed");
     }
     return myIndexHolder;
   }
 
-  private static @NotNull Path createNewIndexDir(Path parent) {
+  @NotNull
+  private static File createNewIndexDir(File parent) {
     return createNewDir(parent, "Index", 1000);
   }
 
-  static @NotNull Path createNewDir(Path parent, String prefix, int max) {
+  @NotNull
+  static File createNewDir(File parent, String prefix, int max) {
     synchronized (ourDirectoryLock) {
       for (int i = 0; i < max; i++) {
         String name = prefix + i;
-        Path f = parent.resolve(name);
-        if (!Files.exists(f)) {
-          boolean createSuccessFull;
-          try {
-            Files.createDirectories(f);
-            createSuccessFull = true;
-          }
-          catch (IOException e) {
-            createSuccessFull = false;
-          }
+        File f = new File(parent, name);
+        if (!f.exists()) {
+          boolean createSuccessFull = f.mkdirs();
           if (createSuccessFull) {
             return f;
           }
@@ -159,9 +157,10 @@ public class MavenIndices implements Disposable {
   }
 
   @VisibleForTesting
-  static @NotNull RepositoryDiff<MavenIndex> getLocalDiff(@NotNull MavenRepositoryInfo localRepo,
-                                                          @NotNull RepositoryDiffContext context,
-                                                          @Nullable MavenIndex currentLocalIndex) {
+  @NotNull
+  static RepositoryDiff<MavenIndex> getLocalDiff(@NotNull MavenRepositoryInfo localRepo,
+                                                 @NotNull RepositoryDiffContext context,
+                                                 @Nullable MavenIndex currentLocalIndex) {
     if (currentLocalIndex != null && FileUtil.pathsEqual(localRepo.getUrl(), currentLocalIndex.getRepository().getUrl())) {
       return new RepositoryDiff<>(currentLocalIndex, null);
     }
@@ -171,7 +170,8 @@ public class MavenIndices implements Disposable {
   }
 
   @VisibleForTesting
-  static @NotNull RepositoryDiff<List<MavenIndex>> getRemoteDiff(
+  @NotNull
+  static RepositoryDiff<List<MavenIndex>> getRemoteDiff(
     @NotNull Map<String, Set<String>> remoteRepositoryIdsByUrl,
     @NotNull List<MavenIndex> currentRemoteIndex,
     @NotNull RepositoryDiffContext context) {
@@ -205,7 +205,8 @@ public class MavenIndices implements Disposable {
   }
 
 
-  private static @NotNull MavenIndex createMavenIndex(@NotNull String id, @NotNull String repositoryPathOrUrl, RepositoryKind repositoryKind) {
+  @NotNull
+  private static MavenIndex createMavenIndex(@NotNull String id, @NotNull String repositoryPathOrUrl, RepositoryKind repositoryKind) {
     throw new UnsupportedOperationException();
   }
 

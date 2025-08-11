@@ -1,4 +1,3 @@
-var target: kotlin.Any
-target = map.computeIfAbsent(key, { compIfAbsentKey ->
+map.computeIfAbsent(key, { y ->
   map.method()
 })

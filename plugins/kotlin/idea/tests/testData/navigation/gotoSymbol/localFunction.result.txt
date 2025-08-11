@@ -1,8 +1,0 @@
-NavigationItem:
-    name: myFoo
-ItemPresentation:
-    presentableText: myFoo()
-    locationString: (in main)
-    icon: RowIcon(icons=[Function, Public])
-TargetElement: fun myFoo() {
-QualifiedName: (in main).myFoo

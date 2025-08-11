@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,7 +43,7 @@ public final class ConvertStringToMultilineIntention extends Intention {
   private static final Logger LOG = Logger.getInstance(ConvertStringToMultilineIntention.class);
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, final @NotNull Project project, final Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull final Project project, final Editor editor) throws IncorrectOperationException {
     final List<GrExpression> expressions;
     if (editor.getSelectionModel().hasSelection()) {
       expressions = Collections.singletonList(((GrExpression)element));
@@ -70,7 +70,8 @@ public final class ConvertStringToMultilineIntention extends Intention {
     }
   }
 
-  private static @NotNull List<GrExpression> collectExpressions(@NotNull PsiElement element) {
+  @NotNull
+  private static List<GrExpression> collectExpressions(@NotNull PsiElement element) {
     assert element instanceof GrExpression;
     List<GrExpression> result = new ArrayList<>();
     result.add((GrExpression)element);
@@ -115,7 +116,8 @@ public final class ConvertStringToMultilineIntention extends Intention {
     return false;
   }
 
-  private static @NotNull List<GrLiteral> collectOperands(@Nullable PsiElement element, @NotNull List<GrLiteral> initial) {
+  @NotNull
+  private static List<GrLiteral> collectOperands(@Nullable PsiElement element, @NotNull List<GrLiteral> initial) {
     if (element instanceof GrLiteral) {
       initial.add((GrLiteral)element);
     }
@@ -126,7 +128,7 @@ public final class ConvertStringToMultilineIntention extends Intention {
     return initial;
   }
 
-  private void invokeImpl(final @NotNull GrExpression element, final @NotNull Project project, final @NotNull Editor editor) {
+  private void invokeImpl(@NotNull final GrExpression element, @NotNull final Project project, @NotNull final Editor editor) {
     final List<GrLiteral> literals = collectOperands(element, new ArrayList<>());
     if (literals.isEmpty()) return;
 
@@ -214,8 +216,9 @@ public final class ConvertStringToMultilineIntention extends Intention {
     }
   }
 
+  @NotNull
   @Override
-  protected @NotNull PsiElementPredicate getElementPredicate() {
+  protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
@@ -226,8 +229,9 @@ public final class ConvertStringToMultilineIntention extends Intention {
     };
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
     return file;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent.ui;
 
 
@@ -83,17 +83,20 @@ abstract class MemoryAgentDialog extends DialogWrapper {
   }
 
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  @Nullable
+  protected JComponent createCenterPanel() {
     return myPanel;
   }
 
   @Override
-  protected @Nullable JComponent createSouthPanel() {
+  @Nullable
+  protected JComponent createSouthPanel() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable JComponent getPreferredFocusedComponent() {
+  public JComponent getPreferredFocusedComponent() {
     return myTree;
   }
 

@@ -35,12 +35,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 public final class GroovyUnconditionalWaitInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return GroovyBundle.message("inspection.message.unconditional.call.to.ref");
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new UnconditionalWaitVisitor();
   }
 

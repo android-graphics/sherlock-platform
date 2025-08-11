@@ -21,6 +21,7 @@ import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import com.siyeh.ig.psiutils.SealedUtils;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,8 @@ import org.jetbrains.annotations.NotNull;
 public final class FinalClassInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[1];
     return InspectionGadgetsBundle.message("final.class.problem.descriptor", aClass.getName());
   }

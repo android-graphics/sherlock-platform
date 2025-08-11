@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic.presentation
 
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.asSafely
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushedEvent
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
@@ -15,7 +14,7 @@ import java.util.*
 internal fun createAggregateActivityHtml(
   target: Appendable,
   projectName: String,
-  filesAndDiagnostics: List<IndexDiagnosticDumper.FilesAndDiagnostic>,
+  diagnostics: List<IndexDiagnosticDumper.ExistingIndexingActivityDiagnostic>,
   sharedIndexEvents: List<JsonSharedIndexDiagnosticEvent>,
   changedFilesPushEvents: List<ChangedFilesPushedEvent>
 ) {
@@ -77,8 +76,8 @@ internal fun createAggregateActivityHtml(
               }
             }
             tbody {
-              for ((_, htmlFile, diagnostic) in filesAndDiagnostics.sortedByDescending { it.diagnostic.projectIndexingActivityHistory.times.updatingStart.instant }) {
-                val times = diagnostic.projectIndexingActivityHistory.times
+              for (diagnostic in diagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }) {
+                val times = diagnostic.indexingTimes
 
                 val classes = if (times is JsonProjectScanningHistoryTimes) {
                   "linkable-table-row scanning-table-row"
@@ -87,43 +86,13 @@ internal fun createAggregateActivityHtml(
                   "linkable-table-row"
                 }
                 tr(classes = classes) {
-                  attributes["href"] = htmlFile.fileName.toString()
-                  printIndexingActivityRow(times, diagnostic.projectIndexingActivityHistory.fileCount)
+                  attributes["href"] = diagnostic.htmlFile.fileName.toString()
+                  printIndexingActivityRow(times, diagnostic.fileCount)
                 }
               }
             }
           }
         }
-
-        div {
-          table(classes = "table-with-margin activity-table metrics-table") {
-            thead {
-              tr {
-                th("Metrics") {
-                  colSpan = "2"
-                }
-              }
-            }
-            tbody {
-              val metrics = IndexingMetrics(filesAndDiagnostics.map { it.diagnostic })
-              for (metric in metrics.getListOfIndexingMetrics()) {
-                tr {
-                  when (metric) {
-                    is IndexingMetric.Duration -> {
-                      td(metric.name)
-                      td(StringUtil.formatDuration(metric.durationMillis.toLong()))
-                    }
-                    is IndexingMetric.Counter -> {
-                      td(metric.name)
-                      td(metric.value.toString())
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-
 
         if (sharedIndexEvents.isNotEmpty()) {
           val indexIdToEvents = sharedIndexEvents.groupBy { it.chunkUniqueId }
@@ -218,23 +187,14 @@ private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistor
   td(times.dumbModeStart?.presentableLocalDateTime() ?: DID_NOT_START)
 
   td {
-    if (times.isCancelled) {
+    if (times.wasInterrupted) {
       strong("Cancelled")
       br()
     }
     text(times.updatingEnd.presentableLocalDateTime())
   }
 
-  // Total time
-  if (times.isCancelled) {
-    td(classes = "red-text") {
-      +times.totalWallTimeWithPauses.presentableDuration()
-      +"\ncancelled"
-    }
-  }
-  else {
-    td(times.totalWallTimeWithPauses.presentableDuration())
-  }
+  td(times.totalWallTimeWithPauses.presentableDuration())
   td(times.wallTimeOnPause.presentableDuration())
 
   td(times.dumbWallTimeWithPauses.presentableDuration())

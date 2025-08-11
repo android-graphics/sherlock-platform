@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
@@ -106,7 +106,8 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
     return myInapplicableCandidates.add(candidate);
   }
 
-  protected static @NotNull PsiSubstitutor getSubstitutor(final @NotNull ResolveState state) {
+  @NotNull
+  protected static PsiSubstitutor getSubstitutor(@NotNull final ResolveState state) {
     PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
     return substitutor;
@@ -189,8 +190,9 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getPlace() {
+  public PsiElement getPlace() {
     return myPlace;
   }
 

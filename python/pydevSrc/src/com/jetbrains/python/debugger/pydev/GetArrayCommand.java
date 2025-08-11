@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
 import com.jetbrains.python.debugger.ArrayChunk;
@@ -20,7 +20,7 @@ public class GetArrayCommand extends GetFrameCommand {
 
   public GetArrayCommand(final RemoteDebugger debugger, final String threadId, final String frameId, PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format) {
     super(debugger, GET_ARRAY, threadId, frameId);
-    myVariableName = var.getEvaluationExpression();
+    myVariableName = GetVariableCommand.composeName(var);
     myRowOffset = rowOffset;
     myColOffset = colOffset;
     myRows = rows;
@@ -47,7 +47,7 @@ public class GetArrayCommand extends GetFrameCommand {
   }
 
   @Override
-  protected void processResponse(final @NotNull ProtocolFrame response) throws PyDebuggerException {
+  protected void processResponse(@NotNull final ProtocolFrame response) throws PyDebuggerException {
     if (isErrorCommand(response.getCommand())) {
       final String payload = response.getPayload();
       if (payload.contains("ExceedingArrayDimensionsException")) {

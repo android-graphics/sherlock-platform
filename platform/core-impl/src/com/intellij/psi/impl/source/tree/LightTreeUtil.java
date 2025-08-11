@@ -85,9 +85,7 @@ public final class LightTreeUtil {
 
   public static @NotNull String toFilteredString(@NotNull LighterAST tree, @NotNull LighterASTNode node, @Nullable TokenSet skipTypes) {
     CharSequence text = getTextFromNode(node, skipTypes);
-    if (text != null) {
-      return text.toString();
-    }
+    if (text != null) return text.toString();
 
     int length = node.getEndOffset() - node.getStartOffset();
     if (length < 0) {
@@ -99,7 +97,7 @@ public final class LightTreeUtil {
     return buffer.toString();
   }
 
-  static void toBuffer(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StringBuilder buffer, @Nullable TokenSet skipTypes) {
+  public static void toBuffer(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StringBuilder buffer, @Nullable TokenSet skipTypes) {
     if (skipTypes != null && skipTypes.contains(node.getTokenType())) {
       return;
     }

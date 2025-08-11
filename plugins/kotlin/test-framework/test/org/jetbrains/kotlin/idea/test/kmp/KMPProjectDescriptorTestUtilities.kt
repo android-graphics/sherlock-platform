@@ -3,10 +3,8 @@ package org.jetbrains.kotlin.idea.test.kmp
 
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.test.KotlinStdJSProjectDescriptor
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.platform.has
@@ -30,29 +28,23 @@ object KMPProjectDescriptorTestUtilities {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     fun validateTest(files: List<PsiFile>, platform: KMPTestPlatform) {
         if (platform == KMPTestPlatform.Unspecified) return
 
         for (file in files) {
-            val module = file.getKaModule(file.project, useSiteModule = null)
-            when (module) {
-                is KaSourceModule -> {
-                    val targetPlatform = module.targetPlatform
-                    when (platform) {
-                        KMPTestPlatform.Jvm -> check(targetPlatform.isJvm())
-                        KMPTestPlatform.Js -> check(targetPlatform.isJs())
-                        KMPTestPlatform.NativeLinux -> check(targetPlatform.isNative())
-                        KMPTestPlatform.CommonNativeJvm -> {
-                            check(targetPlatform.has<JvmPlatform>())
-                            check(targetPlatform.has<NativePlatform>())
-                        }
-
-                        KMPTestPlatform.Unspecified -> {}
-                    }
+            val module = KaModuleProvider.getModule(file.project, file, useSiteModule = null)
+            check(module is KaSourceModule)
+            val targetPlatform = module.targetPlatform
+            when (platform) {
+                KMPTestPlatform.Jvm -> check(targetPlatform.isJvm())
+                KMPTestPlatform.Js -> check(targetPlatform.isJs())
+                KMPTestPlatform.NativeLinux -> check(targetPlatform.isNative())
+                KMPTestPlatform.CommonNativeJvm -> {
+                    check(targetPlatform.has<JvmPlatform>())
+                    check(targetPlatform.has<NativePlatform>())
                 }
-                is KaScriptModule -> {}
-                else -> error("Check failed.")
+
+                KMPTestPlatform.Unspecified -> {}
             }
         }
     }

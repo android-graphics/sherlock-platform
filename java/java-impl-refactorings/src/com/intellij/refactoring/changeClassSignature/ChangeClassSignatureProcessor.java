@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeClassSignature;
 
 import com.intellij.history.LocalHistory;
@@ -14,7 +14,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureUtil;
-import com.intellij.refactoring.extractSuperclass.ExtractSuperClassUtil;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
@@ -46,12 +45,14 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected @NotNull String getCommandName() {
+  @NotNull
+  protected String getCommandName() {
     return ChangeClassSignatureDialog.getRefactoringName();
   }
 
   @Override
-  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  @NotNull
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new ChangeClassSigntaureViewDescriptor(myClass);
   }
 
@@ -80,7 +81,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
     List<UsageInfo> result = new ArrayList<>();
 
     boolean hadTypeParameters = myClass.hasTypeParameters();
-    for (final PsiReference reference : ReferencesSearch.search(myClass, projectScope, false).asIterable()) {
+    for (final PsiReference reference : ReferencesSearch.search(myClass, projectScope, false)) {
       if (reference.getElement() instanceof PsiJavaCodeReferenceElement referenceElement) {
         PsiElement parent = referenceElement.getParent();
         if (parent instanceof PsiTypeElement && (parent.getParent() instanceof PsiInstanceOfExpression ||
@@ -115,19 +116,26 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Nullable
   @Override
-  protected @Nullable String getRefactoringId() {
+  protected String getRefactoringId() {
     return "refactoring.changeClassSignature";
   }
 
+  @Nullable
   @Override
-  protected @Nullable RefactoringEventData getBeforeData() {
-    return ExtractSuperClassUtil.createAfterData(myClass);
+  protected RefactoringEventData getBeforeData() {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElement(myClass);
+    return data;
   }
 
+  @Nullable
   @Override
-  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
-    return ExtractSuperClassUtil.createAfterData(myClass);
+  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElement(myClass);
+    return data;
   }
 
   private void doRefactoring(UsageInfo[] usages) throws IncorrectOperationException {

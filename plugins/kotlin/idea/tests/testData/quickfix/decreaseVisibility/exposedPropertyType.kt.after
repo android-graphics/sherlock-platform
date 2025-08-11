@@ -1,5 +1,4 @@
 // "Make 'foo' private" "true"
-// PRIORITY: HIGH
 // ACTION: Add getter
 // ACTION: Convert property initializer to getter
 // ACTION: Convert property to function
@@ -18,4 +17,3 @@ class First {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPrivateFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeVisibilityFixFactories$ChangeToPrivateModCommandAction

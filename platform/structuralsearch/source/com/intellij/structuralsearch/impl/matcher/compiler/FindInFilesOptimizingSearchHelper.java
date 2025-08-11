@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.project.Project;
@@ -96,8 +96,9 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
     filesToScan2 = map;
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<VirtualFile> getFilesSetToScan() {
+  public Set<VirtualFile> getFilesSetToScan() {
     assert !myTransactionStarted;
     if (filesToScan == null) {
       return Collections.emptySet();

@@ -1,14 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -99,7 +100,7 @@ public class BaseOutputReaderTest {
     doStopTest(BaseDataReader.SleepingPolicy.NON_BLOCKING);
   }
 
-  private static List<String> readLines(BaseDataReader.SleepingPolicy policy, boolean split, boolean incomplete, boolean separators) throws Exception {
+  private List<String> readLines(BaseDataReader.SleepingPolicy policy, boolean split, boolean incomplete, boolean separators) throws Exception {
     Process process = launchTest("data");
     TestOutputReader reader = new TestOutputReader(process.getInputStream(), new BaseOutputReader.Options() {
       @Override public BaseDataReader.SleepingPolicy policy() { return policy; }
@@ -117,7 +118,7 @@ public class BaseOutputReaderTest {
     return reader.myLines;
   }
 
-  private static void doStopTest(@SuppressWarnings("SameParameterValue") BaseDataReader.SleepingPolicy policy) throws Exception {
+  private void doStopTest(@SuppressWarnings("SameParameterValue") BaseDataReader.SleepingPolicy policy) throws Exception {
     Process process = launchTest("sleep");
     TestOutputReader reader = new TestOutputReader(process.getInputStream(), BaseOutputReader.Options.withPolicy(policy));
 
@@ -135,14 +136,16 @@ public class BaseOutputReaderTest {
     return StringUtil.endsWith(line, "\r\n") ? line.substring(0, line.length() - 2) + '\n' : line;
   }
 
-  private static Process launchTest(String mode) throws Exception {
-    String java = PlatformTestUtil.getJavaExe();
+  private Process launchTest(String mode) throws Exception {
+    String java = System.getProperty("java.home") + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java");
 
-    Class<Runner> runnerClass = Runner.class;
-    String classPath = PathUtil.getJarPathForClass(runnerClass);
-    assertNotNull(classPath);
+    String className = BaseOutputReaderTest.Runner.class.getName();
+    URL url = getClass().getClassLoader().getResource(className.replace('.', '/') + ".class");
+    assertNotNull(url);
+    File dir = new File(url.toURI());
+    for (int i = 0; i < StringUtil.countChars(className, '.') + 1; i++) dir = dir.getParentFile();
 
-    String[] cmd = {java, "-cp", classPath, runnerClass.getName(), mode};
+    String[] cmd = {java, "-cp", dir.getPath(), className, mode};
     return new ProcessBuilder(cmd).redirectErrorStream(true).start();
   }
 
@@ -160,6 +163,7 @@ public class BaseOutputReaderTest {
     private static final int SEND_TIMEOUT = 500;
     private static final int SLEEP_TIMEOUT = 60000;
 
+    @SuppressWarnings("BusyWait")
     public static void main(String[] args) throws InterruptedException {
       if (args.length > 0 && "sleep".equals(args[0])) {
         Thread.sleep(SLEEP_TIMEOUT);

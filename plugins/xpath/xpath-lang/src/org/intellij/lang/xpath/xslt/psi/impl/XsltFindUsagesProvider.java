@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.psi.impl;
 
 import com.intellij.lang.cacheBuilder.WordsScanner;
@@ -24,7 +24,8 @@ import org.jetbrains.annotations.Nullable;
 
 class XsltFindUsagesProvider implements FindUsagesProvider {
     @Override
-    public @Nullable WordsScanner getWordsScanner() {
+    @Nullable
+    public WordsScanner getWordsScanner() {
         return LanguageFindUsages.getWordsScanner(XMLLanguage.INSTANCE);
     }
 
@@ -34,12 +35,14 @@ class XsltFindUsagesProvider implements FindUsagesProvider {
     }
 
     @Override
-    public @Nullable String getHelpId(@NotNull PsiElement psiElement) {
+    @Nullable
+    public String getHelpId(@NotNull PsiElement psiElement) {
         return null;
     }
 
     @Override
-    public @NotNull String getType(@NotNull PsiElement element) {
+    @NotNull
+    public String getType(@NotNull PsiElement element) {
         if (element instanceof XsltParameter) {
             return getParameterType((XsltParameter)element);
         }
@@ -64,7 +67,8 @@ class XsltFindUsagesProvider implements FindUsagesProvider {
     }
 
     @Override
-    public @NotNull @NlsSafe String getDescriptiveName(@NotNull PsiElement element) {
+    @NotNull
+    public @NlsSafe String getDescriptiveName(@NotNull PsiElement element) {
         if (element instanceof PsiNamedElement) {
             final String name = ((PsiNamedElement)element).getName();
             if (name != null) return name;
@@ -73,7 +77,8 @@ class XsltFindUsagesProvider implements FindUsagesProvider {
     }
 
     @Override
-    public @NotNull @NlsSafe String getNodeText(@NotNull PsiElement element, boolean useFullName) {
+    @NotNull
+    public @NlsSafe String getNodeText(@NotNull PsiElement element, boolean useFullName) {
         if (useFullName) {
             if (element instanceof NavigationItem navigationItem) {
               final ItemPresentation presentation = navigationItem.getPresentation();

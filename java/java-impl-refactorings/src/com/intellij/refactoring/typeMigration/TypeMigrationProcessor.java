@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.java.JavaBundle;
@@ -33,8 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class TypeMigrationProcessor extends BaseRefactoringProcessor {
-  public static volatile boolean ourSkipFailedConversionInTestMode;
-  private static final int MAX_ROOT_IN_PREVIEW_PRESENTATION = 3;
+  public volatile static boolean ourSkipFailedConversionInTestMode;
+  private final static int MAX_ROOT_IN_PREVIEW_PRESENTATION = 3;
 
   private PsiElement[] myRoots;
   private final Function<? super PsiElement, ? extends PsiType> myRootTypes;
@@ -124,8 +124,9 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   }
 
 
+  @NotNull
   @Override
-  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new TypeMigrationViewDescriptor(myRoots[0]);
   }
 
@@ -258,8 +259,9 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     return myLabeler;
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getCommandName() {
+  protected String getCommandName() {
     return JavaBundle.message("type.migration.command.name");
   }
 }

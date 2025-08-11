@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 abstract class ScratchFile(val project: Project, val file: VirtualFile) {
     var replScratchExecutor: SequentialScratchExecutor? = null
     var compilingScratchExecutor: ScratchExecutor? = null
-    var k2ScratchExecutor: K2ScratchExecutor? = null
 
     private val moduleListeners: MutableList<() -> Unit> = mutableListOf()
     var module: Module? = null
@@ -86,7 +85,7 @@ interface ScratchFileListener {
 
     companion object {
         @Topic.ProjectLevel
-        val TOPIC: Topic<ScratchFileListener> = Topic.create(
+        val TOPIC = Topic.create(
             "ScratchFileListener",
             ScratchFileListener::class.java
         )

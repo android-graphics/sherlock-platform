@@ -1,6 +1,3 @@
-package com.intellij.driver.sdk
-
 import com.intellij.driver.client.Remote
+import com.intellij.driver.sdk.ui.components.Icon
 
-@Remote("com.intellij.psi.PsiElement")
-interface PsiElement

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.editor.Editor;
@@ -28,11 +28,13 @@ public final class EditorHelper {
     return editor instanceof TextEditor ? ((TextEditor)editor).getEditor() : null;
   }
 
-  public static @Nullable FileEditor openInEditor(@NotNull PsiElement element, boolean switchToText) {
+  @Nullable
+  public static FileEditor openInEditor(@NotNull PsiElement element, boolean switchToText) {
     return openInEditor(element, switchToText, false);
   }
 
-  public static @Nullable FileEditor openInEditor(@NotNull PsiElement element, boolean switchToText, boolean focusEditor) {
+  @Nullable
+  public static FileEditor openInEditor(@NotNull PsiElement element, boolean switchToText, boolean focusEditor) {
     PsiFile file;
     int offset;
     if (element instanceof PsiFile){

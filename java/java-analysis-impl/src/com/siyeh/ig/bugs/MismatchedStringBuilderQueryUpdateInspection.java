@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -24,7 +24,8 @@ import java.util.Set;
  */
 public final class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection {
 
-  static final @NonNls Map<BuilderType, Set<String>> returnSelfNames =
+  @NonNls
+  static final Map<BuilderType, Set<String>> returnSelfNames =
     Map.of(BuilderType.ABSTRACT_STRING_BUILDER,
            Set.of("append", "appendCodePoint", "delete", "deleteCharAt", "insert", "replace", "reverse", "repeat"),
            BuilderType.STRING_JOINER, Set.of("add", "merge", "setEmptyValue"));
@@ -32,12 +33,14 @@ public final class MismatchedStringBuilderQueryUpdateInspection extends BaseInsp
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "MismatchedQueryAndUpdateOfStringBuilder";
   }
 
+  @NotNull
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  protected String buildErrorString(Object... infos) {
     final boolean updated = ((Boolean)infos[0]).booleanValue();
     final PsiType type = (PsiType)infos[1]; //"StringBuilder";
     if (updated) {
@@ -132,7 +135,8 @@ public final class MismatchedStringBuilderQueryUpdateInspection extends BaseInsp
       return !VariableAccessUtils.variableIsUsedInArrayInitializer(variable, context);
     }
 
-    private static @Nullable PsiExpression getFirstQualifier(@Nullable PsiExpression expression, @NotNull BuilderType type) {
+    @Nullable
+    private static PsiExpression getFirstQualifier(@Nullable PsiExpression expression, @NotNull BuilderType type) {
       if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
         final PsiExpression next = parenthesizedExpression.getExpression();
         return getFirstQualifier(next, type);
@@ -204,15 +208,18 @@ public final class MismatchedStringBuilderQueryUpdateInspection extends BaseInsp
   }
 
   private static class StringBuilderUpdateCalledVisitor extends JavaRecursiveElementWalkingVisitor {
-    private static final @NonNls Map<BuilderType, Set<String>> updateNames =
+    @NonNls
+    private static final Map<BuilderType, Set<String>> updateNames =
       Map.of(BuilderType.ABSTRACT_STRING_BUILDER,
              Set.of("append", "appendCodePoint", "delete", "deleteCharAt", "insert", "replace", "reverse", "setCharAt", "setLength", "repeat"),
              BuilderType.STRING_JOINER, Set.of("add", "merge", "setEmptyValue"));
 
-    private final @NotNull PsiVariable variable;
+    @NotNull
+    private final PsiVariable variable;
     private boolean updated;
 
-    private final @NotNull BuilderType builderType;
+    @NotNull
+    private final BuilderType builderType;
 
     StringBuilderUpdateCalledVisitor(@NotNull PsiVariable variable, @NotNull BuilderType builderType) {
       this.variable = variable;
@@ -248,17 +255,20 @@ public final class MismatchedStringBuilderQueryUpdateInspection extends BaseInsp
   }
 
   private static class StringBuilderQueryCalledVisitor extends JavaRecursiveElementWalkingVisitor {
-    private static final @NonNls Map<BuilderType, Set<String>> queryNames =
+    @NonNls
+    private static final Map<BuilderType, Set<String>> queryNames =
       Map.of(BuilderType.ABSTRACT_STRING_BUILDER,
              Set.of("capacity", "charAt", "chars", "codePointAt", "codePointBefore", "codePointCount", "codePoints", "compareTo", "equals",
                     "getChars", "hashCode", "indexOf", "lastIndexOf", "length", "offsetByCodePoints", "subSequence", "substring",
                     "toString"),
              BuilderType.STRING_JOINER, Set.of("length", "toString"));
 
-    private final @NotNull PsiVariable variable;
+    @NotNull
+    private final PsiVariable variable;
     private boolean queried;
 
-    private final @NotNull BuilderType builderType;
+    @NotNull
+    private final BuilderType builderType;
 
     StringBuilderQueryCalledVisitor(@NotNull PsiVariable variable, @NotNull BuilderType type) {
       this.variable = variable;
@@ -381,7 +391,8 @@ public final class MismatchedStringBuilderQueryUpdateInspection extends BaseInsp
     }
   }
 
-  private static @Nullable BuilderType getType(@NotNull PsiVariable variable) {
+  @Nullable
+  private static BuilderType getType(@NotNull PsiVariable variable) {
     if (TypeUtils.variableHasTypeOrSubtype(variable, CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER)) {
       return BuilderType.ABSTRACT_STRING_BUILDER;
     }

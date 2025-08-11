@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -33,8 +33,9 @@ public class GrRemoveExceptionFix extends PsiUpdateModCommandAction<PsiElement> 
     }
   }
   
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return GroovyBundle.message("try.catch.fix");
   }
 
@@ -44,7 +45,8 @@ public class GrRemoveExceptionFix extends PsiUpdateModCommandAction<PsiElement> 
     return target == null ? null : Presentation.of(myText);
   }
 
-  private static @Nullable GrTypeElement findTypeElementInDisjunction(@NotNull PsiElement at, int offset) {
+  @Nullable
+  private static GrTypeElement findTypeElementInDisjunction(@NotNull PsiElement at, int offset) {
     final GrDisjunctionTypeElement disjunction = PsiTreeUtil.getParentOfType(at, GrDisjunctionTypeElement.class);
     if (disjunction == null) return null;
     for (GrTypeElement element : disjunction.getTypeElements()) {
@@ -55,7 +57,8 @@ public class GrRemoveExceptionFix extends PsiUpdateModCommandAction<PsiElement> 
     return null;
   }
 
-  private static @Nullable GrCatchClause findCatch(@NotNull PsiElement at) {
+  @Nullable
+  private static GrCatchClause findCatch(@NotNull PsiElement at) {
     return PsiTreeUtil.getParentOfType(at, GrCatchClause.class);
   }
 

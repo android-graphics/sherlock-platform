@@ -24,8 +24,9 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class PyRemoveAssignmentQuickFix extends PsiUpdateModCommandQuickFix {
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.remove.assignment");
   }
 

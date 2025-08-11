@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -25,7 +25,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.text.ImmutableCharSequence;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,8 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-@ApiStatus.Internal
-public final class CompletionAssertions {
+final class CompletionAssertions {
   static void assertCommitSuccessful(Editor editor, PsiFile psiFile) {
     Document document = editor.getDocument();
     int docLength = document.getTextLength();
@@ -82,15 +80,13 @@ public final class CompletionAssertions {
       new Attachment("docText.txt", document.getText()));
   }
 
-  @ApiStatus.Internal
-  public static void checkEditorValid(Editor editor) {
+  static void checkEditorValid(Editor editor) {
     if (!isEditorValid(editor)) {
       throw new AssertionError();
     }
   }
 
-  @ApiStatus.Internal
-  public static boolean isEditorValid(Editor editor) {
+  static boolean isEditorValid(Editor editor) {
     return !(editor instanceof EditorWindow) || ((EditorWindow)editor).isValid();
   }
 
@@ -170,8 +166,7 @@ public final class CompletionAssertions {
            ", physical=" + file.isPhysical();
   }
 
-  @ApiStatus.Internal
-  public static final class WatchingInsertionContext extends InsertionContext implements Disposable {
+  static final class WatchingInsertionContext extends InsertionContext implements Disposable {
     private RangeMarkerEx tailWatcher;
     Throwable invalidateTrace;
     DocumentEvent killer;
@@ -181,11 +176,6 @@ public final class CompletionAssertions {
       super(offsetMap, completionChar, items.toArray(LookupElement.EMPTY_ARRAY),
             file, editor,
             shouldAddCompletionChar(completionChar));
-    }
-
-    @ApiStatus.Internal
-    public Throwable getInvalidateTrace() {
-      return invalidateTrace;
     }
 
     @Override
@@ -205,8 +195,7 @@ public final class CompletionAssertions {
       getDocument().addDocumentListener(spy);
     }
 
-    @ApiStatus.Internal
-    public void stopWatching() {
+    void stopWatching() {
       if (tailWatcher != null) {
         if (spy != null) {
           getDocument().removeDocumentListener(spy);

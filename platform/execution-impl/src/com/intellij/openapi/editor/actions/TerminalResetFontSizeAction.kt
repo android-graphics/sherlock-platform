@@ -1,21 +1,22 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actions
 
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction.Companion.getHandler
+import com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction.Companion.getTerminalWidget
 import com.intellij.openapi.project.DumbAwareAction
 
-private class TerminalResetFontSizeAction : DumbAwareAction(), LightEditCompatible {
+class TerminalResetFontSizeAction : DumbAwareAction(), LightEditCompatible {
   override fun actionPerformed(e: AnActionEvent) {
-    val handler = getHandler(e) ?: return
-    handler.resetTerminalFontSize()
+    getTerminalWidget(e)?.resetFontSize()
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = getHandler(e) != null
+    e.presentation.isEnabled = getTerminalWidget(e) != null
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }

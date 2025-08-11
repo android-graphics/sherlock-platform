@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.PsiTypeCodeFragmentImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
@@ -64,8 +65,8 @@ class CompoundRendererConfigurable extends JPanel {
   private final JLabel myExpandedLabel;
   private JBTable myTable;
   private final JBCheckBox myAppendDefaultChildren;
-  private static final @NonNls String EMPTY_PANEL_ID = "EMPTY";
-  private static final @NonNls String DATA_PANEL_ID = "DATA";
+  @NonNls private static final String EMPTY_PANEL_ID = "EMPTY";
+  @NonNls private static final String DATA_PANEL_ID = "DATA";
   private static final int NAME_TABLE_COLUMN = 0;
   private static final int EXPRESSION_TABLE_COLUMN = 1;
   private static final int ONDEMAND_TABLE_COLUMN = 2;
@@ -272,13 +273,14 @@ class CompoundRendererConfigurable extends JPanel {
     TableColumn exprColumn = myTable.getColumnModel().getColumn(EXPRESSION_TABLE_COLUMN);
     exprColumn.setCellEditor(editor);
     exprColumn.setCellRenderer(new DefaultTableCellRenderer() {
+      @NotNull
       @Override
-      public @NotNull Component getTableCellRendererComponent(@NotNull JTable table,
-                                                              Object value,
-                                                              boolean isSelected,
-                                                              boolean hasFocus,
-                                                              int row,
-                                                              int column) {
+      public Component getTableCellRendererComponent(@NotNull JTable table,
+                                                     Object value,
+                                                     boolean isSelected,
+                                                     boolean hasFocus,
+                                                     int row,
+                                                     int column) {
         final TextWithImports textWithImports = (TextWithImports)value;
         final String text = (textWithImports != null) ? textWithImports.getText() : "";
         return super.getTableCellRendererComponent(table, text, isSelected, hasFocus, row, column);
@@ -443,8 +445,9 @@ class CompoundRendererConfigurable extends JPanel {
       return true;
     }
 
+    @NotNull
     @Override
-    public @NotNull Class<?> getColumnClass(int columnIndex) {
+    public Class<?> getColumnClass(int columnIndex) {
       return switch (columnIndex) {
         case NAME_TABLE_COLUMN -> String.class;
         case EXPRESSION_TABLE_COLUMN -> TextWithImports.class;
@@ -480,8 +483,9 @@ class CompoundRendererConfigurable extends JPanel {
       }
     }
 
+    @NotNull
     @Override
-    public @NotNull String getColumnName(int columnIndex) {
+    public String getColumnName(int columnIndex) {
       return switch (columnIndex) {
         case NAME_TABLE_COLUMN -> JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.name");
         case EXPRESSION_TABLE_COLUMN -> JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.expression");

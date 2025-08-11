@@ -1,4 +1,4 @@
- // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
  package com.intellij.ide.macro;
 
  import com.intellij.ide.IdeCoreBundle;
@@ -9,18 +9,21 @@
  import org.jetbrains.annotations.Nullable;
 
  public class TempDirMacro extends Macro {
+   @NotNull
    @Override
-   public @NotNull String getName() {
+   public String getName() {
      return "TempDir";
    }
 
+   @NotNull
    @Override
-   public @NotNull String getDescription() {
+   public String getDescription() {
      return IdeCoreBundle.message("macro.temp.dir");
    }
 
+   @Nullable
    @Override
-   public @Nullable String expand(@NotNull DataContext dataContext) {
+   public String expand(@NotNull DataContext dataContext) {
      if (SystemInfo.isWindows) {
        String tempDir = System.getenv("TEMP");
        if (tempDir == null) {

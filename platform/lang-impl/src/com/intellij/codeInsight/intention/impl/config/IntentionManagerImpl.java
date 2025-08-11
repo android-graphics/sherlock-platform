@@ -123,10 +123,9 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
   public void dispose() {
   }
 
-  private static @Nullable IntentionAction createFixAllIntentionInternal(@NotNull InspectionToolWrapper<?, ?> toolWrapper,
+  private static @NotNull IntentionAction createFixAllIntentionInternal(@NotNull InspectionToolWrapper<?, ?> toolWrapper,
                                                                         @NotNull IntentionAction action) {
     LocalQuickFix fix = QuickFixWrapper.unwrap(action);
-    if (fix != null && !fix.availableInBatchMode()) return null;
     PsiFile file = QuickFixWrapper.unwrapFile(action);
     return new CleanupInspectionIntention(toolWrapper, fix == null ? action : fix, file, action.getText());
   }

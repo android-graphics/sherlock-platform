@@ -3,33 +3,31 @@ package com.intellij.vcs.log.graph.impl.permanent
 
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
-import com.intellij.vcs.log.graph.impl.facade.RowsMapping
+import com.intellij.vcs.log.graph.utils.IntList
 import com.intellij.vcs.log.graph.utils.TimestampGetter
+import com.intellij.vcs.log.graph.utils.impl.CompressedIntList
+import com.intellij.vcs.log.graph.utils.impl.IntTimestampGetter
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-@ApiStatus.Internal
-class PermanentCommitsInfoImpl<CommitId : Any> private constructor(private val rowsMapping: RowsMapping<CommitId>,
+class PermanentCommitsInfoImpl<CommitId : Any> private constructor(val timestampGetter: TimestampGetter,
+                                                                   private val commitIdIndexes: List<CommitId>,
                                                                    private val notLoadedCommits: Int2ObjectMap<CommitId>) : PermanentCommitsInfo<CommitId> {
-  val timestampGetter: TimestampGetter
-    get() = rowsMapping
-
   override fun getCommitId(nodeId: Int): CommitId {
     if (nodeId < 0) return notLoadedCommits[nodeId]
-    return rowsMapping.getCommitId(nodeId)
+    return commitIdIndexes[nodeId]
   }
 
   override fun getTimestamp(nodeId: Int): Long {
     if (nodeId < 0) return 0
-    return rowsMapping.getTimestamp(nodeId)
+    return timestampGetter.getTimestamp(nodeId)
   }
 
   // todo optimize with special map
   override fun getNodeId(commitId: CommitId): Int {
-    val indexOf = rowsMapping.commitIdMapping.indexOf(commitId)
+    val indexOf = commitIdIndexes.indexOf(commitId)
     if (indexOf != -1) return indexOf
 
     return getNotLoadNodeId(commitId)
@@ -58,7 +56,8 @@ class PermanentCommitsInfoImpl<CommitId : Any> private constructor(private val r
 
   internal fun convertToNodeIds(commitIds: Collection<CommitId>, skipNotLoadedCommits: Boolean): IntSet {
     val result = IntOpenHashSet()
-    rowsMapping.commitIdMapping.forEachIndexed { i, commitId ->
+    for (i in commitIdIndexes.indices) {
+      val commitId = commitIdIndexes[i]
       if (commitIds.contains(commitId)) {
         result.add(i)
       }
@@ -74,7 +73,7 @@ class PermanentCommitsInfoImpl<CommitId : Any> private constructor(private val r
   }
 
   fun containsAll(commitIds: Collection<CommitId>): Boolean {
-    return rowsMapping.commitIdMapping.containsAll(commitIds)
+    return commitIdIndexes.containsAll(commitIds)
   }
 
   companion object {
@@ -83,12 +82,30 @@ class PermanentCommitsInfoImpl<CommitId : Any> private constructor(private val r
                                      notLoadedCommits: Int2ObjectMap<CommitId>): PermanentCommitsInfoImpl<CommitId> {
       val isIntegerCase = !graphCommits.isEmpty() && graphCommits[0].id is Int
 
-      val rowsMapping = RowsMapping<CommitId>(graphCommits.size, isIntegerCase)
-      graphCommits.forEach {
-        rowsMapping.add(it.id, it.timestamp)
-      }
+      val commitIdIndex = if (isIntegerCase) createCompressedIntList(graphCommits as List<GraphCommit<Int>>) as List<CommitId>
+      else graphCommits.map { it.id }
 
-      return PermanentCommitsInfoImpl(rowsMapping, notLoadedCommits)
+      val timestampGetter = createTimestampGetter(graphCommits)
+      return PermanentCommitsInfoImpl(timestampGetter, commitIdIndex, notLoadedCommits)
+    }
+
+    @JvmStatic
+    fun <CommitId> createTimestampGetter(graphCommits: List<GraphCommit<CommitId>>): IntTimestampGetter {
+      return IntTimestampGetter.newInstance(object : TimestampGetter {
+        override fun size() = graphCommits.size
+        override fun getTimestamp(index: Int) = graphCommits[index].timestamp
+      })
+    }
+
+    private fun createCompressedIntList(graphCommits: List<GraphCommit<Int>>): List<Int> {
+      val compressedIntList = CompressedIntList.newInstance(object : IntList {
+        override fun size() = graphCommits.size
+        override fun get(index: Int): Int = graphCommits[index].id
+      }, 30)
+      return object : AbstractList<Int>() {
+        override val size get() = compressedIntList.size()
+        override fun get(index: Int) = compressedIntList[index]
+      }
     }
   }
 }

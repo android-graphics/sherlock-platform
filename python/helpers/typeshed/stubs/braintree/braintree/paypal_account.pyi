@@ -1,7 +1,8 @@
 from _typeshed import Incomplete
+from typing import Any
 
-from braintree.resource import Resource
-from braintree.subscription import Subscription
+from braintree.configuration import Configuration as Configuration
+from braintree.resource import Resource as Resource
 
 class PayPalAccount(Resource):
     @staticmethod
@@ -12,5 +13,5 @@ class PayPalAccount(Resource):
     def update(paypal_account_token, params: Incomplete | None = None): ...
     @staticmethod
     def signature(): ...
-    subscriptions: list[Subscription]
+    subscriptions: Any
     def __init__(self, gateway, attributes) -> None: ...

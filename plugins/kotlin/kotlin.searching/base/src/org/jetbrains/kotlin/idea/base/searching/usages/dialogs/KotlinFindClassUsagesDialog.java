@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.searching.usages.dialogs;
 
@@ -49,7 +49,8 @@ public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
 
     private static final Key<KtClassOrObject> ORIGINAL_CLASS = Key.create("ORIGINAL_CLASS");
 
-    private static @NotNull PsiClass getRepresentingPsiClass(@NotNull KtClassOrObject classOrObject) {
+    @NotNull
+    private static PsiClass getRepresentingPsiClass(@NotNull KtClassOrObject classOrObject) {
         PsiClass lightClass = toLightClass(classOrObject);
         if (lightClass != null) return lightClass;
 
@@ -124,12 +125,14 @@ public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
         return findWhatPanel;
     }
 
+    @NotNull
     @Override
-    protected @NotNull KotlinClassFindUsagesOptions getFindUsagesOptions() {
+    protected KotlinClassFindUsagesOptions getFindUsagesOptions() {
         return (KotlinClassFindUsagesOptions) super.getFindUsagesOptions();
     }
 
-    private @Nullable KtClassOrObject getOriginalClass() {
+    @Nullable
+    private KtClassOrObject getOriginalClass() {
         PsiElement klass = LightClassUtilsKt.getUnwrapped(getPsiElement());
         if (klass == null) {
             return null;
@@ -142,6 +145,8 @@ public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
 
     @Override
     protected void addUsagesOptions(@NotNull JPanel optionsPanel) {
+        super.addUsagesOptions(optionsPanel);
+
         KtClassOrObject klass = getOriginalClass();
         boolean isActual = klass != null && PsiUtilsKt.hasActualModifier(klass);
         KotlinClassFindUsagesOptions options = getFindUsagesOptions();
@@ -153,7 +158,6 @@ public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
                     false
             );
         }
-        addDefaultOptions(optionsPanel);
     }
 
     @Override

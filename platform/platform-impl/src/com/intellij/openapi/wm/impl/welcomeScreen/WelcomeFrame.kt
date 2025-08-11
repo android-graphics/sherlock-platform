@@ -7,7 +7,6 @@ import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.internal.statistic.eventLog.getUiEventLogger
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.*
@@ -42,7 +41,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.ActionListener
@@ -119,7 +117,6 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWi
                 return
               }
             }
-            frame.dispose()
             ApplicationManager.getApplication().exit()
           }
           else {
@@ -154,15 +151,9 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWi
       prepareToShow()?.invoke()
     }
 
-    @Internal
-    fun prepareToShow(): (() -> Unit)? {
+    internal fun prepareToShow(): (() -> Unit)? {
       if (instance != null) {
         return null
-      }
-
-      // ActionManager is used on Welcome Frame, but should be initialized in a pooled thread and not in EDT.
-      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
-        serviceAsync<ActionManager>()
       }
 
       return task@{

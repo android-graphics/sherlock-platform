@@ -60,8 +60,8 @@ public final class GuavaFluentIterableConversionRule extends BaseGuavaTypeConver
       this(stringToReplace, replaceByString, withLambdaParameter, false, false);
     }
 
-    TypeConversionDescriptorFactory(final @NonNls String stringToReplace,
-                                    final @NonNls String replaceByString,
+    TypeConversionDescriptorFactory(@NonNls final String stringToReplace,
+                                    @NonNls final String replaceByString,
                                     boolean withLambdaParameter,
                                     boolean chainedMethod,
                                     boolean fluentIterableReturnType) {
@@ -95,13 +95,14 @@ public final class GuavaFluentIterableConversionRule extends BaseGuavaTypeConver
            (aClass != null && GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(aClass.getQualifiedName()));
   }
 
+  @Nullable
   @Override
-  protected @Nullable TypeConversionDescriptorBase findConversionForMethod(@NotNull PsiType from,
-                                                                           @NotNull PsiType to,
-                                                                           @NotNull PsiMethod method,
-                                                                           @NotNull String methodName,
-                                                                           PsiExpression context,
-                                                                           TypeMigrationLabeler labeler) {
+  protected TypeConversionDescriptorBase findConversionForMethod(@NotNull PsiType from,
+                                                                 @NotNull PsiType to,
+                                                                 @NotNull PsiMethod method,
+                                                                 @NotNull String methodName,
+                                                                 PsiExpression context,
+                                                                 TypeMigrationLabeler labeler) {
     if (context instanceof PsiMethodCallExpression) {
       return buildCompoundDescriptor((PsiMethodCallExpression)context, to, labeler);
     }
@@ -109,10 +110,11 @@ public final class GuavaFluentIterableConversionRule extends BaseGuavaTypeConver
     return getOneMethodDescriptor(methodName, method, from, context);
   }
 
-  private static @Nullable TypeConversionDescriptorBase getOneMethodDescriptor(@NotNull @NlsSafe String methodName,
-                                                                               @NotNull PsiMethod method,
-                                                                               @NotNull PsiType from,
-                                                                               @Nullable PsiExpression context) {
+  @Nullable
+  private static TypeConversionDescriptorBase getOneMethodDescriptor(@NotNull @NlsSafe String methodName,
+                                                                     @NotNull PsiMethod method,
+                                                                     @NotNull PsiType from,
+                                                                     @Nullable PsiExpression context) {
     TypeConversionDescriptor descriptorBase = null;
     PsiType conversionType = null;
     boolean needSpecifyType = true;
@@ -247,7 +249,8 @@ public final class GuavaFluentIterableConversionRule extends BaseGuavaTypeConver
     return descriptorBase;
   }
 
-  private static @Nullable TypeConversionDescriptor createDescriptorForAppend(PsiMethod method, PsiExpression context) {
+  @Nullable
+  private static TypeConversionDescriptor createDescriptorForAppend(PsiMethod method, PsiExpression context) {
     LOG.assertTrue("append".equals(method.getName()));
     final PsiParameterList list = method.getParameterList();
     if (list.getParametersCount() != 1) return null;
@@ -271,9 +274,10 @@ public final class GuavaFluentIterableConversionRule extends BaseGuavaTypeConver
     return null;
   }
 
-  public static @Nullable GuavaChainedConversionDescriptor buildCompoundDescriptor(PsiMethodCallExpression expression,
-                                                                                   PsiType to,
-                                                                                   TypeMigrationLabeler labeler) {
+  @Nullable
+  public static GuavaChainedConversionDescriptor buildCompoundDescriptor(PsiMethodCallExpression expression,
+                                                                         PsiType to,
+                                                                         TypeMigrationLabeler labeler) {
     List<TypeConversionDescriptorBase> methodDescriptors = new SmartList<>();
 
     NotNullLazyValue<TypeConversionRule> optionalDescriptor = NotNullLazyValue.createValue(() -> {
@@ -390,19 +394,22 @@ public final class GuavaFluentIterableConversionRule extends BaseGuavaTypeConver
       return converted;
     }
 
+    @Nullable
     @Override
-    public @Nullable PsiType conversionType() {
+    public PsiType conversionType() {
       return myToType;
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull String ruleFromClass() {
+  public String ruleFromClass() {
     return FLUENT_ITERABLE;
   }
 
+  @NotNull
   @Override
-  public @NotNull String ruleToClass() {
+  public String ruleToClass() {
     return StreamApiConstants.JAVA_UTIL_STREAM_STREAM;
   }
 

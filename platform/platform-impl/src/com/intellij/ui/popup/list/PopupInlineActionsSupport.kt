@@ -10,41 +10,40 @@ import java.awt.event.InputEvent
 import javax.swing.JComponent
 import javax.swing.JList
 
+private val Empty = object : PopupInlineActionsSupport {
+  override fun calcExtraButtonsCount(element: Any?): Int = 0
+  override fun calcButtonIndex(element: Any?, point: Point): Int? = null
+  override fun getInlineAction(element: Any?, index: Int, event: InputEvent?) = InlineActionDescriptor({}, KeepPopupOnPerform.Always)
+  override fun getExtraButtons(list: JList<*>, value: Any?, isSelected: Boolean): List<JComponent> = emptyList()
+  override fun getActiveButtonIndex(list: JList<*>): Int? = null
+  override fun getActiveExtraButtonToolTipText(list: JList<*>, value: Any?): String? = null
+  override fun isMoreButton(element: Any?, index: Int): Boolean = false
+}
+
 internal interface PopupInlineActionsSupport {
+
+  fun hasExtraButtons(element: Any?): Boolean = calcExtraButtonsCount(element) > 0
 
   fun calcExtraButtonsCount(element: Any?): Int
 
   fun calcButtonIndex(element: Any?, point: Point): Int?
 
-  fun getToolTipText(element: Any?, index: Int): @ActionText String?
+  fun getInlineAction(element: Any?, index: Int, event: InputEvent? = null) : InlineActionDescriptor
 
-  fun getKeepPopupOnPerform(element: Any?, index: Int): KeepPopupOnPerform
+  fun getExtraButtons(list: JList<*>, value: Any?, isSelected: Boolean): List<JComponent>
 
-  fun performAction(element: Any?, index: Int, event: InputEvent?)
+  @ActionText
+  fun getActiveExtraButtonToolTipText(list: JList<*>, value: Any?): String?
 
-  fun createExtraButtons(value: Any?, isSelected: Boolean, activeButtonIndex: Int): List<JComponent>
+  fun getActiveButtonIndex(list: JList<*>): Int?
 
   fun isMoreButton(element: Any?, index: Int): Boolean
 
-
-  fun hasExtraButtons(element: Any?): Boolean = calcExtraButtonsCount(element) > 0
-  fun getActiveButtonIndex(list: JList<*>): Int? = (list as? ListPopupImpl.ListWithInlineButtons)?.selectedButtonIndex
-}
-
-internal fun createSupport(popup: ListPopupImpl): PopupInlineActionsSupport {
-  if (!ExperimentalUI.isNewUI()) return Empty
-  if (popup.listStep is ActionPopupStep) return PopupInlineActionsSupportImpl(popup)
-  return NonActionsPopupInlineSupport(popup)
-}
-
-private val Empty = object : PopupInlineActionsSupport {
-  override fun calcExtraButtonsCount(element: Any?): Int = 0
-  override fun calcButtonIndex(element: Any?, point: Point): Int? = null
-  override fun getToolTipText(element: Any?, index: Int): String? = null
-  override fun getKeepPopupOnPerform(element: Any?, index: Int): KeepPopupOnPerform = KeepPopupOnPerform.Always
-  override fun performAction(element: Any?, index: Int, event: InputEvent?) {}
-  override fun createExtraButtons(value: Any?, isSelected: Boolean, activeButtonIndex: Int): List<JComponent> = emptyList()
-  override fun isMoreButton(element: Any?, index: Int): Boolean = false
-
-  override fun getActiveButtonIndex(list: JList<*>): Int? = null
+  companion object {
+    fun create(popup: ListPopupImpl): PopupInlineActionsSupport {
+      if (!ExperimentalUI.isNewUI()) return Empty
+      if (popup.listStep is ActionPopupStep) return PopupInlineActionsSupportImpl(popup)
+      return NonActionsPopupInlineSupport(popup)
+    }
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "LeakingThis")
 
 package com.intellij.ui.tabs.impl
@@ -15,7 +15,10 @@ import com.intellij.openapi.actionSystem.ex.ActionCopiedShortcutsTracker
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -175,44 +178,8 @@ open class JBTabsImpl internal constructor(
   internal var tabListOptions: TabListOptions = tabListOptions
     private set
 
-  private val scrollBarActivityTracker = ScrollBarActivityTracker()
-
-  private inner class ScrollBarActivityTracker {
-    var isRecentlyActive: Boolean = false
-      private set
-    private val RELAYOUT_DELAY = 2000
-    private val relayoutAlarm = Alarm(parentDisposable)
-    private var suspended = false
-
-    fun suspend() {
-      suspended = true
-    }
-
-    fun resume() {
-      suspended = false
-    }
-
-    fun reset() {
-      relayoutAlarm.cancelAllRequests()
-      isRecentlyActive = false
-    }
-
-    fun setRecentlyActive() {
-      if (suspended) return
-      relayoutAlarm.cancelAllRequests()
-      isRecentlyActive = true
-      if (!relayoutAlarm.isDisposed) {
-        relayoutAlarm.addRequest(ContextAwareRunnable {
-          isRecentlyActive = false
-          relayout(forced = false, layoutNow = false)
-        }, RELAYOUT_DELAY)
-      }
-    }
-
-    fun cancelActivityTimer() {
-      relayoutAlarm.cancelAllRequests()
-    }
-  }
+  private val RELAYOUT_DELAY = 2000
+  private val relayoutAlarm = Alarm(parentDisposable)
 
   private val visibleInfos = ArrayList<TabInfo>()
   private val infoToPage = HashMap<TabInfo, AccessibleTabPage>()
@@ -276,24 +243,19 @@ open class JBTabsImpl internal constructor(
 
   private var listener: Job? = null
 
-  val isRecentlyActive: Boolean
-    get() = scrollBarActivityTracker.isRecentlyActive
+  var isRecentlyActive: Boolean = false
+    private set
 
   @JvmField
   internal val attractions: MutableSet<TabInfo> = HashSet()
 
   private val animator = lazy {
-    val result = object : Animator(
-      name = "JBTabs Attractions",
-      totalFrames = 2,
-      cycleDuration = 500,
-      isRepeatable = true,
-      coroutineScope = coroutineScope,
-    ) {
+    val result = object : Animator("JBTabs Attractions", 2, 500, true) {
       override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
         repaintAttractions()
       }
     }
+    Disposer.register(parentDisposable, result)
     result
   }
 
@@ -438,12 +400,8 @@ open class JBTabsImpl internal constructor(
       }
 
       private fun createUI(): ScrollBarUI {
-        return if (SystemInfo.isMac) {
-          TabMacScrollBarUI(thickness = SCROLL_BAR_THICKNESS, thicknessMax = SCROLL_BAR_THICKNESS, thicknessMin = SCROLL_BAR_THICKNESS)
-        }
-        else {
-          TabScrollBarUI(thickness = SCROLL_BAR_THICKNESS, thicknessMax = SCROLL_BAR_THICKNESS, thicknessMin = SCROLL_BAR_THICKNESS)
-        }
+        return if (SystemInfo.isMac) TabMacScrollBarUI(SCROLL_BAR_THICKNESS, SCROLL_BAR_THICKNESS, SCROLL_BAR_THICKNESS)
+        else TabScrollBarUI(SCROLL_BAR_THICKNESS, SCROLL_BAR_THICKNESS, SCROLL_BAR_THICKNESS)
       }
     }
     fakeScrollPane.verticalScrollBar = scrollBar
@@ -479,7 +437,7 @@ open class JBTabsImpl internal constructor(
       glassPane = gp
 
       if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-        val listener = AWTEventListener { _: AWTEvent? ->
+        val listener = { _: AWTEvent? ->
           if (JBPopupFactory.getInstance().getChildPopups(this@JBTabsImpl).isEmpty()) {
             processFocusChange()
           }
@@ -516,19 +474,30 @@ open class JBTabsImpl internal constructor(
       }
     }.addTo(this)
     scrollBarChangeListener = ChangeListener { updateTabsOffsetFromScrollBar() }
-    setTabsPosition(tabsPosition)
   }
 
   @Internal
   protected fun resetScrollBarActivity() {
-    scrollBarActivityTracker.reset()
+    relayoutAlarm.cancelAllRequests()
+    isRecentlyActive = false
+  }
+
+  private fun setRecentlyActive() {
+    relayoutAlarm.cancelAllRequests()
+    isRecentlyActive = true
+    if (!relayoutAlarm.isDisposed) {
+      relayoutAlarm.addRequest(ContextAwareRunnable {
+        isRecentlyActive = false
+        relayout(forced = false, layoutNow = false)
+      }, RELAYOUT_DELAY)
+    }
   }
 
   internal fun isScrollBarAdjusting(): Boolean = scrollBar.valueIsAdjusting
 
   private fun addMouseMotionAwtListener(parentDisposable: Disposable, coroutineScope: CoroutineScope?) {
-    val listener = AWTEventListener { event ->
-      val tabRectangle = lastLayoutPass?.headerRectangle ?: return@AWTEventListener
+    val listener = fun(event: AWTEvent) {
+      val tabRectangle = lastLayoutPass?.headerRectangle ?: return
       event as MouseEvent
       val point = event.point
       SwingUtilities.convertPointToScreen(point, event.component)
@@ -539,13 +508,13 @@ open class JBTabsImpl internal constructor(
       rectangle.location = p
       val inside = rectangle.contains(point)
       if (inside == isMouseInsideTabsArea) {
-        return@AWTEventListener
+        return
       }
 
       isMouseInsideTabsArea = inside
-      scrollBarActivityTracker.cancelActivityTimer()
+      relayoutAlarm.cancelAllRequests()
       if (!inside) {
-        scrollBarActivityTracker.setRecentlyActive()
+        setRecentlyActive()
       }
     }
 
@@ -789,11 +758,9 @@ open class JBTabsImpl internal constructor(
         val anyModality = ModalityState.any().asContextElement()
         (serviceAsync<ActionManager>() as ActionManagerEx).timerEvents.collect {
           withContext(Dispatchers.EDT + anyModality) {
-            writeIntentReadAction {
-              val modalityState = ModalityState.stateForComponent(this@JBTabsImpl)
-              if (ModalityState.current().accepts(modalityState)) {
-                updateTabActions(validateNow = false)
-              }
+            val modalityState = ModalityState.stateForComponent(this@JBTabsImpl)
+            if (!ModalityState.current().dominates(modalityState)) {
+              updateTabActions(validateNow = false)
             }
           }
         }
@@ -2024,19 +1991,16 @@ open class JBTabsImpl internal constructor(
 
   private fun updateTabsOffsetFromScrollBar() {
     if (!isScrollBarAdjusting()) {
-      scrollBarActivityTracker.setRecentlyActive()
+      setRecentlyActive()
       toggleScrollBar(isMouseInsideTabsArea)
     }
     val currentUnitsOffset = effectiveLayout.scrollOffset
     val updatedOffset = scrollBarModel.value
     effectiveLayout.scroll(updatedOffset - currentUnitsOffset)
-    SwingUtilities.invokeLater {
-      relayout(forced = false, layoutNow = false)
-    }
+    relayout(forced = false, layoutNow = false)
   }
 
   override fun doLayout() {
-    scrollBarActivityTracker.suspend() // Model changes caused by layout changes shouldn't be interpreted as activity.
     try {
       for (tab in tabs) {
         tab.tabLabel?.setTabActionsAutoHide(tabLabelActionsAutoHide)
@@ -2106,7 +2070,6 @@ open class JBTabsImpl internal constructor(
     }
     finally {
       forcedRelayout = false
-      scrollBarActivityTracker.resume()
     }
   }
 
@@ -2176,23 +2139,12 @@ open class JBTabsImpl internal constructor(
   private fun computeHeaderFitSize(): Dimension {
     val max = computeMaxSize()
     if (tabsPosition == JBTabsPosition.top || tabsPosition == JBTabsPosition.bottom) {
-      return Dimension(
-        size.width,
-        if (horizontalSide) {
-          max(max.label.height, max.toolbar.height).coerceAtLeast(minHeaderHeight())
-        }
-        else {
-          max.label.height
-        }
-      )
+      return Dimension(size.width, if (horizontalSide) max(max.label.height, max.toolbar.height) else max.label.height)
     }
     else {
       return Dimension(max.label.width + if (horizontalSide) 0 else max.toolbar.width, size.height)
     }
   }
-
-  @Internal
-  protected open fun minHeaderHeight(): Int = 0
 
   fun layoutComp(componentX: Int, componentY: Int, component: JComponent, deltaWidth: Int, deltaHeight: Int): Rectangle {
     return layoutComp(
@@ -3034,19 +2986,19 @@ open class JBTabsImpl internal constructor(
     for (each in visibleInfos) {
       each.changeSupport.firePropertyChange(TabInfo.ACTION_GROUP, "new1", "new2")
     }
-    relayout(forced = true, layoutNow = false)
+    relayout(true, false)
     return this
   }
 
   final override fun setSideComponentOnTabs(onTabs: Boolean): JBTabsPresentation {
     isSideComponentOnTabs = onTabs
-    relayout(forced = true, layoutNow = false)
+    relayout(true, false)
     return this
   }
 
   final override fun setSideComponentBefore(before: Boolean): JBTabsPresentation {
     isSideComponentBefore = before
-    relayout(forced = true, layoutNow = false)
+    relayout(true, false)
     return this
   }
 
@@ -3125,7 +3077,7 @@ open class JBTabsImpl internal constructor(
   }
 
   override fun getActions(originalProvider: Boolean): List<AnAction> {
-    return selectedInfo?.group?.let { listOf(it) } ?: emptyList()
+    return selectedInfo?.group?.getChildren(null)?.toList() ?: emptyList()
   }
 
   val navigationActions: ActionGroup
@@ -3142,12 +3094,10 @@ open class JBTabsImpl internal constructor(
 
   private class DefaultDecorator : UiDecorator {
     override fun getDecoration(): UiDecoration {
-      return UiDecoration(
-        labelFont = null,
-        labelInsets = JBUI.insets(5, 8),
-        contentInsetsSupplier = { JBUI.insets(0, 4) },
-        iconTextGap = JBUI.scale(4),
-      )
+      return UiDecoration(labelFont = null,
+                          labelInsets = JBUI.insets(5, 8),
+                          contentInsetsSupplier = java.util.function.Function { JBUI.insets(0, 4) },
+                          iconTextGap = JBUI.scale(4))
     }
   }
 
@@ -3322,7 +3272,7 @@ open class JBTabsImpl internal constructor(
       })
     }
 
-    override fun getAccessibleName(): String? {
+    override fun getAccessibleName(): String {
       var name = accessibleName ?: getClientProperty(ACCESSIBLE_NAME_PROPERTY) as String?
       if (name == null) {
         // Similar to JTabbedPane, we return the name of our selected tab as our own name.

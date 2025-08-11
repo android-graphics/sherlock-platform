@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-abstract class ShowChangeMarkerAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Disabled {
+public abstract class ShowChangeMarkerAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Disabled {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Data data = getDataFromContext(e);
@@ -41,7 +41,8 @@ abstract class ShowChangeMarkerAction extends DumbAwareAction implements ActionR
     moveToRange(data.tracker, data.editor, targetRange);
   }
 
-  private static @Nullable Data getDataFromContext(@NotNull AnActionEvent e) {
+  @Nullable
+  private static Data getDataFromContext(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return null;
 
@@ -59,28 +60,31 @@ abstract class ShowChangeMarkerAction extends DumbAwareAction implements ActionR
     tracker.scrollAndShowHint(range, editor);
   }
 
-  private @Nullable Range getTargetRange(@NotNull LineStatusTracker<?> tracker, @NotNull Editor editor) {
+  @Nullable
+  private Range getTargetRange(@NotNull LineStatusTracker<?> tracker, @NotNull Editor editor) {
     int line = editor.getCaretModel().getLogicalPosition().line;
     return getTargetRange(tracker, line);
   }
 
-  protected abstract @Nullable Range getTargetRange(@NotNull LineStatusTracker<?> tracker, int line);
+  @Nullable
+  protected abstract Range getTargetRange(@NotNull LineStatusTracker<?> tracker, int line);
 
-  static class Next extends ShowChangeMarkerAction {
+
+  public static class Next extends ShowChangeMarkerAction {
     @Override
     protected Range getTargetRange(@NotNull LineStatusTracker<?> tracker, int line) {
       return tracker.getNextRange(line);
     }
   }
 
-  static class Prev extends ShowChangeMarkerAction {
+  public static class Prev extends ShowChangeMarkerAction {
     @Override
     protected Range getTargetRange(@NotNull LineStatusTracker<?> tracker, int line) {
       return tracker.getPrevRange(line);
     }
   }
 
-  static class Current extends ShowChangeMarkerAction {
+  public static class Current extends ShowChangeMarkerAction {
     @Override
     protected Range getTargetRange(@NotNull LineStatusTracker<?> tracker, int line) {
       return tracker.getRangeForLine(line);
@@ -94,8 +98,8 @@ abstract class ShowChangeMarkerAction extends DumbAwareAction implements ActionR
 
 
   private static class Data {
-    private final @NotNull LineStatusTracker<?> tracker;
-    private final @NotNull Editor editor;
+    @NotNull private final LineStatusTracker<?> tracker;
+    @NotNull private final Editor editor;
 
     Data(@NotNull LineStatusTracker<?> tracker, @NotNull Editor editor) {
       this.tracker = tracker;

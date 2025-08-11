@@ -35,7 +35,7 @@ public abstract class Reverter {
   /**
    * @deprecated always returns empty list
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public List<String> askUserForProceeding() throws IOException {
     return Collections.emptyList();
   }
@@ -76,7 +76,8 @@ public abstract class Reverter {
 
   protected abstract void doRevert() throws IOException;
 
-  public static @NotNull @Nls String getRevertCommandName(@NotNull Revision to) {
+  @NotNull
+  public static @Nls String getRevertCommandName(@NotNull Revision to) {
     String name = to.getChangeSetName();
     String date = DateFormatUtil.formatDateTime(to.getTimestamp());
     if (name != null) {

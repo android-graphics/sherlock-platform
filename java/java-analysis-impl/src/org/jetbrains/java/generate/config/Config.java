@@ -195,7 +195,6 @@ public class Config {
         return myPattern = pattern;
     }
 
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -225,7 +224,6 @@ public class Config {
         return true;
     }
 
-    @Override
     public int hashCode() {
         int result;
         result = (useFullyQualifiedName ? 1 : 0);
@@ -246,7 +244,6 @@ public class Config {
         return result;
     }
 
-    @Override
     public String toString() {
         return "Config{" +
                 "useFullyQualifiedName=" + useFullyQualifiedName +

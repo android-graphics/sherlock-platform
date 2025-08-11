@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.history;
 
@@ -28,7 +28,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class SvnRepositoryContentRevision extends SvnBaseContentRevision implements ByteBackedContentRevision {
 
-  private final @NotNull String myPath;
+  @NotNull private final String myPath;
   private final long myRevision;
 
   public SvnRepositoryContentRevision(@NotNull SvnVcs vcs, @NotNull FilePath remotePath, @Nullable FilePath localPath, long revision) {
@@ -38,7 +38,8 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
   }
 
   @Override
-  public @NotNull String getContent() throws VcsException {
+  @NotNull
+  public String getContent() throws VcsException {
     return ContentRevisionCache.getAsString(getContentAsBytes(), myFile, null);
   }
 
@@ -56,7 +57,8 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
     }
   }
 
-  protected @NotNull ByteArrayOutputStream loadContent() throws VcsException {
+  @NotNull
+  protected ByteArrayOutputStream loadContent() throws VcsException {
     final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     ContentLoader loader = new ContentLoader(myPath, buffer, myRevision);
     if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -75,7 +77,8 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
   }
 
   @Override
-  public @NotNull SvnRevisionNumber getRevisionNumber() {
+  @NotNull
+  public SvnRevisionNumber getRevisionNumber() {
     return new SvnRevisionNumber(Revision.of(myRevision));
   }
 
@@ -156,7 +159,8 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
     }
   }
 
-  public @NotNull String getFullPath() {
+  @NotNull
+  public String getFullPath() {
     return myPath;
   }
 
@@ -164,11 +168,13 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
     return SvnUtil.getRelativePath(repositoryUrl, myPath);
   }
 
-  public @NotNull Url getUrl() throws SvnBindException {
+  @NotNull
+  public Url getUrl() throws SvnBindException {
     return SvnUtil.createUrl(getFullPath(), false);
   }
 
-  public @NotNull Target toTarget() throws SvnBindException {
+  @NotNull
+  public Target toTarget() throws SvnBindException {
     return Target.on(getUrl(), getRevisionNumber().getRevision());
   }
 }

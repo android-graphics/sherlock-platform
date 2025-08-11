@@ -1,4 +1,4 @@
-// "Create 'default' branch" "true"
+// "Insert 'default' branch" "true"
 class Test {
   void test(I i) {
     switch (<caret>i){

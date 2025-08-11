@@ -19,6 +19,5 @@ final class AddServiceActionGroup extends DefaultActionGroup implements DumbAwar
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(getSelectedView(e) != null);
-    e.getPresentation().setPerformGroup(false);
   }
 }

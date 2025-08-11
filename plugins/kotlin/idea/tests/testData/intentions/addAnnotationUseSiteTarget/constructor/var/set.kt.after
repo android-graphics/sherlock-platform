@@ -1,4 +1,4 @@
-// CHOSEN_OPTION: PROPERTY_SETTER|Add use-site target 'set'
+// CHOOSE_USE_SITE_TARGET: set
 
 annotation class A
 

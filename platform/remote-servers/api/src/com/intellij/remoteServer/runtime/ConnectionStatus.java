@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.runtime;
 
 import com.intellij.remoteServer.CloudBundle;
@@ -13,7 +12,8 @@ public enum ConnectionStatus {
 
   private final Supplier<@Nls String> myPresentableText;
 
-  public @Nls String getPresentableText() {
+  @Nls
+  public String getPresentableText() {
     return myPresentableText.get();
   }
 

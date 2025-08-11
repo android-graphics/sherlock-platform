@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.impl;
 
@@ -36,8 +36,9 @@ public interface DirectoryIndexExcludePolicy {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @Nullable
   @Contract(pure = true)
-  default @Nullable Function<Sdk, List<VirtualFile>> getExcludeSdkRootsStrategy() {
+  default Function<Sdk, List<VirtualFile>> getExcludeSdkRootsStrategy() {
     return null;
   }
 

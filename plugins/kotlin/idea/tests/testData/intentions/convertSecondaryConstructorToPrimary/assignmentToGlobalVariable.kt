@@ -1,4 +1,3 @@
-// "Convert to primary constructor" "true"
 var state: String = "Fail"
 
 class A {
@@ -9,5 +8,3 @@ class A {
         state = x
     }
 }
-
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertSecondaryConstructorToPrimaryInspection$createQuickFix$1

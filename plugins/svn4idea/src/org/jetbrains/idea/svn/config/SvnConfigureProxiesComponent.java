@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.config;
 
 import com.intellij.openapi.actionSystem.*;
@@ -40,7 +40,8 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
   }
 
   @Override
-  public @NotNull JComponent createComponent() {
+  @NotNull
+  public JComponent createComponent() {
     if (myComponent == null) {
       myComponent = super.createComponent();
     }
@@ -153,7 +154,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
       return false;
     })) {
       @Override
-      public void actionPerformed(final @NotNull AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         final TreePath path = myTree.getSelectionPath();
         final MyNode node = (MyNode)path.getLastPathComponent();
         final MyNode parentNode = (MyNode) node.getParent();
@@ -267,7 +268,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
   }
 
   private static class GroupNodesComparator implements Comparator<MyNode> {
-    private static final GroupNodesComparator instance = new GroupNodesComparator();
+    private final static GroupNodesComparator instance = new GroupNodesComparator();
 
     private static GroupNodesComparator getInstance() {
       return instance;

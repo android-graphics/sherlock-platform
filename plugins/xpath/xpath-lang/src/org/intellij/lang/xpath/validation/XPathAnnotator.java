@@ -294,7 +294,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
   private static void markUnresolvedVariable(XPathVariableReference reference, AnnotationHolder holder) {
     final String referencedName = reference.getReferencedName();
     // missing name is already flagged by parser
-    if (!referencedName.isEmpty()) {
+    if (referencedName.length() > 0) {
       final TextRange range = reference.getTextRange().shiftRight(1).grown(-1);
       AnnotationBuilder builder =
         holder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.unresolved.variable", referencedName))
@@ -498,7 +498,8 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
     }
   }
 
-  private static @Nullable XPathNodeTypeTest findNodeType(XPathExpression argument) {
+  @Nullable
+  private static XPathNodeTypeTest findNodeType(XPathExpression argument) {
     final XPathNodeTest test = findNodeTest(argument);
     if (test != null && !test.isNameTest() && test.getPrincipalType() == XPathNodeTest.PrincipalType.ELEMENT) {
       return PsiTreeUtil.getChildOfType(test, XPathNodeTypeTest.class);
@@ -506,7 +507,8 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
     return null;
   }
 
-  private static @Nullable PrefixedName findQName(XPathExpression argument) {
+  @Nullable
+  private static PrefixedName findQName(XPathExpression argument) {
     final XPathNodeTest test = findNodeTest(argument);
     if (test != null && test.isNameTest() && test.getPrincipalType() == XPathNodeTest.PrincipalType.ELEMENT) {
       return test.getQName();
@@ -514,7 +516,8 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
     return null;
   }
 
-  private static @Nullable XPathNodeTest findNodeTest(XPathExpression argument) {
+  @Nullable
+  private static XPathNodeTest findNodeTest(XPathExpression argument) {
     if (argument instanceof XPathLocationPath) {
       final XPathStep step = ((XPathLocationPath)argument).getFirstStep();
       if (step != null && step.getPreviousStep() == null && step.getPredicates().length == 0) {

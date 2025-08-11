@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.library.impl.sdk;
 
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +31,9 @@ public class JpsSdkImpl<P extends JpsElement> extends JpsCompositeElementBase<Jp
     myVersionString = original.myVersionString;
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsSdkImpl<P> createCopy() {
+  public JpsSdkImpl<P> createCopy() {
     return new JpsSdkImpl<>(this);
   }
 
@@ -51,8 +52,9 @@ public class JpsSdkImpl<P extends JpsElement> extends JpsCompositeElementBase<Jp
     return mySdkType;
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsLibraryImpl<JpsSdk<P>> getParent() {
+  public JpsLibraryImpl<JpsSdk<P>> getParent() {
     //noinspection unchecked
     return (JpsLibraryImpl<JpsSdk<P>>)super.getParent();
   }

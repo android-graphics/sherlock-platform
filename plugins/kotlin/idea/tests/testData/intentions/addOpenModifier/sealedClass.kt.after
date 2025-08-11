@@ -1,4 +1,3 @@
-// PRIORITY: LOW
 sealed class Foo {
     open fun bar() {
     }

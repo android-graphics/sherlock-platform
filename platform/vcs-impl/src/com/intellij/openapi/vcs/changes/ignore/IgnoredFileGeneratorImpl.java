@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ignore;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -51,9 +51,11 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
 
   private static final Object myNotificationLock = new Object();
 
-  private static @Nullable Notification myNotification;
+  @Nullable
+  private static Notification myNotification;
 
-  private static @Nullable VirtualFile myIgnoreFileRootNotificationShowFor;
+  @Nullable
+  private static VirtualFile myIgnoreFileRootNotificationShowFor;
 
   protected IgnoredFileGeneratorImpl(@NotNull Project project) {
     myProject = project;
@@ -189,7 +191,8 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
   }
 
 
-  private static @NotNull File getIgnoreFile(@NotNull VirtualFile ignoreFileRoot, @NotNull String ignoreFileName) {
+  @NotNull
+  private static File getIgnoreFile(@NotNull VirtualFile ignoreFileRoot, @NotNull String ignoreFileName) {
     File vcsRootFile = VfsUtilCore.virtualToIoFile(ignoreFileRoot);
     return new File(vcsRootFile.getPath(), ignoreFileName);
   }
@@ -246,7 +249,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
 
   @Service(Service.Level.PROJECT)
   @State(name = "IgnoredFileRootStore", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
-  static final class IgnoredFileRootStore implements PersistentStateComponent<IgnoredFileRootStore.State> {
+  final static class IgnoredFileRootStore implements PersistentStateComponent<IgnoredFileRootStore.State> {
     static class State {
       public Set<String> generatedRoots = new HashSet<>();
     }
@@ -265,8 +268,9 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
       myState.generatedRoots.add(root);
     }
 
+    @Nullable
     @Override
-    public @Nullable State getState() {
+    public State getState() {
       return myState;
     }
 

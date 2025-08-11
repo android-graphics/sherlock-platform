@@ -31,12 +31,14 @@ import org.jetbrains.annotations.Nullable;
 public final class DefaultNotLastCaseInSwitchInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("default.not.last.case.in.switch.problem.descriptor", infos[1]);
   }
 
+  @Nullable
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     PsiSwitchLabelStatementBase lbl = (PsiSwitchLabelStatementBase)infos[0];
     if (lbl instanceof PsiSwitchLabelStatement) {
       PsiElement lastDefaultStmt = PsiTreeUtil.skipWhitespacesAndCommentsBackward(PsiTreeUtil.getNextSiblingOfType(lbl, PsiSwitchLabelStatementBase.class));

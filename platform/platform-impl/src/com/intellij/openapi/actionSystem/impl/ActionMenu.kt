@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.diagnostic.UILatencyLogger
@@ -6,7 +6,6 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.IdeEventQueue.Companion.getInstance
 import com.intellij.ide.ui.UISettings
-import com.intellij.internal.inspector.UiInspectorActionUtil
 import com.intellij.internal.inspector.UiInspectorContextProvider
 import com.intellij.internal.inspector.UiInspectorUtil
 import com.intellij.openapi.Disposable
@@ -17,12 +16,9 @@ import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator.decora
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.ui.JBPopupMenu
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.IconLoader.getDarkIcon
 import com.intellij.openapi.util.IconLoader.getDisabledIcon
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
@@ -33,38 +29,38 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBMenu
 import com.intellij.ui.icons.getMenuBarIcon
+import com.intellij.ui.mac.foundation.NSDefaults
 import com.intellij.ui.plaf.beg.BegMenuItemUI
 import com.intellij.ui.plaf.beg.IdeaMenuUI
+import com.intellij.util.Alarm
 import com.intellij.util.FontUtil
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SingleAlarm
-import com.intellij.util.concurrency.EdtScheduler
+import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.Job
 import java.awt.*
 import java.awt.event.AWTEventListener
 import java.awt.event.ComponentEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 import javax.swing.*
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import javax.swing.event.MenuEvent
 import javax.swing.event.MenuListener
 import kotlin.math.abs
-import kotlin.time.Duration.Companion.seconds
 
 @Suppress("RedundantConstructorKeyword")
-class ActionMenu constructor(
-  private val context: DataContext?,
-  private val place: String,
-  group: ActionGroup,
-  private val presentationFactory: PresentationFactory,
-  private var isMnemonicEnabled: Boolean,
-  private val useDarkIcons: Boolean,
-  @JvmField internal val isHeaderMenuItem: Boolean = false,
-) : JBMenu() {
+class ActionMenu constructor(private val context: DataContext?,
+                             private val place: String,
+                             group: ActionGroup,
+                             private val presentationFactory: PresentationFactory,
+                             private var isMnemonicEnabled: Boolean,
+                             private val useDarkIcons: Boolean,
+                             val isHeaderMenuItem: Boolean = false) : JBMenu() {
   private val group = createActionRef(group)
   private val presentation = presentationFactory.getPresentation(group)
 
@@ -160,7 +156,7 @@ class ActionMenu constructor(
       popupListener = createWinListener(specialMenu)
       ReflectionUtil.setField(JMenu::class.java, this, JPopupMenu::class.java, "popupMenu", specialMenu)
       UiInspectorUtil.registerProvider(specialMenu, UiInspectorContextProvider {
-        UiInspectorActionUtil.collectActionGroupInfo("Menu", group.getAction(), place, presentationFactory)
+        UiInspectorUtil.collectActionGroupInfo("Menu", group.getAction(), place, presentationFactory)
       })
     }
     return super.getPopupMenu()
@@ -274,7 +270,7 @@ class ActionMenu constructor(
   }
 
   private inner class MenuListenerImpl : ChangeListener, MenuListener {
-    var delayedClear: Job? = null
+    var delayedClear: ScheduledFuture<*>? = null
     var isSelected: Boolean = false
 
     override fun stateChanged(e: ChangeEvent) {
@@ -326,7 +322,7 @@ class ActionMenu constructor(
         // When a user selects item of a system menu (under macOS), AppKit generates such sequence: CloseParentMenu -> PerformItemAction
         // So we can destroy menu-item before item's action performed, and because of that action will not be executed.
         // Defer clearing to avoid this problem.
-        delayedClear = EdtScheduler.getInstance().schedule(1.seconds, clearSelf)
+        delayedClear = EdtScheduledExecutorService.getInstance().schedule(clearSelf, 1000, TimeUnit.MILLISECONDS)
       }
       else {
         clearSelf.run()
@@ -346,7 +342,7 @@ class ActionMenu constructor(
       }
       Disposer.register(disposable!!, helper)
       if (delayedClear != null) {
-        delayedClear!!.cancel()
+        delayedClear!!.cancel(false)
         delayedClear = null
         clearItems()
       }
@@ -366,15 +362,6 @@ class ActionMenu constructor(
       if (!isSelected) {
         return
       }
-    }
-
-    if (!SystemInfo.isMacSystemMenu && parent is JMenuBar) {
-      // Workaround for a problem in `javax.swing.JMenu.getPopupMenuOrigin` method:
-      // 1. Show some menu above the correspondent main menu item
-      // 2. Change its content (see video in IJPL-54336) or move the main frame to lower position
-      // 3. Open the menu again: it will have the wrong position
-      // The position is calculated based on the old size, resetting size forces `getPopupMenuOrigin` method to use preferred size
-      popupMenu.size = Dimension(0, 0)
     }
 
     super.setPopupMenuVisible(value)
@@ -421,12 +408,16 @@ class ActionMenu constructor(
 
   fun fillMenu() {
     val context = getDataContext()
-    Utils.fillMenu(uiKind = ActualActionUiKind.Menu(this, isMainMenuPlace),
-                   group = group.getAction(),
+    val isDarkMenu = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar()
+    Utils.fillMenu(group = group.getAction(),
+                   component = this,
+                   nativePeer = null,
                    enableMnemonics = isMnemonicEnabled,
                    presentationFactory = presentationFactory,
                    context = context,
                    place = place,
+                   isWindowMenu = true,
+                   useDarkIcons = isDarkMenu,
                    progressPoint = RelativePoint.getNorthEastOf(this)) { !isSelected }
   }
 }
@@ -442,18 +433,13 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.EventDispatc
   private var eventToRedispatch: MouseEvent? = null
 
   init {
-    callbackAlarm = SingleAlarm(
-      task = {
-        Disposer.dispose(callbackAlarm!!)
-        callbackAlarm = null
-        if (eventToRedispatch != null) {
-          getInstance().dispatchEvent(eventToRedispatch!!)
-        }
-      },
-      delay = 50,
-      parentDisposable = this,
-      modalityState = ModalityState.any(),
-    )
+    callbackAlarm = SingleAlarm({
+                                  Disposer.dispose(callbackAlarm!!)
+                                  callbackAlarm = null
+                                  if (eventToRedispatch != null) {
+                                    getInstance().dispatchEvent(eventToRedispatch!!)
+                                  }
+                                }, 50, this, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any())
     this.component = component
     val info = MouseInfo.getPointerInfo()
     startMousePoint = info?.location

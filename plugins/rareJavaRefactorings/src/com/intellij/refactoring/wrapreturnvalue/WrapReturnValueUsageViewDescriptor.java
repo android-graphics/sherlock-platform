@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.wrapreturnvalue;
 
 import com.intellij.psi.PsiElement;
@@ -10,7 +10,8 @@ import org.jetbrains.annotations.NotNull;
 
 class WrapReturnValueUsageViewDescriptor implements UsageViewDescriptor {
 
-    private final @NotNull PsiMethod method;
+    @NotNull
+    private final PsiMethod method;
 
     WrapReturnValueUsageViewDescriptor(@NotNull PsiMethod method,
                                        UsageInfo[] usages){
@@ -28,8 +29,9 @@ class WrapReturnValueUsageViewDescriptor implements UsageViewDescriptor {
         return JavaRareRefactoringsBundle.message("method.whose.return.are.to.wrapped");
     }
 
+    @NotNull
     @Override
-    public @NotNull String getCodeReferencesText(int usagesCount, int filesCount){
+    public String getCodeReferencesText(int usagesCount, int filesCount){
         return JavaRareRefactoringsBundle.message("references.to.be.modified.usage.view", usagesCount, filesCount);
     }
 }

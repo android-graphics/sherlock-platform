@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.jvm.annotations.JVM_OVERLOADS_FQ_NAME
+import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightAccessor
@@ -70,10 +70,8 @@ abstract class AbstractKotlinUClass(
 
         fun isDelegatedMethod(psiMethod: PsiMethod) = psiMethod is KtLightMethod && psiMethod.isDelegated
 
-        fun isJvmOverloadMethod(uMethod: UMethod) = uMethod.javaPsi.hasAnnotation(JVM_OVERLOADS_FQ_NAME.asString())
-
         val result = ArrayList<UMethod>(javaPsi.methods.size)
-        val handledKtDeclarations = mutableMapOf<PsiElement, UMethod>()
+        val handledKtDeclarations = mutableSetOf<PsiElement>()
 
         for (lightMethod in javaPsi.methods) {
             if (isDelegatedMethod(lightMethod)) continue
@@ -86,15 +84,7 @@ abstract class AbstractKotlinUClass(
             // Seeing one accessor and skipping the containing [KtProperty] may cause to miss
             // the other accessor that could be potentially deprecated-hidden.
             if (kotlinOrigin is KtProperty) continue
-
-            if (kotlinOrigin != null) {
-                val overloaded = handledKtDeclarations.putIfAbsent(kotlinOrigin, uMethod)
-                // We assume that the original one is created first, followed by overloaded ones
-                // NB: putIfAbsent returns `null` for the first added element.
-                if (overloaded != null && overloaded != uMethod && isJvmOverloadMethod(overloaded)) {
-                    (uMethod as? KotlinUMethod)?.jvmOverload = overloaded
-                }
-            }
+            handledKtDeclarations.addIfNotNull(kotlinOrigin)
         }
 
         val ktDeclarations: List<KtDeclaration> = run ktDeclarations@{
@@ -111,7 +101,7 @@ abstract class AbstractKotlinUClass(
             baseResolveProviderService.baseKotlinConverter.convertDeclaration(psiElement, this, arrayOf(UElement::class.java))
 
         ktDeclarations.asSequence()
-            .filterNot { it in handledKtDeclarations }
+            .filterNot { handledKtDeclarations.contains(it) }
             .flatMapTo(result) { ktDeclaration ->
                 // [KtDeclaration] that doesn't have a corresponding LC element for some reason.
                 when (ktDeclaration) {

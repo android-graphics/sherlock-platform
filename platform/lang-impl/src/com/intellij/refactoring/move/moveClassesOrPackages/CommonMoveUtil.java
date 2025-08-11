@@ -11,7 +11,6 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -49,7 +48,7 @@ public final class CommonMoveUtil {
 
   private static final Logger LOG = Logger.getInstance(CommonMoveUtil.class);
 
-  public static NonCodeUsageInfo[] retargetUsages(UsageInfo @NotNull [] usages, @NotNull Map<PsiElement, PsiElement> oldToNewElementsMapping) {
+  public static NonCodeUsageInfo[] retargetUsages(UsageInfo[] usages, Map<PsiElement, PsiElement> oldToNewElementsMapping) {
     Arrays.sort(usages, USAGE_INFO_COMPARATOR);
     List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<>();
     for (UsageInfo usage : usages) {

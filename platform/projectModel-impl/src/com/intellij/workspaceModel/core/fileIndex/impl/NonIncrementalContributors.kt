@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.JavaSyntheticLibrary
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.roots.impl.RootFileValidityChecker
 import com.intellij.openapi.vfs.VirtualFile
@@ -150,7 +149,7 @@ internal class NonIncrementalContributors(private val project: Project) {
           continue
         }
 
-        fun registerRoots(files: Collection<VirtualFile>, kind: WorkspaceFileKind, fileSetData: WorkspaceFileSetData) {
+        fun registerRoots(files: MutableCollection<VirtualFile>, kind: WorkspaceFileKind, fileSetData: WorkspaceFileSetData) {
           files.forEach { root ->
             RootFileValidityChecker.correctRoot(root, library, provider)?.let {
               result.putValue(it, WorkspaceFileSetImpl(it, kind, NonIncrementalMarker, EntityStorageKind.MAIN, fileSetData))
@@ -158,12 +157,9 @@ internal class NonIncrementalContributors(private val project: Project) {
           }
         }
         //todo use comparisonId for incremental updates?
-        val sourceRoots = checkNotNull(library.sourceRoots, "getSourceRoots()", library) ?: emptyList<VirtualFile>()
-        registerRoots(sourceRoots, WorkspaceFileKind.EXTERNAL_SOURCE, if (library is JavaSyntheticLibrary) LibrarySourceRootFileSetData(null) else SyntheticLibrarySourceRootData)
-        val binaryRoots = checkNotNull(library.binaryRoots, "getBinaryRoots()", library) ?: emptyList<VirtualFile>()
-        registerRoots(binaryRoots, WorkspaceFileKind.EXTERNAL, if (library is JavaSyntheticLibrary) LibraryRootFileSetData(null) else DummyWorkspaceFileSetData)
-        val excludedRoots = checkNotNull(library.excludedRoots, "getExcludedRoots()", library) ?: emptySet<VirtualFile>()
-        excludedRoots.forEach {
+        registerRoots(library.sourceRoots, WorkspaceFileKind.EXTERNAL_SOURCE, if (library is JavaSyntheticLibrary) LibrarySourceRootFileSetData(null, "") else SyntheticLibrarySourceRootData)
+        registerRoots(library.binaryRoots, WorkspaceFileKind.EXTERNAL, if (library is JavaSyntheticLibrary) LibraryRootFileSetData(null, "") else DummyWorkspaceFileSetData)
+        library.excludedRoots.forEach {
           result.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, NonIncrementalMarker))
         }
         library.unitedExcludeCondition?.let { condition ->
@@ -173,13 +169,6 @@ internal class NonIncrementalContributors(private val project: Project) {
           }
         }
       }
-    }
-    return result
-  }
-  
-  private fun <T> checkNotNull(result: T?, methodName: String, library: SyntheticLibrary): T? {
-    if (result == null) {
-      PluginException.logPluginError(LOG, "Contract violation: SyntheticLibrary::$methodName is marked as '@NotNull', but its implementation in $library returned 'null'", null, library.javaClass)
     }
     return result
   }

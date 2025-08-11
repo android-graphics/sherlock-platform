@@ -14,7 +14,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +21,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-@ApiStatus.Internal
 public final class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
   private final @NotNull Project myProject;
   private final @NotNull Editor myEditor;
@@ -68,7 +66,7 @@ public final class DaemonTooltipRendererProvider implements ErrorStripTooltipRen
         if (i != 0) return i;
         return StringUtil.compare(o1.getToolTip(), o2.getToolTip(), false);
       });
-      HighlightInfo composite = HighlightInfo.createComposite(infos);
+      HighlightInfoComposite composite = HighlightInfoComposite.create(infos);
       String toolTip = composite.getToolTip();
       TooltipAction action = TooltipActionProvider.calcTooltipAction(composite, myProject, myEditor);
       LineTooltipRenderer myRenderer = calcTooltipRenderer(toolTip, action, 0);

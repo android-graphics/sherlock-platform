@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.langInjection;
 
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -12,10 +12,11 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class PyLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
-  private static final @NonNls String SUPPORT_ID = "python";
+  @NonNls private static final String SUPPORT_ID = "python";
 
+  @NotNull
   @Override
-  public @NotNull String getId() {
+  public String getId() {
     return SUPPORT_ID;
   }
 
@@ -29,8 +30,9 @@ public final class PyLanguageInjectionSupport extends AbstractLanguageInjectionS
     return host instanceof PyElement;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getHelpId() {
+  public String getHelpId() {
     return "reference.settings.language.injection.generic.python";
   }
 }

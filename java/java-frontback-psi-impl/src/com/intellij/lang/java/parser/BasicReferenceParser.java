@@ -47,12 +47,14 @@ public class BasicReferenceParser {
     myJavaElementTypeContainer = javaParser.getJavaElementTypeFactory().getContainer();
   }
 
-  public @Nullable PsiBuilder.Marker parseType(PsiBuilder builder, int flags) {
+  @Nullable
+  public PsiBuilder.Marker parseType(PsiBuilder builder, int flags) {
     TypeInfo typeInfo = parseTypeInfo(builder, flags);
     return typeInfo != null ? typeInfo.marker : null;
   }
 
-  public @Nullable TypeInfo parseTypeInfo(PsiBuilder builder, int flags) {
+  @Nullable
+  public TypeInfo parseTypeInfo(PsiBuilder builder, int flags) {
     TypeInfo typeInfo = parseTypeInfo(builder, flags, false);
 
     if (typeInfo != null) {
@@ -78,7 +80,8 @@ public class BasicReferenceParser {
     return typeInfo;
   }
 
-  private @Nullable TypeInfo parseTypeInfo(PsiBuilder builder, int flags, boolean badWildcard) {
+  @Nullable
+  private TypeInfo parseTypeInfo(PsiBuilder builder, int flags, boolean badWildcard) {
     if (builder.getTokenType() == null) return null;
 
     TypeInfo typeInfo = new TypeInfo();
@@ -186,11 +189,12 @@ public class BasicReferenceParser {
     }
   }
 
-  public @Nullable PsiBuilder.Marker parseJavaCodeReference(PsiBuilder builder,
-                                                            boolean eatLastDot,
-                                                            boolean parameterList,
-                                                            boolean isNew,
-                                                            boolean diamonds) {
+  @Nullable
+  public PsiBuilder.Marker parseJavaCodeReference(PsiBuilder builder,
+                                                  boolean eatLastDot,
+                                                  boolean parameterList,
+                                                  boolean isNew,
+                                                  boolean diamonds) {
     return parseJavaCodeReference(builder, eatLastDot, parameterList, false, false, isNew, diamonds, new TypeInfo());
   }
 
@@ -200,9 +204,10 @@ public class BasicReferenceParser {
     return !typeInfo.hasErrors;
   }
 
-  private @Nullable PsiBuilder.Marker parseJavaCodeReference(PsiBuilder builder, boolean eatLastDot, boolean parameterList, boolean isImport,
-                                                             boolean isStaticImport, boolean isNew, boolean diamonds,
-                                                             TypeInfo typeInfo) {
+  @Nullable
+  private PsiBuilder.Marker parseJavaCodeReference(PsiBuilder builder, boolean eatLastDot, boolean parameterList, boolean isImport,
+                                                   boolean isStaticImport, boolean isNew, boolean diamonds,
+                                                   TypeInfo typeInfo) {
     PsiBuilder.Marker refElement = builder.mark();
 
     myParser.getDeclarationParser().parseAnnotations(builder);
@@ -310,7 +315,8 @@ public class BasicReferenceParser {
     return isOk;
   }
 
-  public @NotNull PsiBuilder.Marker parseTypeParameters(PsiBuilder builder) {
+  @NotNull
+  public PsiBuilder.Marker parseTypeParameters(PsiBuilder builder) {
     PsiBuilder.Marker list = builder.mark();
     if (!expect(builder, JavaTokenType.LT)) {
       list.done(myJavaElementTypeContainer.TYPE_PARAMETER_LIST);
@@ -347,7 +353,8 @@ public class BasicReferenceParser {
     return list;
   }
 
-  public @Nullable PsiBuilder.Marker parseTypeParameter(PsiBuilder builder) {
+  @Nullable
+  public PsiBuilder.Marker parseTypeParameter(PsiBuilder builder) {
     PsiBuilder.Marker param = builder.mark();
 
     myParser.getDeclarationParser().parseAnnotations(builder);

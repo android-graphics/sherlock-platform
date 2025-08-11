@@ -1,19 +1,28 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.plaf.basic.ComboPopup;
+import javax.swing.text.AttributeSet;
+
+import java.awt.*;
+import java.util.Locale;
 
 import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 
 public abstract class SdkComboBoxBase<T> extends ComboBox<T> {
   private final Logger LOG = Logger.getInstance(getClass());
-  protected final @NotNull SdkListModelBuilder myModel;
+  @NotNull protected final SdkListModelBuilder myModel;
 
   protected SdkComboBoxBase(@NotNull SdkListModelBuilder model) {
     super();
@@ -38,15 +47,18 @@ public abstract class SdkComboBoxBase<T> extends ComboBox<T> {
     setSelectedItem(myModel.showInvalidSdkItem(name));
   }
 
-  public @NotNull SdkListItem showInvalidSdkItem(@NotNull String name) {
+  @NotNull
+  public SdkListItem showInvalidSdkItem(@NotNull String name) {
     return myModel.showInvalidSdkItem(name);
   }
 
-  public @NotNull SdkListItem showProjectSdkItem() {
+  @NotNull
+  public SdkListItem showProjectSdkItem() {
     return myModel.showProjectSdkItem();
   }
 
-  public @NotNull SdkListItem showNoneSdkItem() {
+  @NotNull
+  public SdkListItem showNoneSdkItem() {
     return myModel.showNoneSdkItem();
   }
 

@@ -54,7 +54,6 @@ import static com.intellij.internal.statistic.eventLog.events.EventFields.Int;
 import static com.intellij.internal.statistic.eventLog.events.EventFields.Long;
 import static com.intellij.notification.NotificationAction.createSimpleExpiring;
 
-@ApiStatus.Internal
 @SuppressWarnings("NonConstantLogger")
 public final class OldDirectoryCleaner {
   @ApiStatus.Internal

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -254,7 +254,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       OverrideImplementUtil.annotateOnOverrideImplement(method, mySourceClass, movedElement);
       if (!PsiUtil.isAvailable(JavaFeature.OVERRIDE_INTERFACE, mySourceClass) && myIsTargetInterface) {
         if (isOriginalMethodAbstract) {
-          for (PsiMethod oMethod : OverridingMethodsSearch.search(method).asIterable()) {
+          for (PsiMethod oMethod : OverridingMethodsSearch.search(method)) {
             deleteOverrideAnnotationIfFound(oMethod);
           }
         }
@@ -473,7 +473,8 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     }
   }
 
-  private @Nullable PsiStatement hasCommonInitializer(PsiStatement commonInitializer, PsiMethod subConstructor, PsiField field, ArrayList<? super PsiElement> statementsToRemove) {
+  @Nullable
+  private PsiStatement hasCommonInitializer(PsiStatement commonInitializer, PsiMethod subConstructor, PsiField field, ArrayList<? super PsiElement> statementsToRemove) {
     final PsiCodeBlock body = subConstructor.getBody();
     if (body == null) return null;
     final PsiStatement[] statements = body.getStatements();
@@ -633,7 +634,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       constructorsToSubConstructors.put(constructor, referencingSubConstructors);
       if (constructor != null) {
         // find references
-        for (PsiReference reference : ReferencesSearch.search(constructor, new LocalSearchScope(mySourceClass), false).asIterable()) {
+        for (PsiReference reference : ReferencesSearch.search(constructor, new LocalSearchScope(mySourceClass), false)) {
           final PsiElement element = reference.getElement();
           if ("super".equals(element.getText())) {
             PsiMethod parentMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
@@ -797,7 +798,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   }
 
   private boolean willBeUsedInSubclass(PsiElement member, PsiClass superclass, PsiClass subclass) {
-    for (PsiReference ref : ReferencesSearch.search(member, new LocalSearchScope(subclass), false).asIterable()) {
+    for (PsiReference ref : ReferencesSearch.search(member, new LocalSearchScope(subclass), false)) {
       PsiElement element = ref.getElement();
       if (!RefactoringHierarchyUtil.willBeInTargetClass(element, myMembersToMove, superclass, false)) {
         return true;

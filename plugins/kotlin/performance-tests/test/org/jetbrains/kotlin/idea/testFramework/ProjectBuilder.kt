@@ -1,6 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-@file:OptIn(UnsafeCastFunction::class)
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.testFramework
 
@@ -34,7 +32,6 @@ import org.jetbrains.kotlin.idea.performance.tests.utils.project.OpenProject
 import org.jetbrains.kotlin.idea.performance.tests.utils.project.ProjectOpenAction
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.addRoot
-import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import java.io.File
 import java.nio.file.Files

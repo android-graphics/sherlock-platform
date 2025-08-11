@@ -1,5 +1,0 @@
-import org.testng.Assert.*
-#parse("File Header.java")
-class ${NAME} {
-    ${BODY}
-}

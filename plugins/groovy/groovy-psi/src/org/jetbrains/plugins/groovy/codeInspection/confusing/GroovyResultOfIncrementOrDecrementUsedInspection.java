@@ -28,12 +28,14 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public final class GroovyResultOfIncrementOrDecrementUsedInspection extends BaseInspection {
 
   @Override
-  protected @Nullable String buildErrorString(Object... args) {
+  @Nullable
+  protected String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.result.increment.or.decrement.expression.used");
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

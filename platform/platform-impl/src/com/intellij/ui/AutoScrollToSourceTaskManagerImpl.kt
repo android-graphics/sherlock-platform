@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.Utils.createAsyncDataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.util.await
@@ -21,40 +22,43 @@ import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
-private class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager {
+@ApiStatus.Experimental
+internal class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager {
   @RequiresEdt
   override fun scheduleScrollToSource(handler: AutoScrollToSourceHandler, dataContext: DataContext) {
     val asyncDataContext = createAsyncDataContext(dataContext)
     val project = dataContext.getData(PlatformDataKeys.PROJECT)
 
     // the task must be canceled if the project is closed
-    (project?.service<CoreUiCoroutineScopeHolder>() ?: service<CoreUiCoroutineScopeHolder>()).coroutineScope
-      .launch(ClientId.current.asContextElement()) {
-        PlatformDataKeys.TOOL_WINDOW.getData(asyncDataContext)?.getReady(handler)?.await()
+    ((project as? ComponentManagerEx)?.getCoroutineScope() ?: service<CoreUiCoroutineScopeHolder>().coroutineScope)
+      .launch(Dispatchers.EDT + ClientId.current.asContextElement()) {
+      PlatformDataKeys.TOOL_WINDOW.getData(asyncDataContext)
+        ?.getReady(handler)
+        ?.await()
 
-        val navigatable = readAction {
-          val file = CommonDataKeys.VIRTUAL_FILE.getData(asyncDataContext)
-          if (file == null || handler.isAutoScrollEnabledFor(file)) {
-            CommonDataKeys.NAVIGATABLE_ARRAY.getData(asyncDataContext)?.singleOrNull()
-          }
-          else {
-            null
-          }
-        } ?: return@launch
+      val navigatable = readAction {
+        val file = CommonDataKeys.VIRTUAL_FILE.getData(asyncDataContext)
+        if (file == null || handler.isAutoScrollEnabledFor(file)) {
+          CommonDataKeys.NAVIGATABLE_ARRAY.getData(asyncDataContext)?.singleOrNull()
+        }
+        else {
+          null
+        }
+      }
 
-        if (project != null && Registry.`is`("ide.navigation.requests")) {
+      if (navigatable != null) {
+        if (Registry.`is`("ide.navigation.requests") && project != null) {
           val options = NavigationOptions.defaultOptions().requestFocus(false).preserveCaret(true).sourceNavigationOnly(true)
           project.serviceAsync<NavigationService>().navigate(navigatable, options)
         }
         else {
-          withContext(Dispatchers.EDT) {
-            SlowOperations.knownIssue("IDEA-304701, EA-677533").use {
-              OpenSourceUtil.navigateToSource(false, true, navigatable)
-            }
+          SlowOperations.knownIssue("IDEA-304701, EA-677533").use {
+            OpenSourceUtil.navigateToSource(false, true, navigatable)
           }
         }
       }
+    }
   }
 }

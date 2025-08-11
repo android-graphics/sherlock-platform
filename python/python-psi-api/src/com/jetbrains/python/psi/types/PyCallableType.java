@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
 import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,15 +41,18 @@ public interface PyCallableType extends PyType {
    *
    * @return list of parameter info null if not applicable.
    */
-  default @Nullable List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
+  @Nullable
+  default List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     return null;
   }
 
-  default @Nullable PyCallable getCallable() {
+  @Nullable
+  default PyCallable getCallable() {
     return null;
   }
 
-  default @Nullable PyFunction.Modifier getModifier() {
+  @Nullable
+  default PyFunction.Modifier getModifier() {
     return null;
   }
 
@@ -59,10 +63,5 @@ public interface PyCallableType extends PyType {
    */
   default int getImplicitOffset() {
     return 0;
-  }
-
-  @Override
-  default <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
-    return visitor.visitPyCallableType(this);
   }
 }

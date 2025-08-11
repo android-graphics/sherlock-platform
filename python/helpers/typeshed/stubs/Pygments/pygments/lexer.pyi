@@ -1,49 +1,47 @@
 from _typeshed import Incomplete
 from collections.abc import Iterable, Iterator, Sequence
-from re import RegexFlag
-from typing import ClassVar
+from typing import Any
 
 from pygments.token import _TokenType
 from pygments.util import Future
 
 class LexerMeta(type):
     def __new__(cls, name, bases, d): ...
-    def analyse_text(self, text: str) -> float: ...  # actually defined in class Lexer
+    def analyse_text(self, text) -> None: ...  # actually defined in class Lexer
     # ClassVars of Lexer, but same situation as with StyleMeta and Style
     name: str
     aliases: Sequence[str]  # not intended mutable
     filenames: Sequence[str]
     alias_filenames: Sequence[str]
     mimetypes: Sequence[str]
-    priority: float
-    url: str | None
+    priority: int
 
 class Lexer(metaclass=LexerMeta):
-    options: Incomplete
-    stripnl: Incomplete
-    stripall: Incomplete
-    ensurenl: Incomplete
-    tabsize: Incomplete
-    encoding: Incomplete
-    filters: Incomplete
+    options: Any
+    stripnl: Any
+    stripall: Any
+    ensurenl: Any
+    tabsize: Any
+    encoding: Any
+    filters: Any
     def __init__(self, **options) -> None: ...
     def add_filter(self, filter_, **options) -> None: ...
     def get_tokens(self, text: str, unfiltered: bool = False) -> Iterator[tuple[_TokenType, str]]: ...
     def get_tokens_unprocessed(self, text: str) -> Iterator[tuple[int, _TokenType, str]]: ...
 
 class DelegatingLexer(Lexer):
-    root_lexer: Incomplete
-    language_lexer: Incomplete
-    needle: Incomplete
+    root_lexer: Any
+    language_lexer: Any
+    needle: Any
     def __init__(self, _root_lexer, _language_lexer, _needle=..., **options) -> None: ...
     def get_tokens_unprocessed(self, text: str) -> Iterator[tuple[int, _TokenType, str]]: ...
 
 class include(str): ...
 class _inherit: ...
 
-inherit: Incomplete
+inherit: Any
 
-class combined(tuple[Incomplete, ...]):
+class combined(tuple[Any, ...]):
     def __new__(cls, *args): ...
     def __init__(self, *args) -> None: ...
 
@@ -59,18 +57,18 @@ def bygroups(*args): ...
 
 class _This: ...
 
-this: Incomplete
+this: Any
 
 def using(_other, **kwargs): ...
 
 class default:
-    state: Incomplete
+    state: Any
     def __init__(self, state) -> None: ...
 
 class words(Future):
-    words: Incomplete
-    prefix: Incomplete
-    suffix: Incomplete
+    words: Any
+    prefix: Any
+    suffix: Any
     def __init__(self, words, prefix: str = "", suffix: str = "") -> None: ...
     def get(self): ...
 
@@ -80,15 +78,15 @@ class RegexLexerMeta(LexerMeta):
     def __call__(cls, *args, **kwds): ...
 
 class RegexLexer(Lexer, metaclass=RegexLexerMeta):
-    flags: ClassVar[RegexFlag]
-    tokens: ClassVar[dict[str, list[Incomplete]]]
+    flags: Any
+    tokens: Any
     def get_tokens_unprocessed(self, text: str, stack: Iterable[str] = ("root",)) -> Iterator[tuple[int, _TokenType, str]]: ...
 
 class LexerContext:
-    text: Incomplete
-    pos: Incomplete
-    end: Incomplete
-    stack: Incomplete
+    text: Any
+    pos: Any
+    end: Any
+    stack: Any
     def __init__(self, text, pos, stack: Incomplete | None = None, end: Incomplete | None = None) -> None: ...
 
 class ExtendedRegexLexer(RegexLexer):

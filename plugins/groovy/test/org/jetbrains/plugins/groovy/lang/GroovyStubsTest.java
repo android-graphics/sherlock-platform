@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.lang;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
@@ -59,9 +58,7 @@ public class GroovyStubsTest extends LightJavaCodeInsightFixtureTestCase {
     fooFile.setTreeElementPointer(null);
     DumbModeTestUtils.runInDumbModeSynchronously(project, () -> {
       UsefulTestCase.assertOneElement(((GroovyFile)fooFile).getClasses());
-      if (Registry.is("ide.dumb.mode.check.awareness")) {
-        TestCase.assertFalse(fooFile.isContentsLoaded());
-      }
+      TestCase.assertFalse(fooFile.isContentsLoaded());
     });
     assertNotNull(JavaPsiFacade.getInstance(project).findClass("Fooxx", GlobalSearchScope.allScope(project)));
   }

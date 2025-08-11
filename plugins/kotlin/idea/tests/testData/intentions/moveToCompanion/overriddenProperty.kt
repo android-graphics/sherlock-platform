@@ -1,5 +1,4 @@
 // SHOULD_FAIL_WITH: Property <b><code>foo</code></b> is overridden by declaration(s) in a subclass
-// IGNORE_K2
 open class A {
     open val <caret>foo: Int = 1
 }

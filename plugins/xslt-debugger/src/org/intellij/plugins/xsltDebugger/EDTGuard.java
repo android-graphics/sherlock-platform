@@ -66,7 +66,8 @@ final class EDTGuard implements InvocationHandler {
   }
 
   @Override
-  public @Nullable Object invoke(Object proxy, @NotNull Method method, Object[] args) throws Throwable {
+  @Nullable
+  public Object invoke(Object proxy, @NotNull Method method, Object[] args) throws Throwable {
     if (SwingUtilities.isEventDispatchThread()) {
       return invokeAsync(method, args);
     }
@@ -74,7 +75,8 @@ final class EDTGuard implements InvocationHandler {
     return invoke(method, args);
   }
 
-  private @Nullable Object invokeAsync(Method method, Object[] args) throws Throwable {
+  @Nullable
+  private Object invokeAsync(Method method, Object[] args) throws Throwable {
     final Call call = new Call(method, args);
 
     if (!myQueue.first.offer(call)) {
@@ -98,7 +100,8 @@ final class EDTGuard implements InvocationHandler {
     return result.getValue();
   }
 
-  private @Nullable Object invoke(@NotNull Method method, Object[] args) throws Throwable {
+  @Nullable
+  private Object invoke(@NotNull Method method, Object[] args) throws Throwable {
     try {
       return convert(method.invoke(myTarget, args));
     } catch (InvocationTargetException e) {
@@ -106,8 +109,9 @@ final class EDTGuard implements InvocationHandler {
     }
   }
 
+  @Nullable
   @SuppressWarnings("unchecked")
-  private @Nullable Object convert(@Nullable Object o) {
+  private Object convert(@Nullable Object o) {
     if (o != null && !(o instanceof Serializable)) {
       synchronized (myInstanceCache) {
         Object instance = myInstanceCache.get(o);
@@ -142,7 +146,8 @@ final class EDTGuard implements InvocationHandler {
     return o;
   }
 
-  public static @NotNull <T, O extends Watchable> T create(final @NotNull O target, final ProcessHandler process) {
+  @NotNull
+  public static <T, O extends Watchable> T create(@NotNull final O target, final ProcessHandler process) {
     final Pair<LinkedBlockingQueue<Call>, LinkedBlockingQueue<Call.Result>> queue =
       Pair.create(new LinkedBlockingQueue<>(10), new LinkedBlockingQueue<>());
 
@@ -249,7 +254,8 @@ final class EDTGuard implements InvocationHandler {
         return call == Call.this;
       }
 
-      public @Nullable Object getValue() throws Throwable {
+      @Nullable
+      public Object getValue() throws Throwable {
         if (myThrowable != null) {
           throw myThrowable;
         }
@@ -262,7 +268,8 @@ final class EDTGuard implements InvocationHandler {
       myArguments = arguments;
     }
 
-    public @NotNull Result invoke() {
+    @NotNull
+    public Result invoke() {
       try {
         return new Result(EDTGuard.this.invoke(myMethod, myArguments));
       } catch (Throwable e) {

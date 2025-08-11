@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.maddyhome.idea.copyright.ui;
 
@@ -28,12 +28,14 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
   }
 
   @Override
-  public @NotNull String getId() {
+  @NotNull
+  public String getId() {
     return "template.copyright.formatting";
   }
 
   @Override
-  public @Nls String getDisplayName() {
+  @Nls
+  public String getDisplayName() {
     return CopyrightBundle.message("configurable.CopyrightFormattingConfigurable.display.name");
   }
 
@@ -92,8 +94,9 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
     return children;
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<BaseExtensionPointName<?>> getDependencies() {
+  public Collection<BaseExtensionPointName<?>> getDependencies() {
     return Collections.singletonList(CopyrightUpdaters.EP_NAME);
   }
 }

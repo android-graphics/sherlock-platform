@@ -1,38 +1,36 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.execution.impl.ExecutionManagerImpl
-import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
-import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.ui.playback.PlaybackContext
-import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
+import com.intellij.openapi.util.ActionCallback
 import com.intellij.xdebugger.XDebuggerManager
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withTimeout
+import com.jetbrains.performancePlugin.utils.AbstractCallbackBasedCommand
 import org.jetbrains.annotations.NonNls
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.minutes
+import java.io.IOException
 
-class StopDebugProcessCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+class StopDebugProcessCommand(text: String, line: Int) : AbstractCallbackBasedCommand(text, line, true) {
+
+  override fun execute(callback: ActionCallback, context: PlaybackContext) {
+    val debugSessions = XDebuggerManager.getInstance(context.project).debugSessions
+    if (debugSessions.isEmpty()) {
+      callback.reject("Debug process was not started")
+      return
+    }
+    if (debugSessions.size > 1) {
+      callback.reject("Currently running ${debugSessions.size} debug processes")
+      return
+    }
+
+    WriteAction.runAndWait<IOException> {
+      val selectedContent = RunContentManager.getInstance(context.project).getSelectedContent()
+      ExecutionManagerImpl.stopProcess(selectedContent)
+      callback.setDone()
+    }
+  }
 
   companion object {
     const val PREFIX: @NonNls String = CMD_PREFIX + "stopDebugProcess"
-  }
-
-  override suspend fun doExecute(context: PlaybackContext) {
-    val debugSessions = XDebuggerManager.getInstance(context.project).debugSessions
-    if (debugSessions.isEmpty()) throw IllegalStateException("Debug process was not started")
-    if (debugSessions.size > 1) throw IllegalStateException("Currently running ${debugSessions.size} debug processes")
-
-    var selectedContent: RunContentDescriptor? = null
-    edtWriteAction {
-      selectedContent = RunContentManager.getInstance(context.project).getSelectedContent()
-      ExecutionManagerImpl.stopProcess(selectedContent)
-    }
-    withTimeout(1.minutes) {
-      while (selectedContent == null || selectedContent?.processHandler?.isProcessTerminated == false) {
-        delay(500.milliseconds)
-      }
-    }
   }
 }

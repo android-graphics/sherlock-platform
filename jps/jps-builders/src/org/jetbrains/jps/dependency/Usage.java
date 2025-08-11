@@ -14,9 +14,7 @@ public interface Usage extends ExternalizableGraphElement {
   @NotNull
   ReferenceID getElementOwner();
 
-  @Override
   boolean equals(Object other);
 
-  @Override
   int hashCode();
 }

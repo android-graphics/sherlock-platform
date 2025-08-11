@@ -7,5 +7,3 @@ class <caret>A : Runnable {
     fun foo() {
     }
 }
-
-// MEMBER: "run(): Unit"

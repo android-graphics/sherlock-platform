@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -113,11 +113,13 @@ public abstract class NonCodeMembersContributor {
     return true;
   }
 
-  protected @Nullable String getParentClassName() {
+  @Nullable
+  protected String getParentClassName() {
     return null;
   }
 
-  protected @NotNull Collection<String> getClassNames() {
+  @NotNull
+  protected Collection<String> getClassNames() {
     String className = getParentClassName();
     return ContainerUtil.createMaybeSingletonList(className);
   }
@@ -146,7 +148,8 @@ public abstract class NonCodeMembersContributor {
     cache = new Cache(contributorMap, allTypeContributors.toArray(new NonCodeMembersContributor[0]));
   }
 
-  private static @NotNull Iterable<NonCodeMembersContributor> getApplicableContributors(@Nullable PsiClass clazz) {
+  @NotNull
+  private static Iterable<NonCodeMembersContributor> getApplicableContributors(@Nullable PsiClass clazz) {
     final List<NonCodeMembersContributor> result = new ArrayList<>();
     if (clazz != null) {
       for (String superClassName : ClassUtil.getSuperClassesWithCache(clazz).keySet()) {
@@ -214,8 +217,9 @@ public abstract class NonCodeMembersContributor {
       return wantMore;
     }
 
+    @NotNull
     @Override
-    public @NotNull Iterable<? extends PsiScopeProcessor> getProcessors() {
+    public Iterable<? extends PsiScopeProcessor> getProcessors() {
       return MultiProcessor.allProcessors(getDelegate());
     }
   }

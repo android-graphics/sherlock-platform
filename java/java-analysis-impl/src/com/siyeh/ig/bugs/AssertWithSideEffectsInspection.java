@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
@@ -20,7 +20,8 @@ import java.util.Set;
 public final class AssertWithSideEffectsInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("assert.with.side.effects.problem.descriptor", infos[0]);
   }
 
@@ -98,9 +99,6 @@ public final class AssertWithSideEffectsInspection extends BaseInspection {
     if (JavaMethodContractUtil.isPure(method)) return null;
     MutationSignature signature = MutationSignature.fromMethod(method);
     if (signature.mutatesAnything()) {
-      if (signature.performsIO()) {
-        return InspectionGadgetsBundle.message("assert.with.side.effects.call.performs.io", method.getName());
-      }
       PsiExpression expression =
         signature.mutatedExpressions(call).filter(expr -> !ExpressionUtils.isNewObject(expr)).findFirst().orElse(null);
       if (expression != null) {

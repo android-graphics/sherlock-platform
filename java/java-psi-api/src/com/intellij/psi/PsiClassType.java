@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmTypeDeclaration;
@@ -44,8 +44,9 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
     myLanguageLevel = languageLevel;
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiClassType annotate(@NotNull TypeAnnotationProvider provider) {
+  public PsiClassType annotate(@NotNull TypeAnnotationProvider provider) {
     return (PsiClassType)super.annotate(provider);
   }
 
@@ -55,7 +56,8 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
    * @return the class instance, or null if the reference resolve failed.
    */
   @Override
-  public abstract @Nullable PsiClass resolve();
+  @Nullable
+  public abstract PsiClass resolve();
 
   /**
    * Returns the non-qualified name of the class referenced by the type.
@@ -210,20 +212,23 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
    *
    * @return the resolve result instance.
    */
-  public abstract @NotNull ClassResolveResult resolveGenerics();
+  @NotNull
+  public abstract ClassResolveResult resolveGenerics();
 
   /**
    * Returns the raw type (with no values assigned to type parameters) corresponding to this type.
    *
    * @return the raw type instance.
    */
-  public abstract @NotNull PsiClassType rawType();
+  @NotNull
+  public abstract PsiClassType rawType();
 
   /**
    * Overrides {@link PsiType#getResolveScope()} to narrow specify @NotNull.
    */
   @Override
-  public abstract @NotNull GlobalSearchScope getResolveScope();
+  @NotNull
+  public abstract GlobalSearchScope getResolveScope();
 
 
   @Override
@@ -231,7 +236,8 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
     return visitor.visitClassType(this);
   }
 
-  public abstract @NotNull LanguageLevel getLanguageLevel();
+  @NotNull
+  public abstract LanguageLevel getLanguageLevel();
 
   /**
    * Functional style setter preserving original type's language level
@@ -239,11 +245,13 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
    * @param languageLevel level to obtain class type with
    * @return type with requested language level
    */
+  @NotNull
   @Contract(pure = true)
-  public abstract @NotNull PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel);
+  public abstract PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel);
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return getClassName();
   }
 
@@ -256,28 +264,32 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
     return null;
   }
   
+  @Nullable
   @Override
-  public @Nullable JvmTypeResolveResult resolveType() {
+  public JvmTypeResolveResult resolveType() {
     ClassResolveResult resolveResult = resolveGenerics();
     PsiClass clazz = resolveResult.getElement();
     return clazz == null ? null : new JvmTypeResolveResult() {
 
       private final JvmSubstitutor mySubstitutor = new PsiJvmSubstitutor(clazz.getProject(), resolveResult.getSubstitutor());
 
+      @NotNull
       @Override
-      public @NotNull JvmTypeDeclaration getDeclaration() {
+      public JvmTypeDeclaration getDeclaration() {
         return clazz;
       }
 
+      @NotNull
       @Override
-      public @NotNull JvmSubstitutor getSubstitutor() {
+      public JvmSubstitutor getSubstitutor() {
         return mySubstitutor;
       }
     };
   }
 
+  @NotNull
   @Override
-  public @NotNull Iterable<JvmType> typeArguments() {
+  public Iterable<JvmType> typeArguments() {
     return Arrays.asList(getParameters());
   }
 
@@ -306,8 +318,9 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
         return null;
       }
 
+      @NotNull
       @Override
-      public @NotNull PsiSubstitutor getSubstitutor() {
+      public PsiSubstitutor getSubstitutor() {
         return PsiSubstitutor.EMPTY;
       }
 
@@ -347,20 +360,24 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
       super(languageLevel, annotations);
     }
 
+    @NotNull
     @Override
-    public final @NotNull String getPresentableText() {
+    public final String getPresentableText() {
       return getPresentableText(false);
     }
 
+    @NotNull
     @Override
-    public abstract @NotNull String getPresentableText(boolean annotated);
+    public abstract String getPresentableText(boolean annotated);
 
+    @NotNull
     @Override
-    public final @NotNull String getCanonicalText() {
+    public final String getCanonicalText() {
       return getCanonicalText(false);
     }
 
+    @NotNull
     @Override
-    public abstract @NotNull String getCanonicalText(boolean annotated);
+    public abstract String getCanonicalText(boolean annotated);
   }
 }

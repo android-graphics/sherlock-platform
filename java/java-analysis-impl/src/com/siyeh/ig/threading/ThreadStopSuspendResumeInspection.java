@@ -28,12 +28,14 @@ import org.jetbrains.annotations.NotNull;
 public final class ThreadStopSuspendResumeInspection extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "CallToThreadStopSuspendOrResumeManager";
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "thread.stop.suspend.resume.problem.descriptor");
   }
@@ -60,7 +62,7 @@ public final class ThreadStopSuspendResumeInspection extends BaseInspection {
       PsiMethodCallExpression expression) {
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
-      final @NonNls String methodName =
+      @NonNls final String methodName =
         methodExpression.getReferenceName();
       if (!("stop".equals(methodName) || "suspend".equals(methodName) ||
             "resume".equals(methodName))) {

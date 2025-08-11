@@ -18,7 +18,6 @@ import java.util.function.Function;
 public final class AnnotationSessionImpl extends AnnotationSession {
   private final UserDataHolder myDataHolder = new UserDataHolderBase();
   private volatile TextRange myPriorityRange;
-  private volatile TextRange myHighlightRange;
   private volatile HighlightSeverity myMinimumSeverity;
 
   private AnnotationSessionImpl(@NotNull PsiFile file) {
@@ -26,7 +25,8 @@ public final class AnnotationSessionImpl extends AnnotationSession {
   }
 
   @ApiStatus.Internal
-  public static @NotNull AnnotationSession create(@NotNull PsiFile file) {
+  @NotNull
+  public static AnnotationSession create(@NotNull PsiFile file) {
     return new AnnotationSessionImpl(file);
   }
 
@@ -34,20 +34,13 @@ public final class AnnotationSessionImpl extends AnnotationSession {
    * @return text range (inside the {@link #getFile()}) for which annotators should be calculated sooner than for the remaining range in the file.
    * Usually this priority range corresponds to the range visible on screen.
    */
-  @Override
   public @NotNull TextRange getPriorityRange() {
     return Objects.requireNonNullElseGet(myPriorityRange, ()->getFile().getTextRange());
   }
 
-  @Override
-  public @NotNull TextRange getHighlightRange() {
-    return Objects.requireNonNullElseGet(myHighlightRange, ()->getFile().getTextRange());
-  }
-
   @ApiStatus.Internal
-  void setVR(@NotNull TextRange priorityRange, @NotNull TextRange highlightRange) {
-    myPriorityRange = priorityRange;
-    myHighlightRange = highlightRange;
+  void setVR(@NotNull TextRange range) {
+    myPriorityRange = range;
   }
 
   @Override

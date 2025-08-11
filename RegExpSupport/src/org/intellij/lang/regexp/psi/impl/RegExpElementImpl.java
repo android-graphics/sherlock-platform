@@ -38,7 +38,8 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
     }
 
     @Override
-    public @NotNull Language getLanguage() {
+    @NotNull
+    public Language getLanguage() {
         return RegExpLanguage.INSTANCE;
     }
 
@@ -71,8 +72,9 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
         getNode().getTreeParent().removeChild(getNode());
     }
 
+    @NotNull
     @Override
-    public final @NotNull String getUnescapedText() {
+    public final String getUnescapedText() {
         return InjectedLanguageManager.getInstance(getProject()).getUnescapedText(this);
     }
 

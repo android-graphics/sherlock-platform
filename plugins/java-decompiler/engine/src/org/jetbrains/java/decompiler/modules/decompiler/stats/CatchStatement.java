@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -10,24 +10,18 @@ import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
-import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public final class CatchStatement extends Statement {
-  public enum CatchStatementType{
-    NORMAL, RESOURCES
-  }
-
   private final List<List<String>> exctstrings = new ArrayList<>();
   private final List<VarExprent> vars = new ArrayList<>();
-  private final List<Exprent> resources = new ArrayList<>();
-
-  private CatchStatementType tryType;
 
   // *****************************************************************************
   // constructors
@@ -35,7 +29,6 @@ public final class CatchStatement extends Statement {
 
   private CatchStatement() {
     super(StatementType.TRY_CATCH);
-    tryType = CatchStatementType.NORMAL;
   }
 
   private CatchStatement(Statement head, Statement next, Set<Statement> setHandlers) {
@@ -131,10 +124,6 @@ public final class CatchStatement extends Statement {
           }
         }
 
-        if (DecHelper.invalidHeadMerge(head)) {
-          return null;
-        }
-
         if (DecHelper.checkStatementExceptions(lst)) {
           return new CatchStatement(head, next, setHandlers);
         }
@@ -154,25 +143,8 @@ public final class CatchStatement extends Statement {
       tracer.incrementCurrentSourceLine();
     }
 
-    if (tryType == CatchStatementType.NORMAL) {
-      buf.appendIndent(indent).append("try {").appendLineSeparator();
-      tracer.incrementCurrentSourceLine();
-    }
-    else {
-      buf.appendIndent(indent).append("try (");
-
-      if (resources.size() > 1) {
-        buf.appendLineSeparator();
-        tracer.incrementCurrentSourceLine();
-        buf.append(ExprProcessor.listToJava(resources, indent + 1, tracer));
-        buf.appendIndent(indent);
-      }
-      else {
-        buf.append(resources.get(0).toJava(indent + 1, tracer));
-      }
-      buf.append(") {").appendLineSeparator();
-      tracer.incrementCurrentSourceLine();
-    }
+    buf.appendIndent(indent).append("try {").appendLineSeparator();
+    tracer.incrementCurrentSourceLine();
 
     buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
     buf.appendIndent(indent).append("}");
@@ -210,16 +182,6 @@ public final class CatchStatement extends Statement {
   }
 
   @Override
-  public List<IMatchable> getSequentialObjects() {
-
-    List<IMatchable> lst = new ArrayList<>(resources);
-    lst.addAll(stats);
-    lst.addAll(vars);
-
-    return lst;
-  }
-
-  @Override
   public Statement getSimpleCopy() {
     CatchStatement cs = new CatchStatement();
 
@@ -233,37 +195,11 @@ public final class CatchStatement extends Statement {
     return cs;
   }
 
-  @Override
-  public void getOffset(BitSet values) {
-    if (values == null) return;
-    super.getOffset(values);
-
-    for (Exprent exp : this.getResources()) {
-      exp.fillBytecodeRange(values);
-    }
-  }
-
   // *****************************************************************************
   // getter and setter methods
   // *****************************************************************************
 
-  public List<List<String>> getExctStrings() {
-    return exctstrings;
-  }
-
   public List<VarExprent> getVars() {
     return vars;
-  }
-
-  public CatchStatementType getTryType() {
-    return tryType;
-  }
-
-  public void setTryType(CatchStatementType tryType) {
-    this.tryType = tryType;
-  }
-
-  public List<Exprent> getResources() {
-    return resources;
   }
 }

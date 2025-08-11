@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -47,14 +47,16 @@ public class WarDirectory implements Serializable {
   private static final WarDirectory[] WAR_DIRECTORIES =
     new WarDirectory[]{WAR_ROOT, META_INF, WEB_INF, WEB_INF_LIB, WEB_INF_LIB_PROVIDED, WEB_INF_CLASSES};
 
-  private final @NotNull String relativePath;
+  @NotNull
+  private final String relativePath;
 
   @PropertyMapping({"relativePath"})
-  WarDirectory(final @NotNull String relativePath) {
+  WarDirectory(@NotNull final String relativePath) {
     this.relativePath = getAdjustedPath(relativePath);
   }
 
-  public @NotNull String getRelativePath() {
+  @NotNull
+  public String getRelativePath() {
     return relativePath;
   }
 
@@ -65,7 +67,8 @@ public class WarDirectory implements Serializable {
     return true;
   }
 
-  public static @NotNull WarDirectory fromPath(final @NotNull String path) {
+  @NotNull
+  public static WarDirectory fromPath(final @NotNull String path) {
     if (StringUtil.isEmpty(path)) return WAR_ROOT;
 
     final String adjustedPath = getAdjustedPath(path);

@@ -1,5 +1,5 @@
 // PROBLEM: none
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 sealed class Bar
 
 inner <caret>class Foo : Bar()

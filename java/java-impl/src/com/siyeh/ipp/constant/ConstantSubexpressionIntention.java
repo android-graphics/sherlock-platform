@@ -90,7 +90,7 @@ public final class ConstantSubexpressionIntention extends MCIntention {
         newExpressionText.append(prevToken.getText());
       }
       if (token == currentToken) {
-        if (!newExpressionText.isEmpty()) {
+        if (newExpressionText.length() > 0) {
           newExpressionText.append(' ');
         }
         if (value instanceof Long) {

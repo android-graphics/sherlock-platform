@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
@@ -16,8 +16,8 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class AsyncChangesTreeImpl<T> extends AsyncChangesTree {
-  private @NotNull List<T> myChanges = Collections.emptyList();
-  private final @NotNull Class<T> myClazz;
+  @NotNull private List<T> myChanges = Collections.emptyList();
+  @NotNull private final Class<T> myClazz;
 
   public AsyncChangesTreeImpl(@NotNull Project project,
                               boolean showCheckboxes,
@@ -45,27 +45,33 @@ public abstract class AsyncChangesTreeImpl<T> extends AsyncChangesTree {
     rebuildTree();
   }
 
+  @NotNull
   @Override
-  protected @NotNull AsyncChangesTreeModel getChangesTreeModel() {
+  protected AsyncChangesTreeModel getChangesTreeModel() {
     return SimpleAsyncChangesTreeModel.create(grouping -> buildTreeModel(grouping, myChanges));
   }
 
+  @NotNull
   @RequiresBackgroundThread
-  protected abstract @NotNull DefaultTreeModel buildTreeModel(@NotNull ChangesGroupingPolicyFactory grouping, @NotNull List<? extends T> changes);
+  protected abstract DefaultTreeModel buildTreeModel(@NotNull ChangesGroupingPolicyFactory grouping, @NotNull List<? extends T> changes);
 
-  public @NotNull List<T> getChanges() {
+  @NotNull
+  public List<T> getChanges() {
     return ContainerUtil.filterIsInstance(myChanges, myClazz);
   }
 
-  public @NotNull List<T> getDisplayedChanges() {
+  @NotNull
+  public List<T> getDisplayedChanges() {
     return VcsTreeModelData.all(this).userObjects(myClazz);
   }
 
-  public @NotNull List<T> getSelectedChanges() {
+  @NotNull
+  public List<T> getSelectedChanges() {
     return VcsTreeModelData.selected(this).userObjects(myClazz);
   }
 
-  public @NotNull Collection<T> getIncludedChanges() {
+  @NotNull
+  public Collection<T> getIncludedChanges() {
     return VcsTreeModelData.included(this).userObjects(myClazz);
   }
 

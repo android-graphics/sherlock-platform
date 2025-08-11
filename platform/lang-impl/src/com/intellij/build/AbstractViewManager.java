@@ -12,14 +12,12 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Toggleable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.SystemNotifications;
@@ -63,11 +61,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     myProject = project;
     myBuildContentManager = BuildContentManager.getInstance(project);
     myBuildsViewValue = new SynchronizedClearableLazy<>(() -> {
-      Ref<MultipleBuildsView> ref = new Ref<>();
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        ref.set(new MultipleBuildsView(myProject, myBuildContentManager, this));
-      });
-      MultipleBuildsView buildsView = ref.get();
+      MultipleBuildsView buildsView = new MultipleBuildsView(myProject, myBuildContentManager, this);
       Disposer.register(this, buildsView);
       return buildsView;
     });

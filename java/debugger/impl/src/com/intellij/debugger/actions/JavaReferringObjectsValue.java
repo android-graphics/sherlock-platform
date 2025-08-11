@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -14,9 +14,8 @@ import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
-import com.intellij.xdebugger.impl.frame.XValueMarkers;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ObjectReference;
@@ -51,8 +50,9 @@ public class JavaReferringObjectsValue extends JavaValue implements ShowReferrin
     myNodeConfigurator = nodeConfigurator;
   }
 
+  @Nullable
   @Override
-  public @Nullable XReferrersProvider getReferrersProvider() {
+  public XReferrersProvider getReferrersProvider() {
     return new XReferrersProvider() {
       @Override
       public XValue getReferringObjectsValue() {
@@ -62,17 +62,17 @@ public class JavaReferringObjectsValue extends JavaValue implements ShowReferrin
   }
 
   @Override
-  public DialogWrapper getDialog(XDebugSession session, String nodeName, XSourcePosition position, XValueMarkers<?, ?> markers) {
-    return new PathsToClosestGcRootsDialog(session.getProject(),
-                                           session.getDebugProcess().getEditorsProvider(),
-                                           position,
+  public DialogWrapper getDialog(XDebuggerTree tree, String nodeName, XDebugSession session) {
+    return new PathsToClosestGcRootsDialog(tree.getProject(),
+                                           tree.getEditorsProvider(),
+                                           tree.getSourcePosition(),
                                            nodeName,
                                            this,
-                                           markers, session, false);
+                                           tree.getValueMarkers(), session, false);
   }
 
   @Override
-  public void computeChildren(final @NotNull XCompositeNode node) {
+  public void computeChildren(@NotNull final XCompositeNode node) {
     scheduleCommand(getEvaluationContext(), node, new SuspendContextCommandImpl(getEvaluationContext().getSuspendContext()) {
         @Override
         public Priority getPriority() {
@@ -120,12 +120,13 @@ public class JavaReferringObjectsValue extends JavaValue implements ShowReferrin
   }
 
   @Override
-  public void computePresentation(final @NotNull XValueNode node, final @NotNull XValuePlace place) {
+  public void computePresentation(@NotNull final XValueNode node, @NotNull final XValuePlace place) {
     super.computePresentation(myNodeConfigurator == null ? node : myNodeConfigurator.apply(node), place);
   }
 
+  @Nullable
   @Override
-  public @Nullable XValueModifier getModifier() {
+  public XValueModifier getModifier() {
     return null;
   }
 }

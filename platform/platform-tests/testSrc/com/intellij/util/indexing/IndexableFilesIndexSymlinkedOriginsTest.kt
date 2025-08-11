@@ -240,8 +240,7 @@ class IndexableFilesIndexSymlinkedOriginsTest : IndexableFilesIndexOriginsTestBa
     val module = projectModelRule.createModule()
     ModuleRootModificationUtil.setModuleSdk(module, sdk)
 
-    val origin = createSdkOrigin(sdk)
-    assertOrigin(origin, classesSymlink)
+    assertOrigin(createSdkOrigin(sdk), classesSymlink)
     assertOrigin(createSdkOrigin(sdk), classesSymlink, "ClassFile.java")
     assertOrigin(createSdkOrigin(sdk), sourcesSymlink)
     assertOrigin(createSdkOrigin(sdk), sourcesSymlink, "SourceFile.java")

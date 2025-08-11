@@ -1,11 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +23,7 @@ public final class TextEditorState implements FileEditorState {
   /**
    * State, which describes how an editor is folded.
    */
-  private @Nullable CodeFoldingState foldingState;
+  private @Nullable CodeFoldingState myFoldingState;
   private Supplier<? extends CodeFoldingState> delayedFoldInfoProducer;
 
   /**
@@ -36,31 +35,29 @@ public final class TextEditorState implements FileEditorState {
    *
    * @param producer  delayed folding info producer
    */
-  @ApiStatus.Internal
-  public void setDelayedFoldState(@NotNull Supplier<? extends CodeFoldingState> producer) {
+  void setDelayedFoldState(@NotNull Supplier<? extends CodeFoldingState> producer) {
     delayedFoldInfoProducer = producer;
   }
 
-  @ApiStatus.Internal
-  public @Nullable Supplier<? extends CodeFoldingState> getDelayedFoldState() {
+  @Nullable
+  Supplier<? extends CodeFoldingState> getDelayedFoldState() {
     return delayedFoldInfoProducer;
   }
 
-  @ApiStatus.Internal
-  public @Nullable CodeFoldingState getFoldingState() {
+  @Nullable
+  CodeFoldingState getFoldingState() {
     // Assuming single-thread access here.
-    if (foldingState == null && delayedFoldInfoProducer != null) {
-      foldingState = delayedFoldInfoProducer.get();
-      if (foldingState != null) {
+    if (myFoldingState == null && delayedFoldInfoProducer != null) {
+      myFoldingState = delayedFoldInfoProducer.get();
+      if (myFoldingState != null) {
         delayedFoldInfoProducer = null;
       }
     }
-    return foldingState;
+    return myFoldingState;
   }
 
-  @ApiStatus.Internal
-  public void setFoldingState(@Nullable CodeFoldingState foldingState) {
-    this.foldingState = foldingState;
+  void setFoldingState(@Nullable CodeFoldingState foldingState) {
+    myFoldingState = foldingState;
     delayedFoldInfoProducer = null;
   }
 

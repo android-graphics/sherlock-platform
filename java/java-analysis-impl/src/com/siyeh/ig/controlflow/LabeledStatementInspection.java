@@ -25,7 +25,8 @@ import org.jetbrains.annotations.NotNull;
 public final class LabeledStatementInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "labeled.statement.problem.descriptor");
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.psi.PsiFile;
@@ -35,11 +35,13 @@ public final class GrImportUtil {
     return aliases.contains(actual);
   }
 
-  private static @NotNull MultiMap<String, String> getAliases(GroovyFile file) {
+  @NotNull
+  private static MultiMap<String, String> getAliases(GroovyFile file) {
     return CachedValuesManager.getCachedValue(file, () -> Result.create(collectAliases(file), file));
   }
 
-  private static @NotNull MultiMap<String, String> collectAliases(@NotNull GroovyFile file) {
+  @NotNull
+  private static MultiMap<String, String> collectAliases(@NotNull GroovyFile file) {
     MultiMap<String, String> aliases = MultiMap.createSet();
 
     for (GrImportStatement anImport : file.getImportStatements()) {

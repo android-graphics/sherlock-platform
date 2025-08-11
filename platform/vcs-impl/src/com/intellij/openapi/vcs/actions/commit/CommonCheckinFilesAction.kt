@@ -16,7 +16,6 @@ import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-@ApiStatus.Internal
 class CommonCheckinFilesAction : DumbAwareAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 

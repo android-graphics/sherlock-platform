@@ -7,7 +7,6 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.util.ThrowableRunnable;
 import junit.framework.TestSuite;
-import org.intellij.lang.annotations.Language;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +26,7 @@ public class MarkdownHeaderTestSuite extends TestSuite {
     }
   }
 
-  public MarkdownHeaderTestSuite(@Language("devkit-action-id") @NotNull String actionId, @NotNull String dataName) {
+  public MarkdownHeaderTestSuite(@NotNull String actionId, @NotNull String dataName) {
     String testDataPath = getHeadersTestData();
     File dir = new File(testDataPath);
     File[] files = dir.listFiles((dir1, name) -> name.endsWith("_before.md"));

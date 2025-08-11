@@ -75,7 +75,6 @@ public final class ColorDescriptor {
     return myAWTColor;
   }
 
-  @Override
   public String toString() {
     if (mySwingColor != null) {
       return mySwingColor;
@@ -92,7 +91,6 @@ public final class ColorDescriptor {
     return "null";
   }
 
-  @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof ColorDescriptor)) {
       return false;

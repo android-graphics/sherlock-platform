@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.Disposable;
@@ -17,38 +17,38 @@ import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
-import java.util.List;
 
 @Deprecated
 public abstract class DebuggerSupport {
-  private static final ExtensionPointName<DebuggerSupport> EXTENSION_POINT = new ExtensionPointName<>("com.intellij.xdebugger.debuggerSupport");
+  private static final ExtensionPointName<DebuggerSupport> EXTENSION_POINT = ExtensionPointName.create("com.intellij.xdebugger.debuggerSupport");
 
   protected static final class DisabledActionHandler extends DebuggerActionHandler {
     public static final DisabledActionHandler INSTANCE = new DisabledActionHandler();
 
     @Override
-    public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
+    public void perform(@NotNull Project project, AnActionEvent event) {
     }
 
     @Override
-    public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
+    public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
       return false;
     }
   }
 
-  @ApiStatus.Internal
-  public static @NotNull List<@NotNull DebuggerSupport> getDebuggerSupports() {
-    return EXTENSION_POINT.getExtensionList();
+  public static DebuggerSupport @NotNull [] getDebuggerSupports() {
+    return EXTENSION_POINT.getExtensions();
   }
 
   private static final BreakpointPanelProvider<?> EMPTY_PANEL_PROVIDER = new BreakpointPanelProvider<>() {
+    @Override
+    public void createBreakpointsGroupingRules(Collection collection) {
+    }
 
     @Override
     public void addListener(BreakpointsListener listener, Project project, Disposable disposable) {
@@ -59,8 +59,9 @@ public abstract class DebuggerSupport {
       return 0;
     }
 
+    @Nullable
     @Override
-    public @Nullable Object findBreakpoint(@NotNull Project project, @NotNull Document document, int offset) {
+    public Object findBreakpoint(@NotNull Project project, @NotNull Document document, int offset) {
       return null;
     }
 
@@ -78,71 +79,86 @@ public abstract class DebuggerSupport {
     }
   };
 
-  public @NotNull BreakpointPanelProvider<?> getBreakpointPanelProvider() {
+  @NotNull
+  public BreakpointPanelProvider<?> getBreakpointPanelProvider() {
     return EMPTY_PANEL_PROVIDER;
   }
 
-  public @NotNull DebuggerActionHandler getStepOverHandler() {
+  @NotNull
+  public DebuggerActionHandler getStepOverHandler() {
     return DisabledActionHandler.INSTANCE;
   }
 
-  public @NotNull DebuggerActionHandler getStepIntoHandler() {
+  @NotNull
+  public DebuggerActionHandler getStepIntoHandler() {
     return DisabledActionHandler.INSTANCE;
   }
 
-  public @NotNull DebuggerActionHandler getSmartStepIntoHandler() {
+  @NotNull
+  public DebuggerActionHandler getSmartStepIntoHandler() {
     return DisabledActionHandler.INSTANCE;
   }
 
-  public @NotNull DebuggerActionHandler getStepOutHandler() {
+  @NotNull
+  public DebuggerActionHandler getStepOutHandler() {
     return DisabledActionHandler.INSTANCE;
   }
 
-  public @NotNull DebuggerActionHandler getForceStepOverHandler() {
+  @NotNull
+  public DebuggerActionHandler getForceStepOverHandler() {
     return DisabledActionHandler.INSTANCE;
   }
 
-  public @NotNull DebuggerActionHandler getForceStepIntoHandler() {
+  @NotNull
+  public DebuggerActionHandler getForceStepIntoHandler() {
     return DisabledActionHandler.INSTANCE;
   }
 
-  public @NotNull DebuggerActionHandler getRunToCursorHandler() {
+  @NotNull
+  public DebuggerActionHandler getRunToCursorHandler() {
     return DisabledActionHandler.INSTANCE;
   }
 
-  public @NotNull DebuggerActionHandler getForceRunToCursorHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
-
-  public @NotNull DebuggerActionHandler getResumeActionHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
-  public @NotNull DebuggerActionHandler getPauseHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
-
-  public @NotNull DebuggerActionHandler getToggleLineBreakpointHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
-  public @NotNull DebuggerActionHandler getToggleTemporaryLineBreakpointHandler() {
+  @NotNull
+  public DebuggerActionHandler getForceRunToCursorHandler() {
     return DisabledActionHandler.INSTANCE;
   }
 
 
-  public @NotNull DebuggerActionHandler getShowExecutionPointHandler() {
+  @NotNull
+  public DebuggerActionHandler getResumeActionHandler() {
     return DisabledActionHandler.INSTANCE;
   }
 
-  public @NotNull DebuggerActionHandler getEvaluateHandler() {
+  @NotNull
+  public DebuggerActionHandler getPauseHandler() {
     return DisabledActionHandler.INSTANCE;
   }
 
-  public @NotNull QuickEvaluateHandler getQuickEvaluateHandler() {
-    // See [XQuickEvaluateHandler] which is provided in frontend
+
+  @NotNull
+  public DebuggerActionHandler getToggleLineBreakpointHandler() {
+    return DisabledActionHandler.INSTANCE;
+  }
+
+  @NotNull
+  public DebuggerActionHandler getToggleTemporaryLineBreakpointHandler() {
+    return DisabledActionHandler.INSTANCE;
+  }
+
+
+  @NotNull
+  public DebuggerActionHandler getShowExecutionPointHandler() {
+    return DisabledActionHandler.INSTANCE;
+  }
+
+  @NotNull
+  public DebuggerActionHandler getEvaluateHandler() {
+    return DisabledActionHandler.INSTANCE;
+  }
+
+  @NotNull
+  public QuickEvaluateHandler getQuickEvaluateHandler() {
     return DISABLED_QUICK_EVALUATE;
   }
 
@@ -152,8 +168,9 @@ public abstract class DebuggerSupport {
       return false;
     }
 
+    @Nullable
     @Override
-    public @Nullable AbstractValueHint createValueHint(@NotNull Project project, @NotNull Editor editor, @NotNull Point point, ValueHintType type) {
+    public AbstractValueHint createValueHint(@NotNull Project project, @NotNull Editor editor, @NotNull Point point, ValueHintType type) {
       return null;
     }
 
@@ -168,11 +185,13 @@ public abstract class DebuggerSupport {
     }
   };
 
-  public @NotNull DebuggerActionHandler getAddToWatchesActionHandler() {
+  @NotNull
+  public DebuggerActionHandler getAddToWatchesActionHandler() {
     return DisabledActionHandler.INSTANCE;
   }
 
-  public @NotNull DebuggerActionHandler getAddToInlineWatchesActionHandler() {
+  @NotNull
+  public DebuggerActionHandler getAddToInlineWatchesActionHandler() {
     return DisabledActionHandler.INSTANCE;
   }
 
@@ -200,12 +219,12 @@ public abstract class DebuggerSupport {
   /**
    * @deprecated use {@link com.intellij.xdebugger.XDebugSessionListener#breakpointsMuted(boolean)}
    */
+  @NotNull
   @Deprecated
-  public @NotNull DebuggerToggleActionHandler getMuteBreakpointsHandler() {
+  public DebuggerToggleActionHandler getMuteBreakpointsHandler() {
     return DISABLED_TOGGLE_HANDLER;
   }
 
-  @ApiStatus.Internal
   protected static final MarkObjectActionHandler DISABLED_MARK_HANDLER = new MarkObjectActionHandler() {
     @Override
     public boolean isMarked(@NotNull Project project, @NotNull AnActionEvent event) {
@@ -213,22 +232,22 @@ public abstract class DebuggerSupport {
     }
 
     @Override
-    public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
+    public void perform(@NotNull Project project, AnActionEvent event) {
     }
 
     @Override
-    public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
+    public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
       return false;
     }
 
     @Override
-    public boolean isHidden(@NotNull Project project, @NotNull AnActionEvent event) {
+    public boolean isHidden(@NotNull Project project, AnActionEvent event) {
       return true;
     }
   };
 
-  @ApiStatus.Internal
-  public @NotNull MarkObjectActionHandler getMarkObjectHandler() {
+  @NotNull
+  public MarkObjectActionHandler getMarkObjectHandler() {
     return DISABLED_MARK_HANDLER;
   }
 
@@ -238,17 +257,19 @@ public abstract class DebuggerSupport {
     }
 
     @Override
-    public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
+    public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
       return false;
     }
   };
 
-  public @NotNull EditBreakpointActionHandler getEditBreakpointAction() {
+  @NotNull
+  public EditBreakpointActionHandler getEditBreakpointAction() {
     return DISABLED_EDIT;
   }
 
 
-  public static @NotNull <T extends DebuggerSupport> DebuggerSupport getDebuggerSupport(Class<T> aClass) {
+  @NotNull
+  public static <T extends DebuggerSupport> DebuggerSupport getDebuggerSupport(Class<T> aClass) {
     for (DebuggerSupport support : getDebuggerSupports()) {
       if (support.getClass() == aClass) {
         return support;

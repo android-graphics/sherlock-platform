@@ -40,7 +40,8 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private JComponent labelAnchor;
   private final Project myProject;
   private List<Sdk> myPythonSdks;
-  private @NotNull List<String> myEnvPaths = Collections.emptyList();
+  @NotNull
+  private List<String> myEnvPaths = Collections.emptyList();
   private boolean myInterpreterRemote;
 
   private final List<Consumer<Boolean>> myRemoteInterpreterModeListeners = new ArrayList<>();
@@ -53,14 +54,15 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     Module[] modules = ModuleManager.getInstance(data.getProject()).getModules();
     boolean showModules = modules.length != 1;
     content = new PyIdeCommonOptionsPanel(data, showModules, myPythonSdks);
-    content.workingDirectoryTextField.addBrowseFolderListener(data.getProject(), FileChooserDescriptorFactory.createSingleFolderDescriptor()
-      .withTitle(PyBundle.message("configurable.select.working.directory")));
+
+    content.workingDirectoryTextField.addBrowseFolderListener(PyBundle.message("configurable.select.working.directory"), "", data.getProject(),
+                                                              FileChooserDescriptorFactory.createSingleFolderDescriptor());
     if (!showModules) {
       setModule(modules[0]);
     }
     else {
       final List<Module> validModules = data.getValidModules();
-      Module selection = !validModules.isEmpty() ? validModules.get(0) : null;
+      Module selection = validModules.size() > 0 ? validModules.get(0) : null;
       content.moduleCombo.setModules(validModules);
       content.moduleCombo.setSelectedModule(selection);
       content.moduleCombo.addActionListener(new ActionListener() {
@@ -149,8 +151,9 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     mySelectedSdk = sdk;
   }
 
+  @Nullable
   @Override
-  public @Nullable Module getModule() {
+  public Module getModule() {
     final Module selectedItem = content.moduleCombo.getSelectedModule();
     if (selectedItem != null) {
       return selectedItem;
@@ -222,7 +225,8 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   @Override
-  public @Nullable PathMappingSettings getMappingSettings() {
+  @Nullable
+  public PathMappingSettings getMappingSettings() {
     if (myInterpreterRemote) {
       return content.pathMappingsComponent.getMappingSettings();
     }
@@ -267,7 +271,8 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     }
   }
 
-  private @Nullable Sdk getSdkSelected() {
+  @Nullable
+  private Sdk getSdkSelected() {
     String sdkHome = getSdkHome();
     if (StringUtil.isEmptyOrSpaces(sdkHome)) {
       final Sdk projectJdk = PythonSdkUtil.findPythonSdk(getModule());
@@ -289,8 +294,9 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     content.interpreterComboBox.removeActionListener(listener);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<String> getEnvFilePaths() {
+  public List<String> getEnvFilePaths() {
     return myEnvPaths;
   }
 

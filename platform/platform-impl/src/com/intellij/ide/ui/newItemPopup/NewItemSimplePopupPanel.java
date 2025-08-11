@@ -61,11 +61,7 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
   }
 
   public void setApplyAction(@NotNull Consumer<? super InputEvent> applyAction) {
-    myApplyAction = e -> {
-      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-        applyAction.consume(e);
-      }
-    };
+    myApplyAction = applyAction;
   }
 
   public @NotNull Consumer<? super InputEvent> getApplyAction() {
@@ -162,7 +158,9 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
   protected void performApplyActionOnEnter(KeyEvent e) {
     if (e.getKeyCode() == KeyEvent.VK_ENTER) {
       if (myApplyAction == null) return;
-      myApplyAction.consume(e);
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+        myApplyAction.consume(e);
+      }
     }
   }
 

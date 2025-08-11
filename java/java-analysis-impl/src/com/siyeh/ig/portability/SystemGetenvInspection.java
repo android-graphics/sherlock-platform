@@ -26,12 +26,14 @@ import org.jetbrains.annotations.NotNull;
 public final class SystemGetenvInspection extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "CallToSystemGetenv";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "system.getenv.call.problem.descriptor");
   }
@@ -50,7 +52,7 @@ public final class SystemGetenvInspection extends BaseInspection {
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
-      final @NonNls String getenv = "getenv";
+      @NonNls final String getenv = "getenv";
       if (!getenv.equals(methodName)) {
         return;
       }

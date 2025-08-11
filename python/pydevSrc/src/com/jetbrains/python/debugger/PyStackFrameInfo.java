@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 
@@ -12,14 +12,15 @@ public class PyStackFrameInfo {
   private final String myName;
   private final PySourcePosition myPosition;
 
-  public PyStackFrameInfo(final String threadId, final String id, final @NlsSafe String name, final PySourcePosition position) {
+  public PyStackFrameInfo(final String threadId, final String id, @NlsSafe final String name, final PySourcePosition position) {
     myThreadId = threadId;
     myId = id;
     myName = name;
     myPosition = position;
   }
 
-  public @NotNull String getThreadId() {
+  @NotNull
+  public String getThreadId() {
     return myThreadId;
   }
 
@@ -27,7 +28,8 @@ public class PyStackFrameInfo {
     return myId;
   }
 
-  public @NlsSafe String getName() {
+  @NlsSafe
+  public String getName() {
     return myName;
   }
 

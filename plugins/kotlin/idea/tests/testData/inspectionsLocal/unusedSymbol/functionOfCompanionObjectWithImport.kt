@@ -1,5 +1,4 @@
 // PROBLEM: none
-// WITH_STDLIB
 package one
 
 import one.My124.Companion.impCost

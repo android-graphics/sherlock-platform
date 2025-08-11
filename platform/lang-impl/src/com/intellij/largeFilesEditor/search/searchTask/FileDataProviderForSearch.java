@@ -2,7 +2,6 @@
 package com.intellij.largeFilesEditor.search.searchTask;
 
 import com.intellij.largeFilesEditor.editor.Page;
-import org.jetbrains.annotations.ApiStatus;
 
 import java.io.IOException;
 
@@ -10,7 +9,6 @@ public interface FileDataProviderForSearch {
 
   long getPagesAmount() throws IOException;
 
-  @ApiStatus.Internal
   Page getPage_wait(long pageNumber) throws IOException;
 
   String getName();

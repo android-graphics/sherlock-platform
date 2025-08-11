@@ -12,7 +12,6 @@ import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +30,7 @@ class GitInteractiveRebaseFile {
     String commentChar = GitVersionSpecialty.KNOWS_CORE_COMMENT_CHAR.existsIn(myProject) ?
                          GitUtil.COMMENT_CHAR : "#";
 
-    Charset encoding = GitConfigUtil.getLogEncodingCharset(myProject, myRoot);
+    String encoding = GitConfigUtil.getLogEncoding(myProject, myRoot);
     List<GitRebaseEntry> entries = new ArrayList<>();
     final StringScanner s = new StringScanner(FileUtil.loadFile(myFile, encoding));
     boolean noop = false;
@@ -84,7 +83,7 @@ class GitInteractiveRebaseFile {
   }
 
   public void save(@NotNull List<? extends GitRebaseEntry> entries) throws IOException {
-    Charset encoding = GitConfigUtil.getLogEncodingCharset(myProject, myRoot);
+    String encoding = GitConfigUtil.getLogEncoding(myProject, myRoot);
     try (PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(myFile), encoding))) {
       boolean knowsDropAction = GitVersionSpecialty.KNOWS_REBASE_DROP_ACTION.existsIn(myProject);
       for (GitRebaseEntry e : entries) {

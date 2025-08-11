@@ -3,7 +3,9 @@
 
 package org.jetbrains.intellij.build.jarCache
 
+import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
+import com.intellij.util.io.DigestUtil
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -16,20 +18,18 @@ import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.CacheDirCleanup
-import java.io.IOException
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.FileTime
 import java.time.Instant
-import kotlin.random.Random
 import kotlin.time.Duration.Companion.days
 
 private const val jarSuffix = ".jar"
 private const val metaSuffix = ".bin"
 
-private const val cacheVersion: Byte = 11
+private const val cacheVersion: Byte = 9
 
 internal class LocalDiskJarCacheManager(
   private val cacheDir: Path,
@@ -55,40 +55,34 @@ internal class LocalDiskJarCacheManager(
   ): Path {
     val items = createSourceAndCacheStrategyList(sources = sources, productionClassOutDir = productionClassOutDir)
 
-    val targetFileNamePrefix = targetFile.fileName.toString().removeSuffix(jarSuffix)
-
     val hash = Hashing.komihash5_0().hashStream()
-    hash.putByte(cacheVersion)
+    hashCommonMeta(hash = hash, items = items, targetFile = targetFile)
     for (source in items) {
-      source.updateAssetDigest(hash)
+      hash.putString(source.path)
+      source.updateDigest(hash)
     }
-    hash.putInt(items.size)
 
     val hash1 = java.lang.Long.toUnsignedString(hash.asLong, Character.MAX_RADIX)
 
-    // another 64-bit hash without `source.updateAssetDigest` to reduce the chance of collision
+    // another 64-bit hash based on paths only to reduce the chance of collision
     hash.reset()
-    hash.putByte(cacheVersion)
-    for (source in items) {
-      hash.putLong(source.getHash())
-    }
-    hash.putInt(items.size)
     producer.updateDigest(hash)
+    for (source in items.asReversed()) {
+      hash.putString(source.path)
+    }
+    hashCommonMeta(hash = hash, items = items, targetFile = targetFile)
 
     val hash2 = java.lang.Long.toUnsignedString(hash.asLong, Character.MAX_RADIX)
 
-    val cacheName = "$targetFileNamePrefix-$hash1-$hash2"
+    val cacheName = "${targetFile.fileName.toString().removeSuffix(jarSuffix)}-$hash1-$hash2"
     val cacheFileName = (cacheName + jarSuffix).takeLast(255)
     val cacheFile = cacheDir.resolve(cacheFileName)
     val cacheMetadataFile = cacheDir.resolve((cacheName + metaSuffix).takeLast(255))
     if (checkCache(cacheMetadataFile = cacheMetadataFile, cacheFile = cacheFile, sources = sources, items = items, span = span, nativeFiles = nativeFiles)) {
-      // update file modification time to maintain FIFO caches i.e., in persistent cache folder on TeamCity agent and for CacheDirCleanup
-      try {
-        Files.setLastModifiedTime(cacheFile, FileTime.from(Instant.now()))
-      } catch (e: IOException) {
-        Span.current().addEvent("update cacheFile modification time failed: $e")
+      if (!producer.useCacheAsTargetFile) {
+        Files.createDirectories(targetFile.parent)
+        Files.copy(cacheFile, targetFile)
       }
-
       span.addEvent(
         "use cache",
         Attributes.of(
@@ -97,17 +91,13 @@ internal class LocalDiskJarCacheManager(
         ),
       )
 
-      if (producer.useCacheAsTargetFile) {
-        return cacheFile
-      }
-      else {
-        Files.createDirectories(targetFile.parent)
-        Files.copy(cacheFile, targetFile)
-        return targetFile
-      }
+      // update file modification time to maintain FIFO caches i.e., in persistent cache folder on TeamCity agent and for CacheDirCleanup
+      Files.setLastModifiedTime(cacheFile, FileTime.from(Instant.now()))
+
+      return if (producer.useCacheAsTargetFile) cacheFile else targetFile
     }
 
-    val tempFile = cacheDir.resolve("$cacheName.t-${Integer.toUnsignedString(Random.nextInt(), Character.MAX_RADIX)}".takeLast(255))
+    val tempFile = cacheDir.resolve("$cacheName.temp-${java.lang.Long.toUnsignedString(DigestUtil.random.nextLong(), Character.MAX_RADIX)}".takeLast(255))
     var fileMoved = false
     try {
       producer.produce(tempFile)
@@ -125,14 +115,14 @@ internal class LocalDiskJarCacheManager(
       }
     }
 
-    val sourceCacheItems = Array(items.size) { index ->
-      val source = items.get(index)
+    val sourceCacheItems = items.map { source ->
       SourceCacheItem(
+        path = source.path,
         size = source.getSize().toInt(),
         hash = source.getHash(),
         nativeFiles = (source.source as? ZipSource)?.let { nativeFiles?.get(it) } ?: emptyList(),
       )
-    }.asList()
+    }
 
     if (!producer.useCacheAsTargetFile) {
       Files.createDirectories(targetFile.parent)
@@ -163,6 +153,12 @@ internal class LocalDiskJarCacheManager(
 
     Span.current().addEvent("zero hash for $source")
   }
+}
+
+private fun hashCommonMeta(hash: HashStream64, items: List<SourceAndCacheStrategy>, targetFile: Path) {
+  hash.putByte(cacheVersion)
+  hash.putInt(items.size)
+  hash.putString(targetFile.fileName.toString())
 }
 
 private fun checkCache(cacheMetadataFile: Path,
@@ -208,18 +204,16 @@ private fun checkSavedAndActualSources(metadata: JarCacheItem, sources: List<Sou
   }
 
   for ((index, metadataItem) in metadata.sources.withIndex()) {
-    if (items.get(index).getHash() != metadataItem.hash) {
+    if (items.get(index).path != metadataItem.path) {
       return false
     }
   }
   return true
 }
 
-private fun notifyAboutMetadata(
-  sources: List<SourceCacheItem>,
-  items: List<SourceAndCacheStrategy>,
-  nativeFiles: MutableMap<ZipSource, List<String>>?,
-) {
+private fun notifyAboutMetadata(sources: List<SourceCacheItem>,
+                                items: List<SourceAndCacheStrategy>,
+                                nativeFiles: MutableMap<ZipSource, List<String>>?) {
   for ((index, sourceCacheItem) in sources.withIndex()) {
     val source = items.get(index).source
     source.size = sourceCacheItem.size
@@ -237,6 +231,7 @@ private class JarCacheItem(
 
 @Serializable
 private class SourceCacheItem(
+  @JvmField val path: String,
   @JvmField val size: Int,
   @JvmField val hash: Long,
   @JvmField val nativeFiles: List<String> = emptyList(),

@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.xml
 
-import com.intellij.coverage.*
+import com.intellij.coverage.CoverageEngine
+import com.intellij.coverage.CoverageRunner
+import com.intellij.coverage.CoverageSuite
 import com.intellij.java.coverage.JavaCoverageBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.rt.coverage.report.XMLCoverageReport
@@ -13,11 +15,7 @@ import java.io.IOException
 private val LOG = logger<XMLReportRunner>()
 
 class XMLReportRunner : CoverageRunner() {
-  override fun loadCoverageData(
-    sessionDataFile: File,
-    baseCoverageSuite: CoverageSuite?,
-    reporter: CoverageLoadErrorReporter
-  ): CoverageLoadingResult = error("Should not be called")
+  override fun loadCoverageData(sessionDataFile: File, baseCoverageSuite: CoverageSuite?) = error("Should not be called")
   override fun getPresentableName() = JavaCoverageBundle.message("coverage.xml.report.title")
   override fun getId() = "jacoco_xml_report"
   override fun getDataFileExtension() = "xml"

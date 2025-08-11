@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
@@ -19,7 +18,7 @@ import java.lang.ref.SoftReference;
 
 import static com.intellij.reference.SoftReference.dereference;
 
-public abstract class LeafElement extends TreeElement implements LighterASTTokenNode {
+public abstract class LeafElement extends TreeElement {
   private static final Logger LOG = Logger.getInstance(LeafElement.class);
   private static final Key<SoftReference<String>> CACHED_TEXT = Key.create("CACHED_TEXT");
 
@@ -220,7 +219,7 @@ public abstract class LeafElement extends TreeElement implements LighterASTToken
 
   @Override
   public ASTNode @NotNull [] getChildren(TokenSet filter) {
-    return TreeElement.EMPTY_ARRAY;
+    return EMPTY_ARRAY;
   }
 
   @Override
@@ -254,12 +253,12 @@ public abstract class LeafElement extends TreeElement implements LighterASTToken
   }
 
   @Override
-  public void removeRange(@NotNull ASTNode first, @Nullable ASTNode firstWhichStayInTree) {
+  public void removeRange(@NotNull ASTNode first, ASTNode firstWhichStayInTree) {
     throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
   @Override
-  public void addChildren(@NotNull ASTNode firstChild, @Nullable ASTNode lastChild, @Nullable ASTNode anchorBefore) {
+  public void addChildren(@NotNull ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore) {
     throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 

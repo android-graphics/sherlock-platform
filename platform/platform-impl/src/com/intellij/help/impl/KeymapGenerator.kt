@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.ModernApplicationStarter
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
@@ -18,6 +17,7 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.system.exitProcess
 
 private val LOG = logger<KeymapGenerator>()
 
@@ -66,9 +66,9 @@ private class KeymapGenerator : ModernApplicationStarter() {
     }
     catch (e: IOException) {
       LOG.error("Cannot save keymaps", e)
-      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1)
+      exitProcess(1)
     }
-    ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true)
+    exitProcess(0)
   }
 }
 

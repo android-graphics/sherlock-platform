@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import icons.SvnIcons;
@@ -30,7 +30,7 @@ public enum ConflictState {
   private final boolean myProperty;
   private final @Nullable Icon myIcon;
 
-  ConflictState(final boolean tree, final boolean text, final boolean property, final @Nullable Icon icon) {
+  ConflictState(final boolean tree, final boolean text, final boolean property, @Nullable final Icon icon) {
     myTree = tree;
     myText = text;
     myProperty = property;
@@ -54,11 +54,13 @@ public enum ConflictState {
     return myProperty || myText || myTree;
   }
 
-  public @Nullable Icon getIcon() {
+  @Nullable
+  public Icon getIcon() {
     return myIcon;
   }
 
-  public @Nls String getDescription() {
+  @Nls
+  public String getDescription() {
     if (!isConflict()) return null;
 
     List<String> conflicts = asList(
@@ -74,7 +76,8 @@ public enum ConflictState {
                        leftState.myProperty || rightState.myProperty);
   }
 
-  public static @NotNull ConflictState getInstance(final boolean tree, final boolean text, final boolean property) {
+  @NotNull
+  public static ConflictState getInstance(final boolean tree, final boolean text, final boolean property) {
     final ConflictState[] conflictStates = values();
     for (ConflictState state : conflictStates) {
       if ((state.isTree() == tree) && (state.isText() == text) && (state.isProperty() == property)) {
@@ -86,7 +89,8 @@ public enum ConflictState {
     return null;
   }
 
-  public static @NotNull ConflictState from(@NotNull Status status) {
+  @NotNull
+  public static ConflictState from(@NotNull Status status) {
     return getInstance(status.getTreeConflict() != null, status.is(StatusType.STATUS_CONFLICTED),
                        status.isProperty(StatusType.STATUS_CONFLICTED));
   }

@@ -11,8 +11,9 @@ public class TextMergeTool implements MergeTool {
 
   private static final Logger LOG = Logger.getInstance(TextMergeTool.class);
 
+  @NotNull
   @Override
-  public @NotNull MergeViewer createComponent(@NotNull MergeContext context, @NotNull MergeRequest request) {
+  public MergeViewer createComponent(@NotNull MergeContext context, @NotNull MergeRequest request) {
     return new TextMergeViewer(context, ((TextMergeRequest)request));
   }
 

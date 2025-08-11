@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -18,7 +18,8 @@ public final class NonNlsUtils {
   private NonNlsUtils() {
   }
 
-  public static @Nullable PsiModifierListOwner getAnnotatableArgument(
+  @Nullable
+  public static PsiModifierListOwner getAnnotatableArgument(
     PsiMethodCallExpression methodCallExpression) {
     final PsiExpressionList argumentList =
       methodCallExpression.getArgumentList();
@@ -36,7 +37,8 @@ public final class NonNlsUtils {
     return null;
   }
 
-  public static @Nullable PsiModifierListOwner getAnnotatableQualifier(
+  @Nullable
+  public static PsiModifierListOwner getAnnotatableQualifier(
     PsiReferenceExpression expression) {
     final PsiExpression qualifierExpression =
       expression.getQualifierExpression();
@@ -128,7 +130,8 @@ public final class NonNlsUtils {
     }
   }
 
-  private static @Nullable <T> T getCachedValue(PsiExpression expression, Key<T> key) {
+  @Nullable
+  private static <T> T getCachedValue(PsiExpression expression, Key<T> key) {
     final T data = expression.getUserData(key);
     if (!(expression instanceof PsiBinaryExpression binaryExpression)) {
       return data;

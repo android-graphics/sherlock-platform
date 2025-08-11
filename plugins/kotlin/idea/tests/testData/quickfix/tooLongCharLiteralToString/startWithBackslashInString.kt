@@ -4,7 +4,6 @@
 // ACTION: Convert to raw string literal
 // ACTION: Introduce local variable
 // ERROR: Illegal escape: '\ '
-// K2_AFTER_ERROR: Unsupported escape sequence.
 
 fun foo() {
     "\ <caret>"

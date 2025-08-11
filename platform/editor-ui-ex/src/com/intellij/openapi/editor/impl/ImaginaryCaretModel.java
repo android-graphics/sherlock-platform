@@ -31,7 +31,7 @@ public class ImaginaryCaretModel implements CaretModel {
 
   @Override
   public @NotNull Caret getCurrentCaret() {
-    return getPrimaryCaret();
+    return myCaret;
   }
 
   protected RuntimeException notImplemented() {
@@ -75,7 +75,7 @@ public class ImaginaryCaretModel implements CaretModel {
 
   @Override
   public @NotNull List<Caret> getAllCarets() {
-    return Collections.singletonList(getCurrentCaret());
+    return Collections.singletonList(myCaret);
   }
 
   @Override
@@ -114,10 +114,10 @@ public class ImaginaryCaretModel implements CaretModel {
     }
     CaretState state = caretStates.get(0);
     if (state.getCaretPosition() != null) {
-      getCurrentCaret().moveToOffset(myEditor.logicalPositionToOffset(state.getCaretPosition()));
+      myCaret.moveToOffset(myEditor.logicalPositionToOffset(state.getCaretPosition()));
     }
     if (state.getSelectionStart() != null && state.getSelectionEnd() != null && !state.getSelectionStart().equals(state.getSelectionEnd())) {
-      getCurrentCaret().setSelection(myEditor.logicalPositionToOffset(state.getSelectionStart()),
+      myCaret.setSelection(myEditor.logicalPositionToOffset(state.getSelectionStart()),
                            myEditor.logicalPositionToOffset(state.getSelectionEnd()));
     }
   }
@@ -125,21 +125,21 @@ public class ImaginaryCaretModel implements CaretModel {
   @Override
   public @NotNull List<CaretState> getCaretsAndSelections() {
     return Collections.singletonList(
-      new CaretState(getCurrentCaret().getLogicalPosition(),
+      new CaretState(myCaret.getLogicalPosition(),
                      0,
-                     myEditor.offsetToLogicalPosition(getCurrentCaret().getSelectionStart()),
-                     myEditor.offsetToLogicalPosition(getCurrentCaret().getSelectionEnd()))
+                     myEditor.offsetToLogicalPosition(myCaret.getSelectionStart()),
+                     myEditor.offsetToLogicalPosition(myCaret.getSelectionEnd()))
     );
   }
 
   @Override
   public void runForEachCaret(@NotNull CaretAction action) {
-    action.perform(getCurrentCaret());
+    action.perform(myCaret);
   }
 
   @Override
   public void runForEachCaret(@NotNull CaretAction action, boolean reverseOrder) {
-    action.perform(getCurrentCaret());
+    action.perform(myCaret);
   }
 
   @Override

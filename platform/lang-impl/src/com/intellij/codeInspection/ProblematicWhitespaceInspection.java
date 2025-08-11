@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.application.options.CodeStyle;
@@ -28,8 +28,9 @@ public final class ProblematicWhitespaceInspection extends LocalInspectionTool {
 
   private static final class ShowWhitespaceFix implements LocalQuickFix {
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return LangBundle.message("problematic.whitespace.show.whitespaces.quickfix");
     }
 
@@ -69,8 +70,9 @@ public final class ProblematicWhitespaceInspection extends LocalInspectionTool {
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new ProblematicWhitespaceVisitor(holder, isOnTheFly);
   }
 

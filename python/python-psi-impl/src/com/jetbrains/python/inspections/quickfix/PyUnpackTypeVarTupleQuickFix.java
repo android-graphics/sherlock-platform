@@ -15,7 +15,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class PyUnpackTypeVarTupleQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.unpack.type.var.tuple");
   }
 

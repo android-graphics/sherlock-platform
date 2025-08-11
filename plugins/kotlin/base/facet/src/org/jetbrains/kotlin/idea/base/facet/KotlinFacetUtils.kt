@@ -55,7 +55,7 @@ val Module.kotlinSourceRootType: KotlinSourceRootType?
     }
 
 val Module.isMultiPlatformModule: Boolean
-    get() = facetSettings.isMultiPlatformModule
+    get() = facetSettings?.isMultiPlatformModule ?: false
 
 val Module.isNewMultiPlatformModule: Boolean
     get() {
@@ -75,14 +75,8 @@ var Module.refinesFragmentIds: Collection<String>
 val Module.isTestModule: Boolean
     get() = facetSettings?.isTestModule ?: false
 
-val IKotlinFacetSettings?.isMultiPlatformModule: Boolean
-    get() = this?.mppVersion != null
-
-val IKotlinFacetSettings?.isNewMultiPlatformModule: Boolean
-    get() {
-        // TODO: review clients, correct them to use precise checks for MPP version
-        return this?.mppVersion.isNewMPP || this?.mppVersion.isHmpp
-    }
+val IKotlinFacetSettings.isMultiPlatformModule: Boolean
+    get() = mppVersion != null
 
 private val Module.facetSettings: IKotlinFacetSettings?
     get() = KotlinFacet.get(this)?.configuration?.settings
@@ -236,7 +230,7 @@ val Module.implementingModules: List<Module>
 
 /**
  * Returns stable binary name of module from the *Kotlin* point of view.
- * Having the correct module name is critical for the compiler, e.g., for 'internal'-visibility
+ * Having correct module name is critical for compiler, e.g. for 'internal'-visibility
  * mangling (see KT-23668).
  *
  * Note that build systems and IDEA have their own module systems and, potentially, their

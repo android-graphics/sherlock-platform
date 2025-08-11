@@ -7,19 +7,11 @@ import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.inspections.AbstractMultiFileLocalInspectionTest
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.psi.KtFile
-import java.io.File
 import kotlin.io.path.Path
 
 abstract class AbstractK2MultiFileLocalInspectionTest: AbstractMultiFileLocalInspectionTest() {
 
-    override fun checkForErrorsBefore(mainFile: File, ktFile: KtFile, fileText: String) {
-        // TODO: KTIJ-30431
-    }
-
-    override fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
-        // TODO: KTIJ-30431
-    }
+    override fun checkForUnexpectedErrors(fileText: String) {}
 
     override fun tearDown() {
         runAll(

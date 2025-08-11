@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.inline
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.ElementDescriptionUtil

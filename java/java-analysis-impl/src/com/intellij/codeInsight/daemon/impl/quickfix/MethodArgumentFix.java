@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -19,7 +19,8 @@ public abstract class MethodArgumentFix extends PsiUpdateModCommandAction<PsiExp
 
   protected final int myIndex;
   protected final ArgumentFixerActionFactory myArgumentFixerActionFactory;
-  protected final @NotNull PsiType myToType;
+  @NotNull
+  protected final PsiType myToType;
 
   protected MethodArgumentFix(@NotNull PsiExpressionList list, int i, @NotNull PsiType toType, @NotNull ArgumentFixerActionFactory fixerActionFactory) {
     super(list);
@@ -39,7 +40,8 @@ public abstract class MethodArgumentFix extends PsiUpdateModCommandAction<PsiExp
     return Presentation.of(getText(list));
   }
 
-  abstract @IntentionName @NotNull String getText(@NotNull PsiExpressionList list);
+  @IntentionName
+  abstract @NotNull String getText(@NotNull PsiExpressionList list);
 
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiExpressionList list, @NotNull ModPsiUpdater updater) {
@@ -53,7 +55,8 @@ public abstract class MethodArgumentFix extends PsiUpdateModCommandAction<PsiExp
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return QuickFixBundle.message("fix.argument.family");
   }
 }

@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -28,8 +27,6 @@ public class ChooserInterceptor extends UiInterceptors.UiInterceptor<JBPopup> {
   final List<String> myOptions;
   final Pattern myToSelect;
 
-  @Nullable Function<List<String>, String> myChooseOption;
-
   /**
    * Create an interceptor which will assert the expected options and select the given option when chooser will appear
    *
@@ -40,13 +37,6 @@ public class ChooserInterceptor extends UiInterceptors.UiInterceptor<JBPopup> {
     super(JBPopup.class);
     myOptions = expectedOptions;
     myToSelect = Pattern.compile(pattern);
-  }
-
-  public ChooserInterceptor(@Nullable List<String> expectedOptions,
-                            @NotNull @RegExp String pattern,
-                            @NotNull Function<List<String>, String> chooseOption) {
-    this(expectedOptions, pattern);
-    myChooseOption = chooseOption;
   }
 
   @Override
@@ -64,13 +54,10 @@ public class ChooserInterceptor extends UiInterceptors.UiInterceptor<JBPopup> {
     if (matched.isEmpty()) {
       fail("No option matches pattern " + myToSelect + " (available options: " + String.join(", ", actualOptions) + ")");
     }
-    if (myChooseOption != null) {
-      content.setSelectedIndex(actualOptions.indexOf(myChooseOption.apply(matched)));
-    } else if (matched.size() == 1) {
-      content.setSelectedIndex(actualOptions.indexOf(matched.get(0)));
-    } else {
+    if (matched.size() > 1) {
       fail("Several options matched: " + matched + " (pattern: " + myToSelect + ")");
     }
+    content.setSelectedIndex(actualOptions.indexOf(matched.get(0)));
     assertTrue(popup.canClose()); // calls cancelHandler
     if (popup instanceof ListPopup listPopup) {
       listPopup.handleSelect(true);

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.featuresSuggester.settings
 
 import com.intellij.openapi.application.ApplicationManager
@@ -19,23 +19,20 @@ import kotlin.math.min
   name = "FeatureSuggesterSettings",
   storages = [Storage("FeatureSuggester.xml", roamingType = RoamingType.DISABLED)]
 )
-internal class FeatureSuggesterSettings : PersistentStateComponent<FeatureSuggesterSettings> {
+class FeatureSuggesterSettings : PersistentStateComponent<FeatureSuggesterSettings> {
   var suggesters: MutableMap<String, Boolean> = run {
     val enabled = isSuggestersEnabledByDefault
-    FeatureSuggester.suggesters.associate { internalId(it.id) to (it.enabledByDefault ?: enabled) }.toMutableMap()
+    FeatureSuggester.suggesters.associate { internalId(it.id) to enabled }.toMutableMap()
   }
 
   // SuggesterId to the last time this suggestion was shown
   private var suggestionLastShownTime: MutableMap<String, Long> = mutableMapOf()
 
-  // the list of timestamps (millis) of the first IDE session start for the last days
+  // List of timestamps (millis) of the first IDE session start for the last days
   private var workingDays: MutableList<Long> = mutableListOf()
 
   val isAnySuggesterEnabled: Boolean
-    get() = needSendStatisticsForSwitchedOffCheckers || suggesters.any { it.value }
-
-  val needSendStatisticsForSwitchedOffCheckers: Boolean
-    get() = Registry.`is`("feature.suggester.send.statistics", false)
+    get() = suggesters.any { it.value }
 
   private val isSuggestersEnabledByDefault: Boolean
     get() = Registry.`is`("feature.suggester.enable.suggesters", false)

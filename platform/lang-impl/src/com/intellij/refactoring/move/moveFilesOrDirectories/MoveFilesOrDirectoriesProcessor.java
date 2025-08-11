@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.EditorHelper;
@@ -33,7 +33,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.lang.ref.Reference;
@@ -50,10 +49,10 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   private final boolean mySearchForReferences;
   protected final boolean mySearchInComments;
   protected final boolean mySearchInNonJavaFiles;
-  private final @NotNull PsiDirectory myNewParent;
+  private final PsiDirectory myNewParent;
   private final MoveCallback myMoveCallback;
   private NonCodeUsageInfo[] myNonCodeUsages;
-  protected final Map<PsiFile, @Unmodifiable List<UsageInfo>> myFoundUsages = new HashMap<>();
+  private final Map<PsiFile, List<UsageInfo>> myFoundUsages = new HashMap<>();
 
   public MoveFilesOrDirectoriesProcessor(@NotNull Project project,
                                          PsiElement @NotNull [] elements,
@@ -83,7 +82,8 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  @NotNull
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new MoveFilesOrDirectoriesViewDescriptor(myElementsToMove, myNewParent);
   }
 
@@ -92,8 +92,8 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     List<UsageInfo> result = new ArrayList<>();
     for (PsiElement element : myElementsToMove) {
       if (mySearchForReferences) {
-        for (PsiReference reference : ReferencesSearch.search(element, GlobalSearchScope.projectScope(myProject)).asIterable()) {
-          result.add(new MovedFileOrDirectoryUsageInfo(reference, element));
+        for (PsiReference reference : ReferencesSearch.search(element, GlobalSearchScope.projectScope(myProject))) {
+          result.add(new MyUsageInfo(reference, element));
         }
       }
       findElementUsages(result, element);
@@ -138,9 +138,8 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(UsageInfo @NotNull [] _usages) {
     try {
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-      boolean showProgression = myElementsToMove.length > 1;
-      progressIndicator.setIndeterminate(!showProgression); // only show progression when moving multiple elements
-      if (showProgression) progressIndicator.setFraction(0.0);
+      progressIndicator.setIndeterminate(myElementsToMove.length <= 1); // only show progress when moving multiple elements
+      progressIndicator.setFraction(0.0);
       List<PsiElement> toChange = new ArrayList<>();
       Collections.addAll(toChange, myElementsToMove);
 
@@ -179,10 +178,10 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       List<SmartPsiElementPointer<PsiFile>> movedFiles = new ArrayList<>();
       for (int i = 0; i < myElementsToMove.length; i++) {
         PsiElement element = toChange.get(i);
-        if (showProgression) progressIndicator.setFraction((double)i / myElementsToMove.length);
+        progressIndicator.setFraction((double)i / myElementsToMove.length);
         if (element instanceof PsiDirectory directory) {
           progressIndicator.setText2(directory.getVirtualFile().getPresentableUrl());
-          doMoveDirectory(directory, newParent);
+          MoveFilesOrDirectoriesUtil.doMoveDirectory(directory, newParent);
           for (PsiElement psiElement : directory.getChildren()) {
             processDirectoryFiles(movedFiles, oldToNewMap, psiElement);
           }
@@ -193,7 +192,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
           PsiFile moving = newParent.findFile(movedFile.getName());
           if (moving == null) {
-            doMoveFile(movedFile, newParent);
+            MoveFilesOrDirectoriesUtil.doMoveFile(movedFile, newParent);
           }
           moving = newParent.findFile(movedFile.getName());
           if (moving != null) {
@@ -213,7 +212,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         }
       }
       progressIndicator.setText2("");
-      if (showProgression) progressIndicator.setFraction(1.0);
+      progressIndicator.setFraction(1.0);
       // sort by offset descending to process correctly several usages in one PsiElement [IDEADEV-33013]
       UsageInfo[] usages = codeUsages.toArray(UsageInfo.EMPTY_ARRAY);
       CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
@@ -233,12 +232,12 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
       for (Map.Entry<PsiFile, List<UsageInfo>> entry : myFoundUsages.entrySet()) {
         // Before retargeting sort usages by start offset to get consistent results
-        List<UsageInfo> sorted = ContainerUtil.sorted(entry.getValue(), Comparator.comparingInt(o -> {
+        ContainerUtil.sort(entry.getValue(), Comparator.comparingInt(o -> {
           PsiElement element = o.getElement();
           if (element == null) return -1;
           return element.getTextRange().getStartOffset();
         }));
-        MoveFileHandler.forElement(entry.getKey()).retargetUsages(sorted, oldToNewMap);
+        MoveFileHandler.forElement(entry.getKey()).retargetUsages(entry.getValue(), oldToNewMap);
       }
 
       myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[0]);
@@ -258,14 +257,6 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         LOG.error(e);
       }
     }
-  }
-
-  protected void doMoveFile(@NotNull PsiFile movedFile, @NotNull PsiDirectory newParent) {
-    MoveFilesOrDirectoriesUtil.doMoveFile(movedFile, newParent);
-  }
-
-  protected void doMoveDirectory(@NotNull PsiDirectory directory, @NotNull PsiDirectory newParent) {
-    MoveFilesOrDirectoriesUtil.doMoveDirectory(directory, newParent);
   }
 
   @Override
@@ -291,20 +282,23 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Nullable
   @Override
-  protected @Nullable String getRefactoringId() {
+  protected String getRefactoringId() {
     return "refactoring.move";
   }
 
+  @Nullable
   @Override
-  protected @Nullable RefactoringEventData getBeforeData() {
+  protected RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
     data.addElements(myElementsToMove);
     return data;
   }
 
+  @Nullable
   @Override
-  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     RefactoringEventData data = new RefactoringEventData();
     data.addElement(myNewParent);
     return data;
@@ -336,7 +330,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
   protected void retargetUsages(UsageInfo @NotNull [] usages, @NotNull Map<PsiElement, PsiElement> oldToNewMap) {
     for (UsageInfo usageInfo : usages) {
-      if (usageInfo instanceof MovedFileOrDirectoryUsageInfo info) {
+      if (usageInfo instanceof MyUsageInfo info) {
         PsiElement element = info.myTarget;
 
         if (info.getReference() instanceof FileReference || info.getReference() instanceof PsiDynaReference) {
@@ -357,8 +351,9 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getCommandName() {
+  protected String getCommandName() {
     return RefactoringBundle.message("move.title");
   }
 
@@ -368,17 +363,14 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  protected static final class MovedFileOrDirectoryUsageInfo extends UsageInfo {
+  private static final class MyUsageInfo extends UsageInfo {
     private final PsiElement myTarget;
     final PsiReference myReference;
 
-    MovedFileOrDirectoryUsageInfo(@NotNull PsiReference reference, @NotNull PsiElement target) {
+    MyUsageInfo(@NotNull PsiReference reference, @NotNull PsiElement target) {
       super(reference);
       myReference = reference;
       myTarget = target;
     }
-
-    public PsiElement getTarget() { return myTarget; }
-    public PsiReference getUpdatedReference() { return myReference; }
   }
 }

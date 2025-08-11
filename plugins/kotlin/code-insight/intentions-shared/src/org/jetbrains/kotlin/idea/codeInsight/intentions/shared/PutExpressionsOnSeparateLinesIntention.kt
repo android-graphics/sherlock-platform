@@ -30,7 +30,8 @@ internal class PutExpressionsOnSeparateLinesIntention :
 
     override fun getFamilyName(): String = KotlinBundle.message("put.expressions.on.separate.lines")
 
-    override fun KaSession.prepareContext(element: KtOperationReferenceExpression) {
+    context(KaSession)
+    override fun prepareContext(element: KtOperationReferenceExpression) {
     }
 
     override fun invoke(

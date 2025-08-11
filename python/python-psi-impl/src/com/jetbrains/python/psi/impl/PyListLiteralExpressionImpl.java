@@ -4,9 +4,10 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyCollectionTypeUtil;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyListLiteralExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -38,11 +39,8 @@ public class PyListLiteralExpressionImpl extends PySequenceExpressionImpl implem
 
   @Override
   public PsiElement addAfter(@NotNull PsiElement psiElement, PsiElement afterThis) throws IncorrectOperationException {
-    checkPyExpression(afterThis);
-    if (psiElement.getNode().getElementType() == PyTokenTypes.COMMA) {
-      return super.addAfter(psiElement, afterThis);
-    }
     checkPyExpression(psiElement);
+    checkPyExpression(afterThis);
     return PyElementGenerator.getInstance(getProject()).insertItemIntoList(this, (PyExpression)afterThis, (PyExpression)psiElement);
   }
 
@@ -54,6 +52,6 @@ public class PyListLiteralExpressionImpl extends PySequenceExpressionImpl implem
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    return PyCollectionTypeUtil.getListLiteralType(this, context);
+    return PyBuiltinCache.getInstance(this).createLiteralCollectionType(this, "list", context);
   }
 }

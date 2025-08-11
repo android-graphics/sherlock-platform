@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -44,12 +44,14 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return getFixName();
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return getText();
   }
 
@@ -62,7 +64,8 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   }
 
   @Override
-  public @NotNull String getText() {
+  @NotNull
+  public String getText() {
     return getFixName();
   }
 
@@ -72,7 +75,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   }
 
   @Override
-  public void invoke(final @NotNull Project project, @Nullable Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull final Project project, @Nullable Editor editor, @NotNull PsiFile file) {
     invokeAction(project, file, myElement.retrieve(), myKey, myPropertiesFiles);
   }
 
@@ -82,11 +85,11 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
     return new IntentionPreviewInfo.CustomDiff(PropertiesFileType.INSTANCE, fileName, myKey + "=", myKey + "=...");
   }
 
-  private void invokeAction(final @NotNull Project project,
-                            @NotNull PsiFile file,
-                            @NotNull PsiElement psiElement,
-                            final @Nullable String suggestedKey,
-                            final @Nullable List<PropertiesFile> propertiesFiles) {
+  private void invokeAction(@NotNull final Project project,
+                                      @NotNull PsiFile file,
+                                      @NotNull PsiElement psiElement,
+                                      @Nullable final String suggestedKey,
+                                      @Nullable final List<PropertiesFile> propertiesFiles) {
     final I18nizeQuickFixModel model;
     final I18nizeQuickFixDialog.DialogCustomization dialogCustomization = createDefaultCustomization(suggestedKey, propertiesFiles);
 
@@ -139,11 +142,11 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
     return Couple.of(key, value);
   }
 
-  public static void createProperty(final @NotNull Project project,
-                                    final @NotNull PsiElement psiElement,
-                                    final @NotNull Collection<? extends PropertiesFile> selectedPropertiesFiles,
-                                    final @NotNull String key,
-                                    final @NotNull String value) {
+  public static void createProperty(@NotNull final Project project,
+                                    @NotNull final PsiElement psiElement,
+                                    @NotNull final Collection<? extends PropertiesFile> selectedPropertiesFiles,
+                                    @NotNull final String key,
+                                    @NotNull final String value) {
     for (PropertiesFile selectedFile : selectedPropertiesFiles) {
       if (!FileModificationService.getInstance().prepareFileForWrite(selectedFile.getContainingFile())) return;
     }

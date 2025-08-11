@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.analysis.JvmAnalysisBundle;
@@ -39,9 +39,9 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -63,14 +63,18 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-public final class PropagateAnnotationPanel extends JPanel implements Disposable {
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.BGT_DATA_PROVIDER;
+
+public class PropagateAnnotationPanel extends JPanel implements Disposable {
+
   private final Tree myTree;
-  private final @NotNull Project myProject;
+  @NotNull
+  private final Project myProject;
   private final List<TaintNode> myRoots;
   private final PropagateTreeListener myTreeSelectionListener;
   private final @NotNull Consumer<? super Collection<@NotNull TaintNode>> myCallback;
@@ -176,7 +180,8 @@ public final class PropagateAnnotationPanel extends JPanel implements Disposable
     return splitter;
   }
 
-  private static @NotNull JComponent getEditorComponent(@NotNull Editor editor, @NlsContexts.BorderTitle String title) {
+  @NotNull
+  private static JComponent getEditorComponent(@NotNull Editor editor, @NlsContexts.BorderTitle String title) {
     EditorSettings memberEditorSettings = editor.getSettings();
     memberEditorSettings.setGutterIconsShown(false);
     memberEditorSettings.setLineNumbersShown(false);
@@ -256,10 +261,11 @@ public final class PropagateAnnotationPanel extends JPanel implements Disposable
     };
   }
 
-  private static final class PropagateTreeListener implements TreeSelectionListener, Disposable {
+  private static class PropagateTreeListener implements TreeSelectionListener, Disposable {
+
     private final ElementEditor myUsageEditor;
     private final ElementEditor myMemberEditor;
-    private final SingleEdtTaskScheduler alarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
+    private final Alarm myAlarm = new Alarm();
 
     private PropagateTreeListener(@NotNull Editor usageEditor,
                                   @NotNull Editor memberEditor) {
@@ -272,7 +278,8 @@ public final class PropagateAnnotationPanel extends JPanel implements Disposable
       TreePath path = e.getPath();
       if (path == null) return;
       TaintNode taintNode = (TaintNode)path.getLastPathComponent();
-      alarm.cancelAndRequest(300, () -> updateEditorTexts(taintNode));
+      myAlarm.cancelAllRequests();
+      myAlarm.addRequest(() -> updateEditorTexts(taintNode), 300);
     }
 
     void updateEditorTexts(@NotNull TaintNode taintNode) {
@@ -301,7 +308,6 @@ public final class PropagateAnnotationPanel extends JPanel implements Disposable
 
     @Override
     public void dispose() {
-      alarm.dispose();
       Disposer.dispose(myUsageEditor);
       Disposer.dispose(myMemberEditor);
     }
@@ -414,18 +420,25 @@ public final class PropagateAnnotationPanel extends JPanel implements Disposable
     }
   }
 
-  private static final class PropagateTree extends Tree implements UiDataProvider {
+  private static class PropagateTree extends Tree implements DataProvider {
     private PropagateTree(TreeModel treeModel) {
       super(treeModel);
       getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     }
 
     @Override
-    public void uiDataSnapshot(@NotNull DataSink sink) {
+    public @Nullable Object getData(@NotNull String dataId) {
+      if (BGT_DATA_PROVIDER.is(dataId)) {
+        return (DataProvider)slowId -> getSlowData(slowId);
+      }
+      return null;
+    }
+
+    private @Nullable Object getSlowData(@NotNull String dataId) {
+      if (!CommonDataKeys.PSI_ELEMENT.is(dataId)) return null;
       TaintNode[] selectedNodes = getSelectedNodes(TaintNode.class, null);
-      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
-        return selectedNodes.length == 1 ? selectedNodes[0].getRef() : null;
-      });
+      if (selectedNodes.length != 1) return null;
+      return selectedNodes[0].getRef();
     }
 
     @Contract("_, _ -> new")

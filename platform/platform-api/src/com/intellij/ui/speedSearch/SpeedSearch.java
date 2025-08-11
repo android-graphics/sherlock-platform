@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -40,14 +40,14 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
   }
 
   public void backspace() {
-    if (!myString.isEmpty()) {
+    if (myString.length() > 0) {
       updatePattern(myString.substring(0, myString.length() - 1));
     }
   }
 
   public boolean shouldBeShowing(String string) {
     return string == null ||
-           myString.isEmpty() || (myMatcher != null && myMatcher.matches(string));
+           myString.length() == 0 || (myMatcher != null && myMatcher.matches(string));
   }
 
   public void processKeyEvent(KeyEvent e) {
@@ -109,7 +109,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
   }
 
   public boolean isHoldingFilter() {
-    return myEnabled && !myString.isEmpty();
+    return myEnabled && myString.length() > 0;
   }
 
   public void setEnabled(boolean enabled) {
@@ -160,8 +160,8 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
 
   @Override
   public @Nullable Iterable<TextRange> matchingFragments(@NotNull String text) {
-    if (getMatcher() instanceof MinusculeMatcher matcher) {
-      return matcher.matchingFragments(text);
+    if (myMatcher instanceof MinusculeMatcher) {
+      return ((MinusculeMatcher)myMatcher).matchingFragments(text);
     }
     return null;
   }
@@ -199,8 +199,9 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
     return myJustActivated || isHoldingFilter();
   }
 
+  @Nullable
   @Override
-  public @Nullable JComponent getTextField() {
+  public JComponent getTextField() {
     return null;
   }
 

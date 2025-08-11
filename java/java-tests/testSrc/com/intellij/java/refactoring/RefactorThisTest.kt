@@ -2,7 +2,6 @@
 package com.intellij.java.refactoring
 
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -190,9 +189,7 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     val group = DefaultActionGroup()
     val dataContext = (editor as EditorEx).dataContext
     action.fillActions(project, group, dataContext)
-    return Utils.expandActionGroup(
-      group, PresentationFactory(), dataContext,
-      ActionPlaces.REFACTORING_QUICKLIST, ActionUiKind.POPUP)
+    return Utils.expandActionGroup(group, PresentationFactory(), dataContext, ActionPlaces.REFACTORING_QUICKLIST)
   }
 
 }

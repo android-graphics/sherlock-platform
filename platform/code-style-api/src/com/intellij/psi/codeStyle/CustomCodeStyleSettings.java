@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +18,7 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
   private CodeStyleSettings myContainer;
   private final String myTagName;
 
-  private static final Logger LOG  = Logger.getInstance(CustomCodeStyleSettings.class);
+  private final static Logger LOG  = Logger.getInstance(CustomCodeStyleSettings.class);
 
   protected CustomCodeStyleSettings(@NonNls @NotNull String tagName, @NotNull CodeStyleSettings container) {
     myTagName = tagName;
@@ -29,14 +29,16 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
     return myContainer;
   }
 
-  public final @NonNls @NotNull String getTagName() {
+  @NonNls @NotNull
+  public final String getTagName() {
     return myTagName;
   }
 
   /**
    * in case settings save additional top-level tags, list the list of them to prevent serializer to treat such tag as unknown settings.
    */
-  public @NotNull List<String> getKnownTagNames() {
+  @NotNull
+  public List<String> getKnownTagNames() {
     return Collections.singletonList(getTagName());
   }
 
@@ -48,7 +50,7 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
     }
   }
 
-  public void writeExternal(Element parentElement, final @NotNull CustomCodeStyleSettings parentSettings) throws WriteExternalException {
+  public void writeExternal(Element parentElement, @NotNull final CustomCodeStyleSettings parentSettings) throws WriteExternalException {
     final Element childElement = new Element(myTagName);
     DefaultJDOMExternalizer.write(this, childElement, new DifferenceFilter<>(this, parentSettings));
     if (!childElement.getContent().isEmpty()) {

@@ -6,7 +6,6 @@ import com.intellij.ide.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -132,8 +131,11 @@ public final class GroupItem implements Cloneable, PaletteGroup {
   }
 
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink, @NotNull Project project) {
-    sink.set(DATA_KEY, this);
+  public @Nullable Object getData(Project project, @NotNull String dataId) {
+    if (DATA_KEY.is(dataId)) {
+      return this;
+    }
+    return null;
   }
 
   @Override

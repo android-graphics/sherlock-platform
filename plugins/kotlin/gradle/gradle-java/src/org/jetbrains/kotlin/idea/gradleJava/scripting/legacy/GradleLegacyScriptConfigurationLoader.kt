@@ -2,17 +2,16 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting.legacy
 
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.core.script.configuration.cache.CachedConfigurationInputs
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.DefaultScriptConfigurationLoader
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoadingContext
+import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.gradleJava.scripting.getGradleScriptInputsStamp
 import org.jetbrains.kotlin.idea.gradleJava.scripting.isGradleKotlinScript
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
@@ -24,7 +23,7 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
  *
  * TODO(gradle6): remove
  */
-class GradleLegacyScriptConfigurationLoader(project: Project, private val coroutineScope: CoroutineScope) : DefaultScriptConfigurationLoader(project) {
+class GradleLegacyScriptConfigurationLoader(project: Project) : DefaultScriptConfigurationLoader(project) {
     private val buildRootsManager
         get() = GradleBuildRootsManager.getInstanceSafe(project)
 
@@ -65,8 +64,8 @@ class GradleLegacyScriptConfigurationLoader(project: Project, private val corout
         }
 
         // Gradle read files from FS, so let's save all docs
-        coroutineScope.launch(Dispatchers.EDT) {
-            edtWriteAction {
+        GlobalScope.launch(EDT(project)) {
+            runWriteAction {
                 FileDocumentManager.getInstance().saveAllDocuments()
             }
         }

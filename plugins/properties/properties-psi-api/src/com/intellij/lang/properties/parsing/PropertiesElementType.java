@@ -10,7 +10,6 @@ public class PropertiesElementType extends IElementType {
     super(debugName, PropertiesLanguage.INSTANCE);
   }
 
-  @Override
   public String toString() {
     return "Properties:" + super.toString();
   }

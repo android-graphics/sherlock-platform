@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -26,7 +26,8 @@ public final class CompoundProjectViewNodeDecorator implements ProjectViewNodeDe
   /**
    * @return a shared instance for the specified project
    */
-  public static @NotNull ProjectViewNodeDecorator get(@Nullable Project project) {
+  @NotNull
+  public static ProjectViewNodeDecorator get(@Nullable Project project) {
     if (project == null || project.isDisposed() || project.isDefault()) return EMPTY;
     ProjectViewNodeDecorator provider = project.getUserData(KEY);
     if (provider != null) return provider;
@@ -40,7 +41,7 @@ public final class CompoundProjectViewNodeDecorator implements ProjectViewNodeDe
   }
 
   @Override
-  public void decorate(@NotNull ProjectViewNode node, @NotNull PresentationData data) {
+  public void decorate(ProjectViewNode node, PresentationData data) {
     forEach(decorator -> decorator.decorate(node, data));
   }
   private void forEach(@NotNull Consumer<? super ProjectViewNodeDecorator> consumer) {

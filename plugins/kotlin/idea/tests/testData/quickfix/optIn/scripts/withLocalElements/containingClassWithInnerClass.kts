@@ -1,5 +1,4 @@
 // "Opt in for 'Library' on statement" "true"
-// PRIORITY: HIGH
 // ACTION: Introduce local variable
 // ACTION: Opt in for 'Library' in containing file 'containingClassWithInnerClass.kts'
 // ACTION: Opt in for 'Library' in module 'light_idea_test_case'
@@ -27,4 +26,4 @@ val foo: MockLibrary = MockLibrary();
         }
     }
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityUseOptInAnnotationFix

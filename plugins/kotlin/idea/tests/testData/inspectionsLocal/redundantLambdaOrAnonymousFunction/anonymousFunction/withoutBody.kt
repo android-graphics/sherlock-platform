@@ -1,4 +1,4 @@
 // PROBLEM: none
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 
 val xx = (f<caret>un(x: Int))(42)

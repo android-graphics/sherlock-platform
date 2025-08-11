@@ -40,14 +40,6 @@ public class ForeachTemplateTest extends PostfixTemplateTestCase {
   public void testIterSameAsFor() {
     doTest();
   }
-  
-  public void testNoDoubleNotNull() {
-    doTest();
-  }
-  
-  public void testNoDoubleNotNullNested() {
-    doTest();
-  }
 
   public void testFinalLocals() {
     JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());

@@ -269,7 +269,8 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
   }
 
   @Override
-  public @NotNull BTreeStatistics getStatistics() throws IOException {
+  @NotNull
+  public BTreeStatistics getStatistics() throws IOException {
     int leafPages = height == 3 ? pagesCount - (1 + root.getNodeView().getChildrenCount() + 1) : height == 2 ? pagesCount - 1 : 1;
     return new BTreeStatistics(
       pagesCount,

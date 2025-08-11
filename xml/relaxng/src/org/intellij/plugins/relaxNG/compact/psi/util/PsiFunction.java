@@ -25,7 +25,8 @@ public final class PsiFunction implements NotNullFunction<ASTNode, PsiElement> {
   public static final PsiFunction INSTANCE = new PsiFunction();
 
   @Override
-  public @NotNull PsiElement fun(ASTNode astNode) {
+  @NotNull
+  public PsiElement fun(ASTNode astNode) {
     return astNode.getPsi();
   }
 }

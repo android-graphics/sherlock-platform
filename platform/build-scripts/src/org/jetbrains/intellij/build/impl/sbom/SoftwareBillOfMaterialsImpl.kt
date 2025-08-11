@@ -1,10 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package org.jetbrains.intellij.build.impl.sbom
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.util.SystemProperties
+import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.DigestUtil.sha1Hex
+import com.intellij.util.io.DigestUtil.updateContentHash
+import com.intellij.util.io.bytesToHex
 import com.intellij.util.io.sha256Hex
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.outputStream
@@ -13,16 +15,19 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Options
 import org.jetbrains.intellij.build.impl.*
-import org.jetbrains.intellij.build.impl.maven.MavenCoordinates
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.readZipFile
+import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -58,15 +63,14 @@ import kotlin.io.path.bufferedReader
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 
-@ApiStatus.Internal
-class SoftwareBillOfMaterialsImpl(
+internal class SoftwareBillOfMaterialsImpl(
   private val context: BuildContext,
   private val distributions: List<DistributionForOsTaskResult>,
   private val distributionFiles: List<DistributionFileEntry>
 ) : SoftwareBillOfMaterials {
   private companion object {
     val JETBRAINS_GITHUB_ORGANIZATIONS: Set<String> = setOf("JetBrains", "Kotlin")
-    val STRICT_MODE: Boolean = System.getProperty("intellij.build.sbom.strictMode").toBoolean()
+    val STRICT_MODE: Boolean = SystemProperties.getBooleanProperty("intellij.build.sbom.strictMode", false)
   }
 
   private val specVersion: String = Version.TWO_POINT_THREE_VERSION
@@ -122,9 +126,8 @@ class SoftwareBillOfMaterialsImpl(
       .repositories
   }
 
-  private fun getFiles(distributionForOsTaskResult: DistributionForOsTaskResult): List<Path> {
-    return distributionForOsTaskResult.builder.distributionFilesBuilt(distributionForOsTaskResult.arch)
-  }
+  private val DistributionForOsTaskResult.files: List<Path>
+    get() = builder.distributionFilesBuilt(arch)
 
   private fun spdxDocument(name: String): SpdxDocument {
     val uri = "$documentNamespace/$specVersion/$name.spdx"
@@ -152,7 +155,6 @@ class SoftwareBillOfMaterialsImpl(
 
   override suspend fun generate() {
     val skipReason = when {
-      true -> "IJI-2177"
       !context.shouldBuildDistributions() -> "No distribution was built"
       documentNamespace == null -> "Document namespace isn't specified"
       context.productProperties.sbomOptions.creator == null -> "Document creator isn't specified"
@@ -163,11 +165,10 @@ class SoftwareBillOfMaterialsImpl(
       Span.current().addEvent("$skipReason, skipping")
       return
     }
-
     check(distributionFiles.any()) {
       "No distribution was built"
     }
-    val documents = if (distributions.any { getFiles(it).any() }) {
+    val documents = if (distributions.any { it.files.any() }) {
       generateFromDistributions()
     }
     else {
@@ -177,19 +178,34 @@ class SoftwareBillOfMaterialsImpl(
       "No SBOM documents were generated"
     }
     for (doc in documents) {
-      Span.current().addEvent("SBOM document generated", Attributes.of(AttributeKey.stringKey("file"), doc.toString()))
-      context.notifyArtifactBuilt(doc)
+      Span.current().addEvent("SBOM document generated", Attributes.of(AttributeKey.stringKey("file"), "$doc"))
     }
-    withContext(Dispatchers.IO) {
-      checkNtiaConformance(documents, context)
+    checkNtiaConformance(documents, context)
+  }
+
+  private class Checksums(@JvmField val path: Path) {
+    val sha1sum: String
+    val sha256sum: String
+
+    init {
+      val buffer = ByteArray(512 * 1024)
+      val digests = Files.newInputStream(path).use {
+        val sha1 = DigestUtil.sha1()
+        val sha256 = DigestUtil.sha256()
+        updateContentHash(digest = sha1, inputStream = it, buffer = buffer)
+        updateContentHash(digest = sha256, inputStream = it, buffer = buffer)
+        bytesToHex(sha1.digest()) to bytesToHex(sha256.digest())
+      }
+      sha1sum = digests.first
+      sha256sum = digests.second
     }
   }
 
   private suspend fun generateFromDistributions(): List<Path> {
     return withContext(Dispatchers.IO) {
       distributions.associateWith { distribution ->
-        getFiles(distribution)
-          .map { async(CoroutineName("checksums for $it")) { Checksums(it) } }
+        distribution.files
+          .map { async { Checksums(it) } }
           .map { it.await() }
       }
     }.flatMap { (distribution, filesWithChecksums) ->
@@ -204,13 +220,9 @@ class SoftwareBillOfMaterialsImpl(
         document.documentDescribes.add(rootPackage)
         val runtimePackage = if (distribution.builder.isRuntimeBundled(it.path)) {
           document.runtimePackage(distribution.builder.targetOs, distribution.arch)
-        }
-        else {
-          null
-        }
+        } else null
         generate(
-          document = document,
-          rootPackage = rootPackage,
+          document, rootPackage,
           runtimePackage = runtimePackage,
           distributionDir = distribution.outDir
         )
@@ -251,7 +263,6 @@ class SoftwareBillOfMaterialsImpl(
 
   private fun SpdxDocument.addRuntimeUpstreams(runtimeArchivePackage: SpdxPackage, os: OsFamily, arch: JvmArchitecture) {
     val cefVersion = context.dependenciesProperties["cef.version"]
-    @Suppress("SpellCheckingInspection")
     val cefSuffix = when (os) {
       OsFamily.LINUX -> when (arch) {
         JvmArchitecture.aarch64 -> "linuxarm64"
@@ -317,27 +328,26 @@ class SoftwareBillOfMaterialsImpl(
    * but documents with every distribution content specified will be built anyway.
    */
   private suspend fun generateFromContentReport(): List<Path> {
-    return SUPPORTED_DISTRIBUTIONS
-      .filter { (os, arch) -> context.shouldBuildDistributionForOS(os, arch) }
-      .map { (os, arch) ->
-        val distributionDir = getOsAndArchSpecificDistDirectory(osFamily = os, arch = arch, context = context)
-        val name = context.productProperties.getBaseArtifactName(context) + "-${distributionDir.name}"
-        val document = spdxDocument(name)
-        val rootPackage = spdxPackage(document, name) {
-          setVersionInfo(version)
-            .setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
-            .setSupplier(creator)
-        }
-        document.documentDescribes.add(rootPackage)
-        generate(
-          document = document,
-          rootPackage = rootPackage,
-          runtimePackage = document.runtimePackage(os, arch),
-          distributionDir = distributionDir,
-          // distributions weren't built
-          claimContainedFiles = false,
-        )
+    return SUPPORTED_DISTRIBUTIONS.asFlow().filter { (os, arch) ->
+      context.shouldBuildDistributionForOS(os, arch)
+    }.map { (os, arch) ->
+      val distributionDir = getOsAndArchSpecificDistDirectory(os, arch, context)
+      val name = context.productProperties.getBaseArtifactName(context) + "-${distributionDir.name}"
+      val document = spdxDocument(name)
+      val rootPackage = spdxPackage(document, name) {
+        setVersionInfo(version)
+          .setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
+          .setSupplier(creator)
       }
+      document.documentDescribes.add(rootPackage)
+      generate(
+        document, rootPackage,
+        runtimePackage = document.runtimePackage(os, arch),
+        distributionDir = distributionDir,
+        // distributions weren't built
+        claimContainedFiles = false
+      )
+    }.toList()
   }
 
   private suspend fun generate(
@@ -354,8 +364,8 @@ class SoftwareBillOfMaterialsImpl(
         .plus(runtimePackage)
         .filterNotNull()
         .toList()
-      for (spdxPackage in containedPackages) {
-        rootPackage.relatesTo(spdxPackage, RelationshipType.CONTAINS)
+      containedPackages.forEach {
+        rootPackage.relatesTo(it, RelationshipType.CONTAINS)
       }
       claimContainedFiles(
         spdxPackage = rootPackage,
@@ -366,13 +376,11 @@ class SoftwareBillOfMaterialsImpl(
         license = license,
       )
     }
-
-    val mavenLibraries = getMavenLibraries()
     if (STRICT_MODE) {
-      checkCopyrightTextForLibraries(mavenLibraries)
+      checkCopyrightTextForLibraries()
     }
     val libraryPackages = mavenLibraries.mapNotNull { lib ->
-      val libraryPackage = spdxPackage(document, lib)
+      val libraryPackage = document.spdxPackage(lib)
       val filePackage = filePackages[lib.entry.path] ?: return@mapNotNull null
       filePackage.relatesTo(libraryPackage, RelationshipType.DEPENDS_ON, "repacked from")
       libraryPackage
@@ -404,9 +412,8 @@ class SoftwareBillOfMaterialsImpl(
         .map { it.path }.distinct()
         // non-bundled plugins, for example
         .filterNot { it.startsWith(context.paths.tempDir) }
-        .toList().map {
-          async(CoroutineName("checksums for $it")) { Checksums(it) }
-        }.map { it.await() }
+        .toList().map { async { Checksums(it) } }
+        .map { it.await() }
     }
   }
 
@@ -432,12 +439,12 @@ class SoftwareBillOfMaterialsImpl(
     addRelationship(relationship)
   }
 
-  private suspend fun getMavenLibraries(): List<MavenLibrary> {
-    return withContext(Dispatchers.IO) {
-      val usedModulesNames = getIncludedModules(distributionFiles.asSequence()).toHashSet()
-      val usedModules = context.project.modules.filterTo(LinkedHashSet()) {
+  private val mavenLibraries: List<MavenLibrary> by lazy {
+    runBlocking(Dispatchers.IO) {
+      val usedModulesNames = distributionFiles.includedModules.toSet()
+      val usedModules = context.project.modules.asSequence().filter {
         usedModulesNames.contains(it.name)
-      }
+      }.toSet()
       val librariesBundledInDistributions = distributionFiles.asSequence()
         .filterIsInstance<LibraryFileEntry>()
         .associateBy {
@@ -454,9 +461,9 @@ class SoftwareBillOfMaterialsImpl(
       }.distinctBy {
         it.first.mavenDescriptor?.mavenId ?: it.first.name
       }.groupBy({ it.first }, { it.second }).map { (library, modules) ->
-        val libraryName = getLibraryFilename(library)
-        async(CoroutineName("maven library $libraryName")) {
-          val libraryEntry = librariesBundledInDistributions.get(libraryName)
+        async {
+          val libraryName = LibraryLicensesListGenerator.getLibraryName(library)
+          val libraryEntry = librariesBundledInDistributions[libraryName]
           val libraryFile = libraryEntry?.libraryFile ?: return@async null
           val libraryLicense = context.productProperties.allLibraryLicenses.firstOrNull {
             it.getLibraryNames().contains(libraryName)
@@ -466,7 +473,7 @@ class SoftwareBillOfMaterialsImpl(
           }
           val mavenDescriptor = library.mavenDescriptor
           if (mavenDescriptor != null) {
-            mavenLibrary(mavenDescriptor = mavenDescriptor, libraryFile = libraryFile, libraryEntry = libraryEntry, libraryLicense = libraryLicense)
+            mavenLibrary(mavenDescriptor, libraryFile, libraryEntry, libraryLicense)
           }
           else {
             MavenLibrary(
@@ -477,7 +484,7 @@ class SoftwareBillOfMaterialsImpl(
             ).takeIf { it.coordinates != null }
           }
         }
-      }.mapNotNull { it.await() }
+      }.mapNotNull { it.await() }.toList()
     }
   }
 
@@ -499,14 +506,14 @@ class SoftwareBillOfMaterialsImpl(
       ?: error("Unknown jar repository ID: ${mavenDescriptor.jarRepositoryId}")
     }
     else null
-    val libraryName = coordinates.getFileName(packaging = mavenDescriptor.packaging)
+    val libraryName = coordinates.getFileName(packaging = mavenDescriptor.packaging, classifier = "")
     val checksums = mavenDescriptor.artifactsVerification.filter {
       Path.of(JpsPathUtil.urlToOsPath(it.url)).name == libraryName
     }
     check(checksums.count() == 1) {
       "Missing checksum for $coordinates: ${checksums.map { it.url }}"
     }
-    val pomName = coordinates.getFileName(packaging = "pom")
+    val pomName = coordinates.getFileName(packaging = "pom", classifier = "")
     return MavenLibrary(
       path = libraryFile,
       coordinates = coordinates,
@@ -524,24 +531,24 @@ class SoftwareBillOfMaterialsImpl(
     var pomFile: String? = null
     var pomModel: Model? = null
 
-    fun getReader(byteBuffer: ByteBuffer): Reader {
-      val byteArray = ByteArray(byteBuffer.remaining())
-      byteBuffer.get(byteArray)
-      return byteArray.inputStream().bufferedReader()
-    }
+    val ByteBuffer.reader: Reader
+      get() = ByteArray(remaining())
+        .also(::get)
+        .inputStream()
+        .bufferedReader()
 
     init {
       // FIXME IJI-1882: this logic is not correct since multiple pom.xml and pom.properties may be present
       readZipFile(jarFile) { name, data ->
         when {
           !name.startsWith("META-INF/") -> return@readZipFile
-          name.endsWith("/pom.xml") -> getReader(data()).use {
+          name.endsWith("/pom.xml") -> data().reader.use {
             pomFile = "$jarFile!$name"
             pomModel = MavenXpp3Reader().read(it, false)
           }
           name.endsWith("/pom.properties") -> {
             val pom = Properties()
-            getReader(data()).use(pom::load)
+            data().reader.use(pom::load)
             coordinates = MavenCoordinates(
               groupId = pom.getProperty("groupId"),
               artifactId = pom.getProperty("artifactId"),
@@ -609,9 +616,9 @@ class SoftwareBillOfMaterialsImpl(
     val organizations = (pomModel?.organization?.name?.let { sequenceOf(it) }
                          ?: pomModel?.developers?.asSequence()?.mapNotNull { it.organization })
       ?.filter { it.isNotBlank() }
-      ?.map { htmlContent ->
+      ?.mapNotNull {
         @Suppress("HardCodedStringLiteral")
-        Jsoup.parse(htmlContent).wholeText().takeIf { it.isNotBlank() } ?: htmlContent
+        Jsoup.parse(it).wholeText().takeIf { it.isNotBlank() } ?: it
       }?.distinct()
       ?.joinToString(transform = ::translateSupplier)
       ?.takeIf { it.isNotBlank() }
@@ -722,21 +729,20 @@ class SoftwareBillOfMaterialsImpl(
 
     fun license(document: SpdxDocument): AnyLicenseInfo {
       return when {
-        library.license == LibraryLicense.JETBRAINS_OWN -> getJetBrainsOwnLicense(document)
+        library.license == LibraryLicense.JETBRAINS_OWN -> document.jetBrainsOwnLicense
         library.licenseUrl == null || library.spdxIdentifier == null -> SpdxNoAssertionLicense()
         else -> parseLicense(document, checkNotNull(library.spdxIdentifier))
       }
     }
   }
 
-  private fun getJetBrainsOwnLicense(document: SpdxDocument): AnyLicenseInfo {
-    return extractedLicenseInfo(
-      spdxDocument = document,
-      name = jetBrainsOwnLicense.name,
-      text = jetBrainsOwnLicense.text,
-      url = jetBrainsOwnLicense.url,
+  private val SpdxDocument.jetBrainsOwnLicense: AnyLicenseInfo
+    get() = extractedLicenseInfo(
+      spdxDocument = this,
+      name = this@SoftwareBillOfMaterialsImpl.jetBrainsOwnLicense.name,
+      text = this@SoftwareBillOfMaterialsImpl.jetBrainsOwnLicense.text,
+      url = this@SoftwareBillOfMaterialsImpl.jetBrainsOwnLicense.url
     )
-  }
 
   /**
    * @param id one of [SpdxConstants.LISTED_LICENSE_URL]
@@ -750,23 +756,23 @@ class SoftwareBillOfMaterialsImpl(
     }
   }
 
-  private fun spdxPackage(document: SpdxDocument, library: MavenLibrary): SpdxPackage {
-    val upstreamPackage = document.spdxPackageUpstream(library.library.forkedFrom)
+  private fun SpdxDocument.spdxPackage(library: MavenLibrary): SpdxPackage {
+    val document = this
+    val upstreamPackage = spdxPackageUpstream(library.library.forkedFrom)
     checkNotNull(library.coordinates) {
       "Missing coordinates for library ${library.library}"
     }
     val libPackage = spdxPackage(
-      spdxDocument = document,
-      name = "${library.coordinates.groupId}:${library.coordinates.artifactId}",
-      licenseDeclared = library.license(document),
+      this, name = "${library.coordinates.groupId}:${library.coordinates.artifactId}",
+      licenseDeclared = library.license(this),
       copyrightText = library.copyrightText,
     ) {
       setVersionInfo(checkNotNull(library.coordinates.version) {
         "Missing version for ${library.coordinates}"
       })
       setDownloadLocation(library.downloadUrl ?: SpdxConstants.NOASSERTION_VALUE)
-      setOrigin(spdxPackageBuilder = this, library = library, upstreamPackage = upstreamPackage)
-      addChecksum(document.createChecksum(ChecksumAlgorithm.SHA256, library.sha256Checksum))
+      setOrigin(library, upstreamPackage)
+      addChecksum(createChecksum(ChecksumAlgorithm.SHA256, library.sha256Checksum))
       if (library.repositoryUrl != null) {
         addExternalRef(library.coordinates.externalRef(document, library.repositoryUrl))
       }
@@ -781,8 +787,7 @@ class SoftwareBillOfMaterialsImpl(
     if (upstream?.version == null || upstream.mavenRepositoryUrl == null) {
       return null
     }
-
-    return spdxPackage(spdxDocument = this, name = "${upstream.groupId}:${upstream.artifactId}", copyrightText = upstream.license.copyrightText) {
+    return spdxPackage(this, "${upstream.groupId}:${upstream.artifactId}", copyrightText = upstream.license.copyrightText) {
       setVersionInfo(upstream.version)
       setSupplier(upstream.license.supplier ?: SpdxConstants.NOASSERTION_VALUE)
       val coordinates = MavenCoordinates(
@@ -795,36 +800,36 @@ class SoftwareBillOfMaterialsImpl(
       val repositoryUrl = checkNotNull(upstream.mavenRepositoryUrl) {
         "Missing Maven repository url for ${upstream.groupId}:${upstream.artifactId}"
       }.removeSuffix("/")
-      val jarName = coordinates.getFileName(packaging = "jar")
+      val jarName = coordinates.getFileName(packaging = "jar", classifier = "")
       setDownloadLocation("$repositoryUrl/${coordinates.directoryPath}/$jarName")
       addExternalRef(coordinates.externalRef(this@spdxPackageUpstream, repositoryUrl))
     }
   }
 
-  private fun setOrigin(spdxPackageBuilder: SpdxPackageBuilder, library: MavenLibrary, upstreamPackage: SpdxPackage?) {
+  private fun SpdxPackageBuilder.setOrigin(library: MavenLibrary, upstreamPackage: SpdxPackage?) {
     when {
-      library.supplier != null -> spdxPackageBuilder.setSupplier(library.supplier)
-      library.isSupplierJetBrains -> spdxPackageBuilder.setSupplier("Organization: ${Suppliers.JETBRAINS}")
-      library.isSupplierApache -> spdxPackageBuilder.setSupplier("Organization: ${Suppliers.APACHE}")
+      library.supplier != null -> setSupplier(library.supplier)
+      library.isSupplierJetBrains -> setSupplier("Organization: ${Suppliers.JETBRAINS}")
+      library.isSupplierApache -> setSupplier("Organization: ${Suppliers.APACHE}")
       library.library.url?.startsWith("https://github.com/google/") == true ||
       library.library.licenseUrl?.startsWith("https://github.com/google/") == true -> {
-        spdxPackageBuilder.setSupplier("Organization: ${Suppliers.GOOGLE}")
+        setSupplier("Organization: ${Suppliers.GOOGLE}")
       }
       else -> {
-        spdxPackageBuilder.setSupplier(SpdxConstants.NOASSERTION_VALUE)
+        setSupplier(SpdxConstants.NOASSERTION_VALUE)
         if (library.pomUrl != null) {
-          spdxPackageBuilder.setSourceInfo("Supplier information is not available in ${library.pomUrl}")
+          setSourceInfo("Supplier information is not available in ${library.pomUrl}")
         }
       }
     }
     val upstream = library.library.forkedFrom
     when {
-      upstreamPackage != null -> spdxPackageBuilder.setOriginator(upstreamPackage.supplier.get())
+      upstreamPackage != null -> setOriginator(upstreamPackage.supplier.get())
       upstream?.revision != null && upstream.sourceCodeUrl != null -> {
-        spdxPackageBuilder.setSourceInfo("Forked from a revision ${upstream.revision} of ${upstream.sourceCodeUrl}")
+        setSourceInfo("Forked from a revision ${upstream.revision} of ${upstream.sourceCodeUrl}")
       }
       upstream?.sourceCodeUrl != null -> {
-        spdxPackageBuilder.setSourceInfo("Forked from ${upstream.sourceCodeUrl}, exact revision is not available")
+        setSourceInfo("Forked from ${upstream.sourceCodeUrl}, exact revision is not available")
       }
     }
   }
@@ -848,10 +853,10 @@ class SoftwareBillOfMaterialsImpl(
   private fun extractedLicenseInfo(spdxDocument: SpdxDocument, name: String, text: String, url: String?): ExtractedLicenseInfo {
     // must only contain letters, numbers, "." and "-" and must begin with "LicenseRef-"
     val licenseRefId = "LicenseRef-$name"
-      .replace(' ', '-')
-      .replace('/', '-')
-      .replace('+', '-')
-      .replace('_', '-')
+      .replace(" ", "-")
+      .replace("/", "-")
+      .replace("+", "-")
+      .replace("_", "-")
     val licenseInfo = ExtractedLicenseInfo(
       spdxDocument.modelStore, spdxDocument.documentUri, licenseRefId,
       spdxDocument.copyManager, true
@@ -888,9 +893,9 @@ class SoftwareBillOfMaterialsImpl(
   ) {
     claimOwnership(spdxPackage, document, license)
     val licenseInfo = spdxPackage.licenseConcluded
-    for (file in files) {
-      file.copyrightText = license.copyrightText
-      file.licenseConcluded = licenseInfo
+    files.forEach {
+      it.copyrightText = license.copyrightText
+      it.licenseConcluded = licenseInfo
     }
     spdxPackage.setPackageVerificationCode(
       document.createPackageVerificationCode(
@@ -938,49 +943,42 @@ class SoftwareBillOfMaterialsImpl(
    * See https://pypi.org/project/ntia-conformance-checker/
    */
   private suspend fun checkNtiaConformance(documents: List<Path>, context: BuildContext) {
-    if (!Docker.isAvailable || SystemInfoRt.isWindows) {
-      return
-    }
-
-    val ntiaChecker = "ntia-checker"
-    retryWithExponentialBackOff {
-      context.runProcess(
-        args = listOf("docker", "build", ".", "--tag", ntiaChecker),
-        workingDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/sbom/$ntiaChecker"),
-      )
-    }
-    documents.forEachConcurrent { document ->
-      try {
-        context.runProcess(
-          args = listOf(
-            "docker", "run", "--rm",
-            "--volume=${document.parent}:${document.parent}:ro",
-            ntiaChecker, "--file", "${document.toAbsolutePath()}", "--verbose"
-          ),
-          attachStdOutToException = true,
+    if (Docker.isAvailable && !SystemInfoRt.isWindows) {
+      val ntiaChecker = "ntia-checker"
+      suspendingRetryWithExponentialBackOff {
+        runProcess(
+          "docker", "build", ".", "--tag", ntiaChecker,
+          workingDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/sbom/$ntiaChecker"),
+          inheritOut = true,
         )
       }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Exception) {
-        val message =
-          """
-           Generated SBOM $document is not NTIA-conformant. 
-           Please look for 'Components missing a supplier' in the suppressed exceptions and specify all missing suppliers.
-           You may use https://package-search.jetbrains.com/ to search for them.
-          """.trimIndent()
-        if (STRICT_MODE) {
-          throw IllegalStateException(message, e)
-        }
-        else {
-          Span.current().addEvent("$message\n${e.stackTraceToString()}")
+      coroutineScope {
+        documents.forEach {
+          launch {
+            try {
+              runProcess(
+                "docker", "run", "--rm",
+                "--volume=${it.parent}:${it.parent}:ro",
+                ntiaChecker, "--file", "${it.toAbsolutePath()}", "--verbose",
+                inheritOut = true,
+              )
+            }
+            catch (e: Exception) {
+              context.messages.error(
+                """
+                   Generated SBOM $it is not NTIA-conformant. 
+                   Please search for 'Components missing an supplier' error message and specify all missing suppliers.
+                   You may use https://package-search.jetbrains.com/ to search for them.
+                """.trimIndent(), e
+              )
+            }
+          }
         }
       }
     }
   }
 
-  private suspend fun checkCopyrightTextForLibraries(mavenLibraries: List<MavenLibrary>) {
+  private suspend fun checkCopyrightTextForLibraries() {
     val sortedLibraries = mavenLibraries.sortedBy {
       it.library.name ?: it.library.libraryName
     }
@@ -1000,7 +998,7 @@ class SoftwareBillOfMaterialsImpl(
       }
     }
     if (errors.any()) {
-      throw RuntimeException(
+      context.messages.error(
         errors.joinToString(
           prefix = "Some copyright texts for software bill of materials are missing:\n\n",
           separator = "\n\n"

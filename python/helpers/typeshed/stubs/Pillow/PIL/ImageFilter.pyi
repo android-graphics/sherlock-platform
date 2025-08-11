@@ -1,7 +1,6 @@
 from _typeshed import Incomplete
 from collections.abc import Callable, Iterable, Sequence
-from typing import Literal
-from typing_extensions import Self, TypeAlias
+from typing_extensions import Literal, Self, TypeAlias
 
 from .Image import Image
 

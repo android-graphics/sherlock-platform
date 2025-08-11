@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.jps.gradle.model.impl;
 
-import com.dynatrace.hash4j.hashing.HashSink;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -16,10 +17,14 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
-public final class GradleModuleResourceConfiguration {
-  @Tag("id") public @NotNull ModuleVersion id;
+public class GradleModuleResourceConfiguration {
+  @NotNull
+  @Tag("id")
+  public ModuleVersion id;
 
-  @Tag("parentId") public @Nullable ModuleVersion parentId;
+  @Nullable
+  @Tag("parentId")
+  public ModuleVersion parentId;
 
   @OptionTag
   public boolean overwrite;
@@ -33,42 +38,34 @@ public final class GradleModuleResourceConfiguration {
   @XCollection(propertyElementName = "test-resources", elementName = "resource")
   public List<ResourceRootConfiguration> testResources = new ArrayList<>();
 
-  public void computeConfigurationHash(boolean forTestResources, PathRelativizerService pathRelativizerService, @NotNull HashSink hash) {
-    computeModuleConfigurationHash(hash);
+  public int computeConfigurationHash(boolean forTestResources, PathRelativizerService pathRelativizerService) {
+    int result = computeModuleConfigurationHash();
 
-    List<ResourceRootConfiguration> _resources = forTestResources ? testResources : resources;
+    final List<ResourceRootConfiguration> _resources = forTestResources ? testResources : resources;
+    result = 31 * result;
     for (ResourceRootConfiguration resource : _resources) {
-      resource.computeConfigurationHash(pathRelativizerService, hash);
+      result += resource.computeConfigurationHash(pathRelativizerService);
     }
-    hash.putInt(_resources.size());
+    return result;
   }
 
-  public void computeConfigurationHash(@NotNull HashSink hash) {
-    computeModuleConfigurationHash(hash);
+  public int computeConfigurationHash() {
+    int result = computeModuleConfigurationHash();
 
-    List<ResourceRootConfiguration> _resources = ContainerUtil.concat(testResources, resources);
+    final List<ResourceRootConfiguration> _resources = ContainerUtil.concat(testResources, resources);
+    result = 31 * result;
     for (ResourceRootConfiguration resource : _resources) {
-      resource.computeConfigurationHash(null, hash);
+      result += resource.computeConfigurationHash(null);
     }
-    hash.putInt(_resources.size());
+    return result;
   }
 
-  public void computeModuleConfigurationHash(@NotNull HashSink hash) {
-    hash.putInt(id.hashCode());
-    if (parentId == null) {
-      hash.putBoolean(false);
-    }
-    else {
-      hash.putBoolean(true);
-      parentId.computeHash(hash);
-    }
-    if (outputDirectory == null) {
-      hash.putInt(-1);
-    }
-    else {
-      hash.putString(outputDirectory);
-    }
-    hash.putBoolean(overwrite);
+  public int computeModuleConfigurationHash() {
+    int result = id.hashCode();
+    result = 31 * result + (parentId != null ? parentId.hashCode() : 0);
+    result = 31 * result + (outputDirectory != null ? outputDirectory.hashCode() : 0);
+    result = 31 * result + (overwrite ? 1 : 0);
+    return result;
   }
 }
 

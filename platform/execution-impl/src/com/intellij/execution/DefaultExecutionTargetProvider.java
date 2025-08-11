@@ -3,13 +3,11 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
-@ApiStatus.Internal
 public final class DefaultExecutionTargetProvider extends ExecutionTargetProvider {
   @Override
   public @NotNull List<ExecutionTarget> getTargets(@NotNull Project project, @NotNull RunConfiguration configuration) {

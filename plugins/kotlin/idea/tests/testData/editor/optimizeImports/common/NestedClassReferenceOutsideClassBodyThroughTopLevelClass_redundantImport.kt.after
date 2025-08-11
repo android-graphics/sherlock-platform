@@ -1,7 +1,0 @@
-package test
-
-class TopLevel {
-    class Nested
-}
-
-fun usage(p: TopLevel.Nested) {}

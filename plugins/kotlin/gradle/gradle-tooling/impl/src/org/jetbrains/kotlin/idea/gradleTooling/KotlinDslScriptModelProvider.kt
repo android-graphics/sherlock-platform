@@ -11,12 +11,12 @@ import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModel
 class KotlinDslScriptModelProvider : ProjectImportModelProvider {
     private val kotlinDslScriptModelClass: Class<*> = KotlinDslScriptsModel::class.java
 
-    override fun populateModels(
+    override fun populateBuildModels(
         controller: BuildController,
-        buildModels: Collection<GradleBuild>,
+        buildModel: GradleBuild,
         modelConsumer: GradleModelConsumer
     ) {
-        buildModels.flatMap { it.projects }.forEach {
+        buildModel.projects.forEach {
             if (it.parent == null) {
                 try {
                     val model = controller.findModel(it, kotlinDslScriptModelClass)

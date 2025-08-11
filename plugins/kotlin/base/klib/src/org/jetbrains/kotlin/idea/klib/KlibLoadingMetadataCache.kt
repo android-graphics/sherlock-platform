@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.library.KLIB_MANIFEST_FILE_NAME
 import org.jetbrains.kotlin.library.KLIB_METADATA_FILE_EXTENSION
 import org.jetbrains.kotlin.library.KLIB_MODULE_METADATA_FILE_NAME
 import org.jetbrains.kotlin.library.metadata.KlibMetadataProtoBuf
+import org.jetbrains.kotlin.library.metadata.KlibMetadataVersion
 import org.jetbrains.kotlin.library.metadata.parseModuleHeader
 import org.jetbrains.kotlin.library.metadata.parsePackageFragment
 import org.jetbrains.kotlin.library.readKonanLibraryVersioning
@@ -34,7 +35,7 @@ class KlibLoadingMetadataCache {
 
     private val packageFragmentCache = CollectionFactory.createConcurrentWeakValueMap<CacheKey, CacheValue<ProtoBuf.PackageFragment>>()
     private val moduleHeaderCache = CollectionFactory.createConcurrentWeakValueMap<CacheKey, CacheValue<KlibMetadataProtoBuf.Header>>()
-    private val libraryMetadataVersionCache = CollectionFactory.createConcurrentWeakValueMap<CacheKey, CacheValue<MetadataVersion>>()
+    private val libraryMetadataVersionCache = CollectionFactory.createConcurrentWeakValueMap<CacheKey, CacheValue<KlibMetadataVersion>>()
 
     fun getCachedPackageFragment(packageFragmentFile: VirtualFile): ProtoBuf.PackageFragment? {
         check(packageFragmentFile.extension == KLIB_METADATA_FILE_EXTENSION) {
@@ -60,13 +61,13 @@ class KlibLoadingMetadataCache {
         }.value
     }
 
-    fun getCachedPackageFragmentWithVersion(packageFragmentFile: VirtualFile): Pair<ProtoBuf.PackageFragment?, MetadataVersion?> {
+    fun getCachedPackageFragmentWithVersion(packageFragmentFile: VirtualFile): Pair<ProtoBuf.PackageFragment?, KlibMetadataVersion?> {
         val packageFragment = getCachedPackageFragment(packageFragmentFile) ?: return null to null
         val version = getCachedMetadataVersion(getKlibLibraryRootForPackageFragment(packageFragmentFile))
         return packageFragment to version
     }
 
-    private fun getCachedMetadataVersion(libraryRoot: VirtualFile): MetadataVersion? {
+    private fun getCachedMetadataVersion(libraryRoot: VirtualFile): KlibMetadataVersion? {
         val manifestFile = libraryRoot.findChild(KLIB_MANIFEST_FILE_NAME) ?: return null
 
         val metadataVersion = libraryMetadataVersionCache.computeIfAbsent(
@@ -110,9 +111,9 @@ class KlibLoadingMetadataCache {
         }
     }
 
-    private fun computeLibraryMetadataVersion(manifestFile: VirtualFile): MetadataVersion? = try {
+    private fun computeLibraryMetadataVersion(manifestFile: VirtualFile): KlibMetadataVersion? = try {
         val versioning = Properties().apply { manifestFile.inputStream.use { load(it) } }.readKonanLibraryVersioning()
-        versioning.metadataVersion?.let(BinaryVersion.Companion::parseVersionArray)?.let(::MetadataVersion)
+        versioning.metadataVersion?.let(BinaryVersion.Companion::parseVersionArray)?.let(::KlibMetadataVersion)
     } catch (_: IOException) {
         // ignore and cache null value
         null

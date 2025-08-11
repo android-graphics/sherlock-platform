@@ -67,18 +67,21 @@ public class ShCompositeElementImpl extends ASTWrapperPsiElement implements ShCo
   public ItemPresentation getPresentation() {
     final String text = UsageViewUtil.createNodeText(this);
     return new ItemPresentation() {
+      @NotNull
       @Override
-      public @NotNull String getPresentableText() {
+      public String getPresentableText() {
         return text;
       }
 
+      @NotNull
       @Override
-      public @NotNull String getLocationString() {
+      public String getLocationString() {
         return getContainingFile().getName();
       }
 
+      @Nullable
       @Override
-      public @Nullable Icon getIcon(boolean b) {
+      public Icon getIcon(boolean b) {
         return ShCompositeElementImpl.this.getIcon(0);
       }
     };

@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.lang.manifest.highlighting;
 
 import com.intellij.lexer.Lexer;
@@ -27,8 +41,9 @@ public final class ManifestSyntaxHighlighterFactory extends SyntaxHighlighterFac
       myAttributes.put(ManifestTokenType.HEADER_VALUE_PART, ManifestColorsAndFonts.HEADER_VALUE_KEY);
     }
 
+    @NotNull
     @Override
-    public @NotNull Lexer getHighlightingLexer() {
+    public Lexer getHighlightingLexer() {
       return new ManifestLexer();
     }
 
@@ -38,8 +53,9 @@ public final class ManifestSyntaxHighlighterFactory extends SyntaxHighlighterFac
     }
   };
 
+  @NotNull
   @Override
-  public @NotNull SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile) {
+  public SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile) {
     return HIGHLIGHTER;
   }
 }

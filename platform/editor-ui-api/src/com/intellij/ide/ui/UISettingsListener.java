@@ -2,6 +2,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
@@ -20,6 +21,7 @@ public interface UISettingsListener extends EventListener {
 
   void uiSettingsChanged(@NotNull UISettings uiSettings);
 
+  @ApiStatus.Internal
   @Topic.AppLevel
   Topic<UISettingsListener> TOPIC = new Topic<>(UISettingsListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 }

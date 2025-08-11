@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.eclipse.conversion;
 
@@ -118,7 +118,8 @@ public final class EJavadocUtil {
     return javadocPath;
   }
 
-  public static @Nullable String stripPathInsideJar(@Nullable String relativeToModulePathWithJarSuffix) {
+  @Nullable
+  public static String stripPathInsideJar(@Nullable String relativeToModulePathWithJarSuffix) {
     String relativeToModulePath = relativeToModulePathWithJarSuffix;
     if (relativeToModulePath != null) {
       int jarSufIdx = relativeToModulePathWithJarSuffix.indexOf(JarFileSystem.JAR_SEPARATOR);

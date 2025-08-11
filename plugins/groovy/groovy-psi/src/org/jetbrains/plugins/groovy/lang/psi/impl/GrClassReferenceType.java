@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,12 +25,14 @@ public final class GrClassReferenceType extends PsiClassType {
   }
 
   @Override
-  public @Nullable PsiClass resolve() {
+  @Nullable
+  public PsiClass resolve() {
     return resolveGenerics().getElement();
   }
 
   @Override
-  public @Nullable String getClassName() {
+  @Nullable
+  public String getClassName() {
     final PsiClass resolved = resolve();
     if (resolved != null) return resolved.getName();
     return myReferenceElement.getReferenceName();
@@ -48,7 +50,8 @@ public final class GrClassReferenceType extends PsiClassType {
   }
 
   @Override
-  public @NotNull ClassResolveResult resolveGenerics() {
+  @NotNull
+  public ClassResolveResult resolveGenerics() {
     final GroovyResolveResult resolveResult = myReferenceElement.advancedResolve();
     return new ClassResolveResult() {
       @Override
@@ -58,7 +61,8 @@ public final class GrClassReferenceType extends PsiClassType {
       }
 
       @Override
-      public @NotNull PsiSubstitutor getSubstitutor() {
+      @NotNull
+      public PsiSubstitutor getSubstitutor() {
         return resolveResult.getSubstitutor();
       }
 
@@ -78,7 +82,8 @@ public final class GrClassReferenceType extends PsiClassType {
       }
 
       @Override
-      public @Nullable PsiElement getCurrentFileResolveScope() {
+      @Nullable
+      public PsiElement getCurrentFileResolveScope() {
         return resolveResult.getCurrentFileResolveContext();
       }
 
@@ -90,7 +95,8 @@ public final class GrClassReferenceType extends PsiClassType {
   }
 
   @Override
-  public @NotNull PsiClassType rawType() {
+  @NotNull
+  public PsiClassType rawType() {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myReferenceElement.getProject());
 
     final PsiClass clazz = resolve();
@@ -103,14 +109,16 @@ public final class GrClassReferenceType extends PsiClassType {
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPresentableText() {
+  public String getPresentableText() {
     return PsiNameHelper
       .getPresentableText(myReferenceElement.getReferenceName(), PsiAnnotation.EMPTY_ARRAY, myReferenceElement.getTypeArguments());
   }
 
   @Override
-  public @NotNull String getCanonicalText() {
+  @NotNull
+  public String getCanonicalText() {
     return myReferenceElement.getCanonicalText();
   }
 
@@ -125,21 +133,25 @@ public final class GrClassReferenceType extends PsiClassType {
   }
 
   @Override
-  public @NotNull GlobalSearchScope getResolveScope() {
+  @NotNull
+  public GlobalSearchScope getResolveScope() {
     return myReferenceElement.getResolveScope();
   }
 
   @Override
-  public @NotNull LanguageLevel getLanguageLevel() {
+  @NotNull
+  public LanguageLevel getLanguageLevel() {
     return myLanguageLevel;
   }
 
   @Override
-  public @NotNull PsiClassType setLanguageLevel(final @NotNull LanguageLevel languageLevel) {
+  @NotNull
+  public PsiClassType setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
     return new GrClassReferenceType(myReferenceElement, languageLevel);
   }
 
-  public @NotNull GrCodeReferenceElement getReference() {
+  @NotNull
+  public GrCodeReferenceElement getReference() {
     return myReferenceElement;
   }
 

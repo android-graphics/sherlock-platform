@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Bas Leijdekkers

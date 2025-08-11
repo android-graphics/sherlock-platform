@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.lookup.*;
@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint;
 import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
@@ -87,8 +86,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
   public static final Key<Boolean> FORCE_TEMPLATE_RUNNING = Key.create("TemplateState.forTemplateRunning");
 
-  @ApiStatus.Internal
-  public TemplateState(@NotNull Project project, final @Nullable Editor editor, @NotNull Document document,
+  TemplateState(@NotNull Project project, final @Nullable Editor editor, @NotNull Document document,
                 @NotNull TemplateStateProcessor processor) {
     super(editor, document);
     myProject = project;
@@ -297,8 +295,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     }
   }
 
-  @ApiStatus.Internal
-  public void start(@NotNull TemplateImpl template,
+  void start(@NotNull TemplateImpl template,
              @Nullable PairProcessor<? super String, ? super String> processor,
              @Nullable Map<String, String> predefinedVarValues) {
     start(template, processor, predefinedVarValues, getEditor().getCaretModel().getOffset());
@@ -422,8 +419,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     performWrite(action);
   }
 
-  @ApiStatus.Internal
-  public void performWrite(Runnable action) {
+  void performWrite(Runnable action) {
     if (requiresWriteAction()) {
       ApplicationManager.getApplication().runWriteAction(action);
     } else {
@@ -556,13 +552,11 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   }
 
   @Nullable
-  @ApiStatus.Internal
-  public PsiFile getPsiFile() {
+  PsiFile getPsiFile() {
     return !isDisposed() ? PsiDocumentManager.getInstance(myProject).getPsiFile(getDocument()) : null;
   }
 
-  @ApiStatus.Internal
-  public boolean requiresWriteAction() {
+  boolean requiresWriteAction() {
     PsiFile file = getPsiFile();
     return file == null || file.isPhysical() || FORCE_TEMPLATE_RUNNING.isIn(file);
   }
@@ -601,8 +595,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   }
 
   // Hours spent fixing code : 3.5
-  @ApiStatus.Internal
-  public void calcResults(final boolean isQuick) {
+  void calcResults(final boolean isQuick) {
     if (getSegments().isInvalid()) {
       gotoEnd(true);
     }
@@ -1023,7 +1016,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   }
 
   @ApiStatus.Internal
-  public void cancelTemplate() {
+  void cancelTemplate() {
     if (isDisposed()) return;
     try {
       fireTemplateCancelled();
@@ -1143,29 +1136,25 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     int start = getSegments().getSegmentStart(segmentNumber);
     int end = getSegments().getSegmentEnd(segmentNumber);
     MarkupModelEx markupModel = (MarkupModelEx)getEditor().getMarkupModel();
-    RangeHighlighterEx highlighter =
-      markupModel.addRangeHighlighterAndChangeAttributes(attributesKey, start, end, HighlighterLayer.ELEMENT_UNDER_CARET - 1,
-                                                         HighlighterTargetArea.EXACT_RANGE, false, segmentHighlighter -> {
-          segmentHighlighter.setGreedyToLeft(true);
-          segmentHighlighter.setGreedyToRight(true);
+    return markupModel.addRangeHighlighterAndChangeAttributes(attributesKey, start, end, HighlighterLayer.ELEMENT_UNDER_CARET - 1,
+                                                              HighlighterTargetArea.EXACT_RANGE, false, segmentHighlighter -> {
+        segmentHighlighter.setGreedyToLeft(true);
+        segmentHighlighter.setGreedyToRight(true);
 
-          EditorColorsScheme scheme = getEditor().getColorsScheme();
-
-          TextAttributes attributes = scheme.getAttributes(attributesKey);
-          if (attributes != null && attributes.getEffectType() == EffectType.BOXED && newStyle) {
-            TextAttributes clone = attributes.clone();
-            clone.setEffectType(EffectType.SLIGHTLY_WIDER_BOX);
-            clone.setBackgroundColor(scheme.getDefaultBackground());
-            segmentHighlighter.setTextAttributes(clone);
-          }
-        });
-    EditorActionAvailabilityHintKt.addActionAvailabilityHint(highlighter,
-                                                             new EditorActionAvailabilityHint("NextTemplateVariable", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                             new EditorActionAvailabilityHint("PreviousTemplateVariable", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                             new EditorActionAvailabilityHint("EditorEscape", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside));
-    highlighter.putUserData(TEMPLATE_RANGE_HIGHLIGHTER_KEY, mightStop);
-
-    return highlighter;
+        EditorColorsScheme scheme = getEditor().getColorsScheme();
+        TextAttributes attributes = segmentHighlighter.getTextAttributes(scheme);
+        if (attributes != null && attributes.getEffectType() == EffectType.BOXED && newStyle) {
+          TextAttributes clone = attributes.clone();
+          clone.setEffectType(EffectType.SLIGHTLY_WIDER_BOX);
+          clone.setBackgroundColor(scheme.getDefaultBackground());
+          segmentHighlighter.setTextAttributes(clone);
+        }
+        EditorActionAvailabilityHintKt.addActionAvailabilityHint(segmentHighlighter,
+                                                                 new EditorActionAvailabilityHint("NextTemplateVariable", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                                 new EditorActionAvailabilityHint("PreviousTemplateVariable", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                                 new EditorActionAvailabilityHint("EditorEscape", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside));
+        segmentHighlighter.putUserData(TEMPLATE_RANGE_HIGHLIGHTER_KEY, mightStop);
+      });
   }
 
   private boolean mightStopAtVariable(@Nullable Variable var, int segmentNumber) {
@@ -1321,7 +1310,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
       }
       buffer.append(ch);
     }
-    if (buffer.isEmpty() && selectionIndent <= 0 || startLineNum >= endLineNum) {
+    if (buffer.length() == 0 && selectionIndent <= 0 || startLineNum >= endLineNum) {
       return;
     }
     String stringToInsert = buffer.toString();

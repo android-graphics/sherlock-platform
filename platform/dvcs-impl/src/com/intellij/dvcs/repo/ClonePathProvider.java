@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.repo;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
@@ -19,7 +19,8 @@ public abstract class ClonePathProvider {
   private static final ExtensionPointName<ClonePathProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.clonePathProvider");
 
-  public static @NotNull String defaultParentDirectoryPath(@NotNull Project project, @NotNull DvcsRememberedInputs rememberedInputs) {
+  @NotNull
+  public static String defaultParentDirectoryPath(@NotNull Project project, @NotNull DvcsRememberedInputs rememberedInputs) {
     for (ClonePathProvider provider : EP_NAME.getExtensionList()) {
       String directoryPath = provider.getParentDirectoryPath(project, rememberedInputs);
       if (StringUtil.isNotEmpty(directoryPath)) {
@@ -31,7 +32,8 @@ public abstract class ClonePathProvider {
     return StringUtil.isEmptyOrSpaces(parentDirectory) ? ProjectUtil.getBaseDir() : parentDirectory;
   }
 
-  public static @NotNull String relativeDirectoryPathForVcsUrl(@NotNull Project project, @NotNull String vcsUrl) {
+  @NotNull
+  public static String relativeDirectoryPathForVcsUrl(@NotNull Project project, @NotNull String vcsUrl) {
     for (ClonePathProvider provider : EP_NAME.getExtensionList()) {
       String directoryPath = provider.getRelativeDirectoryPathForVcsUrl(project, vcsUrl);
       if (StringUtil.isNotEmpty(directoryPath)) {
@@ -47,7 +49,9 @@ public abstract class ClonePathProvider {
     }
   }
 
-  public abstract @Nullable String getParentDirectoryPath(@NotNull Project project, @NotNull DvcsRememberedInputs rememberedInputs);
+  @Nullable
+  public abstract String getParentDirectoryPath(@NotNull Project project, @NotNull DvcsRememberedInputs rememberedInputs);
 
-  public abstract @Nullable String getRelativeDirectoryPathForVcsUrl(@NotNull Project project, @NotNull String vcsUrl);
+  @Nullable
+  public abstract String getRelativeDirectoryPathForVcsUrl(@NotNull Project project, @NotNull String vcsUrl);
 }

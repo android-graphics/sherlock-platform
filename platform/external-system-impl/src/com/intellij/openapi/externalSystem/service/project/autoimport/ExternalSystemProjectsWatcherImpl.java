@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.autoimport;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,7 +11,7 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -25,12 +25,12 @@ import java.util.List;
  * @see ExternalSystemProjectTracker#scheduleChangeProcessing
  * @deprecated use {@link ExternalSystemProjectTracker} instead
  */
-@ApiStatus.Internal
 @SuppressWarnings("DeprecatedIsStillUsed")
 @Deprecated
 public class ExternalSystemProjectsWatcherImpl implements ExternalSystemProjectsWatcher {
 
-  private final @NotNull Project project;
+  @NotNull
+  private final Project project;
 
   private static final ExtensionPointName<Contributor> EP_NAME =
     ExtensionPointName.create("com.intellij.externalProjectWatcherContributor");

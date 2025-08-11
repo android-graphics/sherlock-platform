@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableWithText;
@@ -35,7 +32,7 @@ public abstract class BaseNavigateToSourceAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    boolean inPopup = e.isFromContextMenu();
+    boolean inPopup = ActionPlaces.isPopupPlace(e.getPlace());
     Navigatable target = findTargetForUpdate(e.getDataContext());
     boolean enabled = target != null;
     if (inPopup && !(this instanceof OpenModuleSettingsAction) && OpenModuleSettingsAction.isModuleInProjectViewPopup(e)) {

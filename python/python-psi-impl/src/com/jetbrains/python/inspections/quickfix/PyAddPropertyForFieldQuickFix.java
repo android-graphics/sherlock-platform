@@ -22,12 +22,13 @@ public class PyAddPropertyForFieldQuickFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return myName;
   }
 
   @Override
-  public void applyFix(final @NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+  public void applyFix(@NotNull final Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     if (element instanceof PyReferenceExpression) {
       final PsiReference reference = element.getReference();
       final PsiElement resolved = updater.getWritable(reference.resolve());

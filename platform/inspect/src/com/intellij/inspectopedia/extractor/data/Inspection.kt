@@ -10,7 +10,7 @@ private val WHITELIST = Safelist()
   .addTags("p", "br", "li", "ul", "ol", "b", "i", "code", "a")
   .addAttributes("a", "href")
 
-internal data class Inspection(
+data class Inspection(
   @JvmField var id: String? = null,
 
   @JvmField val name: String,
@@ -24,8 +24,7 @@ internal data class Inspection(
   @JvmField val extendedDescription: String? = null,
   @JvmField val isHasOptionsPanel: Boolean = false,
   @JvmField val options: List<OptionsPanelInfo>? = null,
-  @JvmField val cweIds: List<Int>? = null,
-  @JvmField val codeQualityCategory: String? = null,
+  @JvmField val cweIds: List<Int>? = null
 ) : Comparable<Inspection> {
   fun cleanHtml(@NlsSafe src: String): String {
     val doc = Jsoup.parse(Jsoup.clean(src, WHITELIST))
@@ -43,7 +42,7 @@ internal data class Inspection(
   override fun compareTo(other: Inspection) = name.compareTo(other.name)
 }
 
-internal data class OptionsPanelInfo(
+data class OptionsPanelInfo(
   @JvmField var type: String? = null,
   @JvmField var text: String? = null,
 ) {

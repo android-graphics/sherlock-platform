@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang.java6;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
@@ -213,7 +213,7 @@ public final class ClasspathCache {
     return name;
   }
 
-  static final class NameFilter extends BloomFilterBase {
+  final static class NameFilter extends BloomFilterBase {
     private static final int SEED = 31;
 
     NameFilter(int _maxElementCount, double probability) {

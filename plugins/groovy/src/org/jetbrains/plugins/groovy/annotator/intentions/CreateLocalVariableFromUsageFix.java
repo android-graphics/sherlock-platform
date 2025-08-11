@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -42,12 +42,14 @@ public class CreateLocalVariableFromUsageFix extends Intention {
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return GroovyBundle.message("create.variable.from.usage.family.name");
   }
 
   @Override
-  public @NotNull String getText() {
+  @NotNull
+  public String getText() {
     return GroovyBundle.message("create.variable.from.usage", myRefExpression.getReferenceName());
   }
 
@@ -56,7 +58,8 @@ public class CreateLocalVariableFromUsageFix extends Intention {
     return myOwner.isValid() && myRefExpression.isValid();
   }
 
-  protected static @Nullable Editor positionCursor(Project project, PsiFile targetFile, PsiElement element) {
+  @Nullable
+  protected static Editor positionCursor(Project project, PsiFile targetFile, PsiElement element) {
     TextRange range = element.getTextRange();
     int textOffset = range.getStartOffset();
 
@@ -107,8 +110,9 @@ public class CreateLocalVariableFromUsageFix extends Intention {
 
   }
 
+  @NotNull
   @Override
-  protected @NotNull PsiElementPredicate getElementPredicate() {
+  protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
@@ -117,7 +121,8 @@ public class CreateLocalVariableFromUsageFix extends Intention {
     };
   }
 
-  private @Nullable GrStatement findAnchor(PsiFile file, int offset) {
+  @Nullable
+  private GrStatement findAnchor(PsiFile file, int offset) {
     PsiElement element = file.findElementAt(offset);
     if (element == null && offset > 0) element = file.findElementAt(offset - 1);
     while (element != null) {

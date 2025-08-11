@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -62,8 +62,9 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
     return new AntDomFileReference(this, range, index, text);
   }
 
+  @NotNull
   @Override
-  public @NotNull XmlAttributeValue getElement() {
+  public XmlAttributeValue getElement() {
     return (XmlAttributeValue)super.getElement();
   }
 
@@ -82,8 +83,9 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
     return FileUtil.isAbsolute(path);
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<PsiFileSystemItem> computeDefaultContexts() {
+  public Collection<PsiFileSystemItem> computeDefaultContexts() {
     final AntDomElement element = myValue.getParentOfType(AntDomElement.class, false);
     final AntDomProject containingProject = element != null? element.getAntProject() : null;
 

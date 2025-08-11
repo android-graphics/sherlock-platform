@@ -33,7 +33,8 @@ public final class FinalMethodInFinalClassInspection extends BaseInspection impl
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "final.method.in.final.class.problem.descriptor");
   }

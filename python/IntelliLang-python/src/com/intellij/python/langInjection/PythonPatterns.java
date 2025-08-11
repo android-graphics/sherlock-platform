@@ -6,7 +6,6 @@ import com.intellij.patterns.InitialPatternCondition;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
-import com.jetbrains.python.ast.PyAstStringElement;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.patterns.PyElementPattern;
@@ -21,8 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
-
-import static com.jetbrains.python.codeInsight.template.PyHTMLInjectionControllerKt.looksLikeHTML;
 
 /**
  * Provides patterns for literals, strings, arguments and function/method arguments of Python.
@@ -41,7 +38,7 @@ public final class PythonPatterns extends PlatformPatterns {
   public static PyElementPattern.Capture<PyLiteralExpression> pyLiteralExpression() {
     return new PyElementPattern.Capture<>(new InitialPatternCondition<>(PyLiteralExpression.class) {
       @Override
-      public boolean accepts(final @Nullable Object o, final ProcessingContext context) {
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof PyLiteralExpression;
       }
     });
@@ -63,7 +60,8 @@ public final class PythonPatterns extends PlatformPatterns {
     });
   }
 
-  public static @NotNull PyElementPattern.Capture<PyExpression> pyArgument(@Nullable String functionName, int index) {
+  @NotNull
+  public static PyElementPattern.Capture<PyExpression> pyArgument(@Nullable String functionName, int index) {
     return new PyElementPattern.Capture<>(new InitialPatternCondition<>(PyExpression.class) {
       @Override
       public boolean accepts(@Nullable Object o, ProcessingContext context) {
@@ -72,22 +70,10 @@ public final class PythonPatterns extends PlatformPatterns {
     });
   }
 
-  public static @NotNull PyElementPattern.Capture<PyFormattedStringElement> templateOrFormattedStringContainsHTML() {
-    return new PyElementPattern.Capture<>(PyFormattedStringElement.class) {
-      @Override
-      public boolean accepts(@Nullable Object o, ProcessingContext context) {
-        if (o instanceof PyStringLiteralExpression stringLiteralExpression && stringLiteralExpression.getStringElements().size() == 1) {
-          PyAstStringElement stringElement = stringLiteralExpression.getStringElements().get(0);
-          return stringElement.isTemplate() && looksLikeHTML(stringElement.getContent());
-        }
-        return false;
-      }
-    };
-  }
-
-  public static @NotNull PyElementPattern.Capture<PyExpression> pyModuleFunctionArgument(@Nullable String functionName,
-                                                                                         int index,
-                                                                                         @NotNull String moduleName) {
+  @NotNull
+  public static PyElementPattern.Capture<PyExpression> pyModuleFunctionArgument(@Nullable String functionName,
+                                                                                int index,
+                                                                                @NotNull String moduleName) {
     return new PyElementPattern.Capture<>(new InitialPatternCondition<>(PyExpression.class) {
       @Override
       public boolean accepts(@Nullable Object o, ProcessingContext context) {
@@ -101,9 +87,10 @@ public final class PythonPatterns extends PlatformPatterns {
     });
   }
 
-  public static @NotNull PyElementPattern.Capture<PyExpression> pyMethodArgument(@Nullable String functionName,
-                                                                                 int index,
-                                                                                 @NotNull String classQualifiedName) {
+  @NotNull
+  public static PyElementPattern.Capture<PyExpression> pyMethodArgument(@Nullable String functionName,
+                                                                        int index,
+                                                                        @NotNull String classQualifiedName) {
     return new PyElementPattern.Capture<>(new InitialPatternCondition<>(PyExpression.class) {
       @Override
       public boolean accepts(@Nullable Object o, ProcessingContext context) {
@@ -117,7 +104,8 @@ public final class PythonPatterns extends PlatformPatterns {
     });
   }
 
-  private static @NotNull List<PyCallable> multiResolveCalledFunction(@Nullable Object expression, @Nullable String functionName, int index) {
+  @NotNull
+  private static List<PyCallable> multiResolveCalledFunction(@Nullable Object expression, @Nullable String functionName, int index) {
     if (!isCallArgument(expression, functionName, index)) {
       return Collections.emptyList();
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.openapi.project.Project;
@@ -29,7 +29,8 @@ public final class ChangelistConflictFileStatusProvider implements FileStatusPro
   }
 
   @Override
-  public @Nullable FileStatus getFileStatus(@NotNull VirtualFile virtualFile) {
+  @Nullable
+  public FileStatus getFileStatus(@NotNull VirtualFile virtualFile) {
     ChangelistConflictTracker conflictTracker = ChangelistConflictTracker.getInstance(myProject);
     ChangelistConflictTracker.Options options = conflictTracker.getOptions();
     if (options.HIGHLIGHT_CONFLICTS && conflictTracker.hasConflict(virtualFile)) {

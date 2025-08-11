@@ -61,7 +61,7 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
 
   public void setPathToGit(@Nullable String pathToGit) {
     myState.myPathToGit = pathToGit;
-    GitExecutableDetector.fireExecutableChanged();
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(GitExecutableManager.TOPIC).executableChanged();
   }
 
   public boolean isIgnoreWhitespaces() {

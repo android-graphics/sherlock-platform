@@ -32,7 +32,8 @@ public final class JDBCPrepareStatementWithNonConstantStringInspection extends B
   public boolean considerStaticFinalConstant = false;
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("jdbc.prepare.statement.with.non.constant.string.problem.descriptor");
   }
 

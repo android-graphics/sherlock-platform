@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtmlTag;
 import static git4idea.GitNotificationIdsHolder.COULD_NOT_SAVE_UNCOMMITTED_CHANGES;
@@ -107,7 +109,7 @@ public class GitPreservingProcess {
             ProgressManager.getInstance().executeNonCancelableSection(() -> load());
           }
           else {
-            mySaver.notifyLocalChangesAreNotRestored(myOperationTitle);
+            mySaver.notifyLocalChangesAreNotRestored();
           }
         }
       }
@@ -161,17 +163,20 @@ public class GitPreservingProcess {
    * Saves local changes. In case of error shows a notification and returns false.
    */
   private boolean save() {
-    String errorMessage = mySaver.saveLocalChangesOrError(myRootsToSave);
-    if (errorMessage == null) {
+    try {
+      mySaver.saveLocalChanges(myRootsToSave);
       return true;
+    } catch (VcsException e) {
+      LOG.info("Couldn't save local changes", e);
+      VcsNotifier.getInstance(myProject).notifyError(
+        COULD_NOT_SAVE_UNCOMMITTED_CHANGES, GitBundle.message("save.notification.failed.title"),
+        mySaver.getSaveMethod().selectBundleMessage(
+          GitBundle.message("save.notification.failed.stash.text", myOperationTitle, join(e.getMessages())),
+          GitBundle.message("save.notification.failed.shelf.text", myOperationTitle, join(e.getMessages()))
+        )
+      );
+      return false;
     }
-
-    VcsNotifier.getInstance(myProject).notifyError(
-      COULD_NOT_SAVE_UNCOMMITTED_CHANGES,
-      GitBundle.message("save.notification.failed.title", myOperationTitle),
-      errorMessage
-    );
-    return false;
   }
 
   public void load() {

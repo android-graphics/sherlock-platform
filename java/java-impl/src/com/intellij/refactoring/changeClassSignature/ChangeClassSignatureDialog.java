@@ -3,8 +3,8 @@ package com.intellij.refactoring.changeClassSignature;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ChangeClassSignatureFromUsageFix;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
@@ -16,10 +16,7 @@ import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.StringTableCellEditor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.TableColumnAnimator;
-import com.intellij.ui.TableUtil;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -98,6 +95,11 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   }
 
   @Override
+  protected JComponent createNorthPanel() {
+    return new JLabel(JavaRefactoringBundle.message("changeClassSignature.class.label.text", DescriptiveNameUtil.getDescriptiveName(myClass)));
+  }
+
+  @Override
   protected String getHelpId() {
     return HelpID.CHANGE_CLASS_SIGNATURE;
   }
@@ -116,13 +118,13 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     TableColumn valueColumn = myTable.getColumnModel().getColumn(DEFAULT_VALUE_COLUMN);
     Project project = myClass.getProject();
     nameColumn.setCellRenderer(new MyCellRenderer());
-    nameColumn.setCellEditor(new StringTableCellEditor(project, true));
+    nameColumn.setCellEditor(new StringTableCellEditor(project));
     boundColumn.setCellRenderer(new CodeFragmentTableCellRenderer(project));
     boundColumn.setCellEditor(new JavaCodeFragmentTableCellEditor(project));
     valueColumn.setCellRenderer(new CodeFragmentTableCellRenderer(project));
     valueColumn.setCellEditor(new JavaCodeFragmentTableCellEditor(project));
 
-    myTable.setPreferredScrollableViewportSize(JBUI.size(440, -1));
+    myTable.setPreferredScrollableViewportSize(JBUI.size(210, -1));
     myTable.setVisibleRowCount(4);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myTable.getSelectionModel().setSelectionInterval(0, 0);
@@ -139,7 +141,6 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
           if (e.getType() == TableModelEvent.INSERT) {
             myTable.getModel().removeTableModelListener(this);
             final TableColumnAnimator animator = new TableColumnAnimator(myTable);
-            animator.setDelay(0);
             animator.setStep(20);
             animator.addColumn(defaultValue, myTable.getWidth() / 2);
             animator.startAndDoWhenDone(() -> myTable.editCellAt(myTable.getRowCount() - 1, 0));
@@ -149,7 +150,10 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       });
     }
 
-    return new ChangeClassSignatureDialogUI(myClass, ToolbarDecorator.createDecorator(myTable).createPanel()).getPanel();
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(SeparatorFactory.createSeparator(JavaRefactoringBundle.message("changeClassSignature.parameters.panel.border.title"), myTable), BorderLayout.NORTH);
+    panel.add(ToolbarDecorator.createDecorator(myTable).createPanel(), BorderLayout.CENTER);
+    return panel;
   }
 
   @Override
@@ -305,10 +309,6 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   }
 
   private static class MyCellRenderer extends ColoredTableCellRenderer {
-    @Override
-    protected @NotNull Font getBaseFont() {
-      return EditorUtil.getEditorFont();
-    }
 
     @Override
     public void customizeCellRenderer(@NotNull JTable table, Object value,

@@ -90,9 +90,9 @@ public class IDEA259472Test {
       frame.setVisible(true);
     });
 
-    await(latch1, "waiting onLoadEnd");
+    await(latch1);
 
-    await(latch2, "waiting onLoadingStateChange");
+    await(latch2);
 
     assertThat(jbCefBrowser.getCefBrowser().getURL()).contains("jetbrains");
   }

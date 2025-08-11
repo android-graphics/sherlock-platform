@@ -30,7 +30,8 @@ public interface PyAstFStringFragment extends PyAstElement {
    * fragments of format specifier can be accessed as primary expressions of nested fragments retrieved with
    * {@code getFormatPart().getFragments()}.
    */
-  default @Nullable PyAstExpression getExpression() {
+  @Nullable
+  default PyAstExpression getExpression() {
     return findChildByClass(this, PyAstExpression.class);
   }
 
@@ -40,7 +41,8 @@ public interface PyAstFStringFragment extends PyAstElement {
    * For instance, for the fragment {@code {  expr  !s:{width}}} it's {@code (1, 9)}, though the range {@link #getExpression()}
    * covers only {@code (3, 7)}.
    */
-  default @NotNull TextRange getExpressionContentRange() {
+  @NotNull
+  default TextRange getExpressionContentRange() {
     final PsiElement endAnchor = ObjectUtils.coalesce(getTypeConversion(), getFormatPart(), getClosingBrace());
     return TextRange.create(1, endAnchor != null ? endAnchor.getStartOffsetInParent() : getTextLength());
   }
@@ -50,7 +52,8 @@ public interface PyAstFStringFragment extends PyAstElement {
    * <p>
    * For instance, for the fragment {@code {  expr  !s:{width}}} it's {@code !s}.
    */
-  default @Nullable PsiElement getTypeConversion() {
+  @Nullable
+  default PsiElement getTypeConversion() {
     return findChildByType(this, PyTokenTypes.FSTRING_FRAGMENT_TYPE_CONVERSION);
   }
 
@@ -60,11 +63,13 @@ public interface PyAstFStringFragment extends PyAstElement {
    * <p>
    * For instance, for the fragment {@code {  expr  !s:{width}}} it's {@code !s:{width}}.
    */
-  default @Nullable PyAstFStringFragmentFormatPart getFormatPart() {
+  @Nullable
+  default PyAstFStringFragmentFormatPart getFormatPart() {
     return findChildByClass(this, PyAstFStringFragmentFormatPart.class);
   }
 
-  default @Nullable PsiElement getClosingBrace() {
+  @Nullable
+  default PsiElement getClosingBrace() {
     return findChildByType(this, PyTokenTypes.RBRACE);
   }
 

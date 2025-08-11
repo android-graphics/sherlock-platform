@@ -2,8 +2,7 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -227,7 +226,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
    * This is a wrapper for a component created by a configurable.
    * It allows to use a dedicated UI disposable instead of a dialog disposable.
    */
-  private static final class Wrapper extends JPanel implements Disposable, UiDataProvider {
+  private static final class Wrapper extends JPanel implements Disposable, DataProvider {
     private final Configurable myConfigurable;
 
     private Wrapper(@NotNull Configurable configurable, @NotNull JComponent component) {
@@ -241,8 +240,8 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
     }
 
     @Override
-    public void uiDataSnapshot(@NotNull DataSink sink) {
-      sink.set(UI_DISPOSABLE, this);
+    public Object getData(@NotNull String dataId) {
+      return UI_DISPOSABLE.is(dataId) ? this : null;
     }
 
     @Override

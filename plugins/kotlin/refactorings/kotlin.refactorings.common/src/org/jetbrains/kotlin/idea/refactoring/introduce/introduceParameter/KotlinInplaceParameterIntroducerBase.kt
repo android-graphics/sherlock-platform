@@ -112,13 +112,12 @@ abstract class KotlinInplaceParameterIntroducerBase<KotlinType, Descriptor>(
                     val parameter = parameters[i]
 
                     val parameterText = if (parameter == addedParameter) {
-                        val parameterName = currentName ?: parameter.name?.quoteIfNeeded()
+                        val parameterName = currentName ?: parameter.name
                         val parameterType = currentType ?: parameter.typeReference!!.text
                         descriptor = descriptor.copy(newParameterName = parameterName!!, newParameterTypeText = parameterType)
                         val modifier = if (valVar != KotlinValVar.None) "${valVar.keywordName} " else ""
-                        val argumentValue = newArgumentValue
-                        val defaultValue = if (withDefaultValue && argumentValue != null) {
-                            " = ${if (argumentValue is KtProperty) argumentValue.name else argumentValue.text}"
+                        val defaultValue = if (withDefaultValue) {
+                            " = ${if (newArgumentValue is KtProperty) newArgumentValue.name else newArgumentValue.text}"
                         } else ""
 
                         "$modifier$parameterName: $parameterType$defaultValue"
@@ -185,18 +184,6 @@ abstract class KotlinInplaceParameterIntroducerBase<KotlinType, Descriptor>(
     override fun getVariable() = originalDescriptor.callable.getValueParameters().lastOrNull()
 
     override fun suggestNames(replaceAll: Boolean, variable: KtParameter?) = suggestedNames
-
-    override fun getInitialName(): String? {
-        if (myInitialName == null) {
-            val variable = getVariable()
-            if (variable != null) {
-                return variable.name?.quoteIfNeeded()
-            }
-            LOG.error("Initial name should be provided")
-            return ""
-        }
-        return myInitialName
-    }
 
     override fun createFieldToStartTemplateOn(replaceAll: Boolean, names: Array<out String>): KtParameter {
         return runWriteAction {

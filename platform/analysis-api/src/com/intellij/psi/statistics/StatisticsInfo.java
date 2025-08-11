@@ -59,7 +59,6 @@ public final class StatisticsInfo {
     return myConjuncts;
   }
 
-  @Override
   public String toString() {
     return myContext + "::::" + myValue + (myConjuncts.size() == 1 ? "" : "::::" + myConjuncts);
   }

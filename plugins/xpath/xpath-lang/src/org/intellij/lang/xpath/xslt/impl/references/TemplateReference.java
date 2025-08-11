@@ -80,7 +80,8 @@ class TemplateReference extends AttributeReference implements EmptyResolveMessag
   }
 
   @Override
-  public @NotNull String getUnresolvedMessagePattern() {
+  @NotNull
+  public String getUnresolvedMessagePattern() {
     return XPathBundle.partialMessage("inspection.message.cannot.resolve.template", 1);
   }
 }

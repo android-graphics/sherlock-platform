@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -27,7 +27,8 @@ public abstract class ContractReturnValue {
   private static final int PARAMETER_ORDINAL_BASE = 10;
   private static final int MAX_SUPPORTED_PARAMETER = 100;
 
-  public @Nullable PsiExpression findPlace(@NotNull PsiCallExpression call) {
+  @Nullable
+  public PsiExpression findPlace(@NotNull PsiCallExpression call) {
     return null;
   }
 
@@ -207,7 +208,8 @@ public abstract class ContractReturnValue {
    * @return a ContractReturnValue object. Returns an object which represents any possible value if the supplied ordinal does not
    * correspond to any valid ContractReturnValue.
    */
-  public static @NotNull ContractReturnValue valueOf(int ordinal) {
+  @NotNull
+  public static ContractReturnValue valueOf(int ordinal) {
     return switch (ordinal) {
       case 0, 1 -> returnNull();
       case 2 -> returnNotNull();
@@ -233,7 +235,8 @@ public abstract class ContractReturnValue {
    * @param value string representation of return value
    * @return ContractReturnValue object which corresponds to given string representation; null if given value is not supported.
    */
-  public static @Nullable ContractReturnValue valueOf(@NotNull String value) {
+  @Nullable
+  public static ContractReturnValue valueOf(@NotNull String value) {
     return switch (value) {
       case "_" -> returnAny();
       case "fail" -> fail();

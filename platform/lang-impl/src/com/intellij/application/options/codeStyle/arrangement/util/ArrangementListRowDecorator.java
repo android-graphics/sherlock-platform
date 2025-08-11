@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.util;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -18,7 +18,6 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,17 +26,16 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Set;
 
-@ApiStatus.Internal
 public final class ArrangementListRowDecorator extends JPanel implements ArrangementUiComponent {
 
-  private final @NotNull JLabel mySortLabel = new JLabel(AllIcons.ObjectBrowser.Sorted);
+  @NotNull private final JLabel mySortLabel = new JLabel(AllIcons.ObjectBrowser.Sorted);
 
-  private final @NotNull ArrangementRuleIndexControl     myRowIndexControl;
-  private final @NotNull ArrangementUiComponent          myDelegate;
-  private final @NotNull ArrangementMatchingRulesControl myControl;
-  private final @NotNull ActionButton                    myEditButton;
+  @NotNull private final ArrangementRuleIndexControl     myRowIndexControl;
+  @NotNull private final ArrangementUiComponent          myDelegate;
+  @NotNull private final ArrangementMatchingRulesControl myControl;
+  @NotNull private final ActionButton                    myEditButton;
 
-  private @Nullable Rectangle myScreenBounds;
+  @Nullable private Rectangle myScreenBounds;
 
   private boolean myBeingEdited;
   private boolean myUnderMouse;
@@ -130,18 +128,21 @@ public final class ArrangementListRowDecorator extends JPanel implements Arrange
     myBeingEdited = beingEdited;
   }
 
+  @NotNull
   @Override
-  public @NotNull ArrangementMatchCondition getMatchCondition() {
+  public ArrangementMatchCondition getMatchCondition() {
     return myDelegate.getMatchCondition();
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent getUiComponent() {
+  public JComponent getUiComponent() {
     return this;
   }
 
+  @Nullable
   @Override
-  public @Nullable Rectangle getScreenBounds() {
+  public Rectangle getScreenBounds() {
     return myScreenBounds;
   }
 
@@ -166,8 +167,9 @@ public final class ArrangementListRowDecorator extends JPanel implements Arrange
     return myDelegate.onMouseEntered(e);
   }
 
+  @Nullable
   @Override
-  public @Nullable Rectangle onMouseMove(@NotNull MouseEvent event) {
+  public Rectangle onMouseMove(@NotNull MouseEvent event) {
     myEditButton.setVisible(myControl.getSelectedModelRows().size() <= 1);
     Rectangle bounds = getButtonScreenBounds();
     if (!myBeingEdited && bounds != null) {
@@ -205,8 +207,9 @@ public final class ArrangementListRowDecorator extends JPanel implements Arrange
     myDelegate.onMouseRelease(event); 
   }
 
+  @Nullable
   @Override
-  public @Nullable Rectangle onMouseExited() {
+  public Rectangle onMouseExited() {
     setBackground(UIUtil.getListBackground());
     if (!myBeingEdited) {
       myEditButton.setVisible(false);
@@ -214,7 +217,8 @@ public final class ArrangementListRowDecorator extends JPanel implements Arrange
     return myDelegate.onMouseExited(); 
   }
   
-  private @Nullable Rectangle getButtonScreenBounds() {
+  @Nullable
+  private Rectangle getButtonScreenBounds() {
     if (myScreenBounds == null) {
       return null;
     }
@@ -222,13 +226,15 @@ public final class ArrangementListRowDecorator extends JPanel implements Arrange
     return new Rectangle(bounds.x + myScreenBounds.x, bounds.y + myScreenBounds.y, bounds.width, bounds.height); 
   }
 
+  @Nullable
   @Override
-  public @Nullable ArrangementSettingsToken getToken() {
+  public ArrangementSettingsToken getToken() {
     return myDelegate.getToken();
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<ArrangementSettingsToken> getAvailableTokens() {
+  public Set<ArrangementSettingsToken> getAvailableTokens() {
     return myDelegate.getAvailableTokens();
   }
 

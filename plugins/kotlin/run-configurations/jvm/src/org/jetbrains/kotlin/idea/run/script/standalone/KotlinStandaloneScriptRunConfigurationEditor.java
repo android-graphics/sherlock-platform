@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.run.script.standalone;
 
@@ -6,10 +6,11 @@ import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
 import com.intellij.execution.ui.ShortenCommandLineModeCombo;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.LabeledComponentNoThrow;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.PanelWithAnchor;
@@ -25,8 +26,8 @@ public class KotlinStandaloneScriptRunConfigurationEditor extends SettingsEditor
     private CommonJavaParametersPanel commonProgramParameters;
     private JrePathEditor jrePathEditor;
     private TextFieldWithBrowseButton chooseScriptFileTextField;
-    private LabeledComponentNoThrow<TextFieldWithBrowseButton> chooseScriptFileComponent;
-    private LabeledComponentNoThrow<ShortenCommandLineModeCombo> shortenClasspathModeCombo;
+    private LabeledComponent<TextFieldWithBrowseButton> chooseScriptFileComponent;
+    private LabeledComponent<ShortenCommandLineModeCombo> shortenClasspathModeCombo;
     private JComponent anchor;
 
     public KotlinStandaloneScriptRunConfigurationEditor(Project project) {
@@ -37,10 +38,14 @@ public class KotlinStandaloneScriptRunConfigurationEditor extends SettingsEditor
     }
 
     void initChooseFileField(Project project) {
-        var descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(KotlinParserDefinition.STD_SCRIPT_SUFFIX)
-                .withTitle(KotlinRunConfigurationsBundle.message("script.choose.file"))
+        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+                .withFileFilter(file -> file.isDirectory() || KotlinParserDefinition.STD_SCRIPT_SUFFIX.equals(file.getExtension()))
                 .withTreeRootVisible(true);
-        chooseScriptFileTextField.addBrowseFolderListener(project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+
+        chooseScriptFileTextField.addBrowseFolderListener(
+                KotlinRunConfigurationsBundle.message("script.choose.file"),
+                null, project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
+        );
     }
 
     @Override
@@ -61,8 +66,9 @@ public class KotlinStandaloneScriptRunConfigurationEditor extends SettingsEditor
         configuration.setShortenCommandLine(shortenClasspathModeCombo.getComponent().getSelectedItem());
     }
 
+    @NotNull
     @Override
-    protected @NotNull JComponent createEditor() {
+    protected JComponent createEditor() {
         return mainPanel;
     }
 
@@ -81,7 +87,7 @@ public class KotlinStandaloneScriptRunConfigurationEditor extends SettingsEditor
     }
 
     private void createUIComponents() {
-        chooseScriptFileComponent = new LabeledComponentNoThrow<>();
+        chooseScriptFileComponent = new LabeledComponent<>();
         chooseScriptFileTextField = new TextFieldWithBrowseButton();
         chooseScriptFileComponent.setComponent(chooseScriptFileTextField);
     }

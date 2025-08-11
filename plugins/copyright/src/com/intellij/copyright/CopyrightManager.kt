@@ -80,8 +80,6 @@ abstract class AbstractCopyrightManager {
   }
 }
 
-private val CopyrightProfilesPresentableName = CopyrightBundle.messagePointer("configurable.CopyrightProfilesPanel.display.name")
-
 @Service(Service.Level.APP)
 class IdeCopyrightManager @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) : AbstractCopyrightManager() {
   constructor() : this(SchemeManagerFactory.getInstance())
@@ -102,7 +100,7 @@ class IdeCopyrightManager @NonInjectable constructor(schemeManagerFactory: Schem
         return CopyrightLazySchemeWrapper(name, dataHolder, schemeWriter)
       }
 
-    }, settingsCategory = SettingsCategory.CODE, presentableName = CopyrightProfilesPresentableName.get())
+    }, settingsCategory = SettingsCategory.CODE)
 
   init {
     schemeManager.loadSchemes()
@@ -154,7 +152,7 @@ class CopyrightManager @NonInjectable constructor(private val project: Project,
       LOG.warn("Name is not specified for scheme $fileNameWithoutExtension, file name will be used instead")
       return fileNameWithoutExtension
     }
-  }, schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider, presentableName = CopyrightProfilesPresentableName.get())
+  }, schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider)
 
   override val wrapScheme: Boolean
     get() = project.isDirectoryBased

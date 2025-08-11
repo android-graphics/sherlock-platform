@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -24,17 +24,21 @@ public class XBreakpointPackageGroup extends XBreakpointGroup {
     return IconManager.getInstance().getPlatformIcon(PlatformIcons.Package);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     String packageName = getPackageName();
     return StringUtil.isEmpty(packageName) ? getDefaultPackageName() : packageName;
   }
 
-  public @NotNull @NlsSafe String getPackageName() {
+  @NotNull
+  @NlsSafe
+  public String getPackageName() {
     return myPackageName;
   }
 
-  private static @Nls String getDefaultPackageName() {
+  @Nls
+  private static String getDefaultPackageName() {
     return JavaDebuggerBundle.message("default.package.name");
   }
 }

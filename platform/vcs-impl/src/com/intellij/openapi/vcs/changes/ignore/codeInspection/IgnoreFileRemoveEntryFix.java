@@ -56,8 +56,9 @@ public class IgnoreFileRemoveEntryFix extends LocalQuickFixAndIntentionActionOnP
    *
    * @return QuickFix action name
    */
+  @NotNull
   @Override
-  public @NotNull String getText() {
+  public String getText() {
     return VcsBundle.message("ignore.quick.fix.remove.entry");
   }
 
@@ -96,8 +97,9 @@ public class IgnoreFileRemoveEntryFix extends LocalQuickFixAndIntentionActionOnP
    *
    * @return QuickFix family name
    */
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return VcsBundle.message("ignore.codeInspection.group");
   }
 }

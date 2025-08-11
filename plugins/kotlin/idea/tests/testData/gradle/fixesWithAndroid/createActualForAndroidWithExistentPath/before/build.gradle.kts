@@ -13,6 +13,6 @@ android {
 }
 
 kotlin {
-    {{androidTargetPlaceholder}}
+    android()
     jvm()
 }

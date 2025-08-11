@@ -5,10 +5,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
-import com.intellij.openapi.vcs.changes.ui.subscribeOnVcsToolWindowLayoutChanges
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.Content
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.index.GitStageContentProvider.Companion.STAGING_AREA_TAB_NAME
@@ -25,19 +26,24 @@ internal class GitStageContentProvider(private val project: Project) : ChangesVi
   override fun initTabContent(content: Content) {
     val disposable = Disposer.newDisposable("Git Stage Content Provider")
     val tracker = GitStageTracker.getInstance(project)
-    val gitStagePanel = GitStagePanel(tracker, isVertical = ::isVertical, disposable) {
+    val gitStagePanel = GitStagePanel(tracker, isVertical = ::isVertical, isEditorDiffPreview = ::isDiffPreviewInEditor, disposable) {
       ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME)?.activate(null)
     }
     GitStageTabTitleUpdater(tracker, gitStagePanel)
-
-    val busConnection = project.messageBus.connect(disposable)
-    busConnection.subscribeOnVcsToolWindowLayoutChanges { gitStagePanel.updateLayout() }
+    project.messageBus.connect(disposable).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
+      override fun toolWindowMappingChanged() = gitStagePanel.updateLayout()
+    })
+    project.messageBus.connect(disposable).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      override fun stateChanged(toolWindowManager: ToolWindowManager) = gitStagePanel.updateLayout()
+    })
 
     content.component = gitStagePanel
     content.setDisposer(disposable)
   }
 
-  private fun isVertical() = ChangesViewContentManager.isToolWindowTabVertical(project, STAGING_AREA_TAB_NAME)
+  private fun isDiffPreviewInEditor() = ChangesViewContentManager.isCommitToolWindowShown(project)
+
+  private fun isVertical() = ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME)?.anchor?.isHorizontal == false
 
   companion object {
     @NonNls

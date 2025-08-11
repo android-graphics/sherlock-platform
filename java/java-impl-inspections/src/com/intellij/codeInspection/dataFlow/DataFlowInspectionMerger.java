@@ -2,6 +2,8 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.ex.InspectionElementsMergerBase;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

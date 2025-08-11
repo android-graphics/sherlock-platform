@@ -40,12 +40,14 @@ public final class InstanceVariableInitializationInspection extends BaseInspecti
   public boolean m_ignorePrimitives = false;
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "InstanceVariableMayNotBeInitialized";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final Boolean junitTestCase = (Boolean)infos[0];
     if (junitTestCase.booleanValue()) {
       return InspectionGadgetsBundle.message(
@@ -119,7 +121,8 @@ public final class InstanceVariableInitializationInspection extends BaseInspecti
       }
     }
 
-    private static boolean isInitializedInSetup(PsiField field, PsiClass aClass) {
+    private static boolean isInitializedInSetup(PsiField field,
+                                                PsiClass aClass) {
       final PsiMethod setupMethod = TestFrameworks.getInstance().findSetUpMethod(aClass);
       return InitializationUtils.methodAssignsVariableOrFails(setupMethod, field);
     }

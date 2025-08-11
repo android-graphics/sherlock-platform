@@ -1,7 +1,9 @@
 // MODE: inheritors
 
-interface SomeInterface {/*<# [1 Implementation] #>*/
-open val interfaceProperty: String/*<# [1 Implementation] #>*/
+/*<# block [ 1 Implementation] #>*/
+interface SomeInterface {
+/*<# block [     1 Override] #>*/
+    open val interfaceProperty: String
 }
 
 class SomeClass : SomeInterface {

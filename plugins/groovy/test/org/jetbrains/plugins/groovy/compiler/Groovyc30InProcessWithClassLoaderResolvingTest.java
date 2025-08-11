@@ -29,7 +29,7 @@ public final class Groovyc30InProcessWithClassLoaderResolvingTest extends Groovy
   }
 
   @Override
-  protected void setUp() throws Exception {
+  protected void setUp() {
     super.setUp();
     CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(getProject());
     compilerConfiguration.setBuildProcessVMOptions(

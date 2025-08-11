@@ -4,11 +4,15 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.ObjectUtils;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Decorator stub storage.
@@ -16,16 +20,19 @@ import org.jetbrains.annotations.Nullable;
 public class PyDecoratorStubImpl extends StubBase<PyDecorator> implements PyDecoratorStub {
   private final QualifiedName myQualifiedName;
   private final boolean myHasArgumentList;
-  private final @Nullable PyCustomDecoratorStub myCustomStub;
+  private final List<String> myPositionalArguments;
+  private final Map<String, String> myKeywordArguments;
 
   protected PyDecoratorStubImpl(final QualifiedName qualname,
                                 final boolean hasArgumentList,
                                 final StubElement parent,
-                                final @Nullable PyCustomDecoratorStub customStub) {
+                                final @NotNull List<String> positionalArguments,
+                                final @NotNull Map<String, String> namedArguments) {
     super(parent, PyStubElementTypes.DECORATOR_CALL);
     myQualifiedName = qualname;
     myHasArgumentList = hasArgumentList;
-    myCustomStub = customStub;
+    myPositionalArguments = positionalArguments;
+    myKeywordArguments = namedArguments;
   }
 
   @Override
@@ -39,16 +46,21 @@ public class PyDecoratorStubImpl extends StubBase<PyDecorator> implements PyDeco
   }
 
   @Override
-  public <T> @Nullable T getCustomStub(Class<T> stubClass) {
-    return ObjectUtils.tryCast(myCustomStub, stubClass);
+  public @Nullable String getPositionalArgumentLiteralText(int position) {
+    if (position >= myPositionalArguments.size()) return null;
+    return myPositionalArguments.get(position);
   }
 
   @Override
-  public String toString() {
-    return "PyDecoratorStubImpl{" +
-           "myQualifiedName=" + myQualifiedName +
-           ", myHasArgumentList=" + myHasArgumentList +
-           ", myCustomStub=" + myCustomStub +
-           '}';
+  public @Nullable String getNamedArgumentLiteralText(@NotNull String name) {
+    return myKeywordArguments.get(name);
+  }
+
+  List<String> getPositionalArguments() {
+    return myPositionalArguments;
+  }
+
+  Map<String, String> getKeywordArguments() {
+    return myKeywordArguments;
   }
 }

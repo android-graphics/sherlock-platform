@@ -24,7 +24,8 @@ import org.jetbrains.annotations.NotNull;
  */
 @ApiStatus.Experimental
 public interface PyAstIfStatement extends PyAstCompoundStatement, PyAstStatementWithElse {
-  default @NotNull PyAstIfPart getIfPart() {
+  @NotNull
+  default PyAstIfPart getIfPart() {
     return childToPsiNotNull(PyElementTypes.IF_PART_IF);
   }
 

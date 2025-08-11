@@ -14,8 +14,9 @@ public class MirrorToLeftAction extends SetOperationToBase {
     return true;
   }
 
+  @NotNull
   @Override
-  protected @NotNull DirDiffOperation getOperation(DirDiffElementImpl element) {
+  protected DirDiffOperation getOperation(DirDiffElementImpl element) {
     if (element.isSource()) {
       return DirDiffOperation.DELETE;
     }

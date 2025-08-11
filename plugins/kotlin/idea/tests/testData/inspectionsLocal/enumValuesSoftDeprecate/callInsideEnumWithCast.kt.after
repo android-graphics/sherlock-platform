@@ -7,3 +7,5 @@ enum class EnumClass {
         val v = entries.toTypedArray()
     }
 }
+
+// IGNORE_K2

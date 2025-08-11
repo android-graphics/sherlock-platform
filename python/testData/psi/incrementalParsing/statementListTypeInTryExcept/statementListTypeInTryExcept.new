@@ -1,6 +1,4 @@
 try:
-  print("Hello")
-  print(", ")
-  print("World")
+  print("Hello,")
 except:
   print("World!")

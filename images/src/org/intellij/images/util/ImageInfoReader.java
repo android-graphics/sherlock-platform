@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.util;
 
 import com.intellij.ui.svg.SvgKt;
@@ -17,14 +17,16 @@ import java.util.Iterator;
 import java.util.Objects;
 
 public final class ImageInfoReader {
-  public static @Nullable Info getInfo(byte @NotNull [] data) {
+  @Nullable
+  public static Info getInfo(byte @NotNull [] data) {
     Info info = getSvgInfo(data);
     if (info != null) return info;
 
     return read(new ByteArrayInputStream(data));
   }
 
-  private static @Nullable Info getSvgInfo(byte @NotNull [] data) {
+  @Nullable
+  private static Info getSvgInfo(byte @NotNull [] data) {
     for (int i = 0; i < Math.min(data.length, 100); i++) {
       byte b = data[i];
       if (b == '<') {
@@ -50,7 +52,8 @@ public final class ImageInfoReader {
     }
   }
 
-  private static @Nullable Info read(@NotNull Object input) {
+  @Nullable
+  private static Info read(@NotNull Object input) {
     ImageIO.setUseCache(false);
     try (ImageInputStream iis = ImageIO.createImageInputStream(input)) {
       if (isAppleOptimizedPNG(iis)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.navigation.NavigationItem;
@@ -25,7 +25,8 @@ public abstract class FindManager {
 
   public abstract FindModel createReplaceInFileModel();
 
-  public abstract @Nullable FindModel getPreviousFindModel();
+  @Nullable
+  public abstract FindModel getPreviousFindModel();
 
   public abstract void setPreviousFindModel(FindModel previousFindModel);
 
@@ -74,7 +75,8 @@ public abstract class FindManager {
    *
    * @return the last Find in File settings.
    */
-  public abstract @NotNull FindModel getFindInFileModel();
+  @NotNull
+  public abstract FindModel getFindInFileModel();
 
   /**
    * Returns the settings of the last performed Find in Project operation, or the
@@ -82,7 +84,8 @@ public abstract class FindManager {
    *
    * @return the last Find in Project settings.
    */
-  public abstract @NotNull FindModel getFindInProjectModel();
+  @NotNull
+  public abstract FindModel getFindInProjectModel();
 
   /**
    * Searches for the specified substring in the specified character sequence,
@@ -95,7 +98,8 @@ public abstract class FindManager {
    * @param model  the settings for the search, including the string to find.
    * @return the result of the search.
    */
-  public abstract @NotNull FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model);
+  @NotNull
+  public abstract FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model);
 
   /**
    * Searches for the specified substring in the specified character sequence,
@@ -108,7 +112,8 @@ public abstract class FindManager {
    * @param model  the settings for the search, including the string to find.
    * @return the result of the search.
    */
-  public abstract @NotNull FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model,
+  @NotNull
+  public abstract FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model,
                                         @Nullable VirtualFile findContextFile);
 
   /**

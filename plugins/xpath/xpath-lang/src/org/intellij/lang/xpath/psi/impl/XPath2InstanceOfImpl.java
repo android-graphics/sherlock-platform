@@ -26,13 +26,15 @@ public class XPath2InstanceOfImpl extends XPath2ElementImpl implements XPath2Ins
   }
 
   @Override
-  public @Nullable XPathType getTargetType() {
+  @Nullable
+  public XPathType getTargetType() {
     final XPath2TypeElement node = findChildByClass(XPath2TypeElement.class);
     return node != null ? node.getDeclaredType() : null;
   }
 
+  @NotNull
   @Override
-  public @NotNull XPathType getType() {
+  public XPathType getType() {
     return XPath2Type.BOOLEAN;
   }
 

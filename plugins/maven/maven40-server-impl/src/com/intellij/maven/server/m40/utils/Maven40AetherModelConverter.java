@@ -1,15 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
-import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
-import org.eclipse.aether.repository.RemoteRepository;
-import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.jetbrains.annotations.NotNull;
@@ -18,57 +15,44 @@ import org.jetbrains.idea.maven.model.*;
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * {@link Maven40AetherModelConverter} provides adapted methods of {@link Maven40ModelConverter} for aether models conversion
  */
 public final class Maven40AetherModelConverter extends Maven40ModelConverter {
-  public static @NotNull MavenModel convertModelWithAetherDependencyTree(MavenProject mavenProject,
-                                                                         Model model,
-                                                                         Collection<? extends DependencyNode> dependencyTree,
-                                                                         File localRepository) {
+  @NotNull
+  public static MavenModel convertModelWithAetherDependencyTree(Model model,
+                                                                List<String> sources,
+                                                                List<String> testSources,
+                                                                Collection<? extends Artifact> dependencies,
+                                                                Collection<? extends DependencyNode> dependencyTree,
+                                                                Collection<? extends Artifact> extensions,
+                                                                File localRepository) {
     MavenModel result = new MavenModel();
-    result.setMavenId(new MavenId(mavenProject.getGroupId(), mavenProject.getArtifactId(), mavenProject.getVersion()));
+    result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
 
     Parent parent = model.getParent();
     if (parent != null) {
-      result.setParent(
-        new MavenParent(new MavenId(parent.getGroupId(), parent.getArtifactId(), parent.getVersion()), parent.getRelativePath()));
+      result.setParent(new MavenParent(new MavenId(parent.getGroupId(), parent.getArtifactId(), parent.getVersion()),
+                                       parent.getRelativePath()));
     }
     result.setPackaging(model.getPackaging());
-    result.setName(mavenProject.getName());
-    result.setProperties(mavenProject.getProperties() == null ? new Properties() : model.getProperties());
-    //noinspection SSBasedInspection
-    result.setPlugins(convertPlugins(model, mavenProject.getPluginArtifacts()));
+    result.setName(model.getName());
+    result.setProperties(model.getProperties() == null ? new Properties() : model.getProperties());
+    result.setPlugins(convertPlugins(model));
 
     Map<Artifact, MavenArtifact> convertedArtifacts = new HashMap<>();
-    result.setExtensions(convertArtifacts(mavenProject.getExtensionArtifacts(), convertedArtifacts, localRepository));
-    result.setDependencyTree(convertAetherDependencyNodes(null, dependencyTree, convertedArtifacts, localRepository));
-    result.setDependencies(convertArtifacts(mavenProject.getArtifacts(), convertedArtifacts, localRepository));
+    result.setExtensions(convertArtifacts(extensions, convertedArtifacts, localRepository));
+    result.setDependencyTree(
+      convertAetherDependencyNodes(null, dependencyTree, convertedArtifacts, localRepository));
+    result.setDependencies(convertArtifacts(dependencies, convertedArtifacts, localRepository));
 
-    result.setRemoteRepositories(convertAetherRepositories(mavenProject.getRemoteProjectRepositories()));
-    result.setRemotePluginRepositories(convertAetherRepositories(mavenProject.getRemotePluginRepositories()));
+    result.setRemoteRepositories(convertRepositories(model.getRepositories()));
     result.setProfiles(convertProfiles(model.getProfiles()));
-    result.setModules(mavenProject.getModules());
+    result.setModules(model.getModules());
 
-    convertBuild(result.getBuild(), model.getBuild(),
-                 //mavenProject.getCompileSourceRoots(), mavenProject.getTestCompileSourceRoots()
-                 Collections.singletonList(model.getBuild().getSourceDirectory()), Collections.singletonList(model.getBuild().getTestSourceDirectory())
-    );
+    convertBuild(result.getBuild(), model.getBuild(), sources, testSources);
     return result;
-  }
-
-  @SuppressWarnings("SSBasedInspection")
-  private static List<MavenRemoteRepository> convertAetherRepositories(List<RemoteRepository> repositories) {
-    return repositories.stream().map(
-      r -> new MavenRemoteRepository(r.getId(), r.getId(), r.getUrl(), "default", convertPolicy(r.getPolicy(false)),
-                                     convertPolicy(r.getPolicy(true)))).collect(Collectors.toList());
-  }
-
-  private static MavenRemoteRepository.@Nullable Policy convertPolicy(RepositoryPolicy policy) {
-    return policy != null ? new MavenRemoteRepository.Policy(policy.isEnabled(), policy.getArtifactUpdatePolicy(),
-                                                             policy.getChecksumPolicy()) : null;
   }
 
   public static List<MavenArtifactNode> convertAetherDependencyNodes(MavenArtifactNode parent,
@@ -113,7 +97,8 @@ public final class Maven40AetherModelConverter extends Maven40ModelConverter {
     return result;
   }
 
-  public static @Nullable Artifact toArtifact(@Nullable Dependency dependency) {
+  @Nullable
+  public static Artifact toArtifact(@Nullable Dependency dependency) {
     if (dependency == null) {
       return null;
     }

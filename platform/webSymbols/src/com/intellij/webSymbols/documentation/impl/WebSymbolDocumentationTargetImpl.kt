@@ -23,10 +23,8 @@ import java.awt.Image
 import java.awt.image.BufferedImage
 import javax.swing.Icon
 
-internal class WebSymbolDocumentationTargetImpl(
-  override val symbol: WebSymbol,
-  override val location: PsiElement?,
-)
+internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol,
+                                                override val location: PsiElement?)
   : WebSymbolDocumentationTarget {
 
   override fun createPointer(): Pointer<out DocumentationTarget> {
@@ -44,7 +42,6 @@ internal class WebSymbolDocumentationTargetImpl(
 
       @Suppress("HardCodedStringLiteral")
       val contents = StringBuilder()
-        .appendHeader(doc)
         .appendDefinition(doc, url2ImageMap)
         .appendDescription(doc)
         .appendSections(doc)
@@ -101,13 +98,6 @@ internal class WebSymbolDocumentationTargetImpl(
           .append(it)
           .append(DocumentationMarkup.CONTENT_END)
           .append('\n')
-      } ?: this
-
-    private fun StringBuilder.appendHeader(doc: WebSymbolDocumentation): StringBuilder =
-      doc.header?.let {
-        append("<div class='" + DocumentationMarkup.CLASS_TOP + "'>")
-          .append(it)
-          .append("</div>\n")
       } ?: this
 
     private fun buildSections(doc: WebSymbolDocumentation): Map<String, String> =

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.connection.metadata;
 
 import com.fasterxml.jackson.core.exc.StreamReadException;
@@ -32,7 +32,8 @@ public final class EventLogMetadataUtils {
   /**
    * @return empty rules if error happened during groups fetching or parsing
    */
-  public static @NotNull EventGroupsFilterRules<EventLogBuild> loadAndParseGroupsFilterRules(@NotNull String serviceUrl, @NotNull EventLogConnectionSettings settings) {
+  @NotNull
+  public static EventGroupsFilterRules<EventLogBuild> loadAndParseGroupsFilterRules(@NotNull String serviceUrl, @NotNull EventLogConnectionSettings settings) {
     try {
       String content = loadMetadataFromServer(serviceUrl, settings);
       EventGroupRemoteDescriptors groups = parseGroupRemoteDescriptors(content);
@@ -43,7 +44,8 @@ public final class EventLogMetadataUtils {
     }
   }
 
-  public static @NotNull EventGroupRemoteDescriptors parseGroupRemoteDescriptors(@Nullable String content) throws EventLogMetadataParseException {
+  @NotNull
+  public static EventGroupRemoteDescriptors parseGroupRemoteDescriptors(@Nullable String content) throws EventLogMetadataParseException {
     if (isEmptyOrSpaces(content)) {
       throw new EventLogMetadataParseException(EventLogMetadataParseException.EventLogMetadataParseErrorType.EMPTY_CONTENT);
     }
@@ -65,7 +67,8 @@ public final class EventLogMetadataUtils {
     }
   }
 
-  public static @NotNull String loadMetadataFromServer(@Nullable String serviceUrl, @NotNull EventLogConnectionSettings settings)
+  @NotNull
+  public static String loadMetadataFromServer(@Nullable String serviceUrl, @NotNull EventLogConnectionSettings settings)
     throws EventLogMetadataLoadException {
     if (isEmptyOrSpaces(serviceUrl)) {
       throw new EventLogMetadataLoadException(EventLogMetadataLoadErrorType.EMPTY_SERVICE_URL);

@@ -1,9 +1,0 @@
-fragment gitActorInfo on GitActor {
-  name
-  email
-  avatarUrl
-  date
-  user {
-    ...user
-  }
-}

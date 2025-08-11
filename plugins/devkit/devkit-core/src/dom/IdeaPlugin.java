@@ -6,6 +6,7 @@ import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiPackage;
 import com.intellij.util.xml.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,12 +67,6 @@ public interface IdeaPlugin extends DomElement {
 
   @NotNull GenericAttributeValue<Boolean> getAllowBundledUpdate();
 
-  /**
-   * @deprecated Will be dropped without a replacement: use either a regular plugin or implement a product module.
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Stubbed
-  @Deprecated
   @NotNull GenericAttributeValue<Boolean> getImplementationDetail();
 
   @NotNull GenericAttributeValue<Boolean> getRequireRestart();
@@ -161,9 +156,8 @@ public interface IdeaPlugin extends DomElement {
   @NotNull List<? extends Listeners> getProjectListeners();
 
   /**
-   * @deprecated the corresponding tag in plugin.xml is not supported anymore, this method is used to highlight occurrences of such a tag
+   * @deprecated the corresponding tag in plugin.xml is not supported anymore, this method is used to highlight occurrences of such tag
    */
-  @SuppressWarnings("SpellCheckingInspection")
   @Deprecated
   @NotNull List<? extends Helpset> getHelpsets();
 }

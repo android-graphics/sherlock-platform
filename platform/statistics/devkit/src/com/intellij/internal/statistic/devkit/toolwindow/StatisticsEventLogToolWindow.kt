@@ -13,7 +13,6 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -42,9 +41,7 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
     consoleLog = StatisticsEventLogConsole(project, model, recorderId)
     eventLogListener = object : StatisticsEventLogListener {
       override fun onLogEvent(validatedEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?) {
-        ApplicationManager.getApplication().invokeLater {
-          consoleLog.addLogLine(messageBuilder.buildLogMessage(validatedEvent, rawEventId, rawData))
-        }
+        consoleLog.addLogLine(messageBuilder.buildLogMessage(validatedEvent, rawEventId, rawData))
       }
     }
 

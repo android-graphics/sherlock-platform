@@ -23,17 +23,20 @@ import java.util.List;
 public class ForwardDeclaration<R, T> extends FunctionalParserBase<R, T> {
   private FunctionalParser<R, T> myParser = null;
 
-  public static @NotNull <R, T> ForwardDeclaration<R, T> create() {
+  @NotNull
+  public static <R, T> ForwardDeclaration<R, T> create() {
     return new ForwardDeclaration<>();
   }
 
-  public @NotNull ForwardDeclaration<R, T> define(@NotNull FunctionalParser<R, T> parser) {
+  @NotNull
+  public ForwardDeclaration<R, T> define(@NotNull FunctionalParser<R, T> parser) {
     myParser = parser;
     return this;
   }
 
+  @NotNull
   @Override
-  public @NotNull Pair<R, State> parse(@NotNull List<Token<T>> tokens, @NotNull State state) throws ParserException {
+  public Pair<R, State> parse(@NotNull List<Token<T>> tokens, @NotNull State state) throws ParserException {
     if (myParser != null) {
       return myParser.parse(tokens, state);
     }

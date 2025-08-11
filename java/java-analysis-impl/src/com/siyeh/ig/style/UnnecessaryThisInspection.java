@@ -15,13 +15,12 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.options.OptPane;
-import com.intellij.java.codeserver.core.JavaPsiReferenceUtil;
-import com.intellij.java.codeserver.core.JavaPsiReferenceUtil.ForwardReferenceProblem;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,6 +28,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +42,8 @@ public final class UnnecessaryThisInspection extends BaseInspection implements C
   public boolean ignoreAssignments = false;
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.this.problem.descriptor");
   }
 
@@ -60,7 +61,8 @@ public final class UnnecessaryThisInspection extends BaseInspection implements C
   private static class UnnecessaryThisFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.this.remove.quickfix");
     }
 
@@ -140,8 +142,7 @@ public final class UnnecessaryThisInspection extends BaseInspection implements C
         if (!DeclarationSearchUtils.variableNameResolvesToTarget(referenceName, variable, expression)) {
           return;
         }
-        if (variable instanceof PsiField field && 
-            JavaPsiReferenceUtil.checkForwardReference(expression, field, true) != ForwardReferenceProblem.LEGAL) {
+        if (variable instanceof PsiField && HighlightUtil.isIllegalForwardReferenceToField(expression, (PsiField)variable, true) != null) {
           return;
         }
         registerError(thisExpression);
@@ -157,7 +158,7 @@ public final class UnnecessaryThisInspection extends BaseInspection implements C
             return;
           }
           final String methodName = calledMethod.getName();
-          PsiClass parentClass = PsiUtil.getContainingClass(expression);
+          PsiClass parentClass = ClassUtils.getContainingClass(expression);
           final Project project = expression.getProject();
           final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
           final PsiResolveHelper resolveHelper = psiFacade.getResolveHelper();
@@ -175,7 +176,7 @@ public final class UnnecessaryThisInspection extends BaseInspection implements C
                 return;
               }
             }
-            parentClass = PsiUtil.getContainingClass(parentClass);
+            parentClass = ClassUtils.getContainingClass(parentClass);
           }
         }
         else {
@@ -186,7 +187,7 @@ public final class UnnecessaryThisInspection extends BaseInspection implements C
           if (!DeclarationSearchUtils.variableNameResolvesToTarget(referenceName, variable, expression)) {
             return;
           }
-          PsiClass parentClass = PsiUtil.getContainingClass(expression);
+          PsiClass parentClass = ClassUtils.getContainingClass(expression);
           while (parentClass != null) {
             if (qualifierName.equals(parentClass.getName())) {
               registerError(thisExpression);
@@ -195,7 +196,7 @@ public final class UnnecessaryThisInspection extends BaseInspection implements C
             if (field != null) {
               return;
             }
-            parentClass = PsiUtil.getContainingClass(parentClass);
+            parentClass = ClassUtils.getContainingClass(parentClass);
           }
         }
       }

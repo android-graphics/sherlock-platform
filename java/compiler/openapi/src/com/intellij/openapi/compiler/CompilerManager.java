@@ -108,14 +108,16 @@ public abstract class CompilerManager {
    *
    * @return all tasks to be executed before compilation.
    */
-  public abstract @NotNull List<CompileTask> getBeforeTasks();
+  @NotNull
+  public abstract List<CompileTask> getBeforeTasks();
 
   /**
    * Returns the list of all tasks to be executed after compilation.
    *
    * @return all tasks to be executed after compilation.
    */
-  public abstract @NotNull List<CompileTask> getAfterTaskList();
+  @NotNull
+  public abstract List<CompileTask> getAfterTaskList();
 
   /**
    * Compile a set of files.
@@ -209,16 +211,6 @@ public abstract class CompilerManager {
    */
   public abstract void rebuild(@Nullable CompileStatusNotification callback);
 
-
-  /**
-   * Same as rebuild, but build system directory is forcibly removed from the IDE to ensure the build starts on the clean state
-   *
-   * @param callback a notification callback, or null if no notifications needed
-   */
-  public void rebuildClean(@Nullable CompileStatusNotification callback) {
-    rebuild(callback); // default implementation
-  }
-
   /**
    * Execute a custom compile task.
    *
@@ -253,23 +245,29 @@ public abstract class CompilerManager {
   /*
    * Convenience methods for creating frequently-used compile scopes
    */
-  public abstract @NotNull CompileScope createFilesCompileScope(VirtualFile @NotNull [] files);
+  @NotNull
+  public abstract CompileScope createFilesCompileScope(VirtualFile @NotNull [] files);
 
-  public @NotNull CompileScope createModuleCompileScope(@NotNull Module module, boolean includeDependentModules) {
+  @NotNull
+  public CompileScope createModuleCompileScope(@NotNull Module module, boolean includeDependentModules) {
     return createModulesCompileScope(new Module[] {module}, includeDependentModules);
   }
 
-  public @NotNull CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules) {
+  @NotNull
+  public CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules) {
     return createModulesCompileScope(modules, includeDependentModules, false);
   }
 
-  public @NotNull CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies){
+  @NotNull
+  public CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies){
     return createModulesCompileScope(modules, includeDependentModules, includeRuntimeDependencies, true);
   }
 
   public abstract CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies, boolean includeTests);
-  public abstract @NotNull CompileScope createModuleGroupCompileScope(@NotNull Project project, Module @NotNull [] modules, boolean includeDependentModules);
-  public abstract @NotNull CompileScope createProjectCompileScope(@NotNull Project project);
+  @NotNull
+  public abstract CompileScope createModuleGroupCompileScope(@NotNull Project project, Module @NotNull [] modules, boolean includeDependentModules);
+  @NotNull
+  public abstract CompileScope createProjectCompileScope(@NotNull Project project);
 
   public abstract void setValidationEnabled(ModuleType<?> moduleType, boolean enabled);
 
@@ -284,5 +282,6 @@ public abstract class CompilerManager {
                                                           Collection<? extends File> files,
                                                           File outputDir) throws IOException, CompilationException;
 
-  public abstract @Nullable File getJavacCompilerWorkingDir();
+  @Nullable
+  public abstract File getJavacCompilerWorkingDir();
 }

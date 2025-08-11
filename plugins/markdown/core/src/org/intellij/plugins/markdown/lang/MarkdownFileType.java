@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.lang;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -11,24 +11,28 @@ import javax.swing.*;
 public final class MarkdownFileType extends LanguageFileType {
   public static final MarkdownFileType INSTANCE = new MarkdownFileType();
 
-  private static final @NlsSafe String MARKDOWN_DESCRIPTION = "Markdown";
+  @NlsSafe
+  private static final String MARKDOWN_DESCRIPTION = "Markdown";
 
   private MarkdownFileType() {
     super(MarkdownLanguage.INSTANCE);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return "Markdown";
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
+  public String getDescription() {
     return MARKDOWN_DESCRIPTION;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDefaultExtension() {
+  public String getDefaultExtension() {
     return "md";
   }
 

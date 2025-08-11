@@ -25,7 +25,6 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -1077,7 +1076,6 @@ public final class EditorModel {
     }
   }
 
-  @ApiStatus.Internal
   @RequiresEdt
   public void onFileChanged(Page lastPage, boolean isLengthIncreased) {
     isLocalScrollBarStabilized = false;

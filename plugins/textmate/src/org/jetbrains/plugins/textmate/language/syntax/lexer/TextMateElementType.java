@@ -12,7 +12,8 @@ public class TextMateElementType extends IElementType {
     myScope = scope;
   }
 
-  public @NotNull TextMateScope getScope() {
+  @NotNull
+  public TextMateScope getScope() {
     return myScope;
   }
 

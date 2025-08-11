@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -7,11 +7,11 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 public final class Message {
-  private final @NotNull String myTitle;
-  private final @NotNull String myText;
-  private final @Nullable String myGroup;
-  private final @NotNull Kind myKind;
-  private final @Nullable FilePosition myFilePosition;
+  @NotNull private final String myTitle;
+  @NotNull private final String myText;
+  @Nullable private final String myGroup;
+  @NotNull private final Kind myKind;
+  @Nullable private final FilePosition myFilePosition;
 
   private final boolean myInternal;
 
@@ -31,23 +31,28 @@ public final class Message {
     myFilePosition = filePosition;
   }
 
-  public @NotNull String getTitle() {
+  @NotNull
+  public String getTitle() {
     return myTitle;
   }
 
-  public @NotNull String getText() {
+  @NotNull
+  public String getText() {
     return myText;
   }
 
-  public @Nullable String getGroup() {
+  @Nullable
+  public String getGroup() {
     return myGroup;
   }
 
-  public @NotNull Kind getKind() {
+  @NotNull
+  public Kind getKind() {
     return myKind;
   }
 
-  public @Nullable FilePosition getFilePosition() {
+  @Nullable
+  public FilePosition getFilePosition() {
     return myFilePosition;
   }
 
@@ -56,7 +61,7 @@ public final class Message {
   }
 
   public static class FilePosition {
-    private final @NotNull String myFilePath;
+    @NotNull private final String myFilePath;
     private final int myLine;
     private final int myColumn;
 
@@ -66,7 +71,8 @@ public final class Message {
       myColumn = column;
     }
 
-    public @NotNull String getFilePath() {
+    @NotNull
+    public String getFilePath() {
       return myFilePath;
     }
 

@@ -14,14 +14,11 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.cont
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.facets.KotlinFacetSettingsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingCheckDsl
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.hooks.KotlinMppTestHooks
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.hooks.KotlinMppTestHooksDsl
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.ExecuteRunConfigurationsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.RunConfigurationChecksDsl
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.RunConfigurationsChecker
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.sources.LibrarySourcesCheckDsl
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.sources.LibrarySourcesChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.WorkspaceChecksDsl
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
@@ -31,12 +28,14 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.combineMultipleFailures
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.enableKmpWasmSupport
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.junit.Assert
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
@@ -44,6 +43,7 @@ import org.junit.Test
 import org.junit.runner.Description
 import org.junit.runner.RunWith
 import java.io.File
+import java.io.PrintStream
 import java.util.*
 
 /**
@@ -87,13 +87,13 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
                                                       HighlightingCheckDsl,
                                                       TestWithKotlinPluginAndGradleVersions, DevModeTweaksDsl,
                                                       AllFilesUnderContentRootConfigurationDsl, RunConfigurationChecksDsl,
-                                                      CustomGradlePropertiesDsl, DocumentationCheckerDsl, KotlinMppTestHooksDsl,
-                                                      LibrarySourcesCheckDsl {
+                                                      CustomGradlePropertiesDsl, DocumentationCheckerDsl {
 
     internal val installedFeatures = listOf<TestFeature<*>>(
         GradleProjectsPublishingTestsFeature,
         LinkedProjectPathsTestsFeature,
         NoErrorEventsDuringImportFeature,
+        CustomImportChecker, // NB: Corresponding DSL is not implemented by default in most suites to not pollute the DSL
         CustomGradlePropertiesTestFeature,
 
         ContentRootsChecker,
@@ -105,13 +105,9 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         ExecuteRunConfigurationsChecker,
         AllFilesAreUnderContentRootChecker,
         DocumentationChecker,
-        ReferenceTargetChecker,
-        KotlinMppTestHooks,
-        LibraryKindsChecker,
-        LibrarySourcesChecker
     )
 
-    private val context: KotlinMppTestsContextImpl = KotlinMppTestsContextImpl(installedFeatures)
+    private val context: KotlinMppTestsContextImpl = KotlinMppTestsContextImpl()
 
     @get:Rule
     val testDescriptionProviderJUnitRule = TestDescriptionProviderJUnitRule(context)
@@ -138,57 +134,63 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
 
     open fun TestConfigurationDslScope.defaultTestConfiguration() {}
 
-    protected fun doTest(
-        runImport: Boolean = true,
-        afterImport: (KotlinMppTestsContextImpl) -> Unit = { },
-        testSpecificConfiguration: TestConfigurationDslScope.() -> Unit = { },
-    ) {
+    protected fun doTest(runImport: Boolean = true, testSpecificConfiguration: TestConfigurationDslScope.() -> Unit = { }) {
         context.testConfiguration.defaultTestConfiguration()
         context.testConfiguration.testSpecificConfiguration()
-        context.doTest(runImport, afterImport)
+        context.doTest(runImport)
     }
 
-    private fun KotlinMppTestsContextImpl.doTest(runImport: Boolean, afterImport: (KotlinMppTestsContextImpl) -> Unit = { }) {
+    private fun KotlinMppTestsContextImpl.doTest(runImport: Boolean) {
         runAll(
             {
-                runForEnabledFeatures { context.beforeTestExecution() }
-                createLocalPropertiesFile()
-                configureByFiles()
-                runForEnabledFeatures { context.beforeImport() }
-                if (runImport) {
-                    importProject()
-                }
-                afterImport.invoke(context)
+                installedFeatures.combineMultipleFailures { feature -> with(feature) { context.beforeTestExecution() } }
+                createProjectSubFile(
+                    "local.properties",
+                    """
+                |sdk.dir=${KotlinTestUtils.getAndroidSdkSystemIndependentPath()}
+                |org.gradle.java.home=${findJdkPath()}
+            """.trimMargin()
+                )
 
-                runForEnabledFeatures { context.afterImport() }
+                configureByFiles()
+
+                installedFeatures.combineMultipleFailures { feature -> with(feature) { context.beforeImport() } }
+
+                if (runImport) importProject()
+
+                installedFeatures.combineMultipleFailures { feature ->
+                    with(feature) {
+                        if (feature !is AbstractTestChecker<*> || isCheckerEnabled(feature)) context.afterImport()
+                    }
+                }
             },
             {
-                runForEnabledFeatures { context.afterTestExecution() }
+                installedFeatures.combineMultipleFailures { feature -> with(feature) { context.afterTestExecution() } }
             }
         )
     }
 
-    private fun KotlinMppTestsContextImpl.runForEnabledFeatures(action: TestFeature<*>.() -> Unit) {
-        enabledFeatures.combineMultipleFailures { feature ->
-            with(feature) { action() }
-        }
+    @Suppress("RedundantIf")
+    private fun KotlinMppTestsContextImpl.isCheckerEnabled(checker: AbstractTestChecker<*>): Boolean {
+        // Temporary mute TEST_TASKS checks due to issues with hosts on CI. See KT-56332
+        if (checker is TestTasksChecker) return false
+
+        // Custom checker is always enabled
+        if (checker is CustomImportChecker) return true
+
+        val config = testConfiguration.getConfiguration(GeneralWorkspaceChecks)
+        if (config.disableCheckers != null && checker in config.disableCheckers!!) return false
+        // Highlighting checker should be disabled explicitly, because it's rarely the intention to not run
+        // highlighting when you have sources and say 'onlyCheckers(OrderEntriesCheckers)'
+        if (config.onlyCheckers != null && checker !in config.onlyCheckers!! && checker !is HighlightingChecker) return false
+        return true
     }
 
-    private fun createLocalPropertiesFile() {
-        createProjectSubFile(
-            "local.properties",
-            """
-                |sdk.dir=${KotlinTestUtils.getAndroidSdkSystemIndependentPath()}
-                |org.gradle.java.home=${requireJdkHome()}
-            """.trimMargin()
-        )
-    }
-
-    final override fun requireJdkHome(): String {
+    final override fun findJdkPath(): String {
         return System.getenv("JDK_17") ?: System.getenv("JDK_17_0") ?: System.getenv("JAVA17_HOME") ?: run {
             val message = "Missing JDK_17 or JDK_17_0 or JAVA17_HOME  environment variable"
             if (IS_UNDER_TEAMCITY) LOG.error(message) else LOG.warn(message)
-            super.requireJdkHome()
+            super.findJdkPath()
         }
     }
 
@@ -204,18 +206,16 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
             // @Parametrized
             (this as GradleImportingTestCase).gradleVersion = context.gradleVersion.version
             super.setUp()
+            enableKmpWasmSupport()
         }
 
         context.testProject = myProject
         context.testProjectRoot = myProjectRoot.toNioPath().toFile()
-        context.gradleJdkPath = File(requireJdkHome())
-    }
+        context.gradleJdkPath = File(findJdkPath())
 
-    override fun configureGradleVmOptions(options: MutableSet<String>) {
-        super.configureGradleVmOptions(options)
-        options.add("-XX:MaxMetaspaceSize=1024m")
-        options.add("-XX:+HeapDumpOnOutOfMemoryError")
-        options.add("-XX:HeapDumpPath=${System.getProperty("user.dir")}")
+        // Otherwise Gradle Daemon fails with Metaspace exhausted periodically
+        GradleSystemSettings.getInstance().gradleVmOptions =
+            "-XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${System.getProperty("user.dir")}"
     }
 
     override fun setUpFixtures() {
@@ -320,6 +320,12 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         return ImportSpecBuilder(super.createImportSpec())
             .createDirectoriesForEmptyContentRoots()
             .build()
+    }
+
+    // super does plain `print` instead of `println`, so we need to
+    // override it to preserve line breaks in output of Gradle-process
+    final override fun printOutput(stream: PrintStream, text: String) {
+        stream.println(text)
     }
 
     @Test

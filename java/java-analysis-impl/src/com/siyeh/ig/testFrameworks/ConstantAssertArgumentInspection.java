@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.testFrameworks;
 
 import com.intellij.psi.PsiExpression;
@@ -10,10 +10,12 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public final class ConstantAssertArgumentInspection extends BaseInspection {
-  private static final @NonNls Set<String> ASSERT_METHODS = Set.of(
+  @NonNls
+  private static final Set<String> ASSERT_METHODS = Set.of(
     "assertTrue",
     "assertFalse",
     "assertNull",
@@ -21,7 +23,8 @@ public final class ConstantAssertArgumentInspection extends BaseInspection {
   );
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "constant.junit.assert.argument.problem.descriptor");
   }

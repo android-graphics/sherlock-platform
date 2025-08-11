@@ -30,12 +30,13 @@ public class PyLazyParseablePsiElement extends LazyParseablePsiElement implement
     }
   }
 
-  protected void acceptPyVisitor(@NotNull PyElementVisitor pyVisitor) {
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyElement(this);
   }
 
+  @NotNull
   @Override
-  public @NotNull PythonLanguage getLanguage() {
+  public PythonLanguage getLanguage() {
     return (PythonLanguage)PythonFileType.INSTANCE.getLanguage();
   }
 

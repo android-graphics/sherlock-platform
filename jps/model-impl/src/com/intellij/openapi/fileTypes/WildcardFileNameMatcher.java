@@ -5,7 +5,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 public class WildcardFileNameMatcher implements FileNameMatcher {
   private final String myPattern;
@@ -16,15 +16,18 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
   }
 
   private static final class RegexpMatcher implements MaskMatcher {
-    private final Pattern pattern;
+    private final Matcher myMatcher;
 
     RegexpMatcher(@NotNull String pattern) {
-      this.pattern = PatternUtil.fromMask(pattern);
+      myMatcher = PatternUtil.fromMask(pattern).matcher("");
     }
 
     @Override
     public boolean matches(final @NotNull CharSequence filename) {
-      return pattern.matcher(filename).matches();
+      synchronized (myMatcher) {
+        myMatcher.reset(filename);
+        return myMatcher.matches();
+      }
     }
   }
 
@@ -102,7 +105,6 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
   }
 
 
-  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -112,7 +114,6 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
     return myPattern.equals(that.myPattern);
   }
 
-  @Override
   public int hashCode() {
     return myPattern.hashCode();
   }

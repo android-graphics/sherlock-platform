@@ -9,7 +9,6 @@ import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtParameter

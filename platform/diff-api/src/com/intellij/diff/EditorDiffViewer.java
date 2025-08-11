@@ -13,9 +13,5 @@ public interface EditorDiffViewer extends FrameDiffTool.DiffViewer {
     return ContainerUtil.getFirstItem(getEditors());
   }
 
-  default @NotNull List<? extends Editor> getHighlightEditors() {
-    return getEditors();
-  }
-
   @NotNull List<? extends Editor> getEditors();
 }

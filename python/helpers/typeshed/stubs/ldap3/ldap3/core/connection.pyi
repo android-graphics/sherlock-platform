@@ -1,8 +1,7 @@
 from _collections_abc import Generator, dict_keys
 from _typeshed import Incomplete, ReadableBuffer
 from types import TracebackType
-from typing import Literal
-from typing_extensions import Self, TypeAlias
+from typing_extensions import Literal, Self, TypeAlias
 
 from pyasn1.type.base import Asn1Item
 
@@ -70,7 +69,7 @@ class Connection:
         server: Server | str | _ServerSequence | ServerPool,
         user: str | None = None,
         password: str | None = None,
-        auto_bind: Literal["DEFAULT", "NONE", "NO_TLS", "TLS_BEFORE_BIND", "TLS_AFTER_BIND"] | bool = "DEFAULT",
+        auto_bind: Literal["DEFAULT", "NONE", "NO_TLS", "TLS_BEFORE_BIND", "TLS_AFTER_BIND"] = "DEFAULT",
         version: int = 3,
         authentication: Literal["ANONYMOUS", "SIMPLE", "SASL", "NTLM"] | None = None,
         client_strategy: Literal[

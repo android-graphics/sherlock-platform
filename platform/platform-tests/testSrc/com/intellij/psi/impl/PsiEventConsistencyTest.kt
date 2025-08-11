@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl
 
 import com.intellij.openapi.command.WriteCommandAction
@@ -13,7 +13,6 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.impl.source.tree.*
 import com.intellij.psi.tree.IElementType
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.testFramework.propertyBased.MadTestingUtil.assertNoErrorLoggedIn
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.IntDistribution
@@ -137,7 +136,7 @@ class PsiEventConsistencyTest : BasePlatformTestCase() {
   }
 
   fun testPsiDocSynchronization() {
-    PropertyChecker.checkScenarios { assertNoErrorLoggedIn(RandomAstChanges()) }
+    PropertyChecker.checkScenarios { RandomAstChanges() }
   }
 
   private inner class RandomAstChanges: ImperativeCommand {

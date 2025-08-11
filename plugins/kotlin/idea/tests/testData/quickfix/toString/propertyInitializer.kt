@@ -1,5 +1,4 @@
 // "Add 'toString()' call" "true"
-// PRIORITY: LOW
 
 val s: String = 1 <caret>+ 2 * 3
 

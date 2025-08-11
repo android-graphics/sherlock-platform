@@ -8,7 +8,6 @@ import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSug
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager.UpdateResult
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.psi.PsiDocumentManager
@@ -46,9 +45,7 @@ internal class InlineCompletionCustomDocumentChangesTest : InlineCompletionTestC
 
   private suspend fun sendAcceptSymbolEvent() {
     withContext(Dispatchers.EDT) {
-      writeIntentReadAction {
-        InlineCompletion.getHandlerOrNull(myFixture.editor)!!.invokeEvent(AcceptSymbolEvent())
-      }
+      InlineCompletion.getHandlerOrNull(myFixture.editor)!!.invokeEvent(AcceptSymbolEvent())
     }
   }
 

@@ -39,8 +39,9 @@ import static com.jetbrains.python.PyNames.*;
  */
 public final class PyMissingConstructorInspection extends PyInspection {
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -108,9 +109,11 @@ public final class PyMissingConstructorInspection extends PyInspection {
 
     private static class CallVisitor extends PyRecursiveElementVisitor {
 
-      private final @NotNull PyClass myClass;
+      @NotNull
+      private final PyClass myClass;
 
-      private final @NotNull TypeEvalContext myContext;
+      @NotNull
+      private final TypeEvalContext myContext;
 
       private boolean myHasConstructorCall = false;
 
@@ -191,7 +194,8 @@ public final class PyMissingConstructorInspection extends PyInspection {
                  .anyMatch(callingClass::equals);
       }
 
-      private static @Nullable PsiElement resolveCallingClass(@NotNull PyExpression calleeQualifier) {
+      @Nullable
+      private static PsiElement resolveCallingClass(@NotNull PyExpression calleeQualifier) {
         if (calleeQualifier instanceof PyCallExpression) {
           return Optional
             .of((PyCallExpression)calleeQualifier)

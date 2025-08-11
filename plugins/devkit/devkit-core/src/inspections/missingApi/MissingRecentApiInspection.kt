@@ -10,7 +10,6 @@ import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.*
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
-import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.roots.TestSourcesFilter
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.IntellijInternalApi
@@ -22,6 +21,7 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.actions.DevkitActionsUtil
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
+import org.jetbrains.idea.devkit.util.PsiUtil
 
 internal val MISSING_API_INSPECTION_SHORT_NAME = InspectionProfileEntry.getShortName(MissingRecentApiInspection::class.java.simpleName)
 
@@ -68,7 +68,7 @@ class MissingRecentApiInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     val project = holder.project
     val virtualFile = holder.file.virtualFile
-    if (IntelliJProjectUtil.isIntelliJPlatformProject(project) || virtualFile != null && TestSourcesFilter.isTestSources(virtualFile, project)) {
+    if (PsiUtil.isIdeaProject(project) || virtualFile != null && TestSourcesFilter.isTestSources(virtualFile, project)) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
     val module = ModuleUtil.findModuleForPsiElement(holder.file) ?: return PsiElementVisitor.EMPTY_VISITOR

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.CommonBundle
@@ -8,8 +8,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.AsyncDescriptionSupplier
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.codeInsight.multiverse.CodeInsightContext
-import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -83,11 +81,6 @@ internal class HighlightingProblem(
     get() {
       val id = info?.inspectionToolId ?: return null
       return HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.findById(id))
-    }
-
-  override val contextGroup: CodeInsightContext?
-    get() {
-      return info?.highlighter?.codeInsightContext
     }
 
   override val description: String?

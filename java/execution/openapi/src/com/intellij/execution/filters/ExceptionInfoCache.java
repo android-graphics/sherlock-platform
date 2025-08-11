@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.project.DumbService;
@@ -28,7 +28,7 @@ public class ExceptionInfoCache {
     mySearchScope = searchScope;
   }
 
-  public @NotNull Project getProject() {
+  @NotNull public Project getProject() {
     return myProject;
   }
 
@@ -38,7 +38,8 @@ public class ExceptionInfoCache {
     return result.length != 0 ? result : psiFacade.findClasses(className, GlobalSearchScope.allScope(myProject));
   }
   
-  public @NotNull ClassResolveInfo resolveClassOrFile(@NotNull String className, @Nullable String fileName) {
+  @NotNull
+  public ClassResolveInfo resolveClassOrFile(@NotNull String className, @Nullable String fileName) {
     ClassResolveInfo info = resolveClass(className);
     
     if (info.myClasses.isEmpty() && fileName != null) {
@@ -117,7 +118,8 @@ public class ExceptionInfoCache {
       return myInLibrary;
     }
 
-    static @NotNull ExceptionInfoCache.ClassResolveInfo create(Project project, PsiElement[] elements) {
+    @NotNull
+    static ExceptionInfoCache.ClassResolveInfo create(Project project, PsiElement[] elements) {
       ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
       Map<VirtualFile, PsiElement> result = new LinkedHashMap<>();
       boolean library = true;

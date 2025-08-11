@@ -7,8 +7,8 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import java.nio.file.Files
 import java.nio.file.Path
 
 /**
@@ -18,8 +18,9 @@ private class ProjectDirCheckoutListener : CheckoutListener {
   override fun processCheckedOutDirectory(project: Project, directory: Path): Boolean {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
+    val dotIdea = directory.resolve(Project.DIRECTORY_STORE_FOLDER)
     // todo Rider project layout - several.idea.solution-name names
-    if (!ProjectCoreUtil.isKnownProjectDirectory(directory)) {
+    if (!Files.exists(dotIdea)) {
       return false
     }
     runBlockingCancellable {

@@ -29,7 +29,8 @@ import org.jetbrains.annotations.NotNull;
 public final class RecordStoreResourceInspection extends ResourceInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "RecordStoreOpenedButNotSafelyClosed";
   }
 

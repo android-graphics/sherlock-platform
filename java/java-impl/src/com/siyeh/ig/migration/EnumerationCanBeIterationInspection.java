@@ -14,7 +14,6 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -232,8 +231,8 @@ public final class EnumerationCanBeIterationInspection extends BaseInspection im
       final Project project = manager.getProject();
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = facade.getElementFactory();
-      List<PsiReferenceExpression> referenceElements = VariableAccessUtils.getVariableReferences(enumerationVariable);
-      referenceElements = ContainerUtil.sorted(referenceElements, PsiElementOrderComparator.getInstance());
+      final List<PsiReferenceExpression> referenceElements = VariableAccessUtils.getVariableReferences(enumerationVariable);
+      referenceElements.sort(PsiElementOrderComparator.getInstance());
       int result = KEEP_NOTHING;
       for (PsiReferenceExpression referenceExpression : referenceElements) {
         if (referenceExpression.getTextOffset() <= startOffset) {

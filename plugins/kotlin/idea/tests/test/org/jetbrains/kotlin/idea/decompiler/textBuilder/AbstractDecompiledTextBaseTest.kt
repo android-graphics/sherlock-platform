@@ -17,6 +17,8 @@ import java.io.File
 
 abstract class AbstractDecompiledTextBaseTest(
     baseDirectory: String,
+    private val isJsLibrary: Boolean = false,
+    private val withRuntime: Boolean = false
 ) : KotlinLightCodeInsightFixtureTestCase() {
     protected companion object {
         const val TEST_PACKAGE = "test"
@@ -38,17 +40,23 @@ abstract class AbstractDecompiledTextBaseTest(
         get() = File(mockSourcesBase, getTestName(false))
 
     override fun shouldRunTest(): Boolean {
-        return InTextDirectivesUtils.isCompatibleTarget(TargetBackend.JVM, testDataDirectory)
+        val targetBackend = if (isJsLibrary) TargetBackend.JS else TargetBackend.JVM
+        return InTextDirectivesUtils.isCompatibleTarget(targetBackend, testDataDirectory)
     }
 
     override fun setUp() {
         super.setUp()
 
+        val platform = when {
+            isJsLibrary -> KotlinCompilerStandalone.Platform.JavaScript(MockLibraryFacility.MOCK_LIBRARY_NAME, TEST_PACKAGE)
+            else -> KotlinCompilerStandalone.Platform.Jvm()
+        }
+
         val directivesText = InTextDirectivesUtils.textWithDirectives(testDataDirectory)
         mockLibraryFacility = MockLibraryFacility(
             source = testDataDirectory,
             attachSources = false,
-            platform = KotlinCompilerStandalone.Platform.Jvm(),
+            platform = platform,
             options = getCompilationOptions(directivesText),
             classpath = getCompilationClasspath(directivesText),
         )
@@ -61,7 +69,9 @@ abstract class AbstractDecompiledTextBaseTest(
             listOf("-Xallow-kotlin-package")
         } else {
             emptyList()
-        }
+        } + if (isJsLibrary) {
+            listOf("-Xuse-deprecated-legacy-compiler")
+        } else emptyList()
 
     private fun getCompilationClasspath(directivesText: String): List<File> =
         if (InTextDirectivesUtils.isDirectiveDefined(directivesText, "STDLIB_JDK_8")) {

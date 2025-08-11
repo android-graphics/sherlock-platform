@@ -1,1 +1,0 @@
-fstring = f"test sting: {"test"}"

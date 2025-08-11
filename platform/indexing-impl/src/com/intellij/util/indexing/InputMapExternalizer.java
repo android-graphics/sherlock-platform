@@ -1,7 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.util.SmartList;
+import com.intellij.util.indexing.impl.InputIndexDataExternalizer;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -20,8 +21,6 @@ import java.util.Map;
  * Default externalizer for forward indexes: serializes Map[Key,Value] by using index extension
  * both {@link IndexExtension#getKeyDescriptor()} and {@link IndexExtension#getValueExternalizer()},
  * so that all forward indexes internally are [Key -> ByteArraySequence(serialized Map[Key,Value])]
- *
- * @see ValueLessInputMapExternalizer
  */
 @Internal
 public final class InputMapExternalizer<Key, Value> implements DataExternalizer<Map<Key, Value>> {
@@ -29,25 +28,24 @@ public final class InputMapExternalizer<Key, Value> implements DataExternalizer<
   private final DataExternalizer<Collection<Key>> myKeysExternalizer;
   private final boolean myValuesAreNullAlways;
 
-  public InputMapExternalizer(@NotNull DataExternalizer<Collection<Key>> keysExternalizer,
-                              @NotNull DataExternalizer<Value> valueExternalizer,
-                              boolean valueIsAbsent) {
-    myKeysExternalizer = keysExternalizer;
-    myValueExternalizer = valueExternalizer;
-    myValuesAreNullAlways = valueIsAbsent;
+  public InputMapExternalizer(@NotNull IndexExtension<Key, Value, ?> extension) {
+    myValueExternalizer = extension.getValueExternalizer();
+    myKeysExternalizer = extension instanceof CustomInputsIndexFileBasedIndexExtension
+    ? ((CustomInputsIndexFileBasedIndexExtension<Key>)extension).createExternalizer()
+    : new InputIndexDataExternalizer<>(extension.getKeyDescriptor(), ((IndexExtension<Key, ?, ?>)extension).getName());
+    myValuesAreNullAlways = extension instanceof ScalarIndexExtension;
   }
 
   @Override
   public void save(@NotNull DataOutput stream, Map<Key, Value> data) throws IOException {
-    int size = data.size();
+    final int size = data.size();
     DataInputOutputUtil.writeINT(stream, size);
     if (size == 0) return;
 
-    Collection<Key>[] keysForNullValue = new Collection[]{null};
+    final Collection<Key>[] keysForNullValue = new Collection[]{null};
     Map<Value, Collection<Key>> keysPerValue = null;
 
-    //Store Map[Key -> Value] in 'inverted' form (as Map[Value -> Collection[Key] ]) because it usually
-    // allows for more compact representation (i.e. List[Key] often could be stored with diff-compression)
+    //TODO RC: why store Map<Key,Value> in 'inverted' form, as Map<Value, Collection<Key>> here?
     if (myValuesAreNullAlways) {
       keysForNullValue[0] = data.keySet();
     }

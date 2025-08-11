@@ -10,7 +10,6 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +19,6 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 
-@ApiStatus.Internal
 public final class PluginTable extends JBTable {
   public PluginTable(final PluginTableModel model) {
     super(model);

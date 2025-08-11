@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.diff.impl.patch.lib.base85xjava.Base85x;
 import com.intellij.openapi.vcs.VcsBundle;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
@@ -19,7 +18,6 @@ import java.util.zip.Inflater;
 import static com.intellij.openapi.diff.impl.patch.lib.base85xjava.Base85x.decodeChar;
 import static com.intellij.openapi.diff.impl.patch.lib.base85xjava.Base85x.encodeChar;
 
-@ApiStatus.Internal
 public final class BinaryEncoder {
 
   private static char getCharForLineSize(int lineSize) throws BinaryPatchException, Base85x.Base85FormatException {
@@ -67,7 +65,7 @@ public final class BinaryEncoder {
     byte[] inflated = new byte[1024];
     try {
       String line = input.next();
-      while (line != null && !line.isEmpty()) {
+      while (line != null && line.length() > 0) {
         int len = getLineSizeFromChar(line.charAt(0));
         byte[] toInflate = Base85x.decode(line.substring(1));
         inflater.setInput(toInflate, 0, len);

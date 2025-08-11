@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +26,9 @@ public interface PluginDescriptor {
     return false;
   }
 
-  /** @deprecated Use {@link #getPluginPath()} */
+  /**
+   * @deprecated Use {@link #getPluginPath()}
+   */
   @Deprecated
   default File getPath() {
     Path path = getPluginPath();
@@ -50,8 +51,15 @@ public interface PluginDescriptor {
 
   boolean isLicenseOptional();
 
+  /**
+   * @deprecated Do not use.
+   */
+  @Deprecated
+  PluginId @NotNull [] getOptionalDependentPluginIds();
+
   @Nullable @NlsSafe String getVendor();
 
+  //TODO: remove default implementation in 2021.3
   default @Nullable @NlsSafe String getOrganization() {
     return null;
   }
@@ -70,6 +78,15 @@ public interface PluginDescriptor {
 
   @Nullable String getUrl();
 
+  /**
+   * @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  default @Nullable String getDownloads() {
+    return null;
+  }
+
   @Nullable @NlsSafe String getSinceBuild();
 
   @Nullable @NlsSafe String getUntilBuild();
@@ -81,7 +98,7 @@ public interface PluginDescriptor {
   /**
    * If true, this plugin is hidden from the list of installed plugins in Settings | Plugins.
    */
-  @Internal
+  @ApiStatus.Internal
   default boolean isImplementationDetail() {
     return false;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.impl.ClassLoadingUtils;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.project.Project;
@@ -29,9 +30,9 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 import java.util.Collection;
 
 public abstract class CompilingEvaluator implements ExpressionEvaluator {
-  protected final @NotNull Project myProject;
-  protected final @NotNull PsiElement myPsiContext;
-  protected final @NotNull LightMethodObjectExtractedData myData;
+  @NotNull protected final Project myProject;
+  @NotNull protected final PsiElement myPsiContext;
+  @NotNull protected final LightMethodObjectExtractedData myData;
 
   public CompilingEvaluator(@NotNull Project project, @NotNull PsiElement context, @NotNull LightMethodObjectExtractedData data) {
     myProject = project;
@@ -57,7 +58,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(autoLoadContext, process);
     autoLoadContext.setClassLoader(classLoader);
 
-    JavaSdkVersion version = JavaSdkVersion.fromVersionString(autoLoadContext.getVirtualMachineProxy().version());
+    JavaSdkVersion version = JavaSdkVersion.fromVersionString(((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).version());
     Collection<ClassObject> classes = compile(version);
     defineClasses(classes, autoLoadContext, process, classLoader);
 
@@ -70,7 +71,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
             TextWithImports callCode = getCallCode();
             PsiElement copyContext = myData.getAnchor();
             CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(callCode, copyContext);
-            return factory.getEvaluatorBuilder().build(factory.createPsiCodeFragment(callCode, copyContext, myProject),
+            return factory.getEvaluatorBuilder().build(factory.createCodeFragment(callCode, copyContext, myProject),
                                                        // can not use evaluation position here, it does not match classes then
                                                        SourcePosition.createFromElement(copyContext));
           }
@@ -83,7 +84,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
   }
 
   private void defineClasses(Collection<ClassObject> classes,
-                             EvaluationContextImpl context,
+                             EvaluationContext context,
                              DebugProcess process,
                              ClassLoaderReference classLoader) throws EvaluateException {
     boolean useMagicAccessorImpl = myData.useMagicAccessor();
@@ -117,7 +118,8 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     return classWriter.toByteArray();
   }
 
-  public static @NotNull String getGeneratedClassName() {
+  @NotNull
+  public static String getGeneratedClassName() {
     return GEN_CLASS_NAME;
   }
 
@@ -133,5 +135,6 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
 
   ///////////////// Compiler stuff
 
-  protected abstract @NotNull Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException;
+  @NotNull
+  protected abstract Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException;
 }

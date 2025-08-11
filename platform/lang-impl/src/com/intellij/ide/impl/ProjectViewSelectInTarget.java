@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.CompositeSelectInTarget;
@@ -9,6 +9,7 @@ import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.SelectInProjectViewImpl;
+import com.intellij.ide.projectView.impl.SelectInProjectViewImplKt;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbService;
@@ -47,14 +48,15 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     select(myProject, selector, getMinorViewId(), mySubId, virtualFile, requestFocus);
   }
 
-  public static @NotNull ActionCallback select(@NotNull Project project,
-                                               final Object toSelect,
-                                               final @Nullable String viewId,
-                                               final @Nullable String subviewId,
-                                               final VirtualFile virtualFile,
-                                               final boolean requestFocus) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(
+  @NotNull
+  public static ActionCallback select(@NotNull Project project,
+                                      final Object toSelect,
+                                      @Nullable final String viewId,
+                                      @Nullable final String subviewId,
+                                      final VirtualFile virtualFile,
+                                      final boolean requestFocus) {
+    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+      SelectInProjectViewImplKt.getLOG().debug(
         "ProjectViewSelectInTarget.select: " +
         "project=" + project +
         ", toSelect=" + toSelect +
@@ -66,7 +68,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     }
     ProjectView projectView = ProjectView.getInstance(project);
     if (projectView == null) {
-      LOG.debug("Not selecting anything because there is no project view");
+      SelectInProjectViewImplKt.getLOG().debug("Not selecting anything because there is no project view");
       return ActionCallback.REJECTED;
     }
 
@@ -74,8 +76,8 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       AbstractProjectViewPane pane = projectView.getProjectViewPaneById(id);
       if (pane != null) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Switching to pane " + pane);
+        if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+          SelectInProjectViewImplKt.getLOG().debug("Switching to pane " + pane);
         }
         pane.select(toSelect, virtualFile, requestFocus);
       }
@@ -88,30 +90,30 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
     ToolWindow projectViewToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
     if (projectViewToolWindow == null) {
-      LOG.debug("Not selecting anything because there is no project view tool window");
+      SelectInProjectViewImplKt.getLOG().debug("Not selecting anything because there is no project view tool window");
       return ActionCallback.REJECTED;
     }
 
     ActionCallback result = new ActionCallback();
     Runnable runnable = () -> {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(
+      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+        SelectInProjectViewImplKt.getLOG().debug(
           (requestFocus ? "Activated" : "Shown") +
           ". Changing project view to " + id + " / " + subviewId + ", will continue once changed"
         );
       }
       projectView.changeViewCB(id, subviewId).doWhenProcessed(() -> {
-        LOG.debug("Changed. Delegating to SelectInProjectViewImpl to continue");
+        SelectInProjectViewImplKt.getLOG().debug("Changed. Delegating to SelectInProjectViewImpl to continue");
         project.getService(SelectInProjectViewImpl.class).ensureSelected(id, virtualFile, toSelectSupplier, requestFocus, true, result);
       });
     };
 
     if (requestFocus) {
-      LOG.debug("Activating the project view tool window, will continue once activated");
+      SelectInProjectViewImplKt.getLOG().debug("Activating the project view tool window, will continue once activated");
       projectViewToolWindow.activate(runnable, true);
     }
     else {
-      LOG.debug("Showing the project view tool window, will continue once shown");
+      SelectInProjectViewImplKt.getLOG().debug("Showing the project view tool window, will continue once shown");
       projectViewToolWindow.show(runnable);
     }
 
@@ -119,7 +121,8 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
   }
 
   @Override
-  public @NotNull Collection<SelectInTarget> getSubTargets(@NotNull SelectInContext context) {
+  @NotNull
+  public Collection<SelectInTarget> getSubTargets(@NotNull SelectInContext context) {
     List<SelectInTarget> result = new ArrayList<>();
     AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getProjectViewPaneById(getMinorViewId());
     int index = 0;
@@ -138,14 +141,14 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     VirtualFile vFile = PsiUtilCore.getVirtualFile(file);
     vFile = vFile == null ? null : BackedVirtualFile.getOriginFileIfBacked(vFile);
     if (vFile == null) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Can NOT select " + file + " because its virtual file is null");
+      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+        SelectInProjectViewImplKt.getLOG().debug("Can NOT select " + file + " because its virtual file is null");
       }
       return false;
     }
     else if (!vFile.isValid()) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Can NOT select " + file + " because its virtual file " + vFile + " is invalid");
+      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+        SelectInProjectViewImplKt.getLOG().debug("Can NOT select " + file + " because its virtual file " + vFile + " is invalid");
       }
       return false;
     }
@@ -160,8 +163,8 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
   @Override
   public void select(PsiElement element, final boolean requestFocus) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(
+    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+      SelectInProjectViewImplKt.getLOG().debug(
         "ProjectViewSelectInTarget.selectIn: Select in " + this +
         ", requestFocus=" + requestFocus +
         ", element=" + element
@@ -181,8 +184,8 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
       }
     }
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Top level element is " + toSelect);
+    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+      SelectInProjectViewImplKt.getLOG().debug("Top level element is " + toSelect);
     }
     toSelect = findElementToSelect(element, toSelect);
 

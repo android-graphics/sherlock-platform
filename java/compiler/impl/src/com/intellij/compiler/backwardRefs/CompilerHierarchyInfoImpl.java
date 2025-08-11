@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
@@ -19,7 +19,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 class CompilerHierarchyInfoImpl implements CompilerDirectHierarchyInfo {
-  private static final Logger LOG = Logger.getInstance(CompilerHierarchyInfoImpl.class);
+  private final static Logger LOG = Logger.getInstance(CompilerHierarchyInfoImpl.class);
 
   private final PsiNamedElement myBaseClass;
   private final GlobalSearchScope myDirtyScope;
@@ -46,7 +46,8 @@ class CompilerHierarchyInfoImpl implements CompilerDirectHierarchyInfo {
   }
 
   @Override
-  public @NotNull Stream<PsiElement> getHierarchyChildren() {
+  @NotNull
+  public Stream<PsiElement> getHierarchyChildren() {
     PsiManager psiManager = PsiManager.getInstance(myProject);
     final LanguageCompilerRefAdapter adapter = Objects.requireNonNull(LanguageCompilerRefAdapter.findAdapter(mySearchFileType));
     return myCandidatePerFile
@@ -73,7 +74,8 @@ class CompilerHierarchyInfoImpl implements CompilerDirectHierarchyInfo {
   }
 
   @Override
-  public @NotNull GlobalSearchScope getDirtyScope() {
+  @NotNull
+  public GlobalSearchScope getDirtyScope() {
     return myDirtyScope;
   }
 }

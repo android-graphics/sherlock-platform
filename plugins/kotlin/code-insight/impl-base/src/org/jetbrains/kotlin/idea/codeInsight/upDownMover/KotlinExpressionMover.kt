@@ -504,10 +504,6 @@ class KotlinExpressionMover : AbstractKotlinUpDownMover() {
                 return element
             }
 
-            if (element is PsiErrorElement) {
-                return element
-            }
-
             if (getParentFileAnnotationEntry(element) != null) return null
 
             val movableElement = element.getParentOfTypesAndPredicate(

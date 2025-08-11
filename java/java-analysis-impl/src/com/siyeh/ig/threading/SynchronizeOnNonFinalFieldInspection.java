@@ -28,7 +28,8 @@ import org.jetbrains.annotations.Nullable;
 public final class SynchronizeOnNonFinalFieldInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "synchronize.on.non.final.field.problem.descriptor");
   }
@@ -39,7 +40,8 @@ public final class SynchronizeOnNonFinalFieldInspection extends BaseInspection {
   }
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  @Nullable
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiField field = (PsiField)infos[0];
     return MakeFieldFinalFix.buildFix(field);
   }

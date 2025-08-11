@@ -9,11 +9,10 @@ import javax.swing.JComponent
  */
 interface ReviewTabsComponentFactory<TVM : ReviewTabViewModel, PVM : ReviewToolwindowProjectViewModel<*, TVM>> {
   /**
-   * Provides the main / home tab for given [projectVm] of the toolwindow
+   * Provide a review list component for given [projectVm]
    *
    * @param cs scope that closes when context is changed
    */
-  // TODO: to be renamed to createHomeTabComponent or refactored to get rid of, TBD
   fun createReviewListComponent(cs: CoroutineScope, projectVm: PVM): JComponent
 
   /**

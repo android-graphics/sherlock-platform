@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.geb;
 
 import com.intellij.psi.*;
@@ -97,14 +97,16 @@ public final class GebUtil {
     return res;
   }
 
-  private static @NotNull PsiField extractFieldForContent(@NotNull PsiClass pageOrModuleClass,
-                                                          @NotNull PsiType objectType, String name,
-                                                          @NotNull GrExpression invokedExpression,
-                                                          @NotNull GrClosableBlock block) {
+  @NotNull
+  private static PsiField extractFieldForContent(@NotNull PsiClass pageOrModuleClass,
+                                                 @NotNull PsiType objectType, String name,
+                                                 @NotNull GrExpression invokedExpression,
+                                                 @NotNull GrClosableBlock block) {
     GrLightField field = new GrLightField(pageOrModuleClass, name, objectType, invokedExpression) {
 
       @Override
-      public @NotNull PsiType getType() {
+      @NotNull
+      public PsiType getType() {
         PsiType type = block.getReturnType();
         return type != null ? type : super.getType();
       }
@@ -118,10 +120,11 @@ public final class GebUtil {
     return field;
   }
 
-  private static @NotNull PsiMethod extractMethodForContent(@NotNull PsiClass pageOrModuleClass,
-                                                            @NotNull String name,
-                                                            @NotNull GrExpression invokedExpression,
-                                                            @NotNull GrClosableBlock block) {
+  @NotNull
+  private static PsiMethod extractMethodForContent(@NotNull PsiClass pageOrModuleClass,
+                                                   @NotNull String name,
+                                                   @NotNull GrExpression invokedExpression,
+                                                   @NotNull GrClosableBlock block) {
     GrLightMethodBuilder method = new GrLightMethodBuilder(pageOrModuleClass.getManager(), name) {
       @Override
       public PsiType getReturnType() {

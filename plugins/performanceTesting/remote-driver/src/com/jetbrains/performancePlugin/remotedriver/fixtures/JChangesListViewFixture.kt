@@ -23,16 +23,16 @@ class JChangesListViewFixture(private val robot: Robot, private val component: J
 
   private fun handleCheckBoxWithFileName(fileName: String, setEnabled: Boolean) {
     val root = component.model.root as DefaultMutableTreeNode
-    val node = TreeUtil.findNode(root) { it.toString().contains(fileName) } ?: error("Node with name containing $fileName is not found")
+    val node = TreeUtil.findNode(root) { it.toString().contains(fileName) }
 
-    val fileTreePath = TreePath(node.path)
+    val fileTreePath = TreePath(node!!.path)
     val checkbox = getCheckBoxForNode(node, fileTreePath)
 
     if (checkbox.isSelected != setEnabled) {
-      val fileTreePathLocation = computeOnEdt {
+      val fileTrePathLocation = computeOnEdt {
         component.getPathBounds(fileTreePath) ?: error("Have not found bounds")
       }
-      clickOnCheckbox(checkbox, fileTreePathLocation)
+      clickOnCheckbox(checkbox, fileTrePathLocation)
     }
   }
 

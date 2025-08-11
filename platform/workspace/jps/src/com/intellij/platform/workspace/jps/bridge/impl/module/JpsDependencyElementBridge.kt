@@ -35,8 +35,6 @@ internal class JpsModuleDependencyBridge(private val dependency: ModuleDependenc
   val javaExtension by lazy(LazyThreadSafetyMode.PUBLICATION) {
     JpsJavaDependencyExtensionBridge(dependency.exported, dependency.scope, this)
   }
-  val productionOnTest: Boolean
-    get() = dependency.productionOnTest
     
   override fun getModuleReference(): JpsModuleReference = moduleReference
 
@@ -70,4 +68,6 @@ internal class JpsSdkDependencyBridge(private val sdkType: JpsSdkType<*>, parent
   }
 
   override fun getSdkReference(): JpsSdkReference<*>? = containingModule.getSdkReference(sdkType)
+
+  override fun isInherited(): Boolean = false
 }

@@ -1,4 +1,0 @@
-// WITH_STDLIB
-// IGNORE_K2
-
-fun foo() = kotlin.run { 5 }

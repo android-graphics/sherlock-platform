@@ -26,7 +26,8 @@ public final class MappingBeforeCountInspection extends AbstractBaseJavaLocalIns
   }
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  @NotNull
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {

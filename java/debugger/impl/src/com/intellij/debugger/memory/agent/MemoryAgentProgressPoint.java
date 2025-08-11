@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.agent;
 
 import com.google.gson.Gson;
@@ -22,7 +22,8 @@ public class MemoryAgentProgressPoint {
     this.currentValue = currentValue;
   }
 
-  public static @NotNull MemoryAgentProgressPoint fromJson(@NotNull String fileName) throws IOException {
+  @NotNull
+  public static MemoryAgentProgressPoint fromJson(@NotNull String fileName) throws IOException {
     Gson gson = new Gson();
     MemoryAgentProgressPoint progressPoint = gson.fromJson(new FileReader(fileName, StandardCharsets.UTF_8), MemoryAgentProgressPoint.class);
     if (!progressPoint.isValid()) {

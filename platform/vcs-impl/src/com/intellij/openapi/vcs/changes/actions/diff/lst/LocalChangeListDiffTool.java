@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff.lst;
 
 import com.intellij.diff.DiffContext;
@@ -11,11 +11,9 @@ import com.intellij.diff.tools.fragmented.UnifiedDiffTool;
 import com.intellij.diff.tools.simple.SimpleDiffTool;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
 public final class LocalChangeListDiffTool {
   public static final Key<Boolean> ALLOW_EXCLUDE_FROM_COMMIT = Key.create("Diff.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT");
 
@@ -24,8 +22,9 @@ public final class LocalChangeListDiffTool {
       super(SimpleDiffTool.INSTANCE);
     }
 
+    @NotNull
     @Override
-    public @NotNull DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
+    public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
       return new SimpleLocalChangeListDiffViewer(context, (LocalChangeListDiffRequest)request);
     }
   }
@@ -35,8 +34,9 @@ public final class LocalChangeListDiffTool {
       super(UnifiedDiffTool.INSTANCE);
     }
 
+    @NotNull
     @Override
-    public @NotNull DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
+    public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
       return new UnifiedLocalChangeListDiffViewer(context, (LocalChangeListDiffRequest)request);
     }
 
@@ -46,8 +46,8 @@ public final class LocalChangeListDiffTool {
     }
   }
 
-  private abstract static class Base implements FrameDiffTool, DiffToolSubstitutor {
-    private final @NotNull FrameDiffTool myReplacement;
+  private static abstract class Base implements FrameDiffTool, DiffToolSubstitutor {
+    @NotNull private final FrameDiffTool myReplacement;
 
     protected Base(@NotNull FrameDiffTool replacement) {
       myReplacement = replacement;
@@ -59,13 +59,15 @@ public final class LocalChangeListDiffTool {
       return localRequest.getLineStatusTracker() instanceof PartialLocalLineStatusTracker;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getName() {
+    public String getName() {
       return myReplacement.getName();
     }
 
+    @Nullable
     @Override
-    public @Nullable DiffTool getReplacement(@NotNull DiffTool tool, @NotNull DiffContext context, @NotNull DiffRequest request) {
+    public DiffTool getReplacement(@NotNull DiffTool tool, @NotNull DiffContext context, @NotNull DiffRequest request) {
       if (tool != myReplacement) return null;
       if (!canShow(context, request)) return null;
       return this;

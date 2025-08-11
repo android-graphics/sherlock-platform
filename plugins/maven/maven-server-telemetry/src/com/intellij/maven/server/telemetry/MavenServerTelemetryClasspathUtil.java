@@ -1,9 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.telemetry;
 
-import com.intellij.platform.diagnostic.telemetry.rt.PlatformTelemetryRtClass;
+import com.fasterxml.jackson.core.JsonGenerator;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.propagation.TextMapPropagator;
+import io.opentelemetry.exporter.internal.marshal.MarshalerWithSize;
+import io.opentelemetry.exporter.internal.otlp.traces.TraceRequestMarshaler;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.common.Clock;
 import io.opentelemetry.sdk.logs.SdkLoggerProvider;
@@ -14,7 +16,6 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public final class MavenServerTelemetryClasspathUtil {
-
   public static final Collection<Class<?>> TELEMETRY_CLASSES = Arrays.asList(
     SpanExporter.class,
     TextMapPropagator.class,
@@ -23,6 +24,8 @@ public final class MavenServerTelemetryClasspathUtil {
     Clock.class,
     SdkMeterProvider.class,
     SdkLoggerProvider.class,
-    PlatformTelemetryRtClass.class
+    TraceRequestMarshaler.class,
+    MarshalerWithSize.class,
+    JsonGenerator.class
   );
 }

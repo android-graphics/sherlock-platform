@@ -12,14 +12,14 @@ internal class NavBarContextMenuActionGroup : ActionGroup() {
       return EMPTY_ARRAY
     }
     val dataContext = e.dataContext
-    val popupGroupId = contextMenuActionGroupId(dataContext)
+    val popupGroupId = contextMenuActionGroupId(dataContext::getData)
     val group = CustomActionsSchema.getInstance().getCorrectedAction(popupGroupId) as ActionGroup?
                 ?: return EMPTY_ARRAY
     return group.getChildren(e)
   }
 }
 
-private fun contextMenuActionGroupId(dataProvider: DataContext): String {
+private fun contextMenuActionGroupId(dataProvider: DataProvider): String {
   for (modelExtension in NavBarModelExtension.EP_NAME.extensionList) {
     return modelExtension.getPopupMenuGroup(dataProvider)
            ?: continue

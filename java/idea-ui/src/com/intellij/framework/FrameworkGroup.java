@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework;
 
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
@@ -21,18 +20,21 @@ public abstract class FrameworkGroup<V extends FrameworkVersion> implements Fram
   }
 
   @Override
-  public final @NotNull String getId() {
+  @NotNull
+  public final String getId() {
     return myId;
   }
 
   @Override
-  public abstract @NotNull Icon getIcon();
+  @NotNull
+  public abstract Icon getIcon();
 
   /**
    * Returns the list of known versions of the framework group. The list is shown to the user
    * and allows them to choose the version used in their project.
    */
-  public @NotNull List<V> getGroupVersions() {
+  @NotNull
+  public List<V> getGroupVersions() {
     return Collections.emptyList();
   }
 

@@ -23,7 +23,8 @@ import org.jetbrains.annotations.NotNull;
 
 class VariableValueUsedVisitor extends JavaRecursiveElementWalkingVisitor {
 
-  private final @NotNull PsiVariable variable;
+  @NotNull
+  private final PsiVariable variable;
   private boolean read;
   private boolean written;
 

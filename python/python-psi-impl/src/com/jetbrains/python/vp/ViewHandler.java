@@ -61,9 +61,11 @@ class ViewHandler<C> implements InvocationHandler {
    * Class that invokes view methods in appropriate thread
    */
   private static final class Invoker implements Runnable {
-    private final @NotNull Method method;
+    @NotNull
+    private final Method method;
     private final Object @Nullable [] args;
-    private final @NotNull Object target;
+    @NotNull
+    private final Object target;
 
     private InvocationTargetException exception;
     private Object result;

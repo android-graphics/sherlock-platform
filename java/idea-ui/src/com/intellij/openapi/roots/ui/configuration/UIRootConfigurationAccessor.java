@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.module.Module;
@@ -34,7 +34,8 @@ public class UIRootConfigurationAccessor extends RootConfigurationAccessor imple
   }
 
   @Override
-  public @Nullable Library getLibrary(Library library, final String libraryName, final String libraryLevel) {
+  @Nullable
+  public Library getLibrary(Library library, final String libraryName, final String libraryLevel) {
     final StructureConfigurableContext context = ProjectStructureConfigurable.getInstance(myProject).getContext();
     if (library == null) {
       if (libraryName != null) {
@@ -51,7 +52,8 @@ public class UIRootConfigurationAccessor extends RootConfigurationAccessor imple
   }
 
   @Override
-  public @Nullable Sdk getSdk(final Sdk sdk, final String sdkName) {
+  @Nullable
+  public Sdk getSdk(final Sdk sdk, final String sdkName) {
     final ProjectSdksModel model = ProjectStructureConfigurable.getInstance(myProject).getJdkConfig().getJdksTreeModel();
     return sdkName != null ? model.findSdk(sdkName) : sdk;
   }
@@ -65,12 +67,13 @@ public class UIRootConfigurationAccessor extends RootConfigurationAccessor imple
   }
 
   @Override
-  public Sdk getProjectSdk(final @NotNull Project project) {
+  public Sdk getProjectSdk(@NotNull final Project project) {
     return ProjectStructureConfigurable.getInstance(project).getProjectJdksModel().getProjectSdk();
   }
 
   @Override
-  public @Nullable String getProjectSdkName(final @NotNull Project project) {
+  @Nullable
+  public String getProjectSdkName(@NotNull final Project project) {
     final Sdk projectJdk = getProjectSdk(project);
     if (projectJdk != null) {
       return projectJdk.getName();

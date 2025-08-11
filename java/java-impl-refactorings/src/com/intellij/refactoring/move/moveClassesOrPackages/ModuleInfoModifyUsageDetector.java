@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -42,7 +42,8 @@ class ModuleInfoModifyUsageDetector extends ModuleInfoUsageDetector {
    * Sample: we have a class pack1.A, we want to move it to pack1.pack2 which doesn't exist.
    */
   @Override
-  public @NotNull List<UsageInfo> createUsageInfosForNewlyCreatedDirs() {
+  @NotNull
+  public List<UsageInfo> createUsageInfosForNewlyCreatedDirs() {
     if (myAbsentDirsByModuleDescriptor.isEmpty()) return Collections.emptyList();
     List<UsageInfo> result = new SmartList<>();
     detectModuleStatementsUsed(myAbsentDirsByModuleDescriptor, result, MultiMap.create(), MultiMap.create());
@@ -116,8 +117,9 @@ class ModuleInfoModifyUsageDetector extends ModuleInfoUsageDetector {
     }
   }
 
-  private static @NotNull List<PsiPackageAccessibilityStatement> findModuleStatementsForPkg(@NotNull PsiJavaModule moduleDescriptor,
-                                                                                            @NotNull PsiPackage psiPackage) {
+  @NotNull
+  private static List<PsiPackageAccessibilityStatement> findModuleStatementsForPkg(@NotNull PsiJavaModule moduleDescriptor,
+                                                                                   @NotNull PsiPackage psiPackage) {
     MultiMap<PsiPackage, PsiPackageAccessibilityStatement> exports = collectModuleStatements(moduleDescriptor.getExports());
     MultiMap<PsiPackage, PsiPackageAccessibilityStatement> opens = collectModuleStatements(moduleDescriptor.getOpens());
     return findModuleStatementsForPkg(psiPackage, exports, opens);
@@ -190,8 +192,9 @@ class ModuleInfoModifyUsageDetector extends ModuleInfoUsageDetector {
     }
   }
 
-  private @NotNull List<PsiPackageAccessibilityStatement> createNewModuleStatements(@NotNull PsiPackage targetPackage,
-                                                                                    @NotNull Map<PsiPackageAccessibilityStatement.Role, Set<String>> allModuleRefNamesByRole) {
+  @NotNull
+  private List<PsiPackageAccessibilityStatement> createNewModuleStatements(@NotNull PsiPackage targetPackage,
+                                                                           @NotNull Map<PsiPackageAccessibilityStatement.Role, Set<String>> allModuleRefNamesByRole) {
     List<PsiPackageAccessibilityStatement> result = new SmartList<>();
     PsiElementFactory psiFactory = PsiElementFactory.getInstance(myProject);
     CodeStyleManager styleManager = CodeStyleManager.getInstance(myProject);
@@ -204,7 +207,8 @@ class ModuleInfoModifyUsageDetector extends ModuleInfoUsageDetector {
     return result;
   }
 
-  private static @NotNull String formModuleStatementText(@NotNull PsiPackageAccessibilityStatement.Role role, @NotNull Set<String> moduleRefNames, @NotNull String packageName) {
+  @NotNull
+  private static String formModuleStatementText(@NotNull PsiPackageAccessibilityStatement.Role role, @NotNull Set<String> moduleRefNames, @NotNull String packageName) {
     String roleText = null;
     if (role == PsiPackageAccessibilityStatement.Role.EXPORTS) {
       roleText = PsiKeyword.EXPORTS;
@@ -224,8 +228,10 @@ class ModuleInfoModifyUsageDetector extends ModuleInfoUsageDetector {
   }
 
   private static class DirectoryWithModuleStatements {
-    private final @NotNull PsiDirectory myDir;
-    private final @NotNull List<PsiPackageAccessibilityStatement> myModuleStatements;
+    @NotNull
+    private final PsiDirectory myDir;
+    @NotNull
+    private final List<PsiPackageAccessibilityStatement> myModuleStatements;
 
     private DirectoryWithModuleStatements(@NotNull PsiDirectory dir, @NotNull List<PsiPackageAccessibilityStatement> moduleStatements) {
       myDir = dir;

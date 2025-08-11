@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -49,24 +49,26 @@ import static com.intellij.psi.PsiModifier.ABSTRACT;
 public final class RedundantThrowsDeclarationLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOGGER = Logger.getInstance(RedundantThrowsDeclarationLocalInspection.class.getName());
 
-  private final @NotNull RedundantThrowsDeclarationInspection myGlobalTool;
+  @NotNull private final RedundantThrowsDeclarationInspection myGlobalTool;
 
   @TestOnly
   public RedundantThrowsDeclarationLocalInspection() {
     this(new RedundantThrowsDeclarationInspection());
   }
 
-  public RedundantThrowsDeclarationLocalInspection(final @NotNull RedundantThrowsDeclarationInspection tool) {
+  public RedundantThrowsDeclarationLocalInspection(@NotNull final RedundantThrowsDeclarationInspection tool) {
     myGlobalTool = tool;
   }
 
   @Override
-  public @NotNull String getGroupDisplayName() {
+  @NotNull
+  public String getGroupDisplayName() {
     return myGlobalTool.getGroupDisplayName();
   }
 
   @Override
-  public @NotNull String getShortName() {
+  @NotNull
+  public String getShortName() {
     return myGlobalTool.getShortName();
   }
 
@@ -78,7 +80,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
   }
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new RedundantThrowsVisitor(holder, myGlobalTool.IGNORE_ENTRY_POINTS);
   }
 
@@ -91,7 +93,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
    * @return a stream of throws declarations that are candidates for redundant declarations
    */
   @Contract(pure = true)
-  static StreamEx<ThrowRefType> getRedundantThrowsCandidates(final @Nullable PsiMethod method, final boolean ignoreEntryPoints) {
+  static StreamEx<ThrowRefType> getRedundantThrowsCandidates(@Nullable final PsiMethod method, final boolean ignoreEntryPoints) {
     if (method == null) return StreamEx.empty();
     if (method instanceof SyntheticElement) return StreamEx.empty();
     if (ignoreEntryPoints && UnusedDeclarationInspectionBase.isDeclaredAsEntryPoint(method)) return StreamEx.empty();
@@ -113,15 +115,15 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
 
   static final class RedundantThrowsVisitor extends JavaElementVisitor {
 
-    private final @NotNull ProblemsHolder myHolder;
+    private @NotNull final ProblemsHolder myHolder;
     private final boolean myIgnoreEntryPoints;
-    private RedundantThrowsVisitor(final @NotNull ProblemsHolder holder, final boolean ignoreEntryPoints) {
+    private RedundantThrowsVisitor(@NotNull final ProblemsHolder holder, final boolean ignoreEntryPoints) {
       myHolder = holder;
       myIgnoreEntryPoints = ignoreEntryPoints;
     }
 
     @Override
-    public void visitMethod(final @NotNull PsiMethod method) {
+    public void visitMethod(@NotNull final PsiMethod method) {
       getRedundantThrowsCandidates(method, myIgnoreEntryPoints)
         .filter(throwRefType -> !throwRefType.isThrownIn(method))
         .filter(throwRefType -> !throwRefType.isInOverriddenOf(method))
@@ -138,9 +140,9 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
 
     static final class RedundantThrowsQuickFix extends PsiUpdateModCommandQuickFix {
 
-      private final @NotNull String myMethodName;
-      private final @NotNull String myExceptionName;
-      private RedundantThrowsQuickFix(final @NotNull String exceptionName, final @NotNull String methodName) {
+      @NotNull private final String myMethodName;
+      @NotNull private final String myExceptionName;
+      private RedundantThrowsQuickFix(@NotNull final String exceptionName, @NotNull final String methodName) {
         myExceptionName = exceptionName;
         myMethodName = methodName;
       }
@@ -182,8 +184,9 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
        * @param comment current javadoc
        * @return a {@link Stream} of {@link PsiDocTag} with related @throws tag from the javadoc
        */
-      static @NotNull Stream<PsiDocTag> getRelatedJavadocThrows(final @NotNull PsiJavaCodeReferenceElement currentThrowsRef,
-                                                       final @Nullable PsiDocComment comment) {
+      @NotNull
+      static Stream<PsiDocTag> getRelatedJavadocThrows(@NotNull final PsiJavaCodeReferenceElement currentThrowsRef,
+                                                       @Nullable final PsiDocComment comment) {
         if (comment == null) return Stream.empty();
 
         final PsiElement maybeThrowsList = currentThrowsRef.getParent();
@@ -225,8 +228,8 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
        * @param throwsList a list of throws list
        * @return true if there is at least one element in the list that can be a parent of the class, false otherwise
        */
-      private static boolean isParentInThrowsListPresent(final @NotNull PsiClass clazz,
-                                                         final @NotNull List<PsiClassType> throwsList) {
+      private static boolean isParentInThrowsListPresent(@NotNull final PsiClass clazz,
+                                                         @NotNull final List<PsiClassType> throwsList) {
         final PsiClassType type = PsiTypesUtil.getClassType(clazz);
         return ContainerUtil.exists(throwsList, e -> e.isAssignableFrom(type));
       }
@@ -238,8 +241,8 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
        * @param currentRef the currently eliminated throws declaration in the throws list
        * @return the list of throws declarations as strings from the throws list excluding the currently eliminated throws declaration
        */
-      private static List<PsiClassType> getThrowsListWithoutCurrent(final @NotNull PsiReferenceList throwsList,
-                                                                    final @NotNull PsiJavaCodeReferenceElement currentRef) {
+      private static List<PsiClassType> getThrowsListWithoutCurrent(@NotNull final PsiReferenceList throwsList,
+                                                                    @NotNull final PsiJavaCodeReferenceElement currentRef) {
         final PsiJavaCodeReferenceElement[] referenceElements = throwsList.getReferenceElements();
 
         checkInconsistency(throwsList);
@@ -257,10 +260,10 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
    * Holder for a throw declaration (either in throws list or javadoc) in a method and its exception class type.
    */
   static final class ThrowRefType {
-    private final @NotNull PsiJavaCodeReferenceElement myReference;
-    private final @NotNull PsiClassType myType;
+    @NotNull private final PsiJavaCodeReferenceElement myReference;
+    @NotNull private final PsiClassType myType;
 
-    private ThrowRefType(final @NotNull PsiJavaCodeReferenceElement reference, final @NotNull PsiClassType type) {
+    private ThrowRefType(@NotNull final PsiJavaCodeReferenceElement reference, @NotNull final PsiClassType type) {
       myReference = reference;
       myType = type;
     }
@@ -271,7 +274,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
     }
 
     @Contract(pure = true)
-    private boolean isRemoteExceptionInRemoteMethod(final @NotNull PsiMethod psiMethod) {
+    private boolean isRemoteExceptionInRemoteMethod(@NotNull final PsiMethod psiMethod) {
       if (!myType.equalsToText("java.rmi.RemoteException")) return false;
 
       final PsiClass containingClass = psiMethod.getContainingClass();
@@ -283,7 +286,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
     }
 
     @Contract(pure = true)
-    private boolean isInOverriddenOf(final @NotNull PsiMethod method) {
+    private boolean isInOverriddenOf(@NotNull final PsiMethod method) {
       if (!PsiUtil.canBeOverridden(method)) return false;
 
       final Predicate<PsiMethod> methodContainsThrownExceptions = m -> !ArrayUtil.isEmpty(m.getThrowsList().getReferencedTypes());
@@ -296,7 +299,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
     }
 
     @Contract(pure = true)
-    private boolean isThrownIn(final @NotNull PsiMethod method) {
+    private boolean isThrownIn(@NotNull final PsiMethod method) {
       if (method.hasModifierProperty(ABSTRACT)) return true;
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) return true;
@@ -314,11 +317,11 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
     }
 
     @Contract(pure = true)
-    private boolean isInThrowsListOf(final @NotNull PsiMethod method) {
+    private boolean isInThrowsListOf(@NotNull final PsiMethod method) {
       return ContainerUtil.exists(method.getThrowsList().getReferencedTypes(), myType::isAssignableFrom);
     }
 
-    boolean isCaught(final @NotNull PsiMethod method) {
+    boolean isCaught(@NotNull final PsiMethod method) {
       if (method.getUseScope() instanceof GlobalSearchScope) {
         final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(method.getProject());
         final PsiSearchHelper.SearchCostResult search = searchHelper.isCheapEnoughToSearch(method.getName(),

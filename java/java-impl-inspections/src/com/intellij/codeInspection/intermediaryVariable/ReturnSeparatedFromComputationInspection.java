@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.intermediaryVariable;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
@@ -30,8 +31,9 @@ import java.util.*;
 public final class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(ReturnSeparatedFromComputationInspection.class);
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitReturnStatement(@NotNull PsiReturnStatement returnStatement) {
@@ -72,7 +74,8 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     return null;
   }
 
-  private static @Nullable PsiCodeBlock getVariableScopeBlock(@Nullable PsiVariable variable) {
+  @Nullable
+  private static PsiCodeBlock getVariableScopeBlock(@Nullable PsiVariable variable) {
     if (variable instanceof PsiLocalVariable localVar) {
       if (CommonJavaRefactoringUtil.getVariableScope(localVar) instanceof PsiCodeBlock block) {
         return block;
@@ -131,7 +134,8 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     return flow != null && isApplicable(flow, context);
   }
 
-  private static @Nullable ControlFlow createControlFlow(@NotNull ReturnContext context) {
+  @Nullable
+  private static ControlFlow createControlFlow(@NotNull ReturnContext context) {
     try {
       final ControlFlowPolicy policy = new LocalsControlFlowPolicy(context.variableScope);
       return ControlFlowFactory.getInstance(context.variableScope.getProject()).getControlFlow(context.variableScope, policy);
@@ -221,7 +225,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     if (expression instanceof PsiReferenceExpression) {
       PsiVariable variable = ObjectUtils.tryCast(((PsiReferenceExpression)expression).resolve(), PsiVariable.class);
       return variable != null && (variable.hasModifierProperty(PsiModifier.FINAL) ||
-                                  ControlFlowUtil.isEffectivelyFinal(variable, scope));
+                                  HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null));
     }
     if (expression instanceof PsiUnaryExpression) {
       return ((PsiUnaryExpression)expression).getOperand() instanceof PsiLiteralExpression; // "-1" and "!true"
@@ -498,7 +502,8 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     }
   }
 
-  private static @Nullable PsiStatement getPrevNonEmptyStatement(@Nullable PsiElement psiElement, @Nullable Set<? super PsiElement> skippedEmptyStatements) {
+  @Nullable
+  private static PsiStatement getPrevNonEmptyStatement(@Nullable PsiElement psiElement, @Nullable Set<? super PsiElement> skippedEmptyStatements) {
     if (psiElement == null || !(psiElement.getParent() instanceof PsiCodeBlock)) {
       return null;
     }
@@ -514,7 +519,8 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     return prevStatement;
   }
 
-  private static @Nullable PsiStatement getNearestEnclosingStatement(@Nullable PsiElement element) {
+  @Nullable
+  private static PsiStatement getNearestEnclosingStatement(@Nullable PsiElement element) {
     return element instanceof PsiStatement ? (PsiStatement)element : PsiTreeUtil.getParentOfType(element, PsiStatement.class);
   }
 
@@ -534,13 +540,17 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
       myName = name;
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getName() {
+    public String getName() {
       return JavaBundle.message("inspection.return.separated.from.computation.quickfix", myName);
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaBundle.message("inspection.return.separated.from.computation.family.quickfix");
     }
 

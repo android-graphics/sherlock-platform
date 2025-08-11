@@ -10,6 +10,6 @@ interface Either {
 
 class Main {
     {
-        new Either.<error descr="'Left(L)' has private access in 'Either.Left'">Left</error><>("");
+        new <error descr="'Left(L)' has private access in 'Either.Left'">Either.Left<></error>("");
     }
 }

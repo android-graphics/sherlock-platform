@@ -24,12 +24,14 @@ public final class LockToken extends AccessToken {
     myLock.unlock();
   }
 
-  public static @NotNull LockToken acquireLock(@NotNull Lock lock) {
+  @NotNull
+  public static LockToken acquireLock(@NotNull Lock lock) {
     lock.lock();
     return new LockToken(lock);
   }
 
-  public static @Nullable LockToken attemptLock(@NotNull Lock lock, long time) throws InterruptedException {
+  @Nullable
+  public static LockToken attemptLock(@NotNull Lock lock, long time) throws InterruptedException {
     if (lock.tryLock(time, TimeUnit.MILLISECONDS)) {
       return new LockToken(lock);
     }

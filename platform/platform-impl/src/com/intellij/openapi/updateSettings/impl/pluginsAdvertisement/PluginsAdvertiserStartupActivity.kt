@@ -17,7 +17,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.fileTypes.FileTypeFactory
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -56,8 +56,7 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
         coroutineContext.ensureActive()
 
         withContext(Dispatchers.EDT) {
-          getPluginSuggestionNotificationGroup()
-            .createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
+          notificationGroup.createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
             .setDisplayId("advertiser.no.plugins")
             .notify(project)
         }
@@ -71,7 +70,7 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
           || includeIgnored) {
         @Suppress("DEPRECATION")
         extensionService.extensions.set(PluginFeatureMap(
-          featureMap = getFeatureMapFromMarketPlace(customPluginIds = customPluginIds, featureType = "com.intellij.fileTypeFactory"),
+          featureMap = getFeatureMapFromMarketPlace(customPluginIds = customPluginIds, featureType = FileTypeFactory.FILE_TYPE_FACTORY_EP.name),
           lastUpdateTime = if (oldExtensions != null) System.currentTimeMillis() else 0L,
         ))
         coroutineContext.ensureActive()
@@ -87,12 +86,6 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
           lastUpdateTime = if (oldDependencies != null) System.currentTimeMillis() else 0L,
         ))
       }
-
-      // update information about file handlers when forced
-      if (includeIgnored && PluginAdvertiserExtensionsStateService.getInstance().updateCompatibleFileHandlers()) {
-        EditorNotifications.getInstance(project).updateAllNotifications()
-      }
-
       coroutineContext.ensureActive()
 
       if (unknownFeatures.isNotEmpty()) {
@@ -110,7 +103,7 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
     }
     catch (e: Exception) {
       if (e !is ControlFlowException) {
-        thisLogger().info(e)
+        LOG.info(e)
       }
     }
   }
@@ -167,7 +160,7 @@ private suspend fun getFeatureMapFromMarketPlace(customPluginIds: Set<String>, f
     }
 }
 
-private fun notifyUnbundledPlugins(@Suppress("unused") project: Project) {
+private fun notifyUnbundledPlugins(project: Project) {
   // stub for future plugins
 }
 

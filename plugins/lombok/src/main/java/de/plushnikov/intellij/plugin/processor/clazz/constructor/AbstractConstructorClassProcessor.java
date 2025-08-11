@@ -68,8 +68,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isRecord()) {
-      builder.addErrorMessage("inspection.message.annotation.only.supported.on.class.or.enum.type",
-                              StringUtil.getShortName(getSupportedAnnotationClasses()[0]));
+      builder.addErrorMessage("inspection.message.annotation.only.supported.on.class.or.enum.type", StringUtil.getShortName(getSupportedAnnotationClasses()[0]));
       result = false;
     }
     return result;
@@ -161,13 +160,15 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return result;
   }
 
-  public @NotNull String getConstructorName(@NotNull PsiClass psiClass) {
+  @NotNull
+  public String getConstructorName(@NotNull PsiClass psiClass) {
     return StringUtil.notNullize(psiClass.getName());
   }
 
-  private static @Nullable PsiMethod findExistedMethod(final Collection<PsiMethod> definedMethods,
-                                                       final String methodName,
-                                                       final List<PsiType> paramTypes) {
+  @Nullable
+  private static PsiMethod findExistedMethod(final Collection<PsiMethod> definedMethods,
+                                             final String methodName,
+                                             final List<PsiType> paramTypes) {
     for (PsiMethod method : definedMethods) {
       if (PsiElementUtil.methodMatches(method, null, null, methodName, paramTypes)) {
         return method;
@@ -176,7 +177,8 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return null;
   }
 
-  protected static @NotNull Collection<PsiField> getAllNotInitializedAndNotStaticFields(@NotNull PsiClass psiClass) {
+  @NotNull
+  protected static Collection<PsiField> getAllNotInitializedAndNotStaticFields(@NotNull PsiClass psiClass) {
     Collection<PsiField> allNotInitializedNotStaticFields = new ArrayList<>();
     final boolean classAnnotatedWithValue = PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.VALUE);
     Collection<PsiField> fields = psiClass.isRecord() ? RecordAugmentProvider.getFieldAugments(psiClass)
@@ -206,11 +208,13 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return addField;
   }
 
-  public static @NotNull Collection<PsiField> getAllFields(@NotNull PsiClass psiClass) {
+  @NotNull
+  public static Collection<PsiField> getAllFields(@NotNull PsiClass psiClass) {
     return getAllNotInitializedAndNotStaticFields(psiClass);
   }
 
-  public @NotNull Collection<PsiField> getRequiredFields(@NotNull PsiClass psiClass) {
+  @NotNull
+  public Collection<PsiField> getRequiredFields(@NotNull PsiClass psiClass) {
     return getRequiredFields(psiClass, false);
   }
 
@@ -247,11 +251,12 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return isFinal;
   }
 
-  protected @NotNull Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass,
-                                                                   @PsiModifier.ModifierConstant @NotNull String methodModifier,
-                                                                   @NotNull PsiAnnotation psiAnnotation,
-                                                                   boolean useJavaDefaults,
-                                                                   @NotNull Collection<PsiField> params) {
+  @NotNull
+  protected Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass,
+                                                          @PsiModifier.ModifierConstant @NotNull String methodModifier,
+                                                          @NotNull PsiAnnotation psiAnnotation,
+                                                          boolean useJavaDefaults,
+                                                          @NotNull Collection<PsiField> params) {
     final String staticName = getStaticConstructorName(psiAnnotation);
 
     return createConstructorMethod(psiClass, methodModifier, psiAnnotation, useJavaDefaults, params, staticName, false);
@@ -265,11 +270,12 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return !StringUtil.isEmptyOrSpaces(staticName);
   }
 
-  protected @NotNull Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass,
-                                                                   @PsiModifier.ModifierConstant @NotNull String methodModifier,
-                                                                   @NotNull PsiAnnotation psiAnnotation, boolean useJavaDefaults,
-                                                                   @NotNull Collection<PsiField> params, @Nullable String staticName,
-                                                                   boolean skipConstructorIfAnyConstructorExists) {
+  @NotNull
+  protected Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass,
+                                                          @PsiModifier.ModifierConstant @NotNull String methodModifier,
+                                                          @NotNull PsiAnnotation psiAnnotation, boolean useJavaDefaults,
+                                                          @NotNull Collection<PsiField> params, @Nullable String staticName,
+                                                          boolean skipConstructorIfAnyConstructorExists) {
     List<PsiMethod> methods = new ArrayList<>();
 
     boolean hasStaticConstructor = !validateIsStaticConstructorNotDefined(psiClass, staticName, params, new ProblemProcessingSink());
@@ -328,7 +334,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       final AccessorsInfo.AccessorsValues classAccessorsValues = AccessorsInfo.getAccessorsValues(psiClass);
       for (PsiField psiField : params) {
         final AccessorsInfo paramAccessorsInfo = AccessorsInfo.buildFor(psiField, classAccessorsValues);
-        fieldNames.add(paramAccessorsInfo.removePrefixWithDefault(psiField.getName()));
+        fieldNames.add(paramAccessorsInfo.removePrefix(psiField.getName()));
       }
 
       if (!fieldNames.isEmpty()) {
@@ -416,9 +422,10 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return methodBuilder;
   }
 
-  private static @NotNull LightTypeParameterBuilder createTypeParameter(LombokLightMethodBuilder method,
-                                                                        int index,
-                                                                        PsiTypeParameter psiClassTypeParameter) {
+  @NotNull
+  private static LightTypeParameterBuilder createTypeParameter(LombokLightMethodBuilder method,
+                                                               int index,
+                                                               PsiTypeParameter psiClassTypeParameter) {
     final String nameOfTypeParameter = StringUtil.notNullize(psiClassTypeParameter.getName());
 
     final LightTypeParameterBuilder result = new LightTypeParameterBuilder(nameOfTypeParameter, method, index);
@@ -429,9 +436,10 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return result;
   }
 
-  private static @NotNull String createStaticCodeBlockText(@NotNull PsiType psiType,
-                                                           boolean useJavaDefaults,
-                                                           final @NotNull PsiParameterList parameterList) {
+  @NotNull
+  private static String createStaticCodeBlockText(@NotNull PsiType psiType,
+                                                  boolean useJavaDefaults,
+                                                  @NotNull final PsiParameterList parameterList) {
     final String psiClassName = psiType.getPresentableText();
     final String paramsText = useJavaDefaults ? "" : joinParameters(parameterList);
     return String.format("return new %s(%s);", psiClassName, paramsText);

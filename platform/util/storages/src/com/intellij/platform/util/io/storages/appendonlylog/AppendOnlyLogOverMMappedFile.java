@@ -1,13 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.appendonlylog;
 
 import com.intellij.openapi.util.IntRef;
-import com.intellij.openapi.util.io.ContentTooBigException;
 import com.intellij.platform.util.io.storages.AlignmentUtils;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
-import com.intellij.util.io.ClosedStorageException;
-import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.Unmappable;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import org.jetbrains.annotations.ApiStatus;
@@ -225,8 +223,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   }
 
 
-  @ApiStatus.Internal
-  public static final class RecordLayout {
+  private static final class RecordLayout {
     // Record = (header) + (payload)
     // Header = 32 bit, 32-bit-aligned (so it could be read/write as volatile, and not all CPU arch allow memory sync
     //          ops on non-aligned offsets)
@@ -390,7 +387,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
     headerPage = storage.pageByOffset(0L);
 
-    ByteBuffer headerPageBuffer = headerPageBuffer();
+    ByteBuffer headerPageBuffer = headerPage.rawPageBuffer();
     if (fileIsEmpty) {
       HeaderLayout.putMagicWord(headerPageBuffer, MAGIC_WORD);
       HeaderLayout.putImplementationVersion(headerPageBuffer, CURRENT_IMPLEMENTATION_VERSION);
@@ -471,16 +468,16 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
    * @return version of the log implementation (i.e., this class) used to create the file.
    * Current version is {@link #CURRENT_IMPLEMENTATION_VERSION}
    */
-  public int getImplementationVersion() throws IOException {
-    return HeaderLayout.readImplementationVersion(headerPageBuffer());
+  public int getImplementationVersion() {
+    return HeaderLayout.readImplementationVersion(headerPage.rawPageBuffer());
   }
 
   /** @return version of _data_ stored in records -- up to the client to define/recognize it */
-  public int getDataVersion() throws IOException {
+  public int getDataVersion() {
     return getIntHeaderField(HeaderLayout.EXTERNAL_VERSION_OFFSET);
   }
 
-  public void setDataVersion(int version) throws IOException {
+  public void setDataVersion(int version) {
     setIntHeaderField(HeaderLayout.EXTERNAL_VERSION_OFFSET, version);
   }
 
@@ -490,7 +487,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   }
 
   /** @return arbitrary (user-defined) value from the Log's header, previously set by {@link #setUserDefinedHeaderField(int, int)} */
-  public int getUserDefinedHeaderField(int fieldNo) throws IOException {
+  public int getUserDefinedHeaderField(int fieldNo) {
     int headerOffset = HeaderLayout.FIRST_UNUSED_OFFSET + fieldNo * Integer.BYTES;
     return getIntHeaderField(headerOffset);
   }
@@ -500,7 +497,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
    * There are 5 slots fieldNo=[0..5] available so far
    */
   public void setUserDefinedHeaderField(int fieldNo,
-                                        int headerFieldValue) throws IOException {
+                                        int headerFieldValue) {
     int headerOffset = HeaderLayout.FIRST_UNUSED_OFFSET + fieldNo * Integer.BYTES;
     setIntHeaderField(headerOffset, headerFieldValue);
   }
@@ -522,8 +519,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
     }
     int pageSize = storage.pageSize();
     if (payloadSize > pageSize - RecordLayout.RECORD_HEADER_SIZE) {
-      throw new ContentTooBigException("payloadSize(=" + payloadSize + ") is too big: " +
-                                       "record with header must fit pageSize(=" + pageSize + ")");
+      throw new IllegalArgumentException("payloadSize(=" + payloadSize + ") is too big: " +
+                                         "record with header must fit pageSize(=" + pageSize + ")");
     }
 
     int totalRecordLength = RecordLayout.calculateRecordLength(payloadSize);
@@ -630,7 +627,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   }
 
   @Override
-  public boolean isValidId(long recordId) throws IOException {
+  public boolean isValidId(long recordId) {
     if (recordId <= 0) {
       return false;
     }
@@ -665,7 +662,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   }
 
   @Override
-  public boolean isEmpty() throws IOException {
+  public boolean isEmpty() {
     return firstUnAllocatedOffset() == HeaderLayout.HEADER_SIZE
            && firstUnCommittedOffset() == HeaderLayout.HEADER_SIZE;
   }
@@ -867,34 +864,34 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   }
 
 
-  private long firstUnAllocatedOffset() throws IOException {
+  private long firstUnAllocatedOffset() {
     return getLongHeaderField(HeaderLayout.NEXT_RECORD_TO_BE_ALLOCATED_OFFSET);
   }
 
   private boolean casFirstUnAllocatedOffset(long currentValue,
-                                            long newValue) throws IOException {
+                                            long newValue) {
     return INT64_OVER_BYTE_BUFFER.compareAndSet(
-      headerPageBuffer(),
+      headerPage.rawPageBuffer(),
       HeaderLayout.NEXT_RECORD_TO_BE_ALLOCATED_OFFSET,
       currentValue, newValue
     );
   }
 
-  private long firstUnCommittedOffset() throws IOException {
+  private long firstUnCommittedOffset() {
     return getLongHeaderField(HeaderLayout.NEXT_RECORD_TO_BE_COMMITTED_OFFSET);
   }
 
-  private boolean casFirstUnCommittedOffset(long currentValue, long newValue) throws IOException {
+  private boolean casFirstUnCommittedOffset(long currentValue, long newValue) {
     return INT64_OVER_BYTE_BUFFER.compareAndSet(
-      headerPageBuffer(),
+      headerPage.rawPageBuffer(),
       HeaderLayout.NEXT_RECORD_TO_BE_COMMITTED_OFFSET,
       currentValue, newValue
     );
   }
 
-  private int addToDataRecordsCount(int recordsCommitted) throws IOException {
+  private int addToDataRecordsCount(int recordsCommitted) {
     return (int)INT32_OVER_BYTE_BUFFER.getAndAdd(
-      headerPageBuffer(),
+      headerPage.rawPageBuffer(),
       HeaderLayout.RECORDS_COUNT_OFFSET,
       recordsCommitted
     );
@@ -1099,9 +1096,6 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
   @VisibleForTesting
   static long recordIdToOffset(long recordId) {
-    if (recordId <= 0) {
-      throw new IllegalArgumentException("recordId(=" + recordId + ") is negative or NULL_ID -- can't be read");
-    }
     long offset = recordIdToOffsetUnchecked(recordId);
     if (!AlignmentUtils.is32bAligned(offset)) {
       throw new IllegalArgumentException("recordId(=" + recordId + ") is invalid: recordOffsetInFile(=" + offset + ") is not 32b-aligned");
@@ -1114,34 +1108,26 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   }
 
 
-  private ByteBuffer headerPageBuffer() throws IOException {
-    MMappedFileStorage.Page _headerPage = headerPage;
-    if(_headerPage == null) {
-      throw new ClosedStorageException("["+storagePath()+"] is already closed");
-    }
-    return _headerPage.rawPageBuffer();
-  }
-
-  private int getIntHeaderField(int headerRelativeOffsetBytes) throws IOException {
+  private int getIntHeaderField(int headerRelativeOffsetBytes) {
     Objects.checkIndex(headerRelativeOffsetBytes, HeaderLayout.HEADER_SIZE - Integer.BYTES + 1);
-    return (int)INT32_OVER_BYTE_BUFFER.getVolatile(headerPageBuffer(), headerRelativeOffsetBytes);
+    return (int)INT32_OVER_BYTE_BUFFER.getVolatile(headerPage.rawPageBuffer(), headerRelativeOffsetBytes);
   }
 
-  private long getLongHeaderField(int headerRelativeOffsetBytes) throws IOException {
+  private long getLongHeaderField(int headerRelativeOffsetBytes) {
     Objects.checkIndex(headerRelativeOffsetBytes, HeaderLayout.HEADER_SIZE - Long.BYTES + 1);
-    return (long)INT64_OVER_BYTE_BUFFER.getVolatile(headerPageBuffer(), headerRelativeOffsetBytes);
+    return (long)INT64_OVER_BYTE_BUFFER.getVolatile(headerPage.rawPageBuffer(), headerRelativeOffsetBytes);
   }
 
   private void setIntHeaderField(int headerRelativeOffsetBytes,
-                                 int headerFieldValue) throws IOException {
+                                 int headerFieldValue) {
     Objects.checkIndex(headerRelativeOffsetBytes, HeaderLayout.HEADER_SIZE - Integer.BYTES + 1);
-    INT32_OVER_BYTE_BUFFER.setVolatile(headerPageBuffer(), headerRelativeOffsetBytes, headerFieldValue);
+    INT32_OVER_BYTE_BUFFER.setVolatile(headerPage.rawPageBuffer(), headerRelativeOffsetBytes, headerFieldValue);
   }
 
   private void setLongHeaderField(int headerRelativeOffsetBytes,
-                                  long headerFieldValue) throws IOException {
+                                  long headerFieldValue) {
     Objects.checkIndex(headerRelativeOffsetBytes, HeaderLayout.HEADER_SIZE - Long.BYTES + 1);
-    INT64_OVER_BYTE_BUFFER.setVolatile(headerPageBuffer(), headerRelativeOffsetBytes, headerFieldValue);
+    INT64_OVER_BYTE_BUFFER.setVolatile(headerPage.rawPageBuffer(), headerRelativeOffsetBytes, headerFieldValue);
   }
 
   //================== alignment: ========================================================================

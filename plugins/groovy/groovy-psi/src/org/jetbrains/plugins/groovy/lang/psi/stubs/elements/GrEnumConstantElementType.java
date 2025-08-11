@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.psi.stubs.IndexSink;
@@ -27,8 +27,9 @@ public class GrEnumConstantElementType extends GrStubElementType<GrFieldStub, Gr
     return new GrEnumConstantImpl(stub);
   }
 
+  @NotNull
   @Override
-  public @NotNull GrFieldStub createStub(@NotNull GrEnumConstant psi, StubElement parentStub) {
+  public GrFieldStub createStub(@NotNull GrEnumConstant psi, StubElement parentStub) {
     String[] annNames = GrStubUtils.getAnnotationNames(psi);
     return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames, ArrayUtilRt.EMPTY_STRING_ARRAY,
                            GroovyStubElementTypes.ENUM_CONSTANT, GrFieldStub.buildFlags(psi), null);
@@ -40,7 +41,8 @@ public class GrEnumConstantElementType extends GrStubElementType<GrFieldStub, Gr
   }
 
   @Override
-  public @NotNull GrFieldStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  @NotNull
+  public GrFieldStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return GrFieldElementType.deserializeFieldStub(dataStream, parentStub);
   }
 

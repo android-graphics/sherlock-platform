@@ -1,13 +1,17 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 package com.intellij.ui;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
+import static java.awt.Cursor.DEFAULT_CURSOR;
+import static java.awt.event.InputEvent.BUTTON1_MASK;
+
 public class WindowMoveListener extends WindowMouseListener {
+
   public WindowMoveListener installTo(@NotNull Component component) {
     component.addMouseListener(this);
     component.addMouseMotionListener(this);
@@ -29,7 +33,7 @@ public class WindowMoveListener extends WindowMouseListener {
 
   @Override
   int getCursorType(Component view, Point location) {
-    return Cursor.DEFAULT_CURSOR;
+    return DEFAULT_CURSOR;
   }
 
   @Override
@@ -46,7 +50,7 @@ public class WindowMoveListener extends WindowMouseListener {
   @Override
   public void mouseClicked(MouseEvent event) {
     if (event.isConsumed()) return;
-    if (InputEvent.BUTTON1_MASK == (InputEvent.BUTTON1_MASK & event.getModifiers()) && 1 < event.getClickCount()) {
+    if (BUTTON1_MASK == (BUTTON1_MASK & event.getModifiers()) && 1 < event.getClickCount()) {
       Component view = getView(getContent(event));
       if (view instanceof Frame frame) {
         int state = frame.getExtendedState();

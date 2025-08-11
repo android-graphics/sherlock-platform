@@ -75,7 +75,6 @@ public class VirtualDomParentStrategy implements DomParentStrategy {
     return false;
   }
 
-  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof VirtualDomParentStrategy that)) return false;
@@ -85,7 +84,6 @@ public class VirtualDomParentStrategy implements DomParentStrategy {
     return true;
   }
 
-  @Override
   public int hashCode() {
     return myParentHandler.hashCode();
   }

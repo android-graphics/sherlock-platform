@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.debugger.engine.JavaDebugProcess;
@@ -34,10 +34,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.threadDumpParser.ThreadDumpParser;
-import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.unscramble.ThreadDumpConsoleFactory;
+import com.intellij.unscramble.ThreadDumpParser;
+import com.intellij.unscramble.ThreadState;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -70,7 +70,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<RunnerSettings> {
   private static final Logger LOG = Logger.getInstance(DefaultJavaProgramRunner.class);
-  private static final String ourWiseThreadDumpProperty = "idea.java.run.wise.thread.dump";
+  private final static String ourWiseThreadDumpProperty = "idea.java.run.wise.thread.dump";
 
   public static final String DEFAULT_JAVA_RUNNER_ID = "Run";
 
@@ -79,7 +79,8 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
   }
 
   @Override
-  public @NotNull String getRunnerId() {
+  @NotNull
+  public String getRunnerId() {
     return DEFAULT_JAVA_RUNNER_ID;
   }
 
@@ -147,8 +148,9 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     }
   }
 
-  protected @NotNull Promise<@Nullable RunContentDescriptor> doExecuteAsync(@NotNull TargetEnvironmentAwareRunProfileState state,
-                                                                            @NotNull ExecutionEnvironment env)
+  @NotNull
+  protected Promise<@Nullable RunContentDescriptor> doExecuteAsync(@NotNull TargetEnvironmentAwareRunProfileState state,
+                                                                   @NotNull ExecutionEnvironment env)
     throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
     boolean isLocal = !((TargetEnvironmentAwareRunProfile)env.getRunProfile()).needPrepareTarget();
@@ -228,7 +230,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       controlBreakAction.registerCustomShortcutSet(controlBreakAction.getShortcutSet(), consoleComponent);
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void processTerminated(final @NotNull ProcessEvent event) {
+        public void processTerminated(@NotNull final ProcessEvent event) {
           processHandler.removeProcessListener(this);
           controlBreakAction.unregisterCustomShortcutSet(consoleComponent);
         }
@@ -308,7 +310,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
         return;
       }
       RunnerContentUi runnerContentUi = event.getData(RunnerContentUi.KEY);
-      if (processHandler instanceof BaseProcessHandler && runnerContentUi != null) {
+      if (Registry.is("execution.dump.threads.using.attach") && processHandler instanceof BaseProcessHandler && runnerContentUi != null) {
         String pid = String.valueOf(((BaseProcessHandler<?>)processHandler).getProcess().pid());
         RunTab runTab = event.getData(RunTab.KEY);
         GlobalSearchScope scope =
@@ -343,7 +345,8 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
                 try {
                   vm.detach();
                 }
-                catch (IOException ignored) { }
+                catch (IOException ignored) {
+                }
               }
             }
           });

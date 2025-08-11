@@ -113,5 +113,3 @@ class <lineMarker descr="Run Test">TestClassWithSuite</lineMarker> {
         }
     }
 }
-
-class WithPrivateConstructor private constructor() : TestCase() { }

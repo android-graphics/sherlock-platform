@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.getImportableDescriptor
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
+import java.awt.datatransfer.DataFlavor
 import java.io.Serializable
 
 data class KotlinReferenceData(

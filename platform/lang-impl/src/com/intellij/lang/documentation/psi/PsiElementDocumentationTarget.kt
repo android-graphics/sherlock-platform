@@ -11,7 +11,6 @@ import com.intellij.lang.documentation.DocumentationProvider
 import com.intellij.lang.documentation.DocumentationProvider.DocumentationParts
 import com.intellij.lang.documentation.ExternalDocumentationProvider
 import com.intellij.model.Pointer
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
@@ -19,12 +18,12 @@ import com.intellij.platform.backend.documentation.*
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiFile
 import com.intellij.psi.createSmartPointer
+import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
-import java.awt.Image
 import java.util.function.Supplier
 
 @VisibleForTesting
@@ -114,7 +113,7 @@ class PsiElementDocumentationTarget private constructor(
     val originalPsi = targetElement.getUserData(DocumentationManager.ORIGINAL_ELEMENT_KEY)?.element
                       ?: sourceElement
     val doc = provider.getDocumentationParts(targetElement, originalPsi)
-    if (targetElement is PsiFileSystemItem) {
+    if (targetElement is PsiFile) {
       val fileDoc = DocumentationManager.generateFileDoc(targetElement, doc == null)
       if (fileDoc != null) {
         return if (doc == null)
@@ -170,7 +169,7 @@ class PsiElementDocumentationTarget private constructor(
     })
 
     val imageResolver: DocumentationImageResolver = DocumentationImageResolver { url ->
-      ReadAction.compute<Image?, Throwable> {
+      SlowOperations.allowSlowOperations(SlowOperations.GENERIC).use {  // old API fallback
         dereference()?.targetElement?.let { targetElement ->
           DocumentationManager.getElementImage(targetElement, url)
         }

@@ -1,7 +1,3 @@
-from typing import TypeVar
+from _typeshed import Incomplete
 
-from docutils import readers
-
-_S = TypeVar("_S")
-
-class Reader(readers.ReReader[_S]): ...
+def __getattr__(name: str) -> Incomplete: ...

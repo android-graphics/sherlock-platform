@@ -279,7 +279,8 @@ public final class RemoteRepositoriesConfigurable implements SearchableConfigura
   }
 
   @Override
-  public @NotNull String getId() {
+  @NotNull
+  public String getId() {
     return getClass().getName();
   }
 

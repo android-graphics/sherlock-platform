@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -18,7 +17,6 @@ import java.util.function.LongSupplier;
  *
  */
 // TODO: Used only in RemoteRevisionsNumberCache
-@ApiStatus.Internal
 public final class LazyRefreshingSelfQueue<T> {
   private static final Logger LOG = Logger.getInstance(LazyRefreshingSelfQueue.class);
 
@@ -48,14 +46,14 @@ public final class LazyRefreshingSelfQueue<T> {
   }
 
   // adds item that should be updated at next updateStep() call
-  public void addRequest(final @NotNull T t) {
+  public void addRequest(@NotNull final T t) {
     synchronized (myLock) {
       myQueue.addFirst(new Pair<>(null, t));
     }
   }
 
   // unschedules item from update at next updateStep() call
-  public void forceRemove(final @NotNull T t) {
+  public void forceRemove(@NotNull final T t) {
     synchronized (myLock) {
       for (Iterator<Pair<Long, T>> iterator = myQueue.iterator(); iterator.hasNext();) {
         final Pair<Long, T> pair = iterator.next();

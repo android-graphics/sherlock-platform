@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.ui.tree;
 
@@ -161,7 +161,8 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     }
   }
 
-  public @NotNull Map<VirtualFile, T> getValues() {
+  @NotNull
+  public Map<VirtualFile, T> getValues() {
     return myModel.getValues();
   }
 
@@ -181,7 +182,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     TreeUtil.expandRootChildIfOnlyOne(getTree());
   }
 
-  public void select(final @Nullable VirtualFile toSelect) {
+  public void select(@Nullable final VirtualFile toSelect) {
     if (toSelect != null) {
       select(toSelect, (TreeNode)myModel.getRoot());
     }
@@ -209,7 +210,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
   private static final class MyModel<T> extends DefaultTreeModel implements TreeTableModel {
     private final Map<VirtualFile, T> myCurrentMapping = new HashMap<>();
     private final Class<T> myValueClass;
-    private final @NlsContexts.ColumnName String myValueTitle;
+    @NlsContexts.ColumnName private final String myValueTitle;
     private AbstractFileTreeTable<T> myTreeTable;
 
     private MyModel(@NotNull Project project,
@@ -313,7 +314,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     }
 
     @Override
-    protected void appendChildrenTo(final @NotNull Collection<? super ConvenientNode> children) {
+    protected void appendChildrenTo(@NotNull final Collection<? super ConvenientNode> children) {
       Project project = getObject();
       VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
 
@@ -401,18 +402,18 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     private final Project myProject;
     private final VirtualFileFilter myFilter;
 
-    public FileNode(@NotNull VirtualFile file, final @NotNull Project project) {
+    public FileNode(@NotNull VirtualFile file, @NotNull final Project project) {
       this(file, project, VirtualFileFilter.ALL);
     }
 
-    public FileNode(@NotNull VirtualFile file, final @NotNull Project project, @NotNull VirtualFileFilter filter) {
+    public FileNode(@NotNull VirtualFile file, @NotNull final Project project, @NotNull VirtualFileFilter filter) {
       super(file);
       myProject = project;
       myFilter = filter;
     }
 
     @Override
-    protected void appendChildrenTo(final @NotNull Collection<? super ConvenientNode> children) {
+    protected void appendChildrenTo(@NotNull final Collection<? super ConvenientNode> children) {
       for (VirtualFile child : getObject().getChildren()) {
         if (myFilter.accept(child)) {
           children.add(new FileNode(child, myProject, myFilter));

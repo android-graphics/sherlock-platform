@@ -44,8 +44,9 @@ public class TextMateBraceMatcher implements BraceMatcher {
     return false;
   }
 
+  @Nullable
   @Override
-  public @Nullable IElementType getOppositeBraceTokenType(@NotNull IElementType type) {
+  public IElementType getOppositeBraceTokenType(@NotNull IElementType type) {
     return null;
   }
 

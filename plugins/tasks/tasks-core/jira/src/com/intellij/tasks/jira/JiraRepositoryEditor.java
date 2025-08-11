@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.tasks.jira;
 
 import com.intellij.openapi.project.Project;
@@ -21,7 +35,7 @@ import java.awt.event.ActionListener;
 /**
  * @author Mikhail Golubev
  */
-public final class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
+public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
   private EditorTextField mySearchQueryField;
   private JBLabel mySearchLabel;
   private JBLabel myNoteLabel;
@@ -47,8 +61,9 @@ public final class JiraRepositoryEditor extends BaseRepositoryEditor<JiraReposit
     }
   }
 
+  @Nullable
   @Override
-  protected @Nullable JComponent createCustomPanel() {
+  protected JComponent createCustomPanel() {
     mySearchQueryField = new LanguageTextField(JqlLanguage.INSTANCE, myProject, myRepository.getSearchQuery());
     installListener(mySearchQueryField);
     mySearchLabel = new JBLabel(TaskBundle.message("label.search"), SwingConstants.RIGHT);
@@ -72,7 +87,7 @@ public final class JiraRepositoryEditor extends BaseRepositoryEditor<JiraReposit
   }
 
   @Override
-  public void setAnchor(final @Nullable JComponent anchor) {
+  public void setAnchor(@Nullable final JComponent anchor) {
     super.setAnchor(anchor);
     mySearchLabel.setAnchor(anchor);
   }
@@ -111,7 +126,7 @@ public final class JiraRepositoryEditor extends BaseRepositoryEditor<JiraReposit
     }
   }
 
-  private void useBearerTokenChanged() {
+  protected void useBearerTokenChanged() {
     myRepository.setUseBearerTokenAuthentication(myUseBearerTokenAuthenticationCheckBox.isSelected());
     adjustSettingsForServerProperties();
   }

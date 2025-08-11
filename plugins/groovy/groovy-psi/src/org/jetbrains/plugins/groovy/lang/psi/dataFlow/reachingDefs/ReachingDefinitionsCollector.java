@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
 import com.intellij.psi.PsiElement;
@@ -39,10 +39,11 @@ public final class ReachingDefinitionsCollector {
   private ReachingDefinitionsCollector() {
   }
 
-  public static @NotNull FragmentVariableInfos obtainVariableFlowInformation(final @NotNull GrStatement first,
-                                                                             final @NotNull GrStatement last,
-                                                                             final @NotNull GrControlFlowOwner flowOwner,
-                                                                             @NotNull GroovyControlFlow flow) {
+  @NotNull
+  public static FragmentVariableInfos obtainVariableFlowInformation(@NotNull final GrStatement first,
+                                                                    @NotNull final GrStatement last,
+                                                                    @NotNull final GrControlFlowOwner flowOwner,
+                                                                    @NotNull GroovyControlFlow flow) {
 
     final Int2ObjectMap<int[]> dfaResult = inferDfaResult(flow.getFlow());
 
@@ -114,7 +115,8 @@ public final class ReachingDefinitionsCollector {
   }
 
 
-  private static @Nullable GrVariable resolveToLocalVariable(@Nullable PsiElement element, @NotNull String name) {
+  @Nullable
+  private static GrVariable resolveToLocalVariable(@Nullable PsiElement element, @NotNull String name) {
     if (element == null) return null;
     ElementResolveResult<GrVariable> result = GrReferenceResolveRunnerKt.resolveToLocalVariable(element, name);
     return result != null ? result.getElement() : null;
@@ -227,7 +229,8 @@ public final class ReachingDefinitionsCollector {
     return false;
   }
 
-  private static @Nullable PsiType getType(PsiElement element) {
+  @Nullable
+  private static PsiType getType(PsiElement element) {
     if (element instanceof GrVariable) {
       return ((GrVariable)element).getTypeGroovy();
     }
@@ -314,7 +317,8 @@ public final class ReachingDefinitionsCollector {
   /**
    * return true if path is outside of fragment, null if there is no pathand false if path is inside fragment
    */
-  private static @Nullable Boolean findPath(Instruction cur,
+  @Nullable
+  private static Boolean findPath(Instruction cur,
                                   int destination,
                                   LinkedHashSet<Integer> fragmentInsns,
                                   boolean wasOutside,
@@ -359,8 +363,9 @@ public final class ReachingDefinitionsCollector {
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  private static @NonNls String dumpDfaResult(ArrayList<Int2ObjectMap<IntSet>> dfaResult, ReachingDefinitionsDfaInstance dfa) {
-    final @NonNls StringBuffer buffer = new StringBuffer();
+  @NonNls
+  private static String dumpDfaResult(ArrayList<Int2ObjectMap<IntSet>> dfaResult, ReachingDefinitionsDfaInstance dfa) {
+    @NonNls final StringBuffer buffer = new StringBuffer();
     for (int i = 0; i < dfaResult.size(); i++) {
       Int2ObjectMap<IntSet> map = dfaResult.get(i);
       buffer.append("At ").append(i).append(":\n");
@@ -377,10 +382,10 @@ public final class ReachingDefinitionsCollector {
   }
 
   private static class VariableInfoImpl implements VariableInfo {
-    private final @NotNull String myName;
+    @NotNull private final String myName;
     private final PsiManager myManager;
 
-    private @Nullable
+    @Nullable private
     PsiType myType;
 
     VariableInfoImpl(@NotNull String name, PsiManager manager) {
@@ -389,12 +394,14 @@ public final class ReachingDefinitionsCollector {
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return myName;
     }
 
     @Override
-    public @Nullable PsiType getType() {
+    @Nullable
+    public PsiType getType() {
       if (myType instanceof PsiIntersectionType) return ((PsiIntersectionType)myType).getConjuncts()[0];
       return myType;
     }
@@ -421,7 +428,8 @@ public final class ReachingDefinitionsCollector {
   /**
    * @return map instruction index -> definitions for variable in the instruction
    */
-  private static @NotNull Int2ObjectMap<int[]> postprocess(final @NotNull List<DefinitionMap> dfaResult,
+  @NotNull
+  private static Int2ObjectMap<int[]> postprocess(@NotNull final List<DefinitionMap> dfaResult,
                                                   Instruction @NotNull [] flow) {
     Int2ObjectMap<int[]> result = new Int2ObjectOpenHashMap<>();
     for (int i = 0; i < flow.length; i++) {

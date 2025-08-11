@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -82,7 +82,7 @@ public final class EntryPointsManagerImpl extends EntryPointsManagerBase impleme
         myWriteAnnotations.clear();
         myWriteAnnotations.addAll(writeList);
 
-        DaemonCodeAnalyzerEx.getInstanceEx(myProject).restart("EntryPointsManagerImpl.configureAnnotations");
+        DaemonCodeAnalyzer.getInstance(myProject).restart();
         super.doOKAction();
       }
     }.show();
@@ -127,7 +127,7 @@ public final class EntryPointsManagerImpl extends EntryPointsManagerBase impleme
             Set<ClassPattern> patterns = entryPointsManagerBase.getPatterns();
             patterns.clear();
             patterns.addAll(list);
-            DaemonCodeAnalyzerEx.getInstanceEx(entryPointsManagerBase.myProject).restart("EntryPointsManagerImpl.createConfigureClassPatternsButton");
+            DaemonCodeAnalyzer.getInstance(entryPointsManagerBase.myProject).restart();
             super.doOKAction();
           }
         }.show();

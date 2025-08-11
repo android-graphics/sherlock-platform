@@ -67,6 +67,7 @@ public class n<F, S> {
       }
 
       Object var10001;
+      int var3;
       try {
          var3 = var10000.hashCode() / 2;
          if (this.b == null) {
@@ -83,8 +84,10 @@ public class n<F, S> {
 
    public static <T extends n<K, V>, K, V> List<K> a(Collection<T> var0) {
       ArrayList var1 = new ArrayList(var0.size());
+      Iterator var2 = var0.iterator();
 
-      for(n var3 : var0) {
+      while(var2.hasNext()) {
+         n var3 = (n)var2.next();
          var1.add(var3.a());
       }
 
@@ -133,8 +136,10 @@ public class n<F, S> {
 
    public static <K, V> Map<K, V> c(Collection<n<K, V>> var0) {
       HashMap var1 = new HashMap();
+      Iterator var2 = var0.iterator();
 
-      for(n var3 : var0) {
+      while(var2.hasNext()) {
+         n var3 = (n)var2.next();
          var1.put(var3.a(), var3.b());
       }
 
@@ -145,27 +150,27 @@ public class n<F, S> {
       char[] var10000 = "p\u001c".toCharArray();
       int var10002 = var10000.length;
       int var1 = 0;
-      char[] var9 = var10000;
-      int var4 = var10002;
-      char[] var15;
+      char[] var10001 = var10000;
+      int var2 = var10002;
       int var10003;
+      char[] var4;
       if (var10002 <= 1) {
-         var15 = var10000;
+         var4 = var10000;
          var10003 = var1;
       } else {
-         var9 = var10000;
-         var4 = var10002;
+         var10001 = var10000;
+         var2 = var10002;
          if (var10002 <= var1) {
             d = (new String(var10000)).intern();
             return;
          }
 
-         var15 = var10000;
+         var4 = var10000;
          var10003 = var1;
       }
 
       while(true) {
-         char var10004 = var15[var10003];
+         char var10004 = var4[var10003];
          byte var10005;
          switch (var1 % 5) {
             case 0:
@@ -184,18 +189,18 @@ public class n<F, S> {
                var10005 = 38;
          }
 
-         var15[var10003] = (char)(var10004 ^ var10005);
+         var4[var10003] = (char)(var10004 ^ var10005);
          ++var1;
-         if (var4 == 0) {
-            var10003 = var4;
-            var15 = var9;
+         if (var2 == 0) {
+            var10003 = var2;
+            var4 = var10001;
          } else {
-            if (var4 <= var1) {
-               d = (new String(var9)).intern();
+            if (var2 <= var1) {
+               d = (new String(var10001)).intern();
                return;
             }
 
-            var15 = var9;
+            var4 = var10001;
             var10003 = var1;
          }
       }

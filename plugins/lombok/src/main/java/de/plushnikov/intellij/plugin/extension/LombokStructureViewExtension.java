@@ -45,8 +45,9 @@ public final class LombokStructureViewExtension implements StructureViewExtensio
       .toArray(StructureViewTreeElement[]::new);
   }
 
+  @Nullable
   @Override
-  public @Nullable Object getCurrentEditorElement(Editor editor, PsiElement parent) {
+  public Object getCurrentEditorElement(Editor editor, PsiElement parent) {
     return null;
   }
 }

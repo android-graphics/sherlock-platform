@@ -29,12 +29,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 public final class GroovySillyAssignmentInspection extends BaseInspection {
 
   @Override
-  protected @Nullable String buildErrorString(Object... args) {
+  @Nullable
+  protected String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.silly.assignment");
   }
 
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  @NotNull
+  public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ref;
 
 import com.intellij.openapi.util.EmptyRunnable;
@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.MemoryDumpHelper;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -28,7 +27,6 @@ import java.util.Set;
  * so, if you pass fields or local variables there, nullify them before calling {@link #ensureCollected()}.
  *
  */
-@ApiStatus.Internal
 public final class GCWatcher {
   private final ReferenceQueue<Object> myQueue = new ReferenceQueue<>();
   private final Set<Reference<?>> myReferences = ContainerUtil.newConcurrentSet();
@@ -155,7 +153,6 @@ public final class GCWatcher {
       Path file = Paths.get(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")), "GCWatcher.hprof.zip");
       MemoryDumpHelper.captureMemoryDumpZipped(file);
 
-      message += "\nMemory snapshot is available at " + file + "\n";
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println("##teamcity[publishArtifacts '" + file + "']");
     }

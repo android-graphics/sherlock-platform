@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,7 +8,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
@@ -41,9 +41,9 @@ public abstract class StubIndex {
    */
   @Deprecated(forRemoval = true)
   <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull StubIndexKey<Key, Psi> indexKey,
-                                                    @NotNull Key key,
-                                                    @NotNull Project project,
-                                                    final @Nullable GlobalSearchScope scope) {
+                                                           @NotNull Key key,
+                                                           @NotNull Project project,
+                                                           @Nullable final GlobalSearchScope scope) {
     List<Psi> result = new SmartList<>();
     processElements(indexKey, key, project, scope, (Class<Psi>)PsiElement.class, Processors.cancelableCollectProcessor(result));
     return result;
@@ -68,7 +68,8 @@ public abstract class StubIndex {
     return processElements(indexKey, key, project, scope, requiredClass, processor);
   }
 
-  public abstract @NotNull <Key> Collection<Key> getAllKeys(@NotNull StubIndexKey<Key, ?> indexKey, @NotNull Project project);
+  @NotNull
+  public abstract <Key> Collection<Key> getAllKeys(@NotNull StubIndexKey<Key, ?> indexKey, @NotNull Project project);
 
   public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Project project, @NotNull Processor<? super K> processor) {
     return processAllKeys(indexKey, processor, GlobalSearchScope.allScope(project), null);
@@ -85,20 +86,22 @@ public abstract class StubIndex {
     return processAllKeys(indexKey, Objects.requireNonNull(scope.getProject()), processor);
   }
 
-  public static @NotNull <Key, Psi extends PsiElement> Collection<Psi> getElements(@NotNull StubIndexKey<Key, Psi> indexKey,
-                                                                                   @NotNull Key key,
-                                                                                   final @NotNull Project project,
-                                                                                   final @Nullable GlobalSearchScope scope,
-                                                                                   @NotNull Class<Psi> requiredClass) {
+  @NotNull
+  public static <Key, Psi extends PsiElement> Collection<Psi> getElements(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                          @NotNull Key key,
+                                                                          @NotNull final Project project,
+                                                                          @Nullable final GlobalSearchScope scope,
+                                                                          @NotNull Class<Psi> requiredClass) {
     return getElements(indexKey, key, project, scope, null, requiredClass);
   }
 
-  public static @NotNull <Key, Psi extends PsiElement> Collection<Psi> getElements(@NotNull StubIndexKey<Key, Psi> indexKey,
-                                                                                   @NotNull Key key,
-                                                                                   final @NotNull Project project,
-                                                                                   final @Nullable GlobalSearchScope scope,
-                                                                                   @Nullable IdFilter idFilter,
-                                                                                   @NotNull Class<Psi> requiredClass) {
+  @NotNull
+  public static <Key, Psi extends PsiElement> Collection<Psi> getElements(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                          @NotNull Key key,
+                                                                          @NotNull final Project project,
+                                                                          @Nullable final GlobalSearchScope scope,
+                                                                          @Nullable IdFilter idFilter,
+                                                                          @NotNull Class<Psi> requiredClass) {
     final List<Psi> result = new SmartList<>();
     Processor<Psi> processor = Processors.cancelableCollectProcessor(result);
     getInstance().processElements(indexKey, key, project, scope, idFilter, requiredClass, processor);
@@ -108,7 +111,8 @@ public abstract class StubIndex {
   /**
    * @return lazily reified iterator of VirtualFile's.
    */
-  public abstract @NotNull <Key> Iterator<VirtualFile> getContainingFilesIterator(@NotNull StubIndexKey<Key, ?> indexKey,
+  @NotNull
+  public abstract <Key> Iterator<VirtualFile> getContainingFilesIterator(@NotNull StubIndexKey<Key, ?> indexKey,
                                                                          @NotNull @NonNls Key dataKey,
                                                                          @NotNull Project project,
                                                                          @NotNull GlobalSearchScope scope);
@@ -117,7 +121,8 @@ public abstract class StubIndex {
    * @deprecated use {@link StubIndex#getContainingFilesIterator(StubIndexKey, Object, Project, GlobalSearchScope)}
    */
   @Deprecated(forRemoval = true)
-  public @NotNull <Key> Set<VirtualFile> getContainingFiles(@NotNull StubIndexKey<Key, ?> indexKey,
+  @NotNull
+  public <Key> Set<VirtualFile> getContainingFiles(@NotNull StubIndexKey<Key, ?> indexKey,
                                                    @NotNull @NonNls Key dataKey,
                                                    @NotNull Project project,
                                                    @NotNull GlobalSearchScope scope) {
@@ -135,8 +140,8 @@ public abstract class StubIndex {
   public abstract void forceRebuild(@NotNull Throwable e);
 
   /**
-   * @param fileElementType {@link IFileElementType} to track changes for.
-   * @return {@link ModificationTracker} that changes stamp on every file update (with corresponding {@link IFileElementType})
+   * @param fileElementType {@link StubFileElementType} to track changes for.
+   * @return {@link ModificationTracker} that changes stamp on every file update (with corresponding {@link StubFileElementType})
    * for which the stub has changed.
    * @implNote doesn't track changes of files with binary content. Modification tracking happens before the StubIndex update, so one can use
    * this tracker to react on stub changes without performing the index update. File is considered modified if a stub for its actual content
@@ -144,7 +149,7 @@ public abstract class StubIndex {
    */
   @Internal
   @ApiStatus.Experimental
-  public abstract @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull IFileElementType fileElementType);
+  public abstract @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull StubFileElementType<?> fileElementType);
 
   @Internal
   @ApiStatus.Experimental

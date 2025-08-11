@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package org.jetbrains.idea.devkit.navigation.structure;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -9,7 +11,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -26,8 +27,9 @@ public class PluginDescriptorTreeElement extends PsiTreeElementBase<XmlTag> impl
   }
 
 
+  @NotNull
   @Override
-  public @NotNull @Unmodifiable Collection<StructureViewTreeElement> getChildrenBase() {
+  public Collection<StructureViewTreeElement> getChildrenBase() {
     XmlTag tag = getElement();
     if (tag == null || !tag.isValid()) {
       return Collections.emptyList();
@@ -35,8 +37,9 @@ public class PluginDescriptorTreeElement extends PsiTreeElementBase<XmlTag> impl
     return ContainerUtil.map(tag.getSubTags(), psiElement -> new PluginDescriptorTreeElement(psiElement, false, myIsRoot));
   }
 
+  @Nullable
   @Override
-  public @Nullable String getPresentableText() {
+  public String getPresentableText() {
     XmlTag element = getElement();
     try {
       return PluginDescriptorStructureUtil.getTagDisplayText(element);

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.chainsSearch.context;
 
 import com.intellij.compiler.CompilerReferenceService;
@@ -42,15 +42,24 @@ public final class ChainCompletionContext {
   };
   private static final Set<String> WIDELY_USED_SHORT_NAMES = Set.of("String", "Object", "Class");
 
-  private final @NotNull ChainSearchTarget myTarget;
-  private final @NotNull List<PsiNamedElement> myContextElements;
-  private final @NotNull PsiElement myContext;
-  private final @NotNull GlobalSearchScope myResolveScope;
-  private final @NotNull Project myProject;
-  private final @NotNull PsiResolveHelper myResolveHelper;
-  private final @NotNull Int2ObjectMap<PsiClass> myQualifierClassResolver;
-  private final @NotNull Map<MethodCall, PsiMethod[]> myResolver;
-  private final @NotNull CompilerReferenceServiceEx myRefService;
+  @NotNull
+  private final ChainSearchTarget myTarget;
+  @NotNull
+  private final List<PsiNamedElement> myContextElements;
+  @NotNull
+  private final PsiElement myContext;
+  @NotNull
+  private final GlobalSearchScope myResolveScope;
+  @NotNull
+  private final Project myProject;
+  @NotNull
+  private final PsiResolveHelper myResolveHelper;
+  @NotNull
+  private final Int2ObjectMap<PsiClass> myQualifierClassResolver;
+  @NotNull
+  private final Map<MethodCall, PsiMethod[]> myResolver;
+  @NotNull
+  private final CompilerReferenceServiceEx myRefService;
 
   private final NotNullLazyValue<Set<CompilerRef>> myContextClassReferences;
 
@@ -85,7 +94,8 @@ public final class ChainCompletionContext {
       });
   }
 
-  public @NotNull ChainSearchTarget getTarget() {
+  @NotNull
+  public ChainSearchTarget getTarget() {
     return myTarget;
   }
 
@@ -101,11 +111,13 @@ public final class ChainCompletionContext {
     return false;
   }
 
-  public @NotNull CompilerReferenceServiceEx getRefService() {
+  @NotNull
+  public CompilerReferenceServiceEx getRefService() {
     return myRefService;
   }
 
-  public @NotNull PsiElement getContextPsi() {
+  @NotNull
+  public PsiElement getContextPsi() {
     return myContext;
   }
 
@@ -113,19 +125,23 @@ public final class ChainCompletionContext {
     return myContext.getContainingFile();
   }
 
-  public @NotNull Set<PsiType> getContextTypes() {
+  @NotNull
+  public Set<PsiType> getContextTypes() {
     return myContextElements.stream().map(ChainCompletionContext::getType).collect(Collectors.toSet());
   }
 
-  public @NotNull Set<CompilerRef> getContextClassReferences() {
+  @NotNull
+  public Set<CompilerRef> getContextClassReferences() {
     return myContextClassReferences.getValue();
   }
 
-  public @NotNull GlobalSearchScope getResolveScope() {
+  @NotNull
+  public GlobalSearchScope getResolveScope() {
     return myResolveScope;
   }
 
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myProject;
   }
 
@@ -192,7 +208,8 @@ public final class ChainCompletionContext {
     return new ChainCompletionContext(target, contextElements, containingElement, compilerReferenceService);
   }
 
-  private static @NotNull Set<? extends PsiVariable> getEnclosingLocalVariables(@NotNull PsiElement place) {
+  @NotNull
+  private static Set<? extends PsiVariable> getEnclosingLocalVariables(@NotNull PsiElement place) {
     Set<PsiLocalVariable> result = new HashSet<>();
     if (place instanceof PsiLocalVariable) result.add((PsiLocalVariable)place);
     PsiElement parent = place.getParent();
@@ -257,13 +274,15 @@ public final class ChainCompletionContext {
       return null;
     }
 
-    public @NotNull List<PsiNamedElement> getContextElements() {
+    @NotNull
+    public List<PsiNamedElement> getContextElements() {
       myContextElements.remove(myCompletionVariable);
       return myContextElements;
     }
   }
 
-  private static @Nullable PsiType getType(PsiElement element) {
+  @Nullable
+  private static PsiType getType(PsiElement element) {
     if (element instanceof PsiVariable) {
       return ((PsiVariable)element).getType();
     }

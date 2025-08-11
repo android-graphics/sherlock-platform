@@ -14,7 +14,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlNamedReferenceProviderBean;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,7 +38,6 @@ final class NamedReferenceProviders {
   }
 
   @NotNull
-  @Unmodifiable
   Collection<XmlNamedReferenceProviderBean> getNamedReferenceProviderBeans(@NotNull XmlNamedReferenceHost element) {
     final String hostName = element.getHostName();
     if (hostName == null) {
@@ -85,7 +83,6 @@ final class NamedReferenceProviders {
     }
 
     @NotNull
-    @Unmodifiable
     Collection<XmlNamedReferenceProviderBean> byHostName(@NotNull String hostName) {
       return ContainerUtil.concat(
         ObjectUtils.notNull(myCaseSensitiveMap.get(hostName), Collections.emptyList()),

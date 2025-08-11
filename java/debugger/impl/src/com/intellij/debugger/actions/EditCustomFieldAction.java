@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.JavaValue;
@@ -31,7 +31,7 @@ public class EditCustomFieldAction extends XDebuggerTreeActionBase {
   }
 
   @Override
-  public void update(final @NotNull AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     boolean enabled = false;
     List<JavaValue> values = ViewAsGroup.getSelectedValues(e);
     if (values.size() == 1) {
@@ -40,7 +40,8 @@ public class EditCustomFieldAction extends XDebuggerTreeActionBase {
     e.getPresentation().setEnabledAndVisible(enabled);
   }
 
-  static @Nullable EnumerationChildrenRenderer getParentEnumerationRenderer(ValueDescriptorImpl descriptor) {
+  @Nullable
+  static EnumerationChildrenRenderer getParentEnumerationRenderer(ValueDescriptorImpl descriptor) {
     if (descriptor instanceof UserExpressionDescriptorImpl) {
       return EnumerationChildrenRenderer.getCurrent(((UserExpressionDescriptorImpl)descriptor).getParentDescriptor());
     }

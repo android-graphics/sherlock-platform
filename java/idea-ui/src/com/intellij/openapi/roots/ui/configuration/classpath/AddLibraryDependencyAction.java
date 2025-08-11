@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
@@ -76,7 +76,8 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
   }
 
   @Override
-  protected @Nullable ClasspathTableItem<?> createTableItem(final Library item) {
+  @Nullable
+  protected ClasspathTableItem<?> createTableItem(final Library item) {
     // clear invalid order entry corresponding to added library if any
     final ModifiableRootModel rootModel = myClasspathPanel.getRootModel();
     final OrderEntry[] orderEntries = rootModel.getOrderEntries();
@@ -110,7 +111,8 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
 
   class ExistingLibraryChooser implements ClasspathElementChooser<Library> {
     @Override
-    public @NotNull List<Library> chooseElements() {
+    @NotNull
+    public List<Library> chooseElements() {
       ProjectStructureChooseLibrariesDialog dialog = new ProjectStructureChooseLibrariesDialog(myClasspathPanel, myContext,
                                                                                                getNotAddedSuitableLibrariesCondition());
       dialog.show();

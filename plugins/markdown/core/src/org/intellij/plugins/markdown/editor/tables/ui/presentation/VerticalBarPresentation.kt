@@ -9,7 +9,7 @@ import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ToolbarUtils
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
 import com.intellij.psi.util.startOffset
 import com.intellij.ui.LightweightHint
-import com.intellij.util.SlowOperations
 import com.intellij.util.ui.GraphicsUtil
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.isSoftWrapping
 import org.intellij.plugins.markdown.editor.tables.TableUtils
@@ -68,13 +67,8 @@ internal class VerticalBarPresentation(
   }
 
   private fun shouldShowInlay(): Boolean {
-    if (editor.isDisposed) {
+    if (!row.isValid || editor.isDisposed) {
       return false
-    }
-    SlowOperations.knownIssue("IJPL-162791").use {
-      if (!row.isValid) {
-        return false
-      }
     }
     val table = TableUtils.findTable(row) ?: return false
     return !table.isSoftWrapping(editor)
@@ -105,13 +99,8 @@ internal class VerticalBarPresentation(
   }
 
   override fun paint(graphics: Graphics2D, attributes: TextAttributes) {
-    if (editor.isDisposed || boundsState == initialState) {
+    if (!row.isValid || editor.isDisposed || boundsState == initialState) {
       return
-    }
-    SlowOperations.knownIssue("IJPL-162800").use {
-      if (!row.isValid) {
-        return
-      }
     }
     graphics.useCopy { local ->
       GraphicsUtil.setupAntialiasing(local)
@@ -217,9 +206,7 @@ internal class VerticalBarPresentation(
   }
 
   private fun showToolbar() {
-    val targetComponent = ToolbarUtils.createTargetComponent(editor) { sink ->
-      uiDataSnapshot(sink, row)
-    }
+    val targetComponent = TableActionKeys.createDataContextComponent(editor, createDataProvider(row))
     ToolbarUtils.createImmediatelyUpdatedToolbar(
       group = rowActionGroup,
       place = TableActionPlaces.TABLE_INLAY_TOOLBAR,
@@ -249,9 +236,14 @@ internal class VerticalBarPresentation(
 
     private val initialState = BoundsState(0, 0)
 
-    private fun uiDataSnapshot(sink: DataSink, row: PsiElement) {
+    private fun createDataProvider(row: PsiElement): DataProvider {
       val elementReference = WeakReference(row)
-      sink.lazy(TableActionKeys.ELEMENT) { elementReference }
+      return DataProvider {
+        when {
+          TableActionKeys.ELEMENT.`is`(it) -> elementReference
+          else -> null
+        }
+      }
     }
 
     private fun wrapPresentation(factory: PresentationFactory, editor: Editor, presentation: InlayPresentation): InlayPresentation {

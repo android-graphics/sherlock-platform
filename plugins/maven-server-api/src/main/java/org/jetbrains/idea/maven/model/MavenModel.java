@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class MavenModel extends MavenModelBase {

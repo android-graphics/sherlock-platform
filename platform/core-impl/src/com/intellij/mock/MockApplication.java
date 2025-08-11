@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.AnyModalityState;
 import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -25,7 +24,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -75,10 +73,6 @@ public class MockApplication extends MockComponentManager implements Application
       }
     }
     return service;
-  }
-
-  private static @NotNull Logger getLogger() {
-    return Logger.getInstance(MockApplication.class);
   }
 
   @Override
@@ -264,26 +258,24 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Override
   public void invokeLater(final @NotNull Runnable runnable, final @NotNull Condition<?> expired) {
-    logInsufficientIsolation("invokeLater", runnable, expired);
-    SwingUtilities.invokeLater(runnable);
   }
 
   @Override
   public void invokeLater(final @NotNull Runnable runnable, final @NotNull ModalityState state, final @NotNull Condition<?> expired) {
-    logInsufficientIsolation("invokeLater", runnable, state, expired);
-    SwingUtilities.invokeLater(runnable);
   }
 
   @Override
   public void invokeLater(@NotNull Runnable runnable) {
-    logInsufficientIsolation("invokeLater", runnable);
-    SwingUtilities.invokeLater(runnable);
   }
 
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state) {
-    logInsufficientIsolation("invokeLater", runnable, state);
-    SwingUtilities.invokeLater(runnable);
+  }
+
+  @Deprecated
+  @Override
+  public @NotNull ModalityInvokator getInvokator() {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -369,6 +361,11 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
+  public <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public boolean isWriteActionInProgress() {
     return false;
   }
@@ -393,20 +390,5 @@ public class MockApplication extends MockComponentManager implements Application
     // Ensure that we have cached against correct application.
     MetaLanguage.clearAllMatchingMetaLanguagesCache();
     super.dispose();
-  }
-
-  private static volatile boolean warningLogged = false;
-
-  @SuppressWarnings("SameParameterValue")
-  private void logInsufficientIsolation(String methodName, Object... args) {
-    if (warningLogged || !isUnitTestMode()) {
-      return;
-    }
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    warningLogged = true;
-    getLogger().warn("Attempt to execute method \"" + methodName + "\" with arguments `" +
-                     Arrays.toString(args) + "` within a MockApplication.\n" +
-                     "This is likely caused by an improper test isolation. Please consider writing tests with JUnit 5 fixtures.",
-                     new Throwable());
   }
 }

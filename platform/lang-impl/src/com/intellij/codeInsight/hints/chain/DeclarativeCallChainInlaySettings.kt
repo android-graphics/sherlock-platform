@@ -4,12 +4,10 @@ package com.intellij.codeInsight.hints.chain
 import com.intellij.lang.Language
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 @State(name = "DeclarativeCallChainInlaySettings", storages = [Storage("editor.xml")], category = SettingsCategory.CODE)
-class DeclarativeCallChainInlaySettings : SimplePersistentStateComponent<DeclarativeCallChainInlaySettings.CallChainsState>(CallChainsState()) {
+internal class DeclarativeCallChainInlaySettings : SimplePersistentStateComponent<DeclarativeCallChainInlaySettings.CallChainsState>(CallChainsState()) {
   companion object {
     @JvmStatic
     fun getInstance(project: Project) : DeclarativeCallChainInlaySettings {
@@ -35,7 +33,7 @@ class DeclarativeCallChainInlaySettings : SimplePersistentStateComponent<Declara
     }
   }
 
-  class CallChainsState : BaseState() {
+  internal class CallChainsState : BaseState() {
     var languageToLength: MutableMap<String, Int> by map()
   }
 }

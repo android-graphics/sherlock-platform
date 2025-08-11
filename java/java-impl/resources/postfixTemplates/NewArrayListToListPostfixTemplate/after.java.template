@@ -1,3 +1,0 @@
-public void m(Set<String> value) {
-  new ArrayList<>(value)<spot></spot>
-}

@@ -3,19 +3,16 @@ package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.IntentionSource
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Wrapper for IntentionAction to allow assigning keyboard shortcuts to it
  *
  * The wrapper actions are created and managed by [IntentionShortcutManager].
  */
-@ApiStatus.Internal
 class IntentionActionAsAction(intention: IntentionAction)
   : AnAction({ CodeInsightBundle.message("intention.action.wrapper.name", intention.familyName) }) {
 
@@ -28,7 +25,7 @@ class IntentionActionAsAction(intention: IntentionAction)
     val file = dataContext.getData(CommonDataKeys.PSI_FILE) ?: return
     val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return
 
-    intention.invokeAsAction(editor, file, IntentionSource.CUSTOM_SHORTCUT)
+    intention.invokeAsAction(editor, file)
   }
 
   override fun update(e: AnActionEvent) {

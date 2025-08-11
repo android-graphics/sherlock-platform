@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.diff.impl.settings;
 
@@ -32,7 +32,7 @@ class DiffColorDescriptionPanel extends JPanel implements OptionsPanelImpl.Color
   private ColorPanel myStripeMarkColorPanel;
   private JBCheckBox myInheritIgnoredCheckBox;
 
-  private final @NotNull ColorAndFontOptions myOptions;
+  @NotNull private final ColorAndFontOptions myOptions;
 
   DiffColorDescriptionPanel(@NotNull ColorAndFontOptions options) {
     super(new BorderLayout());
@@ -62,8 +62,9 @@ class DiffColorDescriptionPanel extends JPanel implements OptionsPanelImpl.Color
     });
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent getPanel() {
+  public JComponent getPanel() {
     return this;
   }
 
@@ -120,15 +121,18 @@ class DiffColorDescriptionPanel extends JPanel implements OptionsPanelImpl.Color
     myDispatcher.addListener(listener);
   }
 
-  private static @Nullable Color getBackgroundColor(@NotNull TextAttributes attributes) {
+  @Nullable
+  private static Color getBackgroundColor(@NotNull TextAttributes attributes) {
     return attributes.getBackgroundColor();
   }
 
-  private static @Nullable Color getIgnoredColor(@NotNull TextAttributes attributes) {
+  @Nullable
+  private static Color getIgnoredColor(@NotNull TextAttributes attributes) {
     return attributes.getForegroundColor();
   }
 
-  private static @Nullable Color getStripeMarkColor(@NotNull TextAttributes attributes) {
+  @Nullable
+  private static Color getStripeMarkColor(@NotNull TextAttributes attributes) {
     return attributes.getErrorStripeColor();
   }
 

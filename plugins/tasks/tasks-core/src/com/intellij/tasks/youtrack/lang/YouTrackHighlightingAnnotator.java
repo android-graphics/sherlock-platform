@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.youtrack.lang;
 
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -23,8 +23,9 @@ import static com.intellij.tasks.youtrack.lang.YouTrackHighlightingAnnotator.Que
 public class YouTrackHighlightingAnnotator extends ExternalAnnotator<QueryInfo, List<HighlightRange>> {
   private static final Logger LOG = Logger.getInstance(YouTrackHighlightingAnnotator.class);
 
+  @Nullable
   @Override
-  public @Nullable QueryInfo collectInformation(@NotNull PsiFile file, @NotNull Editor editor, boolean hasErrors) {
+  public QueryInfo collectInformation(@NotNull PsiFile file, @NotNull Editor editor, boolean hasErrors) {
     final YouTrackIntellisense intellisense = file.getUserData(YouTrackIntellisense.INTELLISENSE_KEY);
     if (intellisense == null || !intellisense.getRepository().isConfigured()) {
       return null;
@@ -35,8 +36,9 @@ public class YouTrackHighlightingAnnotator extends ExternalAnnotator<QueryInfo, 
     return new QueryInfo(offset, text, intellisense);
   }
 
+  @Nullable
   @Override
-  public @Nullable List<HighlightRange> doAnnotate(QueryInfo collectedInfo) {
+  public List<HighlightRange> doAnnotate(QueryInfo collectedInfo) {
     if (collectedInfo == null) {
       return Collections.emptyList();
     }

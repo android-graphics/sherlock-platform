@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -17,12 +17,14 @@ public abstract class RunAnythingMatchedRunConfigurationProvider extends RunAnyt
    *
    * @return created run configuration
    */
-  public abstract @NotNull RunnerAndConfigurationSettings createConfiguration(@NotNull DataContext dataContext, @NotNull String pattern);
+  @NotNull
+  public abstract RunnerAndConfigurationSettings createConfiguration(@NotNull DataContext dataContext, @NotNull String pattern);
 
   /**
    * Returns current provider associated run configuration factory
    */
-  public abstract @NotNull ConfigurationFactory getConfigurationFactory();
+  @NotNull
+  public abstract ConfigurationFactory getConfigurationFactory();
 
   @Override
   public Icon getHelpIcon() {

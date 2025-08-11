@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.impl.EmptySoftWrapModel
 import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus
 import kotlin.math.min
 
 internal class IntentionPreviewEditor(psiFileCopy: PsiFile, private val settings: EditorSettings)
@@ -42,6 +41,5 @@ internal class IntentionPreviewEditor(psiFileCopy: PsiFile, private val settings
   override fun getSoftWrapModel(): SoftWrapModel = EmptySoftWrapModel()
 }
 
-@ApiStatus.Internal
 class IntentionPreviewUnsupportedOperationException
   : UnsupportedOperationException("It's unexpected to invoke this method on an intention preview calculating.")

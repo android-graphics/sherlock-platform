@@ -1,9 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -14,7 +17,8 @@ import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public abstract class SearchListModel extends AbstractListModel<Object> {
-  public static final Object MORE_ELEMENT = new Object();
+
+  static final Object MORE_ELEMENT = new Object();
 
   public record ResultsNotificationElement(@NotNull @Nls String label) {
   }
@@ -61,11 +65,13 @@ public abstract class SearchListModel extends AbstractListModel<Object> {
       .collect(Collectors.toList());
   }
 
-  protected @NotNull List<SearchEverywhereContributor> contributors() {
+  @NotNull
+  protected List<SearchEverywhereContributor> contributors() {
     return Lists.transform(listElements, info -> info.getContributor());
   }
 
-  protected @NotNull List<Object> values() {
+  @NotNull
+  protected List<Object> values() {
     return Lists.transform(listElements, info -> info.getElement());
   }
 
@@ -101,12 +107,14 @@ public abstract class SearchListModel extends AbstractListModel<Object> {
     return getElementAt(index) == MORE_ELEMENT;
   }
 
-  public @Nullable <Item> SearchEverywhereContributor<Item> getContributorForIndex(int index) {
+  @Nullable
+  public <Item> SearchEverywhereContributor<Item> getContributorForIndex(int index) {
     //noinspection unchecked
     return (SearchEverywhereContributor<Item>)listElements.get(index).getContributor();
   }
 
-  public @Unmodifiable @NotNull List<SearchEverywhereFoundElementInfo> getFoundElementsInfo() {
+  @NotNull
+  public List<SearchEverywhereFoundElementInfo> getFoundElementsInfo() {
     return ContainerUtil.filter(listElements, info -> info.element != MORE_ELEMENT
                                                       && !(info.element instanceof ResultsNotificationElement));
   }

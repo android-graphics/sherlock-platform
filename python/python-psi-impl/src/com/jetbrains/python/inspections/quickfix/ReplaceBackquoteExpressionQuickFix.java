@@ -26,8 +26,9 @@ import com.jetbrains.python.psi.PyReprExpression;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceBackquoteExpressionQuickFix extends PsiUpdateModCommandQuickFix {
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.replace.backquote.expression");
   }
 

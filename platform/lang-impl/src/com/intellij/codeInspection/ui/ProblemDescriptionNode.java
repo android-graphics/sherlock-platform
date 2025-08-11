@@ -82,7 +82,8 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     return myMessage == null;
   }
 
-  public @Nullable String getToolTipText() {
+  @Nullable
+  public String getToolTipText() {
     if (!isValid()) return null;
     if (myMessage != null) return myMessage;
     CommonProblemDescriptor descriptor = getDescriptor();
@@ -108,16 +109,19 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     return super.canSuppress() && !isQuickFixAppliedFromView();
   }
 
-  public @NotNull InspectionToolWrapper<?, ?> getToolWrapper() {
+  @NotNull
+  public InspectionToolWrapper<?, ?> getToolWrapper() {
     return getPresentation().getToolWrapper();
   }
 
   @Override
-  public @Nullable RefEntity getElement() {
+  @Nullable
+  public RefEntity getElement() {
     return myElement;
   }
 
-  public @Nullable CommonProblemDescriptor getDescriptor() {
+  @Nullable
+  public CommonProblemDescriptor getDescriptor() {
     return myDescriptor;
   }
 
@@ -165,8 +169,9 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   private static final Interner<String> NAME_INTERNER = Interner.createWeakInterner();
 
+  @NotNull
   @Override
-  protected @NotNull String calculatePresentableName() {
+  protected String calculatePresentableName() {
     CommonProblemDescriptor descriptor = getDescriptor();
     if (descriptor == null) return "";
     String name = ReadAction.compute(() -> {
@@ -181,14 +186,16 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     return myDescriptor != null && getPresentation().isProblemResolved(myDescriptor) && !isAlreadySuppressedFromView();
   }
 
+  @Nullable
   @Override
-  public @Nullable String getTailText() {
+  public String getTailText() {
     final String text = super.getTailText();
     return text == null ? "" : text;
   }
 
+  @NotNull
   @Override
-  public @NotNull Pair<PsiElement, CommonProblemDescriptor> getSuppressContent() {
+  public Pair<PsiElement, CommonProblemDescriptor> getSuppressContent() {
     RefEntity refElement = getElement();
     CommonProblemDescriptor descriptor = getDescriptor();
     PsiElement element = descriptor instanceof ProblemDescriptor

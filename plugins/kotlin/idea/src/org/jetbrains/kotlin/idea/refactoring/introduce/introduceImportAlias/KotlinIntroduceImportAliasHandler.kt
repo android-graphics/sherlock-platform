@@ -39,8 +39,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.resolve.scopes.utils.findPackage
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.jetbrains.kotlin.utils.exceptions.checkWithAttachment
-import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
+import org.jetbrains.kotlin.utils.checkWithAttachment
 
 object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
     private val REFACTORING_NAME = KotlinBundle.message("name.introduce.import.alias")
@@ -89,7 +88,7 @@ object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
             validator = validator,
             defaultName = { fqName.asString().replace('.', '_') })
         checkWithAttachment(suggestionsName.isNotEmpty(), { "Unable to build any suggestion name for $fqName" }) {
-            withPsiEntry("file.kt", file)
+            it.withPsiAttachment("file.kt", file)
         }
         val newName = suggestionsName.first()
         suggestedImportAliasNames = suggestionsName

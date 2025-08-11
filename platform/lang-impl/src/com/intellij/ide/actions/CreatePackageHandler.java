@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
@@ -24,8 +24,8 @@ final class CreatePackageHandler extends CreateGroupHandler {
   private static final String DELIMITER = ".";
   private static final String REGEX_DELIMITER = Pattern.quote(DELIMITER);
 
-  private final @NotNull PsiDirectory myPackageRoot;
-  private final @NotNull String myInitialText;
+  @NotNull private final PsiDirectory myPackageRoot;
+  @NotNull private final String myInitialText;
 
   CreatePackageHandler(@NotNull Project project, @NotNull PsiDirectory directory) {
     super(project, directory);
@@ -115,7 +115,8 @@ final class CreatePackageHandler extends CreateGroupHandler {
     return myInitialText;
   }
 
-  private @NotNull String buildInitialText() {
+  @NotNull
+  private String buildInitialText() {
     if (myPackageRoot.isEquivalentTo(myDirectory)) return "";
 
     final String root = myPackageRoot.getVirtualFile().getPath();
@@ -124,7 +125,8 @@ final class CreatePackageHandler extends CreateGroupHandler {
     return current.substring(root.length() + 1).replace("/", DELIMITER) + DELIMITER;
   }
 
-  private @NotNull PsiDirectory getPackageRoot() {
+  @NotNull
+  private PsiDirectory getPackageRoot() {
     final PsiDirectoryFactory manager = PsiDirectoryFactory.getInstance(myProject);
     PsiDirectory directory = myDirectory;
     PsiDirectory parent = directory.getParent();

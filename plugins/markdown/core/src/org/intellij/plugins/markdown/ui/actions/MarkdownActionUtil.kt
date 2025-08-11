@@ -21,7 +21,6 @@ import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
 import org.jetbrains.annotations.ApiStatus
-import org.intellij.plugins.markdown.lang.supportsMarkdown
 
 @ApiStatus.Internal
 object MarkdownActionUtil {
@@ -48,22 +47,16 @@ object MarkdownActionUtil {
     val splitEditor = findSplitEditor(event) ?: return null
     val editor = splitEditor.previewEditor
     return when {
-      editor !is MarkdownPreviewFileEditor || !editor.component.isVisible -> null
+      editor !is MarkdownPreviewFileEditor || !editor.getComponent().isVisible -> null
       else -> editor
     }
   }
 
-  /**
-   * @param strictMarkdown If true, requires pure Markdown language;
-   * if false, allows Markdown-compatible languages (such as Jupyter).
-   */
   @JvmStatic
-  @JvmOverloads
-  fun findMarkdownEditor(event: AnActionEvent, strictMarkdown: Boolean = false): Editor? {
+  fun findMarkdownEditor(event: AnActionEvent): Editor? {
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return null
     return when {
-      if (strictMarkdown) file.language.isMarkdownLanguage() else file.language.supportsMarkdown() ->
-        event.getData(CommonDataKeys.EDITOR)
+      file.language.isMarkdownLanguage() -> event.getData(CommonDataKeys.EDITOR)
       else -> null
     }
   }

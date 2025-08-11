@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
 import com.intellij.psi.PsiType;
@@ -55,7 +55,8 @@ public final class GrBinaryExpressionTypeCalculators {
     MAP.put(GroovyTokenTypes.mREGEX_MATCH, GrBooleanExpressionTypeCalculator.INSTANCE);
   }
 
-  public static @Nullable PsiType computeType(@NotNull GrOperatorExpression e) {
+  @Nullable
+  public static PsiType computeType(@NotNull GrOperatorExpression e) {
     if (isFake(e)) return null;
     final Function<GrOperatorExpression, PsiType> function = MAP.get(e.getOperator());
     assert function != null : e.getOperator();

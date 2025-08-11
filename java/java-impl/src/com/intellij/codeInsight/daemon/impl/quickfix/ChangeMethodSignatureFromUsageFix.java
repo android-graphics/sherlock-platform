@@ -39,7 +39,6 @@ import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,9 +141,6 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myTargetMethod.isValid() || myTargetMethod.getContainingClass() == null) return false;
-    if (ContainerUtil.exists(myTargetMethod.getParameterList().getParameters(), p -> !p.isValid())) {
-      return false;
-    }
     for (PsiExpression expression : myExpressions) {
       if (!expression.isValid()) return false;
     }
@@ -358,9 +354,8 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
           if (PsiPolyExpressionUtil.isPolyExpression(expression)) return null;
           PsiType exprType = CommonJavaRefactoringUtil.getTypeByExpression(expression);
           if (exprType == null || PsiTypes.voidType().equals(exprType)) return null;
-          exprType = PsiTypesUtil.removeExternalAnnotations(exprType);
-          if (exprType instanceof PsiDisjunctionType disjunctionType) {
-            exprType = disjunctionType.getLeastUpperBound();
+          if (exprType instanceof PsiDisjunctionType) {
+            exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
           }
           if (!PsiTypesUtil.allTypeParametersResolved(myTargetMethod, exprType)) return null;
           final ParameterInfoImpl changedParameterInfo = ParameterInfoImpl.create(i).withName(parameter.getName()).withType(exprType);
@@ -451,10 +446,9 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         if (PsiPolyExpressionUtil.isPolyExpression(expression)) return false;
         PsiType exprType = CommonJavaRefactoringUtil.getTypeByExpression(expression);
         if (exprType == null || PsiTypes.voidType().equals(exprType)) return false;
-        if (exprType instanceof PsiDisjunctionType disjunctionType) {
-          exprType = disjunctionType.getLeastUpperBound();
+        if (exprType instanceof PsiDisjunctionType) {
+          exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
         }
-        exprType = PsiTypesUtil.removeExternalAnnotations(exprType);
         if (!PsiTypesUtil.allTypeParametersResolved(myTargetMethod, exprType)) return false;
         JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
         String name = suggestUniqueParameterName(codeStyleManager, expression, exprType, existingNames);

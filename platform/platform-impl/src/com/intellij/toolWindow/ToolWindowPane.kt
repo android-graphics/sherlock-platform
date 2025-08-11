@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("GraphicsSetClipInspection")
 
 package com.intellij.toolWindow
@@ -10,8 +10,6 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.application.impl.InternalUICustomization
-import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ThreeComponentsSplitter
 import com.intellij.openapi.util.Disposer
@@ -29,7 +27,7 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getAdjustedRatio
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getRegisteredMutableInfoOrLogError
 import com.intellij.openapi.wm.impl.WindowInfoImpl
-import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.DevicePoint
@@ -43,9 +41,10 @@ import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.VisibleForTesting
-import java.awt.*
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Image
 import java.awt.geom.Point2D
 import java.awt.image.BufferedImage
 import java.lang.ref.SoftReference
@@ -62,9 +61,9 @@ private val LOG = logger<ToolWindowPane>()
 /**
  * This panel contains all tool stripes and JLayeredPane at the center area. All tool windows are located inside this layered pane.
  */
-@Internal
-class ToolWindowPane private constructor(
+class ToolWindowPane internal constructor(
   frame: JFrame,
+  coroutineScope: CoroutineScope,
   val paneId: String,
   @field:JvmField internal val buttonManager: ToolWindowButtonManager,
 ) : JLayeredPane(), UISettingsListener {
@@ -72,7 +71,6 @@ class ToolWindowPane private constructor(
     const val TEMPORARY_ADDED: String = "TEMPORARY_ADDED"
 
     // the size of the topmost 'resize' area when toolwindow caption is used for both resize and drag
-    @get:JvmName("getHeaderResizeArea")
     internal val headerResizeArea: Int
       get() = JBUI.scale(Registry.intValue("ide.new.tool.window.resize.area.height", 14, 1, 26))
 
@@ -84,42 +82,6 @@ class ToolWindowPane private constructor(
     }
 
     internal fun log() = LOG
-
-    internal fun create(frame: JFrame, coroutineScope: CoroutineScope, paneId: String, buttonManager: ToolWindowButtonManager): ToolWindowPane {
-      return ToolWindowPane(frame, paneId, buttonManager).also { pane ->
-        val app = ApplicationManager.getApplication()
-        app.messageBus.connect(coroutineScope).subscribe(LafManagerListener.TOPIC, LafManagerListener { pane.isLookAndFeelUpdated = true })
-      }
-    }
-
-    internal fun create(frame: JFrame, coroutineScope: CoroutineScope, paneId: String): ToolWindowPane {
-      val buttonManager = createButtonManager(paneId)
-      return create(frame, coroutineScope, paneId, buttonManager)
-    }
-
-    // this is a method strictly for use in tests
-    // will not react to LaF changes, so if you want to test this - use one of the methods with coroutine scope
-    @Internal
-    @VisibleForTesting
-    fun create(frame: JFrame, paneId: String): ToolWindowPane {
-      val buttonManager = createButtonManager(paneId)
-      return ToolWindowPane(frame, paneId, buttonManager)
-    }
-
-    private fun createButtonManager(paneId: String): ToolWindowButtonManager {
-      InternalUICustomization.getInstance().internalCustomizer.createCustomButtonManager(paneId)?.let {
-        return it
-      }
-
-      val buttonManager: ToolWindowButtonManager
-      if (ExperimentalUI.isNewUI()) {
-        buttonManager = ToolWindowPaneNewButtonManager(paneId)
-      }
-      else {
-        buttonManager = ToolWindowPaneOldButtonManager(paneId)
-      }
-      return buttonManager
-    }
   }
 
   private var isLookAndFeelUpdated = false
@@ -152,17 +114,19 @@ class ToolWindowPane private constructor(
 
     // splitters
     verticalSplitter = ThreeComponentsSplitter(true)
-    horizontalSplitter = ThreeComponentsSplitter(false)
-    setUpSplitter(verticalSplitter)
-    setUpSplitter(horizontalSplitter)
-
     val registryValue = Registry.get("ide.mainSplitter.min.size")
     registryValue.addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
         updateInnerMinSize(value)
       }
     }, disposable)
-
+    verticalSplitter.dividerWidth = 0
+    verticalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"))
+    verticalSplitter.background = JBColor.GRAY
+    horizontalSplitter = ThreeComponentsSplitter(false)
+    horizontalSplitter.dividerWidth = 0
+    horizontalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"))
+    horizontalSplitter.background = JBColor.GRAY
     updateInnerMinSize(registryValue)
     val uiSettings = UISettings.getInstance()
     isWideScreen = uiSettings.wideScreenSupport
@@ -180,20 +144,15 @@ class ToolWindowPane private constructor(
     layeredPane = FrameLayeredPane(if (isWideScreen) horizontalSplitter else verticalSplitter, frame = frame)
 
     // compose layout
-    buttonManager.setupToolWindowPane(this)
+    buttonManager.addToToolWindowPane(this)
     add(layeredPane, DEFAULT_LAYER, -1)
     focusTraversalPolicy = LayoutFocusTraversalPolicy()
     ToolWindowDragHelper(disposable, this).start()
     if (Registry.`is`("ide.allow.split.and.reorder.in.tool.window")) {
       ToolWindowInnerDragHelper(disposable, this).start()
     }
-  }
-
-  private fun setUpSplitter(splitter: ThreeComponentsSplitter) {
-    splitter.dividerWidth = 0
-    splitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"))
-
-    splitter.background = InternalUICustomization.getInstance().getToolWindowsPaneThreeSplitterBackground()
+    val app = ApplicationManager.getApplication()
+    app.messageBus.connect(coroutineScope).subscribe(LafManagerListener.TOPIC, LafManagerListener { isLookAndFeelUpdated = true })
   }
 
   override fun removeNotify() {
@@ -309,10 +268,8 @@ class ToolWindowPane private constructor(
 
   internal fun setWeight(anchor: ToolWindowAnchor, weight: Float) {
     setAnchorWeightFutures.remove(anchor)?.cancel(false)
-    // can be null in tests
-    val rootPane = rootPane
-    val size = rootPane?.size ?: Dimension()
-    if (rootPane != null && size.height == 0 && size.width == 0) {
+    val size = rootPane.size
+    if (size.height == 0 && size.width == 0) {
       if (LOG.isDebugEnabled) {
         LOG.debug("Postponing setting the weight of the anchor $anchor because the root pane size is $size")
       }
@@ -615,10 +572,6 @@ class ToolWindowPane private constructor(
         }
       }
 
-      override fun createDivider(): Divider {
-        return InternalUICustomization.getInstance().createCustomDivider(isVisible, this) ?: super.createDivider()
-      }
-
       override fun toString() = "[$firstComponent|$secondComponent]"
     }
 
@@ -886,8 +839,8 @@ private class FrameLayeredPane(splitter: JComponent, frame: JFrame) : JLayeredPa
       }
 
       val info = component.toolWindow.windowInfo
-      val rootWidth = rootPane?.width ?: 0
-      val rootHeight = rootPane?.height ?: 0
+      val rootWidth = rootPane.width
+      val rootHeight = rootPane.height
       val weight = if (info.anchor.isHorizontal) getAdjustedRatio(component.getHeight(), rootHeight, 1)
       else getAdjustedRatio(component.getWidth(), rootWidth, 1)
       setBoundsInPaletteLayer(component, info.anchor, weight)
@@ -902,8 +855,8 @@ private class FrameLayeredPane(splitter: JComponent, frame: JFrame) : JLayeredPa
     else if (weight > 1.0f) {
       weight = 1.0f
     }
-    val rootHeight = rootPane?.height ?: 0
-    val rootWidth = rootPane?.width ?: 0
+    val rootHeight = rootPane.height
+    val rootWidth = rootPane.width
     when (anchor) {
       ToolWindowAnchor.TOP -> {
         component.setBounds(0, 0, width, (rootHeight * weight).toInt())

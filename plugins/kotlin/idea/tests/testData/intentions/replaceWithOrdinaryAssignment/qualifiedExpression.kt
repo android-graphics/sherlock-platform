@@ -1,4 +1,3 @@
-// PRIORITY: LOW
 class Foo {
     var x: Int = 1
 }

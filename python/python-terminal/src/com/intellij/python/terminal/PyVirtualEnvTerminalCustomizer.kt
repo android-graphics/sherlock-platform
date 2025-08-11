@@ -7,7 +7,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
@@ -15,12 +14,12 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.run.findActivateScript
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
-import org.jetbrains.annotations.ApiStatus
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import java.io.File
@@ -32,28 +31,18 @@ import kotlin.io.path.exists
 import kotlin.io.path.isExecutable
 import kotlin.io.path.name
 
-
 class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
-  private companion object {
-    const val JEDITERM_SOURCE = "JEDITERM_SOURCE"
-    const val JEDITERM_SOURCE_ARGS = "JEDITERM_SOURCE_ARGS"
-    const val JEDITERM_SOURCE_SINGLE_ARG = "JEDITERM_SOURCE_SINGLE_ARG"
-    val logger = fileLogger()
-  }
-
   private fun generatePowerShellActivateScript(sdk: Sdk, sdkHomePath: VirtualFile): String? {
     // TODO: This should be migrated to Targets API: each target provides terminal
-    val condaData = (sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.flavorAndData?.data as? PyCondaFlavorData
-    if (condaData != null) {
+    if ((sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.flavor is CondaEnvSdkFlavor) {
       // Activate conda
-      val condaPath = Path(condaData.env.fullCondaPathOnTarget)
-      return if (condaPath.exists() && condaPath.isExecutable()) {
+      val condaPath = PyCondaPackageService.getCondaExecutable(sdk.homePath)?.let { Path(it) }
+      return if (condaPath != null && condaPath.exists() && condaPath.isExecutable()) {
         getCondaActivationCommand(condaPath, sdkHomePath)
       }
       else {
         logger<PyVirtualEnvTerminalCustomizer>().warn("Can't find $condaPath, will not activate conda")
-        val message = PyTerminalBundle.message("powershell.conda.not.activated", "conda")
-        "echo '$message'"
+        PyTerminalBundle.message("powershell.conda.not.activated", "conda")
       }
     }
 
@@ -83,12 +72,10 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
         """.trimIndent()
   }
 
-  override fun customizeCommandAndEnvironment(
-    project: Project,
-    workingDirectory: String?,
-    command: Array<out String>,
-    envs: MutableMap<String, String>,
-  ): Array<out String> {
+  override fun customizeCommandAndEnvironment(project: Project,
+                                              workingDirectory: String?,
+                                              command: Array<out String>,
+                                              envs: MutableMap<String, String>): Array<out String> {
     var sdkByDirectory: Sdk? = null
     if (workingDirectory != null) {
       runReadAction {
@@ -112,18 +99,13 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
           val shellName = Path(shellPath).name
           if (isPowerShell(shellName)) {
             generatePowerShellActivateScript(sdk, sdkHomePath)?.let {
-              envs.put(JEDITERM_SOURCE, it)
+              envs.put("JEDITERM_SOURCE", it)
             }
           }
           else {
             findActivateScript(sdkHomePath.path, shellPath)?.let { activate ->
-              envs.put(JEDITERM_SOURCE, activate.first)
-              envs.put(JEDITERM_SOURCE_ARGS, activate.second ?: "")
-              // **nix shell integration scripts split arguments;
-              // since a path may contain spaces, we do not want it to be split into several arguments.
-              if (activate.second != null) {
-                envs.put(JEDITERM_SOURCE_SINGLE_ARG, "1")
-              }
+              envs.put("JEDITERM_SOURCE", activate.first)
+              envs.put("JEDITERM_SOURCE_ARGS", activate.second ?: "")
             }
           }
         }
@@ -138,7 +120,6 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
       }
     }
 
-    logger.debug("Running ${command.joinToString(" ")} with ${envs.entries.joinToString("\n")}")
     return command
   }
 
@@ -177,7 +158,6 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
 
 }
 
-@ApiStatus.Internal
 class SettingsState {
   var virtualEnvActivate: Boolean = true
 }

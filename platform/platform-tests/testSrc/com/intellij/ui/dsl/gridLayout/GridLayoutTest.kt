@@ -3,7 +3,6 @@ package com.intellij.ui.dsl.gridLayout
 
 import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-import com.intellij.ui.scale.JBUIScale
 import org.junit.Assert
 import org.junit.Test
 import java.awt.Dimension
@@ -37,16 +36,15 @@ class GridLayoutTest {
   @Test
   fun testOneCellGaps() {
     val panel = JPanel(GridLayout())
-    val gaps = UnscaledGaps(1, 2, 3, 4)
+    val gaps = Gaps(1, 2, 3, 4)
     RowsGridBuilder(panel).cell(label(), gaps = gaps)
-    assertEquals(panel.preferredSize,
-                 Dimension(PREFERRED_WIDTH + JBUIScale.scale(gaps.width), PREFERRED_HEIGHT + JBUIScale.scale(gaps.height)))
+    assertEquals(panel.preferredSize, Dimension(PREFERRED_WIDTH + gaps.width, PREFERRED_HEIGHT + gaps.height))
   }
 
   @Test
   fun testOneCellVisualPaddings() {
     val panel = JPanel(GridLayout())
-    val visualPaddings = UnscaledGaps(1, 2, 3, 4)
+    val visualPaddings = Gaps(1, 2, 3, 4)
     val label = label()
     RowsGridBuilder(panel)
       .cell(label, visualPaddings = visualPaddings)
@@ -74,47 +72,47 @@ class GridLayoutTest {
   @Test
   fun testOneCellHorizontalAlignments() {
     val panel = JPanel(GridLayout())
-    val gaps = UnscaledGaps(1, 2, 3, 4)
+    val gaps = Gaps(1, 2, 3, 4)
     val label = label()
     RowsGridBuilder(panel)
       .cell(label, gaps = gaps, horizontalAlign = HorizontalAlign.LEFT, resizableColumn = true)
     doLayout(panel, 200, 100)
     assertEquals(label.size, PREFERRED_SIZE)
-    assertEquals(JBUIScale.scale(gaps.left), label.x)
+    assertEquals(gaps.left, label.x)
 
     panel.removeAll()
     RowsGridBuilder(panel)
       .cell(label, gaps = gaps, horizontalAlign = HorizontalAlign.CENTER, resizableColumn = true)
     doLayout(panel, 200, 100)
     assertEquals(PREFERRED_SIZE, label.size)
-    assertEquals(JBUIScale.scale(gaps.left) + (200 - PREFERRED_WIDTH - JBUIScale.scale(gaps.width)) / 2, label.x)
+    assertEquals(gaps.left + (200 - PREFERRED_WIDTH - gaps.width) / 2, label.x)
 
     panel.removeAll()
     RowsGridBuilder(panel)
       .cell(label, gaps = gaps, horizontalAlign = HorizontalAlign.RIGHT, resizableColumn = true)
     doLayout(panel, 200, 100)
     assertEquals(PREFERRED_SIZE, label.size)
-    assertEquals(200 - PREFERRED_WIDTH - JBUIScale.scale(gaps.right), label.x)
+    assertEquals(200 - PREFERRED_WIDTH - gaps.right, label.x)
 
     panel.removeAll()
     RowsGridBuilder(panel)
       .cell(label, gaps = gaps, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
     doLayout(panel, 200, 100)
-    assertEquals(Dimension(200 - JBUIScale.scale(gaps.width), PREFERRED_HEIGHT), label.size)
-    assertEquals(JBUIScale.scale(gaps.left), label.x)
+    assertEquals(Dimension(200 - gaps.width, PREFERRED_HEIGHT), label.size)
+    assertEquals(gaps.left, label.x)
   }
 
   @Test
   fun testOneCellVerticalAlignments() {
     val panel = JPanel(GridLayout())
-    val gaps = UnscaledGaps(1, 2, 3, 4)
+    val gaps = Gaps(1, 2, 3, 4)
     val label = label()
     RowsGridBuilder(panel)
       .row(resizable = true)
       .cell(label, gaps = gaps, verticalAlign = VerticalAlign.TOP)
     doLayout(panel, 200, 100)
     assertEquals(label.size, PREFERRED_SIZE)
-    assertEquals(JBUIScale.scale(gaps.top), label.y)
+    assertEquals(gaps.top, label.y)
 
     panel.removeAll()
     RowsGridBuilder(panel)
@@ -122,7 +120,7 @@ class GridLayoutTest {
       .cell(label, gaps = gaps, verticalAlign = VerticalAlign.CENTER)
     doLayout(panel, 200, 100)
     assertEquals(PREFERRED_SIZE, label.size)
-    assertEquals(JBUIScale.scale(gaps.top) + (100 - PREFERRED_HEIGHT - JBUIScale.scale(gaps.height)) / 2, label.y)
+    assertEquals(gaps.top + (100 - PREFERRED_HEIGHT - gaps.height) / 2, label.y)
 
     panel.removeAll()
     RowsGridBuilder(panel)
@@ -130,23 +128,23 @@ class GridLayoutTest {
       .cell(label, gaps = gaps, verticalAlign = VerticalAlign.BOTTOM)
     doLayout(panel, 200, 100)
     assertEquals(PREFERRED_SIZE, label.size)
-    assertEquals(100 - PREFERRED_HEIGHT - JBUIScale.scale(gaps.bottom), label.y)
+    assertEquals(100 - PREFERRED_HEIGHT - gaps.bottom, label.y)
 
     panel.removeAll()
     RowsGridBuilder(panel)
       .row(resizable = true)
       .cell(label, gaps = gaps, verticalAlign = VerticalAlign.FILL)
     doLayout(panel, 200, 100)
-    assertEquals(Dimension(PREFERRED_WIDTH, 100 - JBUIScale.scale(gaps.height)), label.size)
-    assertEquals(JBUIScale.scale(gaps.top), label.y)
+    assertEquals(Dimension(PREFERRED_WIDTH, 100 - gaps.height), label.size)
+    assertEquals(gaps.top, label.y)
   }
 
   @Test
   fun testOneCellComplex() {
     val panel = JPanel(GridLayout())
     val label = label()
-    val gaps = UnscaledGaps(1, 2, 3, 4)
-    val visualPaddings = UnscaledGaps(5, 6, 7, 8)
+    val gaps = Gaps(1, 2, 3, 4)
+    val visualPaddings = Gaps(5, 6, 7, 8)
     RowsGridBuilder(panel)
       .row(resizable = true)
       .cell(label, horizontalAlign = HorizontalAlign.LEFT, verticalAlign = VerticalAlign.CENTER, resizableColumn = true, gaps = gaps,
@@ -154,8 +152,8 @@ class GridLayoutTest {
     doLayout(panel, 200, 100)
     assertEquals(PREFERRED_SIZE, label.preferredSize)
     // Visual paddings are compensated by layout, so whole component is fit
-    assertEquals(max(0, JBUIScale.scale(gaps.left) - JBUIScale.scale(visualPaddings.left)), label.x)
-    assertEquals(JBUIScale.scale(gaps.top) + (100 - PREFERRED_HEIGHT - JBUIScale.scale(gaps.height) + JBUIScale.scale(visualPaddings.height)) / 2 - JBUIScale.scale(visualPaddings.top), label.y)
+    assertEquals(max(0, gaps.left - visualPaddings.left), label.x)
+    assertEquals(gaps.top + (100 - PREFERRED_HEIGHT - gaps.height + visualPaddings.height) / 2 - visualPaddings.top, label.y)
 
     panel.removeAll()
     RowsGridBuilder(panel)
@@ -182,7 +180,7 @@ class GridLayoutTest {
         label(preferredWidth = Random.nextInt(150)))
       builder
         .row()
-        .cell(row[0], horizontalAlign = HorizontalAlign.entries.random())
+        .cell(row[0], horizontalAlign = HorizontalAlign.values().random())
         .cell(row[1], resizableColumn = true)
         .cell(row[2])
       labels.add(row)

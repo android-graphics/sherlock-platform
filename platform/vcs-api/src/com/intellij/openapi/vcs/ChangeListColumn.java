@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package com.intellij.openapi.vcs;
 
@@ -21,7 +35,8 @@ public abstract class ChangeListColumn<T extends ChangeList> {
 
   public abstract Object getValue(T changeList);
 
-  public @Nullable Comparator<T> getComparator() {
+  @Nullable
+  public Comparator<T> getComparator() {
     return null;
   }
 
@@ -29,17 +44,20 @@ public abstract class ChangeListColumn<T extends ChangeList> {
 
   public static final ChangeListColumn<CommittedChangeList> DATE = new ChangeListColumn<>() {
     @Override
-    public @NotNull String getTitle() {
+    @NotNull
+    public String getTitle() {
       return message("column.name.revision.list.date");
     }
 
     @Override
-    public @NotNull Object getValue(@NotNull CommittedChangeList changeList) {
+    @NotNull
+    public Object getValue(@NotNull CommittedChangeList changeList) {
       return formatPrettyDateTime(changeList.getCommitDate());
     }
 
     @Override
-    public @NotNull Comparator<CommittedChangeList> getComparator() {
+    @NotNull
+    public Comparator<CommittedChangeList> getComparator() {
       // TODO: CommittedChangeListByDateComparator could be utilized here. But currently it is placed in intellij.platform.vcs.impl.
       // TODO: Think of either moving these ChangeListColumn instances to intellij.platform.vcs.impl or move comparator to intellij.platform.vcs.
       return comparing(CommittedChangeList::getCommitDate);
@@ -48,7 +66,8 @@ public abstract class ChangeListColumn<T extends ChangeList> {
 
   public static final ChangeListColumn<CommittedChangeList> NAME = new ChangeListColumn<>() {
     @Override
-    public @NotNull String getTitle() {
+    @NotNull
+    public String getTitle() {
       return message("column.name.revision.list.committer");
     }
 
@@ -58,7 +77,8 @@ public abstract class ChangeListColumn<T extends ChangeList> {
     }
 
     @Override
-    public @NotNull Comparator<CommittedChangeList> getComparator() {
+    @NotNull
+    public Comparator<CommittedChangeList> getComparator() {
       return (changeList1, changeList2) -> compare(changeList1.getCommitterName(), changeList2.getCommitterName());
     }
   };
@@ -68,17 +88,20 @@ public abstract class ChangeListColumn<T extends ChangeList> {
 
   public static final ChangeListColumn<CommittedChangeList> DESCRIPTION = new ChangeListColumn<>() {
     @Override
-    public @NotNull String getTitle() {
+    @NotNull
+    public String getTitle() {
       return message("column.name.revision.list.description");
     }
 
     @Override
-    public @NotNull Object getValue(@NotNull CommittedChangeList changeList) {
+    @NotNull
+    public Object getValue(@NotNull CommittedChangeList changeList) {
       return changeList.getName();
     }
 
     @Override
-    public @NotNull Comparator<CommittedChangeList> getComparator() {
+    @NotNull
+    public Comparator<CommittedChangeList> getComparator() {
       return comparing(list -> list.getName(), String::compareToIgnoreCase);
     }
   };
@@ -100,12 +123,14 @@ public abstract class ChangeListColumn<T extends ChangeList> {
     }
 
     @Override
-    public @NotNull Object getValue(@NotNull CommittedChangeList changeList) {
+    @NotNull
+    public Object getValue(@NotNull CommittedChangeList changeList) {
       return changeList.getNumber();
     }
 
     @Override
-    public @NotNull Comparator<CommittedChangeList> getComparator() {
+    @NotNull
+    public Comparator<CommittedChangeList> getComparator() {
       return comparingLong(CommittedChangeList::getNumber);
     }
   }

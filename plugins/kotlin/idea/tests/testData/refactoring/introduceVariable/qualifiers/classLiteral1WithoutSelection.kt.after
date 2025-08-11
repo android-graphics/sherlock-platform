@@ -1,7 +1,0 @@
-// INPLACE_VARIABLE_NAME: klass
-class A
-
-fun test() {
-    val klass = A::class
-    klass.java.getDeclaredField("name")
-}

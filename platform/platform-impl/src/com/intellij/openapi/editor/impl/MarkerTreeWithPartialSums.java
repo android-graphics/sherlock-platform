@@ -1,8 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,8 +13,7 @@ import java.util.function.Supplier;
  * Only 'non-greedy' markers with zero length are supported (for such markers start offset is always equal to end offset).
  * Not thread safe - cannot be used from multiple threads simultaneously.
  */
-@ApiStatus.Internal
-public class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends HardReferencingRangeMarkerTree<T> {
+class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends HardReferencingRangeMarkerTree<T> {
   MarkerTreeWithPartialSums(@NotNull Document document) {
     super(document);
   }
@@ -43,8 +41,8 @@ public class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> 
 
   private int getSumOfValuesForOverlappingRanges(@Nullable Node<T> node, int offset, int deltaUpToRootExclusive) {
     if (node == null) return 0;
-    int delta = deltaUpToRootExclusive + node.getDelta();
-    if (offset >= node.getMaxEnd() + delta) return node.subtreeSum;
+    int delta = deltaUpToRootExclusive + node.delta;
+    if (offset >= node.maxEnd + delta) return node.subtreeSum;
     int value = getSumOfValuesForOverlappingRanges(node.getLeft(), offset, delta);
     if (offset >= node.intervalStart() + delta) {
       value += node.getLocalSum();
@@ -68,13 +66,12 @@ public class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> 
   }
 
   @Override
-  public void correctMax(@NotNull IntervalNode<T> node, int deltaUpToRoot) {
+  void correctMax(@NotNull IntervalNode<T> node, int deltaUpToRoot) {
     super.correctMax(node, deltaUpToRoot);
     ((Node<T>)node).recalculateSubTreeSum();
   }
 
-  @ApiStatus.Internal
-  public static final class Node<T extends RangeMarkerImpl & IntSupplier> extends RMNode<T> {
+  static final class Node<T extends RangeMarkerImpl & IntSupplier> extends RMNode<T> {
     private int subtreeSum;
 
     Node(@NotNull RangeMarkerTree<T> rangeMarkerTree,
@@ -127,13 +124,13 @@ public class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> 
     }
 
     @Override
-    public void addInterval(@NotNull T interval) {
+    void addInterval(@NotNull T interval) {
       super.addInterval(interval);
       recalculateSubTreeSumUp();
     }
 
     @Override
-    public void removeIntervalInternal(int i) {
+    void removeIntervalInternal(int i) {
       super.removeIntervalInternal(i);
       recalculateSubTreeSumUp();
     }

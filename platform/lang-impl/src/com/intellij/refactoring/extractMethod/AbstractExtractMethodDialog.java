@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.codeFragment.CodeFragment;
@@ -177,7 +177,8 @@ public class AbstractExtractMethodDialog<T> extends DialogWrapper implements Ext
     mySignaturePreviewTextArea = new MethodSignatureComponent("", myProject, myFileType);
   }
 
-  private @NotNull String getPersistenceId() {
+  @NotNull
+  private String getPersistenceId() {
     return "visibility.combobox." + getClass().getName();
   }
 
@@ -205,8 +206,7 @@ public class AbstractExtractMethodDialog<T> extends DialogWrapper implements Ext
         builder.append(outputName);
       }
     }
-    myOutputVariablesTextArea.setText(
-      !builder.isEmpty() ? builder.toString() : RefactoringBundle.message("refactoring.extract.method.dialog.empty"));
+    myOutputVariablesTextArea.setText(builder.length() > 0 ? builder.toString() : RefactoringBundle.message("refactoring.extract.method.dialog.empty"));
   }
 
   private void updateSignature() {
@@ -217,8 +217,9 @@ public class AbstractExtractMethodDialog<T> extends DialogWrapper implements Ext
     setOKActionEnabled(myValidator.isValidName(getMethodName()));
   }
 
+  @NotNull
   @Override
-  public @NotNull String getMethodName() {
+  public String getMethodName() {
     return myMethodNameTextField.getText().trim();
   }
 
@@ -227,8 +228,9 @@ public class AbstractExtractMethodDialog<T> extends DialogWrapper implements Ext
     return myVariableData;
   }
 
+  @Nullable
   @Override
-  public @Nullable T getVisibility() {
+  public T getVisibility() {
     return myVisibilityComboBox.getVisibility();
   }
 }

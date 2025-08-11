@@ -25,7 +25,8 @@ import org.jetbrains.annotations.NotNull;
 public final class BreakStatementWithLabelInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "break.statement.with.label.problem.descriptor");
   }
@@ -51,7 +52,7 @@ public final class BreakStatementWithLabelInspection extends BaseInspection {
       if (labelText == null) {
         return;
       }
-      if (labelText.isEmpty()) {
+      if (labelText.length() == 0) {
         return;
       }
       registerStatementError(statement);

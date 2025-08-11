@@ -287,6 +287,7 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
         }
     }
 
+
     private fun specialInArgumentListDummyIdentifierSuffix(tokenBefore: PsiElement): String? {
         // If we insert `$` in the argument list of a delegation specifier, this will break parsing
         // and the following block will not be attached as a body to the constructor. Therefore

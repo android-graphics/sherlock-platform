@@ -1,9 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
@@ -22,8 +21,7 @@ public interface DnDNativeTarget extends DnDTarget {
 
     private final Map<DataFlavor, String> myTexts = new HashMap<>();
 
-    @ApiStatus.Internal
-    public EventInfo(final DataFlavor[] flavors, final Transferable transferable) {
+    EventInfo(final DataFlavor[] flavors, final Transferable transferable) {
       myFlavors = flavors;
       myTransferable = transferable;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.removemiddleman;
 
 import com.intellij.psi.PsiElement;
@@ -8,15 +8,16 @@ import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 class RemoveMiddlemanUsageViewDescriptor implements UsageViewDescriptor {
-  private final @NotNull PsiField field;
+  private @NotNull final PsiField field;
 
   RemoveMiddlemanUsageViewDescriptor(@NotNull PsiField field) {
     super();
     this.field = field;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getCodeReferencesText(int usagesCount, int filesCount) {
+  public String getCodeReferencesText(int usagesCount, int filesCount) {
     return JavaRareRefactoringsBundle
       .message("references.to.expose.usage.view", usagesCount, filesCount);
   }

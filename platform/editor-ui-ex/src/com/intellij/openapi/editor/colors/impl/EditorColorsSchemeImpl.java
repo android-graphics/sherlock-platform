@@ -60,6 +60,12 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   }
 
   @Override
+  public void copyTo(AbstractColorsScheme newScheme) {
+    super.copyTo(newScheme);
+    myAttributesTempMap.clear();
+  }
+
+  @Override
   public void setAttributes(@NotNull TextAttributesKey key, @NotNull TextAttributes attributes) {
     if (TextAttributesKey.isTemp(key)) {
       myAttributesTempMap.put(key.getExternalName(), attributes);

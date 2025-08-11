@@ -111,8 +111,9 @@ public final class ToStringProcessor extends AbstractClassProcessor {
     return Collections.singletonList(stringMethod);
   }
 
-  public @NotNull PsiMethod createToStringMethod(@NotNull PsiClass psiClass, @NotNull Collection<MemberInfo> memberInfos,
-                                                 @NotNull PsiAnnotation psiAnnotation, boolean forceCallSuper) {
+  @NotNull
+  public PsiMethod createToStringMethod(@NotNull PsiClass psiClass, @NotNull Collection<MemberInfo> memberInfos,
+                                        @NotNull PsiAnnotation psiAnnotation, boolean forceCallSuper) {
     final PsiManager psiManager = psiClass.getManager();
 
     final String paramString = createParamString(psiClass, memberInfos, psiAnnotation, forceCallSuper);
@@ -194,8 +195,9 @@ public final class ToStringProcessor extends AbstractClassProcessor {
     return paramString.toString();
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
     addFieldsAnnotation(result, psiClass, TO_STRING_INCLUDE, TO_STRING_EXCLUDE);
     return result;

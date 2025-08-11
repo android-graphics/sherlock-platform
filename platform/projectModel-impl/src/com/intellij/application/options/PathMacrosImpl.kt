@@ -9,7 +9,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -23,11 +22,7 @@ import java.util.concurrent.atomic.AtomicLong
   name = "PathMacrosImpl",
   category = SettingsCategory.SYSTEM,
   exportable = true,
-  storages = [Storage(value = PathVariablesSerializer.STORAGE_FILE_NAME,
-                      roamingType = RoamingType.DISABLED,
-                      usePathMacroManager = false,
-                      useSaveThreshold = ThreeState.NO
-  )],
+  storages = [Storage(value = PathVariablesSerializer.STORAGE_FILE_NAME, roamingType = RoamingType.DISABLED, usePathMacroManager = false)],
   useLoadedStateAsExisting = false,
   reportStatistic = false,
 )

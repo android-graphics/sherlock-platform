@@ -1,11 +1,10 @@
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
-import org.jspecify.annotations.NonNull;
 
 @NullMarked
 public class Nullness {
   interface Decoder<T extends @Nullable Object> {
-    @NonNull T decode(Object o);
+    T decode(Object o);
   }
 
   static <T extends @Nullable Object> Decoder<T> identity(T value) {

@@ -98,12 +98,14 @@ public final class XsltQuickFixFactory implements XPathQuickFixFactory {
         }
 
         @Override
-        public @NotNull String getText() {
+        @NotNull
+        public String getText() {
             return getFamilyName();
         }
 
         @Override
-        public @NotNull String getFamilyName() {
+        @NotNull
+        public String getFamilyName() {
             return XPathBundle.message("intention.family.name.edit.file.associations");
         }
     }

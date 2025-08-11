@@ -18,8 +18,8 @@ package com.intellij.openapi.actionSystem;
 /**
  * Markup interface to tell Action Manager that disabled actions shouldn't be shown
  *
- * @deprecated Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#HIDE_DISABLED_CHILDREN}
+ * @author Konstantin Bulenkov
+ * @see AlwaysVisibleActionGroup
  */
-@Deprecated(forRemoval = true)
 public interface CompactActionGroup {
 }

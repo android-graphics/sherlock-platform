@@ -13,6 +13,6 @@ publishing {
 }
 
 kotlin {
-    {{iosTargetPlaceHolder}}
+    ios()
     jvm()
 }

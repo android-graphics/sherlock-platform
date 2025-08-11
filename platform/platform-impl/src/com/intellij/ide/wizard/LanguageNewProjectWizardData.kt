@@ -3,7 +3,6 @@ package com.intellij.ide.wizard
 
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.util.Key
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Deprecated
@@ -29,11 +28,10 @@ interface LanguageNewProjectWizardData : NewProjectWizardBaseData {
   var language: String
 
   companion object {
-    @ApiStatus.Internal
+
     @Deprecated("See LanguageNewProjectWizardData documentation for details")
     val KEY: Key<LanguageNewProjectWizardData> = Key.create(LanguageNewProjectWizardData::class.java.name)
 
-    @get:ApiStatus.Internal
     @JvmStatic
     @Deprecated("See LanguageNewProjectWizardData documentation for details")
     val NewProjectWizardStep.languageData: LanguageNewProjectWizardData?

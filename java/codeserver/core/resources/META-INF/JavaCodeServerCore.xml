@@ -1,6 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.psi.JavaModuleGraphHelper"
-                        serviceImplementation="com.intellij.java.codeserver.core.JavaPsiModuleUtil$Helper"/>
-  </extensions>
-</idea-plugin>

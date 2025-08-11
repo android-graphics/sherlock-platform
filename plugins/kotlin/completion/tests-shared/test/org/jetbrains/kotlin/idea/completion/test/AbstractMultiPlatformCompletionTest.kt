@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.extractMarkerOffset
@@ -18,22 +17,18 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractMultiPlatformCompletionTest : AbstractMultiModuleTest() {
-    protected fun doTest(testPath: String) {
-        val testFile = File(testPath)
-        setupMppProjectFromDirStructure(testFile)
-        val file = project.findFileWithCaret() as KtFile
-        val virtualFilePath = file.virtualFile!!.toNioPath()
 
-        IgnoreTests.runTestIfNotDisabledByFileDirective(virtualFilePath, IgnoreTests.DIRECTIVES.of(pluginMode)) {
-            val doc = PsiDocumentManager.getInstance(myProject).getDocument(file)!!
-            val offset = doc.extractMarkerOffset(project)
-            val editor = EditorFactory.getInstance().createEditor(doc, myProject)!!
-            editor.caretModel.moveToOffset(offset)
-            try {
-                testCompletion(file, editor)
-            } finally {
-                EditorFactory.getInstance().releaseEditor(editor)
-            }
+    protected fun doTest(testPath: String) {
+        setupMppProjectFromDirStructure(File(testPath))
+        val file = project.findFileWithCaret() as KtFile
+        val doc = PsiDocumentManager.getInstance(myProject).getDocument(file)!!
+        val offset = doc.extractMarkerOffset(project)
+        val editor = EditorFactory.getInstance().createEditor(doc, myProject)!!
+        editor.caretModel.moveToOffset(offset)
+        try {
+            testCompletion(file, editor)
+        } finally {
+            EditorFactory.getInstance().releaseEditor(editor)
         }
     }
 

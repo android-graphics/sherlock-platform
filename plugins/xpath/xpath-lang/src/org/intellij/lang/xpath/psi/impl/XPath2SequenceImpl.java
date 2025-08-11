@@ -29,8 +29,9 @@ public class XPath2SequenceImpl extends XPath2ElementImpl implements XPath2Seque
     return findChildrenByClass(XPathExpression.class);
   }
 
+  @NotNull
   @Override
-  public @NotNull XPathType getType() {
+  public XPathType getType() {
     final XPathExpression[] sequence = getSequence();
     if (sequence.length == 0) {
       return XPath2Type.SEQUENCE;

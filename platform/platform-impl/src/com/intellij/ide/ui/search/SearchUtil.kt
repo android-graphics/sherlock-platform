@@ -14,13 +14,11 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
 import com.intellij.ui.SimpleTextAttributes.StyleAttributeConstant
 import com.intellij.ui.TabbedPaneWrapper.TabbedPaneHolder
-import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent
 import com.intellij.util.IntPair
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.Contract
 import java.awt.Color
 import java.awt.Component
 import java.util.regex.Pattern
@@ -89,7 +87,6 @@ object SearchUtil {
     return -1
   }
 
-  @Contract(pure = false)
   private fun traverseComponentsTree(
     configurable: SearchableConfigurable,
     rootComponent: JComponent,
@@ -102,17 +99,10 @@ object SearchUtil {
       return false
     }
 
-    val searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance()
     val label = getLabelsFromComponent(rootComponent)
     if (!label.isEmpty()) {
       for (each in label) {
-        if (isComponentHighlighted(
-            text = each,
-            option = option,
-            force = force,
-            configurable = configurable,
-            searchableOptionsRegistrar = searchableOptionsRegistrar,
-          )) {
+        if (isComponentHighlighted(each, option, force, configurable)) {
           highlightComponent(rootComponent, option)
           // do not visit children of a highlighted component
           return true
@@ -121,15 +111,7 @@ object SearchUtil {
     }
     else if (rootComponent is JComboBox<*>) {
       val labels = getItemsFromComboBox(rootComponent)
-      if (labels.any {
-        isComponentHighlighted(
-          text = it,
-          option = option,
-          force = force,
-          configurable = configurable,
-          searchableOptionsRegistrar = searchableOptionsRegistrar,
-        )
-      }) {
+      if (labels.any { isComponentHighlighted(text = it, option = option, force = force, configurable = configurable) }) {
         highlightComponent(rootComponent, option)
         // do not visit children of a highlighted component
         return true
@@ -164,54 +146,36 @@ object SearchUtil {
     val border = rootComponent.border
     if (border is TitledBorder) {
       val title = border.title
-      if (isComponentHighlighted(
-          text = title,
-          option = option,
-          force = force,
-          configurable = configurable,
-          searchableOptionsRegistrar = searchableOptionsRegistrar,
-        )) {
+      if (isComponentHighlighted(text = title, option = option, force = force, configurable = configurable)) {
         highlightComponent(rootComponent, option)
         rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, true)
         // do not visit children of a highlighted component
         return true
       }
     }
-
-    var highlightedChild = false
-    for (child in rootComponent.components) {
-      if (child is JComponent) {
-        // keep side effects in mind
-        val highlighted = traverseComponentsTree(configurable = configurable, rootComponent = child, option = option, force = force)
-        highlightedChild = highlightedChild || highlighted
-      }
+    return rootComponent.components.any {
+      it is JComponent && traverseComponentsTree(configurable = configurable, rootComponent = it, option = option, force = force)
     }
-    return highlightedChild
   }
 
-  @Internal
-  fun isComponentHighlighted(
-    text: String?,
-    option: String?,
-    force: Boolean,
-    configurable: SearchableConfigurable?,
-    searchableOptionsRegistrar: SearchableOptionsRegistrar,
-  ): Boolean {
+  @JvmStatic
+  fun isComponentHighlighted(text: String?, option: String?, force: Boolean, configurable: SearchableConfigurable?): Boolean {
     if (text == null || option.isNullOrEmpty()) {
       return false
     }
 
+    val searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance()
     val words = searchableOptionsRegistrar.getProcessedWords(option)
     val options = if (configurable == null) words else searchableOptionsRegistrar.replaceSynonyms(words, configurable)
     if (options.isEmpty()) {
-      return text.contains(option, ignoreCase = true)
+      return text.lowercase().contains(option.lowercase())
     }
 
     val tokens = searchableOptionsRegistrar.getProcessedWords(text)
     if (!force) {
       options.retainAll(tokens)
       val highlight = !options.isEmpty()
-      return highlight || text.contains(option, ignoreCase = true)
+      return highlight || text.lowercase().contains(option.lowercase())
     }
     else {
       options.removeAll(tokens)
@@ -477,7 +441,7 @@ object SearchUtil {
     val keySetList = ArrayList<Set<String>>()
     val optionsRegistrar = SearchableOptionsRegistrar.getInstance() as SearchableOptionsRegistrarImpl
     for (word in optionsRegistrar.getProcessedWords(filter)) {
-      val descriptions = optionsRegistrar.findAcceptableDescriptions(word) ?: continue
+      val descriptions = optionsRegistrar.getAcceptableDescriptions(word) ?: continue
       val keySet = HashSet<String>()
       for (description in descriptions) {
         description.path?.let {
@@ -582,7 +546,8 @@ fun processUiLabel(
     rawList!!.add(SearchableOptionEntry(hit = title, path = path))
   }
   else {
-    val words = WORD_SEPARATOR_CHARS.split(title.lowercase()).toSet()
+    val words = HashSet<String>()
+    SearchableOptionsRegistrarImpl.collectProcessedWordsWithoutStemmingAndStopWords(title, words)
     title = title.replace(BundleBase.MNEMONIC_STRING, "")
     title = getNonWordPattern(i18n).matcher(title).replaceAll(" ")
     for (word in words) {
@@ -715,7 +680,6 @@ private fun getLabelsFromComponent(component: Component?): List<String> {
     is JCheckBox -> getLabelFromComponent(component)
     is JRadioButton -> getLabelFromComponent(component)
     is JButton -> getLabelFromComponent(component)
-    is KotlinUIDslRendererComponent ->  component.getCopyText()
     else -> null
   }
   label = label?.takeIf { it.isNotBlank() }

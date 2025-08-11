@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.requests;
 
 import com.intellij.diff.DiffContentFactory;
@@ -19,9 +19,9 @@ import java.util.List;
  * @see com.intellij.diff.DiffManager
  */
 public class SimpleDiffRequest extends ContentDiffRequest {
-  private final @Nullable @NlsContexts.DialogTitle String myTitle;
-  private final @NotNull List<DiffContent> myContents;
-  private final @NotNull List<String> myContentTitles;
+  @Nullable private final @NlsContexts.DialogTitle String myTitle;
+  @NotNull private final List<DiffContent> myContents;
+  @NotNull private final List<String> myContentTitles;
 
   /**
    * Pass {@link DiffContentFactory#createEmpty()} to create request for additions/deletions.
@@ -54,18 +54,22 @@ public class SimpleDiffRequest extends ContentDiffRequest {
     myContentTitles = titles;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<DiffContent> getContents() {
+  public List<DiffContent> getContents() {
     return myContents;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<String> getContentTitles() {
+  public List<String> getContentTitles() {
     return myContentTitles;
   }
 
+  @NlsContexts.DialogTitle
+  @Nullable
   @Override
-  public @NlsContexts.DialogTitle @Nullable String getTitle() {
+  public String getTitle() {
     return myTitle;
   }
 

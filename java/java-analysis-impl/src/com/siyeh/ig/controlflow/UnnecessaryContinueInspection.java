@@ -22,6 +22,7 @@ import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteUnnecessaryStatementFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,8 @@ public final class UnnecessaryContinueInspection extends BaseInspection {
   public boolean ignoreInThenBranch = false;
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.continue.problem.descriptor");
   }
 

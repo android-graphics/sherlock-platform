@@ -15,7 +15,6 @@ import java.util.*
 data class ProductInfo(
   val buildNumber: @NlsSafe String,
   val productCode: @NlsSafe String,
-  val dataDirectoryName: @NlsSafe String,
   val version: @NlsSafe String,
   val versionSuffix: @NlsSafe String?,
   val launch: List<LaunchData>,
@@ -47,13 +46,10 @@ data class ProductInfo(
   }
   
   data class LaunchData(
-    val launcherPath: @NlsSafe String,
-    val vmOptionsFilePath: @NlsSafe String,
-    val customCommands: List<CustomCommandLaunchData>?,
+    val customCommands: List<CustomCommandLaunchData> = emptyList(),
   )
   
   data class CustomCommandLaunchData(
     val commands: List<@NlsSafe String>,
-    val vmOptionsFilePath: @NlsSafe String,
   )
 }

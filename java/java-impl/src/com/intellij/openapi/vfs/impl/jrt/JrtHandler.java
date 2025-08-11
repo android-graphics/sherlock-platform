@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jrt;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +31,7 @@ public class JrtHandler extends ArchiveHandler {
   public void clearCaches() {
     super.clearCaches();
     synchronized (this) {
-      var fs = dereference(myFileSystem);
+      FileSystem fs = dereference(myFileSystem);
       if (fs != null) {
         myFileSystem = null;
         try {
@@ -46,9 +45,9 @@ public class JrtHandler extends ArchiveHandler {
   }
 
   protected synchronized FileSystem getFileSystem() throws IOException {
-    var fs = dereference(myFileSystem);
+    FileSystem fs = dereference(myFileSystem);
     if (fs == null) {
-      var path = getPath().toString();
+      String path = getFile().getPath();
       try {
         fs = FileSystems.newFileSystem(ROOT_URI, Collections.singletonMap("java.home", path));
         myFileSystem = new SoftReference<>(fs);
@@ -57,18 +56,15 @@ public class JrtHandler extends ArchiveHandler {
         throw new IOException("Error mounting JRT filesystem at " + path, e);
       }
     }
-    else if (!fs.isOpen()) {
-      throw new ProcessCanceledException();
-    }
     return fs;
   }
 
   @Override
   protected @NotNull Map<String, EntryInfo> createEntriesMap() throws IOException {
-    var map = new HashMap<String, EntryInfo>();
+    Map<String, EntryInfo> map = new HashMap<>();
     map.put("", createRootEntry());
 
-    var root = getFileSystem().getPath("/modules");
+    Path root = getFileSystem().getPath("/modules");
     if (!Files.exists(root)) throw new FileNotFoundException("JRT root missing");
 
     Files.walkFileTree(root, new SimpleFileVisitor<>() {
@@ -87,14 +83,14 @@ public class JrtHandler extends ArchiveHandler {
       private void process(Path entry, BasicFileAttributes attrs) throws IOException {
         int pathLength = entry.getNameCount();
         if (pathLength > 1) {
-          var relativePath = entry.subpath(1, pathLength);
-          var path = relativePath.toString();
+          Path relativePath = entry.subpath(1, pathLength);
+          String path = relativePath.toString();
           if (!map.containsKey(path)) {
-            var parent = map.get(pathLength > 2 ? relativePath.getParent().toString() : "");
+            EntryInfo parent = map.get(pathLength > 2 ? relativePath.getParent().toString() : "");
             if (parent == null) throw new IOException("Out of order: " + entry);
 
-            var shortName = entry.getFileName().toString();
-            var modified = attrs.lastModifiedTime().toMillis();
+            String shortName = entry.getFileName().toString();
+            long modified = attrs.lastModifiedTime().toMillis();
             map.put(path, new EntryInfo(shortName, attrs.isDirectory(), attrs.size(), modified, parent));
           }
         }
@@ -106,14 +102,15 @@ public class JrtHandler extends ArchiveHandler {
 
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull String relativePath) throws IOException {
-    var entry = getEntryInfo(relativePath);
-    if (entry == null) throw new FileNotFoundException(getPath() + " : " + relativePath);
+    EntryInfo entry = getEntryInfo(relativePath);
+    if (entry == null) throw new FileNotFoundException(getFile() + " : " + relativePath);
+    Path path = getFileSystem().getPath("/modules/" + relativePath);
     try {
-      var path = getFileSystem().getPath("/modules/" + relativePath);
       return Files.readAllBytes(path);
     }
     catch (RuntimeException e) {
-      if (e.getCause() instanceof IOException ioe) throw ioe;
+      Throwable cause = e.getCause();
+      if (cause instanceof IOException) throw (IOException)cause;
       throw e;
     }
   }

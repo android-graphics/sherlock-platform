@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.icons.AllIcons;
@@ -18,17 +18,17 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.SyntaxTraverser;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
 
 public class JavaLambdaNodeProvider implements FileStructureNodeProvider<JavaLambdaTreeElement>, PropertyOwner, DumbAware {
-  public static final @NonNls String ID = "SHOW_LAMBDA";
-  public static final @NonNls String JAVA_LAMBDA_PROPERTY_NAME = "java.lambda.provider";
+  @NonNls public static final String ID = "SHOW_LAMBDA";
+  @NonNls public static final String JAVA_LAMBDA_PROPERTY_NAME = "java.lambda.provider";
 
+  @NotNull
   @Override
-  public @NotNull @Unmodifiable List<JavaLambdaTreeElement> provideNodes(@NotNull TreeElement node) {
+  public List<JavaLambdaTreeElement> provideNodes(@NotNull TreeElement node) {
     if (!(node instanceof PsiTreeElementBase)) {
       return Collections.emptyList();
     }
@@ -41,8 +41,9 @@ public class JavaLambdaNodeProvider implements FileStructureNodeProvider<JavaLam
       .toList();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getCheckBoxText() {
+  public String getCheckBoxText() {
     return JavaStructureViewBundle.message("file.structure.toggle.show.collapse.show.lambdas");
   }
 
@@ -51,18 +52,21 @@ public class JavaLambdaNodeProvider implements FileStructureNodeProvider<JavaLam
     return new Shortcut[]{KeyboardShortcut.fromString(ClientSystemInfo.isMac() ? "meta L" : "control L")};
   }
 
+  @NotNull
   @Override
-  public @NotNull ActionPresentation getPresentation() {
+  public ActionPresentation getPresentation() {
     return new ActionPresentationData(getCheckBoxText(), null, AllIcons.Nodes.Lambda);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return ID;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPropertyName() {
+  public String getPropertyName() {
     return JAVA_LAMBDA_PROPERTY_NAME;
   }
 }

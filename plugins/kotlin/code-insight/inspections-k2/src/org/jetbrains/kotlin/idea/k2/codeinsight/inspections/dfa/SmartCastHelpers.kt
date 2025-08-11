@@ -29,8 +29,8 @@ internal fun isSmartCastNecessary(expr: KtExpression, value: Boolean): Boolean {
                 if (info != null) {
                     val expectedType = (if (e.parent is KtThisExpression) e.parent else e).expectedType
                     val ktType = values[e.mainReference.resolveToSymbol()]
-                    return@any ktType != null && !info.smartCastType.semanticallyEquals(ktType)
-                            && (expectedType == null || !ktType.isSubtypeOf(expectedType))
+                    return@any ktType != null && !info.smartCastType.isEqualTo(ktType)
+                            && (expectedType == null || !ktType.isSubTypeOf(expectedType))
                 }
             }
 
@@ -44,8 +44,7 @@ internal fun isSmartCastNecessary(expr: KtExpression, value: Boolean): Boolean {
                     }
                     if (receiver is KaImplicitReceiverValue) {
                         val ktType = values[receiver.symbol]
-                        return@any ktType != null
-                                && implicitReceiverSmartCastList.none { smartCast -> smartCast.type.semanticallyEquals(ktType) }
+                        return@any ktType != null && implicitReceiverSmartCastList.none { smartCast -> smartCast.type.isEqualTo(ktType) }
                     }
                 }
             }
@@ -114,8 +113,8 @@ private fun getConditionScopes(expr: KtExpression, value: Boolean?): List<KtElem
                         val result = mutableListOf<KtExpression>()
                         if (thenExpression != null && value != false) result += thenExpression
                         if (elseExpression != null && value != true) result += elseExpression
-                        val nothingType = thenExpression?.getKotlinType()?.isNothingType == true ||
-                                elseExpression?.getKotlinType()?.isNothingType == true
+                        val nothingType = thenExpression?.getKotlinType()?.isNothing == true ||
+                                elseExpression?.getKotlinType()?.isNothing == true
                         if (nothingType) {
                             var next = gParent.nextSibling
                             while (next != null) {

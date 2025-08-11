@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
 import com.intellij.openapi.module.Module;
@@ -33,11 +33,13 @@ public class DebuggerGlobalSearchScope extends DelegatingGlobalSearchScope {
     return myScopeComparator.compare(file1, file2);
   }
 
-  public @Nullable Module getModuleIfAny() {
+  @Nullable
+  public Module getModuleIfAny() {
     return myBaseScope instanceof ModuleWithDependenciesScope ? ((ModuleWithDependenciesScope)myBaseScope).getModule() : null;
   }
 
-  public @Nullable GlobalSearchScope fallbackAllScope() {
+  @Nullable
+  public GlobalSearchScope fallbackAllScope() {
     return myFallbackAllScope;
   }
 }

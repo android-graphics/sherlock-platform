@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json;
 
 import com.intellij.json.psi.JsonStringLiteral;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -17,7 +16,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class JsonSpellcheckerStrategy extends SpellcheckingStrategy implements DumbAware {
+public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
   private final Tokenizer<JsonStringLiteral> ourStringLiteralTokenizer = new Tokenizer<>() {
     @Override
     public void tokenize(@NotNull JsonStringLiteral element, @NotNull TokenConsumer consumer) {

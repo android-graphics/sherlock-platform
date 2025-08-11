@@ -10,7 +10,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Map;
@@ -54,8 +53,8 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
     return myType;
   }
 
-  @Override
-  public @NonNls String toString() {
+  @NonNls
+  public String toString() {
     final ObjectReference objectReference = getObjectReference();
     final String objRefString = objectReference != null ? objectReference.toString() : "[referenced object collected]";
     return "ObjectReferenceProxyImpl: " + objRefString + " " + super.toString();
@@ -96,7 +95,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   /**
    * @return a list of waiting ThreadReferenceProxies
    */
-  public @Unmodifiable List<ThreadReferenceProxyImpl> waitingThreads() throws IncompatibleThreadStateException {
+  public List<ThreadReferenceProxyImpl> waitingThreads() throws IncompatibleThreadStateException {
     return ContainerUtil.map(getObjectReference().waitingThreads(), getVirtualMachineProxy()::getThreadReferenceProxy);
   }
 
@@ -108,7 +107,6 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
     return getObjectReference().entryCount();
   }
 
-  @Override
   public boolean equals(Object o) {
     if (!(o instanceof ObjectReferenceProxyImpl)) {
       return false;
@@ -119,7 +117,6 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   }
 
 
-  @Override
   public int hashCode() {
     return myObjectReference.hashCode();
   }

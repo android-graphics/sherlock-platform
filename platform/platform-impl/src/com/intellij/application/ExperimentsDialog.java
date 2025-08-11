@@ -11,7 +11,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +22,6 @@ import javax.swing.table.TableModel;
 /**
  * @author Konstantin Bulenkov
  */
-@ApiStatus.Internal
 public final class ExperimentsDialog extends DialogWrapper {
   ExperimentsDialog(@Nullable Project project) {
     super(project);
@@ -58,7 +56,7 @@ public final class ExperimentsDialog extends DialogWrapper {
   }
 
   @Override
-  protected @NotNull String getDimensionServiceKey() {
+  protected @Nullable String getDimensionServiceKey() {
     return "ExperimentsDialog";
   }
 

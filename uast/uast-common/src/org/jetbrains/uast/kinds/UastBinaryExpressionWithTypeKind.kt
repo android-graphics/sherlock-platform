@@ -17,6 +17,8 @@
 
 package org.jetbrains.uast
 
+import org.jetbrains.annotations.ApiStatus
+
 /**
  * Kinds of [UBinaryExpressionWithType].
  * Examples: type casts, instance checks.

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.ide.JavaUiBundle;
@@ -50,13 +50,13 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 
 public class LayoutTreeComponent implements DnDTarget, Disposable {
-  private static final @NonNls String EMPTY_CARD = "<empty>";
-  private static final @NonNls String PROPERTIES_CARD = "properties";
+  @NonNls private static final String EMPTY_CARD = "<empty>";
+  @NonNls private static final String PROPERTIES_CARD = "properties";
   private final ArtifactEditorImpl myArtifactsEditor;
   private final LayoutTree myTree;
   private final JPanel myTreePanel;
@@ -98,7 +98,8 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     }
   }
 
-  private @Nullable WeightBasedComparator getComparator() {
+  @Nullable
+  private WeightBasedComparator getComparator() {
     return mySortElements ? new WeightBasedComparator(true) : null;
   }
 
@@ -108,7 +109,8 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     myArtifactsEditor.getContext().getParent().getDefaultSettings().setSortElements(sortElements);
   }
 
-  private static @Nullable PackagingElementNode getNode(Object value) {
+  @Nullable
+  private static PackagingElementNode getNode(Object value) {
     if (!(value instanceof DefaultMutableTreeNode)) return null;
     final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
     return userObject instanceof PackagingElementNode ? (PackagingElementNode)userObject : null;
@@ -431,7 +433,8 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     }
   }
 
-  private @Nullable DefaultMutableTreeNode findParentCompositeElementNode(Point point) {
+  @Nullable
+  private DefaultMutableTreeNode findParentCompositeElementNode(Point point) {
     TreePath path = myTree.getPathForLocation(point.x, point.y);
     while (path != null) {
       final PackagingElement<?> element = myTree.getElementByPath(path);
@@ -462,7 +465,8 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     return myTreeStructure.getRootNode();
   }
 
-  public @NotNull CompositePackagingElement<?> getRootElement() {
+  @NotNull
+  public CompositePackagingElement<?> getRootElement() {
     return myContext.getRootElement(myOriginalArtifact);
   }
 
@@ -478,7 +482,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     mySelectedElementInfo.showPropertiesPanel();
   }
 
-  public void putIntoDefaultLocations(final @NotNull List<? extends PackagingSourceItem> items) {
+  public void putIntoDefaultLocations(@NotNull final List<? extends PackagingSourceItem> items) {
     final List<PackagingElement<?>> toSelect = new ArrayList<>();
     editLayout(() -> {
       final CompositePackagingElement<?> rootElement = getArtifact().getRootElement();
@@ -503,7 +507,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     updateAndSelect(getRootNode(), toSelect);
   }
 
-  public void putElements(final @NotNull String path, final @NotNull List<? extends PackagingElement<?>> elements) {
+  public void putElements(@NotNull final String path, @NotNull final List<? extends PackagingElement<?>> elements) {
     final List<PackagingElement<?>> toSelect = new ArrayList<>();
     editLayout(() -> {
       final CompositePackagingElement<?> directory =
@@ -514,7 +518,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     updateAndSelect(getRootNode(), toSelect);
   }
 
-  public void packInto(final @NotNull List<? extends PackagingSourceItem> items, final String pathToJar) {
+  public void packInto(@NotNull final List<? extends PackagingSourceItem> items, final String pathToJar) {
     final List<PackagingElement<?>> toSelect = new ArrayList<>();
     final CompositePackagingElement<?> rootElement = getArtifact().getRootElement();
     editLayout(() -> {
@@ -585,8 +589,9 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   private class LayoutTreeStructure extends SimpleTreeStructure {
     private ArtifactRootNode myRootNode;
 
+    @NotNull
     @Override
-    public @NotNull Object getRootElement() {
+    public Object getRootElement() {
       return getRootNode();
     }
 

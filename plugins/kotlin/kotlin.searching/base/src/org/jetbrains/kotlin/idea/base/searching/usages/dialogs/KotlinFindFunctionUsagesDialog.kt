@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.searching.usages.dialogs
 
-import com.intellij.find.FindUsagesSettings
+import com.intellij.find.FindSettings
 import com.intellij.find.findUsages.FindMethodUsagesDialog
 import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.findUsages.JavaMethodFindUsagesOptions
+import com.intellij.java.JavaBundle
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.ui.SimpleColoredComponent
@@ -20,7 +21,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import javax.swing.JPanel
 
-internal class KotlinFindFunctionUsagesDialog(
+class KotlinFindFunctionUsagesDialog(
     method: KtFunction,
     project: Project,
     findUsagesOptions: KotlinFunctionFindUsagesOptions,
@@ -57,6 +58,8 @@ internal class KotlinFindFunctionUsagesDialog(
     }
 
     override fun addUsagesOptions(optionsPanel: JPanel) {
+        super.addUsagesOptions(optionsPanel)
+
         val method: KtNamedDeclaration = myUsagesHandler.psiElement as KtNamedDeclaration
         if (Utils.isOpen(method)) {
             overrideUsages = addCheckboxToPanel(
@@ -68,12 +71,20 @@ internal class KotlinFindFunctionUsagesDialog(
                 true
             )
         }
-        myCbIncludeOverloadedMethods = addCheckboxToPanel(
-            message("find.declaration.include.overloaded.methods.checkbox"),
-            FindUsagesSettings.getInstance().isSearchOverloadedMethods(),
-            optionsPanel,
-            false
-        )
+
+        if (!Utils.renameCheckbox(
+                optionsPanel,
+                JavaBundle.message("find.options.include.overloaded.methods.checkbox"),
+                message("find.declaration.include.overloaded.methods.checkbox")
+            )
+        ) {
+            addCheckboxToPanel(
+                message("find.declaration.include.overloaded.methods.checkbox"),
+                FindSettings.getInstance().isSearchOverloadedMethods(),
+                optionsPanel,
+                false
+            )
+        }
         val element = psiElement.unwrapped
         val function = if (element is KtNamedDeclaration
         ) element as KtNamedDeclaration?
@@ -89,7 +100,6 @@ internal class KotlinFindFunctionUsagesDialog(
                 false
             )
         }
-        addDefaultOptions(optionsPanel)
     }
 
     override fun calcFindUsagesOptions(options: JavaMethodFindUsagesOptions) {

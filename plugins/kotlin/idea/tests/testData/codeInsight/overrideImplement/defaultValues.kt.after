@@ -8,5 +8,3 @@ class C : T {
         <selection><caret>TODO("Not yet implemented")</selection>
     }
 }
-
-// MEMBER: "foo(a: Int = ...): Unit"

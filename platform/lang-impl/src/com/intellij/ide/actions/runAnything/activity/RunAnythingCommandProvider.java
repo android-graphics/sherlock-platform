@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.execution.ExecutionException;
@@ -72,18 +72,21 @@ public abstract class RunAnythingCommandProvider extends RunAnythingProviderBase
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable String getAdText() {
+  public String getAdText() {
     return getAdContextText() + ", " + getAdDebugText() + ", " + getAdDeleteCommandText();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getCommand(@NotNull String value) {
+  public String getCommand(@NotNull String value) {
     return value;
   }
 
+  @Nullable
   @Override
-  public @Nullable Icon getIcon(@NotNull String value) {
-    return AllIcons.Actions.RunAnything;
+  public Icon getIcon(@NotNull String value) {
+    return AllIcons.Actions.Run_anything;
   }
 }

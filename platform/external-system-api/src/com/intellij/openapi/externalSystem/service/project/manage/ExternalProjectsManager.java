@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -22,11 +21,6 @@ public interface ExternalProjectsManager {
   @NotNull
   Project getProject();
 
-  /**
-   * @deprecated use {@link ExternalSystemProjectTracker} instead
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated(forRemoval = true)
   ExternalSystemProjectsWatcher getExternalProjectsWatcher();
 
   void refreshProject(@NotNull String externalProjectPath, @NotNull ImportSpec importSpec);

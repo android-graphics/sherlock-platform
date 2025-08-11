@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class PyInspectionVisitor extends PyElementVisitor {
-  private final @Nullable ProblemsHolder myHolder;
+  @Nullable private final ProblemsHolder myHolder;
   protected final TypeEvalContext myTypeEvalContext;
 
   public static final Key<TypeEvalContext> INSPECTION_TYPE_EVAL_CONTEXT = Key.create("PyInspectionTypeEvalContext");
@@ -54,7 +54,8 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
     myTypeEvalContext = context;
   }
 
-  public static @NotNull TypeEvalContext getContext(@NotNull LocalInspectionToolSession session) {
+  @NotNull
+  public static TypeEvalContext getContext(@NotNull LocalInspectionToolSession session) {
     TypeEvalContext context;
     synchronized (INSPECTION_TYPE_EVAL_CONTEXT) {
       context = session.getUserData(INSPECTION_TYPE_EVAL_CONTEXT);
@@ -74,7 +75,8 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
     return PyResolveContext.defaultContext(myTypeEvalContext);
   }
 
-  protected @Nullable ProblemsHolder getHolder() {
+  @Nullable
+  protected ProblemsHolder getHolder() {
     return myHolder;
   }
 

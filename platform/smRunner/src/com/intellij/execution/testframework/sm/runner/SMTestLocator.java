@@ -10,7 +10,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,7 +23,6 @@ public interface SMTestLocator extends PossiblyDumbAware {
    * Creates the <code>Location</code> list from <code>protocol</code> and <code>path</code> in <code>scope</code>.
    */
    @NotNull
-   @Unmodifiable
   List<Location> getLocation(@NonNls @NotNull String protocol,
                              @NonNls @NotNull String path,
                              @NonNls @NotNull Project project,
@@ -37,7 +35,8 @@ public interface SMTestLocator extends PossiblyDumbAware {
    * A good example for <code>metainfo</code> is the line number of the beginning of the test. It can speed up the search procedure,
    * but it changes when editing.
    */
-  default @NotNull @Unmodifiable List<Location> getLocation(@NonNls @NotNull String protocol,
+  @NotNull
+  default List<Location> getLocation(@NonNls @NotNull String protocol,
                                      @NonNls @NotNull String path,
                                      @NonNls @Nullable String metainfo,
                                      @NotNull Project project,
@@ -48,7 +47,8 @@ public interface SMTestLocator extends PossiblyDumbAware {
   /**
    * Parse stacktrace line and return corresponding location.
    */
-  default @NotNull @Unmodifiable List<Location> getLocation(@NotNull String stacktraceLine,
+  @NotNull
+  default List<Location> getLocation(@NotNull String stacktraceLine,
                                      @NotNull Project project, @NotNull GlobalSearchScope scope) {
     return Collections.emptyList();
   }
@@ -58,7 +58,8 @@ public interface SMTestLocator extends PossiblyDumbAware {
    * @return ModificationTracker instance used to cache result of {{@link #getLocation(String, String, Project, GlobalSearchScope)}};
    *         To disable caching, override and return {@link ModificationTracker#EVER_CHANGED}.
    */
-  default @NotNull ModificationTracker getLocationCacheModificationTracker(@NotNull Project project) {
+  @NotNull
+  default ModificationTracker getLocationCacheModificationTracker(@NotNull Project project) {
     return PsiModificationTracker.getInstance(project); // invalidates cache on entering/exiting dumb mode
   }
 }

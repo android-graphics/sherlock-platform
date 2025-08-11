@@ -2,7 +2,10 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.google.common.collect.HashBiMap
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
@@ -25,10 +28,7 @@ abstract class BaseSerializationChecker {
 
     val file = Files.createTempFile("", "")
     try {
-      val serializationResult = serializer.serializeCache(file, storage)
-      if (serializationResult is SerializationResult.Fail) {
-        throw RuntimeException(serializationResult.problem)
-      }
+      serializer.serializeCache(file, storage)
 
       val deserialized = (serializer.deserializeCache(file).getOrThrow() as MutableEntityStorageImpl)
         .toSnapshot() as ImmutableEntityStorageImpl

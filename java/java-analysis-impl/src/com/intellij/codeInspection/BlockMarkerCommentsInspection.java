@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -27,7 +27,7 @@ public final class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalIn
     withParent(psiElement(PsiDeclarationStatement.class, PsiExpressionStatement.class))
     .afterSiblingSkipping(or(psiElement(PsiWhiteSpace.class), psiElement(PsiJavaToken.class).with(new PatternCondition<>(null) {
                             @Override
-                            public boolean accepts(final @NotNull PsiJavaToken psiJavaToken, final ProcessingContext context) {
+                            public boolean accepts(@NotNull final PsiJavaToken psiJavaToken, final ProcessingContext context) {
                               return psiJavaToken.getTokenType().equals(JavaTokenType.SEMICOLON);
                             }
                           })),
@@ -37,7 +37,7 @@ public final class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalIn
     withParent(PsiClass.class).
     afterSiblingSkipping(psiElement(PsiWhiteSpace.class), psiElement(PsiJavaToken.class).with(new PatternCondition<>(null) {
       @Override
-      public boolean accepts(final @NotNull PsiJavaToken token, final ProcessingContext context) {
+      public boolean accepts(@NotNull final PsiJavaToken token, final ProcessingContext context) {
         return JavaTokenType.RBRACE.equals(token.getTokenType());
       }
     }));
@@ -58,11 +58,12 @@ public final class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalIn
 
   private static final String END_WORD = "end";
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
-      public void visitComment(final @NotNull PsiComment element) {
+      public void visitComment(@NotNull final PsiComment element) {
         final IElementType tokenType = element.getTokenType();
         if (!(tokenType.equals(JavaTokenType.END_OF_LINE_COMMENT))) {
           return;
@@ -85,8 +86,9 @@ public final class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalIn
   }
 
   private static class DeleteBlockMarkerCommentFix extends PsiUpdateModCommandQuickFix {
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaAnalysisBundle.message("remove.block.marker.comments");
     }
 

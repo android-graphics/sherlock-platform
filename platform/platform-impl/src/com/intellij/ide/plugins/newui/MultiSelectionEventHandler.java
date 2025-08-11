@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.ComponentUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +16,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-@ApiStatus.Internal
+/**
+ * @author Alexander Lobas
+ */
 public final class MultiSelectionEventHandler extends EventHandler {
   private PluginsGroupComponent myContainer;
   private PagePluginLayout myLayout;

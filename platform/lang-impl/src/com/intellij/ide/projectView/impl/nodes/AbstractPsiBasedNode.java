@@ -8,6 +8,7 @@ import com.intellij.ide.bookmark.BookmarksManager;
 import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.impl.CompoundProjectViewNodeDecorator;
 import com.intellij.ide.projectView.impl.ProjectViewInplaceCommentProducerImplKt;
+import com.intellij.ide.tags.TagManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.InplaceCommentAppender;
@@ -31,6 +32,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ColoredText;
 import com.intellij.ui.icons.PredefinedIconOverlayService;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.IconUtil;
@@ -49,6 +51,7 @@ import java.util.Objects;
 
 import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.getFileTimestamp;
 import static com.intellij.ide.projectView.impl.nodes.ProjectViewNodeExtensionsKt.getVirtualFileForNodeOrItsPSI;
+import static com.intellij.ide.util.treeView.NodeRenderer.getSimpleTextAttributes;
 
 /**
  * Class for node descriptors based on PsiElements. Subclasses should define a method that extracts PsiElement from Value.
@@ -183,11 +186,30 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       catch (IndexNotReadyException ignored) {
       }
 
-      final Icon tagIcon = getBookmarkIcon(myProject, value);
+      final Icon tagIcon;
+      final ColoredText tagText;
+      if (!TagManager.isEnabled()) {
+        tagIcon = getBookmarkIcon(myProject, value);
+        tagText = null;
+      }
+      else {
+        var tagIconAndText = TagManager.getTagIconAndText(value);
+        tagIcon = tagIconAndText.icon();
+        tagText = tagIconAndText.coloredText();
+      }
       data.setIcon(withIconMarker(icon, tagIcon));
       data.setPresentableText(myName);
       if (deprecated) {
         data.setAttributesKey(CodeInsightColors.DEPRECATED_ATTRIBUTES);
+      }
+      if (tagText != null) {
+        var fragments = tagText.fragments();
+        for (ColoredText.Fragment fragment : fragments) {
+          data.getColoredText().add(new ColoredFragment(fragment.fragmentText(), fragment.fragmentAttributes()));
+        }
+        if (!fragments.isEmpty()) {
+          data.getColoredText().add(new ColoredFragment(myName, getSimpleTextAttributes(data)));
+        }
       }
       updateImpl(data);
       data.setIcon(patchIcon(myProject, data.getIcon(true), getVirtualFile()));

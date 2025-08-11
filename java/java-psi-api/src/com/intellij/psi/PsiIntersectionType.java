@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.core.JavaPsiBundle;
@@ -25,15 +25,18 @@ public final class PsiIntersectionType extends PsiType.Stub {
     myConjuncts = conjuncts;
   }
 
-  public static @NotNull PsiType createIntersection(@NotNull List<PsiType> conjuncts) {
+  @NotNull
+  public static PsiType createIntersection(@NotNull List<PsiType> conjuncts) {
     return createIntersection(conjuncts.toArray(createArray(conjuncts.size())));
   }
 
-  public static @NotNull PsiType createIntersection(PsiType... conjuncts) {
+  @NotNull
+  public static PsiType createIntersection(PsiType... conjuncts) {
     return createIntersection(true, conjuncts);
   }
 
-  public static @NotNull PsiType createIntersection(boolean flatten, PsiType @NotNull ... conjuncts) {
+  @NotNull
+  public static PsiType createIntersection(boolean flatten, PsiType @NotNull ... conjuncts) {
     assert conjuncts.length > 0;
     if (flatten) {
       conjuncts = flattenAndRemoveDuplicates(conjuncts);
@@ -88,18 +91,21 @@ public final class PsiIntersectionType extends PsiType.Stub {
     return myConjuncts;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPresentableText(final boolean annotated) {
+  public String getPresentableText(final boolean annotated) {
     return StringUtil.join(myConjuncts, psiType -> psiType.getPresentableText(annotated), " & ");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getCanonicalText(boolean annotated) {
+  public String getCanonicalText(boolean annotated) {
     return myConjuncts[0].getCanonicalText(annotated);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getInternalCanonicalText() {
+  public String getInternalCanonicalText() {
     return StringUtil.join(myConjuncts, psiType -> psiType.getInternalCanonicalText(), " & ");
   }
 
@@ -131,7 +137,8 @@ public final class PsiIntersectionType extends PsiType.Stub {
     return myConjuncts;
   }
 
-  public @NotNull PsiType getRepresentative() {
+  @NotNull
+  public PsiType getRepresentative() {
     return myConjuncts[0];
   }
 

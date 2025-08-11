@@ -1,7 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
@@ -119,18 +119,22 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
   }
 
-  protected @NotNull String getAnswerFilePath() {
+  @NotNull
+  protected String getAnswerFilePath() {
     return getTestDataPath() + myFileSuffix + ".txt";
   }
 
-  protected @NonNls @NotNull String getTestDataPath() {
+  @NonNls
+  @NotNull
+  protected String getTestDataPath() {
     if (myTestDataPath != null) {
       return myTestDataPath;
     }
     return PathManagerEx.getTestDataPath();
   }
 
-  protected @NotNull VirtualFile getVirtualFile(@NonNls @NotNull String filePath) {
+  @NotNull
+  protected VirtualFile getVirtualFile(@NonNls @NotNull String filePath) {
     String fullPath = getTestDataPath() + filePath;
 
     VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
@@ -144,7 +148,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param fileName name of the file.
    * @param fileText data file text.
    */
-  protected @NotNull Document configureFromFileText(@NonNls @NotNull String fileName, @NonNls @NotNull String fileText) {
+  @NotNull
+  protected Document configureFromFileText(@NonNls @NotNull String fileName, @NonNls @NotNull String fileText) {
     return configureFromFileText(fileName, fileText, false);
   }
 
@@ -155,7 +160,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param fileText   data file text.
    * @param checkCaret if true, it will be verified that file contains at least one caret or selection marker
    */
-  protected @NotNull Document configureFromFileText(@NonNls @NotNull String fileName,
+  @NotNull
+  protected Document configureFromFileText(@NonNls @NotNull String fileName,
                                            @NonNls @NotNull String fileText,
                                            boolean checkCaret) {
     return WriteCommandAction.writeCommandAction(null).compute(() -> {
@@ -181,7 +187,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     });
   }
 
-  protected @NotNull Editor configureFromFileTextWithoutPSI(@NonNls @NotNull String fileText) {
+  @NotNull
+  protected Editor configureFromFileTextWithoutPSI(@NonNls @NotNull String fileText) {
     return WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
       Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
       EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
@@ -197,17 +204,19 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     });
   }
 
-  protected @NotNull Editor createEditor(@NotNull VirtualFile file) {
+  @NotNull
+  protected Editor createEditor(@NotNull VirtualFile file) {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     Editor editor = FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file, 0), false);
-    DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart("LightPlatformCodeInsightTestCase.createEditor");
+    DaemonCodeAnalyzer.getInstance(getProject()).restart();
     assertNotNull(editor);
     ((EditorImpl)editor).setCaretActive();
     getIndexingMode().ensureIndexingStatus(getProject());
     return editor;
   }
 
-  private @NotNull Document setupFileEditorAndDocument(@NotNull String relativePath, @NotNull String fileText) throws IOException {
+  @NotNull
+  private Document setupFileEditorAndDocument(@NotNull String relativePath, @NotNull String fileText) throws IOException {
     EncodingProjectManager.getInstance(getProject()).setEncoding(null, StandardCharsets.UTF_8);
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     deleteVFile();
@@ -219,14 +228,16 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     return getEditor().getDocument();
   }
 
-  protected @NotNull Editor createSaveAndOpenFile(@NotNull String relativePath, @NotNull String fileText) {
+  @NotNull
+  protected Editor createSaveAndOpenFile(@NotNull String relativePath, @NotNull String fileText) {
     Editor editor = createEditor(VfsTestUtil.createFile(getSourceRoot(), relativePath, fileText));
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     getIndexingMode().ensureIndexingStatus(getProject());
     return editor;
   }
 
-  protected static @NotNull VirtualFile createAndSaveFile(@NotNull String relativePath, @NotNull String fileText) {
+  @NotNull
+  protected static VirtualFile createAndSaveFile(@NotNull String relativePath, @NotNull String fileText) {
     return VfsTestUtil.createFile(getSourceRoot(), relativePath, fileText);
   }
 
@@ -466,7 +477,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     });
   }
 
-  private static @NotNull String getMessage(@NonNls @NotNull String engineMessage, @Nullable String userMessage) {
+  @NotNull
+  private static String getMessage(@NonNls @NotNull String engineMessage, @Nullable String userMessage) {
     if (userMessage == null) return engineMessage;
     return userMessage + " [" + engineMessage + "]";
   }
@@ -708,41 +720,40 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     executeAction(IdeActions.ACTION_COMMENT_LINE);
   }
 
-  /**
-   * @see IdeActions
-   */
   protected void executeAction(@NonNls @NotNull String actionId) {
     executeAction(actionId, getEditor());
   }
 
-  /**
-   * @see IdeActions
-   */
   protected void executeAction(@NonNls @NotNull String actionId, @NotNull Editor editor) {
     executeAction(actionId, editor, getProject());
   }
 
-  /**
-   * @see IdeActions
-   */
   public static void executeAction(@NonNls @NotNull String actionId, @NotNull Editor editor, @Nullable Project project) {
     CommandProcessor.getInstance()
       .executeCommand(project, () -> EditorTestUtil.executeAction(editor, actionId, true), "", null, editor.getDocument());
   }
 
-  protected @NotNull DataContext getCurrentEditorDataContext() {
+  @NotNull
+  protected DataContext getCurrentEditorDataContext() {
     DataContext defaultContext = DataManager.getInstance().getDataContext();
-    return CustomizedDataContext.withSnapshot(defaultContext, sink -> {
-      sink.set(CommonDataKeys.EDITOR, getEditor());
-      sink.set(CommonDataKeys.PROJECT, getProject());
-      sink.set(CommonDataKeys.PSI_FILE, getFile());
-      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+    return CustomizedDataContext.create(defaultContext, dataId -> {
+      if (CommonDataKeys.EDITOR.is(dataId)) {
+        return getEditor();
+      }
+      if (CommonDataKeys.PROJECT.is(dataId)) {
+        return getProject();
+      }
+      if (CommonDataKeys.PSI_FILE.is(dataId)) {
+        return getFile();
+      }
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         PsiFile file = getFile();
         if (file == null) return null;
         Editor editor = getEditor();
         if (editor == null) return null;
         return file.findElementAt(editor.getCaretModel().getOffset());
-      });
+      }
+      return null;
     });
   }
 

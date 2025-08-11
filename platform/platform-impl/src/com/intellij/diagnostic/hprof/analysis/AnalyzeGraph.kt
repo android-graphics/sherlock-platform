@@ -142,7 +142,7 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
     val nominatedClassNames = config.perClassOptions.classNames
     val stopwatch = Stopwatch.createUnstarted()
     nominatedClassNames.forEach { className ->
-      val classDefinition = nav.classStore.getClassIfExists(className) ?: return@forEach
+      val classDefinition = nav.classStore[className]
       val set = nominatedInstances[classDefinition]!!
       progress.fraction = counter.toDouble() / nominatedInstances.size
       progress.text2 = DiagnosticBundle.message("hprof.analysis.progress", set.size, classDefinition.prettyName)
@@ -211,9 +211,7 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
 
     val nominatedClassNames = config.perClassOptions.classNames
     nominatedClassNames.forEach {
-      classStore.getClassIfExists(it)?.also { classDefinition ->
-        nominatedInstances[classDefinition] = IntOpenHashSet()
-      }
+      nominatedInstances[classStore[it]] = IntOpenHashSet()
     }
 
     progress.text2 = DiagnosticBundle.message("analyze.graph.progress.details.collect.roots")

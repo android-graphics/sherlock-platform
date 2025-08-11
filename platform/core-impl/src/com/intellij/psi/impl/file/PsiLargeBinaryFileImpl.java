@@ -18,9 +18,7 @@ package com.intellij.psi.impl.file;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiLargeBinaryFile;
 import com.intellij.psi.impl.PsiManagerImpl;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
 public class PsiLargeBinaryFileImpl extends PsiBinaryFileImpl implements PsiLargeBinaryFile {
   public PsiLargeBinaryFileImpl(PsiManagerImpl manager, FileViewProvider viewProvider) {
     super(manager, viewProvider);

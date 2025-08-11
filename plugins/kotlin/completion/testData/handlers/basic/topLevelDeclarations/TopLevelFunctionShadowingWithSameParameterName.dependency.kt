@@ -1,3 +1,0 @@
-package pack
-
-fun topLevelFunction() {}

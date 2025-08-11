@@ -33,7 +33,7 @@ class KotlinChangeSignatureUsageProvider : ChangeSignatureUsageProvider {
     ): UsageInfo {
         val unwrapped = overrider.unwrapped
         require(unwrapped is KtCallableDeclaration)
-        val kotlinChangeInfoBase = fromJavaChangeInfo(changeInfo, UsageInfo(unwrapped), true)
+        val kotlinChangeInfoBase = fromJavaChangeInfo(changeInfo, UsageInfo(unwrapped))
         if (kotlinChangeInfoBase != null) {
             KotlinChangeSignatureUsageSearcher.findInternalUsages(unwrapped, kotlinChangeInfoBase, result)
         }

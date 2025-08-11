@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.folding;
 
 import com.intellij.application.options.CodeStyle;
@@ -25,18 +25,19 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
 import static com.intellij.psi.util.PsiTreeUtil.skipParentsOfType;
 
-@ApiStatus.Internal
 public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
 
-  public static final CustomFoldingSurroundDescriptor INSTANCE = new CustomFoldingSurroundDescriptor();
+  public final static CustomFoldingSurroundDescriptor INSTANCE = new CustomFoldingSurroundDescriptor();
 
-  private static final String DEFAULT_DESC_TEXT = "Description";
+  private final static String DEFAULT_DESC_TEXT = "Description";
 
   @Override
   public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
@@ -96,11 +97,13 @@ public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor
     return PsiElement.EMPTY_ARRAY;
   }
 
-  private static @Nullable PsiElement getParent(@Nullable PsiElement e) {
+  @Nullable
+  private static PsiElement getParent(@Nullable PsiElement e) {
     return e instanceof PsiFile ? e : skipParentsOfType(e, GeneratedParserUtilBase.DummyBlock.class);
   }
 
-  private static @Nullable PsiElement lowerEndElementIfNeeded(@NotNull PsiElement start, @NotNull PsiElement end) {
+  @Nullable
+  private static PsiElement lowerEndElementIfNeeded(@NotNull PsiElement start, @NotNull PsiElement end) {
     if (PsiTreeUtil.isAncestor(end, start, true)) {
       PsiElement o = end.getLastChild();
       while (o != null && o.getParent() != start.getParent()) {
@@ -113,7 +116,8 @@ public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor
     return end;
   }
 
-  private static @Nullable PsiElement lowerStartElementIfNeeded(@NotNull PsiElement start, @NotNull PsiElement end) {
+  @Nullable
+  private static PsiElement lowerStartElementIfNeeded(@NotNull PsiElement start, @NotNull PsiElement end) {
     if (PsiTreeUtil.isAncestor(start, end, true)) {
       PsiElement o = start.getFirstChild();
       while (o != null && o.getParent() != end.getParent()) {
@@ -126,7 +130,8 @@ public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor
     return start;
   }
 
-  private static @Nullable PsiElement findCommonAncestorForWholeRange(@NotNull PsiElement start, @NotNull PsiElement end) {
+  @Nullable
+  private static PsiElement findCommonAncestorForWholeRange(@NotNull PsiElement start, @NotNull PsiElement end) {
     if (start.getContainingFile() != end.getContainingFile()) {
       return null;
     }
@@ -142,7 +147,8 @@ public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor
     return null;
   }
 
-  private static @Nullable PsiElement findClosestParentAfterLineBreak(PsiElement element) {
+  @Nullable
+  private static PsiElement findClosestParentAfterLineBreak(PsiElement element) {
     PsiElement parent = element;
     while (parent != null && !(parent instanceof PsiFileSystemItem)) {
       PsiElement prev = parent.getPrevSibling();
@@ -164,7 +170,8 @@ public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor
     return element.getTextOffset() == 0;
   }
 
-  private static @Nullable PsiElement findClosestParentBeforeLineBreak(PsiElement element) {
+  @Nullable
+  private static PsiElement findClosestParentBeforeLineBreak(PsiElement element) {
     PsiElement parent = element;
     while (parent != null && !(parent instanceof PsiFileSystemItem)) {
       final PsiElement next = parent.getNextSibling();
@@ -213,7 +220,8 @@ public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor
   }
 
   @TestOnly
-  public static @Unmodifiable @NotNull List<Surrounder> getAllSurrounders() {
+  @NotNull
+  public static List<Surrounder> getAllSurrounders() {
     return ContainerUtil.map(
       CustomFoldingProvider.getAllProviders(), provider -> new CustomFoldingRegionSurrounder(provider));
   }
@@ -306,7 +314,7 @@ public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor
       PsiDocumentManager.getInstance(project).commitDocument(document);
       adjustLineIndent(project, psiFile, language, TextRange.from(endOffset + delta - endString.length(), endString.length()));
       adjustLineIndent(project, psiFile, language, TextRange.from(startOffset, startString.length()));
-      rangeToSelect = rangeMarkerToSelect.getTextRange();
+      rangeToSelect = TextRange.create(rangeMarkerToSelect.getStartOffset(), rangeMarkerToSelect.getEndOffset());
       rangeMarkerToSelect.dispose();
       updater.select(rangeToSelect);
     }

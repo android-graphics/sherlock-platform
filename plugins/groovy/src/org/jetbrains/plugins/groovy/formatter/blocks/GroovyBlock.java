@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.formatter.blocks;
 
@@ -52,9 +52,9 @@ public class GroovyBlock implements Block, ASTBlock {
   /**
    * Consider using {@link FormattingContext#createBlock(ASTNode, Indent, Wrap)}
    */
-  public GroovyBlock(final @NotNull ASTNode node,
-                     final @NotNull Indent indent,
-                     final @Nullable Wrap wrap,
+  public GroovyBlock(@NotNull final ASTNode node,
+                     @NotNull final Indent indent,
+                     @Nullable final Wrap wrap,
                      @NotNull FormattingContext context) {
     myNode = node;
 
@@ -64,17 +64,20 @@ public class GroovyBlock implements Block, ASTBlock {
   }
 
   @Override
-  public @NotNull ASTNode getNode() {
+  @NotNull
+  public ASTNode getNode() {
     return myNode;
   }
 
   @Override
-  public @NotNull TextRange getTextRange() {
+  @NotNull
+  public TextRange getTextRange() {
     return myNode.getTextRange();
   }
 
+  @NotNull
   @Override
-  public @NotNull List<Block> getSubBlocks() {
+  public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
       mySubBlocks = new GroovyBlockGenerator(this).generateSubBlocks();
     }
@@ -82,17 +85,20 @@ public class GroovyBlock implements Block, ASTBlock {
   }
 
   @Override
-  public @Nullable Wrap getWrap() {
+  @Nullable
+  public Wrap getWrap() {
     return myWrap;
   }
 
   @Override
-  public @NotNull Indent getIndent() {
+  @NotNull
+  public Indent getIndent() {
     return myIndent;
   }
 
   @Override
-  public @Nullable Alignment getAlignment() {
+  @Nullable
+  public Alignment getAlignment() {
     if (myAlignment == null) {
       myAlignment = myContext.getAlignmentProvider().getAlignment(myNode.getPsi());
     }
@@ -107,12 +113,14 @@ public class GroovyBlock implements Block, ASTBlock {
    * @param child2 right element
    */
   @Override
-  public @Nullable Spacing getSpacing(Block child1, @NotNull Block child2) {
+  @Nullable
+  public Spacing getSpacing(Block child1, @NotNull Block child2) {
     return GroovySpacingProcessor.getSpacing(child1, child2, myContext);
   }
 
   @Override
-  public @NotNull ChildAttributes getChildAttributes(final int newChildIndex) {
+  @NotNull
+  public ChildAttributes getChildAttributes(final int newChildIndex) {
     ASTNode astNode = getNode();
     final PsiElement psiParent = astNode.getPsi();
     if (psiParent instanceof GroovyFileBase) {
@@ -171,7 +179,7 @@ public class GroovyBlock implements Block, ASTBlock {
    * @param node Tree node
    * @return true if node is incomplete
    */
-  public static boolean isIncomplete(final @NotNull ASTNode node) {
+  public static boolean isIncomplete(@NotNull final ASTNode node) {
     if (node.getElementType() instanceof ILazyParseableElementType) return false;
     ASTNode lastChild = node.getLastChildNode();
     while (lastChild != null &&

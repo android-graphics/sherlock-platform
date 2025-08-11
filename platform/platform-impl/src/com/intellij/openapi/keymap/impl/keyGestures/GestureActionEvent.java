@@ -2,19 +2,17 @@
 package com.intellij.openapi.keymap.impl.keyGestures;
 
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionUiKind;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionEventVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class GestureActionEvent extends AnActionEvent {
   public GestureActionEvent(KeyboardGestureProcessor processor) {
-    super(processor.myContext.dataContext,
-          processor.myContext.actionPresentation,
+    super(processor.myContext.actionKey,
+          processor.myContext.dataContext,
           processor.myContext.actionPlace,
-          ActionUiKind.NONE,
-          processor.myContext.actionKey, 0,
-          ActionManager.getInstance());
+          processor.myContext.actionPresentation, ActionManager.getInstance(),
+          0);
   }
 
   public static final class Init extends GestureActionEvent {

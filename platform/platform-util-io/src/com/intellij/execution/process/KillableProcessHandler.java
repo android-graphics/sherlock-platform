@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.google.common.base.Ascii;
@@ -34,21 +34,25 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   private static final Logger LOG = Logger.getInstance(KillableProcessHandler.class);
 
   private boolean myShouldKillProcessSoftly = true;
+  private final boolean myMediatedProcess;
   private boolean myShouldKillProcessSoftlyWithWinP = SystemInfo.isWin10OrNewer && Registry.is("use.winp.for.graceful.process.termination");
 
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
+    myMediatedProcess = WinRunnerMediator.isRunnerCommandInjected(commandLine);
   }
 
   protected KillableProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
     super(process, commandLine.getCommandLineString(), commandLine.getCharset());
+    myMediatedProcess = WinRunnerMediator.isRunnerCommandInjected(commandLine);
   }
 
-  /** @deprecated the mediator is retired; use {@link #KillableProcessHandler(GeneralCommandLine)} instead */
+  /**
+   * @deprecated please use {@link KillableProcessHandler#KillableProcessHandler(GeneralCommandLine)}
+   */
   @Deprecated(forRemoval = true)
-  @SuppressWarnings("unused")
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
-    this(commandLine);
+    this(mediate(commandLine, withMediator, false));
   }
 
   /**
@@ -56,6 +60,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    */
   public KillableProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
     super(process, commandLine);
+    myMediatedProcess = false;
   }
 
   /**
@@ -70,6 +75,19 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    */
   public KillableProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset, @Nullable Set<File> filesToDelete) {
     super(process, commandLine, charset, filesToDelete);
+    myMediatedProcess = false;
+  }
+
+  /**
+   * @deprecated just don't use this method
+   */
+  @Deprecated(forRemoval = true)
+  @NotNull
+  protected static GeneralCommandLine mediate(@NotNull GeneralCommandLine commandLine, boolean withMediator, boolean showConsole) {
+    if (withMediator && SystemInfo.isWindows) {
+      WinRunnerMediator.injectRunnerCommand(commandLine, showConsole);
+    }
+    return commandLine;
   }
 
   /**
@@ -92,10 +110,10 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    * This method shouldn't be overridden, see {@link #shouldKillProcessSoftly}
    * @see #destroyProcessGracefully
    */
-  protected final boolean canDestroyProcessGracefully() {
+  private boolean canDestroyProcessGracefully() {
     if (processCanBeKilledByOS(myProcess)) {
       if (SystemInfo.isWindows) {
-        return hasPty() || canTerminateGracefullyWithWinP();
+        return hasPty() || myMediatedProcess || canTerminateGracefullyWithWinP();
       }
       if (SystemInfo.isUnix) {
         return true;
@@ -179,17 +197,20 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
           WinProcessTerminator.terminateWinProcessGracefully(this, processService, this::sendInterruptToPtyProcess)) {
         return true;
       }
+      if (myMediatedProcess) {
+        return WinRunnerMediator.destroyProcess(myProcess, true);
+      }
       if (canTerminateGracefullyWithWinP() && !Registry.is("disable.winp")) {
         try {
           if (!myProcess.isAlive()) {
-            OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLineForLog());
+            OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
             return true;
           }
           return WinProcessTerminator.terminateWinProcessGracefully(this, processService);
         }
         catch (Throwable e) {
           if (!myProcess.isAlive()) {
-            OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLineForLog());
+            OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
             return true;
           }
           String message = e.getMessage();
@@ -200,14 +221,14 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
             // Let's fall back to the default termination without logging an error.
             String msg = "Cannot send Ctrl+C to process without a console (fallback to default termination)";
             if (LOG.isDebugEnabled()) {
-              LOG.debug(msg + " " + getCommandLineForLog());
+              LOG.debug(msg + " " + getCommandLine());
             }
             else {
               LOG.info(msg);
             }
           }
           else {
-            LOG.error("Cannot send Ctrl+C (fallback to default termination) " + getCommandLineForLog(), e);
+            LOG.error("Cannot send Ctrl+C (fallback to default termination) " + getCommandLine(), e);
           }
         }
       }

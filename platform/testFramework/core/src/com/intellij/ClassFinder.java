@@ -9,6 +9,7 @@ import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -35,7 +36,16 @@ public class ClassFinder {
     }
   }
 
-  private @Nullable String computeClassName(final @NotNull Path path, final @NotNull Path root) {
+  /**
+   * @deprecated Use {@linkplain ClassFinder#ClassFinder(Path, String, boolean)} instead.
+   */
+  @Deprecated(forRemoval = true)
+  public ClassFinder(final File classPathRoot, final String rootPackage, boolean includeUnconventionallyNamedTests) {
+    this(classPathRoot.toPath(), rootPackage, includeUnconventionallyNamedTests);
+  }
+
+  @Nullable
+  private String computeClassName(final @NotNull Path path, final @NotNull Path root) {
     Path absPath = path.toAbsolutePath();
     String fileName = absPath.getFileName().toString();
     if (!includeUnconventionallyNamedTests) {
@@ -77,7 +87,8 @@ public class ClassFinder {
     return false;
   }
 
-  private static @Nullable String getClassFQN(final @NotNull Path path, final @NotNull Path root) {
+  @Nullable
+  private static String getClassFQN(final @NotNull Path path, final @NotNull Path root) {
     String fqn = StringUtil
       .trimEnd(root.relativize(path).toString(), ".class")
       .replace(path.getFileSystem().getSeparator(), ".");

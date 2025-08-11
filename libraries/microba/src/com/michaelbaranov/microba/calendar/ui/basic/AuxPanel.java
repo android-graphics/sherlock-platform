@@ -1,18 +1,28 @@
 package com.michaelbaranov.microba.calendar.ui.basic;
 
-import com.michaelbaranov.microba.calendar.CalendarResources;
-import com.michaelbaranov.microba.calendar.VetoPolicy;
-import com.michaelbaranov.microba.common.PolicyEvent;
-import com.michaelbaranov.microba.common.PolicyListener;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.DateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
+import java.util.TimeZone;
+
+import javax.swing.JButton;
+import javax.swing.JPanel;
+
+import com.michaelbaranov.microba.calendar.CalendarResources;
+import com.michaelbaranov.microba.calendar.VetoPolicy;
+import com.michaelbaranov.microba.common.PolicyEvent;
+import com.michaelbaranov.microba.common.PolicyListener;
 
 class AuxPanel extends JPanel implements PropertyChangeListener, PolicyListener {
 
@@ -30,15 +40,15 @@ class AuxPanel extends JPanel implements PropertyChangeListener, PolicyListener 
 
   private TimeZone zone;
 
-  private final JButton todayButton;
+  private JButton todayButton;
 
-  private final JButton noneButton;
+  private JButton noneButton;
 
   private DateFormat fullDateFormat;
 
   private Date currentDate;
 
-  private final Set<JComponent> focusableComponents = new HashSet<>();
+  private Set focusableComponents = new HashSet();
 
   private VetoPolicy vetoModel;
 
@@ -48,9 +58,9 @@ class AuxPanel extends JPanel implements PropertyChangeListener, PolicyListener 
 
   private boolean showNoneButton;
 
-  AuxPanel(Locale locale, TimeZone zone, VetoPolicy vetoModel,
-           boolean showTodayBtn, boolean showNoneButton,
-           CalendarResources resources) {
+  public AuxPanel(Locale locale, TimeZone zone, VetoPolicy vetoModel,
+      boolean showTodayBtn, boolean showNoneButton,
+      CalendarResources resources) {
     this.locale = locale;
     this.zone = zone;
     this.vetoModel = vetoModel;
@@ -86,7 +96,6 @@ class AuxPanel extends JPanel implements PropertyChangeListener, PolicyListener 
 
     todayButton.addActionListener(new ActionListener() {
 
-      @Override
       public void actionPerformed(ActionEvent e) {
         currentDate = new Date();
         firePropertyChange(PROPERTY_NAME_DATE, null, currentDate);
@@ -94,7 +103,6 @@ class AuxPanel extends JPanel implements PropertyChangeListener, PolicyListener 
     });
     noneButton.addActionListener(new ActionListener() {
 
-      @Override
       public void actionPerformed(ActionEvent e) {
         firePropertyChange(PROPERTY_NAME_DATE, null, null);
       }
@@ -114,7 +122,6 @@ class AuxPanel extends JPanel implements PropertyChangeListener, PolicyListener 
 
   }
 
-  @Override
   public void propertyChange(PropertyChangeEvent evt) {
     if (evt.getPropertyName().equals("focusable")) {
       Boolean value = (Boolean) evt.getNewValue();
@@ -152,12 +159,10 @@ class AuxPanel extends JPanel implements PropertyChangeListener, PolicyListener 
 
   }
 
-  @Override
   public Locale getLocale() {
     return locale;
   }
 
-  @Override
   public void setLocale(Locale locale) {
     Locale old = this.locale;
     this.locale = locale;
@@ -166,7 +171,7 @@ class AuxPanel extends JPanel implements PropertyChangeListener, PolicyListener 
     reflectData();
   }
 
-  public Collection<JComponent> getFocusableComponents() {
+  public Collection getFocusableComponents() {
     return focusableComponents;
   }
 
@@ -194,7 +199,6 @@ class AuxPanel extends JPanel implements PropertyChangeListener, PolicyListener 
     firePropertyChange(PROPERTY_NAME_VETO_MODEL, old, vetoModel);
   }
 
-  @Override
   public void policyChanged(PolicyEvent event) {
     validateAgainstVeto();
   }

@@ -2,14 +2,13 @@
 package com.intellij.openapi.vcs.changes.patch.tool
 
 import com.intellij.diff.DiffContext
-import com.intellij.diff.DiffViewerEx
 import com.intellij.diff.EditorDiffViewer
 import com.intellij.diff.FrameDiffTool
+import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.actions.impl.SetEditorSettingsAction
 import com.intellij.diff.tools.holders.EditorHolder
 import com.intellij.diff.tools.holders.TextEditorHolder
 import com.intellij.diff.tools.util.DiffDataKeys
-import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.diff.tools.util.PrevNextDifferenceIterableBase
 import com.intellij.diff.tools.util.SimpleDiffPanel
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil
@@ -29,12 +28,11 @@ import com.intellij.openapi.vcs.changes.patch.tool.PatchChangeBuilder.Companion.
 import com.intellij.openapi.vcs.changes.patch.tool.PatchChangeBuilder.Hunk
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import it.unimi.dsi.fastutil.ints.IntConsumer
+import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 
-internal class PatchDiffViewer(
-  private val diffContext: DiffContext,
-  private val diffRequest: PatchDiffRequest,
-) : DiffViewerEx, EditorDiffViewer {
+internal class PatchDiffViewer(private val diffContext: DiffContext,
+                               private val diffRequest: PatchDiffRequest) : DiffViewer, DataProvider, EditorDiffViewer {
   private val project: Project? = diffContext.getProject()
 
   private val panel: SimpleDiffPanel
@@ -62,21 +60,12 @@ internal class PatchDiffViewer(
     val contentPanel = OnesideContentPanel.createFromHolder(editorHolder)
     contentPanel.setTitle(titlePanel)
 
+    panel = SimpleDiffPanel(contentPanel, this, diffContext)
+
     prevNextDifferenceIterable = MyPrevNextDifferenceIterable()
 
-    panel = object : SimpleDiffPanel(contentPanel, diffContext) {
-      override fun uiDataSnapshot(sink: DataSink) {
-        super.uiDataSnapshot(sink)
-        sink[CommonDataKeys.PROJECT] = project
-        sink[DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE] = prevNextDifferenceIterable
-        sink[DiffDataKeys.CURRENT_EDITOR] = editor
-        sink[DiffDataKeys.CURRENT_CHANGE_RANGE] = prevNextDifferenceIterable.currentLineRange
-      }
-    }
     editorSettingsAction = SetEditorSettingsAction(TextDiffViewerUtil.getTextSettings(diffContext), editors)
     editorSettingsAction.applyDefaults()
-
-    listenTypingAttempts(diffContext, editor)
   }
 
   override fun getComponent(): JComponent = panel
@@ -84,8 +73,6 @@ internal class PatchDiffViewer(
   override fun getPreferredFocusedComponent(): JComponent = editor.getContentComponent()
 
   override fun getEditors(): List<Editor?> = listOf(editor)
-
-  override fun getDifferenceIterable(): PrevNextDifferenceIterable = prevNextDifferenceIterable
 
   override fun init(): FrameDiffTool.ToolbarComponents {
     panel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, diffContext, diffRequest))
@@ -131,6 +118,14 @@ internal class PatchDiffViewer(
     group.add(Separator.getInstance())
     group.add(ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_TOOLBAR))
     return group
+  }
+
+  override fun getData(dataId: @NonNls String): Any? {
+    if (CommonDataKeys.PROJECT.`is`(dataId)) return project
+    if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.`is`(dataId)) return prevNextDifferenceIterable
+    if (DiffDataKeys.CURRENT_EDITOR.`is`(dataId)) return editor
+    if (DiffDataKeys.CURRENT_CHANGE_RANGE.`is`(dataId)) return prevNextDifferenceIterable.currentLineRange
+    return null
   }
 
   private inner class MyPrevNextDifferenceIterable : PrevNextDifferenceIterableBase<Hunk>() {

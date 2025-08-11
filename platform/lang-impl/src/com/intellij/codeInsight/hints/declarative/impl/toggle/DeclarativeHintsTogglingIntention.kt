@@ -7,7 +7,6 @@ import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPass
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
@@ -16,7 +15,7 @@ class DeclarativeHintsTogglingIntention(
   private val providerId: String,
   private val providerName: @Nls String,
   private val providerEnabledNow: Boolean
-) : IntentionAction, LowPriorityAction, DumbAware {
+) : IntentionAction, LowPriorityAction {
   override fun startInWriteAction(): Boolean {
     return false
   }

@@ -1,4 +1,4 @@
-// "Make 'call()' return 'java.lang.Integer' or ancestor" "true"
+// "Make 'call()' return 'java.lang.Integer'" "true"
 public class a {
  String f() {
    return new Callable<Integer>() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.findUsages;
 
@@ -219,7 +219,7 @@ public final class GroovyConstructorUsagesSearcher extends QueryExecutorBase<Psi
     return true;
   }
 
-  private static void processImplicitConstructorCall(final @NotNull PsiMember usage,
+  private static void processImplicitConstructorCall(@NotNull final PsiMember usage,
                                                      final Processor<? super PsiReference> processor,
                                                      final PsiMethod constructor) {
     if (constructor instanceof GrMethod) {
@@ -232,13 +232,15 @@ public final class GroovyConstructorUsagesSearcher extends QueryExecutorBase<Psi
     PsiManager manager = constructor.getManager();
     if (manager.areElementsEquivalent(usage, constructor) || manager.areElementsEquivalent(constructor.getContainingClass(), usage.getContainingClass())) return;
     processor.process(new LightMemberReference(manager, usage, PsiSubstitutor.EMPTY) {
+      @NotNull
       @Override
-      public @NotNull PsiElement getElement() {
+      public PsiElement getElement() {
         return usage;
       }
 
+      @NotNull
       @Override
-      public @NotNull TextRange getRangeInElement() {
+      public TextRange getRangeInElement() {
         if (usage instanceof PsiClass) {
           PsiIdentifier identifier = ((PsiClass)usage).getNameIdentifier();
           if (identifier != null) return TextRange.from(identifier.getStartOffsetInParent(), identifier.getTextLength());

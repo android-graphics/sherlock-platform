@@ -1,11 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates.github;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
 public final class Outcome<V> {
 
   private final V myData;
@@ -18,7 +16,8 @@ public final class Outcome<V> {
     myException = exception;
   }
 
-  public @Nullable V get() {
+  @Nullable
+  public V get() {
     return myData;
   }
 
@@ -26,19 +25,23 @@ public final class Outcome<V> {
     return myCancelled;
   }
 
-  public @Nullable Exception getException() {
+  @Nullable
+  public Exception getException() {
     return myException;
   }
 
-  public static @NotNull <V> Outcome<V> createAsCancelled() {
+  @NotNull
+  public static <V> Outcome<V> createAsCancelled() {
     return new Outcome<>(null, true, null);
   }
 
-  public static @NotNull <V> Outcome<V> createAsException(@NotNull Exception ex) {
+  @NotNull
+  public static <V> Outcome<V> createAsException(@NotNull Exception ex) {
     return new Outcome<>(null, false, ex);
   }
 
-  public static @NotNull <V> Outcome<V> createNormal(@NotNull V data) {
+  @NotNull
+  public static <V> Outcome<V> createNormal(@NotNull V data) {
     return new Outcome<>(data, false, null);
   }
 

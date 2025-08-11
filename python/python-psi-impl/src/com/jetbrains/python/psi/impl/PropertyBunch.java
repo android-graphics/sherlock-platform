@@ -38,19 +38,23 @@ public abstract class PropertyBunch<MType> {
   protected String myDoc;
   protected PyTargetExpression mySite;
 
-  public @NotNull Maybe<MType> getGetter() {
+  @NotNull
+  public Maybe<MType> getGetter() {
     return myGetter;
   }
 
-  public @NotNull Maybe<MType> getSetter() {
+  @NotNull
+  public Maybe<MType> getSetter() {
     return mySetter;
   }
 
-  public @NotNull Maybe<MType> getDeleter() {
+  @NotNull
+  public Maybe<MType> getDeleter() {
     return myDeleter;
   }
 
-  public @Nullable String getDoc() {
+  @Nullable
+  public String getDoc() {
     return myDoc;
   }
 
@@ -59,9 +63,11 @@ public abstract class PropertyBunch<MType> {
    * @param ref a reference as an argument in property() call
    * @return value we want to store (resolved callable, name, etc)
    */
-  protected abstract @NotNull Maybe<MType> translate(@Nullable PyExpression ref);
+  @NotNull
+  protected abstract Maybe<MType> translate(@Nullable PyExpression ref);
 
-  public static @Nullable PyCallExpression findPropertyCallSite(@Nullable PyExpression source) {
+  @Nullable
+  public static PyCallExpression findPropertyCallSite(@Nullable PyExpression source) {
     if (source instanceof PyCallExpression call) {
       final PyExpression callee = call.getCallee();
       if (callee instanceof PyReferenceExpression ref) {

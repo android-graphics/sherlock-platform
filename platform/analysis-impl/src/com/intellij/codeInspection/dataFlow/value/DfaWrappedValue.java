@@ -28,7 +28,6 @@ public final class DfaWrappedValue extends DfaValue {
     myType = type;
   }
 
-  @Override
   public @NonNls String toString() {
     return myType + " [with " + myDerivedVariableDescriptor + "=" + myWrappedValue + "]";
   }

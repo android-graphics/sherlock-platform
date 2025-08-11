@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.openapi.Disposable;
@@ -26,7 +26,6 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author Dmitry Avdeev
  */
-@ApiStatus.Internal
 public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   private static final Logger LOG = Logger.getInstance(PsiReferenceRegistrarImpl.class);
   private final Map<Class<?>, SimpleProviderBinding> myBindingsMap = new HashMap<>();
@@ -193,8 +192,9 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
     return ret;
   }
   @ApiStatus.Internal
-  public @Unmodifiable @NotNull List<PsiReferenceProvider> getPsiReferenceProvidersByElement(@NotNull PsiElement element,
-                                                                                             @NotNull PsiReferenceService.Hints hints) {
+  @Unmodifiable
+  public @NotNull List<PsiReferenceProvider> getPsiReferenceProvidersByElement(@NotNull PsiElement element,
+                                                                               @NotNull PsiReferenceService.Hints hints) {
     return ContainerUtil.map(getPairsByElement(element, hints), info -> info.provider);
   }
 }

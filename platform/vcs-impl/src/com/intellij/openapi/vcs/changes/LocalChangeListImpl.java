@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -10,23 +10,25 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class LocalChangeListImpl extends LocalChangeList {
-  private final @NotNull Project myProject;
-  private final @NonNls @NotNull String myId;
-  private final @NlsSafe @NotNull String myName;
-  private final @NlsSafe @NotNull String myComment;
+  @NotNull private final Project myProject;
+  @NonNls @NotNull private final String myId;
+  @NlsSafe @NotNull private final String myName;
+  @NlsSafe @NotNull private final String myComment;
   private final @NotNull Set<? extends Change> myChanges;
-  private final @Nullable ChangeListData myData;
+  @Nullable private final ChangeListData myData;
 
   private final boolean myIsDefault;
   private final boolean myIsReadOnly;
 
-  public static @NotNull LocalChangeListImpl createEmptyChangeListImpl(@NotNull Project project,
-                                                                       @NlsSafe @NotNull String name,
-                                                                       @NonNls @Nullable String id) {
+  @NotNull
+  public static LocalChangeListImpl createEmptyChangeListImpl(@NotNull Project project,
+                                                              @NlsSafe @NotNull String name,
+                                                              @NonNls @Nullable String id) {
     return new Builder(project, name).setId(id).build();
   }
 
-  public static @NotNull String generateChangelistId() {
+  @NotNull
+  public static String generateChangelistId() {
     return UUID.randomUUID().toString();
   }
 
@@ -48,23 +50,27 @@ public final class LocalChangeListImpl extends LocalChangeList {
     myIsReadOnly = isReadOnly;
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<Change> getChanges() {
+  public Set<Change> getChanges() {
     return Collections.unmodifiableSet(myChanges);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getId() {
+  public String getId() {
     return myId;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return myName;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getComment() {
+  public String getComment() {
     return myComment;
   }
 
@@ -78,12 +84,12 @@ public final class LocalChangeListImpl extends LocalChangeList {
     return myIsReadOnly;
   }
 
+  @Nullable
   @Override
-  public @Nullable ChangeListData getData() {
+  public ChangeListData getData() {
     return myData;
   }
 
-  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -91,7 +97,6 @@ public final class LocalChangeListImpl extends LocalChangeList {
     return myName.equals(list.myName);
   }
 
-  @Override
   public int hashCode() {
     return myName.hashCode();
   }
@@ -114,13 +119,13 @@ public final class LocalChangeListImpl extends LocalChangeList {
 
 
   public static class Builder {
-    private final @NotNull Project myProject;
-    private final @NotNull String myName;
+    @NotNull private final Project myProject;
+    @NotNull private final String myName;
 
-    private @Nullable String myId;
-    private @NotNull String myComment = "";
-    private @NotNull Set<Change> myChanges = new HashSet<>();
-    private @Nullable ChangeListData myData = null;
+    @Nullable private String myId;
+    @NotNull private String myComment = "";
+    @NotNull private Set<Change> myChanges = new HashSet<>();
+    @Nullable private ChangeListData myData = null;
     private boolean myIsDefault = false;
     private boolean myIsReadOnly = false;
 
@@ -176,7 +181,8 @@ public final class LocalChangeListImpl extends LocalChangeList {
       return this;
     }
 
-    public @NotNull LocalChangeListImpl build() {
+    @NotNull
+    public LocalChangeListImpl build() {
       String id = myId != null ? myId : generateChangelistId();
       return new LocalChangeListImpl(myProject, id, myName, myComment, myChanges, myData, myIsDefault, myIsReadOnly);
     }

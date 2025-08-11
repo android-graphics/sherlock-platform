@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.facet.ui;
 
@@ -13,8 +13,9 @@ import javax.swing.*;
  * Base class for tabs of facet editors
  */
 public abstract class FacetEditorTab implements Configurable {
+  @NotNull
   @Override
-  public abstract @NotNull JComponent createComponent();
+  public abstract JComponent createComponent();
 
   @Override
   public void apply() throws ConfigurationException {

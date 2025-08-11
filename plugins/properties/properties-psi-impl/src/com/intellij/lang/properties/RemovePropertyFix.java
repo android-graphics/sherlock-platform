@@ -1,21 +1,20 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
-public final class RemovePropertyFix extends PsiUpdateModCommandAction<Property> {
-  RemovePropertyFix(final @NotNull Property origProperty) {
+class RemovePropertyFix extends PsiUpdateModCommandAction<Property> {
+  RemovePropertyFix(@NotNull final Property origProperty) {
     super(origProperty);
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PropertiesBundle.message("remove.property.intention.text");
   }
 

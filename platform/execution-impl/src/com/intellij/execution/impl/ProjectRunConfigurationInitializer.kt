@@ -9,11 +9,11 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModulePointerManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectServiceInitializer
+import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener
 import kotlinx.coroutines.launch
 
-private class ProjectRunConfigurationInitializer : ProjectServiceInitializer {
-  override suspend fun execute(project: Project) {
+private class ProjectRunConfigurationInitializer : ProjectServiceContainerInitializedListener {
+  override suspend fun execute(project: Project, workspaceIndexReady: () -> Unit) {
     val coroutineTracer = CoroutineTracerShim.coroutineTracer
     @Suppress("UsagesOfObsoleteApi")
     (project as ComponentManagerEx).getCoroutineScope().launch(coroutineTracer.rootTrace()) {

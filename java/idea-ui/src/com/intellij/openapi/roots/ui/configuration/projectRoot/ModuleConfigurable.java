@@ -1,11 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.module.*;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
@@ -80,7 +82,8 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
   }
 
   @Override
-  public @NotNull Module getEditableObject() {
+  @NotNull
+  public Module getEditableObject() {
     return myModule;
   }
 
@@ -99,12 +102,15 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
     return myModule.isDisposed() ? null : ModuleType.get(myModule).getIcon();
   }
 
-  public @NotNull Module getModule() {
+  @NotNull
+  public Module getModule() {
     return myModule;
   }
 
   @Override
-  public @Nullable @NonNls String getHelpTopic() {
+  @Nullable
+  @NonNls
+  public String getHelpTopic() {
     ModuleEditor editor = getModuleEditor();
     return editor == null ? null : editor.getHelpTopic();
   }

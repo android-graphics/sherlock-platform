@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -14,21 +14,24 @@ import java.util.List;
 import java.util.Objects;
 
 public final class ResourceBundleImpl extends ResourceBundle {
-  private final @NotNull SmartPsiElementPointer<PsiFile> myDefaultPropertiesFile;
+  @NotNull
+  private final SmartPsiElementPointer<PsiFile> myDefaultPropertiesFile;
   private boolean myValid = true;
 
-  public ResourceBundleImpl(final @NotNull PropertiesFile defaultPropertiesFile) {
+  public ResourceBundleImpl(@NotNull final PropertiesFile defaultPropertiesFile) {
     myDefaultPropertiesFile = SmartPointerManager.getInstance(defaultPropertiesFile.getProject())
       .createSmartPsiElementPointer(defaultPropertiesFile.getContainingFile());
   }
 
+  @NotNull
   @Override
-  public @NotNull List<PropertiesFile> getPropertiesFiles() {
+  public List<PropertiesFile> getPropertiesFiles() {
     return PropertiesImplUtil.getResourceBundleFiles(getDefaultPropertiesFile());
   }
 
+  @NotNull
   @Override
-  public @NotNull PropertiesFile getDefaultPropertiesFile() {
+  public PropertiesFile getDefaultPropertiesFile() {
     return Objects.requireNonNull(PropertiesImplUtil.getPropertiesFile(myDefaultPropertiesFile.getElement()));
   }
 
@@ -37,13 +40,15 @@ public final class ResourceBundleImpl extends ResourceBundle {
     return myDefaultPropertiesFile.getVirtualFile(); // Don't resolve the pointer to avoid slow ops.
   }
 
+  @NotNull
   @Override
-  public @NotNull String getBaseName() {
+  public String getBaseName() {
     return ResourceBundleManager.getInstance(getProject()).getBaseName(Objects.requireNonNull(myDefaultPropertiesFile.getElement()));
   }
 
   @Override
-  public @NotNull VirtualFile getBaseDirectory() {
+  @NotNull
+  public VirtualFile getBaseDirectory() {
     return getDefaultPropertiesFile().getVirtualFile().getParent();
   }
 
@@ -56,7 +61,6 @@ public final class ResourceBundleImpl extends ResourceBundle {
     myValid = false;
   }
 
-  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -66,7 +70,6 @@ public final class ResourceBundleImpl extends ResourceBundle {
     return true;
   }
 
-  @Override
   public int hashCode() {
     return myDefaultPropertiesFile.hashCode();
   }

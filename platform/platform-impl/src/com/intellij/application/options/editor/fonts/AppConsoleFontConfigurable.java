@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.colors.impl.AppFontOptions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +18,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-@ApiStatus.Internal
 public final class AppConsoleFontConfigurable extends AppFontConfigurable {
 
   public static final String ID = "app.console.font";

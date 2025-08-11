@@ -88,10 +88,7 @@ object CodeReviewChangeListComponentFactory {
       }
       is CodeReviewChangeListViewModel.SelectionRequest.OneChange -> {
         invokeAfterRefresh {
-          val currentSelection = selected(this).iterateUserObjects(RefComparisonChange::class.java)
-          if (request.change !in currentSelection) {
-            setSelectedChanges(listOf(request.change))
-          }
+          setSelectedChanges(listOf(request.change))
           addTreeSelectionListener(selectionListener)
         }
       }
@@ -154,21 +151,22 @@ private class Node(change: RefComparisonChange) : AbstractChangesBrowserFilePath
 
 private fun CodeReviewChangeListViewModel.updateSelectedChangesFromTree(tree: AsyncChangesTree) {
   var fuzzy = false
-  val selectedChanges = mutableListOf<RefComparisonChange>()
+  val changes = mutableListOf<RefComparisonChange>()
   selected(tree).iterateRawNodes().forEach {
     if (it.isLeaf) {
       val change = it.userObject as? RefComparisonChange
-      selectedChanges.add(change!!)
+      changes.add(change!!)
     }
     else {
       fuzzy = true
     }
   }
-  val selection = when {
-    selectedChanges.isEmpty() -> null
-    fuzzy -> ChangesSelection.Fuzzy(selectedChanges)
-    selectedChanges.size == 1 -> ChangesSelection.Precise(changes, selectedChanges[0])
-    else -> ChangesSelection.Precise(selectedChanges, selectedChanges[0])
+  val selection = if (changes.isEmpty()) null
+  else if (fuzzy) {
+    ChangesSelection.Fuzzy(changes)
+  }
+  else {
+    ChangesSelection.Precise(this.changes, changes[0])
   }
   updateSelectedChanges(selection)
 }

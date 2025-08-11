@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.CommonBundle;
@@ -69,11 +69,13 @@ public final class ManifestFileUtil {
   private ManifestFileUtil() {
   }
 
-  public static @Nullable VirtualFile findManifestFile(@NotNull CompositePackagingElement<?> root, PackagingElementResolvingContext context, ArtifactType artifactType) {
+  @Nullable
+  public static VirtualFile findManifestFile(@NotNull CompositePackagingElement<?> root, PackagingElementResolvingContext context, ArtifactType artifactType) {
     return ArtifactUtil.findSourceFileByOutputPath(root, MANIFEST_PATH, context, artifactType);
   }
 
-  public static @Nullable VirtualFile suggestManifestFileDirectory(@NotNull CompositePackagingElement<?> root, PackagingElementResolvingContext context, ArtifactType artifactType) {
+  @Nullable
+  public static VirtualFile suggestManifestFileDirectory(@NotNull CompositePackagingElement<?> root, PackagingElementResolvingContext context, ArtifactType artifactType) {
     final VirtualFile metaInfDir = ArtifactUtil.findSourceFileByOutputPath(root, MANIFEST_DIR_NAME, context, artifactType);
     if (metaInfDir != null) {
       return metaInfDir;
@@ -112,7 +114,8 @@ public final class ManifestFileUtil {
     return suggestBaseDir(project, sourceFile.get());
   }
 
-  public static @Nullable VirtualFile suggestManifestFileDirectory(@NotNull Project project, @Nullable Module selectedModule) {
+  @Nullable
+  public static VirtualFile suggestManifestFileDirectory(@NotNull Project project, @Nullable Module selectedModule) {
     Module[] modules = selectedModule != null ? new Module[] {selectedModule} : ModuleManager.getInstance(project).getModules();
     VirtualFile resourceRoot = null;
     VirtualFile sourceRoot = null;
@@ -129,7 +132,8 @@ public final class ManifestFileUtil {
   }
 
 
-  private static @Nullable VirtualFile suggestBaseDir(@NotNull Project project, final @Nullable VirtualFile file) {
+  @Nullable
+  private static VirtualFile suggestBaseDir(@NotNull Project project, final @Nullable VirtualFile file) {
     final VirtualFile[] contentRoots = ProjectRootManager.getInstance(project).getContentRoots();
     if (file == null && contentRoots.length > 0) {
       return contentRoots[0];
@@ -155,7 +159,7 @@ public final class ManifestFileUtil {
     }
   }
 
-  public static void updateManifest(final @NotNull VirtualFile file, final @Nullable String mainClass, final @Nullable List<String> classpath, final boolean replaceValues) {
+  public static void updateManifest(@NotNull final VirtualFile file, final @Nullable String mainClass, final @Nullable List<String> classpath, final boolean replaceValues) {
     final Manifest manifest = readManifest(file);
     final Attributes mainAttributes = manifest.getMainAttributes();
 
@@ -201,7 +205,8 @@ public final class ManifestFileUtil {
     });
   }
 
-  public static @NotNull ManifestFileConfiguration createManifestFileConfiguration(@NotNull VirtualFile manifestFile) {
+  @NotNull
+  public static ManifestFileConfiguration createManifestFileConfiguration(@NotNull VirtualFile manifestFile) {
     final String path = manifestFile.getPath();
     Manifest manifest = readManifest(manifestFile);
     String mainClass = manifest.getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
@@ -238,7 +243,8 @@ public final class ManifestFileUtil {
     return classpath;
   }
 
-  public static @Nullable VirtualFile showDialogAndCreateManifest(final ArtifactEditorContext context, final CompositePackagingElement<?> element) {
+  @Nullable
+  public static VirtualFile showDialogAndCreateManifest(final ArtifactEditorContext context, final CompositePackagingElement<?> element) {
     FileChooserDescriptor descriptor = createDescriptorForManifestDirectory();
     final VirtualFile directory = suggestManifestFileDirectory(element, context, context.getArtifactType());
     final VirtualFile file = FileChooser.chooseFile(descriptor, context.getProject(), directory);
@@ -249,7 +255,8 @@ public final class ManifestFileUtil {
     return createManifestFile(file, context.getProject());
   }
 
-  public static @Nullable VirtualFile createManifestFile(final @NotNull VirtualFile directory, final @NotNull Project project) {
+  @Nullable
+  public static VirtualFile createManifestFile(final @NotNull VirtualFile directory, final @NotNull Project project) {
     ThreadingAssertions.assertEventDispatchThread();
     try {
       return WriteAction.compute(() -> {
@@ -289,7 +296,8 @@ public final class ManifestFileUtil {
     });
   }
 
-  public static @Nullable PsiClass selectMainClass(Project project, final @Nullable String initialClassName) {
+  @Nullable
+  public static PsiClass selectMainClass(Project project, final @Nullable String initialClassName) {
     final TreeClassChooserFactory chooserFactory = TreeClassChooserFactory.getInstance(project);
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(project);
     final PsiClass aClass = initialClassName != null ? JavaPsiFacade.getInstance(project).findClass(initialClassName, searchScope) : null;

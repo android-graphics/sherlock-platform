@@ -4,10 +4,10 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.completion.JavaCompletionUtil.JavaLookupElementHighlighter;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil.JavaModuleScope;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -103,7 +103,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
       for (final ExpectedTypeInfo info : ExpectedTypesProvider.getExpectedTypes(expr, true)) {
         final PsiType type = info.getType();
         final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-        if (psiClass != null && psiClass.getName() != null && !(psiClass.hasModifierProperty(PsiModifier.SEALED) && psiClass.hasModifierProperty(PsiModifier.ABSTRACT))) {
+        if (psiClass != null && psiClass.getName() != null) {
           consumer.consume(createClassLookupItem(psiClass, inJavaContext));
         }
         final PsiType defaultType = info.getDefaultType();
@@ -144,8 +144,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
           else {
             Condition<PsiClass> condition = eachClass ->
               filter.isAcceptable(eachClass, insertedElement) &&
-              AllClassesGetter.isAcceptableInContext(insertedElement, eachClass, filterByScope, pkgContext) &&
-              (!afterNew || !(eachClass.hasModifierProperty(PsiModifier.ABSTRACT) && eachClass.hasModifierProperty(PsiModifier.SEALED)));
+              AllClassesGetter.isAcceptableInContext(insertedElement, eachClass, filterByScope, pkgContext);
             for (JavaPsiClassReferenceElement element : createClassLookupItems(psiClass, afterNew, JAVA_CLASS_INSERT_HANDLER, condition)) {
               element.setLookupString(prefix + element.getLookupString());
 
@@ -196,7 +195,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
     if (parameters.getInvocationCount() >= 2) {
       return GlobalSearchScope.allScope(project);
     }
-    PsiJavaModule javaModule = JavaPsiModuleUtil.findDescriptorByElement(psiFile.getOriginalElement());
+    PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(psiFile.getOriginalElement());
     JavaModuleScope moduleScope = javaModule == null ? null : JavaModuleScope.moduleScope(javaModule);
     if (moduleScope != null) {
       return moduleScope;
@@ -213,10 +212,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
   private static @NotNull MultiMap<String, PsiClass> getAllAnnotationClasses(PsiElement context, PrefixMatcher matcher) {
     MultiMap<String, PsiClass> map = new MultiMap<>();
     GlobalSearchScope scope = context.getResolveScope();
-    Project project = context.getProject();
-    PsiClass[] annotations = JavaPsiFacade.getInstance(project).findClasses(
-      CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, GlobalSearchScope.allScope(project));
-    for (PsiClass annotation : annotations) {
+    PsiClass annotation = JavaPsiFacade.getInstance(context.getProject()).findClass(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, scope);
+    if (annotation != null) {
       DirectClassInheritorsSearch.search(annotation, scope, false).forEach(psiClass -> {
         if (!psiClass.isAnnotationType() || psiClass.getQualifiedName() == null) return true;
 

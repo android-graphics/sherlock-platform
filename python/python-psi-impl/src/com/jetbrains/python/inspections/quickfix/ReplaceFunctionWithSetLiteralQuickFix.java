@@ -31,7 +31,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ReplaceFunctionWithSetLiteralQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.replace.function.set.with.literal");
   }
 

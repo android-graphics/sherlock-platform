@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -154,17 +154,20 @@ public final class IfsUtil {
     return false;
   }
 
-  public static @Nullable BufferedImage getImage(@NotNull VirtualFile file) throws IOException {
+  @Nullable
+  public static BufferedImage getImage(@NotNull VirtualFile file) throws IOException {
     return getImage(file, null);
   }
 
-  public static @Nullable BufferedImage getImage(@NotNull VirtualFile file, @Nullable Component ancestor) throws IOException {
+  @Nullable
+  public static BufferedImage getImage(@NotNull VirtualFile file, @Nullable Component ancestor) throws IOException {
     ScaledImageProvider imageProvider = getImageProvider(file);
     if (imageProvider == null) return null;
     return imageProvider.apply(1d, ancestor);
   }
 
-  public static @Nullable ScaledImageProvider getImageProvider(@NotNull VirtualFile file) throws IOException {
+  @Nullable
+  public static ScaledImageProvider getImageProvider(@NotNull VirtualFile file) throws IOException {
     refresh(file);
     SoftReference<ScaledImageProvider> imageProviderRef = file.getUserData(IMAGE_PROVIDER_REF_KEY);
     return dereference(imageProviderRef);
@@ -174,7 +177,8 @@ public final class IfsUtil {
     return file != null && SVG_FORMAT.equalsIgnoreCase(file.getExtension());
   }
 
-  public static @Nullable String getFormat(@NotNull VirtualFile file) throws IOException {
+  @Nullable
+  public static String getFormat(@NotNull VirtualFile file) throws IOException {
     refresh(file);
     return file.getUserData(FORMAT_KEY);
   }

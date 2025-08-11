@@ -1,4 +1,4 @@
-// FIX: Remove explicit type arguments
+// IS_APPLICABLE: true
 // WITH_STDLIB
 
 val x: List<String>

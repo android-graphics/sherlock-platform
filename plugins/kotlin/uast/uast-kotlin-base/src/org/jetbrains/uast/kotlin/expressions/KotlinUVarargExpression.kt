@@ -23,7 +23,7 @@ class KotlinUVarargExpression(
         get() = valueArgumentsPart.getOrBuild {
             valueArgs.map {
                 it.getArgumentExpression()?.let { argumentExpression ->
-                    baseResolveProviderService.languagePlugin.convertOpt(argumentExpression, this)
+                    getLanguagePlugin().convertOpt(argumentExpression, this)
                 } ?: UastEmptyExpression(this)
             }
         }

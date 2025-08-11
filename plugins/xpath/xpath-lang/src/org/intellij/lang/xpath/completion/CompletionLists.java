@@ -114,7 +114,7 @@ public final class CompletionLists {
           continue;
         }
         final String prefixForURI = nsContext.getPrefixForURI(namespaceURI, PsiTreeUtil.getContextOfType(element, XmlElement.class, true));
-        if (prefixForURI == null && !namespaceURI.isEmpty()) {
+        if (prefixForURI == null && namespaceURI.length() > 0) {
           continue;
         }
         p = qn == null || qn.getPrefix() == null ? makePrefix(prefixForURI) : "";
@@ -264,14 +264,14 @@ public final class CompletionLists {
   }
 
   private static String makePrefix(String p) {
-    return (p != null && !p.isEmpty() ? p + ":" : "");
+    return (p != null && p.length() > 0 ? p + ":" : "");
   }
 
   private static void addNamespaceCompletions(NamespaceContext namespaceContext, Set<? super LookupElement> list, XmlElement context) {
     if (namespaceContext != null) {
       final Collection<String> knownPrefixes = namespaceContext.getKnownPrefixes(context);
       for (String prefix : knownPrefixes) {
-        if (prefix != null && !prefix.isEmpty()) {
+        if (prefix != null && prefix.length() > 0) {
           list.add(new NamespaceLookup(prefix));
         }
       }
@@ -323,14 +323,14 @@ public final class CompletionLists {
 
     final String namespaceURI;
     if (prefixedName.getPrefix() != null) {
-      if (uri == null || uri.isEmpty()) return false;
+      if (uri == null || uri.length() == 0) return false;
 
       namespaceURI = namespaceContext.getNamespaceURI(prefixedName.getPrefix(), context);
     } else {
-      if (!allowDefault) return (uri == null || uri.isEmpty());
+      if (!allowDefault) return (uri == null || uri.length() == 0);
 
       if ((namespaceURI = namespaceContext.getDefaultNamespace(context)) == null) {
-        return (uri == null || uri.isEmpty());
+        return (uri == null || uri.length() == 0);
       }
     }
     return uri.equals(namespaceURI);

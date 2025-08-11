@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -42,15 +42,17 @@ import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDes
 public final class GrUnusedIncDecInspection extends BaseInspection {
   private static final Logger LOG = Logger.getInstance(GrUnusedIncDecInspection.class);
 
+  @NotNull
   @Override
-  public @NotNull String getShortName() {
+  public String getShortName() {
     // used to enable inspection in tests
     // remove when inspection class will match its short name
     return "GroovyUnusedIncOrDec";
   }
 
+  @NotNull
   @Override
-  protected @NotNull BaseInspectionVisitor buildVisitor() {
+  protected BaseInspectionVisitor buildVisitor() {
     return new GrUnusedIncDecInspectionVisitor();
   }
 
@@ -120,8 +122,9 @@ public final class GrUnusedIncDecInspection extends BaseInspection {
         myMessage = GroovyBundle.message("remove.0", expression.getOperationToken().getText());
       }
 
+      @NotNull
       @Override
-      public @NotNull String getFamilyName() {
+      public String getFamilyName() {
         return myMessage;
       }
 
@@ -141,8 +144,9 @@ public final class GrUnusedIncDecInspection extends BaseInspection {
         myMessage = GroovyBundle.message("replace.postfix.0.with.prefix.0", expression.getOperationToken().getText());
       }
 
+      @NotNull
       @Override
-      public @NotNull String getFamilyName() {
+      public String getFamilyName() {
         return myMessage;
       }
 
@@ -159,7 +163,8 @@ public final class GrUnusedIncDecInspection extends BaseInspection {
     }
   }
 
-  private static @Nullable GrUnaryExpression findUnaryExpression(@NotNull PsiElement element) {
+  @Nullable
+  private static GrUnaryExpression findUnaryExpression(@NotNull PsiElement element) {
     PsiElement parent = element.getParent();
     IElementType opType = element.getNode().getElementType();
     if (opType != GroovyTokenTypes.mINC && opType != GroovyTokenTypes.mDEC) return null;

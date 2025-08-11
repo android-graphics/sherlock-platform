@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -154,7 +154,8 @@ public final class FuseStreamOperationsInspection extends AbstractBaseJavaLocalI
     };
   }
 
-  private static @Nullable CollectTerminal extractTerminal(PsiMethodCallExpression streamChain) {
+  @Nullable
+  private static CollectTerminal extractTerminal(PsiMethodCallExpression streamChain) {
     if(streamChain.getMethodExpression().getQualifierExpression() == null) return null;
     PsiMethodCallExpression collector =
       tryCast(PsiUtil.skipParenthesizedExprDown(ArrayUtil.getFirstElement(streamChain.getArgumentList().getExpressions())),
@@ -186,13 +187,17 @@ public final class FuseStreamOperationsInspection extends AbstractBaseJavaLocalI
       myStrictMode = strictMode;
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getName() {
+    public String getName() {
       return JavaBundle.message("inspection.fuse.stream.operations.fix.name", myFusedSteps);
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaBundle.message("inspection.fuse.stream.operations.fix.family.name");
     }
 

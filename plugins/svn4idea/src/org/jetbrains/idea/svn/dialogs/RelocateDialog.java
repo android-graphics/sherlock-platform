@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
@@ -25,15 +25,18 @@ public class RelocateDialog extends DialogWrapper {
   }
 
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  @Nullable
+  protected JComponent createCenterPanel() {
     return myMainPanel;
   }
 
-  public @NotNull String getBeforeURL() {
+  @NotNull
+  public String getBeforeURL() {
     return myFromURLTextField.getText();
   }
 
-  public @NotNull String getAfterURL() {
+  @NotNull
+  public String getAfterURL() {
     return myToURLTextField.getText();
   }
 }

@@ -9,14 +9,11 @@ import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.psi.PsiReference
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.PathUtil
+import org.jetbrains.kotlin.idea.completion.test.configureByFilesWithSuffixes
+import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.completion.test.configureByFilesWithSuffixes
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import org.junit.Assert
 import kotlin.test.assertTrue
@@ -60,14 +57,12 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
         }
     }
 
-    protected open val replacePlaceholders: Boolean = true
-
     private fun doSingleResolveTest() {
         forEachCaret { index, offset ->
             val fileText = myFixture.file.text
             val expectedResolveData = readResolveData(fileText, getExpectedReferences(fileText, index))
             val psiReference = wrapReference(myFixture.file.findReferenceAt(offset))
-            checkReferenceResolve(expectedResolveData, offset, psiReference, render  = { this.render(it) }, replacePlaceholders = replacePlaceholders) { resolveTo ->
+            checkReferenceResolve(expectedResolveData, offset, psiReference, render  = { this.render(it) }) { resolveTo ->
                 checkResolvedTo(resolveTo)
                 performAdditionalResolveChecks(listOf(resolveTo))
             }
@@ -122,11 +117,7 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
     override fun getDefaultProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceNoSources()
 
     protected open fun getExpectedReferences(text: String, index: Int): List<String> {
-        val additionalPrefix = if (isFirPlugin) "_K2" else "_K1"
-        val prefix = "REF"
-        return getExpectedReferences(text, index, prefix + additionalPrefix).ifEmpty {
-            getExpectedReferences(text, index, prefix)
-        }
+        return getExpectedReferences(text, index, "REF")
     }
 
     companion object {
@@ -164,16 +155,14 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
             offset: Int,
             psiReference: PsiReference?,
             render: (PsiElement) -> String = { it.renderAsGotoImplementation() },
-            replacePlaceholders: Boolean = true,
-            checkResolvedTo: (PsiElement) -> Unit = {},
+            checkResolvedTo: (PsiElement) -> Unit = {}
         ) {
             val expectedString = expectedResolveData.referenceString
             if (psiReference != null) {
                 val resolvedTo = executeOnPooledThreadInReadAction { psiReference.resolve() }
                 if (resolvedTo != null) {
                     checkResolvedTo(resolvedTo)
-                    val renderedResolvedTo = render(resolvedTo)
-                    val resolvedToElementStr = if (replacePlaceholders) replacePlaceholders(renderedResolvedTo) else renderedResolvedTo
+                    val resolvedToElementStr = replacePlaceholders(render(resolvedTo))
                     assertEquals(
                         "Found reference to '$resolvedToElementStr', but '$expectedString' was expected",
                         expectedString,

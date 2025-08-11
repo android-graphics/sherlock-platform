@@ -113,7 +113,8 @@ public class ShFilePathCompletionContributor extends CompletionContributor imple
     });
   }
 
-  private static @NotNull LookupElement createFileLookupElement(@NotNull File file) {
+  @NotNull
+  private static LookupElement createFileLookupElement(@NotNull File file) {
     String name = file.getName();
     boolean isDirectory = file.isDirectory();
     return LookupElementBuilder.create(file, quote(name))
@@ -121,7 +122,8 @@ public class ShFilePathCompletionContributor extends CompletionContributor imple
         .withInsertHandler(FILE_INSERT_HANDLER);
   }
 
-  private static @Nullable String getTextWithEnvVarReplacement(@NotNull CompletionParameters parameters) {
+  @Nullable
+  private static String getTextWithEnvVarReplacement(@NotNull CompletionParameters parameters) {
     PsiElement original = parameters.getOriginalPosition();
     if (original == null) return null;
 
@@ -141,7 +143,8 @@ public class ShFilePathCompletionContributor extends CompletionContributor imple
         : originalText;
   }
 
-  private static @Nullable PsiElement getNearestVarIfExist(@NotNull PsiFile file, int offset) {
+  @Nullable
+  private static PsiElement getNearestVarIfExist(@NotNull PsiFile file, int offset) {
     PsiElement e = file.findElementAt(offset);
     if (!(e instanceof LeafPsiElement leaf)) return null;
     if (leaf.getElementType() == ShTypes.VAR) return leaf;
@@ -162,7 +165,8 @@ public class ShFilePathCompletionContributor extends CompletionContributor imple
         children[2].getElementType() == ShTypes.CLOSE_QUOTE;
   }
 
-  private static @NotNull String variableText(PsiElement e) {
+  @NotNull
+  private static String variableText(PsiElement e) {
     String variable = e.getText();
     int index = variable.indexOf("$");
     if (index + 1 <= 0) return variable;

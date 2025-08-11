@@ -1,7 +1,7 @@
 def func(x):
   """
 
-  :rtype: int
+  :rtype: object
   """
   print(x)
   return 1

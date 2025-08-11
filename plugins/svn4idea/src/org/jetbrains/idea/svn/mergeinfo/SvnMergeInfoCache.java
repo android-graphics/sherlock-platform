@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.components.Service;
@@ -31,11 +31,11 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 @Service(Service.Level.PROJECT)
 public final class SvnMergeInfoCache {
 
-  private static final Logger LOG = Logger.getInstance(SvnMergeInfoCache.class);
+  private final static Logger LOG = Logger.getInstance(SvnMergeInfoCache.class);
 
-  private final @NotNull Project myProject;
+  @NotNull private final Project myProject;
   // key - working copy root url
-  private final @NotNull Map<Url, MyCurrentUrlData> myCurrentUrlMapping;
+  @NotNull private final Map<Url, MyCurrentUrlData> myCurrentUrlMapping;
 
   @Topic.ProjectLevel
   public static final Topic<SvnMergeInfoCacheListener> SVN_MERGE_INFO_CACHE =
@@ -58,7 +58,8 @@ public final class SvnMergeInfoCache {
     }
   }
 
-  public @Nullable MergeInfoCached getCachedState(@NotNull WCInfoWithBranches info, String branchPath) {
+  @Nullable
+  public MergeInfoCached getCachedState(@NotNull WCInfoWithBranches info, String branchPath) {
     BranchInfo branchInfo = getBranchInfo(info, branchPath);
 
     return branchInfo != null ? branchInfo.getCached() : null;
@@ -91,7 +92,8 @@ public final class SvnMergeInfoCache {
     return branchInfo != null && branchInfo.isMixedRevisionsFound();
   }
 
-  private @Nullable BranchInfo getBranchInfo(@NotNull WCInfoWithBranches info, String branchPath) {
+  @Nullable
+  private BranchInfo getBranchInfo(@NotNull WCInfoWithBranches info, String branchPath) {
     MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(info.getUrl());
 
     return rootMapping != null ? rootMapping.getBranchInfo(branchPath) : null;
@@ -153,7 +155,7 @@ public final class SvnMergeInfoCache {
   private static final class MyCurrentUrlData {
 
     // key - working copy local path
-    private final @NotNull Map<String, BranchInfo> myBranchInfo = CollectionFactory.createSoftMap();
+    @NotNull private final Map<String, BranchInfo> myBranchInfo = CollectionFactory.createSoftMap();
 
     private MyCurrentUrlData() {
     }

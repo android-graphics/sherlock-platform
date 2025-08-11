@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.lang.psi.impl;
 
 import com.intellij.execution.process.ConsoleHighlighter;
@@ -23,7 +22,8 @@ public class MarkdownListItem extends MarkdownCompositePsiElementBase {
     super(node);
   }
 
-  public @Nullable PsiElement getMarkerElement() {
+  @Nullable
+  public PsiElement getMarkerElement() {
     final PsiElement child = getFirstChild();
     if (child != null && MarkdownTokenTypeSets.LIST_MARKERS.contains(child.getNode().getElementType())) {
       return child;
@@ -33,7 +33,8 @@ public class MarkdownListItem extends MarkdownCompositePsiElementBase {
     }
   }
 
-  public @Nullable PsiElement getCheckBox() {
+  @Nullable
+  public PsiElement getCheckBox() {
     final PsiElement markerElement = getMarkerElement();
     if (markerElement == null) {
       return null;
@@ -47,7 +48,8 @@ public class MarkdownListItem extends MarkdownCompositePsiElementBase {
     }
   }
 
-  private @Nullable PsiElement getFirstNonMarkerElement() {
+  @Nullable
+  private PsiElement getFirstNonMarkerElement() {
     final var marker = getMarkerElement();
     if (marker == null) {
       return null;
@@ -59,7 +61,8 @@ public class MarkdownListItem extends MarkdownCompositePsiElementBase {
     return next;
   }
 
-  public @Nullable String getItemText() {
+  @Nullable
+  public String getItemText() {
     var element = getFirstNonMarkerElement();
     if (element == null) {
       return null;
@@ -83,8 +86,9 @@ public class MarkdownListItem extends MarkdownCompositePsiElementBase {
   }
 
   private class MyItemPresentation extends MarkdownBasePresentation implements ColoredItemPresentation {
+    @Nullable
     @Override
-    public @Nullable String getPresentableText() {
+    public String getPresentableText() {
       if (!isValid()) {
         return null;
       }
@@ -95,8 +99,9 @@ public class MarkdownListItem extends MarkdownCompositePsiElementBase {
       return markerElement.getText().trim();
     }
 
+    @Nullable
     @Override
-    public @Nullable String getLocationString() {
+    public String getLocationString() {
       if (!isValid()) {
         return null;
       }
@@ -111,13 +116,15 @@ public class MarkdownListItem extends MarkdownCompositePsiElementBase {
       }
     }
 
+    @Nullable
     @Override
-    public @Nullable Icon getIcon(boolean unused) {
+    public Icon getIcon(boolean unused) {
       return null;
     }
 
+    @Nullable
     @Override
-    public @Nullable TextAttributesKey getTextAttributesKey() {
+    public TextAttributesKey getTextAttributesKey() {
       final PsiElement checkBox = getCheckBox();
       if (checkBox == null) {
         return null;

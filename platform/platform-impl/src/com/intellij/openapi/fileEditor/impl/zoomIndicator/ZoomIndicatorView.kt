@@ -16,13 +16,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.AnActionLink
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-@ApiStatus.Internal
 class ZoomIndicatorView(val editor: EditorImpl) : JPanel(MigLayout("novisualpadding, ins 0")) {
   var isHovered: Boolean = false; private set
   var lastHoverMs: Long = 0L; private set
@@ -39,7 +37,7 @@ class ZoomIndicatorView(val editor: EditorImpl) : JPanel(MigLayout("novisualpadd
 
   private val settingsBtn = object : ActionButton(settingsAction, settingsAction.templatePresentation.clone(), ActionPlaces.POPUP, JBUI.size(22, 22)) {
     override fun performAction(e: MouseEvent?) {
-      val event = AnActionEvent.createEvent(dataContext, myPresentation, myPlace, ActionUiKind.TOOLBAR, e)
+      val event = AnActionEvent.createFromInputEvent(e, myPlace, myPresentation, dataContext, false, true)
       ActionUtil.performDumbAwareWithCallbacks(myAction, event) { actionPerformed(event) }
     }
     override fun isShowing() = true
@@ -66,8 +64,10 @@ class ZoomIndicatorView(val editor: EditorImpl) : JPanel(MigLayout("novisualpadd
   }
 
   private val resetLink = ActionManager.getInstance().getAction("EditorResetFontSize").run {
-    val dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.EDITOR, editor)
-    val event = AnActionEvent.createEvent(dataContext, null, ActionPlaces.POPUP, ActionUiKind.TOOLBAR, null)
+    val event = AnActionEvent.createFromInputEvent(
+      null, ActionPlaces.POPUP,
+      null, SimpleDataContext.getSimpleContext(CommonDataKeys.EDITOR, editor),
+      false, true)
     update(event)
     fontSizeLabel.addPropertyChangeListener {
       if (it.propertyName == "text") {

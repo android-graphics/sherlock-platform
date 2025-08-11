@@ -13,16 +13,14 @@ private class InlineCompletionLookupManagerListener : LookupManagerListener {
       override fun currentItemChanged(event: LookupEvent) {
         if (event.item == null) return
         val editor = runReadAction { event.lookup.editor }
-        val lookupChanged = InlineCompletionEvent.LookupChange(editor, event)
-        val handler = InlineCompletion.getHandlerOrNull(lookupChanged.topLevelEditor) ?: return
-        handler.invokeEvent(InlineCompletionEvent.LookupChange(editor, event))
+        val handler = InlineCompletion.getHandlerOrNull(editor) ?: return
+        handler.invoke(InlineCompletionEvent.LookupChange(event))
       }
 
       override fun lookupCanceled(event: LookupEvent) {
         val editor = runReadAction { event.lookup.editor }
-        val lookupCancelled = InlineCompletionEvent.LookupCancelled(editor, event)
-        val handler = InlineCompletion.getHandlerOrNull(lookupCancelled.topLevelEditor) ?: return
-        handler.invokeEvent(lookupCancelled)
+        val handler = InlineCompletion.getHandlerOrNull(editor) ?: return
+        handler.invoke(InlineCompletionEvent.LookupCancelled(event))
       }
     })
   }

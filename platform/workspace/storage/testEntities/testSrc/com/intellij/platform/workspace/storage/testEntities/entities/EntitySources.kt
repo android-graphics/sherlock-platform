@@ -3,16 +3,16 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.DummyParentEntitySource
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 data class SampleEntitySource(val name: String) : EntitySource
-data object MySource : EntitySource
+object MySource : EntitySource {
+  override fun toString(): String = "MySource"
+}
 
-data object AnotherSource : EntitySource
+object AnotherSource : EntitySource {
+  override fun toString(): String = "AnotherSource"
+}
 
-data object MyDummyParentSource : DummyParentEntitySource
-
-class VFUEntitySource(private val vfu: VirtualFileUrl) : EntitySource {
-  override val virtualFileUrl: VirtualFileUrl
-    get() = vfu
+object MyDummyParentSource : DummyParentEntitySource {
+  override fun toString(): String = "DummyParent"
 }

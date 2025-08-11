@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -20,8 +19,9 @@ public class ArtifactDeploymentSourceImpl implements ArtifactDeploymentSource {
     myPointer = pointer;
   }
 
+  @NotNull
   @Override
-  public @NotNull ArtifactPointer getArtifactPointer() {
+  public ArtifactPointer getArtifactPointer() {
     return myPointer;
   }
 
@@ -57,8 +57,9 @@ public class ArtifactDeploymentSourceImpl implements ArtifactDeploymentSource {
     return null;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPresentableName() {
+  public String getPresentableName() {
     return myPointer.getArtifactName();
   }
 
@@ -93,8 +94,9 @@ public class ArtifactDeploymentSourceImpl implements ArtifactDeploymentSource {
     return myPointer.hashCode();
   }
 
+  @NotNull
   @Override
-  public @NotNull DeploymentSourceType<?> getType() {
+  public DeploymentSourceType<?> getType() {
     return DeploymentSourceType.EP_NAME.findExtension(ArtifactDeploymentSourceType.class);
   }
 }

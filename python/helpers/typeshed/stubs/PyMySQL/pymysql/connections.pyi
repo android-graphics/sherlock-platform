@@ -1,7 +1,6 @@
 from _typeshed import Incomplete
 from collections.abc import Mapping
 from socket import socket as _socket
-from ssl import _PasswordType
 from typing import Any, AnyStr, Generic, TypeVar, overload
 from typing_extensions import Self
 
@@ -104,7 +103,6 @@ class Connection(Generic[_C]):
         ssl_cert=None,
         ssl_disabled=None,
         ssl_key=None,
-        ssl_key_password: _PasswordType | None = None,
         ssl_verify_cert=None,
         ssl_verify_identity=None,
         read_default_group: Incomplete | None = None,
@@ -126,8 +124,7 @@ class Connection(Generic[_C]):
     ) -> None: ...
     @overload
     def __init__(
-        # different between overloads:
-        self: Connection[_C],  # pyright: ignore[reportInvalidTypeVarUse]  #11780
+        self: Connection[_C],  # different between overloads
         *,
         host: str | None = None,
         user: Incomplete | None = None,

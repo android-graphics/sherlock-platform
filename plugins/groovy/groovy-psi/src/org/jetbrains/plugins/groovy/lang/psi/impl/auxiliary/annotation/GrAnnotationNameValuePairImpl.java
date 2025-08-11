@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
@@ -43,7 +43,8 @@ public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValue
   }
 
   @Override
-  public @Nullable String getName() {
+  @Nullable
+  public String getName() {
     GrNameValuePairStub stub = getStub();
     if (stub != null) {
       return stub.getName();
@@ -58,7 +59,8 @@ public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValue
   }
 
   @Override
-  public @Nullable PsiElement getNameIdentifierGroovy() {
+  @Nullable
+  public PsiElement getNameIdentifierGroovy() {
     PsiElement child = getFirstChild();
     if (child == null) return null;
 
@@ -76,7 +78,8 @@ public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValue
   private volatile Reference<PsiAnnotationMemberValue> myDetachedValue;
 
   @Override
-  public @Nullable PsiAnnotationMemberValue getDetachedValue() {
+  @Nullable
+  public PsiAnnotationMemberValue getDetachedValue() {
     GrNameValuePairStub stub = getStub();
     if (stub != null) {
       String text = stub.getValue();
@@ -107,7 +110,8 @@ public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValue
   }
 
   @Override
-  public @NotNull PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue) {
+  @NotNull
+  public PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue) {
     GrAnnotationMemberValue value = getValue();
     if (value == null) {
       return (PsiAnnotationMemberValue)add(newValue);

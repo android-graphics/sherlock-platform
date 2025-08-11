@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.rest.api20alpha1;
 
 import com.google.gson.reflect.TypeToken;
@@ -35,8 +34,9 @@ public class JiraRestApi20Alpha1 extends JiraRestApi {
     super(repository);
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     // REST API of JIRA 4.x for retrieving possible transitions is very limited: we can't fetch possible resolutions and
     // names of transition destinations. So we have no other options than to hardcode them.
     final HashSet<CustomTaskState> result = new HashSet<>();
@@ -51,8 +51,9 @@ public class JiraRestApi20Alpha1 extends JiraRestApi {
     return JiraRepository.GSON.fromJson(response, JiraIssueApi20Alpha1.class);
   }
 
+  @NotNull
   @Override
-  protected @NotNull List<JiraIssue> parseIssues(String response) {
+  protected List<JiraIssue> parseIssues(String response) {
     JiraResponseWrapper.Issues<JiraIssueApi20Alpha1> wrapper = JiraRepository.GSON.fromJson(response, ISSUES_WRAPPER_TYPE);
     List<JiraIssueApi20Alpha1> incompleteIssues = wrapper.getIssues();
     List<JiraIssue> updatedIssues = new ArrayList<>();
@@ -70,8 +71,9 @@ public class JiraRestApi20Alpha1 extends JiraRestApi {
     return updatedIssues;
   }
 
+  @Nullable
   @Override
-  protected @Nullable String getRequestForStateTransition(@NotNull CustomTaskState state) {
+  protected String getRequestForStateTransition(@NotNull CustomTaskState state) {
     try {
       switch (Integer.parseInt(state.getId())) {
         case 4 -> { // In Progress
@@ -97,8 +99,9 @@ public class JiraRestApi20Alpha1 extends JiraRestApi {
     throw new Exception(TaskBundle.message("jira.failure.no.time.spent"));
   }
 
+  @NotNull
   @Override
-  public @NotNull ApiType getType() {
+  public ApiType getType() {
     return ApiType.REST_2_0_ALPHA;
   }
 }

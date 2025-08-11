@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.group;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -23,10 +23,10 @@ import java.util.List;
 
 public final class ArrangementGroupingComponent extends JPanel implements ArrangementRepresentationAware, ArrangementEditorAware {
 
-  private final @NotNull ArrangementUiComponent      myGroupingTypeToken;
-  private final @NotNull ArrangementRuleIndexControl myRowIndexControl;
+  @NotNull private final ArrangementUiComponent      myGroupingTypeToken;
+  @NotNull private final ArrangementRuleIndexControl myRowIndexControl;
 
-  private final @Nullable ArrangementUiComponent myOrderTypeToken;
+  @Nullable private final ArrangementUiComponent myOrderTypeToken;
 
   /**
    * Assumes that given token {@link CompositeArrangementSettingsToken#getChildren() has no children} or all its children have
@@ -126,8 +126,9 @@ public final class ArrangementGroupingComponent extends JPanel implements Arrang
     super.paintComponent(g);
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent getComponent() {
+  public JComponent getComponent() {
     return this;
   }
 
@@ -147,7 +148,8 @@ public final class ArrangementGroupingComponent extends JPanel implements Arrang
     }
   }
 
-  public @NotNull ArrangementSettingsToken getGroupingType() {
+  @NotNull
+  public ArrangementSettingsToken getGroupingType() {
     ArrangementSettingsToken token = myGroupingTypeToken.getToken();
     assert token != null;
     return token;
@@ -167,7 +169,8 @@ public final class ArrangementGroupingComponent extends JPanel implements Arrang
     setBackground(highlight ? UIUtil.getDecoratedRowColor() : UIUtil.getListBackground());
   }
 
-  public @Nullable ArrangementSettingsToken getOrderType() {
+  @Nullable
+  public ArrangementSettingsToken getOrderType() {
     return myOrderTypeToken == null ? null : myOrderTypeToken.getToken();
   }
 

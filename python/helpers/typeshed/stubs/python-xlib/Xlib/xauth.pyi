@@ -1,5 +1,5 @@
 from _typeshed import FileDescriptorOrPath
-from typing import Final
+from typing_extensions import Final
 
 from Xlib.X import (
     FamilyChaos as FamilyChaos,

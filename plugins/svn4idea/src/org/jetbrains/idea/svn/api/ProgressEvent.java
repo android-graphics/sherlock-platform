@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.api;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,9 +14,9 @@ public class ProgressEvent {
   private final long myRevision;
   private final Url myURL;
 
-  private final @NotNull StatusType myContentsStatus;
-  private final @NotNull StatusType myPropertiesStatus;
-  private final @Nullable String myErrorMessage;
+  @NotNull private final StatusType myContentsStatus;
+  @NotNull private final StatusType myPropertiesStatus;
+  @Nullable private final String myErrorMessage;
   private final EventAction myAction;
 
   public ProgressEvent(@Nullable String errorMessage) {
@@ -47,15 +47,18 @@ public class ProgressEvent {
     return myAction;
   }
 
-  public @NotNull StatusType getContentsStatus() {
+  @NotNull
+  public StatusType getContentsStatus() {
     return myContentsStatus;
   }
 
-  public @Nullable String getErrorMessage() {
+  @Nullable
+  public String getErrorMessage() {
     return myErrorMessage;
   }
 
-  public @NotNull StatusType getPropertiesStatus() {
+  @NotNull
+  public StatusType getPropertiesStatus() {
     return myPropertiesStatus;
   }
 
@@ -67,11 +70,11 @@ public class ProgressEvent {
     return myURL;
   }
 
-  public @Nullable String getPath() {
+  @Nullable
+  public String getPath() {
     return myFile != null ? myFile.getName() : myURL != null ? myURL.toString() : null;
   }
 
-  @Override
   public String toString() {
     return getAction() + " " + getFile() + " " + getURL();
   }

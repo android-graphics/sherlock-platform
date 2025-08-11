@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.framework.detection.impl.FrameworkDetectionProcessor;
@@ -35,7 +35,8 @@ public class RootDetectionProcessor {
   private final FileTypeManager myTypeManager;
   private final ProgressIndicator myProgressIndicator;
 
-  public static @NotNull List<DetectedRootData> detectRoots(@NotNull File baseProjectFile) {
+  @NotNull
+  public static List<DetectedRootData> detectRoots(@NotNull File baseProjectFile) {
     return new RootDetectionProcessor(baseProjectFile, ProjectStructureDetector.EP_NAME.getExtensions()).detectRoots();
   }
 
@@ -107,7 +108,7 @@ public class RootDetectionProcessor {
       if (myProgressIndicator.isCanceled()) {
         return parentsToSkip;
       }
-      final @NlsSafe String path = dir.getPath();
+      @NlsSafe final String path = dir.getPath();
       myProgressIndicator.setText2(path);
     }
 
@@ -214,7 +215,7 @@ public class RootDetectionProcessor {
   private List<DetectedRootData> detectRoots() {
     Map<ProjectStructureDetector, List<DetectedProjectRoot>> roots = runDetectors();
     if (myProgressIndicator != null) {
-      myProgressIndicator.setText2(JavaUiBundle.message("progress.text.processing.0.project.roots", roots.size()));
+      myProgressIndicator.setText2(JavaUiBundle.message("progress.text.processing.0.project.roots", roots.values().size()));
     }
 
     Map<File, DetectedRootData> rootData = new LinkedHashMap<>();

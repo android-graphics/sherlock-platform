@@ -83,7 +83,6 @@ public class OfflineProblemDescriptor {
     return ReadAction.compute(() -> refManager.getProject().isDisposed() ? null : refManager.getReference(myType, myFQName));
   }
 
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -101,7 +100,6 @@ public class OfflineProblemDescriptor {
     return true;
   }
 
-  @Override
   public int hashCode() {
     int result;
     result = Objects.hashCode(myType);

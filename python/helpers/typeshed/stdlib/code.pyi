@@ -1,4 +1,3 @@
-import sys
 from codeop import CommandCompiler
 from collections.abc import Callable, Mapping
 from types import CodeType
@@ -19,34 +18,16 @@ class InteractiveInterpreter:
 class InteractiveConsole(InteractiveInterpreter):
     buffer: list[str]  # undocumented
     filename: str  # undocumented
-    if sys.version_info >= (3, 13):
-        def __init__(
-            self, locals: Mapping[str, Any] | None = None, filename: str = "<console>", *, local_exit: bool = False
-        ) -> None: ...
-        def push(self, line: str, filename: str | None = None) -> bool: ...
-    else:
-        def __init__(self, locals: Mapping[str, Any] | None = None, filename: str = "<console>") -> None: ...
-        def push(self, line: str) -> bool: ...
-
+    def __init__(self, locals: Mapping[str, Any] | None = None, filename: str = "<console>") -> None: ...
     def interact(self, banner: str | None = None, exitmsg: str | None = None) -> None: ...
+    def push(self, line: str) -> bool: ...
     def resetbuffer(self) -> None: ...
     def raw_input(self, prompt: str = "") -> str: ...
 
-if sys.version_info >= (3, 13):
-    def interact(
-        banner: str | None = None,
-        readfunc: Callable[[str], str] | None = None,
-        local: Mapping[str, Any] | None = None,
-        exitmsg: str | None = None,
-        local_exit: bool = False,
-    ) -> None: ...
-
-else:
-    def interact(
-        banner: str | None = None,
-        readfunc: Callable[[str], str] | None = None,
-        local: Mapping[str, Any] | None = None,
-        exitmsg: str | None = None,
-    ) -> None: ...
-
+def interact(
+    banner: str | None = None,
+    readfunc: Callable[[str], str] | None = None,
+    local: Mapping[str, Any] | None = None,
+    exitmsg: str | None = None,
+) -> None: ...
 def compile_command(source: str, filename: str = "<input>", symbol: str = "single") -> CodeType | None: ...

@@ -28,3 +28,8 @@ private class LookbackIterator<T>(private val iterator: Iterator<T>) : Iterator<
   }
 }
 
+@Deprecated(
+  message = "Moved to another file",
+  level = DeprecationLevel.HIDDEN,
+)
+fun <K, V : Any> Map<K, V>.reverse(): Map<V, K> = reverse()

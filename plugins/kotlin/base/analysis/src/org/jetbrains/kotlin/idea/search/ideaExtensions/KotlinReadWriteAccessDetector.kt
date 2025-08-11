@@ -18,9 +18,7 @@ class KotlinReadWriteAccessDetector : ReadWriteAccessDetector() {
         val INSTANCE = KotlinReadWriteAccessDetector()
     }
 
-    private val javaReadWriteAccessDetector by lazy { EP_NAME.extensionList.filterIsInstance<JavaReadWriteAccessDetector>().first() }
-
-    override fun isReadWriteAccessible(element: PsiElement) = element is KtVariableDeclaration || element is KtParameter || javaReadWriteAccessDetector.isReadWriteAccessible(element)
+    override fun isReadWriteAccessible(element: PsiElement) = element is KtVariableDeclaration || element is KtParameter
 
     override fun isDeclarationWriteAccess(element: PsiElement) = isReadWriteAccessible(element)
 
@@ -49,7 +47,7 @@ class KotlinReadWriteAccessDetector : ReadWriteAccessDetector() {
 
     override fun getExpressionAccess(expression: PsiElement): Access {
         if (expression !is KtExpression) { //TODO: there should be a more correct scheme of access type detection for cross-language references
-            return javaReadWriteAccessDetector.getExpressionAccess(expression)
+            return JavaReadWriteAccessDetector().getExpressionAccess(expression)
         }
 
         return when (expression.readWriteAccess(useResolveForReadWrite = true)) {

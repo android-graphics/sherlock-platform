@@ -10,9 +10,7 @@ import java.util.*
 
 @ApiStatus.Internal
 fun InputStream.readWebTypes(): WebTypes =
-  this.use {
-    objectMapper.readValue(this, WebTypes::class.java)
-  }
+  objectMapper.readValue(this, WebTypes::class.java)
 
 @ApiStatus.Internal
 class WebTypesVersionsRegistry<T> {
@@ -29,10 +27,8 @@ class WebTypesVersionsRegistry<T> {
   fun get(packageName: String, packageVersion: SemVer?): T? =
     myVersions[packageName]?.let { get(it, packageVersion) }
 
-  private fun get(
-    versions: SortedMap<SemVer, T>?,
-    pkgVersion: SemVer?,
-  ): T? {
+  private fun get(versions: SortedMap<SemVer, T>?,
+                  pkgVersion: SemVer?): T? {
     if (versions.isNullOrEmpty()) {
       return null
     }

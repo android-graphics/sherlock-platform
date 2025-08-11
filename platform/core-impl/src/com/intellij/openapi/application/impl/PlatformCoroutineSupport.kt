@@ -9,10 +9,6 @@ import kotlin.coroutines.CoroutineContext
 internal class PlatformCoroutineSupport : CoroutineSupport {
 
   override fun edtDispatcher(): CoroutineContext {
-    return EdtCoroutineDispatcher.Locking
-  }
-
-  override fun uiDispatcher(): CoroutineContext {
-    return EdtCoroutineDispatcher.NonLocking
+    return EdtCoroutineDispatcher
   }
 }

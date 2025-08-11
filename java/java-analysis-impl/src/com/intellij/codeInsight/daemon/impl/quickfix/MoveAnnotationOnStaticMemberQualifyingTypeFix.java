@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class MoveAnnotationOnStaticMemberQualifyingTypeFix extends PsiUpdateModCommandAction<PsiAnnotation> {
-  public MoveAnnotationOnStaticMemberQualifyingTypeFix(final @NotNull PsiAnnotation annotation) {
+  public MoveAnnotationOnStaticMemberQualifyingTypeFix(@NotNull final PsiAnnotation annotation) {
     super(annotation);
   }
 
@@ -41,8 +41,9 @@ public final class MoveAnnotationOnStaticMemberQualifyingTypeFix extends PsiUpda
     ct.deleteAndRestoreComments(annotation);
   }
 
+  @Nullable("The type does not have DOT tokens")
   @Contract(value = "null -> null", pure = true)
-  private static @Nullable("The type does not have DOT tokens") PsiElement getRightmostDot(final @Nullable PsiElement element) {
+  private static PsiElement getRightmostDot(@Nullable final PsiElement element) {
     if (element == null) return null;
     return PsiTreeUtil.findSiblingBackward(element, JavaTokenType.DOT, null);
   }
@@ -53,8 +54,9 @@ public final class MoveAnnotationOnStaticMemberQualifyingTypeFix extends PsiUpda
    * @param startElement element to find the type for
    * @return the type element either from a type parameter or a variable declaration
    */
+  @Nullable("No type element found")
   @Contract(pure = true)
-  private static @Nullable("No type element found") PsiTypeElement getTypeElement(final @NotNull PsiElement startElement) {
+  private static PsiTypeElement getTypeElement(@NotNull final PsiElement startElement) {
     PsiElement parent = PsiTreeUtil.getParentOfType(startElement, PsiTypeElement.class, PsiVariable.class, PsiMethod.class);
     if (parent instanceof PsiTypeElement typeElement) {
       return typeElement;

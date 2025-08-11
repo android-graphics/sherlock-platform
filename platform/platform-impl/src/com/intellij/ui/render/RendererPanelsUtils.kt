@@ -10,7 +10,6 @@ import com.intellij.ui.dsl.listCellRenderer.stripHorizontalInsets
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -41,7 +40,6 @@ private const val iconTextUnscaledGap: Int = 4
  * use border for top panel instead. Therefore, such renderers can be configured with custom insets when needed
  * 5. For very specific/complex renderers keep writing them separately, don't complicate simple renderers
  */
-@ApiStatus.Internal
 class RendererPanelsUtils {
 
   companion object {
@@ -96,7 +94,6 @@ open class IconCompOptionalCompPanel<C1 : JComponent>(
   }
 }
 
-@ApiStatus.Internal
 @Deprecated("Use com.intellij.ui.dsl.listCellRenderer.BuilderKt.listCellRenderer instead")
 open class IconPanel : SelectablePanel() {
 

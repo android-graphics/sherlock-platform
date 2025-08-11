@@ -22,7 +22,6 @@ import com.intellij.util.lang.UrlClassLoader;
 import junit.framework.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runner.manipulation.Filter;
@@ -123,20 +122,20 @@ public class TestAll implements Test {
     return ourClassLoadingProblems;
   }
 
-  public static @Unmodifiable List<Path> getClassRoots() {
+  public static List<Path> getClassRoots() {
     return TeamCityLogger.block("Collecting tests from ...", () -> {
       return doGetClassRoots();
     });
   }
 
-  private static @Unmodifiable List<Path> doGetClassRoots() {
+  private static List<Path> doGetClassRoots() {
     String jarsToRunTestsFrom = System.getProperty("jar.dependencies.to.tests");
     if (jarsToRunTestsFrom != null) {
       String[] jars = jarsToRunTestsFrom.split(";");
       List<Path> classpath = Objects.requireNonNull(ExternalClasspathClassLoader.getRoots());
       List<Path> testPaths = Arrays.stream(jars)
         .map(jarName -> {
-               List<? extends Path> resultJars = ContainerUtil.filter(classpath, path -> path.getFileName().toString().startsWith(jarName));
+               List<Path> resultJars = ContainerUtil.filter(classpath, path -> path.getFileName().toString().startsWith(jarName));
                if (resultJars.size() != 1) {
                  String classpathPretty = classpath.stream().map(Path::toString).collect(Collectors.joining(File.pathSeparator));
                  throw new IllegalStateException(
@@ -368,7 +367,7 @@ public class TestAll implements Test {
     return !"true".equals(System.getProperty("intellij.build.test.ignoreFirstAndLastTests"));
   }
 
-  private void runOrCollectNextTest(final @NotNull TestResult testResult,
+  private void runOrCollectNextTest(@NotNull final TestResult testResult,
                                     int totalTests,
                                     @NotNull Class<?> testCaseClass,
                                     @Nullable List<String> collectedTests) {
@@ -415,7 +414,8 @@ public class TestAll implements Test {
     }
   }
 
-  private @Nullable Test getTest(final @NotNull Class<?> testCaseClass) {
+  @Nullable
+  private Test getTest(@NotNull final Class<?> testCaseClass) {
     try {
       if (!Modifier.isPublic(testCaseClass.getModifiers())) {
         return null;
@@ -479,7 +479,8 @@ public class TestAll implements Test {
           super.addTest(test);
         }
 
-        private static @Nullable Method findTestMethod(final TestCase testCase) {
+        @Nullable
+        private static Method findTestMethod(final TestCase testCase) {
           return safeFindMethod(testCase.getClass(), testCase.getName());
         }
       };
@@ -493,7 +494,7 @@ public class TestAll implements Test {
     }
   }
 
-  private static boolean isPotentiallyATest(final @NotNull Class<?> testCaseClass) {
+  private static boolean isPotentiallyATest(@NotNull final Class<?> testCaseClass) {
     try {
       if (!Modifier.isPublic(testCaseClass.getModifiers())) {
         return false;
@@ -536,7 +537,8 @@ public class TestAll implements Test {
     }
   }
 
-  protected @NotNull JUnit4TestAdapter createJUnit4Adapter(@NotNull Class<?> testCaseClass) {
+  @NotNull
+  protected JUnit4TestAdapter createJUnit4Adapter(@NotNull Class<?> testCaseClass) {
     return new JUnit4TestAdapter(testCaseClass, getJUnit4TestAdapterCache());
   }
 
@@ -572,11 +574,12 @@ public class TestAll implements Test {
     return ourUnit4TestAdapterCache;
   }
 
-  private static @Nullable Method safeFindMethod(Class<?> klass, String name) {
+  @Nullable
+  private static Method safeFindMethod(Class<?> klass, String name) {
     return ReflectionUtil.getMethod(klass, name);
   }
 
-  private static void log(@NotNull String message) {
+  private static void log(String message) {
     TeamCityLogger.info(message);
   }
 

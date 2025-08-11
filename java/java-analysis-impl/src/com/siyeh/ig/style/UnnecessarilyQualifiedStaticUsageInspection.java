@@ -51,7 +51,8 @@ public final class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspe
   public boolean m_ignoreStaticAccessFromStaticContext = false;
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final PsiJavaCodeReferenceElement element = (PsiJavaCodeReferenceElement)infos[0];
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiMethodCallExpression) {
@@ -78,7 +79,8 @@ public final class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspe
   private static class UnnecessarilyQualifiedStaticUsageFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.qualifier.for.this.remove.quickfix");
     }
 
@@ -134,10 +136,6 @@ public final class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspe
     }
     final String referenceName = referenceElement.getReferenceName();
     if (referenceName == null) {
-      return false;
-    }
-    if (referenceName.equals(PsiKeyword.YIELD) && parent instanceof PsiMethodCallExpression) {
-      // Qualifier required since Java 14 (JLS 3.8)
       return false;
     }
     final PsiElement target = referenceElement.resolve();

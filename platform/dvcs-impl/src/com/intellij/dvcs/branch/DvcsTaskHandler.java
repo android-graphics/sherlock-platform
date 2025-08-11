@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.dvcs.branch;
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
@@ -16,15 +30,14 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
 public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandler {
 
-  private final @NotNull AbstractRepositoryManager<R> myRepositoryManager;
-  private final @NotNull Project myProject;
-  private final @NotNull String myBranchType;
+  @NotNull private final AbstractRepositoryManager<R> myRepositoryManager;
+  @NotNull private final Project myProject;
+  @NotNull private final String myBranchType;
 
   protected DvcsTaskHandler(@NotNull AbstractRepositoryManager<R> repositoryManager, @NotNull Project project, @NotNull String branchType) {
     myRepositoryManager = repositoryManager;
@@ -38,7 +51,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
   }
 
   @Override
-  public TaskInfo startNewTask(final @NotNull String taskName) {
+  public TaskInfo startNewTask(@NotNull final String taskName) {
     List<R> repositories = myRepositoryManager.getRepositories();
     List<R> problems = ContainerUtil.filter(repositories,
                                             repository -> hasBranch(repository, new TaskInfo(taskName, Collections.emptyList())));
@@ -81,7 +94,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
   }
 
   @Override
-  public void closeTask(final @NotNull TaskInfo taskInfo, @NotNull TaskInfo original) {
+  public void closeTask(@NotNull final TaskInfo taskInfo, @NotNull TaskInfo original) {
     checkout(original.getName(), getRepositories(original.getRepositories()),
              () -> mergeAndClose(taskInfo.getName(), getRepositories(taskInfo.getRepositories())));
   }
@@ -101,7 +114,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
         tasks.get(branch).getRepositories().add(repository.getPresentableUrl());
       }
     }
-    if (tasks.isEmpty()) return new TaskInfo[0];
+    if (tasks.size() == 0) return new TaskInfo[0];
     if (isSyncEnabled()) {
       return new TaskInfo[]{tasks.values().iterator().next()};
     }
@@ -130,7 +143,8 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
     });
   }
 
-  private @NotNull @Unmodifiable List<R> getRepositories(@NotNull Collection<String> urls) {
+  @NotNull
+  private List<R> getRepositories(@NotNull Collection<String> urls) {
     final List<R> repositories = myRepositoryManager.getRepositories();
     return ContainerUtil.mapNotNull(urls, s -> ContainerUtil.find(repositories, repository -> s.equals(repository.getPresentableUrl())));
   }
@@ -139,9 +153,11 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
 
   protected abstract void checkoutAsNewBranch(@NotNull String name, @NotNull List<? extends R> repositories);
 
-  protected abstract @Nullable String getActiveBranch(R repository);
+  @Nullable
+  protected abstract String getActiveBranch(R repository);
 
-  protected abstract @NotNull Iterable<TaskInfo> getAllBranches(@NotNull R repository);
+  @NotNull
+  protected abstract Iterable<TaskInfo> getAllBranches(@NotNull R repository);
 
   protected abstract void mergeAndClose(@NotNull String branch, @NotNull List<? extends R> repositories);
 

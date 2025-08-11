@@ -1,41 +1,44 @@
 // ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3)-javaagent
-// REGISTRY: debugger.async.stacks.coroutines=false
 
+package stepOutNoSuspension
 
-
-package souSuspendFun
-
-import kotlinx.coroutines.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 private fun foo(): Int {
     //Breakpoint!
-    return 42                                                      // 1
+    return 42
 }
 
-// One line suspend wihtout doResume
-suspend fun fourth() = foo()                                       // 2
+suspend fun fourth(): Int {
+    foo()
+    return 5
+}
 
-// Multiline suspend without doResume
 suspend fun third() : Int? {
-    return fourth() * 10                                         // 3
+    fourth()
+    delay(1)
+    return 5
 }
 
-// One line suspend with doResume
-suspend fun second(): Int {
-    return third()?.let { return it } ?: 0
-}
+suspend fun second(): Int = third()?.let { return it } ?: 0
 
-// Multiline suspend with doResume
 suspend fun first(): Int {
-    second()                                                       // 5
+    second()
     return 12
 }
 
-fun main() = runBlocking {
-    launch {
-        first()                                                    // 6
+fun main() {
+    runBlocking {
+        launch {
+            first()
+        }
     }
-    println("End")
 }
 
 // STEP_OUT: 5
+
+// REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
+// REGISTRY: debugger.always.suspend.thread.before.switch=true
+// REGISTRY: debugger.async.stacks.coroutines=false

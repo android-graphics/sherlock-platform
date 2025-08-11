@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.slicer;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -22,7 +24,7 @@ public abstract class SliceHandler implements CodeInsightActionHandler {
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
+  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     PsiElement expression = getExpressionAtCaret(editor, file);
     if (expression == null) {
       HintManager.getInstance().showErrorHint(editor, LangBundle.message("hint.text.cannot.find.what.to.analyze"));
@@ -38,7 +40,8 @@ public abstract class SliceHandler implements CodeInsightActionHandler {
     return false;
   }
 
-  public @Nullable PsiElement getExpressionAtCaret(@NotNull Editor editor, @NotNull PsiFile file) {
+  @Nullable
+  public PsiElement getExpressionAtCaret(@NotNull Editor editor, @NotNull PsiFile file) {
     int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
     if (offset == 0) {
       return null;

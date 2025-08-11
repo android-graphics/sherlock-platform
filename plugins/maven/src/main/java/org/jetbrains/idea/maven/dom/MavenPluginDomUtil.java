@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.project.Project;
@@ -24,7 +24,8 @@ import java.nio.file.Path;
 
 public final class MavenPluginDomUtil {
 
-  public static @Nullable MavenProject findMavenProject(@NotNull DomElement domElement) {
+  @Nullable
+  public static MavenProject findMavenProject(@NotNull DomElement domElement) {
     XmlElement xmlElement = domElement.getXmlElement();
     if (xmlElement == null) return null;
     PsiFile psiFile = xmlElement.getContainingFile();
@@ -34,7 +35,8 @@ public final class MavenPluginDomUtil {
     return MavenProjectsManager.getInstance(psiFile.getProject()).findProject(file);
   }
 
-  public static @Nullable MavenDomPluginModel getMavenPluginModel(DomElement element) {
+  @Nullable
+  public static MavenDomPluginModel getMavenPluginModel(DomElement element) {
     Project project = element.getManager().getProject();
 
     MavenDomPlugin pluginElement = element.getParentOfType(MavenDomPlugin.class, false);
@@ -58,7 +60,8 @@ public final class MavenPluginDomUtil {
     return getMavenPluginModel(project, groupId, artifactId, version);
   }
 
-  public static @Nullable MavenDomPluginModel getMavenPluginModel(Project project, String groupId, String artifactId, String version) {
+  @Nullable
+  public static MavenDomPluginModel getMavenPluginModel(Project project, String groupId, String artifactId, String version) {
     VirtualFile pluginXmlFile = getPluginXmlFile(project, groupId, artifactId, version);
     if (pluginXmlFile == null) return null;
 
@@ -88,8 +91,9 @@ public final class MavenPluginDomUtil {
     return groupId.equals(pluginGroupId);
   }
 
-  private static @Nullable VirtualFile getPluginXmlFile(Project project, String groupId, String artifactId, String version) {
-    Path file = MavenArtifactUtil.getArtifactNioPath(MavenProjectsManager.getInstance(project).getRepositoryPath(),
+  @Nullable
+  private static VirtualFile getPluginXmlFile(Project project, String groupId, String artifactId, String version) {
+    Path file = MavenArtifactUtil.getArtifactNioPath(MavenProjectsManager.getInstance(project).getLocalRepository(),
                                                      groupId, artifactId, version, "jar");
     VirtualFile pluginFile = LocalFileSystem.getInstance().findFileByNioFile(file);
     if (pluginFile == null) return null;

@@ -1,4 +1,4 @@
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 val array = Array(2) { it }
 
 class Foo {

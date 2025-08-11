@@ -17,7 +17,7 @@ import java.awt.Component
 import java.awt.Dimension
 import javax.swing.*
 
-internal class WizardPluginsPage(
+class WizardPluginsPage(
   val controller: BaseController,
   private val pluginService: PluginService,
   goBackAction: () -> Unit,

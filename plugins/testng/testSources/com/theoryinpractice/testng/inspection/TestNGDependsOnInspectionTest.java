@@ -38,7 +38,7 @@ public class TestNGDependsOnInspectionTest extends LightJavaCodeInsightFixtureTe
     protected void setUp() {
       UIUtil.invokeAndWaitIfNeeded(() -> {
         try {
-          super.setUp();
+          TestNGDependsOnInspectionTest.super.setUp();
           myFixture.enableInspections(new DependsOnMethodInspection());
 
         }
@@ -53,7 +53,7 @@ public class TestNGDependsOnInspectionTest extends LightJavaCodeInsightFixtureTe
     protected void tearDown() {
       UIUtil.invokeAndWaitIfNeeded(() -> {
         try {
-          super.tearDown();
+          TestNGDependsOnInspectionTest.super.tearDown();
         }
         catch (Exception e) {
           throw new RuntimeException(e);

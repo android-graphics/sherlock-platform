@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types;
 
@@ -43,19 +43,22 @@ public class GrTypeCastExpressionImpl extends GrExpressionImpl implements GrType
   }
 
   @Override
-  public @Nullable GrExpression getOperand() {
+  @Nullable
+  public GrExpression getOperand() {
     return findExpressionChild(this);
   }
 
   @Override
-  public @NotNull PsiElement getLeftParen() {
+  @NotNull
+  public PsiElement getLeftParen() {
     ASTNode paren = getNode().findChildByType(GroovyTokenTypes.mLPAREN);
     assert paren != null;
     return paren.getPsi();
   }
 
   @Override
-  public @NotNull PsiElement getRightParen() {
+  @NotNull
+  public PsiElement getRightParen() {
     ASTNode paren = getNode().findChildByType(GroovyTokenTypes.mRPAREN);
     assert paren != null;
     return paren.getPsi();

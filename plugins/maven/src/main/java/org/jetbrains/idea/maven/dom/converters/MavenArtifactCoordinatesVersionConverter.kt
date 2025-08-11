@@ -24,6 +24,7 @@ import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
+import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.reposearch.DependencySearchService
 import java.util.regex.Pattern
 
@@ -46,7 +47,8 @@ class MavenArtifactCoordinatesVersionConverter : MavenArtifactCoordinatesConvert
     }
 
     val path = context.file.containingDirectory?.virtualFile?.path
-    val mavenVersion = MavenDistributionsCache.getInstance(context.project).getMavenDistribution(path).version
+    val mavenVersion = path?.let { MavenUtil.getMavenVersion(context.project, it) } ?: MavenDistributionsCache.getInstance(
+      context.project).settingsDistribution.version
     if (VersionComparatorUtil.compare(mavenVersion, "3.6.3") <= 0 && id.version == null) {
       return false
     }

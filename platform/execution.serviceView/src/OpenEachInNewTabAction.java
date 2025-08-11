@@ -2,6 +2,7 @@
 package com.intellij.platform.execution.serviceView;
 
 import com.intellij.execution.services.ServiceViewManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -28,7 +29,7 @@ final class OpenEachInNewTabAction extends DumbAwareAction {
                       getSelectedView(e) != null &&
                       !getSelectedItems(e).isEmpty();
     e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setVisible(enabled || !e.isFromContextMenu());
+    e.getPresentation().setVisible(enabled || !ActionPlaces.isPopupPlace(e.getPlace()));
   }
 
   @Override

@@ -11,7 +11,7 @@ import java.awt.event.MouseEvent
 
 private fun ChangesTree.isLeafSelected(): Boolean = lastSelectedPathComponent?.let { model.isLeaf(it) } == true
 
-internal class ChangesTreeHandlers(private val tree: ChangesTree) {
+private class ChangesTreeHandlers(private val tree: ChangesTree) {
   init {
     tree.addKeyListener(MyEnterListener())
     MyDoubleClickListener().installOn(tree)

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.gist;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +15,8 @@ import org.jetbrains.annotations.NotNull;
  */
 @NonExtendable
 public abstract class GistManager {
-  public static @NotNull GistManager getInstance() {
+  @NotNull
+  public static GistManager getInstance() {
     return ApplicationManager.getApplication().getService(GistManager.class);
   }
 
@@ -28,7 +29,8 @@ public abstract class GistManager {
    * @param <Data> the type of the data to cache
    * @return the gist object, where {@link VirtualFileGist#getFileData} can later be used to retrieve the cached data
    */
-  public abstract @NotNull <Data> VirtualFileGist<Data> newVirtualFileGist(@NotNull @NonNls String id,
+  @NotNull
+  public abstract <Data> VirtualFileGist<Data> newVirtualFileGist(@NotNull @NonNls String id,
                                                                   int version,
                                                                   @NotNull DataExternalizer<Data> externalizer,
                                                                   @NotNull VirtualFileGist.GistCalculator<Data> calcData);
@@ -42,7 +44,8 @@ public abstract class GistManager {
    * @param calcData calculates the data by the file content when needed
    * @return the gist object, where {@link PsiFileGist#getFileData} can later be used to retrieve the cached data
    */
-  public abstract @NotNull <Data> PsiFileGist<Data> newPsiFileGist(@NotNull @NonNls String id,
+  @NotNull
+  public abstract <Data> PsiFileGist<Data> newPsiFileGist(@NotNull @NonNls String id,
                                                           int version,
                                                           @NotNull DataExternalizer<Data> externalizer,
                                                           @NotNull NullableFunction<? super PsiFile, ? extends Data> calcData);

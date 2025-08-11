@@ -23,12 +23,13 @@ import java.util.Set;
 import static org.jetbrains.plugins.textmate.editor.TextMateEditorUtils.getSmartTypingPairs;
 
 public class TextMateTypedHandler extends TypedHandlerDelegate {
+  @NotNull
   @Override
-  public @NotNull Result beforeCharTyped(char c,
-                                         @NotNull Project project,
-                                         @NotNull Editor editor,
-                                         @NotNull PsiFile file,
-                                         @NotNull FileType fileType) {
+  public Result beforeCharTyped(char c,
+                                @NotNull Project project,
+                                @NotNull Editor editor,
+                                @NotNull PsiFile file,
+                                @NotNull FileType fileType) {
     if (fileType == TextMateFileType.INSTANCE) {
       if (c == '\'' || c == '"' || c == '`') {
         if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE) {

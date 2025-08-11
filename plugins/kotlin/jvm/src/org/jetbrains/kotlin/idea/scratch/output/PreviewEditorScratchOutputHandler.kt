@@ -7,20 +7,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
-import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.FoldingModel
 import com.intellij.openapi.editor.markup.*
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.scratch.ScratchExpression
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
-import org.jetbrains.kotlin.idea.scratch.actions.RunScratchActionK2
 import java.util.*
 import kotlin.math.max
 
@@ -41,10 +35,6 @@ class PreviewEditorScratchOutputHandler(
 
     override fun handle(file: ScratchFile, expression: ScratchExpression, output: ScratchOutput) {
         printToPreviewEditor(expression, output)
-    }
-
-    override fun handle(file: ScratchFile, infos: List<RunScratchActionK2.ExplainInfo>, scope: CoroutineScope) {
-        previewOutputBlocksManager.addOutput(infos, scope)
     }
 
     override fun error(file: ScratchFile, message: String) {
@@ -82,14 +72,12 @@ interface ScratchOutputBlock {
     val lineStart: Int
     val lineEnd: Int
     fun addOutput(output: ScratchOutput)
-    fun addOutput(lineNumber: Int, output: ScratchOutput)
 }
 
 class PreviewOutputBlocksManager(editor: Editor) {
     private val targetDocument: Document = editor.document
     private val foldingModel: FoldingModel = editor.foldingModel
     private val markupModel: MarkupModel = editor.markupModel
-    private val project: Project? = editor.project
 
     private val blocks: NavigableMap<ScratchExpression, OutputBlock> = TreeMap(Comparator.comparingInt { it.lineStart })
 
@@ -101,27 +89,6 @@ class PreviewOutputBlocksManager(editor: Editor) {
         if (blocks.putIfAbsent(expression, it) != null) {
             error("There is already a cell for $expression!")
         }
-    }
-
-    fun addOutput(infos: List<RunScratchActionK2.ExplainInfo>, scope: CoroutineScope) {
-        val project = project ?: return
-
-        scope.launch {
-            writeCommandAction(project, KotlinJvmBundle.message("command.name.processing.kotlin.scratch.output")) {
-                targetDocument.setText("")
-                infos.groupBy { it.line }.forEach { (line, values) ->
-                    if (line != null) {
-                        targetDocument.insertStringAtLine(
-                            line,
-                            values.joinToString(separator = " -> ") { it.variableValue.toString() })
-
-                        markupModel.highlightLines(line, line, getAttributesForOutputType(ScratchOutputType.RESULT))
-                    }
-                }
-            }
-        }
-
-
     }
 
     fun clear() {
@@ -152,20 +119,6 @@ class PreviewOutputBlocksManager(editor: Editor) {
                 it.recalculatePosition()
                 it.updateFolding()
             }
-        }
-
-        override fun addOutput(lineNumber: Int, output: ScratchOutput) {
-            val beforeAdding = lineEnd
-            val currentOutputStartLine = if (outputs.isEmpty()) lineStart else beforeAdding + 1
-            outputs.add(output)
-
-            runWriteAction {
-                executeCommand {
-                    targetDocument.insertStringAtLine(lineNumber, output.text)
-                }
-            }
-
-            markupModel.highlightLines(currentOutputStartLine, lineEnd, getAttributesForOutputType(output.type))
         }
 
         /**

@@ -25,12 +25,13 @@ import static com.jetbrains.python.PyStringFormatParser.parsePercentFormat;
 
 public class PyAddSpecifierToFormatQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.add.specifier");
   }
 
   @Override
-  public void applyFix(final @NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+  public void applyFix(@NotNull final Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PyBinaryExpression expression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class);
     if (expression == null) return;
     PyExpression rightExpression = expression.getRightExpression();

@@ -15,7 +15,6 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.rethrowLoggedErrorsIn
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
@@ -65,7 +64,7 @@ class WorkspaceModelTest {
 
       val replacement = builderSnapshot.getStorageReplacement()
 
-      val updated = model.replaceWorkspaceModel("async model update", replacement)
+      val updated = model.replaceProjectModel(replacement)
 
       assertTrue(updated)
 
@@ -89,7 +88,7 @@ class WorkspaceModelTest {
     }
 
     val updated = runWriteActionAndWait {
-      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelInternal).replaceWorkspaceModel("async model update with fail", replacement)
+      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelInternal).replaceProjectModel(replacement)
     }
 
     assertFalse(updated)
@@ -128,7 +127,7 @@ class WorkspaceModelTest {
   }
 
   @Test
-  fun `recursive update`(): Unit = rethrowLoggedErrorsIn {
+  fun `recursive update`() {
     val exception = assertThrows<Throwable> {
       invokeAndWaitIfNeeded {
         ApplicationManager.getApplication().runWriteAction {
@@ -144,7 +143,7 @@ class WorkspaceModelTest {
   }
 
   @Test
-  fun `recursive update silent`(): Unit = rethrowLoggedErrorsIn {
+  fun `recursive update silent`() {
     val exception = assertThrows<Throwable> {
       invokeAndWaitIfNeeded {
         (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent("Test") {
@@ -158,7 +157,7 @@ class WorkspaceModelTest {
   }
 
   @Test
-  fun `recursive update mixed 1`(): Unit = rethrowLoggedErrorsIn {
+  fun `recursive update mixed 1`() {
     val exception = assertThrows<Throwable> {
       invokeAndWaitIfNeeded {
         ApplicationManager.getApplication().runWriteAction {
@@ -174,7 +173,7 @@ class WorkspaceModelTest {
   }
 
   @Test
-  fun `recursive update mixed 2`(): Unit = rethrowLoggedErrorsIn {
+  fun `recursive update mixed 2`() {
     val exception = assertThrows<Throwable> {
       invokeAndWaitIfNeeded {
         runWriteAction {

@@ -16,7 +16,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-@ApiStatus.ScheduledForRemoval
 @Deprecated("Deprecated with the move to ViewModel-based approach")
 @ApiStatus.Internal
 abstract class LineGutterIconRenderer : GutterIconRenderer(), DumbAware, Disposable {

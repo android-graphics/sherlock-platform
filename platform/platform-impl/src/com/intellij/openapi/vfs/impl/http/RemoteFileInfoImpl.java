@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +26,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
-@ApiStatus.Internal
 public final class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCallback, RemoteFileInfo {
   private static final Logger LOG = Logger.getInstance(RemoteFileInfoImpl.class);
   private final Object myLock = new Object();

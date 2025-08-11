@@ -3,7 +3,7 @@ package com.intellij.execution.wsl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.*
@@ -14,7 +14,6 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.net.InetAddress
-import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.coroutines.coroutineContext
@@ -34,14 +33,8 @@ import kotlin.coroutines.coroutineContext
  *
  */
 @ApiStatus.Internal
-class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: InetSocketAddress) : Disposable {
-  @Deprecated("Use the construction with the application address." +
-              " This constructor can lead to sporadic 'connection refused' errors in case of IPv4/IPv6 confusion.")
-  constructor(distro: AbstractWslDistribution, applicationPort: Int) : this(distro, InetSocketAddress("127.0.0.1", applicationPort))
-
+class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int) : Disposable {
   private companion object {
-    private val LOG = logger<WslProxy>()
-
     /**
      * Server might not be opened yet. Since non-blocking Ktor API doesn't wait for it but throws exception instead, we retry
      */
@@ -51,7 +44,7 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: 
       }
       catch (e: IOException) {
         if (attemptRemains <= 0) throw e
-        LOG.warn("Can't connect to $host $port , will retry", e)
+        thisLogger().warn("Can't connect to $host $port , will retry", e)
         delay(100)
       }
       return tryConnect(host, port, attemptRemains - 1)
@@ -115,7 +108,6 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: 
   }
 
   private suspend fun readPortFromChannel(channel: ByteReadChannel): Int = readToBuffer(channel, 2).short.toUShort().toInt()
-  private val stdoutChannel: ByteReadChannel
 
   init {
     val args = if (Registry.`is`("wsl.proxy.connect.localhost")) arrayOf("--loopback") else emptyArray()
@@ -134,8 +126,7 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: 
       }
     }
     try {
-
-      stdoutChannel = process.inputStream.toByteReadChannel()
+      val stdoutChannel = process.inputStream.toByteReadChannel()
       wslLinuxIp = runBlocking {
         readToBuffer(stdoutChannel, 4)
       }.let { InetAddress.getByAddress(it.array()).hostAddress }
@@ -164,16 +155,15 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: 
   private suspend fun clientConnected(linuxEgressPort: Int) {
     val selector = ActorSelectorManager(scope.coroutineContext)
     val winToLin = scope.async {
-      LOG.info("Connecting to WSL: $wslLinuxIp:$linuxEgressPort")
+      thisLogger().info("Connecting to WSL: $wslLinuxIp:$linuxEgressPort")
       val socket = aSocket(selector).tcp().tryConnect(wslLinuxIp, linuxEgressPort)
-      LOG.info("Connected to WSL")
+      thisLogger().info("Connected to WSL")
       socket
     }
     val winToWin = scope.async {
-      LOG.info("Connecting to app: $applicationAddress")
-      val socket = aSocket(ActorSelectorManager(scope.coroutineContext)).tcp()
-        .tryConnect(applicationAddress.hostString, applicationAddress.port)
-      LOG.info("Connected to app")
+      thisLogger().info("Connecting to app: $127.0.0.1:$applicationPort")
+      val socket = aSocket(ActorSelectorManager(scope.coroutineContext)).tcp().tryConnect("127.0.0.1", applicationPort)
+      thisLogger().info("Connected to app")
       socket
     }
     scope.launch {
@@ -186,7 +176,7 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: 
       launch(CoroutineName("WinWin->WinLin $linuxEgressPort")) {
         connectChannels(winToWinSocket.openReadChannel(), winToLinSocket.openWriteChannel(true))
       }.invokeOnCompletion { closeSockets() }
-      launch(CoroutineName("WinLin->WinWin $applicationAddress")) {
+      launch(CoroutineName("WinLin->WinWin $applicationPort")) {
         connectChannels(winToLinSocket.openReadChannel(), winToWinSocket.openWriteChannel(true))
       }.invokeOnCompletion { closeSockets() }
     }
@@ -195,7 +185,5 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: 
 
   override fun dispose() {
     scope.cancel()
-    // Workaround KTOR-8182
-    stdoutChannel.cancel()
   }
 }

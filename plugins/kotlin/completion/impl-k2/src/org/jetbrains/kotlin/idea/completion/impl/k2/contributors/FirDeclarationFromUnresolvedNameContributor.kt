@@ -1,5 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
+
+package org.jetbrains.kotlin.idea.completion.contributors
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.progress.ProgressManager
@@ -7,9 +8,13 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.idea.completion.*
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
+import org.jetbrains.kotlin.idea.completion.ItemPriority
+import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.context.getOriginalDeclarationOrSelf
+import org.jetbrains.kotlin.idea.completion.priority
+import org.jetbrains.kotlin.idea.completion.referenceScope
+import org.jetbrains.kotlin.idea.completion.suppressAutoInsertion
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.psi.*
@@ -25,15 +30,14 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
  * This contributor would contribute `unresolvedVar` at caret position above.
  */
 internal class FirDeclarationFromUnresolvedNameContributor(
-    parameters: KotlinFirCompletionParameters,
-    sink: LookupElementSink,
-    priority: Int = 0,
-) : FirCompletionContributorBase<KotlinRawPositionContext>(parameters, sink, priority) {
-
+    basicContext: FirBasicCompletionContext,
+    priority: Int,
+) : FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
     context(KaSession)
     override fun complete(
         positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
     ) {
         val declaration = positionContext.position.getCurrentDeclarationAtCaret() ?: return
         val referenceScope = referenceScope(declaration) ?: return
@@ -60,7 +64,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         val name = unresolvedRef.getReferencedName()
         if (!prefixMatcher.prefixMatches(name)) return
 
-        val originalCurrentDeclaration = getOriginalDeclarationOrSelf(currentDeclarationInFakeFile, originalKtFile)
+        val originalCurrentDeclaration = getOriginalDeclarationOrSelf(currentDeclarationInFakeFile, basicContext.originalKtFile)
         if (!shouldOfferCompletion(unresolvedRef, originalCurrentDeclaration)) return
 
         if (unresolvedRef.reference?.resolve() == null) {
@@ -91,13 +95,13 @@ internal class FirDeclarationFromUnresolvedNameContributor(
                     val expectedReceiverType = getReceiverType(symbol) ?: return false
 
                     // FIXME: this check does not work with generic types (i.e. List<String> and List<T>)
-                    actualReceiverType.isSubtypeOf(expectedReceiverType)
+                    actualReceiverType.isSubTypeOf(expectedReceiverType)
                 }
                 else -> {
                     // If there is no explicit receiver at call-site, we check if any implicit receiver at call-site matches the extension
                     // receiver type for the current declared symbol
                     val extensionReceiverType = symbol.receiverType ?: return true
-                    collectImplicitReceiverTypes(unresolvedRef).any { it.isSubtypeOf(extensionReceiverType) }
+                    getImplicitReceiverTypesAtPosition(unresolvedRef).any { it.isSubTypeOf(extensionReceiverType) }
                 }
             }
             is KaClassSymbol -> when {

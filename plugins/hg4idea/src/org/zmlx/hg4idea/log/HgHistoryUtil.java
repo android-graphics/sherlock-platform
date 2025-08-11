@@ -1,9 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.log;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -72,7 +74,7 @@ public final class HgHistoryUtil {
    * and it can occupy too much memory. The estimate is ~600Kb for 1000 commits.</p>
    */
   public static @NotNull List<VcsFullCommitDetails> history(@NotNull Project project, @NotNull VirtualFile root, int limit,
-                                                            @NotNull List<@NonNls String> hashParameters, boolean silent)
+                                                   @NotNull List<@NonNls String> hashParameters, boolean silent)
     throws VcsException {
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
@@ -109,13 +111,13 @@ public final class HgHistoryUtil {
   public static @NotNull List<? extends VcsFullCommitDetails> createFullCommitsFromResult(@NotNull Project project,
                                                                                           @NotNull VirtualFile root,
                                                                                           @Nullable HgCommandResult result,
-                                                                                          @NotNull HgVersion version) throws VcsException {
+                                                                                          @NotNull HgVersion version, boolean silent) {
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return Collections.emptyList();
     }
     List<HgFileRevision> hgRevisions =
-      getCommitRecordsOrFail(project, result, new HgFileRevisionLogParser(project, getOriginalHgFile(project, root), version));
+      getCommitRecords(project, result, new HgFileRevisionLogParser(project, getOriginalHgFile(project, root), version), silent);
     List<VcsFullCommitDetails> vcsFullCommitDetailsList = new ArrayList<>();
     for (HgFileRevision revision : hgRevisions) {
       vcsFullCommitDetailsList.add(createDetails(project, root, factory, revision));
@@ -277,21 +279,13 @@ public final class HgHistoryUtil {
   public static @NotNull <CommitInfo> List<CommitInfo> getCommitRecords(@NotNull Project project,
                                                                         @Nullable HgCommandResult result,
                                                                         @NotNull Function<? super String, ? extends CommitInfo> converter) {
-    try {
-      return getCommitRecordsOrFail(project, result, converter);
-    }
-    catch (VcsException e) {
-      VcsNotifier.getInstance(project).notifyError(LOG_CMD_EXEC_ERROR,
-                                                   HgBundle.message("hg4idea.error.log.command.execution"),
-                                                   e.getMessage());
-      return Collections.emptyList();
-    }
+    return getCommitRecords(project, result, converter, false);
   }
 
-  public static @NotNull <CommitInfo> List<CommitInfo> getCommitRecordsOrFail(@NotNull Project project,
-                                                                              @Nullable HgCommandResult result,
-                                                                              @NotNull Function<? super String, ? extends CommitInfo> converter
-  ) throws VcsException {
+  public static @NotNull <CommitInfo> List<CommitInfo> getCommitRecords(@NotNull Project project,
+                                                                        @Nullable HgCommandResult result,
+                                                                        @NotNull Function<? super String, ? extends CommitInfo> converter,
+                                                                        boolean silent) {
     final List<CommitInfo> revisions = new LinkedList<>();
     if (result == null) {
       return revisions;
@@ -300,7 +294,16 @@ public final class HgHistoryUtil {
     List<@NlsSafe String> errors = result.getErrorLines();
     if (!errors.isEmpty()) {
       if (result.getExitValue() != 0) {
-        throw new VcsException(errors.toString()); //NON-NLS
+        if (silent) {
+          LOG.debug(errors.toString());
+        }
+        else {
+          String message = new HtmlBuilder().appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(errors, HtmlChunk::text)).toString();
+          VcsNotifier.getInstance(project).notifyError(LOG_CMD_EXEC_ERROR,
+                                                       HgBundle.message("hg4idea.error.log.command.execution"),
+                                                       message);
+        }
+        return Collections.emptyList();
       }
       LOG.warn(errors.toString());
     }
@@ -440,9 +443,7 @@ public final class HgHistoryUtil {
     return hashArgs;
   }
 
-  public static @NotNull Collection<String> getDescendingHeadsOfBranches(@NotNull Project project,
-                                                                         @NotNull VirtualFile root,
-                                                                         @NotNull Hash hash)
+  public static @NotNull Collection<String> getDescendingHeadsOfBranches(@NotNull Project project, @NotNull VirtualFile root, @NotNull Hash hash)
     throws VcsException {
     //hg log -r "descendants(659db54c1b6865c97c4497fa867194bcd759ca76) and head()" --template "{branch}{bookmarks}"
     Set<String> branchHeads = new HashSet<>();
@@ -493,7 +494,7 @@ public final class HgHistoryUtil {
     @Override
     public void finish() throws VcsException {
       super.finish();
-      if (!myOutput.isEmpty()) {
+      if (myOutput.length() != 0) {
         myConsumer.consume(myOutput);
         myOutput.setLength(0);
       }

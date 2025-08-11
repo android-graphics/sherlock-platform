@@ -28,8 +28,9 @@ public class PyDoubleStarExpressionImpl extends PyElementImpl implements PyDoubl
     super(astNode);
   }
 
+  @Nullable
   @Override
-  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return null;
   }
 

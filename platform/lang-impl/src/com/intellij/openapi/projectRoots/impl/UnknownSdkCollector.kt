@@ -1,8 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
 import com.google.common.collect.MultimapBuilder
 import com.google.common.hash.Hashing
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -18,7 +21,9 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk
+import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.*
+import java.util.function.Consumer
 
 private val EP_NAME = ExtensionPointName.create<UnknownSdkContributor>("com.intellij.unknownSdkContributor")
 
@@ -33,6 +38,7 @@ data class UnknownSdkSnapshot(
   val resolvableSdks: List<UnknownSdk>,
   val knownSdks: List<Sdk>
 ) {
+
   private val sdkState by lazy {
     val hasher = Hashing.goodFastHash(128).newHasher()
     knownSdks.sortedBy { it.name }.forEach { sdk ->
@@ -82,9 +88,24 @@ interface UnknownSdkBlockingCollector {
   fun collectSdksBlocking() : UnknownSdkSnapshot
 }
 
-private val LOG = logger<UnknownSdkCollector>()
+open class UnknownSdkCollector(private val myProject: Project) : UnknownSdkBlockingCollector {
+  companion object {
+    private val LOG = logger<UnknownSdkCollector>()
+  }
 
-open class UnknownSdkCollector(private val project: Project) : UnknownSdkBlockingCollector {
+  /**
+   * NOTE. The callback may not happen if a given task is merged
+   * with a previous or a next similar one.
+   */
+  internal fun UnknownSdkCollectorQueue.collectSdksPromise(lifetime: Disposable, onCompleted: Consumer<UnknownSdkSnapshot>) {
+    ReadAction.nonBlocking<UnknownSdkSnapshot> { collectSdksUnderReadAction() }
+      .expireWith(lifetime)
+      .expireWith(myProject)
+      .coalesceBy(myProject, UnknownSdkCollector::class)
+      .finishOnUiThread(ApplicationManager.getApplication().defaultModalityState, onCompleted)
+      .submit(AppExecutorUtil.getAppExecutorService())
+  }
+
   /**
    * Starts collection of Sdks blockingly inside one read action.
    * For background activities it's more recommended to use [collectSdksPromise]
@@ -93,9 +114,10 @@ open class UnknownSdkCollector(private val project: Project) : UnknownSdkBlockin
   override fun collectSdksBlocking() : UnknownSdkSnapshot = runReadAction { collectSdksUnderReadAction() }
 
   protected open fun checkProjectSdk(project: Project) : Boolean = true
-  protected open fun collectModulesToCheckSdk(project: Project) : List<Module> = ModuleManager.getInstance(this@UnknownSdkCollector.project).modules.toList()
+  protected open fun collectModulesToCheckSdk(project: Project) : List<Module> = ModuleManager.getInstance(myProject).modules.toList()
 
-  internal fun collectSdksUnderReadAction(): UnknownSdkSnapshot {
+  private fun collectSdksUnderReadAction(): UnknownSdkSnapshot {
+
     val knownSdks = mutableSetOf<Sdk>()
     val sdkToTypes = MultimapBuilder.treeKeys(java.lang.String.CASE_INSENSITIVE_ORDER)
       .hashSetValues()
@@ -103,8 +125,8 @@ open class UnknownSdkCollector(private val project: Project) : UnknownSdkBlockin
 
     checkCanceled()
 
-    if (checkProjectSdk(project)) {
-      val rootManager = ProjectRootManager.getInstance(project)
+    if (checkProjectSdk(myProject)) {
+      val rootManager = ProjectRootManager.getInstance(myProject)
       val projectSdk = rootManager.projectSdk
       if (projectSdk == null) {
         val sdkName = rootManager.projectSdkName
@@ -115,16 +137,16 @@ open class UnknownSdkCollector(private val project: Project) : UnknownSdkBlockin
         }
       }
       else {
-        knownSdks.add(projectSdk)
+        knownSdks += projectSdk
       }
     }
 
-    for (module in collectModulesToCheckSdk(project)) {
+    for (module in collectModulesToCheckSdk(myProject)) {
       checkCanceled()
 
       val moduleRootManager = ModuleRootManager.getInstance(module)
       if (moduleRootManager.externalSource != null) {
-        // we do not need to check external modules (e.g., which are imported from Maven or Gradle)
+        //we do not need to check external modules (e.g. which are imported from Maven or Gradle)
         continue
       }
 
@@ -156,8 +178,10 @@ open class UnknownSdkCollector(private val project: Project) : UnknownSdkBlockin
 
       val sdkType = SdkType.findByName(singleSdkTypeName)
       if (sdkType == null) {
-        // that seems like one has removed a plugin that was used and there is no requested SDK either.
-        // it makes less sense to suggest any SDK here (we will fail) just skipping it for now
+        // that seems like one has removed a plugin that was used
+        // and there is no requested SDK too.
+        // it makes less sense to suggest any SDK here (we will fail)
+        // just skipping it for now
         continue
       }
 
@@ -168,7 +192,7 @@ open class UnknownSdkCollector(private val project: Project) : UnknownSdkBlockin
 
     getContributors().forEach {
       val contrib = try {
-        it.contributeUnknownSdks(project)
+        it.contributeUnknownSdks(myProject)
       } catch (e: ProcessCanceledException) {
         throw e
       } catch (t: Throwable) {
@@ -183,7 +207,7 @@ open class UnknownSdkCollector(private val project: Project) : UnknownSdkBlockin
       }
 
       try {
-        knownSdks += it.contributeKnownSdks(project)
+        knownSdks += it.contributeKnownSdks(myProject)
       } catch (e: ProcessCanceledException) {
         throw e
       } catch (t: Throwable) {

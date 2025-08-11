@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.ChangeListColumn;
@@ -12,7 +12,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +24,6 @@ import javax.swing.event.ListSelectionListener;
 import java.util.*;
 
 
-@ApiStatus.Internal
 public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
   private final JScrollPane myScrollPane;
   private final JList<@Nls String> myValueList;
@@ -57,7 +55,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
         if (index == 0) {
           append(value, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
-        else if (value.isEmpty()) {
+        else if (value.length() == 0) {
           append(VcsBundle.message("committed.changes.filter.none"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         else {
@@ -69,18 +67,19 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
     myProviderClass = providerClass;
   }
 
+  @NotNull
   @Override
-  public @NotNull CommittedChangesFilterKey getKey() {
+  public CommittedChangesFilterKey getKey() {
     return new CommittedChangesFilterKey(toString(), CommittedChangesFilterPriority.USER);
   }
 
-  @Override
   public String toString() {
     return myColumn.getTitle();
   }
 
   @Override
-  public @Nullable JComponent getFilterUI() {
+  @Nullable
+  public JComponent getFilterUI() {
     return myScrollPane;
   }
 
@@ -134,7 +133,8 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
   }
 
   @Override
-  public @NotNull List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
+  @NotNull
+  public List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
     final List<String> selection = myValueList.getSelectedValuesList();
     if (myValueList.getSelectedIndex() == 0 || selection.isEmpty()) {
       return new ArrayList<>(changeLists);

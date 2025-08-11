@@ -1,7 +1,0 @@
-{
-  "mainFile": "a/a.kt",
-  "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
-  "targetFile": "b/b.kt",
-  "enabledInK1": "true",
-  "enabledInK2": "true"
-}

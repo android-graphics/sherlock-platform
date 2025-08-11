@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.navigation
 
@@ -12,10 +12,8 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.GotoSuperActionHandler
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
-import org.jetbrains.kotlin.idea.navigation.NavigationTestUtils.getExpectedReferences
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.extractMarkerOffset
@@ -35,13 +33,7 @@ abstract class AbstractKotlinNavigationMultiModuleTest : AbstractMultiModuleTest
         editor.caretModel.moveToOffset(offset)
         try {
             val gotoData = doNavigate(editor, file)
-            val documentText = editor.document.text
-            val expectedReferences = if (pluginMode == KotlinPluginMode.K2 && documentText.contains("// K2_REF:")) {
-                getExpectedReferences(documentText, "// K2_REF:")
-            } else {
-                getExpectedReferences(documentText, "// REF:")
-            }
-            NavigationTestUtils.assertGotoDataMatching(editor, gotoData, true, expectedReferences)
+            NavigationTestUtils.assertGotoDataMatching(editor, gotoData, true)
         } finally {
             EditorFactory.getInstance().releaseEditor(editor)
         }

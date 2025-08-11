@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.core.JavaPsiBundle;
@@ -62,7 +62,8 @@ public final class PsiMethodReferenceUtil {
            isSecondSearchPossible(functionalMethodParameterTypes, qualifierResolveResult, methodRef);
   }
 
-  public static @Nullable PsiType getQualifierType(PsiMethodReferenceExpression expression) {
+  @Nullable
+  public static PsiType getQualifierType(PsiMethodReferenceExpression expression) {
     final PsiTypeElement typeElement = expression.getQualifierType();
     if (typeElement != null) {
       return typeElement.getType();
@@ -81,7 +82,7 @@ public final class PsiMethodReferenceUtil {
 
   public static boolean isReturnTypeCompatible(PsiMethodReferenceExpression expression,
                                                JavaResolveResult result,
-                                               @Nullable PsiType functionalInterfaceType) {
+                                               PsiType functionalInterfaceType) {
     return isReturnTypeCompatible(expression, result, functionalInterfaceType, null);
   }
 
@@ -91,7 +92,8 @@ public final class PsiMethodReferenceUtil {
    * @param expression a method reference to get the return type of
    * @return an actual method reference return type
    */
-  public static @Nullable PsiType getMethodReferenceReturnType(@NotNull PsiMethodReferenceExpression expression) {
+  @Nullable
+  public static PsiType getMethodReferenceReturnType(@NotNull PsiMethodReferenceExpression expression) {
     return getMethodReferenceReturnType(expression, expression.advancedResolve(false));
   }
 
@@ -102,7 +104,8 @@ public final class PsiMethodReferenceUtil {
    * @param result the result of method reference resolution
    * @return an actual method reference return type
    */
-  private static @Nullable PsiType getMethodReferenceReturnType(@NotNull PsiMethodReferenceExpression expression, @NotNull JavaResolveResult result) {
+  @Nullable
+  private static PsiType getMethodReferenceReturnType(@NotNull PsiMethodReferenceExpression expression, @NotNull JavaResolveResult result) {
     PsiSubstitutor subst = result.getSubstitutor();
 
     PsiType methodReturnType = null;
@@ -146,7 +149,7 @@ public final class PsiMethodReferenceUtil {
 
   private static boolean isReturnTypeCompatible(PsiMethodReferenceExpression expression,
                                                 JavaResolveResult result,
-                                                @Nullable PsiType functionalInterfaceType,
+                                                PsiType functionalInterfaceType,
                                                 Ref<@Nls String> errorMessage) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
@@ -185,7 +188,8 @@ public final class PsiMethodReferenceUtil {
       myReferenceTypeQualified = referenceTypeQualified;
     }
 
-    public @Nullable PsiClass getContainingClass() {
+    @Nullable
+    public PsiClass getContainingClass() {
       return myContainingClass;
     }
 
@@ -212,7 +216,8 @@ public final class PsiMethodReferenceUtil {
     return false;
   }
 
-  public static @NotNull QualifierResolveResult getQualifierResolveResult(@NotNull PsiMethodReferenceExpression methodReferenceExpression) {
+  @NotNull
+  public static QualifierResolveResult getQualifierResolveResult(@NotNull PsiMethodReferenceExpression methodReferenceExpression) {
     PsiClass containingClass = null;
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     final PsiExpression expression = methodReferenceExpression.getQualifierExpression();
@@ -302,8 +307,22 @@ public final class PsiMethodReferenceUtil {
     return type;
   }
 
-  public static @NlsContexts.DetailedDescription String checkReturnType(PsiMethodReferenceExpression expression, JavaResolveResult result, 
-                                                                        @Nullable PsiType functionalInterfaceType) {
+  public static @NlsContexts.DetailedDescription String checkTypeArguments(PsiTypeElement qualifier, PsiType psiType) {
+    if (psiType instanceof PsiClassType) {
+      final PsiJavaCodeReferenceElement referenceElement = qualifier.getInnermostComponentReferenceElement();
+      if (referenceElement != null) {
+        PsiType[] typeParameters = referenceElement.getTypeParameters();
+        for (PsiType typeParameter : typeParameters) {
+          if (typeParameter instanceof PsiWildcardType) {
+            return JavaPsiBundle.message("error.message.wildcard.not.expected");
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  public static @NlsContexts.DetailedDescription String checkReturnType(PsiMethodReferenceExpression expression, JavaResolveResult result, PsiType functionalInterfaceType) {
     final Ref<@Nls String> errorMessage = Ref.create();
     if (!isReturnTypeCompatible(expression, result, functionalInterfaceType, errorMessage)) {
       return errorMessage.get();

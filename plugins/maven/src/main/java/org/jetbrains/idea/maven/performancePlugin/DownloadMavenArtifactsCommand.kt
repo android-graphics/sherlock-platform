@@ -1,13 +1,11 @@
 package org.jetbrains.idea.maven.performancePlugin
 
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.idea.maven.project.MavenImportListener
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -23,14 +21,11 @@ class DownloadMavenArtifactsCommand(text: String, line: Int) : PerformanceComman
     const val PREFIX = "$CMD_PREFIX$NAME"
   }
 
-  @Service(Service.Level.PROJECT)
-  private class CoroutineService(val coroutineScope: CoroutineScope)
-
   override suspend fun doExecute(context: PlaybackContext) {
     val project = context.project
     val (sources, docs) = extractCommandList(PREFIX, " ").map { it.toBoolean() }
     val manager = MavenProjectsManager.getInstance(project)
-    val cs = project.service<CoroutineService>().coroutineScope
+    val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
     cs.launch {
       manager.downloadArtifacts(manager.projects, null, sources, docs)
     }

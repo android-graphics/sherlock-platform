@@ -57,7 +57,8 @@ public final class GroovyAssignmentCanBeOperatorAssignmentInspection
   public boolean ignoreObscureOperators = false;
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final GrAssignmentExpression assignmentExpression =
       (GrAssignmentExpression)infos[0];
     return GroovyBundle
@@ -90,8 +91,9 @@ public final class GroovyAssignmentCanBeOperatorAssignmentInspection
     return lhs.getText() + ' ' + signText + "= " + rhsRhs.getText();
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new ReplaceAssignmentWithOperatorAssignmentVisitor();
   }
 
@@ -119,13 +121,16 @@ public final class GroovyAssignmentCanBeOperatorAssignmentInspection
       m_name = GroovyBundle.message("intention.name.replace.eq.with.0.eq", signText);
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return GroovyBundle.message("intention.family.name.simplify");
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return m_name;
     }
 
@@ -185,7 +190,9 @@ public final class GroovyAssignmentCanBeOperatorAssignmentInspection
     }
   }
 
-  private static @Nullable @NonNls String getTextForOperator(IElementType operator) {
+  @Nullable
+  @NonNls
+  private static String getTextForOperator(IElementType operator) {
     if (operator ==  null) {
       return null;
     }

@@ -4,9 +4,7 @@ package com.intellij.find.editorHeaderActions;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.openapi.actionSystem.KeepPopupOnPerform;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
 public final class ToggleExceptLiteralsAction extends EditorHeaderSetSearchContextAction {
   public ToggleExceptLiteralsAction() {
     super(FindBundle.message("search.context.title.except.string.literals"), FindModel.SearchContext.EXCEPT_STRING_LITERALS);

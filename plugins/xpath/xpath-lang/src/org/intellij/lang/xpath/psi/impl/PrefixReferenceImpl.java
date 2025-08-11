@@ -33,7 +33,8 @@ class PrefixReferenceImpl extends ReferenceBase implements PrefixReference {
   }
 
   @Override
-  public @Nullable PsiElement resolve() {
+  @Nullable
+  public PsiElement resolve() {
     final ContextProvider provider = getElement().getXPathContext();
     final NamespaceContext namespaceContext = provider.getNamespaceContext();
     if (namespaceContext != null) {

@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -30,7 +29,8 @@ public final class ParamsGroup implements Cloneable {
     myParamList = paramList;
   }
 
-  public @NotNull String getId() {
+  @NotNull
+  public String getId() {
     return myGroupId;
   }
 
@@ -58,7 +58,7 @@ public final class ParamsGroup implements Cloneable {
     addParameters(ParametersList.parse(parametersString));
   }
 
-  public @Unmodifiable List<String> getParameters() {
+  public List<String> getParameters() {
     return myParamList.getList();
   }
 

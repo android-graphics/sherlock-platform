@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.lcov;
 
 import com.intellij.util.containers.PeekableIterator;
@@ -11,7 +10,8 @@ public class LcovCoverageReport {
 
   private final Map<String, List<LineHits>> myInfo = new HashMap<>();
 
-  public @NotNull Map<String, List<LineHits>> getInfo() {
+  @NotNull
+  public Map<String, List<LineHits>> getInfo() {
     return myInfo;
   }
 
@@ -25,7 +25,8 @@ public class LcovCoverageReport {
     myInfo.put(filePath, result);
   }
 
-  private static @NotNull List<LineHits> doMerge(@NotNull List<LineHits> aList, @NotNull List<LineHits> bList) {
+  @NotNull
+  private static List<LineHits> doMerge(@NotNull List<LineHits> aList, @NotNull List<LineHits> bList) {
     PeekableIterator<LineHits> ai = new PeekableIteratorWrapper<>(aList.iterator());
     PeekableIterator<LineHits> bi = new PeekableIteratorWrapper<>(bList.iterator());
     List<LineHits> out = new ArrayList<>();

@@ -21,7 +21,6 @@ import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,7 +61,7 @@ public final class JavaPostfixTemplatesUtils {
   public static PostfixTemplateExpressionSelector selectorTopmost(Condition<? super PsiElement> additionalFilter) {
     return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
       @Override
-      protected @Unmodifiable List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
+      protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
         return ContainerUtil.createMaybeSingletonList(getTopmostExpression(context));
       }
 
@@ -87,7 +86,7 @@ public final class JavaPostfixTemplatesUtils {
       }
 
       @Override
-      public @Unmodifiable @NotNull List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
+      public @NotNull List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
         List<PsiElement> expressions = super.getExpressions(context, document, offset);
         if (!expressions.isEmpty()) return expressions;
 
@@ -174,11 +173,6 @@ public final class JavaPostfixTemplatesUtils {
   @Contract("null -> false")
   public static boolean isArray(@Nullable PsiType type) {
     return type instanceof PsiArrayType;
-  }
-
-  @Contract("null -> false")
-  public static boolean isArrayReference(@Nullable PsiType type) {
-    return type instanceof PsiArrayType arrayType && !(arrayType.getComponentType() instanceof PsiPrimitiveType);
   }
 
   @Contract("null -> false")

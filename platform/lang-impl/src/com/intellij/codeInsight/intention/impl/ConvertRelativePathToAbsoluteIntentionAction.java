@@ -2,10 +2,8 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public final class ConvertRelativePathToAbsoluteIntentionAction extends ConvertAbsolutePathToRelativeIntentionAction {
 
   @Override

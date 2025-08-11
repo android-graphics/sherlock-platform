@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.application.ReadAction;
@@ -83,8 +83,9 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     }
   }
 
+  @NotNull
   @Override
-  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new MoveMultipleElementsViewDescriptor(PsiUtilCore.toPsiFileArray(getPsiFiles()), getTargetName());
   }
 
@@ -97,7 +98,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   }
 
   @Override
-  protected UsageInfo @NotNull [] findUsages() {
+  public UsageInfo @NotNull [] findUsages() {
     final List<UsageInfo> usages = new ArrayList<>();
     for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
       helper.findUsages(myFilesToMove, myDirectories, usages, mySearchInComments, mySearchInNonJavaFiles, myProject);
@@ -118,12 +119,12 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       }
     }
     for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
-      helper.preprocessUsages(myProject, getPsiFiles(), refUsages, myTargetDirectory, conflicts);
+      helper.preprocessUsages(myProject, getPsiFiles(), refUsages.get(), myTargetDirectory, conflicts);
     }
   }
 
   @Override
-  protected boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     if (!ProgressManager.getInstance()
       .runProcessWithProgressSynchronously(() -> ReadAction.run(() -> collectConflicts(conflicts, refUsages)), RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
@@ -184,7 +185,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       myNonCodeUsages = ContainerUtil.filterIsInstance(usages, NonCodeUsageInfo.class).toArray(NonCodeUsageInfo[]::new);
       List<UsageInfo> usagesToRetarget = new SmartList<>(usages);
       for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
-        usagesToRetarget = helper.retargetUsages(usagesToRetarget, oldToNewElementsMapping);
+        helper.retargetUsages(usagesToRetarget, oldToNewElementsMapping);
       }
       List<UsageInfo> postProcessUsages = new SmartList<>(usages);
       myNestedDirsToMove.entrySet().stream().filter(entry -> entry.getValue().getTargetDirectory() != null)
@@ -226,20 +227,23 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     return false;
   }
 
+  @Nullable
   @Override
-  protected @Nullable String getRefactoringId() {
+  protected String getRefactoringId() {
     return "refactoring.move";
   }
 
+  @Nullable
   @Override
-  protected @Nullable RefactoringEventData getBeforeData() {
+  protected RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
     data.addElements(myDirectories);
     return data;
   }
 
+  @Nullable
   @Override
-  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     RefactoringEventData data = new RefactoringEventData();
     data.addElement(myTargetDirectory);
     return data;
@@ -268,7 +272,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     final PsiElement[] children = directory.getChildren();
     final String relativePath = VfsUtilCore.getRelativePath(directory.getVirtualFile(), rootDirectory.getVirtualFile(), '/');
 
-    final TargetDirectoryWrapper newTargetDirectory = relativePath.isEmpty()
+    final TargetDirectoryWrapper newTargetDirectory = relativePath.length() == 0
                                                       ? targetDirectory
                                                       : targetDirectory.findOrCreateChild(relativePath);
     nestedDirsToMove.put(directory, newTargetDirectory);
@@ -282,12 +286,14 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     }
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getCommandName() {
+  protected String getCommandName() {
     return RefactoringBundle.message("moving.directories.command");
   }
 
-  public @NotNull TargetDirectoryWrapper getTargetDirectory(PsiDirectory dir) {
+  @NotNull
+  public TargetDirectoryWrapper getTargetDirectory(PsiDirectory dir) {
     return new TargetDirectoryWrapper(myTargetDirectory);
   }
 
@@ -328,7 +334,8 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       return myTargetDirectory;
     }
 
-    public @Nullable PsiDirectory getTargetDirectory() {
+    @Nullable
+    public PsiDirectory getTargetDirectory() {
       return myTargetDirectory;
     }
 
@@ -348,14 +355,16 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       }
     }
 
-    public @NotNull PsiDirectory getRootDirectory() {
+    @NotNull
+    public PsiDirectory getRootDirectory() {
       if (myTargetDirectory == null) {
         return myParentDirectory.getRootDirectory();
       }
       return myTargetDirectory;
     }
 
-    public @NotNull String getRelativePathFromRoot() {
+    @NotNull
+    public String getRelativePathFromRoot() {
       if (myTargetDirectory != null) {
         return "";
       }

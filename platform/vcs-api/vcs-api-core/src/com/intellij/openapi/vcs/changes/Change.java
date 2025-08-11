@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -77,11 +77,13 @@ public class Change {
     myOtherLayers.put(name, change);
   }
 
-  public @NotNull Map<@NonNls String, Change> getOtherLayers() {
+  @NotNull
+  public Map<@NonNls String, Change> getOtherLayers() {
     return ContainerUtil.notNullize(myOtherLayers);
   }
 
-  public @NotNull Type getType() {
+  @NotNull
+  public Type getType() {
     Type type = myType;
     if (type == null) {
       myType = type = calcType();
@@ -89,7 +91,8 @@ public class Change {
     return type;
   }
 
-  private @NotNull Type calcType() {
+  @NotNull
+  private Type calcType() {
     if (myBeforeRevision == null) return Type.NEW;
     if (myAfterRevision == null) return Type.DELETED;
 
@@ -107,23 +110,26 @@ public class Change {
     return Type.MODIFICATION;
   }
 
-  public @Nullable ContentRevision getBeforeRevision() {
+  @Nullable
+  public ContentRevision getBeforeRevision() {
     return myBeforeRevision;
   }
 
-  public @Nullable ContentRevision getAfterRevision() {
+  @Nullable
+  public ContentRevision getAfterRevision() {
     return myAfterRevision;
   }
 
-  public @NotNull FileStatus getFileStatus() {
+  @NotNull
+  public FileStatus getFileStatus() {
     return myFileStatus;
   }
 
-  public @Nullable VirtualFile getVirtualFile() {
+  @Nullable
+  public VirtualFile getVirtualFile() {
     return myAfterRevision == null ? null : myAfterRevision.getFile().getVirtualFile();
   }
 
-  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if ((!(o instanceof Change otherChange))) return false;
@@ -142,7 +148,6 @@ public class Change {
     return Comparing.equal(fbr1, fbr2) && Comparing.equal(far1, far2);
   }
 
-  @Override
   public int hashCode() {
     if (myHash == -1) {
       myHash = calculateHash();
@@ -210,8 +215,8 @@ public class Change {
     }
   }
 
-  @Override
-  public @NonNls String toString() {
+  @NonNls
+  public String toString() {
     final Type type = getType();
     return switch (type) {
       case NEW -> "A: " + myAfterRevision;
@@ -221,7 +226,9 @@ public class Change {
     };
   }
 
-  public @Nullable @Nls String getOriginText(final Project project) {
+  @Nullable
+  @Nls
+  public String getOriginText(final Project project) {
     cacheMoveRelativePath(project);
     if (isMoved()) {
       return getMovedText(project);
@@ -232,11 +239,15 @@ public class Change {
     return myIsReplaced ? VcsBundle.message("change.file.replaced.text") : null;
   }
 
-  protected @Nullable @Nls String getRenamedText() {
+  @Nullable
+  @Nls
+  protected String getRenamedText() {
     return VcsBundle.message("change.file.renamed.from.text", myBeforeRevision.getFile().getName());
   }
 
-  protected @Nullable @Nls String getMovedText(final Project project) {
+  @Nullable
+  @Nls
+  protected String getMovedText(final Project project) {
     return VcsBundle.message("change.file.moved.from.text", getMoveRelativePath(project));
   }
 
@@ -251,11 +262,14 @@ public class Change {
     myIsReplaced = isReplaced;
   }
 
-  public @Nullable Icon getAdditionalIcon() {
+  @Nullable
+  public Icon getAdditionalIcon() {
     return null;
   }
 
-  public @Nls @Nullable String getDescription() {
+  @Nls
+  @Nullable
+  public String getDescription() {
     return null;
   }
 }

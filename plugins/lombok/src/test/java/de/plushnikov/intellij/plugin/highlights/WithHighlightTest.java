@@ -11,8 +11,4 @@ public class WithHighlightTest extends AbstractLombokHighlightsTest {
     doTest();
   }
 
-  public void testWitherExample() {
-    doTest();
-  }
-
 }

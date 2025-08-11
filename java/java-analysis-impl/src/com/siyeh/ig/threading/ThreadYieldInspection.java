@@ -28,12 +28,14 @@ import org.jetbrains.annotations.NotNull;
 public final class ThreadYieldInspection extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "CallToThreadYield";
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "thread.yield.problem.descriptor");
   }
@@ -59,7 +61,7 @@ public final class ThreadYieldInspection extends BaseInspection {
       PsiMethodCallExpression expression) {
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
-      final @NonNls String methodName =
+      @NonNls final String methodName =
         methodExpression.getReferenceName();
       if (!"yield".equals(methodName)) {
         return false;

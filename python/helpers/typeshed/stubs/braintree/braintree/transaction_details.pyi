@@ -1,7 +1,7 @@
-from decimal import Decimal
+from typing import Any
 
-from braintree.attribute_getter import AttributeGetter
+from braintree.attribute_getter import AttributeGetter as AttributeGetter
 
 class TransactionDetails(AttributeGetter):
-    amount: Decimal | None
+    amount: Any
     def __init__(self, attributes) -> None: ...

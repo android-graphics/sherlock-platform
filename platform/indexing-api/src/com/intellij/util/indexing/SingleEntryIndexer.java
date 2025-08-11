@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.indexing;
 
@@ -25,7 +25,8 @@ public abstract class SingleEntryIndexer<V> implements DataIndexer<Integer, V, F
   }
 
   @Override
-  public final @NotNull Map<Integer, V> map(@NotNull FileContent inputData) {
+  @NotNull
+  public final Map<Integer, V> map(@NotNull FileContent inputData) {
     final V value = computeValue(inputData);
     if (value == null && !myAcceptNullValues) {
       return Collections.emptyMap();

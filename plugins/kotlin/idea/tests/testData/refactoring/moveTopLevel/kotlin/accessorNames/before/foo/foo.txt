@@ -1,9 +1,0 @@
-foo.topVar
-foo.FooKt.getTopVar
-foo.FooKt.setTopVar
-foo.topFun
-foo.FooKt.topFun
-foo.FooKt.isTrue
-foo.FooKt.setTrue
-foo.FooKt.setIsTrue // Does not exist and should not be changed
-foo.FooKt.getIsTrue // Does not exist and should not be changed

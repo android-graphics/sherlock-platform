@@ -25,7 +25,7 @@ object FileHistoryPaths {
     return FILE_HISTORY.isIn(this)
   }
 
-  internal fun VisiblePack.withFileHistory(fileHistory: FileHistory): VisiblePack {
+  fun VisiblePack.withFileHistory(fileHistory: FileHistory): VisiblePack {
     putUserData(FILE_HISTORY, fileHistory)
     return this
   }

@@ -9,24 +9,24 @@ import java.util.concurrent.TimeoutException
 import kotlin.time.Duration
 
 @ApiStatus.Internal
-val coroutineDumpPrefix: String = "CoroutineDump:"
+val coroutineDumpPrefix = "CoroutineDump:"
 
 @ApiStatus.Internal
-suspend fun <T> withTimeoutDumping(
-  title: String,
-  timeout: Duration,
-  failMessageProducer: (() -> String)? = null,
-  action: suspend () -> T,
-): T = coroutineScope {
+suspend fun <T> withTimeoutDumping(title: String,
+                                   timeout: Duration,
+                                   failMessageProducer: (() -> String)? = null,
+                                   action: suspend () -> T): T = coroutineScope {
   val outerScope = childScope(title)
 
-  val deferred = outerScope.async(CoroutineName("withTimeoutDumping#$title")) { action() }
+  val deferred = outerScope.async { action() }
   @OptIn(DelicateCoroutinesApi::class)
   withContext(blockingDispatcher) {
     try {
       withTimeout(timeout) { deferred.await() }
     }
     catch (e: TimeoutCancellationException) {
+      val message = "$title: Has not finished in $timeout."
+
       //println(buildString {
       //  appendLine(message)
       //  // see com.intellij.testFramework.common.TimeoutKt.timeoutRunBlocking
@@ -36,8 +36,7 @@ suspend fun <T> withTimeoutDumping(
       val coroutinesDump = dumpCoroutines(outerScope)
       val failMessage = outerScope.async { failMessageProducer?.invoke() }.await()
       throw TimeoutException(buildString {
-        append("$title[timeout=$timeout] failed:")
-        appendLine(e.stackTraceToString())
+        appendLine(message)
         if (!failMessage.isNullOrBlank()) {
           appendLine(failMessage)
         }

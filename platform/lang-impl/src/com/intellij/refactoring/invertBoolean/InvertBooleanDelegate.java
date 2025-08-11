@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -17,11 +17,16 @@ import java.util.Collection;
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public abstract class InvertBooleanDelegate {
-  public static final LanguageExtension<InvertBooleanDelegate> EP_NAME = new LanguageExtension<>("com.intellij.refactoring.invertBoolean");
+  public static final ExtensionPointName<InvertBooleanDelegate> EP_NAME = ExtensionPointName.create("com.intellij.refactoring.invertBoolean");
 
-  public static @Nullable InvertBooleanDelegate findInvertBooleanDelegate(PsiElement element) {
-    InvertBooleanDelegate delegate = EP_NAME.forLanguage(element.getLanguage());
-    return delegate != null && delegate.isVisibleOnElement(element) ? delegate : null;
+  @Nullable
+  public static InvertBooleanDelegate findInvertBooleanDelegate(PsiElement element) {
+    for (InvertBooleanDelegate delegate : EP_NAME.getExtensionList()) {
+      if (delegate.isVisibleOnElement(element)) {
+        return delegate;
+      }
+    }
+    return null;
   }
 
   /**
@@ -41,7 +46,8 @@ public abstract class InvertBooleanDelegate {
    *
    * @return null if user canceled the operation
    */
-  public abstract @Nullable PsiElement adjustElement(PsiElement element, Project project, Editor editor);
+  @Nullable
+  public abstract PsiElement adjustElement(PsiElement element, Project project, Editor editor);
 
   /**
    * Eventually collect additional elements to rename, e.g. override methods

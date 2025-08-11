@@ -32,12 +32,14 @@ import java.util.List;
 public final class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAction {
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.convert.lambda.to.function");
   }
 
   @Override
-  public @NotNull String getText() {
+  @NotNull
+  public String getText() {
     return PyPsiBundle.message("INTN.convert.lambda.to.function");
   }
 
@@ -53,7 +55,7 @@ public final class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAct
         final ControlFlow flow = ControlFlowCache.getControlFlow(lambdaExpression);
         final List<Instruction> graph = Arrays.asList(flow.getInstructions());
         final List<PsiElement> elements = PyCodeFragmentUtil.getInputElements(graph, graph);
-        if (!elements.isEmpty()) return false;
+        if (elements.size() > 0) return false;
         return true;
       }
     }

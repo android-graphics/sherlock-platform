@@ -3,13 +3,11 @@ package com.intellij.usageView.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.util.OpenSourceUtil;
-import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
-@ApiStatus.Internal
 public final class SelectInEditorHandler {
   public static void installKeyListener(final JComponent component) {
     component.addKeyListener(new KeyAdapter() {

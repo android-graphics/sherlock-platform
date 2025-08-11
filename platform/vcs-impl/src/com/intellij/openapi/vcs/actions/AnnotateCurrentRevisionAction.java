@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.icons.AllIcons;
@@ -11,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class AnnotateCurrentRevisionAction extends AnnotateRevisionAction {
-  private final @Nullable FileAnnotation.CurrentFileRevisionProvider myProvider;
+  @Nullable private final FileAnnotation.CurrentFileRevisionProvider myProvider;
 
   AnnotateCurrentRevisionAction(@NotNull FileAnnotation annotation, @NotNull AbstractVcs vcs) {
     super(VcsBundle.messagePointer("action.annotate.revision.text"),

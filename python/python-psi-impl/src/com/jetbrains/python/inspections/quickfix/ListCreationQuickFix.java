@@ -23,7 +23,8 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public class ListCreationQuickFix extends PsiUpdateModCommandQuickFix {
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.list.creation");
   }
 
@@ -43,7 +44,8 @@ public class ListCreationQuickFix extends PsiUpdateModCommandQuickFix {
     assignedValue.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(assignedValue), text));
   }
 
-  private static @NotNull List<PyExpression> buildLiteralItems(@NotNull PyExpression assignedValue, List<PyExpressionStatement> statements) {
+  @NotNull
+  private static List<PyExpression> buildLiteralItems(@NotNull PyExpression assignedValue, List<PyExpressionStatement> statements) {
     final List<PyExpression> values = new ArrayList<>();
 
     ContainerUtil.addAll(values, ((PyListLiteralExpression)assignedValue).getElements());

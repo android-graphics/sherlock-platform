@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -24,8 +24,10 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElement> extends AnAction {
-  protected final @NotNull Class<T> myClass;
-  protected final @NotNull Class<? extends PsiFile> myFileClass;
+  @NotNull
+  protected final Class<T> myClass;
+  @NotNull
+  protected final Class<? extends PsiFile> myFileClass;
 
   protected SelectionBasedPsiElementInternalAction(@NotNull Class<T> aClass, @NotNull Class<? extends PsiFile> fileClass) {
     myClass = aClass;
@@ -61,14 +63,14 @@ public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElemen
     }
   }
 
-  protected void showError(final @NotNull Editor editor) {
+  protected void showError(@NotNull final Editor editor) {
     ApplicationManager.getApplication().invokeLater(() -> {
       final String errorHint = "Cannot find element of class " + myClass.getSimpleName() + " at selection/offset";
       HintManager.getInstance().showErrorHint(editor, errorHint);
     });
   }
 
-  private void performOnElement(final @NotNull Editor editor, @NotNull T first) {
+  private void performOnElement(@NotNull final Editor editor, @NotNull T first) {
     final TextRange textRange = first.getTextRange();
     editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
     final String informationHint = getInformationHint(first);
@@ -80,11 +82,15 @@ public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElemen
     }
   }
 
-  protected abstract @Nullable String getInformationHint(@NotNull T element);
+  @Nullable
+  protected abstract String getInformationHint(@NotNull T element);
 
-  protected abstract @HintText @NotNull String getErrorHint();
+  @HintText
+  @NotNull
+  protected abstract String getErrorHint();
 
-  protected @NotNull List<T> getElement(@NotNull Editor editor, @NotNull PsiFile file) {
+  @NotNull
+  protected List<T> getElement(@NotNull Editor editor, @NotNull PsiFile file) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
       return Collections.singletonList(getElementFromSelection(file, selectionModel));
@@ -92,11 +98,13 @@ public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElemen
     return getElementAtOffset(editor, file);
   }
 
-  protected @NotNull List<T> getElementAtOffset(@NotNull Editor editor, @NotNull PsiFile file) {
+  @NotNull
+  protected List<T> getElementAtOffset(@NotNull Editor editor, @NotNull PsiFile file) {
     return Collections.singletonList(PsiTreeUtil.findElementOfClassAtOffset(file, editor.getCaretModel().getOffset(), myClass, false));
   }
 
-  protected @Nullable T getElementFromSelection(@NotNull PsiFile file, @NotNull SelectionModel selectionModel) {
+  @Nullable
+  protected T getElementFromSelection(@NotNull PsiFile file, @NotNull SelectionModel selectionModel) {
     final int selectionStart = selectionModel.getSelectionStart();
     final int selectionEnd = selectionModel.getSelectionEnd();
     return PsiTreeUtil.findElementOfClassAtRange(file, selectionStart, selectionEnd, myClass);
@@ -109,11 +117,13 @@ public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElemen
     presentation.setEnabledAndVisible(enabled);
   }
 
-  private static @Nullable Editor getEditor(@NotNull AnActionEvent e) {
+  @Nullable
+  private static Editor getEditor(@NotNull AnActionEvent e) {
     return e.getData(CommonDataKeys.EDITOR);
   }
 
-  private static @Nullable PsiFile getPsiFile(@NotNull AnActionEvent e) {
+  @Nullable
+  private static PsiFile getPsiFile(@NotNull AnActionEvent e) {
     return e.getData(CommonDataKeys.PSI_FILE);
   }
 }

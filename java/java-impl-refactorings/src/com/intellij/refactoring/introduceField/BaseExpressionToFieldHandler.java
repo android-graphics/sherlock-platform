@@ -74,7 +74,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   }
 
   @Override
-  protected boolean invokeImpl(final Project project, final @NotNull PsiExpression selectedExpr, final Editor editor) {
+  protected boolean invokeImpl(final Project project, @NotNull final PsiExpression selectedExpr, final Editor editor) {
     final PsiElement element = getPhysicalElement(selectedExpr);
 
     final PsiFile file = element.getContainingFile();
@@ -246,7 +246,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     return element;
   }
 
-  protected @Nullable PsiElement isStaticFinalInitializer(PsiExpression expr) {
+  @Nullable
+  protected PsiElement isStaticFinalInitializer(PsiExpression expr) {
     PsiClass parentClass = expr != null ? getParentClass(expr) : null;
     if (parentClass == null) return null;
     IsStaticFinalInitializerExpression visitor = new IsStaticFinalInitializerExpression(parentClass, expr);
@@ -531,7 +532,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return myVisibility;
     }
 
-    public @Nullable PsiClass getDestinationClass() {
+    @Nullable
+    public PsiClass getDestinationClass() {
       return myTargetClass != null ? myTargetClass.getTargetClass() : null;
     }
 
@@ -624,7 +626,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       myProject = targetClass.getProject();
     }
 
-    public @Nullable PsiClass getTargetClass() {
+    @Nullable
+    public PsiClass getTargetClass() {
       if (myTargetClass != null) return myTargetClass;
       final String packageName = StringUtil.getPackageName(myQualifiedName);
       final String shortName = StringUtil.getShortName(myQualifiedName);
@@ -877,7 +880,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     /**
      * @deprecated use CommonJavaRefactoringUtil.appendField instead
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public static PsiField appendField(final PsiClass destClass,
                                        final PsiField psiField,
                                        final PsiElement anchorMember,
@@ -885,7 +888,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return CommonJavaRefactoringUtil.appendField(destClass, psiField, anchorMember, forwardReference);
     }
 
-    private static @Nullable PsiField checkForwardRefs(final @Nullable PsiExpression initializer, final PsiClass parentClass) {
+    @Nullable
+    private static PsiField checkForwardRefs(@Nullable final PsiExpression initializer, final PsiClass parentClass) {
       if (initializer == null) return null;
       final PsiField[] refConstantFields = new PsiField[1];
       initializer.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -979,7 +983,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       super.visitElement(element);
     }
 
-    public @Nullable PsiElement getElementReference() {
+    @Nullable
+    public PsiElement getElementReference() {
       return myElementReference;
     }
   }

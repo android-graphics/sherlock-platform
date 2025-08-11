@@ -1,12 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -60,7 +57,8 @@ final class Component {
     return true;
   }
 
-  public @NotNull Component copy() {
+  @NotNull
+  public Component copy() {
     return new Component(value, ids.clone());
   }
 
@@ -70,8 +68,8 @@ final class Component {
 }
 
 final class Equation {
-  final @NotNull EKey key;
-  final @NotNull Result result;
+  @NotNull final EKey key;
+  @NotNull final Result result;
 
   Equation(@NotNull EKey key, @NotNull Result result) {
     this.key = key;
@@ -97,9 +95,44 @@ final class Equation {
   }
 }
 
-final class DirectionResultPair {
+class Equations {
+  @NotNull final List<? extends DirectionResultPair> results;
+  final boolean stable;
+
+  Equations(@NotNull List<? extends DirectionResultPair> results, boolean stable) {
+    this.results = results;
+    this.stable = stable;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    Equations that = (Equations)o;
+    return stable == that.stable && results.equals(that.results);
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * results.hashCode() + (stable ? 1 : 0);
+  }
+
+  Optional<Result> find(Direction direction) {
+    int key = direction.asInt();
+    for (DirectionResultPair result : results) {
+      if (result.directionKey == key) {
+        return Optional.of(result).map(pair -> pair.result);
+      }
+    }
+    return Optional.empty();
+  }
+}
+
+class DirectionResultPair {
   final int directionKey;
-  final @NotNull Result result;
+  @NotNull
+  final Result result;
 
   DirectionResultPair(int directionKey, @NotNull Result result) {
     this.directionKey = directionKey;
@@ -126,7 +159,7 @@ final class DirectionResultPair {
   }
 }
 
-sealed interface Result permits Effects, FieldAccess, Pending, Value {
+interface Result {
   /**
    * @return a stream of keys which should be solved to make this result final
    */
@@ -137,13 +170,6 @@ sealed interface Result permits Effects, FieldAccess, Pending, Value {
   default void processDependencies(Consumer<EKey> processor) {
   }
 }
-
-/**
- * A result for setter/constructor parameter: unconditional field set;
- * for method: unconditional field return
- * @param name name of the field
- */
-record FieldAccess(String name) implements Result {}
 
 final class Pending implements Result {
   final Component @NotNull [] delta; // sum
@@ -201,8 +227,8 @@ final class Effects implements Result {
   static final Set<EffectQuantum> TOP_EFFECTS = Set.of(EffectQuantum.TopEffectQuantum);
   static final Effects VOLATILE_EFFECTS = new Effects(DataValue.UnknownDataValue2, TOP_EFFECTS);
 
-  final @NotNull DataValue returnValue;
-  final @NotNull Set<EffectQuantum> effects;
+  @NotNull final DataValue returnValue;
+  @NotNull final Set<EffectQuantum> effects;
 
   Effects(@NotNull DataValue returnValue, @NotNull Set<EffectQuantum> effects) {
     this.returnValue = returnValue;

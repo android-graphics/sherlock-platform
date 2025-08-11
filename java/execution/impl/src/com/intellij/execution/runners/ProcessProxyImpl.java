@@ -1,13 +1,15 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.UnixProcessManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -19,10 +21,12 @@ import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
 final class ProcessProxyImpl implements ProcessProxy {
   static final Key<ProcessProxyImpl> KEY = Key.create("ProcessProxyImpl");
+  private static final Path ourBreakgenHelper = SystemInfo.isWindows ? PathManager.findBinFile("breakgen.dll") : null;
 
   private final AsynchronousChannelGroup myGroup;
   private final int myPort;
@@ -33,7 +37,7 @@ final class ProcessProxyImpl implements ProcessProxy {
 
   ProcessProxyImpl(String mainClass) throws IOException {
     myGroup = AsynchronousChannelGroup.withFixedThreadPool(1, r -> new Thread(r, "Process Proxy: " + mainClass));
-    @SuppressWarnings("resource") var channel = AsynchronousServerSocketChannel.open(myGroup)
+    AsynchronousServerSocketChannel channel = AsynchronousServerSocketChannel.open(myGroup)
       .bind(new InetSocketAddress("127.0.0.1", 0))
       .setOption(StandardSocketOptions.SO_REUSEADDR, true);
     myPort = ((InetSocketAddress)channel.getLocalAddress()).getPort();
@@ -59,14 +63,16 @@ final class ProcessProxyImpl implements ProcessProxy {
   public void attach(@NotNull ProcessHandler processHandler) {
     processHandler.putUserData(KEY, this);
     execute(() -> {
-      int pid = processHandler instanceof BaseOSProcessHandler bh ? (int)bh.getProcess().pid() : -1;
+      int pid = -1;
+      if (SystemInfo.isUnix && processHandler instanceof BaseOSProcessHandler) {
+        pid = (int)((BaseOSProcessHandler)processHandler).getProcess().pid();
+      }
       synchronized (myLock) {
         myPid = pid;
       }
     });
   }
 
-  @SuppressWarnings("SameParameterValue")
   private void writeLine(String s) {
     execute(() -> {
       ByteBuffer out = ByteBuffer.wrap((s + '\n').getBytes(StandardCharsets.US_ASCII));
@@ -76,11 +82,31 @@ final class ProcessProxyImpl implements ProcessProxy {
     });
   }
 
+  String getBinPath() {
+    if (SystemInfo.isWindows) {
+      if (ourBreakgenHelper != null) {
+        return ourBreakgenHelper.getParent().toString();
+      }
+    }
+    return PathManager.getBinPath();
+  }
+
   @Override
   public boolean canSendBreak() {
-    synchronized (myLock) {
-      return myPid > 0;
+    if (SystemInfo.isWindows && (CpuArch.isArm64() || CpuArch.isIntel64() || CpuArch.isIntel32())) {  // see also: `AppMainV2#loadHelper`
+      synchronized (myLock) {
+        if (myConnection == null) return false;
+      }
+      return ourBreakgenHelper != null;
     }
+
+    if (SystemInfo.isUnix) {
+      synchronized (myLock) {
+        return myPid > 0;
+      }
+    }
+
+    return false;
   }
 
   @Override
@@ -92,7 +118,10 @@ final class ProcessProxyImpl implements ProcessProxy {
 
   @Override
   public void sendBreak() {
-    if (!SystemInfo.isWindows) {
+    if (SystemInfo.isWindows) {
+      writeLine("BREAK");
+    }
+    else if (SystemInfo.isUnix) {
       int pid;
       synchronized (myLock) {
         pid = myPid;

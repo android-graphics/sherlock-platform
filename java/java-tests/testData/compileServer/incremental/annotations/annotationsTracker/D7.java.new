@@ -1,5 +1,0 @@
-import org.jetbrains.jps.builders.java.dependencyView.MockAnnotation;
-
-@MockAnnotation(param2 = 10)
-public class D7 {
-}

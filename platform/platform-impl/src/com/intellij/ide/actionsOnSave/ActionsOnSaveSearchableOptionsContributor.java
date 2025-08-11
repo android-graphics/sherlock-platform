@@ -4,10 +4,8 @@ package com.intellij.ide.actionsOnSave;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.search.SearchableOptionContributor;
 import com.intellij.ide.ui.search.SearchableOptionProcessor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public final class ActionsOnSaveSearchableOptionsContributor extends SearchableOptionContributor {
   @Override
   public void processOptions(@NotNull SearchableOptionProcessor processor) {

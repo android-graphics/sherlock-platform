@@ -32,9 +32,7 @@ import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
-import com.jetbrains.python.psi.PyAstElementGenerator;
-import com.jetbrains.python.psi.PyIndentUtil;
-import com.jetbrains.python.psi.StructuredDocString;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,13 +46,13 @@ public final class PyDocstringGenerator {
   private final List<DocstringParam> myRemovedParams = new ArrayList<>();
   private final String myDocStringText;
   // Updated after buildAndInsert()
-  private final @Nullable PyAstDocStringOwner myDocStringOwner;
+  @Nullable private final PyAstDocStringOwner myDocStringOwner;
   private final String myDocStringIndent;
   private final DocStringFormat myDocStringFormat;
   private final PsiElement mySettingsAnchor;
 
   private boolean myUseTypesFromDebuggerSignature = true;
-  private boolean myNewMode; // true - generate new string, false - update existing
+  private boolean myNewMode = false; // true - generate new string, false - update existing
   private boolean myAddFirstEmptyLine = false;
   private boolean myParametersPrepared = false;
   private String myQuotes = TRIPLE_DOUBLE_QUOTES;
@@ -72,7 +70,8 @@ public final class PyDocstringGenerator {
     mySettingsAnchor = settingsAnchor;
   }
 
-  public static @NotNull PyDocstringGenerator forDocStringOwner(@NotNull PyAstDocStringOwner owner) {
+  @NotNull
+  public static PyDocstringGenerator forDocStringOwner(@NotNull PyAstDocStringOwner owner) {
     String indentation = "";
     if (owner instanceof PyAstStatementListContainer) {
       indentation = PyIndentUtil.getElementIndent(((PyAstStatementListContainer)owner).getStatementList());
@@ -86,13 +85,13 @@ public final class PyDocstringGenerator {
    *                       It's needed to detect configured docstring format and Python indentation size and, as result,
    *                       generate properly formatted docstring.
    */
-  public static @NotNull PyDocstringGenerator create(@NotNull DocStringFormat format,
-                                            @NotNull String indentation,
-                                            @NotNull PsiElement settingsAnchor) {
+  @NotNull
+  public static PyDocstringGenerator create(@NotNull DocStringFormat format, @NotNull String indentation, @NotNull PsiElement settingsAnchor) {
     return new PyDocstringGenerator(null, null, format, indentation, settingsAnchor);
   }
 
-  public static @NotNull PyDocstringGenerator update(@NotNull PyAstStringLiteralExpression docString) {
+  @NotNull
+  public static PyDocstringGenerator update(@NotNull PyAstStringLiteralExpression docString) {
     return new PyDocstringGenerator(PsiTreeUtil.getParentOfType(docString, PyAstDocStringOwner.class),
                                     docString.getText(),
                                     DocStringParser.getConfiguredDocStringFormatOrPlain(docString),
@@ -105,56 +104,67 @@ public final class PyDocstringGenerator {
    *                       It's needed to detect configured docstring format and Python indentation size and, as result,
    *                       generate properly formatted docstring.
    */
-  public static @NotNull PyDocstringGenerator update(@NotNull DocStringFormat format,
+  @NotNull
+  public static PyDocstringGenerator update(@NotNull DocStringFormat format,
                                             @NotNull String indentation,
                                             @NotNull String text, PsiElement settingsAnchor) {
     return new PyDocstringGenerator(null, text, format, indentation, settingsAnchor);
   }
 
-  public @NotNull PyDocstringGenerator withParam(@NotNull String name) {
+  @NotNull
+  public PyDocstringGenerator withParam(@NotNull String name) {
     return withParamTypedByName(name, null);
   }
 
-  public @NotNull PyDocstringGenerator withParam(@NotNull PyAstNamedParameter param) {
+  @NotNull
+  public PyDocstringGenerator withParam(@NotNull PyAstNamedParameter param) {
     return withParam(getPreferredParameterName(param));
   }
 
-  public @NotNull PyDocstringGenerator withParamTypedByName(@NotNull String name, @Nullable String type) {
+  @NotNull
+  public PyDocstringGenerator withParamTypedByName(@NotNull String name, @Nullable String type) {
     myAddedParams.add(new DocstringParam(name, type, false));
     return this;
   }
 
-  public @NotNull PyDocstringGenerator withParamTypedByName(@NotNull PyAstNamedParameter name, @Nullable String type) {
+  @NotNull
+  public PyDocstringGenerator withParamTypedByName(@NotNull PyAstNamedParameter name, @Nullable String type) {
     return withParamTypedByName(getPreferredParameterName(name), type);
   }
 
-  public @NotNull PyDocstringGenerator withReturnValue(@Nullable String type) {
+  @NotNull
+  public PyDocstringGenerator withReturnValue(@Nullable String type) {
     myAddedParams.add(new DocstringParam("", type, true));
     return this;
   }
 
-  public @NotNull PyDocstringGenerator withoutParam(@NotNull String name) {
+  @NotNull
+  public PyDocstringGenerator withoutParam(@NotNull String name) {
     myRemovedParams.add(new DocstringParam(name, null, false));
     return this;
   }
 
-  public @NotNull PyDocstringGenerator withQuotes(@NotNull String quotes) {
+  @NotNull
+  public PyDocstringGenerator withQuotes(@NotNull String quotes) {
     myQuotes = quotes;
     return this;
   }
 
-  public @NotNull PyDocstringGenerator useTypesFromDebuggerSignature(boolean use) {
+  @NotNull
+  public PyDocstringGenerator useTypesFromDebuggerSignature(boolean use) {
     myUseTypesFromDebuggerSignature = use;
     return this;
   }
 
-  public @NotNull PyDocstringGenerator addFirstEmptyLine() {
+  @NotNull
+  public PyDocstringGenerator addFirstEmptyLine() {
     myAddFirstEmptyLine = true;
     return this;
   }
 
 
-  public @NotNull PyDocstringGenerator forceNewMode() {
+  @NotNull
+  public PyDocstringGenerator forceNewMode() {
     myNewMode = true;
     return this;
   }
@@ -165,7 +175,8 @@ public final class PyDocstringGenerator {
    *                  "captures" whole function body including return statements. Keep in mind that declaration for the return value
    *                  won't be added if containing function is <tt>__init__</tt> or <tt>__new__</tt> method.
    */
-  public @NotNull PyDocstringGenerator withInferredParameters(boolean addReturn) {
+  @NotNull
+  public PyDocstringGenerator withInferredParameters(boolean addReturn) {
     if (myDocStringOwner instanceof PyAstFunction) {
       for (PyAstParameter param : ((PyAstFunction)myDocStringOwner).getParameterList().getParameters()) {
         if (param.getAsNamed() == null) {
@@ -181,7 +192,7 @@ public final class PyDocstringGenerator {
       final RaiseVisitor visitor = new RaiseVisitor();
       final PyAstStatementList statementList = ((PyAstFunction)myDocStringOwner).getStatementList();
       statementList.accept(visitor);
-      if (!PyUtilCore.isConstructorLikeMethod(myDocStringOwner) && (visitor.myHasReturn || addReturn)) {
+      if (!PyUtilCore.isInitOrNewMethod(myDocStringOwner) && (visitor.myHasReturn || addReturn)) {
         // will add :return: placeholder in Sphinx/Epydoc docstrings
         withReturnValue(null);
       }
@@ -189,11 +200,13 @@ public final class PyDocstringGenerator {
     return this;
   }
 
-  public @NotNull String getDocStringIndent() {
+  @NotNull
+  public String getDocStringIndent() {
     return myDocStringIndent;
   }
 
-  public @NotNull DocStringFormat getDocStringFormat() {
+  @NotNull
+  public DocStringFormat getDocStringFormat() {
     return myDocStringFormat;
   }
 
@@ -277,16 +290,19 @@ public final class PyDocstringGenerator {
     return !myAddedParams.isEmpty();
   }
 
-  public @Nullable PyAstStringLiteralExpression getDocStringExpression() {
+  @Nullable
+  public PyAstStringLiteralExpression getDocStringExpression() {
     Preconditions.checkNotNull(myDocStringOwner, "For this action docstring owner must be supplied");
     return myDocStringOwner.getDocStringExpression();
   }
 
-  private @Nullable StructuredDocString getStructuredDocString() {
+  @Nullable
+  private StructuredDocString getStructuredDocString() {
     return myDocStringText == null ? null : DocStringParser.parseDocString(myDocStringFormat, myDocStringText);
   }
 
-  public @NotNull String getPreferredParameterName(@NotNull PyAstNamedParameter parameter) {
+  @NotNull
+  public String getPreferredParameterName(@NotNull PyAstNamedParameter parameter) {
     if (getDocStringFormat() == DocStringFormat.GOOGLE) {
       return parameter.getAsNamed().getRepr(false);
     }
@@ -294,7 +310,8 @@ public final class PyDocstringGenerator {
   }
 
 
-  public static @NotNull String getDefaultType(@NotNull DocstringParam param) {
+  @NotNull
+  public static String getDefaultType(@NotNull DocstringParam param) {
     if (StringUtil.isEmpty(param.getType())) {
       return PyNames.OBJECT;
     }
@@ -303,7 +320,8 @@ public final class PyDocstringGenerator {
     }
   }
 
-  public @NotNull String buildDocString() {
+  @NotNull
+  public String buildDocString() {
     prepareParameters();
     if (myNewMode) {
       return createDocString();
@@ -313,10 +331,11 @@ public final class PyDocstringGenerator {
     }
   }
 
-  private @NotNull String createDocString() {
+  @NotNull
+  private String createDocString() {
     DocStringBuilder builder = null;
-    if (myDocStringFormat == DocStringFormat.REST) {
-      builder = new TagBasedDocStringBuilder(SphinxDocString.TAG_PREFIX);
+    if (myDocStringFormat == DocStringFormat.EPYTEXT || myDocStringFormat == DocStringFormat.REST) {
+      builder = new TagBasedDocStringBuilder(myDocStringFormat == DocStringFormat.EPYTEXT ? "@" : ":");
       TagBasedDocStringBuilder tagBuilder = (TagBasedDocStringBuilder)builder;
       if (myAddFirstEmptyLine) {
         tagBuilder.addEmptyLine();
@@ -378,11 +397,13 @@ public final class PyDocstringGenerator {
     return createEmptyFallbackDocString();
   }
 
-  private @NotNull String updateDocString() {
+  @NotNull
+  private String updateDocString() {
     DocStringUpdater updater = null;
-    if (myDocStringFormat == DocStringFormat.REST) {
+    if (myDocStringFormat == DocStringFormat.EPYTEXT || myDocStringFormat == DocStringFormat.REST) {
+      final String prefix = myDocStringFormat == DocStringFormat.EPYTEXT ? "@" : ":";
       // noinspection ConstantConditions
-      updater = new TagBasedDocStringUpdater((TagBasedDocString)getStructuredDocString(), SphinxDocString.TAG_PREFIX, myDocStringIndent);
+      updater = new TagBasedDocStringUpdater((TagBasedDocString)getStructuredDocString(), prefix, myDocStringIndent);
     }
     else if (myDocStringFormat == DocStringFormat.GOOGLE) {
       //noinspection ConstantConditions
@@ -395,7 +416,7 @@ public final class PyDocstringGenerator {
       updater = new NumpyDocStringUpdater((SectionBasedDocString)getStructuredDocString(), myDocStringIndent);
     }
     // plain docstring - do nothing
-    else if (myDocStringText != null) {
+    else if (myDocStringText != null){
       return myDocStringText;
     }
     if (updater != null) {
@@ -417,7 +438,8 @@ public final class PyDocstringGenerator {
     return createEmptyFallbackDocString();
   }
 
-  private @NotNull String createEmptyFallbackDocString() {
+  @NotNull
+  private String createEmptyFallbackDocString() {
     return myQuotes + '\n' + myDocStringIndent + myQuotes;
   }
 
@@ -428,7 +450,8 @@ public final class PyDocstringGenerator {
     return myAddedParams.get(0);
   }
 
-  public @NotNull PyAstDocStringOwner buildAndInsert(@NotNull String replacementText) {
+  @NotNull
+  public PyAstDocStringOwner buildAndInsert(@NotNull String replacementText) {
     Preconditions.checkNotNull(myDocStringOwner, "For this action docstring owner must be supplied");
 
     final Project project = myDocStringOwner.getProject();
@@ -469,7 +492,8 @@ public final class PyDocstringGenerator {
     return myDocStringOwner;
   }
 
-  public @NotNull PyAstDocStringOwner buildAndInsert() {
+  @NotNull
+  public PyAstDocStringOwner buildAndInsert() {
     Preconditions.checkNotNull(myDocStringOwner, "For this action docstring owner must be supplied");
     return buildAndInsert(buildDocString());
   }
@@ -479,18 +503,19 @@ public final class PyDocstringGenerator {
     private final String myName;
     private final String myType;
     private final boolean myReturnValue;
-
     private DocstringParam(@NotNull String name, @Nullable String type, boolean isReturn) {
       myName = name;
       myType = type;
       myReturnValue = isReturn;
     }
 
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return myName;
     }
 
-    public @Nullable String getType() {
+    @Nullable
+    public String getType() {
       return myType;
     }
 
@@ -526,14 +551,13 @@ public final class PyDocstringGenerator {
              ", myReturnValue=" + myReturnValue +
              '}';
     }
-  }
 
+  }
   private static class RaiseVisitor extends PyAstRecursiveElementVisitor {
 
     private boolean myHasRaise = false;
     private boolean myHasReturn = false;
-    private @Nullable PyAstExpression myRaiseTarget = null;
-
+    @Nullable private PyAstExpression myRaiseTarget = null;
     @Override
     public void visitPyRaiseStatement(@NotNull PyAstRaiseStatement node) {
       myHasRaise = true;
@@ -548,7 +572,8 @@ public final class PyDocstringGenerator {
       myHasReturn = true;
     }
 
-    public @NotNull String getRaiseTargetText() {
+    @NotNull
+    public String getRaiseTargetText() {
       if (myRaiseTarget != null) {
         String raiseTarget = myRaiseTarget.getText();
         if (myRaiseTarget instanceof PyAstCallExpression) {
@@ -561,9 +586,11 @@ public final class PyDocstringGenerator {
       }
       return "";
     }
+
   }
 
-  public @Nullable PyAstDocStringOwner getDocStringOwner() {
+  @Nullable
+  public PyAstDocStringOwner getDocStringOwner() {
     return myDocStringOwner;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.analysis.AnalysisScope;
@@ -9,7 +9,9 @@ import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -141,12 +143,14 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   @Override
-  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  @NotNull
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new IntroduceParameterViewDescriptor(myMethodToSearchFor);
   }
 
   @Override
-  public @NotNull PsiType getForcedType() {
+  @NotNull
+  public PsiType getForcedType() {
     return myForcedType;
   }
 
@@ -371,20 +375,23 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     }
   }
 
+  @Nullable
   @Override
-  protected @Nullable String getRefactoringId() {
+  protected String getRefactoringId() {
     return "refactoring.introduceParameter";
   }
 
+  @Nullable
   @Override
-  protected @Nullable RefactoringEventData getBeforeData() {
+  protected RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
     data.addElements(new PsiElement[] {myLocalVariable, myExpressionToSearch});
     return data;
   }
 
+  @Nullable
   @Override
-  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     final PsiParameter parameter = JavaIntroduceParameterMethodUsagesProcessor.getAnchorParameter(myMethodToReplaceIn);
     final RefactoringEventData afterData = new RefactoringEventData();
     afterData.addElement(parameter);
@@ -491,7 +498,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     }
 
     if (isReplaceDuplicates()) {
-      processMethodsDuplicates();
+      ApplicationManager.getApplication().invokeLater(() -> processMethodsDuplicates(), myProject.getDisposed());
     }
   }
 
@@ -500,9 +507,13 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   private void processMethodsDuplicates() {
-    if (!myMethodToReplaceIn.isValid()) return;
-    MethodDuplicatesHandler.invokeOnScope(myProject, Collections.singleton(myMethodToReplaceIn),
-                                          new AnalysisScope(myMethodToReplaceIn.getContainingFile()), true);
+    final Runnable runnable = () -> {
+      if (!myMethodToReplaceIn.isValid()) return;
+      MethodDuplicatesHandler.invokeOnScope(myProject, Collections.singleton(myMethodToReplaceIn),
+                                            new AnalysisScope(myMethodToReplaceIn.getContainingFile()), true);
+    };
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(runnable),
+                                                                      JavaRefactoringBundle.message("introduce.parameter.duplicates.progress"), true, myProject);
   }
 
   private PsiMethod generateDelegate(final PsiMethod methodToReplaceIn) throws IncorrectOperationException {
@@ -633,11 +644,13 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   @Override
-  protected @NotNull String getCommandName() {
+  @NotNull
+  protected String getCommandName() {
     return JavaRefactoringBundle.message("introduce.parameter.command", DescriptiveNameUtil.getDescriptiveName(myMethodToReplaceIn));
   }
 
-  protected static @Nullable PsiParameter getAnchorParameter(PsiMethod methodToReplaceIn) {
+  @Nullable
+  protected static PsiParameter getAnchorParameter(PsiMethod methodToReplaceIn) {
     PsiParameterList parameterList = methodToReplaceIn.getParameterList();
     final PsiParameter anchorParameter;
     final PsiParameter[] parameters = parameterList.getParameters();
@@ -659,7 +672,8 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   @Override
-  public @NotNull PsiMethod getMethodToSearchFor() {
+  @NotNull
+  public PsiMethod getMethodToSearchFor() {
     return myMethodToSearchFor;
   }
 
@@ -669,7 +683,8 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   @Override
-  public @NotNull String getParameterName() {
+  @NotNull
+  public String getParameterName() {
     return myParameterName;
   }
 
@@ -684,12 +699,14 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   @Override
-  public @NotNull IntList getParameterListToRemove() {
+  @NotNull
+  public IntList getParameterListToRemove() {
     return myParametersToRemove;
   }
 
   @Override
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myProject;
   }
 

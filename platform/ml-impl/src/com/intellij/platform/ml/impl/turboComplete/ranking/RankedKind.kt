@@ -2,9 +2,7 @@
 package com.intellij.platform.ml.impl.turboComplete.ranking
 
 import com.intellij.platform.ml.impl.turboComplete.CompletionKind
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 data class RankedKind(
   val kind: CompletionKind,
   val relevance: Double?,

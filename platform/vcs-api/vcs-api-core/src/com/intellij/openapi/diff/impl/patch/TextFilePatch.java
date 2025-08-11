@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.vcs.FileStatus;
@@ -11,9 +11,9 @@ import java.util.List;
 
 public class TextFilePatch extends FilePatch {
   private final Charset myCharset;
-  private final @Nullable String myLineSeparator;
+  @Nullable private final String myLineSeparator;
   private final List<PatchHunk> myHunks;
-  private @Nullable FileStatus myFileStatus;
+  @Nullable private FileStatus myFileStatus;
 
   public TextFilePatch(@Nullable Charset charset) {
     this(charset, null);
@@ -69,11 +69,13 @@ public class TextFilePatch extends FilePatch {
     return myFileStatus == FileStatus.DELETED || (myHunks.size() == 1 && myHunks.get(0).isDeletedContent());
   }
 
-  public @Nullable Charset getCharset() {
+  @Nullable
+  public Charset getCharset() {
     return myCharset;
   }
 
-  public @Nullable String getLineSeparator() {
+  @Nullable
+  public String getLineSeparator() {
     return myLineSeparator;
   }
 

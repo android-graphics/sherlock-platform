@@ -1,8 +1,7 @@
 from _typeshed import Incomplete, SupportsGetItem, SupportsLenAndGetItem, Unused
 from abc import abstractmethod
 from collections.abc import Iterable, Iterator, MutableSequence
-from typing import Final
-from typing_extensions import Self, TypeAlias
+from typing_extensions import Final, Self, TypeAlias
 
 from .fixer_base import BaseFix
 from .pgen2.grammar import Grammar

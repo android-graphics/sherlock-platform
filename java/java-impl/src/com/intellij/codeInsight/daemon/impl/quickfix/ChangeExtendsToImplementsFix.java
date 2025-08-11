@@ -18,16 +18,15 @@ import org.jetbrains.annotations.Nullable;
 public class ChangeExtendsToImplementsFix extends PsiUpdateModCommandAction<PsiClass> {
   protected final @Nullable SmartPsiElementPointer<PsiClass> myClassToExtendFromPointer;
   private final boolean myToAdd;
-  private final SmartTypePointer myTypeToExtendFrom;
+  private final PsiClassType myTypeToExtendFrom;
 
   public ChangeExtendsToImplementsFix(@NotNull PsiClass aClass, @NotNull PsiClassType classTypeToExtendFrom) {
     super(aClass);
     PsiClass classToExtendFrom = classTypeToExtendFrom.resolve();
     myClassToExtendFromPointer = classToExtendFrom == null ? null : SmartPointerManager.createPointer(classToExtendFrom);
     myToAdd = true;
-    PsiClassType typeToExtendFrom = aClass instanceof PsiTypeParameter ? classTypeToExtendFrom
-                                                                : (PsiClassType)GenericsUtil.eliminateWildcards(classTypeToExtendFrom);
-    myTypeToExtendFrom = SmartTypePointerManager.getInstance(aClass.getProject()).createSmartTypePointer(typeToExtendFrom);
+    myTypeToExtendFrom = aClass instanceof PsiTypeParameter ? classTypeToExtendFrom
+                                                            : (PsiClassType)GenericsUtil.eliminateWildcards(classTypeToExtendFrom);
   }
 
   @Override
@@ -37,7 +36,7 @@ public class ChangeExtendsToImplementsFix extends PsiUpdateModCommandAction<PsiC
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiClass myClass) {
-    if (myTypeToExtendFrom.getType() == null) return null;
+    if (!myTypeToExtendFrom.isValid()) return null;
     PsiClass classToExtendFrom = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
     boolean available = classToExtendFrom != null && classToExtendFrom.isValid()
                         && !classToExtendFrom.hasModifierProperty(PsiModifier.FINAL)
@@ -63,13 +62,11 @@ public class ChangeExtendsToImplementsFix extends PsiUpdateModCommandAction<PsiC
                                    myClass.getImplementsList() : myClass.getExtendsList();
     PsiReferenceList otherList = extendsList == myClass.getImplementsList() ?
                                  myClass.getExtendsList() : myClass.getImplementsList();
-    PsiType psiType = myTypeToExtendFrom.getType();
-    if(!(psiType instanceof PsiClassType psiClassType)) return;
     if (extendsList != null) {
-      ExtendsListFix.modifyList(extendsList, myToAdd, -1, psiClassType);
+      ExtendsListFix.modifyList(extendsList, myToAdd, -1, myTypeToExtendFrom);
     }
     if (otherList != null) {
-      ExtendsListFix.modifyList(otherList, false, -1, psiClassType);
+      ExtendsListFix.modifyList(otherList, false, -1, myTypeToExtendFrom);
     }
   }
 }

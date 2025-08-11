@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeType
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.transfer.backend.LegacySettingsTransferWizard
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.io.FileUtil
@@ -16,6 +17,7 @@ import java.io.File
 import java.net.URI
 import java.sql.Connection
 import java.sql.DriverManager
+import kotlin.collections.set
 
 private val logger = logger<StateDatabaseParser>()
 
@@ -74,7 +76,7 @@ class StateDatabaseParser(private val scope: CoroutineScope, private val setting
 }
 
 private fun createTemporaryFileCopy(file: File): File {
-  val newFile = FileUtil.createTempFile(file.nameWithoutExtension, file.extension, true)
+  val newFile = File(PathManager.getTempPath(), "${file.nameWithoutExtension}.${ProcessHandle.current().pid()}.${file.extension}")
   return file.copyTo(newFile, overwrite = true)
 }
 

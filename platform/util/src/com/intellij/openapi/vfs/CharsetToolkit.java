@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +44,6 @@ import java.util.Map;
  *
  * @author Guillaume LAFORGE
  */
-@ApiStatus.Internal
 public final class CharsetToolkit {
   public static final String UTF8 = "UTF-8";
   /** @deprecated use {@link StandardCharsets#UTF_8} instead */
@@ -280,7 +278,6 @@ public final class CharsetToolkit {
     }
   }
 
-  @ApiStatus.Internal
   public enum GuessedEncoding {
     SEVEN_BIT,     // ASCII characters only
     VALID_UTF8,    // UTF-8

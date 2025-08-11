@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
 import com.intellij.psi.util.CachedValueProvider.Result;
@@ -64,8 +64,9 @@ public final class VariableInitializationChecker {
 
   private static class MySemilattice implements Semilattice<Boolean> {
 
+    @NotNull
     @Override
-    public @NotNull Boolean join(@NotNull List<? extends Boolean> ins) {
+    public Boolean join(@NotNull List<? extends Boolean> ins) {
       if (ins.isEmpty()) {
         return false;
       }

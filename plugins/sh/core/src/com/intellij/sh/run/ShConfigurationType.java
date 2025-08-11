@@ -7,19 +7,12 @@ import com.intellij.execution.configurations.SimpleConfigurationType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.platform.eel.EelDescriptor;
-import com.intellij.platform.eel.EelPlatform;
-import com.intellij.platform.eel.provider.LocalEelDescriptor;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShLanguage;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
-import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
-import static com.intellij.platform.eel.provider.utils.EelPathUtils.getNioPath;
-import static com.intellij.platform.eel.provider.utils.EelUtilsKt.fetchLoginShellEnvVariablesBlocking;
-import static java.nio.file.Files.exists;
-import static java.nio.file.Files.isExecutable;
+import java.io.File;
 
 public final class ShConfigurationType extends SimpleConfigurationType {
   ShConfigurationType() {
@@ -50,35 +43,26 @@ public final class ShConfigurationType extends SimpleConfigurationType {
   }
 
   public static @NotNull String getDefaultShell(@NotNull Project project) {
-    final var shellPathProvider = project.getService(ShDefaultShellPathProvider.class);
-    final var eelDescriptor = project.isDefault() ? LocalEelDescriptor.INSTANCE : getEelDescriptor(project);
-
-    if (shellPathProvider != null
-        && eelDescriptor == LocalEelDescriptor.INSTANCE) { // todo: remove this check when terminal will be migrated to eel
+    ShDefaultShellPathProvider shellPathProvider = project.getService(ShDefaultShellPathProvider.class);
+    if (shellPathProvider != null) {
       return shellPathProvider.getDefaultShell();
-    }
-    else {
-      return trivialDefaultShellDetection(eelDescriptor);
+    } else {
+      return trivialDefaultShellDetection();
     }
   }
 
-  private static @NotNull String trivialDefaultShellDetection(final @NotNull EelDescriptor eelDescriptor) {
-    final var eel = upgradeBlocking(eelDescriptor);
-    final var shell = fetchLoginShellEnvVariablesBlocking(eel.getExec()).get("SHELL");
-
-    if (shell != null) {
-      final var shellPath = getNioPath(shell, eelDescriptor);
-      if (isExecutable(shellPath)) {
-        return shellPath.toString();
-      }
+  private static @NotNull String trivialDefaultShellDetection() {
+    String shell = System.getenv("SHELL");
+    if (shell != null && new File(shell).canExecute()) {
+      return shell;
     }
-    if (eel.getPlatform() instanceof EelPlatform.Linux) {
-      final var bashPath = getNioPath("/bin/bash", eelDescriptor);
-      if (exists(bashPath)) {
-        return bashPath.toString();
+    if (SystemInfo.isUnix) {
+      String bashPath = "/bin/bash";
+      if (new File(bashPath).exists()) {
+        return bashPath;
       }
-      return getNioPath("/bin/sh", eelDescriptor).toString();
+      return "/bin/sh";
     }
-    return "powershell.exe"; // TODO
+    return "powershell.exe";
   }
 }

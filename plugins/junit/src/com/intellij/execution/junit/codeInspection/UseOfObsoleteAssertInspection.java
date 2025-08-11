@@ -16,9 +16,9 @@
 package com.intellij.execution.junit.codeInspection;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.execution.JUnitBundle;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -37,7 +37,8 @@ import org.jetbrains.annotations.Nullable;
 public final class UseOfObsoleteAssertInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     String name = (String)infos[0];
     return JUnitBundle.message("use.of.obsolete.assert.problem.descriptor", name);
   }
@@ -197,7 +198,8 @@ public final class UseOfObsoleteAssertInspection extends BaseInspection implemen
       return proceed[0];
     }
 
-    private static @Nullable PsiImportStaticStatement staticallyImported(PsiClass oldAssertClass, PsiReferenceExpression methodExpression) {
+    @Nullable
+    private static PsiImportStaticStatement staticallyImported(PsiClass oldAssertClass, PsiReferenceExpression methodExpression) {
       final String referenceName = methodExpression.getReferenceName();
       final PsiFile containingFile = methodExpression.getContainingFile();
       if (!(containingFile instanceof PsiJavaFile)) {
@@ -230,8 +232,9 @@ public final class UseOfObsoleteAssertInspection extends BaseInspection implemen
       return null;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JUnitBundle.message("use.of.obsolete.assert.quickfix");
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.errorTreeView.HotfixData;
@@ -33,13 +33,14 @@ import java.util.Map;
  */
 public abstract class AbstractVcsHelper {
 
-  protected final @NotNull Project myProject;
+  @NotNull protected final Project myProject;
 
   protected AbstractVcsHelper(@NotNull Project project) {
     myProject = project;
   }
 
-  public static @NotNull AbstractVcsHelper getInstance(Project project) {
+  @NotNull
+  public static AbstractVcsHelper getInstance(Project project) {
     return project.getService(AbstractVcsHelper.class);
   }
 
@@ -90,7 +91,8 @@ public abstract class AbstractVcsHelper {
   /**
    * {@link #showMergeDialog(List, MergeProvider, MergeDialogCustomizer)} without description.
    */
-  public final @NotNull List<VirtualFile> showMergeDialog(List<? extends VirtualFile> files, MergeProvider provider) {
+  @NotNull
+  public final List<VirtualFile> showMergeDialog(List<? extends VirtualFile> files, MergeProvider provider) {
     return showMergeDialog(files, provider, provider.createDefaultMergeDialogCustomizer());
   }
 
@@ -98,7 +100,8 @@ public abstract class AbstractVcsHelper {
    * {@link #showMergeDialog(java.util.List, MergeProvider)} without description and with default merge provider
    * for the current VCS.
    */
-  public final @NotNull List<VirtualFile> showMergeDialog(List<? extends VirtualFile> files) {
+  @NotNull
+  public final List<VirtualFile> showMergeDialog(List<? extends VirtualFile> files) {
     if (files.isEmpty()) return Collections.emptyList();
     MergeProvider provider = null;
     for (VirtualFile virtualFile : files) {
@@ -119,28 +122,31 @@ public abstract class AbstractVcsHelper {
                                        @NotNull FilePath path,
                                        @NotNull AbstractVcs vcs);
 
-  public abstract @Nullable Collection<VirtualFile> selectFilesToProcess(List<? extends VirtualFile> files,
-                                                                         @NlsContexts.DialogTitle String title,
-                                                                         @NlsContexts.DialogMessage @Nullable String prompt,
-                                                                         @NlsContexts.DialogTitle @Nullable String singleFileTitle,
-                                                                         @NlsContexts.DialogMessage @Nullable String singleFilePromptTemplate,
-                                                                         @NotNull VcsShowConfirmationOption confirmationOption);
+  @Nullable
+  public abstract Collection<VirtualFile> selectFilesToProcess(List<? extends VirtualFile> files,
+                                                               @NlsContexts.DialogTitle String title,
+                                                               @NlsContexts.DialogMessage @Nullable String prompt,
+                                                               @NlsContexts.DialogTitle @Nullable String singleFileTitle,
+                                                               @NlsContexts.DialogMessage @Nullable String singleFilePromptTemplate,
+                                                               @NotNull VcsShowConfirmationOption confirmationOption);
 
-  public abstract @Nullable Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
-                                                                          @NlsContexts.DialogTitle String title,
-                                                                          @NlsContexts.DialogMessage @Nullable String prompt,
-                                                                          @NlsContexts.DialogTitle @Nullable String singleFileTitle,
-                                                                          @NlsContexts.DialogMessage @Nullable String singleFilePromptTemplate,
-                                                                          @NotNull VcsShowConfirmationOption confirmationOption);
+  @Nullable
+  public abstract Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
+                                                                @NlsContexts.DialogTitle String title,
+                                                                @NlsContexts.DialogMessage @Nullable String prompt,
+                                                                @NlsContexts.DialogTitle @Nullable String singleFileTitle,
+                                                                @NlsContexts.DialogMessage @Nullable String singleFilePromptTemplate,
+                                                                @NotNull VcsShowConfirmationOption confirmationOption);
 
-  public abstract @Nullable Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
-                                                                          @NlsContexts.DialogTitle String title,
-                                                                          @NlsContexts.DialogMessage @Nullable String prompt,
-                                                                          @NlsContexts.DialogTitle @Nullable String singleFileTitle,
-                                                                          @NlsContexts.DialogMessage @Nullable String singleFilePromptTemplate,
-                                                                          @NotNull VcsShowConfirmationOption confirmationOption,
-                                                                          @NlsActions.ActionText @Nullable String okActionName,
-                                                                          @NlsActions.ActionText @Nullable String cancelActionName);
+  @Nullable
+  public abstract Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
+                                                                @NlsContexts.DialogTitle String title,
+                                                                @NlsContexts.DialogMessage @Nullable String prompt,
+                                                                @NlsContexts.DialogTitle @Nullable String singleFileTitle,
+                                                                @NlsContexts.DialogMessage @Nullable String singleFilePromptTemplate,
+                                                                @NotNull VcsShowConfirmationOption confirmationOption,
+                                                                @NlsActions.ActionText @Nullable String okActionName,
+                                                                @NlsActions.ActionText @Nullable String cancelActionName);
 
 
   /**

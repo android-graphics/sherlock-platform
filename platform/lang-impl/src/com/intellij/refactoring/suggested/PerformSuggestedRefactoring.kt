@@ -41,7 +41,6 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.SlowOperations
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Font
 import java.awt.Insets
@@ -71,13 +70,13 @@ internal fun performSuggestedRefactoring(
 /**
  * Launch suggested refactoring based on the specified state
  */
-internal fun performSuggestedRefactoring(state: SuggestedRefactoringState,
-                                         originalEditor: Editor,
-                                         project: Project,
-                                         actionPlace: String,
-                                         showReviewBalloon: Boolean,
-                                         popupAnchorComponent: JComponent?,
-                                         popupAnchorPoint: Point?) {
+fun performSuggestedRefactoring(state: SuggestedRefactoringState,
+                                originalEditor: Editor,
+                                project: Project,
+                                actionPlace: String,
+                                showReviewBalloon: Boolean,
+                                popupAnchorComponent: JComponent?,
+                                popupAnchorPoint: Point?) {
   if (state.errorLevel != ErrorLevel.NO_ERRORS || state.oldSignature == state.newSignature) return
   val refactoringSupport = state.refactoringSupport
 
@@ -444,6 +443,4 @@ private fun SuggestedRefactoringSupport.anchorOffset(declaration: PsiElement): I
 }
 
 @set:TestOnly
-@set:ApiStatus.Internal
-@get:ApiStatus.Internal
 var _suggestedChangeSignatureNewParameterValuesForTests: ((index: Int) -> NewParameterValue)? = null

@@ -36,7 +36,8 @@ public class RemoveParamFix extends AbstractFix {
     }
 
     @Override
-    public @NotNull String getText() {
+    @NotNull
+    public String getText() {
         return XPathBundle.message("intention.name.remove.argument", myName);
     }
 

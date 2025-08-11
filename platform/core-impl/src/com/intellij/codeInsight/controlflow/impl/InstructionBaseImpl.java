@@ -35,7 +35,6 @@ public abstract class InstructionBaseImpl implements Instruction {
     return myPred;
   }
 
-  @Override
   public @NotNull String toString() {
     final StringBuilder builder = new StringBuilder(id());
     builder.append("(");

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -26,9 +26,8 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParenthesesIfPossible
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.CallableRefactoring
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.explicateReceiverOf
@@ -126,7 +125,7 @@ class ConvertFunctionTypeParameterToReceiverIntention : SelfTargetingRangeIntent
             if (expression is KtLambdaExpression) {
                 expression.valueParameters.getOrNull(data.typeParameterIndex)?.let { parameterToConvert ->
                     val thisRefExpr = psiFactory.createThisExpression()
-                    val search = ReferencesSearch.search(parameterToConvert, LocalSearchScope(expression)).asIterable().toList()
+                    val search = ReferencesSearch.search(parameterToConvert, LocalSearchScope(expression)).toList()
                     runWriteAction {
                         for (ref in search) {
                             (ref.element as? KtSimpleNameExpression)?.replace(thisRefExpr)
@@ -338,7 +337,7 @@ class ConvertFunctionTypeParameterToReceiverIntention : SelfTargetingRangeIntent
 
             if (body != null) {
                 val functionParameter = callable.valueParameters.getOrNull(data.functionParameterIndex) ?: return
-                for (ref in ReferencesSearch.search(functionParameter, LocalSearchScope(body)).asIterable()) {
+                for (ref in ReferencesSearch.search(functionParameter, LocalSearchScope(body))) {
                     val element = ref.element as? KtSimpleNameExpression ?: continue
                     val callExpression = element.getParentOfTypeAndBranch<KtCallExpression> { calleeExpression }
                     if (callExpression != null) {
@@ -395,7 +394,7 @@ class ConvertFunctionTypeParameterToReceiverIntention : SelfTargetingRangeIntent
 fun PsiElement.searchReferencesOrMethodReferences(): Collection<PsiReference> {
     val lightMethods = toLightMethods()
     return if (lightMethods.isNotEmpty()) {
-        lightMethods.flatMapTo(LinkedHashSet()) { MethodReferencesSearch.search(it).asIterable() }
+        lightMethods.flatMapTo(LinkedHashSet()) { MethodReferencesSearch.search(it) }
     } else {
         ReferencesSearch.search(this).findAll()
     }

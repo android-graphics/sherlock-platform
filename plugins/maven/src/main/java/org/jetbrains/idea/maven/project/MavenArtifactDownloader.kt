@@ -2,43 +2,41 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.util.progress.RawProgressReporter
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
+import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.server.MavenArtifactResolutionRequest
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.nio.file.Path
+import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.io.path.exists
 
-internal class MavenArtifactDownloader(
-  private val myProject: Project,
-  private val myProjectsTree: MavenProjectsTree,
-  artifacts: Collection<MavenArtifact>?,
-  private val progressReporter: RawProgressReporter?,
-  private val eventHandler: MavenEventHandler,
-) {
+class MavenArtifactDownloader(private val myProject: Project,
+                              private val myProjectsTree: MavenProjectsTree,
+                              artifacts: Collection<MavenArtifact>?,
+                              private val progressReporter: RawProgressReporter?,
+                              private val eventHandler: MavenEventHandler) {
 
   private val myArtifacts: Collection<MavenArtifact>? = if (artifacts == null) null else HashSet(artifacts)
 
-  suspend fun downloadSourcesAndJavadocs(
-    mavenProjects: Collection<MavenProject>,
-    downloadSources: Boolean,
-    downloadDocs: Boolean,
-  ): ArtifactDownloadResult {
+  @Throws(MavenProcessCanceledException::class)
+  suspend fun downloadSourcesAndJavadocs(mavenProjects: Collection<MavenProject>,
+                                         downloadSources: Boolean,
+                                         downloadDocs: Boolean,
+                                         embeddersManager: MavenEmbeddersManager): DownloadResult {
     val projectMultiMap = MavenUtil.groupByBasedir(mavenProjects, myProjectsTree)
-    val result = ArtifactDownloadResult()
+    val result = DownloadResult()
     for ((baseDir, mavenProjectsForBaseDir) in projectMultiMap.entrySet()) {
-      val mavenEmbedderWrappers = myProject.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
-      mavenEmbedderWrappers.use {
-        val embedder = mavenEmbedderWrappers.getAlwaysOnlineEmbedder(baseDir)
+      val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, baseDir)
+      try {
         val chunk = download(mavenProjectsForBaseDir, embedder, downloadSources, downloadDocs)
         for (each in mavenProjectsForBaseDir) {
           myProjectsTree.fireArtifactsDownloaded(each!!)
@@ -48,15 +46,19 @@ internal class MavenArtifactDownloader(
         result.unresolvedDocs.addAll(chunk.unresolvedDocs)
         result.unresolvedSources.addAll(chunk.unresolvedSources)
       }
+      finally {
+        embeddersManager.release(embedder)
+      }
     }
     return result
   }
 
+  @Throws(MavenProcessCanceledException::class)
   private suspend fun download(mavenProjects: Collection<MavenProject>,
                                embedder: MavenEmbedderWrapper,
                                downloadSources: Boolean,
-                               downloadDocs: Boolean): ArtifactDownloadResult {
-    val downloadedFiles: MutableCollection<Path> = ConcurrentLinkedQueue()
+                               downloadDocs: Boolean): DownloadResult {
+    val downloadedFiles: MutableCollection<File> = ConcurrentLinkedQueue()
     return try {
       val types: MutableList<MavenExtraArtifactType> = ArrayList(2)
       if (downloadSources) types.add(MavenExtraArtifactType.SOURCES)
@@ -66,12 +68,12 @@ internal class MavenArtifactDownloader(
     }
     finally {
       // We have to refresh parents of downloaded files, because some additional files may have been downloaded
-      val filesToRefresh: MutableSet<Path> = HashSet()
+      val filesToRefresh: MutableSet<File> = HashSet()
       for (file in downloadedFiles) {
         filesToRefresh.add(file)
-        filesToRefresh.add(file.parent)
+        filesToRefresh.add(file.parentFile)
       }
-      LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh, true, false, null)
+      LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh, true, false, null)
     }
   }
 
@@ -116,10 +118,11 @@ internal class MavenArtifactDownloader(
     return result
   }
 
+  @Throws(MavenProcessCanceledException::class)
   private suspend fun download(embedder: MavenEmbedderWrapper,
                                toDownload: Map<MavenId, DownloadData>,
-                               downloadedFiles: MutableCollection<Path>): ArtifactDownloadResult {
-    val result = ArtifactDownloadResult()
+                               downloadedFiles: MutableCollection<File>): DownloadResult {
+    val result = DownloadResult()
     result.unresolvedSources.addAll(toDownload.keys)
     result.unresolvedDocs.addAll(toDownload.keys)
     val requests = ArrayList<MavenArtifactResolutionRequest>()
@@ -132,7 +135,7 @@ internal class MavenArtifactDownloader(
     }
     val artifacts = embedder.resolveArtifacts(requests, progressReporter, eventHandler)
     for (artifact in artifacts) {
-      val file = artifact.file.toPath()
+      val file = artifact.file
       if (file.exists()) {
         downloadedFiles.add(file)
         val mavenId = MavenId(artifact.groupId, artifact.artifactId, artifact.version)
@@ -155,16 +158,36 @@ internal class MavenArtifactDownloader(
   }
 
   private data class DownloadElement(val classifier: String?, val extension: String?, val type: MavenExtraArtifactType?)
-}
 
-@ApiStatus.Internal
-class ArtifactDownloadResult {
-  @JvmField
-  val resolvedSources: MutableSet<MavenId> = ConcurrentHashMap.newKeySet()
-  @JvmField
-  val resolvedDocs: MutableSet<MavenId> = ConcurrentHashMap.newKeySet()
-  @JvmField
-  val unresolvedSources: MutableSet<MavenId> = ConcurrentHashMap.newKeySet()
-  @JvmField
-  val unresolvedDocs: MutableSet<MavenId> = ConcurrentHashMap.newKeySet()
+  // used by third-party plugins
+  class DownloadResult {
+    @JvmField
+    val resolvedSources: MutableSet<MavenId> = ConcurrentHashMap.newKeySet()
+    @JvmField
+    val resolvedDocs: MutableSet<MavenId> = ConcurrentHashMap.newKeySet()
+    @JvmField
+    val unresolvedSources: MutableSet<MavenId> = ConcurrentHashMap.newKeySet()
+    @JvmField
+    val unresolvedDocs: MutableSet<MavenId> = ConcurrentHashMap.newKeySet()
+  }
+
+  companion object {
+    @Throws(MavenProcessCanceledException::class)
+    @JvmStatic
+    @Deprecated("use downloadSourcesAndJavadocs()")
+    fun download(project: Project,
+                 projectsTree: MavenProjectsTree,
+                 mavenProjects: Collection<MavenProject>,
+                 artifacts: Collection<MavenArtifact>?,
+                 downloadSources: Boolean,
+                 downloadDocs: Boolean,
+                 embedder: MavenEmbedderWrapper,
+                 progressIndicator: MavenProgressIndicator?): DownloadResult {
+      val eventHandler = progressIndicator?.syncConsole ?: MavenLogEventHandler
+      return runBlockingMaybeCancellable {
+        MavenArtifactDownloader(project, projectsTree, artifacts, null, eventHandler)
+          .download(mavenProjects, embedder, downloadSources, downloadDocs)
+      }
+    }
+  }
 }

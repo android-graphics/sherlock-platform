@@ -1,11 +1,11 @@
-from typing import Any, ClassVar
+from typing import Any
 
 from ..cmd import Command
 
 class install_headers(Command):
     description: str
-    user_options: ClassVar[list[tuple[str, str, str]]]
-    boolean_options: ClassVar[list[str]]
+    user_options: Any
+    boolean_options: Any
     install_dir: Any
     force: int
     outfiles: Any

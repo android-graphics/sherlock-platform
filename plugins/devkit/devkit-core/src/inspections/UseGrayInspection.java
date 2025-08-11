@@ -38,7 +38,8 @@ public final class UseGrayInspection extends DevKitUastInspectionBase implements
   public static final Class<? extends UElement>[] HINTS = new Class[]{UCallExpression.class};
 
   @Override
-  public @NotNull PsiElementVisitor buildInternalVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  @NotNull
+  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
       @Override
       public boolean visitCallExpression(@NotNull UCallExpression expression) {
@@ -68,7 +69,8 @@ public final class UseGrayInspection extends DevKitUastInspectionBase implements
     return AWT_COLOR_CLASS_NAME.equals(constructorClass.getQualifiedName());
   }
 
-  private static @Nullable Integer getGrayValue(@NotNull UCallExpression constructorCall) {
+  @Nullable
+  private static Integer getGrayValue(@NotNull UCallExpression constructorCall) {
     List<UExpression> constructorParams = constructorCall.getValueArguments();
     UExpression redParam = constructorParams.get(0);
     Integer red = evaluateColorValue(redParam);
@@ -78,7 +80,8 @@ public final class UseGrayInspection extends DevKitUastInspectionBase implements
     return 0 <= red && red < 256 && red.equals(evaluateColorValue(greenParam)) && red.equals(evaluateColorValue(blueParam)) ? red : null;
   }
 
-  private static @Nullable Integer evaluateColorValue(@NotNull UExpression expression) {
+  @Nullable
+  private static Integer evaluateColorValue(@NotNull UExpression expression) {
     Object evaluatedExpression = expression.evaluate();
     if (evaluatedExpression instanceof Integer value) {
       return value;
@@ -87,8 +90,9 @@ public final class UseGrayInspection extends DevKitUastInspectionBase implements
   }
 
 
+  @NotNull
   @Override
-  public @NotNull String getShortName() {
+  public String getShortName() {
     return "InspectionUsingGrayColors";
   }
 

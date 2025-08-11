@@ -16,7 +16,8 @@ internal class ConvertReferenceToLambdaIntention :
 
     override fun getFamilyName(): String = KotlinBundle.message("convert.reference.to.lambda")
 
-    override fun KaSession.prepareContext(element: KtCallableReferenceExpression): String? =
+    context(KaSession)
+    override fun prepareContext(element: KtCallableReferenceExpression): String? =
         if (skip(element)) null
         else ConvertReferenceToLambdaUtil.prepareLambdaExpressionText(element)
 

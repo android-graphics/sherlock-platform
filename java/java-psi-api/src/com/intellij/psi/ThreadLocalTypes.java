@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.RecursionGuard;
@@ -20,7 +20,8 @@ public final class ThreadLocalTypes {
     myProhibitCaching = prohibitCaching;
   }
 
-  public static @Nullable PsiType getElementType(@NotNull PsiElement psi) {
+  @Nullable
+  public static PsiType getElementType(@NotNull PsiElement psi) {
     List<? extends ThreadLocalTypes> stack = ourGuard.currentStack();
     for (int i = stack.size() - 1; i >= 0; i--) {
       ThreadLocalTypes types = stack.get(i);

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -25,8 +25,9 @@ public final class RedundantUnmodifiableInspection extends AbstractBaseJavaLocal
                "unmodifiableSet", "unmodifiableMap", "unmodifiableSortedSet", "unmodifiableSortedMap",
                "unmodifiableNavigableMap", "unmodifiableNavigableSet").parameterCount(1);
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
       @Override
@@ -51,8 +52,9 @@ public final class RedundantUnmodifiableInspection extends AbstractBaseJavaLocal
   }
 
   private static class UnwrapUnmodifiableFix extends PsiUpdateModCommandQuickFix {
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaBundle.message("inspection.redundant.unmodifiable.call.unwrap.argument.quickfix");
     }
 

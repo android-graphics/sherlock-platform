@@ -2,11 +2,6 @@
 package com.jetbrains.python.psi;
 
 import com.jetbrains.python.ast.PyAstValuePattern;
-import org.jetbrains.annotations.NotNull;
 
 public interface PyValuePattern extends PyAstValuePattern, PyPattern {
-  @Override
-  default @NotNull PyReferenceExpression getValue() {
-    return (PyReferenceExpression)PyAstValuePattern.super.getValue();
-  }
 }

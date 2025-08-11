@@ -1,19 +1,13 @@
 from collections.abc import Callable
 from types import TracebackType
-from typing import Any, NoReturn, overload
-from typing_extensions import TypeVarTuple, Unpack
+from typing import Any, NoReturn
 
 __all__ = ["error", "start_new_thread", "exit", "get_ident", "allocate_lock", "interrupt_main", "LockType", "RLock"]
-
-_Ts = TypeVarTuple("_Ts")
 
 TIMEOUT_MAX: int
 error = RuntimeError
 
-@overload
-def start_new_thread(function: Callable[[Unpack[_Ts]], object], args: tuple[Unpack[_Ts]]) -> None: ...
-@overload
-def start_new_thread(function: Callable[..., object], args: tuple[Any, ...], kwargs: dict[str, Any]) -> None: ...
+def start_new_thread(function: Callable[..., object], args: tuple[Any, ...], kwargs: dict[str, Any] = {}) -> None: ...
 def exit() -> NoReturn: ...
 def get_ident() -> int: ...
 def allocate_lock() -> LockType: ...

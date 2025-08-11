@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.modcommand.ModPsiUpdater;
@@ -32,13 +32,15 @@ public class GrReplacePrimitiveTypeWithWrapperFix extends PsiUpdateModCommandQui
     myBoxedName = ((PsiPrimitiveType)type).getBoxedTypeName();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return GroovyBundle.message("replace.with.wrapper", myBoxedName);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return GroovyBundle.message("replace.primitive.type.with.wrapper");
   }
 

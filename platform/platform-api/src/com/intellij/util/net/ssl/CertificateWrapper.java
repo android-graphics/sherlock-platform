@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -176,12 +176,12 @@ public final class CertificateWrapper {
    * See http://tools.ietf.org/html/rfc5280#section-4.1.2.2 for details.
    */
   public enum CommonField {
-    COMMON_NAME("CN", "Common name"),
+    COMMON_NAME("CN", "Common Name"),
     ORGANIZATION("O", "Organization"),
-    ORGANIZATION_UNIT("OU", "Organizational unit"),
+    ORGANIZATION_UNIT("OU", "Organizational Unit"),
     LOCATION("L", "Locality"),
     COUNTRY("C", "Country"),
-    STATE("ST", "State or province");
+    STATE("ST", "State or Province");
 
     private final String myShortName;
     private final String myLongName;

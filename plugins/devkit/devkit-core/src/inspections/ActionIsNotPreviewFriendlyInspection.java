@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.AddAnnotationFix;
@@ -11,7 +11,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -20,8 +19,7 @@ import org.jetbrains.uast.*;
 import java.util.Set;
 import java.util.function.Predicate;
 
-@ApiStatus.Internal
-public final class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspectionBase {
+final class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspectionBase {
 
   private static final String[] METHODS_TO_IGNORE_CLASS = {
     "generatePreview", "getFileModifierForPreview", "applyFixForPreview", "startInWriteAction", "invokeForPreview"};
@@ -85,7 +83,8 @@ public final class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspec
     return holder.getResultsArray();
   }
 
-  private static @Nullable PsiElement getAnchor(PsiField field) {
+  @Nullable
+  private static PsiElement getAnchor(PsiField field) {
     UField uField = UastContextKt.toUElement(field, UField.class);
     if (uField == null) return null;
     UElement anchor = uField.getUastAnchor();
@@ -93,7 +92,8 @@ public final class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspec
     return anchor.getSourcePsi();
   }
 
-  private static @Nullable PsiElement getAnchor(PsiAnnotation field) {
+  @Nullable
+  private static PsiElement getAnchor(PsiAnnotation field) {
     UAnnotation uAnnotation = UastContextKt.toUElement(field, UAnnotation.class);
     if (uAnnotation == null) return null;
     return uAnnotation.getSourcePsi();

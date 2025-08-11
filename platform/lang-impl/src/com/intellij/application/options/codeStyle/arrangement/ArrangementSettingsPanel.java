@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
@@ -36,13 +36,13 @@ import java.util.List;
 
 public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
-  private final @NotNull JPanel myContent = new JPanel(new GridBagLayout());
+  @NotNull private final JPanel myContent = new JPanel(new GridBagLayout());
 
-  private final @NotNull Language                         myLanguage;
-  private final @NotNull ArrangementStandardSettingsAware mySettingsAware;
-  private final @NotNull ArrangementGroupingRulesPanel    myGroupingRulesPanel;
-  private final @NotNull ArrangementMatchingRulesPanel    myMatchingRulesPanel;
-  private final @Nullable ForceArrangementPanel myForceArrangementPanel;
+  @NotNull private final Language                         myLanguage;
+  @NotNull private final ArrangementStandardSettingsAware mySettingsAware;
+  @NotNull private final ArrangementGroupingRulesPanel    myGroupingRulesPanel;
+  @NotNull private final ArrangementMatchingRulesPanel    myMatchingRulesPanel;
+  @Nullable private final ForceArrangementPanel myForceArrangementPanel;
 
   public ArrangementSettingsPanel(@NotNull CodeStyleSettings settings, @NotNull Language language) {
     super(settings);
@@ -84,17 +84,20 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     myGroupingRulesPanel.setVisible(groupingTokens != null && !groupingTokens.isEmpty());
   }
 
+  @Nullable
   @Override
-  public @Nullable JComponent getPanel() {
+  public JComponent getPanel() {
     return myContent;
   }
 
+  @Nullable
   @Override
-  protected @Nullable EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
+  protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
     return null;
   }
 
-  private @Nullable StdArrangementSettings getSettings(@NotNull CodeStyleSettings settings) {
+  @Nullable
+  private StdArrangementSettings getSettings(@NotNull CodeStyleSettings settings) {
     StdArrangementSettings result = (StdArrangementSettings)settings.getCommonSettings(myLanguage).getArrangementSettings();
     if (result == null) {
       result = mySettingsAware.getDefaultSettings();
@@ -149,9 +152,13 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     }
   }
 
-  @Override
-  protected @Nullable String getPreviewText() {
-    return null;
+  @NotNull
+  private static List<ArrangementSectionRule> copy(@NotNull List<ArrangementSectionRule> rules) {
+    List<ArrangementSectionRule> result = new ArrayList<>();
+    for (ArrangementSectionRule rule : rules) {
+      result.add(rule.clone());
+    }
+    return result;
   }
 
   @Override
@@ -159,10 +166,10 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     return ApplicationBundle.message("arrangement.title.settings.tab");
   }
 
+  @Nullable
   @Override
-  protected @NotNull FileType getFileType() {
-    Logger.getInstance(ArrangementSettingsPanel.class).error("This method should not be called because getPreviewText() returns null");
-    return ObjectUtils.notNull(myLanguage.getAssociatedFileType(), FileTypes.UNKNOWN);
+  protected String getPreviewText() {
+    return null;
   }
 
   @Override
@@ -171,11 +178,10 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     return 0;
   }
 
-  private static @NotNull List<ArrangementSectionRule> copy(@NotNull List<ArrangementSectionRule> rules) {
-    List<ArrangementSectionRule> result = new ArrayList<>();
-    for (ArrangementSectionRule rule : rules) {
-      result.add(rule.clone());
-    }
-    return result;
+  @NotNull
+  @Override
+  protected FileType getFileType() {
+    Logger.getInstance(ArrangementSettingsPanel.class).error("This method should not be called because getPreviewText() returns null");
+    return ObjectUtils.notNull(myLanguage.getAssociatedFileType(), FileTypes.UNKNOWN);
   }
 }

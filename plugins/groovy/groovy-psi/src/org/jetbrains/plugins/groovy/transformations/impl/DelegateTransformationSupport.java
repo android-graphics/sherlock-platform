@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -121,7 +121,8 @@ public final class DelegateTransformationSupport implements AstTransformationSup
       return true;
     }
 
-    private @NotNull PsiMethod createDelegationMethod(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
+    @NotNull
+    private PsiMethod createDelegationMethod(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
       final LightMethodBuilder builder = new LightMethodBuilder(myContext.getManager(), GroovyLanguage.INSTANCE, method.getName());
       builder.setMethodReturnType(substitutor.substitute(method.getReturnType()));
       builder.setContainingClass(myContext.getCodeClass());
@@ -171,7 +172,8 @@ public final class DelegateTransformationSupport implements AstTransformationSup
       return new DelegatedMethod(builder, method);
     }
 
-    private @NotNull Condition<PsiMethod> buildCondition(@NotNull PsiAnnotation annotation) {
+    @NotNull
+    private Condition<PsiMethod> buildCondition(@NotNull PsiAnnotation annotation) {
       Condition<PsiMethod> result = method -> {
         if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC)) return false;
 

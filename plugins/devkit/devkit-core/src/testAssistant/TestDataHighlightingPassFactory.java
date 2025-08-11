@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -34,11 +34,12 @@ final class TestDataHighlightingPassFactory implements TextEditorHighlightingPas
   }
 
   @Override
-  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, final @NotNull Editor editor) {
-    final VirtualFile virtualFile = psiFile.getVirtualFile();
+  @Nullable
+  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
+    final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null) {
-      Project project = psiFile.getProject();
-      Document document = psiFile.getViewProvider().getDocument();
+      Project project = file.getProject();
+      Document document = file.getViewProvider().getDocument();
       if (isSupported(virtualFile, project) && document != null) {
         return new TestDataHighlightingPass(project, document);
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -6,10 +6,8 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerGate;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.ChangelistBuilder;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public class MockDelayingChangeProvider implements ChangeProvider {
   private final Object myLock;
   private boolean myLocked;
@@ -20,8 +18,8 @@ public class MockDelayingChangeProvider implements ChangeProvider {
   }
 
   @Override
-  public void getChanges(final @NotNull VcsDirtyScope dirtyScope, final @NotNull ChangelistBuilder builder, final @NotNull ProgressIndicator progress,
-                         final @NotNull ChangeListManagerGate addGate) {
+  public void getChanges(@NotNull final VcsDirtyScope dirtyScope, @NotNull final ChangelistBuilder builder, @NotNull final ProgressIndicator progress,
+                         @NotNull final ChangeListManagerGate addGate) {
     synchronized (myLock) {
       if (myExecuteInsideUpdate == null) {
         return;

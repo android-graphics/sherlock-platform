@@ -38,20 +38,23 @@ class SingularGuavaTableHandler extends SingularMapHandler {
   }
 
 
-  private static @NotNull PsiType getRowKeyType(@NotNull PsiType psiFieldType, PsiManager psiManager) {
+  @NotNull
+  private static PsiType getRowKeyType(@NotNull PsiType psiFieldType, PsiManager psiManager) {
     return PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 0);
   }
 
-  private static @NotNull PsiType getColumnKeyType(@NotNull PsiType psiFieldType, PsiManager psiManager) {
+  @NotNull
+  private static PsiType getColumnKeyType(@NotNull PsiType psiFieldType, PsiManager psiManager) {
     return PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 1);
   }
 
-  @Override
-  protected @NotNull PsiType getValueType(@NotNull PsiType psiFieldType, PsiManager psiManager) {
+  @NotNull
+  protected PsiType getValueType(@NotNull PsiType psiFieldType, PsiManager psiManager) {
     return PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 2);
   }
 
-  private static @NotNull PsiType getCollectionType(@NotNull PsiType psiFieldType, PsiManager psiManager) {
+  @NotNull
+  private static PsiType getCollectionType(@NotNull PsiType psiFieldType, PsiManager psiManager) {
     final PsiType rowKeyType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 0);
     final PsiType columnKeyType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 1);
     final PsiType valueType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 2);
@@ -60,7 +63,8 @@ class SingularGuavaTableHandler extends SingularMapHandler {
   }
 
   @Override
-  protected @NotNull PsiType getBuilderFieldType(@NotNull PsiType psiFieldType, @NotNull Project project) {
+  @NotNull
+  protected PsiType getBuilderFieldType(@NotNull PsiType psiFieldType, @NotNull Project project) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     final PsiType rowKeyType = getRowKeyType(psiFieldType, psiManager);
     final PsiType columnKeyType = getColumnKeyType(psiFieldType, psiManager);
@@ -115,11 +119,11 @@ class SingularGuavaTableHandler extends SingularMapHandler {
 
   @Override
   protected String getOneMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
-    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {1}.{2}; \n" +
+    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {2}.{3}; \n" +
                                      "this.{0}.put(" + LOMBOK_ROW_KEY + ", " + LOMBOK_COLUMN_KEY + ", " + LOMBOK_VALUE + ");\n" +
-                                     "return {3};";
+                                     "return {4};";
 
-    return MessageFormat.format(codeBlockTemplate, info.getFieldName(), collectionQualifiedName,
+    return MessageFormat.format(codeBlockTemplate, info.getFieldName(), singularName, collectionQualifiedName,
                                 sortedCollection ? "naturalOrder()" : "builder()", info.getBuilderChainResult());
   }
 

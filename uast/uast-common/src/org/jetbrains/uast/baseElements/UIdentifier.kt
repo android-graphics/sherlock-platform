@@ -19,6 +19,7 @@ package org.jetbrains.uast
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.internal.log
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 
 open class UIdentifier(
   override val sourcePsi: PsiElement?,

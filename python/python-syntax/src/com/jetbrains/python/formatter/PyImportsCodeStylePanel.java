@@ -47,18 +47,21 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
     return PySyntaxBundle.message("formatter.imports.panel.title");
   }
 
+  @NotNull
   @Override
-  protected @NotNull FileType getFileType() {
+  protected FileType getFileType() {
     return PythonFileType.INSTANCE;
   }
 
+  @Nullable
   @Override
-  protected @Nullable EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
+  protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
     return null;
   }
 
+  @Nullable
   @Override
-  protected @Nullable String getPreviewText() {
+  protected String getPreviewText() {
     return null;
   }
 
@@ -91,8 +94,9 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
            mySortCaseInsensitively.isSelected() != pySettings.OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER;
   }
 
+  @Nullable
   @Override
-  public @Nullable JComponent getPanel() {
+  public JComponent getPanel() {
     return myRootPanel;
   }
 

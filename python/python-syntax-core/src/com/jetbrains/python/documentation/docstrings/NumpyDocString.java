@@ -81,14 +81,16 @@ public class NumpyDocString extends SectionBasedDocString {
     return nextNonEmptyLineNum;
   }
 
+  @Nullable
   @Override
-  protected @Nullable FieldType getFieldType(@NotNull String title) {
+  protected FieldType getFieldType(@NotNull String title) {
     return ourSectionFieldMapping.get(title);
   }
 
+  @NotNull
   @Override
-  protected @NotNull Pair<Substring, Integer> parseSectionHeader(int lineNum) {
-    final @NonNls String title = getLine(lineNum).trim().toString();
+  protected Pair<Substring, Integer> parseSectionHeader(int lineNum) {
+    @NonNls final String title = getLine(lineNum).trim().toString();
     if (SECTION_NAMES.contains(StringUtil.toLowerCase(title))) {
       final Substring nextLine = getLineOrNull(lineNum + 1);
       if (nextLine != null && SECTION_HEADER.matcher(nextLine).matches()) {
@@ -146,7 +148,8 @@ public class NumpyDocString extends SectionBasedDocString {
     return Pair.create(new SectionField(names, type, description != null ? description.trim() : null), parsedDescription.getSecond());
   }
 
-  public @NotNull String getSignature() {
+  @NotNull
+  public String getSignature() {
     return mySignature != null ? mySignature.toString() : "";
   }
 

@@ -2,12 +2,13 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.jetbrains.python.psi.PyIfPartElif;
+import com.jetbrains.python.ast.PyAstIfPartElif;
+import com.jetbrains.python.psi.PyIfPart;
 
 /**
  * PyIfPart that represents an 'elif' part.
  */
-public class PyIfPartElifImpl extends PyConditionalStatementPartImpl implements PyIfPartElif {
+public class PyIfPartElifImpl extends PyConditionalStatementPartImpl implements PyAstIfPartElif, PyIfPart {
   public PyIfPartElifImpl(ASTNode astNode) {
     super(astNode);
   }

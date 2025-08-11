@@ -1,15 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@ApiStatus.Internal
-@VisibleForTesting
-public final class IdeaWatchdogImpl implements IdeaWatchdog {
+final class IdeaWatchdogImpl implements IdeaWatchdog {
   private static final long DEFAULT_WAIT_TIMEOUT_MILLIS = 20 * 1000L;
   private static final long DEFAULT_PULSE_TIMEOUT_MILLIS = 9 * 1000L;
 

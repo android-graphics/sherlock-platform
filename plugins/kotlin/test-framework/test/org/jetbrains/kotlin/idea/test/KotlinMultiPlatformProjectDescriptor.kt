@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
-import kotlin.sequences.forEach
 
 /**
  * The project is created with the following module structure:
@@ -49,10 +48,7 @@ import kotlin.sequences.forEach
  *
  * For more details, please refer to [the YT KB article](https://youtrack.jetbrains.com/articles/KTIJ-A-50/Light-Multiplatform-Tests)
  */
-class KotlinMultiPlatformProjectDescriptor(
-    val platformDescriptors: List<PlatformDescriptor> = PlatformDescriptor.entries,
-    val postponeKotlinSdkCreation: Boolean = false,
-) : KotlinLightProjectDescriptor() {
+object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
     enum class PlatformDescriptor(
         val moduleName: String,
         val targetPlatform: TargetPlatform,
@@ -92,8 +88,8 @@ class KotlinMultiPlatformProjectDescriptor(
             private val javaSourceRoot: String = "src_jvm_java"
             fun javaSourceRoot(): VirtualFile? = findRoot(javaSourceRoot)
 
-            override fun additionalModuleConfiguration(descriptor: KotlinMultiPlatformProjectDescriptor, module: Module, model: ModifiableRootModel) {
-                val sourceRoot = descriptor.createSourceRoot(module, javaSourceRoot)
+            override fun additionalModuleConfiguration(module: Module, model: ModifiableRootModel) {
+                val sourceRoot = createSourceRoot(module, javaSourceRoot)
                 model.addContentEntry(sourceRoot).addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
             }
 
@@ -190,7 +186,7 @@ class KotlinMultiPlatformProjectDescriptor(
             else TempFileSystem.getInstance().findFileByPath("/${rootName}")
                 ?: throw IllegalStateException("Cannot find temp:///${rootName}")
 
-        open fun additionalModuleConfiguration(descriptor: KotlinMultiPlatformProjectDescriptor, module: Module, model: ModifiableRootModel) = Unit
+        open fun additionalModuleConfiguration(module: Module, model: ModifiableRootModel) = Unit
         open fun selectSourceRootByFilePath(filePath: String): VirtualFile? = sourceRoot()
     }
 
@@ -201,7 +197,7 @@ class KotlinMultiPlatformProjectDescriptor(
 
         runWriteAction {
             val descriptorsFromCommonToPlatform =
-                topologicalSort(platformDescriptors, reverseOrder = true, PlatformDescriptor::refinementDependencies)
+                topologicalSort(PlatformDescriptor.entries, reverseOrder = true, PlatformDescriptor::refinementDependencies)
 
             // create libraries beforehand to avoid duplicates
             val projectLibraries = createProjectLibraries(project)
@@ -226,7 +222,7 @@ class KotlinMultiPlatformProjectDescriptor(
     }
 
     private fun createProjectLibraries(project: Project): Map<KmpAwareLibraryDependency, Library> {
-        val allUniqueDependencies = platformDescriptors.flatMap(PlatformDescriptor::libraryDependencies).toSet()
+        val allUniqueDependencies = PlatformDescriptor.entries.flatMap(PlatformDescriptor::libraryDependencies).toSet()
 
         return allUniqueDependencies.associateWith { kmpDependency ->
             createLibraryFromCoordinates(project, kmpDependency)
@@ -267,56 +263,28 @@ class KotlinMultiPlatformProjectDescriptor(
             pureKotlinSourceFolders = listOf(descriptor.sourceRoot()!!.path),
         )
 
-        descriptor.additionalModuleConfiguration(this, module, model)
+        descriptor.additionalModuleConfiguration(module, model)
     }
 
     private fun setUpSdk(module: Module, model: ModifiableRootModel, descriptor: PlatformDescriptor) {
         if (descriptor.isKotlinSdkUsed) {
-            setUpKotlinSdk(module)
-        } else {
-            model.sdk = sdk
-        }
-    }
-
-    private val modulesWithKotlinSdkForPostSetup = mutableSetOf<Module>()
-
-    private fun setUpKotlinSdk(module: Module) {
-        if (postponeKotlinSdkCreation) {
-            modulesWithKotlinSdkForPostSetup += module
-        } else {
             KotlinSdkType.setUpIfNeeded(module)
             ConfigLibraryUtil.configureSdk(
                 module,
                 runReadAction { ProjectJdkTable.getInstance() }.findMostRecentSdkOfType(KotlinSdkType.INSTANCE)
                     ?: error("Kotlin SDK wasn't created")
             )
-        }
-    }
-
-    fun runPostponedSetup() {
-        check(postponeKotlinSdkCreation)
-        runWriteAction {
-            for (module in modulesWithKotlinSdkForPostSetup) {
-                KotlinSdkType.setUpIfNeeded(module)
-                ConfigLibraryUtil.configureSdk(
-                    module,
-                    runReadAction { ProjectJdkTable.getInstance() }.findMostRecentSdkOfType(KotlinSdkType.INSTANCE)
-                        ?: error("Kotlin SDK wasn't created")
-                )
-            }
+        } else {
+            model.sdk = sdk
         }
     }
 
     fun cleanupSourceRoots() = runWriteAction {
-        platformDescriptors.asSequence()
+        PlatformDescriptor.entries.asSequence()
             .map { it.sourceRoot() }
             .filterNotNull()
             .flatMap { it.children.asSequence() }
             .forEach { it.delete(this) }
-    }
-
-    companion object {
-        val ALL_PLATFORMS = KotlinMultiPlatformProjectDescriptor()
     }
 }
 
@@ -342,11 +310,9 @@ private object LibraryDependencies {
     val stdlibNative = KmpAwareLibraryDependency.kotlinNativePrebuilt("klib/common/stdlib:$STDLIB_NATIVE_VERSION")
 
     val coroutinesCommonMain = KmpAwareLibraryDependency.metadataKlib("$KOTLINX_GROUP:$COROUTINES_ARTIFACT:commonMain:$COROUTINES_VERSION")
-    val coroutinesConcurrent =
-        KmpAwareLibraryDependency.metadataKlib("$KOTLINX_GROUP:$COROUTINES_ARTIFACT:concurrentMain:$COROUTINES_VERSION")
+    val coroutinesConcurrent = KmpAwareLibraryDependency.metadataKlib("$KOTLINX_GROUP:$COROUTINES_ARTIFACT:concurrentMain:$COROUTINES_VERSION")
     val coroutinesNative = KmpAwareLibraryDependency.metadataKlib("$KOTLINX_GROUP:$COROUTINES_ARTIFACT:nativeMain:$COROUTINES_VERSION")
-    val coroutinesNativeOther =
-        KmpAwareLibraryDependency.metadataKlib("$KOTLINX_GROUP:$COROUTINES_ARTIFACT:nativeOtherMain:$COROUTINES_VERSION")
+    val coroutinesNativeOther = KmpAwareLibraryDependency.metadataKlib("$KOTLINX_GROUP:$COROUTINES_ARTIFACT:nativeOtherMain:$COROUTINES_VERSION")
     val coroutinesJs = KmpAwareLibraryDependency.klib("$KOTLINX_GROUP:$COROUTINES_ARTIFACT-js:$COROUTINES_VERSION")
     val coroutinesJvm = KmpAwareLibraryDependency.jar("$KOTLINX_GROUP:$COROUTINES_ARTIFACT-jvm:$COROUTINES_VERSION")
     val coroutinesMingw = KmpAwareLibraryDependency.klib("$KOTLINX_GROUP:$COROUTINES_ARTIFACT-mingwx64:$COROUTINES_VERSION")

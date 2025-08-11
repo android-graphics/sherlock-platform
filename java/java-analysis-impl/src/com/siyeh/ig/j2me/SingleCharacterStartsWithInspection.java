@@ -34,7 +34,8 @@ import org.jetbrains.annotations.NotNull;
 public final class SingleCharacterStartsWithInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("single.character.startswith.problem.descriptor");
   }
 
@@ -46,7 +47,8 @@ public final class SingleCharacterStartsWithInspection extends BaseInspection {
   private static class SingleCharacterStartsWithFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "single.character.startswith.quickfix");
     }
@@ -68,7 +70,7 @@ public final class SingleCharacterStartsWithInspection extends BaseInspection {
         character = "\\'";
       }
       final String qualifierText = qualifier.getText();
-      final @NonNls StringBuilder newExpression = new StringBuilder();
+      @NonNls final StringBuilder newExpression = new StringBuilder();
       final PsiClass stringClass = ClassUtils.findClass(CommonClassNames.JAVA_LANG_STRING, qualifier);
       // String.isEmpty() was introduced in Java 6
       final PsiMethod[] isEmptyMethod = (stringClass == null) ? PsiMethod.EMPTY_ARRAY : stringClass.findMethodsByName("isEmpty", false);

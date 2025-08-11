@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -36,17 +36,19 @@ public abstract class InspectionRVContentProvider {
 
   protected static class RefEntityContainer<Descriptor> {
     private final Descriptor[] myDescriptors;
-    private final @Nullable RefEntity myEntity;
+    @Nullable
+    private final RefEntity myEntity;
 
     public RefEntityContainer(@Nullable RefEntity entity, Descriptor[] descriptors) {
       myEntity = entity;
       myDescriptors = descriptors;
     }
 
-    public @NotNull RefElementNode createNode(@NotNull InspectionToolPresentation presentation,
-                                              InspectionTreeModel model,
-                                              InspectionTreeNode topParent,
-                                              boolean showStructure) {
+    @NotNull
+    public RefElementNode createNode(@NotNull InspectionToolPresentation presentation,
+                                     InspectionTreeModel model,
+                                     InspectionTreeNode topParent,
+                                     boolean showStructure) {
       RefEntityContainer<Descriptor> owner = getOwner();
       InspectionTreeNode parent;
       if (owner == null) {
@@ -60,18 +62,21 @@ public abstract class InspectionRVContentProvider {
       return model.createRefElementNode(myEntity, () -> presentation.createRefNode(myEntity, model, parent), parent);
     }
 
-    public @Nullable RefEntity getRefEntity() {
+    @Nullable
+    public RefEntity getRefEntity() {
       return myEntity;
     }
 
-    protected @Nullable String getModuleName() {
+    @Nullable
+    protected String getModuleName() {
       final RefModule refModule = myEntity instanceof RefElement
                                   ? ((RefElement)myEntity).getModule()
                                   : myEntity instanceof RefModule ? (RefModule)myEntity : null;
       return refModule != null ? refModule.getName() : null;
     }
 
-    public @Nullable Module getModule(Project project) {
+    @Nullable
+    public Module getModule(Project project) {
       String name = getModuleName();
       if (name == null) return null;
       return ReadAction.compute(() -> ModuleManager.getInstance(project).findModuleByName(name));
@@ -85,7 +90,8 @@ public abstract class InspectionRVContentProvider {
       return myDescriptors;
     }
 
-    private @Nullable RefEntityContainer<Descriptor> getOwner() {
+    @Nullable
+    private RefEntityContainer<Descriptor> getOwner() {
       if (myEntity == null) return null;
       final RefEntity entity = myEntity.getOwner();
       return entity instanceof RefElement && !(entity instanceof RefDirectory)

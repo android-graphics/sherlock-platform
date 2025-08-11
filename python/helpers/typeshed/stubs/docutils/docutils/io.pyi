@@ -8,9 +8,10 @@ from _typeshed import (
     Unused,
 )
 from re import Pattern
-from typing import IO, Any, ClassVar, Generic, Literal, TypeVar
+from typing import Any, ClassVar
+from typing_extensions import Literal
 
-from docutils import TransformSpec, nodes
+from docutils import TransformSpec
 
 __docformat__: str
 
@@ -20,20 +21,10 @@ class OutputError(OSError): ...
 def check_encoding(stream: Any, encoding: str) -> bool | None: ...
 def error_string(err: BaseException) -> str: ...
 
-_S = TypeVar("_S")
-
-class Input(TransformSpec, Generic[_S]):
+class Input(TransformSpec):
     component_type: ClassVar[str]
     default_source_path: ClassVar[str | None]
-    encoding: str | None
-    error_handler: str
-    source: _S | None
-    source_path: str | None
-    successful_encoding: str | None = None
-    def __init__(
-        self, source: _S | None = None, source_path: str | None = None, encoding: str | None = None, error_handler: str = "strict"
-    ) -> None: ...
-    def read(self) -> str: ...
+    def read(self) -> Any: ...
     def decode(self, data: str | bytes | bytearray) -> str: ...
     coding_slug: ClassVar[Pattern[bytes]]
     byte_order_marks: ClassVar[tuple[tuple[bytes, str], ...]]
@@ -65,7 +56,7 @@ class ErrorOutput:
     def close(self) -> None: ...
     def isatty(self) -> bool: ...
 
-class FileInput(Input[IO[str]]):
+class FileInput(Input):
     def __init__(
         self,
         source: Incomplete | None = None,
@@ -85,14 +76,14 @@ class FileOutput(Output):
 
 class BinaryFileOutput(FileOutput): ...
 
-class StringInput(Input[str]):
+class StringInput(Input):
     default_source_path: ClassVar[str]
 
 class StringOutput(Output):
     default_destination_path: ClassVar[str]
     destination: str | bytes  # only defined after call to write()
 
-class NullInput(Input[Any]):
+class NullInput(Input):
     default_source_path: ClassVar[str]
     def read(self) -> str: ...
 
@@ -100,5 +91,5 @@ class NullOutput(Output):
     default_destination_path: ClassVar[str]
     def write(self, data: Unused) -> None: ...
 
-class DocTreeInput(Input[nodes.document]):
+class DocTreeInput(Input):
     default_source_path: ClassVar[str]

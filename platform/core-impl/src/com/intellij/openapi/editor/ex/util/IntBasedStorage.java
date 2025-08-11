@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.editor.ex.util.SegmentArray.INITIAL_SIZE;
@@ -11,7 +10,6 @@ import static com.intellij.openapi.editor.ex.util.SegmentArray.INITIAL_SIZE;
  * SegmentArrayWithData storage based on the int array. It allows to store one int per segment.
  * It allows to pack {@link IElementType} index and state of the lexer for segment.
  */
-@ApiStatus.Internal
 public class IntBasedStorage implements DataStorage {
   int[] myData;
 

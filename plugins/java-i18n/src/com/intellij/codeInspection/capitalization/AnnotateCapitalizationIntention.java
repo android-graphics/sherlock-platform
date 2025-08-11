@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.capitalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -37,25 +37,28 @@ public final class AnnotateCapitalizationIntention implements IntentionAction {
     return true;
   }
 
+  @Nls
+  @NotNull
   @Override
-  public @Nls @NotNull String getText() {
+  public String getText() {
     return getFamilyName();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return JavaI18nBundle.message("intention.family.annotate.capitalization.type");
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final PsiModifierListOwner modifierListOwner = getElement(editor, file);
     if (modifierListOwner == null) throw new IncorrectOperationException();
 
     BaseListPopupStep<Nls.Capitalization> step =
       new BaseListPopupStep<>(null, Nls.Capitalization.Title, Nls.Capitalization.Sentence) {
         @Override
-        public PopupStep<?> onChosen(final Nls.Capitalization selectedValue, boolean finalChoice) {
+        public PopupStep onChosen(final Nls.Capitalization selectedValue, boolean finalChoice) {
           WriteCommandAction.writeCommandAction(project).run(() -> {
             String nls = Nls.class.getName();
             PsiAnnotation annotation = JavaPsiFacade.getInstance(project).getElementFactory()
@@ -75,7 +78,8 @@ public final class AnnotateCapitalizationIntention implements IntentionAction {
     return false;
   }
 
-  private static @Nullable PsiModifierListOwner getElement(Editor editor, PsiFile file) {
+  @Nullable
+  private static PsiModifierListOwner getElement(Editor editor, PsiFile file) {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class, false);
     if (parameter == null) return null;

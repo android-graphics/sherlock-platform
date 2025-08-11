@@ -1,6 +1,0 @@
-package test
-
-import dependency.TypeAliasedFoo
-
-@TypeAliasedFoo
-fun usage() {}

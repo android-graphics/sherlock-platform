@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -12,8 +12,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-public final class NewActionGroup extends ActionGroup implements ActionWithDelegate<ActionGroup> {
-  private static final @NonNls String PROJECT_OR_MODULE_GROUP_ID = "NewProjectOrModuleGroup";
+/**
+ * @author Dmitry Avdeev
+ */
+public final class NewActionGroup extends ActionGroup {
+  @NonNls private static final String PROJECT_OR_MODULE_GROUP_ID = "NewProjectOrModuleGroup";
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -43,11 +46,6 @@ public final class NewActionGroup extends ActionGroup implements ActionWithDeleg
     return mergedActions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  @Override
-  public @NotNull ActionGroup getDelegate() {
-    return (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WEIGHING_NEW);
-  }
-
   /** @deprecated Avoid explicit synchronous group expansion! */
   @Deprecated(forRemoval = true)
   public static boolean isActionInNewPopupMenu(@NotNull AnAction action) {
@@ -69,9 +67,7 @@ public final class NewActionGroup extends ActionGroup implements ActionWithDeleg
   @Deprecated(forRemoval = true)
   public static boolean anyActionFromGroupMatches(@NotNull ActionGroup group, boolean processPopupSubGroups,
                                                   @NotNull Predicate<? super AnAction> condition) {
-    AnAction[] actions = group instanceof DefaultActionGroup o ? o.getChildren(ActionManager.getInstance()) :
-                         group.getChildren(null);
-    for (AnAction child : actions) {
+    for (AnAction child : group.getChildren(null)) {
       if (condition.test(child)) return true;
       if (child instanceof ActionGroup o) {
         if ((processPopupSubGroups || !o.isPopup()) && anyActionFromGroupMatches(o, processPopupSubGroups, condition)) {

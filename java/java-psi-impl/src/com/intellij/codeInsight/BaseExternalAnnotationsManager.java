@@ -21,7 +21,6 @@ import com.intellij.util.containers.ConcurrentMostlySingularMultiMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.text.CharSequenceReader;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.Attributes;
@@ -93,29 +92,6 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   @Override
-  public @NotNull List<PsiAnnotation> findExternalAnnotations(@NotNull PsiModifierListOwner listOwner,
-                                                              @NotNull Collection<String> annotationFQNs) {
-    List<AnnotationData> result = collectExternalAnnotations(listOwner);
-    if (result.isEmpty()) return Collections.emptyList();
-    SmartList<PsiAnnotation> annotations = new SmartList<>();
-    for (AnnotationData data : result) {
-      if (data.hasNoTypePath() && annotationFQNs.contains(data.annotationClassFqName)) {
-        annotations.add(data.getAnnotation(this));
-      }
-    }
-    return annotations;
-  }
-
-  @Override
-  public @NotNull PsiAnnotation @NotNull [] findExternalTypeAnnotations(@NotNull PsiModifierListOwner listOwner,
-                                                                        @NotNull String typePath) {
-    List<AnnotationData> result = collectExternalAnnotations(listOwner);
-    if (result.isEmpty()) return PsiAnnotation.EMPTY_ARRAY;
-    return StreamEx.of(result).filter(data -> typePath.equals(data.typePath))
-      .map(data -> data.getAnnotation(this)).toArray(PsiAnnotation.EMPTY_ARRAY);
-  }
-
-  @Override
   public @Nullable List<PsiAnnotation> findDefaultConstructorExternalAnnotations(@NotNull PsiClass aClass, @NotNull String annotationFQN) {
     if (aClass.getConstructors().length > 0) {
       return null;
@@ -127,7 +103,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   private @NotNull List<PsiAnnotation> filterAnnotations(@NotNull List<AnnotationData> result, @NotNull String annotationFQN) {
     SmartList<PsiAnnotation> annotations = new SmartList<>();
     for (AnnotationData data : result) {
-      if (data.hasNoTypePath() && data.annotationClassFqName.equals(annotationFQN)) {
+      if (data.annotationClassFqName.equals(annotationFQN)) {
         PsiAnnotation annotation = data.getAnnotation(this);
         annotations.add(annotation);
       }
@@ -141,15 +117,12 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       return null;
     }
     List<AnnotationData> result = collectDefaultConstructorExternalAnnotations(aClass);
-    return StreamEx.of(result)
-      .filter(AnnotationData::hasNoTypePath)
-      .map(data -> data.getAnnotation(this))
-      .toList();
+    return ContainerUtil.map(result, data -> data.getAnnotation(this));
   }
 
   @Override
   public boolean isExternalAnnotationWritable(@NotNull PsiModifierListOwner listOwner, final @NotNull String annotationFQN) {
-    // note that this method doesn't cache its result
+    // note that this method doesn't cache it's result
     List<AnnotationData> map = doCollect(listOwner, true);
     return findByFQN(map, annotationFQN) != null;
   }
@@ -159,12 +132,10 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   @Override
-  public @NotNull PsiAnnotation @NotNull [] findExternalAnnotations(final @NotNull PsiModifierListOwner listOwner) {
+  public PsiAnnotation @Nullable [] findExternalAnnotations(final @NotNull PsiModifierListOwner listOwner) {
     final List<AnnotationData> result = collectExternalAnnotations(listOwner);
-    return result.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : StreamEx.of(result)
-      .filter(data -> data.typePath == null)
-      .map(data -> data.getAnnotation(this))
-      .toArray(PsiAnnotation.EMPTY_ARRAY);
+    return result.isEmpty() ? null : ContainerUtil.map2Array(result, PsiAnnotation.EMPTY_ARRAY,
+                                                             data -> data.getAnnotation(this));
   }
 
   private static final List<AnnotationData> NO_DATA = new ArrayList<>(1);
@@ -372,7 +343,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     if (!hasInvalidAttribute(invalidXml)) {
       return invalidXml;
     }
-    // We assume that XML has single- and double-quote characters only for attribute values, therefore, we don't do any complex parsing,
+    // We assume that XML has single- and double-quote characters only for attribute values, therefore we don't any complex parsing,
     // just have binary inAttribute state
     StringBuilder buf = new StringBuilder(invalidXml.length());
     boolean inAttribute = false;
@@ -454,20 +425,14 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   public static final class AnnotationData {
-    private final @NotNull String annotationClassFqName;
-    private final @NotNull String annotationParameters;
-    private final @Nullable String typePath;
+    private final String annotationClassFqName;
+    private final String annotationParameters;
 
     private volatile PsiAnnotation myAnnotation;
 
-    private AnnotationData(@NotNull String fqn, @NotNull String parameters, @Nullable String typePath) {
+    private AnnotationData(@NotNull String fqn, @NotNull String parameters) {
       annotationClassFqName = fqn;
       annotationParameters = parameters;
-      this.typePath = typePath;
-    }
-
-    public boolean hasNoTypePath() {
-      return typePath == null;
     }
 
     public @NotNull PsiAnnotation getAnnotation(@NotNull BaseExternalAnnotationsManager context) {
@@ -485,25 +450,15 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       if (o == null || getClass() != o.getClass()) return false;
 
       AnnotationData data = (AnnotationData)o;
-      return annotationClassFqName.equals(data.annotationClassFqName) &&
-             annotationParameters.equals(data.annotationParameters) &&
-             Objects.equals(typePath, data.typePath);
+
+      return annotationClassFqName.equals(data.annotationClassFqName) && annotationParameters.equals(data.annotationParameters);
     }
 
     @Override
     public int hashCode() {
       int result = annotationClassFqName.hashCode();
       result = 31 * result + annotationParameters.hashCode();
-      result = 31 * result + Objects.hashCode(typePath);
       return result;
-    }
-
-    /**
-     * Returns annotation typePath, as specified in XML. See {@link com.intellij.psi.impl.cache.ExternalTypeAnnotationContainer} 
-     * for syntax description;
-     */
-    public @Nullable String getTypePath() {
-      return typePath;
     }
 
     @Override
@@ -538,7 +493,6 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
     private String myExternalName;
     private String myAnnotationFqn;
-    private String myTypePath;
     private StringBuilder myArguments;
 
     private DataParsingSaxHandler(@NotNull VirtualFile file, @Nullable BaseExternalAnnotationsManager manager) {
@@ -550,11 +504,9 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     public void startElement(String uri, String localName, String qName, Attributes attributes) {
       if ("item".equals(qName)) {
         myExternalName = attributes.getValue("name");
-        myTypePath = null;
       }
       else if ("annotation".equals(qName)) {
         myAnnotationFqn = attributes.getValue("name");
-        myTypePath = attributes.getValue("typePath");
         myArguments = new StringBuilder();
       }
       else if ("val".equals(qName)) {
@@ -574,25 +526,16 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     public void endElement(String uri, String localName, String qName) {
       if ("item".equals(qName)) {
         myExternalName = null;
-        myTypePath = null;
       }
       else if ("annotation".equals(qName) && myExternalName != null && myAnnotationFqn != null) {
         for (AnnotationData existingData : myData.get(myExternalName)) {
-          if (existingData.annotationClassFqName.equals(myAnnotationFqn)
-              && Objects.equals(myTypePath, existingData.typePath)
-              && myExternalAnnotationsManager != null) {
-            myExternalAnnotationsManager.duplicateError(myFile, myExternalName, "Duplicate annotation '" +
-                                                                                myAnnotationFqn +
-                                                                                "'"
-                                                                                +
-                                                                                (myTypePath == null
-                                                                                 ? ""
-                                                                                 : " for type path '" + myTypePath + "'"));
+          if (existingData.annotationClassFqName.equals(myAnnotationFqn) && myExternalAnnotationsManager != null) {
+            myExternalAnnotationsManager.duplicateError(myFile, myExternalName, "Duplicate annotation '" + myAnnotationFqn + "'");
           }
         }
 
         String argumentsString = myArguments.length() == 0 ? "" : myExternalAnnotationsManager == null ? myArguments.toString() : myExternalAnnotationsManager.intern(myArguments.toString());
-        AnnotationData data = new AnnotationData(myAnnotationFqn, argumentsString, myTypePath);
+        AnnotationData data = new AnnotationData(myAnnotationFqn, argumentsString);
         myData.add(myExternalName, myExternalAnnotationsManager == null ? data : myExternalAnnotationsManager.internAnnotationData(data));
 
         myAnnotationFqn = null;

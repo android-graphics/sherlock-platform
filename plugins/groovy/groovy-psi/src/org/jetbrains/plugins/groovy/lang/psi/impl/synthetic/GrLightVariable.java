@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -87,8 +87,9 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
     return true;
   }
 
+  @NotNull
   @Override
-  public @NotNull SearchScope getUseScope() {
+  public SearchScope getUseScope() {
     return new LocalSearchScope(getDeclarationScope());
   }
 

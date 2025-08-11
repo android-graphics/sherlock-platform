@@ -77,7 +77,7 @@ public abstract class AbstractDelombokAction extends AnAction {
     }
   }
 
-  private void processDirectory(final @NotNull Project project, @NotNull VirtualFile vFile) {
+  private void processDirectory(@NotNull final Project project, @NotNull VirtualFile vFile) {
     VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
@@ -99,11 +99,11 @@ public abstract class AbstractDelombokAction extends AnAction {
     }
   }
 
-  protected void process(final @NotNull Project project, final @NotNull PsiJavaFile psiJavaFile) {
+  protected void process(@NotNull final Project project, @NotNull final PsiJavaFile psiJavaFile) {
     executeCommand(project, () -> getHandler().invoke(project, psiJavaFile));
   }
 
-  protected void process(final @NotNull Project project, final @NotNull PsiFile psiFile, final @NotNull PsiClass psiClass) {
+  protected void process(@NotNull final Project project, @NotNull final PsiFile psiFile, @NotNull final PsiClass psiClass) {
     executeCommand(project, () -> getHandler().invoke(project, psiFile, psiClass));
   }
 
@@ -166,7 +166,8 @@ public abstract class AbstractDelombokAction extends AnAction {
     return ContainerUtil.exists(classesIntern, this::isValidForClass);
   }
 
-  private static @Nullable PsiClass getTargetClass(Editor editor, PsiFile file) {
+  @Nullable
+  private static PsiClass getTargetClass(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) {
@@ -191,7 +192,8 @@ public abstract class AbstractDelombokAction extends AnAction {
     return targetClass != null && isValidForClass(targetClass);
   }
 
-  private @NlsContexts.Command String getCommandName() {
+  @NlsContexts.Command
+  private String getCommandName() {
     String text = getTemplatePresentation().getText();
     return text == null ? "" : text;
   }

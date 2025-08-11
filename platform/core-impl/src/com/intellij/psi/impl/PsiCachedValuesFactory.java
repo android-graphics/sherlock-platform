@@ -6,7 +6,6 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValue;
@@ -29,22 +28,17 @@ public final class PsiCachedValuesFactory implements CachedValuesFactory {
 
   @Override
   public @NotNull <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider, boolean trackValue) {
-    if (trackValue) {
-      return new PsiCachedValueImpl.SoftTracked<>(myManager, provider);
-    }
-
-    return new PsiCachedValueImpl.Soft<>(myManager, provider);
+    return new PsiCachedValueImpl.Soft<>(myManager, provider, trackValue);
   }
 
   @Override
   public @NotNull <T> CachedValue<T> createCachedValue(@NotNull UserDataHolder userDataHolder,
                                                        @NotNull CachedValueProvider<T> provider,
                                                        boolean trackValue) {
-    if (preferHardRefs(userDataHolder)) {
-
-      return trackValue ?
-             new PsiCachedValueImpl.DirectTracked<>(myManager, provider) :
-             new PsiCachedValueImpl.Direct<>(myManager, provider);
+    if (preferHardRefsForPsiCachedValue
+        && userDataHolder instanceof PsiElement
+        && !(userDataHolder instanceof PsiFile)) { // PsiFile cache may outlive the loaded content of file
+      return new PsiCachedValueImpl.Direct<>(myManager, provider, trackValue);
     }
 
     return createCachedValue(provider, trackValue);
@@ -53,29 +47,19 @@ public final class PsiCachedValuesFactory implements CachedValuesFactory {
   @Override
   public @NotNull <T, P> ParameterizedCachedValue<T, P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T, P> provider,
                                                                                        boolean trackValue) {
-    return trackValue ?
-           new PsiParameterizedCachedValue.SoftTracked<>(myManager, provider) :
-           new PsiParameterizedCachedValue.Soft<>(myManager, provider);
+    return new PsiParameterizedCachedValue.Soft<>(myManager, provider, trackValue);
   }
 
   @Override
   public @NotNull <T, P> ParameterizedCachedValue<T, P> createParameterizedCachedValue(@NotNull UserDataHolder userDataHolder,
                                                                                        @NotNull ParameterizedCachedValueProvider<T, P> provider,
                                                                                        boolean trackValue) {
-    if (preferHardRefs(userDataHolder)) {
-      return trackValue ?
-             new PsiParameterizedCachedValue.DirectTracked<>(myManager, provider) :
-             new PsiParameterizedCachedValue.Direct<>(myManager, provider);
+    if (preferHardRefsForPsiCachedValue
+        && userDataHolder instanceof PsiElement
+        && !(userDataHolder instanceof PsiFile)) { // PsiFile cache may outlive the loaded content of file
+      return new PsiParameterizedCachedValue.Direct<>(myManager, provider, trackValue);
     }
 
     return createParameterizedCachedValue(provider, trackValue);
   }
-
-  private static boolean preferHardRefs(@NotNull UserDataHolder userDataHolder) {
-    return preferHardRefsForPsiCachedValue
-           && userDataHolder instanceof PsiElement
-           && !(userDataHolder instanceof StubBasedPsiElement) // StubBasedPsiElement cache may outlive the loaded content of a file
-           && !(userDataHolder instanceof PsiFile);
-  }
-
 }

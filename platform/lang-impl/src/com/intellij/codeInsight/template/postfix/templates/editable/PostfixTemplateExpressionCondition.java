@@ -31,10 +31,8 @@ public interface PostfixTemplateExpressionCondition<T extends PsiElement> extend
    */
   @NotNull @NonNls String getId();
 
-  @Override
   boolean equals(Object o);
 
-  @Override
   int hashCode();
 
   default void serializeTo(@NotNull Element element) {

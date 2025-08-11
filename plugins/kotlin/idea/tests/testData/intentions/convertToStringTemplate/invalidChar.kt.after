@@ -1,2 +1,2 @@
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 val foo = "foo${' "'}bar${' ""'}"

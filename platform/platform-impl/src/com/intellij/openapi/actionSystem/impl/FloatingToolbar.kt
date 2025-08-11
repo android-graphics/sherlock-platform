@@ -10,9 +10,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
@@ -106,8 +104,7 @@ abstract class FloatingToolbar(
   @RequiresEdt
   private suspend fun showIfHidden() {
     preventHintFromShowing = true
-    val enabled = writeIntentReadAction(::isEnabled)
-    if (isShown() || !enabled) {
+    if (isShown() || !isEnabled()) {
       return
     }
     val canBeShownAtCurrentSelection = readAction { canBeShownAtCurrentSelection() }
@@ -115,10 +112,7 @@ abstract class FloatingToolbar(
       return
     }
     val hint = createHint()
-    //maybe readaction
-    writeIntentReadAction {
-      showHint (hint)
-    }
+    showHint(hint)
     hint.addHintListener {
       this.hint = null
     }
@@ -167,11 +161,9 @@ abstract class FloatingToolbar(
 
   private suspend fun createUpdatedActionToolbar(targetComponent: JComponent): ActionToolbar {
     return suspendCancellableCoroutine { continuation ->
-      WriteIntentReadAction.run {
-        createActionToolbar(targetComponent) {
-          if (!continuation.isCompleted) {
-            continuation.resume(it)
-          }
+      createActionToolbar(targetComponent) {
+        if (!continuation.isCompleted) {
+          continuation.resume(it)
         }
       }
     }
@@ -220,13 +212,7 @@ abstract class FloatingToolbar(
     }
     val elementAtStart = PsiUtilCore.getElementAtOffset(file, selectionModel.selectionStart)
     val elementAtEnd = PsiUtilCore.getElementAtOffset(file, selectionModel.selectionEnd)
-    return !(hasIgnoredParent(elementAtStart) || hasIgnoredParent(elementAtEnd)) &&
-           !AppMode.isRemoteDevHost() &&
-           isAvailableForSelection(editor, elementAtStart, elementAtEnd)
-  }
-
-  protected open fun isAvailableForSelection(editor: Editor, elementAtStart: PsiElement, elementAtEnd: PsiElement): Boolean {
-    return true
+    return !(hasIgnoredParent(elementAtStart) || hasIgnoredParent(elementAtEnd)) && !AppMode.isRemoteDevHost()
   }
 
   /**

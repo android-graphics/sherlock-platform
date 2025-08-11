@@ -12,8 +12,6 @@ import com.intellij.ui.JBColor
 import com.intellij.usages.TextChunk
 import com.intellij.util.FontUtil
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.codeInsight.slicer.AbstractKotlinSliceUsage
-import org.jetbrains.kotlin.idea.codeInsight.slicer.HackedSliceLeafValueClassNode
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import java.awt.Font
@@ -80,7 +78,7 @@ internal fun buildTreeRepresentation(rootNode: SliceNode): String {
 
                     repeat(indent) { append('\t') }
 
-                    if (usage is AbstractKotlinSliceUsage && usage.isDereference) {
+                    if (usage is KotlinSliceDereferenceUsage) {
                         append("DEREFERENCE: ")
                     }
 
@@ -89,7 +87,7 @@ internal fun buildTreeRepresentation(rootNode: SliceNode): String {
                     }
 
                     val expectedBehaviourSuffixes = mutableSetOf<String>()
-                    if (usage is AbstractKotlinSliceUsage) {
+                    if (usage is KotlinSliceUsage) {
                         usage.mode.inlineCallStack.forEach {
                             append("(INLINE CALL ${it.function?.name}) ")
                         }
@@ -143,7 +141,7 @@ private val SliceNode.sortedChildren: List<SliceNode>
 internal fun testSliceFromOffset(
     file: KtFile,
     offset: Int,
-    doTest: (sliceProvider: SliceLanguageSupportProvider, rootNode: SliceRootNode) -> Unit
+    doTest: (sliceProvider: KotlinSliceProvider, rootNode: SliceRootNode) -> Unit
 ) {
     val fileText = file.text
     val flowKind = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// FLOW: ")
@@ -159,7 +157,7 @@ internal fun testSliceFromOffset(
     }
 
     val elementAtCaret = file.findElementAt(offset)!!
-    val sliceProvider = LanguageSlicing.getProvider(elementAtCaret)
+    val sliceProvider = KotlinSliceProvider()
     val expression = sliceProvider.getExpressionAtCaret(elementAtCaret, analysisParams.dataFlowToThis)!!
     val rootUsage = sliceProvider.createRootUsage(expression, analysisParams)
     val rootNode = SliceRootNode(file.project, DuplicateMap(), rootUsage)

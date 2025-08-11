@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.facet.FacetManager;
@@ -26,7 +25,8 @@ import java.lang.reflect.Proxy;
  */
 public final class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
   @Override
-  public @Nullable ModifiableRootModel getModuleModifiableModel(final @NotNull Module module) {
+  @Nullable
+  public ModifiableRootModel getModuleModifiableModel(@NotNull final Module module) {
     final Project project = module.getProject();
     final ModulesConfigurator configurator = getModulesConfigurator(project);
     if (configurator != null) {
@@ -40,13 +40,14 @@ public final class IdeaModifiableModelsProvider implements ModifiableModelsProvi
     return ModuleRootManager.getInstance(module).getModifiableModel();
   }
 
-  private static @Nullable ModulesConfigurator getModulesConfigurator(@NotNull Project project) {
+  @Nullable
+  private static ModulesConfigurator getModulesConfigurator(@NotNull Project project) {
     StructureConfigurableContext context = getProjectStructureContext(project);
     return context != null ? context.getModulesConfigurator() : null;
   }
 
   @Override
-  public void commitModuleModifiableModel(final @NotNull ModifiableRootModel model) {
+  public void commitModuleModifiableModel(@NotNull final ModifiableRootModel model) {
     if (!(model instanceof Proxy)) {
       model.commit();
     }
@@ -54,15 +55,16 @@ public final class IdeaModifiableModelsProvider implements ModifiableModelsProvi
   }
 
   @Override
-  public void disposeModuleModifiableModel(final @NotNull ModifiableRootModel model) {
+  public void disposeModuleModifiableModel(@NotNull final ModifiableRootModel model) {
     if (!(model instanceof Proxy)) {
       model.dispose();
     }
     //IDEA should dispose this model instead of us, because it is was given from StructureConfigurableContext
   }
 
+  @NotNull
   @Override
-  public @NotNull ModifiableFacetModel getFacetModifiableModel(@NotNull Module module) {
+  public ModifiableFacetModel getFacetModifiableModel(@NotNull Module module) {
     final ModulesConfigurator configurator = getModulesConfigurator(module.getProject());
     if (configurator != null) {
       return configurator.getFacetsConfigurator().getOrCreateModifiableModel(module);
@@ -78,8 +80,9 @@ public final class IdeaModifiableModelsProvider implements ModifiableModelsProvi
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull LibraryTable.ModifiableModel getLibraryTableModifiableModel() {
+  public LibraryTable.ModifiableModel getLibraryTableModifiableModel() {
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       if (!project.isInitialized()) {
@@ -113,7 +116,8 @@ public final class IdeaModifiableModelsProvider implements ModifiableModelsProvi
     }
   }
 
-  private static @Nullable StructureConfigurableContext getProjectStructureContext(@NotNull Project project) {
+  @Nullable
+  private static StructureConfigurableContext getProjectStructureContext(@NotNull Project project) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return null;
 
     final ProjectStructureConfigurable structureConfigurable = ProjectStructureConfigurable.getInstance(project);

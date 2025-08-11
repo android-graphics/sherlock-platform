@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.lang.Language;
@@ -32,7 +32,7 @@ public class GrLightTypeParameterList extends LightElement implements GrTypePara
   }
 
   @Override
-  public int getTypeParameterIndex(@NotNull PsiTypeParameter typeParameter) {
+  public int getTypeParameterIndex(PsiTypeParameter typeParameter) {
     //noinspection SuspiciousMethodCalls
     return myTypeParameters.indexOf(typeParameter);
   }
@@ -51,7 +51,8 @@ public class GrLightTypeParameterList extends LightElement implements GrTypePara
   }
 
   @SuppressWarnings("unused")
-  public @NotNull GrLightTypeParameterList addTypeParameter(@NotNull GrTypeParameter typeParameter) {
+  @NotNull
+  public GrLightTypeParameterList addTypeParameter(@NotNull GrTypeParameter typeParameter) {
     myTypeParameters.add(typeParameter);
     return this;
   }

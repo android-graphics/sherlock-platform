@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmElementVisitor;
@@ -60,8 +60,9 @@ public interface PsiTypeParameter extends PsiClass, PsiAnnotationOwner, JvmTypeP
     return getExtendsList().getReferencedTypes();
   }
 
+  @Nullable
   @Override
-  default @Nullable <T> T accept(@NotNull JvmElementVisitor<T> visitor) {
+  default <T> T accept(@NotNull JvmElementVisitor<T> visitor) {
     return JvmTypeParameter.super.accept(visitor);
   }
 }

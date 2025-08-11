@@ -2,10 +2,11 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.psi.impl
 
-import com.intellij.debugger.streams.core.psi.ChainTransformer
+import com.intellij.debugger.streams.psi.ChainTransformer
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.StreamCallChecker
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.previousCall
 import org.jetbrains.kotlin.psi.KtCallExpression
+import java.util.*
 
 open class TerminatedChainBuilder(
     transformer: ChainTransformer<KtCallExpression>,

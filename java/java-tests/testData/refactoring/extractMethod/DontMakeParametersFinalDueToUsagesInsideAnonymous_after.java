@@ -7,7 +7,7 @@ class Box {
   }
 
     @NotNull
-    private Box.Data newMethod(String str1, String str2) {
+    private Data newMethod(String str1, String str2) {
         return new Data() {
           @Override
           public String getA() {

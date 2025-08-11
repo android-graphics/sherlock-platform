@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.actions;
 
@@ -14,13 +14,11 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiStatus.Internal
 public abstract class AbstractMissingFilesAction extends AnAction implements DumbAware {
 
   @Override
@@ -54,7 +52,7 @@ public abstract class AbstractMissingFilesAction extends AnAction implements Dum
       for (FilePath file : files) {
         VcsDirtyScopeManager.getInstance(project).fileDirty(file);
       }
-      if (!allExceptions.isEmpty()) {
+      if (allExceptions.size() > 0) {
         AbstractVcsHelper.getInstance(project).showErrors(allExceptions, VcsBundle.message("changes.tab.title.vcs.errors"));
       }
     };

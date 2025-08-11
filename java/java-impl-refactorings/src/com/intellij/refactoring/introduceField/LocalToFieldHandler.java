@@ -22,7 +22,6 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
@@ -110,7 +109,7 @@ public abstract class LocalToFieldHandler {
   /**
    * @deprecated Use {@link #isStaticFieldAllowed(PsiClass)} instead.
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static boolean mayContainConstants(@NotNull PsiClass aClass) {
     return isStaticFieldAllowed(aClass);
   }
@@ -160,8 +159,7 @@ public abstract class LocalToFieldHandler {
     return true;
   }
 
-  private static PsiField createField(PsiLocalVariable local, @NotNull PsiType forcedType, String fieldName, boolean includeInitializer) {
-    forcedType = PsiTypesUtil.removeExternalAnnotations(forcedType);
+  private static PsiField createField(PsiLocalVariable local, PsiType forcedType, String fieldName, boolean includeInitializer) {
     @NonNls StringBuilder pattern = new StringBuilder();
     pattern.append("private int ");
     pattern.append(fieldName);

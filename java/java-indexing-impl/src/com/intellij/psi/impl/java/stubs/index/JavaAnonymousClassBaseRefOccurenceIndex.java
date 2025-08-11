@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
@@ -19,8 +19,9 @@ public final class JavaAnonymousClassBaseRefOccurenceIndex extends StringStubInd
     return ourInstance;
   }
 
+  @NotNull
   @Override
-  public @NotNull StubIndexKey<String, PsiAnonymousClass> getKey() {
+  public StubIndexKey<String, PsiAnonymousClass> getKey() {
     return JavaStubIndexKeys.ANONYMOUS_BASEREF;
   }
 
@@ -29,11 +30,11 @@ public final class JavaAnonymousClassBaseRefOccurenceIndex extends StringStubInd
    */
   @Deprecated
   @Override
-  public Collection<PsiAnonymousClass> get(final @NotNull String s, final @NotNull Project project, final @NotNull GlobalSearchScope scope) {
+  public Collection<PsiAnonymousClass> get(@NotNull final String s, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
     return getOccurences(s, project, scope);
   }
 
-  public Collection<PsiAnonymousClass> getOccurences(final @NotNull String s, final @NotNull Project project, final @NotNull GlobalSearchScope scope) {
+  public Collection<PsiAnonymousClass> getOccurences(@NotNull final String s, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), s, project, new JavaSourceFilterScope(scope), PsiAnonymousClass.class);
   }
 }

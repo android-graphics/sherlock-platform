@@ -1,17 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.dialog
 
-import com.intellij.frontend.HostIdeInfoService
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.internal.statistic.utils.platformPlugin
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
@@ -24,12 +21,11 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
-import org.jetbrains.annotations.Nls
 import java.text.SimpleDateFormat
 import java.util.*
 
 /** This number should be increased when [CommonFeedbackSystemData] fields changing */
-const val COMMON_FEEDBACK_SYSTEM_INFO_VERSION: Int = 3
+const val COMMON_FEEDBACK_SYSTEM_INFO_VERSION = 2
 
 @Serializable
 data class CommonFeedbackSystemData(
@@ -43,8 +39,7 @@ data class CommonFeedbackSystemData(
   private val isInternalModeEnabled: Boolean,
   private val registry: List<String>,
   private val disabledBundledPlugins: List<String>,
-  private val nonBundledPlugins: List<String>,
-  private val isRemoteDevelopmentHost: Boolean,
+  private val nonBundledPlugins: List<String>
 ) : SystemDataJsonSerializable {
   companion object {
     fun getCurrentData(): CommonFeedbackSystemData {
@@ -59,15 +54,13 @@ data class CommonFeedbackSystemData(
         getIsInternalMode(),
         getRegistryKeys(),
         getDisabledPlugins(),
-        getNonBundledPlugins(),
-        AppMode.isRemoteDevHost()
+        getNonBundledPlugins()
       )
     }
 
     private fun getOsVersion() = SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION
     private fun getMemorySize() = Runtime.getRuntime().maxMemory() / FileUtilRt.MEGABYTE
     private fun getCoresNumber() = Runtime.getRuntime().availableProcessors()
-
     private fun getAppVersionWithBuild(): String {
       val appInfo = ApplicationInfo.getInstance()
 
@@ -76,7 +69,6 @@ data class CommonFeedbackSystemData(
       if (edition != null) {
         appVersion += " ($edition)"
       }
-
       val appBuild = appInfo.build
       appVersion += CommonFeedbackBundle.message("dialog.feedback.system.info.panel.app.version.build", appBuild.asString())
       val timestamp: Date = appInfo.buildDate.time
@@ -89,14 +81,6 @@ data class CommonFeedbackSystemData(
         appVersion += CommonFeedbackBundle.message("dialog.feedback.system.info.panel.app.version.build.date",
                                                    NlsMessages.formatDateLong(timestamp))
       }
-
-      if (appInfo.build.productCode == "JBC") {
-        val hostInfo = service<HostIdeInfoService>().getHostInfo()
-        if (hostInfo != null) {
-          appVersion += CommonFeedbackBundle.message("dialog.feedback.system.info.panel.app.version.host", hostInfo.productCode)
-        }
-      }
-
       return appVersion
     }
 
@@ -110,17 +94,11 @@ data class CommonFeedbackSystemData(
 
     private fun getRuntimeVersion() = SystemInfo.JAVA_RUNTIME_VERSION + SystemInfo.OS_ARCH
     private fun getIsInternalMode(): Boolean = ApplicationManager.getApplication().isInternal
-
-    private fun getRegistryKeys(): List<String> {
-      return Registry.getAll()
-        .filter { value: RegistryValue ->
-          val pluginId: String? = value.pluginId
-          val pluginInfo = if (pluginId != null) getPluginInfoById(PluginId.getId(pluginId)) else platformPlugin
-          value.isChangedFromDefault() && pluginInfo.isSafeToReport()
-        }
-        .map { v: RegistryValue -> v.key + "=" + v.asString() }
-        .toList()
-    }
+    private fun getRegistryKeys(): List<String> = Registry.getAll().filter { value: RegistryValue ->
+      val pluginId: String? = value.pluginId
+      val pluginInfo = if (pluginId != null) getPluginInfoById(PluginId.getId(pluginId)) else platformPlugin
+      value.isChangedFromDefault && pluginInfo.isSafeToReport()
+    }.map { v: RegistryValue -> v.key + "=" + v.asString() }.toList()
 
     private fun getDisabledPlugins(): List<String> = getPluginsNamesWithVersion { p: IdeaPluginDescriptor -> !p.isEnabled }
 
@@ -142,10 +120,8 @@ data class CommonFeedbackSystemData(
         .toList()
   }
 
-  fun getMemorySizeForDialog(): String = memorySize.toString() + "M"
-
-  @Suppress("HardCodedStringLiteral")
-  fun getLicenseRestrictionsForDialog(): @Nls String = if (licenseRestrictions.isEmpty())
+  fun getMemorySizeForDialog() = memorySize.toString() + "M"
+  fun getLicenseRestrictionsForDialog() = if (licenseRestrictions.isEmpty())
     CommonFeedbackBundle.message("dialog.feedback.system.info.panel.license.no.info")
   else
     licenseRestrictions.joinToString("\n")
@@ -225,8 +201,6 @@ data class CommonFeedbackSystemData(
       appendLine(getDisabledBundledPluginsForDialog())
       appendLine(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.nonbundled.plugins"))
       appendLine(getNonBundledPluginsForDialog())
-      appendLine(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.remote.dev.host"))
-      appendLine(isRemoteDevelopmentHost.toString())
     }
   }
 }

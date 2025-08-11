@@ -18,6 +18,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestLocator
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.ThrowableComputable

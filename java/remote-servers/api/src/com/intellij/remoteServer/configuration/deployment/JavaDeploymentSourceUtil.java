@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.configuration.deployment;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,10 +16,13 @@ public abstract class JavaDeploymentSourceUtil {
     return ApplicationManager.getApplication().getService(JavaDeploymentSourceUtil.class);
   }
 
-  public abstract @NotNull ArtifactDeploymentSource createArtifactDeploymentSource(@NotNull ArtifactPointer artifactPointer);
+  @NotNull
+  public abstract ArtifactDeploymentSource createArtifactDeploymentSource(@NotNull ArtifactPointer artifactPointer);
 
-  public abstract @NotNull List<DeploymentSource> createArtifactDeploymentSources(@NotNull Project project,
-                                                                                  @NotNull Collection<? extends Artifact> artifacts);
+  @NotNull
+  public abstract List<DeploymentSource> createArtifactDeploymentSources(@NotNull Project project,
+                                                                         @NotNull Collection<? extends Artifact> artifacts);
 
-  public abstract @NotNull List<DeploymentSource> createArtifactDeploymentSources(Project project, ArtifactType... artifactTypes);
+  @NotNull
+  public abstract List<DeploymentSource> createArtifactDeploymentSources(Project project, ArtifactType... artifactTypes);
 }

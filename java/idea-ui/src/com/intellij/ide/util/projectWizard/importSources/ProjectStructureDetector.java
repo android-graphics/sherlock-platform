@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard.importSources;
 
 import com.intellij.ide.util.importProject.ProjectDescriptor;
@@ -41,7 +41,8 @@ public abstract class ProjectStructureDetector {
    *   {@code parent} must be an ancestor of {@code dir} or {@code dir} itself
    *   </li>
    */
-  public abstract @NotNull DirectoryProcessingResult detectRoots(@NotNull File dir, File @NotNull [] children, @NotNull File base,
+  @NotNull
+  public abstract DirectoryProcessingResult detectRoots(@NotNull File dir, File @NotNull [] children, @NotNull File base,
                                                         @NotNull List<DetectedProjectRoot> result);
 
   /**
@@ -81,7 +82,8 @@ public abstract class ProjectStructureDetector {
       return myProcessChildren;
     }
 
-    public @Nullable File getParentToSkip() {
+    @Nullable
+    public File getParentToSkip() {
       return myParentToSkip;
     }
   }

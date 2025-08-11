@@ -3,10 +3,7 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.ui.ExitActionType
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 fun getUiEventLogger(): FeatureUsageUiEvents {
   if (ApplicationManager.getApplication() != null) {
     return ApplicationManager.getApplication().getService(FeatureUsageUiEvents::class.java) ?: EmptyFeatureUsageUiEvents
@@ -15,7 +12,6 @@ fun getUiEventLogger(): FeatureUsageUiEvents {
   return EmptyFeatureUsageUiEvents
 }
 
-@ApiStatus.Internal
 interface FeatureUsageUiEvents {
   fun logSelectConfigurable(configurable: Configurable, loadedFromCache: Boolean, loadTimeMs: Long)
 
@@ -23,14 +19,13 @@ interface FeatureUsageUiEvents {
 
   fun logResetConfigurable(configurable: Configurable)
 
-  fun logShowDialog(dialogClass: Class<*>, invocationPlace: String? = null)
+  fun logShowDialog(dialogClass: Class<*>)
 
-  fun logCloseDialog(dialogClass: Class<*>, exitCode: Int, exitActionType: ExitActionType, invocationPlace: String? = null)
+  fun logCloseDialog(dialogClass: Class<*>, exitCode: Int)
 
-  fun logClickOnHelpDialog(dialogClass: Class<*>, invocationPlace: String? = null)
+  fun logClickOnHelpDialog(dialogClass: Class<*>)
 }
 
-@ApiStatus.Internal
 object EmptyFeatureUsageUiEvents : FeatureUsageUiEvents {
   override fun logSelectConfigurable(configurable: Configurable, loadedFromCache: Boolean, loadTimeMs: Long) {
   }
@@ -41,12 +36,12 @@ object EmptyFeatureUsageUiEvents : FeatureUsageUiEvents {
   override fun logResetConfigurable(configurable: Configurable) {
   }
 
-  override fun logShowDialog(dialogClass: Class<*>, invocationPlace: String?) {
+  override fun logShowDialog(dialogClass: Class<*>) {
   }
 
-  override fun logCloseDialog(dialogClass: Class<*>, exitCode: Int, exitActionType: ExitActionType, invocationPlace: String?) {
+  override fun logCloseDialog(dialogClass: Class<*>, exitCode: Int) {
   }
 
-  override fun logClickOnHelpDialog(dialogClass: Class<*>, invocationPlace: String?) {
+  override fun logClickOnHelpDialog(dialogClass: Class<*>) {
   }
 }

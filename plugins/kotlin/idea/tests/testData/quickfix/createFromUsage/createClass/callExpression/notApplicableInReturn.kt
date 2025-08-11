@@ -1,6 +1,5 @@
 // "Create class 'BookKeeper'" "false"
 // ERROR: Unresolved reference: BookKeeper
-// IGNORE_K2
 package pack
 
 import pack.Currrency.EUR

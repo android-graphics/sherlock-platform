@@ -1,7 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.config.StatisticsStringUtil
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
 
@@ -26,10 +27,8 @@ interface EventLogFilesProvider {
   fun getLogFilesExceptActive(): List<File>
 }
 
-class DefaultEventLogFilesProvider(
-  private val dir: Path,
-  private val activeFileProvider: () -> String?,
-) : EventLogFilesProvider {
+class DefaultEventLogFilesProvider(private val dir: Path,
+                                   private val activeFileProvider: () -> String?) : EventLogFilesProvider {
   override fun getLogFiles(): List<File> {
     return dir.toFile().listFiles()?.toList().orEmpty()
   }
@@ -44,11 +43,9 @@ interface FilesToSendProvider {
   fun getFilesToSend(): List<EventLogFile>
 }
 
-internal class DefaultFilesToSendProvider(
-  private val logFilesProvider: EventLogFilesProvider,
-  private val maxFilesToSend: Int,
-  private val filterActiveFile: Boolean,
-) : FilesToSendProvider {
+class DefaultFilesToSendProvider(private val logFilesProvider: EventLogFilesProvider,
+                                 private val maxFilesToSend: Int,
+                                 private val filterActiveFile: Boolean) : FilesToSendProvider {
   override fun getFilesToSend(): List<EventLogFile> {
     val files = if (filterActiveFile) {
       logFilesProvider.getLogFilesExceptActive()

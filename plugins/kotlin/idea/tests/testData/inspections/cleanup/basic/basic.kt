@@ -109,9 +109,9 @@ object X {
     }
 }
 
-expect class Expected
+header class Expected
 
-actual class Actual
+impl class Actual
 
 // KT-33060
 interface AA {

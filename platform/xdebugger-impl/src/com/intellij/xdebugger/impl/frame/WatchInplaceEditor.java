@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.util.ui.tree.TreeUtil;
@@ -14,14 +28,12 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collections;
 
-@ApiStatus.Internal
 public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
   private final WatchesRootNode myRootNode;
   private final XWatchesView myWatchesView;
@@ -70,8 +82,9 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     TreeUtil.selectNode(myTree, myNode);
   }
 
+  @Nullable
   @Override
-  protected @Nullable Rectangle getEditorBounds() {
+  protected Rectangle getEditorBounds() {
     Rectangle bounds = super.getEditorBounds();
     if (bounds == null) {
       return null;

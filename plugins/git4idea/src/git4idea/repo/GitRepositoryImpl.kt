@@ -11,40 +11,41 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsScope
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
-import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
 import com.intellij.platform.util.coroutines.childScope
-import git4idea.GitDisposable
-import git4idea.GitLocalBranch
-import git4idea.GitUtil
-import git4idea.GitVcs
+import com.intellij.util.ObjectUtils
+import com.intellij.vcs.log.Hash
+import git4idea.*
 import git4idea.branch.GitBranchesCollection
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder
 import git4idea.status.GitStagingAreaHolder
 import git4idea.telemetry.GitTelemetrySpan
+import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
+import java.io.File
+import java.util.*
+import kotlin.concurrent.Volatile
 
-/**
- * @param rootDir Root of the repository (parent directory of '.git' file/directory).
- * @param gitDir  '.git' directory location. For worktrees - location of the 'main_repo/.git/worktrees/worktree_name/'.
- */
 class GitRepositoryImpl private constructor(
   project: Project,
   rootDir: VirtualFile,
   private val gitDir: VirtualFile,
-  parentDisposable: Disposable,
+  parentDisposable: Disposable
 ) : RepositoryImpl(project, rootDir, parentDisposable), GitRepository {
 
   private val vcs = GitVcs.getInstance(project)
 
   private val repositoryFiles = GitRepositoryFiles.createInstance(rootDir, gitDir)
-  private val repositoryReader = GitRepositoryReader(project, repositoryFiles)
+  private val repositoryReader = GitRepositoryReader(repositoryFiles)
 
   private val stagingAreaHolder: GitStagingAreaHolder
   private val untrackedFilesHolder: GitUntrackedFilesHolder
+  private val ignoredRepositoryFilesHolder: GitRepositoryIgnoredFilesHolder
   private val tagHolder: GitTagHolder
 
   @Volatile
@@ -56,8 +57,8 @@ class GitRepositoryImpl private constructor(
   private val coroutineScope = GitDisposable.getInstance(project).coroutineScope.childScope("GitRepositoryImpl")
 
   /**
-   * @see [git4idea.repo.GitRepositoryImpl.createInstance]
-   * @see [git4idea.repo.GitRepositoryImpl.installListeners]
+   * @param rootDir Root of the repository (parent directory of '.git' file/directory).
+   * @param gitDir  '.git' directory location. For worktrees - location of the 'main_repo/.git/worktrees/worktree_name/'.
    */
   init {
     stagingAreaHolder = GitStagingAreaHolder(this)
@@ -65,8 +66,10 @@ class GitRepositoryImpl private constructor(
     untrackedFilesHolder = GitUntrackedFilesHolder(this)
     Disposer.register(this, untrackedFilesHolder)
 
+    ignoredRepositoryFilesHolder = GitRepositoryIgnoredFilesHolder(this)
     tagHolder = GitTagHolder(this)
     repoInfo = readRepoInfo()
+    tagHolder.updateEnabled()
   }
 
   @Deprecated("Deprecated in Java")
@@ -87,7 +90,7 @@ class GitRepositoryImpl private constructor(
   }
 
   override fun getIgnoredFilesHolder(): GitRepositoryIgnoredFilesHolder {
-    return untrackedFilesHolder.ignoredFilesHolder
+    return ignoredRepositoryFilesHolder
   }
 
   override fun getTagHolder(): GitTagHolder {
@@ -164,7 +167,8 @@ class GitRepositoryImpl private constructor(
   }
 
   private fun readRepoInfo(): GitRepoInfo {
-    return getInstance().getTracer(VcsScope).spanBuilder(GitTelemetrySpan.Repository.ReadGitRepositoryInfo.getName()).use { span ->
+    return computeWithSpan(getInstance().getTracer(VcsScope),
+                           GitTelemetrySpan.Repository.ReadGitRepositoryInfo.getName()) { span: Span ->
       span.setAttribute("repository", DvcsUtil.getShortRepositoryName(this))
 
       val configFile = repositoryFiles.configFile
@@ -174,22 +178,19 @@ class GitRepositoryImpl private constructor(
       val remotes = config.parseRemotes()
       val state = repositoryReader.readState(remotes)
       val isShallow = repositoryReader.hasShallowCommits()
-
-      val remoteBranches = state.remoteBranches
-      val localBranches = state.localBranches
       val trackInfos = config.parseTrackInfos(state.localBranches.keys, state.remoteBranches.keys)
-
       val hooksInfo = repositoryReader.readHooksInfo()
-      val submoduleFile = root.toNioPath().resolve(".gitmodules")
+      val submoduleFile = File(VfsUtilCore.virtualToIoFile(root), ".gitmodules")
       val submodules = GitModulesFileReader().read(submoduleFile)
-      recentCheckoutBranches = collectRecentCheckoutBranches(project, root) { branch: GitLocalBranch -> localBranches.containsKey(branch) }
+      val localBranches: Map<GitLocalBranch, Hash> = HashMap(state.localBranches)
+      recentCheckoutBranches = collectRecentCheckoutBranches { branch: GitLocalBranch -> localBranches.containsKey(branch) }
       GitRepoInfo(currentBranch = state.currentBranch,
                   currentRevision = state.currentRevision,
                   state = state.state,
-                  remotes = remotes,
+                  remotes = LinkedHashSet(remotes),
                   localBranchesWithHashes = localBranches,
-                  remoteBranchesWithHashes = remoteBranches,
-                  branchTrackInfos = trackInfos,
+                  remoteBranchesWithHashes = HashMap<GitRemoteBranch, Hash>(state.remoteBranches),
+                  branchTrackInfos = LinkedHashSet(trackInfos),
                   submodules = submodules,
                   hooksInfo = hooksInfo,
                   isShallow = isShallow)
@@ -208,27 +209,24 @@ class GitRepositoryImpl private constructor(
   companion object {
     private val LOG = Logger.getInstance(GitRepositoryImpl::class.java)
 
+
     @JvmStatic
     @Deprecated("Use {@link GitRepositoryManager#getRepositoryForRoot} to obtain an instance of a Git repository.")
-    fun getInstance(
-      root: VirtualFile,
-      project: Project,
-      listenToRepoChanges: Boolean,
-    ): GitRepository {
+    fun getInstance(root: VirtualFile,
+                    project: Project,
+                    listenToRepoChanges: Boolean): GitRepository {
       val repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root)
-      return repository ?: createInstance(root, project, GitDisposable.getInstance(project))
+      return ObjectUtils.notNull(repository) { createInstance(root, project, GitDisposable.getInstance(project)) }
     }
 
 
     @JvmStatic
     @ApiStatus.Internal
     @Deprecated("Use {@link #createInstance(VirtualFile, Project, Disposable)}")
-    fun createInstance(
-      root: VirtualFile,
-      project: Project,
-      parentDisposable: Disposable,
-      listenToRepoChanges: Boolean,
-    ): GitRepository {
+    fun createInstance(root: VirtualFile,
+                       project: Project,
+                       parentDisposable: Disposable,
+                       listenToRepoChanges: Boolean): GitRepository {
       return createInstance(root, project, parentDisposable)
     }
 
@@ -238,38 +236,36 @@ class GitRepositoryImpl private constructor(
      */
     @JvmStatic
     @ApiStatus.Internal
-    fun createInstance(
-      root: VirtualFile,
-      project: Project,
-      parentDisposable: Disposable,
-    ): GitRepository {
-      val gitDir = GitUtil.findGitDir(root) ?: error("Git directory not found for $root")
-      return createInstance(root, gitDir, project, parentDisposable)
+    fun createInstance(root: VirtualFile,
+                       project: Project,
+                       parentDisposable: Disposable): GitRepository {
+      val gitDir = Objects.requireNonNull(GitUtil.findGitDir(root))
+      return createInstance(root, gitDir!!, project, parentDisposable)
     }
 
     @JvmStatic
     @ApiStatus.Internal
-    fun createInstance(
-      root: VirtualFile,
-      gitDir: VirtualFile,
-      project: Project,
-      parentDisposable: Disposable,
-    ): GitRepository {
+    fun createInstance(root: VirtualFile,
+                       gitDir: VirtualFile,
+                       project: Project,
+                       parentDisposable: Disposable): GitRepository {
       ProgressManager.checkCanceled()
-      return GitRepositoryImpl(project, root, gitDir, parentDisposable).apply {
-        val initialRepoInfo = repoInfo
-        val updater = GitRepositoryUpdater(this, this.repositoryFiles)
-        updater.installListeners()
-        notifyIfRepoChanged(this, null, initialRepoInfo)
-        this.untrackedFilesHolder.invalidate()
-      }
+
+      val repository = GitRepositoryImpl(project, root, gitDir, parentDisposable)
+
+      val updater = GitRepositoryUpdater(repository, repository.repositoryFiles)
+      Disposer.register(repository, updater)
+
+      GitRepositoryManager.getInstance(project).notifyListenersAsync(repository)
+      return repository
     }
 
-    private fun notifyIfRepoChanged(repository: GitRepository, previousInfo: GitRepoInfo?, info: GitRepoInfo) {
+    private fun notifyIfRepoChanged(repository: GitRepository,
+                                    previousInfo: GitRepoInfo,
+                                    info: GitRepoInfo) {
       val project = repository.project
       if (!project.isDisposed && info != previousInfo) {
-        GitRepositoryManager.getInstance(project).notifyListenersAsync(repository, previousInfo, info)
-        LOG.debug("Repository $repository changed")
+        GitRepositoryManager.getInstance(project).notifyListenersAsync(repository)
       }
     }
   }

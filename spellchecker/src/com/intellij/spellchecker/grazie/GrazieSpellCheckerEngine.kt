@@ -66,11 +66,6 @@ internal class GrazieSpellCheckerEngine(
     override suspend fun execute(project: Project) {
       project.serviceAsync<GrazieSpellCheckerEngine>().waitForSpeller()
       project.serviceAsync<SpellCheckerManager>()
-
-      // heavy classloading to avoid freezes from FJP thread starvation
-      for (lifecycle in LIFECYCLE_EP_NAME.extensionList) {
-        lifecycle.preload(project)
-      }
     }
   }
 

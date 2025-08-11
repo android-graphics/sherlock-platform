@@ -118,7 +118,6 @@ class JavaUSwitchEntry(
 
   private val caseValuesPart = UastLazyPart<List<UExpression>>()
   private val bodyPart = UastLazyPart<UExpressionList>()
-  private val guardPart = UastLazyPart<UExpression?>()
 
   override val sourcePsi: PsiSwitchLabelStatementBase
     get() = labels.first()
@@ -135,13 +134,6 @@ class JavaUSwitchEntry(
           }
         }
       }
-    }
-
-  override val guard: UExpression?
-    get() = guardPart.getOrBuild {
-      val expression = labels.singleOrNull() ?: return@getOrBuild null
-      val guard = expression.guardExpression ?: return@getOrBuild null
-      JavaConverter.convertPsiElement(guard, this, UExpression::class.java) as? UExpression ?: UnknownJavaExpression(guard, this)
     }
 
   override val body: UExpressionList
@@ -171,10 +163,6 @@ class JavaUSwitchEntry(
         }
       }
     }
-
-  override fun asRenderString(): String = caseValues.joinToString { it.asRenderString() } +
-                                          (guard?.let { " when " + it.asRenderString() } ?: "") +
-                                          " -> " + body.asRenderString()
 }
 
 internal class DummyYieldExpression(

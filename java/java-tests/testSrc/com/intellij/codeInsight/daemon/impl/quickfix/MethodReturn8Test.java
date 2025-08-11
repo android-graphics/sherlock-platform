@@ -3,10 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_8_ANNOTATED;
+import com.intellij.pom.java.LanguageLevel;
 
 public class MethodReturn8Test extends LightQuickFixParameterizedTestCase {
 
@@ -16,8 +13,8 @@ public class MethodReturn8Test extends LightQuickFixParameterizedTestCase {
   }
 
   @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8_ANNOTATED;
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_8;
   }
 }
 

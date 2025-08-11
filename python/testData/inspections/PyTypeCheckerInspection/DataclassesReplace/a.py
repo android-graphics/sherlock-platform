@@ -38,5 +38,5 @@ class D:
     pass
 
 
-replace(<warning descr="Expected type '_DataclassT ≤: DataclassInstance', got 'D' instead">D()</warning>)
-replace(<warning descr="Expected type '_DataclassT ≤: DataclassInstance', got 'D' instead">D()</warning>, a=1, b=2)
+replace(D())
+replace(D(), a=1, b=2)

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,8 @@ final class JpsProductionModuleSourcePackagingElementImpl extends JpsCompositeEl
   }
 
   @Override
-  public @NotNull JpsModuleReference getModuleReference() {
+  @NotNull
+  public JpsModuleReference getModuleReference() {
     return myContainer.getChild(MODULE_REFERENCE_CHILD_ROLE);
   }
 
@@ -32,8 +33,9 @@ final class JpsProductionModuleSourcePackagingElementImpl extends JpsCompositeEl
     return new JpsProductionModuleSourcePackagingElementImpl(this);
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsProductionModuleSourcePackagingElementImpl createElementCopy() {
+  public JpsProductionModuleSourcePackagingElementImpl createElementCopy() {
     return new JpsProductionModuleSourcePackagingElementImpl(this);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.navbar.frontend
 
 import com.intellij.ide.navigationToolbar.NavBarLeftSideExtension
@@ -45,7 +45,10 @@ import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.ScrollPaneConstants
 
-internal class NavBarRootPaneExtension : IdeRootPaneNorthExtension {
+/**
+ * @author Konstantin Bulenkov
+ */
+class NavBarRootPaneExtension : IdeRootPaneNorthExtension {
   companion object {
     const val PANEL_KEY: String = "NavBarPanel"
   }
@@ -195,12 +198,13 @@ internal class MyNavBarWrapperPanel(private val project: Project, useAsComponent
     //return !UISettings.getInstance().showMainToolbar && runToolbarExists();
   }
 
-  private fun runToolbarExists(): Boolean = navToolbarGroupExist ?: run {
-    when (val o = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR)) {
-      is DefaultActionGroup -> o.childrenCount > 0
-      is CustomisedActionGroup -> o.defaultChildrenOrStubs.size > 0
-      else -> false
-    }.also { navToolbarGroupExist = it }
+  private fun runToolbarExists(): Boolean {
+    if (navToolbarGroupExist == null) {
+      val correctedAction = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR)
+      navToolbarGroupExist = correctedAction is DefaultActionGroup && correctedAction.childrenCount > 0 ||
+                             correctedAction is CustomisedActionGroup && correctedAction.getFirstAction() != null
+    }
+    return navToolbarGroupExist!!
   }
 
   private fun toggleNavPanel(settings: UISettings) {
@@ -214,9 +218,7 @@ internal class MyNavBarWrapperPanel(private val project: Project, useAsComponent
     if (show) {
       ApplicationManager.getApplication().invokeLater {
         val navBarPanel = getNavBarPanel()
-        if (navBarPanel.parent != this) { // do not fire events without need
-          add(navBarPanel, BorderLayout.CENTER)
-        }
+        add(navBarPanel, BorderLayout.CENTER)
         navBarPanel.updateUI()
       }
     }
@@ -314,13 +316,15 @@ private fun isNeedGap(group: AnAction): Boolean {
 }
 
 private fun getFirstAction(group: AnAction): AnAction? {
-  val actionsOrStubs = when (group) {
-    is DefaultActionGroup -> group.childActionsOrStubs
-    is CustomisedActionGroup -> group.defaultChildrenOrStubs
-    else -> AnAction.EMPTY_ARRAY
+  if (group is CustomisedActionGroup) {
+    return group.getFirstAction()
   }
+  else if (group !is DefaultActionGroup) {
+    return null
+  }
+
   var firstAction: AnAction? = null
-  for (action in actionsOrStubs) {
+  for (action in group.getChildActionsOrStubs()) {
     if (action is DefaultActionGroup) {
       firstAction = getFirstAction(action)
     }

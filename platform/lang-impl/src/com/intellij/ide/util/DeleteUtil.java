@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
@@ -8,14 +8,13 @@ import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.FactoryMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 
-@ApiStatus.Internal
 public final class DeleteUtil {
   private DeleteUtil() { }
 
@@ -44,7 +43,7 @@ public final class DeleteUtil {
 
     StringBuilder buffer = new StringBuilder();
     for (Map.Entry<String, Integer> entry : countMap.entrySet()) {
-      if (!buffer.isEmpty()) {
+      if (buffer.length() > 0) {
         buffer.append(" ").append(IdeBundle.message("prompt.delete.and")).append(" ");
       }
 

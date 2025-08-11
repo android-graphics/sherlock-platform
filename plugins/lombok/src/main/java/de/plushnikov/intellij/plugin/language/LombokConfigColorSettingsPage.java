@@ -23,18 +23,21 @@ public final class LombokConfigColorSettingsPage implements ColorSettingsPage {
     new AttributesDescriptor(LombokBundle.messagePointer("color.settings.value"), LombokConfigSyntaxHighlighter.VALUE),
   };
 
+  @Nullable
   @Override
-  public @Nullable Icon getIcon() {
+  public Icon getIcon() {
     return LombokIcons.Config;
   }
 
+  @NotNull
   @Override
-  public @NotNull SyntaxHighlighter getHighlighter() {
+  public SyntaxHighlighter getHighlighter() {
     return new LombokConfigSyntaxHighlighter();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDemoText() {
+  public String getDemoText() {
     return """
       ##
       ## Key : lombok.log.fieldName
@@ -49,8 +52,9 @@ public final class LombokConfigColorSettingsPage implements ColorSettingsPage {
       """;
   }
 
+  @Nullable
   @Override
-  public @Nullable Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
+  public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return null;
   }
 
@@ -64,8 +68,10 @@ public final class LombokConfigColorSettingsPage implements ColorSettingsPage {
     return ColorDescriptor.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
-  public @NotNull @NlsContexts.ConfigurableName String getDisplayName() {
+  @NlsContexts.ConfigurableName
+  public String getDisplayName() {
     return LombokBundle.message("configurable.name.lombok.config");
   }
 }

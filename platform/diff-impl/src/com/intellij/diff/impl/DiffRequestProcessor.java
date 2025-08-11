@@ -25,6 +25,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineRange;
+import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -69,7 +70,10 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -180,12 +184,12 @@ public abstract class DiffRequestProcessor
     if (myIsNewToolbar) {
       myToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     }
-    myToolbar.setTargetComponent(myContentPanel);
+    myToolbar.setTargetComponent(myMainPanel);
     myToolbarWrapper = new Wrapper(myToolbar.getComponent());
 
     myRightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_RIGHT_TOOLBAR, myRightToolbarGroup, true);
     myRightToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
-    myRightToolbar.setTargetComponent(myContentPanel.getTargetComponent());
+    myRightToolbar.setTargetComponent(myMainPanel);
 
     myRightToolbarWrapper = new Wrapper(JBUI.Panels.simplePanel(myRightToolbar.getComponent()));
 
@@ -260,13 +264,6 @@ public abstract class DiffRequestProcessor
     updateRequest(force, myCurrentScrollToPolicy);
   }
 
-  /**
-   * Perform a request to update the current DiffRequest
-   * Typically invoked after navigation or on error recovery attempt
-   *
-   * @param force if the request should be re-applied
-   * @param scrollToChangePolicy optional scrolling request passed when navigating between changes in adjacent requests
-   */
   @RequiresEdt
   public abstract void updateRequest(boolean force, @Nullable ScrollToPolicy scrollToChangePolicy);
 
@@ -418,13 +415,9 @@ public abstract class DiffRequestProcessor
   @RequiresEdt
   private void doApplyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
     if (!force && request == myActiveRequest) return;
-    request.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, scrollToChangePolicy);
-    doApplyRequest(request);
-  }
 
-  @RequiresEdt
-  @ApiStatus.Internal
-  protected void doApplyRequest(@NotNull DiffRequest request) {
+    request.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, scrollToChangePolicy);
+
     DiffUtil.runPreservingFocus(myContext, () -> {
       myState.destroy();
       myToolbarStatusPanel.setContent(null);
@@ -448,11 +441,6 @@ public abstract class DiffRequestProcessor
           myState = createState(frameTool);
           try {
             myState.init();
-
-            boolean isLoading = request instanceof LoadingDiffRequest || request instanceof NoDiffRequest;
-            if (!isLoading) {
-              DiffUsageTriggerCollector.logShowDiffTool(myProject, frameTool, myContext.getUserData(DiffUserDataKeys.PLACE));
-            }
           }
           catch (Throwable e) {
             myState.destroy();
@@ -643,12 +631,10 @@ public abstract class DiffRequestProcessor
     collectToolbarActions(viewerActions);
 
     ((ActionToolbarImpl)myToolbar).reset(); // do not leak previous DiffViewer via caches
-    myToolbar.setTargetComponent(myContentPanel.getTargetComponent());
     myToolbar.updateActionsImmediately();
     recursiveRegisterShortcutSet(myToolbarGroup, myMainPanel, null);
 
     if (myIsNewToolbar) {
-      myRightToolbar.setTargetComponent(myContentPanel.getTargetComponent());
       ((ActionToolbarImpl)myRightToolbar).reset();
       myRightToolbar.updateActionsImmediately();
       recursiveRegisterShortcutSet(myRightToolbarGroup, myMainPanel, null);
@@ -754,22 +740,25 @@ public abstract class DiffRequestProcessor
     return myDisposed;
   }
 
+  @NotNull
   @Override
-  public @NotNull CheckedDisposable getDisposable() {
+  public CheckedDisposable getDisposable() {
     return this;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<Editor> getEmbeddedEditors() {
+  public List<Editor> getEmbeddedEditors() {
     DiffViewer viewer = getActiveViewer();
     if (viewer instanceof EditorDiffViewer editorDiffViewer) {
-      return new ArrayList<>(editorDiffViewer.getHighlightEditors());
+      return new ArrayList<>(editorDiffViewer.getEditors());
     }
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
-  public @NotNull @Unmodifiable List<VirtualFile> getFilesToRefresh() {
+  public List<VirtualFile> getFilesToRefresh() {
     DiffRequest request = getActiveRequest();
     if (request != null) {
       return request.getFilesToRefresh();
@@ -858,7 +847,7 @@ public abstract class DiffRequestProcessor
       return actions.toArray(AnAction.EMPTY_ARRAY);
     }
 
-    private @Unmodifiable @NotNull List<ShowInExternalToolAction> getShowActions() {
+    private @NotNull List<ShowInExternalToolAction> getShowActions() {
       Map<ExternalToolGroup, List<ExternalTool>> externalTools = ExternalDiffSettings.getInstance().getExternalTools();
       List<ExternalTool> diffTools = externalTools.getOrDefault(ExternalToolGroup.DIFF_TOOL, Collections.emptyList());
 
@@ -1213,7 +1202,7 @@ public abstract class DiffRequestProcessor
   }
 
   public static void notifyMessage(@NotNull AnActionEvent e, @NotNull JComponent contentPanel, boolean next) {
-    if (!UIUtil.isShowing(contentPanel)) return;
+    if (!contentPanel.isShowing()) return;
     Editor editor = e.getData(DiffDataKeys.CURRENT_EDITOR);
 
     // TODO: provide "change" word in chain UserData - for tests/etc
@@ -1358,6 +1347,7 @@ public abstract class DiffRequestProcessor
       DataSink.uiDataSnapshot(sink, myContext.getUserData(DiffUserDataKeys.DATA_PROVIDER));
       DataSink.uiDataSnapshot(sink, myActiveRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER));
       DataSink.uiDataSnapshot(sink, myState);
+      DataSink.uiDataSnapshot(sink, DataManagerImpl.getDataProviderEx(myContentPanel.getTargetComponent()));
 
       sink.set(CommonDataKeys.PROJECT, myProject);
       sink.set(DiffDataKeys.DIFF_CONTEXT, myContext);
@@ -1501,7 +1491,8 @@ public abstract class DiffRequestProcessor
     @RequiresEdt
     default void destroy() { }
 
-    default @Nullable JComponent getPreferredFocusedComponent() { return null; }
+    @Nullable
+    default JComponent getPreferredFocusedComponent() { return null; }
 
     @Override
     default void uiDataSnapshot(@NotNull DataSink sink) { }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.config;
 
 import org.jetbrains.annotations.Contract;
@@ -34,7 +34,7 @@ public final class StatisticsStringUtil {
   }
 
   public static boolean equals(@Nullable String s1, @Nullable String s2) {
-    //noinspection StringEquality,StringEqualitySSR
+    //noinspection StringEquality
     if (s1 == s2) return true;
     if (s1 == null || s2 == null) return false;
 
@@ -42,14 +42,15 @@ public final class StatisticsStringUtil {
     return s1.equals(s2);
   }
 
-  public static @NotNull List<String> split(@NotNull String text, char separator) {
+  @NotNull
+  public static List<String> split(@NotNull String text, char separator) {
     List<String> result = new ArrayList<>();
     int pos = 0;
     int index = text.indexOf(separator, pos);
     while (index >= 0) {
       final int nextPos = index + 1;
       String token = text.substring(pos, index);
-      if (!token.isEmpty()) {
+      if (token.length() != 0) {
         result.add(token);
       }
       pos = nextPos;

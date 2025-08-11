@@ -17,12 +17,10 @@ package org.jetbrains.rpc
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.jsonProtocol.Request
 import java.io.IOException
 import java.util.*
-import kotlin.Throws
 
 interface MessageProcessor {
   fun cancelWaitingRequests()
@@ -31,8 +29,6 @@ interface MessageProcessor {
 
   fun <RESULT> send(message: Request<RESULT>): Promise<RESULT>
 }
-
-private val MESSAGE_MANAGER_LOG = logger<MessageProcessor>()
 
 class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS>(private val handler: MessageManager.Handler<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS>) : MessageManagerBase() {
   private val callbackMap = ConcurrentCollectionFactory.createConcurrentIntObjectMap<RequestCallback<SUCCESS>>()
@@ -69,16 +65,16 @@ class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUC
     }
     catch (e: Throwable) {
       try {
-        failedToSend(sequence, message.methodName)
+        failedToSend(sequence)
       }
       finally {
-        MESSAGE_MANAGER_LOG.error("Failed to send", e)
+        LOG.error("Failed to send", e)
       }
       return
     }
 
     if (!success) {
-      failedToSend(sequence, message.methodName)
+      failedToSend(sequence)
     }
   }
 
@@ -99,8 +95,8 @@ class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUC
     }
   }
 
-  private fun failedToSend(sequence: Int, methodName: String) {
-    callbackMap.remove(sequence)?.onError("Failed to send ($methodName)")
+  private fun failedToSend(sequence: Int) {
+    callbackMap.remove(sequence)?.onError("Failed to send")
   }
 
   fun processIncoming(incomingParsed: INCOMING) {
@@ -108,7 +104,7 @@ class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUC
     if (commandResponse == null) {
       if (closed) {
         // just ignore
-        MESSAGE_MANAGER_LOG.info("Connection closed, ignore incoming")
+        LOG.info("Connection closed, ignore incoming")
       }
       else {
         handler.acceptNonSequence(incomingParsed)
@@ -126,7 +122,7 @@ class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUC
     }
     catch (e: Throwable) {
       callback.onError(e)
-      MESSAGE_MANAGER_LOG.error("Failed to dispatch response to callback", e)
+      LOG.error("Failed to dispatch response to callback", e)
     }
   }
 

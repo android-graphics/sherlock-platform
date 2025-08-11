@@ -1,6 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(UnsafeCastFunction::class)
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep
 
 import com.intellij.openapi.actionSystem.*
@@ -21,7 +19,6 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.TitleComponentAlignmen
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.IdeaBasedComponentValidator
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.SettingComponent
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.ValidationIndicator
-import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.awt.Dimension
 import java.awt.Insets

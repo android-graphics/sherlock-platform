@@ -6,11 +6,10 @@ import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.indexing.roots.origin.GenericContentEntityOrigin;
 import com.intellij.util.indexing.roots.origin.GenericContentEntityOriginImpl;
 import com.intellij.util.indexing.roots.origin.IndexingRootHolder;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
+
 public final class GenericContentEntityIteratorImpl extends RootHolderIteratorBase {
 
   public GenericContentEntityIteratorImpl(@NotNull EntityPointer<?> entityPointer,
@@ -24,8 +23,9 @@ public final class GenericContentEntityIteratorImpl extends RootHolderIteratorBa
                                     IndexingBundle.message("indexable.files.provider.scanning.content")));
   }
 
+  @NotNull
   @Override
-  public @NotNull GenericContentEntityOrigin getOrigin() {
+  public GenericContentEntityOrigin getOrigin() {
     return new GenericContentEntityOriginImpl(myEntityPointer, roots);
   }
 }

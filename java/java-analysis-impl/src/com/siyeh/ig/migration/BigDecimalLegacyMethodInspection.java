@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -25,13 +25,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class BigDecimalLegacyMethodInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
+  @NotNull
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("bigdecimal.legacy.method.problem.descriptor");
   }
 
+  @Nullable
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     final Object value = ExpressionUtils.computeConstantExpression(expression);
     if (!(value instanceof  Integer)) {
@@ -46,8 +48,9 @@ public final class BigDecimalLegacyMethodInspection extends BaseInspection imple
 
   private static class BigDecimalLegacyMethodFix extends PsiUpdateModCommandQuickFix {
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("bigdecimal.legacy.method.quickfix");
     }
 

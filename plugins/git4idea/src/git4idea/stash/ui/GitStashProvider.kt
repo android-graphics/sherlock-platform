@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash.ui
 
-import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -182,10 +181,10 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
     }
 
     private fun GitStashCache.StashData.Changes.toChangeObjects(): List<GitStashChange> {
-      val stashChanges = changes.map { GitStashChange(it, null, data.stash) }
+      val stashChanges = changes.map { GitStashChange(it, null) }
       val otherChanges = parentCommits.flatMap { parent ->
         val tag: ChangesBrowserNode.Tag = MyTag(StringUtil.capitalize(parent.subject.substringBefore(":")), parent.id)
-        parent.changes.map { GitStashChange(it, tag, data.stash) }
+        parent.changes.map { GitStashChange(it, tag) }
       }
       return stashChanges + otherChanges
     }
@@ -205,7 +204,7 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
     }
   }
 
-  class GitStashChange(private val change: Change, private val changeTag: ChangesBrowserNode.Tag?, private val stashName: String) : SavedPatchesProvider.ChangeObject {
+  class GitStashChange(private val change: Change, private val changeTag: ChangesBrowserNode.Tag?) : SavedPatchesProvider.ChangeObject {
     override fun createDiffRequestProducer(project: Project?): ChangeDiffRequestChain.Producer? {
       return ChangeDiffRequestProducer.create(project, change, prepareChangeContext())
     }
@@ -229,7 +228,6 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
     private fun prepareChangeContext(): Map<Key<*>, Any> {
       val context = mutableMapOf<Key<*>, Any>()
       changeTag?.let { context[ChangeDiffRequestProducer.TAG_KEY] = it }
-      context[DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE] = StringUtil.capitalize(stashName)
       return context
     }
   }

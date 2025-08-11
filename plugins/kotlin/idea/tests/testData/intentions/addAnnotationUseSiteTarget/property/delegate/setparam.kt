@@ -1,6 +1,6 @@
-// NO_OPTION: SETTER_PARAMETER|Add use-site target 'setparam'
-// CHOSEN_OPTION: PROPERTY|Add use-site target 'property'
+// CHOOSE_USE_SITE_TARGET: setparam
 // WITH_STDLIB
+// IS_APPLICABLE: false
 
 annotation class A
 

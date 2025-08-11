@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.lang.LangBundle
@@ -15,19 +15,18 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.RuntimeChooserJreVal
 import com.intellij.openapi.roots.ui.configuration.SdkPopup
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory
 import com.intellij.openapi.ui.Messages
-import com.intellij.platform.eel.EelApi
 import java.nio.file.Path
 import javax.swing.JComponent
 
-internal data class RuntimeChooserCustomItem(
+data class RuntimeChooserCustomItem(
   override val displayName: String?,
   override val version: String?,
   override val homeDir: String,
 ) : RuntimeChooserItem(), RuntimeChooserItemWithFixedLocation
 
-internal object RuntimeChooserAddCustomItem : RuntimeChooserItem()
+object RuntimeChooserAddCustomItem : RuntimeChooserItem()
 
-internal object RuntimeChooserCustom {
+object RuntimeChooserCustom {
   val sdkType: SdkType?
     get() {
       return SdkType
@@ -49,7 +48,6 @@ internal object RuntimeChooserCustom {
 
   private val jdkDownloaderExtension = object : JdkDownloaderDialogHostExtension {
     override fun allowWsl(): Boolean = false
-    override fun getEel(): EelApi? = null
 
     override fun shouldIncludeItem(sdkType: SdkTypeId, item: JdkItem): Boolean {
       return sdkType == this@RuntimeChooserCustom.sdkType && isSupportedSdkItem(item)

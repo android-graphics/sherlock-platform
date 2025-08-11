@@ -1,9 +1,6 @@
 def f(lst):
-    print("Called")
     lst.reverse()
-    print("Reversed")
     lst.append(42)
-    print("Appended")
     return lst
 
 

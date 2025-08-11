@@ -2,10 +2,8 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.lang.LanguageExtension;
-import org.jetbrains.annotations.ApiStatus;
 
 
-@ApiStatus.Internal
 public final class CodeBlockProviders extends LanguageExtension<CodeBlockProvider> {
   public static final CodeBlockProviders INSTANCE = new CodeBlockProviders();
 

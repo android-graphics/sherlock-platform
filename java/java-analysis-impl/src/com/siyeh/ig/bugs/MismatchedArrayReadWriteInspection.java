@@ -16,6 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,7 +27,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
@@ -36,12 +36,14 @@ public final class MismatchedArrayReadWriteInspection extends BaseInspection {
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "MismatchedReadAndWriteOfArray";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final boolean written = ((Boolean)infos[0]).booleanValue();
     if (written) {
       return InspectionGadgetsBundle.message(
@@ -76,7 +78,7 @@ public final class MismatchedArrayReadWriteInspection extends BaseInspection {
       if (!field.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
-      if (SerializationUtils.isSerializationImplicitlyUsedField(field)) {
+      if (HighlightUtil.isSerializationImplicitlyUsedField(field)) {
         return;
       }
       final PsiClass containingClass = PsiUtil.getTopLevelClass(field);
@@ -150,7 +152,7 @@ public final class MismatchedArrayReadWriteInspection extends BaseInspection {
         if (CloneUtils.isClone(method)) {
           return false;
         }
-        final @NonNls String name = method.getName();
+        @NonNls final String name = method.getName();
         if ("copyOf".equals(name) || "copyOfRange".equals(name)) {
           final PsiClass aClass = method.getContainingClass();
           if (aClass != null && CommonClassNames.JAVA_UTIL_ARRAYS.equals(aClass.getQualifiedName())) {

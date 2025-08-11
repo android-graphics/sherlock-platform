@@ -9,8 +9,3 @@ open class A {
 class C : A(), I {
     <caret>
 }
-
-// MEMBER: "foo(): Unit"
-// MEMBER: "equals(other: Any?): Boolean"
-// MEMBER: "hashCode(): Int"
-// MEMBER: "toString(): String"

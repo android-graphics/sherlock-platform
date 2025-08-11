@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -9,7 +9,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -19,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class DisableInspectionToolAction extends IntentionAndQuickFixAction implements Iconable, DumbAware {
+public class DisableInspectionToolAction extends IntentionAndQuickFixAction implements Iconable {
   private final String myToolId;
 
   public DisableInspectionToolAction(LocalInspectionTool tool) {
@@ -27,16 +26,18 @@ public class DisableInspectionToolAction extends IntentionAndQuickFixAction impl
   }
 
   public DisableInspectionToolAction(final HighlightDisplayKey key) {
-    myToolId = key.getShortName();
+    myToolId = key.toString();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return getNameText();
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return getNameText();
   }
 

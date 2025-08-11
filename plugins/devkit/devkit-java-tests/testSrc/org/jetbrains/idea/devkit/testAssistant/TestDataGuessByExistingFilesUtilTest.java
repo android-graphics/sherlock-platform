@@ -18,6 +18,7 @@ import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -174,7 +175,7 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
     List<String> names = ContainerUtil.map(testDataFiles, TestDataFile::getName);
     assertNotNull(names);
     assertEquals(names.toString(), 2, names.size());
-    names = ContainerUtil.sorted(names);
+    Collections.sort(names);
     assertEquals("somethingBA_after.java", names.get(0));
     assertEquals("somethingBA_before.java", names.get(1));
   }
@@ -183,7 +184,7 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
     List<String> names = ContainerUtil.map(testDataFiles, TestDataFile::getName);
     assertNotNull(names);
     assertEquals(names.toString(), 2, names.size());
-    names = ContainerUtil.sorted(names);
+    Collections.sort(names);
     assertEquals("somethingBS.java", names.get(0));
     assertEquals("somethingBS_before.java", names.get(1));
   }
@@ -192,7 +193,7 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
     List<String> names = ContainerUtil.map(testDataFiles, TestDataFile::getName);
     assertNotNull(names);
     assertEquals(names.toString(), 2, names.size());
-    names = ContainerUtil.sorted(names);
+    Collections.sort(names);
     assertEquals("somethingAS.java", names.get(0));
     assertEquals("somethingAS_after.java", names.get(1));
   }

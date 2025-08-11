@@ -31,7 +31,6 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.openapi.vcs.changes.ignore.lexer.IgnoreLexerAdapter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,9 +40,9 @@ import java.util.Map;
 /**
  * Syntax highlighter definition for {@link IgnoreLanguage}.
  */
-@ApiStatus.Internal
 public class IgnoreLanguageHighlighter extends SyntaxHighlighterBase {
-  private final @Nullable VirtualFile currentHighlightedFile;
+  @Nullable
+  private final VirtualFile currentHighlightedFile;
 
   private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<>();
 
@@ -58,8 +57,9 @@ public class IgnoreLanguageHighlighter extends SyntaxHighlighterBase {
     this.currentHighlightedFile = currentHighlightedFile;
   }
 
+  @NotNull
   @Override
-  public @NotNull Lexer getHighlightingLexer() {
+  public Lexer getHighlightingLexer() {
     return new IgnoreLexerAdapter(currentHighlightedFile);
   }
 

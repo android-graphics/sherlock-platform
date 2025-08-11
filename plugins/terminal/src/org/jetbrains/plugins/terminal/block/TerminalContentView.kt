@@ -5,12 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
-@ApiStatus.Internal
-interface TerminalContentView : Disposable {
+internal interface TerminalContentView : Disposable {
   val component: JComponent
 
   val preferredFocusableComponent: JComponent
@@ -31,9 +29,4 @@ interface TerminalContentView : Disposable {
 
   @RequiresEdt(generateAssertion = false)
   fun sendCommandToExecute(shellCommand: String)
-
-  @RequiresEdt(generateAssertion = false)
-  fun isCommandRunning(): Boolean {
-    return false
-  }
 }

@@ -10,9 +10,10 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.PlatformUtils
 import io.opentelemetry.api.trace.StatusCode
+import org.gradle.tooling.BuildLauncher
 import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.ProjectConnection
 import org.gradle.util.GradleVersion
@@ -51,7 +52,8 @@ object GradleWrapperHelper {
       return
     }
     if (settings.distributionType == DistributionType.DEFAULT_WRAPPED && GradleUtil.findDefaultWrapperPropertiesFile(projectPath) != null) {
-      return
+      // Fleet cannot resolve Gradle wrappers from places other than the project root
+      if (!PlatformUtils.isFleetBackend()) return
     }
     withGradleConnection(projectPath, id, settings, listener, cancellationToken) {
       ensureInstalledWrapper(id, projectPath, settings, gradleVersion, listener, it, cancellationToken)
@@ -133,21 +135,9 @@ object GradleWrapperHelper {
     cancellationToken: CancellationToken
   ) {
     SystemPropertiesAdjuster.executeAdjusted(projectPath) {
-
-      /**
-       * Don't reuse this build environment for the main execution process, because the wrapper task changes used Gradle distribution.
-       * It affects [org.gradle.tooling.model.build.GradleEnvironment] in [org.gradle.tooling.model.build.BuildEnvironment].
-       */
-      val buildEnvironment = GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationToken, settings)
-
-      val launcher = connection.newBuild()
-      val wrapperSettings = GradleExecutionSettings(settings).apply {
-        tasks = listOf("wrapper")
-      }
-      GradleExecutionHelper.prepareForExecution(launcher, cancellationToken, id, wrapperSettings, listener, buildEnvironment)
-      ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
-        .spanBuilder("ExecuteWrapperTask")
-        .use { launcher.run() }
+      val launcher: BuildLauncher = GradleExecutionHelper().getBuildLauncher(connection, id, listOf("wrapper"), settings, listener)
+      launcher.withCancellationToken(cancellationToken)
+      ExternalSystemTelemetryUtil.runWithSpan(GradleConstants.SYSTEM_ID, "ExecuteWrapperTask") { launcher.run() }
     }
   }
 

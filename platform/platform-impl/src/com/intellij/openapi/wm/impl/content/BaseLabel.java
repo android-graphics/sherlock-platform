@@ -41,7 +41,7 @@ public class BaseLabel extends JLabel {
         repaint();
       }
     });
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAATextInfoForSwingComponent());
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
 
     if (ExperimentalUI.isNewUI()) {
       setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets()));
@@ -118,7 +118,7 @@ public class BaseLabel extends JLabel {
       myTabColor = null;
     }
     else {
-      setText(showLabelText(content) ? content.getDisplayName() : null);
+      setText(content.getDisplayName());
       setActiveFg(getActiveFg(isSelected));
       setPassiveFg(getPassiveFg(isSelected));
       myTabColor = content.getTabColor();
@@ -149,10 +149,6 @@ public class BaseLabel extends JLabel {
 
       myBold = isBold;
     }
-  }
-
-  boolean showLabelText(@NotNull Content content) {
-    return true;
   }
 
   public @Nullable Color getTabColor() {

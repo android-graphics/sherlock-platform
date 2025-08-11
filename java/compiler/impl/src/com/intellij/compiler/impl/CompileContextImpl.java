@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -51,8 +51,7 @@ public final class CompileContextImpl extends UserDataHolderBase implements Comp
   public CompileContextImpl(@NotNull Project project,
                             @NotNull CompilerTask compilerSession,
                             @NotNull CompileScope compileScope,
-                            boolean isMake,
-                            boolean isRebuild) {
+                            boolean isMake, boolean isRebuild) {
     myProject = project;
     myMessages = new MessagesContainer(project);
     myBuildSession = compilerSession;
@@ -67,7 +66,7 @@ public final class CompileContextImpl extends UserDataHolderBase implements Comp
     final Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(compileScope);
     if (sessionId != null) {
       // in case compilation is started as a part of some execution session,
-      // all compilation tasks should have the same sessionId in order for a successive task not to clean messages
+      // all compilation tasks should have the same sessionId in order for successive task not to clean messages
       // from previous compilation tasks run within this execution session
       compilerSession.setSessionId(sessionId);
     }
@@ -106,7 +105,7 @@ public final class CompileContextImpl extends UserDataHolderBase implements Comp
   }
 
   @Override
-  public void addMessage(@NotNull CompilerMessage msg) {
+  public void addMessage(CompilerMessage msg) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.info("addMessage: " + msg + " this=" + this);
     }
@@ -201,7 +200,7 @@ public final class CompileContextImpl extends UserDataHolderBase implements Comp
   }
 
   @Override
-  public void addScope(@NotNull CompileScope additionalScope) {
+  public void addScope(final CompileScope additionalScope) {
     myCompileScope = new CompositeScope(myCompileScope, additionalScope);
   }
 

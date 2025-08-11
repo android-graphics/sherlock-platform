@@ -54,7 +54,7 @@ import kotlin.io.path.exists
 /**
  * Implements loading and saving module configuration from workspace model in '.classpath' file
  */
-internal class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManagerFileWriteRequestor {
+class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManagerFileWriteRequestor {
   override val id: String
     get() = JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID
 

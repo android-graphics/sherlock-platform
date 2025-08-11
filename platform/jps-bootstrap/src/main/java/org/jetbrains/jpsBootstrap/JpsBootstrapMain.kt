@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jpsBootstrap
 
+import com.google.common.hash.Hashing
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 import com.intellij.openapi.util.SystemInfo
@@ -9,7 +10,6 @@ import com.intellij.util.ExceptionUtil
 import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes
 import org.apache.commons.cli.*
-import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.compress.archivers.examples.Archiver
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.io.file.PathUtils
@@ -22,7 +22,6 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.verbos
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil
 import org.jetbrains.intellij.build.dependencies.JdkDownloader.getJavaExecutable
 import org.jetbrains.intellij.build.dependencies.JdkDownloader.getJdkHome
-import org.jetbrains.intellij.build.dependencies.JdkDownloader.getRuntimeHome
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.module.JpsModule
@@ -133,31 +132,19 @@ class JpsBootstrapMain(args: Array<String>?) {
     val jdkHome: Path
     if (underTeamCity) {
       jdkHome = getJdkHome(communityHome)
-      exportJava(jdkHome)
+      var setParameterServiceMessage = SetParameterServiceMessage(
+        "jps.bootstrap.java.home", jdkHome.toString()
+      )
+      println(setParameterServiceMessage.asString())
+      setParameterServiceMessage = SetParameterServiceMessage(
+        "jps.bootstrap.java.executable", getJavaExecutable(jdkHome).toString())
+      println(setParameterServiceMessage.asString())
     }
     else {
       // On local run JDK was already downloaded via jps-bootstrap.{sh,cmd}
       jdkHome = Path.of(System.getProperty("java.home"))
     }
     return jdkHome
-  }
-
-  private fun downloadRuntime(): Path {
-    val runtimeHome: Path = getRuntimeHome(communityHome)
-    if (underTeamCity) {
-      exportJava(runtimeHome)
-    }
-    return runtimeHome
-  }
-
-  private fun exportJava(home: Path) {
-    var setParameterServiceMessage = SetParameterServiceMessage(
-      "jps.bootstrap.java.home", home.toString()
-    )
-    println(setParameterServiceMessage.asString())
-    setParameterServiceMessage = SetParameterServiceMessage(
-      "jps.bootstrap.java.executable", getJavaExecutable(home).toString())
-    println(setParameterServiceMessage.asString())
   }
 
   @Throws(Throwable::class)
@@ -190,7 +177,6 @@ class JpsBootstrapMain(args: Array<String>?) {
     if (!classpathFileTargetString.isNullOrBlank()) {
       writeClasspathFile(moduleRuntimeClasspath, Path.of(classpathFileTargetString))
     }
-    // downloadRuntime() FIXME IJI-2074
   }
 
   private fun removeOpenedPackage(openedPackages: MutableList<String>, openedPackage: String, unknownPackages: MutableList<String>) {
@@ -407,7 +393,7 @@ class JpsBootstrapMain(args: Array<String>?) {
           }
           else {
             val length = attributes.size()
-            val sha256 = DigestUtils.sha256Hex(Files.readAllBytes(file.toPath()))
+            val sha256 = Hashing.sha256().hashBytes(Files.readAllBytes(file.toPath())).toString()
             "$file file length $length sha256 $sha256"
           }
         }

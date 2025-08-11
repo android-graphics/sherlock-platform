@@ -21,11 +21,9 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.picker.ColorListener
 import com.intellij.ui.picker.ColorPickerPopupCloseListener
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
 
-@ApiStatus.Internal
 class LocalColorChooserService : ClientColorChooserService {
   override fun showDialog(project: Project?,
                           parent: Component,

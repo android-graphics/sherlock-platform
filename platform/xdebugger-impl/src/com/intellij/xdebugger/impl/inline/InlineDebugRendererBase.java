@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.icons.AllIcons;
@@ -27,11 +27,9 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.concurrent.ExecutorService;
 
 import static com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR;
 import static com.intellij.xdebugger.impl.inline.InlineDebugRenderer.INDENT;
@@ -39,18 +37,11 @@ import static com.intellij.xdebugger.impl.inline.InlineDebugRenderer.NAME_VALUE_
 
 @ApiStatus.Internal
 public abstract class InlineDebugRendererBase implements EditorCustomElementRenderer {
-
-  private static final ExecutorService inExecutionPointRepainterExecutor =
-    AppExecutorUtil.createBoundedApplicationPoolExecutor("InlineDebugRenderer in Execution Point Repainter", 1);
-
   public boolean isInExecutionPointCached;
 
   protected int myRemoveXCoordinate = Integer.MAX_VALUE;
   protected int myTextStartXCoordinate;
   protected boolean isHovered = false;
-  protected String specialRenderId = "";
-
-  public void onClick(Inlay inlay, @NotNull EditorMouseEvent event) {}
 
   @Override
   public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
@@ -67,7 +58,7 @@ public abstract class InlineDebugRendererBase implements EditorCustomElementRend
                         })
       .coalesceBy(inlay)
       .expireWith(inlay)
-      .submit(inExecutionPointRepainterExecutor);
+      .submit(AppExecutorUtil.getAppExecutorService());
 
     TextAttributes inlineAttributes = getAttributes(editor);
     if (inlineAttributes == null || inlineAttributes.getForegroundColor() == null) return;
@@ -90,10 +81,10 @@ public abstract class InlineDebugRendererBase implements EditorCustomElementRend
     }
 
     curX += (2 * margin);
-    Icon nodeIcon = getIcon();
-    if (nodeIcon != null) {
-      nodeIcon.paintIcon(inlay.getEditor().getComponent(), g, curX, getIconY(nodeIcon, r));
-      curX += nodeIcon.getIconWidth() + margin * 2;
+    if (isCustomNode()) {
+      Icon watchIcon = AllIcons.Debugger.Watch;
+      watchIcon.paintIcon(inlay.getEditor().getComponent(), g, curX, getIconY(watchIcon, r));
+      curX += watchIcon.getIconWidth() + margin * 2;
     }
     myTextStartXCoordinate = curX;
     for (int i = 0; i < getPresentation().getTexts().size(); i++) {
@@ -126,17 +117,12 @@ public abstract class InlineDebugRendererBase implements EditorCustomElementRend
     paintEffects(g, r, editor, inlineAttributes, font, metrics);
   }
 
-  protected @Nullable Icon getIcon() {
-    return isCustomNode() ? AllIcons.Debugger.Watch : null;
-  }
-
   @Override
   public int calcWidthInPixels(@NotNull Inlay inlay) {
     int width = getInlayTextWidth(inlay);
     width += isCustomNode() ? AllIcons.Actions.Close.getIconWidth() : AllIcons.General.LinkDropTriangle.getIconWidth();
-    Icon icon = getIcon();
-    if (icon != null) {
-      width += icon.getIconWidth();
+    if (isCustomNode()) {
+      width += AllIcons.Debugger.Watch.getIconWidth();
     }
     return width;
   }
@@ -160,7 +146,8 @@ public abstract class InlineDebugRendererBase implements EditorCustomElementRend
     return UIUtil.getFontWithFallback(colorsScheme.getFont(EditorFontType.forJavaStyle(fontStyle)));
   }
 
-  private static @NotNull FontMetrics getFontMetrics(Font font, @NotNull Editor editor) {
+  @NotNull
+  private static FontMetrics getFontMetrics(Font font, @NotNull Editor editor) {
     return FontInfo.getFontMetrics(font, FontInfo.getFontRenderContext(editor.getContentComponent()));
   }
 
@@ -221,7 +208,8 @@ public abstract class InlineDebugRendererBase implements EditorCustomElementRend
     }
   }
 
-  public abstract @NotNull SimpleColoredText getPresentation();
+  @NotNull
+  abstract public SimpleColoredText getPresentation();
 
   private TextAttributes getAttributes(Editor editor) {
     TextAttributesKey key = isInExecutionPointCached ? DebuggerColors.INLINED_VALUES_EXECUTION_LINE : DebuggerColors.INLINED_VALUES;
@@ -254,15 +242,10 @@ public abstract class InlineDebugRendererBase implements EditorCustomElementRend
     return myTextStartXCoordinate;
   }
 
-  public abstract boolean isCustomNode();
+  abstract public boolean isCustomNode();
 
-  public abstract boolean isErrorMessage();
+  abstract public boolean isErrorMessage();
 
   @RequiresBackgroundThread
-  protected abstract boolean calculateIsInExecutionPoint();
-
-  @ApiStatus.Internal
-  public String getSpecialRenderId() {
-    return specialRenderId;
-  }
+  abstract protected boolean calculateIsInExecutionPoint();
 }

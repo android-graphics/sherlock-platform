@@ -1,4 +1,4 @@
-from typing import Final
+from typing_extensions import Final
 
 XK_3270_Duplicate: Final = 0xFD01
 XK_3270_FieldMark: Final = 0xFD02

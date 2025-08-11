@@ -21,7 +21,8 @@ import org.jetbrains.annotations.NotNull;
 
 class VariablePassedAsArgumentExcludedVisitor extends JavaRecursiveElementWalkingVisitor {
 
-  private final @NotNull PsiVariable variable;
+  @NotNull
+  private final PsiVariable variable;
   private final Processor<? super PsiCall> myCallProcessor;
   private final boolean myBuilderPattern;
 

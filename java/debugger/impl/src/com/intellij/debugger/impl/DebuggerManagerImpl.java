@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -90,7 +90,8 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
     }
   };
 
-  private @NotNull DebuggerManagerListener getEventPublisher() {
+  @NotNull
+  private DebuggerManagerListener getEventPublisher() {
     return myProject.getMessageBus().syncPublisher(DebuggerManagerListener.TOPIC);
   }
 
@@ -105,7 +106,7 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
   }
 
   @Override
-  public String getVMClassQualifiedName(final @NotNull PsiClass aClass) {
+  public String getVMClassQualifiedName(@NotNull final PsiClass aClass) {
     for (NameMapper nameMapper : myNameMappers) {
       final String qName = nameMapper.getQualifiedName(aClass);
       if (qName != null) {
@@ -142,22 +143,25 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
     myBreakpointManager.addListeners(busConnection);
   }
 
+  @Nullable
   @Override
-  public @Nullable DebuggerSession getSession(DebugProcess process) {
+  public DebuggerSession getSession(DebugProcess process) {
     ThreadingAssertions.assertEventDispatchThread();
     return ContainerUtil.find(getSessions(), debuggerSession -> process == debuggerSession.getProcess());
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<DebuggerSession> getSessions() {
+  public Collection<DebuggerSession> getSessions() {
     synchronized (mySessions) {
       final Collection<DebuggerSession> values = mySessions.values();
       return values.isEmpty() ? Collections.emptyList() : new ArrayList<>(values);
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable Element getState() {
+  public Element getState() {
     Element state = new Element("state");
     myBreakpointManager.writeExternal(state);
     return state;
@@ -173,7 +177,8 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
   }
 
   @Override
-  public @Nullable DebuggerSession attachVirtualMachine(@NotNull DebugEnvironment environment) throws ExecutionException {
+  @Nullable
+  public DebuggerSession attachVirtualMachine(@NotNull DebugEnvironment environment) throws ExecutionException {
     DebugProcessEvents debugProcess = new DebugProcessEvents(myProject);
     DebuggerSession session = DebuggerSession.create(debugProcess, environment);
     ExecutionResult executionResult = session.getProcess().getExecutionResult();
@@ -260,7 +265,8 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public @Nullable DebuggerSession getDebugSession(final ProcessHandler processHandler) {
+  @Nullable
+  public DebuggerSession getDebugSession(final ProcessHandler processHandler) {
     synchronized (mySessions) {
       return mySessions.get(processHandler);
     }
@@ -311,18 +317,21 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
     return DebuggerManagerThreadImpl.isManagerThread();
   }
 
+  @NotNull
   @Override
-  public @NotNull BreakpointManager getBreakpointManager() {
+  public BreakpointManager getBreakpointManager() {
     return myBreakpointManager;
   }
 
+  @NotNull
   @Override
-  public @NotNull DebuggerContextImpl getContext() {
+  public DebuggerContextImpl getContext() {
     return getContextManager().getContext();
   }
 
+  @NotNull
   @Override
-  public @NotNull DebuggerStateManager getContextManager() {
+  public DebuggerStateManager getContextManager() {
     return myDebuggerStateManager;
   }
 
@@ -343,13 +352,14 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
   private static class MyDebuggerStateManager extends DebuggerStateManager {
     private DebuggerSession myDebuggerSession;
 
+    @NotNull
     @Override
-    public @NotNull DebuggerContextImpl getContext() {
+    public DebuggerContextImpl getContext() {
       return myDebuggerSession == null ? DebuggerContextImpl.EMPTY_CONTEXT : myDebuggerSession.getContextManager().getContext();
     }
 
     @Override
-    public void setState(final @NotNull DebuggerContextImpl context,
+    public void setState(@NotNull final DebuggerContextImpl context,
                          DebuggerSession.State state,
                          DebuggerSession.Event event,
                          String description) {

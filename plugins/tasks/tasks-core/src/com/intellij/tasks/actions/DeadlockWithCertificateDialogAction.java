@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -19,7 +18,7 @@ import java.net.URL;
 public class DeadlockWithCertificateDialogAction extends AnAction {
   public static final String SELF_SIGNED_SERVER_URL = "https://self-signed.certificates-tests.labs.intellij.net";
   @Override
-  public void actionPerformed(final @NotNull AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     ApplicationManager.getApplication().invokeLater(() -> {
       URL location = null;
       try {

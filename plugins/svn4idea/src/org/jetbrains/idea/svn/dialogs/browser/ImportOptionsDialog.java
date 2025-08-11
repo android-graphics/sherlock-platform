@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -49,7 +49,8 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
   }
 
   @Override
-  protected @NonNls String getDimensionServiceKey() {
+  @NonNls
+  protected String getDimensionServiceKey() {
     return "svn4idea.import.options";
   }
 
@@ -70,7 +71,8 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
   }
 
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  @Nullable
+  protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
     GridBagConstraints gc = new GridBagConstraints();

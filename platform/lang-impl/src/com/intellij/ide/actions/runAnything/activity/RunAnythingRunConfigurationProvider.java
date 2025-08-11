@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.execution.Executor;
@@ -12,7 +12,6 @@ import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,10 +20,10 @@ import javax.swing.*;
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.EXECUTOR_KEY;
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 
-@ApiStatus.Internal
 public abstract class RunAnythingRunConfigurationProvider extends RunAnythingProviderBase<ChooseRunConfigurationPopup.ItemWrapper> {
+  @NotNull
   @Override
-  public @NotNull String getCommand(@NotNull ChooseRunConfigurationPopup.ItemWrapper value) {
+  public String getCommand(@NotNull ChooseRunConfigurationPopup.ItemWrapper value) {
     return value.getText();
   }
 
@@ -46,18 +45,21 @@ public abstract class RunAnythingRunConfigurationProvider extends RunAnythingPro
     wrapper.perform(project, executor, dataContext);
   }
 
+  @Nullable
   @Override
-  public @Nullable Icon getIcon(@NotNull ChooseRunConfigurationPopup.ItemWrapper value) {
+  public Icon getIcon(@NotNull ChooseRunConfigurationPopup.ItemWrapper value) {
     return value.getIcon();
   }
 
+  @Nullable
   @Override
-  public @Nullable String getAdText() {
+  public String getAdText() {
     return RunAnythingUtil.getAdContextText() + ", " + RunAnythingUtil.getAdDebugText();
   }
 
+  @NotNull
   @Override
-  public @NotNull RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull ChooseRunConfigurationPopup.ItemWrapper value) {
+  public RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull ChooseRunConfigurationPopup.ItemWrapper value) {
     return new RunAnythingRunConfigurationItem(value, value.getIcon());
   }
 }

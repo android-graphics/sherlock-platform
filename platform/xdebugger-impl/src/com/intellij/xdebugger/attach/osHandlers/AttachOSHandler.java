@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.attach.osHandlers;
 
 import com.intellij.execution.ExecutionException;
@@ -16,20 +16,24 @@ import org.jetbrains.annotations.NotNull;
 public abstract class AttachOSHandler {
 
   private static final Logger LOG = Logger.getInstance(AttachOSHandler.class);
-  private final @NotNull OSType myOSType;
+  @NotNull
+  private final OSType myOSType;
 
-  protected final @NotNull EnvironmentAwareHost myHost;
+  @NotNull
+  protected final EnvironmentAwareHost myHost;
 
-  public AttachOSHandler(@NotNull EnvironmentAwareHost host, final @NotNull OSType osType) {
+  public AttachOSHandler(@NotNull EnvironmentAwareHost host, @NotNull final OSType osType) {
     myHost = host;
     myOSType = osType;
   }
 
-  public @NotNull OSType getOSType() {
+  @NotNull
+  public OSType getOSType() {
     return myOSType;
   }
 
-  public static @NotNull AttachOSHandler getAttachOsHandler(@NotNull EnvironmentAwareHost host) {
+  @NotNull
+  public static AttachOSHandler getAttachOsHandler(@NotNull EnvironmentAwareHost host) {
 
     try {
       final OSType osType = computeOsType(host);
@@ -53,7 +57,8 @@ public abstract class AttachOSHandler {
     return new GenericAttachOSHandler(host, OSType.UNKNOWN);
   }
 
-  private static @NotNull OSType localComputeOsType() {
+  @NotNull
+  private static OSType localComputeOsType() {
     if(SystemInfo.isLinux) {
       return OSType.LINUX;
     }
@@ -69,7 +74,8 @@ public abstract class AttachOSHandler {
     return OSType.UNKNOWN;
   }
 
-  private static @NotNull OSType computeOsType(@NotNull EnvironmentAwareHost host) throws ExecutionException {
+  @NotNull
+  private static OSType computeOsType(@NotNull EnvironmentAwareHost host) throws ExecutionException {
     if (host instanceof LocalAttachHost) {
       return localComputeOsType();
     }

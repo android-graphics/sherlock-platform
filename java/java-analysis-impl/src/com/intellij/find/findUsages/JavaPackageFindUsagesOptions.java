@@ -59,7 +59,6 @@ public class JavaPackageFindUsagesOptions extends JavaFindUsagesOptions {
     }
   }
 
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!super.equals(o)) return false;
@@ -74,7 +73,6 @@ public class JavaPackageFindUsagesOptions extends JavaFindUsagesOptions {
     return true;
   }
 
-  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + (isClassesUsages ? 1 : 0);

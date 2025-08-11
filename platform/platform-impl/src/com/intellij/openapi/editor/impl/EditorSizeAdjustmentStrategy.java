@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.util.SingleEdtTaskScheduler;
+import com.intellij.util.Alarm;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import org.jetbrains.annotations.NotNull;
@@ -13,15 +13,15 @@ import java.awt.*;
 
 /**
  * This class is aimed to help {@linkplain EditorImpl the editor} when the user extensively modifies the longest line
- * at the document (e.g., is typing at its end).
+ * at the document (e.g. is typing at its end).
  * <p>
  * The problem is that the longest line's width determines the width of {@link JComponent#getPreferredSize()}.
  * So, every time the width of the longest line is changed,
  * the editor's preferred size is changed too and that triggers the whole component repaint.
  * <p>
- * This component comes into play here - it's assumed that the editor notifies it every time the preferred size is changed and
+ * This component comes into the play here - it's assumed that the editor notifies it every time the preferred size is changed and
  * receives instructions for the further actions. For example, we can reserve additional space if we see that the preferred size
- * is permanently increasing (the user is typing at the end of the longest line), etc.
+ * is permanently increasing (the user is typing at the end of the longest line) etc.
  * <p>
  * Not thread-safe.
  */
@@ -41,7 +41,7 @@ final class EditorSizeAdjustmentStrategy {
    */
   private static final int DEFAULT_RESERVE_COLUMNS_NUMBER = 4;
 
-  private final SingleEdtTaskScheduler alarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
+  private final Alarm myAlarm = new Alarm();
   private final LongList myTimings = new LongArrayList();
 
   private int myReserveColumns = DEFAULT_RESERVE_COLUMNS_NUMBER;
@@ -80,7 +80,7 @@ final class EditorSizeAdjustmentStrategy {
       result = newPreferredSize;
     }
     else {
-      // don't reduce preferred size on frequent reduction of the longest document line.
+      // Don't reduce preferred size on frequent reduce of the longest document line.
       result = oldPreferredSize;
     }
 
@@ -89,7 +89,7 @@ final class EditorSizeAdjustmentStrategy {
   }
 
   void cancelAllRequests() {
-    alarm.cancel();
+    myAlarm.cancelAllRequests();
   }
 
   /**
@@ -109,7 +109,8 @@ final class EditorSizeAdjustmentStrategy {
   }
 
   private void scheduleSizeUpdate(@NotNull EditorImpl editor) {
-    alarm.cancelAndRequest(1000, new UpdateSizeTask(editor));
+    myAlarm.cancelAllRequests();
+    myAlarm.addRequest(new UpdateSizeTask(editor), 1000);
   }
 
   private final class UpdateSizeTask implements Runnable {

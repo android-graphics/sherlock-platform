@@ -2,6 +2,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
+import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -11,13 +12,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IndexingTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+@HardwareAgentRequired
 public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
   @Override
   protected void setUp() throws Exception {
@@ -43,7 +45,7 @@ public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
 
   public void testTypingInBigFile() throws Exception {
     configureByFile(getTestName(true) + "/File1.properties");
-    Benchmark.newBenchmark(getTestName(false), () -> {
+    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
       type(' ');
       PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
       backspace();
@@ -54,7 +56,7 @@ public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
   public void testResolveManyLiterals() throws Exception {
     final PsiClass aClass = generateTestFiles();
     assertNotNull(aClass);
-    Benchmark.newBenchmark(getTestName(false), () -> aClass.accept(new JavaRecursiveElementWalkingVisitor() {
+    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
         PsiReference[] references = expression.getReferences();

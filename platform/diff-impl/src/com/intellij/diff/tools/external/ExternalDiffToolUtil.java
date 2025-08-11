@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.external;
 
 import com.intellij.CommonBundle;
@@ -18,7 +18,6 @@ import com.intellij.execution.process.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -71,7 +70,8 @@ public final class ExternalDiffToolUtil {
     return false;
   }
 
-  private static @NotNull InputFile createFile(@Nullable Project project, @NotNull DiffContent content, @NotNull FileNameInfo fileName)
+  @NotNull
+  private static InputFile createFile(@Nullable Project project, @NotNull DiffContent content, @NotNull FileNameInfo fileName)
     throws IOException {
 
     if (content instanceof EmptyContent) {
@@ -106,9 +106,10 @@ public final class ExternalDiffToolUtil {
     throw new IllegalArgumentException(content.toString());
   }
 
-  private static @NotNull File createTempFile(@Nullable Project project,
-                                              @NotNull DocumentContent content,
-                                              @NotNull FileNameInfo fileName) throws IOException {
+  @NotNull
+  private static File createTempFile(@Nullable Project project,
+                                     @NotNull DocumentContent content,
+                                     @NotNull FileNameInfo fileName) throws IOException {
     FileDocumentManager.getInstance().saveDocument(content.getDocument());
 
     LineSeparator separator = content.getLineSeparator();
@@ -134,21 +135,24 @@ public final class ExternalDiffToolUtil {
     return createFile(bytes, fileName);
   }
 
-  private static @NotNull File createTempFile(@NotNull VirtualFile file, @NotNull FileNameInfo fileName) throws IOException {
+  @NotNull
+  private static File createTempFile(@NotNull VirtualFile file, @NotNull FileNameInfo fileName) throws IOException {
     byte[] bytes = file.contentsToByteArray();
     return createFile(bytes, fileName);
   }
 
-  private static @NotNull Charset getContentCharset(@Nullable Project project, @NotNull DocumentContent content) {
+  @NotNull
+  private static Charset getContentCharset(@Nullable Project project, @NotNull DocumentContent content) {
     Charset charset = content.getCharset();
     if (charset != null) return charset;
     EncodingManager e = project != null ? EncodingProjectManager.getInstance(project) : EncodingManager.getInstance();
     return e.getDefaultCharset();
   }
 
-  private static @NotNull OutputFile createOutputFile(@Nullable Project project,
-                                                      @NotNull DiffContent content,
-                                                      @NotNull FileNameInfo fileName) throws IOException {
+  @NotNull
+  private static OutputFile createOutputFile(@Nullable Project project,
+                                             @NotNull DiffContent content,
+                                             @NotNull FileNameInfo fileName) throws IOException {
     if (content instanceof FileContent) {
       VirtualFile file = ((FileContent)content).getFile();
 
@@ -172,7 +176,8 @@ public final class ExternalDiffToolUtil {
     throw new IllegalArgumentException(content.toString());
   }
 
-  private static @NotNull File createFile(byte @NotNull [] bytes, @NotNull FileNameInfo fileName) throws IOException {
+  @NotNull
+  private static File createFile(byte @NotNull [] bytes, @NotNull FileNameInfo fileName) throws IOException {
     File tempFile = FileUtil.createTempFile(fileName.prefix + "_", "_" + fileName.name, true);
     FileUtil.writeToFile(tempFile, bytes);
     return tempFile;
@@ -292,8 +297,6 @@ public final class ExternalDiffToolUtil {
                                  @NotNull List<String> titles,
                                  @Nullable String windowTitle) throws IOException {
     try {
-      DiffUsageTriggerCollector.logShowExternalTool(project, false);
-
       GeneralCommandLine commandLine = createDiffCommandLine(project, externalTool, contents, titles, windowTitle);
       commandLine.createProcess();
     }
@@ -302,11 +305,12 @@ public final class ExternalDiffToolUtil {
     }
   }
 
-  private static @NotNull GeneralCommandLine createDiffCommandLine(@Nullable Project project,
-                                                                   @NotNull ExternalDiffSettings.ExternalTool externalTool,
-                                                                   @NotNull List<? extends DiffContent> contents,
-                                                                   @NotNull List<String> titles,
-                                                                   @Nullable String windowTitle) throws IOException {
+  @NotNull
+  private static GeneralCommandLine createDiffCommandLine(@Nullable Project project,
+                                                          @NotNull ExternalDiffSettings.ExternalTool externalTool,
+                                                          @NotNull List<? extends DiffContent> contents,
+                                                          @NotNull List<String> titles,
+                                                          @Nullable String windowTitle) throws IOException {
     assert contents.size() == 2 || contents.size() == 3;
     assert titles.size() == contents.size();
 
@@ -333,8 +337,6 @@ public final class ExternalDiffToolUtil {
                                   @NotNull ExternalDiffSettings.ExternalTool externalTool,
                                   @NotNull ThreesideMergeRequest request,
                                   @Nullable JComponent parentComponent) throws IOException {
-    DiffUsageTriggerCollector.logShowExternalTool(project, true);
-
     handleMergeRequest(request, () -> tryExecuteMerge(project, externalTool, request, parentComponent));
   }
 
@@ -448,9 +450,10 @@ public final class ExternalDiffToolUtil {
     }
   }
 
-  private static @NotNull GeneralCommandLine createMergeCommandLine(@NotNull ExternalDiffSettings.ExternalTool externalTool,
-                                                                    @NotNull OutputFile outputFile,
-                                                                    @NotNull List<? extends InputFile> inputFiles) {
+  @NotNull
+  private static GeneralCommandLine createMergeCommandLine(@NotNull ExternalDiffSettings.ExternalTool externalTool,
+                                                           @NotNull OutputFile outputFile,
+                                                           @NotNull List<? extends InputFile> inputFiles) {
     assert inputFiles.size() == 3;
 
     Map<String, String> patterns = new HashMap<>();
@@ -462,9 +465,10 @@ public final class ExternalDiffToolUtil {
     return createCommandLine(externalTool.getProgramPath(), externalTool.getArgumentPattern(), patterns);
   }
 
-  private static @NotNull GeneralCommandLine createCommandLine(@NotNull String exePath,
-                                                               @NotNull String parametersTemplate,
-                                                               @NotNull Map<String, String> patterns) {
+  @NotNull
+  private static GeneralCommandLine createCommandLine(@NotNull String exePath,
+                                                      @NotNull String parametersTemplate,
+                                                      @NotNull Map<String, String> patterns) {
     List<String> parameters = ParametersListUtil.parse(parametersTemplate, true);
 
     List<String> from = new ArrayList<>();
@@ -486,10 +490,11 @@ public final class ExternalDiffToolUtil {
     return commandLine;
   }
 
-  private static @NotNull List<InputFile> createInputFiles(@Nullable Project project,
-                                                           @NotNull List<? extends DiffContent> contents,
-                                                           @NotNull List<String> titles,
-                                                           @Nullable String windowTitle) throws IOException {
+  @NotNull
+  private static List<InputFile> createInputFiles(@Nullable Project project,
+                                                  @NotNull List<? extends DiffContent> contents,
+                                                  @NotNull List<String> titles,
+                                                  @Nullable String windowTitle) throws IOException {
     List<InputFile> inputFiles = new ArrayList<>();
     for (int i = 0; i < contents.size(); i++) {
       DiffContent content = contents.get(i);
@@ -499,9 +504,10 @@ public final class ExternalDiffToolUtil {
     return inputFiles;
   }
 
-  private static @NotNull OutputFile createOutputFile(@Nullable Project project,
-                                                      @NotNull DiffContent outputContent,
-                                                      @Nullable String windowTitle) throws IOException {
+  @NotNull
+  private static OutputFile createOutputFile(@Nullable Project project,
+                                             @NotNull DiffContent outputContent,
+                                             @Nullable String windowTitle) throws IOException {
     return createOutputFile(project, outputContent, FileNameInfo.createMergeResult(outputContent, windowTitle));
   }
 
@@ -533,7 +539,7 @@ public final class ExternalDiffToolUtil {
   }
 
   private static class NonLocalOutputFile extends TempInputFile implements OutputFile {
-    private final @NotNull VirtualFile myFile;
+    @NotNull private final VirtualFile myFile;
 
     NonLocalOutputFile(@NotNull VirtualFile file, @NotNull File localFile) {
       super(localFile);
@@ -548,8 +554,8 @@ public final class ExternalDiffToolUtil {
   }
 
   private static class DocumentOutputFile extends TempInputFile implements OutputFile {
-    private final @NotNull Document myDocument;
-    private final @NotNull Charset myCharset;
+    @NotNull private final Document myDocument;
+    @NotNull private final Charset myCharset;
 
     DocumentOutputFile(@NotNull Document document, @NotNull Charset charset, @NotNull File localFile) {
       super(localFile);
@@ -565,14 +571,15 @@ public final class ExternalDiffToolUtil {
   }
 
   private static class LocalInputFile implements InputFile {
-    protected final @NotNull VirtualFile myFile;
+    @NotNull protected final VirtualFile myFile;
 
     LocalInputFile(@NotNull VirtualFile file) {
       myFile = file;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getPath() {
+    public String getPath() {
       return myFile.getPath();
     }
 
@@ -582,14 +589,15 @@ public final class ExternalDiffToolUtil {
   }
 
   private static class TempInputFile implements InputFile {
-    protected final @NotNull File myLocalFile;
+    @NotNull protected final File myLocalFile;
 
     TempInputFile(@NotNull File localFile) {
       myLocalFile = localFile;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getPath() {
+    public String getPath() {
       return myLocalFile.getPath();
     }
 
@@ -600,18 +608,19 @@ public final class ExternalDiffToolUtil {
   }
 
   private static class FileNameInfo {
-    public final @NotNull String prefix;
-    public final @NotNull String name;
+    @NotNull public final String prefix;
+    @NotNull public final String name;
 
     FileNameInfo(@NotNull @NonNls String prefix, @NotNull @NonNls String name) {
       this.prefix = prefix;
       this.name = name;
     }
 
-    public static @NotNull FileNameInfo create(@NotNull List<? extends DiffContent> contents,
-                                               @NotNull List<String> titles,
-                                               @Nullable String windowTitle,
-                                               int index) {
+    @NotNull
+    public static FileNameInfo create(@NotNull List<? extends DiffContent> contents,
+                                      @NotNull List<String> titles,
+                                      @Nullable String windowTitle,
+                                      int index) {
       if (contents.size() == 2) {
         Side side = Side.fromIndex(index);
         DiffContent content = side.select(contents);
@@ -635,14 +644,16 @@ public final class ExternalDiffToolUtil {
       }
     }
 
-    public static @NotNull FileNameInfo createMergeResult(@NotNull DiffContent content, @Nullable String windowTitle) {
+    @NotNull
+    public static FileNameInfo createMergeResult(@NotNull DiffContent content, @Nullable String windowTitle) {
       String name = getFileName(content, null, windowTitle);
       return new FileNameInfo("merge_result", name);
     }
 
-    private static @NotNull String getFileName(@NotNull DiffContent content,
-                                               @Nullable String title,
-                                               @Nullable String windowTitle) {
+    @NotNull
+    private static String getFileName(@NotNull DiffContent content,
+                                      @Nullable String title,
+                                      @Nullable String windowTitle) {
       if (content instanceof EmptyContent) {
         return "no_content.tmp";
       }

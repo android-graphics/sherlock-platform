@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.xdebugger;
 
-import com.intellij.idea.AppMode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,7 +33,8 @@ public abstract class XDebuggerUtil {
     return ApplicationManager.getApplication().getService(XDebuggerUtil.class);
   }
 
-  public @Nullable FileEditor getSelectedEditor(Project project, VirtualFile file) {
+  @Nullable
+  public FileEditor getSelectedEditor(Project project, VirtualFile file) {
     return FileEditorManager.getInstance(project).getSelectedEditor(file);
   }
 
@@ -74,7 +74,8 @@ public abstract class XDebuggerUtil {
    * @param line 0-based line number
    * @return source position
    */
-  public abstract @Nullable XSourcePosition createPosition(@Nullable VirtualFile file, int line);
+  @Nullable
+  public abstract XSourcePosition createPosition(@Nullable VirtualFile file, int line);
 
   /**
    * Create {@link XSourcePosition} instance by line and column number
@@ -84,7 +85,8 @@ public abstract class XDebuggerUtil {
    * @param column 0-based column number
    * @return source position
    */
-  public abstract @Nullable XSourcePosition createPosition(@Nullable VirtualFile file, int line, int column);
+  @Nullable
+  public abstract XSourcePosition createPosition(@Nullable VirtualFile file, int line, int column);
 
   /**
    * Create {@link XSourcePosition} instance by line number
@@ -92,9 +94,11 @@ public abstract class XDebuggerUtil {
    * @param offset offset from the beginning of file
    * @return source position
    */
-  public abstract @Nullable XSourcePosition createPositionByOffset(@Nullable VirtualFile file, int offset);
+  @Nullable
+  public abstract XSourcePosition createPositionByOffset(@Nullable VirtualFile file, int offset);
 
-  public abstract @Nullable XSourcePosition createPositionByElement(@Nullable PsiElement element);
+  @Nullable
+  public abstract XSourcePosition createPositionByElement(@Nullable PsiElement element);
 
   public abstract <B extends XLineBreakpoint<?>> XBreakpointGroupingRule<B, ?> getGroupingByFileRule();
 
@@ -102,7 +106,8 @@ public abstract class XDebuggerUtil {
 
   public abstract <T extends XDebuggerSettings<?>> T getDebuggerSettings(Class<T> aClass);
 
-  public abstract @Nullable XValueContainer getValueContainer(DataContext dataContext);
+  @Nullable
+  public abstract XValueContainer getValueContainer(DataContext dataContext);
 
   /**
    * Process all {@link PsiElement}s on the specified line
@@ -118,9 +123,11 @@ public abstract class XDebuggerUtil {
    */
   public abstract void disableValueLookup(@NotNull Editor editor);
 
-  public abstract @Nullable PsiElement findContextElement(@NotNull VirtualFile virtualFile, int offset, @NotNull Project project, boolean checkXml);
+  @Nullable
+  public abstract PsiElement findContextElement(@NotNull VirtualFile virtualFile, int offset, @NotNull Project project, boolean checkXml);
 
-  public abstract @NotNull XExpression createExpression(@NotNull String text, Language language, String custom, @NotNull EvaluationMode mode);
+  @NotNull
+  public abstract XExpression createExpression(@NotNull String text, Language language, String custom, @NotNull EvaluationMode mode);
 
   public abstract void logStack(@NotNull XSuspendContext suspendContext, @NotNull XDebugSession session);
 
@@ -128,8 +135,6 @@ public abstract class XDebuggerUtil {
 
   public static boolean areInlineBreakpointsEnabled(@Nullable VirtualFile file) {
     return Registry.is(INLINE_BREAKPOINTS_KEY) &&
-           // It's a temporary workaround for completely broken lambda breakpoints in RD, IDEA-358375.
-           !AppMode.isRemoteDevHost() &&
            !ContainerUtil.exists(InlineBreakpointsDisabler.Companion.getEP().getExtensionList(),
                                  disabler -> disabler.areInlineBreakpointsDisabled(file));
   }

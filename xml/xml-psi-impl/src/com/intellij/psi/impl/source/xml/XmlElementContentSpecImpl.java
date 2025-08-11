@@ -8,13 +8,10 @@ import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.xml.XmlElementContentGroup;
 import com.intellij.psi.xml.XmlElementContentSpec;
+import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.psi.xml.XmlElementType.XML_ELEMENT_CONTENT_GROUP;
-import static com.intellij.psi.xml.XmlElementType.XML_ELEMENT_CONTENT_SPEC;
-import static com.intellij.psi.xml.XmlTokenType.*;
-
-public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElementContentSpec {
+public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElementContentSpec, XmlElementType {
   private static final Logger LOG = Logger.getInstance(XmlElementContentSpecImpl.class);
 
   public XmlElementContentSpecImpl() {

@@ -2,8 +2,7 @@
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.designer.LightToolWindowContent;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
@@ -13,7 +12,9 @@ import com.intellij.ui.SideBorder;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -109,15 +110,17 @@ public class DesignerToolWindow implements LightToolWindowContent {
     }
   }
 
-  private class MyToolWindowPanel extends Splitter implements UiDataProvider {
+  private class MyToolWindowPanel extends Splitter implements DataProvider {
     MyToolWindowPanel() {
       super(true, 0.33f);
     }
 
     @Override
-    public void uiDataSnapshot(@NotNull DataSink sink) {
-      if (myComponentTree == null) return;
-      sink.set(GuiEditor.DATA_KEY, myComponentTree.getEditor());
+    public @Nullable Object getData(@NotNull @NonNls String dataId) {
+      if (GuiEditor.DATA_KEY.is(dataId) && myComponentTree != null) {
+        return myComponentTree.getData(dataId);
+      }
+      return null;
     }
   }
 }

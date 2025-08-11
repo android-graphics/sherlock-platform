@@ -39,7 +39,8 @@ public final class LanguageLevelUtil {
    * May return {@linkplain LanguageLevel#isUnsupported() unsupported} language level.
    * @param module to get the language level for.
    */
-  public static @NotNull LanguageLevel getEffectiveLanguageLevel(final @NotNull Module module) {
+  @NotNull
+  public static LanguageLevel getEffectiveLanguageLevel(@NotNull final Module module) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     LanguageLevel level = getCustomLanguageLevel(module);
     if (level != null) return level;
@@ -83,7 +84,8 @@ public final class LanguageLevelUtil {
    * @param languageLevel The language level for which to retrieve the short name.
    * @return The short name associated with the specified language level, or null if the language level is not released yet.
    */
-  public static @Nullable String getShortMessage(@NotNull LanguageLevel languageLevel) {
+  @Nullable
+  public static String getShortMessage(@NotNull LanguageLevel languageLevel) {
     return ourPresentableShortMessage.get(languageLevel);
   }
 
@@ -91,7 +93,8 @@ public final class LanguageLevelUtil {
    * For performance reasons, the forbidden API is pre-generated.
    * @see com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator
    */
-  private static @Nullable Set<String> getForbiddenApi(@NotNull LanguageLevel languageLevel) {
+  @Nullable
+  private static Set<String> getForbiddenApi(@NotNull LanguageLevel languageLevel) {
     String message = getShortMessage(languageLevel);
     if (message == null) return null;
     Reference<Set<String>> ref = ourForbiddenAPI.get(languageLevel);
@@ -167,7 +170,8 @@ public final class LanguageLevelUtil {
   /**
    * For serialization of forbidden api.
    */
-  public static @Nullable String getSignature(@Nullable PsiMember member) {
+  @Nullable
+  public static String getSignature(@Nullable PsiMember member) {
     if (member instanceof PsiClass) {
       return ((PsiClass)member).getQualifiedName();
     }

@@ -14,12 +14,13 @@ import org.jetbrains.annotations.NotNull;
 public class PyRemoveDictKeyQuickFix extends PsiUpdateModCommandQuickFix {
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.remove.dict.key");
   }
 
   @Override
-  public void applyFix(final @NotNull Project project, final @NotNull PsiElement element, final @NotNull ModPsiUpdater updater) {
+  public void applyFix(@NotNull final Project project, @NotNull final PsiElement element, @NotNull final ModPsiUpdater updater) {
     final PyKeyValueExpression expression = PsiTreeUtil.getParentOfType(element, PyKeyValueExpression.class);
     if (expression == null) return;
     final PsiElement nextSibling = PsiTreeUtil.skipWhitespacesForward(expression);

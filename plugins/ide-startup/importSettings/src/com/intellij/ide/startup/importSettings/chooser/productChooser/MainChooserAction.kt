@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import javax.swing.Icon
 
-internal open class MainChooserAction<T : BaseService>(val provider: ActionsDataProvider<T>, private val controller: ImportSettingsController) : ProductChooserAction() {
+open class MainChooserAction<T : BaseService>(val provider: ActionsDataProvider<T>, private val controller: ImportSettingsController) : ProductChooserAction() {
 
   override fun displayTextInToolbar(): Boolean {
     return true

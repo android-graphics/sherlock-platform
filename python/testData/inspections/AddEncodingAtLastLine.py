@@ -1,1 +1,1 @@
-<warning descr="No encoding specified for file">#!/usr/bin/env python</warning>
+<warning descr="No encoding specified for file"><caret></warning>#!/usr/bin/env python

@@ -3,7 +3,6 @@ package com.intellij.codeHighlighting;
 
 import com.intellij.ui.JBColor;
 import com.intellij.util.MathUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -11,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@ApiStatus.Internal
 public final class ColorGenerator {
   public static @NotNull List<Color> generateLinearColorSequence(@NotNull List<? extends Color> anchorColors, int colorsBetweenAnchors) {
     assert colorsBetweenAnchors >= 0;

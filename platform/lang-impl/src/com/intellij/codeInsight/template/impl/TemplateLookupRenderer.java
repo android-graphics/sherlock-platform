@@ -6,10 +6,8 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.impl.ElementLookupRenderer;
 import com.intellij.codeInsight.template.Template;
-import org.jetbrains.annotations.ApiStatus;
 
 
-@ApiStatus.Internal
 public final class TemplateLookupRenderer implements ElementLookupRenderer<Template> {
   @Override
   public boolean handlesItem(final Object element) {

@@ -1,11 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.LiveTemplateContextService;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.TextRange;
@@ -15,6 +18,7 @@ import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeSpeedSearch;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +29,7 @@ import java.awt.datatransfer.StringSelection;
 import java.util.Collections;
 import java.util.Set;
 
-class LiveTemplateTree extends CheckboxTree implements UiDataProvider, CopyProvider, PasteProvider, DeleteProvider {
+class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvider, PasteProvider, DeleteProvider {
   private final TemplateListPanel myConfigurable;
 
   LiveTemplateTree(final CheckboxTreeCellRenderer renderer, final CheckedTreeNode root, TemplateListPanel configurable) {
@@ -61,11 +65,15 @@ class LiveTemplateTree extends CheckboxTree implements UiDataProvider, CopyProvi
     }).setComparator(new SubstringSpeedSearchComparator());
   }
 
+  @Nullable
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(PlatformDataKeys.COPY_PROVIDER, this);
-    sink.set(PlatformDataKeys.PASTE_PROVIDER, this);
-    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, this);
+  public Object getData(@NotNull @NonNls String dataId) {
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId) ||
+        PlatformDataKeys.PASTE_PROVIDER.is(dataId) ||
+        PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+      return this;
+    }
+    return null;
   }
 
   @Override
@@ -151,8 +159,9 @@ class LiveTemplateTree extends CheckboxTree implements UiDataProvider, CopyProvi
       return matchingFragments(pattern, text) != null ? 1 : 0;
     }
 
+    @Nullable
     @Override
-    public @Nullable Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
+    public Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
       int index = StringUtil.indexOfIgnoreCase(text, pattern, 0);
       return index >= 0 ? Collections.singleton(TextRange.from(index, pattern.length())) : null;
     }

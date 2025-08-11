@@ -1,14 +1,17 @@
 // MODE: usages
 
-interface SomeInterface {/*<# [1 Usage] #>*/
-fun someFun(): String/*<# [3 Usages] #>*/
+/*<# block [ 1 Usage] #>*/
+interface SomeInterface {
+/*<# block [     3 Usages] #>*/
+    fun someFun(): String
     fun someOtherFun() = someFun() // <== (1): delegation from another interface method
     val someProperty = someFun() // <== (2): property initializer
 }
 
 fun main() {
     val instance = object: SomeInterface {
-        override fun someFun(): String {} // <== (): used below/*<# [1 Usage] #>*/
+/*<# block [         1 Usage] #>*/
+        override fun someFun(): String {} // <== (): used below
     }
     instance.someFun() <== (3): call on an instance
 }

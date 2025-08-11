@@ -27,7 +27,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,33 +129,13 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
         clearRestarterListener(processHandler);
       }
     }
-
-    myProject.getMessageBus().syncPublisher(AutoTestListener.Companion.getTOPIC()).autoTestStatusChanged();
   }
 
-  /**
-   * Disable all enabled auto-test configurations for the project.
-   */
-  public void disableAllAutoTests() {
-    deactivateWatcher();
-    for (RunContentDescriptor descriptor : RunContentManager.getInstance(myProject).getAllDescriptors()) {
-      if (!isAutoTestEnabled(descriptor)) continue;
-      ProcessHandler processHandler = descriptor.getProcessHandler();
-      if (processHandler != null) {
-        clearRestarterListener(processHandler);
-      }
-    }
-    myEnabledRunProfiles.clear();
-    myProject.getMessageBus().syncPublisher(AutoTestListener.Companion.getTOPIC()).autoTestStatusChanged();
-  }
-
-  @ApiStatus.Internal
-  public boolean hasEnabledAutoTests() {
+  private boolean hasEnabledAutoTests() {
     return ContainerUtil.exists(RunContentManager.getInstance(myProject).getAllDescriptors(), this::isAutoTestEnabled);
   }
 
-  @ApiStatus.Internal
-  public boolean isAutoTestEnabled(@NotNull RunContentDescriptor descriptor) {
+  boolean isAutoTestEnabled(@NotNull RunContentDescriptor descriptor) {
     ExecutionEnvironment environment = getCurrentEnvironment(descriptor);
     return environment != null && myEnabledRunProfiles.contains(environment.getRunProfile());
   }

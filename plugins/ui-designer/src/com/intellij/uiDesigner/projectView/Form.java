@@ -32,7 +32,6 @@ public class Form implements Navigatable, Iterable<PsiElement> {
     myFormFiles = new HashSet<>(formFiles);
   }
 
-  @Override
   public boolean equals(Object object) {
     if (object instanceof Form form){
       return myFormFiles.equals(form.myFormFiles) && myClassToBind.equals(form.myClassToBind);
@@ -41,7 +40,6 @@ public class Form implements Navigatable, Iterable<PsiElement> {
     }
   }
 
-  @Override
   public int hashCode() {
     return myFormFiles.hashCode() ^ myClassToBind.hashCode();
   }

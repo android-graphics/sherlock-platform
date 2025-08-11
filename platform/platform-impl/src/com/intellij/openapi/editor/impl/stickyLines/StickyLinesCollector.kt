@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -32,19 +31,8 @@ class StickyLinesCollector(private val project: Project, private val document: D
 
   object ModStamp {
     private val STICKY_LINES_MOD_STAMP_KEY: Key<Long> = Key.create("editor.sticky.lines.mod.stamp")
-    private val STICKY_LINES_FIRST_PASS_FOR_EDITOR: Key<Boolean> = Key.create("editor.sticky.lines.first.pass")
 
-    fun isChanged(editor: Editor, psiFile: PsiFile): Boolean {
-      val isFirstPass: Boolean = editor.getUserData(STICKY_LINES_FIRST_PASS_FOR_EDITOR) == null
-      if (isFirstPass) {
-        // always run pass on editor opening IJPL-158818
-        LOG.trace { "first pass for editor ${debugPsiFile(psiFile)}" }
-        editor.putUserData(STICKY_LINES_FIRST_PASS_FOR_EDITOR, false)
-        if (psiFile.getUserData(STICKY_LINES_MOD_STAMP_KEY) != null) {
-          reset(psiFile)
-        }
-        return true
-      }
+    fun isChanged(psiFile: PsiFile): Boolean {
       val prevModStamp: Long? = psiFile.getUserData(STICKY_LINES_MOD_STAMP_KEY)
       val currModStamp: Long = modStamp(psiFile)
       LOG.trace { "checking modStamp: ${traceStampChanged(psiFile, prevModStamp, currModStamp)}" }
@@ -138,7 +126,7 @@ class StickyLinesCollector(private val project: Project, private val document: D
       ", old removed: ${outdatedLines.size}" +
       ", ${debugPsiFile(psiFile)}"
     }
-    stickyModel.notifyLinesUpdate()
+    stickyModel.notifyListeners()
   }
 
   private fun stickyLinesModel(psiFile: PsiFile): StickyLinesModel? {

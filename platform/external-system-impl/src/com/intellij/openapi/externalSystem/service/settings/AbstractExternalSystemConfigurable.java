@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.settings;
 
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -44,14 +44,14 @@ public abstract class AbstractExternalSystemConfigurable<
   > implements SearchableConfigurable, Configurable.NoScroll
 {
 
-  private final @NotNull List<ExternalSystemSettingsControl<ProjectSettings>> myProjectSettingsControls =
+  @NotNull private final List<ExternalSystemSettingsControl<ProjectSettings>> myProjectSettingsControls =
     new ArrayList<>();
 
-  private final @NotNull ProjectSystemId myExternalSystemId;
-  private final @NotNull Project         myProject;
+  @NotNull private final ProjectSystemId myExternalSystemId;
+  @NotNull private final Project         myProject;
 
-  private @Nullable ExternalSystemSettingsControl<SystemSettings>  mySystemSettingsControl;
-  private @Nullable ExternalSystemSettingsControl<ProjectSettings> myActiveProjectSettingsControl;
+  @Nullable private ExternalSystemSettingsControl<SystemSettings>  mySystemSettingsControl;
+  @Nullable private ExternalSystemSettingsControl<ProjectSettings> myActiveProjectSettingsControl;
 
   private PaintAwarePanel  myComponent;
   private JBList<String>           myProjectsList;
@@ -62,28 +62,33 @@ public abstract class AbstractExternalSystemConfigurable<
     myExternalSystemId = externalSystemId;
   }
 
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myProject;
   }
 
+  @Nls
   @Override
-  public @Nls String getDisplayName() {
+  public String getDisplayName() {
     return myExternalSystemId.getReadableName();
   }
 
+  @Nullable
   @Override
-  public @Nullable JComponent createComponent() {
+  public JComponent createComponent() {
     if (myComponent == null) {
       myComponent = new PaintAwarePanel(new GridBagLayout());
       SystemSettings settings = getSettings();
       prepareSystemSettings(settings);
       prepareProjectSettings(settings);
+      return myComponent;
     }
-    return ScrollPaneFactory.createScrollPane(myComponent, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER, true);
+    return myComponent;
   }
 
   @SuppressWarnings("unchecked")
-  private @NotNull SystemSettings getSettings() {
+  @NotNull
+  private SystemSettings getSettings() {
     ExternalSystemManager<ProjectSettings, L, SystemSettings, ?, ?> manager =
       (ExternalSystemManager<ProjectSettings, L, SystemSettings, ?, ?>)ExternalSystemApiUtil.getManager(myExternalSystemId);
     assert manager != null;
@@ -170,9 +175,11 @@ public abstract class AbstractExternalSystemConfigurable<
    * @param settings  target external project settings
    * @return          control for managing given project settings
    */
-  protected abstract @NotNull ExternalSystemSettingsControl<ProjectSettings> createProjectSettingsControl(@NotNull ProjectSettings settings);
+  @NotNull
+  protected abstract ExternalSystemSettingsControl<ProjectSettings> createProjectSettingsControl(@NotNull ProjectSettings settings);
 
-  protected @NotNull @NlsSafe String getProjectName(@NotNull String path) {
+  @NotNull
+  protected @NlsSafe String getProjectName(@NotNull String path) {
     File file = new File(path);
     return file.isDirectory() || file.getParentFile() == null ? file.getName() : file.getParentFile().getName();
   }
@@ -200,7 +207,8 @@ public abstract class AbstractExternalSystemConfigurable<
    * @return          a control for managing given system-level settings;
    *                  {@code null} if current external system doesn't have system-level settings (only project-level settings)
    */
-  protected abstract @Nullable ExternalSystemSettingsControl<SystemSettings> createSystemSettingsControl(@NotNull SystemSettings settings);
+  @Nullable
+  protected abstract ExternalSystemSettingsControl<SystemSettings> createSystemSettingsControl(@NotNull SystemSettings settings);
 
   @Override
   public boolean isModified() {
@@ -243,7 +251,8 @@ public abstract class AbstractExternalSystemConfigurable<
   /**
    * @return    new empty project-level settings object
    */
-  protected abstract @NotNull ProjectSettings newProjectSettings();
+  @NotNull
+  protected abstract ProjectSettings newProjectSettings();
 
   @Override
   public void reset() {

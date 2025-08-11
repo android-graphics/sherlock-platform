@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.intention.CommonIntentionAction;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -14,14 +15,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 public abstract class ArgumentFixerActionFactory {
   private static final Logger LOG = Logger.getInstance(ArgumentFixerActionFactory.class);
 
-  protected abstract @Nullable PsiExpression getModifiedArgument(PsiExpression expression, final PsiType toType) throws IncorrectOperationException;
+  @Nullable
+  protected abstract PsiExpression getModifiedArgument(PsiExpression expression, final PsiType toType) throws IncorrectOperationException;
 
-  public void registerCastActions(CandidateInfo @NotNull [] candidates, @NotNull PsiCall call, @NotNull Consumer<? super CommonIntentionAction> info) {
+  public void registerCastActions(CandidateInfo @NotNull [] candidates, @NotNull PsiCall call, @NotNull HighlightInfo.Builder highlightInfo, final TextRange fixRange) {
     if (candidates.length == 0) return;
     List<CandidateInfo> methodCandidates = new ArrayList<>(Arrays.asList(candidates));
     PsiExpressionList list = call.getArgumentList();
@@ -94,7 +95,7 @@ public abstract class ArgumentFixerActionFactory {
           if (newCall != null) {
             doCheckNewCall(expectedTypeByParent, newCall, () -> {
               for (Map.Entry<Integer, PsiType> entry : potentialCasts.entrySet()) {
-                registerCastIntention(info, list, suggestedCasts, entry);
+                registerCastIntention(highlightInfo, fixRange, list, suggestedCasts, entry);
               }
               potentialCasts.clear();
             });
@@ -103,7 +104,7 @@ public abstract class ArgumentFixerActionFactory {
           for (Map.Entry<Integer, PsiType> entry : potentialCasts.entrySet()) {
             PsiCall callWithSingleCast = replaceWithCast(expressions, call, entry, true);
             if (callWithSingleCast == null) continue;
-            doCheckNewCall(expectedTypeByParent, callWithSingleCast, () -> registerCastIntention(info, list, suggestedCasts, entry));
+            doCheckNewCall(expectedTypeByParent, callWithSingleCast, () -> registerCastIntention(highlightInfo, fixRange, list, suggestedCasts, entry));
           }
         }
       }
@@ -124,14 +125,15 @@ public abstract class ArgumentFixerActionFactory {
     }
   }
 
-  private void registerCastIntention(@NotNull Consumer<? super CommonIntentionAction> info,
+  private void registerCastIntention(@NotNull HighlightInfo.Builder builder,
+                                     TextRange fixRange,
                                      PsiExpressionList list,
                                      Map<Integer, Set<String>> suggestedCasts,
                                      Map.Entry<Integer, PsiType> entry) {
     suggestedCasts.get(entry.getKey()).add(entry.getValue().getCanonicalText());
     IntentionAction action = createFix(list, entry.getKey(), entry.getValue());
     if (action != null) {
-      info.accept(action);
+      builder.registerFix(action, null, null, fixRange, null);
     }
   }
 

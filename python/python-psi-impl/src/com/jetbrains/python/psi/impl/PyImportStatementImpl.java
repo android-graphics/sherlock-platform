@@ -61,14 +61,16 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
     super.deleteChildInternal(child);
   }
 
+  @NotNull
   @Override
-  public @NotNull Iterable<PyElement> iterateNames() {
+  public Iterable<PyElement> iterateNames() {
     final PyElement resolved = as(resolveImplicitSubModule(), PyElement.class);
     return resolved != null ? ImmutableList.of(resolved) : Collections.emptyList();
   }
 
+  @NotNull
   @Override
-  public @NotNull List<RatedResolveResult> multiResolveName(@NotNull String name) {
+  public List<RatedResolveResult> multiResolveName(@NotNull String name) {
     final PyImportElement[] elements = getImportElements();
     if (elements.length == 1) {
       final PyImportElement element = elements[0];
@@ -85,7 +87,8 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
    *
    * http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
    */
-  private @Nullable PsiElement resolveImplicitSubModule() {
+  @Nullable
+  private PsiElement resolveImplicitSubModule() {
     final PyImportElement[] elements = getImportElements();
     if (elements.length == 1) {
       final PyImportElement element = elements[0];

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.usageView;
 
@@ -17,14 +17,15 @@ public final class UsageViewTypeLocation extends ElementDescriptionLocation {
 
   public static final UsageViewTypeLocation INSTANCE = new UsageViewTypeLocation();
 
+  @NotNull
   @Override
-  public @NotNull ElementDescriptionProvider getDefaultProvider() {
+  public ElementDescriptionProvider getDefaultProvider() {
     return DEFAULT_PROVIDER;
   }
 
   private static final ElementDescriptionProvider DEFAULT_PROVIDER = new ElementDescriptionProvider() {
     @Override
-    public String getElementDescription(final @NotNull PsiElement psiElement, final @NotNull ElementDescriptionLocation location) {
+    public String getElementDescription(@NotNull final PsiElement psiElement, @NotNull final ElementDescriptionLocation location) {
       if (!(location instanceof UsageViewTypeLocation)) return null;
 
       if (psiElement instanceof PsiMetaOwner) {

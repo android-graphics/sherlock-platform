@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.validation;
 
 import com.intellij.lang.ant.AntBundle;
@@ -26,14 +26,15 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
  */
 public class AntHectorConfigurable extends HectorComponentPanel {
-  public static final @NonNls String CONTEXTS_COMBO_KEY = "AntContextsComboBox";
+  @NonNls
+  public static final String CONTEXTS_COMBO_KEY = "AntContextsComboBox";
 
   private final XmlFile myFile;
   private final @NlsSafe String myLocalPath;
@@ -128,7 +129,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
     applyItem(myOriginalContext);
   }
 
-  private void applyItem(final @NlsSafe String contextStr) {
+  private void applyItem(@NlsSafe final String contextStr) {
     XmlFile context = null;
     if (!myNoneText.equals(contextStr)) {
       context = myPathToFileMap.get(contextStr);

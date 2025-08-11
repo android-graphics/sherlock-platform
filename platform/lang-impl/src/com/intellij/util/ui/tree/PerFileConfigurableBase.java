@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.tree;
 
 import com.intellij.CommonBundle;
@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Consumer;
@@ -43,22 +44,27 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.ui.IdeBorderFactory.*;
 
 public abstract class PerFileConfigurableBase<T> implements SearchableConfigurable, Configurable.NoScroll {
   public record Mapping<T>(@Nls String name, @NotNull Supplier<? extends T> getter, @NotNull Consumer<? super T> setter) {
@@ -74,7 +80,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected static final Key<Boolean> ONLY_DIRECTORIES = KeyWithDefaultValue.create("ONLY_DIRECTORIES", Boolean.FALSE);
   protected static final Key<Boolean> SORT_VALUES = KeyWithDefaultValue.create("SORT_VALUES", Boolean.TRUE);
 
-  protected final @NotNull Project myProject;
+  @NotNull
+  protected final Project myProject;
   protected final PerFileMappingsEx<T> myMappings;
 
   /** @noinspection FieldCanBeLocal */
@@ -102,13 +109,15 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   @Override
-  public @NotNull String getId() {
+  @NotNull
+  public String getId() {
     return getDisplayName();
   }
 
-  protected abstract @Nullable <S> Object getParameter(@NotNull Key<S> key);
+  @Nullable
+  protected abstract <S> Object getParameter(@NotNull Key<S> key);
 
-  protected @Unmodifiable @NotNull List<Mapping<T>> getDefaultMappings() {
+  protected @NotNull List<Mapping<T>> getDefaultMappings() {
     return ContainerUtil.emptyList();
   }
 
@@ -135,10 +144,12 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return s;
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent createComponent() {
+  public JComponent createComponent() {
     ThreadingAssertions.assertEventDispatchThread();
     //todo multi-editing, separate project/ide combos _if_ needed by specific configurable (SQL, no Web)
+    myPanel = new JPanel(new BorderLayout());
     myModel = new MyModel<>(param(TARGET_TITLE), param(MAPPING_TITLE));
     myTable = new JBTable(myModel) {
       @SuppressWarnings("unchecked")
@@ -164,36 +175,71 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       .createPanel();
     myTable.getEmptyText().setText(param(EMPTY_TEXT).replace(
       "$addShortcut", KeymapUtil.getFirstKeyboardShortcutText(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD))));
+    JBLabel label = new JBLabel(param(DESCRIPTION));
+    label.setBorder(BorderFactory.createEmptyBorder(TITLED_BORDER_TOP_INSET, TITLED_BORDER_INDENT, TITLED_BORDER_BOTTOM_INSET, 0));
+    label.setComponentStyle(UIUtil.ComponentStyle.SMALL);
 
-    myDefaultProps.addAll(getDefaultMappings());
-    if (myMappings instanceof LanguagePerFileMappings && param(ADD_PROJECT_MAPPING)) {
-      myDefaultProps.add(myProjectMapping);
+    JComponent north = createDefaultMappingComponent();
+    if (north != null) {
+      myPanel.add(north, BorderLayout.NORTH);
     }
-    for (Mapping<T> prop : myDefaultProps) {
-      myDefaultVals.put(prop.name, prop.getter.get());
-    }
+    myPanel.add(label, BorderLayout.SOUTH);
+    myPanel.add(tablePanel, BorderLayout.CENTER);
 
-    myPanel = new PerFileConfigurableBaseUi<T>().getPanel(tablePanel, param(DESCRIPTION), myDefaultProps, (Mapping<T> prop) -> createActionPanel(null, new Value<>() {
-      @Override
-      public void commit() {
-        myModel.fireTableDataChanged();
-      }
-
-      @Override
-      public T get() {
-        return myDefaultVals.get(prop.name);
-      }
-
-      @Override
-      public void set(T value) {
-        myDefaultVals.put(prop.name, adjustChosenValue(null, value));
-      }
-    }));
     return myPanel;
   }
 
-  protected @NlsContexts.Tooltip @Nullable String getToolTipFor(@Nullable T value) {
+  @NlsContexts.Tooltip
+  @Nullable
+  protected String getToolTipFor(@Nullable T value) {
     return null;
+  }
+
+  @Nullable
+  protected JComponent createDefaultMappingComponent() {
+    myDefaultProps.addAll(getDefaultMappings());
+    if (myMappings instanceof LanguagePerFileMappings && param(ADD_PROJECT_MAPPING)) {
+     myDefaultProps.add(myProjectMapping);
+    }
+    if (myDefaultProps.size() == 0) return null;
+    JPanel panel = new JPanel(new GridBagLayout());
+
+    GridBagConstraints cons1 = new GridBagConstraints();
+    cons1.fill = GridBagConstraints.HORIZONTAL;
+    cons1.weightx = 0;
+    cons1.gridx = 0;
+    cons1.insets = JBUI.insets(0, 0, 5, UIUtil.DEFAULT_HGAP);
+    GridBagConstraints cons2 = new GridBagConstraints();
+    cons2.fill = GridBagConstraints.NONE;
+    cons2.anchor = GridBagConstraints.WEST;
+    cons2.weightx = 0;
+    cons2.gridx = 1;
+    cons2.insets = cons1.insets;
+    panel.add(Box.createGlue(), new GridBagConstraints(2, 0, 1, 1, 1., 1., GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                                       JBInsets.emptyInsets(), 0, 0));
+
+    for (Mapping<T> prop : myDefaultProps) {
+      myDefaultVals.put(prop.name, prop.getter.get());
+      JPanel p = createActionPanel(null, new Value<>() {
+        @Override
+        public void commit() {
+          myModel.fireTableDataChanged();
+        }
+
+        @Override
+        public T get() {
+          return myDefaultVals.get(prop.name);
+        }
+
+        @Override
+        public void set(T value) {
+          myDefaultVals.put(prop.name, adjustChosenValue(null, value));
+        }
+      });
+      panel.add(new JBLabel(prop.name + ":"), cons1);
+      panel.add(p, cons2);
+    }
+    return panel;
   }
 
   private void doAddAction() {
@@ -256,7 +302,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     }
   }
 
-  public @Nullable T getNewMapping(@Nullable VirtualFile file) {
+  @Nullable
+  public T getNewMapping(@Nullable VirtualFile file) {
     for (Pair<Object, T> p : ContainerUtil.reverse(myModel.data)) {
       if (keyMatches(p.first, file, false) && p.second != null) return p.second;
     }
@@ -270,7 +317,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return getDefaultNewMapping(file);
   }
 
-  protected @Nullable T getDefaultNewMapping(@Nullable VirtualFile file) {
+  @Nullable
+  protected T getDefaultNewMapping(@Nullable VirtualFile file) {
     return myMappings.getDefaultMapping(file);
   }
 
@@ -501,12 +549,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
         return ObjectUtils.notNull(newFile, startValue);
       }
     });
-    myTable.getColumnModel().getColumn(1).setCellEditor(createMappingCellEditor());
-  }
-
-  @ApiStatus.Internal
-  protected @NotNull TableCellEditor createMappingCellEditor() {
-    return new AbstractTableCellEditor() {
+    myTable.getColumnModel().getColumn(1).setCellEditor(new AbstractTableCellEditor() {
       T editorValue;
 
       @Override
@@ -550,14 +593,16 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       public Object getCellEditorValue() {
         return editorValue;
       }
-    };
+    });
   }
 
-  protected @NotNull JPanel createActionPanel(@Nullable Object target, @NotNull Value<T> value) {
+  @NotNull
+  protected JPanel createActionPanel(@Nullable Object target, @NotNull Value<T> value) {
     return createActionPanel(target, value, false);
   }
 
-  private @NotNull JPanel createActionPanel(@Nullable Object target, @NotNull Value<T> value, boolean editor) {
+  @NotNull
+  private JPanel createActionPanel(@Nullable Object target, @NotNull Value<T> value, boolean editor) {
     AnAction changeAction = createValueAction(target, value);
     return createActionPanel(editor, changeAction);
   }
@@ -667,33 +712,37 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     }
   }
 
-  protected final @NotNull AnAction createValueAction(@Nullable Object target, @NotNull Value<T> value) {
+  @NotNull
+  protected final AnAction createValueAction(@Nullable Object target, @NotNull Value<T> value) {
     return new PerFileConfigurableComboBoxAction(value, target, StringUtil.notNullize(getNullValueText(target)));
   }
 
-  protected @NotNull JBPopup createValueEditorPopup(@Nullable Object target,
-                                                    @Nullable T value,
-                                                    @Nullable Runnable onDispose,
-                                                    @NotNull DataContext dataContext,
-                                                    @NotNull Consumer<? super T> onChosen,
-                                                    @NotNull Runnable onCommit) {
+  @NotNull
+  protected JBPopup createValueEditorPopup(@Nullable Object target,
+                                           @Nullable T value,
+                                           @Nullable Runnable onDispose,
+                                           @NotNull DataContext dataContext,
+                                           @NotNull Consumer<? super T> onChosen,
+                                           @NotNull Runnable onCommit) {
     return createValueEditorActionListPopup(target, onDispose, dataContext, chosen -> {
       onChosen.consume(chosen);
       onCommit.run();
     });
   }
 
-  protected final @NotNull JBPopup createValueEditorActionListPopup(@Nullable Object target,
-                                                                    @Nullable Runnable onDispose,
-                                                                    @NotNull DataContext dataContext,
-                                                                    @NotNull Consumer<? super T> onChosen) {
+  @NotNull
+  protected final JBPopup createValueEditorActionListPopup(@Nullable Object target,
+                                                           @Nullable Runnable onDispose,
+                                                           @NotNull DataContext dataContext,
+                                                           @NotNull Consumer<? super T> onChosen) {
     ActionGroup group = createActionListGroup(target, onChosen);
     return JBPopupFactory.getInstance().createActionGroupPopup(
       null, group, dataContext, false, false, false,
       onDispose, 30, null);
   }
 
-  protected @Nullable Icon getActionListIcon(@Nullable Object target, T t) {
+  @Nullable
+  protected Icon getActionListIcon(@Nullable Object target, T t) {
     return null;
   }
 
@@ -705,12 +754,14 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return param(NULL_TEXT);
   }
 
-  protected @Unmodifiable @NotNull Collection<T> getValueVariants(@Nullable Object target) {
+  @NotNull
+  protected Collection<T> getValueVariants(@Nullable Object target) {
     if (myMappings instanceof PerFileMappingsBase) return ((PerFileMappingsBase<T>)myMappings).getAvailableValues();
     throw new UnsupportedOperationException();
   }
 
-  protected @NotNull ActionGroup createActionListGroup(@Nullable Object target, @NotNull Consumer<? super T> onChosen) {
+  @NotNull
+  protected ActionGroup createActionListGroup(@Nullable Object target, @NotNull Consumer<? super T> onChosen) {
     DefaultActionGroup group = new DefaultActionGroup();
     String clearText = getClearValueText(target);
     Function<T, AnAction> choseAction = t -> {
@@ -801,7 +852,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
 
   public final class PerFileConfigurableComboBoxAction extends ComboBoxAction {
     private final @NotNull Value<T> myValue;
-    private final @Nullable Object myTarget;
+    private @Nullable final Object myTarget;
     private final @NlsActions.ActionText @NotNull String myNullValue;
 
     public PerFileConfigurableComboBoxAction(@NotNull Value<T> value,
@@ -840,8 +891,9 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
           return popup;
         }
 
+        @Nullable
         @Override
-        public @Nullable String getToolTipText() {
+        public String getToolTipText() {
           boolean cellEditor = UIUtil.uiParents(this, true).take(4).filter(JBTable.class).first() != null;
           return cellEditor ? null : getToolTipFor(myValue.get());
         }

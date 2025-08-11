@@ -3,10 +3,8 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public final class OptionEqualityProvider extends AbstractEqualityProvider {
   @Override
   protected boolean areEqual(@NotNull SearchEverywhereFoundElementInfo newItem,

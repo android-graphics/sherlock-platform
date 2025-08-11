@@ -5,6 +5,7 @@ import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.openapi.wm.impl.headertoolbar.adjustIconForHeader
 import com.intellij.openapi.wm.impl.headertoolbar.isDarkHeader
 import com.intellij.ui.JBColor
 import com.intellij.ui.icons.*
@@ -93,10 +94,9 @@ open class HeaderToolbarButtonLook(
     }
 
     if (icon is CachedImageIcon) {
-      val darkHeader = isDarkHeader()
-      return loadIconCustomVersionOrScale(icon = icon, size = iconSize, isDark = darkHeader.takeIf { it }, isDarkForScale = darkHeader)
+      return loadIconCustomVersionOrScale(icon = icon, size = iconSize, isDark = isDarkHeader().takeIf { it })
     }
 
-    return if (icon is ScalableIcon) loadIconCustomVersionOrScale(icon = icon, size = iconSize) else icon
+    return adjustIconForHeader(if (icon is ScalableIcon) loadIconCustomVersionOrScale(icon = icon, size = iconSize) else icon)
   }
 }

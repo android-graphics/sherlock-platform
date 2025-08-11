@@ -3,7 +3,6 @@
   "version": "1234.5",
   "buildNumber": "123.456",
   "productCode": "XL",
-  "envVarBaseName": "XPLAT",
   "dataDirectoryName": "XPlatLauncherTest",
   "productVendor": "JetBrains",
   "launch": [
@@ -33,7 +32,6 @@
             "-Dproduct.property=product.value"
           ],
           "mainClass": "com.intellij.idea.CustomMain",
-          "envVarBaseName": "CUSTOM_XPLAT",
           "dataDirectoryName": "XPlatLauncherTestCustom"
         }
       ]

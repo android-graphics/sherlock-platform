@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.findMostSpecificExistingFileOrNewDefault
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.codeInsight.gradle.combineMultipleFailures
-import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.name.FqName
@@ -185,21 +184,14 @@ object ExecuteRunConfigurationsChecker : AbstractTestChecker<ExecuteRunConfigura
         ThreadingAssertions.assertBackgroundThread()
         return runBlocking {
             smartReadAction(testProject) {
-                val psiElement = findTestPsiElementByFqn(functionFqn)
+                val psiElement = findFunctionIdentifyingElement(functionFqn)
                 createEmptyContextForLocation(PsiLocation(psiElement)).configuration
             }
         }
     }
 
-    /**
-     * Finds either the class (by fqn) or test function (by fqn) to execute the test
-     */
-    private fun KotlinMppTestsContext.findTestPsiElementByFqn(fqn: String): PsiElement = runReadAction {
+    private fun KotlinMppTestsContext.findFunctionIdentifyingElement(fqn: String): PsiElement = runReadAction {
         val fqName = FqName(fqn)
-        KotlinFullClassNameIndex[fqName.asString(), testProject, testProject.allScope()].apply {
-            if (size == 1) return@runReadAction single()
-        }
-
         KotlinFunctionShortNameIndex[fqName.shortName().asString(), testProject, testProject.allScope()]
             .filter { it.fqName == fqName }
             .apply {

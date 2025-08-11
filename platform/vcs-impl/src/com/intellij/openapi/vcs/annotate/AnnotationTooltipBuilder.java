@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.openapi.project.Project;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AnnotationTooltipBuilder {
-  private final @NotNull Project myProject;
+  @NotNull private final Project myProject;
   private final boolean myAsHtml;
 
   private final @Nls StringBuilder sb = new StringBuilder();
@@ -69,19 +69,22 @@ public class AnnotationTooltipBuilder {
   }
 
   private void appendNewline() {
-    if (!sb.isEmpty()) append("\n");
+    if (sb.length() != 0) append("\n");
   }
 
+  @Nls
   @Override
-  public @Nls String toString() {
+  public String toString() {
     return sb.toString();
   }
 
-  public static @Nls @NotNull String buildSimpleTooltip(@NotNull Project project,
-                                                        boolean asHtml,
-                                                        @NotNull @Nls String prefix,
-                                                        @NotNull @NlsSafe String revision,
-                                                        @Nullable @Nls String commitMessage) {
+  @Nls
+  @NotNull
+  public static String buildSimpleTooltip(@NotNull Project project,
+                                          boolean asHtml,
+                                          @NotNull @Nls String prefix,
+                                          @NotNull @NlsSafe String revision,
+                                          @Nullable @Nls String commitMessage) {
     AnnotationTooltipBuilder builder = new AnnotationTooltipBuilder(project, asHtml);
     builder.append(prefix);
     builder.append(" ");

@@ -30,8 +30,9 @@ import com.jetbrains.python.psi.PyTryExceptStatement;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceExceptPartQuickFix extends PsiUpdateModCommandQuickFix {
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.convert.except.to");
   }
 

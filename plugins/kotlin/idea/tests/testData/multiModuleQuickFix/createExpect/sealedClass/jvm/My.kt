@@ -1,7 +1,6 @@
 // "Create expected class in common module testModule_Common" "true"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 // IGNORE_K2
-// KT-76738
 
 actual sealed class <caret>My actual constructor(actual val x: Double) {
 

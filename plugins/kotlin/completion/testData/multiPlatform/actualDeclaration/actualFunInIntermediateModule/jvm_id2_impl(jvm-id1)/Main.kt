@@ -1,3 +1,0 @@
-fun test() {
-    reallyLongFunName2()
-}

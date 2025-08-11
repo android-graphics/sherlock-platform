@@ -40,7 +40,8 @@ public abstract class DocStringLineParser {
     return PyIndentUtil.getLineIndentSize(getLine(lineNum));
   }
 
-  public @NotNull String getLineIndent(int lineNum) {
+  @NotNull
+  public String getLineIndent(int lineNum) {
     return PyIndentUtil.getLineIndent(getLine(lineNum)).toString();
   }
 
@@ -52,11 +53,13 @@ public abstract class DocStringLineParser {
     return StringUtil.isEmptyOrSpaces(getLine(lineNum));
   }
 
-  public @NotNull Substring getLine(int lineNum) {
+  @NotNull
+  public Substring getLine(int lineNum) {
     return myLines.get(lineNum);
   }
 
-  public @Nullable Substring getLineOrNull(int lineNum) {
+  @Nullable
+  public Substring getLineOrNull(int lineNum) {
     return lineNum >= 0 && lineNum < myLines.size() ? myLines.get(lineNum) : null;
   }
 
@@ -64,11 +67,13 @@ public abstract class DocStringLineParser {
     return myLines.size();
   }
 
-  public @NotNull List<Substring> getLines() {
+  @NotNull
+  public List<Substring> getLines() {
     return myLines;
   }
 
-  public @NotNull Substring getDocStringContent() {
+  @NotNull
+  public Substring getDocStringContent() {
     return myDocStringContent;
   }
 

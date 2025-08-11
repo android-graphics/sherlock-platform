@@ -13,8 +13,6 @@ import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.packaging.common.PythonRankingAwarePackageNameComparator
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.BufferedReader
@@ -29,79 +27,66 @@ import kotlin.io.path.exists
 
 private val LOG = logger<PypiPackageCache>()
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @Service
 class PypiPackageCache : PythonPackageCache<String> {
-  override val packages: Set<String>
-    get() = cache
 
-  override operator fun contains(key: String): Boolean = key in cache
+  private val gson: Gson = Gson()
 
-  override fun isEmpty(): Boolean = cache.isEmpty()
+  override val packages: List<String>
+    get() = cache.toList()
 
   @Volatile
   private var cache: Set<String> = emptySet()
 
-  private val lock = Mutex()
-  private var loadInProgress: Boolean = false
+  val filePath: Path
+    get() = Paths.get(PathManager.getSystemPath(), "python_packages", "packages_v2.json")
 
-  private val gson: Gson = Gson()
-
-  val filePath: Path = Paths.get(PathManager.getSystemPath(), "python_packages", "packages_v2.json")
-
-  suspend fun forceReloadCache() {
-    return reloadCache(true)
-  }
-
-  suspend fun reloadCache(force: Boolean = false) {
-    lock.withLock {
-      if ((cache.isNotEmpty() && !force) || loadInProgress) {
-        return
-      }
-
-      loadInProgress = true
-    }
-
-    try {
-      withContext(Dispatchers.IO) {
-        if (!tryLoadFromFile()) {
-          refresh()
-        }
-      }
-    }
-    finally {
-      lock.withLock {
-        loadInProgress = false
-      }
-    }
-  }
-
-  private suspend fun tryLoadFromFile(): Boolean {
-    return withContext(Dispatchers.IO) {
-      if (isFileCacheExpired()) {
-        return@withContext false
-      }
-
-      var packageList = emptySet<String>()
-      try {
-        val type = object : TypeToken<LinkedHashSet<String>>() {}.type
-        packageList = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)
-          .use<BufferedReader, LinkedHashSet<String>> {
-            gson.fromJson(it, type)
-          }
-      }
-      catch (e: JsonSyntaxException) {
-        LOG.warn("Corrupted pypi cache file: $e")
-        return@withContext false
-      }
-
+  private suspend fun loadFromFile() {
+    withContext(Dispatchers.IO) {
+      val type = object : TypeToken<LinkedHashSet<String>>() {}.type
+      val packageList = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)
+        .use<BufferedReader, LinkedHashSet<String>> { gson.fromJson(it, type) }
       LOG.info("Package list loaded from file with ${packageList.size} entries")
       cache = packageList
-      true
     }
   }
 
-  private suspend fun refresh() {
+  private fun store() {
+    Files.createDirectories(filePath.parent)
+    SafeFileOutputStream(filePath).writer(StandardCharsets.UTF_8).use { writer ->
+      gson.toJson(cache.toList(), writer)
+    }
+  }
+
+  suspend fun loadCache() {
+    if (cache.isNotEmpty()) {
+      return
+    }
+    withContext(Dispatchers.IO) {
+      LOG.info("Updating PyPI packages cache")
+      if (filePath.exists()) {
+        if (!isExpired()) {
+          LOG.info("Cache file is not expired, reading packages locally")
+          try {
+            loadFromFile()
+          }
+          catch (ex: JsonSyntaxException) {
+            LOG.info("Corrupted cache file, will reload packages from web")
+            refresh()
+          }
+          return@withContext
+        }
+        LOG.info("Cache expired, rebuilding it")
+        refresh()
+        return@withContext
+      }
+      LOG.info("Cache file does not exist, reading packages from PyPI")
+      refresh()
+    }
+  }
+
+  internal suspend fun refresh() {
     withContext(Dispatchers.IO) {
       LOG.info("Loading python packages from PyPi")
       val pypiList = service<PypiPackageLoader>().loadPackages()
@@ -113,18 +98,14 @@ class PypiPackageCache : PythonPackageCache<String> {
     }
   }
 
-  private fun store() {
-    Files.createDirectories(filePath.parent)
-    SafeFileOutputStream(filePath).writer(StandardCharsets.UTF_8).use { writer ->
-      gson.toJson(cache.toList(), writer)
-    }
-  }
+  override operator fun contains(key: String): Boolean = key in cache
 
-  private fun isFileCacheExpired(): Boolean {
+  override fun isEmpty(): Boolean = cache.isEmpty()
+
+  private fun isExpired(): Boolean {
     if (!filePath.exists()) {
       return true
     }
-
     val fileTime = Files.getLastModifiedTime(filePath)
     val expirationTime = fileTime.toInstant().plus(Duration.ofDays(1))
 

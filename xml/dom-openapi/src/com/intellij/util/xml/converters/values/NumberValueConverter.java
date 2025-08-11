@@ -28,7 +28,7 @@ public class NumberValueConverter<T extends Number> extends ResolvingConverter<T
   public T fromString(final @Nullable @NonNls String s, final @NotNull ConvertContext context) {
     if (s == null) return null;
 
-    if (myAllowEmpty && s.trim().isEmpty()) {
+    if (myAllowEmpty && s.trim().length() == 0) {
       return null;
     }
 
@@ -45,7 +45,7 @@ public class NumberValueConverter<T extends Number> extends ResolvingConverter<T
   public String getErrorMessage(final @Nullable String s, final @NotNull ConvertContext context) {
     if (s == null) return super.getErrorMessage(null, context);
 
-    final boolean isEmpty = s.trim().isEmpty();
+    final boolean isEmpty = s.trim().length() == 0;
     if (isEmpty && myAllowEmpty) return null;
 
     return isEmpty ?

@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.Strings;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
@@ -18,14 +18,12 @@ import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactPathUtil;
 import java.io.*;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-@ApiStatus.Internal
 public final class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   private final String myPathInJar;
-  private final Predicate<? super String> myPathInJarFilter;
+  private final Condition<? super String> myPathInJarFilter;
 
   public JarBasedArtifactRootDescriptor(@NotNull File jarFile,
                                         @NotNull String pathInJar,
@@ -33,7 +31,7 @@ public final class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor
                                         int index,
                                         @NotNull ArtifactBuildTarget target,
                                         @NotNull DestinationInfo destinationInfo,
-                                        @NotNull Predicate<? super String> pathInJarFilter) {
+                                        @NotNull Condition<? super String> pathInJarFilter) {
     super(jarFile, filter, index, target, destinationInfo);
     myPathInJar = pathInJar;
     myPathInJarFilter = pathInJarFilter;
@@ -42,8 +40,8 @@ public final class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor
   public void processEntries(EntryProcessor processor) throws IOException {
     if (!myRoot.isFile()) return;
 
-    String prefix = Strings.trimStart(myPathInJar, "/");
-    if (!Strings.endsWithChar(prefix, '/')) prefix += "/";
+    String prefix = StringUtil.trimStart(myPathInJar, "/");
+    if (!StringUtil.endsWithChar(prefix, '/')) prefix += "/";
     if (prefix.equals("/")) {
       prefix = "";
     }
@@ -56,7 +54,7 @@ public final class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor
         final String name = entry.getName();
         if (name.startsWith(prefix)) {
           String relativePath = name.substring(prefix.length());
-          if (myPathInJarFilter.test(relativePath)) {
+          if (myPathInJarFilter.value(relativePath)) {
             processor.process(entry.isDirectory() ? null : zipFile.getInputStream(entry), relativePath, entry);
           }
         }
@@ -73,12 +71,10 @@ public final class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor
   }
 
   @Override
-  public void copyFromRoot(String filePath,
-                           int rootIndex,
-                           String outputPath,
-                           CompileContext context,
-                           BuildOutputConsumer outputConsumer,
-                           ArtifactOutputToSourceMapping outSrcMapping) throws IOException {
+  public void copyFromRoot(final String filePath,
+                           final int rootIndex, final String outputPath,
+                           CompileContext context, final BuildOutputConsumer outputConsumer,
+                           final ArtifactOutputToSourceMapping outSrcMapping) throws IOException {
     if (!myRoot.isFile()) return;
     ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
     if (logger.isEnabled()) {
@@ -90,7 +86,7 @@ public final class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor
         final String fullOutputPath = JpsArtifactPathUtil.appendToPath(outputPath, relativePath);
         final File outputFile = new File(fullOutputPath);
 
-        FileUtilRt.createParentDirs(outputFile);
+        FileUtil.createParentDirs(outputFile);
         if (inputStream == null) {
           outputFile.mkdir();
         }
@@ -98,7 +94,7 @@ public final class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor
           if (outSrcMapping.getState(fullOutputPath) == null) {
             try (BufferedInputStream from = new BufferedInputStream(inputStream);
                  BufferedOutputStream to = new BufferedOutputStream(new FileOutputStream(outputFile))) {
-              FileUtilRt.copy(from, to);
+              FileUtil.copy(from, to);
             }
             outputConsumer.registerOutputFile(outputFile, Collections.singletonList(filePath));
           }

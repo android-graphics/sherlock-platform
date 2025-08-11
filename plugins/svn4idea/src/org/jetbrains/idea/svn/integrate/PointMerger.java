@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.vcs.VcsException;
@@ -23,7 +23,7 @@ import java.util.List;
 
 public class PointMerger extends Merger {
 
-  private final @NotNull List<Change> mySelectedChanges;
+  @NotNull private final List<Change> mySelectedChanges;
 
   public PointMerger(final SvnVcs vcs,
                      @NotNull CommittedChangeList selectedChangeList,
@@ -81,12 +81,13 @@ public class PointMerger extends Merger {
     client.copy(revision.toTarget(), localPath, revision.getRevisionNumber().getRevision(), true, myHandler);
   }
 
-  private @NotNull File getLocalPath(@NotNull String fullUrl) {
+  @NotNull
+  private File getLocalPath(@NotNull String fullUrl) {
     return SvnUtil.fileFromUrl(myTarget, myCurrentBranchUrl.toString(), fullUrl);
   }
 
   private static class ChangesComparator implements Comparator<Change> {
-    private static final ChangesComparator ourInstance = new ChangesComparator();
+    private final static ChangesComparator ourInstance = new ChangesComparator();
 
     public static ChangesComparator getInstance() {
       return ourInstance;
@@ -113,8 +114,9 @@ public class PointMerger extends Merger {
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable File getMergeInfoHolder() {
+  public File getMergeInfoHolder() {
     return null;
   }
 }

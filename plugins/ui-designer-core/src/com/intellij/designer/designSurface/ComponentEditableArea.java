@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.designSurface;
 
 import com.intellij.designer.model.RadComponent;
@@ -48,7 +48,8 @@ public abstract class ComponentEditableArea implements EditableArea {
   }
 
   @Override
-  public @NotNull List<RadComponent> getSelection() {
+  @NotNull
+  public List<RadComponent> getSelection() {
     return mySelection;
   }
 
@@ -116,7 +117,8 @@ public abstract class ComponentEditableArea implements EditableArea {
   }
 
   @Override
-  public @NotNull JComponent getNativeComponent() {
+  @NotNull
+  public JComponent getNativeComponent() {
     return myComponent;
   }
 
@@ -126,7 +128,8 @@ public abstract class ComponentEditableArea implements EditableArea {
   }
 
   @Override
-  public @Nullable FeedbackTreeLayer getFeedbackTreeLayer() {
+  @Nullable
+  public FeedbackTreeLayer getFeedbackTreeLayer() {
     return null;
   }
 }

@@ -53,7 +53,6 @@ public class RootDomParentStrategy implements DomParentStrategy {
     return true;
   }
 
-  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof RootDomParentStrategy that)) return false;
@@ -63,7 +62,6 @@ public class RootDomParentStrategy implements DomParentStrategy {
     return true;
   }
 
-  @Override
   public int hashCode() {
     return myFileElement.hashCode();
   }

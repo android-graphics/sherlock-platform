@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -29,8 +29,9 @@ import java.util.StringJoiner;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
@@ -105,8 +106,10 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
   }
 
   private static class ReplaceWithOldStyleSwitchFix extends PsiUpdateModCommandQuickFix {
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
     @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaBundle.message("inspection.replace.with.old.style.switch.statement.fix.name");
     }
 
@@ -189,7 +192,7 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
     }
   }
 
-  private abstract static class SwitchGenerator {
+  private static abstract class SwitchGenerator {
     private final PsiSwitchBlock mySwitchBlock;
     final PsiElementFactory myFactory;
 
@@ -255,7 +258,8 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
       return newBlock;
     }
 
-    private static @NotNull String collectCommentsBefore(@Nullable PsiElement rule, @NotNull CommentTracker ct) {
+    @NotNull
+    private static String collectCommentsBefore(@Nullable PsiElement rule, @NotNull CommentTracker ct) {
       boolean commentFound = false;
       if (rule == null) {
         return "";

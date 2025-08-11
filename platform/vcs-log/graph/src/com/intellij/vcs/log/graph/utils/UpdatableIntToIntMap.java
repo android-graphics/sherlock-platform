@@ -15,12 +15,9 @@
  */
 package com.intellij.vcs.log.graph.utils;
 
-import org.jetbrains.annotations.ApiStatus;
-
 /**
  * @author erokhins
  */
-@ApiStatus.Internal
 public interface UpdatableIntToIntMap extends IntToIntMap {
   void update(int startLongIndex, int endLongIndex);
 }

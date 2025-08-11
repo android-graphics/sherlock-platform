@@ -19,13 +19,13 @@ class FluxQueryException(Exception):
 class FluxCsvParserException(Exception): ...
 
 class FluxSerializationMode(Enum):
-    tables = 1
-    stream = 2
-    dataFrame = 3
+    tables: int
+    stream: int
+    dataFrame: int
 
 class FluxResponseMetadataMode(Enum):
-    full = 1
-    only_names = 2
+    full: int
+    only_names: int
 
 class _FluxCsvParserMetadata:
     table_index: int
@@ -45,7 +45,6 @@ class FluxCsvParser:
         data_frame_index: list[str] | None = None,
         query_options: Incomplete | None = None,
         response_metadata_mode: FluxResponseMetadataMode = ...,
-        use_extension_dtypes: bool = False,
     ) -> None: ...
     def __enter__(self) -> Self: ...
     def __exit__(

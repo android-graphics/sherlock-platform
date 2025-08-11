@@ -1,6 +1,5 @@
 import javaApi.JavaClass
 import kotlinApi.KotlinClass
-
 internal class X {
     fun get(index: Int): Int {
         return 0

@@ -42,23 +42,3 @@ fun reportToQodanaWhenActivityFinished(inspectListener: InspectListener,
     inspectListener.activityFinished(System.currentTimeMillis() - start, Thread.currentThread().id, activityKind, project)
   }
 }
-
-@ApiStatus.Internal
-suspend fun reportToQodanaWhenActivityFinished(
-  inspectListener: InspectListener,
-  activityKind: String,
-  project: Project,
-  activity: suspend () -> Unit
-) {
-  val start = System.currentTimeMillis()
-  try {
-    activity()
-  } finally {
-    inspectListener.activityFinished(
-      System.currentTimeMillis() - start,
-      Thread.currentThread().id,
-      activityKind,
-      project
-    )
-  }
-}

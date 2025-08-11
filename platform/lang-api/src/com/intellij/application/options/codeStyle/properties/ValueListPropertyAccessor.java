@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.properties;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -22,7 +21,7 @@ public abstract class ValueListPropertyAccessor<T> extends CodeStyleFieldAccesso
   protected abstract @NotNull List<String> toExternal(@NotNull T value);
 
   @Override
-  protected @Unmodifiable @Nullable List<String> parseString(@NotNull String string) {
+  protected @Nullable List<String> parseString(@NotNull String string) {
     return getValueList(string);
   }
 

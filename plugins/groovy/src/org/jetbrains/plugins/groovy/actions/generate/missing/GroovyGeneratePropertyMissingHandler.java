@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.actions.generate.missing;
 
 import com.intellij.codeInsight.generation.ClassMember;
@@ -45,8 +45,9 @@ public class GroovyGeneratePropertyMissingHandler extends GenerateMembersHandler
     return ClassMember.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
-  protected @NotNull List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members)
+  protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members)
     throws IncorrectOperationException {
 
     final String templName = JavaTemplateUtil.TEMPLATE_FROM_USAGE_METHOD_BODY;
@@ -62,7 +63,8 @@ public class GroovyGeneratePropertyMissingHandler extends GenerateMembersHandler
     return result;
   }
 
-  private static @Nullable GrMethod genGetter(PsiClass aClass, FileTemplate template) {
+  @Nullable
+  private static GrMethod genGetter(PsiClass aClass, FileTemplate template) {
     Properties properties = FileTemplateManager.getInstance(aClass.getProject()).getDefaultProperties();
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, CommonClassNames.JAVA_LANG_OBJECT);
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, "null");
@@ -82,7 +84,8 @@ public class GroovyGeneratePropertyMissingHandler extends GenerateMembersHandler
       .createMethodFromText("def propertyMissing(String name) {\n" + bodyText + "\n}");
   }
 
-  private static @Nullable GrMethod genSetter(PsiClass aClass, FileTemplate template) {
+  @Nullable
+  private static GrMethod genSetter(PsiClass aClass, FileTemplate template) {
     Properties properties = FileTemplateManager.getInstance(aClass.getProject()).getDefaultProperties();
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, "void");
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, "");

@@ -1,2 +1,0 @@
-// FIX: Simplify boolean expression
-fun foo(x: Boolean, y: Boolean): Boolean = !(x || y)

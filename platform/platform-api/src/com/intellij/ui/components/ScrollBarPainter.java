@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.diagnostic.LoadingState;
@@ -12,7 +12,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.MixedColorProducer;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.RegionPainter;
-import kotlinx.coroutines.CoroutineScope;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +25,8 @@ import java.util.function.Supplier;
 /**
  * This is an internal implementation for drawing opaque and transparent scroll bars.
  * It is public only to provide the ability to edit colors in the Settings/Preferences.
- * Since the colors are animated, the constants given in the class represent some key points for drawing scrollbars in different modes.
+ * Due to the fact that the colors are animated, the constants given in the class
+ * represent some key points for drawing scrollbars in different modes.
  *
  * @see com.intellij.openapi.options.colors.pages.GeneralColorsPage
  */
@@ -131,8 +132,8 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
   private static final int LIGHT_ALPHA = SystemInfoRt.isMac ? 120 : 160;
   private static final int DARK_ALPHA = SystemInfoRt.isMac ? 255 : 180;
 
-  ScrollBarPainter(@NotNull Supplier<? extends Component> supplier, @NotNull CoroutineScope coroutineScope) {
-    animator = new TwoWayAnimator(getClass().getName(), 11, 150, 125, 300, 125, coroutineScope) {
+  ScrollBarPainter(@NotNull Supplier<? extends Component> supplier) {
+    animator = new TwoWayAnimator(getClass().getName(), 11, 150, 125, 300, 125) {
       @Override
       public void onValueUpdate() {
         Component component = supplier.get();
@@ -168,7 +169,7 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
       alpha = Integer.min(alpha, 255);
     }
     else {
-      alpha = JBColor.isBright() ? LIGHT_ALPHA : DARK_ALPHA;
+      alpha = UIUtil.isUnderDarcula() ? DARK_ALPHA : LIGHT_ALPHA;
     }
 
     return ColorUtil.toAlpha(color, alpha);
@@ -181,7 +182,7 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
   static Color getColor(@NotNull Supplier<? extends Component> supplier, @NotNull ColorKey transparent, @NotNull ColorKey opaque) {
     return JBColor.lazy(() -> {
       Component component = supplier.get();
-      return getColor(component, component != null && DefaultScrollBarUI.Companion.isOpaque(component) ? opaque : transparent);
+      return getColor(component, component != null && DefaultScrollBarUI.isOpaque(component) ? opaque : transparent);
     });
   }
 
@@ -189,11 +190,11 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     component.setBackground(JBColor.lazy(() -> getColor(component, BACKGROUND)));
   }
 
-  public static final class Track extends ScrollBarPainter {
+  static final class Track extends ScrollBarPainter {
     private final MixedColorProducer fillProducer;
 
-    public Track(@NotNull Supplier<? extends Component> supplier, @NotNull CoroutineScope coroutineScope) {
-      super(supplier, coroutineScope);
+    Track(@NotNull Supplier<? extends Component> supplier) {
+      super(supplier);
       fillProducer = new MixedColorProducer(
         getColor(supplier, TRACK_BACKGROUND, TRACK_OPAQUE_BACKGROUND),
         getColor(supplier, TRACK_HOVERED_BACKGROUND, TRACK_OPAQUE_HOVERED_BACKGROUND));
@@ -203,10 +204,7 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     public void paint(@NotNull Graphics2D g, int x, int y, int width, int height, @Nullable Float value) {
       double mixer = value == null ? 0 : value.doubleValue();
       Color fill = fillProducer.produce(mixer);
-      // optimization
-      if (0 >= fill.getAlpha()) {
-        return;
-      }
+      if (0 >= fill.getAlpha()) return; // optimization
 
       g.setPaint(fill);
       RectanglePainter.FILL.paint(g, x, y, width, height, null);
@@ -218,9 +216,8 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     private final MixedColorProducer fillProducer;
     private final MixedColorProducer drawProducer;
 
-    Thumb(@NotNull Supplier<? extends Component> supplier, boolean opaque, @NotNull CoroutineScope coroutineScope) {
-      super(supplier, coroutineScope);
-
+    Thumb(@NotNull Supplier<? extends Component> supplier, boolean opaque) {
+      super(supplier);
       fillProducer = new MixedColorProducer(
         opaque ? getColor(supplier, THUMB_OPAQUE_BACKGROUND)
                : getColor(supplier, THUMB_BACKGROUND, THUMB_OPAQUE_BACKGROUND),
@@ -268,8 +265,8 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
 
   @ApiStatus.Internal
   public static class ThinScrollBarThumb extends Thumb {
-    ThinScrollBarThumb(@NotNull Supplier<? extends Component> supplier, boolean opaque, @NotNull CoroutineScope coroutineScope) {
-      super(supplier, opaque, coroutineScope);
+    ThinScrollBarThumb(@NotNull Supplier<? extends Component> supplier, boolean opaque) {
+      super(supplier, opaque);
     }
 
     @Override

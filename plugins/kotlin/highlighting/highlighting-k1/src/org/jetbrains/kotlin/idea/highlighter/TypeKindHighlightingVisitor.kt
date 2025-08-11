@@ -36,10 +36,7 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
         val key = attributeKeyForObjectAccess(expression) ?: calculateDeclarationReferenceAttributes(referenceTarget) ?: return
         if (key != KotlinHighlightInfoTypeSemanticNames.ANNOTATION
             || parent?.parentOfTypes(KtImportDirective::class, KtPackageDirective::class, KtTypeAlias::class) != null) { // annotation was highlighted in AnnoEntryHighVisitor
-            val parentAnno = PsiTreeUtil.getParentOfType(
-                expression, KtAnnotationEntry::class.java, /* strict = */false, KtValueArgumentList::class.java
-            )
-            highlightName(expression.project, parentAnno?:expression, textRange, key)
+            highlightName(expression.project, textRange, key)
         }
     }
 
@@ -109,20 +106,10 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
         return when (target.kind) {
             ClassKind.ANNOTATION_CLASS -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
             ClassKind.INTERFACE -> KotlinHighlightInfoTypeSemanticNames.TRAIT
-            ClassKind.OBJECT -> if (target.isData) {
-                KotlinHighlightInfoTypeSemanticNames.DATA_OBJECT
-            } else {
-                KotlinHighlightInfoTypeSemanticNames.OBJECT
-            }
+            ClassKind.OBJECT -> KotlinHighlightInfoTypeSemanticNames.OBJECT
             ClassKind.ENUM_CLASS -> KotlinHighlightInfoTypeSemanticNames.ENUM
             ClassKind.ENUM_ENTRY -> KotlinHighlightInfoTypeSemanticNames.ENUM_ENTRY
-            else -> if (target.modality === Modality.ABSTRACT) {
-                KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS
-            } else if (target.isData) {
-                KotlinHighlightInfoTypeSemanticNames.DATA_CLASS
-            } else {
-                KotlinHighlightInfoTypeSemanticNames.CLASS
-            }
+            else -> if (target.modality === Modality.ABSTRACT) KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS else KotlinHighlightInfoTypeSemanticNames.CLASS
         }
     }
 

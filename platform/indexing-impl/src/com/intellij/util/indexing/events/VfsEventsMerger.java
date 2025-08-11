@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.events;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RollingFileHandler;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,7 +16,6 @@ import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,28 +44,24 @@ public final class VfsEventsMerger {
     }
   }
 
-  @ApiStatus.Internal
-  public void recordFileEvent(@NotNull VirtualFile file, boolean contentChange) {
+  void recordFileEvent(@NotNull VirtualFile file, boolean contentChange) {
     tryLog(contentChange ? "FILE_CONTENT_CHANGED" : "FILE_ADDED", file);
     updateChange(file, contentChange ? FILE_CONTENT_CHANGED : FILE_ADDED);
   }
 
-  @ApiStatus.Internal
-  public void recordFileRemovedEvent(@NotNull VirtualFile file) {
+  void recordFileRemovedEvent(@NotNull VirtualFile file) {
     tryLog("FILE_REMOVED", file);
     updateChange(file, FILE_REMOVED);
   }
 
-  @ApiStatus.Internal
-  public void recordTransientStateChangeEvent(@NotNull VirtualFile file) {
+  void recordTransientStateChangeEvent(@NotNull VirtualFile file) {
     tryLog("FILE_TRANSIENT_STATE_CHANGED", file);
     updateChange(file, FILE_TRANSIENT_STATE_CHANGED);
   }
 
   private final AtomicInteger myPublishedEventIndex = new AtomicInteger();
 
-  @ApiStatus.Internal
-  public int getPublishedEventIndex() {
+  int getPublishedEventIndex() {
     return myPublishedEventIndex.get();
   }
 
@@ -123,8 +119,8 @@ public final class VfsEventsMerger {
               return false;
             }
           }
-          catch (ProcessCanceledException pce) { // todo remove (IJPL-9805)
-            ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().error(new RuntimeException(pce));
+          catch (ProcessCanceledException pce) { // todo remove
+            ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().error(pce);
             assert false;
           }
         }
@@ -143,13 +139,11 @@ public final class VfsEventsMerger {
     return true;
   }
 
-  @ApiStatus.Internal
-  public boolean hasChanges() {
+  boolean hasChanges() {
     return !myChangeInfos.isEmpty();
   }
 
-  @ApiStatus.Internal
-  public int getApproximateChangesCount() {
+  int getApproximateChangesCount() {
     return myChangeInfos.size();
   }
 
@@ -191,14 +185,8 @@ public final class VfsEventsMerger {
     @Override
     public String toString() {
       StringBuilder builder = new StringBuilder();
-      builder.append("file: ");
-      if (file instanceof VirtualFileWithId fileWithId) {
-        builder.append(fileWithId.getId());
-      }
-      else {
-        builder.append(file.getPath());
-      }
-      builder.append("; ").append("operation: ");
+      builder.append("file: ").append(file.getPath()).append("; ")
+        .append("operation: ");
       if ((eventMask & FILE_TRANSIENT_STATE_CHANGED) != 0) builder.append("TRANSIENT_STATE_CHANGE ");
       if ((eventMask & FILE_CONTENT_CHANGED) != 0) builder.append("CONTENT_CHANGE ");
       if ((eventMask & FILE_REMOVED) != 0) builder.append("REMOVE ");
@@ -206,34 +194,28 @@ public final class VfsEventsMerger {
       return builder.toString().trim();
     }
 
-    @ApiStatus.Internal
-    public boolean isContentChanged() {
+    boolean isContentChanged() {
       return (eventMask & FILE_CONTENT_CHANGED) != 0;
     }
 
-    @ApiStatus.Internal
-    public boolean isFileRemoved() {
+    boolean isFileRemoved() {
       return (eventMask & FILE_REMOVED) != 0;
     }
 
-    @ApiStatus.Internal
-    public boolean isFileAdded() {
+    boolean isFileAdded() {
       return (eventMask & FILE_ADDED) != 0;
     }
 
-    @ApiStatus.Internal
-    public boolean isTransientStateChanged() {
+    boolean isTransientStateChanged() {
       return (eventMask & FILE_TRANSIENT_STATE_CHANGED) != 0;
     }
 
     @NotNull
-    @ApiStatus.Internal
-    public VirtualFile getFile() {
+    VirtualFile getFile() {
       return file;
     }
 
-    @ApiStatus.Internal
-    public int getFileId() {
+    int getFileId() {
       int fileId = FileBasedIndex.getFileId(file);
       assert fileId >= 0;
       return fileId;
@@ -273,10 +255,7 @@ public final class VfsEventsMerger {
       if (indexedFile instanceof FileContent fileContent) {
         extra += ",contLen(b)=" + fileContent.getContent().length;
         FileType fileType = fileContent.getFileType();
-        // WARNING: LanguageFileType does not guarantee that there is a PsiFile.
-        // Example: org.jetbrains.bazel.languages.projectview.base.ProjectViewFileType
-        // psiLen has never been helpful to me, so don't log it for now.
-        // extra += ",psiLen=" + (fileType instanceof LanguageFileType ? fileContent.getPsiFile().getTextLength() : -1);
+        extra += ",psiLen=" + (fileType instanceof LanguageFileType ? fileContent.getPsiFile().getTextLength() : -1);
         extra += ",bin=" + (fileType.isBinary() ? "t" : "f");
       }
 
@@ -289,12 +268,7 @@ public final class VfsEventsMerger {
 
   public static void tryLog(Supplier<String> message) {
     if (LOG != null) {
-      try {
-        LOG.info(message.get());
-      }
-      catch (Throwable t) {
-        Logger.getInstance(VfsEventsMerger.class).error("Could not evaluate log message (message.get())", t);
-      }
+      LOG.info(message.get());
     }
   }
 

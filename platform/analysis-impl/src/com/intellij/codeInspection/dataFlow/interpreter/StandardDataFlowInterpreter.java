@@ -205,7 +205,7 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
       .into(joinInstructions);
     for (int index = 0; index < myInstructions.length; index++) {
       Instruction instruction = myInstructions[index];
-      if (instruction instanceof FinishElementInstruction finishInstruction && !finishInstruction.mayFlushSomething()) {
+      if (instruction instanceof FinishElementInstruction && !((FinishElementInstruction)instruction).getVarsToFlush().isEmpty()) {
         // Good chances to squash something after some vars are flushed
         joinInstructions.add(myInstructions[index + 1]);
       }

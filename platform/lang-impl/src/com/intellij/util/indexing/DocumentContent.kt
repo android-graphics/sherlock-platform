@@ -4,9 +4,7 @@ package com.intellij.util.indexing
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 sealed class DocumentContent {
   abstract val text: CharSequence
   abstract val modificationStamp: Long

@@ -11,10 +11,8 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
-import org.jetbrains.annotations.ApiStatus
 
 
-@ApiStatus.Internal
 interface ExecutionPointVm {
   val isTopFrame: Boolean
   val mainPositionVm: ExecutionPositionVm?
@@ -23,7 +21,6 @@ interface ExecutionPointVm {
   suspend fun navigateTo(navigationMode: ExecutionPositionNavigationMode, sourceKind: XSourceKind? = null)
 }
 
-@ApiStatus.Internal
 interface ExecutionPositionVm {
   val file: VirtualFile
   val line: Int
@@ -36,7 +33,6 @@ interface ExecutionPositionVm {
   suspend fun navigateTo(navigationMode: ExecutionPositionNavigationMode, isActiveSourceKind: Boolean)
 }
 
-@ApiStatus.Internal
 class ExecutionPositionGutterVm(val gutterIconRendererState: StateFlow<GutterIconRenderer?>)
 
 

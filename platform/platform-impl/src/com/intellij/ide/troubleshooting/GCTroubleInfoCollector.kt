@@ -3,10 +3,8 @@ package com.intellij.ide.troubleshooting
 
 import com.intellij.openapi.project.Project
 import com.intellij.troubleshooting.GeneralTroubleInfoCollector
-import org.jetbrains.annotations.ApiStatus
 import java.lang.management.ManagementFactory
 
-@ApiStatus.Internal
 class GCTroubleInfoCollector : GeneralTroubleInfoCollector {
   override fun getTitle(): String = "Garbage Collection"
 

@@ -101,7 +101,8 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
       myIcon = aClass.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
     }
 
-    private static @NotNull @NlsSafe String createText(@NotNull PsiClass aClass) {
+    @NotNull
+    private static @NlsSafe String createText(@NotNull PsiClass aClass) {
       String text = aClass.getName();
       PsiClass containingClass = aClass.getContainingClass();
       while (containingClass != null) {
@@ -136,12 +137,10 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
       return psiClass != null && psiClass.isValid();
     }
 
-    @Override
     public int hashCode() {
       return myQName.hashCode();
     }
 
-    @Override
     public boolean equals(Object object) {
       return object instanceof ClassUsageGroup && myQName.equals(((ClassUsageGroup)object).myQName);
     }

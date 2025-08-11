@@ -89,11 +89,7 @@ internal class ShortcutPresenter(private val coroutineScope: CoroutineScope) {
 
   private fun fillParentNames(group: ActionGroup, parentName: String, parentNames: MutableMap<String, String>) {
     val actionManager = ActionManager.getInstance()
-    val actions = when (group) {
-      is DefaultActionGroup -> group.getChildren(actionManager)
-      else -> group.getChildren(null)
-    }
-    for (item in actions) {
+    for (item in group.getChildren(null)) {
       when (item) {
         is ActionGroup -> {
           if (!item.isPopup) fillParentNames(item, parentName, parentNames)

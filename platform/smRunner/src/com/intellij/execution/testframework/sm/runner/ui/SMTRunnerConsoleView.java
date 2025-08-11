@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.filters.HyperlinkInfo;
@@ -12,6 +12,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,7 @@ import java.util.List;
 
 public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView implements RunContentActionsContributor {
   private SMTestRunnerResultsForm myResultsViewer;
-  private final @Nullable String mySplitterProperty;
+  @Nullable private final String mySplitterProperty;
   private final List<AttachToProcessListener> myAttachToProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public SMTRunnerConsoleView(TestConsoleProperties consoleProperties) {
@@ -71,7 +72,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView implements 
    * Note: it's a permanent printing, as opposed to calling the same method on {@link #getConsole()} instance.
    */
   @Override
-  public void print(final @NotNull String s, final @NotNull ConsoleViewContentType contentType) {
+  public void print(@NotNull final String s, @NotNull final ConsoleViewContentType contentType) {
     myResultsViewer.getRoot().addLast(new Printable() {
       @Override
       public void printOn(final Printer printer) {

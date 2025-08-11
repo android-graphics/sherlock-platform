@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -18,7 +18,8 @@ import java.util.Map;
 public final class CachedXmlDocumentSet {
   private final Map<String, String> nameToDir = new HashMap<>();
 
-  public @Nullable Element load(@NotNull String name, boolean refresh) throws IOException, JDOMException {
+  @Nullable
+  public Element load(@NotNull String name, boolean refresh) throws IOException, JDOMException {
     assert nameToDir.containsKey(name) : name;
 
     VirtualFile file = getFile(name, refresh);

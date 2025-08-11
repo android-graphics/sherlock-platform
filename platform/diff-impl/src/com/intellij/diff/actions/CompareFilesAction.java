@@ -38,8 +38,8 @@ public class CompareFilesAction extends BaseShowDiffAction {
   @Deprecated
   public static final DataKey<DiffRequest> DIFF_REQUEST = DataKey.create("CompareFilesAction.DiffRequest");
 
-  public static final @NonNls String LAST_USED_FILE_KEY = "two.files.diff.last.used.file";
-  public static final @NonNls String LAST_USED_FOLDER_KEY = "two.files.diff.last.used.folder";
+  @NonNls public static final String LAST_USED_FILE_KEY = "two.files.diff.last.used.file";
+  @NonNls public static final String LAST_USED_FOLDER_KEY = "two.files.diff.last.used.folder";
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -99,12 +99,14 @@ public class CompareFilesAction extends BaseShowDiffAction {
     return true;
   }
 
-  protected @Nullable DiffRequest getDiffRequest(@NotNull AnActionEvent e) {
+  @Nullable
+  protected DiffRequest getDiffRequest(@NotNull AnActionEvent e) {
     return e.getData(DiffDataKeys.DIFF_REQUEST_TO_COMPARE);
   }
 
+  @Nullable
   @Override
-  protected @Nullable DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e) {
+  protected DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     DiffRequest diffRequest = getDiffRequest(e);
     if (diffRequest != null) {
@@ -144,7 +146,8 @@ public class CompareFilesAction extends BaseShowDiffAction {
     return createMutableChainFromFiles(project, file1, file2, baseFile);
   }
 
-  private static @Nullable VirtualFile getOtherFile(@Nullable Project project, @NotNull VirtualFile file) {
+  @Nullable
+  private static VirtualFile getOtherFile(@Nullable Project project, @NotNull VirtualFile file) {
     FileChooserDescriptor descriptor;
     String key;
 
@@ -163,7 +166,8 @@ public class CompareFilesAction extends BaseShowDiffAction {
     return otherFile;
   }
 
-  private static @NotNull VirtualFile getDefaultSelection(@Nullable Project project, @NotNull String key, @NotNull VirtualFile file) {
+  @NotNull
+  private static VirtualFile getDefaultSelection(@Nullable Project project, @NotNull String key, @NotNull VirtualFile file) {
     if (project == null) return file;
     final String path = PropertiesComponent.getInstance(project).getValue(key);
     if (path == null) return file;
@@ -176,7 +180,8 @@ public class CompareFilesAction extends BaseShowDiffAction {
     PropertiesComponent.getInstance(project).setValue(key, file.getPath());
   }
 
-  private static @NotNull Type getType(@Nullable VirtualFile file) {
+  @NotNull
+  private static Type getType(@Nullable VirtualFile file) {
     if (file == null) return Type.FILE;
     if (file.getFileType() instanceof ArchiveFileType) return Type.ARCHIVE;
     if (file.isDirectory()) return Type.DIRECTORY;

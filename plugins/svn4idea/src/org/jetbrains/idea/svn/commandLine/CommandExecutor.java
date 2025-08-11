@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.ExecutionException;
@@ -20,7 +20,6 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.auth.PasswordAuthenticationData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import java.io.ByteArrayOutputStream;
@@ -37,13 +36,13 @@ public class CommandExecutor {
   static final Logger LOG = Logger.getInstance(CommandExecutor.class.getName());
   private final AtomicReference<Integer> myExitCodeReference;
 
-  private @Nullable String myMessage;
+  @Nullable private String myMessage;
   private boolean myIsDestroyed;
   private boolean myNeedsDestroy;
   private volatile @DialogMessage String myDestroyReason;
   private volatile boolean myWasCancelled;
-  private final @NotNull List<File> myTempFiles;
-  protected final @NotNull GeneralCommandLine myCommandLine;
+  @NotNull private final List<File> myTempFiles;
+  @NotNull protected final GeneralCommandLine myCommandLine;
   protected Process myProcess;
   protected SvnProcessHandler myHandler;
   private OutputStreamWriter myProcessWriter;
@@ -55,8 +54,8 @@ public class CommandExecutor {
   private final EventDispatcher<LineCommandListener> myListeners = EventDispatcher.create(LineCommandListener.class);
 
   private final AtomicBoolean myWasError = new AtomicBoolean(false);
-  private final @Nullable LineCommandListener myResultBuilder;
-  private final @NotNull Command myCommand;
+  @Nullable private final LineCommandListener myResultBuilder;
+  @NotNull private final Command myCommand;
 
   public CommandExecutor(@NotNull @NonNls String exePath, @NotNull Command command) {
     myCommand = command;
@@ -76,22 +75,11 @@ public class CommandExecutor {
     }
     myCommandLine.addParameter(command.getName().getName());
     myCommandLine.addParameters(prepareParameters(command));
-
-    PasswordAuthenticationData auth = command.getAuthParameters();
-    if (auth != null) {
-      myCommandLine.addParameter("--username");
-      myCommandLine.addParameter(auth.getUserName());
-      myCommandLine.addParameter("--password");
-      myCommandLine.addParameter(auth.getPassword());
-      if (!auth.isStorageAllowed()) {
-        myCommandLine.addParameter("--no-auth-cache");
-      }
-    }
-
     myExitCodeReference = new AtomicReference<>();
   }
 
-  private @NotNull List<String> prepareParameters(@NotNull Command command) {
+  @NotNull
+  private List<String> prepareParameters(@NotNull Command command) {
     List<String> parameters = command.getParameters();
 
     detectAndRemoveMessage(parameters);
@@ -156,9 +144,10 @@ public class CommandExecutor {
     myCommandLine.withEnvironment(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("svn"));
   }
 
-  private @NotNull File ensureCommandFile(@NonNls @NotNull String prefix,
-                                          @NotNull String data,
-                                          @NotNull String parameterName) throws SvnBindException {
+  @NotNull
+  private File ensureCommandFile(@NonNls @NotNull String prefix,
+                                 @NotNull String data,
+                                 @NotNull String parameterName) throws SvnBindException {
     File result = createTempFile(prefix, ".txt");
     myTempFiles.add(result);
 
@@ -211,13 +200,15 @@ public class CommandExecutor {
     }
   }
 
-  protected static @NotNull File getSvnFolder() {
+  @NotNull
+  protected static File getSvnFolder() {
     File vcsFolder = new File(PathManager.getSystemPath(), "vcs");
 
     return new File(vcsFolder, "svn");
   }
 
-  protected static @NotNull File createTempFile(@NonNls @NotNull String prefix, @NonNls @NotNull String extension) throws SvnBindException {
+  @NotNull
+  protected static File createTempFile(@NonNls @NotNull String prefix, @NonNls @NotNull String extension) throws SvnBindException {
     try {
       return FileUtil.createTempFile(getSvnFolder(), prefix, extension);
     }
@@ -236,8 +227,9 @@ public class CommandExecutor {
     }
   }
 
-  protected @NotNull SvnProcessHandler createProcessHandler() {
-    return new SvnProcessHandler(myProcess, myCommandLine, needsUtf8Output(), needsBinaryOutput());
+  @NotNull
+  protected SvnProcessHandler createProcessHandler() {
+    return new SvnProcessHandler(myProcess, myCommandLine.getCommandLineString(), needsUtf8Output(), needsBinaryOutput());
   }
 
   protected boolean needsBinaryOutput() {
@@ -249,11 +241,13 @@ public class CommandExecutor {
     return myCommand.getParameters().contains("--xml");
   }
 
-  protected @NotNull GeneralCommandLine createCommandLine() {
+  @NotNull
+  protected GeneralCommandLine createCommandLine() {
     return new GeneralCommandLine();
   }
 
-  protected @NotNull Process createProcess() throws ExecutionException {
+  @NotNull
+  protected Process createProcess() throws ExecutionException {
     return myCommandLine.createProcess();
   }
 
@@ -278,12 +272,14 @@ public class CommandExecutor {
     return outputAdapter.getOutput();
   }
 
-  public @NotNull ByteArrayOutputStream getBinaryOutput() {
+  @NotNull
+  public ByteArrayOutputStream getBinaryOutput() {
     return myHandler.getBinaryOutput();
   }
 
   // TODO: Carefully here - do not modify command from threads other than the one started command execution
-  public @NotNull Command getCommand() {
+  @NotNull
+  public Command getCommand() {
     return myCommand;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeCook.deductive.resolver;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +50,7 @@ public class BindingFactory {
           descendants.add(aClass);
         }
         else {
-          for (PsiClass bInheritor : ClassInheritorsSearch.search(bClass, false).asIterable()) {
+          for (PsiClass bInheritor : ClassInheritorsSearch.search(bClass, false)) {
             getGreatestLowerClasses(bInheritor, aClass, descendants);
           }
         }
@@ -126,7 +126,6 @@ public class BindingFactory {
       }
     }
 
-    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       return o instanceof BindingImpl binding && myBindings.equals(binding.myBindings);
@@ -201,7 +200,6 @@ public class BindingFactory {
       return b3;
     }
 
-    @Override
     public String toString() {
       final StringBuilder buffer = new StringBuilder();
 
@@ -420,7 +418,7 @@ public class BindingFactory {
 
     @Override
     public boolean nonEmpty() {
-      return !myBindings.isEmpty();
+      return myBindings.size() > 0;
     }
 
     @Override
@@ -440,7 +438,7 @@ public class BindingFactory {
           class Verifier extends PsiExtendedTypeVisitor<Void> {
             boolean myFlag;
 
-            @Override public Void visitTypeVariable(final @NotNull PsiTypeVariable var) {
+            @Override public Void visitTypeVariable(@NotNull final PsiTypeVariable var) {
               if (var.getIndex() == index) {
                 myFlag = true;
               }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -6,7 +6,6 @@ import com.intellij.xdebugger.memory.ui.ReferenceInfo;
 import com.intellij.xdebugger.memory.ui.TypeInfo;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -14,7 +13,7 @@ import java.util.List;
 public class JavaTypeInfo implements TypeInfo {
   private final ReferenceType referenceType;
 
-  public static @Unmodifiable List<TypeInfo> wrap(List<? extends ReferenceType> types) {
+  public static List<TypeInfo> wrap(List<? extends ReferenceType> types) {
     return ContainerUtil.map(types, JavaTypeInfo::new);
   }
 
@@ -22,17 +21,20 @@ public class JavaTypeInfo implements TypeInfo {
     this.referenceType = referenceType;
   }
 
+  @NotNull
   @Override
-  public @NotNull String name() {
+  public String name() {
     return getReferenceType().name();
   }
 
+  @NotNull
   @Override
-  public @NotNull @Unmodifiable List<ReferenceInfo> getInstances(int limit) {
+  public List<ReferenceInfo> getInstances(int limit) {
     return ContainerUtil.map(getReferenceType().instances(limit), JavaReferenceInfo::new);
   }
 
-  public @NotNull ReferenceType getReferenceType() {
+  @NotNull
+  public ReferenceType getReferenceType() {
     return referenceType;
   }
 

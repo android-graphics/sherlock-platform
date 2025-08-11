@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -29,14 +29,16 @@ public final class DebuggerPanelsManager {
     myProject = project;
   }
 
-  public @Nullable RunContentDescriptor attachVirtualMachine(@NotNull ExecutionEnvironment environment,
-                                                             RunProfileState state,
-                                                             RemoteConnection remoteConnection,
-                                                             boolean pollConnection) throws ExecutionException {
+  @Nullable
+  public RunContentDescriptor attachVirtualMachine(@NotNull ExecutionEnvironment environment,
+                                                   RunProfileState state,
+                                                   RemoteConnection remoteConnection,
+                                                   boolean pollConnection) throws ExecutionException {
     return attachVirtualMachine(new DefaultDebugUIEnvironment(environment, state, remoteConnection, pollConnection));
   }
 
-  public @Nullable RunContentDescriptor attachVirtualMachine(DebugUIEnvironment environment) throws ExecutionException {
+  @Nullable
+  public RunContentDescriptor attachVirtualMachine(DebugUIEnvironment environment) throws ExecutionException {
     final DebugEnvironment modelEnvironment = environment.getEnvironment();
     final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(modelEnvironment);
     if (debuggerSession == null) {
@@ -46,7 +48,8 @@ public final class DebuggerPanelsManager {
     XDebugSession debugSession =
       XDebuggerManager.getInstance(myProject).startSessionAndShowTab(modelEnvironment.getSessionName(), environment.getReuseContent(), new XDebugProcessStarter() {
         @Override
-        public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
+        @NotNull
+        public XDebugProcess start(@NotNull XDebugSession session) {
           return JavaDebugProcess.create(session, debuggerSession);
         }
       });

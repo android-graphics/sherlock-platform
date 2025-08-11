@@ -14,6 +14,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 
+
 internal const val MAX_FEEDBACK_SURVEY_NUMBER_SHOWS: Int = 2
 
 internal fun FeedbackSurveyConfig.checkIsFeedbackCollectionDeadlineNotPast(): Boolean {
@@ -60,7 +61,7 @@ internal fun isSuitableToShow(feedbackSurveyConfig: FeedbackSurveyConfig, projec
     true
   }
   else {
-    !CommonFeedbackSurveyService.checkIsFeedbackSurveyAnswerSent(feedbackSurveyConfig) &&
+    !CommonFeedbackSurveyService.checkIsFeedbackSurveyAnswerSent(feedbackSurveyConfig.surveyId) &&
     feedbackSurveyConfig.checkIdeIsSuitable() &&
     feedbackSurveyConfig.checkIsFeedbackCollectionDeadlineNotPast() &&
     feedbackSurveyConfig.checkIsIdeEAPIfRequired() &&
@@ -77,7 +78,13 @@ internal fun isSuitableToShow(feedbackSurveyConfig: FeedbackSurveyConfig, projec
 private fun invokeRespondNotificationAction(feedbackSurveyType: FeedbackSurveyType<*>, project: Project, forTest: Boolean) {
   when (feedbackSurveyType) {
     is InIdeFeedbackSurveyType -> {
-      feedbackSurveyType.feedbackSurveyConfig.showFeedbackDialog(project, forTest)
+      val inIdeFeedbackSurveyConfig = feedbackSurveyType.feedbackSurveyConfig as InIdeFeedbackSurveyConfig
+      val dialog = inIdeFeedbackSurveyConfig.createFeedbackDialog(project, forTest)
+      val isOk = dialog.showAndGet()
+      if (isOk && !forTest) {
+        inIdeFeedbackSurveyConfig.updateStateAfterDialogClosedOk(project)
+        updateCommonFeedbackSurveysStateAfterSent(inIdeFeedbackSurveyConfig)
+      }
     }
     is ExternalFeedbackSurveyType -> {
       val externalFeedbackSurveyConfig = feedbackSurveyType.feedbackSurveyConfig as ExternalFeedbackSurveyConfig
@@ -90,7 +97,7 @@ private fun invokeRespondNotificationAction(feedbackSurveyType: FeedbackSurveyTy
   }
 }
 
-internal fun updateCommonFeedbackSurveysStateAfterSent(feedbackSurveyConfig: FeedbackSurveyConfig) {
+private fun updateCommonFeedbackSurveysStateAfterSent(feedbackSurveyConfig: FeedbackSurveyConfig) {
   CommonFeedbackSurveyService.feedbackSurveyAnswerSent(feedbackSurveyConfig.surveyId)
 }
 
@@ -99,8 +106,7 @@ private fun browseToSurvey(project: Project, feedbackSurveyConfig: ExternalFeedb
 }
 
 private fun checkNumberShowsNotExceeded(feedbackSurveyConfig: FeedbackSurveyConfig): Boolean {
-  if (feedbackSurveyConfig.isIndefinite) return true
-
-  return CommonFeedbackSurveyService.getNumberShowsOfFeedbackSurvey(feedbackSurveyConfig.surveyId) < MAX_FEEDBACK_SURVEY_NUMBER_SHOWS
+  return CommonFeedbackSurveyService.getNumberShowsOfFeedbackSurvey(
+    feedbackSurveyConfig.surveyId) < MAX_FEEDBACK_SURVEY_NUMBER_SHOWS
 }
 

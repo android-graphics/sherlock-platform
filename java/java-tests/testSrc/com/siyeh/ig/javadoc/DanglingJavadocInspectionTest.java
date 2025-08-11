@@ -14,7 +14,7 @@ public class DanglingJavadocInspectionTest extends LightJavaInspectionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_23;
+    return JAVA_9;
   }
 
   public void testDanglingJavadoc() {

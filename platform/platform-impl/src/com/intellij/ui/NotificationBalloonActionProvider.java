@@ -24,7 +24,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.JBRectangle;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +37,6 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-@ApiStatus.Internal
 public final class NotificationBalloonActionProvider implements BalloonImpl.ActionProvider {
   private final BalloonImpl myBalloon;
   private final BalloonLayoutData myLayoutData;
@@ -170,7 +168,7 @@ public final class NotificationBalloonActionProvider implements BalloonImpl.Acti
         }
       }
       if (ColorUtil.isDark(JBColor.namedColor("MainToolbar.background")) && JBColor.isBright() && icon instanceof CachedImageIcon) {
-        icon = CustomIconUtilKt.loadIconCustomVersionOrScale((CachedImageIcon)icon, 16, true, true);
+        icon = CustomIconUtilKt.loadIconCustomVersionOrScale((CachedImageIcon)icon, 16, true);
       }
     }
     return icon;

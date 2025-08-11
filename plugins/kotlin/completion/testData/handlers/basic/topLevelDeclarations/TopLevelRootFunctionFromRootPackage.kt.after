@@ -1,6 +1,0 @@
-fun usage() {
-    topLevelFunction()<caret>
-}
-
-// ELEMENT: topLevelFunction
-// TAIL_TEXT: "() (<root>)"

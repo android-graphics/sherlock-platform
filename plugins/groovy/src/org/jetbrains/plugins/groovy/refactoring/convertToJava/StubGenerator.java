@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
@@ -265,7 +265,8 @@ public final class StubGenerator implements ClassItemGenerator {
     GenerationUtil.writeThrowsList(text, throwsList, exceptions, classNameProvider);
   }
 
-  private static @Nullable GroovyResolveResult resolveChainingConstructor(GrMethod constructor) {
+  @Nullable
+  private static GroovyResolveResult resolveChainingConstructor(GrMethod constructor) {
     LOG.assertTrue(constructor.isConstructor());
 
     final GrConstructorInvocation constructorInvocation = PsiImplUtil.getChainingConstructorInvocation(constructor);

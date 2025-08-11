@@ -19,7 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,9 +47,6 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
       if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) && expression.getContainingFile() instanceof PsiJavaFile javaFile) {
         if (PsiUtil.isAvailable(JavaFeature.STRING_SWITCH, javaFile)) return true;
       }
-
-      if (PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, expression) &&
-          TypeConversionUtil.isPrimitiveAndNotNull(type)) return true;
 
       return false;
     });

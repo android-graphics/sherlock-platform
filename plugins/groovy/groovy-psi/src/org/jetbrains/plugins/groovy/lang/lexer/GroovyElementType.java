@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.lexer;
 
@@ -29,11 +29,12 @@ public class GroovyElementType extends IElementType {
     return myLeftBound;
   }
 
-  public abstract static class PsiCreator extends GroovyElementType {
+  public static abstract class PsiCreator extends GroovyElementType {
     protected PsiCreator(String debugName) {
       super(debugName);
     }
 
-    public abstract @NotNull PsiElement createPsi(@NotNull ASTNode node);
+    @NotNull
+    public abstract PsiElement createPsi(@NotNull ASTNode node);
   }
 }

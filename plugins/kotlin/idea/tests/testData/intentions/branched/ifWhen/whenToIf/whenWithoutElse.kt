@@ -1,4 +1,3 @@
-// PRIORITY: LOW
 fun test(n: Int): String {
     var s = "test"
     <caret>when (n) {

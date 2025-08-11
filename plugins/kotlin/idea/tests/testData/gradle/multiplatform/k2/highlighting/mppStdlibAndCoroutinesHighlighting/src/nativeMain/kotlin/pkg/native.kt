@@ -35,7 +35,8 @@ suspend fun commonCoroutines() {
 }
 
 fun concurrent() {
-    runBlocking {}
+    // Issue: KTIJ-27250
+    <!HIGHLIGHTING("severity='ERROR'; descr='[NO_VALUE_FOR_PARAMETER] No value passed for parameter 'context'.'")!>runBlocking<!> {}
 }
 
 fun jvm(param: <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference 'ExecutorCoroutineDispatcher'.'")!>ExecutorCoroutineDispatcher<!>) {}

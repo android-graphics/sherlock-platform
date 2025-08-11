@@ -25,7 +25,8 @@ import org.jetbrains.annotations.NotNull;
  * Recursive visitor with multimap, to be used for {@link MembersManager#getDependencies(PyElement)}
  */
 class PyRecursiveElementVisitorWithResult extends PyRecursiveElementVisitor {
-  protected final @NotNull MultiMap<PyClass, PyElement> myResult;
+  @NotNull
+  protected final MultiMap<PyClass, PyElement> myResult;
 
   PyRecursiveElementVisitorWithResult() {
     myResult = new MultiMap<>();

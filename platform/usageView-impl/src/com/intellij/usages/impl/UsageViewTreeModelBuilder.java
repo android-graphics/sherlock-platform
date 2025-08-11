@@ -53,8 +53,9 @@ final class UsageViewTreeModelBuilder extends DefaultTreeModel {
       return false;
     }
 
+    @NotNull
     @Override
-    protected @NotNull String getNodeText() {
+    protected String getNodeText() {
       return getUserObject().toString();
     }
   }
@@ -103,7 +104,8 @@ final class UsageViewTreeModelBuilder extends DefaultTreeModel {
   }
 
   @Override
-  public @NotNull Object getRoot() {
+  @NotNull
+  public Object getRoot() {
     return myRootNode;
   }
 

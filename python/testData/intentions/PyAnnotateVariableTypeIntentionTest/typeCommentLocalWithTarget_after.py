@@ -1,7 +1,6 @@
-from io import TextIOWrapper, _WrappedBuffer
-from typing import Union, Any
+from typing import BinaryIO
 
 
 def func():
-    with open('file.txt') as var:  # type: [TextIOWrapper[Union[_WrappedBuffer, Any]]]
+    with open('file.txt') as var:  # type: [BinaryIO]
         var

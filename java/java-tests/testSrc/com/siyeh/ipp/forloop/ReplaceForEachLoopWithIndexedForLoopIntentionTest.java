@@ -18,7 +18,6 @@ public class ReplaceForEachLoopWithIndexedForLoopIntentionTest extends IPPTestCa
   public void testBlockNeeded() { doTest(); }
   public void testBlockNeededLabeled() { doTest(); }
   public void testVar() { doTest(); }
-  public void testNoExternalAnno() { doTest(); }
 
   @Override
   protected String getIntentionName() {

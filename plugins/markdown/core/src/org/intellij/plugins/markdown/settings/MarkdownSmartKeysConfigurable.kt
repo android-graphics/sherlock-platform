@@ -1,26 +1,15 @@
 package org.intellij.plugins.markdown.settings
 
 import com.intellij.application.options.CodeCompletionOptionsCustomSection
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.ide.impl.ProjectUtil
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
-import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindSelected
-import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.util.MarkdownApplicationScope
 
 internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(), SearchableConfigurable, CodeCompletionOptionsCustomSection {
   private val settings
     get() = MarkdownCodeInsightSettings.getInstance()
-
-  private val coroutineScope
-    get() = MarkdownApplicationScope.scope()
 
   override fun getDisplayName(): String {
     return MarkdownBundle.message("markdown.smart.keys.configurable.name")
@@ -31,8 +20,6 @@ internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(),
   }
 
   override fun Panel.createContent() {
-    useNewComboBoxRenderer()
-
     group(title = MarkdownBundle.message("markdown.smart.keys.configurable.tables.group.name")) {
       row {
         checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.tables.reformat.on.type"))
@@ -78,36 +65,12 @@ internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(),
             setter = { settings.state.smartEnterAndBackspace = it }
           )
       }
-      var renumberCheckBox: JBCheckBox? = null
       row {
-        renumberCheckBox = checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.lists.renumber.lists"))
+        checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.lists.renumber.lists"))
           .bindSelected(
             getter = { settings.state.renumberListsOnType },
             setter = { settings.state.renumberListsOnType = it }
           )
-          .applyToComponent { isEnabled = settings.state.listNumberingType != MarkdownCodeInsightSettings.ListNumberingType.PREVIOUS_NUMBER }
-          .component
-      }
-      row(MarkdownBundle.message("markdown.smart.keys.configurable.lists.numbering")) {
-        comboBox(CollectionComboBoxModel(MarkdownCodeInsightSettings.ListNumberingType.entries))
-          .bindItem(
-            getter = { settings.state.listNumberingType },
-            setter = {
-              if (it != null) {
-                settings.state.listNumberingType = it
-              }
-              coroutineScope.launch {
-                readAction {
-                  ProjectUtil.getOpenProjects().forEach { project ->
-                    DaemonCodeAnalyzer.getInstance(project).restart()
-                  }
-                }
-              }
-            }
-          )
-          .onChanged {
-            renumberCheckBox?.isEnabled = it.item != MarkdownCodeInsightSettings.ListNumberingType.PREVIOUS_NUMBER
-          }
       }
     }
     group(title = MarkdownBundle.message("markdown.smart.keys.configurable.other.group.name")) {

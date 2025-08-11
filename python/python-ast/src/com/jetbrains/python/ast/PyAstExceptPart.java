@@ -30,11 +30,13 @@ import java.util.List;
 public interface PyAstExceptPart extends PyAstElement, PyAstNamedElementContainer, PyAstStatementPart {
   PyAstExceptPart[] EMPTY_ARRAY = new PyAstExceptPart[0];
 
-  default @Nullable PyAstExpression getExceptClass() {
+  @Nullable
+  default PyAstExpression getExceptClass() {
     return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
 
-  default @Nullable PyAstExpression getTarget() {
+  @Nullable
+  default PyAstExpression getTarget() {
     return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 1);
   }
 
@@ -43,7 +45,8 @@ public interface PyAstExceptPart extends PyAstElement, PyAstNamedElementContaine
   }
 
   @Override
-  default @NotNull List<PsiNamedElement> getNamedElements() {
+  @NotNull
+  default List<PsiNamedElement> getNamedElements() {
     final List<PyAstExpression> expressions = PyUtilCore.flattenedParensAndStars(getTarget());
     final List<PsiNamedElement> results = new ArrayList<>();
     for (PyAstExpression expression : expressions) {

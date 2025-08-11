@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -12,7 +12,8 @@ public abstract class ModuleRootManagerEx extends ModuleRootManager {
   public static final ExtensionPointName<ModuleExtension> MODULE_EXTENSION_NAME = new ExtensionPointName<>("com.intellij.moduleExtension");
 
   @ApiStatus.Internal
-  public abstract @NotNull ModifiableRootModel getModifiableModel(@NotNull RootConfigurationAccessor accessor);
+  @NotNull
+  public abstract ModifiableRootModel getModifiableModel(@NotNull RootConfigurationAccessor accessor);
 
   /**
    * This method was introduced only for new workspace model and should not be used in other places. Instance of {@link ModifiableRootModel}
@@ -20,7 +21,8 @@ public abstract class ModuleRootManagerEx extends ModuleRootManager {
    * via {@link com.intellij.openapi.roots.impl.ModifiableModelCommitterService#multiCommit}.
    */
   @ApiStatus.Internal
-  public @NotNull ModifiableRootModel getModifiableModelForMultiCommit(@NotNull RootConfigurationAccessor accessor) {
+  @NotNull
+  public ModifiableRootModel getModifiableModelForMultiCommit(@NotNull RootConfigurationAccessor accessor) {
     return getModifiableModel(accessor);
   }
 

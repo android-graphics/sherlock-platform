@@ -83,10 +83,9 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         val moduleB = createModuleInTmpDir("b")
         val moduleC = createModuleInTmpDir("c")
 
-        val allowedEventKinds = setOf(KotlinModificationEventKind.GLOBAL_MODULE_STATE_MODIFICATION)
-        val trackerA = createTracker(moduleA, "module A with added module roots", allowedEventKinds)
-        val trackerB = createTracker(moduleB, "module B", allowedEventKinds)
-        val trackerC = createTracker(moduleC, "module C", allowedEventKinds)
+        val trackerA = createTracker(moduleA, "module A with added module roots")
+        val trackerB = createTracker(moduleB, "module B")
+        val trackerC = createTracker(moduleC, "module C")
 
         moduleA.addContentRoot(createTempDirectory().toPath())
 
@@ -118,10 +117,9 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         val moduleB = createModuleInTmpDir("b")
         val moduleC = createModuleInTmpDir("c")
 
-        val allowedEventKinds = setOf(KotlinModificationEventKind.GLOBAL_MODULE_STATE_MODIFICATION)
-        val trackerA = createTracker(moduleA, "module A with an added library dependency", allowedEventKinds)
-        val trackerB = createTracker(moduleB, "module B", allowedEventKinds)
-        val trackerC = createTracker(moduleC, "module C", allowedEventKinds)
+        val trackerA = createTracker(moduleA, "module A with an added library dependency")
+        val trackerB = createTracker(moduleB, "module B")
+        val trackerC = createTracker(moduleC, "module C")
 
         moduleA.addLibrary(TestKotlinArtifacts.kotlinTestJunit)
 

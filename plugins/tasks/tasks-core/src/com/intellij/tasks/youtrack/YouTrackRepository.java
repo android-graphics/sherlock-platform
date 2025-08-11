@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.youtrack;
 
 import com.google.gson.Gson;
@@ -66,8 +66,9 @@ public class YouTrackRepository extends NewBaseRepositoryImpl {
     super(type);
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseRepository clone() {
+  public BaseRepository clone() {
     return new YouTrackRepository(this);
   }
 
@@ -85,7 +86,8 @@ public class YouTrackRepository extends NewBaseRepositoryImpl {
     return ContainerUtil.map2Array(result, YouTrackTask.class, issue -> new YouTrackTask(this, issue));
   }
 
-  private @NotNull List<YouTrackIssue> fetchIssues(@Nullable String query, int offset, int limit) throws URISyntaxException, IOException {
+  @NotNull
+  private List<YouTrackIssue> fetchIssues(@Nullable String query, int offset, int limit) throws URISyntaxException, IOException {
     String searchQuery = getDefaultSearch() + (StringUtil.isNotEmpty(query) ? " " + query : "");
     URI endpoint = new URIBuilder(getRestApiUrl("api", "issues"))
       .addParameter("query", searchQuery)
@@ -110,8 +112,9 @@ public class YouTrackRepository extends NewBaseRepositoryImpl {
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable CancellableConnection createCancellableConnection() {
+  public CancellableConnection createCancellableConnection() {
     return new HttpTestConnection(new HttpGet()) {
       @Override
       protected void test() throws Exception {
@@ -130,12 +133,14 @@ public class YouTrackRepository extends NewBaseRepositoryImpl {
   }
 
   @Override
-  public @Nullable Task findTask(@NotNull String id) throws Exception {
+  @Nullable
+  public Task findTask(@NotNull String id) throws Exception {
     YouTrackIssue issue = fetchIssue(id);
     return issue != null ? new YouTrackTask(this, issue) : null;
   }
 
-  private @Nullable YouTrackIssue fetchIssue(@NotNull String issueId) throws URISyntaxException, IOException {
+  @Nullable
+  private YouTrackIssue fetchIssue(@NotNull String issueId) throws URISyntaxException, IOException {
     URI endpoint = new URIBuilder(getRestApiUrl("api", "issues", issueId))
       .addParameter("fields", YouTrackIssue.DEFAULT_FIELDS)
       .build();
@@ -157,12 +162,14 @@ public class YouTrackRepository extends NewBaseRepositoryImpl {
                               .toNothing());
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     return ContainerUtil.map2Set(fetchAvailableStates(task.getId()), suggestion -> new CustomTaskState(suggestion, suggestion));
   }
 
-  private @NotNull List<String> fetchAvailableStates(@NotNull String issueId) throws URISyntaxException, IOException {
+  @NotNull
+  private List<String> fetchAvailableStates(@NotNull String issueId) throws URISyntaxException, IOException {
     URI endpoint = new URIBuilder(getRestApiUrl("api", "commands", "assist"))
       .addParameter("fields", YouTrackCommandList.DEFAULT_FIELDS)
       .build();
@@ -244,8 +251,9 @@ public class YouTrackRepository extends NewBaseRepositoryImpl {
     return super.getFeatures() | STATE_UPDATING | TIME_MANAGEMENT;
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getDefaultScheme() {
+  protected String getDefaultScheme() {
     return "https";
   }
 
@@ -263,18 +271,21 @@ public class YouTrackRepository extends NewBaseRepositoryImpl {
       myErrorInfo = errorInfo;
     }
 
-    private @NotNull YouTrackErrorInfo getErrorInfo() {
+    @NotNull
+    private YouTrackErrorInfo getErrorInfo() {
       return myErrorInfo;
     }
 
-    private static @NotNull @NlsSafe String mostDescriptiveMessage(@NotNull YouTrackErrorInfo errorInfo) {
+    @NotNull
+    private static @NlsSafe String mostDescriptiveMessage(@NotNull YouTrackErrorInfo errorInfo) {
       return StringUtil.isNotEmpty(errorInfo.getErrorDescription()) ? errorInfo.getErrorDescription() :
              StringUtil.isNotEmpty(errorInfo.getError()) ? errorInfo.getError() :
              "Unknown error";
     }
   }
 
-  private @NotNull RequestFailedException parseYouTrackError(@NotNull HttpResponse response) {
+  @NotNull
+  private RequestFailedException parseYouTrackError(@NotNull HttpResponse response) {
     try {
       return new YouTrackRequestFailedException(this, GSON.fromJson(TaskResponseUtil.getResponseContentAsReader(response),
                                                                     YouTrackErrorInfo.class));

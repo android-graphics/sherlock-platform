@@ -74,6 +74,7 @@ fun createTestOpenProjectOptions(runPostStartUpActivities: Boolean = true, befor
   return OpenProjectTask {
     forceOpenInNewFrame = true
 
+    isRefreshVfsNeeded = false
     runConversionBeforeOpen = false
     runConfigurators = false
     showWelcomeScreen = false

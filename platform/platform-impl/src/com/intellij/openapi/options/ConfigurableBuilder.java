@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -14,7 +14,6 @@ import kotlin.reflect.KMutableProperty0;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -209,8 +208,8 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
   }
 
   @Override
-  public @Unmodifiable @NotNull List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
-                                                                             @NotNull Function<? super String, @NlsContexts.Command String> nameConverter) {
+  public @NotNull List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
+                                                               @NotNull Function<? super String, @NlsContexts.Command String> nameConverter) {
     List<ConfigurableBuilder.CheckboxField> boxes = JBIterable.from(myFields).filter(CheckboxField.class).toList();
     return ContainerUtil.map(boxes, box -> new BooleanOptionDescription(nameConverter.apply(box.getTitle()), configurableId) {
       @Override
@@ -227,7 +226,7 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
 
   @Override
   public void createContent(@NotNull Panel builder) {
-    ConfigurableBuilderHelper.buildFieldsPanel(builder, myTitle, myFields);
+    ConfigurableBuilderHelper.buildFieldsPanel$intellij_platform_ide_impl(builder, myTitle, myFields);
   }
 
   @ApiStatus.Internal

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs;
 
@@ -56,7 +56,7 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
     XmlSerializerUtil.copyBean(state, this);
   }
 
-  public static class LinkMatch implements LinkDescriptor, Comparable {
+  public static class LinkMatch implements Comparable {
     private final TextRange myRange;
     private final String myTargetUrl;
 
@@ -65,8 +65,7 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
       myTargetUrl = targetUrl;
     }
 
-    @Override
-    public @NotNull TextRange getRange() {
+    public TextRange getRange() {
       return myRange;
     }
 

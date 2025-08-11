@@ -6,12 +6,11 @@ import java.io.File
 class GradleToolWindowOldGroupingTest : GradleToolWindowTest() {
   override fun setUp() {
     super.setUp()
-    currentExternalProjectSettings.isUseQualifiedModuleNames = false
+    currentExternalProjectSettings.setUseQualifiedModuleNames(false)
   }
 
-  override val path: String
-    get() {
-    val testDataPath = super.path
+  override fun getPath(): String {
+    val testDataPath = super.getPath()
     val testDataForOldGrouping = "$testDataPath.old"
     if (File(testDataForOldGrouping).exists()) {
       return testDataForOldGrouping

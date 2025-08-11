@@ -1,3 +1,0 @@
-class MyClass:
-    def __init__(self) -> None: ...
-    _public_api: str

@@ -1,9 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -22,8 +20,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SingleCharAlternationInspection extends LocalInspectionTool {
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new SingleCharAlternationVisitor(holder);
   }
 
@@ -62,13 +61,17 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
         myText = text;
       }
 
+      @Nls
+      @NotNull
       @Override
-      public @Nls @NotNull String getName() {
+      public String getName() {
         return CommonQuickFixBundle.message("fix.replace.with.x", myText);
       }
 
+      @Nls
+      @NotNull
       @Override
-      public @Nls @NotNull String getFamilyName() {
+      public String getFamilyName() {
         return RegExpBundle.message("inspection.quick.fix.replace.alternation.with.character.class");
       }
 

@@ -2,9 +2,7 @@
 package com.intellij.vcs.log.graph.utils
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 open class IntHashSetFlags(private val size: Int) : Flags {
   val data = IntOpenHashSet()
 

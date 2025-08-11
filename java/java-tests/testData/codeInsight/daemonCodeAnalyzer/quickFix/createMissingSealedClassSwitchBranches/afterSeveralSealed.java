@@ -1,4 +1,4 @@
-// "Create missing branch 'Test.Cl1'" "true-preview"
+// "Create missing switch branch 'Test.Cl1'" "true-preview"
 class Test {
   interface II1{}
   sealed interface II2{}

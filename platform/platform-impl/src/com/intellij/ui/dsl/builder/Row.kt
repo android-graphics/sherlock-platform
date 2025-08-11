@@ -1,9 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.TooltipTitle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.ObservableProperty
@@ -25,6 +27,7 @@ import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.event.ActionEvent
 import javax.swing.*
@@ -35,20 +38,20 @@ import javax.swing.*
 enum class RowLayout {
   /**
    * All cells of the row (including label if present) independent of parent grid.
-   * That means this row has its own grid.
+   * That means this row has its own grid
    */
   INDEPENDENT,
 
   /**
    * Label is aligned, other components independent of parent grid. If label is not provided
    * then first cell (sometimes can be [JCheckBox] for example) is considered as a label.
-   * That means the label is in parent grid; other components have their own grid.
+   * That means label is in parent grid, other components have own grid
    */
   LABEL_ALIGNED,
 
   /**
-   * All components including label are in parent grid.
-   * That means label and other components are in the parent grid.
+   * All components including label are in parent grid
+   * That means label and other components are in parent grid
    */
   PARENT_GRID
 }
@@ -91,6 +94,7 @@ enum class BottomGap {
 @LayoutDslMarker
 @JvmDefaultWithCompatibility
 interface Row {
+
   /**
    * Layout of the row.
    * Default value is [RowLayout.LABEL_ALIGNED] when label is provided for the row, [RowLayout.INDEPENDENT] otherwise
@@ -99,19 +103,18 @@ interface Row {
 
   /**
    * Marks the row as resizable: the row occupies all extra vertical space in parent (for example in [Panel.group] or [Panel.panel])
-   * and changes size together with parent.
-   * When resizable is necessary in whole [DialogPanel] all row parents should be marked as [resizableRow] as well.
-   * It's possible to have several resizable rows, which means extra space is shared between them.
-   * Note that alignment inside the cell is managed by [CellBase.align] method.
+   * and changes size together with parent. When resizable is needed in whole [DialogPanel] all row parents should be marked
+   * as [resizableRow] as well. It's possible to have several resizable rows, which means extra space is shared between them.
+   * Note that alignment inside the cell is managed by [CellBase.align]  method
    *
    * @see [Grid.resizableRows]
    */
   fun resizableRow(): Row
 
   /**
-   * Adds comment after the row with the appropriate color and font size.
+   * Adds comment after the row with appropriate color and font size (macOS and Linux use smaller font).
    * * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically
-   * * \n does not work as new line in HTML, use &lt;br&gt; instead
+   * * \n does not work as new line in html, use &lt;br&gt; instead
    * * Links with href to http/https are automatically marked with additional arrow icon
    * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
    *
@@ -125,9 +128,8 @@ interface Row {
                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Row
 
   /**
-   * Adds [component].
-   * Use this method only for custom specific components; all standard components like label, button,
-   * checkbox, etc. are covered by dedicated [Row] factory methods
+   * Adds [component]. Use this method only for custom specific components, all standard components like label, button,
+   * checkbox etc are covered by dedicated [Row] factory methods
    */
   fun <T : JComponent> cell(component: T): Cell<T>
 
@@ -169,31 +171,29 @@ interface Row {
   fun enabled(isEnabled: Boolean): Row
 
   /**
-   * Binds the enabled state of row to provided [predicate]
+   * Binds row enabled state to provided [predicate]
    */
   fun enabledIf(predicate: ComponentPredicate): Row
 
   /**
-   * Binds enabled state of row to provided [property] predicate.
+   * Binds row enabled state to provided [property] predicate.
    */
   fun enabledIf(property: ObservableProperty<Boolean>): Row
 
   /**
-   * Adds a gap above the current row.
-   * It is visible together with the row.
-   * Only the greatest gap of top and bottom gaps is used between two rows (or top gap if equal)
+   * Adds additional gap above current row. It is visible together with the row.
+   * Only greatest gap of top and bottom gaps is used between two rows (or top gap if equal)
    */
   fun topGap(topGap: TopGap): Row
 
   /**
-   * Adds a gap below the current row.
-   * It is visible together with the row.
-   * Only the greatest gap of top and bottom gaps is used between two rows (or top gap if equal)
+   * Adds additional gap below current row. It is visible together with the row.
+   * Only greatest gap of top and bottom gaps is used between two rows (or top gap if equal)
    */
   fun bottomGap(bottomGap: BottomGap): Row
 
   /**
-   * Creates subpanel inside the cell of the row. The panel contains its own rows and cells.
+   * Creates sub-panel inside the cell of the row. The panel contains its own rows and cells
    */
   fun panel(init: Panel.() -> Unit): Panel
 
@@ -207,11 +207,11 @@ interface Row {
    *
    *
    * If there is a binding [ButtonsGroup.bind] for the buttons group then:
-   * * [value] must be provided with correspondent to a binding type for all radio buttons in the group
-   * * it's possible to mark default radio button by [JRadioButton.isSelected] = true. Such a button will be selected by default in case
-   * the initial value of bound variable doesn't equal any values of radio buttons in the group.
+   * * [value] must be provided with correspondent to binding type for all radio buttons in the group
+   * * it's possible to mark default radio button by [JRadioButton.isSelected] = true. Such button will be selected by default in case
+   * initial value of bound variable doesn't equal any values of radio buttons in the group
    *
-   * If there is no binding, then the values of all radio buttons in the group must be null.
+   * If there is no binding, then values of all radio buttons in the group must be null
    */
   fun radioButton(@NlsContexts.RadioButton text: String, value: Any? = null): Cell<JBRadioButton>
 
@@ -220,16 +220,44 @@ interface Row {
   fun button(@NlsContexts.Button text: String, action: AnAction, @NonNls actionPlace: String = ActionPlaces.UNKNOWN): Cell<JButton>
 
   /**
+   * This method is moved into extension because Kotlin UI DSL is going to be moved into public API, but [ActionButton] is a part of impl API
+   * To fix compilation issue add `import com.intellij.ui.dsl.builder.actionButton`
+   */
+  @Deprecated("Use extension function com.intellij.ui.dsl.builder.ExtensionsKt.actionButton instead", level = DeprecationLevel.HIDDEN)
+  @ApiStatus.ScheduledForRemoval
+  fun actionButton(action: AnAction, @NonNls actionPlace: String = ActionPlaces.UNKNOWN): Cell<ActionButton> {
+    return actionButton(action, actionPlace)
+  }
+
+  /**
+   * This method is moved into extension because Kotlin UI DSL is going to be moved into public API, but [ActionButton] is a part of impl API.
+   * To fix compilation issue add `import com.intellij.ui.dsl.builder.actionsButton`
+   */
+  @Deprecated("Use extension function com.intellij.ui.dsl.builder.ExtensionsKt.actionButton instead", level = DeprecationLevel.HIDDEN)
+  @ApiStatus.ScheduledForRemoval
+  fun actionsButton(vararg actions: AnAction,
+                    @NonNls actionPlace: String = ActionPlaces.UNKNOWN,
+                    icon: Icon = AllIcons.General.GearPlain): Cell<ActionButton> {
+    return actionsButton(*actions, actionPlace = actionPlace, icon = icon)
+  }
+
+  @Deprecated("Use another segmentedButton method instead. API is different and text value must be assigned in new version of renderer",
+              level = DeprecationLevel.HIDDEN)
+  @ApiStatus.Experimental
+  fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String): SegmentedButton<T>
+
+  /**
    * [renderer] converts values to visual presentation. Every presentation must have non-empty text, other properties are optional.
    * Use [SegmentedButton.update] if text, hint, or other properties in model are changed and should be re-rendered
    */
+  @ApiStatus.Experimental
   fun <T> segmentedButton(items: Collection<T>, renderer: SegmentedButton.ItemPresentation.(T) -> Unit): SegmentedButton<T>
 
   fun slider(min: Int, max: Int, minorTickSpacing: Int, majorTickSpacing: Int): Cell<JSlider>
 
   /**
    * Adds a label. For label that relates to joined control [Panel.row] and [Cell.label] must be used,
-   * because they set a correct gap between label and component and set [JLabel.labelFor] property
+   * because they set correct gap between label and component and set [JLabel.labelFor] property
    */
   fun label(@NlsContexts.Label text: String): Cell<JLabel>
 
@@ -249,7 +277,7 @@ interface Row {
            action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
   /**
-   * Adds comment with the appropriate color and font size.
+   * Adds comment with appropriate color and font size (macOS and Linux use smaller font).
    * * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically
    * * \n does not work as new line in html, use &lt;br&gt; instead
    * * Links with href to http/https are automatically marked with additional arrow icon
@@ -264,17 +292,17 @@ interface Row {
               action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
   /**
-   * Creates a focusable link with text inside. Should not be used with HTML in [text].
+   * Creates focusable link with text inside. Should not be used with html in [text]
    */
   fun link(@NlsContexts.LinkLabel text: String, action: (ActionEvent) -> Unit): Cell<ActionLink>
 
   /**
-   * Creates a focusable browser link with text inside. Should not be used with HTML in [text].
+   * Creates focusable browser link with text inside. Should not be used with html in [text]
    */
   fun browserLink(@NlsContexts.LinkLabel text: String, url: String): Cell<BrowserLink>
 
   /**
-   * Use [Cell.onChanged] to listen to selection changes.
+   * Use [Cell.onChanged] to listen selection changes
    *
    * @param item current item
    * @param items list of all available items in popup
@@ -293,46 +321,12 @@ interface Row {
   /**
    * Creates text field with browse button and [columns] set to [COLUMNS_SHORT]
    */
-  @ApiStatus.Experimental
-  fun textFieldWithBrowseButton(
-    project: Project? = null,
-    fileChosen: ((chosenFile: VirtualFile) -> String)? = null
-  ): Cell<TextFieldWithBrowseButton> =
-    textFieldWithBrowseButton(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(), project, fileChosen)
-
-  /**
-   * Creates text field with browse button and [columns] set to [COLUMNS_SHORT]
-   */
-  @ApiStatus.Experimental
-  fun textFieldWithBrowseButton(
-    browseDialogTitle: @NlsContexts.DialogTitle String,
-    project: Project? = null,
-    fileChosen: ((chosenFile: VirtualFile) -> String)? = null
-  ): Cell<TextFieldWithBrowseButton> =
-    textFieldWithBrowseButton(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle(browseDialogTitle), project, fileChosen)
-
-  /**
-   * Creates text field with browse button and [columns] set to [COLUMNS_SHORT]
-   */
-  @ApiStatus.Experimental
-  fun textFieldWithBrowseButton(
-    fileChooserDescriptor: FileChooserDescriptor,
-    project: Project? = null,
-    fileChosen: ((chosenFile: VirtualFile) -> String)? = null
-  ): Cell<TextFieldWithBrowseButton>
-
-  @Deprecated(
-    "Use [Row.textFieldWithBrowseButton(String, Project?, ((VirtualFile) -> String)?)] " +
-    "or [Row.textFieldWithBrowseButton(FileChooserDescriptor, Project?, ((VirtualFile) -> String)?)] together with [FileChooserDescriptor.withTitle]",
-    level = DeprecationLevel.ERROR,
-  )
   fun textFieldWithBrowseButton(
     @NlsContexts.DialogTitle browseDialogTitle: String? = null,
     project: Project? = null,
     fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
     fileChosen: ((chosenFile: VirtualFile) -> String)? = null
-  ): Cell<TextFieldWithBrowseButton> =
-    textFieldWithBrowseButton(fileChooserDescriptor.withTitle(browseDialogTitle), project, fileChosen)
+  ): Cell<TextFieldWithBrowseButton>
 
   /**
    * Creates password field with [columns] set to [COLUMNS_SHORT]
@@ -348,27 +342,27 @@ interface Row {
   /**
    * Creates integer text field with [columns] set to [COLUMNS_TINY]
    *
-   * @param range allowed value range inclusive
+   * @param range allowed values range inclusive
    * @param keyboardStep increase/decrease step for keyboard keys up/down. The keys are not used if [keyboardStep] is null
    */
   fun intTextField(range: IntRange? = null, keyboardStep: Int? = null): Cell<JBTextField>
 
   /**
-   * Creates spinner for int values.
+   * Creates spinner for int values
    *
-   * @param range allowed value range inclusive
+   * @param range allowed values range inclusive
    */
   fun spinner(range: IntRange, step: Int = 1): Cell<JBIntSpinner>
 
   /**
-   * Creates spinner for double values.
+   * Creates spinner for double values
    *
-   * @param range allowed value range inclusive
+   * @param range allowed values range inclusive
    */
   fun spinner(range: ClosedRange<Double>, step: Double = 1.0): Cell<JSpinner>
 
   /**
-   * Creates text area with [columns] set to [COLUMNS_SHORT].
+   * Creates text area with [columns] set to [COLUMNS_SHORT]
    */
   fun textArea(): Cell<JBTextArea>
 
@@ -387,7 +381,7 @@ interface Row {
   /**
    * Overrides all gaps around row by [customRowGaps]. Should be used for very specific cases
    */
-  @Deprecated("Use overloaded customize(...) with UnscaledGapsY", level = DeprecationLevel.HIDDEN)
+  @Deprecated("Use overloaded customize(...) with UnscaledGapsY")
   @ApiStatus.ScheduledForRemoval
   fun customize(customRowGaps: VerticalGaps): Row
 

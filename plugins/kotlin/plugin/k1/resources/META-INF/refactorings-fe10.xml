@@ -4,6 +4,10 @@
             qualifiedName="org.jetbrains.kotlin.additionalExtractableAnalyser"
             interface="org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.AdditionalExtractableAnalyser"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.foreignUsagesRenameProcessor"
+            interface="org.jetbrains.kotlin.idea.refactoring.rename.ForeignUsagesRenameProcessor"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -74,6 +78,9 @@
     <refactoring.inlineHandler
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.inline.JavaToKotlinInlineHandler"/>
+    <refactoring.inlineHandler
+            language="JAVA"
+            implementationClass="org.jetbrains.kotlin.idea.refactoring.inline.KotlinToJavaInlineHandler"/>
 
     <refactoring.safeDeleteProcessor
             id="kotlinProcessor"

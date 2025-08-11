@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.youtrack.model;
 
 import com.google.gson.JsonElement;
@@ -26,15 +26,18 @@ public class YouTrackIssue {
   private long resolved;
   private List<CustomField> customFields;
 
-  public @NotNull @NlsSafe String getId() {
+  @NotNull
+  public @NlsSafe String getId() {
     return id;
   }
 
-  public @NotNull @NlsSafe String getSummary() {
+  @NotNull
+  public @NlsSafe String getSummary() {
     return summary;
   }
 
-  public @NotNull @NlsSafe String getDescription() {
+  @NotNull
+  public @NlsSafe String getDescription() {
     return StringUtil.notNullize(description);
   }
 
@@ -50,7 +53,8 @@ public class YouTrackIssue {
     return resolved;
   }
 
-  public @NotNull List<CustomField> getCustomFields() {
+  @NotNull
+  public List<CustomField> getCustomFields() {
     return ContainerUtil.notNullize(customFields);
   }
 
@@ -58,11 +62,13 @@ public class YouTrackIssue {
     private String name;
     private JsonElement value;
 
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return name;
     }
 
-    public @Nullable JsonElement getValue() {
+    @Nullable
+    public JsonElement getValue() {
       return value;
     }
   }

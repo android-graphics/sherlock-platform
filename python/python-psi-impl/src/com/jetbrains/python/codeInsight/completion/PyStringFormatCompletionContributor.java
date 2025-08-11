@@ -58,7 +58,7 @@ public final class PyStringFormatCompletionContributor extends CompletionContrib
     psiElement(PyStringLiteralExpression.class).beforeLeaf(psiElement().withText("%")).withParent(PyBinaryExpression.class);
 
 
-  private static final @Nullable PatternCondition<PyBinaryExpression> PERCENT_BINARY_EXPRESSION_PATTERN =
+  @Nullable private static final PatternCondition<PyBinaryExpression> PERCENT_BINARY_EXPRESSION_PATTERN =
     new PatternCondition<>("isBinaryFormatExpression") {
       @Override
       public boolean accepts(@NotNull PyBinaryExpression expression, ProcessingContext context) {
@@ -156,7 +156,8 @@ public final class PyStringFormatCompletionContributor extends CompletionContrib
       }
     }
 
-    private static @NotNull List<LookupElement> getElementsFromString(final @Nullable PyArgumentList argumentList) {
+    @NotNull
+    private static List<LookupElement> getElementsFromString(@Nullable final PyArgumentList argumentList) {
       if (argumentList != null) {
         final PyReferenceExpression refExpr = PsiTreeUtil.getPrevSiblingOfType(argumentList, PyReferenceExpression.class);
         final PyStringLiteralExpression strExpr = PsiTreeUtil.getChildOfType(refExpr, PyStringLiteralExpression.class);
@@ -176,19 +177,21 @@ public final class PyStringFormatCompletionContributor extends CompletionContrib
       return Collections.emptyList();
     }
 
-    private static @NotNull List<LookupElement> getFormatLookupBuilders(final @NotNull PyStringLiteralExpression expression) {
+    @NotNull
+    private static List<LookupElement> getFormatLookupBuilders(@NotNull final PyStringLiteralExpression expression) {
       final Map<String, PyStringFormatParser.SubstitutionChunk> chunks = PyStringFormatParser.getKeywordSubstitutions(
         PyStringFormatParser.filterSubstitutions(PyStringFormatParser.parseNewStyleFormat(expression.getText())));
       return getLookupBuilders(chunks);
     }
 
-    private static List<LookupElement> getPercentLookupBuilders(final @NotNull PyStringLiteralExpression expression) {
+    private static List<LookupElement> getPercentLookupBuilders(@NotNull final PyStringLiteralExpression expression) {
       final Map<String, PyStringFormatParser.SubstitutionChunk> chunks = PyStringFormatParser.getKeywordSubstitutions(
         PyStringFormatParser.filterSubstitutions(PyStringFormatParser.parsePercentFormat(expression.getText())));
       return getLookupBuilders(chunks);
     }
 
-    private static @NotNull List<LookupElement> getLookupBuilders(final @NotNull Map<String, PyStringFormatParser.SubstitutionChunk> chunks) {
+    @NotNull
+    private static List<LookupElement> getLookupBuilders(@NotNull final Map<String, PyStringFormatParser.SubstitutionChunk> chunks) {
       return chunks.keySet().stream()
         .map(PyStringFormatCompletionContributor::createLookUpElement)
         .collect(Collectors.toList());
@@ -197,8 +200,8 @@ public final class PyStringFormatCompletionContributor extends CompletionContrib
 
   private static class StringFormatCompletionProvider extends CompletionProvider<CompletionParameters> {
     @Override
-    protected void addCompletions(final @NotNull CompletionParameters parameters,
-                                  final @NotNull ProcessingContext context,
+    protected void addCompletions(@NotNull final CompletionParameters parameters,
+                                  @NotNull final ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
       final PsiElement original = parameters.getOriginalPosition();
       if (original != null) {
@@ -211,9 +214,10 @@ public final class PyStringFormatCompletionContributor extends CompletionContrib
       }
     }
 
-    private static @NotNull List<LookupElement> addCompletionsForSubstitutions(final @NotNull CompletionParameters parameters,
-                                                                               final @NotNull PsiElement original,
-                                                                               final @NotNull PyStringLiteralExpression stringExpression) {
+    @NotNull
+    private static List<LookupElement> addCompletionsForSubstitutions(@NotNull final CompletionParameters parameters,
+                                                                      @NotNull final PsiElement original,
+                                                                      @NotNull final PyStringLiteralExpression stringExpression) {
       final int stringOffset = getCaretStartOffsetInsideString(parameters, stringExpression);
 
       if (isInsideFormatSubstitutionChunk(stringExpression, stringOffset)) {
@@ -258,21 +262,21 @@ public final class PyStringFormatCompletionContributor extends CompletionContrib
       return Collections.emptyList();
     }
 
-    private static int getCaretStartOffsetInsideString(final @NotNull CompletionParameters parameters,
-                                                       final @NotNull PyStringLiteralExpression parent) {
+    private static int getCaretStartOffsetInsideString(@NotNull final CompletionParameters parameters,
+                                                       @NotNull final PyStringLiteralExpression parent) {
       final int caretAbsoluteOffset = parameters.getOffset();
       final int stringExprStartOffset = parameters.getPosition().getTextRange().getStartOffset();
       final int stringValueStartOffset = parent.getStringValueTextRange().getStartOffset();
       return caretAbsoluteOffset - stringExprStartOffset - stringValueStartOffset;
     }
 
-    private static boolean isInsideFormatSubstitutionChunk(final @NotNull PyStringLiteralExpression expression, final int offset) {
+    private static boolean isInsideFormatSubstitutionChunk(@NotNull final PyStringLiteralExpression expression, final int offset) {
       List<PyStringFormatParser.SubstitutionChunk> substitutions = PyStringFormatParser.filterSubstitutions(
         PyStringFormatParser.parseNewStyleFormat(expression.getStringValue()));
       return isInsideSubstitutionChunk(offset, substitutions);
     }
 
-    private static boolean isInsidePercentSubstitutionChunk(final @NotNull PyStringLiteralExpression expression, final int offset) {
+    private static boolean isInsidePercentSubstitutionChunk(@NotNull final PyStringLiteralExpression expression, final int offset) {
       List<PyStringFormatParser.SubstitutionChunk> substitutions = PyStringFormatParser.filterSubstitutions(
         PyStringFormatParser.parsePercentFormat(expression.getStringValue()));
       return isInsideSubstitutionChunk(offset, substitutions);
@@ -282,20 +286,22 @@ public final class PyStringFormatCompletionContributor extends CompletionContrib
       return substitutions.stream().anyMatch(s -> offset >= s.getStartIndex() && offset <= s.getEndIndex());
     }
 
-    private static PyExpression @NotNull [] getFormatFunctionKeyWordArguments(final @NotNull PsiElement original) {
+    private static PyExpression @NotNull [] getFormatFunctionKeyWordArguments(@NotNull final PsiElement original) {
       final PsiElement pyReferenceExpression = PsiTreeUtil.getParentOfType(original, PyReferenceExpression.class);
       final PyArgumentList argumentList = PsiTreeUtil.getNextSiblingOfType(pyReferenceExpression, PyArgumentList.class);
       return argumentList != null ? argumentList.getArguments() : PyExpression.EMPTY_ARRAY;
     }
 
-    private static @NotNull List<LookupElement> getKeysFromStarArgument(final @NotNull PyStarArgument arg) {
+    @NotNull
+    private static List<LookupElement> getKeysFromStarArgument(@NotNull final PyStarArgument arg) {
       final PyDictLiteralExpression dict = ObjectUtils.chooseNotNull(PsiTreeUtil.getChildOfType(arg, PyDictLiteralExpression.class),
                                                                      getDictFromReference(arg));
 
       return dict != null ? getElementsFromDict(dict) : Collections.emptyList();
     }
 
-    private static @NotNull List<LookupElement> getElementsFromDict(final @NotNull PyDictLiteralExpression dict) {
+    @NotNull
+    private static List<LookupElement> getElementsFromDict(@NotNull final PyDictLiteralExpression dict) {
       return Arrays.stream(dict.getElements())
         .map(e -> PyUtil.as(e.getKey(), PyStringLiteralExpression.class))
         .filter(k-> k != null)
@@ -303,7 +309,8 @@ public final class PyStringFormatCompletionContributor extends CompletionContrib
         .collect(Collectors.toList());
     }
 
-    private static @Nullable PyDictLiteralExpression getDictFromReference(final @NotNull PyExpression arg) {
+    @Nullable
+    private static PyDictLiteralExpression getDictFromReference(@NotNull final PyExpression arg) {
       final PyReferenceExpression referenceExpression = PsiTreeUtil.getChildOfType(arg, PyReferenceExpression.class);
       if (referenceExpression != null) {
         final PsiElement resolveResult = referenceExpression.getReference().resolve();
@@ -315,19 +322,22 @@ public final class PyStringFormatCompletionContributor extends CompletionContrib
       return null;
     }
 
-    private static @Nullable LookupElement getKeywordArgument(final @NotNull PyKeywordArgument arg) {
+    @Nullable
+    private static LookupElement getKeywordArgument(@NotNull final PyKeywordArgument arg) {
       final String keyword = arg.getKeyword();
       return keyword != null ?  createLookUpElement(keyword) : null;
     }
   }
 
-  private static @NotNull LookupElement createLookUpElement(final @NotNull String element) {
+  @NotNull
+  private static LookupElement createLookUpElement(@NotNull final String element) {
     return LookupElementBuilder
       .create(element)
       .withTypeText("arg");
   }
 
-  private static @NotNull String getPrefix(int offset, final @NotNull PsiFile file) {
+  @NotNull
+  private static String getPrefix(int offset, @NotNull final PsiFile file) {
     if (offset > 0) {
       offset--;
     }

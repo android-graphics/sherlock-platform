@@ -9,15 +9,15 @@ import java.util.*
  */
 data class Property<T>(
   val value: T,
-  val location: Path
+  val location: String
 )
 
 fun Properties.getStringProperty(key: String, propertiesPath: Path): Property<String>? {
   val property = getProperty(key) ?: return null
-  return Property(property, propertiesPath)
+  return Property(property, propertiesPath.toString())
 }
 
 fun Properties.getBooleanProperty(key: String, propertiesPath: Path): Property<Boolean>? {
   val property = getProperty(key) ?: return null
-  return Property(property.toBoolean(), propertiesPath)
+  return Property(property.toBoolean(), propertiesPath.toString())
 }

@@ -15,11 +15,12 @@ import com.intellij.util.TimeoutUtil
 import java.nio.file.Path
 import javax.swing.JOptionPane
 
+
 /**
  * Demonstrates how [WslSync.syncWslFolders] works
  */
-internal class WslSyncAction : DumbAwareAction() {
-  @Suppress("HardCodedStringLiteral") // This is a test, internal only action
+@Suppress("HardCodedStringLiteral") // This is a test, internal only action
+class WslSyncAction : DumbAwareAction("WSL Sync") {
   override fun actionPerformed(e: AnActionEvent) {
 
     val progressManager = ProgressManager.getInstance()

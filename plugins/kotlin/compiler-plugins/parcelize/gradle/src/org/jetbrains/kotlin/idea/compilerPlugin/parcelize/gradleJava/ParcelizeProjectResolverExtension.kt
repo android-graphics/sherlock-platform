@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.gradleJava
 
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.model.parcelize.ParcelizeModelBui
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
-internal class ParcelizeIdeModel @PropertyMapping("isEnabled") constructor(
+class ParcelizeIdeModel @PropertyMapping("isEnabled") constructor(
     val isEnabled: Boolean
 ) : AbstractExternalEntityData(GradleConstants.SYSTEM_ID) {
     companion object {
@@ -23,11 +23,11 @@ internal class ParcelizeIdeModel @PropertyMapping("isEnabled") constructor(
     }
 }
 
-internal class ParcelizeIdeModelDataService : AbstractProjectDataService<ParcelizeIdeModel, Void>() {
+class ParcelizeIdeModelDataService : AbstractProjectDataService<ParcelizeIdeModel, Void>() {
     override fun getTargetDataKey() = ParcelizeIdeModel.KEY
 }
 
-internal class ParcelizeProjectResolverExtension : AbstractProjectResolverExtension() {
+class ParcelizeProjectResolverExtension : AbstractProjectResolverExtension() {
     override fun getExtraProjectModelClasses() = setOf(ParcelizeGradleModel::class.java)
     override fun getToolingExtensionsClasses() = setOf(ParcelizeModelBuilderService::class.java, Unit::class.java)
 

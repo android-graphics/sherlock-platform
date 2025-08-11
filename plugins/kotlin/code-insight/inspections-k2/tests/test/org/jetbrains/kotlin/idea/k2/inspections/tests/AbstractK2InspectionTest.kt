@@ -13,7 +13,7 @@ import kotlin.io.path.Path
 abstract class AbstractK2InspectionTest : AbstractInspectionTest() {
 
     override fun inspectionClassDirective() = "// K2_INSPECTION_CLASS:"
-    override fun registerGradlePlugin() {}
+    override fun registerGradlPlugin() {}
 
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2

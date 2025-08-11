@@ -80,7 +80,6 @@ class EventLogConfiguration {
     }
 
     val defaultSessionId: String by lazy { generateSessionId() }
-
     internal fun generateSessionId(): String {
       val presentableHour = StatisticsUtil.getCurrentHourInUTC()
       return "$presentableHour-${UUID.randomUUID().toString().shortedUUID()}"
@@ -120,16 +119,11 @@ class EventLogConfiguration {
     return if (str.endsWith(".")) str + "0" else str
   }
 
-  /**
-   * Certain recorders should have ids matching to the default one(FUS).
-   * Since the calculated values are cached make sure to pass correct parameters before the first initialization.
-   */
-  @JvmOverloads
-  fun getOrCreate(recorderId: String, alternativeRecorderId: String? = null): EventLogRecorderConfiguration {
+  fun getOrCreate(recorderId: String): EventLogRecorderConfiguration {
     if (isDefaultRecorderId(recorderId)) return defaultConfiguration
 
     synchronized(this) {
-      return configurations.getOrPut(recorderId) { EventLogRecorderConfiguration(recorderId = recorderId, eventLogConfiguration = this, alternativeRecorderId = alternativeRecorderId) }
+      return configurations.getOrPut(recorderId) { EventLogRecorderConfiguration(recorderId, this) }
     }
   }
 
@@ -155,13 +149,9 @@ class EventLogConfiguration {
 
 }
 
-/**
- * @param alternativeRecorderId - when provided, machine id and device id will be generated based on it instead of the `recorderId`
- */
 class EventLogRecorderConfiguration internal constructor(private val recorderId: String,
                                                          private val eventLogConfiguration: EventLogConfiguration,
-                                                         val sessionId: String = generateSessionId(),
-                                                         val alternativeRecorderId: String? = null) {
+                                                         val sessionId: String = generateSessionId()) {
 
   val deviceId: String = getOrGenerateDeviceId()
   val bucket: Int = deviceId.asBucket()
@@ -177,11 +167,11 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
 
   init {
     machineIdReference = AtomicLazyValue {
-      val configOptions = EventLogConfigOptionsService.getInstance().getOptions(alternativeRecorderId ?: recorderId)
+      val configOptions = EventLogConfigOptionsService.getInstance().getOptions(recorderId)
       generateMachineId(configOptions.machineIdSalt, configOptions.machineIdRevision)
     }
 
-    EventLogConfigOptionsService.TOPIC.subscribe(null, object : EventLogRecorderConfigOptionsListener(alternativeRecorderId ?: recorderId) {
+    EventLogConfigOptionsService.TOPIC.subscribe(null, object : EventLogRecorderConfigOptionsListener(recorderId) {
       override fun onMachineIdConfigurationChanged(salt: @Nullable String?, revision: Int) {
         machineIdReference.updateAndGet { prevValue ->
           if (salt != null && revision != -1 && revision > prevValue.revision) {
@@ -199,7 +189,7 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
       return MachineId.DISABLED
     }
     val revision = if (value >= 0) value else DEFAULT_ID_REVISION
-    val machineId = MachineIdManager.getAnonymizedMachineId("JetBrains${alternativeRecorderId ?: recorderId}${salt}") ?: return MachineId.UNKNOWN
+    val machineId = MachineIdManager.getAnonymizedMachineId("JetBrains$recorderId", salt) ?: return MachineId.UNKNOWN
     return MachineId(machineId, revision)
   }
 
@@ -229,17 +219,17 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
   private fun getOrGenerateDeviceId(): String {
     val app = ApplicationManager.getApplication()
     if (app != null && app.isHeadlessEnvironment) {
-      val property = eventLogConfiguration.getHeadlessDeviceIdProperty(alternativeRecorderId ?: recorderId)
+      val property = eventLogConfiguration.getHeadlessDeviceIdProperty(recorderId)
       System.getProperty(property)?.let {
         return it
       }
     }
 
     try {
-      return DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, alternativeRecorderId ?: recorderId)
+      return DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, recorderId)
     }
-    catch (_: DeviceIdManager.InvalidDeviceIdTokenException) {
-      EventLogConfiguration.LOG.warn("Failed retrieving device id for ${alternativeRecorderId ?: recorderId}")
+    catch (e: DeviceIdManager.InvalidDeviceIdTokenException) {
+      EventLogConfiguration.LOG.warn("Failed retrieving device id for $recorderId")
       return UNDEFINED_DEVICE_ID
     }
   }
@@ -247,13 +237,13 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
   private fun getOrGenerateSalt(): ByteArray {
     val app = ApplicationManager.getApplication()
     if (app != null && app.isHeadlessEnvironment) {
-      val property = eventLogConfiguration.getHeadlessSaltProperty(alternativeRecorderId ?: recorderId)
+      val property = eventLogConfiguration.getHeadlessSaltProperty(recorderId)
       System.getProperty(property)?.let {
         return it.toByteArray(Charsets.UTF_8)
       }
     }
 
-    return EventLogConfiguration.getOrGenerateSaltFromPrefs(alternativeRecorderId ?: recorderId)
+    return EventLogConfiguration.getOrGenerateSaltFromPrefs(recorderId)
   }
 
   /**

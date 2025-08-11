@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -96,7 +96,8 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   }
 
   @Override
-  protected @NonNls String getHelpTopic() {
+  @NonNls
+  protected String getHelpTopic() {
     return "reference.dialogs.inspection.scope";
   }
 
@@ -107,7 +108,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   }
 
   @Override
-  protected JComponent getAdditionalActionSettings(final @NotNull Project project, final @NotNull BaseAnalysisActionDialog dialog) {
+  protected JComponent getAdditionalActionSettings(@NotNull final Project project, final @NotNull BaseAnalysisActionDialog dialog) {
     dialog.setShowInspectInjectedCode(true);
     final CodeInspectionAdditionalUi ui = new CodeInspectionAdditionalUi();
     final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
@@ -192,9 +193,10 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     profilesCombo.selectScheme(selectedProfile);
   }
 
-  private @NotNull InspectionProfileImpl getProfileToUse(@NotNull Project project,
-                                                         @NotNull InspectionProfileManager appProfileManager,
-                                                         @NotNull InspectionProjectProfileManager projectProfileManager) {
+  @NotNull
+  private InspectionProfileImpl getProfileToUse(@NotNull Project project,
+                                                @NotNull InspectionProfileManager appProfileManager,
+                                                @NotNull InspectionProjectProfileManager projectProfileManager) {
     final String lastSelectedProfile = PropertiesComponent.getInstance(project).getValue(LAST_SELECTED_PROFILE_PROP);
     if (lastSelectedProfile != null) {
       final char type = lastSelectedProfile.charAt(0);

@@ -28,13 +28,15 @@ public final class NonFinalStaticVariableUsedInClassInitializationInspection
   extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.final.static.variable.initialization.problem.descriptor");
   }
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  @Nullable
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiField field = (PsiField)infos[0];
     return MakeFieldFinalFix.buildFix(field);
   }

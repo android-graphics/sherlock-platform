@@ -75,12 +75,8 @@ public final class ForwardCompatibilityInspection extends AbstractBaseJavaLocalI
         if (nameElement != null && PsiKeyword.YIELD.equals(nameElement.getText()) && ref.getQualifierExpression() == null &&
             !JavaFeature.SWITCH_EXPRESSION.isSufficient(languageLevel)) {
           PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(expression.getMethodExpression());
-          String message = JavaErrorBundle.message("yield.unqualified.method.warn");
-          if (qualifier != null) {
-            holder.registerProblem(nameElement, message, new QualifyCallFix(), new RenameFix());
-          } else {
-            holder.registerProblem(nameElement, message, new RenameFix());
-          }
+          holder.registerProblem(nameElement, JavaErrorBundle.message("yield.unqualified.method.warn"),
+                                   qualifier == null ? null : new QualifyCallFix(), new RenameFix());
         }
       }
 

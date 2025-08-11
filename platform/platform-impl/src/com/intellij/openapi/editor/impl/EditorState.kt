@@ -23,7 +23,6 @@ class EditorState : ObservableState() {
     const val isStickySelectionPropertyName = "isStickySelection"
     const val myForcedBackgroundPropertyName = "myForcedBackground"
     const val myBorderPropertyName = "myBorder"
-    const val disableDefaultSoftWrapsCalculationPropertyName = "disableDefaultSoftWrapsCalculation"
   }
 
 
@@ -59,7 +58,4 @@ class EditorState : ObservableState() {
   var myPlaceholderText: CharSequence? by property(null)
   var myPlaceholderAttributes: TextAttributes? by property(null)
   var myShowPlaceholderWhenFocused: Boolean by property(false)
-
-  // leading spaces
-  var disableDefaultSoftWrapsCalculation: Boolean by property(false)
 }

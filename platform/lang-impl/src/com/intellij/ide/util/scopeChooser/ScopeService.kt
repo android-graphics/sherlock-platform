@@ -13,7 +13,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.job
 import kotlinx.coroutines.joinAll
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.await
@@ -21,7 +20,6 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
-@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class ScopeService(
   private val project: Project,

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
-import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -54,13 +53,10 @@ class DumbServiceGuiExecutor(project: Project, queue: DumbServiceMergingTaskQueu
   }
 
   @ApiStatus.Internal
-  enum class IndexingType : CoroutineContext.Element, IntelliJContextElement {
+  enum class IndexingType : CoroutineContext.Element {
     SCANNING, INDEXING;
 
     override val key: CoroutineContext.Key<IndexingType> get() = IndexingType
-
-
-    override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
 
     companion object Key : CoroutineContext.Key<IndexingType>
   }

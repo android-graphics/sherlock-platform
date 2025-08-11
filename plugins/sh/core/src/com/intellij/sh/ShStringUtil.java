@@ -34,7 +34,8 @@ public final class ShStringUtil {
     return StringUtil.replace(name, ORIGINS, ENCODED);
   }
 
-  public static @NotNull String unquote(String afterSlash) {
+  @NotNull
+  public static String unquote(String afterSlash) {
     return StringUtil.replace(afterSlash, ENCODED, ORIGINS);
   }
 }

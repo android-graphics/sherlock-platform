@@ -1,4 +1,10 @@
 from _typeshed import Incomplete
+from typing import Any
+
+from braintree.credentials_parser import CredentialsParser as CredentialsParser
+from braintree.environment import Environment as Environment
+from braintree.exceptions.configuration_error import ConfigurationError as ConfigurationError
+from braintree.util.graphql_client import GraphQLClient as GraphQLClient
 
 class Configuration:
     @staticmethod
@@ -13,15 +19,15 @@ class Configuration:
     def api_version(): ...
     @staticmethod
     def graphql_api_version(): ...
-    environment: Incomplete
-    merchant_id: Incomplete
-    public_key: Incomplete
-    private_key: Incomplete
-    client_id: Incomplete
-    client_secret: Incomplete
-    access_token: Incomplete
-    timeout: Incomplete
-    wrap_http_exceptions: Incomplete
+    environment: Any
+    merchant_id: Any
+    public_key: Any
+    private_key: Any
+    client_id: Any
+    client_secret: Any
+    access_token: Any
+    timeout: Any
+    wrap_http_exceptions: Any
     def __init__(
         self,
         environment: Incomplete | None = None,

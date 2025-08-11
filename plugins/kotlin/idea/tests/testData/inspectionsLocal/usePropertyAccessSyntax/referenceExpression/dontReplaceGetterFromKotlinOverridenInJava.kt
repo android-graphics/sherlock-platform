@@ -1,7 +1,4 @@
 // PROBLEM: none
-// WITH_STDLIB
-// ERROR: Unresolved reference: getX
-// K2_ERROR:
 
 fun test() {
     val j = JavaClassOverridingKotlinClass()

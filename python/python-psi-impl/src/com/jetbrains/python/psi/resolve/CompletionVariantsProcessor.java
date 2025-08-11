@@ -35,7 +35,8 @@ import java.util.*;
 
 public class CompletionVariantsProcessor extends VariantsProcessor {
 
-  private final @NotNull Map<String, LookupElement> myVariants = new HashMap<>();
+  @NotNull
+  private final Map<String, LookupElement> myVariants = new HashMap<>();
 
   private final boolean mySuppressParentheses;
 
@@ -60,7 +61,8 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     mySuppressParentheses = suppressParentheses;
   }
 
-  private @NotNull LookupElement setupItem(@NotNull LookupElementBuilder item) {
+  @NotNull
+  private LookupElement setupItem(@NotNull LookupElementBuilder item) {
     final PsiElement element = item.getPsiElement();
     if (!myPlainNamesOnly && element != null) {
       final Project project = element.getProject();
@@ -152,7 +154,8 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     return variants.toArray(LookupElement.EMPTY_ARRAY);
   }
 
-  public @NotNull List<LookupElement> getResultList() {
+  @NotNull
+  public List<LookupElement> getResultList() {
     return new ArrayList<>(myVariants.values());
   }
 

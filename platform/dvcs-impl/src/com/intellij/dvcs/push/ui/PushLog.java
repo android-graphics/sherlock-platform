@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.PushSettings;
@@ -47,19 +47,19 @@ import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_COLLAPSE_ALL;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_ALL;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 
-public final class PushLog extends JPanel implements Disposable, UiDataProvider {
-  private static final @NonNls String CONTEXT_MENU = "Vcs.Push.ContextMenu";
-  private static final @NonNls String START_EDITING = "startEditing";
-  private static final @NonNls String TREE_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Tree.Proportion";
-  private static final @NonNls String DETAILS_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Details.Proportion";
+public final class PushLog extends JPanel implements Disposable, DataProvider {
+  @NonNls private static final String CONTEXT_MENU = "Vcs.Push.ContextMenu";
+  @NonNls private static final String START_EDITING = "startEditing";
+  @NonNls private static final String TREE_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Tree.Proportion";
+  @NonNls private static final String DETAILS_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Details.Proportion";
   private final PushLogChangesBrowser myChangesBrowser;
   private final JBLoadingPanel myChangesLoadingPane;
   private final CheckboxTree myTree;
@@ -69,7 +69,7 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
   private final MyShowDetailsAction myShowDetailsAction;
   private boolean myShouldRepaint = false;
   private boolean mySyncStrategy;
-  private @Nullable @Nls String mySyncRenderedText;
+  @Nullable private @Nls String mySyncRenderedText;
   private final @NotNull Project myProject;
   private final boolean myAllowSyncStrategy;
 
@@ -83,6 +83,7 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
     treeModel.nodeStructureChanged(root);
     myTreeCellRenderer = new MyTreeCellRenderer();
     myTree = new CheckboxTree(myTreeCellRenderer, root) {
+
       @Override
       protected boolean shouldShowBusyIconIfNeeded() {
         return true;
@@ -342,11 +343,13 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
     }
   }
 
-  static @NotNull List<Change> collectAllChanges(@NotNull List<? extends CommitNode> commitNodes) {
+  @NotNull
+  static List<Change> collectAllChanges(@NotNull List<? extends CommitNode> commitNodes) {
     return CommittedChangesTreeBrowser.zipChanges(collectChanges(commitNodes));
   }
 
-  private static @NotNull List<CommitNode> collectSelectedCommitNodes(@NotNull List<DefaultMutableTreeNode> selectedNodes) {
+  @NotNull
+  private static List<CommitNode> collectSelectedCommitNodes(@NotNull List<DefaultMutableTreeNode> selectedNodes) {
     //addAll Commit nodes from selected Repository nodes;
     List<CommitNode> nodes = StreamEx.of(selectedNodes)
       .select(RepositoryNode.class)
@@ -359,7 +362,8 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
     return nodes;
   }
 
-  private static @NotNull List<Change> collectChanges(@NotNull List<? extends CommitNode> commitNodes) {
+  @NotNull
+  private static List<Change> collectChanges(@NotNull List<? extends CommitNode> commitNodes) {
     List<Change> changes = new ArrayList<>();
     for (CommitNode node : commitNodes) {
       changes.addAll(node.getUserObject().getChanges());
@@ -367,7 +371,8 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
     return changes;
   }
 
-  private static @NotNull <T> List<T> getChildNodesByType(@NotNull DefaultMutableTreeNode node, Class<T> type, boolean reverseOrder) {
+  @NotNull
+  private static <T> List<T> getChildNodesByType(@NotNull DefaultMutableTreeNode node, Class<T> type, boolean reverseOrder) {
     List<T> nodes = new ArrayList<>();
     if (node.getChildCount() < 1) {
       return nodes;
@@ -389,7 +394,8 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
     return nodes;
   }
 
-  private static @NotNull List<Integer> getSortedRows(int @NotNull [] rows) {
+  @NotNull
+  private static List<Integer> getSortedRows(int @NotNull [] rows) {
     List<Integer> sorted = new ArrayList<>();
     for (int row : rows) {
       sorted.add(row);
@@ -436,32 +442,42 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
     myChangesBrowser.getViewer().setEmptyText(DvcsBundle.message("push.no.commits.selected"));
   }
 
+  // Make changes available for diff action; revisionNumber for create patch and copy revision number actions
+  @Nullable
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    // Make changes available for diff action; revisionNumber for create patch and copy revision number actions
-    List<CommitNode> commitNodes = getSelectedCommitNodes();
-    sink.set(VcsDataKeys.CHANGES,
-             collectAllChanges(commitNodes).toArray(Change.EMPTY_CHANGE_ARRAY));
-    sink.set(VcsDataKeys.VCS_REVISION_NUMBERS, ContainerUtil.map2Array(
-      commitNodes, VcsRevisionNumber.class, commitNode -> {
+  public Object getData(@NotNull String id) {
+    if (VcsDataKeys.CHANGES.is(id)) {
+      List<CommitNode> commitNodes = getSelectedCommitNodes();
+      return collectAllChanges(commitNodes).toArray(Change.EMPTY_CHANGE_ARRAY);
+    }
+    else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(id)) {
+      List<CommitNode> commitNodes = getSelectedCommitNodes();
+      return ContainerUtil.map2Array(commitNodes, VcsRevisionNumber.class, commitNode -> {
         Hash hash = commitNode.getUserObject().getId();
         return new TextRevisionNumber(hash.asString(), hash.toShortString());
-      }));
-    sink.set(VcsDataKeys.VCS_COMMIT_SUBJECTS, ContainerUtil.map2Array(
-      commitNodes, String.class, commitNode -> commitNode.getUserObject().getSubject()));
+      });
+    }
+    else if (VcsDataKeys.VCS_COMMIT_SUBJECTS.is(id)) {
+      List<CommitNode> commitNodes = getSelectedCommitNodes();
+      return ContainerUtil.map2Array(commitNodes, String.class, commitNode -> commitNode.getUserObject().getSubject());
+    }
+    return null;
   }
 
-  private @NotNull List<CommitNode> getSelectedCommitNodes() {
+  @NotNull
+  private List<CommitNode> getSelectedCommitNodes() {
     List<DefaultMutableTreeNode> selectedNodes = getSelectedTreeNodes();
     return selectedNodes.isEmpty() ? Collections.emptyList() : collectSelectedCommitNodes(selectedNodes);
   }
 
-  private @NotNull List<DefaultMutableTreeNode> getSelectedTreeNodes() {
+  @NotNull
+  private List<DefaultMutableTreeNode> getSelectedTreeNodes() {
     int[] rows = myTree.getSelectionRows();
     return (rows != null && rows.length != 0) ? getNodesForRows(getSortedRows(rows)) : emptyList();
   }
 
-  private @NotNull List<DefaultMutableTreeNode> getNodesForRows(@NotNull List<Integer> rows) {
+  @NotNull
+  private List<DefaultMutableTreeNode> getNodesForRows(@NotNull List<Integer> rows) {
     List<DefaultMutableTreeNode> nodes = new ArrayList<>();
     for (Integer row : rows) {
       TreePath path = myTree.getPathForRow(row);
@@ -502,7 +518,8 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
     checkedNodes.forEach(n -> myTree.setNodeState(n, newState));
   }
 
-  private @Nullable DefaultMutableTreeNode getFirstNodeToEdit() {
+  @Nullable
+  private DefaultMutableTreeNode getFirstNodeToEdit() {
     // start edit last selected component if editable
     if (myTree.getLastSelectedPathComponent() instanceof RepositoryNode selectedNode) {
       if (selectedNode.isEditableNow()) return selectedNode;
@@ -520,7 +537,8 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
     return myTree;
   }
 
-  public @NotNull CheckboxTree getTree() {
+  @NotNull
+  public CheckboxTree getTree() {
     return myTree;
   }
 
@@ -734,16 +752,6 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
         }
       };
     }
-
-    @Override
-    protected boolean startEditing(TreePath path, MouseEvent event) {
-      boolean editingStarted = super.startEditing(path, event);
-      if (editingStarted && myTree.getCellEditor() instanceof MyTreeCellEditor editor) {
-        editor.myValue.getTargetPanel().editingStarted();
-      }
-
-      return editingStarted;
-    }
   }
 
   private static class MyTreeViewPort extends JBViewport {
@@ -765,7 +773,7 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
 
   private static class MyShowDetailsAction extends DumbAwareToggleAction {
     private boolean myEnabled;
-    private final @NotNull PushSettings mySettings;
+    @NotNull private final PushSettings mySettings;
     private final @NotNull Consumer<? super Boolean> myOnUpdate;
 
     MyShowDetailsAction(@NotNull Project project, @NotNull Consumer<? super Boolean> onUpdate) {

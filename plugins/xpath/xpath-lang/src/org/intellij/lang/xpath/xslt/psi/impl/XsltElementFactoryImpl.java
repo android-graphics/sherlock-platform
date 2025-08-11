@@ -77,7 +77,8 @@ class XsltElementFactoryImpl extends XsltElementFactory {
         }
 
         @Override
-        public @Nullable String toString() {
+        @Nullable
+        public String toString() {
             return "Unrecognized tag: " + getTag().getName();
         }
     }

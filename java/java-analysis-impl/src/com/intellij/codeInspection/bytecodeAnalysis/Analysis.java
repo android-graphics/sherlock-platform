@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
@@ -250,7 +250,8 @@ abstract class Analysis<Res> {
     return new State(0, new Conf(0, createStartFrame()), new ArrayList<>(), false, false, false);
   }
 
-  protected abstract @NotNull Equation analyze() throws AnalyzerException;
+  @NotNull
+  protected abstract Equation analyze() throws AnalyzerException;
 
   final Frame<BasicValue> createStartFrame() {
     Frame<BasicValue> frame = new Frame<>(methodNode.maxLocals, methodNode.maxStack);
@@ -282,7 +283,8 @@ abstract class Analysis<Res> {
     return frame;
   }
 
-  static @NotNull Frame<BasicValue> createCatchFrame(Frame<? extends BasicValue> frame) {
+  @NotNull
+  static Frame<BasicValue> createCatchFrame(Frame<? extends BasicValue> frame) {
     Frame<BasicValue> catchFrame = new Frame<>(frame);
     catchFrame.clearStack();
     catchFrame.push(ASMUtils.THROWABLE_VALUE);

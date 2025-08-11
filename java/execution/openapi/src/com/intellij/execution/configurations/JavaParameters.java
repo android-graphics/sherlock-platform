@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.CantRunException;
@@ -115,7 +115,8 @@ public class JavaParameters extends SimpleJavaParameters {
     configureByModule(module, classPathType, getValidJdkToRunModule(module, (classPathType & TESTS_ONLY) == 0));
   }
 
-  public static @NotNull Sdk getValidJdkToRunModule(final Module module, boolean productionOnly) throws CantRunException {
+  @NotNull
+  public static Sdk getValidJdkToRunModule(final Module module, boolean productionOnly) throws CantRunException {
     Sdk jdk = getJdkToRunModule(module, productionOnly);
     if (jdk == null) {
       throw CantRunException.noJdkForModule(module);
@@ -127,7 +128,8 @@ public class JavaParameters extends SimpleJavaParameters {
     return jdk;
   }
 
-  public static @Nullable Sdk getJdkToRunModule(Module module, boolean productionOnly) {
+  @Nullable
+  public static Sdk getJdkToRunModule(Module module, boolean productionOnly) {
     final Sdk moduleSdk = ModuleRootManager.getInstance(module).getSdk();
     if (moduleSdk == null) {
       return null;

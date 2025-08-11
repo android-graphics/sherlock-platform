@@ -21,12 +21,13 @@ internal class ConvertConcatenationToBuildStringIntention :
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean =
         element.operationToken == KtTokens.PLUS && !element.isInsideAnnotationEntryArgumentList()
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
+    context(KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Unit? {
         val parent = element.parent
-        val isApplicable = element.expressionType?.isStringType == true
+        val isApplicable = element.expressionType?.isString == true
                 && (parent !is KtBinaryExpression
                 || parent.operationToken != KtTokens.PLUS
-                || parent.expressionType?.isStringType == false)
+                || parent.expressionType?.isString == false)
         return isApplicable.asUnit
     }
 

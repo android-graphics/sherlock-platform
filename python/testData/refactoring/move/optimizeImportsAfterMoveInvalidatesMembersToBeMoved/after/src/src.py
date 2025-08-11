@@ -40,7 +40,7 @@ from serviceform.tasks.models import Task
 from .. import emails, utils
 from ..utils import ColorStr
 
-from .mixins import SubitemMixin, NameDescriptionMixin, CopyMixin
+from .mixins import CopyMixin
 from .people import Participant, ResponsibilityPerson
 from .email import EmailTemplate
 from .participation import QuestionAnswer

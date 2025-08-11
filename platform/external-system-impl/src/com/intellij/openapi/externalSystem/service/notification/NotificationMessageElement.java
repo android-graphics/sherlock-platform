@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.icons.AllIcons;
@@ -14,7 +14,6 @@ import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,15 +33,14 @@ import static com.intellij.util.ui.EmptyIcon.ICON_16;
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Internal
 public class NotificationMessageElement extends NavigatableMessageElement {
   public static final String MSG_STYLE = "messageStyle";
   public static final String LINK_STYLE = "linkStyle";
 
-  private final @NotNull CustomizeColoredTreeCellRenderer myLeftTreeCellRenderer;
-  private final @NotNull CustomizeColoredTreeCellRenderer myRightTreeCellRenderer;
+  @NotNull private final CustomizeColoredTreeCellRenderer myLeftTreeCellRenderer;
+  @NotNull private final CustomizeColoredTreeCellRenderer myRightTreeCellRenderer;
 
-  public NotificationMessageElement(final @NotNull ErrorTreeElementKind kind,
+  public NotificationMessageElement(@NotNull final ErrorTreeElementKind kind,
                                     @Nullable GroupingElement parent,
                                     String[] message,
                                     @NotNull Navigatable navigatable,
@@ -64,7 +62,8 @@ public class NotificationMessageElement extends NavigatableMessageElement {
         renderer.append(NewErrorTreeRenderer.calcPrefix(NotificationMessageElement.this));
       }
 
-      private static @NotNull Icon getIcon(@NotNull ErrorTreeElementKind kind) {
+      @NotNull
+      private static Icon getIcon(@NotNull ErrorTreeElementKind kind) {
         return switch (kind) {
           case INFO -> AllIcons.General.Information;
           case ERROR -> AllIcons.General.Error;
@@ -78,13 +77,15 @@ public class NotificationMessageElement extends NavigatableMessageElement {
     myRightTreeCellRenderer = new MyCustomizeColoredTreeCellRendererReplacement();
   }
 
+  @Nullable
   @Override
-  public @Nullable CustomizeColoredTreeCellRenderer getRightSelfRenderer() {
+  public CustomizeColoredTreeCellRenderer getRightSelfRenderer() {
     return myRightTreeCellRenderer;
   }
 
+  @Nullable
   @Override
-  public @Nullable CustomizeColoredTreeCellRenderer getLeftSelfRenderer() {
+  public CustomizeColoredTreeCellRenderer getLeftSelfRenderer() {
     return myLeftTreeCellRenderer;
   }
 
@@ -124,7 +125,8 @@ public class NotificationMessageElement extends NavigatableMessageElement {
   }
 
   private final class MyCustomizeColoredTreeCellRendererReplacement extends CustomizeColoredTreeCellRendererReplacement {
-    private final @NotNull JEditorPane myEditorPane;
+    @NotNull
+    private final JEditorPane myEditorPane;
 
     private MyCustomizeColoredTreeCellRendererReplacement() {
       myEditorPane = installJep(new MyEditorPane());

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n.batch;
 
 import com.intellij.codeInspection.i18n.I18nizeConcatenationQuickFix;
@@ -61,8 +61,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -71,7 +71,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
   private static final @NonNls String LAST_USED_PROPERTIES_FILE = "LAST_USED_PROPERTIES_FILE";
   private static final @NonNls String LAST_USED_CONTEXT = "I18N_FIX_LAST_USED_CONTEXT";
 
-  private final @NotNull Project myProject;
+  @NotNull private final Project myProject;
   private final List<I18nizedPropertyData<D>> myKeyValuePairs;
   private final @NotNull Function<? super D, ? extends List<UsageInfo>> myUsagePreviewProvider;
   private final Set<Module> myContextModules;
@@ -272,7 +272,8 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
     return splitter;
   }
 
-  private @NotNull List<Pair<Integer, I18nizedPropertyData<D>>> getSelectedDataWithIndices() {
+  @NotNull
+  private List<Pair<Integer, I18nizedPropertyData<D>>> getSelectedDataWithIndices() {
     int[] rows = myTable.getSelectedRows();
     List<Pair<Integer, I18nizedPropertyData<D>>> selection = new ArrayList<>(rows.length);
     for (int row : rows) {
@@ -304,7 +305,8 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
     super.doOKAction();
   }
 
-  private @Nullable String getContextString() {
+  @Nullable
+  private String getContextString() {
     return myContextModules.stream().map(Module::getName).min(Comparator.naturalOrder()).orElse(null);
   }
 

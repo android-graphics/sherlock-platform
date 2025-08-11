@@ -1,10 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 @SuppressWarnings("NotNullFieldNotInitialized")
-public final class FeatureDescriptor {
+public class FeatureDescriptor {
   private @NotNull String myId;
   private @Nullable String myDisplayName;
   private final @Nullable String myGroupId;
@@ -48,8 +47,7 @@ public final class FeatureDescriptor {
   private static final @NonNls String ELEMENT_TRACK_ACTION = "track-action";
   private static final @NonNls String ELEMENT_TRACK_INTENTION = "track-intention";
 
-  @ApiStatus.Internal
-  public FeatureDescriptor(@NotNull GroupDescriptor group, @Nullable ProductivityFeaturesProvider provider, @NotNull Element featureElement) {
+  FeatureDescriptor(@NotNull GroupDescriptor group, @Nullable ProductivityFeaturesProvider provider, @NotNull Element featureElement) {
     myGroupId = group.getId();
     myProvider = provider;
     readExternal(featureElement);
@@ -165,8 +163,7 @@ public final class FeatureDescriptor {
     return myProvider.getClass();
   }
 
-  @ApiStatus.Internal
-  public void triggerUsed() {
+  void triggerUsed() {
     myLastTimeUsed = System.currentTimeMillis();
     myUsageCount++;
   }
@@ -180,7 +177,6 @@ public final class FeatureDescriptor {
     myLastTimeUsed = Math.max(myLastTimeUsed, newLastTimeUsed);
   }
 
-  @Override
   public String toString() {
 
     return "id = [" +
@@ -215,8 +211,7 @@ public final class FeatureDescriptor {
     return ArrayUtilRt.toStringArray(myDependencies);
   }
 
-  @ApiStatus.Internal
-  public void triggerShown() {
+  void triggerShown() {
     myLastTimeShown = System.currentTimeMillis();
     myShownCount++;
   }
@@ -229,16 +224,14 @@ public final class FeatureDescriptor {
     return myShownCount;
   }
 
-  @ApiStatus.Internal
-  public void copyStatistics(FeatureDescriptor statistics) {
+  void copyStatistics(FeatureDescriptor statistics) {
     myUsageCount = statistics.getUsageCount();
     myLastTimeShown = statistics.getLastTimeShown();
     myLastTimeUsed = statistics.getLastTimeUsed();
     myShownCount = statistics.getShownCount();
   }
 
-  @ApiStatus.Internal
-  public void readStatistics(Element element) {
+  void readStatistics(Element element) {
     String count = element.getAttributeValue(ATTRIBUTE_COUNT);
     String lastShown = element.getAttributeValue(ATTRIBUTE_LAST_SHOWN);
     String lastUsed = element.getAttributeValue(ATTRIBUTE_LAST_USED);
@@ -250,8 +243,7 @@ public final class FeatureDescriptor {
     myShownCount = shownCount == null ? 0 : Integer.parseInt(shownCount);
   }
 
-  @ApiStatus.Internal
-  public void writeStatistics(Element element) {
+  void writeStatistics(Element element) {
     element.setAttribute(ATTRIBUTE_COUNT, String.valueOf(getUsageCount()));
     element.setAttribute(ATTRIBUTE_LAST_SHOWN, String.valueOf(getLastTimeShown()));
     element.setAttribute(ATTRIBUTE_LAST_USED, String.valueOf(getLastTimeUsed()));

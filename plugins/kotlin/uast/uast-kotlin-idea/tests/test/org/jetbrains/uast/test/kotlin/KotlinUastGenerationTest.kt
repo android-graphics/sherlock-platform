@@ -1,6 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-@file:OptIn(UnsafeCastFunction::class)
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.uast.test.kotlin
 
@@ -14,7 +12,6 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost

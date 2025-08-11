@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.ui;
 
-import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManagerBase;
+import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
 import com.intellij.codeInsight.generation.GenerateEqualsHelper;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.options.ConfigurationException;
@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.NamedItemsListEditor;
 import com.intellij.openapi.ui.Namer;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
-import com.intellij.psi.PsiType;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
@@ -25,16 +24,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiPredicate;
 
-public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<TemplateResource>> {
+public final class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<TemplateResource>> {
   private static final Namer<Couple<TemplateResource>> NAMER = new Namer<>() {
 
     @Override
     public String getName(Couple<TemplateResource> couple) {
-      return EqualsHashCodeTemplatesManagerBase.getTemplateBaseName(couple.first);
+      return EqualsHashCodeTemplatesManager.getTemplateBaseName(couple.first);
     }
 
     @Override
@@ -44,8 +42,8 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
 
     @Override
     public void setName(Couple<TemplateResource> couple, String name) {
-      couple.first.setFileName(EqualsHashCodeTemplatesManagerBase.toEqualsName(name));
-      couple.second.setFileName(EqualsHashCodeTemplatesManagerBase.toHashCodeName(name));
+      couple.first.setFileName(EqualsHashCodeTemplatesManager.toEqualsName(name));
+      couple.second.setFileName(EqualsHashCodeTemplatesManager.toHashCodeName(name));
     }
   };
 
@@ -83,9 +81,9 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
       }
     };
   private final Project myProject;
-  private final EqualsHashCodeTemplatesManagerBase myManager;
+  private final EqualsHashCodeTemplatesManager myManager;
 
-  public EqualsHashCodeTemplatesPanel(Project project, EqualsHashCodeTemplatesManagerBase manager) {
+  public EqualsHashCodeTemplatesPanel(Project project, EqualsHashCodeTemplatesManager manager) {
     super(NAMER, FACTORY, CLONER, COMPARER, new ArrayList<>(manager.getTemplateCouples()));
     myProject = project;
     myManager = manager;
@@ -128,8 +126,8 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
 
   @Override
   protected UnnamedConfigurable createConfigurable(Couple<TemplateResource> item) {
-    final GenerateTemplateConfigurable equalsConfigurable = new GenerateTemplateConfigurable(item.first, getEqualsImplicitVars(), myProject);
-    final GenerateTemplateConfigurable hashCodeConfigurable = new GenerateTemplateConfigurable(item.second, getHashCodeImplicitVars(), myProject);
+    final GenerateTemplateConfigurable equalsConfigurable = new GenerateTemplateConfigurable(item.first, GenerateEqualsHelper.getEqualsImplicitVars(myProject), myProject);
+    final GenerateTemplateConfigurable hashCodeConfigurable = new GenerateTemplateConfigurable(item.second, GenerateEqualsHelper.getHashCodeImplicitVars(), myProject);
     return new UnnamedConfigurable() {
       @Override
       public @NotNull JComponent createComponent() {
@@ -175,14 +173,6 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
         hashCodeConfigurable.disposeUIResources();
       }
     };
-  }
-
-  protected @NotNull Map<String, PsiType> getHashCodeImplicitVars() {
-    return GenerateEqualsHelper.getHashCodeImplicitVars();
-  }
-
-  protected @NotNull Map<String, PsiType> getEqualsImplicitVars() {
-    return GenerateEqualsHelper.getEqualsImplicitVars(myProject);
   }
 
   @Override

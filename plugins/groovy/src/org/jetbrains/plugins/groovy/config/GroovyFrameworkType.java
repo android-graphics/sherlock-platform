@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.framework.FrameworkTypeEx;
@@ -19,18 +19,21 @@ public final class GroovyFrameworkType extends FrameworkTypeEx {
     return false;
   }
 
+  @NotNull
   @Override
-  public @NotNull FrameworkSupportInModuleProvider createProvider() {
+  public FrameworkSupportInModuleProvider createProvider() {
     return new GroovyFrameworkSupportProvider();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPresentableName() {
+  public String getPresentableName() {
     return GroovyBundle.message("language.groovy");
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getIcon() {
+  public Icon getIcon() {
     return JetgroovyIcons.Groovy.Groovy_16x16;
   }
 }

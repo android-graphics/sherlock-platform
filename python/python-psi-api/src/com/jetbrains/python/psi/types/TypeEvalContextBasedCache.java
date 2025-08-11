@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
 import com.intellij.psi.util.CachedValue;
@@ -18,16 +18,18 @@ import java.util.concurrent.ConcurrentMap;
  * @author Ilya.Kazakevich
  */
 public final class TypeEvalContextBasedCache<T> {
-  private final @NotNull CachedValue<ConcurrentMap<TypeEvalConstraints, T>> myCachedMapStorage;
+  @NotNull
+  private final CachedValue<ConcurrentMap<TypeEvalConstraints, T>> myCachedMapStorage;
 
-  private final @NotNull Function<? super TypeEvalContext, ? extends T> myProvider;
+  @NotNull
+  private final Function<? super TypeEvalContext, ? extends T> myProvider;
 
   /**
    * @param manager       Cache manager to be used to store cache
    * @param valueProvider engine to create value based on context.
    */
-  public TypeEvalContextBasedCache(final @NotNull CachedValuesManager manager,
-                                   final @NotNull Function<? super TypeEvalContext, ? extends T> valueProvider) {
+  public TypeEvalContextBasedCache(@NotNull final CachedValuesManager manager,
+                                   @NotNull final Function<? super TypeEvalContext, ? extends T> valueProvider) {
     myCachedMapStorage = manager.createCachedValue(new MapCreator<>(), false);
     myProvider = valueProvider;
   }
@@ -39,7 +41,8 @@ public final class TypeEvalContextBasedCache<T> {
    * @param context to be used as key
    * @return value
    */
-  public @NotNull T getValue(final @NotNull TypeEvalContext context) {
+  @NotNull
+  public T getValue(@NotNull final TypeEvalContext context) {
 
     // map is thread safe but not atomic nor getValue() is, so in worst case several threads may produce same result
     // myProvider.fun should never be launched under lock to prevent deadlocks like PY-24300 and PY-24625
@@ -60,8 +63,9 @@ public final class TypeEvalContextBasedCache<T> {
    * Provider that creates map to store cache. Map depends on PSI modification
    */
   private static final class MapCreator<T> implements CachedValueProvider<ConcurrentMap<TypeEvalConstraints, T>> {
+    @NotNull
     @Override
-    public @NotNull Result<ConcurrentMap<TypeEvalConstraints, T>> compute() {
+    public Result<ConcurrentMap<TypeEvalConstraints, T>> compute() {
       // This method is called if cache is empty. Create new map for it.
       // Concurrent map allows several threads to call get and put, so it is thread safe but not atomic
       final ConcurrentMap<TypeEvalConstraints, T> map = ContainerUtil.createConcurrentSoftValueMap();

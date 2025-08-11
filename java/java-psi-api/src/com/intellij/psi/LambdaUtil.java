@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -82,7 +82,8 @@ public final class LambdaUtil {
   /**
    * Extract functional interface from intersection
    */
-  public static @Nullable PsiType normalizeFunctionalType(@Nullable PsiType functionalInterfaceType) {
+  @Nullable
+  public static PsiType normalizeFunctionalType(@Nullable PsiType functionalInterfaceType) {
     if (functionalInterfaceType instanceof PsiIntersectionType) {
       PsiType functionalConjunct = extractFunctionalConjunct((PsiIntersectionType)functionalInterfaceType);
       if (functionalConjunct != null) {
@@ -176,7 +177,7 @@ public final class LambdaUtil {
   }
 
   @Contract("null -> null")
-  public static @Nullable MethodSignature getFunction(final @Nullable PsiClass psiClass) {
+  public static @Nullable MethodSignature getFunction(@Nullable final PsiClass psiClass) {
     if (isPlainInterface(psiClass)) {
       return CachedValuesManager.getProjectPsiDependentCache(psiClass, LambdaUtil::calcFunction);
     }
@@ -570,8 +571,10 @@ public final class LambdaUtil {
 
 
   public static class TargetMethodContainer{
-    public final @NotNull PsiMethod targetMethod;
-    public final @NotNull PsiMethod inheritor;
+    @NotNull
+    public final PsiMethod targetMethod;
+    @NotNull
+    public final PsiMethod inheritor;
 
     private TargetMethodContainer(@NotNull PsiMethod method, @NotNull PsiMethod inheritor) {
       this.targetMethod = method;
@@ -587,7 +590,8 @@ public final class LambdaUtil {
    * @param baseType     the base type to resolve the class from
    * @return the target method if found, or null if not found
    */
-  public static @Nullable TargetMethodContainer getTargetMethod(@NotNull PsiType type, @NotNull MethodSignature signature, @NotNull PsiType baseType) {
+  @Nullable
+  public static TargetMethodContainer getTargetMethod(@NotNull PsiType type, @NotNull MethodSignature signature, @NotNull PsiType baseType) {
     PsiClass baseClass = PsiUtil.resolveClassInClassTypeOnly(baseType);
     if (baseClass == null) {
       return null;
@@ -633,7 +637,8 @@ public final class LambdaUtil {
     return true;
   }
 
-  private static @NotNull MethodSignature getSignatureWithSubstitutors(@NotNull PsiMethod method, @NotNull PsiType type) {
+  @NotNull
+  private static MethodSignature getSignatureWithSubstitutors(@NotNull PsiMethod method, @NotNull PsiType type) {
     PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(type);
     final PsiClass aClass = classResolveResult.getElement();
     if (aClass == null) return method.getSignature(PsiSubstitutor.EMPTY);
@@ -1257,7 +1262,6 @@ public final class LambdaUtil {
         psiType = substitutor.substitute(parameters[i].getType());
         if (!PsiTypesUtil.isDenotableType(psiType, lambdaExpression)) return null;
       }
-      psiType = PsiTypesUtil.removeExternalAnnotations(psiType);
 
       PsiAnnotation[] annotations = lambdaParameter.getAnnotations();
       for (PsiAnnotation annotation : annotations) {
@@ -1295,7 +1299,8 @@ public final class LambdaUtil {
    * @return {@link PsiClass} or {@link PsiLambdaExpression} which contains passed {@code element}. 
    *         {@link PsiAnonymousClass} is skipped if {@code element} is located in the corresponding expression list
    */
-  public static @Nullable PsiElement getContainingClassOrLambda(@NotNull PsiElement element) {
+  @Nullable
+  public static PsiElement getContainingClassOrLambda(@NotNull PsiElement element) {
     PsiElement currentClass;
     while (true) {
       currentClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, PsiLambdaExpression.class);
@@ -1307,30 +1312,5 @@ public final class LambdaUtil {
         return currentClass;
       }
     }
-  }
-
-  /**
-   * Kind of error for functional interface
-   */
-  public enum FunctionalInterfaceStatus {
-    VALID,
-    NOT_INTERFACE,
-    NO_ABSTRACT_METHOD,
-    MULTIPLE_ABSTRACT_METHODS
-  }
-
-  /**
-   * @param psiClass class to check whether it represents a functional interface
-   * @return {@link FunctionalInterfaceStatus#VALID} if it's a valid functional interface, or other value
-   * representing the kind of error
-   */
-  public static @NotNull FunctionalInterfaceStatus checkInterfaceFunctional(@NotNull PsiClass psiClass) {
-    List<HierarchicalMethodSignature> signatures = findFunctionCandidates(psiClass);
-    if (signatures == null) return FunctionalInterfaceStatus.NOT_INTERFACE;
-    if (signatures.isEmpty()) return FunctionalInterfaceStatus.NO_ABSTRACT_METHOD;
-    if (signatures.size() == 1) {
-      return FunctionalInterfaceStatus.VALID;
-    }
-    return FunctionalInterfaceStatus.MULTIPLE_ABSTRACT_METHODS;
   }
 }

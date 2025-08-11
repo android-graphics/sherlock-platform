@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.DfaNullability;
@@ -33,35 +33,40 @@ public interface DfReferenceType extends DfType {
   /**
    * @return mutability of all the objects referred by this type
    */
-  default @NotNull Mutability getMutability() {
+  @NotNull
+  default Mutability getMutability() {
     return Mutability.UNKNOWN;
   }
 
   /**
    * @return special field if additional information is known about the special field of all referenced objects
    */
-  default @Nullable SpecialField getSpecialField() {
+  @Nullable
+  default SpecialField getSpecialField() {
     return null;
   }
 
   /**
    * @return type of special field; {@link DfType#BOTTOM} if {@link #getSpecialField()} returns null
    */
-  default @NotNull DfType getSpecialFieldType() {
+  @NotNull
+  default DfType getSpecialFieldType() {
     return BOTTOM;
   }
 
   /**
    * @return this type without type constraint, or simply this type if it's a constant
    */
-  default @NotNull DfReferenceType dropTypeConstraint() {
+  @NotNull
+  default DfReferenceType dropTypeConstraint() {
     return this;
   }
 
   /**
    * @return this type without locality flag, or simply this type if it's a constant
    */
-  default @NotNull DfReferenceType dropLocality() {
+  @NotNull
+  default DfReferenceType dropLocality() {
     return this;
   }
 
@@ -74,7 +79,8 @@ public interface DfReferenceType extends DfType {
   /**
    * @return this type without mutability knowledge, or simply this type if it's a constant
    */
-  default @NotNull DfReferenceType dropMutability() {
+  @NotNull
+  default DfReferenceType dropMutability() {
     return this;
   }
 
@@ -110,7 +116,8 @@ public interface DfReferenceType extends DfType {
   }
 
   @Override
-  default @NotNull DfType getBasicType() {
+  @NotNull
+  default DfType getBasicType() {
     return dropSpecialField();
   }
 

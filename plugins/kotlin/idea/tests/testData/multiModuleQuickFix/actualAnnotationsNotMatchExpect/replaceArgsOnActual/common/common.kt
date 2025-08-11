@@ -1,4 +1,4 @@
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 annotation class Ann(val value: String)
 
 @Ann("value")

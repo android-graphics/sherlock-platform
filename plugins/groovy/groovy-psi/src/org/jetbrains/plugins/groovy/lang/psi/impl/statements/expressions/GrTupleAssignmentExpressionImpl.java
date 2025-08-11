@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
@@ -16,19 +16,22 @@ public class GrTupleAssignmentExpressionImpl extends GrExpressionImpl implements
     super(node);
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiType getType() {
+  public PsiType getType() {
     GrExpression rValue = getRValue();
     return rValue == null ? null : rValue.getType();
   }
 
+  @NotNull
   @Override
-  public @NotNull GrTuple getLValue() {
+  public GrTuple getLValue() {
     return findNotNullChildByClass(GrTuple.class);
   }
 
+  @Nullable
   @Override
-  public @Nullable GrExpression getRValue() {
+  public GrExpression getRValue() {
     return findChildByClass(GrExpression.class);
   }
 

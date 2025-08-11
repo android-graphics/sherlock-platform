@@ -71,12 +71,6 @@ interface TestFeature<V : Any> {
      * Tip: use for checks on the imported project
      */
     fun KotlinMppTestsContext.afterImport() {}
-
-    /**
-     * If `false`, the test feature should be explicitly enabled via the DSL of
-     * [org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks]
-     */
-    fun isEnabledByDefault(): Boolean = true
 }
 
 /**

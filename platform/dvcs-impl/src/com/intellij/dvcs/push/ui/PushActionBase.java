@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
@@ -31,11 +30,15 @@ public abstract class PushActionBase extends DumbAwareAction {
 
   protected abstract boolean isEnabled(@NotNull VcsPushUi dialog);
 
-  protected @Nls @NotNull String getText(@NotNull VcsPushUi dialog, boolean enabled) {
+  @Nls
+  @NotNull
+  protected String getText(@NotNull VcsPushUi dialog, boolean enabled) {
     return Objects.requireNonNull(getTemplatePresentation().getTextWithMnemonic());
   }
 
-  protected abstract @Nls @Nullable String getDescription(@NotNull VcsPushUi dialog, boolean enabled);
+  @Nls
+  @Nullable
+  protected abstract String getDescription(@NotNull VcsPushUi dialog, boolean enabled);
 
   protected abstract void actionPerformed(@NotNull Project project, @NotNull VcsPushUi dialog);
 
@@ -65,8 +68,6 @@ public abstract class PushActionBase extends DumbAwareAction {
     boolean enabled = isEnabled(dialog);
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setText(getText(dialog, enabled));
-    String description = getDescription(dialog, enabled);
-    e.getPresentation().setDescription(description);
-    e.getPresentation().putClientProperty(ActionUtil.TOOLTIP_TEXT, description);
+    e.getPresentation().setDescription(getDescription(dialog, enabled));
   }
 }

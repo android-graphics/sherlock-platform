@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.Language;
@@ -12,7 +12,8 @@ import static java.lang.Character.isLetterOrDigit;
 
 @ApiStatus.Internal
 public interface LanguageCodeStyleProvider extends CustomCodeStyleSettingsFactory {
-  static @Nullable LanguageCodeStyleProvider forLanguage(Language language) {
+  @Nullable
+  static LanguageCodeStyleProvider forLanguage(Language language) {
     for (LanguageCodeStyleProvider provider : CodeStyleSettingsService.getInstance().getLanguageCodeStyleProviders()) {
       if (provider.getLanguage().equals(language)) {
         return provider;
@@ -21,7 +22,8 @@ public interface LanguageCodeStyleProvider extends CustomCodeStyleSettingsFactor
     return null;
   }
 
-  static @Nullable LanguageCodeStyleProvider findUsingBaseLanguage(@NotNull Language language) {
+  @Nullable
+  static LanguageCodeStyleProvider findUsingBaseLanguage(@NotNull Language language) {
     for (Language currLang = language; currLang != null;  currLang = currLang.getBaseLanguage()) {
       LanguageCodeStyleProvider curr = forLanguage(currLang);
       if (curr != null) return curr;

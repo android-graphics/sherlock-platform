@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.actions;
 
@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.vcs.commit.CommitMode;
 import com.intellij.vcs.commit.CommitModeManager;
 import com.intellij.vcsUtil.VcsImplUtil;
@@ -48,7 +47,7 @@ import static com.intellij.util.ui.UIUtil.removeMnemonic;
 import static com.intellij.vcsUtil.RollbackUtil.getRollbackOperationName;
 import static java.util.Collections.emptyList;
 
-public final class RollbackAction extends DumbAwareAction {
+public class RollbackAction extends DumbAwareAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -149,9 +148,9 @@ public final class RollbackAction extends DumbAwareAction {
     return emptyList();
   }
 
-  private static @Nullable Set<VirtualFile> getModifiedWithoutEditing(final AnActionEvent e, Project project) {
-    List<VirtualFile> selectedModifiedWithoutEditing =
-      JBIterable.from(e.getData(ChangesListView.MODIFIED_WITHOUT_EDITING_DATA_KEY)).toList();
+  @Nullable
+  private static Set<VirtualFile> getModifiedWithoutEditing(final AnActionEvent e, Project project) {
+    final List<VirtualFile> selectedModifiedWithoutEditing = e.getData(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY);
     if (!ContainerUtil.isEmpty(selectedModifiedWithoutEditing)) {
       return new HashSet<>(selectedModifiedWithoutEditing);
     }
@@ -168,13 +167,12 @@ public final class RollbackAction extends DumbAwareAction {
   }
 
   private static void rollbackModifiedWithoutEditing(final Project project, final Set<? extends VirtualFile> modifiedWithoutEditing) {
-    String operationName = removeMnemonic(getRollbackOperationName(project));
-    String decapitalizedOperationName = StringUtil.decapitalize(operationName);
+    final String operationName = StringUtil.decapitalize(removeMnemonic(getRollbackOperationName(project)));
     String message = (modifiedWithoutEditing.size() == 1)
                      ? VcsBundle.message("rollback.modified.without.editing.confirm.single",
-                                         decapitalizedOperationName, modifiedWithoutEditing.iterator().next().getPresentableUrl())
+                                         operationName, modifiedWithoutEditing.iterator().next().getPresentableUrl())
                      : VcsBundle.message("rollback.modified.without.editing.confirm.multiple",
-                                         decapitalizedOperationName, modifiedWithoutEditing.size());
+                                         operationName, modifiedWithoutEditing.size());
     int rc = showYesNoDialog(project, message, VcsBundle.message("changes.action.rollback.title", operationName), getQuestionIcon());
     if (rc != Messages.YES) {
       return;

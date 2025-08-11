@@ -26,13 +26,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 public final class GroovySynchronizedMethodInspection extends BaseInspection {
 
   @Override
-  protected @Nullable String buildErrorString(Object... args) {
+  @Nullable
+  protected String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.synchronized.method.ref");
 
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

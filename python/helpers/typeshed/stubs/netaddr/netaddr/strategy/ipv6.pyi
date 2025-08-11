@@ -1,5 +1,6 @@
 from collections.abc import Iterable, Sequence
-from typing import ClassVar, Final, Literal
+from typing import ClassVar
+from typing_extensions import Final, Literal
 
 from netaddr.fbsocket import AF_INET6
 

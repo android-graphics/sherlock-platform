@@ -1,11 +1,24 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.externalSystem.importing;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -15,21 +28,20 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  */
 @ApiStatus.Internal
-public final class ImportSpecImpl implements ImportSpec {
-  private final @NotNull Project myProject;
-  private final @NotNull ProjectSystemId myExternalSystemId;
-  private @NotNull ProgressExecutionMode myProgressExecutionMode;
-  private @Nullable ExternalProjectRefreshCallback myCallback;
+public class ImportSpecImpl implements ImportSpec {
+  @NotNull private final Project myProject;
+  @NotNull private final ProjectSystemId myExternalSystemId;
+  @NotNull private ProgressExecutionMode myProgressExecutionMode;
+  @Nullable private ExternalProjectRefreshCallback myCallback;
   private boolean isPreviewMode;
   private boolean createDirectoriesForEmptyContentRoots;
   private boolean isActivateBuildToolWindowOnStart;
   private boolean isActivateBuildToolWindowOnFailure;
-  private @NotNull ThreeState myNavigateToError = ThreeState.UNSURE;
-  private @Nullable String myVmOptions;
-  private @Nullable String myArguments;
-  private @Nullable ProjectResolverPolicy myProjectResolverPolicy;
-  private @Nullable Runnable myRerunAction;
-  private @Nullable UserDataHolderBase myUserData;
+  @NotNull private ThreeState myNavigateToError = ThreeState.UNSURE;
+  @Nullable private String myVmOptions;
+  @Nullable private String myArguments;
+  @Nullable private ProjectResolverPolicy myProjectResolverPolicy;
+  @Nullable private Runnable myRerunAction;
 
   public ImportSpecImpl(@NotNull Project project, @NotNull ProjectSystemId id) {
     myProject = project;
@@ -37,18 +49,21 @@ public final class ImportSpecImpl implements ImportSpec {
     myProgressExecutionMode = ProgressExecutionMode.MODAL_SYNC;
   }
 
+  @NotNull
   @Override
-  public @NotNull Project getProject() {
+  public Project getProject() {
     return myProject;
   }
 
+  @NotNull
   @Override
-  public @NotNull ProjectSystemId getExternalSystemId() {
+  public ProjectSystemId getExternalSystemId() {
     return myExternalSystemId;
   }
 
+  @NotNull
   @Override
-  public @NotNull ProgressExecutionMode getProgressExecutionMode() {
+  public ProgressExecutionMode getProgressExecutionMode() {
     return myProgressExecutionMode;
   }
 
@@ -60,8 +75,9 @@ public final class ImportSpecImpl implements ImportSpec {
     myCallback = callback;
   }
 
+  @Nullable
   @Override
-  public @Nullable ExternalProjectRefreshCallback getCallback() {
+  public ExternalProjectRefreshCallback getCallback() {
     return myCallback;
   }
 
@@ -110,8 +126,9 @@ public final class ImportSpecImpl implements ImportSpec {
     myNavigateToError = navigateToError;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getVmOptions() {
+  public String getVmOptions() {
     return myVmOptions;
   }
 
@@ -119,8 +136,9 @@ public final class ImportSpecImpl implements ImportSpec {
     myVmOptions = vmOptions;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getArguments() {
+  public String getArguments() {
     return myArguments;
   }
 
@@ -128,7 +146,8 @@ public final class ImportSpecImpl implements ImportSpec {
     myArguments = arguments;
   }
 
-  public @Nullable ProjectResolverPolicy getProjectResolverPolicy() {
+  @Nullable
+  public ProjectResolverPolicy getProjectResolverPolicy() {
     return myProjectResolverPolicy;
   }
 
@@ -136,20 +155,12 @@ public final class ImportSpecImpl implements ImportSpec {
     myProjectResolverPolicy = projectResolverPolicy;
   }
 
-  public @Nullable Runnable getRerunAction() {
+  @Nullable
+  public Runnable getRerunAction() {
     return myRerunAction;
   }
 
   public void setRerunAction(@Nullable Runnable rerunAction) {
     myRerunAction = rerunAction;
-  }
-
-  @Override
-  public @Nullable UserDataHolderBase getUserData() {
-    return myUserData;
-  }
-
-  public void setUserData(@Nullable UserDataHolderBase userData) {
-    myUserData = userData;
   }
 }

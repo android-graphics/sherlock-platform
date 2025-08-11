@@ -7,17 +7,15 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.execution.ParametersListUtil
-import org.jetbrains.annotations.ApiStatus
 import java.util.Set.copyOf
 
-@ApiStatus.Internal
-object TerminalCommandUsageStatistics {
+internal object TerminalCommandUsageStatistics {
 
   private val emptyCommand = CommandData("<empty>", null)
   private val whitespacesCommand = CommandData("<whitespaces>", null)
   private val relativePathCommand = CommandData("<relative path>", null)
   private val absolutePathCommand = CommandData("<absolute path>", null)
-  val knownCommandToSubCommandsMap: Map<String, Set<String>> = buildKnownCommandToSubCommandMap()
+  private val knownCommandToSubCommandsMap: Map<String, Set<String>> = buildKnownCommandToSubCommandMap()
 
   internal val commandExecutableField = EventFields.String("command", listOf(relativePathCommand.command, absolutePathCommand.command,
                                                                              emptyCommand.command, whitespacesCommand.command)

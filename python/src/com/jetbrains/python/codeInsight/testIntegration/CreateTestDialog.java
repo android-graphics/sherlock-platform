@@ -37,8 +37,10 @@ public final class CreateTestDialog extends DialogWrapper {
     init();
     myClassRequired = StringUtil.isNotEmpty(model.getClassName());
     myModel = model;
-    myTargetDir.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(PyBundle.message("code.insight.select.target.directory")));
+    myTargetDir.addBrowseFolderListener(PyBundle.message("code.insight.select.target.directory"), null, project,
+                                        FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myTargetDir.setEditable(false);
+
 
     myTargetDir.addActionListener(new ActionListener() {
       @Override

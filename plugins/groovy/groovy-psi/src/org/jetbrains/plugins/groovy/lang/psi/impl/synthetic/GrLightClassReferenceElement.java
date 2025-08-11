@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.util.TextRange;
@@ -26,7 +26,8 @@ import java.util.Collections;
  * @author Maxim.Medvedev
  */
 public class GrLightClassReferenceElement extends LightElement implements GrCodeReferenceElement {
-  private final @NotNull String myClassName;
+  @NotNull
+  private final String myClassName;
   private final String myText;
   private final PsiElement myContext;
 
@@ -46,13 +47,15 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
     return myClassName;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getQualifiedReferenceName() {
+  public String getQualifiedReferenceName() {
     return myClassName;
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
+  public Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
     PsiClass clazz = JavaPsiFacade.getInstance(getProject()).findClass(myClassName, myContext.getResolveScope());
     return clazz == null ? Collections.emptyList() : Collections.singletonList(new ElementResolveResult<>(clazz));
   }
@@ -101,18 +104,21 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
     return "light reference element";
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getElement() {
+  public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
-  public @NotNull TextRange getRangeInElement() {
+  public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());
   }
 
+  @NotNull
   @Override
-  public @NotNull String getCanonicalText() {
+  public String getCanonicalText() {
     final PsiElement resolved = resolve();
     if (resolved instanceof PsiClass) return ((PsiClass)resolved).getQualifiedName();
     return myClassName;
@@ -143,8 +149,9 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
     return myText;
   }
 
+  @NotNull
   @Override
-  public @NotNull CodeReferenceKind getKind() {
+  public CodeReferenceKind getKind() {
     return CodeReferenceKind.REFERENCE;
   }
 

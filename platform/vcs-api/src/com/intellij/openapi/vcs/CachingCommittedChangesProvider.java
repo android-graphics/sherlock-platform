@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -47,7 +47,8 @@ public interface CachingCommittedChangesProvider<T extends CommittedChangeList, 
    * @param location the location where changes are requested.
    * @return the files which may contain the changes, or null if the call is not supported.
    */
-  default @Nullable Collection<FilePath> getIncomingFiles(@NotNull RepositoryLocation location) throws VcsException {
+  @Nullable
+  default Collection<FilePath> getIncomingFiles(@NotNull RepositoryLocation location) throws VcsException {
     return null;
   }
 

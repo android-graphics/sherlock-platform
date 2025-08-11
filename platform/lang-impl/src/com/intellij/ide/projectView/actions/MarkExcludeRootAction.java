@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.icons.AllIcons;
@@ -14,7 +14,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.workspaceModel.core.fileIndex.impl.OptionalExclusionUtil;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -41,15 +40,14 @@ public class MarkExcludeRootAction extends MarkRootActionBase {
     super.actionPerformed(e);
   }
 
-  protected @NlsContexts.DialogMessage String getPromptText(@NlsContexts.DialogMessage String message) {
+  @NlsContexts.DialogMessage
+  protected String getPromptText(@NlsContexts.DialogMessage String message) {
     return LangBundle.message("dialog.message.are.you.sure.you.would.like.to.exclude", message);
   }
 
   @Override
   protected void modifyRoots(@NotNull VirtualFile vFile, @NotNull ContentEntry entry) {
-    if (!OptionalExclusionUtil.exclude(entry.getRootModel().getModule().getProject(), vFile)) {
-      entry.addExcludeFolder(vFile);
-    }
+    entry.addExcludeFolder(vFile);
   }
 
   @Override

@@ -1,15 +1,16 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ui.mac.foundation.ID;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
-public abstract class TBItem {
+abstract class TBItem {
   private final @NotNull String myName;
   private @Nullable String myUid;
 
-  protected @NotNull ID myNativePeer = ID.NIL; // java wrapper holds native object
+  @NotNull ID myNativePeer = ID.NIL; // java wrapper holds native object
 
   final @Nullable ItemListener myListener;
   boolean myIsVisible = true;
@@ -22,11 +23,6 @@ public abstract class TBItem {
   @NotNull
   String getName() { return myName; }
 
-  @TestOnly
-  public @NotNull ID getNativePeer() {
-    return myNativePeer;
-  }
-
   @Nullable
   String getUid() { return myUid; }
 
@@ -35,9 +31,8 @@ public abstract class TBItem {
   synchronized
   @NotNull ID createNativePeer() {
     // called from AppKit (when NSTouchBarDelegate create items)
-    if (myNativePeer == ID.NIL) {
+    if (myNativePeer == ID.NIL)
       myNativePeer = _createNativePeer();
-    }
     return myNativePeer;
   }
 

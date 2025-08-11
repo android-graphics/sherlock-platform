@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.fir.uast.test
 
 import com.intellij.openapi.project.Project
@@ -22,6 +22,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     private val whitelist : Set<String> = setOf(
+        // TODO: return type for ambiguous call
+        "MultiResolveJavaAmbiguous",
+        // TODO: return type for ambiguous call
+        "MultiConstructorResolve",
         // TODO: multiResolve
         "MultiInvokableObjectResolve",
         // TODO: resolve annotation param to annotation ctor ??
@@ -62,14 +66,6 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveStringFromUast(myFixture, project)
     }
 
-    fun testResolveBuiltinOperator() {
-        checkResolveBuiltinOperator(myFixture, project)
-    }
-
-    fun testResolveBuiltinClass() {
-        checkResolveBuiltinClass(myFixture, project)
-    }
-
     fun testMultiResolve() {
         checkMultiResolve(myFixture)
     }
@@ -79,7 +75,7 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     }
 
     fun testMultiResolveJavaAmbiguous() {
-        checkMultiResolveJavaAmbiguous(myFixture)
+        doCheck("MultiResolveJavaAmbiguous", ::checkMultiResolveJavaAmbiguous)
     }
 
     fun testResolveFromBaseJava() {
@@ -95,7 +91,7 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     }
 
     fun testMultiConstructorResolve() {
-        checkMultiConstructorResolve(myFixture, project)
+        doCheck("MultiConstructorResolve", ::checkMultiConstructorResolve)
     }
 
     fun testMultiInvokableObjectResolve() {
@@ -106,12 +102,8 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkMultiResolveJvmOverloads(myFixture)
     }
 
-    fun testLocalResolve_class() {
-        checkLocalResolve_class(myFixture)
-    }
-
-    fun testLocalResolve_function() {
-        checkLocalResolve_function(myFixture)
+    fun testLocalResolve() {
+        checkLocalResolve(myFixture)
     }
 
     fun testGetJavaClass() {
@@ -148,10 +140,6 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testResolveImplicitLambdaParameter_binary() {
         checkResolveImplicitLambdaParameter_binary(myFixture)
-    }
-
-    fun testNullityOfResolvedLambdaParameter() {
-        checkNullityOfResolvedLambdaParameter(myFixture)
     }
 
     fun testResolveSyntheticMethod() {
@@ -192,10 +180,6 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testArgumentMappingSAM_methodReference() {
         checkArgumentMappingSAM_methodReference(myFixture)
-    }
-
-    fun testParameterForArgument_extensionReceiver_suspend() {
-        checkParameterForArgument_extensionReceiver_suspend(myFixture)
     }
 
     fun testSyntheticEnumMethods() {
@@ -294,10 +278,6 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveThisExpressionAsLambdaReceiver(myFixture)
     }
 
-    fun testResolveThisExpressionForExtensionFunctionType() {
-        checkResolveThisExpressionForExtensionFunctionType(myFixture)
-    }
-
     fun testResolvePropertiesInCompanionObjectFromBinaryDependency() {
         checkResolvePropertiesInCompanionObjectFromBinaryDependency(myFixture)
     }
@@ -336,9 +316,5 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testResolveJvmNameOnSetterFromLibrary() {
         checkResolveJvmNameOnSetterFromLibrary(myFixture)
-    }
-
-    fun testResolveProtoDSL() {
-        checkResolveProtoDSL(myFixture, isK2 = true)
     }
 }

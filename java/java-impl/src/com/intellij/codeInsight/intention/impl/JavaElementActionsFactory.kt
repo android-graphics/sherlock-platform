@@ -21,7 +21,6 @@ import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.impl.light.LightRecordMember
-import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.ThreeState
 import com.intellij.util.asSafely
@@ -119,12 +118,7 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
                             request.modifiers.containsAll(constantModifiers)
     val result = ArrayList<IntentionAction>()
     if (canCreateEnumConstant(javaClass)) {
-      val typesAgree = !request.fieldType.mapNotNull { expectedType -> (expectedType.theType as? PsiClassType)?.resolve() }.none {
-        InheritanceUtil.isInheritorOrSelf(javaClass, it, true)
-      }
-      if (typesAgree) {
-        result += CreateEnumConstantAction(javaClass, request)
-      }
+      result += CreateEnumConstantAction(javaClass, request)
     }
     if (constantRequested || request.fieldName.uppercase(Locale.ENGLISH) == request.fieldName) {
       result += CreateConstantAction(javaClass, request)

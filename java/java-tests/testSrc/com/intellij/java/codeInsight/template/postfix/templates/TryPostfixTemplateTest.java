@@ -59,8 +59,4 @@ public class TryPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testConstructorStatement() {
     doTest();
   }
-
-  public void testAfterLambda() {
-    doTest();
-  }
 }

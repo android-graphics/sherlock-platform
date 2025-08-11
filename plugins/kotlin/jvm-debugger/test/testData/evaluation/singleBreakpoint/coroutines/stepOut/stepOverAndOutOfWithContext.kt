@@ -1,7 +1,4 @@
 // ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3)-javaagent
-// REGISTRY: debugger.async.stacks.coroutines=false
-
-
 
 import kotlinx.coroutines.*
 

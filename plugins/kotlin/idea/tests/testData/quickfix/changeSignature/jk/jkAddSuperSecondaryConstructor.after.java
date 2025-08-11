@@ -6,8 +6,6 @@ public class JavaInheritor extends KotlinBase {
     }
 
     public JavaInheritor(String s, int i) {
-        super(s, i<selection><caret></selection>);
+        super(s, i);
     }
 }
-
-// IGNORE_K2

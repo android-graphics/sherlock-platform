@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.validation;
 
 import com.intellij.codeInsight.intention.FileModifier;
@@ -29,13 +29,15 @@ class ExpressionReplacementFix implements IntentionAction {
     myExpr = expression;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getText() {
+  public String getText() {
     return XPathBundle.message("intention.name.replace.with.x", myDisplay);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return XPathBundle.message("intention.family.name.replace.with.valid.xpath.expression");
   }
 

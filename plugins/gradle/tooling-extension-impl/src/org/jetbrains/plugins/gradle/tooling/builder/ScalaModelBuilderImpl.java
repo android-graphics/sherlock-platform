@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
@@ -55,7 +55,8 @@ public class ScalaModelBuilderImpl implements ModelBuilderService {
     return scalaModel;
   }
 
-  private static @Nullable ScalaModel createModel(@Nullable Task task) {
+  @Nullable
+  private static ScalaModel createModel(@Nullable Task task) {
     if (!(task instanceof ScalaCompile)) return null;
 
     ScalaCompile scalaCompile = (ScalaCompile)task;
@@ -88,8 +89,9 @@ public class ScalaModelBuilderImpl implements ModelBuilderService {
       .reportMessage(project);
   }
 
+  @Nullable
   @Contract("null -> null")
-  private static @Nullable ScalaCompileOptionsImpl create(@Nullable ScalaCompileOptions options) {
+  private static ScalaCompileOptionsImpl create(@Nullable ScalaCompileOptions options) {
     if (options == null) return null;
 
     ScalaCompileOptionsImpl result = new ScalaCompileOptionsImpl();
@@ -136,15 +138,17 @@ public class ScalaModelBuilderImpl implements ModelBuilderService {
     return result;
   }
 
-  private static @Nullable List<String> wrapStringList(@Nullable List<?> list) {
+  @Nullable
+  private static List<String> wrapStringList(@Nullable List<?> list) {
     if (list == null) return null;
     // fix serialization issue if 's' is an instance of groovy.lang.GString [IDEA-125174]
     //noinspection SSBasedInspection
     return list.stream().map(x -> x.toString()).collect(Collectors.toList());
   }
 
+  @Nullable
   @Contract("null -> null")
-  private static @Nullable ScalaForkOptionsImpl create(@Nullable ScalaForkOptions forkOptions) {
+  private static ScalaForkOptionsImpl create(@Nullable ScalaForkOptions forkOptions) {
     if (forkOptions == null) return null;
 
     ScalaForkOptionsImpl result = new ScalaForkOptionsImpl();

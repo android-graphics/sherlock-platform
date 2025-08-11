@@ -37,19 +37,16 @@ fun move(container: PsiElement, statements: Array<PsiElement>, generateDefaultIn
         val scope = LocalSearchScope(container)
         val lastStatementOffset = statements[statements.size - 1].textRange.endOffset
 
-
         statements.forEachIndexed { i, statement ->
             if (needToDeclareOut(statement, lastStatementOffset, scope)) {
                 val property = statement as? KtProperty
                 if (property?.initializer != null) {
                     if (i == statements.size - 1) {
                         prepareLastPropertyToBeInitializedWithExpression(
-                            psiFactory,
                             container, dummyFirstStatement, resultStatements, propertiesDeclarations, property
                         )
                     } else {
                         declareOut(
-                            psiFactory,
                             container, dummyFirstStatement, generateDefaultInitializers, resultStatements, propertiesDeclarations, property
                         )
                     }
@@ -78,7 +75,6 @@ fun move(container: PsiElement, statements: Array<PsiElement>, generateDefaultIn
  * As a result: `property_initializerval property=`; should be fixed on the call site of [move] method
  */
 private fun prepareLastPropertyToBeInitializedWithExpression(
-    psiFactory: KtPsiFactory,
     container: PsiElement,
     dummyFirstStatement: PsiElement,
     resultStatements: ArrayList<PsiElement>,
@@ -86,6 +82,7 @@ private fun prepareLastPropertyToBeInitializedWithExpression(
     property: KtProperty
 ) {
     val name = property.name ?: return
+    val psiFactory = KtPsiFactory(property.project)
     var declaration = psiFactory.createProperty(name, property.typeReference?.text, property.isVar, null)
     declaration = container.addBefore(declaration, dummyFirstStatement) as KtProperty
     container.addAfter(psiFactory.createEQ(), declaration)
@@ -96,7 +93,6 @@ private fun prepareLastPropertyToBeInitializedWithExpression(
 }
 
 private fun declareOut(
-    psiFactory: KtPsiFactory,
     container: PsiElement,
     dummyFirstStatement: PsiElement,
     generateDefaultInitializers: Boolean,
@@ -104,17 +100,16 @@ private fun declareOut(
     propertiesDeclarations: ArrayList<KtProperty>,
     property: KtProperty
 ) {
-    var declaration = createVariableDeclaration(psiFactory, property, generateDefaultInitializers)
+    var declaration = createVariableDeclaration(property, generateDefaultInitializers)
     declaration = container.addBefore(declaration, dummyFirstStatement) as KtProperty
-    container.addBefore(psiFactory.createNewLine(), dummyFirstStatement)
     propertiesDeclarations.add(declaration)
-    val assignment = createVariableAssignment(psiFactory, property)
+    val assignment = createVariableAssignment(property)
     resultStatements.add(property.replace(assignment))
 }
 
-private fun createVariableAssignment(psiFactory: KtPsiFactory, property: KtProperty): KtBinaryExpression {
+private fun createVariableAssignment(property: KtProperty): KtBinaryExpression {
     val propertyName = property.name ?: error("Property should have a name " + property.text)
-    val assignment = psiFactory.createExpression("$propertyName = x") as KtBinaryExpression
+    val assignment = KtPsiFactory(property.project).createExpression("$propertyName = x") as KtBinaryExpression
     val right = assignment.right ?: error("Created binary expression should have a right part " + assignment.text)
     val initializer = property.initializer ?: error("Initializer should exist for property " + property.text)
     right.replace(initializer)
@@ -122,7 +117,7 @@ private fun createVariableAssignment(psiFactory: KtPsiFactory, property: KtPrope
 }
 
 @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
-private fun createVariableDeclaration(psiFactory: KtPsiFactory, property: KtProperty, generateDefaultInitializers: Boolean): KtProperty {
+private fun createVariableDeclaration(property: KtProperty, generateDefaultInitializers: Boolean): KtProperty {
     allowAnalysisOnEdt {
         @OptIn(KaAllowAnalysisFromWriteAction::class)
         allowAnalysisFromWriteAction {
@@ -144,7 +139,7 @@ private fun createVariableDeclaration(psiFactory: KtPsiFactory, property: KtProp
                     else -> null
                 }
 
-                return psiFactory.createProperty(property.name!!, typeString, property.isVar, defaultInitializer)
+                return KtPsiFactory(property.project).createProperty(property.name!!, typeString, property.isVar, defaultInitializer)
             }
         }
     }

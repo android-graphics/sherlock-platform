@@ -7,11 +7,8 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.util.CommonJavaRefactoringUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -21,10 +18,7 @@ public final class MakeStaticUtil {
   public static InternalUsageInfo[] findClassRefsInMember(PsiTypeParameterListOwner member, boolean includeSelf) {
     PsiClass containingClass = member.getContainingClass();
     ArrayList<InternalUsageInfo> classRefs = new ArrayList<>();
-    PsiTreeUtil.processElements(member, e -> {
-      addClassRefs(member, classRefs, containingClass, e, includeSelf);
-      return true;
-    });
+    addClassRefs(member, classRefs, containingClass, member, includeSelf);
     return classRefs.toArray(new InternalUsageInfo[0]);
   }
 
@@ -43,7 +37,7 @@ public final class MakeStaticUtil {
           }
         }
         else {
-          final PsiClass memberContainingClass = findContainingClass(ref, member);
+          final PsiClass memberContainingClass = member.getContainingClass();
           if (!(originalMember instanceof PsiClass) || !isPartOf(memberContainingClass, (PsiClass)originalMember)) {
             if (isPartOf(memberContainingClass, containingClass)) {
               classRefs.add(new InternalUsageInfo(element, member));
@@ -91,17 +85,13 @@ public final class MakeStaticUtil {
         }
       }
     }
+
+    PsiElement[] children = element.getChildren();
+    for (PsiElement child : children) {
+      addClassRefs(originalMember, classRefs, containingClass, child, includeSelf);
+    }
   }
 
-  private static @Nullable PsiClass findContainingClass(@NotNull PsiReferenceExpression ref, @NotNull PsiMember member) {
-    PsiClass memberClass = member.getContainingClass();
-    PsiClass containingClass = PsiUtil.getContainingClass(ref);
-    while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
-      if (!member.hasModifierProperty(PsiModifier.STATIC) && containingClass.hasModifierProperty(PsiModifier.STATIC)) return null;
-      containingClass = PsiUtil.getContainingClass(containingClass);
-    }
-    return containingClass;
-  }
 
   private static boolean isPartOf(PsiClass elementClass, PsiClass containingClass) {
     while(elementClass != null) {

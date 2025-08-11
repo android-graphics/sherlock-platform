@@ -1,4 +1,4 @@
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 fun test() {
     <selection>unresolved[1, 2]</selection>
     unresolved(1, 2)

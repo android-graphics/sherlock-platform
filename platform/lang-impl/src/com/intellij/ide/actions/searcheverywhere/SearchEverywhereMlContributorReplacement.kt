@@ -3,7 +3,6 @@ package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
 
@@ -18,8 +17,7 @@ interface SearchEverywhereMlContributorReplacement {
 
     @JvmStatic
     fun getFirstExtension(): SearchEverywhereMlContributorReplacement? {
-      val extensions = EP_NAME.extensionList
-      return extensions.firstOrNull()
+      return EP_NAME.extensions.firstOrNull()
     }
 
     @JvmStatic
@@ -29,14 +27,4 @@ interface SearchEverywhereMlContributorReplacement {
   }
 
   fun replaceInSeparateTab(contributor: SearchEverywhereContributor<*>): SearchEverywhereContributor<*>
-
-  @ApiStatus.Internal
-  fun configureContributor(newContributor: SearchEverywhereContributor<*>,
-                           parentContributor: SearchEverywhereContributor<*>): SearchEverywhereContributor<*> {
-    // Make sure replacing contributor is disposed when [SearchEverywhereUI] is disposed
-    // We achieve that by registering initial contributor, which is a child [Disposable] to [SearchEverywhereUI],
-    // as a parent [Disposable] to a new contributor
-    Disposer.register(parentContributor, newContributor)
-    return newContributor
-  }
 }

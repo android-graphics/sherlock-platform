@@ -1,5 +1,5 @@
 // "Make 'A' open" "false"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 // ACTION: Introduce import alias
 annotation class A
 

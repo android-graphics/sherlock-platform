@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.ide.projectView.NodeSortKey;
@@ -156,14 +156,16 @@ final class AssociationsEditor implements Disposable {
     return myComponent;
   }
 
-  static @Nullable Object getTreeSelection(JTree tree) {
+  @Nullable
+  static Object getTreeSelection(JTree tree) {
     final TreePath[] selectionPath = tree.getSelectionPaths();
     if (selectionPath == null || selectionPath.length != 1) return null;
     final Object component = selectionPath[0].getLastPathComponent();
     return getObject(component);
   }
 
-  private static @Nullable Object getObject(Object component) {
+  @Nullable
+  private static Object getObject(Object component) {
     if (!(component instanceof DefaultMutableTreeNode node)) return null;
     final Object userObject = node.getUserObject();
     if (!(userObject instanceof ProjectViewNode)) return null;

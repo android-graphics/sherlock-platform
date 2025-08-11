@@ -1,4 +1,3 @@
-// PRIORITY: LOW
 // AFTER-WARNING: Parameter 'i' is never used
 fun foo(b: Boolean?) {
     <caret>when (b) {

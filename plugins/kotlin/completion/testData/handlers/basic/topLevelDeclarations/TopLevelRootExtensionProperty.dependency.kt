@@ -1,2 +1,0 @@
-val String.topLevelExtensionProperty
-    get() = ""

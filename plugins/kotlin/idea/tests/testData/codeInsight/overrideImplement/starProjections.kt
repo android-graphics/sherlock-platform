@@ -8,5 +8,3 @@ interface Base {
 class Derived : Base {
     <caret>
 }
-
-// MEMBER: "foo(c: C<*>): Unit"

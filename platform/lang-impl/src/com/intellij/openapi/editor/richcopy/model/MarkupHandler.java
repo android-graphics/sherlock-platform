@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.editor.richcopy.model;
 
-import org.jetbrains.annotations.ApiStatus;
-
-@ApiStatus.Internal
 public interface MarkupHandler {
   void handleText(int startOffset, int endOffset) throws Exception;
   void handleForeground(int foregroundId)  throws Exception;

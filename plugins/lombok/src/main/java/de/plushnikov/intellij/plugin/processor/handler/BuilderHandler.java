@@ -45,13 +45,13 @@ import static de.plushnikov.intellij.plugin.thirdparty.LombokAddNullAnnotations.
  * @author Michail Plushnikov
  */
 public class BuilderHandler {
-  private static final String ANNOTATION_BUILDER_CLASS_NAME = "builderClassName";
+  private final static String ANNOTATION_BUILDER_CLASS_NAME = "builderClassName";
   private static final String ANNOTATION_BUILD_METHOD_NAME = "buildMethodName";
   private static final String ANNOTATION_BUILDER_METHOD_NAME = "builderMethodName";
   public static final String ANNOTATION_SETTER_PREFIX = "setterPrefix";
 
-  private static final String BUILD_METHOD_NAME = "build";
-  private static final String BUILDER_METHOD_NAME = "builder";
+  private final static String BUILD_METHOD_NAME = "build";
+  private final static String BUILDER_METHOD_NAME = "builder";
   public static final String TO_BUILDER_METHOD_NAME = "toBuilder";
   static final String TO_BUILDER_ANNOTATION_KEY = "toBuilder";
 
@@ -217,7 +217,7 @@ public class BuilderHandler {
 
   public boolean validate(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemSink problemSink) {
     final PsiClass psiClass = psiMethod.getContainingClass();
-    boolean result = null != psiClass && validateAnnotationOnRightType(psiClass, problemSink);
+    boolean result = null!=psiClass && validateAnnotationOnRightType(psiClass, problemSink);
     if (result) {
       final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiMethod);
 
@@ -334,49 +334,56 @@ public class BuilderHandler {
     return result;
   }
 
-  public static @NotNull String getBuildMethodName(@NotNull PsiAnnotation psiAnnotation) {
+  @NotNull
+  public static String getBuildMethodName(@NotNull PsiAnnotation psiAnnotation) {
     final String buildMethodName =
       PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, ANNOTATION_BUILD_METHOD_NAME, BUILD_METHOD_NAME);
     return StringUtil.isEmptyOrSpaces(buildMethodName) ? BUILD_METHOD_NAME : buildMethodName;
   }
 
-  public @NotNull String getBuilderMethodName(@NotNull PsiAnnotation psiAnnotation) {
+  @NotNull
+  public String getBuilderMethodName(@NotNull PsiAnnotation psiAnnotation) {
     final String builderMethodName =
       PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_METHOD_NAME, BUILDER_METHOD_NAME);
     return null == builderMethodName ? BUILDER_METHOD_NAME : builderMethodName;
   }
 
-  private static @NotNull String getSetterPrefix(@NotNull PsiAnnotation psiAnnotation) {
+  @NotNull
+  private static String getSetterPrefix(@NotNull PsiAnnotation psiAnnotation) {
     final String setterPrefix = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, ANNOTATION_SETTER_PREFIX, "");
     return null == setterPrefix ? "" : setterPrefix;
   }
 
+  @NotNull
   @PsiModifier.ModifierConstant
-  private static @NotNull String getBuilderOuterAccessVisibility(@NotNull PsiAnnotation psiAnnotation) {
+  private static String getBuilderOuterAccessVisibility(@NotNull PsiAnnotation psiAnnotation) {
     final String accessVisibility = LombokProcessorUtil.getAccessVisibility(psiAnnotation);
     return null == accessVisibility ? PsiModifier.PUBLIC : accessVisibility;
   }
 
+  @NotNull
   @PsiModifier.ModifierConstant
-  private static @NotNull String getBuilderInnerAccessVisibility(@NotNull PsiAnnotation psiAnnotation) {
+  private static String getBuilderInnerAccessVisibility(@NotNull PsiAnnotation psiAnnotation) {
     final String accessVisibility = getBuilderOuterAccessVisibility(psiAnnotation);
     return PsiModifier.PROTECTED.equals(accessVisibility) ? PsiModifier.PUBLIC : accessVisibility;
   }
 
-  private static @NotNull String getBuilderClassName(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+  @NotNull
+  private static String getBuilderClassName(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     return getBuilderClassName(psiClass, psiAnnotation, null);
   }
 
-  public static @NotNull String getBuilderClassName(@NotNull PsiClass psiClass,
-                                                    @NotNull PsiAnnotation psiAnnotation,
-                                                    @Nullable PsiMethod psiMethod) {
+  @NotNull
+  public static String getBuilderClassName(@NotNull PsiClass psiClass,
+                                           @NotNull PsiAnnotation psiAnnotation,
+                                           @Nullable PsiMethod psiMethod) {
     final String builderClassName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_CLASS_NAME, "");
     if (!StringUtil.isEmptyOrSpaces(builderClassName)) {
       return builderClassName;
     }
 
     String relevantReturnType = psiClass.getName();
-    if (psiClass instanceof PsiAnonymousClass psiAnonymousClass) {
+    if(psiClass instanceof PsiAnonymousClass psiAnonymousClass) {
       relevantReturnType = psiAnonymousClass.getBaseClassType().getClassName();
     }
 
@@ -384,8 +391,7 @@ public class BuilderHandler {
       final PsiType psiMethodReturnType = psiMethod.getReturnType();
       if (psiMethodReturnType instanceof PsiClassType psiClassType) {
         relevantReturnType = psiClassType.getClassName();
-      }
-      else if (null != psiMethodReturnType) {
+      }else if (null != psiMethodReturnType) {
         relevantReturnType = PsiNameHelper.getShortClassName(psiMethodReturnType.getPresentableText());
       }
     }
@@ -393,20 +399,14 @@ public class BuilderHandler {
     return getBuilderClassName(psiClass, relevantReturnType);
   }
 
-  static @NotNull String getBuilderClassName(@NotNull PsiClass psiClass, @Nullable String returnTypeName) {
+  @NotNull
+  static String getBuilderClassName(@NotNull PsiClass psiClass, @Nullable String returnTypeName) {
     final ConfigDiscovery configDiscovery = ConfigDiscovery.getInstance();
     final String builderClassNamePattern = configDiscovery.getStringLombokConfigProperty(BUILDER_CLASS_NAME, psiClass);
     return replace(builderClassNamePattern, "*", capitalize(StringUtil.notNullize(returnTypeName)));
   }
 
-  static boolean hasMethod(@NotNull PsiClass psiClass, @NotNull String builderMethodName, int paramCount) {
-    final Collection<PsiMethod> existingMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
-    return existingMethods.stream()
-      .filter(method -> method.getParameterList().getParametersCount() == paramCount)
-      .map(PsiMethod::getName).anyMatch(builderMethodName::equals);
-  }
-
-  static boolean hasStaticMethod(@NotNull PsiClass psiClass, @NotNull String builderMethodName) {
+  boolean hasMethod(@NotNull PsiClass psiClass, @NotNull String builderMethodName) {
     final Collection<PsiMethod> existingMethods = PsiClassUtil.collectClassStaticMethodsIntern(psiClass);
     return existingMethods.stream().map(PsiMethod::getName).anyMatch(builderMethodName::equals);
   }
@@ -443,7 +443,7 @@ public class BuilderHandler {
                                                             @NotNull PsiClass builderPsiClass,
                                                             @NotNull PsiAnnotation psiAnnotation) {
     final String builderMethodName = getBuilderMethodName(psiAnnotation);
-    if (!builderMethodName.isEmpty() && !hasStaticMethod(containingClass, builderMethodName)) {
+    if (!builderMethodName.isEmpty() && !hasMethod(containingClass, builderMethodName)) {
       final PsiType psiTypeWithGenerics = PsiClassUtil.getTypeWithGenerics(builderPsiClass);
 
       final String blockText = String.format("return new %s();", psiTypeWithGenerics.getCanonicalText(false));
@@ -538,7 +538,8 @@ public class BuilderHandler {
     return factory.createType(builderPsiClass, psiTypes);
   }
 
-  private static @NotNull Stream<BuilderInfo> createBuilderInfos(@NotNull PsiClass psiClass, @Nullable PsiMethod psiClassMethod) {
+  @NotNull
+  private static Stream<BuilderInfo> createBuilderInfos(@NotNull PsiClass psiClass, @Nullable PsiMethod psiClassMethod) {
     final Stream<BuilderInfo> result;
     if (null != psiClassMethod) {
       result = Arrays.stream(psiClassMethod.getParameterList().getParameters()).map(BuilderInfo::fromPsiParameter);
@@ -558,8 +559,7 @@ public class BuilderHandler {
     final PsiSubstitutor builderSubstitutor = getBuilderSubstitutor(psiClass, builderClass);
     final String accessVisibility = getBuilderInnerAccessVisibility(psiAnnotation);
     final String setterPrefix = getSetterPrefix(psiAnnotation);
-    final LombokNullAnnotationLibrary nullAnnotationLibrary =
-      ConfigDiscovery.getInstance().getAddNullAnnotationLombokConfigProperty(psiClass);
+    final LombokNullAnnotationLibrary nullAnnotationLibrary = ConfigDiscovery.getInstance().getAddNullAnnotationLombokConfigProperty(psiClass);
 
     return createBuilderInfos(psiClass, psiClassMethod)
       .map(info -> info.withSubstitutor(builderSubstitutor))
@@ -570,7 +570,8 @@ public class BuilderHandler {
       .collect(Collectors.toList());
   }
 
-  public @NotNull PsiClass createBuilderClass(@NotNull PsiClass psiClass, @Nullable PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
+  @NotNull
+  public PsiClass createBuilderClass(@NotNull PsiClass psiClass, @Nullable PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
     final LombokLightClassBuilder builderClass;
     if (null != psiMethod) {
       builderClass = createEmptyBuilderClass(psiClass, psiMethod, psiAnnotation);
@@ -640,7 +641,8 @@ public class BuilderHandler {
                                                       LombokCopyableAnnotations.JACKSON_COPY_TO_BUILDER);
   }
 
-  private static @NotNull PsiAnnotation createPojoBuilderAnnotation(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+  @NotNull
+  private static PsiAnnotation createPojoBuilderAnnotation(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     final StringBuilder parameters = new StringBuilder();
     final String setterPrefix = getSetterPrefix(psiAnnotation);
     parameters.append("withPrefix=\"");
@@ -657,14 +659,16 @@ public class BuilderHandler {
       .createAnnotationFromText('@' + JACKSON_DATABIND_ANNOTATION_JSON_POJOBUILDER + "(" + parameters + ")", psiClass);
   }
 
-  private static @NotNull LombokLightClassBuilder createEmptyBuilderClass(@NotNull PsiClass psiClass,
-                                                                          @NotNull PsiMethod psiMethod,
-                                                                          @NotNull PsiAnnotation psiAnnotation) {
+  @NotNull
+  private static LombokLightClassBuilder createEmptyBuilderClass(@NotNull PsiClass psiClass,
+                                                                 @NotNull PsiMethod psiMethod,
+                                                                 @NotNull PsiAnnotation psiAnnotation) {
     return createBuilderClass(psiClass, psiMethod,
                               psiMethod.isConstructor() || psiMethod.hasModifierProperty(PsiModifier.STATIC), psiAnnotation);
   }
 
-  private static @NotNull LombokLightClassBuilder createEmptyBuilderClass(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+  @NotNull
+  private static LombokLightClassBuilder createEmptyBuilderClass(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     return createBuilderClass(psiClass, psiClass, true, psiAnnotation);
   }
 
@@ -678,7 +682,8 @@ public class BuilderHandler {
     return Optional.ofNullable(builderClass);
   }
 
-  public @NotNull PsiMethod createToStringMethod(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass builderClass) {
+  @NotNull
+  public PsiMethod createToStringMethod(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass builderClass) {
     return createToStringMethod(psiAnnotation, builderClass, false);
   }
 
@@ -701,10 +706,11 @@ public class BuilderHandler {
     return !isBuilderDefaultSetter;
   }
 
-  private static @NotNull LombokLightClassBuilder createBuilderClass(@NotNull PsiClass psiClass,
-                                                                     @NotNull PsiTypeParameterListOwner psiTypeParameterListOwner,
-                                                                     final boolean isStatic,
-                                                                     @NotNull PsiAnnotation psiAnnotation) {
+  @NotNull
+  private static LombokLightClassBuilder createBuilderClass(@NotNull PsiClass psiClass,
+                                                            @NotNull PsiTypeParameterListOwner psiTypeParameterListOwner,
+                                                            final boolean isStatic,
+                                                            @NotNull PsiAnnotation psiAnnotation) {
     PsiMethod psiMethod = null;
     if (psiTypeParameterListOwner instanceof PsiMethod) {
       psiMethod = (PsiMethod)psiTypeParameterListOwner;
@@ -726,7 +732,8 @@ public class BuilderHandler {
     return classBuilder;
   }
 
-  public static @NotNull Collection<PsiMethod> createConstructors(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+  @NotNull
+  public static Collection<PsiMethod> createConstructors(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     final Collection<PsiMethod> methodsIntern = PsiClassUtil.collectClassConstructorIntern(psiClass);
     final NoArgsConstructorProcessor noArgsConstructorProcessor = getNoArgsConstructorProcessor();
     final String constructorName = noArgsConstructorProcessor.getConstructorName(psiClass);
@@ -738,12 +745,13 @@ public class BuilderHandler {
     return noArgsConstructorProcessor.createNoArgsConstructor(psiClass, PsiModifier.PACKAGE_LOCAL, psiAnnotation);
   }
 
-  public @NotNull PsiMethod createBuildMethod(@NotNull PsiAnnotation psiAnnotation,
-                                              @NotNull PsiClass parentClass,
-                                              @Nullable PsiMethod psiMethod,
-                                              @NotNull PsiClass builderClass,
-                                              @NotNull String buildMethodName,
-                                              List<BuilderInfo> builderInfos) {
+  @NotNull
+  public PsiMethod createBuildMethod(@NotNull PsiAnnotation psiAnnotation,
+                                     @NotNull PsiClass parentClass,
+                                     @Nullable PsiMethod psiMethod,
+                                     @NotNull PsiClass builderClass,
+                                     @NotNull String buildMethodName,
+                                     List<BuilderInfo> builderInfos) {
     final PsiType builderType = getReturnTypeOfBuildMethod(parentClass, psiMethod);
 
     final PsiSubstitutor builderSubstitutor = getBuilderSubstitutor(parentClass, builderClass);
@@ -803,11 +811,12 @@ public class BuilderHandler {
     return true;
   }
 
-  private static @NotNull String createBuildMethodCodeBlockText(@Nullable PsiMethod psiMethod,
-                                                                @NotNull PsiClass psiClass,
-                                                                @NotNull PsiType buildMethodReturnType,
-                                                                @NotNull String buildMethodPrepare,
-                                                                @NotNull String buildMethodParameters) {
+  @NotNull
+  private static String createBuildMethodCodeBlockText(@Nullable PsiMethod psiMethod,
+                                                       @NotNull PsiClass psiClass,
+                                                       @NotNull PsiType buildMethodReturnType,
+                                                       @NotNull String buildMethodPrepare,
+                                                       @NotNull String buildMethodParameters) {
     final String blockText;
 
     final String codeBlockFormat, callExpressionText;
@@ -829,7 +838,8 @@ public class BuilderHandler {
     return blockText;
   }
 
-  private static @NotNull String calculateCallExpressionForMethod(@NotNull PsiMethod psiMethod, @NotNull PsiClass builderClass) {
+  @NotNull
+  private static String calculateCallExpressionForMethod(@NotNull PsiMethod psiMethod, @NotNull PsiClass builderClass) {
     final PsiClass containingClass = psiMethod.getContainingClass();
 
     StringBuilder className = new StringBuilder();

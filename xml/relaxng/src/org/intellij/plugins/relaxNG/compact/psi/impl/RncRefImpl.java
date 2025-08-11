@@ -32,7 +32,8 @@ public class RncRefImpl extends RncElementImpl implements RncRef {
   }
 
   @Override
-  public @Nullable RncDefine getPattern() {
+  @Nullable
+  public RncDefine getPattern() {
     final PsiReference ref = getReference();
     // TODO: honor combine & return virtual element if multiResolve().length > 0
     return ref instanceof PatternReference ? (RncDefine)ref.resolve() : null;

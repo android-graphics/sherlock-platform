@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.codeStyle;
 
@@ -20,7 +20,6 @@ import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.components.ActionLink;
-import com.intellij.ui.components.JBBox;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
@@ -59,7 +58,8 @@ public final class CodeStyleMainPanel extends JPanel implements TabbedLanguageCo
     }
   };
 
-  private static final @NonNls String WAIT_CARD = "CodeStyleSchemesConfigurable.$$$.Wait.placeholder.$$$";
+  @NonNls
+  private static final String WAIT_CARD = "CodeStyleSchemesConfigurable.$$$.Wait.placeholder.$$$";
 
   private final PropertiesComponent myProperties;
 
@@ -144,15 +144,16 @@ public final class CodeStyleMainPanel extends JPanel implements TabbedLanguageCo
     onCurrentSchemeChanged();
   }
 
-  private @NotNull JComponent createLinkComponent() {
+  @NotNull
+  private JComponent createLinkComponent() {
     ActionLink link = new ActionLink(mySetFromAction);
     link.setVerticalAlignment(SwingConstants.BOTTOM);
 
-    JBBox linkBox = new JBBox(BoxLayout.Y_AXIS);
+    Box linkBox = new Box(BoxLayout.Y_AXIS);
     linkBox.add(Box.createVerticalGlue());
     linkBox.add(link);
 
-    JBBox row = new JBBox(BoxLayout.X_AXIS);
+    Box row = new Box(BoxLayout.X_AXIS);
     row.add(Box.createRigidArea(new JBDimension(0, 12)));
     row.add(Box.createHorizontalGlue());
     row.add(linkBox);
@@ -223,7 +224,9 @@ public final class CodeStyleMainPanel extends JPanel implements TabbedLanguageCo
     }
   }
 
-  public @NonNls @Nullable String getHelpTopic() {
+  @NonNls
+  @Nullable
+  public String getHelpTopic() {
     NewCodeStyleSettingsPanel selectedPanel = ensureCurrentPanel();
     return selectedPanel != null
            ? selectedPanel.getHelpTopic()
@@ -282,7 +285,8 @@ public final class CodeStyleMainPanel extends JPanel implements TabbedLanguageCo
     return mySettingsPanels.get(scheme.getName()).isModified();
   }
 
-  public @NotNull OptionsContainingConfigurable getOptionIndexer() {
+  @NotNull
+  public OptionsContainingConfigurable getOptionIndexer() {
     final CodeStyleScheme defaultScheme = CodeStyleSchemes.getInstance().getDefaultScheme();
     final NewCodeStyleSettingsPanel panel = ensurePanel(defaultScheme);
     return panel.getOptionIndexer();
@@ -296,7 +300,8 @@ public final class CodeStyleMainPanel extends JPanel implements TabbedLanguageCo
     }
   }
 
-  private static @NotNull String getSelectedTabPropertyName(@NotNull TabbedLanguageCodeStylePanel panel) {
+  @NotNull
+  private static String getSelectedTabPropertyName(@NotNull TabbedLanguageCodeStylePanel panel) {
     Language language = panel.getDefaultLanguage();
     return language != null ? SELECTED_TAB + "." + language.getID() : SELECTED_TAB;
   }

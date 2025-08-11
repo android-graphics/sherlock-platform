@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection;
 
@@ -6,6 +6,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
  * The context of the {@link LocalInspectionTool} life cycle.
  * @see LocalInspectionTool#buildVisitor(ProblemsHolder, boolean, LocalInspectionToolSession)
  */
+@ApiStatus.NonExtendable
 public final class LocalInspectionToolSession extends UserDataHolderBase {
   private final PsiFile myFile;
   private final TextRange myPriorityRange;
@@ -54,7 +56,7 @@ public final class LocalInspectionToolSession extends UserDataHolderBase {
    * For example, spellchecker plugin might want to skip running itself altogether if minimumSeverity = WARNING.
    * This hint is only a hint, meaning that the inspection might choose to ignore it.
    */
-  public @Nullable HighlightSeverity getMinimumSeverity() {
+  public HighlightSeverity getMinimumSeverity() {
     return myMinimumSeverity;
   }
 }

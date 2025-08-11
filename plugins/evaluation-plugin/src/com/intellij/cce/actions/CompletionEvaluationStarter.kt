@@ -9,23 +9,21 @@ import com.github.ajalt.clikt.parameters.arguments.default
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
-import com.intellij.cce.commands.evaluationCommandExtensions
 import com.intellij.cce.evaluable.EvaluableFeature
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.evaluation.BackgroundStepFactory
 import com.intellij.cce.evaluation.EvaluationProcess
-import com.intellij.cce.evaluation.FinishEvaluationStep
-import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
-import com.intellij.cce.evaluation.step.runInIntellij
+import com.intellij.cce.evaluation.EvaluationRootInfo
 import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
-import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.cce.workspace.EvaluationWorkspace
-import com.intellij.ide.commandNameFromExtension
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.application.ApplicationStarter
-import com.intellij.openapi.application.ex.ApplicationEx.FORCE_EXIT
-import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.bootstrap.commandNameFromExtension
+import com.intellij.warmup.util.importOrOpenProjectAsync
+import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
@@ -37,8 +35,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     get() = ApplicationStarter.NOT_IN_EDT
 
   override fun main(args: List<String>) {
-
-    fun run() = MainEvaluationCommand()
+    MainEvaluationCommand()
       .subcommands(
         FullCommand(),
         GenerateActionsCommand(),
@@ -48,53 +45,56 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
         MergeEvaluations(),
         ContextCollectionEvaluationCommand()
       )
-      .also { command ->
-        evaluationCommandExtensions.forEach {
-          it.extend(command)
-        }
-      }
       .main(args.toList().subList(1, args.size))
-
-
-    val startTimestamp = System.currentTimeMillis()
-    try {
-      run()
-      val delta = 5_000 - (System.currentTimeMillis() - startTimestamp)
-      if (delta > 0) {
-        Thread.sleep(delta) // for graceful shutdown
-      }
-      exit(0)
-    }
-    catch (e: FinishEvaluationStep.EvaluationCompletedWithErrorsException) {
-      fatalError(e.message!!)
-    }
-    catch (e: Exception) {
-      fatalError("Evaluation failed $e. StackTrace: ${stackTraceToString(e)}")
-    }
   }
 
   abstract class EvaluationCommand(name: String, help: String) : CliktCommand(name = name, help = help) {
 
     protected val featureName by argument(name = "Feature name").default("rename")
 
-    protected fun <T : EvaluationStrategy> loadConfig(configPath: Path, strategySerializer: StrategySerializer<T>): Config {
-      try {
-        println("Load config: $configPath")
-        val config = ConfigFactory.load(configPath, strategySerializer)
-        println("Config loaded!")
-        return config
-      }
-      catch (e: Throwable) {
-        fatalError("Error for loading config: $configPath, $e. StackTrace: ${stackTraceToString(e)}")
-        throw e
-      }
+    protected fun <T : EvaluationStrategy> loadConfig(configPath: Path, strategySerializer: StrategySerializer<T>) = try {
+      println("Load config: $configPath")
+      val config = ConfigFactory.load(configPath, strategySerializer)
+      println("Config loaded!")
+      config
+    }
+    catch (e: Throwable) {
+      fatalError("Error for loading config: $configPath, $e. StackTrace: ${stackTraceToString(e)}")
     }
 
     protected fun runPreliminarySteps(feature: EvaluableFeature<*>, workspace: EvaluationWorkspace) {
       for (step in feature.getPreliminaryEvaluationSteps()) {
         println("Starting preliminary step: ${step.name}")
-        step.runInIntellij(null, workspace)
+        step.start(workspace)
       }
+    }
+
+    protected fun loadAndApply(projectPath: String, action: (Project) -> Unit) {
+      val project: Project?
+
+      try {
+        println("Open and load project $projectPath. Operation may take a few minutes.")
+        @Suppress("SSBasedInspection")
+        project = runUnderModalProgressIfIsEdt {
+          importOrOpenProjectAsync(OpenProjectArgsData(FileSystems.getDefault().getPath(projectPath)))
+        }
+        println("Project loaded!")
+
+        try {
+          action(project)
+        }
+        catch (exception: Exception) {
+          throw RuntimeException("Failed to run actions on the project: $exception", exception)
+        }
+      }
+      catch (e: Exception) {
+        fatalError("Project could not be loaded or processed: $e. StackTrace: ${stackTraceToString(e)}")
+      }
+    }
+
+    private fun fatalError(msg: String): Nothing {
+      System.err.println("Evaluation failed: $msg")
+      exitProcess(1)
     }
   }
 
@@ -103,20 +103,20 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
   }
 
   abstract class EvaluationCommandBase(name: String, help: String) : EvaluationCommand(name, help) {
+
     private val configPath by argument(name = "config-path", help = "Path to config").default(ConfigFactory.DEFAULT_CONFIG_NAME)
 
     override fun run() {
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the $featureName")
       val config = loadConfig(Paths.get(configPath), feature.getStrategySerializer())
-      val workspace = EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
-      val datasetContext = DatasetContext(workspace, workspace, configPath)
+      val workspace = EvaluationWorkspace.create(config)
       runPreliminarySteps(feature, workspace)
-      feature.prepareEnvironment(config).use { environment ->
-        val stepFactory = BackgroundStepFactory(feature, config, environment, null, datasetContext)
-        EvaluationProcess.build(environment, stepFactory) {
-          customize()
-          shouldReorderElements = config.reorder.useReordering
-        }.start(workspace)
+      loadAndApply(config.projectPath) { project ->
+        val stepFactory = BackgroundStepFactory(feature, config, project, null, EvaluationRootInfo(true))
+        EvaluationProcess.build({
+                                  customize()
+                                  shouldReorderElements = config.reorder.useReordering
+                                }, stepFactory).startAsync(workspace).get()
       }
     }
 
@@ -148,19 +148,17 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
 
     override fun run() {
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
-      val workspace = EvaluationWorkspace.open(workspacePath, SetupStatsCollectorStep.statsCollectorLogsDirectory)
-      val datasetContext = DatasetContext(workspace, workspace, null)
+      val workspace = EvaluationWorkspace.open(workspacePath)
       val config = workspace.readConfig(feature.getStrategySerializer())
       runPreliminarySteps(feature, workspace)
-      feature.prepareEnvironment(config).use { environment ->
-        val stepFactory = BackgroundStepFactory(feature, config, environment, null, datasetContext)
-        val process = EvaluationProcess.build(environment, stepFactory) {
-          shouldGenerateActions = false
-          shouldInterpretActions = interpretActions
-          shouldReorderElements = reorderElements
-          shouldGenerateReports = generateReport
-        }
-        process.start(workspace)
+      loadAndApply(config.projectPath) { project ->
+        val process = EvaluationProcess.build({
+                                                shouldGenerateActions = false
+                                                shouldInterpretActions = interpretActions
+                                                shouldReorderElements = reorderElements
+                                                shouldGenerateReports = generateReport
+                                              }, BackgroundStepFactory(feature, config, project, null, EvaluationRootInfo(true)))
+        process.startAsync(workspace)
       }
     }
   }
@@ -172,18 +170,18 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     override fun run() {
       val workspacesToCompare = getWorkspaces()
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
-      val config = workspacesToCompare.map { EvaluationWorkspace.open(it, SetupStatsCollectorStep.statsCollectorLogsDirectory) }.buildMultipleEvaluationsConfig(
+      val config = workspacesToCompare.map { EvaluationWorkspace.open(it) }.buildMultipleEvaluationsConfig(
         feature.getStrategySerializer(),
         "COMPARING",
       )
-      val outputWorkspace = EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
-      val datasetContext = DatasetContext(outputWorkspace, null, null)
-      feature.prepareEnvironment(config).use { environment ->
-        val stepFactory = BackgroundStepFactory(feature, config, environment, workspacesToCompare, datasetContext)
-        val process = EvaluationProcess.build(environment, stepFactory) {
-          shouldGenerateReports = true
-        }
-        process.start(outputWorkspace)
+      val outputWorkspace = EvaluationWorkspace.create(config)
+      loadAndApply(config.projectPath) { project ->
+        val process = EvaluationProcess.build({
+                                                shouldGenerateReports = true
+                                              },
+                                              BackgroundStepFactory(feature, config, project, workspacesToCompare,
+                                                                    EvaluationRootInfo(true)))
+        process.startAsync(outputWorkspace)
       }
     }
   }
@@ -209,25 +207,24 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     override fun run() {
       val workspacesToMerge = readWorkspacesFromDirectory(root)
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
-      val config = workspacesToMerge.map { EvaluationWorkspace.open(it, SetupStatsCollectorStep.statsCollectorLogsDirectory) }.buildMultipleEvaluationsConfig(
+      val config = workspacesToMerge.map { EvaluationWorkspace.open(it) }.buildMultipleEvaluationsConfig(
         feature.getStrategySerializer()
       )
-      val outputWorkspace = EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
-      val datasetContext = DatasetContext(outputWorkspace, null, null)
+      val outputWorkspace = EvaluationWorkspace.create(config)
       for (workspacePath in workspacesToMerge) {
-        val workspace = EvaluationWorkspace.open(workspacePath, SetupStatsCollectorStep.statsCollectorLogsDirectory)
+        val workspace = EvaluationWorkspace.open(workspacePath)
         val sessionFiles = workspace.sessionsStorage.getSessionFiles()
         for (sessionFile in sessionFiles) {
           outputWorkspace.sessionsStorage.saveSessions(workspace.sessionsStorage.getSessions(sessionFile.first))
         }
       }
       outputWorkspace.saveMetadata()
-      feature.prepareEnvironment(config).use { environment ->
-        val stepFactory = BackgroundStepFactory(feature, config, environment, null, datasetContext)
-        val process = EvaluationProcess.build(environment, stepFactory) {
-          shouldGenerateReports = true
-        }
-        process.start(outputWorkspace)
+      loadAndApply(config.projectPath) { project ->
+        val process = EvaluationProcess.build({
+                                                shouldGenerateReports = true
+                                              },
+                                              BackgroundStepFactory(feature, config, project, null, EvaluationRootInfo(true)))
+        process.startAsync(outputWorkspace)
       }
     }
   }
@@ -247,19 +244,4 @@ private fun readWorkspacesFromDirectory(directory: String): List<String> {
   }
 
   return result
-}
-
-private fun exit(exitCode: Int) {
-  try {
-    ApplicationManagerEx.getApplicationEx().exit(FORCE_EXIT, exitCode)
-    throw IllegalStateException("Process should be finished!!!")
-  }
-  catch (_: Throwable) {
-    exitProcess(exitCode)
-  }
-}
-
-private fun fatalError(msg: String) {
-  System.err.println("Evaluation failed: $msg")
-  exit(1)
 }

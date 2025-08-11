@@ -24,10 +24,8 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.border.Border
 
-internal class OnboardingDialog(
-  var titleGetter: (StartupWizardStage?) -> @NlsContexts.DialogTitle String?,
-  val cancelCallback: () -> Unit,
-) : DialogWrapper(null, null, true, IdeModalityType.IDE, false) {
+class OnboardingDialog(var titleGetter: (StartupWizardStage?) -> @NlsContexts.DialogTitle String?, val cancelCallback: () -> Unit) : DialogWrapper(null, null, true, IdeModalityType.IDE,
+                                                                                                                                            false) {
 
   private val tracker = WizardPageTracker()
 
@@ -129,7 +127,7 @@ internal class OnboardingDialog(
   }
 }
 
-internal interface OnboardingPage: Disposable {
+interface OnboardingPage: Disposable {
   val content: JComponent
   val stage: StartupWizardStage?
   val backgroundImage: Image? get() = null

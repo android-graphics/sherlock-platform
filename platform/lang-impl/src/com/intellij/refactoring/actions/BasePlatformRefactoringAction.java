@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.Language;
@@ -7,7 +7,6 @@ import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
@@ -26,7 +25,7 @@ import java.util.List;
 
 public abstract class BasePlatformRefactoringAction extends BaseRefactoringAction {
   private final CachedValue<Boolean> myHidden = new CachedValueImpl<>(
-    () -> CachedValueProvider.Result.create(calcHidden(), LanguageRefactoringSupport.getInstance()));
+    () -> CachedValueProvider.Result.create(calcHidden(), LanguageRefactoringSupport.INSTANCE));
   private final Condition<RefactoringSupportProvider> myCondition = provider -> getRefactoringHandler(provider) != null;
 
   @Override
@@ -52,7 +51,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
       }
     }
 
-    PsiElement[] psiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (psiElements != null && psiElements.length > 1) {
       RefactoringActionHandler handler = getHandler(psiElements[0].getLanguage(), psiElements[0]);
       if (handler != null && isEnabledOnElements(psiElements)) {
@@ -77,8 +76,9 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
     return null;
   }
 
-  protected @Nullable RefactoringActionHandler getHandler(@NotNull Language language, PsiElement element) {
-    List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.getInstance().allForLanguage(language);
+  @Nullable
+  protected RefactoringActionHandler getHandler(@NotNull Language language, PsiElement element) {
+    List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
     if (providers.isEmpty()) return null;
     if (element == null) return getRefactoringHandler(providers.get(0));
     for (RefactoringSupportProvider provider : providers) {
@@ -96,7 +96,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
 
   @Override
   protected boolean isAvailableForLanguage(final Language language) {
-    List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.getInstance().allForLanguage(language);
+    List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
     return ContainerUtil.find(providers, myCondition) != null;
   }
 
@@ -110,9 +110,11 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
     return false;
   }
 
-  protected abstract @Nullable RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider);
+  @Nullable
+  protected abstract RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider);
 
-  protected @Nullable RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider, PsiElement element) {
+  @Nullable
+  protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider, PsiElement element) {
     return getRefactoringHandler(provider);
   }
 

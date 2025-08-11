@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.filters;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -27,8 +27,9 @@ import java.util.Objects;
  * @author gregsh
  */
 public final class ExceptionExFilterFactory implements ExceptionFilterFactory {
+  @NotNull
   @Override
-  public @NotNull Filter create(@NotNull GlobalSearchScope searchScope) {
+  public Filter create(@NotNull GlobalSearchScope searchScope) {
     return new MyFilter(Objects.requireNonNull(searchScope.getProject()), searchScope);
   }
 
@@ -42,12 +43,12 @@ public final class ExceptionExFilterFactory implements ExceptionFilterFactory {
     private final ExceptionInfoCache myCache;
     private final ExceptionLineParserFactory myFactory = ExceptionLineParserFactory.getInstance();
 
-    MyFilter(@NotNull Project project, final @NotNull GlobalSearchScope scope) {
+    MyFilter(@NotNull Project project, @NotNull final GlobalSearchScope scope) {
       myCache = new ExceptionInfoCache(project, scope);
     }
 
     @Override
-    public Result applyFilter(final @NotNull String line, final int textEndOffset) {
+    public Result applyFilter(@NotNull final String line, final int textEndOffset) {
       return null;
     }
 
@@ -57,10 +58,10 @@ public final class ExceptionExFilterFactory implements ExceptionFilterFactory {
     }
 
     @Override
-    public void applyHeavyFilter(final @NotNull Document copiedFragment,
+    public void applyHeavyFilter(@NotNull final Document copiedFragment,
                                  final int startOffset,
                                  int startLineNumber,
-                                 final @NotNull Consumer<? super AdditionalHighlight> consumer) {
+                                 @NotNull final Consumer<? super AdditionalHighlight> consumer) {
       Map<String, ExceptionWorker.ParsedLine> visited = new HashMap<>();
       ExceptionWorker.ParsedLine emptyInfo = new ExceptionWorker.ParsedLine(TextRange.EMPTY_RANGE, TextRange.EMPTY_RANGE, TextRange.EMPTY_RANGE, null, -1);
 
@@ -84,8 +85,9 @@ public final class ExceptionExFilterFactory implements ExceptionFilterFactory {
         int off = startOffset + lineStartOffset;
         final Color color = NamedColorUtil.getInactiveTextColor();
         consumer.consume(new AdditionalHighlight(off + info.classFqnRange.getStartOffset(), off + info.methodNameRange.getEndOffset()) {
+          @NotNull
           @Override
-          public @NotNull TextAttributes getTextAttributes(@Nullable TextAttributes source) {
+          public TextAttributes getTextAttributes(@Nullable TextAttributes source) {
             return new TextAttributes(null, null, color, EffectType.BOLD_DOTTED_LINE, Font.PLAIN);
           }
         });
@@ -113,8 +115,9 @@ public final class ExceptionExFilterFactory implements ExceptionFilterFactory {
       return worker.getInfo();
     }
 
+    @NotNull
     @Override
-    public @NotNull String getUpdateMessage() {
+    public String getUpdateMessage() {
       return JavaAnalysisBundle.message("highlighting.try.blocks");
     }
   }

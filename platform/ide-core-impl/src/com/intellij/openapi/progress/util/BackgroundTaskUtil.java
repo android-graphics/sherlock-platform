@@ -393,7 +393,12 @@ public final class BackgroundTaskUtil {
    */
   @CalledInAny
   public static @NotNull <L> L syncPublisher(@NotNull Project project, @NotNull Topic<L> topic) throws ProcessCanceledException {
-    return project.getMessageBus().syncPublisher(topic);
+    return ReadAction.compute(() -> {
+      if (project.isDisposed()) {
+        throw new ProcessCanceledException();
+      }
+      return project.getMessageBus().syncPublisher(topic);
+    });
   }
 
   /**

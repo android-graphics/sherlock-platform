@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.roots.ProjectRootManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -66,14 +65,12 @@ class MavenDontExcludeTargetTest : MavenMultiVersionImportingTestCase() {
     val fileIndex = ProjectRootManager.getInstance(project).getFileIndex()
 
     withContext(Dispatchers.EDT) {
-      writeIntentReadAction {
-        assert(fileIndex.isInContent(classA))
-        assert(fileIndex.isInContent(testClass))
-        assert(fileIndex.isInContent(a))
-        assert(fileIndex.isInContent(aaa))
-        assert(!fileIndex.isInContent(realClassA))
-        assert(!fileIndex.isInContent(realTestClass))
-      }
+      assert(fileIndex.isInContent(classA))
+      assert(fileIndex.isInContent(testClass))
+      assert(fileIndex.isInContent(a))
+      assert(fileIndex.isInContent(aaa))
+      assert(!fileIndex.isInContent(realClassA))
+      assert(!fileIndex.isInContent(realTestClass))
     }
   }
 }

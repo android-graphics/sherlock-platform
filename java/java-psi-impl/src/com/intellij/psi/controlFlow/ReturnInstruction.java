@@ -16,7 +16,6 @@ public class ReturnInstruction extends GoToInstruction {
     myCallInstruction = callInstruction;
   }
 
-  @Override
   public String toString() {
     return "RETURN FROM " + getProcBegin() + (offset == 0 ? "" : " TO "+offset);
   }

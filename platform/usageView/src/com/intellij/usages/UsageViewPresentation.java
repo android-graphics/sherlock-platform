@@ -56,7 +56,9 @@ public class UsageViewPresentation {
     myTabText = tabText;
   }
 
-  public @NotNull @NlsSafe String getScopeText() {
+  @NotNull
+  @NlsSafe
+  public String getScopeText() {
     return myScopeText;
   }
 
@@ -97,7 +99,9 @@ public class UsageViewPresentation {
     mySearchString = searchString;
   }
 
-  public @NlsContexts.ListItem @Nullable("null means the targets node must not be visible") String getTargetsNodeText() {
+  @NlsContexts.ListItem
+  @Nullable("null means the targets node must not be visible")
+  public String getTargetsNodeText() {
     return myTargetsNodeText;
   }
 
@@ -113,7 +117,8 @@ public class UsageViewPresentation {
     myShowCancelButton = showCancelButton;
   }
 
-  public @NotNull @NlsContexts.ListItem String getNonCodeUsagesString() {
+  @NotNull
+  public @NlsContexts.ListItem String getNonCodeUsagesString() {
     return myNonCodeUsagesString;
   }
 
@@ -121,7 +126,8 @@ public class UsageViewPresentation {
     myNonCodeUsagesString = nonCodeUsagesString;
   }
 
-  public @NotNull @NlsContexts.ListItem String getCodeUsagesString() {
+  @NotNull
+  public @NlsContexts.ListItem String getCodeUsagesString() {
     return myCodeUsagesString;
   }
 

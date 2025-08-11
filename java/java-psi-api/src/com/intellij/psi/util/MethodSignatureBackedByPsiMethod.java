@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.psi.util;
 
 import com.intellij.diagnostic.PluginException;
@@ -22,8 +36,9 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     myName = method.getName();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return myName;
   }
 
@@ -46,15 +61,18 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     return super.equals(o);
   }
 
-  public @NotNull PsiMethod getMethod() {
+  @NotNull
+  public PsiMethod getMethod() {
     return myMethod;
   }
 
-  public static @NotNull MethodSignatureBackedByPsiMethod create(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
+  @NotNull
+  public static MethodSignatureBackedByPsiMethod create(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
     return create(method, substitutor, PsiUtil.isRawSubstitutor(method, substitutor));
   }
 
-  public static @NotNull MethodSignatureBackedByPsiMethod create(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor, boolean isRaw) {
+  @NotNull
+  public static MethodSignatureBackedByPsiMethod create(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor, boolean isRaw) {
     PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
     if (isRaw) {
       substitutor = JavaPsiFacade.getElementFactory(method.getProject()).createRawSubstitutor(substitutor, methodTypeParameters);

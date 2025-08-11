@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
-import com.intellij.openapi.application.WriteIntentReadAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,7 +67,7 @@ final class PingEDT {
 
   private boolean processNext() {
     pinged = false;
-    WriteIntentReadAction.run(pingAction);
+    pingAction.run();
     return pinged;
   }
 

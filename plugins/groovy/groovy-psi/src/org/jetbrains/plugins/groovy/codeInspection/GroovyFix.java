@@ -36,8 +36,9 @@ public abstract class GroovyFix implements LocalQuickFix {
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       throw new UnsupportedOperationException();
     }
   };

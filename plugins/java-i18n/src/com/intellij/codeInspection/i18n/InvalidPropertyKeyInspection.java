@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -28,7 +28,8 @@ import java.util.*;
 
 public final class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
-  public @NotNull String getShortName() {
+  @NotNull
+  public String getShortName() {
     return "UnresolvedPropertyKey";
   }
 
@@ -256,8 +257,9 @@ public final class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalIns
       );
     }
 
-    private static @NotNull List<PropertiesFile> filterNotInLibrary(@NotNull Project project,
-                                                                    @NotNull List<? extends PropertiesFile> propertiesFiles) {
+    @NotNull
+    private static List<PropertiesFile> filterNotInLibrary(@NotNull Project project,
+                                                           @NotNull List<? extends PropertiesFile> propertiesFiles) {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
       final List<PropertiesFile> result = new ArrayList<>(propertiesFiles.size());

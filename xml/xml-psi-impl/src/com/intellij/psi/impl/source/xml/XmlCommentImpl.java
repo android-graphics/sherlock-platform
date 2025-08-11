@@ -14,9 +14,7 @@ import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.xml.XmlElementType.XML_COMMENT;
-
-public class XmlCommentImpl extends XmlElementImpl implements XmlComment, PsiMetaOwner, PsiLanguageInjectionHost {
+public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlElementType, PsiMetaOwner, PsiLanguageInjectionHost {
   public XmlCommentImpl() {
     super(XML_COMMENT);
   }
@@ -43,13 +41,13 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, PsiMet
 
   @Override
   public XmlTag getParentTag() {
-    if (getParent() instanceof XmlTag) return (XmlTag)getParent();
+    if(getParent() instanceof XmlTag) return (XmlTag)getParent();
     return null;
   }
 
   @Override
   public XmlTagChild getNextSiblingInTag() {
-    if (getParent() instanceof XmlTag) {
+    if(getParent() instanceof XmlTag) {
       PsiElement sibling = getNextSibling();
       return sibling instanceof XmlTagChild ? (XmlTagChild)sibling : null;
     }
@@ -58,7 +56,7 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, PsiMet
 
   @Override
   public XmlTagChild getPrevSiblingInTag() {
-    if (getParent() instanceof XmlTag) {
+    if(getParent() instanceof XmlTag) {
       PsiElement sibling = getPrevSibling();
       return sibling instanceof XmlTagChild ? (XmlTagChild)sibling : null;
     }

@@ -121,9 +121,8 @@ class KotlinMoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
 
     }
 
-    override fun retargetUsages(usages: List<UsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>): List<UsageInfo> {
+    override fun retargetUsages(usages: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>?) {
         // usages are processed through `FileUsagesWrapper`
-        return usages
     }
 
     override fun postProcessUsages(usages: Array<out UsageInfo>, newDirMapper: Function<in PsiDirectory, out PsiDirectory>) {

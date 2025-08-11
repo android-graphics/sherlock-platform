@@ -1,6 +1,14 @@
 // "Initialize with constructor parameter" "false"
-// IGNORE_IRRELEVANT_ACTIONS
+// ACTION: Add getter
+// ACTION: Add initializer
+// ACTION: Apply all 'Add modifier' fixes in file
+// ACTION: Convert member to extension
+// ACTION: Convert property to function
+// ACTION: Introduce backing property
+// ACTION: Make 'b' 'abstract'
+// ACTION: Move to companion object
 // ERROR: Property must be initialized or be abstract
+// IGNORE_K2
 
 actual class SimpleWConstructor {
     val <caret>b: String

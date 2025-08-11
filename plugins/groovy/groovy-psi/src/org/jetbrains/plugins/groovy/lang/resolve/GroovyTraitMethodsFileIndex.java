@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -46,14 +46,16 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
   private static final ID<Integer, ByteArraySequence> INDEX_ID = ID.create("groovy.trait.methods");
   private static final @NonNls String HELPER_SUFFIX = "$Trait$Helper.class";
 
-  private final @NotNull StubTreeSerializer myStubTreeSerializer;
+  @NotNull
+  private final StubTreeSerializer myStubTreeSerializer;
 
   public GroovyTraitMethodsFileIndex() {
     myStubTreeSerializer = new ShareableStubTreeSerializer();
   }
 
+  @NotNull
   @Override
-  public @NotNull ID<Integer, ByteArraySequence> getName() {
+  public ID<Integer, ByteArraySequence> getName() {
     return INDEX_ID;
   }
 
@@ -62,8 +64,9 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
     return ClassFileStubBuilder.STUB_VERSION + 6;
   }
 
+  @NotNull
   @Override
-  public @NotNull InputFilter getInputFilter() {
+  public InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {
@@ -72,8 +75,9 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
     };
   }
 
+  @NotNull
   @Override
-  public @NotNull SingleEntryIndexer<ByteArraySequence> getIndexer() {
+  public SingleEntryIndexer<ByteArraySequence> getIndexer() {
     return new SingleEntryIndexer<>(false) {
       @Override
       protected ByteArraySequence computeValue(@NotNull FileContent inputData) {
@@ -86,8 +90,9 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
     };
   }
 
+  @NotNull
   @Override
-  public @NotNull DataExternalizer<ByteArraySequence> getValueExternalizer() {
+  public DataExternalizer<ByteArraySequence> getValueExternalizer() {
     return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, ByteArraySequence value) throws IOException {
@@ -106,7 +111,8 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
     };
   }
 
-  public static @Nullable PsiJavaFileStub index(@NotNull VirtualFile file, byte @NotNull [] content) {
+  @Nullable
+  public static PsiJavaFileStub index(@NotNull VirtualFile file, byte @NotNull [] content) {
     try {
       PsiJavaFileStub root = new PsiJavaFileStubImpl("", true);
       new ClassReader(content).accept(new GrTraitMethodVisitor(file, root), EMPTY_ATTRIBUTES, ClassReader.SKIP_CODE);
@@ -147,13 +153,15 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
     @Override
     public void visitInnerClass(String name, String outerName, String innerName, int access) { }
 
+    @Nullable
     @Override
-    public @Nullable FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+    public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
       return null;
     }
 
+    @Nullable
     @Override
-    public @Nullable MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+    public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       if ((access & ACC_SYNTHETIC) == 0 && (access & ACC_STATIC) != 0 && name != null) {
         Type[] args = Type.getArgumentTypes(desc);
         if (args.length > 0 && args[0].getSort() == Type.OBJECT && CommonClassNames.JAVA_LANG_CLASS.equals(args[0].getClassName())) {
@@ -165,7 +173,8 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
     }
   }
 
-  public static @NotNull Collection<PsiMethod> getStaticTraitMethods(@NotNull ClsClassImpl trait) {
+  @NotNull
+  public static Collection<PsiMethod> getStaticTraitMethods(@NotNull ClsClassImpl trait) {
     PsiFile psiFile = trait.getContainingFile();
     if (!(psiFile instanceof PsiJavaFile)) return Collections.emptyList();
 

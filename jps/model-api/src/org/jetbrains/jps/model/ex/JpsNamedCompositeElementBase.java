@@ -1,4 +1,18 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.jps.model.ex;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -7,12 +21,11 @@ import org.jetbrains.jps.model.JpsNamedElement;
 
 public abstract class JpsNamedCompositeElementBase<Self extends JpsNamedCompositeElementBase<Self>> extends JpsCompositeElementBase<Self>
   implements JpsNamedElement {
-  private @NlsSafe String name;
+  private @NlsSafe String myName;
 
   protected JpsNamedCompositeElementBase(@NlsSafe @NotNull String name) {
     super();
-
-    this.name = name;
+    myName = name;
   }
 
   /**
@@ -20,19 +33,19 @@ public abstract class JpsNamedCompositeElementBase<Self extends JpsNamedComposit
    * write the corresponding code in your class directly.
    */
   @Deprecated
-  protected JpsNamedCompositeElementBase(@NotNull JpsNamedCompositeElementBase<Self> original) {
+  protected JpsNamedCompositeElementBase(JpsNamedCompositeElementBase<Self> original) {
     super(original);
-
-    name = original.name;
+    myName = original.myName;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
-    return name;
+  public String getName() {
+    return myName;
   }
 
   @Override
   public void setName(@NlsSafe @NotNull String name) {
-    this.name = name;
+    myName = name;
   }
 }

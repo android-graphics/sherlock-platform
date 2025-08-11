@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.libraries.impl;
 
 import com.intellij.openapi.Disposable;
@@ -69,8 +69,9 @@ final class LibraryPresentationManagerImpl extends LibraryPresentationManager im
     return (LibraryPresentationProvider<P>)providers.get(kind);
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getNamedLibraryIcon(@NotNull Library library, @Nullable StructureConfigurableContext context) {
+  public Icon getNamedLibraryIcon(@NotNull Library library, @Nullable StructureConfigurableContext context) {
     final Icon icon = getCustomIcon(library, context);
     return icon != null ? icon : PlatformIcons.LIBRARY_ICON;
   }
@@ -89,8 +90,9 @@ final class LibraryPresentationManagerImpl extends LibraryPresentationManager im
     return null;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<Icon> getCustomIcons(@NotNull Library library, StructureConfigurableContext context) {
+  public List<Icon> getCustomIcons(@NotNull Library library, StructureConfigurableContext context) {
     final VirtualFile[] files = getLibraryFiles(library, context);
     final List<Icon> icons = new SmartList<>();
     LibraryDetectionManager.getInstance().processProperties(Arrays.asList(files), new LibraryDetectionManager.LibraryPropertiesProcessor() {
@@ -107,7 +109,7 @@ final class LibraryPresentationManagerImpl extends LibraryPresentationManager im
   }
 
   @Override
-  public boolean isLibraryOfKind(@NotNull List<? extends VirtualFile> files, final @NotNull LibraryKind kind) {
+  public boolean isLibraryOfKind(@NotNull List<? extends VirtualFile> files, @NotNull final LibraryKind kind) {
     return !LibraryDetectionManager.getInstance().processProperties(files, new LibraryDetectionManager.LibraryPropertiesProcessor() {
       @Override
       public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind processedKind, @NotNull P properties) {
@@ -119,7 +121,7 @@ final class LibraryPresentationManagerImpl extends LibraryPresentationManager im
   @Override
   public boolean isLibraryOfKind(@NotNull Library library,
                                  @NotNull LibrariesContainer librariesContainer,
-                                 final @NotNull Set<? extends LibraryKind> acceptedKinds) {
+                                 @NotNull final Set<? extends LibraryKind> acceptedKinds) {
     final LibraryKind type = ((LibraryEx)library).getKind();
     if (type != null && acceptedKinds.contains(type)) return true;
 
@@ -132,14 +134,16 @@ final class LibraryPresentationManagerImpl extends LibraryPresentationManager im
     });
   }
 
+  @NotNull
   @Override
-  public @NotNull List<String> getDescriptions(@NotNull Library library, StructureConfigurableContext context) {
+  public List<String> getDescriptions(@NotNull Library library, StructureConfigurableContext context) {
     final VirtualFile[] files = getLibraryFiles(library, context);
     return getDescriptions(files, Collections.emptySet());
   }
 
+  @NotNull
   @Override
-  public @NotNull List<@Nls String> getDescriptions(VirtualFile @NotNull [] classRoots, final Set<? extends LibraryKind> excludedKinds) {
+  public List<@Nls String> getDescriptions(VirtualFile @NotNull [] classRoots, final Set<? extends LibraryKind> excludedKinds) {
     final Set<@Nls String> result = new LinkedHashSet<>();
     LibraryDetectionManager.getInstance().processProperties(Arrays.asList(classRoots), new LibraryDetectionManager.LibraryPropertiesProcessor() {
       @Override

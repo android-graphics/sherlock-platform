@@ -113,7 +113,8 @@ final class TBPanelActionGroup extends TBPanel {
       presentation.setEnabledAndVisible(true);
 
       final @NotNull DataContext dataContext = DataManager.getInstance().getDataContext(Helpers.getCurrentFocusComponent());
-      AnActionEvent event = AnActionEvent.createEvent(dataContext, presentation, ActionPlaces.TOUCHBAR_GENERAL, ActionUiKind.TOOLBAR, null);
+      AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.TOUCHBAR_GENERAL, presentation,
+                                              ActionManager.getInstance(), 0, false, true);
       event.setInjectedContext(action.isInInjectedContext());
 
       final boolean result;
@@ -427,9 +428,7 @@ final class TBPanelActionGroup extends TBPanel {
     // but here we expand actions with current-focus-component (theoretically it can cause that some actions will be updated incorrectly)
     DataContext dataContext = Utils.createAsyncDataContext(DataManager.getInstance().getDataContext(Helpers.getCurrentFocusComponent()));
     if (myLastUpdate != null) myLastUpdate.cancel();
-    myLastUpdate = Utils.expandActionGroupAsync(
-      myActionGroup, myFactory, dataContext,
-      ActionPlaces.TOUCHBAR_GENERAL, ActionUiKind.TOOLBAR, false);
+    myLastUpdate = Utils.expandActionGroupAsync(myActionGroup, myFactory, dataContext, ActionPlaces.TOUCHBAR_GENERAL, true, false);
     myLastUpdate.onSuccess(actions -> _applyPresentationChanges(actions)).onProcessed(__ -> myLastUpdate = null);
     if (myStats != null) {
       myStats.incrementCounter(StatsCounters.totalUpdateDurationNs, System.nanoTime() - timeNs);

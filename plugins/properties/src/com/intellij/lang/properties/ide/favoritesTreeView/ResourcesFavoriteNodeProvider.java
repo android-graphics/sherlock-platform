@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.ide.favoritesTreeView;
 
 import com.intellij.ide.favoritesTreeView.FavoriteNodeProvider;
@@ -23,7 +23,7 @@ import java.util.List;
 
 final class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
-  public Collection<AbstractTreeNode<?>> getFavoriteNodes(final DataContext context, final @NotNull ViewSettings viewSettings) {
+  public Collection<AbstractTreeNode<?>> getFavoriteNodes(final DataContext context, @NotNull final ViewSettings viewSettings) {
     final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) {
       return null;
@@ -78,7 +78,8 @@ final class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
   }
 
   @Override
-  public @NotNull String getFavoriteTypeId() {
+  @NotNull
+  public String getFavoriteTypeId() {
     return "resource_bundle";
   }
 

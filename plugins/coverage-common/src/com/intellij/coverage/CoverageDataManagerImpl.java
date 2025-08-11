@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.coverage.view.CoverageViewManager;
@@ -130,7 +130,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     return myActiveBundles.values().stream().findFirst().orElse(null);
   }
 
-  protected @Nullable CoverageSuiteListener createCoverageViewListener() {
+  @Nullable
+  protected CoverageSuiteListener createCoverageViewListener() {
     return new CoverageViewSuiteListener(myProject);
   }
 
@@ -244,7 +245,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   private void closeSuitesBundle(@NotNull CoverageSuitesBundle suite, boolean removeWatches) {
-    if (!myActiveBundles.remove(suite.getCoverageEngine(), suite)) return;
+    if (myActiveBundles.remove(suite.getCoverageEngine()) == null) return;
     CoverageViewManager.getInstance(myProject).closeView(suite);
     if (removeWatches) {
       ExternalCoverageWatchManager.getInstance(myProject).clearWatches();
@@ -348,12 +349,12 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   @Override
-  public void attachToProcess(final @NotNull ProcessHandler handler,
-                              final @NotNull RunConfigurationBase configuration,
+  public void attachToProcess(@NotNull final ProcessHandler handler,
+                              @NotNull final RunConfigurationBase configuration,
                               final RunnerSettings runnerSettings) {
     handler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(final @NotNull ProcessEvent event) {
+      public void processTerminated(@NotNull final ProcessEvent event) {
         processGatheredCoverage(configuration, runnerSettings);
         handler.removeProcessListener(this);
       }
@@ -391,7 +392,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   @Override
-  public void addSuiteListener(final @NotNull CoverageSuiteListener listener, @NotNull Disposable parentDisposable) {
+  public void addSuiteListener(@NotNull final CoverageSuiteListener listener, @NotNull Disposable parentDisposable) {
     myListeners.add(listener);
     Disposer.register(parentDisposable, new Disposable() {
       @Override

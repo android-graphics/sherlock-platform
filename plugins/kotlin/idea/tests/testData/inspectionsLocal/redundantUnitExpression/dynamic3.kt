@@ -1,6 +1,4 @@
 // PROBLEM: none
-// K2_ERROR: Unsupported [dynamic type].
-// K2_ERROR: Unsupported [dynamic type].
 // ERROR: Unsupported [Dynamic types are not supported in this context]
 // ERROR: Unsupported [Dynamic types are not supported in this context]
 

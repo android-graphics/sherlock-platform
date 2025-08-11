@@ -12,11 +12,10 @@ import org.jetbrains.kotlin.idea.base.psi.shouldLambdaParameterBeNamed
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getOutermostParenthesizerOrThis
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isLambdaOutsideParentheses
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
-import org.jetbrains.kotlin.utils.exceptions.checkWithAttachment
+import org.jetbrains.kotlin.utils.checkWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 import org.jetbrains.kotlin.utils.sure
@@ -87,7 +86,7 @@ abstract class KotlinIntroduceVariableContext(
         addToReferences: Boolean,
         lambdaArgumentName: Name?,
     ): KtExpression {
-        val isActualExpression = actualExpression.getOutermostParenthesizerOrThis() == expressionToReplace
+        val isActualExpression = actualExpression == expressionToReplace
 
         val replacement = psiFactory.createExpression(nameSuggestions.single().first())
         val substringInfo = expressionToReplace.extractableSubstringInfo
@@ -132,11 +131,11 @@ abstract class KotlinIntroduceVariableContext(
             val propertyText = buildString {
                 append("$varOvVal ")
                 val single = nameSuggestions.single()
-                checkWithAttachment(single.isNotEmpty(), {
+                checkWithAttachment(single.isNotEmpty(), lazyMessage = {
                     "nameSuggestions: $nameSuggestions"
-                }) {
-                    withPsiEntry("expression.kt", expression)
-                }
+                }, {
+                    it.withPsiAttachment("expression", expression)
+                })
                 append(single.first())
                 append(" = ")
                 append(initializerText)

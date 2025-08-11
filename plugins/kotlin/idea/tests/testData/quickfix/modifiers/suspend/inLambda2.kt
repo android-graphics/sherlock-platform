@@ -1,5 +1,5 @@
 // "Make test suspend" "false"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 // ACTION: Convert to single-line lambda
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Introduce import alias

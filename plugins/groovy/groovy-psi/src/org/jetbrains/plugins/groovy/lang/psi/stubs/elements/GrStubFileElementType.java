@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.lang.ASTNode;
@@ -35,8 +35,9 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
   @Override
   public StubBuilder getBuilder() {
     return new DefaultStubBuilder() {
+      @NotNull
       @Override
-      protected @NotNull StubElement createStubForFile(final @NotNull PsiFile file) {
+      protected StubElement createStubForFile(@NotNull final PsiFile file) {
         if (file instanceof GroovyFile) {
           return new GrFileStub((GroovyFile)file);
         }
@@ -74,19 +75,21 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
   }
 
   @Override
-  public @NotNull String getExternalId() {
+  @NotNull
+  public String getExternalId() {
     return "groovy.FILE";
   }
 
   @Override
-  public void serialize(final @NotNull GrFileStub stub, final @NotNull StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull final GrFileStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName().toString());
     dataStream.writeBoolean(stub.isScript());
     GrStubUtils.writeStringArray(dataStream, stub.getAnnotations());
   }
 
+  @NotNull
   @Override
-  public @NotNull GrFileStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public GrFileStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     StringRef name = dataStream.readName();
     boolean isScript = dataStream.readBoolean();
     return new GrFileStub(name, isScript, GrStubUtils.readStringArray(dataStream));

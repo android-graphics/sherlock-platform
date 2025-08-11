@@ -168,7 +168,7 @@ class JDOMCoreNavigator extends DefaultNavigator {
   @Override
   public final String getElementQName(Object element) {
     Element e = (Element)element;
-    if (e.getNamespace().getPrefix().isEmpty()) {
+    if (e.getNamespace().getPrefix().length() == 0) {
       return e.getName();
     }
     return e.getNamespacePrefix() + ":" + e.getName();
@@ -197,7 +197,7 @@ class JDOMCoreNavigator extends DefaultNavigator {
   @Override
   public final String getAttributeQName(Object att) {
     Attribute attribute = (Attribute)att;
-    if (attribute.getNamespacePrefix().isEmpty()) {
+    if (attribute.getNamespacePrefix().length() == 0) {
       return attribute.getName();
     }
     return attribute.getNamespacePrefix() + ":" + attribute.getName();

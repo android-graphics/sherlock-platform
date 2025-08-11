@@ -9,8 +9,7 @@ import com.intellij.find.impl.livePreview.SearchResults
 import com.intellij.find.impl.livePreview.SearchResults.SearchResultsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -31,8 +30,7 @@ internal class CombinedEditorSearchSession(private val project: Project,
                                            private var currentEditor: Editor,
                                            private val closeAction: () -> Unit,
                                            parentComponent: JComponent,
-                                           disposableParent: Disposable
-) : SearchSession, UiDataProvider {
+                                           disposableParent: Disposable) : SearchSession {
 
   private val disposable = Disposer.newCheckedDisposable().also {
     Disposer.register(it, this::close)
@@ -73,7 +71,7 @@ internal class CombinedEditorSearchSession(private val project: Project,
   }
 
   init {
-    searchComponent = SearchReplaceComponent.buildFor(project, parentComponent, this)
+    searchComponent = SearchReplaceComponent.buildFor(project, parentComponent)
       .addPrimarySearchActions(*createPrimarySearchActions())
       .addExtraSearchActions(
         ToggleMatchCase(),
@@ -83,6 +81,7 @@ internal class CombinedEditorSearchSession(private val project: Project,
       .addExtraReplaceAction(TogglePreserveCaseAction())
       .addReplaceFieldActions(PrevOccurrenceAction(false),
                               NextOccurrenceAction(false))
+      .withDataProvider(MyDataProvider())
       .withCloseAction(::close)
       .build()
 
@@ -377,9 +376,13 @@ internal class CombinedEditorSearchSession(private val project: Project,
     }
   }
 
-  override fun uiDataSnapshot(sink: DataSink) {
-    DataSink.uiDataSnapshot(sink, currentSession)
-    sink[SearchSession.KEY] = this
+  private inner class MyDataProvider : DataProvider {
+    override fun getData(dataId: String): Any? {
+      return when {
+        SearchSession.KEY.`is`(dataId) -> this@CombinedEditorSearchSession
+        else -> currentSession.getData(dataId)
+      }
+    }
   }
 
   private class WiderStatusTextAction : StatusTextAction() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xdebugger;
 
@@ -12,11 +12,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XDropFrameHandler;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XSuspendContext;
-import com.intellij.xdebugger.frame.XValueMarkerProvider;
-import com.intellij.xdebugger.mixedMode.XMixedModeDebugProcessExtension;
+import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.ApiStatus;
@@ -39,7 +35,7 @@ import javax.swing.event.HyperlinkListener;
  * Otherwise, use method {@link XDebuggerManager#startSessionAndShowTab} to start a new debugging session.
  */
 public abstract class XDebugProcess {
-  private final @NotNull XDebugSession mySession;
+  private final XDebugSession mySession;
   private ProcessHandler myProcessHandler;
 
   /**
@@ -49,7 +45,7 @@ public abstract class XDebugProcess {
     mySession = session;
   }
 
-  public final @NotNull XDebugSession getSession() {
+  public final XDebugSession getSession() {
     return mySession;
   }
 
@@ -63,7 +59,8 @@ public abstract class XDebugProcess {
   /**
    * @return editor provider which will be used to produce editors for "Evaluate" and "Set Value" actions
    */
-  public abstract @NotNull XDebuggerEditorsProvider getEditorsProvider();
+  @NotNull
+  public abstract XDebuggerEditorsProvider getEditorsProvider();
 
   /**
    * Called when {@link XDebugSession} is initialized and breakpoints are registered in
@@ -145,7 +142,8 @@ public abstract class XDebugProcess {
   /**
    * Implement {@link XSmartStepIntoHandler} and return its instance from this method to enable the Smart Step Into action.
    */
-  public @Nullable XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
+  @Nullable
+  public XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
     return null;
   }
 
@@ -153,7 +151,8 @@ public abstract class XDebugProcess {
    * Implement {@link XDropFrameHandler} and return its instance from this method to enable the Drop Frame action.
    */
   @ApiStatus.Experimental
-  public @Nullable XDropFrameHandler getDropFrameHandler() {
+  @Nullable
+  public XDropFrameHandler getDropFrameHandler() {
     return null;
   }
 
@@ -162,7 +161,8 @@ public abstract class XDebugProcess {
    * support for alternative view of the execution position, like a disassembly view.
    */
   @ApiStatus.Experimental
-  public @Nullable XAlternativeSourceHandler getAlternativeSourceHandler() {
+  @Nullable
+  public XAlternativeSourceHandler getAlternativeSourceHandler() {
     return null;
   }
 
@@ -174,7 +174,8 @@ public abstract class XDebugProcess {
     throw new AbstractMethodError();
   }
 
-  public @NotNull Promise<Object> stopAsync() {
+  @NotNull
+  public Promise<Object> stopAsync() {
     stop();
     return Promises.resolvedPromise();
   }
@@ -231,11 +232,13 @@ public abstract class XDebugProcess {
     return true;
   }
 
-  protected @Nullable ProcessHandler doGetProcessHandler() {
+  @Nullable
+  protected ProcessHandler doGetProcessHandler() {
     return null;
   }
 
-  public final @NotNull ProcessHandler getProcessHandler() {
+  @NotNull
+  public final ProcessHandler getProcessHandler() {
     if (myProcessHandler == null) {
       myProcessHandler = doGetProcessHandler();
       if (myProcessHandler == null) {
@@ -245,7 +248,8 @@ public abstract class XDebugProcess {
     return myProcessHandler;
   }
 
-  public @NotNull ExecutionConsole createConsole() {
+  @NotNull
+  public ExecutionConsole createConsole() {
     return TextConsoleBuilderFactory.getInstance().createBuilder(getSession().getProject()).getConsole();
   }
 
@@ -253,7 +257,8 @@ public abstract class XDebugProcess {
    * Override this method to enable the 'Mark Object' action.
    * @return new instance of {@link XValueMarkerProvider}'s implementation, or {@code null} if the 'Mark Object' feature isn't supported
    */
-  public @Nullable XValueMarkerProvider<?,?> createValueMarkerProvider() {
+  @Nullable
+  public XValueMarkerProvider<?,?> createValueMarkerProvider() {
     return null;
   }
 
@@ -270,14 +275,16 @@ public abstract class XDebugProcess {
     return mySession.isStopped() ? XDebuggerBundle.message("debugger.state.message.disconnected") : XDebuggerBundle.message("debugger.state.message.connected");
   }
 
-  public @Nullable HyperlinkListener getCurrentStateHyperlinkListener() {
+  @Nullable
+  public HyperlinkListener getCurrentStateHyperlinkListener() {
     return null;
   }
 
   /**
    * Override this method to customize the content of the tab in the 'Debug' tool window.
    */
-  public @NotNull XDebugTabLayouter createTabLayouter() {
+  @NotNull
+  public XDebugTabLayouter createTabLayouter() {
     return new XDebugTabLayouter() {
     };
   }
@@ -291,7 +298,8 @@ public abstract class XDebugProcess {
     return false;
   }
 
-  public @Nullable XDebuggerEvaluator getEvaluator() {
+  @Nullable
+  public XDebuggerEvaluator getEvaluator() {
     XStackFrame frame = getSession().getCurrentStackFrame();
     return frame == null ? null : frame.getEvaluator();
   }
@@ -314,15 +322,5 @@ public abstract class XDebugProcess {
   @ApiStatus.Experimental
   public boolean dependsOnPlugin(@NotNull IdeaPluginDescriptor descriptor) {
     return false;
-  }
-
-  /**
-   * Provides an extension to support mixed mode debugging
-   */
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
-  @Nullable
-  public XMixedModeDebugProcessExtension getMixedModeDebugProcessExtension() {
-    return null;
   }
 }

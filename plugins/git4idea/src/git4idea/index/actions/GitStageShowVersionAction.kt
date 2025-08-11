@@ -4,7 +4,6 @@ package git4idea.index.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -12,18 +11,11 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.OpenSourceUtil
-import git4idea.GitDisposable
-import git4idea.i18n.GitBundle
 import git4idea.index.*
 import git4idea.index.vfs.GitIndexFileSystemRefresher
 import git4idea.index.vfs.GitIndexVirtualFile
 import git4idea.index.vfs.filePath
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.withContext
 
 abstract class GitStageShowVersionAction(private val showStaged: Boolean) : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
@@ -47,33 +39,21 @@ abstract class GitStageShowVersionAction(private val showStaged: Boolean) : Dumb
     val project = e.project ?: return
     val sourceFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
     val root = getRoot(project, sourceFile) ?: return
-    val caret = e.getData(CommonDataKeys.CARET)
-
-    if (showStaged) {
-      GitDisposable.getInstance(project).coroutineScope.childScope("Show staged file").async {
-        val filePath = sourceFile.filePath()
-        withBackgroundProgress(project, GitBundle.message("stage.vfs.read.process", filePath.name), true) {
-          val targetFile = GitIndexFileSystemRefresher.getInstance(project).createFile(root, filePath) ?: return@withBackgroundProgress
-          withContext(Dispatchers.EDT) {
-            navigateToFile(project, targetFile, sourceFile, caret)
-          }
-        }
-      }
+    val targetFile = if (showStaged) {
+      GitIndexFileSystemRefresher.getInstance(project).getFile(root, sourceFile.filePath())
     }
     else {
-      val targetFile = sourceFile.filePath().virtualFile ?: return
-      navigateToFile(project, targetFile, sourceFile, caret)
-    }
-  }
+      sourceFile.filePath().virtualFile
+    } ?: return
 
-  private fun navigateToFile(project: Project, targetFile: VirtualFile, sourceFile: VirtualFile, caret: Caret?) {
+    val caret = e.getData(CommonDataKeys.CARET)
     if (caret == null) {
       OpenSourceUtil.navigate(OpenFileDescriptor(project, targetFile))
+      return
     }
-    else {
-      val targetPosition = getTargetPosition(project, sourceFile, targetFile, caret)
-      OpenSourceUtil.navigate(OpenFileDescriptor(project, targetFile, targetPosition.line, targetPosition.column))
-    }
+
+    val targetPosition = getTargetPosition(project, sourceFile, targetFile, caret)
+    OpenSourceUtil.navigate(OpenFileDescriptor(project, targetFile, targetPosition.line, targetPosition.column))
   }
 
   private fun getTargetPosition(project: Project, sourceFile: VirtualFile, targetFile: VirtualFile, caret: Caret): LogicalPosition {

@@ -107,7 +107,6 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testGenericNotGenericInterfaceMethod() { doTest(); }
   public void testInferredFromCast() { doTest(); }
   public void testReferencedFromSelf() { doTest(); }
-  public void testFriendlyMessageInBadInference() { doTest(); }
 
   private void doTest() {
     doTest(false);

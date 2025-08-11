@@ -1,4 +1,0 @@
-// DISABLE_ERRORS
-expect class <caret>My {
-    constructor()
-}

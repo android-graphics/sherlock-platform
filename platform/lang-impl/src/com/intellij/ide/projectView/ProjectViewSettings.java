@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
@@ -17,7 +17,8 @@ public interface ProjectViewSettings extends ViewSettings {
     return false;
   }
 
-  default @NotNull NodeSortKey getSortKey() {
+  @NotNull
+  default NodeSortKey getSortKey() {
     return NodeSortKey.BY_NAME;
   }
 
@@ -189,15 +190,18 @@ public interface ProjectViewSettings extends ViewSettings {
       return view != null && view.isShowLibraryContents(getPaneID(view));
     }
 
-    private @Nullable ProjectViewDirectoryHelper getProjectViewDirectoryHelper() {
+    @Nullable
+    private ProjectViewDirectoryHelper getProjectViewDirectoryHelper() {
       return project.isDisposed() ? null : ProjectViewDirectoryHelper.getInstance(project);
     }
 
-    private @Nullable ProjectView getProjectView() {
+    @Nullable
+    private ProjectView getProjectView() {
       return project.isDisposed() ? null : ProjectView.getInstance(project);
     }
 
-    private @Nullable String getPaneID(@NotNull ProjectView view) {
+    @Nullable
+    private String getPaneID(@NotNull ProjectView view) {
       return id != null ? id : view.getCurrentViewId();
     }
   }

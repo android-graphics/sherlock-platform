@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
@@ -17,7 +17,7 @@ public class KindSorter implements Sorter {
     this.isPopup = isPopup;
   }
 
-  public static final @NonNls String ID = "KIND";
+  @NonNls public static final String ID = "KIND";
   private final boolean isPopup;
 
   private final Comparator COMPARATOR = new Comparator() {
@@ -55,7 +55,8 @@ public class KindSorter implements Sorter {
   };
 
   @Override
-  public @NotNull Comparator getComparator() {
+  @NotNull
+  public Comparator getComparator() {
     return COMPARATOR;
   }
 
@@ -65,12 +66,14 @@ public class KindSorter implements Sorter {
   }
 
   @Override
-  public @NotNull ActionPresentation getPresentation() {
+  @NotNull
+  public ActionPresentation getPresentation() {
     throw new IllegalStateException();
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return ID;
   }
 }

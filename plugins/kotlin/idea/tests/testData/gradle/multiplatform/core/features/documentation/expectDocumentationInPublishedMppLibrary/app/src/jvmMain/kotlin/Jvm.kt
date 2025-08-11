@@ -1,6 +1,3 @@
-//region Test configuration
-// - hidden: line markers
-//endregion
 import com.example.dumblib.DumbLib
 
 fun jvmFoo() {
@@ -14,4 +11,4 @@ actual object Bar
 /**
  * JVM doc fun bar
  */
-actual fun bar() {}
+actual fun bar()

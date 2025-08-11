@@ -1,4 +1,4 @@
-from typing import Final
+from typing_extensions import Final
 
 NONE: Final = 0
 ParentRelative: Final = 1

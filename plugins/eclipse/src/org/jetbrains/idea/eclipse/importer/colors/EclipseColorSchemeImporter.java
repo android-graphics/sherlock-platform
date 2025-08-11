@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.idea.eclipse.importer.colors;
 
 import com.intellij.execution.process.ConsoleHighlighter;
@@ -26,10 +40,11 @@ import java.io.IOException;
 import java.io.InputStream;
 
 @SuppressWarnings("UseJBColor")
-public final class EclipseColorSchemeImporter implements SchemeImporter<EditorColorsScheme>, EclipseColorThemeElements {
-  private static final String[] ECLIPSE_THEME_EXTENSIONS = {"xml"};
+public class EclipseColorSchemeImporter implements SchemeImporter<EditorColorsScheme>, EclipseColorThemeElements {
 
-  private static final TextAttributesKey[] ATTRIBUTES_TO_COPY = {
+  private final static String[] ECLIPSE_THEME_EXTENSIONS = {"xml"};
+
+  private final static TextAttributesKey[] ATTRIBUTES_TO_COPY = {
     HighlighterColors.BAD_CHARACTER,
     CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES,
     CodeInsightColors.ERRORS_ATTRIBUTES,
@@ -79,7 +94,7 @@ public final class EclipseColorSchemeImporter implements SchemeImporter<EditorCo
     CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES
   };
 
-  private static final ColorKey[] COLORS_TO_COPY = {
+  private final static ColorKey[] COLORS_TO_COPY = {
     EditorColors.ANNOTATIONS_COLOR,
     EditorColors.ANNOTATIONS_LAST_COMMIT_COLOR,
     EditorColors.ADDED_LINES_COLOR,
@@ -95,7 +110,7 @@ public final class EclipseColorSchemeImporter implements SchemeImporter<EditorCo
   //
   // These attributes are referenced only symbolically since they are located outside this module's dependencies.
   //
-  private static final String @NonNls [] EXTERNAL_ATTRIBUTES = {
+  private final static String @NonNls [] EXTERNAL_ATTRIBUTES = {
     "BREAKPOINT_ATTRIBUTES",
     "EXECUTIONPOINT_ATTRIBUTES",
     "NOT_TOP_FRAME_ATTRIBUTES",
@@ -104,7 +119,7 @@ public final class EclipseColorSchemeImporter implements SchemeImporter<EditorCo
     "DEBUGGER_INLINED_VALUES_EXECUTION_LINE"
   };
 
-  private static final String @NonNls [] EXTERNAL_COLORS = {
+  private final static String @NonNls [] EXTERNAL_COLORS = {
     "VCS_ANNOTATIONS_COLOR_1",
     "VCS_ANNOTATIONS_COLOR_2",
     "VCS_ANNOTATIONS_COLOR_3",
@@ -117,11 +132,12 @@ public final class EclipseColorSchemeImporter implements SchemeImporter<EditorCo
     return ECLIPSE_THEME_EXTENSIONS;
   }
 
+  @Nullable
   @Override
-  public @Nullable EditorColorsScheme importScheme(@NotNull Project project,
-                                                   @NotNull VirtualFile selectedFile,
-                                                   @NotNull EditorColorsScheme currentScheme,
-                                                   @NotNull SchemeFactory<? extends EditorColorsScheme> schemeFactory) throws SchemeImportException {
+  public EditorColorsScheme importScheme(@NotNull Project project,
+                                         @NotNull VirtualFile selectedFile,
+                                         @NotNull EditorColorsScheme currentScheme,
+                                         @NotNull SchemeFactory<? extends EditorColorsScheme> schemeFactory) throws SchemeImportException {
     String themeName = readSchemeName(selectedFile);
     if (themeName != null) {
       EditorColorsScheme colorsScheme = schemeFactory.createNewScheme(themeName);
@@ -136,8 +152,8 @@ public final class EclipseColorSchemeImporter implements SchemeImporter<EditorCo
     return readFromStream(selectedFile, null);
   }
 
-  private static String readFromStream(final @NotNull VirtualFile file,
-                                       final @Nullable EclipseThemeReader.OptionHandler optionHandler)
+  private static String readFromStream(@NotNull final VirtualFile file,
+                                       @Nullable final EclipseThemeReader.OptionHandler optionHandler)
     throws SchemeImportException {
     try (InputStream inputStream = file.getInputStream()) {
       EclipseThemeReader themeReader = new EclipseThemeReader(optionHandler);

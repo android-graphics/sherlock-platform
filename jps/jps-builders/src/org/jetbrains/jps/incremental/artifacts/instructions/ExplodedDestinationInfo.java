@@ -10,7 +10,6 @@ public final class ExplodedDestinationInfo extends DestinationInfo {
     super(outputPath, outputPath);
   }
 
-  @Override
   public String toString() {
     return getOutputPath();
   }

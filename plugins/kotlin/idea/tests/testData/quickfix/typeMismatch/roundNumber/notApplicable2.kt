@@ -1,5 +1,5 @@
 // "Round using roundToInt()" "false"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 // ACTION: Change parameter 'x' type of function 'foo' to 'Long'
 // ACTION: Convert expression to 'Int'
 // ACTION: Create function 'foo'

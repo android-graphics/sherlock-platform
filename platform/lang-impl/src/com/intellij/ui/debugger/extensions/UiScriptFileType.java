@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.debugger.extensions;
 
 import com.intellij.lang.LangBundle;
@@ -23,19 +23,22 @@ public final class UiScriptFileType implements FileType {
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return "UI Script";
   }
 
   @Override
-  public @NotNull String getDescription() {
+  @NotNull
+  public String getDescription() {
     return LangBundle.message("filetype.ui.script.description");
   }
 
   public static final String myExtension = "ijs";
 
   @Override
-  public @NotNull String getDefaultExtension() {
+  @NotNull
+  public String getDefaultExtension() {
     return myExtension;
   }
 

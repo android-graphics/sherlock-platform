@@ -1,8 +1,0 @@
-package test
-
-import dependency1.invoke
-import dependency2.invoke
-
-fun usage(a: Any) {
-    a()
-}

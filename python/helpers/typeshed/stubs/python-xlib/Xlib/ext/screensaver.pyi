@@ -1,4 +1,4 @@
-from typing import Final
+from typing_extensions import Final
 
 from Xlib._typing import ErrorHandler
 from Xlib.display import Display

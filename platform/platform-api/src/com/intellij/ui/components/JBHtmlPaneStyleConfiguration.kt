@@ -5,8 +5,7 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.Companion.defaultSpaceAfterParagraph
-import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.Companion.defaultSpaceBeforeParagraph
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.Builder
 import com.intellij.ui.scale.JBUIScale
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -44,7 +43,7 @@ import java.util.*
  */
 class JBHtmlPaneStyleConfiguration private constructor(builder: Builder) {
   @ApiStatus.Internal
-  val colorSchemeProvider: () -> EditorColorsScheme = builder.colorSchemeProvider
+  val colorScheme: EditorColorsScheme = builder.colorScheme
 
   @ApiStatus.Internal
   val editorInlineContext: Boolean = builder.editorInlineContext
@@ -78,6 +77,33 @@ class JBHtmlPaneStyleConfiguration private constructor(builder: Builder) {
   constructor() : this(builder())
 
   constructor(configure: Builder.() -> Unit) : this(builder().also { configure(it) })
+
+  override fun equals(other: Any?): Boolean =
+    other is JBHtmlPaneStyleConfiguration
+    && colorSchemesEqual(colorScheme, other.colorScheme)
+    && inlineCodeParentSelectors == other.inlineCodeParentSelectors
+    && largeCodeFontSizeSelectors == other.largeCodeFontSizeSelectors
+    && enableInlineCodeBackground == other.enableInlineCodeBackground
+    && enableCodeBlocksBackground == other.enableCodeBlocksBackground
+    && useFontLigaturesInCode == other.useFontLigaturesInCode
+    && spaceBeforeParagraph == other.spaceBeforeParagraph
+    && spaceAfterParagraph == other.spaceAfterParagraph
+
+  private fun colorSchemesEqual(colorScheme: EditorColorsScheme, colorScheme2: EditorColorsScheme): Boolean =
+    // Update here when more colors are used from the colorScheme
+    colorScheme.defaultBackground.rgb == colorScheme2.defaultBackground.rgb
+    && colorScheme.defaultForeground.rgb == colorScheme2.defaultForeground.rgb
+    && ElementKind.entries.all {
+      colorScheme.getAttributes(it.colorSchemeKey, false) ==
+        colorScheme2.getAttributes(it.colorSchemeKey, false)
+    }
+
+  override fun hashCode(): Int =
+    Objects.hash(colorScheme.defaultBackground.rgb and 0xffffff,
+                 colorScheme.defaultForeground.rgb and 0xffffff,
+                 inlineCodeParentSelectors, largeCodeFontSizeSelectors,
+                 enableInlineCodeBackground, enableCodeBlocksBackground,
+                 useFontLigaturesInCode, spaceBeforeParagraph, spaceAfterParagraph)
 
   /**
    * Allows overriding default theme styling for [JBHtmlPane] elements, like code
@@ -170,21 +196,7 @@ class JBHtmlPaneStyleConfiguration private constructor(builder: Builder) {
      * Provide an editor color scheme to be used to determine colors of the elements
      * and syntax highlighting.
      */
-    @get:ApiStatus.ScheduledForRemoval()
-    @get:Deprecated("Use colorSchemeProvider instead to properly react for global scheme changes", ReplaceWith("colorSchemeProvider = { colorScheme }"))
-    @set:ApiStatus.ScheduledForRemoval()
-    @set:Deprecated("Use colorSchemeProvider instead to properly react for global scheme changes", ReplaceWith("colorSchemeProvider = { colorScheme }"))
     var colorScheme: EditorColorsScheme = EditorColorsManager.getInstance().globalScheme
-      set(value) {
-        field = value
-        colorSchemeProvider = { value }
-      }
-
-    /**
-     * Provide an editor color scheme to be used to determine colors of the elements
-     * and syntax highlighting.
-     */
-    var colorSchemeProvider: () -> EditorColorsScheme = { EditorColorsManager.getInstance().globalScheme }
 
     /**
      * Whether the [JBHtmlPane] is placed inline within an editor or an equivalent control.
@@ -253,16 +265,8 @@ class JBHtmlPaneStyleConfiguration private constructor(builder: Builder) {
      * Provide an editor color scheme to be used to determine colors of the elements
      * and syntax highlighting.
      */
-    @Deprecated("Use colorSchemeProvider instead to properly react for global scheme changes", ReplaceWith("colorSchemeProvider { colorScheme }"))
     fun colorScheme(colorScheme: EditorColorsScheme): Builder =
-      apply { this.colorSchemeProvider = { colorScheme } }
-
-    /**
-     * Provide an editor color scheme to be used to determine colors of the elements
-     * and syntax highlighting.
-     */
-    fun colorSchemeProvider(colorSchemeProvider: () -> EditorColorsScheme): Builder =
-      apply { this.colorSchemeProvider = colorSchemeProvider }
+      apply { this.colorScheme = colorScheme }
 
     /**
      * Whether the [JBHtmlPane] is placed inline within an editor or an equivalent control.

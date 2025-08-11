@@ -1,6 +1,6 @@
 // "Add parameter to function 'called'" "true"
 // WITH_STDLIB
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 // WITH_NEW_INFERENCE
 
 fun caller() {

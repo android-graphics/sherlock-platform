@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.Expression;
@@ -7,14 +7,12 @@ import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
 /**
  * @author Konstantin Bulenkov
  */
-@ApiStatus.Internal
 public abstract class SplitWordsMacro extends MacroBase {
   private final char mySeparator;
 
@@ -34,15 +32,16 @@ public abstract class SplitWordsMacro extends MacroBase {
     return NameUtil.splitWords(text, mySeparator, this::convertCase);
   }
 
-  protected abstract @NotNull String convertCase(@NotNull String word);
+  @NotNull protected abstract String convertCase(@NotNull String word);
 
   public static final class SnakeCaseMacro extends SplitWordsMacro {
     public SnakeCaseMacro() {
       super("snakeCase", "snakeCase(String)", '_');
     }
 
+    @NotNull
     @Override
-    protected @NotNull String convertCase(@NotNull String word) {
+    protected String convertCase(@NotNull String word) {
       return StringUtil.toLowerCase(word);
     }
   }
@@ -52,8 +51,9 @@ public abstract class SplitWordsMacro extends MacroBase {
       super("lowercaseAndDash", "lowercaseAndDash(String)", '-');
     }
 
+    @NotNull
     @Override
-    protected @NotNull String convertCase(@NotNull String word) {
+    protected String convertCase(@NotNull String word) {
       return StringUtil.toLowerCase(word);
     }
   }
@@ -63,8 +63,9 @@ public abstract class SplitWordsMacro extends MacroBase {
       super("spaceSeparated", "spaceSeparated(String)", ' ');
     }
 
+    @NotNull
     @Override
-    protected @NotNull String convertCase(@NotNull String word) {
+    protected String convertCase(@NotNull String word) {
       return word;
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.connection.request;
 
 import org.jetbrains.annotations.NotNull;
@@ -19,11 +19,13 @@ public class StatsProxyInfo {
     return myProxy == Proxy.NO_PROXY;
   }
 
-  public @NotNull Proxy getProxy() {
+  @NotNull
+  public Proxy getProxy() {
     return myProxy;
   }
 
-  public @Nullable StatsProxyAuthProvider getProxyAuth() {
+  @Nullable
+  public StatsProxyAuthProvider getProxyAuth() {
     return myProxyAuth;
   }
 

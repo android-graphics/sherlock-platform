@@ -1,4 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -17,8 +18,6 @@ import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,9 +34,8 @@ import static com.intellij.openapi.vcs.configurable.VcsDirectoryConfigurationPan
 import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
 
-@ApiStatus.Internal
 public class VcsMappingConfigurationDialog extends DialogWrapper {
-  private final @NotNull Project myProject;
+  @NotNull private final Project myProject;
   private ComboBox<AbstractVcs> myVCSComboBox;
   private TextFieldWithBrowseButton myDirectoryTextField;
   private JPanel myPanel;
@@ -54,10 +52,12 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     super(project, false);
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    var descriptor = createSingleFolderDescriptor()
-      .withTitle(VcsBundle.message("settings.vcs.mapping.browser.select.directory.title"))
-      .withDescription(VcsBundle.message("settings.vcs.mapping.browser.select.directory.description"));
-    myDirectoryTextField.addActionListener(new MyBrowseFolderListener(myDirectoryTextField, project, descriptor));
+    myDirectoryTextField.addActionListener(
+      new MyBrowseFolderListener(VcsBundle.message("settings.vcs.mapping.browser.select.directory.title"),
+                                 VcsBundle.message("settings.vcs.mapping.browser.select.directory.description"),
+                                 myDirectoryTextField,
+                                 project,
+                                 createSingleFolderDescriptor()));
     setMapping(suggestDefaultMapping(project));
     initProjectMessage();
     setTitle(title);
@@ -65,14 +65,11 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     myVCSComboBox.addActionListener(e -> updateVcsConfigurable());
   }
 
-  private static @NotNull VcsDirectoryMapping suggestDefaultMapping(@NotNull Project project) {
-    AbstractVcs[] vcses = ProjectLevelVcsManager.getInstance(project).getAllSupportedVcss();
-    ContainerUtil.sort(vcses, SuggestedVcsComparator.create(project));
-    String defaultVcsName = vcses.length > 0 ? vcses[0].getName() : "";
-
+  @NotNull
+  private static VcsDirectoryMapping suggestDefaultMapping(@NotNull Project project) {
     String basePath = project.getBasePath();
-    if (basePath == null) return VcsDirectoryMapping.createDefault(defaultVcsName);
-    return new VcsDirectoryMapping(basePath, defaultVcsName);
+    if (basePath == null) return VcsDirectoryMapping.createDefault("");
+    return new VcsDirectoryMapping(basePath, "");
   }
 
   @Override
@@ -91,7 +88,8 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     myDirectoryTextField.setEnabled(myDirectoryRadioButton.isSelected());
   }
 
-  public @NotNull VcsDirectoryMapping getMapping() {
+  @NotNull
+  public VcsDirectoryMapping getMapping() {
     AbstractVcs vcs = myVCSComboBox.getItem();
     String vcsName = vcs != null ? vcs.getName() : "";
     String directory = myProjectRadioButton.isSelected() ? "" : toSystemIndependentName(myDirectoryTextField.getText());
@@ -148,8 +146,13 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
   }
 
   private class MyBrowseFolderListener extends ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> {
-    MyBrowseFolderListener(TextFieldWithBrowseButton textField, Project project, FileChooserDescriptor fileChooserDescriptor) {
-      super(textField, project, fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+
+    MyBrowseFolderListener(@NlsContexts.DialogTitle String title,
+                           @NlsContexts.Label String description,
+                           TextFieldWithBrowseButton textField,
+                           Project project,
+                           FileChooserDescriptor fileChooserDescriptor) {
+      super(title, description, textField, project, fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     }
 
     @Override
@@ -166,7 +169,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     }
 
     @Override
-    protected void onFileChosen(final @NotNull VirtualFile chosenFile) {
+    protected void onFileChosen(@NotNull final VirtualFile chosenFile) {
       String oldText = myDirectoryTextField.getText();
       super.onFileChosen(chosenFile);
       AbstractVcs vcs = myVCSComboBox.getItem();

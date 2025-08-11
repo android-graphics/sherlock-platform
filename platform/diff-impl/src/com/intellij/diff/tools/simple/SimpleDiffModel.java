@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.util.DiffDividerDrawUtil;
@@ -11,35 +11,37 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class SimpleDiffModel {
-  @ApiStatus.Internal protected final @NotNull SimpleDiffViewer myViewer;
+  @NotNull @ApiStatus.Internal protected final SimpleDiffViewer myViewer;
 
-  private final @NotNull List<SimpleDiffChange> myValidChanges = new ArrayList<>();
-  private final @NotNull List<SimpleDiffChange> myAllChanges = new ArrayList<>();
-  private @NotNull ThreeState myIsContentsEqual = ThreeState.UNSURE;
+  @NotNull private final List<SimpleDiffChange> myValidChanges = new ArrayList<>();
+  @NotNull private final List<SimpleDiffChange> myAllChanges = new ArrayList<>();
+  @NotNull private ThreeState myIsContentsEqual = ThreeState.UNSURE;
 
-  @ApiStatus.Internal protected final @NotNull List<@Nullable SimpleDiffChangeUi> myPresentations = new ArrayList<>();
+  @NotNull @ApiStatus.Internal protected final List<@Nullable SimpleDiffChangeUi> myPresentations = new ArrayList<>();
 
   public SimpleDiffModel(@NotNull SimpleDiffViewer viewer) {
     myViewer = viewer;
   }
 
-  public @NotNull ThreeState isContentsEqual() {
+  @NotNull
+  public ThreeState isContentsEqual() {
     return myIsContentsEqual;
   }
 
-  public @NotNull List<SimpleDiffChange> getChanges() {
+  @NotNull
+  public List<SimpleDiffChange> getChanges() {
     return Collections.unmodifiableList(myValidChanges);
   }
 
-  public @NotNull @Unmodifiable List<SimpleDiffChange> getAllChanges() {
+  @NotNull
+  public List<SimpleDiffChange> getAllChanges() {
     return ContainerUtil.filter(myAllChanges, it -> !it.isDestroyed());
   }
 

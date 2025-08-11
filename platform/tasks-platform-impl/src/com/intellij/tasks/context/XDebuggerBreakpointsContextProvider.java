@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.context;
 
 import com.intellij.openapi.application.AccessToken;
@@ -21,13 +21,15 @@ import static com.intellij.configurationStore.XmlSerializer.serialize;
  * @author Dmitry Avdeev
  */
 final class XDebuggerBreakpointsContextProvider extends WorkingContextProvider {
+  @NotNull
   @Override
-  public @NotNull String getId() {
+  public String getId() {
     return "xDebugger";
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
+  public String getDescription() {
     return TaskBundle.message("xdebugger.breakpoints");
   }
 
@@ -41,7 +43,8 @@ final class XDebuggerBreakpointsContextProvider extends WorkingContextProvider {
     }
   }
 
-  private static @NotNull XBreakpointManagerImpl getBreakpointManager(XDebuggerManager instance) {
+  @NotNull
+  private static XBreakpointManagerImpl getBreakpointManager(XDebuggerManager instance) {
     return (XBreakpointManagerImpl)instance.getBreakpointManager();
   }
 

@@ -4,7 +4,6 @@ package com.intellij.openapi.actionSystem;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -20,6 +19,8 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
  * Represents a group of actions.
  *
  * @see com.intellij.openapi.actionSystem.DefaultActionGroup
+ * @see com.intellij.openapi.actionSystem.CheckedActionGroup
+ * @see com.intellij.openapi.actionSystem.CompactActionGroup
  */
 public abstract class ActionGroup extends AnAction {
   public static final ActionGroup EMPTY_GROUP = new ActionGroup() {
@@ -28,9 +29,6 @@ public abstract class ActionGroup extends AnAction {
       return EMPTY_ARRAY;
     }
   };
-
-  @ApiStatus.Internal
-  public static final DataKey<ActionGroup> CONTEXT_ACTION_GROUP_KEY = DataKey.create("context.action.group");
 
   private boolean mySearchable = true;
   private Set<AnAction> mySecondaryActions;
@@ -146,11 +144,10 @@ public abstract class ActionGroup extends AnAction {
   }
 
   /**
-   * Allows the group to intercept and transform its expanded visible children.
+   * Allows the group to intercept and transform its expanded content.
    */
-  public @Unmodifiable @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(
-    @NotNull AnActionEvent e,
-    @NotNull List<? extends @NotNull AnAction> visibleChildren) {
+  public @NotNull List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren,
+                                                            @NotNull UpdateSession updateSession) {
     return Collections.unmodifiableList(visibleChildren);
   }
 

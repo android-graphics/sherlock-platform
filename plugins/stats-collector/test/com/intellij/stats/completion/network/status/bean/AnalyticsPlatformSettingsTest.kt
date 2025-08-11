@@ -1,11 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.network.status.bean
 
 import com.intellij.lang.Language
+import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Test
 
-class AnalyticsPlatformSettingsTest {
+class AnalyticsPlatformSettingsTest : TestCase() {
+
   private fun generateJson(releaseType: String, majorVersionBorders: String): String =
     """{
           "productCode": "IU",
@@ -19,7 +20,7 @@ class AnalyticsPlatformSettingsTest {
           }]
     }"""
 
-  @Test fun `test correct settings json parsing`() {
+  fun `test correct settings json parsing`() {
     val json = generateJson(
       releaseType = "ALL",
       majorVersionBorders = "{ \"majorVersionFrom\": \"2020.1\" }"
@@ -29,7 +30,7 @@ class AnalyticsPlatformSettingsTest {
     assertThat(result!!.versions[0].releaseType).isEqualTo(ReleaseType.ALL)
   }
 
-  @Test fun `test correct settings json parsing 2`() {
+  fun `test correct settings json parsing 2`() {
     val json = generateJson(
       releaseType = "RELEASE",
       majorVersionBorders = "{ \"majorVersionFrom\": \"2020.1\", \"majorVersionTo\": \"2020.2\" }"
@@ -39,7 +40,7 @@ class AnalyticsPlatformSettingsTest {
     assertThat(result!!.versions[0].releaseType).isEqualTo(ReleaseType.RELEASE)
   }
 
-  @Test fun `test empty settings json parsing`() {
+  fun `test empty settings json parsing`() {
     val json =
       """
       """
@@ -47,7 +48,7 @@ class AnalyticsPlatformSettingsTest {
     assertThat(result).isNull()
   }
 
-  @Test fun `test settings json with default values parsing`() {
+  fun `test settings json with default values parsing`() {
     val endpoint = "https://prod.fus.aws.intellij.net/oso/v1/send/"
     val json =
       """{

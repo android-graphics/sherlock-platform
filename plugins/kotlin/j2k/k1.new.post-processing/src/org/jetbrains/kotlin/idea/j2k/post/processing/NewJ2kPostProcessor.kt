@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.psi.KtFile
 
 class NewJ2kPostProcessor : PostProcessor {
@@ -31,7 +32,7 @@ class NewJ2kPostProcessor : PostProcessor {
         converterContext: ConverterContext?,
         onPhaseChanged: ((Int, String) -> Unit)?
     ) {
-        if (converterContext !is ConverterContext) error("Invalid converter context for new J2K")
+        if (converterContext !is NewJ2kConverterContext) error("Invalid converter context for new J2K")
 
         for ((i, group) in allProcessings.withIndex()) {
             ProgressManager.checkCanceled()

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -11,7 +11,6 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,7 +21,7 @@ public class ExcludedFiles {
   private final State myState = new State();
 
   public void serializeInto(@NotNull Element element) {
-    if (!myDescriptors.isEmpty()) {
+    if (myDescriptors.size() > 0) {
       XmlSerializer.serializeInto(myState, element);
     }
   }
@@ -59,7 +58,7 @@ public class ExcludedFiles {
     myDescriptors.clear();
   }
 
-  public @Unmodifiable List<FileSetDescriptor> getDescriptors(@NotNull String descriptorType) {
+  public List<FileSetDescriptor> getDescriptors(@NotNull String descriptorType) {
     return ContainerUtil.filter(myDescriptors, descriptor -> descriptorType.equals(descriptor.getType()));
   }
 
@@ -75,14 +74,13 @@ public class ExcludedFiles {
     });
   }
 
-  @Override
   public boolean equals(@NotNull Object o) {
     return o instanceof ExcludedFiles && myDescriptors.equals(((ExcludedFiles)o).myDescriptors);
   }
 
   public class State {
     @OptionTag("DO_NOT_FORMAT")
-    public @Unmodifiable List<FileSetDescriptor.State> getDescriptors() {
+    public List<FileSetDescriptor.State> getDescriptors() {
       return ContainerUtil.map(myDescriptors, descriptor -> descriptor.getState());
     }
 

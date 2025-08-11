@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.project.Project
@@ -20,7 +19,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBTextField
 import com.intellij.uiDesigner.core.GridLayoutManager
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.onClosed
 import kotlinx.coroutines.delay
@@ -30,7 +29,7 @@ import org.jetbrains.kotlin.idea.actions.internal.benchmark.AbstractCompletionBe
 import org.jetbrains.kotlin.idea.actions.internal.benchmark.AbstractCompletionBenchmarkAction.Companion.shuffledSequence
 import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.*
@@ -71,7 +70,7 @@ class HighlightingBenchmarkAction : AnAction() {
 
         val finishListener = DaemonFinishListener()
         connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, finishListener)
-        KotlinPluginDisposable.getInstance(project).coroutineScope.launch(Dispatchers.EDT) {
+        GlobalScope.launch(EDT) {
             try {
                 delay(100)
                 ktFiles

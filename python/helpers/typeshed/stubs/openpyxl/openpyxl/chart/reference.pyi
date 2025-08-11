@@ -1,11 +1,10 @@
-from _typeshed import ConvertibleToInt, Unused
+from _typeshed import Incomplete, Unused
 from collections.abc import Generator
-from typing import Literal, overload
+from typing import overload
+from typing_extensions import Literal
 
 from openpyxl.descriptors import Strict
-from openpyxl.descriptors.base import MinMax, String
-from openpyxl.workbook.child import _WorkbookChild
-from openpyxl.worksheet._read_only import ReadOnlyWorksheet
+from openpyxl.descriptors.base import MinMax, String, _ConvertibleToInt
 
 class DummyWorksheet:
     title: str
@@ -17,12 +16,12 @@ class Reference(Strict):
     min_col: MinMax[int, Literal[False]]
     max_col: MinMax[int, Literal[False]]
     range_string: String[Literal[True]]
-    worksheet: _WorkbookChild | ReadOnlyWorksheet | DummyWorksheet
+    worksheet: Incomplete | None
     @overload
     def __init__(
         self,
         *,
-        worksheet: _WorkbookChild | ReadOnlyWorksheet | DummyWorksheet | None = None,
+        worksheet: Unused = None,
         min_col: Unused = None,
         min_row: Unused = None,
         max_col: Unused = None,
@@ -32,15 +31,15 @@ class Reference(Strict):
     @overload
     def __init__(
         self,
-        worksheet: _WorkbookChild | ReadOnlyWorksheet,
-        min_col: ConvertibleToInt,
-        min_row: ConvertibleToInt,
-        max_col: ConvertibleToInt | None = None,
-        max_row: ConvertibleToInt | None = None,
+        worksheet: Incomplete | None,
+        min_col: _ConvertibleToInt,
+        min_row: _ConvertibleToInt,
+        max_col: _ConvertibleToInt | None = None,
+        max_row: _ConvertibleToInt | None = None,
         range_string: str | None = None,
     ) -> None: ...
     def __len__(self) -> int: ...
-    def __eq__(self, other: object) -> bool: ...
+    def __eq__(self, other): ...
     @property
     def rows(self) -> Generator[Reference, None, None]: ...
     @property

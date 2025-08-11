@@ -2,15 +2,24 @@ package com.intellij.driver.sdk.ui
 
 import com.intellij.driver.sdk.WaitForException
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.button
 import com.intellij.driver.sdk.waitFor
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
-fun <T : UiComponent> T.shouldNot(condition: T.() -> Boolean): T {
-  return should(timeout = DEFAULT_FIND_TIMEOUT, condition = { !condition() })
+// should
+infix fun <T : UiComponent> T.should(condition: T.() -> Boolean): T {
+  return should(timeout = DEFAULT_FIND_TIMEOUT_SECONDS.seconds, condition = condition)
 }
 
-fun <T : UiComponent> T.shouldBe(condition: T.() -> Boolean): T {
-  return should(timeout = DEFAULT_FIND_TIMEOUT, condition = condition)
+// should not
+infix fun <T : UiComponent> T.shouldNot(condition: T.() -> Boolean): T {
+  return should(timeout = DEFAULT_FIND_TIMEOUT_SECONDS.seconds, condition = { !condition() })
+}
+
+// should
+infix fun <T : UiComponent> T.shouldBe(condition: T.() -> Boolean): T {
+  return should(timeout = DEFAULT_FIND_TIMEOUT_SECONDS.seconds, condition = condition)
 }
 
 fun <T : UiComponent> T.shouldBe(message: String, condition: T.() -> Boolean, timeout: Duration): T {
@@ -18,44 +27,46 @@ fun <T : UiComponent> T.shouldBe(message: String, condition: T.() -> Boolean, ti
 }
 
 fun <T : UiComponent> T.shouldBe(message: String, condition: T.() -> Boolean): T {
-  return should(message = message, timeout = DEFAULT_FIND_TIMEOUT, condition = condition)
+  return should(message = message, timeout = DEFAULT_FIND_TIMEOUT_SECONDS.seconds, condition = condition)
 }
 
-fun <T : UiComponent> T.shouldBeNoExceptions(
-  message: String? = null,
-  timeout: Duration = DEFAULT_FIND_TIMEOUT,
-  condition: T.() -> Unit,
-): T {
-  var lastException: Throwable? = null
-  try {
-    waitFor(message, timeout) {
-      try {
-        this.condition()
-        true
-      }
-      catch (e: Throwable) {
-        lastException = e
-        false
-      }
-    }
-  }
-  catch (e: WaitForException) {
-    lastException?.let { throw it }
-    throw WaitForException(e.timeout, e.errorMessage)
-  }
-  return this
+fun <T : UiComponent> T.shouldBe(condition: T.() -> Boolean, timeout: Duration): T {
+  return should(timeout = timeout, condition = condition)
 }
 
-fun <T : UiComponent> T.should(condition: T.() -> Boolean): T {
-  return should(timeout = DEFAULT_FIND_TIMEOUT, condition = condition)
+// should
+infix fun <T : UiComponent> T.shouldHave(condition: T.() -> Boolean): T {
+  return should(timeout = DEFAULT_FIND_TIMEOUT_SECONDS.seconds, condition = condition)
 }
 
-fun <T : UiComponent> T.should(message: String? = null,
-                               timeout: Duration = DEFAULT_FIND_TIMEOUT,
+fun <T : UiComponent> T.shouldHave(message: String, condition: T.() -> Boolean): T {
+  return should(message = message, timeout = DEFAULT_FIND_TIMEOUT_SECONDS.seconds, condition = condition)
+}
+
+fun <T : UiComponent> T.shouldHave(condition: T.() -> Boolean, timeout: Duration): T {
+  return should(timeout = timeout, condition = condition)
+}
+
+fun <T : UiComponent> T.shouldHave(message: String, condition: T.() -> Boolean, timeout: Duration): T {
+  return should(message = message, timeout = timeout, condition = condition)
+}
+
+fun <T : UiComponent> T.should(seconds: Int = DEFAULT_FIND_TIMEOUT_SECONDS, condition: T.() -> Boolean): T {
+  return should(timeout = seconds.seconds, condition = condition)
+}
+
+fun <T : UiComponent> T.should(message: String,
+                               seconds: Int = DEFAULT_FIND_TIMEOUT_SECONDS,
+                               condition: T.() -> Boolean): T {
+  return should(message = message, timeout = seconds.seconds, condition = condition)
+}
+
+fun <T : UiComponent> T.should(message: String = "",
+                               timeout: Duration = DEFAULT_FIND_TIMEOUT_SECONDS.seconds,
                                condition: T.() -> Boolean): T {
   var lastException: Throwable? = null
   try {
-    waitFor(message, timeout) {
+    waitFor(timeout, errorMessage = message) {
       try {
         this.condition()
       }
@@ -65,7 +76,7 @@ fun <T : UiComponent> T.should(message: String? = null,
       }
     }
   } catch (e: WaitForException){
-    throw WaitForException(e.timeout, e.errorMessage, lastException)
+    throw WaitForException(e.duration, e.errorMessage, lastException)
   }
   return this
 }
@@ -80,4 +91,7 @@ val present: UiComponent.() -> Boolean = { present() }
 
 val notPresent: UiComponent.() -> Boolean = { notPresent() }
 
-val focusOwner: UiComponent.() -> Boolean = { isFocusOwner() }
+fun haveText(value: String): UiComponent.() -> Boolean = { hasText(value) }
+
+fun haveButton(value: String): UiComponent.() -> Boolean = { button(value).present() }
+

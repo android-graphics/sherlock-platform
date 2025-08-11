@@ -8,13 +8,11 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class FsRoot extends VirtualDirectoryImpl {
   private final String myPathWithOneSlash;
 
-  @ApiStatus.Internal
   public FsRoot(int id,
                 @NotNull VfsData vfsData,
                 @NotNull NewVirtualFileSystem fs,
@@ -29,7 +27,7 @@ public final class FsRoot extends VirtualDirectoryImpl {
     }
     myPathWithOneSlash = pathBeforeSlash + '/';
     VfsData.Segment segment = getSegment();
-    segment.initFileData(id, myData, this);
+    segment.initFileData(id, myData);
     // assume root has FS-default case-sensitivity
     segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVE, attributes.areChildrenCaseSensitive() == FileAttributes.CaseSensitivity.SENSITIVE);
     segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, true);

@@ -1,5 +1,5 @@
 // "Change to constructor invocation" "false"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 // ACTION: Introduce import alias
 @JvmInline value class V(val x: Int)
 

@@ -15,7 +15,7 @@ import java.util.function.BiConsumer;
  * Null keys are NOT allowed
  * Null values are NOT allowed
  */
-abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, HashingStrategy<K>, ReferenceQueueable {
+abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, HashingStrategy<K> {
   final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<>();
   private final ConcurrentMap<KeyReference<K>, V> myMap; // hashing strategy must be canonical, we compute corresponding hash codes using our own myHashingStrategy
   private final @NotNull HashingStrategy<? super K> myHashingStrategy;
@@ -59,8 +59,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   // returns true if some keys were processed
-  @Override
-  public boolean processQueue() {
+  private boolean processQueue() {
     KeyReference<K> wk;
     boolean processed = false;
     //noinspection unchecked
@@ -302,19 +301,23 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
       //noinspection unchecked
       Map.Entry<K,V> e = (Map.Entry<K,V>)o;
       V ev = e.getValue();
+
       HardKey<K> key = createHardKey(e.getKey());
+
+      boolean toRemove;
       try {
         V hv = myMap.get(key);
-        boolean toRemove = hv == null ? ev == null && myMap.containsKey(key) : hv.equals(ev);
+        toRemove = hv == null ? ev == null && myMap.containsKey(key) : hv.equals(ev);
         if (toRemove) {
           myMap.remove(key);
         }
-        processQueue();
-        return toRemove;
       }
       finally {
         key.clear();
       }
+      processQueue();
+
+      return toRemove;
     }
 
     @Override
@@ -348,41 +351,24 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   @Override
   public boolean remove(@NotNull Object key, @NotNull Object value) {
-    HardKey<K> hardKey = createHardKey(key);
-    try {
-      boolean removed = myMap.remove(hardKey, value);
-      processQueue();
-      return removed;
-    }
-    finally {
-      hardKey.clear();
-    }
+    //noinspection unchecked
+    boolean removed = myMap.remove(createKeyReference((K)key), value);
+    processQueue();
+    return removed;
   }
 
   @Override
   public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
-    HardKey<K> hardKey = createHardKey(key);
-    try {
-      boolean replaced = myMap.replace(hardKey, oldValue, newValue);
-      processQueue();
-      return replaced;
-    }
-    finally {
-      hardKey.clear();
-    }
+    boolean replaced = myMap.replace(createKeyReference(key), oldValue, newValue);
+    processQueue();
+    return replaced;
   }
 
   @Override
   public V replace(@NotNull K key, @NotNull V value) {
-    HardKey<K> hardKey = createHardKey(key);
-    try {
-      V replaced = myMap.replace(hardKey, value);
-      processQueue();
-      return replaced;
-    }
-    finally {
-      hardKey.clear();
-    }
+    V replaced = myMap.replace(createKeyReference(key), value);
+    processQueue();
+    return replaced;
   }
 
   // MAKE SURE IT CONSISTENT WITH com.intellij.util.containers.ConcurrentHashMap

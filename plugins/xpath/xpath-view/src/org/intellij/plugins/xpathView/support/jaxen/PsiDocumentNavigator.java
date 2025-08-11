@@ -134,7 +134,8 @@ public class PsiDocumentNavigator extends DefaultNavigator {
     }
 
     @Override
-    public @NotNull String getProcessingInstructionData(Object obj) {
+    @NotNull
+    public String getProcessingInstructionData(Object obj) {
         LOG.assertTrue(obj instanceof XmlProcessingInstruction);
 
         XmlProcessingInstruction pi = (XmlProcessingInstruction)obj;
@@ -264,7 +265,8 @@ public class PsiDocumentNavigator extends DefaultNavigator {
     }
 
     @Override
-    public @NotNull String getCommentStringValue(Object comment) {
+    @NotNull
+    public String getCommentStringValue(Object comment) {
         LOG.assertTrue(comment instanceof XmlComment);
 
         PsiElement c = (PsiElement)comment;
@@ -278,7 +280,8 @@ public class PsiDocumentNavigator extends DefaultNavigator {
     }
 
     @Override
-    public @NotNull String getElementStringValue(Object element) {
+    @NotNull
+    public String getElementStringValue(Object element) {
         LOG.assertTrue(element instanceof XmlTag);
 
         final TextCollector collector = new TextCollector();
@@ -287,7 +290,8 @@ public class PsiDocumentNavigator extends DefaultNavigator {
     }
 
     @Override
-    public @NotNull String getAttributeStringValue(Object attr) {
+    @NotNull
+    public String getAttributeStringValue(Object attr) {
         LOG.assertTrue(attr instanceof XmlAttribute);
         return StringUtil.notNullize(((XmlAttribute)attr).getValue());
     }
@@ -305,7 +309,8 @@ public class PsiDocumentNavigator extends DefaultNavigator {
     }
 
     @Override
-    public @NotNull String getTextStringValue(Object txt) {
+    @NotNull
+    public String getTextStringValue(Object txt) {
 
         if (txt instanceof XmlText) {
           return ((XmlText)txt).getValue();

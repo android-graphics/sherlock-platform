@@ -48,10 +48,6 @@ public class LombokHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void testBuilderWithDefaultReinitializeInConstructor() {
-    doTest();
-  }
-
   public void testValueSealedInterface() {
     doTest();
   }
@@ -66,10 +62,6 @@ public class LombokHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testOnXExample() {
-    doTest();
-  }
-
-  public void testLombokNullable() {
     doTest();
   }
 

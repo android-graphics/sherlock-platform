@@ -45,7 +45,6 @@ import com.intellij.util.ui.EditableModel
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.RegionPaintIcon
 import com.intellij.util.ui.RegionPainter
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.awt.*
@@ -461,7 +460,6 @@ private class ColorListPopupStep(val model: FileColorsTableModel, val scope: Nam
   }
 }
 
-@ApiStatus.Internal
 class FileColorsSearchOptionContributor : SearchableOptionContributor() {
   override fun processOptions(processor: SearchableOptionProcessor) {
     val displayName = message(DISPLAY_NAME_KEY)

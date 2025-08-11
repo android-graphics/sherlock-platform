@@ -1,5 +1,5 @@
 // PROBLEM: none
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 fun test() {
     foo(<caret>) { 1 }
 }

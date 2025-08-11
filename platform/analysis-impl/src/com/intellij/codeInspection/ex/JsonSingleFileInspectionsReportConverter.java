@@ -10,7 +10,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@ApiStatus.Internal
 public final class JsonSingleFileInspectionsReportConverter extends JsonInspectionsReportConverter {
   @Override
   public String getFormatName() {

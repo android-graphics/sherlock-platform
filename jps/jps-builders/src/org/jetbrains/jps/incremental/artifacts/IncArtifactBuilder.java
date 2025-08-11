@@ -1,13 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.MultiMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
@@ -33,13 +33,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-@ApiStatus.Internal
 public final class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, ArtifactBuildTarget> {
   private static final Logger LOG = Logger.getInstance(IncArtifactBuilder.class);
   public static final String BUILDER_ID = "artifacts-builder";
 
   public IncArtifactBuilder() {
-    super(List.of(ArtifactBuildTargetType.INSTANCE));
+    super(Collections.singletonList(ArtifactBuildTargetType.INSTANCE));
   }
 
   @Override
@@ -48,8 +47,7 @@ public final class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescript
                     @NotNull BuildOutputConsumer outputConsumer, final @NotNull CompileContext context) throws ProjectBuildException {
     try {
       new IncArtifactBuilderHelper(target, outputConsumer, context).build(holder);
-    }
-    catch (IOException e) {
+    } catch (IOException e) {
       throw new ProjectBuildException(e);
     }
   }
@@ -71,8 +69,7 @@ public final class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescript
     private final ProjectDescriptor pd;
     private final ArtifactOutputToSourceMapping outSrcMapping;
 
-    @SuppressWarnings("SSBasedInspection")
-    private final Int2ObjectOpenHashMap<Set<String>> filesToProcess = new Int2ObjectOpenHashMap<>();
+    private final Int2ObjectMap<Set<String>> filesToProcess = new Int2ObjectOpenHashMap<>();
     private final Set<JarInfo> changedJars = new HashSet<>();
 
     private IncArtifactBuilderHelper(@NotNull ArtifactBuildTarget target,
@@ -105,7 +102,7 @@ public final class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescript
 
     private boolean startBuild() {
       String outputFilePath = artifact.getOutputFilePath();
-      if (Strings.isEmpty(outputFilePath)) {
+      if (StringUtil.isEmpty(outputFilePath)) {
         context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR,
                                                    JpsBuildBundle.message("build.message.cannot.build.0.artifact.output.path.is.not.specified", artifact.getName())));
         return false;
@@ -155,7 +152,7 @@ public final class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescript
         @Override
         public boolean apply(@NotNull ArtifactBuildTarget target, @NotNull File file, @NotNull ArtifactRootDescriptor root) throws IOException {
           int rootIndex = root.getRootIndex();
-          String sourcePath = FileUtilRt.toSystemIndependentName(file.getPath());
+          String sourcePath = FileUtil.toSystemIndependentName(file.getPath());
           addFileToProcess(rootIndex, sourcePath, deletedFiles);
           final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
           if (outputPaths != null) {
@@ -239,7 +236,7 @@ public final class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescript
           }
           else {
             List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(destination.getOutputFilePath());
-            if (sources == null || !sources.isEmpty() && sources.get(0).getRootIndex() == descriptor.getRootIndex()) {
+            if (sources == null || sources.size() > 0 && sources.get(0).getRootIndex() == descriptor.getRootIndex()) {
               outSrcMapping.update(destination.getOutputFilePath(), Collections.emptyList());
               changedJars.add(((JarDestinationInfo)destination).getJarInfo());
             }
@@ -321,7 +318,7 @@ public final class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescript
 
         boolean deleted = deletedPaths.contains(filePath);
         if (!deleted) {
-          deleted = FileUtilRt.delete(new File(filePath));
+          deleted = FileUtil.delete(new File(filePath));
         }
 
         if (deleted) {

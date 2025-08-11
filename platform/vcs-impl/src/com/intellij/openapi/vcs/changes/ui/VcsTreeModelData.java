@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.FileSelectInContext;
@@ -21,41 +21,40 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
 public abstract class VcsTreeModelData {
-  public static @NotNull VcsTreeModelData all(@NotNull JTree tree) {
-    return all(tree.getModel());
+  @NotNull
+  public static VcsTreeModelData all(@NotNull JTree tree) {
+    assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
+    return new AllUnderData(getRoot(tree));
   }
 
   @NotNull
-  public static VcsTreeModelData all(@NotNull TreeModel model) {
-    assert model.getRoot() instanceof ChangesBrowserNode;
-    return new AllUnderData((ChangesBrowserNode<?>)model.getRoot());
-  }
-
-  public static @NotNull VcsTreeModelData selected(@NotNull JTree tree) {
+  public static VcsTreeModelData selected(@NotNull JTree tree) {
     assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
     return new SelectedData(tree);
   }
 
-  public static @NotNull VcsTreeModelData exactlySelected(@NotNull JTree tree) {
+  @NotNull
+  public static VcsTreeModelData exactlySelected(@NotNull JTree tree) {
     assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
     return new ExactlySelectedData(tree);
   }
 
-  public static @NotNull VcsTreeModelData included(@NotNull ChangesTree tree) {
+  @NotNull
+  public static VcsTreeModelData included(@NotNull ChangesTree tree) {
     assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
 
     Set<Object> includedSet = tree.getIncludedSet();
     return new IncludedUnderData(includedSet, getRoot(tree));
   }
 
-  public static @NotNull VcsTreeModelData allUnderTag(@NotNull JTree tree, @NotNull Object tag) {
+  @NotNull
+  public static VcsTreeModelData allUnderTag(@NotNull JTree tree, @NotNull Object tag) {
     assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
 
     ChangesBrowserNode<?> tagNode = findTagNode(tree, tag);
@@ -63,16 +62,19 @@ public abstract class VcsTreeModelData {
     return new AllUnderData(tagNode);
   }
 
-  public static @NotNull VcsTreeModelData allUnder(@NotNull ChangesBrowserNode<?> node) {
+  @NotNull
+  public static VcsTreeModelData allUnder(@NotNull ChangesBrowserNode<?> node) {
     return new AllUnderData(node);
   }
 
-  public static @NotNull VcsTreeModelData selectedUnderTag(@NotNull JTree tree, @NotNull Object tag) {
+  @NotNull
+  public static VcsTreeModelData selectedUnderTag(@NotNull JTree tree, @NotNull Object tag) {
     assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
     return new SelectedTagData(tree, tag);
   }
 
-  public static @NotNull VcsTreeModelData includedUnderTag(@NotNull ChangesTree tree, @NotNull Object tag) {
+  @NotNull
+  public static VcsTreeModelData includedUnderTag(@NotNull ChangesTree tree, @NotNull Object tag) {
     assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
 
     ChangesBrowserNode<?> tagNode = findTagNode(tree, tag);
@@ -86,16 +88,18 @@ public abstract class VcsTreeModelData {
   /**
    * @deprecated use {@link #iterateNodes()}
    */
+  @NotNull
   @Deprecated
-  public final @NotNull Stream<ChangesBrowserNode<?>> nodesStream() {
+  public final Stream<ChangesBrowserNode<?>> nodesStream() {
     return iterateNodes().toStream();
   }
 
   /**
    * @deprecated use {@link #iterateUserObjects(Class)}
    */
+  @NotNull
   @Deprecated
-  public final @NotNull <U> Stream<U> userObjectsStream(@NotNull Class<U> clazz) {
+  public final <U> Stream<U> userObjectsStream(@NotNull Class<U> clazz) {
     return iterateUserObjects(clazz).toStream();
   }
 
@@ -123,11 +127,13 @@ public abstract class VcsTreeModelData {
   }
 
 
-  public final @NotNull List<Object> userObjects() {
+  @NotNull
+  public final List<Object> userObjects() {
     return iterateUserObjects().toList();
   }
 
-  public final @NotNull <U> List<U> userObjects(@NotNull Class<U> clazz) {
+  @NotNull
+  public final <U> List<U> userObjects(@NotNull Class<U> clazz) {
     return iterateUserObjects(clazz).toList();
   }
 
@@ -136,21 +142,23 @@ public abstract class VcsTreeModelData {
     EmptyData() {
     }
 
+    @NotNull
     @Override
-    public @NotNull JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
+    public JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
       return JBIterable.empty();
     }
   }
 
   private static class AllUnderData extends VcsTreeModelData {
-    private final @NotNull ChangesBrowserNode<?> myNode;
+    @NotNull private final ChangesBrowserNode<?> myNode;
 
     AllUnderData(@NotNull ChangesBrowserNode<?> node) {
       myNode = node;
     }
 
+    @NotNull
     @Override
-    public @NotNull JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
+    public JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
       return myNode.traverse();
     }
   }
@@ -161,8 +169,9 @@ public abstract class VcsTreeModelData {
       super(tree);
     }
 
+    @NotNull
     @Override
-    public @NotNull JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
+    public JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
       return super.iterateRawNodes()
         .flatMap(ChangesBrowserNode::traverse)
         .unique(); // filter out nodes that already were processed (because their parent selected too)
@@ -176,8 +185,9 @@ public abstract class VcsTreeModelData {
       myPaths = tree.getSelectionPaths();
     }
 
+    @NotNull
     @Override
-    public @NotNull JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
+    public JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
       TreePath[] paths = myPaths;
       if (paths == null) return JBIterable.empty();
 
@@ -194,8 +204,9 @@ public abstract class VcsTreeModelData {
       myTagNode = findTagNode(tree, tag);
     }
 
+    @NotNull
     @Override
-    public @NotNull JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
+    public JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
       ChangesBrowserNode<?> tagNode = myTagNode;
       if (tagNode == null) return JBIterable.empty();
 
@@ -215,8 +226,9 @@ public abstract class VcsTreeModelData {
       super(tree, tag);
     }
 
+    @NotNull
     @Override
-    public @NotNull JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
+    public JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
       return super.iterateRawNodes()
         .flatMap(ChangesBrowserNode::traverse)
         .unique(); // filter out nodes that already were processed (because their parent selected too)
@@ -232,21 +244,23 @@ public abstract class VcsTreeModelData {
       myIncluded = includedSet;
     }
 
+    @NotNull
     @Override
-    public @NotNull JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
+    public JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
       return myNode.traverse().filter(node -> myIncluded.contains(node.getUserObject()));
     }
   }
 
   private static class AllExpandedByDefaultData extends VcsTreeModelData {
-    private final @NotNull ChangesBrowserNode<?> myNode;
+    @NotNull private final ChangesBrowserNode<?> myNode;
 
     AllExpandedByDefaultData(@NotNull ChangesBrowserNode<?> node) {
       myNode = node;
     }
 
+    @NotNull
     @Override
-    public @NotNull JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
+    public JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
       JBTreeTraverser<ChangesBrowserNode<?>> traverser = JBTreeTraverser.from(node -> {
         if (node.shouldExpandByDefault()) {
           return node.iterateNodeChildren();
@@ -259,7 +273,8 @@ public abstract class VcsTreeModelData {
     }
   }
 
-  public static @NotNull ListSelection<Object> getListSelectionOrAll(@NotNull JTree tree) {
+  @NotNull
+  public static ListSelection<Object> getListSelectionOrAll(@NotNull JTree tree) {
     List<Object> entries = selected(tree).userObjects();
     if (entries.size() > 1) {
       return ListSelection.createAt(entries, 0)
@@ -321,12 +336,14 @@ public abstract class VcsTreeModelData {
     }
   }
 
-  private static @NotNull JBIterable<Change> mapToChange(@NotNull VcsTreeModelData data) {
+  @NotNull
+  private static JBIterable<Change> mapToChange(@NotNull VcsTreeModelData data) {
     return data.iterateUserObjects()
       .filter(Change.class);
   }
 
-  static @NotNull JBIterable<VirtualFile> mapToNavigatableFile(@NotNull VcsTreeModelData data) {
+  @NotNull
+  static JBIterable<VirtualFile> mapToNavigatableFile(@NotNull VcsTreeModelData data) {
     return data.iterateUserObjects()
       .flatMap(entry -> {
         if (entry instanceof Change) {
@@ -345,11 +362,13 @@ public abstract class VcsTreeModelData {
       .filter(VirtualFile::isValid);
   }
 
-  static @NotNull JBIterable<VirtualFile> mapToVirtualFile(@NotNull VcsTreeModelData data) {
+  @NotNull
+  static JBIterable<VirtualFile> mapToVirtualFile(@NotNull VcsTreeModelData data) {
     return mapObjectToVirtualFile(data.iterateUserObjects());
   }
 
-  static @NotNull JBIterable<VirtualFile> mapObjectToVirtualFile(@NotNull JBIterable<Object> userObjects) {
+  @NotNull
+  static JBIterable<VirtualFile> mapObjectToVirtualFile(@NotNull JBIterable<Object> userObjects) {
     return userObjects.map(entry -> {
         if (entry instanceof Change) {
           FilePath path = ChangesUtil.getAfterPath((Change)entry);
@@ -367,13 +386,15 @@ public abstract class VcsTreeModelData {
       .filter(VirtualFile::isValid);
   }
 
-  static @NotNull JBIterable<FilePath> mapToFilePath(@NotNull VcsTreeModelData data) {
+  @NotNull
+  static JBIterable<FilePath> mapToFilePath(@NotNull VcsTreeModelData data) {
     return data.iterateUserObjects()
       .map(VcsTreeModelData::mapUserObjectToFilePath)
       .filterNotNull();
   }
 
-  public static @Nullable FilePath mapUserObjectToFilePath(@Nullable Object userObject) {
+  @Nullable
+  public static FilePath mapUserObjectToFilePath(@Nullable Object userObject) {
     if (userObject instanceof Change change) {
       return ChangesUtil.getFilePath(change);
     }
@@ -389,7 +410,8 @@ public abstract class VcsTreeModelData {
   /**
    * @see ChangesListView#EXACTLY_SELECTED_FILES_DATA_KEY
    */
-  public static @NotNull JBIterable<VirtualFile> mapToExactVirtualFile(@NotNull VcsTreeModelData data) {
+  @NotNull
+  public static JBIterable<VirtualFile> mapToExactVirtualFile(@NotNull VcsTreeModelData data) {
     return data.iterateUserObjects()
       .map(object -> {
         if (object instanceof VirtualFile) return (VirtualFile)object;
@@ -401,7 +423,8 @@ public abstract class VcsTreeModelData {
   }
 
 
-  public static @Nullable ChangesBrowserNode<?> findTagNode(@NotNull JTree tree, @NotNull Object tag) {
+  @Nullable
+  public static ChangesBrowserNode<?> findTagNode(@NotNull JTree tree, @NotNull Object tag) {
     ChangesBrowserNode<?> root = (ChangesBrowserNode<?>)tree.getModel().getRoot();
     return root.iterateNodeChildren().find(node -> tag.equals(node.getUserObject()));
   }
@@ -414,7 +437,8 @@ public abstract class VcsTreeModelData {
     return true;
   }
 
-  private static @NotNull ChangesBrowserNode<?> getRoot(@NotNull JTree tree) {
+  @NotNull
+  private static ChangesBrowserNode<?> getRoot(@NotNull JTree tree) {
     return (ChangesBrowserNode<?>)tree.getModel().getRoot();
   }
 }

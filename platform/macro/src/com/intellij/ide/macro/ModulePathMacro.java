@@ -1,22 +1,25 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEnumerator;
 import org.jetbrains.annotations.NotNull;
 
 public final class ModulePathMacro extends Macro implements PathMacro {
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return "ModuleSourcePath";
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
+  public String getDescription() {
     return IdeCoreBundle.message("macro.module.source.path");
   }
 

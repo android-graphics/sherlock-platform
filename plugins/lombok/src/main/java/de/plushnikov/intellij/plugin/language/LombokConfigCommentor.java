@@ -4,28 +4,33 @@ import com.intellij.lang.Commenter;
 import org.jetbrains.annotations.Nullable;
 
 public final class LombokConfigCommentor implements Commenter {
+  @Nullable
   @Override
-  public @Nullable String getLineCommentPrefix() {
+  public String getLineCommentPrefix() {
     return "#";
   }
 
+  @Nullable
   @Override
-  public @Nullable String getBlockCommentPrefix() {
+  public String getBlockCommentPrefix() {
     return "";
   }
 
+  @Nullable
   @Override
-  public @Nullable String getBlockCommentSuffix() {
+  public String getBlockCommentSuffix() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getCommentedBlockCommentPrefix() {
+  public String getCommentedBlockCommentPrefix() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getCommentedBlockCommentSuffix() {
+  public String getCommentedBlockCommentSuffix() {
     return null;
   }
 }

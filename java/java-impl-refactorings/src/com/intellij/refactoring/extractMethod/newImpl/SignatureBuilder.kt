@@ -7,7 +7,6 @@ import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
-import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
 import com.intellij.refactoring.util.RefactoringUtil
@@ -31,7 +30,7 @@ class SignatureBuilder(private val project: Project) {
     val parameterList = createParameterList(inputParameters, scope)
 
     val method = if (returnType != null) {
-      factory.createMethod(methodName, PsiTypesUtil.removeExternalAnnotations(returnType), targetClass)
+      factory.createMethod(methodName, returnType, targetClass)
     } else {
       factory.createConstructor("methodName", targetClass)
     }

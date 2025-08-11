@@ -93,12 +93,11 @@ abstract class AbstractKotlinMultiplatformTestClassGradleConfigurationProducer :
             val settings = configuration.settings
 
             val createFilter = { clazz: PsiClass -> createTestFilterFrom(clazz) }
-            val module = context.module ?: throw IllegalStateException("Module should not be null")
-            if (!settings.applyTestConfiguration(module, tasks, classes, createFilter)) {
+            if (!settings.applyTestConfiguration(context.module, tasks, classes, createFilter)) {
                 LOG.warn("Cannot apply class test configuration, uses raw run configuration")
                 performRunnable.run()
             }
-            settings.externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module)
+            settings.externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(context.module)
             configuration.name = classes.joinToString("|") { it.name ?: "<error>" }
             performRunnable.run()
         }
@@ -146,8 +145,7 @@ abstract class AbstractKotlinTestClassGradleConfigurationProducer
     }
 
     private fun ConfigurationContext.check(): Boolean {
-        val myModule = module
-        return hasTestFramework && myModule != null && isApplicable(myModule)
+        return hasTestFramework && module != null && isApplicable(module)
     }
 
     override fun getPsiClassForLocation(contextLocation: Location<*>) = getTestClassForKotlinTest(contextLocation)

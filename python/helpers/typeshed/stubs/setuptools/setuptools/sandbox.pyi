@@ -1,7 +1,7 @@
 import sys
 from types import TracebackType
-from typing import ClassVar, Literal
-from typing_extensions import Self
+from typing import Any
+from typing_extensions import Literal, Self
 
 from ._distutils.errors import DistutilsError
 
@@ -56,10 +56,10 @@ class AbstractSandbox:
     def utime(self, path, *args, **kw): ...
 
 class DirectorySandbox(AbstractSandbox):
-    write_ops: ClassVar[dict[str, None]]
+    write_ops: Any
     def __init__(self, sandbox, exceptions=...) -> None: ...
     def tmpnam(self) -> None: ...
-    def open(self, file, flags, mode: int = 511, *args, **kw): ...  # type: ignore[override]
+    def open(self, file, flags, mode: int = 511, *args, **kw): ...  # type:ignore[override]
 
 class SandboxViolation(DistutilsError):
-    tmpl: str
+    tmpl: Any

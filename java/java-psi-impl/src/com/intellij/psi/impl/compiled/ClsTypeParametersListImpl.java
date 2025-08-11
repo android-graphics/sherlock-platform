@@ -50,7 +50,7 @@ public class ClsTypeParametersListImpl extends ClsRepositoryPsiElement<PsiTypePa
   }
 
   @Override
-  public int getTypeParameterIndex(@NotNull PsiTypeParameter typeParameter) {
+  public int getTypeParameterIndex(PsiTypeParameter typeParameter) {
     assert typeParameter.getParent() == this;
     return PsiImplUtil.getTypeParameterIndex(typeParameter, this);
   }

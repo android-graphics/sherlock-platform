@@ -26,7 +26,8 @@ import org.jetbrains.annotations.NotNull;
 public final class UnconditionalWaitInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "unconditional.wait.problem.descriptor");
   }
@@ -77,7 +78,7 @@ public final class UnconditionalWaitInspection extends BaseInspection {
         }
         final PsiReferenceExpression methodExpression =
           methodCallExpression.getMethodExpression();
-        final @NonNls String methodName =
+        @NonNls final String methodName =
           methodExpression.getReferenceName();
         if (!HardcodedMethodConstants.WAIT.equals(methodName)) {
           continue;

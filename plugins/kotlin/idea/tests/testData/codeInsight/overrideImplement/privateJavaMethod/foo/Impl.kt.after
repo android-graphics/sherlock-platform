@@ -24,9 +24,3 @@ class C : A(), I {
         TODO("Not yet implemented")
     }
 }
-
-// MEMBER: "equals(other: Any?): Boolean"
-// MEMBER: "hashCode(): Int"
-// MEMBER: "toString(): String"
-// MEMBER: "x(): Unit"
-// MEMBER: "z(): Unit"

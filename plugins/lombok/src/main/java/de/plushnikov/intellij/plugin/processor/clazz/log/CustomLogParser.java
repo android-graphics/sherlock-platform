@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.log;
 
 import de.plushnikov.intellij.plugin.processor.clazz.log.AbstractLogProcessor.LoggerInitializerParameter;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,11 +14,11 @@ import java.util.stream.Collectors;
 
 /**
  * Never throws exception, returns null in case of invalid declaration.
+ *
+ * @author Adam Juraszek
  */
-@ApiStatus.Internal
-public final class CustomLogParser {
-  @ApiStatus.Internal
-  public static final class LoggerInitializerDeclaration {
+final class CustomLogParser {
+  static class LoggerInitializerDeclaration {
     private final List<LoggerInitializerParameter> withTopic;
     private final List<LoggerInitializerParameter> withoutTopic;
 
@@ -71,7 +70,8 @@ public final class CustomLogParser {
     throw new UnsupportedOperationException("Utility class");
   }
 
-  static @Nullable String parseLoggerType(@NotNull String customDeclaration) {
+  @Nullable
+  static String parseLoggerType(@NotNull String customDeclaration) {
     final Matcher declarationMatcher = DECLARATION_PATTERN.matcher(customDeclaration);
     if (!declarationMatcher.matches()) {
       return null;
@@ -83,7 +83,8 @@ public final class CustomLogParser {
     return loggerType;
   }
 
-  static @Nullable String parseLoggerInitializer(@NotNull String customDeclaration) {
+  @Nullable
+  static String parseLoggerInitializer(@NotNull String customDeclaration) {
     final Matcher declarationMatcher = DECLARATION_PATTERN.matcher(customDeclaration);
     if (!declarationMatcher.matches()) {
       return null;
@@ -96,7 +97,8 @@ public final class CustomLogParser {
    *
    * @return null if declaration is invalid
    */
-  static @Nullable LoggerInitializerDeclaration parseInitializerParameters(@NotNull String customDeclaration) {
+  @Nullable
+  static LoggerInitializerDeclaration parseInitializerParameters(@NotNull String customDeclaration) {
     final Matcher declarationMatcher = DECLARATION_PATTERN.matcher(customDeclaration);
     if (!declarationMatcher.matches()) {
       return null;
@@ -126,7 +128,8 @@ public final class CustomLogParser {
     return new LoggerInitializerDeclaration(withTopic, withoutTopic);
   }
 
-  private static @NotNull List<LoggerInitializerParameter> splitParameters(@NotNull String parameters) {
+  @NotNull
+  private static List<LoggerInitializerParameter> splitParameters(@NotNull String parameters) {
     if (parameters.isEmpty()) {
       return Collections.emptyList();
     }

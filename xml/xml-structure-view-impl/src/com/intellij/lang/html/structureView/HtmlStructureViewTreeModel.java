@@ -50,7 +50,6 @@ final class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel impleme
       return true;
     }
 
-    @Override
     public String toString() {
       return getName();
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.openapi.editor.Document;
@@ -64,7 +64,8 @@ public class ArrangementSectionDetector {
     return false;
   }
 
-  public static @Nullable ArrangementSectionRule isSectionStartComment(@NotNull ArrangementSettings settings, @NotNull String comment) {
+  @Nullable
+  public static ArrangementSectionRule isSectionStartComment(@NotNull ArrangementSettings settings, @NotNull String comment) {
     for (ArrangementSectionRule rule : settings.getSections()) {
       if (rule.getStartComment() != null && StringUtil.equals(comment, rule.getStartComment())) {
         return rule;
@@ -89,19 +90,23 @@ public class ArrangementSectionDetector {
       myText = text;
     }
 
-    public @NotNull PsiElement getElement() {
+    @NotNull
+    public PsiElement getElement() {
       return myElement;
     }
 
-    public @NotNull ArrangementSettingsToken getToken() {
+    @NotNull
+    public ArrangementSettingsToken getToken() {
       return myToken;
     }
 
-    public @NotNull TextRange getTextRange() {
+    @NotNull
+    public TextRange getTextRange() {
       return myTextRange;
     }
 
-    public @NotNull String getText() {
+    @NotNull
+    public String getText() {
       return myText;
     }
   }

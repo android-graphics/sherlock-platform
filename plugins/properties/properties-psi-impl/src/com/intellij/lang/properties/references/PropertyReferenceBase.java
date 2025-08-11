@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -48,7 +48,8 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
   }
 
-  protected @NotNull String getKeyText() {
+  @NotNull
+  protected String getKeyText() {
     return myKey;
   }
 
@@ -67,17 +68,20 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   }
 
   @Override
-  public @NotNull PsiElement getElement() {
+  @NotNull
+  public PsiElement getElement() {
     return myElement;
   }
 
   @Override
-  public @NotNull TextRange getRangeInElement() {
+  @NotNull
+  public TextRange getRangeInElement() {
     return myTextRange;
   }
 
   @Override
-  public @NotNull String getCanonicalText() {
+  @NotNull
+  public String getCanonicalText() {
     return myKey;
   }
 
@@ -115,7 +119,9 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   }
 
   @Override
-  public @InspectionMessage @NotNull String getUnresolvedMessagePattern() {
+  @InspectionMessage
+  @NotNull
+  public String getUnresolvedMessagePattern() {
     return PropertiesBundle.message("unresolved.property.key");
   }
 
@@ -155,7 +161,8 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     return results;
   }
 
-  protected abstract @Nullable List<PropertiesFile> getPropertiesFiles();
+  @Nullable
+  protected abstract List<PropertiesFile> getPropertiesFiles();
 
   protected boolean isProperty(PsiElement element) {
     if (element instanceof IProperty) {

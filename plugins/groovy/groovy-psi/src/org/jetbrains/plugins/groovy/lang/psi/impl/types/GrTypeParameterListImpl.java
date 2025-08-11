@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
@@ -45,7 +45,7 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub>
   }
 
   @Override
-  public int getTypeParameterIndex(@NotNull PsiTypeParameter typeParameter) {
+  public int getTypeParameterIndex(PsiTypeParameter typeParameter) {
     final GrTypeParameter[] typeParameters = getTypeParameters();
     for (int i = 0; i < typeParameters.length; i++) {
       if (typeParameters[i].equals(typeParameter)) return i;
@@ -68,7 +68,7 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub>
   }
 
   @Override
-  public ASTNode addInternal(@NotNull ASTNode first, @NotNull ASTNode last, ASTNode anchor, Boolean before) {
+  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
     appendParenthesesIfNeeded();
 
     if (first == last && first.getPsi() instanceof PsiTypeParameter) {
@@ -133,8 +133,9 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub>
     return true;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<? extends PsiElement> getComponents() {
+  public List<? extends PsiElement> getComponents() {
     return Arrays.asList(getTypeParameters());
   }
 }

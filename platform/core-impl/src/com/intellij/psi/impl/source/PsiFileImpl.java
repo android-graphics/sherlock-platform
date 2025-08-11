@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -38,8 +38,10 @@ import com.intellij.testFramework.ReadOnlyLightVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.CharSequenceSubSequence;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -49,17 +51,6 @@ import java.util.function.Supplier;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiFileWithStubSupport, Queryable, Cloneable {
-  private static final CharTable NON_INTERNING_CHAR_TABLE = new CharTable() {
-    @Override
-    public @NotNull CharSequence intern(@NotNull CharSequence text) {
-      return text;
-    }
-
-    @Override
-    public @NotNull CharSequence intern(@NotNull CharSequence baseText, int startOffset, int endOffset) {
-      return new CharSequenceSubSequence(baseText, startOffset, endOffset);
-    }
-  };
   private static final Logger LOG = Logger.getInstance(PsiFileImpl.class);
   static final @NonNls String STUB_PSI_MISMATCH = "stub-psi mismatch";
 
@@ -279,19 +270,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     );
   }
 
-  /**
-   * @deprecated use {@link #getStubDescriptor()} instead
-   */
-  @Deprecated
   public @Nullable IStubFileElementType<?> getElementTypeForStubBuilder() {
     ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage());
     IFileElementType type = definition == null ? null : definition.getFileNodeType();
     return type instanceof IStubFileElementType ? (IStubFileElementType<?>)type : null;
-  }
-
-  @ApiStatus.Experimental
-  public @Nullable LanguageStubDescriptor getStubDescriptor() {
-    return StubElementRegistryService.getInstance().getStubDescriptor(getLanguage());
   }
 
   protected @NotNull FileElement createFileElement(CharSequence docText) {
@@ -300,9 +282,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     if (contentLeaf instanceof FileElement) {
       treeElement = (FileElement)contentLeaf;
-      if (getUserData(IndexingDataKeys.VIRTUAL_FILE) != null) {
-        treeElement.setCharTable(NON_INTERNING_CHAR_TABLE);
-      }
     }
     else {
       CompositeElement xxx = ASTFactory.composite(myElementType);
@@ -517,6 +496,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public boolean isPhysical() {
+    // TODO[ik] remove this shit with dummy file system
     return getViewProvider().isEventSystemEnabled();
   }
 
@@ -615,7 +595,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   /**
    * @return a root stub of {@link #getStubTree()}, or null if the file is not stub-based or AST has been loaded.
    */
-  public @Nullable StubElement<?> getStub() {
+  public @Nullable StubElement getStub() {
     StubTree stubHolder = getStubTree();
     return stubHolder != null ? stubHolder.getRoot() : null;
   }
@@ -624,9 +604,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
    * A green stub is a stub object that can co-exist with tree (AST). So, contrary to {@link #getStub()}, can be non-null
    * even if the AST has been loaded in this file. It can be used in cases when retrieving information from a stub is cheaper
    * than from AST.
-   * <p>
-   * Implementation note: green stub is erased in the files that are changed after they had been switched to AST mode.
-   * So it is recommended to cache long computations performed in AST mode.
    *
    * @return a stub object corresponding to the file's content, or null if it's not available (e.g. has been garbage-collected)
    * @see #getStub()
@@ -654,20 +631,15 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return getStubTreeOrFileElement().first;
   }
 
-  /**
-   * @see #getGreenStub() documentation
-   */
+  @SuppressWarnings("unchecked")
   public final <T> T withGreenStubOrAst(
     Function<PsiFileStub<?>, T> stubProcessor,
     Function<FileElement, T> astProcessor
   ) {
-    //noinspection rawtypes,unchecked
+    //noinspection rawtypes
     return withGreenStubOrAst((Class<PsiFileStub<?>>)(Class)PsiFileStub.class, stubProcessor, astProcessor);
   }
 
-  /**
-   * @see #getGreenStub() documentation
-   */
   public final <T, S extends PsiFileStub<?>> T withGreenStubOrAst(
     Class<S> stubClass,
     Function<S, T> stubProcessor,
@@ -676,8 +648,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     Pair<@Nullable StubTree, @Nullable FileElement> result = getStubTreeOrFileElement();
     StubElement<?> stubElement = result.first != null ? result.first.getRoot() : null;
     if (stubElement != null && !stubClass.isAssignableFrom(stubElement.getClass())) {
-      LanguageStubDescriptor descriptor = getStubDescriptor();
-      String elementTypeName = descriptor != null ? descriptor.getFileElementSerializer().getExternalId() : null;
+      IStubFileElementType<?> elementType = getElementTypeForStubBuilder();
+      String elementTypeName = elementType != null ? elementType.getExternalId() : null;
       Logger.getInstance(PsiFileImpl.class).error("stub: " + stubElement.getClass().getName() + "; file: " + elementTypeName);
       stubElement = null;
     }
@@ -721,13 +693,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public @NotNull Pair<@Nullable StubTree, @Nullable FileElement> getStubTreeOrFileElement() {
     assertReadAccessAllowed();
 
-    StubTree deref = derefStub();
+    StubTree derefd = derefStub();
     FileElement treeElement = getTreeElement();
-    if (deref != null || treeElement != null) {
-      return Pair.create(deref, treeElement);
+    if (derefd != null || treeElement != null) {
+      return Pair.create(derefd, treeElement);
     }
 
-    if (Boolean.TRUE.equals(getUserData(BUILDING_STUB)) || myLoadingAst || getStubDescriptor() == null) {
+    if (Boolean.TRUE.equals(getUserData(BUILDING_STUB)) || myLoadingAst || getElementTypeForStubBuilder() == null) {
       return Pair.empty();
     }
 
@@ -736,14 +708,14 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     ObjectStubTree<?> tree = StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
     if (!(tree instanceof StubTree)) return Pair.empty();
     FileViewProvider viewProvider = getViewProvider();
-    List<Pair<LanguageStubDescriptor, PsiFile>> roots = StubTreeBuilder.getStubbedRootDescriptors(viewProvider);
+    List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(viewProvider);
 
     try {
       synchronized (myPsiLock) {
         FileElement treeElementOnLock = getTreeElement();
-        StubTree dereferencedOnLock = derefStub();
-        if (dereferencedOnLock != null || treeElementOnLock != null) {
-          return Pair.create(dereferencedOnLock, treeElementOnLock);
+        StubTree derefdOnLock = derefStub();
+        if (derefdOnLock != null || treeElementOnLock != null) {
+          return Pair.create(derefdOnLock, treeElementOnLock);
         }
 
         PsiFileStubImpl<?> baseRoot = (PsiFileStubImpl<?>)((StubTree)tree).getRoot();
@@ -754,7 +726,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         PsiFileStub<?>[] stubRoots = baseRoot.getStubRoots();
         if (stubRoots.length != roots.size()) {
           com.intellij.util.Function<PsiFileStub<?>, String> stubToString =
-            stub -> "{" + stub.getClass().getSimpleName() + " " + stub.getFileElementType().getLanguage() + "}";
+            stub -> "{" + stub.getClass().getSimpleName() + " " + stub.getType().getLanguage() + "}";
           LOG.error("readOrBuilt roots = " + StringUtil.join(stubRoots, stubToString, ", ") + "; " +
                     StubTreeLoader.getFileViewProviderMismatchDiagnostics(viewProvider));
           rebuildStub();
@@ -802,7 +774,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   protected PsiFileImpl cloneImpl(FileElement treeElementClone) {
     PsiFileImpl clone = (PsiFileImpl)super.clone();
-    clone.setTreeElementPointer(treeElementClone); // should not use setTreeElement here because the cloned file still has VirtualFile (SCR17963)
+    clone.setTreeElementPointer(treeElementClone); // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
     treeElementClone.setPsi(clone);
     return clone;
   }
@@ -842,7 +814,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public PsiElement @NotNull [] getChildren() {
-    return calcTreeElement().getChildrenAsPsiElements((TokenSet)null, ARRAY_FACTORY);
+    return calcTreeElement().getChildrenAsPsiElements((TokenSet)null, PsiElement.ARRAY_FACTORY);
   }
 
   @Override
@@ -1014,7 +986,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public void navigate(boolean requestFocus) {
-    assert canNavigate() : "Couldn't navigate to "+this+": isValid="+isValid()+"; getVirtualFile()="+getVirtualFile()+"; getOriginalFile()="+getOriginalFile();
+    assert canNavigate() : this;
     //noinspection ConstantConditions
     PsiNavigationSupport.getInstance().getDescriptor(this).navigate(requestFocus);
   }
@@ -1063,8 +1035,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
         if (tree == null) {
           assertReadAccessAllowed();
-          LanguageStubDescriptor stubDescriptor = getStubDescriptor();
-          if (stubDescriptor == null) {
+          IStubFileElementType<?> contentElementType = getElementTypeForStubBuilder();
+          if (contentElementType == null) {
             VirtualFile vFile = getVirtualFile();
             String message = "ContentElementType: " + getContentElementType() +
                              "; file: " + this + (vFile.isValid() ? "" : " (" + vFile + " invalid)") +
@@ -1076,9 +1048,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
             throw new AssertionError(message);
           }
 
-          StubElement<?> currentStubTree = stubDescriptor.getStubDefinition().getBuilder().buildStubTree(this);
+          StubElement<?> currentStubTree = contentElementType.getBuilder().buildStubTree(this);
           if (currentStubTree == null) {
-            throw new AssertionError("Stub tree wasn't built for " + stubDescriptor + "; file: " + this);
+            throw new AssertionError("Stub tree wasn't built for " + contentElementType + "; file: " + this);
           }
 
           tree = new StubTree((PsiFileStub<?>)currentStubTree);

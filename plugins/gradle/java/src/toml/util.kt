@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.toml
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
@@ -34,9 +33,9 @@ internal fun getLibraries(context: PsiElement): List<TomlKeySegment> = getTableE
 internal fun String.getVersionCatalogParts() : List<String> = split("_", "-")
 
 internal fun findTomlFile(context: PsiElement, name: String) : TomlFile? {
-  val module = ModuleUtilCore.findModuleForPsiElement(context) ?: return null
-  val file = getVersionCatalogFiles(module)[name] ?: return null
-  return context.manager.findFile(file)?.asSafely<TomlFile>()
+  val versionCatalogFiles = getVersionCatalogFiles(context.project)
+  val file = versionCatalogFiles[name] ?: versionCatalogFiles.firstNotNullOfOrNull { e -> e.value.takeIf { name.startsWith(e.key) } } ?: return null
+  return PsiManager.getInstance(context.project).findFile(file)?.asSafely<TomlFile>()
 }
 
 private fun findTomlFileDynamically(context: PsiElement, name: String): VirtualFile? {
@@ -60,28 +59,12 @@ fun findOriginInTomlFile(method: PsiMethod, context: PsiElement): PsiElement? {
     containingClasses.add(containingClasses.last().containingClass!!)
   }
   containingClasses.reverse()
-  val name = getVersionCatalogName(containingClasses.first()) ?: return null
+  val name = containingClasses.first().name?.substringAfter(LIBRARIES_FOR_PREFIX) ?: return null
   val toml = listOf(StringUtil.decapitalize(name), name).firstNotNullOfOrNull { findTomlFile(context, it) }
              ?: return null
   val tomlVisitor = TomlVersionCatalogVisitor(containingClasses.tail(), method)
   toml.accept(tomlVisitor)
   return tomlVisitor.resolveTarget
-}
-
-/**
- * Determines a section name (libraries / plugins / bundles / versions) the given key-value belongs to
- */
-fun getTomlParentSectionName(tomlKeyValue: TomlKeyValue): String? {
-  val parentTable = tomlKeyValue.parent?.asSafely<TomlTable>() ?: return null
-  return parentTable.header.key?.name
-}
-
-private fun getVersionCatalogName(psiClass: PsiClass): String? {
-  val name = psiClass.name?.substringAfter(LIBRARIES_FOR_PREFIX) ?: return null
-  if (name.endsWith("InPluginsBlock"))
-    return name.substringBefore("InPluginsBlock")
-  else
-    return name
 }
 
 private class TomlVersionCatalogVisitor(containingClasses: List<PsiClass>, val targetMethod: PsiMethod) : TomlRecursiveVisitor() {

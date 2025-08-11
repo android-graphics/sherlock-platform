@@ -25,9 +25,9 @@ import java.util.List;
  * User : catherine
  */
 public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiElement> {
-  private @Nullable PyType myType;
-  private final @NotNull TextRange myFullRange;
-  private final @Nullable PyImportElement myImportElement;
+  @Nullable private PyType myType;
+  @NotNull private final TextRange myFullRange;
+  @Nullable private final PyImportElement myImportElement;
 
   public DocStringTypeReference(PsiElement element, TextRange range, @NotNull TextRange fullRange, @Nullable PyType type,
                                 @Nullable PyImportElement importElement) {
@@ -37,8 +37,9 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
     myImportElement = importElement;
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (element.equals(resolve())) {
       return element;
     }
@@ -102,7 +103,8 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
-  public @NotNull List<Object> collectTypeVariants() {
+  @NotNull
+  public List<Object> collectTypeVariants() {
     final PsiFile file = myElement.getContainingFile();
     final List<Object> variants =
       Lists.newArrayList(PyNames.TYPE_STR, PyNames.TYPE_INT, "basestring", "bool", "buffer", "bytearray", "complex", "dict",

@@ -1,12 +1,13 @@
-// FIR_COMPARISON
-
 package test
 
-fun test() {
-    class Bar
+class Main {
+    fun test() {
+        class Bar
 
-    val bar = Bar<caret>
+        val b = B<caret>
+    }
 }
 
+// IGNORE_K2
 // ELEMENT: Bar
 // TAIL_TEXT: " (foo)"

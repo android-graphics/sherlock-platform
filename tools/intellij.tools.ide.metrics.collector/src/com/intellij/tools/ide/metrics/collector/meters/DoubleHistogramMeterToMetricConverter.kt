@@ -13,34 +13,34 @@ class DoubleHistogramMeterToMetricConverter : MeterToMetricConverter {
       .removeSuffix(".")
   }
 
-  override fun convert(metricData: MetricData, transform: (String, Long) -> Pair<String, Int>): List<PerformanceMetrics.Metric> {
+  override fun convert(metricData: MetricData): List<PerformanceMetrics.Metric> {
     val dataPoint: HistogramPointData = metricData.histogramData.points.first()
 
     val minMetric = PerformanceMetrics.newDuration(metricData.getMetricName("min"),
-                                                   dataPoint.min.toInt())
+                                                   dataPoint.min.toLong())
     val maxMetric = PerformanceMetrics.newDuration(metricData.getMetricName("max"),
-                                                   dataPoint.max.toInt())
+                                                   dataPoint.max.toLong())
 
     val measurementsCountMetric = PerformanceMetrics.newDuration(metricData.getMetricName("measurements.count", addUnitSuffix = false),
-                                                                 dataPoint.count.toInt())
+                                                                 dataPoint.count)
 
     val medianMetric = PerformanceMetrics.newDuration(metricData.getMetricName("median"),
-                                                      metricData.histogramData.median().toInt())
+                                                      metricData.histogramData.median().toLong())
 
     val stdevMetric = PerformanceMetrics.newDuration(metricData.getMetricName("standard.deviation"),
-                                                     metricData.histogramData.standardDeviation().toInt())
+                                                     metricData.histogramData.standardDeviation().toLong())
 
     val pctl95 = PerformanceMetrics.newDuration(metricData.getMetricName("95.percentile"),
-                                                metricData.histogramData.calculatePercentile(95).toInt())
+                                                metricData.histogramData.calculatePercentile(95).toLong())
 
     val pctl99 = PerformanceMetrics.newDuration(metricData.getMetricName("99.percentile"),
-                                                metricData.histogramData.calculatePercentile(99).toInt())
+                                                metricData.histogramData.calculatePercentile(99).toLong())
 
     val madMetric = PerformanceMetrics.newDuration(metricData.getMetricName("mad"),
-                                                   metricData.histogramData.mad().toInt())
+                                                   metricData.histogramData.mad().toLong())
 
     val rangeMetric = PerformanceMetrics.newDuration(metricData.getMetricName("range"),
-                                                     metricData.histogramData.range().toInt())
+                                                     metricData.histogramData.range().toLong())
 
     return listOf(minMetric, maxMetric, measurementsCountMetric, medianMetric, stdevMetric, pctl95, pctl99, madMetric, rangeMetric)
   }

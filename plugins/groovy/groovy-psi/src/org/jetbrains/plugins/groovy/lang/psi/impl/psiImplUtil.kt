@@ -9,6 +9,7 @@ import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil.findFirstParent
 import com.intellij.psi.util.PsiTreeUtil.getParentOfType
+import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
 import com.intellij.util.containers.toArray
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes
@@ -19,6 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall

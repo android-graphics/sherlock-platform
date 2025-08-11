@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.concurrent.CompletableFuture
 

@@ -8,5 +8,3 @@ class GC() : G<Int> {
         <selection><caret>TODO("Not yet implemented")</selection>
     }
 }
-
-// MEMBER: "foo(t: Int): Int"

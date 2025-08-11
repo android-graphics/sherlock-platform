@@ -27,13 +27,13 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
     // covers cases like classes, class functions and class properties
     containingClassOrObjectOrSelf?.fqName?.let { fqName ->
         val fqNameAsString = fqName.asString()
-        val targetDeclarations = KotlinFullClassNameIndex.getAllElements(fqNameAsString, project, scope) {
+        val targetDeclarations: List<KtDeclaration> = KotlinFullClassNameIndex.getAllElements(fqNameAsString, project, scope, filter = {
             it.matchesWithExpect(containingClassOrObjectOrSelf)
-        } + KotlinTopLevelTypeAliasFqNameIndex.getAllElements(fqNameAsString, project, scope) {
+        }) + KotlinTopLevelTypeAliasFqNameIndex.getAllElements(fqNameAsString, project, scope, filter = {
             it.matchesWithExpect(containingClassOrObjectOrSelf)
-        }
+        })
 
-        return targetDeclarations.mapNotNull { targetDeclaration ->
+        return targetDeclarations.asSequence().mapNotNull { targetDeclaration ->
             when (declaration) {
                 is KtClassOrObject -> targetDeclaration
                 is KtConstructor<*> -> {
@@ -56,24 +56,28 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
                     }
 
                 else -> null
-            }
-        }.map { it.createSmartPointer() }
+            }?.createSmartPointer()
+        }
     }
     // top level functions
     val packageFqName = declaration.containingKtFile.packageFqName
     val name = declaration.name ?: return emptySequence()
     val topLevelFqName = packageFqName.child(Name.identifier(name)).asString()
     return when (declaration) {
-        is KtNamedFunction -> KotlinTopLevelFunctionFqnNameIndex.getAllElements(topLevelFqName, project, scope) {
-            it.matchesWithExpect(declaration)
+        is KtNamedFunction -> {
+            KotlinTopLevelFunctionFqnNameIndex.getAllElements(topLevelFqName, project, scope) {
+                it.matchesWithExpect(declaration)
+            }.asSequence().map(KtNamedFunction::createSmartPointer)
         }
 
-        is KtProperty -> KotlinTopLevelPropertyFqnNameIndex.getAllElements(topLevelFqName, project, scope) {
-            it.matchesWithExpect(declaration)
+        is KtProperty -> {
+            KotlinTopLevelPropertyFqnNameIndex.getAllElements(topLevelFqName, project, scope) {
+                it.matchesWithExpect(declaration)
+            }.asSequence().map(KtProperty::createSmartPointer)
         }
 
         else -> emptySequence()
-    }.map { it.createSmartPointer() }
+    }
 }
 
 @OptIn(KaExperimentalApi::class)

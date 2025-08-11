@@ -1,7 +1,0 @@
-package one
-
-enum class EnumClass {
-    A, B;
-}
-
-fun function(e: EnumClass) {}

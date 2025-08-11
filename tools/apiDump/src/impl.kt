@@ -12,6 +12,7 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AnnotationNode
 import java.nio.file.Path
+import kotlin.collections.set
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.inputStream
 import kotlin.io.path.name
@@ -53,13 +54,10 @@ class ApiIndex private constructor(
     return classes[className]
   }
 
-  internal fun discoverPackages(packages: Map<String, ApiAnnotations>, root: Path): ApiIndex {
+  internal fun discoverPackages(packages: Map<String, ApiAnnotations>): ApiIndex {
     val builder = this.packages.builder()
     for ((packageName, packageAnnotations) in packages) {
-      val existingAnnotations = this.packages[packageName]
-      if (existingAnnotations != null && existingAnnotations != packageAnnotations) {
-        error("$packageName has different annotations in different modules. The current root = $root")
-      }
+      check(this.packages[packageName] == null)
       builder[packageName] = packageAnnotations
     }
     return ApiIndex(
@@ -68,17 +66,9 @@ class ApiIndex private constructor(
     )
   }
 
-  internal fun discoverClass(signature: ClassBinarySignature, root: Path): ApiIndex {
+  internal fun discoverClass(signature: ClassBinarySignature): ApiIndex {
     val className = signature.name
-    if (className.endsWith("/package-info")) {
-      // ignore package-info.java
-      return this
-    }
-
-    check(classes[className] == null) {
-      "$className already declared. The current root = $root"
-    }
-
+    check(classes[className] == null)
     return ApiIndex(
       packages,
       classes = classes.put(className, signature),
@@ -94,14 +84,6 @@ class API internal constructor(
   val publicApi: List<ApiClass> by lazy {
     publicApi(index, signatures)
   }
-
-  private val stableAndExperimentalApi: Pair<List<ApiClass>, List<ApiClass>> by lazy {
-    stableAndExperimentalApi(publicApi)
-  }
-
-  val stableApi: List<ApiClass> get() = stableAndExperimentalApi.first
-
-  val experimentalApi: List<ApiClass> get() = stableAndExperimentalApi.second
 }
 
 /**
@@ -113,7 +95,7 @@ fun api(index: ApiIndex, root: Path): API {
   val classFilePaths: Sequence<Path> = classFilePaths(root)
 
   val packages: Map<String, ApiAnnotations> = classFilePaths.packages()
-  index = index.discoverPackages(packages, root)
+  index = index.discoverPackages(packages)
 
   val signatures: List<ClassBinarySignature> = classFilePaths
     .map { it.inputStream() }
@@ -127,7 +109,7 @@ fun api(index: ApiIndex, root: Path): API {
          * because the next [handleAnnotationsAndVisibility] call relies on it
          * to resolve the outer class name.
          */
-        index = index.discoverClass(it, root)
+        index = index.discoverClass(it)
       }
     }
   return API(index, signatures)
@@ -147,7 +129,7 @@ private fun ClassBinarySignature.handleAnnotationsAndVisibility(index: ApiIndex)
   if (outerName != null) {
     val outerClass = index.resolveClass(outerName) ?: error("Outer class $outerName is unknown")
     signature = signature.annotate(outerClass.annotations.apiAnnotations())
-    if (!outerClass.isEffectivelyPublic || access.isProtected && outerClass.isEffectivelyFinal()) {
+    if (!outerClass.isEffectivelyPublic || access.isProtected && outerClass.access.isFinal) {
       signature = signature.copy(isEffectivelyPublic = false)
     }
   }
@@ -196,7 +178,7 @@ private fun ClassBinarySignature.removePrivateSupertypes(index: ApiIndex): Class
   if (privateSupertypes.isEmpty()) {
     return this
   }
-  val isFinal = isEffectivelyFinal()
+  val isFinal = access.isFinal
   val signatures = memberSignatures.mapTo(HashSet()) { it.jvmMember }
   val inheritedSignatures = sequence {
     for (supertype in privateSupertypes) {
@@ -233,7 +215,6 @@ private fun publicApi(index: ApiIndex, classSignatures: List<ClassBinarySignatur
   val result = ArrayList<ApiClass>()
   for (signature in publicSignatures) {
     val className = signature.name
-    val isFinal = signature.isEffectivelyFinal()
     val members = signature.memberSignatures
       .sortedWith(MEMBER_SORT_ORDER)
       .mapNotNull { memberSignature ->
@@ -244,16 +225,9 @@ private fun publicApi(index: ApiIndex, classSignatures: List<ClassBinarySignatur
         if (memberSignature.isConstructorAccessor()) {
           return@mapNotNull null
         }
-        if (isFinal && memberSignature.access.isProtected) {
-          return@mapNotNull null
-        }
         ApiMember(
           ApiRef(memberSignature.name, memberSignature.desc),
-          ApiFlags(
-            memberSignature.access.access,
-            annotationExperimental = memberSignature.annotations.isExperimental() || companionAnnotations.isExperimental,
-            annotationNonExtendable = memberSignature.annotations.isNonExtendable(),
-          ),
+          ApiFlags(memberSignature.access.access, memberSignature.annotations.isExperimental() || companionAnnotations.isExperimental),
         )
       }
     if (members.isEmpty() && signature.isNotUsedWhenEmpty) {
@@ -261,50 +235,12 @@ private fun publicApi(index: ApiIndex, classSignatures: List<ClassBinarySignatur
     }
     result += ApiClass(
       className,
-      flags = ApiFlags(
-        signature.access.access,
-        signature.annotations.isExperimental(),
-        signature.annotations.isNonExtendable(),
-      ),
+      flags = ApiFlags(signature.access.access, signature.annotations.isExperimental()),
       supers = signature.supertypes,
       members,
     )
   }
   return result
-}
-
-private fun stableAndExperimentalApi(classSignatures: List<ApiClass>): Pair<List<ApiClass>, List<ApiClass>> {
-  val stableClassSignatures = ArrayList<ApiClass>()
-  val experimentalClassSignatures = ArrayList<ApiClass>()
-  for (classSignature in classSignatures) {
-    if (classSignature.flags.annotationExperimental) {
-      // the whole class is experimental
-      experimentalClassSignatures.add(classSignature)
-      continue
-    }
-    val stableMembers = ArrayList<ApiMember>()
-    val experimentalMembers = ArrayList<ApiMember>()
-    for (member in classSignature.members) {
-      val memberList = if (member.flags.annotationExperimental) {
-        experimentalMembers
-      }
-      else {
-        stableMembers
-      }
-      memberList.add(member)
-    }
-    if (experimentalMembers.isEmpty()) {
-      // a stable class has only stable members
-      stableClassSignatures.add(classSignature)
-      continue
-    }
-    // keep only experimental members
-    experimentalClassSignatures.add(classSignature.copy(members = experimentalMembers))
-
-    // keep only stable members but also keep the signature in the stable list even if all members are experimental
-    stableClassSignatures.add(classSignature.copy(members = stableMembers))
-  }
-  return Pair(stableClassSignatures, experimentalClassSignatures)
 }
 
 @OptIn(ExperimentalPathApi::class)
@@ -352,7 +288,6 @@ private fun Sequence<Path>.packages(): Map<String, ApiAnnotations> {
 
 private const val API_STATUS_INTERNAL_DESCRIPTOR = "Lorg/jetbrains/annotations/ApiStatus\$Internal;"
 private const val API_STATUS_EXPERIMENTAL_DESCRIPTOR = "Lorg/jetbrains/annotations/ApiStatus\$Experimental;"
-private const val API_STATUS_NON_EXTENDABLE = "Lorg/jetbrains/annotations/ApiStatus\$NonExtendable;"
 
 private fun List<AnnotationNode>.apiAnnotations(): ApiAnnotations {
   var isInternal = false
@@ -373,20 +308,12 @@ private fun List<AnnotationNode>.apiAnnotations(): ApiAnnotations {
   }
 }
 
-private fun ClassBinarySignature.isEffectivelyFinal(): Boolean {
-  return access.isFinal || annotations.isNonExtendable()
-}
-
 private fun List<AnnotationNode>?.isInternal(): Boolean {
   return hasAnnotation(API_STATUS_INTERNAL_DESCRIPTOR)
 }
 
 private fun List<AnnotationNode>?.isExperimental(): Boolean {
   return hasAnnotation(API_STATUS_EXPERIMENTAL_DESCRIPTOR)
-}
-
-private fun List<AnnotationNode>?.isNonExtendable(): Boolean {
-  return hasAnnotation(API_STATUS_NON_EXTENDABLE)
 }
 
 private typealias ClassResolver = (String) -> ClassBinarySignature?

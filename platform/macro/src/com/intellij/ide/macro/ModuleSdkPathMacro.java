@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.macro;
 
 import com.intellij.execution.ExecutionBundle;
@@ -12,20 +12,23 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class ModuleSdkPathMacro extends Macro implements PathMacro {
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return "ModuleSdkPath";
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
+  public String getDescription() {
     return PlatformUtils.isPyCharm()
       ? ExecutionBundle.message("project.interpreter.path")
       : ExecutionBundle.message("module.sdk.path");
   }
 
+  @Nullable
   @Override
-  public @Nullable String expand(@NotNull DataContext dataContext) {
+  public String expand(@NotNull DataContext dataContext) {
     final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (module == null) {
       return null;

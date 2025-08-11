@@ -2,24 +2,23 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.inline
 
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractKotlinInlinePropertyHandler
-import org.jetbrains.kotlin.idea.refactoring.inline.AbstractKotlinInlinePropertyProcessor
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtProperty
 
 class KotlinInlinePropertyHandler : AbstractKotlinInlinePropertyHandler(true) {
-    override fun createProcessor(
+
+    override fun createInlinePropertyDialog(
         declaration: KtProperty,
         reference: PsiReference?,
-        inlineThisOnly: Boolean,
-        deleteAfter: Boolean,
-        isWhenSubjectVariable: Boolean,
-        editor: Editor?,
-        statementToDelete: KtBinaryExpression?,
-        project: Project
-    ): AbstractKotlinInlinePropertyProcessor = KotlinInlinePropertyProcessor(
-        declaration, reference, inlineThisOnly, deleteAfter, isWhenSubjectVariable, editor, statementToDelete, project
+        assignmentToDelete: KtBinaryExpression?,
+        editor: Editor?
+    ) = KotlinInlinePropertyDialog(
+        property = declaration,
+        reference = reference,
+        assignmentToDelete = assignmentToDelete,
+        withPreview = withPrompt,
+        editor = editor
     )
 }

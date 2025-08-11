@@ -46,7 +46,7 @@ public class JBCefHwPopupTest {
     JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
     frame.setSize(640, 480);
     frame.setLocationRelativeTo(null);
-    invokeAndWaitForCondition(() -> frame.setVisible(true), () -> frame.isShowing(), "wait isShowing");
+    invokeAndWaitForCondition(() -> frame.setVisible(true), () -> frame.isShowing());
 
     var browser = new JBCefBrowser();
     browser.loadHTML("<html><body><h1>Hello World</h1></body></html>");

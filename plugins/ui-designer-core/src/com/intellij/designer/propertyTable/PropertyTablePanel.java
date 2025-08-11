@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.DesignerBundle;
@@ -177,7 +177,8 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
     return myPropertyTable;
   }
 
-  public @Nullable PropertyTableTab getCurrentTab() {
+  @Nullable
+  public PropertyTableTab getCurrentTab() {
     return myCurrentTab;
   }
 

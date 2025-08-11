@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev.dataviewer;
 
 import com.jetbrains.python.debugger.PyDebugValue;
@@ -12,14 +12,14 @@ import org.jetbrains.annotations.Nullable;
 import static com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult.ResultType.UNHANDLED_ERROR;
 
 public class DataViewerCommand extends AbstractFrameCommand {
-  private final @NotNull String myVariableName;
-  private final @NotNull DataViewerCommandAction myAction;
+  @NotNull private final String myVariableName;
+  @NotNull private final DataViewerCommandAction myAction;
   private final String @Nullable[] myArgs;
-  private @Nullable DataViewerCommandResult myResult;
+  @Nullable private DataViewerCommandResult myResult;
 
-  public DataViewerCommand(final @NotNull RemoteDebugger debugger,
-                           final @NotNull String threadId,
-                           final @NotNull String frameId,
+  public DataViewerCommand(@NotNull final RemoteDebugger debugger,
+                           @NotNull final String threadId,
+                           @NotNull final String frameId,
                            @NotNull PyDebugValue var,
                            @NotNull DataViewerCommandAction action,
                            String @Nullable[] args) {
@@ -44,7 +44,8 @@ public class DataViewerCommand extends AbstractFrameCommand {
     }
   }
 
-  public @NotNull DataViewerCommandResult getResult() {
+  @NotNull
+  public DataViewerCommandResult getResult() {
     if (myResult == null)
       return DataViewerCommandResult.makeErrorResult(UNHANDLED_ERROR, "No response received");
     return myResult;

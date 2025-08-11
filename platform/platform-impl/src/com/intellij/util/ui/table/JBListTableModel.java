@@ -16,7 +16,6 @@
 package com.intellij.util.ui.table;
 
 import com.intellij.util.ui.EditableModel;
-import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
@@ -25,7 +24,6 @@ import javax.swing.table.TableModel;
 /**
  * @author Konstantin Bulenkov
  */
-@ApiStatus.Internal
 public abstract class JBListTableModel extends AbstractTableModel implements EditableModel {
   private final TableModel myModel;
 

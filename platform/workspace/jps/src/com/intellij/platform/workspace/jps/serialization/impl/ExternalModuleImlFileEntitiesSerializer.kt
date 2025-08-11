@@ -30,10 +30,8 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
                                                        internalEntitySource: JpsFileEntitySource,
                                                        internalModuleListSerializer: JpsModuleListSerializer)
   : ModuleImlFileEntitiesSerializer(modulePath, fileUrl, internalEntitySource, context, internalModuleListSerializer) {
-
-  override val externalStorage: Boolean = true
-
-  override val facetManagerComponentName: String = "ExternalFacetManager"
+  override val skipLoadingIfFileDoesNotExist: Boolean
+    get() = true
 
   override fun loadEntities(reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
@@ -45,15 +43,15 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
     return entitySource is JpsImportedEntitySource && entitySource.storedExternally
   }
 
-  override fun readExternalSystemOptions(content: JpsFileContent,
+  override fun readExternalSystemOptions(reader: JpsFileContentReader,
                                          moduleOptions: Map<String?, String?>): Pair<Map<String?, String?>, String?> {
-    val componentTag = content.loadComponent("ExternalSystem") ?: return Pair(emptyMap(), null)
+    val componentTag = reader.loadComponent(fileUrl.url, "ExternalSystem", getBaseDirPath()) ?: return Pair(emptyMap(), null)
     val options = componentTag.attributes.associateBy({ it.name }, { it.value })
     return Pair(options, options["externalSystem"])
   }
 
   override fun loadExternalSystemOptions(module: ModuleEntity.Builder,
-                                         content: JpsFileContent,
+                                         reader: JpsFileContentReader,
                                          externalSystemOptions: Map<String?, String?>,
                                          externalSystemId: String?,
                                          entitySource: EntitySource) {
@@ -73,7 +71,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
   override fun saveModuleOptions(externalSystemOptions: ExternalSystemModuleOptionsEntity?,
                                  moduleType: String?,
                                  customImlData: ModuleCustomImlDataEntity?,
-                                 content: WritableJpsFileContent) {
+                                 writer: JpsFileContentWriter) {
     val fileUrlString = fileUrl.url
     if (FileUtil.extensionEquals(fileUrlString, "iml")) {
       logger<ExternalModuleImlFileEntitiesSerializer>().error("External serializer should not write to iml files. Path:$fileUrlString")
@@ -93,7 +91,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
       saveOption("linkedProjectId", externalSystemOptions.linkedProjectId)
       saveOption("linkedProjectPath", externalSystemOptions.linkedProjectPath)
       saveOption("rootProjectPath", externalSystemOptions.rootProjectPath)
-      content.saveComponent("ExternalSystem", componentTag)
+      writer.saveComponent(fileUrlString, "ExternalSystem", componentTag)
     }
     if (moduleType != null || !customImlData?.customModuleOptions.isNullOrEmpty()) {
       val componentTag = JDomSerializationUtil.createComponentElement(DEPRECATED_MODULE_MANAGER_COMPONENT_NAME)
@@ -103,12 +101,16 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
       customImlData?.customModuleOptions?.forEach{ (key, value) ->
         componentTag.addContent(Element("option").setAttribute("key", key).setAttribute("value", value))
       }
-      content.saveComponent(DEPRECATED_MODULE_MANAGER_COMPONENT_NAME, componentTag)
+      writer.saveComponent(fileUrlString, DEPRECATED_MODULE_MANAGER_COMPONENT_NAME, componentTag)
     }
   }
 
   override fun createExternalEntitySource(externalSystemId: String) =
     JpsImportedEntitySource(internalEntitySource, externalSystemId, true)
+
+  override fun createFacetSerializer(): FacetsSerializer {
+    return FacetsSerializer(fileUrl, internalEntitySource, "ExternalFacetManager", getBaseDirPath(), true, context)
+  }
 
   override fun getBaseDirPath(): String {
     return modulePath.path

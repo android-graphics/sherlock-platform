@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCatchSection;
 import com.intellij.psi.PsiElement;
@@ -24,7 +24,8 @@ public class DeleteCatchSectionFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     if (removeTryCatch) {
       return CommonQuickFixBundle.message("fix.remove.statement", "try-catch");
     }
@@ -33,8 +34,9 @@ public class DeleteCatchSectionFix extends PsiUpdateModCommandQuickFix {
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return InspectionGadgetsBundle.message("delete.catch.section.fix.family.name");
   }
 

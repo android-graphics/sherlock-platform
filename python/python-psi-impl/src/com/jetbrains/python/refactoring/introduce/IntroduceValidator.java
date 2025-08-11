@@ -41,11 +41,12 @@ public abstract class IntroduceValidator {
            !(myNamesValidator.isKeyword(name, project));
   }
 
-  public boolean checkPossibleName(final @NotNull String name, final @NotNull PyExpression expression) {
+  public boolean checkPossibleName(@NotNull final String name, @NotNull final PyExpression expression) {
     return check(name, expression) == null;
   }
 
-  public abstract @Nullable String check(String name, PsiElement psiElement);
+  @Nullable
+  public abstract String check(String name, PsiElement psiElement);
 
   public static boolean isDefinedInScope(String name, PsiElement psiElement) {
     if (psiElement.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE) != null) {

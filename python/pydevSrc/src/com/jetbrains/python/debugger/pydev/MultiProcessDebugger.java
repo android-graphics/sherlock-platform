@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
 import com.google.common.collect.Collections2;
@@ -16,10 +16,10 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
-import com.jetbrains.python.tables.TableCommandParameters;
-import com.jetbrains.python.tables.TableCommandType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.jetbrains.python.tables.TableCommandParameters;
+import com.jetbrains.python.tables.TableCommandType;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -51,8 +51,8 @@ public class MultiProcessDebugger implements ProcessDebugger {
    * @deprecated the dispatcher code must be removed if no issues arise in Python debugger
    */
   @Deprecated
-  public MultiProcessDebugger(final @NotNull IPyDebugProcess debugProcess,
-                              final @NotNull ServerSocket serverSocket,
+  public MultiProcessDebugger(@NotNull final IPyDebugProcess debugProcess,
+                              @NotNull final ServerSocket serverSocket,
                               final int timeoutInMillis,
                               boolean useDispatcher) {
     myDebugProcess = debugProcess;
@@ -125,7 +125,8 @@ public class MultiProcessDebugger implements ProcessDebugger {
    * @deprecated the dispatcher code must be removed if no issues arise in Python debugger
    */
   @Deprecated(forRemoval = true)
-  private static @NotNull ServerSocket createServerSocket() throws ExecutionException {
+  @NotNull
+  private static ServerSocket createServerSocket() throws ExecutionException {
     final ServerSocket serverSocket;
     try {
       serverSocket = new ServerSocket(0, 0, InetAddress.getLoopbackAddress());
@@ -190,20 +191,14 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public PyDebugValue evaluate(String threadId, String frameId, String expression, boolean execute, int evaluationTimeout)
-    throws PyDebuggerException {
-    return debugger(threadId).evaluate(threadId, frameId, expression, execute, evaluationTimeout);
+  public PyDebugValue evaluate(String threadId, String frameId, String expression, boolean execute) throws PyDebuggerException {
+    return debugger(threadId).evaluate(threadId, frameId, expression, execute);
   }
 
   @Override
-  public PyDebugValue evaluate(String threadId,
-                               String frameId,
-                               String expression,
-                               boolean execute,
-                               int evaluationTimeout,
-                               boolean trimResult)
+  public PyDebugValue evaluate(String threadId, String frameId, String expression, boolean execute, boolean trimResult)
     throws PyDebuggerException {
-    return debugger(threadId).evaluate(threadId, frameId, expression, execute, evaluationTimeout, trimResult);
+    return debugger(threadId).evaluate(threadId, frameId, expression, execute, trimResult);
   }
 
   @Override
@@ -220,8 +215,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   public @Nullable String execTableCommand(String threadId,
                                            String frameId,
                                            String command,
-                                           TableCommandType commandType, TableCommandParameters tableCommandParameters)
-    throws PyDebuggerException {
+                                           TableCommandType commandType, TableCommandParameters tableCommandParameters) throws PyDebuggerException {
     return debugger(threadId).execTableCommand(threadId, frameId, command, commandType, tableCommandParameters);
   }
 
@@ -249,20 +243,19 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public @NotNull DataViewerCommandResult executeDataViewerCommand(@NotNull DataViewerCommandBuilder builder) throws PyDebuggerException {
+  @NotNull
+  public DataViewerCommandResult executeDataViewerCommand(@NotNull DataViewerCommandBuilder builder) throws PyDebuggerException {
     assert builder.getThreadId() != null;
     return debugger(builder.getThreadId()).executeDataViewerCommand(builder);
   }
 
   @Override
-  public void loadReferrers(String threadId,
-                            String frameId,
-                            PyReferringObjectsValue var,
-                            PyDebugCallback<? super XValueChildrenList> callback) {
+  public void loadReferrers(String threadId, String frameId, PyReferringObjectsValue var, PyDebugCallback<? super XValueChildrenList> callback) {
     debugger(threadId).loadReferrers(threadId, frameId, var, callback);
   }
 
-  private @NotNull ProcessDebugger debugger(@NotNull String threadId) {
+  @NotNull
+  private ProcessDebugger debugger(@NotNull String threadId) {
     ProcessDebugger debugger = myThreadRegistry.getDebugger(threadId);
     if (debugger != null) {
       return debugger;
@@ -552,7 +545,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
       }
     }
 
-    private void addCloseListener(final @NotNull RemoteDebugger debugger) {
+    private void addCloseListener(@NotNull final RemoteDebugger debugger) {
       debugger.addCloseListener(new RemoteDebuggerCloseListener() {
         @Override
         public void closed() {
@@ -589,17 +582,13 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
     public void disconnect() {
       myShouldAccept = false;
-      if (myServerSocket != null) {
-        synchronized (this) {
-          if (!myServerSocket.isClosed()) {
-            try {
-              myServerSocket.close();
-            }
-            catch (IOException ignore) {
-            }
-          }
-          myServerSocket = null;
+      if (myServerSocket != null && !myServerSocket.isClosed()) {
+        try {
+          myServerSocket.close();
         }
+        catch (IOException ignore) {
+        }
+        myServerSocket = null;
       }
     }
   }

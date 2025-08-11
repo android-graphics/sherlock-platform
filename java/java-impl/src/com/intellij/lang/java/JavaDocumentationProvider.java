@@ -135,7 +135,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  public @Unmodifiable List<String> getUrlFor(final PsiElement element, final PsiElement originalElement) {
+  public List<String> getUrlFor(final PsiElement element, final PsiElement originalElement) {
     return getExternalJavaDocUrl(element);
   }
 
@@ -180,7 +180,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     if (file instanceof PsiJavaFile) {
       String packageName = ((PsiJavaFile)file).getPackageName();
-      if (!packageName.isEmpty()) {
+      if (packageName.length() > 0) {
         buffer.append(packageName);
         newLine(buffer);
       }
@@ -649,7 +649,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         createTypeParamsListComment(builder, commenter, typeParameterList);
       }
     }
-    return !builder.isEmpty() ? builder.toString() : null;
+    return builder.length() > 0 ? builder.toString() : null;
   }
 
   public static void generateParametersTakingDocFromSuperMethods(StringBuilder builder,
@@ -915,7 +915,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     sb.append("<br>");
   }
 
-  public static @Unmodifiable @Nullable List<String> getExternalJavaDocUrl(final PsiElement element) {
+  public static @Nullable List<String> getExternalJavaDocUrl(final PsiElement element) {
     List<String> urls = null;
 
     if (element instanceof PsiClass) {
@@ -926,7 +926,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       if (aClass != null) {
         urls = findUrlForClass(aClass);
         if (urls != null) {
-          urls = ContainerUtil.map(urls, url -> url + "#" + field.getName());
+          urls.replaceAll(url -> url + "#" + field.getName());
         }
       }
     }
@@ -959,7 +959,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       return null;
     }
     else {
-      return ContainerUtil.map(urls, FileUtil::toSystemIndependentName);
+      urls.replaceAll(FileUtil::toSystemIndependentName);
+      return urls;
     }
   }
 
@@ -1001,7 +1002,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return PsiTreeUtil.getChildOfType(packageInfoFile, PsiDocComment.class);
   }
 
-  public static @Unmodifiable @Nullable List<String> findUrlForClass(@NotNull PsiClass aClass) {
+  public static @Nullable List<String> findUrlForClass(@NotNull PsiClass aClass) {
     String qName = aClass.getQualifiedName();
     if (qName != null) {
       PsiFile file = aClass.getContainingFile();
@@ -1032,7 +1033,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return null;
   }
 
-  public static @Unmodifiable @Nullable List<String> findUrlForVirtualFile(Project project, VirtualFile virtualFile, String relPath) {
+  public static @Nullable List<String> findUrlForVirtualFile(Project project, VirtualFile virtualFile, String relPath) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
     Module module = fileIndex.getModuleForFile(virtualFile);

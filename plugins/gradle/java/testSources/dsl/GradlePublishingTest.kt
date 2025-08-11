@@ -35,7 +35,7 @@ class GradlePublishingTest : GradleCodeInsightTestCase() {
   companion object {
 
     private val FIXTURE_BUILDER = GradleTestFixtureBuilder.create("GradlePublishingTest") { gradleVersion ->
-      withSettingsFile(gradleVersion) {
+      withSettingsFile {
         setProjectName("GradlePublishingTest")
       }
       withBuildFile(gradleVersion) {

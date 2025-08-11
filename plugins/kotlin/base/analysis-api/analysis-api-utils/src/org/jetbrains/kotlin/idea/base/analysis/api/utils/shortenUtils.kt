@@ -142,16 +142,18 @@ fun ShortenCommand.invokeShortening(): List<KtElement> {
         targetFile.addImport(nameToImport, allUnder = true)
     }
 
-    val shorteningResults = mutableListOf<SmartPsiElementPointer<KtElement>>()
+    val shorteningResults = mutableListOf<KtElement>()
     //todo
     //        PostprocessReformattingAspect.getInstance(targetFile.project).disablePostprocessFormattingInside {
     for ((typePointer, shortenedRef) in listOfTypeToShortenInfo) {
         val type = typePointer.element ?: continue
-        type.deleteQualifier()
-        if (shortenedRef != null) {
-            type.referenceExpression?.replace(psiFactory.createExpression(shortenedRef))
+        if (shortenedRef == null) {
+            type.deleteQualifier()
+            shorteningResults.add(type)
+        } else {
+            val shorteningResult = type.replace(psiFactory.createExpression(shortenedRef)) as? KtElement ?: continue
+            shorteningResults.add(shorteningResult)
         }
-        shorteningResults.add(type.createSmartPointer())
     }
 
     for ((callPointer, shortenedRef) in listOfQualifierToShortenInfo) {
@@ -163,22 +165,22 @@ fun ShortenCommand.invokeShortening(): List<KtElement> {
             }
             callee?.replace(psiFactory.createExpression(shortenedRef))
         }
-        call.deleteQualifier()?.let { shorteningResults.add(it.createSmartPointer()) }
+        call.deleteQualifier()?.let { shorteningResults.add(it) }
     }
 
     for (labelInfo in thisLabelsToShorten) {
         val thisWithLabel = labelInfo.labelToShorten.element ?: continue
         thisWithLabel.labelQualifier?.delete()
-        shorteningResults.add(thisWithLabel.createSmartPointer())
+        shorteningResults.add(thisWithLabel)
     }
 
     for (kDocNamePointer in kDocQualifiersToShorten) {
         val kDocName = kDocNamePointer.element ?: continue
         kDocName.deleteQualifier()
-        shorteningResults.add(kDocName.createSmartPointer())
+        shorteningResults.add(kDocName)
     }
     //        }
-    return shorteningResults.mapNotNull { it.element }
+    return shorteningResults
 }
 
 private fun KtDotQualifiedExpression.deleteQualifier(): KtExpression? {

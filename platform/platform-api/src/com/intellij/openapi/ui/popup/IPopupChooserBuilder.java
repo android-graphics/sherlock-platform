@@ -9,7 +9,10 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -90,7 +93,7 @@ public interface IPopupChooserBuilder<T> {
 
   IPopupChooserBuilder<T> setAccessibleName(@Nls String title);
 
-  IPopupChooserBuilder<T> setItemSelectedCallback(Consumer<? super @UnknownNullability T> c);
+  IPopupChooserBuilder<T> setItemSelectedCallback(Consumer<? super T> c);
 
   IPopupChooserBuilder<T> withHintUpdateSupply();
 

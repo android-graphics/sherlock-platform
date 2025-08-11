@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -36,11 +36,11 @@ public final class IgnoredFileBean implements IgnoredFileDescriptor {
     myPattern = null;
   }
 
-  IgnoredFileBean(@NotNull @NonNls String mask, @Nullable String path) {
+  IgnoredFileBean(@NotNull @NonNls String mask) {
     myType = IgnoreSettingsType.MASK;
     myMask = mask;
     myPattern = PatternUtil.fromMask(mask);
-    myPath = path;
+    myPath = null;
     myFilenameIfFile = null;
     myProject = null;
   }
@@ -51,17 +51,22 @@ public final class IgnoredFileBean implements IgnoredFileDescriptor {
   }
 
   @Override
-  public @Nullable @NlsSafe String getPath() {
+  @Nullable
+  @NlsSafe
+  public String getPath() {
     return myPath;
   }
 
   @Override
-  public @Nullable @NonNls String getMask() {
+  @Nullable
+  @NonNls
+  public String getMask() {
     return myMask;
   }
 
   @Override
-  public @NotNull IgnoreSettingsType getType() {
+  @NotNull
+  public IgnoreSettingsType getType() {
     return myType;
   }
 
@@ -117,7 +122,8 @@ public final class IgnoredFileBean implements IgnoredFileDescriptor {
     }
   }
 
-  private @Nullable FilePath resolve() {
+  @Nullable
+  private FilePath resolve() {
     assert myType != IgnoreSettingsType.MASK;
     if (myCachedResolved == null) {
       myCachedResolved = doResolve(myProject, myPath, myType == IgnoreSettingsType.UNDER_DIR);

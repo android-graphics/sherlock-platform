@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Optional;
 
 @ApiStatus.Experimental
 public interface PyAstNumericLiteralExpression extends PyAstLiteralExpression {
@@ -31,32 +32,46 @@ public interface PyAstNumericLiteralExpression extends PyAstLiteralExpression {
    * This method will return {@code null} if the value is too large or too
    * small to be represented as a long.
    */
-  default @Nullable Long getLongValue() {
+  @Nullable
+  default Long getLongValue() {
     final BigInteger value = getBigIntegerValue();
-    long longValue = value.longValue();
-    return BigInteger.valueOf(longValue).equals(value) ? longValue : null;
+
+    return Optional
+      .ofNullable(value)
+      .map(BigInteger::longValue)
+      .filter(longValue -> BigInteger.valueOf(longValue).equals(value))
+      .orElse(null);
   }
 
   /**
    * Returns the value of this literal as a {@code BigInteger} (with any
    * fraction truncated).
    */
-  default @NotNull BigInteger getBigIntegerValue() {
+  @Nullable
+  default BigInteger getBigIntegerValue() {
     if (isIntegerLiteral()) {
       return getBigIntegerValue(getNode().getText());
     }
 
     final BigDecimal bigDecimal = getBigDecimalValue();
-    return bigDecimal.toBigInteger();
+    return bigDecimal == null ? null : bigDecimal.toBigInteger();
   }
 
   /**
    * Returns the exact value of this literal.
    */
-  default @NotNull BigDecimal getBigDecimalValue() {
+  @Nullable
+  default BigDecimal getBigDecimalValue() {
     final String text = getNode().getText();
-    return isIntegerLiteral() ? new BigDecimal(getBigIntegerValue(text))
-                              : new BigDecimal(prepareLiteralForJava(text, 0));
+
+    if (isIntegerLiteral()) {
+      return Optional
+        .ofNullable(getBigIntegerValue(text))
+        .map(BigDecimal::new)
+        .orElse(null);
+    }
+
+    return new BigDecimal(prepareLiteralForJava(text, 0));
   }
 
   default boolean isIntegerLiteral() {
@@ -68,11 +83,13 @@ public interface PyAstNumericLiteralExpression extends PyAstLiteralExpression {
    *
    * @return null if this is not integer literal or the suffix is missed; string suffix otherwise
    */
-  default @Nullable String getIntegerLiteralSuffix() {
+  @Nullable
+  default String getIntegerLiteralSuffix() {
     return isIntegerLiteral() ? StringUtil.nullize(retrieveSuffix(getText())) : null;
   }
 
-  private static @NotNull BigInteger getBigIntegerValue(@NotNull String text) {
+  @Nullable
+  private static BigInteger getBigIntegerValue(@NotNull String text) {
     if (text.equalsIgnoreCase("0" + retrieveSuffix(text))) {
       return BigInteger.ZERO;
     }
@@ -105,20 +122,14 @@ public interface PyAstNumericLiteralExpression extends PyAstLiteralExpression {
     return new BigInteger(prepareLiteralForJava(text, beginIndex), radix);
   }
 
-  private static @NotNull String prepareLiteralForJava(@NotNull String text, int beginIndex) {
+  @NotNull
+  private static String prepareLiteralForJava(@NotNull String text, int beginIndex) {
     int endIndex = text.length() - retrieveSuffix(text).length();
-
-    StringBuilder result = new StringBuilder(endIndex - beginIndex);
-    for (int i = beginIndex; i < endIndex; i++) {
-      char c = text.charAt(i);
-      if (c != '_') {
-        result.append(c);
-      }
-    }
-    return result.toString();
+    return text.substring(beginIndex, endIndex).replaceAll("_", "");
   }
 
-  private static @NotNull String retrieveSuffix(@NotNull String text) {
+  @NotNull
+  private static String retrieveSuffix(@NotNull String text) {
     int lastIndex = text.length();
     while (lastIndex > 0) {
       char last = text.charAt(lastIndex - 1);

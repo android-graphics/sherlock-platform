@@ -31,7 +31,8 @@ public class PyNoneLiteralExpressionImpl extends PyElementImpl implements PyNone
   }
 
   @Override
-  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  @Nullable
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return isEllipsis() ? null : PyNoneType.INSTANCE;
   }
 

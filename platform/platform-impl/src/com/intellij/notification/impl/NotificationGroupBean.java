@@ -2,12 +2,10 @@
 package com.intellij.notification.impl;
 
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Alexander Lobas
  */
-@ApiStatus.Internal
 @Deprecated(forRemoval = true)
 public final class NotificationGroupBean {
   @Attribute("parentId")

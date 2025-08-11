@@ -18,13 +18,15 @@ import java.util.Map;
 
 @ApiStatus.Internal
 public final class JpsEncodingModelSerializerExtension extends JpsModelSerializerExtension {
+  @NotNull
   @Override
-  public @NotNull List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
+  public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
     return Collections.singletonList(new JpsEncodingConfigurationSerializer());
   }
 
+  @NotNull
   @Override
-  public @NotNull List<? extends JpsGlobalExtensionSerializer> getGlobalExtensionSerializers() {
+  public List<? extends JpsGlobalExtensionSerializer> getGlobalExtensionSerializers() {
     return Collections.singletonList(new JpsGlobalEncodingSerializer());
   }
 

@@ -26,7 +26,7 @@ fun KtDotQualifiedExpression.isToString(): Boolean {
     return analyze(callExpression) {
         referenceExpression.mainReference.resolveToSymbols().any { symbol ->
             val functionSymbol = symbol as? KaNamedFunctionSymbol ?: return@any false
-            functionSymbol.valueParameters.isEmpty() && functionSymbol.returnType.isStringType
+            functionSymbol.valueParameters.isEmpty() && functionSymbol.returnType.isString
         }
     }
 }
@@ -37,7 +37,7 @@ fun KtDeclaration.isFinalizeMethod(): Boolean {
     val function = this as? KtNamedFunction ?: return false
     return function.name == "finalize"
             && function.valueParameters.isEmpty()
-            && function.returnType.isUnitType
+            && function.returnType.isUnit
 }
 
 context(KaSession)
@@ -89,7 +89,7 @@ fun KtCallExpression.isImplicitInvokeCall(): Boolean? {
  * ```
  */
 context(KaSession)
-fun KtReference.resolveCompanionObjectShortReferenceToContainingClassSymbol(): KaNamedClassSymbol? {
+fun KtReference.resolveCompanionObjectShortReferenceToContainingClassSymbol(): KaNamedClassOrObjectSymbol? {
     if (this !is KtSimpleNameReference) return null
 
     val symbol = this.resolveToSymbol()
@@ -98,7 +98,7 @@ fun KtReference.resolveCompanionObjectShortReferenceToContainingClassSymbol(): K
     // class name reference resolves to companion
     if (expression.name == symbol.name?.asString()) return null
 
-    val containingSymbol = symbol.containingDeclaration as? KaNamedClassSymbol
+    val containingSymbol = symbol.containingDeclaration as? KaNamedClassOrObjectSymbol
     return containingSymbol?.takeIf { it.companionObject == symbol }
 }
 

@@ -11,7 +11,6 @@ interface UIThemeCustomizer {
   fun createIconCustomizer(themeName: String): Map<String, String>
 }
 
-@ApiStatus.Internal
 open class UIThemeCustomizerImpl : UIThemeCustomizer {
   override fun createColorCustomizer(themeName: String): Map<String, Color> {
     return emptyMap()

@@ -1,1 +1,0 @@
-val from = "<selection>Foo\\\t\nBar</selection>"

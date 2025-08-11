@@ -42,7 +42,7 @@ import java.awt.event.ItemListener;
 import java.util.Arrays;
 import java.util.Set;
 
-public final class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
+public class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
   private JPanel myRoot;
   private ComboBox<@Nls String> myLanguage;
   private EditorTextField myPrefix;
@@ -113,13 +113,14 @@ public final class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
     }
   }
 
-  public @NotNull String getLanguage() {
+  @NotNull
+  public String getLanguage() {
     return (String)myLanguage.getSelectedItem();
   }
 
   public void setLanguage(@NlsSafe String id) {
     final DefaultComboBoxModel<String> model = (DefaultComboBoxModel)myLanguage.getModel();
-    if (model.getIndexOf(id) == -1 && !id.isEmpty()) {
+    if (model.getIndexOf(id) == -1 && id.length() > 0) {
       model.insertElementAt(id, 0);
     }
     myLanguage.setSelectedItem(id);

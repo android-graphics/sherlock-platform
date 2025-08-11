@@ -41,8 +41,6 @@ internal class UiHierarchyWebService : RestService() {
     return doc.convertToHtml()
   }
 
-  override fun getMaxRequestsPerMinute(): Int = Int.MAX_VALUE
-
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
     try {
       val response = when (val result = routing.handleRequest(urlDecoder, request, context)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -33,7 +33,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
   private final List<D> myHistory = new ArrayList<>();
   private int myCurrentIndex = -1;
   protected final DebuggerTreeCreator<D> myTreeCreator;
-  protected final @NotNull Project myProject;
+  @NotNull protected final Project myProject;
 
   protected DebuggerTreeWithHistoryContainer(@NotNull D initialItem, @NotNull DebuggerTreeCreator<D> creator, @NotNull Project project) {
     myTreeCreator = creator;

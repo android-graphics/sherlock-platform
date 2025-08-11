@@ -11,9 +11,7 @@ import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 data class AnnotationData(val vcs: AbstractVcs, val filePath: FilePath, val revisionNumber: VcsRevisionNumber) {
   companion object {
     @JvmStatic

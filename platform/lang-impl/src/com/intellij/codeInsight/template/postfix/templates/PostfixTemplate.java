@@ -80,7 +80,8 @@ public abstract class PostfixTemplate implements PossiblyDumbAware {
     myProvider = provider;
   }
 
-  protected @NotNull @NlsContexts.DetailedDescription String calcDescription() {
+  @NotNull
+  protected @NlsContexts.DetailedDescription String calcDescription() {
     String defaultDescription = CodeInsightBundle.message("postfix.template.description.under.construction");
     try {
       return PostfixTemplateMetaData.createMetaData(this).getDescription().getText();
@@ -95,35 +96,40 @@ public abstract class PostfixTemplate implements PossiblyDumbAware {
   /**
    * @return identifier used for saving the settings related to this template
    */
-  public @NotNull @NonNls String getId() {
+  @NotNull
+  public @NonNls String getId() {
     return myId;
   }
 
   /**
    * @return key used for expanding the template in the editor
    */
-  public final @NotNull @NlsSafe String getKey() {
+  @NotNull
+  public final @NlsSafe String getKey() {
     return myKey;
   }
 
   /**
    * @return template name displayed in UI
    */
-  public @NotNull @NlsSafe String getPresentableName() {
+  @NotNull
+  public @NlsSafe String getPresentableName() {
     return myPresentableName;
   }
 
   /**
    * @return template description displayed in UI
    */
-  public @NotNull @NlsContexts.DetailedDescription String getDescription() {
+  @NotNull
+  public @NlsContexts.DetailedDescription String getDescription() {
     return myLazyDescription.getValue();
   }
 
   /**
    * @return short example of the expanded form shown in the completion popup and templates tree on the configuration page
    */
-  public @NotNull @NlsSafe String getExample() {
+  @NotNull
+  public @NlsSafe String getExample() {
     return myExample;
   }
 
@@ -161,7 +167,8 @@ public abstract class PostfixTemplate implements PossiblyDumbAware {
   /**
    * @return the {@link PostfixTemplateProvider} that provided this template
    */
-  public @Nullable PostfixTemplateProvider getProvider() {
+  @Nullable
+  public PostfixTemplateProvider getProvider() {
     return myProvider;
   }
 

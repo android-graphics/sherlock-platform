@@ -33,23 +33,26 @@ public class PyTypingTypeAliasStubImpl implements PyTypingAliasStub {
     myText = text;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getText() {
+  public String getText() {
     return myText;
   }
 
+  @NotNull
   @Override
-  public @NotNull Class<PyTypingAliasStubType> getTypeClass() {
+  public Class<? extends CustomTargetExpressionStubType> getTypeClass() {
     return PyTypingAliasStubType.class;
   }
 
   @Override
-  public void serialize(@NotNull StubOutputStream stream) throws IOException {
+  public void serialize(StubOutputStream stream) throws IOException {
     stream.writeName(myText);
   }
 
+  @Nullable
   @Override
-  public @Nullable QualifiedName getCalleeName() {
+  public QualifiedName getCalleeName() {
     return null;
   }
 

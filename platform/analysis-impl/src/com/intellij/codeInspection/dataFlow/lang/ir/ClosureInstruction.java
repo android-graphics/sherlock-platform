@@ -31,7 +31,6 @@ public class ClosureInstruction extends Instruction {
     return nextStates(interpreter, stateBefore);
   }
 
-  @Override
   public String toString() {
     return "CLOSURE";
   }

@@ -11,7 +11,6 @@ class FooBar extends Foo {
     }
 
     static class Bar implements Runnable {
-        @Override
         public void run() {
 
         }

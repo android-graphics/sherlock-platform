@@ -1,11 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,8 +13,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiStatus.Internal
-public abstract class FileTemplateTab {
+abstract class FileTemplateTab {
   protected final List<FileTemplateBase> templates = new ArrayList<>();
   private final @NlsContexts.TabTitle String myTitle;
   static final Color MODIFIED_FOREGROUND = JBColor.BLUE;
@@ -26,7 +24,8 @@ public abstract class FileTemplateTab {
 
   public abstract JComponent getComponent();
 
-  public abstract @Nullable FileTemplate getSelectedTemplate();
+  @Nullable
+  public abstract FileTemplate getSelectedTemplate();
 
   public abstract void selectTemplate(FileTemplate template);
 

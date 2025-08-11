@@ -109,7 +109,6 @@ public final class DuplicateMnemonicInspection extends BaseFormInspection {
       myExclusiveContainerStack = exclusiveContainerStack;
     }
 
-    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -122,7 +121,6 @@ public final class DuplicateMnemonicInspection extends BaseFormInspection {
       return true;
     }
 
-    @Override
     public int hashCode() {
       int result = myMnemonicChar;
       result = 31 * result + myExclusiveContainerStack.hashCode();

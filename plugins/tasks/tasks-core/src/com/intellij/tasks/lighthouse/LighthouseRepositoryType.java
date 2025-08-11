@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.lighthouse;
 
 import com.intellij.openapi.project.Project;
@@ -17,18 +16,21 @@ import java.util.EnumSet;
  * @author Dennis.Ushakov
  */
 public class LighthouseRepositoryType extends BaseRepositoryType<LighthouseRepository> {
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return "Lighthouse";
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getIcon() {
+  public Icon getIcon() {
     return TasksCoreIcons.Lighthouse;
   }
 
+  @NotNull
   @Override
-  public @NotNull TaskRepository createRepository() {
+  public TaskRepository createRepository() {
     return new LighthouseRepository(this);
   }
 
@@ -42,10 +44,11 @@ public class LighthouseRepositoryType extends BaseRepositoryType<LighthouseRepos
     return EnumSet.of(TaskState.SUBMITTED, TaskState.OPEN, TaskState.RESOLVED, TaskState.OTHER);
   }
 
+  @NotNull
   @Override
-  public @NotNull TaskRepositoryEditor createEditor(LighthouseRepository repository,
-                                                    Project project,
-                                                    Consumer<? super LighthouseRepository> changeListener) {
+  public TaskRepositoryEditor createEditor(LighthouseRepository repository,
+                                           Project project,
+                                           Consumer<? super LighthouseRepository> changeListener) {
     return new LighthouseRepositoryEditor(project, repository, changeListener);
   }
 }

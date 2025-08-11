@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.GlobalUsageHelper;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LocalRefUseInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithUnnamedPatternFix;
@@ -40,7 +41,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.SerializationUtils;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
@@ -56,9 +56,9 @@ import static com.intellij.codeInspection.options.OptPane.*;
  * Local counterpart of {@link UnusedDeclarationInspectionBase}
  */
 public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInspectionTool {
-  public static final @NonNls String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
-  public static final @NonNls String UNUSED_PARAMETERS_SHORT_NAME = "UnusedParameters";
-  public static final @NonNls String UNUSED_ID = "unused";
+  @NonNls public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
+  @NonNls public static final String UNUSED_PARAMETERS_SHORT_NAME = "UnusedParameters";
+  @NonNls public static final String UNUSED_ID = "unused";
 
   public boolean LOCAL_VARIABLE = true;
   public boolean FIELD = true;
@@ -163,7 +163,7 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
       @Override
       public void visitField(@NotNull PsiField field) {
         if (!compareVisibilities(field, getFieldVisibility())) return;
-        if (SerializationUtils.isSerializationImplicitlyUsedField(field)) return;
+        if (HighlightUtil.isSerializationImplicitlyUsedField(field)) return;
         if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
           if (!info.isReferenced(field) && !UnusedSymbolUtil.isImplicitUsage(project, field)) {
             List<IntentionAction> fixes = new ArrayList<>(suggestionsToMakeFieldUsed(field));
@@ -196,7 +196,7 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
           }
         }
         else if (!UnusedSymbolUtil.isFieldUsed(project, file, field, helper)) {
-          if (UnusedSymbolUtil.isImplicitWrite(project, field) && !UnusedSymbolUtil.isImplicitRead(project, field)) {
+          if (UnusedSymbolUtil.isImplicitWrite(project, field)) {
             registerProblem(field, getNotUsedForReadingMessage(field), List.of(fixFactory.createSafeDeleteFix(field)));
           }
           else if (!UnusedSymbolUtil.isImplicitUsage(project, field)) {
@@ -230,7 +230,7 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
         if (isIgnoreAccessors() && PropertyUtilBase.isSimplePropertyAccessor(method)) return;
         if (!compareVisibilities(method, getMethodVisibility())) return;
         if (UnusedSymbolUtil.isMethodUsed(project, file, method, helper)) return;
-        @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key;
+        String key;
         if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
           key = method.isConstructor() ? "private.constructor.is.not.used" : "private.method.is.not.used";
         }
@@ -356,13 +356,16 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
       @Override
       public void visitClass(@NotNull PsiClass aClass) {
         if (aClass instanceof PsiImplicitClass) return;
-        String acceptedVisibility = aClass.getContainingClass() == null ? getClassVisibility() : getInnerClassVisibility();
+        String acceptedVisibility = aClass.getContainingClass() == null ? getClassVisibility()
+                                                                        : getInnerClassVisibility();
         if (!compareVisibilities(aClass, acceptedVisibility)) return;
         if (UnusedSymbolUtil.isClassUsed(project, file, aClass, helper)) return;
 
-        @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String pattern;
+        String pattern;
         if (aClass.getContainingClass() != null && aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-          pattern = aClass.isInterface() ? "private.inner.interface.is.not.used" : "private.inner.class.is.not.used";
+          pattern = aClass.isInterface()
+                    ? "private.inner.interface.is.not.used"
+                    : "private.inner.class.is.not.used";
         }
         else if (aClass.getParent() instanceof PsiDeclarationStatement) { // local class
           pattern = "local.class.is.not.used";
@@ -388,7 +391,8 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
         formatUnusedSymbolHighlightInfo(pattern, aClass);
       }
 
-      private static @NotNull @NlsContexts.DetailedDescription String getNotUsedForReadingMessage(@NotNull PsiField field) {
+      @NotNull
+      private static @NlsContexts.DetailedDescription String getNotUsedForReadingMessage(@NotNull PsiField field) {
         String visibility = VisibilityUtil.getVisibilityStringToDisplay(field);
         String message = JavaErrorBundle.message("field.is.not.used.for.reading", visibility, field.getName());
         return StringUtil.capitalize(message);
@@ -439,23 +443,27 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
   }
 
   @PsiModifier.ModifierConstant
-  public @Nullable String getClassVisibility() {
+  @Nullable
+  public String getClassVisibility() {
     if (!CLASS) return null;
     return myClassVisibility;
   }
   @PsiModifier.ModifierConstant
-  public @Nullable String getFieldVisibility() {
+  @Nullable
+  public String getFieldVisibility() {
     if (!FIELD) return null;
     return myFieldVisibility;
   }
   @PsiModifier.ModifierConstant
-  public @Nullable String getMethodVisibility() {
+  @Nullable
+  public String getMethodVisibility() {
     if (!METHOD) return null;
     return myMethodVisibility;
   }
 
   @PsiModifier.ModifierConstant
-  public @Nullable String getParameterVisibility() {
+  @Nullable
+  public String getParameterVisibility() {
     if (!PARAMETER) return null;
     return myParameterVisibility;
   }
@@ -465,7 +473,8 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
   }
 
   @PsiModifier.ModifierConstant
-  public @Nullable String getInnerClassVisibility() {
+  @Nullable
+  public String getInnerClassVisibility() {
     if (!INNER_CLASS) return null;
     return myInnerClassVisibility;
   }
@@ -491,18 +500,23 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
   }
 
   @Override
-  public @NotNull String getGroupDisplayName() {
+  @NotNull
+  public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
-  public @NotNull @NonNls String getShortName() {
+  @NotNull
+  @NonNls
+  public String getShortName() {
     return SHORT_NAME;
   }
 
   @Override
   @Pattern(VALID_ID_PATTERN)
-  public @NotNull @NonNls String getID() {
+  @NotNull
+  @NonNls
+  public String getID() {
     return UNUSED_ID;
   }
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.lang.UrlClassLoader
@@ -23,7 +24,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeTo
-import kotlin.io.path.relativeToOrSelf
 
 private class BundledPluginsLister : ModernApplicationStarter() {
   // not premain because FileTypeManager is used to report extensions
@@ -55,7 +55,7 @@ private class BundledPluginsLister : ModernApplicationStarter() {
           layout.add(LayoutItemDescriptor(
             name = plugin.pluginId.idString,
             kind = ProductInfoLayoutItemKind.plugin,
-            classPath = jarFiles?.map { it.relativeToOrSelf(homeDir).invariantSeparatorsPathString } ?: emptyList()
+            classPath = jarFiles?.map { it.relativeTo(homeDir).invariantSeparatorsPathString } ?: emptyList()
           ))
 
           pluginIds.add(plugin.pluginId.idString)
@@ -128,7 +128,9 @@ private class BundledPluginsLister : ModernApplicationStarter() {
 
 private suspend fun closeApplication(exitCode: Int) {
   withContext(Dispatchers.EDT) {
-    ApplicationManager.getApplication().exit(false, true, false, exitCode)
+    blockingContext {
+      ApplicationManager.getApplication().exit(false, true, false, exitCode)
+    }
   }
 }
 

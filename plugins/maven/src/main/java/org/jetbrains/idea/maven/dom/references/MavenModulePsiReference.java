@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -27,9 +27,8 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -100,7 +99,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
 
   @Override
   public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
-    if (myText.isEmpty() || resolve() != null) return LocalQuickFix.EMPTY_ARRAY;
+    if (myText.length() == 0 || resolve() != null) return LocalQuickFix.EMPTY_ARRAY;
     return new LocalQuickFix[]{new CreateModuleFix(true, myText, myPsiFile), new CreateModuleFix(false, myText, myPsiFile)};
   }
 
@@ -115,13 +114,15 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
       myModulePath = modulePath;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getText() {
+    public String getText() {
       return myWithParent ? MavenDomBundle.message("fix.create.module.with.parent") : MavenDomBundle.message("fix.create.module");
     }
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return MavenDomBundle.message("inspection.group");
     }
 
@@ -152,7 +153,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
       String modulePath = FileUtil.toCanonicalPath(baseDir.getPath() + "/" + myModulePath);
       String pomFileName = MavenConstants.POM_XML;
 
-      if (!Files.isDirectory(Path.of(FileUtil.toSystemDependentName(modulePath)))) {
+      if (!new File(FileUtil.toSystemDependentName(modulePath)).isDirectory()) {
         String fileName = PathUtil.getFileName(modulePath);
         if (MavenUtil.isPomFileName(fileName) || MavenUtil.isPotentialPomFile(fileName)) {
           modulePath = PathUtil.getParentPath(modulePath);

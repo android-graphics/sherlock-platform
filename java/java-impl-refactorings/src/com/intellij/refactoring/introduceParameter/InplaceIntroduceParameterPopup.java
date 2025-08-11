@@ -170,7 +170,8 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
       .getSuggestedNameInfo(defaultType);
   }
 
-  private @Nullable PsiParameter getParameter() {
+  @Nullable
+  private PsiParameter getParameter() {
     if (!myMethod.isValid()) return null;
     final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
     return parameters.length > myParameterIndex && myParameterIndex >= 0 ? parameters[myParameterIndex] : null;
@@ -342,7 +343,8 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
     return myPanel.isGenerateDelegate();
   }
 
-  public @NotNull IntroduceVariableBase.JavaReplaceChoice getReplaceChoice() {
+  @NotNull
+  public IntroduceVariableBase.JavaReplaceChoice getReplaceChoice() {
     return myReplaceChoice;
   }
 

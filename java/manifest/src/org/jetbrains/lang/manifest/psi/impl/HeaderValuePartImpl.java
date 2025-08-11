@@ -54,8 +54,9 @@ public class HeaderValuePartImpl extends ASTWrapperPsiElement implements HeaderV
     return getUnwrappedText().isEmpty() ? PsiReference.EMPTY_ARRAY : myRepository.getReferences(this);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getUnwrappedText() {
+  public String getUnwrappedText() {
     StringBuilder builder = new StringBuilder();
 
     for (PsiElement element = getFirstChild(); element != null; element = element.getNextSibling()) {
@@ -67,8 +68,9 @@ public class HeaderValuePartImpl extends ASTWrapperPsiElement implements HeaderV
     return builder.toString().trim();
   }
 
+  @NotNull
   @Override
-  public @NotNull TextRange getHighlightingRange() {
+  public TextRange getHighlightingRange() {
     int endOffset = getTextRange().getEndOffset();
     PsiElement last = getLastChild();
     while (isSpace(last)) {

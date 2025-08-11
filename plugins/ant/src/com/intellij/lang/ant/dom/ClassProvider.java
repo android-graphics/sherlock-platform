@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntBundle;
@@ -12,19 +26,23 @@ import org.jetbrains.annotations.Nullable;
 */
 abstract class ClassProvider {
   static final ClassProvider EMPTY = new ClassProvider() {
+    @Nullable
     @Override
-    public @Nullable Class lookupClass() {
+    public Class lookupClass() {
       return null;
     }
 
+    @Nullable
     @Override
-    public @Nullable String getError() {
+    public String getError() {
       return null;
     }
   };
-  abstract @Nullable Class lookupClass();
+  @Nullable
+  abstract Class lookupClass();
 
-  abstract @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String getError();
+  @Nullable
+  abstract @Nls(capitalization = Nls.Capitalization.Sentence) String getError();
 
   static ClassProvider create(Class clazz) {
     return clazz == null? EMPTY : new LoadedClassProvider(clazz);
@@ -41,13 +59,15 @@ abstract class ClassProvider {
       myClass = clazz;
     }
 
+    @Nullable
     @Override
-    public @Nullable Class lookupClass() {
+    public Class lookupClass() {
       return myClass;
     }
 
+    @Nullable
     @Override
-    public @Nullable String getError() {
+    public String getError() {
       return null;
     }
   }
@@ -63,16 +83,19 @@ abstract class ClassProvider {
     }
 
     @Override
-    public @Nullable Class lookupClass() {
+    @Nullable
+    public Class lookupClass() {
       return getResult().getFirst();
     }
 
     @Override
-    public @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String getError() {
+    @Nullable
+    public @Nls(capitalization = Nls.Capitalization.Sentence) String getError() {
       return getResult().getSecond();
     }
 
-    private @NotNull Pair<Class, @Nls String> getResult() {
+    @NotNull
+    private Pair<Class, @Nls String> getResult() {
       Pair<Class, String> result = myResult;
       if (result == null) {
         Class clazz = null;

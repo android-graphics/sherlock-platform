@@ -50,11 +50,9 @@ interface TestingTasks {
    *
    * Mutates incoming collections.
    */
-  suspend fun prepareEnvForTestRun(
-    jvmArgs: MutableList<String>,
-    systemProperties: MutableMap<String, String>,
-    classPath: MutableList<String>,
-    remoteDebugging: Boolean,
-    cleanSystemDir: Boolean = true,
-  )
+  fun prepareEnvForTestRun(jvmArgs: MutableList<String>,
+                           systemProperties: MutableMap<String, String>,
+                           classPath: MutableList<String>,
+                           remoteDebugging: Boolean,
+                           cleanSystemDir: Boolean = true)
 }

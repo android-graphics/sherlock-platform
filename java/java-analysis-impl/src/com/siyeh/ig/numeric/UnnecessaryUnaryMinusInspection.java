@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -32,7 +32,8 @@ import static com.siyeh.ig.numeric.UnaryPlusInspection.ConvertDoubleUnaryToPrefi
 public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.unary.minus.problem.descriptor");
   }
 
@@ -49,7 +50,8 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
   private static class ReplaceParentOperatorFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.unary.minus.quickfix");
     }
 
@@ -62,7 +64,7 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
       }
       final PsiExpression parentExpression = (PsiExpression)prefixExpression.getParent();
       final CommentTracker commentTracker = new CommentTracker();
-      final @NonNls StringBuilder newExpression = new StringBuilder();
+      @NonNls final StringBuilder newExpression = new StringBuilder();
       if (parentExpression instanceof PsiAssignmentExpression assignmentExpression) {
         final PsiExpression lhs = assignmentExpression.getLExpression();
         newExpression.append(commentTracker.text(lhs));

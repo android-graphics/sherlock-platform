@@ -17,7 +17,10 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents an entry in the classpath of a module (as shown in the "Order/Export" page
@@ -38,6 +41,16 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
    */
   @Deprecated
   VirtualFile @NotNull [] getFiles(@NotNull OrderRootType type);
+
+  /**
+   * Returns the list of roots of the given type for this entry.
+   *
+   * @deprecated the meaning of this method is unclear.
+   * If this instance represents dependency on a library or an SDK, use {@link LibraryOrSdkOrderEntry#getRootUrls(OrderRootType)} instead.
+   * In other cases, use {@link OrderEnumerator} and specify what files from dependencies of a module you want to get.
+   */
+  @Deprecated(forRemoval = true)
+  String @NotNull [] getUrls(@NotNull OrderRootType rootType);
 
   /**
    * Returns the user-visible name of this OrderEntry.
@@ -70,5 +83,5 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
    * @param initialValue the default value to be returned by the visit process.
    * @return the value returned by the visitor.
    */
-  <R> @UnknownNullability R accept(@NotNull RootPolicy<R> policy, @Nullable R initialValue);
+  <R> R accept(@NotNull RootPolicy<R> policy, @Nullable R initialValue);
 }

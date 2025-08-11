@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.*;
@@ -7,10 +7,7 @@ import com.intellij.execution.actions.RunConfigurationsComboBoxAction;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,6 +31,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -147,7 +145,6 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
   protected JButton createJButtonForAction(Action action) {
     if (action == myRunAction) {
       JBOptionButton button = new JBOptionButton(action, null);
-      button.setHideDisabledOptions(true);
       button.setAddSeparator(false);
       button.setOptionTooltipText(getDefaultTooltip());
       button.setIconTextGap(JBUI.CurrentTheme.ActionsList.elementIconGap());
@@ -189,28 +186,22 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
       button.setIcon(executor.getIcon());
       myExecutorActions.forEach(action -> action.unregisterCustomShortcutSet(getContentPanel()));
       myExecutorActions.clear();
-      if (selected == null) {
-        return;
+      if (selected != null) {
+        ExecutorAction action = createAction(selected, executor);
+        DefaultActionGroup group = new DefaultActionGroup();
+        RunConfigurationsComboBoxAction.forAllExecutors(o -> {
+          if (o != executor) {
+            group.addAction(createAction(selected, o));
+          }
+        });
+        button.setOptions(Arrays.asList(group.getChildren(ActionManager.getInstance())));
+        button.setToolTipText(UIUtil.removeMnemonic(executor.getStartActionText(selected.getName())) + " (" + KeymapUtil.getFirstKeyboardShortcutText(action) + ")");
       }
-      List<AnAction> actions = new ArrayList<>();
-      RunConfigurationsComboBoxAction.forAllExecutors(o -> {
-        if (o != executor) {
-          actions.add(createAction(selected, o));
-        }
-      });
-      button.setOptions(actions);
-      ExecutorAction action = createAction(selected, executor);
-      String tooltip = UIUtil.removeMnemonic(executor.getStartActionText(selected.getName()));
-      String actionShortcut = KeymapUtil.getFirstKeyboardShortcutText(action);
-      if(!actionShortcut.isEmpty()) {
-        tooltip += " (" + actionShortcut + ")";
-      }
-
-      button.setToolTipText(tooltip);
     }
   }
 
-  private @NotNull ExecutorAction createAction(@NotNull RunnerAndConfigurationSettings selected, @NotNull Executor executor) {
+  @NotNull
+  private ExecutorAction createAction(@NotNull RunnerAndConfigurationSettings selected, @NotNull Executor executor) {
     return new ExecutorAction(executor) {
       {
         AnAction action = ActionManager.getInstance().getAction(executor.getId());
@@ -230,6 +221,11 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
       @Override
       protected RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull AnActionEvent e) {
         return selected;
+      }
+
+      @Override
+      protected boolean hideDisabledExecutorButtons() {
+        return true;
       }
     };
   }

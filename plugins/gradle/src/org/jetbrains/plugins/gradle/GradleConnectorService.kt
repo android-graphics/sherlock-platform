@@ -17,7 +17,6 @@ import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentCo
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.task.RunConfigurationTaskState
 import com.intellij.util.ThreeState
 import org.gradle.initialization.BuildCancellationToken
@@ -31,9 +30,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.plugins.gradle.execution.target.TargetGradleConnector
 import org.jetbrains.plugins.gradle.execution.target.maybeConvertToRemote
-import org.jetbrains.plugins.gradle.internal.daemon.getDaemonsStatus
-import org.jetbrains.plugins.gradle.internal.daemon.stopDaemons
-import org.jetbrains.plugins.gradle.internal.daemon.gracefulStopDaemons
+import org.jetbrains.plugins.gradle.internal.daemon.GradleDaemonServices
 import org.jetbrains.plugins.gradle.service.project.DistributionFactoryExt
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
@@ -92,12 +89,12 @@ internal class GradleConnectorService(project: Project) : Disposable {
     try {
       if (ProjectUtil.getOpenProjects().isEmpty()) {
         val gradleVersion_6_5 = GradleVersion.version("6.5")
-        val idleDaemons = getDaemonsStatus(knownGradleUserHomes).filter {
+        val idleDaemons = GradleDaemonServices.getDaemonsStatus(knownGradleUserHomes).filter {
           it.status.lowercase(Locale.getDefault()) == "idle" &&
           GradleVersion.version(it.version) < gradleVersion_6_5
         }
         if (idleDaemons.isNotEmpty()) {
-          stopDaemons(knownGradleUserHomes, idleDaemons)
+          GradleDaemonServices.stopDaemons(knownGradleUserHomes, idleDaemons)
         }
       }
     }
@@ -137,7 +134,7 @@ internal class GradleConnectorService(project: Project) : Disposable {
         }
       }
     }
-    gracefulStopDaemons(knownGradleUserHomes)
+    GradleDaemonServices.gracefulStopDaemons(knownGradleUserHomes)
   }
 
   private fun getConnection(connectorParams: ConnectorParams,
@@ -246,32 +243,30 @@ internal class GradleConnectorService(project: Project) : Disposable {
         targetEnvironmentConfigurationProvider,
         executionSettings?.getUserData(RunConfigurationTaskState.KEY)
       )
-      return ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
-        .spanBuilder("GradleConnection")
-        .use {
-          val connectionService = getInstance(projectPath, taskId)
-          if (connectionService != null) {
-            val buildCancellationToken = (cancellationToken as? CancellationTokenInternal)?.token
-            buildCancellationToken?.let { connectionService.cancellationTokens.add(it) }
-            try {
-              val connection = connectionService.getConnection(connectionParams, taskId, listener)
-              return@use if (connection is NonClosableConnection) {
-                function.apply(connection)
-              }
-              else {
-                connection.use(function::apply)
-              }
+      return ExternalSystemTelemetryUtil.computeWithSpan(GradleConstants.SYSTEM_ID, "GradleConnection") {
+        val connectionService = getInstance(projectPath, taskId)
+        if (connectionService != null) {
+          val buildCancellationToken = (cancellationToken as? CancellationTokenInternal)?.token
+          buildCancellationToken?.let { connectionService.cancellationTokens.add(it) }
+          try {
+            val connection = connectionService.getConnection(connectionParams, taskId, listener)
+            return@computeWithSpan if (connection is NonClosableConnection) {
+              function.apply(connection)
             }
-            finally {
-              buildCancellationToken?.let { connectionService.cancellationTokens.remove(it) }
+            else {
+              connection.use(function::apply)
             }
           }
-          else {
-            val newConnector = createConnector(connectionParams, taskId, listener)
-            val connection = newConnector.connect()
-            return@use connection.use(function::apply)
+          finally {
+            buildCancellationToken?.let { connectionService.cancellationTokens.remove(it) }
           }
         }
+        else {
+          val newConnector = createConnector(connectionParams, taskId, listener)
+          val connection = newConnector.connect()
+          return@computeWithSpan connection.use(function::apply)
+        }
+      }
     }
 
     @ApiStatus.Experimental

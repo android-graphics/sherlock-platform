@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hints.presentation.RecursivelyUpdatingRootPresen
 import com.intellij.codeInsight.hints.presentation.RootInlayPresentation
 import com.intellij.codeInsight.hints.presentation.SpacePresentation
 import com.intellij.lang.Language
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.progress.DumbProgressIndicator
@@ -179,8 +178,7 @@ class InlayPassTest : BasePlatformTestCase() {
   }
 
   private fun createPass(collectors: List<CollectorWithSettings<*>>): InlayHintsPass {
-    val visibleRange = myFixture.editor.calculateVisibleRange()
-    return ActionUtil.underModalProgress(project, "") { InlayHintsPass(myFixture.file, collectors, myFixture.editor, visibleRange, sharedSink) }
+    return InlayHintsPass(myFixture.file, collectors, myFixture.editor, myFixture.editor.calculateVisibleRange(), sharedSink)
   }
 
   private fun InlayHintsPass.collectAndApply() {

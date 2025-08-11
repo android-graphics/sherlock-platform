@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.FilePath;
@@ -10,9 +10,9 @@ import org.jetbrains.idea.svn.status.Status;
 
 class SvnChangedFile {
 
-  private final @NotNull FilePath myFilePath;
-  private final @NotNull Status myStatus;
-  private final @Nullable Url myCopyFromURL;
+  @NotNull private final FilePath myFilePath;
+  @NotNull private final Status myStatus;
+  @Nullable private final Url myCopyFromURL;
 
   SvnChangedFile(@NotNull FilePath filePath, @NotNull Status status) {
     this(filePath, status, null);
@@ -24,15 +24,18 @@ class SvnChangedFile {
     myCopyFromURL = copyFromURL;
   }
 
-  public @NotNull FilePath getFilePath() {
+  @NotNull
+  public FilePath getFilePath() {
     return myFilePath;
   }
 
-  public @NotNull Status getStatus() {
+  @NotNull
+  public Status getStatus() {
     return myStatus;
   }
 
-  public @Nullable Url getCopyFromURL() {
+  @Nullable
+  public Url getCopyFromURL() {
     return ObjectUtils.chooseNotNull(myCopyFromURL, myStatus.getCopyFromUrl());
   }
 

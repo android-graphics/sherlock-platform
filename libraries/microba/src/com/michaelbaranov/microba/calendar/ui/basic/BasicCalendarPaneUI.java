@@ -1,13 +1,8 @@
 package com.michaelbaranov.microba.calendar.ui.basic;
 
-import com.michaelbaranov.microba.calendar.CalendarPane;
-import com.michaelbaranov.microba.calendar.HolidayPolicy;
-import com.michaelbaranov.microba.calendar.VetoPolicy;
-import com.michaelbaranov.microba.calendar.ui.CalendarPaneUI;
-
-import javax.swing.*;
-import javax.swing.plaf.ComponentUI;
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -15,7 +10,25 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
-import java.util.*;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
+import java.util.TimeZone;
+
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import javax.swing.plaf.ComponentUI;
+
+import com.michaelbaranov.microba.calendar.CalendarPane;
+import com.michaelbaranov.microba.calendar.DatePicker;
+import com.michaelbaranov.microba.calendar.HolidayPolicy;
+import com.michaelbaranov.microba.calendar.VetoPolicy;
+import com.michaelbaranov.microba.calendar.ui.CalendarPaneUI;
 
 public class BasicCalendarPaneUI extends CalendarPaneUI implements
     PropertyChangeListener, FocusListener {
@@ -38,7 +51,7 @@ public class BasicCalendarPaneUI extends CalendarPaneUI implements
 
   protected CalendarHeader headerPanel;
 
-  protected Set<JComponent> focusableComponents = new HashSet<>();
+  protected Set focusableComponents = new HashSet();
 
   protected ComponentListener componentListener;
 
@@ -46,7 +59,6 @@ public class BasicCalendarPaneUI extends CalendarPaneUI implements
     return new BasicCalendarPaneUI();
   }
 
-  @Override
   public void installUI(JComponent component) {
     peer = (CalendarPane) component;
     createNestedComponents();
@@ -55,7 +67,6 @@ public class BasicCalendarPaneUI extends CalendarPaneUI implements
     installKeyboardActions();
   }
 
-  @Override
   public void uninstallUI(JComponent component) {
     uninstallKeyboardActions();
     uninstallListeners();
@@ -91,28 +102,24 @@ public class BasicCalendarPaneUI extends CalendarPaneUI implements
 
     action.put(ENTER_KEY, new AbstractAction() {
 
-      @Override
       public void actionPerformed(ActionEvent e) {
         peer.commitEdit();
       }
     });
     action.put(ESCAPE_KEY, new AbstractAction() {
 
-      @Override
       public void actionPerformed(ActionEvent e) {
         peer.revertEdit();
       }
     });
     action.put("pgupkey", new AbstractAction() {
 
-      @Override
       public void actionPerformed(ActionEvent e) {
         classicPanel.addMonth(1);
       }
     });
     action.put("pgdownkey", new AbstractAction() {
 
-      @Override
       public void actionPerformed(ActionEvent e) {
         classicPanel.addMonth(-1);
       }
@@ -271,26 +278,21 @@ public class BasicCalendarPaneUI extends CalendarPaneUI implements
     auxPanel.setResources(peer.getResources());
   }
 
-  @Override
   public void commit() throws PropertyVetoException {
     peer.setDate(gridPanel.getDateToCommit());
   }
 
-  @Override
   public void revert() {
     widgetDateChanged(peer.getDate());
   }
 
-  @Override
   public void focusGained(FocusEvent e) {
     gridPanel.requestFocus(true);
   }
 
-  @Override
   public void focusLost(FocusEvent e) {
   }
 
-  @Override
   public void propertyChange(PropertyChangeEvent evt) {
     if (evt.getPropertyName().equals(CalendarPane.PROPERTY_NAME_DATE)) {
       widgetDateChanged((Date) evt.getNewValue());
@@ -324,11 +326,11 @@ public class BasicCalendarPaneUI extends CalendarPaneUI implements
       Boolean value = (Boolean) evt.getNewValue();
       auxPanel.setShowTodayBtn(value.booleanValue());
     } else if (evt.getPropertyName().equals(
-      CalendarPane.PROPERTY_NAME_SHOW_NONE_BTN)) {
+        DatePicker.PROPERTY_NAME_SHOW_NONE_BTN)) {
       boolean value = ((Boolean) evt.getNewValue()).booleanValue();
       auxPanel.setShowNoneButton(value);
     } else if (evt.getPropertyName().equals(
-      CalendarPane.PROPERTY_NAME_SHOW_NUMBER_WEEK)) {
+        DatePicker.PROPERTY_NAME_SHOW_NUMBER_WEEK)) {
       addNestedComponents();
     } else if (evt.getPropertyName().equals("focusable")) {
       Boolean value = (Boolean) evt.getNewValue();
@@ -339,16 +341,22 @@ public class BasicCalendarPaneUI extends CalendarPaneUI implements
     } else if (evt.getPropertyName().equals(
         CalendarPane.PROPERTY_NAME_RESOURCES)) {
       widgetResourceChanged();
+    } else if (evt.getPropertyName()
+        .equals("enabled"/* CalendarPane.PROPERTY_NAME_ENABLED */)) {
+      Boolean value = (Boolean) evt.getNewValue();
+      classicPanel.setEnabled(value.booleanValue());
+      modernPanel.setEnabled(value.booleanValue());
+      gridPanel.setEnabled(value.booleanValue());
+      auxPanel.setEnabled(value.booleanValue());
     }
+
   }
 
   protected class ComponentListener implements FocusListener,
       PropertyChangeListener {
-    @Override
     public void focusGained(FocusEvent e) {
     }
 
-    @Override
     public void focusLost(FocusEvent e) {
       boolean isFocusableComponent = focusableComponents.contains(e
           .getSource());
@@ -361,7 +369,6 @@ public class BasicCalendarPaneUI extends CalendarPaneUI implements
       }
     }
 
-    @Override
     public void propertyChange(PropertyChangeEvent evt) {
       if (evt.getSource() == gridPanel
           && evt.getPropertyName().equals(
@@ -370,7 +377,7 @@ public class BasicCalendarPaneUI extends CalendarPaneUI implements
         try {
           peer.setDate(newValue);
         } catch (PropertyVetoException e) {
-          // Ignore. Just cannot happen, because CalendarGridPanel
+          // Ignore. Just can not happen, beacause CalendarGridPanel
           // already checked the date against current peer's
           // vetoPolicy.
         }

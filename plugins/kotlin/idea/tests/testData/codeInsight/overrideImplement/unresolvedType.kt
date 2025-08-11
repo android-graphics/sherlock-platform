@@ -1,5 +1,5 @@
 // FIR_IDENTICAL
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 interface A<in TPipeline, out TBuilder : Any, TFeature : Any> {
     fun install(pipeline: TPipeline, configure: TBuilder.() -> Unit): TFeature
 }
@@ -7,8 +7,3 @@ interface A<in TPipeline, out TBuilder : Any, TFeature : Any> {
 class X : A<String, UnresolvedType, Unit> {
     <caret>
 }
-
-// MEMBER: "install(pipeline: String, configure: UnresolvedType.() -> Unit): Unit"
-// MEMBER: "equals(other: Any?): Boolean"
-// MEMBER: "hashCode(): Int"
-// MEMBER: "toString(): String"

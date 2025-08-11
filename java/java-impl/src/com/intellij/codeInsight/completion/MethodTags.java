@@ -8,7 +8,6 @@ import com.intellij.codeInsight.lookup.impl.LookupCellRenderer;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -37,28 +36,20 @@ public final class MethodTags {
     if (matcher.value(element.getLookupString())) {
       return null;
     }
-    Set<String> tags = collectTags(element, matcher);
-    if (tags == null) return null;
-    if (tags.isEmpty()) {
-      return null;
-    }
-    return new TagLookupElementDecorator(element, tags, prefix, completionType == CompletionType.SMART);
-  }
-
-  /**
-   * @return Set of tags, which can be used for this element, can return null if an element is not for PsiMember
-   */
-  static @Nullable Set<String> collectTags(@NotNull LookupElement element, @NotNull Condition<? super String> matcher) {
     String lookupString = element.getLookupString();
     PsiElement psiElement = element.getPsiElement();
     if (!(psiElement instanceof PsiMember psiMember)) {
       return null;
     }
     PsiClass psiClass = psiMember.getContainingClass();
-    return tags(lookupString).stream()
+    Set<String> tags = tags(lookupString).stream()
       .filter(t -> matcher.value(t.name()) && t.matcher().test(psiClass))
       .map(t -> t.name())
       .collect(Collectors.toSet());
+    if (tags.isEmpty()) {
+      return null;
+    }
+    return new TagLookupElementDecorator(element, tags, prefix, completionType == CompletionType.SMART);
   }
 
   @ApiStatus.Experimental
@@ -98,22 +89,7 @@ public final class MethodTags {
     @Override
     public void renderElement(@NotNull LookupElementPresentation presentation) {
       super.renderElement(presentation);
-      String itemText = presentation.getItemText();
-      String tailText = presentation.getTailText();
-      if (itemText != null && (tailText == null || tailText.isBlank() || (tailText.startsWith("(") && tailText.endsWith(")")))) {
-        if (tailText == null) {
-          tailText = "";
-        }
-        String tagMessage = JavaBundle.message("java.completion.tag", myTags.size());
-        String fullItemText = itemText + tailText + " " + tagMessage + " ";
-        String allTags = Strings.join(myTags, ", ");
-        fullItemText += allTags;
-        presentation.setItemText(fullItemText);
-        presentation.decorateItemTextRange(new TextRange(itemText.length(), itemText.length() + tailText.length() + 1 + tagMessage.length()),
-                                           LookupElementPresentation.LookupItemDecoration.GRAY);
-        presentation.setTailText("");
-      }
-      else if (myTags.size() == 1) {
+      if (myTags.size() == 1) {
         presentation.appendTailText(" " + JavaBundle.message("java.completion.tag", myTags.size()) + " ", true);
         int startOffset = getStartOffset(presentation);
         String text = myTags.iterator().next();

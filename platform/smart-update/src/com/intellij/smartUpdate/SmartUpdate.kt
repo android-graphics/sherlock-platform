@@ -29,7 +29,8 @@ private val LOG = logger<SmartUpdate>()
 
 @State(name = "SmartUpdateOptions", storages = [Storage(value = StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED)])
 @Service(Service.Level.PROJECT)
-internal class SmartUpdate(val project: Project, private val coroutineScope: CoroutineScope) : PersistentStateComponent<SmartUpdate.Options>, Disposable {
+class SmartUpdate(val project: Project, private val coroutineScope: CoroutineScope) : PersistentStateComponent<SmartUpdate.Options>, Disposable {
+
   class Options: BaseState() {
     var scheduled by property(false)
     var scheduledTime by property(LocalTime.of(8, 0).toSecondOfDay())

@@ -36,7 +36,8 @@ import org.jetbrains.annotations.NotNull;
 public final class BooleanConstructorInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "BooleanConstructorCall";
   }
 
@@ -46,7 +47,8 @@ public final class BooleanConstructorInspection extends BaseInspection implement
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("boolean.constructor.problem.descriptor");
   }
 
@@ -66,7 +68,8 @@ public final class BooleanConstructorInspection extends BaseInspection implement
     private static final String FALSE = '\"' + PsiKeyword.FALSE + '\"';
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("boolean.constructor.simplify.quickfix");
     }
 
@@ -88,7 +91,7 @@ public final class BooleanConstructorInspection extends BaseInspection implement
       final String text = argument.getText();
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
       CommentTracker tracker = new CommentTracker();
-      final @NonNls String newExpression;
+      @NonNls final String newExpression;
       if (PsiKeyword.TRUE.equals(text) || TRUE.equalsIgnoreCase(text)) {
         newExpression = "java.lang.Boolean.TRUE";
       }
@@ -122,7 +125,8 @@ public final class BooleanConstructorInspection extends BaseInspection implement
       PsiReplacementUtil.replaceExpression(expression, newExpression, tracker);
     }
 
-    private static @NonNls String buildText(PsiExpression argument, boolean useValueOf) {
+    @NonNls
+    private static String buildText(PsiExpression argument, boolean useValueOf) {
       final String text = argument.getText();
       final PsiType argumentType = argument.getType();
       if (!useValueOf && PsiTypes.booleanType().equals(argumentType)) {
@@ -148,7 +152,7 @@ public final class BooleanConstructorInspection extends BaseInspection implement
       if (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
         return;
       }
-      final PsiClass aClass = PsiUtil.getContainingClass(expression);
+      final PsiClass aClass = ClassUtils.getContainingClass(expression);
       if (aClass != null) {
         final String qualifiedName = aClass.getQualifiedName();
         if (CommonClassNames.JAVA_LANG_BOOLEAN.equals(qualifiedName)) {

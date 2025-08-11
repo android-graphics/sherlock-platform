@@ -9,18 +9,16 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.junit.Test
 
 class MavenSearchTest : MavenMultiVersionImportingTestCase() {
   @Test
-  fun `test searching POM files by module name`() = runBlocking {
+  fun `test searching POM files by module name`() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""<groupId>test</groupId>
                      <artifactId>p1</artifactId>
                      <packaging>pom</packaging>
@@ -49,14 +47,10 @@ class MavenSearchTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>""")
     importProjectAsync()
 
-    withContext(Dispatchers.EDT) {
-      writeIntentReadAction {
-        val m1Psi = PsiManager.getInstance(project).findFile(m1File)
-        val m2Psi = PsiManager.getInstance(project).findFile(m2File)
-        UsefulTestCase.assertContainsElements(lookForFiles("module1"), m1Psi)
-        UsefulTestCase.assertContainsElements(lookForFiles("module2"), m2Psi)
-      }
-    }
+    val m1Psi = PsiManager.getInstance(project).findFile(m1File)
+    val m2Psi = PsiManager.getInstance(project).findFile(m2File)
+    UsefulTestCase.assertContainsElements(lookForFiles("module1"), m1Psi)
+    UsefulTestCase.assertContainsElements(lookForFiles("module2"), m2Psi)
   }
 
   private fun lookForFiles(pattern: String): List<Any> =

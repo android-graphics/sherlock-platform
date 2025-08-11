@@ -3,11 +3,11 @@ package org.jetbrains.kotlin.idea.base.fir.codeInsight
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -51,12 +51,12 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
                             ?: return false
 
                         val parameterType = parameterTypeReference.type
-                        if (!parameterType.isResolvedClassType() || !parameterType.isSubtypeOf(buildMainParameterType())) {
+                        if (!parameterType.isResolvedClassType() || !parameterType.isSubTypeOf(buildMainParameterType())) {
                             return false
                         }
                     }
 
-                    val functionSymbol = function.symbol
+                    val functionSymbol = function.getFunctionLikeSymbol()
                     if (functionSymbol !is KaNamedFunctionSymbol) {
                         return false
                     }
@@ -66,15 +66,15 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
                         return false
                     }
 
-                    if (configuration.checkResultType && !function.returnType.isUnitType) {
+                    if (configuration.checkResultType && !function.returnType.isUnit) {
                         return false
                     }
 
                     if (!isTopLevel) {
-                        val containingClass = functionSymbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol ?: return false
+                        val containingClass = functionSymbol.originalContainingClassForOverride ?: return false
                         val annotationJvmStatic = JvmStandardClassIds.Annotations.JvmStatic
                         return containingClass.classKind.isObject
-                                && (!configuration.checkJvmStaticAnnotation || annotationJvmStatic in functionSymbol.annotations)
+                                && (!configuration.checkJvmStaticAnnotation || functionSymbol.hasAnnotation(annotationJvmStatic))
 
                     }
 

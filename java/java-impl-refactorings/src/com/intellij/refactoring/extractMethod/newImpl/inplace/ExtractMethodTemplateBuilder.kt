@@ -97,30 +97,24 @@ data class ExtractMethodTemplateBuilder(
       template.setToIndent(false)
       editor.caretModel.moveToOffset(file.textRange.startOffset)
       val templateState = TemplateManager.getInstance(project).runTemplate(editor, template)
-      if (templateState.isFinished) {
-        Disposer.dispose(disposable)
-      }
-      else {
-        setupImaginaryInplaceRenamer(templateState, restartHandler)
-        Disposer.register(templateState) { SuggestedRefactoringProvider.getInstance(project).reset() }
-        DaemonCodeAnalyzer.getInstance(project).disableUpdateByTimer(templateState)
-        setTemplateValidator(templateState) { range -> templateFields[templateState.currentVariableNumber].validator.invoke(range) }
-        Disposer.register(templateState, disposable)
-        templateState.addTemplateStateListener(object: TemplateEditingAdapter(){
-          override fun templateCancelled(template: Template?) {
-            if (UndoManager.getInstance(project).isUndoOrRedoInProgress) return
+      setupImaginaryInplaceRenamer(templateState, restartHandler)
+      Disposer.register(templateState) { SuggestedRefactoringProvider.getInstance(project).reset() }
+      DaemonCodeAnalyzer.getInstance(project).disableUpdateByTimer(templateState)
+      setTemplateValidator(templateState) { range -> templateFields[templateState.currentVariableNumber].validator.invoke(range) }
+      Disposer.register(templateState, disposable)
+      templateState.addTemplateStateListener(object: TemplateEditingAdapter(){
+        override fun templateCancelled(template: Template?) {
+          if (UndoManager.getInstance(project).isUndoOrRedoInProgress) return
+          onBroken.invoke()
+        }
+        override fun templateFinished(template: Template, brokenOff: Boolean) {
+          if (brokenOff){
             onBroken.invoke()
+            return
           }
-
-          override fun templateFinished(template: Template, brokenOff: Boolean) {
-            if (brokenOff){
-              onBroken.invoke()
-              return
-            }
-            onSuccess.invoke()
-          }
-        })
-      }
+          onSuccess.invoke()
+        }
+      })
       return@ThrowableComputable templateState
     })
   }

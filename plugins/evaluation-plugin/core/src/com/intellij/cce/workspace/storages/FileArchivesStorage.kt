@@ -12,7 +12,8 @@ class FileArchivesStorage(private val storageDir: String) : KeyValueStorage<Stri
   val fileExtension: String = ".gz"
 
   init {
-    ensureDirExists(storageDir)
+    val storagePath = Paths.get(storageDir)
+    if (!Files.exists(storagePath)) Files.createDirectories(storagePath)
   }
 
   override fun get(key: String): String {

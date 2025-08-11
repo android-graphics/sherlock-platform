@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -25,7 +25,9 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import sun.font.CompositeFont;
 import sun.font.Font2D;
 import sun.font.FontSubstitution;
@@ -40,7 +42,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.IntUnaryOperator;
 
-@ApiStatus.Internal
 public final class ShowFontsUsedByEditorAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   private static final Logger LOG = Logger.getInstance(ShowFontsUsedByEditorAction.class);
 
@@ -161,7 +162,7 @@ final class AccessingInternalJdkFontApi {
   private static final FontRenderContext DUMMY_CONTEXT = new FontRenderContext(null, false, false);
 
   @SuppressWarnings("InstanceofIncompatibleInterface")
-  static @Unmodifiable List<String> getRelevantComponents(@NotNull Font font, @NotNull CharSequence text, int startOffset, int endOffset)
+  static List<String> getRelevantComponents(@NotNull Font font, @NotNull CharSequence text, int startOffset, int endOffset)
     throws Exception {
     if (GET_FONT_2D_METHOD != null) {
       Font2D font2D = (Font2D)GET_FONT_2D_METHOD.invoke(font);

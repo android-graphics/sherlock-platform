@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.declaration;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -43,8 +43,9 @@ public final class GrMethodMayBeStaticInspection extends BaseInspection {
       checkbox("myIgnoreEmptyMethods", GroovyBundle.message("method.may.be.static.ignore.empty.method.option")));
   }
 
+  @NotNull
   @Override
-  protected @NotNull BaseInspectionVisitor buildVisitor() {
+  protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
       public void visitMethod(@NotNull GrMethod method) {

@@ -18,23 +18,25 @@ public final class ComparisonMergeUtil {
 
   private ComparisonMergeUtil() { }
 
-  public static @NotNull List<MergeRange> buildSimple(@NotNull FairDiffIterable fragments1,
-                                                      @NotNull FairDiffIterable fragments2,
-                                                      @NotNull CancellationChecker indicator) {
+  @NotNull
+  public static List<MergeRange> buildSimple(@NotNull FairDiffIterable fragments1,
+                                             @NotNull FairDiffIterable fragments2,
+                                             @NotNull CancellationChecker indicator) {
     assert fragments1.getLength1() == fragments2.getLength1();
     return new FairMergeBuilder().execute(fragments1, fragments2);
   }
 
-  static @NotNull List<MergeRange> buildMerge(@NotNull FairDiffIterable fragments1,
-                                              @NotNull FairDiffIterable fragments2,
-                                              @NotNull SideEquality trueEquality,
-                                              @NotNull CancellationChecker indicator) {
+  @NotNull
+  static List<MergeRange> buildMerge(@NotNull FairDiffIterable fragments1,
+                                     @NotNull FairDiffIterable fragments2,
+                                     @NotNull SideEquality trueEquality,
+                                     @NotNull CancellationChecker indicator) {
     assert fragments1.getLength1() == fragments2.getLength1();
     return new FairMergeBuilder(trueEquality).execute(fragments1, fragments2);
   }
 
   private static final class FairMergeBuilder {
-    private final @NotNull ChangeBuilder myChangesBuilder;
+    @NotNull private final ChangeBuilder myChangesBuilder;
 
     private FairMergeBuilder() {
       myChangesBuilder = new ChangeBuilder();
@@ -44,8 +46,9 @@ public final class ComparisonMergeUtil {
       myChangesBuilder = new IgnoringChangeBuilder(trueEquality);
     }
 
-    public @NotNull List<MergeRange> execute(@NotNull FairDiffIterable fragments1,
-                                             @NotNull FairDiffIterable fragments2) {
+    @NotNull
+    public List<MergeRange> execute(@NotNull FairDiffIterable fragments1,
+                                    @NotNull FairDiffIterable fragments2) {
       PeekableIterator<Range> unchanged1 = new PeekableIteratorWrapper<>(fragments1.unchanged());
       PeekableIterator<Range> unchanged2 = new PeekableIteratorWrapper<>(fragments2.unchanged());
 
@@ -57,7 +60,8 @@ public final class ComparisonMergeUtil {
       return myChangesBuilder.finish(fragments1.getLength2(), fragments1.getLength1(), fragments2.getLength2());
     }
 
-    private @NotNull Side add(@NotNull Range range1, @NotNull Range range2) {
+    @NotNull
+    private Side add(@NotNull Range range1, @NotNull Range range2) {
       int start1 = range1.start1;
       int end1 = range1.end1;
 
@@ -86,7 +90,7 @@ public final class ComparisonMergeUtil {
   }
 
   private static class ChangeBuilder {
-    protected final @NotNull List<MergeRange> myChanges = new ArrayList<>();
+    @NotNull protected final List<MergeRange> myChanges = new ArrayList<>();
 
     private int myIndex1 = 0;
     private int myIndex2 = 0;
@@ -112,7 +116,8 @@ public final class ComparisonMergeUtil {
       myIndex3 = end3;
     }
 
-    public @NotNull List<MergeRange> finish(int length1, int length2, int length3) {
+    @NotNull
+    public List<MergeRange> finish(int length1, int length2, int length3) {
       assert myIndex1 <= length1;
       assert myIndex2 <= length2;
       assert myIndex3 <= length3;
@@ -128,7 +133,7 @@ public final class ComparisonMergeUtil {
   }
 
   private static final class IgnoringChangeBuilder extends ChangeBuilder {
-    private final @NotNull SideEquality myTrueEquality;
+    @NotNull private final SideEquality myTrueEquality;
 
     private IgnoringChangeBuilder(@NotNull SideEquality trueEquality) {
       myTrueEquality = trueEquality;
@@ -172,9 +177,10 @@ public final class ComparisonMergeUtil {
     }
   }
 
-  public static @Nullable CharSequence tryResolveConflict(@NotNull CharSequence leftText,
-                                                          @NotNull CharSequence baseText,
-                                                          @NotNull CharSequence rightText) {
+  @Nullable
+  public static CharSequence tryResolveConflict(@NotNull CharSequence leftText,
+                                                @NotNull CharSequence baseText,
+                                                @NotNull CharSequence rightText) {
     if (DiffConfig.USE_GREEDY_MERGE_MAGIC_RESOLVE) {
       return MergeResolveUtil.tryGreedyResolve(leftText, baseText, rightText);
     }

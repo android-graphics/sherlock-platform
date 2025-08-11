@@ -37,6 +37,7 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.io.write
 import com.intellij.util.ui.UIUtil
+import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.platform.workspace.jps.serialization.impl.toConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
@@ -44,7 +45,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.WEB_MODULE_ENTIT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
-import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import kotlinx.coroutines.Dispatchers
@@ -836,7 +836,8 @@ class ModuleBridgesTest {
 
     val moduleDirPath = temporaryDirectoryRule.newDirectoryPath(moduleName).toString()
     val moduleDirVfu = virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(moduleDirPath))
-    val moduleEntitySource = LegacyBridgeJpsEntitySourceFactory.getInstance(project).createEntitySourceForModule(
+    val moduleEntitySource = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForModule(
+      project = project,
       baseModuleDir = moduleDirVfu,
       externalSource = null,
     )

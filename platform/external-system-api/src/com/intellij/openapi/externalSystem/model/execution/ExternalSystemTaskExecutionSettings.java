@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.execution;
 
 import com.intellij.execution.configurations.ParametersList;
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,8 +22,8 @@ import java.util.*;
  */
 @Tag("ExternalSystemSettings")
 public class ExternalSystemTaskExecutionSettings implements Cloneable {
-  public static final @NotNull @NonNls String TAG_NAME = "ExternalSystemSettings";
-  public static final @NotNull @NonNls Key<ParametersList> JVM_AGENT_SETUP_KEY = Key.create("jvmAgentSetup");
+  @NotNull @NonNls public static final String TAG_NAME = "ExternalSystemSettings";
+  @NotNull @NonNls public static final Key<ParametersList> JVM_AGENT_SETUP_KEY = Key.create("jvmAgentSetup");
 
   private @NotNull List<String> myTaskNames = new ArrayList<>();
   private @NotNull List<String> myTaskDescriptions = new ArrayList<>();
@@ -57,7 +58,8 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     myPassParentEnvs = source.myPassParentEnvs;
   }
 
-  public @Nullable @Nls String getExecutionName() {
+  @Nullable
+  public @Nls String getExecutionName() {
     return myExecutionName;
   }
 
@@ -101,7 +103,8 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     myScriptParameters = scriptParameters;
   }
 
-  public @NotNull List<@NlsSafe String> getTaskNames() {
+  @NotNull
+  public List<@NlsSafe String> getTaskNames() {
     return myTaskNames;
   }
 
@@ -109,7 +112,8 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     myTaskNames = taskNames;
   }
 
-  public @NotNull List<@Nls String> getTaskDescriptions() {
+  @NotNull
+  public List<@Nls String> getTaskDescriptions() {
     return myTaskDescriptions;
   }
 
@@ -117,7 +121,8 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     myTaskDescriptions = taskDescriptions;
   }
 
-  public @NotNull Map<String, String> getEnv() {
+  @NotNull
+  public Map<String, String> getEnv() {
     return myEnv;
   }
 

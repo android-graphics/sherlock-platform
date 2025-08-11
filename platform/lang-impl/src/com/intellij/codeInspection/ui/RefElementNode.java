@@ -16,7 +16,7 @@ import javax.swing.*;
 
 public class RefElementNode extends SuppressableInspectionTreeNode {
   private final Icon myIcon;
-  private final @Nullable RefEntity myRefEntity;
+  @Nullable private final RefEntity myRefEntity;
 
   public RefElementNode(@Nullable RefEntity refEntity,
                         @NotNull InspectionToolPresentation presentation,
@@ -33,12 +33,14 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  public @Nullable RefEntity getElement() {
+  @Nullable
+  public RefEntity getElement() {
     return myRefEntity;
   }
 
   @Override
-  public @Nullable Icon getIcon(boolean expanded) {
+  @Nullable
+  public Icon getIcon(boolean expanded) {
     return myIcon;
   }
 
@@ -97,8 +99,9 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
     return isLeaf() && getPresentation().isProblemResolved(getElement());
   }
 
+  @Nullable
   @Override
-  public @Nullable String getTailText() {
+  public String getTailText() {
     if (getPresentation().isDummy()) {
       return "";
     }
@@ -109,8 +112,9 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
     return isLeaf() ? "" : null;
   }
 
+  @NotNull
   @Override
-  public @NotNull Pair<PsiElement, CommonProblemDescriptor> getSuppressContent() {
+  public Pair<PsiElement, CommonProblemDescriptor> getSuppressContent() {
     RefEntity refElement = getElement();
     PsiElement element = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;
     return Pair.create(element, null);

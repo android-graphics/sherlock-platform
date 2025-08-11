@@ -12,7 +12,6 @@ public class PsiImportListStubImpl extends StubBase<PsiImportList> implements Ps
     super(parent, JavaStubElementTypes.IMPORT_LIST);
   }
 
-  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "PsiImportListStub";

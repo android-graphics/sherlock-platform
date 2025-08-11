@@ -20,7 +20,7 @@ public abstract class LoggerRt {
 
   private static Factory ourFactory;
 
-  private static synchronized Factory getFactory() {
+  private synchronized static Factory getFactory() {
     if (ourFactory == null) {
       try {
         ourFactory = new IdeaFactory();

@@ -5,12 +5,10 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -67,19 +65,7 @@ public class AnnotateActionGroup extends ActionGroup implements DumbAware {
 
   static void revalidateMarkupInAllEditors() {
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-      revalidateMarkupInEditor(editor);
-    }
-  }
-
-  static void revalidateMarkupInEditors(@NotNull Project project, @NotNull Document document) {
-    EditorFactory.getInstance().editors(document, project).forEach(editor -> {
-      revalidateMarkupInEditor(editor);
-    });
-  }
-
-  static void revalidateMarkupInEditor(@NotNull Editor editor) {
-    if (editor.getGutter() instanceof EditorGutterComponentEx) {
-      if (AnnotateToggleAction.getAnnotationPresentation(editor) != null) {
+      if (editor.getGutter() instanceof EditorGutterComponentEx) {
         ((EditorGutterComponentEx)editor.getGutter()).revalidateMarkup();
       }
     }

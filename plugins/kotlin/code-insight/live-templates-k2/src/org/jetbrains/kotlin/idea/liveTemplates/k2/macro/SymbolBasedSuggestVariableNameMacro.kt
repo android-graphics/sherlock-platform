@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfTypeSafe
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
@@ -26,10 +27,9 @@ class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = nul
                     allowAnalysisFromWriteAction {
                         analyze(initializer) {
                             val nameValidator = KotlinDeclarationNameValidator(
-                              declaration,
-                              false,
-                              KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-                              listOf(declaration)
+                                declaration,
+                                false,
+                                KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
                             )
 
                             return (sequenceOfNotNull (defaultName) + NAME_SUGGESTER.suggestExpressionNames(initializer))
@@ -45,13 +45,12 @@ class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = nul
             @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(declaration) {
-                    val symbol = declaration.symbol as? KaVariableSymbol
+                    val symbol = declaration.getSymbolOfTypeSafe<KaVariableSymbol>()
                     if (symbol != null) {
                         val nameValidator = KotlinDeclarationNameValidator(
-                          declaration,
-                          false,
-                          KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-                          listOf(declaration)
+                            declaration,
+                            false,
+                            KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
                         )
                         return (sequenceOfNotNull (defaultName) + NAME_SUGGESTER.suggestTypeNames(symbol.returnType))
                             .filter { nameValidator.validate(it) }

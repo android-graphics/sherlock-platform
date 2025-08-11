@@ -12,17 +12,14 @@ import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.actions.RunDashboardActionUtils;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author konstantin.aleev
  */
-final class CopyConfigurationAction extends DumbAwareAction {
+final class CopyConfigurationAction extends AnAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -36,7 +33,7 @@ final class CopyConfigurationAction extends DumbAwareAction {
     boolean enabled = node != null && RunManager.getInstance(project).hasSettings(node.getConfigurationSettings());
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(enabled);
-    boolean popupPlace = e.isFromContextMenu();
+    boolean popupPlace = ActionPlaces.isPopupPlace(e.getPlace());
     presentation.setVisible(enabled || !popupPlace);
     if (popupPlace) {
       presentation.setText(getTemplatePresentation().getText() + "...");

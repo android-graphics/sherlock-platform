@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -13,8 +13,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
  * @author Maxim.Medvedev
  */
 public class GrRangeType extends GrLiteralClassType {
-  private final @Nullable PsiType myLeft;
-  private final @Nullable PsiType myRight;
+  @Nullable private final PsiType myLeft;
+  @Nullable private final PsiType myRight;
   private final PsiType myIterationType;
   private final String myQualifiedName;
 
@@ -44,8 +44,9 @@ public class GrRangeType extends GrLiteralClassType {
     this(LanguageLevel.JDK_1_5, scope, facade, left, right);
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getJavaClassName() {
+  protected String getJavaClassName() {
     return myQualifiedName;
   }
 
@@ -63,13 +64,15 @@ public class GrRangeType extends GrLiteralClassType {
     return new PsiType[]{myIterationType};
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
+  public PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
     return new GrRangeType(languageLevel, myScope, myFacade, myLeft, myRight);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getInternalCanonicalText() {
+  public String getInternalCanonicalText() {
     return "[" +
            (myLeft == null ? PsiKeyword.NULL : myLeft.getInternalCanonicalText()) +
            ".." +
@@ -82,15 +85,18 @@ public class GrRangeType extends GrLiteralClassType {
     return (myLeft == null || myLeft.isValid()) && (myRight == null || myRight.isValid());
   }
 
-  public @Nullable PsiType getIterationType() {
+  @Nullable
+  public PsiType getIterationType() {
     return myIterationType;
   }
 
-  public @Nullable PsiType getLeft() {
+  @Nullable
+  public PsiType getLeft() {
     return myLeft;
   }
 
-  public @Nullable PsiType getRight() {
+  @Nullable
+  public PsiType getRight() {
     return myRight;
   }
 }

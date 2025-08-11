@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization
 
 import com.intellij.icons.AllIcons
@@ -164,13 +164,13 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
         loadCustomIcon(path)
         null
       }
-      catch (_: FileNotFoundException) {
+      catch (ex: FileNotFoundException) {
         ValidationInfo(IdeBundle.message("icon.validation.message.not.found"), this)
       }
-      catch (_: NoSuchFileException) {
+      catch (ex: NoSuchFileException) {
         ValidationInfo(IdeBundle.message("icon.validation.message.not.found"), this)
       }
-      catch (_: Throwable) {
+      catch (t: Throwable) {
         ValidationInfo(IdeBundle.message("icon.validation.message.format"), this)
       }
     }).installOn(this)
@@ -196,7 +196,9 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
 
   private fun browseIconAndSelect() {
     val descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-      .withExtensionFilter(IdeBundle.message("icon.file.filter.label"), "svg", "png")
+      .withFileFilter { file ->
+        StringUtil.equalsIgnoreCase(file.extension, "svg") || StringUtil.equalsIgnoreCase(file.extension, "png")
+      }
     descriptor.title = IdeBundle.message("title.browse.icon")
     descriptor.description = IdeBundle.message("prompt.browse.icon.for.selected.action")
     val iconFile = FileChooser.chooseFile(descriptor, null, null)

@@ -32,7 +32,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -319,15 +318,10 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     return template;
   }
 
-  public static boolean areParameterTemplatesEnabledOnCompletion() {
-    return Registry.is("java.completion.argument.live.template") &&
-           !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
-  }
-
   public static boolean startArgumentLiveTemplate(InsertionContext context, PsiMethod method) {
     if (method.getParameterList().isEmpty() ||
         context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ||
-        !areParameterTemplatesEnabledOnCompletion()) {
+        !ParameterInfoControllerBase.areParameterTemplatesEnabledOnCompletion()) {
       return false;
     }
 
@@ -557,13 +551,9 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this));
 
     presentation.setStrikeout(JavaElementLookupRenderer.isToStrikeout(this));
-    boolean isAutoImportName = myContainingClass != null &&
-                               myMethod != null &&
-                               JavaCodeStyleManager.getInstance(myMethod.getProject())
-                                 .isStaticAutoImportName(myContainingClass.getQualifiedName() + "." + myMethod.getName());
+
     MemberLookupHelper helper = myHelper != null ? myHelper : new MemberLookupHelper(myMethod, myContainingClass, false, false);
-    boolean showPackage = myHelper != null && (!myHelper.willBeImported() || isAutoImportName);
-    helper.renderElement(presentation, myHelper != null, showPackage, getSubstitutor());
+    helper.renderElement(presentation, myHelper != null, myHelper != null && !myHelper.willBeImported(), getSubstitutor());
     if (!myForcedQualifier.isEmpty()) {
       presentation.setItemText(myForcedQualifier + presentation.getItemText());
     }

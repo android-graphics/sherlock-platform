@@ -14,17 +14,15 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.sh.highlighting.ShTextOccurrencesUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.MissingResourceException;
 
-@ApiStatus.Internal
-public final class ShRenameAllOccurrencesHandler extends EditorActionHandler {
+final class ShRenameAllOccurrencesHandler extends EditorActionHandler {
   public static final ShRenameAllOccurrencesHandler INSTANCE = new ShRenameAllOccurrencesHandler();
-  public static final Key<TextOccurrencesRenamer> RENAMER_KEY = Key.create("renamer");
+  static final Key<TextOccurrencesRenamer> RENAMER_KEY = Key.create("renamer");
 
   private ShRenameAllOccurrencesHandler() {
   }
@@ -35,7 +33,7 @@ public final class ShRenameAllOccurrencesHandler extends EditorActionHandler {
   }
 
   @Override
-  public void doExecute(final @NotNull Editor editor, @Nullable Caret c, DataContext dataContext) {
+  public void doExecute(@NotNull final Editor editor, @Nullable Caret c, DataContext dataContext) {
     Caret caret = editor.getCaretModel().getPrimaryCaret();
     SelectionModel selectionModel = editor.getSelectionModel();
     boolean hasSelection = caret.hasSelection();
@@ -64,7 +62,8 @@ public final class ShRenameAllOccurrencesHandler extends EditorActionHandler {
     }
   }
 
-  static @NotNull RegistryValue getMaxInplaceRenameSegmentsRegistryValue() {
+  @NotNull
+  static RegistryValue getMaxInplaceRenameSegmentsRegistryValue() {
     return Registry.get("inplace.rename.segments.limit");
   }
 

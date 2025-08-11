@@ -2,7 +2,7 @@
 package com.intellij.usageView.impl;
 
 import com.intellij.find.FindBundle;
-import com.intellij.find.FindUsagesSettings;
+import com.intellij.find.FindSettings;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -65,7 +65,7 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
     DumbAwareToggleAction toggleNewTabAction = new DumbAwareToggleAction(FindBundle.message("find.open.in.new.tab.action")) {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
-        return FindUsagesSettings.getInstance().isShowResultsInSeparateView();
+        return FindSettings.getInstance().isShowResultsInSeparateView();
       }
 
       @Override
@@ -75,7 +75,7 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
 
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        FindUsagesSettings.getInstance().setShowResultsInSeparateView(state);
+        FindSettings.getInstance().setShowResultsInSeparateView(state);
       }
     };
 

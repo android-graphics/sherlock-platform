@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,11 +38,8 @@ public class CapturingProcessHandler extends OSProcessHandler {
     return myCharset != null ? myCharset : super.getCharset();
   }
 
-  /**
-   * Blocks until process finished, returns its output
-   */
-  @RequiresBackgroundThread(generateAssertion = false)
-  public final @NotNull ProcessOutput runProcess() {
+  @NotNull
+  public ProcessOutput runProcess() {
     return myProcessRunner.runProcess();
   }
 
@@ -52,7 +48,6 @@ public class CapturingProcessHandler extends OSProcessHandler {
    *
    * @param timeoutInMilliseconds non-positive means infinity
    */
-  @RequiresBackgroundThread(generateAssertion = false)
   public ProcessOutput runProcess(int timeoutInMilliseconds) {
     return myProcessRunner.runProcess(timeoutInMilliseconds);
   }
@@ -67,15 +62,18 @@ public class CapturingProcessHandler extends OSProcessHandler {
     return myProcessRunner.runProcess(timeoutInMilliseconds, destroyOnTimeout);
   }
 
-  public @NotNull ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator) {
+  @NotNull
+  public ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator) {
     return myProcessRunner.runProcess(indicator);
   }
 
-  public @NotNull ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator, int timeoutInMilliseconds) {
+  @NotNull
+  public ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator, int timeoutInMilliseconds) {
     return myProcessRunner.runProcess(indicator, timeoutInMilliseconds);
   }
 
-  public @NotNull ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator, int timeoutInMilliseconds, boolean destroyOnTimeout) {
+  @NotNull
+  public ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator, int timeoutInMilliseconds, boolean destroyOnTimeout) {
     return myProcessRunner.runProcess(indicator, timeoutInMilliseconds, destroyOnTimeout);
   }
 
@@ -88,8 +86,9 @@ public class CapturingProcessHandler extends OSProcessHandler {
       super(process, charset, commandLine);
     }
 
+    @NotNull
     @Override
-    protected @NotNull BaseOutputReader.Options readerOptions() {
+    protected BaseOutputReader.Options readerOptions() {
       return BaseOutputReader.Options.forMostlySilentProcess();
     }
   }

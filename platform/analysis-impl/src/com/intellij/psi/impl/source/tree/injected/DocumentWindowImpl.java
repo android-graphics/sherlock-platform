@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -27,18 +27,15 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.StringOperation;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@ApiStatus.Internal
-public final class DocumentWindowImpl extends UserDataHolderBase implements Disposable, DocumentWindow, DocumentEx {
+class DocumentWindowImpl extends UserDataHolderBase implements Disposable, DocumentWindow, DocumentEx {
   private static final Logger LOG = Logger.getInstance(DocumentWindowImpl.class);
   private final DocumentEx myDelegate;
   private final boolean myOneLine;
@@ -60,8 +57,7 @@ public final class DocumentWindowImpl extends UserDataHolderBase implements Disp
   }
 
   @Nullable("null means we were unable to calculate")
-  @ApiStatus.Internal
-  public LogicalPosition hostToInjectedInVirtualSpace(@NotNull LogicalPosition hPos) {
+  LogicalPosition hostToInjectedInVirtualSpace(@NotNull LogicalPosition hPos) {
     // beware the virtual space
     int hLineStartOffset = hPos.line >= myDelegate.getLineCount() ? myDelegate.getTextLength() : myDelegate.getLineStartOffset(hPos.line);
     int iLineStartOffset = hostToInjected(hLineStartOffset);
@@ -292,7 +288,7 @@ public final class DocumentWindowImpl extends UserDataHolderBase implements Disp
   }
 
   @Override
-  public @Unmodifiable @NotNull Collection<@NotNull StringOperation> prepareReplaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
+  public @NotNull Collection<@NotNull StringOperation> prepareReplaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
     if (isOneLine()) {
       s = StringUtil.replace(s.toString(), "\n", "");
     }
@@ -309,7 +305,7 @@ public final class DocumentWindowImpl extends UserDataHolderBase implements Disp
     return doPrepareReplaceString(startOffset, endOffset, s);
   }
 
-  private @Unmodifiable @NotNull Collection<@NotNull StringOperation> doPrepareReplaceString(int startOffset, int endOffset, CharSequence s) {
+  private @NotNull Collection<@NotNull StringOperation> doPrepareReplaceString(int startOffset, int endOffset, CharSequence s) {
     assert intersectWithEditable(new TextRange(startOffset, startOffset)) != null;
     assert intersectWithEditable(new TextRange(endOffset, endOffset)) != null;
 
@@ -884,7 +880,8 @@ public final class DocumentWindowImpl extends UserDataHolderBase implements Disp
 
   @Override
   public boolean equals(Object o) {
-    return o instanceof DocumentWindowImpl window && myDelegate.equals(window.getDelegate()) && areRangesEqual(window);
+    if (!(o instanceof DocumentWindowImpl window)) return false;
+    return myDelegate.equals(window.getDelegate()) && areRangesEqual(window);
   }
 
   @Override

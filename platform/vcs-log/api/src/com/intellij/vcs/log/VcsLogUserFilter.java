@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -32,13 +31,15 @@ public interface VcsLogUserFilter extends VcsLogDetailsFilter {
   @NotNull
   Collection<@NlsSafe String> getValuesAsText();
 
+  @NotNull
   @Override
-  default @NotNull String getDisplayText() {
+  default String getDisplayText() {
     return StringUtil.join(getValuesAsText(), ", ");
   }
 
+  @NotNull
   @Override
-  default @NotNull VcsLogFilterCollection.FilterKey<VcsLogUserFilter> getKey() {
+  default VcsLogFilterCollection.FilterKey<VcsLogUserFilter> getKey() {
     return USER_FILTER;
   }
 }

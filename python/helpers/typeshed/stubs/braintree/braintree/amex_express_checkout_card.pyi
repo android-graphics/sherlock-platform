@@ -1,8 +1,9 @@
-from braintree.resource import Resource
-from braintree.subscription import Subscription
+from typing import Any
+
+from braintree.resource import Resource as Resource
 
 class AmexExpressCheckoutCard(Resource):
-    subscriptions: list[Subscription]
+    subscriptions: Any
     def __init__(self, gateway, attributes) -> None: ...
     @property
     def expiration_date(self): ...

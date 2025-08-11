@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-@ApiStatus.Internal
 public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
   public AnnotateRevisionActionBase(@Nullable @NlsActions.ActionText String text,
                                     @Nullable @NlsActions.ActionDescription String description,
@@ -50,13 +48,17 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
     super(dynamicText, dynamicDescription, icon);
   }
 
-  protected abstract @Nullable AbstractVcs getVcs(@NotNull AnActionEvent e);
+  @Nullable
+  protected abstract AbstractVcs getVcs(@NotNull AnActionEvent e);
 
-  protected abstract @Nullable VirtualFile getFile(@NotNull AnActionEvent e);
+  @Nullable
+  protected abstract VirtualFile getFile(@NotNull AnActionEvent e);
 
-  protected abstract @Nullable VcsFileRevision getFileRevision(@NotNull AnActionEvent e);
+  @Nullable
+  protected abstract VcsFileRevision getFileRevision(@NotNull AnActionEvent e);
 
-  protected @Nullable Editor getEditor(@NotNull AnActionEvent e) {
+  @Nullable
+  protected Editor getEditor(@NotNull AnActionEvent e) {
     return null;
   }
 
@@ -89,7 +91,7 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(final @NotNull AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final VcsFileRevision fileRevision = getFileRevision(e);
     final VirtualFile file = getFile(e);
     final AbstractVcs vcs = getVcs(e);

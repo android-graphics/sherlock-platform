@@ -19,11 +19,16 @@ import java.util.List;
  * @author Ilya.Kazakevich
  */
 public final class SimpleCommand implements Command {
-  private final @NotNull @NlsSafe String myName;
-  private final @Nullable Help myHelp;
-  private final @NotNull ArgumentsInfo myArgumentsInfo;
-  private final @NotNull List<Option> myOptions = new ArrayList<>();
-  private final @NotNull CommandExecutor myExecutor;
+  @NotNull
+  private final @NlsSafe String myName;
+  @Nullable
+  private final Help myHelp;
+  @NotNull
+  private final ArgumentsInfo myArgumentsInfo;
+  @NotNull
+  private final List<Option> myOptions = new ArrayList<>();
+  @NotNull
+  private final CommandExecutor myExecutor;
 
   /**
    *
@@ -34,12 +39,12 @@ public final class SimpleCommand implements Command {
    * @param options command options
    * @param onCommandSuccessExecutedRunnable runnable to be run when command is executed with exit code 0
    */
-  public SimpleCommand(final @NotNull @NlsSafe String name,
-                       final @Nullable Help help,
-                       final @NotNull ArgumentsInfo argumentsInfo,
-                       final @NotNull CommandExecutor executor,
-                       final @NotNull Collection<Option> options,
-                       final @Nullable Runnable onCommandSuccessExecutedRunnable) {
+  public SimpleCommand(@NotNull final @NlsSafe String name,
+                       @Nullable final Help help,
+                       @NotNull final ArgumentsInfo argumentsInfo,
+                       @NotNull final CommandExecutor executor,
+                       @NotNull final Collection<Option> options,
+                       @Nullable final Runnable onCommandSuccessExecutedRunnable) {
     myName = name;
     myHelp = help;
     myArgumentsInfo = argumentsInfo;
@@ -55,21 +60,23 @@ public final class SimpleCommand implements Command {
    * @param executor engine to execute command
    * @param options command options
    */
-  public SimpleCommand(final @NotNull @NlsSafe String name,
-                       final @Nullable Help help,
-                       final @NotNull ArgumentsInfo argumentsInfo,
-                       final @NotNull CommandExecutor executor,
-                       final @NotNull Collection<Option> options) {
+  public SimpleCommand(@NotNull final @NlsSafe String name,
+                       @Nullable final Help help,
+                       @NotNull final ArgumentsInfo argumentsInfo,
+                       @NotNull final CommandExecutor executor,
+                       @NotNull final Collection<Option> options) {
     this(name, help, argumentsInfo, executor, options, null);
   }
 
+  @NotNull
   @Override
-  public @NotNull @NlsSafe String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
+  @Nullable
   @Override
-  public @Nullable Help getHelp(final boolean tryCutOutArguments) {
+  public Help getHelp(final boolean tryCutOutArguments) {
     if (!tryCutOutArguments || myHelp == null) {
       return myHelp;
     }
@@ -78,26 +85,29 @@ public final class SimpleCommand implements Command {
     return new Help(newHelpString, myHelp.getExternalHelpUrl());
   }
 
+  @NotNull
   @Override
-  public @NotNull ArgumentsInfo getArgumentsInfo() {
+  public ArgumentsInfo getArgumentsInfo() {
     return myArgumentsInfo;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<Option> getOptions() {
+  public List<Option> getOptions() {
     return Collections.unmodifiableList(myOptions);
   }
 
   @Override
-  public void execute(final @NotNull String commandName,
-                      final @NotNull Module module,
-                      final @NotNull List<String> parameters,
-                      final @Nullable ConsoleView consoleView,
-                      final @Nullable Runnable onExecuted) {
+  public void execute(@NotNull final String commandName,
+                      @NotNull final Module module,
+                      @NotNull final List<String> parameters,
+                      @Nullable final ConsoleView consoleView,
+                      @Nullable final Runnable onExecuted) {
     myExecutor.execute(myName, module, parameters, consoleView, onExecuted);
   }
 
-  public @NotNull CommandExecutor getExecutor() {
+  @NotNull
+  public CommandExecutor getExecutor() {
     return myExecutor;
   }
 }

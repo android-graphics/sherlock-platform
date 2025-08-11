@@ -2,7 +2,7 @@ package org.intellij.plugins.markdown.ui.actions.styling
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.client.currentSessionOrNull
+import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
@@ -10,9 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.util.siblings
-import com.intellij.util.application
 import org.intellij.plugins.markdown.MarkdownBundle.messagePointer
 import org.intellij.plugins.markdown.MarkdownIcons
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAt
@@ -20,6 +18,7 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.items
 import org.intellij.plugins.markdown.editor.lists.ListUtils.list
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.lang.psi.util.hasType
@@ -43,7 +42,7 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
-    val session = application.currentSessionOrNull
+    val session = ClientSessionsManager.getAppSession()
     if (session?.isRemote == true) {
       event.presentation.isEnabledAndVisible = false
       return
@@ -109,7 +108,7 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
       val project = event.project ?: return
       val editor = event.getData(CommonDataKeys.EDITOR) ?: return
       val caret = event.getData(CommonDataKeys.CARET) ?: return
-      val file = event.getData(CommonDataKeys.PSI_FILE) ?: return
+      val file = event.getData(CommonDataKeys.PSI_FILE) as? MarkdownFile ?: return
       val caretOffset = caret.selectionStart
       val document = editor.document
       val list = findList(file, document, caretOffset)
@@ -125,7 +124,7 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
     }
 
     override fun isSelected(event: AnActionEvent): Boolean {
-      val file = event.getData(CommonDataKeys.PSI_FILE) ?: return false
+      val file = event.getData(CommonDataKeys.PSI_FILE) as? MarkdownFile ?: return false
       val editor = event.getData(CommonDataKeys.EDITOR) ?: return false
       val caretOffset = event.getData(CommonDataKeys.CARET)?.offset ?: return false
       val document = editor.document
@@ -180,7 +179,7 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
     }
 
     companion object {
-      private fun findList(file: PsiFile, document: Document, offset: Int): MarkdownList? {
+      private fun findList(file: MarkdownFile, document: Document, offset: Int): MarkdownList? {
         return file.getListItemAt(offset, document)?.list
       }
 

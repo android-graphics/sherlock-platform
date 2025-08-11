@@ -5,6 +5,7 @@ class A {
 
     @Override
     public boolean equals(Object o) {<caret>
+        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         A a1 = (A) o;
         return a == a1.a;

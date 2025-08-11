@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_5
-import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.*
@@ -18,7 +17,7 @@ import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType.Companion.LONG
 import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType.Companion.SHORT
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class PrimitiveTypeCastsConversion(context: ConverterContext) : RecursiveConversion(context) {
+class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         return recurse(convertTypeCastExpression(element) ?: element)
@@ -84,17 +83,15 @@ class PrimitiveTypeCastsConversion(context: ConverterContext) : RecursiveConvers
                 // conversions of floating point types to integral types lesser than Int is an error (KT-30360)
                 // we have to convert in two steps
                 receiver
-                    .callOn(symbolProvider.provideMethodSymbol("kotlin.$initialTypeName.toInt"), expressionType = typeFactory.types.int)
-                    .callOn(symbolProvider.provideMethodSymbol("kotlin.Int.$conversionFunctionName"), expressionType = toType)
+                    .callOn(symbolProvider.provideMethodSymbol("kotlin.$initialTypeName.toInt"))
+                    .callOn(symbolProvider.provideMethodSymbol("kotlin.Int.$conversionFunctionName"))
             } else {
                 JKQualifiedExpression(
                     receiver,
                     JKCallExpressionImpl(
                         symbolProvider.provideMethodSymbol("kotlin.$initialTypeName.$conversionFunctionName"),
-                        JKArgumentList(),
-                        expressionType = toType
-                    ),
-                    toType
+                        JKArgumentList()
+                    )
                 )
             }
 
@@ -126,13 +123,11 @@ class PrimitiveTypeCastsConversion(context: ConverterContext) : RecursiveConvers
 
             result = JKQualifiedExpression(
                 result,
-                JKFieldAccessExpression(symbolProvider.provideFieldSymbol("kotlin.code"), typeFactory.types.int),
-                typeFactory.types.int
+                JKFieldAccessExpression(symbolProvider.provideFieldSymbol("kotlin.code"))
             )
             if (toType != INT) {
                 result = result.callOn(
-                    symbolProvider.provideMethodSymbol("kotlin.Int.to${toType.kotlinName()}"),
-                    expressionType = toType
+                    symbolProvider.provideMethodSymbol("kotlin.Int.to${toType.kotlinName()}")
                 )
             }
             return result
@@ -149,19 +144,16 @@ class PrimitiveTypeCastsConversion(context: ConverterContext) : RecursiveConvers
 
             if (fromType == FLOAT || fromType == DOUBLE) {
                 return result.callOn(
-                    symbolProvider.provideMethodSymbol("kotlin.${fromType.kotlinName()}.toInt"),
-                    expressionType = typeFactory.types.int
+                    symbolProvider.provideMethodSymbol("kotlin.${fromType.kotlinName()}.toInt")
                 ).callOn(
-                    symbolProvider.provideMethodSymbol("kotlin.Int.toChar"),
-                    expressionType = typeFactory.types.char
+                    symbolProvider.provideMethodSymbol("kotlin.Int.toChar")
                 )
             }
             return JKCallExpressionImpl(
                 symbolProvider.provideMethodSymbol("kotlin.Char"),
                 JKArgumentList(
-                    result.callOn(symbolProvider.provideMethodSymbol("kotlin.toUShort"), expressionType = typeFactory.types.short)
-                ),
-                expressionType = typeFactory.types.char
+                    result.callOn(symbolProvider.provideMethodSymbol("kotlin.toUShort"))
+                )
             )
         }
     }

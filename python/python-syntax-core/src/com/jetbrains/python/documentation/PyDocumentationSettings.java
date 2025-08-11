@@ -6,13 +6,11 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.ast.*;
+import com.jetbrains.python.ast.PyAstFile;
+import com.jetbrains.python.ast.PyAstTargetExpression;
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceClasses;
@@ -34,7 +32,8 @@ public abstract class PyDocumentationSettings
   public static final PyDefaultProjectAwareServiceClasses<ServiceState, PyDocumentationSettings, AppService, ModuleService>
     SERVICE_CLASSES = new PyDefaultProjectAwareServiceClasses<>(AppService.class, ModuleService.class);
 
-  @ApiStatus.Internal public static final DocStringFormat DEFAULT_DOC_STRING_FORMAT = DocStringFormat.REST;
+  @ApiStatus.Internal
+  public final static DocStringFormat DEFAULT_DOC_STRING_FORMAT = DocStringFormat.REST;
 
   protected PyDocumentationSettings() {
     super(new ServiceState());
@@ -57,19 +56,21 @@ public abstract class PyDocumentationSettings
     return file instanceof PyAstFile ? getFormatForFile(file) == format : getState().getFormat() == format;
   }
 
-  public final @NotNull DocStringFormat getFormatForFile(@NotNull PsiFile file) {
+  @NotNull
+  public final DocStringFormat getFormatForFile(@NotNull PsiFile file) {
     final DocStringFormat fileFormat = getFormatFromDocformatAttribute(file);
     return fileFormat != null && fileFormat != DocStringFormat.PLAIN ? fileFormat : getState().myDocStringFormat;
   }
 
-  public static @Nullable DocStringFormat getFormatFromDocformatAttribute(@NotNull PsiFile file) {
+  @Nullable
+  public static DocStringFormat getFormatFromDocformatAttribute(@NotNull PsiFile file) {
     if (file instanceof PyAstFile) {
-      final PyAstTargetExpression expr = getDocFormatAttribute(file);
+      final PyAstTargetExpression expr = ((PyAstFile)file).findTopLevelAttribute(PyNames.DOCFORMAT);
       if (expr != null) {
         final String docformat = PyPsiUtilsCore.strValue(expr.findAssignedValue());
         if (docformat != null) {
           final List<String> words = StringUtil.split(docformat, " ");
-          if (!words.isEmpty()) {
+          if (words.size() > 0) {
             final DocStringFormat fileFormat = DocStringFormat.fromName(words.get(0));
             if (fileFormat != null) {
               return fileFormat;
@@ -81,43 +82,8 @@ public abstract class PyDocumentationSettings
     return null;
   }
 
-  private static @Nullable PyAstTargetExpression getDocFormatAttribute(@NotNull PsiFile file) {
-    StubElement<?> stub = ((PsiFileImpl)file).getGreenStub();
-    if (stub != null) {
-      return getDocFormatAttribute(stub.getChildrenStubs());
-    }
-    else {
-      return getDocFormatAttribute(file.getChildren());
-    }
-  }
-
-  private static @Nullable PyAstTargetExpression getDocFormatAttribute(@NotNull List<StubElement<?>> stubs) {
-    for (StubElement<?> stub : stubs) {
-      PsiElement psi = stub.getPsi();
-      if (psi instanceof PyAstTargetExpression targetExpression && PyNames.DOCFORMAT.equals(targetExpression.getName())) {
-        return targetExpression;
-      }
-      if (psi instanceof PyAstIfPart || psi instanceof PyAstElsePart) {
-        PyAstTargetExpression targetExpression = getDocFormatAttribute(stub.getChildrenStubs());
-        if (targetExpression != null) return targetExpression;
-      }
-    }
-    return null;
-  }
-
-  private static @Nullable PyAstTargetExpression getDocFormatAttribute(@NotNull PsiElement @NotNull [] elements) {
-    for (PsiElement element : elements) {
-      if (element instanceof PyAstClass || element instanceof PyAstFunction) continue;
-      if (element instanceof PyAstTargetExpression targetExpression && PyNames.DOCFORMAT.equals(targetExpression.getName())) {
-        return targetExpression;
-      }
-      PyAstTargetExpression targetExpression = getDocFormatAttribute(element.getChildren());
-      if (targetExpression != null) return targetExpression;
-    }
-    return null;
-  }
-
-  public final @NotNull DocStringFormat getFormat() {
+  @NotNull
+  public final DocStringFormat getFormat() {
     return getState().getFormat();
   }
 
@@ -144,7 +110,8 @@ public abstract class PyDocumentationSettings
 
 
   public static final class ServiceState {
-    private @NotNull DocStringFormat myDocStringFormat;
+    @NotNull
+    private DocStringFormat myDocStringFormat;
     @OptionTag("analyzeDoctest")
     public boolean myAnalyzeDoctest = true;
     @OptionTag("renderExternalDocumentation")
@@ -159,7 +126,8 @@ public abstract class PyDocumentationSettings
       this(DEFAULT_DOC_STRING_FORMAT);
     }
 
-    public @NotNull DocStringFormat getFormat() {
+    @NotNull
+    public DocStringFormat getFormat() {
       return myDocStringFormat;
     }
 
@@ -170,7 +138,8 @@ public abstract class PyDocumentationSettings
     // Legacy name of the field to preserve settings format
     @SuppressWarnings("unused")
     @OptionTag("myDocStringFormat")
-    public @NotNull String getFormatName() {
+    @NotNull
+    public String getFormatName() {
       return myDocStringFormat.getName();
     }
 

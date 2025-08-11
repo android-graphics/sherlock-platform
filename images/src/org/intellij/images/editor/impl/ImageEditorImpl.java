@@ -102,12 +102,14 @@ public final class ImageEditorImpl implements ImageEditor {
   }
 
   @Override
-  public @NotNull VirtualFile getFile() {
+  @NotNull
+  public VirtualFile getFile() {
     return file;
   }
 
   @Override
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return project;
   }
 

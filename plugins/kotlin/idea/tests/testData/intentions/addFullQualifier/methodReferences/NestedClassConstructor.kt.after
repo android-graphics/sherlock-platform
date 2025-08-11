@@ -1,4 +1,3 @@
-// PRIORITY: LOW
 package one.two.three
 
 class Foo {

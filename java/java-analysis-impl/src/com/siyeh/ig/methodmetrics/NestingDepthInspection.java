@@ -23,7 +23,8 @@ import org.jetbrains.annotations.NotNull;
 public final class NestingDepthInspection extends MethodMetricInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "OverlyNestedMethod";
   }
 
@@ -38,7 +39,8 @@ public final class NestingDepthInspection extends MethodMetricInspection {
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final Integer nestingDepth = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "nesting.depth.problem.descriptor", nestingDepth);

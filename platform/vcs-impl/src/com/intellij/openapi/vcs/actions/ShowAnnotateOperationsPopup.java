@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.icons.AllIcons;
@@ -19,11 +19,14 @@ import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public final class ShowAnnotateOperationsPopup extends DumbAwareAction {
+public class ShowAnnotateOperationsPopup extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     List<AnAction> actions = getActions(e.getDataContext());
@@ -47,7 +50,8 @@ public final class ShowAnnotateOperationsPopup extends DumbAwareAction {
     popup.showInBestPositionFor(e.getDataContext());
   }
 
-  private static @Nullable List<AnAction> getActions(@NotNull DataContext context) {
+  @Nullable
+  private static List<AnAction> getActions(@NotNull DataContext context) {
     Editor editor = context.getData(CommonDataKeys.EDITOR);
     if (editor == null) return null;
 
@@ -66,7 +70,6 @@ public final class ShowAnnotateOperationsPopup extends DumbAwareAction {
     return ContainerUtil.nullize(actions);
   }
 
-  @ApiStatus.Internal
   public static class Group extends ActionGroup implements DumbAware {
     {
       getTemplatePresentation().setHideGroupIfEmpty(true);

@@ -8,8 +8,6 @@ import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizar
 
 interface GradleKotlinNewProjectWizardData : GradleNewProjectWizardData, KotlinOnboardingProjectWizardData {
 
-    var generateMultipleModules: Boolean
-
     companion object {
 
         val KEY = Key.create<GradleKotlinNewProjectWizardData>(GradleKotlinNewProjectWizardData::class.java.name)

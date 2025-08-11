@@ -28,7 +28,7 @@ public final class VariableTypeFromCallFix implements IntentionAction {
   private final PsiVariable myVar;
 
   private VariableTypeFromCallFix(@NotNull PsiType type, @NotNull PsiVariable var) {
-    myExpressionType = PsiTypesUtil.removeExternalAnnotations(type);
+    myExpressionType = type;
     myVar = var;
   }
 

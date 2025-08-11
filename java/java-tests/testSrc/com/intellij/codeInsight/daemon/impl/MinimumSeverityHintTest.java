@@ -10,7 +10,6 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -25,11 +24,7 @@ public class MinimumSeverityHintTest extends DaemonAnalyzerTestCase {
     enableInspectionTool(new UnusedDeclarationInspection());
     UndoManager.getInstance(myProject);
     DaemonCodeAnalyzer.getInstance(getProject()).setUpdateByTimerEnabled(true);
-  }
-
-  @Override
-  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    DaemonProgressIndicator.runInDebugMode(() -> super.runTestRunnable(testRunnable));
+    DaemonProgressIndicator.setDebug(true);
   }
 
   public void testMinimumSeverityHintDoesPropagateToAnnotators() {

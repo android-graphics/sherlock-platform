@@ -18,21 +18,14 @@ internal class ParseSdkmanrcAction: AnAction() {
       return
     }
 
-    val sdkmanrcConfigProvider = ExternalJavaConfigurationProvider.EP_NAME.extensionList.find { it is SdkmanrcConfigurationProvider }
-
-    if (sdkmanrcConfigProvider == null) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-
+    val watcher = project.service<SdkmanrcWatcherService>()
     val file: VirtualFile? = CommonDataKeys.VIRTUAL_FILE.getData(e.dataContext)
 
-    e.presentation.isEnabledAndVisible = file != null && file.path == sdkmanrcConfigProvider.getConfigurationFile(project).absolutePath
+    e.presentation.isEnabledAndVisible = file != null && file.path == watcher.file.absolutePath
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val sdkmanrcConfigProvider = ExternalJavaConfigurationProvider.EP_NAME.extensionList.find { it is SdkmanrcConfigurationProvider } ?: return
-    project.service<ExternalJavaConfigurationService>().updateJdkFromConfig(sdkmanrcConfigProvider)
+    project.service<SdkmanrcWatcherService>().configureSdkFromSdkmanrc()
   }
 }

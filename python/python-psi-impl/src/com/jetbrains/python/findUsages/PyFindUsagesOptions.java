@@ -28,8 +28,9 @@ public class PyFindUsagesOptions extends FindUsagesOptions implements Persistent
   }
 
 
+  @Nullable
   @Override
-  public @Nullable State getState() {
+  public State getState() {
     State s = new State();
     s.isSearchForTextOccurrences = isSearchForTextOccurrences;
     return s;

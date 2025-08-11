@@ -4,7 +4,6 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
  * <br/>
  * Use {@link ActionsEventLogGroup#ACTION_ID} instead.
  */
-@ApiStatus.Internal
 public final class ActionRuleValidator extends ClassNameRuleValidator {
   @Override
   public @NotNull String getRuleId() {

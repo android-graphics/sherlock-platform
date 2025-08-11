@@ -1,9 +1,0 @@
-class X {
-
-    void x() {}
-
-    void foo() {
-    new Object() {
-    }
-  }
-}

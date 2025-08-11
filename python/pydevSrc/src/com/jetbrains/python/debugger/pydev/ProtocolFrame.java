@@ -1,5 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 // Licensed under the terms of the Eclipse Public License (EPL).
 package com.jetbrains.python.debugger.pydev;
 
@@ -14,9 +12,9 @@ public class ProtocolFrame {
 
   private final int myCommand;
   private final int mySequence;
-  private final @NotNull String myPayload;
+  private @NotNull final String myPayload;
 
-  public ProtocolFrame(final int command, final int sequence, final @NotNull String payload) {
+  public ProtocolFrame(final int command, final int sequence, @NotNull final String payload) {
     myCommand = command;
     mySequence = sequence;
     myPayload = payload;
@@ -41,7 +39,8 @@ public class ProtocolFrame {
     return mySequence;
   }
 
-  public @NotNull String getPayload() {
+  @NotNull
+  public String getPayload() {
     return myPayload;
   }
 

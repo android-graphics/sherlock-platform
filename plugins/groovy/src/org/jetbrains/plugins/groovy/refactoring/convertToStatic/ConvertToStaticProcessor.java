@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToStatic;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,8 +42,9 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
     myFiles = files;
   }
 
+  @NotNull
   @Override
-  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new UsageViewDescriptorAdapter() {
       @Override
       public PsiElement @NotNull [] getElements() {
@@ -148,8 +149,9 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getCommandName() {
+  protected String getCommandName() {
     return GroovyRefactoringBundle.message("converting.files.to.static");
   }
 

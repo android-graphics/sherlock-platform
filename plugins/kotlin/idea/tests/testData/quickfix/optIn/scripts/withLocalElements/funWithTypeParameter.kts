@@ -1,5 +1,4 @@
 // "Opt in for 'Library' on 'bar'" "true"
-// PRIORITY: HIGH
 // ACTION: Add full qualifier
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Introduce import alias
@@ -21,4 +20,4 @@ val foo: MockLibrary = MockLibrary();
     fun bar(test: MockLibrary<caret>){
     }
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityUseOptInAnnotationFix

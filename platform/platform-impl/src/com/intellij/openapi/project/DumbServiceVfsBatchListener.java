@@ -6,13 +6,11 @@ import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Stack;
 
-@ApiStatus.Internal
 public final class DumbServiceVfsBatchListener {
 
   public DumbServiceVfsBatchListener(@NotNull Project myProject,

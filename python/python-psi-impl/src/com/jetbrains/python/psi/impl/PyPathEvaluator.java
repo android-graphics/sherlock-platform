@@ -34,7 +34,8 @@ public class PyPathEvaluator extends PyEvaluator {
     myContainingFilePath = containingFilePath;
   }
 
-  public static @Nullable String evaluatePath(PyExpression expr) {
+  @Nullable
+  public static String evaluatePath(PyExpression expr) {
     if (expr == null) {
       return null;
     }
@@ -44,7 +45,8 @@ public class PyPathEvaluator extends PyEvaluator {
   }
 
   @Override
-  protected @Nullable Object evaluateCall(@NotNull PyCallExpression expression) {
+  @Nullable
+  protected Object evaluateCall(@NotNull PyCallExpression expression) {
     final PyExpression[] args = expression.getArguments();
     if (expression.isCalleeText("resolve")) {
       PyReferenceExpression callee = (PyReferenceExpression)expression.getCallee();
@@ -84,7 +86,8 @@ public class PyPathEvaluator extends PyEvaluator {
   }
 
   @Override
-  protected @Nullable Object evaluateReference(@NotNull PyReferenceExpression expression) {
+  @Nullable
+  protected Object evaluateReference(@NotNull PyReferenceExpression expression) {
     if (PyNames.PARDIR.equals(expression.getName())) {
       return "..";
     }

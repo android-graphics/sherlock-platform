@@ -1,6 +1,7 @@
 import datetime
 from _typeshed import Incomplete
-from typing import ClassVar, Literal, Protocol, TypeVar
+from typing import ClassVar, Protocol, TypeVar
+from typing_extensions import Literal
 
 from ..relativedelta import relativedelta
 from ._common import _tzinfo as _tzinfo, enfold as enfold, tzname_in_python2 as tzname_in_python2, tzrangebase as tzrangebase
@@ -56,8 +57,8 @@ class _ttinfo:
 class _TZFileReader(Protocol):
     # optional attribute:
     # name: str
-    def read(self, size: int, /) -> bytes: ...
-    def seek(self, target: int, whence: Literal[1], /) -> object: ...
+    def read(self, __size: int) -> bytes: ...
+    def seek(self, __target: int, __whence: Literal[1]) -> object: ...
 
 class tzfile(_tzinfo):
     def __init__(self, fileobj: str | _TZFileReader, filename: str | None = None) -> None: ...

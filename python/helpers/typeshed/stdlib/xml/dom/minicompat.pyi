@@ -1,5 +1,6 @@
 from collections.abc import Iterable
-from typing import Any, Literal, TypeVar
+from typing import Any, TypeVar
+from typing_extensions import Literal
 
 __all__ = ["NodeList", "EmptyNodeList", "StringTypes", "defproperty"]
 

@@ -18,7 +18,8 @@ public class PySearchUtil extends PySearchUtilBase {
    * @param element element to search
    * @return string that represents element
    */
-  public static @NotNull String computeElementNameForStringSearch(final @NotNull PsiElement element) {
+  @NotNull
+  public static String computeElementNameForStringSearch(@NotNull final PsiElement element) {
     if (element instanceof PyFile) {
       return FileUtilRt.getNameWithoutExtension(((PyFile)element).getName());
     }

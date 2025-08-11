@@ -15,33 +15,24 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Strings
-import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetPresentable
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem.Companion.openProjectAndLogRecent
-import com.intellij.platform.eel.provider.EelInitialization
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.BitUtil
-import com.intellij.util.PathUtil
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.event.ActionEvent
 import java.nio.file.Files
 import java.nio.file.Path
-import javax.swing.Icon
 
 open class ReopenProjectAction @JvmOverloads constructor(
   projectPath: @SystemIndependent String,
   projectName: @NlsSafe String?,
   displayName: @NlsSafe String?,
-  branchName: @NlsSafe String? = null,
-  activationTimestamp: Long? = null,
-) : AnAction(), DumbAware, LightEditCompatible, ProjectToolbarWidgetPresentable {
+  branchName: @NlsSafe String? = null
+) : AnAction(), DumbAware, LightEditCompatible {
   private val myProjectPath: @SystemIndependent String
   private val myProjectName: @NlsSafe String?
   private val myDisplayName: @NlsSafe String?
-  private val myBranchName: @NlsSafe String?
-  private val myActivationTimestamp: Long?
 
-  override val branchName: @NlsSafe String? get() = myBranchName
+  val branchName: @NlsSafe String?
 
   var isRemoved: Boolean = false
     private set
@@ -53,8 +44,7 @@ open class ReopenProjectAction @JvmOverloads constructor(
     myProjectPath = projectPath
     myProjectName = projectName
     myDisplayName = displayName
-    myBranchName = branchName
-    myActivationTimestamp = activationTimestamp
+    this.branchName = branchName
 
     if (Strings.isEmpty(projectDisplayName)) {
       logger<ReopenProjectAction>().error("Empty action text for projectName='$projectName' displayName='$displayName' path='$projectPath'")
@@ -84,11 +74,6 @@ open class ReopenProjectAction @JvmOverloads constructor(
     IdeEventQueue.getInstance().popupManager.closeAllPopups()
 
     val project = e.project
-
-    runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.title.project.initialization")) {
-      EelInitialization.runEelInitialization(myProjectPath)
-    }
-
     val file = Path.of(myProjectPath).normalize()
     if (Files.notExists(file)) {
       if (Messages.showDialog(project, IdeBundle
@@ -124,18 +109,11 @@ open class ReopenProjectAction @JvmOverloads constructor(
       return if (manager is RecentProjectsManagerBase) manager.getProjectName(myProjectPath) else myProjectName
     }
 
-  override val projectNameToDisplay: @NlsSafe String
+  val projectNameToDisplay: @NlsSafe String?
     get() {
       val manager = RecentProjectsManager.getInstance()
-      return (if (manager is RecentProjectsManagerBase) manager.getDisplayName(myProjectPath) else null) ?: projectName ?: projectPath
+      return (if (manager is RecentProjectsManagerBase) manager.getDisplayName(myProjectPath) else null) ?: projectName
     }
-
-  override val projectPathToDisplay: @NlsSafe String
-    get() = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(projectPath), false)
-
-  override val projectIcon: Icon get() = RecentProjectsManagerBase.getInstanceEx().getProjectIcon(projectPath, true, 20)
-
-  override val activationTimestamp: Long? get() = myActivationTimestamp
 
   fun setProjectGroup(projectGroup: ProjectGroup?) {
     this.projectGroup = projectGroup

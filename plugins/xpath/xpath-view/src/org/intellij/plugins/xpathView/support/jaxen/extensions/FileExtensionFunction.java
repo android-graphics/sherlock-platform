@@ -27,7 +27,8 @@ class FileExtensionFunction extends BasicFileInfoFunction {
     }
 
     @Override
-    protected @Nullable Object extractInfo(PsiFile psiFile) {
+    @Nullable
+    protected Object extractInfo(PsiFile psiFile) {
         final VirtualFile virtualFile = psiFile.getVirtualFile();
         return virtualFile != null ? virtualFile.getExtension() : null;
     }

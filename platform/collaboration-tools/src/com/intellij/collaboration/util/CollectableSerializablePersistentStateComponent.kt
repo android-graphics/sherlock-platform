@@ -3,6 +3,7 @@ package com.intellij.collaboration.util
 
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -15,8 +16,9 @@ abstract class CollectableSerializablePersistentStateComponent<T : Any>(defaultS
     stateFlow.value = state
   }
 
+
   protected fun updateStateAndEmit(updateFunction: (currentState: T) -> T) {
     updateState(updateFunction)
-    stateFlow.value = state
+    stateFlow.update(updateFunction)
   }
 }

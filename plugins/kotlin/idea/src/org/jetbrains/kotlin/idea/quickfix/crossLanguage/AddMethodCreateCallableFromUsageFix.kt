@@ -61,8 +61,7 @@ class AddMethodCreateCallableFromUsageFix(
                 isForCompanion = JvmModifier.STATIC in request.modifiers,
                 modifierList = modifierList,
                 preferEmptyBody = true,
-                annotations = annotations,
-                elementToReplace = request.elementToReplace
+                annotations = annotations
             )
         }
 

@@ -17,7 +17,13 @@ import java.nio.charset.Charset;
 /**
  * Adds <a href="http://unicode.org/faq/utf_bom.html">file's BOM</a> to files with UTF-XXX encoding.
  */
-final class AddBomAction extends AnAction implements DumbAware {
+public final class AddBomAction extends AnAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(AddBomAction.class);
+
+  public AddBomAction() {
+    super(IdeBundle.messagePointer("add.BOM"));
+  }
+
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
@@ -59,7 +65,7 @@ final class AddBomAction extends AnAction implements DumbAware {
       WriteAction.runAndWait(() -> virtualFile.setBinaryContent(contentWithAddedBom));
     }
     catch (IOException ex) {
-      Logger.getInstance(AddBomAction.class).warn("Unexpected exception occurred in file " + virtualFile, ex);
+      LOG.warn("Unexpected exception occurred in file " + virtualFile, ex);
     }
   }
 }

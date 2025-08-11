@@ -34,7 +34,8 @@ class SingularGuavaMapHandler extends SingularMapHandler {
   }
 
   @Override
-  protected @NotNull PsiType getBuilderFieldType(@NotNull PsiType psiFieldType, @NotNull Project project) {
+  @NotNull
+  protected PsiType getBuilderFieldType(@NotNull PsiType psiFieldType, @NotNull Project project) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     final PsiType keyType = getKeyType(psiFieldType, psiManager);
     final PsiType valueType = getValueType(psiFieldType, psiManager);
@@ -63,11 +64,11 @@ class SingularGuavaMapHandler extends SingularMapHandler {
 
   @Override
   protected String getOneMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
-    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {1}.{2}; \n" +
+    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {2}.{3}; \n" +
                                      "this.{0}.put(" + LOMBOK_KEY + ", " + LOMBOK_VALUE + ");\n" +
-                                     "return {3};";
+                                     "return {4};";
 
-    return MessageFormat.format(codeBlockTemplate, info.getFieldName(), collectionQualifiedName,
+    return MessageFormat.format(codeBlockTemplate, info.getFieldName(), singularName, collectionQualifiedName,
                                 sortedCollection ? "naturalOrder()" : "builder()", info.getBuilderChainResult());
   }
 

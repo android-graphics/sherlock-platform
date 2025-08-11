@@ -13,8 +13,10 @@ import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.analysis.KotlinBaseAnalysisBundle
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectedDeclarationIfAny
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.forceResolveReferences
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.getReceiverTypeSearcherInfo
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
@@ -67,8 +69,8 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
 
         val currentTargets = (reference as? PsiPolyVariantReference)?.multiResolve(false)?.mapNotNull { it.element as? KtDeclaration } ?: return true
         if (targetDeclaration !is KtDeclaration) return true
-        val expectedTarget = targetDeclaration.expectDeclarationIfAny() ?: targetDeclaration
-        return if (expectedTarget in currentTargets.map { it.expectDeclarationIfAny() ?: it }
+        val expectedTarget = targetDeclaration.expectedDeclarationIfAny() ?: targetDeclaration
+        return if (expectedTarget in currentTargets.map { it.expectedDeclarationIfAny() ?: it }
         ) {
             consumer.process(reference)
         } else {

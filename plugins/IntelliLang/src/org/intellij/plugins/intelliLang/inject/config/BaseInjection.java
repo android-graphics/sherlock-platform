@@ -38,10 +38,7 @@ import org.intellij.lang.annotations.RegExp;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.jdom.CDATA;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -54,7 +51,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
   public static final Key<BaseInjection> INJECTION_KEY = Key.create("INJECTION_KEY");
 
-  private final @NotNull @NlsSafe String mySupportId;
+  @NotNull private final @NlsSafe String mySupportId;
 
   private @Nls String myDisplayName = "";
 
@@ -62,10 +59,12 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   private String myPrefix = "";
   private String mySuffix = "";
 
-  private @NonNls String myValuePattern = "";
+  @NonNls
+  private String myValuePattern = "";
   private Pattern myCompiledValuePattern;
 
-  private @NonNls String myIgnorePattern = "";
+  @NonNls
+  private String myIgnorePattern = "";
   private Pattern myCompiledIgnorePattern;
 
   private boolean mySingleFile;
@@ -102,17 +101,21 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
 
   @Override
-  public @NotNull @NlsSafe String getSupportId() {
+  @NotNull
+  public @NlsSafe String getSupportId() {
     return mySupportId;
   }
 
   @Override
-  public @NotNull @NlsSafe String getInjectedLanguageId() {
+  @NotNull
+  public @NlsSafe String getInjectedLanguageId() {
     return myInjectedLanguageId;
   }
 
+  @Nls
   @Override
-  public @Nls @NotNull String getDisplayName() {
+  @NotNull
+  public String getDisplayName() {
     return myDisplayName;
   }
 
@@ -125,7 +128,8 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
 
   @Override
-  public @NotNull String getPrefix() {
+  @NotNull
+  public String getPrefix() {
     return myPrefix;
   }
 
@@ -134,7 +138,8 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
 
   @Override
-  public @NotNull String getSuffix() {
+  @NotNull
+  public String getSuffix() {
     return mySuffix;
   }
 
@@ -187,7 +192,8 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
 
   @Override
-  public @NotNull List<TextRange> getInjectedArea(final PsiElement element) {
+  @NotNull
+  public List<TextRange> getInjectedArea(final PsiElement element) {
     final TextRange textRange = ElementManipulators.getValueTextRange(element);
     if (myCompiledValuePattern == null) {
       return Collections.singletonList(textRange);
@@ -245,7 +251,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     return new BaseInjection(mySupportId).copyFrom(this);
   }
 
-  @Override
   @SuppressWarnings({"RedundantIfStatement"})
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -264,7 +269,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     return true;
   }
 
-  @Override
   public int hashCode() {
     int result;
     result = myInjectedLanguageId.hashCode();
@@ -375,13 +379,14 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
   protected void writeExternalImpl(Element e) { }
 
-  public @NotNull String getValuePattern() {
+  @NotNull
+  public String getValuePattern() {
     return myValuePattern;
   }
 
   public void setValuePattern(@RegExp @Nullable String pattern) {
     try {
-      if (pattern != null && !pattern.isEmpty()) {
+      if (pattern != null && pattern.length() > 0) {
         myValuePattern = pattern;
         myCompiledValuePattern = Pattern.compile(pattern, Pattern.DOTALL);
       }
@@ -396,13 +401,14 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     }
   }
 
-  public @NotNull String getIgnorePattern() {
+  @NotNull
+  public String getIgnorePattern() {
     return myIgnorePattern;
   }
 
   public void setIgnorePattern(@RegExp @Nullable String pattern) {
     try {
-      if (pattern != null && !pattern.isEmpty()) {
+      if (pattern != null && pattern.length() > 0) {
         myIgnorePattern = pattern;
         myCompiledIgnorePattern = Pattern.compile(pattern, Pattern.DOTALL);
       }
@@ -463,7 +469,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     }
   }
 
-  public void setPlaceEnabled(final @Nullable String text, final boolean enabled) {
+  public void setPlaceEnabled(@Nullable final String text, final boolean enabled) {
     for (int i = 0; i < myPlaces.length; i++) {
       final InjectionPlace cur = myPlaces[i];
       if (text == null || Objects.equals(text, cur.getText())) {

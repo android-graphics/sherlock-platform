@@ -76,7 +76,8 @@ class ArrayContentsAssignedVisitor extends JavaRecursiveElementWalkingVisitor {
     }
   }
 
-  private static @Nullable PsiExpression getDeepArrayExpression(
+  @Nullable
+  private static PsiExpression getDeepArrayExpression(
     PsiExpression expression) {
     if (!(expression instanceof PsiArrayAccessExpression)) {
       return null;

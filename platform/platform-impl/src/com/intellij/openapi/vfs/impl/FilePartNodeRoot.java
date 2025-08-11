@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -16,7 +16,6 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,8 +25,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-@ApiStatus.Internal
-public final class FilePartNodeRoot extends FilePartNode {
+final class FilePartNodeRoot extends FilePartNode {
   private FilePartNodeRoot(@NotNull NewVirtualFileSystem fs) {
     super(fs);
   }
@@ -329,7 +327,7 @@ public final class FilePartNodeRoot extends FilePartNode {
   }
 
   void removePointer(@NotNull VirtualFilePointerImpl pointer) {
-    FilePartNode node = pointer.getNode();
+    FilePartNode node = pointer.myNode;
     int remainingLeaves = node.removeLeaf(pointer);
     if (remainingLeaves == 0) {
       VirtualFile file = myFile(node.myFileOrUrl);
@@ -345,7 +343,7 @@ public final class FilePartNodeRoot extends FilePartNode {
 
   void checkConsistency() {
     if (VirtualFilePointerManagerImpl.shouldCheckConsistency()) {
-      doCheckConsistency(null, "", fs.getProtocol() + URLUtil.SCHEME_SEPARATOR);
+      doCheckConsistency(null, "", myFS.getProtocol() + URLUtil.SCHEME_SEPARATOR);
     }
   }
 

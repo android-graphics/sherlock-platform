@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -60,7 +60,10 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -94,17 +97,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     myRefactoringScope = refactoringScope;
   }
 
-  @ApiStatus.Internal
-  public Runnable getPrepareSuccessfulSwingThreadCallback() {
-    return myPrepareSuccessfulSwingThreadCallback;
-  }
-
-  protected abstract @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages);
+  @NotNull
+  protected abstract UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages);
 
   /**
    * Is called inside atomic action.
    */
-  @ApiStatus.OverrideOnly
   protected abstract UsageInfo @NotNull [] findUsages();
 
   /**
@@ -120,7 +118,6 @@ public abstract class BaseRefactoringProcessor implements Runnable {
    * @param refUsages usages to be filtered
    * @return true if preprocessed successfully
    */
-  @ApiStatus.OverrideOnly
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     prepareSuccessful();
     return true;
@@ -129,12 +126,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   /**
    * Is called inside atomic action.
    */
-  @ApiStatus.OverrideOnly
   protected boolean isPreviewUsages(UsageInfo @NotNull [] usages) {
     return myIsPreviewUsages;
   }
 
-  @ApiStatus.Internal
   protected boolean isPreviewUsages() {
     return myIsPreviewUsages;
   }
@@ -268,10 +263,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   protected void previewRefactoring(UsageInfo @NotNull [] usages) {
-    if (ApplicationManager.getApplication().isUnitTestMode() || Boolean.getBoolean("ide.performance.skip.refactoring.dialogs")) {
-      if (!PREVIEW_IN_TESTS) {
-        throw new RuntimeException("Unexpected preview in tests: " + StringUtil.join(usages, UsageInfo::toString, ", "));
-      }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!PREVIEW_IN_TESTS) throw new RuntimeException("Unexpected preview in tests: " + StringUtil.join(usages, UsageInfo::toString, ", "));
       ensureElementsWritable(usages, createUsageViewDescriptor(usages));
       execute(usages);
       return;
@@ -281,7 +274,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     final PsiElement2UsageTargetAdapter[] targets = PsiElement2UsageTargetAdapter.convert(elements);
     Factory<UsageSearcher> factory = () -> new UsageInfoSearcherAdapter() {
       @Override
-      public void generate(final @NotNull Processor<? super Usage> processor) {
+      public void generate(@NotNull final Processor<? super Usage> processor) {
         ApplicationManager.getApplication().runReadAction(() -> {
           for (int i = 0; i < elements.length; i++) {
             elements[i] = targets[i].getElement();
@@ -330,7 +323,6 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     execute(usages);
   }
 
-  @ApiStatus.OverrideOnly
   protected void execute(final UsageInfo @NotNull [] usages) {
     long executeStart = System.currentTimeMillis();
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
@@ -347,11 +339,13 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     return CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext()) == null;
   }
 
-  protected @NotNull UndoConfirmationPolicy getUndoConfirmationPolicy() {
+  @NotNull
+  protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
     return UndoConfirmationPolicy.DEFAULT;
   }
 
-  private static @NotNull UsageViewPresentation createPresentation(@NotNull UsageViewDescriptor descriptor, Usage @NotNull [] usages) {
+  @NotNull
+  private static UsageViewPresentation createPresentation(@NotNull UsageViewDescriptor descriptor, Usage @NotNull [] usages) {
     UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setTabText(RefactoringBundle.message("usageView.tabText"));
     presentation.setTargetsNodeText(descriptor.getProcessedElementsHeader());
@@ -458,7 +452,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
   }
 
-  protected void customizeUsagesView(final @NotNull UsageViewDescriptor viewDescriptor, final @NotNull UsageView usageView) {
+  protected void customizeUsagesView(@NotNull final UsageViewDescriptor viewDescriptor, @NotNull final UsageView usageView) {
     Runnable refactoringRunnable = () -> {
       Set<UsageInfo> usagesToRefactor = UsageViewUtil.getNotExcludedUsageInfos(usageView);
       final UsageInfo[] infos = usagesToRefactor.toArray(UsageInfo.EMPTY_ARRAY);
@@ -483,7 +477,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
                                         RefactoringBundle.message("usageView.doAction"), false);
   }
 
-  private void doRefactoring(final @NotNull Collection<UsageInfo> usageInfoSet) {
+  private void doRefactoring(@NotNull final Collection<UsageInfo> usageInfoSet) {
    for (Iterator<UsageInfo> iterator = usageInfoSet.iterator(); iterator.hasNext();) {
       UsageInfo usageInfo = iterator.next();
       final PsiElement element = usageInfo.getElement();
@@ -655,7 +649,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       }
     }
 
-    public @NotNull Collection<String> getMessages() {
+    @NotNull
+    public Collection<String> getMessages() {
         List<String> result = new ArrayList<>(messages);
         for (int i = 0; i < messages.size(); i++) {
           result.set(i, result.get(i).replaceAll("<[^>]+>", ""));
@@ -671,8 +666,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   protected boolean showConflicts(@NotNull MultiMap<PsiElement, @DialogMessage String> conflicts, UsageInfo @Nullable [] usages) {
-    if (!conflicts.isEmpty() && (ApplicationManager.getApplication().isUnitTestMode()
-                                 || Boolean.getBoolean("ide.performance.skip.refactoring.dialogs"))) {
+    if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
       if (!ConflictsInTestsException.isTestIgnore()) throw new ConflictsInTestsException(conflicts.values());
       return true;
     }
@@ -696,29 +690,36 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     return true;
   }
 
-  protected @NotNull ConflictsDialogBase prepareConflictsDialog(@NotNull MultiMap<PsiElement, @DialogMessage String> conflicts, UsageInfo @Nullable [] usages) {
+  @NotNull
+  protected ConflictsDialogBase prepareConflictsDialog(@NotNull MultiMap<PsiElement, @DialogMessage String> conflicts, UsageInfo @Nullable [] usages) {
     final ConflictsDialogBase conflictsDialog = createConflictsDialog(conflicts, usages);
     conflictsDialog.setCommandName(getCommandName());
     return conflictsDialog;
   }
 
-  protected @Nullable RefactoringEventData getBeforeData() {
+  @Nullable
+  protected RefactoringEventData getBeforeData() {
     return null;
   }
 
-  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+  @Nullable
+  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     return null;
   }
 
-  protected @NonNls @Nullable String getRefactoringId() {
+  @NonNls
+  @Nullable
+  protected String getRefactoringId() {
     return null;
   }
 
-  protected @NotNull ConflictsDialogBase createConflictsDialog(@NotNull MultiMap<PsiElement, @DialogMessage String> conflicts, UsageInfo @Nullable [] usages) {
+  @NotNull
+  protected ConflictsDialogBase createConflictsDialog(@NotNull MultiMap<PsiElement, @DialogMessage String> conflicts, UsageInfo @Nullable [] usages) {
     return RefactoringUiService.getInstance().createConflictsDialog(myProject, conflicts, usages == null ? null : () -> execute(usages), false, true);
   }
 
-  protected @NotNull Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
+  @NotNull
+  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
     return Arrays.asList(descriptor.getElements());
   }
 

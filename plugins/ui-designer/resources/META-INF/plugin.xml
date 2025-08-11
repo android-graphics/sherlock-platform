@@ -1,5 +1,5 @@
 <idea-plugin>
-  <name>Swing UI Designer</name>
+  <name>UI Designer</name>
   <id>com.intellij.uiDesigner</id>
   <category>Swing</category>
   <vendor>JetBrains</vendor>

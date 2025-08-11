@@ -30,12 +30,14 @@ import org.jetbrains.annotations.NotNull;
 public final class DateToStringInspection extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "CallToDateToString";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "call.to.date.tostring.problem.descriptor");
   }

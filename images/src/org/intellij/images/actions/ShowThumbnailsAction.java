@@ -15,10 +15,7 @@
  */
 package org.intellij.images.actions;
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.thumbnail.ThumbnailManager;
@@ -48,7 +45,7 @@ public final class ShowThumbnailsAction extends AnAction {
   public void update(@NotNull AnActionEvent e) {
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     boolean enabled = file != null && file.isDirectory();
-    if (e.isFromContextMenu()) {
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
       e.getPresentation().setEnabledAndVisible(enabled);
     }
     else {

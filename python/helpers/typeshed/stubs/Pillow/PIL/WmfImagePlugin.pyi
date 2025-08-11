@@ -1,6 +1,7 @@
 import sys
 from _typeshed import Incomplete
-from typing import ClassVar, Literal
+from typing import ClassVar
+from typing_extensions import Literal
 
 from ._imaging import _PixelAccessor
 from .ImageFile import StubImageFile

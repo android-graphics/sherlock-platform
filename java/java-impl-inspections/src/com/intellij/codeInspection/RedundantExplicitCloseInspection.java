@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
@@ -22,8 +22,9 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public final class RedundantExplicitCloseInspection extends AbstractBaseJavaLocalInspectionTool {
   CallMatcher CLOSE = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, "close").parameterCount(0);
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitTryStatement(@NotNull PsiTryStatement statement) {
@@ -57,7 +58,8 @@ public final class RedundantExplicitCloseInspection extends AbstractBaseJavaLoca
     };
   }
 
-  private static @NotNull List<PsiStatement> getTerminatingStatements(@Nullable PsiStatement last) {
+  @NotNull
+  private static List<PsiStatement> getTerminatingStatements(@Nullable PsiStatement last) {
     if (last == null) return Collections.emptyList();
     List<PsiStatement> terminatingStatements = new ArrayList<>();
     PsiIfStatement ifStatement = tryCast(last, PsiIfStatement.class);

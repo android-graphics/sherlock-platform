@@ -16,14 +16,11 @@
 package com.intellij.debugger.ui.tree;
 
 import com.intellij.openapi.util.UserDataHolder;
-import org.jetbrains.annotations.Nls;
 
 public interface NodeDescriptor extends UserDataHolder {
 
-  @Nls
   String getName();
 
-  @Nls
   String getLabel();
 
   void displayAs(NodeDescriptor descriptor);

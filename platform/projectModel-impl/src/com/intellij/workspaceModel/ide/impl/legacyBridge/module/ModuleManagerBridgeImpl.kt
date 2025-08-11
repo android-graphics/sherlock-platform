@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.ModuleStore
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -56,7 +55,6 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 
 
 private val loadAllModulesTimeMs = MillisecondsMeasurer()
@@ -81,12 +79,10 @@ internal class ModuleManagerComponentBridgeInitializer : BridgeInitializer {
 
 @Suppress("OVERRIDE_DEPRECATION")
 @ApiStatus.Internal
-abstract class ModuleManagerBridgeImpl(
-  private val project: Project,
-  private val coroutineScope: CoroutineScope,
-  moduleRootListenerBridge: ModuleRootListenerBridge,
-) : ModuleManagerEx(), Disposable {
-  private val moduleNameToUnloadedModuleDescription: MutableMap<String, UnloadedModuleDescription> = ConcurrentHashMap()
+abstract class ModuleManagerBridgeImpl(private val project: Project,
+                                       private val coroutineScope: CoroutineScope,
+                                       moduleRootListenerBridge: ModuleRootListenerBridge) : ModuleManagerEx(), Disposable {
+  private val moduleNameToUnloadedModuleDescription: MutableMap<String, UnloadedModuleDescription> = LinkedHashMap()
 
   private val moduleNamesQuery = entities<ModuleEntity>().map { it.name }
 
@@ -165,39 +161,36 @@ abstract class ModuleManagerBridgeImpl(
     modules().forEach(Disposer::dispose)
   }
 
-  @ApiStatus.Internal
-  fun modules(): Sequence<ModuleBridge> {
+  protected fun modules(): Sequence<ModuleBridge> {
     return modules(entityStore.current)
   }
 
-  final override fun areModulesLoaded(): Boolean {
+  override fun areModulesLoaded(): Boolean {
     return WorkspaceModelTopics.getInstance(project).modulesAreLoaded
   }
 
-  final override fun moduleDependencyComparator(): Comparator<Module> {
+  override fun moduleDependencyComparator(): Comparator<Module> {
     return entityStore.cachedValue(dependencyComparatorValue)
   }
 
-  final override fun moduleGraph(): Graph<Module> = entityStore.cachedValue(dependencyGraphWithTestsValue)
+  override fun moduleGraph(): Graph<Module> = entityStore.cachedValue(dependencyGraphWithTestsValue)
 
-  final override fun moduleGraph(includeTests: Boolean): Graph<Module> {
+  override fun moduleGraph(includeTests: Boolean): Graph<Module> {
     return entityStore.cachedValue(if (includeTests) dependencyGraphWithTestsValue else dependencyGraphWithoutTestsValue)
   }
 
   val entityStore: VersionedEntityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage
 
-  suspend fun loadModules(
-    loadedEntities: List<ModuleEntity>,
-    unloadedEntities: List<ModuleEntity>,
-    targetBuilder: MutableEntityStorage?,
-    initializeFacets: Boolean,
-  ): Unit = loadAllModulesTimeMs.addMeasuredTime {
+  suspend fun loadModules(loadedEntities: List<ModuleEntity>,
+                          unloadedEntities: List<ModuleEntity>,
+                          targetBuilder: MutableEntityStorage?,
+                          initializeFacets: Boolean) = loadAllModulesTimeMs.addMeasuredTime {
     val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
     val corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID }
 
     @Suppress("OPT_IN_USAGE")
     val result = coroutineScope {
-      LOG.debug { "Loading modules for ${loadedEntities.size} entities: [${loadedEntities.joinToString { it.name }}]" }
+      LOG.debug { "Loading modules for ${loadedEntities.size} entities" }
 
       val precomputedExtensionModel = precomputeModuleLevelExtensionModel()
       val result = loadedEntities.map { moduleEntity ->
@@ -237,7 +230,7 @@ abstract class ModuleManagerBridgeImpl(
     }
 
     if (targetBuilder == null) {
-      (project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl).updateProjectModelSilent("Add module mapping") { builder ->
+      (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Add module mapping") { builder ->
         fillBuilder(builder)
       }
     }
@@ -257,23 +250,20 @@ abstract class ModuleManagerBridgeImpl(
     }
   }
 
-  final override fun calculateUnloadModules(builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage): Pair<List<String>, List<String>> {
+  override fun calculateUnloadModules(builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage): Pair<List<String>, List<String>> {
     val currentModuleNames = HashSet<String>()
     builder.entities(ModuleEntity::class.java).mapTo(currentModuleNames) { it.name }
     unloadedEntityBuilder.entities(ModuleEntity::class.java).mapTo(currentModuleNames) { it.name }
     return AutomaticModuleUnloader.getInstance(project).calculateNewModules(currentModuleNames, builder, unloadedEntityBuilder)
   }
 
-  final override fun updateUnloadedStorage(modulesToLoad: List<String>, modulesToUnload: List<String>) {
+  override fun updateUnloadedStorage(modulesToLoad: List<String>, modulesToUnload: List<String>) {
     AutomaticModuleUnloader.getInstance(project).updateUnloadedStorage(modulesToLoad, modulesToUnload)
   }
 
-  final override fun getModifiableModel(): ModifiableModuleModel {
-    return ModifiableModuleModelBridgeImpl(
-      project = project,
-      moduleManager = this,
-      diff = MutableEntityStorage.from(entityStore.current.toSnapshot()),
-    )
+  override fun getModifiableModel(): ModifiableModuleModel {
+    return ModifiableModuleModelBridgeImpl(project = project, moduleManager = this,
+                                           diff = MutableEntityStorage.from(entityStore.current.toSnapshot()))
   }
 
   fun getModifiableModel(diff: MutableEntityStorage): ModifiableModuleModel {
@@ -344,26 +334,17 @@ abstract class ModuleManagerBridgeImpl(
   override val sortedModules: Array<Module>
     get() = entityStore.cachedValue(sortedModulesValue)
 
-  private val modulesByNameMapValue = CachedValue<Map<String, Module>> { storage ->
-    modules(storage).associateByTo(hashMapOf()) { it.name }
-  }
-
-  override val modulesByNameMap: Map<String, Module>
-    get() = entityStore.cachedValue(modulesByNameMapValue)
-
   override fun findModuleByName(name: String): Module? {
     return entityStore.current.resolve(ModuleId(name))?.findModule(entityStore.current)
   }
 
-  override fun disposeModule(module: Module) {
-    ApplicationManager.getApplication().runWriteAction {
-      val modifiableModel = getModifiableModel()
-      modifiableModel.disposeModule(module)
-      modifiableModel.commit()
-    }
+  override fun disposeModule(module: Module) = ApplicationManager.getApplication().runWriteAction {
+    val modifiableModel = getModifiableModel()
+    modifiableModel.disposeModule(module)
+    modifiableModel.commit()
   }
 
-  final override suspend fun setUnloadedModules(unloadedModuleNames: List<String>): Unit = setUnloadedModulesTimeMs.addMeasuredTime {
+  override suspend fun setUnloadedModules(unloadedModuleNames: List<String>) = setUnloadedModulesTimeMs.addMeasuredTime {
     // optimization
     /* if (unloadedModules.keys == unloadedModuleNames) {
        return
@@ -376,7 +357,7 @@ abstract class ModuleManagerBridgeImpl(
     val moduleEntitiesToUnload = mainStorage.entities(ModuleEntity::class.java)
       .filter { unloadedModulesNameHolder.isUnloaded(it.name) }
       .toList()
-    val unloadedEntityStorage = (project.serviceAsync<WorkspaceModel>() as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities
+    val unloadedEntityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities
     val moduleEntitiesToLoad = unloadedEntityStorage.entities(ModuleEntity::class.java)
       .filter { !unloadedModulesNameHolder.isUnloaded(it.name) }
       .toList()
@@ -406,7 +387,7 @@ abstract class ModuleManagerBridgeImpl(
     }
 
     withContext(Dispatchers.EDT) {
-      edtWriteAction {
+      writeAction {
         ProjectRootManagerEx.getInstanceEx(project).withRootsChange(RootsChangeRescanningInfo.NO_RESCAN_NEEDED).use {
           WorkspaceModel.getInstance(project).updateProjectModel("Update unloaded modules") { builder ->
             addAndRemoveModules(builder, moduleEntitiesToLoad, moduleEntitiesToUnload, unloadedEntityStorage)
@@ -420,12 +401,10 @@ abstract class ModuleManagerBridgeImpl(
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  private fun addAndRemoveModules(
-    builder: MutableEntityStorage,
-    entitiesToAdd: List<ModuleEntity>,
-    entitiesToRemove: List<ModuleEntity>,
-    storageContainingEntitiesToAdd: EntityStorage,
-  ) {
+  private fun addAndRemoveModules(builder: MutableEntityStorage,
+                                  entitiesToAdd: List<ModuleEntity>,
+                                  entitiesToRemove: List<ModuleEntity>,
+                                  storageContainingEntitiesToAdd: EntityStorage) {
     for (entity in entitiesToRemove) {
       builder.removeEntity(entity)
     }
@@ -437,7 +416,7 @@ abstract class ModuleManagerBridgeImpl(
     }
   }
 
-  final override fun setUnloadedModulesSync(unloadedModuleNames: List<String>) {
+  override fun setUnloadedModulesSync(unloadedModuleNames: List<String>) {
     if (!ApplicationManager.getApplication().isDispatchThread) {
       @Suppress("RAW_RUN_BLOCKING")
       return runBlocking(CoreProgressManager.getCurrentThreadProgressModality().asContextElement()) {
@@ -454,7 +433,7 @@ abstract class ModuleManagerBridgeImpl(
     }, "", true, project)
   }
 
-  final override fun removeUnloadedModules(unloadedModules: Collection<UnloadedModuleDescription>) {
+  override fun removeUnloadedModules(unloadedModules: Collection<UnloadedModuleDescription>) {
     ThreadingAssertions.assertWriteAccess()
 
     unloadedModules.forEach { this.moduleNameToUnloadedModuleDescription.remove(it.name) }
@@ -555,10 +534,7 @@ abstract class ModuleManagerBridgeImpl(
       get() = getMutableExternalMapping(MODULE_BRIDGE_MAPPING_ID)
 
     fun fireModulesAdded(project: Project, modules: List<Module>) {
-      val bus = project.messageBus
-      if (!bus.isDisposed) {
-        bus.syncPublisher(ModuleListener.TOPIC).modulesAdded(project, modules)
-      }
+      project.messageBus.syncPublisher(ModuleListener.TOPIC).modulesAdded(project, modules)
     }
 
     internal fun getModuleGroupPath(module: Module, entityStorage: VersionedEntityStorage): Array<String>? {

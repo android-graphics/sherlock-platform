@@ -1,6 +1,7 @@
 import sys
 from _typeshed import Incomplete
-from typing import ClassVar, Literal
+from typing import ClassVar
+from typing_extensions import Literal
 
 from ._imaging import _PixelAccessor
 from .ImageFile import ImageFile
@@ -8,10 +9,10 @@ from .ImageFile import ImageFile
 split: Incomplete
 field: Incomplete
 if sys.platform == "win32":
-    gs_binary: Literal["gswin32c", "gswin64c", "gs", False] | None
-    gs_windows_binary: Literal["gswin32c", "gswin64c", "gs", False] | None
+    gs_binary: Literal["gswin32c", "gswin64c", "gs", False, None]
+    gs_windows_binary: Literal["gswin32c", "gswin64c", "gs", False, None]
 else:
-    gs_binary: Literal["gs", False] | None
+    gs_binary: Literal["gs", False, None]
     gs_windows_binary: None
 
 def has_ghostscript(): ...

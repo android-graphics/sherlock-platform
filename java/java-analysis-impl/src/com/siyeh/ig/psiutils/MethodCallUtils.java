@@ -40,7 +40,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class MethodCallUtils {
 
-  private static final @NonNls Set<String> regexMethodNames = new HashSet<>(5);
+  @NonNls private static final Set<String> regexMethodNames = new HashSet<>(5);
 
   static {
     regexMethodNames.add("compile");
@@ -56,7 +56,8 @@ public final class MethodCallUtils {
     return expression.getMethodExpression().getReferenceName();
   }
 
-  public static @Nullable PsiType getTargetType(@NotNull PsiMethodCallExpression expression) {
+  @Nullable
+  public static PsiType getTargetType(@NotNull PsiMethodCallExpression expression) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
     if (qualifierExpression == null) {
@@ -233,7 +234,7 @@ public final class MethodCallUtils {
                                                @NotNull PsiVariable variable,
                                                @NotNull @NonNls String methodName) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    final @NonNls String name = methodExpression.getReferenceName();
+    @NonNls final String name = methodExpression.getReferenceName();
     if (!methodName.equals(name)) {
       return false;
     }
@@ -245,8 +246,9 @@ public final class MethodCallUtils {
     return variable.equals(element);
   }
 
-  public static @Nullable PsiMethod findMethodWithReplacedArgument(@NotNull PsiCall call, @NotNull PsiExpression target,
-                                                                   @NotNull PsiExpression replacement) {
+  @Nullable
+  public static PsiMethod findMethodWithReplacedArgument(@NotNull PsiCall call, @NotNull PsiExpression target,
+                                                         @NotNull PsiExpression replacement) {
     final PsiExpressionList argumentList = call.getArgumentList();
     if (argumentList == null) {
       return null;
@@ -384,8 +386,9 @@ public final class MethodCallUtils {
    * @param methodCall call to check
    * @return a qualifier call
    */
+  @Nullable
   @Contract(pure = true)
-  public static @Nullable PsiMethodCallExpression getQualifierMethodCall(@NotNull PsiMethodCallExpression methodCall) {
+  public static PsiMethodCallExpression getQualifierMethodCall(@NotNull PsiMethodCallExpression methodCall) {
     return
       tryCast(PsiUtil.skipParenthesizedExprDown(methodCall.getMethodExpression().getQualifierExpression()), PsiMethodCallExpression.class);
   }
@@ -434,7 +437,8 @@ public final class MethodCallUtils {
    * @return a parameter or null if supplied expression is not a call argument, call is not resolved or expression is a var-arg
    * argument.
    */
-  public static @Nullable PsiParameter getParameterForArgument(@NotNull PsiExpression argument) {
+  @Nullable
+  public static PsiParameter getParameterForArgument(@NotNull PsiExpression argument) {
     PsiElement argumentParent = argument.getParent();
     if (argumentParent instanceof PsiReferenceExpression) {
       PsiMethodCallExpression callForQualifier = tryCast(argumentParent.getParent(), PsiMethodCallExpression.class);

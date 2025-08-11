@@ -22,12 +22,14 @@ import java.util.List;
 
 public final class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.convert.method.to.property");
   }
 
   @Override
-  public @NotNull String getText() {
+  @NotNull
+  public String getText() {
     return PyPsiBundle.message("INTN.convert.method.to.property");
   }
 

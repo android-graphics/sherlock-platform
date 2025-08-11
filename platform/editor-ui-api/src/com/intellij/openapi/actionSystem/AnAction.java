@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.diagnostic.LoadingState;
@@ -10,11 +10,9 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.*;
 
@@ -61,8 +59,6 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
 public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadAware {
   private static final Logger LOG = Logger.getInstance(AnAction.class);
 
-  @ApiStatus.Internal
-  public static final Key<Integer> ACTIONS_MOD_COUNT = Key.create("AnAction.ACTIONS_MOD_COUNT");
   public static final Key<List<AnAction>> ACTIONS_KEY = Key.create("AnAction.shortcutSet");
   public static final AnAction[] EMPTY_ARRAY = new AnAction[0];
 
@@ -186,9 +182,6 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     }
   }
 
-  /**
-   * Do not override, but prefer extending from {@link DumbAwareAction} instead.
-   */
   @Override
   public boolean isDumbAware() {
     if (PossiblyDumbAware.super.isDumbAware()) {
@@ -197,16 +190,6 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     return ActionClassMetaData.isDefaultUpdate(this);
   }
 
-  /**
-   * Specifies the thread and the way {@link AnAction#update(AnActionEvent)},
-   * {@link ActionGroup#getChildren(AnActionEvent)} or other update-like methods shall be called.
-   * <p>
-   * The preferred value is {@link ActionUpdateThread#BGT}.
-   * <p>
-   * The default value is {@link ActionUpdateThread#EDT}.
-   *
-   * @see ActionUpdateThread
-   */
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     if (this instanceof UpdateInBackground && ((UpdateInBackground)this).isUpdateInBackground()) {
@@ -215,7 +198,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     if (ActionClassMetaData.isDefaultUpdate(this)) {
       return ActionUpdateThread.BGT;
     }
-    return ActionUpdateThread.EDT;
+    return ActionUpdateThreadAware.super.getActionUpdateThread();
   }
 
   /** Returns the set of shortcuts associated with this action. */
@@ -255,7 +238,6 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     }
     if (!actionList.contains(this)) {
       actionList.add(this);
-      updateCustomActionsModCount(component);
     }
 
     if (parentDisposable != null) {
@@ -266,19 +248,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   public final void unregisterCustomShortcutSet(@NotNull JComponent component) {
     List<AnAction> actionList = ComponentUtil.getClientProperty(component, ACTIONS_KEY);
     if (actionList != null) {
-      if (actionList.remove(this)) {
-        updateCustomActionsModCount(component);
-      }
+      actionList.remove(this);
     }
-  }
-
-  /**
-   * Update component's "actions mod count" on actions' update.
-   * Allows subscribing on addition/removing of custom shortcut actions.
-   */
-  private static void updateCustomActionsModCount(@NotNull JComponent component) {
-    int oldCounter = Objects.requireNonNullElse(ClientProperty.get(component, ACTIONS_MOD_COUNT), 0);
-    ClientProperty.put(component, ACTIONS_MOD_COUNT, oldCounter + 1);
   }
 
   /**
@@ -308,9 +279,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   /**
    * Return {@code true} if the action has to display its text along with the icon when placed in the toolbar.
    * <p>
-   * @deprecated Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#SHOW_TEXT_IN_TOOLBAR} presentation property instead.
+   * TODO Move to template presentation client properties and drop the method.
    */
-  @Deprecated(forRemoval = true)
   public boolean displayTextInToolbar() {
     return false;
   }
@@ -318,9 +288,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   /**
    * Return {@code true} if the action displays text in a smaller font (same as toolbar combobox font) when placed in the toolbar.
    * <p>
-   * @deprecated Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#USE_SMALL_FONT_IN_TOOLBAR} presentation property instead.
+   * TODO Move to template presentation client properties and drop the method.
    */
-  @Deprecated(forRemoval = true)
   public boolean useSmallerFontForTextInToolbar() {
     return false;
   }
@@ -351,20 +320,17 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * call {@code ActivityTracker.getInstance().inc()}
    * to notify the action subsystem to update all toolbar actions
    * when your subsystem's determines that its actions' visibility might be affected.
-   * <br/>
-   * This method is always called under the {@link com.intellij.openapi.application.ReadAction}.
    *
    * @see #getActionUpdateThread()
    */
   @ApiStatus.OverrideOnly
-  @RequiresReadLock(generateAssertion = false)
   public void update(@NotNull AnActionEvent e) {
   }
 
   /**
-   * Though the platform components (toolbars, menus, etc.) do their best to call update sometime before calling actionPerformed,
-   * implementations MUST NOT rely on it.
-   * Instead, they MUST always check whether the data context is suitable in {@link #actionPerformed(AnActionEvent)} and do nothing if it is not.
+   * <b>Deprecated and unused</b>
+   * The method is a part of a dropped contract.
+   * Drop it ASAP and move all the required code to {@link #actionPerformed(AnActionEvent)}.
    *
    * @deprecated Move any code to {@link #actionPerformed(AnActionEvent)}
    */
@@ -389,16 +355,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   }
 
   @NotNull
-  @ApiStatus.Internal
-  public Presentation createTemplatePresentation() {
-    Presentation presentation = Presentation.newTemplatePresentation();
-    if (displayTextInToolbar()) {
-      presentation.putClientProperty("SHOW_TEXT_IN_TOOLBAR", true);
-      if (useSmallerFontForTextInToolbar()) {
-        presentation.putClientProperty("USE_SMALL_FONT_IN_TOOLBAR", true);
-      }
-    }
-    return presentation;
+  Presentation createTemplatePresentation() {
+    return Presentation.newTemplatePresentation();
   }
 
   /**
@@ -412,21 +370,9 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * Performs the action logic.
    * <p>
    * It is called on the UI thread with all data in the provided {@link DataContext} instance.
-   * <p>
-   * The data context of {@link AnActionEvent#getData(DataKey)} MAY occasionally NOT HAVE the necessary data.
-   * <p>
-   * The implementors should not assume that {@link #update(AnActionEvent)}
-   * or {@link #beforeActionPerformedUpdate(AnActionEvent)} have been called before,
-   * and MUST to re-check that context is suitable, and do nothing if it is not.
-   * <p>
-   * The method must not be called directly.
-   * Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#performActionDumbAwareWithCallbacks} or
-   * (when delegating) {@link ActionWrapperUtil#actionPerformed}
    *
-   * @see com.intellij.openapi.actionSystem.ex.ActionUtil#performActionDumbAwareWithCallbacks
-   * @see ActionWrapperUtil#actionPerformed
+   * @see #beforeActionPerformedUpdate(AnActionEvent)
    */
-  @ApiStatus.OverrideOnly
   public abstract void actionPerformed(@NotNull AnActionEvent e);
 
   @ApiStatus.Internal
@@ -455,7 +401,6 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * <p>
    * TODO Move to template presentation client properties and drop the method.
    */
-  @ApiStatus.Internal
   public void setDefaultIcon(boolean isDefaultIconSet) {
     myIsDefaultIcon = isDefaultIconSet;
   }
@@ -465,7 +410,6 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * <p>
    * TODO Move to template presentation client properties and drop the method.
    */
-  @ApiStatus.Internal
   public boolean isDefaultIcon() {
     return myIsDefaultIcon;
   }

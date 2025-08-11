@@ -1,10 +1,20 @@
-from _typeshed import ConvertibleToFloat, ConvertibleToInt, Incomplete, Unused
-from typing import ClassVar, Literal
-from typing_extensions import TypeAlias
+from _typeshed import Incomplete, Unused
+from typing import ClassVar
+from typing_extensions import Literal, TypeAlias
 
-from openpyxl.descriptors.base import Bool, Float, Integer, NoneSet, Set, String, Typed, _ConvertibleToBool
+from openpyxl.descriptors.base import (
+    Bool,
+    Float,
+    Integer,
+    NoneSet,
+    Set,
+    String,
+    Typed,
+    _ConvertibleToBool,
+    _ConvertibleToFloat,
+    _ConvertibleToInt,
+)
 from openpyxl.descriptors.excel import ExtensionList
-from openpyxl.descriptors.sequence import Sequence
 from openpyxl.descriptors.serialisable import Serialisable
 
 _Pane: TypeAlias = Literal["bottomRight", "topRight", "bottomLeft", "topLeft"]
@@ -19,8 +29,8 @@ class Pane(Serialisable):
     state: Set[_PaneState]
     def __init__(
         self,
-        xSplit: ConvertibleToFloat | None = None,
-        ySplit: ConvertibleToFloat | None = None,
+        xSplit: _ConvertibleToFloat | None = None,
+        ySplit: _ConvertibleToFloat | None = None,
         topLeftCell: str | None = None,
         activePane: _Pane = "topLeft",
         state: _PaneState = "split",
@@ -35,7 +45,7 @@ class Selection(Serialisable):
         self,
         pane: _Pane | Literal["none"] | None = None,
         activeCell: str | None = "A1",
-        activeCellId: ConvertibleToInt | None = None,
+        activeCellId: _ConvertibleToInt | None = None,
         sqref: str | None = "A1",
     ) -> None: ...
 
@@ -78,22 +88,20 @@ class SheetView(Serialisable):
         showWhiteSpace: _ConvertibleToBool | None = None,
         view: _SheetViewView | Literal["none"] | None = None,
         topLeftCell: str | None = None,
-        colorId: ConvertibleToInt | None = None,
-        zoomScale: ConvertibleToInt | None = None,
-        zoomScaleNormal: ConvertibleToInt | None = None,
-        zoomScaleSheetLayoutView: ConvertibleToInt | None = None,
-        zoomScalePageLayoutView: ConvertibleToInt | None = None,
+        colorId: _ConvertibleToInt | None = None,
+        zoomScale: _ConvertibleToInt | None = None,
+        zoomScaleNormal: _ConvertibleToInt | None = None,
+        zoomScaleSheetLayoutView: _ConvertibleToInt | None = None,
+        zoomScalePageLayoutView: _ConvertibleToInt | None = None,
         zoomToFit: _ConvertibleToBool | None = None,
-        workbookViewId: ConvertibleToInt | None = 0,
+        workbookViewId: _ConvertibleToInt | None = 0,
         selection: Incomplete | None = None,
         pane: Pane | None = None,
     ) -> None: ...
 
 class SheetViewList(Serialisable):
     tagname: ClassVar[str]
-    sheetView: Sequence[list[SheetView]]
+    sheetView: Incomplete
     extLst: Typed[ExtensionList, Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
-    def __init__(self, sheetView: SheetView | None = None, extLst: Unused = None) -> None: ...
-    @property
-    def active(self) -> SheetView: ...
+    def __init__(self, sheetView: Incomplete | None = None, extLst: Unused = None) -> None: ...

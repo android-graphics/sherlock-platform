@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -273,8 +273,9 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     return this;
   }
 
+  @NotNull
   @Override
-  public @NotNull LinkedHashSet<String> suggestNames() {
+  public LinkedHashSet<String> suggestNames() {
     return new GrFieldNameSuggester(myContext, new GroovyFieldValidator(myContext), false).suggestNames();
   }
 
@@ -309,7 +310,8 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   }
 
   @Override
-  public @NotNull Init initializeIn() {
+  @NotNull
+  public Init initializeIn() {
     if (myCurrentMethodRadioButton.isSelected()) return Init.CUR_METHOD;
     if (myFieldDeclarationRadioButton.isSelected()) return Init.FIELD_DECLARATION;
     if (myClassConstructorSRadioButton.isSelected()) return Init.CONSTRUCTOR;
@@ -318,7 +320,8 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   }
 
   @Override
-  public @NotNull String getVisibilityModifier() {
+  @NotNull
+  public String getVisibilityModifier() {
     if (myPrivateRadioButton.isSelected()) return PsiModifier.PRIVATE;
     if (myProtectedRadioButton.isSelected()) return PsiModifier.PROTECTED;
     if (myPublicRadioButton.isSelected()) return PsiModifier.PUBLIC;
@@ -337,7 +340,8 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return myNameField.getEnteredName();
   }
 
@@ -351,7 +355,8 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     return myTypeComboBox.getSelectedType();
   }
 
-  private static @Nullable String getInvokedOnLocalVar(GrExpression expression) {
+  @Nullable
+  private static String getInvokedOnLocalVar(GrExpression expression) {
     if (expression instanceof GrReferenceExpression) {
       final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
       if (PsiUtil.isLocalVariable(resolved)) {
@@ -389,7 +394,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
         ExpressionChecker visitor = new ExpressionChecker(clazz, scope);
         scope.accept(visitor);
         if (!visitor.isResult()) {
-          return false;
+          return visitor.isResult();
         }
       }
       return true;

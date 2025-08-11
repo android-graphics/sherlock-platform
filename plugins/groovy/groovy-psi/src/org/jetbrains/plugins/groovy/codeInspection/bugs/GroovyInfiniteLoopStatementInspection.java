@@ -26,13 +26,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 public final class GroovyInfiniteLoopStatementInspection extends BaseInspection {
 
   @Override
-  protected @Nullable String buildErrorString(Object... args) {
+  @Nullable
+  protected String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.ref.statement.cannot.complete.without.throwing.exception");
 
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

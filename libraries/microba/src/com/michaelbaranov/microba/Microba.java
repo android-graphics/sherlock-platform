@@ -3,6 +3,12 @@ package com.michaelbaranov.microba;
 import com.michaelbaranov.microba.calendar.ui.basic.BasicCalendarPaneUI;
 import com.michaelbaranov.microba.calendar.ui.basic.BasicDatePickerUI;
 import com.michaelbaranov.microba.common.MicrobaComponent;
+import com.michaelbaranov.microba.gradient.ui.basic.BasicGradientUI;
+import com.michaelbaranov.microba.gradienteditor.ui.basic.BasicGradientEditorUI;
+import com.michaelbaranov.microba.marker.ui.basic.BasicMarkerBarUI;
+import com.michaelbaranov.microba.marker.ui.metal.MetalMarkerBarUI;
+import com.michaelbaranov.microba.marker.ui.motif.MotifMarkerBarUI;
+import com.michaelbaranov.microba.marker.ui.windows.WindowsMarkerBarUI;
 
 import javax.swing.*;
 import java.applet.Applet;
@@ -18,16 +24,16 @@ import java.util.Map;
  * @author Michael Baranov
  * 
  */
-public final class Microba {
+public class Microba {
 
-  private static final UIChangeListener changeListener = new UIChangeListener();
+  private static UIChangeListener changeListener = new UIChangeListener();
 
   /**
    * Initializes the library: installs L&F properties, sets up a L&F change
    * listener.
    * <p>
    * No need to call this method explicitly for desktop applications. You
-   * should only call it in {@link Applet#init()}. This will handle the browser 
+   * should only call it in {@link Applet#init()}. This will handle browser
    * refresh button correctly.
    * 
    */
@@ -50,11 +56,30 @@ public final class Microba {
     UIManager.put(packagePrefix + "calendar.ui.basic.BasicCalendarPaneUI", BasicCalendarPaneUI.class);
     UIManager.put("microba.DatePickerUI", packagePrefix + "calendar.ui.basic.BasicDatePickerUI");
     UIManager.put(packagePrefix + "calendar.ui.basic.BasicDatePickerUI", BasicDatePickerUI.class);
+    UIManager.put("microba.GradientUI", packagePrefix + "gradient.ui.basic.BasicGradientUI");
+    UIManager.put(packagePrefix + "gradient.ui.basic.BasicGradientUI", BasicGradientUI.class);
+    UIManager.put("microba.GradientEditorUI", packagePrefix + "gradienteditor.ui.basic.BasicGradientEditorUI");
+    UIManager.put(packagePrefix + "gradienteditor.ui.basic.BasicGradientEditorUI", BasicGradientEditorUI.class);
+    UIManager.put("microba.MarkerBarUI", packagePrefix + "marker.ui.basic.BasicMarkerBarUI");
+    UIManager.put(packagePrefix + "marker.ui.basic.BasicMarkerBarUI", BasicMarkerBarUI.class);
+
+    // particular L&F
+    if (lookAndFeel.getID().equals("Windows")) {
+      UIManager.put("microba.MarkerBarUI", packagePrefix + "marker.ui.windows.WindowsMarkerBarUI");
+      UIManager.put(packagePrefix + "marker.ui.windows.WindowsMarkerBarUI", WindowsMarkerBarUI.class);
+    }
+    else if (lookAndFeel.getID().equals("Metal")) {
+      UIManager.put("microba.MarkerBarUI", packagePrefix + "marker.ui.metal.MetalMarkerBarUI");
+      UIManager.put(packagePrefix + "marker.ui.metal.MetalMarkerBarUI", MetalMarkerBarUI.class);
+    }
+    else if (lookAndFeel.getID().equals("Motif")) {
+      UIManager.put("microba.MarkerBarUI", packagePrefix + "marker.ui.motif.MotifMarkerBarUI");
+      UIManager.put(packagePrefix + "marker.ui.motif.MotifMarkerBarUI", MotifMarkerBarUI.class);
+    }
   }
 
   private static final class UIChangeListener implements
       PropertyChangeListener {
-    @Override
     public void propertyChange(PropertyChangeEvent event) {
       if ("lookAndFeel".equals(event.getPropertyName())) {
         setLookAndFeelProperties((LookAndFeel) event.getNewValue());
@@ -62,28 +87,28 @@ public final class Microba {
     }
   }
 
-  private static final Map<String, Map<String, Color>> lookAndFeelToOverride = new HashMap<>();
+  private static Map lookAndFeelToOverride = new HashMap();
 
   /**
-   * Sets per-Look&Feel map of color overrides.
+   * Sets per-Lokk&Feel map of color overrides.
    * 
    * 
    * @param lookAndFeel
    *            look&feel ID
    * @param overrides
-   *            keys in the map are {@link String} constants, values are of
+   *            keys in the map are {@link String} constants, valuse are of
    *            type {@link Color} or of type {@link String} (in this case,
    *            {@link Color} values are obtained via
    *            {@link UIManager#getColor(Object)}). May be <code>null</code>.
    */
-  public static void setColorOverrideMap(String lookAndFeel, Map<String, Color> overrides) {
+  public static void setColorOverrideMap(String lookAndFeel, Map overrides) {
     lookAndFeelToOverride.put(lookAndFeel, overrides);
     // TODO: refresh ui delegates
   }
 
   /**
-   * Returns overridden color for a given component in current Look&Feel. The
-   * algorithm is:
+   * Returns overriden color for given component in current Look&Feel. The
+   * algorithms is:
    * <ul>
    * <li>If the component overrides the constant (per-instance override),
    * then it is returned.
@@ -98,29 +123,29 @@ public final class Microba {
    *            color constant
    * @param component
    *            component of the library
-   * @return overridden color or <code>null</code> if not overridden
+   * @return overriden color or <code>null</code> if not overriden
    */
   public static synchronized Color getOverridenColor(String colorConstant,
       MicrobaComponent component) {
 
-    Map<String, Color> componentOverrideMap = component.getColorOverrideMap();
+    Map componentOverrideMap = component.getColorOverrideMap();
     if (componentOverrideMap != null) {
       if (componentOverrideMap.containsKey(colorConstant)) {
-        Color val = componentOverrideMap.get(colorConstant);
-        if (val != null)
-          return val;
+        Object val = componentOverrideMap.get(colorConstant);
+        if (val instanceof Color)
+          return (Color) val;
         else
           return UIManager.getColor(val);
       }
     }
 
     String currentLookAndFeel = UIManager.getLookAndFeel().getID();
-    Map<String, Color> overrides = lookAndFeelToOverride.get(currentLookAndFeel);
+    Map overrides = (Map) lookAndFeelToOverride.get(currentLookAndFeel);
     if (overrides != null) {
       if (overrides.containsKey(colorConstant)) {
-        Color val = overrides.get(colorConstant);
-        if (val != null)
-          return val;
+        Object val = overrides.get(colorConstant);
+        if (val instanceof Color)
+          return (Color) val;
         else
           return UIManager.getColor(val);
 
@@ -131,8 +156,8 @@ public final class Microba {
   }
 
   /**
-   * Returns overridden color for a given component in current Look&Feel or a
-   * default value. The algorithm is:
+   * Returns overriden color for given component in current Look&Feel or a
+   * default value. The algorithms is:
    * <ul>
    * <li>If the component overrides the constant (per-instance override),
    * then it is returned.
@@ -147,13 +172,14 @@ public final class Microba {
    *            color constant
    * @param component
    *            component of the library
-   * @return overridden color or defaultColor if not overridden
+   * @param defaultColor
+   * @return overriden color or defaultColor if not overriden
    */
   public static synchronized Color getOverridenColor(String colorConstant,
       MicrobaComponent component, Color defaultColor) {
-    Color overridden = getOverridenColor(colorConstant, component);
-    if (overridden != null)
-      return overridden;
+    Color overriden = getOverridenColor(colorConstant, component);
+    if (overriden != null)
+      return overriden;
     else
       return defaultColor;
   }

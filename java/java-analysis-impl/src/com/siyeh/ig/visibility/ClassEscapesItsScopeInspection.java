@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.visibility;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -51,7 +51,8 @@ public final class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalI
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "ClassEscapesDefinedScope";
   }
 
@@ -63,13 +64,14 @@ public final class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalI
       checkbox("checkPackageLocal", InspectionGadgetsBundle.message("class.escapes.defined.scope.display.package.option")));
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     List<VisibilityChecker> checkers = new ArrayList<>(2);
     if (checkModuleApi) {
       PsiFile file = holder.getFile();
       if (file instanceof PsiJavaFile javaFile && PsiUtil.isAvailable(JavaFeature.MODULES, javaFile)) {
-        PsiJavaModule psiModule = JavaPsiModuleUtil.findDescriptorByElement(file);
+        PsiJavaModule psiModule = JavaModuleGraphUtil.findDescriptorByElement(file);
         if (psiModule != null) {
           VirtualFile vFile = file.getVirtualFile();
           if (vFile != null) {
@@ -148,7 +150,7 @@ public final class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalI
     }
   }
 
-  private abstract static class VisibilityChecker {
+  private static abstract class VisibilityChecker {
     static final VisibilityChecker[] EMPTY_ARRAY = new VisibilityChecker[0];
     final ProblemsHolder myHolder;
 

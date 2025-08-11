@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.psi.*;
@@ -8,7 +8,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -22,7 +21,8 @@ public final class ApproximateResolver {
    * @param maxDepth a guard against too long chained calls, determines how deeply this resolve will go into a chained call
    * @return a set of possible classes corresponding to types that this expression might have, or null if it can't be determined
    */
-  static @Nullable Set<PsiClass> getPossibleTypes(@NotNull PsiExpression expression, int maxDepth) {
+  @Nullable
+  static Set<PsiClass> getPossibleTypes(@NotNull PsiExpression expression, int maxDepth) {
     if (maxDepth == 0) return null;
 
     expression = PsiUtil.skipParenthesizedExprDown(expression);
@@ -35,7 +35,8 @@ public final class ApproximateResolver {
            null;
   }
 
-  private static @Nullable Set<PsiClass> getConditionalType(PsiConditionalExpression expression, int maxDepth) {
+  @Nullable
+  private static Set<PsiClass> getConditionalType(PsiConditionalExpression expression, int maxDepth) {
     PsiExpression thenBranch = expression.getThenExpression();
     PsiExpression elseBranch = expression.getElseExpression();
     if (thenBranch != null && elseBranch != null) {
@@ -48,7 +49,8 @@ public final class ApproximateResolver {
     return null;
   }
 
-  private static @Nullable Set<PsiClass> getNewType(PsiNewExpression expression) {
+  @Nullable
+  private static Set<PsiClass> getNewType(PsiNewExpression expression) {
     if (expression.isArrayCreation()) return null;
     PsiAnonymousClass aClass = expression.getAnonymousClass();
     if (aClass != null) return Collections.singleton(aClass);
@@ -62,7 +64,8 @@ public final class ApproximateResolver {
     return null;
   }
 
-  private static @Nullable Set<PsiClass> getCallType(@NotNull PsiExpression expression, int maxDepth) {
+  @Nullable
+  private static Set<PsiClass> getCallType(@NotNull PsiExpression expression, int maxDepth) {
     PsiReferenceExpression ref = ((PsiMethodCallExpression)expression).getMethodExpression();
     PsiExpression qualifier = ref.getQualifierExpression();
     if (qualifier == null) return extractClass(expression.getType());
@@ -74,7 +77,8 @@ public final class ApproximateResolver {
     return methods == null ? null : getDefiniteSymbolTypes(methods, qualifierType);
   }
 
-  private static @Nullable Set<PsiClass> getNonCallType(@NotNull PsiReferenceExpression expression, int maxDepth) {
+  @Nullable
+  private static Set<PsiClass> getNonCallType(@NotNull PsiReferenceExpression expression, int maxDepth) {
     PsiExpression qualifier = expression.getQualifierExpression();
     if (qualifier == null) {
       PsiElement target = expression.resolve();
@@ -87,17 +91,20 @@ public final class ApproximateResolver {
     return members == null ? null : getDefiniteSymbolTypes(members, qualifierType);
   }
 
-  private static @Nullable Set<PsiClass> extractClass(PsiType type) {
+  @Nullable
+  private static Set<PsiClass> extractClass(PsiType type) {
     PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
     return psiClass == null || psiClass instanceof PsiTypeParameter ? null : Collections.singleton(psiClass);
   }
 
-  public static @NotNull @Unmodifiable List<PsiMethod> getPossibleMethods(@NotNull Set<? extends PsiClass> classes, @NotNull String name, int callArgCount) {
+  @NotNull
+  public static List<PsiMethod> getPossibleMethods(@NotNull Set<? extends PsiClass> classes, @NotNull String name, int callArgCount) {
     return ContainerUtil.flatMap(classes,
       aClass -> ContainerUtil.filter(aClass.findMethodsByName(name, true), m->canHaveArgCount(m, callArgCount)));
   }
 
-  public static @NotNull List<PsiMember> getPossibleNonMethods(@NotNull Set<? extends PsiClass> symbols, @NotNull String name) {
+  @NotNull
+  public static List<PsiMember> getPossibleNonMethods(@NotNull Set<? extends PsiClass> symbols, @NotNull String name) {
     List<PsiMember> result = new ArrayList<>();
     for (PsiClass sym : symbols) {
       ContainerUtil.addIfNotNull(result, sym.findFieldByName(name, true));
@@ -106,7 +113,8 @@ public final class ApproximateResolver {
     return result;
   }
 
-  public static @Nullable Set<PsiClass> getDefiniteSymbolTypes(@NotNull List<? extends PsiMember> candidates, @NotNull Set<? extends PsiClass> qualifierType) {
+  @Nullable
+  public static Set<PsiClass> getDefiniteSymbolTypes(@NotNull List<? extends PsiMember> candidates, @NotNull Set<? extends PsiClass> qualifierType) {
     Set<PsiClass> possibleTypes = new HashSet<>();
     for (PsiMember candidate : candidates) {
       if (candidate instanceof PsiClass) {

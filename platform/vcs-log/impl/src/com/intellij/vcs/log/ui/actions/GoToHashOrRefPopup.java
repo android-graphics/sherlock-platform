@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
@@ -23,9 +24,7 @@ import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
-import com.intellij.vcs.log.visible.filters.HashSeparatorCharFilter;
 import com.intellij.vcsUtil.VcsImplUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +39,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Function;
 
-@ApiStatus.Internal
 public class GoToHashOrRefPopup {
   private static final Logger LOG = Logger.getInstance(GoToHashOrRefPopup.class);
 
@@ -66,7 +64,7 @@ public class GoToHashOrRefPopup {
       @Override
       public void onOk() {
         if (myFuture == null) {
-          String refText = StringUtil.trim(getText(), HashSeparatorCharFilter.invert());
+          String refText = StringUtil.trim(getText(), CharFilter.NOT_WHITESPACE_FILTER);
           final Future<?> future = ((mySelectedRef == null || (!mySelectedRef.getName().equals(refText)))
                                     ? myOnSelectedHash.apply(refText)
                                     : myOnSelectedRef.apply(mySelectedRef));

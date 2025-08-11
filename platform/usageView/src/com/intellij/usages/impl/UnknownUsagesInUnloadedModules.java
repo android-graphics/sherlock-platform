@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
@@ -47,16 +47,18 @@ public class UnknownUsagesInUnloadedModules extends UsageAdapter implements Usag
       modulesText);
   }
 
+  @NotNull
   @Override
-  public @NotNull UsagePresentation getPresentation() {
+  public UsagePresentation getPresentation() {
     return new UsagePresentation() {
       @Override
       public TextChunk @NotNull [] getText() {
         return new TextChunk[] {new TextChunk(SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes(), myExplanationText)};
       }
 
+      @NotNull
       @Override
-      public @NotNull String getPlainText() {
+      public String getPlainText() {
         return myExplanationText;
       }
 

@@ -23,9 +23,6 @@ interface JKOperatorToken {
         fun toKtElementType(token: JKOperatorToken): IElementType? = tokenToKotlinElementType[token]
 
         val RANGE = JKKtSingleValueOperatorToken(KtTokens.RANGE)
-        val RANGE_UNTIL = JKKtSingleValueOperatorToken(KtTokens.RANGE_UNTIL)
-        val UNTIL = JKKtWordOperatorToken("until")
-        val DOWN_TO = JKKtWordOperatorToken("downTo")
 
         val DIV = JKKtSingleValueOperatorToken(KtTokens.DIV)
         val MINUS = JKKtSingleValueOperatorToken(KtTokens.MINUS)
@@ -74,8 +71,6 @@ interface JKOperatorToken {
         val BITWISE_LOGICAL_OPERATORS = listOf(AND, OR, XOR)
 
         val SHIFT_OPERATORS = listOf(SHL, SHR, USHR)
-
-        val RANGE_OPERATORS = listOf(RANGE, RANGE_UNTIL, UNTIL, DOWN_TO)
 
         private val javaElementTypeToToken: Map<IElementType, JKOperatorToken> = mapOf(
             JavaTokenType.DIV to DIV,
@@ -152,9 +147,6 @@ interface JKOperatorToken {
             EXCLEQEQEQ to KtTokens.EXCLEQEQEQ,
 
             PERCEQ to KtTokens.PERCEQ,
-
-            RANGE to KtTokens.RANGE,
-            RANGE_UNTIL to KtTokens.RANGE_UNTIL,
         )
     }
 }

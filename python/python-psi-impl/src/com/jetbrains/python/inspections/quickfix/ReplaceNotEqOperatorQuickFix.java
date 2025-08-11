@@ -27,8 +27,9 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceNotEqOperatorQuickFix extends PsiUpdateModCommandQuickFix  {
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.replace.noteq.operator");
   }
 

@@ -12,19 +12,19 @@ import java.util.List;
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getDownNodes;
 
 class BekBranch {
-  private static final Logger LOG = Logger.getInstance(BekBranch.class);
+  private final static Logger LOG = Logger.getInstance(BekBranch.class);
 
   private static final int MAX_BLOCK_SIZE = 20;
   private static final int MAX_DELTA_TIME = 60 * 60 * 24 * 3 * 1000;
   private static final int SMALL_DELTA_TIME = 60 * 60 * 4 * 1000;
 
 
-  private final @NotNull LinearGraph myPermanentGraph;
-  private final @NotNull List<Integer> myNodeIndexes;
+  @NotNull private final LinearGraph myPermanentGraph;
+  @NotNull private final List<Integer> myNodeIndexes;
 
   private int myNoInsertSize;
 
-  private @Nullable List<Integer> myPrepareForInsertPart = null;
+  @Nullable private List<Integer> myPrepareForInsertPart = null;
 
   BekBranch(@NotNull LinearGraph permanentGraph, @NotNull List<Integer> nodeIndexes) {
     myPermanentGraph = permanentGraph;
@@ -65,7 +65,8 @@ class BekBranch {
     myPrepareForInsertPart = myNodeIndexes.subList(prevIndex, myNoInsertSize);
   }
 
-  public @Nullable List<Integer> getPrepareForInsertPart() {
+  @Nullable
+  public List<Integer> getPrepareForInsertPart() {
     return myPrepareForInsertPart;
   }
 

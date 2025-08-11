@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.tree.IElementType;
@@ -10,38 +11,82 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class XmlTagUtil {
+  private static final ObjectIntMap<String> ourCharacterEntities = new ObjectIntHashMap<>(6);
+
+  static {
+    ourCharacterEntities.put("lt", '<');
+    ourCharacterEntities.put("gt", '>');
+    ourCharacterEntities.put("apos", '\'');
+    ourCharacterEntities.put("quot", '\"');
+    ourCharacterEntities.put("nbsp", '\u00a0');
+    ourCharacterEntities.put("amp", '&');
+  }
+
   /**
    * if text contains XML-sensitive characters (<,>), quote text with ![CDATA[ ... ]]
    *
    * @return quoted text
    */
   public static String getCDATAQuote(String text) {
-    return BasicXmlTagUtil.getCDATAQuote(text);
+    if (text == null) return null;
+    String offensiveChars = "<>&\n";
+    final int textLength = text.length();
+    if (textLength > 0 && (Character.isWhitespace(text.charAt(0)) || Character.isWhitespace(text.charAt(textLength - 1)))) {
+      return "<![CDATA[" + text + "]]>";
+    }
+    for (int i = 0; i < offensiveChars.length(); i++) {
+      char c = offensiveChars.charAt(i);
+      if (text.indexOf(c) != -1) {
+        return "<![CDATA[" + text + "]]>";
+      }
+    }
+    return text;
   }
 
   public static String getInlineQuote(String text) {
-    return BasicXmlTagUtil.getInlineQuote(text);
+    if (text == null) return null;
+    String offensiveChars = "<>&";
+    for (int i = 0; i < offensiveChars.length(); i++) {
+      char c = offensiveChars.charAt(i);
+      if (text.indexOf(c) != -1) {
+        return "<![CDATA[" + text + "]]>";
+      }
+    }
+    return text;
   }
 
 
   public static CharSequence composeTagText(@NonNls String tagName, @NonNls String tagValue) {
-    return BasicXmlTagUtil.composeTagText(tagName, tagValue);
+    StringBuilder builder = new StringBuilder();
+    builder.append('<').append(tagName);
+    if (StringUtil.isEmpty(tagValue)) {
+      builder.append("/>");
+    }
+    else {
+      builder.append('>').append(getCDATAQuote(tagValue)).append("</").append(tagName).append('>');
+    }
+    return builder;
   }
 
   public static String[] getCharacterEntityNames() {
-    return BasicXmlTagUtil.getCharacterEntityNames();
+    return ArrayUtilRt.toStringArray(ourCharacterEntities.keySet());
   }
 
   public static char getCharacterByEntityName(String entityName) {
-    return BasicXmlTagUtil.getCharacterByEntityName(entityName);
+    int c = ourCharacterEntities.get(entityName);
+    return c==-1?0:(char)c;
   }
 
-  public static @Nullable XmlToken getStartTagNameElement(@NotNull XmlTag tag) {
+  @Nullable
+  public static XmlToken getStartTagNameElement(@NotNull XmlTag tag) {
     final ASTNode node = tag.getNode();
     if (node == null) return null;
 
@@ -55,7 +100,8 @@ public final class XmlTagUtil {
     return current == null ? null : (XmlToken)current.getPsi();
   }
 
-  public static @Nullable XmlToken getEndTagNameElement(@NotNull XmlTag tag) {
+  @Nullable
+  public static XmlToken getEndTagNameElement(@NotNull XmlTag tag) {
     final ASTNode node = tag.getNode();
     if (node == null) return null;
 
@@ -75,7 +121,8 @@ public final class XmlTagUtil {
     return null;
   }
 
-  public static @NotNull TextRange getTrimmedValueRange(final @NotNull XmlTag tag) {
+  @NotNull
+  public static TextRange getTrimmedValueRange(final @NotNull XmlTag tag) {
     XmlTagValue tagValue = tag.getValue();
     final String text = tagValue.getText();
     final String trimmed = text.trim();
@@ -84,18 +131,21 @@ public final class XmlTagUtil {
     return new TextRange(startOffset, startOffset + trimmed.length());
   }
 
-  public static @Nullable TextRange getStartTagRange(@NotNull XmlTag tag) {
+  @Nullable
+  public static TextRange getStartTagRange(@NotNull XmlTag tag) {
     XmlToken tagName = getStartTagNameElement(tag);
     return getTagRange(tagName, XmlTokenType.XML_START_TAG_START);
   }
 
 
-  public static @Nullable TextRange getEndTagRange(@NotNull XmlTag tag) {
+  @Nullable
+  public static TextRange getEndTagRange(@NotNull XmlTag tag) {
     XmlToken tagName = getEndTagNameElement(tag);
     return getTagRange(tagName, XmlTokenType.XML_END_TAG_START);
   }
 
-  private static @Nullable TextRange getTagRange(@Nullable XmlToken tagName, IElementType tagStart) {
+  @Nullable
+  private static TextRange getTagRange(@Nullable XmlToken tagName, IElementType tagStart) {
     if (tagName == null) {
       return null;
     }

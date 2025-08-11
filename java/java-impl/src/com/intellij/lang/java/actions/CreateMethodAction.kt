@@ -127,15 +127,11 @@ private class JavaMethodRenderer(
 
   private fun insertMethod(method: PsiMethod): PsiMethod {
     val anchor = javaUsage?.getAnchor(targetClass)
-    val elementToReplace = request.elementToReplace
-    val inserted = if (anchor != null) {
-      targetClass.addAfter(method, anchor)
-    }
-    else if (elementToReplace != null && request.elementToReplace.isValid) {
-      request.elementToReplace.replace(method) as PsiMethod
+    val inserted = if (anchor == null) {
+      targetClass.add(method)
     }
     else {
-      targetClass.add(method)
+      targetClass.addAfter(method, anchor)
     }
     return inserted as PsiMethod
   }

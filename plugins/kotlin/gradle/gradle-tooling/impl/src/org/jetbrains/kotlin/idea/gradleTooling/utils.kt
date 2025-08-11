@@ -39,5 +39,6 @@ fun String.capitalize(): String {
 
     /* Fallback implementation for older Kotlin versions */
     if (this.isEmpty()) return this
-    return this[0].uppercaseChar() + this.drop(1)
+    @Suppress("DEPRECATION")
+    return this[0].toUpperCase() + this.drop(1)
 }

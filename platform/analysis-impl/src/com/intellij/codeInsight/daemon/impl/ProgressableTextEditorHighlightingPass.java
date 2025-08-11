@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -9,12 +9,10 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,8 +27,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   private final @NotNull @Nls String myPresentableName;
   protected final PsiFile myFile;
   private final @Nullable Editor myEditor;
-  @ApiStatus.Internal
-  protected final @NotNull TextRange myRestrictRange;
+  final @NotNull TextRange myRestrictRange;
   private final HighlightingSession myHighlightingSession;
 
   protected ProgressableTextEditorHighlightingPass(@NotNull Project project,
@@ -82,7 +79,6 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   @Override
   public final void doCollectInformation(@NotNull ProgressIndicator progress) {
     GlobalInspectionContextBase.assertUnderDaemonProgress();
-    ProgressManager.checkCanceled();
     myFinished = false;
     try {
       collectInformationWithProgress(progress);
@@ -127,7 +123,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     return myFinished;
   }
 
-  public @Nullable("null means do not show progress") @Nls String getPresentableName() {
+  protected @Nullable("null means do not show progress") @Nls String getPresentableName() {
     return myPresentableName;
   }
 
@@ -151,9 +147,8 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     }
   }
 
-  @ApiStatus.Internal
-  public static final class EmptyPass extends TextEditorHighlightingPass {
-    public EmptyPass(@NotNull Project project, @NotNull Document document) {
+  static class EmptyPass extends TextEditorHighlightingPass {
+    EmptyPass(@NotNull Project project, @NotNull Document document) {
       super(project, document, false);
     }
 
@@ -166,7 +161,8 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     }
   }
 
-  protected @NotNull HighlightingSession getHighlightingSession() {
+  @NotNull
+  protected HighlightingSession getHighlightingSession() {
     return myHighlightingSession;
   }
 }

@@ -48,7 +48,6 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
     return result;
   }
 
-  @Override
   public boolean equals(Object o) {
     if (!(o instanceof RendererConfiguration)) return false;
 

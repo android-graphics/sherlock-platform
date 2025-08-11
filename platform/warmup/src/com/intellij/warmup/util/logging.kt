@@ -147,7 +147,7 @@ private val loggerFactory: WarmupLoggerFactory? by lazyPub {
   try {
     WarmupLoggerFactory.basePath.findOrCreateFile()
   }
-  catch (_: IOException) {
+  catch (e: IOException) {
     return@lazyPub null
   }
   val instance = WarmupLoggerFactory()

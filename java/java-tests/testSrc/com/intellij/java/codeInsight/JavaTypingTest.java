@@ -3,7 +3,6 @@ package com.intellij.java.codeInsight;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AbstractBasicJavaTypingTest;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 public class JavaTypingTest extends AbstractBasicJavaTypingTest {
@@ -63,46 +62,4 @@ public class JavaTypingTest extends AbstractBasicJavaTypingTest {
 
   //doesn't support in general case because of resolving
   public void testQuestionAfterPolyadic2() { doTest('?'); }
-
-  //doesn't support because of formatting
-  public void testCloseBracesAfterSwitchRule() {
-    setLanguageLevel(LanguageLevel.JDK_21);
-    doTest('{');
-  }
-
-  //doesn't support because of formatting
-  public void testCloseBracesAfterSwitchRuleNewLine() {
-    setLanguageLevel(LanguageLevel.JDK_21);
-    doTest('{');
-  }
-
-  //doesn't support because of formatting
-  public void testCloseBracesAfterSwitchRuleNewLine2() {
-    setLanguageLevel(LanguageLevel.JDK_21);
-    doTest('{');
-  }
-
-  //doesn't support because of formatting
-  public void testCloseBracesAfterSwitchRule2ThrowStatement() {
-    setLanguageLevel(LanguageLevel.JDK_21);
-    doTest('{');
-  }
-
-  //doesn't support because of formatting
-  public void testCloseBracesAfterSwitchRule2Expression() {
-    setLanguageLevel(LanguageLevel.JDK_21);
-    doTest('{');
-  }
-
-  //doesn't support because of formatting
-  public void testCloseBracesAfterSwitchRule3Expression() {
-    setLanguageLevel(LanguageLevel.JDK_21);
-    doTest('{');
-  }
-
-  //doesn't support because of formatting
-  public void testCloseBracesAfterSwitchRule3ExpressionOldLine() {
-    setLanguageLevel(LanguageLevel.JDK_21);
-    doTest('{');
-  }
 }

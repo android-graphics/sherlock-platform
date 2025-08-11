@@ -22,6 +22,7 @@ import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.tree.AsyncTreeModel;
@@ -56,14 +57,21 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   public static final Logger LOG = Logger.getInstance(PsiViewerDialog.class);
 
-  private @Nullable AbstractTreeModel myTreeModel;
-  private final @NotNull Tree myStubTree;
-  private final @NotNull StubDetailsViewer myStubDetailsViewer;
-  private @Nullable JPanel myPanel;
-  private final @NotNull Project myProject;
-  private final @NotNull PsiTreeUpdater myUpdater;
+  @Nullable
+  private AbstractTreeModel myTreeModel;
+  @NotNull
+  private final Tree myStubTree;
+  @NotNull
+  private final StubDetailsViewer myStubDetailsViewer;
+  @Nullable
+  private JPanel myPanel;
+  @NotNull
+  private final Project myProject;
+  @NotNull
+  private final PsiTreeUpdater myUpdater;
 
-  private volatile @NotNull Map<ASTNode, StubElement<?>> myNodeToStubs = new BidirectionalMap<>();
+  @NotNull
+  private volatile Map<ASTNode, StubElement<?>> myNodeToStubs = new BidirectionalMap<>();
   Disposable myTreeModelDisposable = Disposer.newDisposable();
 
 
@@ -94,8 +102,9 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
   }
 
 
+  @NotNull
   @Override
-  public @NotNull JComponent getComponent() {
+  public JComponent getComponent() {
     if (myPanel != null) return myPanel;
 
     JBSplitter splitter = new JBSplitter("StubViewer.showPreviewDetails.proportion", 0.7f);
@@ -166,7 +175,8 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
     resetStubTree();
   }
 
-  private static @Nullable Stub buildStubForElement(Project project, PsiElement rootElement, @NotNull String textToParse) {
+  @Nullable
+  private static Stub buildStubForElement(Project project, PsiElement rootElement, @NotNull String textToParse) {
     Stub stub = null;
     PsiFileWithStubSupport psiFile = (PsiFileWithStubSupport)rootElement;
     StubTree tree = psiFile.getStubTree();
@@ -192,7 +202,8 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
     return stub;
   }
 
-  private static @Nullable StubBuilder getStubBuilder(@NotNull PsiFileImpl rootElement) {
+  @Nullable
+  private static StubBuilder getStubBuilder(@NotNull PsiFileImpl rootElement) {
     IStubFileElementType<?> builder = rootElement.getElementTypeForStubBuilder();
     return builder == null ? null : builder.getBuilder();
   }

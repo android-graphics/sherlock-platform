@@ -65,8 +65,9 @@ public class PyImportReference extends PyReferenceImpl {
     return super.getUnresolvedDescription();
   }
 
+  @NotNull
   @Override
-  protected @NotNull List<RatedResolveResult> resolveInner() {
+  protected List<RatedResolveResult> resolveInner() {
     final PyImportElement parent = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class); //importRef.getParent();
     final QualifiedName qname = myElement.asQualifiedName();
     return qname == null ? Collections.emptyList() : ResolveImportUtil.resolveNameInImportStatement(parent, qname);
@@ -157,7 +158,7 @@ public class PyImportReference extends PyReferenceImpl {
     private final PsiFile myCurrentFile;
     private final Set<String> myNamesAlready;
     private final List<Object> myObjects;
-    private final @NotNull TypeEvalContext myContext;
+    @NotNull private final TypeEvalContext myContext;
 
     ImportVariantCollector(@NotNull TypeEvalContext context) {
       myContext = context;

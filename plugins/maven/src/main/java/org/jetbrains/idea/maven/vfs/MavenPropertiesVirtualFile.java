@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.vfs;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,7 +18,8 @@ import java.util.TreeSet;
 
 public class MavenPropertiesVirtualFile extends VirtualFile {
   private final String myPath;
-  private final @NotNull VirtualFileSystem myFS;
+  @NotNull
+  private final VirtualFileSystem myFS;
   private final byte[] myContent;
 
   public MavenPropertiesVirtualFile(String path, Properties properties, @NotNull VirtualFileSystem FS) {
@@ -41,17 +42,20 @@ public class MavenPropertiesVirtualFile extends VirtualFile {
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return myPath;
   }
 
   @Override
-  public @NotNull VirtualFileSystem getFileSystem() {
+  @NotNull
+  public VirtualFileSystem getFileSystem() {
     return myFS;
   }
 
   @Override
-  public @NotNull String getPath() {
+  @NotNull
+  public String getPath() {
     return myPath;
   }
 
@@ -111,7 +115,8 @@ public class MavenPropertiesVirtualFile extends VirtualFile {
   }
 
   @Override
-  public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
+  @NotNull
+  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     throw new UnsupportedOperationException();
   }
 }

@@ -6,13 +6,14 @@ import com.intellij.cce.metric.util.chrF
 import org.apache.commons.text.similarity.LevenshteinDistance
 
 
-abstract class LineSimilarityMetric(showByDefault: Boolean) : SimilarityMetric(showByDefault) {
-  protected fun Lookup.getWithPrefix() = suggestions.firstOrNull()?.text
+private fun Lookup.getWithPrefix() = suggestions.firstOrNull()?.text
 
+
+abstract class LineSimularityMetric(showByDefault: Boolean) : SimilarityMetric(showByDefault) {
   override fun computeExpectedText(session: Session, lookup: Lookup) = session.expectedText
 }
 
-class EditDistanceFirstLine(showByDefault: Boolean) : LineSimilarityMetric(showByDefault) {
+class EditDistanceFirstLine(showByDefault: Boolean) : LineSimularityMetric(showByDefault) {
   override val name = "Edit Distance First Line"
   override val description: String = "The minimum normalized edit distance to expected"
 
@@ -26,7 +27,7 @@ class EditDistanceFirstLine(showByDefault: Boolean) : LineSimilarityMetric(showB
   override fun computeExpected(lookup: Lookup, expectedText: String) = expectedText.firstLine().length.toDouble()
 }
 
-class NonEmptySuggestionRate(showByDefault: Boolean) : LineSimilarityMetric(showByDefault) {
+class NonEmptySuggestionRate(showByDefault: Boolean) : LineSimularityMetric(showByDefault) {
   override val name = "Non-Empty Suggestion Rate"
   override val description = "Average session count that the suggestion was non-empty"
 
@@ -38,7 +39,7 @@ class NonEmptySuggestionRate(showByDefault: Boolean) : LineSimilarityMetric(show
   override fun computeExpected(lookup: Lookup, expectedText: String) = 1.0
 }
 
-class PerfectFirstLine(showByDefault: Boolean) : LineSimilarityMetric(showByDefault) {
+class PerfectFirstLine(showByDefault: Boolean) : LineSimularityMetric(showByDefault) {
   override val name = "Perfect First Line"
   override val description: String = "Ratio of completions with proposal matches until the end of the first line"
 
@@ -51,7 +52,7 @@ class PerfectFirstLine(showByDefault: Boolean) : LineSimilarityMetric(showByDefa
   override fun computeExpected(lookup: Lookup, expectedText: String): Double = 1.0
 }
 
-class CharFScoreFirstLine(showByDefault: Boolean = false) : LineSimilarityMetric(showByDefault) {
+class CharFScoreFirstLine(showByDefault: Boolean) : LineSimularityMetric(showByDefault) {
   override val name = "Character n-gram F-score First Line"
   override val description: String = "Average ChrF++ score on the first line"
 
@@ -65,7 +66,7 @@ class CharFScoreFirstLine(showByDefault: Boolean = false) : LineSimilarityMetric
   override fun computeExpected(lookup: Lookup, expectedText: String): Double = 1.0
 }
 
-class CharFScore(showByDefault: Boolean = false) : LineSimilarityMetric(showByDefault) {
+class CharFScore(showByDefault: Boolean = false) : LineSimularityMetric(showByDefault) {
   override val name = "Character n-gram F-score"
   override val description: String = "Average ChrF++ score on the whole proposal"
 

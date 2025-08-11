@@ -47,7 +47,7 @@ public final class AppEditorFontConfigurable extends AppFontConfigurable {
     return myPanel;
   }
 
-  @Nullable AppEditorFontOptionsPanel getPanel() {
+  public @Nullable AppEditorFontOptionsPanel getPanel() {
     return myPanel;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.util.Pair;
@@ -38,13 +38,15 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     myTypeParameterList = new GrLightTypeParameterList(context);
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getNameIdentifierGroovy() {
+  public PsiElement getNameIdentifierGroovy() {
     return new GrLightIdentifier(getManager(), getName());
   }
 
+  @Nullable
   @Override
-  public @Nullable GrDocComment getDocComment() {
+  public GrDocComment getDocComment() {
     return null;
   }
 
@@ -61,8 +63,9 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     return getTypeParameters().length != 0;
   }
 
+  @NotNull
   @Override
-  public @NotNull GrLightModifierList getModifierList() {
+  public GrLightModifierList getModifierList() {
     return myModifierList;
   }
 
@@ -101,8 +104,9 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     return GrClassImplUtil.getSupers(this, includeSynthetic);
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiReferenceList getExtendsList() {
+  public PsiReferenceList getExtendsList() {
     return null;
   }
 
@@ -111,8 +115,9 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     return GrClassImplUtil.getSuperTypes(this, includeSynthetic);
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiReferenceList getImplementsList() {
+  public PsiReferenceList getImplementsList() {
     return null;
   }
 
@@ -121,8 +126,9 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     return false;
   }
 
+  @Nullable
   @Override
-  public @Nullable GrTypeDefinitionBody getBody() {
+  public GrTypeDefinitionBody getBody() {
     return null;
   }
 
@@ -141,23 +147,27 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     return GrMembersDeclaration.EMPTY_ARRAY;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getQualifiedName() {
+  public String getQualifiedName() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable GrExtendsClause getExtendsClause() {
+  public GrExtendsClause getExtendsClause() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable GrImplementsClause getImplementsClause() {
+  public GrImplementsClause getImplementsClause() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiField findCodeFieldByName(String name, boolean checkBases) {
+  public PsiField findCodeFieldByName(String name, boolean checkBases) {
     return GrClassImplUtil.findFieldByName(this, name, checkBases, false);
   }
 
@@ -171,8 +181,9 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     return GrClassImplUtil.findCodeMethodsBySignature(this, patternMethod, checkBases);
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiClass getSuperClass() {
+  public PsiClass getSuperClass() {
     return GrClassImplUtil.getSuperClass(this);
   }
 
@@ -181,8 +192,9 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     return false;
   }
 
+  @NotNull
   @Override
-  public @NotNull GrLightTypeParameterList getTypeParameterList() {
+  public GrLightTypeParameterList getTypeParameterList() {
     return myTypeParameterList;
   }
 
@@ -206,13 +218,15 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     return PsiClassImplUtil.getAllInnerClasses(this);
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiField findFieldByName(@NonNls String name, boolean checkBases) {
+  public PsiField findFieldByName(@NonNls String name, boolean checkBases) {
     return GrClassImplUtil.findFieldByName(this, name, checkBases, true);
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiMethod findMethodBySignature(@NotNull PsiMethod patternMethod, boolean checkBases) {
+  public PsiMethod findMethodBySignature(@NotNull PsiMethod patternMethod, boolean checkBases) {
     return GrClassImplUtil.findMethodBySignature(this, patternMethod, checkBases);
   }
 
@@ -226,33 +240,39 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     return GrClassImplUtil.findMethodsByName(this, name, checkBases);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls @NotNull String name, boolean checkBases) {
+  public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls @NotNull String name, boolean checkBases) {
     return GrClassImplUtil.findMethodsAndTheirSubstitutorsByName(this, name, checkBases);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
+  public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
     return GrClassImplUtil.getAllMethodsAndTheirSubstitutors(this);
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiClass findInnerClassByName(@NonNls String name, boolean checkBases) {
+  public PsiClass findInnerClassByName(@NonNls String name, boolean checkBases) {
     return GrClassImplUtil.findInnerClassByName(this, name, checkBases);
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement getLBrace() {
+  public PsiElement getLBrace() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement getRBrace() {
+  public PsiElement getRBrace() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiIdentifier getNameIdentifier() {
+  public PsiIdentifier getNameIdentifier() {
     return null;
   }
 
@@ -271,13 +291,15 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiClass getContainingClass() {
+  public PsiClass getContainingClass() {
     return myContainingClass;
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<HierarchicalMethodSignature> getVisibleSignatures() {
+  public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
     return PsiSuperMethodImplUtil.getVisibleSignatures(this);
   }
 
@@ -286,7 +308,8 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     throw new UnsupportedOperationException();
   }
 
-  public @NotNull GrLightTypeDefinitionBase setContainingClass(@Nullable PsiClass containingClass) {
+  @NotNull
+  public GrLightTypeDefinitionBase setContainingClass(@Nullable PsiClass containingClass) {
     myContainingClass = containingClass;
     return this;
   }

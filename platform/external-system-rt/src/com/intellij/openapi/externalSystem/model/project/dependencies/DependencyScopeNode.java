@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project.dependencies;
 
 import com.intellij.serialization.PropertyMapping;
@@ -19,16 +19,19 @@ public class DependencyScopeNode extends AbstractDependencyNode {
     this.description = description; //NON-NLS
   }
 
-  public @NotNull String getScope() {
+  @NotNull
+  public String getScope() {
     return scope;
   }
 
+  @NotNull
   @Override
-  public @NotNull @Nls String getDisplayName() {
+  public @Nls String getDisplayName() {
     return displayName;
   }
 
-  public @Nullable @Nls String getDescription() {
+  @Nullable
+  public @Nls String getDescription() {
     return description;
   }
 }

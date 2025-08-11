@@ -1,5 +1,5 @@
 
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.turnRefsToSuper;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -31,8 +31,9 @@ class RefsToSuperViewDescriptor implements UsageViewDescriptor{
     return null;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getCodeReferencesText(int usagesCount, int filesCount) {
+  public String getCodeReferencesText(int usagesCount, int filesCount) {
     return JavaRefactoringBundle.message("references.to.0.to.be.replaced.with.references.to.1",
                                             myClass.getName(), mySuper.getName(), UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }

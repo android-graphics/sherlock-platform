@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
+import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.building.ModelBuildingRequest;
@@ -23,7 +24,9 @@ import org.apache.maven.model.building.ModelProblemCollector;
 import org.apache.maven.model.building.ModelProblemCollectorRequest;
 import org.apache.maven.model.interpolation.ModelInterpolator;
 import org.apache.maven.model.interpolation.StringSearchModelInterpolator;
+import org.apache.maven.project.interpolation.ModelInterpolationException;
 import org.codehaus.plexus.component.annotations.Component;
+import org.codehaus.plexus.interpolation.InterpolationPostProcessor;
 import org.codehaus.plexus.interpolation.MapBasedValueSource;
 import org.codehaus.plexus.interpolation.SingleResponseValueSource;
 import org.codehaus.plexus.interpolation.ValueSource;
@@ -46,7 +49,6 @@ public class CustomMaven3ModelInterpolator2 extends StringSearchModelInterpolato
   private String localRepository;
 
 
-  @Override
   public Model interpolateModel(Model model, File projectDir, ModelBuildingRequest config, ModelProblemCollector problems) {
     String mavenVersion = System.getProperty(MAVEN_EMBEDDER_VERSION);
     if (VersionComparatorUtil.compare(mavenVersion, "3.6.2") >= 0) {
@@ -58,7 +60,6 @@ public class CustomMaven3ModelInterpolator2 extends StringSearchModelInterpolato
     return model;
   }
 
-  @Override
   public void interpolateObject(Object obj, Model model, File projectDir, ModelBuildingRequest config, ModelProblemCollector problems) {
     String mavenVersion = System.getProperty(MAVEN_EMBEDDER_VERSION);
     if (VersionComparatorUtil.compare(mavenVersion, "3.6.2") >= 0) {

@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.TestOnly
 
 /**
  * Represents a feedback survey.
@@ -39,6 +40,7 @@ abstract class FeedbackSurvey : PluginAware {
     return feedbackSurveyType.isSuitableToShow(project)
   }
 
+  @TestOnly
   fun showNotification(project: Project, forTest: Boolean = false) {
     feedbackSurveyType.showNotification(project, forTest)
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,15 +10,14 @@ import com.intellij.util.indexing.FileBasedIndexEx;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.DirectInputDataDiffBuilder;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
-import com.intellij.util.indexing.impl.UpdatedEntryProcessor;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.indexing.impl.KeyValueUpdateProcessor;
+import com.intellij.util.indexing.impl.RemovedKeyProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@ApiStatus.Internal
-public final class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBuilder<Integer, SerializedStubTree> {
+final class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBuilder<Integer, SerializedStubTree> {
   private static final Logger LOG = Logger.getInstance(SerializedStubTree.class);
   private final @Nullable SerializedStubTree myCurrentTree;
 
@@ -29,15 +28,20 @@ public final class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBui
 
   @Override
   public boolean differentiate(@NotNull Map<Integer, SerializedStubTree> newData,
-                               @NotNull UpdatedEntryProcessor<? super Integer, ? super SerializedStubTree> changesProcessor) throws StorageException {
-    return differentiate(newData, changesProcessor, false);
+                               @NotNull KeyValueUpdateProcessor<? super Integer, ? super SerializedStubTree> addProcessor,
+                               @NotNull KeyValueUpdateProcessor<? super Integer, ? super SerializedStubTree> updateProcessor,
+                               @NotNull RemovedKeyProcessor<? super Integer> removeProcessor) throws StorageException
+  {
+    return differentiate(newData, addProcessor, updateProcessor, removeProcessor, false);
   }
 
   /**
    * @param dryRun if true, won't update the stub indices
    */
   public boolean differentiate(@NotNull Map<Integer, SerializedStubTree> newData,
-                               @NotNull UpdatedEntryProcessor<? super Integer, ? super SerializedStubTree> changesProcessor,
+                               @NotNull KeyValueUpdateProcessor<? super Integer, ? super SerializedStubTree> addProcessor,
+                               @NotNull KeyValueUpdateProcessor<? super Integer, ? super SerializedStubTree> updateProcessor,
+                               @NotNull RemovedKeyProcessor<? super Integer> removeProcessor,
                                boolean dryRun) throws StorageException {
     if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
       LOG.info((dryRun ? "[dry run]" : "") + "differentiate: inputId=" + myInputId +
@@ -53,7 +57,7 @@ public final class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBui
             LOG.info((dryRun ? "[dry run]" : "") + "equal trees: inputId=" + myInputId +
                      ",myTreeLen=" + myCurrentTree.myTreeByteLength +
                      ",myStubLen=" + myCurrentTree.myIndexedStubByteLength +
-                     ",newTreeLen=" + newSerializedStubTree.myTreeByteLength +
+                     ",newTreeLen=" + newSerializedStubTree.myIndexedStubByteLength +
                      ",newStubLen=" + newSerializedStubTree.myIndexedStubByteLength);
           }
           return false;
@@ -65,9 +69,9 @@ public final class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBui
                      ",newStubLen=" + newSerializedStubTree.myIndexedStubByteLength);
           }
         }
-        changesProcessor.removed(myInputId, myInputId);
+        removeProcessor.process(myInputId, myInputId);
       }
-      changesProcessor.added(myInputId, newSerializedStubTree, myInputId);
+      addProcessor.process(myInputId, newSerializedStubTree, myInputId);
       if (!dryRun) updateStubIndices(newSerializedStubTree);
     }
     else {
@@ -77,15 +81,14 @@ public final class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBui
         }
         return false; // ?????????
       }
-      changesProcessor.removed(myInputId, myInputId);
+      removeProcessor.process(myInputId, myInputId);
       if (!dryRun) updateStubIndices(null);
     }
     return true;
   }
 
   @Nullable
-  @ApiStatus.Internal
-  public SerializedStubTree getSerializedStubTree() {
+  SerializedStubTree getSerializedStubTree() {
     return myCurrentTree;
   }
 

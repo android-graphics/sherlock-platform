@@ -29,13 +29,15 @@ public class XPath2CastImpl extends XPath2ElementImpl implements XPath2Cast {
   }
 
   @Override
-  public @Nullable XPathType getTargetType() {
+  @Nullable
+  public XPathType getTargetType() {
     final XPath2TypeElement node = findChildByClass(XPath2TypeElement.class);
     return node != null ? node.getDeclaredType() : null;
   }
 
   @Override
-  public @NotNull XPathType getType() {
+  @NotNull
+  public XPathType getType() {
     final XPathType type = getTargetType();
     return type != null ? type : XPathType.UNKNOWN;
   }

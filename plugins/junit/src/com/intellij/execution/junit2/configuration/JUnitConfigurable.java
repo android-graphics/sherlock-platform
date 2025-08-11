@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit2.configuration;
 
@@ -28,7 +28,6 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.LabeledComponentNoThrow;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Condition;
@@ -87,15 +86,15 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private final BrowseModuleValueActionListener[] myBrowsers;
   private JComponent myPackagePanel;
   private LabeledComponent<EditorTextFieldWithBrowseButton> myPackage;
-  private LabeledComponentNoThrow<TextFieldWithBrowseButton> myDir;
-  private LabeledComponentNoThrow<JPanel> myPattern;
+  private LabeledComponent<TextFieldWithBrowseButton> myDir;
+  private LabeledComponent<JPanel> myPattern;
   private LabeledComponent<EditorTextFieldWithBrowseButton> myClass;
   private LabeledComponent<EditorTextFieldWithBrowseButton> myMethod;
   private LabeledComponent<EditorTextFieldWithBrowseButton> myCategory;
   // Fields
   private JPanel myWholePanel;
-  private LabeledComponentNoThrow<ModuleDescriptionsComboBox> myModule;
-  private LabeledComponentNoThrow<JCheckBox> myUseModulePath;
+  private LabeledComponent<ModuleDescriptionsComboBox> myModule;
+  private LabeledComponent<JCheckBox> myUseModulePath;
   private CommonJavaParametersPanel myCommonJavaParameters;
   private JRadioButton myWholeProjectScope;
   private JRadioButton mySingleModuleScope;
@@ -110,9 +109,9 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private JPanel myScopesPanel;
   private JComboBox<String> myRepeatCb;
   private JTextField myRepeatCountField;
-  private LabeledComponentNoThrow<JComboBox<String>> myChangeListLabeledComponent;
-  private LabeledComponentNoThrow<RawCommandLineEditor> myUniqueIdField;
-  private LabeledComponentNoThrow<RawCommandLineEditor> myTagsField;
+  private LabeledComponent<JComboBox<String>> myChangeListLabeledComponent;
+  private LabeledComponent<RawCommandLineEditor> myUniqueIdField;
+  private LabeledComponent<RawCommandLineEditor> myTagsField;
   private final Project myProject;
   private JComponent anchor;
 
@@ -295,7 +294,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   @Override
-  public void applyEditorTo(final @NotNull JUnitConfiguration configuration) {
+  public void applyEditorTo(@NotNull final JUnitConfiguration configuration) {
     configuration.setRepeatMode((String)myRepeatCb.getSelectedItem());
     try {
       configuration.setRepeatCount(Integer.parseInt(myRepeatCountField.getText()));
@@ -336,7 +335,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   @Override
-  public void resetEditorFrom(final @NotNull JUnitConfiguration configuration) {
+  public void resetEditorFrom(@NotNull final JUnitConfiguration configuration) {
     final int count = configuration.getRepeatCount();
     myRepeatCountField.setText(String.valueOf(count));
     myRepeatCountField.setEnabled(count > 1);
@@ -403,7 +402,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myForkCb.setSelectedItem(updateForkMethod(selectedType, (String)myForkCb.getSelectedItem(), myRepeatCb.getSelectedItem()));
   }
 
-  public static @NotNull String updateForkMethod(Integer selectedType, String forkMethod, Object repeat) {
+  @NotNull
+  public static String updateForkMethod(Integer selectedType, String forkMethod, Object repeat) {
     if (forkMethod == null) {
       forkMethod = JUnitConfiguration.FORK_NONE;
     }
@@ -500,7 +500,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myShortenClasspathModeCombo = new LabeledComponent<>();
   }
 
-  public static @NotNull JavaCodeFragment.VisibilityChecker createClassVisibilityChecker(TestClassBrowser classBrowser) {
+  @NotNull
+  public static JavaCodeFragment.VisibilityChecker createClassVisibilityChecker(TestClassBrowser classBrowser) {
     return new JavaCodeFragment.VisibilityChecker() {
       @Override
       public Visibility isDeclarationVisible(PsiElement declaration, PsiElement place) {
@@ -572,7 +573,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   @Override
-  public @NotNull JComponent createEditor() {
+  @NotNull
+  public JComponent createEditor() {
     return myWholePanel;
   }
 

@@ -1,37 +1,18 @@
 class C {
-  void tryFinally(int n) {
-    int s = switch(n) {
-      case 2 -> {
-        System.out.println("hello");
-        yield 1;
-      }
-      case 3 -> {
-        try {
-          System.out.println("hello");
-          yield 1; // never happens
-        }
-        finally {
-          yield 2;
-        }
-      }
-      default -> 0;
-    };
-  }
-  
   void defaultBranchHasNoResult(int n) {
-    String s = <error descr="Switch expression should produce a result in all execution paths">switch</error> (n) {
+    String s = <error descr="Switch expression should produce result in all execution paths">switch</error> (n) {
       default:
     };
   }
 
   void defaultRuleHasNoResult(int n) {
     String s = switch (n) {
-      <error descr="Switch expression rule should produce a result in all execution paths">default</error> -> {}
+      <error descr="Switch expression rule should produce result in all execution paths">default</error> -> {}
     };
   }
 
   void defaultBranchSometimesHasNoResult(int n, boolean b) {
-    String s = <error descr="Switch expression should produce a result in all execution paths">switch</error> (n) {
+    String s = <error descr="Switch expression should produce result in all execution paths">switch</error> (n) {
       default: {
         if (b) yield "";
       }
@@ -40,20 +21,20 @@ class C {
 
   void defaultRuleSometimesHasNoResult(int n, boolean b) {
     String s = switch (n) {
-      <error descr="Switch expression rule should produce a result in all execution paths">default</error> -> {
+      <error descr="Switch expression rule should produce result in all execution paths">default</error> -> {
         if (b) yield "";
       }
     };
   }
 
   void defaultBranchAlwaysThrows(int n) {
-    String s = <error descr="'switch' expression does not have any result expressions">switch</error> (n) {
+    String s = <error descr="Switch expression does not have any result expressions">switch</error> (n) {
       default: throw new RuntimeException();
     };
   }
 
   void defaultRuleAlwaysThrows(int n) {
-    String s = <error descr="'switch' expression does not have any result expressions">switch</error> (n) {
+    String s = <error descr="Switch expression does not have any result expressions">switch</error> (n) {
       default -> throw new RuntimeException();
     };
   }
@@ -96,7 +77,7 @@ class C {
   }
 
   void oneOfBranchesHasNoResult(int n) {
-    String s = <error descr="Switch expression should produce a result in all execution paths">switch</error> (n) {
+    String s = <error descr="Switch expression should produce result in all execution paths">switch</error> (n) {
       case 0: yield "";
       default:
     };
@@ -105,13 +86,13 @@ class C {
   void oneOfRulesHasNoResult(int n) {
     String s = switch (n) {
       case 0 -> "";
-      <error descr="Switch expression rule should produce a result in all execution paths">default</error> -> {
+      <error descr="Switch expression rule should produce result in all execution paths">default</error> -> {
       }
     };
   }
 
   void allBranchesHaveNoResult(int n) {
-    String s = <error descr="Switch expression should produce a result in all execution paths">switch</error> (n) {
+    String s = <error descr="Switch expression should produce result in all execution paths">switch</error> (n) {
       case 0:
       default:
     };
@@ -119,9 +100,9 @@ class C {
 
   void allRulesHaveNoResult(int n) {
     String s = switch (n) {
-      <error descr="Switch expression rule should produce a result in all execution paths">case</error> 0 -> {
+      <error descr="Switch expression rule should produce result in all execution paths">case</error> 0 -> {
       }
-      <error descr="Switch expression rule should produce a result in all execution paths">default</error> -> {
+      <error descr="Switch expression rule should produce result in all execution paths">default</error> -> {
       }
     };
   }
@@ -164,14 +145,5 @@ class C {
         default -> "b";
       };
     }
-  }
-  
-  void systemExit(int x) {
-    int result = switch(x) {
-      <error descr="Switch expression rule should produce a result in all execution paths">case</error> 1 -> {
-        System.exit(0);
-      }
-      default -> 0;
-    };
   }
 }

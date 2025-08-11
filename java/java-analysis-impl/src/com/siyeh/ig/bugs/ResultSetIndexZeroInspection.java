@@ -30,12 +30,14 @@ import org.jetbrains.annotations.NotNull;
 public final class ResultSetIndexZeroInspection extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "UseOfIndexZeroInJDBCResultSet";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     if (((Boolean)infos[0]).booleanValue()) {
       return InspectionGadgetsBundle.message("use.0index.in.jdbc.resultset.problem.descriptor");
     } else {
@@ -54,7 +56,7 @@ public final class ResultSetIndexZeroInspection extends BaseInspection {
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final @NonNls String methodName = methodExpression.getReferenceName();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if (methodName == null) {
         return;
       }

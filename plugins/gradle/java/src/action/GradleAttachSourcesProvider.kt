@@ -3,39 +3,36 @@ package org.jetbrains.plugins.gradle.action
 
 import com.intellij.codeInsight.AttachSourcesProvider
 import com.intellij.codeInsight.AttachSourcesProvider.AttachSourcesAction
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.LibraryOrderEntry
-import com.intellij.openapi.util.ActionCallback
 import com.intellij.psi.PsiFile
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gradle.service.sources.GradleLibrarySourcesDownloader
-import org.jetbrains.plugins.gradle.util.GradleBundle
+import org.jetbrains.plugins.gradle.util.GradleConstants
 
-class GradleAttachSourcesProvider(private val cs: CoroutineScope) : AttachSourcesProvider {
+class GradleAttachSourcesProvider : AttachSourcesProvider {
 
   override fun getActions(orderEntries: List<LibraryOrderEntry>, psiFile: PsiFile): Collection<AttachSourcesAction> {
-    if (!GradleLibrarySourcesDownloader.canDownloadSources(orderEntries)) {
+    val gradleModules = getGradleModules(orderEntries)
+    if (gradleModules.isEmpty()) {
       return emptyList()
     }
-    val action = object : AttachSourcesAction {
-      override fun getName(): String = GradleBundle.message("gradle.action.download.sources")
-
-      override fun getBusyText(): String = GradleBundle.message("gradle.action.download.sources.busy.text")
-
-      override fun perform(orderEntires: List<LibraryOrderEntry>): ActionCallback {
-        val actionCallback = ActionCallback()
-        cs.launch {
-          val path = GradleLibrarySourcesDownloader.download(psiFile.project, orderEntires)
-          if (path != null) {
-            actionCallback.setDone()
-          }
-          else {
-            actionCallback.setRejected()
-          }
-        }
-        return actionCallback
-      }
+    val action = GradleDownloadSourceAction(orderEntries, psiFile) {
+      getGradleModules(orderEntries)
     }
     return listOf(action)
+  }
+
+  private fun getGradleModules(libraryOrderEntries: List<LibraryOrderEntry>): Map<LibraryOrderEntry, Module> {
+    val result = HashMap<LibraryOrderEntry, Module>()
+    for (entry in libraryOrderEntries) {
+      if (entry.isModuleLevel()) {
+        continue
+      }
+      val module = entry.getOwnerModule()
+      if (ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
+        result.put(entry, module)
+      }
+    }
+    return result
   }
 }

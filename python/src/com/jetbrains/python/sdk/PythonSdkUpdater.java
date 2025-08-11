@@ -38,22 +38,17 @@ import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PythonPluginDisposable;
-import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.common.PythonPackage;
 import com.jetbrains.python.packaging.management.PythonPackageManager;
 import com.jetbrains.python.packaging.management.PythonPackageManagerExt;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.UnsupportedPythonSdkTypeException;
 import com.jetbrains.python.sdk.headless.PythonActivityKey;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -143,22 +138,26 @@ public final class PythonSdkUpdater {
           "Starting SDK refresh for '" + mySdk.getName() + "' triggered by " + Trigger.getCauseByTrace(myRequestData.myTraceback));
       }
       try {
-        PyTargetsIntrospectionFacade targetsFacade = new PyTargetsIntrospectionFacade(mySdk, myProject);
-        String version = targetsFacade.getInterpreterVersion(indicator);
-        commitSdkVersionIfChanged(mySdk, version);
-        if (targetsFacade.isLocalTarget()) {
-          List<String> paths = targetsFacade.getInterpreterPaths(indicator);
-          updateSdkPaths(mySdk, paths, myProject);
+        if (Registry.get("python.use.targets.api").asBoolean()) {
+          PyTargetsIntrospectionFacade targetsFacade = new PyTargetsIntrospectionFacade(mySdk, myProject);
+          String version = targetsFacade.getInterpreterVersion(indicator);
+          commitSdkVersionIfChanged(mySdk, version);
+          if (targetsFacade.isLocalTarget()) {
+            List<String> paths = targetsFacade.getInterpreterPaths(indicator);
+            updateSdkPaths(mySdk, paths, myProject);
+          }
+          else {
+            targetsFacade.synchronizeRemoteSourcesAndSetupMappings(indicator);
+          }
         }
         else {
-          targetsFacade.synchronizeRemoteSourcesAndSetupMappings(indicator);
+          updateLocalSdkVersionAndPaths(mySdk, myProject);
         }
         // This step also includes setting mapped interpreter paths
         generateSkeletons(mySdk, indicator);
         refreshPackages(mySdk, indicator);
-        addBundledPyiStubsToInterpreterPaths(mySdk);
       }
-      catch (ExecutionException e) {
+      catch (InvalidSdkException | ExecutionException e) {
         LOG.warn("Update for SDK " + mySdk.getName() + " failed", e);
       }
       finally {
@@ -168,39 +167,6 @@ public final class PythonSdkUpdater {
           DaemonCodeAnalyzer.getInstance(myProject).restart();
         }, myProject.getDisposed());
       }
-    }
-
-    private void addBundledPyiStubsToInterpreterPaths(@NotNull Sdk sdk) {
-      List<VirtualFile> allStubRoots = new ArrayList<>();
-      ContainerUtil.addIfNotNull(allStubRoots, PyTypeShed.INSTANCE.getThirdPartyStubRoot());
-      ContainerUtil.addIfNotNull(allStubRoots, PyBundledStubs.INSTANCE.getRoot());
-      PythonPackageManager packageManager = PythonPackageManager.Companion.forSdk(myProject, sdk);
-      Set<String> installedPackageNames = ContainerUtil.map2Set(packageManager.getInstalledPackages(), PythonPackage::getName);
-      List<VirtualFile> bundledStubRoots = StreamEx.of(allStubRoots)
-        .flatArray(root -> root.getChildren())
-        .filter(VirtualFile::isDirectory)
-        .filter(stubPkgRoot -> {
-          String stubPkgName = stubPkgRoot.getName();
-          String stubPkgAlias = PyPsiPackageUtil.INSTANCE.moduleToPackageName(stubPkgName, stubPkgName);
-          return installedPackageNames.contains(stubPkgName) || installedPackageNames.contains(stubPkgAlias);
-        })
-        .filter(stubPkgRoot -> {
-          String pypiStubPkgName = stubPkgRoot.getName().toLowerCase(Locale.ROOT) + "-stubs";
-          String typeshedStubPkgName = "types-" + stubPkgRoot.getName();
-          return !(installedPackageNames.contains(pypiStubPkgName) ||
-                   installedPackageNames.contains(typeshedStubPkgName));
-        })
-        .toList();
-
-      LOG.info("Bundled .pyi stub roots for SDK " + sdk + ":" + bundledStubRoots);
-      changeSdkModificator(sdk, effectiveModificator -> {
-        VirtualFile[] currentRoots = effectiveModificator.getRoots(OrderRootType.CLASSES);
-        effectiveModificator.removeAllRoots();
-        for (VirtualFile sdkPath : ContainerUtil.concat(List.of(currentRoots), bundledStubRoots)) {
-          effectiveModificator.addRoot(PythonSdkType.getSdkRootVirtualFile(sdkPath), OrderRootType.CLASSES);
-        }
-        return true;
-      });
     }
 
     private @NotNull Disposable getIndicatorDisposable(@NotNull ProgressIndicator indicator) {
@@ -308,7 +274,6 @@ public final class PythonSdkUpdater {
   /**
    * @deprecated Use {@link #scheduleUpdate} or {@link #updateVersionAndPathsSynchronouslyAndScheduleRemaining}
    */
-  @ApiStatus.Internal
   @Deprecated
   public static boolean update(@NotNull Sdk sdk, @Nullable Project project, @Nullable Component ownerComponent) {
     return updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project);
@@ -343,7 +308,7 @@ public final class PythonSdkUpdater {
         }, PyBundle.message("sdk.gen.updating.interpreter"), false, project);
       }
       else {
-        LOG.assertTrue(!application.holdsReadLock(), "Synchronous SDK update should not be run under read action");
+        LOG.assertTrue(!application.isReadAccessAllowed(), "Synchronous SDK update should not be run under read action");
         updateLocalSdkVersionAndPaths(sdk, project);
       }
     }
@@ -496,39 +461,30 @@ public final class PythonSdkUpdater {
     final List<VirtualFile> localSdkPaths = buildSdkPaths(sdk, sdkRoots.first, userAddedRoots.first);
     commitSdkPathsIfChanged(sdk, localSdkPaths, forceCommit);
 
-    if (Registry.is("python.detect.cross.module.dependencies")) {
-      final var transferredPathCandidates = new HashSet<VirtualFile>();
-      transferredPathCandidates.addAll(sdkRoots.second);
-      transferredPathCandidates.addAll(userAddedRoots.second);
+    final var pathsToTransfer = new HashSet<VirtualFile>();
+    pathsToTransfer.addAll(sdkRoots.second);
+    pathsToTransfer.addAll(userAddedRoots.second);
+    // Presumably source and content roots that were configured manually by user, not set up automatically as "transferred"
+    HashSet<VirtualFile> nonTransferredModuleRoots = new HashSet<>(moduleRoots);
+    nonTransferredModuleRoots.removeAll(PyTransferredSdkRootsKt.getPathsToTransfer(sdk));
+    pathsToTransfer.removeAll(nonTransferredModuleRoots);
+
+    /*
+    PyTransferredSdkRootsKt#transferRoots and PyTransferredSdkRootsKt#removeTransferredRoots skip sdks
+    that are not equal to module one (editable as well).
+
+    That's why roots changes were not applied but paths to transfer were successfully set.
+
+    When current method was executed for original sdk,
+    roots changes were not applied since there were no changes in paths to transfer (they were shared with editable copy).
+     */
+    if (!pathsToTransfer.equals(PyTransferredSdkRootsKt.getPathsToTransfer(sdk))) {
       if (project != null) {
-        PyTransferredSdkRootsKt.updateTransferredRoots(project, sdk, transferredPathCandidates);
+        PyTransferredSdkRootsKt.removeTransferredRootsFromModulesWithSdk(project, sdk);
       }
-    }
-    else {
-      final var pathsToTransfer = new HashSet<VirtualFile>();
-      pathsToTransfer.addAll(sdkRoots.second);
-      pathsToTransfer.addAll(userAddedRoots.second);
-      // Presumably source and content roots that were configured manually by user, not set up automatically as "transferred"
-      HashSet<VirtualFile> nonTransferredModuleRoots = new HashSet<>(moduleRoots);
-      nonTransferredModuleRoots.removeAll(PyTransferredSdkRootsKt.getPathsToTransfer(sdk));
-      pathsToTransfer.removeAll(nonTransferredModuleRoots);
-      /*
-      PyTransferredSdkRootsKt#transferRoots and PyTransferredSdkRootsKt#removeTransferredRoots skip sdks
-      that are not equal to module one (editable as well).
-  
-      That's why roots changes were not applied but paths to transfer were successfully set.
-  
-      When current method was executed for original sdk,
-      roots changes were not applied since there were no changes in paths to transfer (they were shared with editable copy).
-      */
-      if (!pathsToTransfer.equals(PyTransferredSdkRootsKt.getPathsToTransfer(sdk))) {
-        if (project != null) {
-          PyTransferredSdkRootsKt.removeTransferredRootsFromModulesWithSdk(project, sdk);
-        }
-        PyTransferredSdkRootsKt.setPathsToTransfer(sdk, pathsToTransfer);
-        if (project != null) {
-          PyTransferredSdkRootsKt.transferRootsToModulesWithSdk(project, sdk);
-        }
+      PyTransferredSdkRootsKt.setPathsToTransfer(sdk, pathsToTransfer);
+      if (project != null) {
+        PyTransferredSdkRootsKt.transferRootsToModulesWithSdk(project, sdk);
       }
     }
   }
@@ -550,7 +506,7 @@ public final class PythonSdkUpdater {
       .addAll(sdkRoots)
       .addAll(getSkeletonsPaths(sdk))
       .addAll(userAddedRoots)
-      .addAll(PyTypeShed.INSTANCE.findStdlibRootsForSdk(sdk))
+      .addAll(PyTypeShed.INSTANCE.findRootsForSdk(sdk))
       .build();
   }
 
@@ -604,8 +560,7 @@ public final class PythonSdkUpdater {
     return Pair.createNonNull(lib, source);
   }
 
-  @ApiStatus.Internal
-  public static @NotNull Set<VirtualFile> getModuleRoots(@Nullable Project project) {
+  private static @NotNull Set<VirtualFile> getModuleRoots(@Nullable Project project) {
     if (project != null) {
       final Set<VirtualFile> moduleRoots = new HashSet<>();
       final Module[] modules = ModuleManager.getInstance(project).getModules();

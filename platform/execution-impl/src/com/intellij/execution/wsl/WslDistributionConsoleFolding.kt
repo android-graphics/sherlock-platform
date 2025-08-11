@@ -6,7 +6,6 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.wsl.WSLDistribution.*
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
 /**
@@ -20,7 +19,6 @@ import org.jetbrains.annotations.VisibleForTesting
  *
  * See [com.intellij.execution.wsl.WSLDistribution.patchCommandLine]
  */
-@ApiStatus.Internal
 class WslDistributionConsoleFolding : ConsoleFolding() {
   override fun shouldFoldLine(project: Project, line: String): Boolean {
     return shouldFoldLineNoProject(line)

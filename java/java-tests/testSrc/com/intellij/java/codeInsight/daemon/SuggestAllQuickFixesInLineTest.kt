@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.IntentionsUI
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.testFramework.enableInspectionTool
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import junit.framework.TestCase
 
 class SuggestAllQuickFixesInLineTest : LightJavaCodeInsightFixtureTestCase() {
   fun testPreferFixesFromOffset() {
@@ -15,12 +16,12 @@ class SuggestAllQuickFixesInLineTest : LightJavaCodeInsightFixtureTestCase() {
                               "}")
     myFixture.doHighlighting()
     val allActions = IntentionsUI.getInstance(project).getCachedIntentions(editor, file).allActions
-    assertNotNull(allActions.first {  it.text == "Safe delete 'foo'" })
-    assertNotNull(allActions.first {  it.text == "Create method 'UnknownMethod' in 'Test'" })
+    TestCase.assertEquals("Safe delete 'foo'", allActions[0].text)
+    TestCase.assertEquals("Create method 'UnknownMethod' in 'Test'", allActions[1].text)
 
     editor.caretModel.moveToOffset(editor.caretModel.offset + 20)
     myFixture.doHighlighting()
     val newActions = IntentionsUI.getInstance(project).getCachedIntentions(editor, file).allActions
-    assertNotNull(newActions.first {  it.text == "Create method 'UnknownMethod' in 'Test'" })
+    TestCase.assertEquals("Create method 'UnknownMethod' in 'Test'", newActions[0].text)
   }
 }

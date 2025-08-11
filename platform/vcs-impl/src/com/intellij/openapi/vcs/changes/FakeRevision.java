@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,7 +46,8 @@ public class FakeRevision implements ByteBackedContentRevision {
   }
 
   @Override
-  public @Nullable String getContent() throws VcsException {
+  @Nullable
+  public String getContent() throws VcsException {
     ContentRevision revision = createDelegateContentRevision();
     if (revision == null) return null;
     return revision.getContent();
@@ -75,17 +76,19 @@ public class FakeRevision implements ByteBackedContentRevision {
   }
 
   @Override
-  public @NotNull FilePath getFile() {
+  @NotNull
+  public FilePath getFile() {
     return myFile;
   }
 
   @Override
-  public @NotNull VcsRevisionNumber getRevisionNumber() {
+  @NotNull
+  public VcsRevisionNumber getRevisionNumber() {
     return VcsRevisionNumber.NULL;
   }
 
   @Override
   public String toString() {
-    return "FakeRevision:" + myFile.getPath();
+    return myFile.getPath();
   }
 }

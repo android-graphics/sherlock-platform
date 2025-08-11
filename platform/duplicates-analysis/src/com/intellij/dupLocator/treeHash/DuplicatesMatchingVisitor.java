@@ -203,17 +203,18 @@ final class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
           return false;
         }
 
-        if (list.isEmpty()) {
+        if (list.size() == 0) {
           hashToElement.remove(hash);
         }
       }
     }
 
-    return hashToElement.isEmpty();
+    return hashToElement.size() == 0;
   }
 
+  @NotNull
   @Override
-  protected @NotNull NodeFilter getNodeFilter() {
+  protected NodeFilter getNodeFilter() {
     return myNodeFilter;
   }
 }

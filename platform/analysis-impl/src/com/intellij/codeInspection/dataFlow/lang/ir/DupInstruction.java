@@ -15,7 +15,6 @@ public class DupInstruction extends Instruction {
     return nextStates(interpreter, memState);
   }
 
-  @Override
   public String toString() {
     return "DUP";
   }

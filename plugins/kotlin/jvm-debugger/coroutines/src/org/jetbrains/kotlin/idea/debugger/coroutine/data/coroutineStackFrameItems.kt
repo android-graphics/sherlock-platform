@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
-import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.JavaValue
@@ -14,8 +13,8 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeKotlinPreferredLineNumbe
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeSourceName
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.findPosition
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.toXSourcePosition
 
 /**
  * Creation frame of coroutine either in RUNNING or SUSPENDED state.
@@ -25,11 +24,11 @@ class CreationCoroutineStackFrameItem(
     val first: Boolean
 ) : CoroutineStackFrameItem(location, emptyList()) {
 
-    override fun createFrame(debugProcess: DebugProcessImpl, sourcePosition: SourcePosition?): XStackFrame? {
+    override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         val frame = debugProcess.findFirstFrame() ?: return null
-        val position = sourcePosition.toXSourcePosition()
-        return CreationCoroutineStackFrame(frame, position, withSeparator = first, location)
+        val position = location.findPosition(debugProcess)
+        return CreationCoroutineStackFrame(frame, position, withSepartor = first, location)
     }
 }
 
@@ -38,11 +37,10 @@ class CreationCoroutineStackFrameItem(
  */
 class DefaultCoroutineStackFrameItem(location: Location, spilledVariables: List<JavaValue>) :
     CoroutineStackFrameItem(location, spilledVariables) {
-
-    override fun createFrame(debugProcess: DebugProcessImpl, sourcePosition: SourcePosition?): XStackFrame? {
+    override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         val frame = debugProcess.findFirstFrame() ?: return null
-        val position = sourcePosition.toXSourcePosition()
+        val position = location.findPosition(debugProcess)
         return CoroutineStackFrame(frame, position, spilledVariables, false, location)
     }
 }
@@ -64,9 +62,9 @@ open class RunningCoroutineStackFrameItem(
     location: Location,
     spilledVariables: List<JavaValue> = emptyList()
 ) : CoroutineStackFrameItem(location, spilledVariables) {
-    override fun createFrame(debugProcess: DebugProcessImpl, sourcePosition: SourcePosition?): XStackFrame? {
+    override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
         DebuggerManagerThreadImpl.assertIsManagerThread()
-        val position = sourcePosition.toXSourcePosition()
+        val position = location.findPosition(debugProcess)
         return CoroutineStackFrame(frame, position)
     }
 }
@@ -75,10 +73,10 @@ sealed class CoroutineStackFrameItem(val location: Location, val spilledVariable
     StackFrameItem(location, spilledVariables) {
     val log by logger
 
-    override fun createFrame(debugProcess: DebugProcessImpl, sourcePosition: SourcePosition?): XStackFrame? {
+    override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         val frame = debugProcess.findFirstFrame() ?: return null
-        val position = sourcePosition.toXSourcePosition()
+        val position = location.findPosition(debugProcess)
         return CoroutineStackFrame(frame, position, spilledVariables, false, location)
     }
 

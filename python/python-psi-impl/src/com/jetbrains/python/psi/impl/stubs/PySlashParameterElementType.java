@@ -22,8 +22,9 @@ public class PySlashParameterElementType extends PyStubElementType<PySlashParame
     super("SLASH_PARAMETER");
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement createElement(@NotNull ASTNode node) {
+  public PsiElement createElement(@NotNull ASTNode node) {
     return new PySlashParameterImpl(node);
   }
 
@@ -32,8 +33,9 @@ public class PySlashParameterElementType extends PyStubElementType<PySlashParame
     return new PySlashParameterImpl(stub);
   }
 
+  @NotNull
   @Override
-  public @NotNull PySlashParameterStub createStub(@NotNull PySlashParameter psi, StubElement parentStub) {
+  public PySlashParameterStub createStub(@NotNull PySlashParameter psi, StubElement parentStub) {
     return new PySlashParameterStubImpl(parentStub);
   }
 
@@ -42,7 +44,8 @@ public class PySlashParameterElementType extends PyStubElementType<PySlashParame
   }
 
   @Override
-  public @NotNull PySlashParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) {
+  @NotNull
+  public PySlashParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) {
     return new PySlashParameterStubImpl(parentStub);
   }
 }

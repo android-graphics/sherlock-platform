@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.PsiElement;
@@ -73,15 +73,16 @@ import java.util.function.Function;
  */
 @ApiStatus.Experimental
 public final class StubAwareComputation<Psi extends PsiElement, CustomStub, Result> {
-  public static @NotNull <Psi extends StubBasedPsiElement<PsiStub>, PsiStub extends StubElement<Psi>>
+  @NotNull
+  public static <Psi extends StubBasedPsiElement<PsiStub>, PsiStub extends StubElement<Psi>>
   PsiToStubConversion<Psi, PsiStub, PsiStub> on(@NotNull Psi element) {
     return new PsiToStubConversion<>(element, StubBasedPsiElement::getStub, StubBasedPsiElement::getStub);
   }
 
   public static final class PsiToStubConversion<Psi extends PsiElement, PsiStub extends StubElement<Psi>, CustomStub> {
-    private final @NotNull Psi myElement;
-    private final @NotNull Function<Psi, @Nullable PsiStub> myStubGetter;
-    private final @NotNull Function<Psi, @Nullable CustomStub> myCustomStubGetter;
+    @NotNull private final Psi myElement;
+    @NotNull private final Function<Psi, @Nullable PsiStub> myStubGetter;
+    @NotNull private final Function<Psi, @Nullable CustomStub> myCustomStubGetter;
 
     private PsiToStubConversion(@NotNull Psi element,
                                 @NotNull Function<Psi, @Nullable PsiStub> psiStubGetter,
@@ -91,11 +92,13 @@ public final class StubAwareComputation<Psi extends PsiElement, CustomStub, Resu
       myCustomStubGetter = customStubGetter;
     }
 
-    private @Nullable PsiStub getPsiStub() {
+    @Nullable
+    private PsiStub getPsiStub() {
       return myStubGetter.apply(myElement);
     }
 
-    private @Nullable CustomStub getCustomStub() {
+    @Nullable
+    private CustomStub getCustomStub() {
       return myCustomStubGetter.apply(myElement);
     }
 
@@ -107,7 +110,8 @@ public final class StubAwareComputation<Psi extends PsiElement, CustomStub, Resu
      * @see StubElement
      * @see com.jetbrains.python.psi.impl.stubs.PyCustomStub
      */
-    public @NotNull <S> PsiToStubConversion<Psi, PsiStub, S> withCustomStub(@NotNull Function<@NotNull PsiStub, @Nullable S> stubGetter) {
+    @NotNull
+    public <S> PsiToStubConversion<Psi, PsiStub, S> withCustomStub(@NotNull Function<@NotNull PsiStub, @Nullable S> stubGetter) {
       return new PsiToStubConversion<>(myElement, myStubGetter, psi -> {
         PsiStub stub = myStubGetter.apply(psi);
         return stub != null ? stubGetter.apply(stub) : null;
@@ -117,23 +121,33 @@ public final class StubAwareComputation<Psi extends PsiElement, CustomStub, Resu
     /**
      * @see StubAwareComputation#overStub(Function)
      */
-    public @NotNull <Result> StubAwareComputation<Psi, CustomStub, Result> overStub(@NotNull Function<CustomStub, Result> stubComputation) {
+    @NotNull
+    public <Result> StubAwareComputation<Psi, CustomStub, Result> overStub(@NotNull Function<CustomStub, Result> stubComputation) {
       return new StubAwareComputation<>(this, stubComputation, null, null, null);
     }
 
     /**
      * @see StubAwareComputation#overAst(Function)
      */
-    public @NotNull <Result> StubAwareComputation<Psi, CustomStub, Result> overAst(@NotNull Function<Psi, Result> astComputation) {
+    @NotNull
+    public <Result> StubAwareComputation<Psi, CustomStub, Result> overAst(@NotNull Function<Psi, Result> astComputation) {
       return new StubAwareComputation<>(this, null, astComputation, null, null);
+    }
+
+    /**
+     * @see StubAwareComputation#overAstStubLike(Function)
+     */
+    @NotNull
+    public <Result> StubAwareComputation<Psi, CustomStub, Result> overAstStubLike(@NotNull Function<Psi, Result> astStubLikeComputation) {
+      return new StubAwareComputation<>(this, null, null, astStubLikeComputation, null);
     }
   }
 
-  private final @NotNull PsiToStubConversion<Psi, ?, CustomStub> myConversion;
-  private final @Nullable Function<CustomStub, @Nullable Result> myStubComputation;
-  private final @Nullable Function<Psi, @Nullable Result> myAstComputation;
-  private final @Nullable Function<Psi, @Nullable Result> myAstStubLikeComputation;
-  private final @Nullable Function<Psi, @Nullable CustomStub> myStubBuilder;
+  @NotNull private final PsiToStubConversion<Psi, ?, CustomStub> myConversion;
+  @Nullable private final Function<CustomStub, @Nullable Result> myStubComputation;
+  @Nullable private final Function<Psi, @Nullable Result> myAstComputation;
+  @Nullable private final Function<Psi, @Nullable Result> myAstStubLikeComputation;
+  @Nullable private final Function<Psi, @Nullable CustomStub> myStubBuilder;
 
 
   private StubAwareComputation(@NotNull PsiToStubConversion<Psi, ?, CustomStub> conversion,
@@ -154,7 +168,8 @@ public final class StubAwareComputation<Psi extends PsiElement, CustomStub, Resu
    *
    * @see PsiToStubConversion#withCustomStub(Function)
    */
-  public @NotNull StubAwareComputation<Psi, CustomStub, Result> overStub(@NotNull Function<@Nullable CustomStub, Result> stubComputation) {
+  @NotNull
+  public StubAwareComputation<Psi, CustomStub, Result> overStub(@NotNull Function<@Nullable CustomStub, Result> stubComputation) {
     return new StubAwareComputation<>(myConversion, stubComputation, myAstComputation, myAstStubLikeComputation, myStubBuilder);
   }
 
@@ -167,7 +182,8 @@ public final class StubAwareComputation<Psi extends PsiElement, CustomStub, Resu
    *
    * @see #withStubBuilder(Function)
    */
-  public @NotNull StubAwareComputation<Psi, CustomStub, Result> overAst(@NotNull Function<@NotNull Psi, Result> astComputation) {
+  @NotNull
+  public StubAwareComputation<Psi, CustomStub, Result> overAst(@NotNull Function<@NotNull Psi, Result> astComputation) {
     return new StubAwareComputation<>(myConversion, myStubComputation, astComputation, myAstStubLikeComputation, myStubBuilder);
   }
 
@@ -179,7 +195,8 @@ public final class StubAwareComputation<Psi extends PsiElement, CustomStub, Resu
    *
    * @see #withStubBuilder(Function)
    */
-  public @NotNull StubAwareComputation<Psi, CustomStub, Result> overAstStubLike(@NotNull Function<@NotNull Psi, Result> astStubLikeComputation) {
+  @NotNull
+  public StubAwareComputation<Psi, CustomStub, Result> overAstStubLike(@NotNull Function<@NotNull Psi, Result> astStubLikeComputation) {
     return new StubAwareComputation<>(myConversion, myStubComputation, myAstComputation, astStubLikeComputation, myStubBuilder);
   }
 
@@ -189,7 +206,8 @@ public final class StubAwareComputation<Psi extends PsiElement, CustomStub, Resu
    *
    * @see com.jetbrains.python.psi.impl.stubs.PyCustomStub
    */
-  public @NotNull StubAwareComputation<Psi, CustomStub, Result> withStubBuilder(@NotNull Function<@NotNull Psi, @Nullable CustomStub> stubBuilder) {
+  @NotNull
+  public StubAwareComputation<Psi, CustomStub, Result> withStubBuilder(@NotNull Function<@NotNull Psi, @Nullable CustomStub> stubBuilder) {
     return new StubAwareComputation<>(myConversion, myStubComputation, myAstComputation, myAstStubLikeComputation, stubBuilder);
   }
 

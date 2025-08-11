@@ -3,11 +3,9 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.actions.BasePlatformRefactoringAction
-import com.intellij.refactoring.actions.ExtractSuperActionBase
 import org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringSupportProvider
 import org.jetbrains.kotlin.psi.KtElement
 
@@ -21,9 +19,4 @@ class IntroduceK2PropertyAction : BasePlatformRefactoringAction() {
 
     override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean =
         elements.all { it is KtElement }
-
-    override fun update(e: AnActionEvent) {
-        super.update(e)
-        ExtractSuperActionBase.removeFirstWordInMainMenu(this, e)
-    }
 }

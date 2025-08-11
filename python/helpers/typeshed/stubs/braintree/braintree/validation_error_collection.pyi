@@ -1,7 +1,10 @@
 from _typeshed import Incomplete
+from typing import Any
+
+from braintree.validation_error import ValidationError as ValidationError
 
 class ValidationErrorCollection:
-    data: dict[str, Incomplete]
+    data: Any
     def __init__(self, data: Incomplete | None = None) -> None: ...
     @property
     def deep_errors(self): ...

@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -12,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
@@ -33,7 +33,8 @@ internal object AddTypeAnnotationToValueParameterFixFactory {
             )
         }
 
-    private fun KaSession.getTypeName(element: KtParameter, defaultValue: KtExpression): String? {
+    context(KaSession)
+    private fun getTypeName(element: KtParameter, defaultValue: KtExpression): String? {
         val type = defaultValue.expressionType ?: return null
 
         if (type.isArrayOrPrimitiveArray) {
@@ -52,8 +53,9 @@ internal object AddTypeAnnotationToValueParameterFixFactory {
         return getTypeName(type)
     }
 
+    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.getTypeName(type: KaType): String {
+    private fun getTypeName(type: KaType): String {
         val typeName = type.render(
             KaTypeRendererForSource.WITH_SHORT_NAMES,
             Variance.INVARIANT
@@ -64,11 +66,12 @@ internal object AddTypeAnnotationToValueParameterFixFactory {
     private class AddTypeAnnotationToValueParameterFix(
         element: KtParameter,
         private val typeName: String,
-    ) : PsiUpdateModCommandAction<KtParameter>(element) {
+    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtParameter, Unit>(element, Unit) {
 
         override fun invoke(
             actionContext: ActionContext,
             element: KtParameter,
+            elementContext: Unit,
             updater: ModPsiUpdater,
         ) {
             element.typeReference = KtPsiFactory(actionContext.project).createType(typeName)

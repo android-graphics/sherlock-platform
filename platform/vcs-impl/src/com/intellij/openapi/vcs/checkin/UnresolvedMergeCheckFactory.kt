@@ -10,12 +10,10 @@ import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FileStatus.*
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.CommitContext
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Checks if there are unresolved conflicts selected to commit.
  */
-@ApiStatus.Internal
 class UnresolvedMergeCheckFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
     UnresolvedMergeCheckHandler(panel, commitContext)

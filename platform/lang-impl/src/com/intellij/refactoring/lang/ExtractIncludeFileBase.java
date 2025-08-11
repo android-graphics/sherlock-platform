@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.lang;
 
@@ -71,11 +71,12 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
 
   protected abstract void doReplaceRange(final String includePath, final T first, final T last);
 
-  protected @NotNull String doExtract(final PsiDirectory targetDirectory,
-                                      final String targetfileName,
-                                      final T first,
-                                      final T last,
-                                      final Language includingLanguage) throws IncorrectOperationException {
+  @NotNull
+  protected String doExtract(final PsiDirectory targetDirectory,
+                             final String targetfileName,
+                             final T first,
+                             final T last,
+                             final Language includingLanguage) throws IncorrectOperationException {
     final PsiFile file = targetDirectory.createFile(targetfileName);
     Project project = targetDirectory.getProject();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -95,7 +96,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
                                    final List<IncludeDuplicate<T>> duplicates,
                                    final Editor editor,
                                    final Project project) {
-    if (!duplicates.isEmpty()) {
+    if (duplicates.size() > 0) {
       final String message = RefactoringBundle.message("idea.has.found.fragments.that.can.be.replaced.with.include.directive",
                                                   ApplicationNamesInfo.getInstance().getProductName());
       final int exitCode = Messages.showYesNoDialog(project, message, getRefactoringName(), Messages.getInformationIcon());
@@ -146,12 +147,13 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
   public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
   }
 
-  protected @NotNull Language getLanguageForExtract(PsiElement firstExtracted) {
+  @NotNull
+  protected Language getLanguageForExtract(PsiElement firstExtracted) {
     return firstExtracted.getLanguage();
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     try {
       myIncludingFile = file;
       doInvoke(project, editor, file);
@@ -233,7 +235,8 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
     });
   }
 
-  private @NotNull Pair<PsiDirectory, String> getTargetDirectoryAndFileName(@NotNull PsiFile file, FileType fileType, @NotNull Pair<T, T> children) {
+  @NotNull
+  private Pair<PsiDirectory, String> getTargetDirectoryAndFileName(@NotNull PsiFile file, FileType fileType, @NotNull Pair<T, T> children) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return Pair.create(ourTargetDirectory, ourTargetFileName);
     }
@@ -253,9 +256,11 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
     return new ExtractIncludeDialog(containingDirectory, extractExtension);
   }
 
-  protected abstract @Nullable Pair<T, T> findPairToExtract(int start, int end);
+  @Nullable
+  protected abstract Pair<T, T> findPairToExtract(int start, int end);
 
-  protected @NonNls String getExtractExtension(final FileType extractFileType, final T first) {
+  @NonNls
+  protected String getExtractExtension(final FileType extractFileType, final T first) {
     return extractFileType.getDefaultExtension();
   }
 

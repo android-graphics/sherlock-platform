@@ -1,13 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.properties.psi.*;
@@ -36,7 +35,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
+public final class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   private static final Logger LOG = Logger.getInstance(PropertiesFileImpl.class);
   private static final TokenSet PROPERTIES_LIST_SET = TokenSet.create(PropertiesElementTypes.PROPERTIES_LIST);
 
@@ -44,22 +43,21 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     super(viewProvider, PropertiesLanguage.INSTANCE);
   }
 
-  public PropertiesFileImpl(FileViewProvider viewProvider, Language language) {
-    super(viewProvider, language);
-  }
-
   @Override
-  public @NotNull FileType getFileType() {
+  @NotNull
+  public FileType getFileType() {
     return PropertiesFileType.INSTANCE;
   }
 
   @Override
-  public @NonNls String toString() {
+  @NonNls
+  public String toString() {
     return "Properties file:" + getName();
   }
 
   @Override
-  public @NotNull List<IProperty> getProperties() {
+  @NotNull
+  public List<IProperty> getProperties() {
     PropertiesList propertiesList = withGreenStubOrAst(
       stub -> {
         PropertiesListStub propertiesListStub = stub.findChildStubByType(PropertiesElementTypes.PROPERTIES_LIST);
@@ -75,23 +73,27 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return ArrayUtil.getFirstElement(getNode().getChildren(PROPERTIES_LIST_SET));
   }
 
+  @Nullable
   @Override
-  public @Nullable IProperty findPropertyByKey(@NotNull String key) {
+  public IProperty findPropertyByKey(@NotNull String key) {
     return propertiesByKey(key).findFirst().orElse(null);
   }
 
   @Override
-  public @NotNull List<IProperty> findPropertiesByKey(@NotNull String key) {
+  @NotNull
+  public List<IProperty> findPropertiesByKey(@NotNull String key) {
     return propertiesByKey(key).collect(Collectors.toList());
   }
 
   @Override
-  public @NotNull ResourceBundle getResourceBundle() {
+  @NotNull
+  public ResourceBundle getResourceBundle() {
     return PropertiesImplUtil.getResourceBundle(this);
   }
 
   @Override
-  public @NotNull Locale getLocale() {
+  @NotNull
+  public Locale getLocale() {
     return PropertiesUtil.getLocale(this);
   }
 
@@ -104,13 +106,15 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   @Override
-  public @NotNull PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException {
+  @NotNull
+  public PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException {
     final IProperty position = findInsertionPosition(property);
     return addPropertyAfter(property, position);
   }
 
   @Override
-  public @NotNull PsiElement addPropertyAfter(final @NotNull IProperty property, final @Nullable IProperty anchor) throws IncorrectOperationException {
+  @NotNull
+  public PsiElement addPropertyAfter(@NotNull final IProperty property, @Nullable final IProperty anchor) throws IncorrectOperationException {
     final TreeElement copy = ChangeUtil.copyToElement(property.getPsiElement());
     List<IProperty> properties = getProperties();
     ASTNode anchorBefore = anchor == null ? properties.isEmpty() ? null : properties.get(0).getPsiElement().getNode()
@@ -133,8 +137,9 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return (IProperty)addProperty(PropertiesElementFactory.createProperty(getProject(), key, value, null, format));
   }
 
+  @NotNull
   @Override
-  public @NotNull IProperty addPropertyAfter(@NotNull String key, @NotNull String value, @Nullable IProperty anchor) {
+  public IProperty addPropertyAfter(@NotNull String key, @NotNull String value, @Nullable IProperty anchor) {
     return (IProperty)addPropertyAfter(PropertiesElementFactory.createProperty(getProject(), key, value, null), anchor);
   }
 
@@ -159,7 +164,8 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   @Override
-  public @NotNull Map<String, String> getNamesMap() {
+  @NotNull
+  public Map<String, String> getNamesMap() {
     Map<String, String> result = new HashMap<>();
     for (IProperty property : getProperties()) {
       result.put(property.getUnescapedKey(), property.getValue());
@@ -187,7 +193,8 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return ContainerUtil.getLastItem(properties);
   }
 
-  private @NotNull Stream<? extends IProperty> propertiesByKey(@NotNull String key) {
+  @NotNull
+  private Stream<? extends IProperty> propertiesByKey(@NotNull String key) {
     if (shouldReadIndex()) {
       return PropertyKeyIndex.getInstance().getProperties(key, getProject(), GlobalSearchScope.fileScope(this)).stream();
     }

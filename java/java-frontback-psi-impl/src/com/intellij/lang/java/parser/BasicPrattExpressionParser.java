@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
@@ -29,6 +29,7 @@ import static com.intellij.psi.impl.source.BasicElementTypes.*;
 @SuppressWarnings("UnnecessarilyQualifiedStaticUsage")
 @ApiStatus.Experimental
 public class BasicPrattExpressionParser {
+  static final int FORBID_LAMBDA_MASK = 0x1;
   private final Map<IElementType, ParserData> ourInfixParsers;
   private static final TokenSet THIS_OR_SUPER = TokenSet.create(JavaTokenType.THIS_KEYWORD, JavaTokenType.SUPER_KEYWORD);
   private static final TokenSet ID_OR_SUPER = TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.SUPER_KEYWORD);
@@ -40,6 +41,7 @@ public class BasicPrattExpressionParser {
   private static final TokenSet POSTFIX_OPS = TokenSet.create(JavaTokenType.PLUSPLUS, JavaTokenType.MINUSMINUS);
   private static final TokenSet PREF_ARITHMETIC_OPS = TokenSet.orSet(POSTFIX_OPS, TokenSet.create(JavaTokenType.PLUS, JavaTokenType.MINUS));
   private static final TokenSet PREFIX_OPS = TokenSet.orSet(PREF_ARITHMETIC_OPS, TokenSet.create(JavaTokenType.TILDE, JavaTokenType.EXCL));
+
 
   private static final int MULTIPLICATION_PRECEDENCE = 2;
   private static final int ADDITIVE_PRECEDENCE = 3;
@@ -134,7 +136,8 @@ public class BasicPrattExpressionParser {
     return lhs;
   }
 
-  private @Nullable PsiBuilder.Marker parseUnary(final PsiBuilder builder, final int mode) {
+  @Nullable
+  private PsiBuilder.Marker parseUnary(final PsiBuilder builder, final int mode) {
     final IElementType tokenType = builder.getTokenType();
 
     if (PREFIX_OPS.contains(tokenType)) {
@@ -191,7 +194,8 @@ public class BasicPrattExpressionParser {
     }
   }
 
-  private @Nullable PsiBuilder.Marker parsePostfix(final PsiBuilder builder, final int mode) {
+  @Nullable
+  private PsiBuilder.Marker parsePostfix(final PsiBuilder builder, final int mode) {
     PsiBuilder.Marker operand = parsePrimary(builder, null, -1, mode);
     if (operand == null) return null;
 
@@ -205,7 +209,8 @@ public class BasicPrattExpressionParser {
     return operand;
   }
 
-  private @Nullable PsiBuilder.Marker parsePrimary(PsiBuilder builder, @Nullable BreakPoint breakPoint, int breakOffset, final int mode) {
+  @Nullable
+  private PsiBuilder.Marker parsePrimary(PsiBuilder builder, @Nullable BreakPoint breakPoint, int breakOffset, final int mode) {
     PsiBuilder.Marker startMarker = builder.mark();
 
     PsiBuilder.Marker expr = parsePrimaryExpressionStart(builder, mode);
@@ -258,19 +263,6 @@ public class BasicPrattExpressionParser {
           builder.advanceLexer();
           refExpr.done(myJavaElementTypeContainer.REFERENCE_EXPRESSION);
           expr = refExpr;
-        }
-        else if (dotTokenType == JavaTokenType.STRING_TEMPLATE_BEGIN || dotTokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) {
-          dotPos.drop();
-          expr = parseStringTemplate(builder, expr, dotTokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN);
-        }
-        else if (dotTokenType == JavaTokenType.STRING_LITERAL || dotTokenType == JavaTokenType.TEXT_BLOCK_LITERAL) {
-          dotPos.drop();
-          final PsiBuilder.Marker templateExpression = expr.precede();
-          final PsiBuilder.Marker literal = builder.mark();
-          builder.advanceLexer();
-          literal.done(myJavaElementTypeContainer.LITERAL_EXPRESSION);
-          templateExpression.done(myJavaElementTypeContainer.TEMPLATE_EXPRESSION);
-          expr = templateExpression;
         }
         else if (THIS_OR_SUPER.contains(dotTokenType) && exprType(expr) == myJavaElementTypeContainer.REFERENCE_EXPRESSION) {
           if (breakPoint == BreakPoint.P2 && builder.getCurrentOffset() == breakOffset) {
@@ -389,12 +381,9 @@ public class BasicPrattExpressionParser {
     }
   }
 
-  private @Nullable PsiBuilder.Marker parsePrimaryExpressionStart(final PsiBuilder builder, final int mode) {
+  @Nullable
+  private PsiBuilder.Marker parsePrimaryExpressionStart(final PsiBuilder builder, final int mode) {
     IElementType tokenType = builder.getTokenType();
-
-    if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN || tokenType == JavaTokenType.STRING_TEMPLATE_BEGIN) {
-      return parseStringTemplate(builder, null, tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN);
-    }
 
     if (BASIC_ALL_LITERALS.contains(tokenType)) {
       final PsiBuilder.Marker literal = builder.mark();
@@ -412,7 +401,7 @@ public class BasicPrattExpressionParser {
     }
 
     if (tokenType == JavaTokenType.LPARENTH) {
-      if (!BitUtil.isSet(mode, BasicExpressionParser.FORBID_LAMBDA_MASK)) {
+      if (!BitUtil.isSet(mode, FORBID_LAMBDA_MASK)) {
         final PsiBuilder.Marker lambda = parseLambdaAfterParenth(builder);
         if (lambda != null) {
           return lambda;
@@ -427,8 +416,10 @@ public class BasicPrattExpressionParser {
         error(builder, JavaPsiBundle.message("expected.expression"));
       }
 
-      if (!expect(builder, JavaTokenType.RPARENTH) && inner != null) {
-        error(builder, JavaPsiBundle.message("expected.rparen"));
+      if (!expect(builder, JavaTokenType.RPARENTH)) {
+        if (inner != null) {
+          error(builder, JavaPsiBundle.message("expected.rparen"));
+        }
       }
 
       parenth.done(myJavaElementTypeContainer.PARENTH_EXPRESSION);
@@ -462,7 +453,7 @@ public class BasicPrattExpressionParser {
       builder.remapCurrentToken(tokenType = JavaTokenType.IDENTIFIER);
     }
     if (tokenType == JavaTokenType.IDENTIFIER) {
-      if (!BitUtil.isSet(mode, BasicExpressionParser.FORBID_LAMBDA_MASK) && builder.lookAhead(1) == JavaTokenType.ARROW) {
+      if (!BitUtil.isSet(mode, FORBID_LAMBDA_MASK) && builder.lookAhead(1) == JavaTokenType.ARROW) {
         return parseLambdaExpression(builder, false);
       }
 
@@ -520,7 +511,8 @@ public class BasicPrattExpressionParser {
     return null;
   }
 
-  private @Nullable PsiBuilder.Marker parseClassAccessOrMethodReference(PsiBuilder builder) {
+  @Nullable
+  private PsiBuilder.Marker parseClassAccessOrMethodReference(PsiBuilder builder) {
     PsiBuilder.Marker expr = builder.mark();
 
     boolean primitive = BASIC_PRIMITIVE_TYPE_BIT_SET.contains(builder.getTokenType());
@@ -534,7 +526,8 @@ public class BasicPrattExpressionParser {
     return result;
   }
 
-  private @Nullable PsiBuilder.Marker parseClassAccessOrMethodReference(PsiBuilder builder, PsiBuilder.Marker expr, boolean optionalClassKeyword) {
+  @Nullable
+  private PsiBuilder.Marker parseClassAccessOrMethodReference(PsiBuilder builder, PsiBuilder.Marker expr, boolean optionalClassKeyword) {
     IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.DOT) {
       return parseClassObjectAccess(builder, expr, optionalClassKeyword);
@@ -546,7 +539,8 @@ public class BasicPrattExpressionParser {
     return null;
   }
 
-  private @NotNull PsiBuilder.Marker parseMethodReference(final PsiBuilder builder, final PsiBuilder.Marker start) {
+  @NotNull
+  private PsiBuilder.Marker parseMethodReference(final PsiBuilder builder, final PsiBuilder.Marker start) {
     builder.advanceLexer();
 
     myParser.getReferenceParser().parseReferenceParameterList(builder, false, false);
@@ -559,36 +553,8 @@ public class BasicPrattExpressionParser {
     return start;
   }
 
-  private PsiBuilder.Marker parseStringTemplate(PsiBuilder builder, PsiBuilder.Marker start, boolean textBlock) {
-    final PsiBuilder.Marker templateExpression = start == null ? builder.mark() : start.precede();
-    final PsiBuilder.Marker template = builder.mark();
-    IElementType tokenType;
-    do {
-      builder.advanceLexer();
-      tokenType = builder.getTokenType();
-      if (textBlock
-          ? tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_MID || tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_END
-          : tokenType == JavaTokenType.STRING_TEMPLATE_MID || tokenType == JavaTokenType.STRING_TEMPLATE_END) {
-        emptyExpression(builder);
-      }
-      else {
-        parse(builder);
-        tokenType = builder.getTokenType();
-      }
-    }
-    while (textBlock ? tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_MID : tokenType == JavaTokenType.STRING_TEMPLATE_MID);
-    if (textBlock ? tokenType != JavaTokenType.TEXT_BLOCK_TEMPLATE_END : tokenType != JavaTokenType.STRING_TEMPLATE_END) {
-      builder.error(JavaPsiBundle.message("expected.template.fragment"));
-    }
-    else {
-      builder.advanceLexer();
-    }
-    template.done(myJavaElementTypeContainer.TEMPLATE);
-    templateExpression.done(myJavaElementTypeContainer.TEMPLATE_EXPRESSION);
-    return templateExpression;
-  }
-
-  private @NotNull PsiBuilder.Marker parseNew(PsiBuilder builder, @Nullable PsiBuilder.Marker start) {
+  @NotNull
+  private PsiBuilder.Marker parseNew(PsiBuilder builder, @Nullable PsiBuilder.Marker start) {
     PsiBuilder.Marker newExpr = (start != null ? start.precede() : builder.mark());
     builder.advanceLexer();
 
@@ -674,15 +640,17 @@ public class BasicPrattExpressionParser {
     return newExpr;
   }
 
-  private @NotNull PsiBuilder.Marker parseArrayInitializer(PsiBuilder builder) {
+  @NotNull
+  private PsiBuilder.Marker parseArrayInitializer(PsiBuilder builder) {
     return parseArrayInitializer(builder, myJavaElementTypeContainer.ARRAY_INITIALIZER_EXPRESSION, this::parse,
                                  "expected.expression");
   }
 
-  public @NotNull PsiBuilder.Marker parseArrayInitializer(@NotNull PsiBuilder builder,
-                                                          @NotNull IElementType type,
-                                                          @NotNull Function<? super PsiBuilder, PsiBuilder.Marker> elementParser,
-                                                          @NotNull @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String missingElementKey) {
+  @NotNull
+  public PsiBuilder.Marker parseArrayInitializer(@NotNull PsiBuilder builder,
+                                                 @NotNull IElementType type,
+                                                 @NotNull Function<? super PsiBuilder, PsiBuilder.Marker> elementParser,
+                                                 @NotNull @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String missingElementKey) {
     PsiBuilder.Marker arrayInit = builder.mark();
     builder.advanceLexer();
 
@@ -724,7 +692,8 @@ public class BasicPrattExpressionParser {
     return arrayInit;
   }
 
-  public @NotNull PsiBuilder.Marker parseArgumentList(final PsiBuilder builder) {
+  @NotNull
+  public PsiBuilder.Marker parseArgumentList(final PsiBuilder builder) {
     final PsiBuilder.Marker list = builder.mark();
     builder.advanceLexer();
 
@@ -778,7 +747,8 @@ public class BasicPrattExpressionParser {
     return list;
   }
 
-  private @Nullable PsiBuilder.Marker parseLambdaAfterParenth(final PsiBuilder builder) {
+  @Nullable
+  private PsiBuilder.Marker parseLambdaAfterParenth(final PsiBuilder builder) {
     final boolean isLambda;
     final boolean isTyped;
 
@@ -809,12 +779,14 @@ public class BasicPrattExpressionParser {
         PsiBuilder.Marker marker = builder.mark();
         builder.advanceLexer();
         BasicReferenceParser.TypeInfo typeInfo = myParser.getReferenceParser().parseTypeInfo(
-          builder, BasicReferenceParser.ELLIPSIS | BasicReferenceParser.WILDCARD);
+          builder, BasicReferenceParser.EAT_LAST_DOT | BasicReferenceParser.ELLIPSIS | BasicReferenceParser.WILDCARD);
         if (typeInfo != null) {
           IElementType t = builder.getTokenType();
-          lambda = t == JavaTokenType.IDENTIFIER ||
-                   t == JavaTokenType.THIS_KEYWORD ||
-                   t == JavaTokenType.RPARENTH && builder.lookAhead(1) == JavaTokenType.ARROW;
+          if (t == JavaTokenType.IDENTIFIER ||
+              t == JavaTokenType.THIS_KEYWORD ||
+              t == JavaTokenType.RPARENTH && builder.lookAhead(1) == JavaTokenType.ARROW) {
+            lambda = true;
+          }
         }
         marker.rollbackTo();
 
@@ -830,7 +802,7 @@ public class BasicPrattExpressionParser {
     return isLambda ? parseLambdaExpression(builder, isTyped) : null;
   }
 
-  private @Nullable PsiBuilder.Marker parseLambdaExpression(final PsiBuilder builder, final boolean typed) {
+  private PsiBuilder.Marker parseLambdaExpression(final PsiBuilder builder, final boolean typed) {
     final PsiBuilder.Marker start = builder.mark();
 
     myParser.getDeclarationParser().parseLambdaParameterList(builder, typed);
@@ -863,17 +835,21 @@ public class BasicPrattExpressionParser {
     if (builder.rawLookup(1) == JavaTokenType.GT) {
       if (builder.rawLookup(2) == JavaTokenType.GT) {
         if (builder.rawLookup(3) == JavaTokenType.EQ) {
-          return JavaTokenType.GTGTGTEQ;
+          tokenType = JavaTokenType.GTGTGTEQ;
         }
-        return JavaTokenType.GTGTGT;
+        else {
+          tokenType = JavaTokenType.GTGTGT;
+        }
       }
-      if (builder.rawLookup(2) == JavaTokenType.EQ) {
-        return JavaTokenType.GTGTEQ;
+      else if (builder.rawLookup(2) == JavaTokenType.EQ) {
+        tokenType = JavaTokenType.GTGTEQ;
       }
-      return JavaTokenType.GTGT;
+      else {
+        tokenType = JavaTokenType.GTGT;
+      }
     }
     else if (builder.rawLookup(1) == JavaTokenType.EQ) {
-      return JavaTokenType.GE;
+      tokenType = JavaTokenType.GE;
     }
 
     return tokenType;
@@ -900,7 +876,8 @@ public class BasicPrattExpressionParser {
     gtToken.collapse(type);
   }
 
-  private @Nullable PsiBuilder.Marker parseClassObjectAccess(PsiBuilder builder, PsiBuilder.Marker expr, boolean optionalClassKeyword) {
+  @Nullable
+  private PsiBuilder.Marker parseClassObjectAccess(PsiBuilder builder, PsiBuilder.Marker expr, boolean optionalClassKeyword) {
     final PsiBuilder.Marker mark = builder.mark();
     builder.advanceLexer();
 
@@ -919,7 +896,7 @@ public class BasicPrattExpressionParser {
   }
 
   private void emptyExpression(final PsiBuilder builder) {
-    emptyElement(builder, myJavaElementTypeContainer.EMPTY_EXPRESSION);
+    emptyElement(builder, myJavaElementTypeContainer.EMPTY_STATEMENT);
   }
 
   private enum BreakPoint {P1, P2, P4}
@@ -936,7 +913,7 @@ public class BasicPrattExpressionParser {
                int mode);
   }
 
-  private static final class ParserData {
+  private final static class ParserData {
     private final int myPrecedence;
     private final InfixParser myParser;
 
@@ -959,7 +936,7 @@ public class BasicPrattExpressionParser {
       if (right == null) {
         error(builder, JavaPsiBundle.message("expected.expression"));
       }
-      done(beforeLhs, myJavaElementTypeContainer.ASSIGNMENT_EXPRESSION, builder, myWhiteSpaceAndCommentSetHolder);
+      done(beforeLhs, myJavaElementTypeContainer.ASSIGNMENT_EXPRESSION, myWhiteSpaceAndCommentSetHolder);
     }
   }
 
@@ -972,22 +949,25 @@ public class BasicPrattExpressionParser {
                       IElementType binOpType,
                       int currentPrecedence,
                       int mode) {
+
       int operandCount = 1;
       while (true) {
         advanceBinOpToken(builder, binOpType);
         PsiBuilder.Marker rhs = parser.tryParseWithPrecedenceAtMost(builder, currentPrecedence - 1, mode);
-        if (rhs == null) {
-          error(builder, JavaPsiBundle.message("expected.expression"));
-        }
-        operandCount++;
         IElementType nextToken = getBinOpToken(builder);
-        if (nextToken != binOpType) {
+        if (rhs != null) {
+          operandCount++;
+        }
+        if (rhs == null || nextToken != binOpType) {
+          if (rhs == null) {
+            error(builder, JavaPsiBundle.message("expected.expression"));
+          }
           break;
         }
       }
       done(beforeLhs, operandCount > 2
                       ? myJavaElementTypeContainer.POLYADIC_EXPRESSION
-                      : myJavaElementTypeContainer.BINARY_EXPRESSION, builder, myWhiteSpaceAndCommentSetHolder);
+                      : myJavaElementTypeContainer.BINARY_EXPRESSION, myWhiteSpaceAndCommentSetHolder);
     }
   }
 

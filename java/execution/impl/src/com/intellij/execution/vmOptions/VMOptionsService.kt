@@ -11,6 +11,4 @@ interface VMOptionsService {
   }
 
   fun getOrComputeOptionsForJdk(javaHome: String): CompletableFuture<JdkOptionsData>
-
-  fun getStandardOptions(): JdkOptionsData = JdkOptionsData(emptyList())
 }

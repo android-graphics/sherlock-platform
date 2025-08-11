@@ -13,7 +13,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorComposite
-import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.*
 import com.intellij.openapi.project.Project
@@ -68,38 +67,31 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
   private var loadedState: Element? = null
 
   companion object {
-    @Deprecated("Prefer using FileEditorManagerKeys.SHOW_NORTH_PANEL",
-                replaceWith = ReplaceWith("FileEditorManagerKeys.SHOW_NORTH_PANEL",
-                                          imports = ["com.intellij.openapi.fileEditor.FileEditorManagerKeys"]))
-    val SHOW_NORTH_PANEL: Key<Boolean> = FileEditorManagerKeys.SHOW_NORTH_PANEL
-
-    @Deprecated("Prefer using FileEditorManagerKeys.WINDOW_DIMENSION_KEY",
-                replaceWith = ReplaceWith("FileEditorManagerKeys.WINDOW_DIMENSION_KEY",
-                                          imports = ["com.intellij.openapi.fileEditor.FileEditorManagerKeys"]))
-    val WINDOW_DIMENSION_KEY: Key<String> = FileEditorManagerKeys.WINDOW_DIMENSION_KEY
-
+    val SHOW_NORTH_PANEL: Key<Boolean> = Key.create("SHOW_NORTH_PANEL")
+    val WINDOW_DIMENSION_KEY: Key<String> = Key.create("WINDOW_DIMENSION_KEY")
     @JvmField
-    @Deprecated("Prefer using FileEditorManagerKeys.REOPEN_WINDOW",
-                replaceWith = ReplaceWith("FileEditorManagerKeys.REOPEN_WINDOW",
-                                          imports = ["com.intellij.openapi.fileEditor.FileEditorManagerKeys"]))
-    val REOPEN_WINDOW: Key<Boolean> = FileEditorManagerKeys.REOPEN_WINDOW
+    val REOPEN_WINDOW: Key<Boolean> = Key.create("REOPEN_WINDOW")
+    @JvmField
+    val ALLOW_DOCK_TOOL_WINDOWS: Key<Boolean> = Key.create("ALLOW_DOCK_TOOL_WINDOWS")
 
     private fun getWindowDimensionKey(content: DockableContent<*>): String? {
       return if (content is DockableEditor) getWindowDimensionKey(content.file) else null
     }
 
-    private fun getWindowDimensionKey(file: VirtualFile): String? = FileEditorManagerKeys.WINDOW_DIMENSION_KEY.get(file)
+    private fun getWindowDimensionKey(file: VirtualFile): String? = WINDOW_DIMENSION_KEY.get(file)
 
     @JvmStatic
     fun isNorthPanelVisible(uiSettings: UISettings): Boolean = uiSettings.showNavigationBar && !uiSettings.presentationMode
 
     @JvmStatic
     fun isNorthPanelAvailable(editors: List<FileEditor>): Boolean {
+      val defaultNorthPanelVisible = isNorthPanelVisible(UISettings.getInstance())
       for (editor in editors) {
-        val value = FileEditorManagerKeys.SHOW_NORTH_PANEL.get(editor)
-        if (value != null) return value
+        if (SHOW_NORTH_PANEL.isIn(editor)) {
+          return SHOW_NORTH_PANEL.get(editor, defaultNorthPanelVisible)
+        }
       }
-      return true
+      return defaultNorthPanelVisible
     }
   }
 
@@ -356,24 +348,22 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
 
   fun createNewDockContainerFor(content: DockableContent<*>, point: RelativePoint) {
     val container = getFactory(content.dockContainerType).createContainer(content)
-
-    val file: VirtualFile? = (content as? DockableEditor)?.file
-    val canReopenWindow = FileEditorManagerKeys.REOPEN_WINDOW.get(file, true)
+    val canReopenWindow = content.presentation.getClientProperty(REOPEN_WINDOW)
+    val reopenWindow = canReopenWindow == null || canReopenWindow
     val window = createWindowFor(dimensionKey = getWindowDimensionKey(content = content),
                                  id = null,
                                  container = container,
-                                 canReopenWindow = canReopenWindow)
-
-    val isSingletonEditorInWindow = (content as? DockableEditor)?.isSingletonEditorInWindow ?: false
-    if (!isSingletonEditorInWindow) {
-      window.setupToolWindowPane()
-    }
-    val isNorthPanelAvailable = (content as? DockableEditor)?.isNorthPanelAvailable ?: true
+                                 canReopenWindow = reopenWindow)
+    val isNorthPanelAvailable = if (content is DockableEditor) content.isNorthPanelAvailable else isNorthPanelVisible(UISettings.getInstance())
     if (isNorthPanelAvailable) {
       window.setupNorthPanel()
     }
-
+    val canDockToolWindows = content.presentation.getClientProperty(ALLOW_DOCK_TOOL_WINDOWS)
+    if (canDockToolWindows == null || canDockToolWindows) {
+      window.setupToolWindowPane()
+    }
     val size = content.preferredSize
+
     // The given relative point might be relative to a component on a different screen, using different DPI screen coordinates. Convert to
     // device coordinates first. Ideally, we would be given a DevicePoint
     val showPoint = DevicePoint(point).locationOnScreen
@@ -409,14 +399,13 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     val window = createWindowFor(dimensionKey = getWindowDimensionKey(file = file),
                                  id = null,
                                  container = container,
-                                 canReopenWindow = FileEditorManagerKeys.REOPEN_WINDOW.get(file, true))
+                                 canReopenWindow = REOPEN_WINDOW.get(file, true))
     if (!ApplicationManager.getApplication().isHeadlessEnvironment && !ApplicationManager.getApplication().isUnitTestMode) {
       window.show(true)
     }
 
     val editorWindow = container.splitters.getOrCreateCurrentWindow(file)
     val result = openFile(editorWindow)
-
     if (!isSingletonEditorInWindow) {
       window.setupToolWindowPane()
     }
@@ -424,7 +413,6 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     if (isNorthPanelAvailable) {
       window.setupNorthPanel()
     }
-
     container.add(
       DockableEditor(
         img = null,

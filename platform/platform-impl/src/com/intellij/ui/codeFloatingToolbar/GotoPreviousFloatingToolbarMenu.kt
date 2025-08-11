@@ -6,9 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.ui.codeFloatingToolbar.GotoNextFloatingToolbarMenu.Companion.findFloatingToolbar
 import com.intellij.ui.codeFloatingToolbar.GotoNextFloatingToolbarMenu.Companion.showNextMenu
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 class GotoPreviousFloatingToolbarMenu: AnAction() {
 
   init {

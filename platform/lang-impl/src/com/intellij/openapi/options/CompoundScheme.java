@@ -3,7 +3,6 @@ package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +10,6 @@ import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.function.BiConsumer;
 
-@ApiStatus.Internal
 public class CompoundScheme<E extends SchemeElement> implements ExternalizableScheme {
   protected String myName;
   protected final ArrayList<E> myElements = new ArrayList<>();

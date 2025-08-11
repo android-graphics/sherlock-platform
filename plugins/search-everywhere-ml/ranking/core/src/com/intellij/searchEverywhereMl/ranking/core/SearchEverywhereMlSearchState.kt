@@ -18,7 +18,6 @@ internal class SearchEverywhereMlSearchState(
   val keysTyped: Int, val backspacesTyped: Int, val searchQuery: String,
   private val modelProvider: SearchEverywhereModelProvider,
   private val providersCache: FeaturesProviderCache?,
-  private val mixedListInfo: SearchEverywhereMixedListInfo,
   project: Project?,
   searchScope: ScopeDescriptor?,
   isSearchEverywhere: Boolean,
@@ -32,10 +31,11 @@ internal class SearchEverywhereMlSearchState(
                          element: Any,
                          contributor: SearchEverywhereContributor<*>,
                          priority: Int,
+                         mixedListInfo: SearchEverywhereMixedListInfo,
                          context: SearchEverywhereMLContextInfo): SearchEverywhereMLItemInfo {
     val features = arrayListOf<EventPair<*>>()
     val contributorId = contributor.searchProviderId
-    val contributorFeatures = getContributorFeatures(contributor)
+    val contributorFeatures = contributorFeaturesProvider.getFeatures(contributor, mixedListInfo, sessionStartTime)
 
     SearchEverywhereElementFeaturesProvider.getFeatureProvidersForContributor(contributorId).forEach { provider ->
       features.addAll(provider.getElementFeatures(element, sessionStartTime, searchQuery, priority, providersCache))
@@ -104,10 +104,6 @@ internal class SearchEverywhereMlSearchState(
                   itemInfo: SearchEverywhereMLItemInfo): Double {
     val features = getAllFeatures(context.features, itemInfo.features, itemInfo.contributorFeatures)
     return model.predict(features)
-  }
-
-  fun getContributorFeatures(contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {
-    return contributorFeaturesProvider.getFeatures(contributor, mixedListInfo, sessionStartTime)
   }
 }
 

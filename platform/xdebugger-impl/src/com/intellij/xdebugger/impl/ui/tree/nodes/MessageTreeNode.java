@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,7 +29,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
   private XDebuggerTreeNodeHyperlink myLink;
 
   private MessageTreeNode(XDebuggerTree tree,
-                          final @Nullable XDebuggerTreeNode parent,
+                          @Nullable final XDebuggerTreeNode parent,
                           final @Nls String message,
                           final SimpleTextAttributes attributes,
                           @Nullable Icon icon) {
@@ -64,8 +64,9 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     myEllipsis = false;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<? extends TreeNode> getChildren() {
+  public List<? extends TreeNode> getChildren() {
     return Collections.emptyList();
   }
 
@@ -73,8 +74,9 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     return myEllipsis;
   }
 
+  @Nullable
   @Override
-  public @Nullable XDebuggerTreeNodeHyperlink getLink() {
+  public XDebuggerTreeNodeHyperlink getLink() {
     return myLink;
   }
 
@@ -88,8 +90,9 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull List<? extends XDebuggerTreeNode> getLoadedChildren() {
+  public List<? extends XDebuggerTreeNode> getLoadedChildren() {
     return Collections.emptyList();
   }
 

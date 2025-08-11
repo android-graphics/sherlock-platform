@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.WriteAction;
@@ -9,7 +10,6 @@ import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.command.CommandToken;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -24,7 +24,7 @@ import java.util.*;
 /**
  * @author gregsh
  */
-public final class ShuffleNamesAction extends DumbAwareAction {
+public final class ShuffleNamesAction extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -84,7 +84,7 @@ public final class ShuffleNamesAction extends DumbAwareAction {
             }
           }
 
-          boolean isQuoted = !quote.isEmpty();
+          boolean isQuoted = quote.length() > 0;
           boolean isNumber = false;
           if (isQuoted || type.equals("ID") || type.equals("word") || type.contains("IDENT") && !"ts".equals(text) || //NON-NLS
               (isNumber = text.matches("[0-9]+"))) {

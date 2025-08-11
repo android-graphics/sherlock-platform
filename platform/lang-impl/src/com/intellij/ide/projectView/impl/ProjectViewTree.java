@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.dnd.aware.DnDAwareTree;
@@ -8,7 +8,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.presentation.FilePresentationService;
 import com.intellij.psi.PsiElement;
@@ -38,9 +38,18 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class ProjectViewTree extends DnDAwareTree implements UiCompatibleDataProvider, SpeedSearchSupply.SpeedSearchLocator {
+public class ProjectViewTree extends DnDAwareTree implements UiDataProvider, SpeedSearchSupply.SpeedSearchLocator {
 
   private @Nullable ProjectViewDirectoryExpandDurationMeasurer expandMeasurer;
+
+  /**
+   * @deprecated use another constructor instead
+   */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("unused")
+  protected ProjectViewTree(Project project, TreeModel model) {
+    this(model);
+  }
 
   public ProjectViewTree(TreeModel model) {
     super((TreeModel)null);
@@ -59,10 +68,7 @@ public class ProjectViewTree extends DnDAwareTree implements UiCompatibleDataPro
       var obj = TreeUtil.getUserObject(node);
       if (obj instanceof BasePsiNode<?> pvNode) {
         var file = pvNode.getVirtualFile();
-        // true means "don't expand", so we put the condition inside !(),
-        // expressing inside the "it's a directory, and not a hidden one (starting with a dot)" condition
-        // (the file == null check is to stay on the safe side and expand if we don't know what it is)
-        return !(file == null || (file.isDirectory() && !file.getName().startsWith(".")));
+        return file != null && !file.isDirectory(); // true means "don't expand", so we only auto-expand directories
       }
       else if (obj instanceof AbstractTreeNode<?> abstractTreeNode) {
         return !abstractTreeNode.isAutoExpandAllowed();
@@ -121,7 +127,8 @@ public class ProjectViewTree extends DnDAwareTree implements UiCompatibleDataPro
   /**
    * @return custom renderer for tree nodes
    */
-  protected @NotNull TreeCellRenderer createCellRenderer() {
+  @NotNull
+  protected TreeCellRenderer createCellRenderer() {
     return new ProjectViewRenderer();
   }
 
@@ -158,8 +165,9 @@ public class ProjectViewTree extends DnDAwareTree implements UiCompatibleDataPro
     return enabled;
   }
 
+  @Nullable
   @Override
-  public @Nullable Color getFileColorFor(Object object) {
+  public Color getFileColorFor(Object object) {
     if (object instanceof DefaultMutableTreeNode node) {
       object = node.getUserObject();
     }
@@ -169,7 +177,8 @@ public class ProjectViewTree extends DnDAwareTree implements UiCompatibleDataPro
     return null;
   }
 
-  public static @Nullable Color getColorForElement(@Nullable PsiElement psi) {
+  @Nullable
+  public static Color getColorForElement(@Nullable PsiElement psi) {
     if (psi == null || !psi.isValid()) {
       return null;
     }

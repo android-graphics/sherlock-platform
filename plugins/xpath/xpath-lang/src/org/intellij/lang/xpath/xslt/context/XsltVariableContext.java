@@ -63,7 +63,8 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
         return (XPathVariable) ResolveCache.getInstance(reference.getProject()).resolveWithCaching(reference, RESOLVER, false, false);
     }
 
-    private @Nullable XPathVariable resolveInner(XPathVariableReference reference) {
+    @Nullable
+    private XPathVariable resolveInner(XPathVariableReference reference) {
         final XmlTag context = getContextTagImpl(reference);
         final VariableResolveProcessor processor = new VariableResolveProcessor(reference.getReferencedName(), context);
 
@@ -94,7 +95,8 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
       return !processor.shouldContinue();
     }
 
-    protected @Nullable XmlTag getContextTagImpl(XPathElement element) {
+    @Nullable
+    protected XmlTag getContextTagImpl(XPathElement element) {
         return PsiTreeUtil.getContextOfType(element, XmlTag.class, true);
     }
 
@@ -127,7 +129,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
         return true;
     }
 
-    abstract static class VariableProcessor extends ElementProcessor<XmlTag> {
+    static abstract class VariableProcessor extends ElementProcessor<XmlTag> {
         VariableProcessor(XmlTag context) {
             super(context);
         }

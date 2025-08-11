@@ -17,36 +17,28 @@ package org.jetbrains.jps.model.serialization;
 
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.AssertionFailedError;
-import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationProperties;
 import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationType;
 import org.jetbrains.jps.model.runConfiguration.JpsRunConfiguration;
 import org.jetbrains.jps.model.runConfiguration.JpsRunConfigurationType;
 import org.jetbrains.jps.model.runConfiguration.JpsTypedRunConfiguration;
 import org.jetbrains.jps.model.serialization.runConfigurations.JpsUnknownRunConfigurationType;
-import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-public class JpsRunConfigurationsSerializationTest {
-  @Test
+public class JpsRunConfigurationsSerializationTest extends JpsSerializationTestCase {
   public void testLoadIpr() {
     doTest("jps/model-serialization/testData/run-configurations/run-configurations.ipr");
   }
 
-  @Test
   public void testLoadDirectoryBased() {
     doTest("jps/model-serialization/testData/run-configurations-dir");
   }
 
   private void doTest(final String relativePath) {
-    JpsProjectData projectData = JpsProjectData.loadFromTestData(relativePath, getClass());
-    JpsProject project = projectData.getProject();
+    loadProject(relativePath);
     List<JpsTypedRunConfiguration<JpsApplicationRunConfigurationProperties>>
-      configurations = ContainerUtil.newArrayList(project.getRunConfigurations(JpsApplicationRunConfigurationType.INSTANCE));
+      configurations = ContainerUtil.newArrayList(myProject.getRunConfigurations(JpsApplicationRunConfigurationType.INSTANCE));
     assertEquals(2, configurations.size());
 
     JpsTypedRunConfiguration<JpsApplicationRunConfigurationProperties> shared = configurations.get(0);
@@ -57,7 +49,7 @@ public class JpsRunConfigurationsSerializationTest {
     assertEquals("Main", main.getName());
     assertEquals("xxx.Main", main.getProperties().getMainClass());
 
-    List<JpsRunConfiguration> all = project.getRunConfigurations();
+    List<JpsRunConfiguration> all = myProject.getRunConfigurations();
     JpsRunConfiguration junit = findByName(all, "test");
     JpsRunConfigurationType type = ((JpsTypedRunConfiguration)junit).getType();
     assertEquals("JUnit", assertInstanceOf(type, JpsUnknownRunConfigurationType.class).getTypeId());

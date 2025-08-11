@@ -34,14 +34,6 @@ public class CoverageOptionsProvider implements PersistentStateComponent<Coverag
     myState.myActivateViewOnRun = state;
   }
 
-  public boolean showInProjectView() {
-    return myState.myShowInProjectView;
-  }
-
-  public void setShowInProjectView(boolean state) {
-    myState.myShowInProjectView = state;
-  }
-
   @Override
   public State getState() {
     return myState;
@@ -51,7 +43,6 @@ public class CoverageOptionsProvider implements PersistentStateComponent<Coverag
   public void loadState(@NotNull State state) {
     myState.myAddOrReplace = state.myAddOrReplace;
     myState.myActivateViewOnRun = state.myActivateViewOnRun;
-    myState.myShowInProjectView = state.myShowInProjectView;
   }
 
   public static final int REPLACE_SUITE = 0;
@@ -62,6 +53,5 @@ public class CoverageOptionsProvider implements PersistentStateComponent<Coverag
   public static class State {
     public int myAddOrReplace = ASK_ON_NEW_SUITE;
     public boolean myActivateViewOnRun = true;
-    public boolean myShowInProjectView = true;
   }
 }

@@ -146,15 +146,6 @@ public class Py3QuickFixTest extends PyTestCase {
                      true);
   }
 
-  // PY-12132
-  public void testAddABCToSuperclassesCaretAtAbstractMethod() {
-    doInspectionTest("PyAbstractClassInspection/quickFix/AddABCToSuperclassesCaretAtAbstractMethod/main.py",
-                     PyAbstractClassInspection.class,
-                     "Add '" + PyNames.ABC + "' to superclasses",
-                     true,
-                     true);
-  }
-
   // PY-30789
   public void testSetABCMetaAsMetaclassPy3() {
     final String[] testFiles = {
@@ -172,15 +163,6 @@ public class Py3QuickFixTest extends PyTestCase {
   // PY-30789
   public void testSetImportedABCMetaAsMetaclassPy3() {
     doInspectionTest("PyAbstractClassInspection/quickFix/SetImportedABCMetaAsMetaclassPy3/main.py",
-                     PyAbstractClassInspection.class,
-                     "Set '" + PyNames.ABC_META + "' as metaclass",
-                     true,
-                     true);
-  }
-
-  // PY-12132
-  public void testSetABCMetaAsMetaclassPy3CaretAtAbstractMethod() {
-    doInspectionTest("PyAbstractClassInspection/quickFix/SetABCMetaAsMetaclassPy3CaretAtAbstractMethod/main.py",
                      PyAbstractClassInspection.class,
                      "Set '" + PyNames.ABC_META + "' as metaclass",
                      true,

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.cloneDialog
 
 import com.intellij.icons.AllIcons
@@ -24,7 +24,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
+class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
 
   override fun getIcon(): Icon = AllIcons.Vcs.FromVCSDialog
 
@@ -40,10 +40,8 @@ internal class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
     return RepositoryUrlMainExtensionComponent(project, modalityState)
   }
 
-  internal class RepositoryUrlMainExtensionComponent(
-    private val project: Project,
-    private val modalityState: ModalityState,
-  ) : VcsCloneDialogExtensionComponent() {
+  class RepositoryUrlMainExtensionComponent(private val project: Project,
+                                            private val modalityState: ModalityState) : VcsCloneDialogExtensionComponent() {
     override fun onComponentSelected() {
       dialogStateListener.onOkActionNameChanged(getCurrentVcsComponent()?.getOkButtonText() ?: VcsBundle.message("clone.dialog.clone.button"))
       dialogStateListener.onOkActionEnabled(true)

@@ -1,8 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.find.FindUsagesSettings;
+import com.intellij.find.FindSettings;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.java.JavaBundle;
@@ -57,7 +57,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     myRoots = roots;
     myRules = rules;
 
-    myScopeChooserCombo = new ScopeChooserCombo(project, false, true, FindUsagesSettings.getInstance().getDefaultScopeName());
+    myScopeChooserCombo = new ScopeChooserCombo(project, false, true, FindSettings.getInstance().getDefaultScopeName());
     Disposer.register(myDisposable, myScopeChooserCombo);
     myScopeChooserCombo.getChildComponent().addActionListener(new ActionListener() {
       @Override
@@ -74,7 +74,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       Messages.showErrorDialog(JavaRefactoringBundle.message("type.migration.no.scope.warning.message"), CommonBundle.getErrorTitle());
       return;
     }
-    FindUsagesSettings.getInstance().setDefaultScopeName(myScopeChooserCombo.getSelectedScopeName());
+    FindSettings.getInstance().setDefaultScopeName(myScopeChooserCombo.getSelectedScopeName());
     if (myRules == null) {
       myRules = new TypeMigrationRules(getProject());
       myRules.setBoundScope(myScopeChooserCombo.getSelectedScope());
@@ -82,7 +82,8 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     invokeRefactoring(new TypeMigrationProcessor(myProject, myRoots, getMigrationTypeFunction(), myRules, true));
   }
 
-  protected abstract @NotNull Function<? super PsiElement, ? extends PsiType> getMigrationTypeFunction();
+  @NotNull
+  protected abstract Function<? super PsiElement, ? extends PsiType> getMigrationTypeFunction();
 
   protected void appendMigrationTypeEditor(JPanel panel, GridBagConstraints cs) {
   }
@@ -206,7 +207,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       }
 
       final List<PsiExpression> expressions = new ArrayList<>();
-      for (PsiReference reference : ReferencesSearch.search(root, GlobalSearchScope.fileScope(root.getContainingFile())).asIterable()) {
+      for (PsiReference reference : ReferencesSearch.search(root, GlobalSearchScope.fileScope(root.getContainingFile()))) {
         final PsiElement element = reference.getElement();
         final PsiExpression expr = PsiTreeUtil.getParentOfType(element, PsiExpression.class, false);
         if (expr != null) {
@@ -256,7 +257,8 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       return Functions.constant(getMigrationType());
     }
 
-    public @Nullable PsiType getMigrationType() {
+    @Nullable
+    public PsiType getMigrationType() {
       try {
         return myTypeCodeFragment.getType();
       }
@@ -266,7 +268,8 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       }
     }
 
-    private @Nullable PsiType getRootType() {
+    @Nullable
+    private PsiType getRootType() {
       return TypeMigrationLabeler.getElementType(myRoots[0]);
     }
 

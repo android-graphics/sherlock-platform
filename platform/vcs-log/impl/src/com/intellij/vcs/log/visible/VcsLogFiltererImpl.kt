@@ -41,7 +41,6 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.function.BiConsumer
 import java.util.stream.Collectors
-import kotlin.math.min
 
 class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvider>,
                          internal val storage: VcsLogStorage,
@@ -233,11 +232,8 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       commitCountToTry = commitCountToTry.next()
     }
 
-    // Let's not load more commits than can be currently displayed.
-    // E.g., for a small data pack commitCountToTry is almost always greater than the number of commits there.
-    val numberOfCommitsToLoad = min(graph.allCommits.size, commitCountToTry.count)
-    val commitsFromVcs = filterWithVcs(filters, graphOptions, numberOfCommitsToLoad)
-    return FilterByDetailsResult(commitsFromVcs, commitsFromVcs.size >= numberOfCommitsToLoad, commitCountToTry, FilterKind.Vcs)
+    val commitsFromVcs = filterWithVcs(filters, graphOptions, commitCountToTry.count)
+    return FilterByDetailsResult(commitsFromVcs, commitsFromVcs.size >= commitCountToTry.count, commitCountToTry, FilterKind.Vcs)
   }
 
   @Throws(VcsException::class)
@@ -524,7 +520,7 @@ internal data class FilterByDetailsResult(val matchingCommits: IntSet?,
 
 private data class FilterByHashResult(val visiblePack: VisiblePack, val commitCount: CommitCountStage, val filterKind: FilterKind)
 
-internal fun areFiltersAffectedByIndexing(filters: VcsLogFilterCollection, roots: List<VirtualFile>): Boolean {
+fun areFiltersAffectedByIndexing(filters: VcsLogFilterCollection, roots: List<VirtualFile>): Boolean {
   val detailsFilters = filters.detailsFilters
   if (detailsFilters.isEmpty()) return false
 

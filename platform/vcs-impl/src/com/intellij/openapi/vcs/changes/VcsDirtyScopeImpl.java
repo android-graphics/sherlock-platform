@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -26,9 +26,9 @@ public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope implements 
   private final Map<VirtualFile, RecursiveFilePathSet> myDirtyDirectoriesRecursively = new HashMap<>();
   private final Set<FilePath> myAllVcsRoots = new HashSet<>();
   private final Set<VirtualFile> myAffectedVcsRoots = new HashSet<>();
-  private final @NotNull Project myProject;
+  @NotNull private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
-  private final @NotNull AbstractVcs myVcs;
+  @NotNull private final AbstractVcs myVcs;
   private boolean myWasEverythingDirty;
 
   private final @Nullable HashingStrategy<FilePath> myHashingStrategy;
@@ -48,13 +48,15 @@ public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope implements 
     return myAffectedVcsRoots;
   }
 
+  @NotNull
   @Override
-  public @NotNull Project getProject() {
+  public Project getProject() {
     return myProject;
   }
 
+  @NotNull
   @Override
-  public @NotNull AbstractVcs getVcs() {
+  public AbstractVcs getVcs() {
     return myVcs;
   }
 
@@ -134,7 +136,8 @@ public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope implements 
    * @return VcsDirtyScope with trimmed duplicated paths from the sets.
    */
   @Override
-  public @NotNull VcsDirtyScopeImpl pack() {
+  @NotNull
+  public VcsDirtyScopeImpl pack() {
     VcsDirtyScopeImpl copy = new VcsDirtyScopeImpl(myVcs);
     copy.myWasEverythingDirty = myWasEverythingDirty;
     for (VirtualFile root : myAffectedVcsRoots) {
@@ -151,7 +154,8 @@ public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope implements 
     return copy;
   }
 
-  private @NotNull RecursiveFilePathSet removeAncestorsRecursive(@Nullable RecursiveFilePathSet dirs) {
+  @NotNull
+  private RecursiveFilePathSet removeAncestorsRecursive(@Nullable RecursiveFilePathSet dirs) {
     RecursiveFilePathSet result = newRecursiveFilePathSet();
     if (dirs == null) return result;
 
@@ -179,7 +183,8 @@ public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope implements 
     return myHashingStrategy == null ? new HashSet<>() : CollectionFactory.createCustomHashingStrategySet(myHashingStrategy);
   }
 
-  private @NotNull RecursiveFilePathSet newRecursiveFilePathSet() {
+  @NotNull
+  private RecursiveFilePathSet newRecursiveFilePathSet() {
     return new RecursiveFilePathSet(myCaseSensitive);
   }
 
@@ -280,7 +285,7 @@ public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope implements 
   }
 
   @Override
-  public boolean belongsTo(final @NotNull FilePath path) {
+  public boolean belongsTo(final FilePath path) {
     if (myProject.isDisposed()) return false;
     final VcsRoot rootObject = myVcsManager.getVcsRootObjectFor(path);
     if (rootObject == null || rootObject.getVcs() != myVcs) {
@@ -332,7 +337,8 @@ public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope implements 
   }
 
   @Override
-  public @NonNls String toString() {
+  @NonNls
+  public String toString() {
     @NonNls StringBuilder result = new StringBuilder("VcsDirtyScope[");
     if (!myDirtyFiles.isEmpty()) {
       result.append(" files: ");

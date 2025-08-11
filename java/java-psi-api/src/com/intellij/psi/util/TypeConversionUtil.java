@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
@@ -68,8 +68,9 @@ public final class TypeConversionUtil {
       return true;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getPresentableText(boolean annotated) {
+    public String getPresentableText(boolean annotated) {
       return "FAKE TYPE";
     }
   };
@@ -437,7 +438,8 @@ public final class TypeConversionUtil {
            InheritanceUtil.isInheritorOrSelf(subClass, psiClass, true);
   }
 
-  private static @NotNull PsiClassType obtainSafeSuperType(@NotNull PsiTypeParameter typeParameter) {
+  @NotNull
+  private static PsiClassType obtainSafeSuperType(@NotNull PsiTypeParameter typeParameter) {
     final PsiClassType superType = typeParameter.getSuperTypes()[0];
     final PsiClassType.ClassResolveResult result = superType.resolveGenerics();
     final PsiClass superClass = result.getElement();
@@ -983,7 +985,8 @@ public final class TypeConversionUtil {
     PsiClass leftResultElement = leftResult.getElement();
     PsiClass rightResultElement = rightResult.getElement();
     if (leftResultElement == null || rightResultElement == null) {
-      if (left instanceof PsiClassType && left.equalsToText(JAVA_LANG_OBJECT)) {
+      if (leftResultElement == null && rightResultElement != null &&
+              left instanceof PsiClassType && left.equalsToText(JAVA_LANG_OBJECT)) {
         return true;
       }
       if (leftResultElement != rightResultElement) return false;
@@ -1074,7 +1077,8 @@ public final class TypeConversionUtil {
     return rightBoxed != null && isAssignable(left, rightBoxed);
   }
 
-  private static @NotNull Set<String> getAllBoxedTypeSupers(@NotNull PsiClass psiClass) {
+  @NotNull
+  private static Set<String> getAllBoxedTypeSupers(@NotNull PsiClass psiClass) {
     PsiManager manager = psiClass.getManager();
     final Project project = psiClass.getProject();
     CachedValue<Set<String>> boxedHolderTypes = project.getUserData(POSSIBLE_BOXED_HOLDER_TYPES);
@@ -1153,8 +1157,8 @@ public final class TypeConversionUtil {
 
   private static final RecursionGuard<PsiType> ourGuard = RecursionManager.createGuard("isAssignable");
 
-  public static boolean typesAgree(final @NotNull PsiType typeLeft,
-                                   final @NotNull PsiType typeRight,
+  public static boolean typesAgree(@NotNull final PsiType typeLeft,
+                                   @NotNull final PsiType typeRight,
                                    final boolean allowUncheckedConversion) {
     if (typeLeft instanceof PsiWildcardType) {
       final PsiWildcardType leftWildcard = (PsiWildcardType)typeLeft;
@@ -1196,9 +1200,10 @@ public final class TypeConversionUtil {
     }
   }
 
-  public static @Nullable PsiSubstitutor getClassSubstitutor(@NotNull PsiClass superClassCandidate,
-                                                             @NotNull PsiClass derivedClassCandidate,
-                                                             @NotNull PsiSubstitutor derivedSubstitutor) {
+  @Nullable
+  public static PsiSubstitutor getClassSubstitutor(@NotNull PsiClass superClassCandidate,
+                                                   @NotNull PsiClass derivedClassCandidate,
+                                                   @NotNull PsiSubstitutor derivedSubstitutor) {
     if (superClassCandidate.getManager().areElementsEquivalent(superClassCandidate, derivedClassCandidate)) {
       PsiTypeParameter[] baseParams = superClassCandidate.getTypeParameters();
       PsiTypeParameter[] derivedParams = derivedClassCandidate.getTypeParameters();
@@ -1221,7 +1226,8 @@ public final class TypeConversionUtil {
    * @see PsiClass#isInheritor(PsiClass, boolean)
    * @see InheritanceUtil#isInheritorOrSelf(PsiClass, PsiClass, boolean)
    */
-  public static @NotNull PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass,
+  @NotNull
+  public static PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass,
                                                         @NotNull PsiClass derivedClass,
                                                         @NotNull PsiSubstitutor derivedSubstitutor) {
     if (!superClass.hasTypeParameters() && superClass.getContainingClass() == null) return PsiSubstitutor.EMPTY; //optimization and protection against EJB queer hierarchy
@@ -1236,13 +1242,15 @@ public final class TypeConversionUtil {
   }
 
   // the same as getSuperClassSubstitutor() but can return null, which means that classes were not inheritors
-  public static @Nullable PsiSubstitutor getMaybeSuperClassSubstitutor(@NotNull PsiClass superClass,
+  @Nullable
+  public static PsiSubstitutor getMaybeSuperClassSubstitutor(@NotNull PsiClass superClass,
                                                              @NotNull PsiClass derivedClass,
                                                              @NotNull PsiSubstitutor derivedSubstitutor) {
     return JavaClassSupers.getInstance().getSuperClassSubstitutor(superClass, derivedClass, derivedClass.getResolveScope(), derivedSubstitutor);
   }
 
-  public static @NotNull PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass, @NotNull PsiClassType classType) {
+  @NotNull
+  public static PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass, @NotNull PsiClassType classType) {
       final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
       return getSuperClassSubstitutor(superClass, classResolveResult.getElement(), classResolveResult.getSubstitutor());
   }
@@ -1250,7 +1258,8 @@ public final class TypeConversionUtil {
   /**
    * see JLS 5.6.2
    */
-  public static @NotNull PsiType binaryNumericPromotion(PsiType type1, PsiType type2) {
+  @NotNull
+  public static PsiType binaryNumericPromotion(PsiType type1, PsiType type2) {
     type1 = uncapture(type1);
     type2 = uncapture(type2);
     if (isDoubleType(type1)) return unbox(type1);
@@ -1263,7 +1272,8 @@ public final class TypeConversionUtil {
     return PsiTypes.intType();
   }
 
-  private static @NotNull PsiType unbox(@NotNull PsiType type) {
+  @NotNull
+  private static PsiType unbox(@NotNull PsiType type) {
     if (type instanceof PsiPrimitiveType) return type;
     if (type instanceof PsiClassType) {
       type = PsiPrimitiveType.getUnboxedType(type);
@@ -1400,8 +1410,9 @@ public final class TypeConversionUtil {
   public static PsiType erasure(@Nullable PsiType type, @NotNull PsiSubstitutor beforeSubstitutor) {
     if (type == null) return null;
     return type.accept(new PsiTypeVisitor<PsiType>() {
+      @NotNull
       @Override
-      public @NotNull PsiType visitType(@NotNull PsiType type) {
+      public PsiType visitType(@NotNull PsiType type) {
         return type;
       }
 
@@ -1419,8 +1430,9 @@ public final class TypeConversionUtil {
         return wildcardType;
       }
 
+      @Nullable
       @Override
-      public @Nullable PsiType visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
+      public PsiType visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
         return capturedWildcardType.getUpperBound().accept(this);
       }
 
@@ -1463,7 +1475,8 @@ public final class TypeConversionUtil {
     return value;
   }
 
-  public static @NotNull PsiType unboxAndBalanceTypes(PsiType type1, PsiType type2) {
+  @NotNull
+  public static PsiType unboxAndBalanceTypes(PsiType type1, PsiType type2) {
     if (type1 instanceof PsiClassType) type1 = PsiPrimitiveType.getUnboxedType(type1);
     if (type2 instanceof PsiClassType) type2 = PsiPrimitiveType.getUnboxedType(type2);
 
@@ -1514,12 +1527,7 @@ public final class TypeConversionUtil {
   public static PsiType calcTypeForBinaryExpression(PsiType lType, PsiType rType, @NotNull IElementType sign, boolean accessLType) {
     if (sign == JavaTokenType.PLUS) {
       // evaluate right argument first, since '+-/*%' is left associative and left operand tends to be bigger
-      if (rType == null) {
-        if (accessLType) {
-          return lType != null && lType.equalsToText(JAVA_LANG_STRING) ? lType : null;
-        }
-        return NULL_TYPE;
-      }
+      if (rType == null) return null;
       if (rType.equalsToText(JAVA_LANG_STRING)) {
         return rType;
       }

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.intellij.lang.xpath.xslt.impl.references;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -35,66 +36,69 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Objects;
 
-final class ExternalResourceReference implements PsiReference, LocalQuickFixProvider {
-  private final XmlAttribute attribute;
-  private final ExternalResourceManager resourceManager = ExternalResourceManager.getInstance();
+class ExternalResourceReference implements PsiReference, LocalQuickFixProvider {
+  private final XmlAttribute myAttribute;
+  private final ExternalResourceManager myResourceManager = ExternalResourceManager.getInstance();
 
   ExternalResourceReference(XmlAttribute attribute) {
-    this.attribute = attribute;
+    myAttribute = attribute;
   }
 
   @Override
   public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
-    return new LocalQuickFix[] { new DownloadResourceFix(attribute.getValue()) };
+    return new LocalQuickFix[] { new DownloadResourceFix(myAttribute.getValue()) };
   }
 
 
   @Override
-  public @NotNull PsiElement getElement() {
-    return attribute.getValueElement();
+  @NotNull
+  public PsiElement getElement() {
+    return myAttribute.getValueElement();
   }
 
   @Override
-  public @NotNull TextRange getRangeInElement() {
-    final XmlAttributeValue value = attribute.getValueElement();
+  @NotNull
+  public TextRange getRangeInElement() {
+    final XmlAttributeValue value = myAttribute.getValueElement();
     return value != null ? TextRange.from(1, value.getTextLength() - 2) : TextRange.from(0, 0);
   }
 
   @Override
-  public @Nullable PsiElement resolve() {
-    String value = attribute.getValue();
-    String resourceLocation = value == null ? null : resourceManager.getResourceLocation(value, attribute.getProject());
-    if (Objects.equals(resourceLocation, value)) {
-      return null;
-    }
+  @Nullable
+  public PsiElement resolve() {
+    final String value = myAttribute.getValue();
+    final String resourceLocation = myResourceManager.getResourceLocation(value);
 
-    VirtualFile file;
-    try {
-      file = VfsUtil.findFileByURL(new URL(resourceLocation));
-    }
-    catch (MalformedURLException e) {
+    if (!Objects.equals(resourceLocation, value)) {
+      VirtualFile file;
       try {
-        file = VfsUtil.findFileByURL(new File(resourceLocation).toURI().toURL());
+        file = VfsUtil.findFileByURL(new URL(resourceLocation));
       }
-      catch (MalformedURLException e1) {
-        file = null;
+      catch (MalformedURLException e) {
+        try {
+          file = VfsUtil.findFileByURL(new File(resourceLocation).toURI().toURL());
+        }
+        catch (MalformedURLException e1) {
+          file = null;
+        }
       }
-    }
-    if (file != null) {
-      return attribute.getManager().findFile(file);
+      if (file != null) {
+        return myAttribute.getManager().findFile(file);
+      }
     }
     return null;
   }
 
   @Override
-  public @NotNull String getCanonicalText() {
-    return attribute.getValue();
+  @NotNull
+  public String getCanonicalText() {
+    return myAttribute.getValue();
   }
 
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
-    attribute.setValue(newElementName);
-    final XmlAttributeValue value = attribute.getValueElement();
+    myAttribute.setValue(newElementName);
+    final XmlAttributeValue value = myAttribute.getValueElement();
     assert value != null;
     return value;
   }
@@ -111,7 +115,7 @@ final class ExternalResourceReference implements PsiReference, LocalQuickFixProv
 
   @Override
   public Object @NotNull [] getVariants() {
-    return resourceManager.getResourceUrls(null, false);
+    return myResourceManager.getResourceUrls(null, false);
   }
 
   @Override

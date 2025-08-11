@@ -100,7 +100,7 @@ public class PythonInspectionsTest extends PyTestCase {
 
   //PY-3373
   public void testPyDocstringParametersInspection() {
-    runWithDocStringFormat(DocStringFormat.REST, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON34));
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON34));
   }
 
   // PY-9795
@@ -110,10 +110,6 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPySimplifyBooleanCheckInspection() {
     doHighlightingTest(PySimplifyBooleanCheckInspection.class, LanguageLevel.PYTHON26);
-  }
-
-  public void testPySimplifyBooleanCheckInspectionAnnotations() {
-    doHighlightingTest(PySimplifyBooleanCheckInspection.class, LanguageLevel.PYTHON313);
   }
 
   public void testPyFromFutureImportInspection() {

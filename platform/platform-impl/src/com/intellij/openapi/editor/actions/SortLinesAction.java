@@ -6,8 +6,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-final class SortLinesAction extends EditorAction {
-  SortLinesAction() {
+public final class SortLinesAction extends EditorAction {
+  public SortLinesAction() {
     super(new AbstractPermuteLinesHandler() {
       @Override
       public void permute(String @NotNull [] lines) {

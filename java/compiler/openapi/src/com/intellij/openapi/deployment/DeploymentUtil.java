@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.deployment;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,7 +16,7 @@ public abstract class DeploymentUtil {
   }
 
   public static String trimForwardSlashes(@NotNull String path) {
-    while (!path.isEmpty() && (path.charAt(0) == '/' || path.charAt(0) == File.separatorChar)) {
+    while (path.length() != 0 && (path.charAt(0) == '/' || path.charAt(0) == File.separatorChar)) {
       path = path.substring(1);
     }
     return path;
@@ -25,7 +25,7 @@ public abstract class DeploymentUtil {
   public static String concatPaths(String... paths) {
     final StringBuilder builder = new StringBuilder();
     for (String path : paths) {
-      if (path.isEmpty()) continue;
+      if (path.length() == 0) continue;
 
       final int len = builder.length();
       if (len > 0 && builder.charAt(len - 1) != '/' && builder.charAt(len - 1) != File.separatorChar) {
@@ -43,7 +43,7 @@ public abstract class DeploymentUtil {
     if (endsWithSlash && startsWithSlash) {
       tail = trimForwardSlashes(relativePath);
     }
-    else if (!endsWithSlash && !startsWithSlash && !basePath.isEmpty() && !relativePath.isEmpty()) {
+    else if (!endsWithSlash && !startsWithSlash && basePath.length() > 0 && relativePath.length() > 0) {
       tail = "/" + relativePath;
     }
     else {
@@ -52,5 +52,7 @@ public abstract class DeploymentUtil {
     return basePath + tail;
   }
 
-  public abstract @Nullable @Nls String getConfigFileErrorMessage(ConfigFile configFile);
+  @Nullable
+  @Nls
+  public abstract String getConfigFileErrorMessage(ConfigFile configFile);
 }

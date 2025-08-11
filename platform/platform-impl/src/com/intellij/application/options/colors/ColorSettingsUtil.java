@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -63,10 +62,8 @@ public final class ColorSettingsUtil {
     return true;
   }
 
-  @NotNull
-  @Unmodifiable
-  public static List<@NotNull Pair<TextAttributesKey, @Nls String>> getErrorTextAttributes() {
-    List<Pair<TextAttributesKey, @Nls String>> attributes = new ArrayList<>(
+  public static ArrayList<Pair<TextAttributesKey, @Nls String>> getErrorTextAttributes() {
+    final ArrayList<Pair<TextAttributesKey, @Nls String>> attributes = new ArrayList<>(
       List.of(
        new Pair<>(CodeInsightColors.ERRORS_ATTRIBUTES, OptionsBundle.message("options.java.attribute.descriptor.error")),
        new Pair<>(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES, OptionsBundle.message("options.java.attribute.descriptor.unknown.symbol")),
@@ -90,7 +87,7 @@ public final class ColorSettingsUtil {
       }
     }
 
-    return List.copyOf(attributes);
+    return attributes;
   }
 
   private static void addInspectionSeverityAttributes(List<? super AttributesDescriptor> descriptors) {

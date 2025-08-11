@@ -55,7 +55,8 @@ public abstract class XsltRefactoringActionBase implements RefactoringActionHand
         throw new UnsupportedOperationException();
     }
 
-    public @Nullable @NlsContexts.NotificationContent String getErrorMessage(Editor editor, PsiFile file, XmlAttribute context) {
+    @Nullable
+    public @NlsContexts.NotificationContent String getErrorMessage(Editor editor, PsiFile file, XmlAttribute context) {
         return null;
     }
 

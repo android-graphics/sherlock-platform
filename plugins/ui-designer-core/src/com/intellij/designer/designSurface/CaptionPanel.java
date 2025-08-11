@@ -12,6 +12,7 @@ import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLayeredPane;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class CaptionPanel extends JBLayeredPane implements UiDataProvider {
+public class CaptionPanel extends JBLayeredPane implements DataProvider {
   private static final int SIZE = 16;
 
   private final boolean myHorizontal;
@@ -173,8 +174,11 @@ public class CaptionPanel extends JBLayeredPane implements UiDataProvider {
   }
 
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myActionsProvider);
+  public Object getData(@NotNull @NonNls String dataId) {
+    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+      return myActionsProvider;
+    }
+    return null;
   }
 
   public void update() {

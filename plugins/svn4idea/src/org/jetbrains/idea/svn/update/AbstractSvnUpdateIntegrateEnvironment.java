@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnvironment {
   protected final SvnVcs myVcs;
   private final ProjectLevelVcsManager myVcsManager;
-  public static final @NonNls String REPLACED_ID = "replaced";
+  @NonNls public static final String REPLACED_ID = "replaced";
 
   protected AbstractSvnUpdateIntegrateEnvironment(final SvnVcs vcs) {
     myVcs = vcs;
@@ -50,9 +50,10 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
   }
 
   @Override
-  public @NotNull UpdateSession updateDirectories(final FilePath @NotNull [] contentRoots,
-                                                  final UpdatedFiles updatedFiles,
-                                                  final ProgressIndicator progressIndicator, final @NotNull Ref<SequentialUpdatesContext> context)
+  @NotNull
+  public UpdateSession updateDirectories(final FilePath @NotNull [] contentRoots,
+                                         final UpdatedFiles updatedFiles,
+                                         final ProgressIndicator progressIndicator, @NotNull final Ref<SequentialUpdatesContext> context)
     throws ProcessCanceledException {
 
     if (context.isNull()) {
@@ -224,7 +225,8 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
         return writable;
       }
 
-      protected abstract @Nullable List<VirtualFile> merge();
+      @Nullable
+      protected abstract List<VirtualFile> merge();
 
       @Override
       public void run() {
@@ -290,5 +292,6 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
                                                  ArrayList<VcsException> exceptions, UpdatedFiles updatedFiles);
 
   @Override
-  public abstract @Nullable Configurable createConfigurable(Collection<FilePath> collection);
+  @Nullable
+  public abstract Configurable createConfigurable(Collection<FilePath> collection);
 }

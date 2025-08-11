@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -23,27 +23,29 @@ public final class BatchSuppressManagerImpl implements BatchSuppressManager {
   }
 
   @Override
-  public boolean isSuppressedFor(final @NotNull PsiElement element, final @NotNull String toolId) {
+  public boolean isSuppressedFor(@NotNull final PsiElement element, @NotNull final String toolId) {
     return JavaSuppressionUtil.getElementToolSuppressedIn(element, toolId) != null;
   }
 
   @Override
-  public @Nullable String getSuppressedInspectionIdsIn(@NotNull PsiElement element) {
+  @Nullable
+  public String getSuppressedInspectionIdsIn(@NotNull PsiElement element) {
     return JavaSuppressionUtil.getSuppressedInspectionIdsIn(element);
   }
 
   @Override
-  public @Nullable PsiElement getElementToolSuppressedIn(final @NotNull PsiElement place, final @NotNull String toolId) {
+  @Nullable
+  public PsiElement getElementToolSuppressedIn(@NotNull final PsiElement place, @NotNull final String toolId) {
     return JavaSuppressionUtil.getElementToolSuppressedIn(place, toolId);
   }
 
   @Override
-  public boolean canHave15Suppressions(final @NotNull PsiElement file) {
+  public boolean canHave15Suppressions(@NotNull final PsiElement file) {
     return JavaSuppressionUtil.canHave15Suppressions(file);
   }
 
   @Override
-  public boolean alreadyHas14Suppressions(final @NotNull PsiDocCommentOwner commentOwner) {
+  public boolean alreadyHas14Suppressions(@NotNull final PsiDocCommentOwner commentOwner) {
     return JavaSuppressionUtil.alreadyHas14Suppressions(commentOwner);
   }
 }

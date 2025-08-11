@@ -4,7 +4,6 @@ package com.intellij.diff.editor
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.impl.DiffEditorViewerListener
 import com.intellij.diff.impl.DiffRequestProcessor
-import com.intellij.diff.impl.DiffSettingsHolder
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -15,17 +14,17 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.reopenVirtualFileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.JComponent
 
 @Suppress("LeakingThis")
 open class DiffEditorViewerFileEditor(
   file: VirtualFile,
-  val editorViewer: DiffEditorViewer,
+  val editorViewer: DiffEditorViewer
 ) : DiffFileEditorBase(file,
                        editorViewer.component,
                        editorViewer.disposable), FileEditorWithTextEditors {
-  private val settings by lazy { DiffSettingsHolder.DiffSettings.getSettings() }
 
   init {
     editorViewer.addListener(MyEditorViewerListener(), this)
@@ -43,7 +42,7 @@ open class DiffEditorViewerFileEditor(
   }
 
   override fun getState(level: FileEditorStateLevel): FileEditorState {
-    if (settings.isIncludedInNavigationHistory == DiffSettingsHolder.IncludeInNavigationHistory.Never) {
+    if (!Registry.`is`(DIFF_IN_NAVIGATION_HISTORY_KEY)) {
       return FileEditorState.INSTANCE
     }
 
@@ -51,9 +50,7 @@ open class DiffEditorViewerFileEditor(
   }
 
   override fun setState(state: FileEditorState) {
-    if (settings.isIncludedInNavigationHistory == DiffSettingsHolder.IncludeInNavigationHistory.Never) {
-      return
-    }
+    if (!Registry.`is`(DIFF_IN_NAVIGATION_HISTORY_KEY)) return
 
     editorViewer.setState(state)
   }
@@ -94,5 +91,5 @@ open class DiffEditorViewerFileEditor(
 open class DiffRequestProcessorEditor(
   file: VirtualFile,
   @Deprecated("use editorViewer instead", replaceWith = ReplaceWith("editorViewer"))
-  val processor: DiffRequestProcessor,
+  val processor: DiffRequestProcessor
 ) : DiffEditorViewerFileEditor(file, processor)

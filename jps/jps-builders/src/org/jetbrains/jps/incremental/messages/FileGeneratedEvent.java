@@ -1,9 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.messages;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 
@@ -17,21 +17,21 @@ import java.util.Collections;
 public final class FileGeneratedEvent extends BuildMessage {
   private static final Logger LOG = Logger.getInstance(FileGeneratedEvent.class);
 
-  private final Collection<Pair<String, String>> paths = new ArrayList<>();
-  private final BuildTarget<?> sourceTarget;
+  private final Collection<Pair<String, String>> myPaths = new ArrayList<>();
+  private final BuildTarget<?> mySourceTarget;
 
   public FileGeneratedEvent(@NotNull BuildTarget<?> sourceTarget) {
     super("", Kind.INFO);
-    this.sourceTarget = sourceTarget;
+    mySourceTarget = sourceTarget;
   }
 
   public @NotNull BuildTarget<?> getSourceTarget() {
-    return sourceTarget;
+    return mySourceTarget;
   }
 
   public void add(String root, String relativePath) {
     if (root != null && relativePath != null) {
-      paths.add(new Pair<>(FileUtilRt.toSystemIndependentName(root), FileUtilRt.toSystemIndependentName(relativePath)));
+      myPaths.add(Pair.create(FileUtil.toSystemIndependentName(root), FileUtil.toSystemIndependentName(relativePath)));
     }
     else {
       LOG.info("Invalid file generation event: root=" + root + "; relativePath=" + relativePath);
@@ -44,10 +44,6 @@ public final class FileGeneratedEvent extends BuildMessage {
    * modified by the build process.
    */
   public @NotNull Collection<Pair<String, String>> getPaths() {
-    return Collections.unmodifiableCollection(paths);
-  }
-
-  public boolean isEmpty() {
-    return paths.isEmpty();
+    return Collections.unmodifiableCollection(myPaths);
   }
 }

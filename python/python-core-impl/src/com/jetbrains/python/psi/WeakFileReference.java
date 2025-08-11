@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi;
 
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -14,13 +14,15 @@ public class WeakFileReference extends FileReferenceWithOneContext implements Ps
     super(fileReferenceSet, range, index, text);
   }
 
+  @Nullable
   @Override
-  public @Nullable HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
+  public HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
     return HighlightSeverity.WARNING;
   }
 
+  @Nullable
   @Override
-  public @Nullable @Nls String getUnresolvedDescription() {
+  public @Nls String getUnresolvedDescription() {
     return null;
   }
 }

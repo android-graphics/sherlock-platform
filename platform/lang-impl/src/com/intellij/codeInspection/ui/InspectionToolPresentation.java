@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
@@ -25,9 +27,10 @@ public interface InspectionToolPresentation extends InspectionToolResultExporter
 
   }
 
-  default @NotNull RefElementNode createRefNode(@Nullable RefEntity entity,
-                                                @NotNull InspectionTreeModel model,
-                                                @NotNull InspectionTreeNode parent) {
+  @NotNull
+  default RefElementNode createRefNode(@Nullable RefEntity entity,
+                                       @NotNull InspectionTreeModel model,
+                                       @NotNull InspectionTreeNode parent) {
     return new RefElementNode(entity, this, parent);
   }
 
@@ -43,17 +46,20 @@ public interface InspectionToolPresentation extends InspectionToolResultExporter
   GlobalInspectionContextImpl getContext();
 
   /** Override the preview panel for the entity. */
-  default @Nullable JComponent getCustomPreviewPanel(@NotNull RefEntity entity) {
+  @Nullable
+  default JComponent getCustomPreviewPanel(@NotNull RefEntity entity) {
     return null;
   }
 
   /** Override the preview panel for the problem descriptor. */
-  default @Nullable JComponent getCustomPreviewPanel(@NotNull CommonProblemDescriptor descriptor, @NotNull Disposable parent) {
+  @Nullable
+  default JComponent getCustomPreviewPanel(@NotNull CommonProblemDescriptor descriptor, @NotNull Disposable parent) {
     return null;
   }
 
   /** Additional actions applicable to the problem descriptor. May be (but not necessarily) related to the custom preview panel. */
-  default @Nullable JComponent getCustomActionsPanel(@NotNull CommonProblemDescriptor descriptor, @NotNull Disposable parent) {
+  @Nullable
+  default JComponent getCustomActionsPanel(@NotNull CommonProblemDescriptor descriptor, @NotNull Disposable parent) {
     return null;
   }
 

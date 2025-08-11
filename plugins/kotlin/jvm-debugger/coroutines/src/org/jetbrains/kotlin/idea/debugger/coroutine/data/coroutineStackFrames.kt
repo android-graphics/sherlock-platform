@@ -14,7 +14,6 @@ import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.sun.jdi.Location
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinVariableNameFinder
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.safeCoroutineStackFrameProxy
@@ -28,11 +27,12 @@ import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
  * resumeWith()
  *
  */
-@ApiStatus.Internal
 class CoroutinePreflightFrame(
-    val coroutineStacksInfoData: CoroutineStacksInfoData,
-    frame: StackFrameProxyImpl,
+    val coroutineInfoData: CoroutineInfoData,
+    val frame: StackFrameProxyImpl,
     val threadPreCoroutineFrames: List<StackFrameProxyImpl>,
+    val mode: SuspendExitMode,
+    val isFirstSuspendFrame: Boolean,
     firstFrameVariables: List<JavaValue>
 ) : CoroutineStackFrame(frame, null, firstFrameVariables) {
 
@@ -45,16 +45,18 @@ class CoroutinePreflightFrame(
 class CreationCoroutineStackFrame(
     frame: StackFrameProxyImpl,
     sourcePosition: XSourcePosition?,
-    private var withSeparator: Boolean,
+    private var withSepartor: Boolean,
     location: Location? = frame.safeLocation()
 ) : CoroutineStackFrame(frame, sourcePosition, emptyList(), false, location), XDebuggerFramesList.ItemWithSeparatorAbove {
 
     override fun getCaptionAboveOf() =
         KotlinDebuggerCoroutinesBundle.message("coroutine.dump.creation.trace")
 
-    override fun hasSeparatorAbove() = withSeparator
+    override fun hasSeparatorAbove() =
+        withSepartor
+
     override fun setWithSeparator(withSeparator: Boolean) {
-        this.withSeparator = withSeparator
+        this.withSepartor = withSeparator
     }
 }
 

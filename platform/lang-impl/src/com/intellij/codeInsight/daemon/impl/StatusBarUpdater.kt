@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
-import com.intellij.codeInsight.multiverse.EditorContextManager.Companion.getInstance
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
@@ -81,9 +80,7 @@ private suspend fun updateStatus(project: Project, daemonCodeAnalyzer: DaemonCod
     }
 
     val offset = editor.caretModel.offset
-    val editorContextManager = getInstance(project)
-    val context = editorContextManager.getEditorContexts(editor).mainContext
-    daemonCodeAnalyzer.findHighlightByOffset(document, offset, false, MIN, context)?.description ?: ""
+    daemonCodeAnalyzer.findHighlightByOffset(document, offset, false, MIN)?.description ?: ""
   } ?: return
 
   if (text.takeIf { it.isNotEmpty() } != statusBar.info?.takeIf { it.isNotEmpty() }) {

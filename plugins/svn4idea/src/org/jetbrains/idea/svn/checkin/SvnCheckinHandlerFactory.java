@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,8 +38,9 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     super(SvnVcs.getKey());
   }
 
+  @NotNull
   @Override
-  protected @NotNull CheckinHandler createVcsHandler(@NotNull CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
+  protected CheckinHandler createVcsHandler(@NotNull CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
     final Project project = panel.getProject();
     return new CheckinHandler() {
       @Override
@@ -99,7 +100,8 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     };
   }
 
-  private static @NotNull MultiMap<Url, WorkingCopyFormat> splitIntoCopies(@NotNull SvnVcs vcs, @NotNull Collection<Change> changes) {
+  @NotNull
+  private static MultiMap<Url, WorkingCopyFormat> splitIntoCopies(@NotNull SvnVcs vcs, @NotNull Collection<Change> changes) {
     MultiMap<Url, WorkingCopyFormat> result = MultiMap.createSet();
     SvnFileUrlMapping mapping = vcs.getSvnFileUrlMapping();
 

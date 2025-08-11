@@ -1,1 +1,0 @@
-Tools to create venv (to be used in prod and tests) and test fixture (see showcase)

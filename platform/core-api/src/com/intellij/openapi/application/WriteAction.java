@@ -130,14 +130,14 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   public static <T, E extends Throwable> T computeAndWait(@NotNull ThrowableComputable<T, E> action, ModalityState modalityState) throws E {
     Application application = ApplicationManager.getApplication();
     if (application.isWriteIntentLockAcquired()) {
-      return application.runWriteAction(action);
+      return ApplicationManager.getApplication().runWriteAction(action);
     }
 
     if (SwingUtilities.isEventDispatchThread()) {
       return application.runWriteIntentReadAction(() -> application.runWriteAction(action));
     }
 
-    if (application.holdsReadLock()) {
+    if (application.isReadAccessAllowed()) {
       LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
     }
 

@@ -1,8 +1,0 @@
-Original text:
----------------
-print("Hello, World")
----------------
-Subtree: Language: Python
----------------
-<reparse>print("Hello,"); print(","); print("World")</reparse>
----------------

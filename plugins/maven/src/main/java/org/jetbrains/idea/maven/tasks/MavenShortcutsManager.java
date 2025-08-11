@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.openapi.Disposable;
@@ -15,7 +15,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.update.MergingQueueUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
@@ -26,10 +25,11 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
+import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.nio.file.Path;
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -100,7 +100,7 @@ public final class MavenShortcutsManager implements Disposable {
     if (projectPath != null) {
       String portablePath = FileUtil.toSystemIndependentName(projectPath);
 
-      result.append(Path.of(portablePath).getParent().getFileName());
+      result.append(new File(portablePath).getParentFile().getName());
       result.append(Integer.toHexString(portablePath.hashCode()));
 
       if (goal != null) result.append(goal);
@@ -145,7 +145,7 @@ public final class MavenShortcutsManager implements Disposable {
     void shortcutsUpdated();
   }
 
-  private final class MyProjectsTreeListener implements MavenProjectsManager.Listener, MavenProjectsTree.Listener {
+  private class MyProjectsTreeListener implements MavenProjectsManager.Listener, MavenProjectsTree.Listener {
     private final Map<MavenProject, Boolean> mySheduledProjects = new HashMap<>();
     private final MergingUpdateQueue myUpdateQueue = new MavenMergingUpdateQueue("MavenShortcutsManager: Keymap Update",
                                                                                  500, true, MavenShortcutsManager.this).usePassThroughInUnitTestMode();
@@ -156,19 +156,20 @@ public final class MavenShortcutsManager implements Disposable {
     }
 
     @Override
-    public void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored, @NotNull List<MavenProject> unignored, boolean fromImport) {
+    public void projectsIgnoredStateChanged(List<? extends MavenProject> ignored, List<? extends MavenProject> unignored, boolean fromImport) {
       scheduleKeymapUpdate(unignored, true);
       scheduleKeymapUpdate(ignored, false);
     }
 
     @Override
-    public void projectsUpdated(@NotNull List<? extends Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
+    public void projectsUpdated(List<? extends Pair<MavenProject, MavenProjectChanges>> updated, List<? extends MavenProject> deleted) {
       scheduleKeymapUpdate(MavenUtil.collectFirsts(updated), true);
       scheduleKeymapUpdate(deleted, false);
     }
 
     @Override
-    public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+    public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                NativeMavenProjectHolder nativeMavenProject) {
       scheduleKeymapUpdate(Collections.singletonList(projectWithChanges.first), true);
     }
 
@@ -177,14 +178,14 @@ public final class MavenShortcutsManager implements Disposable {
       scheduleKeymapUpdate(Collections.singletonList(project), true);
     }
 
-    private void scheduleKeymapUpdate(List<MavenProject> mavenProjects, boolean forUpdate) {
+    private void scheduleKeymapUpdate(List<? extends MavenProject> mavenProjects, boolean forUpdate) {
       synchronized (mySheduledProjects) {
         for (MavenProject each : mavenProjects) {
           mySheduledProjects.put(each, forUpdate);
         }
       }
 
-      MergingQueueUtil.queueTracked(myUpdateQueue, new Update(MavenShortcutsManager.this) {
+      myUpdateQueue.queue(new Update(MavenShortcutsManager.this) {
         @Override
         public void run() {
           List<MavenProject> projectToUpdate;

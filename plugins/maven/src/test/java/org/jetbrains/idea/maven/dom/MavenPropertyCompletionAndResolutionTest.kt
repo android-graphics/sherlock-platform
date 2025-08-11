@@ -4,13 +4,16 @@ package org.jetbrains.idea.maven.dom
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.lang.properties.IProperty
 import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlTag
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import org.jetbrains.idea.maven.dom.model.MavenDomProfiles
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel
-import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -18,85 +21,97 @@ import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem
 import org.junit.Test
 
 class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
-
+  
   override fun setUp() = runBlocking {
     super.setUp()
 
     importProjectAsync("""
-                        <groupId>test</groupId>
-                        <artifactId>project</artifactId>
-                        <version>1</version>
-                        """.trimIndent())
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """.trimIndent())
   }
 
   @Test
   fun testResolutionToProject() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <name>${'$'}{<caret>project.version}</name>
                        """.trimIndent())
 
-    assertResolved(projectPom, findTag("project.version"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag("project.version"))
+    }
   }
 
   @Test
   fun testResolutionToProjectAt() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <name>@<caret>project.version@</name>
                        """.trimIndent())
 
-    assertResolved(projectPom, findTag("project.version"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag("project.version"))
+    }
   }
 
   @Test
   fun testCorrectlyCalculatingTextRangeWithLeadingWhitespaces() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <name>     ${'$'}{<caret>project.version}</name>
                        """.trimIndent())
 
-    assertResolved(projectPom, findTag("project.version"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag("project.version"))
+    }
   }
 
   @Test
   fun testBuiltInBasedirProperty() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId<artifactId>project</artifactId>
                        <version>1</version>
                        <name>${'$'}{<caret>basedir}</name>
                        """.trimIndent())
 
     val baseDir = readAction { PsiManager.getInstance(project).findDirectory(projectPom.getParent())!! }
-    assertResolved(projectPom, baseDir)
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, baseDir)
+    }
 
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId<artifactId>project</artifactId>
                        <version>1</version>
                        <name>${'$'}{<caret>project.basedir}</name>
                        """.trimIndent())
 
 
-    assertResolved(projectPom, baseDir)
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, baseDir)
+    }
 
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId<artifactId>project</artifactId>
                        <version>1</version>
                        <name>${'$'}{<caret>pom.basedir}</name>
                        """.trimIndent())
 
-    assertResolved(projectPom, baseDir)
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, baseDir)
+    }
   }
 
   @Test
   fun testBuiltInMavenMultimoduleDirProperty() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId<artifactId>project</artifactId>
                        <version>1</version>
                        <properties>
@@ -104,8 +119,10 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        </properties>>
                        """.trimIndent())
 
-    val multimoduleDir = readAction { PsiManager.getInstance(project).findDirectory(projectPom.getParent()) }
-    assertResolved(projectPom, multimoduleDir!!)
+    withContext(Dispatchers.EDT) {
+      val multimoduleDir = PsiManager.getInstance(project).findDirectory(projectPom.getParent())
+      assertResolved(projectPom, multimoduleDir!!)
+    }
   }
 
   @Test
@@ -119,7 +136,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                        </parent>
                                        <artifactId>m1</artifactId>
                                        """.trimIndent())
-    updateProjectPom("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -128,9 +145,8 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                       <module>m1</module>
                     </modules>
                     """.trimIndent())
-    updateAllProjects()
 
-    val m1 = updateModulePom("m1",
+    val m1 = createModulePom("m1",
                              """
                                        <parent>
                                           <groupId>test</groupId>
@@ -142,34 +158,40 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                          <myDir>${'$'}{<caret>maven.multiModuleProjectDirectory}</myDir>
                                        </properties>
                                        """.trimIndent())
-    val multimoduleDir = readAction { PsiManager.getInstance(project).findDirectory(projectPom.getParent()) }
-    assertResolved(m1, multimoduleDir!!)
+    withContext(Dispatchers.EDT) {
+      val multimoduleDir = PsiManager.getInstance(project).findDirectory(projectPom.getParent())
+      assertResolved(m1, multimoduleDir!!)
+    }
   }
 
   @Test
   fun testResolutionWithSeveralProperties() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <name>${'$'}{<caret>project.artifactId}-${'$'}{project.version}</name>
                        """.trimIndent())
 
-    assertResolved(projectPom, findTag("project.artifactId"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag("project.artifactId"))
+    }
 
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <name>${'$'}{project.artifactId}-${'$'}{<caret>project.version}</name>
                        """.trimIndent())
 
-    assertResolved(projectPom, findTag("project.version"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag("project.version"))
+    }
   }
 
   @Test
   fun testResolvingFromPropertiesSection() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -178,12 +200,14 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        </properties>
                        """.trimIndent())
 
-    assertResolved(projectPom, findTag("project.version"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag("project.version"))
+    }
   }
 
   @Test
   fun testResolvingFromPropertiesSectionAt() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -192,83 +216,97 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        </properties>
                        """.trimIndent())
 
-    assertResolved(projectPom, findTag("project.version"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag("project.version"))
+    }
   }
 
   @Test
   fun testResolutionToUnknownProjectProperty() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <name>${'$'}{<caret>project.bar}</name>
                        """.trimIndent())
 
-    assertUnresolved(projectPom)
+    withContext(Dispatchers.EDT) {
+      assertUnresolved(projectPom)
+    }
   }
 
   @Test
   fun testResolutionToAbsentProjectProperty() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <name>${'$'}{<caret>project.description}</name>
                        """.trimIndent())
 
-    assertResolved(projectPom, findTag("project.name"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag("project.name"))
+    }
   }
 
   @Test
   fun testResolutionToAbsentPomProperty() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <name>${'$'}{<caret>pom.description}</name>
                        """.trimIndent())
 
-    assertResolved(projectPom, findTag("project.name"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag("project.name"))
+    }
   }
 
   @Test
   fun testResolutionToAbsentUnclassifiedProperty() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <name>${'$'}{<caret>description}</name>
                        """.trimIndent())
 
-    assertResolved(projectPom, findTag("project.name"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag("project.name"))
+    }
   }
 
   @Test
   fun testResolutionToPomProperty() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <name>${'$'}{<caret>pom.version}</name>
                        """.trimIndent())
 
-    assertResolved(projectPom, findTag("project.version"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag("project.version"))
+    }
   }
 
   @Test
   fun testResolutionToUnclassifiedProperty() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId<artifactId>project</artifactId>
                        <version>1</version>
                        <name>${'$'}{<caret>version}</name>
                        """.trimIndent())
 
-    assertResolved(projectPom, findTag("project.version"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag("project.version"))
+    }
   }
 
   @Test
   fun testResolutionToDerivedCoordinatesFromProjectParent() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <artifactId>project</artifactId>
                        <parent>
                          <groupId>test</groupId  <artifactId>parent</artifactId>
@@ -277,12 +315,14 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        <name>${'$'}{<caret>project.version}</name>
                        """.trimIndent())
 
-    assertResolved(projectPom, findTag("project.parent.version"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag("project.parent.version"))
+    }
   }
 
   @Test
   fun testResolutionToProjectParent() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId<artifactId>project</artifactId>
                        <version>1</version>
                        <parent>
@@ -292,12 +332,14 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        <name>${'$'}{<caret>project.parent.version}</name>
                        """.trimIndent())
 
-    assertResolved(projectPom, findTag("project.parent.version"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag("project.parent.version"))
+    }
   }
 
   @Test
   fun testResolutionToInheritedModelPropertiesForManagedParent() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -334,68 +376,74 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                       <name>${'$'}{<caret>project.build.directory}</name>
                       """.trimIndent())
 
-    assertResolved(child, findTag(projectPom, "project.build.directory"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(child, findTag(projectPom, "project.build.directory"))
+    }
   }
 
   @Test
   fun testResolutionToInheritedModelPropertiesForRelativeParent() = runBlocking {
-    updateProjectPom("""
-                     <groupId>test</groupId>
-                     <artifactId>project</artifactId>
-                     <version>1</version>
-                     <parent>
+    withContext(Dispatchers.EDT) {
+      createProjectPom("""
                        <groupId>test</groupId>
-                       <artifactId>parent</artifactId>
+                       <artifactId>project</artifactId>
                        <version>1</version>
-                       <relativePath>./parent/pom.xml</version>
-                     </parent>
-                     <name>${'$'}{<caret>project.build.directory}</name>
-                     """.trimIndent())
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>parent</artifactId>
+                         <version>1</version>
+                         <relativePath>./parent/pom.xml</version>
+                       </parent>
+                       <name>${'$'}{<caret>project.build.directory}</name>
+                       """.trimIndent())
 
-    val parent = createModulePom("parent",
-                                 """
-                                         <groupId>test</groupId>
-                                         <artifactId>parent</artifactId>
-                                         <version>1</version>
-                                         <build>
-                                           <directory>dir</directory>
-                                         </build>
-                                         """.trimIndent())
+      val parent = createModulePom("parent",
+                                   """
+                                           <groupId>test</groupId>
+                                           <artifactId>parent</artifactId>
+                                           <version>1</version>
+                                           <build>
+                                             <directory>dir</directory>
+                                           </build>
+                                           """.trimIndent())
 
-    assertResolved(projectPom, findTag(parent, "project.build.directory"))
+      assertResolved(projectPom, findTag(parent, "project.build.directory"))
+    }
   }
 
   @Test
   fun testResolutionToInheritedPropertiesForNonManagedParent() = runBlocking {
-    updateProjectPom("""
-                     <groupId>test</groupId>
-                     <artifactId>project</artifactId>
-                     <version>1</version>
-                     <parent>
+    withContext(Dispatchers.EDT) {
+      createProjectPom("""
                        <groupId>test</groupId>
-                       <artifactId>parent</artifactId>
+                       <artifactId>project</artifactId>
                        <version>1</version>
-                       <relativePath>parent/pom.xml</version>
-                     </parent>
-                     <name>${'$'}{<caret>foo}</name>
-                     """.trimIndent())
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>parent</artifactId>
+                         <version>1</version>
+                         <relativePath>parent/pom.xml</version>
+                       </parent>
+                       <name>${'$'}{<caret>foo}</name>
+                       """.trimIndent())
 
-    val parent = createModulePom("parent",
-                                 """
-                                         <groupId>test</groupId>
-                                         <artifactId>parent</artifactId>
-                                         <version>1</version>
-                                         <properties>
-                                           <foo>value</foo>
-                                         </properties>
-                                         """.trimIndent())
+      val parent = createModulePom("parent",
+                                   """
+                                           <groupId>test</groupId>
+                                           <artifactId>parent</artifactId>
+                                           <version>1</version>
+                                           <properties>
+                                             <foo>value</foo>
+                                           </properties>
+                                           """.trimIndent())
 
-    assertResolved(projectPom, findTag(parent, "project.properties.foo"))
+      assertResolved(projectPom, findTag(parent, "project.properties.foo"))
+    }
   }
 
   @Test
   fun testResolutionToInheritedSuperPomProjectProperty() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -404,12 +452,14 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
     val effectiveSuperPom = MavenUtil.resolveSuperPomFile(project, projectPom)
     assertNotNull(effectiveSuperPom)
-    assertResolved(projectPom, findTag(effectiveSuperPom!!, "project.build.finalName"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag(effectiveSuperPom, "project.build.finalName"))
+    }
   }
 
   @Test
   fun testHandleResolutionRecursion() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -435,12 +485,14 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                       </parent>
                       """.trimIndent())
 
-    assertResolved(projectPom, findTag(projectPom, "project.name"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag(projectPom, "project.name"))
+    }
   }
 
   @Test
   fun testResolutionFromProperties() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -450,12 +502,14 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        <name>${'$'}{<caret>foo}</name>
                        """.trimIndent())
 
-    assertResolved(projectPom, findTag(projectPom, "project.properties.foo"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag(projectPom, "project.properties.foo"))
+    }
   }
 
   @Test
   fun testResolutionWithProfiles() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -473,21 +527,19 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                            </properties>
                          </profile>
                        </profiles>
-                       <name>${'$'}{foo}</name>
+                       <name>${'$'}{<caret>foo}</name>
                        """.trimIndent())
 
     readWithProfiles("two")
 
-    moveCaretTo(projectPom, """
-      </profiles>
-      <name>${'$'}{<caret>foo}</name>""".trimIndent())
-
-    assertResolved(projectPom, findTag(projectPom, "project.profiles[1].properties.foo"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag(projectPom, "project.profiles[1].properties.foo"))
+    }
   }
 
   @Test
   fun testResolutionToPropertyDefinedWithinProfiles() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -514,12 +566,14 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     readWithProfiles("one")
-    assertResolved(projectPom, findTag(projectPom, "project.profiles[1].properties.foo"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag(projectPom, "project.profiles[1].properties.foo"))
+    }
   }
 
   @Test
   fun testResolutionToPropertyDefinedOutsideProfiles() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -537,12 +591,14 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     readWithProfiles("one")
-    assertResolved(projectPom, findTag(projectPom, "project.properties.foo"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag(projectPom, "project.properties.foo"))
+    }
   }
 
   @Test
   fun testResolutionWithDefaultProfiles() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -563,21 +619,19 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                            </properties>
                          </profile>
                        </profiles>
-                       <name>${'$'}{foo}</name>
+                       <name>${'$'}{<caret>foo}</name>
                        """.trimIndent())
 
     updateAllProjects()
 
-    moveCaretTo(projectPom, """
-      </profiles>
-      <name>${'$'}{<caret>foo}</name>""".trimIndent())
-
-    assertResolved(projectPom, findTag(projectPom, "project.profiles[1].properties.foo"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag(projectPom, "project.profiles[1].properties.foo"))
+    }
   }
 
   @Test
   fun testResolutionWithTriggeredProfiles() = runBlocking {
-    importProjectAsync("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -598,39 +652,19 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                            </properties>
                          </profile>
                        </profiles>
-                       <name>${'$'}{foo}</name>
+                       <name>${'$'}{<caret>foo}</name>
                        """.trimIndent())
 
-    createProjectPom("""
-      <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <profiles>
-                         <profile>
-                           <id>one</id>
-                           <properties>
-                             <foo>value</foo>
-                           </properties>
-                         </profile>
-                         <profile>
-                           <id>two</id>
-                           <activation>
-                             <jdk>[1.5,)</jdk>
-                           </activation>
-                           <properties>
-                             <foo>value</foo>
-                           </properties>
-                         </profile>
-                       </profiles>
-                       <name>${'$'}{<caret>foo}</name>
-""")
+    updateAllProjects()
 
-    assertResolved(projectPom, findTag(projectPom, "project.profiles[1].properties.foo"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag(projectPom, "project.profiles[1].properties.foo"))
+    }
   }
 
   @Test
   fun testResolvingToProfilesBeforeModelsProperties() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -650,7 +684,9 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
     readWithProfiles("one")
 
-    assertResolved(projectPom, findTag(projectPom, "project.profiles[0].properties.foo"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag(projectPom, "project.profiles[0].properties.foo"))
+    }
   }
 
   @Test
@@ -677,7 +713,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        </profiles>
                        """.trimIndent())
 
-    updateProjectPom("""
+    setPomContentAsync(projectPom, """
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -686,8 +722,10 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
     readWithProfiles("two")
 
-    moveCaretTo(projectPom, "<name>${'$'}{<caret>foo}</name>")
-    assertResolved(projectPom, findTag(profiles, "settings.profiles[1].properties.foo", MavenDomSettingsModel::class.java))
+    withContext(Dispatchers.EDT) {
+      moveCaretTo(projectPom, "<name>${'$'}{<caret>foo}</name>")
+      assertResolved(projectPom, findTag(profiles, "settings.profiles[1].properties.foo", MavenDomSettingsModel::class.java))
+    }
   }
 
   @Test
@@ -697,14 +735,16 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
   ${repositoryPath}</localRepository>
   """.trimIndent())
 
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <name>${'$'}{<caret>settings.localRepository}</name>
                        """.trimIndent())
 
-    assertResolved(projectPom, findTag(profiles, "settings.localRepository", MavenDomSettingsModel::class.java))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag(profiles, "settings.localRepository", MavenDomSettingsModel::class.java))
+    }
   }
 
   @Test
@@ -722,9 +762,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                                </profiles>
                                                """.trimIndent())
 
-    refreshFiles(listOf(profiles))
     fixture.configureFromExistingVirtualFile(profiles)
-
     fixture.complete(CompletionType.BASIC)
     val strings = fixture.getLookupElementStrings()!!
 
@@ -746,9 +784,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                                </profiles>
                                                """.trimIndent())
 
-    refreshFiles(listOf(profiles))
     fixture.configureFromExistingVirtualFile(profiles)
-
     readAction {
       val elementAtCaret = fixture.getElementAtCaret()
       assert(elementAtCaret is XmlTag)
@@ -758,96 +794,136 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
   @Test
   fun testResolvingAbsentSettingsModelProperties() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <name>${'$'}{<caret>settings.localRepository}</name>
                        """.trimIndent())
 
-    assertResolved(projectPom, findTag(projectPom, "project.name"))
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag(projectPom, "project.name"))
+    }
   }
 
   @Test
   fun testResolvingUnknownSettingsModelProperties() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <name>${'$'}{<caret>settings.foo.bar}</name>
                        """.trimIndent())
 
-    assertUnresolved(projectPom)
+    withContext(Dispatchers.EDT) {
+      assertUnresolved(projectPom)
+    }
+  }
+
+  @Test
+  fun testResolvingPropertiesInOldStyleProfilesXml() = runBlocking {
+    val profiles = createProfilesXmlOldStyle("""
+                                                       <profile>
+                                                         <id>one</id>
+                                                         <properties>
+                                                           <foo>value</foo>
+                                                         </properties>
+                                                       </profile>
+                                                       <profile>
+                                                         <id>two</id>
+                                                         <properties>
+                                                           <foo>value</foo>
+                                                         </properties>
+                                                       </profile>
+                                                       """.trimIndent())
+
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <name>${'$'}{<caret>foo}</name>
+                       """.trimIndent())
+
+    readWithProfiles("two")
+
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, findTag(profiles, "profiles[1].properties.foo", MavenDomProfiles::class.java))
+    }
   }
 
   @Test
   fun testResolvingInheritedProperties() = runBlocking {
-    updateProjectPom("""
-                     <groupId>test</groupId>
-                     <artifactId>project</artifactId>
-                     <version>1</version>
-                     <parent>
+    withContext(Dispatchers.EDT) {
+      createProjectPom("""
                        <groupId>test</groupId>
-                       <artifactId>parent</artifactId>
+                       <artifactId>project</artifactId>
                        <version>1</version>
-                       <relativePath>./parent/pom.xml</version>
-                     </parent>
-                     <name>${'$'}{<caret>foo}</name>
-                     """.trimIndent())
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>parent</artifactId>
+                         <version>1</version>
+                         <relativePath>./parent/pom.xml</version>
+                       </parent>
+                       <name>${'$'}{<caret>foo}</name>
+                       """.trimIndent())
 
-    val parent = createModulePom("parent",
-                                 """
-                                         <groupId>test</groupId>
-                                         <artifactId>parent</artifactId>
-                                         <version>1</version>
-                                         <properties>
-                                           <foo>value</foo>
-                                         </properties>
-                                         """.trimIndent())
-    assertResolved(projectPom, findTag(parent, "project.properties.foo"))
+      val parent = createModulePom("parent",
+                                   """
+                                           <groupId>test</groupId>
+                                           <artifactId>parent</artifactId>
+                                           <version>1</version>
+                                           <properties>
+                                             <foo>value</foo>
+                                           </properties>
+                                           """.trimIndent())
+      assertResolved(projectPom, findTag(parent, "project.properties.foo"))
+    }
   }
 
   @Test
   fun testSystemProperties() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <name>${'$'}{<caret>user.home}</name>
                        """.trimIndent())
 
-    val psiElement = readAction { MavenPropertiesVirtualFileSystem.getInstance().findSystemProperty(project, "user.home")!!.getPsiElement() }
-    assertResolved(projectPom, psiElement)
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom,
+                     MavenPropertiesVirtualFileSystem.getInstance().findSystemProperty(project, "user.home")!!.getPsiElement())
+    }
   }
 
   @Test
   fun testEnvProperties() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
   <groupId>test</groupId>
   <artifactId>project</artifactId>
   <version>1</version>
   <name>${"$"}{<caret>env.${envVar}}</name>
   """.trimIndent())
 
-    val psiElement = readAction { MavenPropertiesVirtualFileSystem.getInstance().findEnvProperty(project, envVar)!!.getPsiElement() }
-    assertResolved(projectPom, psiElement)
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, MavenPropertiesVirtualFileSystem.getInstance().findEnvProperty(project, envVar)!!.getPsiElement())
+    }
   }
 
   @Test
   fun testUpperCaseEnvPropertiesOnWindows() = runBlocking {
     if (!SystemInfo.isWindows) return@runBlocking
 
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <name>${'$'}{<caret>env.PATH}</name>
                        """.trimIndent())
 
-    val ref = getReferenceAtCaret(projectPom)
-    assertNotNull(ref)
+    withContext(Dispatchers.EDT) {
+      val ref = getReferenceAtCaret(projectPom)
+      assertNotNull(ref)
 
-    readAction {
       val resolved = ref!!.resolve()
       assertEquals(System.getenv("Path").replace("[^A-Za-z]".toRegex(), ""),
                    (resolved as IProperty?)!!.getValue()!!.replace("[^A-Za-z]".toRegex(), ""))
@@ -858,109 +934,38 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
   fun testCaseInsencitiveOnWindows() = runBlocking {
     if (!SystemInfo.isWindows) return@runBlocking
 
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <name>${'$'}{<caret>env.PaTH}</name>
                        """.trimIndent())
 
-    assertUnresolved(projectPom)
-  }
-
-  @Test
-  fun testResolvingPropertiesToThemselves() = runBlocking {
-    MavenPropertyPsiReference.PROPS_RESOLVING_TO_MY_ELEMENT.forEach { propertyName ->
-      updateProjectPom("""
-                         <groupId>test</groupId>
-                         <artifactId>project</artifactId>
-                         <version>1</version>
-                         <name>${'$'}{<caret>$propertyName}</name>
-                         """.trimIndent())
-      val ref = getReferenceAtCaret(projectPom)!!
-      assertResolved(projectPom, ref.element)
+    withContext(Dispatchers.EDT) {
+      assertUnresolved(projectPom)
     }
-  }
-
-  @Test
-  fun testParsedVersionResolving() = runBlocking {
-    updateProjectPom("""
-                        <groupId>test</groupId>
-                        <artifactId>project</artifactId>
-                        <version>1</version>
-                        <name>${'$'}{<caret>parsedVersion.majorVersion}</name>
-                        <build>
-                          <plugins>
-                            <plugin>
-                              <groupId>org.codehaus.mojo</groupId>
-                              <artifactId>build-helper-maven-plugin</artifactId>
-                              <executions>
-                                <execution>
-                                  <goals>
-                                    <goal>parse-version</goal>
-                                  </goals>
-                                </execution>
-                              </executions>
-                            </plugin>
-                          </plugins>
-                        </build>
-                    """.trimIndent())
-    fixture.configureFromExistingVirtualFile(projectPom)
-    // Resolving this property depends on the presence of the build-helper-maven-plugin in pom. Reimport to add the plugin in MavenProject.
-    runBlocking { importProjectAsync() }
-    assertResolved(projectPom, findTag(projectPom, "project.version"))
-  }
-
-  @Test
-  fun testParsedVersionResolvingCustomPrefix() = runBlocking {
-    updateProjectPom("""
-                        <groupId>test</groupId>
-                        <artifactId>project</artifactId>
-                        <version>1</version>
-                        <name>${'$'}{<caret>parsedVersionCustom.majorVersion}</name>
-                        <build>
-                          <plugins>
-                            <plugin>
-                              <groupId>org.codehaus.mojo</groupId>
-                              <artifactId>build-helper-maven-plugin</artifactId>
-                              <executions>
-                                <execution>
-                                  <goals>
-                                    <goal>parse-version</goal>
-                                  </goals>
-                                </execution>
-                              </executions>
-                              <configuration>
-                                <propertyPrefix>parsedVersionCustom</propertyPrefix>
-                              </configuration>
-                            </plugin>
-                          </plugins>
-                        </build>
-                    """.trimIndent())
-    fixture.configureFromExistingVirtualFile(projectPom)
-    // Resolving this property depends on the presence of the build-helper-maven-plugin in pom. Reimport to add the plugin in MavenProject.
-    runBlocking { importProjectAsync() }
-    assertResolved(projectPom, findTag(projectPom, "project.version"))
   }
 
   @Test
   fun testNotUpperCaseEnvPropertiesOnWindows() = runBlocking {
     if (!SystemInfo.isWindows) return@runBlocking
 
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <name>${'$'}{<caret>env.Path}</name>
                        """.trimIndent())
 
-    assertUnresolved(projectPom)
+    withContext(Dispatchers.EDT) {
+      assertUnresolved(projectPom)
+    }
   }
 
 
   @Test
   fun testHighlightUnresolvedProperties() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>child</artifactId>
                        <version>1</version>
@@ -980,29 +985,27 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        ${'$'}{pom.compileArtifacts.empty}
                        ${'$'}{modules.empty}
                        ${'$'}{projectDirectory}
-                       ${'$'}{parsedVersion.majorVersion}
                        </foo>
                        </properties>
                        """.trimIndent()
     )
 
-    checkHighlighting(
-      projectPom,
-      Highlight(text = "xxx"),
-      Highlight(text = "zzz"),
-      Highlight(text = "pom.maven.build.timestamp"),
-      Highlight(text = "parent.maven.build.timestamp"),
-      Highlight(text = "baseUri"),
-      Highlight(text = "unknownProperty"),
-      Highlight(text = "project.version.bar"),
-      Highlight(text = "project.parentFile.nameXxx"),
+    checkHighlighting(projectPom,
+                      Highlight(text = "xxx"),
+                      Highlight(text = "zzz"),
+                      Highlight(text = "pom.maven.build.timestamp"),
+                      Highlight(text = "parent.maven.build.timestamp"),
+                      Highlight(text = "baseUri"),
+                      Highlight(text = "unknownProperty"),
+                      Highlight(text = "project.version.bar"),
+                      Highlight(text = "project.parentFile.nameXxx"),
     )
 
   }
 
   @Test
   fun testCompletion() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1010,7 +1013,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                          <groupId>test</groupId>
                          <artifactId>parent</artifactId>
                          <version>1</version>
-                         <relativePath>./parent/pom.xml</relativePath>
+                         <relativePath>./parent/pom.xml</version>
                        </parent>
                        <properties>
                          <pomProp>value</pomProp>
@@ -1029,6 +1032,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                            </properties>
                          </profile>
                        </profiles>
+                       <name>${'$'}{<caret>}</name>
                        """.trimIndent())
 
     createProfilesXml("""
@@ -1081,36 +1085,6 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
     readWithProfiles("one")
 
-    updateProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <parent>
-                         <groupId>test</groupId>
-                         <artifactId>parent</artifactId>
-                         <version>1</version>
-                         <relativePath>./parent/pom.xml</version>
-                       </parent>
-                       <properties>
-                         <pomProp>value</pomProp>
-                       </properties>
-                       <profiles>
-                         <profile>
-                           <id>one</id>
-                           <properties>
-                             <pomProfilesProp>value</pomProfilesProp>
-                           </properties>
-                         </profile>
-                         <profile>
-                           <id>two</id>
-                           <properties>
-                             <pomProfilesPropInactive>value</pomProfilesPropInactive>
-                           </properties>
-                         </profile>
-                       </profiles>
-                       <name>${'$'}{<caret>}</name>
-                       """.trimIndent())
-
     val variants = getCompletionVariants(projectPom)
     assertContain(variants, "pomProp", "pomProfilesProp", "profilesXmlProp")
     assertContain(variants,
@@ -1120,12 +1094,8 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
     assertContain(variants, "artifactId", "project.artifactId", "pom.artifactId")
     assertContain(variants, "basedir", "project.basedir", "pom.basedir", "project.baseUri", "pom.basedir")
     assertDoNotContain(variants, "baseUri")
-    assertContain(variants, "build.timestamp")
     assertContain(variants, "maven.build.timestamp")
     assertContain(variants, "maven.multiModuleProjectDirectory")
-    assertContain(variants, "maven.home")
-    assertContain(variants, "maven.version")
-    assertContain(variants, "maven.build.version")
     assertDoNotContain(variants, "project.maven.build.timestamp")
     assertContain(variants, "settingsXmlProp")
     assertContain(variants, "settings.localRepository")
@@ -1134,7 +1104,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
   @Test
   fun testDoNotIncludeCollectionPropertiesInCompletion() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1145,7 +1115,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
   @Test
   fun testCompletingAfterOpenBrace() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1157,7 +1127,9 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
   @Test
   fun testCompletingAfterOpenBraceInOpenTag() = runBlocking {
-    updateProjectPom("""
+    if (ignore()) return@runBlocking
+
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1169,7 +1141,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
   @Test
   fun testCompletingAfterOpenBraceAndSomeText() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1183,7 +1155,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
   @Test
   fun testCompletingAfterOpenBraceAndSomeTextWithDot() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1197,7 +1169,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
   @Test
   fun testDoNotCompleteAfterNonWordCharacter() = runBlocking {
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>

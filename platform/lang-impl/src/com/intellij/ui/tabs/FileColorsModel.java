@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -17,7 +17,6 @@ import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +27,6 @@ import java.util.*;
 /**
  * @author Konstantin Bulenkov
  */
-@ApiStatus.Internal
 public final class FileColorsModel implements Cloneable {
   public static final String FILE_COLOR = "fileColor";
 
@@ -37,7 +35,8 @@ public final class FileColorsModel implements Cloneable {
   private final Map<String, String> myPredefinedScopeNameToPropertyKey = new HashMap<>();
   private final Map<String, String> myPredefinedScopeNameToColor = new HashMap<>();
 
-  private final @NotNull Project myProject;
+  @NotNull
+  private final Project myProject;
 
   FileColorsModel(@NotNull Project project) {
     myProject = project;
@@ -179,7 +178,8 @@ public final class FileColorsModel implements Cloneable {
     add(new FileColorConfiguration(scopeName, colorName), isProjectLevel);
   }
 
-  private @Nullable FileColorConfiguration findConfiguration(@NotNull String scopeName, boolean isProjectLevel) {
+  @Nullable
+  private FileColorConfiguration findConfiguration(@NotNull String scopeName, boolean isProjectLevel) {
     List<FileColorConfiguration> configurations = isProjectLevel ? myProjectLevelConfigurations : myApplicationLevelConfigurations;
     for (FileColorConfiguration configuration : configurations) {
       if (scopeName.equals(configuration.getScopeName())) {
@@ -193,7 +193,8 @@ public final class FileColorsModel implements Cloneable {
     return findConfiguration(scopeName, true) != null;
   }
 
-  public @Nullable String getColor(@NotNull PsiFile psiFile) {
+  @Nullable
+  public String getColor(@NotNull PsiFile psiFile) {
     if (!psiFile.isValid()) {
       return null;
     }
@@ -201,7 +202,8 @@ public final class FileColorsModel implements Cloneable {
     return virtualFile == null ? null : getColor(virtualFile, psiFile.getProject());
   }
 
-  public @Nullable String getColor(@NotNull VirtualFile file, Project project) {
+  @Nullable
+  public String getColor(@NotNull VirtualFile file, Project project) {
     if (!file.isValid()) {
       return null;
     }
@@ -215,7 +217,8 @@ public final class FileColorsModel implements Cloneable {
     });
   }
 
-  public @Nullable String getScopeColor(@NotNull String scopeName, Project project) {
+  @Nullable
+  public String getScopeColor(@NotNull String scopeName, Project project) {
     FileColorConfiguration configuration = null;
     Iterator<FileColorConfiguration> iterator = getConfigurations();
     while (iterator.hasNext()) {
@@ -231,7 +234,8 @@ public final class FileColorsModel implements Cloneable {
     return null;
   }
 
-  private @Nullable FileColorConfiguration findConfiguration(final @NotNull VirtualFile colored) {
+  @Nullable
+  private FileColorConfiguration findConfiguration(@NotNull final VirtualFile colored) {
     Iterator<FileColorConfiguration> iterator = getConfigurations();
     while(iterator.hasNext()) {
       var configuration = iterator.next();
@@ -247,7 +251,8 @@ public final class FileColorsModel implements Cloneable {
     return null;
   }
 
-  private @NotNull Iterator<FileColorConfiguration> getConfigurations() {
+  @NotNull
+  private Iterator<FileColorConfiguration> getConfigurations() {
     return ContainerUtil.concatIterators(myApplicationLevelConfigurations.iterator(), myProjectLevelConfigurations.iterator());
   }
 
@@ -285,7 +290,8 @@ public final class FileColorsModel implements Cloneable {
     return new ArrayList<>(myApplicationLevelConfigurations);
   }
 
-  public @NotNull List<FileColorConfiguration> getProjectLevelConfigurations() {
+  @NotNull
+  public List<FileColorConfiguration> getProjectLevelConfigurations() {
     return new ArrayList<>(myProjectLevelConfigurations);
   }
 }

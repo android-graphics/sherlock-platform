@@ -1,4 +1,4 @@
-from typing import Final
+from typing_extensions import Final
 
 MIN_ROW: Final = 0
 MIN_COLUMN: Final = 0

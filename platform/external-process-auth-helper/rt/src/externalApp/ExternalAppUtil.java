@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package externalApp;
 
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +25,8 @@ public final class ExternalAppUtil {
   private ExternalAppUtil() { }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  public static @NotNull Result sendIdeRequest(@NotNull String entryPoint, int idePort, @NotNull String handlerId, @Nullable String bodyContent) {
+  @NotNull
+  public static Result sendIdeRequest(@NotNull String entryPoint, int idePort, @NotNull String handlerId, @Nullable String bodyContent) {
     try {
       // allow self-signed certificates of IDE
       TrustManager[] tm = {new AllowingTrustManager()};
@@ -65,7 +66,8 @@ public final class ExternalAppUtil {
     }
   }
 
-  public static @NotNull String getEnv(@NotNull String env) {
+  @NotNull
+  public static String getEnv(@NotNull String env) {
     String value = System.getenv(env);
     if (value == null) {
       throw new IllegalStateException(env + " environment variable is not defined!");

@@ -1,4 +1,0 @@
-expect class <selection><caret></selection>A {
-    fun a(): M
-    class M
-}

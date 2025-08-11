@@ -27,7 +27,8 @@ import org.jetbrains.annotations.NotNull;
 public final class NakedNotifyInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "naked.notify.problem.descriptor");
   }
@@ -69,7 +70,7 @@ public final class NakedNotifyInspection extends BaseInspection {
       }
       final PsiReferenceExpression methodExpression =
         methodCallExpression.getMethodExpression();
-      final @NonNls String methodName =
+      @NonNls final String methodName =
         methodExpression.getReferenceName();
       if (!HardcodedMethodConstants.NOTIFY.equals(methodName) &&
           !HardcodedMethodConstants.NOTIFY_ALL.equals(methodName)) {

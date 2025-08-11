@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.ant.execution;
 
 import org.apache.tools.ant.BuildException;
@@ -26,7 +26,7 @@ public class IdeaInputHandler implements InputHandler {
     if (request instanceof MultipleChoiceInputRequest) {
       @SuppressWarnings("unchecked") 
       List<String> choices = ((MultipleChoiceInputRequest)request).getChoices();
-      if (choices != null && !choices.isEmpty()) {
+      if (choices != null && choices.size() > 0) {
         int count = choices.size();
         packet.appendLong(count);
         for (String choice : choices) {

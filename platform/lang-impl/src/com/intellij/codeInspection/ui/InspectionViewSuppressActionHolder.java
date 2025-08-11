@@ -14,7 +14,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.Interner;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +21,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@ApiStatus.Internal
 public final class InspectionViewSuppressActionHolder {
   private final Map<String, Map<ContextDescriptor, SuppressIntentionAction[]>> mySuppressActions =
     FactoryMap.create(__ -> new HashMap<>());
@@ -45,7 +43,8 @@ public final class InspectionViewSuppressActionHolder {
     });
   }
 
-  public synchronized @NotNull Set<SuppressIntentionAction> getSuppressActions(@NotNull InspectionToolWrapper wrapper) {
+  @NotNull
+  public synchronized Set<SuppressIntentionAction> getSuppressActions(@NotNull InspectionToolWrapper wrapper) {
     return mySuppressActions.get(wrapper.getShortName()).values().stream().flatMap(Arrays::stream).collect(Collectors.toSet());
   }
 
@@ -56,10 +55,14 @@ public final class InspectionViewSuppressActionHolder {
   }
 
   private static final class ContextDescriptor {
-    private final @NotNull Language myElementLanguage;
-    private final @NotNull Language myFileBaseLanguage;
-    private final @NotNull Set<Language> myFileLanguages;
-    private final @Nullable ContextDescriptor myInjectionDescriptor;
+    @NotNull
+    private final Language myElementLanguage;
+    @NotNull
+    private final Language myFileBaseLanguage;
+    @NotNull
+    private final Set<Language> myFileLanguages;
+    @Nullable
+    private final ContextDescriptor myInjectionDescriptor;
 
     private static ContextDescriptor from(@NotNull PsiElement element) {
       return from(element, true);

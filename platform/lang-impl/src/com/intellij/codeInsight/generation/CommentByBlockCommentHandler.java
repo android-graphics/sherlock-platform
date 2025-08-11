@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
@@ -179,7 +179,8 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
     }
   }
 
-  private static @Nullable String trim(String s) {
+  @Nullable
+  private static String trim(String s) {
     return s == null ? null : s.trim();
   }
 
@@ -237,7 +238,8 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
            PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null;
   }
 
-  private @Nullable TextRange findCommentedRange(final Commenter commenter) {
+  @Nullable
+  private TextRange findCommentedRange(final Commenter commenter) {
     final CharSequence text = myDocument.getCharsSequence();
     final FileType fileType = myFile.getFileType();
     if (fileType instanceof CustomSyntaxTableFileType) {
@@ -316,7 +318,8 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
   }
 
 
-  private @Nullable TextRange getSelectedComments(CharSequence text, String prefix, String suffix) {
+  @Nullable
+  private TextRange getSelectedComments(CharSequence text, String prefix, String suffix) {
     TextRange commentedRange = null;
     if (myCaret.hasSelection()) {
       int selectionStart = myCaret.getSelectionStart();
@@ -332,7 +335,8 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
     return commentedRange;
   }
 
-  private static @Nullable Commenter findCommenter(PsiFile file, Editor editor, Caret caret) {
+  @Nullable
+  private static Commenter findCommenter(PsiFile file, Editor editor, Caret caret) {
     final FileType fileType = file.getFileType();
     if (fileType instanceof AbstractFileType) {
       return ((AbstractFileType)fileType).getCommenter();
@@ -343,8 +347,9 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
     return getCommenter(file, editor, lang, lang);
   }
 
-  public static @Nullable Commenter getCommenter(final PsiFile file, final Editor editor,
-                                                 final Language lineStartLanguage, final Language lineEndLanguage) {
+  @Nullable
+  public static Commenter getCommenter(final PsiFile file, final Editor editor,
+                                       final Language lineStartLanguage, final Language lineEndLanguage) {
 
     final FileViewProvider viewProvider = file.getViewProvider();
 
@@ -368,7 +373,8 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
     return LanguageCommenters.INSTANCE.forLanguage(lang);
   }
 
-  private @Nullable PsiElement findCommentAtCaret() {
+  @Nullable
+  private PsiElement findCommentAtCaret() {
     int offset = myCaret.getOffset();
     TextRange range = new TextRange(myCaret.getSelectionStart(), myCaret.getSelectionEnd());
     if (offset == range.getEndOffset()) {
@@ -385,7 +391,8 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
     return comment;
   }
 
-  private @Nullable PsiComment getCommentAtOffset(int offset) {
+  @Nullable
+  private PsiComment getCommentAtOffset(int offset) {
     PsiElement elt = myFile.getViewProvider().findElementAt(offset);
     if (elt == null) return null;
     return PsiTreeUtil.getParentOfType(elt, PsiComment.class, false);
@@ -619,7 +626,7 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
         ((EscapingCommenter)commenter).unescape(document, marker);
       }
     }
-    return marker.getTextRange();
+    return TextRange.create(marker.getStartOffset(), marker.getEndOffset());
   }
 
   private static int getNearest(String text, String pattern, int position) {

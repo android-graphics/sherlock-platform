@@ -4,7 +4,6 @@ package com.intellij.largeFilesEditor.file;
 import com.intellij.largeFilesEditor.editor.Page;
 import com.intellij.largeFilesEditor.search.searchTask.FileDataProviderForSearch;
 import com.intellij.openapi.Disposable;
-import org.jetbrains.annotations.ApiStatus;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -19,7 +18,6 @@ public interface LargeFileManager extends Disposable{
 
   int getPageSize();
 
-  @ApiStatus.Internal
   Page getPage_wait(long pageNumber) throws IOException;
 
   boolean hasBOM();

@@ -5,9 +5,9 @@ import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -28,30 +28,30 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSaverDialog {
   protected final JTextField myFileName = new JTextField(20);
-  protected final JComboBox<String> myExtensions = new ComboBox<>();
+  protected final JComboBox myExtensions = new JComboBox();
   protected final FileSaverDescriptor myDescriptor;
 
   public FileSaverDialogImpl(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent) {
     super(descriptor, parent);
     myDescriptor = descriptor;
-    fillExtensions(descriptor);
+    for (@NlsSafe String ext : descriptor.getFileExtensions()) {
+      myExtensions.addItem(ext);
+    }
     setTitle(getChooserTitle(descriptor));
   }
 
   public FileSaverDialogImpl(@NotNull FileSaverDescriptor descriptor, @Nullable Project project) {
     super(descriptor, project);
     myDescriptor = descriptor;
-    fillExtensions(descriptor);
-    setTitle(getChooserTitle(descriptor));
-  }
-
-  private void fillExtensions(FileSaverDescriptor descriptor) {
-    var extFilter = descriptor.getExtensionFilter();
-    if (extFilter != null) {
-      extFilter.second.forEach(ext -> myExtensions.addItem(ext));
+    for (@NlsSafe String ext : descriptor.getFileExtensions()) {
+      myExtensions.addItem(ext);
     }
+    setTitle(getChooserTitle(descriptor));
   }
 
   private static @NlsContexts.DialogTitle String getChooserTitle(final FileSaverDescriptor descriptor) {
@@ -142,17 +142,16 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     }
 
     boolean correctExt = true;
-    var extFilter = myDescriptor.getExtensionFilter();
-    if (extFilter != null) {
-      var _path = path;
-      correctExt = extFilter.second.stream().anyMatch(ext -> Strings.endsWithIgnoreCase(_path, '.' + ext));
+    for (String ext : myDescriptor.getFileExtensions()) {
+      correctExt = path.endsWith("." + ext);
+      if (correctExt) break;
     }
 
     if (!correctExt) {
       Object obj = myExtensions.getSelectedItem();
       String selectedExtension = obj == null ? null : obj.toString();
       if (!Strings.isEmpty(selectedExtension)) {
-        path += '.' + selectedExtension;
+        path += "." + selectedExtension;
       }
     }
 

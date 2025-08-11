@@ -4,7 +4,6 @@ package com.intellij.application.options.colors.highlighting;
 import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.CustomFoldRegionRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -12,7 +11,6 @@ import java.awt.geom.Rectangle2D;
 
 import static com.intellij.openapi.editor.colors.CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES;
 
-@ApiStatus.Internal
 public final class CustomFoldRegionRendererWrapper implements CustomFoldRegionRenderer {
   private final CustomFoldRegionRenderer myDelegate;
   private final boolean myDrawBorder;

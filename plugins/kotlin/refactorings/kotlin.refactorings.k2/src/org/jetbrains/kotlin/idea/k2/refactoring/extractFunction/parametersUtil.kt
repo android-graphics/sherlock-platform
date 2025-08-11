@@ -78,7 +78,6 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher.isSemanticMatch
 import org.jetbrains.kotlin.psi.KtReferenceExpression
-import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
 
 /**
  * Represents a parameter candidate as it's original declaration and a reference in code.
@@ -222,8 +221,8 @@ private fun ExtractionData.registerParameter(
         return
     }
 
-    val thisSymbol = (receiverSymbol as? KaReceiverParameterSymbol)?.owningCallableSymbol ?: receiverSymbol
-    val hasThisReceiver = thisSymbol != null && (extensionReceiver != null || thisSymbol.psi?.containingFile == commonParent.containingFile)
+    val thisSymbol = (receiverSymbol as? KaReceiverParameterSymbol)?.type?.expandedSymbol ?: receiverSymbol
+    val hasThisReceiver = thisSymbol != null
     val thisExpr = refInfo.refExpr.parent as? KtThisExpression
 
     val referencedClassifierSymbol: KaClassifierSymbol? =
@@ -329,10 +328,7 @@ private fun ExtractionData.calculateArgumentText(
 ): String {
     var argumentText =
         if (hasThisReceiver && extractThis) {
-            val label = when {
-                elementToExtract is KtFunctionLiteral -> elementToExtract.findLabelAndCall().first
-                else -> elementToExtract.name
-            }?.let { "@$it" } ?: ""
+            val label = elementToExtract.name?.let { "@$it" } ?: ""
             "this$label"
         } else {
             val argumentExpr = argExpr.getQualifiedExpressionForSelectorOrThis()
@@ -420,7 +416,7 @@ private fun createOriginalType(
     val functionSymbol = (originalDeclaration as KtNamedFunction).symbol as KaNamedFunctionSymbol
     val typeString =
         buildString { //todo rewrite as soon as functional type can be created by api call: https://youtrack.jetbrains.com/issue/KT-66566
-            functionSymbol.receiverParameter?.returnType?.render(position = Variance.INVARIANT)?.let {
+            functionSymbol.receiverParameter?.type?.render(position = Variance.INVARIANT)?.let {
                 append(it)
                 append(".")
             }
@@ -441,7 +437,7 @@ private fun createOriginalType(
         .getContentElement()?.type
 } else {
     parameterExpression?.expressionType ?: receiverToExtract?.type
-}) ?: builtinTypes.nullableAny
+}) ?: builtinTypes.NULLABLE_ANY
 
 
 @OptIn(KaExperimentalApi::class)

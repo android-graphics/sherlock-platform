@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -9,19 +9,17 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.StringComboboxEditor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-@ApiStatus.Internal
 public final class ComboEditorCompletionContributor extends CompletionContributor implements DumbAware {
 
   public static final Key<Boolean> CONTINUE_RUN_COMPLETION = Key.create("CONTINUE_RUN_COMPLETION");
   private static final Key<LookupElementProvider> LOOKUP_ELEMENT_PROVIDER_KEY = Key.create("LOOKUP_ELEMENT_PROVIDER_KEY");
 
   @Override
-  public void fillCompletionVariants(final @NotNull CompletionParameters parameters, final @NotNull CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     if (parameters.getInvocationCount() == 0) {
       return;
     }
@@ -51,7 +49,7 @@ public final class ComboEditorCompletionContributor extends CompletionContributo
     }
   }
 
-  public static void installLookupElementProvider(final @NotNull Document document, final @NotNull LookupElementProvider provider) {
+  public static void installLookupElementProvider(@NotNull final Document document, @NotNull final LookupElementProvider provider) {
     LOOKUP_ELEMENT_PROVIDER_KEY.set(document, provider);
   }
 
@@ -62,8 +60,9 @@ public final class ComboEditorCompletionContributor extends CompletionContributo
   }
 
   public static final class DefaultLookupElementProvider implements LookupElementProvider {
+    @NotNull
     @Override
-    public @NotNull LookupElementBuilder createLookupElement(@NotNull String lookupString) {
+    public LookupElementBuilder createLookupElement(@NotNull String lookupString) {
       return LookupElementBuilder.create(lookupString).withInsertHandler((context, item) -> {
         final Document document = context.getEditor().getDocument();
         document.deleteString(context.getEditor().getCaretModel().getOffset(), document.getTextLength());

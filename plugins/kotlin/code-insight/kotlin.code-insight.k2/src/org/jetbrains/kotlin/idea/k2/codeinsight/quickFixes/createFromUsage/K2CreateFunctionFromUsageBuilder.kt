@@ -6,18 +6,16 @@ import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.EP_NAME
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageBuilder.buildRequestsAndActions
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.canRefactor
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.getReceiverOrContainerClass
@@ -54,7 +52,7 @@ object K2CreateFunctionFromUsageBuilder {
     private fun KtSimpleNameExpression.referenceNameOfElement(): Boolean = getReferencedNameElementType() == KtTokens.IDENTIFIER
 
     internal fun buildRequestsAndActions(callExpression: KtCallExpression): List<IntentionAction> {
-        val methodRequests = analyze(callExpression) { buildRequests(callExpression) }
+        val methodRequests = buildRequests(callExpression)
         val extensions = EP_NAME.extensions
         return methodRequests.flatMap { (targetClass, request) ->
             extensions.flatMap { ext ->
@@ -63,11 +61,11 @@ object K2CreateFunctionFromUsageBuilder {
         }
     }
 
-    context (KaSession)
     private fun buildRequests(callExpression: KtCallExpression): List<Pair<JvmClass, CreateMethodRequest>> {
         val calleeExpression = callExpression.calleeExpression as? KtSimpleNameExpression ?: return emptyList()
         val requests = mutableListOf<Pair<JvmClass, CreateMethodRequest>>()
         val receiverExpression = calleeExpression.getReceiverExpression()
+        analyze(callExpression) {
         // Register default create-from-usage request.
         // TODO: Check whether this class or file can be edited (Use `canRefactor()`).
         val defaultContainerPsi = calleeExpression.getReceiverOrContainerPsiElement()
@@ -108,7 +106,6 @@ object K2CreateFunctionFromUsageBuilder {
             }
         }
         if (receiverExpression != null || computeImplicitReceiverClass(calleeExpression) != null) {
-            val explicitReceiverType = receiverExpression?.expressionType
             val implicitReceiverType = computeImplicitReceiverType(calleeExpression)
             val containerClassForExtension: KtElement =
                 implicitReceiverType?.convertToClass() ?: calleeExpression.getNonStrictParentOfType<KtClassOrObject>()
@@ -116,24 +113,18 @@ object K2CreateFunctionFromUsageBuilder {
             val jvmClassWrapper = JvmClassWrapperForKtClass(containerClassForExtension)
             val shouldCreateCompanionClass = shouldCreateCompanionClass(calleeExpression)
             val modifiers = computeModifiers(defaultContainerPsi?:calleeExpression.containingFile, calleeExpression, callExpression, shouldCreateCompanionClass, true)
-            val request = CreateMethodFromKotlinUsageRequest(
+            requests.add(jvmClassWrapper to CreateMethodFromKotlinUsageRequest(
                 callExpression,
                 modifiers,
                 receiverExpression,
-                receiverType = explicitReceiverType ?: implicitReceiverType,
+                receiverType = implicitReceiverType,
                 isExtension = true,
                 isAbstractClassOrInterface = false,
                 isForCompanion = shouldCreateCompanionClass,
-            )
-            if (!hasExtensionFunction(containerClassForExtension, request.methodName)) {
-                requests.add(jvmClassWrapper to request)
-            }
+            ))
+        }
         }
         return requests
-    }
-
-    private fun hasExtensionFunction(containerClassForExtension: KtElement, name: @NlsSafe String): Boolean {
-        return containerClassForExtension.containingFile.children.find { it.isExtensionDeclaration() && it is PsiNamedElement && it.name == name} != null
     }
 
     context (KaSession)
@@ -226,8 +217,8 @@ object K2CreateFunctionFromUsageBuilder {
 
     context (KaSession)
     private fun KaType.getAbstractSuperType(): KaType? {
-        fun Sequence<KaType>.firstAbstractEditableType() = firstOrNull { it.hasAbstractDeclaration() && it.canRefactor() }
-        return directSupertypes.firstAbstractEditableType() ?: allSupertypes.firstAbstractEditableType()
+        fun List<KaType>.firstAbstractEditableType() = firstOrNull { it.hasAbstractDeclaration() && it.canRefactor() }
+        return getDirectSuperTypes().firstAbstractEditableType() ?: getAllSuperTypes().firstAbstractEditableType()
     }
 
     /**
@@ -237,7 +228,7 @@ object K2CreateFunctionFromUsageBuilder {
     private fun KtExpression.getTypeOfAbstractSuperClass(): KaType? {
         val type = expressionType ?: return null
         if (type.hasAbstractDeclaration()) return type
-        return type.allSupertypes.firstOrNull { it.hasAbstractDeclaration() }
+        return type.getAllSuperTypes().firstOrNull { it.hasAbstractDeclaration() }
     }
 
     /**
@@ -265,7 +256,7 @@ object K2CreateFunctionFromUsageBuilder {
 
             var type: KaType? = implicitReceiver.type
             if (type is KaTypeParameterType) {
-                type = type.directSupertypes.firstOrNull()
+                type = type.getDirectSuperTypes().firstOrNull()
             }
             return type
         }

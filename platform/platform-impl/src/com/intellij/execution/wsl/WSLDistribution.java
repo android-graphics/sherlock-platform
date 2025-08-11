@@ -13,8 +13,6 @@ import com.intellij.execution.process.*;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -30,7 +28,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -187,7 +184,6 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @param timeout                timeout in ms
    * @param processHandlerConsumer consumes process handler just before execution, may be used for cancellation
    */
-  @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull ProcessOutput executeOnWsl(@NotNull List<String> command,
                                              @NotNull WSLCommandLineOptions options,
                                              int timeout,
@@ -206,7 +202,6 @@ public class WSLDistribution implements AbstractWslDistribution {
     return output;
   }
 
-  @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull ProcessOutput executeOnWsl(int timeout, @NonNls String @NotNull ... command) throws ExecutionException {
     return executeOnWsl(Arrays.asList(command), new WSLCommandLineOptions(), timeout, null);
   }
@@ -214,7 +209,6 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * @deprecated use {@link #patchCommandLine(GeneralCommandLine, Project, WSLCommandLineOptions)} instead
    */
-  @ApiStatus.Internal
   @Deprecated
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
@@ -244,9 +238,7 @@ public class WSLDistribution implements AbstractWslDistribution {
         ptyOptions = null;
       }
       commandLine.setProcessCreator((processBuilder) -> {
-        return ProgressManager.getInstance().runProcess(() -> {
-          return WslIjentUtil.runProcessBlocking(WslIjentManager.getInstance(), project, this, processBuilder, options, ptyOptions);
-        }, new EmptyProgressIndicator());
+        return WslIjentUtil.runProcessBlocking(WslIjentManager.getInstance(), project, this, processBuilder, options, ptyOptions);
       });
     }
     else {
@@ -291,7 +283,7 @@ public class WSLDistribution implements AbstractWslDistribution {
             project,
             IdeBundle.message("wsl.enter.root.password.dialog.title"),
             IdeBundle.message("wsl.sudo.password.for.root.label", getPresentableName()),
-            new CredentialAttributes("WSL", "root"),
+            new CredentialAttributes("WSL", "root", WSLDistribution.class),
             true
           );
           if (password != null) {
@@ -389,7 +381,8 @@ public class WSLDistribution implements AbstractWslDistribution {
   /***
    * Never run {@link #fixTTYSize(GeneralCommandLine)}
    */
-  public static @NotNull GeneralCommandLine neverRunTTYFix(@NotNull GeneralCommandLine commandLine) {
+  @NotNull
+  public static GeneralCommandLine neverRunTTYFix(@NotNull GeneralCommandLine commandLine) {
     commandLine.putUserData(NEVER_RUN_TTY_FIX, true);
     return commandLine;
   }
@@ -690,7 +683,7 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @throws ExecutionException if IP can't be obtained (see logs for more info)
    * @deprecated use {@link com.intellij.execution.wsl.WslProxy} because Windows IP address is almost always closed by firewall and this method also uses `eth0` address which also might be broken
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public final @NotNull InetAddress getHostIpAddress() throws ExecutionException {
     final var hostIpOrException = getValueWithLogging(myLazyHostIp, "host IP");
     if (hostIpOrException == null) {

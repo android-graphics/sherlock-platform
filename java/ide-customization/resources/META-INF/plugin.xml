@@ -13,8 +13,8 @@
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
-    <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
+    <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
+    <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
     <postStartupActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler$MyStartupActivity"/>
 
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
@@ -59,9 +59,7 @@
   </extensions>
 
   <actions>
-    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
-      <add-to-group group-id="ProjectViewToolbar" anchor="first"/>
-    </action>
+    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction"/>
 
     <group id="OpenProjectGroup">
       <group id="NewElementInMenuGroup" class="com.intellij.ide.actions.NewActionGroup" popup="true" searchable="false"/>

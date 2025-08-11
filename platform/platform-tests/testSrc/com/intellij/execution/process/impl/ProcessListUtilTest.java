@@ -28,53 +28,40 @@ public class ProcessListUtilTest extends TestCase {
   public void testMac_Basic() {
     List<ProcessInfo> infos = ProcessListUtil.parseMacOutput(
       """
-          PID  PPID STAT COMM
+          PID  PPID STAT USER    COMM
 
-            1     0 S    /dir/file
-            2     1 S    ./dir/dir/file
-            3     2 S    ./dir/dir/file
-        10000     3 S    ./dir/dir/file""",
+            1     0 S    user    /dir/file
+            2     1 S    user    ./dir/dir/file
+            3     2 S    user    ./dir/dir/file
+        10000     3 S    user    ./dir/dir/file""",
       """
-          PID  PPID STAT COMMAND
+          PID  PPID STAT USER    COMMAND
 
-            1     0 S    /dir/file
-            2     1 S    ./dir/dir/file
-            3     2 S    ./dir/dir/file param param
-        10000     3 S    ./dir/dir/file param2 param2""",
-      """
-          PID  USER
-
-            1  user1
-            2  user2
-            3  user3
-        10000  user4"""
+            1     0 S    user    /dir/file
+            2     1 S    user    ./dir/dir/file
+            3     2 S    user    ./dir/dir/file param param
+        10000     3 S    user    ./dir/dir/file param2 param2"""
     );
     assertOrderedEquals(infos,
-                        new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0, "user1", ThreeState.UNSURE),
-                        new ProcessInfo(2, "./dir/dir/file", "file", "", "./dir/dir/file", 1, "user2", ThreeState.UNSURE),
-                        new ProcessInfo(3, "./dir/dir/file param param", "file", "param param", "./dir/dir/file", 2, "user3", ThreeState.UNSURE),
-                        new ProcessInfo(10000, "./dir/dir/file param2 param2", "file", "param2 param2", "./dir/dir/file", 3, "user4", ThreeState.UNSURE));
+                        new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0, "user", ThreeState.UNSURE),
+                        new ProcessInfo(2, "./dir/dir/file", "file", "", "./dir/dir/file", 1, "user", ThreeState.UNSURE),
+                        new ProcessInfo(3, "./dir/dir/file param param", "file", "param param", "./dir/dir/file", 2, "user", ThreeState.UNSURE),
+                        new ProcessInfo(10000, "./dir/dir/file param2 param2", "file", "param2 param2", "./dir/dir/file", 3, "user", ThreeState.UNSURE));
   }
 
   public void testMac_DoNotIncludeProcessedMissingOnTheSecondPSRun() {
     List<ProcessInfo> infos = ProcessListUtil.parseMacOutput(
       """
-          PID  PPID STAT COMM
+          PID  PPID STAT USER    COMM
 
-            1     0 S    /dir/file
-            2     1 S    /dir/file
+            1     0 S    user    /dir/file
+            2     1 S    user    /dir/file
         """,
       """
-          PID  PPID STAT COMMAND
+          PID  PPID STAT USER    COMMAND
 
-            1     0 S    /dir/file
-            5     1 S    /dir/file
-        """,
-      """
-          PID USER
-
-            1 user
-            5 user
+            1     0 S    user    /dir/file
+            5     1 S    user    /dir/file
         """
     );
     assertOrderedEquals(infos, new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0, "user", ThreeState.UNSURE));
@@ -83,86 +70,40 @@ public class ProcessListUtilTest extends TestCase {
   public void testMac_DoNotIncludeProcessedChangedOnTheSecondPSRun() {
     List<ProcessInfo> infos = ProcessListUtil.parseMacOutput(
       """
-          PID  PPID STAT COMM
+          PID  PPID STAT USER    COMM
 
-            1     0 S    /dir/file
-            2     1 S    /dir/file
-            3     2 S    /dir/file
-            4     3 S    /dir/file
+            1     0 S    user    /dir/file
+            2     1 S    user    /dir/file
+            3     2 S    user    /dir/file
+            4     3 S    user    /dir/file
         """,
       """
-          PID  PPID STAT COMMAND
+          PID  PPID STAT USER    COMMAND
 
-            1     0 S    /dir/file param
-            2     1 S    /dir/ffff
-            3     2 S    /dir/file1
-            4     3 S    /dir/file/1
-        """,
-      """
-          PID USER
-
-            1 user
-            2 user
-            3 user
-            4 user
+            1     0 S    user    /dir/file param
+            2     1 S    user    /dir/ffff
+            3     2 S    user    /dir/file1
+            4     3 S    user    /dir/file/1
         """
     );
     assertOrderedEquals(infos, new ProcessInfo(1, "/dir/file param", "file", "param", "/dir/file", 0, "user", ThreeState.UNSURE));
   }
 
-  public void testMac_DoNotIncludeProcessedWithMissingUsers() {
-    List<ProcessInfo> infos = ProcessListUtil.parseMacOutput(
-      """
-          PID  PPID STAT COMM
-
-            1     0 S    /dir/file
-            2     1 S    /dir/file
-            3     2 S    /dir/file
-            4     3 S    /dir/file
-        """,
-      """
-          PID  PPID STAT COMMAND
-
-            1     0 S    /dir/file
-            2     1 S    /dir/file
-            3     2 S    /dir/file
-            4     3 S    /dir/file
-        """,
-      """
-          PID USER
-
-            1 user1
-            3 user3
-        """
-    );
-    assertOrderedEquals(
-      infos,
-      new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0, "user1", ThreeState.UNSURE),
-      new ProcessInfo(3, "/dir/file", "file", "", "/dir/file", 2, "user3", ThreeState.UNSURE));
-  }
-
   public void testMac_DoNotIncludeZombies() {
     List<ProcessInfo> infos = ProcessListUtil.parseMacOutput(
       """
-          PID  PPID STAT COMM
+          PID  PPID STAT USER    COMM
 
-            1     0 S    /dir/file
-            2     1 Z    /dir/file
-            3     1 SZ   /dir/file
+            1     0 S    user    /dir/file
+            2     1 Z    user    /dir/file
+            3     1 SZ   user    /dir/file
         """,
       """
-          PID  PPID STAT COMM
+          PID  PPID STAT USER    COMM
 
-            1     0 S    /dir/file
-            2     1 Z    /dir/file
-            3     1 SZ   /dir/file
-        """,
-      """
-          PID  USER
-
-            1  user
-            2  user
-            3  user
+            1     0 S    user    /dir/file
+            2     1 Z    user    /dir/file
+            3     1 SZ   user    /dir/file
         """
     );
     assertOrderedEquals(infos, new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0, "user", ThreeState.UNSURE));
@@ -171,22 +112,16 @@ public class ProcessListUtilTest extends TestCase {
   public void testMac_VariousFormsPidStatUser() {
     List<ProcessInfo> infos = ProcessListUtil.parseMacOutput(
       """
-          PID  PPID STAT COMM
+          PID  PPID STAT USER      COMMAND
 
-            1     0 S    /dir/file
-          101     1 Ss   /dir/file
+            1     0 S    user      /dir/file
+          101     1 Ss   user_name /dir/file
         """,
       """
-          PID  PPID STAT COMMAND
+          PID  PPID STAT USER      COMM
 
-            1     0 S    /dir/file
-          101     1 Ss   /dir/file
-        """,
-      """
-          PID  USER
-
-            1  user
-          101  user_name
+            1     0 S    user      /dir/file
+          101     1 Ss   user_name /dir/file
         """
     );
     assertOrderedEquals(infos,
@@ -197,91 +132,61 @@ public class ProcessListUtilTest extends TestCase {
   public void testMac_WrongFormat() {
     assertNull(ProcessListUtil.parseMacOutput(
       """
-           PID STAT COMM
+           PID STAT USER    COMM
 
-             1 S    /dir/file
+             1 S    user    /dir/file
         """,
-      "",
-      """
-           PID USER
-
-             1 user
-        """
+      ""
     ));
     assertNull(ProcessListUtil.parseMacOutput(
       "",
       """
-           PID STAT COMMAND
+           PID STAT USER    COMMAND
 
-             1 S    /dir/file
-        """,
-      """
-           PID USER
-
-             1 user
+             1 S    user    /dir/file
         """
     ));
 
 
     assertNull(ProcessListUtil.parseMacOutput(
       """
-           PID STAT COMM
+           PID STAT USER    COMM
 
-             1 S    /dir/file
+             1 S    user    /dir/file
         """,
-      "wrong format",
-    """
-         PID USER
-
-           1 user
-      """
+      "wrong format"
     ));
     assertNull(ProcessListUtil.parseMacOutput(
       "wrong format",
       """
-           PID STAT COMMAND
+           PID STAT USER    COMMAND
 
-             1 S    /dir/file
-        """,
-      """
-           PID USER
-
-             1 user
+             1 S    user    /dir/file
         """
     ));
 
     assertEmpty(ProcessListUtil.parseMacOutput(
       """
-           PID PPID STAT COMM
+           PID PPID STAT USER    COMM
 
-             1    0 S    /dir/file
+             1    0 S    user    /dir/file
         """,
       """
-           PID PPID S COMMAND
+           PID PPID S USER    COMMAND
 
-                        \s
-        """,
-      """
-           PID USER
-
-             1 user
+                                  \s
         """
     ));
     assertEmpty(ProcessListUtil.parseMacOutput(
       """
-           PID PPID S COMMAND
+           PID PPID S USER    COMMAND
 
-                        \s
+                                  \s
         """,
       """
-           PID PPID STAT COMMAND
+           PID PPID STAT USER    COMMAND
 
-             1    0 S    /dir/file
-        """,
-      """
-           PID USER
-
-             1 user
+             1    0 S    user    /dir/file
         """
     ));
   }
@@ -437,24 +342,20 @@ public class ProcessListUtilTest extends TestCase {
 
   public void testMacOwnership() {
     String commandOnly = """
-      PID  PPID STAT COMM
-      
-        1     0 S    /dir/file""";
+      PID  PPID STAT USER    COMM
+          
+        1     0 S    user    /dir/file""";
     String full = """
-          PID  PPID STAT COMMAND
+          PID  PPID STAT USER    COMMAND
 
-            1     0 S    /dir/file""";
-    String users = """
-          PID USER
-
-            1 user""";
-    List<ProcessInfo> infos = ProcessListUtil.parseMacOutput(commandOnly, full, users, null);
+            1     0 S    user    /dir/file""";
+    List<ProcessInfo> infos = ProcessListUtil.parseMacOutput(commandOnly, full, null);
     assertOrderedEquals(infos, new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0, "user", ThreeState.UNSURE));
 
-    infos = ProcessListUtil.parseMacOutput(commandOnly, full, users, "user");
+    infos = ProcessListUtil.parseMacOutput(commandOnly, full, "user");
     assertOrderedEquals(infos, new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0, "user", ThreeState.YES));
 
-    infos = ProcessListUtil.parseMacOutput(commandOnly, full, users, "user2");
+    infos = ProcessListUtil.parseMacOutput(commandOnly, full, "user2");
     assertOrderedEquals(infos, new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0, "user", ThreeState.NO));
   }
 

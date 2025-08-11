@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -104,7 +104,8 @@ public final class ReplaceInefficientStreamCountInspection extends AbstractBaseJ
     };
   }
 
-  private static @Nullable PsiBinaryExpression extractComparison(PsiMethodCallExpression call, boolean isPresent) {
+  @Nullable
+  private static PsiBinaryExpression extractComparison(PsiMethodCallExpression call, boolean isPresent) {
     final PsiMethodCallExpression countCall;
     if (STREAM_FILTER.test(call)) {
       countCall = ExpressionUtils.getCallForQualifier(call);
@@ -130,7 +131,8 @@ public final class ReplaceInefficientStreamCountInspection extends AbstractBaseJ
     return !range.isEmpty() && range.max() == 0;
   }
 
-  private static @Nullable PsiBinaryExpression extractBinary(PsiMethodCallExpression call) {
+  @Nullable
+  private static PsiBinaryExpression extractBinary(PsiMethodCallExpression call) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
     return ObjectUtils.tryCast(parent, PsiBinaryExpression.class);
   }
@@ -154,7 +156,8 @@ public final class ReplaceInefficientStreamCountInspection extends AbstractBaseJ
     return false;
   }
 
-  private static @Nullable PsiExpression extractLambdaReturnExpression(PsiLambdaExpression lambda) {
+  @Nullable
+  private static PsiExpression extractLambdaReturnExpression(PsiLambdaExpression lambda) {
     PsiElement lambdaBody = lambda.getBody();
     PsiExpression expression = null;
     if (lambdaBody instanceof PsiExpression) {
@@ -211,13 +214,17 @@ public final class ReplaceInefficientStreamCountInspection extends AbstractBaseJ
       mySimplificationMode = simplificationMode;
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getName() {
+    public String getName() {
       return mySimplificationMode.getName();
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaBundle.message("quickfix.family.replace.inefficient.stream.count");
     }
 

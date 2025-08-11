@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -21,7 +21,7 @@ public final class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSigna
   public static class SearchParameters implements QueryParameters {
     private final PsiMethod myMethod;
     //null means any class would be matched
-    private final @Nullable PsiClass myClass;
+    @Nullable private final PsiClass myClass;
     private final boolean myCheckBases;
     private final boolean myAllowStaticMethod;
     private final boolean myJlsOnly;
@@ -42,8 +42,9 @@ public final class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSigna
       myJlsOnly = jlsOnly;
     }
 
+    @Nullable
     @Override
-    public @Nullable Project getProject() {
+    public Project getProject() {
       return myMethod.getProject();
     }
 
@@ -56,11 +57,13 @@ public final class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSigna
       return myCheckBases;
     }
 
-    public final @NotNull PsiMethod getMethod() {
+    @NotNull
+    public final PsiMethod getMethod() {
       return myMethod;
     }
 
-    public final @Nullable PsiClass getPsiClass() {
+    @Nullable
+    public final PsiClass getPsiClass() {
       return myClass;
     }
 
@@ -80,10 +83,11 @@ public final class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSigna
   private SuperMethodsSearch() {
   }
 
-  public static @NotNull Query<MethodSignatureBackedByPsiMethod> search(@NotNull PsiMethod derivedMethod,
-                                                                        final @Nullable PsiClass psiClass,
-                                                                        boolean checkBases,
-                                                                        boolean allowStaticMethod) {
+  @NotNull
+  public static Query<MethodSignatureBackedByPsiMethod> search(@NotNull PsiMethod derivedMethod,
+                                                               @Nullable final PsiClass psiClass,
+                                                               boolean checkBases,
+                                                               boolean allowStaticMethod) {
     return search(new SearchParameters(derivedMethod, psiClass, checkBases, allowStaticMethod));
   }
 

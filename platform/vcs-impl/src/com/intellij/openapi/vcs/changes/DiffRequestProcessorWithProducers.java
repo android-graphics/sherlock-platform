@@ -3,10 +3,8 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.openapi.ListSelection;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
 public interface DiffRequestProcessorWithProducers {
   @Nullable
   ListSelection<? extends DiffRequestProducer> collectDiffProducers(boolean selectedOnly);

@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.diff;
 
 import com.intellij.diff.contents.DocumentContent;
@@ -12,26 +26,31 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 
 public abstract class DiffContentFactoryEx extends DiffContentFactory {
-  public static @NotNull DiffContentFactoryEx getInstanceEx() {
+  @NotNull
+  public static DiffContentFactoryEx getInstanceEx() {
     return (DiffContentFactoryEx)DiffContentFactory.getInstance();
   }
 
 
-  public abstract @NotNull DocumentContentBuilder documentContent(@Nullable Project project, boolean readOnly);
+  @NotNull
+  public abstract DocumentContentBuilder documentContent(@Nullable Project project, boolean readOnly);
 
 
-  public abstract @NotNull DocumentContent createDocumentFromBytes(@Nullable Project project,
-                                                                   byte @NotNull [] content,
-                                                                   @NotNull FileType fileType,
-                                                                   @NotNull String fileName);
+  @NotNull
+  public abstract DocumentContent createDocumentFromBytes(@Nullable Project project,
+                                                          byte @NotNull [] content,
+                                                          @NotNull FileType fileType,
+                                                          @NotNull String fileName);
 
-  public abstract @NotNull DocumentContent createDocumentFromBytes(@Nullable Project project,
-                                                                   byte @NotNull [] content,
-                                                                   @NotNull FilePath filePath);
+  @NotNull
+  public abstract DocumentContent createDocumentFromBytes(@Nullable Project project,
+                                                          byte @NotNull [] content,
+                                                          @NotNull FilePath filePath);
 
-  public abstract @NotNull DocumentContent createDocumentFromBytes(@Nullable Project project,
-                                                                   byte @NotNull [] content,
-                                                                   @NotNull VirtualFile highlightFile);
+  @NotNull
+  public abstract DocumentContent createDocumentFromBytes(@Nullable Project project,
+                                                          byte @NotNull [] content,
+                                                          @NotNull VirtualFile highlightFile);
 
 
   public interface DocumentContentBuilder {

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -24,7 +24,8 @@ public final class SuspendManagerUtil {
   /**
    * Returns suspend context that suspends the thread specified (may be currently evaluating)
    */
-  public static @Nullable SuspendContextImpl findContextByThread(@NotNull SuspendManager suspendManager, @Nullable ThreadReferenceProxyImpl thread) {
+  @Nullable
+  public static SuspendContextImpl findContextByThread(@NotNull SuspendManager suspendManager, @Nullable ThreadReferenceProxyImpl thread) {
     if (thread == null) {
       return ContainerUtil.find(suspendManager.getEventContexts(), c -> c.getSuspendPolicy() == EventRequest.SUSPEND_ALL);
     }
@@ -39,7 +40,8 @@ public final class SuspendManagerUtil {
     return null;
   }
 
-  public static @Nullable SuspendContextImpl getContextForEvaluation(@NotNull SuspendManager suspendManager) {
+  @Nullable
+  public static SuspendContextImpl getContextForEvaluation(@NotNull SuspendManager suspendManager) {
     // first try to take the context from the current command, if any
     DebuggerCommandImpl currentCommand = DebuggerManagerThreadImpl.getCurrentCommand();
     SuspendContextImpl currentSuspendContext =
@@ -56,13 +58,15 @@ public final class SuspendManagerUtil {
     return suspendManager.getPausedContext();
   }
 
-  public static @NotNull Set<SuspendContextImpl> getSuspendingContexts(@NotNull SuspendManager suspendManager,
-                                                                       @NotNull ThreadReferenceProxyImpl thread) {
+  @NotNull
+  public static Set<SuspendContextImpl> getSuspendingContexts(@NotNull SuspendManager suspendManager,
+                                                              @NotNull ThreadReferenceProxyImpl thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return StreamEx.of(suspendManager.getEventContexts()).filter(suspendContext -> suspendContext.suspends(thread)).toSet();
   }
 
-  public static @Nullable SuspendContextImpl getSuspendingContext(@NotNull SuspendManager suspendManager, @NotNull ThreadReferenceProxyImpl thread) {
+  @Nullable
+  public static SuspendContextImpl getSuspendingContext(@NotNull SuspendManager suspendManager, @NotNull ThreadReferenceProxyImpl thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return ContainerUtil.find(suspendManager.getEventContexts(), suspendContext -> suspendContext.suspends(thread));
   }
@@ -70,7 +74,6 @@ public final class SuspendManagerUtil {
   @ApiStatus.Internal
   public static @Nullable SuspendContextImpl getPausedSuspendingContext(@NotNull SuspendManager suspendManager,
                                                                         @NotNull ThreadReferenceProxyImpl thread) {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
     List<SuspendContextImpl> pausedContexts = suspendManager.getPausedContexts();
     SuspendContextImpl context = ContainerUtil.find(pausedContexts, suspendContext ->
       suspendContext.getEventThread() == thread && suspendContext.suspends(thread)
@@ -84,7 +87,7 @@ public final class SuspendManagerUtil {
   public static void switchToThreadInSuspendAllContext(@NotNull SuspendContextImpl suspendAllContext, @NotNull ThreadReferenceProxyImpl threadProxy) {
     assert suspendAllContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL;
     DebugProcessImpl debugProcess = suspendAllContext.getDebugProcess();
-    suspendAllContext.getManagerThread().schedule(new SuspendContextCommandImpl(suspendAllContext) {
+    debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(suspendAllContext) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl c) {
         DebuggerSession session = debugProcess.getSession();

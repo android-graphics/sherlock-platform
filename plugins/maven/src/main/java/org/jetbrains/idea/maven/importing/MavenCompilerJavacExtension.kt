@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
  * @author Vladislav.Soroka
  */
 class MavenCompilerJavacExtension : MavenCompilerExtension {
-  override val mavenCompilerId: String = "javac"
+  override fun getMavenCompilerId(): String = "javac"
 
   override fun getCompiler(project: Project): BackendCompiler {
     return (CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl).javacCompiler

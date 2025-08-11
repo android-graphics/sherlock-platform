@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,8 +19,6 @@ import java.io.InputStream;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -39,8 +37,7 @@ public abstract class ArchiveHandler {
   public static final FileAttributes DIRECTORY_ATTRIBUTES =
     new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false, FileAttributes.CaseSensitivity.SENSITIVE);
 
-  @ApiStatus.Internal
-  public static class EntryInfo {
+  protected static class EntryInfo {
     public final EntryInfo parent;
     public final CharSequence shortName;
     public final boolean isDirectory;
@@ -56,24 +53,25 @@ public abstract class ArchiveHandler {
     }
   }
 
-  private final Path myPath;
+  private volatile File myPath;
   private final Object myLock = new Object();
   private volatile Reference<Map<String, EntryInfo>> myEntries = new SoftReference<>(null);
   private volatile Reference<AddonlyKeylessHash<EntryInfo, Object>> myChildrenEntries = new SoftReference<>(null);
   private boolean myCorrupted;
 
   protected ArchiveHandler(@NotNull String path) {
-    myPath = Paths.get(path);
+    myPath = new File(path);
   }
 
-  public @NotNull Path getPath() {
+  public @NotNull File getFile() {
     return myPath;
   }
 
-  /** @deprecated please use {@link #getPath} instead */
-  @Deprecated
-  public @NotNull File getFile() {
-    return getPath().toFile();
+  protected void setFile(@NotNull File path) {
+    synchronized (myLock) {
+      assert myEntries.get() == null && myChildrenEntries.get() == null && !myCorrupted : "Archive already opened";
+      myPath = path;
+    }
   }
 
   public @Nullable FileAttributes getAttributes(@NotNull String relativePath) {
@@ -83,7 +81,7 @@ public abstract class ArchiveHandler {
         return new FileAttributes(e.isDirectory, false, false, false, e.length, e.timestamp, false, FileAttributes.CaseSensitivity.SENSITIVE);
       }
     }
-    else if (Files.exists(myPath)) {
+    else if (Files.exists(myPath.toPath())) {
       return DIRECTORY_ATTRIBUTES;
     }
 
@@ -128,7 +126,7 @@ public abstract class ArchiveHandler {
             }
             catch (Exception e) {
               myCorrupted = true;
-              Logger.getInstance(getClass()).warn(e.getMessage() + ": " + getPath(), e);
+              Logger.getInstance(getClass()).warn(e.getMessage() + ": " + myPath, e);
               map = new AddonlyKeylessHash<>(ourKeyValueMapper);
             }
           }
@@ -173,7 +171,6 @@ public abstract class ArchiveHandler {
     }
   }
 
-  @ApiStatus.Internal
   protected @Nullable EntryInfo getEntryInfo(@NotNull String relativePath) {
     return getEntriesMap().get(relativePath);
   }
@@ -194,7 +191,7 @@ public abstract class ArchiveHandler {
             }
             catch (Exception e) {
               myCorrupted = true;
-              Logger.getInstance(getClass()).warn(e.getMessage() + ": " + getPath(), e);
+              Logger.getInstance(getClass()).warn(e.getMessage() + ": " + myPath, e);
               map = Collections.emptyMap();
             }
           }
@@ -211,7 +208,6 @@ public abstract class ArchiveHandler {
 
   protected abstract @NotNull Map<String, EntryInfo> createEntriesMap() throws IOException;
 
-  @ApiStatus.Internal
   protected @NotNull EntryInfo createRootEntry() {
     return new EntryInfo("", true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, null);
   }
@@ -224,23 +220,19 @@ public abstract class ArchiveHandler {
    *
    * @param entryFun a routine for producing entry data; when {@code null}, a directory entry is created.
    */
-  protected final void processEntry(
-    @NotNull Map<String, EntryInfo> map,
-    @NotNull String entryName,
-    @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, ? extends @NotNull EntryInfo> entryFun
-  ) {
+  protected final void processEntry(@NotNull Map<String, EntryInfo> map,
+                                    @NotNull String entryName,
+                                    @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, ? extends @NotNull EntryInfo> entryFun) {
     processEntry(map, null, entryName, entryFun);
   }
 
-  protected final void processEntry(
-    @NotNull Map<String, EntryInfo> map,
-    @Nullable Logger logger,
-    @NotNull String entryName,
-    @SuppressWarnings("BoundedWildcard") @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, ? extends @NotNull EntryInfo> entryFun
-  ) {
+  protected final void processEntry(@NotNull Map<String, EntryInfo> map,
+                                    @Nullable Logger logger,
+                                    @NotNull String entryName,
+                                    @SuppressWarnings("BoundedWildcard") @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, ? extends @NotNull EntryInfo> entryFun) {
     String normalizedName = normalizeName(entryName);
     if (normalizedName.isEmpty() || normalizedName.contains("..") && ArrayUtil.contains("..", normalizedName.split("/"))) {
-      if (logger != null) logger.trace("invalid entry: " + getPath() + "!/" + entryName);
+      if (logger != null) logger.trace("invalid entry: " + getFile() + "!/" + entryName);
       return;
     }
 
@@ -251,7 +243,7 @@ public abstract class ArchiveHandler {
 
     EntryInfo existing = map.get(normalizedName);
     if (existing != null) {
-      if (logger != null) logger.trace("duplicate entry: " + getPath() + "!/" + normalizedName);
+      if (logger != null) logger.trace("duplicate entry: " + getFile() + "!/" + normalizedName);
       return;
     }
 
@@ -267,7 +259,7 @@ public abstract class ArchiveHandler {
   private EntryInfo directoryEntry(Map<String, EntryInfo> map, @Nullable Logger logger, String normalizedName) {
     EntryInfo entry = map.get(normalizedName);
     if (entry == null || !entry.isDirectory) {
-      if (logger != null && entry != null) logger.trace("duplicate entry: " + getPath() + "!/" + normalizedName);
+      if (logger != null && entry != null) logger.trace("duplicate entry: " + getFile() + "!/" + normalizedName);
       if (normalizedName.isEmpty()) {
         entry = createRootEntry();
       }

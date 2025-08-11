@@ -24,15 +24,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author Dmitry Avdeev
  */
 public class TestRunLineMarkerProvider extends RunLineMarkerContributor implements DumbAware {
-  private static final String URL_TEST_PREFIX = "java:test://";
-  private static final String URL_SUITE_PREFIX = "java:suite://";
+
   private static final Logger LOG = Logger.getInstance(TestRunLineMarkerProvider.class);
 
 
@@ -42,7 +38,7 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor implemen
       PsiElement element = e.getParent();
       if (element instanceof PsiClass psiClass) {
         if (!isTestClass(psiClass)) return null;
-        String url = URL_SUITE_PREFIX + ClassUtil.getJVMClassName(psiClass);
+        String url = "java:suite://" + ClassUtil.getJVMClassName(psiClass);
         TestStateStorage.Record state = TestStateStorage.getInstance(e.getProject()).getState(url);
         return getInfo(state, true, PsiMethodUtil.hasMainInClass(psiClass) ? 1 : 0);
       }
@@ -50,19 +46,8 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor implemen
         PsiClass containingClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class);
         if (!isTestMethod(containingClass, psiMethod)) return null;
         if (isIgnoredForGradleConfiguration(containingClass, psiMethod)) return null;
-        String urlSuffix = ClassUtil.getJVMClassName(containingClass) + "/" + psiMethod.getName();
-
-        List<String> urlList = new ArrayList<>();
-        urlList.add(URL_TEST_PREFIX + urlSuffix);
-        if (isGradleConfiguration(containingClass)) {
-          urlList.add(URL_SUITE_PREFIX + urlSuffix);
-        }
-
-        TestStateStorage.Record state = null;
-        for (String url : urlList) {
-          state = TestStateStorage.getInstance(e.getProject()).getState(url);
-          if (state != null) break;
-        }
+        String url = "java:test://" + ClassUtil.getJVMClassName(containingClass) + "/" + psiMethod.getName();
+        TestStateStorage.Record state = TestStateStorage.getInstance(e.getProject()).getState(url);
         return getInfo(state, false, 0);
       }
     }

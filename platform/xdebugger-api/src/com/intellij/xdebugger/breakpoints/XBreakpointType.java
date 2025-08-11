@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.xdebugger.breakpoints;
 
@@ -43,7 +43,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
    * @param id an unique id of breakpoint type
    * @param title title of tab in the breakpoints dialog
    */
-  protected XBreakpointType(final @NonNls @NotNull String id, final @Nls @NotNull String title) {
+  protected XBreakpointType(@NonNls @NotNull final String id, @Nls @NotNull final String title) {
     this(id, title, false);
   }
 
@@ -52,13 +52,14 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
    * @param title                  title of tab in the breakpoints dialog
    * @param suspendThreadSupported {@code true} if suspending only one thread is supported for this type of breakpoints
    */
-  protected XBreakpointType(final @NonNls @NotNull String id, final @Nls @NotNull String title, boolean suspendThreadSupported) {
+  protected XBreakpointType(@NonNls @NotNull final String id, @Nls @NotNull final String title, boolean suspendThreadSupported) {
     myId = id;
     myTitle = title;
     mySuspendThreadSupported = suspendThreadSupported;
   }
 
-  public @Nullable P createProperties() {
+  @Nullable
+  public P createProperties() {
     return null;
   }
 
@@ -79,45 +80,55 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return EnumSet.allOf(StandardPanels.class);
   }
 
-  public final @NotNull String getId() {
+  @NotNull
+  public final String getId() {
     return myId;
   }
 
-  public @NotNull @Nls String getTitle() {
+  @NotNull
+  @Nls
+  public String getTitle() {
     return myTitle;
   }
 
-  public @NotNull Icon getEnabledIcon() {
+  @NotNull 
+  public Icon getEnabledIcon() {
     return AllIcons.Debugger.Db_set_breakpoint;
   }
 
-  public @NotNull Icon getDisabledIcon() {
+  @NotNull
+  public Icon getDisabledIcon() {
     return AllIcons.Debugger.Db_disabled_breakpoint;
   }
 
-  public @NotNull Icon getSuspendNoneIcon() {
+  @NotNull
+  public Icon getSuspendNoneIcon() {
     return AllIcons.Debugger.Db_no_suspend_breakpoint;
   }
 
-  public @NotNull Icon getMutedEnabledIcon() {
+  @NotNull
+  public Icon getMutedEnabledIcon() {
     return AllIcons.Debugger.Db_muted_breakpoint;
   }
 
-  public @NotNull Icon getMutedDisabledIcon() {
+  @NotNull
+  public Icon getMutedDisabledIcon() {
     return AllIcons.Debugger.Db_muted_disabled_breakpoint;
   }
 
   /**
    * @return the icon shown for a breakpoint which is scheduled but not yet set (validated, resolved) in the debugger engine
    */
-  public @Nullable Icon getPendingIcon() {
+  @Nullable
+  public Icon getPendingIcon() {
     return null;
   }
 
   /**
    * @return the icon which is shown for a dependent breakpoint until its master breakpoint is reached
    */
-  public @NotNull Icon getInactiveDependentIcon() {
+  @NotNull
+  public Icon getInactiveDependentIcon() {
     return AllIcons.Debugger.Db_dep_line_breakpoint;
   }
 
@@ -128,16 +139,18 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
    * "foo.Bar.workHard()" for method breakpoint,
    * ...).
    */
-  public abstract @Nls String getDisplayText(B breakpoint);
+  @Nls
+  public abstract String getDisplayText(B breakpoint);
 
   /**
    * Laconic breakpoint description with specification of its kind (type of target).
-   * Primarily used for tooltip in the editor, when an exact target is obvious but overall semantics might be unclear.
+   * Primarily used for tooltip in the editor, when exact target is obvious but overall semantics might be unclear.
    * E.g.: "Line breakpoint", "Lambda breakpoint", "Field breakpoint".
    *
    * @see XLineBreakpointType#getGeneralDescription(XLineBreakpointType.XLineBreakpointVariant)
    */
-  public @Nls String getGeneralDescription(B breakpoint) {
+  @Nls
+  public String getGeneralDescription(B breakpoint) {
     // Default implementation just for API backward compatibility, it's highly recommended to properly implement this method.
     return getDisplayText(breakpoint);
   }
@@ -150,19 +163,23 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return Collections.emptyList();
   }
 
-  public @Nullable XBreakpointCustomPropertiesPanel<B> createCustomConditionsPanel() {
+  @Nullable 
+  public XBreakpointCustomPropertiesPanel<B> createCustomConditionsPanel() {
     return null;
   }
 
-  public @Nullable XBreakpointCustomPropertiesPanel<B> createCustomPropertiesPanel(@NotNull Project project) {
+  @Nullable
+  public XBreakpointCustomPropertiesPanel<B> createCustomPropertiesPanel(@NotNull Project project) {
     return null;
   }
 
-  public @Nullable XBreakpointCustomPropertiesPanel<B> createCustomRightPropertiesPanel(@NotNull Project project) {
+  @Nullable
+  public XBreakpointCustomPropertiesPanel<B> createCustomRightPropertiesPanel(@NotNull Project project) {
     return null;
   }
 
-  public @Nullable XBreakpointCustomPropertiesPanel<B> createCustomTopPropertiesPanel(@NotNull Project project) {
+  @Nullable
+  public XBreakpointCustomPropertiesPanel<B> createCustomTopPropertiesPanel(@NotNull Project project) {
     return null;
   }
 
@@ -170,11 +187,13 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
    * @deprecated override {@link #getEditorsProvider(B, Project)} instead
    */
   @Deprecated
-  public @Nullable XDebuggerEditorsProvider getEditorsProvider() {
+  @Nullable
+  public XDebuggerEditorsProvider getEditorsProvider() {
     return null;
   }
 
-  public @Nullable XDebuggerEditorsProvider getEditorsProvider(@NotNull B breakpoint, @NotNull Project project) {
+  @Nullable
+  public XDebuggerEditorsProvider getEditorsProvider(@NotNull B breakpoint, @NotNull Project project) {
     return getEditorsProvider();
   }
 
@@ -182,7 +201,8 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return Collections.emptyList();
   }
 
-  public @NotNull Comparator<B> getBreakpointComparator() {
+  @NotNull 
+  public Comparator<B> getBreakpointComparator() {
     return (b, b1) -> Long.compare(b1.getTimeStamp(), b.getTimeStamp());
     //return XDebuggerUtil.getInstance().getDefaultBreakpointComparator(this);
   }
@@ -200,7 +220,8 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
    * This method is called then "Add" button is pressed in the "Breakpoints" dialog 
    * @return the created breakpoint or {@code null} if breakpoint wasn't created
    */
-  public @Nullable B addBreakpoint(final Project project, JComponent parentComponent) {
+  @Nullable
+  public B addBreakpoint(final Project project, JComponent parentComponent) {
     return null;
   }
 
@@ -210,7 +231,8 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
    *
    * @return a default breakpoint or {@code null} if default breakpoint isn't supported
    */
-  public @Nullable XBreakpoint<P> createDefaultBreakpoint(@NotNull XBreakpointCreator<P> creator) {
+  @Nullable
+  public XBreakpoint<P> createDefaultBreakpoint(@NotNull XBreakpointCreator<P> creator) {
     return null;
   }
 
@@ -218,14 +240,16 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return true;
   }
 
-  public @Nullable @NonNls String getBreakpointsDialogHelpTopic() {
+  @Nullable @NonNls
+  public String getBreakpointsDialogHelpTopic() {
     return null;
   }
 
   /**
    * Override this method to define source position for a breakpoint. It will be used e.g. by 'Go To' and 'View Source' buttons in 'Breakpoints' dialog
    */
-  public @Nullable XSourcePosition getSourcePosition(@NotNull XBreakpoint<P> breakpoint) {
+  @Nullable
+  public XSourcePosition getSourcePosition(@NotNull XBreakpoint<P> breakpoint) {
     return null;
   }
 
@@ -234,7 +258,8 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
    * Usually used in the list of breakpoints.
    * It is expected to be short.
    */
-  public @Nls String getShortText(B breakpoint) {
+  @Nls
+  public String getShortText(B breakpoint) {
     return getDisplayText(breakpoint);
   }
 

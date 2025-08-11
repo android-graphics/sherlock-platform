@@ -1,13 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.AddToInspectionOptionListFix;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import com.intellij.util.Processor;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
@@ -32,7 +30,7 @@ public final class SpecialAnnotationsUtilBase {
     if (modifierList != null) {
       final PsiAnnotation[] psiAnnotations = modifierList.getAnnotations();
       for (PsiAnnotation psiAnnotation : psiAnnotations) {
-        final @NonNls String name = psiAnnotation.getQualifiedName();
+        @NonNls final String name = psiAnnotation.getQualifiedName();
         if (name == null) continue;
         if (name.startsWith("java.") || //name.startsWith("javax.") ||
             name.startsWith("org.jetbrains.") ||

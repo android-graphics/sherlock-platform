@@ -11,8 +11,10 @@ import java.nio.file.Path;
 import java.util.function.Function;
 
 public final class PathSourceMapper implements NodeSourcePathMapper {
-  private final @NotNull Function<String, String> toFull;
-  private final @NotNull Function<String, String> toRelative;
+  @NotNull
+  private final Function<String, String> toFull;
+  @NotNull
+  private final Function<String, String> toRelative;
 
   public PathSourceMapper() {
     this(Function.identity(), Function.identity());

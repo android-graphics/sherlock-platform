@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractInterface;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -17,7 +17,6 @@ import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,7 +25,7 @@ import java.util.Set;
 
 class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
 
-  ExtractInterfaceDialog(Project project, PsiClass sourceClass, @Unmodifiable Set<PsiElement> selectedMembers) {
+  ExtractInterfaceDialog(Project project, PsiClass sourceClass, Set<PsiElement> selectedMembers) {
     super(project, sourceClass, collectMembers(sourceClass, selectedMembers), ExtractInterfaceHandler.getRefactoringName());
     for (MemberInfo memberInfo : myMemberInfos) {
       final PsiMember member = memberInfo.getMember();
@@ -83,8 +82,9 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
            : RefactoringBundle.message("package.for.original.class");
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getEntityName() {
+  protected String getEntityName() {
     return RefactoringBundle.message("extractSuperInterface.interface");
   }
 

@@ -7,7 +7,6 @@ import com.apple.eawt.FullScreenListener
 import com.apple.eawt.FullScreenUtilities
 import com.apple.eawt.event.FullScreenEvent
 import com.intellij.ide.ActiveWindowsWatcher
-import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -15,7 +14,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeFrameImpl
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
+import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.executeOnCancelInEdt
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ToolbarService.Companion.getInstance
@@ -42,10 +41,6 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
     private val LOG: Logger
       get() = logger<MacMainFrameDecorator>()
 
-    /**
-     * A client property on a root pane to describe the fullscreen state
-     * Should either be true or null
-     */
     const val FULL_SCREEN: String = "Idea.Is.In.FullScreen.Mode.Now"
 
     const val FULL_SCREEN_PROGRESS: String = "Idea.Is.In.FullScreen.Mode.Progress"
@@ -105,6 +100,9 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
 
       override fun windowEnteredFullScreen(event: FullScreenEvent) {
         frame.togglingFullScreenInProgress = false
+        // We can get the notification when the frame has been disposed
+        val rootPane = frame.rootPane
+        rootPane?.putClientProperty(FULL_SCREEN, true)
         enterFullScreen()
         frame.validate()
         notifyFrameComponents(true)
@@ -119,7 +117,7 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
         frame.togglingFullScreenInProgress = false
         // We can get the notification when the frame has been disposed
         val rootPane = frame.rootPane
-        if (!ExperimentalUI.isNewUI() || !CustomWindowHeaderUtil.isToolbarInHeader(UISettings.getInstance(), false)) {
+        if (!ExperimentalUI.isNewUI() || (rootPane as? IdeRootPane)?.isToolbarInHeader() == false) {
           getInstance().setCustomTitleBar(frame, rootPane) { runnable ->
             executeOnCancelInEdt(coroutineScope) { runnable.run() }
           }
@@ -169,10 +167,8 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
   private fun enterFullScreen() {
     isInFullScreen = true
     LOG.debug { "Full screen set flag true for $frame" }
-    val rootPane = frame.rootPane
-    rootPane?.putClientProperty(FULL_SCREEN, true)
     storeFullScreenStateIfNeeded()
-    rootPane?.putClientProperty(FULL_SCREEN_PROGRESS, null)
+    frame.rootPane?.putClientProperty(FULL_SCREEN_PROGRESS, null)
     tabsHandler.enterFullScreen()
   }
 
@@ -187,11 +183,11 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
     tabsHandler.exitFullScreen()
   }
 
-  override fun setStoredFullScreen(state: Boolean) {
-    isInFullScreen = state
+  override fun setStoredFullScreen() {
+    isInFullScreen = true
     val rootPane = frame.rootPane
     if (rootPane != null) {
-      rootPane.putClientProperty(FULL_SCREEN, if (state) true else null)
+      rootPane.putClientProperty(FULL_SCREEN, true)
       if (rootPane.border != null) {
         rootPane.setBorder(null)
       }

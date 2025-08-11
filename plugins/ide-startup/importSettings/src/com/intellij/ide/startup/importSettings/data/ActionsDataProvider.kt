@@ -12,7 +12,7 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import javax.swing.Icon
 
-internal interface ActionsDataProvider<T : BaseService> {
+interface ActionsDataProvider<T : BaseService> {
   enum class popUpPlace {
     MAIN,
     OTHER
@@ -93,7 +93,7 @@ internal interface ActionsDataProvider<T : BaseService> {
     }
   }
 
-  val settingsService: SettingsService
+  val settingsService
     get() = SettingsService.getInstance()
 
   val productService: T
@@ -109,13 +109,13 @@ internal interface ActionsDataProvider<T : BaseService> {
   fun productSelected(contributor: SettingsContributor)
 }
 
-internal class JBrActionsDataProvider private constructor() : ActionsDataProvider<JbService> {
+class JBrActionsDataProvider private constructor() : ActionsDataProvider<JbService> {
   companion object {
     private val provider = JBrActionsDataProvider()
-    fun getInstance(): JBrActionsDataProvider = provider
+    fun getInstance() = provider
   }
 
-  override val productService: JbService = settingsService.getJbService()
+  override val productService = settingsService.getJbService()
   private var map: Map<ActionsDataProvider.popUpPlace, List<Product>?>? = null
 
   init {
@@ -253,8 +253,7 @@ class ExtActionsDataProvider(override val productService: ExternalProductService
     get() = productService.products()
   override val other: List<Product>? = null
   override fun productSelected(contributor: SettingsContributor) {
-    val product = contributor as? ExternalProductInfo ?: return
-    ImportSettingsEventsCollector.externalSelected(product.transferableId)
+    ImportSettingsEventsCollector.externalSelected((contributor as Product).id)
   }
 }
 

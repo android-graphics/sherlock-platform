@@ -1,11 +1,10 @@
 from collections.abc import Sequence
-from re import Pattern
 from typing import Protocol
 
 import gdb
 
 def register_xmethod_matcher(
-    locus: gdb.Objfile | gdb.Progspace | None, matcher: XMethodMatcher, replace: bool = False
+    locus: gdb.Objfile | gdb.Progspace | None, matcher: _XMethodMatcher, replace: bool = ...
 ) -> None: ...
 
 class _XMethod(Protocol):
@@ -18,28 +17,18 @@ class XMethod:
 
     def __init__(self, name: str) -> None: ...
 
-class XMethodWorker:
-    def get_arg_types(self) -> Sequence[gdb.Type] | gdb.Type | None: ...
+class _XMethodWorker(Protocol):
+    def get_arg_types(self) -> Sequence[gdb.Type]: ...
     def get_result_type(self, *args: gdb.Value) -> gdb.Type: ...
     def __call__(self, *args: gdb.Value) -> object: ...
 
-class XMethodMatcher:
-    name: str
+class XMethodWorker: ...
+
+class _XMethodMatcher(Protocol):
     enabled: bool
-    methods: list[_XMethod] | None
+    methods: list[_XMethod]
 
     def __init__(self, name: str) -> None: ...
-    def match(self, class_type: gdb.Type, method_name: str) -> XMethodWorker | Sequence[XMethodWorker]: ...
+    def match(self, class_type: gdb.Type, method_name: str) -> _XMethodWorker: ...
 
-class _SimpleWorkerMethod(Protocol):
-    def __call__(self, *args: gdb.Value) -> object: ...
-
-class SimpleXMethodMatcher(XMethodMatcher):
-    def __init__(
-        self,
-        name: str,
-        class_matcher: str | Pattern[str],
-        method_matcher: str | Pattern[str],
-        method_function: _SimpleWorkerMethod,
-        *arg_types: Sequence[gdb.Type] | gdb.Type | None,
-    ) -> None: ...
+class XMethodMatcher: ...

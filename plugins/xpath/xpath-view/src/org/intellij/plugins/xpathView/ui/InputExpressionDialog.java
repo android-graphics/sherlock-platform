@@ -75,7 +75,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
     private final EditorComboBox myComboBox;
     private JComponent myEditorComponent;
 
-    private @Nullable Set<Namespace> myNamespaceCache;
+    @Nullable private Set<Namespace> myNamespaceCache;
     private InteractiveContextProvider myContextProvider;
     private final PsiFile myXPathFile;
 
@@ -244,7 +244,8 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         return myEditor.getField().getDocument().getTextLength() > 0;
     }
 
-    protected @Nullable Editor getEditor() {
+    @Nullable
+    protected Editor getEditor() {
         if (getMode() == Mode.ADVANCED) {
             return myEditor.getField().getEditor();
         } else {
@@ -432,17 +433,20 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         }
 
         @Override
-        public @NotNull ContextType getContextType() {
+        @NotNull
+        public ContextType getContextType() {
             return XPathSupport.TYPE;
         }
 
         @Override
-        public @Nullable XmlElement getContextElement() {
+        @Nullable
+        public XmlElement getContextElement() {
             return myContextElement;
         }
 
         @Override
-        public @NotNull EvalExpressionDialog.MyNamespaceContext getNamespaceContext() {
+        @NotNull
+        public EvalExpressionDialog.MyNamespaceContext getNamespaceContext() {
             return myNamespaceContext;
         }
 
@@ -461,9 +465,9 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
             for (Iterator<QName> it = set.iterator(); it.hasNext();) {
                 final QName name = it.next();
                 final String prefix = name.getPrefix();
-                if (prefix == null || prefix.isEmpty()) {
+                if (prefix == null || prefix.length() == 0) {
                     final String uri = name.getNamespaceURI();
-                    if (uri != null && !uri.isEmpty()) {
+                    if (uri != null && uri.length() > 0) {
                         final String assignedPrefix = myNamespaceContext.getPrefixForURI(uri, null);
                         if (assignedPrefix == null) {
                             it.remove();
@@ -484,27 +488,31 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         private BidirectionalMap<String, String> myMap;
 
         @Override
-        public @Nullable String getNamespaceURI(String prefix, XmlElement context) {
+        @Nullable
+        public String getNamespaceURI(String prefix, XmlElement context) {
             final String s = myMap.get(prefix);
-            if (s == null && prefix.isEmpty()) {
+            if (s == null && prefix.length() == 0) {
                 return "";
             }
             return s;
         }
 
         @Override
-        public @Nullable String getPrefixForURI(String uri, XmlElement context) {
+        @Nullable
+        public String getPrefixForURI(String uri, XmlElement context) {
             final List<String> list = myMap.getKeysByValue(uri);
             return list != null && !list.isEmpty() ? list.get(0) : null;
         }
 
         @Override
-        public @NotNull Collection<String> getKnownPrefixes(XmlElement context) {
+        @NotNull
+        public Collection<String> getKnownPrefixes(XmlElement context) {
             return myMap.keySet();
         }
 
         @Override
-        public @Nullable PsiElement resolve(String prefix, XmlElement context) {
+        @Nullable
+        public PsiElement resolve(String prefix, XmlElement context) {
             return null;
         }
 
@@ -537,12 +545,14 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         }
 
         @Override
-        public @NotNull String getText() {
+        @NotNull
+        public String getText() {
             return getFamilyName();
         }
 
         @Override
-        public @NotNull String getFamilyName() {
+        @NotNull
+        public String getFamilyName() {
             return XPathBundle.message("intention.family.name.register.namespace.prefix");
         }
 

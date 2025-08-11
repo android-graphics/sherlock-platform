@@ -1,30 +1,27 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.ant
 
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.UsefulTestCase.assertContainsElements
-import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.FileCollectionFactory
 import com.intellij.util.io.directoryContent
 import org.jetbrains.jps.ant.model.JpsAntExtensionService
 import org.jetbrains.jps.ant.model.impl.artifacts.JpsAntArtifactExtensionImpl
 import org.jetbrains.jps.model.artifact.JpsArtifactService
-import org.jetbrains.jps.model.serialization.JpsGlobalSettingsLoading.loadGlobalSettings
-import org.jetbrains.jps.model.serialization.JpsProjectData
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Test
+import org.jetbrains.jps.model.serialization.JpsSerializationTestCase
 import java.io.File
-import kotlin.io.path.Path
-import kotlin.io.path.absolutePathString
 
-class JpsAntSerializationTest {
-  @Test
+class JpsAntSerializationTest : JpsSerializationTestCase() {
+  private lateinit var antHome: File
+
+  override fun setUp() {
+    super.setUp()
+    antHome = createTempDir("antHome")
+  }
+
   fun testLoadArtifactProperties() {
-    val projectData = JpsProjectData.loadFromTestData(PROJECT_PATH, javaClass)
-    val myProject = projectData.project
+    loadProject(PROJECT_PATH)
     val artifacts = JpsArtifactService.getInstance().getSortedArtifacts(myProject)
     assertEquals(2, artifacts.size)
     val dir = artifacts[0]
@@ -32,13 +29,13 @@ class JpsAntSerializationTest {
 
     val preprocessing = JpsAntExtensionService.getPreprocessingExtension(dir)!!
     assertTrue(preprocessing.isEnabled)
-    assertEquals(projectData.getUrl("build.xml"), preprocessing.fileUrl)
+    assertEquals(getUrl("build.xml"), preprocessing.fileUrl)
     assertEquals("show-message", preprocessing.targetName)
     assertEquals(JpsAntArtifactExtensionImpl.ARTIFACT_OUTPUT_PATH_PROPERTY,
                  assertOneElement(preprocessing.antProperties).getPropertyName())
 
     val postprocessing = JpsAntExtensionService.getPostprocessingExtension(dir)!!
-    assertEquals(projectData.getUrl("build.xml"), postprocessing.fileUrl)
+    assertEquals(getUrl("build.xml"), postprocessing.fileUrl)
     assertEquals("create-file", postprocessing.targetName)
     val properties = postprocessing.antProperties
     assertEquals(2, properties.size)
@@ -54,56 +51,57 @@ class JpsAntSerializationTest {
     assertNull(JpsAntExtensionService.getPreprocessingExtension(jar))
   }
 
-  @Test
   fun testLoadAntInstallations() {
-    val antHome = directoryContent {
+    directoryContent {
       file("foo.jar")
       dir("lib") {
         file("bar.jar")
       }
-    }.generateInTempDir()
-    val model = org.jetbrains.jps.model.serialization.loadGlobalSettings(OPTIONS_PATH, javaClass, mapOf(
-      "MY_ANT_HOME_DIR" to antHome.absolutePathString()
-    ))
-    val installation = JpsAntExtensionService.findAntInstallation(model, "Apache Ant version 1.8.2")
+    }.generate(antHome)
+    loadGlobalSettings(OPTIONS_PATH)
+    val installation = JpsAntExtensionService.findAntInstallation(myModel, "Apache Ant version 1.8.2")
     assertNotNull(installation)
     assertEquals(FileUtil.toSystemIndependentName(installation!!.antHome.absolutePath),
                  FileUtil.toSystemIndependentName(
                    File(SystemProperties.getUserHome(), "applications/apache-ant-1.8.2").absolutePath))
 
-    val installation2 = JpsAntExtensionService.findAntInstallation(model, "Patched Ant")
+    val installation2 = JpsAntExtensionService.findAntInstallation(myModel, "Patched Ant")
     assertNotNull(installation2)
     UsefulTestCase.assertSameElements(toFiles(installation2!!.classpath),
-                                      File(antHome.toFile(), "foo.jar"),
-                                      File(antHome.toFile(), "lib/bar.jar"))
+                                      File(antHome, "foo.jar"),
+                                      File(antHome, "lib/bar.jar"))
   }
 
-  @Test
+  override fun getPathVariables(): Map<String, String> {
+    val pathVariables = super.getPathVariables()
+    pathVariables.put("MY_ANT_HOME_DIR", antHome.absolutePath)
+    return pathVariables
+  }
+
   fun testLoadAntConfiguration() {
-    val projectData = JpsProjectData.loadFromTestData(PROJECT_PATH, javaClass)
-    val model = projectData.project.model
-    loadGlobalSettings(model.global, Path(PathManagerEx.getCommunityHomePath()).resolve(OPTIONS_PATH))
-    val buildXmlUrl = projectData.getUrl("build.xml")
-    val options = JpsAntExtensionService.getOptions(projectData.project, buildXmlUrl)
+    loadProject(PROJECT_PATH)
+    loadGlobalSettings(OPTIONS_PATH)
+    val buildXmlUrl = getUrl("build.xml")
+    val options = JpsAntExtensionService.getOptions(myProject, buildXmlUrl)
     assertEquals(128, options.maxHeapSize)
     assertEquals("-J-Dmy.ant.prop=123", options.antCommandLineParameters)
     assertContainsElements(toFiles(options.additionalClasspath),
-                           projectData.baseProjectDir.resolve("lib/jdom.jar").toFile(),
-                           projectData.baseProjectDir.resolve("ant-lib/a.jar").toFile())
+                           File(getAbsolutePath("lib/jdom.jar")),
+                           File(getAbsolutePath("ant-lib/a.jar")))
     val property = assertOneElement(options.properties)
     assertEquals("my.property", property.getPropertyName())
     assertEquals("its value", property.getPropertyValue())
 
-    val emptyFileUrl = projectData.getUrl("empty.xml")
-    val options2 = JpsAntExtensionService.getOptions(projectData.project, emptyFileUrl)
+    val emptyFileUrl = getUrl("empty.xml")
+    val options2 = JpsAntExtensionService.getOptions(myProject, emptyFileUrl)
     assertEquals(256, options2.maxHeapSize)
     assertEquals(10, options2.maxStackSize)
     assertEquals("1.6", options2.customJdkName)
 
-    val bundled = JpsAntExtensionService.getAntInstallationForBuildFile(model, buildXmlUrl)!!
+    val bundled = JpsAntExtensionService.getAntInstallationForBuildFile(myModel, buildXmlUrl)!!
     assertEquals("Bundled Ant", bundled.name)
 
-    val installation = JpsAntExtensionService.getAntInstallationForBuildFile(model, emptyFileUrl)!!
+    val installation = JpsAntExtensionService.getAntInstallationForBuildFile(myModel, emptyFileUrl)!!
     assertEquals("Apache Ant version 1.8.2", installation.name)
 
   }

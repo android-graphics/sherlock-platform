@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.externalSystemIntegration.output.parsers;
 
 import com.intellij.build.events.DerivedResult;
@@ -9,19 +9,21 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 public class MavenTaskFailedResultImpl implements DerivedResult {
-  private final @NlsSafe String myError;
+  private @NlsSafe final String myError;
 
   public MavenTaskFailedResultImpl(@NlsSafe String error) {
     myError = error;
   }
 
+  @NotNull
   @Override
-  public @NotNull FailureResult createFailureResult() {
+  public FailureResult createFailureResult() {
     return new FailureResultImpl();
   }
 
+  @NotNull
   @Override
-  public @NotNull EventResult createDefaultResult() {
+  public EventResult createDefaultResult() {
     return new FailureResultImpl(myError);
   }
 }

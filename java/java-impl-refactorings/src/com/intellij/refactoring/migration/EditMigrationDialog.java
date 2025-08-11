@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;

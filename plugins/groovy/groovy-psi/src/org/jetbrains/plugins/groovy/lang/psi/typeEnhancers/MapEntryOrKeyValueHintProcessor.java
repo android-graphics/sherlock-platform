@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.openapi.util.Couple;
@@ -14,8 +14,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public final class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
-  private static final @NlsSafe String INDEX = "index";
-  private static final @NlsSafe String ARG_NUM = "argNum";
+  @NlsSafe private static final String INDEX = "index";
+  @NlsSafe private static final String ARG_NUM = "argNum";
 
 
   @Override
@@ -23,10 +23,11 @@ public final class MapEntryOrKeyValueHintProcessor extends SignatureHintProcesso
     return "groovy.transform.stc.MapEntryOrKeyValue";
   }
 
+  @NotNull
   @Override
-  public @NotNull List<PsiType[]> inferExpectedSignatures(@NotNull PsiMethod method,
-                                                          @NotNull PsiSubstitutor substitutor,
-                                                          String @NotNull [] options) {
+  public List<PsiType[]> inferExpectedSignatures(@NotNull PsiMethod method,
+                                                 @NotNull PsiSubstitutor substitutor,
+                                                 String @NotNull [] options) {
     int argNum = extractArgNum(options);
     boolean index = extractIndex(options);
 
@@ -106,7 +107,8 @@ public final class MapEntryOrKeyValueHintProcessor extends SignatureHintProcesso
     return null;
   }
 
-  private static @Nullable Couple<String> parseValue(String value) {
+  @Nullable
+  private static Couple<String> parseValue(String value) {
     String[] split = value.split("=");
     return split.length == 2 ? Couple.of(split[0].trim(), split[1].trim()) : null;
   }

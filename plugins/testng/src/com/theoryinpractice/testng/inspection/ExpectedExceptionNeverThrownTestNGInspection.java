@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -17,8 +17,9 @@ import java.util.List;
  */
 public class ExpectedExceptionNeverThrownTestNGInspection extends AbstractBaseJavaLocalInspectionTool {
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new ExpectedExceptionNeverThrownVisitor(holder);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.openapi.editor.Editor;
@@ -27,14 +27,16 @@ public class DynamicPropertyFromLabelFix extends DynamicPropertyFix {
     myTargetClassPointer = createSmartPointer(targetClass);
   }
 
+  @Nullable
   @Override
-  protected @Nullable String getRefName() {
+  protected String getRefName() {
     GrArgumentLabel namedArgument = myLabelPointer.getElement();
     return namedArgument == null ? null : namedArgument.getName();
   }
 
+  @NotNull
   @Override
-  protected @NotNull DynamicDialog createDialog() {
+  protected DynamicDialog createDialog() {
     return new DynamicPropertyDialog(myLabelPointer.getElement(),myTargetClassPointer.getElement());
   }
 

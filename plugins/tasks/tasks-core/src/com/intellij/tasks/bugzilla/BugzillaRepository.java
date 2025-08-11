@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.bugzilla;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,20 +6,37 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.*;
+import com.intellij.tasks.CustomTaskState;
+import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
+import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.RequestFailedException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.apache.xmlrpc.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.Vector;
 import java.util.regex.Matcher;
+import org.apache.xmlrpc.CommonsXmlRpcTransport;
+import org.apache.xmlrpc.XmlRpcClient;
+import org.apache.xmlrpc.XmlRpcClientException;
+import org.apache.xmlrpc.XmlRpcException;
+import org.apache.xmlrpc.XmlRpcRequest;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
@@ -62,8 +79,9 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     myComponentName = other.myComponentName;
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseRepository clone() {
+  public BaseRepository clone() {
     return new BugzillaRepository(this);
   }
 
@@ -93,13 +111,15 @@ public class BugzillaRepository extends BaseRepositoryImpl {
       .withParameter("resolution", !withClosed ? "" : null);
   }
 
+  @Nullable
   @Override
-  public @Nullable Task findTask(@NotNull String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
     final Hashtable<String, Object> table = findBugInfoById(id);
     return table != null ? new BugzillaTask(table, this) : null;
   }
 
-  private @Nullable Hashtable<String, Object> findBugInfoById(@NotNull String id) throws Exception {
+  @Nullable
+  private Hashtable<String, Object> findBugInfoById(@NotNull String id) throws Exception {
     final Hashtable<String, Object> response;
     try {
       // In Bugzilla 3.0 this method is called "get_bugs".
@@ -164,8 +184,9 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     request.execute();
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     final Hashtable<String, ?> response = new BugzillaXmlRpcRequest("Bug.fields")
       .withParameter("names", newVector("bug_status", "resolution"))
       .requireAuthentication(true)
@@ -221,12 +242,14 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     return Collections.emptySet();
   }
 
-  private @Nullable String getCustomStateName(@NotNull Task task) throws Exception {
+  @Nullable
+  private String getCustomStateName(@NotNull Task task) throws Exception {
     final Hashtable<String, Object> found = findBugInfoById(task.getId());
     return found != null ? (String)found.get("status") : null;
   }
 
-  private static @NotNull List<String> extractNotEmptyNames(@NotNull Vector<Hashtable<String, ?>> vector) {
+  @NotNull
+  private static List<String> extractNotEmptyNames(@NotNull Vector<Hashtable<String, ?>> vector) {
     return ContainerUtil.mapNotNull(vector, table -> StringUtil.nullize((String)table.get("name")));
   }
 
@@ -255,7 +278,8 @@ public class BugzillaRepository extends BaseRepositoryImpl {
   /**
    * @return pair where first element is list of project names and second is list of component names (will be empty for Bugzilla < 4.2)
    */
-  public @NotNull Pair<List<String>, List<String>> fetchProductAndComponentNames() throws Exception {
+  @NotNull
+  public Pair<List<String>, List<String>> fetchProductAndComponentNames() throws Exception {
     Hashtable<String, Vector<Integer>> productIdsResponse = new BugzillaXmlRpcRequest("Product.get_selectable_products")
       .requireAuthentication(true)
       .execute();
@@ -279,8 +303,9 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     return Pair.create(productNames, componentNames);
   }
 
+  @Nullable
   @Override
-  public @Nullable CancellableConnection createCancellableConnection() {
+  public CancellableConnection createCancellableConnection() {
     return new CancellableConnection() {
 
       BugzillaXmlRpcRequest myRequest;
@@ -319,8 +344,9 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     return table;
   }
 
+  @Nullable
   @Override
-  public @Nullable String extractId(@NotNull String taskName) {
+  public String extractId(@NotNull String taskName) {
     String id = taskName.trim();
     return id.matches("\\d+") ? id : null;
   }
@@ -417,7 +443,8 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     return true;
   }
 
-  public @NotNull String getProductName() {
+  @NotNull
+  public String getProductName() {
     return myProductName;
   }
 
@@ -425,7 +452,8 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     myProductName = productName;
   }
 
-  public @NotNull String getComponentName() {
+  @NotNull
+  public String getComponentName() {
     return myComponentName;
   }
 

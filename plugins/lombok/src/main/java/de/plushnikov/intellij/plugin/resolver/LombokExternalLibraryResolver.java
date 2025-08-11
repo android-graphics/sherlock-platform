@@ -31,18 +31,20 @@ public final class LombokExternalLibraryResolver extends ExternalLibraryResolver
     simpleNameToFQNameMap = MAIN_LOMBOK_CLASSES.stream().collect(Collectors.toMap(StringUtil::getShortName, Function.identity()));
   }
 
+  @Nullable
   @Override
-  public @Nullable ExternalClassResolveResult resolveClass(@NotNull String shortClassName,
-                                                           @NotNull ThreeState isAnnotation,
-                                                           @NotNull Module contextModule) {
+  public ExternalClassResolveResult resolveClass(@NotNull String shortClassName,
+                                                 @NotNull ThreeState isAnnotation,
+                                                 @NotNull Module contextModule) {
     if (isAnnotation == ThreeState.YES && simpleNameToFQNameMap.containsKey(shortClassName)) {
       return new ExternalClassResolveResult(simpleNameToFQNameMap.get(shortClassName), LOMBOK_DESCRIPTOR);
     }
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable ExternalLibraryDescriptor resolvePackage(@NotNull String packageName) {
+  public ExternalLibraryDescriptor resolvePackage(@NotNull String packageName) {
     if (allLombokPackages.contains(packageName)) {
       return LOMBOK_DESCRIPTOR;
     }

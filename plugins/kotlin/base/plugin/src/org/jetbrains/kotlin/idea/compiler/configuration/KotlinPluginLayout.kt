@@ -24,9 +24,7 @@ val isRunningFromSources: Boolean by lazy {
 }
 
 object KotlinPluginLayout {
-    @get:ApiStatus.ScheduledForRemoval
     @Deprecated("Use 'KotlinPluginLayout' directly", ReplaceWith("KotlinPluginLayout"))
-    @get:Deprecated("Use 'KotlinPluginLayout' directly", ReplaceWith("KotlinPluginLayout"))
     @JvmStatic
     val instance: KotlinPluginLayout
         get() = KotlinPluginLayout
@@ -40,24 +38,12 @@ object KotlinPluginLayout {
         get() = kotlincProvider.value
 
     /**
-     * Directory with the Kotlin compiler distribution same version as plugin analyzer.
-     */
-    @Deprecated(
-        "Use 'kotlinc' instead. Temporary workaround for scratches before Kotlin 2.1.20",
-        ReplaceWith("kotlinc")
-    )
-    @JvmStatic
-    // TODO: KTIJ-32993
-    val kotlincIde: File
-        get() = kotlincIdeProvider.value
-
-    /**
      * Location of the JPS plugin and all its dependency jars
      */
     val jpsPluginClasspath: List<File>
         get() = jpsPluginClasspathProvider.value
 
-    val jsEngines: File by lazy {
+    val jsEngines by lazy {
         kotlinc.resolve("lib").resolve("js.engines.jar").also { check(it.exists()) { "$it doesn't exist" } }
     }
 
@@ -79,7 +65,6 @@ object KotlinPluginLayout {
     val ideCompilerVersion: IdeKotlinVersion = IdeKotlinVersion.get(KotlinCompilerVersion.VERSION)
 
     private val kotlincProvider: Lazy<File>
-    private val kotlincIdeProvider: Lazy<File>
     private val jpsPluginClasspathProvider: Lazy<List<File>>
 
     init {
@@ -95,17 +80,6 @@ object KotlinPluginLayout {
                     KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_dist.xml")
                 ) ?: error("Can't download dist")
                 val unpackedDistDir = KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources")
-                LazyZipUnpacker(unpackedDistDir).lazyUnpack(distJar)
-            }
-
-            // TODO: KTIJ-32993
-            kotlincIdeProvider = lazy {
-                @Suppress("DEPRECATION")
-                val distJar = downloadArtifactForIdeFromSources(
-                    OLD_KOTLIN_DIST_ARTIFACT_ID,
-                    KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_ide_dist.xml")
-                ) ?: error("Can't download dist")
-                val unpackedDistDir = KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-ide-dist-for-ide-from-sources")
                 LazyZipUnpacker(unpackedDistDir).lazyUnpack(distJar)
             }
 
@@ -126,7 +100,6 @@ object KotlinPluginLayout {
             fun resolve(path: String) = kotlinPluginRoot.resolve(path).also { check(it.exists()) { "$it doesn't exist" } }.toFile()
 
             kotlincProvider = lazy { resolve("kotlinc") }
-            kotlincIdeProvider = lazy { resolve("kotlinc.ide") }
             jpsPluginClasspathProvider = lazy { listOf(resolve("lib/jps/kotlin-jps-plugin.jar")) }
         }
 

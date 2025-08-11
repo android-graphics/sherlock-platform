@@ -51,8 +51,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.xml.namespace.QName;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static org.intellij.plugins.xpathView.util.Copyable.Util.copy;
 
@@ -161,7 +161,8 @@ public class EditContextDialog extends DialogWrapper {
   }
 
   @Override
-  protected @NotNull String getDimensionServiceKey() {
+  @NotNull
+  protected String getDimensionServiceKey() {
     return getClass().getName() + ".DIMENSION_SERVICE_KEY";
   }
 
@@ -182,7 +183,7 @@ public class EditContextDialog extends DialogWrapper {
       final String name = (String)myVariableTableModel.getValueAt(i, 0);
 
       final String expr = expression.getExpression();
-      if ((expr == null || expr.trim().isEmpty()) && (name == null || name.trim().isEmpty())) {
+      if ((expr == null || expr.trim().length() == 0) && (name == null || name.trim().length() == 0)) {
         continue;
       }
       final String error = getError(expression);
@@ -332,7 +333,7 @@ public class EditContextDialog extends DialogWrapper {
           setForeground(JBColor.RED);
           setToolTipText(XPathBundle.message("tooltip.duplicate.variable"));
         }
-        else if (variable.getExpression().isEmpty()) {
+        else if (variable.getExpression().length() == 0) {
           setForeground(PlatformColors.BLUE);
           setToolTipText(XPathBundle.message("tooltip.empty.expression.variable.will.evaluate.to.empty.nodeset"));
         }
@@ -417,7 +418,7 @@ public class EditContextDialog extends DialogWrapper {
       setForeground(table.getForeground());
 
       final String prefix = myNamespaces.get(row).getPrefix();
-      if (column == 1 && prefix == null || prefix.isEmpty()) {
+      if (column == 1 && prefix == null || prefix.length() == 0) {
         setForeground(PlatformColors.BLUE);
       }
       else if (column == 0) {
@@ -435,25 +436,29 @@ public class EditContextDialog extends DialogWrapper {
 
   private class MyNamespaceContext implements NamespaceContext {
     @Override
-    public @Nullable String getNamespaceURI(String prefix, XmlElement context) {
+    @Nullable
+    public String getNamespaceURI(String prefix, XmlElement context) {
       return Namespace.makeMap(myNamespaceTableModel.getNamespaces()).get(prefix);
     }
 
     @Override
-    public @Nullable String getPrefixForURI(String uri, XmlElement context) {
+    @Nullable
+    public String getPrefixForURI(String uri, XmlElement context) {
       final BidirectionalMap<String, String> bidiMap = new BidirectionalMap<>();
       bidiMap.putAll(Namespace.makeMap(myNamespaceTableModel.getNamespaces()));
       final List<String> list = bidiMap.getKeysByValue(uri);
-      return list != null && !list.isEmpty() ? list.get(0) : null;
+      return list != null && list.size() > 0 ? list.get(0) : null;
     }
 
     @Override
-    public @NotNull Collection<String> getKnownPrefixes(XmlElement context) {
+    @NotNull
+    public Collection<String> getKnownPrefixes(XmlElement context) {
       return Namespace.makeMap(myNamespaceTableModel.getNamespaces()).keySet();
     }
 
     @Override
-    public @Nullable PsiElement resolve(String prefix, XmlElement context) {
+    @Nullable
+    public PsiElement resolve(String prefix, XmlElement context) {
       return null;
     }
 
@@ -488,32 +493,38 @@ public class EditContextDialog extends DialogWrapper {
     }
 
     @Override
-    public @NotNull ContextType getContextType() {
+    @NotNull
+    public ContextType getContextType() {
       return myContextProvider.getContextType();
     }
 
     @Override
-    public @Nullable XmlElement getContextElement() {
+    @Nullable
+    public XmlElement getContextElement() {
       return myContextProvider.getContextElement();
     }
 
     @Override
-    public @Nullable NamespaceContext getNamespaceContext() {
+    @Nullable
+    public NamespaceContext getNamespaceContext() {
       return myNamespaceContext;
     }
 
     @Override
-    public @Nullable VariableContext getVariableContext() {
+    @Nullable
+    public VariableContext getVariableContext() {
       return myVariableContext;
     }
 
     @Override
-    public @Nullable Set<QName> getAttributes(boolean forValidation) {
+    @Nullable
+    public Set<QName> getAttributes(boolean forValidation) {
       return myContextProvider.getAttributes(forValidation);
     }
 
     @Override
-    public @Nullable Set<QName> getElements(boolean forValidation) {
+    @Nullable
+    public Set<QName> getElements(boolean forValidation) {
       return myContextProvider.getElements(forValidation);
     }
   }

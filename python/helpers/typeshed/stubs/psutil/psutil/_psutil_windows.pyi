@@ -1,13 +1,11 @@
-from typing import Final
-
-ABOVE_NORMAL_PRIORITY_CLASS: Final = 32768
-BELOW_NORMAL_PRIORITY_CLASS: Final = 16384
+ABOVE_NORMAL_PRIORITY_CLASS: int
+BELOW_NORMAL_PRIORITY_CLASS: int
 ERROR_ACCESS_DENIED: int
 ERROR_INVALID_NAME: int
 ERROR_PRIVILEGE_NOT_HELD: int
 ERROR_SERVICE_DOES_NOT_EXIST: int
-HIGH_PRIORITY_CLASS: Final = 128
-IDLE_PRIORITY_CLASS: Final = 64
+HIGH_PRIORITY_CLASS: int
+IDLE_PRIORITY_CLASS: int
 INFINITE: int
 MIB_TCP_STATE_CLOSED: int
 MIB_TCP_STATE_CLOSE_WAIT: int
@@ -21,9 +19,9 @@ MIB_TCP_STATE_LISTEN: int
 MIB_TCP_STATE_SYN_RCVD: int
 MIB_TCP_STATE_SYN_SENT: int
 MIB_TCP_STATE_TIME_WAIT: int
-NORMAL_PRIORITY_CLASS: Final = 32
+NORMAL_PRIORITY_CLASS: int
 PSUTIL_CONN_NONE: int
-REALTIME_PRIORITY_CLASS: Final = 256
+REALTIME_PRIORITY_CLASS: int
 WINDOWS_10: int
 WINDOWS_7: int
 WINDOWS_8: int
@@ -37,7 +35,7 @@ class TimeoutExpired(Exception): ...
 
 def QueryDosDevice(*args, **kwargs): ...  # incomplete
 def boot_time(*args, **kwargs): ...  # incomplete
-def check_pid_range(pid: int, /) -> None: ...
+def check_pid_range(__pid: int) -> None: ...
 def cpu_count_cores(*args, **kwargs): ...  # incomplete
 def cpu_count_logical(*args, **kwargs): ...  # incomplete
 def cpu_freq(*args, **kwargs): ...  # incomplete

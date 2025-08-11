@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -12,37 +12,27 @@ import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 
 public abstract class CompilerReferenceReader<Index extends CompilerReferenceIndex<?>> {
   protected final Index myIndex;
-  private final Path buildDir;
+  private final File myBuildDir;
 
-  public CompilerReferenceReader(@NotNull Path buildDir, Index index) {
+  public CompilerReferenceReader(File buildDir, Index index) {
     myIndex = index;
-    this.buildDir = buildDir;
+    myBuildDir = buildDir;
   }
 
-  /**
-   * @deprecated Use {@link #CompilerReferenceReader(Path, CompilerReferenceIndex)}
-   */
-  @SuppressWarnings("IO_FILE_USAGE")
-  @Deprecated
-  public CompilerReferenceReader(@NotNull File buildDir, Index index) {
-    myIndex = index;
-    this.buildDir = buildDir.toPath();
-  }
-
-  public @NotNull NameEnumerator getNameEnumerator() {
+  @NotNull
+  public NameEnumerator getNameEnumerator() {
     return myIndex.getByteSeqEum();
   }
 
   public void close(boolean removeIndex) {
     myIndex.close();
     if (removeIndex) {
-      CompilerReferenceIndex.removeIndexFiles(buildDir);
+      CompilerReferenceIndex.removeIndexFiles(myBuildDir);
     }
   }
 
@@ -50,17 +40,20 @@ public abstract class CompilerReferenceReader<Index extends CompilerReferenceInd
     return myIndex;
   }
 
-  public abstract @Nullable Set<VirtualFile> findReferentFileIds(@NotNull CompilerRef ref, boolean checkBaseClassAmbiguity) throws StorageException;
+  @Nullable
+  public abstract Set<VirtualFile> findReferentFileIds(@NotNull CompilerRef ref, boolean checkBaseClassAmbiguity) throws StorageException;
 
   public abstract @Nullable Set<VirtualFile> findFileIdsWithImplicitToString(@NotNull CompilerRef ref) throws StorageException;
 
-  public abstract @Nullable Map<VirtualFile, SearchId[]> getDirectInheritors(@NotNull CompilerRef searchElement,
-                                                                             @NotNull GlobalSearchScope searchScope,
-                                                                             @NotNull GlobalSearchScope dirtyScope,
-                                                                             @NotNull FileType fileType,
-                                                                             @NotNull CompilerHierarchySearchType searchType) throws StorageException;
+  @Nullable
+  public abstract Map<VirtualFile, SearchId[]> getDirectInheritors(@NotNull CompilerRef searchElement,
+                                                                   @NotNull GlobalSearchScope searchScope,
+                                                                   @NotNull GlobalSearchScope dirtyScope,
+                                                                   @NotNull FileType fileType,
+                                                                   @NotNull CompilerHierarchySearchType searchType) throws StorageException;
 
-  public abstract @Nullable Integer getAnonymousCount(@NotNull CompilerRef.CompilerClassHierarchyElementDef classDef, boolean checkDefinitions);
+  @Nullable
+  public abstract Integer getAnonymousCount(@NotNull CompilerRef.CompilerClassHierarchyElementDef classDef, boolean checkDefinitions);
 
   public abstract int getOccurrenceCount(@NotNull CompilerRef element);
 

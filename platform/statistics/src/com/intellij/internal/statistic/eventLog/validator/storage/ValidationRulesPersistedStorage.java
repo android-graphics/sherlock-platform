@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.storage;
 
 import com.intellij.internal.statistic.eventLog.*;
@@ -22,8 +22,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProvider;
-
 public class ValidationRulesPersistedStorage implements IntellijValidationRulesStorage {
   private static final Logger LOG = Logger.getInstance(ValidationRulesPersistedStorage.class);
 
@@ -35,7 +33,6 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
   private final @NotNull EventLogMetadataPersistence myMetadataPersistence;
   private final @NotNull EventLogMetadataLoader myMetadataLoader;
   private final @NotNull AtomicBoolean myIsInitialized;
-  private final @NotNull EventLogSystemCollector eventLogSystemCollector;
 
   ValidationRulesPersistedStorage(@NotNull String recorderId) {
     myIsInitialized = new AtomicBoolean(false);
@@ -43,8 +40,7 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
     mySemaphore = new Semaphore();
     myMetadataPersistence = new EventLogMetadataPersistence(recorderId);
     myMetadataLoader = new EventLogServerMetadataLoader(recorderId);
-    eventLogSystemCollector = getEventLogProvider(myRecorderId).getEventLogSystemLogger$intellij_platform_statistics();
-    myVersion = loadValidatorsFromLocalCache();
+    myVersion = loadValidatorsFromLocalCache(recorderId);
   }
 
   @TestOnly
@@ -56,8 +52,7 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
     mySemaphore = new Semaphore();
     myMetadataPersistence = persistence;
     myMetadataLoader = loader;
-    eventLogSystemCollector = getEventLogProvider(myRecorderId).getEventLogSystemLogger$intellij_platform_statistics();
-    myVersion = loadValidatorsFromLocalCache();
+    myVersion = loadValidatorsFromLocalCache(recorderId);
   }
 
   @Override
@@ -65,16 +60,16 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
     return eventsValidators.get(groupId);
   }
 
-  private @Nullable String loadValidatorsFromLocalCache() {
+  private @Nullable String loadValidatorsFromLocalCache(@NotNull String recorderId) {
     String rawEventsScheme = myMetadataPersistence.getCachedEventsScheme();
     if (rawEventsScheme != null) {
       try {
         String newVersion = updateValidators(rawEventsScheme);
-        eventLogSystemCollector.logMetadataLoaded(newVersion);
+        EventLogSystemLogger.logMetadataLoad(recorderId, newVersion);
         return newVersion;
       }
       catch (EventLogMetadataParseException e) {
-        eventLogSystemCollector.logMetadataLoadFailed(e);
+        EventLogSystemLogger.logMetadataErrorOnLoad(myRecorderId, e);
       }
     }
     return null;
@@ -122,18 +117,18 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
 
         if (version != null && !StringUtil.equals(version, myVersion)) {
           myVersion = version;
-          eventLogSystemCollector.logMetadataUpdated(myVersion);
+          EventLogSystemLogger.logMetadataUpdated(myRecorderId, myVersion);
         }
       }
     }
     catch (EventLogMetadataLoadException | EventLogMetadataParseException e) {
-      eventLogSystemCollector.logMetadataUpdateFailed(e);
+      EventLogSystemLogger.logMetadataErrorOnUpdate(myRecorderId, e);
     }
   }
 
   @Override
   public void reload() {
-    myVersion = loadValidatorsFromLocalCache();
+    myVersion = loadValidatorsFromLocalCache(myRecorderId);
   }
 
   @Override
@@ -141,15 +136,17 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
     return !myIsInitialized.get();
   }
 
-  protected @NotNull Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build, @NotNull EventGroupRemoteDescriptors groups) {
+  @NotNull
+  protected Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build, @NotNull EventGroupRemoteDescriptors groups) {
     GlobalRulesHolder globalRulesHolder = new GlobalRulesHolder(groups.rules);
     return createValidators(build, groups, globalRulesHolder, myRecorderId);
   }
 
-  public static @NotNull Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build,
-                                                                       @NotNull EventGroupRemoteDescriptors groups,
-                                                                       @NotNull GlobalRulesHolder globalRulesHolder,
-                                                                       @NotNull String recorderId) {
+  @NotNull
+  public static Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build,
+                                                              @NotNull EventGroupRemoteDescriptors groups,
+                                                              @NotNull GlobalRulesHolder globalRulesHolder,
+                                                              @NotNull String recorderId) {
     ValidationSimpleRuleFactory ruleFactory = new ValidationSimpleRuleFactory(new CustomRuleProducer(recorderId));
     return groups.groups.stream()
       .filter(group -> EventGroupFilterRules.create(group, EventLogBuild.EVENT_LOG_BUILD_PRODUCER).accepts(build))

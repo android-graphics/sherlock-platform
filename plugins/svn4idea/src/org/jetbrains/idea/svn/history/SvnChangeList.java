@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.history;
 
@@ -65,7 +65,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   private final CommonPathSearcher myCommonPathSearcher;
   private final Set<String> myKnownAsDirectories;
 
-  public SvnChangeList(final @NotNull List<? extends CommittedChangeList> lists, final @NotNull SvnRepositoryLocation location) {
+  public SvnChangeList(@NotNull final List<? extends CommittedChangeList> lists, @NotNull final SvnRepositoryLocation location) {
 
     final SvnChangeList sample = (SvnChangeList) lists.get(0);
     myVcs = sample.myVcs;
@@ -154,12 +154,14 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   }
 
   @Override
-  public @Nullable Date getCommitDate() {
+  @Nullable
+  public Date getCommitDate() {
     return myDate;
   }
 
+  @Nullable
   @Override
-  public @Nullable VcsRevisionNumber getRevisionNumber() {
+  public VcsRevisionNumber getRevisionNumber() {
     return myRevisionNumber;
   }
 
@@ -280,7 +282,8 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     }
   }
 
-  private @Nullable FilePath getLocalPath(@NotNull String path, final NotNullFunction<File, Boolean> detector) {
+  @Nullable
+  private FilePath getLocalPath(@NotNull String path, final NotNullFunction<File, Boolean> detector) {
     if (myVcs.getProject().isDefault()) return null;
 
     Url absoluteUrl = parseUrl(myRepositoryRoot + path, false);
@@ -330,7 +333,8 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
       return myPathToChangeMapping.get(path);
     }
 
-    private @Nullable FilePath localDeletedPath(@NotNull Url url, final boolean isDir) {
+    @Nullable
+    private FilePath localDeletedPath(@NotNull Url url, final boolean isDir) {
       final SvnFileUrlMapping urlMapping = myVcs.getSvnFileUrlMapping();
       final File file = urlMapping.getLocalPath(url);
       if (file != null) {
@@ -406,7 +410,8 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
       myWithoutDirStatus.clear();
     }
 
-    private @Nullable SvnRepositoryContentRevision createRevision(final SvnRepositoryContentRevision previousRevision, final boolean isDir) {
+    @Nullable
+    private SvnRepositoryContentRevision createRevision(final SvnRepositoryContentRevision previousRevision, final boolean isDir) {
       return previousRevision == null ? null :
              SvnRepositoryContentRevision.create(myVcs, previousRevision.getFullPath(),
                                                  VcsUtil.getFilePath(previousRevision.getFile().getPath(), isDir),
@@ -461,13 +466,15 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
       }
     }
 
-    private @NotNull String getRelativePath(@NotNull ContentRevision revision) {
+    @NotNull
+    private String getRelativePath(@NotNull ContentRevision revision) {
       return ((SvnRepositoryContentRevision)revision).getRelativePath(myRepositoryRoot);
     }
 
-    private @NotNull Collection<Change> getChildrenAsChanges(@NotNull ContentRevision contentRevision,
-                                                             final boolean isBefore,
-                                                             final @NotNull Set<Pair<Boolean, String>> duplicates)
+    @NotNull
+    private Collection<Change> getChildrenAsChanges(@NotNull ContentRevision contentRevision,
+                                                    final boolean isBefore,
+                                                    @NotNull final Set<Pair<Boolean, String>> duplicates)
       throws VcsException {
       final List<Change> result = new ArrayList<>();
 
@@ -536,9 +543,10 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     change.addAdditionalLayerElement(SvnChangeProvider.PROPERTY_LAYER, additional);
   }
 
-  private @Nullable SvnLazyPropertyContentRevision createPropertyRevision(@NotNull FilePath filePath,
-                                                                          @Nullable ContentRevision revision,
-                                                                          @NotNull Url url) {
+  @Nullable
+  private SvnLazyPropertyContentRevision createPropertyRevision(@NotNull FilePath filePath,
+                                                                @Nullable ContentRevision revision,
+                                                                @NotNull Url url) {
     if (revision == null) return null;
 
     SvnRevisionNumber number = (SvnRevisionNumber)revision.getRevisionNumber();
@@ -547,7 +555,8 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return myMessage;
   }
 
@@ -590,7 +599,6 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     myMessage = newMessage;
   }
 
-  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -605,7 +613,6 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     return true;
   }
 
-  @Override
   public int hashCode() {
     int result;
     result = Long.hashCode(myRevision);
@@ -615,7 +622,6 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     return result;
   }
 
-  @Override
   public String toString() {
     return myMessage;
   }
@@ -710,13 +716,15 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     return myBranchUrl;
   }
 
-  public @Nullable VirtualFile getVcsRoot() {
+  @Nullable
+  public VirtualFile getVcsRoot() {
     ensureCacheUpdated();
 
     return myWcRoot == null ? null : myWcRoot.getRoot();
   }
 
-  public @Nullable VirtualFile getRoot() {
+  @Nullable
+  public VirtualFile getRoot() {
     ensureCacheUpdated();
 
     return myWcRoot == null ? null : myWcRoot.getVirtualFile();
@@ -788,11 +796,13 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     myWcRoot = null;
   }
 
-  public @NotNull Set<String> getAffectedPaths() {
+  @NotNull
+  public Set<String> getAffectedPaths() {
     return ContainerUtil.newHashSet(ContainerUtil.concat(myAddedPaths, myDeletedPaths, myChangedPaths));
   }
 
-  public @Nullable String getWcPath() {
+  @Nullable
+  public String getWcPath() {
     final RootUrlInfo rootInfo = getWcRootInfo();
 
     return rootInfo == null ? null : rootInfo.getIoFile().getAbsolutePath();

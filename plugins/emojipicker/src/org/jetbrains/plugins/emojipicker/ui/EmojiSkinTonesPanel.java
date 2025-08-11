@@ -17,7 +17,7 @@ import java.util.EnumMap;
 import java.util.Map;
 
 public class EmojiSkinTonesPanel extends JPanel {
-  private static final @NlsSafe String ITEM_EMOJI = "🖐";
+  @NlsSafe private static final String ITEM_EMOJI = "🖐";
 
   private final EmojiPickerStyle myStyle;
   private final Map<EmojiSkinTone, Item> myItemMap = new EnumMap<>(EmojiSkinTone.class);

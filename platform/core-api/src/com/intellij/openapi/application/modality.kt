@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
-import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.currentTemporaryThreadContextOrNull
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.progress.ProgressManager
@@ -18,6 +17,7 @@ suspend fun isModalAwareContext(): Boolean {
   return currentCoroutineContext().contextModality() != ModalityState.any()
 }
 
+@Suppress("CONFLICTING_OVERLOADS") // KT-61878
 fun ModalityState.asContextElement(): CoroutineContext {
   return ModalityStateElement(this)
 }
@@ -54,9 +54,7 @@ private object ModalityStateElementKey
   : CoroutineContext.Key<ModalityStateElement>
 
 private class ModalityStateElement(val modalityState: ModalityState)
-  : AbstractCoroutineContextElement(ModalityStateElementKey), IntelliJContextElement {
-
-  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+  : AbstractCoroutineContextElement(ModalityStateElementKey) {
 
   override fun toString(): String {
     return modalityState.toString()

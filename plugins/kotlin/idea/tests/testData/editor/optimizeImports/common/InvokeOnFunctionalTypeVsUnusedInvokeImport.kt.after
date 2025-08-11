@@ -1,5 +1,0 @@
-package test
-
-fun test(action: () -> Unit) {
-    action()
-}

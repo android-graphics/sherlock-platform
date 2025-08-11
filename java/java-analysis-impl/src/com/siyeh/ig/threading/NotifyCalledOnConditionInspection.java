@@ -27,7 +27,8 @@ import org.jetbrains.annotations.NotNull;
 public final class NotifyCalledOnConditionInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "notify.called.on.condition.problem.descriptor");
   }

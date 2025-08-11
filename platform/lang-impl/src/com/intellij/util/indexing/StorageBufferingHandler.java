@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.util.indexing.events.VfsEventsMerger;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,12 +15,12 @@ abstract class StorageBufferingHandler {
   private volatile boolean myPreviousDataBufferingState;
   private final Object myBufferingStateUpdateLock = new Object();
 
-  boolean runUpdate(boolean transientInMemoryIndices, @NotNull StorageUpdate update) {
+  boolean runUpdate(boolean transientInMemoryIndices, @NotNull Computable<Boolean> update) {
     ProgressManager.checkCanceled();
     StorageGuard.StorageModeExitHandler storageModeExitHandler = myStorageLock.enter(transientInMemoryIndices);
     try {
       ensureBufferingState(transientInMemoryIndices);
-      return update.update();
+      return update.compute();
     }
     finally {
       storageModeExitHandler.leave();
@@ -51,5 +52,6 @@ abstract class StorageBufferingHandler {
     myPreviousDataBufferingState = false;
   }
 
-  protected abstract @NotNull Stream<UpdatableIndex<?, ?, ?, ?>> getIndexes();
+  @NotNull
+  protected abstract Stream<UpdatableIndex<?, ?, ?, ?>> getIndexes();
 }

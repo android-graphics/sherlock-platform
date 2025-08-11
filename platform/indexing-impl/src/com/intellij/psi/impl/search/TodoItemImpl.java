@@ -48,12 +48,10 @@ public final class TodoItemImpl implements TodoItem {
     return myPattern;
   }
 
-  @Override
   public int hashCode() {
     return myFile.hashCode() + myStartOffset + myEndOffset + (myPattern != null ? myPattern.hashCode() : 0);
   }
 
-  @Override
   public boolean equals(Object obj){
     if(!(obj instanceof TodoItemImpl todoItem)){
       return false;

@@ -42,11 +42,10 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.CommonProcessors.CollectProcessor;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
-import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
-import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
@@ -75,40 +74,6 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   protected CodeInsightTestFixture myFixture;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor(), getTestName(false));
-    final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
-    myFixture.setTestDataPath(getTestDataPath());
-    myFixture.setUp();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      if (myFixture != null) {
-        PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
-        PyModuleNameCompletionContributor.ENABLED = true;
-        setLanguageLevel(null);
-
-        myFixture.tearDown();
-        myFixture = null;
-      }
-
-      FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).flushLanguageLevelCache();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
   protected void assertProjectFilesNotParsed(@NotNull PsiFile currentFile) {
     assertRootNotParsed(currentFile, myFixture.getTempDirFixture().getFile("."), null);
   }
@@ -119,10 +84,6 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   protected void assertSdkRootsNotParsed(@NotNull PsiFile currentFile) {
     final Sdk testSdk = PythonSdkUtil.findPythonSdk(currentFile);
-    if (testSdk == null) {
-      LOG.warn("testSdk is null. assertSdkRootsNotParsed is skipped");
-      return;
-    }
     for (VirtualFile root : testSdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
       assertRootNotParsed(currentFile, root, null);
     }
@@ -158,6 +119,17 @@ public abstract class PyTestCase extends UsefulTestCase {
     final PsiFile file = myFixture.getFile();
     final TextRange myTextRange = file.getTextRange();
     CodeStyleManager.getInstance(myFixture.getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset());
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
+    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor(), getTestName(false));
+    final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
+    myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setUp();
   }
 
   /**
@@ -247,57 +219,47 @@ public abstract class PyTestCase extends UsefulTestCase {
                                             @NotNull VirtualFile root,
                                             @NotNull OrderRootType rootType,
                                             @NotNull Consumer<VirtualFile> rootConsumer) {
-    addSdkRoots(sdk, List.of(root), rootType);
+    WriteAction.run(() -> {
+      final SdkModificator modificator = sdk.getSdkModificator();
+      assertNotNull(modificator);
+      modificator.addRoot(root, rootType);
+      modificator.commitChanges();
+    });
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
     try {
       rootConsumer.accept(root);
     }
     finally {
-      removeSdkRoots(sdk, List.of(root), rootType);
-    }
-  }
-
-  private static void removeSdkRoots(@NotNull Sdk sdk, @NotNull List<VirtualFile> roots, @NotNull OrderRootType rootType) {
-    WriteAction.run(() -> {
-      final SdkModificator modificator = sdk.getSdkModificator();
-      assertNotNull(modificator);
-      for (VirtualFile root : roots) {
+      WriteAction.run(() -> {
+        final SdkModificator modificator = sdk.getSdkModificator();
+        assertNotNull(modificator);
         modificator.removeRoot(root, rootType);
-      }
-      modificator.commitChanges();
-    });
-    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
-  }
-
-  private static void addSdkRoots(@NotNull Sdk sdk, @NotNull List<VirtualFile> roots, @NotNull OrderRootType rootType) {
-    WriteAction.run(() -> {
-      final SdkModificator modificator = sdk.getSdkModificator();
-      assertNotNull(modificator);
-      for (VirtualFile root : roots) {
-        modificator.addRoot(root, rootType);
-      }
-      modificator.commitChanges();
-    });
-    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
-  }
-
-  protected void enablePyiStubsForPackages(String @NotNull ... packageNames) {
-    Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
-    assertNotNull(sdk);
-    List<VirtualFile> stubPackageRoots = new ArrayList<>();
-    for (String packageName : packageNames) {
-      VirtualFile stubPackageRoot = PyTypeShed.INSTANCE.getStubRootForPackage(packageName);
-      if (stubPackageRoot == null) {
-        stubPackageRoot = PyBundledStubs.INSTANCE.getStubRootForPackage(packageName);
-      }
-      assertNotNull("Stub package root for " + packageName + " not found", stubPackageRoot);
-      stubPackageRoots.add(stubPackageRoot);
+        modificator.commitChanges();
+      });
+      IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
     }
-    addSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES);
-    Disposer.register(getTestRootDisposable(), () -> removeSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES));
   }
 
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
+      PyModuleNameCompletionContributor.ENABLED = true;
+      setLanguageLevel(null);
+      myFixture.tearDown();
+      myFixture = null;
+      FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).flushLanguageLevelCache();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Nullable

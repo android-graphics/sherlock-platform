@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.icons.AllIcons;
@@ -23,7 +23,7 @@ import java.util.Collection;
 public class MavenEditGoalDialog extends DialogWrapper {
 
   private final Project myProject;
-  private final @Nullable Collection<String> myHistory;
+  @Nullable private final Collection<String> myHistory;
 
   private JPanel contentPane;
 
@@ -88,11 +88,14 @@ public class MavenEditGoalDialog extends DialogWrapper {
     MavenSelectProjectPopup.attachToWorkingDirectoryField(projectsManager, workDirectoryField.getTextField(), showProjectTreeButton,
                                                           goalsComboBox != null ? goalsComboBox : goalsEditor);
 
-    workDirectoryField.addBrowseFolderListener(myProject, new MavenPomFileChooserDescriptor(myProject).withTitle(RunnerBundle.message("maven.select.working.directory")));
+    workDirectoryField.addBrowseFolderListener(
+      RunnerBundle.message("maven.select.working.directory"), "", myProject,
+      new MavenPomFileChooserDescriptor(myProject));
   }
 
+  @Nullable
   @Override
-  protected @Nullable ValidationInfo doValidate() {
+  protected ValidationInfo doValidate() {
     if (workDirectoryField.getText().trim().isEmpty()) {
       return new ValidationInfo(TasksBundle.message("maven.tasks.edit.working.dir.is.empty"), workDirectoryField);
     }
@@ -100,7 +103,8 @@ public class MavenEditGoalDialog extends DialogWrapper {
     return null;
   }
 
-  public @NotNull String getGoals() {
+  @NotNull
+  public String getGoals() {
     if (goalsComboBox != null) {
       return (String)goalsComboBox.getEditor().getItem();
     }
@@ -117,7 +121,8 @@ public class MavenEditGoalDialog extends DialogWrapper {
     goalsEditor.setText(goals);
   }
 
-  public @NotNull String getWorkDirectory() {
+  @NotNull
+  public String getWorkDirectory() {
     return workDirectoryField.getText();
   }
 

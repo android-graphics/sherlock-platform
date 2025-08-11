@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.roots.impl;
 
@@ -29,19 +29,23 @@ public abstract class DirectoryIndex {
     return project.getService(DirectoryIndex.class);
   }
 
-  public abstract @NotNull
+  @NotNull
+  public abstract
   Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources);
 
   public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, @NotNull GlobalSearchScope scope) {
     return getDirectoriesByPackageName(packageName, true).filtering(scope::contains);
   }
 
-  public abstract @Nullable String getPackageName(@NotNull VirtualFile dir);
+  @Nullable
+  public abstract String getPackageName(@NotNull VirtualFile dir);
 
-  public abstract @NotNull List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir);
+  @NotNull
+  public abstract List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir);
 
   /**
    * @return names of unloaded modules which directly or transitively via exported dependencies depend on the specified module
    */
-  public abstract @NotNull Set<String> getDependentUnloadedModules(@NotNull Module module);
+  @NotNull
+  public abstract Set<String> getDependentUnloadedModules(@NotNull Module module);
 }

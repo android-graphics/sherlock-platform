@@ -63,15 +63,13 @@ public enum LanguageLevel {
   JDK_22_PREVIEW(JavaPsiBundle.messagePointer("jdk.22.preview.language.level.description"), 22),
   JDK_23(JavaPsiBundle.messagePointer("jdk.23.language.level.description"), 23),
   JDK_23_PREVIEW(JavaPsiBundle.messagePointer("jdk.23.preview.language.level.description"), 23),
-  JDK_24(JavaPsiBundle.messagePointer("jdk.24.language.level.description"), 24),
-  JDK_24_PREVIEW(JavaPsiBundle.messagePointer("jdk.24.preview.language.level.description"), 24),
-  JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 25),
+  JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 24),
   ;
 
   /**
    * Should point to the latest released JDK.
    */
-  public static final LanguageLevel HIGHEST = JDK_24;
+  public static final LanguageLevel HIGHEST = JDK_22;
 
   private final Supplier<@Nls String> myPresentableText;
   private final JavaVersion myVersion;
@@ -142,7 +140,9 @@ public enum LanguageLevel {
     return Objects.requireNonNull(ourStandardVersions.get(myVersion.feature));
   }
 
-  public @NotNull @Nls String getPresentableText() {
+  @NotNull
+  @Nls
+  public String getPresentableText() {
     return myPresentableText.get();
   }
 
@@ -167,7 +167,8 @@ public enum LanguageLevel {
   /**
    * @return the {@link JavaVersion} object that corresponds to this language level 
    */
-  public @NotNull JavaVersion toJavaVersion() {
+  @NotNull
+  public JavaVersion toJavaVersion() {
     return myVersion;
   }
 
@@ -193,7 +194,8 @@ public enum LanguageLevel {
   }
 
   /** See {@link JavaVersion#parse(String)} for supported formats. */
-  public static @Nullable LanguageLevel parse(@Nullable String compilerComplianceOption) {
+  @Nullable
+  public static LanguageLevel parse(@Nullable String compilerComplianceOption) {
     if (compilerComplianceOption != null) {
       JavaSdkVersion sdkVersion = JavaSdkVersion.fromVersionString(compilerComplianceOption);
       if (sdkVersion != null) {

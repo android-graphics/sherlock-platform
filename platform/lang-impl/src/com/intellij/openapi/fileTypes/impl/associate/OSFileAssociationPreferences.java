@@ -63,6 +63,7 @@ public final class OSFileAssociationPreferences implements PersistentStateCompon
   }
 
   public boolean contains(@NotNull FileType fileType) {
-    return fileTypeNames.contains(fileType.getName());
+    //noinspection SSBasedInspection
+    return fileTypeNames.stream().anyMatch(name->name.equals(fileType.getName()));
   }
 }

@@ -16,7 +16,8 @@ import java.util.List;
 @ApiStatus.Experimental
 public interface PyAstGeneratorExpression extends PyAstComprehensionElement {
   @Override
-  default @NotNull List<PsiNamedElement> getNamedElements() {
+  @NotNull
+  default List<PsiNamedElement> getNamedElements() {
     // extract whatever names are defined in "for" components
     List<? extends PyComprehensionForComponent> fors = getForComponents();
     PyAstExpression[] for_targets = new PyAstExpression[fors.size()];

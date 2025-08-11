@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.editor.Editor;
@@ -10,7 +10,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.RefactoringSettings;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -22,8 +21,9 @@ public class RenamePsiFileProcessor extends RenamePsiElementProcessor {
     return element instanceof PsiFileSystemItem;
   }
 
+  @NotNull
   @Override
-  public @NotNull RenameDialog createRenameDialog(@NotNull Project project, final @NotNull PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
+  public RenameDialog createRenameDialog(@NotNull Project project, @NotNull final PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
     return new PsiFileRenameDialog(project, element, nameSuggestionContext, editor);
   }
 
@@ -33,10 +33,11 @@ public class RenamePsiFileProcessor extends RenamePsiElementProcessor {
       : RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY;
   }
 
+  @NotNull
   @Override
-  public @Unmodifiable @NotNull Collection<PsiReference> findReferences(@NotNull PsiElement element,
-                                                                        @NotNull SearchScope searchScope,
-                                                                        boolean searchInCommentsAndStrings) {
+  public Collection<PsiReference> findReferences(@NotNull PsiElement element,
+                                                 @NotNull SearchScope searchScope,
+                                                 boolean searchInCommentsAndStrings) {
     if (!getSearchForReferences(element)) {
       return Collections.emptyList();
     }

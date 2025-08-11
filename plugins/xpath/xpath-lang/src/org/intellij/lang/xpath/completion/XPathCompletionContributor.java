@@ -109,7 +109,7 @@ public class XPathCompletionContributor extends CompletionContributor {
                if (namespaceContext != null) {
                  final String prefixForURI =
                    namespaceContext.getPrefixForURI(XPath2Type.XMLSCHEMA_NS, parent.getXPathContext().getContextElement());
-                 if (prefixForURI != null && !prefixForURI.isEmpty()) {
+                 if (prefixForURI != null && prefixForURI.length() > 0) {
                    addResult(result, ContainerUtil.map(XPath2Type.SchemaType.listSchemaTypes(),
                                                        type -> new MyLookup(prefixForURI + ":" + type.getQName().getLocalPart())),
                              parameters);
@@ -150,7 +150,8 @@ public class XPathCompletionContributor extends CompletionContributor {
       PrioritizedLookupElement.withPriority(e, e instanceof VariableLookup ? 2 : 1)));
   }
 
-  private static @NotNull String findPrefixStatic(CompletionParameters parameters) {
+  @NotNull
+  private static String findPrefixStatic(CompletionParameters parameters) {
     String prefix = CompletionUtil.findReferencePrefix(parameters);
     if (prefix == null) {
       prefix = CompletionUtil.findJavaIdentifierPrefix(parameters);

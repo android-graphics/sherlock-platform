@@ -19,7 +19,6 @@ import com.intellij.ui.JBColor
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.*
 import javax.swing.AbstractAction
@@ -44,7 +43,6 @@ private const val ACTION_SLIDE_LEFT_STEP = "actionSlideLeftStep"
 private const val ACTION_SLIDE_RIGHT = "actionSlideRight"
 private const val ACTION_SLIDE_RIGHT_STEP = "actionSlideRightStep"
 
-@ApiStatus.Internal
 abstract class SliderComponent<T: Number>(initialValue: T) : JComponent() {
 
   protected val leftPadding: Int = DEFAULT_HORIZONTAL_PADDING

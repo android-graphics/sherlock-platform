@@ -1,10 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.library.impl;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.ex.JpsElementCollectionRole;
 import org.jetbrains.jps.model.ex.JpsNamedCompositeElementBase;
@@ -14,41 +12,39 @@ import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-@ApiStatus.Internal
 public final class JpsLibraryImpl<P extends JpsElement> extends JpsNamedCompositeElementBase<JpsLibraryImpl<P>> implements JpsTypedLibrary<P> {
-  private static final ConcurrentMap<JpsOrderRootType, JpsElementCollectionRole<JpsLibraryRoot>> rootRoles = new ConcurrentHashMap<>();
-  private final JpsLibraryType<P> libraryType;
+  private static final ConcurrentMap<JpsOrderRootType, JpsElementCollectionRole<JpsLibraryRoot>> ourRootRoles = new ConcurrentHashMap<>();
+  private final JpsLibraryType<P> myLibraryType;
 
   public JpsLibraryImpl(@NotNull String name, @NotNull JpsLibraryType<P> type, @NotNull P properties) {
     super(name);
-    libraryType = type;
-    myContainer.setChild(libraryType.getPropertiesRole(), properties);
+    myLibraryType = type;
+    myContainer.setChild(myLibraryType.getPropertiesRole(), properties);
   }
 
   private JpsLibraryImpl(@NotNull JpsLibraryImpl<P> original) {
     super(original);
-    libraryType = original.libraryType;
+    myLibraryType = original.myLibraryType;
   }
 
   @Override
   public @NotNull JpsLibraryType<P> getType() {
-    return libraryType;
+    return myLibraryType;
   }
 
   @Override
-  public @Nullable <T extends JpsElement> JpsTypedLibrary<T> asTyped(@NotNull JpsLibraryType<T> type) {
+  public @Nullable <P extends JpsElement> JpsTypedLibrary<P> asTyped(@NotNull JpsLibraryType<P> type) {
     //noinspection unchecked
-    return libraryType.equals(type) ? (JpsTypedLibrary<T>)this : null;
+    return myLibraryType.equals(type) ? (JpsTypedLibrary<P>)this : null;
   }
 
   @Override
   public @NotNull P getProperties() {
-    return myContainer.getChild(libraryType.getPropertiesRole());
+    return myContainer.getChild(myLibraryType.getPropertiesRole());
   }
 
   @Override
@@ -68,14 +64,13 @@ public final class JpsLibraryImpl<P extends JpsElement> extends JpsNamedComposit
   }
 
   @Override
-  public void addRoot(@NotNull String url,
-                      @NotNull JpsOrderRootType rootType,
+  public void addRoot(final @NotNull String url, final @NotNull JpsOrderRootType rootType,
                       @NotNull JpsLibraryRoot.InclusionOptions options) {
     myContainer.getOrSetChild(getRole(rootType)).addChild(new JpsLibraryRootImpl(url, rootType, options));
   }
 
   @Override
-  public void removeUrl(@NotNull String url, @NotNull JpsOrderRootType rootType) {
+  public void removeUrl(final @NotNull String url, final @NotNull JpsOrderRootType rootType) {
     final JpsElementCollection<JpsLibraryRoot> rootsCollection = myContainer.getChild(getRole(rootType));
     if (rootsCollection != null) {
       for (JpsLibraryRoot root : rootsCollection.getElements()) {
@@ -87,10 +82,11 @@ public final class JpsLibraryImpl<P extends JpsElement> extends JpsNamedComposit
     }
   }
 
-  private static @NotNull JpsElementCollectionRole<JpsLibraryRoot> getRole(@NotNull JpsOrderRootType type) {
-    return rootRoles.computeIfAbsent(type, it -> {
-      return JpsElementCollectionRole.create(new JpsLibraryRootRole(it));
-    });
+  private static JpsElementCollectionRole<JpsLibraryRoot> getRole(JpsOrderRootType type) {
+    JpsElementCollectionRole<JpsLibraryRoot> role = ourRootRoles.get(type);
+    if (role != null) return role;
+    ourRootRoles.putIfAbsent(type, JpsElementCollectionRole.create(new JpsLibraryRootRole(type)));
+    return ourRootRoles.get(type);
   }
 
   @Override
@@ -104,7 +100,6 @@ public final class JpsLibraryImpl<P extends JpsElement> extends JpsNamedComposit
     return (JpsElementCollectionImpl<JpsLibrary>)myParent;
   }
 
-  @SuppressWarnings("removal")
   @Override
   public @NotNull JpsLibraryImpl<P> createCopy() {
     return new JpsLibraryImpl<>(this);
@@ -121,7 +116,7 @@ public final class JpsLibraryImpl<P extends JpsElement> extends JpsNamedComposit
   }
 
   @Override
-  public @NotNull @Unmodifiable List<File> getFiles(@NotNull JpsOrderRootType rootType) {
+  public List<File> getFiles(final JpsOrderRootType rootType) {
     return JpsLibraryRootProcessing.convertToFiles(getRoots(rootType));
   }
 
@@ -131,12 +126,12 @@ public final class JpsLibraryImpl<P extends JpsElement> extends JpsNamedComposit
   }
 
   @Override
-  public List<String> getRootUrls(@NotNull JpsOrderRootType rootType) {
+  public List<String> getRootUrls(JpsOrderRootType rootType) {
     return JpsLibraryRootProcessing.convertToUrls(getRoots(rootType));
   }
 
   @Override
   public String toString() {
-    return "JpsLibraryImpl: " + getName();
+    return "JpsLibraryImpl: "+getName();
   }
 }

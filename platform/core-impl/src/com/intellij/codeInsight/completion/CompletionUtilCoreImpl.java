@@ -7,7 +7,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +33,7 @@ public final class CompletionUtilCoreImpl {
 
       Document document = containingFile.getViewProvider().getDocument();
       if (document != null) {
-        Document hostDocument = PsiDocumentManagerBase.getTopLevelDocument(document);
+        Document hostDocument = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
         OffsetTranslator translator = hostDocument.getUserData(OffsetTranslator.RANGE_TRANSLATION);
         if (translator != null) {
           if (document instanceof DocumentWindow) {

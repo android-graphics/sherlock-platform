@@ -1,15 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiStatus.Internal
 @Tag("activation")
 public class TaskActivationState {
   @XCollection(elementName = "task", valueAttributeName = "name", propertyElementName = "before_run")
@@ -40,7 +40,8 @@ public class TaskActivationState {
     return true;
   }
 
-  public @NotNull List<String> getTasks(@NotNull ExternalSystemTaskActivator.Phase phase) {
+  @NotNull
+  public List<String> getTasks(@NotNull ExternalSystemTaskActivator.Phase phase) {
     return switch (phase) {
       case AFTER_COMPILE -> afterCompileTasks;
       case BEFORE_COMPILE -> beforeCompileTasks;

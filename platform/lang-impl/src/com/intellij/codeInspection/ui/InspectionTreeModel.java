@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -23,7 +23,6 @@ import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.TreeTraversal;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +73,8 @@ public final class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode>
     return myRoot;
   }
 
-  public @Nullable InspectionTreeNode getParent(InspectionTreeNode node) {
+  @Nullable
+  public InspectionTreeNode getParent(InspectionTreeNode node) {
     return node.myParent;
   }
 
@@ -131,23 +131,21 @@ public final class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode>
     }
   }
 
-  @ApiStatus.Internal
-  public @NotNull InspectionModuleNode createModuleNode(@NotNull Module module, @NotNull InspectionTreeNode parent) {
+  @NotNull
+  public InspectionModuleNode createModuleNode(@NotNull Module module, @NotNull InspectionTreeNode parent) {
     return getOrAdd(module, parent, () -> new InspectionModuleNode(module, parent));
   }
 
-  @ApiStatus.Internal
-  public @NotNull InspectionPackageNode createPackageNode(String packageName, @NotNull InspectionTreeNode parent) {
+  @NotNull
+  public InspectionPackageNode createPackageNode(String packageName, @NotNull InspectionTreeNode parent) {
     return getOrAdd(packageName, parent, () -> new InspectionPackageNode(packageName, parent));
   }
 
-  @ApiStatus.Internal
   @NotNull
   InspectionGroupNode createGroupNode(@Nls String group, @NotNull InspectionTreeNode parent) {
     return getOrAdd(group, parent, () -> new InspectionGroupNode(group, parent));
   }
 
-  @ApiStatus.Internal
   @NotNull
   InspectionSeverityGroupNode createSeverityGroupNode(SeverityRegistrar severityRegistrar,
                                                       HighlightDisplayLevel level,
@@ -155,9 +153,10 @@ public final class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode>
     return getOrAdd(level, parent, () -> new InspectionSeverityGroupNode(severityRegistrar, level, parent));
   }
 
-  public @NotNull RefElementNode createRefElementNode(@Nullable RefEntity entity,
-                                                      @NotNull Supplier<? extends RefElementNode> supplier,
-                                                      @NotNull InspectionTreeNode parent) {
+  @NotNull
+  public RefElementNode createRefElementNode(@Nullable RefEntity entity,
+                                             @NotNull Supplier<? extends RefElementNode> supplier,
+                                             @NotNull InspectionTreeNode parent) {
     return getOrAdd(entity, parent, () -> ReadAction.compute(supplier::get));
   }
 
@@ -179,7 +178,6 @@ public final class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode>
     getOrAdd(descriptor, parent, () -> ReadAction.compute(() -> new ProblemDescriptionNode(element, descriptor, presentation, parent)));
   }
 
-  @ApiStatus.Internal
   public void createOfflineProblemDescriptorNode(@NotNull OfflineProblemDescriptor offlineDescriptor,
                                                  @NotNull OfflineDescriptorResolveResult resolveResult,
                                                  @NotNull InspectionToolPresentation presentation,
@@ -232,8 +230,9 @@ public final class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode>
     return (T)node;
   }
 
+  @NotNull
   @Override
-  public @NotNull Invoker getInvoker() {
+  public Invoker getInvoker() {
     return myInvoker;
   }
 }

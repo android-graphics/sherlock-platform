@@ -15,11 +15,9 @@ import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.PopupPositionManager
 import com.intellij.ui.popup.PopupUpdateProcessorBase
 import com.intellij.util.ui.JBDimension
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import javax.swing.JEditorPane
 
-@ApiStatus.Internal
 class ShowElementInfoAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val ui = getSEUI(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)) ?: return
@@ -84,8 +82,7 @@ private class ElementInfoManager(private val seUI: SearchEverywhereUI) {
       override fun updatePopup(element: Any?) {
         val popup = myPopup
         if (popup?.isVisible == true) {
-          val single = seUI.selectedInfos.singleOrNull() ?: return
-          fillContent(popup.component as JEditorPane, single)
+          seUI.getData(SearchEverywhereUI.SELECTED_ITEM_INFO.name)?.let { fillContent(popup.component as JEditorPane, it as SearchEverywhereFoundElementInfo) }
         }
       }
     }

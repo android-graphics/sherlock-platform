@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.project.Project;
@@ -33,18 +33,21 @@ public final class LibrariesModifiableModel implements LibraryTable.ModifiableMo
     myLibraryEditorListener = libraryEditorListener;
   }
 
+  @NotNull
   @Override
-  public @NotNull Library createLibrary(String name) {
+  public Library createLibrary(String name) {
     return createLibrary(name, null);
   }
 
+  @NotNull
   @Override
-  public @NotNull Library createLibrary(String name, @Nullable PersistentLibraryKind<?> type) {
+  public Library createLibrary(String name, @Nullable PersistentLibraryKind<?> type) {
     return createLibrary(name, type, null);
   }
 
+  @NotNull
   @Override
-  public @NotNull Library createLibrary(String name, @Nullable PersistentLibraryKind<?> type, @Nullable ProjectModelExternalSource externalSource) {
+  public Library createLibrary(String name, @Nullable PersistentLibraryKind<?> type, @Nullable ProjectModelExternalSource externalSource) {
     final Library library = getLibrariesModifiableModel().createLibrary(name, type, externalSource);
     final BaseLibrariesConfigurable configurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
     configurable.createLibraryNode(library);
@@ -73,7 +76,8 @@ public final class LibrariesModifiableModel implements LibraryTable.ModifiableMo
   }
 
   @Override
-  public @NotNull Iterator<Library> getLibraryIterator() {
+  @NotNull
+  public Iterator<Library> getLibraryIterator() {
     return getLibrariesModifiableModel().getLibraryIterator();
   }
 

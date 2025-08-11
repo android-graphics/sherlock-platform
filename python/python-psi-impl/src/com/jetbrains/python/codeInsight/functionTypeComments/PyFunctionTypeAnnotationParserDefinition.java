@@ -30,8 +30,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class PyFunctionTypeAnnotationParserDefinition extends PythonParserDefinition {
 
+  @NotNull
   @Override
-  public @NotNull TokenSet getCommentTokens() {
+  public TokenSet getCommentTokens() {
     return TokenSet.EMPTY;
   }
 
@@ -45,8 +46,9 @@ public final class PyFunctionTypeAnnotationParserDefinition extends PythonParser
     return PyFunctionTypeAnnotationFileElementType.INSTANCE;
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiParser createParser(Project project) {
+  public PsiParser createParser(Project project) {
     return new PyFunctionTypeAnnotationParser();
   }
 }

@@ -11,7 +11,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +22,6 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-@ApiStatus.Internal
 public class InspectionProfileConvertor {
   private final Map<String, HighlightDisplayLevel> myDisplayLevelMap = new HashMap<>();
   public static final @NonNls String OLD_HIGHTLIGHTING_SETTINGS_PROFILE = "EditorHighlightingSettings";

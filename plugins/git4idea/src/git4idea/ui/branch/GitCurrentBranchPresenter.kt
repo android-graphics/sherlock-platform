@@ -7,15 +7,12 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.StringUtil
 import git4idea.GitTag
 import git4idea.GitUtil
 import git4idea.GitVcs
-import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchSyncStatus
 import git4idea.branch.GitBranchUtil
-import git4idea.branch.calcTooltip
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
@@ -88,24 +85,12 @@ private fun GitRepository.calcTooltip(): @NlsContexts.Tooltip String? {
     repoInfo.state == Repository.State.DETACHED -> GitBundle.message("git.status.bar.widget.tooltip.detached")
     repoInfo.state == Repository.State.REBASING -> GitBundle.message("git.status.bar.widget.tooltip.rebasing")
     repoInfo.currentBranch != null -> {
-      val htmlBuilder = HtmlBuilder()
       var message = DvcsBundle.message("tooltip.branch.widget.vcs.branch.name.text", GitVcs.DISPLAY_NAME.get(), repoInfo.currentBranch.name)
-      htmlBuilder.append(message)
       if (!GitUtil.justOneGitRepository(project)) {
-        htmlBuilder.br()
-          .append(DvcsBundle.message("tooltip.branch.widget.root.name.text", root.name))
+        message += "\n"
+        message += DvcsBundle.message("tooltip.branch.widget.root.name.text", root.name)
       }
-
-
-      val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
-      val incomingOutgoingState = incomingOutgoingManager.getIncomingOutgoingState(this, repoInfo.currentBranch)
-      val incomingOutgoingTooltip = incomingOutgoingState.calcTooltip()
-      if (incomingOutgoingTooltip != null) {
-        htmlBuilder.br()
-        htmlBuilder.appendRaw(incomingOutgoingTooltip)
-      }
-
-      htmlBuilder.toString()
+      message
     }
     else -> null
   }

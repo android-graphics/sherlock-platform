@@ -19,7 +19,8 @@ internal class MovePropertyToConstructorIntention
 
     override fun isApplicableByPsi(element: KtProperty): Boolean = element.isMovableToConstructorByPsi()
 
-    override fun KaSession.prepareContext(element: KtProperty): MovePropertyToConstructorInfo? = MovePropertyToConstructorInfo.create(element)
+    context(KaSession)
+    override fun prepareContext(element: KtProperty): MovePropertyToConstructorInfo? = MovePropertyToConstructorInfo.create(element)
 
     override fun invoke(
       actionContext: ActionContext,

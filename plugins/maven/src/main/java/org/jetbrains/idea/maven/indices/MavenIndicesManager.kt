@@ -166,7 +166,7 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
   /**
    * Add artifact info to index async.
    */
-  fun scheduleArtifactIndexing(mavenId: MavenId?, artifactFile: Path, localRepo: String): Boolean {
+  fun scheduleArtifactIndexing(mavenId: MavenId?, artifactFile: File, localRepo: String): Boolean {
     try {
       val localIndex = myGavIndices.firstOrNull {
         it.repository.kind == RepositoryKind.LOCAL && it.repository.url == localRepo
@@ -211,7 +211,7 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
   }
 
 
-  private fun fixIndex(artifactFile: Path) {
+  private fun fixIndex(artifactFile: File) {
     MavenIndexUsageCollector.ADD_ARTIFACT_FROM_POM.log(myProject)
 
     val localGavIndex = myGavIndices.filter {
@@ -223,7 +223,7 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
   }
 
   private fun addToIndexAndNotify(index: MavenUpdatableIndex,
-                                  artifactFile: Path,
+                                  artifactFile: File,
                                   action: MavenIndexerListener.(MavenRepositoryInfo, Set<File>, Set<File>) -> Unit) {
     cs.launch(Dispatchers.IO) {
       val artifactResponses = index.tryAddArtifacts(listOf(artifactFile))
@@ -243,7 +243,7 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
   private class MavenIndexServerDownloadListener(private val myManager: MavenIndicesManager) : MavenServerDownloadListener {
     override fun artifactDownloaded(file: File, relativePath: String) {
       val localRepository = MavenIndexUtils.getLocalRepository(myManager.myProject)
-      localRepository?.url?.let { myManager.scheduleArtifactIndexing(null, file.toPath(), it) }
+      localRepository?.url?.let { myManager.scheduleArtifactIndexing(null, file, it) }
     }
   }
 

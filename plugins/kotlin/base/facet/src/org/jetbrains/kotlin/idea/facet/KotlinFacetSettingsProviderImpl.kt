@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.facet
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -29,7 +28,7 @@ class KotlinFacetSettingsProviderImpl(project: Project) :
     KotlinCompilerSettingsListener,
     KotlinFacetSettingsProvider {
 
-    override fun getSettings(module: Module): IKotlinFacetSettings? = KotlinFacet.get(module)?.configuration?.settings
+    override fun getSettings(module: Module) = KotlinFacet.get(module)?.configuration?.settings
 
     override fun getInitializedSettings(module: Module): IKotlinFacetSettings = runReadAction { get(module) }
 
@@ -52,7 +51,7 @@ class KotlinFacetSettingsProviderImpl(project: Project) :
     }
 
     override fun <T> settingsChanged(oldSettings: T?, newSettings: T?) {
-        ApplicationManager.getApplication().runReadAction { invalidate() }
+        invalidate()
     }
 
     override fun beforeChanged(event: VersionedStorageChange) {

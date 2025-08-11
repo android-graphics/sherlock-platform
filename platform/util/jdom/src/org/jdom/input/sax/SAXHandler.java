@@ -558,7 +558,7 @@ public class SAXHandler extends DefaultHandler implements LexicalHandler, DeclHa
 
     // Take leftover declared namespaces and add them to this element's
     // map of namespaces
-    if (!declaredNamespaces.isEmpty()) {
+    if (declaredNamespaces.size() > 0) {
       transferNamespaces(element);
     }
 
@@ -637,7 +637,7 @@ public class SAXHandler extends DefaultHandler implements LexicalHandler, DeclHa
         // or the schema sets attributeFormDefault="qualified"
         final HashMap<String, Namespace> tmpmap = new HashMap<>();
         for (final Namespace nss : element.getNamespacesInScope()) {
-          if (!nss.getPrefix().isEmpty()
+          if (nss.getPrefix().length() > 0
               && nss.getURI().equals(attURI)) {
             attPrefix = nss.getPrefix();
             break;
@@ -765,7 +765,7 @@ public class SAXHandler extends DefaultHandler implements LexicalHandler, DeclHa
    * @throws SAXException if the state of the handler does not allow this.
    */
   private void flushCharacters(final String data) throws SAXException {
-    if (data.isEmpty() && !inCDATA) {
+    if (data.length() == 0 && !inCDATA) {
       previousCDATA = inCDATA;
       return;
     }
@@ -782,7 +782,7 @@ public class SAXHandler extends DefaultHandler implements LexicalHandler, DeclHa
                                                  : factory.cdata(lastline, lastcol, data);
       factory.addContent(getCurrentElement(), cdata);
     }
-    else if (!data.isEmpty()) {
+    else if (data.length() != 0) {
       final Text text = currentLocator == null ? factory.text(data)
                                                : factory.text(lastline, lastcol, data);
       factory.addContent(getCurrentElement(), text);

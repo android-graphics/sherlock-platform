@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style;
 
 import com.intellij.modcommand.ActionContext;
@@ -35,8 +35,9 @@ public final class AddReturnTypeFix extends PsiUpdateModCommandAction<PsiElement
     super(PsiElement.class);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return GroovyBundle.message("add.return.type.to.method.declaration");
   }
 
@@ -46,7 +47,8 @@ public final class AddReturnTypeFix extends PsiUpdateModCommandAction<PsiElement
            Presentation.of(GroovyBundle.message("add.return.type")) : null;
   }
 
-  private static @Nullable GrMethod findMethod(@NotNull PsiElement at, int offset) {
+  @Nullable
+  private static GrMethod findMethod(@NotNull PsiElement at, int offset) {
     if (at.getParent() instanceof GrReturnStatement returnStatement) {
       final PsiElement word = returnStatement.getReturnWord();
 

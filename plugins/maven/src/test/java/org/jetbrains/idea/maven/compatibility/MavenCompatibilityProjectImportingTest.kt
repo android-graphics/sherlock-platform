@@ -3,10 +3,12 @@ package org.jetbrains.idea.maven.compatibility
 
 import com.intellij.maven.testFramework.MavenImportingTestCase
 import com.intellij.maven.testFramework.MavenWrapperTestFixture
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.text.VersionComparatorUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.model.MavenProjectProblem
@@ -17,16 +19,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-
-private val MAVEN_VERSIONS = listOf(
-  arrayOf("4.0.0-rc-3"),
-  arrayOf("3.9.9"),
-  arrayOf("3.8.8"),
-  arrayOf("3.6.3"),
-  arrayOf("3.5.4"),
-  arrayOf("3.2.5"),
-  arrayOf("3.1.1"),
-)
 
 @RunWith(Parameterized::class)
 class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
@@ -56,27 +48,27 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Before
-  fun before() = runBlocking {
+  fun before() = runBlocking(Dispatchers.EDT) {
     myWrapperTestFixture = MavenWrapperTestFixture(project, myMavenVersion)
     myWrapperTestFixture!!.setUp()
 
 
     val helper = MavenCustomRepositoryHelper(dir, "local1")
-    val repoPath = helper.getTestData("local1")
+    val repoPath = helper.getTestDataPath("local1")
     repositoryPath = repoPath
   }
 
   @After
-  fun after() = runBlocking {
+  fun after() = runBlocking(Dispatchers.EDT) {
     myWrapperTestFixture!!.tearDown()
   }
 
 
   @Test
-  fun testExceptionsFromMavenExtensionsAreReportedAsProblems() = runBlocking {
+  fun testExceptionsFromMavenExtensionsAreReportedAsProblems() = runBlocking(Dispatchers.EDT) {
     assumeVersionAtLeast("3.1.0")
     val helper = MavenCustomRepositoryHelper(dir, "plugins")
-    repositoryPath = helper.getTestData("plugins")
+    repositoryPath = helper.getTestDataPath("plugins")
     mavenGeneralSettings.isWorkOffline = true
 
     createProjectPom("""
@@ -99,11 +91,11 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
     val projects = projectsTree.projects
     assertEquals(1, projects.size)
     val mavenProject = projects[0]
-    val extensionProblems = mavenProject.problems.filter { "throw!" == it.description }
+    val extensionProblems = mavenProject.getProblems().filter { "throw!" == it.description }
     assertEquals(extensionProblems.toString(), 1, extensionProblems.size)
     val problem = extensionProblems[0]
     assertEquals(problem.toString(), MavenProjectProblem.ProblemType.STRUCTURE, problem.type)
-    val otherProblems = mavenProject.problems.filter { it !== problem }
+    val otherProblems = mavenProject.getProblems().filter { it !== problem }
     assertTrue(otherProblems.toString(),
                otherProblems.all {
                  it.type == MavenProjectProblem.ProblemType.DEPENDENCY && it.description!!.startsWith("Unresolved plugin")
@@ -111,7 +103,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testSmokeImport() = runBlocking {
+  fun testSmokeImport() = runBlocking(Dispatchers.EDT) {
     assertCorrectVersion()
 
     importProjectAsync("""
@@ -125,7 +117,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testSmokeImportWithUnknownExtension() = runBlocking {
+  fun testSmokeImportWithUnknownExtension() = runBlocking(Dispatchers.EDT) {
     assertCorrectVersion()
     createProjectSubFile(".mvn/extensions.xml", """
       <extensions>
@@ -176,7 +168,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testInterpolateModel() = runBlocking {
+  fun testInterpolateModel() = runBlocking(Dispatchers.EDT) {
     assertCorrectVersion()
 
     importProjectAsync("""
@@ -201,7 +193,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testImportProjectProperties() = runBlocking {
+  fun testImportProjectProperties() = runBlocking(Dispatchers.EDT) {
     assumeVersionMoreThan("3.0.3")
 
     assertCorrectVersion()
@@ -242,7 +234,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testImportAddedProjectProperties() = runBlocking {
+  fun testImportAddedProjectProperties() = runBlocking(Dispatchers.EDT) {
     assumeVersionMoreThan("3.0.3")
     assumeVersionNot("3.6.0")
 
@@ -282,7 +274,9 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
 
     assertModuleLibDep(mn("project", "module1"), "Maven: org.example:intellijmaventest:1.0")
 
-    val module1 = createModulePom("module1", """
+    /*myWrapperTestFixture.tearDown();
+      myWrapperTestFixture.setUp();*/
+    createModulePom("module1", """
       <parent>
       <groupId>test</groupId>
       <artifactId>project</artifactId>
@@ -298,7 +292,6 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
       </dependencies>
       """.trimIndent()
     )
-    refreshFiles(listOf(module1))
 
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -317,7 +310,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testImportSubProjectWithPropertyInParent() = runBlocking {
+  fun testImportSubProjectWithPropertyInParent() = runBlocking(Dispatchers.EDT) {
     assumeVersionMoreThan("3.0.3")
 
     assertCorrectVersion()
@@ -348,7 +341,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testLanguageLevelWhenSourceLanguageLevelIsNotSpecified() = runBlocking {
+  fun testLanguageLevelWhenSourceLanguageLevelIsNotSpecified() = runBlocking(Dispatchers.EDT) {
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -390,8 +383,43 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
     @JvmStatic
     @get:Parameterized.Parameters(name = "with Maven-{0}")
     val mavenVersions: List<Array<String>>
-      get() {
-        return MAVEN_VERSIONS
-      }
+      get() = listOf(
+        arrayOf("4.0.0-beta-3"),
+        arrayOf("3.9.8"),
+        arrayOf("3.9.7"),
+        arrayOf("3.9.6"),
+        arrayOf("3.9.5"),
+        arrayOf("3.9.4"),
+        arrayOf("3.9.3"),
+        arrayOf("3.9.2"),
+        arrayOf("3.9.1"),
+        arrayOf("3.9.0"),
+        arrayOf("3.8.8"),
+        arrayOf("3.8.7"),
+        arrayOf("3.8.6"),
+        arrayOf("3.8.5"),
+        arrayOf("3.8.4"),
+        arrayOf("3.8.3"),
+        arrayOf("3.8.2"),
+        arrayOf("3.8.1"),
+        arrayOf("3.8.1"),
+        arrayOf("3.6.3"),
+        arrayOf("3.6.2"),
+        arrayOf("3.6.1"),
+        arrayOf("3.6.0"),
+        arrayOf("3.5.4"),
+        arrayOf("3.5.3"),
+        arrayOf("3.5.2"),
+        arrayOf("3.5.0"),
+        arrayOf("3.3.9"),
+        arrayOf("3.3.3"),
+        arrayOf("3.3.1"),
+        arrayOf("3.2.5"),
+        arrayOf("3.2.3"),
+        arrayOf("3.2.2"),
+        arrayOf("3.2.1"),
+        arrayOf("3.1.1"),
+        arrayOf("3.1.0")
+      )
   }
 }

@@ -24,7 +24,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -67,18 +66,16 @@ private const val DURATION_COLOR_UPDATING = 33
 /**
  * The [ColorPipette] which picks up the color from monitor.
  */
-@ApiStatus.Internal
 open class GraphicalColorPipette(private val parent: JComponent) : ColorPipette {
   override val icon: Icon = AllIcons.Ide.Pipette
 
-  override val rolloverIcon: Icon = AllIcons.Ide.PipetteRollover
+  override val rolloverIcon: Icon = AllIcons.Ide.Pipette_rollover
 
-  override val pressedIcon: Icon = AllIcons.Ide.PipetteRollover
+  override val pressedIcon: Icon = AllIcons.Ide.Pipette_rollover
 
   override fun pick(callback: ColorPipette.Callback): Unit = PickerDialog(parent, callback).pick()
 }
 
-@ApiStatus.Internal
 class GraphicalColorPipetteProvider : ColorPipetteProvider {
   override fun createPipette(owner: JComponent): ColorPipette = GraphicalColorPipette(owner)
 }

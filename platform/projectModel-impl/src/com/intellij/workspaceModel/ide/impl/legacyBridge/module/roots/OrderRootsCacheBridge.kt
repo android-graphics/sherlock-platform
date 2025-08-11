@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.Disposable
@@ -19,33 +19,41 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 
 @ApiStatus.Internal
-class OrderRootsCacheBridge(project: Project, parentDisposable: Disposable) : OrderRootsCache(parentDisposable) {
-  class UrlsAndVirtualFiles(val urls: Array<String>, val virtualFiles: Array<VirtualFile>)
+class OrderRootsCacheBridge(val project: Project, parentDisposable: Disposable) : OrderRootsCache(parentDisposable) {
   private val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
-  private val myRootUrlsAndFiles = AtomicReference<ConcurrentMap<CacheKey, UrlsAndVirtualFiles>>()
+  private val myRootUrls = AtomicReference<ConcurrentMap<CacheKey, Array<String>>>()
+  private val myRootVirtualFiles = AtomicReference<ConcurrentMap<CacheKey, Array<VirtualFile>>>()
 
   override fun getOrComputeRoots(rootType: OrderRootType, flags: Int, computer: Supplier<out Collection<String>>): Array<VirtualFile> {
-    val urlsAndFiles = ensureCached(rootType, flags, computer)
-    return urlsAndFiles.virtualFiles
+    cacheRootsIfNeeded(rootType, flags, computer)
+    return myRootVirtualFiles.get()[CacheKey(rootType, flags)] ?: VirtualFile.EMPTY_ARRAY
   }
 
   override fun getOrComputeUrls(rootType: OrderRootType, flags: Int, computer: Supplier<out Collection<String>>): Array<String> {
-    val urlsAndFiles = ensureCached(rootType, flags, computer)
-    return urlsAndFiles.urls
+    cacheRootsIfNeeded(rootType, flags, computer)
+    return myRootUrls.get()[CacheKey(rootType, flags)] ?: ArrayUtil.EMPTY_STRING_ARRAY
   }
 
   override fun clearCache() {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired()
-    myRootUrlsAndFiles.set(null)
+    myRootUrls.set(null)
+    myRootVirtualFiles.set(null)
   }
 
-  private fun ensureCached(rootType: OrderRootType, flags: Int, rootUrlsComputer: Supplier<out Collection<String>>): UrlsAndVirtualFiles {
+  private fun cacheRootsIfNeeded(rootType: OrderRootType, flags: Int, rootUrlsComputer: Supplier<out Collection<String>>) {
     val key = CacheKey(rootType, flags)
-    val entry = myRootUrlsAndFiles.get()?.get(key)
-    if (entry != null) return entry
-    val virtualFileUrls = rootUrlsComputer.get().map { virtualFileUrlManager.getOrCreateFromUrl(it) as VirtualFileUrlBridge }
-    val urls = ArrayUtil.toStringArray(virtualFileUrls.map { it.url })
-    val virtualFiles = VfsUtilCore.toVirtualFileArray(virtualFileUrls.mapNotNull { it.file })
-    return ConcurrencyUtil.cacheOrGet(myRootUrlsAndFiles, ConcurrentHashMap()).computeIfAbsent(key) { UrlsAndVirtualFiles(urls, virtualFiles) }
+    var virtualFileUrls: List<VirtualFileUrlBridge>? = null
+    if (myRootUrls.get()?.get(key) == null) {
+      virtualFileUrls = rootUrlsComputer.get().map { virtualFileUrlManager.getOrCreateFromUrl(it) as VirtualFileUrlBridge }
+      ConcurrencyUtil.cacheOrGet(myRootUrls, ConcurrentHashMap()).computeIfAbsent(key) { ArrayUtil.toStringArray(virtualFileUrls!!.map { it.url }) }
+    }
+    if (myRootVirtualFiles.get()?.get(key) == null) {
+      if (virtualFileUrls == null) {
+        virtualFileUrls = rootUrlsComputer.get().map { virtualFileUrlManager.getOrCreateFromUrl(it) as VirtualFileUrlBridge }
+      }
+      ConcurrencyUtil.cacheOrGet(myRootVirtualFiles, ConcurrentHashMap()).computeIfAbsent(key) {
+        VfsUtilCore.toVirtualFileArray(virtualFileUrls.mapNotNull { it.file })
+      }
+    }
   }
 }

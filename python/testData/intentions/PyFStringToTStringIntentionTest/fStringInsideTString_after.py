@@ -1,1 +1,0 @@
-s = t"This is a f-string with an {t"emb<caret>edded {value} f-string"}"

@@ -34,8 +34,8 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public final class CyclicDependenciesPanel extends JPanel implements Disposable, UiDataProvider {
   private static final Set<PsiFile> EMPTY_FILE_SET = new HashSet<>(0);
@@ -155,7 +155,7 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
 
   private static PackageDependenciesNode hideEmptyMiddlePackages(PackageDependenciesNode node, StringBuffer result){
     if (node.getChildCount() == 0 || node.getChildCount() > 1 || node.getChildCount() == 1 && node.getChildAt(0) instanceof FileNode){
-      result.append(!result.isEmpty() ? "." : "").append(node.toString().equals(getDefaultPackageAbbreviation()) ? "" : node.toString());//toString()
+      result.append(result.length() != 0 ? "." : "").append(node.toString().equals(getDefaultPackageAbbreviation()) ? "" : node.toString());//toString()
     } else {
       if (node.getChildCount() == 1){
         PackageDependenciesNode child = (PackageDependenciesNode)node.getChildAt(0);
@@ -166,7 +166,7 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
         } else {
           if (child instanceof PackageNode){
             node.removeAllChildren();
-            result.append(!result.isEmpty() ? "." : "")
+            result.append(result.length() != 0 ? "." : "")
               .append(node.toString().equals(getDefaultPackageAbbreviation()) ? "" : node.toString());
             node = hideEmptyMiddlePackages(child, result);
             ((PackageNode)node).setPackageName(result.toString());//toString()
@@ -488,11 +488,14 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
     }
   }
 
-  private static class MyTree extends Tree implements UiDataProvider {
+  private static class MyTree extends Tree implements DataProvider {
     @Override
-    public void uiDataSnapshot(@NotNull DataSink sink) {
+    public Object getData(@NotNull String dataId) {
       PackageDependenciesNode node = getSelectedNode();
-      sink.set(CommonDataKeys.NAVIGATABLE, node);
+      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+        return node;
+      }
+      return null;
     }
 
     public @Nullable PackageDependenciesNode getSelectedNode() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -16,8 +16,8 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 public class WCInfo {
 
   private final boolean myIsWcRoot;
-  private final @NotNull Depth myStickyDepth;
-  private final @NotNull RootUrlInfo myRootInfo;
+  @NotNull private final Depth myStickyDepth;
+  @NotNull private final RootUrlInfo myRootInfo;
 
   public WCInfo(@NotNull RootUrlInfo rootInfo, boolean isWcRoot, @NotNull Depth stickyDepth) {
     myRootInfo = rootInfo;
@@ -25,7 +25,8 @@ public class WCInfo {
     myStickyDepth = stickyDepth;
   }
 
-  public @NotNull Depth getStickyDepth() {
+  @NotNull
+  public Depth getStickyDepth() {
     return myStickyDepth;
   }
 
@@ -33,19 +34,23 @@ public class WCInfo {
     return myRootInfo.getPath();
   }
 
-  public @Nullable VirtualFile getVcsRoot() {
+  @Nullable
+  public VirtualFile getVcsRoot() {
     return null;
   }
 
-  public @NotNull Url getUrl() {
+  @NotNull
+  public Url getUrl() {
     return myRootInfo.getUrl();
   }
 
-  public @NotNull Url getRepoUrl() {
+  @NotNull
+  public Url getRepoUrl() {
     return myRootInfo.getRepositoryUrl();
   }
 
-  public @NotNull RootUrlInfo getRootInfo() {
+  @NotNull
+  public RootUrlInfo getRootInfo() {
     return myRootInfo;
   }
 
@@ -59,7 +64,8 @@ public class WCInfo {
     return error != null ? error.getMessage() : "";
   }
 
-  public @NotNull WorkingCopyFormat getFormat() {
+  @NotNull
+  public WorkingCopyFormat getFormat() {
     return myRootInfo.getFormat();
   }
 
@@ -80,7 +86,8 @@ public class WCInfo {
     return getPath().hashCode();
   }
 
-  public @Nullable NestedCopyType getType() {
+  @Nullable
+  public NestedCopyType getType() {
     return myRootInfo.getType();
   }
 }

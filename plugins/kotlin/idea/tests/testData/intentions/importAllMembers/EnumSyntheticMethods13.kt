@@ -1,4 +1,3 @@
-// PRIORITY: HIGH
 // COMPILER_ARGUMENTS: -XXLanguage:-EnumEntries
 package test;
 

@@ -9,11 +9,8 @@ import org.jetbrains.annotations.ApiStatus;
 import java.lang.annotation.*;
 
 /**
- * Methods and constructors annotated with {@code RequiresReadLockAbsence} must be called without a read lock <i>nor</i>
- * a write lock held.
- * Parameters annotated with {@code RequiresReadLockAbsence} must be callables and are guaranteed to be called without
- * a read lock <i>nor</i> a write lock held.
- * (Write access <i>implies</i> read access, hence requires-read-lock-absence <i>implies</i> requires-write-lock-absence)
+ * Methods and constructors annotated with {@code RequiresReadLockAbsence} must be called without read lock held.
+ * Parameters annotated with {@code RequiresReadLockAbsence} must be callables and are guaranteed to be called without read lock held.
  * <p/>
  * Aside from a documentation purpose, the annotation is processed by the {@link org.jetbrains.jps.devkit.threadingModelHelper}.
  * The plugin instruments annotated elements with {@link Application#assertReadAccessNotAllowed()} calls

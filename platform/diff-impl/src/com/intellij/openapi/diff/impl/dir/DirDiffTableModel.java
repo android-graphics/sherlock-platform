@@ -65,7 +65,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
   public static final String EMPTY_STRING = StringUtil.repeatSymbol(' ', 50);
 
-  private final @Nullable Project myProject;
+  @Nullable private final Project myProject;
   private final DirDiffSettings mySettings;
 
   protected DiffElement mySource;
@@ -138,7 +138,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void selectFirstRow() {
-    if (!myElements.isEmpty()) {
+    if (myElements.size() > 0) {
       int row = myElements.get(0).isSeparator() ? 1 : 0;
       if (row < myTable.getRowCount()) {
         myTable.getSelectionModel().setSelectionInterval(row, row);
@@ -184,7 +184,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     return map != null ? map.get(source.getSourceName()) : null;
   }
 
-  private static @Nls String prepareText(String text) {
+  @Nls
+  private static String prepareText(String text) {
     final int LEN = EMPTY_STRING.length();
     String right;
     if (text == null) {
@@ -420,18 +421,20 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
   }
 
-  public @NlsContexts.DialogTitle String getTitle() {
+  @NlsContexts.DialogTitle
+  public String getTitle() {
     if (myDisposed) return DiffBundle.message("diff.files.dialog.title");
     if (mySource instanceof VirtualFileDiffElement &&
         myTarget instanceof VirtualFileDiffElement) {
       VirtualFile srcFile = ((VirtualFileDiffElement)mySource).getValue();
       VirtualFile trgFile = ((VirtualFileDiffElement)myTarget).getValue();
-      return DiffRequestFactory.getInstance().getTitleForComparison(srcFile, trgFile);
+      return DiffRequestFactory.getInstance().getTitle(srcFile, trgFile);
     }
     return IdeBundle.message("diff.dialog.title", mySource.getPresentablePath(), myTarget.getPresentablePath());
   }
 
-  public @Nullable DirDiffElementImpl getElementAt(int index) {
+  @Nullable
+  public DirDiffElementImpl getElementAt(int index) {
     return 0 <= index && index < myElements.size() ? myElements.get(index) : null;
   }
 
@@ -476,8 +479,9 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     myTable = table;
   }
 
+  @Nullable
   @Override
-  public @Nullable Object getValueAt(int rowIndex, int columnIndex) {
+  public Object getValueAt(int rowIndex, int columnIndex) {
     try {
       final DirDiffElementImpl element = myElements.get(rowIndex);
       if (element.isSeparator()) {
@@ -525,7 +529,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     return elements;
   }
 
-  public @NotNull ColumnType getColumnType(int column) {
+  @NotNull
+  public ColumnType getColumnType(int column) {
     final int count = (getColumnCount() - 1) / 2;
     if (column == count) return ColumnType.OPERATION;
     if (column > count) {
@@ -550,7 +555,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     };
   }
 
-  public @Nullable Project getProject() {
+  @Nullable
+  public Project getProject() {
     return myProject;
   }
 
@@ -826,8 +832,9 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
           return true;
         }
 
+        @NotNull
         @Override
-        public @NotNull String getDoNotShowMessage() {
+        public String getDoNotShowMessage() {
           return DiffBundle.message("do.not.ask.me.again");
         }
       })

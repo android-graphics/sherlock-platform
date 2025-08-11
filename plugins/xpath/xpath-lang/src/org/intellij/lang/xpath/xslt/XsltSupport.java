@@ -121,7 +121,7 @@ public final class XsltSupport {
     if (isXsltAttribute(attribute)) {
       final String tagName = attribute.getParent().getLocalName();
       final String s = XPATH_ATTR_MAP.get(name);
-      if ((s == null || !s.isEmpty()) && !tagName.equals(s)) {
+      if ((s == null || s.length() > 0) && !tagName.equals(s)) {
         if (!isAttributeValueTemplate(attribute, true)) {
           return false;
         }
@@ -287,7 +287,8 @@ public final class XsltSupport {
     return "import".equals(tag.getLocalName()) && isXsltCoreTag(tag) && tag.getAttribute("href", null) != null;
   }
 
-  public static @Nullable PsiElement getAttValueToken(@NotNull XmlAttribute attribute) {
+  @Nullable
+  public static PsiElement getAttValueToken(@NotNull XmlAttribute attribute) {
     final XmlAttributeValue valueElement = attribute.getValueElement();
     if (valueElement != null) {
       final PsiElement firstChild = valueElement.getFirstChild();

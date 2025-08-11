@@ -42,22 +42,10 @@ public final class JavaParserUtil {
   public interface ParserWrapper extends BasicJavaParserUtil.ParserWrapper {
   }
 
-  /**
-   * @deprecated please, use {@link WhiteSpaceAndCommentSetHolder#INSTANCE} instead
-   */
-  @Deprecated
   public static final WhitespacesAndCommentsBinder PRECEDING_COMMENT_BINDER =
-    WhiteSpaceAndCommentSetHolder.INSTANCE.getPrecedingCommentBinder(LanguageLevel.HIGHEST);
-  /**
-   * @deprecated please, use {@link WhiteSpaceAndCommentSetHolder#INSTANCE} instead
-   */
-  @Deprecated
+    WhiteSpaceAndCommentSetHolder.INSTANCE.getPrecedingCommentBinder();
   public static final WhitespacesAndCommentsBinder SPECIAL_PRECEDING_COMMENT_BINDER =
-    WhiteSpaceAndCommentSetHolder.INSTANCE.getSpecialPrecedingCommentBinder(LanguageLevel.HIGHEST);
-  /**
-   * @deprecated please, use {@link WhiteSpaceAndCommentSetHolder#INSTANCE} instead
-   */
-  @Deprecated
+    WhiteSpaceAndCommentSetHolder.INSTANCE.getSpecialPrecedingCommentBinder();
   public static final WhitespacesAndCommentsBinder TRAILING_COMMENT_BINDER =
     WhiteSpaceAndCommentSetHolder.INSTANCE.getTrailingCommentBinder();
 
@@ -106,14 +94,10 @@ public final class JavaParserUtil {
                                                 final LanguageLevel level) {
     return BasicJavaParserUtil.parseFragment(chameleon, wrapper, eatAll, level,
                                              (levelLanguage) -> (JavaDocLexer)JavaParserDefinition.createDocLexer(levelLanguage),
-                                             (levelLanguage) -> JavaParserDefinition.createLexer(levelLanguage)
+                                             (levelLanguage) -> (BasicJavaLexer)JavaParserDefinition.createLexer(levelLanguage)
     );
   }
 
-  /**
-   * @deprecated use {@link BasicJavaParserUtil#done(PsiBuilder.Marker, IElementType, PsiBuilder, WhiteSpaceAndCommentSetHolder)}
-   */
-  @Deprecated
   public static void done(final PsiBuilder.Marker marker, final IElementType type) {
     BasicJavaParserUtil.done(marker, type, WhiteSpaceAndCommentSetHolder.INSTANCE);
   }

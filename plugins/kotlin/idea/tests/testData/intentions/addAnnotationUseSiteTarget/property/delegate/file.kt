@@ -1,6 +1,6 @@
-// NO_OPTION: FILE|Add use-site target 'file'
-// CHOSEN_OPTION: PROPERTY|Add use-site target 'property'
+// CHOOSE_USE_SITE_TARGET: file
 // WITH_STDLIB
+// IS_APPLICABLE: false
 
 annotation class A
 

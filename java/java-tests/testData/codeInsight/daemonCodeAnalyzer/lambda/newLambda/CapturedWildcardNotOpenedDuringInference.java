@@ -12,9 +12,9 @@ interface Foo<T> {
 
 class Bar {
   Foo<List<String>> transform(final Foo<? extends String> foo) {
-    return foo
+    <error descr="Incompatible types. Found: 'Foo<? extends java.util.List<? extends java.lang.String>>', required: 'Foo<java.util.List<java.lang.String>>'">return foo
       .map(v2 -> tuple(v2))
-      .<error descr="Incompatible types. Found: 'Foo<? extends java.util.List<? extends java.lang.String>>', required: 'Foo<java.util.List<java.lang.String>>'">onClose</error>();
+      .onClose();</error>
   }
 
   static <T2> List<T2> tuple(T2 v2) {

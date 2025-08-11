@@ -1,5 +1,5 @@
 // "Create class 'Bar'" "true"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 internal class Foo
 
 val bar = <caret>Bar(Foo())

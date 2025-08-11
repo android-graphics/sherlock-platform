@@ -1,9 +1,9 @@
 {
   "type": "JAVA_METHOD",
-  "classId": "/A1",
+  "classId": "/A",
   "libraries": ["JUnit4"],
   "methodSignature": "void foo()",
   "newName": "bar",
-  "mainFile": "A1.java",
+  "mainFile": "A.java",
   "enabledInK2": "true"
 }

@@ -31,7 +31,8 @@ public class PyParameterTypeList extends PyElementImpl {
     super(astNode);
   }
 
-  public @NotNull List<PyExpression> getParameterTypes() {
+  @NotNull
+  public List<PyExpression> getParameterTypes() {
     return findChildrenByType(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
   }
 }

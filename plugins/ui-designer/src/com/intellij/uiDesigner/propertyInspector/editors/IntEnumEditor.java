@@ -91,7 +91,6 @@ public final class IntEnumEditor extends PropertyEditor<Integer> {
       myText = text;
     }
 
-    @Override
     public String toString() {
       return myText;
     }

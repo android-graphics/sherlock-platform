@@ -147,7 +147,8 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   }
 
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  @Nullable
+  protected JComponent createCenterPanel() {
     return contentPane;
   }
 
@@ -156,7 +157,8 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     return contentPane;
   }
 
-  protected @NotNull ExtractMethodInfoHelper getHelper() {
+  @NotNull
+  protected ExtractMethodInfoHelper getHelper() {
     return myHelper;
   }
 
@@ -171,7 +173,8 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     return null;
   }
 
-  protected @Nullable String getEnteredName() {
+  @Nullable
+  protected String getEnteredName() {
     String text = myNameField.getText();
     if (!text.trim().isEmpty()) {
       return text.trim();
@@ -329,7 +332,8 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     }
 
     @Override
-    public @NotNull ExtractMethodInfoHelper getHelper() {
+    @NotNull
+    public ExtractMethodInfoHelper getHelper() {
       return myHelper;
     }
 

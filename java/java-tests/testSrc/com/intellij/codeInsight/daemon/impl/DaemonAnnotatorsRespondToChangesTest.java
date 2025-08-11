@@ -46,7 +46,6 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.TestTimeOut;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -80,6 +79,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
     myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     UndoManager.getInstance(myProject);
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
+    DaemonProgressIndicator.setDebug(true);
     PlatformTestUtil.assumeEnoughParallelism();
   }
 
@@ -103,11 +103,6 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
       myDaemonCodeAnalyzer = null;
       super.tearDown();
     }
-  }
-
-  @Override
-  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    DaemonProgressIndicator.runInDebugMode(() -> super.runTestRunnable(testRunnable));
   }
 
   @Override
@@ -173,11 +168,11 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
                                         HighlightSeverity.ERROR);
     long elapsed = System.currentTimeMillis() - start;
 
-    assertSize(0, errors);
+    assertEquals(0, errors.size());
     if (!run.get()) {
       fail(ThreadDumper.dumpThreadsToString());
     }
-    assertTrue("Elapsed: " + elapsed, elapsed >= SLEEP);
+    assertTrue("Elapsed: "+elapsed, elapsed >= SLEEP);
   }
 
   public void testAddRemoveHighlighterRaceInIncorrectAnnotatorsWhichUseFileRecursiveVisit() {
@@ -199,7 +194,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
       assertEquals("XXX", assertOneElement(doHighlighting(HighlightSeverity.WARNING)).getDescription());
 
       for (int i = 0; i < 100; i++) {
-        myDaemonCodeAnalyzer.restart(getTestName(false)+ " "+i);
+        myDaemonCodeAnalyzer.restart();
         List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
         assertEquals("XXX", assertOneElement(infos).getDescription());
       }
@@ -390,12 +385,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     long start = System.currentTimeMillis();
-    try {
-      myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, checkHighlighted);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, checkHighlighted);
     if (!success.get()) {
       List<RangeHighlighter> errors = ContainerUtil.filter(markupModel.getAllHighlighters(), highlighter -> HighlightInfo.fromRangeHighlighter(highlighter) != null && HighlightInfo.fromRangeHighlighter(highlighter).getSeverity() == HighlightSeverity.ERROR);
       long elapsed = System.currentTimeMillis() - start;
@@ -576,8 +566,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
 
     DaemonCodeAnalyzer.DaemonListener.AnnotatorStatistics stat = firstStatistics.get();
     assertNotNull(stat);
-    assertEquals("comment", stat.firstAnnotation.getMessage());
-    assertEquals(HighlightSeverity.INFORMATION, stat.firstAnnotation.getSeverity());
+    assertEquals("Annotation(message='comment', severity='INFORMATION', toolTip='<html>comment</html>')", stat.firstAnnotation.toString());
     assertSame(stat.firstAnnotation, stat.lastAnnotation);
     assertTrue(stat.annotatorStartStamp > 0);
     assertTrue(stat.firstAnnotationStamp >= stat.annotatorStartStamp);
@@ -620,7 +609,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
       HighlightInfo info = assertOneElement(infos);
       assertEquals("warning", info.getDescription());
       MiddleOfTextAnnotator.doAnnotate = false;
-      myDaemonCodeAnalyzer.restart(getTestName(false));
+      myDaemonCodeAnalyzer.restart();
       assertEmpty(doHighlighting());
     });
   }
@@ -650,11 +639,11 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
     editor.getScrollPane().getViewport().setExtentSize(new Dimension(100, editor.getPreferredHeight() - (int)caretVisualPoint.getY()));
     ProperTextRange visibleRange = editor.calculateVisibleRange();
     assertTrue(visibleRange.toString(), visibleRange.getStartOffset() > 0);
-    myDaemonCodeAnalyzer.restart(getTestName(false));
+    myDaemonCodeAnalyzer.restart();
     expectedVisibleRange = visibleRange;
     useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new CheckVisibleRangeAnnotator()}, ()-> assertEmpty(doHighlighting()));
     DaemonRespondToChangesTest.makeWholeEditorWindowVisible(editor);
-    myDaemonCodeAnalyzer.restart(getTestName(false));
+    myDaemonCodeAnalyzer.restart();
     expectedVisibleRange = new TextRange(0, editor.getDocument().getTextLength());
     useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new CheckVisibleRangeAnnotator()}, ()-> assertEmpty(doHighlighting()));
   }
@@ -832,7 +821,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true);
 
     // both annos should produce their results
-    myDaemonCodeAnalyzer.restart(getTestName(false));
+    myDaemonCodeAnalyzer.restart();
     DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
     useAnnotatorsIn(annotatorsByLanguage, () -> {
       long deadline = System.currentTimeMillis() + 20_000;
@@ -930,41 +919,9 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
         assertEquals(MyFileLevelAnnotator.MSG, info.getDescription());
 
         backspace();
-      }
-    });
-  }
-
-  public static class MyFileLevelAnnotatorWithConstantlyChangingDescription extends MyRecordingAnnotator {
-    private static final String MSG = "xxxzz: ";
-
-    @Override
-    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-      if (element instanceof PsiFile) {
-        holder.newAnnotation(HighlightSeverity.ERROR, MSG+element.getText().substring(0, Math.min(10, element.getTextLength()))).fileLevel().create();
-        iDidIt();
-      }
-      LOG.debug(getClass()+".annotate("+element+") = "+didIDoIt());
-    }
-    static boolean isMine(HighlightInfo info) {
-      return info.getDescription().startsWith(MSG);
-    }
-  }
-
-  public void testFileLevelAnnotationDoesNotDuplicateOnTypingEventWhenItsDescriptionIsConstantlyChanging() {
-    configureByText(PlainTextFileType.INSTANCE, "<caret>");
-
-    useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new MyFileLevelAnnotatorWithConstantlyChangingDescription()}, () -> {
-      for (int i=0; i<100; i++) {
-        assertTrue(MyFileLevelAnnotatorWithConstantlyChangingDescription.isMine(assertOneElement(highlightErrors())));
-        HighlightInfo info = assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
-        assertTrue(MyFileLevelAnnotatorWithConstantlyChangingDescription.isMine(info));
-
-        type('2');
-        assertTrue(MyFileLevelAnnotatorWithConstantlyChangingDescription.isMine(assertOneElement(highlightErrors())));
+        assertEquals(MyFileLevelAnnotator.MSG, assertOneElement(highlightErrors()).getDescription());
         info = assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
-        assertTrue(MyFileLevelAnnotatorWithConstantlyChangingDescription.isMine(info));
-
-        backspace();
+        assertEquals(MyFileLevelAnnotator.MSG, info.getDescription());
       }
     });
   }

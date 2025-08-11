@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.project.Project;
@@ -22,13 +22,15 @@ public abstract class LocatableConfigurationBase<T> extends RunConfigurationBase
     super(project, factory, null);
   }
 
+  @NotNull
   @Override
-  protected @NotNull LocatableRunConfigurationOptions getOptions() {
+  protected LocatableRunConfigurationOptions getOptions() {
     return (LocatableRunConfigurationOptions)super.getOptions();
   }
 
+  @NotNull
   @Override
-  protected @NotNull Class<? extends LocatableRunConfigurationOptions> getDefaultOptionsClass() {
+  protected Class<? extends LocatableRunConfigurationOptions> getDefaultOptionsClass() {
     return LocatableRunConfigurationOptions.class;
   }
 
@@ -57,7 +59,8 @@ public abstract class LocatableConfigurationBase<T> extends RunConfigurationBase
    *
    * @return the name of the action.
    */
-  public @Nullable @NlsActions.ActionText String getActionName() {
+  @Nullable
+  public @NlsActions.ActionText String getActionName() {
     String name = getName();
     final String shortName = name.length() < 20 ? name : name.substring(0, 20) + "...";
     return shortName + getPresentableType();

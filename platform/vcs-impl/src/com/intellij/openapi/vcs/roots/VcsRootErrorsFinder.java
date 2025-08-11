@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.openapi.project.Project;
@@ -14,9 +14,9 @@ import java.util.Collection;
 import java.util.List;
 
 public final class VcsRootErrorsFinder {
-  private final @NotNull Project myProject;
-  private final @NotNull ProjectLevelVcsManager myVcsManager;
-  private final @NotNull VcsRootDetector myRootDetector;
+  @NotNull private final Project myProject;
+  @NotNull private final ProjectLevelVcsManager myVcsManager;
+  @NotNull private final VcsRootDetector myRootDetector;
 
   public VcsRootErrorsFinder(@NotNull Project project) {
     myProject = project;
@@ -24,26 +24,30 @@ public final class VcsRootErrorsFinder {
     myRootDetector = VcsRootDetector.getInstance(myProject);
   }
 
-  public @NotNull Collection<VcsRootError> getOrFind() {
+  @NotNull
+  public Collection<VcsRootError> getOrFind() {
     Collection<VcsRoot> vcsRoots = myRootDetector.getOrDetect();
     return calcErrors(vcsRoots);
   }
 
-  public @NotNull Collection<VcsRootError> find() {
+  @NotNull
+  public Collection<VcsRootError> find() {
     Collection<VcsRoot> vcsRoots = myRootDetector.detect();
     return calcErrors(vcsRoots);
   }
 
-  private @NotNull Collection<VcsRootError> calcErrors(@NotNull Collection<VcsRoot> detectedRoots) {
+  @NotNull
+  private Collection<VcsRootError> calcErrors(@NotNull Collection<VcsRoot> detectedRoots) {
     List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
     Collection<VcsRootError> errors = new ArrayList<>();
     errors.addAll(findExtraMappings(mappings));
     errors.addAll(findUnregisteredRoots(mappings, detectedRoots));
-    return VcsRootErrorFilter.filter(myProject, errors);
+    return errors;
   }
 
-  private @NotNull Collection<VcsRootError> findUnregisteredRoots(@NotNull List<? extends VcsDirectoryMapping> mappings,
-                                                                  @NotNull Collection<VcsRoot> vcsRoots) {
+  @NotNull
+  private Collection<VcsRootError> findUnregisteredRoots(@NotNull List<? extends VcsDirectoryMapping> mappings,
+                                                         @NotNull Collection<VcsRoot> vcsRoots) {
     Collection<VcsRootError> errors = new ArrayList<>();
     List<String> mappedPaths = mappingsToPathsWithSelectedVcs(mappings);
     for (VcsRoot root : vcsRoots) {
@@ -56,7 +60,8 @@ public final class VcsRootErrorsFinder {
     return errors;
   }
 
-  private @NotNull Collection<VcsRootError> findExtraMappings(@NotNull List<? extends VcsDirectoryMapping> mappings) {
+  @NotNull
+  private Collection<VcsRootError> findExtraMappings(@NotNull List<? extends VcsDirectoryMapping> mappings) {
     Collection<VcsRootError> errors = new ArrayList<>();
     for (VcsDirectoryMapping mapping : mappings) {
       if (!hasVcsChecker(mapping.getVcs())) {
@@ -104,7 +109,7 @@ public final class VcsRootErrorsFinder {
     return new VcsRootErrorsFinder(project);
   }
 
-  private boolean isRoot(final @NotNull VcsDirectoryMapping mapping) {
+  private boolean isRoot(@NotNull final VcsDirectoryMapping mapping) {
     if (mapping.isDefaultMapping()) return true;
     AbstractVcs vcs = myVcsManager.findVcsByName(mapping.getVcs());
     if (vcs == null) return false;

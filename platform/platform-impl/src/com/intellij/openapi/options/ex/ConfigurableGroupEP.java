@@ -22,7 +22,7 @@ import java.util.ResourceBundle;
  * Therefore, do not use groups to create a hierarchy of configurables, especially if there are very few of them.
  * It is recommended to create a hierarchy using {@link com.intellij.openapi.options.ConfigurableEP#parentId ConfigurableEP}.
  */
-public final class ConfigurableGroupEP implements PluginAware {
+final class ConfigurableGroupEP implements PluginAware {
   private static final ExtensionPointName<ConfigurableGroupEP> EP = new ExtensionPointName<>("com.intellij.groupConfigurable");
 
   /**
@@ -86,11 +86,11 @@ public final class ConfigurableGroupEP implements PluginAware {
     myPluginDescriptor = descriptor;
   }
 
-  public @NotNull @NlsContexts.ConfigurableName String getDisplayName() {
+  @NotNull @NlsContexts.ConfigurableName String getDisplayName() {
     return getResourceValue(displayNameKey);
   }
 
-  public @NlsContexts.DetailedDescription @NotNull String getDescription() {
+  @NlsContexts.DetailedDescription @NotNull String getDescription() {
     return getResourceValue(descriptionKey);
   }
 
@@ -110,7 +110,7 @@ public final class ConfigurableGroupEP implements PluginAware {
     return message != null ? message : OptionsBundle.message(key);
   }
 
-  public static @Nullable ConfigurableGroupEP find(@NotNull String id) {
+  static @Nullable ConfigurableGroupEP find(@NotNull String id) {
     return EP.findFirstSafe(ep -> id.equals(ep.id));
   }
 }

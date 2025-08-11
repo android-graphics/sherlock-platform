@@ -20,7 +20,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.elementType
-import com.intellij.psi.util.parentsOfType
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
@@ -94,7 +93,7 @@ class KotlinLineBreakpointType :
             when {
                 element is KtDestructuringDeclaration ->
                     ApplicabilityResult.MAYBE_YES
-                element.getContainingMethod().isInsideInlineOnlyDeclaration() ->
+                element.getContainingMethod().isInlineOnlyDeclaration() ->
                     ApplicabilityResult.DEFINITELY_NO
                 element.isClosingBraceInMethod() ->
                     ApplicabilityResult.MAYBE_YES
@@ -138,10 +137,9 @@ class KotlinLineBreakpointType :
         }
 
         lambdas.forEachIndexed { ordinal, lambda ->
-            val element = lambda.bodyExpression?.takeIf { it.textLength > 0 } ?: lambda
-            val positionImpl = XSourcePositionImpl.createByElement(element)
+            val positionImpl = XSourcePositionImpl.createByElement(lambda)
             if (positionImpl != null) {
-                result.add(LambdaJavaBreakpointVariant(positionImpl, element, ordinal))
+                result.add(LambdaJavaBreakpointVariant(positionImpl, lambda, ordinal))
             }
         }
 
@@ -193,8 +191,8 @@ class KotlinLineBreakpointType :
 private val LineBreakpoint<*>.javaBreakpointProperties
     get() = xBreakpoint?.properties as? JavaBreakpointProperties<*>
 
-private fun PsiElement?.isInsideInlineOnlyDeclaration(): Boolean =
-    this != null && parentsOfType<KtCallableDeclaration>(withSelf = true).any { it.isInlineOnly() }
+private fun PsiElement?.isInlineOnlyDeclaration(): Boolean =
+    this is KtCallableDeclaration && isInlineOnly()
 
 private fun PsiElement.isClosingBraceInMethod(): Boolean {
     if (this is LeafPsiElement && node.elementType === KtTokens.RBRACE) {

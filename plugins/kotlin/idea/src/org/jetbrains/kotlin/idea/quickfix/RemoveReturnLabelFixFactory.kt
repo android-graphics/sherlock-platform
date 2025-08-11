@@ -2,13 +2,15 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.RemoveReturnLabelFix
 import org.jetbrains.kotlin.psi.KtReturnExpression
 
-object RemoveReturnLabelFixFactory : KotlinIntentionActionsFactory() {
-    override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
-        val returnExpression = diagnostic.psiElement as? KtReturnExpression ?: return emptyList()
-        return listOf(RemoveReturnLabelFix(returnExpression).asIntention())
+object RemoveReturnLabelFixFactory : KotlinSingleIntentionActionFactory() {
+    override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtReturnExpression>? {
+        val returnExpression = diagnostic.psiElement as? KtReturnExpression ?: return null
+        val labelName = returnExpression.getLabelName() ?: return null
+        return RemoveReturnLabelFix(returnExpression, labelName)
     }
 }

@@ -30,12 +30,14 @@ public final class ReadObjectAndWriteObjectPrivateInspection
   extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "NonPrivateSerializationMethod";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "readwriteobject.private.problem.descriptor");
   }

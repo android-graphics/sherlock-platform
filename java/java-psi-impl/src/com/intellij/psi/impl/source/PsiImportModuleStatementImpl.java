@@ -119,11 +119,6 @@ public class PsiImportModuleStatementImpl extends PsiImportStatementBaseImpl imp
   }
 
   @Override
-  public boolean isOnDemand() {
-    return true;
-  }
-
-  @Override
   public String toString() {
     return "PsiImportModuleStatement";
   }

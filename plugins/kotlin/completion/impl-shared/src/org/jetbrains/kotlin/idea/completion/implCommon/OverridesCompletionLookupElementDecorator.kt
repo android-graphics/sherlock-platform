@@ -8,15 +8,12 @@ import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsFilter
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.*
 import com.intellij.ui.RowIcon
-import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.completion.handlers.indexOfSkippingSpace
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
@@ -28,7 +25,6 @@ class OverridesCompletionLookupElementDecorator(
     lookupElement: LookupElement,
     private val declaration: KtCallableDeclaration?,
     private val text: String,
-    private val tailText: String?,
     private val isImplement: Boolean,
     private val icon: RowIcon,
     private val baseClassName: String?,
@@ -50,7 +46,6 @@ class OverridesCompletionLookupElementDecorator(
         presentation.isItemTextBold = isImplement
         presentation.icon = icon
         presentation.clearTail()
-        presentation.setTailText(tailText, true)
         presentation.setTypeText(baseClassName, baseClassIcon)
     }
 
@@ -98,17 +93,8 @@ class OverridesCompletionLookupElementDecorator(
         val tailComments = dummyMemberChildren.toList().takeLastWhile(::isCommentOrWhiteSpace).map(::createCommentOrWhiteSpace)
 
         val prototype = generateMember()
-        val prototypeModifierList = prototype.modifierList!!
-        prototypeModifierList.contextReceiverList?.let { receiverList ->
-            val anchor = modifierList.firstChild
-            when (val sibling = receiverList.nextSibling) {
-                is PsiWhiteSpace -> modifierList.addRangeBefore(receiverList, sibling, anchor)
-                else -> modifierList.addBefore(receiverList, anchor)
-            }
-        }
-        context.copyRetainedAnnotations(from = prototypeModifierList, to = modifierList)
-
-        prototypeModifierList.replace(modifierList)
+        context.copyRetainedAnnotations(from = prototype.modifierList!!, to = modifierList)
+        prototype.modifierList!!.replace(modifierList)
         val insertedMember = dummyMember.replaced(prototype)
         if (isSuspend) insertedMember.addModifier(KtTokens.SUSPEND_KEYWORD)
 

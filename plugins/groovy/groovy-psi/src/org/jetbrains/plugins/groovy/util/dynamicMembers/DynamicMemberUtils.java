@@ -1,13 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util.dynamicMembers;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +41,13 @@ public final class DynamicMemberUtils {
   }
 
   public static ClassMemberHolder getMembers(@NotNull Project project, @NotNull String source) {
-    ConcurrentHashMap<String, ClassMemberHolder> map = ConcurrencyUtil.computeIfAbsent(project, KEY, () -> new ConcurrentHashMap<>());
+    ConcurrentHashMap<String, ClassMemberHolder> map = project.getUserData(KEY);
+
+    if (map == null) {
+      map = new ConcurrentHashMap<>();
+      map = ((UserDataHolderEx)project).putUserDataIfAbsent(KEY, map);
+    }
+
     ClassMemberHolder res = map.get(source);
 
     if (res == null) {
@@ -91,7 +97,9 @@ public final class DynamicMemberUtils {
     return version.compareTo(since) >= 0;
   }
 
-  public static @NlsSafe @Nullable String getCommentValue(PsiMethod method, @NlsSafe String commentTagName) {
+  @NlsSafe
+  @Nullable
+  public static String getCommentValue(PsiMethod method, @NlsSafe String commentTagName) {
     Map<String, String> commentMap = method.getUserData(COMMENT_KEY);
     if (commentMap == null) return null;
     return commentMap.get(commentTagName);
@@ -341,13 +349,15 @@ public final class DynamicMemberUtils {
       return myTypeParameters;
     }
 
+    @NotNull
     @Override
-    public @NotNull GrParameterList getParameterList() {
+    public GrParameterList getParameterList() {
       return myParameterList;
     }
 
+    @NotNull
     @Override
-    public @NotNull Map<String, NamedArgumentDescriptor> getNamedParameters() {
+    public Map<String, NamedArgumentDescriptor> getNamedParameters() {
       return namedParameters;
     }
 
@@ -366,8 +376,9 @@ public final class DynamicMemberUtils {
       return myMethod.getContainingClass();
     }
 
+    @Nullable
     @Override
-    public @Nullable String getOriginInfo() {
+    public String getOriginInfo() {
       return myOriginalInfo;
     }
 
@@ -398,8 +409,9 @@ public final class DynamicMemberUtils {
       return myClass;
     }
 
+    @Nullable
     @Override
-    public @Nullable String getOriginInfo() {
+    public String getOriginInfo() {
       return myOriginalInfo;
     }
 

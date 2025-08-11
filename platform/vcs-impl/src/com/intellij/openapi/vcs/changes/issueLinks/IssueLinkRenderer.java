@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.issueLinks;
 
 import com.intellij.openapi.project.Project;
@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,8 +53,7 @@ public class IssueLinkRenderer {
     myColoredComponent.append(piece, baseStyle, new SimpleColoredComponent.BrowserLauncherTag(targetUrl));
   }
 
-  @ApiStatus.Internal
-  public static SimpleTextAttributes getLinkAttributes(@NotNull SimpleTextAttributes baseStyle) {
+  private static SimpleTextAttributes getLinkAttributes(@NotNull SimpleTextAttributes baseStyle) {
     Color color = baseStyle.getFgColor();
     int alpha = color != null ? color.getAlpha() : 255;
     Color linkColor = JBUI.CurrentTheme.Link.Foreground.ENABLED;

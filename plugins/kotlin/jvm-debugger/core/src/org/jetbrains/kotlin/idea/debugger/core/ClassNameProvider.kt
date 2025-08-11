@@ -41,7 +41,7 @@ class ClassNameProvider(private val configuration: Configuration = Configuration
     @RequiresReadLock
     fun getCandidatesInfo(position: SourcePosition): List<ClassNameCandidateInfo> {
         val regularClassNames = position.elementAt?.let(::getCandidatesForElementInternal) ?: emptyList()
-        val lambdaClassNames = getLambdasAtLineIfAny(position).flatMap(::getCandidatesForElementInternal)
+        val lambdaClassNames = getLambdasAtLineIfAny(position).flatMap { getCandidatesForElementInternal(it) }
         return (regularClassNames + lambdaClassNames).distinct()
     }
 
@@ -84,10 +84,8 @@ class ClassNameProvider(private val configuration: Configuration = Configuration
                             registerClassName(className + JvmAbi.DEFAULT_IMPLS_SUFFIX)
                         }
 
-                        if (current !is KtEnumEntry) {
-                            // Continue searching if inside an object literal
-                            break
-                        }
+                        // Continue searching if inside an object literal
+                        break
                     }
                 }
                 is KtProperty -> {

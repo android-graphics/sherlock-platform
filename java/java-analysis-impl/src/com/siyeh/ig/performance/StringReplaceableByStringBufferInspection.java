@@ -22,10 +22,12 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInspection.options.OptPane.checkbox;
-import static com.intellij.codeInspection.options.OptPane.pane;
+import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public final class StringReplaceableByStringBufferInspection extends BaseInspection {
 
@@ -33,12 +35,14 @@ public final class StringReplaceableByStringBufferInspection extends BaseInspect
   public boolean onlyWarnOnLoop = true;
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "NonConstantStringShouldBeStringBuffer";
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "string.replaceable.by.string.buffer.problem.descriptor");
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
@@ -17,8 +17,9 @@ public final class IntroduceVariableAction extends IntroduceActionBase {
     return provider.getIntroduceVariableHandler();
   }
 
+  @Nullable
   @Override
-  protected @Nullable RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider, PsiElement element) {
+  protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider, PsiElement element) {
     return provider.getIntroduceVariableHandler(element);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.search
 
 import com.intellij.find.usages.api.PsiUsage
@@ -40,7 +40,7 @@ internal class WebSymbolsUsageSearcher : UsageSearcher {
 
 object WebSymbolUsageQueries {
 
-  fun buildWebSymbolUsagesQueries(symbol: WebSymbol, project: Project, searchScope: SearchScope): List<Query<out PsiUsage>> =
+  fun buildWebSymbolUsagesQueries(symbol: WebSymbol, project: Project, searchScope: SearchScope) =
     (symbol.psiContext
        ?.let { WebSymbolsQueryExecutorFactory.create(it, true) }
        ?.namesProvider
@@ -52,7 +52,7 @@ object WebSymbolUsageQueries {
         SearchService.getInstance()
           .searchWord(project, it)
           .caseSensitive(false)
-          .inContexts(SearchContext.inCodeHosts(), SearchContext.inCode(), SearchContext.inPlainText(), SearchContext.inStrings())
+          .inContexts(SearchContext.IN_CODE_HOSTS, SearchContext.IN_CODE, SearchContext.IN_PLAIN_TEXT, SearchContext.IN_STRINGS)
           .includeInjections()
           .inScope(searchScope)
           .buildQuery(LeafOccurrenceMapper.withPointer(symbol.createPointer(), ::findReferencesToSymbol))

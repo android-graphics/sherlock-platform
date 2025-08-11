@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate
 
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import org.jetbrains.plugins.textmate.api.TextMateBundleProvider
 import kotlin.io.path.absolutePathString
@@ -9,10 +8,11 @@ fun TextMateServiceImpl.getPluginBundles(): MutableList<TextMateBundleToLoad> {
   val bundleProviders = TextMateBundleProvider.EP_NAME.extensionList
   val pluginBundles = mutableListOf<TextMateBundleProvider.PluginBundle>()
   for (provider in bundleProviders) {
-    runCatching {
+    try {
       pluginBundles.addAll(provider.getBundles())
-    }.getOrLogException {
-      thisLogger().error("$$provider failed", it)
+    }
+    catch (e: Exception) {
+      thisLogger().error("${provider} failed", e)
     }
   }
   return pluginBundles.distinctBy { it.path }.mapTo(mutableListOf()) { TextMateBundleToLoad(it.name, it.path.absolutePathString()) }

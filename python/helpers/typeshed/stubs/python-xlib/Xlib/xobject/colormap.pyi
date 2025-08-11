@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from re import Pattern
-from typing import Final
+from typing_extensions import Final
 
 from Xlib._typing import ErrorHandler
 from Xlib.protocol import request, rq

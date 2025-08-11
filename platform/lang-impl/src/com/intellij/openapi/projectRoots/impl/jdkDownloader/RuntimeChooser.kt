@@ -4,10 +4,8 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.annotations.ApiStatus
 
 
-@ApiStatus.Internal
 class RuntimeChooserAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     RuntimeChooserUtil.showRuntimeChooserPopup()

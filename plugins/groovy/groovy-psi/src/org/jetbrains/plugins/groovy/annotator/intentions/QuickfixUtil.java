@@ -1,11 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
@@ -36,7 +33,8 @@ import java.util.List;
 import static com.intellij.codeInspection.IntentionWrapper.wrapToQuickFixes;
 
 public final class QuickfixUtil {
-  public static @Nullable PsiClass findTargetClass(GrReferenceExpression refExpr) {
+  @Nullable
+  public static PsiClass findTargetClass(GrReferenceExpression refExpr) {
     if (refExpr.getQualifier() == null) {
       return PsiUtil.getContextClass(refExpr);
     }
@@ -160,7 +158,8 @@ public final class QuickfixUtil {
     return settings;
   }
 
-  public static @NotNull List<IntentionAction> fixesToIntentions(@NotNull PsiElement highlightElement, @NotNull LocalQuickFix @NotNull [] fixes) {
+  @NotNull
+  public static List<IntentionAction> fixesToIntentions(@NotNull PsiElement highlightElement, @NotNull LocalQuickFix @NotNull [] fixes) {
     InspectionManager inspectionManager = InspectionManager.getInstance(highlightElement.getProject());
     // dummy problem descriptor, highlight element is only used
     ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(

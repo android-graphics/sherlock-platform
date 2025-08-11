@@ -10,7 +10,6 @@ import com.intellij.ui.BalloonLayoutData
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBScrollBar
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
 import java.awt.Insets
 import java.awt.Toolkit
@@ -25,7 +24,6 @@ import kotlin.math.max
 /**
  * @author Alexander Lobas
  */
-@ApiStatus.Internal
 class WelcomeSeparateBalloonLayoutImpl(parent: JRootPane, insets: Insets) : WelcomeBalloonLayoutImpl(parent, insets) {
   private val myShowState = ShowState()
   private val myScrollController = ScrollController()

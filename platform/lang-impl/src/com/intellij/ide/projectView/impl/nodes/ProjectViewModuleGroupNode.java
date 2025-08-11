@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.impl.nodes;
 
@@ -14,7 +14,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -23,8 +22,9 @@ public class ProjectViewModuleGroupNode extends ModuleGroupNode {
     super(project, value, viewSettings);
   }
 
+  @NotNull
   @Override
-  protected @NotNull AbstractTreeNode createModuleNode(@NotNull Module module) {
+  protected AbstractTreeNode createModuleNode(@NotNull Module module) {
     final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
     if (roots.length == 1) {
       final PsiDirectory psi = PsiManager.getInstance(myProject).findDirectory(roots[0]);
@@ -36,14 +36,16 @@ public class ProjectViewModuleGroupNode extends ModuleGroupNode {
     return new ProjectViewModuleNode(getProject(), module, getSettings());
   }
 
+  @NotNull
   @Override
-  protected @NotNull ModuleGroupNode createModuleGroupNode(@NotNull ModuleGroup moduleGroup) {
+  protected ModuleGroupNode createModuleGroupNode(@NotNull ModuleGroup moduleGroup) {
     return new ProjectViewModuleGroupNode(getProject(), moduleGroup, getSettings());
   }
 
 
+  @NotNull
   @Override
-  protected @Unmodifiable @NotNull List<Module> getModulesByFile(@NotNull VirtualFile file) {
+  protected List<Module> getModulesByFile(@NotNull VirtualFile file) {
     return ContainerUtil.createMaybeSingletonList(ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(file, false));
   }
 }

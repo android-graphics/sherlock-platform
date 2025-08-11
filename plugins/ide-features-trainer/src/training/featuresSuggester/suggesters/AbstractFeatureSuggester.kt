@@ -9,7 +9,6 @@ import com.intellij.openapi.keymap.KeymapUtil
 import org.jetbrains.annotations.Nls
 import training.featuresSuggester.*
 import training.featuresSuggester.settings.FeatureSuggesterSettings
-import training.featuresSuggester.statistics.FeatureSuggesterStatistics
 import java.util.concurrent.TimeUnit
 
 abstract class AbstractFeatureSuggester : FeatureSuggester {
@@ -26,21 +25,14 @@ abstract class AbstractFeatureSuggester : FeatureSuggester {
    */
   override fun isSuggestionNeeded() = !isSuggestingActionUsedRecently() && !isSuggestionShownRecently()
 
-  override fun logStatisticsThatSuggestionIsFound(suggestion: Suggestion) {
-    val daysPassedFromLastUsage = actionSummary()?.lastUsedTimestamp?.let { (System.currentTimeMillis() - it) / TimeUnit.DAYS.toMillis(1L) } ?: -1
-    FeatureSuggesterStatistics.logSuggestionFound(id, !isSuggestingActionUsedRecently(), daysPassedFromLastUsage.toInt())
-  }
-
-  protected fun isSuggestingActionUsedRecently(): Boolean {
-    val summary = actionSummary() ?: return false
+  private fun isSuggestingActionUsedRecently(): Boolean {
+    val summary = service<ActionsLocalSummary>().getActionStatsById(suggestingActionId) ?: return false
     val lastTimeUsed = summary.lastUsedTimestamp
     val oldestWorkingDayStart = FeatureSuggesterSettings.instance().getOldestWorkingDayStartMillis(minSuggestingIntervalDays)
     return lastTimeUsed > oldestWorkingDayStart
   }
 
-  private fun actionSummary() = service<ActionsLocalSummary>().getActionStatsById(suggestingActionId)
-
-  protected fun isSuggestionShownRecently(): Boolean {
+  private fun isSuggestionShownRecently(): Boolean {
     val lastTimeShown = FeatureSuggesterSettings.instance().getSuggestionLastShownTime(id)
     val delta = System.currentTimeMillis() - lastTimeShown
     return delta < TimeUnit.DAYS.toMillis(1L)
@@ -65,7 +57,7 @@ abstract class AbstractFeatureSuggester : FeatureSuggester {
   }
 
   @Nls
-  open fun getShortcutText(actionId: String): String {
+  fun getShortcutText(actionId: String): String {
     val shortcut = KeymapUtil.getShortcutText(actionId)
     return if (shortcut == "<no shortcut>") {
       FeatureSuggesterBundle.message("shortcut.not.found.message")

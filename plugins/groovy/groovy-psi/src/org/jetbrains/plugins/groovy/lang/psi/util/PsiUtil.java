@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -105,14 +105,16 @@ public final class PsiUtil {
   private PsiUtil() {
   }
 
-  public static @Nullable String getMethodName(GrMethodCall methodCall) {
+  @Nullable
+  public static String getMethodName(GrMethodCall methodCall) {
     GrExpression invokedExpression = methodCall.getInvokedExpression();
     if (!(invokedExpression instanceof GrReferenceExpression)) return null;
 
     return ((GrReferenceExpression)invokedExpression).getReferenceName();
   }
 
-  public static @Nullable String getUnqualifiedMethodName(GrMethodCall methodCall) {
+  @Nullable
+  public static String getUnqualifiedMethodName(GrMethodCall methodCall) {
     GrExpression invokedExpression = methodCall.getInvokedExpression();
     if (!(invokedExpression instanceof GrReferenceExpression)) return null;
 
@@ -161,7 +163,8 @@ public final class PsiUtil {
     return Applicability.inapplicable;
   }
 
-  public static @Nullable GrArgumentList getArgumentsList(@Nullable PsiElement methodRef) {
+  @Nullable
+  public static GrArgumentList getArgumentsList(@Nullable PsiElement methodRef) {
     if (methodRef == null) return null;
 
     if (methodRef instanceof GrEnumConstant) return ((GrEnumConstant)methodRef).getArgumentList();
@@ -291,7 +294,8 @@ public final class PsiUtil {
     return result.toArray(PsiType.createArray(result.size()));
   }
 
-  public static @Nullable PsiClass getJavaLangClass(PsiElement resolved, GlobalSearchScope scope) {
+  @Nullable
+  public static PsiClass getJavaLangClass(PsiElement resolved, GlobalSearchScope scope) {
     return JavaPsiFacade.getInstance(resolved.getProject()).findClass(JAVA_LANG_CLASS, scope);
   }
 
@@ -329,7 +333,7 @@ public final class PsiUtil {
     }
   }
 
-  public static Iterable<PsiClass> iterateSupers(final @NotNull PsiClass psiClass, final boolean includeSelf) {
+  public static Iterable<PsiClass> iterateSupers(@NotNull final PsiClass psiClass, final boolean includeSelf) {
     return new Iterable<>() {
       @Override
       public Iterator<PsiClass> iterator() {
@@ -393,7 +397,8 @@ public final class PsiUtil {
           }
 
           @Override
-          public @NotNull PsiClass next() {
+          @NotNull
+          public PsiClass next() {
             nextElement();
             nextObtained = false;
             if (current == null) throw new NoSuchElementException();
@@ -409,7 +414,8 @@ public final class PsiUtil {
     };
   }
 
-  public static @Nullable PsiClass getContextClass(@Nullable PsiElement element) {
+  @Nullable
+  public static PsiClass getContextClass(@Nullable PsiElement element) {
     PsiElement context = element;
     while (context != null) {
       if (context instanceof GrAnonymousClassDefinition
@@ -438,7 +444,8 @@ public final class PsiUtil {
     return name.startsWith(GroovyPsiElementFactory.DUMMY_FILE_NAME);
   }
 
-  public static @Nullable GroovyPsiElement getFileOrClassContext(PsiElement context) {
+  @Nullable
+  public static GroovyPsiElement getFileOrClassContext(PsiElement context) {
     while (context != null) {
       if (context instanceof GrTypeDefinition) {
         return (GroovyPsiElement)context;
@@ -618,7 +625,8 @@ public final class PsiUtil {
     return PsiUtilKt.skipWhiteSpacesAndNewLinesForward(elem);
   }
 
-  public static @NotNull PsiIdentifier getJavaNameIdentifier(@NotNull GrNamedElement namedElement) {
+  @NotNull
+  public static PsiIdentifier getJavaNameIdentifier(@NotNull GrNamedElement namedElement) {
     final PsiElement element = namedElement.getNameIdentifierGroovy();
     JavaIdentifier identifier = element.getUserData(NAME_IDENTIFIER);
     if (identifier == null) {
@@ -636,7 +644,8 @@ public final class PsiUtil {
     return identifier;
   }
 
-  public static @Nullable GrStatement findEnclosingStatement(@Nullable PsiElement context) {
+  @Nullable
+  public static GrStatement findEnclosingStatement(@Nullable PsiElement context) {
     while (context != null) {
       if (isExpressionStatement(context)) return (GrStatement)context;
       context = PsiTreeUtil.getParentOfType(context, GrStatement.class, true);
@@ -673,16 +682,19 @@ public final class PsiUtil {
   }
 
 
-  public static @Nullable PsiElement skipWhitespacesAndComments(@Nullable PsiElement elem, boolean forward, boolean skipNLs) {
+  @Nullable
+  public static PsiElement skipWhitespacesAndComments(@Nullable PsiElement elem, boolean forward, boolean skipNLs) {
     return skipSet(elem, forward, TokenSets.WHITE_SPACES_OR_COMMENTS, skipNLs);
   }
 
 
-  public static @Nullable PsiElement skipWhitespacesAndComments(@Nullable PsiElement elem, boolean forward) {
+  @Nullable
+  public static PsiElement skipWhitespacesAndComments(@Nullable PsiElement elem, boolean forward) {
     return skipSet(elem, forward, TokenSets.WHITE_SPACES_OR_COMMENTS, true);
   }
 
-  public static @Nullable PsiElement skipSet(PsiElement elem, boolean forward, TokenSet set, boolean skipNLs) {
+  @Nullable
+  public static PsiElement skipSet(PsiElement elem, boolean forward, TokenSet set, boolean skipNLs) {
     while (elem != null &&
            elem.getNode() != null &&
            set.contains(elem.getNode().getElementType()) &&
@@ -697,7 +709,8 @@ public final class PsiUtil {
     return elem;
   }
 
-  public static @Nullable PsiElement skipSet(@NotNull PsiElement element, boolean forward, @NotNull TokenSet set) {
+  @Nullable
+  public static PsiElement skipSet(@NotNull PsiElement element, boolean forward, @NotNull TokenSet set) {
     do {
       if (forward) {
         element = element.getNextSibling();
@@ -711,12 +724,14 @@ public final class PsiUtil {
     return element;
   }
 
-  public static @Nullable PsiElement skipWhitespaces(@Nullable PsiElement elem, boolean forward) {
+  @Nullable
+  public static PsiElement skipWhitespaces(@Nullable PsiElement elem, boolean forward) {
     return skipSet(elem, forward, TokenSets.WHITE_SPACES_SET, true);
   }
 
 
-  public static @Nullable PsiType getSmartReturnType(@NotNull PsiMethod method) {
+  @Nullable
+  public static PsiType getSmartReturnType(@NotNull PsiMethod method) {
     if (GdkMethodUtil.isMacro(method)) {
       return null;
     }
@@ -814,7 +829,8 @@ public final class PsiUtil {
     }
   }
 
-  public static @Nullable PsiElement skipParentheses(@Nullable PsiElement element, boolean up) {
+  @Nullable
+  public static PsiElement skipParentheses(@Nullable PsiElement element, boolean up) {
     if (element == null) return null;
     if (up) {
       PsiElement parent;
@@ -830,13 +846,15 @@ public final class PsiUtil {
     return element;
   }
 
-  public static @NotNull PsiElement skipParenthesesIfSensibly(@NotNull PsiElement element, boolean up) {
+  @NotNull
+  public static PsiElement skipParenthesesIfSensibly(@NotNull PsiElement element, boolean up) {
     PsiElement res = skipParentheses(element, up);
     return res == null ? element : res;
   }
 
 
-  public static @Nullable PsiElement getNamedArgumentValue(GrNamedArgument otherNamedArgument, String argumentName) {
+  @Nullable
+  public static PsiElement getNamedArgumentValue(GrNamedArgument otherNamedArgument, String argumentName) {
     PsiElement parent = otherNamedArgument.getParent();
 
     if (!(parent instanceof GrNamedArgumentsOwner)) return null;
@@ -847,7 +865,8 @@ public final class PsiUtil {
     return namedArgument.getExpression();
   }
 
-  public static @NotNull PsiClass getOriginalClass(@NotNull PsiClass aClass) {
+  @NotNull
+  public static PsiClass getOriginalClass(@NotNull PsiClass aClass) {
     PsiFile file = aClass.getContainingFile();
     if (file == null) return aClass;
 
@@ -987,14 +1006,16 @@ public final class PsiUtil {
     return false;
   }
 
-  public static @Nullable GrMethodCall getMethodCallByNamedParameter(GrNamedArgument namedArgument) {
+  @Nullable
+  public static GrMethodCall getMethodCallByNamedParameter(GrNamedArgument namedArgument) {
     GrCall res = getCallByNamedParameter(namedArgument);
     if (res instanceof GrMethodCall) return (GrMethodCall)res;
 
     return null;
   }
 
-  public static @Nullable GrCall getCallByNamedParameter(GrNamedArgument namedArgument) {
+  @Nullable
+  public static GrCall getCallByNamedParameter(GrNamedArgument namedArgument) {
     PsiElement parent = namedArgument.getParent();
 
     PsiElement eMethodCall;
@@ -1097,7 +1118,8 @@ public final class PsiUtil {
     return ControlFlowUtils.collectReturns(controlFlowOwner, true).contains(statement);
   }
 
-  public static @Nullable PsiClass getContainingNotInnerClass(@Nullable PsiElement element) {
+  @Nullable
+  public static PsiClass getContainingNotInnerClass(@Nullable PsiElement element) {
     PsiClass domainClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (domainClass == null) return null;
 
@@ -1108,7 +1130,8 @@ public final class PsiUtil {
     }
   }
 
-  public static @NotNull ResolveResult getAccessObjectClass(GrExpression expression) {
+  @NotNull
+  public static ResolveResult getAccessObjectClass(GrExpression expression) {
     if (isThisOrSuperRef(expression)) return EmptyGroovyResolveResult.INSTANCE;
     PsiType type = expression.getType();
     if (type instanceof PsiClassType) {
@@ -1150,7 +1173,8 @@ public final class PsiUtil {
     return getArgumentsList(context) != null;
   }
 
-  public static @NotNull List<GrImportStatement> getValidImportStatements(final GroovyFile file) {
+  @NotNull
+  public static List<GrImportStatement> getValidImportStatements(final GroovyFile file) {
     final List<GrImportStatement> oldImports = new ArrayList<>();
     for (GrImportStatement statement : file.getImportStatements()) {
       if (!ErrorUtil.containsError(statement)) {
@@ -1217,7 +1241,8 @@ public final class PsiUtil {
     return false;
   }
 
-  public static @Unmodifiable @NotNull List<@NotNull PsiAnnotation> getAllAnnotations(@NotNull PsiElement element, @NotNull String annotationNameFq) {
+  @Unmodifiable
+  public static @NotNull List<@NotNull PsiAnnotation> getAllAnnotations(@NotNull PsiElement element, @NotNull String annotationNameFq) {
     List<PsiModifierListOwner> parents = PsiTreeUtil.collectParents(element, PsiModifierListOwner.class, true, __ -> false);
     List<PsiAnnotation> annotations = new SmartList<>();
     for (PsiModifierListOwner parent : parents) {
@@ -1229,7 +1254,8 @@ public final class PsiUtil {
     return annotations;
   }
 
-  public static @Nullable PsiType extractIteratedType(GrForInClause forIn) {
+  @Nullable
+  public static PsiType extractIteratedType(GrForInClause forIn) {
     GrExpression iterated = forIn.getIteratedExpression();
     if (iterated == null) return null;
     return ClosureParameterEnhancer.findTypeForIteration(iterated, forIn);
@@ -1266,7 +1292,7 @@ public final class PsiUtil {
     }
   }
 
-  public static boolean scopeClassImplementsTrait(final @NotNull PsiClass trait, final @NotNull PsiElement place) {
+  public static boolean scopeClassImplementsTrait(@NotNull final PsiClass trait, @NotNull final PsiElement place) {
     GrTypeDefinition scopeClass = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, true);
     return scopeClass != null && ContainerUtil.find(scopeClass.getSuperTypes(),
                                                     type -> place.getManager().areElementsEquivalent(type.resolve(), trait)) != null;
@@ -1298,7 +1324,8 @@ public final class PsiUtil {
     return candidates.length == 1 && candidates[0].getElement() instanceof GrBindingVariable;
   }
 
-  public static @Nullable GrConstructorInvocation getConstructorInvocation(@NotNull GrMethod constructor) {
+  @Nullable
+  public static GrConstructorInvocation getConstructorInvocation(@NotNull GrMethod constructor) {
     assert constructor.isConstructor();
 
     final GrOpenBlock body = constructor.getBlock();
@@ -1350,7 +1377,7 @@ public final class PsiUtil {
     return false;
   }
 
-  public static boolean isBlockReturnVoid(final @NotNull GrCodeBlock block) {
+  public static boolean isBlockReturnVoid(@NotNull final GrCodeBlock block) {
     return CachedValuesManager.getCachedValue(block, () -> CachedValueProvider.Result.create(ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
       @Override
       public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
@@ -1386,13 +1413,15 @@ public final class PsiUtil {
     return variable instanceof GrVariable && !(variable instanceof GrField);
   }
 
-  public static @Nullable PsiElement getPreviousNonWhitespaceToken(PsiElement e) {
+  @Nullable
+  public static PsiElement getPreviousNonWhitespaceToken(PsiElement e) {
     PsiElement next = PsiTreeUtil.prevLeaf(e);
     while (next != null && next.getNode().getElementType() == TokenType.WHITE_SPACE) next = PsiTreeUtil.prevLeaf(next);
     return next;
   }
 
-  public static @Nullable Object getLabelValue(@Nullable GrArgumentLabel label) {
+  @Nullable
+  public static Object getLabelValue(@Nullable GrArgumentLabel label) {
     if (label == null) return null;
     final PsiElement element = label.getNameElement();
     if (element instanceof GrExpression) {

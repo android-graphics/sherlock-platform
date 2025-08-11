@@ -13,11 +13,8 @@ import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogElem
 
 class AttachToProcessElementsFilters(val selectedFilter: AtomicLazyProperty<AttachDialogDebuggersFilter>) {
 
-  private val processPredicates = run {
-    val actionManager = ActionManager.getInstance()
-    val group = actionManager.getAction("XDebugger.Attach.Dialog.Settings") as? DefaultActionGroup
-    group?.getChildren(actionManager)?.filterIsInstance<ProcessPredicate>() ?: emptyList()
-  }
+  private val processPredicates = (ActionManager.getInstance().getAction(
+    "XDebugger.Attach.Dialog.Settings") as? DefaultActionGroup)?.getChildren(null)?.filterIsInstance<ProcessPredicate>() ?: emptyList()
 
   private val speedSearch = SpeedSearch().apply {
     updatePattern("")

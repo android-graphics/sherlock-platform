@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.propertyTable;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -15,6 +15,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.TextTransferable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ import java.awt.datatransfer.Transferable;
 import java.util.Collections;
 import java.util.List;
 
-public class RadPropertyTable extends PropertyTable implements UiDataProvider, ComponentSelectionListener {
+public class RadPropertyTable extends PropertyTable implements DataProvider, ComponentSelectionListener {
   private final MyCopyProvider myCopyProvider = new MyCopyProvider();
 
   private final Project myProject;
@@ -80,10 +81,16 @@ public class RadPropertyTable extends PropertyTable implements UiDataProvider, C
   }
 
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    if (myDesigner == null) return;
-    sink.set(PlatformCoreDataKeys.FILE_EDITOR, myDesigner.getEditor());
-    sink.set(PlatformDataKeys.COPY_PROVIDER, isEditing() ? null : myCopyProvider);
+  public Object getData(@NotNull @NonNls String dataId) {
+    if (myDesigner != null) {
+      if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
+        return myDesigner.getEditor();
+      }
+      if (PlatformDataKeys.COPY_PROVIDER.is(dataId) && !isEditing()) {
+        return myCopyProvider;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -92,7 +99,8 @@ public class RadPropertyTable extends PropertyTable implements UiDataProvider, C
   }
 
   @Override
-  protected @NotNull TextAttributesKey getErrorAttributes(@NotNull HighlightSeverity severity) {
+  @NotNull
+  protected TextAttributesKey getErrorAttributes(@NotNull HighlightSeverity severity) {
     return SeverityRegistrar.getSeverityRegistrar(myProject).getHighlightInfoTypeBySeverity(severity).getAttributesKey();
   }
 
@@ -145,7 +153,8 @@ public class RadPropertyTable extends PropertyTable implements UiDataProvider, C
     }
   }
 
-  private @Nullable String getCurrentKey() {
+  @Nullable
+  private String getCurrentKey() {
     PropertyTableTab tab = myPropertyTablePanel.getCurrentTab();
     return tab == null ? null : tab.getKey();
   }

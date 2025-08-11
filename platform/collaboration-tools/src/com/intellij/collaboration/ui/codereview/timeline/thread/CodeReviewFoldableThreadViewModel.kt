@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui.codereview.timeline.thread
 
 import com.intellij.collaboration.ui.codereview.user.CodeReviewUser
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import java.util.*

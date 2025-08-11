@@ -308,7 +308,6 @@ public class StopAction extends DumbAwareAction implements ActionRemotePermissio
       this.hasSeparator = hasSeparator;
     }
 
-    @Override
     public String toString() {
       return displayName;
     }

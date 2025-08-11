@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -32,15 +32,18 @@ public final class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiMod
       myApproximate = approximate;
     }
 
-    public @NotNull PsiClass getAnnotationClass() {
+    @NotNull
+    public PsiClass getAnnotationClass() {
       return myAnnotationClass;
     }
 
-    public @NotNull SearchScope getScope() {
+    @NotNull
+    public SearchScope getScope() {
       return myScope;
     }
 
-    public @NotNull Class<? extends PsiModifierListOwner> @NotNull [] getTypes() {
+    @NotNull
+    public Class<? extends PsiModifierListOwner> @NotNull [] getTypes() {
       return myTypes;
     }
 
@@ -57,33 +60,40 @@ public final class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiMod
     super(EP_NAME);
   }
 
+  @NotNull
   @SafeVarargs
-  public static @NotNull <T extends PsiModifierListOwner> Query<T> searchElements(@NotNull PsiClass annotationClass, @NotNull SearchScope scope, @NotNull Class<? extends T> @NotNull ... types) {
+  public static <T extends PsiModifierListOwner> Query<T> searchElements(@NotNull PsiClass annotationClass, @NotNull SearchScope scope, @NotNull Class<? extends T> @NotNull ... types) {
     //noinspection unchecked
     return (Query<T>)searchElements(new Parameters(annotationClass, scope, types));
   }
 
-  public static @NotNull Query<? extends PsiModifierListOwner> searchElements(@NotNull Parameters parameters) {
+  @NotNull
+  public static Query<? extends PsiModifierListOwner> searchElements(@NotNull Parameters parameters) {
     return new InstanceofQuery<>(INSTANCE.createQuery(parameters), parameters.getTypes());
   }
 
-  public static @NotNull Query<PsiClass> searchPsiClasses(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
+  @NotNull
+  public static Query<PsiClass> searchPsiClasses(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
      return searchElements(annotationClass, scope, PsiClass.class);
   }
 
-  public static @NotNull Query<PsiMethod> searchPsiMethods(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
+  @NotNull
+  public static Query<PsiMethod> searchPsiMethods(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
     return searchElements(annotationClass, scope, PsiMethod.class);
   }
 
-  public static @NotNull Query<PsiMember> searchPsiMembers(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
+  @NotNull
+  public static Query<PsiMember> searchPsiMembers(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
     return searchElements(annotationClass, scope, PsiMember.class);
   }
 
-  public static @NotNull Query<PsiField> searchPsiFields(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
+  @NotNull
+  public static Query<PsiField> searchPsiFields(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
     return searchElements(annotationClass, scope, PsiField.class);
   }
 
-  public static @NotNull Query<PsiParameter> searchPsiParameters(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
+  @NotNull
+  public static Query<PsiParameter> searchPsiParameters(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
     return searchElements(annotationClass, scope, PsiParameter.class);
   }
 }

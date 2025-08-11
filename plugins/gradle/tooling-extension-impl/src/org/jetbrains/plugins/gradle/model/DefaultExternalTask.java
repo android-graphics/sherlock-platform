@@ -1,23 +1,24 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class DefaultExternalTask implements ExternalTask {
-  private @NotNull String name;
-  private @NotNull String qName;
-  private @Nullable String description;
-  private @Nullable String group;
-  private @Nullable String type;
-
-  private boolean isJvm;
+  @NotNull
+  private String name;
+  @NotNull
+  private String qName;
+  @Nullable
+  private String description;
+  @Nullable
+  private String group;
+  @Nullable
+  private String type;
 
   private boolean isTest;
 
   private boolean isJvmTest;
-
-  private boolean isInherited;
 
   public DefaultExternalTask() {
   }
@@ -28,14 +29,13 @@ public final class DefaultExternalTask implements ExternalTask {
     description = externalTask.getDescription();
     group = externalTask.getGroup();
     type = externalTask.getType();
-    isJvm = externalTask.isJvm();
     isTest = externalTask.isTest();
     isJvmTest = externalTask.isJvmTest();
-    isInherited = externalTask.isInherited();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return name;
   }
 
@@ -43,8 +43,9 @@ public final class DefaultExternalTask implements ExternalTask {
     this.name = name;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getQName() {
+  public String getQName() {
     return qName;
   }
 
@@ -52,8 +53,9 @@ public final class DefaultExternalTask implements ExternalTask {
     qName = QName;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getDescription() {
+  public String getDescription() {
     return description;
   }
 
@@ -61,8 +63,9 @@ public final class DefaultExternalTask implements ExternalTask {
     this.description = description;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getGroup() {
+  public String getGroup() {
     return group;
   }
 
@@ -70,22 +73,14 @@ public final class DefaultExternalTask implements ExternalTask {
     this.group = group;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getType() {
+  public String getType() {
     return type;
   }
 
   public void setType(@Nullable String type) {
     this.type = type;
-  }
-
-  @Override
-  public boolean isJvm() {
-    return isJvm;
-  }
-
-  public void setJvm(boolean isJvm) {
-    this.isJvm = isJvm;
   }
 
   @Override
@@ -104,14 +99,5 @@ public final class DefaultExternalTask implements ExternalTask {
 
   public void setJvmTest(boolean test) {
     isJvmTest = test;
-  }
-
-  @Override
-  public boolean isInherited() {
-    return isInherited;
-  }
-
-  public void setInherited(boolean inherited) {
-    isInherited = inherited;
   }
 }

@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.debugger;
 
 import com.intellij.execution.Executor;
@@ -54,8 +56,9 @@ public abstract class RemoteDebugConfiguration extends LocatableConfigurationBas
     this.defaultPort = defaultPort;
   }
 
+  @Nullable
   @Attribute
-  public @Nullable String getHost() {
+  public String getHost() {
     return host;
   }
 
@@ -77,13 +80,15 @@ public abstract class RemoteDebugConfiguration extends LocatableConfigurationBas
     this.port = port;
   }
 
+  @NotNull
   @Override
-  public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new RemoteDebugConfigurationSettingsEditor();
   }
 
+  @Nullable
   @Override
-  public @Nullable RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
+  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
     return EmptyRunProfileState.INSTANCE;
   }
 
@@ -112,8 +117,9 @@ public abstract class RemoteDebugConfiguration extends LocatableConfigurationBas
     XmlSerializer.serializeInto(this, element, serializationFilter);
   }
 
+  @NotNull
   @Override
-  public @NotNull InetSocketAddress computeDebugAddress(RunProfileState state) {
+  public InetSocketAddress computeDebugAddress(RunProfileState state) {
     if (host == null) {
       return new InetSocketAddress(InetAddress.getLoopbackAddress(), port);
     }
@@ -143,8 +149,9 @@ public abstract class RemoteDebugConfiguration extends LocatableConfigurationBas
       configuration.setPort(portField.getNumber());
     }
 
+    @NotNull
     @Override
-    protected @NotNull JComponent createEditor() {
+    protected JComponent createEditor() {
       return FormBuilder.createFormBuilder().addLabeledComponent(XDebuggerBundle.message("label.host"), hostField)
         .addLabeledComponent(XDebuggerBundle.message("label.port"), portField).getPanel();
     }

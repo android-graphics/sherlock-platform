@@ -4,8 +4,6 @@ package com.jetbrains.jsonSchema.impl.validations;
 import com.jetbrains.jsonSchema.extension.JsonSchemaValidation;
 import com.jetbrains.jsonSchema.extension.JsonValidationHost;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
-import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature;
-import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
 import com.jetbrains.jsonSchema.impl.JsonComplianceCheckerOptions;
 import com.jetbrains.jsonSchema.impl.JsonSchemaAnnotatorChecker;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
@@ -23,7 +21,6 @@ public final class TypeValidation implements JsonSchemaValidation {
                           @Nullable JsonSchemaType schemaType,
                           @NotNull JsonValidationHost consumer,
                           @NotNull JsonComplianceCheckerOptions options) {
-    JsonSchemaHighlightingSessionStatisticsCollector.getInstance().reportSchemaUsageFeature(JsonSchemaFusCountedFeature.TypeValidation);
     JsonSchemaType otherType = JsonSchemaAnnotatorChecker.getMatchingSchemaType(schema, schemaType);
     if (otherType != null && !otherType.equals(schemaType) && !otherType.equals(propValue.getAlternateType(schemaType))) {
       consumer.typeError(propValue.getDelegate(), propValue.getAlternateType(schemaType), JsonSchemaAnnotatorChecker.getExpectedTypes(Collections.singleton(schema)));

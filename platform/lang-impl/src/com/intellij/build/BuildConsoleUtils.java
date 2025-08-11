@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.Failure;
@@ -124,7 +124,8 @@ public final class BuildConsoleUtils {
   }
 
   @ApiStatus.Internal
-  public static @NotNull String getMessageTitle(@NotNull String message) {
+  @NotNull
+  public static String getMessageTitle(@NotNull String message) {
     message = stripHtml(message, true);
     int sepIndex = message.indexOf(". ");
     int eolIndex = message.indexOf("\n");
@@ -138,14 +139,16 @@ public final class BuildConsoleUtils {
   }
 
   @ApiStatus.Experimental
-  public static @NotNull DataContext getDataContext(@NotNull Object buildId, @NotNull AbstractViewManager buildListener) {
+  @NotNull
+  public static DataContext getDataContext(@NotNull Object buildId, @NotNull AbstractViewManager buildListener) {
     BuildView buildView = buildListener.getBuildView(buildId);
     return buildView != null ? new MyDelegatingDataContext(buildView) : DataContext.EMPTY_CONTEXT;
   }
 
   @ApiStatus.Experimental
-  public static @NotNull DataContext getDataContext(@NotNull Object buildId, @NotNull BuildProgressListener buildListener,
-                                                    @Nullable ComponentContainer container) {
+  @NotNull
+  public static DataContext getDataContext(@NotNull Object buildId, @NotNull BuildProgressListener buildListener,
+                                           @Nullable ComponentContainer container) {
     DataContext dataContext;
     if (buildListener instanceof BuildView) {
       dataContext = new MyDelegatingDataContext((BuildView)buildListener);
@@ -165,7 +168,8 @@ public final class BuildConsoleUtils {
   }
 
 
-  private static @Nullable BuildView findBuildView(@NotNull Component component) {
+  @Nullable
+  private static BuildView findBuildView(@NotNull Component component) {
     Component parent = component;
     while ((parent = parent.getParent()) != null) {
       if (parent instanceof BuildView) {

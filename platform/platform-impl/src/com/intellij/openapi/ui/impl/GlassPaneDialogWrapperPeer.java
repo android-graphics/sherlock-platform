@@ -2,13 +2,13 @@
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RemoteDesktopService;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -31,10 +31,7 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,7 +40,6 @@ import java.awt.image.BufferedImage;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.CompletableFuture;
 
-@ApiStatus.Internal
 public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
   private static final Logger LOG = Logger.getInstance(GlassPaneDialogWrapperPeer.class);
 
@@ -336,7 +332,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     });
   }
 
-  private static final class MyDialog extends HwFacadeJPanel implements Disposable, DialogWrapperDialog, UiDataProvider {
+  private static final class MyDialog extends HwFacadeJPanel implements Disposable, DialogWrapperDialog, DataProvider {
     private final WeakReference<DialogWrapper> myDialogWrapper;
     private final IdeGlassPaneEx myPane;
     private JComponent myContentPane;
@@ -353,8 +349,14 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
       setLayout(new BorderLayout());
       setOpaque(false);
 
-      Insets insets = ShadowJava2DPainter.Type.IDE.getInsets();
-      setBorder(BorderFactory.createEmptyBorder(insets.top, insets.left, insets.bottom, insets.right));
+      if (ShadowJava2DPainter.Companion.enabled()) {
+        Insets insets = ShadowJava2DPainter.Companion.getInsets("Ide");
+        setBorder(BorderFactory.createEmptyBorder(insets.top, insets.left, insets.bottom, insets.right));
+      }
+      else {
+        setBorder(BorderFactory.createEmptyBorder(AllIcons.Ide.Shadow.Top.getIconHeight(), AllIcons.Ide.Shadow.Left.getIconWidth(),
+                                                  AllIcons.Ide.Shadow.Bottom.getIconHeight(), AllIcons.Ide.Shadow.Right.getIconWidth()));
+      }
 
       myPane = pane;
       myDialogWrapper = new WeakReference<>(wrapper);
@@ -574,9 +576,12 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     }
 
     @Override
-    public void uiDataSnapshot(@NotNull DataSink sink) {
+    public Object getData(final @NotNull @NonNls String dataId) {
       DialogWrapper wrapper = myDialogWrapper.get();
-      DataSink.uiDataSnapshot(sink, wrapper);
+      if (wrapper instanceof DataProvider) {
+        return ((DataProvider)wrapper).getData(dataId);
+      }
+      return null;
     }
 
     @Override

@@ -17,9 +17,7 @@
 package com.intellij.history.core.changes;
 
 import com.intellij.history.core.Content;
-import com.intellij.history.core.HistoryPathFilter;
 import com.intellij.util.io.DataInputOutputUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -50,13 +48,7 @@ public abstract class Change {
 
   public abstract boolean affectsProject(String projectId);
 
-  /**
-   * @deprecated Use {@link Change#affectsMatching(HistoryPathFilter)} instead.
-   */
-  @Deprecated
-  public abstract boolean affectsMatching(@NotNull Pattern pattern);
-
-  public abstract boolean affectsMatching(@NotNull HistoryPathFilter historyPathFilter);
+  public abstract boolean affectsMatching(Pattern pattern);
 
   public abstract boolean isCreationalFor(String path);
 

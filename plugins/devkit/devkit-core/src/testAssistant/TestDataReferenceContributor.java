@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.openapi.project.Project;
@@ -81,8 +81,9 @@ final class TestDataReferenceContributor extends PsiReferenceContributor {
       return new TestDataReference(this, range, index, text);
     }
 
+    @NotNull
     @Override
-    public @NotNull Collection<PsiFileSystemItem> computeDefaultContexts() {
+    public Collection<PsiFileSystemItem> computeDefaultContexts() {
       return toFileSystemItems(ManagingFS.getInstance().getLocalRoots());
     }
 
@@ -137,7 +138,8 @@ final class TestDataReferenceContributor extends PsiReferenceContributor {
       return super.innerResolve(caseSensitive, containingFile);
     }
 
-    private @Nullable PsiDirectory getProjectPsiRoot() {
+    @Nullable
+    private PsiDirectory getProjectPsiRoot() {
       final Project project = getElement().getProject();
       final VirtualFile projectDir = project.getBaseDir();
       if (projectDir != null) {
@@ -147,7 +149,8 @@ final class TestDataReferenceContributor extends PsiReferenceContributor {
       return null;
     }
 
-    private @Nullable PsiDirectory getContentPsiRoot() {
+    @Nullable
+    private PsiDirectory getContentPsiRoot() {
       final Project project = getElement().getProject();
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       final VirtualFile file = getElement().getContainingFile().getOriginalFile().getVirtualFile();

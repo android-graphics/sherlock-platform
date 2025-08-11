@@ -17,9 +17,7 @@ package com.intellij.history.core;
 
 import com.intellij.history.ByteContent;
 import com.intellij.history.core.tree.RootEntry;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
 public interface LabelImpl {
   long getLabelChangeId();
 

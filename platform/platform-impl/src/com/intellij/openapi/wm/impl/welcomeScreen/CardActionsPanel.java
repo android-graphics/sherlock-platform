@@ -15,7 +15,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.util.ui.CenteredIcon;
 import com.intellij.util.ui.GraphicsUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +24,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiStatus.Internal
 public class CardActionsPanel extends JPanel {
   private static final boolean USE_ICONS = true;
   private final JBCardLayout myLayout = new JBCardLayout();

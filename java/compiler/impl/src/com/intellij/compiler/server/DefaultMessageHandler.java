@@ -78,5 +78,6 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
 
   protected abstract void handleBuildEvent(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event);
 
-  public abstract @NotNull ProgressIndicator getProgressIndicator();
+  @NotNull
+  public abstract ProgressIndicator getProgressIndicator();
 }

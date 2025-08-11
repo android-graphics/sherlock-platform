@@ -25,7 +25,8 @@ import org.jetbrains.annotations.NotNull;
 public final class WaitNotInLoopInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("wait.not.in.loop.problem.descriptor");
   }
 

@@ -38,9 +38,11 @@ public abstract class ColoredOutputTypeRegistry {
 
      see full doc at http://en.wikipedia.org/wiki/ANSI_escape_code
   */
-  public abstract @NotNull ProcessOutputType getOutputType(@NonNls String attribute, @NotNull Key streamType);
+  public @NotNull
+  abstract ProcessOutputType getOutputType(@NonNls String attribute, @NotNull Key streamType);
 
-  abstract @NotNull ProcessOutputType getOutputType(@NotNull AnsiTerminalEmulator terminal, @NotNull Key streamType);
+  @NotNull
+  abstract ProcessOutputType getOutputType(@NotNull AnsiTerminalEmulator terminal, @NotNull Key streamType);
 
   public static ColoredOutputTypeRegistry getInstance() {
     return ApplicationManager.getApplication().getService(ColoredOutputTypeRegistry.class);

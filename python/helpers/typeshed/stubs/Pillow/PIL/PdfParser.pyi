@@ -1,7 +1,8 @@
 import collections
 from _typeshed import Incomplete
 from types import TracebackType
-from typing import Any, Literal
+from typing import Any
+from typing_extensions import Literal
 
 def encode_text(s: str) -> bytes: ...
 
@@ -65,7 +66,7 @@ class PdfStream:
     def __init__(self, dictionary, buf) -> None: ...
     def decode(self): ...
 
-def pdf_repr(x) -> bytes: ...
+def pdf_repr(x: Incomplete) -> bytes: ...
 
 class PdfParser:
     filename: Incomplete

@@ -38,7 +38,8 @@ public class PyNumericLiteralExpressionImpl extends PyElementImpl implements PyN
   }
 
   @Override
-  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  @Nullable
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     if (isIntegerLiteral()) {
       return PyBuiltinCache.getInstance(this).getIntType();
     }

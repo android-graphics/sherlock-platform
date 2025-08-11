@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.google.common.collect.Iterables;
@@ -13,7 +13,6 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -24,7 +23,7 @@ import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.findAll;
 
 public final class PatchReader {
-  public static final @NonNls String NO_NEWLINE_SIGNATURE = UnifiedDiffWriter.NO_NEWLINE_SIGNATURE;
+  @NonNls public static final String NO_NEWLINE_SIGNATURE = UnifiedDiffWriter.NO_NEWLINE_SIGNATURE;
   private final List<String> myLines;
   private final PatchReader.PatchContentParser myPatchContentParser;
   private final AdditionalInfoParser myAdditionalInfoParser;
@@ -33,19 +32,19 @@ public final class PatchReader {
 
   private enum DiffFormat {CONTEXT, UNIFIED}
 
-  private static final @NonNls String CONTEXT_HUNK_PREFIX = "***************";
-  private static final @NonNls String CONTEXT_FILE_PREFIX = "*** ";
-  private static final @NonNls String UNIFIED_BEFORE_HUNK_PREFIX = "--- ";
-  private static final @NonNls String UNIFIED_AFTER_HUNK_PREFIX = "+++ ";
-  private static final @NonNls String DIFF_GIT_HEADER_LINE = "diff --git";
-  static final @NonNls String HASH_PATTERN = "[0-9a-fA-F]+";
+  @NonNls private static final String CONTEXT_HUNK_PREFIX = "***************";
+  @NonNls private static final String CONTEXT_FILE_PREFIX = "*** ";
+  @NonNls private static final String UNIFIED_BEFORE_HUNK_PREFIX = "--- ";
+  @NonNls private static final String UNIFIED_AFTER_HUNK_PREFIX = "+++ ";
+  @NonNls private static final String DIFF_GIT_HEADER_LINE = "diff --git";
+  @NonNls static final String HASH_PATTERN = "[0-9a-fA-F]+";
 
-  private static final @NonNls Pattern ourUnifiedHunkStartPattern = Pattern.compile("@@ -(\\d+)(,(\\d+))? \\+(\\d+)(,(\\d+))? @@.*");
-  private static final @NonNls Pattern ourContextBeforeHunkStartPattern = Pattern.compile("\\*\\*\\* (\\d+),(\\d+) \\*\\*\\*\\*");
-  private static final @NonNls Pattern ourContextAfterHunkStartPattern = Pattern.compile("--- (\\d+),(\\d+) ----");
-  private static final @NonNls Pattern ourEmptyRevisionInfoPattern = Pattern.compile("\\(\\s*revision\\s*\\)");
+  @NonNls private static final Pattern ourUnifiedHunkStartPattern = Pattern.compile("@@ -(\\d+)(,(\\d+))? \\+(\\d+)(,(\\d+))? @@.*");
+  @NonNls private static final Pattern ourContextBeforeHunkStartPattern = Pattern.compile("\\*\\*\\* (\\d+),(\\d+) \\*\\*\\*\\*");
+  @NonNls private static final Pattern ourContextAfterHunkStartPattern = Pattern.compile("--- (\\d+),(\\d+) ----");
+  @NonNls private static final Pattern ourEmptyRevisionInfoPattern = Pattern.compile("\\(\\s*revision\\s*\\)");
 
-  private static final @NonNls Pattern ourGitHeaderLinePattern = Pattern.compile(DIFF_GIT_HEADER_LINE + "\\s+(\\S+)\\s+(\\S+).*");
+  @NonNls private static final Pattern ourGitHeaderLinePattern = Pattern.compile(DIFF_GIT_HEADER_LINE + "\\s+(\\S+)\\s+(\\S+).*");
 
   public PatchReader(CharSequence patchContent) {
     this(patchContent, true);
@@ -61,7 +60,8 @@ public final class PatchReader {
     myPatchContentParser = new PatchContentParser(saveHunks);
   }
 
-  public @NotNull List<TextFilePatch> readTextPatches() throws PatchSyntaxException {
+  @NotNull
+  public List<TextFilePatch> readTextPatches() throws PatchSyntaxException {
     parseAllPatches();
     return getTextPatches();
   }
@@ -78,11 +78,13 @@ public final class PatchReader {
     return null;
   }
 
-  public @NotNull List<TextFilePatch> getTextPatches() {
+  @NotNull
+  public List<TextFilePatch> getTextPatches() {
     return findAll(myPatches, TextFilePatch.class);
   }
 
-  public @NotNull List<FilePatch> getAllPatches() {
+  @NotNull
+  public List<FilePatch> getAllPatches() {
     return myPatches;
   }
 
@@ -90,7 +92,7 @@ public final class PatchReader {
     ListIterator<String> iterator = myLines.listIterator();
     if (!iterator.hasNext()) {
       myPatches = Collections.emptyList();
-      throw new NotAPatchException();
+      return;
     }
 
     String next;
@@ -137,13 +139,10 @@ public final class PatchReader {
       }
     }
     myPatches = myPatchContentParser.getResult();
-    if (myPatches.isEmpty()) {
-      throw new NotAPatchException();
-    }
     myPatchFileInfo = PatchFileHeaderParser.parseHeader(Iterables.limit(myLines, headerLineNum).iterator());
   }
 
-  public @NotNull ThrowableComputable<Map<String, @Unmodifiable Map<String, CharSequence>>, PatchSyntaxException> getAdditionalInfo(@Nullable Set<String> paths) {
+  public @NotNull ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> getAdditionalInfo(@Nullable Set<String> paths) {
     PatchSyntaxException e = myAdditionalInfoParser.getSyntaxException();
     if (e != null) {
       return () -> {
@@ -227,7 +226,7 @@ public final class PatchReader {
             iterator.previous();
             break;
           }
-          if (!sb.isEmpty()) {
+          if (sb.length() > 0) {
             sb.append("\n");
           }
           sb.append(StringUtil.unescapeStringCharacters(line.substring(UnifiedDiffWriter.ADD_INFO_LINE_START.length())));
@@ -241,7 +240,7 @@ public final class PatchReader {
   }
 
 
-  static final class PatchContentParser implements Parser {
+  final static class PatchContentParser implements Parser {
     private final boolean mySaveHunks;
     private DiffFormat myDiffFormat = null;
     private final List<FilePatch> myPatches;
@@ -325,7 +324,8 @@ public final class PatchReader {
       return curPatch;
     }
 
-    private static @Nullable PatchHunk readNextHunkUnified(@NotNull ListIterator<String> iterator) throws PatchSyntaxException {
+    @Nullable
+    private static PatchHunk readNextHunkUnified(@NotNull ListIterator<String> iterator) throws PatchSyntaxException {
       String curLine = null;
       int numIncrements = 0;
       while (iterator.hasNext()) {
@@ -383,7 +383,8 @@ public final class PatchReader {
       return hunk;
     }
 
-    public @Nullable String getLastName() {
+    @Nullable
+    public String getLastName() {
       if (myPatches.isEmpty()) {
         return null;
       }
@@ -393,11 +394,13 @@ public final class PatchReader {
       }
     }
 
-    private static @Nullable PatchLine parsePatchLine(final String line, final int prefixLength) {
+    @Nullable
+    private static PatchLine parsePatchLine(final String line, final int prefixLength) {
       return parsePatchLine(line, prefixLength, true);
     }
 
-    private static @Nullable PatchLine parsePatchLine(final String line, final int prefixLength, boolean expectMeaningfulLines) {
+    @Nullable
+    private static PatchLine parsePatchLine(final String line, final int prefixLength, boolean expectMeaningfulLines) {
       if (!expectMeaningfulLines) return null;
 
       PatchLine.Type type;
@@ -423,7 +426,8 @@ public final class PatchReader {
       return new PatchLine(type, lineText);
     }
 
-    private static @Nullable PatchHunk readNextHunkContext(ListIterator<String> iterator) throws PatchSyntaxException {
+    @Nullable
+    private static PatchHunk readNextHunkContext(ListIterator<String> iterator) throws PatchSyntaxException {
       while (iterator.hasNext()) {
         String curLine = iterator.next();
         if (curLine.startsWith(CONTEXT_FILE_PREFIX)) {
@@ -463,12 +467,12 @@ public final class PatchReader {
       int afterLineIndex = 0;
       PatchLine lastBeforePatchLine = null;
       PatchLine lastAfterPatchLine = null;
-      if (beforeLines.isEmpty()) {
+      if (beforeLines.size() == 0) {
         for (String line : afterLines) {
           hunk.addLine(parsePatchLine(line, 2));
         }
       }
-      else if (afterLines.isEmpty()) {
+      else if (afterLines.size() == 0) {
         for (String line : beforeLines) {
           hunk.addLine(parsePatchLine(line, 2));
         }
@@ -518,7 +522,7 @@ public final class PatchReader {
       return hunk;
     }
 
-    private static boolean startsWith(final @Nullable String line, final String prefix) {
+    private static boolean startsWith(@Nullable final String line, final String prefix) {
       return line != null && line.startsWith(prefix);
     }
 
@@ -551,7 +555,7 @@ public final class PatchReader {
       if (pos >= 0) {
         @NlsSafe String versionId = fileName.substring(pos).trim();
         fileName = fileName.substring(0, pos);
-        if (!versionId.isEmpty() && !ourEmptyRevisionInfoPattern.matcher(versionId).matches()) {
+        if (versionId.length() > 0 && !ourEmptyRevisionInfoPattern.matcher(versionId).matches()) {
           if (before) {
             patch.setBeforeVersionId(versionId);
           }
@@ -571,7 +575,8 @@ public final class PatchReader {
       }
     }
 
-    static @Nullable String stripPatchNameIfNeeded(@NotNull String fileName, boolean before) {
+    @Nullable
+    static String stripPatchNameIfNeeded(@NotNull String fileName, boolean before) {
       if (UnifiedDiffWriter.DEV_NULL.equals(fileName)) return null;
       String prefix = before ? UnifiedDiffWriter.A_PREFIX : UnifiedDiffWriter.B_PREFIX;
       return StringUtil.trimStart(fileName, prefix);

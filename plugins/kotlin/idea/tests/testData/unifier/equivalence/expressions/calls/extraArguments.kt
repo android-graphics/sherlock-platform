@@ -1,4 +1,4 @@
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 fun bar(n: Int): Int = n + 1
 
 fun foo() {

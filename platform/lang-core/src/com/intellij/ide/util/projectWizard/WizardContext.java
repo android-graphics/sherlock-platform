@@ -27,7 +27,8 @@ public class WizardContext extends UserDataHolderBase {
   /**
    * a project where the module should be added, can be null => the wizard creates a new project
    */
-  private final @Nullable Project myProject;
+  @Nullable
+  private final Project myProject;
   private final Disposable myDisposable;
   private Session mySessionId = null;
   private Path myProjectFileDirectory;
@@ -102,7 +103,8 @@ public class WizardContext extends UserDataHolderBase {
     }
   }
 
-  public @Nullable Project getProject() {
+  @Nullable
+  public Project getProject() {
     return myProject;
   }
 
@@ -168,7 +170,8 @@ public class WizardContext extends UserDataHolderBase {
     return isCreatingNewProject() ? 1 : 0;
   }
 
-  public @Nullable Icon getStepIcon() {
+  @Nullable
+  public Icon getStepIcon() {
     return null;
   }
 
@@ -206,11 +209,12 @@ public class WizardContext extends UserDataHolderBase {
     return myProjectJdk;
   }
 
-  public @Nullable ProjectBuilder getProjectBuilder() {
+  @Nullable
+  public ProjectBuilder getProjectBuilder() {
     return myProjectBuilder;
   }
 
-  public void setProjectBuilder(final @Nullable ProjectBuilder projectBuilder) {
+  public void setProjectBuilder(@Nullable final ProjectBuilder projectBuilder) {
     myProjectBuilder = projectBuilder;
     myOriginalBuilder = myProjectBuilder;
   }

@@ -1,1 +1,0 @@
-type Foo[T = str] = Bar[T]

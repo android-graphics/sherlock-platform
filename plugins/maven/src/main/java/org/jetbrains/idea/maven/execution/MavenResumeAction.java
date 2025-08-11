@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.ExecutionBundle;
@@ -110,7 +110,8 @@ public class MavenResumeAction extends AnAction {
     return goals.size() > 2 && "-rf".equals(goals.get(goals.size() - 2));
   }
 
-  private @Nullable MavenProject findProjectByName(@NotNull String projectName) {
+  @Nullable
+  private MavenProject findProjectByName(@NotNull String projectName) {
     List<MavenProject> projects = MavenProjectsManager.getInstance(myEnvironment.getProject()).getProjects();
 
     MavenProject candidate = null;
@@ -346,7 +347,7 @@ public class MavenResumeAction extends AnAction {
       myContext.getStartedProjects();
 
       if (event.getExitCode() == 0 &&
-          !myContext.getStartedProjects().isEmpty() &&
+          myContext.getStartedProjects().size() != 0 &&
           myContext.getProjectsInReactor().size() != myContext.getStartedProjects().size()) {
         log(String.format("Build was success, but not all project was build. Project build order: %s, built projects: %s",
                           myContext.getProjectsInReactor(),

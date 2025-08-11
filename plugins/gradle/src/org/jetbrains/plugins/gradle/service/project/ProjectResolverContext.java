@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.util.UserDataHolderEx;
 import org.gradle.tooling.CancellationToken;
+import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectModel;
@@ -33,8 +34,11 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   @NotNull
   String getProjectPath();
 
-  @NotNull
+  @Nullable
   GradleExecutionSettings getSettings();
+
+  @NotNull
+  ProjectConnection getConnection();
 
   @NotNull
   CancellationToken getCancellationToken();
@@ -48,7 +52,7 @@ public interface ProjectResolverContext extends UserDataHolderEx {
 
   boolean isUseQualifiedModuleNames();
 
-  boolean isDelegatedBuild();
+  default boolean isDelegatedBuild() { return true; }
 
   @Nullable
   BuildEnvironment getBuildEnvironment();
@@ -87,7 +91,8 @@ public interface ProjectResolverContext extends UserDataHolderEx {
     return getRootModel(modelClass);
   }
 
-  default @Nullable <T> T getExtraProject(@Nullable IdeaModule module, @NotNull Class<T> modelClass) {
+  @Nullable
+  default <T> T getExtraProject(@Nullable IdeaModule module, @NotNull Class<T> modelClass) {
     return module == null ? getRootModel(modelClass) : getProjectModel(module, modelClass);
   }
 

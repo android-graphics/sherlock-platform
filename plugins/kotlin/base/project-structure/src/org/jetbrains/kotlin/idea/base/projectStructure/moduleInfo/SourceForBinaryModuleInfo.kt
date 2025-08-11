@@ -2,9 +2,7 @@
 package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 
-@K1ModeProjectStructureApi
 interface SourceForBinaryModuleInfo : IdeaModuleInfo {
     val binariesModuleInfo: BinaryModuleInfo
     fun sourceScope(): GlobalSearchScope

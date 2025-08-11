@@ -1,8 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.gradle.model.impl;
 
-import com.dynatrace.hash4j.hashing.HashSink;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,12 +20,13 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.util.*;
 
 /**
  * @author Vladislav.Soroka
  */
-public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourceRootDescriptor> implements BuildTargetHashSupplier {
+public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourceRootDescriptor> {
   GradleResourcesTarget(@NotNull GradleResourcesTargetType type, @NotNull JpsModule module) {
     super(type, module);
   }
@@ -45,8 +46,9 @@ public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourc
     return true;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<GradleResourceRootDescriptor> computeRootDescriptors(@NotNull JpsModel model, @NotNull ModuleExcludeIndex index, @NotNull IgnoredFileIndex ignoredFileIndex, @NotNull BuildDataPaths dataPaths) {
+  public List<GradleResourceRootDescriptor> computeRootDescriptors(@NotNull JpsModel model, @NotNull ModuleExcludeIndex index, @NotNull IgnoredFileIndex ignoredFileIndex, @NotNull BuildDataPaths dataPaths) {
     final List<GradleResourceRootDescriptor> result = new ArrayList<>();
 
     GradleProjectConfiguration projectConfig = JpsGradleExtensionService.getInstance().getGradleProjectConfiguration(dataPaths);
@@ -65,7 +67,7 @@ public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourc
     if (moduleConfig != null) {
       return isTests() ? moduleConfig.testResources : moduleConfig.resources;
     }
-    return List.of();
+    return Collections.emptyList();
   }
 
   public GradleModuleResourceConfiguration getModuleResourcesConfiguration(BuildDataPaths dataPaths) {
@@ -78,8 +80,9 @@ public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourc
     return ((GradleResourcesTargetType)getTargetType()).isTests();
   }
 
+  @Nullable
   @Override
-  public @Nullable GradleResourceRootDescriptor findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex) {
+  public GradleResourceRootDescriptor findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex) {
     for (GradleResourceRootDescriptor descriptor : rootIndex.getTargetRoots(this, null)) {
       if (descriptor.getRootId().equals(rootId)) {
         return descriptor;
@@ -88,13 +91,15 @@ public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourc
     return null;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPresentableName() {
+  public String getPresentableName() {
     return getTargetType().getTypeId() + ":" + myModule.getName();
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context) {
+  public Collection<File> getOutputRoots(@NotNull CompileContext context) {
     GradleModuleResourceConfiguration configuration =
       getModuleResourcesConfiguration(context.getProjectDescriptor().dataManager.getDataPaths());
     final Set<File> result = FileCollectionFactory.createCanonicalFileSet();
@@ -108,11 +113,13 @@ public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourc
     return result;
   }
 
-  public @Nullable File getModuleOutputDir() {
+  @Nullable
+  public File getModuleOutputDir() {
     return JpsJavaExtensionService.getInstance().getOutputDirectory(myModule, isTests());
   }
 
-  public static @Nullable File getOutputDir(@Nullable File moduleOutput, ResourceRootConfiguration config, @Nullable String outputDirectory) {
+  @Nullable
+  public static File getOutputDir(@Nullable File moduleOutput, ResourceRootConfiguration config, @Nullable String outputDirectory) {
     if(outputDirectory != null) {
       moduleOutput = JpsPathUtil.urlToFile(outputDirectory);
     }
@@ -121,26 +128,21 @@ public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourc
       return null;
     }
     String targetPath = config.targetPath;
-    if (targetPath == null || targetPath.isBlank()) {
+    if (StringUtil.isEmptyOrSpaces(targetPath)) {
       return moduleOutput;
     }
-
-    File targetPathFile = new File(targetPath);
-    File outputFile = targetPathFile.isAbsolute() ? targetPathFile : new File(moduleOutput, targetPath);
+    final File targetPathFile = new File(targetPath);
+    final File outputFile = targetPathFile.isAbsolute() ? targetPathFile : new File(moduleOutput, targetPath);
     return new File(FileUtil.toCanonicalPath(outputFile.getPath()));
   }
 
   @Override
-  public void computeConfigurationDigest(@NotNull ProjectDescriptor projectDescriptor, @NotNull HashSink hash) {
-    BuildDataPaths dataPaths = projectDescriptor.dataManager.getDataPaths();
-    GradleModuleResourceConfiguration configuration = getModuleResourcesConfiguration(dataPaths);
-    if (configuration == null) {
-      hash.putBoolean(false);
-    }
-    else {
-      hash.putBoolean(true);
-      PathRelativizerService pathRelativizerService = projectDescriptor.dataManager.getRelativizer();
-      configuration.computeConfigurationHash(isTests(), pathRelativizerService, hash);
+  public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
+    final BuildDataPaths dataPaths = pd.getTargetsState().getDataPaths();
+    final GradleModuleResourceConfiguration configuration = getModuleResourcesConfiguration(dataPaths);
+    if (configuration != null) {
+      PathRelativizerService pathRelativizerService = pd.dataManager.getRelativizer();
+      out.write(Integer.toHexString(configuration.computeConfigurationHash(isTests(), pathRelativizerService)));
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -9,9 +9,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
-import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.ELEMENT_ADDITIONAL
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -20,8 +17,6 @@ import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import org.jdom.Element
-import java.nio.file.InvalidPathException
-import java.nio.file.Path
 
 private val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
 
@@ -55,8 +50,7 @@ internal class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Bu
 
   override fun setHomePath(path: String?) {
     modifiedSdkEntity.homePath = if (path != null) {
-      val descriptor = getDescriptor(path)
-      val globalInstance = GlobalWorkspaceModel.getInstance(descriptor).getVirtualFileUrlManager()
+      val globalInstance = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
       globalInstance.getOrCreateFromUrl(path)
     } else {
       null
@@ -86,7 +80,7 @@ internal class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Bu
   }
 
   override fun addRoot(root: VirtualFile, rootType: OrderRootType) {
-    val virtualFileUrlManager = GlobalWorkspaceModel.getInstance(LocalEelDescriptor).getVirtualFileUrlManager()
+    val virtualFileUrlManager = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
     modifiedSdkEntity.roots.add(
       SdkRoot(virtualFileUrlManager.getOrCreateFromUrl(root.url), rootTypes[rootType.customName]!!)
     )
@@ -111,10 +105,7 @@ internal class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Bu
     ThreadingAssertions.assertWriteAccess()
     if (isCommitted) error("Modification already completed")
 
-    val descriptor = getDescriptor(modifiedSdkEntity.homePath?.toString())
-
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor)
-
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
     // In some cases we create SDK in air and need to modify it somehow e.g ProjectSdksModel.createSdkInternal,
     // so it's OK that entity may not be in storage
 
@@ -167,16 +158,5 @@ internal class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Bu
 
   override fun toString(): String {
     return "$name Version:$versionString Path:($homePath)"
-  }
-
-  private fun getDescriptor(path: String?): EelDescriptor {
-    path ?: return LocalEelDescriptor
-    return try {
-      Path.of(path).getEelDescriptor()
-    }
-    catch (_: InvalidPathException) {
-      // sometimes (in Ruby) the SDK home is set to 'temp:///root/nostubs'
-      LocalEelDescriptor
-    }
   }
 }

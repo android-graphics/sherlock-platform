@@ -5,7 +5,6 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.tree.JavaDocElementTypeFactory;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +38,6 @@ public final class JavaLexer extends BasicJavaLexer {
    * @return JavaFeature, which introduced a given keyword; null if the supplied string is not a soft keyword
    * @deprecated use {@link PsiUtil#softKeywordFeature(CharSequence)}
    */
-  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @Nullable JavaFeature softKeywordFeature(@NotNull CharSequence keyword) {
     return PsiUtil.softKeywordFeature(keyword);

@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.generic;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,8 +35,9 @@ public final class XPathResponseHandler extends SelectorBasedResponseHandler {
     super(repository);
   }
 
+  @NotNull
   @Override
-  protected @NotNull List<Object> selectTasksList(@NotNull String response, int max) throws Exception {
+  protected List<Object> selectTasksList(@NotNull String response, int max) throws Exception {
     Document document = new SAXBuilder(false).build(new StringReader(response));
     Element root = document.getRootElement();
     XPath xPath = lazyCompile(getSelector(TASKS).getPath());
@@ -50,8 +50,9 @@ public final class XPathResponseHandler extends SelectorBasedResponseHandler {
     return ContainerUtil.getFirstItems(rawTaskElements, max);
   }
 
+  @Nullable
   @Override
-  protected @Nullable String selectString(@NotNull Selector selector, @NotNull Object context) throws Exception {
+  protected String selectString(@NotNull Selector selector, @NotNull Object context) throws Exception {
     if (StringUtil.isEmpty(selector.getPath())) {
       return null;
     }
@@ -63,7 +64,8 @@ public final class XPathResponseHandler extends SelectorBasedResponseHandler {
     return s;
   }
 
-  private @NotNull XPath lazyCompile(@NotNull String path) throws Exception {
+  @NotNull
+  private XPath lazyCompile(@NotNull String path) throws Exception {
     XPath xPath = myCompiledCache.get(path);
     if (xPath == null) {
       try {
@@ -77,8 +79,9 @@ public final class XPathResponseHandler extends SelectorBasedResponseHandler {
     return xPath;
   }
 
+  @NotNull
   @Override
-  public @NotNull ResponseType getResponseType() {
+  public ResponseType getResponseType() {
     return ResponseType.XML;
   }
 }

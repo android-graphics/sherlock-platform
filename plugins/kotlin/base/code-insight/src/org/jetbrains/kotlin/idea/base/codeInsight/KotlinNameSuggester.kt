@@ -210,7 +210,7 @@ class KotlinNameSuggester(
                 return@sequence
             }
 
-            if (presentableType.isCharSequenceType || presentableType.isStringType) {
+            if (presentableType.isCharSequence || presentableType.isString) {
                 registerCompoundName("string")
                 registerCompoundName("str")
                 registerCompoundName("s")
@@ -242,7 +242,7 @@ class KotlinNameSuggester(
             }
 
             // when the presentable iterable element type is `Any`, don't suggest `anies`
-            val presentableElementType = getIterableElementType(presentableType)?.let { getPresentableType(it) }?.takeUnless { it.isAnyType }
+            val presentableElementType = getIterableElementType(presentableType)?.let { getPresentableType(it) }?.takeUnless { it.isAny }
 
             if (presentableElementType != null) {
                 registerClassNames(presentableElementType) { Strings.pluralize(it) }
@@ -302,7 +302,7 @@ class KotlinNameSuggester(
                     type.parameters.forEach { process(it.typeReference?.typeElement) }
                     val returnType = type.returnTypeReference
                     if (returnType != null) {
-                        if (returnType.type.isBooleanType) {
+                        if (returnType.type.isBoolean) {
                             add("predicate")
                         } else {
                             add("to")
@@ -482,27 +482,6 @@ class KotlinNameSuggester(
             }
         }
 
-        fun suggestTypeAliasNameByPsi(typeElement: KtTypeElement, validator: (String) -> Boolean): String {
-            fun KtTypeElement.render(): String {
-                return when (this) {
-                    is KtNullableType -> "Nullable${innerType?.render() ?: ""}"
-                    is KtFunctionType -> {
-                        val arguments = listOfNotNull(receiverTypeReference) + parameters.mapNotNull { it.typeReference }
-                        val argText = arguments.joinToString(separator = "") { it.typeElement?.render() ?: "" }
-                        val returnText = returnTypeReference?.typeElement?.render() ?: "Unit"
-                        "${argText}To$returnText"
-                    }
-                    is KtUserType -> {
-                        val argText = typeArguments.joinToString(separator = "") { it.typeReference?.typeElement?.render() ?: "" }
-                        "$argText${referenceExpression?.text ?: ""}"
-                    }
-                    else -> text.capitalizeAsciiOnly()
-                }
-            }
-
-            return suggestNameByName(typeElement.render(), validator)
-        }
-
         /**
          * Decapitalizes the passed [name] if [mustStartWithLowerCase] is `true`, checks whether the result is a valid identifier,
          * validates it using [validator], and improves it by adding a numeric suffix in case of conflicts.
@@ -594,14 +573,14 @@ class KotlinNameSuggester(
 context(KaSession)
 private fun getPrimitiveType(type: KaType): PrimitiveType? {
     return when {
-        type.isBooleanType -> PrimitiveType.BOOLEAN
-        type.isCharType -> PrimitiveType.CHAR
-        type.isByteType || type.isUByteType -> PrimitiveType.BYTE
-        type.isShortType || type.isUShortType -> PrimitiveType.SHORT
-        type.isIntType || type.isUIntType -> PrimitiveType.INT
-        type.isLongType || type.isULongType -> PrimitiveType.LONG
-        type.isFloatType -> PrimitiveType.FLOAT
-        type.isDoubleType -> PrimitiveType.DOUBLE
+        type.isBoolean -> PrimitiveType.BOOLEAN
+        type.isChar -> PrimitiveType.CHAR
+        type.isByte || type.isUByte -> PrimitiveType.BYTE
+        type.isShort || type.isUShort -> PrimitiveType.SHORT
+        type.isInt || type.isUInt -> PrimitiveType.INT
+        type.isLong || type.isULong -> PrimitiveType.LONG
+        type.isFloat -> PrimitiveType.FLOAT
+        type.isDouble -> PrimitiveType.DOUBLE
         else -> null
     }
 }
@@ -616,7 +595,7 @@ private fun getIterableElementType(type: KaType): KaType? {
         return type.typeArguments.singleOrNull()?.type
     }
 
-    for (supertype in type.allSupertypes) {
+    for (supertype in type.getAllSuperTypes()) {
         if (supertype is KaClassType) {
             if (supertype.classId in ITERABLE_LIKE_CLASS_IDS) {
                 return supertype.typeArguments.singleOrNull()?.type

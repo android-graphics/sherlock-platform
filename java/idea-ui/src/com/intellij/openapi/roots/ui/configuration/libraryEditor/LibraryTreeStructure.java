@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.JavaUiBundle;
@@ -36,8 +36,9 @@ class LibraryTreeStructure extends AbstractTreeStructure {
     };
   }
 
+  @NotNull
   @Override
-  public @NotNull Object getRootElement() {
+  public Object getRootElement() {
     return myRootElementDescriptor;
   }
 
@@ -102,7 +103,8 @@ class LibraryTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public @NotNull NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
+  @NotNull
+  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     return (NodeDescriptor)element;
   }
 }

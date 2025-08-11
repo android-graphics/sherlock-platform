@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository.settings;
 
 import com.google.common.base.Strings;
@@ -37,12 +37,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public final class RepositoryLibraryPropertiesEditor {
   private static final Logger LOG = Logger.getInstance(RepositoryLibraryPropertiesEditor.class);
-  private final @NotNull Project project;
+  @NotNull private final Project project;
   State currentState;
   List<String> versions;
   private final RepositoryLibraryPropertiesModel initialModel;
@@ -61,7 +61,7 @@ public final class RepositoryLibraryPropertiesEditor {
   private ComboBox<RemoteRepositoryDescription> myRemoteRepositoryComboBox;
   private JPanel myRemoteRepositoryOptionsPanel;
 
-  private final @NotNull ModelChangeListener onChangeListener;
+  @NotNull private final ModelChangeListener onChangeListener;
   private final ActionLink myManageDependenciesLink;
 
   public interface ModelChangeListener {
@@ -84,7 +84,7 @@ public final class RepositoryLibraryPropertiesEditor {
                                            final RepositoryLibraryPropertiesModel model,
                                            RepositoryLibraryDescription description,
                                            boolean allowExcludingTransitiveDependencies,
-                                           final @NotNull ModelChangeListener onChangeListener,
+                                           @NotNull final ModelChangeListener onChangeListener,
                                            boolean globalLibrary) {
     this.initialModel = model.clone();
     this.model = model;
@@ -264,7 +264,8 @@ public final class RepositoryLibraryPropertiesEditor {
     ApplicationManager.getApplication().invokeLater(() -> setState(State.FailedToLoad), ModalityState.any());
   }
 
-  public @Nullable String getSelectedVersion() {
+  @Nullable
+  public String getSelectedVersion() {
     VersionItem selectedItem = (VersionItem)versionSelector.getSelectedItem();
     return selectedItem != null ? selectedItem.getVersionId() : null;
   }

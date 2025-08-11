@@ -1,5 +1,5 @@
 internal class A {
-    private var i = takeByte().toInt()
+    private val i = takeByte().toInt()
 
     fun foo() {
         TODO()

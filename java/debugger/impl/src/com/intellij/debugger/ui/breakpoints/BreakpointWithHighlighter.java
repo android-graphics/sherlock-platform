@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.*;
@@ -9,7 +9,6 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.statistics.StatisticsStorage;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +24,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -46,18 +44,21 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
 
 import javax.swing.*;
 import java.util.List;
-import java.util.Objects;
 
 public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperties> extends Breakpoint<P> {
   private static final Logger LOG = Logger.getInstance(BreakpointWithHighlighter.class);
 
-  private @Nullable SourcePosition mySourcePosition;
+  @Nullable
+  private SourcePosition mySourcePosition;
 
   private boolean myVisible = true;
   private volatile Icon myIcon = getSetIcon(false);
-  private @Nullable String myClassName;
-  private @Nullable String myPackageName;
-  private @Nullable String myInvalidMessage;
+  @Nullable
+  private String myClassName;
+  @Nullable
+  private String myPackageName;
+  @Nullable
+  private String myInvalidMessage;
 
   protected abstract void createRequestForPreparedClass(final DebugProcessImpl debugProcess, final ReferenceType classType);
 
@@ -80,13 +81,15 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     return myIcon;
   }
 
+  @Nullable
   @Override
-  public @Nullable @NlsSafe String getClassName() {
+  public @NlsSafe String getClassName() {
     return myClassName;
   }
 
   @Override
-  public @Nullable String getShortClassName() {
+  @Nullable
+  public String getShortClassName() {
     final SourcePosition pos = getSourcePosition();
     if (pos != null) {
       if (pos.getFile() instanceof JspFile) {
@@ -96,12 +99,14 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     return super.getShortClassName();
   }
 
+  @Nullable
   @Override
-  public @Nullable String getPackageName() {
+  public String getPackageName() {
     return myPackageName;
   }
 
-  public @Nullable BreakpointWithHighlighter init() {
+  @Nullable
+  public BreakpointWithHighlighter init() {
     if (!isValid()) {
       return null;
     }
@@ -121,7 +126,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
         process.getSession().updateBreakpointPresentation(((XLineBreakpoint)myXBreakpoint), myIcon, myInvalidMessage);
       }
     }
-    if (debugProcess != null && debugProcess.isAttached() && debugProcess.getVirtualMachineProxy().canBeModified() && !isObsolete()) {
+    if (debugProcess != null && debugProcess.getVirtualMachineProxy().canBeModified() && !isObsolete()) {
       if (myClassName == null) {
         myClassName = JVMNameUtil.getSourcePositionClassDisplayName(debugProcess, getSourcePosition());
       }
@@ -185,9 +190,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
 
   @Override
   void scheduleReload() {
-    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-360452, EA-1479781")) {
-      resetSourcePosition(); // sync init source position just in case
-    }
+    resetSourcePosition(); // sync init source position just in case
     super.scheduleReload();
   }
 
@@ -196,11 +199,12 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     return isPositionValid(myXBreakpoint.getSourcePosition());
   }
 
-  protected static boolean isPositionValid(final @Nullable XSourcePosition sourcePosition) {
+  protected static boolean isPositionValid(@Nullable final XSourcePosition sourcePosition) {
     return ReadAction.compute(() -> sourcePosition != null && sourcePosition.getFile().isValid()).booleanValue();
   }
 
-  public @Nullable SourcePosition getSourcePosition() {
+  @Nullable
+  public SourcePosition getSourcePosition() {
     return mySourcePosition;
   }
 
@@ -208,8 +212,10 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
    * @see #getDisplayName()
    * @deprecated better use {@link Breakpoint#getDisplayName()}
    */
-  @Deprecated(forRemoval = true)
-  public @NotNull @Nls String getDescription() {
+  @NotNull
+  @Nls
+  @Deprecated
+  public String getDescription() {
     return getDisplayName();
   }
 
@@ -258,9 +264,10 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     myPackageName = null;
   }
 
-  static @Nullable BreakpointRequest createLocationBreakpointRequest(@NotNull FilteredRequestor requestor,
-                                                                     @Nullable Location location,
-                                                                     @NotNull DebugProcessImpl debugProcess) {
+  @Nullable
+  static BreakpointRequest createLocationBreakpointRequest(@NotNull FilteredRequestor requestor,
+                                                           @Nullable Location location,
+                                                           @NotNull DebugProcessImpl debugProcess) {
     if (location != null) {
       RequestManagerImpl requestsManager = debugProcess.getRequestsManager();
       BreakpointRequest request = requestsManager.createBreakpointRequest(requestor, location);
@@ -297,7 +304,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     updateUI();
   }
 
-  protected boolean isMuted(final @NotNull DebugProcessImpl debugProcess) {
+  protected boolean isMuted(@NotNull final DebugProcessImpl debugProcess) {
     return debugProcess.areBreakpointsMuted();
   }
 
@@ -326,7 +333,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
         updateCaches(null);
       }
       else {
-        Objects.requireNonNull(context.getManagerThread()).schedule(new DebuggerCommandImpl() {
+        debugProcess.getManagerThread().invoke(new DebuggerCommandImpl() {
           @Override
           protected void action() {
             if (!myProject.isDisposed()) {
@@ -351,7 +358,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     return getPsiClassAt(sourcePosition);
   }
 
-  protected static PsiClass getPsiClassAt(final @Nullable SourcePosition sourcePosition) {
+  protected static PsiClass getPsiClassAt(@Nullable final SourcePosition sourcePosition) {
     return ReadAction.compute(() -> JVMNameUtil.getClassAt(sourcePosition));
   }
 
@@ -366,7 +373,8 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     myVisible = visible;
   }
 
-  public @Nullable Document getDocument() {
+  @Nullable
+  public Document getDocument() {
     PsiFile file = DebuggerUtilsEx.getPsiFile(myXBreakpoint.getSourcePosition(), myProject);
     if (file != null) {
       return file.getViewProvider().getDocument();
@@ -380,12 +388,8 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   protected String getFileName() {
-    VirtualFile file = getVirtualFile();
-    return file != null ? file.getName() : "";
-  }
-
-  protected @Nullable VirtualFile getVirtualFile() {
-    return ObjectUtils.doIfNotNull(ObjectUtils.doIfNotNull(myXBreakpoint, XBreakpoint::getSourcePosition), XSourcePosition::getFile);
+    XSourcePosition sourcePosition = myXBreakpoint.getSourcePosition();
+    return sourcePosition != null ? sourcePosition.getFile().getName() : "";
   }
 
   @Override
@@ -404,7 +408,6 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     }
   }
 
-  @Override
   public String toString() {
     return ReadAction.compute(() -> CommonXmlStrings.HTML_START + CommonXmlStrings.BODY_START
                                     + XmlStringUtil.escapeString(getDisplayName())

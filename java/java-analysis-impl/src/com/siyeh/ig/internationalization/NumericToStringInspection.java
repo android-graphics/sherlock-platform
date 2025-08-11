@@ -27,12 +27,14 @@ import org.jetbrains.annotations.NotNull;
 public final class NumericToStringInspection extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "CallToNumericToString";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("call.to.numeric.tostring.problem.descriptor");
   }
 

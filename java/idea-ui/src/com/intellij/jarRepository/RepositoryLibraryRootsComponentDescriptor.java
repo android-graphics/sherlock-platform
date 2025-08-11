@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository;
 
 import com.intellij.ide.JavaUiBundle;
@@ -28,18 +28,21 @@ import java.util.List;
 class RepositoryLibraryRootsComponentDescriptor extends LibraryRootsComponentDescriptor {
   private static final Logger LOG = Logger.getInstance(RepositoryLibraryRootsComponentDescriptor.class);
 
+  @Nullable
   @Override
-  public @Nullable OrderRootTypePresentation getRootTypePresentation(@NotNull OrderRootType type) {
+  public OrderRootTypePresentation getRootTypePresentation(@NotNull OrderRootType type) {
     return DefaultLibraryRootsComponentDescriptor.getDefaultPresentation(type);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<? extends RootDetector> getRootDetectors() {
+  public List<? extends RootDetector> getRootDetectors() {
     return Collections.singletonList(DefaultLibraryRootsComponentDescriptor.createAnnotationsRootDetector());
   }
 
+  @NotNull
   @Override
-  public @NotNull FileChooserDescriptor createAttachFilesChooserDescriptor(@Nullable String libraryName) {
+  public FileChooserDescriptor createAttachFilesChooserDescriptor(@Nullable String libraryName) {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.setTitle(JavaUiBundle.message("chooser.title.attach.external.annotations"));
     descriptor.setDescription(JavaUiBundle.message("chooser.description.select.directory.where.external.annotations.are.located"));
@@ -51,13 +54,15 @@ class RepositoryLibraryRootsComponentDescriptor extends LibraryRootsComponentDes
     return JavaUiBundle.message("repository.library.root.action.attach.annotations.text");
   }
 
+  @NotNull
   @Override
-  public @NotNull List<? extends AttachRootButtonDescriptor> createAttachButtons() {
+  public List<? extends AttachRootButtonDescriptor> createAttachButtons() {
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
-  public @NotNull RootRemovalHandler createRootRemovalHandler() {
+  public RootRemovalHandler createRootRemovalHandler() {
     return new RootRemovalHandler() {
       @Override
       public void onRootRemoved(@NotNull String rootUrl, @NotNull OrderRootType rootType, @NotNull LibraryEditor libraryEditor) {
@@ -75,7 +80,8 @@ class RepositoryLibraryRootsComponentDescriptor extends LibraryRootsComponentDes
     };
   }
 
-  private static @Nullable String getMavenCoordinates(@NotNull String jarUrl) {
+  @Nullable
+  private static String getMavenCoordinates(@NotNull String jarUrl) {
     File jarFile = new File(PathUtil.getLocalPath(VfsUtilCore.urlToPath(jarUrl)));
     if (jarFile.getParentFile() == null) return null;
     File artifactDir = jarFile.getParentFile().getParentFile();

@@ -28,7 +28,8 @@ import org.jetbrains.annotations.NotNull;
 public final class ComparisonOfShortAndCharInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("comparison.of.short.and.char.problem.descriptor");
   }
 

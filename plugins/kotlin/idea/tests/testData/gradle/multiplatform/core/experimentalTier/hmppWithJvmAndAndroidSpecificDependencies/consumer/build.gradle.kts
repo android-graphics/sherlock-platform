@@ -8,7 +8,7 @@ plugins {
 kotlin {
     linuxX64()
     jvm()
-    {{androidTargetPlaceholder}}
+    android()
 
     sourceSets {
         val commonMain by getting {

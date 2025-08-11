@@ -1,2 +1,0 @@
-def myfunc():
-    pass

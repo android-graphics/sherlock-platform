@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -6,7 +6,6 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
@@ -28,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
-public final class AnnotationHolderImpl extends SmartList<@NotNull Annotation> implements AnnotationHolder {
+final public class AnnotationHolderImpl extends SmartList<@NotNull Annotation> implements AnnotationHolder {
   private static final Logger LOG = Logger.getInstance(AnnotationHolderImpl.class);
   private final AnnotationSession myAnnotationSession;
 
@@ -188,6 +187,10 @@ public final class AnnotationHolderImpl extends SmartList<@NotNull Annotation> i
     return annotation;
   }
 
+  public boolean hasAnnotations() {
+    return !isEmpty();
+  }
+
   @Override
   public @NotNull AnnotationSession getCurrentAnnotationSession() {
     return myAnnotationSession;
@@ -202,30 +205,25 @@ public final class AnnotationHolderImpl extends SmartList<@NotNull Annotation> i
     return createBuilder(severity, null);
   }
 
-  private @NotNull AnnotationBuilder createBuilder(@NotNull HighlightSeverity severity, @Nls String message) {
+  @NotNull
+  private B createBuilder(@NotNull HighlightSeverity severity, @Nls String message) {
     return new B(this, severity, message, myCurrentElement.get(), myAnnotator);
   }
 
   @ApiStatus.Internal
   public void runAnnotatorWithContext(@NotNull PsiElement element) {
     myCurrentElement.set(element);
-    try {
-      ((Annotator)myAnnotator).annotate(element, this);
-    }
-    catch (IndexNotReadyException ignore) { }
+    ((Annotator)myAnnotator).annotate(element, this);
   }
 
   /**
-   * @deprecated use {@link #runAnnotatorWithContext(PsiElement)}
+   * use {@link #runAnnotatorWithContext(PsiElement)}
    */
   @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public void runAnnotatorWithContext(PsiElement element, Annotator annotator) {
     myCurrentElement.set(element);
-    try {
-      annotator.annotate(element, this);
-    }
-    catch (IndexNotReadyException ignore) { }
+    annotator.annotate(element, this);
   }
 
   @ApiStatus.Internal

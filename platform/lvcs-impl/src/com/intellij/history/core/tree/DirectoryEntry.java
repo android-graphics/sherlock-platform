@@ -9,7 +9,6 @@ import com.intellij.util.io.DataInputOutputUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -21,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-@ApiStatus.Internal
 public class DirectoryEntry extends Entry {
   private final ArrayList<Entry> myChildren;
 

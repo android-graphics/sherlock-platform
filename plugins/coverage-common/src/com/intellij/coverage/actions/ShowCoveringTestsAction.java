@@ -1,4 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 package com.intellij.coverage.actions;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -37,7 +38,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
-public final class ShowCoveringTestsAction extends AnAction {
+public class ShowCoveringTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ShowCoveringTestsAction.class);
 
   private final CoverageSuitesBundle myBundle;
@@ -63,7 +64,7 @@ public final class ShowCoveringTestsAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(final @NotNull AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getProject();
     LOG.assertTrue(project != null);
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
@@ -125,7 +126,7 @@ public final class ShowCoveringTestsAction extends AnAction {
   }
 
   @Override
-  public void update(final @NotNull AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(myTestsAvailable);
   }

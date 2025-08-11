@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -115,7 +115,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
 
     final PsiMethod toSearchFor = (PsiMethod)myHelper.getToSearchFor();
 
-    for (PsiReference ref1 : MethodReferencesSearch.search(toSearchFor, GlobalSearchScope.projectScope(myProject), true).asIterable()) {
+    for (PsiReference ref1 : MethodReferencesSearch.search(toSearchFor, GlobalSearchScope.projectScope(myProject), true)) {
       PsiElement ref = ref1.getElement();
       if (ref.getLanguage() != GroovyLanguage.INSTANCE) {
         result.add(new OtherLanguageUsageInfo(ref1));
@@ -212,8 +212,9 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       myWrapper = new GrExpressionWrapper(myClosure);
     }
 
+    @NotNull
     @Override
-    public @NotNull Project getProject() {
+    public Project getProject() {
       return myProject;
     }
 
@@ -222,8 +223,9 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       return myMethod;
     }
 
+    @NotNull
     @Override
-    public @NotNull PsiMethod getMethodToSearchFor() {
+    public PsiMethod getMethodToSearchFor() {
       return (PsiMethod)myHelper.getToSearchFor();
     }
 
@@ -232,8 +234,9 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       return myWrapper;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getParameterName() {
+    public String getParameterName() {
       return myHelper.getName();
     }
 
@@ -252,14 +255,16 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       return false; //todo
     }
 
+    @NotNull
     @Override
-    public @NotNull PsiType getForcedType() {
+    public PsiType getForcedType() {
       PsiType type = myHelper.getSelectedType();
       return type != null ? type : PsiType.getJavaLangObject(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject));
     }
 
+    @NotNull
     @Override
-    public @NotNull IntList getParameterListToRemove() {
+    public IntList getParameterListToRemove() {
       return myHelper.parametersToRemove();
     }
 

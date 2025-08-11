@@ -1,3 +1,0 @@
-fragment organizationInfo on Organization {
-  name
-}

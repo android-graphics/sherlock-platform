@@ -7,7 +7,7 @@
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Move lambda argument into parentheses
 // ACTION: Specify explicit lambda signature
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 inline fun foo(f: (Int) -> Int) {}
 
 fun baz(): String = ""

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -42,8 +42,9 @@ public final class ArrayObjectsEqualsInspection extends BaseInspection {
     }
   }
 
+  @NotNull
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  protected String buildErrorString(Object... infos) {
     final Kind kind = (Kind)infos[0];
     return kind.toString();
   }
@@ -53,8 +54,9 @@ public final class ArrayObjectsEqualsInspection extends BaseInspection {
     return true;
   }
 
+  @Nullable
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final Kind kind = (Kind)infos[0];
     return new ArrayEqualsHashCodeFix(kind);
   }
@@ -68,12 +70,14 @@ public final class ArrayObjectsEqualsInspection extends BaseInspection {
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "Arrays." + myKind.myNewMethodName + "()");
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return getName();
     }
 

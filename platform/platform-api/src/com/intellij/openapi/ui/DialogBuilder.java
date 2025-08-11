@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -11,7 +11,6 @@ import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -309,8 +308,7 @@ public class DialogBuilder implements Disposable {
     }
   }
 
-  @ApiStatus.Internal
-  public abstract static class BuiltinAction implements ActionDescriptor, CustomizableAction {
+  private abstract static class BuiltinAction implements ActionDescriptor, CustomizableAction {
     protected @NlsActions.ActionText String myText = null;
 
     @Override
@@ -325,19 +323,19 @@ public class DialogBuilder implements Disposable {
       return builtinAction;
     }
 
-    abstract Action getBuiltinAction(MyDialogWrapper dialogWrapper);
+    protected abstract Action getBuiltinAction(MyDialogWrapper dialogWrapper);
   }
 
-  public static final class OkActionDescriptor extends BuiltinAction {
+  public static class OkActionDescriptor extends BuiltinAction {
     @Override
-    Action getBuiltinAction(MyDialogWrapper dialogWrapper) {
+    protected Action getBuiltinAction(MyDialogWrapper dialogWrapper) {
       return dialogWrapper.getOKAction();
     }
   }
 
-  public static final class CancelActionDescriptor extends BuiltinAction {
+  public static class CancelActionDescriptor extends BuiltinAction {
     @Override
-    Action getBuiltinAction(MyDialogWrapper dialogWrapper) {
+    protected Action getBuiltinAction(MyDialogWrapper dialogWrapper) {
       return dialogWrapper.getCancelAction();
     }
   }

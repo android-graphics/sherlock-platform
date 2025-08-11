@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.execution.ui.layout.ViewContext;
@@ -20,46 +20,54 @@ import java.util.EventObject;
 public abstract class XDebugView implements Disposable {
   public enum SessionEvent {PAUSED, BEFORE_RESUME, RESUMED, STOPPED, FRAME_CHANGED, SETTINGS_CHANGED}
 
-  private final SingleAlarm clearAlarm = SingleAlarm.Companion.singleEdtAlarm(100, this, () -> clear());
+  private final SingleAlarm myClearAlarm;
+  private static final int VIEW_CLEAR_DELAY = 100; //ms
+
+  public XDebugView() {
+    myClearAlarm = new SingleAlarm(() -> clear(), VIEW_CLEAR_DELAY, this);
+  }
 
   protected final void requestClear() {
-    // no delay in tests
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (!clearAlarm.isDisposed()) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) { // no delay in tests
+      if (!myClearAlarm.isDisposed()) {
         clear();
       }
     }
     else {
-      clearAlarm.cancelAndRequest();
+      myClearAlarm.cancelAndRequest();
     }
   }
 
-  public @Nullable JComponent getMainComponent() {
+  @Nullable
+  public JComponent getMainComponent() {
     return null;
   }
 
   protected final void cancelClear() {
-    clearAlarm.cancel();
+    myClearAlarm.cancel();
   }
 
   protected abstract void clear();
 
   public abstract void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session);
 
-  protected static @Nullable XDebugSession getSession(@NotNull EventObject e) {
+  @Nullable
+  protected static XDebugSession getSession(@NotNull EventObject e) {
     Component component = e.getSource() instanceof Component ? (Component)e.getSource() : null;
     return component == null ? null : getSession(component);
   }
 
-  public static @Nullable XDebugSession getSession(@NotNull Component component) {
+  @Nullable
+  public static XDebugSession getSession(@NotNull Component component) {
     return getData(XDebugSession.DATA_KEY, component);
   }
 
-  public static @Nullable <T> T getData(DataKey<T> key, @NotNull Component component) {
+  @Nullable
+  public static <T> T getData(DataKey<T> key, @NotNull Component component) {
     DataContext dataContext = DataManager.getInstance().getDataContext(component);
     ViewContext viewContext = ViewContext.CONTEXT_KEY.getData(dataContext);
     ContentManager contentManager = viewContext == null ? null : viewContext.getContentManager();
-    if (contentManager != null && !contentManager.isDisposed()) {
+    if (contentManager != null) {
       T data = key.getData(DataManager.getInstance().getDataContext(contentManager.getComponent()));
       if (data != null) {
         return data;

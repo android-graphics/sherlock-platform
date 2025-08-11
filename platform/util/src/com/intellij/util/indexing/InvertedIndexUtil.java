@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Ref;
 import com.intellij.util.io.IOCancellationCallbackHolder;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -20,80 +19,75 @@ public final class InvertedIndexUtil {
                                                                            @Nullable Condition<? super V> valueChecker,
                                                                            @Nullable IntPredicate idChecker)
     throws StorageException {
+    IntSet mainIntersection = null;
 
-    Ref<IntSet> mainIntersectionRef = new Ref<>(null);
     for (K dataKey : dataKeys) {
       IOCancellationCallbackHolder.checkCancelled();
 
       IntSet copy = new IntOpenHashSet();
-      index.withData(dataKey, container -> {
-        for (ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
-          final V value = valueIt.next();
-          if (valueChecker != null && !valueChecker.value(value)) {
-            continue;
-          }
-          IOCancellationCallbackHolder.checkCancelled();
+      ValueContainer<V> container = index.getData(dataKey);
 
-          ValueContainer.IntIterator iterator = valueIt.getInputIdsIterator();
+      for (ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
+        final V value = valueIt.next();
+        if (valueChecker != null && !valueChecker.value(value)) {
+          continue;
+        }
+        IOCancellationCallbackHolder.checkCancelled();
 
-          final IntPredicate predicate;
-          if (mainIntersectionRef.isNull() ||
-              iterator.size() < mainIntersectionRef.get().size() ||
-              (predicate = valueIt.getValueAssociationPredicate()) == null) {
-            while (iterator.hasNext()) {
-              final int id = iterator.next();
-              if (mainIntersectionRef.isNull() && (idChecker == null || idChecker.test(id))
-                  || !mainIntersectionRef.isNull() && mainIntersectionRef.get().contains(id)) {
-                copy.add(id);
-              }
-            }
-          }
-          else {
-            for (IntIterator intIterator = mainIntersectionRef.get().iterator(); intIterator.hasNext(); ) {
-              int id = intIterator.nextInt();
-              if (predicate.test(id) && (idChecker == null || idChecker.test(id))) {
-                copy.add(id);
-              }
+        ValueContainer.IntIterator iterator = valueIt.getInputIdsIterator();
+
+        final IntPredicate predicate;
+        if (mainIntersection == null || iterator.size() < mainIntersection.size() || (predicate = valueIt.getValueAssociationPredicate()) == null) {
+          while (iterator.hasNext()) {
+            final int id = iterator.next();
+            if (mainIntersection == null && (idChecker == null || idChecker.test(id)) ||
+                mainIntersection != null && mainIntersection.contains(id)) {
+              copy.add(id);
             }
           }
         }
-        return true;
-      });
+        else {
+          for (IntIterator intIterator = mainIntersection.iterator(); intIterator.hasNext(); ) {
+            int id = intIterator.nextInt();
+            if (predicate.test(id) && (idChecker == null || idChecker.test(id))) {
+              copy.add(id);
+            }
+          }
+        }
+      }
 
-      mainIntersectionRef.set( copy );
-      if (mainIntersectionRef.get().isEmpty()) {
+      mainIntersection = copy;
+      if (mainIntersection.isEmpty()) {
         return IntSets.EMPTY_SET;
       }
     }
 
-    return mainIntersectionRef.isNull()? IntSets.EMPTY_SET : mainIntersectionRef.get();
+    return mainIntersection == null ? IntSets.EMPTY_SET : mainIntersection;
   }
 
   public static @NotNull <K, V, I> IntSet collectInputIdsContainingAnyKey(@NotNull InvertedIndex<? super K, V, I> index,
                                                                           @NotNull Collection<? extends K> dataKeys,
                                                                           @Nullable Condition<? super V> valueChecker,
                                                                           @Nullable IntPredicate idChecker) throws StorageException {
-    Ref<IntSet> resultRef = new Ref<>(null);
+    IntSet result = null;
     for (K dataKey : dataKeys) {
       IOCancellationCallbackHolder.checkCancelled();
-      index.withData(dataKey, container -> {
-        for (ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
-          V value = valueIt.next();
-          if (valueChecker != null && !valueChecker.value(value)) {
-            continue;
-          }
-          IOCancellationCallbackHolder.checkCancelled();
-          ValueContainer.IntIterator iterator = valueIt.getInputIdsIterator();
-          while (iterator.hasNext()) {
-            int id = iterator.next();
-            if (idChecker != null && !idChecker.test(id)) continue;
-            if (resultRef.isNull()) resultRef.set(new IntOpenHashSet());
-            resultRef.get().add(id);
-          }
+      ValueContainer<V> container = index.getData(dataKey);
+      for (ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
+        V value = valueIt.next();
+        if (valueChecker != null && !valueChecker.value(value)) {
+          continue;
         }
-        return true;
-      });
+        IOCancellationCallbackHolder.checkCancelled();
+        ValueContainer.IntIterator iterator = valueIt.getInputIdsIterator();
+        while (iterator.hasNext()) {
+          int id = iterator.next();
+          if (idChecker != null && !idChecker.test(id)) continue;
+          if (result == null) result = new IntOpenHashSet();
+          result.add(id);
+        }
+      }
     }
-    return resultRef.isNull() ? IntSets.EMPTY_SET : resultRef.get();
+    return result == null ? IntSets.EMPTY_SET : result;
   }
 }

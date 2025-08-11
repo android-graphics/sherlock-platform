@@ -53,7 +53,8 @@ public final class PyFlipComparisonIntention extends PsiUpdateModCommandAction<P
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.flip.comparison");
   }
 

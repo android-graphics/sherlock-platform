@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -35,7 +35,7 @@ public abstract class LanguageLevelQuickFix {
     this.mavenProject = mavenProject;
   }
 
-  public void perform(final @NotNull LanguageLevel level) {
+  public void perform(@NotNull final LanguageLevel level) {
     final MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, mavenProject.getFile());
     if (model == null) return;
 
@@ -88,7 +88,8 @@ public abstract class LanguageLevelQuickFix {
     return ContainerUtil.find(tag.getChildren(), e -> e instanceof XmlText);
   }
 
-  protected static @NotNull ConstantNode getExpression(@Nullable String prevValue, @NotNull String newValue) {
+  @NotNull
+  protected static ConstantNode getExpression(@Nullable String prevValue, @NotNull String newValue) {
     if (StringUtil.isEmptyOrSpaces(prevValue)) {
       return new ConstantNode(newValue).withLookupStrings(newValue);
     }

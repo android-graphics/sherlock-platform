@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,13 +11,11 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.PathUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
-public class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFilePointer {
+class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFilePointer {
   private static final Logger LOG = Logger.getInstance(VirtualFilePointerImpl.class);
 
   private static final boolean TRACE_CREATION = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode();
@@ -32,11 +30,6 @@ public class VirtualFilePointerImpl extends TraceableDisposable implements Virtu
     myListener = listener;
   }
 
-  @ApiStatus.Internal
-  public FilePartNode getNode() {
-    return myNode;
-  }
-
   @Override
   public @NotNull String getFileName() {
     FilePartNode node = checkDisposed(myNode);
@@ -46,8 +39,8 @@ public class VirtualFilePointerImpl extends TraceableDisposable implements Virtu
       return ((VirtualFile)result).getName();
     }
     String url = (String)result;
-    if (node.fs instanceof ArchiveFileSystem) {
-      url = ArchiveFileSystem.getLocalPath((ArchiveFileSystem)node.fs, url);
+    if (node.myFS instanceof ArchiveFileSystem) {
+      url = ArchiveFileSystem.getLocalPath((ArchiveFileSystem)node.myFS, url);
     }
     int index = url.lastIndexOf('/');
     return index >= 0 ? url.substring(index + 1) : url;

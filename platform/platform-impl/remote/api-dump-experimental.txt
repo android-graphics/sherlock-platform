@@ -1,7 +1,0 @@
-*:com.intellij.remote.ui.SdkScopeController
-- a:addListener(com.intellij.remote.ui.SdkScopeController$SdkScopeChangeListener):V
-- a:isProjectLevel():Z
-- a:isProjectLevelSupported():Z
-- a:setProjectLevel(Z):V
-*:com.intellij.remote.ui.SdkScopeController$SdkScopeChangeListener
-- a:onSdkScopeChanged():V

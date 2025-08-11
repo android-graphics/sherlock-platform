@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix;
 
@@ -15,7 +15,8 @@ final class QuickFixBranchUtil {
     private QuickFixBranchUtil() {
     }
 
-    static @Nullable KotlinType findLowerBoundOfOverriddenCallablesReturnTypes(@NotNull CallableDescriptor descriptor) {
+    @Nullable
+    static KotlinType findLowerBoundOfOverriddenCallablesReturnTypes(@NotNull CallableDescriptor descriptor) {
         KotlinType matchingReturnType = null;
         for (CallableDescriptor overriddenDescriptor : descriptor.getOverriddenDescriptors()) {
             KotlinType overriddenReturnType = overriddenDescriptor.getReturnType();
@@ -38,7 +39,8 @@ final class QuickFixBranchUtil {
                PsiTreeUtil.getNextSiblingOfType(expression, KtExpression.class) == null;
     }
 
-    static @Nullable KtIfExpression getParentIfForBranch(@Nullable KtExpression expression) {
+    @Nullable
+    static KtIfExpression getParentIfForBranch(@Nullable KtExpression expression) {
         KtIfExpression ifExpression = PsiTreeUtil.getParentOfType(expression, KtIfExpression.class, true);
         if (ifExpression == null) return null;
         if (equalOrLastInBlock(ifExpression.getThen(), expression)
@@ -48,7 +50,8 @@ final class QuickFixBranchUtil {
         return null;
     }
 
-    private static @Nullable KtWhenExpression getParentWhenForBranch(@Nullable KtExpression expression) {
+    @Nullable
+    private static KtWhenExpression getParentWhenForBranch(@Nullable KtExpression expression) {
         KtWhenEntry whenEntry = PsiTreeUtil.getParentOfType(expression, KtWhenEntry.class, true);
         if (whenEntry == null) return null;
         KtExpression whenEntryExpression = whenEntry.getExpression();
@@ -57,7 +60,8 @@ final class QuickFixBranchUtil {
         return PsiTreeUtil.getParentOfType(whenEntry, KtWhenExpression.class, true);
     }
 
-    private static @Nullable KtExpression getParentForBranch(@Nullable KtExpression expression) {
+    @Nullable
+    private static KtExpression getParentForBranch(@Nullable KtExpression expression) {
         KtExpression parent = getParentIfForBranch(expression);
         if (parent != null) return parent;
         return getParentWhenForBranch(expression);

@@ -1,25 +1,15 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.k2.inspections.tests
 
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.registerExtension
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.k2FileName
-import org.jetbrains.kotlin.idea.core.script.SCRIPT_CONFIGURATIONS_SOURCES
-import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
-import org.jetbrains.kotlin.idea.core.script.k2.BundledScriptConfigurationsSource
-import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.div
@@ -33,19 +23,7 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
 
     override val inspectionFileName: String = ".k2Inspection"
 
-    override val skipErrorsBeforeCheckDirectives: List<String>
-        get() = super.skipErrorsBeforeCheckDirectives + K2DirectiveBasedActionUtils.DISABLE_K2_ERRORS_DIRECTIVE
-
-    override val skipErrorsAfterCheckDirectives: List<String>
-        get() = super.skipErrorsAfterCheckDirectives + K2DirectiveBasedActionUtils.DISABLE_K2_ERRORS_DIRECTIVE
-
-    override fun checkForErrorsBefore(mainFile: File,ktFile: KtFile, fileText: String) {
-        K2DirectiveBasedActionUtils.checkForErrorsBefore(mainFile, ktFile, fileText)
-    }
-
-    override fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
-        K2DirectiveBasedActionUtils.checkForErrorsAfter(mainFile, ktFile, fileText)
-    }
+    override fun checkForUnexpectedErrors(fileText: String) {}
 
     override fun fileName(): String = k2FileName(super.fileName(), testDataDirectory)
 
@@ -65,26 +43,9 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
         return super.getAfterTestDataAbsolutePath(mainFileName)
     }
 
-    override fun doTest(path: String) {
-        val mainFile = File(dataFilePath(fileName()))
-
-        val extraFileNames = findExtraFilesForTest(mainFile)
-
-        val psiFile = myFixture.configureByFiles(*(listOf(mainFile.name) + extraFileNames).toTypedArray()).first()
-
-        if ((myFixture.file as? KtFile)?.isScript() == true) {
-            val dependenciesSource = object : BundledScriptConfigurationsSource(project, CoroutineScope(Dispatchers.IO + SupervisorJob())) {
-                override suspend fun updateModules(storage: MutableEntityStorage?) {
-                    //do nothing because adding modules is not permitted in light tests
-                }
-            }
-            project.registerExtension(SCRIPT_CONFIGURATIONS_SOURCES, dependenciesSource, testRootDisposable)
-
-            val script = BaseScriptModel(psiFile.virtualFile)
-            runWithModalProgressBlocking(project, "Testing") {
-                dependenciesSource.updateDependenciesAndCreateModules(setOf(script))
-            }
+    override fun doTestFor(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2, "after") {
+            doTestForInternal(mainFile, inspection, fileText)
         }
-        super.doTest(path)
     }
 }

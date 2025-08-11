@@ -1,4 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.theoryinpractice.testng.model;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -37,7 +39,8 @@ public abstract class TestNGTestObject {
     myConfig = config;
   }
 
-  public static @NotNull TestNGTestObject fromConfig(@NotNull TestNGConfiguration config) {
+  @NotNull
+  public static TestNGTestObject fromConfig(@NotNull TestNGConfiguration config) {
     final String testObject = config.getPersistantData().TEST_OBJECT;
     if (testObject.equals(TestType.PACKAGE.getType())) {
       return new TestNGTestPackage(config);
@@ -146,7 +149,7 @@ public abstract class TestNGTestObject {
       if (testAnnotation == null) {
         return;
       }
-      for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, searchScope).asIterable()) {
+      for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, searchScope)) {
         final PsiClass containingClass = psiMember.getContainingClass();
         if (containingClass == null) continue;
         if (skipUnrelated && ArrayUtil.find(classes, containingClass) < 0) continue;
@@ -239,7 +242,8 @@ public abstract class TestNGTestObject {
     return result;
   }
 
-  protected @NotNull GlobalSearchScope getSearchScope() {
+  @NotNull
+  protected GlobalSearchScope getSearchScope() {
     final TestData data = myConfig.getPersistantData();
     final Module module = myConfig.getConfigurationModule().getModule();
     if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.ide.JavaUiBundle;
@@ -60,8 +60,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private static final Logger LOG = Logger.getInstance(ClasspathPanelImpl.class);
@@ -110,14 +110,15 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     myEntryTable.setDefaultEditor(DependencyScope.class, new DefaultCellEditor(scopeEditor));
     myEntryTable.setDefaultRenderer(DependencyScope.class, new ComboBoxTableRenderer<>(DependencyScope.values()) {
       @Override
-      protected String getTextFor(final @NotNull DependencyScope value) {
+      protected String getTextFor(@NotNull final DependencyScope value) {
         return value.getDisplayName();
       }
     });
 
     myEntryTable.setTransferHandler(new TransferHandler() {
+      @Nullable
       @Override
-      protected @Nullable Transferable createTransferable(JComponent c) {
+      protected Transferable createTransferable(JComponent c) {
         OrderEntry entry = getSelectedEntry();
         if (entry == null) {
           return null;
@@ -266,7 +267,8 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     PopupHandler.installPopupMenu(myEntryTable, actionGroup, "ClassPathEntriesPopup");
   }
 
-  private static @NotNull SortOrder getNextSortOrder(@NotNull SortOrder order) {
+  @NotNull
+  private static SortOrder getNextSortOrder(@NotNull SortOrder order) {
     return switch (order) {
       case ASCENDING -> SortOrder.DESCENDING;
       case DESCENDING -> SortOrder.UNSORTED;
@@ -284,12 +286,14 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
   @Override
-  public @Nullable OrderEntry getSelectedEntry() {
+  @Nullable
+  public OrderEntry getSelectedEntry() {
     ClasspathTableItem<?> item = getSelectedItem();
     return item != null ? item.getEntry() : null;
   }
 
-  private @Nullable ClasspathTableItem<?> getSelectedItem() {
+  @Nullable
+  private ClasspathTableItem<?> getSelectedItem() {
     if (myEntryTable.getSelectedRowCount() != 1) return null;
     return getItemAt(myEntryTable.getSelectedRow());
   }
@@ -369,7 +373,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
             }
 
             @Override
-            public PopupStep<?> onChosen(final AddItemPopupAction<?> selectedValue, final boolean finalChoice) {
+            public PopupStep onChosen(final AddItemPopupAction<?> selectedValue, final boolean finalChoice) {
               if (selectedValue.hasSubStep()) {
                 return selectedValue.createSubStep();
               }
@@ -377,7 +381,8 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
             }
 
             @Override
-            public @NotNull String getTextFor(AddItemPopupAction<?> value) {
+            @NotNull
+            public String getTextFor(AddItemPopupAction<?> value) {
               return "&" + value.getIndex() + "  " + value.getTitle();
             }
           });
@@ -472,7 +477,8 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
   @Override
-  public @NotNull LibraryTableModifiableModelProvider getModifiableModelProvider(@NotNull String tableLevel) {
+  @NotNull
+  public LibraryTableModifiableModelProvider getModifiableModelProvider(@NotNull String tableLevel) {
     if (LibraryTableImplUtil.MODULE_LEVEL.equals(tableLevel)) {
       final LibraryTable moduleLibraryTable = getRootModel().getModuleLibraryTable();
       return new LibraryTableModifiableModelProvider() {

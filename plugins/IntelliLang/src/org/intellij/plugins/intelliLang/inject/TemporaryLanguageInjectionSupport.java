@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.Language;
@@ -6,10 +6,12 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-final class TemporaryLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
 
+class TemporaryLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
+
+  @NotNull
   @Override
-  public @NotNull String getId() {
+  public String getId() {
     return TemporaryPlacesRegistry.SUPPORT_ID;
   }
 

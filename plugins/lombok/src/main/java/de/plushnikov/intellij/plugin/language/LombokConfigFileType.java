@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsContexts;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import icons.LombokIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -15,18 +16,22 @@ public final class LombokConfigFileType extends LanguageFileType {
     super(LombokConfigLanguage.INSTANCE);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return "LOMBOK_CONFIG";
   }
 
+  @NotNull
   @Override
-  public @NotNull @NlsContexts.Label String getDescription() {
+  @NlsContexts.Label
+  public String getDescription() {
     return LombokBundle.message("filetype.lombok.config.description");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDefaultExtension() {
+  public String getDefaultExtension() {
     return "config";
   }
 

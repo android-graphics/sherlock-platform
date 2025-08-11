@@ -39,7 +39,6 @@ public enum JavaElementKind {
   RECEIVER_PARAMETER("element.receiver.parameter"),
   RECORD("element.record"),
   RECORD_COMPONENT("element.record_component"),
-  RECORD_HEADER("element.record_header"),
   SEMICOLON("element.type.semicolon"),
   SNIPPET_BODY("element.snippet_body"),
   STATEMENT("element.statement"),
@@ -59,14 +58,16 @@ public enum JavaElementKind {
   /**
    * @return human-readable name of the item having the subject role in the sentence (nominative case)
    */
-  public @Nls @NotNull String subject() {
+  @Nls
+  public @NotNull String subject() {
     return JavaPsiBundle.message(propertyKey, 0);
   }
 
   /**
    * @return human-readable name of the item having the object role in the sentence (accusative case)
    */
-  public @Nls @NotNull String object() {
+  @Nls
+  public @NotNull String object() {
     return JavaPsiBundle.message(propertyKey, 1);
   }
 
@@ -160,9 +161,6 @@ public enum JavaElementKind {
     }
     if (element instanceof PsiRecordComponent) {
       return RECORD_COMPONENT;
-    }
-    if (element instanceof PsiRecordHeader) {
-      return RECORD_HEADER;
     }
     if (element instanceof PsiLocalVariable) {
       return LOCAL_VARIABLE;

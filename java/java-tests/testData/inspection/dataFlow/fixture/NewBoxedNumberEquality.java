@@ -33,7 +33,7 @@ class Testcase {
   }
 
   void test() {
-    int x = <error descr="Incompatible types. Found: 'null', required: 'int'">null;</error>
+    <error descr="Incompatible types. Found: 'null', required: 'int'">int x = null;</error>
     Integer boxed = x;
     if (boxed == 5) {}
   }

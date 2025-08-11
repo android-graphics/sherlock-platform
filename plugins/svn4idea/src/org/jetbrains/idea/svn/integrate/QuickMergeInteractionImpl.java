@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.project.Project;
@@ -31,16 +31,17 @@ import static org.jetbrains.idea.svn.integrate.ToBeMergedDialog.MERGE_ALL_CODE;
 
 public class QuickMergeInteractionImpl implements QuickMergeInteraction {
 
-  private final @NotNull MergeContext myMergeContext;
-  private final @NotNull Project myProject;
+  @NotNull private final MergeContext myMergeContext;
+  @NotNull private final Project myProject;
 
   public QuickMergeInteractionImpl(@NotNull MergeContext mergeContext) {
     myMergeContext = mergeContext;
     myProject = mergeContext.getProject();
   }
 
+  @NotNull
   @Override
-  public @NotNull QuickMergeContentsVariants selectMergeVariant() {
+  public QuickMergeContentsVariants selectMergeVariant() {
     QuickMergeWayOptionsPanel panel = new QuickMergeWayOptionsPanel();
     DialogBuilder builder = new DialogBuilder(myProject);
 
@@ -62,11 +63,12 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
       message("dialog.message.merge.confirm.reintegrate", myMergeContext.getSourceUrl().toDecodedString(), targetUrl.toDecodedString())));
   }
 
+  @NotNull
   @Override
-  public @NotNull SelectMergeItemsResult selectMergeItems(@NotNull List<SvnChangeList> lists,
-                                                          @NotNull MergeChecker mergeChecker,
-                                                          boolean allStatusesCalculated,
-                                                          boolean allListsLoaded) {
+  public SelectMergeItemsResult selectMergeItems(@NotNull List<SvnChangeList> lists,
+                                                 @NotNull MergeChecker mergeChecker,
+                                                 boolean allStatusesCalculated,
+                                                 boolean allListsLoaded) {
     ToBeMergedDialog dialog = new ToBeMergedDialog(myMergeContext, lists, mergeChecker, allStatusesCalculated, allListsLoaded);
     dialog.show();
 
@@ -76,8 +78,9 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
     return new SelectMergeItemsResult(resultCode, selectedLists);
   }
 
+  @NotNull
   @Override
-  public @NotNull LocalChangesAction selectLocalChangesAction(boolean mergeAll) {
+  public LocalChangesAction selectLocalChangesAction(boolean mergeAll) {
     LocalChangesAction[] possibleResults;
     String message;
 
@@ -118,7 +121,8 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
     return showOkCancelDialog(myProject, question, myMergeContext.getMergeTitle(), getQuestionIcon()) == OK;
   }
 
-  private static @NotNull QuickMergeContentsVariants toMergeVariant(int exitCode) {
+  @NotNull
+  private static QuickMergeContentsVariants toMergeVariant(int exitCode) {
     return switch (exitCode) {
       case MERGE_ALL_CODE -> QuickMergeContentsVariants.all;
       case OK_EXIT_CODE -> QuickMergeContentsVariants.select;

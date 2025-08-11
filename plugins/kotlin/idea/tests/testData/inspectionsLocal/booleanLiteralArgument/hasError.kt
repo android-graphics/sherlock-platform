@@ -1,5 +1,5 @@
 // PROBLEM: none
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 fun foo(vararg a: Int, b: Boolean) {}
 
 fun test() {

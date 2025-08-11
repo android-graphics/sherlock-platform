@@ -66,13 +66,8 @@ object HtmlDescriptorUtils {
         ?.asSafely<HtmlElementDescriptorImpl>()
         ?.let { return it }
     }
-    return getStandardHtmlElementDescriptor(tag.project, name.adjustCase(tag))
-  }
-
-  @JvmStatic
-  internal fun getStandardHtmlElementDescriptor(project: Project, name: String): HtmlElementDescriptorImpl? {
-    return getHtmlNSDescriptor(project)
-      ?.getElementDescriptorByName(name)
+    return getHtmlNSDescriptor(tag.project)
+      ?.getElementDescriptorByName(name.adjustCase(tag))
       ?.asSafely<HtmlElementDescriptorImpl>()
   }
 

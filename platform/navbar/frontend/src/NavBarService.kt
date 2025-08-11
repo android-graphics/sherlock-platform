@@ -74,18 +74,10 @@ class NavBarService(private val project: Project, cs: CoroutineScope) {
   fun createNavBarPanel(): JComponent {
     EDT.assertIsEdt()
     return staticNavBarPanel(
-      project,
+      project, cs,
       initialItems = ::defaultModel,
       contextItems = ::contextItems,
       requestNavigation = ::requestNavigation,
-    )
-  }
-
-  private suspend fun defaultModel(): List<NavBarVmItem> {
-    return listOf(
-      project
-        .service<NavBarServiceDelegate>()
-        .defaultModel()
     )
   }
 
@@ -117,7 +109,8 @@ class NavBarService(private val project: Project, cs: CoroutineScope) {
           yield()
         }
         showHint(dataContext, project, component)
-        vm.selectTail(true)
+        vm.selectTail()
+        vm.showPopup()
       }
     }
 
@@ -142,9 +135,7 @@ suspend fun contextModel(ctx: DataContext, project: Project): List<NavBarVmItem>
     return emptyList()
   }
   return try {
-    project
-      .service<NavBarServiceDelegate>()
-      .contextModel(ctx)
+    instance<NavBarServiceDelegate>().contextModel(ctx)
   }
   catch (ce: CancellationException) {
     throw ce
@@ -156,6 +147,12 @@ suspend fun contextModel(ctx: DataContext, project: Project): List<NavBarVmItem>
     fileLogger().error(t)
     emptyList()
   }
+}
+
+internal suspend fun defaultModel(): List<NavBarVmItem> {
+  return listOf(
+    instance<NavBarServiceDelegate>().defaultModel()
+  )
 }
 
 fun UISettings.isNavbarShown(): Boolean {

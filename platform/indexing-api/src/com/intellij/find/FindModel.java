@@ -241,7 +241,8 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    *
    * @return the string to find.
    */
-  public @NotNull String getStringToFind() {
+  @NotNull
+  public String getStringToFind() {
     return (myStringToFind == null) ? "" : myStringToFind;
   }
 
@@ -268,7 +269,8 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    *
    * @return the string to replace with.
    */
-  public @NotNull String getStringToReplace() {
+  @NotNull
+  public String getStringToReplace() {
     return myStringToReplace;
   }
 
@@ -546,7 +548,8 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    *
    * @return the directory used as a scope, or null if the selected scope is not "Directory".
    */
-  public @Nullable @NlsSafe String getDirectoryName() {
+  @Nullable
+  public @NlsSafe String getDirectoryName() {
     return directoryName;
   }
 
@@ -560,7 +563,14 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     if (changed) {
       this.directoryName = directoryName;
       notifyObservers();
+      if (directoryName != null) {
+        String path = FileUtil.toSystemIndependentName(directoryName);
+        if (path.endsWith("/.idea") || path.contains("/.idea/")) {
+          setSearchInProjectFiles(true);
+        }
+      }
     }
+
   }
 
   /**
@@ -684,6 +694,12 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     if (changed) {
       this.fileFilter = fileFilter;
       notifyObservers();
+      if (fileFilter != null) {
+        List<String> split = StringUtil.split(fileFilter, ",");
+        if (ContainerUtil.exists(split, s -> s.endsWith("*.iml") || s.endsWith("*.ipr") || s.endsWith("*.iws"))) {
+          setSearchInProjectFiles(true);
+        }
+      }
     }
   }
 
@@ -693,7 +709,8 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    *
    * @return the module name, or null if the selected scope is not "Module".
    */
-  public @Nullable @NlsSafe String getModuleName() {
+  @Nullable
+  public @NlsSafe String getModuleName() {
     return moduleName;
   }
 
@@ -848,7 +865,8 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     }
   }
 
-  public @NotNull SearchContext getSearchContext() {
+  @NotNull
+  public SearchContext getSearchContext() {
     return searchContext;
   }
 
@@ -865,20 +883,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   public boolean isSearchInProjectFiles() {
-    if (!mySearchInProjectFiles) {
-      if (fileFilter != null) {
-        List<String> split = StringUtil.split(fileFilter, ",");
-        if (ContainerUtil.exists(split, s -> s.endsWith(".iml") || s.endsWith(".ipr") || s.endsWith(".iws"))) {
-          return true;
-        }
-      }
-      if (directoryName != null) {
-        String path = FileUtil.toSystemIndependentName(directoryName);
-        if (path.endsWith("/.idea") || path.contains("/.idea/")) {
-          return true;
-        }
-      }
-    }
     return mySearchInProjectFiles;
   }
 

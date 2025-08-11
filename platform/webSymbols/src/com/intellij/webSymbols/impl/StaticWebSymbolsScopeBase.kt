@@ -10,6 +10,7 @@ import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.query.impl.SearchMap
+import com.intellij.webSymbols.webTypes.WebTypesSymbolBase
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
 

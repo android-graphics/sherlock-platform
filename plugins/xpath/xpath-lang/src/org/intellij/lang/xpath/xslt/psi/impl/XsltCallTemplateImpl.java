@@ -33,7 +33,8 @@ public class XsltCallTemplateImpl extends XsltTemplateInvocationBase implements 
     }
 
     @Override
-    public @Nullable XsltTemplate getTemplate() {
+    @Nullable
+    public XsltTemplate getTemplate() {
         final PsiReference[] references = getReferences();
         for (PsiReference reference : references) {
             final PsiElement t = reference.resolve();

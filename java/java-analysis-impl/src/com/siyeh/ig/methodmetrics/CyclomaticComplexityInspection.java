@@ -24,7 +24,8 @@ import org.jetbrains.annotations.NotNull;
 public final class CyclomaticComplexityInspection extends MethodMetricInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "OverlyComplexMethod";
   }
 
@@ -40,7 +41,8 @@ public final class CyclomaticComplexityInspection extends MethodMetricInspection
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final Integer complexity = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "cyclomatic.complexity.problem.descriptor", complexity);

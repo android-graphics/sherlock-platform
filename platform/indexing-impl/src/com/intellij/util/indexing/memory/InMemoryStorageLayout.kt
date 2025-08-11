@@ -3,19 +3,18 @@ package com.intellij.util.indexing.memory
 
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexExtension
+import com.intellij.util.indexing.InputMapExternalizer
 import com.intellij.util.indexing.impl.IndexStorage
 import com.intellij.util.indexing.impl.forward.ForwardIndex
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor
 import com.intellij.util.indexing.impl.forward.MapForwardIndexAccessor
-import com.intellij.util.indexing.impl.storage.defaultMapExternalizerFor
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class InMemoryStorageLayoutProvider : FileBasedIndexLayoutProvider {
-  override fun <K, V> getLayout(extension: FileBasedIndexExtension<K, V>,
-                                otherApplicableProviders: Iterable<FileBasedIndexLayoutProvider>): VfsAwareIndexStorageLayout<K, V> {
+  override fun <K, V> getLayout(extension: FileBasedIndexExtension<K, V>): VfsAwareIndexStorageLayout<K, V> {
     return InMemoryStorageLayout(extension)
   }
 
@@ -35,7 +34,7 @@ class InMemoryStorageLayout<K, V>(private val myExtension: FileBasedIndexExtensi
   }
 
   override fun getForwardIndexAccessor(): ForwardIndexAccessor<K, V> {
-    return MapForwardIndexAccessor(defaultMapExternalizerFor(myExtension))
+    return MapForwardIndexAccessor(InputMapExternalizer(myExtension))
   }
 
   override fun clearIndexData() {}

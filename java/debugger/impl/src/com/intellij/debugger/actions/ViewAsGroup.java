@@ -1,8 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public class ViewAsGroup extends ActionGroup implements DumbAware {
@@ -47,7 +45,6 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     RendererAction(NodeRenderer nodeRenderer) {
       super(nodeRenderer.getName());
       myNodeRenderer = nodeRenderer;
-      getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
     }
 
     @Override
@@ -70,7 +67,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     }
 
     @Override
-    public void setSelected(final @NotNull AnActionEvent e, final boolean state) {
+    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       if (!state) return;
 
       final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
@@ -79,12 +76,12 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
 
       LOG.assertTrue(!values.isEmpty());
 
-      DebuggerManagerThreadImpl managerThread = debuggerContext.getManagerThread();
-      if (managerThread == null) {
+      DebugProcessImpl process = debuggerContext.getDebugProcess();
+      if (process == null) {
         return;
       }
 
-      managerThread.schedule(new DebuggerContextCommandImpl(debuggerContext) {
+      process.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
         @Override
         public void threadAction(@NotNull SuspendContextImpl suspendContext) {
           for (XValueNodeImpl node : selectedNodes) {
@@ -99,7 +96,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
   }
 
   @Override
-  public AnAction @NotNull [] getChildren(final @Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable final AnActionEvent e) {
     if (e == null) {
       return EMPTY_ARRAY;
     }
@@ -112,7 +109,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     List<JavaValue> values = getSelectedValues(e);
     if (!values.isEmpty()) {
       CompletableFuture<List<NodeRenderer>> future = new CompletableFuture<>();
-      boolean scheduled = Objects.requireNonNull(debuggerContext.getManagerThread()).schedule(new DebuggerContextCommandImpl(debuggerContext) {
+      boolean scheduled = process.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
         @Override
         public void threadAction(@NotNull SuspendContextImpl suspendContext) {
           getApplicableRenderers(values, process)
@@ -155,7 +152,8 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     return EMPTY_ARRAY;
   }
 
-  private static @NotNull CompletableFuture<List<NodeRenderer>> getApplicableRenderers(List<JavaValue> values, DebugProcessImpl process) {
+  @NotNull
+  private static CompletableFuture<List<NodeRenderer>> getApplicableRenderers(List<JavaValue> values, DebugProcessImpl process) {
     List<CompletableFuture<List<NodeRenderer>>> futures = new ArrayList<>(values.size());
     for (JavaValue value : values) {
       if (value instanceof JavaReferringObjectsValue) { // disable for any referrers at all
@@ -184,7 +182,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
   }
 
   @Override
-  public void update(final @NotNull AnActionEvent event) {
+  public void update(@NotNull final AnActionEvent event) {
     DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(event.getDataContext());
     if (getSelectedValues(event).isEmpty() || debuggerContext.getDebugProcess() == null) {
       event.getPresentation().setEnabledAndVisible(false);
@@ -193,7 +191,8 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     event.getPresentation().setEnabledAndVisible(true);
   }
 
-  public static @NotNull List<JavaValue> getSelectedValues(@NotNull AnActionEvent event) {
+  @NotNull
+  public static List<JavaValue> getSelectedValues(@NotNull AnActionEvent event) {
     List<XValueNodeImpl> selectedNodes = XDebuggerTree.getSelectedNodes(event.getDataContext());
     return StreamEx.of(selectedNodes)
       .map(XValueNodeImpl::getValueContainer)

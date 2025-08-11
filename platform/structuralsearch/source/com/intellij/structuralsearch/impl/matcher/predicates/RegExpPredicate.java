@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.psi.PsiElement;
@@ -20,7 +20,8 @@ public final class RegExpPredicate extends MatchPredicate {
   private final String baseHandlerName;
   private boolean simpleString;
   private final boolean couldBeOptimized;
-  private final @NotNull String regexp;
+  @NotNull
+  private final String regexp;
   private final boolean caseSensitive;
   private boolean multiline;
   private final boolean wholeWords;
@@ -66,7 +67,8 @@ public final class RegExpPredicate extends MatchPredicate {
     return couldBeOptimized;
   }
 
-  public @NotNull String getRegExp() {
+  @NotNull
+  public String getRegExp() {
     return regexp;
   }
 

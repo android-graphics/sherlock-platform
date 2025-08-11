@@ -16,7 +16,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class TransformClassicClassQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.classic.class.transform");
   }
 

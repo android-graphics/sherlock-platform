@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
@@ -20,7 +20,7 @@ import java.util.Set;
  */
 public class ByTypeArrangementEntryMatcher implements ArrangementEntryMatcher {
 
-  private final @NotNull Set<ArrangementAtomMatchCondition> myTypes = new HashSet<>();
+  @NotNull private final Set<ArrangementAtomMatchCondition> myTypes = new HashSet<>();
 
   public ByTypeArrangementEntryMatcher(@NotNull ArrangementAtomMatchCondition interestedType) {
     myTypes.add(interestedType);
@@ -46,7 +46,8 @@ public class ByTypeArrangementEntryMatcher implements ArrangementEntryMatcher {
     return false;
   }
 
-  public @NotNull Set<ArrangementAtomMatchCondition> getTypes() {
+  @NotNull
+  public Set<ArrangementAtomMatchCondition> getTypes() {
     return myTypes;
   }
 

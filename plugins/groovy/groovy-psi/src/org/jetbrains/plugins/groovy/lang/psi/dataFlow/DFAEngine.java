@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -38,8 +38,9 @@ public final class DFAEngine<E> {
       }
     }
 
+    @NotNull
     @Override
-    public @NotNull Deque<CallInstruction> callStack(@NotNull Instruction instruction) {
+    public Deque<CallInstruction> callStack(@NotNull Instruction instruction) {
       return myEnv.get(instruction.num());
     }
 
@@ -49,17 +50,20 @@ public final class DFAEngine<E> {
     }
   }
 
-  public @NotNull List<@Nullable E> performForceDFA() {
+  @NotNull
+  public List<@Nullable E> performForceDFA() {
     List<E> result = performDFA(false);
     assert result != null;
     return result;
   }
 
-  public @Nullable List<@Nullable E> performDFAWithTimeout() {
+  @Nullable
+  public List<@Nullable E> performDFAWithTimeout() {
     return performDFA(true);
   }
 
-  private @Nullable List<@Nullable E> performDFA(boolean timeout) {
+  @Nullable
+  private List<@Nullable E> performDFA(boolean timeout) {
     final int n = myFlow.length;
     final List<Optional<E>> info = getEmptyInfo(n);
     final CallEnvironment env = new MyCallEnvironment(n);
@@ -85,7 +89,8 @@ public final class DFAEngine<E> {
     return ContainerUtil.map(info, e -> e.orElse(null));
   }
 
-  private @NotNull List<Optional<E>> getEmptyInfo(int n) {
+  @NotNull
+  private List<Optional<E>> getEmptyInfo(int n) {
     //noinspection unchecked
     Optional<E>[] optionals = new Optional[n];
     Arrays.fill(optionals, Optional.empty());
@@ -101,7 +106,8 @@ public final class DFAEngine<E> {
     }
   }
 
-  private @NotNull List<E> getPrevInfos(@NotNull Instruction instruction, @NotNull List<Optional<E>> info, @NotNull CallEnvironment env) {
+  @NotNull
+  private List<E> getPrevInfos(@NotNull Instruction instruction, @NotNull List<Optional<E>> info, @NotNull CallEnvironment env) {
     List<E> prevInfos = new SmartList<>();
     for (Instruction i : getPrevious(instruction, env)) {
       Optional<E> prevInfo = info.get(i.num());
@@ -110,11 +116,13 @@ public final class DFAEngine<E> {
     return prevInfos;
   }
 
-  private @NotNull Iterable<Instruction> getPrevious(@NotNull Instruction instruction, @NotNull CallEnvironment env) {
+  @NotNull
+  private Iterable<Instruction> getPrevious(@NotNull Instruction instruction, @NotNull CallEnvironment env) {
     return myDfa.isForward() ? instruction.predecessors(env) : instruction.successors(env);
   }
 
-  private @NotNull Iterable<Instruction> getNext(@NotNull Instruction instruction, @NotNull CallEnvironment env) {
+  @NotNull
+  private Iterable<Instruction> getNext(@NotNull Instruction instruction, @NotNull CallEnvironment env) {
     return myDfa.isForward() ? instruction.successors(env) : instruction.predecessors(env);
   }
 

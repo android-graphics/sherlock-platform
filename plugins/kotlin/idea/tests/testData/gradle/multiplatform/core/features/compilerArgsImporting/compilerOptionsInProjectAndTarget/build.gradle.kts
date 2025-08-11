@@ -26,7 +26,7 @@ kotlin {
         }
     }
 
-    {{androidTargetPlaceholder}}
+    android()
     js(IR) { nodejs() }
 
     listOf(

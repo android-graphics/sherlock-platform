@@ -17,7 +17,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +24,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiStatus.Internal
 public final class CheckBoxListModelEditor<T> {
   private final CheckBoxList<T> list;
   private final ToolbarDecorator toolbarDecorator;

@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
-import org.jetbrains.annotations.ApiStatus
 
 private class CombinedDiffManagerImpl(private val project: Project) : CombinedDiffManager {
   override fun createProcessor(diffPlace: String?): CombinedDiffComponentProcessor {
@@ -52,7 +51,6 @@ class CombinedDiffPreviewModel {
     }
 
     @JvmStatic
-    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use prepareCombinedBlocksFromProducers", ReplaceWith("prepareCombinedBlocksFromProducers(changes)"))
     fun prepareCombinedDiffModelRequestsFromProducers(changes: List<ChangeDiffRequestChain.Producer>): List<CombinedBlockProducer> {
       return prepareCombinedBlocksFromProducers(changes)
@@ -60,7 +58,7 @@ class CombinedDiffPreviewModel {
   }
 }
 
-internal fun prepareCombinedBlocksFromWrappers(project: Project, changes: List<Wrapper>): List<CombinedBlockProducer> {
+fun prepareCombinedBlocksFromWrappers(project: Project, changes: List<Wrapper>): List<CombinedBlockProducer> {
   return changes.mapNotNull { wrapper ->
     val producer = wrapper.createProducer(project) ?: return@mapNotNull null
     val id = CombinedPathBlockId(wrapper.filePath, wrapper.fileStatus, wrapper.tag)
@@ -68,7 +66,7 @@ internal fun prepareCombinedBlocksFromWrappers(project: Project, changes: List<W
   }
 }
 
-internal fun prepareCombinedBlocksFromProducers(changes: List<ChangeDiffRequestChain.Producer>): List<CombinedBlockProducer> {
+fun prepareCombinedBlocksFromProducers(changes: List<ChangeDiffRequestChain.Producer>): List<CombinedBlockProducer> {
   return changes.map { producer ->
     val id = CombinedPathBlockId(producer.filePath, producer.fileStatus, null)
     CombinedBlockProducer(id, producer)

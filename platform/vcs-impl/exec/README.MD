@@ -1,1 +1,0 @@
-This module defines a set of functionality that depends both on vcs and platform execution modules

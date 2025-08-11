@@ -9,21 +9,19 @@ import com.intellij.rt.coverage.instrumentation.UnloadedUtil;
 import com.intellij.rt.coverage.util.ClassNameUtil;
 import org.jetbrains.coverage.org.objectweb.asm.ClassReader;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public final class SourceLineCounterUtil {
 
-  public static List<Integer> collectSrcLinesForUntouchedFiles(byte[] content, final Project project) {
+  public static void collectSrcLinesForUntouchedFiles(final List<? super Integer> uncoveredLines,
+                                                      byte[] content, final Project project) {
     final ClassReader reader = new ClassReader(content);
     final String qualifiedName = ClassNameUtil.convertToFQName(reader.getClassName());
     final ProjectData projectData = new ProjectData();
     IDEACoverageRunner.setExcludeAnnotations(project, projectData);
     UnloadedUtil.appendUnloadedClass(projectData, qualifiedName, reader, false);
     final ClassData classData = projectData.getClassData(qualifiedName);
-    if (classData == null || classData.getLines() == null) return Collections.emptyList();
-    final List<Integer> uncoveredLines = new ArrayList<>();
+    if (classData == null || classData.getLines() == null) return;
     final LineData[] lines = (LineData[])classData.getLines();
     for (LineData line : lines) {
       if (line == null) continue;
@@ -32,6 +30,5 @@ public final class SourceLineCounterUtil {
         uncoveredLines.add(line.getLineNumber() - 1);
       }
     }
-    return uncoveredLines;
   }
 }

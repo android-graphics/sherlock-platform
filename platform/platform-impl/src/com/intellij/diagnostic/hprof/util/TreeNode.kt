@@ -15,9 +15,6 @@
  */
 package com.intellij.diagnostic.hprof.util
 
-import org.jetbrains.annotations.ApiStatus
-
-@ApiStatus.Internal
 interface TreeNode {
   fun description(): String
   fun children(): Collection<TreeNode>

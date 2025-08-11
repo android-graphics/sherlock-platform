@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.tasks.lighthouse;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,7 +50,7 @@ import java.util.regex.Pattern;
  * @author Dennis.Ushakov
  */
 @Tag("Lighthouse")
-public final class LighthouseRepository extends BaseRepositoryImpl {
+public class LighthouseRepository extends BaseRepositoryImpl {
   private static final Logger LOG = Logger.getInstance(LighthouseRepository.class);
   private static final Pattern DATE_PATTERN = Pattern.compile("(\\d\\d\\d\\d\\-\\d\\d\\-\\d\\d).*(\\d\\d:\\d\\d:\\d\\d).*");
   private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -53,8 +67,9 @@ public final class LighthouseRepository extends BaseRepositoryImpl {
     super(type);
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseRepository clone() {
+  public BaseRepository clone() {
     return new LighthouseRepository(this);
   }
 
@@ -105,7 +120,8 @@ public final class LighthouseRepository extends BaseRepositoryImpl {
     return tasks.toArray(Task.EMPTY_ARRAY);
   }
 
-  private @Nullable Task createIssue(Element element) {
+  @Nullable
+  private Task createIssue(Element element) {
     final String id = element.getChildText("number");
     if (id == null) {
       return null;
@@ -138,13 +154,15 @@ public final class LighthouseRepository extends BaseRepositoryImpl {
         return getUrl() + "/projects/" + myProjectId + "/tickets/" + getId() + ".xml";
       }
 
+      @NotNull
       @Override
-      public @NotNull String getId() {
+      public String getId() {
         return myProjectId + "-" + id;
       }
 
+      @NotNull
       @Override
-      public @NotNull String getSummary() {
+      public String getSummary() {
         return summary;
       }
 
@@ -158,13 +176,15 @@ public final class LighthouseRepository extends BaseRepositoryImpl {
         return Comment.EMPTY_ARRAY;
       }
 
+      @NotNull
       @Override
-      public @NotNull Icon getIcon() {
+      public Icon getIcon() {
         return TasksCoreIcons.Lighthouse;
       }
 
+      @NotNull
       @Override
-      public @NotNull TaskType getType() {
+      public TaskType getType() {
         return TaskType.BUG;
       }
 
@@ -195,7 +215,8 @@ public final class LighthouseRepository extends BaseRepositoryImpl {
     };
   }
 
-  private static @Nullable Date parseDate(Element element, String name) throws ParseException {
+  @Nullable
+  private static Date parseDate(Element element, String name) throws ParseException {
     final Matcher m = DATE_PATTERN.matcher(element.getChildText(name));
     if (m.find()) {
       return DATE_FORMAT.parse(m.group(1) + " " + m.group(2));
@@ -204,7 +225,8 @@ public final class LighthouseRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public @Nullable String extractId(@NotNull String taskName) {
+  @Nullable
+  public String extractId(@NotNull String taskName) {
     Matcher matcher = myPattern.matcher(taskName);
     return matcher.find() ? matcher.group(1) : null;
   }
@@ -246,8 +268,9 @@ public final class LighthouseRepository extends BaseRepositoryImpl {
     method.addRequestHeader("X-LighthouseToken", getPassword());
   }
 
+  @Nullable
   @Override
-  public @Nullable Task findTask(@NotNull String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
     final String[] split = id.split("\\-");
     final String projectId = split[0];
     final String realId = split[1];

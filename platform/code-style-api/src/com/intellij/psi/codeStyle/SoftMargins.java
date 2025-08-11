@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.psi.codeStyle;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -15,11 +29,12 @@ import java.util.stream.Collectors;
 
 class SoftMargins implements Cloneable {
 
-  private @Unmodifiable List<Integer> myValues;
+  @Unmodifiable
+  private List<Integer> myValues;
 
-  // Serialization getter
-  @SuppressWarnings("unused")
-  public @Nullable String getSOFT_MARGINS() {
+  @SuppressWarnings("unused") // Serialization getter
+  @Nullable
+  public String getSOFT_MARGINS() {
     return myValues != null ? toString() : null;
   }
 
@@ -85,7 +100,7 @@ class SoftMargins implements Cloneable {
   }
 
   public void serializeInto(@NotNull Element element) {
-    if (myValues != null && !myValues.isEmpty()) {
+    if (myValues != null && myValues.size() > 0) {
       XmlSerializer.serializeInto(this, element);
     }
   }

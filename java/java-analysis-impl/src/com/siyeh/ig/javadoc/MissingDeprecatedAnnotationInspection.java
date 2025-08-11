@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.javadoc;
 
-import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
@@ -35,7 +34,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,12 +43,12 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-@ApiStatus.Internal
-public final class MissingDeprecatedAnnotationInspection extends BaseInspection implements CleanupLocalInspectionTool {
+final class MissingDeprecatedAnnotationInspection extends BaseInspection implements CleanupLocalInspectionTool {
   @SuppressWarnings("PublicField") public boolean warnOnMissingJavadoc = false;
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     final boolean annotationWarning = infos[0] == Boolean.TRUE;
     return annotationWarning
            ? InspectionGadgetsBundle.message("missing.deprecated.annotation.problem.descriptor")
@@ -77,7 +75,8 @@ public final class MissingDeprecatedAnnotationInspection extends BaseInspection 
   private static class MissingDeprecatedAnnotationFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("missing.deprecated.annotation.add.quickfix");
     }
 
@@ -98,11 +97,13 @@ public final class MissingDeprecatedAnnotationInspection extends BaseInspection 
   }
 
   private static class MissingDeprecatedTagFix extends PsiUpdateModCommandQuickFix {
-    private static final @NonNls String DEPRECATED_TAG_NAME = "deprecated";
+    @NonNls private static final String DEPRECATED_TAG_NAME = "deprecated";
     private static final String TEXT = " TODO: explain";
 
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
     @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("missing.add.deprecated.javadoc.tag.quickfix");
     }
 
@@ -225,7 +226,7 @@ public final class MissingDeprecatedAnnotationInspection extends BaseInspection 
 
     private static boolean hasDeprecatedComment(PsiJavaDocumentedElement documentedElement, boolean checkContent) {
       final PsiDocComment comment = documentedElement.getDocComment();
-      if (comment == null || !JavaDocUtil.shouldRunInspectionOnOldMarkdownComment(comment)) {
+      if (comment == null) {
         return false;
       }
       final PsiDocTag deprecatedTag = comment.findTagByName("deprecated");

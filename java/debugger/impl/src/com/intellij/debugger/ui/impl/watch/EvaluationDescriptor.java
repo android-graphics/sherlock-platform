@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerContext;
@@ -54,7 +54,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
 
   public PsiCodeFragment createCodeFragment(PsiElement context) {
     TextWithImports text = getEvaluationText();
-    return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createPsiCodeFragment(text, context, myProject);
+    return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createCodeFragment(text, context, myProject);
   }
 
   @ApiStatus.Experimental
@@ -129,7 +129,8 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
     return false;
   }
 
-  public @Nullable Modifier getModifier() {
+  @Nullable
+  public Modifier getModifier() {
     return myModifier;
   }
 
@@ -159,8 +160,9 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
               update(debuggerContext);
             }
 
+            @NotNull
             @Override
-            public @NotNull Type getLType() throws EvaluateException, ClassNotLoadedException {
+            public Type getLType() throws EvaluateException, ClassNotLoadedException {
               //noinspection ConstantConditions
               return evaluationDescriptor.getModifier().getExpectedType();
             }

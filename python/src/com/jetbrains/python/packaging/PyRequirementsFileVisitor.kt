@@ -5,7 +5,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.jetbrains.python.PyBundle
-import java.util.*
 
 class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String, PyPackage>,
                                 private val settings: PyPackageRequirementsSettings) {
@@ -62,8 +61,8 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
 
         // base files cannot be modified, so we report requirements with different version
         parsed.asSequence()
-          .filter { it.name.lowercase(Locale.getDefault()) in importedPackages }
-          .map { it to importedPackages.remove(it.name.lowercase(Locale.getDefault())) }
+          .filter { it.name.toLowerCase() in importedPackages }
+          .map { it to importedPackages.remove(it.name.toLowerCase()) }
           .filterNot { compatibleVersion(it.first, it.second!!.version, settings.specifyVersion) }
           .forEach { unchangedInBaseFiles.add(it.first.name) }
 
@@ -75,7 +74,7 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
       }
       else {
         val requirement = parsed.first()
-        val name = requirement.name
+        val name = requirement.name.toLowerCase()
         if (name in importedPackages) {
           val pkg = importedPackages.remove(name)!!
           val formatted = formatRequirement(requirement, pkg, lines)
@@ -131,10 +130,10 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
   private fun convertToRequirementsEntry(requirement: PyRequirement, settings: PyPackageRequirementsSettings, version: String? = null): String {
     val packageName = when {
       settings.specifyVersion -> when {
-        version != null -> requirement.presentableTextWithoutVersion + requirement.extras + settings.versionSpecifier.separator + version
-        else -> requirement.presentableTextWithoutVersion
+        version != null -> requirement.name + requirement.extras + settings.versionSpecifier.separator + version
+        else -> requirement.presentableText
       }
-      else -> requirement.presentableTextWithoutVersion + requirement.extras
+      else -> requirement.name + requirement.extras
     }
 
     if (requirement.installOptions.size == 1) return packageName

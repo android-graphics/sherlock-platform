@@ -19,7 +19,8 @@ public final class PyNegateComparisonIntention extends PsiUpdateModCommandAction
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.negate.comparison");
   }
 

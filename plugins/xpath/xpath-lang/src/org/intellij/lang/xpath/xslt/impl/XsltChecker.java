@@ -51,7 +51,7 @@ public class XsltChecker implements NanoXmlBuilder {
     @Override
     public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
         if (myState == State.POSSIBLY) {
-            if ("version".equals(key) && (nsURI == null || nsURI.isEmpty())) {
+            if ("version".equals(key) && (nsURI == null || nsURI.length() == 0)) {
                 checkVersion(value, State.YES);
                 NanoXmlBuilder.stop();
             }

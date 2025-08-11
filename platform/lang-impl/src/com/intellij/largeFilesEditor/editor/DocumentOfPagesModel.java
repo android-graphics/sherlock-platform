@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.editor;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,11 +7,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
 
-@ApiStatus.Internal
 public final class DocumentOfPagesModel {
 
   private static final Logger LOG = Logger.getInstance(DocumentOfPagesModel.class);
@@ -86,7 +84,7 @@ public final class DocumentOfPagesModel {
   }
 
   public void removeLastPage(Project project) {
-    if (!pagesInDocument.isEmpty()) {
+    if (pagesInDocument.size() > 0) {
       int indexOfLastPage = pagesInDocument.size() - 1;
       Page lastPage = pagesInDocument.get(indexOfLastPage);
       pagesInDocument.remove(indexOfLastPage);
@@ -131,7 +129,7 @@ public final class DocumentOfPagesModel {
   }
 
   public int absoluteSymbolPositionToOffset(AbsoluteSymbolPosition absolutePosition) {
-    if (absolutePosition == null || pagesInDocument.isEmpty()) {
+    if (absolutePosition == null || pagesInDocument.size() == 0) {
       return 0;
     }
 

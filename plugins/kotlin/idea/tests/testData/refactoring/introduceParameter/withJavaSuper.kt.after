@@ -1,7 +1,0 @@
-// WITH_DEFAULT_VALUE: false
-
-class A: I {
-    override fun m(i: Int) {
-        val p = i
-    }
-}

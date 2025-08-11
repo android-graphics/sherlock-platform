@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.ide.IdeEventQueue;
@@ -26,7 +26,7 @@ public final class RunAnythingManager {
   private JBPopup myBalloon;
   private RunAnythingPopupUI myRunAnythingUI;
   private Dimension myBalloonFullSize;
-  private @Nullable String mySelectedText;
+  @Nullable private String mySelectedText;
 
   public RunAnythingManager(@NotNull Project project) {
     myProject = project;
@@ -136,7 +136,8 @@ public final class RunAnythingManager {
   }
 
   @SuppressWarnings("Duplicates")
-  private @NotNull RunAnythingPopupUI createView(@NotNull AnActionEvent event) {
+  @NotNull
+  private RunAnythingPopupUI createView(@NotNull AnActionEvent event) {
     RunAnythingPopupUI view = new RunAnythingPopupUI(event);
 
     view.setSearchFinishedHandler(() -> {

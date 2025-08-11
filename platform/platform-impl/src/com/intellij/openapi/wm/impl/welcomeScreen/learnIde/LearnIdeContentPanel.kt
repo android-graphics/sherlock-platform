@@ -10,7 +10,6 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts.HeaderColor
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
@@ -18,7 +17,6 @@ import java.awt.Rectangle
 import javax.swing.*
 import javax.swing.plaf.ComponentUI
 
-@ApiStatus.Internal
 class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() {
 
   //unscalable insets

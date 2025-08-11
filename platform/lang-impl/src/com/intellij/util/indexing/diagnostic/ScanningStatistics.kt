@@ -61,13 +61,13 @@ class ScanningStatistics(val fileSetName: String) {
     }
   }
 
-  fun addStatus(fileOrDir: VirtualFile, unindexedFileStatus: UnindexedFileStatus, project: Project) {
+  fun addStatus(fileOrDir: VirtualFile, unindexedFileStatus: UnindexedFileStatus, statusTime: Long, project: Project) {
     if (fileOrDir.isDirectory) return
     numberOfScannedFiles++
     if (unindexedFileStatus.shouldIndex) {
       numberOfFilesForIndexing++
     }
-    this.statusTime += unindexedFileStatus.timeTotal
+    this.statusTime += statusTime
 
     timeProcessingUpToDateFiles += unindexedFileStatus.timeProcessingUpToDateFiles
     timeUpdatingContentLessIndexes += unindexedFileStatus.timeUpdatingContentLessIndexes

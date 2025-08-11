@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.pratt;
 
 import com.intellij.lang.ITokenTypeRemapper;
@@ -8,14 +8,12 @@ import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedList;
 import java.util.List;
 
-@ApiStatus.Internal
 public class PrattBuilderImpl extends PrattBuilder {
   private final PsiBuilder myBuilder;
   private final PrattBuilder myParentBuilder;
@@ -54,7 +52,7 @@ public class PrattBuilderImpl extends PrattBuilder {
   }
 
   @Override
-  public void setTokenTypeRemapper(final @Nullable ITokenTypeRemapper remapper) {
+  public void setTokenTypeRemapper(@Nullable final ITokenTypeRemapper remapper) {
     myBuilder.setTokenTypeRemapper(remapper);
   }
 
@@ -64,7 +62,8 @@ public class PrattBuilderImpl extends PrattBuilder {
   }
 
   @Override
-  public @Nullable IElementType parse() {
+  @Nullable
+  public IElementType parse() {
     checkParsed();
     return myLeftSiblings.size() != 1 ? null : myLeftSiblings.getLast();
   }
@@ -107,7 +106,8 @@ public class PrattBuilderImpl extends PrattBuilder {
     myStartMarker.drop();
   }
 
-  private @Nullable TokenParser findParser() {
+  @Nullable
+  private TokenParser findParser() {
     final IElementType tokenType = getTokenType();
     for (final PrattRegistry.ParserData parserData : myRegistry.getParsers(tokenType)) {
       if (parserData.priority() > myPriority && parserData.pattern().accepts(this)) {
@@ -124,30 +124,33 @@ public class PrattBuilderImpl extends PrattBuilder {
   }
 
   @Override
-  public void error(final @NotNull @NlsContexts.ParsingError String errorText) {
+  public void error(@NotNull @NlsContexts.ParsingError final String errorText) {
     final PsiBuilder.Marker marker = myBuilder.mark();
     myBuilder.error(errorText);
     marker.drop();
   }
 
   @Override
-  public @Nullable IElementType getTokenType() {
+  @Nullable
+  public IElementType getTokenType() {
     return myBuilder.getTokenType();
   }
 
   @Override
-  public @Nullable String getTokenText() {
+  @Nullable
+  public String getTokenText() {
     return myBuilder.getTokenText();
   }
 
   @Override
-  public void reduce(final @NotNull IElementType type) {
+  public void reduce(@NotNull final IElementType type) {
     myStartMarker.finish(type);
     myStartMarker = myStartMarker.precede();
   }
 
   @Override
-  public @NotNull List<IElementType> getResultTypes() {
+  @NotNull
+  public List<IElementType> getResultTypes() {
     checkParsed();
     return myLeftSiblings;
   }

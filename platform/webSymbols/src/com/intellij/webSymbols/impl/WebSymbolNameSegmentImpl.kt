@@ -19,9 +19,8 @@ class WebSymbolNameSegmentImpl internal constructor(
   symbolKinds: Set<WebSymbolQualifiedKind>?,
   private val explicitApiStatus: WebSymbolApiStatus?,
   private val explicitPriority: WebSymbol.Priority?,
-  private val explicitProximity: Int?,
-  internal val highlightingEnd: Int?,
-) : WebSymbolNameSegment {
+  private val explicitProximity: Int?
+): WebSymbolNameSegment {
 
   init {
     assert(start <= end)
@@ -48,23 +47,15 @@ class WebSymbolNameSegmentImpl internal constructor(
 
   internal fun withOffset(offset: Int): WebSymbolNameSegmentImpl =
     WebSymbolNameSegmentImpl(start + offset, end + offset, symbols, problem, displayName,
-                             matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity,
-                             highlightingEnd?.let { it + offset })
+                             matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity)
 
   internal fun withDisplayName(displayName: String?) =
     WebSymbolNameSegmentImpl(start, end, symbols, problem, this.displayName ?: displayName,
-                             matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity,
-                             highlightingEnd)
+                             matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity)
 
   internal fun withRange(start: Int, end: Int) =
     WebSymbolNameSegmentImpl(start, end, symbols, problem, displayName,
-                             matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity,
-                             null)
-
-  internal fun withSymbols(symbols: List<WebSymbol>) =
-    WebSymbolNameSegmentImpl(start, end, symbols, problem, displayName,
-                             matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity,
-                             highlightingEnd)
+                             matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity)
 
   internal fun copy(
     apiStatus: WebSymbolApiStatus?,
@@ -72,12 +63,11 @@ class WebSymbolNameSegmentImpl internal constructor(
     proximity: Int?,
     problem: WebSymbolNameSegment.MatchProblem?,
     symbols: List<WebSymbol>,
-    highlightEnd: Int? = null,
   ): WebSymbolNameSegmentImpl =
     WebSymbolNameSegmentImpl(start, end, this.symbols + symbols, problem ?: this.problem,
                              displayName, matchScore, forcedSymbolKinds,
-                             apiStatus ?: this.explicitApiStatus, priority ?: this.explicitPriority,
-                             proximity ?: this.explicitProximity, highlightEnd ?: this.highlightingEnd)
+                         apiStatus ?: this.explicitApiStatus, priority ?: this.explicitPriority,
+                         proximity ?: this.explicitProximity)
 
   internal fun canUnwrapSymbols(): Boolean =
     explicitApiStatus == null
@@ -109,7 +99,7 @@ class WebSymbolNameSegmentImpl internal constructor(
     private val explicitApiStatus = nameSegment.explicitApiStatus
     private val explicitPriority = nameSegment.explicitPriority
     private val explicitProximity = nameSegment.explicitProximity
-    private val highlightingEnd = nameSegment.highlightingEnd
+
 
     override fun dereference(): WebSymbolNameSegmentImpl? =
       symbols.map { it.dereference() }
@@ -117,7 +107,7 @@ class WebSymbolNameSegmentImpl internal constructor(
         ?.let {
           @Suppress("UNCHECKED_CAST")
           (WebSymbolNameSegmentImpl(start, end, it as List<WebSymbol>, problem, displayName, matchScore,
-                                    types, explicitApiStatus, explicitPriority, explicitProximity, highlightingEnd))
+                                    types, explicitApiStatus, explicitPriority, explicitProximity))
         }
 
   }

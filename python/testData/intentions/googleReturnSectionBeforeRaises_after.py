@@ -1,7 +1,7 @@
 def f():
     """
     Returns:
-        Any: 
+        object: 
 
     Raises:
         RuntimeException

@@ -229,7 +229,6 @@ final class UsedIconsListingAction extends AnAction {
           PsiFile file = annotation.getContainingFile();
           if (useScope.contains(file.getVirtualFile())) {
             WriteCommandAction.writeCommandAction(project, file).run(() -> {
-              //noinspection ResultOfMethodCallIgnored -- load tree?
               annotation.getNode();
               annotation.setDeclaredAttributeValue(
                 "icon",

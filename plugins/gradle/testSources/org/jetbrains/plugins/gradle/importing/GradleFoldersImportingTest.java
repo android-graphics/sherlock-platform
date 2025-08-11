@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing;
 
-import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager;
 import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImpl;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -14,17 +14,23 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import org.jetbrains.plugins.gradle.GradleManager;
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExcludeBuildFilesDataService;
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getManager;
 
 /**
  * @author Vladislav.Soroka
@@ -34,165 +40,61 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   @Test
   public void testUnsupportedTypesInDsl() throws Exception {
     importProject(
-      """
-        import org.gradle.api.internal.FactoryNamedDomainObjectContainer;
-        import org.gradle.internal.reflect.Instantiator;
-        class MyObj implements Named {
-          String myName;
-          public MyObj(String name) {
-            myName = namse
-          }
-        
-          public String getName() {
-            return myName
-          }
-        }
-        project.extensions.create(
-                        "sourceSets",
-                        FactoryNamedDomainObjectContainer,
-                        MyObj,
-                        services.get(Instantiator),
-                       {action -> }
-                )
-        sourceSets {
-         println "Hello World!"
-        }
-        """
-    );
+      createBuildScriptBuilder().addPostfix(
+          "import org.gradle.api.internal.FactoryNamedDomainObjectContainer;",
+          "import org.gradle.internal.reflect.Instantiator;",
+          "class MyObj implements Named {",
+          "  String myName;",
+          "  public MyObj(String name) {",
+          "    myName = namse",
+          "  }",
+          "  ",
+          "  public String getName() {",
+          "    return myName",
+          "  }",
+          "}",
+          "project.extensions.create(",
+          "                \"sourceSets\",",
+          "                FactoryNamedDomainObjectContainer,",
+          "                MyObj,",
+          "                services.get(Instantiator),",
+          "               {action -> }",
+          "        ) ",
+          "sourceSets {",
+          " println \"Hello World!\"",
+          "}"
+      ).generate());
   }
 
   @Test
-  public void testImportBaseJavaProjectInNonDelegatedAndModulePerSourceSetModes() throws Exception {
-    createDefaultDirs();
-    createProjectSubFile("build.gradle", "apply plugin: 'java'");
-
+  public void testBaseJavaProject() throws Exception {
     getCurrentExternalProjectSettings().setDelegatedBuild(false);
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(true);
-    importProject();
-
-    assertModules("project", "project.main", "project.test");
-
-    assertNoExcludePatterns("project", "build.gradle");
-    assertExcludes("project", ".gradle", "build", "out");
-
-    assertContentRoots("project", getProjectPath());
-    assertNoSourceRoots("project");
-
-    assertContentRoots("project.main", path("src/main"));
-    assertSourceRoots("project.main", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
-    );
-
-    assertContentRoots("project.test", path("src/test"));
-    assertSourceRoots("project.test", it -> it
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
-    );
-
-    assertModuleOutputs("project.main", path("out/production/classes"), path("out/production/resources"));
-    assertModuleOutput("project.main", path("out/production/classes"), "");
-
-    assertModuleOutputs("project.test", path("out/test/classes"), path("out/test/resources"));
-    assertModuleOutput("project.test", "", path("out/test/classes"));
-  }
-
-  @Test
-  public void testImportBaseJavaProjectInNonDelegatedAndModulePerProjectModes() throws Exception {
     createDefaultDirs();
-    createProjectSubFile("build.gradle", "apply plugin: 'java'");
+    importProject(
+      "apply plugin: 'java'"
+    );
+    assertNotDelegatedBaseJavaProject();
 
-    getCurrentExternalProjectSettings().setDelegatedBuild(false);
     getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
     importProject();
-
-    assertModules("project");
-
-    assertExcludes("project", ".gradle", "build", "out");
-
-    assertContentRoots("project", getProjectPath());
-    assertSourceRoots("project", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
-    );
-
-    assertModuleOutputs("project",
-                        path("out/production/classes"),
-                        path("out/production/resources"),
-                        path("out/test/classes"),
-                        path("out/test/resources"));
-    assertModuleOutput("project",
-                       path("out/production/classes"),
-                       path("out/test/classes"));
-  }
-
-  @Test
-  public void testImportBaseJavaProjectInDelegatedAndModulePerProjectModes() throws Exception {
-    createDefaultDirs();
-    createProjectSubFile("build.gradle", "apply plugin: 'java'");
+    assertNotDelegatedMergedBaseJavaProject();
 
     getCurrentExternalProjectSettings().setDelegatedBuild(true);
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
     importProject();
+    assertDelegatedMergedBaseJavaProject();
 
-    assertModules("project");
+    getCurrentExternalProjectSettings().setDelegatedBuild(false);
+    // subscribe to the GradleSettings changes topic
+    ((GradleManager)getManager(GradleConstants.SYSTEM_ID)).runActivity(myProject);
+    GradleSettings.getInstance(myProject).getPublisher().onBuildDelegationChange(false, getProjectPath());
+    assertNotDelegatedMergedBaseJavaProject();
 
-    assertExcludes("project", ".gradle", "build");
-
-    assertContentRoots("project", getProjectPath());
-    assertSourceRoots("project", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
-    );
-
-    assertModuleOutputs("project",
-                        path("build/classes/java/main"),
-                        path("build/resources/main"),
-                        path("build/classes/java/test"),
-                        path("build/resources/test"));
-    assertModuleOutput("project",
-                       path("build/classes/java/main"),
-                       path("build/classes/java/test"));
-  }
-
-  @Test
-  public void testImportBaseJavaProjectInDelegatedAndModulePerSourceSetModes() throws Exception {
-    createDefaultDirs();
-    createProjectSubFile("build.gradle", "apply plugin: 'java'");
-
-    getCurrentExternalProjectSettings().setDelegatedBuild(true);
     getCurrentExternalProjectSettings().setResolveModulePerSourceSet(true);
     importProject();
-
-    assertModules("project", "project.main", "project.test");
-
-    assertNoExcludePatterns("project", "build.gradle");
-    assertExcludes("project", ".gradle", "build");
-
-    assertContentRoots("project", getProjectPath());
-    assertNoSourceRoots("project");
-
-    assertContentRoots("project.main", path("src/main"));
-    assertSourceRoots("project.main", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
-    );
-
-    assertContentRoots("project.test", path("src/test"));
-    assertSourceRoots("project.test", it -> it
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
-    );
-
-    assertModuleOutputs("project.main", path("build/classes/java/main"), path("build/resources/main"));
-    assertModuleOutput("project.main", path("build/classes/java/main"), "");
-
-    assertModuleOutputs("project.test", path("build/classes/java/test"), path("build/resources/test"));
-    assertModuleOutput("project.test", "", path("build/classes/java/test"));
+    assertNotDelegatedBaseJavaProject();
+    getCurrentExternalProjectSettings().setDelegatedBuild(true);
+    GradleSettings.getInstance(myProject).getPublisher().onBuildDelegationChange(true, getProjectPath());
+    assertDelegatedBaseJavaProject();
   }
 
   @Test
@@ -202,64 +104,101 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     createProjectSubFile("gradle.properties", "org.gradle.warning.mode=fail");
     importProject("apply plugin: 'java'");
 
+    assertDelegatedBaseJavaProject();
+  }
+
+  private void assertNotDelegatedBaseJavaProject() {
     assertModules("project", "project.main", "project.test");
-
     assertNoExcludePatterns("project", "build.gradle");
-    assertExcludes("project", ".gradle", "build");
 
+    assertDefaultGradleJavaProjectFolders();
+
+    final String mainClassesOutputPath = "/out/production/classes";
+    assertModuleOutputs("project.main",
+                        getProjectPath() + mainClassesOutputPath,
+                        getProjectPath() + "/out/production/resources");
+    String testClassesOutputPath = "/out/test/classes";
+    assertModuleOutputs("project.test",
+                        getProjectPath() + testClassesOutputPath,
+                        getProjectPath() + "/out/test/resources");
+
+    assertModuleOutput("project.main", getProjectPath() + mainClassesOutputPath, "");
+    assertModuleOutput("project.test", "", getProjectPath() + testClassesOutputPath);
+  }
+
+  private void assertDelegatedBaseJavaProject() {
+    assertModules("project", "project.main", "project.test");
     assertContentRoots("project", getProjectPath());
-    assertNoSourceRoots("project");
+    assertNoExcludePatterns("project", "build.gradle");
 
-    assertContentRoots("project.main", path("src/main"));
-    assertSourceRoots("project.main", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
-    );
+    assertModuleOutputs("project.main",
+                        getProjectPath() + "/build/classes/java/main",
+                        getProjectPath() + "/build/resources/main");
+    assertModuleOutput("project.main", getProjectPath() + "/build/classes/java/main", "");
 
-    assertContentRoots("project.test", path("src/test"));
-    assertSourceRoots("project.test", it -> it
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
-    );
+    assertModuleOutputs("project.test",
+                        getProjectPath() + "/build/classes/java/test",
+                        getProjectPath() + "/build/resources/test");
+    assertModuleOutput("project.test", "", getProjectPath() + "/build/classes/java/test");
+  }
 
-    assertModuleOutputs("project.main", path("build/classes/java/main"), path("build/resources/main"));
-    assertModuleOutput("project.main", path("build/classes/java/main"), "");
+  private void assertNotDelegatedMergedBaseJavaProject() {
+    assertModules("project");
 
-    assertModuleOutputs("project.test", path("build/classes/java/test"), path("build/resources/test"));
-    assertModuleOutput("project.test", "", path("build/classes/java/test"));
+    assertDefaultGradleJavaProjectFoldersForMergedModule();
+
+    assertModuleOutputs("project",
+                        getProjectPath() + "/out/production/classes",
+                        getProjectPath() + "/out/production/resources",
+                        getProjectPath() + "/out/test/classes",
+                        getProjectPath() + "/out/test/resources");
+
+    assertModuleOutput("project", getProjectPath() + "/out/production/classes", getProjectPath() + "/out/test/classes");
+  }
+
+  private void assertDelegatedMergedBaseJavaProject() {
+    assertModuleOutputs("project",
+                        getProjectPath() + "/build/classes/java/main",
+                        getProjectPath() + "/build/resources/main",
+                        getProjectPath() + "/build/classes/java/test",
+                        getProjectPath() + "/build/resources/test");
   }
 
   @Test
   public void testCompileOutputPathCustomizedWithIdeaPlugin() throws Exception {
     createDefaultDirs();
-    createProjectSubFile("build.gradle", """
-      apply plugin: 'java'
-      apply plugin: 'idea'
-      idea {
-        module {
-          outputDir = file(buildDir)
-        }
-      }
-      """);
+    importProject(
+      """
+        apply plugin: 'java'
+        apply plugin: 'idea'
+        idea {
+          module {
+            outputDir = file(buildDir)
+          }
+        }"""
+    );
 
-    importProject();
     assertModules("project", "project.main", "project.test");
-    assertModuleOutput("project.main", path("build/classes/java/main"), "");
-    assertModuleOutput("project.test", "", path("build/classes/java/test"));
 
+    assertDefaultGradleJavaProjectFolders();
+
+    assertModuleOutput("project.main", getProjectPath() + "/build/classes/java/main", "");
+    assertModuleOutput("project.test", "", getProjectPath() + "/build/classes/java/test");
 
     getCurrentExternalProjectSettings().setDelegatedBuild(false);
     GradleSettings.getInstance(myProject).getPublisher().onBuildDelegationChange(false, getProjectPath());
-    assertModules("project", "project.main", "project.test");
-    assertModuleOutput("project.main", path("build"), "");
-    assertModuleOutput("project.test", "", path("out/test/classes"));
-
+    assertModuleOutput("project.main", getProjectPath() + "/build", "");
+    assertModuleOutput("project.test", "", getProjectPath() + "/out/test/classes");
 
     getCurrentExternalProjectSettings().setDelegatedBuild(true);
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
-    importProject();
+
+    importProjectUsingSingeModulePerGradleProject();
+
     assertModules("project");
-    assertModuleOutput("project", path("build"), path("build/classes/java/test"));
+
+    assertDefaultGradleJavaProjectFoldersForMergedModule();
+
+    assertModuleOutput("project", getProjectPath() + "/build", getProjectPath() + "/build/classes/java/test");
   }
 
   @Test
@@ -279,114 +218,59 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
     assertModules("project", "project.main", "project.test");
 
-    assertExcludes("project", ".gradle", "build");
+    assertDefaultGradleJavaProjectFolders();
+    assertGeneratedSources("project.main", path("src/main/java"));
+    assertGeneratedTestSources("project.test", path("src/test/java"));
 
-    assertContentRoots("project", getProjectPath());
-    assertNoSourceRoots("project");
-
-    assertContentRoots("project.main", path("src/main"));
-    assertSourceRoots("project.main", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE_GENERATED, path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
-    );
-
-    assertContentRoots("project.test", path("src/test"));
-    assertSourceRoots("project.test", it -> it
-      .sourceRoots(ExternalSystemSourceType.TEST_GENERATED, path("src/test/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
-    );
-
-
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
-    importProject();
+    importProjectUsingSingeModulePerGradleProject();
 
     assertModules("project");
 
-    assertExcludes("project", ".gradle", "build");
-
-    assertContentRoots("project", getProjectPath());
-    assertSourceRoots("project", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE_GENERATED, path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
-      .sourceRoots(ExternalSystemSourceType.TEST_GENERATED, path("src/test/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
-    );
+    assertDefaultGradleJavaProjectFoldersForMergedModule();
+    assertGeneratedSources("project", path("src/main/java"));
+    assertGeneratedTestSources("project", path("src/test/java"));
   }
 
   @Test
   public void testCustomSourceSetsAreImported() throws Exception {
     createDefaultDirs();
-    createProjectSubFile("src/customSourceSet/java/G.java");
+    createProjectSubFile("src/generated/java/G.java");
 
     importProject("""
                     apply plugin: 'java'
                     apply plugin: 'idea'
-                    
+
                     sourceSets {
-                      customSourceSet
+                      generated
                     }""");
 
-    assertModules("project", "project.main", "project.test", "project.customSourceSet");
+    assertModules("project", "project.main", "project.test", "project.generated");
 
-    assertContentRoots("project", getProjectPath());
-    assertNoSourceRoots("project");
-
-    assertContentRoots("project.main", path("src/main"));
-    assertSourceRoots("project.main", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
-    );
-
-    assertContentRoots("project.test", path("src/test"));
-    assertSourceRoots("project.test", it -> it
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
-    );
-
-    assertContentRoots("project.customSourceSet", path("src/customSourceSet"));
-    assertSourceRoots("project.customSourceSet", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/customSourceSet/java"))
-    );
-
-
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
-    importProject();
-
-    assertModules("project");
-    assertSourceRoots("project", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"), path("src/customSourceSet/java"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
-    );
+    importProjectUsingSingeModulePerGradleProject();
+    assertSources("project", path("src/generated/java"), path("src/main/java"));
+    assertTestSources("project", path("src/test/java"));
   }
 
   @Test
   @TargetVersions("4.7+")
   public void testResourceFoldersWithIdeaPluginInNonJavaProject() throws Exception {
     createProjectSubDirs("python/src", "python/test", "python/resources");
-    importProject(script(it -> it
-      .withIdeaPlugin()
-      .addPostfix(
-        """
-          idea {
-            module {
-              sourceDirs += file('python/src')
-              resourceDirs += file('python/resources')
-              testSourceDirs += file('python/test')
-            }
-          }
-          """
-      )
-    ));
+    importProject(createBuildScriptBuilder().withIdeaPlugin()
+                    .addPostfix(      "idea {",
+                                      "  module {",
+                                      "    sourceDirs += file('python/src')",
+                                      "    resourceDirs += file('python/resources')",
+                                      "    testSourceDirs += file('python/test')",
+                                      "  }",
+                                      "}")
+                    .generate());
 
     assertModules("project");
     assertContentRoots("project", getProjectPath());
-    assertSourceRoots("project", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("python/src"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("python/resources"))
-      .sourceRoots(ExternalSystemSourceType.TEST, path("python/test"))
-    );
+
+    assertSources("project", path("python/src"));
+    assertResources("project", path("python/resources"));
+    assertTestSources("project", path("python/test"));
   }
 
   @Test
@@ -415,39 +299,25 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     );
 
     assertModules("project", "project.main", "project.test");
-
-    assertExcludes("project", ".gradle", "build");
-
     assertContentRoots("project", getProjectPath());
-    assertNoSourceRoots("project");
-
+    assertExcludes("project", ".gradle", "build");
     assertContentRoots("project.main", path("src/main"));
-    assertSourceRoots("project.main", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"), path("src/main/src2"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"), path("src/main/resources2"))
-    );
-
+    assertSources("project.main", path("src/main/java"), path("src/main/src2"));
+    assertResources("project.main", path("src/main/resources"), path("src/main/resources2"));
     assertContentRoots("project.test", path("src/test"));
-    assertSourceRoots("project.test", it -> it
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"), path("src/test/src2"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"), path("src/test/resources2"))
-    );
+    assertTestSources("project.test", path("src/test/java"), path("src/test/src2"));
+    assertTestResources("project.test", path("src/test/resources"), path("src/test/resources2"));
 
-
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
-    importProject();
+    importProjectUsingSingeModulePerGradleProject();
 
     assertModules("project");
+    assertContentRoots("project", getProjectPath());
 
     assertExcludes("project", ".gradle", "build");
-
-    assertContentRoots("project", getProjectPath());
-    assertSourceRoots("project", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"), path("src/main/src2"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"), path("src/main/resources2"))
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"), path("src/test/src2"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"), path("src/test/resources2"))
-    );
+    assertSources("project", path("src/main/java"), path("src/main/src2"));
+    assertResources("project", path("src/main/resources"), path("src/main/resources2"));
+    assertTestSources("project", path("src/test/java"), path("src/test/src2"));
+    assertTestResources("project", path("src/test/resources"), path("src/test/resources2"));
   }
 
   @Test
@@ -480,29 +350,20 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
     Runnable check = () -> {
       assertModules("project", "project.main", "project.test", "project.customSourceSet");
-
+      assertContentRoots("project", getProjectPath());
       assertExcludes("project", ".gradle", "build");
 
-      assertContentRoots("project", getProjectPath());
-      assertNoSourceRoots("project");
-
       assertContentRoots("project.main", path("src/main"));
-      assertSourceRoots("project.main", it -> it
-        .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-        .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
-      );
+      assertSources("project.main", path("src/main/java"));
+      assertResources("project.main", path("src/main/resources"));
 
       assertContentRoots("project.test", path("src/test"));
-      assertSourceRoots("project.test", it -> it
-        .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"), path("src/test/src2"))
-        .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"), path("src/test/resources2"))
-      );
+      assertTestSources("project.test", path("src/test/java"), path("src/test/src2"));
+      assertTestResources("project.test", path("src/test/resources"), path("src/test/resources2"));
 
       assertContentRoots("project.customSourceSet", path("src/customSourceSet"));
-      assertSourceRoots("project.customSourceSet", it -> it
-        .sourceRoots(ExternalSystemSourceType.TEST, path("src/customSourceSet/java"))
-        .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/customSourceSet/resources"))
-      );
+      assertTestSources("project.customSourceSet", path("src/customSourceSet/java"));
+      assertTestResources("project.customSourceSet", path("src/customSourceSet/resources"));
     };
 
     check.run();
@@ -530,6 +391,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testProjectWithInheritedOutputDirs() throws Exception {
+
     createDefaultDirs();
     importProject(
       """
@@ -544,48 +406,24 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
     assertModules("project", "project.main", "project.test");
 
-    assertExcludes("project", ".gradle", "build");
-
-    assertContentRoots("project", getProjectPath());
-    assertNoSourceRoots("project");
-
-    assertContentRoots("project.main", path("src/main"));
-    assertSourceRoots("project.main", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
-    );
-
-    assertContentRoots("project.test", path("src/test"));
-    assertSourceRoots("project.test", it -> it
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
-    );
+    assertDefaultGradleJavaProjectFolders();
 
     assertModuleInheritedOutput("project");
     assertModuleInheritedOutput("project.main");
     assertModuleInheritedOutput("project.test");
 
-
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
-    importProject();
+    importProjectUsingSingeModulePerGradleProject();
 
     assertModules("project");
 
-    assertExcludes("project", ".gradle", "build");
-
-    assertContentRoots("project", getProjectPath());
-    assertSourceRoots("project", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
-    );
+    assertDefaultGradleJavaProjectFoldersForMergedModule();
 
     assertModuleInheritedOutput("project");
   }
 
   @Test
   public void testSourceFoldersMerge() throws Exception {
+
     createDefaultDirs();
     createProjectSubFile("src/B.java");
     createProjectSubFile("src/resources/res.properties");
@@ -608,153 +446,98 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     );
 
     assertModules("project", "project.main", "project.test");
+    assertContentRoots("project", getProjectPath());
 
     assertExcludes("project", ".gradle", "build");
-
-    assertContentRoots("project", getProjectPath());
-    assertNoSourceRoots("project");
 
     assertContentRoots("project.main", path("src"));
-    assertSourceRoots("project.main", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src"), path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/resources"), path("src/main/resources"))
-    );
+    assertSources("project.main", path("src"), path("src/main/java"));
+    assertResources("project.main", path("src/resources"), path("src/main/resources"));
 
     assertContentRoots("project.test", path("test"), path("src/test"));
-    assertSourceRoots("project.test", it -> it
-      .sourceRoots(ExternalSystemSourceType.TEST, path("test"), path("src/test/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("test/resources"), path("src/test/resources"))
-    );
+    assertTestSources("project.test", path("test"), path("src/test/java"));
+    assertTestResources("project.test", path("test/resources"), path("src/test/resources"));
 
-
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
-    importProject();
-
+    importProjectUsingSingeModulePerGradleProject();
     assertModules("project");
-
-    assertExcludes("project", ".gradle", "build");
-
     assertContentRoots("project", getProjectPath());
-    assertSourceRoots("project", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src"), path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/resources"), path("src/main/resources"))
-      .sourceRoots(ExternalSystemSourceType.TEST, path("test"), path("src/test/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("test/resources"), path("src/test/resources"))
-    );
+    assertExcludes("project", ".gradle", "build");
+    assertSources("project", path("src"), path("src/main/java"));
+    assertResources("project", path("src/main/resources"), path("src/resources"));
+    assertTestSources("project", path("test"), path("src/test/java"));
+    assertTestResources("project", path("src/test/resources"), path("test/resources"));
   }
 
   @Test
   public void testRootsAreNotCreatedIfFilesAreMissing() throws Exception {
     createProjectSubFile("src/main/java/A.java");
     createProjectSubFile("src/test/resources/res.properties");
-
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
-    importProject(
+    importProjectUsingSingeModulePerGradleProject(
       """
         apply plugin: 'java'
         apply plugin: 'idea'
         sourceSets.main.java.srcDirs file('src/generated/java')
         idea.module {
           generatedSourceDirs += file('src/generated/java')
-        }
-        """
+        }"""
     );
 
     assertModules("project");
-
     assertExcludes("project", ".gradle", "build");
-
-    assertContentRoots("project", getProjectPath());
-    assertSourceRoots("project", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
-    );
+    assertSources("project", path("src/main/java"));
+    assertResources("project");
+    assertTestSources("project");
+    assertGeneratedSources("project");
+    assertTestResources("project", path("src/test/resources"));
   }
 
   @Test
   public void testRootsAreAddedWhenAFolderCreated() throws Exception {
     createProjectSubFile("src/main/java/A.java");
-
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
-    importProject(
-      """
-        apply plugin: 'java'
-        apply plugin: 'idea'
-        sourceSets.main.java.srcDirs file('src/generated/java')
-        idea.module {
-          generatedSourceDirs += file('src/generated/java')
-        }
-        """
-    );
+    importProjectUsingSingeModulePerGradleProject("""
+                                                    apply plugin: 'java'
+                                                    apply plugin: 'idea'
+                                                    sourceSets.main.java.srcDirs file('src/generated/java')
+                                                    idea.module {
+                                                      generatedSourceDirs += file('src/generated/java')
+                                                    }""");
 
     assertModules("project");
-    assertSourceRoots("project", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-    );
+    assertSources("project", path("src/main/java"));
+    assertTestSources("project");
 
     createProjectSubFile("src/test/java/ATest.java");
     waitForModulesUpdate();
-    assertSourceRoots("project", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
-    );
+    assertTestSources("project", path("src/test/java"));
 
     createProjectSubFile("src/main/resources/res.txt");
     waitForModulesUpdate();
-    assertSourceRoots("project", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
-    );
+    assertResources("project", path("src/main/resources"));
 
     createProjectSubFile("src/generated/java/Generated.java");
     waitForModulesUpdate();
-    assertSourceRoots("project", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
-      .sourceRoots(ExternalSystemSourceType.SOURCE_GENERATED, path("src/generated/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
-    );
+    assertGeneratedSources("project", path("src/generated/java"));
   }
 
   @Test
   public void testRootsListenersAreUpdatedWithProjectModel() throws Exception {
     createProjectSubFile("src/main/java/A.java");
-
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
-    importProject("apply plugin: 'java'");
+    importProjectUsingSingeModulePerGradleProject("apply plugin: 'java'");
 
     assertModules("project");
-    assertContentRoots("project", getProjectPath());
-    assertSourceRoots("project", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-    );
 
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
-    importProject(
+    importProjectUsingSingeModulePerGradleProject(
       """
         apply plugin: 'java'
-        
         sourceSets {
-          test {
-            java.srcDirs = [file('test-src/java')]
-          }
-        }
-        """);
-
-    assertModules("project");
-    assertContentRoots("project", getProjectPath());
-    assertSourceRoots("project", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-    );
+         test {
+            java.srcDirs = [file('test-src/java')]  }
+        }""");
 
     createProjectSubFile("src/test/java/ATest.java");
     createProjectSubFile("test-src/java/BTest.java");
     waitForModulesUpdate();
-    assertSourceRoots("project", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST, path("test-src/java"))
-    );
+    assertTestSources("project", path("test-src/java"));
   }
 
 
@@ -765,56 +548,44 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     createProjectSubFile("test/Test.java");
     createProjectSubFile("test/test.properties");
 
-    importProject(
-      """
-        apply plugin: 'java'
-        sourceSets {
-          main {
-            java {
-              srcDir 'src'
-            }
-            resources {
-              srcDir 'src'
-            }
-          }
-          test {
-            java {
-              srcDir 'test'
-            }
-            resources {
-              srcDir 'test'
-            }
-          }
-        }
-        """
-    );
-
+    importProject("""
+                    apply plugin: 'java'
+                    sourceSets {
+                      main {
+                        java {
+                          srcDir 'src'
+                        }
+                        resources {
+                          srcDir 'src'
+                        }
+                      }
+                      test {
+                        java {
+                          srcDir 'test'
+                        }
+                        resources {
+                          srcDir 'test'
+                        }
+                      }
+                    }
+                    """);
     assertModules("project", "project.main", "project.test");
-
     assertContentRoots("project", getProjectPath());
-    assertNoSourceRoots("project");
-
     assertContentRoots("project.main", path("src"));
-    assertSourceRoots("project.main", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src"))
-    );
-
     assertContentRoots("project.test", path("test"), path("src/test"));
-    assertSourceRoots("project.test", it -> it
-      .sourceRoots(ExternalSystemSourceType.TEST, path("test"))
-    );
+    assertSources("project.main", path("src"));
+    assertTestSources("project.test", path("test"));
+    assertResources("project");
+    assertTestResources("project");
 
-
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
-    importProject();
+    importProjectUsingSingeModulePerGradleProject();
 
     assertModules("project");
-
     assertContentRoots("project", getProjectPath());
-    assertSourceRoots("project", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src"))
-      .sourceRoots(ExternalSystemSourceType.TEST, path("test"))
-    );
+    assertSources("project", path("src"));
+    assertTestSources("project", path("test"));
+    assertResources("project");
+    assertTestResources("project");
   }
 
   @Test
@@ -865,10 +636,9 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertContentRoots("rootName.project1.project3",
                        FileUtil.toSystemIndependentName(new File(getProjectPath(), "project3").getAbsolutePath()));
 
-
     getCurrentExternalProjectSettings().setUseQualifiedModuleNames(false);
-    importProject();
 
+    importProject();
     assertModules("rootName",
                   "project1",
                   "project2",
@@ -886,7 +656,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  public void testSourceFoldersOutOfContentRoot() throws Exception {
+  public void testSourceFoldersOutOfContentRootWithModuleResolving() throws Exception {
     createProjectSubFile("src/main/java/A.java", "class A {}");
     createProjectSubFile("../outer1/src/main/java/A.java", "class A {}");
     createProjectSubFile("../outer1/src/main/kotlin/A.kt", "class A {}");
@@ -894,119 +664,113 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     createProjectSubFile("../outer3/A.java", "class A {}");
     createProjectSubFile("build/generated/A.java", "class A {}");
     createProjectSubFile("../outer4/generated/A.java", "class A {}");
-    createProjectSubFile("build.gradle", script(it -> it
+    GradleBuildScriptBuilder buildScript = createBuildScriptBuilder()
       .withJavaPlugin()
       .withIdeaPlugin()
       .addPrefix(
-        """
-          sourceSets {
-            generated.java.srcDirs += "${buildDir}/generated"
-            generated.java.srcDirs += '../outer4/generated'
-            main.java.srcDirs += '../outer1/src/main/java'
-            main.java.srcDirs += '../outer1/src/main/kotlin'
-            main.java.srcDirs += '../outer2/src/main/java'
-            main.java.srcDirs += '../outer3'
-          }
-          """
-      ).addPrefix(
-        """
-          idea {
-            module {
-              inheritOutputDirs = true
-              generatedSourceDirs += file("${buildDir}/generated")
-              generatedSourceDirs += file('../outer4/generated')
-            }
-          }
-          """
-      )
-    ));
-
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(true);
-    importProject();
-
+        "sourceSets {",
+        "  generated.java.srcDirs += \"${buildDir}/generated\"",
+        "  generated.java.srcDirs += '../outer4/generated'",
+        "  main.java.srcDirs += '../outer1/src/main/java'",
+        "  main.java.srcDirs += '../outer1/src/main/kotlin'",
+        "  main.java.srcDirs += '../outer2/src/main/java'",
+        "  main.java.srcDirs += '../outer3'",
+        "}")
+      .addPrefix(
+        "idea {",
+        "  module {",
+        "    inheritOutputDirs = true",
+        "    generatedSourceDirs += file(\"${buildDir}/generated\")",
+        "    generatedSourceDirs += file('../outer4/generated')",
+        "  }",
+        "}");
+    importPerSourceSet(true);
+    importProject(buildScript.generate());
     assertModules("project", "project.main", "project.test", "project.generated");
+    assertContentEntryExists("project", "");
+    assertContentEntryExists("project.main",
+                             "../outer1",
+                             "../outer2",
+                             "../outer3");
+    assertContentEntryExists("project.generated",
+                             "build/generated",
+                             "../outer4");
+    assertSourceExists("project.main",
+                       "src/main/java",
+                       "../outer1/src/main/java",
+                       "../outer1/src/main/kotlin",
+                       "../outer2/src/main/java",
+                       "../outer3");
+    assertSourceExists("project.generated",
+                       "build/generated",
+                       "../outer4/generated");
+  }
 
-    assertContentRoots("project", getProjectPath());
-    assertNoSourceRoots("project");
-
-    assertContentRoots("project.main",
-                       path("src/main"),
-                       path("../outer1/src/main"),
-                       path("../outer2/src/main"),
-                       path("../outer3")
-    );
-    assertSourceRoots("project.main", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE,
-                   path("src/main/java"),
-                   path("../outer1/src/main/java"),
-                   path("../outer1/src/main/kotlin"),
-                   path("../outer2/src/main/java"),
-                   path("../outer3")
-      )
-    );
-
-    assertContentRoots("project.test", path("src/test"));
-    assertNoSourceRoots("project.test");
-
-    assertContentRoots("project.generated",
-                       path("src/generated"),
-                       path("build/generated"),
-                       path("../outer4")
-    );
-    assertSourceRoots("project.generated", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE_GENERATED,
-                   path("build/generated"),
-                   path("../outer4/generated")
-      )
-    );
-
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
-    importProject();
-
+  @Test
+  public void testSourceFoldersOutOfContentRootWithoutModuleResolving() throws Exception {
+    createProjectSubFile("src/main/java/A.java", "class A {}");
+    createProjectSubFile("../outer1/src/main/java/A.java", "class A {}");
+    createProjectSubFile("../outer1/src/main/kotlin/A.kt", "class A {}");
+    createProjectSubFile("../outer2/src/main/java/A.java", "class A {}");
+    createProjectSubFile("../outer3/A.java", "class A {}");
+    createProjectSubFile("build/generated/A.java", "class A {}");
+    createProjectSubFile("../outer4/generated/A.java", "class A {}");
+    GradleBuildScriptBuilder buildScript = createBuildScriptBuilder()
+      .withJavaPlugin()
+      .withIdeaPlugin()
+      .addPrefix(
+        "sourceSets {",
+        "  generated.java.srcDirs += \"${buildDir}/generated\"",
+        "  generated.java.srcDirs += '../outer4/generated'",
+        "  main.java.srcDirs += '../outer1/src/main/java'",
+        "  main.java.srcDirs += '../outer1/src/main/kotlin'",
+        "  main.java.srcDirs += '../outer2/src/main/java'",
+        "  main.java.srcDirs += '../outer3'",
+        "}")
+      .addPrefix(
+        "idea {",
+        "  module {",
+        "    inheritOutputDirs = true",
+        "    generatedSourceDirs += file(\"${buildDir}/generated\")",
+        "    generatedSourceDirs += file('../outer4/generated')",
+        "  }",
+        "}");
+    importPerSourceSet(false);
+    importProject(buildScript.generate());
     assertModules("project");
-
-    assertContentRoots("project",
-                       getProjectPath(),
-                       path("../outer1/src/main/java"),
-                       path("../outer1/src/main/kotlin"),
-                       path("../outer2/src/main/java"),
-                       path("../outer3"),
-                       path("../outer4/generated")
-    );
-    assertSourceRoots("project", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE,
-                   path("src/main/java"),
-                   path("../outer1/src/main/java"),
-                   path("../outer1/src/main/kotlin"),
-                   path("../outer2/src/main/java"),
-                   path("../outer3")
-      )
-      .sourceRoots(ExternalSystemSourceType.SOURCE_GENERATED,
-                   path("build/generated"),
-                   path("../outer4/generated")
-      )
-    );
+    assertContentEntryExists("project",
+                             "",
+                             "../outer1/src/main/java",
+                             "../outer1/src/main/kotlin",
+                             "../outer2",
+                             "../outer3",
+                             "build/generated",
+                             "../outer4");
+    assertSourceExists("project",
+                       "src/main/java",
+                       "../outer1/src/main/java",
+                       "../outer1/src/main/kotlin",
+                       "../outer2/src/main/java",
+                       "../outer3",
+                       "build/generated",
+                       "../outer4/generated");
   }
 
   @Test
   public void testMultipleSourcesConsistencyCompilerOutput() throws Exception {
     createProjectSubFile("src/main/java/A.java", "class A {}");
     createProjectSubFile("src/main/kotlin/A.kt", "class A {}");
-
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
-    importProject(script(it -> it
-      .withMavenCentral()
-      .withKotlinJvmPlugin()
-      .withJavaLibraryPlugin()
-    ));
-
-    assertModules("project");
-
-    assertContentRoots("project", getProjectPath());
-    assertSourceRoots("project", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"), path("src/main/kotlin"))
+    importPerSourceSet(false);
+    importProject(
+      createBuildScriptBuilder()
+        .withMavenCentral()
+        .withKotlinJvmPlugin()
+        .withJavaLibraryPlugin()
+        .generate()
     );
-
+    assertModules("project");
+    assertContentEntryExists("project");
+    assertSourceExists("project", "src/main/java", "src/main/kotlin");
     assertModuleOutput("project", getProjectPath() + "/build/classes/java/main", getProjectPath() + "/build/classes/java/test");
   }
 
@@ -1020,8 +784,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
           module {
             excludeDirs += file('submodule')
           }
-        }
-        """
+        }"""
     );
 
     assertModules("project");
@@ -1040,61 +803,45 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   public void testSharedSourceFolders() throws Exception {
     createProjectSubFile("settings.gradle", "include 'app1', 'app2'");
     createProjectSubFile("shared/resources/resource.txt");
-    createProjectSubFile("app1/build.gradle", script(it -> it
+    createProjectSubFile("app1/build.gradle", createBuildScriptBuilder()
       .withJavaPlugin()
       .addPostfix(
-        """
-          sourceSets {
-            main.resources.srcDir '../shared/resources'
-          }
-          """
+        "sourceSets {",
+        "  main.resources.srcDir '../shared/resources'",
+        "  }"
       )
-    ));
-    createProjectSubFile("app2/build.gradle", script(it -> it
+      .generate());
+    createProjectSubFile("app2/build.gradle", createBuildScriptBuilder()
       .withJavaPlugin()
       .addPostfix(
-        """
-          sourceSets {
-            main.resources.srcDir '../shared/resources'
-          }
-          """
+        "sourceSets {",
+        "  main.resources.srcDir '../shared/resources'",
+        "  }"
       )
-    ));
+      .generate());
 
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
-    importProject();
+    importPerSourceSet(false);
+    importProject("");
 
     assertModules("project", "project.app1", "project.app2");
-
-    assertContentRoots("project", getProjectPath());
-    assertNoSourceRoots("project");
-
-    assertContentRoots("project.app1", path("app1"), path("shared/resources"));
-    assertSourceRoots("project.app1", it -> it
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("shared/resources"))
-    );
-
-    assertContentRoots("project.app2", path("app2"));
-    assertNoSourceRoots("project.app2");
+    assertResources("project.app1", getProjectPath() + "/shared/resources");
+    assertResources("project.app2");
   }
 
   @Test
   public void testBuildFileAtSourceRootLayout() throws Exception {
     createProjectSubDir("build");
-    createProjectSubFile("build.gradle", script(it -> it
+    final GradleBuildScriptBuilder buildScript = createBuildScriptBuilder()
       .withJavaPlugin()
       .addPostfix(
-        """
-          sourceSets {
-            main.java.srcDirs = ['.']
-          }
-          """
-      )
-    ));
+        "sourceSets {",
+        "  main.java.srcDirs = ['.']",
+        "}"
+      );
 
     Registry.get(GradleExcludeBuildFilesDataService.REGISTRY_KEY).setValue(false);
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(true);
-    importProject();
+    importPerSourceSet(true);
+    importProject(buildScript.generate());
     assertModules("project", "project.main", "project.test");
     assertContentRoots("project");
     assertContentRoots("project.main", getProjectPath());
@@ -1102,16 +849,16 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertNoExcludePatterns("project.main", getExternalSystemConfigFileName());
 
     Registry.get(GradleExcludeBuildFilesDataService.REGISTRY_KEY).setValue(true);
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(true);
-    importProject();
+    importPerSourceSet(true);
+    importProject(buildScript.generate());
     assertModules("project", "project.main", "project.test");
     assertContentRoots("project");
     assertContentRoots("project.main", getProjectPath());
     assertExcludes("project.main", "build");
     assertExcludePatterns("project.main", getExternalSystemConfigFileName());
 
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
-    importProject();
+    importPerSourceSet(false);
+    importProject(buildScript.generate());
     assertModules("project");
     assertContentRoots("project", getProjectPath());
     assertExcludes("project", "build");
@@ -1149,29 +896,48 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertExcludes("project", ".gradle", "build");
 
     assertContentRoots("project", getProjectPath());
-    assertNoSourceRoots("project");
+    assertSources("project");
+    assertResources("project");
+    assertTestSources("project");
+    assertTestResources("project");
+    assertGeneratedSources("project");
+    assertGeneratedResources("project");
+    assertGeneratedTestSources("project");
+    assertGeneratedTestResources("project");
 
     assertContentRoots("project.main", path("src/main"));
-    assertSourceRoots("project.main", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
-    );
+    assertSources("project.main", path("src/main/java"));
+    assertResources("project.main", path("src/main/resources"));
+    assertTestSources("project.main");
+    assertTestResources("project.main");
+    assertGeneratedSources("project.main");
+    assertGeneratedResources("project.main");
+    assertGeneratedTestSources("project.main");
+    assertGeneratedTestResources("project.main");
     assertModuleOutput("project.main", path("build/classes/java/main"), "");
     assertModuleOutputs("project.main", path("build/classes/java/main"), path("build/resources/main"));
 
     assertContentRoots("project.test", path("src/test"));
-    assertSourceRoots("project.test", it -> it
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
-    );
+    assertSources("project.test");
+    assertResources("project.test");
+    assertTestSources("project.test", path("src/test/java"));
+    assertTestResources("project.test", path("src/test/resources"));
+    assertGeneratedSources("project.test");
+    assertGeneratedResources("project.test");
+    assertGeneratedTestSources("project.test");
+    assertGeneratedTestResources("project.test");
     assertModuleOutput("project.test", "", path("build/classes/java/test"));
     assertModuleOutputs("project.test", path("build/classes/java/test"), path("build/resources/test"));
 
     assertContentRoots("project.integrationTest", path("src/integrationTest"));
-    assertSourceRoots("project.integrationTest", it -> it
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/integrationTest/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/integrationTest/resources"))
-    );
+    assertSources("project.integrationTest");
+    assertResources("project.integrationTest");
+    assertTestSources("project.integrationTest", path("src/integrationTest/java"));
+    assertTestResources("project.integrationTest", path("src/integrationTest/resources"));
+    assertGeneratedSources("project.integrationTest");
+    assertGeneratedResources("project.integrationTest");
+    assertGeneratedTestSources("project.integrationTest");
+    assertGeneratedTestResources("project.integrationTest");
     assertModuleOutput("project.integrationTest", "", path("build/classes/java/integrationTest"));
     assertModuleOutputs("project.integrationTest", path("build/classes/java/integrationTest"), path("build/resources/integrationTest"));
   }
@@ -1207,29 +973,48 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertExcludes("project", ".gradle", "build", "out");
 
     assertContentRoots("project", getProjectPath());
-    assertNoSourceRoots("project");
+    assertSources("project");
+    assertResources("project");
+    assertTestSources("project");
+    assertTestResources("project");
+    assertGeneratedSources("project");
+    assertGeneratedResources("project");
+    assertGeneratedTestSources("project");
+    assertGeneratedTestResources("project");
 
     assertContentRoots("project.main", path("src/main"));
-    assertSourceRoots("project.main", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
-    );
+    assertSources("project.main", path("src/main/java"));
+    assertResources("project.main", path("src/main/resources"));
+    assertTestSources("project.main");
+    assertTestResources("project.main");
+    assertGeneratedSources("project.main");
+    assertGeneratedResources("project.main");
+    assertGeneratedTestSources("project.main");
+    assertGeneratedTestResources("project.main");
     assertModuleOutput("project.main", path("out/production/classes"), "");
     assertModuleOutputs("project.main", path("out/production/classes"), path("out/production/resources"));
 
     assertContentRoots("project.test", path("src/test"));
-    assertSourceRoots("project.test", it -> it
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
-    );
+    assertSources("project.test");
+    assertResources("project.test");
+    assertTestSources("project.test", path("src/test/java"));
+    assertTestResources("project.test", path("src/test/resources"));
+    assertGeneratedSources("project.test");
+    assertGeneratedResources("project.test");
+    assertGeneratedTestSources("project.test");
+    assertGeneratedTestResources("project.test");
     assertModuleOutput("project.test", "", path("out/test/classes"));
     assertModuleOutputs("project.test", path("out/test/classes"), path("out/test/resources"));
 
     assertContentRoots("project.integrationTest", path("src/integrationTest"));
-    assertSourceRoots("project.integrationTest", it -> it
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/integrationTest/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/integrationTest/resources"))
-    );
+    assertSources("project.integrationTest");
+    assertResources("project.integrationTest");
+    assertTestSources("project.integrationTest", path("src/integrationTest/java"));
+    assertTestResources("project.integrationTest", path("src/integrationTest/resources"));
+    assertGeneratedSources("project.integrationTest");
+    assertGeneratedResources("project.integrationTest");
+    assertGeneratedTestSources("project.integrationTest");
+    assertGeneratedTestResources("project.integrationTest");
     assertModuleOutput("project.integrationTest", "", path("out/integrationTest/classes"));
     assertModuleOutputs("project.integrationTest", path("out/integrationTest/classes"), path("out/integrationTest/resources"));
   }
@@ -1256,29 +1041,48 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertExcludes("project", ".gradle", "build");
 
     assertContentRoots("project", getProjectPath());
-    assertNoSourceRoots("project");
+    assertSources("project");
+    assertResources("project");
+    assertTestSources("project");
+    assertTestResources("project");
+    assertGeneratedSources("project");
+    assertGeneratedResources("project");
+    assertGeneratedTestSources("project");
+    assertGeneratedTestResources("project");
 
     assertContentRoots("project.main", path("src/main"));
-    assertSourceRoots("project.main", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
-    );
+    assertSources("project.main", path("src/main/java"));
+    assertResources("project.main", path("src/main/resources"));
+    assertTestSources("project.main");
+    assertTestResources("project.main");
+    assertGeneratedSources("project.main");
+    assertGeneratedResources("project.main");
+    assertGeneratedTestSources("project.main");
+    assertGeneratedTestResources("project.main");
     assertModuleOutput("project.main", path("build/classes/java/main"), "");
     assertModuleOutputs("project.main", path("build/classes/java/main"), path("build/resources/main"));
 
     assertContentRoots("project.test", path("src/test"));
-    assertSourceRoots("project.test", it -> it
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
-    );
+    assertSources("project.test");
+    assertResources("project.test");
+    assertTestSources("project.test", path("src/test/java"));
+    assertTestResources("project.test", path("src/test/resources"));
+    assertGeneratedSources("project.test");
+    assertGeneratedResources("project.test");
+    assertGeneratedTestSources("project.test");
+    assertGeneratedTestResources("project.test");
     assertModuleOutput("project.test", "", path("build/classes/java/test"));
     assertModuleOutputs("project.test", path("build/classes/java/test"), path("build/resources/test"));
 
     assertContentRoots("project.testFixtures", path("src/testFixtures"));
-    assertSourceRoots("project.testFixtures", it -> it
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/testFixtures/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/testFixtures/resources"))
-    );
+    assertSources("project.testFixtures");
+    assertResources("project.testFixtures");
+    assertTestSources("project.testFixtures", path("src/testFixtures/java"));
+    assertTestResources("project.testFixtures", path("src/testFixtures/resources"));
+    assertGeneratedSources("project.testFixtures");
+    assertGeneratedResources("project.testFixtures");
+    assertGeneratedTestSources("project.testFixtures");
+    assertGeneratedTestResources("project.testFixtures");
     assertModuleOutput("project.testFixtures", "", path("build/classes/java/testFixtures"));
     assertModuleOutputs("project.testFixtures", path("build/classes/java/testFixtures"), path("build/resources/testFixtures"));
   }
@@ -1305,31 +1109,88 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertExcludes("project", ".gradle", "build", "out");
 
     assertContentRoots("project", getProjectPath());
-    assertNoSourceRoots("project");
+    assertSources("project");
+    assertResources("project");
+    assertTestSources("project");
+    assertTestResources("project");
+    assertGeneratedSources("project");
+    assertGeneratedResources("project");
+    assertGeneratedTestSources("project");
+    assertGeneratedTestResources("project");
 
     assertContentRoots("project.main", path("src/main"));
-    assertSourceRoots("project.main", it -> it
-      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
-      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
-    );
+    assertSources("project.main", path("src/main/java"));
+    assertResources("project.main", path("src/main/resources"));
+    assertTestSources("project.main");
+    assertTestResources("project.main");
+    assertGeneratedSources("project.main");
+    assertGeneratedResources("project.main");
+    assertGeneratedTestSources("project.main");
+    assertGeneratedTestResources("project.main");
     assertModuleOutput("project.main", path("out/production/classes"), "");
     assertModuleOutputs("project.main", path("out/production/classes"), path("out/production/resources"));
 
     assertContentRoots("project.test", path("src/test"));
-    assertSourceRoots("project.test", it -> it
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
-    );
+    assertSources("project.test");
+    assertResources("project.test");
+    assertTestSources("project.test", path("src/test/java"));
+    assertTestResources("project.test", path("src/test/resources"));
+    assertGeneratedSources("project.test");
+    assertGeneratedResources("project.test");
+    assertGeneratedTestSources("project.test");
+    assertGeneratedTestResources("project.test");
     assertModuleOutput("project.test", "", path("out/test/classes"));
     assertModuleOutputs("project.test", path("out/test/classes"), path("out/test/resources"));
 
     assertContentRoots("project.testFixtures", path("src/testFixtures"));
-    assertSourceRoots("project.testFixtures", it -> it
-      .sourceRoots(ExternalSystemSourceType.TEST, path("src/testFixtures/java"))
-      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/testFixtures/resources"))
-    );
+    assertSources("project.testFixtures");
+    assertResources("project.testFixtures");
+    assertTestSources("project.testFixtures", path("src/testFixtures/java"));
+    assertTestResources("project.testFixtures", path("src/testFixtures/resources"));
+    assertGeneratedSources("project.testFixtures");
+    assertGeneratedResources("project.testFixtures");
+    assertGeneratedTestSources("project.testFixtures");
+    assertGeneratedTestResources("project.testFixtures");
     assertModuleOutput("project.testFixtures", "", path("out/testFixtures/classes"));
     assertModuleOutputs("project.testFixtures", path("out/testFixtures/classes"), path("out/testFixtures/resources"));
+  }
+
+  protected void assertDefaultGradleJavaProjectFolders() {
+    if (GradleProjectSettings.isDelegatedBuildEnabled(myProject, getProjectPath())) {
+      assertExcludes("project", ".gradle", "build");
+    }
+    else {
+      assertExcludes("project", ".gradle", "build", "out");
+    }
+
+    assertContentRoots("project", getProjectPath());
+    assertSources("project");
+    assertResources("project");
+    assertTestSources("project");
+    assertTestResources("project");
+
+    assertContentRoots("project.main", path("src/main"));
+    assertSources("project.main", path("src/main/java"));
+    assertResources("project.main", path("src/main/resources"));
+
+    assertContentRoots("project.test", path("src/test"));
+    assertTestSources("project.test", path("src/test/java"));
+    assertTestResources("project.test", path("src/test/resources"));
+  }
+
+  protected void assertDefaultGradleJavaProjectFoldersForMergedModule() {
+    if (GradleProjectSettings.isDelegatedBuildEnabled(myProject, getProjectPath())) {
+      assertExcludes("project", ".gradle", "build");
+    }
+    else {
+      assertExcludes("project", ".gradle", "build", "out");
+    }
+
+    assertContentRoots("project", getProjectPath());
+    assertSources("project", path("src/main/java"));
+    assertResources("project", path("src/main/resources"));
+    assertTestSources("project", path("src/test/java"));
+    assertTestResources("project", path("src/test/resources"));
   }
 
   private void createDefaultDirs() throws IOException {
@@ -1337,6 +1198,38 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     createProjectSubFile("src/test/java/A.java");
     createProjectSubFile("src/main/resources/resource.properties");
     createProjectSubFile("src/test/resources/test_resource.properties");
+  }
+
+  @Nullable
+  protected ContentEntry findContentEntry(@NotNull String moduleName, @NotNull String contentPath) {
+    ModuleRootManager moduleRootManager = getRootManager(moduleName);
+    Module module = moduleRootManager.getModule();
+    String rootPath = getAbsolutePath(ExternalSystemApiUtil.getExternalProjectPath(module));
+    String expectedContentPath = getAbsolutePath(rootPath + "/" + contentPath);
+    ContentEntry[] contentEntries = moduleRootManager.getContentEntries();
+    for (ContentEntry contentEntry : contentEntries) {
+      String actualContentPath = getAbsolutePath(contentEntry.getUrl());
+      if (actualContentPath.equals(expectedContentPath)) return contentEntry;
+    }
+    return null;
+  }
+
+  protected void assertContentEntryExists(@NotNull String moduleName, String @NotNull ... contentPaths) {
+    for (String contentPath : contentPaths) {
+      ContentEntry contentEntry = findContentEntry(moduleName, contentPath);
+      assertNotNull("Content entry " + contentPath + " not found in module " + moduleName, contentEntry);
+    }
+  }
+
+  protected void assertSourceExists(@NotNull String moduleName, String @NotNull ... sourcePaths) {
+    for (String sourcePath : sourcePaths) {
+      SourceFolder sourceFolder = findSource(moduleName, sourcePath);
+      assertNotNull("Source folder " + sourcePath + " not found in module " + moduleName, sourceFolder);
+    }
+  }
+
+  protected void importPerSourceSet(boolean b) {
+    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(b);
   }
 
   protected void waitForModulesUpdate() throws Exception {

@@ -31,18 +31,21 @@ public class PyDocstringFileType extends PythonFileType {
     super(new PyDocstringLanguageDialect());
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return PyNames.PY_DOCSTRING_ID;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
+  public String getDescription() {
     return PyPsiBundle.message("filetype.python.docstring.description");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDefaultExtension() {
+  public String getDefaultExtension() {
     return "docstring";
   }
 }

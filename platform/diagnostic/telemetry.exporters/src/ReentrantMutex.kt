@@ -26,7 +26,6 @@ For more information, please refer to <https://unlicense.org>
 
 package com.intellij.platform.diagnostic.telemetry.exporters
 
-import com.intellij.concurrency.IntelliJContextElement
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -46,10 +45,6 @@ internal suspend fun <T> Mutex.withReentrantLock(block: suspend () -> T): T {
   }
 }
 
-private class ReentrantMutexContextElement(
-  override val key: ReentrantMutexContextKey,
-) : CoroutineContext.Element, IntelliJContextElement {
-  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
-}
+private class ReentrantMutexContextElement(override val key: ReentrantMutexContextKey) : CoroutineContext.Element
 
 private data class ReentrantMutexContextKey(@JvmField val mutex: Mutex) : CoroutineContext.Key<ReentrantMutexContextElement>

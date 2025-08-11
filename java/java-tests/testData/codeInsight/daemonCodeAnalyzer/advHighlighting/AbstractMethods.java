@@ -1,11 +1,11 @@
 // abstract methods
 class a {
-  <error descr="Method body or 'abstract' modifier expected">void f();</error>
+  <error descr="Missing method body, or declare abstract">void f();</error>
 
 }
 abstract class c1 {
   abstract void f1();
-  <error descr="Method body or 'abstract' modifier expected">int f2();</error>
+  <error descr="Missing method body, or declare abstract">int f2();</error>
 }
 
 interface ff {
@@ -80,11 +80,7 @@ abstract class cc2 extends cc1 {
   abstract protected void f(int i);
 }
 class cc3 extends cc2 {
-  public void f(int i) {
-    new Object() {
-        <error descr="Method body expected">void x();</error>
-    };
-  }
+  public void f(int i) {}
 }
 ///////////////
 interface MyComparator {
@@ -93,7 +89,6 @@ interface MyComparator {
     boolean equals(java.lang.Object object);
 }
 class MyComparatorImpl implements MyComparator {
-    <error descr="Method body expected">MyComparatorImpl();</error>
     public int compare(Object o, Object o1) {
         new MyComparator() {
             public int compare(Object o, Object o1) {

@@ -104,10 +104,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> imple
       LOG.error(getConfigurationFactory() + " produced wrong type", e);
       return null;
     }
-    catch (IndexNotReadyException e) {
-      return null;
-    }
-    catch (ProcessCanceledException e) {
+    catch (ProcessCanceledException | IndexNotReadyException e) {
       throw e;
     }
     catch (Throwable e) {

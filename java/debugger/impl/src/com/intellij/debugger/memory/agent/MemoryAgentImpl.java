@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -59,7 +59,8 @@ class MemoryAgentImpl implements MemoryAgent {
     myProgressTracker = MemoryAgentProgressTracker.DISABLED;
   }
 
-  private @NotNull MemoryAgentCapabilities initializeCapabilities(@NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
+  @NotNull
+  private MemoryAgentCapabilities initializeCapabilities(@NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
     return myProxy.initializeCapabilities(evaluationContext);
   }
 
@@ -97,10 +98,11 @@ class MemoryAgentImpl implements MemoryAgent {
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull MemoryAgentActionResult<Pair<long[], ObjectReference[]>> estimateObjectSize(@NotNull EvaluationContextImpl evaluationContext,
-                                                                                              @NotNull ObjectReference reference,
-                                                                                              long timeoutInMillis) throws EvaluateException {
+  public MemoryAgentActionResult<Pair<long[], ObjectReference[]>> estimateObjectSize(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                     @NotNull ObjectReference reference,
+                                                                                     long timeoutInMillis) throws EvaluateException {
     if (!myCapabilities.canEstimateObjectSize()) {
       throw new UnsupportedOperationException("Memory agent can't estimate object size");
     }
@@ -109,10 +111,11 @@ class MemoryAgentImpl implements MemoryAgent {
     return executeOperation(() -> myProxy.estimateObjectSize(evaluationContext, reference, timeoutInMillis));
   }
 
+  @NotNull
   @Override
-  public @NotNull MemoryAgentActionResult<Pair<long[], long[]>> getShallowAndRetainedSizesByObjects(@NotNull EvaluationContextImpl evaluationContext,
-                                                                                                    @NotNull List<ObjectReference> references,
-                                                                                                    long timeoutInMillis) throws EvaluateException {
+  public MemoryAgentActionResult<Pair<long[], long[]>> getShallowAndRetainedSizesByObjects(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                           @NotNull List<ObjectReference> references,
+                                                                                           long timeoutInMillis) throws EvaluateException {
     if (!myCapabilities.canEstimateObjectsSizes()) {
       throw new UnsupportedOperationException("Memory agent can't estimate objects sizes");
     }
@@ -121,10 +124,11 @@ class MemoryAgentImpl implements MemoryAgent {
   }
 
   @Override
-  public @NotNull MemoryAgentActionResult<ObjectsAndSizes> getSortedShallowAndRetainedSizesByClass(@NotNull EvaluationContextImpl evaluationContext,
-                                                                                                   @NotNull ReferenceType classType,
-                                                                                                   long objectsLimit,
-                                                                                                   long timeoutInMillis) throws EvaluateException {
+  @NotNull
+  public MemoryAgentActionResult<ObjectsAndSizes> getSortedShallowAndRetainedSizesByClass(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                          @NotNull ReferenceType classType,
+                                                                                          long objectsLimit,
+                                                                                          long timeoutInMillis) throws EvaluateException {
     if (!myCapabilities.canEstimateObjectsSizes()) {
       throw new UnsupportedOperationException("Memory agent can't estimate objects sizes");
     }
@@ -132,10 +136,11 @@ class MemoryAgentImpl implements MemoryAgent {
     return executeOperation(() -> myProxy.getShallowAndRetainedSizeByClass(evaluationContext, classType, objectsLimit, timeoutInMillis));
   }
 
+  @NotNull
   @Override
-  public @NotNull MemoryAgentActionResult<long[]> getShallowSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
-                                                                          @NotNull List<ReferenceType> classes,
-                                                                          long timeoutInMillis) throws EvaluateException {
+  public MemoryAgentActionResult<long[]> getShallowSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
+                                                                 @NotNull List<ReferenceType> classes,
+                                                                 long timeoutInMillis) throws EvaluateException {
     if (!myCapabilities.canGetShallowSizeByClasses()) {
       throw new UnsupportedOperationException("Memory agent can't get shallow size by classes");
     }
@@ -143,10 +148,11 @@ class MemoryAgentImpl implements MemoryAgent {
     return executeOperation(() -> myProxy.getShallowSizeByClasses(evaluationContext, classes, timeoutInMillis));
   }
 
+  @NotNull
   @Override
-  public @NotNull MemoryAgentActionResult<long[]> getRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
-                                                                           @NotNull List<ReferenceType> classes,
-                                                                           long timeoutInMillis) throws EvaluateException {
+  public MemoryAgentActionResult<long[]> getRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
+                                                                  @NotNull List<ReferenceType> classes,
+                                                                  long timeoutInMillis) throws EvaluateException {
     if (!myCapabilities.canGetRetainedSizeByClasses()) {
       throw new UnsupportedOperationException("Memory agent can't get retained size by classes");
     }
@@ -154,10 +160,11 @@ class MemoryAgentImpl implements MemoryAgent {
     return executeOperation(() -> myProxy.getRetainedSizeByClasses(evaluationContext, classes, timeoutInMillis));
   }
 
+  @NotNull
   @Override
-  public @NotNull MemoryAgentActionResult<Pair<long[], long[]>> getShallowAndRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
-                                                                                                   @NotNull List<ReferenceType> classes,
-                                                                                                   long timeoutInMillis) throws EvaluateException {
+  public MemoryAgentActionResult<Pair<long[], long[]>> getShallowAndRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                          @NotNull List<ReferenceType> classes,
+                                                                                          long timeoutInMillis) throws EvaluateException {
     if (!myCapabilities.canGetRetainedSizeByClasses() || !myCapabilities.canGetShallowSizeByClasses()) {
       throw new UnsupportedOperationException("Memory agent can't get shallow and retained size by classes");
     }
@@ -165,12 +172,13 @@ class MemoryAgentImpl implements MemoryAgent {
     return executeOperation(() -> myProxy.getShallowAndRetainedSizeByClasses(evaluationContext, classes, timeoutInMillis));
   }
 
+  @NotNull
   @Override
-  public @NotNull MemoryAgentActionResult<ReferringObjectsInfo> findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext,
-                                                                                          @NotNull ObjectReference reference,
-                                                                                          int pathsNumber,
-                                                                                          int objectsNumber,
-                                                                                          long timeoutInMillis) throws EvaluateException {
+  public MemoryAgentActionResult<ReferringObjectsInfo> findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                 @NotNull ObjectReference reference,
+                                                                                 int pathsNumber,
+                                                                                 int objectsNumber,
+                                                                                 long timeoutInMillis) throws EvaluateException {
     if (!myCapabilities.canFindPathsToClosestGcRoots()) {
       throw new UnsupportedOperationException("Memory agent can't provide paths to closest gc roots");
     }
@@ -197,13 +205,15 @@ class MemoryAgentImpl implements MemoryAgent {
     myProgressIndicator = progressIndicator;
   }
 
+  @Nullable
   @Override
-  public @Nullable MemoryAgentProgressPoint checkProgress() {
+  public MemoryAgentProgressPoint checkProgress() {
     return myProxy.checkProgress();
   }
 
+  @NotNull
   @Override
-  public @NotNull MemoryAgentCapabilities getCapabilities() {
+  public MemoryAgentCapabilities getCapabilities() {
     return myCapabilities;
   }
 

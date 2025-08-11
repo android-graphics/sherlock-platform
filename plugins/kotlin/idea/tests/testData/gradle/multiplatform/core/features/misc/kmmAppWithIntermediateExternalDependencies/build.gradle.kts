@@ -10,7 +10,7 @@ repositories {
 {{default_android_block}}
 
 kotlin {
-    {{androidTargetPlaceholder}}
+    android()
     ios()
 
     val commonMain by sourceSets.getting

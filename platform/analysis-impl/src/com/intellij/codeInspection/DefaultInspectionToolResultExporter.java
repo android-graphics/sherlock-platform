@@ -461,12 +461,17 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     }
 
     checkFromSameFile(refElement, descriptors);
-    if (myContext.getOutputPath() == null || !(myToolWrapper instanceof LocalInspectionToolWrapper)
-        || this instanceof AggregateResultsExporter) {
-      myProblemElements.put(refElement, descriptors);
+    if (filterSuppressed) {
+      if (myContext.getOutputPath() == null || !(myToolWrapper instanceof LocalInspectionToolWrapper)
+          || this instanceof AggregateResultsExporter) {
+        myProblemElements.put(refElement, descriptors);
+      }
+      else {
+        addLocalInspectionProblem(refElement, descriptors);
+      }
     }
     else {
-      addLocalInspectionProblem(refElement, descriptors);
+      myProblemElements.put(refElement, descriptors);
     }
   }
 

@@ -17,8 +17,8 @@
 package org.intellij.plugins.relaxNG.compact;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
@@ -30,7 +30,8 @@ import java.util.Map;
 
 public class RncHighlighter extends SyntaxHighlighterBase {
   @Override
-  public @NotNull Lexer getHighlightingLexer() {
+  @NotNull
+  public Lexer getHighlightingLexer() {
     return new CompactSyntaxLexerAdapter();
   }
 

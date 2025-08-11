@@ -35,7 +35,8 @@ public final class ScopeUtil {
   private ScopeUtil() {
   }
 
-  public static @Nullable PsiElement getParameterScope(final PsiElement element){
+  @Nullable
+  public static PsiElement getParameterScope(final PsiElement element){
     if (element instanceof PyNamedParameter){
       final PyFunction function = getParentOfType(element, PyFunction.class, false);
       if (function != null){
@@ -67,11 +68,13 @@ public final class ScopeUtil {
    *
    * This method does not access AST if underlying PSI is stub based.
    */
-  public static @Nullable ScopeOwner getScopeOwner(final @Nullable PsiElement element) {
+  @Nullable
+  public static ScopeOwner getScopeOwner(@Nullable final PsiElement element) {
     return (ScopeOwner)ScopeUtilCore.getScopeOwner(element);
   }
 
-  public static @Nullable ScopeOwner getDeclarationScopeOwner(@Nullable PsiElement anchor, @Nullable String name) {
+  @Nullable
+  public static ScopeOwner getDeclarationScopeOwner(@Nullable PsiElement anchor, @Nullable String name) {
     if (name != null) {
       final ScopeOwner originalScopeOwner = getScopeOwner(anchor);
       ScopeOwner scopeOwner = originalScopeOwner;
@@ -88,9 +91,10 @@ public final class ScopeUtil {
     return null;
   }
 
-  public static @NotNull List<PsiElement> getElementsOfAccessType(@NotNull String name,
-                                                                  @NotNull ScopeOwner scopeOwner,
-                                                                  @NotNull ReadWriteInstruction.ACCESS type) {
+  @NotNull
+  public static List<PsiElement> getElementsOfAccessType(@NotNull String name,
+                                                         @NotNull ScopeOwner scopeOwner,
+                                                         @NotNull ReadWriteInstruction.ACCESS type) {
     return StreamEx
       .of(ControlFlowCache.getControlFlow(scopeOwner).getInstructions())
       .select(ReadWriteInstruction.class)

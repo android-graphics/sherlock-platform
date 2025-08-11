@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.facet.ui.libraries;
 
@@ -10,11 +10,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public class LibraryDownloadInfo {
-  private final @Nullable RemoteRepositoryInfo myRemoteRepository;
+  @Nullable private final RemoteRepositoryInfo myRemoteRepository;
   private final String myRelativeDownloadUrl;
   private final String myFileNamePrefix;
   private final String myFileNameSuffix;
-  private final @Nullable String myPresentableUrl;
+  @Nullable private final String myPresentableUrl;
 
   public LibraryDownloadInfo(final @NotNull RemoteRepositoryInfo remoteRepository,
                              final @NotNull @NonNls String relativeDownloadUrl,
@@ -45,40 +45,47 @@ public class LibraryDownloadInfo {
     this(downloadUrl, null, fileNamePrefix);
   }
 
-  public @NotNull String getDownloadUrl() {
+  @NotNull
+  public String getDownloadUrl() {
     return myRemoteRepository != null ? getDownloadUrl(myRemoteRepository.getDefaultMirror()) : myRelativeDownloadUrl;
   }
 
-  public @NotNull String getDownloadUrl(String mirror) {
+  @NotNull
+  public String getDownloadUrl(String mirror) {
     return mirror + myRelativeDownloadUrl;
   }
 
-  public @Nullable RemoteRepositoryInfo getRemoteRepository() {
+  @Nullable
+  public RemoteRepositoryInfo getRemoteRepository() {
     return myRemoteRepository;
   }
 
-  public @NotNull String getFileNamePrefix() {
+  @NotNull
+  public String getFileNamePrefix() {
     return myFileNamePrefix;
   }
 
-  public @NotNull String getFileNameSuffix() {
+  @NotNull
+  public String getFileNameSuffix() {
     return myFileNameSuffix;
   }
 
-  public @NotNull String getFileName() {
+  @NotNull
+  public String getFileName() {
     return myFileNamePrefix + myFileNameSuffix;
   }
 
-  public @NotNull String getPresentableUrl() {
+  @NotNull
+  public String getPresentableUrl() {
     return myPresentableUrl != null ? myPresentableUrl
            : myRemoteRepository != null ? myRemoteRepository.getDefaultMirror() : myRelativeDownloadUrl;
   }
 
-  public @NotNull String getPresentableUrl(String mirror) {
+  @NotNull
+  public String getPresentableUrl(String mirror) {
     return myPresentableUrl != null ? myPresentableUrl : mirror;
   }
 
-  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -94,7 +101,6 @@ public class LibraryDownloadInfo {
     return true;
   }
 
-  @Override
   public int hashCode() {
     int result = myRemoteRepository != null ? myRemoteRepository.hashCode() : 0;
     result = 31 * result + (myRelativeDownloadUrl != null ? myRelativeDownloadUrl.hashCode() : 0);

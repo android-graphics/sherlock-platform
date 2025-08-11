@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -85,21 +84,24 @@ final class PsiReflectionAccessUtil {
     return type == null || isAccessibleType(type);
   }
 
-  public static @Nullable String getAccessibleReturnType(@NotNull PsiExpression expression, @Nullable PsiType type) {
+  @Nullable
+  public static String getAccessibleReturnType(@NotNull PsiExpression expression, @Nullable PsiType type) {
     String expectedType = tryGetWeakestAccessibleExpectedType(expression);
     if (expectedType != null) return expectedType;
 
     return type != null ? nearestAccessibleType(type).getCanonicalText() : null;
   }
 
-  public static @Nullable String getAccessibleReturnType(@NotNull PsiExpression expression, @Nullable PsiClass psiClass) {
+  @Nullable
+  public static String getAccessibleReturnType(@NotNull PsiExpression expression, @Nullable PsiClass psiClass) {
     String expectedType = tryGetWeakestAccessibleExpectedType(expression);
     if (expectedType != null) return expectedType;
 
     return nearestAccessibleBaseClassName(psiClass);
   }
 
-  private static @Nullable String tryGetWeakestAccessibleExpectedType(@NotNull PsiExpression expression) {
+  @Nullable
+  private static String tryGetWeakestAccessibleExpectedType(@NotNull PsiExpression expression) {
     PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
     PsiType realType = expression.getType();
     if (expectedType != null && realType != null) {
@@ -113,7 +115,8 @@ final class PsiReflectionAccessUtil {
     return null;
   }
 
-  private static @NotNull List<PsiType> getAllAssignableSupertypes(@NotNull PsiType from, @NotNull PsiType to) {
+  @NotNull
+  private static List<PsiType> getAllAssignableSupertypes(@NotNull PsiType from, @NotNull PsiType to) {
     Set<PsiType> types = new LinkedHashSet<>();
     Queue<PsiType> queue = new ArrayDeque<>();
     queue.offer(from);
@@ -130,12 +133,14 @@ final class PsiReflectionAccessUtil {
     return result;
   }
 
+  @NotNull
   @Contract(pure = true)
-  public static @NotNull String classForName(@NotNull String typeName) {
+  public static String classForName(@NotNull String typeName) {
     return TypeConversionUtil.isPrimitive(typeName) ? typeName + ".class" : "java.lang.Class.forName(\"" + typeName + "\")";
   }
 
-  public static @NotNull String getUniqueMethodName(@NotNull PsiClass psiClass, @NotNull String prefix) {
+  @NotNull
+  public static String getUniqueMethodName(@NotNull PsiClass psiClass, @NotNull String prefix) {
     if (!StringUtil.isJavaIdentifier(prefix)) throw new IllegalArgumentException("prefix must be a correct java identifier: " + prefix);
     int i = 1;
     String name;
@@ -155,16 +160,12 @@ final class PsiReflectionAccessUtil {
 
     if (TypeConversionUtil.isPrimitiveAndNotNull(type)) return true;
 
-    if (type instanceof PsiWildcardType wildcardType) {
-      var bound = wildcardType.getBound();
-      return bound == null || isAccessibleType(bound);
-    }
-
     PsiClass psiClass = PsiTypesUtil.getPsiClass(type);
     return isAccessible(psiClass) && !hasInaccessibleGenerics(type);
   }
 
-  public static @NotNull PsiType nearestAccessibleType(@NotNull PsiType type) {
+  @NotNull
+  public static PsiType nearestAccessibleType(@NotNull PsiType type) {
     while (!isAccessibleType(type)) {
       PsiClass psiClass = PsiTypesUtil.getPsiClass(type);
       boolean isAccessible = isAccessible(psiClass);
@@ -172,18 +173,15 @@ final class PsiReflectionAccessUtil {
         return TypeConversionUtil.erasure(type);
       }
 
-      PsiType[] types = type.getSuperTypes();
-      if (types.length == 0) {
-        Logger.getInstance(PsiReflectionAccessUtil.class).error("Empty super types for " + type);
-      }
-      type = types[0];
+      type = type.getSuperTypes()[0];
     }
 
     return type;
   }
 
   @Contract("null -> null")
-  private static @Nullable String nearestAccessibleBaseClassName(@Nullable PsiClass psiClass) {
+  @Nullable
+  private static String nearestAccessibleBaseClassName(@Nullable PsiClass psiClass) {
     while (psiClass != null && !isAccessible(psiClass)) {
       psiClass = psiClass.getSuperClass();
     }

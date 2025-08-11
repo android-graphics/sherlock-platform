@@ -2,9 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchingProcessStatisticsCollector
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 class SearchProcessLogger : SearchAdapter() {
 
   private val reportedContributors = mutableSetOf<SearchEverywhereContributor<*>>()

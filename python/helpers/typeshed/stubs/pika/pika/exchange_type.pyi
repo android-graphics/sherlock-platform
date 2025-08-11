@@ -1,7 +1,7 @@
 from enum import Enum
 
 class ExchangeType(Enum):
-    direct = "direct"
-    fanout = "fanout"
-    headers = "headers"
-    topic = "topic"
+    direct: str
+    fanout: str
+    headers: str
+    topic: str

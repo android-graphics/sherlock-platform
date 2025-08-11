@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@ApiStatus.Internal
 public final class UndoChangeRevertingVisitor extends ChangeVisitor {
   private static final Logger LOG = Logger.getInstance(UndoChangeRevertingVisitor.class);
 

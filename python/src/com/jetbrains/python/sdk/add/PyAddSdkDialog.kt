@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add
 
 import com.intellij.CommonBundle
@@ -25,21 +25,9 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.PyExecutionException
-import com.jetbrains.python.sdk.PreferredSdkComparator
-import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.add.v1.CreateSdkInterrupted
-import com.jetbrains.python.sdk.add.v1.PyAddExistingCondaEnvPanel
-import com.jetbrains.python.sdk.add.v1.PyAddExistingVirtualEnvPanel
-import com.jetbrains.python.sdk.add.v1.PyAddNewCondaEnvPanel
-import com.jetbrains.python.sdk.add.v1.PyAddNewVirtualEnvPanel
-import com.jetbrains.python.sdk.add.v1.PyAddSystemWideInterpreterPanel
-import com.jetbrains.python.sdk.add.v1.doCreateSouthPanel
-import com.jetbrains.python.showProcessExecutionErrorDialog
-import com.jetbrains.python.sdk.add.v1.swipe
+import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.jetbrains.python.sdk.detectVirtualEnvs
-import com.jetbrains.python.sdk.isAssociatedWithModule
-import com.jetbrains.python.sdk.sdkSeemsValid
 import java.awt.CardLayout
 import java.awt.event.ActionEvent
 import java.io.IOException
@@ -55,11 +43,9 @@ import javax.swing.JPanel
  * Use [show] to instantiate and show the dialog.
  *
  */
-class PyAddSdkDialog private constructor(
-  private val project: Project?,
-  private val module: Module?,
-  private val existingSdks: List<Sdk>,
-) : DialogWrapper(project) {
+class PyAddSdkDialog private constructor(private val project: Project?,
+                                         private val module: Module?,
+                                         private val existingSdks: List<Sdk>) : DialogWrapper(project) {
   /**
    * This is the main panel that supplies sliding effect for the wizard states.
    */
@@ -92,7 +78,7 @@ class PyAddSdkDialog private constructor(
     val venvPanel = createVirtualEnvPanel(project, module, sdks)
     val condaPanel = createAnacondaPanel(project, module)
     val systemWidePanel = PyAddSystemWideInterpreterPanel(project, module, existingSdks, context)
-    return if (PyCondaSdkCustomizer.Companion.instance.preferCondaEnvironments) {
+    return if (PyCondaSdkCustomizer.instance.preferCondaEnvironments) {
       listOf(condaPanel, venvPanel, systemWidePanel)
     }
     else {
@@ -134,8 +120,8 @@ class PyAddSdkDialog private constructor(
   private val nextAction: Action = object : DialogWrapperAction(PyBundle.message("python.sdk.next")) {
     override fun doAction(e: ActionEvent) {
       selectedPanel?.let {
-        if (it.actions.containsKey(PyAddSdkDialogFlowAction.NEXT)) onNext()
-        else if (it.actions.containsKey(PyAddSdkDialogFlowAction.FINISH)) {
+        if (it.actions.containsKey(NEXT)) onNext()
+        else if (it.actions.containsKey(FINISH)) {
           onFinish()
         }
       }
@@ -169,7 +155,7 @@ class PyAddSdkDialog private constructor(
 
           panel.addStateListener(object : PyAddSdkStateListener {
             override fun onComponentChanged() {
-              com.jetbrains.python.sdk.add.v1.show(mainPanel, panel.component)
+              show(mainPanel, panel.component)
 
               selectedPanel?.let { updateWizardActionButtons(it) }
             }
@@ -197,7 +183,7 @@ class PyAddSdkDialog private constructor(
           cardLayout.show(cardPanel, selectedValue.panelName)
 
           southPanel?.let {
-            if (selectedValue.actions.containsKey(PyAddSdkDialogFlowAction.NEXT)) {
+            if (selectedValue.actions.containsKey(NEXT)) {
               navigationPanelCardLayout?.show(it, WIZARD_CARD_PANE)
               rootPane.defaultButton = nextButton.value
 
@@ -220,11 +206,9 @@ class PyAddSdkDialog private constructor(
     }
   }
 
-  private fun createVirtualEnvPanel(
-    project: Project?,
-    module: Module?,
-    existingSdks: List<Sdk>,
-  ): PyAddSdkPanel {
+  private fun createVirtualEnvPanel(project: Project?,
+                                    module: Module?,
+                                    existingSdks: List<Sdk>): PyAddSdkPanel {
     val newVirtualEnvPanel = when {
       allowCreatingNewEnvironments(project) -> PyAddNewVirtualEnvPanel(project, module, existingSdks, null, context)
       else -> null
@@ -248,9 +232,9 @@ class PyAddSdkDialog private constructor(
       else -> null
     }
     val panels = listOf(newCondaEnvPanel,
-                        PyAddExistingCondaEnvPanel(project, existingSdks, null))
+                        PyAddExistingCondaEnvPanel(project, module, existingSdks, null, context))
       .filterNotNull()
-    val defaultPanel = if (PyCondaSdkCustomizer.Companion.instance.preferExistingEnvironments) panels[1] else panels[0]
+    val defaultPanel = if (PyCondaSdkCustomizer.instance.preferExistingEnvironments) panels[1] else panels[0]
     return PyAddSdkGroupPanel(PyBundle.messagePointer("python.add.sdk.panel.name.conda.environment"),
                               PythonIcons.Python.Anaconda, panels, defaultPanel)
   }
@@ -277,7 +261,7 @@ class PyAddSdkDialog private constructor(
       it.previous()
 
       // sliding effect
-      if (it.actions.containsKey(PyAddSdkDialogFlowAction.PREVIOUS)) {
+      if (it.actions.containsKey(PREVIOUS)) {
         val stepContent = it.component
         val stepContentName = stepContent.hashCode().toString()
 
@@ -328,9 +312,9 @@ class PyAddSdkDialog private constructor(
 
     it.actions.forEach { (action, isEnabled) ->
       val actionButton = when (action) {
-        PyAddSdkDialogFlowAction.PREVIOUS -> previousButton.value
-        PyAddSdkDialogFlowAction.NEXT -> nextButton.value.apply { text = PyBundle.message("python.sdk.next") }
-        PyAddSdkDialogFlowAction.FINISH -> nextButton.value.apply { text = PyBundle.message("python.sdk.finish") }
+        PREVIOUS -> previousButton.value
+        NEXT -> nextButton.value.apply { text = PyBundle.message("python.sdk.next") }
+        FINISH -> nextButton.value.apply { text = PyBundle.message("python.sdk.finish") }
         else -> null
       }
       actionButton?.isEnabled = isEnabled
@@ -363,12 +347,10 @@ class PyAddSdkDialog private constructor(
      * and Docker Compose types throws [NoClassDefFoundError] exception when
      * `org.jetbrains.plugins.remote-run` plugin is disabled.
      */
-    private fun PyAddSdkProvider.safeCreateView(
-      project: Project?,
-      module: Module?,
-      existingSdks: List<Sdk>,
-      context: UserDataHolder,
-    ): PyAddSdkView? {
+    private fun PyAddSdkProvider.safeCreateView(project: Project?,
+                                                module: Module?,
+                                                existingSdks: List<Sdk>,
+                                                context: UserDataHolder): PyAddSdkView? {
       try {
         return createView(project, module, null, existingSdks, context)
       }
@@ -379,3 +361,5 @@ class PyAddSdkDialog private constructor(
     }
   }
 }
+
+class CreateSdkInterrupted : Exception()

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -26,8 +26,9 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
+  @NotNull
   @Override
-  public @NotNull Set<FileType> getFileTypes() {
+  public Set<FileType> getFileTypes() {
     return Set.of(JavaFileType.INSTANCE, JavaClassFileType.INSTANCE);
   }
 
@@ -79,10 +80,11 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
     return CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<CompilerRef> getHierarchyRestrictedToLibraryScope(@NotNull CompilerRef baseRef,
-                                                                         @NotNull PsiElement basePsi,
-                                                                         @NotNull NameEnumerator names, @NotNull GlobalSearchScope libraryScope)
+  public List<CompilerRef> getHierarchyRestrictedToLibraryScope(@NotNull CompilerRef baseRef,
+                                                                @NotNull PsiElement basePsi,
+                                                                @NotNull NameEnumerator names, @NotNull GlobalSearchScope libraryScope)
     throws IOException {
     @Nullable PsiClass value =
       basePsi instanceof PsiClass ? (PsiClass)basePsi : ReadAction.compute(() -> (PsiMember)basePsi).getContainingClass();
@@ -111,13 +113,15 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
     return overridden;
   }
 
+  @NotNull
   @Override
-  public @NotNull Class<? extends CompilerRef.CompilerClassHierarchyElementDef> getHierarchyObjectClass() {
+  public Class<? extends CompilerRef.CompilerClassHierarchyElementDef> getHierarchyObjectClass() {
     return CompilerRef.CompilerClassHierarchyElementDef.class;
   }
 
+  @NotNull
   @Override
-  public @NotNull Class<? extends CompilerRef> getFunExprClass() {
+  public Class<? extends CompilerRef> getFunExprClass() {
     return CompilerRef.JavaCompilerFunExprDef.class;
   }
 

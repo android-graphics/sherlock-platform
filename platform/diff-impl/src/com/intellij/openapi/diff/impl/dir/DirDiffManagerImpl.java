@@ -30,14 +30,14 @@ public class DirDiffManagerImpl extends DirDiffManager {
   }
 
   @Override
-  public void showDiff(final @NotNull DiffElement dir1,
-                       final @NotNull DiffElement dir2,
+  public void showDiff(@NotNull final DiffElement dir1,
+                       @NotNull final DiffElement dir2,
                        final DirDiffSettings settings,
-                       final @Nullable Runnable onWindowClosing) {
+                       @Nullable final Runnable onWindowClosing) {
     showDiff(settings, new DirDiffTableModel(myProject, dir1, dir2, settings), onWindowClosing);
   }
   
-  public void showDiff(final DirDiffSettings settings, DirDiffTableModel model, final @Nullable Runnable onWindowClosing) {
+  public void showDiff(final DirDiffSettings settings, DirDiffTableModel model, @Nullable final Runnable onWindowClosing) {
     if (settings.showInFrame) {
       DirDiffFrame frame = new DirDiffFrame(myProject, model);
       setWindowListener(onWindowClosing, frame.getFrame());

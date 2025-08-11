@@ -15,10 +15,8 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
 public class Py3HighlightingTest extends PyTestCase {
@@ -123,12 +121,7 @@ public class Py3HighlightingTest extends PyTestCase {
 
   // PY-32067
   public void testAwaitInNonAsyncFunction() {
-    var testPath = TEST_PATH + getTestName(true) + PyNames.DOT_PY;
-    myFixture.testHighlighting(true, false, false, testPath);
-    final List<IntentionAction> quickFixes = myFixture.filterAvailableIntentions("Convert");
-    assertOneElement(quickFixes);
-    myFixture.launchAction(quickFixes.get(0));
-    myFixture.checkResultByFile(TEST_PATH + getTestName(true) + ".after.py");
+    doTest(false, false);
   }
 
   // PY-32067

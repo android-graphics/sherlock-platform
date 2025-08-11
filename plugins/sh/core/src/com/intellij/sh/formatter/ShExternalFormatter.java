@@ -10,7 +10,6 @@ import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.service.AsyncDocumentFormattingService;
 import com.intellij.formatting.service.AsyncFormattingRequest;
 import com.intellij.openapi.project.Project;
-import com.intellij.platform.eel.provider.utils.EelPathUtils.FileTransferAttributesStrategy;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.sh.ShFileType;
@@ -25,19 +24,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.attribute.PosixFilePermission;
-import java.util.*;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 
-import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
-import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
-import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
-import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemoteTempIfNeeded;
 import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShNotification.NOTIFICATION_GROUP_ID;
 
 public final class ShExternalFormatter extends AsyncDocumentFormattingService {
-  private static final @NonNls List<String> KNOWN_SHELLS = Arrays.asList("bash", "posix", "mksh");
+  @NonNls private static final List<String> KNOWN_SHELLS = Arrays.asList("bash", "posix", "mksh");
 
   private static final Set<Feature> FEATURES = EnumSet.noneOf(Feature.class);
 
@@ -65,7 +61,7 @@ public final class ShExternalFormatter extends AsyncDocumentFormattingService {
   protected @Nullable FormattingTask createFormattingTask(@NotNull AsyncFormattingRequest request) {
     FormattingContext formattingContext = request.getContext();
     Project project = formattingContext.getProject();
-    String shFmtExecutable = ShSettings.getShfmtPath(project);
+    String shFmtExecutable = ShSettings.getShfmtPath();
     if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
       return null;
     }
@@ -77,8 +73,8 @@ public final class ShExternalFormatter extends AsyncDocumentFormattingService {
     ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
     if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(shFmtExecutable)) return null;
 
-    @SuppressWarnings("IO_FILE_USAGE") final var path = Optional.ofNullable(request.getIOFile()).map(File::toPath).orElse(null);
-    if (path == null) return null;
+    File ioFile = request.getIOFile();
+    if (ioFile == null) return null;
 
     @NonNls
     List<String> params = new SmartList<>();
@@ -102,17 +98,12 @@ public final class ShExternalFormatter extends AsyncDocumentFormattingService {
     if (shSettings.MINIFY_PROGRAM) {
       params.add("-mn");
     }
-    params.add(asEelPath(path).toString());
-
-    final var eel = upgradeBlocking(getEelDescriptor(project));
+    params.add(ioFile.getPath());
 
     try {
-      FileTransferAttributesStrategy forceExecutePermission =
-        FileTransferAttributesStrategy.copyWithRequiredPosixPermissions(PosixFilePermission.OWNER_EXECUTE);
       GeneralCommandLine commandLine = new GeneralCommandLine()
         .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
-        .withExePath(transferLocalContentToRemoteTempIfNeeded(eel, Path.of(shFmtExecutable), forceExecutePermission).toString())
-        .withWorkingDirectory(path.getParent())
+        .withExePath(shFmtExecutable)
         .withParameters(params);
 
       OSProcessHandler handler = new OSProcessHandler(commandLine.withCharset(StandardCharsets.UTF_8));

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.validations;
 
 import com.intellij.json.JsonBundle;
@@ -7,8 +7,6 @@ import com.jetbrains.jsonSchema.extension.JsonErrorPriority;
 import com.jetbrains.jsonSchema.extension.JsonSchemaValidation;
 import com.jetbrains.jsonSchema.extension.JsonValidationHost;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
-import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature;
-import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
 import com.jetbrains.jsonSchema.impl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +76,7 @@ public final class NumericValidation implements JsonSchemaValidation {
     }
     Number maximum = schema.getMaximum();
     if (maximum == null) return isValid;
-    boolean isExclusive = schema.isExclusiveMaximum();
+    boolean isExclusive = Boolean.TRUE.equals(schema.isExclusiveMaximum());
     final double doubleValue = maximum.doubleValue();
     if (isExclusive) {
       if (value.doubleValue() >= doubleValue) {
@@ -116,7 +114,7 @@ public final class NumericValidation implements JsonSchemaValidation {
 
     Number minimum = schema.getMinimum();
     if (minimum == null) return isValid;
-    boolean isExclusive = schema.isExclusiveMinimum();
+    boolean isExclusive = Boolean.TRUE.equals(schema.isExclusiveMinimum());
     final double doubleValue = minimum.doubleValue();
     if (isExclusive) {
       if (value.doubleValue() <= doubleValue) {
@@ -142,7 +140,6 @@ public final class NumericValidation implements JsonSchemaValidation {
                           @Nullable JsonSchemaType schemaType,
                           @NotNull JsonValidationHost consumer,
                           @NotNull JsonComplianceCheckerOptions options) {
-    JsonSchemaHighlightingSessionStatisticsCollector.getInstance().reportSchemaUsageFeature(JsonSchemaFusCountedFeature.NumberValidation);
     return checkNumber(propValue.getDelegate(), schema, schemaType, consumer, options);
   }
 }

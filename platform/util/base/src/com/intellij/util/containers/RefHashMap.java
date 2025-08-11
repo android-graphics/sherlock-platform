@@ -5,32 +5,25 @@ import com.intellij.util.ObjectUtilsRt;
 import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.*;
-import java.util.function.BiConsumer;
 
 /**
  * Base class for (soft/weak) keys -> hard values map
  * Null keys are NOT allowed
  * Null values are allowed
  */
-abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, ReferenceQueueable {
+abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   private final MyMap myMap;
   private final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<>();
   private final HardKey myHardKeyInstance = new HardKey(); // "singleton"
   private final @NotNull HashingStrategy<? super K> myStrategy;
   private Set<Entry<K, V>> entrySet;
-  private final BiConsumer<? super @NotNull Map<K, V>, ? super V> myEvictionListener;
 
   RefHashMap(int initialCapacity, float loadFactor, @NotNull HashingStrategy<? super K> strategy) {
-    this(initialCapacity, loadFactor, strategy, null);
-  }
-  RefHashMap(int initialCapacity, float loadFactor, @NotNull HashingStrategy<? super K> strategy, @Nullable BiConsumer<? super @NotNull Map<K, V>, ? super V> evictionListener) {
     myStrategy = strategy;
     myMap = new MyMap(initialCapacity, loadFactor);
-    myEvictionListener = evictionListener;
   }
 
   private RefHashMap(int initialCapacity, float loadFactor) {
@@ -100,9 +93,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, 
   @FunctionalInterface
   interface Key<T> {
     T get();
-    @Override
     int hashCode();
-    @Override
     boolean equals(Object o);
   }
 
@@ -143,16 +134,12 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, 
   }
 
   // returns true if some refs were tossed
-  @Override
-  public boolean processQueue() {
+  boolean processQueue() {
     boolean processed = false;
     Key<K> wk;
     //noinspection unchecked
     while ((wk = (Key<K>)myReferenceQueue.poll()) != null) {
-      V v = removeKey(wk);
-      if (myEvictionListener != null) {
-        myEvictionListener.accept(this, v);
-      }
+      removeKey(wk);
       processed = true;
     }
     return processed;

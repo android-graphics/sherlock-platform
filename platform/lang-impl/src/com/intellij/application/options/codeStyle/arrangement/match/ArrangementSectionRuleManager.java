@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
@@ -42,9 +42,15 @@ public final class ArrangementSectionRuleManager {
   private final ArrangementSectionRulesControl myControl;
   private final ArrangementMatchingRuleEditor myEditor;
 
-  public @Nullable ArrangementSectionRuleData getSectionRuleData(@NotNull StdArrangementMatchRule element) {
-    final ArrangementMatchCondition condition = element.getMatcher().getCondition();
-    return getSectionRuleData(condition);
+  @Nullable
+  public static ArrangementSectionRuleManager getInstance(@NotNull Language language,
+                                                          @NotNull ArrangementStandardSettingsManager settingsManager,
+                                                          @NotNull ArrangementColorsProvider colorsProvider,
+                                                          @NotNull ArrangementSectionRulesControl control) {
+    if (settingsManager.isSectionRulesSupported()) {
+      return new ArrangementSectionRuleManager(language, settingsManager, colorsProvider, control);
+    }
+    return null;
   }
 
   private ArrangementSectionRuleManager(@NotNull Language language,
@@ -63,7 +69,31 @@ public final class ArrangementSectionRuleManager {
     return myEditor;
   }
 
-  public @Nullable ArrangementSectionRuleData getSectionRuleData(@NotNull ArrangementMatchCondition condition) {
+  @NotNull
+  public static Set<ArrangementSettingsToken> getSectionMutexes() {
+    return MUTEXES;
+  }
+
+  public static boolean isEnabled(@NotNull ArrangementSettingsToken token) {
+    return TOKENS.contains(token);
+  }
+
+  public void showEditor(int rowToEdit) {
+    myControl.showEditor(myEditor, rowToEdit);
+  }
+
+  public boolean isSectionRule(@Nullable Object element) {
+    return element instanceof StdArrangementMatchRule && getSectionRuleData((StdArrangementMatchRule)element) != null;
+  }
+
+  @Nullable
+  public ArrangementSectionRuleData getSectionRuleData(@NotNull StdArrangementMatchRule element) {
+    final ArrangementMatchCondition condition = element.getMatcher().getCondition();
+    return getSectionRuleData(condition);
+  }
+
+  @Nullable
+  public ArrangementSectionRuleData getSectionRuleData(@NotNull ArrangementMatchCondition condition) {
     final Ref<Boolean> isStart = new Ref<>();
     final Ref<String> text = new Ref<>();
     condition.invite(new ArrangementMatchConditionVisitor() {
@@ -98,26 +128,16 @@ public final class ArrangementSectionRuleManager {
     return new ArrangementSectionRuleData(processSectionText(StringUtil.notNullize(text.get())), isStart.get());
   }
 
-  public static boolean isEnabled(@NotNull ArrangementSettingsToken token) {
-    return TOKENS.contains(token);
-  }
-
-  public void showEditor(int rowToEdit) {
-    myControl.showEditor(myEditor, rowToEdit);
-  }
-
-  public boolean isSectionRule(@Nullable Object element) {
-    return element instanceof StdArrangementMatchRule && getSectionRuleData((StdArrangementMatchRule)element) != null;
-  }
-
-  public @NotNull StdArrangementMatchRule createDefaultSectionRule() {
+  @NotNull
+  public StdArrangementMatchRule createDefaultSectionRule() {
     final ArrangementAtomMatchCondition type = new ArrangementAtomMatchCondition(START_SECTION);
     final ArrangementAtomMatchCondition text = new ArrangementAtomMatchCondition(TEXT, createDefaultSectionText());
     final ArrangementMatchCondition condition = ArrangementUtil.combine(type, text);
     return new StdArrangementMatchRule(new StdArrangementEntryMatcher(condition));
   }
 
-  private @NotNull String processSectionText(@NotNull String text) {
+  @NotNull
+  private String processSectionText(@NotNull String text) {
     final String lineCommentPrefix = myCommenter.getLineCommentPrefix();
     if (lineCommentPrefix != null && text.startsWith(lineCommentPrefix)) {
       return text;
@@ -133,7 +153,8 @@ public final class ArrangementSectionRuleManager {
            prefix != null && suffix != null ? wrapIntoBlockComment(prefix, suffix, text) : "";
   }
 
-  private @NotNull String createDefaultSectionText() {
+  @NotNull
+  private String createDefaultSectionText() {
     if (myCommenter != null) {
       final String lineCommentPrefix = myCommenter.getLineCommentPrefix();
       if (StringUtil.isNotEmpty(lineCommentPrefix)) {
@@ -147,20 +168,6 @@ public final class ArrangementSectionRuleManager {
       }
     }
     return "";
-  }
-
-  public static @Nullable ArrangementSectionRuleManager getInstance(@NotNull Language language,
-                                                                    @NotNull ArrangementStandardSettingsManager settingsManager,
-                                                                    @NotNull ArrangementColorsProvider colorsProvider,
-                                                                    @NotNull ArrangementSectionRulesControl control) {
-    if (settingsManager.isSectionRulesSupported()) {
-      return new ArrangementSectionRuleManager(language, settingsManager, colorsProvider, control);
-    }
-    return null;
-  }
-
-  public static @NotNull Set<ArrangementSettingsToken> getSectionMutexes() {
-    return MUTEXES;
   }
 
   private static String wrapIntoBlockComment(@NotNull String prefix, @NotNull String suffix, @NotNull String text) {
@@ -184,7 +191,8 @@ public final class ArrangementSectionRuleManager {
       return myIsSectionStart;
     }
 
-    public @NotNull String getText() {
+    @NotNull
+    public String getText() {
       return myText;
     }
   }

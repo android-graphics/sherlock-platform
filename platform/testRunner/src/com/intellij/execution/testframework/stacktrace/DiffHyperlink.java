@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.testframework.stacktrace;
 
@@ -27,13 +27,15 @@ import java.util.Objects;
 public class DiffHyperlink implements Printable {
   private static final String NEW_LINE = "\n";
 
-  private final @NotNull String myExpected;
-  private final @NotNull String myActual;
+  @NotNull
+  private final String myExpected;
+  @NotNull
+  private final String myActual;
   protected final String myFilePath;
   protected final String myActualFilePath;
   private final boolean myPrintOneLine;
   private final HyperlinkInfo myDiffHyperlink = new DiffHyperlinkInfo();
-  private static final int ourMaxExpectedLength = Registry.intValue("test.console.expected.actual.max.length", 255);
+  private final static int ourMaxExpectedLength = Registry.intValue("test.console.expected.actual.max.length", 255);
   private AbstractTestProxy myTestProxy;
 
 
@@ -79,15 +81,18 @@ public class DiffHyperlink implements Printable {
     return getTitle();
   }
 
-  public @Nullable @NlsSafe String getTestName() {
+  @Nullable
+  public @NlsSafe String getTestName() {
     return myTestProxy.getName();
   }
 
-  public @NotNull String getLeft() {
+  @NotNull
+  public String getLeft() {
     return myExpected;
   }
 
-  public @NotNull String getRight() {
+  @NotNull
+  public String getRight() {
     return myActual;
   }
 

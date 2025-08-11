@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -12,11 +12,10 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.model.MavenProfileKind;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
-import org.jetbrains.idea.maven.project.MavenPluginInfo;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenIndexUpdateState;
@@ -28,6 +27,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.tree.TreePath;
 import java.awt.event.InputEvent;
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 
@@ -136,8 +136,9 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     });
   }
 
+  @NotNull
   @Override
-  public @NotNull RootNode getRootElement() {
+  public RootNode getRootElement() {
     return myRoot;
   }
 
@@ -236,7 +237,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public void accept(@NotNull TreeVisitor visitor) {
-    ((TreeVisitor.Acceptor)myTree.getModel()).accept(visitor);
+    ((AsyncTreeModel)myTree.getModel()).accept(visitor);
   }
 
   public void updateGoals() {
@@ -265,8 +266,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     return myProjectToNodeMapping.get(project);
   }
 
-  @ApiStatus.Internal
-  public enum DisplayKind {
+  enum DisplayKind {
     ALWAYS, NEVER, NORMAL
   }
 
@@ -305,28 +305,30 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     NONE, ERROR
   }
 
-  void updatePluginsTree(PluginsNode pluginsNode, List<MavenPluginInfo> pluginInfos) {
-    boundedUpdateService.execute(new MavenProjectsStructure.UpdatePluginsTreeTask(pluginsNode, pluginInfos));
+  void updatePluginsTree(PluginsNode pluginsNode, List<MavenPlugin> plugins) {
+    boundedUpdateService.execute(new MavenProjectsStructure.UpdatePluginsTreeTask(pluginsNode, plugins));
   }
 
   private class UpdatePluginsTreeTask implements Runnable {
-    private final @NotNull PluginsNode myParentNode;
-    private final List<MavenPluginInfo> myPluginInfos;
+    @NotNull private final PluginsNode myParentNode;
+    private final List<MavenPlugin> myPlugins;
 
-    UpdatePluginsTreeTask(@NotNull PluginsNode parentNode, List<MavenPluginInfo> pluginInfos) {
+    UpdatePluginsTreeTask(@NotNull PluginsNode parentNode, List<MavenPlugin> plugins) {
       myParentNode = parentNode;
-      myPluginInfos = pluginInfos;
+      myPlugins = plugins;
     }
 
 
     @Override
     public void run() {
+      File localRepository = getProjectsManager().getLocalRepository();
+
       List<PluginNode> pluginInfos = new ArrayList<>();
-      var iterator = myPluginInfos.iterator();
+      Iterator<MavenPlugin> iterator = myPlugins.iterator();
       while (!isUnloading && iterator.hasNext()) {
-        var next = iterator.next();
-        var pluginInfo = MavenArtifactUtil.readPluginInfo(next.getArtifact());
-        var pluginNode = new PluginNode(MavenProjectsStructure.this, myParentNode, next.getPlugin(), pluginInfo);
+        MavenPlugin next = iterator.next();
+        var pluginInfo = MavenArtifactUtil.readPluginInfo(localRepository, next.getMavenId());
+        var pluginNode = new PluginNode(MavenProjectsStructure.this, myParentNode, next, pluginInfo);
         pluginInfos.add(pluginNode);
       }
       updateNodesInEDT(pluginInfos);

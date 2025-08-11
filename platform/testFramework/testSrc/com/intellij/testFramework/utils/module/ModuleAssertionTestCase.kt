@@ -7,8 +7,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.SourceRootEntity
-import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -38,8 +36,8 @@ abstract class ModuleAssertionTestCase {
     project.withProjectAsync {
       val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
       project.workspaceModel.update("test project initialisation") { storage ->
-        ProjectConfigurator(storage, virtualFileUrlManager, projectRoot)
-          .configure()
+        val projectConfigurator = ProjectConfigurator(storage, virtualFileUrlManager, projectRoot)
+        projectConfigurator.configure()
       }
     }
     return project
@@ -51,57 +49,12 @@ abstract class ModuleAssertionTestCase {
     private val projectRoot: Path
   ) {
 
-    fun addModuleEntity(moduleName: String, relativePath: String, configure: ContentRootConfigurator.() -> Unit = {}) {
-      addModuleEntity(moduleName) {
-        addContentRoot(relativePath, configure)
-      }
-    }
-
-    fun addModuleEntity(moduleName: String, configure: ModuleConfigurator.() -> Unit = {}) {
-      val moduleEntity = ModuleEntity(moduleName, emptyList(), NonPersistentEntitySource)
-      storage addEntity moduleEntity
-
-      ModuleConfigurator(storage, virtualFileUrlManager, projectRoot, moduleEntity)
-        .configure()
-    }
-  }
-
-  class ModuleConfigurator(
-    private val storage: MutableEntityStorage,
-    private val virtualFileUrlManager: VirtualFileUrlManager,
-    private val projectRoot: Path,
-    private val moduleEntity: ModuleEntity.Builder,
-  ) {
-
-    fun addContentRoot(relativePath: String, configure: ContentRootConfigurator.() -> Unit = {}) {
+    fun addModuleEntity(moduleName: String, relativePath: String) {
       val contentRootPath = projectRoot.resolve(relativePath).normalize()
       val contentRoot = contentRootPath.toVirtualFileUrl(virtualFileUrlManager)
-
-      val contentRootEntity = ContentRootEntity(contentRoot, emptyList(), NonPersistentEntitySource) {
-        module = moduleEntity
-      }
-      storage addEntity contentRootEntity
-
-      ContentRootConfigurator(storage, virtualFileUrlManager, projectRoot, contentRootEntity)
-        .configure()
-    }
-  }
-
-  class ContentRootConfigurator(
-    private val storage: MutableEntityStorage,
-    private val virtualFileUrlManager: VirtualFileUrlManager,
-    private val projectRoot: Path,
-    private val contentRootEntity: ContentRootEntity.Builder,
-  ) {
-
-    fun addSourceRoot(typeId: SourceRootTypeId, relativePath: String) {
-      val sourceRootPath = projectRoot.resolve(relativePath).normalize()
-      val sourceRoot = sourceRootPath.toVirtualFileUrl(virtualFileUrlManager)
-
-      val sourceRootEntity = SourceRootEntity(sourceRoot, typeId, NonPersistentEntitySource) {
-        contentRoot = contentRootEntity
-      }
-      storage addEntity sourceRootEntity
+      storage addEntity (ContentRootEntity(contentRoot, emptyList(), NonPersistentEntitySource) {
+        module = ModuleEntity(moduleName, emptyList(), NonPersistentEntitySource)
+      })
     }
   }
 }

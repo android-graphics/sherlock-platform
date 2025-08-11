@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.eel.provider.utils.EelPathUtils.FileTransferAttributesStrategy;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
@@ -45,20 +44,14 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
-import java.nio.file.Path;
-import java.nio.file.attribute.PosixFilePermission;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
-import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
-import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemoteTempIfNeeded;
 import static java.util.Arrays.asList;
 
-public class ShShellcheckExternalAnnotator
-  extends ExternalAnnotator<ShShellcheckExternalAnnotator.CollectedInfo, ShShellcheckExternalAnnotator.ShellcheckResponse> {
+public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellcheckExternalAnnotator.CollectedInfo, ShShellcheckExternalAnnotator.ShellcheckResponse> {
   private static final Logger LOG = Logger.getInstance(ShShellcheckExternalAnnotator.class);
   private static final List<@NlsSafe String> KNOWN_SHELLS = asList("bash", "dash", "ksh", "sh"); //NON-NLS
   private static final @NlsSafe String DEFAULT_SHELL = "bash";
@@ -69,8 +62,9 @@ public class ShShellcheckExternalAnnotator
     return ShShellcheckInspection.SHORT_NAME;
   }
 
+  @Nullable
   @Override
-  public @Nullable CollectedInfo collectInformation(@NotNull PsiFile file) {
+  public CollectedInfo collectInformation(@NotNull PsiFile file) {
     if (!(file instanceof ShFile)) return null;
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return null;
@@ -80,25 +74,21 @@ public class ShShellcheckExternalAnnotator
                              getShellcheckExecutionParams(file));
   }
 
+  @Nullable
   @Override
-  public @Nullable ShellcheckResponse doAnnotate(@NotNull CollectedInfo fileInfo) {
+  public ShellcheckResponse doAnnotate(@NotNull CollectedInfo fileInfo) {
     // Temporary solution to avoid execution under read action in dumb mode. Should be removed after IDEA-229905 will be fixed
     Application application = ApplicationManager.getApplication();
     if (application != null && application.isReadAccessAllowed() && !application.isUnitTestMode()) return null;
 
-    String shellcheckExecutable = ShSettings.getShellcheckPath(fileInfo.project);
+    String shellcheckExecutable = ShSettings.getShellcheckPath();
     if (!ShShellcheckUtil.isExecutionValidPath(shellcheckExecutable)) return null;
     ShShellcheckUtil.checkShellCheckForUpdate(fileInfo.project);
 
-
-    final var eel = upgradeBlocking(getEelDescriptor(fileInfo.project));
-
     try {
-      FileTransferAttributesStrategy forceExecutePermission =
-        FileTransferAttributesStrategy.copyWithRequiredPosixPermissions(PosixFilePermission.OWNER_EXECUTE);
       GeneralCommandLine commandLine = new GeneralCommandLine()
         .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
-        .withExePath(transferLocalContentToRemoteTempIfNeeded(eel, Path.of(shellcheckExecutable), forceExecutePermission).toString())
+        .withExePath(shellcheckExecutable)
         .withParameters(fileInfo.executionParams);
       if (!ApplicationManager.getApplication().isUnitTestMode()) commandLine.withWorkDirectory(fileInfo.workDirectory);
       long timestamp = fileInfo.modificationStamp;
@@ -151,10 +141,10 @@ public class ShShellcheckExternalAnnotator
       String message = result.message;
       @NonNls String scCode = "SC" + code;
       @NonNls String html =
-        "<html>" +
-        "<p>" + StringUtil.escapeXmlEntities(message) + "</p>" +
-        "<p>See <a href='https://github.com/koalaman/shellcheck/wiki/SC" + code + "'>" + scCode + "</a>.</p>" +
-        "</html>";
+          "<html>" +
+              "<p>" + StringUtil.escapeXmlEntities(message) + "</p>" +
+              "<p>See <a href='https://github.com/koalaman/shellcheck/wiki/SC" + code + "'>" + scCode + "</a>.</p>" +
+          "</html>";
       AnnotationBuilder builder = holder.newAnnotation(severity(result.level), message).range(range).tooltip(html);
 
       String formattedMessage = format(message);
@@ -164,12 +154,13 @@ public class ShShellcheckExternalAnnotator
       }
       String quotedMessage = quote(formattedMessage);
       builder.withFix(new ShSuppressInspectionIntention(quotedMessage, scCode, startOffset))
-        .withFix(new ShDisableInspectionIntention(quotedMessage, scCode))
+      .withFix(new ShDisableInspectionIntention(quotedMessage, scCode))
         .create();
     }
   }
 
-  private static @NotNull HighlightSeverity severity(@Nullable String level) {
+  @NotNull
+  private static HighlightSeverity severity(@Nullable String level) {
     if ("error".equals(level)) {
       return HighlightSeverity.ERROR;
     }
@@ -179,13 +170,13 @@ public class ShShellcheckExternalAnnotator
     return HighlightSeverity.WEAK_WARNING;
   }
 
-  private static @NotNull List<@NlsSafe String> getShellcheckExecutionParams(@NotNull PsiFile file) {
+  @NotNull
+  private static List<@NlsSafe String> getShellcheckExecutionParams(@NotNull PsiFile file) {
     String interpreter = getInterpreter(file);
     List<String> params = new SmartList<>();
     ShShellcheckInspection inspection = ShShellcheckInspection.findShShellcheckInspection(file);
 
-    Collections.addAll(params, "--color=never", "--format=json", "--severity=style", "--shell=" + interpreter, "--wiki-link-count=10",
-                       //NON-NLS
+    Collections.addAll(params, "--color=never", "--format=json", "--severity=style", "--shell=" + interpreter, "--wiki-link-count=10", //NON-NLS
                        "--exclude=SC1091", "-"); //NON-NLS
     inspection.getDisabledInspections().forEach(setting -> params.add("--exclude=" + setting));//NON-NLS
     return params;
@@ -202,15 +193,18 @@ public class ShShellcheckExternalAnnotator
   }
 
   @Contract(pure = true)
-  private static @NotNull String format(@NotNull String originalMessage) {
+  @NotNull
+  private static String format(@NotNull String originalMessage) {
     return originalMessage.endsWith(".") ? originalMessage.substring(0, originalMessage.length() - 1) : originalMessage;
   }
 
-  private static @NotNull String quote(@NotNull String originalMessage) {
+  @NotNull
+  private static String quote(@NotNull String originalMessage) {
     return "'" + StringUtil.first(originalMessage, 60, true) + "'";
   }
 
-  private static @NotNull String getInterpreter(@NotNull PsiFile file) {
+  @NotNull
+  private static String getInterpreter(@NotNull PsiFile file) {
     if (!(file instanceof ShFile)) return DEFAULT_SHELL;
     return ShShebangParserUtil.getInterpreter((ShFile)file, KNOWN_SHELLS, DEFAULT_SHELL);
   }

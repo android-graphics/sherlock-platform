@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.ide.DataManager;
@@ -58,13 +58,15 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesH
     reset();
   }
 
+  @Nls
   @Override
-  public @Nls String getDisplayName() {
+  public String getDisplayName() {
     return VcsBundle.message("settings.filter.update.project.info.by.scope");
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent createComponent() {
+  public JComponent createComponent() {
     final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     panel.add(myCheckbox);
     panel.add(myComboBox);

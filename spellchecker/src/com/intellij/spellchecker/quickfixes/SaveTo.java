@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsContexts;
@@ -37,8 +36,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction, DumbAware {
-  private @Nullable DictionaryLayer myLayer = null;
+public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
+  @Nullable private DictionaryLayer myLayer = null;
   private String myWord;
 
   public SaveTo(@NotNull DictionaryLayer layer) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.Disposable;
@@ -34,14 +34,15 @@ import static org.jetbrains.idea.svn.config.SvnIniFile.SERVERS_FILE_NAME;
 
 @State(name = "SvnConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE), reportStatistic = false)
 public class SvnConfiguration implements PersistentStateComponent<SvnConfigurationState>, Disposable {
-  public static final int ourMaxAnnotateRevisionsDefault = 500;
+  public final static int ourMaxAnnotateRevisionsDefault = 500;
 
-  private static final long UPGRADE_TO_15_VERSION_ASKED = 123;
-  private static final long CHANGELIST_SUPPORT = 124;
-  private static final long UPGRADE_TO_16_VERSION_ASKED = 125;
+  private final static long UPGRADE_TO_15_VERSION_ASKED = 123;
+  private final static long CHANGELIST_SUPPORT = 124;
+  private final static long UPGRADE_TO_16_VERSION_ASKED = 125;
 
   private final Project myProject;
-  private @NotNull SvnConfigurationState myState = new SvnConfigurationState();
+  @NotNull
+  private SvnConfigurationState myState = new SvnConfigurationState();
 
   private SvnAuthenticationManager myAuthManager;
   private SvnAuthenticationManager myPassiveAuthManager;
@@ -55,8 +56,9 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   private SvnIniFile myServersFile;
   private SvnIniFile myConfigFile;
 
+  @NotNull
   @Override
-  public @NotNull SvnConfigurationState getState() {
+  public SvnConfigurationState getState() {
     return myState;
   }
 
@@ -74,11 +76,13 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     }
   }
 
-  public @NotNull DiffOptions getMergeOptions() {
+  @NotNull
+  public DiffOptions getMergeOptions() {
     return new DiffOptions(isIgnoreSpacesInMerge(), isIgnoreSpacesInMerge(), isIgnoreSpacesInMerge());
   }
 
-  public @NotNull SvnIniFile getServersFile() {
+  @NotNull
+  public SvnIniFile getServersFile() {
     if (myServersFile == null) {
       myServersFile = new SvnIniFile(getConfigurationPath().resolve(SERVERS_FILE_NAME));
     }
@@ -87,7 +91,8 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     return myServersFile;
   }
 
-  public @NotNull SvnIniFile getConfigFile() {
+  @NotNull
+  public SvnIniFile getConfigFile() {
     if (myConfigFile == null) {
       myConfigFile = new SvnIniFile(getConfigurationPath().resolve(CONFIG_FILE_NAME));
     }
@@ -95,7 +100,8 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     return myConfigFile;
   }
 
-  public @NotNull String getSshTunnelSetting() {
+  @NotNull
+  public String getSshTunnelSetting() {
     // TODO: Utilize both system and user settings
     return StringUtil.notNullize(getConfigFile().getValue("tunnels", "ssh"));
   }
@@ -268,7 +274,8 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     return myState.directory.path;
   }
 
-  public @NotNull Path getConfigurationPath() {
+  @NotNull
+  public Path getConfigurationPath() {
     return Paths.get(getConfigurationDirectory());
   }
 
@@ -379,10 +386,11 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   // TODO: Rewrite AutoStorage to use MemoryPasswordSafe at least
   public static class AuthStorage {
 
-    private final @NotNull TreeSet<String> myKeys = new TreeSet<>();
-    private final @NotNull Map<String, Object> myStorage = new HashMap<>();
+    @NotNull private final TreeSet<String> myKeys = new TreeSet<>();
+    @NotNull private final Map<String, Object> myStorage = new HashMap<>();
 
-    public static @NotNull String getKey(@NotNull String type, @NotNull String realm) {
+    @NotNull
+    public static String getKey(@NotNull String type, @NotNull String realm) {
       return type + "$" + realm;
     }
 
@@ -403,7 +411,8 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
       }
     }
 
-    public synchronized @Nullable Object getDataWithLowerCheck(@NotNull String kind, @NotNull String realm) {
+    @Nullable
+    public synchronized Object getDataWithLowerCheck(@NotNull String kind, @NotNull String realm) {
       String key = getKey(kind, realm);
       Object result = myStorage.get(key);
 
@@ -419,7 +428,8 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     }
   }
 
-  public @NotNull MergeRootInfo getMergeRootInfo(final File file, final SvnVcs svnVcs) {
+  @NotNull
+  public MergeRootInfo getMergeRootInfo(final File file, final SvnVcs svnVcs) {
     if (!myMergeRootInfos.containsKey(file)) {
       myMergeRootInfos.put(file, new MergeRootInfo(file, svnVcs));
     }

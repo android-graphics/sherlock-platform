@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 public class PyStringFormatParser {
   private static final Pattern NEW_STYLE_FORMAT_TOKENS = Pattern.compile("(\\{\\{)|(\\}\\})|(\\{[^\\{\\}]*\\})|([^\\{\\}]+)");
 
-  public abstract static class FormatStringChunk {
+  public static abstract class FormatStringChunk {
     private final int myStartIndex;
     protected int myEndIndex;
 
@@ -52,7 +52,8 @@ public class PyStringFormatParser {
       return myEndIndex;
     }
 
-    public @NotNull TextRange getTextRange() {
+    @NotNull
+    public TextRange getTextRange() {
       return TextRange.create(myStartIndex, myEndIndex);
     }
   }
@@ -65,11 +66,11 @@ public class PyStringFormatParser {
   }
 
   public static class SubstitutionChunk extends FormatStringChunk {
-    private @Nullable String myMappingKey;
-    private @Nullable String myWidth;
-    private @Nullable String myPrecision;
-    private @Nullable Integer myManualPosition;
-    private @Nullable Integer myAutoPosition;
+    @Nullable private String myMappingKey;
+    @Nullable private String myWidth;
+    @Nullable private String myPrecision;
+    @Nullable private Integer myManualPosition;
+    @Nullable private Integer myAutoPosition;
 
     private char myConversionType;
 
@@ -81,7 +82,8 @@ public class PyStringFormatParser {
       myEndIndex = endIndex;
     }
 
-    public @Nullable Integer getManualPosition() {
+    @Nullable
+    public Integer getManualPosition() {
       return myManualPosition;
     }
 
@@ -97,7 +99,8 @@ public class PyStringFormatParser {
      * and implicit indexing.
      *
      */
-    public @Nullable Integer getAutoPosition() {
+    @Nullable
+    public Integer getAutoPosition() {
       return myAutoPosition;
     }
 
@@ -113,7 +116,8 @@ public class PyStringFormatParser {
       myConversionType = conversionType;
     }
 
-    public @Nullable String getPrecision() {
+    @Nullable
+    public String getPrecision() {
       return myPrecision;
     }
 
@@ -121,7 +125,8 @@ public class PyStringFormatParser {
       myPrecision = precision;
     }
 
-    public @Nullable String getWidth() {
+    @Nullable
+    public String getWidth() {
       return myWidth;
     }
 
@@ -129,7 +134,8 @@ public class PyStringFormatParser {
       myWidth = width;
     }
 
-    public @Nullable String getMappingKey() {
+    @Nullable
+    public String getMappingKey() {
       return myMappingKey;
     }
 
@@ -145,13 +151,14 @@ public class PyStringFormatParser {
      * @see #getAutoPosition()
      * @see #getMappingKey()
      */
-    public @Nullable Integer getPosition() {
+    @Nullable
+    public Integer getPosition() {
       return ObjectUtils.chooseNotNull(myManualPosition, myAutoPosition);
     }
   }
 
   public static class PercentSubstitutionChunk extends SubstitutionChunk {
-    private @Nullable String myConversionFlags;
+    @Nullable private String myConversionFlags;
     private char myLengthModifier;
     private boolean myUnclosedMapping;
 
@@ -159,7 +166,8 @@ public class PyStringFormatParser {
       super(startIndex, startIndex);
     }
 
-    public @Nullable String getConversionFlags() {
+    @Nullable
+    public String getConversionFlags() {
       return myConversionFlags;
     }
 
@@ -185,9 +193,9 @@ public class PyStringFormatParser {
   }
 
   public static class NewStyleSubstitutionChunk extends SubstitutionChunk {
-    private @Nullable String myConversion;
-    private @Nullable String myMappingKeyAttributeName;
-    private @Nullable String myMappingKeyElementIndex;
+    @Nullable private String myConversion;
+    @Nullable private String myMappingKeyAttributeName;
+    @Nullable private String myMappingKeyElementIndex;
     private boolean signOption;
     private boolean zeroPadding;
     private boolean alternateForm;
@@ -197,7 +205,8 @@ public class PyStringFormatParser {
       super(startIndex, startIndex);
     }
 
-    public @Nullable String getConversion() {
+    @Nullable
+    public String getConversion() {
       return myConversion;
     }
 
@@ -237,7 +246,8 @@ public class PyStringFormatParser {
       this.thousandsSeparator = true;
     }
 
-    public @Nullable String getMappingKeyAttributeName() {
+    @Nullable
+    public String getMappingKeyAttributeName() {
       return myMappingKeyAttributeName;
     }
 
@@ -245,7 +255,8 @@ public class PyStringFormatParser {
       myMappingKeyAttributeName = mappingKeyAttributeName;
     }
 
-    public @Nullable String getMappingKeyElementIndex() {
+    @Nullable
+    public String getMappingKeyElementIndex() {
       return myMappingKeyElementIndex;
     }
 
@@ -254,8 +265,8 @@ public class PyStringFormatParser {
     }
   }
 
-  private final @NotNull String myLiteral;
-  private final @NotNull List<FormatStringChunk> myResult = new ArrayList<>();
+  @NotNull private final String myLiteral;
+  @NotNull private final List<FormatStringChunk> myResult = new ArrayList<>();
   private int myPos;
   private int mySubstitutionsCount = 0;
 
@@ -277,15 +288,18 @@ public class PyStringFormatParser {
     myLiteral = literal;
   }
 
-  public static @NotNull List<FormatStringChunk> parsePercentFormat(@NotNull String s) {
+  @NotNull
+  public static List<FormatStringChunk> parsePercentFormat(@NotNull String s) {
     return new PyStringFormatParser(s).parse();
   }
 
-  public static @NotNull List<FormatStringChunk> parseNewStyleFormat(@NotNull String s) {
+  @NotNull
+  public static List<FormatStringChunk> parseNewStyleFormat(@NotNull String s) {
     return new PyStringFormatParser(s).parseNewStyle();
   }
 
-  private @NotNull List<FormatStringChunk> parse() {
+  @NotNull
+  private List<FormatStringChunk> parse() {
     myPos = 0;
     while (myPos < myLiteral.length()) {
       int next = myLiteral.indexOf('%', myPos);
@@ -495,7 +509,7 @@ public class PyStringFormatParser {
     chunk.setEndIndex(myPos);
   }
 
-  private boolean isAtSet(final @NotNull String characterSet) {
+  private boolean isAtSet(@NotNull final String characterSet) {
     return myPos < myLiteral.length() && characterSet.indexOf(myLiteral.charAt(myPos)) >= 0;
   }
 
@@ -503,7 +517,8 @@ public class PyStringFormatParser {
     return myPos < myLiteral.length() && myLiteral.charAt(myPos) == c;
   }
 
-  private @NotNull String parseWidth() {
+  @NotNull
+  private String parseWidth() {
     if (isAt('*')) {
       myPos++;
       return "*";
@@ -511,7 +526,8 @@ public class PyStringFormatParser {
     return parseWhileCharacterInSet(DIGITS);
   }
 
-  private @NotNull String parseWhileCharacterInSet(final @NotNull String characterSet) {
+  @NotNull
+  private String parseWhileCharacterInSet(@NotNull final String characterSet) {
     int flagStart = myPos;
     while (isAtSet(characterSet)) {
       myPos++;
@@ -519,7 +535,8 @@ public class PyStringFormatParser {
     return myLiteral.substring(flagStart, myPos);
   }
 
-  public static @NotNull List<SubstitutionChunk> filterSubstitutions(@NotNull List<? extends FormatStringChunk> chunks) {
+  @NotNull
+  public static List<SubstitutionChunk> filterSubstitutions(@NotNull List<? extends FormatStringChunk> chunks) {
     final List<SubstitutionChunk> results = new ArrayList<>();
     for (FormatStringChunk chunk : chunks) {
       if (chunk instanceof SubstitutionChunk) {
@@ -530,7 +547,8 @@ public class PyStringFormatParser {
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public static @NotNull List<SubstitutionChunk> getPositionalSubstitutions(@NotNull List<? extends SubstitutionChunk> substitutions) {
+  @NotNull
+  public static List<SubstitutionChunk> getPositionalSubstitutions(@NotNull List<? extends SubstitutionChunk> substitutions) {
     final ArrayList<SubstitutionChunk> result = new ArrayList<>();
     for (SubstitutionChunk s : substitutions) {
       if (s.getMappingKey() == null) {
@@ -541,7 +559,8 @@ public class PyStringFormatParser {
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public static @NotNull Map<String, SubstitutionChunk> getKeywordSubstitutions(@NotNull List<? extends SubstitutionChunk> substitutions) {
+  @NotNull
+  public static Map<String, SubstitutionChunk> getKeywordSubstitutions(@NotNull List<? extends SubstitutionChunk> substitutions) {
     final Map<String, SubstitutionChunk> result = new HashMap<>();
     for (SubstitutionChunk s : substitutions) {
       final String key = s.getMappingKey();
@@ -552,7 +571,8 @@ public class PyStringFormatParser {
     return result;
   }
 
-  public static @NotNull List<TextRange> substitutionsToRanges(@NotNull List<? extends SubstitutionChunk> substitutions) {
+  @NotNull
+  public static List<TextRange> substitutionsToRanges(@NotNull List<? extends SubstitutionChunk> substitutions) {
     final List<TextRange> ranges = new ArrayList<>();
     for (SubstitutionChunk substitution : substitutions) {
       ranges.add(TextRange.create(substitution.getStartIndex(), substitution.getEndIndex()));
@@ -563,7 +583,8 @@ public class PyStringFormatParser {
   /**
    * Return the RHS operand of %-based string literal format expression.
    */
-  public static @Nullable PyExpression getFormatValueExpression(@NotNull PyStringLiteralExpression element) {
+  @Nullable
+  public static PyExpression getFormatValueExpression(@NotNull PyStringLiteralExpression element) {
     final PsiElement parent = element.getParent();
     if (parent instanceof PyBinaryExpression binaryExpr) {
       if (binaryExpr.isOperator("%")) {
@@ -580,7 +601,8 @@ public class PyStringFormatParser {
   /**
    * Return the argument list of the str.format() literal format expression.
    */
-  public static @Nullable PyArgumentList getNewStyleFormatValueExpression(@NotNull PyStringLiteralExpression element) {
+  @Nullable
+  public static PyArgumentList getNewStyleFormatValueExpression(@NotNull PyStringLiteralExpression element) {
     final PsiElement parent = element.getParent();
     if (parent instanceof PyQualifiedExpression qualifiedExpr) {
       final String name = qualifiedExpr.getReferencedName();
@@ -594,7 +616,8 @@ public class PyStringFormatParser {
     return null;
   }
 
-  public static @NotNull List<TextRange> getEscapeRanges(@NotNull String s) {
+  @NotNull
+  public static List<TextRange> getEscapeRanges(@NotNull String s) {
     final List<TextRange> ranges = new ArrayList<>();
     Matcher matcher = PyStringLiteralDecoder.PATTERN_ESCAPE.matcher(s);
     while (matcher.find()) {

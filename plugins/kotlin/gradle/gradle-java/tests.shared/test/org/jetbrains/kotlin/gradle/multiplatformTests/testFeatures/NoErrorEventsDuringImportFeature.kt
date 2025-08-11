@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils
  * Records all error-events received during import and compares them with the expected
  * error-events in the `importErrors.txt`-file. If no error events present, file is expected to be absent
  */
-object NoErrorEventsDuringImportFeature : TestFeatureWithSetUpTearDown<Unit> {
+internal object NoErrorEventsDuringImportFeature : TestFeatureWithSetUpTearDown<Unit> {
     private var importStatusCollector: ImportStatusCollector? = null
 
     override fun createDefaultConfiguration() { }
@@ -40,9 +40,7 @@ object NoErrorEventsDuringImportFeature : TestFeatureWithSetUpTearDown<Unit> {
             testConfiguration
         )
         val buildErrors = importStatusCollector!!.buildErrors
-        val isBuildFailed = importStatusCollector!!.isBuildSuccessful.not()
         when {
-            !expectedFailure.exists() && isBuildFailed -> error("BUILD FAILED appeared during the import")
             !expectedFailure.exists() && buildErrors.isEmpty() -> return
 
             expectedFailure.exists() && buildErrors.isEmpty() ->

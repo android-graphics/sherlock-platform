@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.DiffContext;
@@ -14,11 +28,10 @@ import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
-import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,11 +39,11 @@ import javax.swing.*;
 import java.util.List;
 
 public abstract class OnesideDiffViewer<T extends EditorHolder> extends ListenerDiffViewerBase {
-  protected final @NotNull SimpleDiffPanel myPanel;
-  @ApiStatus.Internal protected final @NotNull OnesideContentPanel myContentPanel;
+  @NotNull protected final SimpleDiffPanel myPanel;
+  @NotNull protected final OnesideContentPanel myContentPanel;
 
-  private final @NotNull Side mySide;
-  private final @NotNull T myHolder;
+  @NotNull private final Side mySide;
+  @NotNull private final T myHolder;
 
   public OnesideDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request, @NotNull EditorHolderFactory<T> factory) {
     super(context, request);
@@ -40,13 +53,7 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
 
     myContentPanel = OnesideContentPanel.createFromHolder(myHolder);
 
-    myPanel = new SimpleDiffPanel(myContentPanel, context) {
-      @Override
-      public void uiDataSnapshot(@NotNull DataSink sink) {
-        super.uiDataSnapshot(sink);
-        DataSink.uiDataSnapshot(sink, OnesideDiffViewer.this);
-      }
-    };
+    myPanel = new SimpleDiffPanel(myContentPanel, this, context);
   }
 
   @Override
@@ -67,7 +74,8 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
   // Editors
   //
 
-  protected @NotNull T createEditorHolder(@NotNull EditorHolderFactory<T> factory) {
+  @NotNull
+  protected T createEditorHolder(@NotNull EditorHolderFactory<T> factory) {
     DiffContent content = mySide.select(myRequest.getContents());
     return factory.create(content, myContext);
   }
@@ -76,7 +84,8 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
     Disposer.dispose(myHolder);
   }
 
-  protected @Nullable JComponent createTitle() {
+  @Nullable
+  protected JComponent createTitle() {
     List<JComponent> simpleTitles = DiffUtil.createSimpleTitles(this, myRequest);
     return getSide().select(simpleTitles);
   }
@@ -85,41 +94,50 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
   // Getters
   //
 
+  @NotNull
   @Override
-  public @NotNull JComponent getComponent() {
+  public JComponent getComponent() {
     return myPanel;
   }
 
+  @Nullable
   @Override
-  public @Nullable JComponent getPreferredFocusedComponent() {
+  public JComponent getPreferredFocusedComponent() {
     if (!myPanel.isGoodContent()) return null;
     return getEditorHolder().getPreferredFocusedComponent();
   }
 
-  public @NotNull Side getSide() {
+  @NotNull
+  public Side getSide() {
     return mySide;
   }
 
-  protected @NotNull DiffContent getContent() {
+  @NotNull
+  protected DiffContent getContent() {
     return mySide.select(myRequest.getContents());
   }
 
-  protected @NotNull T getEditorHolder() {
+  @NotNull
+  protected T getEditorHolder() {
     return myHolder;
   }
 
+  @Nullable
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    super.uiDataSnapshot(sink);
-    sink.set(DiffDataKeys.CURRENT_CONTENT, getContent());
+  public Object getData(@NotNull @NonNls String dataId) {
+    if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
+      return getContent();
+    }
+    return super.getData(dataId);
   }
 
   //
   // Misc
   //
 
+  @Nullable
   @Override
-  public @Nullable Navigatable getNavigatable() {
+  protected Navigatable getNavigatable() {
     return getContent().getNavigatable();
   }
 

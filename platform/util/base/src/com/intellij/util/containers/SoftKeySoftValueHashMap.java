@@ -7,7 +7,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.*;
 
-final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>, ReferenceQueueable {
+final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   private final RefHashMap<K, ValueReference<K,V>> mySoftKeyMap = new SoftHashMap<>(4);
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
@@ -24,8 +24,7 @@ final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>, ReferenceQueueable
   }
 
   // returns true if some refs were tossed
-  @Override
-  public boolean processQueue() {
+  private boolean processQueue() {
     boolean processed = mySoftKeyMap.processQueue();
     while(true) {
       //noinspection unchecked

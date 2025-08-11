@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -10,14 +10,15 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class PasswordMacro extends PromptingMacro{
+public class PasswordMacro extends PromptingMacro{
   @Override
   public @NotNull String getName() {
     return "Password";
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @Override
-  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getDescription() {
+  public @NotNull String getDescription() {
     return IdeCoreBundle.message("displays.a.password.input.dialog");
   }
 

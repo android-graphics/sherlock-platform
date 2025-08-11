@@ -18,7 +18,7 @@ public final class ExternalAnnotationsRefactoringListenerProvider implements Ref
       Project project = element.getProject();
       ExternalAnnotationsManager externalAnnotationsManager = ExternalAnnotationsManager.getInstance(project);
       PsiAnnotation[] annotations = externalAnnotationsManager.findExternalAnnotations(modifierListOwner);
-      if (annotations.length > 0) {
+      if (annotations != null) {
         String oldExternalName = PsiFormatUtil.getExternalName(modifierListOwner, false, Integer.MAX_VALUE);
         if (oldExternalName == null) {
           return null;

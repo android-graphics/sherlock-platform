@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -12,8 +11,9 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile;
 import org.jetbrains.annotations.NotNull;
 
 public final class MarkdownTypedHandler extends TypedHandlerDelegate {
+  @NotNull
   @Override
-  public @NotNull Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!(file instanceof MarkdownFile)) return Result.CONTINUE;
     if (charTyped == '`') {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -9,7 +9,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -29,7 +28,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.common.TestApplicationKt;
-import com.intellij.testFramework.common.TestEnvironmentKt;
 import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.ui.IconManager;
@@ -40,7 +38,6 @@ import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
-import kotlinx.coroutines.Job;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -70,7 +67,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
-import static com.intellij.testFramework.TestLoggerKt.recordErrorsLoggedInTheCurrentThreadAndReportThemAsFailures;
 import static com.intellij.testFramework.common.Cleanup.cleanupSwingDataStructures;
 import static com.intellij.testFramework.common.TestEnvironmentKt.initializeTestEnvironment;
 import static org.junit.Assume.assumeTrue;
@@ -300,7 +296,6 @@ public abstract class UsefulTestCase extends TestCase {
   protected void tearDown() throws Exception {
     // to make stack trace reading easier, don't use method references here
     new RunAll(
-      () -> checkContextJobCanceled(),
       () -> {
         if (isIconRequired()) {
           IconManager.Companion.deactivate();
@@ -326,16 +321,6 @@ public abstract class UsefulTestCase extends TestCase {
       () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS),
       () -> clearFields(this)
     ).run(mySuppressedExceptions);
-  }
-
-  private static void checkContextJobCanceled() {
-    Job currentJob = Cancellation.currentJob();
-    if (currentJob != null && currentJob.isCancelled()) {
-      throw new IllegalStateException("""
-The context job for test framework was canceled during execution. It can cause incomplete cleanup of the test.
-Most likely there was an uncaught exception in asynchronous execution that resulted in a failure of the whole computation tree for the test.
-""", currentJob.getCancellationException());
-    }
   }
 
   protected final void disposeRootDisposable() {
@@ -505,13 +490,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     ThrowableRunnable<Throwable> wrappedRunnable = wrapTestRunnable(testRunnable);
     if (runInDispatchThread()) {
-      try {
-        UITestUtil.replaceIdeEventQueueSafely();
-      }
-      catch (IllegalAccessError e) {
-        TestEnvironmentKt.checkAddOpens();
-        throw e;
-      }
+      UITestUtil.replaceIdeEventQueueSafely();
       EdtTestUtil.runInEdtAndWait(() -> defaultRunBare(wrappedRunnable));
     }
     else if (runFromCoroutine()) {
@@ -530,7 +509,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
       boolean success = false;
       TestLoggerFactory.onTestStarted();
       try {
-        recordErrorsLoggedInTheCurrentThreadAndReportThemAsFailures(testRunnable);
+        testRunnable.run();
         success = true;
       }
       catch (AssumptionViolatedException e) {
@@ -763,7 +742,8 @@ Most likely there was an uncaught exception in asynchronous execution that resul
     assertSameElements(messageForCollection(message, collection), collection, expected);
   }
 
-  private static @NotNull <T> String messageForCollection(@NotNull String message, @NotNull Collection<? extends T> collection) {
+  @NotNull
+  private static <T> String messageForCollection(@NotNull String message, @NotNull Collection<? extends T> collection) {
     return (message.isBlank() ? "" : message + "\n") + toString(collection);
   }
 
@@ -1125,7 +1105,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
       }
 
       if (expectedErrorMsgPart != null) {
-        assertTrue(cause.getClass()+" message was expected to contain '"+expectedErrorMsgPart+"', but got: '"+cause.getMessage()+"'", ObjectUtils.notNull(cause.getMessage(), "").contains(expectedErrorMsgPart));
+        assertTrue(cause.getClass()+" message was expected to contain '"+expectedErrorMsgPart+"', but got: '"+cause.getMessage()+"'", cause.getMessage().contains(expectedErrorMsgPart));
       }
     }
     finally {

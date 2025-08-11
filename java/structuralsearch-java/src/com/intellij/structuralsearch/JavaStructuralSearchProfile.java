@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -89,7 +89,8 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public @NotNull String getTypedVarString(@NotNull PsiElement element) {
+  @NotNull
+  public String getTypedVarString(@NotNull PsiElement element) {
     String text;
 
     if (element instanceof PsiReceiverParameter) {
@@ -140,7 +141,8 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public @Nullable String getAlternativeText(@NotNull PsiElement node, @NotNull String previousText) {
+  @Nullable
+  public String getAlternativeText(@NotNull PsiElement node, @NotNull String previousText) {
     // Short class name is matched with fully qualified name
     if (node instanceof PsiJavaCodeReferenceElement || node instanceof PsiClass) {
       final PsiElement element = (node instanceof PsiJavaCodeReferenceElement)
@@ -189,8 +191,9 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return targetNode;
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getPresentableElement(@NotNull PsiElement element) {
+  public PsiElement getPresentableElement(@NotNull PsiElement element) {
     element = super.getPresentableElement(element);
     if (element instanceof PsiReferenceExpression) {
       final PsiElement parent = element.getParent();
@@ -214,7 +217,8 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public @NotNull PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor) {
+  @NotNull
+  public PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor) {
     return new JavaMatchingVisitor(globalVisitor);
   }
 
@@ -233,12 +237,14 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public @NotNull CompiledPattern createCompiledPattern() {
+  @NotNull
+  public CompiledPattern createCompiledPattern() {
     return new JavaCompiledPattern();
   }
 
+  @NotNull
   @Override
-  public @NotNull List<MatchPredicate> getCustomPredicates(@NotNull MatchVariableConstraint constraint, @NotNull String name, @NotNull MatchOptions options) {
+  public List<MatchPredicate> getCustomPredicates(@NotNull MatchVariableConstraint constraint, @NotNull String name, @NotNull MatchOptions options) {
     final List<MatchPredicate> result = new SmartList<>();
 
     if (!StringUtil.isEmptyOrSpaces(constraint.getNameOfExprType())) {
@@ -351,7 +357,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   private static boolean shouldTryExpressionPattern(@NotNull List<? extends PsiElement> elements) {
-    if (!elements.isEmpty() && elements.size() <= 3) {
+    if (elements.size() >= 1 && elements.size() <= 3) {
       final PsiElement firstElement = elements.get(0);
       if (firstElement instanceof PsiDeclarationStatement) {
         final PsiElement lastChild = firstElement.getLastChild();
@@ -407,19 +413,22 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return false;
   }
 
+  @NotNull
   @Override
-  public @NotNull Class<? extends TemplateContextType> getTemplateContextTypeClass() {
+  public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
     return JavaCodeContextType.Generic.class;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<PatternContext> getPatternContexts() {
+  public List<PatternContext> getPatternContexts() {
     if (!Registry.is("ssr.in.editor.problem.highlighting")) return super.getPatternContexts();
     return PATTERN_CONTEXTS;
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiCodeFragment createCodeFragment(@NotNull Project project, @NotNull String text, String contextId) {
+  public PsiCodeFragment createCodeFragment(@NotNull Project project, @NotNull String text, String contextId) {
     final PsiCodeFragmentImpl fragment =
       MEMBER_CONTEXT.getId().equals(contextId)
       ? (PsiCodeFragmentImpl)JavaCodeFragmentFactory.getInstance(project).createMemberCodeFragment(text, null, true)
@@ -619,7 +628,6 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public void provideAdditionalReplaceOptions(@NotNull PsiElement node, @NotNull ReplaceOptions options, @NotNull ReplacementBuilder builder) {
-    final StructuralSearchProfile profile = this;
     node.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
@@ -655,7 +663,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
           @Override
           public void visitElement(@NotNull PsiElement element) {
             final String type = element.getText();
-            if (profile.isReplacementTypedVariable(type)) {
+            if (MatchUtil.isTypedVariable(type)) {
               final ParameterInfo typeInfo = builder.findParameterization(element);
               if (typeInfo != null) {
                 typeInfo.setArgumentContext(false);
@@ -833,8 +841,9 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return element instanceof PsiIdentifier;
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<String> getReservedWords() {
+  public Collection<String> getReservedWords() {
     return RESERVED_WORDS;
   }
 
@@ -1059,7 +1068,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (aClass == null) {
       return false;
     }
-    final @NonNls String name = aClass.getName();
+    @NonNls final String name = aClass.getName();
     return name != null && !"_Dummy_".equals(name);
   }
 

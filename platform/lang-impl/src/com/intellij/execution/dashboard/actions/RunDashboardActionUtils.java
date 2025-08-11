@@ -19,15 +19,18 @@ public final class RunDashboardActionUtils {
   private RunDashboardActionUtils() {
   }
 
-  public static @NotNull List<RunDashboardRunConfigurationNode> getTargets(@NotNull AnActionEvent e) {
+  @NotNull
+  public static List<RunDashboardRunConfigurationNode> getTargets(@NotNull AnActionEvent e) {
     return ServiceViewActionUtils.getTargets(e, RunDashboardRunConfigurationNode.class);
   }
 
-  public static @Nullable RunDashboardRunConfigurationNode getTarget(@NotNull AnActionEvent e) {
+  @Nullable
+  public static RunDashboardRunConfigurationNode getTarget(@NotNull AnActionEvent e) {
     return ServiceViewActionUtils.getTarget(e, RunDashboardRunConfigurationNode.class);
   }
 
-  public static @NotNull JBIterable<RunDashboardRunConfigurationNode> getLeafTargets(@NotNull AnActionEvent e) {
+  @NotNull
+  public static JBIterable<RunDashboardRunConfigurationNode> getLeafTargets(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return JBIterable.empty();
 

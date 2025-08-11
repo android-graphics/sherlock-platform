@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide;
 
 import com.google.gson.JsonObject;
@@ -36,8 +36,9 @@ final class ProjectSetRequestHandler extends RestService {
     return method == HttpMethod.POST;
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getServiceName() {
+  protected String getServiceName() {
     return "openProjectSet";
   }
 
@@ -46,8 +47,9 @@ final class ProjectSetRequestHandler extends RestService {
     return true;
   }
 
+  @Nullable
   @Override
-  public @Nullable String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
+  public String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
     final JsonObject descriptor = JsonParser.parseReader(createJsonReader(request)).getAsJsonObject();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       new ProjectSetReader().readDescriptor(descriptor, null);

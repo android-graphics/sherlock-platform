@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.roots.ProjectModelExternalSource
@@ -6,7 +6,6 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -19,8 +18,8 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
-internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val libraryTable: LibraryTable, val descriptor: EelDescriptor, private val entitySource: EntitySource) :
-  LegacyBridgeModifiableBase(MutableEntityStorage.from(GlobalWorkspaceModel.getInstance(descriptor).currentSnapshot), true),
+internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val libraryTable: LibraryTable, private val entitySource: EntitySource):
+  LegacyBridgeModifiableBase(MutableEntityStorage.from(GlobalWorkspaceModel.getInstance().currentSnapshot), true),
   LibraryTable.ModifiableModel {
 
   private val myAddedLibraries = mutableListOf<LibraryBridgeImpl>()
@@ -54,7 +53,7 @@ internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val librar
 
     val library = LibraryBridgeImpl(
       libraryTable = libraryTable,
-      origin = LibraryOrigin.OfDescriptor(descriptor),
+      project = null,
       initialId = LibraryId(name, libraryTableId),
       initialEntityStorage = entityStorageOnDiff,
       targetBuilder = this.diff
@@ -78,7 +77,7 @@ internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val librar
   }
 
   override fun commit() {
-    GlobalWorkspaceModel.getInstance(descriptor).updateModel("${libraryTableId.level} library table commit") {
+    GlobalWorkspaceModel.getInstance().updateModel("${libraryTableId.level} library table commit") {
       it.applyChangesFrom(diff)
     }
     libraries.forEach { library -> (library as LibraryBridgeImpl).clearTargetBuilder() }

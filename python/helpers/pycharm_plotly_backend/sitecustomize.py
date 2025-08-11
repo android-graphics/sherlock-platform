@@ -26,9 +26,7 @@ def init_plotly_render():
     from plotly.io._renderers import renderers
 
     class DisplayDataObject:
-        def __init__(self, html_string, image_string):
-            # type: (str, str) -> None
-
+        def __init__(self, html_string: str, image_string: str):
             self.html_string = html_string
             self.image_string = image_string
 

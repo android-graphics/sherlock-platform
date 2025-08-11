@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.psi.PsiElement;
@@ -62,7 +61,7 @@ public class ReachingDefsTest extends LightJavaCodeInsightFixtureTestCase {
     final PsiElement start = file.findElementAt(selStart);
     final PsiElement end = file.findElementAt(selEnd - 1);
     final GrControlFlowOwner owner = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(start, end), GrControlFlowOwner.class, false);
-    assertNotNull(owner);
+    assert owner != null;
     GrStatement firstStatement = getStatement(start, owner);
     GrStatement lastStatement = getStatement(end, owner);
 

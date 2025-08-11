@@ -13,7 +13,6 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestActionEvent
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.platforms.forcedTargetPlatform
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.platform.CommonPlatforms
@@ -49,7 +48,7 @@ abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTest
         val fileText = FileUtil.loadFile(dataFile(), true)
 
         val conflictFile = File("$path.messages")
-        val afterFile = getAfterFile(path)
+        val afterFile = File("$path.after")
 
         var mainPsiFile: KtFile? = null
 
@@ -104,13 +103,6 @@ abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTest
             mainPsiFile?.forcedTargetPlatform = null
             ConfigLibraryUtil.unconfigureLibrariesByDirective(module, fileText)
         }
-    }
-
-    private fun getAfterFile(path: String): File {
-        if (isK2Mode()) {
-            File("$path.k2.after").takeIf { it.exists() }?.let { return it }
-        }
-        return File("$path.after")
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

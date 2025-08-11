@@ -6,9 +6,7 @@ import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileCha
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.*
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 abstract class NewFilesListener : VirtualFileChangesListener {
 
   abstract fun fireNewFilesCreated()

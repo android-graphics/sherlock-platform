@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.common.runAll
+import com.intellij.util.WaitFor
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import git4idea.config.GitConfigUtil.COMMIT_TEMPLATE
 import git4idea.repo.GitCommitTemplateTracker

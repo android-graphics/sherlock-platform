@@ -40,7 +40,8 @@ import javax.xml.namespace.QName;
 import java.util.*;
 
 public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
-  private static final @NonNls QName UNKNOWN = new QName("", "#unknown");
+  @NonNls
+  private static final QName UNKNOWN = new QName("", "#unknown");
 
   private static final HashingStrategy<Locator> HASHING_STRATEGY = new HashingStrategy<>() {
     @Override
@@ -134,18 +135,19 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
   }
 
   @Override
-  public @Nullable String getDefaultValue() {
+  @Nullable
+  public String getDefaultValue() {
     return isFixed() ? myValues.keySet().iterator().next() : null;
   }
 
   @Override
   public boolean isEnumerated() {
-    return !myValues.isEmpty() && myValues.get(null) == null;
+    return myValues.size() > 0 && myValues.get(null) == null;
   }
 
   @Override
   public String[] getEnumeratedValues() {
-    if (!myValues.isEmpty()) {
+    if (myValues.size() > 0) {
       final Map<String, String> copy;
       if (myValues.get(null) != null) {
         copy = new HashMap<>(myValues);
@@ -170,7 +172,8 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
   }
 
   @Override
-  public @NotNull Collection<PsiElement> getDeclarations() {
+  @NotNull
+  public Collection<PsiElement> getDeclarations() {
     return ContainerUtil.map(myDeclarations, locator -> myElementDescriptor.getDeclaration(locator));
   }
 
@@ -181,7 +184,7 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
       final String uri = myName.getNamespaceURI();
       final String prefix = tag.getPrefixByNamespace(uri);
       if (prefix != null) {
-        if (prefix.isEmpty()) {
+        if (prefix.length() == 0) {
           return myName.getLocalPart();
         }
         else {
@@ -189,9 +192,9 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
         }
       }
     }
-    if (!myName.getNamespaceURI().isEmpty()) {
+    if (myName.getNamespaceURI().length() > 0) {
       final String prefix2 = myName.getPrefix();
-      if (prefix2 != null && !prefix2.isEmpty()) {
+      if (prefix2 != null && prefix2.length() > 0) {
         return prefix2 + ":" + myName.getLocalPart();
       }
     }
@@ -199,7 +202,8 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
   }
 
   @Override
-  public @NonNls String getName() {
+  @NonNls
+  public String getName() {
     return myName.getLocalPart();
   }
 
@@ -238,8 +242,9 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
   public PsiReference[] getValueReferences(final XmlElement element, @NotNull String text) {
     if (element.getContainingFile() instanceof HtmlCompatibleFile) {
       return new PsiReference[]{new HtmlEnumeratedValueReference(element, this, null) {
+        @Nullable
         @Override
-        public @Nullable PsiElement resolve() {
+        public PsiElement resolve() {
           if (isTokenDatatype(getValue())) {
             return getElement();
           }
@@ -249,8 +254,9 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
     }
     else {
       return new PsiReference[]{new XmlEnumeratedValueReference(element, this) {
+        @Nullable
         @Override
-        public @Nullable PsiElement resolve() {
+        public PsiElement resolve() {
           if (isTokenDatatype(getValue())) {
             return getElement();
           }

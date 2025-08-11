@@ -55,7 +55,6 @@ import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
 import javax.swing.DefaultComboBoxModel
@@ -372,7 +371,6 @@ internal class CompletionQualityStatsAction : AnAction() {
   }
 }
 
-@ApiStatus.Internal
 class CompletionQualityDialog(project: Project, editor: Editor?) : DialogWrapper(project) {
   private var fileTypeCombo: JComboBox<FileType>
 

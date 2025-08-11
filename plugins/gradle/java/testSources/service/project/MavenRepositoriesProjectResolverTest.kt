@@ -33,7 +33,7 @@ class MavenRepositoriesProjectResolverTest {
     myResolver.nextResolver = mock(GradleProjectResolverExtension::class.java)
 
     myRepoList.clear()
-    val fakeModel = TestRepositoryModels(myRepoList)
+    val fakeModel = TestRepositoriesModel(myRepoList)
 
     myProject = mock(IdeaProject::class.java)
     myModule = mock(IdeaModule::class.java)
@@ -76,15 +76,11 @@ class MavenRepositoriesProjectResolverTest {
   fun testRepositoriesDeduplicated() {
     val mavenRepo1 = MyMavenRepoModel("name", "http://some.host")
     myRepoList.add(mavenRepo1)
-    myRepoList.add(mavenRepo1)
-    myRepoList.add(mavenRepo1)
 
     myResolver.populateProjectExtraModels(myProject, myProjectNode)
 
     val mavenRepo2 = MyMavenRepoModel("name1", "http://some.other.host")
     myRepoList.apply {
-      add(MyMavenRepoModel("name", "http://some.host"))
-      add(MyMavenRepoModel("name", "http://some.host"))
       add(MyMavenRepoModel("name", "http://some.host"))
       add(mavenRepo2)
     }
@@ -98,6 +94,7 @@ class MavenRepositoriesProjectResolverTest {
     assertEquals(myProjectNode.mavenRepositories(), mavenRepoModels.toMavenRepoData())
   }
 
+
   private fun DataNode<*>.mavenRepositories(): Collection<MavenRepositoryData> =
     ExternalSystemApiUtil.getChildren(this, MavenRepositoryData.KEY).map { it.data }
 
@@ -110,7 +107,7 @@ class MavenRepositoriesProjectResolverTest {
     override fun getUrl(): String = myUrl
   }
 
-  private class TestRepositoryModels(private val myRepositories: List<MavenRepositoryModel>) : RepositoryModels {
+  private class TestRepositoriesModel(private val myRepositories: List<MavenRepositoryModel>) : RepositoryModels {
     override fun getRepositories(): List<MavenRepositoryModel> = myRepositories
   }
 }

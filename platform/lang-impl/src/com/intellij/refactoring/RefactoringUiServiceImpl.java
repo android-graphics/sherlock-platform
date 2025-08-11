@@ -24,7 +24,6 @@ import com.intellij.refactoring.rename.RenameRefactoringDialog;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +33,6 @@ import java.util.Collection;
 
 import static com.intellij.openapi.util.NlsContexts.*;
 
-@ApiStatus.Internal
 public final class RefactoringUiServiceImpl extends RefactoringUiService {
   @Override
   public RenameRefactoringDialog createRenameRefactoringDialog(Project project,

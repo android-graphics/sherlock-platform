@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.ProjectViewNestingRulesProvider;
@@ -36,11 +36,13 @@ public final class ProjectViewFileNestingService implements PersistentStateCompo
   private MyState myState = new MyState();
   private long myModCount;
 
-  public static @NotNull ProjectViewFileNestingService getInstance() {
+  @NotNull
+  public static ProjectViewFileNestingService getInstance() {
     return ApplicationManager.getApplication().getService(ProjectViewFileNestingService.class);
   }
 
-  static @NotNull List<NestingRule> loadDefaultNestingRules() {
+  @NotNull
+  static List<NestingRule> loadDefaultNestingRules() {
     List<NestingRule> result = new ArrayList<>();
 
     final ProjectViewNestingRulesProvider.Consumer consumer = (parentFileSuffix, childFileSuffix) -> {
@@ -62,7 +64,7 @@ public final class ProjectViewFileNestingService implements PersistentStateCompo
   }
 
   @Override
-  public void loadState(final @NotNull MyState state) {
+  public void loadState(@NotNull final MyState state) {
     myState = state;
     myModCount++;
   }
@@ -71,11 +73,12 @@ public final class ProjectViewFileNestingService implements PersistentStateCompo
    * This list of rules is used for serialization and for UI.
    * See also {@link NestingTreeStructureProvider}, it adjusts this list of rules to match its needs
    */
-  public @NotNull List<NestingRule> getRules() {
+  @NotNull
+  public List<NestingRule> getRules() {
     return myState.myRules;
   }
 
-  public void setRules(final @NotNull List<NestingRule> rules) {
+  public void setRules(@NotNull final List<NestingRule> rules) {
     myState.myRules.clear();
     myState.myRules.addAll(rules);
     myModCount++;
@@ -96,9 +99,9 @@ public final class ProjectViewFileNestingService implements PersistentStateCompo
   }
 
   public static final class NestingRule {
-    private @NotNull String myParentFileSuffix;
+    @NotNull private String myParentFileSuffix;
 
-    private @NotNull String myChildFileSuffix;
+    @NotNull private String myChildFileSuffix;
 
     @SuppressWarnings("unused") // used by serializer
     public NestingRule() {
@@ -110,21 +113,23 @@ public final class ProjectViewFileNestingService implements PersistentStateCompo
       myChildFileSuffix = childFileSuffix;
     }
 
+    @NotNull
     @Attribute("parent-file-suffix")
-    public @NotNull String getParentFileSuffix() {
+    public String getParentFileSuffix() {
       return myParentFileSuffix;
     }
 
-    public void setParentFileSuffix(final @NotNull String parentFileSuffix) {
+    public void setParentFileSuffix(@NotNull final String parentFileSuffix) {
       myParentFileSuffix = parentFileSuffix;
     }
 
+    @NotNull
     @Attribute("child-file-suffix")
-    public @NotNull String getChildFileSuffix() {
+    public String getChildFileSuffix() {
       return myChildFileSuffix;
     }
 
-    public void setChildFileSuffix(final @NotNull String childFileSuffix) {
+    public void setChildFileSuffix(@NotNull final String childFileSuffix) {
       myChildFileSuffix = childFileSuffix;
     }
 

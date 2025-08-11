@@ -1,10 +1,14 @@
 // MODE: inheritors
 
-interface SomeInterface {/*<# [2 Implementations] #>*/
-fun interfaceMethodA()/*<# [2 Implementations] #>*/
+/*<# block [ 1 Implementation] #>*/
+interface SomeInterface {
+/*<# block [     2 Implementations] #>*/
+    fun interfaceMethodA()
 }
-open class SomeClass : SomeInterface {/*<# [1 Inheritor] #>*/
-override fun interfaceMethodA() {} // <== (1)/*<# [1 Override] #>*/
+/*<# block [ 1 Inheritor] #>*/
+open class SomeClass : SomeInterface {
+/*<# block [     1 Override] #>*/
+    override fun interfaceMethodA() {} // <== (1)
 }
 
 class SomeDerivedClass : SomeClass() {

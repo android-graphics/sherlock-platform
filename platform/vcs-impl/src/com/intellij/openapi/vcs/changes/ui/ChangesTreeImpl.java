@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
@@ -18,8 +18,8 @@ import java.util.List;
  */
 @Deprecated
 public abstract class ChangesTreeImpl<T> extends ChangesTree {
-  private final @NotNull List<T> myChanges = new ArrayList<>();
-  private final @NotNull Class<T> myClazz;
+  @NotNull private final List<T> myChanges = new ArrayList<>();
+  @NotNull private final Class<T> myClazz;
 
   public ChangesTreeImpl(@NotNull Project project,
                          boolean showCheckboxes,
@@ -50,7 +50,8 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
   }
 
 
-  protected abstract @NotNull DefaultTreeModel buildTreeModel(@NotNull List<? extends T> changes);
+  @NotNull
+  protected abstract DefaultTreeModel buildTreeModel(@NotNull List<? extends T> changes);
 
   @Override
   public void rebuildTree() {
@@ -59,15 +60,18 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
   }
 
 
-  public @NotNull List<T> getChanges() {
+  @NotNull
+  public List<T> getChanges() {
     return VcsTreeModelData.all(this).userObjects(myClazz);
   }
 
-  public @NotNull List<T> getSelectedChanges() {
+  @NotNull
+  public List<T> getSelectedChanges() {
     return VcsTreeModelData.selected(this).userObjects(myClazz);
   }
 
-  public @NotNull Collection<T> getIncludedChanges() {
+  @NotNull
+  public Collection<T> getIncludedChanges() {
     return VcsTreeModelData.included(this).userObjects(myClazz);
   }
 
@@ -85,8 +89,9 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
       super(project, showCheckboxes, highlightProblems, Change.class, changes);
     }
 
+    @NotNull
     @Override
-    protected @NotNull DefaultTreeModel buildTreeModel(@NotNull List<? extends Change> changes) {
+    protected DefaultTreeModel buildTreeModel(@NotNull List<? extends Change> changes) {
       return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), changes, null);
     }
   }
@@ -105,8 +110,9 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
       super(project, showCheckboxes, highlightProblems, FilePath.class, paths);
     }
 
+    @NotNull
     @Override
-    protected @NotNull DefaultTreeModel buildTreeModel(@NotNull List<? extends FilePath> changes) {
+    protected DefaultTreeModel buildTreeModel(@NotNull List<? extends FilePath> changes) {
       return TreeModelBuilder.buildFromFilePaths(myProject, getGrouping(), changes);
     }
   }
@@ -125,8 +131,9 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
       super(project, showCheckboxes, highlightProblems, VirtualFile.class, files);
     }
 
+    @NotNull
     @Override
-    protected @NotNull DefaultTreeModel buildTreeModel(@NotNull List<? extends VirtualFile> changes) {
+    protected DefaultTreeModel buildTreeModel(@NotNull List<? extends VirtualFile> changes) {
       return TreeModelBuilder.buildFromVirtualFiles(myProject, getGrouping(), changes);
     }
   }

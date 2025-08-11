@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.javadoc
 
 import com.intellij.java.JavaBundle
@@ -9,9 +9,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiKeyword
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.selected
-import javax.swing.JCheckBox
-import javax.swing.JPanel
-import javax.swing.JTextField
+import javax.swing.*
 
 class JavadocGenerationAdditionalUi {
   lateinit var myIncludeLibraryCb: JCheckBox
@@ -47,7 +45,9 @@ class JavadocGenerationAdditionalUi {
         myLinkToJdkDocs = checkBox(JavaBundle.message("javadoc.generate.link.to.jdk.documentation.option")).component
       }
       row(JavaBundle.message("javadoc.generate.output.directory")) {
-        myTfOutputDir = textFieldWithBrowseButton(FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(JavaBundle.message("javadoc.generate.output.directory.browse")))
+        myTfOutputDir = textFieldWithBrowseButton(JavaBundle.message("javadoc.generate.output.directory.browse"),
+          null,
+          FileChooserDescriptorFactory.createSingleFolderDescriptor())
           .align(AlignX.FILL)
           .component
         bottomGap(BottomGap.MEDIUM)

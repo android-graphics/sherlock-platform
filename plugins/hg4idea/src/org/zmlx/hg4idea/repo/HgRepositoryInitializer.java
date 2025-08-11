@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.repo;
 
 import com.intellij.openapi.project.ProjectManager;
@@ -22,8 +22,9 @@ public class HgRepositoryInitializer implements VcsRepositoryInitializer {
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull VcsKey getSupportedVcs() {
+  public VcsKey getSupportedVcs() {
     return HgVcs.getKey();
   }
 }

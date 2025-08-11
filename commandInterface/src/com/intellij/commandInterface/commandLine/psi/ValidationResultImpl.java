@@ -1,13 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.commandInterface.commandLine.psi;
 
-import com.intellij.commandInterface.command.Argument;
-import com.intellij.commandInterface.command.Command;
-import com.intellij.commandInterface.command.Option;
 import com.intellij.commandInterface.commandLine.ValidationResult;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.commandInterface.command.Argument;
+import com.intellij.commandInterface.command.Command;
+import com.intellij.commandInterface.command.Option;
+import com.intellij.commandInterface.commandLine.psi.CommandLineArgument;
+import com.intellij.commandInterface.commandLine.psi.CommandLineOption;
+import com.intellij.commandInterface.commandLine.psi.CommandLineVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,15 +27,18 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
   /**
    * All options [name -> option]
    */
-  private final @NotNull Map<String, Option> myOptions = new HashMap<>();
+  @NotNull
+  private final Map<String, Option> myOptions = new HashMap<>();
   /**
    * Available, but unused options [name -> option]
    */
-  private final @NotNull Map<String, Option> myUnusedOptions = new HashMap<>();
+  @NotNull
+  private final Map<String, Option> myUnusedOptions = new HashMap<>();
   /**
    * We always need command to validate args
    */
-  private final @NotNull Command myCommand;
+  @NotNull
+  private final Command myCommand;
   /**
    * Number of next positional argument. I.e. will be 3 for "my_arg arg_1 arg_2"
    */
@@ -41,25 +47,30 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
    * If next arg is supposed to be option arg, then option and number of expected args stored here.
    * Null stored otherwise.
    */
-  private @Nullable Pair<Option, Integer> myCurrentOptionAndArgsLeft;
+  @Nullable
+  private Pair<Option, Integer> myCurrentOptionAndArgsLeft;
   /**
    * List of elements whose values are known to be bad
    */
-  private final @NotNull Collection<PsiElement> myBadValues = new ArrayList<>();
+  @NotNull
+  private final Collection<PsiElement> myBadValues = new ArrayList<>();
   /**
    * List of elements which is known to be excess
    */
-  private final @NotNull Collection<CommandLineArgument> myExcessArguments = new ArrayList<>();
+  @NotNull
+  private final Collection<CommandLineArgument> myExcessArguments = new ArrayList<>();
   /**
    * Map of arguments known to be option arguments [PSI argument -> option]
    */
-  private final @NotNull Map<CommandLineArgument, Option> myOptionArguments = new HashMap<>();
+  @NotNull
+  private final Map<CommandLineArgument, Option> myOptionArguments = new HashMap<>();
   /**
    * PSI argument -> argument map
    */
-  private final @NotNull Map<CommandLineArgument, Argument> myArguments = new HashMap<>();
+  @NotNull
+  private final Map<CommandLineArgument, Argument> myArguments = new HashMap<>();
 
-  private ValidationResultImpl(final @NotNull Command command) {
+  private ValidationResultImpl(@NotNull final Command command) {
     for (final Option option : command.getOptions()) {
       for (final String optionName : option.getAllNames()) {
         myOptions.put(optionName, option);
@@ -70,33 +81,37 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
   }
 
   @Override
-  public boolean isBadValue(final @NotNull PsiElement element) {
+  public boolean isBadValue(@NotNull final PsiElement element) {
     return myBadValues.contains(element);
   }
 
   @Override
-  public boolean isExcessArgument(final @NotNull CommandLineArgument argument) {
+  public boolean isExcessArgument(@NotNull final CommandLineArgument argument) {
     return myExcessArguments.contains(argument);
   }
 
   @Override
-  public @NotNull Collection<Option> getUnusedOptions() {
+  @NotNull
+  public Collection<Option> getUnusedOptions() {
     return myUnusedOptions.values();
   }
 
 
   @Override
-  public @Nullable Option getOptionForOptionArgument(final @NotNull CommandLineArgument argument) {
+  @Nullable
+  public Option getOptionForOptionArgument(@NotNull final CommandLineArgument argument) {
     return myOptionArguments.get(argument);
   }
 
+  @Nullable
   @Override
-  public @Nullable Argument getArgument(final @NotNull CommandLineArgument commandLineArgument) {
+  public Argument getArgument(final @NotNull CommandLineArgument commandLineArgument) {
     return myArguments.get(commandLineArgument);
   }
 
   @Override
-  public @Nullable Option getOption(final @NotNull CommandLineOption option) {
+  @Nullable
+  public Option getOption(final @NotNull CommandLineOption option) {
     return myOptions.get(option.getOptionName());
   }
 
@@ -105,7 +120,8 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
    * @param file file to validate
    * @return validation result or null if file has no command or command is unknown
    */
-  static @Nullable ValidationResult create(final CommandLineFile file) {
+  @Nullable
+  static ValidationResult create(final CommandLineFile file) {
     final Command command = file.findRealCommand();
     if (command == null) {
       return null;
@@ -116,7 +132,7 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
   }
 
   @Override
-  public void visitArgument(final @NotNull CommandLineArgument o) {
+  public void visitArgument(@NotNull final CommandLineArgument o) {
     super.visitArgument(o);
     if (myCurrentOptionAndArgsLeft != null) {
       processOptionArgument(o);
@@ -127,7 +143,7 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
     processPositionalArgument(o);
   }
 
-  private void processPositionalArgument(final @NotNull CommandLineArgument o) {
+  private void processPositionalArgument(@NotNull final CommandLineArgument o) {
     final Pair<Boolean, Argument> argumentPair = myCommand.getArgumentsInfo().getArgument(myCurrentPositionArgument++);
     if (argumentPair == null) {
       myExcessArguments.add(o);
@@ -137,7 +153,7 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
     }
   }
 
-  private void processOptionArgument(final @NotNull CommandLineArgument o) {
+  private void processOptionArgument(@NotNull final CommandLineArgument o) {
     assert myCurrentOptionAndArgsLeft != null: "Method can't be called if no current option exist";
     if (myCurrentOptionAndArgsLeft.second > 0) {
       myCurrentOptionAndArgsLeft = Pair.create(myCurrentOptionAndArgsLeft.first, myCurrentOptionAndArgsLeft.second - 1);
@@ -155,7 +171,7 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
     }
   }
 
-  private void processArgument(final @NotNull CommandLineArgument o, final Argument argumentInfo) {
+  private void processArgument(@NotNull final CommandLineArgument o, final Argument argumentInfo) {
     myArguments.put(o, argumentInfo);
     if (!argumentInfo.isValid(o.getText())) {
       myBadValues.add(o);
@@ -164,7 +180,7 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
 
 
   @Override
-  public void visitWhiteSpace(final @NotNull PsiWhiteSpace space) {
+  public void visitWhiteSpace(@NotNull final PsiWhiteSpace space) {
     super.visitWhiteSpace(space);
     // -aSHORT_OPT_ARGUMENT, but -a NEW_POSITION_ARGUMENT, so whitespace makes sense
     if (myCurrentOptionAndArgsLeft != null && myCurrentOptionAndArgsLeft.second == 0) {
@@ -173,7 +189,7 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
   }
 
   @Override
-  public void visitOption(final @NotNull CommandLineOption o) {
+  public void visitOption(@NotNull final CommandLineOption o) {
     super.visitOption(o);
     if (myUnusedOptions.containsKey(o.getOptionName())) {
       // Remove from list of available options
@@ -195,8 +211,9 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable Pair<Boolean, Argument> getNextArg() {
+  public Pair<Boolean, Argument> getNextArg() {
     if (myCurrentOptionAndArgsLeft != null && myCurrentOptionAndArgsLeft.second > 0) { // Next arg is option arg
       final Pair<Integer, Argument> argumentAndQuantity = myCurrentOptionAndArgsLeft.first.getArgumentAndQuantity();
       if (argumentAndQuantity != null) {

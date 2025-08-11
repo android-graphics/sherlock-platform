@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.debugger.ui.breakpoints;
 
@@ -28,8 +28,9 @@ public class CallTracingPropertiesPanel extends XBreakpointCustomPropertiesPanel
     myProject = project;
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent getComponent() {
+  public JComponent getComponent() {
     myStartTracing = new JBCheckBox(JavaDebuggerBundle.message("checkbox.start.tracing"));
     myEndTracing = new JBCheckBox(JavaDebuggerBundle.message("checkbox.stop.tracing"));
     JButton filters = new JButton(JavaDebuggerBundle.message("checkbox.tracking.filters"));

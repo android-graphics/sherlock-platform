@@ -61,9 +61,6 @@ object DebuggerDiagnosticsUtil {
     val problems = mutableListOf<String>()
 
     for (threadProxy in allThreads) {
-      if (threadProxy.isIgnoreModelSuspendCount) {
-        continue
-      }
       val suspendingContexts = SuspendManagerUtil.getSuspendingContexts(suspendManager, threadProxy)
       val resumedByWatching = if (invocationWatching != null && suspendingContexts.contains(invocationWatching.mySuspendAllContext)) 1
       else 0
@@ -148,7 +145,7 @@ object DebuggerDiagnosticsUtil {
     }
 
     if (problems.isNotEmpty()) {
-      process.logError("Found ${problems.size} problems", Attachment("Problems.txt", problems.joinToString(separator = "\n")))
+      process.logError("Found ${problems.size} problems", Attachment("Problems", problems.joinToString(separator = "\n")))
     }
   }
 
@@ -173,35 +170,23 @@ object DebuggerDiagnosticsUtil {
 
   @JvmStatic
   @JvmOverloads
-  fun getAttachments(process: DebugProcessImpl, first: Attachment? = null): Array<Attachment> {
-    if (!DebuggerManagerThreadImpl.isManagerThread()) {
-      return Attachment.EMPTY_ARRAY
-    }
+  fun getAttachments(process: DebugProcessImpl, first: Attachment? = null): Array<Attachment?> {
     val paramAttachment = if (first != null) listOf(first) else emptyList()
-    val result = paramAttachment + createStateAttachments(process)
-    for (attachment in result) {
-      attachment.isIncluded = true
-    }
-    return result.toArray(Attachment.EMPTY_ARRAY)
+    return (paramAttachment + createStateAttachments(process)).toArray(Attachment.EMPTY_ARRAY)
   }
 
   @JvmStatic
   private fun createStateAttachments(process: DebugProcessImpl) : List<Attachment> {
     if (recursionTracker.get() == true) {
-      return listOf(Attachment("Recursion_problem_detected_Just_dump.txt", noErr { ThreadDumper.dumpThreadsToString() }))
+      return listOf(Attachment("Recursion problem detected, just thread dump", noErr { ThreadDumper.dumpThreadsToString() }))
     }
     else {
       try {
         recursionTracker.set(true)
-
-        return buildList {
-          add(getDebuggerStateOverview(process))
-          if (process.isAttached) {
-            add(createThreadsAttachment(process))
-          }
-          add(Attachment("IDE_thread_dump.txt", noErr { ThreadDumper.dumpThreadsToString() }))
-          add(Attachment("context_detailed_information.txt", process.suspendManager.eventContexts.joinToString("\n") { it.toAttachmentString() }))
-        }
+        return listOf(getDebuggerStateOverview(process),
+                      createThreadsAttachment(process),
+                      Attachment("IDE thread dump", noErr { ThreadDumper.dumpThreadsToString() })) +
+               process.suspendManager.eventContexts.map { it.toAttachment() }
       }
       finally {
         recursionTracker.remove()
@@ -226,7 +211,7 @@ object DebuggerDiagnosticsUtil {
         "old invocation watcher is using"
       }
     } else "no suspend-all invocation watcher is activated"
-    return Attachment("Application_threads_state.txt", "$vmModelCount\n$blockedThreadsInfo\n$threads")
+    return Attachment("Application threads state", "$vmModelCount\n$blockedThreadsInfo\n$threads")
   }
 
   @JvmStatic
@@ -237,14 +222,14 @@ object DebuggerDiagnosticsUtil {
     val currentSuspendContext = (currentCommand as? SuspendContextCommandImpl)?.suspendContext
     val currentSuspendContextText = "Current Command Suspend context = $currentSuspendContext\n"
     val registryInfo = Registry.getAll()
-      .filter { it.key.startsWith("debugger.") && it.isChangedFromDefault() }
+      .filter { it.key.startsWith("debugger.") && it.isChangedFromDefault }
       .joinToString(separator = "") { "${it.key} = ${it.asString()}\n" }
     val content = registryInfo +
                   currentCommandText +
                   currentSuspendContextText +
                   noErr { process.stateForDiagnostics } +
                   noErr { (suspendManager as SuspendManagerImpl).stateForDiagnostics }
-    return Attachment("Debugger_state_overview.txt", content)
+    return Attachment("Debugger state overview", content)
   }
 
   @JvmStatic

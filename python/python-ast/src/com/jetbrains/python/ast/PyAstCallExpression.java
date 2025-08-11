@@ -19,7 +19,8 @@ import java.util.Objects;
 public interface PyAstCallExpression extends PyAstCallSiteExpression {
 
   @Override
-  default @Nullable PyAstExpression getReceiver(@Nullable PyAstCallable resolvedCallee) {
+  @Nullable
+  default PyAstExpression getReceiver(@Nullable PyAstCallable resolvedCallee) {
     if (resolvedCallee instanceof PyAstFunction function) {
       if (!PyNames.NEW.equals(function.getName()) && function.getModifier() == PyAstFunction.Modifier.STATICMETHOD) {
         return null;
@@ -40,7 +41,7 @@ public interface PyAstCallExpression extends PyAstCallSiteExpression {
 
   @Contract("null -> false")
   private static boolean isImplicitlyInvokedMethod(@Nullable PyAstCallable resolvedCallee) {
-    if (PyUtilCore.isConstructorLikeMethod(resolvedCallee)) return true;
+    if (PyUtilCore.isInitOrNewMethod(resolvedCallee)) return true;
 
     if (resolvedCallee instanceof PyAstFunction function) {
       return PyNames.CALL.equals(function.getName()) && function.getContainingClass() != null;
@@ -50,14 +51,16 @@ public interface PyAstCallExpression extends PyAstCallSiteExpression {
   }
 
   @Override
-  default @NotNull List<PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
+  @NotNull
+  default List<PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
     return Arrays.asList(getArguments());
   }
 
   /**
    * @return the expression representing the object being called (reference to a function).
    */
-  default @Nullable PyAstExpression getCallee() {
+  @Nullable
+  default PyAstExpression getCallee() {
     // peel off any parens, because we may have smth like (lambda x: x+1)(2)
     PsiElement seeker = getFirstChild();
     while (seeker instanceof PyAstParenthesizedExpression) seeker = ((PyAstParenthesizedExpression)seeker).getContainedExpression();
@@ -67,7 +70,8 @@ public interface PyAstCallExpression extends PyAstCallSiteExpression {
   /**
    * @return the argument list used in the call.
    */
-  default @Nullable PyAstArgumentList getArgumentList() {
+  @Nullable
+  default PyAstArgumentList getArgumentList() {
     return PsiTreeUtil.getChildOfType(this, PyAstArgumentList.class);
   }
 
@@ -87,7 +91,8 @@ public interface PyAstCallExpression extends PyAstCallSiteExpression {
    * @param argClass argument expected type
    * @return the argument or null
    */
-  default @Nullable <T extends PsiElement> T getArgument(int index, @NotNull Class<T> argClass) {
+  @Nullable
+  default <T extends PsiElement> T getArgument(int index, @NotNull Class<T> argClass) {
     final PyAstExpression[] args = getArguments();
     return args.length > index ? ObjectUtils.tryCast(args[index], argClass) : null;
   }
@@ -100,7 +105,8 @@ public interface PyAstCallExpression extends PyAstCallSiteExpression {
    * @param argClass argument expected type
    * @return the argument or null
    */
-  default @Nullable <T extends PsiElement> T getArgument(int index, @NonNls @NotNull String keyword, @NotNull Class<T> argClass) {
+  @Nullable
+  default <T extends PsiElement> T getArgument(int index, @NonNls @NotNull String keyword, @NotNull Class<T> argClass) {
     final PyAstExpression arg = getKeywordArgument(keyword);
     if (arg != null) {
       return ObjectUtils.tryCast(arg, argClass);
@@ -114,7 +120,8 @@ public interface PyAstCallExpression extends PyAstCallSiteExpression {
    * @param keyword argument keyword
    * @return the argument or null
    */
-  default @Nullable PyAstExpression getKeywordArgument(@NotNull String keyword) {
+  @Nullable
+  default PyAstExpression getKeywordArgument(@NotNull String keyword) {
     for (PyAstExpression arg : getArguments()) {
       if (arg instanceof PyAstKeywordArgument keywordArg) {
         if (keyword.equals(keywordArg.getKeyword())) {

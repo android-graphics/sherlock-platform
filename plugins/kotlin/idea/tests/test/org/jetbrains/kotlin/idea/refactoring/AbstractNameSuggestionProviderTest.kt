@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.codeInsight.TargetElementUtil
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.NameSuggestionProvider
 import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider
@@ -15,12 +14,10 @@ import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 abstract class AbstractNameSuggestionProviderTest : KotlinLightCodeInsightFixtureTestCase() {
     private fun getSuggestNames(element: PsiElement): List<String> {
         val names = HashSet<String>()
-        ActionUtil.underModalProgress(project, "") {
-            for (provider in NameSuggestionProvider.EP_NAME.extensions) {
-                val info = provider.getSuggestedNames(element, null, names)
-                if (info != null) {
-                    if (provider is PreferrableNameSuggestionProvider && !provider.shouldCheckOthers()) break
-                }
+        for (provider in NameSuggestionProvider.EP_NAME.extensions) {
+            val info = provider.getSuggestedNames(element, null, names)
+            if (info != null) {
+                if (provider is PreferrableNameSuggestionProvider && !provider.shouldCheckOthers()) break
             }
         }
         return names.sorted()
@@ -32,8 +29,7 @@ abstract class AbstractNameSuggestionProviderTest : KotlinLightCodeInsightFixtur
             myFixture.editor,
             TargetElementUtil.ELEMENT_NAME_ACCEPTED or TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
         )!!
-        val suffix = if (isFirPlugin) "_K2" else ""
-        val expectedNames = InTextDirectivesUtils.findListWithPrefixes(file.text, "// SUGGESTED_NAMES$suffix: ")
+        val expectedNames = InTextDirectivesUtils.findListWithPrefixes(file.text, "// SUGGESTED_NAMES: ")
         val actualNames = getSuggestNames(targetElement)
         TestCase.assertEquals(expectedNames, actualNames)
     }

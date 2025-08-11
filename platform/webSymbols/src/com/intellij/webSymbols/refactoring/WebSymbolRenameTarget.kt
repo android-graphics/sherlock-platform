@@ -13,11 +13,8 @@ interface WebSymbolRenameTarget : RenameTarget {
   override fun createPointer(): Pointer<out WebSymbolRenameTarget>
 
   companion object {
-    fun create(symbol: WebSymbol): WebSymbolRenameTarget? =
-      if (!acceptSymbolForPsiSourcedWebSymbolRenameHandler(symbol))
-        WebSymbolRenameTargetImpl(symbol)
-      else
-        null
+    fun create(symbol: WebSymbol): WebSymbolRenameTarget =
+      WebSymbolRenameTargetImpl(symbol)
   }
 
 }

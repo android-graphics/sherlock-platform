@@ -4,8 +4,6 @@ package com.intellij.openapi.options.newEditor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.ui.scale.JBUIScale;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -14,7 +12,6 @@ import java.util.Map;
 /**
  * @author Alexander Lobas
  */
-@ApiStatus.Internal
 public final class SingleSettingEditor extends ConfigurableEditor {
   private final SimpleBanner myBanner = new SimpleBanner() {
     @Override
@@ -24,17 +21,12 @@ public final class SingleSettingEditor extends ConfigurableEditor {
   };
   private final Map<Configurable, ConfigurableController> myControllers = new HashMap<>();
   private ConfigurableController myLastController;
-  private Dimension myDialogInitSize;
 
   SingleSettingEditor(Disposable parent, Configurable configurable) {
     super(parent);
     add(myBanner, BorderLayout.NORTH);
     myBanner.setVisible(false);
     init(configurable, false);
-
-    if (configurable instanceof Configurable.SingleEditorConfiguration singleEditorConfiguration) {
-      myDialogInitSize = singleEditorConfiguration.getDialogInitialSize();
-    }
   }
 
   @Override
@@ -51,10 +43,5 @@ public final class SingleSettingEditor extends ConfigurableEditor {
     }
 
     myBanner.setVisible(myBanner.canShow());
-  }
-
-  @Override
-  public @Nullable Dimension getDialogInitialSize() {
-    return myDialogInitSize;
   }
 }

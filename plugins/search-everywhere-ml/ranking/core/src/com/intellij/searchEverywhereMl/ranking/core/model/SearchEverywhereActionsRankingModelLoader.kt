@@ -6,11 +6,12 @@ import com.intellij.internal.ml.FeaturesInfo
 import com.intellij.internal.ml.ResourcesModelMetadataReader
 import com.intellij.searchEverywhere.model.actions.PredictionModel
 import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
+import com.intellij.searchEverywhere.model.actions.exp.PredictionModel as ExperimentalPredictionModel
 
 internal class SearchEverywhereActionsRankingModelLoader : SearchEverywhereMLRankingModelLoader() {
   private val standardResourceDirectory = "actions_features"
+
   private val expResourceDirectory = "actions_features_exp"
-  private val expModelDirectory = "actions_model_exp"
 
   override val supportedTab = SearchEverywhereTabWithMlRanking.ACTION
 
@@ -23,12 +24,17 @@ internal class SearchEverywhereActionsRankingModelLoader : SearchEverywhereMLRan
     }
   }
 
-  private fun getStandardModel(): SearchEverywhereMlModel {
+  private fun getStandardModel(): SearchEverywhereMLRankingDecisionFunction {
     val metadata = FeaturesInfo.buildInfo(ResourcesModelMetadataReader(this::class.java, standardResourceDirectory))
-    return object : SearchEverywhereMlModel(metadata) {
+    return object : SearchEverywhereMLRankingDecisionFunction(metadata) {
       override fun predict(features: DoubleArray?): Double = PredictionModel.makePredict(features)
     }
   }
 
-  private fun getExperimentalModel(): DecisionFunction = getCatBoostModel(expResourceDirectory, expModelDirectory)
+  private fun getExperimentalModel(): SearchEverywhereMLRankingDecisionFunction {
+    val metadata = FeaturesInfo.buildInfo(ResourcesModelMetadataReader(this::class.java, expResourceDirectory))
+    return object : SearchEverywhereMLRankingDecisionFunction(metadata) {
+      override fun predict(features: DoubleArray?): Double = ExperimentalPredictionModel.makePredict(features)
+    }
+  }
 }

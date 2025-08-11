@@ -37,12 +37,12 @@ public final class AddRuntimeExceptionToThrowsAction implements ModCommandAction
     if (method == null) return nop();
     ModCommand command =
       AddExceptionToThrowsFix.addExceptionsToThrowsList(context.project(), method, Collections.singleton(aClass), myProcessHierarchy);
-    if (command == null && !AddExceptionToThrowsFix.isAnyOfTheMethodsUnmodifiable(method)) {
+    if (command == null) {
       return chooseAction(QuickFixBundle.message("add.runtime.exception.to.throws.header"),
                           new AddRuntimeExceptionToThrowsAction(ThreeState.YES),
                           new AddRuntimeExceptionToThrowsAction(ThreeState.NO));
     }
-    return command != null ? command : new AddRuntimeExceptionToThrowsAction(ThreeState.NO).perform(context);
+    return command;
   }
 
 

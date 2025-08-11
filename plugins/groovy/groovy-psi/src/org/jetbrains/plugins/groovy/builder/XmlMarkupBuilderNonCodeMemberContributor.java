@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.builder;
 
 import com.intellij.psi.PsiClass;
@@ -18,10 +18,11 @@ import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesT
 public final class XmlMarkupBuilderNonCodeMemberContributor extends BuilderMethodsContributor {
 
   private static final String FQN = "groovy.xml.MarkupBuilder";
-  private static final @NonNls String ORIGIN_INFO = "via MarkupBuilder";
+  @NonNls private static final String ORIGIN_INFO = "via MarkupBuilder";
 
+  @Nullable
   @Override
-  protected @Nullable String getParentClassName() {
+  protected String getParentClassName() {
     return FQN;
   }
 
@@ -79,7 +80,8 @@ public final class XmlMarkupBuilderNonCodeMemberContributor extends BuilderMetho
     return true;
   }
 
-  private static @NotNull GrLightMethodBuilder createMethod(@NotNull String name, @NotNull PsiClass clazz, @NotNull PsiElement place) {
+  @NotNull
+  private static GrLightMethodBuilder createMethod(@NotNull String name, @NotNull PsiClass clazz, @NotNull PsiElement place) {
     GrLightMethodBuilder res = new GrLightMethodBuilder(place.getManager(), name);
     res.setReturnType(JAVA_LANG_STRING, place.getResolveScope());
     res.setOriginInfo(ORIGIN_INFO);

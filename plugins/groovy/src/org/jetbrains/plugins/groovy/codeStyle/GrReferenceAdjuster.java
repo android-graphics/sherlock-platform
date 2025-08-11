@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.lang.ASTNode;
@@ -183,7 +183,8 @@ public final class GrReferenceAdjuster implements ReferenceAdjuster {
            GroovyCodeStyleSettingsFacade.getInstance(containingClass.getProject()).insertInnerClassImports();
   }
 
-  private static @Nullable <Qualifier extends PsiElement> PsiElement resolveRef(@NotNull GrQualifiedReference<Qualifier> ref, boolean incomplete) {
+  @Nullable
+  private static <Qualifier extends PsiElement> PsiElement resolveRef(@NotNull GrQualifiedReference<Qualifier> ref, boolean incomplete) {
     if (!incomplete) return ref.resolve();
 
     PsiResolveHelper helper = JavaPsiFacade.getInstance(ref.getProject()).getResolveHelper();
@@ -197,7 +198,8 @@ public final class GrReferenceAdjuster implements ReferenceAdjuster {
 
 
   @SuppressWarnings("unchecked")
-  private static @Nullable <Qualifier extends PsiElement> GrQualifiedReference<Qualifier> getCopy(@NotNull GrQualifiedReference<Qualifier> ref) {
+  @Nullable
+  private static <Qualifier extends PsiElement> GrQualifiedReference<Qualifier> getCopy(@NotNull GrQualifiedReference<Qualifier> ref) {
     if (ref.getParent() instanceof GrMethodCall) {
       final GrMethodCall copy = ((GrMethodCall)ref.getParent().copy());
       return (GrQualifiedReference<Qualifier>)copy.getInvokedExpression();

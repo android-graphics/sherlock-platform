@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.notification.Notification;
@@ -23,7 +23,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
@@ -38,23 +41,22 @@ import static com.intellij.util.ui.UIUtil.BR;
 /**
  * Searches for Vcs roots problems via {@link VcsRootErrorsFinder} and notifies about them.
  */
-@ApiStatus.Internal
 public final class VcsRootProblemNotifier {
   private static final Logger LOG = Logger.getInstance(VcsRootProblemNotifier.class);
 
-  private final @NotNull Project myProject;
-  private final @NotNull VcsConfiguration mySettings;
-  private final @NotNull ProjectLevelVcsManagerImpl myVcsManager;
-  private final @NotNull ChangeListManager myChangeListManager;
-  private final @NotNull ProjectFileIndex myProjectFileIndex;
+  @NotNull private final Project myProject;
+  @NotNull private final VcsConfiguration mySettings;
+  @NotNull private final ProjectLevelVcsManagerImpl myVcsManager;
+  @NotNull private final ChangeListManager myChangeListManager;
+  @NotNull private final ProjectFileIndex myProjectFileIndex;
 
   // unregistered roots reported during this session but not explicitly ignored
-  private final @NotNull Set<String> myReportedUnregisteredRoots;
+  @NotNull private final Set<String> myReportedUnregisteredRoots;
 
-  private @Nullable Notification myNotification;
-  private final @NotNull Object NOTIFICATION_LOCK = new Object();
+  @Nullable private Notification myNotification;
+  @NotNull private final Object NOTIFICATION_LOCK = new Object();
 
-  private final @NotNull Function<VcsRootError, String> ROOT_TO_PRESENTABLE = rootError -> getPresentableMapping(rootError.getMapping());
+  @NotNull private final Function<VcsRootError, String> ROOT_TO_PRESENTABLE = rootError -> getPresentableMapping(rootError.getMapping());
 
   public static VcsRootProblemNotifier createInstance(@NotNull Project project) {
     return new VcsRootProblemNotifier(project);
@@ -144,7 +146,8 @@ public final class VcsRootProblemNotifier {
     }
   }
 
-  private @NotNull NotificationAction getConfigureNotificationAction() {
+  @NotNull
+  private NotificationAction getConfigureNotificationAction() {
     return NotificationAction.create(
       VcsBundle.messagePointer("action.NotificationAction.VcsRootProblemNotifier.text.configure"),
       (event, notification) -> {
@@ -201,12 +204,14 @@ public final class VcsRootProblemNotifier {
     }
   }
 
-  private @NotNull Collection<VcsRootError> scan() {
+  @NotNull
+  private Collection<VcsRootError> scan() {
     return new VcsRootErrorsFinder(myProject).find();
   }
 
-  private @NotNull @NlsContexts.NotificationContent String makeDescription(@NotNull Collection<? extends VcsRootError> unregisteredRoots,
-                                                                           @NotNull Collection<? extends VcsRootError> invalidRoots) {
+  @NotNull
+  private @NlsContexts.NotificationContent String makeDescription(@NotNull Collection<? extends VcsRootError> unregisteredRoots,
+                                                                  @NotNull Collection<? extends VcsRootError> invalidRoots) {
     @Nls StringBuilder description = new StringBuilder();
     if (!invalidRoots.isEmpty()) {
       if (invalidRoots.size() == 1) {
@@ -242,7 +247,8 @@ public final class VcsRootProblemNotifier {
                              ROOT_TO_PRESENTABLE.fun(rootError), vcsName);
   }
 
-  private @NotNull String joinRootsForPresentation(@NotNull Collection<? extends VcsRootError> errors) {
+  @NotNull
+  private String joinRootsForPresentation(@NotNull Collection<? extends VcsRootError> errors) {
     List<? extends VcsRootError> sortedRoots = sorted(errors, (root1, root2) -> {
       if (root1.getMapping().isDefaultMapping()) return -1;
       if (root2.getMapping().isDefaultMapping()) return 1;
@@ -251,9 +257,10 @@ public final class VcsRootProblemNotifier {
     return StringUtil.join(sortedRoots, ROOT_TO_PRESENTABLE, BR);
   }
 
-  private static @NotNull @NlsContexts.NotificationTitle String makeTitle(@NotNull Collection<? extends VcsRootError> unregisteredRoots,
-                                                                          @NotNull Collection<? extends VcsRootError> invalidRoots,
-                                                                          boolean rootsAlreadyAdded) {
+  @NotNull
+  private static @NlsContexts.NotificationTitle String makeTitle(@NotNull Collection<? extends VcsRootError> unregisteredRoots,
+                                                                 @NotNull Collection<? extends VcsRootError> invalidRoots,
+                                                                 boolean rootsAlreadyAdded) {
     String title;
     if (unregisteredRoots.isEmpty()) {
       title = VcsBundle.message("roots.notification.title.invalid.vcs.root.choice.mapping.mappings", invalidRoots.size());
@@ -284,7 +291,8 @@ public final class VcsRootProblemNotifier {
     return result;
   }
 
-  private @NotNull List<VcsRootError> getImportantUnregisteredMappings(@NotNull Collection<? extends VcsRootError> errors) {
+  @NotNull
+  private List<VcsRootError> getImportantUnregisteredMappings(@NotNull Collection<? extends VcsRootError> errors) {
     return filter(errors, error -> {
       VcsDirectoryMapping mapping = error.getMapping();
       return error.getType() == UNREGISTERED_ROOT &&
@@ -298,7 +306,8 @@ public final class VcsRootProblemNotifier {
     return exists(allErrors, it -> it.getType() == UNREGISTERED_ROOT && isExplicitlyIgnoredPath(it.getMapping()));
   }
 
-  private static @NotNull Collection<VcsRootError> getInvalidRoots(@NotNull Collection<? extends VcsRootError> errors) {
+  @NotNull
+  private static Collection<VcsRootError> getInvalidRoots(@NotNull Collection<? extends VcsRootError> errors) {
     return filter(errors, error -> error.getType() == VcsRootError.Type.EXTRA_MAPPING);
   }
 

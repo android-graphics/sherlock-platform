@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.todo.TodoPanelSettings;
@@ -26,10 +26,10 @@ import java.util.function.Consumer;
 @State(name = "VcsManagerConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class VcsConfiguration implements PersistentStateComponent<VcsConfiguration> {
   private static final Logger LOG = Logger.getInstance(VcsConfiguration.class);
-  public static final long ourMaximumFileForBaseRevisionSize = 500 * 1000;
+  public final static long ourMaximumFileForBaseRevisionSize = 500 * 1000;
 
-  public static final @NonNls String PATCH = "patch";
-  public static final @NonNls String DIFF = "diff";
+  @NonNls public static final String PATCH = "patch";
+  @NonNls public static final String DIFF = "diff";
 
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT =
     !PlatformUtils.isPyCharm() && !PlatformUtils.isRubyMine() && !PlatformUtils.isCLion();
@@ -57,7 +57,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean SHOW_DIRTY_RECURSIVELY = false;
   public boolean LIMIT_HISTORY = true;
   public int MAXIMUM_HISTORY_ROWS = 1000;
-  public @NlsSafe String UPDATE_FILTER_SCOPE_NAME = null;
+  @NlsSafe public String UPDATE_FILTER_SCOPE_NAME = null;
   public boolean USE_COMMIT_MESSAGE_MARGIN = true;
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
   public boolean LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = true;
@@ -85,11 +85,13 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     private final String myId;
     private final String myKey;
 
-    public @NonNls String getId() {
+    @NonNls
+    public String getId() {
       return myId;
     }
 
-    public @Nls String getDisplayName() {
+    @Nls
+    public String getDisplayName() {
       return VcsBundle.message(myKey);
     }
   }
@@ -104,14 +106,17 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
       myKey = key;
     }
 
-    private final @NotNull String myId;
+    @NotNull
+    private final String myId;
     private final String myKey;
 
-    public @NotNull String getId() {
+    @NotNull
+    public String getId() {
       return myId;
     }
 
-    public @Nls String getDisplayName() {
+    @Nls
+    public String getDisplayName() {
       return VcsBundle.message(myKey);
     }
   }
@@ -122,7 +127,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   @XCollection(elementName = "MESSAGE")
   public List<String> myLastCommitMessages = new ArrayList<>();
   public @Nullable String LAST_COMMIT_MESSAGE = null;
-  public @NotNull String LAST_CHUNK_COMMIT_MESSAGE = "";
   public boolean MAKE_NEW_CHANGELIST_ACTIVE = false;
   public boolean PRESELECT_EXISTING_CHANGELIST = false;
 
@@ -138,8 +142,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean UPDATE_FILTER_BY_SCOPE = false;
   public boolean SHOW_FILE_HISTORY_AS_TREE = false;
   public boolean GROUP_MULTIFILE_MERGE_BY_DIRECTORY = false;
-
-  public boolean NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS = true;
 
   private static final int MAX_STORED_MESSAGES = 25;
 
@@ -167,14 +169,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     });
   }
 
-  public void saveTempChunkCommitMessage(final @NotNull String comment) {
-    LAST_CHUNK_COMMIT_MESSAGE = comment;
-  }
-
-  public @NotNull String getTempChunkCommitMessage() {
-    return LAST_CHUNK_COMMIT_MESSAGE;
-  }
-
   private static void addCommitMessage(@NotNull List<? super String> recentMessages, @NotNull String comment) {
     if (recentMessages.size() >= MAX_STORED_MESSAGES) {
       recentMessages.remove(0);
@@ -186,8 +180,9 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     return ContainerUtil.getLastItem(myLastCommitMessages);
   }
 
+  @NotNull
   @CalledInAny
-  public @NotNull ArrayList<String> getRecentMessages() {
+  public ArrayList<String> getRecentMessages() {
     return new ArrayList<>(myLastCommitMessages);
   }
 
@@ -222,7 +217,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   /**
    * @deprecated Always start progress in background
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public PerformInBackgroundOption getUpdateOption() {
     return PerformInBackgroundOption.ALWAYS_BACKGROUND;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration.actions;
 
@@ -11,7 +11,6 @@ import com.intellij.openapi.roots.ui.configuration.ContentEntryTreeEditor;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootPropertiesHelper;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -22,7 +21,6 @@ import java.util.Locale;
 /**
  * @author Eugene Zhuravlev
  */
-@ApiStatus.Internal
 public final class ToggleSourcesStateAction<P extends JpsElement> extends ContentEntryEditingAction {
   private final ContentEntryTreeEditor myEntryTreeEditor;
   private final ModuleSourceRootEditHandler<P> myEditHandler;
@@ -39,7 +37,7 @@ public final class ToggleSourcesStateAction<P extends JpsElement> extends Conten
   }
 
   @Override
-  public boolean isSelected(final @NotNull AnActionEvent e) {
+  public boolean isSelected(@NotNull final AnActionEvent e) {
     final VirtualFile[] selectedFiles = getSelectedFiles();
     if (selectedFiles.length == 0) return false;
 
@@ -48,7 +46,7 @@ public final class ToggleSourcesStateAction<P extends JpsElement> extends Conten
   }
 
   @Override
-  public void setSelected(final @NotNull AnActionEvent e, final boolean isSelected) {
+  public void setSelected(@NotNull final AnActionEvent e, final boolean isSelected) {
     final VirtualFile[] selectedFiles = getSelectedFiles();
     assert selectedFiles.length != 0;
 

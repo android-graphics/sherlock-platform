@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress
 
 import com.intellij.build.BuildWorkspaceConfiguration
@@ -16,7 +16,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.PlatformTestUtil
@@ -76,35 +75,19 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
     runWithProgressExIndicatorSupport { rebuildProject() }
     buildViewTestFixture.assertBuildViewTreeEquals("-\n rebuild finished")
     buildViewTestFixture.assertBuildViewSelectedNode("rebuild finished", false) { output ->
-      assertThat(output).startsWith(if (AdvancedSettings.getBoolean("compiler.unified.ic.implementation")) """
-          Clearing build system data…
-          Executing pre-compile tasks…
-          Cleaning output directories…
-          Running 'before' tasks
-          Checking sources
-          Copying resources… [a]
-          Updating dependency information… [a]
-          Parsing java… [a]
-          Writing classes… [a]
-          Adding nullability assertions… [a]
-          Adding threading assertions… [a]
-          Adding pattern assertions… [a]
-          Running 'after' tasks
-        """.trimIndent() else """
-          Clearing build system data…
-          Executing pre-compile tasks…
-          Cleaning output directories…
-          Running 'before' tasks
-          Checking sources
-          Copying resources… [a]
-          Parsing java… [a]
-          Writing classes… [a]
-          Adding nullability assertions… [a]
-          Adding threading assertions… [a]
-          Adding pattern assertions… [a]
-          Updating dependency information… [a]
-          Running 'after' tasks
-        """.trimIndent())
+      assertThat(output).startsWith("Clearing build system data…\n" +
+                                    "Executing pre-compile tasks…\n" +
+                                    "Cleaning output directories…\n" +
+                                    "Running 'before' tasks\n" +
+                                    "Checking sources\n" +
+                                    "Copying resources… [a]\n" +
+                                    "Parsing java… [a]\n" +
+                                    "Writing classes… [a]\n" +
+                                    "Adding nullability assertions… [a]\n" +
+                                    "Adding threading assertions… [a]\n" +
+                                    "Adding pattern assertions… [a]\n" +
+                                    "Updating dependency information… [a]\n" +
+                                    "Running 'after' tasks\n")
       assertThat(output).contains("Finished, saving caches…\n" +
                                   "Executing post-compile tasks…\n" +
                                   "Synchronizing output directories…")
@@ -113,33 +96,18 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
     runWithProgressExIndicatorSupport { rebuild(module) }
     buildViewTestFixture.assertBuildViewTreeEquals("-\n recompile finished")
     buildViewTestFixture.assertBuildViewSelectedNode("recompile finished", false) { output ->
-      assertThat(output).startsWith(if (AdvancedSettings.getBoolean("compiler.unified.ic.implementation")) """
-        Executing pre-compile tasks…
-        Cleaning output directories…
-        Running 'before' tasks
-        Checking sources
-        Copying resources… [a]
-        Updating dependency information… [a]
-        Parsing java… [a]
-        Writing classes… [a]
-        Adding nullability assertions… [a]
-        Adding threading assertions… [a]
-        Adding pattern assertions… [a]
-        Running 'after' tasks
-      """.trimIndent() else """
-        Executing pre-compile tasks…
-        Cleaning output directories…
-        Running 'before' tasks
-        Checking sources
-        Copying resources… [a]
-        Parsing java… [a]
-        Writing classes… [a]
-        Adding nullability assertions… [a]
-        Adding threading assertions… [a]
-        Adding pattern assertions… [a]
-        Updating dependency information… [a]
-        Running 'after' tasks
-      """.trimIndent())
+      assertThat(output).startsWith("Executing pre-compile tasks…\n" +
+                                    "Cleaning output directories…\n" +
+                                    "Running 'before' tasks\n" +
+                                    "Checking sources\n" +
+                                    "Copying resources… [a]\n" +
+                                    "Parsing java… [a]\n" +
+                                    "Writing classes… [a]\n" +
+                                    "Adding nullability assertions… [a]\n" +
+                                    "Adding threading assertions… [a]\n" +
+                                    "Adding pattern assertions… [a]\n" +
+                                    "Updating dependency information… [a]\n" +
+                                    "Running 'after' tasks")
       assertThat(output).contains("Finished, saving caches…\n" +
                                   "Executing post-compile tasks…\n" +
                                   "Synchronizing output directories…")

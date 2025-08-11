@@ -55,18 +55,10 @@ object Text {
   private const val cSharpTypeOrValueTuple = "($id|\\($id(, *$id)+\\))"
   private const val cSharpGenericTypeParameter = "(((in|out) +)?$cSharpTypeOrValueTuple)"
   private const val cSharpGenericMethod = "$id\\<$cSharpGenericTypeParameter(, *$cSharpGenericTypeParameter)*\\>\\("
-  private const val scalaTodo = "= ?\\?\\?\\?"
-  private val codeLikePattern = Regex("$assignment|$idChain|$pyFString|$call|$commonCharEscape|$keyColonValue|$cSharpGenericMethod|$scalaTodo")
-
-  private val javaVariable = Regex("\\b([A-Z])($id) ([a-z])(\\2) ?[;:,)=]")
+  private val codeLikePattern = Regex("$assignment|$idChain|$pyFString|$call|$commonCharEscape|$keyColonValue|$cSharpGenericMethod")
 
   fun CharSequence.looksLikeCode(): Boolean {
     if (codeLikePattern.find(this) != null) return true
-
-    val matcher = javaVariable.find(this)
-    if (matcher != null && matcher.groups[1]!!.value == matcher.groups[3]!!.value.uppercase()) {
-      return true
-    }
 
     if (this.any { it.code > 127 }) return false
 

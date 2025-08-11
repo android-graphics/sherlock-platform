@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.framework.addSupport;
 
 import com.intellij.diagnostic.PluginException;
@@ -20,11 +20,13 @@ import java.util.List;
 
 public abstract class FrameworkSupportInModuleProvider implements FrameworkOrGroup {
 
-  public abstract @NotNull FrameworkTypeEx getFrameworkType();
+  @NotNull
+  public abstract FrameworkTypeEx getFrameworkType();
 
-  public abstract @NotNull FrameworkSupportInModuleConfigurable createConfigurable(@NotNull FrameworkSupportModel model);
+  @NotNull
+  public abstract FrameworkSupportInModuleConfigurable createConfigurable(@NotNull FrameworkSupportModel model);
 
-  public abstract boolean isEnabledForModuleType(@NotNull ModuleType<?> moduleType);
+  public abstract boolean isEnabledForModuleType(@NotNull ModuleType moduleType);
 
   public boolean isEnabledForModuleBuilder(@NotNull ModuleBuilder builder) {
     return isEnabledForModuleType(builder.getModuleType());
@@ -38,8 +40,9 @@ public abstract class FrameworkSupportInModuleProvider implements FrameworkOrGro
     return !isSupportAlreadyAdded(module, facetsProvider);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPresentableName() {
+  public String getPresentableName() {
     return getFrameworkType().getPresentableName();
   }
 
@@ -55,13 +58,15 @@ public abstract class FrameworkSupportInModuleProvider implements FrameworkOrGro
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getId() {
+  public String getId() {
     return getFrameworkType().getId();
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getIcon() {
+  public Icon getIcon() {
     Icon icon = getFrameworkType().getIcon();
     //noinspection ConstantConditions
     if (icon == null) {

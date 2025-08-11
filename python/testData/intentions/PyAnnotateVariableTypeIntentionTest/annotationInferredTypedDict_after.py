@@ -1,1 +1,0 @@
-var: [dict[str, int | str]] = {"foo": 42, "bar": "baz"}

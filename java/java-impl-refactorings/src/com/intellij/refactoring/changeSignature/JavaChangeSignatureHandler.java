@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.JavaTargetElementEvaluator;
@@ -57,18 +57,19 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final PsiElement @NotNull [] elements, final @Nullable DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final PsiElement @NotNull [] elements, @Nullable final DataContext dataContext) {
     if (elements.length != 1) return;
     Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
     invokeOnElement(project, editor, elements[0]);
   }
 
+  @Nullable
   @Override
-  public @Nullable String getTargetNotFoundMessage() {
+  public String getTargetNotFoundMessage() {
     return RefactoringBundle.message("error.wrong.caret.position.method.or.class.name");
   }
 
-  private static void invoke(@NotNull PsiMethod method, @NotNull Project project, final @Nullable Editor editor) {
+  private static void invoke(@NotNull PsiMethod method, @NotNull Project project, @Nullable final Editor editor) {
     PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method);
     if (newMethod == null) return;
 
@@ -124,8 +125,9 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
               return currentInfo.getNewParameters().length;
             }
 
+            @Nullable
             @Override
-            public @Nullable String getReturnTypeText() {
+            public String getReturnTypeText() {
               return currentInfo.getNewReturnType().getTypeText();
             }
           };

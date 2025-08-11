@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.filters.HyperlinkInfo;
@@ -85,7 +99,7 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
     myWrapper.printOn(printer, printables, skipFileContent);
   }
 
-  public void addLast(final @NotNull Printable printable) {
+  public void addLast(@NotNull final Printable printable) {
     synchronized (myNestedPrintables) {
       myNestedPrintables.add(printable);
       if (myNestedPrintables.size() > 500) {
@@ -94,7 +108,7 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
     }
   }
 
-  public void insert(final @NotNull Printable printable, int i) {
+  public void insert(@NotNull final Printable printable, int i) {
     synchronized (myNestedPrintables) {
       if (i >= myNestedPrintables.size()) {
         myNestedPrintables.add(printable);
@@ -170,7 +184,8 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
     private final MyFlushToFilePrinter myPrinter = new MyFlushToFilePrinter();
     private final Object myFileLock = new Object();
 
-    private synchronized @Nullable File getFile() {
+    @Nullable
+    private synchronized File getFile() {
       if (myFile == null) {
         try {
           final File tempFile = FileUtil.createTempFile("idea_test_", ".out");

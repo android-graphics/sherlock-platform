@@ -20,7 +20,3 @@ class SomeOther<S> : Some<S> {
         TODO("Not yet implemented")
     }
 }
-
-// MEMBER: "someFoo(): Unit"
-// MEMBER: "someOtherFoo(): Int"
-// MEMBER: "someGenericFoo(): S"

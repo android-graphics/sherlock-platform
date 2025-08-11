@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -29,13 +29,15 @@ public class JvmSmartStepIntoActionHandler extends XSmartStepIntoHandler<JvmSmar
     mySession = session;
   }
 
+  @NotNull
   @Override
-  public @NotNull Promise<List<JvmSmartStepIntoVariant>> computeSmartStepVariantsAsync(@NotNull XSourcePosition position) {
+  public Promise<List<JvmSmartStepIntoVariant>> computeSmartStepVariantsAsync(@NotNull XSourcePosition position) {
     return findVariants(position, true);
   }
 
+  @NotNull
   @Override
-  public @NotNull Promise<List<JvmSmartStepIntoVariant>> computeStepIntoVariants(@NotNull XSourcePosition position) {
+  public Promise<List<JvmSmartStepIntoVariant>> computeStepIntoVariants(@NotNull XSourcePosition position) {
     return findVariants(position, false);
   }
 
@@ -50,8 +52,9 @@ public class JvmSmartStepIntoActionHandler extends XSmartStepIntoHandler<JvmSmar
     return Promises.rejectedPromise();
   }
 
+  @NotNull
   @Override
-  public @NotNull List<JvmSmartStepIntoVariant> computeSmartStepVariants(@NotNull XSourcePosition position) {
+  public List<JvmSmartStepIntoVariant> computeSmartStepVariants(@NotNull XSourcePosition position) {
     throw new IllegalStateException("Should not be called");
   }
 
@@ -84,13 +87,15 @@ public class JvmSmartStepIntoActionHandler extends XSmartStepIntoHandler<JvmSmar
       return myTarget.getPresentation();
     }
 
+    @Nullable
     @Override
-    public @Nullable Icon getIcon() {
+    public Icon getIcon() {
       return myTarget.getIcon();
     }
 
+    @Nullable
     @Override
-    public @Nullable TextRange getHighlightRange() {
+    public TextRange getHighlightRange() {
       PsiElement element = myTarget.getHighlightElement();
       return element != null ? element.getTextRange() : null;
     }

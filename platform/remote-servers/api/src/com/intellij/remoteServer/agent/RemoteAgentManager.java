@@ -1,14 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.agent;
 
 import com.intellij.openapi.application.ApplicationManager;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
 
-@ApiStatus.Internal
+/**
+ * @author michael.golubev
+ */
 public abstract class RemoteAgentManager {
 
   public static RemoteAgentManager getInstance() {

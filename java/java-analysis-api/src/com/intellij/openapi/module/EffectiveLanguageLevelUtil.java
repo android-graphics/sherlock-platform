@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -9,7 +9,8 @@ public final class EffectiveLanguageLevelUtil {
    * @deprecated use {@link LanguageLevelUtil#getEffectiveLanguageLevel(Module)} directly instead
    */
   @Deprecated
-  public static @NotNull LanguageLevel getEffectiveLanguageLevel(final @NotNull Module module) {
+  @NotNull
+  public static LanguageLevel getEffectiveLanguageLevel(@NotNull final Module module) {
     return LanguageLevelUtil.getEffectiveLanguageLevel(module);
   }
 }

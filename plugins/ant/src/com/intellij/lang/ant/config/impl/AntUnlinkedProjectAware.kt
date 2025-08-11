@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl
 
-import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.lang.ant.config.AntBuildFile
 import com.intellij.lang.ant.config.AntConfigurationBase
 import com.intellij.lang.ant.config.AntConfigurationListener
@@ -22,9 +21,9 @@ import com.intellij.util.PathUtil
 class AntUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
   override val systemId = SYSTEM_ID
 
-  override fun buildFileExtensions(): Array<String> = arrayOf(XmlFileType.DEFAULT_EXTENSION)
-
-  override fun isBuildFile(project: Project, buildFile: VirtualFile): Boolean = buildFile.name in KNOWN_ANT_FILES
+  override fun isBuildFile(project: Project, buildFile: VirtualFile): Boolean {
+    return buildFile.name in KNOWN_ANT_FILES
+  }
 
   override fun isLinkedProject(project: Project, externalProjectPath: String): Boolean {
     val antConfiguration = AntConfigurationBase.getInstance(project)

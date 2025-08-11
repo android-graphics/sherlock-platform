@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.ide.CopyPasteManager.ContentChangedListener;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.DataFlavor;
@@ -51,10 +50,4 @@ public interface ClientCopyPasteManager extends ClipboardOwner {
   void addContentChangedListener(@NotNull ContentChangedListener listener, @NotNull Disposable parentDisposable);
 
   void removeContentChangedListener(@NotNull ContentChangedListener listener);
-
-  boolean isSystemSelectionSupported();
-
-  @Nullable Transferable getSystemSelectionContents();
-
-  void setSystemSelectionContents(@NotNull Transferable content);
 }

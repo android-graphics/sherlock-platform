@@ -1,2 +1,2 @@
-/// [java.lang.String#copyValueOf(char\[\], int, int)]
+/// [java.util.HashMap#toString()]
 class C{}

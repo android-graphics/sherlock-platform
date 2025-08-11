@@ -4,9 +4,7 @@ package com.intellij.find.editorHeaderActions;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.openapi.actionSystem.KeepPopupOnPerform;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
 public final class ToggleExceptCommentsAndLiteralsAction extends EditorHeaderSetSearchContextAction {
   public ToggleExceptCommentsAndLiteralsAction() {
     super(

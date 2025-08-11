@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.findUsages;
 
@@ -23,9 +23,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
-  protected final @NotNull PsiElement myPsiElement;
-  private final @Nullable String myHelpId;
-  protected final @NotNull FindUsagesHandlerBase myUsagesHandler;
+  @NotNull protected final PsiElement myPsiElement;
+  @Nullable private final String myHelpId;
+  @NotNull protected final FindUsagesHandlerBase myUsagesHandler;
 
   public CommonFindUsagesDialog(@NotNull PsiElement element,
                                 @NotNull Project project,
@@ -52,12 +52,11 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
   protected boolean isInFileOnly() {
     if (super.isInFileOnly()) return true;
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-347939, EA-976313")) {
-      return ReadAction.compute(() -> {
-        Project project = myPsiElement.getProject();
-        SearchScope useScope = PsiSearchHelper.getInstance(project).getUseScope(myPsiElement);
-        return useScope instanceof LocalSearchScope;
-      });
+      Project project = myPsiElement.getProject();
+      SearchScope useScope = PsiSearchHelper.getInstance(project).getUseScope(myPsiElement);
+      if (useScope instanceof LocalSearchScope) return true;
     }
+    return false;
   }
 
   @Override
@@ -70,8 +69,9 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
+  @Nullable
   @Override
-  protected @Nullable String getHelpId() {
+  protected String getHelpId() {
     return myHelpId;
   }
 }

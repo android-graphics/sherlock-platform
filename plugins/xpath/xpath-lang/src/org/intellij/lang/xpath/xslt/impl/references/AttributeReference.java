@@ -38,7 +38,8 @@ class AttributeReference extends SimpleAttributeReference {
     }
 
     @Override
-    protected @NotNull TextRange getTextRange() {
+    @NotNull
+    protected TextRange getTextRange() {
         return TextRange.from(0, myAttribute.getValue().length());
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.history.core.revisions.Revision;
@@ -6,10 +6,10 @@ import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionItem;
 import com.intellij.ide.CopyProvider;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -37,13 +37,12 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public final class RevisionsList {
   public static final int RECENT_PERIOD = 12;
   private final JBTable table;
-  private final JComponent component;
   private volatile Set<Long> filteredRevisions;
 
   public RevisionsList(SelectionListener l) {
@@ -64,13 +63,16 @@ public final class RevisionsList {
     addSelectionListener(l);
 
     CopyProvider copyProvider = new MyCellRenderer.MyCopyProvider(table);
-    component = UiDataProvider.wrapComponent(table, sink -> {
-      sink.set(PlatformDataKeys.COPY_PROVIDER, copyProvider);
+    DataManager.registerDataProvider(table, dataId -> {
+      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+        return copyProvider;
+      }
+      return null;
     });
   }
 
-  public @NotNull JComponent getComponent() {
-    return component;
+  public JComponent getComponent() {
+    return table;
   }
 
   public boolean isEmpty() {
@@ -215,11 +217,11 @@ public final class RevisionsList {
     }
   }
 
-  private static final class MyModel extends AbstractTableModel {
+  public static final class MyModel extends AbstractTableModel {
     private final List<? extends RevisionItem> myRevisions;
     private final Map<RevisionItem, Period> myPeriods;
 
-    MyModel(List<? extends RevisionItem> revisions, Map<RevisionItem, Period> periods) {
+    public MyModel(List<? extends RevisionItem> revisions, Map<RevisionItem, Period> periods) {
       myRevisions = revisions;
       myPeriods = periods;
     }
@@ -552,7 +554,7 @@ public final class RevisionsList {
           String time = DateFormatUtil.formatDateTime(r.revision.getTimestamp());
           String title = labelsAndColor.title;
           String filesCount = labelsAndColor.filesCount;
-          if (!sb.isEmpty()) sb.append("\n");
+          if (sb.length() != 0) sb.append("\n");
           sb.append(time).append(", ")
             .append(filesCount).append(": ")
             .append(title);

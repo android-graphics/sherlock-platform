@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
@@ -34,8 +34,9 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
     super(node);
   }
 
+  @Nullable
   @Override
-  public @Nullable GroovyCallReference getReference() {
+  public GroovyCallReference getReference() {
     return myReference.getValue();
   }
 
@@ -51,12 +52,14 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
   }
 
   @Override
-  public @NotNull GrExpression getLValue() {
+  @NotNull
+  public GrExpression getLValue() {
     return Objects.requireNonNull(findExpressionChild(this));
   }
 
   @Override
-  public @Nullable GrExpression getRValue() {
+  @Nullable
+  public GrExpression getRValue() {
     GrExpression[] exprs = findChildrenByClass(GrExpression.class);
     if (exprs.length > 1) {
       return exprs[1];
@@ -64,13 +67,15 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
     return null;
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getOperationToken() {
+  public PsiElement getOperationToken() {
     return findNotNullChildByType(ASSIGNMENTS);
   }
 
+  @Nullable
   @Override
-  public @Nullable IElementType getOperator() {
+  public IElementType getOperator() {
     return TokenSets.ASSIGNMENTS_TO_OPERATORS.get(getOperationTokenType());
   }
 
@@ -84,19 +89,22 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
     visitor.visitAssignmentExpression(this);
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiType getLeftType() {
+  public PsiType getLeftType() {
     return getLValue().getType();
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiType getRightType() {
+  public PsiType getRightType() {
     GrExpression rValue = getRValue();
     return rValue == null ? null : rValue.getType();
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiType getType() {
+  public PsiType getType() {
     IElementType type = getOperationTokenType();
     if (TokenSets.ASSIGNMENTS_TO_OPERATORS.containsKey(type)) {
       return super.getType();

@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
 import com.intellij.debugger.DebuggerContext
-import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
@@ -25,14 +24,12 @@ class ContinuationVariableValueDescriptorImpl(
     override fun calcValueName() = variableName
 
     override fun calcValue(evaluationContext: EvaluationContextImpl?): Value? {
-        val referenceType = continuation.referenceType() ?: return null
-        val field = DebuggerUtils.findField(referenceType, fieldName) ?: return null
+        val field = continuation.referenceType()?.fieldByName(fieldName) ?: return null
         return continuation.getValue(field)
     }
 
     fun updateValue(value: Value?) {
-        val referenceType = continuation.referenceType() ?: return
-        val field = DebuggerUtils.findField(referenceType, fieldName) ?: return
+        val field = continuation.referenceType()?.fieldByName(fieldName) ?: return
         continuation.setValue(field, value)
     }
 

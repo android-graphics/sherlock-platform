@@ -1,15 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.python;
 
 import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.python.community.testFramework.testEnv.EnvTagsKt;
 import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.env.PyEnvTestCase;
 import org.junit.Test;
 
-import java.nio.file.Path;
 import java.util.*;
 
 import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
@@ -28,7 +26,7 @@ public class PyEnvSufficiencyTest extends PyEnvTestCase {
         return;         // not on env agent
       }
       for (String root : roots) {
-        tags.addAll(EnvTagsKt.loadEnvTags(Path.of(root)));
+        tags.addAll(loadEnvTags(root));
       }
 
       List<String> missing = new ArrayList<>();

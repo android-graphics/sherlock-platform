@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.application.PathManager;
@@ -72,7 +72,8 @@ public final class CommandUtil {
     parameters.add(format(path, pegRevision));
   }
 
-  public static @NotNull String format(@NotNull String path, @Nullable Revision pegRevision) {
+  @NotNull
+  public static String format(@NotNull String path, @Nullable Revision pegRevision) {
     StringBuilder builder = new StringBuilder(path);
 
     boolean hasAtSymbol = path.contains("@");
@@ -128,7 +129,8 @@ public final class CommandUtil {
     put(parameters, "--revision", format(startRevision) + ":" + format(endRevision));
   }
 
-  public static @NotNull String format(@NotNull Revision revision) {
+  @NotNull
+  public static String format(@NotNull Revision revision) {
     var date = revision.getDate();
     return date != null ? "{" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(date.toInstant().atZone(ZoneOffset.UTC)) + "}" : revision.toString();
   }
@@ -178,7 +180,8 @@ public final class CommandUtil {
     return (T)unmarshaller.unmarshal(new StringReader(data.trim()));
   }
 
-  public static @NotNull File getHomeDirectory() {
+  @NotNull
+  public static File getHomeDirectory() {
     return new File(PathManager.getHomePath());
   }
 
@@ -190,11 +193,13 @@ public final class CommandUtil {
     return !StringUtil.isEmpty(type) ? type.charAt(0) : ' ';
   }
 
-  public static @NotNull StatusType getStatusType(@Nullable String type) {
+  @NotNull
+  public static StatusType getStatusType(@Nullable String type) {
     return getStatusType(getStatusChar(type));
   }
 
-  public static @NotNull StatusType getStatusType(char first) {
+  @NotNull
+  public static StatusType getStatusType(char first) {
     final StatusType contentsStatus;
     if ('A' == first) {
       contentsStatus = StatusType.STATUS_ADDED;
@@ -216,7 +221,8 @@ public final class CommandUtil {
     return contentsStatus;
   }
 
-  public static @Nullable File findExistingParent(@Nullable File file) {
+  @Nullable
+  public static File findExistingParent(@Nullable File file) {
     while (file != null) {
       if (file.exists() && file.isDirectory()) return file;
       file = file.getParentFile();
@@ -224,7 +230,8 @@ public final class CommandUtil {
     return null;
   }
 
-  public static @NotNull File requireExistingParent(@NotNull File file) {
+  @NotNull
+  public static File requireExistingParent(@NotNull File file) {
     File result = findExistingParent(file);
 
     if (result == null) {

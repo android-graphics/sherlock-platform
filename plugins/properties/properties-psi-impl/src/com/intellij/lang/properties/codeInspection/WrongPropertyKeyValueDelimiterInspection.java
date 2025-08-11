@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.codeInspection;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
@@ -21,8 +21,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class WrongPropertyKeyValueDelimiterInspection extends PropertiesInspectionBase implements CleanupLocalInspectionTool {
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     if (!(holder.getFile() instanceof PropertiesFileImpl)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
@@ -46,8 +47,9 @@ public class WrongPropertyKeyValueDelimiterInspection extends PropertiesInspecti
       super(element);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getText() {
+    public String getText() {
       return getFamilyName();
     }
 
@@ -56,8 +58,9 @@ public class WrongPropertyKeyValueDelimiterInspection extends PropertiesInspecti
       ((PropertyImpl) element).replaceKeyValueDelimiterWithDefault();
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return PropertiesBundle.message("replace.key.value.delimiter.quick.fix.family.name");
     }
   }

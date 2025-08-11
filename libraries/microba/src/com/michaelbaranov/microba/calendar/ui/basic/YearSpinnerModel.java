@@ -1,12 +1,13 @@
 package com.michaelbaranov.microba.calendar.ui.basic;
 
-import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+
+import javax.swing.SpinnerNumberModel;
 
 class YearSpinnerModel extends SpinnerNumberModel {
 
@@ -16,7 +17,7 @@ class YearSpinnerModel extends SpinnerNumberModel {
 
   public static final String PROPERTY_NAME_ZONE = "zone";
 
-  private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(
+  private PropertyChangeSupport changeSupport = new PropertyChangeSupport(
       this);
 
   private Locale locale;
@@ -25,7 +26,7 @@ class YearSpinnerModel extends SpinnerNumberModel {
 
   private Calendar calendar;
 
-  YearSpinnerModel(Date date, Locale locale, TimeZone zone) {
+  public YearSpinnerModel(Date date, Locale locale, TimeZone zone) {
     this.locale = locale;
     this.zone = zone;
     createLocaleAndZoneSensitive();
@@ -41,12 +42,10 @@ class YearSpinnerModel extends SpinnerNumberModel {
       calendar = Calendar.getInstance(zone, locale);
   }
 
-  @Override
   public Object getValue() {
-    return calendar.get(Calendar.YEAR);
+    return new Integer(calendar.get(Calendar.YEAR));
   }
 
-  @Override
   public void setValue(Object value) {
     Number newVal = (Number) value;
     Number oldVal = (Number) getValue();
@@ -67,25 +66,23 @@ class YearSpinnerModel extends SpinnerNumberModel {
     }
   }
 
-  @Override
   public Object getNextValue() {
 
     Integer currVal = (Integer) getValue();
     int newVal = currVal.intValue() + 1;
 
     if (newVal <= calendar.getActualMaximum(Calendar.YEAR))
-      return newVal;
+      return new Integer(newVal);
 
     return currVal;
   }
 
-  @Override
   public Object getPreviousValue() {
     Integer currVal = (Integer) getValue();
     int newVal = currVal.intValue() - 1;
 
     if (newVal >= calendar.getActualMinimum(Calendar.YEAR))
-      return newVal;
+      return new Integer(newVal);
 
     return currVal;
   }

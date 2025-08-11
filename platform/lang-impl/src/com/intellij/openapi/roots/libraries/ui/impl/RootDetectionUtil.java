@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.libraries.ui.impl;
 
 import com.intellij.ide.util.ChooseElementsDialog;
@@ -38,17 +38,19 @@ public final class RootDetectionUtil {
   private RootDetectionUtil() {
   }
 
-  public static @NotNull List<OrderRoot> detectRoots(final @NotNull Collection<? extends VirtualFile> rootCandidates,
-                                                     @Nullable Component parentComponent,
-                                                     @Nullable Project project,
-                                                     final @NotNull LibraryRootsComponentDescriptor rootsComponentDescriptor) {
+  @NotNull
+  public static List<OrderRoot> detectRoots(@NotNull final Collection<? extends VirtualFile> rootCandidates,
+                                            @Nullable Component parentComponent,
+                                            @Nullable Project project,
+                                            @NotNull final LibraryRootsComponentDescriptor rootsComponentDescriptor) {
     return detectRoots(rootCandidates, parentComponent, project, rootsComponentDescriptor.getRootsDetector(),
                        rootsComponentDescriptor.getRootTypes());
   }
 
-  public static @NotNull List<OrderRoot> detectRoots(final @NotNull Collection<? extends VirtualFile> rootCandidates, @Nullable Component parentComponent,
-                                                     @Nullable Project project, final @NotNull LibraryRootsDetector detector,
-                                                     OrderRootType @NotNull [] rootTypesAllowedToBeSelectedByUserIfNothingIsDetected) {
+  @NotNull
+  public static List<OrderRoot> detectRoots(@NotNull final Collection<? extends VirtualFile> rootCandidates, @Nullable Component parentComponent,
+                                            @Nullable Project project, @NotNull final LibraryRootsDetector detector,
+                                            OrderRootType @NotNull [] rootTypesAllowedToBeSelectedByUserIfNothingIsDetected) {
     final List<OrderRoot> result = new ArrayList<>();
     final List<SuggestedChildRootInfo> suggestedRoots = new ArrayList<>();
     new Task.Modal(project, ProjectBundle.message("progress.title.scanning.for.roots"), true) {
@@ -170,8 +172,9 @@ public final class RootDetectionUtil {
       return item;
     }
 
+    @Nullable
     @Override
-    protected @Nullable Icon getItemIcon(String item) {
+    protected Icon getItemIcon(String item) {
       return null;
     }
   }

@@ -17,35 +17,32 @@
 package com.intellij.execution.util;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathMappingSettings;
-import com.intellij.util.PathMappingSettings.PathMapping;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 
-final class PathMappingTable extends ListTableWithButtons<PathMapping> {
+final class PathMappingTable extends ListTableWithButtons<PathMappingSettings.PathMapping> {
   PathMappingTable() {
     getTableView().getEmptyText().setText(ExecutionBundle.message("empty.text.no.mappings"));
   }
 
   @Override
-  protected ListTableModel<PathMapping> createListModel() {
-    ColumnInfo<PathMapping, @NlsContexts.ListItem String> local = 
-      new ElementsColumnInfoBase<>(ExecutionBundle.message("path.mapping.column.path.local")) {
+  protected ListTableModel createListModel() {
+    ColumnInfo local = new ElementsColumnInfoBase<PathMappingSettings.PathMapping>(ExecutionBundle.message("path.mapping.column.path.local")) {
       @Override
-      public @NlsSafe String valueOf(PathMapping pathMapping) {
+      public @NlsSafe String valueOf(PathMappingSettings.PathMapping pathMapping) {
         return pathMapping.getLocalRoot();
       }
 
       @Override
-      public boolean isCellEditable(PathMapping pathMapping) {
+      public boolean isCellEditable(PathMappingSettings.PathMapping pathMapping) {
         return canDeleteElement(pathMapping);
       }
 
       @Override
-      public void setValue(PathMapping pathMapping, String s) {
+      public void setValue(PathMappingSettings.PathMapping pathMapping, String s) {
         if (s.equals(valueOf(pathMapping))) {
           return;
         }
@@ -54,25 +51,24 @@ final class PathMappingTable extends ListTableWithButtons<PathMapping> {
       }
 
       @Override
-      protected String getDescription(PathMapping pathMapping) {
+      protected String getDescription(PathMappingSettings.PathMapping pathMapping) {
         return valueOf(pathMapping);
       }
     };
 
-    ColumnInfo<PathMapping, @NlsContexts.ListItem String> remote = 
-      new ElementsColumnInfoBase<>(ExecutionBundle.message("path.mapping.column.path.remote")) {
+    ColumnInfo remote = new ElementsColumnInfoBase<PathMappingSettings.PathMapping>(ExecutionBundle.message("path.mapping.column.path.remote")) {
       @Override
-      public @NlsSafe String valueOf(PathMapping pathMapping) {
+      public @NlsSafe String valueOf(PathMappingSettings.PathMapping pathMapping) {
         return pathMapping.getRemoteRoot();
       }
 
       @Override
-      public boolean isCellEditable(PathMapping pathMapping) {
+      public boolean isCellEditable(PathMappingSettings.PathMapping pathMapping) {
         return canDeleteElement(pathMapping);
       }
 
       @Override
-      public void setValue(PathMapping pathMapping, String s) {
+      public void setValue(PathMappingSettings.PathMapping pathMapping, String s) {
         if (s.equals(valueOf(pathMapping))) {
           return;
         }
@@ -81,12 +77,12 @@ final class PathMappingTable extends ListTableWithButtons<PathMapping> {
       }
 
       @Override
-      protected String getDescription(PathMapping pathMapping) {
+      protected String getDescription(PathMappingSettings.PathMapping pathMapping) {
         return valueOf(pathMapping);
       }
     };
 
-    return new ListTableModel<>(local, remote);
+    return new ListTableModel(local, remote);
   }
 
 
@@ -95,22 +91,22 @@ final class PathMappingTable extends ListTableWithButtons<PathMapping> {
   }
 
   @Override
-  protected PathMapping createElement() {
-    return new PathMapping();
+  protected PathMappingSettings.PathMapping createElement() {
+    return new PathMappingSettings.PathMapping();
   }
 
   @Override
-  protected boolean isEmpty(PathMapping element) {
+  protected boolean isEmpty(PathMappingSettings.PathMapping element) {
     return StringUtil.isEmpty(element.getLocalRoot()) && StringUtil.isEmpty(element.getRemoteRoot());
   }
 
   @Override
-  protected PathMapping cloneElement(PathMapping envVariable) {
+  protected PathMappingSettings.PathMapping cloneElement(PathMappingSettings.PathMapping envVariable) {
     return envVariable.clone();
   }
 
   @Override
-  protected boolean canDeleteElement(PathMapping selection) {
+  protected boolean canDeleteElement(PathMappingSettings.PathMapping selection) {
     return true;
   }
 }

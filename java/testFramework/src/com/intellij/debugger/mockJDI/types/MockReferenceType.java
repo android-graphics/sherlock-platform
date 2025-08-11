@@ -1,7 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
+ * Use is subject to license terms.
+ */
 package com.intellij.debugger.mockJDI.types;
 
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.mockJDI.MockLocation;
 import com.intellij.debugger.mockJDI.MockVirtualMachine;
 import com.intellij.debugger.mockJDI.members.MockConstructor;
@@ -14,7 +16,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.org.objectweb.asm.*;
 
 import java.io.StringReader;
@@ -232,12 +233,12 @@ public abstract class MockReferenceType extends MockType implements ReferenceTyp
   protected abstract List<ReferenceType> getThisAndAllSupers();
 
   @Override
-  public @Unmodifiable List<Method> methodsByName(String string) {
+  public List<Method> methodsByName(String string) {
     return ContainerUtil.filter(allMethods(), method -> method.name().equals(string));
   }
 
   @Override
-  public @Unmodifiable List<Method> methodsByName(String string, String string1) {
+  public List<Method> methodsByName(String string, String string1) {
     return ContainerUtil.filter(allMethods(), method -> method.name().equals(string) && method.signature().equals(string1));
   }
 
@@ -290,11 +291,11 @@ public abstract class MockReferenceType extends MockType implements ReferenceTyp
       reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
         @Override
         public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-          Method method = DebuggerUtils.findMethod(MockReferenceType.this, name, desc);
-          if (method == null) {
+          final List<Method> methods = MockReferenceType.this.methodsByName(name, desc);
+          if (methods.isEmpty()) {
             return super.visitMethod(access, name, desc, signature, exceptions);
           }
-          return new LineNumbersEvaluatingVisitor(stratum, method);
+          return new LineNumbersEvaluatingVisitor(stratum, methods.get(0));
         }
       }, 0);
     }

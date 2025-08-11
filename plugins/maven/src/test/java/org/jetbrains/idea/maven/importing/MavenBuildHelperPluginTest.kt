@@ -53,7 +53,7 @@ class MavenBuildHelperPluginTest : MavenDomTestCase() {
           </properties>
         """.trimIndent())
 
-    updateProjectPom(
+    createProjectPom(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>

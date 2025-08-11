@@ -73,7 +73,6 @@ public final class JavaMethod implements AnnotatedElement {
     return DomReflectionUtil.invokeMethod(myMethod, o, args);
   }
 
-  @Override
   public String toString() {
     return "JavaMethod: " + myMethod.toString();
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -12,10 +12,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CustomLiveTemplateLookupElement extends LiveTemplateLookupElement {
-  private final @NotNull CustomLiveTemplateBase myCustomLiveTemplate;
+  @NotNull private final CustomLiveTemplateBase myCustomLiveTemplate;
 
-  private final @NotNull String myTemplateKey;
-  private final @NotNull String myItemText;
+  @NotNull private final String myTemplateKey;
+  @NotNull private final String myItemText;
 
   public CustomLiveTemplateLookupElement(@NotNull CustomLiveTemplateBase customLiveTemplate,
                                          @NotNull @NlsSafe String templateKey,
@@ -29,12 +29,14 @@ public class CustomLiveTemplateLookupElement extends LiveTemplateLookupElement {
     myItemText = itemText;
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getItemText() {
+  protected String getItemText() {
     return myItemText;
   }
 
-  public @NotNull CustomLiveTemplateBase getCustomLiveTemplate() {
+  @NotNull
+  public CustomLiveTemplateBase getCustomLiveTemplate() {
     return myCustomLiveTemplate;
   }
 

@@ -135,7 +135,6 @@ public abstract class AntDomElement implements DomElement {
     return Role.DATA_TYPE == getChildDescription().getUserData(ROLE);
   }
 
-  @Override
   public String toString() {
     final XmlTag tag = getXmlTag();
     if (tag == null) {

@@ -54,9 +54,13 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
   }
 
   override suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
-    val sessionManager = createSaveSessionProducerManager()
-    saveSettingsAndCommitComponents(saveResult, forceSavingAllSettings, sessionManager)
-    sessionManager.save(saveResult)
+    val saveSessionManager = createSaveSessionProducerManager()
+    saveSettingsAndCommitComponents(
+      saveResult = saveResult,
+      forceSavingAllSettings = forceSavingAllSettings,
+      sessionManager = saveSessionManager,
+    )
+    saveSessionManager.save(saveResult)
   }
 
   internal suspend fun saveSettingsAndCommitComponents(
@@ -70,7 +74,9 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
           try {
             settingsSavingComponent.save()
           }
-          catch (e: CancellationException) { throw e }
+          catch (e: CancellationException) {
+            throw e
+          }
           catch (e: Throwable) {
             saveResult.addError(e)
           }
@@ -80,32 +86,40 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
 
     // SchemeManager (asyncSettingsSavingComponent) must be saved before saving components
     // (component state uses scheme manager in an ipr project, so, we must save it before) so, call it sequentially
-    commitComponents(forceSavingAllSettings, sessionManager, saveResult)
+    commitComponents(isForce = forceSavingAllSettings, sessionManager = sessionManager, saveResult = saveResult)
   }
 
   final override suspend fun commitComponents(isForce: Boolean, sessionManager: SaveSessionProducerManager, saveResult: SaveResult) {
     // ensure that this task will not interrupt regular saving
     runCatching {
-      commitObsoleteComponents(sessionManager, isProjectLevel = false)
+      commitObsoleteComponents(session = sessionManager, isProjectLevel = false)
     }.getOrLogException(LOG)
-    super.commitComponents(isForce, sessionManager, saveResult)
+    super.commitComponents(isForce = isForce, sessionManager = sessionManager, saveResult = saveResult)
   }
 
   internal open fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
     val storageManager = storageManager as? StateStorageManagerImpl ?: return
     for (item in ObsoleteStorageBean.EP_NAME.filterableLazySequence()) {
       val bean = item.instance ?: continue
-      if (bean.isProjectLevel != isProjectLevel) continue
-      val collapsedPath = bean.file ?: continue
-      val storage = storageManager.getOrCreateStorage(collapsedPath, roamingType = RoamingType.DISABLED)
+      if (bean.isProjectLevel != isProjectLevel) {
+        continue
+      }
+
+      val storage = storageManager.getOrCreateStorage(collapsedPath = bean.file ?: continue, roamingType = RoamingType.DISABLED)
       for (componentName in bean.components) {
-        session.getProducer(storage)?.setState(component = null, componentName, item.pluginDescriptor.pluginId, state = null)
+        session.getProducer(storage)?.setState(
+          component = null,
+          componentName = componentName,
+          pluginId = item.pluginDescriptor.pluginId,
+          state = null,
+        )
       }
     }
   }
 
   final override fun release() {
     asyncSettingsSavingComponents.drop()
+
     super.release()
   }
 }

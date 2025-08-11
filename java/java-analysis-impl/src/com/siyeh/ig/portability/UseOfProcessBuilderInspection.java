@@ -28,7 +28,8 @@ import org.jetbrains.annotations.NotNull;
 public final class UseOfProcessBuilderInspection extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "use.processbuilder.class.problem.descriptor");
   }
@@ -63,7 +64,7 @@ public final class UseOfProcessBuilderInspection extends BaseInspection {
       if (type == null) {
         return;
       }
-      final @NonNls String typeString = type.getCanonicalText();
+      @NonNls final String typeString = type.getCanonicalText();
       if (!"java.lang.ProcessBuilder".equals(typeString)) {
         return;
       }

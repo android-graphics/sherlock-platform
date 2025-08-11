@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import org.jetbrains.annotations.NotNull;
@@ -7,8 +7,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class QuantitySelection<T> {
-  private final @NotNull Group<T> mySelected;
-  private final @NotNull Group<T> myUnselected;
+  @NotNull private final Group<T> mySelected;
+  @NotNull private final Group<T> myUnselected;
 
   public QuantitySelection(boolean startFromSelectAll) {
     mySelected = new Group<>();
@@ -46,11 +46,13 @@ public class QuantitySelection<T> {
     mySelected.setAll();
   }
 
-  public @NotNull Set<T> getSelected() {
+  @NotNull
+  public Set<T> getSelected() {
     return mySelected.getItems();
   }
 
-  public @NotNull Set<T> getUnselected() {
+  @NotNull
+  public Set<T> getUnselected() {
     return myUnselected.getItems();
   }
 
@@ -64,7 +66,7 @@ public class QuantitySelection<T> {
 
   private static class Group<T> {
     private boolean myAll;
-    private final @NotNull Set<T> myItems = new HashSet<>();
+    @NotNull private final Set<T> myItems = new HashSet<>();
 
     public void add(T t) {
       myItems.add(t);
@@ -85,7 +87,8 @@ public class QuantitySelection<T> {
       myItems.clear();
     }
 
-    public @NotNull Set<T> getItems() {
+    @NotNull
+    public Set<T> getItems() {
       return myItems;
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.debugger.breakpoints.properties;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -95,7 +95,9 @@ public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaL
     encodedInlinePosition = state.encodedInlinePosition;
   }
 
-  public static @Nls @NotNull String getGeneralDescription(JavaLineBreakpointProperties props) {
+  @Nls
+  @NotNull
+  public static String getGeneralDescription(JavaLineBreakpointProperties props) {
     // These properties are immutable, could not be changed after breakpoint creation, so we treat them specially,
     // compared to other ones (e.g., WATCH_*** for JavaFieldBreakpointProperties).
 

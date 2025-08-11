@@ -1,6 +1,6 @@
 // "Add annotation target" "true"
 // WITH_STDLIB
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 @file:MyExperimentalAPI
 
 @MyExperimentalAPI<caret>

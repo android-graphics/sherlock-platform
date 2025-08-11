@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -60,12 +60,14 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
     myModifierList = modifierList;
   }
 
-  private static @NotNull PsiType getTypeNotNull(PsiType type, PsiElement scope) {
+  @NotNull
+  private static PsiType getTypeNotNull(PsiType type, PsiElement scope) {
     return type != null ? type : TypesUtil.getJavaLangObject(scope);
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getDeclarationScope() {
+  public PsiElement getDeclarationScope() {
     return myScope;
   }
 
@@ -104,8 +106,9 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
     return myOptional;
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement getEllipsisDots() {
+  public PsiElement getEllipsisDots() {
     return null;
   }
 
@@ -115,7 +118,8 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
   }
 
   @Override
-  public @NotNull PsiElement getNameIdentifierGroovy() {
+  @NotNull
+  public PsiElement getNameIdentifierGroovy() {
     return null;
   }
 
@@ -143,8 +147,9 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
     return getDeclarationScope().isValid();
   }
 
+  @NotNull
   @Override
-  public @NotNull GrModifierList getModifierList() {
+  public GrModifierList getModifierList() {
     return myModifierList;
   }
 

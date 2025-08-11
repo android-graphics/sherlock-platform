@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.Disposable;
@@ -16,15 +16,13 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@ApiStatus.Internal
 public abstract class LocalChangesBrowser extends AsyncChangesBrowserBase implements Disposable {
-  private final @NotNull ToggleChangeDiffAction myToggleChangeDiffAction;
+  @NotNull private final ToggleChangeDiffAction myToggleChangeDiffAction;
 
   public LocalChangesBrowser(@NotNull Project project) {
     super(project, true, true);
@@ -42,8 +40,9 @@ public abstract class LocalChangesBrowser extends AsyncChangesBrowserBase implem
     shutdown();
   }
 
+  @NotNull
   @Override
-  protected @NotNull List<AnAction> createDiffActions() {
+  protected List<AnAction> createDiffActions() {
     return ContainerUtil.append(
       super.createDiffActions(),
       myToggleChangeDiffAction
@@ -125,7 +124,7 @@ public abstract class LocalChangesBrowser extends AsyncChangesBrowserBase implem
   }
 
   private class MyChangeListListener extends ChangeListAdapter {
-    private final @NotNull MergingUpdateQueue myUpdateQueue =
+    @NotNull private final MergingUpdateQueue myUpdateQueue =
       new MergingUpdateQueue("LocalChangesViewer", 300, true,
                              LocalChangesBrowser.this, LocalChangesBrowser.this);
 
@@ -147,8 +146,9 @@ public abstract class LocalChangesBrowser extends AsyncChangesBrowserBase implem
       myViewer.rebuildTree();
     }
 
+    @NotNull
     @Override
-    protected @NotNull AsyncChangesTreeModel getChangesTreeModel() {
+    protected AsyncChangesTreeModel getChangesTreeModel() {
       return SimpleAsyncChangesTreeModel.create(grouping -> {
         List<LocalChangeList> allLists = ChangeListManager.getInstance(myProject).getChangeLists();
         List<LocalChangeList> selectedLists = ContainerUtil.filter(allLists, list -> !list.getChanges().isEmpty());
@@ -159,7 +159,7 @@ public abstract class LocalChangesBrowser extends AsyncChangesBrowserBase implem
   }
 
   public static class SelectedChangeLists extends LocalChangesBrowser {
-    private final @NotNull Set<String> myChangeListNames;
+    @NotNull private final Set<String> myChangeListNames;
 
     public SelectedChangeLists(@NotNull Project project, @NotNull Collection<? extends LocalChangeList> changeLists) {
       super(project);
@@ -167,8 +167,9 @@ public abstract class LocalChangesBrowser extends AsyncChangesBrowserBase implem
       myViewer.rebuildTree();
     }
 
+    @NotNull
     @Override
-    protected @NotNull AsyncChangesTreeModel getChangesTreeModel() {
+    protected AsyncChangesTreeModel getChangesTreeModel() {
       return SimpleAsyncChangesTreeModel.create(grouping -> {
         List<LocalChangeList> allLists = ChangeListManager.getInstance(myProject).getChangeLists();
         List<LocalChangeList> selectedLists = ContainerUtil.filter(allLists, list -> myChangeListNames.contains(list.getName()));
@@ -184,8 +185,9 @@ public abstract class LocalChangesBrowser extends AsyncChangesBrowserBase implem
       myViewer.rebuildTree();
     }
 
+    @NotNull
     @Override
-    protected @NotNull AsyncChangesTreeModel getChangesTreeModel() {
+    protected AsyncChangesTreeModel getChangesTreeModel() {
       return SimpleAsyncChangesTreeModel.create(grouping -> {
         Collection<Change> allChanges = ChangeListManager.getInstance(myProject).getAllChanges();
         return TreeModelBuilder.buildFromChanges(myProject, grouping, allChanges, null);

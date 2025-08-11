@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.execution.Location;
@@ -67,7 +67,8 @@ public abstract class AbstractExternalSystemRunConfigurationProducer extends Run
     return true;
   }
 
-  private static @Nullable ExternalSystemTaskExecutionSettings getTaskSettingsFromContext(ConfigurationContext context) {
+  @Nullable
+  private static ExternalSystemTaskExecutionSettings getTaskSettingsFromContext(ConfigurationContext context) {
     final Location<?> contextLocation = context.getLocation();
     if (!(contextLocation instanceof ExternalSystemTaskLocation)) {
       return null;
@@ -75,7 +76,8 @@ public abstract class AbstractExternalSystemRunConfigurationProducer extends Run
     return ((ExternalSystemTaskLocation)contextLocation).getTaskInfo().getSettings();
   }
 
-  private static @Nullable Project getProjectFromContext(ConfigurationContext context) {
+  @Nullable
+  private static Project getProjectFromContext(ConfigurationContext context) {
     final Location<?> contextLocation = context.getLocation();
     if (!(contextLocation instanceof ExternalSystemTaskLocation)) {
       return null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,7 +21,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -59,9 +58,10 @@ public final class ParametrizedDuplicates {
     return IntroduceParameterHandler.getElementsInCopy(project, pattern[0].getContainingFile(), pattern, false);
   }
 
-  public static @Nullable ParametrizedDuplicates findDuplicates(@NotNull ExtractMethodProcessor originalProcessor,
-                                                                @NotNull DuplicatesFinder.MatchType matchType,
-                                                                @Nullable @Unmodifiable Set<? extends TextRange> textRanges) {
+  @Nullable
+  public static ParametrizedDuplicates findDuplicates(@NotNull ExtractMethodProcessor originalProcessor,
+                                                      @NotNull DuplicatesFinder.MatchType matchType,
+                                                      @Nullable Set<? extends TextRange> textRanges) {
     DuplicatesFinder finder = createDuplicatesFinder(originalProcessor, matchType, textRanges);
     if (finder == null) {
       return null;
@@ -86,7 +86,8 @@ public final class ParametrizedDuplicates {
     return duplicates;
   }
 
-  private static @NotNull Map<PsiExpression, String> foldParameters(ExtractMethodProcessor originalProcessor, List<Match> matches) {
+  @NotNull
+  private static Map<PsiExpression, String> foldParameters(ExtractMethodProcessor originalProcessor, List<Match> matches) {
     if (matches.isEmpty() || !originalProcessor.getInputVariables().isFoldable()) {
       return Collections.emptyMap();
     }
@@ -169,9 +170,10 @@ public final class ParametrizedDuplicates {
     return true;
   }
 
-  private static @Nullable DuplicatesFinder createDuplicatesFinder(@NotNull ExtractMethodProcessor processor,
-                                                                   @NotNull DuplicatesFinder.MatchType matchType,
-                                                                   @Nullable @Unmodifiable Set<? extends TextRange> textRanges) {
+  @Nullable
+  private static DuplicatesFinder createDuplicatesFinder(@NotNull ExtractMethodProcessor processor,
+                                                         @NotNull DuplicatesFinder.MatchType matchType,
+                                                         @Nullable Set<? extends TextRange> textRanges) {
     PsiElement[] elements = getFilteredElements(processor.myElements);
     if (elements.length == 0) {
       return null;
@@ -316,7 +318,8 @@ public final class ParametrizedDuplicates {
     return matches;
   }
 
-  private static @Nullable List<ClusterOfUsages> getUsagesInMatch(@NotNull Map<PsiExpression, ClusterOfUsages> usagesMap, @NotNull Match match) {
+  @Nullable
+  private static List<ClusterOfUsages> getUsagesInMatch(@NotNull Map<PsiExpression, ClusterOfUsages> usagesMap, @NotNull Match match) {
     List<ClusterOfUsages> result = new ArrayList<>();
     List<ExtractedParameter> parameters = match.getExtractedParameters();
     for (ExtractedParameter parameter : parameters) {
@@ -477,8 +480,9 @@ public final class ParametrizedDuplicates {
     }
   }
 
-  private static @Nullable PsiExpression wrapExpressionWithCodeBlock(PsiElement @NotNull [] copy,
-                                                                     @NotNull ExtractMethodProcessor originalProcessor) {
+  @Nullable
+  private static PsiExpression wrapExpressionWithCodeBlock(PsiElement @NotNull [] copy,
+                                                           @NotNull ExtractMethodProcessor originalProcessor) {
     if (copy.length != 1 || !(copy[0] instanceof PsiExpression expression)) return null;
 
     PsiType type = expression.getType();
@@ -534,9 +538,10 @@ public final class ParametrizedDuplicates {
     return wrapped;
   }
 
-  private @NotNull Map<PsiLocalVariable, ClusterOfUsages> createParameterDeclarations(@NotNull ExtractMethodProcessor originalProcessor,
-                                                                                      @NotNull Map<PsiExpression, PsiExpression> expressionsMapping,
-                                                                                      @NotNull Map<PsiExpression, String> predefinedNames) {
+  @NotNull
+  private Map<PsiLocalVariable, ClusterOfUsages> createParameterDeclarations(@NotNull ExtractMethodProcessor originalProcessor,
+                                                                             @NotNull Map<PsiExpression, PsiExpression> expressionsMapping,
+                                                                             @NotNull Map<PsiExpression, String> predefinedNames) {
 
     Project project = myElements[0].getProject();
     Map<PsiLocalVariable, ClusterOfUsages> parameterDeclarations = new HashMap<>();
@@ -654,9 +659,9 @@ public final class ParametrizedDuplicates {
   }
 
   private static class ClusterOfUsages {
-    private final @NotNull Set<PsiExpression> myPatterns;
-    private final @NotNull Map<Match, ExtractedParameter> myParameters;
-    private final @NotNull ExtractedParameter myParameter;
+    @NotNull private final Set<PsiExpression> myPatterns;
+    @NotNull private final Map<Match, ExtractedParameter> myParameters;
+    @NotNull private final ExtractedParameter myParameter;
     private final int myFirstOffset;
 
     ClusterOfUsages(@NotNull ExtractedParameter parameter) {

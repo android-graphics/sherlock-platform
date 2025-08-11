@@ -10,7 +10,7 @@ android {
 }
 
 kotlin {
-    androidTarget()
+    android()
     jvm()
     linuxX64()
 

@@ -21,6 +21,7 @@ import javax.swing.*
 import javax.swing.text.JTextComponent
 import javax.swing.tree.DefaultMutableTreeNode
 
+
 /**
  * Skips [action] execution if this or other block is executing with [this] "atomic".
  * Needs to break the recursion locally.
@@ -224,6 +225,7 @@ fun <C : JToggleButton> C.bind(property: ObservableProperty<Boolean>): C = apply
     isSelected = it
   }
 }
+
 
 fun <C : JToggleButton> C.bind(property: ObservableMutableProperty<Boolean>): C = apply {
   isSelected = property.get()

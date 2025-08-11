@@ -1,5 +1,5 @@
 // "Remove parameter 'a'" "true"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 
 package com.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy.zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 

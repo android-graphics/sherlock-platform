@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StaxFactory")
 package com.intellij.util.xml.dom
 
@@ -40,12 +40,14 @@ fun createXmlStreamReader(input: InputStream, locationSource: String? = null): X
 
 @Throws(XMLStreamException::class)
 fun createXmlStreamReader(bytes: ByteArray): XMLStreamReader2 {
-  return StreamReaderImpl.construct(ByteSourceBootstrapper.construct(configWithCoalescing.createNonShared(null, null, "UTF-8"), bytes, 0, bytes.size))
+  val readerConfig = configWithCoalescing.createNonShared(null, null, "UTF-8")
+  return StreamReaderImpl.construct(ByteSourceBootstrapper.construct(readerConfig, bytes, 0, bytes.size))
 }
 
 @Internal
 fun createXmlStreamReader(bytes: ByteArray, start: Int, size: Int): XMLStreamReader2 {
-  return StreamReaderImpl.construct(ByteSourceBootstrapper.construct(configWithCoalescing.createNonShared(null, null, "UTF-8"), bytes, start, size))
+  val readerConfig = configWithCoalescing.createNonShared(null, null, "UTF-8")
+  return StreamReaderImpl.construct(ByteSourceBootstrapper.construct(readerConfig, bytes, start, size))
 }
 
 @Throws(XMLStreamException::class)

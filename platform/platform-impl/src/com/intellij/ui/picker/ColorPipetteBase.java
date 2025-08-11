@@ -6,7 +6,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +17,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
-@ApiStatus.Internal
 public abstract class ColorPipetteBase implements ColorPipette {
   private final Alarm myColorListenersNotifier = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
   protected final JComponent myParent;

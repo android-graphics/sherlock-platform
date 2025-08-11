@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,37 +11,38 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiStatus.Internal
 public final class UnknownInvalidSdk implements UnknownSdk {
   private static final Logger LOG = Logger.getInstance(UnknownInvalidSdk.class);
 
-  final @NotNull Sdk mySdk;
-  final @NotNull SdkType mySdkType;
+  @NotNull final Sdk mySdk;
+  @NotNull final SdkType mySdkType;
 
   UnknownInvalidSdk(@NotNull Sdk sdk, @NotNull SdkType sdkType) {
     mySdk = sdk;
     mySdkType = sdkType;
   }
 
+  @NotNull
   @Override
-  public @NotNull SdkType getSdkType() {
+  public SdkType getSdkType() {
     return mySdkType;
   }
 
   @Override
-  public @NotNull String getSdkName() {
+  @NotNull
+  public String getSdkName() {
     return mySdk.getName();
   }
 
   @Override
-  public @Nullable String getExpectedVersionString() {
+  @Nullable
+  public String getExpectedVersionString() {
     return mySdk.getVersionString();
   }
 
@@ -57,7 +58,8 @@ public final class UnknownInvalidSdk implements UnknownSdk {
     });
   }
 
-  static @NotNull List<UnknownInvalidSdk> resolveInvalidSdks(@NotNull List<? extends Sdk> usedSdks) {
+  @NotNull
+  static List<UnknownInvalidSdk> resolveInvalidSdks(@NotNull List<? extends Sdk> usedSdks) {
     List<UnknownInvalidSdk> result = new ArrayList<>();
     for (Sdk sdk : usedSdks) {
       if (SdkDownloadTracker.getInstance().isDownloading(sdk)) continue;
@@ -70,7 +72,8 @@ public final class UnknownInvalidSdk implements UnknownSdk {
     return result;
   }
 
-  private static @Nullable UnknownInvalidSdk resolveInvalidSdk(@NotNull Sdk sdk) {
+  @Nullable
+  private static UnknownInvalidSdk resolveInvalidSdk(@NotNull Sdk sdk) {
     SdkTypeId type = sdk.getSdkType();
     if (!(type instanceof SdkType sdkType)) return null;
 
@@ -97,9 +100,10 @@ public final class UnknownInvalidSdk implements UnknownSdk {
     return new UnknownInvalidSdk(sdk, sdkType);
   }
 
-  public @NotNull UnknownInvalidSdkFix buildFix(@NotNull Project project,
-                                                @Nullable UnknownSdkLocalSdkFix localSdkFix,
-                                                @Nullable UnknownSdkDownloadableSdkFix downloadableSdkFix) {
+  @NotNull
+  public UnknownInvalidSdkFix buildFix(@NotNull Project project,
+                                       @Nullable UnknownSdkLocalSdkFix localSdkFix,
+                                       @Nullable UnknownSdkDownloadableSdkFix downloadableSdkFix) {
     UnknownSdkFixAction action = null;
     if (localSdkFix != null) {
       action = new UnknownInvalidSdkFixLocal(this, localSdkFix);

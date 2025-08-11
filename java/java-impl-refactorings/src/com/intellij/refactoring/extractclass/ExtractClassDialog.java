@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.java.JavaBundle;
@@ -36,8 +36,8 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeListener<PsiMember, MemberInfo> {
   private final Map<MemberInfoBase<PsiMember>, PsiMember> myMember2CauseMap = new HashMap<>();
@@ -61,7 +61,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     this.sourceClass = sourceClass;
     final DocumentListener docListener = new DocumentAdapter() {
       @Override
-      protected void textChanged(final @NotNull DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         validateButtons();
       }
     };
@@ -160,7 +160,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     }
 
     final String className = getClassName();
-    if (className.isEmpty() || !nameHelper.isIdentifier(className)) {
+    if (className.length() == 0 || !nameHelper.isIdentifier(className)) {
       throw new ConfigurationException(JavaBundle.message("invalid.extracted.class.name", className));
     }
 
@@ -176,11 +176,13 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     }
   }
 
-  public @NotNull String getPackageName() {
+  @NotNull
+  public String getPackageName() {
     return packageTextField.getText().trim();
   }
 
-  public @NotNull String getClassName() {
+  @NotNull
+  public String getClassName() {
     return classNameField.getText().trim();
   }
 
@@ -251,8 +253,9 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     final JPanel panel = new JPanel(new BorderLayout());
     String asEnumColumnTitle = RefactorJBundle.message("extract.class.as.enum.column.title");
     final MemberSelectionTable table = new MemberSelectionTable(memberInfo, asEnumColumnTitle) {
+      @Nullable
       @Override
-      protected @Nullable Object getAbstractColumnValue(MemberInfo memberInfo) {
+      protected Object getAbstractColumnValue(MemberInfo memberInfo) {
         if (isExtractAsEnum()) {
           final PsiMember member = memberInfo.getMember();
           if (isConstantField(member)) {
@@ -280,7 +283,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     table.setMemberInfoModel(new DelegatingMemberInfoModel<>(table.getMemberInfoModel()) {
 
       @Override
-      public int checkForProblems(final @NotNull MemberInfo member) {
+      public int checkForProblems(@NotNull final MemberInfo member) {
         final PsiMember cause = getCause(member);
         if (member.isChecked() && cause != null) return ERROR;
         if (!member.isChecked() && cause != null) return WARNING;

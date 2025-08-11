@@ -27,7 +27,8 @@ class AxisLookup extends AbstractLookup {
     @Override
     public void renderElement(@NotNull LookupElementPresentation presentation) {
         super.renderElement(presentation);
-        presentation.setIcon(AllIcons.Nodes.ClassInitializer);
+        presentation.setIcon(AllIcons.Nodes.J2eeParameter);
         presentation.setItemTextBold(true);
     }
+
 }

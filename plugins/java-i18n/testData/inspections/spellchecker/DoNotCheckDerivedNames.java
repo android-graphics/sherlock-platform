@@ -5,7 +5,6 @@ class Super {
 }
 
 class Sub extends Super {
-  @Override
   void asdftypo() {}
 }
 

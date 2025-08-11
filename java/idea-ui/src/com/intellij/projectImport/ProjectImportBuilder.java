@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectImport;
 
 import com.intellij.ide.DataManager;
@@ -64,7 +64,8 @@ public abstract class ProjectImportBuilder<T> extends ProjectBuilder {
     return CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
   }
 
-  protected @NlsContexts.DialogTitle String getTitle() {
+  @NlsContexts.DialogTitle
+  protected String getTitle() {
     return JavaUiBundle.message("project.import.wizard.title", getName());
   }
 
@@ -73,7 +74,7 @@ public abstract class ProjectImportBuilder<T> extends ProjectBuilder {
     return myUpdate;
   }
 
-  public void setUpdate(boolean update) {
+  public void setUpdate(final boolean update) {
     myUpdate = update;
   }
 }

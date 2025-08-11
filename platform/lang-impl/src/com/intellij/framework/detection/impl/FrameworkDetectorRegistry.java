@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.framework.detection.impl;
 
 import com.intellij.framework.FrameworkType;
@@ -20,17 +20,23 @@ public abstract class FrameworkDetectorRegistry {
     return ApplicationManager.getApplication().getService(FrameworkDetectorRegistry.class);
   }
 
-  public abstract @Nullable FrameworkType findFrameworkType(@NotNull String typeId);
+  @Nullable
+  public abstract FrameworkType findFrameworkType(@NotNull String typeId);
 
-  public abstract @NotNull List<? extends FrameworkType> getFrameworkTypes();
+  @NotNull
+  public abstract List<? extends FrameworkType> getFrameworkTypes();
 
-  public abstract @Nullable FrameworkDetector getDetectorById(@NotNull String id);
+  @Nullable
+  public abstract FrameworkDetector getDetectorById(@NotNull String id);
 
-  public abstract @NotNull Collection<String> getDetectorIds(@NotNull FileType fileType);
+  @NotNull
+  public abstract Collection<String> getDetectorIds(@NotNull FileType fileType);
 
-  public abstract @NotNull Collection<String> getAllDetectorIds();
+  @NotNull
+  public abstract Collection<String> getAllDetectorIds();
 
-  public abstract @NotNull MultiMap<FileType, Pair<ElementPattern<FileContent>, String>> getDetectorsMap();
+  @NotNull
+  public abstract MultiMap<FileType, Pair<ElementPattern<FileContent>, String>> getDetectorsMap();
 
   public abstract FileType @NotNull [] getAcceptedFileTypes();
 }

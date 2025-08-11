@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInspection.java19api.DescriptorsGenerator.ModuleFiles;
@@ -41,7 +41,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Stream;
 
-final class Java9GenerateModuleDescriptorsAction extends AnAction {
+public final class Java9GenerateModuleDescriptorsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(Java9GenerateModuleDescriptorsAction.class);
   private static final String CLASS_FILE_PATTERN = "glob:*" + CommonClassNames.CLASS_FILE_EXTENSION;
 
@@ -106,7 +106,8 @@ final class Java9GenerateModuleDescriptorsAction extends AnAction {
       });
   }
 
-  private static @NotNull List<ModuleFiles> collectClassFiles(@NotNull Project project) {
+  @NotNull
+  private static List<ModuleFiles> collectClassFiles(@NotNull Project project) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.setIndeterminate(true);
     indicator.setText(JavaRefactoringBundle.message("generate.module.descriptors.scanning.message"));
@@ -161,11 +162,12 @@ final class Java9GenerateModuleDescriptorsAction extends AnAction {
     return moduleFiles;
   }
 
-  private static boolean mayContainModuleInfo(final @NotNull Module module) {
+  private static boolean mayContainModuleInfo(@NotNull final Module module) {
     return ReadAction.compute(() -> JavaFeature.MODULES.isSufficient(LanguageLevelUtil.getEffectiveLanguageLevel(module)));
   }
 
-  private static @NotNull List<Path> collectClassFiles(@Nullable Path file) throws IOException {
+  @NotNull
+  private static List<Path> collectClassFiles(@Nullable Path file) throws IOException {
     if (file == null || !Files.exists(file)) return Collections.emptyList();
     try (Stream<Path> stream = Files.walk(file)) {
       final PathMatcher matcher = FileSystems.getDefault().getPathMatcher(CLASS_FILE_PATTERN);

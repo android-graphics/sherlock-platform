@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -58,7 +58,7 @@ public final class ExpressionChildrenRenderer extends ReferenceRenderer implemen
   @Override
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
     EvaluationContextImpl evaluationContextImpl = (EvaluationContextImpl)evaluationContext;
-    evaluationContextImpl.getManagerThread().schedule(new PossiblySyncCommand(evaluationContextImpl.getSuspendContext()) {
+    evaluationContextImpl.getDebugProcess().getManagerThread().schedule(new PossiblySyncCommand(evaluationContextImpl.getSuspendContext()) {
       @Override
       public void syncAction(@NotNull SuspendContextImpl suspendContext) {
         try {
@@ -77,7 +77,8 @@ public final class ExpressionChildrenRenderer extends ReferenceRenderer implemen
     });
   }
 
-  public static @Nullable NodeRenderer getLastChildrenRenderer(ValueDescriptor descriptor) {
+  @Nullable
+  public static NodeRenderer getLastChildrenRenderer(ValueDescriptor descriptor) {
     return descriptor.getUserData(LAST_CHILDREN_RENDERER);
   }
 
@@ -152,7 +153,8 @@ public final class ExpressionChildrenRenderer extends ReferenceRenderer implemen
   public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext context, NodeDescriptor parentDescriptor) {
     CompletableFuture<Boolean> res = new CompletableFuture<>();
     EvaluationContextImpl evaluationContextImpl = (EvaluationContextImpl)context;
-    evaluationContextImpl.getManagerThread().schedule(new PossiblySyncCommand(evaluationContextImpl.getSuspendContext()) {
+    DebugProcessImpl debugProcess = evaluationContextImpl.getDebugProcess();
+    debugProcess.getManagerThread().schedule(new PossiblySyncCommand(evaluationContextImpl.getSuspendContext()) {
       @Override
       public void syncAction(@NotNull SuspendContextImpl suspendContext) {
         EvaluationContext evaluationContext = context.createEvaluationContext(value);

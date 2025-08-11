@@ -7,8 +7,9 @@ import org.jetbrains.annotations.NotNull;
 public class BlockTreeStructure extends SimpleTreeStructure {
   private BlockTreeNode myRoot;
 
+  @NotNull
   @Override
-  public @NotNull BlockTreeNode getRootElement() {
+  public BlockTreeNode getRootElement() {
     return myRoot;
   }
 

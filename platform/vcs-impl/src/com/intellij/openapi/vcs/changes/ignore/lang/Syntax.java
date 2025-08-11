@@ -31,9 +31,11 @@ import org.jetbrains.annotations.Nullable;
 public enum Syntax {
   GLOB, REGEXP;
 
-  private static final @NonNls String KEY = "syntax:";
+  @NonNls
+  private static final String KEY = "syntax:";
 
-  public static @Nullable Syntax find(@Nullable String name) {
+  @Nullable
+  public static Syntax find(@Nullable String name) {
     if (name == null) {
       return null;
     }

@@ -15,7 +15,6 @@
  */
 package org.intellij.images.editor;
 
-import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.ChangeListener;
@@ -72,14 +71,16 @@ public interface ImageDocument {
   /**
    * Returns the bounds of the current image.
    */
-  default @Nullable Rectangle getBounds() {
+  @Nullable
+  default Rectangle getBounds() {
     return getBounds(1d);
   }
 
   /**
    * Returns the bounds of the image represented in the provided scale.
    */
-  default @Nullable Rectangle getBounds(double scale) {
+  @Nullable
+  default Rectangle getBounds(double scale) {
     BufferedImage image = getValue(scale);
     return image != null ? new Rectangle(image.getWidth(), image.getHeight()) : null;
   }
@@ -115,6 +116,4 @@ public interface ImageDocument {
   void addChangeListener(ChangeListener listener);
 
   void removeChangeListener(ChangeListener listener);
-
-  DataKey<ImageDocument> IMAGE_DOCUMENT_DATA_KEY = DataKey.create("image.document");
 }

@@ -3,29 +3,26 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
-import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.io.createDirectories
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.model.MavenProjectProblem
-import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager
+import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.MisconfiguredPlexusDummyEmbedder
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
 import java.io.BufferedReader
+import java.io.File
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.stream.Collectors
-import kotlin.io.path.isRegularFile
-import kotlin.io.path.writeText
 
 
 class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
-
+  
   private val httpServerFixture = MavenHttpRepositoryServerFixture()
   private lateinit var myUrl: String
 
@@ -74,9 +71,9 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testDownloadedFromRepository() = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
-    val remoteRepoPath = helper.getTestData("remote")
-    val localRepoPath = helper.getTestData("local1")
-    httpServerFixture.startRepositoryFor(remoteRepoPath.toString())
+    val remoteRepoPath = helper.getTestDataPath("remote")
+    val localRepoPath = helper.getTestDataPath("local1")
+    httpServerFixture.startRepositoryFor(remoteRepoPath)
     repositoryPath = localRepoPath
     val settingsXml = createProjectSubFile(
       "settings.xml",
@@ -87,19 +84,19 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
        """.trimIndent())
     mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
     removeFromLocalRepository("org/mytest/myartifact/")
-    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
+    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     importProjectAsync(pom())
-    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
-    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isRegularFile())
+    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isFile)
 
   }
 
   @Test
   fun testDownloadSourcesFromRepository() = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
-    val remoteRepoPath = helper.getTestData("remote")
-    val localRepoPath = helper.getTestData("local1")
-    httpServerFixture.startRepositoryFor(remoteRepoPath.toString())
+    val remoteRepoPath = helper.getTestDataPath("remote")
+    val localRepoPath = helper.getTestDataPath("local1")
+    httpServerFixture.startRepositoryFor(remoteRepoPath)
     repositoryPath = localRepoPath
     val settingsXml = createProjectSubFile(
       "settings.xml",
@@ -111,18 +108,18 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
     mavenImporterSettings.isDownloadSourcesAutomatically = true
     removeFromLocalRepository("org/mytest/myartifact/")
-    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
+    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     importProjectAsync(pom())
-    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
-    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isRegularFile())
+    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isFile)
   }
 
   @Test
   fun testPluginDownloadedFromRepository() = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
-    val remoteRepoPath = helper.getTestData("remote")
-    val localRepoPath = helper.getTestData("local1")
-    httpServerFixture.startRepositoryFor(remoteRepoPath.toString())
+    val remoteRepoPath = helper.getTestDataPath("remote")
+    val localRepoPath = helper.getTestDataPath("local1")
+    httpServerFixture.startRepositoryFor(remoteRepoPath)
     repositoryPath = localRepoPath
     val settingsXml = createProjectSubFile(
       "settings.xml",
@@ -133,18 +130,18 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
        """.trimIndent())
     mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
     removeFromLocalRepository("org/mytest/myartifact/")
-    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
+    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     importProjectAsync(pomPlugins())
-    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
+    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
   }
 
 
   @Test
   fun testDownloadedFromRepositoryWithAuthentification() = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
-    val remoteRepoPath = helper.getTestData("remote")
-    val localRepoPath = helper.getTestData("local1")
-    httpServerFixture.startRepositoryFor(remoteRepoPath.toFile(), USERNAME, PASSWORD)
+    val remoteRepoPath = helper.getTestDataPath("remote")
+    val localRepoPath = helper.getTestDataPath("local1")
+    httpServerFixture.startRepositoryFor(File(remoteRepoPath), USERNAME, PASSWORD)
     repositoryPath = localRepoPath
     val settingsXml = createProjectSubFile(
       "settings.xml",
@@ -164,17 +161,17 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
     mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
     removeFromLocalRepository("org/mytest/myartifact/")
-    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
+    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     importProjectAsync(pom())
-    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
+    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
   }
 
   @Test
   fun testDownloadedFromRepositoryWithWrongAuthentificationLeadsToError() = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
-    val remoteRepoPath = helper.getTestData("remote")
-    val localRepoPath = helper.getTestData("local1")
-    httpServerFixture.startRepositoryFor(remoteRepoPath.toFile(), USERNAME, PASSWORD)
+    val remoteRepoPath = helper.getTestDataPath("remote")
+    val localRepoPath = helper.getTestDataPath("local1")
+    httpServerFixture.startRepositoryFor(File(remoteRepoPath), USERNAME, PASSWORD)
     repositoryPath = localRepoPath
     val settingsXml = createProjectSubFile(
       "settings.xml",
@@ -194,26 +191,20 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
     mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
     removeFromLocalRepository("org/mytest/myartifact/")
-    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
+    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     createProjectPom(pom())
     doImportProjectsAsync(listOf(projectPom), false)
     TestCase.assertEquals(1, projectsManager.rootProjects.size)
-    val problemDescription = projectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.REPOSITORY }.description
-    forMaven3 {
-      TestCase.assertEquals("status code: 401, reason phrase: Unauthorized (401)", problemDescription)
-    }
-    forMaven4 {
-      TestCase.assertEquals("too many authentication attempts. Limit: 3", problemDescription)
-    }
-
+    TestCase.assertEquals("status code: 401, reason phrase: Unauthorized (401)",
+                          projectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.REPOSITORY }.description)
   }
 
   @Test
   fun `settings xml respected at the very start of the container`() = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
-    val remoteRepoPath = helper.getTestData("remote")
-    val localRepoPath = helper.getTestData("local1")
-    httpServerFixture.startRepositoryFor(remoteRepoPath.toFile(), USERNAME, PASSWORD)
+    val remoteRepoPath = helper.getTestDataPath("remote")
+    val localRepoPath = helper.getTestDataPath("local1")
+    httpServerFixture.startRepositoryFor(File(remoteRepoPath), USERNAME, PASSWORD)
     repositoryPath = localRepoPath
     @Language(value = "XML") val settingsXmlText = """
        <settings>
@@ -271,9 +262,8 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
     Registry.get("maven.server.debug").setValue(false)
     removeFromLocalRepository("org/mytest/myartifact/")
-    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
-    val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
-    val embedderWrapper = mavenEmbedderWrappers.getEmbedder(projectRoot.toNioPath())
+    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    val embedderWrapper = MavenServerManager.getInstance().createEmbedder(project, true, projectRoot.toNioPath().toString())
     val embedder = embedderWrapper.getEmbedder()
     assertTrue("Embedder should be remote object: got class ${embedder.javaClass.name}", embedder.javaClass.name.contains("\$Proxy"))
     assertFalse(embedder.javaClass.isAssignableFrom(MisconfiguredPlexusDummyEmbedder::class.java))
@@ -303,7 +293,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   fun testWithDependencyLastUpdatedWithErrorForceUpdate() = runBlocking {
     doLastUpdatedTest(true, pom()) {
       TestCase.assertEquals(1, projectsManager.rootProjects.size)
-      TestCase.assertEquals(projectsManager.rootProjects[0].problems.joinToString { it.toString() }, 0, projectsManager.rootProjects[0].problems.size)
+      TestCase.assertEquals(projectsManager.rootProjects[0].problems.joinToString{it.toString()}, 0, projectsManager.rootProjects[0].problems.size)
     }
   }
 
@@ -311,18 +301,18 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   fun testWithPluginLastUpdatedWithErrorForceUpdate() = runBlocking {
     doLastUpdatedTest(true, pomPlugins()) {
       TestCase.assertEquals(1, projectsManager.rootProjects.size)
-      TestCase.assertEquals(projectsManager.rootProjects[0].problems.joinToString { it.toString() }, 0, projectsManager.rootProjects[0].problems.size)
+      TestCase.assertEquals(projectsManager.rootProjects[0].problems.joinToString{it.toString()},0, projectsManager.rootProjects[0].problems.size)
     }
     val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
     removeFromLocalRepository("org/mytest/myartifact/")
-    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
+    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
   }
 
   private fun doLastUpdatedTest(updateSnapshots: Boolean, pomContent: String, checks: () -> Unit) = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
-    val remoteRepoPath = helper.getTestData("remote")
-    val localRepoPath = helper.getTestData("local1")
-    httpServerFixture.startRepositoryFor(remoteRepoPath.toString())
+    val remoteRepoPath = helper.getTestDataPath("remote")
+    val localRepoPath = helper.getTestDataPath("local1")
+    httpServerFixture.startRepositoryFor(remoteRepoPath)
     repositoryPath = localRepoPath
     val settingsXml = createProjectSubFile(
       "settings.xml",
@@ -341,10 +331,10 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
       "${myUrl.replace(":", "\\:")}/.error=\n" +
       "${myUrl.replace(":", "\\:")}/.lastUpdated=${System.currentTimeMillis()}\n"
     val dir = helper.getTestData("local1/org/mytest/myartifact/1.0")
-    dir.createDirectories()
+    dir.mkdirs()
 
-    dir.resolve("myartifact-1.0.jar.lastUpdated").writeText(lastUpdatedText)
-    dir.resolve("myartifact-1.0.pom.lastUpdated").writeText(lastUpdatedText)
+    File(dir, "myartifact-1.0.jar.lastUpdated").writeText(lastUpdatedText)
+    File(dir, "myartifact-1.0.pom.lastUpdated").writeText(lastUpdatedText)
 
     sendGetRequest("$myUrl/org/mytest/myartifact/1.0/myartifact-1.0.pom")
     sendGetRequest("$myUrl/org/mytest/myartifact/1.0/myartifact-1.0.pom.sha1")

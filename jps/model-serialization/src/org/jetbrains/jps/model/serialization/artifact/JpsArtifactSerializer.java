@@ -71,7 +71,8 @@ public final class JpsArtifactSerializer {
     artifact.getContainer().setChild(serializer.getRole(), e);
   }
 
-  private static @Nullable JpsPackagingElement loadPackagingElement(Element element) {
+  @Nullable
+  private static JpsPackagingElement loadPackagingElement(Element element) {
     JpsPackagingElement packagingElement = createPackagingElement(element);
     if (packagingElement instanceof JpsCompositePackagingElement) {
       for (Element childElement : JDOMUtil.getChildren(element, ELEMENT_TAG)) {
@@ -84,7 +85,8 @@ public final class JpsArtifactSerializer {
     return packagingElement;
   }
 
-  private static @Nullable JpsPackagingElement createPackagingElement(Element element) {
+  @Nullable
+  private static JpsPackagingElement createPackagingElement(Element element) {
     String typeId = element.getAttributeValue(ID_ATTRIBUTE);
     if (typeId == null) return null;
     JpsPackagingElementSerializer<?> serializer = findElementSerializer(typeId);
@@ -94,7 +96,8 @@ public final class JpsArtifactSerializer {
     return null;
   }
 
-  private static @Nullable JpsPackagingElementSerializer<?> findElementSerializer(@NotNull String typeId) {
+  @Nullable
+  private static JpsPackagingElementSerializer<?> findElementSerializer(@NotNull String typeId) {
     for (JpsPackagingElementSerializer<?> serializer : STANDARD_SERIALIZERS) {
       if (serializer.getTypeId().equals(typeId)) {
         return serializer;
@@ -110,7 +113,8 @@ public final class JpsArtifactSerializer {
     return null;
   }
 
-  private static @Nullable JpsArtifactExtensionSerializer<?> getExtensionSerializer(String id) {
+  @Nullable
+  private static JpsArtifactExtensionSerializer<?> getExtensionSerializer(String id) {
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsArtifactExtensionSerializer<?> serializer : extension.getArtifactExtensionSerializers()) {
         if (serializer.getId().equals(id)) {

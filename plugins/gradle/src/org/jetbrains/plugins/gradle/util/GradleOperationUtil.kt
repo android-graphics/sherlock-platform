@@ -5,10 +5,8 @@
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.externalSystem.model.task.*
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
@@ -52,7 +50,7 @@ fun getGradleProjectReloadOperation(
 ): ObservableOperationTrace {
   val operation = AtomicOperationTrace("Gradle Reload")
   val executionIds = HashMap<ExternalSystemTaskId, OperationExecutionId>()
-  whenExternalSystemTaskStarted(parentDisposable) { path, id ->
+  whenExternalSystemTaskStarted(parentDisposable) { id, path ->
     if (isResolveTask(id) && isRelevant(id, path)) {
       val executionId = OperationExecutionId.createId {
         putData(ID_KEY, id)
@@ -92,7 +90,7 @@ fun getGradleTaskExecutionOperation(
 ): ObservableOperationTrace {
   val operation = AtomicOperationTrace("Gradle Task Execution")
   val executionIds = HashMap<ExternalSystemTaskId, OperationExecutionId>()
-  whenExternalSystemTaskStarted(parentDisposable) { path, id ->
+  whenExternalSystemTaskStarted(parentDisposable) { id, path ->
     if (isExecuteTask(id) && isRelevant(id, path)) {
       val executionId = OperationExecutionId.createId {
         putData(ID_KEY, id)
@@ -113,8 +111,9 @@ fun getGradleTaskExecutionOperation(
 
 fun isResolveTask(id: ExternalSystemTaskId): Boolean {
   if (id.type == ExternalSystemTaskType.RESOLVE_PROJECT) {
-    val processingManager = ExternalSystemProcessingManager.getInstance()
-    val task = processingManager.findTask(id)
+    val task = ApplicationManager.getApplication()
+      .getService(ExternalSystemProcessingManager::class.java)
+      .findTask(id)
     if (task is ExternalSystemResolveProjectTask) {
       return !task.isPreviewMode
     }
@@ -128,12 +127,12 @@ private fun isExecuteTask(id: ExternalSystemTaskId): Boolean {
 
 fun whenExternalSystemTaskStarted(
   parentDisposable: Disposable,
-  action: (String, ExternalSystemTaskId) -> Unit
+  action: (ExternalSystemTaskId, String?) -> Unit
 ) {
   ExternalSystemProgressNotificationManager.getInstance()
     .addNotificationListener(object : ExternalSystemTaskNotificationListener {
-      override fun onStart(projectPath: String, id: ExternalSystemTaskId) {
-        action(projectPath, id)
+      override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
+        action(id, workingDir)
       }
     }, parentDisposable)
 }
@@ -144,15 +143,15 @@ fun whenExternalSystemTaskFinished(
 ) {
   ExternalSystemProgressNotificationManager.getInstance()
     .addNotificationListener(object : ExternalSystemTaskNotificationListener {
-      override fun onSuccess(projectPath: String, id: ExternalSystemTaskId) {
+      override fun onSuccess(id: ExternalSystemTaskId) {
         action(id, OperationExecutionStatus.Success)
       }
 
-      override fun onFailure(projectPath: String, id: ExternalSystemTaskId, exception: Exception) {
-        action(id, OperationExecutionStatus.Failure(exception))
+      override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
+        action(id, OperationExecutionStatus.Failure(e))
       }
 
-      override fun onCancel(projectPath: String, id: ExternalSystemTaskId) {
+      override fun onCancel(id: ExternalSystemTaskId) {
         action(id, OperationExecutionStatus.Cancel)
       }
     }, parentDisposable)

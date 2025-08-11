@@ -3,28 +3,28 @@ package com.intellij.util.concurrency;
 
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.AccessToken;
+import kotlin.coroutines.CoroutineContext;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 
 final class ContextRunnable implements Runnable {
 
-  private final @NotNull ChildContext myContext;
+  private final boolean myRoot;
+  private final @NotNull CoroutineContext myParentContext;
   private final @NotNull Runnable myRunnable;
 
   @Async.Schedule
-  ContextRunnable(@NotNull ChildContext context, @NotNull Runnable runnable) {
-    if (runnable instanceof ContextRunnable) {
-      throw new IllegalArgumentException("Can not wrap ContextRunnable into ContextRunnable");
-    }
-    myContext = context;
+  ContextRunnable(boolean root, @NotNull CoroutineContext context, @NotNull Runnable runnable) {
+    myRoot = root;
+    myParentContext = context;
     myRunnable = runnable;
   }
 
   @Async.Execute
   @Override
   public void run() {
-    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
-      myContext.runInChildContext(myRunnable);
+    try (AccessToken ignored = ThreadContext.installThreadContext(myParentContext, !myRoot)) {
+      myRunnable.run();
     }
   }
 

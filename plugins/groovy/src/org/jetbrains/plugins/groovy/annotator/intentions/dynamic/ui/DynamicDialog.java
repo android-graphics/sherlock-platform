@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -117,7 +117,8 @@ public abstract class DynamicDialog extends DialogWrapper {
     }
   }
 
-  private @Nullable Document createDocument(final String text) {
+  @Nullable
+  private Document createDocument(final String text) {
     GroovyCodeFragment fragment = new GroovyCodeFragment(myProject, text);
     fragment.setContext(myContext);
     return PsiDocumentManager.getInstance(myProject).getDocument(fragment);
@@ -139,7 +140,8 @@ public abstract class DynamicDialog extends DialogWrapper {
     myTypeComboBox.getEditor().setItem(createDocument(type.getCanonicalText()));
   }
 
-  public @Nullable GrTypeElement getEnteredTypeName() {
+  @Nullable
+  public GrTypeElement getEnteredTypeName() {
     final Document typeEditorDocument = getTypeEditorDocument();
 
     if (typeEditorDocument == null) return null;
@@ -151,14 +153,16 @@ public abstract class DynamicDialog extends DialogWrapper {
     }
   }
 
-  public @Nullable Document getTypeEditorDocument() {
+  @Nullable
+  public Document getTypeEditorDocument() {
     final Object item = myTypeComboBox.getEditor().getItem();
 
     return item instanceof Document ? (Document)item : null;
   }
 
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  @Nullable
+  protected JComponent createCenterPanel() {
     return myPanel;
   }
 

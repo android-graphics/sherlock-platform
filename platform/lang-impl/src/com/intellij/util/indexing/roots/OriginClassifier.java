@@ -4,11 +4,10 @@ package com.intellij.util.indexing.roots;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.LibraryId;
-import com.intellij.platform.workspace.jps.entities.SdkId;
 import com.intellij.platform.workspace.storage.EntityPointer;
 import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.util.SmartList;
@@ -26,7 +25,7 @@ final class OriginClassifier {
   private static final Logger LOG = Logger.getInstance(OriginClassifier.class);
   public final EntityStorage entityStorage;
   public final Collection<EntityPointer<?>> myEntityPointers = new HashSet<>();
-  public final Collection<SdkId> sdks = new HashSet<>();
+  public final Collection<Sdk> sdks = new HashSet<>();
   public final Collection<LibraryId> libraryIds = new HashSet<>();
   public final Collection<VirtualFile> filesFromAdditionalLibraryRootsProviders = new SmartList<>();
   public final Collection<VirtualFile> filesFromIndexableSetContributors = new SmartList<>();
@@ -65,7 +64,7 @@ final class OriginClassifier {
       return;
     }
 
-    SdkId sdk = WorkspaceFileSetRecognizer.INSTANCE.getSdkId(fileSet);
+    Sdk sdk = WorkspaceFileSetRecognizer.INSTANCE.getSdk(fileSet);
     if (sdk != null) {
       sdks.add(sdk);
       return;

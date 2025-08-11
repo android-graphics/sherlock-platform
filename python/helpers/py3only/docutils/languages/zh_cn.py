@@ -1,11 +1,12 @@
-# $Id: zh_cn.py 9452 2023-09-27 00:11:54Z milde $
+# -*- coding: utf-8 -*-
+# $Id: zh_cn.py 4564 2006-05-21 20:44:42Z wiemann $
 # Author: Pan Junyong <panjy@zopechina.com>
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
-# Two files must be translated for each language: one in docutils/languages,
-# the other in docutils/parsers/rst/languages.
+# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
+# translated for each language: one in docutils/languages, the other in
+# docutils/parsers/rst/languages.
 
 """
 Simplified Chinese language mappings for language-dependent features
@@ -38,7 +39,7 @@ labels = {
       'tip': '技巧',
       'warning': '警告',
       'contents': '目录',
-}
+} 
 """Mapping of node class name to label text."""
 
 bibliographic_fields = {
@@ -57,6 +58,10 @@ bibliographic_fields = {
       '摘要': 'abstract'}
 """Simplified Chinese to canonical name mapping for bibliographic fields."""
 
-author_separators = [';', ',', '；', '，', '、']
+author_separators = [';', ',',
+                     '\uff1b', # '；'
+                     '\uff0c', # '，'
+                     '\u3001', # '、'
+                    ]
 """List of separator strings for the 'Authors' bibliographic field. Tried in
 order."""

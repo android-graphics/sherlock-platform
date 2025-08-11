@@ -2,7 +2,6 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerContext;
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -27,7 +26,7 @@ public class ThrownExceptionValueDescriptorImpl extends ValueDescriptorImpl {
 
   @Override
   public String getName() {
-    return JavaDebuggerBundle.message("exception");
+    return "Exception";
   }
 
   @Override

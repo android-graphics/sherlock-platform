@@ -5,10 +5,8 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.environment.EnvironmentKey
 import com.intellij.ide.environment.EnvironmentKeyProvider
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
-@ApiStatus.Internal
 class PluginEnvironmentKeyProvider : EnvironmentKeyProvider {
 
   object Keys {

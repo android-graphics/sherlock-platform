@@ -2,7 +2,6 @@
 package com.intellij.ui;
 
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,12 +16,10 @@ public class CollectionComboBoxModel<T> extends CollectionListModel<T> implement
     mySelection = null;
   }
 
-  @Contract(mutates = "param1")
   public CollectionComboBoxModel(@NotNull List<T> items) {
     this(items, ContainerUtil.getFirstItem(items));
   }
 
-  @Contract(mutates = "param1")
   public CollectionComboBoxModel(@NotNull List<T> items, @Nullable T selection) {
     super(items, true);
     mySelection = selection;

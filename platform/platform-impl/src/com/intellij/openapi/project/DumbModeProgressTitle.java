@@ -25,7 +25,6 @@ import java.util.Set;
  * to allow shared indexes to include it's information into
  * the progress.
  */
-@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 @ApiStatus.Experimental
 public final class DumbModeProgressTitle {

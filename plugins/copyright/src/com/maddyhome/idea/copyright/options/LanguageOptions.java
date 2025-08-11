@@ -85,7 +85,6 @@ public final class LanguageOptions implements Cloneable {
     DefaultJDOMExternalizer.write(this, element, new DifferenceFilter<>(this, DEFAULT_SETTINGS_HOLDER));
   }
 
-  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -136,7 +135,6 @@ public final class LanguageOptions implements Cloneable {
 
   }
 
-  @Override
   public int hashCode() {
     int result;
     result = (block ? 1 : 0);
@@ -155,7 +153,6 @@ public final class LanguageOptions implements Cloneable {
     return result;
   }
 
-  @Override
   public String toString() {
     return "LanguageOptions" +
            ", fileTypeOverride=" + fileTypeOverride +

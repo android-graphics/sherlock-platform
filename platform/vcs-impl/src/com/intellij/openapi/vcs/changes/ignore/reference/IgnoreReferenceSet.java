@@ -54,7 +54,8 @@ import java.util.regex.Pattern;
 
 public class IgnoreReferenceSet extends FileReferenceSet {
 
-  private final @NotNull IgnorePatternsMatchedFilesCache myIgnorePatternsMatchedFilesCache;
+  @NotNull
+  private final IgnorePatternsMatchedFilesCache myIgnorePatternsMatchedFilesCache;
 
   private final PatternCache myPatternCache;
 
@@ -92,8 +93,9 @@ public class IgnoreReferenceSet extends FileReferenceSet {
    *
    * @return contexts collection
    */
+  @NotNull
   @Override
-  public @NotNull Collection<PsiFileSystemItem> computeDefaultContexts() {
+  public Collection<PsiFileSystemItem> computeDefaultContexts() {
     PsiFile containingFile = getElement().getContainingFile();
     PsiDirectory containingDirectory =
       containingFile.getParent() != null ? containingFile.getParent() : containingFile.getOriginalFile().getContainingDirectory();
@@ -134,7 +136,8 @@ public class IgnoreReferenceSet extends FileReferenceSet {
    * @return last {@link FileReference}
    */
   @Override
-  public @Nullable FileReference getLastReference() {
+  @Nullable
+  public FileReference getLastReference() {
     FileReference lastReference = super.getLastReference();
     if (lastReference != null && lastReference.getCanonicalText().endsWith(getSeparatorString())) {
       return this.myReferences != null && this.myReferences.length > 1 ?
@@ -305,7 +308,8 @@ public class IgnoreReferenceSet extends FileReferenceSet {
      * @param file    working file
      * @return Psi item
      */
-    private static @Nullable PsiFileSystemItem getPsiFileSystemItem(@NotNull PsiManager manager, @NotNull VirtualFile file) {
+    @Nullable
+    private static PsiFileSystemItem getPsiFileSystemItem(@NotNull PsiManager manager, @NotNull VirtualFile file) {
       if (!file.isValid()) {
         return null;
       }

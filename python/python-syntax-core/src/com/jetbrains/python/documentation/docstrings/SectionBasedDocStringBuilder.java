@@ -33,16 +33,19 @@ public abstract class SectionBasedDocStringBuilder extends DocStringBuilder<Sect
     myContinuationIndent = defaultContinuationIndent;
   }
 
-  public @NotNull SectionBasedDocStringBuilder startParametersSection() {
+  @NotNull
+  public SectionBasedDocStringBuilder startParametersSection() {
     // TODO make default section titles configurable
     return startSection(getDefaultParametersHeader());
   }
 
-  public @NotNull SectionBasedDocStringBuilder startReturnsSection() {
+  @NotNull
+  public SectionBasedDocStringBuilder startReturnsSection() {
     return startSection(getDefaultReturnsHeader());
   }
 
-  protected @NotNull SectionBasedDocStringBuilder startSection(@NotNull String title) {
+  @NotNull
+  protected SectionBasedDocStringBuilder startSection(@NotNull String title) {
     if (myCurSectionTitle != null) {
       addEmptyLine();
     }
@@ -50,24 +53,31 @@ public abstract class SectionBasedDocStringBuilder extends DocStringBuilder<Sect
     return this;
   }
 
-  public @NotNull SectionBasedDocStringBuilder endSection() {
+  @NotNull
+  public SectionBasedDocStringBuilder endSection() {
     myCurSectionTitle = null;
     return this;
   }
 
-  protected abstract @NotNull String getDefaultParametersHeader();
+  @NotNull
+  protected abstract String getDefaultParametersHeader();
 
-  protected abstract @NotNull String getDefaultReturnsHeader();
+  @NotNull
+  protected abstract String getDefaultReturnsHeader();
 
-  public abstract @NotNull SectionBasedDocStringBuilder addParameter(@NotNull String name, @Nullable String type, @NotNull String description);
+  @NotNull
+  public abstract SectionBasedDocStringBuilder addParameter(@NotNull String name, @Nullable String type, @NotNull String description);
 
-  public abstract @NotNull SectionBasedDocStringBuilder addReturnValue(@Nullable String name, @NotNull String type, @NotNull String description);
+  @NotNull
+  public abstract SectionBasedDocStringBuilder addReturnValue(@Nullable String name, @NotNull String type, @NotNull String description);
 
-  protected @NotNull SectionBasedDocStringBuilder addSectionLine(@NotNull String line) {
+  @NotNull
+  protected SectionBasedDocStringBuilder addSectionLine(@NotNull String line) {
     return addLine(mySectionIndent + line);
   }
 
-  protected @NotNull SectionBasedDocStringBuilder withSectionIndent(@NotNull String indent) {
+  @NotNull
+  protected SectionBasedDocStringBuilder withSectionIndent(@NotNull String indent) {
     mySectionIndent = indent;
     return this;
   }

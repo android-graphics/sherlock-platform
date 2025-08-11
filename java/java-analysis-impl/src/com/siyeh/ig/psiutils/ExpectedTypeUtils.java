@@ -16,14 +16,13 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.lang.java.parser.BasicExpressionParser;
+import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -37,7 +36,8 @@ public final class ExpectedTypeUtils {
 
   private ExpectedTypeUtils() {}
 
-  public static @Nullable PsiType findExpectedType(@NotNull PsiExpression expression, boolean calculateTypeForComplexReferences) {
+  @Nullable
+  public static PsiType findExpectedType(@NotNull PsiExpression expression, boolean calculateTypeForComplexReferences) {
     return findExpectedType(expression, calculateTypeForComplexReferences, false);
   }
 
@@ -69,7 +69,7 @@ public final class ExpectedTypeUtils {
                       JavaTokenType.OREQ, JavaTokenType.XOREQ, JavaTokenType.PERCEQ, JavaTokenType.LTLTEQ, JavaTokenType.GTGTEQ,
                       JavaTokenType.GTGTGTEQ);
 
-    private final @NotNull PsiExpression wrappedExpression;
+    @NotNull private final PsiExpression wrappedExpression;
     private final boolean calculateTypeForComplexReferences;
     private final boolean reportCasts;
     private PsiType expectedType = null;
@@ -446,7 +446,8 @@ public final class ExpectedTypeUtils {
       }
     }
 
-    private static @NotNull JavaResolveResult findCalledMethod(PsiExpressionList expressionList) {
+    @NotNull
+    private static JavaResolveResult findCalledMethod(PsiExpressionList expressionList) {
       final PsiElement parent = expressionList.getParent();
       if (parent instanceof PsiCall call) {
         return call.resolveMethodGenerics();
@@ -519,7 +520,8 @@ public final class ExpectedTypeUtils {
       }
     }
 
-    private static @Nullable PsiMethod findDeepestVisibleSuperMethod(PsiMethod method, PsiType returnType, PsiElement element) {
+    @Nullable
+    private static PsiMethod findDeepestVisibleSuperMethod(PsiMethod method, PsiType returnType, PsiElement element) {
       if (method.isConstructor()) {
         return null;
       }
@@ -583,7 +585,7 @@ public final class ExpectedTypeUtils {
       if (containingClass == null) {
         return false;
       }
-      final PsiClass referencingClass = PsiUtil.getContainingClass(referencingLocation);
+      final PsiClass referencingClass = ClassUtils.getContainingClass(referencingLocation);
       if (referencingClass == null) {
         return false;
       }
@@ -605,7 +607,7 @@ public final class ExpectedTypeUtils {
     }
 
     private static boolean isShiftOperation(@NotNull IElementType sign) {
-      return BasicExpressionParser.SHIFT_OPS.contains(sign);
+      return ExpressionParser.SHIFT_OPS.contains(sign);
     }
 
     private static boolean isOperatorAssignmentOperation(@NotNull IElementType sign) {
@@ -616,7 +618,8 @@ public final class ExpectedTypeUtils {
       return ArrayUtil.indexOf(expressionList.getExpressions(), expression);
     }
 
-    private static @Nullable PsiType getTypeOfParameter(@NotNull JavaResolveResult result, int parameterPosition) {
+    @Nullable
+    private static PsiType getTypeOfParameter(@NotNull JavaResolveResult result, int parameterPosition) {
       if (parameterPosition < 0 ) {
         return null;
       }

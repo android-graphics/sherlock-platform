@@ -19,13 +19,11 @@ import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.CoroutineScope
@@ -33,10 +31,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.scratch.*
-import org.jetbrains.kotlin.idea.scratch.actions.RunScratchActionK2
 import org.jetbrains.kotlin.idea.scratch.output.*
 import org.jetbrains.kotlin.psi.UserDataProperty
 
@@ -66,7 +62,7 @@ private class KtScratchFileEditorProvider : FileEditorProvider, AsyncFileEditorP
         editorCoroutineScope: CoroutineScope
     ): FileEditor {
         val textEditorProvider = TextEditorProvider.getInstance()
-        val scratchFile = readAction { editorCoroutineScope.childScope("scratches scope").createScratchFile(project, file) }
+        val scratchFile = readAction { createScratchFile(project, file) }
             ?: return textEditorProvider.createFileEditor(
                 project = project,
                 file = file,
@@ -79,7 +75,7 @@ private class KtScratchFileEditorProvider : FileEditorProvider, AsyncFileEditorP
             file = scratchFile.file,
             document = readAction { FileDocumentManager.getInstance().getDocument(scratchFile.file) },
             editorCoroutineScope = editorCoroutineScope,
-        )
+        ) as TextEditor
         val editorFactory = serviceAsync<EditorFactory>()
         return withContext(Dispatchers.EDT) {
             val viewer = editorFactory.createViewer(editorFactory.createDocument(""), scratchFile.project, EditorKind.PREVIEW)
@@ -90,9 +86,7 @@ private class KtScratchFileEditorProvider : FileEditorProvider, AsyncFileEditorP
     }
 
     override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-        val scratchFile = runBlockingCancellable {
-            createScratchFile(project, file)
-        } ?: return TextEditorProvider.getInstance().createEditor(project, file)
+        val scratchFile = createScratchFile(project, file) ?: return TextEditorProvider.getInstance().createEditor(project, file)
         return KtScratchFileEditorWithPreview.createKtScratchFileEditor(scratchFile)
     }
 
@@ -127,7 +121,6 @@ class KtScratchFileEditorWithPreview internal constructor(
         previewTextEditor.parentScratchEditorWithPreview = this
 
         scratchFile.compilingScratchExecutor?.addOutputHandler(commonPreviewOutputHandler)
-        scratchFile.k2ScratchExecutor?.addOutputHandler(commonPreviewOutputHandler)
         scratchFile.replScratchExecutor?.addOutputHandler(commonPreviewOutputHandler)
 
         configureSyncScrollForSourceAndPreview()
@@ -197,7 +190,7 @@ class KtScratchFileEditorWithPreview internal constructor(
     }
 
     override fun createToolbar(): ActionToolbar {
-        return if (isK2Mode()) ScratchTopPanelK2(scratchFile).actionsToolbar else ScratchTopPanel(scratchFile).actionsToolbar
+        return ScratchTopPanel(scratchFile).actionsToolbar
     }
 
     fun clearOutputHandlers() {
@@ -264,14 +257,14 @@ class KtScratchFileEditorWithPreview internal constructor(
 }
 
 fun TextEditor.findScratchFileEditorWithPreview(): KtScratchFileEditorWithPreview? =
-    this as? KtScratchFileEditorWithPreview ?: parentScratchEditorWithPreview
+    if (this is KtScratchFileEditorWithPreview) this else parentScratchEditorWithPreview
 
 private var TextEditor.parentScratchEditorWithPreview: KtScratchFileEditorWithPreview?
         by UserDataProperty(Key.create("parent.preview.editor"))
 
-fun CoroutineScope.createScratchFile(project: Project, file: VirtualFile): ScratchFile? {
+fun createScratchFile(project: Project, file: VirtualFile): ScratchFile? {
     val psiFile = PsiManager.getInstance(project).findFile(file) ?: return null
-    val scratchFile = ScratchFileLanguageProvider.get(psiFile.language)?.newScratchFile(project, file, this) ?: return null
+    val scratchFile = ScratchFileLanguageProvider.get(psiFile.language)?.newScratchFile(project, file) ?: return null
     setupCodeAnalyzerRestarterOutputHandler(project, scratchFile)
 
     return scratchFile
@@ -309,10 +302,6 @@ private class LayoutDependantOutputHandler(
 
     override fun handle(file: ScratchFile, expression: ScratchExpression, output: ScratchOutput) {
         targetHandler.handle(file, expression, output)
-    }
-
-    override fun handle(file: ScratchFile, infos: List<RunScratchActionK2.ExplainInfo>, scope: CoroutineScope) {
-        targetHandler.handle(file, infos, scope)
     }
 
     override fun error(file: ScratchFile, message: String) {

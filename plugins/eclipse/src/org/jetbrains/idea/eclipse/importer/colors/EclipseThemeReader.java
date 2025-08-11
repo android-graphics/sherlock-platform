@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse.importer.colors;
 
 import com.intellij.openapi.editor.markup.EffectType;
@@ -20,8 +20,8 @@ import java.util.Map;
 
 @SuppressWarnings("UseJBColor")
 public class EclipseThemeReader extends DefaultHandler implements EclipseColorThemeElements {
-  private final @Nullable OptionHandler myOptionHandler;
-  private @Nullable String myThemeName;
+  @Nullable private final OptionHandler myOptionHandler;
+  @Nullable private String myThemeName;
   
   private static final Map<String, Integer> ECLIPSE_DEFAULT_FONT_STYLES = new HashMap<>();
   static {
@@ -106,11 +106,13 @@ public class EclipseThemeReader extends DefaultHandler implements EclipseColorTh
     return false;
   }
 
-  public @Nullable String getThemeName() {
+  @Nullable
+  public String getThemeName() {
     return myThemeName;
   }
   
-  private static @Nullable Color getColor(Attributes attributes) throws SAXException {
+  @Nullable
+  private static Color getColor(Attributes attributes) throws SAXException {
     String colorString = attributes.getValue(COLOR_ATTR);
     if (colorString != null && !colorString.isEmpty()) {
       try {
@@ -146,7 +148,8 @@ public class EclipseThemeReader extends DefaultHandler implements EclipseColorTh
     return ECLIPSE_DEFAULT_FONT_STYLES.getOrDefault(tag, Font.PLAIN);
   }
   
-  private static @Nullable EffectType getEffectType(@NotNull Attributes attributes) {
+  @Nullable
+  private static EffectType getEffectType(@NotNull Attributes attributes) {
     String strikeThrough = attributes.getValue(STRIKETHROUGH_ATTR);
     if (Boolean.parseBoolean(strikeThrough)) {
       return EffectType.STRIKEOUT;

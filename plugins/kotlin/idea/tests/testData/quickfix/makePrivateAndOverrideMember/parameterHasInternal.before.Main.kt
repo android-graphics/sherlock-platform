@@ -1,5 +1,5 @@
 // "Implements 'getName'" "false"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 // ACTION: Convert to secondary constructor
 // ACTION: Create test
 // ACTION: Enable a trailing comma by default in the formatter

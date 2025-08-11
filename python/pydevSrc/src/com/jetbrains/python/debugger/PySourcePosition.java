@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -16,7 +16,8 @@ public abstract class PySourcePosition {
     this.line = line;
   }
 
-  protected @Nullable String normalize(@Nullable String file) {
+  @Nullable
+  protected String normalize(@Nullable String file) {
     if (file == null) {
       return null;
     }

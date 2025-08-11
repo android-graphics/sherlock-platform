@@ -70,7 +70,8 @@ internal class ConvertForEachToForLoopIntention
     private fun KtCallExpression.getSingleLambdaArgument(): KtLambdaExpression? =
         valueArguments.singleOrNull()?.getArgumentExpression() as? KtLambdaExpression
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Context? {
+    context(KaSession)
+    override fun prepareContext(element: KtCallExpression): Context? {
         if (!element.isForEachByAnalyze()) return null
         if (element.isUsedAsExpression) return null
 

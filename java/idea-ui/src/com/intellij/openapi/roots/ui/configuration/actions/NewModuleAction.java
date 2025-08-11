@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.actions;
 
 import com.intellij.ide.JavaUiBundle;
@@ -83,20 +83,21 @@ public class NewModuleAction extends AnAction implements DumbAware, NewProjectOr
     if (builder.isOpenProjectSettingsAfter()) {
       ModulesConfigurator.showDialog(project, null, null);
     }
-    return modules.isEmpty() ? null : modules.get(0);
+    return modules == null || modules.isEmpty() ? null : modules.get(0);
   }
 
-  protected @Nullable Object prepareDataFromContext(final AnActionEvent e) {
+  @Nullable
+  protected Object prepareDataFromContext(final AnActionEvent e) {
     return null;
   }
 
-  protected void processCreatedModule(final Module module, final @Nullable Object dataFromContext) {
+  protected void processCreatedModule(final Module module, @Nullable final Object dataFromContext) {
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(getEventProject(e) != null);
-    NewProjectAction.Companion.updateActionText$intellij_java_ui(this, e);
+    NewProjectAction.updateActionText(this, e);
   }
 
   @Override
@@ -104,8 +105,9 @@ public class NewModuleAction extends AnAction implements DumbAware, NewProjectOr
     return ActionUpdateThread.BGT;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getActionText(boolean isInNewSubmenu, boolean isInJavaIde) {
+  public String getActionText(boolean isInNewSubmenu, boolean isInJavaIde) {
     return JavaUiBundle.message("module.new.action", isInNewSubmenu ? 1 : 0, isInJavaIde ? 1 :0);
   }
 }

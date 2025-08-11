@@ -18,7 +18,6 @@ package com.jetbrains.python.magicLiteral;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.StringLiteralExpression;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Ilya.Kazakevich
  */
-@ApiStatus.Internal
 public interface PyMagicLiteralExtensionPoint {
 
   ExtensionPointName<PyMagicLiteralExtensionPoint> EP_NAME = ExtensionPointName.create("Pythonid.magicLiteral");
@@ -47,5 +45,5 @@ public interface PyMagicLiteralExtensionPoint {
   @NotNull
   String getLiteralType();
 
-  boolean isEnabled(final @NotNull PsiElement anchor);
+  boolean isEnabled(@NotNull final PsiElement anchor);
 }

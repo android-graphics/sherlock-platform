@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.codeInsight.multiverse.*;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
@@ -14,7 +13,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.psi.*;
@@ -29,22 +27,21 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
 
 import static com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC;
 
-final class ResolveScopeManagerImpl extends ResolveScopeManager implements Disposable {
+public final class ResolveScopeManagerImpl extends ResolveScopeManager implements Disposable {
   private final Project myProject;
   private final ProjectRootManager myProjectRootManager;
   private final PsiManager myManager;
 
-  private final Map<Pair<VirtualFile, CodeInsightContext>, GlobalSearchScope> myDefaultResolveScopesCache;
+  private final Map<VirtualFile, GlobalSearchScope> myDefaultResolveScopesCache;
   private final AdditionalIndexableFileSet myAdditionalIndexableFileSet;
 
-  ResolveScopeManagerImpl(Project project) {
+  public ResolveScopeManagerImpl(Project project) {
     myProject = project;
     myProjectRootManager = ProjectRootManager.getInstance(project);
     myManager = PsiManager.getInstance(project);
@@ -66,31 +63,29 @@ final class ResolveScopeManagerImpl extends ResolveScopeManager implements Dispo
     ResolveScopeEnlarger.EP_NAME.addChangeListener(() -> myDefaultResolveScopesCache.clear(), this);
   }
 
-  private @NotNull GlobalSearchScope createScopeByFile(@NotNull Pair<VirtualFile, CodeInsightContext> key) {
-    VirtualFile original = VirtualFileUtil.originalFile(key.first);
-    VirtualFile file = ObjectUtils.notNull(original, key.first);
-    CodeInsightContext context = key.second;
-
+  private @NotNull GlobalSearchScope createScopeByFile(@NotNull VirtualFile key) {
+    VirtualFile original = VirtualFileUtil.originalFile(key);
+    VirtualFile file = ObjectUtils.notNull(original, key);
     GlobalSearchScope scope = null;
     for (ResolveScopeProvider resolveScopeProvider : ResolveScopeProvider.EP_NAME.getExtensionList()) {
-      scope = resolveScopeProvider.getResolveScope(file, context, myProject);
+      scope = resolveScopeProvider.getResolveScope(file, myProject);
       if (scope != null) break;
     }
     if (scope == null) scope = getInherentResolveScope(file);
     for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensionList()) {
-      SearchScope extra = enlarger.getAdditionalResolveScope(file, context, myProject);
+      SearchScope extra = enlarger.getAdditionalResolveScope(file, myProject);
       if (extra != null) {
         scope = scope.union(extra);
       }
     }
-    if (original != null && !scope.contains(key.first)) {
-      scope = scope.union(GlobalSearchScope.fileScope(myProject, key.first));
+    if (original != null && !scope.contains(key)) {
+      scope = scope.union(GlobalSearchScope.fileScope(myProject, key));
     }
     return scope;
   }
 
-  private @NotNull GlobalSearchScope getResolveScopeFromProviders(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
-    return myDefaultResolveScopesCache.get(Pair.create(vFile, context));
+  private @NotNull GlobalSearchScope getResolveScopeFromProviders(@NotNull VirtualFile vFile) {
+    return myDefaultResolveScopesCache.get(vFile);
   }
 
   private @NotNull GlobalSearchScope getInherentResolveScope(@NotNull VirtualFile vFile) {
@@ -109,7 +104,7 @@ final class ResolveScopeManagerImpl extends ResolveScopeManager implements Dispo
       return allScope;
     }
 
-    return LibraryScopeCache.getInstance(myProject).getLibraryScope(vFile);
+    return LibraryScopeCache.getInstance(myProject).getLibraryScope(projectFileIndex.getOrderEntriesForFile(vFile));
   }
 
   @Override
@@ -117,7 +112,7 @@ final class ResolveScopeManagerImpl extends ResolveScopeManager implements Dispo
     ProgressIndicatorProvider.checkCanceled();
 
     if (element instanceof PsiDirectory) {
-      return getResolveScopeFromProviders(((PsiDirectory)element).getVirtualFile(), CodeInsightContextKt.anyContext());
+      return getResolveScopeFromProviders(((PsiDirectory)element).getVirtualFile());
     }
 
     PsiFile containingFile = element.getContainingFile();
@@ -148,7 +143,7 @@ final class ResolveScopeManagerImpl extends ResolveScopeManager implements Dispo
     if (!psiFile.getOriginalFile().isPhysical() && !psiFile.getViewProvider().isPhysical()) {
       return withFile(psiFile, GlobalSearchScope.allScope(myProject));
     }
-    return getResolveScopeFromProviders(psiFile.getViewProvider().getVirtualFile(), FileViewProviderUtil.getCodeInsightContext(psiFile));
+    return getResolveScopeFromProviders(psiFile.getViewProvider().getVirtualFile());
   }
 
   private GlobalSearchScope withFile(PsiFile containingFile, GlobalSearchScope scope) {
@@ -162,7 +157,7 @@ final class ResolveScopeManagerImpl extends ResolveScopeManager implements Dispo
   public @NotNull GlobalSearchScope getDefaultResolveScope(@NotNull VirtualFile vFile) {
     PsiFile psiFile = myManager.findFile(vFile);
     assert psiFile != null : "directory=" + vFile.isDirectory() + "; " + myProject+"; vFile="+vFile+"; type="+vFile.getFileType();
-    return getResolveScopeFromProviders(vFile, CodeInsightContextKt.anyContext()); //todo ijpl-339???
+    return getResolveScopeFromProviders(vFile);
   }
 
 
@@ -170,19 +165,16 @@ final class ResolveScopeManagerImpl extends ResolveScopeManager implements Dispo
   public @NotNull GlobalSearchScope getUseScope(@NotNull PsiElement element) {
     VirtualFile vDirectory;
     VirtualFile virtualFile;
-    FileViewProvider fileViewProvider;
     PsiFile containingFile;
     GlobalSearchScope allScope = GlobalSearchScope.allScope(myManager.getProject());
     if (element instanceof PsiDirectory) {
       vDirectory = ((PsiDirectory)element).getVirtualFile();
       virtualFile = null;
       containingFile = null;
-      fileViewProvider = null;
     }
     else {
       containingFile = element.getContainingFile();
       if (containingFile == null) return allScope;
-      fileViewProvider = containingFile.getViewProvider();
       virtualFile = containingFile.getVirtualFile();
       if (virtualFile == null) return allScope;
       if (virtualFile instanceof VirtualFileWindow) {
@@ -195,12 +187,10 @@ final class ResolveScopeManagerImpl extends ResolveScopeManager implements Dispo
     }
 
     if (vDirectory == null) return allScope;
-
+    ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
     VirtualFile notNullVFile = virtualFile != null ? virtualFile : vDirectory;
-    Module module = findModule(fileViewProvider, notNullVFile);
-
+    Module module = projectFileIndex.getModuleForFile(notNullVFile);
     if (module == null) {
-      ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
       List<OrderEntry> entries = projectFileIndex.getOrderEntriesForFile(notNullVFile);
       if (entries.isEmpty() &&
           (WorkspaceFileIndex.getInstance(myProject).findFileSet(notNullVFile, true, false, true, true, true) != null ||
@@ -208,7 +198,7 @@ final class ResolveScopeManagerImpl extends ResolveScopeManager implements Dispo
         return allScope;
       }
 
-      GlobalSearchScope result = LibraryScopeCache.getInstance(myProject).getLibraryUseScope(notNullVFile);
+      GlobalSearchScope result = LibraryScopeCache.getInstance(myProject).getLibraryUseScope(entries);
       return containingFile == null || virtualFile.isDirectory() || result.contains(virtualFile)
              ? result : GlobalSearchScope.fileScope(containingFile).uniteWith(result);
     }
@@ -216,18 +206,6 @@ final class ResolveScopeManagerImpl extends ResolveScopeManager implements Dispo
     return isTest
            ? GlobalSearchScope.moduleTestsWithDependentsScope(module)
            : GlobalSearchScope.moduleWithDependentsScope(module);
-  }
-
-  private @Nullable Module findModule(@Nullable FileViewProvider fileViewProvider, @NotNull VirtualFile notNullVFile) {
-    if (fileViewProvider != null && CodeInsightContextKt.isSharedSourceSupportEnabled(myProject)) {
-      CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(fileViewProvider);
-      if (context instanceof ModuleContext) {
-        return ((ModuleContext)context).getModule();
-      }
-    }
-
-    ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
-    return projectFileIndex.getModuleForFile(notNullVFile);
   }
 
   @Override

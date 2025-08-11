@@ -80,11 +80,6 @@ interface WebSymbolDocumentation {
    */
   val footnote: @Nls String?
 
-  /**
-   * Header shown before definition
-   */
-  val header: @Nls String?
-
   fun isNotEmpty(): Boolean
 
   fun withName(name: @NlsSafe String): WebSymbolDocumentation
@@ -110,8 +105,6 @@ interface WebSymbolDocumentation {
   fun withDescriptionSection(name: @Nls String, contents: @Nls String): WebSymbolDocumentation
 
   fun withFootnote(footnote: @Nls String?): WebSymbolDocumentation
-
-  fun withHeader(header: @Nls String?): WebSymbolDocumentation
 
   fun with(name: @NlsSafe String = this.name,
            definition: @NlsSafe String = this.definition,
@@ -153,7 +146,7 @@ interface WebSymbolDocumentation {
                descriptionSections: Map<@Nls String, @Nls String> = symbol.descriptionSections,
                footnote: @Nls String? = null): WebSymbolDocumentation =
       WebSymbolDocumentationImpl(name, definition, definitionDetails, description, docUrl, apiStatus, required, defaultValue, library, icon,
-                                 descriptionSections, footnote, null)
+                                 descriptionSections, footnote)
         .let { doc: WebSymbolDocumentation ->
           WebSymbolDocumentationCustomizer.EP_NAME.extensionList.fold(doc) { documentation, customizer ->
             customizer.customize(symbol, location, documentation)

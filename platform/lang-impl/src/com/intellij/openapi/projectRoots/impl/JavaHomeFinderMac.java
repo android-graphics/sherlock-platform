@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,11 +10,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@ApiStatus.Internal
 public class JavaHomeFinderMac extends JavaHomeFinderBasic {
   public static final String JAVA_HOME_FIND_UTIL = "/usr/libexec/java_home";
 
@@ -50,13 +50,14 @@ public class JavaHomeFinderMac extends JavaHomeFinderBasic {
       homePath = ExecUtil.execAndReadLine(new GeneralCommandLine(JAVA_HOME_FIND_UTIL));
     }
     if (homePath != null) {
-      return Path.of(homePath);
+      return Paths.get(homePath);
     }
     return null;
   }
 
+  @NotNull
   @Override
-  protected @NotNull List<Path> listPossibleJdkHomesFromInstallRoot(@NotNull Path path) {
+  protected List<Path> listPossibleJdkHomesFromInstallRoot(@NotNull Path path) {
     return Arrays.asList(path, path.resolve("Home"), path.resolve("Contents/Home"));
   }
 
@@ -85,7 +86,7 @@ public class JavaHomeFinderMac extends JavaHomeFinderBasic {
   }
 
   private static void processSubfolders(@Nullable Path dir, Consumer<? super Path> processor) {
-    if (dir == null || !Files.isDirectory(dir)) { return; }
+    if (dir == null || !Files.isDirectory(dir) || Files.isSymbolicLink(dir)) { return; }
     try (Stream<Path> files = Files.list(dir)) {
       files.forEach(candidate -> {
         if (Files.isDirectory(candidate)) {
@@ -95,19 +96,26 @@ public class JavaHomeFinderMac extends JavaHomeFinderBasic {
     } catch (IOException ignore) {}
   }
 
-  /// Finds directories for JDKs installed by <a href="https://brew.sh/">homebrew</a>.
-  /// Searches in `homebrew/opt/` to return symlinks that are safe after updating the formula.
+  /**
+   * Finds directories for JDKs installed by <a href="https://brew.sh/">homebrew</a>.
+   */
   private @NotNull Set<String> findJavaInstalledByBrew() {
     var found = new HashSet<String>();
-    var paths = List.of("/opt/homebrew/opt/", "/usr/homebrew/opt/");
+    var paths = List.of("/opt/homebrew/Cellar/", "/usr/homebrew/Cellar/");
     for (String path : paths) {
       Path parentFolder = getPathInUserHome(path);
       // JDKs installed by Homebrew can be hidden in `libexec`
       processSubfolders(parentFolder, formula -> {
-        processSubfolders(formula, subFolder -> {
-          if (subFolder.getFileName().toString().equals("libexec")) {
-            found.addAll(scanAll(subFolder, true));
-          }
+        processSubfolders(formula, version -> {
+          processSubfolders(version, subFolder -> {
+            if (subFolder.getFileName().toString().equals("libexec")) {
+              found.addAll(
+                scanAll(subFolder, true).stream()
+                  .filter(jdkPath -> !Files.isSymbolicLink(Path.of(jdkPath)))
+                  .collect(Collectors.toSet())
+              );
+            }
+          });
         });
       });
     }

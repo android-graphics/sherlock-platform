@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.breakpoints.ui;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -32,11 +32,14 @@ public abstract class XBreakpointGroupingRule<B, G extends XBreakpointGroup> {
     myPresentableName = presentableName;
   }
 
-  public @NotNull @Nls String getPresentableName() {
+  @NotNull
+  @Nls
+  public String getPresentableName() {
     return myPresentableName;
   }
 
-  public @NotNull String getId() {
+  @NotNull 
+  public String getId() {
     return myId;
   }
 
@@ -44,9 +47,11 @@ public abstract class XBreakpointGroupingRule<B, G extends XBreakpointGroup> {
     return XBreakpointsGroupingPriorities.DEFAULT;
   }
 
-  public abstract @Nullable G getGroup(@NotNull B breakpoint, @NotNull Collection<? extends G> groups);
+  @Nullable
+  public abstract G getGroup(@NotNull B breakpoint, @NotNull Collection<? extends G> groups);
 
-  public @Nullable Icon getIcon() {
+  @Nullable
+  public Icon getIcon() {
     return null;
   }
 }

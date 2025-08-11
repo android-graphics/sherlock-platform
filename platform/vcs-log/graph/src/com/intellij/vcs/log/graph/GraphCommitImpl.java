@@ -3,15 +3,13 @@ package com.intellij.vcs.log.graph;
 
 import com.google.common.primitives.Ints;
 import com.intellij.util.ArrayUtilRt;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-@ApiStatus.Internal
 public final class GraphCommitImpl<CommitId> extends AbstractGraphCommit<CommitId> {
-  private final @NotNull CommitId myId;
-  private final @NotNull Object myParents;
+  @NotNull private final CommitId myId;
+  @NotNull private final Object myParents;
 
   // use createCommit
   private GraphCommitImpl(@NotNull CommitId id, @NotNull List<CommitId> parents, long timestamp) {
@@ -29,8 +27,9 @@ public final class GraphCommitImpl<CommitId> extends AbstractGraphCommit<CommitI
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull CommitId getId() {
+  public CommitId getId() {
     return myId;
   }
 
@@ -54,7 +53,8 @@ public final class GraphCommitImpl<CommitId> extends AbstractGraphCommit<CommitI
     return myParents instanceof Object[] ? ((Object[])myParents).length : 1;
   }
 
-  public static @NotNull <CommitId> GraphCommit<CommitId> createCommit(@NotNull CommitId id, @NotNull List<CommitId> parents, long timestamp) {
+  @NotNull
+  public static <CommitId> GraphCommit<CommitId> createCommit(@NotNull CommitId id, @NotNull List<CommitId> parents, long timestamp) {
     if (id instanceof Integer) {
       //noinspection unchecked
       return (GraphCommit<CommitId>)createIntCommit((Integer)id, (List<Integer>)parents, timestamp);
@@ -62,7 +62,8 @@ public final class GraphCommitImpl<CommitId> extends AbstractGraphCommit<CommitI
     return new GraphCommitImpl<>(id, parents, timestamp);
   }
 
-  public static @NotNull GraphCommit<Integer> createIntCommit(int id, @NotNull List<Integer> parents, long timestamp) {
+  @NotNull
+  public static GraphCommit<Integer> createIntCommit(int id, @NotNull List<Integer> parents, long timestamp) {
     if (parents.size() == 1) {
       return new IntGraphCommit.SingleParent(timestamp, id, parents.get(0));
     }

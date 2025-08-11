@@ -1,5 +1,5 @@
 // "Add 'fun' modifier to 'Function0'" "false"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 // ACTION: Add full qualifier
 // ACTION: Convert to anonymous object
 // ACTION: Split property declaration

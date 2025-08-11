@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.icons.AllIcons;
@@ -33,7 +33,7 @@ import javax.swing.*;
 import java.util.Set;
 
 public final class ProjectPatternProvider extends PatternDialectProvider {
-  public static final @NonNls String FILE = "file";
+  @NonNls public static final String FILE = "file";
 
   private static final Logger LOG = Logger.getInstance(ProjectPatternProvider.class);
 
@@ -55,7 +55,8 @@ public final class ProjectPatternProvider extends PatternDialectProvider {
   }
 
   @Override
-  public @NotNull String getShortName() {
+  @NotNull
+  public String getShortName() {
     return FILE;
   }
 
@@ -68,7 +69,8 @@ public final class ProjectPatternProvider extends PatternDialectProvider {
   }
 
   @Override
-  public @Nullable PackageSet createPackageSet(final PackageDependenciesNode node, final boolean recursively) {
+  @Nullable
+  public PackageSet createPackageSet(final PackageDependenciesNode node, final boolean recursively) {
     if (node instanceof ModuleGroupNode) {
       if (!recursively) return null;
       return new FilePatternPackageSet(getGroupModulePattern((ModuleGroupNode)node), "*//*");
@@ -82,7 +84,7 @@ public final class ProjectPatternProvider extends PatternDialectProvider {
     else if (node instanceof DirectoryNode) {
       String pattern = ((DirectoryNode)node).getFQName();
       if (pattern != null) {
-        if (!pattern.isEmpty()) {
+        if (pattern.length() > 0) {
           pattern += recursively ? "//*" : "/*";
         }
         else {
@@ -137,8 +139,9 @@ public final class ProjectPatternProvider extends PatternDialectProvider {
     return AllIcons.General.ProjectTab;
   }
 
+  @Nls
   @Override
-  public @Nls @NotNull String getHintMessage() {
+  public @NotNull String getHintMessage() {
     return LangBundle.message("package.pattern.provider.hint.label");
   }
 

@@ -4,7 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.module.Module
@@ -57,10 +57,7 @@ class ModuleStoreTest {
   fun `set option`() = runBlocking {
     val moduleFile = tempDirManager.createVirtualFile("test.iml", """
         <?xml version="1.0" encoding="UTF-8"?>
-        <module type="JAVA_MODULE" foo="bar" version="4">
-            <component name="NewModuleRootManager" />
-        </module>
-        """.trimIndent())
+        <module type="JAVA_MODULE" foo="bar" version="4" />""".trimIndent())
 
     projectRule.loadModule(moduleFile).useAndDispose {
       assertThat(getOptionValue("foo")).isEqualTo("bar")
@@ -203,7 +200,7 @@ class ModuleStoreTest {
       val contentRoot = tempDirManager.createVirtualDir()
 
 
-      val module = edtWriteAction {
+      val module = writeAction {
         ModuleManager.getInstance(project).newNonPersistentModule(moduleName, JAVA_MODULE_ENTITY_TYPE_ID_NAME)
       }
       withContext(Dispatchers.EDT) {
@@ -258,7 +255,7 @@ suspend inline fun <T> Module.useAndDispose(task: Module.() -> T): T {
 
 suspend fun ProjectRule.loadModule(file: VirtualFile): Module {
   val project = project
-  return edtWriteAction { ModuleManager.getInstance(project).loadModule(file.toNioPath()) }
+  return writeAction { ModuleManager.getInstance(project).loadModule(file.toNioPath()) }
 }
 
 val Module.contentRootUrls: Array<String>
@@ -266,7 +263,7 @@ val Module.contentRootUrls: Array<String>
 
 internal suspend fun ProjectRule.createModule(path: Path): Module {
   val project = project
-  return edtWriteAction {
+  return writeAction {
     ModuleManager.getInstance(project).newModule(path, JAVA_MODULE_ENTITY_TYPE_ID_NAME)
   }
 }

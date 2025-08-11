@@ -1,4 +1,4 @@
-// FIX: Remove explicit type arguments
+// IS_APPLICABLE: true
 // AFTER-WARNING: Variable 'x' is never used
 fun foo() {
     val x = Box<caret><String>("x")

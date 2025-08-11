@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.modifier;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -64,7 +64,8 @@ public interface CodeStyleSettingsModifier {
    * @return The function which disables the modifier in the given code style settings or by other means. It is purely programmatic and
    * doesn't perform any UI operations by itself. {@code null} means that programmatic disabling is not available.
    */
-  default @Nullable Consumer<CodeStyleSettings> getDisablingFunction(@NotNull Project project) {
+  @Nullable
+  default Consumer<CodeStyleSettings> getDisablingFunction(@NotNull Project project) {
     return null;
   }
 

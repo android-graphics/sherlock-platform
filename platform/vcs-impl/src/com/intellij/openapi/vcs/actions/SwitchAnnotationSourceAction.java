@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -38,7 +38,7 @@ final class SwitchAnnotationSourceAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(final @NotNull AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     e.getPresentation().setText(myShowMerged ? getHideMerged() : getShowMerged());
   }
 
@@ -54,11 +54,13 @@ final class SwitchAnnotationSourceAction extends AnAction implements DumbAware {
     AnnotateActionGroup.revalidateMarkupInAllEditors();
   }
 
-  private static @NlsActions.ActionText String getShowMerged() {
+  @NlsActions.ActionText
+  private static String getShowMerged() {
     return VcsBundle.message("annotation.switch.to.merged.text");
   }
 
-  private static @NlsActions.ActionText String getHideMerged() {
+  @NlsActions.ActionText
+  private static String getHideMerged() {
     return VcsBundle.message("annotation.switch.to.original.text");
   }
 }

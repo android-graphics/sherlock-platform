@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.binary;
 
 import com.intellij.diff.DiffContext;
@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,9 +22,8 @@ import java.util.List;
 import static com.intellij.diff.util.DiffUtil.getDiffSettings;
 import static java.util.Collections.singletonList;
 
-@ApiStatus.Internal
 public class OnesideBinaryDiffViewer extends OnesideDiffViewer<BinaryEditorHolder> {
-  private final @NotNull TransferableFileEditorStateSupport myTransferableStateSupport;
+  @NotNull private final TransferableFileEditorStateSupport myTransferableStateSupport;
 
   public OnesideBinaryDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request, BinaryEditorHolder.BinaryEditorHolderFactory.INSTANCE);
@@ -59,12 +57,14 @@ public class OnesideBinaryDiffViewer extends OnesideDiffViewer<BinaryEditorHolde
   //
 
   @Override
-  protected @NotNull Runnable performRediff(final @NotNull ProgressIndicator indicator) {
+  @NotNull
+  protected Runnable performRediff(@NotNull final ProgressIndicator indicator) {
     JComponent notification = getSide().select(DiffNotifications.createRemovedContent(), DiffNotifications.createInsertedContent());
     return applyNotification(notification);
   }
 
-  private @NotNull Runnable applyNotification(final @Nullable JComponent notification) {
+  @NotNull
+  private Runnable applyNotification(@Nullable final JComponent notification) {
     return () -> {
       clearDiffPresentation();
       if (notification != null) myPanel.addNotification(notification);

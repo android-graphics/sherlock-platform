@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.Presentation;
@@ -165,7 +165,8 @@ public final class SidePanel extends JPanel {
     myIndex2Separator.put(myModel.size(), text);
   }
 
-  private @Nullable @NlsContexts.Separator String getSeparatorAbove(final SidePanelItem item) {
+  @Nullable
+  private @NlsContexts.Separator String getSeparatorAbove(final SidePanelItem item) {
     return myIndex2Separator.get(myModel.indexOf(item));
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -51,7 +51,8 @@ public final class StatementExtractor {
     return result.toString();
   }
 
-  private static @NotNull Node createNode(@NotNull PsiExpression expression, @NotNull PsiExpression root) {
+  @NotNull
+  private static Node createNode(@NotNull PsiExpression expression, @NotNull PsiExpression root) {
     Node result = new Expr(expression);
     PsiExpression parent;
     while (expression != root) {
@@ -93,7 +94,8 @@ public final class StatementExtractor {
     return result;
   }
 
-  private static @NotNull Node foldNode(@NotNull Node node, @NotNull PsiExpression expression, @NotNull PsiExpression parent) {
+  @NotNull
+  private static Node foldNode(@NotNull Node node, @NotNull PsiExpression expression, @NotNull PsiExpression parent) {
     if (parent instanceof PsiPolyadicExpression polyadic) {
       IElementType type = polyadic.getOperationTokenType();
       boolean and;
@@ -122,7 +124,7 @@ public final class StatementExtractor {
     return node;
   }
 
-  private abstract static class Node {
+  private static abstract class Node {
     final PsiExpression myAnchor;
 
     protected Node(PsiExpression anchor) {
@@ -131,7 +133,6 @@ public final class StatementExtractor {
 
     public abstract Node prepend(Node node);
 
-    @Override
     public abstract String toString();
   }
 
@@ -205,7 +206,6 @@ public final class StatementExtractor {
       return node.myAnchor == null ? this : new Cons(node, this);
     }
 
-    @Override
     public String toString() {
       if (myAnchor instanceof PsiInstanceOfExpression) {
         var patternVariableWrappers = JavaPsiPatternUtil.collectPatternVariableWrappers(myAnchor);

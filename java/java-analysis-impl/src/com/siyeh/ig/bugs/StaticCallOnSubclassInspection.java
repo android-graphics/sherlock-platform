@@ -32,12 +32,14 @@ import org.jetbrains.annotations.NotNull;
 public final class StaticCallOnSubclassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "StaticMethodReferencedViaSubclass";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final PsiClass declaringClass = (PsiClass)infos[0];
     final PsiClass referencedClass = (PsiClass)infos[1];
     return InspectionGadgetsBundle.message(
@@ -53,7 +55,8 @@ public final class StaticCallOnSubclassInspection extends BaseInspection impleme
   private static class StaticCallOnSubclassFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("static.method.via.subclass.rationalize.quickfix");
     }
 

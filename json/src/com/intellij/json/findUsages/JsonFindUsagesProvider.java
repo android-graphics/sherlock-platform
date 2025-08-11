@@ -11,7 +11,10 @@ import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class JsonFindUsagesProvider implements FindUsagesProvider {
+/**
+ * @author Mikhail Golubev
+ */
+public final class JsonFindUsagesProvider implements FindUsagesProvider {
   @Override
   public @Nullable WordsScanner getWordsScanner() {
     return new JsonWordScanner();

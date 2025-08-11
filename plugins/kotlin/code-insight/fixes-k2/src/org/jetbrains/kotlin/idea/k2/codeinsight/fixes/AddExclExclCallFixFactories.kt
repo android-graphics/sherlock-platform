@@ -27,7 +27,8 @@ object AddExclExclCallFixFactories {
         getFixForUnsafeCall(diagnostic.psi)
     }
 
-    private fun KaSession.getFixForUnsafeCall(psi: PsiElement): List<AddExclExclCallFix> {
+    context(KaSession)
+    private fun getFixForUnsafeCall(psi: PsiElement): List<AddExclExclCallFix> {
         val (target, hasImplicitReceiver) = when (val unwrapped = psi.unwrapParenthesesLabelsAndAnnotations()) {
             // `foo.bar` -> `foo!!.bar`
             is KtDotQualifiedExpression -> unwrapped.receiverExpression to false
@@ -102,7 +103,7 @@ object AddExclExclCallFixFactories {
         // Adding `!!` will then surface the error that `operator` should be added (with corresponding fix).
         val typeScope = type.scope?.declarationScope
             ?: return@IntentionBased emptyList()
-        val hasValidIterator = typeScope.callables(OperatorNameConventions.ITERATOR)
+        val hasValidIterator = typeScope.getCallableSymbols(OperatorNameConventions.ITERATOR)
             .filter { it is KaNamedFunctionSymbol && it.valueParameters.isEmpty() }.singleOrNull() != null
         if (hasValidIterator) {
             listOfNotNull(expression.asAddExclExclCallFix())

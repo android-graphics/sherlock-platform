@@ -120,11 +120,9 @@ public class ScopePanel extends JPanel implements Disposable{
         });
         final @NlsSafe String path = scope.getPath();
         myDirectory.setText(path);
-      myDirectory.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
-        .withTitle(XPathBundle.message("dialog.title.select.path"))
-        .withDescription(XPathBundle.message("label.select.path")));
+        myDirectory.addBrowseFolderListener(XPathBundle.message("dialog.title.select.path"), XPathBundle.message("label.select.path"), myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
-      myRecursive.setSelected(scope.isRecursive());
+        myRecursive.setSelected(scope.isRecursive());
     }
 
     @SuppressWarnings({"unchecked", "UseOfObsoleteCollectionType"})
@@ -137,17 +135,20 @@ public class ScopePanel extends JPanel implements Disposable{
         myCustomScopeSelection = new ScopeChooserCombo();
     }
 
-    private @Nullable String getDirectoryName() {
+    @Nullable
+    private String getDirectoryName() {
         final String s = myDirectory.getText();
-        return !s.isEmpty() ? s : null;
+        return s.length() > 0 ? s : null;
     }
 
-    private @Nullable String getModuleName() {
+    @Nullable
+    private String getModuleName() {
         final Module module = myModuleSelection.getSelectedModule();
         return module != null ? module.getName() : null;
     }
 
-    private @NotNull SearchScope.ScopeType getScopeType() {
+    @NotNull
+    private SearchScope.ScopeType getScopeType() {
         if (myWholeProjectScope.isSelected()) return SearchScope.ScopeType.PROJECT;
         if (myModuleScope.isSelected()) return SearchScope.ScopeType.MODULE;
         if (myDirectoryScope.isSelected()) return SearchScope.ScopeType.DIRECTORY;

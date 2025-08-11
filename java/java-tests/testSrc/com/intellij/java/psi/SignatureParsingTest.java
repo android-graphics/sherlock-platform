@@ -5,6 +5,7 @@ import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.compiled.SignatureParsing;
 import com.intellij.psi.impl.compiled.StubBuildingVisitor;
 import com.intellij.util.cls.ClsFormatException;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.text.StringCharacterIterator;

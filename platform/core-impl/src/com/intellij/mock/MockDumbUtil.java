@@ -2,9 +2,7 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.project.DumbUtil;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
 public class MockDumbUtil implements DumbUtil {
 
   @Override

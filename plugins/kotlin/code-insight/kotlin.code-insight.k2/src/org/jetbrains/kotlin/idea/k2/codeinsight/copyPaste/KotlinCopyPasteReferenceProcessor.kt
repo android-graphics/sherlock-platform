@@ -1,13 +1,17 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor
 import com.intellij.codeInsight.editorActions.ReferenceCopyPasteProcessor
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -24,7 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
+import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.declarationsSuggestedToBeImported
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.RestoreReferencesDialog
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.ReviewAddedImports.reviewAddedImports
@@ -36,17 +40,13 @@ import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getSourceRoot
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
 import java.io.IOException
 import org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste.KotlinReferenceRestoringHelper as Helper
 
-/**
- * Tests: [org.jetbrains.kotlin.idea.k2.copyPaste.K2InsertImportOnPasteTestGenerated]
- */
-internal class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReferenceTransferableData>(), ReferenceCopyPasteProcessor {
+class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReferenceTransferableData>(), ReferenceCopyPasteProcessor {
     override fun collectTransferableData(
         file: PsiFile,
         editor: Editor,
@@ -55,17 +55,12 @@ internal class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<Kotlin
     ): List<KotlinReferenceTransferableData> {
         if (file !is KtFile || DumbService.getInstance(file.project).isDumb) return listOf()
 
-        if (file is KtCodeFragment) return listOf()
-
         check(startOffsets.size == endOffsets.size) {
             "startOffsets ${startOffsets.contentToString()} has to have the same size as endOffsets ${endOffsets.contentToString()}"
         }
 
         val sourceLocation = getFqNameAtOffset(file, startOffsets.min())?.takeIf { it == getFqNameAtOffset(file, endOffsets.max()) }
-        val sourceRanges = startOffsets.zip(endOffsets) { startOffset, endOffset ->
-            checkRangeIsProper(startOffset, endOffset, file)
-            TextRange(startOffset, endOffset)
-        }
+        val sourceRanges = startOffsets.zip(endOffsets) { startOffset, endOffset -> TextRange(startOffset, endOffset) }
         val sourceReferenceInfos = Helper.collectSourceReferenceInfos(file, startOffsets, endOffsets)
 
         // we need to store text of the file at the moment of CUT/COPY because references are resolved during PASTE
@@ -77,8 +72,8 @@ internal class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<Kotlin
         if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE != CodeInsightSettings.NO) {
             try {
                 return listOf(content.getTransferData(KotlinReferenceTransferableData.dataFlavor) as KotlinReferenceTransferableData)
-            } catch (_: UnsupportedFlavorException) {
-            } catch (_: IOException) {
+            } catch (ignored: UnsupportedFlavorException) {
+            } catch (ignored: IOException) {
             }
         }
         return emptyList()
@@ -119,7 +114,7 @@ internal class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<Kotlin
                 withBackgroundProgress(project, KotlinBundle.message("copy.paste.resolve.pasted.references"), cancellable = true) {
                     // Step 2. Resolve references in source file.
                     val resolvedSourceReferences = readAction {
-                        analyzeCopy(sourceFileCopy, KaDanglingFileResolutionMode.PREFER_SELF) {
+                        analyzeCopy(sourceFileCopy, DanglingFileResolutionMode.PREFER_SELF) {
                             Helper.getResolvedSourceReferencesThatMightRequireRestoring(sourceFileCopy, sourceReferenceInfos, sourceRanges)
                         }
                     }
@@ -135,7 +130,7 @@ internal class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<Kotlin
 
                     targetReferencesToRestore
                 }
-            } catch (_: CancellationException) {
+            } catch (e: CancellationException) {
                 emptyList()
             }
 
@@ -151,7 +146,8 @@ internal class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<Kotlin
                 } else targetReferencesToRestore
 
                 // Step 5. Restore references, i.e. add missing imports or qualifiers.
-                val restoredTargetReferences = writeIntentReadAction {
+                // TODO: remove `blockingContext`, see KTIJ-30071
+                val restoredTargetReferences = blockingContext {
                     project.executeCommand(KotlinBundle.message("copy.paste.restore.pasted.references.capitalized")) {
                         buildList {
                             ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(

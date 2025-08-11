@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.lang.Language;
@@ -14,18 +14,21 @@ public final class MockLanguageFileType extends LanguageFileType {
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return "Mock";
   }
 
   @Override
-  public @NotNull String getDescription() {
+  @NotNull
+  public String getDescription() {
     //noinspection HardCodedStringLiteral
     return "Mock";
   }
 
   @Override
-  public @NotNull String getDefaultExtension() {
+  @NotNull
+  public String getDefaultExtension() {
     return ".mockExtensionThatProbablyWon'tEverExist";
   }
 

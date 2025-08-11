@@ -118,7 +118,7 @@ internal class LoadKtGradleConfigurationAction : AnAction() {
             return false
         }
 
-        return GradleBuildRootsManager.getInstance(project)?.isConfigurationOutOfDate(file) == true
+        return GradleBuildRootsManager.getInstance(project)?.isConfigurationOutOfDate(file) ?: false
     }
 
     private fun getKotlinScriptFile(editor: Editor): VirtualFile? {
@@ -134,6 +134,6 @@ internal class LoadKtGradleConfigurationAction : AnAction() {
 }
 
 fun getGradleVersion(project: Project, settings: GradleProjectSettings): String {
-    val gradleHome = service<GradleInstallationManager>().getGradleHomePath(project, settings.externalProjectPath)
+    val gradleHome = service<GradleInstallationManager>().getGradleHome(project, settings.externalProjectPath)?.path
     return GradleInstallationManager.getGradleVersion(gradleHome) ?: GradleVersion.current().version
 }

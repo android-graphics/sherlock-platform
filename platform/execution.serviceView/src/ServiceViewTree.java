@@ -8,7 +8,6 @@ import com.intellij.execution.services.ServiceViewOptions;
 import com.intellij.ide.DataManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.ColoredItem;
 import com.intellij.platform.execution.serviceView.ServiceModel.ServiceViewItem;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DoubleClickListener;
@@ -22,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.util.function.Function;
 
@@ -44,19 +42,6 @@ final class ServiceViewTree extends Tree {
     AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myTreeModel, parent);
     setModel(asyncTreeModel);
     initTree();
-  }
-
-  @Override
-  public boolean isFileColorsEnabled() {
-    return true;
-  }
-
-  @Override
-  public @Nullable Color getFileColorFor(Object object) {
-    if (object instanceof ColoredItem coloredItem) {
-      return coloredItem.getColor();
-    }
-    return null;
   }
 
   private void initTree() {
@@ -106,8 +91,9 @@ final class ServiceViewTree extends Tree {
       myDescriptor = null;
     }
 
+    @Nullable
     @Override
-    protected @Nullable ItemPresentation getPresentation(Object node) {
+    protected ItemPresentation getPresentation(Object node) {
       // Ensure that value != myTreeModel.getRoot() && !(value instanceof LoadingNode)
       if (!(node instanceof ServiceViewItem)) return null;
 

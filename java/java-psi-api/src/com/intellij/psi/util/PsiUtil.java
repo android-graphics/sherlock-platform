@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,7 +37,10 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -60,23 +62,22 @@ public final class PsiUtil extends PsiUtilCore {
   private static final @NotNull Map<CharSequence, JavaFeature> SOFT_KEYWORDS = CollectionFactory.createCharSequenceMap(true);
 
   static {
-    SOFT_KEYWORDS.put(EXPORTS, JavaFeature.MODULES);
-    SOFT_KEYWORDS.put(MODULE, JavaFeature.MODULES);
-    SOFT_KEYWORDS.put(OPEN, JavaFeature.MODULES);
-    SOFT_KEYWORDS.put(OPENS, JavaFeature.MODULES);
-    SOFT_KEYWORDS.put(PERMITS, JavaFeature.SEALED_CLASSES);
-    SOFT_KEYWORDS.put(PROVIDES, JavaFeature.MODULES);
-    SOFT_KEYWORDS.put(RECORD, JavaFeature.RECORDS);
-    SOFT_KEYWORDS.put(REQUIRES, JavaFeature.MODULES);
-    SOFT_KEYWORDS.put(SEALED, JavaFeature.SEALED_CLASSES);
-    SOFT_KEYWORDS.put(TO, JavaFeature.MODULES);
-    SOFT_KEYWORDS.put(TRANSITIVE, JavaFeature.MODULES);
-    SOFT_KEYWORDS.put(USES, JavaFeature.MODULES);
     SOFT_KEYWORDS.put(VAR, JavaFeature.LVTI);
-    SOFT_KEYWORDS.put(VALUE, JavaFeature.VALHALLA_VALUE_CLASSES);
-    SOFT_KEYWORDS.put(WHEN, JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS);
-    SOFT_KEYWORDS.put(WITH, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(RECORD, JavaFeature.RECORDS);
     SOFT_KEYWORDS.put(YIELD, JavaFeature.SWITCH_EXPRESSION);
+    SOFT_KEYWORDS.put(SEALED, JavaFeature.SEALED_CLASSES);
+    SOFT_KEYWORDS.put(PERMITS, JavaFeature.SEALED_CLASSES);
+    SOFT_KEYWORDS.put(WHEN, JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS);
+    SOFT_KEYWORDS.put(OPEN, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(MODULE, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(REQUIRES, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(EXPORTS, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(OPENS, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(USES, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(PROVIDES, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(TRANSITIVE, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(TO, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(WITH, JavaFeature.MODULES);
   }
 
   private PsiUtil() {}
@@ -129,11 +130,12 @@ public final class PsiUtil extends PsiUtilCore {
    * Checks that reference on {@code member} inserted at {@code place} will be resolved and accessible
    */
   public static boolean isMemberAccessibleAt(@NotNull PsiMember member, @NotNull PsiElement place) {
-    VirtualFile virtualFile = getVirtualFile(member);
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(member);
     return (virtualFile == null || place.getResolveScope().contains(virtualFile)) && isAccessible(member, place, null);
   }
 
-  public static @NotNull JavaResolveResult getAccessObjectClass(@NotNull PsiExpression expression) {
+  @NotNull
+  public static JavaResolveResult getAccessObjectClass(@NotNull PsiExpression expression) {
     if (expression instanceof PsiSuperExpression) return JavaResolveResult.EMPTY;
     PsiType type = expression.getType();
     JavaResolveResult accessObject = getAccessObjectClass(type, expression);
@@ -148,7 +150,8 @@ public final class PsiUtil extends PsiUtilCore {
     return JavaResolveResult.EMPTY;
   }
 
-  private static @Nullable JavaResolveResult getAccessObjectClass(@Nullable PsiType type, @NotNull PsiElement place) {
+  @Nullable
+  private static JavaResolveResult getAccessObjectClass(@Nullable PsiType type, @NotNull PsiElement place) {
     if (type instanceof PsiClassType) {
       return ((PsiClassType)type).resolveGenerics();
     }
@@ -265,9 +268,10 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   /**
-   * @return enclosing the outermost (method or class initializer) body but not higher than scope
+   * @return enclosing outermost (method or class initializer) body but not higher than scope
    */
-  public static @Nullable PsiElement getTopLevelEnclosingCodeBlock(@Nullable PsiElement element, PsiElement scope) {
+  @Nullable
+  public static PsiElement getTopLevelEnclosingCodeBlock(@Nullable PsiElement element, PsiElement scope) {
     PsiElement blockSoFar = null;
     while (element != null) {
       // variable can be defined in for loop initializer
@@ -291,7 +295,7 @@ public final class PsiUtil extends PsiUtilCore {
         if (element instanceof PsiClass && !isLocalOrAnonymousClass((PsiClass)element)) {
           break;
         }
-        if (element instanceof PsiFile && getTemplateLanguageFile(element) != null) {
+        if (element instanceof PsiFile && PsiUtilCore.getTemplateLanguageFile(element) != null) {
           return element;
         }
       }
@@ -325,8 +329,9 @@ public final class PsiUtil extends PsiUtilCore {
   /**
    * @return topmost code block where variable makes sense
    */
+  @Nullable
   @Contract(pure = true)
-  public static @Nullable PsiElement getVariableCodeBlock(@NotNull PsiVariable variable, @Nullable PsiElement context) {
+  public static PsiElement getVariableCodeBlock(@NotNull PsiVariable variable, @Nullable PsiElement context) {
     PsiElement codeBlock = null;
     if (variable instanceof PsiParameter) {
       PsiElement declarationScope = ((PsiParameter)variable).getDeclarationScope();
@@ -369,9 +374,6 @@ public final class PsiUtil extends PsiUtilCore {
       PsiElement scope = variable.getParent() == null ? null : variable.getParent().getParent();
       codeBlock = getTopLevelEnclosingCodeBlock(variable, scope);
       if (codeBlock != null && codeBlock.getParent() instanceof PsiSwitchStatement) codeBlock = codeBlock.getParent().getParent();
-      if (codeBlock == null && scope instanceof PsiCodeBlock && scope.getParent() instanceof PsiSwitchExpression) {
-        codeBlock = scope;
-      }
     }
     return codeBlock;
   }
@@ -385,7 +387,8 @@ public final class PsiUtil extends PsiUtilCore {
     return false;
   }
 
-  public static @Unmodifiable @NotNull List<PsiExpression> getSwitchResultExpressions(@NotNull PsiSwitchExpression switchExpression) {
+  @Unmodifiable
+  public static @NotNull List<PsiExpression> getSwitchResultExpressions(@NotNull PsiSwitchExpression switchExpression) {
     PsiCodeBlock body = switchExpression.getBody();
     if (body != null) {
       List<PsiExpression> result = new ArrayList<>();
@@ -417,34 +420,6 @@ public final class PsiUtil extends PsiUtilCore {
     }
   }
 
-  /**
-   * @param typeCast cast to check
-   * @return true if the supplied cast is necessary to fulfill the signature polymorphic method contract
-   * @see <a href="https://docs.oracle.com/en/java/javase/21/docs//api/java.base/java/lang/invoke/MethodHandle.html#sigpoly">Signature polymorphism</a> in Java API reference
-   */
-  // see http://download.java.net/jdk7/docs/api/java/lang/invoke/MethodHandle.html#sigpoly
-  public static boolean isInSignaturePolymorphicCall(@NotNull PsiTypeCastExpression typeCast) {
-    if (!isLanguageLevel7OrHigher(typeCast)) return false;
-
-    // return type
-    final PsiExpression operand = typeCast.getOperand();
-    if (operand instanceof PsiMethodCallExpression && isPolymorphicMethod((PsiMethodCallExpression)operand)) {
-      return true;
-    }
-
-    // argument type
-    final PsiElement exprList = skipParenthesizedExprUp(typeCast.getParent());
-    return exprList instanceof PsiExpressionList &&
-           exprList.getParent() instanceof PsiMethodCallExpression &&
-           isPolymorphicMethod((PsiMethodCallExpression)exprList.getParent());
-  }
-
-  private static boolean isPolymorphicMethod(PsiMethodCallExpression expression) {
-    PsiElement target = expression.getMethodExpression().resolve();
-    return target instanceof PsiMethod &&
-           AnnotationUtil.isAnnotated((PsiMethod)target, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0);
-  }
-
   @MagicConstant(intValues = {ACCESS_LEVEL_PUBLIC, ACCESS_LEVEL_PROTECTED, ACCESS_LEVEL_PACKAGE_LOCAL, ACCESS_LEVEL_PRIVATE})
   public @interface AccessLevel {}
 
@@ -466,20 +441,21 @@ public final class PsiUtil extends PsiUtilCore {
    * @see com.intellij.lang.jvm.util.JvmUtil#getAccessModifier(int) for JVM language analogue.
    */
   @PsiModifier.ModifierConstant
-  public static @NotNull String getAccessModifier(@AccessLevel int accessLevel) {
+  @NotNull
+  public static String getAccessModifier(@AccessLevel int accessLevel) {
     if (accessLevel <= 0 || accessLevel > accessModifiers.length) {
       throw new IllegalArgumentException("Unknown level:" + accessLevel);
     }
-    @PsiModifier.ModifierConstant String modifier =  accessModifiers[accessLevel - 1];
+    @SuppressWarnings("UnnecessaryLocalVariable") @PsiModifier.ModifierConstant String modifier =  accessModifiers[accessLevel - 1];
     return modifier;
   }
 
-  private static final @PsiModifier.ModifierConstant String[] accessModifiers = {
+  private static final String[] accessModifiers = {
     PsiModifier.PRIVATE, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC
   };
 
   /**
-   * @return true if the element specified is a statement or expression statement. see JLS 14.5-14.8
+   * @return true if element specified is statement or expression statement. see JLS 14.5-14.8
    */
   public static boolean isStatement(@NotNull PsiElement element) {
     PsiElement parent = element.getParent();
@@ -520,7 +496,8 @@ public final class PsiUtil extends PsiUtilCore {
     return element instanceof PsiCodeBlock;
   }
 
-  public static @Nullable PsiElement getEnclosingStatement(PsiElement element) {
+  @Nullable
+  public static PsiElement getEnclosingStatement(PsiElement element) {
     while (element != null) {
       if (element.getParent() instanceof PsiCodeBlock) return element;
       element = element.getParent();
@@ -529,7 +506,8 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
 
-  public static @Nullable PsiElement getElementInclusiveRange(@NotNull PsiElement scope, @NotNull TextRange range) {
+  @Nullable
+  public static PsiElement getElementInclusiveRange(@NotNull PsiElement scope, @NotNull TextRange range) {
     PsiElement psiElement = scope.findElementAt(range.getStartOffset());
     while (psiElement != null && !psiElement.getTextRange().contains(range)) {
       if (psiElement == scope) return null;
@@ -538,7 +516,8 @@ public final class PsiUtil extends PsiUtilCore {
     return psiElement;
   }
 
-  public static @Nullable PsiClass resolveClassInType(@Nullable PsiType type) {
+  @Nullable
+  public static PsiClass resolveClassInType(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
       return ((PsiClassType) type).resolve();
     }
@@ -554,11 +533,13 @@ public final class PsiUtil extends PsiUtilCore {
     return null;
   }
 
-  public static @Nullable PsiClass resolveClassInClassTypeOnly(@Nullable PsiType type) {
+  @Nullable
+  public static PsiClass resolveClassInClassTypeOnly(@Nullable PsiType type) {
     return type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
   }
 
-  public static @NotNull PsiClassType.ClassResolveResult resolveGenericsClassInType(@Nullable PsiType type) {
+  @NotNull
+  public static PsiClassType.ClassResolveResult resolveGenericsClassInType(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
       PsiClassType classType = (PsiClassType) type;
       return classType.resolveGenerics();
@@ -575,7 +556,8 @@ public final class PsiUtil extends PsiUtilCore {
     return PsiClassType.ClassResolveResult.EMPTY;
   }
 
-  public static @NotNull PsiType convertAnonymousToBaseType(@NotNull PsiType type) {
+  @NotNull
+  public static PsiType convertAnonymousToBaseType(@NotNull PsiType type) {
     PsiClass psiClass = resolveClassInType(type);
     if (psiClass instanceof PsiAnonymousClass) {
       type = PsiTypesUtil.createArrayType(((PsiAnonymousClass) psiClass).getBaseClassType(), type.getArrayDimensions());
@@ -713,8 +695,8 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   /**
-   * Compares types with respect to type parameter bounds: e.g., for
-   * {@code class Foo<T extends Number>{}} types {@code Foo<?>} and {@code Foo<? extends Number>}
+   * Compares types with respect to type parameter bounds: e.g. for
+   * {@code class Foo<T extends Number>{}} types Foo&lt;?&gt; and Foo&lt;? extends Number&gt;
    * would be equivalent
    */
   public static boolean equalOnEquivalentClasses(@NotNull PsiClassType thisClassType,
@@ -788,8 +770,9 @@ public final class PsiUtil extends PsiUtilCore {
     return true;
   }
 
+  @Nullable
   @Contract("null -> null")
-  public static @Nullable PsiExpression deparenthesizeExpression(PsiExpression expression) {
+  public static PsiExpression deparenthesizeExpression(PsiExpression expression) {
     while (true) {
       if (expression instanceof PsiParenthesizedExpression) {
         expression = ((PsiParenthesizedExpression)expression).getExpression();
@@ -804,13 +787,15 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   /**
-   * Checks whether a given class is inner (as opposed to nested class)
+   * Checks whether given class is inner (as opposed to nested)
+   *
    */
   public static boolean isInnerClass(@NotNull PsiClass aClass) {
     return !aClass.hasModifierProperty(PsiModifier.STATIC) && aClass.getContainingClass() != null;
   }
 
-  public static @Nullable PsiElement findModifierInList(@NotNull PsiModifierList modifierList, String modifier) {
+  @Nullable
+  public static PsiElement findModifierInList(@NotNull PsiModifierList modifierList, String modifier) {
     PsiElement[] children = modifierList.getChildren();
     for (PsiElement child : children) {
       if (child.getText().equals(modifier)) return child;
@@ -818,12 +803,15 @@ public final class PsiUtil extends PsiUtilCore {
     return null;
   }
 
-  public static @Nullable PsiClass getTopLevelClass(@NotNull PsiElement element) {
+  @Nullable
+  public static PsiClass getTopLevelClass(@NotNull PsiElement element) {
     PsiClass topClass = JBIterable.generate(element, PsiElement::getParent).takeWhile(e -> !(e instanceof PsiFile)).filter(PsiClass.class).last();
     return topClass instanceof PsiTypeParameter ? null : topClass;
   }
 
-  public static @NlsSafe @Nullable String getPackageName(@NotNull PsiClass aClass) {
+  @NlsSafe
+  @Nullable
+  public static String getPackageName(@NotNull PsiClass aClass) {
     PsiClass topClass = getTopLevelClass(aClass);
     if (topClass != null) {
       String fqName = topClass.getQualifiedName();
@@ -846,7 +834,8 @@ public final class PsiUtil extends PsiUtilCore {
    * @return element with static modifier enclosing place and enclosed by aClass (if not null).
    * Note that traversal goes through context elements.
    */
-  public static @Nullable PsiModifierListOwner getEnclosingStaticElement(@NotNull PsiElement place, @Nullable PsiClass aClass) {
+  @Nullable
+  public static PsiModifierListOwner getEnclosingStaticElement(@NotNull PsiElement place, @Nullable PsiClass aClass) {
     LOG.assertTrue(aClass == null || !place.isPhysical() || PsiTreeUtil.isContextAncestor(aClass, place, false));
     PsiElement parent = place;
     while (parent != aClass) {
@@ -861,9 +850,10 @@ public final class PsiUtil extends PsiUtilCore {
 
   /**
    * @param element element to get the associated type from (return type for method, or variable type for variable)
-   * @return the associated type; might be null
+   * @return the associated type, might be null
    */
-  public static @Nullable PsiType getTypeByPsiElement(@NotNull PsiElement element) {
+  @Nullable
+  public static PsiType getTypeByPsiElement(@NotNull PsiElement element) {
     if (element instanceof PsiVariable) {
       return ((PsiVariable)element).getType();
     }
@@ -874,7 +864,8 @@ public final class PsiUtil extends PsiUtilCore {
   /**
    * Applies capture conversion to the type in context
    */
-  public static @NotNull PsiType captureToplevelWildcards(@NotNull PsiType type, @NotNull PsiElement context) {
+  @NotNull
+  public static PsiType captureToplevelWildcards(@NotNull PsiType type, @NotNull PsiElement context) {
     if (!(type instanceof PsiClassType)) return type;
     PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
     PsiClass aClass = result.getElement();
@@ -933,7 +924,9 @@ public final class PsiUtil extends PsiUtilCore {
     return PsiTreeUtil.getParentOfType(element, PsiDocComment.class, true, PsiMember.class) != null;
   }
 
-  public static @NotNull @Unmodifiable List<PsiTypeElement> getParameterTypeElements(@NotNull PsiParameter parameter) {
+  @NotNull
+  @Unmodifiable
+  public static List<PsiTypeElement> getParameterTypeElements(@NotNull PsiParameter parameter) {
     PsiTypeElement typeElement = parameter.getTypeElement();
     return typeElement != null && typeElement.getType() instanceof PsiDisjunctionType
            ? PsiTreeUtil.getChildrenOfTypeAsList(typeElement, PsiTypeElement.class)
@@ -946,7 +939,8 @@ public final class PsiUtil extends PsiUtilCore {
     }
   }
 
-  public static @Nullable VirtualFile getJarFile(@NotNull PsiElement candidate) {
+  @Nullable
+  public static VirtualFile getJarFile(@NotNull PsiElement candidate) {
     VirtualFile file = candidate.getContainingFile().getVirtualFile();
     if (file != null && file.getFileSystem().getProtocol().equals("jar")) {
       return VfsUtilCore.getVirtualFileForJar(file);
@@ -989,14 +983,16 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   /*
-   * Returns iterator of type parameters visible in the owner. Type parameters are iterated in
+   * Returns iterator of type parameters visible in owner. Type parameters are iterated in
    * inner-to-outer, right-to-left order.
    */
-  public static @NotNull Iterator<PsiTypeParameter> typeParametersIterator(@NotNull PsiTypeParameterListOwner owner) {
+  @NotNull
+  public static Iterator<PsiTypeParameter> typeParametersIterator(@NotNull PsiTypeParameterListOwner owner) {
     return typeParametersIterable(owner).iterator();
   }
 
-  public static @NotNull Iterable<PsiTypeParameter> typeParametersIterable(@NotNull PsiTypeParameterListOwner owner) {
+  @NotNull
+  public static Iterable<PsiTypeParameter> typeParametersIterable(@NotNull PsiTypeParameterListOwner owner) {
     Iterable<PsiTypeParameter> result = null;
 
     PsiTypeParameterListOwner currentOwner = owner;
@@ -1055,7 +1051,8 @@ public final class PsiUtil extends PsiUtilCore {
     return result;
   }
 
-  public static @Nullable PsiMember findEnclosingConstructorOrInitializer(PsiElement expression) {
+  @Nullable
+  public static PsiMember findEnclosingConstructorOrInitializer(PsiElement expression) {
     PsiMember parent = PsiTreeUtil.getParentOfType(expression, PsiClassInitializer.class, PsiEnumConstantInitializer.class, PsiMethod.class, PsiField.class);
     if (parent instanceof PsiMethod && !((PsiMethod)parent).isConstructor()) return null;
     return parent;
@@ -1110,7 +1107,7 @@ public final class PsiUtil extends PsiUtilCore {
   /**
    * @param feature feature to check
    * @param element a valid PsiElement to check (it's better to supply PsiFile if already known; any element is accepted for convenience)
-   * @return true if the feature is available in the PsiFile, the supplied element belongs to
+   * @return true if the feature is available in the PsiFile the supplied element belongs to
    */
   public static boolean isAvailable(@NotNull JavaFeature feature, @NotNull PsiElement element) {
     if (!feature.isSufficient(getLanguageLevel(element))) return false;
@@ -1129,21 +1126,21 @@ public final class PsiUtil extends PsiUtilCore {
    * Returns the element language level.
    * <p>
    * Note that it's a rare case when one may need a language level. Usually, it's interesting to check
-   * whether a particular language feature is available in a given context. 
+   * whether a particular language feature is available at a given context. 
    * Consider using {@link #isAvailable(JavaFeature, PsiElement)} instead of this method.
    * 
    * @param element element to get Java language level for
    * @return the language level.
    */
-  @Contract(pure = true)
-  public static @NotNull LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
+  @NotNull
+  public static LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) {
       return JavaDirectoryService.getInstance().getLanguageLevel((PsiDirectory)element);
     }
 
     PsiFile file = element.getContainingFile();
     // Could be non-physical 'light file' created by some JVM languages
-    PsiFile navigationFile = file == null || file.isPhysical() ? null : ObjectUtils.tryCast(file.getNavigationElement(), PsiFile.class);
+    PsiFile navigationFile = file == null ? null : ObjectUtils.tryCast(file.getNavigationElement(), PsiFile.class);
     if (navigationFile != null) {
       file = navigationFile;
     }
@@ -1165,7 +1162,8 @@ public final class PsiUtil extends PsiUtilCore {
     return instance != null ? instance.getEffectiveLanguageLevel(getVirtualFile(file)) : LanguageLevel.HIGHEST;
   }
 
-  public static @NotNull LanguageLevel getLanguageLevel(@NotNull Project project) {
+  @NotNull
+  public static LanguageLevel getLanguageLevel(@NotNull Project project) {
     LanguageLevelProjectExtension instance = LanguageLevelProjectExtension.getInstance(project);
     return instance != null ? instance.getLanguageLevel() : LanguageLevel.HIGHEST;
   }
@@ -1202,13 +1200,15 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   @Contract("null, _ -> null")
-  public static @Nullable PsiType extractIterableTypeParameter(@Nullable PsiType psiType, boolean eraseTypeParameter) {
+  @Nullable
+  public static PsiType extractIterableTypeParameter(@Nullable PsiType psiType, boolean eraseTypeParameter) {
     PsiType type = substituteTypeParameter(psiType, CommonClassNames.JAVA_LANG_ITERABLE, 0, eraseTypeParameter);
     return type != null ? type : substituteTypeParameter(psiType, CommonClassNames.JAVA_UTIL_COLLECTION, 0, eraseTypeParameter);
   }
 
   @Contract("null, _, _, _ -> null")
-  public static @Nullable PsiType substituteTypeParameter(@Nullable PsiType psiType, @NotNull String superClass, int typeParamIndex, boolean eraseTypeParameter) {
+  @Nullable
+  public static PsiType substituteTypeParameter(@Nullable PsiType psiType, @NotNull String superClass, int typeParamIndex, boolean eraseTypeParameter) {
     PsiClassType.ClassResolveResult classResolveResult = resolveClass(psiType);
     PsiClass psiClass = classResolveResult.getElement();
     if (psiClass == null) return null;
@@ -1220,7 +1220,8 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   @Contract("null, _, _, _ -> null")
-  public static @Nullable PsiType substituteTypeParameter(@Nullable PsiType psiType, @NotNull PsiClass superClass, int typeParamIndex, boolean eraseTypeParameter) {
+  @Nullable
+  public static PsiType substituteTypeParameter(@Nullable PsiType psiType, @NotNull PsiClass superClass, int typeParamIndex, boolean eraseTypeParameter) {
     PsiClassType.ClassResolveResult classResolveResult = resolveClass(psiType);
     PsiClass psiClass = classResolveResult.getElement();
     if (psiClass == null) return null;
@@ -1232,10 +1233,11 @@ public final class PsiUtil extends PsiUtilCore {
     return psiType instanceof PsiClassType ? ((PsiClassType)psiType).resolveGenerics() : PsiClassType.ClassResolveResult.EMPTY;
   }
 
-  private static @Nullable PsiType substituteType(int typeParamIndex,
-                                                  boolean eraseTypeParameter,
-                                                  PsiClassType.ClassResolveResult classResolveResult,
-                                                  PsiClass psiClass, PsiClass baseClass) {
+  @Nullable
+  private static PsiType substituteType(int typeParamIndex,
+                                        boolean eraseTypeParameter,
+                                        PsiClassType.ClassResolveResult classResolveResult,
+                                        PsiClass psiClass, PsiClass baseClass) {
     if (!psiClass.isEquivalentTo(baseClass) && !psiClass.isInheritor(baseClass, true)) return null;
 
     PsiTypeParameter[] parameters = baseClass.getTypeParameters();
@@ -1301,7 +1303,8 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   @Contract("null -> null")
-  public static @Nullable PsiExpression skipParenthesizedExprDown(@Nullable PsiExpression expression) {
+  @Nullable
+  public static PsiExpression skipParenthesizedExprDown(@Nullable PsiExpression expression) {
     while (expression instanceof PsiParenthesizedExpression) {
       expression = ((PsiParenthesizedExpression)expression).getExpression();
     }
@@ -1329,7 +1332,7 @@ public final class PsiUtil extends PsiUtilCore {
     catch (Throwable e) {
       if (sourceOfType == null) throw e;
 
-      ensureValid(sourceOfType);
+      PsiUtilCore.ensureValid(sourceOfType);
       throw new RuntimeException("Via " + sourceOfType.getClass() + " #" + sourceOfType.getLanguage(), e);
     }
   }
@@ -1362,7 +1365,8 @@ public final class PsiUtil extends PsiUtilCore {
     }
   }
 
-  public static @Nullable String getMemberQualifiedName(@NotNull PsiMember member) {
+  @Nullable
+  public static String getMemberQualifiedName(@NotNull PsiMember member) {
     if (member instanceof PsiClass) {
       return ((PsiClass)member).getQualifiedName();
     }
@@ -1460,7 +1464,8 @@ public final class PsiUtil extends PsiUtilCore {
     return true;
   }
 
-  public static @NotNull PsiModifierListOwner preferCompiledElement(@NotNull PsiModifierListOwner element) {
+  @NotNull
+  public static PsiModifierListOwner preferCompiledElement(@NotNull PsiModifierListOwner element) {
     PsiElement original = element.getOriginalElement();
     return original instanceof PsiModifierListOwner ? (PsiModifierListOwner)original : element;
   }
@@ -1538,11 +1543,11 @@ public final class PsiUtil extends PsiUtilCore {
     return false;
   }
 
-  private static final Set<String> KEYWORDS = Collections.unmodifiableSet(
-    ContainerUtil.newHashSet(ABSTRACT, BOOLEAN, BREAK, BYTE, CASE, CATCH, CHAR, CLASS, CONST, CONTINUE, DEFAULT, DO, DOUBLE, ELSE, EXTENDS,
-                             FALSE, FINAL, FINALLY, FLOAT, FOR, GOTO, IF, IMPLEMENTS, IMPORT, INSTANCEOF, INT, INTERFACE, LONG, NATIVE,
-                             NEW, NON_SEALED, NULL, PACKAGE, PRIVATE, PROTECTED, PUBLIC, RETURN, SHORT, STATIC, STRICTFP, SUPER, SWITCH,
-                             SYNCHRONIZED, THIS, THROW, THROWS, TRANSIENT, TRUE, TRY, VOID, VOLATILE, WHILE));
+  private static final Set<String> KEYWORDS = ContainerUtil.immutableSet(
+    ABSTRACT, BOOLEAN, BREAK, BYTE, CASE, CATCH, CHAR, CLASS, CONST, CONTINUE, DEFAULT, DO, DOUBLE, ELSE, EXTENDS, FINAL, FINALLY,
+    FLOAT, FOR, GOTO, IF, IMPLEMENTS, IMPORT, INSTANCEOF, INT, INTERFACE, LONG, NATIVE, NEW, PACKAGE, PRIVATE, PROTECTED, PUBLIC,
+    RETURN, SHORT, STATIC, STRICTFP, SUPER, SWITCH, SYNCHRONIZED, THIS, THROW, THROWS, TRANSIENT, TRY, VOID, VOLATILE, WHILE,
+    TRUE, FALSE, NULL, NON_SEALED);
 
   /**
    * @param id word to check
@@ -1576,7 +1581,8 @@ public final class PsiUtil extends PsiUtilCore {
   /**
    * @return containing class for {@code element} ignoring {@link PsiAnonymousClass} if {@code element} is located in corresponding expression list
    */
-  public static @Nullable PsiClass getContainingClass(PsiElement element) {
+  @Nullable
+  public static PsiClass getContainingClass(PsiElement element) {
     PsiClass currentClass;
     while (true) {
       currentClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
@@ -1601,7 +1607,6 @@ public final class PsiUtil extends PsiUtilCore {
    * @deprecated  use {@link #isAvailable(JavaFeature, PsiElement)} instead to check whether a particular feature is available, rather 
    * than to check against a language level; if you still need an explicit language level check, just inline the method call.
    */
-  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isLanguageLevel10OrHigher(@NotNull PsiElement element) {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_10);
@@ -1611,7 +1616,6 @@ public final class PsiUtil extends PsiUtilCore {
    * @deprecated use {@link #isAvailable(JavaFeature, PsiElement)} instead to check whether a particular feature is available, rather
    * than to check against a language level; if you still need an explicit language level check, just inline the method call.
    */
-  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isLanguageLevel11OrHigher(@NotNull PsiElement element) {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_11);
@@ -1621,7 +1625,6 @@ public final class PsiUtil extends PsiUtilCore {
    * @deprecated use {@link #isAvailable(JavaFeature, PsiElement)} instead to check whether a particular feature is available, rather
    * than to check against a language level; if you still need an explicit language level check, just inline the method call.
    */
-  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isLanguageLevel14OrHigher(@NotNull PsiElement element) {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_14);
@@ -1631,7 +1634,6 @@ public final class PsiUtil extends PsiUtilCore {
    * @deprecated use {@link #isAvailable(JavaFeature, PsiElement)} instead to check whether a particular feature is available, rather
    * than to check against a language level; if you still need an explicit language level check, just inline the method call.
    */
-  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isLanguageLevel16OrHigher(@NotNull PsiElement element) {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_16);
@@ -1641,7 +1643,6 @@ public final class PsiUtil extends PsiUtilCore {
    * @deprecated use {@link #isAvailable(JavaFeature, PsiElement)} instead to check whether a particular feature is available, rather
    * than to check against a language level; if you still need an explicit language level check, just inline the method call.
    */
-  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isLanguageLevel17OrHigher(@NotNull PsiElement element) {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_17);
@@ -1651,7 +1652,6 @@ public final class PsiUtil extends PsiUtilCore {
    * @deprecated use {@link #isAvailable(JavaFeature, PsiElement)} instead to check whether a particular feature is available, rather
    * than to check against a language level; if you still need an explicit language level check, just inline the method call.
    */
-  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isLanguageLevel18OrHigher(@NotNull PsiElement element) {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_18);

@@ -1,7 +1,0 @@
-package test
-
-import dependency.WithCompanionWithInvokeAlias
-
-fun test() {
-    WithCompanionWithInvokeAlias()
-}

@@ -7,8 +7,9 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificatio
 import org.jetbrains.kotlin.analysis.api.platform.modification.isModuleLevel
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
+import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractKotlinModuleModificationEventTest : AbstractKotlinModificationEventTest() {
@@ -35,7 +36,7 @@ abstract class AbstractKotlinModuleModificationEventTest : AbstractKotlinModific
         additionalAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     ): ModuleModificationEventTracker =
         createTracker(
-            module.toKaSourceModuleForProduction()!!,
+            module.productionSourceInfo!!.toKaModule(),
             label,
             additionalAllowedEventKinds,
         )
@@ -46,7 +47,7 @@ abstract class AbstractKotlinModuleModificationEventTest : AbstractKotlinModific
         additionalAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     ): ModuleModificationEventTracker =
         createTracker(
-            library.toKaLibraryModules(project).single(),
+            LibraryInfoCache.getInstance(project)[library].single().toKaModule(),
             label,
             additionalAllowedEventKinds,
         )

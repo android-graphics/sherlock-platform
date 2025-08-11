@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.usageView;
 
@@ -40,21 +40,25 @@ public final class UsageViewUtil {
 
   private UsageViewUtil() { }
 
-  public static @NotNull @NlsSafe String createNodeText(@NotNull PsiElement element) {
+  @NotNull
+  public static @NlsSafe String createNodeText(@NotNull PsiElement element) {
     return ElementDescriptionUtil.getElementDescription(element, UsageViewNodeTextLocation.INSTANCE);
   }
 
-  public static @NotNull @NlsSafe String getShortName(@NotNull PsiElement psiElement) {
+  @NotNull
+  public static @NlsSafe String getShortName(@NotNull PsiElement psiElement) {
     PsiUtilCore.ensureValid(psiElement);
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewShortNameLocation.INSTANCE);
   }
 
-  public static @NotNull @NlsSafe String getLongName(@NotNull PsiElement psiElement) {
+  @NotNull
+  public static @NlsSafe String getLongName(@NotNull PsiElement psiElement) {
     PsiUtilCore.ensureValid(psiElement);
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewLongNameLocation.INSTANCE);
   }
 
-  public static @NotNull @NlsSafe String getType(@NotNull PsiElement psiElement) {
+  @NotNull
+  public static @NlsSafe String getType(@NotNull PsiElement psiElement) {
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewTypeLocation.INSTANCE);
   }
 
@@ -129,7 +133,7 @@ public final class UsageViewUtil {
     return set.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  public static UsageInfo @NotNull [] toUsageInfoArray(final @NotNull Collection<? extends UsageInfo> collection) {
+  public static UsageInfo @NotNull [] toUsageInfoArray(@NotNull final Collection<? extends UsageInfo> collection) {
     final int size = collection.size();
     return size == 0 ? UsageInfo.EMPTY_ARRAY : collection.toArray(new UsageInfo[size]);
   }
@@ -148,7 +152,8 @@ public final class UsageViewUtil {
     }
   }
 
-  public static @NotNull Set<UsageInfo> getNotExcludedUsageInfos(@NotNull UsageView usageView) {
+  @NotNull
+  public static Set<UsageInfo> getNotExcludedUsageInfos(@NotNull UsageView usageView) {
     Set<Usage> excludedUsages = usageView.getExcludedUsages();
 
     Set<UsageInfo> usageInfos = new LinkedHashSet<>();
@@ -175,7 +180,8 @@ public final class UsageViewUtil {
     return false;
   }
 
-  public static @Nullable KeyboardShortcut getShowUsagesWithSettingsShortcut() {
+  @Nullable
+  public static KeyboardShortcut getShowUsagesWithSettingsShortcut() {
     return ActionManager.getInstance().getKeyboardShortcut("ShowSettingsAndFindUsages");
   }
 }

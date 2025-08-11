@@ -27,7 +27,6 @@ class Saxon9SourceFrame<N extends NodeInfo> extends AbstractSaxon9Frame<Debugger
   }
 
 
-  @Override
   public String getXPath() {
     return Navigator.getPath(myElement);
   }

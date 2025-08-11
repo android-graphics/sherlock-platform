@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.vcs.log.graph.collapsing;
 
 import com.intellij.openapi.util.Pair;
@@ -21,7 +35,7 @@ public class EdgeStorage {
 
   public static final int NULL_ID = MIN_NODE_ID;
 
-  private final @NotNull IntIntMultiMap myEdges = new IntIntMultiMap();
+  @NotNull private final IntIntMultiMap myEdges = new IntIntMultiMap();
 
   public EdgeStorage() {
     assert GraphEdgeType.values().length <= MAX_EDGE_TYPE_COUNT;
@@ -56,7 +70,8 @@ public class EdgeStorage {
     return myEdges.keys();
   }
 
-  private static @Nullable Integer convertToInteger(int value) {
+  @Nullable
+  private static Integer convertToInteger(int value) {
     return value == NULL_ID ? null : value;
   }
 
@@ -66,7 +81,8 @@ public class EdgeStorage {
     return (type << EDGE_BITS_OFFSET) | (COMPRESSED_NODE_ID_MASK & nodeId);
   }
 
-  private static @NotNull GraphEdgeType retrievedType(int compressEdge) {
+  @NotNull
+  private static GraphEdgeType retrievedType(int compressEdge) {
     int type = compressEdge >>> EDGE_BITS_OFFSET;
     return GraphEdgeType.values()[type];
   }

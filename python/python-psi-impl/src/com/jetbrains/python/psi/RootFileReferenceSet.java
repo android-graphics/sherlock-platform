@@ -60,8 +60,9 @@ public class RootFileReferenceSet extends FileReferenceSet {
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<PsiFileSystemItem> computeDefaultContexts() {
+  public Collection<PsiFileSystemItem> computeDefaultContexts() {
     PsiFile file = getContainingFile();
     if (file == null) return ContainerUtil.emptyList();
 

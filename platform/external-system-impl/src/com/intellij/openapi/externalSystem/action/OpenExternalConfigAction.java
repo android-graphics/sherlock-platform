@@ -10,13 +10,11 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Internal
 public class OpenExternalConfigAction extends ExternalSystemNodeAction<ExternalConfigPathAware> {
 
   public OpenExternalConfigAction() {

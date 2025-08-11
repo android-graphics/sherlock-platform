@@ -6,7 +6,6 @@ import com.intellij.util.ui.UIUtil;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
-import org.cef.misc.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -17,10 +16,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
 public final class JBCefTestHelper {
-  // NOTE: TeamCity runs tests in parallel with downloading (and other processes), and because of that
-  // first CEF initialization takes a long time (more than 15 sec in 1% of test runs). So use a large constant here.
-  //
-  private static int WAIT_BROWSER_SECONDS = Utils.getInteger("JCEF_WAIT_BROWSER_SECONDS", 60);
   /**
    * Shows the browser in a frame in waits for a load completion.
    */
@@ -58,16 +53,16 @@ public final class JBCefTestHelper {
       }
     }, browser.getCefBrowser());
 
-    invokeAndWaitForLatch(latch, "waiting onLoadEnd", runnable);
+    invokeAndWaitForLatch(latch, runnable);
   }
 
   /**
    * Invokes and waits for the condition to become true.
    */
-  public static void invokeAndWaitForCondition(@NotNull Runnable runnable, @NotNull BooleanSupplier condition, @NotNull String description) {
+  public static void invokeAndWaitForCondition(@NotNull Runnable runnable, @NotNull BooleanSupplier condition) {
     CountDownLatch latch = new CountDownLatch(1);
 
-    invokeAndWaitForLatch(latch, description, () -> {
+    invokeAndWaitForLatch(latch, () -> {
       runnable.run();
       latch.countDown();
     });
@@ -83,15 +78,15 @@ public final class JBCefTestHelper {
     }
   }
 
-  public static void invokeAndWaitForLatch(@NotNull CountDownLatch latch, @NotNull String description, @NotNull Runnable runnable) {
+  public static void invokeAndWaitForLatch(@NotNull CountDownLatch latch, @NotNull Runnable runnable) {
     UIUtil.invokeLaterIfNeeded(runnable);
-    await(latch, description);
+    await(latch);
   }
 
-  public static void await(@NotNull CountDownLatch latch, @NotNull String description) {
+  public static void await(@NotNull CountDownLatch latch) {
     try {
-      if (!latch.await(WAIT_BROWSER_SECONDS, TimeUnit.SECONDS)) {
-        Assert.fail(description + " failed by timeout:\n" + ThreadDumper.dumpThreadsToString());
+      if (!latch.await(5, TimeUnit.SECONDS)) {
+        Assert.fail("timeout:\n" + ThreadDumper.dumpThreadsToString());
       }
     }
     catch (InterruptedException e) {

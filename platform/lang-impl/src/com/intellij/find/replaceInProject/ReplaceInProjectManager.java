@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.replaceInProject;
 
 import com.intellij.find.*;
@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -26,7 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,11 +44,9 @@ import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.AdapterProcessor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -56,7 +54,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 
-public class ReplaceInProjectManager {
+@Service(Service.Level.PROJECT)
+public final class ReplaceInProjectManager {
   private static final NotificationGroup NOTIFICATION_GROUP = FindInPathAction.NOTIFICATION_GROUP;
 
   private final Project myProject;
@@ -80,11 +79,13 @@ public class ReplaceInProjectManager {
       this.findModel = findModel;
     }
 
-    public @NotNull FindModel getFindModel() {
+    @NotNull
+    public FindModel getFindModel() {
       return findModel;
     }
 
-    public @NotNull UsageView getUsageView() {
+    @NotNull
+    public UsageView getUsageView() {
       return usageView;
     }
 
@@ -118,11 +119,13 @@ public class ReplaceInProjectManager {
       isOpenInNewTabEnabled = UsageViewContentManager.getInstance(myProject).getReusableContentsCount() > 0;
     }
     if (model == null) {
+
       findModel = findManager.getFindInProjectModel().clone();
       findModel.setReplaceState(true);
       findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
       findModel.setOpenInNewTab(toOpenInNewTab);
-      initModel(findModel, dataContext);
+      FindInProjectUtil.setScope(myProject, findModel, dataContext);
+      FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
     }
     else {
       findModel = model;
@@ -136,11 +139,6 @@ public class ReplaceInProjectManager {
         FindInProjectManager.getInstance(myProject).findInPath(findModel);
       }
     });
-  }
-
-  protected void initModel(@NotNull FindModel findModel, @NotNull DataContext dataContext) {
-    FindInProjectUtil.setScope(myProject, findModel, dataContext);
-    FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
   }
 
   public void replaceInPath(@NotNull FindModel findModel) {
@@ -193,7 +191,7 @@ public class ReplaceInProjectManager {
 
   public void searchAndShowUsages(@NotNull UsageViewManager manager,
                                   @NotNull Factory<? extends UsageSearcher> usageSearcherFactory,
-                                  final @NotNull FindModel findModelCopy,
+                                  @NotNull final FindModel findModelCopy,
                                   @NotNull UsageViewPresentation presentation,
                                   @NotNull FindUsagesProcessPresentation processPresentation) {
     presentation.setMergeDupLinesAvailable(false);
@@ -220,7 +218,7 @@ public class ReplaceInProjectManager {
         public void findingUsagesFinished(final UsageView usageView) {
           if (context[0] != null && !processPresentation.isShowFindOptionsPrompt()) {
             ApplicationManager.getApplication().invokeLater(() -> {
-              replaceUsagesUnderCommand(context[0], usageView.getUsages(), true, true);
+              replaceUsagesUnderCommand(context[0], usageView.getUsages(), true);
             }, myProject.getDisposed());
           }
         }
@@ -243,7 +241,7 @@ public class ReplaceInProjectManager {
       .ask(myProject);
   }
 
-  private static @Unmodifiable Set<VirtualFile> getFiles(@NotNull Collection<Usage> usages) {
+  private static Set<VirtualFile> getFiles(@NotNull Collection<Usage> usages) {
     return ContainerUtil.map2Set(usages, usage -> ((UsageInfo2UsageAdapter)usage).getFile());
   }
 
@@ -266,7 +264,7 @@ public class ReplaceInProjectManager {
           replaceContext.getFindModel().getStringToFind(),
           String.valueOf(files.size()),
           replaceContext.getFindModel().getStringToReplace())) {
-          replaceUsagesUnderCommand(replaceContext, usages, true, false);
+          replaceUsagesUnderCommand(replaceContext, usages, true);
         }
       }
 
@@ -287,7 +285,7 @@ public class ReplaceInProjectManager {
 
       @Override
       public void actionPerformed(ActionEvent e) {
-        replaceUsagesUnderCommand(replaceContext, getSelectedUsages(), false, false);
+        replaceUsagesUnderCommand(replaceContext, getSelectedUsages(), false);
       }
 
       @Override
@@ -313,7 +311,7 @@ public class ReplaceInProjectManager {
     replaceContext.getUsageView().addButtonToLowerPane(replaceSelectedAction);
   }
 
-  private boolean replaceUsages(@NotNull ReplaceContext replaceContext, @NotNull Collection<? extends Usage> usages, boolean disposeUsageView) {
+  private boolean replaceUsages(@NotNull ReplaceContext replaceContext, @NotNull Collection<? extends Usage> usages) {
     int[] replacedCount = {0};
     boolean[] success = {true};
     boolean result = ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
@@ -354,20 +352,7 @@ public class ReplaceInProjectManager {
       }
     );
     success[0] &= result;
-    var usageView = replaceContext.getUsageView();
-    if (disposeUsageView) {
-      // This code is invoked when replacing all usages directly from the popup,
-      // skipping the tool window.
-      // The usage view isn't needed in this case, and updating it (removing the replaced usages)
-      // is costly and causes freezes (IJPL-45211).
-      // Dispose it instead.
-      UIUtil.invokeLaterIfNeeded(() -> {
-        Disposer.dispose(usageView);
-      });
-    }
-    else {
-      usageView.removeUsagesBulk(usages);
-    }
+    replaceContext.getUsageView().removeUsagesBulk(usages);
     reportNumberReplacedOccurrences(myProject, replacedCount[0]);
     return success[0];
   }
@@ -453,7 +438,7 @@ public class ReplaceInProjectManager {
   }
 
   private void replaceUsagesUnderCommand(@NotNull ReplaceContext replaceContext, @NotNull Set<? extends Usage> usagesSet,
-                                         boolean replaceAll, boolean disposeUsageView) {
+                                         boolean replaceAll) {
     if (usagesSet.isEmpty()) {
       return;
     }
@@ -464,7 +449,7 @@ public class ReplaceInProjectManager {
     if (!ensureUsagesWritable(usages)) return;
 
     Runnable runnable = () -> {
-      final boolean success = replaceUsages(replaceContext, usages, disposeUsageView);
+      final boolean success = replaceUsages(replaceContext, usages);
       final UsageView usageView = replaceContext.getUsageView();
 
       if (closeUsageViewIfEmpty(usageView, success)) return;

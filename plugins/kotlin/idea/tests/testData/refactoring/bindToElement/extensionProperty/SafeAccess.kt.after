@@ -1,8 +1,6 @@
 // BIND_TO test.barFoo
 package test
 
-import test.barFoo
-
 fun foo() {
     val x: Any? = null
     x?.<caret>barFoo

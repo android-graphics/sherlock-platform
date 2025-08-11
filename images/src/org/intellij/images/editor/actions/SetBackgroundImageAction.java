@@ -15,6 +15,7 @@
  */
 package org.intellij.images.editor.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -34,7 +35,7 @@ public class SetBackgroundImageAction extends DumbAwareAction {
     Project project = e.getProject();
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     boolean image = file != null && ImageFileTypeManager.getInstance().isImage(file);
-    boolean visible = !e.isFromContextMenu() || image;
+    boolean visible = !ActionPlaces.isPopupPlace(e.getPlace()) || image;
     e.getPresentation().setEnabled(project != null);
     e.getPresentation().setVisible(visible);
   }

@@ -12,7 +12,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Area;
 import java.util.Map;
-import java.util.Objects;
 import java.util.WeakHashMap;
 
 public final class ScreenUtil {
@@ -550,9 +549,6 @@ public final class ScreenUtil {
 
   public static boolean intersectsVisibleScreen(@NotNull Window window) {
     if (StartupUiUtil.isWaylandToolkit()) return true; // No window coordinates in Wayland
-    GraphicsConfiguration configuration = window.getGraphicsConfiguration();
-    // keep the ID in sync with com.intellij.platform.impl.toolkit.HeadlessDummyGraphicsEnvironment, can't be referenced here
-    if (Objects.equals(configuration.getDevice().getIDstring(), "DummyHeadless")) return true;
-    return configuration.getBounds().intersects(window.getBounds());
+    return window.getGraphicsConfiguration().getBounds().intersects(window.getBounds());
   }
 }

@@ -6,6 +6,7 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import org.jetbrains.annotations.NotNull;
 
 class InstanceofEvaluator extends PatternLabelEvaluator {

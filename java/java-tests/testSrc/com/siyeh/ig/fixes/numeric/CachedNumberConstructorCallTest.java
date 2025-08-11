@@ -16,6 +16,7 @@
 package com.siyeh.ig.fixes.numeric;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.numeric.CachedNumberConstructorCallInspection;
 

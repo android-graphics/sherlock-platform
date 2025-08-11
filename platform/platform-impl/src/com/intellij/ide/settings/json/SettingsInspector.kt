@@ -29,12 +29,11 @@ fun buildComponentModel(): JsonSettingsModel.ComponentModel =
   })
 
 
-@ApiStatus.Internal
-fun listAppComponents(): List<ComponentDescriptor> {
+internal fun listAppComponents(): List<ComponentDescriptor> {
   val descriptors = mutableListOf<ComponentDescriptor>()
   fun processImplementationClass(aClass: Class<*>, descriptor: PluginDescriptor?) {
     if (PersistentStateComponent::class.java.isAssignableFrom(aClass)) {
-      val state = getState(aClass)
+      val state = aClass.getAnnotation(State::class.java)
       @Suppress("UNCHECKED_CAST")
       descriptors.add(
         ComponentDescriptor(
@@ -58,15 +57,8 @@ fun listAppComponents(): List<ComponentDescriptor> {
   return descriptors
 }
 
-private fun getState(aClass: Class<*>): State? {
-  aClass.getAnnotation(State::class.java)?.let { return it }
-  aClass.superclass?.let { return getState(it) }
-  return null
-}
 
-
-@ApiStatus.Internal
-data class ComponentDescriptor(
+internal data class ComponentDescriptor(
   val name: String,
   val aClass: Class<PersistentStateComponent<*>>,
   val pluginDescriptor: PluginDescriptor?,
@@ -163,8 +155,7 @@ data class ComponentDescriptor(
     when (accessor.genericType.typeName) {
       "java.util.List<java.lang.String>" -> return JsonSettingsModel.PropertyType.StringList
       "java.util.Set<java.lang.String>" -> return JsonSettingsModel.PropertyType.StringSet
-      "java.util.Collection<java.lang.String>" -> return JsonSettingsModel.PropertyType.StringList
-      "java.util.Map<java.lang.String, java.lang.String>" -> return JsonSettingsModel.PropertyType.StringMap
+      "java.util.Collection<java.lang.String>" -> JsonSettingsModel.PropertyType.StringList
     }
     return JsonSettingsModel.PropertyType.Unsupported
   }

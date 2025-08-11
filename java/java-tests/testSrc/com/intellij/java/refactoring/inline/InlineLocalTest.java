@@ -3,7 +3,6 @@ package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -15,7 +14,6 @@ import com.intellij.refactoring.inline.InlineLocalHandler;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
 import org.jetbrains.annotations.NotNull;
@@ -144,13 +142,11 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
-  public void testAssignmentToArrayElement() throws Exception {
-    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
-      UiInterceptors.register(new ChooserInterceptor(List.of("This reference only", "All 2 references and remove the variable"),
-                                                     "All 2 references and remove the variable"));
-      doTest("Cannot perform refactoring.\n" +
-             "Variable 'arr' is accessed for writing");
-    });
+  public void testAssignmentToArrayElement() {
+    UiInterceptors.register(new ChooserInterceptor(List.of("This reference only", "All 2 references and remove the variable"),
+                                                   "All 2 references and remove the variable"));
+    doTest("Cannot perform refactoring.\n" +
+           "Variable 'arr' is accessed for writing");
   }
 
   public void testArrayMethodCallInitialized() {
@@ -284,11 +280,9 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
-  public void testLocalVarInsideLambdaBodyWriteUsage() throws Exception {
-    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
-      doTest("Cannot perform refactoring.\n" +
-             "Variable 'hello' is accessed for writing");
-    });
+  public void testLocalVarInsideLambdaBodyWriteUsage() {
+    doTest("Cannot perform refactoring.\n" +
+           "Variable 'hello' is accessed for writing");
   }
 
   public void testReassignedVariableNoOption() {
@@ -361,13 +355,6 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   public void testCompositeAssignment() { doTest(); }
   
   public void testCompositeAssignmentCast() { doTest(); }
-  
-  public void testLambdaInitialization() { doTest(); }
-  
-  public void testSeparateInitialization() { doTest(); }
-  public void testSeparateInitialization2() { doTest(); }
-  public void testSeparateInitialization3() { doTest("Cannot perform refactoring.\nVariable aaa has no initializer"); }
-  public void testSeparateInitialization4() { doTest(); }
 
   private void doTest(String conflictMessage) {
     try {
@@ -394,7 +381,7 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
       JavaRefactoringSettings.getInstance().INLINE_LOCAL_THIS = initialSetting;
     }
   }
-
+  
   public void testInLambda() {
     doTest(LanguageLevel.JDK_1_8);
   }
@@ -406,7 +393,6 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   private void doTest(LanguageLevel languageLevel) {
     String fileName = prepareTest(languageLevel);
     performInline(getProject(), getEditor());
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile(fileName + ".after");
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -11,7 +11,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
 import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
-import org.jetbrains.java.decompiler.util.StartEndPair;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
@@ -91,10 +90,10 @@ public final class IfStatement extends Statement {
           post = elsestat;
         }
         else {
-          if (lstSucc.isEmpty()) {
+          if (lstSucc.size() == 0) {
             post = elsestat;
           }
-          else if (lstSucc1.isEmpty()) {
+          else if (lstSucc1.size() == 0) {
             post = ifstat;
           }
         }
@@ -283,9 +282,9 @@ public final class IfStatement extends Statement {
   }
 
   @Override
-  public List<IMatchable> getSequentialObjects() {
+  public List<Object> getSequentialObjects() {
 
-    List<IMatchable> lst = new ArrayList<>(stats);
+    List<Object> lst = new ArrayList<>(stats);
     lst.add(1, headexprent.get(0));
 
     return lst;
@@ -408,13 +407,6 @@ public final class IfStatement extends Statement {
 
   public StatEdge getElseEdge() {
     return elseedge;
-  }
-
-  @Override
-  public StartEndPair getStartEndRange() {
-    return StartEndPair.join(super.getStartEndRange(), 
-      ifstat != null ? ifstat.getStartEndRange() : null, 
-      elsestat != null ? elsestat.getStartEndRange(): null);
   }
 
   // *****************************************************************************

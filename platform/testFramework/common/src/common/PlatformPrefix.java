@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.common;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -17,14 +16,13 @@ public final class PlatformPrefix {
   private PlatformPrefix() { }
 
   private static final String[] PREFIX_CANDIDATES = {
-    "Rider", "GoLand", "CLion", "FleetBackend",
+    "Rider", "GoLand", "CLion", "MobileIDE", "FleetBackend",
     null,
-    "AppCode",
+    "AppCode", "SwiftTests",
     "Python", "DataSpell", "PyCharmCore",
     "DataGrip",
     "Ruby",
     "PhpStorm",
-    "RustRover",
     "UltimateLangXml", "Idea", "PlatformLangXml"
   };
 
@@ -55,8 +53,6 @@ public final class PlatformPrefix {
       if (resource != null) {
         if (candidate != null) {
           setPlatformPrefix(candidate);
-          var logger = Logger.getInstance(PlatformPrefix.class);
-          logger.info(String.format("Platform prefix (IDE that is emulated by this test): %s. File %s", candidate, resource));
         }
         break;
       }

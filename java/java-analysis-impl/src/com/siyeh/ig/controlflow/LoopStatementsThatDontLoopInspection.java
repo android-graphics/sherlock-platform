@@ -33,12 +33,14 @@ public final class LoopStatementsThatDontLoopInspection extends BaseInspection {
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "LoopStatementThatDoesntLoop";
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("loop.statements.that.dont.loop.problem.descriptor");
   }
 

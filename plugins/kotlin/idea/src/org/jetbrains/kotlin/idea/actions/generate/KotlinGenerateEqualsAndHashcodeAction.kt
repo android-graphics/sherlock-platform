@@ -217,7 +217,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
 
                     append('\n')
 
-                    variablesForEquals.sortedWithPrimitivesFirst().forEach {
+                    variablesForEquals.forEach {
                         val isNullable = TypeUtils.isNullableType(it.type)
                         val isArray = KotlinBuiltIns.isArrayOrPrimitiveArray(it.type)
                         val canUseArrayContentFunctions = targetClass.canUseArrayContentFunctions()
@@ -292,8 +292,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
             val hashCodeFun = generateFunctionSkeleton(superHashCode, targetClass)
             val builtins = superHashCode.builtIns
 
-            // Sort variables in `hashCode()` to preserve the same order as in `equals()`
-            val propertyIterator = variablesForEquals.sortedWithPrimitivesFirst().iterator()
+            val propertyIterator = variablesForHashCode.iterator()
             val initialValue = when {
                 !builtins.isMemberOfAny(superHashCode) -> "super.hashCode()"
                 propertyIterator.hasNext() -> propertyIterator.next().genVariableHashCode(false)
@@ -326,8 +325,4 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
         val anchor = with(targetClass.declarations) { lastIsInstanceOrNull<KtNamedFunction>() ?: lastOrNull() }
         return insertMembersAfterAndReformat(editor, targetClass, prototypes, anchor)
     }
-}
-
-private fun List<VariableDescriptor>.sortedWithPrimitivesFirst(): List<VariableDescriptor> = sortedBy {
-    !KotlinBuiltIns.isPrimitiveTypeOrNullablePrimitiveType(it.type)
 }

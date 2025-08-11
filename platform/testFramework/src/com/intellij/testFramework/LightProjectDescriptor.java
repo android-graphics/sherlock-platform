@@ -170,7 +170,8 @@ public class LightProjectDescriptor {
     }
   }
 
-  public @NotNull Path generateProjectPath() {
+  @NotNull
+  public Path generateProjectPath() {
     return TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME + ProjectFileType.DOT_DEFAULT_EXTENSION);
   }
 

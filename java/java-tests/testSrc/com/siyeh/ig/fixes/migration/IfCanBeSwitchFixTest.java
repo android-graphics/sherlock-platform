@@ -39,6 +39,4 @@ public class IfCanBeSwitchFixTest extends IGQuickFixesTestCase {
   public void testEnumEquals() { doTest(); }
   public void testRelabelingBreaks() { doTest(); }
   public void testIfWithoutThenBranch() { doTest(); }
-  public void testIfWithIsEmpty() { doTest(); }
-  public void testIfWithIsEmptyInFirst() { doTest(); }
 }

@@ -31,7 +31,6 @@ public class XValueChildrenList {
   public static final XValueChildrenList EMPTY = new XValueChildrenList(Collections.emptyList(), Collections.emptyList());
   private final List<String> myNames;
   private final List<XValue> myValues;
-  private final List<XNamedValue> myTopValues = new SmartList<>();
   private final List<XValueGroup> myTopGroups;
   private final List<XValueGroup> myBottomGroups = new SmartList<>();
 
@@ -93,10 +92,6 @@ public class XValueChildrenList {
     myTopGroups.add(group);
   }
 
-  public void addTopValue(@NotNull XNamedValue value) {
-    myTopValues.add(value);
-  }
-
   /**
    * Adds a node representing group of values to the bottom of a node children list
    */
@@ -118,10 +113,6 @@ public class XValueChildrenList {
 
   public List<XValueGroup> getTopGroups() {
     return myTopGroups;
-  }
-
-  public List<XNamedValue> getTopValues() {
-    return myTopValues;
   }
 
   public List<XValueGroup> getBottomGroups() {

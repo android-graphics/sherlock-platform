@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -51,8 +51,9 @@ public class CustomizeContextViewAction extends XDebuggerTreeActionBase {
   }
 
   private static class MyTabbedConfigurable extends TabbedConfigurable {
+    @NotNull
     @Override
-    protected @NotNull List<Configurable> createConfigurables() {
+    protected List<Configurable> createConfigurables() {
       return JavaDebuggerSettings.createDataViewsConfigurable();
     }
 

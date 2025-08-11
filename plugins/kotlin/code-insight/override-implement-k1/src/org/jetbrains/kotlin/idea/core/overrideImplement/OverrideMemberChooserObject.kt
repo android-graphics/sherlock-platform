@@ -387,6 +387,7 @@ fun generateUnsupportedOrSuperCall(
 
 fun KtModifierListOwner.makeNotActual() {
     removeModifier(KtTokens.ACTUAL_KEYWORD)
+    removeModifier(KtTokens.IMPL_KEYWORD)
 }
 
 fun KtModifierListOwner.makeActual() {

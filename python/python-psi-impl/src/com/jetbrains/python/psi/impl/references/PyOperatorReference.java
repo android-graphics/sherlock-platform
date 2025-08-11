@@ -35,8 +35,9 @@ public class PyOperatorReference extends PyReferenceImpl {
     super(element, context);
   }
 
+  @NotNull
   @Override
-  protected @NotNull List<RatedResolveResult> resolveInner() {
+  protected List<RatedResolveResult> resolveInner() {
     if (myElement instanceof PyBinaryExpression expr) {
       final String name = expr.getReferencedName();
       if (PyNames.CONTAINS.equals(name)) {
@@ -78,14 +79,16 @@ public class PyOperatorReference extends PyReferenceImpl {
     }
   }
 
-  public @Nullable PyExpression getReceiver() {
+  @Nullable
+  public PyExpression getReceiver() {
     if (myElement instanceof PyCallSiteExpression) {
       return ((PyCallSiteExpression)myElement).getReceiver(null);
     }
     return null;
   }
 
-  private @NotNull List<RatedResolveResult> resolveLeftAndRightOperators(@NotNull PyBinaryExpression expr, @Nullable String name) {
+  @NotNull
+  private List<RatedResolveResult> resolveLeftAndRightOperators(@NotNull PyBinaryExpression expr, @Nullable String name) {
     final List<RatedResolveResult> result = new ArrayList<>();
 
     final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
@@ -109,7 +112,8 @@ public class PyOperatorReference extends PyReferenceImpl {
     return result;
   }
 
-  private @NotNull List<RatedResolveResult> resolveMember(@Nullable PyExpression object, @Nullable String name) {
+  @NotNull
+  private List<RatedResolveResult> resolveMember(@Nullable PyExpression object, @Nullable String name) {
     final ArrayList<RatedResolveResult> results = new ArrayList<>();
     if (object != null && name != null) {
       final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
@@ -144,9 +148,10 @@ public class PyOperatorReference extends PyReferenceImpl {
     return results;
   }
 
-  private @Nullable List<? extends RatedResolveResult> resolveDefinitionMember(@NotNull PyClassLikeType classLikeType,
-                                                                               @NotNull PyExpression object,
-                                                                               @NotNull String name) {
+  @Nullable
+  private List<? extends RatedResolveResult> resolveDefinitionMember(@NotNull PyClassLikeType classLikeType,
+                                                                     @NotNull PyExpression object,
+                                                                     @NotNull String name) {
     final PyClassLikeType metaClassType = classLikeType.getMetaClassType(myContext.getTypeEvalContext(), true);
     if (metaClassType != null) {
       final List<? extends RatedResolveResult> results =

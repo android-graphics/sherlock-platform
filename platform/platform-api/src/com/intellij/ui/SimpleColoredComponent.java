@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -116,7 +116,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   @Override
   public void updateUI() {
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAATextInfoForSwingComponent());
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
     Object value = UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS);
     if (value == null) value = RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
     putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, value);
@@ -453,8 +453,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
   }
 
-  @ApiStatus.Internal
-  public final synchronized int computePreferredHeight() {
+  final synchronized int computePreferredHeight() {
     int height = myIpad.top + myIpad.bottom;
 
     Font font = getBaseFont();
@@ -868,11 +867,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
           doPaintFragmentBackground(g, i, bgColor, (int)offset, 0, (int)fragmentWidth, height);
         }
 
-        boolean enabled = isEnabled();
-        Color color = enabled ? getActiveTextColor(attributes.getFgColor()) : NamedColorUtil.getInactiveTextColor();
-        if (enabled && attributes.useFaded()) {
-          color = ColorUtil.faded(color);
-        }
+        Color color;
+        color = isEnabled() ? getActiveTextColor(attributes.getFgColor()) : NamedColorUtil.getInactiveTextColor();
         g.setColor(color);
 
         final int fragmentAlignment = fragment.alignment;

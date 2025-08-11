@@ -9,18 +9,20 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public class PySyntaxBundle extends DynamicBundle {
-  private static final @NonNls String BUNDLE = "messages.PySyntaxBundle";
+  @NonNls private static final String BUNDLE = "messages.PySyntaxBundle";
   public static final PySyntaxBundle INSTANCE = new PySyntaxBundle();
 
   private PySyntaxBundle() {
     super(BUNDLE);
   }
 
-  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  @NotNull
+  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  @NotNull
+  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

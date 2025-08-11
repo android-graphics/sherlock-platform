@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.lang.ASTNode;
@@ -31,8 +31,9 @@ public class GrVariableDeclarationElementType extends GrStubElementType<GrVariab
     GrStubUtils.writeNullableString(dataStream, stub.getTypeString());
   }
 
+  @NotNull
   @Override
-  public @NotNull GrVariableDeclarationStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public GrVariableDeclarationStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new GrVariableDeclarationStub(
       parentStub,
       GrStubUtils.readNullableString(dataStream)
@@ -44,8 +45,9 @@ public class GrVariableDeclarationElementType extends GrStubElementType<GrVariab
     return new GrVariableDeclarationImpl(stub);
   }
 
+  @NotNull
   @Override
-  public @NotNull GrVariableDeclarationStub createStub(@NotNull GrVariableDeclaration psi, StubElement parentStub) {
+  public GrVariableDeclarationStub createStub(@NotNull GrVariableDeclaration psi, StubElement parentStub) {
     return new GrVariableDeclarationStub(parentStub, GrStubUtils.getTypeText(psi.getTypeElementGroovy()));
   }
 

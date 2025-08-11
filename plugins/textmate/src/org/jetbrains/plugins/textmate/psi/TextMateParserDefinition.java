@@ -15,10 +15,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.TextMateLanguage;
 
 public class TextMateParserDefinition implements ParserDefinition {
-  private static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType("TextMate", TextMateLanguage.LANGUAGE);
+  private final static IFileElementType FILE_ELEMENT_TYPE = new IFileElementType("TextMate", TextMateLanguage.LANGUAGE);
 
+  @NotNull
   @Override
-  public @NotNull Lexer createLexer(Project project) {
+  public Lexer createLexer(Project project) {
     return new EmptyLexer();
   }
 
@@ -32,18 +33,21 @@ public class TextMateParserDefinition implements ParserDefinition {
     return FILE_ELEMENT_TYPE;
   }
 
+  @NotNull
   @Override
-  public @NotNull TokenSet getCommentTokens() {
+  public TokenSet getCommentTokens() {
     return TokenSet.EMPTY;
   }
 
+  @NotNull
   @Override
-  public @NotNull TokenSet getStringLiteralElements() {
+  public TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement createElement(ASTNode node) {
+  public PsiElement createElement(ASTNode node) {
     return new TextMatePsiElement(node.getElementType());
   }
 

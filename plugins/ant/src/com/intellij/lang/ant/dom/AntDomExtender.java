@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntIntrospector;
@@ -69,7 +69,7 @@ public final class AntDomExtender extends DomExtender<AntDomElement> {
   );
 
   @Override
-  public void registerExtensions(final @NotNull AntDomElement antDomElement, @NotNull DomExtensionsRegistrar registrar) {
+  public void registerExtensions(@NotNull final AntDomElement antDomElement, @NotNull DomExtensionsRegistrar registrar) {
     final XmlElement xmlElement = antDomElement.getXmlElement();
     if (xmlElement instanceof XmlTag xmlTag) {
       final String tagName = xmlTag.getName();
@@ -294,7 +294,8 @@ public final class AntDomExtender extends DomExtender<AntDomElement> {
     return map;
   }
 
-  private static @Nullable DomExtension registerChild(DomExtensionsRegistrar registrar, DomGenericInfo elementInfo, String childName) {
+  @Nullable
+  private static DomExtension registerChild(DomExtensionsRegistrar registrar, DomGenericInfo elementInfo, String childName) {
     if (elementInfo.getCollectionChildDescription(childName) == null) { // register if not yet defined statically
       Class<? extends AntDomElement> modelClass = getModelClass(childName);
       if (modelClass == null) {
@@ -305,7 +306,8 @@ public final class AntDomExtender extends DomExtender<AntDomElement> {
     return null;
   }
 
-  public static @Nullable AntIntrospector getIntrospector(Class c) {
+  @Nullable
+  public static AntIntrospector getIntrospector(Class c) {
     try {
       return AntIntrospector.getInstance(c);
     }
@@ -318,7 +320,8 @@ public final class AntDomExtender extends DomExtender<AntDomElement> {
     return null;
   }
 
-  private static @Nullable Class<? extends AntDomElement> getModelClass(@NotNull String tagName) {
+  @Nullable
+  private static Class<? extends AntDomElement> getModelClass(@NotNull String tagName) {
     return TAG_MAPPING.get(StringUtil.toLowerCase(tagName));
   }
 
@@ -356,18 +359,21 @@ public final class AntDomExtender extends DomExtender<AntDomElement> {
     }
 
     @Override
-    public @Nullable PomTarget findDeclaration(DomElement parent, @NotNull EvaluatedXmlName name) {
+    @Nullable
+    public PomTarget findDeclaration(DomElement parent, @NotNull EvaluatedXmlName name) {
       final XmlName xmlName = name.getXmlName();
       return doFindDeclaration(parent, xmlName);
     }
 
     @Override
-    public @Nullable PomTarget findDeclaration(@NotNull DomElement child) {
+    @Nullable
+    public PomTarget findDeclaration(@NotNull DomElement child) {
       XmlName name = new XmlName(child.getXmlElementName(), child.getXmlElementNamespace());
       return doFindDeclaration(child.getParent(), name);
     }
 
-    private static @Nullable PomTarget doFindDeclaration(DomElement parent, XmlName xmlName) {
+    @Nullable
+    private static PomTarget doFindDeclaration(DomElement parent, XmlName xmlName) {
       if (!(parent instanceof AntDomElement parentElement)) {
         return null;
       }
@@ -397,22 +403,26 @@ public final class AntDomExtender extends DomExtender<AntDomElement> {
     }
   }
 
-  private abstract static class AbstractIntrospector {
-    public @NotNull Iterator<String> getAttributesIterator() {
+  private static abstract class AbstractIntrospector {
+    @NotNull
+    public Iterator<String> getAttributesIterator() {
       return Collections.emptyIterator();
     }
 
-    public @NotNull Iterator<String> getNestedElementsIterator() {
+    @NotNull
+    public Iterator<String> getNestedElementsIterator() {
       return Collections.emptyIterator();
     }
 
     public abstract boolean isContainer();
 
-    public @Nullable Class getAttributeType(String attribName) {
+    @Nullable
+    public Class getAttributeType(String attribName) {
       return null;
     }
 
-    public @Nullable Class getNestedElementType(String elementName) {
+    @Nullable
+    public Class getNestedElementType(String elementName) {
       return null;
     }
   }
@@ -440,7 +450,8 @@ public final class AntDomExtender extends DomExtender<AntDomElement> {
     }
 
     @Override
-    public @NotNull Iterator<String> getAttributesIterator() {
+    @NotNull
+    public Iterator<String> getAttributesIterator() {
       return new EnumerationToIteratorAdapter<>(myIntrospector.getAttributes());
     }
 
@@ -455,7 +466,8 @@ public final class AntDomExtender extends DomExtender<AntDomElement> {
     }
 
     @Override
-    public @NotNull Iterator<String> getNestedElementsIterator() {
+    @NotNull
+    public Iterator<String> getNestedElementsIterator() {
       initNestedElements();
       return myNestedElements.iterator();
     }
@@ -520,7 +532,8 @@ public final class AntDomExtender extends DomExtender<AntDomElement> {
     }
 
     @Override
-    public @NotNull Iterator<String> getAttributesIterator() {
+    @NotNull
+    public Iterator<String> getAttributesIterator() {
       final List<AntDomMacrodefAttribute> macrodefAttributes = myMacrodef.getMacroAttributes();
       if (macrodefAttributes.isEmpty()) {
         return Collections.emptyIterator();
@@ -558,7 +571,8 @@ public final class AntDomExtender extends DomExtender<AntDomElement> {
     }
 
     @Override
-    public @NotNull Iterator<String> getNestedElementsIterator() {
+    @NotNull
+    public Iterator<String> getNestedElementsIterator() {
       return getNestedElementsMap().keySet().iterator();
     }
 
@@ -635,7 +649,8 @@ public final class AntDomExtender extends DomExtender<AntDomElement> {
     }
 
     @Override
-    public @NotNull Iterator<String> getAttributesIterator() {
+    @NotNull
+    public Iterator<String> getAttributesIterator() {
       final List<AntDomScriptdefAttribute> macrodefAttributes = myScriptDef.getScriptdefAttributes();
       final List<String> attribs = new ArrayList<>(macrodefAttributes.size());
       for (AntDomScriptdefAttribute attribute : macrodefAttributes) {

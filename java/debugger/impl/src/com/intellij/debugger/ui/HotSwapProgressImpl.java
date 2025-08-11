@@ -7,7 +7,10 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapProgress;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
@@ -16,7 +19,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.SmartList;
@@ -26,27 +29,21 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.hotswap.HotSwapStatusNotificationManager;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public final class HotSwapProgressImpl extends HotSwapProgress {
-  static final NotificationGroup NOTIFICATION_GROUP = Registry.is("debugger.hotswap.floating.toolbar")
-                                                      ? NotificationGroupManager.getInstance().getNotificationGroup("HotSwap Messages")
-                                                      : NotificationGroup.toolWindowGroup("HotSwap", ToolWindowId.DEBUG);
+  static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("HotSwap", ToolWindowId.DEBUG);
 
-  private final Int2ObjectMap<Map<DebuggerSession, List<String>>> myMessages = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<List<String>> myMessages = new Int2ObjectOpenHashMap<>();
   private final ProgressWindow myProgressWindow;
   private @NlsContexts.ProgressTitle String myTitle = JavaDebuggerBundle.message("progress.hot.swap.title");
   private final MergingUpdateQueue myUpdateQueue;
@@ -84,11 +81,8 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
       listener.onFinish();
     }
 
-    var debuggerSessions = myMessages.values().stream().flatMap(e -> e.keySet().stream()).collect(Collectors.toUnmodifiableSet());
-    boolean addSessionName = debuggerSessions.size() > 1;
-
-    List<String> errors = getMessages(MessageCategory.ERROR, addSessionName);
-    List<String> warnings = getMessages(MessageCategory.WARNING, addSessionName);
+    List<String> errors = getMessages(MessageCategory.ERROR);
+    List<String> warnings = getMessages(MessageCategory.WARNING);
 
     if (!errors.isEmpty()) {
       notifyUser(JavaDebuggerBundle.message("status.hot.swap.completed.with.errors"), buildMessage(errors), true, NotificationType.ERROR);
@@ -99,8 +93,8 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
     }
     else if (!myMessages.isEmpty()) {
       List<String> messages = new ArrayList<>();
-      for (int key : myMessages.keySet()) {
-        messages.addAll(getMessages(key, addSessionName));
+      for (IntIterator iterator = myMessages.keySet().iterator(); iterator.hasNext(); ) {
+        messages.addAll(getMessages(iterator.nextInt()));
       }
       notifyUser("", buildMessage(messages), false, NotificationType.INFORMATION);
     }
@@ -111,12 +105,11 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
                           boolean withRestart,
                           NotificationType type) {
     Notification notification = NOTIFICATION_GROUP.createNotification(title, message, type);
-    HotSwapStatusNotificationManager.getInstance(getProject()).trackNotification(notification);
     if (SoftReference.dereference(mySessionRef) != null) {
+      notification.addAction(new StopHotSwapNotificationAction(mySessionRef));
       if (withRestart) {
         notification.addAction(new RestartHotSwapNotificationAction(mySessionRef));
       }
-      notification.addAction(new StopHotSwapNotificationAction(mySessionRef));
     }
     notification.setImportant(false).notify(getProject());
   }
@@ -125,35 +118,22 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
     mySessionRef = new WeakReference<>(session.getXDebugSession());
   }
 
-  private @NotNull @Unmodifiable List<String> getMessages(int category, boolean addSessionName) {
-    var sessionMessages = ContainerUtil.notNullize(myMessages.get(category));
-    return sessionMessages.entrySet().stream().flatMap(entry -> {
-      var stream = entry.getValue().stream();
-      return addSessionName ? stream.map(message -> entry.getKey().getSessionName() + ": " + message) : stream;
-    }).toList();
-  }
-
-  boolean hasErrors() {
-    return !getMessages(MessageCategory.ERROR, false).isEmpty();
+  List<String> getMessages(int category) {
+    return ContainerUtil.notNullize(myMessages.get(category));
   }
 
   private static @NlsSafe String buildMessage(List<String> messages) {
-    return StreamEx.of(messages).joining("\n");
+    return StreamEx.of(messages).map(m -> StringUtil.trimEnd(m, ';')).joining("\n");
   }
 
   @Override
   public void addMessage(DebuggerSession session, final int type, final String text) {
-    Map<DebuggerSession, List<String>> messages = myMessages.get(type);
+    List<String> messages = myMessages.get(type);
     if (messages == null) {
-      messages = new HashMap<>();
+      messages = new SmartList<>();
       myMessages.put(type, messages);
     }
-    List<String> sessionMessages = messages.get(session);
-    if (sessionMessages == null) {
-      sessionMessages = new SmartList<>();
-      messages.put(session, sessionMessages);
-    }
-    sessionMessages.add(text);
+    messages.add(session.getSessionName() + ": " + text + ";");
   }
 
   @Override

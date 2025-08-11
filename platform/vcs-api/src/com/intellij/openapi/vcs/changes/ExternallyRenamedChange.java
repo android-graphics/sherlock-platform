@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -44,7 +44,8 @@ public class ExternallyRenamedChange extends Change {
   }
 
   @Override
-  public @Nls String getOriginText(final Project project) {
+  @Nls
+  public String getOriginText(final Project project) {
     if (myCopied) {
       return VcsBundle.message("change.file.copied.from.text", myOriginUrl);
     }
@@ -52,7 +53,9 @@ public class ExternallyRenamedChange extends Change {
   }
 
   @Override
-  protected @Nullable @Nls String getRenamedText() {
+  @Nullable
+  @Nls
+  protected String getRenamedText() {
     if (myRenamedTargetName != null) {
       if (getBeforeRevision() != null) {
         return VcsBundle.message("change.file.renamed.to.text", myRenamedTargetName);
@@ -65,7 +68,9 @@ public class ExternallyRenamedChange extends Change {
   }
 
   @Override
-  protected @Nullable @Nls String getMovedText(final Project project) {
+  @Nullable
+  @Nls
+  protected String getMovedText(final Project project) {
     if (myRenamedTargetName != null) {
       if (getBeforeRevision() != null) {
         return VcsBundle.message("change.file.moved.to.text", myRenamedTargetName);

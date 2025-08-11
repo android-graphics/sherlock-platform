@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,7 +10,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
 @State(name = "BaseRefactoringSettings", storages = @Storage("baseRefactoring.xml"), category = SettingsCategory.CODE)
-public final class RefactoringSettings implements PersistentStateComponent<RefactoringSettings> {
+public class RefactoringSettings implements PersistentStateComponent<RefactoringSettings> {
   public static RefactoringSettings getInstance() {
     return ApplicationManager.getApplication().getService(RefactoringSettings.class);
   }
@@ -39,7 +39,7 @@ public final class RefactoringSettings implements PersistentStateComponent<Refac
   }
 
   @Override
-  public void loadState(final @NotNull RefactoringSettings state) {
+  public void loadState(@NotNull final RefactoringSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 }

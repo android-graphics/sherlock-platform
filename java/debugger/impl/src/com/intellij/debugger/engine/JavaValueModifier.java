@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -16,7 +16,6 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
-import com.intellij.java.debugger.impl.shared.SharedDebuggerUtils;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -64,7 +63,7 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
         @Override
         public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
           callback.setValue(
-            StringUtil.wrapWithDoubleQuote(SharedDebuggerUtils.translateStringValue(DebuggerUtils.getValueAsString(evaluationContext, value))));
+            StringUtil.wrapWithDoubleQuote(DebuggerUtils.translateStringValue(DebuggerUtils.getValueAsString(evaluationContext, value))));
         }
       });
     }
@@ -104,13 +103,13 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
     if (value != null && JAVA_LANG_STRING.equals(varType.name()) && !(value instanceof StringReference)) {
       String v = DebuggerUtils.getValueAsString(context, value);
       if (v != null) {
-        value = DebuggerUtilsEx.mirrorOfString(v, context);
+        value = DebuggerUtilsEx.mirrorOfString(v, context.getDebugProcess().getVirtualMachineProxy(), context);
       }
     }
     if (value instanceof DoubleValue) {
       double dValue = ((DoubleValue)value).doubleValue();
       if (varType instanceof FloatType && Float.MIN_VALUE <= dValue && dValue <= Float.MAX_VALUE) {
-        value = context.getVirtualMachineProxy().mirrorOf((float)dValue);
+        value = context.getDebugProcess().getVirtualMachineProxy().mirrorOf((float)dValue);
       }
     }
     if (value != null) {
@@ -142,13 +141,14 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
     Type getLType() throws ClassNotLoadedException, EvaluateException;
   }
 
-  private static @Nullable ExpressionEvaluator tryDirectAssignment(@NotNull XExpression expression,
-                                                                   @Nullable Type varType,
-                                                                   @NotNull EvaluationContextImpl evaluationContext) {
+  @Nullable
+  private static ExpressionEvaluator tryDirectAssignment(@NotNull XExpression expression,
+                                                         @Nullable Type varType,
+                                                         @NotNull EvaluationContextImpl evaluationContext) {
     if (varType instanceof LongType) {
       try {
         return new ExpressionEvaluatorImpl(new IdentityEvaluator(
-          evaluationContext.getVirtualMachineProxy().mirrorOf(Long.decode(expression.getExpression()))));
+          evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(Long.decode(expression.getExpression()))));
       }
       catch (NumberFormatException ignored) {
       }
@@ -179,7 +179,7 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
       final ReferenceType refType;
       try {
         refType = evaluationContext.getDebugProcess().loadClass(evaluationContext,
-                                                                ex,
+                                                                ex.className(),
                                                                 setValueRunnable.getClassLoader(evaluationContext));
         if (refType != null) {
           //try again
@@ -195,7 +195,7 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
     }
   }
 
-  protected void set(final @NotNull XExpression expression,
+  protected void set(@NotNull final XExpression expression,
                      final XModificationCallback callback,
                      final DebuggerContextImpl debuggerContext,
                      final SetValueRunnable setValueRunnable) {
@@ -239,8 +239,9 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
               }
             }
 
+            @Nullable
             @Override
-            public @Nullable Type getLType() throws EvaluateException, ClassNotLoadedException {
+            public Type getLType() throws EvaluateException, ClassNotLoadedException {
               return setValueRunnable.getLType();
             }
           });
@@ -253,11 +254,11 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
     };
 
     progressWindow.setTitle(JavaDebuggerBundle.message("title.evaluating"));
-    evaluationContext.getManagerThread().startProgress(askSetAction, progressWindow);
+    evaluationContext.getDebugProcess().getManagerThread().startProgress(askSetAction, progressWindow);
   }
 
   @Override
   public @NotNull XExpression stringToXExpression(@NotNull String text) {
-    return XExpressionImpl.fromText(StringUtil.wrapWithDoubleQuote(SharedDebuggerUtils.translateStringValue(text)));
+    return XExpressionImpl.fromText(StringUtil.wrapWithDoubleQuote(DebuggerUtils.translateStringValue(text)));
   }
 }

@@ -91,7 +91,8 @@ public final class LombokProcessorManager {
 
   private final MultiMap<String, String> ourSupportedShortNames = createSupportedShortNames();
 
-  private @NotNull MultiMap<String, String> createSupportedShortNames() {
+  @NotNull
+  private MultiMap<String, String> createSupportedShortNames() {
     MultiMap<String, String> map = new MultiMap<>();
     for (Processor processor : getAllProcessors()) {
       for (String annotationClass : processor.getSupportedAnnotationClasses()) {
@@ -281,7 +282,8 @@ public final class LombokProcessorManager {
     return ourSupportedShortNames;
   }
 
-  private @NotNull Collection<Processor> getAllProcessors() {
+  @NotNull
+  private Collection<Processor> getAllProcessors() {
     return Arrays.asList(
       myAllArgsConstructorProcessor,
       myNoArgsConstructorProcessor,

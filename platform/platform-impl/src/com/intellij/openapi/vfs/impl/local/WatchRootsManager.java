@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.Disposable;
@@ -16,7 +16,10 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemDependent;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 import java.nio.file.InvalidPathException;
@@ -24,12 +27,11 @@ import java.nio.file.Path;
 import java.util.*;
 
 /**
- * Class manages the roots to monitor via {@link FileWatcher} -- i.e., it keeps {@link FileWatcher} configured
- * with the actual set of roots to watch for.
+ * Class manages the roots to monitor via {@link FileWatcher} -- i.e. it keeps {@link FileWatcher} configured with the
+ * actual set of roots to watch for.
  * Unless stated otherwise, all paths are {@link SystemIndependent @SystemIndependent}.
  */
-@ApiStatus.Internal
-public final class WatchRootsManager {
+final class WatchRootsManager {
   private static final Logger LOG = Logger.getInstance(WatchRootsManager.class);
 
   private final FileWatcher myFileWatcher;
@@ -59,13 +61,10 @@ public final class WatchRootsManager {
     });
   }
 
-  @NotNull Set<WatchRequest> replaceWatchedRoots(
-    @Unmodifiable @NotNull Collection<WatchRequest> requestsToRemove,
-    @Unmodifiable @NotNull Collection<String> recursiveRootsToAdd,
-    @Unmodifiable @NotNull Collection<String> flatRootsToAdd
-  ) {
-    Set<WatchRequest> recursiveRequestsToRemove = new HashSet<>();
-    Set<WatchRequest> flatRequestsToRemove = new HashSet<>();
+  @NotNull Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> requestsToRemove,
+                                                 @NotNull Collection<String> recursiveRootsToAdd,
+                                                 @NotNull Collection<String> flatRootsToAdd) {
+    Set<WatchRequest> recursiveRequestsToRemove = new HashSet<>(), flatRequestsToRemove = new HashSet<>();
     requestsToRemove.forEach(req -> (req.isToWatchRecursively() ? recursiveRequestsToRemove : flatRequestsToRemove).add(req));
 
     Set<WatchRequest> result = new HashSet<>(recursiveRootsToAdd.size() + flatRootsToAdd.size());
@@ -99,7 +98,7 @@ public final class WatchRootsManager {
       SymlinkData data = mySymlinksById.get(fileId);
       if (data != null) {
         if (FileUtil.pathsEqual(data.path, linkPath) && FileUtil.pathsEqual(data.target, linkTarget)) {
-          // avoiding costly removal and re-addition of the request in case of a no-op update
+          // Avoid costly removal and re-addition of the request in case of no-op update
           return;
         }
         mySymlinksById.remove(fileId);
@@ -111,13 +110,15 @@ public final class WatchRootsManager {
 
       SymlinkData existing = mySymlinksByPath.get(linkPath);
       if (existing != null) {
-        LOG.error("Path conflict. Existing symlink: " + existing + " vs. incoming symlink: " + data);
+        LOG.error("Path conflict. " +
+                  "Existing symlink: " + existing + " vs. incoming symlink: " + data);
         return;
       }
 
       mySymlinksByPath.put(data.path, data);
       mySymlinksById.put(data.id, data);
-      if (data.hasValidTarget() && WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, data.path)) {
+      if (data.hasValidTarget()
+          && WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, data.path)) {
         addWatchSymlinkRequest(data.getWatchRequest());
       }
     }
@@ -144,12 +145,10 @@ public final class WatchRootsManager {
     });
   }
 
-  static @NotNull CanonicalPathMap createCanonicalPathMap(
-    @NotNull Set<String> flatWatchRoots,
-    @NotNull Set<String> optimizedRecursiveWatchRoots,
-    @NotNull Collection<Pair<String, String>> pathMappings,
-    boolean convertToForwardSlashes
-  ) {
+  static @NotNull CanonicalPathMap createCanonicalPathMap(@NotNull Set<String> flatWatchRoots,
+                                                          @NotNull Set<String> optimizedRecursiveWatchRoots,
+                                                          @NotNull Collection<Pair<String, String>> pathMappings,
+                                                          boolean convertToForwardSlashes) {
     NavigableSet<@SystemDependent String> optimizedRecursiveWatchRootsCopy = WatchRootsUtil.createFileNavigableSet();
     List<Pair<@SystemDependent String, @SystemDependent String>> initialMappings = new ArrayList<>(pathMappings.size());
 
@@ -159,10 +158,10 @@ public final class WatchRootsManager {
       initialMappings.addAll(pathMappings);
     }
     else {
-      for (String recursiveWatchRoot : optimizedRecursiveWatchRoots) {
+      for (String recursiveWatchRoot: optimizedRecursiveWatchRoots) {
         optimizedRecursiveWatchRootsCopy.add(recursiveWatchRoot.replace('/', '\\'));
       }
-      for (Pair<String, String> mapping : pathMappings) {
+      for (Pair<String, String> mapping: pathMappings) {
         initialMappings.add(new Pair<>(mapping.first.replace('/', '\\'),
                                        mapping.second.replace('/', '\\')));
       }
@@ -172,13 +171,11 @@ public final class WatchRootsManager {
     return new CanonicalPathMap(optimizedRecursiveWatchRootsCopy, optimizedFlatWatchRoots, initialMappings);
   }
 
-  private void updateWatchRoots(
-    @Unmodifiable Collection<String> rootsToAdd,
-    Set<WatchRequest> requestsToRemove,
-    Set<WatchRequest> result,
-    Map<String, List<WatchRequest>> roots,
-    boolean recursiveWatchRoots
-  ) {
+  private void updateWatchRoots(@NotNull Collection<String> rootsToAdd,
+                                @NotNull Set<WatchRequest> requestsToRemove,
+                                @NotNull Set<WatchRequest> result,
+                                @NotNull Map<String, List<WatchRequest>> roots,
+                                boolean recursiveWatchRoots) {
     List<WatchSymlinkRequest> watchSymlinkRequestsToAdd = new SmartList<>();
     for (String root : rootsToAdd) {
       String watchRoot = prepareWatchRoot(root);
@@ -225,13 +222,12 @@ public final class WatchRootsManager {
     }
   }
 
-  private static @Nullable String prepareWatchRoot(String root) {
+  private static @Nullable String prepareWatchRoot(@NotNull String root) {
     int index = root.indexOf(JarFileSystem.JAR_SEPARATOR);
     if (index >= 0) root = root.substring(0, index);
     try {
       Path rootPath = Path.of(FileUtil.toSystemDependentName(root));
       if (!rootPath.isAbsolute()) throw new InvalidPathException(root, "Watch roots should be absolute");
-      checkRootIsSane(rootPath);
       return FileUtil.toSystemIndependentName(rootPath.toString());
     }
     catch (InvalidPathException e) {
@@ -240,13 +236,7 @@ public final class WatchRootsManager {
     }
   }
 
-  private static void checkRootIsSane(Path rootPath) {
-    if (rootPath.startsWith("/proc")) {
-      LOG.error("One shouldn't use [" + rootPath + "] as watch root");
-    }
-  }
-
-  private void removeWatchRequest(WatchRequest request) {
+  private void removeWatchRequest(@NotNull WatchRequest request) {
     String watchRoot = request.getRootPath();
     Map<String, List<WatchRequest>> roots = request.isToWatchRecursively() ? myRecursiveWatchRoots : myFlatWatchRoots;
     List<WatchRequest> requests = roots.get(watchRoot);
@@ -266,7 +256,7 @@ public final class WatchRootsManager {
     }
   }
 
-  private void addWatchSymlinkRequests(List<WatchSymlinkRequest> watchSymlinkRequestsToAdd) {
+  private void addWatchSymlinkRequests(@NotNull List<WatchSymlinkRequest> watchSymlinkRequestsToAdd) {
     for (WatchSymlinkRequest request : watchSymlinkRequestsToAdd) {
       if (!request.getRootPath().isEmpty() && !request.isRegistered()) {
         addWatchSymlinkRequest(request);
@@ -274,7 +264,7 @@ public final class WatchRootsManager {
     }
   }
 
-  private void addWatchSymlinkRequest(WatchSymlinkRequest request) {
+  private void addWatchSymlinkRequest(@NotNull WatchSymlinkRequest request) {
     String watchRoot = request.getRootPath();
     Map<String, List<WatchRequest>> roots = request.isToWatchRecursively() ? myRecursiveWatchRoots : myFlatWatchRoots;
     List<WatchRequest> requests = roots.computeIfAbsent(watchRoot, __ -> new SmartList<>());
@@ -290,7 +280,7 @@ public final class WatchRootsManager {
     }
   }
 
-  private void removeWatchSymlinkRequests(List<WatchSymlinkRequest> watchSymlinkRequestsToRemove) {
+  private void removeWatchSymlinkRequests(@NotNull List<WatchSymlinkRequest> watchSymlinkRequestsToRemove) {
     for (WatchSymlinkRequest request : watchSymlinkRequestsToRemove) {
       Ref<Boolean> remove = new Ref<>(true);
       WatchRootsUtil.forEachPathSegment(request.getOriginalPath(), '/', path -> {
@@ -307,7 +297,7 @@ public final class WatchRootsManager {
     }
   }
 
-  private void removeWatchSymlinkRequest(WatchSymlinkRequest request) {
+  private void removeWatchSymlinkRequest(@NotNull WatchSymlinkRequest request) {
     if (!request.isRegistered()) {
       return;
     }
@@ -318,7 +308,8 @@ public final class WatchRootsManager {
     }
   }
 
-  private void collectSymlinkRequests(WatchRequestImpl newRequest, /*OutParam*/ Collection<WatchSymlinkRequest> watchSymlinkRequestsToAdd) {
+  private void collectSymlinkRequests(@NotNull WatchRequestImpl newRequest,
+                                      @NotNull /*OutParam*/ Collection<WatchSymlinkRequest> watchSymlinkRequestsToAdd) {
     assert newRequest.isToWatchRecursively() : newRequest;
     WatchRootsUtil.collectByPrefix(mySymlinksByPath, newRequest.getRootPath(), e -> {
       if (e.getValue().hasValidTarget()) {
@@ -331,7 +322,7 @@ public final class WatchRootsManager {
     private final String myFSRootPath;
     private final boolean myWatchRecursively;
 
-    private WatchRequestImpl(@NotNull String rootPath, boolean watchRecursively) {
+    WatchRequestImpl(@NotNull String rootPath, boolean watchRecursively) {
       myFSRootPath = rootPath;
       myWatchRecursively = watchRecursively;
     }
@@ -357,17 +348,17 @@ public final class WatchRootsManager {
     private final boolean myWatchRecursively;
     private boolean myRegistered = false;
 
-    private WatchSymlinkRequest(SymlinkData data, boolean watchRecursively) {
+    WatchSymlinkRequest(@NotNull SymlinkData data, boolean watchRecursively) {
       mySymlinkData = data;
       assert mySymlinkData.hasValidTarget();
       myWatchRecursively = watchRecursively;
     }
 
-    private boolean isRegistered() {
+    boolean isRegistered() {
       return myRegistered;
     }
 
-    private boolean setRegistered(boolean registered) {
+    boolean setRegistered(boolean registered) {
       if (myRegistered != registered) {
         myRegistered = registered;
         return true;
@@ -391,18 +382,18 @@ public final class WatchRootsManager {
   }
 
   private static final class SymlinkData {
-    private final int id;
-    private final @SystemIndependent String path;
-    private final @Nullable @SystemIndependent String target;
+    final int id;
+    final @NotNull @SystemIndependent String path;
+    final @Nullable @SystemIndependent String target;
     private WatchSymlinkRequest myWatchRequest;
 
-    private SymlinkData(int id, String path, @Nullable String target) {
+    SymlinkData(int id, @NotNull String path, @Nullable String target) {
       this.id = id;
       this.path = FileUtil.toSystemIndependentName(path);
       this.target = target != null ? FileUtil.toSystemIndependentName(target) : null;
     }
 
-    private WatchSymlinkRequest getWatchRequest() {
+    @NotNull WatchSymlinkRequest getWatchRequest() {
       assert hasValidTarget();
       if (myWatchRequest == null) {
         myWatchRequest = new WatchSymlinkRequest(this, true);
@@ -410,18 +401,18 @@ public final class WatchRootsManager {
       return myWatchRequest;
     }
 
-    private boolean hasValidTarget() {
+    boolean hasValidTarget() {
       return target != null;
     }
 
-    private void removeRequest(WatchRootsManager manager) {
+    void removeRequest(@NotNull WatchRootsManager manager) {
       if (myWatchRequest != null) {
         manager.removeWatchSymlinkRequest(myWatchRequest);
         myWatchRequest = null;
       }
     }
 
-    private void clear() {
+    void clear() {
       myWatchRequest = null;
     }
 

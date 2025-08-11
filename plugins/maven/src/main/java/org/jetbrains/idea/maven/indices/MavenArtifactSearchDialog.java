@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
@@ -32,7 +33,8 @@ public final class MavenArtifactSearchDialog extends DialogWrapper {
 
   private final Map<MavenArtifactSearchPanel, Boolean> myOkButtonStates = new HashMap<>();
 
-  public static @NotNull List<MavenId> searchForClass(Project project, String className) {
+  @NotNull
+  public static List<MavenId> searchForClass(Project project, String className) {
     if (MavenUtil.isMavenUnitTestModeEnabled()) {
       assert ourResultForTest != null;
 
@@ -49,7 +51,8 @@ public final class MavenArtifactSearchDialog extends DialogWrapper {
     return d.getResult();
   }
 
-  public static @NotNull List<MavenId> searchForArtifact(Project project, Collection<MavenDomDependency> managedDependencies) {
+  @NotNull
+  public static List<MavenId> searchForArtifact(Project project, Collection<MavenDomDependency> managedDependencies) {
     if (MavenUtil.isMavenUnitTestModeEnabled()) {
       assert ourResultForTest != null;
 
@@ -136,8 +139,9 @@ public final class MavenArtifactSearchDialog extends DialogWrapper {
     setOKActionEnabled(canSelect);
   }
 
+  @NotNull
   @Override
-  protected @NotNull Action getOKAction() {
+  protected Action getOKAction() {
     Action result = super.getOKAction();
     result.putValue(Action.NAME, MavenDomBundle.message("maven.artifact.pom.search.add"));
     return result;
@@ -160,7 +164,8 @@ public final class MavenArtifactSearchDialog extends DialogWrapper {
     return "Maven.ArtifactSearchDialog";
   }
 
-  public @NotNull List<MavenId> getResult() {
+  @NotNull
+  public List<MavenId> getResult() {
     return myResult;
   }
 

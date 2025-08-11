@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.openapi.externalSystem.model.Key;
@@ -35,7 +35,8 @@ public final class AnnotationProcessingData {
    * Annotation processor arguments
    * @return immutable collection of arguments
    */
-  public @Unmodifiable Collection<String> getArguments() {
+  @Unmodifiable
+  public Collection<String> getArguments() {
     return arguments;
   }
 
@@ -43,7 +44,8 @@ public final class AnnotationProcessingData {
    * Annotation processor path
    * @return immutable collection of path elements
    */
-  public @Unmodifiable Collection<String> getPath() {
+  @Unmodifiable
+  public Collection<String> getPath() {
     return path;
   }
 
@@ -77,7 +79,8 @@ public final class AnnotationProcessingData {
       testSources = isTestSources;
     }
 
-    public @NotNull String getOutputPath() {
+    @NotNull
+    public String getOutputPath() {
       return outputPath;
     }
 

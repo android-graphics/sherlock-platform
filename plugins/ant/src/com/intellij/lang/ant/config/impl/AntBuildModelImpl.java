@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.AntSupport;
@@ -43,7 +43,8 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   }
 
   @Override
-  public @Nullable String getDefaultTargetName() {
+  @Nullable
+  public String getDefaultTargetName() {
     final AntDomProject antDomProject = getAntProject();
     if (antDomProject != null) {
       return antDomProject.getDefaultTarget().getRawText();
@@ -52,7 +53,8 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   }
 
   @Override
-  public @Nullable @NlsSafe String getName() {
+  @Nullable
+  public @NlsSafe String getName() {
     final AntDomProject project = getAntProject();
     return project != null? project.getName().getRawText() : null;
   }
@@ -74,7 +76,8 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   }
 
   @Override
-  public @Nullable @NonNls String getDefaultTargetActionId() {
+  @Nullable
+  public @NonNls String getDefaultTargetActionId() {
     if (StringUtil.isEmptyOrSpaces(getDefaultTargetName())) {
       return null;
     }
@@ -91,7 +94,8 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   }
 
   @Override
-  public @Nullable AntBuildTargetBase findTarget(final String name) {
+  @Nullable
+  public AntBuildTargetBase findTarget(final String name) {
     for (AntBuildTargetBase target : myTargets.getValue()) {
       if (Comparing.strEqual(target.getName(), name)) {
         return target;
@@ -101,7 +105,8 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   }
 
   @Override
-  public @Nullable BuildTask findTask(final String targetName, final String taskName) {
+  @Nullable
+  public BuildTask findTask(final String targetName, final String taskName) {
     final AntBuildTargetBase buildTarget = findTarget(targetName);
     return (buildTarget == null) ? null : buildTarget.findTask(taskName);
   }

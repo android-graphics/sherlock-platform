@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -74,12 +74,14 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected @NotNull String getCommandName() {
+  @NotNull
+  protected String getCommandName() {
     return JavaRefactoringBundle.message("move.inner.class.command", myDescriptiveName);
   }
 
   @Override
-  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  @NotNull
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new MoveInnerViewDescriptor(myInnerClass);
   }
 
@@ -191,7 +193,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       }
 
       // replace references in a new class to old inner class with references to itself
-      for (PsiReference ref : ReferencesSearch.search(myInnerClass, new LocalSearchScope(newClass.getContainingFile()), true).asIterable()) {
+      for (PsiReference ref : ReferencesSearch.search(myInnerClass, new LocalSearchScope(newClass.getContainingFile()), true)) {
         PsiElement element = ref.getElement();
         if (element.getParent() instanceof PsiJavaCodeReferenceElement parentRef) {
           PsiElement parentRefElement = parentRef.resolve();
@@ -317,7 +319,8 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private @NotNull PsiField createOuterField(@NotNull PsiElementFactory factory) {
+  @NotNull
+  private PsiField createOuterField(@NotNull PsiElementFactory factory) {
     PsiField field = factory.createField(myFieldNameOuterClass, factory.createType(myOuterClass));
 
     PsiModifierList modifierList = field.getModifierList();
@@ -448,7 +451,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
                     final String parameterName,
                     boolean searchInComments,
                     boolean searchInNonJava,
-                    final @NotNull PsiElement targetContainer) {
+                    @NotNull final PsiElement targetContainer) {
     myNewClassName = className;
     myInnerClass = innerClass;
     myDescriptiveName = DescriptiveNameUtil.getDescriptiveName(myInnerClass);
@@ -532,7 +535,8 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     return statement;
   }
 
-  private static @Nullable PsiElement getAnchorElement(PsiCodeBlock body) {
+  @Nullable
+  private static PsiElement getAnchorElement(PsiCodeBlock body) {
     PsiStatement[] statements = body.getStatements();
     if (statements.length > 0) {
       PsiStatement first = statements[0];

@@ -9,7 +9,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
-import org.jetbrains.plugins.terminal.block.session.ShellIntegrationFunctions
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 
 internal object ShellEnvBasedGenerators {
@@ -21,12 +20,13 @@ internal object ShellEnvBasedGenerators {
    */
   fun aliasesGenerator(): ShellRuntimeDataGenerator<Map<String, String>> {
     return ShellRuntimeDataGenerator(cacheKeyAndDebugName = "aliases") { context ->
-      getAliases(context) ?: emptyMap<String, String>()
+      val shellEnv = getShellEnv(context) ?: return@ShellRuntimeDataGenerator emptyMap()
+      shellEnv.aliases
     }
   }
 
   suspend fun getShellEnv(context: ShellRuntimeContext): ShellEnvironment? {
-    val result = context.runShellCommand(ShellIntegrationFunctions.GET_ENVIRONMENT.functionName)
+    val result = context.runShellCommand("__jetbrains_intellij_get_environment")
     if (result.exitCode != 0) {
       LOG.error("Get shell environment command failed with exit code ${result.exitCode}, output: ${result.output}")
       return null
@@ -48,16 +48,6 @@ internal object ShellEnvBasedGenerators {
     )
   }
 
-  suspend fun getAliases(context: ShellRuntimeContext): Map<String, String>? {
-    val result = context.runShellCommand(ShellIntegrationFunctions.GET_ALIASES.functionName)
-    if (result.exitCode != 0) {
-      LOG.error("Get shell aliases command failed with exit code ${result.exitCode}, output: ${result.output}")
-      return null
-    }
-
-    return parseAliases(result.output, context.shellName.name)
-  }
-
   private fun parseAliases(text: String, shellName: String): Map<String, String> {
     val shellSupport = TerminalShellSupport.findByShellName(shellName)
                        ?: return emptyMap()
@@ -65,7 +55,7 @@ internal object ShellEnvBasedGenerators {
       shellSupport.parseAliases(text)
     }
     catch (t: Throwable) {
-      LOG.error("Failed to parse aliases: $text", t)
+      LOG.error("Failed to parse aliases: $text")
       emptyMap()
     }
   }

@@ -44,7 +44,8 @@ public final class ImportFromToImportIntention extends PyBaseIntentionAction {
     String myModuleName = null;
     int myRelativeLevel = 0;
 
-    public @NotNull @IntentionName String getText() {
+    @NotNull
+    public @IntentionName String getText() {
       String name = myModuleName != null ? myModuleName : "...";
       if (myRelativeLevel > 0) {
         String[] relative_names = getRelativeNames(false, this);
@@ -71,7 +72,8 @@ public final class ImportFromToImportIntention extends PyBaseIntentionAction {
     }
   }
 
-  private static @Nullable PsiElement getElementFromEditor(Editor editor, PsiFile file) {
+  @Nullable
+  private static PsiElement getElementFromEditor(Editor editor, PsiFile file) {
     PsiElement element = null;
     Document doc = editor.getDocument();
     PsiFile a_file = file;
@@ -112,7 +114,8 @@ public final class ImportFromToImportIntention extends PyBaseIntentionAction {
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.convert.import.qualify");
   }
 
@@ -214,8 +217,8 @@ public final class ImportFromToImportIntention extends PyBaseIntentionAction {
       } while (feeler != null);
       String top_name = top_qualifier.getName();
       Collection<PsiReference> possible_targets = references.keySet();
-      if (!star_references.isEmpty()) {
-        possible_targets = new ArrayList<>(references.size() + star_references.size());
+      if (star_references.size() > 0) {
+        possible_targets = new ArrayList<>(references.keySet().size() + star_references.size());
         possible_targets.addAll(references.keySet());
         possible_targets.addAll(star_references);
       }

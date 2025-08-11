@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.project.Project;
@@ -18,7 +18,8 @@ public final class SearchScopeProvider {
 
   /** @deprecated Use {@link ExecutionSearchScopes#executionScope(Collection)}*/
   @Deprecated(forRemoval = true)
-  public static @NotNull GlobalSearchScope createSearchScope(@NotNull Project project, @Nullable RunProfile runProfile) {
+  @NotNull
+  public static GlobalSearchScope createSearchScope(@NotNull Project project, @Nullable RunProfile runProfile) {
     return ExecutionSearchScopes.executionScope(project, runProfile);
   }
 }

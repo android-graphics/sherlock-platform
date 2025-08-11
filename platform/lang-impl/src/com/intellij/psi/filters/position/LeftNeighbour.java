@@ -40,7 +40,6 @@ public class LeftNeighbour extends PositionElementFilter{
     return false;
   }
 
-  @Override
   public String toString(){
     return "left(" +getFilter()+")";
   }

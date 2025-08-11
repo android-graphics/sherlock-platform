@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.core.fileIndex
 
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.WorkspaceModel
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -34,26 +35,7 @@ interface WorkspaceFileIndexContributor<E : WorkspaceEntity> {
   fun registerFileSets(entity: E, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage)
 
   /**
-   * Describes other entities whose properties may be used in [registerFileSets].
-   *
-   * The [WorkspaceFileIndexContributor] is registered per-entity, however if the implementation of the contributor accesses properties
-   * that refer to other entities, the changes of the referred entities won't be tracked by the contributor automatically.
-   *
-   * For example, if the contributor for ParentEntity accesses the ChildEntity,
-   * the ChildEntity should be listed in [dependenciesOnOtherEntities]:
-   * ```
-   * class MyParentContributor : WorkspaceFileIndexContributor<ParentEntity> {
-   *
-   *   override fun registerFileSets(entity: ParentEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-   *     val childUrl = entity.child.url   // <--- Accessing fields from the referred entity
-   *     registrar.registerFileSet(childUrl, ...)
-   *   }
-   *
-   *   override val dependenciesOnOtherEntities = listOf(DependencyDescription.OnChild(ChildEntity::class.java) { it.parent })
-   * }
-   *```
-   * Then MyParentContributor with overridden [dependenciesOnOtherEntities] will be called when ChildEntity specified
-   * as a dependency is changed.
+   * Describes other entities which properties may be used in [registerFileSets].
    */
   val dependenciesOnOtherEntities: List<DependencyDescription<E>>
     get() = emptyList()
@@ -182,6 +164,13 @@ interface WorkspaceFileSetRegistrar {
    * Excludes [excludedRoot] and all files under it from [excludedFrom] kind of files. 
    * This is a temporary solution to keep behavior of old code. 
    */
+  @ApiStatus.Obsolete
+  fun registerExcludedRoot(excludedRoot: VirtualFile, excludedFrom: WorkspaceFileKind, entity: WorkspaceEntity)
+  
+  /**
+   * Excludes [excludedRoot] and all files under it from [excludedFrom] kind of files. 
+   * This is a temporary solution to keep behavior of old code. 
+   */
   fun registerExcludedRoot(excludedRoot: VirtualFileUrl, excludedFrom: WorkspaceFileKind, entity: WorkspaceEntity)
 
   /**
@@ -208,4 +197,11 @@ interface WorkspaceFileSetRegistrar {
                                   kind: WorkspaceFileKind,
                                   entity: WorkspaceEntity,
                                   customData: WorkspaceFileSetData?)
+
+  /**
+   * A variant of [registerExclusionCondition] function which takes [VirtualFile] instead of [VirtualFileUrl].
+   * This function is considered as a temporary solution until all contributors to [WorkspaceFileIndex] are migrated to Workspace Model.
+   */
+  @ApiStatus.Obsolete
+  fun registerExclusionCondition(root: VirtualFile, condition: (VirtualFile) -> Boolean, entity: WorkspaceEntity)
 }

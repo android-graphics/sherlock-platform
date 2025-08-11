@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.remoteDev.RemoteDevUtilBundle
@@ -35,21 +34,20 @@ object CodeWithMeGuestLauncher {
   fun downloadCompatibleClientAndLaunch(
     lifetime: Lifetime?,
     project: Project?,
-    clientBuild: BuildNumber?,
+    clientBuild: String?,
     url: String,
     @NlsContexts.DialogTitle product: String,
-    enableBeforeRunHooks: Boolean,
-    onDone: (Lifetime) -> Unit = {},
+    onDone: (Lifetime) -> Unit = {}
   ) {
     if (!application.isDispatchThread) {
       // starting a task from background will call invokeLater, but with wrong modality, so do it ourselves
-      application.invokeLater({ downloadCompatibleClientAndLaunch(lifetime, project, clientBuild, url, product, enableBeforeRunHooks, onDone) }, ModalityState.any())
+      application.invokeLater({ downloadCompatibleClientAndLaunch(lifetime, project, clientBuild, url, product, onDone) }, ModalityState.any())
       return
     }
 
     val uri = UrlUtil.parseOrShowError(url, product) ?: return
 
-    if (runAlreadyDownloadedClient(clientBuild, lifetime, project, url, enableBeforeRunHooks, onDone)) {
+    if (runAlreadyDownloadedClient(clientBuild, lifetime, project, url, onDone)) {
       return
     }
 
@@ -58,7 +56,7 @@ object CodeWithMeGuestLauncher {
       return
     }
 
-    ProgressManager.getInstance().run(DownloadAndLaunchClientTask(project, uri, lifetime, url, product, enableBeforeRunHooks, onDone))
+    ProgressManager.getInstance().run(DownloadAndLaunchClientTask(project, uri, lifetime, url, product, onDone))
   }
 
   private class DownloadAndLaunchClientTask(
@@ -67,8 +65,7 @@ object CodeWithMeGuestLauncher {
     private val lifetime: Lifetime?,
     private val url: String,
     private val product: @NlsContexts.DialogTitle String,
-    private val enableBeforeRunHooks: Boolean,
-    private val onDone: (Lifetime) -> Unit,
+    private val onDone: (Lifetime) -> Unit
   ) : Backgroundable(project, RemoteDevUtilBundle.message("launcher.title"), true) {
 
     private var clientLifetime : Lifetime = Lifetime.Terminated
@@ -77,9 +74,8 @@ object CodeWithMeGuestLauncher {
       try {
         val sessionInfo = when (uri.scheme) {
           "tcp", "gwws" -> {
-            val clientBuildString = uri.fragmentParameters["cb"] ?: error("there is no client build in url")
+            val clientBuild = uri.fragmentParameters["cb"] ?: error("there is no client build in url")
             val jreBuild = uri.fragmentParameters["jb"] ?: error("there is no jre build in url")
-            val clientBuild = BuildNumber.fromStringOrNull(clientBuildString) ?: error("invalid client build: $clientBuildString")
             val unattendedMode = isUnattendedModeUri(uri)
 
             CodeWithMeClientDownloader.createSessionInfo(clientBuild, jreBuild, unattendedMode)
@@ -94,15 +90,14 @@ object CodeWithMeGuestLauncher {
         }
 
         val parentLifetime = lifetime ?: project?.createLifetime() ?: Lifetime.Eternal
-        val frontendInstallation = CodeWithMeClientDownloader.downloadFrontendAndJdk(sessionInfo, progressIndicator)
+        val extractedJetBrainsClientData = CodeWithMeClientDownloader.downloadClientAndJdk(sessionInfo, progressIndicator)
 
-        clientLifetime = runDownloadedFrontend(
+        clientLifetime = runDownloadedClient(
           lifetime = parentLifetime,
-          frontendInstallation = frontendInstallation,
+          extractedJetBrainsClientData = extractedJetBrainsClientData,
           urlForThinClient = url,
           product = product,
-          progressIndicator = progressIndicator,
-          enableBeforeRunHooks = enableBeforeRunHooks,
+          progressIndicator = progressIndicator
         )
       }
       catch (t: Throwable) {
@@ -119,12 +114,11 @@ object CodeWithMeGuestLauncher {
   }
 
   private fun runAlreadyDownloadedClient(
-    clientBuild: BuildNumber?,
+    clientBuild: String?,
     aLifetime: Lifetime?,
     project: Project?,
     url: String,
-    enableBeforeRunHooks: Boolean,
-    onDone: (Lifetime) -> Unit,
+    onDone: (Lifetime) -> Unit
   ): Boolean {
     if (clientBuild == null) {
       return false
@@ -137,27 +131,9 @@ object CodeWithMeGuestLauncher {
       onDone(clientLifetime)
       return true
     }
-
-    val frontendInstallation = findFrontendInstallation(clientBuild)
-    if (frontendInstallation == null) return false
     
-    val lifetime = aLifetime ?: project?.createLifetime() ?: Lifetime.Eternal
-    val clientLifetime = CodeWithMeClientDownloader.runFrontendProcess(
-      lifetime = lifetime,
-      url = url,
-      frontendInstallation = frontendInstallation,
-      enableBeforeRunHooks = enableBeforeRunHooks,
-    )
-    onDone(clientLifetime)
-    return true
-  }
-
-  private fun findFrontendInstallation(clientBuild: BuildNumber): FrontendInstallation? {
-    val customSnapshotInstallation = CodeWithMeClientDownloader.createCustomFrontendSnapshotInstallation(clientBuild)
-    if (customSnapshotInstallation != null) return customSnapshotInstallation 
-
     if (!CodeWithMeClientDownloader.isClientDownloaded(clientBuild)) {
-      return null
+      return false
     }
     val sessionInfo = CodeWithMeClientDownloader.createSessionInfo(clientBuild, null, true)
     val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
@@ -166,20 +142,25 @@ object CodeWithMeGuestLauncher {
       url = clientUrl,
       tempDir = tempDir,
       cachesDir = service<JetBrainsClientDownloaderConfigurationProvider>().clientCachesDir,
-      includeInManifest = CodeWithMeClientDownloader.getJetBrainsClientManifestFilter(sessionInfo.clientBuildNumber),
+      includeInManifest = CodeWithMeClientDownloader.getJetBrainsClientManifestFilter(sessionInfo.hostBuildNumber),
     )
-    return StandaloneFrontendInstallation(guestData.targetPath, clientBuild, null)
+    val lifetime = aLifetime ?: project?.createLifetime() ?: Lifetime.Eternal
+    val clientLifetime = CodeWithMeClientDownloader.runCwmGuestProcessFromDownload(
+      lifetime = lifetime,
+      url = url,
+      extractedJetBrainsClientData = ExtractedJetBrainsClientData(guestData.targetPath, null, clientBuild)
+    )
+    onDone(clientLifetime)
+    return true
   }
 
-  fun runDownloadedFrontend(
-    lifetime: Lifetime, frontendInstallation: FrontendInstallation, urlForThinClient: String,
-    @NlsContexts.DialogTitle product: String, progressIndicator: ProgressIndicator?, enableBeforeRunHooks: Boolean,
-  ): Lifetime {
+  fun runDownloadedClient(lifetime: Lifetime, extractedJetBrainsClientData: ExtractedJetBrainsClientData, urlForThinClient: String,
+                          @NlsContexts.DialogTitle product: String, progressIndicator: ProgressIndicator?): Lifetime {
     // todo: offer to connect as-is?
     try {
       progressIndicator?.text = RemoteDevUtilBundle.message("launcher.launch.client")
-      progressIndicator?.text2 = frontendInstallation.installationHome.pathString
-      val thinClientLifetime = CodeWithMeClientDownloader.runFrontendProcess(lifetime, urlForThinClient, frontendInstallation, enableBeforeRunHooks)
+      progressIndicator?.text2 = extractedJetBrainsClientData.clientDir.pathString
+      val thinClientLifetime = CodeWithMeClientDownloader.runCwmGuestProcessFromDownload(lifetime, urlForThinClient, extractedJetBrainsClientData)
 
       // Wait a bit until process will be launched and only after that finish task
       Thread.sleep(3000)

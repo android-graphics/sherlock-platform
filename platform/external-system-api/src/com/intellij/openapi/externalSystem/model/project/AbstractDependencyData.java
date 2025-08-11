@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.roots.DependencyScope;
@@ -10,8 +10,8 @@ import java.io.ObjectInputStream;
 public abstract class AbstractDependencyData<T extends AbstractExternalEntityData & Named> extends AbstractExternalEntityData
   implements DependencyData<T>, Named, OrderAware {
 
-  private @NotNull ModuleData ownerModule;
-  private @NotNull T target;
+  @NotNull private ModuleData ownerModule;
+  @NotNull private T target;
 
   private DependencyScope scope = DependencyScope.COMPILE;
 
@@ -26,7 +26,8 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
   }
 
   @Override
-  public @NotNull ModuleData getOwnerModule() {
+  @NotNull
+  public ModuleData getOwnerModule() {
     return ownerModule;
   }
 
@@ -35,7 +36,8 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
   }
 
   @Override
-  public @NotNull T getTarget() {
+  @NotNull
+  public T getTarget() {
     return target;
   }
 
@@ -44,7 +46,8 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
   }
 
   @Override
-  public @NotNull DependencyScope getScope() {
+  @NotNull
+  public DependencyScope getScope() {
     return scope;
   }
 
@@ -61,8 +64,9 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
     this.exported = exported;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getExternalName() {
+  public String getExternalName() {
     return target.getExternalName();
   }
 
@@ -71,8 +75,9 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
     target.setExternalName(name);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getInternalName() {
+  public String getInternalName() {
     return target.getInternalName();
   }
 

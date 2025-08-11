@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -31,7 +31,8 @@ public abstract class MergeModuleStatementsFix<T extends PsiStatement> extends P
     return PsiUtil.isAvailable(JavaFeature.MODULES, element) ? Presentation.of(getText()) : null;
   }
 
-  abstract @IntentionName @NotNull String getText();
+  @IntentionName
+  abstract @NotNull String getText();
 
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiJavaModule javaModule, @NotNull ModPsiUpdater updater) {
@@ -55,18 +56,22 @@ public abstract class MergeModuleStatementsFix<T extends PsiStatement> extends P
     updater.moveCaretTo(resultingStatement.getTextRange().getEndOffset());
   }
 
-  protected abstract @NotNull String getReplacementText(List<? extends T> statementsToMerge);
+  @NotNull
+  protected abstract String getReplacementText(List<? extends T> statementsToMerge);
 
-  protected abstract @NotNull List<T> getStatementsToMerge(@NotNull PsiJavaModule javaModule);
+  @NotNull
+  protected abstract List<T> getStatementsToMerge(@NotNull PsiJavaModule javaModule);
 
-  protected static @NotNull String joinUniqueNames(@NotNull List<String> names) {
+  @NotNull
+  protected static String joinUniqueNames(@NotNull List<String> names) {
     final Set<String> unique = new HashSet<>();
     return names.stream()
       .filter(name -> unique.add(name))
       .collect(Collectors.joining(","));
   }
 
-  public static @Nullable MergeModuleStatementsFix<?> createFix(@Nullable PsiElement statement) {
+  @Nullable
+  public static MergeModuleStatementsFix<?> createFix(@Nullable PsiElement statement) {
     if (statement instanceof PsiPackageAccessibilityStatement) {
       return MergePackageAccessibilityStatementsFix.createFix((PsiPackageAccessibilityStatement)statement);
     }

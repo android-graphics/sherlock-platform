@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -33,10 +33,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 
+/**
+ * @author anna
+ */
 public abstract class MasterDetailsComponent implements Configurable, DetailsComponent.Facade, MasterDetails {
   protected static final Logger LOG = Logger.getInstance(MasterDetailsComponent.class);
 
@@ -370,7 +373,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       if (!(userObject instanceof NamedConfigurable)) break;
       final String displayName = current.getDisplayName();
       if (StringUtil.isEmptyOrSpaces(displayName)) break;
-      if (!path.isEmpty()) {
+      if (path.length() > 0) {
         path.append('|');
       }
       path.append(displayName);

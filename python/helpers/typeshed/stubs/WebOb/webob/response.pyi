@@ -2,20 +2,12 @@ from _typeshed import SupportsItems, SupportsRead
 from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment
 from collections.abc import Iterable, Iterator, Sequence
 from datetime import timedelta
-from typing import IO, Any, Literal, Protocol, TypedDict
-from typing_extensions import TypeAlias
+from typing import IO, Any, Protocol
+from typing_extensions import Literal, TypeAlias, TypedDict
 
 from webob.byterange import ContentRange
 from webob.cachecontrol import _ResponseCacheControl
-from webob.cookies import _SameSitePolicy
-from webob.descriptors import (
-    _AsymmetricProperty,
-    _AsymmetricPropertyWithDelete,
-    _authorization,
-    _ContentRangeParams,
-    _DateProperty,
-    _ListProperty,
-)
+from webob.descriptors import _AsymmetricProperty, _AsymmetricPropertyWithDelete, _authorization, _DateProperty, _ListProperty
 from webob.headers import ResponseHeaders
 from webob.request import Request
 
@@ -53,6 +45,16 @@ class _ResponseCacheControlDict(TypedDict, total=False):
     stale_if_error: int
 
 _HTTPHeader: TypeAlias = tuple[str, str]
+_ContentRangeParams: TypeAlias = (
+    ContentRange
+    | list[int | None]
+    | tuple[int, int]
+    | tuple[None, None]
+    | tuple[int, int, int | None]
+    | tuple[None, None, int | None]
+    | str
+    | None
+)
 
 class Response:
     default_content_type: str
@@ -132,7 +134,7 @@ class Response:
         httponly: bool = False,
         comment: str | None = None,
         overwrite: bool = False,
-        samesite: _SameSitePolicy | None = None,
+        samesite: Literal["strict", "lax", "none"] | None = None,
     ) -> None: ...
     def delete_cookie(self, name: str, path: str = "/", domain: str | None = None) -> None: ...
     def unset_cookie(self, name: str, strict: bool = True) -> None: ...
@@ -151,7 +153,7 @@ class ResponseBodyFile:
     mode: Literal["wb"]
     closed: Literal[False]
     response: Response
-    def __init__(self, response: Response) -> None: ...
+    def __init__(self, response: Response): ...
     @property
     def encoding(self) -> str | None: ...
     def write(self, text: str | bytes) -> int: ...

@@ -1,5 +1,6 @@
 from _typeshed import StrPath
-from typing import ClassVar, Literal
+from typing import ClassVar
+from typing_extensions import Literal
 
 from .. import fixer_base
 from ..pytree import Node

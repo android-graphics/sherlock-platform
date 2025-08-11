@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project.dependencies;
 
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +10,8 @@ import java.util.List;
 
 public abstract class AbstractDependencyNode implements DependencyNode, Serializable {
   private final long id;
-  private final @NotNull List<DependencyNode> dependencies;
+  @NotNull
+  private final List<DependencyNode> dependencies;
   private ResolutionState resolutionState;
   private String selectionReason;
 
@@ -24,13 +25,15 @@ public abstract class AbstractDependencyNode implements DependencyNode, Serializ
     return id;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<DependencyNode> getDependencies() {
+  public List<DependencyNode> getDependencies() {
     return dependencies;
   }
 
+  @Nullable
   @Override
-  public @Nullable ResolutionState getResolutionState() {
+  public ResolutionState getResolutionState() {
     return resolutionState;
   }
 
@@ -38,8 +41,9 @@ public abstract class AbstractDependencyNode implements DependencyNode, Serializ
     this.resolutionState = resolutionState;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getSelectionReason() {
+  public String getSelectionReason() {
     return selectionReason;
   }
 
@@ -58,6 +62,7 @@ public abstract class AbstractDependencyNode implements DependencyNode, Serializ
 
   @Override
   public int hashCode() {
-    return Long.hashCode(id);
+    int result = (int)(id ^ (id >>> 32));
+    return result;
   }
 }

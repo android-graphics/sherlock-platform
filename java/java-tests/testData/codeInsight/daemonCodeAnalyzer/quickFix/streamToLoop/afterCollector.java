@@ -115,7 +115,7 @@ public class Main {
 
   // Unresolved reference
   void f(Collection<? extends Foo> c) {
-      TreeSet treeSet = new TreeSet();
+      R treeSet = new TreeSet();
       for (Foo foo : c) {
           treeSet.add(foo);
       }

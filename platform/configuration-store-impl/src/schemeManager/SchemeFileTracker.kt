@@ -2,7 +2,6 @@
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.LOG
-import com.intellij.configurationStore.RELOADING_STORAGE_WRITE_REQUESTOR
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.configurationStore.StoreReloadManagerImpl
 import com.intellij.openapi.diagnostic.debug
@@ -25,9 +24,8 @@ internal class SchemeFileTracker<T : Scheme, M : T>(
 
   override fun after(events: List<VFileEvent>) {
     val list = ArrayList<SchemeChangeEvent<T, M>>()
-
     for (event in events) {
-      if (event.requestor is SchemeManagerImpl<*, *> || event.requestor == RELOADING_STORAGE_WRITE_REQUESTOR) {
+      if (event.requestor is SchemeManagerImpl<*, *>) {
         continue
       }
 
@@ -47,8 +45,8 @@ internal class SchemeFileTracker<T : Scheme, M : T>(
           else if (schemeManager.canRead(event.childName) && isMyDirectory(event.parent)) {
             val virtualFile = event.file
             LOG.debug { "CREATED ${event.path} (virtualFile: ${if (virtualFile == null) "not " else ""}found)" }
-            if (virtualFile != null) {
-              list.add(AddScheme(virtualFile))
+            virtualFile?.let {
+              list.add(AddScheme(it))
             }
           }
         }

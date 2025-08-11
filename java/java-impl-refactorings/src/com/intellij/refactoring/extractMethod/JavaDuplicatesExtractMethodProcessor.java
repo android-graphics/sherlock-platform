@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -207,7 +207,8 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     return false;
   }
 
-  private @NotNull PsiElement updateCallQualifier(PsiMethodCallExpression callExpression) {
+  @NotNull
+  private PsiElement updateCallQualifier(PsiMethodCallExpression callExpression) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
     PsiClass psiClass = myExtractedMethod.getContainingClass();
     LOG.assertTrue(psiClass != null, "myExtractedMethod.getContainingClass");
@@ -217,7 +218,8 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     return JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(callExpression);
   }
 
-  public @NotNull DuplicatesFinder createDuplicatesFinder() {
+  @NotNull
+  public DuplicatesFinder createDuplicatesFinder() {
     ReturnValue returnValue = myOutputVariables.length == 1 ? new VariableReturnValue(myOutputVariables[0]) : null;
 
     Set<PsiVariable> effectivelyLocal = getEffectivelyLocalVariables();

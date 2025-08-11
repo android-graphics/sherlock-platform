@@ -5,53 +5,57 @@ import ai.grazie.detector.heuristics.rule.RuleFilter
 import ai.grazie.utils.toLinkedSet
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GraziePlugin
-import com.intellij.grazie.ide.msg.CONFIG_STATE_TOPIC
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassLoaderUtil
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.spellchecker.grazie.SpellcheckerLifecycle
-import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.spelling.SpellingCheckRule
 import java.util.concurrent.Callable
 
-internal class GrazieSpellcheckerLifecycle : SpellcheckerLifecycle {
-  override suspend fun preload(project: Project) {
-    serviceAsync<GrazieCheckers>()
+object GrazieSpellchecker {
+
+  fun isCorrect(word: String): Boolean? {
+    return ApplicationManager.getApplication().service<GrazieSpellcheckerLifecycle>().isCorrect(word)
+  }
+
+  /**
+   * Checks text for spelling mistakes.
+   */
+  fun getSuggestions(word: String): Collection<String> {
+    return ApplicationManager.getApplication().service<GrazieSpellcheckerLifecycle>().getSuggestions(word)
   }
 }
 
-@ApiStatus.Internal
 @Service(Service.Level.APP)
-class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
+internal class GrazieSpellcheckerLifecycle(cs: CoroutineScope) : GrazieStateLifecycle {
 
   private val MAX_SUGGESTIONS_COUNT = 3
 
   private val filter by lazy { RuleFilter.withAllBuiltIn() }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val executeScope = cs.childScope(Dispatchers.Default.limitedParallelism(1))
+
   private fun filterCheckers(word: String): Set<SpellerTool> {
-    val checkers = this.checkers
+    val checkers = this.checkers.value
     if (checkers.isEmpty()) {
       return emptySet()
     }
 
     val preferred = filter.filter(listOf(word)).preferred
-    return checkers.asSequence()
-      .filter { checker -> preferred.any { checker.lang.equalsTo(it) } }
-      .toSet()
+    return checkers.asSequence().filter { checker -> preferred.any { checker.lang.equalsTo(it) } }.toSet()
   }
 
   data class SpellerTool(val tool: JLanguageTool, val lang: Lang, val speller: SpellingCheckRule, val suggestLimit: Int) {
@@ -68,8 +72,7 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
             val mutated = word + word.last() + word.last()
             if (speller.match(tool.getRawAnalyzedSentence(mutated)).isEmpty()) null else true
           }
-        }
-        else false
+        } else false
       }
     }
 
@@ -87,42 +90,33 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
   }
 
   @Volatile
-  private var checkers: Collection<SpellerTool> = heavyInit()
+  private var checkers: Lazy<Collection<SpellerTool>> = initCheckers()
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private val configurationScope = coroutineScope.childScope("ConfigurationChanged", Dispatchers.Default.limitedParallelism(1))
-
-  init {
-    val application = ApplicationManager.getApplication()
-    val connection = application.messageBus.connect(coroutineScope)
-    connection.subscribe(CONFIG_STATE_TOPIC, this)
-  }
-
-  // getService() enables cancellable code to be canceled even when init of service is a long operation
-  private fun heavyInit(): Collection<SpellerTool> {
-    val set = LinkedHashSet<SpellerTool>()
-    for (lang in GrazieConfig.get().availableLanguages) {
-      if (lang.isEnglish()) continue
-
-      val tool = LangTool.getTool(lang)
-      tool.allSpellingCheckRules.firstOrNull()
-        ?.let { set.add(SpellerTool(tool, lang, it, MAX_SUGGESTIONS_COUNT)) }
+  private fun initCheckers(): Lazy<Collection<SpellerTool>> {
+    return lazy(LazyThreadSafetyMode.PUBLICATION) {
+      GrazieConfig.get().availableLanguages.asSequence()
+        .filterNot { it.isEnglish() }
+        .mapNotNull { lang ->
+          ProgressManager.checkCanceled()
+          val tool = LangTool.getTool(lang)
+          tool.allSpellingCheckRules.firstOrNull()?.let {
+            SpellerTool(tool, lang, it, MAX_SUGGESTIONS_COUNT)
+          }
+        }
+        .toLinkedSet()
     }
-
-    return set
   }
 
   override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
-    configurationScope.launch {
-      checkers = blockingContext { heavyInit() }
-    }
+    checkers = initCheckers()
+    executeScope.launch { checkers.value }
   }
 
   fun isCorrect(word: String): Boolean? {
     val myCheckers = filterCheckers(word)
 
     var isAlien = true
-    for (speller in myCheckers) {
+    myCheckers.forEach { speller ->
       when (speller.check(word)) {
         true -> return true
         false -> isAlien = false
@@ -150,13 +144,5 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
         .flatten()
         .toLinkedSet()
     }, indicator)
-  }
-
-  @TestOnly
-  fun awaitConfiguration() {
-    runBlockingMaybeCancellable {
-      val jobs: List<Job> = configurationScope.coroutineContext.job.children.toList()
-      joinAll(*jobs.toTypedArray())
-    }
   }
 }

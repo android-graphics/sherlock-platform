@@ -1,15 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
-import com.intellij.diagnostic.LoadingState
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ArrayNode
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -18,16 +18,11 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.eel.*
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.write
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.*
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.tukaani.xz.XZInputStream
@@ -41,11 +36,10 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 /** describes vendor + product part of the UI **/
-@Internal
 data class JdkProduct(
   val vendor: @NlsSafe String,
   val product: @NlsSafe String?,
-  val flavour: @NlsSafe String?,
+  val flavour: @NlsSafe String?
 ) {
   val packagePresentationText: String
     get() = buildString {
@@ -64,7 +58,6 @@ data class JdkProduct(
 }
 
 /** describes an item behind the version as well as download info **/
-@Internal
 data class JdkItem(
   val product: JdkProduct,
 
@@ -102,9 +95,8 @@ data class JdkItem(
 
   val sharedIndexAliases: List<String>,
 
-  private val saveToFile: (Path) -> Unit,
+  private val saveToFile: (Path) -> Unit
 ) {
-  val archiveSizeInMB: String = String.format("%.1f", archiveSize.toDouble() / 1024 / 1024)
 
   fun writeMarkerFile(file: Path) {
     saveToFile(file)
@@ -141,7 +133,7 @@ data class JdkItem(
   private val vendorPrefix
     get() = suggestedSdkName.split("-").dropLast(1).joinToString("-")
 
-  fun matchesVendor(predicate: String): Boolean {
+  fun matchesVendor(predicate: String) : Boolean {
     val cases = sequence {
       yield(product.vendor)
 
@@ -158,10 +150,6 @@ data class JdkItem(
 
     val match = predicate.trim()
     return cases.any { it.equals(match, ignoreCase = true) }
-  }
-
-  fun detectVariant(): JdkVersionDetector.Variant {
-    return detectVariant(fullPresentationWithVendorText)
   }
 
   /**
@@ -186,29 +174,13 @@ data class JdkItem(
    * returns Arch if it's expected to be shown, `null` otherwise
    */
   val presentableArchIfNeeded: @NlsSafe String?
-    get() = if (Registry.`is`("jdk.downloader.show.other.arch", false) || arch != "x86_64") arch else null
+    get() = if (arch != "x86_64") arch else null
 
   val fullPresentationText: @NlsSafe String
-    get() = product.packagePresentationText + " " + jdkVersion + (presentableArchIfNeeded?.let { " ($it)" } ?: "")
+    get() = product.packagePresentationText + " " + jdkVersion + (presentableArchIfNeeded?.let {" ($it)" } ?: "")
 
   val fullPresentationWithVendorText: @NlsSafe String
-    get() = product.packagePresentationText + " " + (jdkVendorVersion ?: jdkVersion) + (presentableArchIfNeeded?.let { " ($it)" } ?: "")
-
-  companion object {
-    fun detectVariant(vendorText: @NlsSafe String): JdkVersionDetector.Variant {
-      if (vendorText.contains("Oracle OpenJDK")) return JdkVersionDetector.Variant.Oracle
-      if (vendorText.contains("Corretto")) return JdkVersionDetector.Variant.Corretto
-      if (vendorText.contains("BellSoft")) return JdkVersionDetector.Variant.Liberica
-      if (vendorText.contains("Azul")) return JdkVersionDetector.Variant.Zulu
-      if (vendorText.contains("SAP")) return JdkVersionDetector.Variant.SapMachine
-      if (vendorText.contains("Temurin")) return JdkVersionDetector.Variant.Temurin
-      if (vendorText.contains("Semeru")) return JdkVersionDetector.Variant.Semeru
-      if (vendorText.contains("GraalVM Community")) return JdkVersionDetector.Variant.GraalVMCE
-      if (vendorText.contains("GraalVM")) return JdkVersionDetector.Variant.GraalVM
-      if (vendorText.contains("JetBrains Runtime")) return JdkVersionDetector.Variant.JBR
-      return JdkVersionDetector.Variant.Unknown
-    }
-  }
+    get() = product.packagePresentationText + " " + (jdkVendorVersion ?: jdkVersion) + (presentableArchIfNeeded?.let {" ($it)" } ?: "")
 }
 
 enum class JdkPackageType(@NonNls val type: String) {
@@ -224,32 +196,25 @@ enum class JdkPackageType(@NonNls val type: String) {
   abstract fun openDecompressor(archiveFile: Path): Decompressor
 
   companion object {
-    fun findType(jsonText: String): JdkPackageType? = entries.firstOrNull { it.type.equals(jsonText, ignoreCase = true) }
+    fun findType(jsonText: String): JdkPackageType? = values().firstOrNull { it.type.equals(jsonText, ignoreCase = true) }
   }
 }
 
-@Internal
 data class JdkPlatform(
   val os: String,
   val arch: String,
 )
 
-@Internal
 data class JdkPredicate(
   private val ideBuildNumber: BuildNumber?,
   private val supportedPlatforms: Set<JdkPlatform>,
 ) {
+
   companion object {
     fun none(): JdkPredicate = JdkPredicate(null, emptySet())
 
     fun default(): JdkPredicate = createInstance(forWsl = false)
     fun forWSL(buildNumber: BuildNumber? = ApplicationInfoImpl.getShadowInstance().build): JdkPredicate = createInstance(forWsl = true, buildNumber)
-
-    fun forEel(
-      eel: EelApi,
-      buildNumber: BuildNumber? = ApplicationInfoImpl.getShadowInstance().build,
-    ): JdkPredicate =
-      createInstance(eel, buildNumber)
 
     /**
      * Selects only JDKs that are for the same OS and CPU arch as the current Java process.
@@ -271,19 +236,6 @@ data class JdkPredicate(
       return JdkPredicate(buildNumber, platforms.toSet())
     }
 
-    private fun createInstance(eel: EelApi, buildNumber: BuildNumber?): JdkPredicate {
-      val platform = when {
-        eel.platform.isMac && eel.platform.isArm64 -> setOf(JdkPlatform("macOS", "x86_64"), JdkPlatform("macOS", "aarch64"))
-        eel.platform.isMac && eel.platform.isX86_64 -> setOf(JdkPlatform("macOS", "x86_64"))
-        eel.platform.isLinux && eel.platform.isArm64 -> setOf(JdkPlatform("linux", "aarch64"))
-        eel.platform.isLinux && eel.platform.isX86_64 -> setOf(JdkPlatform("linux", "x86_64"))
-        eel.platform.isWindows && eel.platform.isX86_64 -> setOf(JdkPlatform("windows", "x86_64"))
-        eel.platform.isWindows && eel.platform.isArm64 -> setOf(JdkPlatform("windows", "aarch64"))
-        else -> emptySet()
-      }
-      return JdkPredicate(buildNumber, platform)
-    }
-
     val currentOS: String = when {
       SystemInfo.isWindows -> "windows"
       SystemInfo.isMac -> "macOS"
@@ -297,18 +249,16 @@ data class JdkPredicate(
     }
   }
 
-  fun testJdkProduct(product: JsonObject): Boolean = testPredicate(product.get("filter")) == true
+  fun testJdkProduct(product: ObjectNode): Boolean {
+    val filterNode = product["filter"]
+    return testPredicate(filterNode) == true
+  }
 
-  fun testJdkPackage(pkg: JsonObject): Boolean {
-    val os = (pkg["os"] as? JsonPrimitive)?.contentOrNull ?: return false
-    val arch = (pkg["arch"] as? JsonPrimitive)?.contentOrNull ?: return false
-    if (JdkPlatform(os, arch) !in supportedPlatforms) {
-      return false
-    }
-
-    if ((pkg["package_type"] as? JsonPrimitive)?.contentOrNull?.let(JdkPackageType.Companion::findType) == null) {
-      return false
-    }
+  fun testJdkPackage(pkg: ObjectNode): Boolean {
+    val os = pkg["os"]?.asText() ?: return false
+    val arch = pkg["arch"]?.asText() ?: return false
+    if (JdkPlatform(os, arch) !in supportedPlatforms) return false
+    if (pkg["package_type"]?.asText()?.let(JdkPackageType.Companion::findType) == null) return false
     return testPredicate(pkg["filter"]) == true
   }
 
@@ -329,28 +279,22 @@ data class JdkPredicate(
    * or (from 2020.3.1)
    *         { "type": "supports_arch" }
    */
-  fun testPredicate(filter: JsonElement?): Boolean? {
+  fun testPredicate(filter: JsonNode?): Boolean? {
     //no filter means predicate is true
-    if (filter == null) {
-      return true
-    }
+    if (filter == null) return true
 
     // used in "default" element
-    (filter as? JsonPrimitive)?.booleanOrNull?.let {
-      return it
-    }
+    if (filter.isBoolean) return filter.asBoolean()
 
-    if (filter !is JsonObject) {
-      return null
-    }
+    if (filter !is ObjectNode) return null
 
-    val type = (filter["type"] as? JsonPrimitive)?.contentOrNull ?: return null
+    val type = filter["type"]?.asText() ?: return null
     if (type == "or") {
-      return foldSubPredicates(filter = filter, emptyResult = false, op = Boolean::or)
+      return foldSubPredicates(filter, false, Boolean::or)
     }
 
     if (type == "and") {
-      return foldSubPredicates(filter = filter, emptyResult = true, op = Boolean::and)
+      return foldSubPredicates(filter, true, Boolean::and)
     }
 
     if (type == "not") {
@@ -359,29 +303,23 @@ data class JdkPredicate(
     }
 
     if (type == "const") {
-      return (filter["value"] as? JsonPrimitive)?.booleanOrNull
+      return filter["value"]?.asBoolean()
     }
 
     if (type == "build_number_range" && ideBuildNumber != null) {
-      val fromBuild = (filter["since"] as? JsonPrimitive)?.contentOrNull
-      val untilBuild = (filter["until"] as? JsonPrimitive)?.contentOrNull
+      val fromBuild = filter["since"]?.asText()
+      val untilBuild = filter["until"]?.asText()
 
-      if (fromBuild == null && untilBuild == null) {
-        return true
-      }
+      if (fromBuild == null && untilBuild == null) return true
 
       if (fromBuild != null) {
         val fromBuildSafe = BuildNumber.fromStringOrNull(fromBuild) ?: return null
-        if (fromBuildSafe > ideBuildNumber) {
-          return false
-        }
+        if (fromBuildSafe > ideBuildNumber) return false
       }
 
       if (untilBuild != null) {
         val untilBuildSafe = BuildNumber.fromStringOrNull(untilBuild) ?: return null
-        if (ideBuildNumber > untilBuildSafe) {
-          return false
-        }
+        if (ideBuildNumber > untilBuildSafe) return false
       }
 
       return true
@@ -399,16 +337,11 @@ data class JdkPredicate(
     return null
   }
 
-  private fun foldSubPredicates(
-    filter: JsonObject,
-    emptyResult: Boolean,
-    op: (acc: Boolean, Boolean) -> Boolean,
-  ): Boolean? {
-    val items = filter.get("items") as? JsonArray ?: return null
-    if (items.isEmpty()) {
-      return false
-    }
-
+  private fun foldSubPredicates(filter: ObjectNode,
+                                emptyResult: Boolean,
+                                op: (acc: Boolean, Boolean) -> Boolean): Boolean? {
+    val items = filter["items"] as? ArrayNode ?: return null
+    if (items.isEmpty) return false
     return items.fold(emptyResult) { acc, subFilter ->
       val subResult = testPredicate(subFilter) ?: return null
       op(acc, subResult)
@@ -416,70 +349,61 @@ data class JdkPredicate(
   }
 }
 
-@Internal
 object JdkListParser {
-  fun readTree(rawData: String): JsonObject = Json.decodeFromString<JsonElement>(rawData).jsonObject
+  fun readTree(rawData: ByteArray): ObjectNode = ObjectMapper().readTree(rawData) as? ObjectNode ?: error("Unexpected JSON data")
 
-  fun parseJdkList(tree: JsonObject, filters: JdkPredicate): List<JdkItem> {
-    val items = tree.get("jdks")?.jsonArray ?: error("`jdks` element is missing")
-    return items
-      .asSequence()
-      .filterIsInstance<JsonObject>()
-      .flatMap { parseJdkItem(item = it, filters = filters) }
-      .toList()
-  }
+  fun parseJdkList(tree: ObjectNode, filters: JdkPredicate): List<JdkItem> {
+    val items = tree["jdks"] as? ArrayNode ?: error("`jdks` element is missing")
 
-  @OptIn(ExperimentalSerializationApi::class)
-  fun parseJdkItem(item: JsonObject, filters: JdkPredicate): List<JdkItem> {
-    // check this package is OK to show for that instance of the IDE
-    if (!filters.testJdkProduct(item)) {
-      return emptyList()
+    val result = mutableListOf<JdkItem>()
+    for (item in items.filterIsInstance<ObjectNode>()) {
+      result += parseJdkItem(item, filters)
     }
 
-    val packages = item["packages"] as? JsonArray ?: return emptyList()
+    return result.toList()
+  }
+
+  fun parseJdkItem(item: ObjectNode, filters: JdkPredicate): List<JdkItem> {
+    // check this package is OK to show for that instance of the IDE
+    if (!filters.testJdkProduct(item)) return emptyList()
+
+    val packages = item["packages"] as? ArrayNode ?: return emptyList()
     val product = JdkProduct(
-      vendor = (item["vendor"] as? JsonPrimitive)?.contentOrNull ?: return emptyList(),
-      product = (item["product"] as? JsonPrimitive)?.contentOrNull,
-      flavour = (item["flavour"] as? JsonPrimitive)?.contentOrNull,
+      vendor = item["vendor"]?.asText() ?: return emptyList(),
+      product = item["product"]?.asText(),
+      flavour = item["flavour"]?.asText()
     )
 
-    val contents = jsonFormat.encodeToString(item)
-    return packages.filterIsInstance<JsonObject>().filter(filters::testJdkPackage).map { pkg ->
-      JdkItem(
-        product = product,
-        isDefaultItem = item["default"]?.let { filters.testPredicate(it) == true } ?: false,
-        isVisibleOnUI = item["listed"]?.let { filters.testPredicate(it) == true } ?: true,
+    val contents = ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsBytes(item)
+    return packages.filterIsInstance<ObjectNode>().filter(filters::testJdkPackage).map { pkg ->
+      JdkItem(product = product,
+              isDefaultItem = item["default"]?.let { filters.testPredicate(it) == true } ?: false,
+              isVisibleOnUI = item["listed"]?.let { filters.testPredicate(it) == true } ?: true,
 
-        jdkMajorVersion = (item["jdk_version_major"] as? JsonPrimitive)?.intOrNull ?: return emptyList(),
-        jdkVersion = (item["jdk_version"] as? JsonPrimitive)?.contentOrNull ?: return emptyList(),
-        jdkVendorVersion = (item["jdk_vendor_version"] as? JsonPrimitive)?.contentOrNull,
-        suggestedSdkName = (item["suggested_sdk_name"] as? JsonPrimitive)?.contentOrNull ?: return emptyList(),
+              jdkMajorVersion = item["jdk_version_major"]?.asInt() ?: return emptyList(),
+              jdkVersion = item["jdk_version"]?.asText() ?: return emptyList(),
+              jdkVendorVersion = item["jdk_vendor_version"]?.asText(),
+              suggestedSdkName = item["suggested_sdk_name"]?.asText() ?: return emptyList(),
 
-        os = (pkg["os"] as? JsonPrimitive)?.contentOrNull ?: return emptyList(),
-        arch = (pkg["arch"] as? JsonPrimitive)?.contentOrNull ?: return emptyList(),
-        packageType = (pkg["package_type"] as? JsonPrimitive)?.contentOrNull?.let(JdkPackageType.Companion::findType) ?: return emptyList(),
-        url = (pkg["url"] as? JsonPrimitive)?.contentOrNull ?: return emptyList(),
-        sha256 = (pkg["sha256"] as? JsonPrimitive)?.contentOrNull ?: return emptyList(),
-        archiveSize = (pkg["archive_size"] as? JsonPrimitive)?.longOrNull ?: return emptyList(),
-        archiveFileName = (pkg["archive_file_name"] as? JsonPrimitive)?.contentOrNull ?: return emptyList(),
-        packageRootPrefix = (pkg["package_root_prefix"] as? JsonPrimitive)?.contentOrNull ?: return emptyList(),
-        packageToBinJavaPrefix = (pkg["package_to_java_home_prefix"] as? JsonPrimitive)?.contentOrNull ?: return emptyList(),
+              os = pkg["os"]?.asText() ?: return emptyList(),
+              arch = pkg["arch"]?.asText() ?: return emptyList(),
+              packageType = pkg["package_type"]?.asText()?.let(JdkPackageType.Companion::findType) ?: return emptyList(),
+              url = pkg["url"]?.asText() ?: return emptyList(),
+              sha256 = pkg["sha256"]?.asText() ?: return emptyList(),
+              archiveSize = pkg["archive_size"]?.asLong() ?: return emptyList(),
+              archiveFileName = pkg["archive_file_name"]?.asText() ?: return emptyList(),
+              packageRootPrefix = pkg["package_root_prefix"]?.asText() ?: return emptyList(),
+              packageToBinJavaPrefix = pkg["package_to_java_home_prefix"]?.asText() ?: return emptyList(),
 
-        unpackedSize = (pkg["unpacked_size"] as? JsonPrimitive)?.longOrNull ?: return emptyList(),
-        installFolderName = (pkg["install_folder_name"] as? JsonPrimitive)?.contentOrNull ?: return emptyList(),
+              unpackedSize = pkg["unpacked_size"]?.asLong() ?: return emptyList(),
+              installFolderName = pkg["install_folder_name"]?.asText() ?: return emptyList(),
 
-        sharedIndexAliases = (item["shared_index_aliases"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull } ?: listOf(),
+              sharedIndexAliases = (item["shared_index_aliases"] as? ArrayNode)?.mapNotNull { it.asText() } ?: listOf(),
 
-        saveToFile = { file -> file.write(contents) },
+              saveToFile = { file -> file.write(contents) }
       )
     }
   }
-}
-
-@ExperimentalSerializationApi
-private val jsonFormat = Json {
-  prettyPrint = true
-  prettyPrintIndent = "  "
 }
 
 @Service
@@ -491,17 +415,12 @@ class JdkListDownloader : JdkListDownloaderBase() {
 
   override val feedUrl: String
     get() {
-      if (LoadingState.COMPONENTS_LOADED.isOccurred) {
-        val registry = runCatching { Registry.get("jdk.downloader.url").asString() }.getOrNull()
-        if (!registry.isNullOrBlank()) {
-          return registry
-        }
-      }
+      val registry = runCatching { Registry.get("jdk.downloader.url").asString() }.getOrNull()
+      if (!registry.isNullOrBlank()) return registry
       return "https://download.jetbrains.com/jdk/feed/v1/jdks.json.xz"
     }
 }
 
-@Internal
 abstract class JdkListDownloaderBase {
   protected abstract val feedUrl: String
 
@@ -525,24 +444,18 @@ abstract class JdkListDownloaderBase {
    * Entries are sorter from the best suggested to the worst suggested items.
    */
   fun downloadModelForJdkInstaller(progress: ProgressIndicator?, predicate: JdkPredicate): List<JdkItem> {
-    if (predicate == JdkPredicate.none()) {
-      return listOf()
-    }
-
-    return jdksListCache.getOrCompute(feedUrl, EmptyRawJdkList) {
-      downloadJdksListNoCache(feedUrl, progress)
-    }.getJdks(predicate)
+    return downloadJdksListWithCache(predicate, feedUrl, progress)
   }
 
   /**
    * Lists all entries suitable for UI download, there can be some unlisted entries that are ignored here by intent
    */
-  fun downloadForUI(progress: ProgressIndicator?, feedUrl: String? = null): List<JdkItem> = downloadForUI(progress, feedUrl, JdkPredicate.default())
+  fun downloadForUI(progress: ProgressIndicator?, feedUrl: String? = null) : List<JdkItem> = downloadForUI(progress, feedUrl, JdkPredicate.default())
 
   /**
    * Lists all entries suitable for UI download, there can be some unlisted entries that are ignored here by intent
    */
-  fun downloadForUI(progress: ProgressIndicator?, feedUrl: String? = null, predicate: JdkPredicate): List<JdkItem> {
+  fun downloadForUI(progress: ProgressIndicator?, feedUrl: String? = null, predicate: JdkPredicate) : List<JdkItem> {
     //we intentionally disable cache here for all user UI requests, as of IDEA-252237
     val url = feedUrl ?: this.feedUrl
     val raw = downloadJdksListNoCache(url, progress)
@@ -560,13 +473,26 @@ abstract class JdkListDownloaderBase {
 
   private val jdksListCache = CachedValueWithTTL<RawJdkList>(15 to TimeUnit.MINUTES)
 
+  private fun downloadJdksListWithCache(predicate: JdkPredicate, feedUrl: String?, progress: ProgressIndicator?): List<JdkItem> {
+    @Suppress("NAME_SHADOWING")
+    val feedUrl = feedUrl ?: this.feedUrl
+
+    if (predicate == JdkPredicate.none()) {
+      return listOf()
+    }
+
+    return jdksListCache.getOrCompute(feedUrl, EmptyRawJdkList) {
+      downloadJdksListNoCache(feedUrl, progress)
+    }.getJdks(predicate)
+  }
+
   private fun downloadJdksListNoCache(feedUrl: String, progress: ProgressIndicator?): RawJdkList {
     // download XZ packed version of the data (several KBs packed, several dozen KBs unpacked) and process it in-memory
     val rawDataXZ = try {
       downloadJdkList(feedUrl, progress)
     }
     catch (t: IOException) {
-      thisLogger().warn("Failed to download the list of available JDKs from $feedUrl. ${t.message}")
+      Logger.getInstance(javaClass).warn("Failed to download the list of available JDKs from $feedUrl. ${t.message}")
       return EmptyRawJdkList
     }
 
@@ -577,12 +503,12 @@ abstract class JdkListDownloaderBase {
         }
       }
     }
-    catch (e: Throwable) {
-      throw RuntimeException("Failed to unpack the list of available JDKs from $feedUrl. ${e.message}", e)
+    catch (t: Throwable) {
+      throw RuntimeException("Failed to unpack the list of available JDKs from $feedUrl. ${t.message}", t)
     }
 
     val json = try {
-      JdkListParser.readTree(rawData.decodeToString())
+      JdkListParser.readTree(rawData)
     }
     catch (t: Throwable) {
       throw RuntimeException("Failed to parse the downloaded list of available JDKs. ${t.message}", t)
@@ -593,25 +519,25 @@ abstract class JdkListDownloaderBase {
 }
 
 private interface RawJdkList {
-  fun getJdks(predicate: JdkPredicate): List<JdkItem>
+  fun getJdks(predicate: JdkPredicate) : List<JdkItem>
 }
 
 private object EmptyRawJdkList : RawJdkList {
-  override fun getJdks(predicate: JdkPredicate): List<JdkItem> = listOf()
+  override fun getJdks(predicate: JdkPredicate) : List<JdkItem> = listOf()
 }
 
 private class RawJdkListImpl(
   private val feedUrl: String,
-  private val json: JsonObject,
+  private val json: ObjectNode,
 ) : RawJdkList {
   private val cache = ConcurrentHashMap<JdkPredicate, () -> List<JdkItem>>()
 
   override fun getJdks(predicate: JdkPredicate) = cache.computeIfAbsent(predicate) { parseJson(it) }()
 
-  private fun parseJson(predicate: JdkPredicate): () -> List<JdkItem> {
+  private fun parseJson(predicate: JdkPredicate) : () -> List<JdkItem> {
     val result = runCatching {
       try {
-        JdkListParser.parseJdkList(json, predicate)
+        java.util.List.copyOf(JdkListParser.parseJdkList(json, predicate))
       }
       catch (t: Throwable) {
         throw RuntimeException("Failed to process the downloaded list of available JDKs from $feedUrl. ${t.message}", t)
@@ -623,7 +549,7 @@ private class RawJdkListImpl(
 }
 
 private class CachedValueWithTTL<T : Any>(
-  private val ttl: Pair<Int, TimeUnit>,
+  private val ttl: Pair<Int, TimeUnit>
 ) {
   private val lock = ReentrantReadWriteLock()
   private var cachedUrl: String? = null
@@ -650,7 +576,7 @@ private class CachedValueWithTTL<T : Any>(
     }
 
     lock.write {
-      // double-checked
+      //double checked
       readValueOrNull(url) { return it }
 
       val value = runCatching(compute).getOrElse {

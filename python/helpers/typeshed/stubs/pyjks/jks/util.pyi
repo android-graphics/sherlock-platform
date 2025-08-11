@@ -1,8 +1,7 @@
 from _typeshed import FileDescriptorOrPath, SupportsKeysAndGetItem, Unused
 from collections.abc import Iterable
 from struct import Struct
-from typing import Final, Literal
-from typing_extensions import Self, TypeAlias
+from typing_extensions import Final, Literal, Self, TypeAlias
 
 from .bks import BksKeyEntry
 from .jks import PrivateKeyEntry

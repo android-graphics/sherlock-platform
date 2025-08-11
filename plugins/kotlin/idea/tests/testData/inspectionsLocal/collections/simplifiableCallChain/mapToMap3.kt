@@ -1,9 +1,5 @@
 // FIX: Merge call chain to 'associateWith'
 // WITH_STDLIB
-
-// Issue: KTIJ-30620
-// IGNORE_K2
-
 fun getValue(i: Int): String = ""
 
 fun test(list: List<Int>) {

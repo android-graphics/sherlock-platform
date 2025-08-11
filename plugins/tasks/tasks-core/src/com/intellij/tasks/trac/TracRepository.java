@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.trac;
 
 import com.intellij.tasks.Comment;
@@ -89,8 +89,9 @@ public class TracRepository extends BaseRepositoryImpl {
     return new XmlRpcClient(getUrl());
   }
 
+  @Nullable
   @Override
-  public @Nullable Task findTask(@NotNull String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
     return getTask(Integer.parseInt(id), getRpcClient(), new Transport());
   }
 
@@ -102,7 +103,8 @@ public class TracRepository extends BaseRepositoryImpl {
     myDefaultSearch = defaultSearch;
   }
 
-  private @Nullable Task getTask(int id, XmlRpcClient client, Transport transport) throws IOException, XmlRpcException {
+  @Nullable
+  private Task getTask(int id, XmlRpcClient client, Transport transport) throws IOException, XmlRpcException {
     XmlRpcRequest request = new XmlRpcRequest("ticket.get", new Vector(Collections.singletonList(id)));
     Object response = client.execute(request, transport);
     if (response == null) return null;
@@ -110,19 +112,22 @@ public class TracRepository extends BaseRepositoryImpl {
     final Hashtable<String, String> map = (Hashtable<String, String>)vector.get(3);
     return new Task() {
 
+      @NotNull
       @Override
-      public @NotNull String getId() {
+      public String getId() {
         return vector.get(0).toString();
       }
 
+      @NotNull
       @Override
-      public @NotNull String getSummary() {
+      public String getSummary() {
         //noinspection HardCodedStringLiteral
         return map.get("summary");
       }
 
+      @Nullable
       @Override
-      public @Nullable String getDescription() {
+      public String getDescription() {
         return null;
       }
 
@@ -131,13 +136,15 @@ public class TracRepository extends BaseRepositoryImpl {
         return Comment.EMPTY_ARRAY;
       }
 
+      @NotNull
       @Override
-      public @NotNull Icon getIcon() {
+      public Icon getIcon() {
         return TasksCoreIcons.Trac;
       }
 
+      @NotNull
       @Override
-      public @NotNull TaskType getType() {
+      public TaskType getType() {
         String type = map.get("type");
         if (type == null) return TaskType.OTHER;
         return switch (type) {
@@ -168,8 +175,9 @@ public class TracRepository extends BaseRepositoryImpl {
         return true;
       }
 
+      @Nullable
       @Override
-      public @Nullable String getIssueUrl() {
+      public String getIssueUrl() {
         return null;
       }
 
@@ -184,8 +192,9 @@ public class TracRepository extends BaseRepositoryImpl {
     return o instanceof Date ? (Date)o : new Date((Integer)o * 1000L);
   }
 
+  @Nullable
   @Override
-  public @Nullable CancellableConnection createCancellableConnection() {
+  public CancellableConnection createCancellableConnection() {
 
     return new CancellableConnection() {
 
@@ -204,8 +213,9 @@ public class TracRepository extends BaseRepositoryImpl {
     };
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseRepository clone() {
+  public BaseRepository clone() {
     return new TracRepository(this);
   }
 

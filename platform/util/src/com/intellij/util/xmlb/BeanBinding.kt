@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.serialization.ClassUtil
 import com.intellij.serialization.MutableAccessor
 import com.intellij.serialization.PropertyCollector
-import com.intellij.util.ClearableClassValue
 import com.intellij.util.ThreeState
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xmlb.XmlSerializerImpl.createClassBinding
@@ -38,11 +37,6 @@ private val PROPERTY_COLLECTOR = XmlSerializerPropertyCollector(MyPropertyCollec
 private val EMPTY_BINDINGS = arrayOf<NestedBinding>()
 
 fun getBeanAccessors(aClass: Class<*>): List<MutableAccessor> = PROPERTY_COLLECTOR.collect(aClass)
-
-@Internal
-fun clearPropertyCollectorCache() {
-  PROPERTY_COLLECTOR.clear()
-}
 
 internal const val JSON_CLASS_DISCRIMINATOR_KEY: String = "_class"
 
@@ -693,22 +687,13 @@ private fun createOptionTagBindingByAnnotation(optionTag: OptionTag, accessor: M
 private class XmlSerializerPropertyCollector(configuration: Configuration) : PropertyCollector(configuration) {
   private val accessorCache = XmlSerializerPropertyCollectorListClassValue(configuration)
 
-  override fun collect(aClass: Class<*>): List<MutableAccessor> {
-    return accessorCache.get(aClass)
-  }
-
-  fun clear() {
-    accessorCache.clear()
-  }
+  override fun collect(aClass: Class<*>): List<MutableAccessor> = accessorCache.get(aClass)
 }
 
-// using a ClearableClassValue with manual clear because otherwise some classes aren't unloaded to to a memory leak in ClassValue
-// see IJPL-171223 XmlSerializerPropertyCollectorListClassValue keeps strong references to PropertyAccessor instances that prevents unloading of a plugin
 private class XmlSerializerPropertyCollectorListClassValue(
   private val configuration: PropertyCollector.Configuration,
-) : ClearableClassValue<List<MutableAccessor>>() {
-
-  override fun computeValueImpl(aClass: Class<*>): List<MutableAccessor> {
+) : ClassValue<List<MutableAccessor>>() {
+  override fun computeValue(aClass: Class<*>): List<MutableAccessor> {
     // do not pass classToOwnFields cache - no need because we collect the whole set of accessors
     val result = PropertyCollector.doCollect(aClass, configuration, null)
     if (result.isNotEmpty() || isAssertBindings(aClass)) {
@@ -724,8 +709,8 @@ private class XmlSerializerPropertyCollectorListClassValue(
       aClass === String::class.java -> LOG.error("Do not compute bindings for String")
     }
 
-    LOG.debug("No accessors for ${aClass.name}. " +
-              "This means that state class cannot be serialized properly. Please see https://jb.gg/ij-psoc")
+    LOG.warn("No accessors for ${aClass.name}. " +
+             "This means that state class cannot be serialized properly. Please see https://jb.gg/ij-psoc")
     return Collections.emptyList()
   }
 }

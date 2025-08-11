@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.module.WebModuleBuilder;
@@ -17,13 +17,15 @@ import java.awt.*;
  * @author Dmitry Avdeev
  */
 public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> implements ProjectTemplate {
+  @NotNull
   @Override
-  public @NotNull ModuleBuilder createModuleBuilder() {
+  public ModuleBuilder createModuleBuilder() {
     return new WebModuleBuilder<>(this);
   }
 
+  @Nullable
   @Override
-  public @Nullable ValidationInfo validateSettings() {
+  public ValidationInfo validateSettings() {
     return null;
   }
 
@@ -46,7 +48,8 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
     return true;
   }
 
-  public static @NotNull JPanel createTitlePanel() {
+  @NotNull
+  public static JPanel createTitlePanel() {
     final JPanel titlePanel = new JPanel(new BorderLayout());
     final JLabel title = new JLabel(ProjectBundle.message("label.new.project"));
     title.setFont(title.getFont().deriveFont(Font.BOLD));

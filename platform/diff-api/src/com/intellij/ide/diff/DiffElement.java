@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ide.diff;
 
 import com.intellij.diff.DiffContentFactory;
@@ -30,21 +44,26 @@ import java.util.concurrent.Callable;
 public abstract class DiffElement<T> {
   public static final DiffElement<?>[] EMPTY_ARRAY = new DiffElement[0];
 
-  public abstract @NlsSafe String getPath();
+  @NlsSafe
+  public abstract String getPath();
 
-  public abstract @NlsSafe @NotNull String getName();
+  @NlsSafe
+  @NotNull
+  public abstract String getName();
 
   /**
    * Returns name to be used for displaying this item in UI
    */
-  public @NlsSafe String getPresentableName() {
+  @NlsSafe
+  public String getPresentableName() {
     return getName();
   }
 
   /**
    * Returns path to be used for displaying this item in UI and logs
    */
-  public @NlsSafe String getPresentablePath() {
+  @NlsSafe
+  public String getPresentablePath() {
     return getPresentableName();
   }
 
@@ -52,7 +71,8 @@ public abstract class DiffElement<T> {
    * Returns the path of the element that is subjected to filtering.
    * Filter operations will be executed based on the returned path.
    */
-  public @NlsSafe String getFilterablePath() {
+  @NlsSafe
+  public String getFilterablePath() {
     return getPath();
   }
 
@@ -68,7 +88,8 @@ public abstract class DiffElement<T> {
 
   public abstract DiffElement[] getChildren() throws IOException;
 
-  public @Nullable Navigatable getNavigatable(@Nullable Project project) {
+  @Nullable
+  public Navigatable getNavigatable(@Nullable Project project) {
     return null;
   }
 
@@ -79,12 +100,14 @@ public abstract class DiffElement<T> {
    */
   public abstract byte @Nullable [] getContent() throws IOException;
 
-  public @Nullable InputStream getContentStream() throws IOException {
+  @Nullable
+  public InputStream getContentStream() throws IOException {
     byte[] bytes = getContent();
     return bytes != null ? new ByteArrayInputStream(bytes) : null;
   }
 
-  public @NotNull Charset getCharset() {
+  @NotNull
+  public Charset getCharset() {
     return EncodingManager.getInstance().getDefaultCharset();
   }
 
@@ -94,7 +117,8 @@ public abstract class DiffElement<T> {
     return "/";
   }
 
-  public @Nullable Icon getIcon() {
+  @Nullable
+  public Icon getIcon() {
     return null;
   }
 
@@ -103,7 +127,8 @@ public abstract class DiffElement<T> {
    *
    * @see com.intellij.diff.chains.DiffRequestProducer#process
    */
-  public @NotNull DiffContent createDiffContent(@Nullable Project project, @NotNull ProgressIndicator indicator)
+  @NotNull
+  public DiffContent createDiffContent(@Nullable Project project, @NotNull ProgressIndicator indicator)
     throws DiffRequestProducerException, ProcessCanceledException {
     try {
       final T src = getValue();
@@ -121,7 +146,8 @@ public abstract class DiffElement<T> {
     }
   }
 
-  public @Nullable Callable<DiffElement<T>> getElementChooser(@Nullable Project project) {
+  @Nullable
+  public Callable<DiffElement<T>> getElementChooser(@Nullable Project project) {
     return null;
   }
 
@@ -143,7 +169,8 @@ public abstract class DiffElement<T> {
    * @return {@code true} if coping was completed successfully,
    *        {@code false} otherwise
    */
-  public @Nullable DiffElement<?> copyTo(DiffElement<T> container, String relativePath) {
+  @Nullable
+  public DiffElement<?> copyTo(DiffElement<T> container, String relativePath) {
     return null;
   }
 

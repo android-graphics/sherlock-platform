@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.tracking;
 
 import com.intellij.debugger.DebuggerManager;
@@ -43,9 +43,11 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
   private final Project myProject;
   private final MyConstructorBreakpoints myBreakpoint;
 
-  private @Nullable HashSet<ObjectReference> myNewObjects = null;
+  @Nullable
+  private HashSet<ObjectReference> myNewObjects = null;
 
-  private @NotNull HashSet<ObjectReference> myTrackedObjects = new HashSet<>();
+  @NotNull
+  private HashSet<ObjectReference> myTrackedObjects = new HashSet<>();
 
   private volatile boolean myIsBackgroundMode;
   private volatile boolean myIsBackgroundTrackingEnabled;
@@ -109,8 +111,9 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     myTrackedObjects = new HashSet<>();
   }
 
+  @NotNull
   @Override
-  public @NotNull List<ObjectReference> getNewInstances() {
+  public List<ObjectReference> getNewInstances() {
     return myNewObjects == null ? Collections.emptyList() : new ArrayList<>(myNewObjects);
   }
 
@@ -262,8 +265,9 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
       setSuspendPolicy(DebuggerSettings.SUSPEND_THREAD);
     }
 
+    @Nullable
     @Override
-    public @Nullable SourcePosition getSourcePosition() {
+    public SourcePosition getSourcePosition() {
       return null;
     }
 
@@ -277,8 +281,9 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
       return "";
     }
 
+    @Nullable
     @Override
-    protected @Nullable JavaLineBreakpointType getXBreakpointType() {
+    protected JavaLineBreakpointType getXBreakpointType() {
       return null;
     }
   }

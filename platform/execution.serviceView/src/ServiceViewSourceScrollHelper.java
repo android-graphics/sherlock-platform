@@ -31,7 +31,8 @@ final class ServiceViewSourceScrollHelper {
   private static final String AUTO_SCROLL_TO_SOURCE_PROPERTY = "service.view.auto.scroll.to.source";
   private static final String AUTO_SCROLL_FROM_SOURCE_PROPERTY = "service.view.auto.scroll.from.source";
 
-  static @NotNull AutoScrollToSourceHandler createAutoScrollToSourceHandler(@NotNull Project project) {
+  @NotNull
+  static AutoScrollToSourceHandler createAutoScrollToSourceHandler(@NotNull Project project) {
     return new ServiceViewAutoScrollToSourceHandler(project);
   }
 

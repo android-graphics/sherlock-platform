@@ -19,15 +19,17 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usages.TextChunk
 import com.intellij.util.FontUtil
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.idea.codeInsight.slicer.AbstractKotlinSliceUsage
-import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import java.awt.Font
 
-open class KotlinSliceUsage : AbstractKotlinSliceUsage {
+open class KotlinSliceUsage : SliceUsage {
+
+    val mode: KotlinSliceAnalysisMode
+    val forcedExpressionMode: Boolean
+
     private var usageInfo: AdaptedUsageInfo? = null
 
     constructor(
@@ -35,11 +37,15 @@ open class KotlinSliceUsage : AbstractKotlinSliceUsage {
         parent: SliceUsage,
         mode: KotlinSliceAnalysisMode,
         forcedExpressionMode: Boolean,
-    ) : super(element, parent, mode, forcedExpressionMode) {
+    ) : super(element, parent) {
+        this.mode = mode
+        this.forcedExpressionMode = forcedExpressionMode
         initializeUsageInfo()
     }
 
     constructor(element: PsiElement, params: SliceAnalysisParams) : super(element, params) {
+        this.mode = KotlinSliceAnalysisMode.Default
+        this.forcedExpressionMode = false
         initializeUsageInfo()
     }
 
@@ -56,6 +62,9 @@ open class KotlinSliceUsage : AbstractKotlinSliceUsage {
     override fun getMergedInfos(): Array<UsageInfo> {
         return arrayOf(getUsageInfo())
     }
+
+    protected open val isDereference: Boolean
+        get() = false
 
     override fun computeText(): Array<TextChunk> {
         val text = super.computeText()

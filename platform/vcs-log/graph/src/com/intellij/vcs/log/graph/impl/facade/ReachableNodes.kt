@@ -6,10 +6,8 @@ import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.graph.utils.Flags
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
-@ApiStatus.Internal
 class ReachableNodes(private val graph: LiteLinearGraph) {
   private val visited: Flags = BitSetFlags(graph.nodesCount())
 

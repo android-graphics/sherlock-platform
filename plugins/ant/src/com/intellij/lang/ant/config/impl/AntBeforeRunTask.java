@@ -77,7 +77,6 @@ public final class AntBeforeRunTask extends BeforeRunTask<AntBeforeRunTask>{
     return Objects.equals(myTargetName, target.getName());
   }
 
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -91,7 +90,6 @@ public final class AntBeforeRunTask extends BeforeRunTask<AntBeforeRunTask>{
     return true;
   }
 
-  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + (myTargetName != null ? myTargetName.hashCode() : 0);

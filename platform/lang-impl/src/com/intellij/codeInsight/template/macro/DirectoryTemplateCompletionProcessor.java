@@ -5,10 +5,8 @@ package com.intellij.codeInsight.template.macro;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.psi.PsiFileSystemItem;
-import org.jetbrains.annotations.ApiStatus;
 
 
-@ApiStatus.Internal
 public class DirectoryTemplateCompletionProcessor implements TemplateCompletionProcessor {
   @Override
   public boolean nextTabOnItemSelected(final ExpressionContext context, final LookupElement item) {

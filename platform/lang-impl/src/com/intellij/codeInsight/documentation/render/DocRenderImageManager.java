@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
-import com.intellij.util.ui.JBImageToolkit;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.image.FileImageSource;
 import sun.awt.image.ImageDecoder;
@@ -10,7 +9,6 @@ import sun.awt.image.ToolkitImage;
 import java.awt.*;
 import java.awt.image.ColorModel;
 import java.awt.image.ImageConsumer;
-import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Dictionary;
@@ -115,13 +113,7 @@ final class DocRenderImageManager extends AbstractDocRenderMemoryManager<Image> 
     @Override
     protected ImageDecoder getDecoder() {
       InputStream stream = CachingDataReader.getInstance().getInputStream(myURL);
-      if (stream == null) return null;
-
-      if (!stream.markSupported()) {
-        stream = new BufferedInputStream(stream);
-      }
-
-      return JBImageToolkit.getWithCustomDecoders(this, stream, this::getDecoder);
+      return stream == null ? null : getDecoder(stream);
     }
 
     @Override

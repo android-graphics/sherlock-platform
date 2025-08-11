@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.SearchSession;
@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -39,7 +38,9 @@ public abstract class PrevNextOccurrenceAction extends DumbAwareAction implement
     return Utils.shortcutSetOf(singleLine ? ContainerUtil.concat(getDefaultShortcuts(), getSingleLineShortcuts()) : getDefaultShortcuts());
   }
 
-  protected abstract @NotNull List<Shortcut> getDefaultShortcuts();
+  @NotNull
+  protected abstract List<Shortcut> getDefaultShortcuts();
 
-  protected abstract @Unmodifiable @NotNull List<Shortcut> getSingleLineShortcuts();
+  @NotNull
+  protected abstract List<Shortcut> getSingleLineShortcuts();
 }

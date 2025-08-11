@@ -80,17 +80,20 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
     }
 
     @Override
-    public final @NotNull ItemPresentation getPresentation() {
+    @NotNull
+    public final ItemPresentation getPresentation() {
         return this;
     }
 
     @Override
-    public @Nullable Icon getIcon(boolean open) {
+    @Nullable
+    public Icon getIcon(boolean open) {
         return getIcon(0);
     }
 
     @Override
-    public @Nullable String getLocationString() {
+    @Nullable
+    public String getLocationString() {
         return "(in " + getContainingFile().getName() + ")";
     }
 
@@ -105,7 +108,8 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
     }
 
     @Override
-    public @Nullable String getName() {
+    @Nullable
+    public String getName() {
         final XmlAttributeValue nameElement = getNameElement();
         return nameElement != null ? nameElement.getValue() : null;
     }
@@ -117,15 +121,17 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
         return this;
     }
 
+    @NotNull
     @Override
-    @SuppressWarnings({"RawUseOfParameterizedType"})
-    public @NotNull PsiElement getNavigationElement() {
+    @SuppressWarnings({ "RawUseOfParameterizedType" })
+    public PsiElement getNavigationElement() {
         if (myNavigationElement == null && myElement.isValid()) {
             final Class[] allInterfaces = CompletionLists.getAllInterfaces(myElement.getClass());
             myNavigationElement = (PsiElement)Proxy.newProxyInstance(getClass().getClassLoader(), allInterfaces, new InvocationHandler() {
                 @Override
+                @Nullable
                 @SuppressWarnings({"StringEquality", "AutoBoxing", "AutoUnboxing"})
-                public @Nullable Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                     try {
                         final XmlAttributeValue nameElement = XsltElementImpl.this.getNameElement();
                         return switch (method.getName()) {
@@ -147,16 +153,19 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
         return myElement.isValid() ? myNavigationElement : this;
     }
 
-    public @Nullable XmlAttribute getNameAttribute() {
+    @Nullable
+    public XmlAttribute getNameAttribute() {
         return myElement.getAttribute("name", null);
     }
 
-    public @Nullable PsiElement getNameIdentifier() {
+    @Nullable
+    public PsiElement getNameIdentifier() {
         final XmlAttribute nameAttribute = getNameAttribute();
         return nameAttribute != null ? XsltSupport.getAttValueToken(nameAttribute) : null;
     }
 
-    private @Nullable XmlAttributeValue getNameElement() {
+    @Nullable
+    private XmlAttributeValue getNameElement() {
         XmlAttribute attribute = getNameAttribute();
         return attribute != null ? attribute.getValueElement() : null;
     }
@@ -172,7 +181,8 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
     }
 
     @Override
-    public @NotNull Language getLanguage() {
+    @NotNull
+    public Language getLanguage() {
         return XsltLanguage.INSTANCE;
     }
 

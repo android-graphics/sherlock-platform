@@ -9,8 +9,8 @@ abstract class P2 {
   }
 
   Object o = new P2() {
-    @Override
     @NotNull
+    @Override
     String foo(String p) {
       return "";
     }

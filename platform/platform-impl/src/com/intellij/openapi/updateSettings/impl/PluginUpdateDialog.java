@@ -2,13 +2,13 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.plugins.PluginManagerMain;
+import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.enums.PluginsGroupType;
 import com.intellij.ide.plugins.newui.*;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
@@ -24,9 +24,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.ActionLink;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.labels.LinkListener;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
@@ -55,7 +53,6 @@ final class PluginUpdateDialog extends DialogWrapper {
   private final PluginDetailsPageComponent myDetailsPage;
   private final JLabel myTotalLabel = new JLabel();
   private final ActionLink myIgnoreAction;
-  private final JBCheckBox myAutoUpdateOption;
 
   private @Nullable Runnable myFinishCallback;
 
@@ -66,8 +63,8 @@ final class PluginUpdateDialog extends DialogWrapper {
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
   }
 
-  PluginUpdateDialog(@Nullable Project project, @NotNull Collection<PluginDownloader> updatesForPlugins) {
-    this(project, updatesForPlugins, null, true);
+  PluginUpdateDialog(@Nullable Project project, @NotNull Collection<PluginDownloader> updatedPlugins) {
+    this(project, updatedPlugins, null, true);
     setTitle(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
@@ -84,9 +81,6 @@ final class PluginUpdateDialog extends DialogWrapper {
       close(CANCEL_EXIT_CODE);
       UpdateChecker.ignorePlugins(ContainerUtil.map(myGroup.ui.plugins, ListPluginComponent::getPluginDescriptor));
     });
-
-    myAutoUpdateOption =
-      new JBCheckBox(IdeBundle.message("updates.auto.update.title"), UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled());
 
     myPluginModel = new MyPluginModel(project) {
       @Override
@@ -179,15 +173,6 @@ final class PluginUpdateDialog extends DialogWrapper {
   protected void doOKAction() {
     super.doOKAction();
 
-    if (PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed()) {
-      UpdateOptions state = UpdateSettings.getInstance().getState();
-      boolean selected = myAutoUpdateOption.isSelected();
-      if (state.isPluginsAutoUpdateEnabled() != selected) {
-        state.setPluginsAutoUpdateEnabled(selected);
-        ApplicationManager.getApplication().getService(PluginAutoUpdateService.class).onSettingsChanged$intellij_platform_ide_impl();
-      }
-    }
-
     if (myPlatformUpdate) return;
 
     List<PluginDownloader> toDownloads = new ArrayList<>();
@@ -222,31 +207,6 @@ final class PluginUpdateDialog extends DialogWrapper {
           if (customRestarter != null) {
             customRestarter.accept(restartRequired);
             return;
-          }
-          if (PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed() &&
-              !UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled()) {
-            Notification notification = UpdateChecker.getNotificationGroupForPluginUpdateResults()
-              .createNotification(IdeBundle.message("updates.plugins.notification.title"),
-                                  IdeBundle.message("updates.plugins.autoupdate.notification.message"), NotificationType.INFORMATION)
-              .addAction(new NotificationAction(IdeBundle.message("updates.auto.update.title")) {
-                @Override
-                public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-                  UpdateSettings.getInstance().getState().setPluginsAutoUpdateEnabled(true);
-                  ApplicationManager.getApplication().getService(PluginAutoUpdateService.class)
-                    .onSettingsChanged$intellij_platform_ide_impl();
-                  notification.expire();
-                }
-              })
-              .addAction(new NotificationAction(IdeBundle.message("label.dont.show")) {
-                @Override
-                public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-                  notification.setDoNotAskFor(null);
-                  notification.expire();
-                }
-              });
-            notification.configureDoNotAskOption("updates.plugins.autoupdate.notification",
-                                                 IdeBundle.message("updates.plugins.autoupdate.notification.do.not.ask.display"));
-            notification.notify(myProject);
           }
           if (!restartRequired) {
             UpdateChecker.getNotificationGroupForPluginUpdateResults()
@@ -326,18 +286,6 @@ final class PluginUpdateDialog extends DialogWrapper {
   protected JPanel createSouthAdditionalPanel() {
     JPanel panel = new Wrapper(myIgnoreAction);
     panel.setBorder(JBUI.Borders.emptyLeft(10));
-    return panel;
-  }
-
-  @Override
-  protected @NotNull JPanel createButtonsPanel(@NotNull List<? extends JButton> buttons) {
-    JPanel panel = super.createButtonsPanel(buttons);
-    if (PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed()) {
-      JPanel buttonsPanel = new NonOpaquePanel(new BorderLayout(JBUI.scale(10), 0));
-      buttonsPanel.add(myAutoUpdateOption, BorderLayout.WEST);
-      buttonsPanel.add(panel);
-      return buttonsPanel;
-    }
     return panel;
   }
 

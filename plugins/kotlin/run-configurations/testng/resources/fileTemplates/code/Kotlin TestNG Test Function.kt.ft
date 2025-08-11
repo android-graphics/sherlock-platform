@@ -1,4 +1,0 @@
-@org.testng.annotations.Test
-fun test${NAME}() {
-  ${BODY}
-}

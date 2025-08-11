@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.ExecutionBundle;
@@ -86,7 +86,8 @@ public class AllInPackageGradleConfigurationProducer extends AbstractGradleTestR
     return ContainerUtil.map(allTasksToRuns, it -> new TestTasksToRun(it, testFilter));
   }
 
-  protected static @Nullable PsiElement getSourceElement(@NotNull Module module, @NotNull PsiElement element) {
+  @Nullable
+  protected static PsiElement getSourceElement(@NotNull Module module, @NotNull PsiElement element) {
     if (element instanceof PsiFileSystemItem) {
       return element;
     }
@@ -100,13 +101,15 @@ public class AllInPackageGradleConfigurationProducer extends AbstractGradleTestR
     return null;
   }
 
-  private static @Nullable PsiDirectory getPackageDirectory(@NotNull Module module, @NotNull PsiPackage element) {
+  @Nullable
+  private static PsiDirectory getPackageDirectory(@NotNull Module module, @NotNull PsiPackage element) {
     PsiDirectory[] sourceDirs = element.getDirectories(GlobalSearchScope.moduleScope(module));
     if (sourceDirs.length == 0) return null;
     return sourceDirs[0];
   }
 
-  private static @Nullable PsiPackage extractPackage(@NotNull PsiElement location) {
+  @Nullable
+  private static PsiPackage extractPackage(@NotNull PsiElement location) {
     PsiPackage psiPackage = AbstractJavaTestConfigurationProducer.checkPackage(location);
     if (psiPackage == null) return null;
     if (psiPackage.getQualifiedName().isEmpty()) return null;

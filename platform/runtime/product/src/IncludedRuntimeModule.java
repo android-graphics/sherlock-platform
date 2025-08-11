@@ -14,5 +14,5 @@ public interface IncludedRuntimeModule {
   /**
    * Returns instance describing conditions under which the module is loaded. 
    */
-  @NotNull RuntimeModuleLoadingRule getLoadingRule();
+  @NotNull ModuleImportance getImportance();
 }

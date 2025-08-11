@@ -18,8 +18,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class ShRunLineMarkerContributor extends RunLineMarkerContributor implements DumbAware {
+  @Nullable
   @Override
-  public @Nullable Info getInfo(@NotNull PsiElement element) {
+  public Info getInfo(@NotNull PsiElement element) {
     if (element instanceof OuterLanguageElementImpl || !(element instanceof LeafElement ) || element.getTextRange().getStartOffset() != 0)
       return null;
     var contributionProhibited = ContainerUtil.exists(ShRunnerAdditionalCondition.EP.getExtensionsIfPointIsRegistered(), additionalCondition -> {

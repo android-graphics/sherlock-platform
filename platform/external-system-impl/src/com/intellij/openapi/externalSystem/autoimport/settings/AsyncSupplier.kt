@@ -2,9 +2,7 @@
 package com.intellij.openapi.externalSystem.autoimport.settings
 
 import com.intellij.openapi.Disposable
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 interface AsyncSupplier<R> {
 
   /**

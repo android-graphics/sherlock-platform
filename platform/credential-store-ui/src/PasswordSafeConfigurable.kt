@@ -4,7 +4,11 @@ package com.intellij.credentialStore
 import com.intellij.credentialStore.gpg.Pgp
 import com.intellij.credentialStore.gpg.PgpKey
 import com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
-import com.intellij.credentialStore.keePass.*
+import com.intellij.credentialStore.keePass.DB_FILE_NAME
+import com.intellij.credentialStore.keePass.KeePassFileManager
+import com.intellij.credentialStore.keePass.MainKeyFileStorage
+import com.intellij.credentialStore.keePass.getDefaultDbFile
+import com.intellij.credentialStore.keePass.getDefaultMainPasswordFile
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
@@ -210,13 +214,18 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
 
         indent {
           row(CredentialStoreBundle.message("settings.password.database")) {
-            val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
-              .withTitle(CredentialStoreBundle.message("passwordSafeConfigurable.keepass.database.file"))
-              .withExtensionFilter("kdbx")
-            keePassDbFile = textFieldWithBrowseButton(fileChooserDescriptor, fileChosen = {
-              val path = if (it.isDirectory) "${it.path}${File.separator}${DB_FILE_NAME}" else it.path
-              return@textFieldWithBrowseButton File(path).path
-            })
+            val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter {
+              it.isDirectory || it.name.endsWith(".kdbx")
+            }
+            keePassDbFile = textFieldWithBrowseButton(CredentialStoreBundle.message("passwordSafeConfigurable.keepass.database.file"),
+                                                      fileChooserDescriptor = fileChooserDescriptor,
+                                                      fileChosen = {
+                                                        val path = when {
+                                                          it.isDirectory -> "${it.path}${File.separator}$DB_FILE_NAME"
+                                                          else -> it.path
+                                                        }
+                                                        return@textFieldWithBrowseButton File(path).path
+                                                      })
               .resizableColumn()
               .align(AlignX.FILL)
               .gap(RightGap.SMALL)
@@ -307,8 +316,10 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
     override fun actionPerformed(event: AnActionEvent) {
       closeCurrentStore()
 
-      FileChooserDescriptorFactory.createSingleFileDescriptor()
-        .withExtensionFilter("kdbx")
+      FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
+        .withFileFilter {
+          !it.isDirectory && it.nameSequence.endsWith(".kdbx")
+        }
         .chooseFile(event) {
           createKeePassFileManager()?.import(Paths.get(it.path), event)
         }

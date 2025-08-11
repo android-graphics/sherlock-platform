@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.projectImport;
 
@@ -13,11 +13,9 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBRadioButton;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -26,6 +24,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ImportChooserStep extends ProjectImportWizardStep {
@@ -33,7 +32,8 @@ public class ImportChooserStep extends ProjectImportWizardStep {
 
   private final List<? extends ProjectImportProvider> myProviders;
   private final StepSequence mySequence;
-  private @Nullable ProjectImportProvider myFromSourcesProvider;
+  @Nullable
+  private ProjectImportProvider myFromSourcesProvider;
   private JBList myList;
   private JPanel myPanel;
 
@@ -135,8 +135,10 @@ public class ImportChooserStep extends ProjectImportWizardStep {
     }
   }
 
-  private static @Unmodifiable List<ProjectImportProvider> sorted(@Unmodifiable List<? extends ProjectImportProvider> providers) {
-    return ContainerUtil.sorted(providers, (l, r) -> l.getName().compareToIgnoreCase(r.getName()));
+  private static List<ProjectImportProvider> sorted(List<? extends ProjectImportProvider> providers) {
+    List<ProjectImportProvider> result = new ArrayList<>(providers);
+    result.sort((l, r) -> l.getName().compareToIgnoreCase(r.getName()));
+    return result;
   }
 
   @Override
@@ -177,7 +179,8 @@ public class ImportChooserStep extends ProjectImportWizardStep {
   }
 
   @Override
-  public @NonNls String getHelpId() {
+  @NonNls
+  public String getHelpId() {
     return "reference.dialogs.new.project.import";
   }
 }

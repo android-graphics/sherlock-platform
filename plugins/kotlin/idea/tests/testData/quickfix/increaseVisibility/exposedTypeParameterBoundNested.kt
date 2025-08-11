@@ -1,5 +1,4 @@
 // "Make 'PrivateInnerClass' public" "true"
-// PRIORITY: HIGH
 // ACTION: Create test
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Import members from 'PrivateInFileClass'
@@ -14,4 +13,3 @@ private class PrivateInFileClass<T : <caret>PrivateInFileClass.PrivateInnerClass
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPublicFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeVisibilityFixFactories$ChangeToPublicModCommandAction

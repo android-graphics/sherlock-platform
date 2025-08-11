@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.optionalToIf;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,7 +16,8 @@ interface Instruction {
 
   String generate();
 
-  static @Nullable Instruction create(@NotNull PsiStatement statement) {
+  @Nullable
+  static Instruction create(@NotNull PsiStatement statement) {
     PsiDeclarationStatement declaration = tryCast(statement, PsiDeclarationStatement.class);
     if (declaration != null) return Declaration.create(declaration);
     PsiReturnStatement returnStatement = tryCast(statement, PsiReturnStatement.class);
@@ -80,7 +81,8 @@ interface Instruction {
       return myLhs.getName() + "=" + myRhs.getText() + ";\n";
     }
 
-    static @Nullable Assignment create(@NotNull PsiAssignmentExpression assignment) {
+    @Nullable
+    static Assignment create(@NotNull PsiAssignmentExpression assignment) {
       PsiExpression rhs = assignment.getRExpression();
       if (rhs == null) return null;
       PsiReference reference = tryCast(assignment.getLExpression(), PsiReference.class);
@@ -109,7 +111,8 @@ interface Instruction {
       return copy.getText();
     }
 
-    static @Nullable Declaration create(@NotNull PsiDeclarationStatement declaration) {
+    @Nullable
+    static Declaration create(@NotNull PsiDeclarationStatement declaration) {
       PsiElement[] declared = declaration.getDeclaredElements();
       if (declared.length != 1) return null;
       PsiVariable lhs = tryCast(declared[0], PsiVariable.class);
@@ -153,7 +156,8 @@ interface Instruction {
              "else{\n" + StringUtil.join(myElseInstructions, i -> i.generate(), "") + "\n}";
     }
 
-    static @Nullable Check create(@NotNull PsiIfStatement ifStatement) {
+    @Nullable
+    static Check create(@NotNull PsiIfStatement ifStatement) {
       PsiExpression condition = ifStatement.getCondition();
       if (condition == null) return null;
       PsiStatement thenBranch = ifStatement.getThenBranch();
@@ -184,7 +188,8 @@ interface Instruction {
       return "return " + myExpression.getText() + ";\n";
     }
 
-    static @Nullable Return create(@NotNull PsiReturnStatement returnStatement) {
+    @Nullable
+    static Return create(@NotNull PsiReturnStatement returnStatement) {
       PsiExpression returnValue = returnStatement.getReturnValue();
       return returnValue == null ? null : new Return(returnValue);
     }
@@ -202,7 +207,8 @@ interface Instruction {
       return "throw " + myException.getText() + ";\n";
     }
 
-    static @Nullable Throw create(@NotNull PsiThrowStatement throwStatement) {
+    @Nullable
+    static Throw create(@NotNull PsiThrowStatement throwStatement) {
       PsiExpression exception = throwStatement.getException();
       return exception == null ? null : new Throw(exception);
     }

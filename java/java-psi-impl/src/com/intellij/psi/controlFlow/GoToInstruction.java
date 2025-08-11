@@ -34,7 +34,6 @@ public class GoToInstruction extends BranchingInstruction {
     this.isReturn = isReturn;
   }
 
-  @Override
   public String toString() {
     final String sRole = "["+role.toString()+"]";
     return "GOTO " + sRole + " " + offset + (isReturn ? " RETURN" : "");

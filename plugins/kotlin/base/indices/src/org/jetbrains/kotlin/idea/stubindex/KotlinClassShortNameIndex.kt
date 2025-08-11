@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 class KotlinClassShortNameIndex internal constructor() : StringStubIndexExtension<KtClassOrObject>() {
     companion object Helper : KotlinStringStubIndexHelper<KtClassOrObject>(KtClassOrObject::class.java) {
         @JvmField
-        @ApiStatus.ScheduledForRemoval
         @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
         val INSTANCE: KotlinClassShortNameIndex = KotlinClassShortNameIndex()
 

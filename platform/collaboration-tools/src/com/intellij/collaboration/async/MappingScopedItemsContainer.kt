@@ -95,9 +95,6 @@ class MappingScopedItemsContainer<T, K, V> internal constructor(
   companion object {
     fun <T, V> byIdentity(cs: CoroutineScope, mapper: CoroutineScope.(T) -> V) =
       MappingScopedItemsContainer(cs, { it }, HashingStrategy.identity(), mapper, {})
-
-    fun <T, V> byEquality(cs: CoroutineScope, mapper: CoroutineScope.(T) -> V) =
-      MappingScopedItemsContainer(cs, { it }, HashingStrategy.canonical(), mapper, {})
   }
 }
 

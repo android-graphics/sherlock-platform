@@ -1,7 +1,4 @@
-// "Convert to primary constructor" "true"
-class ConvertToInit//comment1
-//comment2
-    () {
+class ConvertToInit() {
     fun foo() {}
 
     fun bar() {}
@@ -13,4 +10,3 @@ class ConvertToInit//comment1
 
     fun baz() {}
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertSecondaryConstructorToPrimaryInspection$createQuickFix$1

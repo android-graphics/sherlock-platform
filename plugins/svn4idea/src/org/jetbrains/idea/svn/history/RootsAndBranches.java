@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.CommonBundle;
@@ -54,8 +54,8 @@ import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 public class RootsAndBranches implements CommittedChangeListDecorator {
   private static final Logger LOG = Logger.getInstance(RootsAndBranches.class);
 
-  private final @NotNull SvnVcs myVcs;
-  private final @NotNull Project myProject;
+  @NotNull private final SvnVcs myVcs;
+  @NotNull private final Project myProject;
   private final DecoratorManager myManager;
   private final RepositoryLocation myLocation;
   private JPanel myPanel;
@@ -64,7 +64,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
   private boolean myHighlightingOn;
   private JPanel myPanelWrapper;
-  private final @NotNull MergePanelFiltering myStrategy;
+  @NotNull private final MergePanelFiltering myStrategy;
   private final CommonFilter myFilterMerged = new CommonFilter(messagePointer("tab.repository.merge.panel.filter.plus"));
   private final CommonFilter myFilterNotMerged = new CommonFilter(messagePointer("tab.repository.merge.panel.filter.minus"));
   private final CommonFilter myFilterAlien = new CommonFilter(messagePointer("tab.repository.merge.panel.filter.others"));
@@ -183,7 +183,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     final Task.Backgroundable backgroundable =
       new Task.Backgroundable(myProject, message("progress.title.loading.working.copies.data"), false) {
         @Override
-        public void run(final @NotNull ProgressIndicator indicator) {
+        public void run(@NotNull final ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
           final Map<String, SvnMergeInfoRootPanelManual> panels = new HashMap<>();
           final Map<String, MergeInfoHolder> holders = new HashMap<>();
@@ -310,7 +310,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     return svnGroup;
   }
 
-  private @NotNull MergeInfoHolder createHolder(@NotNull SvnMergeInfoRootPanelManual panel) {
+  @NotNull
+  private MergeInfoHolder createHolder(@NotNull SvnMergeInfoRootPanelManual panel) {
     return new MergeInfoHolder(myProject, myManager, this, panel);
   }
 
@@ -392,7 +393,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
-    public void update(final @NotNull AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       for (MergeInfoHolder holder : myHolders.values()) {
         if (holder.refreshEnabled(false)) {
           e.getPresentation().setEnabled(true);
@@ -403,7 +404,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
-    public void actionPerformed(final @NotNull AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
 
@@ -426,12 +427,12 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
-    public boolean isSelected(final @NotNull AnActionEvent e) {
+    public boolean isSelected(@NotNull final AnActionEvent e) {
       return myHighlightingOn;
     }
 
     @Override
-    public void setSelected(final @NotNull AnActionEvent e, final boolean state) {
+    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       if (state) {
         turnFromHereHighlighting();
       }
@@ -454,18 +455,18 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
-    public void update(final @NotNull AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(myHighlightingOn);
     }
 
     @Override
-    public boolean isSelected(final @NotNull AnActionEvent e) {
+    public boolean isSelected(@NotNull final AnActionEvent e) {
       return mySelected;
     }
 
     @Override
-    public void setSelected(final @NotNull AnActionEvent e, final boolean state) {
+    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       mySelected = state;
       myStrategy.notifyListener();
     }
@@ -516,12 +517,14 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
-    protected @NotNull MergerFactory createMergerFactory(SelectedChangeListsChecker checker) {
+    @NotNull
+    protected MergerFactory createMergerFactory(SelectedChangeListsChecker checker) {
       return new ChangeListsMergerFactory(checker.getSelectedLists(), true, !myMarkAsMerged, false);
     }
 
     @Override
-    protected @NotNull SelectedChangeListsChecker createChecker() {
+    @NotNull
+    protected SelectedChangeListsChecker createChecker() {
       return new SelectedChangeListsChecker();
     }
 
@@ -534,15 +537,17 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
       presentation.setEnabled(presentation.isEnabled() && mergeEnabled(checker.getSelectedLists(), myMarkAsMerged));
     }
 
+    @Nullable
     @Override
-    protected @Nullable Url getSelectedBranchUrl(SelectedCommittedStuffChecker checker) {
+    protected Url getSelectedBranchUrl(SelectedCommittedStuffChecker checker) {
       SvnMergeInfoRootPanelManual data = getPanelData(checker.getSelectedLists());
 
       return data != null && data.getBranch() != null ? data.getBranch().getUrl() : null;
     }
 
     @Override
-    protected @Nullable String getSelectedBranchLocalPath(SelectedCommittedStuffChecker checker) {
+    @Nullable
+    protected String getSelectedBranchLocalPath(SelectedCommittedStuffChecker checker) {
       final SvnMergeInfoRootPanelManual data = getPanelData(checker.getSelectedLists());
       if (data != null) {
         return data.getLocalBranch();
@@ -565,12 +570,14 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
-    protected @NotNull MergerFactory createMergerFactory(final SelectedChangeListsChecker checker) {
+    @NotNull
+    protected MergerFactory createMergerFactory(final SelectedChangeListsChecker checker) {
       return new ChangeListsMergerFactory(checker.getSelectedLists(), false, !myIntegrate, false);
     }
 
     @Override
-    protected @NotNull SelectedChangeListsChecker createChecker() {
+    @NotNull
+    protected SelectedChangeListsChecker createChecker() {
       return new SelectedChangeListsChecker();
     }
 
@@ -586,8 +593,9 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
       }
     }
 
+    @Nullable
     @Override
-    protected @Nullable Url getSelectedBranchUrl(SelectedCommittedStuffChecker checker) {
+    protected Url getSelectedBranchUrl(SelectedCommittedStuffChecker checker) {
       SvnMergeInfoRootPanelManual data = getPanelData(checker.getSelectedLists());
 
       return data != null && data.getBranch() != null ? data.getBranch().getUrl() : null;
@@ -622,7 +630,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     return null;
   }
 
-  public @Nullable ListMergeStatus getStatus(final CommittedChangeList list, final boolean ignoreEnabled) {
+  @Nullable
+  public ListMergeStatus getStatus(final CommittedChangeList list, final boolean ignoreEnabled) {
     if (!(list instanceof SvnChangeList svnList)) {
       return null;
     }
@@ -646,7 +655,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     return null;
   }
 
-  public @NotNull MergePanelFiltering getStrategy() {
+  @NotNull
+  public MergePanelFiltering getStrategy() {
     return myStrategy;
   }
 
@@ -676,8 +686,9 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
       return myPanel;
     }
 
+    @NotNull
     @Override
-    public @NotNull CommittedChangesFilterKey getKey() {
+    public CommittedChangesFilterKey getKey() {
       return new CommittedChangesFilterKey("MERGE_PANEL", CommittedChangesFilterPriority.MERGE);
     }
 
@@ -704,7 +715,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
-    public @NotNull List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
+    @NotNull
+    public List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
       if ((!myFilterAlien.mySelected) && (!myFilterNotMerged.mySelected) && (!myFilterMerged.mySelected)) {
         return new ArrayList<>(changeLists);
       }

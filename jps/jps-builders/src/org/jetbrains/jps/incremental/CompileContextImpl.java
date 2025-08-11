@@ -1,11 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -24,29 +23,31 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
 import java.util.*;
 
-@ApiStatus.Internal
+/**
+ * @author Eugene Zhuravlev
+ */
 public final class CompileContextImpl extends UserDataHolderBase implements CompileContext {
-  private final CompileScope scope;
-  private final MessageHandler delegateMessageHandler;
-  private final Set<ModuleBuildTarget> nonIncrementalModules = new HashSet<>();
+  private final CompileScope myScope;
+  private final MessageHandler myDelegateMessageHandler;
+  private final Set<ModuleBuildTarget> myNonIncrementalModules = new HashSet<>();
 
-  private final Object2LongMap<BuildTarget<?>> compilationStartStamp = new Object2LongOpenHashMap<>();
-  private final ProjectDescriptor projectDescriptor;
-  private final Map<String, String> builderParams;
-  private final CanceledStatus cancelStatus;
-  private volatile float done = -1.0f;
-  private final EventDispatcher<BuildListener> listeners = EventDispatcher.create(BuildListener.class);
+  private final Object2LongMap<BuildTarget<?>> myCompilationStartStamp = new Object2LongOpenHashMap<>();
+  private final ProjectDescriptor myProjectDescriptor;
+  private final Map<String, String> myBuilderParams;
+  private final CanceledStatus myCancelStatus;
+  private volatile float myDone = -1.0f;
+  private final EventDispatcher<BuildListener> myListeners = EventDispatcher.create(BuildListener.class);
 
-  public CompileContextImpl(@NotNull CompileScope scope,
-                            @NotNull ProjectDescriptor projectDescriptor,
-                            @NotNull MessageHandler delegateMessageHandler,
-                            @NotNull Map<String, String> builderParams,
-                            @NotNull CanceledStatus cancelStatus) {
-    this.projectDescriptor = projectDescriptor;
-    this.builderParams = Collections.unmodifiableMap(builderParams);
-    this.cancelStatus = cancelStatus;
-    this.scope = scope;
-    this.delegateMessageHandler = delegateMessageHandler;
+  CompileContextImpl(@NotNull CompileScope scope,
+                     @NotNull ProjectDescriptor pd,
+                     @NotNull MessageHandler delegateMessageHandler,
+                     @NotNull Map<String, String> builderParams,
+                     @NotNull CanceledStatus cancelStatus) {
+    myProjectDescriptor = pd;
+    myBuilderParams = Collections.unmodifiableMap(builderParams);
+    myCancelStatus = cancelStatus;
+    myScope = scope;
+    myDelegateMessageHandler = delegateMessageHandler;
   }
 
   @TestOnly
@@ -56,16 +57,16 @@ public final class CompileContextImpl extends UserDataHolderBase implements Comp
 
   @Override
   public long getCompilationStartStamp(BuildTarget<?> target) {
-    synchronized (compilationStartStamp) {
-      return compilationStartStamp.getLong(target);
+    synchronized (myCompilationStartStamp) {
+      return myCompilationStartStamp.getLong(target);
     }
   }
 
   @Override
   public void setCompilationStartStamp(@NotNull Collection<? extends BuildTarget<?>> targets, long stamp) {
-    synchronized (compilationStartStamp) {
+    synchronized (myCompilationStartStamp) {
       for (BuildTarget<?> target : targets) {
-        compilationStartStamp.put(target, stamp);
+        myCompilationStartStamp.put(target, stamp);
       }
     }
   }
@@ -75,40 +76,45 @@ public final class CompileContextImpl extends UserDataHolderBase implements Comp
   }
 
   @Override
+  public boolean isProjectRebuild() {
+    return JavaBuilderUtil.isForcedRecompilationAllJavaModules(this);
+  }
+
+  @Override
   public @NotNull BuildLoggingManager getLoggingManager() {
-    return projectDescriptor.getLoggingManager();
+    return myProjectDescriptor.getLoggingManager();
   }
 
   @Override
   public @Nullable String getBuilderParameter(String paramName) {
-    return builderParams.get(paramName);
+    return myBuilderParams.get(paramName);
   }
 
   @Override
   public void addBuildListener(@NotNull BuildListener listener) {
-    listeners.addListener(listener);
+    myListeners.addListener(listener);
   }
 
   @Override
   public void removeBuildListener(@NotNull BuildListener listener) {
-    listeners.removeListener(listener);
+    myListeners.removeListener(listener);
   }
 
   @Override
   public void markNonIncremental(@NotNull ModuleBuildTarget target) {
     if (!target.isTests()) {
-      nonIncrementalModules.add(new ModuleBuildTarget(target.getModule(), JavaModuleBuildTargetType.TEST));
+      myNonIncrementalModules.add(new ModuleBuildTarget(target.getModule(), JavaModuleBuildTargetType.TEST));
     }
-    nonIncrementalModules.add(target);
+    myNonIncrementalModules.add(target);
   }
 
   @Override
   public boolean shouldDifferentiate(@NotNull ModuleChunk chunk) {
-    if (nonIncrementalModules.isEmpty()) {
+    if (myNonIncrementalModules.isEmpty()) {
       return true;
     }
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      if (nonIncrementalModules.contains(target)) {
+      if (myNonIncrementalModules.contains(target)) {
         return false;
       }
     }
@@ -117,7 +123,7 @@ public final class CompileContextImpl extends UserDataHolderBase implements Comp
 
   @Override
   public @NotNull CanceledStatus getCancelStatus() {
-    return cancelStatus;
+    return myCancelStatus;
   }
 
   @Override
@@ -129,38 +135,38 @@ public final class CompileContextImpl extends UserDataHolderBase implements Comp
 
   @Override
   public void clearNonIncrementalMark(@NotNull ModuleBuildTarget target) {
-    nonIncrementalModules.remove(target);
+    myNonIncrementalModules.remove(target);
   }
 
   @Override
   public @NotNull CompileScope getScope() {
-    return scope;
+    return myScope;
   }
 
   @Override
-  public void processMessage(BuildMessage message) {
-    if (message.getKind() == BuildMessage.Kind.ERROR) {
+  public void processMessage(BuildMessage msg) {
+    if (msg.getKind() == BuildMessage.Kind.ERROR) {
       Utils.ERRORS_DETECTED_KEY.set(this, Boolean.TRUE);
     }
-    if (message instanceof ProgressMessage) {
-      ((ProgressMessage)message).setDone(done);
+    if (msg instanceof ProgressMessage) {
+      ((ProgressMessage)msg).setDone(myDone);
     }
-    delegateMessageHandler.processMessage(message);
-    if (message instanceof FileGeneratedEvent) {
-      listeners.getMulticaster().filesGenerated((FileGeneratedEvent)message);
+    myDelegateMessageHandler.processMessage(msg);
+    if (msg instanceof FileGeneratedEvent) {
+      myListeners.getMulticaster().filesGenerated((FileGeneratedEvent)msg);
     }
-    else if (message instanceof FileDeletedEvent) {
-      listeners.getMulticaster().filesDeleted((FileDeletedEvent)message);
+    else if (msg instanceof FileDeletedEvent) {
+      myListeners.getMulticaster().filesDeleted((FileDeletedEvent)msg);
     }
   }
 
   @Override
   public void setDone(float done) {
-    this.done = done;
+    myDone = done;
   }
 
   @Override
   public @NotNull ProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
+    return myProjectDescriptor;
   }
 }

@@ -1,6 +1,5 @@
 from types import TracebackType
-from typing import final
-from typing_extensions import Self
+from typing_extensions import Self, final
 
 __all__ = ("Timeout", "timeout", "timeout_at")
 

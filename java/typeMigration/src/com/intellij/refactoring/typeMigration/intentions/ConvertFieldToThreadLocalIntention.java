@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -30,13 +30,15 @@ import java.util.Objects;
 public final class ConvertFieldToThreadLocalIntention extends BaseElementAtCaretIntentionAction implements LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(ConvertFieldToThreadLocalIntention.class);
 
+  @NotNull
   @Override
-  public @NotNull String getText() {
+  public String getText() {
     return getFamilyName();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return TypeMigrationBundle.message("convert.to.threadlocal.family.name");
   }
 
@@ -93,7 +95,8 @@ public final class ConvertFieldToThreadLocalIntention extends BaseElementAtCaret
                                                "ThreadLocal<" + genericArg + "> " + fieldName + " = ThreadLocal.withInitial(...)");
   }
 
-  private static @Nullable PsiClassType getMigrationTargetType(@NotNull PsiType fromType, @NotNull Project project, @NotNull PsiElement context) {
+  @Nullable
+  private static PsiClassType getMigrationTargetType(@NotNull PsiType fromType, @NotNull Project project, @NotNull PsiElement context) {
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiClass threadLocalClass = psiFacade.findClass(ThreadLocal.class.getName(), GlobalSearchScope.allScope(project));
     if (threadLocalClass == null) {//show warning

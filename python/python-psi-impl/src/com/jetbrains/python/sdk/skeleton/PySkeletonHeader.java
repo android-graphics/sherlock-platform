@@ -14,8 +14,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PySkeletonHeader {
-  public static final @NonNls String BUILTIN_NAME = "(built-in)"; // version required for built-ins
-  public static final @NonNls String PREGENERATED = "(pre-generated)"; // pre-generated skeleton
+  @NonNls public static final String BUILTIN_NAME = "(built-in)"; // version required for built-ins
+  @NonNls public static final String PREGENERATED = "(pre-generated)"; // pre-generated skeleton
 
   // Path (the first component) may contain spaces, this header spec is deprecated
   private static final Pattern VERSION_LINE_V1 = Pattern.compile("# from (\\S+) by generator (\\S+)\\s*");
@@ -23,7 +23,7 @@ public class PySkeletonHeader {
   private static final Pattern FROM_LINE_V2 = Pattern.compile("# from (.*)$");
   private static final Pattern BY_LINE_V2 = Pattern.compile("# by generator (.*)$");
 
-  private final @NotNull String myFile;
+  @NotNull private final String myFile;
   private final int myVersion;
 
   public PySkeletonHeader(@NotNull String binaryFile, int version) {
@@ -31,7 +31,8 @@ public class PySkeletonHeader {
     myVersion = version;
   }
 
-  public @NotNull String getBinaryFile() {
+  @NotNull
+  public String getBinaryFile() {
     return myFile;
   }
 
@@ -39,7 +40,8 @@ public class PySkeletonHeader {
     return myVersion;
   }
 
-  public static @Nullable PySkeletonHeader readSkeletonHeader(@NotNull File file) {
+  @Nullable
+  public static PySkeletonHeader readSkeletonHeader(@NotNull File file) {
     try (LineNumberReader reader = new LineNumberReader(new FileReader(file, StandardCharsets.UTF_8))) {
       String line = null;
       // Read 3 lines, skip first 2: encoding, module name

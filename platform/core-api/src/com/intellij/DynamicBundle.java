@@ -8,7 +8,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.ReflectionUtil;
@@ -22,6 +21,8 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiFunction;
@@ -82,9 +83,9 @@ public class DynamicBundle extends AbstractBundle {
                                                                @NotNull String defaultPath,
                                                                @NotNull Locale locale,
                                                                @NotNull BiFunction<? super @NotNull ClassLoader, ? super Locale, ? extends @NotNull ResourceBundle> bundleResolver) {
-    String bundlePath = FileUtilRt.toCanonicalPath(defaultPath, '.', true);
+    Path bundlePath = FileSystems.getDefault().getPath(FileUtil.toCanonicalPath(defaultPath, '.'));
     ClassLoader pluginClassLoader = DefaultBundleService.isDefaultBundle() ? null: LocalizationUtil.INSTANCE.getPluginClassLoader(bundleClassLoader, locale);
-    List<String> paths = LocalizationUtil.INSTANCE.getLocalizedPathsWithDefault(bundlePath, locale);
+    List<Path> paths = LocalizationUtil.INSTANCE.getLocalizedPathsWithDefault(bundlePath, locale);
     Map<LocalizationOrder, ResourceBundle> bundleOrderMap = new HashMap<>();
     if (pluginClassLoader != null) {
       try {
@@ -106,12 +107,13 @@ public class DynamicBundle extends AbstractBundle {
     return bundle;
   }
 
-  private static @NotNull List<ResourceBundle> getBundlesFromLocalizationFolder(@NotNull String pathToBundle, ClassLoader loader, @NotNull Locale locale) {
-    List<String> paths = LocalizationUtil.INSTANCE.getFolderLocalizedPaths(pathToBundle, locale);
+  private static @NotNull List<ResourceBundle> getBundlesFromLocalizationFolder(@NotNull Path pathToBundle, ClassLoader loader, @NotNull Locale locale) {
+    List<Path> paths = LocalizationUtil.INSTANCE.getFolderLocalizedPaths(pathToBundle, locale);
     List<ResourceBundle> resourceBundles = new ArrayList<>();
-    for (String path : paths) {
+    for (Path path : paths) {
       try {
-        resourceBundles.add(AbstractBundleKt._doResolveBundle(loader, locale, path));
+        ResourceBundle resourceBundle = AbstractBundleKt._doResolveBundle(loader, locale, FileUtil.toSystemIndependentName(path.toString()));
+        resourceBundles.add(resourceBundle);
       }
       catch (MissingResourceException ignored) { }
     }
@@ -128,8 +130,8 @@ public class DynamicBundle extends AbstractBundle {
   }
 
   private static void resolveBundleOrder(@NotNull ClassLoader loader,
-                                         @NotNull String pathToBundle,
-                                         @NotNull List<String> orderedPaths,
+                                         @NotNull Path pathToBundle,
+                                         @NotNull List<? extends Path> orderedPaths,
                                          @NotNull Map<? super LocalizationOrder, ? super ResourceBundle> bundleOrderMap,
                                          @NotNull BiFunction<? super @NotNull ClassLoader, ? super Locale, ? extends @NotNull ResourceBundle> bundleResolver,
                                          @NotNull Locale locale) {
@@ -150,15 +152,16 @@ public class DynamicBundle extends AbstractBundle {
 
   private static void putBundleOrder(@NotNull ResourceBundle bundle,
                                      @NotNull Map<? super LocalizationOrder, ? super ResourceBundle> bundleOrderMap,
-                                     @NotNull List<String> orderedPaths) {
+                                     @NotNull List<? extends Path> orderedPaths) {
     String bundlePath = FileUtil.toCanonicalPath(bundle.getBaseBundleName(), '.');
 
     if (!bundle.getLocale().toString().isEmpty()) {
       bundlePath += "_" + bundle.getLocale().toString();
     }
-    LocalizationOrder localizationOrder = LocalizationOrder.Companion.getLocalizationOrder(orderedPaths, bundlePath);
+    Path path = FileSystems.getDefault().getPath(bundlePath);
+    LocalizationOrder localizationOrder = LocalizationOrder.Companion.getLocalizationOrder(orderedPaths, path);
     if (localizationOrder == null) {
-      LOG.debug("Order cannot be defined for the bundle: " + bundlePath +
+      LOG.debug("Order cannot be defined for the bundle: " + path +
                 "; Current locale: " + getLocale() +
                 "; Paths for locale: " + orderedPaths);
       return;
@@ -189,8 +192,10 @@ public class DynamicBundle extends AbstractBundle {
    * It's to be refactored with "ResourceBundleProvider" since 'core-api' module will use java 1.9+
    */
   private static class DynamicBundleInternal {
-    private static final @NotNull MethodHandle SET_PARENT;
-    private static final @NotNull MethodHandle GET_PARENT;
+    @NotNull
+    private static final MethodHandle SET_PARENT;
+    @NotNull
+    private static final MethodHandle GET_PARENT;
 
     static {
       try {
@@ -363,7 +368,9 @@ public class DynamicBundle extends AbstractBundle {
   }
 
   @ApiStatus.Internal
-  public static @NotNull @Unmodifiable Map<String, ResourceBundle> getResourceBundles() {
+  @NotNull
+  @Unmodifiable
+  public static Map<String, ResourceBundle> getResourceBundles() {
     return Collections.unmodifiableMap(bundles);
   }
 

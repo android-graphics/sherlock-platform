@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
@@ -24,11 +24,13 @@ public final class CommonJavaRunDashboardCustomizer extends RunDashboardCustomiz
   }
 
   @Override
-  public @Nullable PsiElement getPsiElement(@NotNull RunDashboardRunConfigurationNode node) {
+  @Nullable
+  public PsiElement getPsiElement(@NotNull RunDashboardRunConfigurationNode node) {
     return findMainClass(node.getConfigurationSettings().getConfiguration());
   }
 
-  private static @Nullable PsiClass findMainClass(@NotNull RunConfiguration runConfiguration) {
+  @Nullable
+  private static PsiClass findMainClass(@NotNull RunConfiguration runConfiguration) {
     if (runConfiguration instanceof SingleClassConfiguration) {
       return ((SingleClassConfiguration)runConfiguration).getMainClass();
     }

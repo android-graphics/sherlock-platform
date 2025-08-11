@@ -1,7 +1,7 @@
 // "Add annotation target" "false"
 // ACTION: Introduce import alias
 // WITH_STDLIB
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 @file:MyExperimentalAPI<caret>
 
 @RequiresOptIn

@@ -35,7 +35,7 @@ public final class ByteBufferCleaner {
     }
   }
 
-  private static synchronized @NotNull MethodHandle getByteBufferCleaner() throws Throwable {
+  private synchronized static @NotNull MethodHandle getByteBufferCleaner() throws Throwable {
     MethodHandle cleaner = ByteBufferCleaner.cleaner;
     if (cleaner != null) {
       return cleaner;

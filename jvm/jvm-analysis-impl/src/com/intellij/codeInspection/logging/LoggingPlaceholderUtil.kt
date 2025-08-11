@@ -3,23 +3,18 @@ package com.intellij.codeInspection.logging
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.InheritanceUtil
-import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.addIfNotNull
 import com.siyeh.ig.callMatcher.CallMapper
 import com.siyeh.ig.callMatcher.CallMatcher
 import com.siyeh.ig.format.FormatDecode
 import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.uast.*
-import org.jetbrains.uast.UastBinaryOperator.Companion.ASSIGN
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 const val MAX_BUILDER_LENGTH = 20
 const val ADD_ARGUMENT_METHOD_NAME = "addArgument"
 const val SET_MESSAGE_METHOD_NAME = "setMessage"
-private val knownNames = setOf(ADD_ARGUMENT_METHOD_NAME, SET_MESSAGE_METHOD_NAME)
 
 internal interface LoggerTypeSearcher {
   fun findType(expression: UCallExpression, context: LoggerContext): PlaceholderLoggerType?
@@ -37,72 +32,26 @@ private val SLF4J_HOLDER = object : LoggerTypeSearcher {
 
 internal val LOG4J_LOG_BUILDER_HOLDER = object : LoggerTypeSearcher {
   override fun findType(expression: UCallExpression, context: LoggerContext): PlaceholderLoggerType? {
-    var initializers: List<UExpression?>?
     var qualifierExpression = getImmediateLoggerQualifier(expression)
     if (qualifierExpression is UReferenceExpression) {
       val target: UVariable = qualifierExpression.resolveToUElement() as? UVariable ?: return null
       if (!target.isFinal) {
         return PlaceholderLoggerType.LOG4J_EQUAL_PLACEHOLDERS //formatted builder is really rare
       }
-      qualifierExpression = target.uastInitializer
-      if (qualifierExpression == null) {
-        initializers = tryToFindInitializers(target, expression)
-      }
-      else {
-        initializers = listOf(qualifierExpression)
+      qualifierExpression = target.uastInitializer?.skipParenthesizedExprDown()
+    }
+    if (qualifierExpression is UQualifiedReferenceExpression) {
+      qualifierExpression = qualifierExpression.selector
+    }
+    if (qualifierExpression is UCallExpression) {
+      return when (LOG4J_HOLDER.findType(qualifierExpression, context)) {
+        PlaceholderLoggerType.LOG4J_FORMATTED_STYLE -> PlaceholderLoggerType.LOG4J_FORMATTED_STYLE
+        PlaceholderLoggerType.LOG4J_OLD_STYLE -> PlaceholderLoggerType.LOG4J_EQUAL_PLACEHOLDERS
+        else -> null
       }
     }
-    else {
-      initializers = listOf(qualifierExpression)
-    }
-    if (initializers == null) return null
-    return initializers.map {
-      it?.skipParenthesizedExprDown()
-    }.map {
-      if (it is UQualifiedReferenceExpression) {
-        it.selector
-      }
-      else {
-        it
-      }
-    }.map {
-      if (it is UCallExpression) {
-        when (LOG4J_HOLDER.findType(it, context)) {
-          PlaceholderLoggerType.LOG4J_FORMATTED_STYLE -> PlaceholderLoggerType.LOG4J_FORMATTED_STYLE
-          PlaceholderLoggerType.LOG4J_OLD_STYLE -> PlaceholderLoggerType.LOG4J_EQUAL_PLACEHOLDERS
-          else -> null
-        }
-      }
-      else {
-        PlaceholderLoggerType.LOG4J_EQUAL_PLACEHOLDERS
-      }
-    }.distinct().singleOrNull()
+    return PlaceholderLoggerType.LOG4J_EQUAL_PLACEHOLDERS
   }
-}
-
-private fun tryToFindInitializers(originalVariable: UVariable, expression: UCallExpression): List<UExpression>? {
-  val variableText = originalVariable.name
-  if (variableText == null) return null
-  if (originalVariable.getContainingUFile()?.sourcePsi != expression.getContainingUFile()?.sourcePsi) return null
-  val element = originalVariable.sourcePsi ?: return null
-  return CachedValuesManager.getManager(element.project).getCachedValue(element, CachedValueProvider {
-    val variable = element.toUElementOfType<UVariable>()
-    val initializers = mutableListOf<UExpression>()
-    val uastParent = variable?.uastParent
-    uastParent?.accept(object : AbstractUastVisitor() {
-      override fun visitBinaryExpression(node: UBinaryExpression): Boolean {
-        if (node.operator == ASSIGN) {
-          val leftOperand = node.leftOperand
-          if (leftOperand is UReferenceExpression && leftOperand.sourcePsi?.text == variableText && leftOperand.resolveToUElement() == variable) {
-            initializers.add(node.rightOperand)
-          }
-        }
-        return super.visitBinaryExpression(node)
-      }
-    })
-    return@CachedValueProvider CachedValueProvider.Result.create(initializers,
-                                                                 PsiModificationTracker.MODIFICATION_COUNT)
-  })
 }
 
 internal val SLF4J_BUILDER_HOLDER = object : LoggerTypeSearcher {
@@ -117,7 +66,7 @@ internal val SLF4J_BUILDER_HOLDER = object : LoggerTypeSearcher {
 private val LOG4J_HOLDER = object : LoggerTypeSearcher {
   override fun findType(expression: UCallExpression, context: LoggerContext): PlaceholderLoggerType? {
     val qualifierExpression = getImmediateLoggerQualifier(expression)
-    var initializers: List<UExpression>? = null
+    var initializer: UExpression? = null
     if (qualifierExpression is UReferenceExpression) {
       var resolvedToUElement = qualifierExpression.resolveToUElement()
       if (resolvedToUElement is UMethod) {
@@ -133,31 +82,20 @@ private val LOG4J_HOLDER = object : LoggerTypeSearcher {
       if (!target.isFinal) {
         return null
       }
-      val uastInitializer = target.uastInitializer
-      initializers = if (uastInitializer != null) listOf(uastInitializer) else null
-      if (initializers == null) {
-        initializers = tryToFindInitializers(target, expression)
-      }
+      initializer = target.uastInitializer
+      if (initializer == null) return null
     }
     else if (qualifierExpression is UCallExpression) {
-      initializers = listOf(qualifierExpression)
+      initializer = qualifierExpression
     }
-    if (initializers == null || initializers.isEmpty()) return null
-    return initializers.map {
-      it.skipParenthesizedExprDown()
-    }.map {
-      if (it is UQualifiedReferenceExpression) {
-        it.selector
-      }
-      else {
-        it
-      }
-    }.map {
-      if (it is UCallExpression && LoggingUtil.FORMATTED_LOG4J.uCallMatches(it)) {
-        PlaceholderLoggerType.LOG4J_FORMATTED_STYLE
-      }
-      else PlaceholderLoggerType.LOG4J_OLD_STYLE
-    }.distinct().singleOrNull()
+    initializer = initializer?.skipParenthesizedExprDown()
+    if (initializer is UQualifiedReferenceExpression) {
+      initializer = initializer.selector
+    }
+    return if (initializer is UCallExpression && LoggingUtil.FORMATTED_LOG4J.uCallMatches(initializer)) {
+      PlaceholderLoggerType.LOG4J_FORMATTED_STYLE
+    }
+    else PlaceholderLoggerType.LOG4J_OLD_STYLE
   }
 }
 
@@ -279,7 +217,8 @@ internal fun getLogStringIndex(parameters: List<UParameter>): Int? {
 }
 
 internal fun detectLoggerMethod(uCallExpression: UCallExpression): UCallExpression? {
-  return if (uCallExpression.isMethodNameOneOf(knownNames)) {
+  val name = uCallExpression.methodName
+  return if (name == ADD_ARGUMENT_METHOD_NAME || name == SET_MESSAGE_METHOD_NAME) {
     detectLoggerBuilderMethod(uCallExpression) ?: return null
   }
   else {

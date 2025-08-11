@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints;
 
 
@@ -28,7 +28,8 @@ public final class MethodInfoExcludeListFilter implements HintInfoFilter {
       .collect(Collectors.toList());
   }
 
-  public static @NotNull MethodInfoExcludeListFilter forLanguage(@NotNull Language language) {
+  @NotNull
+  public static MethodInfoExcludeListFilter forLanguage(@NotNull Language language) {
     Set<String> list = fullExcludelist(language);
     return new MethodInfoExcludeListFilter(list);
   }
@@ -41,7 +42,9 @@ public final class MethodInfoExcludeListFilter implements HintInfoFilter {
     return false;
   }
 
-  private static @NotNull @Unmodifiable Set<String> fullExcludelist(Language language) {
+  @NotNull
+  @Unmodifiable
+  private static Set<String> fullExcludelist(Language language) {
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
     if (provider == null) {
       return Collections.emptySet();
@@ -55,7 +58,8 @@ public final class MethodInfoExcludeListFilter implements HintInfoFilter {
     return excludeList;
   }
 
-  private static @NotNull Set<String> excludeList(@NotNull Language language) {
+  @NotNull
+  private static Set<String> excludeList(@NotNull Language language) {
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
     if (provider != null) {
       ParameterNameHintsSettings settings = ParameterNameHintsSettings.getInstance();

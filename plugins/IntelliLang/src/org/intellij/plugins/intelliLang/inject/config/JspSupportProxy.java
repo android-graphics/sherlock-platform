@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.intellij.plugins.intelliLang.inject.config;
 
@@ -16,7 +16,8 @@ public abstract class JspSupportProxy {
   private static JspSupportProxy ourInstance;
   private static boolean isInitialized;
 
-  public static synchronized @Nullable JspSupportProxy getInstance() {
+  @Nullable
+  public static synchronized JspSupportProxy getInstance() {
     if (isInitialized) {
       return ourInstance;
     }

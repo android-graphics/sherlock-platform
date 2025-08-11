@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight.upDownMover;
 
@@ -31,7 +31,8 @@ public abstract class AbstractKotlinUpDownMover extends LineMover {
             @NotNull LineRange oldRange
     );
 
-    protected @Nullable LineRange getSourceRange(
+    @Nullable
+    protected LineRange getSourceRange(
             @NotNull PsiElement firstElement,
             @NotNull PsiElement lastElement,
             @NotNull Editor editor,
@@ -130,7 +131,8 @@ public abstract class AbstractKotlinUpDownMover extends LineMover {
         return lastElement;
     }
 
-    protected static @Nullable KtAnnotationEntry getParentFileAnnotationEntry(@Nullable PsiElement element) {
+    @Nullable
+    protected static KtAnnotationEntry getParentFileAnnotationEntry(@Nullable PsiElement element) {
         if (element == null) return null;
 
         KtAnnotationEntry annotationEntry = PsiTreeUtil.getParentOfType(element, KtAnnotationEntry.class);
@@ -150,15 +152,18 @@ public abstract class AbstractKotlinUpDownMover extends LineMover {
         return PsiTreeUtil.isAncestor(block, blockElement, true) && comment instanceof PsiComment;
     }
 
-    protected static @Nullable PsiElement getSiblingOfType(@NotNull PsiElement element, boolean down, @NotNull Class<? extends PsiElement> type) {
+    @Nullable
+    protected static PsiElement getSiblingOfType(@NotNull PsiElement element, boolean down, @NotNull Class<? extends PsiElement> type) {
         return down ? PsiTreeUtil.getNextSiblingOfType(element, type) : PsiTreeUtil.getPrevSiblingOfType(element, type);
     }
 
-    protected static @Nullable PsiElement firstNonWhiteSibling(@NotNull LineRange lineRange, boolean down) {
+    @Nullable
+    protected static PsiElement firstNonWhiteSibling(@NotNull LineRange lineRange, boolean down) {
         return firstNonWhiteElement(down ? lineRange.lastElement.getNextSibling() : lineRange.firstElement.getPrevSibling(), down);
     }
 
-    protected static @Nullable PsiElement firstNonWhiteSibling(@NotNull PsiElement element, boolean down) {
+    @Nullable
+    protected static PsiElement firstNonWhiteSibling(@NotNull PsiElement element, boolean down) {
         return firstNonWhiteElement(down ? element.getNextSibling() : element.getPrevSibling(), down);
     }
 

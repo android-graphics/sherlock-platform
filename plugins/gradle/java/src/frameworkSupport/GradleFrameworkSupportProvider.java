@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.frameworkSupport;
 
 import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
@@ -38,11 +38,13 @@ public abstract class GradleFrameworkSupportProvider extends FrameworkSupportInM
     return null;
   }
 
+  @NotNull
   @Override
-  public @NotNull FrameworkSupportInModuleConfigurable createConfigurable(@NotNull FrameworkSupportModel model) {
+  public FrameworkSupportInModuleConfigurable createConfigurable(@NotNull FrameworkSupportModel model) {
     return new FrameworkSupportInModuleConfigurable() {
+      @Nullable
       @Override
-      public @Nullable JComponent createComponent() {
+      public JComponent createComponent() {
         return GradleFrameworkSupportProvider.this.createComponent();
       }
 
@@ -62,7 +64,7 @@ public abstract class GradleFrameworkSupportProvider extends FrameworkSupportInM
   }
 
   @Override
-  public boolean isEnabledForModuleType(@NotNull ModuleType<?> moduleType) {
+  public boolean isEnabledForModuleType(@NotNull ModuleType moduleType) {
     return false;
   }
 }

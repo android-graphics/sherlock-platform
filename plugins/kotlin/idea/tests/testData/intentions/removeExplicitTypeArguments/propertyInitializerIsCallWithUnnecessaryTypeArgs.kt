@@ -1,4 +1,4 @@
-// FIX: Remove explicit type arguments
+// IS_APPLICABLE: true
 // AFTER-WARNING: Variable 'l' is never used
 
 fun bar() {

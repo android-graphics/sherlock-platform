@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.validation;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -15,8 +15,9 @@ import java.util.Map;
  * @author Dmitry Avdeev
  */
 public class XsltColorPage extends XMLColorsPage {
+  @NotNull
   @Override
-  public @NotNull String getDisplayName() {
+  public String getDisplayName() {
     return XPathBundle.message("configurable.xslt.display.name");
   }
 
@@ -27,8 +28,9 @@ public class XsltColorPage extends XMLColorsPage {
     };
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDemoText() {
+  public String getDemoText() {
     return """
       <xsl><xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0"></xsl>
           <xsl><xsl:template match="/hello-world"></xsl>

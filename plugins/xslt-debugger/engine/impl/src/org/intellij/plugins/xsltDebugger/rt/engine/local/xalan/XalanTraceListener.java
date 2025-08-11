@@ -136,17 +136,14 @@ public class XalanTraceListener extends PrintTraceListener {
       myMatchedNode = node;
     }
 
-    @Override
     public String getXPath() {
       return myPath;
     }
 
-    @Override
     public String getURI() {
       return mySystemId;
     }
 
-    @Override
     public int getLineNumber() {
       return myLineNumber;
     }

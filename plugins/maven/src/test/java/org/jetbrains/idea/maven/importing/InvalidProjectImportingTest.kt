@@ -16,55 +16,23 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.WriteAction
 import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.project.MavenProject
 import org.junit.Test
+import java.io.IOException
 
 class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
-
-  @Test
-  fun testSystemDependencyWithoutPath() = runBlocking {
-    runWithoutStaticSync()
-    createProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <dependencies>
-                         <dependency>
-                           <groupId>junit</groupId>
-                           <artifactId>junit</artifactId>
-                           <version>4.0</version>
-                           <scope>system</scope>
-                         </dependency>
-                       </dependencies>
-                       """.trimIndent())
-    doImportProjectsAsync(listOf(projectPom), false)
-
-    assertModules("project")
-    forMaven3 {
-      //IDEA-357072
-      assertModuleLibDeps("project") // dependency was not added due to reported pom model problem.
-    }
-
-    forMaven4 {
-      val expected = arrayOf(
-        "'dependencies.dependency.systemPath' for junit:junit:jar is missing.",
-        "'dependencies.dependency.scope' for junit:junit:jar declares usage of deprecated 'system' scope ",
-      )
-      assertProblems(projectsManager.findProject(projectPom)!!, *expected)
-    }
-  }
-
+  
   @Test
   fun testResetDependenciesWhenProjectContainsErrors() = runBlocking {
     //Registry.get("maven.server.debug").setValue(true);
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
-                       <packaging>pom</packaging>
+                       <packaging>jar</packaging>
                        <version>1</version>
                        <modules>
                          <module>m1</module>
@@ -89,16 +57,16 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     assertModuleLibDeps("m1", "Maven: somegroup:artifact:1.0")
 
 
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
-                       <packaging>pom</packaging>
+                       <packaging>jar</packaging>
                        <version>1</version>
                        <modules>
                          <module>m1</module>
                        </modules>
                        """.trimIndent())
-    updateModulePom("m1", """
+    createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -121,7 +89,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
-                       <packaging>pom</packaging>
+                       <packaging>jar</packaging>
                        <version>1</version>
                        <modules>
                          <module>m1</module>
@@ -146,15 +114,15 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     assertModuleLibDeps("m1", "Maven: somegroup:artifact:1.0")
 
 
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
-                       <packaging>pom</packaging>
+                       <packaging>jar</packaging>
                        <version>1</version>
                        <modules>
                          <module>m1</module>
                        </modules>
                        """.trimIndent())
-    updateModulePom("m1", """
+    createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -165,7 +133,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
       </dependencies>
       """.trimIndent())
 
-    updateAllProjects()
+    importProjectAsync()
     assertModules("project", "m1")
     assertModuleLibDeps("m1", "Maven: somegroup:artifact:1.0")
   }
@@ -173,7 +141,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testUnknownProblemWithEmptyFile() = runBlocking {
     createProjectPom("")
-    edtWriteAction { projectPom.setBinaryContent(ByteArray(0)) }
+    WriteAction.runAndWait<IOException> { projectPom.setBinaryContent(ByteArray(0)) }
 
     importProjectAsync()
 
@@ -193,14 +161,10 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
     assertModules("project")
     val root = rootProjects[0]
-    val problems = if (isMaven4)
-      arrayOf(
-        "'artifactId' with value '\${undefined}' does not match a valid coordinate id pattern.",
-        "'artifactId' contains an expression but should be a constant.",
-      )
-    else
-      arrayOf("'artifactId' with value '\${undefined}' does not match a valid id pattern.")
-    assertProblems(root, *problems)
+    val problem = if (isMaven4
+    ) "'artifactId' with value '\${undefined}' does not match a valid coordinate id pattern."
+    else "'artifactId' with value '\${undefined}' does not match a valid id pattern."
+    assertProblems(root, problem)
   }
 
   @Test
@@ -221,7 +185,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project")
 
     val root = rootProjects[0]
-    val problems = root.problems
+    val problems = root.getProblems()
     assertFalse(problems.isEmpty())
     assertModuleLibDeps("project", "Maven: group:artifact:1")
   }
@@ -242,7 +206,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project")
 
     val root = rootProjects[0]
-    val problems = root.problems
+    val problems = root.getProblems()
     UsefulTestCase.assertSize(1, problems)
     assertTrue(problems[0]!!.description!!.contains("Could not find artifact test:parent:pom:1"))
   }
@@ -265,15 +229,10 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
                               """.trimIndent())
 
     val root = rootProjects[0]
-    val problems = root.problems
-    forMaven3 {
-      UsefulTestCase.assertSize(2, problems)
-      assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains("Could not find artifact test:parent:pom:1"))
-      assertTrue(problems[1]!!.description, problems[1]!!.description == "Module 'foo' not found")
-    }
-    forMaven4 {
-      assertContain(problems.map { it.description }, "Module 'foo' not found")
-    }
+    val problems = root.getProblems()
+    UsefulTestCase.assertSize(2, problems)
+    assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains("Could not find artifact test:parent:pom:1"))
+    assertTrue(problems[1]!!.description, problems[1]!!.description == "Module 'foo' not found")
   }
 
   @Test
@@ -291,8 +250,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project")
 
     val root = rootProjects[0]
-    val problem = root.problems.firstOrNull { it.description!!.contains("Module 'foo' not found") }
-    assertNotNull("Expected: Module 'foo' not found", problem)
+    assertProblems(root, "Module 'foo' not found")
   }
 
   @Test
@@ -342,14 +300,9 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project", "foo")
 
     val root = rootProjects[0]
-    val mavenProject = getModules(root)[0]
-    forMaven3 {
-      val problem = mavenProject.problems[0].description!!
-      assertTrue(problem.contains("Non-parseable POM"))
-    }
-    forMaven4 {
-      assertProblems(mavenProject, "'pom.xml' has syntax errors")
-    }
+    assertProblems(root)
+
+    assertProblems(getModules(root)[0], "'pom.xml' has syntax errors")
   }
 
   @Test
@@ -684,24 +637,13 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
                               """.trimIndent())
 
     val root = rootProjects[0]
-    val problems = root.problems
+    val problems = root.getProblems()
     UsefulTestCase.assertSize(1, problems)
-    forMaven3 {
-      val description = if (mavenVersionIsOrMoreThan("3.9.8"))
-        "Unresolveable build extension: Plugin xxx:yyy:1 or one of its dependencies could not be resolved"
-      else
-        "Could not find artifact xxx:yyy:jar:1"
-      assertTrue(problems[0].description!!.contains(description))
-    }
-
-    forMaven4 {
-      assertTrue(problems.isNotEmpty())
-      assertTrue(
-        problems[0].description!!.contains("Could not find artifact xxx:yyy:jar:1") ||
-        problems[0].description!!.contains("xxx:yyy:jar:1 was not found")
-      )
-    }
-
+    val description = if (mavenVersionIsOrMoreThan("3.9.8"))
+      "Unresolveable build extension: Plugin xxx:yyy:1 or one of its dependencies could not be resolved"
+    else
+      "Could not find artifact xxx:yyy:jar:1"
+    assertTrue(problems[0]!!.description!!.contains(description))
   }
 
   @Test
@@ -786,39 +728,22 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
     assertProblems(root)
 
+    var problems = getModules(root)[0].getProblems()
+    UsefulTestCase.assertSize(1, problems)
+    val description = if (mavenVersionIsOrMoreThan("3.9.8"))
+      "Unresolveable build extension: Plugin xxx:xxx:1 or one of its dependencies could not be resolved"
+    else
+      "Could not find artifact xxx:xxx:jar:1"
+    assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains(description))
 
-    forMaven3 {
-      var problems = getModules(root)[0].problems
-      UsefulTestCase.assertSize(1, problems)
-      val description = if (mavenVersionIsOrMoreThan("3.9.8"))
-        "Unresolveable build extension: Plugin xxx:xxx:1 or one of its dependencies could not be resolved"
-      else
-        "Could not find artifact xxx:xxx:jar:1"
-      assertTrue(problems[0].description, problems[0].description!!.contains(description))
 
-      problems = getModules(root)[1].problems
-      UsefulTestCase.assertSize(1, problems)
-      val description2 = if (mavenVersionIsOrMoreThan("3.9.8"))
-        "Unresolveable build extension: Plugin yyy:yyy:1 or one of its dependencies could not be resolved"
-      else
-        "Could not find artifact yyy:yyy:jar:1"
-      assertTrue(problems[0].description, problems[0].description!!.contains(description2))
-    }
-
-    forMaven4 {
-      var problems = getModules(root)[0].problems
-      assertTrue(
-        problems[0].description!!.contains("Plugin xxx:xxx:1 or one of its dependencies could not be resolved")
-        || problems[0].description!!.contains("Could not find artifact xxx:xxx:jar:1") ||
-        problems[0].description!!.contains("xxx:xxx:jar:1 was not found")
-      )
-      problems = getModules(root)[1].problems
-      assertTrue(
-        problems[0].description!!.contains("Plugin yyy:yyy:1 or one of its dependencies could not be resolved")
-        || problems[0].description!!.contains("Could not find artifact yyy:yyy:jar:1") ||
-        problems[0].description!!.contains("yyy:yyy:jar:1 was not found")
-      )
-    }
+    problems = getModules(root)[1].getProblems()
+    UsefulTestCase.assertSize(1, problems)
+    val description2 = if (mavenVersionIsOrMoreThan("3.9.8"))
+      "Unresolveable build extension: Plugin yyy:yyy:1 or one of its dependencies could not be resolved"
+    else
+      "Could not find artifact yyy:yyy:jar:1"
+    assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains(description2))
   }
 
   @Test
@@ -846,7 +771,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   fun testDoNotReportResolvedPlugins() = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "plugins")
 
-    repositoryPath = helper.getTestData("plugins")
+    repositoryPath = helper.getTestDataPath("plugins")
 
     importProjectAsync("""
                               <groupId>test</groupId>
@@ -888,25 +813,16 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project")
 
     val root = rootProjects[0]
-    val problems = root.problems
+    val problems = root.getProblems()
+    UsefulTestCase.assertSize(2, problems)
 
-    forMaven3 {
-      UsefulTestCase.assertSize(1, problems)
+    val description = if (mavenVersionIsOrMoreThan("3.9.8"))
+      "Unresolveable build extension: Plugin xxx:yyy:1 or one of its dependencies could not be resolved"
+    else
+      "Could not find artifact xxx:yyy:jar:1"
+    assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains(description))
 
-      val description = if (mavenVersionIsOrMoreThan("3.9.8"))
-        "Unresolveable build extension: Plugin xxx:yyy:1 or one of its dependencies could not be resolved"
-      else
-        "Could not find artifact xxx:yyy:jar:1"
-      assertTrue(problems[0].description, problems[0].description!!.contains(description))
-    }
-
-    forMaven4 {
-      UsefulTestCase.assertSize(1, problems)
-      assertTrue(
-        problems[0].description!!.contains("Could not find artifact xxx:yyy:jar:1") ||
-        problems[0].description!!.contains("xxx:yyy:jar:1 was not found")
-      )
-    }
+    assertTrue(problems[1]!!.description, problems[1]!!.description!!.contains("Unresolved plugin: 'xxx:yyy:1'"))
   }
 
   @Test
@@ -924,6 +840,21 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     assertProblems(root, "'settings.xml' has syntax errors")
   }
 
+  @Test
+  fun testInvalidProfilesXml() = runBlocking {
+    createProfilesXml("<prof<<")
+
+    importProjectAsync("""
+                              <groupId>test</groupId>
+                              <artifactId>project</artifactId>
+                              <version>1</version>
+                              """.trimIndent())
+    assertModules("project")
+
+    val root = rootProjects[0]
+    assertProblems(root, "'profiles.xml' has syntax errors")
+  }
+
   private val rootProjects: List<MavenProject>
     get() = projectsTree.rootProjects
 
@@ -933,9 +864,17 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
   private fun assertProblems(project: MavenProject, vararg expectedProblems: String) {
     val actualProblems: MutableList<String?> = ArrayList()
-    for (each in project.problems) {
+    for (each in project.getProblems()) {
       actualProblems.add(each.description)
     }
     assertOrderedElementsAreEqual(actualProblems, *expectedProblems)
+  }
+
+  private fun assertContainsProblems(project: MavenProject, vararg expectedProblems: String) {
+    val actualProblems: MutableList<String?> = ArrayList()
+    for (each in project.getProblems()) {
+      actualProblems.add(each.description)
+    }
+    UsefulTestCase.assertContainsElements(actualProblems, *expectedProblems)
   }
 }

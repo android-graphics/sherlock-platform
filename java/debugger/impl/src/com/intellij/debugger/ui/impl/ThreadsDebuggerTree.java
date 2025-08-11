@@ -24,7 +24,10 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
 
 public class ThreadsDebuggerTree extends DebuggerTree {
   private static final Logger LOG = Logger.getInstance(ThreadsDebuggerTree.class);
@@ -61,7 +64,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
     final DebuggerSession.State state = session != null ? session.getState() : DebuggerSession.State.DISPOSED;
     if (ApplicationManager.getApplication().isUnitTestMode() || state == DebuggerSession.State.PAUSED || state == DebuggerSession.State.RUNNING) {
       showMessage(MessageDescriptor.EVALUATING);
-      Objects.requireNonNull(context.getManagerThread()).schedule(command);
+      context.getDebugProcess().getManagerThread().schedule(command);
     }
     else {
       showMessage(session != null ? session.getStateDescription() : JavaDebuggerBundle.message("status.debug.stopped"));
@@ -90,8 +93,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
       final boolean showGroups = ThreadsViewSettings.getInstance().SHOW_THREAD_GROUPS;
       try {
         final ThreadReferenceProxyImpl currentThread = ThreadsViewSettings.getInstance().SHOW_CURRENT_THREAD ? suspendContextThread : null;
-        @SuppressWarnings("UsagesOfObsoleteApi")
-        final VirtualMachineProxyImpl vm = suspendContext != null ? suspendContext.getVirtualMachineProxy() : debugProcess.getVirtualMachineProxy();
+        final VirtualMachineProxyImpl vm = debugProcess.getVirtualMachineProxy();
 
         final EvaluationContextImpl evaluationContext = suspendContext != null ? getDebuggerContext().createEvaluationContext() : null;
         final NodeManagerImpl nodeManager = getNodeFactory();

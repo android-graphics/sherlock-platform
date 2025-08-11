@@ -19,13 +19,7 @@ private val packagesImportedByDefault = setOf(
 )
 
 class Imports(private val scopeFqn: String?) {
-  fun isNotEmpty(): Boolean = set.isNotEmpty() || wildcardImports.isNotEmpty()
-  
-  val imports: Set<String>
-    get() = set + wildcardImports.map { "$it.*" }
-  
-  private val set = mutableSetOf<String>()
-  private val wildcardImports = mutableSetOf<String>()
+  val set = mutableSetOf<String>()
 
   fun findAndRemoveFqns(str: String): String {
     val res = StringBuilder()
@@ -49,28 +43,11 @@ class Imports(private val scopeFqn: String?) {
   }
 
   fun add(import: String) {
-    val importSegments = import.split('.')
-    if (importSegments.size < 2) set.add(import)
-    else {
-      val (packageName, name) = import
-        .split('.')
-        .let {
-          it.dropLast(1).joinToString(".") to it.last()
-        }
-      add(packageName, name)
-    }
+    set.add(import)
   }
 
-  private fun String.packageRegex() = Regex("^${replace(".", "\\.")}\\.[^.]*$")
-
   private fun add(packageName: String, name: String) {
-    if (packageName == scopeFqn || packageName in packagesImportedByDefault || packageName in wildcardImports) {
-      return
-    } else if (name == "*") {
-      val packageRegex = packageName.packageRegex()
-      set.removeIf { it.matches(packageRegex) }
-      wildcardImports.add(packageName)
-    } else {
+    if (packageName != scopeFqn && packageName !in packagesImportedByDefault) {
       set.add("$packageName.$name")
     }
   }

@@ -3,7 +3,6 @@ from _typeshed import FileDescriptorOrPath
 from collections.abc import Callable, Generator, Iterable, Sequence
 from re import Pattern
 from token import *
-from token import EXACT_TOKEN_TYPES as EXACT_TOKEN_TYPES
 from typing import Any, NamedTuple, TextIO
 from typing_extensions import TypeAlias
 
@@ -15,7 +14,6 @@ __all__ = [
     "CIRCUMFLEX",
     "CIRCUMFLEXEQUAL",
     "COLON",
-    "COLONEQUAL",
     "COMMA",
     "COMMENT",
     "DEDENT",
@@ -70,19 +68,17 @@ __all__ = [
     "STAREQUAL",
     "STRING",
     "TILDE",
-    "TYPE_COMMENT",
-    "TYPE_IGNORE",
     "TokenInfo",
     "VBAR",
     "VBAREQUAL",
     "detect_encoding",
-    "generate_tokens",
     "tok_name",
     "tokenize",
     "untokenize",
 ]
-if sys.version_info < (3, 13):
-    __all__ += ["ASYNC", "AWAIT"]
+
+if sys.version_info >= (3, 8):
+    __all__ += ["ASYNC", "AWAIT", "COLONEQUAL", "generate_tokens", "TYPE_COMMENT", "TYPE_IGNORE"]
 
 if sys.version_info >= (3, 10):
     __all__ += ["SOFT_KEYWORD"]
@@ -90,8 +86,10 @@ if sys.version_info >= (3, 10):
 if sys.version_info >= (3, 12):
     __all__ += ["EXCLAMATION", "FSTRING_END", "FSTRING_MIDDLE", "FSTRING_START"]
 
-if sys.version_info >= (3, 13):
-    __all__ += ["TokenError", "open"]
+if sys.version_info >= (3, 8):
+    from token import EXACT_TOKEN_TYPES as EXACT_TOKEN_TYPES
+else:
+    EXACT_TOKEN_TYPES: dict[str, int]
 
 cookie_re: Pattern[str]
 blank_re: Pattern[bytes]
@@ -113,9 +111,7 @@ class TokenInfo(_TokenInfo):
 _Token: TypeAlias = TokenInfo | Sequence[int | str | _Position]
 
 class TokenError(Exception): ...
-
-if sys.version_info < (3, 13):
-    class StopTokenizing(Exception): ...  # undocumented
+class StopTokenizing(Exception): ...  # undocumented
 
 class Untokenizer:
     tokens: list[str]
@@ -125,8 +121,6 @@ class Untokenizer:
     def add_whitespace(self, start: _Position) -> None: ...
     def untokenize(self, iterable: Iterable[_Token]) -> str: ...
     def compat(self, token: Sequence[int | str], iterable: Iterable[_Token]) -> None: ...
-    if sys.version_info >= (3, 12):
-        def escape_brackets(self, token: str) -> str: ...
 
 # the docstring says "returns bytes" but is incorrect --
 # if the ENCODING token is missing, it skips the encode

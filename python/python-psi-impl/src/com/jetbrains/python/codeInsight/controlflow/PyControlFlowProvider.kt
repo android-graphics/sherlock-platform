@@ -16,7 +16,6 @@ class PyControlFlowProvider : ControlFlowProvider {
   override fun getAdditionalInfo(instruction: Instruction): String? {
     return when (instruction) {
       is ReadWriteInstruction -> "${instruction.access} ${instruction.name}"
-      is RefutablePatternInstruction -> instruction.elementPresentation
       else -> null
     }
   }

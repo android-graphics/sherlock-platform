@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.ide.plugins
 
@@ -83,30 +83,58 @@ class ClassLoaderConfigurator(
   }
 
   fun configureModule(module: IdeaPluginDescriptorImpl): Boolean {
-    val mainDescriptor = pluginSet.findEnabledPlugin(module.pluginId)
-    if (mainDescriptor == null) {
-      log.warn("Module '${module.moduleName}' is not loaded, because plugin ${module.pluginId} is not found in enabled plugins")
-      return false
-    }
     checkPackagePrefixUniqueness(module)
 
     val isMain = module.moduleName == null
+    val dependencies = pluginSet.moduleGraph.getDependencies(module).toTypedArray()
+    sortDependenciesInPlace(dependencies)
 
     if (isMain) {
       if (module.useCoreClassLoader || module.pluginId == PluginManagerCore.CORE_ID) {
         setPluginClassLoaderForModuleAndOldSubDescriptors(module, coreLoader)
+        return true
+      }
+
+      var files = module.jarFiles
+      if (files == null) {
+        if (!module.isUseIdeaClassLoader) {
+          log.error("jarFiles is not set for $module")
+        }
+        files = emptyList()
+      }
+
+      var libDirectories = Collections.emptyList<Path>()
+      val libDir = module.path.resolve("lib")
+      if (Files.exists(libDir)) {
+        libDirectories = Collections.singletonList(libDir)
+      }
+
+      val mimicJarUrlConnection = !module.isBundled && module.vendor != "JetBrains"
+      val pluginClassPath = ClassPath(/* files = */ files,
+                                      /* configuration = */ DEFAULT_CLASSLOADER_CONFIGURATION,
+                                      /* resourceFileFactory = */ resourceFileFactory,
+                                      /* mimicJarUrlConnection = */ mimicJarUrlConnection)
+      val mainInfo = MainInfo(classPath = pluginClassPath, files = files, libDirectories = libDirectories)
+      val existing = mainToClassPath.put(module.pluginId, mainInfo)
+      if (existing != null) {
+        log.error(PluginException("Main module with ${module.pluginId} is already added (existingClassPath=${existing.files}", module.pluginId))
+      }
+
+      val mainDependentClassLoader = if (module.isUseIdeaClassLoader) {
+        configureUsingIdeaClassloader(mainInfo.files, module)
       }
       else {
-        configureMainPluginModule(module)
+        createPluginClassLoader(module = module, mainInfo = mainInfo, dependencies = dependencies)
       }
+      module.pluginClassLoader = mainDependentClassLoader
+      configureDependenciesInOldFormat(module, mainDependentClassLoader)
     }
     else {
-      if (module.packagePrefix == null && module.pluginId != PluginManagerCore.CORE_ID && module.jarFiles == null && module.moduleLoadingRule != ModuleLoadingRule.EMBEDDED) {
+      if (module.packagePrefix == null && module.pluginId != PluginManagerCore.CORE_ID && module.jarFiles == null) {
         throw PluginException("Package is not specified (module=$module)", module.pluginId)
       }
 
       assert(module.pluginDependencies.isEmpty()) { "Module $module shouldn't have plugin dependencies: ${module.pluginDependencies}" }
-      val dependencies = getSortedDependencies(module)
       // if the module depends on an unavailable plugin, it will not be loaded
       if (dependencies.any { it.pluginClassLoader == null }) {
         return false
@@ -116,17 +144,15 @@ class ClassLoaderConfigurator(
         module.pluginClassLoader = coreLoader
         return true
       }
-      if (module.pluginId == PluginManagerCore.CORE_ID) {
-        configureCorePluginModuleClassLoader(module, dependencies)
-        return true
-      }
 
-      val mainInfo = mainToClassPath.get(module.pluginId) ?: run {
-        configureMainPluginModule(mainDescriptor)
-      }
-      
-      if (module.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
-        module.pluginClassLoader = mainInfo.mainClassLoader
+      val mainInfo = mainToClassPath.get(module.pluginId)
+      if (mainInfo == null) {
+        if (module.pluginId == PluginManagerCore.CORE_ID) {
+          configureCorePluginModuleClassLoader(module, dependencies)
+        }
+        else {
+          throw PluginException("Cannot find containing plugin ${module.pluginId} for module ${module.moduleName} ", module.pluginId)
+        }
       }
       else {
         val customJarFiles = module.jarFiles
@@ -142,12 +168,8 @@ class ClassLoaderConfigurator(
           )
         }
         else {
-          val mimicJarUrlConnection = module.vendor == PluginManagerCore.VENDOR_JETBRAINS
-                                      && (module.moduleName == "intellij.rider.test.cases"
-                                          || module.moduleName == "intellij.rider.test.cases.qodana"
-                                          || module.moduleName == "intellij.rider.test.cases.supplementary")
           module.pluginClassLoader = PluginClassLoader(
-            classPath = ClassPath(customJarFiles, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, mimicJarUrlConnection),
+            classPath = ClassPath(customJarFiles, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, false),
             parents = dependencies,
             pluginDescriptor = module,
             coreLoader = coreLoader,
@@ -160,73 +182,6 @@ class ClassLoaderConfigurator(
     }
 
     return true
-  }
-
-  private fun getSortedDependencies(module: IdeaPluginDescriptorImpl): Array<IdeaPluginDescriptorImpl> {
-    val dependenciesList = pluginSet.getSortedDependencies(module)
-    var mutableDependenciesList: MutableList<IdeaPluginDescriptorImpl>? = null
-    for (moduleItem in module.content.modules) {
-      if (moduleItem.loadingRule == ModuleLoadingRule.EMBEDDED) {
-        if (mutableDependenciesList == null) {
-          mutableDependenciesList = dependenciesList.toMutableList()
-        }
-        mutableDependenciesList.addAll(pluginSet.getSortedDependencies(moduleItem.requireDescriptor()))
-      }
-    }
-    val dependencies = (mutableDependenciesList ?: dependenciesList).toTypedArray()
-    sortDependenciesInPlace(dependencies)
-    return dependencies
-  }
-
-  private fun configureMainPluginModule(module: IdeaPluginDescriptorImpl): MainInfo {
-    val exisingMainInfo = mainToClassPath.get(module.pluginId)
-    if (exisingMainInfo != null) {
-      return exisingMainInfo
-    } 
-
-    var mainModuleFiles = module.jarFiles
-    if (mainModuleFiles == null) {
-      if (!module.isUseIdeaClassLoader) {
-        log.error("jarFiles is not set for $module")
-      }
-      mainModuleFiles = emptyList()
-    }
-    var allFiles: MutableList<Path>? = null
-    for (contentModule in module.content.modules) {
-      if (contentModule.loadingRule == ModuleLoadingRule.EMBEDDED) {
-        val customJarFiles = contentModule.requireDescriptor().jarFiles
-        if (customJarFiles != null) {
-          if (allFiles == null) {
-            allFiles = ArrayList(mainModuleFiles)
-          }
-          allFiles.addAll(customJarFiles)
-        }
-      }
-    }
-
-    var libDirectories = Collections.emptyList<Path>()
-    val libDir = module.path.resolve("lib")
-    if (Files.exists(libDir)) {
-      libDirectories = Collections.singletonList(libDir)
-    }
-
-    val mimicJarUrlConnection = !module.isBundled && module.vendor != "JetBrains"
-    val files = allFiles ?: mainModuleFiles
-    val pluginClassPath = ClassPath(/* files = */ files,
-                                    /* configuration = */ DEFAULT_CLASSLOADER_CONFIGURATION,
-                                    /* resourceFileFactory = */ resourceFileFactory,
-                                    /* mimicJarUrlConnection = */ mimicJarUrlConnection)
-    val mainDependentClassLoader = if (module.isUseIdeaClassLoader) {
-      configureUsingIdeaClassloader(files, module)
-    }
-    else {
-      createPluginClassLoader(module = module, dependencies = getSortedDependencies(module), classPath = pluginClassPath, libDirectories = libDirectories)
-    }
-    val mainInfo = MainInfo(classPath = pluginClassPath, libDirectories = libDirectories, mainClassLoader = mainDependentClassLoader)
-    mainToClassPath.put(module.pluginId, mainInfo)
-    module.pluginClassLoader = mainDependentClassLoader
-    configureDependenciesInOldFormat(module, mainDependentClassLoader)
-    return mainInfo
   }
 
   private fun configureDependenciesInOldFormat(module: IdeaPluginDescriptorImpl, mainDependentClassLoader: ClassLoader) {
@@ -288,7 +243,7 @@ class ClassLoaderConfigurator(
       val resolveScopeManager = createPluginDependencyAndContentBasedScope(descriptor = corePlugin, pluginSet = pluginSet)
       if (resolveScopeManager != null) {
         coreUrlClassLoader.resolveScopeManager = BiFunction { name, force ->
-          resolveScopeManager.isDefinitelyAlienClass(name = name, packagePrefix = "", force = force)
+          resolveScopeManager.isDefinitelyAlienClass(name, "", force)
         }
       }
     }
@@ -316,12 +271,9 @@ class ClassLoaderConfigurator(
     }
   }
 
-  private fun createPluginClassLoader(
-    module: IdeaPluginDescriptorImpl,
-    dependencies: Array<IdeaPluginDescriptorImpl>,
-    classPath: ClassPath,
-    libDirectories: List<Path>
-  ): PluginClassLoader {
+  private fun createPluginClassLoader(module: IdeaPluginDescriptorImpl,
+                                      dependencies: Array<IdeaPluginDescriptorImpl>,
+                                      mainInfo: MainInfo): PluginClassLoader {
     val resolveScopeManager: ResolveScopeManager?
     // main plugin descriptor
     if (module.moduleName == null) {
@@ -342,13 +294,13 @@ class ClassLoaderConfigurator(
         createModuleContentBasedScope(descriptor = module)
       }
     }
-    return PluginClassLoader(classPath = classPath,
+    return PluginClassLoader(classPath = mainInfo.classPath,
                              parents = dependencies,
                              pluginDescriptor = module,
                              coreLoader = coreLoader,
                              resolveScopeManager = resolveScopeManager,
                              packagePrefix = module.packagePrefix,
-                             libDirectories = libDirectories)
+                             libDirectories = mainInfo.libDirectories)
   }
 }
 
@@ -386,9 +338,8 @@ private fun createScopeWithExtraPackage(@Suppress("SameParameterValue") customPa
 // package of module is not taken in an account to support resolving of module libraries -
 // instead, only classes from plugin's modules (content or dependencies) are excluded.
 @VisibleForTesting
-@ApiStatus.Internal
 fun createPluginDependencyAndContentBasedScope(descriptor: IdeaPluginDescriptorImpl, pluginSet: PluginSet): ResolveScopeManager? {
-  val contentPackagePrefixes = getPackagePrefixesLoadedBySeparateClassLoaders(descriptor)
+  val contentPackagePrefixes = getContentPackagePrefixes(descriptor)
   val dependencyPackagePrefixes = getDependencyPackagePrefixes(descriptor, pluginSet)
   if (contentPackagePrefixes.isEmpty() && dependencyPackagePrefixes.isEmpty()) {
     return null
@@ -419,7 +370,7 @@ fun createPluginDependencyAndContentBasedScope(descriptor: IdeaPluginDescriptorI
   }
 }
 
-private fun getPackagePrefixesLoadedBySeparateClassLoaders(descriptor: IdeaPluginDescriptorImpl): List<Pair<String, String?>> {
+private fun getContentPackagePrefixes(descriptor: IdeaPluginDescriptorImpl): List<Pair<String, String?>> {
   val modules = descriptor.content.modules
   if (modules.isEmpty()) {
     return emptyList()
@@ -428,7 +379,7 @@ private fun getPackagePrefixesLoadedBySeparateClassLoaders(descriptor: IdeaPlugi
   val result = ArrayList<Pair<String, String?>>(modules.size)
   for (item in modules) {
     val module = item.requireDescriptor()
-    if (!module.jarFiles.isNullOrEmpty() || module.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
+    if (!module.jarFiles.isNullOrEmpty()) {
       continue
     }
 
@@ -487,15 +438,7 @@ private fun createModuleContentBasedScope(descriptor: IdeaPluginDescriptorImpl):
       }
       return ""
     }
-  }
-}
-
-internal val canExtendIdeaClassLoader: Boolean by lazy {
-  runCatching {
-    MethodHandles.lookup().findVirtual(ClassLoaderConfigurator::class.java.classLoader.javaClass, "addFiles",
-                                       MethodType.methodType(Void.TYPE, MutableList::class.java))
-  }.isSuccess
-}
+  }}
 
 private fun configureUsingIdeaClassloader(classPath: List<Path>, descriptor: IdeaPluginDescriptorImpl): ClassLoader {
   log.warn("${descriptor.pluginId} uses deprecated `use-idea-classloader` attribute")
@@ -513,7 +456,6 @@ private fun configureUsingIdeaClassloader(classPath: List<Path>, descriptor: Ide
 }
 
 @VisibleForTesting
-@ApiStatus.Internal
 fun sortDependenciesInPlace(dependencies: Array<IdeaPluginDescriptorImpl>) {
   if (dependencies.size <= 1) {
     return
@@ -536,9 +478,8 @@ fun sortDependenciesInPlace(dependencies: Array<IdeaPluginDescriptorImpl>) {
 
 private class MainInfo(
   @JvmField val classPath: ClassPath,
+  @JvmField val files: List<Path>,
   @JvmField val libDirectories: List<Path>,
-  @JvmField val mainClassLoader: ClassLoader,
 ) {
-  constructor(classLoader: PluginClassLoader) 
-    : this(classPath = classLoader.classPath, libDirectories = classLoader.getLibDirectories(), mainClassLoader = classLoader)
+  constructor(classLoader: PluginClassLoader) : this(classPath = classLoader.classPath, files = classLoader.files, libDirectories = classLoader.getLibDirectories())
 }

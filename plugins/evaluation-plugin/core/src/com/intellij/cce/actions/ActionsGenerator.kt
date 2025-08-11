@@ -7,7 +7,8 @@ import com.intellij.cce.util.FileTextUtil.computeChecksum
 
 class ActionsGenerator(private val processor: GenerateActionsProcessor) {
   fun generate(code: CodeFragment): FileActions {
-    val actions = processor.buildActions(code)
+    processor.process(code)
+    val actions = processor.getActions()
     return FileActions(code.path, computeChecksum(code.text), actions.count { it is CallFeature }, actions)
   }
 }

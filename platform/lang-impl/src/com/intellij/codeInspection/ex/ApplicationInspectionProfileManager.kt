@@ -27,7 +27,6 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.serviceContainer.NonInjectable
 import org.jdom.Element
 import org.jdom.JDOMException
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
@@ -40,7 +39,6 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
   : ApplicationInspectionProfileManagerBase(schemeManagerFactory), PersistentStateComponent<Element> {
 
   open val converter: InspectionProfileConvertor
-    @ApiStatus.Internal
     get() = InspectionProfileConvertor(this)
 
   val rootProfileName: String

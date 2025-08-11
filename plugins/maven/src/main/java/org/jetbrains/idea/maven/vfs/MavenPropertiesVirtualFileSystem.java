@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.vfs;
 
 import com.intellij.lang.properties.IProperty;
@@ -17,10 +17,10 @@ import java.util.Map;
 import java.util.Properties;
 
 public final class MavenPropertiesVirtualFileSystem extends DummyFileSystem {
-  public static final @NonNls String PROTOCOL = "maven-properties";
+  @NonNls public static final String PROTOCOL = "maven-properties";
 
-  public static final @NonNls String SYSTEM_PROPERTIES_FILE = "System.properties";
-  public static final @NonNls String ENV_PROPERTIES_FILE = "Environment.properties";
+  @NonNls public static final String SYSTEM_PROPERTIES_FILE = "System.properties";
+  @NonNls public static final String ENV_PROPERTIES_FILE = "Environment.properties";
 
   public static final String[] PROPERTIES_FILES = new String[]{SYSTEM_PROPERTIES_FILE, ENV_PROPERTIES_FILE};
 
@@ -32,7 +32,8 @@ public final class MavenPropertiesVirtualFileSystem extends DummyFileSystem {
   }
 
   @Override
-  public @NotNull String getProtocol() {
+  @NotNull
+  public String getProtocol() {
     return PROTOCOL;
   }
 
@@ -88,11 +89,13 @@ public final class MavenPropertiesVirtualFileSystem extends DummyFileSystem {
     return null;
   }
 
-  public @Nullable IProperty findSystemProperty(Project project, @NotNull String propertyName) {
+  @Nullable
+  public IProperty findSystemProperty(Project project, @NotNull String propertyName) {
     return MavenDomUtil.findProperty(project, getSystemPropertiesFile(), propertyName);
   }
 
-  public @Nullable IProperty findEnvProperty(Project project, @NotNull String propertyName) {
+  @Nullable
+  public IProperty findEnvProperty(Project project, @NotNull String propertyName) {
     return MavenDomUtil.findProperty(project, getEnvPropertiesFile(), propertyName);
   }
 

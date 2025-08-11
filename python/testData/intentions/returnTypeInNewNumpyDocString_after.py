@@ -3,6 +3,6 @@ def f(x):
 
     Returns
     -------
-    int
+    object
     """
     return 42

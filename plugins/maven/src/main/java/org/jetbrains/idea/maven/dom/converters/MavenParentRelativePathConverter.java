@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -32,13 +46,9 @@ import java.util.Collection;
 import java.util.List;
 
 public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile> implements CustomReferenceConverter {
-
-  public static final String DEFAULT_PARENT_PATH = "../pom.xml";
-
   @Override
   public PsiFile fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
-    String path = s == null ? DEFAULT_PARENT_PATH : s;
-    if (StringUtil.isEmptyOrSpaces(path)) return null;
+    if (StringUtil.isEmptyOrSpaces(s)) return null;
 
     VirtualFile contextFile = context.getFile().getVirtualFile();
     if (contextFile == null) return null;
@@ -47,7 +57,7 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
     if (parent == null) {
       return null;
     }
-    VirtualFile f = parent.findFileByRelativePath(path);
+    VirtualFile f = parent.findFileByRelativePath(s);
     if (f == null) return null;
 
     if (f.isDirectory()) f = f.findChild(MavenConstants.POM_XML);
@@ -65,8 +75,9 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
     return MavenDomUtil.calcRelativePath(currentFile.getParent(), f.getVirtualFile());
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<PsiFile> getVariants(@NotNull ConvertContext context) {
+  public Collection<PsiFile> getVariants(@NotNull ConvertContext context) {
     List<PsiFile> result = new ArrayList<>();
     PsiFile currentFile = context.getFile().getOriginalFile();
     for (DomFileElement<MavenDomProjectModel> each : MavenDomUtil.collectProjectModels(context.getFile().getProject())) {
@@ -91,12 +102,14 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return MavenDomBundle.message("fix.parent.path");
     }
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return MavenDomBundle.message("inspection.group");
     }
 

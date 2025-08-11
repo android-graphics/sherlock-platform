@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
@@ -50,13 +50,15 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     getOptions().resetModificationCount();
   }
 
+  @NotNull
   @Override
-  protected @NotNull ModuleBasedConfigurationOptions getOptions() {
+  protected ModuleBasedConfigurationOptions getOptions() {
     return (ModuleBasedConfigurationOptions)super.getOptions();
   }
 
+  @NotNull
   @Override
-  protected @NotNull Class<? extends ModuleBasedConfigurationOptions> getDefaultOptionsClass() {
+  protected Class<? extends ModuleBasedConfigurationOptions> getDefaultOptionsClass() {
     return ModuleBasedConfigurationOptions.class;
   }
 
@@ -106,8 +108,9 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     return configuration;
   }
 
+  @Nullable
   @Override
-  public final @Nullable T getState() {
+  public final T getState() {
     syncModuleName();
     return super.getState();
   }
@@ -234,12 +237,10 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     return modules.length == 1 ? modules[0] : null;
   }
 
-  @Override
   public String getProjectPathOnTarget() {
     return getOptions().getProjectPathOnTarget();
   }
 
-  @Override
   public void setProjectPathOnTarget(String path) {
     getOptions().setProjectPathOnTarget(path);
   }

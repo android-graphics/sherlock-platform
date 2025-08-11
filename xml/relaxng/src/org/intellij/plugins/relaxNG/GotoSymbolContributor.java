@@ -73,7 +73,8 @@ public class GotoSymbolContributor implements ChooseByNameContributorEx {
       }, parameters.getSearchScope());
   }
 
-  static @Nullable NavigationItem wrap(@Nullable PsiElement item) {
+  @Nullable
+  static NavigationItem wrap(@Nullable PsiElement item) {
     if (!(item instanceof NavigationItem)) return null;
     PsiMetaData metaData0 = item instanceof PsiMetaOwner ? ((PsiMetaOwner)item).getMetaData() : null;
     PsiPresentableMetaData metaData = metaData0 instanceof PsiPresentableMetaData ? (PsiPresentableMetaData)metaData0 : null;
@@ -83,18 +84,21 @@ public class GotoSymbolContributor implements ChooseByNameContributorEx {
         return metaData.getName();
       }
 
+      @NotNull
       @Override
-      public @NotNull String getLocationString() {
+      public String getLocationString() {
         return MyNavigationItem.getLocationString(item);
       }
 
       @Override
-      public @Nullable Icon getIcon(boolean open) {
+      @Nullable
+      public Icon getIcon(boolean open) {
         return metaData.getIcon();
       }
 
+      @Nullable
       @Override
-      public @Nullable TextAttributesKey getTextAttributesKey() {
+      public TextAttributesKey getTextAttributesKey() {
         ItemPresentation p = ((NavigationItem)item).getPresentation();
         return p instanceof ColoredItemPresentation ? ((ColoredItemPresentation)p).getTextAttributesKey() : null;
       }
@@ -107,7 +111,7 @@ public class GotoSymbolContributor implements ChooseByNameContributorEx {
     final ItemPresentation myPresentation;
     final String myLocationString;
 
-    private MyNavigationItem(NavigationItem item, final @NotNull ItemPresentation presentation) {
+    private MyNavigationItem(NavigationItem item, @NotNull final ItemPresentation presentation) {
       myItem = item;
       myPresentation = presentation;
       myLocationString = getLocationString((PsiElement)myItem);
@@ -119,7 +123,8 @@ public class GotoSymbolContributor implements ChooseByNameContributorEx {
     }
 
     @Override
-    public @Nullable String getLocationString() {
+    @Nullable
+    public String getLocationString() {
       return myLocationString;
     }
 
@@ -128,11 +133,13 @@ public class GotoSymbolContributor implements ChooseByNameContributorEx {
     }
 
     @Override
-    public @Nullable Icon getIcon(boolean open) {
+    @Nullable
+    public Icon getIcon(boolean open) {
       return myPresentation.getIcon(open);
     }
 
-    public @Nullable TextAttributesKey getTextAttributesKey() {
+    @Nullable
+    public TextAttributesKey getTextAttributesKey() {
       return myPresentation instanceof ColoredItemPresentation ? ((ColoredItemPresentation)myPresentation).getTextAttributesKey() : null;
     }
 

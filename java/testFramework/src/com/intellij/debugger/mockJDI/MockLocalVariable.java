@@ -65,7 +65,7 @@ public class MockLocalVariable extends MockMirror implements LocalVariable {
 
   @Override
   public int compareTo(LocalVariable o) {
-    return name().compareTo(o.name());
+    throw new UnsupportedOperationException("Not implemented: \"compareTo\" in " + getClass().getName());
   }
 
   public Value getValue() {

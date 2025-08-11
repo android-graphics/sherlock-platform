@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test;
 
@@ -19,7 +19,10 @@ import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.TestDataFile;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.PathUtil;
 import junit.framework.TestCase;
 import kotlin.collections.CollectionsKt;
@@ -57,7 +60,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -145,12 +147,6 @@ public final class KotlinTestUtils {
             return androidSdkRootEnvDir;
         }
 
-        // Try to guess Android SDK location for local development
-        File defaultAndroidSdkLocation = new File(System.getProperty("user.home") + "/Library/Android/sdk");
-        if (defaultAndroidSdkLocation.isDirectory()) {
-            return defaultAndroidSdkLocation;
-        }
-
         throw new RuntimeException(
                 "Unable to get a valid path from 'android.sdk' property (" + androidSdkProp + "), " +
                 "please point it to the android SDK location");
@@ -158,6 +154,18 @@ public final class KotlinTestUtils {
 
     public static String getAndroidSdkSystemIndependentPath() {
         return PathUtil.toSystemIndependentName(findAndroidSdk().getAbsolutePath());
+    }
+
+    public static void mkdirs(@NotNull File file) {
+        if (file.isDirectory()) {
+            return;
+        }
+        if (!file.mkdirs()) {
+            if (file.exists()) {
+                throw new IllegalStateException("Failed to create " + file + ": file exists and not a directory");
+            }
+            throw new IllegalStateException("Failed to create " + file);
+        }
     }
 
     @NotNull
@@ -193,7 +201,7 @@ public final class KotlinTestUtils {
         shortName = shortName.substring(shortName.lastIndexOf('\\') + 1);
         LightVirtualFile virtualFile = new LightVirtualFile(shortName, KotlinLanguage.INSTANCE, StringUtilRt.convertLineSeparators(text));
 
-        virtualFile.setCharset(StandardCharsets.UTF_8);
+        virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
         PsiFileFactoryImpl factory = (PsiFileFactoryImpl) PsiFileFactory.getInstance(project);
         return (KtFile) factory.trySetupPsiForFile(virtualFile, KotlinLanguage.INSTANCE, true, false);
     }
@@ -512,12 +520,7 @@ public final class KotlinTestUtils {
     }
 
     public static void runTest(@NotNull DoTest test, @NotNull TestCase testCase, @TestDataFile String testDataFile) throws Exception {
-        TestLoggerKt.rethrowLoggedErrorsIn(() -> {
-            runTestImpl(
-                    testWithCustomIgnoreDirective(test, TargetBackend.ANY, IGNORE_BACKEND_DIRECTIVE_PREFIX, testCase),
-                    testCase, testDataFile
-            );
-        });
+        runTestImpl(testWithCustomIgnoreDirective(test, TargetBackend.ANY, IGNORE_BACKEND_DIRECTIVE_PREFIX, testCase), testCase, testDataFile);
     }
 
     // In this test runner version the `testDataFile` parameter is annotated by `TestDataFile`.

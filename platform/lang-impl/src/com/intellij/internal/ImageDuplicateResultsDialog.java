@@ -1,12 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.hint.PsiImplementationViewElement;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PropertyName;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
@@ -100,7 +104,28 @@ public final class ImageDuplicateResultsDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
+    final JPanel panel = new JPanel(new BorderLayout());
+    DataManager.registerDataProvider(panel, dataId -> {
+      final TreePath path = myTree.getSelectionPath();
+      if (path != null) {
+        Object component = path.getLastPathComponent();
+        VirtualFile file = null;
+        if (component instanceof MyFileNode) {
+          component = ((MyFileNode)component).getParent();
+        }
+        if (component instanceof MyDuplicatesNode) {
+          file = ((MyDuplicatesNode)component).getUserObject().iterator().next();
+        }
+        if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+          return file;
+        }
+        if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId) && file != null) {
+          return new VirtualFile[]{file};
+        }
+      }
+      return null;
+    });
+
     JBList<String> list = new JBList<>(new ResourceModules().getModuleNames());
     final NotNullFunction<Object, JComponent> modulesRenderer =
       dom -> new JLabel(dom instanceof Module ? ((Module)dom).getName() : dom.toString(), PlatformIcons.SOURCE_FOLDERS_ICON, SwingConstants.LEFT);
@@ -196,16 +221,7 @@ public final class ImageDuplicateResultsDialog extends DialogWrapper {
     final JLabel label = new JLabel(
       "<html>Press <b>Enter</b> to preview image<br>Total images found: " + myImages.size() + ". Total duplicates found: " + total+"</html>");
     panel.add(label, BorderLayout.SOUTH);
-    return UiDataProvider.wrapComponent(panel, sink -> uiDataSnapshot(sink));
-  }
-
-  private void uiDataSnapshot(@NotNull DataSink sink) {
-    TreePath path = myTree.getSelectionPath();
-    Object component = path == null ? null : path.getLastPathComponent();
-    if (component instanceof MyFileNode o) component = o.getParent();
-    VirtualFile file = component instanceof MyDuplicatesNode o ? o.getUserObject().iterator().next() : null;
-    sink.set(CommonDataKeys.VIRTUAL_FILE, file);
-    sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, file == null ? null : new VirtualFile[]{file});
+    return panel;
   }
 
   @Override
@@ -218,7 +234,8 @@ public final class ImageDuplicateResultsDialog extends DialogWrapper {
     return myTree;
   }
 
-  private @Nullable VirtualFile getFileFromSelection() {
+  @Nullable
+  private VirtualFile getFileFromSelection() {
     final TreePath path = myTree.getSelectionPath();
     if (path != null) {
       Object component = path.getLastPathComponent();

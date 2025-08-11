@@ -12,12 +12,16 @@ import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.table.JBTable
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.JBUI
+import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.gradle.scripting.settings.KotlinStandaloneScriptsModel
 import org.jetbrains.kotlin.idea.gradle.scripting.settings.StandaloneScriptsStorage
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
+import java.awt.BorderLayout
 import javax.swing.JComponent
+import javax.swing.JPanel
 import javax.swing.ListSelectionModel
+import javax.swing.plaf.BorderUIResource
 
 class StandaloneScriptsUIComponent(val project: Project) : UnnamedConfigurable {
     private val fileChooser: FileChooserDescriptor = object : FileChooserDescriptor(
@@ -33,15 +37,17 @@ class StandaloneScriptsUIComponent(val project: Project) : UnnamedConfigurable {
         }
     }
 
-    private var panel: JComponent? = null
+    private var panel: JPanel? = null
 
     private val scriptsFromStorage = StandaloneScriptsStorage.getInstance(project)?.files?.toList() ?: emptyList()
     private val scriptsInTable = scriptsFromStorage.toMutableList()
 
     private val table: JBTable
-    private val model: KotlinStandaloneScriptsModel = KotlinStandaloneScriptsModel.createModel(scriptsInTable)
+    private val model: KotlinStandaloneScriptsModel
 
     init {
+        model = KotlinStandaloneScriptsModel.createModel(scriptsInTable)
+
         table = TableView(model)
         table.preferredScrollableViewportSize = JBUI.size(300, -1)
         table.selectionModel.selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
@@ -71,14 +77,17 @@ class StandaloneScriptsUIComponent(val project: Project) : UnnamedConfigurable {
 
     override fun createComponent(): JComponent? {
         if (panel == null) {
-            val component = ToolbarDecorator.createDecorator(table)
-                .setAddAction { addScripts() }
-                .setRemoveAction { removeScripts() }
-                .setRemoveActionUpdater { table.selectedRow >= 0 }
-                .disableUpDownActions()
-                .createPanel()
-
-            this.panel = component
+            val panel = JPanel(BorderLayout())
+            panel.border = BorderUIResource.TitledBorderUIResource(KotlinIdeaGradleBundle.message("standalone.scripts.settings.title"))
+            panel.add(
+                ToolbarDecorator.createDecorator(table)
+                    .setAddAction { addScripts() }
+                    .setRemoveAction { removeScripts() }
+                    .setRemoveActionUpdater { table.selectedRow >= 0 }
+                    .disableUpDownActions()
+                    .createPanel()
+            )
+            this.panel = panel
         }
         return panel
     }

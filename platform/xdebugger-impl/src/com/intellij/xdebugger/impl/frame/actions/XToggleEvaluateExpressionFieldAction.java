@@ -17,7 +17,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +30,6 @@ import javax.swing.*;
  * <p>The initial visibility is set by {@link #markAsEvaluateExpressionField(JComponent)}
  * Use {@link #isEvaluateExpressionFieldEnabled()} to get current state of the option.</p>
  */
-@ApiStatus.Internal
 public class XToggleEvaluateExpressionFieldAction extends DumbAwareToggleAction implements ActionRemoteBehaviorSpecification.Frontend {
 
   private static final Key<String> EVALUATE_EXPRESSION_FIELD = Key.create("Evaluate Expression Field");
@@ -81,7 +79,7 @@ public class XToggleEvaluateExpressionFieldAction extends DumbAwareToggleAction 
   private static void findAllFieldsAndUpdateState(DataContext context, boolean state) {
     XWatchesView view = context.getData(XWatchesView.DATA_KEY);
     if (view instanceof XWatchesViewImpl) {
-      JComponent panel = ((XWatchesViewImpl)view).getPanel();
+      JPanel panel = ((XWatchesViewImpl)view).getPanel();
       UIUtil.uiTraverser(panel)
         .filter(c -> c instanceof JComponent && ClientProperty.get(c, EVALUATE_EXPRESSION_FIELD) != null)
         .forEach(c -> c.setVisible(state));

@@ -1,4 +1,3 @@
-// PRIORITY: HIGH
 // INTENTION_TEXT: "Import members from 'com.test.States'"
 import com.test.States
 

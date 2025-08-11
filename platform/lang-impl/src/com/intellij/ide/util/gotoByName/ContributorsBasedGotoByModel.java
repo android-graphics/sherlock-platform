@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.concurrency.JobLauncher;
@@ -29,7 +29,6 @@ import com.intellij.util.indexing.FindSymbolParameters;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -152,7 +151,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     return ArrayUtilRt.toStringArray(allNames);
   }
 
-  private @Unmodifiable List<ChooseByNameContributor> filterDumb(List<? extends ChooseByNameContributor> contributors) {
+  private List<ChooseByNameContributor> filterDumb(List<? extends ChooseByNameContributor> contributors) {
     return ContainerUtil.filter(contributors, contributor -> DumbService.getInstance(myProject).isUsableInCurrentContext(contributor));
   }
 
@@ -229,9 +228,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
         LOG.debug(TimeoutUtil.getDurationMillis(start) + "," + contributor + "," + count[0]);
       }
     }
-    catch (IndexNotReadyException ignore) {
-    }
-    catch (ProcessCanceledException ignore) {
+    catch (ProcessCanceledException ex) {
       // index corruption detected, ignore
     }
     catch (Throwable ex) {
@@ -250,7 +247,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
    *  which {@link #acceptItem(NavigationItem)} returns {@code true}.
    */
   @Override
-  public Object @NotNull [] getElementsByName(final @NotNull String name, final boolean checkBoxState, final @NotNull String pattern) {
+  public Object @NotNull [] getElementsByName(@NotNull final String name, final boolean checkBoxState, @NotNull final String pattern) {
     return getElementsByName(name, FindSymbolParameters.wrap(pattern, myProject, checkBoxState), new ProgressIndicatorBase());
   }
 
@@ -295,7 +292,8 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     return pattern;
   }
 
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myProject;
   }
 }

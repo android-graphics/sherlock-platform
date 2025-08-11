@@ -16,13 +16,7 @@ import javax.swing.Icon
 data class LanguageRef(val id: String, @field:Nls val displayName: String, val icon: Icon?) {
   companion object {
     @JvmStatic
-    fun forLanguage(lang: Language): LanguageRef =
-      (nonDependentLanguage(lang) ?: lang).let {
-        LanguageRef(it.id, it.displayName, it.associatedFileType?.icon)
-      }
-
-    private fun nonDependentLanguage(lang: Language): Language? =
-      if (lang is DependentLanguage) lang.baseLanguage else lang
+    fun forLanguage(lang: Language): LanguageRef = LanguageRef(lang.id, lang.displayName, lang.associatedFileType?.icon)
 
     @JvmStatic
     fun forNavigationitem(item: NavigationItem): LanguageRef? = when (item) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.util.Condition;
@@ -7,11 +7,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
 @ApiStatus.Internal
-public class ImmutableSyntheticLibrary extends SyntheticLibrary {
+class ImmutableSyntheticLibrary extends SyntheticLibrary {
   private final List<VirtualFile> mySourceRoots;
   private final List<VirtualFile> myBinaryRoots;
   private final Set<VirtualFile> myExcludedRoots;
@@ -25,11 +26,11 @@ public class ImmutableSyntheticLibrary extends SyntheticLibrary {
                             @Nullable Condition<? super VirtualFile> excludeCondition,
                             @Nullable ExcludeFileCondition constantCondition) {
     super(comparisonId, constantCondition);
-    mySourceRoots = List.copyOf(sourceRoots);
-    myBinaryRoots = List.copyOf(binaryRoots);
+    mySourceRoots = immutableOrEmptyList(sourceRoots);
+    myBinaryRoots = immutableOrEmptyList(binaryRoots);
     myExcludedRoots = ContainerUtil.unmodifiableOrEmptySet(excludedRoots);
     myExcludeCondition = excludeCondition;
-    hashCode = 31 * (31 * sourceRoots.hashCode() + binaryRoots.hashCode()) + excludedRoots.hashCode();
+    hashCode = Objects.hash(mySourceRoots, myBinaryRoots, myExcludedRoots, myExcludeCondition);
   }
 
   @Override
@@ -48,8 +49,8 @@ public class ImmutableSyntheticLibrary extends SyntheticLibrary {
   }
 
   @Override
-  public @Nullable Condition<? super VirtualFile> getExcludeFileCondition() {
-    return myExcludeCondition;
+  public @Nullable Condition<VirtualFile> getExcludeFileCondition() {
+    return (Condition<VirtualFile>)myExcludeCondition;
   }
 
   @Override
@@ -67,5 +68,10 @@ public class ImmutableSyntheticLibrary extends SyntheticLibrary {
   @Override
   public int hashCode() {
     return hashCode;
+  }
+
+  private static @NotNull
+  @Unmodifiable <E> List<E> immutableOrEmptyList(@NotNull List<? extends E> list) {
+    return list.isEmpty() ? Collections.emptyList() : List.copyOf(list);
   }
 }

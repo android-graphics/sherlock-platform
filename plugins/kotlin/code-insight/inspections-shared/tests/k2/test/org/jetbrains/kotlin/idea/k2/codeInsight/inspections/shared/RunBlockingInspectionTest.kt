@@ -19,14 +19,11 @@ import org.junit.jupiter.api.*
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import java.io.File
 import org.jdom.Element
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class RunBlockingInspectionTest: ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+class RunBlockingInspectionTest {
+
     private val testDataDir = KotlinRoot.DIR.resolve("code-insight/inspections-shared/tests/testData/inspections/runBlocking").path
     private data class TraceElement(val fgName: String, val url: String, val fileAndLine: String)
     private val psiFileMap = mutableMapOf<String, PsiFile>()
@@ -42,35 +39,23 @@ class RunBlockingInspectionTest: ExpectedPluginModeProvider {
         }
         fun getFixture() = myFixture
         public override fun setUp() = super.setUp()
-        public override fun tearDown() {
-            super.tearDown()
-        }
-
         override fun getTestDataPath() = testDataDir
         override fun getProjectDescriptor(): DefaultLightProjectDescriptor = projectDescriptor
     }
 
     @BeforeAll
     fun initialize() {
-        setUpWithKotlinPlugin(testCase.testRootDisposable) {
-            testCase.setUp()
-            testCase.getFixture().testDataPath = testDataDir
-            val file = File("$testDataDir/inspectionData/tests.xml")
-            val expectedRoot: Element = JDOMUtil.load(file)
-            myTests = expectedRoot.getChildren("test").map { Test.fromElement(it) }
+        testCase.setUp()
+        testCase.getFixture().testDataPath = testDataDir
+        val file = File("$testDataDir/inspectionData/tests.xml")
+        val expectedRoot: Element = JDOMUtil.load(file)
+        myTests = expectedRoot.getChildren("test").map { Test.fromElement(it) }
 
-            val aggregatedInputFiles = myTests.fold(listOf<String>()) { acc, test -> acc + (test.inputFiles) }
-            aggregatedInputFiles.forEach { input ->
-                val psiFile = testCase.getFixture().configureByFile(input)
-                psiFileMap[input] = psiFile
-            }
+        val aggregatedInputFiles = myTests.fold(listOf<String>()) { acc, test -> acc + (test.inputFiles) }
+        aggregatedInputFiles.forEach { input ->
+            val psiFile = testCase.getFixture().configureByFile(input)
+            psiFileMap[input] = psiFile
         }
-
-    }
-
-    @AfterAll
-    fun tearDown() {
-        testCase.tearDown()
     }
 
     @TestFactory

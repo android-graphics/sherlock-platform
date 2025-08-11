@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.jps.model.serialization;
 
 import org.jdom.Element;
@@ -47,7 +61,8 @@ public abstract class JpsModelSerializerExtension {
   }
 
   @ApiStatus.Internal
-  public @NotNull List<JpsLibraryRootTypeSerializer> getSdkRootTypeSerializers() {
+  @NotNull
+  public List<JpsLibraryRootTypeSerializer> getSdkRootTypeSerializers() {
     return Collections.emptyList();
   }
 
@@ -56,62 +71,76 @@ public abstract class JpsModelSerializerExtension {
   }
 
   @ApiStatus.Internal
-  public @Nullable JpsElementReference<? extends JpsCompositeElement> createLibraryTableReference(String tableLevel) {
+  @Nullable
+  public JpsElementReference<? extends JpsCompositeElement> createLibraryTableReference(String tableLevel) {
     return null;
   }
 
   @ApiStatus.Internal
-  public @Nullable String getLibraryTableLevelId(JpsElementReference<? extends JpsCompositeElement> reference) {
+  @Nullable
+  public String getLibraryTableLevelId(JpsElementReference<? extends JpsCompositeElement> reference) {
     return null;
   }
 
-  public @NotNull List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
+  @NotNull
+  public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
     return Collections.emptyList();
   }
 
-  public @NotNull List<? extends JpsGlobalExtensionSerializer> getGlobalExtensionSerializers() {
+  @NotNull
+  public List<? extends JpsGlobalExtensionSerializer> getGlobalExtensionSerializers() {
     return Collections.emptyList();
   }
 
-  public @NotNull List<? extends JpsModulePropertiesSerializer<?>> getModulePropertiesSerializers() {
+  @NotNull
+  public List<? extends JpsModulePropertiesSerializer<?>> getModulePropertiesSerializers() {
     return Collections.emptyList();
   }
 
-  public @NotNull List<? extends JpsModuleSourceRootPropertiesSerializer<?>> getModuleSourceRootPropertiesSerializers() {
+  @NotNull
+  public List<? extends JpsModuleSourceRootPropertiesSerializer<?>> getModuleSourceRootPropertiesSerializers() {
     return Collections.emptyList();
   }
 
-  public @NotNull List<? extends JpsLibraryPropertiesSerializer<?>> getLibraryPropertiesSerializers() {
+  @NotNull
+  public List<? extends JpsLibraryPropertiesSerializer<?>> getLibraryPropertiesSerializers() {
     return Collections.emptyList();
   }
 
-  public @NotNull List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesSerializers() {
+  @NotNull
+  public List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesSerializers() {
     return Collections.emptyList();
   }
 
-  public @NotNull List<? extends JpsFacetConfigurationSerializer<?>> getFacetConfigurationSerializers() {
+  @NotNull
+  public List<? extends JpsFacetConfigurationSerializer<?>> getFacetConfigurationSerializers() {
     return Collections.emptyList();
   }
 
-  public @NotNull List<? extends JpsPackagingElementSerializer<?>> getPackagingElementSerializers() {
+  @NotNull
+  public List<? extends JpsPackagingElementSerializer<?>> getPackagingElementSerializers() {
     return Collections.emptyList();
   }
 
-  public @NotNull List<? extends JpsArtifactPropertiesSerializer<?>> getArtifactTypePropertiesSerializers() {
+  @NotNull
+  public List<? extends JpsArtifactPropertiesSerializer<?>> getArtifactTypePropertiesSerializers() {
     return Collections.emptyList();
   }
 
   @ApiStatus.Internal
-  public @NotNull List<? extends JpsArtifactExtensionSerializer<?>> getArtifactExtensionSerializers() {
+  @NotNull
+  public List<? extends JpsArtifactExtensionSerializer<?>> getArtifactExtensionSerializers() {
     return Collections.emptyList();
   }
 
   @ApiStatus.Internal
-  public @Nullable JpsModuleClasspathSerializer getClasspathSerializer() {
+  @Nullable
+  public JpsModuleClasspathSerializer getClasspathSerializer() {
     return null;
   }
 
-  public @NotNull List<? extends JpsRunConfigurationPropertiesSerializer<?>> getRunConfigurationPropertiesSerializers() {
+  @NotNull
+  public List<? extends JpsRunConfigurationPropertiesSerializer<?>> getRunConfigurationPropertiesSerializers() {
     return Collections.emptyList();
   }
 }

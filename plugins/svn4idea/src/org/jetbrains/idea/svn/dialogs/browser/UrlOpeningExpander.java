@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.util.NotNullFunction;
@@ -10,7 +10,7 @@ import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
 public class UrlOpeningExpander extends AbstractOpeningExpander {
-  private final @NotNull Url myUrl;
+  @NotNull private final Url myUrl;
 
   UrlOpeningExpander(@NotNull RepositoryBrowserComponent browser, @NotNull Url selectionPath, @NotNull Url url) {
     super(browser, selectionPath);
@@ -34,14 +34,15 @@ public class UrlOpeningExpander extends AbstractOpeningExpander {
   }
 
   public static class Factory implements NotNullFunction<RepositoryBrowserComponent, Expander> {
-    private final @NotNull Url myUrl;
+    @NotNull private final Url myUrl;
 
     public Factory(@NotNull Url url) {
       myUrl = url;
     }
 
     @Override
-    public @NotNull Expander fun(final RepositoryBrowserComponent repositoryBrowserComponent) {
+    @NotNull
+    public Expander fun(final RepositoryBrowserComponent repositoryBrowserComponent) {
       return new UrlOpeningExpander(repositoryBrowserComponent, myUrl, myUrl);
     }
   }

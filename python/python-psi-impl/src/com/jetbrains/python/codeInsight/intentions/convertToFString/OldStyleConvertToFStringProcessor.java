@@ -18,11 +18,11 @@ package com.jetbrains.python.codeInsight.intentions.convertToFString;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.PyStringFormatParser;
 import com.jetbrains.python.PyStringFormatParser.NewStyleSubstitutionChunk;
 import com.jetbrains.python.PyStringFormatParser.PercentSubstitutionChunk;
 import com.jetbrains.python.PyStringFormatParser.SubstitutionChunk;
-import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -42,13 +42,15 @@ public class OldStyleConvertToFStringProcessor extends BaseConvertToFStringProce
     super(pyString);
   }
 
+  @NotNull
   @Override
-  protected @NotNull List<SubstitutionChunk> extractAllSubstitutionChunks() {
+  protected List<SubstitutionChunk> extractAllSubstitutionChunks() {
     return PyStringFormatParser.filterSubstitutions(PyStringFormatParser.parsePercentFormat(myPyString.getText()));
   }
 
+  @NotNull
   @Override
-  protected @NotNull PySubstitutionChunkReference createReference(@NotNull SubstitutionChunk chunk) {
+  protected PySubstitutionChunkReference createReference(@NotNull SubstitutionChunk chunk) {
     return new PySubstitutionChunkReference(myPyString, chunk);
   }
 
@@ -67,14 +69,16 @@ public class OldStyleConvertToFStringProcessor extends BaseConvertToFStringProce
     return super.checkReferencedExpression(chunks, chunk, valueSource, expression);
   }
 
+  @NotNull
   @Override
-  public @NotNull PyExpression getWholeExpressionToReplace() {
+  public PyExpression getWholeExpressionToReplace() {
     //noinspection ConstantConditions
     return PsiTreeUtil.getParentOfType(myPyString, PyBinaryExpression.class);
   }
 
+  @Nullable
   @Override
-  protected @Nullable PsiElement getValuesSource() {
+  protected PsiElement getValuesSource() {
     final PyBinaryExpression binaryExpression = as(myPyString.getParent(), PyBinaryExpression.class);
     assert binaryExpression != null;
     return binaryExpression.getRightExpression();

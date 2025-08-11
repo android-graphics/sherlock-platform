@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
@@ -22,7 +23,7 @@ import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,6 +51,7 @@ import static org.junit.Assert.*;
 
 @RunFirst
 @SkipSlowTestLocally
+@HardwareAgentRequired
 public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory tempDir = new TempDirectory();
 
@@ -82,7 +84,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     UIUtil.pump(); // wait for all event handlers to calm down
 
     Logger.getInstance(VfsUtilPerformanceTest.class).debug("Start searching...");
-    Benchmark.newBenchmark("finding child", () -> {
+    PerformanceTestUtil.newPerformanceTest("finding child", () -> {
       for (int i = 0; i < 1_000_000; i++) {
         VirtualFile child = vDir.findChild("5111.txt");
         assertEquals(theChild, child);
@@ -106,8 +108,8 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     String path = jar.getPath() + "!/";
     ManagingFS managingFS = ManagingFS.getInstance();
     NewVirtualFile root = managingFS.findRoot(path, fs);
-    Benchmark.newBenchmark("finding root",
-                           () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
+    PerformanceTestUtil.newPerformanceTest("finding root",
+                                        () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
                                             Collections.nCopies(500, null), null,
                                             __ -> {
                                               for (int i = 0; i < 100_000; i++) {
@@ -151,7 +153,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         }
       };
 
-      Benchmark.newBenchmark("getParent before movement", checkPerformance)
+      PerformanceTestUtil.newPerformanceTest("getParent before movement", checkPerformance)
         .start(getQualifiedTestMethodName() + " - getParent before movement");
 
       VirtualFile dir1 = root.createChildDirectory(this, "dir1");
@@ -160,7 +162,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         dir1.createChildData(this, "a" + i + ".txt").move(this, dir2);
       }
 
-      Benchmark.newBenchmark("getParent after movement", checkPerformance)
+      PerformanceTestUtil.newPerformanceTest("getParent after movement", checkPerformance)
         .start(getQualifiedTestMethodName() + " - getParent after movement");
     });
   }
@@ -185,7 +187,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
                     "fff.txt";
       VirtualFile file = fixture.findOrCreateDir(path);
 
-      Benchmark.newBenchmark("VF.getPath()", () -> {
+      PerformanceTestUtil.newPerformanceTest("VF.getPath()", () -> {
         for (int i = 0; i < 1_000_000; ++i) {
           file.getPath();
         }
@@ -270,7 +272,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     VirtualDirectoryImpl temp = createTempFsDirectory();
 
     EdtTestUtil.runInEdtAndWait(() -> {
-      Benchmark.newBenchmark("many files creations", () -> {
+      PerformanceTestUtil.newPerformanceTest("many files creations", () -> {
         assertEquals(N, events.size());
         processEvents(events);
         assertEquals(N, temp.getCachedChildren().size());
@@ -285,7 +287,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
       })
       .start(getQualifiedTestMethodName() + " - many files creations");
 
-      Benchmark.newBenchmark("many files deletions", () -> {
+      PerformanceTestUtil.newPerformanceTest("many files deletions", () -> {
         assertEquals(N, events.size());
         processEvents(events);
         assertEquals(0, temp.getCachedChildren().size());

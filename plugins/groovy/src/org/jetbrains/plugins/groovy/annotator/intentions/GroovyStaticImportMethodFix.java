@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
@@ -48,7 +48,8 @@ public class GroovyStaticImportMethodFix extends Intention {
   }
 
   @Override
-  public @NotNull @IntentionName String getText() {
+  @NotNull
+  public @IntentionName String getText() {
     if (getCandidates().size() == 1) {
       final int options = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_FQ_NAME;
       String methodText = PsiFormatUtil.formatMethod(getCandidates().get(0), PsiSubstitutor.EMPTY, options, 0);
@@ -76,17 +77,20 @@ public class GroovyStaticImportMethodFix extends Intention {
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return getText();
   }
 
-  private @Nullable GrReferenceExpression getMethodExpression() {
+  @Nullable
+  private GrReferenceExpression getMethodExpression() {
     GrMethodCall methodCall = myMethodCall.getElement();
     if (methodCall == null) return null;
     return getMethodExpression(methodCall);
   }
 
-  private static @Nullable GrReferenceExpression getMethodExpression(@NotNull GrMethodCall call) {
+  @Nullable
+  private static GrReferenceExpression getMethodExpression(@NotNull GrMethodCall call) {
     GrExpression result = call.getInvokedExpression();
     return result instanceof GrReferenceExpression ? (GrReferenceExpression)result : null;
   }
@@ -103,7 +107,8 @@ public class GroovyStaticImportMethodFix extends Intention {
     return !getCandidates().isEmpty();
   }
 
-  private @NotNull List<PsiMethod> getMethodsToImport() {
+  @NotNull
+  private List<PsiMethod> getMethodsToImport() {
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(myMethodCall.getProject());
 
     GrMethodCall element = myMethodCall.getElement();
@@ -148,8 +153,9 @@ public class GroovyStaticImportMethodFix extends Intention {
     }
   }
 
+  @NotNull
   @Override
-  protected @NotNull PsiElementPredicate getElementPredicate() {
+  protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
@@ -186,7 +192,8 @@ public class GroovyStaticImportMethodFix extends Intention {
       .showInBestPositionFor(editor);
   }
 
-  private @NotNull List<PsiMethod> getCandidates() {
+  @NotNull
+  private List<PsiMethod> getCandidates() {
     List<PsiMethod> result = myCandidates;
     if (result == null) {
       result = getMethodsToImport();

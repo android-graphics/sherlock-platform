@@ -1,8 +1,10 @@
+from typing import Type
+
 import my
-from my import X, Y
+from my import X
 
 
-def foo(a) -> type[X | Y]:
+def foo(a) -> Type[X]:
     if a:
         return my.X<caret>
     else:

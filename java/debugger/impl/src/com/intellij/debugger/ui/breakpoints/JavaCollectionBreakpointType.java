@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.HelpID;
@@ -39,33 +39,39 @@ public final class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBa
     return Registry.is("debugger.collection.watchpoints.enabled");
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getEnabledIcon() {
+  public Icon getEnabledIcon() {
     return AllIcons.Debugger.Db_field_breakpoint;
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getDisabledIcon() {
+  public Icon getDisabledIcon() {
     return AllIcons.Debugger.Db_disabled_field_breakpoint;
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getSuspendNoneIcon() {
+  public Icon getSuspendNoneIcon() {
     return AllIcons.Debugger.Db_no_suspend_field_breakpoint;
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getMutedEnabledIcon() {
+  public Icon getMutedEnabledIcon() {
     return AllIcons.Debugger.Db_muted_field_breakpoint;
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getMutedDisabledIcon() {
+  public Icon getMutedDisabledIcon() {
     return AllIcons.Debugger.Db_muted_disabled_field_breakpoint;
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getInactiveDependentIcon() {
+  public Icon getInactiveDependentIcon() {
     return AllIcons.Debugger.Db_dep_field_breakpoint;
   }
 
@@ -84,34 +90,40 @@ public final class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBa
     return JavaDebuggerBundle.message("collection.watchpoints.tab.title");
   }
 
+  @Nls
   @Override
-  protected @Nls @NotNull String getGeneralDescription(XLineBreakpointType<JavaCollectionBreakpointProperties>.XLineBreakpointVariant variant) {
+  protected @NotNull String getGeneralDescription(XLineBreakpointType<JavaCollectionBreakpointProperties>.XLineBreakpointVariant variant) {
     return JavaDebuggerBundle.message("collection.watchpoint.description");
   }
 
+  @Nls
   @Override
-  public @Nls String getGeneralDescription(XLineBreakpoint<JavaCollectionBreakpointProperties> breakpoint) {
+  public String getGeneralDescription(XLineBreakpoint<JavaCollectionBreakpointProperties> breakpoint) {
     return JavaDebuggerBundle.message("collection.watchpoint.description");
   }
 
-  public @Nls String getText(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
+  @Nls
+  public String getText(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
     JavaFieldBreakpointProperties properties = breakpoint.getProperties();
     final String className = properties.myClassName;
     return className != null && !className.isEmpty() ? className + "." + properties.myFieldName : properties.myFieldName;
   }
 
+  @Nullable
   @Override
-  public @Nullable JavaCollectionBreakpointProperties createProperties() {
+  public JavaCollectionBreakpointProperties createProperties() {
     return new JavaCollectionBreakpointProperties();
   }
 
+  @Nullable
   @Override
-  public @Nullable JavaCollectionBreakpointProperties createBreakpointProperties(@NotNull VirtualFile file, int line) {
+  public JavaCollectionBreakpointProperties createBreakpointProperties(@NotNull VirtualFile file, int line) {
     return new JavaCollectionBreakpointProperties();
   }
 
+  @NotNull
   @Override
-  public @NotNull Breakpoint<JavaCollectionBreakpointProperties> createJavaBreakpoint(Project project, XBreakpoint breakpoint) {
+  public Breakpoint<JavaCollectionBreakpointProperties> createJavaBreakpoint(Project project, XBreakpoint breakpoint) {
     return new CollectionBreakpoint(project, breakpoint);
   }
 
@@ -138,8 +150,9 @@ public final class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBa
     });
   }
 
+  @Nullable
   @Override
-  public @Nullable XLineBreakpoint<JavaCollectionBreakpointProperties> addBreakpoint(final Project project, JComponent parentComponent) {
+  public XLineBreakpoint<JavaCollectionBreakpointProperties> addBreakpoint(final Project project, JComponent parentComponent) {
     final Ref<XLineBreakpoint<JavaCollectionBreakpointProperties>> result = Ref.create(null);
     AddFieldBreakpointDialog dialog = new AddFieldBreakpointDialog(project) {
       @Override

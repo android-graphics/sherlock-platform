@@ -1,12 +1,10 @@
-from _typeshed import ConvertibleToInt
 from re import Pattern
-from typing import ClassVar, Final, Literal
-from typing_extensions import Self
+from typing import ClassVar
+from typing_extensions import Final, Literal, Self
 
 from openpyxl.descriptors import Strict
-from openpyxl.descriptors.base import Alias, Bool, Integer, MatchPattern, String, Typed, _ConvertibleToBool
+from openpyxl.descriptors.base import Alias, Bool, Integer, MatchPattern, String, Typed, _ConvertibleToBool, _ConvertibleToInt
 from openpyxl.descriptors.serialisable import Serialisable
-from openpyxl.xml.functions import Element
 
 from ..xml._functions_overloads import _HasText
 
@@ -22,7 +20,7 @@ class _HeaderFooterPart(Strict):
     RGB: ClassVar[str]
     color: MatchPattern[str, Literal[True]]
     def __init__(
-        self, text: str | None = None, font: str | None = None, size: ConvertibleToInt | None = None, color: str | None = None
+        self, text: str | None = None, font: str | None = None, size: _ConvertibleToInt | None = None, color: str | None = None
     ) -> None: ...
     def __bool__(self) -> bool: ...
     @classmethod
@@ -40,7 +38,7 @@ class HeaderFooterItem(Strict):
         center: _HeaderFooterPart | None = None,
     ) -> None: ...
     def __bool__(self) -> bool: ...
-    def to_tree(self, tagname: str) -> Element: ...
+    def to_tree(self, tagname): ...
     @classmethod
     def from_tree(cls, node: _HasText) -> Self: ...
 

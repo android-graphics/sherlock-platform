@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
-import com.intellij.vcs.commit.CommitMode;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,9 +43,10 @@ import java.util.function.Function;
  * @see ProjectLevelVcsManager
  */
 public abstract class AbstractVcs extends StartedActivated {
-  protected static final @NonNls String ourIntegerPattern = "\\d+";
+  @NonNls protected static final String ourIntegerPattern = "\\d+";
 
-  protected final @NotNull Project myProject;
+  @NotNull
+  protected final Project myProject;
   private final String myName;
   private final VcsKey myKey;
 
@@ -105,7 +105,8 @@ public abstract class AbstractVcs extends StartedActivated {
    * @see VcsKey#getName
    * @see AllVcsesI#getByName(String)
    */
-  public final @NonNls String getName() {
+  @NonNls
+  public final String getName() {
     return myName;
   }
 
@@ -114,13 +115,17 @@ public abstract class AbstractVcs extends StartedActivated {
    *
    * @see #getShortName
    */
-  public abstract @Nls @NotNull String getDisplayName();
+  @Nls
+  @NotNull
+  public abstract String getDisplayName();
 
   /**
    * Returns the short or abbreviated name of this VCS, which name can be used in those places in the UI where the space is limited.
    * (e.g. it can be "SVN" for Subversion or "Hg" for Mercurial).<br/><br/>
    */
-  public @Nls @NotNull String getShortName() {
+  @Nls
+  @NotNull
+  public String getShortName() {
     return getDisplayName();
   }
 
@@ -129,7 +134,9 @@ public abstract class AbstractVcs extends StartedActivated {
    * (e.g. it can be "_SVN" for Subversion or "_Hg" for Mercurial).<br/><br/>
    * Returns generic "VC_S" by default.
    */
-  public @Nls @NotNull String getShortNameWithMnemonic() {
+  @Nls
+  @NotNull
+  public String getShortNameWithMnemonic() {
     return VcsBundle.message("vcs.generic.name.with.mnemonic");
   }
 
@@ -144,12 +151,13 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
+   * Allows to hide 'Local Changes' toolwindow tab, as well as disable changelists.
    * Takes effect for projects that have configured mappings for this VCS only.
    *
-   * @return the commit mode to enforce for this VCS, or null to apply the project's default
+   * @return true if 'Local Changes' tab should be hidden.
    */
-  public @Nullable CommitMode getForcedCommitMode() {
-    return null;
+  public boolean isWithCustomLocalChanges() {
+    return false;
   }
 
   /**
@@ -185,15 +193,19 @@ public abstract class AbstractVcs extends StartedActivated {
   /**
    * @return Custom value for {@link com.intellij.openapi.vcs.actions.CompareWithTheSameVersionAction} action text.
    */
-  public @NlsActions.ActionText @Nullable String getCompareWithTheSameVersionActionName() {
+  @NlsActions.ActionText
+  @Nullable
+  public String getCompareWithTheSameVersionActionName() {
     return null;
   }
 
-  public @Nullable Configurable getConfigurable() {
+  @Nullable
+  public Configurable getConfigurable() {
     return null;
   }
 
-  public @Nullable TransactionProvider getTransactionProvider() {
+  @Nullable
+  public TransactionProvider getTransactionProvider() {
     return null;
   }
 
@@ -206,7 +218,8 @@ public abstract class AbstractVcs extends StartedActivated {
    * @see #needsCaseSensitiveDirtyScope
    * @see #createDirtyScope
    */
-  public @Nullable ChangeProvider getChangeProvider() {
+  @Nullable
+  public ChangeProvider getChangeProvider() {
     return null;
   }
 
@@ -219,7 +232,8 @@ public abstract class AbstractVcs extends StartedActivated {
    *
    * @return the interface implementation, or null if none is provided.
    */
-  public @Nullable EditFileProvider getEditFileProvider() {
+  @Nullable
+  public EditFileProvider getEditFileProvider() {
     return null;
   }
 
@@ -230,14 +244,16 @@ public abstract class AbstractVcs extends StartedActivated {
    * @see #getCommitExecutors
    * @see #arePartialChangelistsSupported
    */
-  public @Nullable CheckinEnvironment getCheckinEnvironment() {
+  @Nullable
+  public CheckinEnvironment getCheckinEnvironment() {
     return myCheckinEnvironment;
   }
 
   /**
    * @return the rollback interface, or null if rollbacks are not supported by the VCS.
    */
-  public @Nullable RollbackEnvironment getRollbackEnvironment() {
+  @Nullable
+  public RollbackEnvironment getRollbackEnvironment() {
     return myRollbackEnvironment;
   }
 
@@ -245,14 +261,16 @@ public abstract class AbstractVcs extends StartedActivated {
    * @see #getDiffProvider
    * @see #getCommittedChangesProvider
    */
-  public @Nullable VcsHistoryProvider getVcsHistoryProvider() {
+  @Nullable
+  public VcsHistoryProvider getVcsHistoryProvider() {
     return null;
   }
 
   /**
    * Typically, delegates to {@link #getVcsHistoryProvider}.
    */
-  public @Nullable VcsHistoryProvider getVcsBlockHistoryProvider() {
+  @Nullable
+  public VcsHistoryProvider getVcsBlockHistoryProvider() {
     return null;
   }
 
@@ -262,7 +280,8 @@ public abstract class AbstractVcs extends StartedActivated {
    * @see #getIntegrateEnvironment
    * @see #getVcsExceptionsHotFixer
    */
-  public @Nullable UpdateEnvironment getUpdateEnvironment() {
+  @Nullable
+  public UpdateEnvironment getUpdateEnvironment() {
     return myUpdateEnvironment;
   }
 
@@ -338,7 +357,8 @@ public abstract class AbstractVcs extends StartedActivated {
    * (in particular, the VCS can show a confirmation to the user by itself)
    */
   @RequiresEdt
-  public @NotNull ThreeState mayRemoveChangeList(@NotNull LocalChangeList list, boolean explicitly) {
+  @NotNull
+  public ThreeState mayRemoveChangeList(@NotNull LocalChangeList list, boolean explicitly) {
     return ThreeState.UNSURE;
   }
 
@@ -371,14 +391,16 @@ public abstract class AbstractVcs extends StartedActivated {
    *
    * @return the status interface, or null if the check status operation is not supported or required by the VCS.
    */
-  public @Nullable UpdateEnvironment getStatusEnvironment() {
+  @Nullable
+  public UpdateEnvironment getStatusEnvironment() {
     return null;
   }
 
   /**
    * Provides information about per-line modification history for a file ('git blame').
    */
-  public @Nullable AnnotationProvider getAnnotationProvider() {
+  @Nullable
+  public AnnotationProvider getAnnotationProvider() {
     return null;
   }
 
@@ -386,7 +408,8 @@ public abstract class AbstractVcs extends StartedActivated {
    * @see #getVcsHistoryProvider
    * @see #getRevisionSelector
    */
-  public @Nullable DiffProvider getDiffProvider() {
+  @Nullable
+  public DiffProvider getDiffProvider() {
     return null;
   }
 
@@ -425,7 +448,8 @@ public abstract class AbstractVcs extends StartedActivated {
    *
    * @return the revision selector implementation, or null if none is provided.
    */
-  public @Nullable RevisionSelector getRevisionSelector() {
+  @Nullable
+  public RevisionSelector getRevisionSelector() {
     return null;
   }
 
@@ -435,7 +459,8 @@ public abstract class AbstractVcs extends StartedActivated {
    *
    * @return the update interface, or null if integrate operations are not supported by the VCS.
    */
-  public @Nullable UpdateEnvironment getIntegrateEnvironment() {
+  @Nullable
+  public UpdateEnvironment getIntegrateEnvironment() {
     return null;
   }
 
@@ -446,7 +471,8 @@ public abstract class AbstractVcs extends StartedActivated {
     return null;
   }
 
-  public final @Nullable CachingCommittedChangesProvider<? extends CommittedChangeList, ?> getCachingCommittedChangesProvider() {
+  @Nullable
+  public final CachingCommittedChangesProvider<? extends CommittedChangeList, ?> getCachingCommittedChangesProvider() {
     CommittedChangesProvider<? extends CommittedChangeList, ?> provider = getCommittedChangesProvider();
     if (provider instanceof CachingCommittedChangesProvider) {
       return (CachingCommittedChangesProvider<? extends CommittedChangeList, ?>)provider;
@@ -469,18 +495,22 @@ public abstract class AbstractVcs extends StartedActivated {
    * @param path                 the path for which revision number is queried
    * @see #getRevisionPattern
    */
-  public @Nullable VcsRevisionNumber parseRevisionNumber(String revisionNumberString, FilePath path) throws VcsException {
+  @Nullable
+  public VcsRevisionNumber parseRevisionNumber(String revisionNumberString, FilePath path) throws VcsException {
     return parseRevisionNumber(revisionNumberString);
   }
 
-  public @Nullable VcsRevisionNumber parseRevisionNumber(String revisionNumberString) throws VcsException {
+  @Nullable
+  public VcsRevisionNumber parseRevisionNumber(String revisionNumberString) throws VcsException {
     return null;
   }
 
   /**
    * @return null if VCS does not support revision parsing
    */
-  public @NonNls @Nullable String getRevisionPattern() {
+  @NonNls
+  @Nullable
+  public String getRevisionPattern() {
     return null;
   }
 
@@ -506,14 +536,16 @@ public abstract class AbstractVcs extends StartedActivated {
    * @param mapping the mapping being configured
    * @return the configurable instance, or null if no configuration is required.
    */
-  public @Nullable UnnamedConfigurable getRootConfigurable(VcsDirectoryMapping mapping) {
+  @Nullable
+  public UnnamedConfigurable getRootConfigurable(VcsDirectoryMapping mapping) {
     return null;
   }
 
   /**
    * @see #getRootConfigurable
    */
-  public @Nullable VcsRootSettings createEmptyVcsRootSettings() {
+  @Nullable
+  public VcsRootSettings createEmptyVcsRootSettings() {
     return null;
   }
 
@@ -525,8 +557,9 @@ public abstract class AbstractVcs extends StartedActivated {
    * Consider implementing other means of automatic VCS root detection,
    * such as {@link VcsRootChecker#detectProjectMappings(Project, Collection, Set)} or {@link VcsRootChecker#isRoot(VirtualFile)}.
    */
+  @Nullable
   @Deprecated
-  public @Nullable RootsConvertor getCustomConvertor() {
+  public RootsConvertor getCustomConvertor() {
     return null;
   }
 
@@ -567,7 +600,8 @@ public abstract class AbstractVcs extends StartedActivated {
    *
    * @return the merge provider implementation, or null if the VCS doesn't support merge operations.
    */
-  public @Nullable MergeProvider getMergeProvider() {
+  @Nullable
+  public MergeProvider getMergeProvider() {
     return null;
   }
 
@@ -579,8 +613,9 @@ public abstract class AbstractVcs extends StartedActivated {
     return false;
   }
 
+  @NotNull
   @Deprecated
-  public @NotNull <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
+  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
     if (!allowsNestedRoots()) {
       new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance()).doFilter(in);
     }
@@ -590,11 +625,13 @@ public abstract class AbstractVcs extends StartedActivated {
   /**
    * Allows customized handling of {@link UpdateSession} errors.
    */
-  public @Nullable VcsExceptionsHotFixer getVcsExceptionsHotFixer() {
+  @Nullable
+  public VcsExceptionsHotFixer getVcsExceptionsHotFixer() {
     return null;
   }
 
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myProject;
   }
 
@@ -602,7 +639,8 @@ public abstract class AbstractVcs extends StartedActivated {
     return new VcsKey(name);
   }
 
-  public final @NotNull VcsKey getKeyInstanceMethod() {
+  @NotNull
+  public final VcsKey getKeyInstanceMethod() {
     return myKey;
   }
 
@@ -610,11 +648,13 @@ public abstract class AbstractVcs extends StartedActivated {
     return VcsType.centralized;
   }
 
-  protected @Nullable VcsOutgoingChangesProvider<CommittedChangeList> getOutgoingProviderImpl() {
+  @Nullable
+  protected VcsOutgoingChangesProvider<CommittedChangeList> getOutgoingProviderImpl() {
     return null;
   }
 
-  public final @Nullable VcsOutgoingChangesProvider<CommittedChangeList> getOutgoingChangesProvider() {
+  @Nullable
+  public final VcsOutgoingChangesProvider<CommittedChangeList> getOutgoingChangesProvider() {
     return VcsType.centralized.equals(getType()) ? null : getOutgoingProviderImpl();
   }
 
@@ -626,11 +666,13 @@ public abstract class AbstractVcs extends StartedActivated {
     return false;
   }
 
-  protected @Nullable TreeDiffProvider getTreeDiffProviderImpl() {
+  @Nullable
+  protected TreeDiffProvider getTreeDiffProviderImpl() {
     return null;
   }
 
-  public @Nullable TreeDiffProvider getTreeDiffProvider() {
+  @Nullable
+  public TreeDiffProvider getTreeDiffProvider() {
     final RemoteDifferenceStrategy strategy = getRemoteDifferenceStrategy();
     return RemoteDifferenceStrategy.ASK_LATEST_REVISION.equals(strategy) ? null : getTreeDiffProviderImpl();
   }
@@ -647,7 +689,7 @@ public abstract class AbstractVcs extends StartedActivated {
     return true;
   }
 
-  public boolean allowsRemoteCalls(final @NotNull VirtualFile file) {
+  public boolean allowsRemoteCalls(@NotNull final VirtualFile file) {
     return true;
   }
 
@@ -669,21 +711,24 @@ public abstract class AbstractVcs extends StartedActivated {
   /**
    * @see #getCheckinEnvironment
    */
-  protected @Nullable CheckinEnvironment createCheckinEnvironment() {
+  @Nullable
+  protected CheckinEnvironment createCheckinEnvironment() {
     return null;
   }
 
   /**
    * @see #getUpdateEnvironment
    */
-  protected @Nullable UpdateEnvironment createUpdateEnvironment() {
+  @Nullable
+  protected UpdateEnvironment createUpdateEnvironment() {
     return null;
   }
 
   /**
    * @see #getRollbackEnvironment
    */
-  protected @Nullable RollbackEnvironment createRollbackEnvironment() {
+  @Nullable
+  protected RollbackEnvironment createRollbackEnvironment() {
     return null;
   }
 
@@ -693,7 +738,8 @@ public abstract class AbstractVcs extends StartedActivated {
     setRollbackEnvironment(createRollbackEnvironment());
   }
 
-  public @Nullable CommittedChangeList loadRevisions(VirtualFile vf, @NotNull VcsRevisionNumber number) {
+  @Nullable
+  public CommittedChangeList loadRevisions(VirtualFile vf, @NotNull VcsRevisionNumber number) {
     return VcsSynchronousProgressWrapper.compute(() -> {
       CommittedChangesProvider<? extends CommittedChangeList, ?> provider = getCommittedChangesProvider();
       Pair<? extends CommittedChangeList, FilePath> pair = provider == null ? null : provider.getOneList(vf, number);

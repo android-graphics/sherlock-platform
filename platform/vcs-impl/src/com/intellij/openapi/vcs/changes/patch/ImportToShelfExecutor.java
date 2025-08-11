@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -128,8 +128,9 @@ public final class ImportToShelfExecutor implements ApplyPatchExecutor<TextFileP
       myMap = new HashMap<>();
     }
 
+    @NotNull
     @Override
-    public @NotNull String getName() {
+    public String getName() {
       return myName;
     }
 

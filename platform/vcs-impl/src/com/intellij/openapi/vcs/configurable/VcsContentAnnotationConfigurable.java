@@ -19,8 +19,9 @@ public final class VcsContentAnnotationConfigurable extends VcsCheckBoxWithSpinn
     return new SpinnerNumberModel(1, 1, VcsContentAnnotationSettings.ourMaxDays, 1);
   }
 
+  @Nls
   @Override
-  public @Nls String getDisplayName() {
+  public String getDisplayName() {
     return VcsBundle.message("configurable.VcsContentAnnotationConfigurable.display.name");
   }
 

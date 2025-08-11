@@ -55,7 +55,8 @@ class GroupSurrounder implements Surrounder {
     }
 
     @Override
-    public @Nullable TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements) {
+    @Nullable
+    public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements) {
         assert elements.length == 1 || PsiTreeUtil.findCommonParent(elements) == elements[0].getParent();
         final PsiElement e = elements[0];
         final ASTNode node = e.getNode();

@@ -1,20 +1,20 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.utils.impl;
 
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.IntToIntMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public final class PermanentListIntToIntMap extends AbstractIntToIntMap implements IntToIntMap {
   public static final int DEFAULT_BLOCK_SIZE = 30;
 
-  public static @NotNull IntToIntMap newInstance(@NotNull Flags visibleIndexes, int shortSize) {
+  @NotNull
+  public static IntToIntMap newInstance(@NotNull Flags visibleIndexes, int shortSize) {
     return newInstance(visibleIndexes, shortSize, DEFAULT_BLOCK_SIZE);
   }
 
-  public static @NotNull IntToIntMap newInstance(final @NotNull Flags visibleIndexes, int shortSize, int blockSize) {
+  @NotNull
+  public static IntToIntMap newInstance(@NotNull final Flags visibleIndexes, int shortSize, int blockSize) {
     if (shortSize < 0) throw new NegativeArraySizeException("shortSize < 0: " + shortSize);
     if (shortSize == 0) return createEmptyIntToIntMap(visibleIndexes);
 
@@ -32,7 +32,8 @@ public final class PermanentListIntToIntMap extends AbstractIntToIntMap implemen
     return new PermanentListIntToIntMap(visibleIndexes, shortSize, blockSize, strongShortIndexes);
   }
 
-  private static @NotNull IntToIntMap createEmptyIntToIntMap(final @NotNull Flags visibleIndexes) {
+  @NotNull
+  private static IntToIntMap createEmptyIntToIntMap(@NotNull final Flags visibleIndexes) {
     return new IntToIntMap() {
       @Override
       public int shortSize() {
@@ -56,7 +57,7 @@ public final class PermanentListIntToIntMap extends AbstractIntToIntMap implemen
     };
   }
 
-  private final @NotNull Flags myVisibleIndexes;
+  @NotNull private final Flags myVisibleIndexes;
 
   private final int myLongSize;
   private final int myShortSize;

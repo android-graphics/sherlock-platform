@@ -4,7 +4,6 @@ import com.intellij.terminal.completion.engine.ShellCommandNode
 import com.intellij.terminal.completion.engine.ShellCommandTreeBuilder
 import com.intellij.terminal.completion.engine.ShellCommandTreeNode
 import com.intellij.terminal.completion.engine.ShellCommandTreeSuggestionsProvider
-import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.util.containers.TreeTraversal
 import org.jetbrains.annotations.ApiStatus
@@ -30,7 +29,7 @@ class ShellCommandSpecCompletion(
     if (arguments.isEmpty()) {
       return null  // no arguments, there should be at least one empty incomplete argument
     }
-    val commandSpec: ShellCommandSpec = commandSpecManager.getCommandSpec(command) ?: return null  // no spec for command
+    val commandSpec = commandSpecManager.getCommandSpec(command) ?: return null  // no spec for command
 
     val completeArguments = arguments.subList(0, arguments.size - 1)
     val lastArgument = arguments.last()

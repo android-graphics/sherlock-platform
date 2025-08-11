@@ -11,14 +11,15 @@ public final class UsageViewLongNameLocation extends ElementDescriptionLocation 
 
   public static final UsageViewLongNameLocation INSTANCE = new UsageViewLongNameLocation();
 
+  @NotNull
   @Override
-  public @NotNull ElementDescriptionProvider getDefaultProvider() {
+  public ElementDescriptionProvider getDefaultProvider() {
     return DEFAULT_PROVIDER;
   }
 
   private static final ElementDescriptionProvider DEFAULT_PROVIDER = new ElementDescriptionProvider() {
     @Override
-    public String getElementDescription(final @NotNull PsiElement element, final @NotNull ElementDescriptionLocation location) {
+    public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
       if (location instanceof UsageViewLongNameLocation) {
         if (element instanceof PsiDirectory directory) {
           return SymbolPresentationUtil.getFilePathPresentation(directory);

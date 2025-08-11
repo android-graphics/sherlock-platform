@@ -5,7 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.util.IntCollectionUtil
-import git4idea.GitUtil
+import com.intellij.vcs.log.util.VcsLogUtil
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.regex.Pattern
@@ -49,7 +49,7 @@ private fun IndexDataGetter.selectSourceCommits(targetCommit: Int,
     val hashesString = match.subSequence(suffixStart.length, match.length - 1) // -1 for the last ")"
     val hashesCandidates = hashesString.split(",", " ", ";")
     for (h in hashesCandidates) {
-      if (GitUtil.isHashString(h, false)) {
+      if (VcsLogUtil.HASH_REGEX.matcher(h).matches()) {
         val hash = HashImpl.build(h)
         val index = logStorage.getCommitIndex(hash, root)
         if (sourceCandidatesExtended.contains(index)) {

@@ -7,7 +7,6 @@ import com.intellij.webSymbols.patterns.ComplexPatternOptions
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternFactory
 import com.intellij.webSymbols.patterns.WebSymbolsPatternReferenceResolver
-import java.util.Objects
 
 /**
  * A utility [WebSymbol], which allows to reference
@@ -20,7 +19,7 @@ class ReferencingWebSymbol private constructor(
   override val origin: WebSymbolOrigin,
   vararg references: WebSymbolQualifiedKind,
   override val priority: WebSymbol.Priority?,
-  private val location: List<WebSymbolQualifiedName> = emptyList(),
+  location: List<WebSymbolQualifiedName> = emptyList(),
 ) : WebSymbol {
 
   companion object {
@@ -40,8 +39,6 @@ class ReferencingWebSymbol private constructor(
       )
   }
 
-  private val references = references.toList()
-
   override val pattern: WebSymbolsPattern =
     WebSymbolsPatternFactory.createComplexPattern(
       ComplexPatternOptions(
@@ -52,23 +49,9 @@ class ReferencingWebSymbol private constructor(
           }.toTypedArray()
         )), false,
       WebSymbolsPatternFactory.createPatternSequence(
-        WebSymbolsPatternFactory.createSymbolReferencePlaceholder(name),
+        WebSymbolsPatternFactory.createSymbolReferencePlaceholder(),
       )
     )
-
-  override fun equals(other: Any?): Boolean =
-    other === this ||
-    other is ReferencingWebSymbol
-    && other.namespace == namespace
-    && other.kind == kind
-    && other.name == name
-    && other.origin == origin
-    && other.priority == priority
-    && other.location == location
-    && other.references == references
-
-  override fun hashCode(): Int =
-    Objects.hash(namespace, kind, name, origin, priority, location, references)
 
   override fun createPointer(): Pointer<out WebSymbol> =
     Pointer.hardPointer(this)

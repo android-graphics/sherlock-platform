@@ -1,5 +1,6 @@
 from collections.abc import Callable, MutableMapping
-from typing import Any, ClassVar, NoReturn, TypedDict
+from typing import Any, ClassVar, NoReturn
+from typing_extensions import TypedDict
 
 from jmespath.functions import Functions
 

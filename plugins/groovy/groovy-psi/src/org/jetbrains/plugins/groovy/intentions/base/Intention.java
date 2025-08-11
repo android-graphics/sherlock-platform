@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.base;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -41,7 +41,8 @@ public abstract class Intention implements IntentionAction {
 
   protected abstract void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException;
 
-  protected abstract @NotNull PsiElementPredicate getElementPredicate();
+  @NotNull
+  protected abstract PsiElementPredicate getElementPredicate();
 
   protected static void replaceExpressionWithNegatedExpressionString(@NotNull String newExpression, @NotNull GrExpression expression) throws IncorrectOperationException {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
@@ -133,12 +134,14 @@ public abstract class Intention implements IntentionAction {
   }
 
   @Override
-  public @NotNull @IntentionName String getText() {
+  @NotNull
+  public @IntentionName String getText() {
     return GroovyIntentionsBundle.message(getPrefix() + ".name");
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return GroovyIntentionsBundle.message(getPrefix() + ".family.name");
   }
 }

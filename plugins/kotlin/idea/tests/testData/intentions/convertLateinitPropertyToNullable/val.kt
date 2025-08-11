@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 class C {
     <caret>private lateinit val bar: String
 }

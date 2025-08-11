@@ -2,20 +2,19 @@
 package org.jetbrains.plugins.gradle.service
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.LightIdeaTestCase
 import org.gradle.StartParameter
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.PathAssembler
 import org.gradle.wrapper.WrapperConfiguration
 import org.gradle.wrapper.WrapperExecutor
-import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import java.io.File
 import java.net.URI
 import java.util.*
 
-abstract class GradleInstallationManagerTestCase : GradleImportingTestCase() {
-
+abstract class GradleInstallationManagerTestCase : LightIdeaTestCase() {
   fun doTestGradleVersion(expectedVersion: GradleVersion,
                           distributionType: DistributionType,
                           wrapperVersionToGenerate: GradleVersion?) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.framework.detection.impl;
 
 import com.intellij.facet.FacetType;
@@ -21,7 +21,8 @@ public final class FrameworkDetectionUtil {
   private FrameworkDetectionUtil() {
   }
 
-  public static @Nullable FrameworkType findFrameworkTypeForFacetDetector(@NotNull FacetType<?, ?> facetType) {
+  @Nullable
+  public static FrameworkType findFrameworkTypeForFacetDetector(@NotNull FacetType<?, ?> facetType) {
     for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensionList()) {
       if (detector instanceof FacetBasedFrameworkDetector<?, ?> &&
           ((FacetBasedFrameworkDetector)detector).getFacetType().equals(facetType)) {

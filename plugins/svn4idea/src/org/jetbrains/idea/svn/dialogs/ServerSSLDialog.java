@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
@@ -17,7 +17,7 @@ import java.security.cert.X509Certificate;
 
 public class ServerSSLDialog extends DialogWrapper {
 
-  private final @NotNull String myCertificateInfo;
+  @NotNull private final String myCertificateInfo;
   private Action myTempAction;
   private AcceptResult myResult;
 
@@ -94,7 +94,8 @@ public class ServerSSLDialog extends DialogWrapper {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral", "StringBufferReplaceableByString"})
-  private static @NotNull String getServerCertificateInfo(@NotNull X509Certificate cert) {
+  @NotNull
+  private static String getServerCertificateInfo(@NotNull X509Certificate cert) {
     return new StringBuilder()
       .append(" - Subject: ")
       .append(cert.getSubjectDN().getName())

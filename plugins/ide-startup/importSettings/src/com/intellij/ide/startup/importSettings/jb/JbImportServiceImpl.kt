@@ -25,12 +25,14 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.*
+import com.intellij.util.containers.mapSmartSet
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import kotlinx.coroutines.*
 import org.jdom.Element
@@ -47,8 +49,11 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 import javax.swing.Icon
 import kotlin.Result
+import kotlin.coroutines.coroutineContext
 import kotlin.io.path.*
+import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
+
 
 internal data class JbProductInfo(
   override val version: String,
@@ -277,10 +282,6 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
                                                customBrokenPluginVersions = emptyMap(),
                                                productBuildNumber = { PluginManagerCore.buildNumber })
     for (parentDir in parentDirs) {
-      if (!parentDir.exists() || !parentDir.isDirectory()) {
-        logger.info("Parent dir $parentDir doesn't exist or not a directory. Skipping it")
-        continue
-      }
       val configDirectoriesCandidates = parentDir
         .listDirectoryEntries()
         .filter { it.isDirectory() }
@@ -395,24 +396,24 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     return NameMappings.getIcon(productInfo.codeName, size)
   }
 
-  override fun importSettings(productId: String, data: DataToApply): DialogImportData {
+  override fun importSettings(productId: String, dataToApply: DataToApply): DialogImportData {
     val productInfo = products[productId] ?: error("Can't find product")
     val filteredCategories = mutableSetOf<SettingsCategory>()
     var plugins2import: Map<PluginId, IdeaPluginDescriptorImpl>? = null
     var unselectedPlugins: List<String>? = null
-    for (setting in data.importSettings) {
-      if (setting.id == SettingsCategory.PLUGINS.name) {
+    for (data in dataToApply.importSettings) {
+      if (data.id == SettingsCategory.PLUGINS.name) {
         // plugins category must be added as well, some PSC's use it, for instance KotlinNotebookApplicationOptionsProvider
         filteredCategories.add(SettingsCategory.PLUGINS)
         plugins2import = productInfo.getPluginsDescriptors().filter {
-          setting.selectedChildIds?.contains(it.key.idString) ?: false
+          data.selectedChildIds?.contains(it.key.idString) ?: false
         }
-        unselectedPlugins = setting.unselectedChildIds
-        logger.info("Will import ${setting.selectedChildIds?.size} custom plugins: ${setting.selectedChildIds?.joinToString()}\n" +
-                 "${setting.unselectedChildIds?.size} plugins will be skipped: ${setting.unselectedChildIds?.joinToString()}")
+        unselectedPlugins = data.unselectedChildIds
+        logger.info("Will import ${data.selectedChildIds?.size} custom plugins: ${data.selectedChildIds?.joinToString()}\n" +
+                 "${data.unselectedChildIds?.size} plugins will be skipped: ${data.unselectedChildIds?.joinToString()}")
       }
       else {
-        val category = DEFAULT_SETTINGS_CATEGORIES[setting.id] ?: continue
+        val category = DEFAULT_SETTINGS_CATEGORIES[data.id] ?: continue
         filteredCategories.add(category)
       }
     }
@@ -443,7 +444,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     val startTime = System.currentTimeMillis()
     importStartedDeferred = coroutineScope.async(modalityState.asContextElement()) {
       suspend fun performImport(): Boolean {
-        if (importEverything && NameMappings.canImportDirectly(productInfo.codeName) && data.featuredPluginIds.isEmpty()) {
+        if (importEverything && NameMappings.canImportDirectly(productInfo.codeName) && dataToApply.featuredPluginIds.isEmpty()) {
           logger.info("Started importing all...")
           progressIndicator.text2 = ImportSettingsBundle.message("progress.details.migrating.options")
           //TODO support plugin list customization for raw import
@@ -473,8 +474,6 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
                   ImportSettingsEventsCollector.jbPluginsImportTimeSpent(it)
                 }
               }
-              logger.info("Started localization migration...")
-              importer.migrateLocalization()
               if (progressIndicator.isCanceled()) {
                 logger.info("Import cancelled after importing the plugins. ${if (restartRequired) "Will now restart." else ""}")
                 return restartRequired
@@ -494,7 +493,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
                 logger.info("Options migrated in $it ms.")
                 ImportSettingsEventsCollector.jbOptionsImportTimeSpent(it)
               }
-              if (installPlugins(plugins2import?.keys.orEmpty(), data.featuredPluginIds, progressIndicator)) {
+              if (installPlugins(plugins2import?.keys.orEmpty(), dataToApply.featuredPluginIds, progressIndicator)) {
                 restartRequired = true
               }
             }
@@ -534,7 +533,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       try {
         shouldRestart = performImport()
       } catch (e: Throwable) {
-        if (e is CancellationException) {
+        if (e is CancellationException || e is ProcessCanceledException) {
           logger.info("Import cancellation detected. Proceeding normally without restart.")
         } else {
           logger.error("Import error. Proceeding normally without restart.", e)

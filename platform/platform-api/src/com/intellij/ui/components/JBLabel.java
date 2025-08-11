@@ -122,10 +122,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
 
   @Override
   public void setAnchor(@Nullable JComponent anchor) {
-    if (this.myAnchor != anchor) {
-      myAnchor = anchor;
-      invalidate();
-    }
+    myAnchor = anchor;
   }
 
   @Override
@@ -275,7 +272,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
       setCopyable(true);
     }
 
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAATextInfoForSwingComponent());
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
   }
 
   /**
@@ -350,7 +347,6 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
         if (myEditorPane.getCaret() instanceof DefaultCaret) {
           ((DefaultCaret)myEditorPane.getCaret()).setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
         }
-        myEditorPane.setToolTipText(getToolTipText());
         myEditorPane.setText(getText());
         checkMultiline();
         myEditorPane.setCaretPosition(0);
@@ -400,20 +396,23 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   private void updateTextAlignment() {
     if (myEditorPane == null) return;
 
-    Border newBorder = null;
-    int verticalTextPosition = getVerticalTextPosition();
-    if (verticalTextPosition == CENTER || verticalTextPosition == BOTTOM) {
-      Insets insets = myEditorPane.getInsets();
-      int preferredHeightWithoutInsets = myEditorPane.getPreferredSize().height - insets.top - insets.bottom;
-      int availableHeight = getHeight();
-      if (preferredHeightWithoutInsets > 0 && availableHeight > preferredHeightWithoutInsets) {
-        // since the 'top' value is in real already-scaled pixels, should use swing's EmptyBorder
-        //noinspection UseDPIAwareBorders
-        newBorder = new EmptyBorder(verticalTextPosition == CENTER ? (availableHeight - preferredHeightWithoutInsets + 1) / 2 :
-                                    availableHeight - preferredHeightWithoutInsets, 0, 0, 0);
-      }
+    myEditorPane.setBorder(null); // clear border
+
+    int position = getVerticalTextPosition();
+    if (position == TOP) {
+      return;
     }
-    myEditorPane.setBorder(newBorder);
+
+    int preferredHeight = myEditorPane.getPreferredSize().height;
+    int availableHeight = getHeight();
+    if (availableHeight <= preferredHeight) {
+      return;
+    }
+
+    // since the 'top' value is in real already-scaled pixels, should use swing's EmptyBorder
+    //noinspection UseDPIAwareBorders
+    myEditorPane.setBorder(new EmptyBorder(position == CENTER ? (availableHeight - preferredHeight + 1) / 2 :
+                                           availableHeight - preferredHeight, 0, 0, 0));
   }
 
   @Override
@@ -438,13 +437,5 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   public JBLabel andOpaque() {
     setOpaque(true);
     return this;
-  }
-
-  @Override
-  public void setToolTipText(@Nullable @NlsContexts.Tooltip String text) {
-    super.setToolTipText(text);
-    if (myEditorPane != null) {
-      myEditorPane.setToolTipText(text);
-    }
   }
 }

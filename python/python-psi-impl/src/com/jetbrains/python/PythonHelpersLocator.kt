@@ -17,10 +17,8 @@
 package com.jetbrains.python
 
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.getPluginDistDirByClass
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -28,21 +26,18 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
-@Internal
 interface PythonHelpersLocator {
   companion object {
-    val LOG: Logger = logger<PythonHelpersLocator>()
+    val LOG = Logger.getInstance(PythonHelpersLocator::class.java)
     private const val PROPERTY_HELPERS_LOCATION = "idea.python.helpers.path"
-    const val COMMUNITY_HELPERS_MODULE_NAME: String = "intellij.python.helpers"
-    private val EP_NAME: ExtensionPointName<PythonHelpersLocator> = ExtensionPointName("com.jetbrains.python.pythonHelpersLocator")
-
-    @TestOnly
-    @Internal
-    val epNameForTests: ExtensionPointName<PythonHelpersLocator> = EP_NAME
+    const val COMMUNITY_HELPERS_MODULE_NAME = "intellij.python.helpers"
+    private val EP_NAME: ExtensionPointName<PythonHelpersLocator> =
+      ExtensionPointName.create("com.jetbrains.python.pythonHelpersLocator")
 
     /**
      * @return A list of Path objects representing the roots of the Python Helpers.
@@ -75,7 +70,7 @@ interface PythonHelpersLocator {
           return path
       }
 
-      LOG.info("File $resourceName does not exist in helpers root")
+      LOG.warn("File $resourceName does not exist in helpers root")
       return null
     }
 
@@ -103,7 +98,7 @@ interface PythonHelpersLocator {
     @RequiresBackgroundThread
     fun findPathStringInHelpers(@NonNls resourceName: String): String = findPathInHelpers(resourceName)?.absolutePathString() ?: ""
 
-    @Deprecated("Use {@link PythonHelpersLocator#findPathInHelpers}.", ReplaceWith("findPathInHelpers(resourceName)"), DeprecationLevel.ERROR)
+    @Deprecated("Use {@link PythonHelpersLocator#findPathInHelpers}.", ReplaceWith("findPathInHelpers(resourceName)"))
     @JvmStatic
     fun getHelperPath(@NonNls resourceName: String): String = findPathStringInHelpers(resourceName)
   }
@@ -113,42 +108,29 @@ interface PythonHelpersLocator {
 
   private fun getCommunityHelpersRootPath(): Path {
     val property = System.getProperty(PROPERTY_HELPERS_LOCATION)
-    if (property != null) {
-      return Path.of(property)
+    return if (property != null) {
+      Path.of(property)
     }
-    else {
-      return getHelpersRoot(COMMUNITY_HELPERS_MODULE_NAME, "/python/helpers").also {
-        assertHelpersLayout(it)
-      }
+    else getHelpersRoot(COMMUNITY_HELPERS_MODULE_NAME, "/python/helpers").also {
+      assertHelpersLayout(it)
     }
   }
 
   @Internal
   @RequiresBackgroundThread
-  fun getHelpersRoot(moduleName: String, relativePath: String): Path {
-    return findRootByJarPath(
-      aClass = PythonHelpersLocator::class.java,
-      moduleName = moduleName,
-      relativePath = relativePath,
-    )
-  }
+  fun getHelpersRoot(moduleName: String, relativePath: String): Path =
+    findRootByJarPath(PathUtil.getJarPathForClass(PythonHelpersLocator::class.java), moduleName, relativePath)
 
   @Internal
-  fun findRootByJarPath(aClass: Class<*>, moduleName: String, relativePath: String): Path {
-    if (PluginManagerCore.isRunningFromSources()) {
-      return Path.of(PathManager.getCommunityHomePath(), relativePath)
+  fun findRootByJarPath(jarPath: String, moduleName: String, relativePath: String): Path {
+    return if (PluginManagerCore.isRunningFromSources()) {
+      Path.of(PathManager.getCommunityHomePath(), relativePath)
     }
-
-    getPluginDistDirByClass(aClass)?.let {
-      return it.resolve(PathUtil.getFileName(relativePath))
+    else {
+      getPluginBaseDir(jarPath)?.let {
+        Path.of(it.absolutePathString(), PathUtil.getFileName(relativePath))
+      } ?: Path.of(Path(jarPath).parent.absolutePathString(), moduleName)
     }
-
-    val jarPath = PathUtil.getJarPathForClass(aClass)
-    getPluginBaseDir(jarPath)?.let {
-      return it.resolve(PathUtil.getFileName(relativePath))
-    }
-
-    return Path.of(jarPath).parent.toAbsolutePath().resolve(moduleName)
   }
 
   private fun getPluginBaseDir(jarPath: String): Path? {
@@ -173,4 +155,4 @@ interface PythonHelpersLocator {
   }
 }
 
-private class PythonHelpersLocatorDefault : PythonHelpersLocator
+internal class PythonHelpersLocatorDefault : PythonHelpersLocator

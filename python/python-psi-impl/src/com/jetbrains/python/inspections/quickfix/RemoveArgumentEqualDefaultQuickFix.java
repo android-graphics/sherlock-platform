@@ -38,7 +38,8 @@ public class RemoveArgumentEqualDefaultQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.remove.argument.equal.default");
   }
 

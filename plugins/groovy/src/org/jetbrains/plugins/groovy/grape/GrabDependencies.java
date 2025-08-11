@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.grape;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -70,12 +70,14 @@ public final class GrabDependencies implements IntentionAction {
   public static final String GRAPE_RUNNER = "org.jetbrains.plugins.groovy.grape.GrapeRunner";
 
   @Override
-  public @NotNull String getText() {
+  @NotNull
+  public String getText() {
     return GroovyBundle.message("grab.intention.name");
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return GroovyBundle.message("grab.family.name");
   }
 
@@ -144,7 +146,7 @@ public final class GrabDependencies implements IntentionAction {
   }
 
   @Override
-  public void invoke(final @NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     assert module != null;
 

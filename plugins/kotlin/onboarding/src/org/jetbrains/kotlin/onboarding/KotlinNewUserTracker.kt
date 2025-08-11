@@ -8,9 +8,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.KotlinFileType
-import java.time.*
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 class KotlinNewUserTrackerState : BaseState() {
     // Unix time seconds
@@ -19,7 +21,7 @@ class KotlinNewUserTrackerState : BaseState() {
     var newKtUserSince by property(0L)
 }
 
-@State(name = "KotlinNewUserTracker", storages = [Storage(value = "kotlin-onboarding.xml", roamingType = RoamingType.DISABLED)])
+@State(name = "KotlinNewUserTracker", storages = [Storage("kotlin-onboarding.xml")])
 class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState> {
     companion object {
         // Offer survey after one week of using Kotlin
@@ -52,11 +54,7 @@ class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState>
         }.getOrNull()
     }
 
-    /**
-     * Returns the date on which the user installed IDEA, or null if it could not be determined.
-     */
-    @ApiStatus.Internal
-    fun getInstallationDate(): LocalDate? {
+    internal fun getInstallationDate(): LocalDate? {
         val installationId = getInstallationId() ?: return null
         val dateSubstring = installationId.take(6).takeIf { it.length == 6 } ?: return null
         val day = dateSubstring.substring(0..1).toIntOrNull() ?: return null
@@ -84,18 +82,6 @@ class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState>
 
     override fun loadState(state: KotlinNewUserTrackerState) {
         currentState = state
-    }
-
-    /**
-     * Returns the date on which the user was first detected to have used Kotlin.
-     * Returns null if an error occurred, or the user has not used Kotlin before.
-     *
-     * Note: This data only started being tracked in 2023, so that is the minimum date that exists and can be returned from here.
-     */
-    @ApiStatus.Internal
-    fun getFirstKotlinUsageDate(): LocalDate? {
-        if (state.newKtUserSince == 0L) return null
-        return Instant.ofEpochSecond(state.newKtUserSince).atOffset(ZoneOffset.UTC).toLocalDate()
     }
 
     internal fun isNewKtUser(): Boolean {

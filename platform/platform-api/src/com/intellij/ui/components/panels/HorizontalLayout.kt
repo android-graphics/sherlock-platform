@@ -3,8 +3,10 @@ package com.intellij.ui.components.panels
 
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBValue
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
+import java.util.function.IntSupplier
 import javax.swing.SwingConstants
 import kotlin.math.abs
 
@@ -26,9 +28,6 @@ class HorizontalLayout private constructor(private val gap: JBValue,
   enum class Group {
     LEFT, CENTER, RIGHT
   }
-
-  @Internal
-  var preferredSizeFunction: (Component) -> Dimension = { LayoutUtil.getPreferredSize(it) }
 
   private val leftGroup = ArrayList<Component>()
   private val centerGroup = ArrayList<Component>()
@@ -165,7 +164,7 @@ class HorizontalLayout private constructor(private val gap: JBValue,
         continue
       }
 
-      val size = preferredSizeFunction(component)
+      val size = LayoutUtil.getPreferredSize(component)
       var y = 0
       if (verticalAlignment == FILL) {
         size.height = height
@@ -189,7 +188,7 @@ class HorizontalLayout private constructor(private val gap: JBValue,
     var result: Dimension? = null
     for (component in list) {
       if (component.isVisible) {
-        result = joinDimension(result, gap, preferredSizeFunction(component))
+        result = joinDimension(result, gap, LayoutUtil.getPreferredSize(component))
       }
     }
     return result

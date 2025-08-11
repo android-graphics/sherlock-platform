@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInspection.BatchSuppressManager;
@@ -54,7 +54,8 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
     return getElementToolSuppressedIn(place, toolId) != null;
   }
 
-  public static @Nullable PsiElement getElementToolSuppressedIn(final PsiElement place, @NotNull String toolId) {
+  @Nullable
+  public static PsiElement getElementToolSuppressedIn(final PsiElement place, @NotNull String toolId) {
     if (place == null) return null;
     if (GroovyUnusedDeclarationInspection.SHORT_NAME.equals(toolId)) {
       PsiElement forUnused = getElementToolSuppressedIn(place, UNUSED_SYMBOL_SHORT_NAME);
@@ -114,7 +115,8 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
     });
   }
 
-  private static @NotNull Collection<String> getInspectionIdsSuppressedInAnnotation(final GrModifierList modifierList) {
+  @NotNull
+  private static Collection<String> getInspectionIdsSuppressedInAnnotation(final GrModifierList modifierList) {
     if (modifierList == null) {
       return Collections.emptyList();
     }
@@ -141,7 +143,8 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
     return result;
   }
 
-  private static @Nullable String getInspectionIdSuppressedInAnnotationAttribute(GrAnnotationMemberValue element) {
+  @Nullable
+  private static String getInspectionIdSuppressedInAnnotationAttribute(GrAnnotationMemberValue element) {
     if (element instanceof GrLiteral) {
       final Object value = ((GrLiteral)element).getValue();
       if (value instanceof String) {

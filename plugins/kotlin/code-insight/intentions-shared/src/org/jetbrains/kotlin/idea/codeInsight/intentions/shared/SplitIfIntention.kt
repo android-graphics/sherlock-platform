@@ -21,7 +21,8 @@ import org.jetbrains.kotlin.util.match
 internal class SplitIfIntention :
     KotlinApplicableModCommandAction<KtExpression, Unit>(KtExpression::class) {
 
-    override fun KaSession.prepareContext(element: KtExpression) {
+    context(KaSession)
+    override fun prepareContext(element: KtExpression) {
     }
 
     override fun invoke(

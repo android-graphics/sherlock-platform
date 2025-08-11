@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiTreeChangeAdapter;
 import com.intellij.psi.PsiTreeChangeEvent;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -22,7 +21,6 @@ import java.util.List;
 /**
  * Updates attribute of open files when roots change
  */
-@ApiStatus.Internal
 public final class FileEditorPsiTreeChangeListener extends PsiTreeChangeAdapter {
   private static final Logger LOG = Logger.getInstance(FileEditorPsiTreeChangeListener.class);
   private final Project myProject;
@@ -33,7 +31,7 @@ public final class FileEditorPsiTreeChangeListener extends PsiTreeChangeAdapter 
   }
 
   @Override
-  public void propertyChanged(final @NotNull PsiTreeChangeEvent e) {
+  public void propertyChanged(@NotNull final PsiTreeChangeEvent e) {
     if (PsiTreeChangeEvent.PROP_ROOTS.equals(e.getPropertyName())) {
       ApplicationManager.getApplication().assertWriteIntentLockAcquired();
       FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);

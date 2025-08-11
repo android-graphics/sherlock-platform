@@ -18,12 +18,14 @@ import java.util.List;
 
 public final class PyConvertStaticMethodToFunctionIntention extends PyBaseIntentionAction {
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.convert.static.method.to.function");
   }
 
   @Override
-  public @NotNull String getText() {
+  @NotNull
+  public String getText() {
     return PyPsiBundle.message("INTN.convert.static.method.to.function");
   }
 

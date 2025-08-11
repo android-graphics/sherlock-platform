@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.generation.surroundWith;
 
@@ -59,7 +59,7 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
   public static final TextRange CARET_IS_OK = new TextRange(0, 0);
 
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (file instanceof PsiCompiledElement) {
       HintManager.getInstance().showErrorHint(editor, LangBundle.message("hint.text.can.t.modify.decompiled.code"));
@@ -106,7 +106,8 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
   }
 
   @TestOnly
-  public static @Nullable List<AnAction> buildSurroundActions(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
+  @Nullable
+  public static List<AnAction> buildSurroundActions(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
     Map<Surrounder, PsiElement[]> surrounders = computeSurrounders(editor, file);
     return doBuildSurroundActions(project, editor, file, surrounders);
   }
@@ -272,10 +273,11 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
     }
   }
 
-  private static @Nullable List<AnAction> doBuildSurroundActions(@NotNull Project project,
-                                                                 @NotNull Editor editor,
-                                                                 @NotNull PsiFile file,
-                                                                 @NotNull Map<Surrounder, PsiElement[]> surrounders) {
+  @Nullable
+  private static List<AnAction> doBuildSurroundActions(@NotNull Project project,
+                                                       @NotNull Editor editor,
+                                                       @NotNull PsiFile file,
+                                                       @NotNull Map<Surrounder, PsiElement[]> surrounders) {
     if (surrounders.isEmpty()) return null;
     List<AnAction> applicable = new ArrayList<>();
 

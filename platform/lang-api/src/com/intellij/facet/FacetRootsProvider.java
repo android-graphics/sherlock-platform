@@ -18,14 +18,12 @@ package com.intellij.facet;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
 public interface FacetRootsProvider {
 
   @NotNull
-  @Unmodifiable
   Collection<VirtualFile> getFacetRoots();
 
 }

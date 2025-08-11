@@ -1,4 +1,3 @@
-// "Convert to primary constructor" "true"
 class DefaultValueChain {
     val x1: Int
     val x3: Int
@@ -10,5 +9,3 @@ class DefaultValueChain {
         this.x5 = x5
     }
 }
-
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertSecondaryConstructorToPrimaryInspection$createQuickFix$1

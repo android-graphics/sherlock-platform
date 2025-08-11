@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.scopeChooser;
 
@@ -17,7 +17,6 @@ import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-@ApiStatus.Internal
 public final class ScopeConfigurable extends NamedConfigurable<NamedScope> {
   private final Disposable myDisposable = Disposer.newDisposable();
   private NamedScope myScope;
@@ -80,23 +78,28 @@ public final class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     return id;
   }
 
-  public @NotNull NamedScopesHolder getHolder() {
+  @NotNull
+  public NamedScopesHolder getHolder() {
     return getHolder(mySharedCheckbox.isSelected());
   }
 
-  private @NotNull NamedScopesHolder getHolder(boolean local) {
+  @NotNull
+  private NamedScopesHolder getHolder(boolean local) {
     return (local
             ? DependencyValidationManager.getInstance(myProject)
             : NamedScopeManager.getInstance(myProject));
   }
 
   @Override
-  public @Nullable @NonNls String getHelpTopic() {
+  @Nullable
+  @NonNls
+  public String getHelpTopic() {
     return "project.scopes";
   }
 
+  @Nullable
   @Override
-  protected @Nullable JComponent createTopRightComponent() {
+  protected JComponent createTopRightComponent() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(BorderLayout.WEST, mySharedCheckbox);
     panel.add(BorderLayout.EAST, mySharedContextHelp);
@@ -165,8 +168,9 @@ public final class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable Icon getIcon(boolean expanded) {
+  public Icon getIcon(boolean expanded) {
     return myIcon;
   }
 }

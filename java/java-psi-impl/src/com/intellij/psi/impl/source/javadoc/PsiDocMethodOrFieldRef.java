@@ -144,7 +144,12 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     List<String> types = new ArrayList<>();
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child.getNode().getElementType() == DOC_TYPE_HOLDER) {
-        types.add(child.getText());
+        final String[] typeStrings = child.getText().split("[, ]");  //avoid param types list parsing hmm method(paramType1, paramType2, ...) -> typeElement1, identifier2, ...
+        for (String type : typeStrings) {
+          if (!type.isEmpty()) {
+            types.add(type);
+          }
+        }
       }
     }
 
@@ -335,14 +340,13 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
           ((PsiJavaCodeReferenceElement)ref).bindToElement(containingClass);
         }
       }
-      else if (containingClass != null && PsiTreeUtil.getParentOfType(PsiDocMethodOrFieldRef.this, PsiClass.class) != containingClass) {
-        String qName = containingClass.getQualifiedName();
-        if (qName == null) qName = containingClass.getName(); // local class has no qualified name, but has a short name
-        if (qName == null) return PsiDocMethodOrFieldRef.this; // ref can't be fixed
-        PsiDocComment fromText = JavaPsiFacade.getElementFactory(containingClass.getProject())
-          .createDocCommentFromText("/**{@link " + qName + "#" + newName + "}*/");
-        PsiDocMethodOrFieldRef methodOrFieldRefFromText = PsiTreeUtil.findChildOfType(fromText, PsiDocMethodOrFieldRef.class);
-        addAfter(Objects.requireNonNull(methodOrFieldRefFromText).getFirstChild(), null);
+      else {
+        if (containingClass != null && !PsiTreeUtil.isAncestor(containingClass, PsiDocMethodOrFieldRef.this, true)) {
+          PsiDocComment fromText = JavaPsiFacade.getElementFactory(containingClass.getProject())
+            .createDocCommentFromText("/**{@link " + containingClass.getQualifiedName() + "#" + newName + "}*/");
+          PsiDocMethodOrFieldRef methodOrFieldRefFromText = PsiTreeUtil.findChildOfType(fromText, PsiDocMethodOrFieldRef.class);
+          addAfter(Objects.requireNonNull(methodOrFieldRefFromText).getFirstChild(), null);
+        }
       }
 
       if (hasSignature || !name.equals(newName)) {

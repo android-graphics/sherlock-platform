@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.inlineSuperClass;
 
@@ -47,13 +47,15 @@ public class InlineSuperClassRefactoringDialog extends InlineOptionsDialog {
     return null;
   }
 
+  @Nullable
   @Override
-  protected @Nullable String getHelpId() {
+  protected String getHelpId() {
     return "Inline_Super_Class";
   }
 
   @Override
-  protected @NotNull JComponent createCenterPanel() {
+  @NotNull
+  protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints gc =
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,

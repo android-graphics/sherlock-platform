@@ -7,11 +7,10 @@ import java.io.InputStream
 class JsonPlistReader : PlistReader {
   companion object {
     @OptIn(ExperimentalSerializationApi::class)
-    val textmateJson: Json by lazy {
+    val textmateJson by lazy {
       Json {
         isLenient = true
         allowTrailingComma = true
-        allowComments = true
         ignoreUnknownKeys = true
       }
     }
@@ -25,9 +24,9 @@ class JsonPlistReader : PlistReader {
   }
 
   private fun readDict(map: Map<String, JsonElement>): PListValue {
-    return PListValue.value(Plist(map.mapNotNull { (key, value) ->
-      readValue(value)?.let { key to it }
-    }.toMap()), PlistValueType.DICT)
+    return PListValue.value(Plist.fromMap(map.mapValues {
+      readValue(it.value)
+    }), PlistValueType.DICT)
   }
 
   private fun readValue(value: JsonElement): PListValue? {
@@ -40,6 +39,9 @@ class JsonPlistReader : PlistReader {
       }
       is JsonPrimitive -> {
         readBasicValue(value)
+      }
+      else -> {
+        error("Unexpected value $value")
       }
     }
   }

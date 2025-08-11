@@ -469,6 +469,8 @@ class SkeletonGenerator(object):
         if not self.roots:
             return []
         # TODO Move to future InterpreterHandler
+        if IS_JAVA:  # jython can't have binary modules
+            return []
         paths = sorted_no_case(self.roots)
         for path in paths:
             for root, files in walk_python_path(path):

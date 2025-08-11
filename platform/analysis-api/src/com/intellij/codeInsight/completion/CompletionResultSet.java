@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -7,7 +7,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,8 +27,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
   private final PrefixMatcher prefixMatcher;
   private final java.util.function.Consumer<? super CompletionResult> consumer;
   protected final CompletionService myCompletionService = CompletionService.getCompletionService();
-  @ApiStatus.Internal
-  public final CompletionContributor contributor;
+  protected final CompletionContributor contributor;
   private boolean myStopped;
 
   protected CompletionResultSet(final PrefixMatcher prefixMatcher, java.util.function.Consumer<? super CompletionResult> consumer, CompletionContributor contributor) {
@@ -38,8 +36,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     this.contributor = contributor;
   }
 
-  @ApiStatus.Internal
-  public java.util.function.Consumer<? super CompletionResult> getConsumer() {
+  protected java.util.function.Consumer<? super CompletionResult> getConsumer() {
     return consumer;
   }
 

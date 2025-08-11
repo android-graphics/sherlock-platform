@@ -34,7 +34,6 @@ import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreSyntax;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -43,9 +42,9 @@ import java.util.List;
 /**
  * Class provides completion feature for {@link com.intellij.openapi.vcs.changes.ignore.psi.IgnoreTypes#SYNTAX} element.
  */
-@ApiStatus.Internal
 public class SyntaxCompletionContributor extends CompletionContributor {
-  private static final @NotNull List<LookupElementBuilder> SYNTAX_ELEMENTS = new ArrayList<>();
+  @NotNull
+  private static final List<LookupElementBuilder> SYNTAX_ELEMENTS = new ArrayList<>();
 
   static {
     for (Syntax syntax : Syntax.values()) {

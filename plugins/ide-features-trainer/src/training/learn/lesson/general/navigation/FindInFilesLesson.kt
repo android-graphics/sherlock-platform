@@ -19,7 +19,6 @@ import org.assertj.swing.core.MouseClickInfo
 import org.assertj.swing.data.TableCell
 import org.assertj.swing.fixture.JTableFixture
 import org.assertj.swing.fixture.JTextComponentFixture
-import org.intellij.lang.annotations.Language
 import training.dsl.*
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
@@ -58,12 +57,11 @@ open class FindInFilesLesson(override val sampleFilePath: String,
       }
     }
 
-    task {
-      val appleText = "apple"
-      text(LessonsBundle.message("find.in.files.type.to.find", code(appleText)))
-      stateCheck { getFindPopup()?.stringToFind?.lowercase(Locale.getDefault()) == appleText }
+    task("apple") {
+      text(LessonsBundle.message("find.in.files.type.to.find", code(it)))
+      stateCheck { getFindPopup()?.stringToFind?.lowercase(Locale.getDefault()) == it }
       restoreByUi()
-      test { type(appleText) }
+      test { type(it) }
     }
 
     task {
@@ -139,16 +137,15 @@ open class FindInFilesLesson(override val sampleFilePath: String,
       test { actions(it) }
     }
 
-    task {
-      val orangeText = "orange"
+    task("orange") {
       text(LessonsBundle.message("find.in.files.type.to.replace",
-                                 code("apple"), code(orangeText)))
+                                 code("apple"), code(it)))
       triggerAndBorderHighlight().component { ui: SearchTextArea ->
-        orangeText.startsWith(ui.textArea.text) && UIUtil.getParentOfType(FindPopupPanel::class.java, ui) != null
+        it.startsWith(ui.textArea.text) && UIUtil.getParentOfType(FindPopupPanel::class.java, ui) != null
       }
       stateCheck {
         getFindPopup()?.helper?.model?.let { model ->
-          model.stringToReplace == orangeText && model.stringToFind == "apple"
+          model.stringToReplace == it && model.stringToFind == "apple"
         } ?: false
       }
       restoreByUi()
@@ -156,7 +153,7 @@ open class FindInFilesLesson(override val sampleFilePath: String,
         ideFrame {
           val textArea = findComponentWithTimeout { textArea: JTextArea -> textArea.text == "" }
           JTextComponentFixture(robot(), textArea).click()
-          type(orangeText)
+          type(it)
         }
       }
     }
@@ -249,7 +246,7 @@ open class FindInFilesLesson(override val sampleFilePath: String,
   }
 
   private fun TaskContext.showWarningIfPopupClosed(isReplacePopup: Boolean) {
-    @Language("devkit-action-id") val actionId = if (isReplacePopup) "ReplaceInPath" else "FindInPath"
+    val actionId = if (isReplacePopup) "ReplaceInPath" else "FindInPath"
     showWarning(LessonsBundle.message("find.in.files.popup.closed.warning.message", action(actionId), LessonUtil.actionName(actionId))) {
       getFindPopup()?.helper?.isReplaceState != isReplacePopup
     }

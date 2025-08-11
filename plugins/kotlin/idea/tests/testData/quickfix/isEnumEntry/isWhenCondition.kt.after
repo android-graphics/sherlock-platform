@@ -6,5 +6,4 @@ fun test(foo: Foo): Int = when (foo) {
     else -> 2
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveIsFromIsEnumEntryFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveIsFromIsEnumEntryFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.IsEnumEntryFactory$RemoveIsFix

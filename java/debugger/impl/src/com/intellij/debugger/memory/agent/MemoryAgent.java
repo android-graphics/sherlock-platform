@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.DebugProcess;
@@ -26,7 +26,8 @@ public interface MemoryAgent {
    */
   int DEFAULT_GC_ROOTS_OBJECTS_LIMIT = 50;
 
-  static @NotNull MemoryAgent get(@NotNull EvaluationContextImpl evaluationContext) {
+  @NotNull
+  static MemoryAgent get(@NotNull EvaluationContextImpl evaluationContext) {
     if (!isAgentEnabled(evaluationContext.getDebugProcess())) {
       return MemoryAgentImpl.DISABLED;
     }

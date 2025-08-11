@@ -1,14 +1,12 @@
 package de.plushnikov.intellij.plugin.processor;
 
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -49,19 +47,21 @@ public abstract class AbstractProcessor implements Processor {
     return supportedAnnotationClasses;
   }
 
+  @NotNull
   @Override
-  public final @NotNull Class<? extends PsiElement> getSupportedClass() {
+  public final Class<? extends PsiElement> getSupportedClass() {
     return supportedClass;
   }
 
-  public abstract @NotNull Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass);
+  @NotNull
+  public abstract Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass);
 
   protected boolean supportAnnotationVariant(@NotNull PsiAnnotation psiAnnotation) {
     return true;
   }
 
-  protected @Unmodifiable @NotNull <T extends PsiModifierListOwner> Collection<T> filterToleratedElements(@NotNull @Unmodifiable Collection<? extends T> definedMethods) {
-    return ContainerUtil.filter(definedMethods, definedMethod -> !PsiAnnotationSearchUtil.isAnnotatedWith(definedMethod, LombokClassNames.TOLERATE));
+  protected void filterToleratedElements(@NotNull Collection<? extends PsiModifierListOwner> definedMethods) {
+    definedMethods.removeIf(definedMethod -> PsiAnnotationSearchUtil.isAnnotatedWith(definedMethod, LombokClassNames.TOLERATE));
   }
 
   protected boolean readAnnotationOrConfigProperty(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass,

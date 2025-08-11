@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n.inconsistentResourceBundle;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -24,13 +24,15 @@ public final class InconsistentPropertiesEndsInspectionProvider implements Incon
   private static final Set<Character> PROPERTY_VALUE_END_CHECK_SYMBOLS = Set.of('!', '?', '.', ':', ';');
   private static final char NULL = '\0';
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return "REPORT_INCONSISTENT_PROPERTIES_ENDS";
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPresentableName() {
+  public String getPresentableName() {
     return JavaI18nBundle.message("inconsistent.bundle.report.inconsistent.properties.ends");
   }
 

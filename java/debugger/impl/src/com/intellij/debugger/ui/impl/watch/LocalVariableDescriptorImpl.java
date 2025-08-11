@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerContext;
@@ -93,8 +93,9 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
     return myLocalVariable.name();
   }
 
+  @Nullable
   @Override
-  public @Nullable String getDeclaredType() {
+  public String getDeclaredType() {
     return myTypeName;
   }
 
@@ -126,8 +127,9 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
               update(debuggerContext);
             }
 
+            @NotNull
             @Override
-            public @NotNull Type getLType() throws EvaluateException, ClassNotLoadedException {
+            public Type getLType() throws EvaluateException, ClassNotLoadedException {
               return local.getType();
             }
           });

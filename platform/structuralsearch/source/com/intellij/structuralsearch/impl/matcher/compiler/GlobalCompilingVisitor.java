@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.util.NodeFilter;
@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
  * @author maxim
  */
 public class GlobalCompilingVisitor {
-  private static final @NonNls String SUBSTITUTION_PATTERN_STR = "\\b(__\\$_\\w+)\\b";
+  @NonNls private static final String SUBSTITUTION_PATTERN_STR = "\\b(__\\$_\\w+)\\b";
   private static final Pattern ourSubstitutionPattern = Pattern.compile(SUBSTITUTION_PATTERN_STR);
   private static final NodeFilter ourFilter = LexicalNodesFilter.getInstance();
 
@@ -37,7 +37,8 @@ public class GlobalCompilingVisitor {
   private final List<PsiElement> myLexicalNodes = new SmartList<>();
   private int myCodeBlockLevel;
 
-  public static @NotNull NodeFilter getFilter() {
+  @NotNull
+  public static NodeFilter getFilter() {
     return ourFilter;
   }
 
@@ -104,7 +105,8 @@ public class GlobalCompilingVisitor {
     context.getPattern().getHandler(element).setFilter(filter);
   }
 
-  public @NotNull List<PsiElement> getLexicalNodes() {
+  @NotNull
+  public List<PsiElement> getLexicalNodes() {
     return myLexicalNodes;
   }
 
@@ -129,12 +131,14 @@ public class GlobalCompilingVisitor {
     return ourSubstitutionPattern.matcher(pattern).find();
   }
 
-  public @Nullable MatchingHandler processPatternStringWithFragments(@NotNull String pattern, @NotNull OccurenceKind kind) {
+  @Nullable
+  public MatchingHandler processPatternStringWithFragments(@NotNull String pattern, @NotNull OccurenceKind kind) {
     return processPatternStringWithFragments(pattern, kind, ourSubstitutionPattern);
   }
 
-  public @Nullable MatchingHandler processPatternStringWithFragments(@NotNull String pattern, @NotNull OccurenceKind kind,
-                                                                     @NotNull Pattern substitutionPattern) {
+  @Nullable
+  public MatchingHandler processPatternStringWithFragments(@NotNull String pattern, @NotNull OccurenceKind kind,
+                                                           @NotNull Pattern substitutionPattern) {
     String content;
 
     if (kind == OccurenceKind.LITERAL) {

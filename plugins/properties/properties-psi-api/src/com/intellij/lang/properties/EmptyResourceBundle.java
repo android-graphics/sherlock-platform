@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -16,28 +16,33 @@ public final class EmptyResourceBundle {
   private EmptyResourceBundle() {}
   private static class Holder {
     private static final ResourceBundle NULL = new ResourceBundle() {
+      @NotNull
       @Override
-      public @NotNull List<PropertiesFile> getPropertiesFiles() {
+      public List<PropertiesFile> getPropertiesFiles() {
         return Collections.emptyList();
       }
 
+      @NotNull
       @Override
-      public @NotNull PropertiesFile getDefaultPropertiesFile() {
+      public PropertiesFile getDefaultPropertiesFile() {
         throw new IllegalStateException();
       }
 
       @Override
-      public @NotNull String getBaseName() {
+      @NotNull
+      public String getBaseName() {
         return "";
       }
 
       @Override
-      public @NotNull VirtualFile getBaseDirectory() {
+      @NotNull
+      public VirtualFile getBaseDirectory() {
         throw new IllegalStateException();
       }
 
+      @NotNull
       @Override
-      public @NotNull Project getProject() {
+      public Project getProject() {
         throw new IllegalStateException();
       }
 

@@ -7,7 +7,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
-import com.intellij.psi.formatter.java.JavaFormatterAnnotationUtil;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PropertyUtilBase;
@@ -367,7 +366,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     if (entry == null) {
       return;
     }
-    parseModifierListOwner(initializer, entry);
+    parseModifiers(initializer.getModifierList(), entry);
   }
 
   private static @NotNull TextRange getElementRangeWithoutComments(@NotNull PsiElement element) {
@@ -487,7 +486,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
       return;
     }
     if (modifier != null) {
-      parseModifierListOwner(modifier, entry);
+      parseModifiers(modifier.getModifierList(), entry);
     }
     if (nextPsiRoot == null) {
       return;
@@ -543,12 +542,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     return myStack.isEmpty() ? null : myStack.peek();
   }
 
-  private static void parseModifierListOwner(@NotNull PsiModifierListOwner modifierListOwner, @NotNull JavaElementArrangementEntry entry) {
-    if (JavaFormatterAnnotationUtil.isFieldWithAnnotations(modifierListOwner)) {
-      entry.setHasAnnotation();
-    }
-
-    PsiModifierList modifierList = modifierListOwner.getModifierList();
+  private static void parseModifiers(@Nullable PsiModifierList modifierList, @NotNull JavaElementArrangementEntry entry) {
     if (modifierList == null) {
       return;
     }

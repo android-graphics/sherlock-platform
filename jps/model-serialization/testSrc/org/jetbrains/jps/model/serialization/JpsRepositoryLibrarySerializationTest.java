@@ -7,14 +7,8 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
-import org.junit.jupiter.api.Test;
 
-import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
-import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
-import static org.junit.jupiter.api.Assertions.*;
-
-public class JpsRepositoryLibrarySerializationTest {
-  @Test
+public class JpsRepositoryLibrarySerializationTest extends JpsSerializationTestCase {
   public void testPlain() {
     JpsMavenRepositoryLibraryDescriptor properties = loadLibrary("plain");
     assertEquals("junit", properties.getGroupId());
@@ -24,14 +18,12 @@ public class JpsRepositoryLibrarySerializationTest {
     assertEmpty(properties.getExcludedDependencies());
   }
 
-  @Test
   public void testWithoutTransitiveDependencies() {
     JpsMavenRepositoryLibraryDescriptor properties = loadLibrary("without-transitive-dependencies");
     assertFalse(properties.isIncludeTransitiveDependencies());
     assertEmpty(properties.getExcludedDependencies());
   }
 
-  @Test
   public void testWithExcludedDependencies() {
     JpsMavenRepositoryLibraryDescriptor properties = loadLibrary("with-excluded-dependencies");
     assertTrue(properties.isIncludeTransitiveDependencies());
@@ -40,8 +32,8 @@ public class JpsRepositoryLibrarySerializationTest {
 
   @NotNull
   private JpsMavenRepositoryLibraryDescriptor loadLibrary(String name) {
-    JpsProjectData projectData = JpsProjectData.loadFromTestData("jps/model-serialization/testData/repositoryLibraries", getClass());
-    JpsLibrary library = projectData.getProject().getLibraryCollection().findLibrary(name);
+    loadProject("/jps/model-serialization/testData/repositoryLibraries");
+    JpsLibrary library = myProject.getLibraryCollection().findLibrary(name);
     assertNotNull(library);
     assertSame(JpsRepositoryLibraryType.INSTANCE, library.getType());
     JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>> typed = library.asTyped(JpsRepositoryLibraryType.INSTANCE);

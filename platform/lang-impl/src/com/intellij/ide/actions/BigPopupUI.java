@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
@@ -14,7 +15,7 @@ import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.ui.searchComponents.ExtendableSearchTextField;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Advertiser;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -36,7 +38,7 @@ import java.util.Optional;
 public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable {
   private static final int MINIMAL_SUGGESTIONS_LIST_HEIGHT= 100;
 
-  protected final @Nullable Project myProject;
+  @Nullable protected final Project myProject;
 
   protected ExtendableTextField mySearchField;
   protected JPanel suggestionsPanel;
@@ -51,14 +53,17 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     myProject = project;
   }
 
-  public abstract @NotNull JBList<Object> createList();
+  @NotNull
+  public abstract JBList<Object> createList();
 
-  protected abstract @NotNull ListCellRenderer<Object> createCellRenderer();
+  @NotNull
+  protected abstract ListCellRenderer<Object> createCellRenderer();
 
   /**
    * todo make the method abstract after {@link #createTopLeftPanel()} and {@link #createSettingsPanel()} are removed
    */
-  protected @NotNull JComponent createHeader() {
+  @NotNull
+  protected JComponent createHeader() {
     JPanel header = new JPanel(new BorderLayout());
     header.add(createTopLeftPanel(), BorderLayout.WEST);
     header.add(createSettingsPanel(), BorderLayout.EAST);
@@ -69,7 +74,8 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
    * @deprecated Override createHeader and remove implementation of this method at all
    */
   @Deprecated(forRemoval = true)
-  protected @NotNull JPanel createTopLeftPanel() {
+  @NotNull
+  protected JPanel createTopLeftPanel() {
     return new JPanel(); // not used
   }
 
@@ -77,7 +83,8 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
    * @deprecated Override createHeader and remove implementation of this method at all
    */
   @Deprecated(forRemoval = true)
-  protected @NotNull JPanel createSettingsPanel() {
+  @NotNull
+  protected JPanel createSettingsPanel() {
     return new JPanel(); // not used
   }
 
@@ -86,23 +93,56 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     return hint != null ? new String[]{hint} : ArrayUtil.EMPTY_STRING_ARRAY;
   }
   
-  protected @Nullable @PopupAdvertisement String getInitialHint() {
+  @Nullable
+  protected @PopupAdvertisement String getInitialHint() {
     return null;
   }
 
-  protected abstract @NotNull @Nls String getAccessibleName();
+  @NotNull
+  @Nls
+  protected abstract String getAccessibleName();
 
   protected void installScrollingActions() {
     ScrollingUtil.installActions(myResultsList, getSearchField());
   }
 
-  protected static class SearchField extends ExtendableSearchTextField {
+  protected static class SearchField extends ExtendableTextField {
     public SearchField() {
-      super();
+      if (ExperimentalUI.isNewUI()) {
+        setOpaque(false);
+        setBorder(PopupUtil.createComplexPopupTextFieldBorder());
+      }
+      else {
+        Border empty = new EmptyBorder(JBUI.CurrentTheme.BigPopup.searchFieldInsets());
+        Border topLine = JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 0, 0);
+        setBorder(JBUI.Borders.merge(empty, topLine, true));
+        setBackground(JBUI.CurrentTheme.BigPopup.searchFieldBackground());
+      }
+      setFocusTraversalKeysEnabled(false);
+
+      if (Registry.is("new.search.everywhere.use.editor.font")) {
+        Font editorFont = EditorUtil.getEditorFont();
+        setFont(editorFont);
+      }
+
+      int fontDelta = Registry.intValue("new.search.everywhere.font.size.delta");
+      if (fontDelta != 0) {
+        Font font = getFont();
+        font = font.deriveFont((float)fontDelta + font.getSize());
+        setFont(font);
+      }
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      size.height = Integer.max(JBUIScale.scale(29), size.height);
+      return size;
     }
   }
 
-  protected @NotNull ExtendableTextField createSearchField() {
+  @NotNull
+  protected ExtendableTextField createSearchField() {
     return new SearchField();
   }
 
@@ -171,7 +211,8 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     });
   }
 
-  protected @NotNull String getSearchPattern() {
+  @NotNull
+  protected String getSearchPattern() {
     return Optional.ofNullable(mySearchField)
       .map(JTextComponent::getText)
       .orElse("");
@@ -194,7 +235,8 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     return createFooterPanel(pnl);
   }
 
-  protected @NotNull JScrollPane createListPane() {
+  @NotNull
+  protected JScrollPane createListPane() {
     JScrollPane resultsScroll = new JBScrollPane(myResultsList) {
       @Override
       public void updateUI() {
@@ -211,13 +253,15 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     return resultsScroll;
   }
 
-  protected @NotNull JPanel createFooterPanel(@NotNull JPanel panel) {
+  @NotNull
+  protected JPanel createFooterPanel(@NotNull JPanel panel) {
     myHintLabel = createHint();
     panel.add(myHintLabel.getAdComponent(), BorderLayout.SOUTH);
     return panel;
   }
 
-  private @NotNull Advertiser createHint() {
+  @NotNull
+  private Advertiser createHint() {
     Advertiser advertiser = new Advertiser();
 
     advertiser.setBorder(JBUI.CurrentTheme.BigPopup.advertiserBorder());
@@ -231,7 +275,8 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     return advertiser;
   }
 
-  public @NotNull JTextField getSearchField() {
+  @NotNull
+  public JTextField getSearchField() {
     return mySearchField;
   }
 

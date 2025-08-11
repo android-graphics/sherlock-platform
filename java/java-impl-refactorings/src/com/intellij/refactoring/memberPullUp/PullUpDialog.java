@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPullUp;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -24,7 +25,6 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
 import com.intellij.util.ui.UIUtil;
-import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,11 +46,6 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
   };
 
   private static final @NonNls String PULL_UP_STATISTICS_KEY = "pull.up##";
-
-  static boolean isEnumSyntheticMethod(@NotNull PsiMethod method) {
-    return CallMatcher.enumValues().methodMatches(method) ||
-           CallMatcher.enumValueOf().methodMatches(method);
-  }
 
   public interface Callback {
     boolean checkConflicts(PullUpDialog dialog);
@@ -210,8 +205,11 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
       }
       if (element instanceof PsiMethod method) {
         PsiClass aClass = method.getContainingClass();
-        if (aClass != null && aClass.isEnum() && isEnumSyntheticMethod(method)) {
-          return false;
+        if (aClass != null && aClass.isEnum()) {
+          MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
+          if (HighlightMethodUtil.isEnumSyntheticMethod(methodSignature, aClass.getProject())) {
+            return false;
+          }
         }
         final PsiMethod superClassMethod = findSuperMethod(currentSuperClass, method);
         if (superClassMethod != null && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, currentSuperClass)) return false;

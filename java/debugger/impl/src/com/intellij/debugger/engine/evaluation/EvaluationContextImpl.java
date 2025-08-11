@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.EvaluatingComputable;
@@ -8,10 +8,8 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
@@ -20,7 +18,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class EvaluationContextImpl extends UserDataHolderBase implements EvaluationContext {
+public final class EvaluationContextImpl implements EvaluationContext {
   private final DebuggerComputableValue myThisObject;
   private final @NotNull SuspendContextImpl mySuspendContext;
   private final StackFrameProxyImpl myFrameProxy;
@@ -29,8 +27,6 @@ public final class EvaluationContextImpl extends UserDataHolderBase implements E
   private @Nullable ThreadReferenceProxyImpl myThreadForEvaluation = null;
 
   private @Nullable ThreadReferenceProxyImpl myPreferableThread = null;
-
-  private boolean myMayRetryEvaluation = false;
 
   private EvaluationContextImpl(@NotNull SuspendContextImpl suspendContext,
                                 @Nullable StackFrameProxyImpl frameProxy,
@@ -54,18 +50,16 @@ public final class EvaluationContextImpl extends UserDataHolderBase implements E
     this(suspendContext, frameProxy, () -> frameProxy != null ? frameProxy.thisObject() : null);
   }
 
+  @Nullable
   @Override
-  public @Nullable Value computeThisObject() throws EvaluateException {
+  public Value computeThisObject() throws EvaluateException {
     return myThisObject.getValue();
   }
 
+  @NotNull
   @Override
-  public @NotNull SuspendContextImpl getSuspendContext() {
+  public SuspendContextImpl getSuspendContext() {
     return mySuspendContext;
-  }
-
-  public @NotNull VirtualMachineProxyImpl getVirtualMachineProxy() {
-    return mySuspendContext.getVirtualMachineProxy();
   }
 
   @Override
@@ -73,13 +67,14 @@ public final class EvaluationContextImpl extends UserDataHolderBase implements E
     return myFrameProxy;
   }
 
+  @NotNull
   @Override
-  public @NotNull DebugProcessImpl getDebugProcess() {
+  public DebugProcessImpl getDebugProcess() {
     return getSuspendContext().getDebugProcess();
   }
 
   public DebuggerManagerThreadImpl getManagerThread() {
-    return getSuspendContext().getManagerThread();
+    return getDebugProcess().getManagerThread();
   }
 
   @Override
@@ -95,8 +90,9 @@ public final class EvaluationContextImpl extends UserDataHolderBase implements E
     return copy;
   }
 
+  @Nullable
   @Override
-  public @Nullable ClassLoaderReference getClassLoader() throws EvaluateException {
+  public ClassLoaderReference getClassLoader() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (myClassLoader != null) {
       return myClassLoader;
@@ -161,14 +157,14 @@ public final class EvaluationContextImpl extends UserDataHolderBase implements E
 
   @Override
   public <T extends Value> T computeAndKeep(@NotNull ThrowableComputable<T, EvaluateException> computable) throws EvaluateException {
-    return DebuggerUtils.getInstance().processCollectibleValue(computable, value -> {
+    return DebuggerUtils.processCollectibleValue(computable, value -> {
       keep(value);
       return value;
-    }, this);
+    });
   }
 
   public boolean isEvaluationPossible() {
-    return getSuspendContext().getDebugProcess().isEvaluationPossibleInCurrentCommand(getSuspendContext());
+    return getSuspendContext().getDebugProcess().isEvaluationPossible(getSuspendContext());
   }
 
   @Contract(pure = true)
@@ -180,15 +176,5 @@ public final class EvaluationContextImpl extends UserDataHolderBase implements E
     else {
       return "Evaluating requested on " + myPreferableThread + ", started on " + myThreadForEvaluation + " for " + mySuspendContext;
     }
-  }
-
-  @ApiStatus.Internal
-  public boolean isMayRetryEvaluation() {
-    return myMayRetryEvaluation;
-  }
-
-  @ApiStatus.Internal
-  public void setMayRetryEvaluation(boolean mayRetryEvaluation) {
-    myMayRetryEvaluation = mayRetryEvaluation;
   }
 }

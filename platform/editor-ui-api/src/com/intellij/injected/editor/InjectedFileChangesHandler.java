@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -17,13 +17,12 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
-internal val REFACTORING_DATA_KEY: Key<SuggestedRefactoringData> = Key.create<SuggestedRefactoringData>("suggested.refactoring.data")
+val REFACTORING_DATA_KEY = Key.create<SuggestedRefactoringData>("suggested.refactoring.data")
 
-@ApiStatus.Internal
 class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
   private val icon = AllIcons.Actions.SuggestedRefactoringBulb
 
@@ -44,7 +43,7 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
     // we add it into 'errorFixesToShow' if it's not empty to always be at the top of the list
     // we don't add into it if it's empty to keep the color of the bulb
     val collectionToAdd = intentions.inspectionFixesToShow
-    collectionToAdd.add(HighlightInfo.IntentionActionDescriptor(intention, null, null, icon, null, null, null, null))
+    collectionToAdd.add(HighlightInfo.IntentionActionDescriptor(intention, null, null, icon, null, null, null))
   }
 
   private fun suggestRefactoringIntention(hostFile: PsiFile, offset: Int): MyIntention? {
@@ -99,7 +98,19 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
     if (!range.containsOffset(offset)) return null
 
     SuggestedRefactoringFeatureUsage.refactoringSuggested(refactoringData, state)
-    val text = refactoringData.getIntentionText()
+
+    val text = when (refactoringData) {
+      is SuggestedRenameData -> RefactoringBundle.message(
+        "suggested.refactoring.rename.intention.text",
+        refactoringData.oldName,
+        refactoringData.newName
+      )
+
+      is SuggestedChangeSignatureData -> RefactoringBundle.message(
+        "suggested.refactoring.change.signature.intention.text",
+        refactoringData.nameOfStuffToUpdate
+      )
+    }
 
     return MyIntention(text, showReviewBalloon = refactoringData is SuggestedChangeSignatureData)
   }

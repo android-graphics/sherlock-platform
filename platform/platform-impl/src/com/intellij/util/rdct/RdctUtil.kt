@@ -3,9 +3,8 @@ package com.intellij.util.rdct
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
-import org.jetbrains.annotations.ApiStatus.Internal
 
-@Internal
+
 class ItemsList(override val name: String, private val knownValuesList: List<String>) : PrimitiveEventField<String?>() {
   override fun addData(fuData: FeatureUsageData, value: String?) {
     val data =
@@ -20,7 +19,6 @@ class ItemsList(override val name: String, private val knownValuesList: List<Str
     listOf("{enum:|unknown|${knownValuesList.joinToString("|")}}")
 }
 
-@Internal
 @JvmField
 val HostProductCode: ItemsList = ItemsList("parentProductCode", listOf("IU", "RM", "WS", "PS", "PY", "DS", "OC", "CL", "DB", "RD", "GO"))
 

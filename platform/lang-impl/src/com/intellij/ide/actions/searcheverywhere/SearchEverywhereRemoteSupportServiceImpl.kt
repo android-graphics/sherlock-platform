@@ -4,9 +4,7 @@ package com.intellij.ide.actions.searcheverywhere
 import com.intellij.ide.actions.searcheverywhere.remote.RemoteSearchEverywhereConverter
 import com.intellij.ide.actions.searcheverywhere.remote.RemoteSearchEverywhereConverterSupplier
 import com.intellij.ide.actions.searcheverywhere.remote.SearchEverywhereRemoteSupportService
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 class SearchEverywhereRemoteSupportServiceImpl: SearchEverywhereRemoteSupportService {
 
   override fun getConverters(contributorID: String?): List<RemoteSearchEverywhereConverter<*, *>> {

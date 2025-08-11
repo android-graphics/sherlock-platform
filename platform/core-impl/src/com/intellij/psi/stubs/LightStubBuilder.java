@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.*;
@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ILightStubFileElementType;
 import com.intellij.util.containers.BooleanStack;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -17,6 +18,8 @@ import it.unimi.dsi.fastutil.ints.IntStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.objectInfo;
 
 public class LightStubBuilder implements StubBuilder {
   private static final Logger LOG = Logger.getInstance(LightStubBuilder.class);
@@ -36,24 +39,16 @@ public class LightStubBuilder implements StubBuilder {
         LOG.error("Unexpected PsiFile instance: " + file + ", " + file.getClass());
         return null;
       }
-      LanguageStubDescriptor stubDescriptor = ((PsiFileImpl)file).getStubDescriptor();
-      if (stubDescriptor == null) {
+      if (((PsiFileImpl)file).getElementTypeForStubBuilder() == null) {
         LOG.error("File is not of IStubFileElementType: " + file);
         return null;
       }
 
       FileASTNode node = file.getNode();
-      IElementType nodeElementType = node.getElementType();
-      if (nodeElementType != stubDescriptor.getFileElementType()) {
-        // this is the case for JSP files. They have Java as language.
-        tree = new TreeBackedLighterAST(node);
-      }
-      else {
-        tree = node.getLighterAST();
-      }
+      tree = node.getElementType() instanceof ILightStubFileElementType ? node.getLighterAST() : new TreeBackedLighterAST(node);
     }
     else {
-      FORCED_AST.remove();
+      FORCED_AST.set(null);
     }
 
     StubElement<?> rootStub = createStubForFile(file, tree);
@@ -128,13 +123,18 @@ public class LightStubBuilder implements StubBuilder {
     }
   }
 
-  private static @NotNull StubElement<?> createStub(@NotNull LighterAST tree,
-                                                    @NotNull LighterASTNode element,
-                                                    @NotNull StubElement<?> parentStub) {
+  private static StubElement<?> createStub(LighterAST tree, LighterASTNode element, StubElement<?> parentStub) {
     IElementType elementType = element.getTokenType();
-    LightStubElementFactory<?, ?> factory = StubElementRegistryService.getInstance().getLightStubFactory(elementType);
-    if (factory != null && factory.shouldCreateStub(tree, element, parentStub)) {
-      return factory.createStub(tree, element, parentStub);
+    if (elementType instanceof IStubElementType) {
+      if (elementType instanceof ILightStubElementType) {
+        ILightStubElementType<?, ?> lightElementType = (ILightStubElementType<?, ?>)elementType;
+        if (lightElementType.shouldCreateStub(tree, element, parentStub)) {
+          return lightElementType.createStub(tree, element, parentStub);
+        }
+      }
+      else {
+        LOG.error("Element is not of ILightStubElementType: " + objectInfo(elementType) + ", " + element);
+      }
     }
 
     return parentStub;

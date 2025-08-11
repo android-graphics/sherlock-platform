@@ -46,10 +46,8 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
   @Override
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
-    PsiReferenceExpression element = myReferenceExpression.getElement();
-    if (element == null) return false;
-    if (element.isQualified()) return false;
-    PsiElement scope = element;
+    if(myReferenceExpression.isQualified()) return false;
+    PsiElement scope = myReferenceExpression;
     do {
       scope = PsiTreeUtil.getParentOfType(scope, PsiMethod.class, PsiClass.class);
       if (!(scope instanceof PsiAnonymousClass)) {
@@ -60,8 +58,8 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     while (true);
   }
 
-  @Override
-  public String getText(String varName) {
+    @Override
+    public String getText(String varName) {
     return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.PARAMETER.object(), varName);
   }
 
@@ -72,9 +70,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiReferenceExpression element = myReferenceExpression.getElement();
-    if (element == null) return IntentionPreviewInfo.EMPTY;
-    PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+    PsiMethod method = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiMethod.class);
     if (method == null) return IntentionPreviewInfo.EMPTY;
     List<ParameterInfoImpl> infos = getParameterInfos(method);
     String newParameters = "(" + StringUtil.join(infos, i -> i.getTypeText() + " " + i.getName(), ", ") + ")";
@@ -87,13 +83,11 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiReferenceExpression element = myReferenceExpression.getElement();
-    if(element==null) return;
-    if (CreateFromUsageUtils.isValidReference(element, false)) return;
+    if (CreateFromUsageUtils.isValidReference(myReferenceExpression, false)) return;
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
-    PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+    PsiMethod method = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiMethod.class);
     LOG.assertTrue(method != null);
     chooseEnclosingMethod(editor, method, m -> {
       m = SuperMethodWarningUtil.checkSuperMethod(m);
@@ -109,10 +103,10 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
       }
       else {
         JavaChangeSignatureDialog dialog =
-          JavaChangeSignatureDialog.createAndPreselectNew(project, m, parameterInfos, true, element);
+          JavaChangeSignatureDialog.createAndPreselectNew(project, m, parameterInfos, true, myReferenceExpression);
         dialog.setParameterInfos(parameterInfos);
         if (dialog.showAndGet()) {
-          final String varName = element.getReferenceName();
+          final String varName = myReferenceExpression.getReferenceName();
           for (ParameterInfoImpl info : parameterInfos) {
             if (info.isNew()) {
               final String newParamName = info.getName();
@@ -120,7 +114,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
                 final PsiExpression newExpr = JavaPsiFacade.getElementFactory(project).createExpressionFromText(newParamName, m);
                 WriteCommandAction.writeCommandAction(project).run(() -> {
                   final PsiReferenceExpression[] refs =
-                    CreateFromUsageUtils.collectExpressions(element, PsiMember.class, PsiFile.class);
+                    CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMember.class, PsiFile.class);
                   for (PsiReferenceExpression ref : refs) {
                     ref.replace(newExpr.copy());
                   }
@@ -181,10 +175,8 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
   }
 
   private @NotNull List<ParameterInfoImpl> getParameterInfos(PsiMethod method) {
-    PsiReferenceExpression element = myReferenceExpression.getElement();
-    if (element == null) return Collections.emptyList();
-    final String parameterName = element.getReferenceName();
-    PsiType[] expectedTypes = CreateFromUsageUtils.guessType(element, false);
+    final String parameterName = myReferenceExpression.getReferenceName();
+    PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
     final List<ParameterInfoImpl> parameterInfos =
       new ArrayList<>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
     ParameterInfoImpl parameterInfo =

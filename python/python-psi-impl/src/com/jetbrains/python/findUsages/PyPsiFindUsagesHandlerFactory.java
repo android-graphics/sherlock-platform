@@ -41,7 +41,8 @@ public interface PyPsiFindUsagesHandlerFactory {
            element instanceof PyTargetExpression;
   }
 
-  default @Nullable FindUsagesHandlerBase createFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
+  @Nullable
+  default FindUsagesHandlerBase createFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
     if (element instanceof PyImportedModule) {
       final PsiElement resolved = ((PyImportedModule)element).resolve();
       if (resolved != null) {
@@ -55,7 +56,7 @@ public interface PyPsiFindUsagesHandlerFactory {
       if (!forHighlightUsages) {
         TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), null);
         final Collection<PsiElement> superMethods = PySuperMethodsSearch.search((PyFunction)element, true, context).findAll();
-        if (!superMethods.isEmpty()) {
+        if (superMethods.size() > 0) {
           final PsiElement next = superMethods.iterator().next();
           // TODO should do this for Jython functions overriding Java methods too
           if (next instanceof PyFunction && !isInObject((PyFunction)next)) {
@@ -85,7 +86,8 @@ public interface PyPsiFindUsagesHandlerFactory {
     return null;
   }
 
-  default @NotNull PyModuleFindUsagesHandler createModuleFindUsagesHandler(@NotNull PsiFileSystemItem element) {
+  @NotNull
+  default PyModuleFindUsagesHandler createModuleFindUsagesHandler(@NotNull PsiFileSystemItem element) {
     return new PyModuleFindUsagesHandler(element);
   }
 

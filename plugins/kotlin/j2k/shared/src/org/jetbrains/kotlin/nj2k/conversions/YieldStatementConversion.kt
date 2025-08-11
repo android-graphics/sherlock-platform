@@ -2,12 +2,14 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.j2k.ConverterContext
+import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversionWithData
 import org.jetbrains.kotlin.nj2k.asStatement
 import org.jetbrains.kotlin.nj2k.tree.*
 
-class YieldStatementConversion(context: ConverterContext) : RecursiveConversionWithData<Boolean>(context, initialData = false) {
+class YieldStatementConversion(context: NewJ2kConverterContext) :
+    RecursiveConversionWithData<Boolean>(context, initialData = false) {
+
     override fun applyToElement(element: JKTreeElement, data: Boolean /* is yield allowed */): JKTreeElement {
         when (element) {
             is JKKtWhenExpression -> return recurse(element, data = true)
@@ -17,6 +19,7 @@ class YieldStatementConversion(context: ConverterContext) : RecursiveConversionW
         }
         element.invalidate()
 
+        check(element is JKJavaYieldStatement)
         val newElement = if (data) {
             element.expression.asStatement()
         } else {

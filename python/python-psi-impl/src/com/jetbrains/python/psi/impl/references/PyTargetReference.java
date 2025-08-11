@@ -58,7 +58,8 @@ public class PyTargetReference extends PyReferenceImpl {
     return super.getVariants();
   }
 
-  private @Nullable PyClassPattern getContainingClassPatternIfInAttributeNamePosition() {
+  @Nullable
+  private PyClassPattern getContainingClassPatternIfInAttributeNamePosition() {
     PsiElement grandParent = myElement.getParent().getParent();
     if (myElement.getParent() instanceof PyCapturePattern && grandParent instanceof PyPatternArgumentList) {
       return as(grandParent.getParent(), PyClassPattern.class);

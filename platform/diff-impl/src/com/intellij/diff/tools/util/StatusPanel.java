@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util;
 
 import com.intellij.openapi.diff.DiffBundle;
@@ -48,13 +48,17 @@ public class StatusPanel extends JPanel {
     }
   }
 
-  protected @NlsContexts.Label @Nullable String getMessage() {
+  @NlsContexts.Label
+  @Nullable
+  protected String getMessage() {
     return null;
   }
 
-  protected @Nullable Icon getStatusIcon() { return null; }
+  @Nullable
+  protected Icon getStatusIcon() { return null; }
 
-  protected @NotNull Color getStatusForeground() {
+  @NotNull
+  protected Color getStatusForeground() {
     return UIUtil.getLabelForeground();
   }
 }

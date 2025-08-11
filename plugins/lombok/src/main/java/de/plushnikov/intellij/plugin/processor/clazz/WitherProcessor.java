@@ -11,7 +11,6 @@ import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +58,8 @@ public final class WitherProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  private static @NotNull Collection<? extends PsiVariable> getPossibleWithElements(@NotNull PsiClass psiClass) {
+  @NotNull
+  private static Collection<? extends PsiVariable> getPossibleWithElements(@NotNull PsiClass psiClass) {
     if (psiClass.isRecord()) {
       return List.of(psiClass.getRecordComponents());
     }
@@ -102,9 +102,10 @@ public final class WitherProcessor extends AbstractClassProcessor {
     }
   }
 
-  private @NotNull Collection<PsiMethod> createFieldWithers(@NotNull PsiClass psiClass,
-                                                            @NotNull String methodModifier,
-                                                            @NotNull AccessorsInfo accessors) {
+  @NotNull
+  private static Collection<PsiMethod> createFieldWithers(@NotNull PsiClass psiClass,
+                                                          @NotNull String methodModifier,
+                                                          @NotNull AccessorsInfo accessors) {
     Collection<PsiMethod> result = new ArrayList<>();
 
     final Collection<PsiField> witherFields = getWitherFields(psiClass);
@@ -119,21 +120,19 @@ public final class WitherProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  private @NotNull Collection<PsiField> getWitherFields(@NotNull PsiClass psiClass) {
+  @NotNull
+  private static Collection<PsiField> getWitherFields(@NotNull PsiClass psiClass) {
     Collection<PsiField> witherFields = new ArrayList<>();
 
-    final AccessorsInfo.AccessorsValues classAccessorsValues = AccessorsInfo.getAccessorsValues(psiClass);
-    final Collection<PsiMethod> existingMethods = filterToleratedElements(PsiClassUtil.collectClassMethodsIntern(psiClass));
     for (PsiField psiField : psiClass.getFields()) {
-      if (shouldGenerateWither(psiField, classAccessorsValues, existingMethods)) {
+      if (shouldGenerateWither(psiField)) {
         witherFields.add(psiField);
       }
     }
     return witherFields;
   }
 
-  private static boolean shouldGenerateWither(@NotNull PsiField psiField, @NotNull AccessorsInfo.AccessorsValues classAccessorsValues,
-                                              @NotNull Collection<PsiMethod> existingMethods) {
+  private static boolean shouldGenerateWither(@NotNull PsiField psiField) {
     boolean createWither = true;
     PsiModifierList modifierList = psiField.getModifierList();
     if (null != modifierList) {
@@ -146,39 +145,14 @@ public final class WitherProcessor extends AbstractClassProcessor {
       createWither &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
       // Skip fields having Wither annotation already
       createWither &= !PsiAnnotationSearchUtil.isAnnotatedWith(psiField, LombokClassNames.WITHER, LombokClassNames.WITH);
-
-      final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField, classAccessorsValues).withFluent(false);
-      createWither &= accessorsInfo.acceptsFieldName(psiField.getName());
-
-      if (createWither) {
-        createWither = isWitherMethodUnique(psiField, accessorsInfo, existingMethods);
-      }
     }
     return createWither;
   }
 
-  private static boolean isWitherMethodUnique(@NotNull PsiField psiField, @NotNull AccessorsInfo accessorsInfo,
-                                              @NotNull Collection<PsiMethod> existingMethods) {
-    final Collection<String> possibleWitherNames =
-      LombokUtils.toAllWitherNames(accessorsInfo, psiField.getName(), PsiTypes.booleanType().equals(psiField.getType()));
-    for (String witherName : possibleWitherNames) {
-      if (PsiMethodUtil.hasSimilarMethod(existingMethods, witherName, 1)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   @Override
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
-    final PsiClass containingClass = psiField.getContainingClass();
-    if (containingClass != null) {
-      final AccessorsInfo.AccessorsValues classAccessorsValues = AccessorsInfo.getAccessorsValues(containingClass);
-      final Collection<PsiMethod> existingMethods = filterToleratedElements(PsiClassUtil.collectClassMethodsIntern(containingClass));
-
-      if (shouldGenerateWither(psiField, classAccessorsValues, existingMethods)) {
-        return LombokPsiElementUsage.READ_WRITE;
-      }
+    if (shouldGenerateWither(psiField)) {
+      return LombokPsiElementUsage.READ_WRITE;
     }
     return LombokPsiElementUsage.NONE;
   }

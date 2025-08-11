@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.ClearableLazyValue;
@@ -18,13 +18,14 @@ import static com.intellij.util.containers.ContainerUtil.map;
 public class SvnMapping {
   private static final Comparator<String> FILE_PATHS_COMPARATOR = (path1, path2) -> comparePaths(path1, path2);
 
-  private final @NotNull List<VirtualFile> myLonelyRoots = new ArrayList<>();
-  private final @NotNull TreeMap<String, RootUrlInfo> myFile2UrlMap = new TreeMap<>(FILE_PATHS_COMPARATOR);
-  private final @NotNull Map<Url, RootUrlInfo> myUrl2FileMap = new HashMap<>();
+  @NotNull private final List<VirtualFile> myLonelyRoots = new ArrayList<>();
+  @NotNull private final TreeMap<String, RootUrlInfo> myFile2UrlMap = new TreeMap<>(FILE_PATHS_COMPARATOR);
+  @NotNull private final Map<Url, RootUrlInfo> myUrl2FileMap = new HashMap<>();
   // no additional info. for caching only (convert roots)
-  private final @NotNull ClearableLazyValue<List<VirtualFile>> myPreCalculatedUnderVcsRoots = new ClearableLazyValue<>() {
+  @NotNull private final ClearableLazyValue<List<VirtualFile>> myPreCalculatedUnderVcsRoots = new ClearableLazyValue<>() {
+    @NotNull
     @Override
-    protected @NotNull List<VirtualFile> compute() {
+    protected List<VirtualFile> compute() {
       return map(myFile2UrlMap.values(), RootUrlInfo::getVirtualFile);
     }
   };
@@ -49,28 +50,34 @@ public class SvnMapping {
     myUrl2FileMap.put(rootInfo.getUrl(), rootInfo);
   }
 
-  public @NotNull List<VirtualFile> getUnderVcsRoots() {
+  @NotNull
+  public List<VirtualFile> getUnderVcsRoots() {
     return myPreCalculatedUnderVcsRoots.getValue();
   }
 
-  public @NotNull List<RootUrlInfo> getAllCopies() {
+  @NotNull
+  public List<RootUrlInfo> getAllCopies() {
     return new ArrayList<>(myFile2UrlMap.values());
   }
 
-  public @Nullable String getRootForPath(@NotNull String path) {
+  @Nullable
+  public String getRootForPath(@NotNull String path) {
     return find(myFile2UrlMap.headMap(path, true).descendingKeySet(),
                 root -> SystemInfo.isFileSystemCaseSensitive ? path.startsWith(root) : startsWithIgnoreCase(path, root));
   }
 
-  public @NotNull Collection<Url> getUrls() {
+  @NotNull
+  public Collection<Url> getUrls() {
     return myUrl2FileMap.keySet();
   }
 
-  public @Nullable RootUrlInfo byFile(@NotNull String path) {
+  @Nullable
+  public RootUrlInfo byFile(@NotNull String path) {
     return myFile2UrlMap.get(path);
   }
 
-  public @Nullable RootUrlInfo byUrl(@NotNull Url url) {
+  @Nullable
+  public RootUrlInfo byUrl(@NotNull Url url) {
     return myUrl2FileMap.get(url);
   }
 
@@ -82,7 +89,8 @@ public class SvnMapping {
     myLonelyRoots.addAll(roots);
   }
 
-  public @NotNull List<VirtualFile> getLonelyRoots() {
+  @NotNull
+  public List<VirtualFile> getLonelyRoots() {
     return myLonelyRoots;
   }
 

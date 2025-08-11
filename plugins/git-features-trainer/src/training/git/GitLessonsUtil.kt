@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.BranchChangeListener
+import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListChange
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
@@ -21,6 +22,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsProjectLog
@@ -62,7 +64,7 @@ object GitLessonsUtil {
         else false
       }
       triggerUI().component { ui: VcsLogGraphTable ->
-        ui.jumpToGraphRow(0, true)
+        ui.jumpToRow(0, true)
         ui.selectionModel.clearSelection()
         true
       }
@@ -218,6 +220,32 @@ object GitLessonsUtil {
     }
   }
 
+  fun LessonContext.showWarningIfModalCommitEnabled() {
+    task {
+      val step = stateCheck {
+        VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
+      }
+      val callbackId = LearningUiManager.addCallback {
+        CommitModeManager.setCommitFromLocalChanges(project, true)
+        step.complete(true)
+      }
+      showWarning(GitLessonsBundle.message("git.use.non.modal.commit.ui.warning",
+                                           action("ShowSettings"),
+                                           strong(VcsBundle.message("version.control.main.configurable.name")),
+                                           strong(VcsBundle.message("commit.dialog.configurable")),
+                                           strong(VcsBundle.message("settings.commit.without.dialog")))
+                  + " " + GitLessonsBundle.message("git.click.to.change.settings", callbackId)) {
+        !VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
+      }
+      test {
+        if (!VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES) {
+          Thread.sleep(1000)  // need to wait until LessonMessagePane become updated after restart and warning will be showed
+          clickLessonMessagePaneLink(" click ")
+        }
+      }
+    }
+  }
+
   fun LessonContext.showWarningIfStagingAreaEnabled() {
     task {
       val step = stateCheck {
@@ -239,10 +267,12 @@ object GitLessonsUtil {
   }
 
   fun LessonContext.restoreCommitWindowStateInformer() {
+    val enabledModalInterface = !VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
     val enabledStagingArea = GitVcsApplicationSettings.getInstance().isStagingAreaEnabled
-    if (!enabledStagingArea) return
+    if (!enabledModalInterface && !enabledStagingArea) return
     restoreChangedSettingsInformer {
-      enableStagingArea(true)
+      if (enabledModalInterface) CommitModeManager.setCommitFromLocalChanges(null, false)
+      if (enabledStagingArea) enableStagingArea(true)
     }
   }
 
@@ -277,7 +307,6 @@ object GitLessonsUtil {
     stateCheck {
       ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)?.isVisible == true
     }
-
     test { actions("ActivateVersionControlToolWindow") }
   }
 

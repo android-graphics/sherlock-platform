@@ -186,7 +186,6 @@ fun KtFile.analyzeWithAllCompilerChecks(callback: ((Diagnostic) -> Unit)?, varar
  * @ref [KotlinCacheService]
  * @ref [org.jetbrains.kotlin.idea.caches.resolve.PerFileAnalysisCache]
  */
-@ApiStatus.Internal
 @Deprecated(
     "Use either KtFile.analyzeWithAllCompilerChecks() or KtElement.analyzeAndGetResult()",
     ReplaceWith("analyzeAndGetResult()")

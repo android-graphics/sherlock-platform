@@ -40,15 +40,16 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
   private static final Pattern RE_LOOSE_TAG_LINE = Pattern.compile("([a-z]+)\\s+([a-zA-Z_0-9]*)\\s*:?\\s*?([^:]*)");
   private static final Pattern RE_ARG_TYPE = Pattern.compile("(.*?)\\s+([a-zA-Z_0-9]+)");
 
-  public static final String[] PARAM_TAGS = new String[]{"param", "parameter", "arg", "argument"};
-  public static final String[] PARAM_TYPE_TAGS = new String[]{"type"};
-  public static final String[] VARIABLE_TAGS = new String[]{"ivar", "cvar", "var"};
+  public static String[] PARAM_TAGS = new String[]{"param", "parameter", "arg", "argument"};
+  public static String[] PARAM_TYPE_TAGS = new String[]{"type"};
+  public static String[] VARIABLE_TAGS = new String[]{"ivar", "cvar", "var"};
 
-  public static final String[] RAISES_TAGS = new String[]{"raises", "raise", "except", "exception"};
-  public static final String[] RETURN_TAGS = new String[]{"return", "returns"};
-  private final @NotNull String myTagPrefix;
+  public static String[] RAISES_TAGS = new String[]{"raises", "raise", "except", "exception"};
+  public static String[] RETURN_TAGS = new String[]{"return", "returns"};
+  @NotNull
+  private final String myTagPrefix;
 
-  static String TYPE = "type";
+  public static String TYPE = "type";
 
   protected TagBasedDocString(@NotNull Substring docStringText, @NotNull String tagPrefix) {
     super(docStringText);
@@ -68,8 +69,11 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
     myDescription = builder.toString();
   }
 
+  public abstract List<String> getAdditionalTags();
+
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
+  public String getDescription() {
     return myDescription;
   }
 
@@ -84,7 +88,8 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
     return "";
   }
 
-  private @NotNull Map<Substring, Substring> getTagValuesMap(String key) {
+  @NotNull
+  private Map<Substring, Substring> getTagValuesMap(String key) {
     Map<Substring, Substring> map = myArgTagValues.get(key);
     if (map == null) {
       map = Maps.newLinkedHashMap();
@@ -156,7 +161,8 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
     return result;
   }
 
-  public @Nullable Substring getTagValue(String... tagNames) {
+  @Nullable
+  public Substring getTagValue(String... tagNames) {
     for (String tagName : tagNames) {
       final Substring value = mySimpleTagValues.get(tagName);
       if (value != null) {
@@ -166,12 +172,14 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
     return null;
   }
 
-  public @Nullable Substring getTagValue(String tagName, @NotNull String argName) {
+  @Nullable
+  public Substring getTagValue(String tagName, @NotNull String argName) {
     final Map<Substring, Substring> argValues = myArgTagValues.get(tagName);
     return argValues != null ? argValues.get(new Substring(argName)) : null;
   }
 
-  public @Nullable Substring getTagValue(String[] tagNames, @NotNull String argName) {
+  @Nullable
+  public Substring getTagValue(String[] tagNames, @NotNull String argName) {
     for (String tagName : tagNames) {
       final Map<Substring, Substring> argValues = myArgTagValues.get(tagName);
       final Substring key = new Substring(argName);
@@ -193,13 +201,15 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
     return result;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<String> getParameters() {
+  public List<String> getParameters() {
     return toUniqueStrings(getParameterSubstrings());
   }
 
+  @NotNull
   @Override
-  public @NotNull List<Substring> getParameterSubstrings() {
+  public List<Substring> getParameterSubstrings() {
     final List<Substring> results = new ArrayList<>();
     results.addAll(getTagArguments(PARAM_TAGS));
     results.addAll(getTagArguments(PARAM_TYPE_TAGS));

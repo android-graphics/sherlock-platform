@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.util;
 
 import com.intellij.icons.AllIcons;
@@ -30,11 +30,6 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 
-/**
- * @see MasterController
- * @deprecated not used anymore, and is internal
- */
-@Deprecated(forRemoval = true)
 public final class MasterDetailPopupBuilder implements MasterController {
   private static final Color BORDER_COLOR = Gray._135;
 
@@ -58,7 +53,8 @@ public final class MasterDetailPopupBuilder implements MasterController {
     myProject = project;
   }
 
-  public @NotNull MasterDetailPopupBuilder setList(@NotNull JBList list) {
+  @NotNull
+  public MasterDetailPopupBuilder setList(@NotNull JBList list) {
     myChooserComponent = list;
     myDetailController.setList(list);
 
@@ -142,43 +138,51 @@ public final class MasterDetailPopupBuilder implements MasterController {
     }
   }
 
-  public @NotNull MasterDetailPopupBuilder setDelegate(@NotNull Delegate delegate) {
+  @NotNull
+  public MasterDetailPopupBuilder setDelegate(@NotNull Delegate delegate) {
     myDelegate = delegate;
     return this;
   }
 
-  public @NotNull MasterDetailPopupBuilder setDetailView(@NotNull DetailView detailView) {
+  @NotNull
+  public MasterDetailPopupBuilder setDetailView(@NotNull DetailView detailView) {
     myDetailView = detailView;
     myDetailController.setDetailView(myDetailView);
     return this;
   }
 
-  public @NotNull MasterDetailPopupBuilder setDimensionServiceKey(@Nullable String dimensionServiceKey) {
+  @NotNull
+  public MasterDetailPopupBuilder setDimensionServiceKey(@Nullable String dimensionServiceKey) {
     myDimensionServiceKey = dimensionServiceKey;
     return this;
   }
 
-  public @NotNull MasterDetailPopupBuilder setAddDetailViewToEast(boolean addDetailViewToEast) {
+  @NotNull
+  public MasterDetailPopupBuilder setAddDetailViewToEast(boolean addDetailViewToEast) {
     myAddDetailViewToEast = addDetailViewToEast;
     return this;
   }
 
-  public @NotNull MasterDetailPopupBuilder setActionsGroup(@Nullable ActionGroup actions) {
+  @NotNull
+  public MasterDetailPopupBuilder setActionsGroup(@Nullable ActionGroup actions) {
     myActions = actions;
     return this;
   }
 
-  public @NotNull MasterDetailPopupBuilder setPopupTuner(@Nullable Consumer<? super IPopupChooserBuilder> tuner) {
+  @NotNull
+  public MasterDetailPopupBuilder setPopupTuner(@Nullable Consumer<? super IPopupChooserBuilder> tuner) {
     myPopupTuner = tuner;
     return this;
   }
 
-  public @NotNull MasterDetailPopupBuilder setDoneRunnable(@Nullable Runnable doneRunnable) {
+  @NotNull
+  public MasterDetailPopupBuilder setDoneRunnable(@Nullable Runnable doneRunnable) {
     myDoneRunnable = doneRunnable;
     return this;
   }
 
-  public @NotNull JBPopup createMasterDetailPopup() {
+  @NotNull
+  public JBPopup createMasterDetailPopup() {
     if (myChooserComponent instanceof JList) {
       ((JList<?>)myChooserComponent).setCellRenderer(new ListItemRenderer(myProject, myDelegate));
     }
@@ -241,12 +245,12 @@ public final class MasterDetailPopupBuilder implements MasterController {
       if (SystemInfoRt.isMac && !StartupUiUtil.isUnderDarcula()) {
         JButton done = new JButton(LangBundle.message("button.done"));
         done.setOpaque(false);
-        //noinspection HardCodedStringLiteral
         done.setMnemonic('o');
         done.addActionListener(actionListener);
         builder.setCommandButton(new ActiveComponent.Adapter() {
+          @NotNull
           @Override
-          public @NotNull JComponent getComponent() {
+          public JComponent getComponent() {
             return done;
           }
         });

@@ -1,19 +1,14 @@
-from _typeshed import Incomplete
-from typing import Final
+from typing import Any
 
-from braintree.resource import Resource
-from braintree.subscription import Subscription
+from braintree.resource import Resource as Resource
 
 class ApplePayCard(Resource):
     class CardType:
-        AmEx: Final = "Apple Pay - American Express"
-        MasterCard: Final = "Apple Pay - MasterCard"
-        Visa: Final = "Apple Pay - Visa"
-
-    is_expired: Incomplete
-    subscriptions: list[Subscription]
+        AmEx: str
+        MasterCard: str
+        Visa: str
+    is_expired: Any
+    subscriptions: Any
     def __init__(self, gateway, attributes) -> None: ...
     @property
     def expiration_date(self): ...
-    @staticmethod
-    def signature(): ...

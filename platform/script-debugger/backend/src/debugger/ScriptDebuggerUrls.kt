@@ -10,6 +10,7 @@ import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.ApiStatus
+import java.net.URISyntaxException
 
 @ApiStatus.Internal
 object ScriptDebuggerUrls {
@@ -17,6 +18,7 @@ object ScriptDebuggerUrls {
   @JvmStatic
   fun newLocalFileUrl(path: String): Url {
     val uriPath = toUriPath(path)
+    if (uriPath.isNotEmpty() && uriPath[0] != '/') throw URISyntaxException(path, "Must be absolute")
     return Urls.newUrl(URLUtil.FILE_PROTOCOL, "", uriPath)
   }
 
@@ -28,16 +30,13 @@ object ScriptDebuggerUrls {
   }
 
   private fun toUriPath(path: String): String {
-    var result = decodeAndConvertToSystemIndependent(path)
+    var result = FileUtilRt.toSystemIndependentName(path)
     if (result.length >= 2 && result[1] == ':') result = "/$result"
     return result
   }
 
-  // Shumaf: I hate that we have so many ways to parse a URL, yet none of them are correct
-  private fun decodeAndConvertToSystemIndependent(path: String): String = FileUtilRt.toSystemIndependentName(URLUtil.unescapePercentSequences(path))
-
   private fun toUri(absoluteOrRelativePath: String): Url {
-    var result = decodeAndConvertToSystemIndependent(absoluteOrRelativePath)
+    var result = FileUtilRt.toSystemIndependentName(absoluteOrRelativePath)
     if (result.length >= 2 && result[1] == ':') result = "/$result"
     return if (result.isNotEmpty() && result[0] == '/') newLocalFileUrl(result) else Urls.newUnparsable(result)
   }

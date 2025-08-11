@@ -25,14 +25,14 @@ import java.util.*;
 public final class ShelvedChangeList implements ExternalizableScheme {
   private static final Logger LOG = Logger.getInstance(ShelvedChangeList.class);
 
-  private static final @NonNls String NAME_ATTRIBUTE = "name";
-  private static final @NonNls String ATTRIBUTE_DATE = "date";
-  private static final @NonNls String ATTRIBUTE_RECYCLED_CHANGELIST = "recycled";
-  private static final @NonNls String ATTRIBUTE_TOBE_DELETED_CHANGELIST = "toDelete";
-  private static final @NonNls String ATTRIBUTE_DELETED_CHANGELIST = "deleted";
-  private static final @NonNls String ELEMENT_BINARY = "binary";
-  private static final @NonNls String PATH_FIELD_NAME = "PATH";
-  private static final @NonNls String DESCRIPTION_FIELD_NAME = "DESCRIPTION";
+  @NonNls private static final String NAME_ATTRIBUTE = "name";
+  @NonNls private static final String ATTRIBUTE_DATE = "date";
+  @NonNls private static final String ATTRIBUTE_RECYCLED_CHANGELIST = "recycled";
+  @NonNls private static final String ATTRIBUTE_TOBE_DELETED_CHANGELIST = "toDelete";
+  @NonNls private static final String ATTRIBUTE_DELETED_CHANGELIST = "deleted";
+  @NonNls private static final String ELEMENT_BINARY = "binary";
+  @NonNls private static final String PATH_FIELD_NAME = "PATH";
+  @NonNls private static final String DESCRIPTION_FIELD_NAME = "DESCRIPTION";
 
   private Path myPath;
   private @NotNull String mySchemeName;
@@ -88,8 +88,9 @@ public final class ShelvedChangeList implements ExternalizableScheme {
     myRecycled = recycled;
   }
 
+  @Nls
   @Override
-  public @Nls String toString() {
+  public String toString() {
     return DESCRIPTION;
   }
 
@@ -120,7 +121,8 @@ public final class ShelvedChangeList implements ExternalizableScheme {
     }
   }
 
-  public @Nullable List<ShelvedChange> getChanges() {
+  @Nullable
+  public List<ShelvedChange> getChanges() {
     return myChanges;
   }
 
@@ -138,13 +140,15 @@ public final class ShelvedChangeList implements ExternalizableScheme {
     myChanges = shelvedChanges;
   }
 
-  static @NotNull List<ShelvedChange> createShelvedChangesFromFilePatches(@NotNull Project project,
-                                                                          @NotNull Path patchPath,
-                                                                          @NotNull Collection<? extends FilePatch> filePatches) {
+  @NotNull
+  static List<ShelvedChange> createShelvedChangesFromFilePatches(@NotNull Project project,
+                                                                 @NotNull Path patchPath,
+                                                                 @NotNull Collection<? extends FilePatch> filePatches) {
     return ContainerUtil.mapNotNull(filePatches, patch -> createShelvedChange(project, patchPath, patch));
   }
 
-  static @Nullable ShelvedChange createShelvedChange(@NotNull Project project, @NotNull Path patchPath, @NotNull FilePatch patch) {
+  @Nullable
+  static ShelvedChange createShelvedChange(@NotNull Project project, @NotNull Path patchPath, @NotNull FilePatch patch) {
     String beforeName = patch.getBeforeName();
     String afterName = patch.getAfterName();
     if (beforeName == null || afterName == null) {
@@ -170,8 +174,9 @@ public final class ShelvedChangeList implements ExternalizableScheme {
     return myBinaryFiles;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return mySchemeName;
   }
 
@@ -204,12 +209,12 @@ public final class ShelvedChangeList implements ExternalizableScheme {
     return myPath;
   }
 
-  public @NlsSafe @NotNull String getDescription() {
+  @NlsSafe
+  public @NotNull String getDescription() {
     return Objects.requireNonNullElse(DESCRIPTION, "");
   }
 
-  @ApiStatus.Internal
-  public void setDescription(@NotNull @NlsSafe String description) {
+  void setDescription(@NotNull @NlsSafe String description) {
     DESCRIPTION = description;
   }
 

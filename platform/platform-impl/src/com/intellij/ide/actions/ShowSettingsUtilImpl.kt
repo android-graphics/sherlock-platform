@@ -1,33 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.TabbedConfigurable
-import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.ConfigurableWrapper
-import com.intellij.openapi.options.newEditor.SettingsDialog
 import com.intellij.openapi.options.newEditor.SettingsDialogFactory
-import com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.currentOrDefaultProject
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.navigation.Place
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Composite
 import java.util.function.Consumer
@@ -39,39 +29,13 @@ private val LOG = logger<ShowSettingsUtilImpl>()
 open class ShowSettingsUtilImpl : ShowSettingsUtil() {
   companion object {
     @JvmStatic
-    @Deprecated("Use showSettings instead")
-    fun getDialog(project: Project?, groups: List<ConfigurableGroup>, toSelect: Configurable?): DialogWrapper =
-      createDialogWrapper(project, groups, toSelect, null, true)
-
-    private fun createDialogWrapper(project: Project?, groups: List<ConfigurableGroup>, toSelect: Configurable?, filter: String?, isModal: Boolean) =
-      SettingsDialogFactory.getInstance().create(
+    fun getDialog(project: Project?, groups: List<ConfigurableGroup>, toSelect: Configurable?): DialogWrapper {
+      return SettingsDialogFactory.getInstance().create(
         project = currentOrDefaultProject(project),
         groups = filterEmptyGroups(groups),
         configurable = toSelect,
-        filter = filter
+        filter = null
       )
-
-    @JvmStatic
-    fun showSettings(project: Project?, groups: List<ConfigurableGroup>, toSelect: Configurable?) {
-      showInternal(project, groups, toSelect, filter = null)
-    }
-
-    private fun showInternal(project: Project?, groups: List<ConfigurableGroup>, toSelect: Configurable?, filter: String?) {
-      val currentOrDefaultProject = currentOrDefaultProject(project)
-      val isActualProject = currentOrDefaultProject != ProjectManager.getInstance().defaultProject
-      if (useNonModalSettingsWindow() && isActualProject) {
-        runWithModalProgressBlocking(currentOrDefaultProject, IdeBundle.message("settings.modal.opening.message")) {
-          val settingsFile = SettingsVirtualFileHolder.getInstance(currentOrDefaultProject).getOrCreate(toSelect) {
-            createDialogWrapper(project, groups, toSelect, filter, false) as SettingsDialog
-          }
-          val fileEditorManager = FileEditorManager.getInstance(currentOrDefaultProject) as FileEditorManagerEx;
-          val options = FileEditorOpenOptions(reuseOpen = true, isSingletonEditorInWindow = true, requestFocus = true)
-          fileEditorManager.openFile(settingsFile, options);
-        }
-      }
-      else {
-        createDialogWrapper(project, groups, toSelect, filter, true).show()
-      }
     }
 
     /**
@@ -114,8 +78,12 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
       val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, /* withIdeSettings = */true)
         .takeIf { !it.configurables.isEmpty() }
       val configurableToSelect = if (idToSelect == null) null else ConfigurableVisitor.findById(idToSelect, listOf(group))
-
-      showInternal(project, listOf<ConfigurableGroup>(group!!), configurableToSelect, filter)
+      SettingsDialogFactory.getInstance().create(
+        project = currentOrDefaultProject(project),
+        groups = listOf(group!!),
+        configurable = configurableToSelect,
+        filter = filter
+      ).show()
     }
 
     @JvmStatic
@@ -126,7 +94,7 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
 
   override fun showSettingsDialog(project: Project, vararg groups: ConfigurableGroup) {
     runCatching {
-      showSettings(project, groups.asList(), null)
+      getDialog(project, groups.asList(), null).show()
     }.getOrLogException(LOG)
   }
 
@@ -134,11 +102,9 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     showSettingsDialog(project = project, configurableClass = configurableClass, additionalConfiguration = null)
   }
 
-  override fun <T : Configurable?> showSettingsDialog(
-    project: Project?,
-    configurableClass: Class<T>,
-    additionalConfiguration: Consumer<in T>?,
-  ) {
+  override fun <T : Configurable?> showSettingsDialog(project: Project?,
+                                                      configurableClass: Class<T>,
+                                                      additionalConfiguration: Consumer<in T>?) {
     assert(Configurable::class.java.isAssignableFrom(configurableClass)) { "Not a configurable: " + configurableClass.name }
     showSettingsDialog(project, { it: Configurable? -> ConfigurableWrapper.cast(configurableClass, it) != null }) { it: Configurable ->
       if (additionalConfiguration != null) {
@@ -148,11 +114,9 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     }
   }
 
-  override fun showSettingsDialog(
-    project: Project?,
-    predicate: Predicate<in Configurable>,
-    additionalConfiguration: Consumer<in Configurable>?,
-  ) {
+  override fun showSettingsDialog(project: Project?,
+                                  predicate: Predicate<in Configurable>,
+                                  additionalConfiguration: Consumer<in Configurable>?) {
     val groups = getConfigurableGroups(project, true)
     val config = object : ConfigurableVisitor() {
       override fun accept(configurable: Configurable): Boolean {
@@ -160,18 +124,18 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
       }
     }.find(*groups) ?: error("Cannot find configurable for specified predicate")
     additionalConfiguration?.accept(config)
-    showSettings(project, groups.asList(), config)
+    getDialog(project, groups.asList(), config).show()
   }
 
   override fun showSettingsDialog(project: Project?, nameToSelect: String) {
     val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project,  /* withIdeSettings = */true)
     val groups = if (group.configurables.isEmpty()) emptyList() else listOf(group)
-    showSettings(project = project, groups = groups, toSelect = findPreselectedByDisplayName(nameToSelect, groups))
+    getDialog(project = project, groups = groups, toSelect = findPreselectedByDisplayName(nameToSelect, groups)).show()
   }
 
   override fun showSettingsDialog(project: Project, toSelect: Configurable?) {
     val groups = listOf(ConfigurableExtensionPointUtil.getConfigurableGroup(project,  /* withIdeSettings = */true))
-    showSettings(project = project, groups = groups, toSelect = toSelect)
+    getDialog(project = project, groups = groups, toSelect = toSelect).show()
   }
 
   override fun editConfigurable(project: Project, configurable: Configurable): Boolean {
@@ -185,12 +149,10 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
                             showApplyButton = isWorthToShowApplyButton(configurable))
   }
 
-  override fun editConfigurable(
-    project: Project,
-    dimensionServiceKey: String,
-    configurable: Configurable,
-    showApplyButton: Boolean,
-  ): Boolean {
+  override fun editConfigurable(project: Project,
+                                dimensionServiceKey: String,
+                                configurable: Configurable,
+                                showApplyButton: Boolean): Boolean {
     return editConfigurable(parent = null,
                             project = project,
                             configurable = configurable,
@@ -255,7 +217,6 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
   }
 }
 
-
 private suspend fun SequenceScope<Configurable>.collect(configurables: Array<Configurable>) {
   for (configurable in configurables) {
     yield(configurable)
@@ -284,14 +245,12 @@ private fun isWorthToShowApplyButton(configurable: Configurable): Boolean {
   return configurable is Place.Navigator || configurable is Composite || configurable is TabbedConfigurable
 }
 
-private fun editConfigurable(
-  parent: Component?,
-  project: Project?,
-  configurable: Configurable,
-  dimensionKey: String,
-  advancedInitialization: (() -> Unit)?,
-  showApplyButton: Boolean,
-): Boolean {
+private fun editConfigurable(parent: Component?,
+                             project: Project?,
+                             configurable: Configurable,
+                             dimensionKey: String,
+                             advancedInitialization: (() -> Unit)?,
+                             showApplyButton: Boolean): Boolean {
   val consumer = if (advancedInitialization == null) null else { _: Configurable? -> advancedInitialization() }
   return editConfigurable(parent = parent,
                           project = project,
@@ -301,14 +260,12 @@ private fun editConfigurable(
                           showApplyButton = showApplyButton)
 }
 
-private fun <T : Configurable> editConfigurable(
-  parent: Component?,
-  project: Project?,
-  configurable: T,
-  advancedInitialization: ((T) -> Unit)?,
-  dimensionKey: String,
-  showApplyButton: Boolean,
-): Boolean {
+private fun <T : Configurable> editConfigurable(parent: Component?,
+                                                 project: Project?,
+                                                 configurable: T,
+                                                 advancedInitialization: ((T) -> Unit)?,
+                                                 dimensionKey: String,
+                                                 showApplyButton: Boolean): Boolean {
   val editor = if (parent == null) {
     SettingsDialogFactory.getInstance().create(project = project,
                                                key = dimensionKey,
@@ -331,11 +288,4 @@ private fun <T : Configurable> editConfigurable(
     })
   }
   return editor.showAndGet()
-}
-
-private fun useNonModalSettingsWindow(): Boolean {
-  if (System.getProperty("ide.ui.non.modal.settings.window") != null) {
-    return System.getProperty("ide.ui.non.modal.settings.window").toBoolean()
-  }
-  return getBoolean("ide.ui.non.modal.settings.window")
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.compiler;
 
 import com.google.gson.Gson;
@@ -28,7 +28,7 @@ import java.util.List;
 public final class GradleBuildProcessParametersProvider extends BuildProcessParametersProvider {
 
   public static final Logger LOG = Logger.getInstance(GradleBuildProcessParametersProvider.class);
-  private final @NotNull Project myProject;
+  @NotNull private final Project myProject;
 
   private List<String> myGradleClasspath;
 
@@ -37,7 +37,8 @@ public final class GradleBuildProcessParametersProvider extends BuildProcessPara
   }
 
   @Override
-  public @NotNull List<String> getClassPath() {
+  @NotNull
+  public List<String> getClassPath() {
     List<String> result = new ArrayList<>();
     if (!GradleSettings.getInstance(myProject).getLinkedProjectsSettings().isEmpty()) {
       addGradleClassPath(result);
@@ -46,7 +47,7 @@ public final class GradleBuildProcessParametersProvider extends BuildProcessPara
     return result;
   }
 
-  private void addGradleClassPath(final @NotNull List<String> classpath) {
+  private void addGradleClassPath(@NotNull final List<String> classpath) {
     if (myGradleClasspath == null) {
       myGradleClasspath = new ArrayList<>();
       String gradleToolingApiJarPath = PathUtil.getJarPathForClass(ProjectConnection.class);
@@ -61,14 +62,15 @@ public final class GradleBuildProcessParametersProvider extends BuildProcessPara
     classpath.addAll(myGradleClasspath);
   }
 
-  private static void addOtherClassPath(final @NotNull List<String> classpath) {
+  private static void addOtherClassPath(@NotNull final List<String> classpath) {
     classpath.add(locateAntLibraries());
     classpath.add(PathUtil.getJarPathForClass(GroovyObject.class));
     classpath.add(PathUtil.getJarPathForClass(Gson.class));
     classpath.add(PathUtil.getJarPathForClass(org.slf4j.Logger.class));
   }
 
-  private static @NotNull String locateAntLibraries() {
+  @NotNull
+  private static String locateAntLibraries() {
     var gradleJar = PathManager.getJarForClass(GradleConstants.class);
     if (gradleJar != null) {
       Path pathToAnt = gradleJar.resolveSibling("ant").resolve("ant.jar");

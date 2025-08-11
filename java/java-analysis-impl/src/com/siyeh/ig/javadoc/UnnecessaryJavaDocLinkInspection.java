@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -33,8 +33,9 @@ public final class UnnecessaryJavaDocLinkInspection extends BaseInspection imple
   @SuppressWarnings("PublicField")
   public boolean ignoreInlineLinkToSuper = false;
 
+  @NotNull
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  protected String buildErrorString(Object... infos) {
     final int n = ((Integer)infos[1]).intValue();
     if (n == THIS_METHOD) {
       return InspectionGadgetsBundle.message(
@@ -70,13 +71,15 @@ public final class UnnecessaryJavaDocLinkInspection extends BaseInspection imple
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.javadoc.link.quickfix", tagName);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.java.doc.link.fix.family.name");
     }
 
@@ -127,7 +130,7 @@ public final class UnnecessaryJavaDocLinkInspection extends BaseInspection imple
     @Override
     public void visitDocTag(@NotNull PsiDocTag tag) {
       super.visitDocTag(tag);
-      final @NonNls String name = tag.getName();
+      @NonNls final String name = tag.getName();
       if ("link".equals(name) || "linkplain".equals(name)) {
         if (!(tag instanceof PsiInlineDocTag)) {
           return;

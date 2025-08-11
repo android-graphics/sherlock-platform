@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
@@ -35,7 +35,8 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
   }
 
   @Override
-  public @Nullable GrExpression getCondition() {
+  @Nullable
+  public GrExpression getCondition() {
     PsiElement lParenth = getLParenth();
 
     if (lParenth == null) return null;
@@ -47,7 +48,8 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
   }
 
   @Override
-  public @Nullable GrStatement getThenBranch() {
+  @Nullable
+  public GrStatement getThenBranch() {
     List<GrStatement> statements = new ArrayList<>();
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrStatement) statements.add((GrStatement)cur);
@@ -59,7 +61,8 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
   }
 
   @Override
-  public @Nullable GrStatement getElseBranch() {
+  @Nullable
+  public GrStatement getElseBranch() {
     List<GrStatement> statements = new ArrayList<>();
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrStatement) statements.add((GrStatement)cur);
@@ -86,12 +89,14 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
   }
 
   @Override
-  public @NotNull <T extends GrStatement> T replaceThenBranch(@NotNull T newBranch) throws IncorrectOperationException {
+  @NotNull
+  public <T extends GrStatement> T replaceThenBranch(@NotNull T newBranch) throws IncorrectOperationException {
     return PsiImplUtil.replaceBody(newBranch, getThenBranch(), getNode(), getProject());
   }
 
   @Override
-  public @NotNull <T extends GrStatement> T replaceElseBranch(@NotNull T newBranch) throws IncorrectOperationException {
+  @NotNull
+  public <T extends GrStatement> T replaceElseBranch(@NotNull T newBranch) throws IncorrectOperationException {
     return PsiImplUtil.replaceBody(newBranch, getElseBranch(), getNode(), getProject());
   }
 

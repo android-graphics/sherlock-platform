@@ -1,5 +1,4 @@
 // PROBLEM: none
-// WITH_STDLIB
 open class A {
    open fun foo(number: Int) {
       print(number)

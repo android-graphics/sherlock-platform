@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
@@ -7,14 +7,10 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypes;
+import com.intellij.psi.*;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.ui.NonFocusableCheckBox;
-import com.intellij.ui.components.JBBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -50,7 +46,8 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
     setAdvertisementText(getAdvertisementText());
   }
 
-  private static @Nullable @PopupAdvertisement String getAdvertisementText() {
+  @Nullable
+  private static @PopupAdvertisement String getAdvertisementText() {
     final Shortcut shortcut = KeymapUtil.getPrimaryShortcut("PreviousTemplateVariable");
     if  (shortcut != null) {
       return GroovyBundle.message("introduce.variable.change.type.advertisement", KeymapUtil.getShortcutText(shortcut));
@@ -94,16 +91,17 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
                                                        new Insets(5, 5, 5, 5), 0, 0));
     }
 
-    panel.add(JBBox.createVerticalBox(),
+    panel.add(Box.createVerticalBox(),
               new GridBagConstraints(0, 2, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
     return panel;
   }
 
+  @Nullable
   @Override
-  protected @Nullable GroovyIntroduceVariableSettings getInitialSettingsForInplace(final @NotNull GrIntroduceContext context,
-                                                                                   final @NotNull OccurrencesChooser.ReplaceChoice choice,
-                                                                                   final String[] names) {
+  protected GroovyIntroduceVariableSettings getInitialSettingsForInplace(@NotNull final GrIntroduceContext context,
+                                                                         @NotNull final OccurrencesChooser.ReplaceChoice choice,
+                                                                         final String[] names) {
     return new GroovyIntroduceVariableSettings() {
       private final CanonicalTypes.Type myType;
 
@@ -124,8 +122,9 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
         return myCanBeFinalCb != null ? myCanBeFinalCb.isSelected() : false;
       }
 
+      @Nullable
       @Override
-      public @Nullable String getName() {
+      public String getName() {
         return names[0];
       }
 
@@ -134,8 +133,9 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
         return choice == OccurrencesChooser.ReplaceChoice.ALL;
       }
 
+      @Nullable
       @Override
-      public @Nullable PsiType getSelectedType() {
+      public PsiType getSelectedType() {
         return myType != null ? myType.getType(context.getPlace()) : null;
       }
     };
@@ -154,7 +154,8 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
     builder.replaceElement(element, "Variable_type", typeExpression, true, true);
   }
 
-  private static @Nullable PsiElement getTypeELementOrDef(@NotNull GrVariable variable) {
+  @Nullable
+  private static PsiElement getTypeELementOrDef(@NotNull GrVariable variable) {
     GrTypeElement typeElement = variable.getTypeElementGroovy();
     if (typeElement != null) return typeElement;
 
@@ -171,8 +172,9 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
         return myCanBeFinalCb.isSelected();
       }
 
+      @Nullable
       @Override
-      public @Nullable String getName() {
+      public String getName() {
         return GrInplaceVariableIntroducer.this.getInputName();
       }
 
@@ -181,8 +183,9 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
         return isReplaceAllOccurrences();
       }
 
+      @Nullable
       @Override
-      public @Nullable PsiType getSelectedType() {
+      public PsiType getSelectedType() {
         return GrInplaceVariableIntroducer.this.getSelectedType();
       }
     };

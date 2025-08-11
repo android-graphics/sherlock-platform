@@ -7,12 +7,13 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import git4idea.GitVcs
 import git4idea.config.GitVcsApplicationSettings
+import git4idea.index.canEnableStagingArea
 import git4idea.index.enableStagingArea
 
 abstract class GitToggleStagingAreaAction(private val enable: Boolean) : DumbAwareToggleAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
-    if (project == null ||
+    if (project == null || !canEnableStagingArea() ||
         ProjectLevelVcsManager.getInstance(project).singleVCS?.keyInstanceMethod != GitVcs.getKey()) {
       e.presentation.isEnabledAndVisible = false
     }

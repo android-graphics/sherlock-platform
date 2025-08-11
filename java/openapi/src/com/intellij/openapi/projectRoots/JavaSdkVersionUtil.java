@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.module.Module;
@@ -21,12 +21,12 @@ public final class JavaSdkVersionUtil {
     return actual == null || actual.isAtLeast(expected);
   }
 
-  public static @Nullable JavaSdkVersion getJavaSdkVersion(@NotNull PsiElement element) {
+  public static JavaSdkVersion getJavaSdkVersion(@NotNull PsiElement element) {
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
     return module != null ? getJavaSdkVersion(ModuleRootManager.getInstance(module).getSdk()) : null;
   }
 
-  public static @Nullable JavaSdkVersion getJavaSdkVersion(@Nullable Sdk sdk) {
+  public static JavaSdkVersion getJavaSdkVersion(@Nullable Sdk sdk) {
     if (sdk != null) {
       SdkTypeId sdkType = sdk.getSdkType();
       if (!(sdkType instanceof JavaSdk) && sdkType instanceof SdkType) {
@@ -39,7 +39,8 @@ public final class JavaSdkVersionUtil {
     return null;
   }
 
-  public static @Nullable Sdk findJdkByVersion(@NotNull JavaSdkVersion version) {
+  @Nullable
+  public static Sdk findJdkByVersion(@NotNull JavaSdkVersion version) {
     JavaSdk javaSdk = JavaSdk.getInstance();
     Sdk candidate = null;
     for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(javaSdk)) {

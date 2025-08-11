@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.jdi;
 
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.jetbrains.jdi.JNITypeParser;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -177,12 +176,12 @@ public class GeneratedReferenceType implements ReferenceType {
 
   @Override
   public List<String> availableStrata() {
-    return List.of(defaultStratum());
+    return List.of(myVm.getDefaultStratum());
   }
 
   @Override
   public String defaultStratum() {
-    return DebugProcess.JAVA_STRATUM;
+    return myVm.getDefaultStratum();
   }
 
   @Override
@@ -237,7 +236,7 @@ public class GeneratedReferenceType implements ReferenceType {
 
   @Override
   public String signature() {
-    return DebuggerUtilsEx.typeNameToSignature(myName);
+    return JNITypeParser.typeNameToSignature(myName);
   }
 
   @Override

@@ -22,7 +22,7 @@ internal class WasmMultiplatformSupportAvailability : KotlinSupportAvailability 
                 true
             }
 
-            Registry.`is`("kotlin.k2.kmp.wasm.enabled", true) -> {
+            Registry.`is`("kotlin.k2.kmp.wasm.enabled", false) -> {
                 true
             }
 

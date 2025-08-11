@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.CommonBundle;
@@ -42,11 +42,11 @@ public abstract class ExecutableValidator {
   private static final Logger LOG = Logger.getInstance(ExecutableValidator.class);
   private static final NotificationGroup ourNotificationGroup =
     NotificationGroupManager.getInstance().getNotificationGroup("External Executable Critical Failures");
-  protected final @NotNull Project myProject;
+  @NotNull protected final Project myProject;
 
-  private final @NotNull @NlsContexts.DialogTitle String myNotificationErrorTitle;
-  private final @NotNull @NlsContexts.DialogMessage String myNotificationErrorDescription;
-  private final @NotNull @NlsContexts.DialogMessage String myNotificationSafeModeDescription;
+  @NotNull private final @NlsContexts.DialogTitle String myNotificationErrorTitle;
+  @NotNull private final @NlsContexts.DialogMessage String myNotificationErrorDescription;
+  @NotNull private final @NlsContexts.DialogMessage String myNotificationSafeModeDescription;
 
   /**
    * Configures notification and dialog by setting text messages and titles specific to the whoever uses the validator.
@@ -71,13 +71,16 @@ public abstract class ExecutableValidator {
    * @return the settings configurable display name, where the executable is shown and can be fixed.
    *         This configurable will be opened if user presses "Fix" on the notification about invalid executable.
    */
-  protected abstract @NotNull @Nls String getConfigurableDisplayName();
+  @NotNull @Nls
+  protected abstract String getConfigurableDisplayName();
 
-  protected @Nullable Notification validate(@NotNull String executable) {
+  @Nullable
+  protected Notification validate(@NotNull String executable) {
     return !isExecutableValid(executable) ? createDefaultNotification() : null;
   }
 
-  protected @NotNull ExecutableNotValidNotification createDefaultNotification() {
+  @NotNull
+  protected ExecutableNotValidNotification createDefaultNotification() {
     return new ExecutableNotValidNotification();
   }
 
@@ -137,7 +140,8 @@ public abstract class ExecutableValidator {
     }
   }
 
-  protected @NotNull @NlsContexts.NotificationContent String prepareDescription(@NotNull @Nls String description, boolean appendFixIt) {
+  @NotNull
+  protected @NlsContexts.NotificationContent String prepareDescription(@NotNull @Nls String description, boolean appendFixIt) {
     @NlsSafe String executable = getCurrentExecutable();
 
     HtmlBuilder builder = new HtmlBuilder();

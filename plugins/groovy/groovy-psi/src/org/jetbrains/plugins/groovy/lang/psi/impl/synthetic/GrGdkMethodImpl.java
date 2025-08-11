@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
@@ -47,13 +47,15 @@ public final class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMe
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiType getReceiverType() {
+  public PsiType getReceiverType() {
     return myReceiverType;
   }
 
   @Override
-  public @NotNull PsiMethod getStaticMethod() {
+  @NotNull
+  public PsiMethod getStaticMethod() {
     return myMethod;
   }
 
@@ -88,9 +90,10 @@ public final class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMe
     return myMethod.hashCode();
   }
 
-  public static @NotNull GrGdkMethod createGdkMethod(final @NotNull PsiMethod original,
-                                                     final boolean isStatic,
-                                                     final @Nullable String originInfo) {
+  @NotNull
+  public static GrGdkMethod createGdkMethod(@NotNull final PsiMethod original,
+                                            final boolean isStatic,
+                                            @Nullable final String originInfo) {
     final Key<CachedValue<GrGdkMethodImpl>> cachedValueKey = isStatic ? CACHED_STATIC : CACHED_NON_STATIC;
     CachedValue<GrGdkMethodImpl> cachedValue = original.getUserData(cachedValueKey);
     if (cachedValue == null) {
@@ -111,8 +114,9 @@ public final class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMe
     return myMethod.isValid();
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getNavigationElement() {
+  public PsiElement getNavigationElement() {
     PsiElement navigationElement = myMethod.getNavigationElement();
     return navigationElement == null ? myMethod : navigationElement;
   }
@@ -122,8 +126,9 @@ public final class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMe
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getPrototype() {
+  public PsiElement getPrototype() {
     return getStaticMethod();
   }
 }

@@ -30,7 +30,6 @@ public interface ChangeListFilteringStrategy {
   @NotNull
   List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists);
 
-  @Override
   @Nls
   String toString();
 }

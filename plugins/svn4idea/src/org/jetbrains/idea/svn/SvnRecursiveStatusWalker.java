@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ReadAction;
@@ -35,14 +35,14 @@ import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 public class SvnRecursiveStatusWalker {
   private static final Logger LOG = Logger.getInstance(SvnRecursiveStatusWalker.class);
 
-  private final @NotNull SvnVcs myVcs;
-  private final @NotNull Project myProject;
-  private final @NotNull ProjectLevelVcsManager myVcsManager;
-  private final @NotNull ChangeListManager myChangeListManager;
-  private final @Nullable ProgressIndicator myProgress;
-  private final @NotNull StatusReceiver myReceiver;
-  private final @NotNull LinkedList<MyItem> myQueue;
-  private final @NotNull MyHandler myHandler;
+  @NotNull private final SvnVcs myVcs;
+  @NotNull private final Project myProject;
+  @NotNull private final ProjectLevelVcsManager myVcsManager;
+  @NotNull private final ChangeListManager myChangeListManager;
+  @Nullable private final ProgressIndicator myProgress;
+  @NotNull private final StatusReceiver myReceiver;
+  @NotNull private final LinkedList<MyItem> myQueue;
+  @NotNull private final MyHandler myHandler;
 
   public SvnRecursiveStatusWalker(@NotNull SvnVcs vcs, @NotNull StatusReceiver receiver, @Nullable ProgressIndicator progress) {
     myVcs = vcs;
@@ -98,7 +98,7 @@ public class SvnRecursiveStatusWalker {
     }
   }
 
-  public boolean isIgnoredByVcs(final @NotNull VirtualFile vFile) {
+  public boolean isIgnoredByVcs(@NotNull final VirtualFile vFile) {
     return ReadAction.compute(() -> {
       if (myVcs.getProject().isDisposed()) throw new ProcessCanceledException();
       return myVcsManager.isIgnored(vFile);
@@ -127,9 +127,9 @@ public class SvnRecursiveStatusWalker {
   }
 
   private static final class MyItem {
-    private final @NotNull FilePath myPath;
-    private final @NotNull Depth myDepth;
-    private final @NotNull StatusClient myStatusClient;
+    @NotNull private final FilePath myPath;
+    @NotNull private final Depth myDepth;
+    @NotNull private final StatusClient myStatusClient;
     private final boolean myIsInnerCopyRoot;
 
     private MyItem(@NotNull FilePath path, @NotNull Depth depth, boolean isInnerCopyRoot, @NotNull StatusClient statusClient) {
@@ -139,15 +139,18 @@ public class SvnRecursiveStatusWalker {
       myIsInnerCopyRoot = isInnerCopyRoot;
     }
 
-    public @NotNull FilePath getPath() {
+    @NotNull
+    public FilePath getPath() {
       return myPath;
     }
 
-    public @NotNull Depth getDepth() {
+    @NotNull
+    public Depth getDepth() {
       return myDepth;
     }
 
-    public @NotNull StatusClient getClient() {
+    @NotNull
+    public StatusClient getClient() {
       return myStatusClient;
     }
 
@@ -167,8 +170,9 @@ public class SvnRecursiveStatusWalker {
     VirtualFileVisitor.Option[] options = newDepth.equals(Depth.EMPTY) ? ar(SKIP_ROOT, ONE_LEVEL_DEEP) : new VirtualFileVisitor.Option[0];
 
     visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>(options) {
+      @NotNull
       @Override
-      public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
+      public Result visitFileEx(@NotNull VirtualFile file) {
         if (isIgnoredIdeaLevel(file)) {
           myReceiver.processIgnored(getFilePath(file));
           return SKIP_CHILDREN;
@@ -185,7 +189,8 @@ public class SvnRecursiveStatusWalker {
     });
   }
 
-  private @NotNull MyItem createItem(@NotNull FilePath path, @NotNull Depth depth, boolean isInnerCopyRoot) {
+  @NotNull
+  private MyItem createItem(@NotNull FilePath path, @NotNull Depth depth, boolean isInnerCopyRoot) {
     StatusClient statusClient = myVcs.getFactory(path.getIOFile()).createStatusClient();
 
     return new MyItem(path, depth, isInnerCopyRoot, statusClient);
@@ -208,7 +213,8 @@ public class SvnRecursiveStatusWalker {
       }
     }
 
-    public @Nullable Status getCurrentItemStatus() {
+    @Nullable
+    public Status getCurrentItemStatus() {
       Status result = null;
 
       try {

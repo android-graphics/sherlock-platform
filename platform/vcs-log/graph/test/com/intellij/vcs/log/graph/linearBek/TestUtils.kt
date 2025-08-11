@@ -15,6 +15,10 @@ import org.junit.Assert.assertEquals
 import kotlin.test.assertNull
 
 class DummyTimestampGetter(val nodesCount: Int) : TimestampGetter {
+  override fun size(): Int {
+    return nodesCount
+  }
+
   override fun getTimestamp(index: Int): Long {
     return 0
   }

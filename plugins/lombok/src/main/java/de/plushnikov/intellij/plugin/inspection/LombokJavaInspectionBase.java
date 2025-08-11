@@ -19,5 +19,6 @@ public abstract class LombokJavaInspectionBase extends AbstractBaseJavaLocalInsp
     return createVisitor(holder, isOnTheFly);
   }
 
-  protected abstract @NotNull PsiElementVisitor createVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly);
+  @NotNull
+  protected abstract PsiElementVisitor createVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly);
 }

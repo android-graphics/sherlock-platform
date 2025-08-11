@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.openapi.Disposable;
@@ -68,8 +68,9 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull Object getRootElement() {
+  public Object getRootElement() {
     return myRoot;
   }
 
@@ -265,8 +266,9 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
       myNodeClasses = nodeClasses;
     }
 
+    @NotNull
     @Override
-    public @NotNull Action visit(@NotNull TreePath path) {
+    public Action visit(@NotNull TreePath path) {
       Object object = TreeUtil.getLastUserObject(path);
       if (object != null && anyAssignableFrom(object.getClass())) {
         myCollector.add(path);
@@ -303,11 +305,13 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     ALWAYS, NEVER, NORMAL
   }
 
-  public @NotNull <T extends ExternalSystemNode> List<T> getNodes(@NotNull Class<T> nodeClass) {
+  @NotNull
+  public <T extends ExternalSystemNode> List<T> getNodes(@NotNull Class<T> nodeClass) {
     return doGetNodes(nodeClass, myRoot.getChildren(), new SmartList<>(), node -> true);
   }
 
-  public @NotNull <T extends ExternalSystemNode> List<T> getExistingNodes(@NotNull Class<T> nodeClass) {
+  @NotNull
+  public <T extends ExternalSystemNode> List<T> getExistingNodes(@NotNull Class<T> nodeClass) {
     return doGetNodes(nodeClass, myRoot.getChildren(), new SmartList<>(), node -> {
       if (node instanceof ExternalSystemNode<?> esNode) {
         ExternalSystemNode<?>[] cachedNodes = esNode.getCached();
@@ -317,10 +321,11 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     });
   }
 
-  private static @NotNull <T extends ExternalSystemNode> List<T> doGetNodes(@NotNull Class<T> nodeClass,
-                                                                            SimpleNode[] nodes,
-                                                                            @NotNull List<T> result,
-                                                                            @NotNull Predicate<SimpleNode> shouldDive) {
+  @NotNull
+  private static <T extends ExternalSystemNode> List<T> doGetNodes(@NotNull Class<T> nodeClass,
+                                                                   SimpleNode[] nodes,
+                                                                   @NotNull List<T> result,
+                                                                   @NotNull Predicate<SimpleNode> shouldDive) {
     if (nodes == null) return result;
 
     for (SimpleNode node : nodes) {
@@ -335,7 +340,8 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     return result;
   }
 
-  public @NotNull <T extends ExternalSystemNode> List<T> getSelectedNodes(SimpleTree tree, Class<T> nodeClass) {
+  @NotNull
+  public <T extends ExternalSystemNode> List<T> getSelectedNodes(SimpleTree tree, Class<T> nodeClass) {
     return TreeUtil.collectSelectedObjectsOfType(tree, nodeClass);
   }
 }

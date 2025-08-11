@@ -8,8 +8,6 @@ import com.intellij.util.ExceptionUtilRt
 import com.intellij.util.Function
 import com.intellij.util.concurrency.captureBiConsumerThreadContext
 import com.intellij.util.concurrency.createChildContext
-import kotlinx.coroutines.DelicateCoroutinesApi
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.concurrency.Promise.State
 import java.util.concurrent.*
@@ -20,18 +18,9 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-/**
- * **Obsolescence notice**
- *
- * Please use [Kotlin coroutines](https://plugins.jetbrains.com/docs/intellij/kotlin-coroutines.html)
- * Instead of this class use [kotlinx.coroutines.CompletableDeferred]
- */
-@ApiStatus.Obsolete
-open class AsyncPromise<T> private constructor(
-  internal val f: CompletableFuture<T>,
-  private val hasErrorHandler: AtomicBoolean,
-  addExceptionHandler: Boolean,
-) : CancellablePromise<T>, CompletablePromise<T> {
+open class AsyncPromise<T> private constructor(internal val f: CompletableFuture<T>,
+                                               private val hasErrorHandler: AtomicBoolean,
+                                               addExceptionHandler: Boolean) : CancellablePromise<T>, CompletablePromise<T> {
   companion object {
     private val LOG = Logger.getInstance(AsyncPromise::class.java)
 
@@ -157,23 +146,19 @@ open class AsyncPromise<T> private constructor(
     }, hasErrorHandler, addExceptionHandler = true)
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
-  private fun <T> wrapWithCancellationPropagation(producer: (CoroutineContext) -> CompletableFuture<T>): CompletableFuture<T> {
-    val childContext = createChildContext("AsyncPromise: $this, $producer")
-    val capturingFuture = producer(childContext.context)
-    val ijElementsToken = childContext.applyContextActions(false)
+  private inline fun <T> wrapWithCancellationPropagation(producer: (CoroutineContext) -> CompletableFuture<T>): CompletableFuture<T> {
+    val (childContext, childContinuation) = createChildContext()
+    val capturingFuture = producer(childContext)
     return capturingFuture.whenComplete { _, result ->
-      ijElementsToken.finish()
-      val continuation = childContext.continuation
       when (result) {
-        null -> continuation?.resume(Unit)
-        is ProcessCanceledException -> continuation?.resumeWithException(CancellationException())
+        null -> childContinuation?.resume(Unit)
+        is ProcessCanceledException -> childContinuation?.resumeWithException(CancellationException())
         is CompletionException -> when (val cause = result.cause) {
-          is CancellationException -> continuation?.resumeWithException(cause)
-          null -> continuation?.resume(Unit)
-          else -> continuation?.resumeWithException(cause)
+          is CancellationException -> childContinuation?.resumeWithException(cause)
+          null -> childContinuation?.resume(Unit)
+          else -> childContinuation?.resumeWithException(cause)
         }
-        else -> continuation?.resumeWithException(result)
+        else -> childContinuation?.resumeWithException(result)
       }
     }
   }

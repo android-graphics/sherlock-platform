@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -11,10 +11,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-final class ShowHideAspectAction extends ToggleAction implements DumbAware {
+public class ShowHideAspectAction extends ToggleAction implements DumbAware {
   private final AnnotationFieldGutter myGutter;
+  private boolean isAvailable = true;
 
-  ShowHideAspectAction(AnnotationFieldGutter gutter) {
+  public ShowHideAspectAction(AnnotationFieldGutter gutter) {
     super(gutter.getDisplayName());
     myGutter = gutter;
   }
@@ -38,5 +39,15 @@ final class ShowHideAspectAction extends ToggleAction implements DumbAware {
     VcsUtil.setAspectAvailability(myGutter.getID(), state);
 
     AnnotateActionGroup.revalidateMarkupInAllEditors();
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setEnabled(isAvailable);
+  }
+
+  public void setAvailable(boolean available) {
+    isAvailable = available;
   }
 }

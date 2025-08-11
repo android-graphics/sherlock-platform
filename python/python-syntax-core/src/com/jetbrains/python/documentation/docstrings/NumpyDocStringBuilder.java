@@ -36,25 +36,29 @@ public class NumpyDocStringBuilder extends SectionBasedDocStringBuilder {
   }
 
   @Override
-  protected @NotNull String getDefaultParametersHeader() {
+  @NotNull
+  protected String getDefaultParametersHeader() {
     return "Parameters";
   }
 
   @Override
-  protected @NotNull String getDefaultReturnsHeader() {
+  @NotNull
+  protected String getDefaultReturnsHeader() {
     return "Returns";
   }
 
+  @NotNull
   @Override
-  protected @NotNull SectionBasedDocStringBuilder startSection(@NotNull String title) {
+  protected SectionBasedDocStringBuilder startSection(@NotNull String title) {
     super.startSection(title);
     addLine(StringUtil.capitalize(title));
     addLine(StringUtil.repeatSymbol(myUnderlineSymbol, title.length()));
     return this;
   }
 
+  @NotNull
   @Override
-  public @NotNull SectionBasedDocStringBuilder addParameter(@NotNull String name, @Nullable String type, @NotNull String description) {
+  public SectionBasedDocStringBuilder addParameter(@NotNull String name, @Nullable String type, @NotNull String description) {
     if (type != null) {
       addSectionLine(String.format("%s : %s", name, type));
     }
@@ -67,8 +71,9 @@ public class NumpyDocStringBuilder extends SectionBasedDocStringBuilder {
     return this;
   }
 
+  @NotNull
   @Override
-  public @NotNull SectionBasedDocStringBuilder addReturnValue(@Nullable String name, @NotNull String type, @NotNull String description) {
+  public SectionBasedDocStringBuilder addReturnValue(@Nullable String name, @NotNull String type, @NotNull String description) {
     if (name != null) {
       addSectionLine(String.format("%s : %s", name, type));
     }

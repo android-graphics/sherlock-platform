@@ -4,13 +4,13 @@ import typeUse.*;
 
 interface Function<F, T> extends java.util.function.Function<F, T> {
   @Override
-  @javax.annotation.Nullable
-  T apply(@javax.annotation.Nullable F input);
+  @Nullable
+  T apply(@Nullable F input);
 }
 
 interface Predicate<T> extends java.util.function.Predicate<T> {
-  boolean apply(@javax.annotation.Nullable T input);
-  default boolean test(@javax.annotation.Nullable T input) {
+  boolean apply(@Nullable T input);
+  default boolean test(@Nullable T input) {
     return apply(input);
   }
 }

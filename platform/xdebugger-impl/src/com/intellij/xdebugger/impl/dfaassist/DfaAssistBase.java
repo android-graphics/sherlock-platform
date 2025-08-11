@@ -10,7 +10,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
@@ -99,7 +98,7 @@ public abstract class DfaAssistBase implements Disposable {
 
   protected void cleanUp() {
     UIUtil.invokeLaterIfNeeded(() -> {
-      ReadAction.run(() -> Disposer.dispose(myMarkup));
+      Disposer.dispose(myMarkup);
     });
   }
 

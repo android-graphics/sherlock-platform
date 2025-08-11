@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateEditor;
@@ -25,14 +25,16 @@ public interface PostfixTemplateProvider {
   /**
    * @return identifier used for storing settings of this provider's templates
    */
-  default @NotNull @NonNls String getId() {
+  @NotNull
+  default @NonNls String getId() {
     return getClass().getName();
   }
 
   /**
    * @return presentation name of an editable template type. If {@code null}, the provider doesn't allow customizing its templates.
    */
-  default @Nullable @NlsActions.ActionText String getPresentableName() {
+  @Nullable
+  default @NlsActions.ActionText String getPresentableName() {
     return null;
   }
 
@@ -91,14 +93,16 @@ public interface PostfixTemplateProvider {
    * <p>
    * If {@code templateToEdit} is {@code null}, it's considered as an editor for a new template.
    */
-  default @Nullable PostfixTemplateEditor createEditor(@Nullable PostfixTemplate templateToEdit) {
+  @Nullable
+  default PostfixTemplateEditor createEditor(@Nullable PostfixTemplate templateToEdit) {
     return null;
   }
 
   /**
    * Reads from a given DOM element, and instantiates a template that was stored by this provider.
    */
-  default @Nullable PostfixTemplate readExternalTemplate(@NotNull @NonNls String id, @NotNull @NlsSafe String name, @NotNull Element template) {
+  @Nullable
+  default PostfixTemplate readExternalTemplate(@NotNull @NonNls String id, @NotNull @NlsSafe String name, @NotNull Element template) {
     return null;
   }
 

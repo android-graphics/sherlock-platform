@@ -48,7 +48,7 @@ public interface StickyLinesModel {
 
   void removeListener(@NotNull Listener listener);
 
-  void notifyLinesUpdate();
+  void notifyListeners();
 
   /**
    * Marker associated with sticky line to distinguish the highlighting daemon which produced the line.
@@ -68,14 +68,6 @@ public interface StickyLinesModel {
   }
 
   interface Listener {
-    /**
-     * Called when a batch of sticky lines is added or removed
-     */
-    void linesUpdated();
-
-    /**
-     * Called when all sticky lines are removed
-     */
-    void linesRemoved();
+    void modelChanged();
   }
 }

@@ -4,9 +4,11 @@ package com.intellij.ui.dsl.builder
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.ui.dsl.builder.impl.ItemPresentationImpl
+import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.validation.CellValidation
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -16,18 +18,20 @@ import javax.swing.Icon
  * @see Row.segmentedButton
  */
 @ApiStatus.NonExtendable
+@ApiStatus.Experimental
 interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
 
   companion object {
     const val DEFAULT_MAX_BUTTONS_COUNT: Int = 6
 
+    @ApiStatus.Experimental
     fun createPresentation(text: @Nls String? = null, toolTipText: @Nls String? = null, icon: Icon? = null, enabled: Boolean = true): ItemPresentation {
       return ItemPresentationImpl(text, toolTipText, icon, enabled)
     }
   }
 
   @LayoutDslMarker
-  @ApiStatus.NonExtendable
+  @NonExtendable
   interface ItemPresentation {
 
     var text: @Nls String?
@@ -48,6 +52,10 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
   override fun resizableColumn(): SegmentedButton<T>
 
   override fun gap(rightGap: RightGap): SegmentedButton<T>
+
+  @Deprecated("Use customize(UnscaledGaps) instead")
+  @ApiStatus.ScheduledForRemoval
+  override fun customize(customGaps: Gaps): SegmentedButton<T>
 
   override fun customize(customGaps: UnscaledGaps): SegmentedButton<T>
 

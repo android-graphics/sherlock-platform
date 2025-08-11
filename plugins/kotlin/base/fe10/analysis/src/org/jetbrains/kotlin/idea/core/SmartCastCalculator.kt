@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.core
 
 import com.intellij.psi.PsiElement
-import io.vavr.Tuple2
+import javaslang.Tuple2
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor

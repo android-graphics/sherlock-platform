@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.Nullability;
@@ -50,8 +50,8 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -161,8 +161,9 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     return getHelpId() != null;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getChosenMethodName() {
+  public String getChosenMethodName() {
     return myNameField.getEnteredName().trim();
   }
 
@@ -266,7 +267,8 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     return false;
   }
 
-  private @Nullable JPanel createReturnTypePanel() {
+  @Nullable
+  private JPanel createReturnTypePanel() {
     if (TypeConversionUtil.isPrimitiveWrapper(myReturnType) && myNullability == Nullability.NULLABLE) {
       return null;
     }
@@ -453,7 +455,8 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   }
 
   @Override
-  public @NotNull String getVisibility() {
+  @NotNull
+  public String getVisibility() {
     return myTargetClass.isInterface() || myVisibilityPanel == null
            ? PsiModifier.PUBLIC : ObjectUtils.notNull(myVisibilityPanel.getVisibility(), PsiModifier.PUBLIC);
   }
@@ -478,7 +481,8 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     return splitter;
   }
 
-  private @NotNull JBLabel createDuplicatesCountLabel() {
+  @NotNull
+  private JBLabel createDuplicatesCountLabel() {
     JBLabel duplicatesCount = new JBLabel();
     if (myDuplicatesCountSupplier != null) {
       duplicatesCount.setText(JavaRefactoringBundle.message("refactoring.extract.method.dialog.duplicates.pending"));
@@ -590,7 +594,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   }
 
   protected String getSignature() {
-    final @NonNls StringBuilder buffer = new StringBuilder();
+    @NonNls final StringBuilder buffer = new StringBuilder();
     if (myGenerateAnnotations != null && myGenerateAnnotations.isSelected()) {
       final NullableNotNullManager nullManager = NullableNotNullManager.getInstance(myProject);
       buffer.append("@");
@@ -601,7 +605,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     final int declarationOffset = buffer.length();
     final String visibilityString = VisibilityUtil.getVisibilityString(getVisibility());
     buffer.append(visibilityString);
-    if (!buffer.isEmpty()) {
+    if (buffer.length() > 0) {
       buffer.append(" ");
     }
     if (isMakeStatic() && !isChainedConstructor()) {

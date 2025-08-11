@@ -6,12 +6,14 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.successfulConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.KotlinParcelizeBundle
@@ -23,7 +25,7 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-internal class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplicableQuickFix<KtClass>(clazz) {
+class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplicableQuickFix<KtClass>(clazz) {
     override fun getFamilyName() = KotlinParcelizeBundle.message("parcelize.fix.migrate.to.parceler.companion.object")
 
     @OptIn(KaAllowAnalysisOnEdt::class)
@@ -45,22 +47,21 @@ internal class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotl
 
         context(KaSession)
         override val KtCallableDeclaration.returnTypeClassId: ClassId?
-            get() = (symbol as KaCallableSymbol).returnType.classId
+            get() = getSymbolOfType<KaCallableSymbol>().returnType.classId
 
         context(KaSession)
         override val KtCallableDeclaration.receiverTypeClassId: ClassId?
-            get() = (symbol as KaCallableSymbol).receiverType?.classId
+            get() = getSymbolOfType<KaCallableSymbol>().receiverType?.classId
 
         context(KaSession)
         override val KtCallableDeclaration.overrideCount: Int
-            get() = (symbol as KaCallableSymbol).allOverriddenSymbols.count()
+            get() = getSymbolOfType<KaCallableSymbol>().allOverriddenSymbols.count()
 
         context(KaSession)
         override val KtProperty.isJvmField: Boolean
             get() {
-                val symbol = symbol as? KaPropertySymbol ?: return false
-                return symbol.hasBackingField
-                        && (symbol.backingFieldSymbol?.annotations?.contains(JvmAbi.JVM_FIELD_ANNOTATION_CLASS_ID) == true)
+                val symbol = getVariableSymbol() as? KaPropertySymbol ?: return false
+                return symbol.hasBackingField && (symbol.backingFieldSymbol?.hasAnnotation(JvmAbi.JVM_FIELD_ANNOTATION_CLASS_ID) == true)
             }
 
         context(KaSession)
@@ -75,13 +76,13 @@ internal class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotl
 
         context(KaSession)
         private fun KaType.hasSuperTypeClassId(superTypeClassId: ClassId): Boolean {
-            val superClassSymbol = findClass(superTypeClassId) ?: return false
-            return isSubtypeOf(superClassSymbol.buildStarProjectedType())
+            val superClassSymbol = getClassOrObjectSymbolByClassId(superTypeClassId) ?: return false
+            return isSubTypeOf(superClassSymbol.buildStarProjectedType())
         }
 
         context(KaSession)
         override fun KtClassOrObject.hasSuperClass(superTypeClassId: ClassId): Boolean {
-            val subClassSymbol = classSymbol ?: return false
+            val subClassSymbol = getClassOrObjectSymbol() ?: return false
             return subClassSymbol.buildStarProjectedType().hasSuperTypeClassId(superTypeClassId)
         }
 
@@ -95,7 +96,7 @@ internal class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotl
                 ?.successfulConstructorCallOrNull()
                 ?.symbol
                 ?.containingClassId
-                ?.let { findClass(it) }
+                ?.let { getClassOrObjectSymbolByClassId(it) }
                 ?.psi as? KtClassOrObject
 
         context(KaSession)

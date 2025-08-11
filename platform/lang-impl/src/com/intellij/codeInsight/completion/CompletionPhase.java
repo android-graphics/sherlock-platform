@@ -88,8 +88,7 @@ public abstract class CompletionPhase implements Disposable {
       myTracker.ignoreCurrentDocumentChange();
     }
 
-    @ApiStatus.Internal
-    public boolean isExpired() {
+    private boolean isExpired() {
       return myTracker.hasAnythingHappened() || myRequestCount <= 0;
     }
 
@@ -190,9 +189,10 @@ public abstract class CompletionPhase implements Disposable {
         .submit(ourExecutor);
     }
 
-    private static @NotNull CommittingDocuments getCompletionPhase(@Nullable CompletionProgressIndicator prevIndicator,
-                                                                   Editor topLevelEditor,
-                                                                   @Nullable TypedEvent event) {
+    @NotNull
+    private static CommittingDocuments getCompletionPhase(@Nullable CompletionProgressIndicator prevIndicator,
+                                                          Editor topLevelEditor,
+                                                          @Nullable TypedEvent event) {
       if (event != null) {
         CompletionPhase currentPhase = CompletionServiceImpl.getCompletionPhase();
         if (currentPhase instanceof CommittingDocuments committingPhase &&
@@ -225,7 +225,7 @@ public abstract class CompletionPhase implements Disposable {
 
       for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
         try {
-          ThreeState result = confidence.shouldSkipAutopopup(editor, elementAt, psiFile, offset);
+          ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset);
           if (result != ThreeState.UNSURE) {
             LOG.debug(confidence + " has returned shouldSkipAutopopup=" + result);
             return result == ThreeState.YES;
@@ -275,6 +275,7 @@ public abstract class CompletionPhase implements Disposable {
             // When ScreenReader is active the lookup gets focus on show and we should not close it.
             if (ScreenReader.isActive() &&
                 event.getOppositeComponent() != null &&
+                indicator.getLookup().getComponent() != null &&
                 // Check the opposite is in the lookup ancestor
                 SwingUtilities.getWindowAncestor(event.getOppositeComponent()) ==
                 SwingUtilities.getWindowAncestor(indicator.getLookup().getComponent())) {
@@ -306,7 +307,7 @@ public abstract class CompletionPhase implements Disposable {
     }
   }
 
-  public abstract static class ZombiePhase extends CompletionPhase {
+  public static abstract class ZombiePhase extends CompletionPhase {
 
     ZombiePhase(CompletionProgressIndicator indicator) {
       super(indicator);

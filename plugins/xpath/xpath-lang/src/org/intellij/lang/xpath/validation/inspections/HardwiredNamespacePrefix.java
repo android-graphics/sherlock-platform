@@ -91,7 +91,9 @@ public class HardwiredNamespacePrefix extends XPathInspection {
     }
 
   @Override
-  public @NonNls @NotNull String getShortName() {
+    @NonNls
+    @NotNull
+    public String getShortName() {
         return "HardwiredNamespacePrefix";
     }
 

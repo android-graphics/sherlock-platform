@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.inspections;
 
 import com.intellij.codeInspection.*;
@@ -18,12 +18,14 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 public final class MavenRedundantGroupIdInspection extends XmlSuppressableInspectionTool {
 
   @Override
-  public @NotNull String getGroupDisplayName() {
+  @NotNull
+  public String getGroupDisplayName() {
     return MavenDomBundle.message("inspection.group");
   }
 
   @Override
-  public @NotNull String getShortName() {
+  @NotNull
+  public String getShortName() {
     return "MavenRedundantGroupId";
   }
 
@@ -37,7 +39,7 @@ public final class MavenRedundantGroupIdInspection extends XmlSuppressableInspec
         MavenDomProjectModel projectModel = model.getRootElement();
 
         String groupId = projectModel.getGroupId().getStringValue();
-        if (groupId != null && !groupId.isEmpty()) {
+        if (groupId != null && groupId.length() > 0) {
           MavenDomParent parent = projectModel.getMavenParent();
 
           String parentGroupId = parent.getGroupId().getStringValue();

@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -18,7 +20,7 @@ public class BuildParticipant implements Serializable {
   private String myRootProjectName;
   private String myRootPath;
   private String myParentRootPath;
-  private @NotNull Set<String> myProjects = new HashSet<>();
+  @NotNull private Set<String> myProjects = new HashSet<>();
 
   @Attribute("name")
   public String getRootProjectName() {
@@ -48,7 +50,8 @@ public class BuildParticipant implements Serializable {
   }
 
   @XCollection(propertyElementName = "projects", elementName = "project", valueAttributeName = "path")
-  public @NotNull Set<String> getProjects() {
+  @NotNull
+  public Set<String> getProjects() {
     return myProjects;
   }
 

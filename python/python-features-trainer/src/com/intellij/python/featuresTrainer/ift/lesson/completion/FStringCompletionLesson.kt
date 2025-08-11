@@ -52,12 +52,11 @@ class FStringCompletionLesson
     prepareSample(sample)
     showWarningIfPython3NotFound()
 
-    task {
-      val prefix = "{my"
-      text(PythonLessonsBundle.message("python.f.string.completion.type.prefix", code(prefix)))
+    task("{my") {
+      text(PythonLessonsBundle.message("python.f.string.completion.type.prefix", code(it)))
       runtimeText {
         val prefixTyped = checkExpectedStateOfEditor(sample) { change ->
-          "{my_car".startsWith(change) && change.startsWith(prefix)
+          "{my_car".startsWith(change) && change.startsWith(it)
         } == null
         if (prefixTyped) PythonLessonsBundle.message("python.f.string.completion.invoke.manually", action("CodeCompletion")) else null
       }
@@ -69,7 +68,7 @@ class FStringCompletionLesson
           "{my_car".startsWith(change)
         }
       }
-      test { type(prefix) }
+      test { type(it) }
     }
     task {
       text(PythonLessonsBundle.message("python.f.string.completion.complete.it", code(completionItem), action("EditorChooseLookupItem")))

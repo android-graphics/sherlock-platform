@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -103,7 +103,8 @@ public final class EditPropertyValueTooltipManager implements EditorMouseListene
     showTooltip(editor, component, false);
   }
 
-  private static @Nullable String createActionText(@NotNull String actionId, @NotNull String href) {
+  @Nullable
+  private static String createActionText(@NotNull String actionId, @NotNull String href) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
     if (action == null) return null;
     String text = action.getTemplateText();

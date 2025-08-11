@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dgm;
 
 import com.intellij.openapi.project.Project;
@@ -55,7 +55,8 @@ public final class GdkMethodHolder {
     myOriginalMethodsByNameAndType = ConcurrentFactoryMap.createMap(name -> groupByType(byName.get(name)));
   }
 
-  private static @NotNull MultiMap<String, PsiMethod> groupByType(Collection<? extends PsiMethod> methods) {
+  @NotNull
+  private static MultiMap<String, PsiMethod> groupByType(Collection<? extends PsiMethod> methods) {
     MultiMap<String, PsiMethod> map = new MultiMap<>();
     for (PsiMethod method : methods) {
       PsiType type = getCategoryTargetType(method);
@@ -65,7 +66,8 @@ public final class GdkMethodHolder {
     return map;
   }
 
-  private static @Nullable PsiType getCategoryTargetType(@NotNull PsiMethod method) {
+  @Nullable
+  private static PsiType getCategoryTargetType(@NotNull PsiMethod method) {
     final PsiType parameterType = method.getParameterList().getParameters()[0].getType();
     return TypeConversionUtil.erasure(parameterType);
   }
@@ -111,7 +113,8 @@ public final class GdkMethodHolder {
   }
 
   @Override
-  public @NonNls String toString() {
+  @NonNls
+  public String toString() {
     return "GDK Method Holder for " + myClassName;
   }
 }

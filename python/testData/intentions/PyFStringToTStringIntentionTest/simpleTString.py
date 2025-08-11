@@ -1,1 +1,0 @@
-s = t"Hel<caret>lo, {name}!"

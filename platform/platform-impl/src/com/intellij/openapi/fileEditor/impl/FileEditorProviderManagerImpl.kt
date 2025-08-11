@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SlowOperations
 import kotlinx.coroutines.*
 import kotlinx.serialization.Serializable
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import kotlin.time.Duration.Companion.seconds
 
@@ -36,11 +35,9 @@ private val LOG: Logger
 
 private fun computeKey(providers: List<FileEditorWithProvider>) = providers.joinToString(separator = ",") { it.provider.editorTypeId }
 
-@ApiStatus.Internal
 @Serializable
 data class FileEditorProviderManagerState(@JvmField val selectedProviders: Map<String, String> = emptyMap())
 
-@ApiStatus.Internal
 @State(name = "FileEditorProviderManager",
        storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)])
 class FileEditorProviderManagerImpl

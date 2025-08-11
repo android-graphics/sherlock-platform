@@ -5,35 +5,39 @@ package org.jetbrains.kotlin.idea.configuration
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction.nonBlocking
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootMap
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.ConfigureKotlinNotification
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
 
 object ConfigureKotlinNotificationManager : KotlinSingleNotificationManager<ConfigureKotlinNotification> {
-    suspend fun notify(project: Project, excludeModules: List<Module> = emptyList()) {
-        val notificationState = readAction {
+    fun notify(project: Project, excludeModules: List<Module> = emptyList()) {
+        nonBlocking(Callable {
             ConfigureKotlinNotification.getNotificationState(project, excludeModules)
-        }
-
-        withContext(Dispatchers.EDT) {
-            notificationState?.let {
-                KotlinJ2KOnboardingFUSCollector.logShowConfigureKtNotification(project)
-                notify(project, ConfigureKotlinNotification(project, excludeModules, it))
+        })
+            .expireWith(KotlinPluginDisposable.getInstance(project))
+            .coalesceBy(this)
+            .finishOnUiThread(ModalityState.any()) { notificationState ->
+                notificationState?.let {
+                    KotlinJ2KOnboardingFUSCollector.logShowConfigureKtNotification(project)
+                    notify(project, ConfigureKotlinNotification(project, excludeModules, it))
+                }
             }
-        }
+            .submit(AppExecutorUtil.getAppExecutorService())
+
     }
 
     fun getVisibleNotifications(project: Project): Array<out ConfigureKotlinNotification> {
@@ -81,7 +85,7 @@ fun checkHideNonConfiguredNotifications(project: Project) {
         val moduleSourceRootMap = ModuleSourceRootMap(project)
 
         if (notification.notificationState.debugProjectName != project.name) {
-            logger<ConfigureKotlinNotificationManager>().error("Bad notification check for project: ${project.name}\n${notification.notificationState}")
+            LOG.error("Bad notification check for project: ${project.name}\n${notification.notificationState}")
         }
 
         val hideNotification =
@@ -112,3 +116,5 @@ fun checkHideNonConfiguredNotifications(project: Project) {
         }
     }
 }
+
+private val LOG = Logger.getInstance(ConfigureKotlinNotificationManager::class.java)

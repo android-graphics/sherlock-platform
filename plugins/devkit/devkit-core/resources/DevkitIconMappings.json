@@ -9,8 +9,7 @@
       },
       "addSDK.svg": "icons/add_sdk.svg",
       "sdkClosed.svg": "icons/sdk_closed.svg",
-      "remoteMapping.svg": "icons/remoteMapping.svg",
-      "localizationFile.svg": "icons/localizationFile.svg"
+      "remoteMapping.svg": "icons/remoteMapping.svg"
     }
   }
 }

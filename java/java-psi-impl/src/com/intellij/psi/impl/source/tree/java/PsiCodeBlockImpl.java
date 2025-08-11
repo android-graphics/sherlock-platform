@@ -263,7 +263,7 @@ public final class PsiCodeBlockImpl extends LazyParseablePsiElement implements P
     }
 
     if (child == null) {
-      child = this.getLastChild();
+      child = ((PsiElement)this).getLastChild();
     }
 
     while (child != null) {

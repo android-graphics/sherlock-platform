@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.test.preference
 
 import com.intellij.debugger.settings.DebuggerSettings
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl

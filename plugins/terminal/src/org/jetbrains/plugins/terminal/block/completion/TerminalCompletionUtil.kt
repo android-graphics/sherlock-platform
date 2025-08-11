@@ -12,16 +12,12 @@ import javax.swing.Icon
 
 internal object TerminalCompletionUtil {
   fun getNextSuggestionsString(suggestion: ShellCompletionSuggestion): String {
-    var separator: String? = null
     val result = when (suggestion) {
       is ShellCommandSpec -> getNextOptionsAndArgumentsString(suggestion)
-      is ShellOptionSpec -> {
-        separator = suggestion.separator
-        getNextArgumentsString(suggestion.arguments)
-      }
+      is ShellOptionSpec -> getNextArgumentsString(suggestion.arguments)
       else -> ""
     }
-    return if (result.isNotEmpty()) "${separator ?: " "}$result" else ""
+    return if (result.isNotEmpty()) " $result" else ""
   }
 
   /** Returns required options and all arguments */

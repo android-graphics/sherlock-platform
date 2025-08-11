@@ -1,5 +1,6 @@
 import sys
-from typing import Any, Literal, overload
+from typing import Any, overload
+from typing_extensions import Literal
 
 if sys.platform != "win32" and sys.platform != "darwin":
     AFMT_AC3: int

@@ -2,7 +2,6 @@
 package com.intellij.warmup.util
 
 import com.intellij.platform.util.ArgsParser
-import org.jetbrains.annotations.ApiStatus
 
 interface WarmupProjectArgs : OpenProjectArgs {
   val build: Boolean
@@ -10,7 +9,6 @@ interface WarmupProjectArgs : OpenProjectArgs {
   val indexGitLog: Boolean
 }
 
-@ApiStatus.Internal
 class WarmupProjectArgsImpl(parser: ArgsParser) : WarmupProjectArgs, OpenProjectArgsImpl(parser) {
 
   override val build: Boolean by parser.arg("build", "Build opened project. Cannot be specified together with --rebuild").flag()

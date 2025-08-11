@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.gitlab;
 
 import com.google.gson.Gson;
@@ -44,7 +43,7 @@ import static com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonSingleObje
 public class GitlabRepository extends NewBaseRepositoryImpl {
   private static final Logger LOG = Logger.getInstance(GitlabRepository.class);
 
-  private static final @NonNls String TOKEN_HEADER = "PRIVATE-TOKEN";
+  @NonNls private static final String TOKEN_HEADER = "PRIVATE-TOKEN";
 
   private static final Pattern ID_PATTERN = Pattern.compile("\\d+");
   private static final Gson GSON = TaskGsonUtil.createDefaultBuilder().create();
@@ -56,7 +55,8 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
 
   public static final GitlabProject UNSPECIFIED_PROJECT = createUnspecifiedProject();
 
-  private static @NotNull GitlabProject createUnspecifiedProject() {
+  @NotNull
+  private static GitlabProject createUnspecifiedProject() {
     final GitlabProject unspecified = new GitlabProject() {
       @Override
       public String getName() {
@@ -100,8 +100,9 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     return true;
   }
 
+  @NotNull
   @Override
-  public @NotNull GitlabRepository clone() {
+  public GitlabRepository clone() {
     return new GitlabRepository(this);
   }
 
@@ -111,15 +112,17 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     return ContainerUtil.map2Array(issues, GitlabTask.class, issue -> new GitlabTask(this, issue));
   }
 
+  @Nullable
   @Override
-  public @Nullable Task findTask(@NotNull String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
     // doesn't work now, because Gitlab's REST API doesn't provide endpoint to find task
     // using only its global ID, it requires both task's global ID AND task's project ID
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable CancellableConnection createCancellableConnection() {
+  public CancellableConnection createCancellableConnection() {
     return new HttpTestConnection(new HttpGet()) {
       @Override
       protected void test() throws Exception {
@@ -133,7 +136,8 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   /**
    * Always forcibly attempt to fetch new projects from server.
    */
-  public @NotNull List<GitlabProject> fetchProjects() throws Exception {
+  @NotNull
+  public List<GitlabProject> fetchProjects() throws Exception {
     final ResponseHandler<List<GitlabProject>> handler = new GsonMultipleObjectsDeserializer<>(GSON, LIST_OF_PROJECTS_TYPE);
     final String projectUrl = getRestApiUrl("projects");
     final List<GitlabProject> result = new ArrayList<>();
@@ -157,12 +161,14 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public @NotNull GitlabProject fetchProject(int id) throws Exception {
+  @NotNull
+  public GitlabProject fetchProject(int id) throws Exception {
     final HttpGet request = new HttpGet(getRestApiUrl("project", id));
     return getHttpClient().execute(request, new GsonSingleObjectDeserializer<>(GSON, GitlabProject.class));
   }
 
-  public @NotNull List<GitlabIssue> fetchIssues(int pageNumber, int pageSize, boolean openedOnly) throws Exception {
+  @NotNull
+  public List<GitlabIssue> fetchIssues(int pageNumber, int pageSize, boolean openedOnly) throws Exception {
     ensureProjectsDiscovered();
     final URIBuilder uriBuilder = new URIBuilder(getIssuesUrl())
       .addParameter("page", String.valueOf(pageNumber))
@@ -187,7 +193,8 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   /**
    * @param issueId global issue's ID (<tt>id</tt> field, not <tt>iid</tt>)
    */
-  public @Nullable GitlabIssue fetchIssue(int projectId, int issueId) throws Exception {
+  @Nullable
+  public GitlabIssue fetchIssue(int projectId, int issueId) throws Exception {
     ensureProjectsDiscovered();
     final HttpGet request = new HttpGet(getRestApiUrl("projects", projectId, "issues", issueId));
     final ResponseHandler<GitlabIssue> handler = new GsonSingleObjectDeserializer<>(GSON, GitlabIssue.class, true);
@@ -204,23 +211,26 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     return name;
   }
 
+  @Nullable
   @Override
-  public @Nullable String extractId(@NotNull String taskName) {
+  public String extractId(@NotNull String taskName) {
     return ID_PATTERN.matcher(taskName).matches() ? taskName : null;
   }
 
   @Override
   public boolean isConfigured() {
-    return super.isConfigured() && StringUtil.isNotEmpty(getPassword());
+    return super.isConfigured() && !myPassword.isEmpty();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getRestApiPathPrefix() {
+  public String getRestApiPathPrefix() {
     return "/api/v4/";
   }
 
+  @Nullable
   @Override
-  protected @Nullable HttpRequestInterceptor createRequestInterceptor() {
+  protected HttpRequestInterceptor createRequestInterceptor() {
     return (request, context) -> {
       request.addHeader(TOKEN_HEADER, myPassword);
     };
@@ -237,7 +247,8 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   /**
    * May return cached projects or make request to receive new ones.
    */
-  public @NotNull List<GitlabProject> getProjects() {
+  @NotNull
+  public List<GitlabProject> getProjects() {
     try {
       ensureProjectsDiscovered();
     }
@@ -253,7 +264,8 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     }
   }
 
-  private @NotNull HttpGet getApiVersionRequest() {
+  @NotNull
+  private HttpGet getApiVersionRequest() {
     return new HttpGet(StringUtil.trimEnd(getUrl(), "/") + "/api/v4/version");
   }
 

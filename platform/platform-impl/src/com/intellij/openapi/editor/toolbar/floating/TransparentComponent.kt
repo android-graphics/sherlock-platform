@@ -7,6 +7,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface TransparentComponent {
 
+  val autoHideable: Boolean
+
   @RequiresEdt
   fun isComponentOnHold(): Boolean
 

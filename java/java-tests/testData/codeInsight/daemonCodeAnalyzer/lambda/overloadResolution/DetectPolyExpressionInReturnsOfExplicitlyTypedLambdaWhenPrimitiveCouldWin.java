@@ -11,12 +11,12 @@ class Test {
   }
 
   void test(boolean cond) {
-    m<error descr="Ambiguous method call: both 'Test.m(GetInt)' and 'Test.m(GetInteger)' match">(() -> {
+    <error descr="Ambiguous method call: both 'Test.m(GetInt)' and 'Test.m(GetInteger)' match">m</error>(() -> {
       if (cond)
         return 42;
       else
         return foo();
-    })</error>;
+    });
 
     m(() -> {
       return foo();

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io;
 
 import io.netty.buffer.ByteBuf;
@@ -40,7 +40,8 @@ public abstract class Decoder extends ChannelInboundHandlerAdapter {
     T contentReceived(@NotNull ByteBuf input, @NotNull ChannelHandlerContext context, boolean isCumulateBuffer) throws IOException;
   }
 
-  protected final @Nullable <T> T readContent(@NotNull ByteBuf input, @NotNull ChannelHandlerContext context, int contentLength, @NotNull FullMessageConsumer<T> fullMessageConsumer) throws IOException {
+  @Nullable
+  protected final <T> T readContent(@NotNull ByteBuf input, @NotNull ChannelHandlerContext context, int contentLength, @NotNull FullMessageConsumer<T> fullMessageConsumer) throws IOException {
     ByteBuf buffer = getBufferIfSufficient(input, contentLength, context);
     if (buffer == null) {
       return null;
@@ -62,7 +63,8 @@ public abstract class Decoder extends ChannelInboundHandlerAdapter {
     }
   }
 
-  protected final @Nullable ByteBuf getBufferIfSufficient(@NotNull ByteBuf input, int requiredLength, @NotNull ChannelHandlerContext context) {
+  @Nullable
+  protected final ByteBuf getBufferIfSufficient(@NotNull ByteBuf input, int requiredLength, @NotNull ChannelHandlerContext context) {
     if (!input.isReadable()) {
       return null;
     }

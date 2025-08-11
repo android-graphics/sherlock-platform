@@ -71,14 +71,16 @@ public class UnsupportedFeatures extends CompatibilityVisitor {
     }
   }
 
-  private static @NotNull IntentionAction createIntention(@NotNull PsiElement node, @NotNull @InspectionMessage String message, @NotNull LocalQuickFix localQuickFix) {
+  @NotNull
+  private static IntentionAction createIntention(@NotNull PsiElement node, @NotNull @InspectionMessage String message, @NotNull LocalQuickFix localQuickFix) {
     return createIntention(node, null, message, localQuickFix);
   }
 
-  private static @NotNull IntentionAction createIntention(@NotNull PsiElement node,
-                                                          @Nullable TextRange range,
-                                                          @NotNull @InspectionMessage String message,
-                                                          @NotNull LocalQuickFix localQuickFix) {
+  @NotNull
+  private static IntentionAction createIntention(@NotNull PsiElement node,
+                                                 @Nullable TextRange range,
+                                                 @NotNull @InspectionMessage String message,
+                                                 @NotNull LocalQuickFix localQuickFix) {
     final LocalQuickFix[] quickFixes = {localQuickFix};
     ProblemDescriptor descr =
       new ProblemDescriptorImpl(node, node, message, quickFixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true, range, true);

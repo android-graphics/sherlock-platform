@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -16,16 +16,19 @@ public abstract class SingleEntryCompositeIndexer<V, SubIndexerType, SubIndexerV
     super(acceptNullValues);
   }
 
+  @NotNull
   @Override
-  public final @NotNull Map<Integer, V> map(@NotNull FileContent inputData, @NotNull SubIndexerType indexerType) {
+  public final Map<Integer, V> map(@NotNull FileContent inputData, @NotNull SubIndexerType indexerType) {
     throw new AssertionError();
   }
 
+  @Nullable
   @Override
-  protected @Nullable V computeValue(@NotNull FileContent inputData) {
+  protected V computeValue(@NotNull FileContent inputData) {
     SubIndexerType subIndexerType = calculateSubIndexer(inputData);
     return subIndexerType == null ? null : computeValue(inputData, Objects.requireNonNull(subIndexerType));
   }
 
-  protected abstract @Nullable V computeValue(@NotNull FileContent inputData, @NotNull SubIndexerType indexerType);
+  @Nullable
+  protected abstract V computeValue(@NotNull FileContent inputData, @NotNull SubIndexerType indexerType);
 }

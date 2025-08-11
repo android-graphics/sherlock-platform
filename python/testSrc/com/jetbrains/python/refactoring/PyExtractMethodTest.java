@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring;
 
 import com.intellij.lang.LanguageRefactoringSupport;
@@ -18,7 +18,7 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     final String dir = "refactoring/extractmethod/";
 
     myFixture.configureByFile(dir + beforeName);
-    final RefactoringSupportProvider provider = LanguageRefactoringSupport.getInstance().forLanguage(PythonLanguage.getInstance());
+    final RefactoringSupportProvider provider = LanguageRefactoringSupport.INSTANCE.forLanguage(PythonLanguage.getInstance());
     assertNotNull(provider);
     final RefactoringActionHandler handler = provider.getExtractMethodHandler();
     assertNotNull(handler);
@@ -41,31 +41,6 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
       return;
     }
     fail("No exception was thrown");
-  }
-
-  // PY-34626 
-  public void testMethodInnerFunc() {
-    doTest("extracted");
-  }
-
-  // PY-34626 
-  public void testMethodInnerFuncWithOwnParam() {
-    doTest("extracted");
-  }
-
-  // PY-34626
-  public void testMethodInnerFuncWithMethodParam() {
-    doTest("extracted");
-  }
-
-  // PY-34626
-  public void testMethodInnerFuncRecursive() {
-    doTest("extracted");
-  }
-
-  // PY-34626
-  public void testMethodInnerFuncCombined() {
-    doTest("extracted");
   }
 
   public void testParameter() {

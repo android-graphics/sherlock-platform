@@ -1,28 +1,24 @@
-from _typeshed import FileDescriptorOrPath
-from os import _Environ
-from typing import AnyStr
-
-from .spawnbase import _InputRePattern, _Logfile
+from _typeshed import Incomplete
 
 def run(
-    command: str,
-    timeout: float | None = 30,
+    command,
+    timeout: int = 30,
     withexitstatus: bool = False,
-    events: list[tuple[_InputRePattern, AnyStr]] | dict[_InputRePattern, AnyStr] | None = None,
-    extra_args: None = None,
-    logfile: _Logfile | None = None,
-    cwd: FileDescriptorOrPath | None = None,
-    env: _Environ[str] | None = None,
+    events: Incomplete | None = None,
+    extra_args: Incomplete | None = None,
+    logfile: Incomplete | None = None,
+    cwd: Incomplete | None = None,
+    env: Incomplete | None = None,
     **kwargs,
-) -> AnyStr | tuple[AnyStr, int]: ...
+): ...
 def runu(
-    command: str,
-    timeout: float | None = 30,
+    command,
+    timeout: int = 30,
     withexitstatus: bool = False,
-    events: list[tuple[_InputRePattern, AnyStr]] | dict[_InputRePattern, AnyStr] | None = None,
-    extra_args: None = None,
-    logfile: _Logfile | None = None,
-    cwd: FileDescriptorOrPath | None = None,
-    env: _Environ[str] | None = None,
+    events: Incomplete | None = None,
+    extra_args: Incomplete | None = None,
+    logfile: Incomplete | None = None,
+    cwd: Incomplete | None = None,
+    env: Incomplete | None = None,
     **kwargs,
-) -> AnyStr | tuple[AnyStr, int]: ...
+): ...

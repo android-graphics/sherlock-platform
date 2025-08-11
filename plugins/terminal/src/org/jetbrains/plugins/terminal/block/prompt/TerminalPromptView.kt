@@ -19,13 +19,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.ui.EditorTextField
+import com.intellij.ui.LanguageTextField
 import com.intellij.ui.border.CustomLineBorder
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.TerminalCommandExecutor
 import org.jetbrains.plugins.terminal.block.completion.TerminalInlineCompletion
 import org.jetbrains.plugins.terminal.block.history.CommandHistoryPresenter
@@ -34,7 +33,7 @@ import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptController.Prom
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorDescription
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorStateListener
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorUtil
-import org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptFileType
+import org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptLanguage
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
@@ -51,12 +50,11 @@ import javax.swing.JScrollPane
 import kotlin.math.max
 import kotlin.math.min
 
-@ApiStatus.Internal
-class TerminalPromptView(
+internal class TerminalPromptView(
   private val project: Project,
   private val settings: JBTerminalSystemSettingsProviderBase,
   session: BlockTerminalSession,
-  commandExecutor: TerminalCommandExecutor,
+  commandExecutor: TerminalCommandExecutor
 ) : PromptStateListener, Disposable {
   val controller: TerminalPromptController
 
@@ -86,7 +84,7 @@ class TerminalPromptView(
   private val toolbarSizeInitializedFuture: CompletableFuture<*>
 
   init {
-    val editorTextField = createPromptTextField()
+    val editorTextField = createPromptTextField(session)
     editor = editorTextField.getEditor(true) as EditorImpl
     controller = TerminalPromptController(project, editor, session, commandExecutor)
     controller.addListener(this)
@@ -105,13 +103,6 @@ class TerminalPromptView(
                                          0)
     val outerBorder = object : CustomLineBorder(TerminalUi.promptSeparatorColor(editor),
                                                 JBInsets(1, 0, 0, 0)) {
-      override fun getBorderInsets(c: Component): Insets {
-        if (c.y == 0) {
-          return JBInsets.emptyInsets()
-        }
-        return super.getBorderInsets(c)
-      }
-
       override fun paintBorder(c: Component, g: Graphics?, x: Int, y: Int, w: Int, h: Int) {
         // Paint the border only if the component is not on the top
         if (c.y != 0) {
@@ -163,8 +154,8 @@ class TerminalPromptView(
     }
   }
 
-  private fun createPromptTextField(): EditorTextField {
-    val textField = object : EditorTextField(project, TerminalPromptFileType) {
+  private fun createPromptTextField(session: BlockTerminalSession): LanguageTextField {
+    val textField = object : LanguageTextField(TerminalPromptLanguage, project, "", false) {
       override fun setBackground(bg: Color?) {
         // do nothing to not set background to editor in super method
       }
@@ -174,7 +165,6 @@ class TerminalPromptView(
         font = EditorUtil.getEditorFont()
       }
     }
-    textField.setOneLineMode(false)
     textField.setDisposedWith(this)
     textField.alignmentX = JComponent.LEFT_ALIGNMENT
 

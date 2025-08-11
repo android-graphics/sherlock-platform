@@ -7,7 +7,7 @@ import org.jetbrains.concurrency.createError
 import org.jetbrains.jsonProtocol.Request
 import java.util.concurrent.atomic.AtomicInteger
 
-@Deprecated("Please don't use logger from scriptDebugger", level = DeprecationLevel.HIDDEN)
+@Deprecated("Please don't use logger from scriptDebugger", level = DeprecationLevel.WARNING)
 val LOG: Logger = Logger.getInstance(CommandProcessor::class.java)
 
 @ApiStatus.NonExtendable

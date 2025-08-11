@@ -1,5 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 // Licensed under the terms of the Eclipse Public License (EPL).
 package com.jetbrains.python.debugger.pydev;
 
@@ -88,13 +86,13 @@ public abstract class AbstractCommand<T> {
   public static final String TAB_CHAR = "@_@TAB_CHAR@_@";
 
 
-  private final @NotNull RemoteDebugger myDebugger;
+  @NotNull private final RemoteDebugger myDebugger;
   private final int myCommandCode;
 
   private final ResponseProcessor<T> myResponseProcessor;
 
 
-  protected AbstractCommand(final @NotNull RemoteDebugger debugger, final int commandCode) {
+  protected AbstractCommand(@NotNull final RemoteDebugger debugger, final int commandCode) {
     myDebugger = debugger;
     myCommandCode = commandCode;
     myResponseProcessor = createResponseProcessor();
@@ -108,7 +106,8 @@ public abstract class AbstractCommand<T> {
     return myResponseProcessor;
   }
 
-  public final @NotNull String getPayload() {
+  @NotNull
+  public final String getPayload() {
     Payload payload = new Payload();
     buildPayload(payload);
     return payload.getText();
@@ -117,7 +116,8 @@ public abstract class AbstractCommand<T> {
   protected abstract void buildPayload(Payload payload);
 
 
-  public static @NotNull String buildCondition(String expression) {
+  @NotNull
+  public static String buildCondition(String expression) {
     String condition;
 
     if (expression != null) {
@@ -134,7 +134,7 @@ public abstract class AbstractCommand<T> {
     return false;
   }
 
-  public final void execute() throws PyDebuggerException {
+  public void execute() throws PyDebuggerException {
     final int sequence = myDebugger.getNextSequence();
 
     final ResponseProcessor<T> processor = getResponseProcessor();
@@ -167,7 +167,7 @@ public abstract class AbstractCommand<T> {
     }
   }
 
-  public final void execute(final PyDebugCallback<? super T> callback) {
+  public void execute(final PyDebugCallback<T> callback) {
     final int sequence = myDebugger.getNextSequence();
 
     final ResponseProcessor<T> processor = getResponseProcessor();
@@ -230,7 +230,7 @@ public abstract class AbstractCommand<T> {
     return command >= 900 && command < 1000;
   }
 
-  protected void processResponse(final @NotNull ProtocolFrame response) throws PyDebuggerException {
+  protected void processResponse(@NotNull final ProtocolFrame response) throws PyDebuggerException {
     if (isErrorCommand(response.getCommand())) {
       throw new PyDebuggerException(response.getPayload());
     }
@@ -247,7 +247,8 @@ public abstract class AbstractCommand<T> {
 
     protected abstract T parseResponse(ProtocolFrame response) throws PyDebuggerException;
 
-    protected @Nullable T parseException(ProtocolFrame frame) throws PyDebuggerException {
+    @Nullable
+    protected T parseException(ProtocolFrame frame) throws PyDebuggerException {
       return null;
     }
   }
@@ -280,7 +281,8 @@ public abstract class AbstractCommand<T> {
     return command == ERROR;
   }
 
-  public @NotNull RemoteDebugger getDebugger() {
+  @NotNull
+  public RemoteDebugger getDebugger() {
     return myDebugger;
   }
 
@@ -302,7 +304,7 @@ public abstract class AbstractCommand<T> {
     }
 
     private Payload doAdd(String text) {
-      if (!myBuilder.isEmpty()) {
+      if (myBuilder.length() > 0) {
         return separator().append(text);
       }
       else {

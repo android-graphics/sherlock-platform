@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,9 +32,9 @@ public class QuickMerge extends BackgroundTaskGroup {
 
   private static final Logger LOG = Logger.getInstance(QuickMerge.class);
 
-  private final @NotNull MergeContext myMergeContext;
-  private final @NotNull QuickMergeInteraction myInteraction;
-  private final @NotNull Semaphore mySemaphore = new Semaphore();
+  @NotNull private final MergeContext myMergeContext;
+  @NotNull private final QuickMergeInteraction myInteraction;
+  @NotNull private final Semaphore mySemaphore = new Semaphore();
 
   public QuickMerge(@NotNull MergeContext mergeContext, @NotNull QuickMergeInteraction interaction) {
     super(mergeContext.getProject(), mergeContext.getMergeTitle());
@@ -42,11 +42,13 @@ public class QuickMerge extends BackgroundTaskGroup {
     myInteraction = interaction;
   }
 
-  public @NotNull MergeContext getMergeContext() {
+  @NotNull
+  public MergeContext getMergeContext() {
     return myMergeContext;
   }
 
-  public @NotNull QuickMergeInteraction getInteraction() {
+  @NotNull
+  public QuickMergeInteraction getInteraction() {
     return myInteraction;
   }
 
@@ -186,7 +188,8 @@ public class QuickMerge extends BackgroundTaskGroup {
         newIntegrateTask(title, mergerFactory).queue()))));
   }
 
-  private @NotNull Task newIntegrateTask(@ProgressTitle @NotNull String title, @NotNull MergerFactory mergerFactory) {
+  @NotNull
+  private Task newIntegrateTask(@ProgressTitle @NotNull String title, @NotNull MergerFactory mergerFactory) {
     return new SvnIntegrateChangesTask(myMergeContext.getVcs(), new WorkingCopyInfo(myMergeContext.getWcInfo().getPath(), true),
                                        mergerFactory, myMergeContext.getSourceUrl(), title, false,
                                        myMergeContext.getBranchName()) {
@@ -211,7 +214,8 @@ public class QuickMerge extends BackgroundTaskGroup {
            checkRepositoryVersion15(myMergeContext.getVcs(), myMergeContext.getSourceUrl());
   }
 
-  private @NotNull MergerFactory createMergeAllFactory(boolean reintegrate, @Nullable WrapperInvertor copyPoint, boolean supportsMergeInfo) {
+  @NotNull
+  private MergerFactory createMergeAllFactory(boolean reintegrate, @Nullable WrapperInvertor copyPoint, boolean supportsMergeInfo) {
     long revision = copyPoint != null
                     ? reintegrate ? copyPoint.getWrapped().getTargetRevision() : copyPoint.getWrapped().getSourceRevision()
                     : -1;

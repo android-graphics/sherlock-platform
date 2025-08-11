@@ -9,13 +9,12 @@ import java.awt.AlphaComposite
 import java.awt.Component
 import java.awt.Graphics2D
 import javax.swing.Icon
-import kotlin.math.ceil
 
 /**
  * Draws image. If you need to position image inside inlay, use [InsetPresentation]
  */
 @ApiStatus.Internal
-open class ScaledIconPresentation(
+class ScaledIconPresentation(
   private val metricsStorage: InlayTextMetricsStorage,
   val isSmall: Boolean,
   icon: Icon, private val component: Component) : BasePresentation() {
@@ -26,7 +25,8 @@ open class ScaledIconPresentation(
   }
 
   private fun getMetrics() = metricsStorage.getFontMetrics(isSmall)
-  protected open fun getScaleFactor() = (getMetrics().fontHeight.toDouble() / icon.iconHeight)
+
+  private fun getScaleFactor() = (getMetrics().fontHeight.toDouble() / icon.iconHeight)
 
   override val width: Int
     get() = (icon.iconWidth * getScaleFactor()).toInt()
@@ -42,18 +42,4 @@ open class ScaledIconPresentation(
   }
 
   override fun toString(): String = "<image>"
-}
-
-@ApiStatus.Internal
-class ScaledIconWithCustomFactorPresentation(
-  metricsStorage: InlayTextMetricsStorage,
-  isSmall: Boolean,
-  icon: Icon,
-  component: Component,
-  private val iconScaleFactor: Float = 1f) : ScaledIconPresentation(metricsStorage, isSmall, icon, component) {
-
-  override val height: Int
-    get() = ceil(super.height * iconScaleFactor).toInt()
-
-  override fun getScaleFactor(): Double = super.getScaleFactor() * iconScaleFactor
 }

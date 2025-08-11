@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsActions;
@@ -364,15 +363,7 @@ public class DefaultActionGroup extends ActionGroup {
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-    if (e == null) reportGetChildrenForNullEvent();
     return getChildren(e != null ? e.getActionManager() : ActionManager.getInstance());
-  }
-
-  private static void reportGetChildrenForNullEvent() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    LOG.error("Do not call `getChildren(null)`. Do not expand action groups manually. " +
-              "Reuse `AnActionEvent.updateSession` by composing, wrapping, and postprocessing action groups. " +
-              "Otherwise, use `getChildActionsOrStubs()` or `getChildren(ActionManager)`");
   }
 
   @Override
@@ -492,11 +483,8 @@ public class DefaultActionGroup extends ActionGroup {
     return children;
   }
 
-  /** @deprecated Prefer other {@link #add} and {@link #addAll} variants */
-  @Deprecated
   public final void addAll(@NotNull ActionGroup group) {
-    addAll(group instanceof DefaultActionGroup o ? o.getChildActionsOrStubs() :
-           group.getChildren(null));
+    addAll(group.getChildren(null));
   }
 
   public final void addAll(@NotNull Collection<? extends AnAction> actionList) {

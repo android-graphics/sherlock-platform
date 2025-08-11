@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -9,52 +9,44 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 @ApiStatus.Internal
-public final class SingleIndexValueRemover {
-  public final @NotNull ID<?, ?> indexId;
-  public final int shardNo;
-
-  private final @NotNull FileBasedIndexImpl indexImpl;
-
+final
+class SingleIndexValueRemover {
+  private final FileBasedIndexImpl myIndexImpl;
+  final @NotNull ID<?, ?> indexId;
   private final int inputId;
   private final @Nullable String fileInfo;
-  private final @NotNull FileIndexingResult.ApplicationMode applicationMode;
+  private final @NotNull FileIndexesValuesApplier.ApplicationMode applicationMode;
+  long evaluatingValueRemoverTime;
 
-  /** Time of {@code index.mapInputAndPrepareUpdate(inputId, null)}, in nanoseconds */
-  public long evaluatingValueRemoverTime;
-
-  SingleIndexValueRemover(@NotNull FileBasedIndexImpl indexImpl,
-                          @NotNull ID<?, ?> indexId,
-                          int shardNo,
+  SingleIndexValueRemover(FileBasedIndexImpl indexImpl, @NotNull ID<?, ?> indexId,
                           @Nullable VirtualFile file,
                           @Nullable FileContent fileContent,
                           int inputId,
-                          @NotNull FileIndexingResult.ApplicationMode applicationMode) {
-    this.indexImpl = indexImpl;
+                          @NotNull FileIndexesValuesApplier.ApplicationMode applicationMode) {
+    myIndexImpl = indexImpl;
     this.indexId = indexId;
     this.inputId = inputId;
-    this.shardNo = shardNo;
     this.fileInfo = FileBasedIndexImpl.getFileInfoLogString(inputId, file, fileContent);
     this.applicationMode = applicationMode;
   }
 
   /**
-   * Contrary to the {@link SingleIndexValueApplier}, the remover does both 'prepare update' and 'apply update to the index'
-   * steps here. This is because for removes {@link InvertedIndex#mapInputAndPrepareUpdate(int, Object)} is almost trivial,
-   * with ~0 cost.
    * @return false in case index update is not necessary or the update has failed
    */
-  public boolean remove() {
-    if (!RebuildStatus.isOk(indexId) && !indexImpl.myIsUnitTestMode) {
+  boolean remove() {
+    if (!RebuildStatus.isOk(indexId) && !myIndexImpl.myIsUnitTestMode) {
       return false; // the index is scheduled for rebuild, no need to update
     }
-    indexImpl.increaseLocalModCount();
+    myIndexImpl.increaseLocalModCount();
 
-    UpdatableIndex<?, ?, FileContent, ?> index = indexImpl.getIndex(indexId);
+    UpdatableIndex<?, ?, FileContent, ?> index = myIndexImpl.getIndex(indexId);
 
     FileBasedIndexImpl.markFileWritingIndexes(inputId);
     try {
-      StorageUpdate storageUpdate;
+      Supplier<Boolean> storageUpdate;
       long startTime = System.nanoTime();
       try {
         storageUpdate = index.mapInputAndPrepareUpdate(inputId, null);
@@ -67,16 +59,18 @@ public final class SingleIndexValueRemover {
         this.evaluatingValueRemoverTime = System.nanoTime() - startTime;
       }
 
-      if (indexImpl.runUpdateForPersistentData(storageUpdate)) {
+      if (myIndexImpl.runUpdateForPersistentData(storageUpdate)) {
         if (FileBasedIndexEx.doTraceStubUpdates(indexId) || FileBasedIndexEx.doTraceIndexUpdates()) {
           FileBasedIndexImpl.LOG.info("index " + indexId + " deletion finished for " + fileInfo);
         }
-        ConcurrencyUtil.withLock(indexImpl.myReadLock, () -> index.setUnindexedStateForFile(inputId));
+        ConcurrencyUtil.withLock(myIndexImpl.myReadLock, () -> {
+          index.setUnindexedStateForFile(inputId);
+        });
       }
       return true;
     }
     catch (RuntimeException exception) {
-      indexImpl.requestIndexRebuildOnException(exception, indexId);
+      myIndexImpl.requestIndexRebuildOnException(exception, indexId);
       return false;
     }
     finally {

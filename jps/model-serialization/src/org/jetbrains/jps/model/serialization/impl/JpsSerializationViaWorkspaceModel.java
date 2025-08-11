@@ -9,7 +9,6 @@ import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Map;
 
 /**
@@ -26,13 +25,8 @@ public interface JpsSerializationViaWorkspaceModel {
     return null;
   }
 
-  @NotNull JpsModel loadModel(@NotNull Path projectPath,
-                              @Nullable Path workspaceStorageCachePath,
-                              @Nullable Path externalConfigurationDirectory,
-                              @Nullable Path optionsPath,
-                              @Nullable Path globalWorkspaceStoragePath,
-                              boolean loadUnloadedModules) throws IOException;
+  @NotNull JpsModel loadModel(@NotNull String projectPath, @Nullable String optionsPath, boolean loadUnloadedModules) throws IOException;
 
-  @NotNull JpsProject loadProject(@NotNull Path projectPath, @Nullable Path externalConfigurationDirectory, @NotNull Map<String, String> pathVariables,
+  @NotNull JpsProject loadProject(@NotNull String projectPath, @NotNull Map<String, String> pathVariables, 
                                   boolean loadUnloadedModules) throws IOException;
 }

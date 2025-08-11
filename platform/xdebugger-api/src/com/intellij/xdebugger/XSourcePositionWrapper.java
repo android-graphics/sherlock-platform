@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger;
 
 import com.intellij.openapi.project.Project;
@@ -23,13 +22,15 @@ public abstract class XSourcePositionWrapper implements XSourcePosition {
     return myPosition.getOffset();
   }
 
+  @NotNull
   @Override
-  public @NotNull VirtualFile getFile() {
+  public VirtualFile getFile() {
     return myPosition.getFile();
   }
 
+  @NotNull
   @Override
-  public @NotNull Navigatable createNavigatable(@NotNull Project project) {
+  public Navigatable createNavigatable(@NotNull Project project) {
     return myPosition.createNavigatable(project);
   }
 }

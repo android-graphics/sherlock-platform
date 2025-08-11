@@ -3,8 +3,7 @@ package org.jetbrains.plugins.terminal.block
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.FocusChangeListener
@@ -69,7 +68,7 @@ internal class SimpleTerminalView(
 
   private fun createEditor(): EditorImpl {
     val document = DocumentImpl("", true)
-    val editor = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = true)
+    val editor = TerminalUiUtils.createOutputEditor(document, project, settings)
     editor.useTerminalDefaultBackground(this)
     editor.settings.isLineMarkerAreaShown = false
     editor.scrollPane.verticalScrollBarPolicy = if (withVerticalScroll) {
@@ -90,7 +89,7 @@ internal class SimpleTerminalView(
    * This wrapper is needed to provide the editor to the DataContext.
    * Editor is not proving it itself, because renderer mode is enabled ([EditorImpl.isRendererMode]).
    */
-  private inner class SimpleTerminalPanel(editor: Editor) : JPanel(), UiDataProvider {
+  private inner class SimpleTerminalPanel(editor: Editor) : JPanel(), DataProvider {
     init {
       background = TerminalUi.defaultBackground(editor)
       border = JBUI.Borders.emptyLeft(TerminalUi.alternateBufferLeftInset)
@@ -98,8 +97,11 @@ internal class SimpleTerminalView(
       add(editor.component, BorderLayout.CENTER)
     }
 
-    override fun uiDataSnapshot(sink: DataSink) {
-      sink[CommonDataKeys.EDITOR] = editor
+    override fun getData(dataId: String): Any? {
+      return if (CommonDataKeys.EDITOR.`is`(dataId)) {
+        editor
+      }
+      else null
     }
   }
 }

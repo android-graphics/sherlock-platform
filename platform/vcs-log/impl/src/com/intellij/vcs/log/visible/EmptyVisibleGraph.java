@@ -8,7 +8,6 @@ import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.actions.ActionController;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +16,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-@ApiStatus.Internal
 public final class EmptyVisibleGraph implements VisibleGraph<Integer> {
   private static final VisibleGraph<Integer> INSTANCE = new EmptyVisibleGraph();
 

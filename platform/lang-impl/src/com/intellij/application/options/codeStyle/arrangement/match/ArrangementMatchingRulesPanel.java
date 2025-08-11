@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -6,8 +6,7 @@ import com.intellij.application.options.codeStyle.arrangement.color.ArrangementC
 import com.intellij.application.options.codeStyle.arrangement.util.TitleWithToolbar;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
@@ -17,6 +16,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,9 +25,9 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 
-public final class ArrangementMatchingRulesPanel extends JPanel implements UiDataProvider {
+public final class ArrangementMatchingRulesPanel extends JPanel implements DataProvider {
 
-  private final @NotNull ArrangementSectionRulesControl myControl;
+  @NotNull private final ArrangementSectionRulesControl myControl;
 
   public ArrangementMatchingRulesPanel(@NotNull Language language,
                                        @NotNull ArrangementStandardSettingsManager settingsManager,
@@ -81,7 +81,8 @@ public final class ArrangementMatchingRulesPanel extends JPanel implements UiDat
     return new ArrangementSectionRulesControl(language, settingsManager, colorsProvider, callback);
   }
 
-  public @NotNull List<ArrangementSectionRule> getSections() {
+  @NotNull
+  public List<ArrangementSectionRule> getSections() {
     return myControl.getSections();
   }
 
@@ -89,7 +90,8 @@ public final class ArrangementMatchingRulesPanel extends JPanel implements UiDat
     myControl.setSections(rules);
   }
 
-  public @Nullable Collection<StdArrangementRuleAliasToken> getRulesAliases() {
+  @Nullable
+  public Collection<StdArrangementRuleAliasToken> getRulesAliases() {
     return myControl.getRulesAliases();
   }
 
@@ -101,8 +103,12 @@ public final class ArrangementMatchingRulesPanel extends JPanel implements UiDat
     myControl.hideEditor();
   }
 
+  @Nullable
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(ArrangementSectionRulesControl.KEY, myControl);
+  public Object getData(@NotNull @NonNls String dataId) {
+    if (ArrangementSectionRulesControl.KEY.is(dataId)) {
+      return myControl;
+    }
+    return null;
   }
 }

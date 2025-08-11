@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.JavaTestUtil;
@@ -200,7 +200,8 @@ class LightTestMigration {
     return javaFiles.get(0);
   }
 
-  private static @NotNull List<Path> getJavaFiles(Path dir) throws IOException {
+  @NotNull
+  private static List<Path> getJavaFiles(Path dir) throws IOException {
     List<Path> javaFiles = Files.walk(dir).filter(p -> p.toString().endsWith(".java")).filter(p -> Files.isRegularFile(p))
       .collect(Collectors.toList());
     if (javaFiles.isEmpty()) {

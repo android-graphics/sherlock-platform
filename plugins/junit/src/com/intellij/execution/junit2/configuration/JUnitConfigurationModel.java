@@ -10,7 +10,6 @@ import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestObject;
 import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -26,7 +25,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.junit.RepeatCount;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -100,9 +98,7 @@ public class JUnitConfigurationModel {
 
   public void apply(final Module module, final JUnitConfiguration configuration, @Nullable ClassEditorField classField) {
     final boolean shouldUpdateName = configuration.isGeneratedName();
-    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-359592")) {
-      applyTo(configuration.getPersistentData(), module, classField);
-    }
+    applyTo(configuration.getPersistentData(), module, classField);
     if (shouldUpdateName && !JavaExecutionUtil.isNewName(configuration.getName())) {
       configuration.setGeneratedName();
     }

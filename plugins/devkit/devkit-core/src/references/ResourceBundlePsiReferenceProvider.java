@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -58,8 +58,9 @@ class ResourceBundlePsiReferenceProvider extends PsiReferenceProvider {
       return variants.toArray(LookupElement.EMPTY_ARRAY);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getUnresolvedMessagePattern() {
+    public String getUnresolvedMessagePattern() {
       return DevKitBundle.message("plugin.xml.convert.property.bundle.cannot.resolve");
     }
   }

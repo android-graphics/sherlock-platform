@@ -36,8 +36,8 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -60,7 +60,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private ModifiableRootModel myModifiableRootModelProxy;
 
   private final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
-  private static final @NonNls String METHOD_COMMIT = "commit";
+  @NonNls private static final String METHOD_COMMIT = "commit";
   private boolean myEditorsInitialized;
 
   protected History myHistory;
@@ -81,13 +81,15 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   protected abstract JComponent createCenterPanel();
 
-  public abstract @Nullable ModuleConfigurationEditor getSelectedEditor();
+  @Nullable
+  public abstract ModuleConfigurationEditor getSelectedEditor();
 
   public abstract void selectEditor(String displayName);
 
   protected abstract void restoreSelectedEditor();
 
-  public abstract @Nullable ModuleConfigurationEditor getEditor(@NotNull String displayName);
+  @Nullable
+  public abstract ModuleConfigurationEditor getEditor(@NotNull String displayName);
 
   protected abstract void disposeCenterPanel();
 
@@ -102,7 +104,8 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     myEventDispatcher.addListener(listener);
   }
 
-  public @Nullable Module getModule() {
+  @Nullable
+  public Module getModule() {
     return myModulesProvider.getModule(myName);
   }
 
@@ -195,7 +198,8 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     }
   }
 
-  public @NotNull ModuleConfigurationState createModuleConfigurationState() {
+  @NotNull
+  public ModuleConfigurationState createModuleConfigurationState() {
     return new ModuleConfigurationStateImpl(myProject, myModulesProvider) {
       @Override
       public ModifiableRootModel getModifiableRootModel() {
@@ -231,7 +235,8 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return myGenericSettingsPanel;
   }
 
-  public @NotNull JPanel getPanel() {
+  @NotNull
+  public JPanel getPanel() {
     if (myGenericSettingsPanel == null) {
       myGenericSettingsPanel = createPanel();
     }
@@ -322,13 +327,14 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     }
   }
 
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return myName;
   }
 
   private class ModifiableRootModelInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final ModifiableRootModel myDelegateModel;
-    private static final @NonNls Set<String> myCheckedNames = Set.of(
+    @NonNls private static final Set<String> myCheckedNames = Set.of(
       "addOrderEntry", "addLibraryEntry", "addInvalidLibrary", "addModuleOrderEntry", "addInvalidModuleEntry", "removeOrderEntry",
       "setSdk", "inheritSdk", "inheritCompilerOutputPath", "setExcludeOutput", "replaceEntryOfType", "rearrangeOrderEntries");
 
@@ -365,7 +371,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   private class LibraryTableInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final LibraryTable myDelegateTable;
-    private final @NonNls Set<String> myCheckedNames = new HashSet<>(Collections.singletonList("removeLibrary" /*,"createLibrary"*/));
+    @NonNls private final Set<String> myCheckedNames = new HashSet<>(Collections.singletonList("removeLibrary" /*,"createLibrary"*/));
 
     LibraryTableInvocationHandler(@NotNull LibraryTable table) {
       myDelegateTable = table;
@@ -528,7 +534,8 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return unwrappedParams;
   }
 
-  public @Nullable String getHelpTopic() {
+  @Nullable
+  public String getHelpTopic() {
     if (myEditors.isEmpty()) {
       return null;
     }

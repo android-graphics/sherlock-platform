@@ -1,4 +1,4 @@
-// CHOSEN_OPTION: PROPERTY|Add use-site target 'property'
+// CHOOSE_USE_SITE_TARGET: property
 
 annotation class A
 

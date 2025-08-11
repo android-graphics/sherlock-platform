@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
 import com.intellij.codeInsight.intention.CommonIntentionAction;
@@ -6,7 +6,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Contract;
@@ -18,10 +17,9 @@ import java.util.function.UnaryOperator;
 /**
  * Intention action replacement that operates on {@link ModCommand}.
  * If you need your action to work in the dumb mode, extend it with {@link com.intellij.openapi.project.DumbAware}
- * or override {@link PossiblyDumbAware#isDumbAware()}
- * (please see <a href="https://plugins.jetbrains.com/docs/intellij/indexing-and-psi-stubs.html#dumb-mode">dumb mode docs</a> for details)
+ * or {@link com.intellij.openapi.project.PossiblyDumbAware} (please see <a href="https://plugins.jetbrains.com/docs/intellij/indexing-and-psi-stubs.html#dumb-mode">dumb mode docs</a> for details)
  */
-public interface ModCommandAction extends CommonIntentionAction, PossiblyDumbAware {
+public interface ModCommandAction extends CommonIntentionAction {
   /**
    * Empty array constant for convenience
    */
@@ -80,7 +78,8 @@ public interface ModCommandAction extends CommonIntentionAction, PossiblyDumbAwa
   }
 
   @Override
-  default @NotNull ModCommandAction asModCommandAction() {
+  @NotNull
+  default ModCommandAction asModCommandAction() {
     return this;
   }
 }

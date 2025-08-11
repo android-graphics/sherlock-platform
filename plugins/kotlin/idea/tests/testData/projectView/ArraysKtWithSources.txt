@@ -116,7 +116,6 @@ Navigation item file #1: kotlin-stdlib.jar!/kotlin/collections/ArraysKt.class
      +PsiDirectory: system
      +PsiDirectory: text
      +PsiDirectory: time
-     +PsiDirectory: uuid
      _Assertions
      BuilderInference
      ConsistentCopyVisibility
@@ -217,4 +216,4 @@ Navigation item file #1: kotlin-stdlib.jar!/kotlin/collections/ArraysKt.class
      UShortArrayKt
      UShortKt
     +PsiDirectory: META-INF
-   +PsiDirectory: kotlin-stdlib-common.klib
+   +PsiDirectory: kotlin-stdlib-common.jar

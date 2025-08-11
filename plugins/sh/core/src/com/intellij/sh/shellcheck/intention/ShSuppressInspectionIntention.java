@@ -22,13 +22,15 @@ public class ShSuppressInspectionIntention implements IntentionAction {
     myOffset = offset;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getText() {
+  public String getText() {
     return ShBundle.message("sh.suppress.inspection", myMessage);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return ShBundle.message("sh.shell.script");
   }
 

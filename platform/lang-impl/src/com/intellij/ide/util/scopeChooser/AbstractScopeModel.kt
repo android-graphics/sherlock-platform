@@ -4,9 +4,7 @@ package com.intellij.ide.util.scopeChooser
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.ui.popup.ListSeparator
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 interface AbstractScopeModel : Disposable {
 
   fun addScopeModelListener(listener: ScopeModelListener)
@@ -24,13 +22,11 @@ interface AbstractScopeModel : Disposable {
 
 }
 
-@ApiStatus.Internal
 interface ScopesSnapshot {
   val scopeDescriptors: List<ScopeDescriptor>
   fun getSeparatorFor(scopeDescriptor: ScopeDescriptor): ListSeparator?
 }
 
-@ApiStatus.Internal
 interface ScopeModelListener {
   fun scopesUpdated(scopes: ScopesSnapshot)
 }

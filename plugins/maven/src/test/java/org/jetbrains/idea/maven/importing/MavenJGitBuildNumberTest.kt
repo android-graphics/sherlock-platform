@@ -91,7 +91,6 @@ class MavenJGitBuildNumberTest : MavenDomTestCase() {
                                 <plugin>
                                     <groupId>ru.concerteza.buildnumber</groupId>
                                     <artifactId>maven-jgit-buildnumber-plugin</artifactId>
-                                    <version>1.2.10</version>
                                 </plugin>
                             </plugins>
                         </build>

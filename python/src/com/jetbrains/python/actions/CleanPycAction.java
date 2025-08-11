@@ -1,10 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.actions;
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.io.FileUtil;
@@ -26,7 +23,7 @@ import java.util.List;
 public class CleanPycAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final PsiElement[] elements = e.getData(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY);
+    final PsiElement[] elements = e.getData(LangDataKeys.PSI_ELEMENT_ARRAY);
     if (elements == null) return;
     final List<File> pycFiles = new ArrayList<>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
@@ -60,7 +57,7 @@ public class CleanPycAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     final PsiElement[] elements = e.getData(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY);
-    if (e.isFromContextMenu()) {
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
       e.getPresentation().setEnabledAndVisible(isAllDirectories(elements));
     }
     else {

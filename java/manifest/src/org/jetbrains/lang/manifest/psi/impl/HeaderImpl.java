@@ -32,11 +32,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
-import org.jetbrains.lang.manifest.psi.Header;
-import org.jetbrains.lang.manifest.psi.HeaderValue;
-import org.jetbrains.lang.manifest.psi.ManifestToken;
-import org.jetbrains.lang.manifest.psi.ManifestTokenType;
+import org.jetbrains.lang.manifest.psi.*;
 
 import java.util.List;
 
@@ -48,8 +44,9 @@ public class HeaderImpl extends ASTWrapperPsiElement implements Header {
     super(node);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return getNameElement().getText();
   }
 
@@ -59,20 +56,23 @@ public class HeaderImpl extends ASTWrapperPsiElement implements Header {
     return this;
   }
 
+  @NotNull
   @Override
-  public @NotNull ManifestToken getNameElement() {
+  public ManifestToken getNameElement() {
     ManifestToken token = (ManifestToken)getNode().findChildByType(ManifestTokenType.HEADER_NAME);
     assert token != null : getText();
     return token;
   }
 
+  @Nullable
   @Override
-  public @Nullable HeaderValue getHeaderValue() {
+  public HeaderValue getHeaderValue() {
     return PsiTreeUtil.getChildOfType(this, HeaderValue.class);
   }
 
+  @NotNull
   @Override
-  public @NotNull @Unmodifiable List<HeaderValue> getHeaderValues() {
+  public List<HeaderValue> getHeaderValues() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HeaderValue.class);
   }
 

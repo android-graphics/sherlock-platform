@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Conditions
 import com.intellij.psi.PsiElement
 
-@Suppress("PostfixTemplateDescriptionNotFound")
 open class PyEditablePostfixTemplate(templateId: String,
                                      templateName: String,
                                      liveTemplate: TemplateImpl,

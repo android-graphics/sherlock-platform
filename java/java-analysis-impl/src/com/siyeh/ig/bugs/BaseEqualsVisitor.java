@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -99,7 +99,8 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
     }
   }
 
-  private static @Nullable PsiType resolveIsEqualPredicateType(@NotNull PsiMethodCallExpression expression) {
+  @Nullable
+  private static PsiType resolveIsEqualPredicateType(@NotNull PsiMethodCallExpression expression) {
     PsiExpression highestPredicate = expression;
     int max = 100;
     int currentLevel = 0;
@@ -128,7 +129,8 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
     return findPsiTypeForPredicate(highestPredicate);
   }
 
-  private static @Nullable PsiType findPsiTypeForPredicate(@NotNull PsiExpression predicate) {
+  @Nullable
+  private static PsiType findPsiTypeForPredicate(@NotNull PsiExpression predicate) {
     PsiType typeParameter =
       PsiUtil.substituteTypeParameter(predicate.getType(), JAVA_UTIL_FUNCTION_PREDICATE, 0, false);
     if (typeParameter != null && !typeParameter.equalsToText(JAVA_LANG_OBJECT)) {
@@ -152,7 +154,8 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
     return null;
   }
 
-  private static @Nullable PsiType findPredicateExpectedType(@NotNull PsiExpression predicate) {
+  @Nullable
+  private static PsiType findPredicateExpectedType(@NotNull PsiExpression predicate) {
     final PsiType expectedType = ExpectedTypeUtils.findExpectedType(predicate, true);
     if (!(expectedType instanceof PsiClassType classType)) {
       return null;

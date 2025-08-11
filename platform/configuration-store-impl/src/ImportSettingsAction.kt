@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.ide.IdeBundle
@@ -48,16 +48,17 @@ open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
     val component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext)
 
     val descriptor = object : FileChooserDescriptor(true, true, true, true, false, false) {
-      override fun isFileSelectable(file: VirtualFile?): Boolean = when {
-        file == null -> false
-        file.isDirectory -> file.fileSystem.getNioPath(file)?.let { path -> ConfigImportHelper.isConfigDirectory(path) } == true
-        else -> super.isFileSelectable(file)
+      override fun isFileSelectable(file: VirtualFile?): Boolean {
+        if (file?.isDirectory == true) {
+          return file.fileSystem.getNioPath(file)?.let { path -> ConfigImportHelper.isConfigDirectory(path) } == true
+        }
+        return super.isFileSelectable(file)
       }
     }.apply {
       title = ConfigurationStoreBundle.message("title.import.file.location")
       description = ConfigurationStoreBundle.message("prompt.choose.import.file.path")
       isHideIgnored = false
-      ConfigImportHelper.setSettingsFilter(this)
+      withFileFilter { ConfigImportHelper.isSettingsFile(it) }
     }
 
     chooseSettingsFile(descriptor, PathManager.getOriginalConfigDir().pathString, component) {

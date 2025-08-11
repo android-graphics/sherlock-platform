@@ -41,18 +41,23 @@ public final class ManifestFileType extends LanguageFileType {
     super(ManifestLanguage.INSTANCE);
   }
 
+  @NotNull
+  @NonNls
   @Override
-  public @NotNull @NonNls String getName() {
+  public String getName() {
     return "Manifest";
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
+  public String getDescription() {
     return ManifestBundle.message("filetype.manifest.description");
   }
 
+  @NotNull
+  @NonNls
   @Override
-  public @NotNull @NonNls String getDefaultExtension() {
+  public String getDefaultExtension() {
     return "MF";
   }
 

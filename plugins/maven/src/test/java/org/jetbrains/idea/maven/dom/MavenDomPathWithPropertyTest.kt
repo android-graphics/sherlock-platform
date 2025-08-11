@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
@@ -6,15 +5,11 @@ import com.intellij.openapi.application.EDT
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import org.junit.Ignore
 import org.junit.Test
-
 
 class MavenDomPathWithPropertyTest : MavenDomTestCase() {
   @Test
-  @Ignore("IDEA-357023")
-  fun testRename() = runBlocking {
+  fun testRename() = runBlocking(Dispatchers.EDT) {
     importProjectAsync(
       """
         <groupId>test</groupId>
@@ -47,24 +42,22 @@ class MavenDomPathWithPropertyTest : MavenDomTestCase() {
         </build>
         """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      val dir = createProjectSubDir("aaa/bbb/res")
+    val dir = createProjectSubDir("aaa/bbb/res")
 
-      val bbb = dir.getParent()
+    val bbb = dir.getParent()
+    fixture.renameElement(PsiManager.getInstance(fixture.getProject()).findDirectory(bbb)!!, "Z")
 
-      fixture.renameElement(PsiManager.getInstance(fixture.getProject()).findDirectory(bbb)!!, "Z")
 
-      val text = PsiManager.getInstance(fixture.getProject()).findFile(projectPom)!!.getText()
-      assert(text.contains("<directory>aaa/Z/res</directory>"))
-      assert(text.contains("<directory>aaa/Z/res</directory>"))
-      assert(text.contains("<directory>aaa/Z/res</directory>"))
-      assert(text.contains("<directory>aaa/Z/res</directory>"))
-      assert(text.contains("<directory>aaa/Z/@rrr@</directory>"))
-    }
+    val text = PsiManager.getInstance(fixture.getProject()).findFile(projectPom)!!.getText()
+    assert(text.contains("<directory>aaa/Z/res</directory>"))
+    assert(text.contains("<directory>aaa/Z/res</directory>"))
+    assert(text.contains("<directory>aaa/Z/res</directory>"))
+    assert(text.contains("<directory>aaa/Z/res</directory>"))
+    assert(text.contains("<directory>aaa/Z/@rrr@</directory>"))
   }
 
   @Test
-  fun testCompletionDirectoriesOnly() = runBlocking {
+  fun testCompletionDirectoriesOnly() = runBlocking(Dispatchers.EDT) {
     createProjectPom(
       """
             <groupId>test</groupId>

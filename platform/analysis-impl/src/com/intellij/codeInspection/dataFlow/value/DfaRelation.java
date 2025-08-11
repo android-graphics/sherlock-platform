@@ -49,7 +49,6 @@ public record DfaRelation(@NotNull DfaValue leftOperand, @NotNull DfaValue right
     return relationType == RelationType.EQ;
   }
 
-  @Override
   public @NonNls String toString() {
     return leftOperand + " " + relationType + " " + rightOperand;
   }

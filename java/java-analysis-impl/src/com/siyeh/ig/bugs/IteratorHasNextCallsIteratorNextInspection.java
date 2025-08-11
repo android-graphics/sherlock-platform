@@ -30,7 +30,8 @@ public final class IteratorHasNextCallsIteratorNextInspection
   extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     String methodName = (String)infos[0];
     return InspectionGadgetsBundle.message(
       "iterator.hasnext.which.calls.next.problem.descriptor", methodName);

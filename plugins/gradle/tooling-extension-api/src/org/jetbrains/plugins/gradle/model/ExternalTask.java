@@ -35,11 +35,7 @@ public interface ExternalTask extends Serializable {
   @Nullable
   String getType();
 
-  boolean isJvm();
-
   boolean isTest();
 
   boolean isJvmTest();
-
-  boolean isInherited();
 }

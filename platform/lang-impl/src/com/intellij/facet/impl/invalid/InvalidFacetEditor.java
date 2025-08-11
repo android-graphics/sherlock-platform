@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.invalid;
 
 import com.intellij.facet.ui.FacetEditorContext;
@@ -6,13 +6,11 @@ import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.NlsContexts;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-@ApiStatus.Internal
 public final class InvalidFacetEditor extends FacetEditorTab {
   private final @NlsContexts.DialogMessage String myErrorMessage;
   private JPanel myMainPanel;
@@ -28,8 +26,9 @@ public final class InvalidFacetEditor extends FacetEditorTab {
     myInvalidFacetManager = InvalidFacetManager.getInstance(context.getProject());
   }
 
+  @Nls
   @Override
-  public @Nls String getDisplayName() {
+  public String getDisplayName() {
     return "";
   }
 
@@ -37,8 +36,9 @@ public final class InvalidFacetEditor extends FacetEditorTab {
     return myIgnoreCheckBox;
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent createComponent() {
+  public JComponent createComponent() {
     myIconLabel.setIcon(AllIcons.General.BalloonError);
     myDescriptionLabel.setText(myErrorMessage);
     return myMainPanel;

@@ -27,7 +27,8 @@ import org.jetbrains.annotations.NotNull;
 public final class AbstractClassWithOnlyOneDirectInheritorInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("abstract.class.with.only.one.direct.inheritor.problem.descriptor");
   }
 

@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -70,7 +71,7 @@ public final class LoggerInitializedWithForeignClassInspection extends BaseInspe
 
   public boolean ignoreSuperClass = false;
   public boolean ignoreNonPublicClasses = false;
-  public boolean ignoreNotFinalField = true;
+
   {
     parseString(loggerClassName, loggerFactoryClassNames);
     parseString(loggerFactoryMethodName, loggerFactoryMethodNames);
@@ -86,9 +87,7 @@ public final class LoggerInitializedWithForeignClassInspection extends BaseInspe
                        new JavaIdentifierValidator())),
       checkbox("ignoreSuperClass", InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.super.class.option")),
       checkbox("ignoreNonPublicClasses",
-               InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.non.public.classes.option")),
-      checkbox("ignoreNotFinalField",
-               InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.not.final.field"))
+               InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.non.public.classes.option"))
     );
   }
 
@@ -138,7 +137,6 @@ public final class LoggerInitializedWithForeignClassInspection extends BaseInspe
         if ("loggerFactoryMethodNames".equals(factoryName) && DEFAULT_FACTORY_METHOD_NAMES.equals(beanValue)) return false;
         if ("ignoreSuperClass".equals(factoryName) && !ignoreSuperClass) return false;
         if ("ignoreNonPublicClasses".equals(factoryName) && !ignoreNonPublicClasses) return false;
-        if ("ignoreNotFinalField".equals(factoryName) && ignoreNotFinalField) return false;
         return true;
       }
     });
@@ -207,9 +205,9 @@ public final class LoggerInitializedWithForeignClassInspection extends BaseInspe
       if (expressions.length != 1) {
         return;
       }
-      PsiClass containingClass = PsiUtil.getContainingClass(expression);
+      PsiClass containingClass = ClassUtils.getContainingClass(expression);
       while (containingClass instanceof PsiAnonymousClass) {
-        containingClass = PsiUtil.getContainingClass(containingClass);
+        containingClass = ClassUtils.getContainingClass(containingClass);
       }
       if (containingClass == null) {
         return;
@@ -245,12 +243,6 @@ public final class LoggerInitializedWithForeignClassInspection extends BaseInspe
       if(StreamEx.zip(loggerFactoryClassNames, loggerFactoryMethodNames, (cl, m)-> new Pair<>(cl, m))
         .noneMatch(expected->expected.first.equals(className) && expected.second.equals(referenceName))) {
         return;
-      }
-
-      if (ignoreNotFinalField) {
-        PsiField field = PsiTreeUtil.getParentOfType(methodCallExpression, PsiField.class);
-        if (field == null) return;
-        if (!field.hasModifierProperty(PsiModifier.FINAL)) return;
       }
 
       final PsiTypeElement operand = expression.getOperand();

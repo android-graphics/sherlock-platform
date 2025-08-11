@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.task.impl;
 
 import com.intellij.task.ProjectTask;
@@ -12,7 +12,8 @@ import java.util.Collections;
  * @author Vladislav.Soroka
  */
 public abstract class AbstractProjectTask implements ProjectTask {
-  private @NotNull Collection<ProjectTask> myDependencies;
+  @NotNull
+  private Collection<ProjectTask> myDependencies;
 
   public AbstractProjectTask() {
     this(Collections.emptyList());
@@ -22,7 +23,8 @@ public abstract class AbstractProjectTask implements ProjectTask {
     myDependencies = dependencies;
   }
 
-  public @NotNull Collection<ProjectTask> getDependsOn() {
+  @NotNull
+  public Collection<ProjectTask> getDependsOn() {
     return myDependencies;
   }
 
@@ -31,7 +33,8 @@ public abstract class AbstractProjectTask implements ProjectTask {
   }
 
   @Override
-  public @Nls String toString() {
+  @Nls
+  public String toString() {
     return getPresentableName();
   }
 }

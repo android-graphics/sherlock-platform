@@ -27,7 +27,6 @@ public final class GeneralGroupNode extends PackageDependenciesNode {
     }
   }
 
-  @Override
   public String toString() {
     return myName;
   }
@@ -37,7 +36,6 @@ public final class GeneralGroupNode extends PackageDependenciesNode {
     return 6;
   }
 
-  @Override
   public boolean equals(Object o) {
     if (isEquals()){
       return super.equals(o);
@@ -46,7 +44,6 @@ public final class GeneralGroupNode extends PackageDependenciesNode {
     return myName.equals(((GeneralGroupNode)o).myName);
   }
 
-  @Override
   public int hashCode() {
     return myName.hashCode();
   }

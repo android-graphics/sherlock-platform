@@ -1,9 +1,9 @@
-// "Add name to argument: 'b = 42'" "true"
+// "Add name to argument: 'b = "FOO"'" "true"
+// LANGUAGE_VERSION: 1.3
 
-fun f(a: Int, b: Int, c: Int) {}
+fun f(a: Int, b: String) {}
 
 fun g() {
-    f(c = 3, <caret>42, a = 1)
+    f(a = 10, <caret>"FOO")
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddNameToArgumentFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddNameToArgumentFixFactory$AddNameToArgumentFix

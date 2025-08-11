@@ -23,7 +23,7 @@ class GitRebaseCheckinHandlerFactory : VcsCheckinHandlerFactory(GitVcs.getKey())
 
       private lateinit var project: Project
       private lateinit var repository: GitRepository
-      private lateinit var rebaseFrom: GitRebaseParams.RebaseUpstream
+      private lateinit var rebaseFrom: String
 
       override fun checkinSuccessful() {
         if (!active) return
@@ -41,7 +41,7 @@ class GitRebaseCheckinHandlerFactory : VcsCheckinHandlerFactory(GitVcs.getKey())
         active = true
         project = executor.project
         repository = executor.repository
-        rebaseFrom = executor.upstream
+        rebaseFrom = executor.hash
 
         return ReturnResult.COMMIT
       }

@@ -28,7 +28,8 @@ import org.jetbrains.annotations.NotNull;
 public final class FieldHasSetterButNoGetterInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "field.has.setter.but.no.getter.problem.descriptor");
   }

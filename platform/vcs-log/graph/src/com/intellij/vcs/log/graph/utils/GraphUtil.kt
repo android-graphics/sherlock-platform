@@ -7,7 +7,6 @@ import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
-import org.jetbrains.annotations.ApiStatus
 import kotlin.math.max
 
 /**
@@ -44,7 +43,6 @@ internal fun LinearGraph.getReachableMatchingNodes(startNodes: Set<Int>?, matche
 /**
  * Check whether lowerNode is an ancestor of the upperNode.
  */
-@ApiStatus.Internal
 fun LiteLinearGraph.isAncestor(lowerNode: Int, upperNode: Int): Boolean {
   val visited = BitSetFlags(nodesCount(), false)
 
@@ -74,7 +72,6 @@ fun LiteLinearGraph.isAncestor(lowerNode: Int, upperNode: Int): Boolean {
  * Find a parent of the startNode which is on the path to the endNode.
  * Fails when there is no path from startNode to endNode.
  */
-@ApiStatus.Internal
 fun LiteLinearGraph.getCorrespondingParent(startNode: Int, endNode: Int, visited: Flags): Int {
   val candidates = getNodes(startNode, LiteLinearGraph.NodeFilter.DOWN)
   if (candidates.size == 1) return candidates[0]
@@ -99,7 +96,6 @@ fun LiteLinearGraph.getCorrespondingParent(startNode: Int, endNode: Int, visited
 /**
  * Return a set of nodes that are reachable from the first node, but not from the second.
  */
-@ApiStatus.Internal
 fun LinearGraph.subgraphDifference(node1: Int, node2: Int): IntSet {
   val liteLinearGraph = LinearGraphUtils.asLiteLinearGraph(this)
 
@@ -138,7 +134,6 @@ private fun Iterable<Int>.maxOrDefault(): Int {
 /**
  * Returns a set of nodes in the graph that are reachable only from the specified head node and not from others.
  */
-@ApiStatus.Internal
 fun LiteLinearGraph.exclusiveNodes(headNode: Int, isHead: (Int) -> Boolean = { false }): IntSet {
   val result = IntOpenHashSet()
   BfsWalk(headNode, this).walk { it ->
@@ -158,7 +153,6 @@ fun LiteLinearGraph.exclusiveNodes(headNode: Int, isHead: (Int) -> Boolean = { f
 /**
  * Returns a set of nodes in the graph that are reachable only from the specified head node and not from others.
  */
-@ApiStatus.Internal
 fun LinearGraph.exclusiveNodes(headNode: Int, isHead: (Int) -> Boolean = { false }): IntSet {
   return LinearGraphUtils.asLiteLinearGraph(this).exclusiveNodes(headNode, isHead)
 }

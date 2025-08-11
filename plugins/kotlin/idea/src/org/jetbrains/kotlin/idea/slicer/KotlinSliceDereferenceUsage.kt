@@ -7,12 +7,10 @@ import com.intellij.slicer.SliceUsage
 import com.intellij.usages.UsagePresentation
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeInsight.slicer.AbstractKotlinSliceUsage
-import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode
 
 class KotlinSliceDereferenceUsage(
     element: PsiElement,
-    parent: AbstractKotlinSliceUsage,
+    parent: KotlinSliceUsage,
     mode: KotlinSliceAnalysisMode
 ) : KotlinSliceUsage(element, parent, mode, false) {
     override fun processChildren(processor: Processor<in SliceUsage>) {

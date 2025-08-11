@@ -26,7 +26,6 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyCodeFragmentWithHiddenImports;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.pyi.PyiFile;
@@ -37,7 +36,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.PyUtil.sure;
@@ -55,18 +57,21 @@ public final class AddImportHelper {
     return firstIsFromImport - secondIsFromImport;
   };
 
-  private static @NotNull Comparator<PyImportStatementBase> getImportStatementComparator(@NotNull PsiFile settingsAnchor) {
+  @NotNull
+  private static Comparator<PyImportStatementBase> getImportStatementComparator(@NotNull PsiFile settingsAnchor) {
     return (import1, import2) -> {
       final Comparator<String> stringComparator = getImportTextComparator(settingsAnchor);
       return ContainerUtil.compareLexicographically(getSortNames(import1), getSortNames(import2), Comparator.nullsFirst(stringComparator));
     };
   }
 
-  public static @NotNull Comparator<String> getImportTextComparator(@NotNull PsiFile settingsAnchor) {
+  @NotNull
+  public static Comparator<String> getImportTextComparator(@NotNull PsiFile settingsAnchor) {
     return PythonCodeStyleService.getInstance().isOptimizeImportsCaseSensitiveOrder(settingsAnchor) ? String.CASE_INSENSITIVE_ORDER : Comparator.naturalOrder();
   }
 
-  private static @NotNull List<String> getSortNames(@NotNull PyImportStatementBase importStatement) {
+  @NotNull
+  private static List<String> getSortNames(@NotNull PyImportStatementBase importStatement) {
     final List<String> result = new ArrayList<>();
     final PyFromImportStatement fromImport = as(importStatement, PyFromImportStatement.class);
     if (fromImport != null) {
@@ -98,7 +103,8 @@ public final class AddImportHelper {
    * @param settingsAnchor file to use as an anchor to detect settings of Optimize Imports
    * @see ImportPriority
    */
-  public static @NotNull Comparator<PyImportStatementBase> getSameGroupImportsComparator(@NotNull PsiFile settingsAnchor) {
+  @NotNull
+  public static Comparator<PyImportStatementBase> getSameGroupImportsComparator(@NotNull PsiFile settingsAnchor) {
     if (PythonCodeStyleService.getInstance().isOptimizeImportsSortedByTypeFirst(settingsAnchor)) {
       return IMPORT_TYPE_COMPARATOR.thenComparing(getImportStatementComparator(settingsAnchor));
     }
@@ -123,11 +129,13 @@ public final class AddImportHelper {
       myDescription = description;
     }
 
-    public @NotNull ImportPriority getPriority() {
+    @NotNull
+    public ImportPriority getPriority() {
       return myPriority;
     }
 
-    public @NotNull String getDescription() {
+    @NotNull
+    public String getDescription() {
       return myDescription;
     }
   }
@@ -163,7 +171,8 @@ public final class AddImportHelper {
 
   }
 
-  public static @Nullable PsiElement getLocalInsertPosition(@NotNull PsiElement anchor) {
+  @Nullable
+  public static PsiElement getLocalInsertPosition(@NotNull PsiElement anchor) {
     return PsiTreeUtil.getParentOfType(anchor, PyStatement.class, false);
   }
 
@@ -176,14 +185,16 @@ public final class AddImportHelper {
    * @param file target file where some new top-level element is going to be inserted
    * @return anchor PSI element as described
    */
-  public static @Nullable PsiElement getFileInsertPosition(final PsiFile file) {
+  @Nullable
+  public static PsiElement getFileInsertPosition(final PsiFile file) {
     return getInsertPosition(file, null, null, null);
   }
 
-  private static @Nullable PsiElement getInsertPosition(@NotNull PsiElement insertParent,
-                                                        @Nullable PsiElement anchor,
-                                                        @Nullable PyImportStatementBase newImport,
-                                                        @Nullable ImportPriority priority) {
+  @Nullable
+  private static PsiElement getInsertPosition(@NotNull PsiElement insertParent,
+                                              @Nullable PsiElement anchor,
+                                              @Nullable PyImportStatementBase newImport,
+                                              @Nullable ImportPriority priority) {
     PsiElement feeler = ImportLocationHelper.getInstance().getSearchStartPosition(anchor, insertParent);
     if (feeler == null) return null;
     // skip initial comments and whitespace and try to get just below the last import stmt
@@ -271,7 +282,8 @@ public final class AddImportHelper {
     return seeker;
   }
 
-  private static @Nullable PsiComment getTopmostBoundComment(@NotNull PsiElement element) {
+  @Nullable
+  private static PsiComment getTopmostBoundComment(@NotNull PsiElement element) {
     List<List<PsiComment>> commentBlocks = PyPsiUtils.getPrecedingCommentBlocks(element);
     if (commentBlocks.isEmpty()) return null;
 
@@ -304,20 +316,23 @@ public final class AddImportHelper {
     return getSameGroupImportsComparator(existingImport.getContainingFile()).compare(newImport, existingImport) < 0;
   }
 
-  public static @NotNull ImportPriority getImportPriority(@NotNull PsiElement importLocation, @NotNull PsiFileSystemItem toImport) {
+  @NotNull
+  public static ImportPriority getImportPriority(@NotNull PsiElement importLocation, @NotNull PsiFileSystemItem toImport) {
     final ImportPriorityChoice choice = getImportPriorityWithReason(importLocation, toImport);
     LOG.debug(String.format("Import group for %s at %s is %s: %s", toImport, importLocation.getContainingFile(),
                             choice.myPriority, choice.myDescription));
     return choice.myPriority;
   }
 
-  public static @NotNull ImportPriority getImportPriority(@NotNull PyImportStatementBase importStatement) {
+  @NotNull
+  public static ImportPriority getImportPriority(@NotNull PyImportStatementBase importStatement) {
     final ImportPriorityChoice choice = getImportPriorityWithReason(importStatement);
     LOG.debug(String.format("Import group for '%s' is %s: %s", importStatement.getText(), choice.myPriority, choice.myDescription));
     return choice.myPriority;
   }
 
-  static @NotNull ImportPriorityChoice getImportPriorityWithReason(@NotNull PyImportStatementBase importStatement) {
+  @NotNull
+  static ImportPriorityChoice getImportPriorityWithReason(@NotNull PyImportStatementBase importStatement) {
     final PsiElement resolved;
     final PsiElement resolveAnchor;
     if (importStatement instanceof PyFromImportStatement fromImportStatement) {
@@ -367,7 +382,8 @@ public final class AddImportHelper {
     return getImportPriorityWithReason(importStatement, resolvedFileOrDir);
   }
 
-  static @NotNull ImportPriorityChoice getImportPriorityWithReason(@NotNull PsiElement importLocation, @NotNull PsiFileSystemItem toImport) {
+  @NotNull
+  static ImportPriorityChoice getImportPriorityWithReason(@NotNull PsiElement importLocation, @NotNull PsiFileSystemItem toImport) {
     final VirtualFile vFile = toImport.getVirtualFile();
     if (vFile == null) {
       return new ImportPriorityChoice(UNRESOLVED_SYMBOL_PRIORITY, toImport + " doesn't have an associated virtual file");
@@ -447,12 +463,6 @@ public final class AddImportHelper {
     final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
     final LanguageLevel languageLevel = LanguageLevel.forElement(file);
     final PyImportStatement importNodeToInsert = generator.createImportStatement(languageLevel, name, asName);
-
-    if (file instanceof PyCodeFragmentWithHiddenImports fragment) {
-      fragment.addImports(Collections.singletonList(importNodeToInsert));
-      return true;
-    }
-
     final PsiElement insertParent;
     if (insertBefore == null || insertBefore.getParent() == null) {
       final PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(anchor, PyImportStatementBase.class, false);
@@ -567,10 +577,6 @@ public final class AddImportHelper {
                                             @Nullable ImportPriority priority,
                                             @Nullable PsiElement anchor,
                                             @Nullable PsiElement insertBefore) {
-    if (file instanceof PyCodeFragmentWithHiddenImports fragment) {
-      fragment.addImports(Collections.singletonList(newImport));
-      return;
-    }
     try {
       final PyImportStatementBase parentImport = PsiTreeUtil.getParentOfType(anchor, PyImportStatementBase.class, false);
       final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(file.getProject());
@@ -727,7 +733,8 @@ public final class AddImportHelper {
   }
 
   @Contract("null -> null; !null -> !null")
-  private static @Nullable List<PyImportStatementBase> getImportsAllowedToReuse(@Nullable PsiElement importBlockStart) {
+  @Nullable
+  private static List<PyImportStatementBase> getImportsAllowedToReuse(@Nullable PsiElement importBlockStart) {
     if (importBlockStart == null) return null;
 
     final List<PyImportStatementBase> importsAllowedToReuse = new ArrayList<>();
@@ -803,7 +810,6 @@ public final class AddImportHelper {
 
     final String path = importPath.toString();
     final ImportPriority priority = getImportPriority(file, toImport);
-
     if (!PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT) {
       addImportStatement(file, path, null, priority, element);
 

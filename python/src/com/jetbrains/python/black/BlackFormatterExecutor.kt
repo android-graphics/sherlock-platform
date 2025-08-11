@@ -7,11 +7,11 @@ import com.intellij.execution.target.local.LocalTargetEnvironment
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Version
+import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.black.configuration.BlackFormatterConfiguration
 import com.jetbrains.python.pyi.PyiFileType
@@ -34,7 +34,7 @@ class BlackFormatterExecutor(private val project: Project,
   private var targetEnvironmentRequest: TargetEnvironmentRequest
 
   companion object {
-    val BLACK_DEFAULT_TIMEOUT: Duration = 30000.milliseconds
+    val BLACK_DEFAULT_TIMEOUT = 30000.milliseconds
     private val LOG = thisLogger()
     private val minimalStdinFilenameCompatibleVersion = Version(21, 4, 0)
   }
@@ -68,7 +68,7 @@ class BlackFormatterExecutor(private val project: Project,
   private fun buildTargetCommandLine(blackFormattingRequest: BlackFormattingRequest,
                                      targetEnvRequest: TargetEnvironmentRequest): TargetedCommandLine {
     val cmd = TargetedCommandLineBuilder(targetEnvRequest)
-    val cmdArgs = configToCmdArguments(blackFormattingRequest)
+    val cmdArgs = configToCmdArguments(blackFormattingRequest.virtualFile)
     val cwd = blackFormattingRequest.virtualFile.parent.takeIf { it != null && it.isDirectory }
     if (cwd != null) {
       cmd.setWorkingDirectory(cwd.path)
@@ -93,13 +93,11 @@ class BlackFormatterExecutor(private val project: Project,
     return cmd.build()
   }
 
-  private fun configToCmdArguments(blackFormattingRequest: BlackFormattingRequest): List<String> {
+  private fun configToCmdArguments(vFile: VirtualFile): List<String> {
     val cmd = mutableListOf<String>()
-    val blackVersion = runBlockingCancellable {
-      BlackFormatterVersionService.getVersion (project)
-    }
+    val blackVersion = BlackFormatterVersionService.getVersion(project)
 
-    if (FileTypeRegistry.getInstance().isFileOfType(blackFormattingRequest.virtualFile, PyiFileType.INSTANCE)) {
+    if (FileTypeRegistry.getInstance().isFileOfType(vFile, PyiFileType.INSTANCE)) {
       cmd.add("--pyi")
     }
 
@@ -109,13 +107,7 @@ class BlackFormatterExecutor(private val project: Project,
 
     if (blackVersion >= minimalStdinFilenameCompatibleVersion) {
       cmd.add("--stdin-filename")
-      cmd.add(blackFormattingRequest.virtualFile.path)
-    }
-
-    if (blackFormattingRequest is BlackFormattingRequest.Fragment) {
-      blackFormattingRequest.lineRanges.forEach { range ->
-        cmd.add("--line-ranges=${range.first}-${range.last}")
-      }
+      cmd.add(vFile.path)
     }
 
     return cmd
@@ -134,10 +126,10 @@ class BlackFormatterExecutor(private val project: Project,
 
     val process = targetEnvironment.createProcess(targetCMD)
 
-    val processHandler = CapturingProcessHandler(process, DEFAULT_CHARSET,
+    val processHandler = CapturingProcessHandler(process, BlackFormattingService.DEFAULT_CHARSET,
                                                  targetCMD.getCommandPresentation(targetEnvironment))
 
-    processHandler.addProcessListener(writeToStdinListener(formattingRequest.documentText, vFile.charset))
+    processHandler.addProcessListener(writeToStdinListener(formattingRequest.fragmentToFormat, vFile.charset))
 
     processHandler.addProcessListener(object : CapturingProcessAdapter() {
       override fun processTerminated(event: ProcessEvent) {

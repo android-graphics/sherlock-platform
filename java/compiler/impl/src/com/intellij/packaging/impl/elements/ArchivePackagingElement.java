@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.java.workspace.entities.ArchivePackagingElementEntity;
@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class ArchivePackagingElement extends CompositeElementWithManifest<ArchivePackagingElement> {
-  public static final @NonNls String NAME_ATTRIBUTE = "name";
+  @NonNls public static final String NAME_ATTRIBUTE = "name";
   private String myArchiveFileName;
 
   public ArchivePackagingElement() {
@@ -36,7 +36,8 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
   }
 
   @Override
-  public @NotNull PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
+  @NotNull
+  public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new ArchiveElementPresentation(this);
   }
 
@@ -45,8 +46,8 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     return getMyArchiveName();
   }
 
-  @Override
-  public @NonNls String toString() {
+  @NonNls @Override
+  public String toString() {
     return "archive:" + getMyArchiveName();
   }
 

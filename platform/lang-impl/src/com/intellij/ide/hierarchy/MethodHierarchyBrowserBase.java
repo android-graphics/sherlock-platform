@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.hierarchy;
 
@@ -26,7 +26,8 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
   }
 
   @Override
-  protected @NotNull String getPrevOccurenceActionNameImpl() {
+  @NotNull
+  protected String getPrevOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.method.prev.occurence.name");
   }
 
@@ -38,7 +39,8 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
   }
 
   @Override
-  protected @NotNull String getNextOccurenceActionNameImpl() {
+  @NotNull
+  protected String getNextOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.method.next.occurence.name");
   }
 
@@ -78,7 +80,8 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
   }
 
   @Override
-  protected @NotNull String getActionPlace() {
+  @NotNull
+  protected String getActionPlace() {
     return ActionPlaces.METHOD_HIERARCHY_VIEW_TOOLBAR;
   }
 
@@ -117,7 +120,8 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
     }
   }
 
-  public static @Nls String getMethodType() {
+  @Nls
+  public static String getMethodType() {
     //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.method");
   }

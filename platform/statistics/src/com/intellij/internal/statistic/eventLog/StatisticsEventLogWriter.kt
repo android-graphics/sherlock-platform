@@ -4,13 +4,12 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.Disposable
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.seconds
+import java.util.concurrent.TimeUnit
 
 interface StatisticsEventLogWriter : Disposable {
   fun log(logEvent: LogEvent)
@@ -46,11 +45,8 @@ class StatisticsEventLogFileWriter(private val recorderId: String,
       val fileEventLoggerLogger = EventLogFileWriter(dir, maxFileSizeInBytes, logFilePathProvider)
       logger = fileEventLoggerLogger
       if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) {
-        // effectively canceled when this object is disposed
-        loggerProvider.coroutineScope.launch {
-          delay(10.seconds)
-          if (loggerProvider.isRecordEnabled()) fileEventLoggerLogger.flush ()
-        }
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(
+          { if (loggerProvider.isRecordEnabled()) fileEventLoggerLogger.flush ()  }, 10, TimeUnit.SECONDS)
       }
     }
     catch (e: IOException) {
@@ -84,6 +80,11 @@ class StatisticsEventLogFileWriter(private val recorderId: String,
   }
 
   override fun dispose() {
-    logger = null
+    val closeFuture = AppExecutorUtil.getAppExecutorService().submit {
+      logger = null
+    }
+    Runtime.getRuntime().addShutdownHook(Thread {
+      closeFuture.get(500, TimeUnit.MILLISECONDS)
+    })
   }
 }

@@ -69,6 +69,7 @@ il.co.galex.namethatcolor
 com.godwin.kdocer
 tarn.gradle.dependencies
 com.vv.adbuninstall
+intellij.ktor
 com.github.goldsubmarine.restfulhelper
 me.shedaniel.architectury
 net.labymod.intellij.singlehotswap

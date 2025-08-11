@@ -40,12 +40,8 @@ def _get_df_variable_repr(data_frame):
     # large data frames. df.__str__() is already optimised and works fast enough.
     data_preview = []
     column_row = 0
-    shape_rows, shape_cols = data_frame.shape
-    if shape_cols > 1000 or shape_rows > 10000:
-        head_number = 1
-    else:
-        head_number = 3
-    rows = str(data_frame.head(head_number)).split('\n')
+
+    rows = str(data_frame).split('\n')
     for (i, r) in enumerate(rows):
         if i != column_row:
             data_preview.append("[%s]" % r)
@@ -55,7 +51,7 @@ def _get_df_variable_repr(data_frame):
 
     # The string provided is used for column name completion
     # by JupyterVarsFrameExecutor.parseFrameVars
-    return '%s %s' % (list(data_frame.columns), ' '.join(data_preview))
+    return '{} {}'.format(list(data_frame.columns), ' '.join(data_preview))
 
 
 def _trim_string_repr_if_needed(value, do_trim=True, max_length=MAX_REPR_LENGTH):
@@ -71,9 +67,9 @@ def _get_external_collection_repr(collection, raise_exception=False):
 
     # pandas var
     try:
-        if typename == "Series" or typename == "GeoSeries":
+        if typename == "Series":
             return _get_series_variable_repr(collection)
-        if typename == "DataFrame" or typename == "GeoDataFrame":
+        if typename == "DataFrame":
             return _get_df_variable_repr(collection)
     except Exception as e:
         pydev_log.warn("Failed to format pandas variable: " + str(e))
@@ -88,9 +84,6 @@ def _get_external_collection_repr(collection, raise_exception=False):
         if raise_exception:
             raise e
     return None
-
-
-pydevd_repr_function_python2 = None
 
 
 if IS_PY3K:
@@ -109,20 +102,19 @@ if IS_PY3K:
 
 
     class PydevdRepr(Repr):
-        def __init__(self, do_trim):
+        def __init__(self):
             super(PydevdRepr, self).__init__()
             self.fillvalue = '...'
-            self.maxdict = MAX_REPR_ITEM_SIZE
-            self.maxlist = MAX_REPR_ITEM_SIZE
-            self.maxtuple = MAX_REPR_ITEM_SIZE
-            self.maxset = MAX_REPR_ITEM_SIZE
-            self.maxfrozenset = MAX_REPR_ITEM_SIZE
-            self.maxdeque = MAX_REPR_ITEM_SIZE
-            self.maxarray = MAX_REPR_ITEM_SIZE
-            self.maxlong = MAX_REPR_ITEM_SIZE
-            self.maxstring = MAX_REPR_ITEM_SIZE
+            self.maxdict = \
+            self.maxlist = \
+            self.maxtuple = \
+            self.maxset = \
+            self.maxfrozenset = \
+            self.maxdeque = \
+            self.maxarray = \
+            self.maxlong = \
+            self.maxstring = \
             self.maxother = MAX_REPR_ITEM_SIZE
-            self.do_trim = do_trim
 
         def _repr_iterable(self, x, level, left, right, maxiter, trail=''):
             n = len(x)
@@ -133,15 +125,14 @@ if IS_PY3K:
                 repr1 = self.repr1
                 pieces = []
                 curr_length = 0
-                max_elements = maxiter if self.do_trim else n
-                for elem in islice(x, max_elements):
+                for elem in islice(x, maxiter):
                     elem_repr = repr1(elem, newlevel)
                     curr_length += len(elem_repr)
                     pieces.append(elem_repr)
-                    if curr_length >= MAX_REPR_LENGTH and self.do_trim:
+                    if curr_length >= MAX_REPR_LENGTH:
                         break
 
-                if (n > maxiter or curr_length >= MAX_REPR_LENGTH) and self.do_trim:
+                if n > maxiter or curr_length >= MAX_REPR_LENGTH:
                     pieces.append(self.fillvalue)
                 s = ', '.join(pieces)
                 if n == 1 and trail:
@@ -150,15 +141,8 @@ if IS_PY3K:
 
         def repr_str(self, x, level):
             if level == self.maxlevel:
-                if self.do_trim:
-                    return x[:self.maxstring]
-                else:
-                    return x
-            else:
-                if self.do_trim:
-                    return super().repr_str(x, level)
-                else:
-                    return "'{x}'".format(x=x)
+                return x[:self.maxstring]
+            return super().repr_str(x, level)
 
         def repr_dict(self, x, level):
             n = len(x)
@@ -168,18 +152,17 @@ if IS_PY3K:
             repr1 = self.repr1
             pieces = []
             curr_length = 0
-            max_elements = self.maxdict if self.do_trim else n
-            for key in islice(_possibly_sorted(x), max_elements):
+            for key in islice(_possibly_sorted(x), self.maxdict):
                 keyrepr = repr1(key, newlevel)
                 valrepr = repr1(x[key], newlevel)
                 elem_repr = '%s: %s' % (keyrepr, valrepr)
                 pieces.append(elem_repr)
                 curr_length += len(elem_repr)
-                if curr_length >= MAX_REPR_LENGTH and self.do_trim:
+                if curr_length >= MAX_REPR_LENGTH:
                     break
 
-            if (n > self.maxdict or curr_length >= MAX_REPR_LENGTH) and self.do_trim:
-                pieces.append(self.fillvalue)
+            if n > self.maxdict or curr_length >= MAX_REPR_LENGTH:
+                pieces.append('...')
             s = ', '.join(pieces)
             return '{%s}' % (s,)
 
@@ -191,23 +174,19 @@ if IS_PY3K:
 
             # if `__repr__` is overridden, then use `reprlib`
             if x.__class__.__repr__ != object.__repr__:
-                if self.do_trim:
-                    return super().repr_instance(x, level)
-
-                return repr(x)
+                return super().repr_instance(x, level)
 
             # if `__str__` is overridden, then return str(x)
             if x.__class__.__str__ != object.__str__:
                 return str(x)
 
-            if self.do_trim:
-                return super().repr_instance(x, level)
-
-            return '%s' % x
+            # else use `reprlib`
+            return super().repr_instance(x, level)
 
 
+    pydevd_repr_function = PydevdRepr().repr
 else:
-    def pydevd_repr_function(value, do_trim=True):
+    def pydevd_repr_function(value):
         # pandas series, ds | ndarray
         result = _get_external_collection_repr(value, True)
         if result is not None:
@@ -224,24 +203,16 @@ else:
 
         if hasattr(value, '__class__'):
             if value.__class__ in limited_size_collection_classes:
-                if len(value) > MAX_REPR_ITEM_SIZE and do_trim:
+                if len(value) > MAX_REPR_ITEM_SIZE:
                     return ('%s' % take_first_n_coll_elements(value, MAX_REPR_ITEM_SIZE)).rstrip(')]}') + '...'
                 return None
 
         # if `__repr__` is overridden, then return repr(value)
         if hasattr(value.__class__, "__repr__"):
-            if do_trim:
-                return repr(value)[:MAX_REPR_LENGTH]
-            else:
-                return repr(value)
+            return repr(value)
 
         # else
-        if do_trim:
-            return str(value)[:MAX_REPR_LENGTH]
-        else:
-            return str(value)
-
-    pydevd_repr_function_python2 = pydevd_repr_function
+        return str(value)
 
 
 def get_value_repr(value, do_trim=True, format=DEFAULT_FORMAT):
@@ -260,14 +231,9 @@ def get_value_repr(value, do_trim=True, format=DEFAULT_FORMAT):
             if format != DEFAULT_FORMAT:
                 value_representation = format % value
             else:
-                if IS_PY3K:
-                    pydevd_repr_fun = PydevdRepr(do_trim).repr
-                    value_representation = pydevd_repr_fun(value)
-                else:
-                    value_representation = pydevd_repr_function_python2(value, do_trim)
-
-        except Exception as e:
-            pydev_log.warn("Failed to get repr for a value: " + str(e))
+                value_representation = pydevd_repr_function(value)
+        except:
+            pass
 
         if value_representation is None:
             value_representation = format % value

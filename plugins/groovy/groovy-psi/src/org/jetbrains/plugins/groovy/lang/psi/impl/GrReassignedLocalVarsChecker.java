@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.NullableComputable;
@@ -22,7 +22,8 @@ import java.util.Collection;
 
 public final class GrReassignedLocalVarsChecker {
 
-  public static @Nullable PsiType getReassignedVarType(@NotNull GrReferenceExpression refExpr, boolean honorCompileStatic) {
+  @Nullable
+  public static PsiType getReassignedVarType(@NotNull GrReferenceExpression refExpr, boolean honorCompileStatic) {
     if (honorCompileStatic && !CompileStaticUtil.isCompileStatic(refExpr) || refExpr.getQualifier() != null) {
       return null;
     }
@@ -37,7 +38,8 @@ public final class GrReassignedLocalVarsChecker {
     return TypeInferenceHelper.getCurrentContext().getExpressionType(((GrVariable)resolved), variable -> getLeastUpperBoundByVar(variable));
   }
 
-  private static @Nullable PsiType getLeastUpperBoundByVar(final @NotNull GrVariable var) {
+  @Nullable
+  private static PsiType getLeastUpperBoundByVar(@NotNull final GrVariable var) {
     return RecursionManager.doPreventingRecursion(var, false, (NullableComputable<PsiType>)() -> {
       final Collection<PsiReference> all = ReferencesSearch.search(var, var.getUseScope()).findAll();
       final GrExpression initializer = var.getInitializerGroovy();

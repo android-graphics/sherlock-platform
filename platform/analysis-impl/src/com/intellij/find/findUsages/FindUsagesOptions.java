@@ -3,7 +3,7 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.analysis.AnalysisBundle;
-import com.intellij.find.FindUsagesSettings;
+import com.intellij.find.FindSettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.PredefinedSearchScopeProvider;
@@ -16,8 +16,6 @@ import java.util.List;
 
 public class FindUsagesOptions implements Cloneable {
   public @NotNull SearchScope searchScope;
-  @ApiStatus.Internal
-  public boolean isMaximalScope = false;
 
   public boolean isSearchForTextOccurrences = true;
 
@@ -29,7 +27,7 @@ public class FindUsagesOptions implements Cloneable {
   }
 
   public FindUsagesOptions(@NotNull Project project, final @Nullable DataContext dataContext) {
-    this(findScopeByName(project, dataContext, FindUsagesSettings.getInstance().getDefaultScopeName()));
+    this(findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName()));
   }
 
   public FindUsagesOptions(@NotNull SearchScope searchScope) {

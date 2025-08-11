@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
@@ -8,21 +8,17 @@ import com.intellij.execution.TargetDebuggerConnectionUtil;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.*;
-import com.intellij.execution.target.eel.EelTargetEnvironmentRequest;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.wsl.WslPath;
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
+import com.intellij.execution.wsl.target.WslTargetEnvironmentRequest;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
-import com.intellij.platform.eel.provider.EelProviderUtil;
-import com.intellij.platform.eel.provider.LocalEelDescriptor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +29,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   private JavaParameters myParams;
   private TargetEnvironmentRequest myTargetEnvironmentRequest;
   private TargetedCommandLineBuilder myCommandLine;
-  private volatile @Nullable TargetDebuggerConnection myTargetDebuggerConnection;
+  @Nullable private volatile TargetDebuggerConnection myTargetDebuggerConnection;
 
   protected JavaCommandLineState(@NotNull ExecutionEnvironment environment) {
     super(environment);
@@ -56,7 +52,8 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   }
 
   @Override
-  protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
+  @NotNull
+  protected OSProcessHandler startProcess() throws ExecutionException {
     return JavaCommandLineStateUtil.startProcess(createCommandLine(), ansiColoringEnabled());
   }
 
@@ -70,8 +67,8 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   public TargetEnvironmentRequest createCustomTargetEnvironmentRequest() {
     try {
       JavaParameters parameters = getJavaParameters();
-      var config = checkCreateNonLocalConfiguration(parameters.getJdk());
-      return config == null ? null : new EelTargetEnvironmentRequest(config);
+      WslTargetEnvironmentConfiguration config = checkCreateWslConfiguration(parameters.getJdk());
+      return config == null ? null : new WslTargetEnvironmentRequest(config);
     }
     catch (ExecutionException e) {
       // ignore
@@ -79,30 +76,6 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     return null;
   }
 
-  @ApiStatus.Internal
-  public static @Nullable EelTargetEnvironmentRequest.Configuration checkCreateNonLocalConfiguration(@Nullable Sdk jdk) {
-    if (jdk == null) {
-      return null;
-    }
-
-    VirtualFile virtualFile = jdk.getHomeDirectory();
-
-    if (virtualFile == null) {
-      return null;
-    }
-
-    var vitrualFilePath = virtualFile.toNioPath();
-    var descriptor = EelProviderUtil.getEelDescriptor(vitrualFilePath);
-
-    if (descriptor != LocalEelDescriptor.INSTANCE) {
-      var config = new EelTargetEnvironmentRequest.Configuration(EelProviderUtil.upgradeBlocking(descriptor));
-      addJavaLangConfig(config, Objects.requireNonNull(EelNioBridgeServiceKt.asEelPath(vitrualFilePath)).toString(), jdk);
-      return config;
-    }
-    return null;
-  }
-
-  @ApiStatus.Obsolete
   public static WslTargetEnvironmentConfiguration checkCreateWslConfiguration(@Nullable Sdk jdk) {
     if (jdk == null) {
       return null;
@@ -114,20 +87,16 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     WslPath wslPath = WslPath.parseWindowsUncPath(virtualFile.getPath());
     if (wslPath != null) {
       WslTargetEnvironmentConfiguration config = new WslTargetEnvironmentConfiguration(wslPath.getDistribution());
-      addJavaLangConfig(config, wslPath.getLinuxPath(), jdk);
+      JavaLanguageRuntimeConfiguration javaConfig = new JavaLanguageRuntimeConfiguration();
+      javaConfig.setHomePath(wslPath.getLinuxPath());
+      String jdkVersionString = jdk.getVersionString();
+      if (jdkVersionString != null) {
+        javaConfig.setJavaVersionString(jdkVersionString);
+      }
+      config.addLanguageRuntime(javaConfig);
       return config;
     }
     return null;
-  }
-
-  private static void addJavaLangConfig(TargetEnvironmentConfiguration config, String javaHomePath, Sdk jdk) {
-    JavaLanguageRuntimeConfiguration javaConfig = new JavaLanguageRuntimeConfiguration();
-    javaConfig.setHomePath(javaHomePath);
-    String jdkVersionString = jdk.getVersionString();
-    if (jdkVersionString != null) {
-      javaConfig.setJavaVersionString(jdkVersionString);
-    }
-    config.addLanguageRuntime(javaConfig);
   }
 
   protected boolean shouldPrepareDebuggerConnection() {
@@ -162,8 +131,9 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
+  public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
     TargetDebuggerConnection targetDebuggerConnection = myTargetDebuggerConnection;
     if (targetDebuggerConnection != null) {
       return targetDebuggerConnection.getResolvedRemoteConnection();
@@ -182,7 +152,8 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     return myTargetEnvironmentRequest;
   }
 
-  protected synchronized @NotNull TargetedCommandLineBuilder getTargetedCommandLine() {
+  @NotNull
+  protected synchronized TargetedCommandLineBuilder getTargetedCommandLine() {
     if (myCommandLine != null) {
       // In a correct implementation that uses the new API this condition is always true.
       return myCommandLine;
@@ -205,7 +176,8 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     }
   }
 
-  protected @NotNull TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
+  @NotNull
+  protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
     throws ExecutionException {
     SimpleJavaParameters javaParameters = getJavaParameters();
     if (!javaParameters.isDynamicClasspath()) {

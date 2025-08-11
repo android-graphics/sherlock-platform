@@ -135,7 +135,8 @@ class GitBrancherImpl implements GitBrancher {
                              @Nullable Runnable callInAwtAfterExecution) {
     if (branchesToContainingRepositories.isEmpty()) return;
     Set<String> branchNames = branchesToContainingRepositories.keySet();
-    new CommonBackgroundTask(myProject, getRefsDeletionProgressMessage(branchNames), callInAwtAfterExecution) {
+    String branchMsg = branchNames.size() == 1 ? branchNames.iterator().next() : StringUtil.join(branchNames, ", ");
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.deleting.branch.process", branchMsg), callInAwtAfterExecution) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         GitBranchWorker worker = newWorker(indicator);
@@ -154,7 +155,8 @@ class GitBrancherImpl implements GitBrancher {
   @Override
   public void deleteRemoteBranches(@NotNull List<String> branchNames, @NotNull List<? extends GitRepository> repositories) {
     if (branchNames.isEmpty()) return;
-    new CommonBackgroundTask(myProject, getRefsDeletionProgressMessage(branchNames), null) {
+    String branchMsg = branchNames.size() == 1 ? branchNames.iterator().next() : StringUtil.join(branchNames, ", ");
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.deleting.remote.branch", branchMsg), null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         newWorker(indicator).deleteRemoteBranches(branchNames, repositories);
@@ -203,7 +205,7 @@ class GitBrancherImpl implements GitBrancher {
   public void merge(@NotNull GitReference reference,
                     @NotNull DeleteOnMergeOption deleteOnMerge,
                     @NotNull List<? extends @NotNull GitRepository> repositories,
-                    boolean allowRollback) {
+                    @NotNull Boolean allowRollback) {
     new CommonBackgroundTask(myProject, GitBundle.message("branch.merging.process", reference.getName()), null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
@@ -226,20 +228,11 @@ class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void rebase(@NotNull List<? extends GitRepository> repositories, @NotNull GitReference reference) {
-    doRebase(repositories, reference.getFullName(), reference.getName());
-  }
-
-  @Override
-  public void rebase(@NotNull List<? extends @NotNull GitRepository> repositories, @NotNull String reference) {
-    doRebase(repositories, reference, reference);
-  }
-
-  private void doRebase(@NotNull List<? extends GitRepository> repositories, @NotNull String reference, @NotNull String displayName) {
-    new CommonBackgroundTask(myProject, GitBundle.message("branch.rebasing.onto.process", displayName), null) {
+  public void rebase(@NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.rebasing.onto.process", branchName), null) {
       @Override
       void execute(@NotNull ProgressIndicator indicator) {
-        newWorker(indicator).rebase(repositories, reference);
+        newWorker(indicator).rebase(repositories, branchName);
       }
     }.runInBackground();
   }
@@ -272,17 +265,10 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void deleteTag(@NotNull String name, @NotNull List<? extends GitRepository> repositories) {
-    deleteTags(Collections.singletonMap(name, repositories));
-  }
-
-  @Override
-  public void deleteTags(@NotNull Map<String, List<? extends GitRepository>> tagsToContainingRepositories) {
-    if (tagsToContainingRepositories.isEmpty()) return;
-    new CommonBackgroundTask(myProject, getRefsDeletionProgressMessage(tagsToContainingRepositories.keySet()), null) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.deleting.tag.process", name), null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-        GitBranchWorker worker = newWorker(indicator);
-        tagsToContainingRepositories.forEach(worker::deleteTag);
+        newWorker(indicator).deleteTag(name, repositories);
       }
     }.runInBackground();
   }
@@ -295,11 +281,6 @@ class GitBrancherImpl implements GitBrancher {
         newWorker(indicator).deleteRemoteTag(name, repositories);
       }
     }.runInBackground();
-  }
-
-  private static @NotNull @Nls String getRefsDeletionProgressMessage(Collection<String> refsNames) {
-    String names = refsNames.size() == 1 ? refsNames.iterator().next() : StringUtil.join(refsNames, ", ");
-    return GitBundle.message("branch.deleting.branch.process", names);
   }
 
   /**

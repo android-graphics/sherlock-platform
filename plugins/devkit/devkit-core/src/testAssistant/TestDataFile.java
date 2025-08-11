@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.openapi.application.ReadAction;
@@ -39,13 +39,15 @@ public interface TestDataFile {
       return myFile;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getPath() {
+    public String getPath() {
       return myFile.getPath();
     }
 
+    @NotNull
     @Override
-    public @NotNull String getName() {
+    public String getName() {
       return myFile.getName();
     }
   }
@@ -65,13 +67,15 @@ public interface TestDataFile {
       return null;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getPath() {
+    public String getPath() {
       return myPath;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getName() {
+    public String getName() {
       return PathUtil.getFileName(getPath());
     }
   }
@@ -102,13 +106,15 @@ public interface TestDataFile {
       return myFile;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getName() {
+    public String getName() {
       return PathUtil.getFileName(getPath());
     }
 
+    @NotNull
     @Override
-    public @NotNull String getPath() {
+    public String getPath() {
       return myPath;
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mock;
 
 import com.intellij.execution.DefaultExecutionTarget;
@@ -14,8 +14,9 @@ import java.util.List;
 public class MockExecutionTargetManager extends ExecutionTargetManager {
   private ExecutionTarget myTarget = DefaultExecutionTarget.INSTANCE;
 
+  @NotNull
   @Override
-  public @NotNull ExecutionTarget getActiveTarget() {
+  public ExecutionTarget getActiveTarget() {
     return myTarget;
   }
 
@@ -24,8 +25,9 @@ public class MockExecutionTargetManager extends ExecutionTargetManager {
     myTarget = target;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<ExecutionTarget> getTargetsFor(@Nullable RunConfiguration settings) {
+  public List<ExecutionTarget> getTargetsFor(@Nullable RunConfiguration settings) {
     return Collections.singletonList(DefaultExecutionTarget.INSTANCE);
   }
 

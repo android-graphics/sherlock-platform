@@ -8,7 +8,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +17,6 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-@ApiStatus.Internal
 public final class BalloonLayoutConfiguration {
   public final int iconPanelWidth;
   public final Dimension iconOffset;

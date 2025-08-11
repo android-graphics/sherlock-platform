@@ -101,6 +101,7 @@ __all__ = [
     "setheading",
     "setpos",
     "setposition",
+    "settiltangle",
     "setundobuffer",
     "setx",
     "sety",
@@ -130,9 +131,6 @@ __all__ = [
 
 if sys.version_info >= (3, 12):
     __all__ += ["teleport"]
-
-if sys.version_info < (3, 13):
-    __all__ += ["settiltangle"]
 
 # Note: '_Color' is the alias we use for arguments and _AnyColor is the
 # alias we use for return types. Really, these two aliases should be the
@@ -338,7 +336,7 @@ class TPen:
     def isvisible(self) -> bool: ...
     # Note: signatures 1 and 2 overlap unsafely when no arguments are provided
     @overload
-    def pen(self) -> _PenState: ...  # type: ignore[overload-overlap]
+    def pen(self) -> _PenState: ...  # type: ignore[misc]
     @overload
     def pen(
         self,
@@ -384,7 +382,7 @@ class RawTurtle(TPen, TNavigator):
     def shape(self, name: str) -> None: ...
     # Unsafely overlaps when no arguments are provided
     @overload
-    def shapesize(self) -> tuple[float, float, float]: ...  # type: ignore[overload-overlap]
+    def shapesize(self) -> tuple[float, float, float]: ...  # type: ignore[misc]
     @overload
     def shapesize(
         self, stretch_wid: float | None = None, stretch_len: float | None = None, outline: float | None = None
@@ -395,16 +393,13 @@ class RawTurtle(TPen, TNavigator):
     def shearfactor(self, shear: float) -> None: ...
     # Unsafely overlaps when no arguments are provided
     @overload
-    def shapetransform(self) -> tuple[float, float, float, float]: ...  # type: ignore[overload-overlap]
+    def shapetransform(self) -> tuple[float, float, float, float]: ...  # type: ignore[misc]
     @overload
     def shapetransform(
         self, t11: float | None = None, t12: float | None = None, t21: float | None = None, t22: float | None = None
     ) -> None: ...
     def get_shapepoly(self) -> _PolygonCoords | None: ...
-
-    if sys.version_info < (3, 13):
-        def settiltangle(self, angle: float) -> None: ...
-
+    def settiltangle(self, angle: float) -> None: ...
     @overload
     def tiltangle(self, angle: None = None) -> float: ...
     @overload
@@ -622,7 +617,7 @@ def isvisible() -> bool: ...
 
 # Note: signatures 1 and 2 overlap unsafely when no arguments are provided
 @overload
-def pen() -> _PenState: ...  # type: ignore[overload-overlap]
+def pen() -> _PenState: ...  # type: ignore[misc]
 @overload
 def pen(
     pen: _PenState | None = None,
@@ -661,7 +656,7 @@ if sys.version_info >= (3, 12):
 
 # Unsafely overlaps when no arguments are provided
 @overload
-def shapesize() -> tuple[float, float, float]: ...  # type: ignore[overload-overlap]
+def shapesize() -> tuple[float, float, float]: ...  # type: ignore[misc]
 @overload
 def shapesize(stretch_wid: float | None = None, stretch_len: float | None = None, outline: float | None = None) -> None: ...
 @overload
@@ -671,16 +666,13 @@ def shearfactor(shear: float) -> None: ...
 
 # Unsafely overlaps when no arguments are provided
 @overload
-def shapetransform() -> tuple[float, float, float, float]: ...  # type: ignore[overload-overlap]
+def shapetransform() -> tuple[float, float, float, float]: ...  # type: ignore[misc]
 @overload
 def shapetransform(
     t11: float | None = None, t12: float | None = None, t21: float | None = None, t22: float | None = None
 ) -> None: ...
 def get_shapepoly() -> _PolygonCoords | None: ...
-
-if sys.version_info < (3, 13):
-    def settiltangle(angle: float) -> None: ...
-
+def settiltangle(angle: float) -> None: ...
 @overload
 def tiltangle(angle: None = None) -> float: ...
 @overload

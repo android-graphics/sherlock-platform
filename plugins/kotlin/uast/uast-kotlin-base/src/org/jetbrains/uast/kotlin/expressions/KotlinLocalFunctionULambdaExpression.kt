@@ -14,7 +14,6 @@ class KotlinLocalFunctionULambdaExpression(
 ) : KotlinAbstractUExpression(givenParent), ULambdaExpression {
     private val bodyPart = UastLazyPart<UExpression>()
     private val valueParametersPart = UastLazyPart<List<KotlinUParameter>>()
-    private val uAnnotationsPart = UastLazyPart<List<UAnnotation>>()
 
     override val functionalInterfaceType: PsiType? = null
 
@@ -34,19 +33,7 @@ class KotlinLocalFunctionULambdaExpression(
             }
         }
 
-    override val uAnnotations: List<UAnnotation>
-        get() = uAnnotationsPart.getOrBuild {
-            sourcePsi.annotationEntries.map {
-                baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this)
-            }
-        }
-
     override fun asRenderString(): String {
-        val renderedAnnotations = uAnnotations.joinToString(
-            separator = " ",
-            postfix = if (uAnnotations.isNotEmpty()) " " else "", // @... fun...
-            transform = UAnnotation::asRenderString
-        )
         val renderedValueParameters = valueParameters.joinToString(
             prefix = "(",
             postfix = ")",
@@ -55,6 +42,6 @@ class KotlinLocalFunctionULambdaExpression(
         val expressions = (body as? UBlockExpression)?.expressions?.joinToString("\n") {
             it.asRenderString().withMargin
         } ?: body.asRenderString()
-        return "${renderedAnnotations}fun $renderedValueParameters {\n${expressions.withMargin}\n}"
+        return "fun $renderedValueParameters {\n${expressions.withMargin}\n}"
     }
 }

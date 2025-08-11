@@ -32,7 +32,8 @@ public final class LoadLibraryWithNonConstantStringInspection extends BaseInspec
   public boolean considerStaticFinalConstant = false;
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     final String qualifier = (String)infos[0];
     return InspectionGadgetsBundle.message("load.library.with.non.constant.string.problem.descriptor", qualifier);
   }

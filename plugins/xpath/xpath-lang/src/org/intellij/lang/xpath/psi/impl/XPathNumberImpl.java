@@ -29,7 +29,8 @@ public class XPathNumberImpl extends XPathElementImpl implements XPathNumber {
   }
 
   @Override
-  public @NotNull XPathType getType() {
+  @NotNull
+  public XPathType getType() {
     if (getXPathVersion() == XPathVersion.V1) {
       return XPathType.NUMBER;
     } else {

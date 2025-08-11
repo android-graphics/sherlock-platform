@@ -7,10 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.vcsUtil.VcsImplUtil
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultTreeModel
 
-@ApiStatus.Internal
 class ModuleChangesGroupingPolicy(val project: Project, model: DefaultTreeModel) : SimpleChangesGroupingPolicy<Module>(model) {
   private val myIndex = ProjectFileIndex.getInstance(project)
 

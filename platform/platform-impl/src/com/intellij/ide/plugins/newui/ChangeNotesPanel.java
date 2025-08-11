@@ -9,7 +9,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +21,6 @@ import java.awt.event.MouseEvent;
 /**
  * @author Alexander Lobas
  */
-@ApiStatus.Internal
 public final class ChangeNotesPanel implements ChangeNotes {
   private final JPanel myPanel = new OpaquePanel(new BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR);
   private final JLabel myTitle = new JLabel(IdeBundle.message("label.plugin.change.notes"), AllIcons.General.ArrowRight, SwingConstants.LEFT) {

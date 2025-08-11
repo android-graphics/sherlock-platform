@@ -36,9 +36,8 @@ internal class KotlinPostfixTemplateProvider : PostfixTemplateProvider {
             KotlinTryPostfixTemplate(this),
             KotlinWhenPostfixTemplate(this),
             KotlinNotPostfixTemplate(this),
-            KotlinValPostfixTemplate(this),
-            KotlinVarPostfixTemplate(this),
-            KotlinArgumentPostfixTemplate(this),
+            KotlinIntroduceVariablePostfixTemplate("val", this),
+            KotlinIntroduceVariablePostfixTemplate("var", this),
         )
     }
 

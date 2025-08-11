@@ -4,10 +4,7 @@ package com.intellij.platform.execution.dashboard.actions;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,7 +17,7 @@ import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.g
 /**
  * @author Konstantin Aleev
  */
-final class GroupConfigurationsAction extends DumbAwareAction {
+final class GroupConfigurationsAction extends AnAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -31,7 +28,7 @@ final class GroupConfigurationsAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(e.getProject() != null && !getTargets(e).isEmpty());
-    if (e.isFromContextMenu()) {
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
       presentation.setText(getTemplatePresentation().getText() + "...");
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.application.ReadAction;
@@ -118,15 +118,15 @@ public class VcsRootIterator {
     private final Project myProject;
     private final Processor<? super FilePath> myPathProcessor;
     private final Processor<? super VirtualFile> myFileProcessor;
-    private final @Nullable VirtualFileFilter myDirectoryFilter;
+    @Nullable private final VirtualFileFilter myDirectoryFilter;
     private final VirtualFile myRoot;
     private final MyRootFilter myRootPresentFilter;
     private final ProjectLevelVcsManager myVcsManager;
 
     private MyRootIterator(final Project project,
                            final VirtualFile root,
-                           final @Nullable Processor<? super FilePath> pathProcessor,
-                           final @Nullable Processor<? super VirtualFile> fileProcessor,
+                           @Nullable final Processor<? super FilePath> pathProcessor,
+                           @Nullable final Processor<? super VirtualFile> fileProcessor,
                            @Nullable VirtualFileFilter directoryFilter) {
       myProject = project;
       myPathProcessor = pathProcessor;
@@ -151,8 +151,9 @@ public class VcsRootIterator {
           }
         }
 
+        @NotNull
         @Override
-        public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
+        public Result visitFileEx(@NotNull VirtualFile file) {
           if (isIgnoredByVcs(myVcsManager, myProject, file)) return SKIP_CHILDREN;
           if (myRootPresentFilter != null && !myRootPresentFilter.accept(file)) return SKIP_CHILDREN;
           if (myProject.isDisposed() || !process(file)) return skipTo(myRoot);

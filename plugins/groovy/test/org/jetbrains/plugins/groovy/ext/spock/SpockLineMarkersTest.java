@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.ext.spock;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.LightProjectDescriptor;
+import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
@@ -38,7 +39,7 @@ public class SpockLineMarkersTest extends LightGroovyTestCase {
     map.put("methodWithoutLabels", false);
     map.put("methodWithAnotherLabel", false);
     map.put("method with spaces ok", true);
-    GrTypeDefinition spec = file.getTypeDefinitions()[0];
+    GrTypeDefinition spec = DefaultGroovyMethods.first(file.getTypeDefinitions());
     for (GrMethod method : spec.getCodeMethods()) {
       String name = method.getName();
       Assertions.assertEquals(map.get(name), TestFrameworks.getInstance().isTestMethod(method));
@@ -59,7 +60,7 @@ public class SpockLineMarkersTest extends LightGroovyTestCase {
     map.put("methodWithoutLabels", false);
     map.put("methodWithAnotherLabel", false);
     map.put("method with spaces ok", true);
-    GrTypeDefinition spec = file.getTypeDefinitions()[0];
+    GrTypeDefinition spec = DefaultGroovyMethods.first(file.getTypeDefinitions());
     DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
       for (GrMethod method : spec.getCodeMethods()) {
         String name = method.getName();

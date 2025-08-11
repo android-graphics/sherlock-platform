@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Processor;
 import com.intellij.util.text.ImmutableCharSequence;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +18,6 @@ import java.lang.ref.SoftReference;
 
 import static com.intellij.reference.SoftReference.dereference;
 
-@ApiStatus.Internal
 public class FrozenDocument implements DocumentEx {
   private final ImmutableCharSequence myText;
   private volatile @Nullable SoftReference<LineSet> myLineSet;

@@ -222,7 +222,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
             }
         }
 
-        val originalName = (element as PsiNamedElement).name ?: return
+        val originalName = (element as PsiNamedElement).name
         for (propertyMethod in propertyMethods) {
             val mangledPropertyName = if (propertyMethod is KtLightMethod && propertyMethod.isMangled) {
                 val suffix = renameRefactoringSupport.getModuleNameSuffixForMangledName(propertyMethod.name)
@@ -247,18 +247,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
             addRenameElements(propertyMethod, originalName, adjustedPropertyName, allRenames, scope)
         }
 
-        val baseName = originalName
-        val newBaseName = if (renameRefactoringSupport.demangleInternalName(baseName) == originalName) {
-            renameRefactoringSupport.mangleInternalName(
-                newName,
-                renameRefactoringSupport.getModuleNameSuffixForMangledName(baseName)!!
-            )
-        } else newName
-        val safeNewName = newName.quoteIfNeeded()
-
-        prepareOverrideRenaming(element, baseName, newBaseName.quoteIfNeeded(), safeNewName, allRenames)
-
-        ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
+        renameRefactoringSupport.prepareForeignUsagesRenaming(element, newName, allRenames, scope)
     }
 
   protected enum class UsageKind {
@@ -439,7 +428,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
       null,
     )
 
-      usages.forEach { (it as? KtResolvableCollisionUsageInfo)?.apply() }
+    usages.forEach { (it as? KtResolvableCollisionUsageInfo)?.apply() }
 
       if (wasRequiredOverride) {
           renameRefactoringSupport.dropOverrideKeywordIfNecessary(element)

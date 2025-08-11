@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.services.ServiceViewActionUtils;
 import com.intellij.execution.services.ServiceViewUIUtils;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,7 +30,6 @@ final class ServiceViewTreeUi implements ServiceViewUi {
   private final JPanel myMainPanel;
   private final SimpleToolWindowPanel myContentPanel = new SimpleToolWindowPanel(false);
   private final Splitter mySplitter;
-  private final JComponent myMasterPanelWrapper;
   private final JPanel myMasterPanel;
   private final JPanel myDetailsPanel;
   private final JPanel myContentComponentPanel;
@@ -38,7 +38,6 @@ final class ServiceViewTreeUi implements ServiceViewUi {
     ExecutionBundle.message("service.view.empty.selection.text"));
   private final Set<JComponent> myDetailsComponents = ContainerUtil.createWeakSet();
   private ActionToolbar myServiceActionToolbar;
-  private JComponent myServiceActionToolbarPlaceholder;
   private JComponent myServiceActionToolbarWrapper;
   private ActionToolbar myMasterActionToolbar;
   private NavBarWrapper myNavBarWrapper;
@@ -54,28 +53,21 @@ final class ServiceViewTreeUi implements ServiceViewUi {
     myMainPanel.add(myContentPanel, BorderLayout.CENTER);
     myContentPanel.setContent(mySplitter);
 
-    myMasterPanel = new JPanel(new BorderLayout());
-    myMasterPanelWrapper = UiDataProvider.wrapComponent(myMasterPanel, sink -> {
-      sink.set(ServiceViewActionUtils.IS_FROM_TREE_KEY, true);
-    });
-    mySplitter.setFirstComponent(myMasterPanelWrapper);
+    myMasterPanel = new MyPanel();
+    mySplitter.setFirstComponent(myMasterPanel);
 
     myDetailsPanel = new JPanel(new BorderLayout());
     myContentComponentPanel = new JPanel(new BorderLayout());
     myMessagePanel.setFocusable(true);
     myContentComponentPanel.add(myMessagePanel, BorderLayout.CENTER);
     myDetailsPanel.add(myContentComponentPanel, BorderLayout.CENTER);
-    if (ServiceViewUIUtils.isNewServicesUIEnabled()) {
-      myServiceActionToolbarPlaceholder = new JPanel(new BorderLayout());
-      myDetailsPanel.add(myServiceActionToolbarPlaceholder, BorderLayout.NORTH);
-    }
     mySplitter.setSecondComponent(myDetailsPanel);
 
     if (state.showServicesTree) {
       myNavBarPanel.setVisible(false);
     }
     else {
-      myMasterPanelWrapper.setVisible(false);
+      myMasterPanel.setVisible(false);
     }
 
     ComponentUtil
@@ -83,8 +75,9 @@ final class ServiceViewTreeUi implements ServiceViewUi {
         JBIterable.from(myDetailsComponents).append(myMessagePanel).filter(component -> myContentComponentPanel != component.getParent()).iterator());
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent getComponent() {
+  public JComponent getComponent() {
     return myMainPanel;
   }
 
@@ -100,7 +93,7 @@ final class ServiceViewTreeUi implements ServiceViewUi {
     if (inDetails) {
       JComponent wrapper = ServiceViewUIUtils.wrapServicesAligned(myServiceActionToolbar);
       myServiceActionToolbarWrapper = actionProvider.wrapServiceToolbar(wrapper, inDetails);
-      myServiceActionToolbarPlaceholder.add(myServiceActionToolbarWrapper, BorderLayout.CENTER);
+      myDetailsPanel.add(myServiceActionToolbarWrapper, BorderLayout.NORTH);
     }
     else {
       myContentPanel.setToolbar(actionProvider.wrapServiceToolbar(myServiceActionToolbar.getComponent(), inDetails));
@@ -146,7 +139,7 @@ final class ServiceViewTreeUi implements ServiceViewUi {
 
   @Override
   public void setMasterComponentVisible(boolean visible) {
-    myMasterPanelWrapper.setVisible(visible);
+    myMasterPanel.setVisible(visible);
     if (myNavBarWrapper != null) {
       myNavBarWrapper.setVisible(!visible);
     }
@@ -200,8 +193,9 @@ final class ServiceViewTreeUi implements ServiceViewUi {
     myDetailsPanel.setVisible(visible);
   }
 
+  @Nullable
   @Override
-  public @Nullable JComponent getDetailsComponent() {
+  public JComponent getDetailsComponent() {
     int count = myContentComponentPanel.getComponentCount();
     if (count == 0) return null;
 
@@ -245,6 +239,15 @@ final class ServiceViewTreeUi implements ServiceViewUi {
       if (myScrollPane.getBorder() != border) {
         myScrollPane.setBorder(border);
       }
+    }
+  }
+
+  private static class MyPanel extends JPanel implements UiDataProvider {
+    MyPanel() { super(new BorderLayout()); }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(ServiceViewActionUtils.IS_FROM_TREE_KEY, true);
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
 import com.intellij.ui.MixedColorProducer
@@ -7,50 +7,44 @@ import java.awt.Graphics2D
 import java.awt.Insets
 import javax.swing.JComponent
 
-internal class TabScrollBarUI(
-  thickness: Int,
-  thicknessMax: Int,
-  thicknessMin: Int,
-) : ThinScrollBarUI(thickness = thickness, thicknessMax = thicknessMax, thicknessMin = thicknessMin) {
+internal class TabScrollBarUI(thickness: Int, thicknessMax: Int, thicknessMin: Int) : ThinScrollBarUI(thickness, thicknessMax, thicknessMin) {
   private var isHovered: Boolean = false
 
-  override fun createThumbPainter(state: DefaultScrollbarUiInstalledState): ScrollBarPainter.Thumb {
-    val defaultColorProducer = MixedColorProducer(
-      ScrollBarPainter.getColor({ state.scrollBar }, ScrollBarPainter.TABS_TRANSPARENT_THUMB_BACKGROUND),
-      ScrollBarPainter.getColor({ state.scrollBar }, ScrollBarPainter.TABS_THUMB_BACKGROUND))
+  private val defaultColorProducer: MixedColorProducer = MixedColorProducer(
+    ScrollBarPainter.getColor({ myScrollBar }, ScrollBarPainter.TABS_TRANSPARENT_THUMB_BACKGROUND),
+    ScrollBarPainter.getColor({ myScrollBar }, ScrollBarPainter.TABS_THUMB_BACKGROUND))
 
-    val hoveredColorProducer = MixedColorProducer(
-      ScrollBarPainter.getColor({ state.scrollBar }, ScrollBarPainter.TABS_THUMB_BACKGROUND),
-      ScrollBarPainter.getColor({ state.scrollBar }, ScrollBarPainter.TABS_THUMB_HOVERED_BACKGROUND))
+  private val hoveredColorProducer: MixedColorProducer = MixedColorProducer(
+    ScrollBarPainter.getColor({ myScrollBar }, ScrollBarPainter.TABS_THUMB_BACKGROUND),
+    ScrollBarPainter.getColor({ myScrollBar }, ScrollBarPainter.TABS_THUMB_HOVERED_BACKGROUND))
 
-    return object : ScrollBarPainter.ThinScrollBarThumb({ state.scrollBar }, false, state.coroutineScope) {
+  override fun createThumbPainter(): ScrollBarPainter.Thumb {
+    return object : ScrollBarPainter.ThinScrollBarThumb({ myScrollBar }, false) {
       override fun getFillProducer() = if (isHovered) hoveredColorProducer else defaultColorProducer
     }
   }
 
-  override fun createWrapAnimationBehaviour(state: DefaultScrollbarUiInstalledState): ScrollBarAnimationBehavior {
-    return object : ToggleableScrollBarAnimationBehaviorDecorator(
-      decoratedBehavior = createBaseAnimationBehavior(state),
-      trackAnimator = state.track.animator,
-      thumbAnimator = state.thumb.animator,
-    ) {
+  override fun createWrapAnimationBehaviour(): ScrollBarAnimationBehavior {
+    return object : ToggleableScrollBarAnimationBehaviorDecorator(createBaseAnimationBehavior(), myTrack.animator, myThumb.animator) {
       override fun onThumbHover(hovered: Boolean) {
         super.onThumbHover(hovered)
         if (isHovered != hovered) {
           isHovered = hovered
-          state.scrollBar.revalidate()
-          state.scrollBar.repaint()
+          myScrollBar.revalidate()
+          myScrollBar.repaint()
         }
       }
     }
   }
 
 
-  override fun paintThumb(g: Graphics2D, c: JComponent, state: DefaultScrollbarUiInstalledState) {
-    if (state.animationBehavior.thumbFrame > 0) {
-      paint(p = state.thumb, g = g, c = c, small = !isHovered)
+  override fun paintThumb(g: Graphics2D?, c: JComponent?) {
+    if (myAnimationBehavior.thumbFrame > 0) {
+      paint(myThumb, g, c, !isHovered)
     }
   }
 
-  override fun getInsets(small: Boolean): Insets = if (small) JBUI.insetsBottom(2) else JBUI.emptyInsets()
+  override fun getInsets(small: Boolean): Insets {
+    return if (small) JBUI.insetsBottom(2) else JBUI.emptyInsets()
+  }
 }

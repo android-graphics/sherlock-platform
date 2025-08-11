@@ -2,10 +2,8 @@
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.IntelliJProjectUtil
+import org.jetbrains.idea.devkit.util.PsiUtil
 
 internal class WorkspaceModelGenerationAction: AnAction() {
 
@@ -19,7 +17,7 @@ internal class WorkspaceModelGenerationAction: AnAction() {
   }
 
   override fun update(event: AnActionEvent) {
-    if (!IntelliJProjectUtil.isIntelliJPlatformProject(event.project)) {
+    if (!PsiUtil.isIdeaProject(event.project)) {
       event.presentation.isEnabledAndVisible = false
       return
     }
@@ -41,18 +39,14 @@ internal class WorkspaceModelGenerateAllModulesAction: AnAction() {
 
     val modules = ModuleManager.getInstance(project).modules
     val modulesSize = modules.size
-    log.info("Updating $modulesSize modules")
+    println("Updating $modulesSize modules")
     WorkspaceModelGenerator.getInstance(project).generate(modules)
   }
 
   override fun update(event: AnActionEvent) {
-    if (!IntelliJProjectUtil.isIntelliJPlatformProject(event.project)) {
+    if (!PsiUtil.isIdeaProject(event.project)) {
       event.presentation.isEnabledAndVisible = false
       return
     }
-  }
-  
-  companion object {
-    val log: Logger = logger<WorkspaceModelGenerateAllModulesAction>()
   }
 }

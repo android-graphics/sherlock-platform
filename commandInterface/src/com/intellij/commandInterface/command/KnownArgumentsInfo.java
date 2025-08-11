@@ -32,7 +32,8 @@ public final class KnownArgumentsInfo implements ArgumentsInfo {
   /**
    * List of real arguments.
    */
-  private final @NotNull List<Argument> myArguments = new ArrayList<>();
+  @NotNull
+  private final List<Argument> myArguments = new ArrayList<>();
   /**
    * Minimum number of arguments this command requires (actually, number of required arguments)
    */
@@ -49,7 +50,7 @@ public final class KnownArgumentsInfo implements ArgumentsInfo {
    *
    * @param arguments arguments this command have
    */
-  public KnownArgumentsInfo(final @NotNull Collection<Argument> arguments) {
+  public KnownArgumentsInfo(@NotNull final Collection<Argument> arguments) {
     this(arguments, arguments.size(), arguments.size());
   }
 
@@ -69,7 +70,7 @@ public final class KnownArgumentsInfo implements ArgumentsInfo {
    * @param arguments    list of known arguments (last one would be used to accept all residual values)
    * @param minArguments number of required arguments
    */
-  public KnownArgumentsInfo(final @NotNull Collection<Argument> arguments,
+  public KnownArgumentsInfo(@NotNull final Collection<Argument> arguments,
                             final int minArguments) {
     this(arguments, minArguments, Integer.MAX_VALUE);
   }
@@ -82,7 +83,7 @@ public final class KnownArgumentsInfo implements ArgumentsInfo {
    * @param minArguments number of required arguments
    * @param maxArguments maximum number of argument values this command accepts
    */
-  public KnownArgumentsInfo(final @NotNull Collection<Argument> arguments,
+  public KnownArgumentsInfo(@NotNull final Collection<Argument> arguments,
                             final int minArguments,
                             final int maxArguments) {
    assert !arguments.isEmpty(): "At least one argument should be provided";
@@ -91,8 +92,9 @@ public final class KnownArgumentsInfo implements ArgumentsInfo {
     myMaxArguments = maxArguments;
   }
 
+  @Nullable
   @Override
-  public @Nullable Pair<Boolean, Argument> getArgument(final int argumentPosition) {
+  public Pair<Boolean, Argument> getArgument(final int argumentPosition) {
     if (argumentPosition >= myMaxArguments) {
       return null;
     }

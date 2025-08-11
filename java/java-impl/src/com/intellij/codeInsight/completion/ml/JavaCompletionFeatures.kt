@@ -71,7 +71,7 @@ object JavaCompletionFeatures {
       fun getValue(text: String): JavaKeyword? = ALL_VALUES[text]
     }
 
-    override fun toString(): String = name.lowercase(Locale.ENGLISH)
+    override fun toString(): String = name.toLowerCase(Locale.ENGLISH)
   }
 
   enum class JavaType {

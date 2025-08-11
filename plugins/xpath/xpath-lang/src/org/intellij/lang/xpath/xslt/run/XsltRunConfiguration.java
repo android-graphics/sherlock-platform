@@ -78,12 +78,12 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     }
 
     private List<Pair<String, String>> myParameters = new ArrayList<>();
-    private @Nullable VirtualFilePointer myXsltFile = null;
-    private @Nullable VirtualFilePointer myXmlInputFile = null;
-    private @NotNull OutputType myOutputType = OutputType.CONSOLE;
+    @Nullable private VirtualFilePointer myXsltFile = null;
+    @Nullable private VirtualFilePointer myXmlInputFile = null;
+    @NotNull private OutputType myOutputType = OutputType.CONSOLE;
     private boolean mySaveToFile = false;
-    private @NotNull JdkChoice myJdkChoice = JdkChoice.FROM_MODULE;
-    private @Nullable FileType myFileType = XmlFileType.INSTANCE;
+    @NotNull private JdkChoice myJdkChoice = JdkChoice.FROM_MODULE;
+    @Nullable private FileType myFileType = XmlFileType.INSTANCE;
 
     public @NlsSafe String myOutputFile; // intentionally untracked. should it be?
     public boolean myOpenOutputFile;
@@ -103,8 +103,9 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         mySuggestedName = null;
     }
 
+    @NotNull
     @Override
-    public @NotNull SettingsEditor<XsltRunConfiguration> getConfigurationEditor() {
+    public SettingsEditor<XsltRunConfiguration> getConfigurationEditor() {
         return new XsltRunSettingsEditor(getProject());
     }
 
@@ -206,7 +207,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     }
 
     static boolean isEmpty(String file) {
-        return file == null || file.isEmpty();
+        return file == null || file.length() == 0;
     }
 
     // return modules to compile before run. Null or empty list to build project
@@ -260,7 +261,8 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         }
     }
 
-    private static @Nullable FileType getFileType(String value) {
+    @Nullable
+    private static FileType getFileType(String value) {
         if (value == null) return null;
         return FileTypeManager.getInstance().findFileTypeByName(value);
     }
@@ -339,23 +341,28 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         myXsltFile = VirtualFilePointerManager.getInstance().create(virtualFile, getProject(), null);
     }
 
-    public @Nullable @NlsSafe String getXsltFile() {
+    @Nullable
+    public @NlsSafe String getXsltFile() {
         return myXsltFile != null ? myXsltFile.getPresentableUrl() : null;
     }
 
-    public @Nullable VirtualFile findXsltFile() {
+    @Nullable
+    public VirtualFile findXsltFile() {
         return myXsltFile != null ? myXsltFile.getFile() : null;
     }
 
-    public @Nullable VirtualFile findXmlInputFile() {
+    @Nullable
+    public VirtualFile findXmlInputFile() {
         return myXmlInputFile != null ? myXmlInputFile.getFile() : null;
     }
 
-    public @Nullable @NlsSafe String getXmlInputFile() {
+    @Nullable
+    public @NlsSafe String getXmlInputFile() {
         return myXmlInputFile != null ? myXmlInputFile.getPresentableUrl() : null;
     }
 
-    public @Nullable FileType getFileType() {
+    @Nullable
+    public FileType getFileType() {
         return myFileType;
     }
 
@@ -363,11 +370,13 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         myFileType = fileType;
     }
 
-    public @Nullable Module getModule() {
+    @Nullable
+    public Module getModule() {
         return myModule != null ? ModuleManager.getInstance(getProject()).findModuleByName(myModule) : null;
     }
 
-    public @Nullable Sdk getJdk() {
+    @Nullable
+    public Sdk getJdk() {
         return myJdk != null ? ProjectJdkTable.getInstance().findJdk(myJdk) : null;
     }
 
@@ -391,7 +400,8 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         myJdk = projectJdk != null ? projectJdk.getName() : null;
     }
 
-    public @NotNull OutputType getOutputType() {
+    @NotNull
+    public OutputType getOutputType() {
         return myOutputType;
     }
 
@@ -407,7 +417,8 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         mySaveToFile = saveToFile;
     }
 
-    public @NotNull JdkChoice getJdkChoice() {
+    @NotNull
+    public JdkChoice getJdkChoice() {
         return myJdkChoice;
     }
 
@@ -425,7 +436,8 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         return ourDefaultSdk;
     }
 
-    public @Nullable Sdk getEffectiveJDK() {
+    @Nullable
+    public Sdk getEffectiveJDK() {
         if (myJdkChoice == JdkChoice.JDK) {
             return myJdk != null ? ProjectJdkTable.getInstance().findJdk(myJdk) : null;
         }
@@ -444,7 +456,8 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         return jdk;
     }
 
-    public @Nullable Module getEffectiveModule() {
+    @Nullable
+    public Module getEffectiveModule() {
         //assert myJdkChoice == JdkChoice.FROM_MODULE;
 
         Module module = myJdkChoice == JdkChoice.FROM_MODULE ? getModule() : null;

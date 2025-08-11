@@ -46,7 +46,8 @@ public class ReporterWithTimer implements PlaybackCommandReporter {
       });
   }
 
-  private static @NotNull Notification getDelayNotification(long totalTime, long averageDelay, long maxDelay) {
+  @NotNull
+  private static Notification getDelayNotification(long totalTime, long averageDelay, long maxDelay) {
     return new Notification(PlaybackRunnerExtended.NOTIFICATION_GROUP,
                             PerformanceTestingBundle.message("delay.notification.title"),
                             PerformanceTestingBundle.message("delay.notification.message", totalTime, averageDelay, maxDelay),

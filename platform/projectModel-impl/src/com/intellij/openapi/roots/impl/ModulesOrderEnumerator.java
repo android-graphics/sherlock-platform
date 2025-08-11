@@ -2,7 +2,6 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderEnumerationHandler;
@@ -20,8 +19,8 @@ import java.util.Set;
 public final class ModulesOrderEnumerator extends OrderEnumeratorBase {
   private final Collection<? extends Module> myModules;
 
-  public ModulesOrderEnumerator(@NotNull Project project, @NotNull Collection<? extends Module> modules) {
-    super(project, null);
+  public ModulesOrderEnumerator(@NotNull Collection<? extends Module> modules) {
+    super(null);
     myModules = modules;
   }
 

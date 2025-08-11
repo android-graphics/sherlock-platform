@@ -83,7 +83,7 @@ public final class ResolveProfiler {
     }
 
     if (threadInfo.getPrefix().isEmpty()) {
-      threadMap.remove();
+      threadMap.set(null);
     }
   }
 

@@ -38,8 +38,9 @@ public class IgnoreCommenter implements Commenter {
    *
    * @return the line comment text, or null.
    */
+  @Nullable
   @Override
-  public @Nullable String getLineCommentPrefix() {
+  public String getLineCommentPrefix() {
     return IgnoreFileConstants.HASH;
   }
 
@@ -49,8 +50,9 @@ public class IgnoreCommenter implements Commenter {
    *
    * @return the block comment start text, or null.
    */
+  @Nullable
   @Override
-  public @Nullable String getBlockCommentPrefix() {
+  public String getBlockCommentPrefix() {
     return null;
   }
 
@@ -60,8 +62,9 @@ public class IgnoreCommenter implements Commenter {
    *
    * @return the block comment end text, or null.
    */
+  @Nullable
   @Override
-  public @Nullable String getBlockCommentSuffix() {
+  public String getBlockCommentSuffix() {
     return null;
   }
 
@@ -71,8 +74,9 @@ public class IgnoreCommenter implements Commenter {
    *
    * @return the commented block comment start text, or null.
    */
+  @Nullable
   @Override
-  public @Nullable String getCommentedBlockCommentPrefix() {
+  public String getCommentedBlockCommentPrefix() {
     return null;
   }
 
@@ -82,8 +86,9 @@ public class IgnoreCommenter implements Commenter {
    *
    * @return the commented block comment end text, or null.
    */
+  @Nullable
   @Override
-  public @Nullable String getCommentedBlockCommentSuffix() {
+  public String getCommentedBlockCommentSuffix() {
     return null;
   }
 }

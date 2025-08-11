@@ -5,7 +5,7 @@ import com.intellij.formatting.commandLine.CodeStyleProcessorBuildException.Argu
 import com.intellij.formatting.commandLine.CodeStyleProcessorBuildException.ShowUsageException
 import com.intellij.formatting.commandLine.FileSetFormatValidator
 import com.intellij.formatting.commandLine.FileSetFormatter
-import com.intellij.formatting.commandLine.createBuilder
+import com.intellij.formatting.commandLine.createFormatter
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.testFramework.LightPlatformTestCase
 import java.io.File
@@ -13,7 +13,7 @@ import java.io.File
 class FileSetFormatterStarterTest : LightPlatformTestCase() {
   private inline fun <reified T : Exception> expectExceptionsOnArgs(vararg args: String) {
     try {
-      createBuilder(args.toList()).build(project).let {
+      createFormatter(args.toList()).use {
         fail("Missing expected exception ${T::class}")
       }
     }
@@ -34,7 +34,7 @@ class FileSetFormatterStarterTest : LightPlatformTestCase() {
                                                                              "really_hope_noone_adds_file_with_this_name_in_future", "src")
 
   fun testDefaultArgs() {
-    createBuilder(listOf("format", ".")).build(project).let { processor ->
+    createFormatter(listOf("format", ".")).use { processor ->
       assertInstanceOf(processor, FileSetFormatter::class.java)
       assertFalse(processor.isRecursive)
       assertEmpty(processor.getFileMasks())
@@ -45,7 +45,7 @@ class FileSetFormatterStarterTest : LightPlatformTestCase() {
   }
 
   fun testNonDefaultArgs() {
-    createBuilder(listOf("format", "-r", "-d", "-m", "*.java, ,*.kt,", ".", "..")).build(project).let { processor ->
+    createFormatter(listOf("format", "-r", "-d", "-m", "*.java, ,*.kt,", ".", "..")).use { processor ->
       assertInstanceOf(processor, FileSetFormatValidator::class.java)
       assertTrue(processor.isRecursive)
 
@@ -60,7 +60,7 @@ class FileSetFormatterStarterTest : LightPlatformTestCase() {
   }
 
   fun testNonDefaultArgs2() {
-    createBuilder(listOf("format", "-d", "-allowDefaults", ".")).build(project).let { processor ->
+    createFormatter(listOf("format", "-d", "-allowDefaults", ".")).use { processor ->
       assertInstanceOf(processor, FileSetFormatValidator::class.java)
       assertEquals(CodeStyleSettingsManager.getInstance().createSettings(), processor.defaultCodeStyle)
     }

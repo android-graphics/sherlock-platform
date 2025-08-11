@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.util.InvalidDataException;
@@ -24,7 +24,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
   private Map<String, String> additionalConstraints;
 
-  private @NotNull String regExp = "";
+  @NotNull
+  private String regExp = "";
   private boolean invertRegExp;
   private boolean withinHierarchy;
   private boolean strictlyWithinHierarchy;
@@ -33,50 +34,58 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
   private int maxCount = 1;
   private boolean greedy = true;
   private boolean invertReference;
-  private @NotNull String referenceConstraint = "";
-  private @NotNull String referenceConstraintName = "";
+  @NotNull
+  private String referenceConstraint = "";
+  @NotNull
+  private String referenceConstraintName = "";
   private boolean partOfSearchResults;
-  private @NotNull String nameOfExprType = "";
-  private @NotNull String expressionTypes = "";
+  @NotNull
+  private String nameOfExprType = "";
+  @NotNull
+  private String expressionTypes = "";
   private boolean invertExprType;
   private boolean exprTypeWithinHierarchy;
 
-  private @NotNull String nameOfFormalArgType = "";
-  private @NotNull String expectedTypes = "";
+  @NotNull
+  private String nameOfFormalArgType = "";
+  @NotNull
+  private String expectedTypes = "";
   private boolean invertFormalType;
   private boolean formalArgTypeWithinHierarchy;
 
-  private @NotNull String withinConstraint = "";
-  private @NotNull String containsConstraint = "";
+  @NotNull
+  private String withinConstraint = "";
+  @NotNull
+  private String containsConstraint = "";
   private boolean invertContainsConstraint;
   private boolean invertWithinConstraint;
 
-  private @NotNull String contextConstraint = "";
+  @NotNull private String contextConstraint = "";
 
-  private static final @NonNls String REFERENCE_CONDITION = "reference";
-  private static final @NonNls String NAME_OF_EXPRTYPE = "nameOfExprType";
-  private static final @NonNls String NAME_OF_FORMALTYPE = "nameOfFormalType";
-  private static final @NonNls String REGEXP = "regexp";
-  private static final @NonNls String EXPRTYPE_WITHIN_HIERARCHY = "exprTypeWithinHierarchy";
-  private static final @NonNls String FORMALTYPE_WITHIN_HIERARCHY = "formalTypeWithinHierarchy";
+  @NonNls private static final String REFERENCE_CONDITION = "reference";
+  @NonNls private static final String NAME_OF_EXPRTYPE = "nameOfExprType";
+  @NonNls private static final String NAME_OF_FORMALTYPE = "nameOfFormalType";
+  @NonNls private static final String REGEXP = "regexp";
+  @NonNls private static final String EXPRTYPE_WITHIN_HIERARCHY = "exprTypeWithinHierarchy";
+  @NonNls private static final String FORMALTYPE_WITHIN_HIERARCHY = "formalTypeWithinHierarchy";
 
-  private static final @NonNls String WITHIN_HIERARCHY = "withinHierarchy";
-  private static final @NonNls String MAX_OCCURS = "maxCount";
-  private static final @NonNls String MIN_OCCURS = "minCount";
+  @NonNls private static final String WITHIN_HIERARCHY = "withinHierarchy";
+  @NonNls private static final String MAX_OCCURS = "maxCount";
+  @NonNls private static final String MIN_OCCURS = "minCount";
 
-  private static final @NonNls String NEGATE_NAME_CONDITION = "negateName";
-  private static final @NonNls String NEGATE_EXPRTYPE_CONDITION = "negateExprType";
-  private static final @NonNls String NEGATE_FORMALTYPE_CONDITION = "negateFormalType";
-  private static final @NonNls String NEGATE_CONTAINS_CONDITION = "negateContains";
-  private static final @NonNls String NEGATE_WITHIN_CONDITION = "negateWithin";
-  private static final @NonNls String NEGATE_REFERENCE_CONDITION = "negateReference";
-  private static final @NonNls String WITHIN_CONDITION = "within";
-  private static final @NonNls String CONTAINS_CONDITION = "contains";
-  private static final @NonNls String TARGET = "target";
-  private static final @NonNls String CONTEXT = "context";
+  @NonNls private static final String NEGATE_NAME_CONDITION = "negateName";
+  @NonNls private static final String NEGATE_EXPRTYPE_CONDITION = "negateExprType";
+  @NonNls private static final String NEGATE_FORMALTYPE_CONDITION = "negateFormalType";
+  @NonNls private static final String NEGATE_CONTAINS_CONDITION = "negateContains";
+  @NonNls private static final String NEGATE_WITHIN_CONDITION = "negateWithin";
+  @NonNls private static final String NEGATE_REFERENCE_CONDITION = "negateReference";
+  @NonNls private static final String WITHIN_CONDITION = "within";
+  @NonNls private static final String CONTAINS_CONDITION = "contains";
+  @NonNls private static final String TARGET = "target";
+  @NonNls private static final String CONTEXT = "context";
 
-  private static final @NonNls String WHOLE_WORDS_ONLY = "wholeWordsOnly";
-  private static final @NonNls String TRUE = Boolean.TRUE.toString();
+  @NonNls private static final String WHOLE_WORDS_ONLY = "wholeWordsOnly";
+  @NonNls private static final String TRUE = Boolean.TRUE.toString();
 
   public MatchVariableConstraint() {}
 
@@ -124,7 +133,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     return new MatchVariableConstraint(this);
   }
 
-  static @NotNull String convertRegExpTypeToTypeString(@NotNull String regexp) {
+  @NotNull
+  static String convertRegExpTypeToTypeString(@NotNull String regexp) {
     final StringBuilder result = new StringBuilder();
     for (int i = 0, length = regexp.length(); i < length; i++) {
       final int c = regexp.codePointAt(i);
@@ -164,10 +174,11 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     return result.toString();
   }
 
-  static @NotNull String convertTypeStringToRegExp(@NotNull String typeString) {
+  @NotNull
+  static String convertTypeStringToRegExp(@NotNull String typeString) {
     final StringBuilder result = new StringBuilder();
     for (String type : StringUtil.split(typeString, "|")) {
-      if (!result.isEmpty()) {
+      if (result.length() > 0) {
         result.append('|');
       }
       MatchUtil.shieldRegExpMetaChars(type.trim(), result);
@@ -183,7 +194,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     this.greedy = greedy;
   }
 
-  public @NotNull String getRegExp() {
+  @NotNull
+  public String getRegExp() {
     return regExp;
   }
 
@@ -239,7 +251,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     this.invertReference = invertReference;
   }
 
-  public @NotNull String getReferenceConstraint() {
+  @NotNull
+  public String getReferenceConstraint() {
     return referenceConstraint;
   }
 
@@ -263,11 +276,13 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     this.strictlyWithinHierarchy = strictlyWithinHierarchy;
   }
 
-  public @NotNull String getNameOfExprType() {
+  @NotNull
+  public String getNameOfExprType() {
     return nameOfExprType;
   }
 
-  public @NotNull String getExpressionTypes() {
+  @NotNull
+  public String getExpressionTypes() {
     return expressionTypes;
   }
 
@@ -309,11 +324,13 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     this.wholeWordsOnly = wholeWordsOnly;
   }
 
-  public @NotNull String getNameOfFormalArgType() {
+  @NotNull
+  public String getNameOfFormalArgType() {
     return nameOfFormalArgType;
   }
 
-  public @NotNull String getExpectedTypes() {
+  @NotNull
+  public String getExpectedTypes() {
     return expectedTypes;
   }
 
@@ -347,7 +364,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     this.formalArgTypeWithinHierarchy = formalArgTypeWithinHierarchy;
   }
 
-  public @NotNull String getContextConstraint() {
+  @NotNull
+  public String getContextConstraint() {
     return contextConstraint;
   }
 
@@ -391,7 +409,6 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     return (additionalConstraints == null) ? Collections.emptyMap() : Collections.unmodifiableMap(additionalConstraints);
   }
 
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof MatchVariableConstraint other)) return false;
@@ -430,7 +447,6 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     return true;
   }
 
-  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 29 * result + regExp.hashCode();
@@ -579,7 +595,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     }
   }
 
-  public @NotNull String getWithinConstraint() {
+  @NotNull
+  public String getWithinConstraint() {
     return withinConstraint;
   }
 
@@ -587,7 +604,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     this.withinConstraint = withinConstraint;
   }
 
-  public @NotNull String getContainsConstraint() {
+  @NotNull
+  public String getContainsConstraint() {
     return containsConstraint;
   }
 

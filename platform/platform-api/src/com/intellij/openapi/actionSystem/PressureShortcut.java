@@ -35,7 +35,6 @@ public class PressureShortcut extends MouseShortcut {
     return 1;
   }
 
-  @Override
   public boolean equals(Object obj) {
     if (this == obj) return true;
     if (obj == null || getClass() != obj.getClass()) return false;
@@ -45,7 +44,6 @@ public class PressureShortcut extends MouseShortcut {
     return myStage == other.myStage;
   }
 
-  @Override
   public int hashCode() {
     return super.hashCode() + (int)myStage;
   }

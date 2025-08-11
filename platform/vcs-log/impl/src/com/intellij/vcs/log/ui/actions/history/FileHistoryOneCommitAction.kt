@@ -17,9 +17,7 @@ import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder
 import com.intellij.vcs.log.ui.table.lazyMap
 import com.intellij.vcs.log.ui.table.size
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 abstract class FileHistoryOneCommitAction<T : VcsCommitMetadata> : AnAction(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 

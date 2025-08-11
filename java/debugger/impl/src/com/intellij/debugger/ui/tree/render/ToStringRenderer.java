@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -9,7 +9,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.settings.DebuggerSettingsUtils;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
@@ -81,7 +80,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
     if (value instanceof ObjectReference) {
       DebuggerUtils.ensureNotInsideObjectConstructor((ObjectReference)value, evaluationContext);
     }
-    BatchEvaluator.getBatchEvaluator(evaluationContext).invoke(new ToStringCommand(evaluationContext, value) {
+    BatchEvaluator.getBatchEvaluator(evaluationContext.getDebugProcess()).invoke(new ToStringCommand(evaluationContext, value) {
       @Override
       public void evaluationResult(String message) {
         valueDescriptor.setValueLabel(
@@ -101,8 +100,9 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
     return XDebuggerUIConstants.getCollectingDataMessage();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getLinkText() {
+  public String getLinkText() {
     return JavaDebuggerBundle.message("message.node.toString");
   }
 
@@ -173,7 +173,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
 
     ON_DEMAND = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "ON_DEMAND"));
     USE_CLASS_FILTERS = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "USE_CLASS_FILTERS"));
-    myClassFilters = DebuggerSettingsUtils.readFilters(element.getChildren("filter"));
+    myClassFilters = DebuggerUtilsEx.readFilters(element.getChildren("filter"));
   }
 
   @Override
@@ -186,7 +186,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
     if (USE_CLASS_FILTERS) {
       JDOMExternalizerUtil.writeField(element, "USE_CLASS_FILTERS", "true");
     }
-    DebuggerSettingsUtils.writeFilters(element, "filter", myClassFilters);
+    DebuggerUtilsEx.writeFilters(element, "filter", myClassFilters);
   }
 
   public ClassFilter[] getClassFilters() {

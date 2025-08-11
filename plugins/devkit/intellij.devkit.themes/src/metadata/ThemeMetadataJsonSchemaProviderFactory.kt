@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes.metadata
 
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -15,7 +14,7 @@ import java.util.*
 @NonNls
 internal const val THEME_METADATA_JSON_EXTENSION = "themeMetadata.json"
 
-internal class ThemeMetadataJsonSchemaProviderFactory : JsonSchemaProviderFactory, DumbAware {
+internal class ThemeMetadataJsonSchemaProviderFactory : JsonSchemaProviderFactory {
 
   override fun getProviders(project: Project): MutableList<JsonSchemaFileProvider> {
     return Collections.singletonList(object : JsonSchemaFileProvider {

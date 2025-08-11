@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -47,7 +47,8 @@ public final class KeySetIterationMayUseEntrySetInspection extends BaseInspectio
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     ReplacementMode mode = (ReplacementMode)infos[0];
     return InspectionGadgetsBundle.message("key.set.iteration.may.use.entry.set.problem.descriptor", mode.myDisplayName);
   }
@@ -64,13 +65,16 @@ public final class KeySetIterationMayUseEntrySetInspection extends BaseInspectio
       myMode = mode;
     }
 
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
     @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
+    public String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", myMode.myDisplayName);
     }
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("key.set.iteration.may.use.entry.set.quickfix");
     }
 
@@ -233,7 +237,8 @@ public final class KeySetIterationMayUseEntrySetInspection extends BaseInspectio
       }
     }
 
-    private static @NotNull String createNewVariableName(@NotNull PsiElement scope, @NotNull PsiType type, ReplacementMode mode) {
+    @NotNull
+    private static String createNewVariableName(@NotNull PsiElement scope, @NotNull PsiType type, ReplacementMode mode) {
       VariableNameGenerator generator = new VariableNameGenerator(scope, VariableKind.LOCAL_VARIABLE);
       if (mode == ReplacementMode.VALUES) {
         generator.byType(type).byName("value", "val", "v");
@@ -340,8 +345,9 @@ public final class KeySetIterationMayUseEntrySetInspection extends BaseInspectio
     }
   }
 
+  @Nullable
   @Contract("null -> null")
-  private static @Nullable PsiExpression getIteratedExpression(PsiExpression iteratedValue) {
+  private static PsiExpression getIteratedExpression(PsiExpression iteratedValue) {
     PsiLocalVariable variable = ExpressionUtils.resolveLocalVariable(iteratedValue);
     if (variable != null) {
       final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(variable, PsiMethod.class);

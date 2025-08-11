@@ -2,6 +2,8 @@
 package com.intellij.sh;
 
 import com.intellij.lang.Language;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 
 public final class ShLanguage extends Language {
   public static final Language INSTANCE = new ShLanguage();

@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ShowLogAction
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
@@ -11,12 +12,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
+import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
@@ -102,7 +105,7 @@ open class StandalonePluginUpdateChecker(
   open fun verifyUpdate(status: PluginUpdateStatus.Update): PluginUpdateStatus = status
 
   fun pluginUsed() {
-    if (!UpdateSettings.getInstance().isPluginsCheckNeeded) return
+    if (!UpdateSettings.getInstance().isCheckNeeded) return
     if (ApplicationManager.getApplication().isHeadlessEnvironment) return
 
     val lastUpdateTime = PropertiesComponent.getInstance().getLong(updateTimestampProperty, 0L)
@@ -144,7 +147,7 @@ open class StandalonePluginUpdateChecker(
     } else {
       try {
         updateStatus = checkUpdatesInMainRepository()
-        for (host in RepositoryHelper.getCustomPluginRepositoryHosts()) {
+        for (host in RepositoryHelper.getPluginHosts().filterNotNull()) {
           val customUpdateStatus = checkUpdatesInCustomRepository(host)
           updateStatus = updateStatus.mergeWith(customUpdateStatus)
         }
@@ -182,8 +185,17 @@ open class StandalonePluginUpdateChecker(
   private fun checkUpdatesInMainRepository(): PluginUpdateStatus {
     val buildNumber = ApplicationInfo.getInstance().apiVersion
     val os = URLEncoder.encode(SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION, CharsetToolkit.UTF8)
+    val uid = PermanentInstallationID.get()
     val pluginId = pluginId.idString
-    val url = "https://plugins.jetbrains.com/plugins/list?pluginId=$pluginId&build=$buildNumber&pluginVersion=$currentVersion&os=$os"
+    var url =
+      "https://plugins.jetbrains.com/plugins/list?pluginId=$pluginId&build=$buildNumber&pluginVersion=$currentVersion&os=$os&uuid=$uid"
+
+    if (!PropertiesComponent.getInstance().getBoolean(UpdateChecker.MACHINE_ID_DISABLED_PROPERTY, false)) {
+      val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates", "")
+      if (machineId != null) {
+        url += "&${UpdateChecker.MACHINE_ID_PARAMETER}=$machineId"
+      }
+    }
 
     val responseDoc = HttpRequests.request(url).connect { JDOMUtil.load(it.inputStream) }
     if (responseDoc.name != "plugin-repository") {

@@ -6,9 +6,7 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.setItems
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -19,7 +17,6 @@ import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.util.ui.showingScope
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.vcs.ui.ProgressStripe
@@ -40,12 +37,10 @@ import kotlin.coroutines.CoroutineContext
 /**
  * Binds the state of the combo box model with the given items state and selection flows.
  */
-fun <T : Any> MutableCollectionComboBoxModel<T>.bindIn(
-  scope: CoroutineScope,
-  items: Flow<Collection<T>>,
-  selectionState: MutableStateFlow<T?>,
-  sortComparator: Comparator<T>,
-) {
+fun <T : Any> MutableCollectionComboBoxModel<T>.bindIn(scope: CoroutineScope,
+                                                       items: Flow<Collection<T>>,
+                                                       selectionState: MutableStateFlow<T?>,
+                                                       sortComparator: Comparator<T>) {
   scope.launchNow {
     items.collect {
       setItems(it.sortedWith(sortComparator))
@@ -64,12 +59,10 @@ fun <T : Any> MutableCollectionComboBoxModel<T>.bindIn(
   }
 }
 
-internal fun <T> ComboBoxWithActionsModel<T>.bindIn(
-  scope: CoroutineScope,
-  items: Flow<Collection<T>>,
-  selectionState: MutableStateFlow<T?>,
-  sortComparator: Comparator<T>,
-) {
+internal fun <T> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
+                                                    items: Flow<Collection<T>>,
+                                                    selectionState: MutableStateFlow<T?>,
+                                                    sortComparator: Comparator<T>) {
   scope.launchNow {
     items.collect {
       this@bindIn.items = it.sortedWith(sortComparator)
@@ -87,13 +80,11 @@ internal fun <T> ComboBoxWithActionsModel<T>.bindIn(
   }
 }
 
-internal fun <T> ComboBoxWithActionsModel<T>.bindIn(
-  scope: CoroutineScope,
-  items: Flow<Collection<T>>,
-  selectionState: MutableStateFlow<T?>,
-  actions: Flow<List<Action>>,
-  sortComparator: Comparator<T>,
-) {
+internal fun <T> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
+                                                    items: Flow<Collection<T>>,
+                                                    selectionState: MutableStateFlow<T?>,
+                                                    actions: Flow<List<Action>>,
+                                                    sortComparator: Comparator<T>) {
   bindIn(scope, items, selectionState, sortComparator)
 
   scope.launchNow {
@@ -139,15 +130,6 @@ fun JComponent.bindEnabledIn(scope: CoroutineScope, enabledFlow: Flow<Boolean>) 
   }
 }
 
-@ApiStatus.Internal
-fun JComponent.bindDisabled(debugName: String, disabledFlow: Flow<Boolean>) {
-  showingScope(debugName) {
-    disabledFlow.collect {
-      isEnabled = !it
-    }
-  }
-}
-
 fun JComponent.bindDisabledIn(scope: CoroutineScope, disabledFlow: Flow<Boolean>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     disabledFlow.collect {
@@ -183,9 +165,7 @@ fun JComponent.bindTooltipTextIn(scope: CoroutineScope, tooltipTextFlow: Flow<@N
 fun JTextComponent.bindTextIn(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
-      if (text != it) {
-        text = it
-      }
+      text = it
     }
   }
 }
@@ -194,17 +174,7 @@ fun JEditorPane.bindTextIn(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
       text = it
-      // JDK bug JBR-2256 - need to force height recalculation
       setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
-    }
-  }
-}
-
-@ApiStatus.Internal
-fun JEditorPane.bindTextHtml(debugName: String, textFlow: Flow<@Nls String>) {
-  showingScope(debugName) {
-    textFlow.collect {
-      setHtmlBody(it)
     }
   }
 }
@@ -213,6 +183,7 @@ fun JEditorPane.bindTextHtmlIn(scope: CoroutineScope, textFlow: Flow<@Nls String
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
       setHtmlBody(it)
+      setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
     }
   }
 }
@@ -221,15 +192,6 @@ fun JLabel.bindTextIn(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
       text = it
-    }
-  }
-}
-
-@ApiStatus.Internal
-fun JLabel.bindIcon(debugName: String, iconFlow: Flow<Icon?>) {
-  showingScope(debugName) {
-    iconFlow.collect {
-      icon = it
     }
   }
 }
@@ -270,24 +232,14 @@ fun Document.bindTextIn(cs: CoroutineScope, textFlow: StateFlow<String>, setter:
       setter(text)
     }
   }
-
-  fun doSetText(newText: String) {
-    WriteIntentReadAction.run {
+  cs.launchNow(CoroutineName("Text binding for $this")) {
+    textFlow.collectScoped { newText ->
       if (text != newText) {
-        val noCr = newText.filter { it != '\r' }
-        WriteAction.run<Throwable> {
-          setText(noCr)
+        writeAction {
+          setText(newText.filter { it != '\r' })
         }
       }
-    }
-  }
-
-  cs.launchNow(CoroutineName("Text binding for $this")) {
-    withContext(Dispatchers.EDT) {
       addDocumentListener(listener)
-      textFlow.collectScoped { newText ->
-        doSetText(newText)
-      }
       try {
         awaitCancellation()
       }
@@ -315,53 +267,21 @@ fun Wrapper.bindContentIn(scope: CoroutineScope, contentFlow: Flow<JComponent?>)
   }
 }
 
-@ApiStatus.Internal
-fun <D> Wrapper.bindContent(
-  debugName: String,
-  dataFlow: Flow<D>,
-  componentFactory: CoroutineScope.(D) -> JComponent?,
-) {
-  showingScope(debugName) {
-    bindContentImpl(dataFlow, componentFactory)
-  }
-}
-
-fun <D> Wrapper.bindContentIn(
-  scope: CoroutineScope, dataFlow: Flow<D>,
-  componentFactory: CoroutineScope.(D) -> JComponent?,
-) {
+fun <D> Wrapper.bindContentIn(scope: CoroutineScope, dataFlow: Flow<D>,
+                              componentFactory: CoroutineScope.(D) -> JComponent?) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    bindContentImpl(dataFlow, componentFactory)
-  }
-}
-
-@ApiStatus.Internal
-fun Wrapper.bindContent(
-  debugName: String, contentFlow: Flow<JComponent?>,
-) {
-  showingScope(debugName) {
-    contentFlow.collect {
-      setContent(it)
+    dataFlow.collectScoped {
+      val component = componentFactory(it) ?: return@collectScoped
+      setContent(component)
       repaint()
-    }
-  }
-}
 
-private suspend fun <D> Wrapper.bindContentImpl(
-  dataFlow: Flow<D>,
-  componentFactory: CoroutineScope.(D) -> JComponent?,
-) {
-  dataFlow.collectScoped {
-    val component = componentFactory(it) ?: return@collectScoped
-    setContent(component)
-    repaint()
-
-    try {
-      awaitCancellation()
-    }
-    finally {
-      setContent(null)
-      repaint()
+      try {
+        awaitCancellation()
+      }
+      finally {
+        setContent(null)
+        repaint()
+      }
     }
   }
 }
@@ -382,11 +302,9 @@ fun <T> JBList<T>.bindBusyIn(scope: CoroutineScope, busyFlow: Flow<Boolean>) {
   }
 }
 
-fun <D> JPanel.bindChildIn(
-  scope: CoroutineScope, dataFlow: Flow<D>,
-  constraints: Any? = null, index: Int? = null,
-  componentFactory: CoroutineScope.(D) -> JComponent?,
-) {
+fun <D> JPanel.bindChildIn(scope: CoroutineScope, dataFlow: Flow<D>,
+                           constraints: Any? = null, index: Int? = null,
+                           componentFactory: CoroutineScope.(D) -> JComponent?) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     dataFlow.collectScoped {
       val component = componentFactory(it) ?: return@collectScoped

@@ -18,8 +18,9 @@ public class PythonContentEntriesConfigurable extends ModuleAwareProjectConfigur
     super(project, PyBundle.message("configurable.PythonContentEntriesConfigurable.display.name"), "reference.settingsdialog.project.structure");
   }
 
+  @NotNull
   @Override
-  protected @NotNull Configurable createModuleConfigurable(Module module) {
+  protected Configurable createModuleConfigurable(Module module) {
     if (PlatformUtils.isPyCharmCommunity())
       return new PlatformContentEntriesConfigurable(module, JavaSourceRootType.SOURCE);
     return new PyContentEntriesModuleConfigurable(module);

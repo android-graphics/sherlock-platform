@@ -9,7 +9,6 @@ import git4idea.branch.GitRebaseParams
 import git4idea.rebase.GitRebaseEditorHandler
 import git4idea.rebase.GitRebaseProcess
 import git4idea.rebase.GitRebaseSpec
-import git4idea.rebase.interactive.getRebaseUpstreamFor
 import git4idea.repo.GitRepository
 
 internal abstract class GitCommitEditingOperation(protected val repository: GitRepository) {
@@ -20,8 +19,7 @@ internal abstract class GitCommitEditingOperation(protected val repository: GitR
     rebaseEditor: GitRebaseEditorHandler,
     preserveMerges: Boolean = false
   ): GitCommitEditingOperationResult {
-    val lastCommit = commits.last()
-    val base = getRebaseUpstreamFor(lastCommit)
+    val base = commits.last().parents.first().asString()
     val params = GitRebaseParams.editCommits(
       repository.vcs.version,
       base,
@@ -52,7 +50,7 @@ internal abstract class GitCommitEditingOperation(protected val repository: GitR
     override fun notifySuccess() {
       repository.update()
       val newHead = repository.currentRevision!!
-      result = GitCommitEditingOperationResult.Complete(repository, params.upstream, initialHead, newHead)
+      result = GitCommitEditingOperationResult.Complete(repository, params.upstream!!, initialHead, newHead)
     }
   }
 }

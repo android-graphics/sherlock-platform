@@ -2,9 +2,9 @@
 // BIND_TO test.bar.fooBar
 package test
 
-import test.foo.fooBar
+import test.bar.fooBar
 
 fun Any.foo() {
-    <caret>test.bar.fooBar
+    <caret>fooBar
 }
 

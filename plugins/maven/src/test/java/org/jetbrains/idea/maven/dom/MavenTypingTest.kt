@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.dom
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
 
 class MavenTypingTest : MavenDomTestCase() {
@@ -302,22 +301,20 @@ class MavenTypingTest : MavenDomTestCase() {
                                          """.trimIndent())
   }
 
-  private suspend fun assertTypeResult(c: Char, xml: String) {
+  private fun assertTypeResult(c: Char, xml: String) {
     assertTypeResultInRegularFile(projectPom, c, createPomXml(xml))
   }
 
-  private suspend fun assertTypeResultInRegularFile(f: VirtualFile, c: Char, expected: String) {
-    val content = String(f.contentsToByteArray())
-    MavenLog.LOG.warn("Typing '$c' in file $f:\n$content")
+  private fun assertTypeResultInRegularFile(f: VirtualFile, c: Char, expected: String) {
     type(f, c)
     fixture.checkResult(expected)
   }
 
-  private suspend fun assertBackspaceResult(xml: String) {
+  private fun assertBackspaceResult(xml: String) {
     assertTypeResult('\b', xml)
   }
 
-  private suspend fun assertBackspaceResultInRegularFile(f: VirtualFile, content: String) {
+  private fun assertBackspaceResultInRegularFile(f: VirtualFile, content: String) {
     assertTypeResultInRegularFile(f, '\b', content)
   }
 }

@@ -22,7 +22,7 @@ data class CommandLineProcessorResult(val project: Project?, val future: Deferre
   val hasError: Boolean
     get() = future.isCompleted && future.getCompleted().exitCode == 1
 
-  fun showError() {
+  internal fun showError() {
     Messages.showErrorDialog(future.getCompleted().message, IdeBundle.message("dialog.title.cannot.execute.command"))
   }
 }

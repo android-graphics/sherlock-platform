@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -28,12 +29,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Alarm;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -52,12 +51,11 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
   protected static final String WHITESPACE = " \t";
 
   protected final Project myProject;
-  protected final @NotNull Editor myEditor;
+  @NotNull protected final Editor myEditor;
 
   protected final RangeMarker myLbraceMarker;
   private final CaretListener myEditorCaretListener;
 
-  @ApiStatus.Internal
   protected final @NotNull ParameterInfoControllerData myParameterInfoControllerData;
 
   protected final Alarm myAlarm = new Alarm();
@@ -86,7 +84,11 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
   }
 
   static List<ParameterInfoControllerBase> getAllControllers(@NotNull Editor editor) {
-    return ConcurrencyUtil.computeIfAbsent(editor, ALL_CONTROLLERS_KEY, () -> new CopyOnWriteArrayList<>());
+    List<ParameterInfoControllerBase> array = editor.getUserData(ALL_CONTROLLERS_KEY);
+    if (array == null) {
+      array = ((UserDataHolderEx)editor).putUserDataIfAbsent(ALL_CONTROLLERS_KEY, new CopyOnWriteArrayList<>());
+    }
+    return array;
   }
 
   public static boolean existsForEditor(@NotNull Editor editor) {
@@ -181,8 +183,8 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     myParameterInfoControllerData.getHandler().syncUpdateOnCaretMove(new MyLazyUpdateParameterInfoContext());
   }
 
-  @ApiStatus.Internal
-  protected @NotNull ParameterInfoControllerData createParameterInfoControllerData(@NotNull ParameterInfoHandler<PsiElement, Object> handler) {
+  @NotNull
+  protected ParameterInfoControllerData createParameterInfoControllerData(@NotNull ParameterInfoHandler<PsiElement, Object> handler) {
     return new ParameterInfoControllerData(handler);
   }
 
@@ -310,7 +312,8 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     return offset > rangeStart ? offset : CharArrayUtil.shiftForward(text, rangeEnd, WHITESPACE);
   }
 
-  public static @Nullable <E extends PsiElement> E findArgumentList(PsiFile file, int offset, int lbraceOffset) {
+  @Nullable
+  public static <E extends PsiElement> E findArgumentList(PsiFile file, int offset, int lbraceOffset) {
     if (file == null) return null;
     ParameterInfoHandler[] handlers = ShowParameterInfoHandler.getHandlers(file.getProject(), PsiUtilCore.getLanguageAtOffset(file, offset), file.getViewProvider().getBaseLanguage());
 
@@ -361,23 +364,21 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     throw new TimeoutException();
   }
 
-  /**
-   * @deprecated Always false
-   */
-  @Deprecated
   public static boolean areParameterTemplatesEnabledOnCompletion() {
-    return false;
+    return Registry.is("java.completion.argument.live.template") &&
+           !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
   }
 
-  public static @NotNull ParameterInfoControllerBase createParameterInfoController(@NotNull Project project,
-                                                                                   @NotNull Editor editor,
-                                                                                   int lbraceOffset,
-                                                                                   Object[] descriptors,
-                                                                                   Object highlighted,
-                                                                                   PsiElement parameterOwner,
-                                                                                   @NotNull ParameterInfoHandler handler,
-                                                                                   boolean showHint,
-                                                                                   boolean requestFocus) {
+  @NotNull
+  public static ParameterInfoControllerBase createParameterInfoController(@NotNull Project project,
+                                                                          @NotNull Editor editor,
+                                                                          int lbraceOffset,
+                                                                          Object[] descriptors,
+                                                                          Object highlighted,
+                                                                          PsiElement parameterOwner,
+                                                                          @NotNull ParameterInfoHandler handler,
+                                                                          boolean showHint,
+                                                                          boolean requestFocus) {
     for (ParameterInfoControllerProvider provider : ParameterInfoControllerProvider.EP_NAME.getExtensions()) {
       ParameterInfoControllerBase controller = provider.create(project, editor, lbraceOffset,
                                                                descriptors, highlighted, parameterOwner,
@@ -426,7 +427,8 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     }
 
     @Override
-    public @NotNull Editor getEditor() {
+    @NotNull
+    public Editor getEditor() {
       return myEditor;
     }
 

@@ -4,6 +4,7 @@ package com.intellij.platform.instanceContainer.internal
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.instanceContainer.InstanceContainer
 import com.intellij.platform.instanceContainer.InstanceNotRegisteredException
+import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineName
@@ -20,8 +21,8 @@ class InstanceContainerImpl(
 
   override fun toString(): String {
     val state = _state
-    return if (state is InstanceContainerState) {
-      "Container $containerName { registered: ${state.holders.size} }"
+    return if (state is PersistentMap<*, *>) {
+      "Container $containerName { registered: ${state.size} }"
     }
     else {
       "Container $containerName (disposed)"
@@ -91,13 +92,13 @@ class InstanceContainerImpl(
   }
 
   override fun getInstanceHolder(keyClass: Class<*>, registerDynamic: Boolean): InstanceHolder? {
-    if (!registerDynamic || dynamicInstanceSupport == null) {
-      return getInstanceHolder(keyClass)
-    }
     lateinit var holder: InstanceHolder
     updateState { state: InstanceContainerState ->
       state.getByClass(keyClass)?.let {
         return it
+      }
+      if (!registerDynamic || dynamicInstanceSupport == null) {
+        return null
       }
       val dynamicInstanceInitializer = dynamicInstanceSupport.dynamicInstanceInitializer(instanceClass = keyClass)
       if (dynamicInstanceInitializer == null) {
@@ -109,7 +110,7 @@ class InstanceContainerImpl(
       state.replaceByClass(keyClass, holder)
     }
     // the following can only execute in case `holder` was initialized and committed into `state`
-    dynamicInstanceSupport.dynamicInstanceRegistered(holder)
+    dynamicInstanceSupport!!.dynamicInstanceRegistered(holder)
     return holder
   }
 

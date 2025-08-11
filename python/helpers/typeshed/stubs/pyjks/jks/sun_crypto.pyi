@@ -1,4 +1,4 @@
-from typing import Final
+from typing_extensions import Final
 
 SUN_JKS_ALGO_ID: Final[tuple[int, ...]]
 SUN_JCE_ALGO_ID: Final[tuple[int, ...]]

@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.openapi.CompositeDisposable;
@@ -56,8 +56,8 @@ public final class TreeConflictRefreshablePanel implements Disposable {
   private final FilePath myPath;
   private final CompositeDisposable myChildDisposables = new CompositeDisposable();
   private final LongArrayList myRightRevisionsList;
-  private final @NotNull JBLoadingPanel myDetailsPanel;
-  private final @NotNull BackgroundTaskQueue myQueue;
+  @NotNull private final JBLoadingPanel myDetailsPanel;
+  @NotNull private final BackgroundTaskQueue myQueue;
   private volatile ProgressIndicator myIndicator = new EmptyProgressIndicator();
 
   public TreeConflictRefreshablePanel(@NotNull Project project, @NotNull BackgroundTaskQueue queue, @NotNull ConflictedSvnChange change) {
@@ -91,7 +91,8 @@ public final class TreeConflictRefreshablePanel implements Disposable {
     return true;
   }
 
-  public @NotNull JPanel getPanel() {
+  @NotNull
+  public JPanel getPanel() {
     return myDetailsPanel;
   }
 
@@ -125,7 +126,8 @@ public final class TreeConflictRefreshablePanel implements Disposable {
     return new BeforeAfter<>(leftSide, rightSide);
   }
 
-  private @Nullable Revision getPegRevisionFromLeftSide(@NotNull TreeConflictDescription description) {
+  @Nullable
+  private Revision getPegRevisionFromLeftSide(@NotNull TreeConflictDescription description) {
     Revision result = null;
     if (description.getSourceLeftVersion() != null) {
       long committed = description.getSourceLeftVersion().getPegRevision();
@@ -144,7 +146,8 @@ public final class TreeConflictRefreshablePanel implements Disposable {
            !Objects.equals(description.getSourceLeftVersion().getPath(), description.getSourceRightVersion().getPath());
   }
 
-  private @NotNull ConflictSidePresentation createSide(@Nullable ConflictVersion version, @Nullable Revision untilThisOther, boolean isLeft)
+  @NotNull
+  private ConflictSidePresentation createSide(@Nullable ConflictVersion version, @Nullable Revision untilThisOther, boolean isLeft)
     throws VcsException {
     ConflictSidePresentation result = EmptyConflictSide.INSTANCE;
     if (version != null &&
@@ -363,7 +366,8 @@ public final class TreeConflictRefreshablePanel implements Disposable {
     return e -> new MergeFromTheirsResolver(myVcs, description, myChange, myCommittedRevision).execute();
   }
 
-  public static @NotNull String filePath(@NotNull FilePath newFilePath) {
+  @NotNull
+  public static String filePath(@NotNull FilePath newFilePath) {
     return newFilePath.getName() + " (" + Objects.requireNonNull(newFilePath.getParentPath()).getPath() + ")";
   }
 

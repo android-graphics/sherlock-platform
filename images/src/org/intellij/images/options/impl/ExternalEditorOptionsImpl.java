@@ -67,7 +67,6 @@ final class ExternalEditorOptionsImpl implements ExternalEditorOptions, JDOMExte
     }
   }
 
-  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -81,7 +80,6 @@ final class ExternalEditorOptionsImpl implements ExternalEditorOptions, JDOMExte
            otherOptions.getExecutablePath() == null;
   }
 
-  @Override
   public int hashCode() {
     return executablePath != null ? executablePath.hashCode() : 0;
   }

@@ -43,12 +43,14 @@ public final class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspe
   public boolean ignoreCantWrap;
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "ThrowInsideCatchBlockWhichIgnoresCaughtException";
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("exception.from.catch.which.doesnt.wrap.problem.descriptor");
   }
 
@@ -77,7 +79,7 @@ public final class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspe
       if (parameter == null || parameter.isUnnamed()) {
         return;
       }
-      final @NonNls String parameterName = parameter.getName();
+      @NonNls final String parameterName = parameter.getName();
       if (PsiUtil.isIgnoredName(parameterName)) {
         return;
       }

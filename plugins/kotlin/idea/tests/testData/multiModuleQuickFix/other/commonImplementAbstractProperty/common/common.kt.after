@@ -1,8 +1,0 @@
-// "Implement abstract property" "true"
-interface IFoo {
-    val a: Int
-}
-
-expect class End : IFoo {
-    override val a: Int<selection><caret></selection>
-}

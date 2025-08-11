@@ -7,8 +7,6 @@
 // ACTION: Put arguments on separate lines
 // ERROR: Destructuring declaration initializer of type Foo must have a 'component1()' function
 // ERROR: Destructuring declaration initializer of type Foo must have a 'component2()' function
-// K2_AFTER_ERROR: Destructuring of type 'Foo' requires operator function 'component1()'.
-// K2_AFTER_ERROR: Destructuring of type 'Foo' requires operator function 'component2()'.
 class Foo(private val bar: String, var baz: Int)
 
 fun test() {

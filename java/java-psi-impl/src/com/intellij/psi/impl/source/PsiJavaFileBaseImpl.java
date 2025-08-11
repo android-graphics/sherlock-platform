@@ -13,13 +13,11 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.PsiClassImplUtil;
-import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
@@ -42,7 +40,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -305,7 +302,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     if (iterable != null && !ContainerUtil.process(iterable, new MyResolveCacheProcessor(state, processor))) return false;
 
     if (processor instanceof ClassResolverProcessor &&
-        (PsiFileEx.isBatchReferenceProcessingEnabled(this) || myResolveCache.hasUpToDateValue()) &&
+        (getUserData(BATCH_REFERENCE_PROCESSING) == Boolean.TRUE || myResolveCache.hasUpToDateValue()) &&
         !PsiUtil.isInsideJavadocComment(place)) {
       MostlySingularMultiMap<String, ResultWithContext> cache = myResolveCache.getValue();
       MyResolveCacheProcessor cacheProcessor = new MyResolveCacheProcessor(state, processor);
@@ -468,10 +465,6 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     for (PsiJavaCodeReferenceElement aImplicitlyImported : getImplicitlyImportedPackageReferences()) {
       PsiElement resolved = aImplicitlyImported.resolve();
       if (resolved != null) {
-        if (resolved instanceof PsiPackage && "java.lang".equals(((PsiPackage)resolved).getQualifiedName())) {
-          LanguageLevel level = PsiUtil.getLanguageLevel(place);
-          processor = new JavaLangClassesFilter(processor, level);
-        }
         if (!processOnDemandTarget(resolved, state, place, processor)) return false;
       }
     }
@@ -593,7 +586,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     clearCaches();
   }
 
-  private @NotNull @Unmodifiable List<PsiImportStatementBase> getImplicitImports() {
+  @NotNull
+  private List<PsiImportStatementBase> getImplicitImports() {
     return ContainerUtil.map(getImplicitlyImportedElements(), element -> element.createImportStatement());
   }
 
@@ -685,38 +679,6 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       }
 
       return myProcessor.execute(element, myState);
-    }
-  }
-
-  private static class JavaLangClassesFilter extends DelegatingScopeProcessor {
-    private static final Map<String, LanguageLevel> ourJavaLangClassFeatures = new HashMap<>();
-
-    static {
-      // Only classes appeared in java.lang since Java 9 are listed here
-      // As --release option works since Java 9
-      ourJavaLangClassFeatures.put("MatchException", JavaFeature.PATTERNS_IN_SWITCH.getMinimumLevel());
-      ourJavaLangClassFeatures.put("Module", JavaFeature.MODULES.getMinimumLevel());
-      ourJavaLangClassFeatures.put("ModuleLayer", JavaFeature.MODULES.getMinimumLevel());
-      ourJavaLangClassFeatures.put("ProcessHandle", LanguageLevel.JDK_1_9);
-      ourJavaLangClassFeatures.put("Record", JavaFeature.RECORDS.getMinimumLevel());
-      ourJavaLangClassFeatures.put("ScopedValue", JavaFeature.SCOPED_VALUES.getMinimumLevel());
-      ourJavaLangClassFeatures.put("WrongThreadException", LanguageLevel.JDK_19);
-    }
- 
-    private final LanguageLevel myLevel;
-
-    JavaLangClassesFilter(@NotNull PsiScopeProcessor processor, LanguageLevel level) {
-      super(processor);
-      myLevel = level;
-    }
-
-    @Override
-    public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-      if (element instanceof PsiClass) {
-        LanguageLevel classMinLevel = ourJavaLangClassFeatures.get(((PsiClass)element).getName());
-        if (classMinLevel != null && myLevel.isLessThan(classMinLevel)) return true;
-      }
-      return super.execute(element, state);
     }
   }
 }

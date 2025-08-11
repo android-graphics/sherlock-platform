@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.project.Project;
@@ -9,11 +9,9 @@ import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
 public class MockAbstractVcs extends AbstractVcs {
   private static final String NAME = "mock"; // NON-NLS
   private static final VcsKey ourKey = createKey(NAME);
@@ -48,7 +46,8 @@ public class MockAbstractVcs extends AbstractVcs {
   }
 
   @Override
-  public @NotNull String getDisplayName() {
+  @NotNull
+  public String getDisplayName() {
     return getName(); //NON-NLS
   }
 
@@ -71,7 +70,8 @@ public class MockAbstractVcs extends AbstractVcs {
   }
 
   @Override
-  public @Nullable VcsRevisionNumber parseRevisionNumber(final String revisionNumberString) {
+  @Nullable
+  public VcsRevisionNumber parseRevisionNumber(final String revisionNumberString) {
     return new VcsRevisionNumber.Int(Integer.parseInt(revisionNumberString));
   }
 

@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.EDT;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +15,6 @@ import java.util.function.Function;
 /**
  * Use to assert that no AWT events are pumped during some activity (e.g., action update, write operations, etc.)
  */
-@ApiStatus.Internal
 public final class ProhibitAWTEvents implements IdeEventQueue.EventDispatcher {
   private static final Logger LOG = Logger.getInstance(ProhibitAWTEvents.class);
 

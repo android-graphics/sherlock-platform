@@ -1,16 +1,16 @@
 import sys
 from multiprocessing.process import BaseProcess
-from typing import ClassVar, Final
+from typing import ClassVar
 
 from .util import Finalize
 
 if sys.platform == "win32":
     __all__ = ["Popen"]
 
-    TERMINATE: Final[int]
-    WINEXE: Final[bool]
-    WINSERVICE: Final[bool]
-    WINENV: Final[bool]
+    TERMINATE: int
+    WINEXE: bool
+    WINSERVICE: bool
+    WINENV: bool
 
     class Popen:
         finalizer: Finalize

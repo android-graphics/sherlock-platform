@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.lang.Language;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public class DefaultCodeStyleSettingsFacade implements CodeStyleSettingsFacade {
   private final @NotNull CodeStyleSettings mySettings;
   private @Nullable Language myLanguage;
-  private final @Nullable FileType myFileType;
+  private @Nullable final FileType myFileType;
 
   public DefaultCodeStyleSettingsFacade(@NotNull CodeStyleSettings settings, @Nullable FileType fileType) {
     mySettings = settings;
@@ -27,11 +27,13 @@ public class DefaultCodeStyleSettingsFacade implements CodeStyleSettingsFacade {
     return this;
   }
 
-  private @NotNull CommonCodeStyleSettings.IndentOptions getIndentOptions() {
+  @NotNull
+  private CommonCodeStyleSettings.IndentOptions getIndentOptions() {
     return myFileType != null ? mySettings.getIndentOptions(myFileType) : mySettings.getIndentOptions();
   }
 
-  private @NotNull CommonCodeStyleSettings getCommonSettings() {
+  @NotNull
+  private CommonCodeStyleSettings getCommonSettings() {
     return mySettings.getCommonSettings(myLanguage);
   }
 

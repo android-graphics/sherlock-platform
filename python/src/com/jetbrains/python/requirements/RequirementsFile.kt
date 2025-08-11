@@ -40,6 +40,18 @@ class RequirementsFile(viewProvider: FileViewProvider) : PsiFileBase(viewProvide
       return getPythonSdk(this)
     }
 
+  fun enabledRequirements(): List<Requirement> {
+    val sdk = sdk ?: return emptyList()
+    return requirements().filter {
+      it.enabled(getPythonInfo(sdk).map)
+    }
+  }
+
+  fun disabledRequirements(): List<Requirement> {
+    val sdk = sdk ?: return requirements()
+    return requirements().filter { !it.enabled(getPythonInfo(sdk).map) }
+  }
+
   override fun toString(): String {
     return "Requirements File"
   }

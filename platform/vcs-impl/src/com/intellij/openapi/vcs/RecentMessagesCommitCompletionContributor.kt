@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
 import com.intellij.codeInsight.completion.*
@@ -9,12 +8,12 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider
 import one.util.streamex.StreamEx
 
-internal class RecentMessagesCommitCompletionContributor : CompletionContributor(), DumbAware {
+class RecentMessagesCommitCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val file = parameters.originalFile
     val project = file.project
     val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
-    if (!CommitMessage.isCommitMessage(document)) return
+    if (document.getUserData(CommitMessage.DATA_KEY) == null) return
     if (parameters.invocationCount == 0) return
 
     result.caseInsensitive()

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -82,15 +82,16 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
     });
   }
 
+  @NotNull
   @Override
-  public synchronized @NotNull List<? extends AbstractTreeNode<?>> getChildren() {
+  public synchronized List<? extends AbstractTreeNode<?>> getChildren() {
     if (myCachedChildren != null) return myCachedChildren;
     return myCachedChildren = myBundle.getCoverageEngine().createCoverageViewExtension(myProject, myBundle)
       .getChildrenNodes(this);
   }
 
   @Override
-  protected void update(final @NotNull PresentationData presentation) {
+  protected void update(@NotNull final PresentationData presentation) {
     ApplicationManager.getApplication().runReadAction(() -> {
       final Object object = getValue();
       if (object instanceof PsiNamedElement value) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.application.ReadAction;
@@ -64,7 +64,8 @@ public class CurrentRevision implements VcsFileRevision {
   }
 
   @Override
-  public @NotNull VcsRevisionNumber getRevisionNumber() {
+  @NotNull
+  public VcsRevisionNumber getRevisionNumber() {
     return myRevisionNumber;
   }
 
@@ -73,8 +74,9 @@ public class CurrentRevision implements VcsFileRevision {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable RepositoryLocation getChangedRepositoryPath() {
+  public RepositoryLocation getChangedRepositoryPath() {
     return null;  // use initial url..
   }
 

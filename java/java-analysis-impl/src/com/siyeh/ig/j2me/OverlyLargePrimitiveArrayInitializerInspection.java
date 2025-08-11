@@ -39,7 +39,8 @@ public final class OverlyLargePrimitiveArrayInitializerInspection
   public int m_limit = 64;
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final Integer numElements = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "large.initializer.primitive.type.array.problem.descriptor",

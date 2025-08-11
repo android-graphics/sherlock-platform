@@ -214,7 +214,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private void assertDoesNotResolve(String fileText) {
-    assertEquals(FileLocalResolver.LightResolveResult.NON_LOCAL, configureAndResolve(fileText));
+    assertEquals(configureAndResolve(fileText), FileLocalResolver.LightResolveResult.NON_LOCAL);
   }
 
   private void assertResolves(String fileText) {

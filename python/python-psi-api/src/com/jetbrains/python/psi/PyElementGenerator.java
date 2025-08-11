@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
@@ -52,12 +52,11 @@ public abstract class PyElementGenerator extends PyAstElementGenerator {
 
   public abstract PyBinaryExpression createBinaryExpression(String s, PyExpression expr, PyExpression listLiteral);
 
-  @Override
-  public @NotNull PyExpression createExpressionFromText(@NotNull LanguageLevel languageLevel, @NotNull String text) throws IncorrectOperationException {
-    return (PyExpression)super.createExpressionFromText(languageLevel, text);
-  }
+  @NotNull
+  public abstract PyExpression createExpressionFromText(@NotNull LanguageLevel languageLevel, @NotNull String text) throws IncorrectOperationException;
 
-  public abstract @NotNull PyPattern createPatternFromText(@NotNull LanguageLevel languageLevel, @NotNull String text) throws IncorrectOperationException;
+  @NotNull
+  public abstract PyPattern createPatternFromText(@NotNull LanguageLevel languageLevel, @NotNull String text) throws IncorrectOperationException;
 
   /**
    * Adds elements to list inserting required commas.
@@ -68,7 +67,8 @@ public abstract class PyElementGenerator extends PyAstElementGenerator {
    * @param toInsert  what to insert
    * @return newly inserted element
    */
-  public abstract @NotNull PsiElement insertItemIntoListRemoveRedundantCommas(
+  @NotNull
+  public abstract PsiElement insertItemIntoListRemoveRedundantCommas(
     @NotNull PyElement list,
     @Nullable PyExpression afterThis,
     @NotNull PyExpression toInsert);
@@ -76,7 +76,8 @@ public abstract class PyElementGenerator extends PyAstElementGenerator {
   public abstract PsiElement insertItemIntoList(PyElement list, @Nullable PyExpression afterThis, PyExpression toInsert)
     throws IncorrectOperationException;
 
-  public abstract @NotNull PyCallExpression createCallExpression(final LanguageLevel langLevel, String functionName);
+  @NotNull
+  public abstract PyCallExpression createCallExpression(final LanguageLevel langLevel, String functionName);
 
   public abstract PyImportElement createImportElement(@NotNull LanguageLevel languageLevel, @NotNull String name, @Nullable String alias);
 
@@ -93,12 +94,14 @@ public abstract class PyElementGenerator extends PyAstElementGenerator {
   /**
    * @param text parameters list already in parentheses, e.g. {@code (foo, *args, **kwargs)}.
    */
-  public abstract @NotNull PyParameterList createParameterList(@NotNull LanguageLevel languageLevel, @NotNull String text);
+  @NotNull
+  public abstract PyParameterList createParameterList(@NotNull LanguageLevel languageLevel, @NotNull String text);
 
   /**
    * @param text argument list already in parentheses, e.g. {@code (1, 2, *xs)}.
    */
-  public abstract @NotNull PyArgumentList createArgumentList(@NotNull LanguageLevel languageLevel, @NotNull String text);
+  @NotNull
+  public abstract PyArgumentList createArgumentList(@NotNull LanguageLevel languageLevel, @NotNull String text);
 
   public abstract PyKeywordArgument createKeywordArgument(LanguageLevel languageLevel, String keyword, String value);
 
@@ -109,12 +112,14 @@ public abstract class PyElementGenerator extends PyAstElementGenerator {
 
   public abstract PyPassStatement createPassStatement();
 
-  public abstract @NotNull PyDecoratorList createDecoratorList(final String @NotNull ... decoratorTexts);
+  @NotNull
+  public abstract PyDecoratorList createDecoratorList(final String @NotNull ... decoratorTexts);
 
   /**
    * Creates new line whitespace
    */
-  public abstract @NotNull PsiElement createNewLine();
+  @NotNull
+  public abstract PsiElement createNewLine();
 
   /**
    * Creates import statement of form {@code from qualifier import name as alias}.
@@ -125,7 +130,8 @@ public abstract class PyElementGenerator extends PyAstElementGenerator {
    * @param alias         optional alias for {@code as alias} part
    * @return created {@link PyFromImportStatement}
    */
-  public abstract @NotNull PyFromImportStatement createFromImportStatement(@NotNull LanguageLevel languageLevel,
+  @NotNull
+  public abstract PyFromImportStatement createFromImportStatement(@NotNull LanguageLevel languageLevel,
                                                                   @NotNull String qualifier,
                                                                   @NotNull String name,
                                                                   @Nullable String alias);
@@ -138,13 +144,14 @@ public abstract class PyElementGenerator extends PyAstElementGenerator {
    * @param alias         optional alias for {@code as alias} part
    * @return created {@link PyImportStatement}
    */
-  public abstract @NotNull PyImportStatement createImportStatement(@NotNull LanguageLevel languageLevel,
+  @NotNull
+  public abstract PyImportStatement createImportStatement(@NotNull LanguageLevel languageLevel,
                                                           @NotNull String name,
                                                           @Nullable String alias);
 
-  public abstract @NotNull PyNoneLiteralExpression createEllipsis();
+  @NotNull
+  public abstract PyNoneLiteralExpression createEllipsis();
 
-  public abstract @NotNull PySingleStarParameter createSingleStarParameter();
-
-  public abstract @NotNull PySlashParameter createSlashParameter();
+  @NotNull
+  public abstract PySingleStarParameter createSingleStarParameter();
 }

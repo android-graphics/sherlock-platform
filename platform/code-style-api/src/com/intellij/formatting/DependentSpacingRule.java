@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
@@ -25,13 +25,14 @@ public final class DependentSpacingRule {
 
   private final ObjectIntMap<Anchor> myData = new ObjectIntHashMap<>();
 
-  private final @NotNull Trigger myTrigger;
+  @NotNull private final Trigger myTrigger;
 
   public DependentSpacingRule(@NotNull Trigger trigger) {
     myTrigger = trigger;
   }
 
-  public @NotNull Trigger getTrigger() {
+  @NotNull
+  public Trigger getTrigger() {
     return myTrigger;
   }
 

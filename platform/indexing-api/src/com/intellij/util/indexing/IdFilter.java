@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,17 +59,21 @@ public abstract class IdFilter {
       }
     };
 
-    public abstract @NonNls @NotNull String getId();
+    @NonNls
+    @NotNull
+    public abstract String getId();
   }
 
-  public static @NotNull IdFilter getProjectIdFilter(@NotNull Project project, final boolean includeNonProjectItems) {
+  @NotNull
+  public static IdFilter getProjectIdFilter(@NotNull Project project, final boolean includeNonProjectItems) {
     Key<CachedValue<IdFilter>> key = includeNonProjectItems ? OUTSIDE_PROJECT : INSIDE_PROJECT;
     CachedValueProvider<IdFilter> provider = () -> CachedValueProvider.Result.create(buildProjectIdFilter(project, includeNonProjectItems),
               ProjectRootManager.getInstance(project), VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
     return CachedValuesManager.getManager(project).getCachedValue(project, key, provider, false);
   }
 
-  private static @NotNull IdFilter buildProjectIdFilter(@NotNull Project project, boolean includeNonProjectItems) {
+  @NotNull
+  private static IdFilter buildProjectIdFilter(@NotNull Project project, boolean includeNonProjectItems) {
     long started = System.currentTimeMillis();
     final BitSet idSet = new BitSet();
 
@@ -83,8 +101,9 @@ public abstract class IdFilter {
         return id >= 0 && idSet.get(id);
       }
 
+      @NotNull
       @Override
-      public @NotNull FilterScopeType getFilteringScopeType() {
+      public FilterScopeType getFilteringScopeType() {
         return includeNonProjectItems ? FilterScopeType.PROJECT_AND_LIBRARIES : FilterScopeType.PROJECT;
       }
     };
@@ -93,7 +112,8 @@ public abstract class IdFilter {
   public abstract boolean containsFileId(int id);
 
   @Internal
-  public @NotNull FilterScopeType getFilteringScopeType() {
+  @NotNull
+  public FilterScopeType getFilteringScopeType() {
     return FilterScopeType.OTHER;
   }
 }

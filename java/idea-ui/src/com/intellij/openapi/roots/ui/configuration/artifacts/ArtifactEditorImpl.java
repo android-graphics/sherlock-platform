@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -57,8 +58,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class ArtifactEditorImpl implements ArtifactEditorEx {
-  private JPanel myPanel;
+public class ArtifactEditorImpl implements ArtifactEditorEx, UiDataProvider {
+  private JPanel myMainPanel;
   private JCheckBox myBuildOnMakeCheckBox;
   private TextFieldWithBrowseButton myOutputDirectoryField;
   private JPanel myEditorPanel;
@@ -79,8 +80,6 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private final ArtifactValidationManagerImpl myValidationManager;
   private boolean myDisposed;
 
-  private final JComponent myMainComponent;
-
   public ArtifactEditorImpl(final @NotNull ArtifactsStructureConfigurableContext context, @NotNull Artifact artifact, @NotNull ArtifactEditorSettings settings) {
     myContext = createArtifactEditorContext(context);
     myOriginalArtifact = artifact;
@@ -95,9 +94,10 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myTopPanel.setBorder(JBUI.Borders.empty(0, 10));
     myBuildOnMakeCheckBox.setSelected(artifact.isBuildOnMake());
     final String outputPath = artifact.getOutputPath();
-    myOutputDirectoryField.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
-      .withTitle(JavaCompilerBundle.message("dialog.title.output.directory.for.artifact"))
-      .withDescription(JavaCompilerBundle.message("chooser.description.select.output.directory.for.0.artifact", getArtifact().getName())));
+    myOutputDirectoryField.addBrowseFolderListener(JavaCompilerBundle.message("dialog.title.output.directory.for.artifact"),
+                                                   JavaCompilerBundle.message("chooser.description.select.output.directory.for.0.artifact",
+                                                                              getArtifact().getName()), myProject,
+                                                   FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myOutputDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
@@ -111,9 +111,6 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
       public void actionPerformed(ActionEvent e) {
         ActionManager.getInstance().createActionPopupMenu("ArtifactEditor", myShowSpecificContentOptionsGroup).getComponent().show(myShowSpecificContentOptionsButton, 0, 0);
       }
-    });
-    myMainComponent = UiDataProvider.wrapComponent(myPanel, sink -> {
-      sink.set(ARTIFACTS_EDITOR_KEY, this);
     });
     setOutputPath(outputPath);
     updateShowContentCheckbox();
@@ -143,9 +140,10 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myLayoutTreeComponent.saveElementProperties();
   }
 
-  private @Nullable String getConfiguredOutputPath() {
+  @Nullable
+  private String getConfiguredOutputPath() {
     String outputPath = FileUtil.toSystemIndependentName(myOutputDirectoryField.getText().trim());
-    if (outputPath.isEmpty()) {
+    if (outputPath.length() == 0) {
       outputPath = null;
     }
     return outputPath;
@@ -155,7 +153,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return mySourceItemsTree;
   }
 
-  public void addListener(final @NotNull ArtifactEditorListener listener) {
+  public void addListener(@NotNull final ArtifactEditorListener listener) {
     myDispatcher.addListener(listener);
   }
 
@@ -164,7 +162,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return myContext;
   }
 
-  public void removeListener(final @NotNull ArtifactEditorListener listener) {
+  public void removeListener(@NotNull final ArtifactEditorListener listener) {
     myDispatcher.removeListener(listener);
   }
 
@@ -191,6 +189,8 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   public JComponent createMainComponent() {
     myLayoutTreeComponent.initTree();
+    DataManager.registerDataProvider(myMainPanel, (EdtNoGetDataProvider)this::uiDataSnapshot);
+
     myErrorPanelPlace.add(myValidationManager.getMainErrorPanel(), BorderLayout.CENTER);
 
     final JBSplitter splitter = new OnePixelSplitter(false);
@@ -386,7 +386,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   @Override
   public JComponent getMainComponent() {
-    return myMainComponent;
+    return myMainPanel;
   }
 
   @Override
@@ -401,14 +401,14 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   @Override
-  public void removePackagingElement(final @NotNull String pathToParent, final @NotNull PackagingElement<?> element) {
+  public void removePackagingElement(@NotNull final String pathToParent, @NotNull final PackagingElement<?> element) {
     doReplaceElement(pathToParent, element, null);
   }
 
   @Override
-  public void replacePackagingElement(final @NotNull String pathToParent,
-                                      final @NotNull PackagingElement<?> element,
-                                      final @NotNull PackagingElement<?> replacement) {
+  public void replacePackagingElement(@NotNull final String pathToParent,
+                                      @NotNull final PackagingElement<?> element,
+                                      @NotNull final PackagingElement<?> replacement) {
     doReplaceElement(pathToParent, element, replacement);
   }
 
@@ -429,7 +429,8 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myLayoutTreeComponent.rebuildTree();
   }
 
-  private @Nullable CompositePackagingElement<?> findCompositeElementByPath(String pathToElement) {
+  @Nullable
+  private CompositePackagingElement<?> findCompositeElementByPath(String pathToElement) {
     CompositePackagingElement<?> element = getRootElement();
     for (String name : StringUtil.split(pathToElement, "/")) {
       element = element.findCompositeChild(name);
@@ -461,7 +462,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return myLayoutTreeComponent;
   }
 
-  public void updateOutputPath(@NotNull String oldArtifactName, final @NotNull String newArtifactName) {
+  public void updateOutputPath(@NotNull String oldArtifactName, @NotNull final String newArtifactName) {
     final String oldDefaultPath = ArtifactUtil.getDefaultArtifactOutputPath(oldArtifactName, myProject);
     if (Objects.equals(oldDefaultPath, getConfiguredOutputPath())) {
       setOutputPath(ArtifactUtil.getDefaultArtifactOutputPath(newArtifactName, myProject));
@@ -472,7 +473,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
       final String name = ((ArchivePackagingElement)root).getArchiveFileName();
       final String fileName = FileUtilRt.getNameWithoutExtension(name);
       final String extension = FileUtilRt.getExtension(name);
-      if (fileName.equals(oldFileName) && !extension.isEmpty()) {
+      if (fileName.equals(oldFileName) && extension.length() > 0) {
         myLayoutTreeComponent.editLayout(
           () -> ((ArchivePackagingElement)getRootElement()).setArchiveFileName(ArtifactUtil.suggestArtifactFileName(newArtifactName) + "." + extension));
         myLayoutTreeComponent.updateRootNode();
@@ -547,4 +548,10 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     String helpId = myPropertiesEditors.getHelpId(myTabbedPane.getSelectedTitle());
     return helpId != null ? helpId : "reference.settingsdialog.project.structure.artifacts";
   }
+
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(ARTIFACTS_EDITOR_KEY, this);
+  }
+
 }

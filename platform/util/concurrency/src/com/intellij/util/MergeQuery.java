@@ -22,8 +22,9 @@ public final class MergeQuery<T> extends AbstractQuery<T>{
     return delegateProcessResults(myQuery1, consumer) && delegateProcessResults(myQuery2, consumer);
   }
 
+  @NotNull
   @Override
-  public @NotNull AsyncFuture<Boolean> forEachAsync(final @NotNull Processor<? super T> consumer) {
+  public AsyncFuture<Boolean> forEachAsync(@NotNull final Processor<? super T> consumer) {
     final AsyncFutureResult<Boolean> result = AsyncFutureFactory.getInstance().createAsyncFutureResult();
 
     AsyncFuture<Boolean> fq = myQuery1.forEachAsync(consumer);

@@ -1,5 +1,5 @@
 // "Add parameter to function 'foo'" "true"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 
 fun foo(x: Int, i: Int) {
     foo();

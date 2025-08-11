@@ -12,7 +12,6 @@ class ChangeSignatureQuickFixesRegistrar: KotlinQuickFixRegistrar() {
         registerFactory(ChangeSignatureFixFactory.removeParameterFactory)
         registerFactory(ChangeSignatureFixFactory.typeMismatchFactory)
         registerFactory(ChangeSignatureFixFactory.nullForNotNullFactory)
-        registerFactory(ReorderParametersFixFactory.unInitializedParameter)
         registerFactory(ChangeParameterTypeFixFactory.typeMismatchFactory)
         registerFactory(ChangeParameterTypeFixFactory.nullForNotNullTypeFactory)
     }

@@ -122,7 +122,8 @@ public final class DefinitionResolver extends CommonElement.Visitor implements
     }
   }
 
-  public static @Nullable Set<Define> resolve(Grammar scope, final String value) {
+  @Nullable
+  public static Set<Define> resolve(Grammar scope, final String value) {
     final Map<String, Set<Define>> map = getAllVariants(scope);
     if (map == null) {
       return null;
@@ -131,7 +132,7 @@ public final class DefinitionResolver extends CommonElement.Visitor implements
     final Set<Define> set = map.get(value);
 
     // actually we should always do this, but I'm a bit afraid of the performance impact
-    if (set == null || set.isEmpty()) {
+    if (set == null || set.size() == 0) {
       final PsiElement element = scope.getPsiElement();
       if (element != null) {
         final PsiFile file = element.getContainingFile();
@@ -146,7 +147,8 @@ public final class DefinitionResolver extends CommonElement.Visitor implements
     return set;
   }
 
-  public static @Nullable Map<String, Set<Define>> getAllVariants(Grammar scope) {
+  @Nullable
+  public static Map<String, Set<Define>> getAllVariants(Grammar scope) {
     final PsiElement psiElement = scope.getPsiElement();
     if (psiElement == null || !psiElement.isValid()) return null;
 
@@ -205,7 +207,8 @@ public final class DefinitionResolver extends CommonElement.Visitor implements
       return myResult == null;
     }
 
-    public @Nullable Set<Define> getResult() {
+    @Nullable
+    public Set<Define> getResult() {
       return myResult != null ? Collections.singleton(myResult) : null;
     }
   }

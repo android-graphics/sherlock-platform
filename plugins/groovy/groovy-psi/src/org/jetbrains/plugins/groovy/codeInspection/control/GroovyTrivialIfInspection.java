@@ -43,8 +43,9 @@ import static org.jetbrains.plugins.groovy.codeInspection.GroovyFix.replaceState
 
 public final class GroovyTrivialIfInspection extends BaseInspection {
 
+  @NotNull
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new TrivialIfVisitor();
   }
 
@@ -60,7 +61,8 @@ public final class GroovyTrivialIfInspection extends BaseInspection {
 
   private static class TrivialIfFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return GroovyBundle.message("intention.family.name.simplify");
     }
 
@@ -93,7 +95,7 @@ public final class GroovyTrivialIfInspection extends BaseInspection {
       final String conditionText = condition.getText();
       final PsiElement nextStatement =
         PsiTreeUtil.skipWhitespacesForward(statement);
-      final @NonNls String newStatement = "return " + conditionText + ';';
+      @NonNls final String newStatement = "return " + conditionText + ';';
       replaceStatement(statement, newStatement);
       assert nextStatement != null;
       nextStatement.delete();
@@ -103,7 +105,7 @@ public final class GroovyTrivialIfInspection extends BaseInspection {
         throws IncorrectOperationException {
       final GrCondition condition = statement.getCondition();
       final String conditionText = condition.getText();
-      final @NonNls String newStatement = "return " + conditionText + ';';
+      @NonNls final String newStatement = "return " + conditionText + ';';
       replaceStatement(statement, newStatement);
     }
 
@@ -181,7 +183,7 @@ public final class GroovyTrivialIfInspection extends BaseInspection {
       if (nextStatement == null) {
         return;
       }
-      final @NonNls String newStatement = "return " + conditionText + ';';
+      @NonNls final String newStatement = "return " + conditionText + ';';
       replaceStatement(statement, newStatement);
       nextStatement.delete();
     }
@@ -194,7 +196,7 @@ public final class GroovyTrivialIfInspection extends BaseInspection {
       }
       final String conditionText =
           BoolUtils.getNegatedExpressionText(condition);
-      final @NonNls String newStatement = "return " + conditionText + ';';
+      @NonNls final String newStatement = "return " + conditionText + ';';
       replaceStatement(statement, newStatement);
     }
 
@@ -438,7 +440,8 @@ public final class GroovyTrivialIfInspection extends BaseInspection {
     }
   }
 
-  private static @NonNls String getTextForOperator(IElementType operator) {
+  @NonNls
+  private static String getTextForOperator(IElementType operator) {
     if (operator.equals(GroovyTokenTypes.mASSIGN)) {
       return "=";
     }

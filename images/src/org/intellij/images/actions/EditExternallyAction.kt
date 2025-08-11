@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -78,7 +79,7 @@ internal class EditExternallyAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
     val enabled = file != null && ImageFileTypeManager.getInstance().isImage(file)
-    if (e.isFromContextMenu) {
+    if (ActionPlaces.isPopupPlace(e.place)) {
       e.presentation.isVisible = enabled
     }
 

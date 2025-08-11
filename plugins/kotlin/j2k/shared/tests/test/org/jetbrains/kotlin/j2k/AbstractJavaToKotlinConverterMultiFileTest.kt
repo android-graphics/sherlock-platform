@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -29,7 +28,7 @@ abstract class AbstractJavaToKotlinConverterMultiFileTest : AbstractJavaToKotlin
         val filesToConvert = directory.listFiles { _, name -> name.endsWith(".java") }!!.sortedBy { it.name }
         val firstFile = filesToConvert.first()
 
-        IgnoreTests.runTestIfNotDisabledByFileDirective(firstFile.toPath(), getDisableTestDirective(pluginMode)) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(firstFile.toPath(), getDisableTestDirective()) {
             withCustomCompilerOptions(firstFile.readText(), project, module) {
                 doTest(directory, filesToConvert)
             }
@@ -58,12 +57,7 @@ abstract class AbstractJavaToKotlinConverterMultiFileTest : AbstractJavaToKotlin
             psiFile
         }
 
-        var filesResult: FilesResult? = null
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            { filesResult = convertFilesToKotlin(psiFilesToConvert) }, "", true, project
-        )
-
-        val (results, externalCodeProcessor) = filesResult!!
+        val (results, externalCodeProcessor) = convertFilesToKotlin(psiFilesToConvert)
         val externalUsagesFixerProcess = externalCodeProcessor?.prepareWriteOperation(progress = null)
 
         fun expectedResultFile(i: Int) = File(filesToConvert[i].path.replace(".java", ".kt"))
@@ -90,14 +84,15 @@ abstract class AbstractJavaToKotlinConverterMultiFileTest : AbstractJavaToKotlin
 
         for ((i, kotlinFile) in resultFiles.withIndex()) {
             val expectedFile = expectedResultFile(i)
-            val actualText = kotlinFile.getFileTextWithErrors(pluginMode)
-            KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
+            val actualText = kotlinFile.getFileTextWithErrors()
+            val actualTextWithoutRedundantImports = removeRedundantImports(actualText)
+            KotlinTestUtils.assertEqualsToFile(expectedFile, actualTextWithoutRedundantImports)
         }
 
         for ((externalFile, externalPsiFile) in externalFiles.zip(externalPsiFiles)) {
             val expectedFile = File(externalFile.path + ".expected")
             val resultText = when (externalPsiFile) {
-                is KtFile -> externalPsiFile.getFileTextWithErrors(pluginMode)
+                is KtFile -> externalPsiFile.getFileTextWithErrors()
                 else -> externalPsiFile.text
             }
             KotlinTestUtils.assertEqualsToFile(expectedFile, resultText)

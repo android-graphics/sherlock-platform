@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.*;
@@ -99,8 +99,8 @@ import static com.intellij.util.ui.UIUtil.*;
 public final class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildConsoleView, Filterable<ExecutionNode>, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance(BuildTreeConsoleView.class);
 
-  private static final @NonNls String TREE = "tree";
-  private static final @NonNls String SPLITTER_PROPERTY = "BuildView.Splitter.Proportion";
+  @NonNls private static final String TREE = "tree";
+  @NonNls private static final String SPLITTER_PROPERTY = "BuildView.Splitter.Proportion";
   private final JPanel myPanel = new JPanel();
   private final Map<Object, ExecutionNode> nodesMap = new ConcurrentHashMap<>();
 
@@ -124,7 +124,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
   /**
    * @deprecated BuildViewSettingsProvider is not used anymore.
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public BuildTreeConsoleView(@NotNull Project project,
                               @NotNull BuildDescriptor buildDescriptor,
                               @Nullable ExecutionConsole executionConsole,
@@ -481,11 +481,12 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     }
   }
 
-  private @NotNull ExecutionNode addAsPresentableEventNode(@NotNull PresentableBuildEvent event,
-                                                           @NotNull Set<? super ExecutionNode> structureChanged,
-                                                           @Nullable ExecutionNode parentNode,
-                                                           @NotNull Object eventId,
-                                                           @NotNull ExecutionNode buildProgressRootNode) {
+  @NotNull
+  private ExecutionNode addAsPresentableEventNode(@NotNull PresentableBuildEvent event,
+                                                  @NotNull Set<? super ExecutionNode> structureChanged,
+                                                  @Nullable ExecutionNode parentNode,
+                                                  @NotNull Object eventId,
+                                                  @NotNull ExecutionNode buildProgressRootNode) {
     ExecutionNode executionNode = new ExecutionNode(myProject, parentNode, parentNode == buildProgressRootNode, this::isCorrectThread);
     BuildEventPresentationData presentationData = event.getPresentationData();
     executionNode.applyFrom(presentationData);
@@ -998,7 +999,8 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
       invokeLaterIfNeeded(() -> myToolbar.updateActionsImmediately());
     }
 
-    private @NotNull DefaultActionGroup createDefaultTextConsoleToolbar() {
+    @NotNull
+    private DefaultActionGroup createDefaultTextConsoleToolbar() {
       DefaultActionGroup textConsoleToolbarActionGroup = new DefaultActionGroup();
       textConsoleToolbarActionGroup.add(new ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
         @Override
@@ -1276,8 +1278,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     }
   }
 
-  @ApiStatus.Internal
-  public final class MyTreeStructure extends AbstractTreeStructure {
+  private final class MyTreeStructure extends AbstractTreeStructure {
     @Override
     public @NotNull Object getRootElement() {
       return myRootNode;

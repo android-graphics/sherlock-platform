@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -33,13 +33,15 @@ public interface SearchEverywhereClassifier {
       return false;
     }
 
-    public static @Nullable VirtualFile getVirtualFile(@NotNull Object o) {
+    @Nullable
+    public static VirtualFile getVirtualFile(@NotNull Object o) {
       return EP_NAME.getExtensionList().stream()
         .map(classifier -> classifier.getVirtualFile(o))
         .filter(Objects::nonNull).findFirst().orElse(null);
     }
 
-    public static @Nullable Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    @Nullable
+    public static Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       return EP_NAME.getExtensionList().stream()
         .map(classifier -> classifier.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)).filter(Objects::nonNull)
         .findFirst().orElse(null);
@@ -49,8 +51,9 @@ public interface SearchEverywhereClassifier {
      * @deprecated This method is deprecated and will be removed in a future version.
      * Use GlobalSearchScope.projectScope(project) to retrieve the project scope instead.
      */
+    @Nullable
     @Deprecated(forRemoval = true)
-    public static @Nullable GlobalSearchScope getProjectScope(@NotNull Project project) {
+    public static GlobalSearchScope getProjectScope(@NotNull Project project) {
       return null;
     }
   }

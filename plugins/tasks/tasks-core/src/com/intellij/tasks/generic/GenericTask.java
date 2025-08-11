@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.generic;
 
 import com.intellij.tasks.Comment;
@@ -28,18 +27,21 @@ public class GenericTask extends Task {
     myRepository = repository;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getId() {
+  public String getId() {
     return myId;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getSummary() {
+  public String getSummary() {
     return mySummary;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getDescription() {
+  public String getDescription() {
     return myDescription;
   }
 
@@ -48,23 +50,27 @@ public class GenericTask extends Task {
     return Comment.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getIcon() {
+  public Icon getIcon() {
     return myRepository.getIcon();
   }
 
+  @NotNull
   @Override
-  public @NotNull TaskType getType() {
+  public TaskType getType() {
     return TaskType.OTHER;
   }
 
+  @Nullable
   @Override
-  public @Nullable Date getUpdated() {
+  public Date getUpdated() {
     return myUpdated;
   }
 
+  @Nullable
   @Override
-  public @Nullable Date getCreated() {
+  public Date getCreated() {
     return myCreated;
   }
 
@@ -78,13 +84,15 @@ public class GenericTask extends Task {
     return true;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getIssueUrl() {
+  public String getIssueUrl() {
     return myIssueUrl;
   }
 
+  @Nullable
   @Override
-  public @Nullable TaskRepository getRepository() {
+  public TaskRepository getRepository() {
     return myRepository;
   }
 

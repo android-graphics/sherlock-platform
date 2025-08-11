@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 
 public class InvestigateFix implements IntentionAction {
-  private final @DetailedDescription String myReason;
+  @DetailedDescription private final String myReason;
 
   public InvestigateFix(@DetailedDescription String reason) {
     myReason = reason;
@@ -24,13 +24,15 @@ public class InvestigateFix implements IntentionAction {
     dialog.show();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getText() {
+  public String getText() {
     return GroovyBundle.message("investigate.gdsl.error.intention.name");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return GroovyBundle.message("investigate.gdsl.error.family.name");
   }
 

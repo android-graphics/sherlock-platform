@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.serialization.PropertyMapping;
@@ -8,9 +8,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Serializable;
 
 public class ProjectId implements ProjectCoordinate, Serializable {
-  private final @Nullable String groupId;
-  private final @Nullable String artifactId;
-  private final @Nullable String version;
+  @Nullable private final String groupId;
+  @Nullable private final String artifactId;
+  @Nullable private final String version;
 
   @PropertyMapping({"groupId", "artifactId", "version"})
   public ProjectId(@Nullable String groupId, @Nullable String artifactId, @Nullable String version) {
@@ -20,21 +20,25 @@ public class ProjectId implements ProjectCoordinate, Serializable {
   }
 
   @Override
-  public @Nullable String getGroupId() {
+  @Nullable
+  public String getGroupId() {
     return groupId;
   }
 
   @Override
-  public @Nullable String getArtifactId() {
+  @Nullable
+  public String getArtifactId() {
     return artifactId;
   }
 
   @Override
-  public @Nullable String getVersion() {
+  @Nullable
+  public String getVersion() {
     return version;
   }
 
-  public @NotNull String getKey() {
+  @NotNull
+  public String getKey() {
     StringBuilder builder = new StringBuilder();
 
     append(builder, groupId);
@@ -44,12 +48,13 @@ public class ProjectId implements ProjectCoordinate, Serializable {
     return builder.toString();
   }
 
-  public @NotNull String getDisplayString() {
+  @NotNull
+  public String getDisplayString() {
     return getKey();
   }
 
   public static void append(StringBuilder builder, String part) {
-    if (!builder.isEmpty()) builder.append(':');
+    if (builder.length() != 0) builder.append(':');
     builder.append(part == null ? "<unknown>" : part);
   }
 

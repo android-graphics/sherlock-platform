@@ -6,7 +6,6 @@ class YappiProfile(object):
     """
     def __init__(self):
         self.stats = None
-        yappi.set_clock_type("wall")
 
     def runcall(self, func, *args, **kw):
         self.enable()
@@ -21,28 +20,17 @@ class YappiProfile(object):
     def disable(self):
         yappi.stop()
 
-    def convert_stats_to_dict(self, stats):
-        result = []
-        for stat in stats:
-            func_dict = {
-                'filename': stat.module,
-                'name': stat.name,
-                'line': stat.lineno,
-                'calls': stat.ncall,
-                'total_time': stat.ttot,
-                'cumulative_time': stat.tsub,
-                'thread_id': stat.ctx_id
-            }
-            result.append(func_dict)
-        return result
-
     def create_stats(self):
-        self.stats = yappi.get_func_stats()
+        self.stats = yappi.convert2pstats(yappi.get_func_stats()).stats
 
     def getstats(self):
         self.create_stats()
+
         return self.stats
 
     def dump_stats(self, file):
-        self.getstats().save(file, type="ystat")
+        import marshal
+        f = open(file, 'wb')
+        marshal.dump(self.getstats(), f)
+        f.close()
 

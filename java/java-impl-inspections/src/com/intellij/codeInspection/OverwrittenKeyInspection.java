@@ -1,12 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -44,8 +44,9 @@ public final class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspect
   private static final CallMatcher MAP_ENTRY =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_MAP, "entry");
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new OverwrittenKeyVisitor(holder);
   }
 
@@ -218,7 +219,7 @@ public final class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspect
           }
           if (PsiUtil.isJvmLocalVariable(var)) {
             PsiElement scope = PsiUtil.getVariableCodeBlock(var, null);
-            if (scope != null && ControlFlowUtil.isEffectivelyFinal(var, scope)) {
+            if (scope != null && HighlightControlFlowUtil.isEffectivelyFinal(var, scope, null)) {
               return var;
             }
           }

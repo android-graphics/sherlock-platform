@@ -5,12 +5,9 @@ package org.jetbrains.kotlin.idea.util
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.util.Computable
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.ScheduledForRemoval
 @Deprecated("Use 'com.intellij.openapi.progress.util.BackgroundTaskUtil' instead")
 object ProgressIndicatorUtils {
-    @ApiStatus.ScheduledForRemoval
     @Deprecated(
         "Use 'com.intellij.openapi.progress.util.BackgroundTaskUtil.runUnderDisposeAwareIndicator()' instead",
         ReplaceWith(

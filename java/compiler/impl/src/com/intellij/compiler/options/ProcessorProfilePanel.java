@@ -28,8 +28,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -94,7 +94,8 @@ public class ProcessorProfilePanel extends JPanel {
         }
       }
 
-      private static @NotNull @NlsSafe String getPathString(VirtualFile[] files) {
+      @NotNull
+      private static @NlsSafe String getPathString(VirtualFile[] files) {
         final StringBuilder builder = new StringBuilder();
         for (VirtualFile file : files) {
           if (!builder.isEmpty()) {

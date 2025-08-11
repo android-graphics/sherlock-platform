@@ -32,24 +32,28 @@ public final class XPathChangeUtil {
     private XPathChangeUtil() {
     }
 
-    public static @NotNull XPathExpression createExpression(PsiElement context, String text) {
+    @NotNull
+    public static XPathExpression createExpression(PsiElement context, String text) {
         final XPathFile file = createXPathFile(context, text);
         final XPathExpression child = PsiTreeUtil.getChildOfType(file, XPathExpression.class);
         assert child != null;
         return child;
     }
 
-    public static @NotNull XPathVariableReference createVariableReference(PsiElement context, String name) {
+    @NotNull
+    public static XPathVariableReference createVariableReference(PsiElement context, String name) {
         return (XPathVariableReference)createExpression(context, "$" + name);
     }
 
-    public static @NotNull XPathFile createXPathFile(PsiElement context, String text) {
+    @NotNull
+    public static XPathFile createXPathFile(PsiElement context, String text) {
         final XPathFile file = createXPathFile(context.getProject(), text, context.getContainingFile().getFileType());
         ContextProvider.copy(context.getContainingFile(), file);
         return file;
     }
 
-    public static @NotNull XPathFile createXPathFile(Project project, String text, FileType fileType) {
+    @NotNull
+    public static XPathFile createXPathFile(Project project, String text, FileType fileType) {
         return (XPathFile)PsiFileFactory.getInstance(project).createFileFromText("dummy." + fileType.getDefaultExtension(), fileType, text, LocalTimeCounter.currentTime(), true);
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.CommonBundle;
@@ -40,8 +40,9 @@ public class GrMoveToDirFix extends GroovyFix {
     myPackageName = packageName;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     String packName = StringUtil.isEmptyOrSpaces(myPackageName) ? "default package" : myPackageName;
     return GroovyBundle.message("move.to.correct.dir", packName);
   }
@@ -63,8 +64,9 @@ public class GrMoveToDirFix extends GroovyFix {
     return new IntentionPreviewInfo.Html(builder.wrapWith("p"));
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return GroovyBundle.message("move.to.correct.dir.family.name");
   }
 

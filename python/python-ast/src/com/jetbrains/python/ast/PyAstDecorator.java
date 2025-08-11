@@ -45,7 +45,8 @@ public interface PyAstDecorator extends PyAstCallExpression {
   /**
    * @return the function being decorated, or null.
    */
-  default @Nullable PyAstFunction getTarget() {
+  @Nullable
+  default PyAstFunction getTarget() {
     return PsiTreeUtil.getStubOrPsiParentOfType(this, PyAstFunction.class);
   }
 
@@ -56,7 +57,8 @@ public interface PyAstDecorator extends PyAstCallExpression {
    * were relaxed in PEP 614, this method is expected to return either a plain reference expression
    * (i.e. {@code foo.bar}, not {@code foo[0].bar}) or a call on such a reference.
    */
-  default @Nullable PyAstExpression getExpression() {
+  @Nullable
+  default PyAstExpression getExpression() {
     return findChildByClass(this, PyAstExpression.class);
   }
 
@@ -67,7 +69,8 @@ public interface PyAstDecorator extends PyAstCallExpression {
   }
 
   @Override
-  default @Nullable PyAstExpression getCallee() {
+  @Nullable
+  default PyAstExpression getCallee() {
     final PyAstExpression exprAfterAt = getExpression();
     return exprAfterAt instanceof PyAstCallExpression ? ((PyAstCallExpression)exprAfterAt).getCallee() : exprAfterAt;
   }
@@ -95,7 +98,8 @@ public interface PyAstDecorator extends PyAstCallExpression {
    * @see PyAstReferenceExpression#asQualifiedName()
    * @see PyDecoratorStub#getQualifiedName()
    */
-  default @Nullable QualifiedName getQualifiedName() {
+  @Nullable
+  default QualifiedName getQualifiedName() {
     final PyAstReferenceExpression refExpr = ObjectUtils.tryCast(getCallee(), PyAstReferenceExpression.class);
     return refExpr != null ? refExpr.asQualifiedName() : null;
   }

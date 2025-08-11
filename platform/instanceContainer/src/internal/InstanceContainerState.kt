@@ -15,7 +15,7 @@ import java.lang.invoke.VarHandle
  * [cache] contains the subset of whatever it is in [holders].
  */
 internal class InstanceContainerState private constructor(
-  @JvmField val holders: InstanceHolders,
+  val holders: InstanceHolders,
   private var cache: PersistentMap<Class<*>, InstanceHolder>,
 ) {
 
@@ -24,7 +24,9 @@ internal class InstanceContainerState private constructor(
    */
   constructor(holders: InstanceHolders) : this(holders, persistentHashMapOf())
 
-  fun getByName(keyClassName: String): InstanceHolder? = holders[keyClassName]
+  fun getByName(keyClassName: String): InstanceHolder? {
+    return holders[keyClassName]
+  }
 
   @Suppress("UNCHECKED_CAST")
   fun getByClass(keyClass: Class<*>): InstanceHolder? {
@@ -74,8 +76,8 @@ internal class InstanceContainerState private constructor(
      * At worst, we might lose some published cached key, but it will be re-cached in the next published [InstanceContainerState] instance.
      */
     return InstanceContainerState(
-      holders = holders.put(keyClass.name, holder),
-      cache = cache.put(keyClass, holder),
+      holders.put(keyClass.name, holder),
+      cache.put(keyClass, holder),
     )
   }
 

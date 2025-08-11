@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -13,7 +13,6 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.lang.UrlClassLoader;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.ClassDependencyLoader;
@@ -36,8 +35,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.reference.SoftReference.dereference;
 
-@ApiStatus.Internal
-public final class InProcessGroovyc implements GroovycFlavor {
+final class InProcessGroovyc implements GroovycFlavor {
   private static final Logger LOG = Logger.getInstance(InProcessGroovyc.class);
   private static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-(.*))?\\.jar");
   private static final Pattern GROOVY_JAR_PATTERN = Pattern.compile("groovy(-(\\d.*))?\\.jar");
@@ -93,10 +91,11 @@ public final class InProcessGroovyc implements GroovycFlavor {
     return waitForStubGeneration(future, mailbox, parser, loader);
   }
 
-  private static @Nullable GroovycContinuation waitForStubGeneration(Future<Void> future,
-                                                                     LinkedBlockingQueue<?> mailbox,
-                                                                     GroovycOutputParser parser,
-                                                                     JointCompilationClassLoader loader) throws InterruptedException {
+  @Nullable
+  private static GroovycContinuation waitForStubGeneration(Future<Void> future,
+                                                           LinkedBlockingQueue<?> mailbox,
+                                                           GroovycOutputParser parser,
+                                                           JointCompilationClassLoader loader) throws InterruptedException {
     while (true) {
       Object msg = mailbox.poll(1, TimeUnit.MINUTES);
       if (GROOVYC_FINISHED.equals(msg)) {
@@ -117,13 +116,15 @@ public final class InProcessGroovyc implements GroovycFlavor {
     }
   }
 
-  private static @NotNull GroovycContinuation createContinuation(Future<Void> future,
-                                                                 @NotNull Queue<String> mailbox,
-                                                                 GroovycOutputParser parser,
-                                                                 @NotNull JointCompilationClassLoader loader) {
+  @NotNull
+  private static GroovycContinuation createContinuation(Future<Void> future,
+                                                        @NotNull Queue<String> mailbox,
+                                                        GroovycOutputParser parser, 
+                                                        @NotNull JointCompilationClassLoader loader) {
     return new GroovycContinuation() {
+      @NotNull
       @Override
-      public @NotNull GroovyCompilerResult continueCompilation() throws Exception {
+      public GroovyCompilerResult continueCompilation() throws Exception {
         loader.resetCache();
         parser.onContinuation();
         mailbox.offer(GroovyRtConstants.JAVAC_COMPLETED);
@@ -231,7 +232,8 @@ public final class InProcessGroovyc implements GroovycFlavor {
     return null;
   }
 
-  static @Nullable String evaluatePathToGroovyJarForParentClassloader(Collection<String> compilationClassPath) {
+  @Nullable
+  static String evaluatePathToGroovyJarForParentClassloader(Collection<String> compilationClassPath) {
     if (!"true".equals(System.getProperty("groovyc.reuse.compiler.classes", "true"))) {
       return null;
     }
@@ -345,9 +347,10 @@ public final class InProcessGroovyc implements GroovycFlavor {
     return result;
   }
 
-  private static @NotNull PrintStream createStream(@NotNull GroovycOutputParser parser,
-                                                   @NotNull Key<?> type,
-                                                   @Nullable("null means not overridden") PrintStream overridden) throws IOException {
+  @NotNull
+  private static PrintStream createStream(@NotNull GroovycOutputParser parser,
+                                          @NotNull Key<?> type,
+                                          @Nullable("null means not overridden") PrintStream overridden) throws IOException {
     final Thread thread = Thread.currentThread();
     OutputStream out = new OutputStream() {
       ByteArrayOutputStream line = new ByteArrayOutputStream();

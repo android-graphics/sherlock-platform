@@ -1,4 +1,6 @@
-// ERROR: 'public' function exposes its 'internal' return type 'B'.
+// ERROR: Function 'public' exposes its 'internal' return type 'B'.
+import J.B
+
 class J {
     internal class B
 

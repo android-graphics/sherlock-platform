@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.execution.configurations.SimpleJavaParameters;
@@ -37,11 +37,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
   private static final String COVERAGE_AGENT_PATH_PROPERTY = "idea.coverage.agent.path";
 
   @Override
-  public @NotNull CoverageLoadingResult loadCoverageData(
-    final @NotNull File sessionDataFile,
-    final @Nullable CoverageSuite coverageSuite,
-    final @NotNull CoverageLoadErrorReporter reporter
-  ) {
+  public ProjectData loadCoverageData(@NotNull final File sessionDataFile, @Nullable final CoverageSuite coverageSuite) {
     ProjectData projectData = ProjectDataLoader.load(sessionDataFile);
     File sourceMapFile = new File(JavaCoverageEnabledConfiguration.getSourceMapPath(sessionDataFile.getPath()));
     if (sourceMapFile.exists()) {
@@ -50,7 +46,6 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
       }
       catch (IOException e) {
         LOG.warn("Error reading source map associated with coverage data", e);
-        reporter.reportWarning("Error reading source map associated with coverage data: " + e.getMessage(), e);
       }
     }
     if (coverageSuite instanceof JavaCoverageSuite javaSuite) {
@@ -65,7 +60,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
         javaSuite.setExcludePatterns(excludePatterns);
       }
     }
-    return new SuccessCoverageLoadingResult(projectData);
+    return projectData;
   }
 
   @Override
@@ -85,7 +80,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                                      final boolean testTracking,
                                      final boolean branchCoverage,
                                      @Nullable String sourceMapPath,
-                                     final @Nullable Project project) {
+                                     @Nullable final Project project) {
     final String agentPath = getAgentPath();
     if (agentPath == null) return;
     final String[] excludeAnnotations = getExcludeAnnotations(project);
@@ -106,21 +101,23 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
     }
   }
 
-  private static @Nullable String getAgentPath() {
+  @Nullable
+  private static String getAgentPath() {
     final String userDefinedAgentPath = System.getProperty(COVERAGE_AGENT_PATH_PROPERTY);
     final String bundledAgentPath = PathUtil.getJarPathForClass(ProjectData.class);
     final String agentPath = userDefinedAgentPath != null ? userDefinedAgentPath : bundledAgentPath;
     return handleSpacesInAgentPath(agentPath);
   }
 
-  private static @Nullable JavaTargetParameter createArgumentTargetParameter(String agentPath,
-                                                                             String sessionDataFilePath,
-                                                                             String @Nullable [] patterns,
-                                                                             String[] excludePatterns,
-                                                                             String[] excludeAnnotations,
-                                                                             boolean testTracking,
-                                                                             boolean branchCoverage,
-                                                                             String sourceMapPath) {
+  @Nullable
+  private static JavaTargetParameter createArgumentTargetParameter(String agentPath,
+                                                                   String sessionDataFilePath,
+                                                                   String @Nullable [] patterns,
+                                                                   String[] excludePatterns,
+                                                                   String[] excludeAnnotations,
+                                                                   boolean testTracking,
+                                                                   boolean branchCoverage,
+                                                                   String sourceMapPath) {
     try {
       final File tempFile = createTempFile();
       tempFile.deleteOnExit();
@@ -254,17 +251,20 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
 
 
   @Override
-  public @NotNull String getPresentableName() {
+  @NotNull
+  public String getPresentableName() {
     return "IntelliJ IDEA";
   }
 
   @Override
-  public @NotNull String getId() {
+  @NotNull
+  public String getId() {
     return "idea";
   }
 
   @Override
-  public @NotNull String getDataFileExtension() {
+  @NotNull
+  public String getDataFileExtension() {
     return "ic";
   }
 

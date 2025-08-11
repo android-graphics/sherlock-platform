@@ -106,7 +106,7 @@ open class HighlightingConfiguration(
         val params = mutableListOf<String>()
 
         if (renderSeverityOption.shouldRender(highlightingCodeMetaInfo.highlightingInfo.severity)) {
-            params.add("severity='${highlightingCodeMetaInfo.highlightingInfo.severity.name}'")
+            params.add("severity='${highlightingCodeMetaInfo.highlightingInfo.severity}'")
         }
 
         when (descriptionRenderingOption) {

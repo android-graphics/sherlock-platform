@@ -19,11 +19,15 @@ class KotlinQuickFixService {
     private val list = KotlinQuickFixesList.createCombined(KotlinQuickFixRegistrar.allQuickFixesList())
     private val importOnTheFlyList = KotlinQuickFixesList.createCombined(KotlinQuickFixRegistrar.allImportOnTheFlyQuickFixList())
 
-    fun KaSession.getQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> =
-        with(list) { getQuickFixesFor(diagnostic) }
+    context(KaSession)
+    fun getQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> {
+        return list.getQuickFixesFor(diagnostic)
+    }
 
-    fun KaSession.getImportQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<KotlinImportQuickFixAction<*>> =
-        with(importOnTheFlyList) { getQuickFixesFor(diagnostic).filterIsInstance<KotlinImportQuickFixAction<*>>() }
+    context(KaSession)
+    fun getImportQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<KotlinImportQuickFixAction<*>> {
+        return importOnTheFlyList.getQuickFixesFor(diagnostic).filterIsInstance<KotlinImportQuickFixAction<*>>()
+    }
 }
 
 abstract class KotlinQuickFixRegistrar {
@@ -38,9 +42,7 @@ abstract class KotlinQuickFixRegistrar {
         private val EP_NAME: ExtensionPointName<KotlinQuickFixRegistrar> =
             ExtensionPointName.create("org.jetbrains.kotlin.codeinsight.quickfix.registrar")
 
-        fun allQuickFixesList(): List<KotlinQuickFixesList> =
-            EP_NAME.extensionList.map { it.list }
-        fun allImportOnTheFlyQuickFixList(): List<KotlinQuickFixesList> =
-            EP_NAME.extensionList.map { it.importOnTheFlyList }
+        fun allQuickFixesList() = EP_NAME.extensionList.map { it.list }
+        fun allImportOnTheFlyQuickFixList() = EP_NAME.extensionList.map { it.importOnTheFlyList }
     }
 }

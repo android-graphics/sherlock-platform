@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.psi.impl;
 
 import com.intellij.navigation.ItemPresentation;
@@ -39,17 +39,19 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
         myAttribute = attribute;
     }
 
-    public @Nullable QName getQName() {
+    @Nullable
+    public QName getQName() {
         final String prefix = getPrefix();
-        if (prefix != null && !prefix.isEmpty()) {
+        if (prefix != null && prefix.length() > 0) {
             final String uri = XsltNamespaceContext.getNamespaceUriStatic(prefix, myAttribute);
-            return uri != null && !uri.isEmpty() ? new QName(uri, getName(), prefix) : QNameUtil.UNRESOLVED;
+            return uri != null && uri.length() > 0 ? new QName(uri, getName(), prefix) : QNameUtil.UNRESOLVED;
         } else {
             return new QName(getName());
         }
     }
 
-    private @Nullable String getPrefix() {
+    @Nullable
+    private String getPrefix() {
         return hasPrefix() ? PrefixReference.getPrefixRange(myAttribute).substring(myAttribute.getValue()) : null;
     }
 
@@ -133,12 +135,14 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
     }
 
     @Override
-    public @Nullable Icon getIcon(boolean open) {
+    @Nullable
+    public Icon getIcon(boolean open) {
         return getIcon(0);
     }
 
     @Override
-    public @Nullable @NlsSafe String getPresentableText() {
+    @Nullable
+    public @NlsSafe String getPresentableText() {
       final QName qName = getQName();
       if (qName != null) {
         return qName.toString();
@@ -146,9 +150,10 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
       return hasPrefix() ? getPrefix() + ":" + getName() : getName();
     }
 
+    @NotNull
     @Override
-    @SuppressWarnings({"RawUseOfParameterizedType"})
-    public @NotNull PsiElement getNavigationElement() {
+    @SuppressWarnings({ "RawUseOfParameterizedType" })
+    public PsiElement getNavigationElement() {
         if (myNavigationElement == null && myAttribute.isValid()) {
             final XmlTag tag = myAttribute.getParent();
             final Class[] allInterfaces = CompletionLists.getAllInterfaces(tag.getClass());
@@ -197,7 +202,8 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
     }
 
     @Override
-    public @NotNull SearchScope getUseScope() {
+    @NotNull
+    public SearchScope getUseScope() {
         return myAttribute.getUseScope();
     }
 

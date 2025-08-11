@@ -26,8 +26,9 @@ import com.jetbrains.python.psi.PyWithItem;
 import org.jetbrains.annotations.NotNull;
 
 public class PyRemoveWithTargetQuickFix extends PsiUpdateModCommandQuickFix {
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.remove.with.target");
   }
 

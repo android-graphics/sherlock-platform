@@ -11,7 +11,7 @@ public class PyStringLiteralCoreUtil {
   /**
    * Valid string prefix characters (lowercased) as defined in Python lexer.
    */
-  public static final String PREFIX_CHARACTERS = "ubcrft";
+  public static final String PREFIX_CHARACTERS = "ubcrf";
 
   /**
    * Maximum length of a string prefix as defined in Python lexer.

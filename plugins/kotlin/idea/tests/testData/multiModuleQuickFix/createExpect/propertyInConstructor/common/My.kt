@@ -1,3 +1,3 @@
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 
 expect class My

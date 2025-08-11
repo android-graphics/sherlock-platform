@@ -12,8 +12,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.xml.StartTagEndTokenProvider;
 import com.intellij.testFramework.ParsingTestCase;
 
-import static com.intellij.xml.testFramework.XmlElementTypeServiceHelper.registerXmlElementTypeServices;
-
 public class AntParsingTest extends ParsingTestCase {
 
   public AntParsingTest() {
@@ -23,7 +21,6 @@ public class AntParsingTest extends ParsingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    registerXmlElementTypeServices(getApplication(), getTestRootDisposable());
     addExplicitExtension(LanguageASTFactory.INSTANCE, XMLLanguage.INSTANCE, new XmlASTFactory());
     registerExtensionPoint(new ExtensionPointName<>("com.intellij.xml.startTagEndToken"),
                            StartTagEndTokenProvider.class);
@@ -158,7 +155,7 @@ public class AntParsingTest extends ParsingTestCase {
     doTest(true);
   }
 
-  public void testBuildNumber() {
+   public void testBuildNumber() {
     doTest(true);
   }
 }

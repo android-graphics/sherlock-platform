@@ -14,8 +14,9 @@ import java.util.List;
 public final class JpsRemoteRepositoriesModelSerializerExtension extends JpsModelSerializerExtension{
   private static final JpsRemoteRepositoriesConfigurationSerializer SERIALIZER_IMPL = new JpsRemoteRepositoriesConfigurationSerializer();
 
+  @NotNull
   @Override
-  public @NotNull List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
+  public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
     return Collections.singletonList(SERIALIZER_IMPL);
   }
 }

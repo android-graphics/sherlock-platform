@@ -56,7 +56,7 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KaSession>(KtTok
                         result,
                         returnType,
                         label = null,
-                        isLikelyInPositionForReturn(expression, parent, returnType.isUnitType)
+                        isLikelyInPositionForReturn(expression, parent, returnType.isUnit)
                     )
                 }
                 break
@@ -73,7 +73,7 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KaSession>(KtTok
         label: Name?,
         isLikelyInPositionForReturn: Boolean = false
     ) {
-        val isUnit = returnType.isUnitType
+        val isUnit = returnType.isUnit
         result.add(createKeywordElementWithSpace("return", tail = label?.labelNameToTail().orEmpty(), addSpaceAfter = !isUnit).also {
             it.isReturnAtHighlyLikelyPosition = isLikelyInPositionForReturn
         })

@@ -101,8 +101,7 @@ abstract class AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer 
             val configuration = fromContext.configuration as GradleRunConfiguration
             val settings = configuration.settings
 
-            val module = context.module ?: throw IllegalStateException("Module should not be null")
-            val result = settings.applyTestConfiguration(module, tasks, *classes) {
+            val result = settings.applyTestConfiguration(context.module, tasks, *classes) {
                 var filters = createTestFilterFrom(context.location, it, psiMethod)
                 if (context.location is PsiMemberParameterizedLocation && contextualSuffix != null) {
                     filters = filters.replace("[*$contextualSuffix*]", "")
@@ -110,7 +109,7 @@ abstract class AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer 
                 filters
             }
 
-            settings.externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module)
+            settings.externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(context.module)
 
             if (result) {
                 configuration.name = (if (classes.size == 1) classes[0].name!! + "." else "") + psiMethod.name
@@ -162,8 +161,7 @@ abstract class AbstractKotlinTestMethodGradleConfigurationProducer
     }
 
     private fun ConfigurationContext.check(): Boolean {
-        val myModule = module
-        return hasTestFramework && myModule != null && isApplicable(myModule)
+        return hasTestFramework && module != null && isApplicable(module)
     }
 
     override fun getPsiMethodForLocation(contextLocation: Location<*>) = getTestMethodForKotlinTest(contextLocation)

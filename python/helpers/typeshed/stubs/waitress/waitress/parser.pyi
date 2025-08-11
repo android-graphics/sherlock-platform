@@ -1,12 +1,11 @@
 from collections.abc import Mapping, Sequence
 from io import BytesIO
 from re import Pattern
+from typing import Any
 
 from waitress.adjustments import Adjustments
 from waitress.receiver import ChunkedReceiver, FixedStreamReceiver
 from waitress.utilities import Error
-
-def unquote_bytes_to_wsgi(bytestring: str | bytes | bytearray) -> str: ...
 
 class ParsingError(Exception): ...
 class TransferEncodingNotImplemented(Exception): ...
@@ -39,6 +38,6 @@ class HTTPRequestParser:
 def split_uri(uri: bytes) -> tuple[str, str, bytes, str, str]: ...
 def get_header_lines(header: bytes) -> Sequence[bytes]: ...
 
-first_line_re: Pattern[str]
+first_line_re: Pattern[Any]
 
 def crack_first_line(line: str) -> tuple[bytes, bytes, bytes]: ...

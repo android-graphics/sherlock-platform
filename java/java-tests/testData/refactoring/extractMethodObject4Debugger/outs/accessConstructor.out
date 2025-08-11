@@ -5,7 +5,7 @@ public class GeneratedEvaluationClass {
         return newWithReflectionAccess1(50);
     }
 
-    public static Object newWithReflectionAccess1(int p0) {
+    public static Object newWithReflectionAccess1(int value) {
         try {
             Class<?> klass = Class.forName("WithReflectionAccess");
             java.lang.reflect.Constructor<?> member = null;
@@ -30,7 +30,7 @@ public class GeneratedEvaluationClass {
                 }
             }
             member.setAccessible(true);
-            return (Object) member.newInstance(p0);
+            return (Object) member.newInstance(value);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }

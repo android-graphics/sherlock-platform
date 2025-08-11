@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.settings;
 
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
@@ -21,7 +21,8 @@ public class ImportFromGradleControl
     super(GradleConstants.SYSTEM_ID, new GradleSettings(ProjectManager.getInstance().getDefaultProject()), getInitialProjectSettings(), true);
   }
 
-  private static @NotNull GradleProjectSettings getInitialProjectSettings() {
+  @NotNull
+  private static GradleProjectSettings getInitialProjectSettings() {
     GradleProjectSettings result = new GradleProjectSettings();
     String gradleHome = GradleUtil.getLastUsedGradleHome();
     if (!StringUtil.isEmpty(gradleHome)) {
@@ -30,13 +31,15 @@ public class ImportFromGradleControl
     return result;
   }
   
+  @NotNull
   @Override
-  protected @NotNull ExternalSystemSettingsControl<GradleProjectSettings> createProjectSettingsControl(@NotNull GradleProjectSettings settings) {
+  protected ExternalSystemSettingsControl<GradleProjectSettings> createProjectSettingsControl(@NotNull GradleProjectSettings settings) {
     return new GradleProjectSettingsControl(settings);
   }
 
+  @Nullable
   @Override
-  protected @Nullable ExternalSystemSettingsControl<GradleSettings> createSystemSettingsControl(@NotNull GradleSettings settings) {
+  protected ExternalSystemSettingsControl<GradleSettings> createSystemSettingsControl(@NotNull GradleSettings settings) {
     return new GradleSystemSettingsControl(settings);
   }
 

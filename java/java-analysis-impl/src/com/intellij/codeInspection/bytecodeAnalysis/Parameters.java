@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.RichControlFlow;
-import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
@@ -146,7 +145,7 @@ class MakeResult implements PendingAction {
 }
 
 class NonNullInAnalysis extends Analysis<PResult> {
-  private final ExpandableArray<PendingAction> pendingActions;
+  final private ExpandableArray<PendingAction> pendingActions;
   private final ExpandableArray<PResult> results;
   private final NotNullInterpreter interpreter = new NotNullInterpreter();
 
@@ -191,14 +190,12 @@ class NonNullInAnalysis extends Analysis<PResult> {
   private PResult subResult;
 
   @Override
-  protected @NotNull Equation analyze() throws AnalyzerException {
+  @NotNull
+  protected Equation analyze() throws AnalyzerException {
     pendingPush(new ProceedState(createStartState()));
     int steps = 0;
     while (pendingTop > 0 && earlyResult == null) {
       steps ++;
-      if (steps % 100 == 0) {
-        ProgressManager.checkCanceled();
-      }
       TooComplexException.check(method, steps);
       PendingAction action = pendingActions.get(--pendingTop);
       if (action instanceof MakeResult makeResult) {
@@ -374,7 +371,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
 }
 
 class NullableInAnalysis extends Analysis<PResult> {
-  private final ExpandableArray<State> pending;
+  final private ExpandableArray<State> pending;
 
   private final NullableInterpreter interpreter = new NullableInterpreter();
 
@@ -405,14 +402,12 @@ class NullableInAnalysis extends Analysis<PResult> {
   private boolean top;
 
   @Override
-  protected @NotNull Equation analyze() throws AnalyzerException {
+  @NotNull
+  protected Equation analyze() throws AnalyzerException {
     pendingPush(createStartState());
     int steps = 0;
     while (pendingTop > 0 && earlyResult == null) {
       steps ++;
-      if (steps % 100 == 0) {
-        ProgressManager.checkCanceled();
-      }
       TooComplexException.check(method, steps);
       State state = Objects.requireNonNull(pending.get(--pendingTop));
       int insnIndex = state.conf.insnIndex;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -15,11 +15,13 @@ public class MavenClassSearchResult extends MavenArtifactSearchResult {
     this.packageName = packageName;
   }
 
-  public @NlsSafe String getClassName() {
+  @NlsSafe
+  public String getClassName() {
     return className;
   }
 
-  public @NlsSafe String getPackageName() {
+  @NlsSafe
+  public String getPackageName() {
     return packageName;
   }
 }

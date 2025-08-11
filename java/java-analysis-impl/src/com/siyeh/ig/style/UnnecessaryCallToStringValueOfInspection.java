@@ -2,10 +2,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -59,7 +56,8 @@ public final class UnnecessaryCallToStringValueOfInspection extends BaseInspecti
   public boolean reportWithEmptyString = false;
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     if (infos[1] == Boolean.TRUE) {
       return InspectionGadgetsBundle.message("unnecessary.tostring.call.problem.empty.string.descriptor");
     }
@@ -114,12 +112,14 @@ public final class UnnecessaryCallToStringValueOfInspection extends BaseInspecti
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", replacementText);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return CommonQuickFixBundle.message("fix.simplify");
     }
 
@@ -165,7 +165,8 @@ public final class UnnecessaryCallToStringValueOfInspection extends BaseInspecti
     }
   }
 
-  private static @Nullable PsiExpression getArgument(@NotNull PsiMethodCallExpression call) {
+  @Nullable
+  private static PsiExpression getArgument(@NotNull PsiMethodCallExpression call) {
     if (!STATIC_TO_STRING_CONVERTERS.test(call)) return null;
     return PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]);
   }

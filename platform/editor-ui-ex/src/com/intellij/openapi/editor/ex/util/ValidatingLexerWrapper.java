@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.diagnostic.PluginException;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * This class verifies that delegate lexer generates a continuous sequence of tokens (without gaps), and that it
  * does not stall during iteration (generating empty tokens for the same offset continuously).
  */
-final class ValidatingLexerWrapper extends Lexer {
+public class ValidatingLexerWrapper extends Lexer {
   private final Lexer myDelegate;
   private int myLastStartOffset;
   private int myLastEndOffset;
@@ -21,7 +21,7 @@ final class ValidatingLexerWrapper extends Lexer {
   private IElementType myLastTokenType;
   private boolean myLastValuesActual;
 
-  ValidatingLexerWrapper(@NotNull Lexer delegate) { myDelegate = delegate;}
+  public ValidatingLexerWrapper(@NotNull Lexer delegate) {myDelegate = delegate;}
 
   @Override
   public @NotNull CharSequence getTokenSequence() {
@@ -99,16 +99,6 @@ final class ValidatingLexerWrapper extends Lexer {
     }
   }
 
-  private @NotNull String buildDiagnosticMessage(@NotNull String message) {
-    return message +
-           "; delegateClass=" + myDelegate.getClass().getCanonicalName() +
-           "; delegate=" + myDelegate +
-           "; lastTokenType=" + myLastTokenType +
-           "; lastStartOffset=" + myLastStartOffset +
-           "; lastEndOffset=" + myLastEndOffset +
-           "; lastState=" + myLastState;
-  }
-
   @Override
   public @NotNull LexerPosition getCurrentPosition() {
     return myDelegate.getCurrentPosition();
@@ -133,8 +123,7 @@ final class ValidatingLexerWrapper extends Lexer {
   private void throwException(@NotNull String message) {
     Class<? extends Lexer> lexerClass = myDelegate.getClass();
     boolean isFlexAdapter = lexerClass == FlexAdapter.class;
-    throw PluginException.createByClass(
-      buildDiagnosticMessage(message) + ": " + (isFlexAdapter ? myDelegate.toString() : lexerClass.getName()),
+    throw PluginException.createByClass(message + ": " + (isFlexAdapter ? myDelegate.toString() : lexerClass.getName()),
                                         null,
                                         isFlexAdapter ? ((FlexAdapter)myDelegate).getFlex().getClass() : lexerClass);
   }

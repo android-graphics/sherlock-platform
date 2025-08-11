@@ -110,11 +110,18 @@ interface JsonSchemaInterpretationStrategy {
            || baseSchema.rawFile != null && baseSchema.rawFile == childSchema.rawFile
   }
 
+  private fun isNodeWithDifferentPointers(
+    baseSchema: JsonSchemaObject,
+    childSchema: JsonSchemaObject,
+  ): Boolean {
+    return baseSchema.pointer != childSchema.pointer
+  }
+
   private fun isApplicatorBranchWithNonEmptyParent(
     baseSchema: JsonSchemaObject,
     childSchema: JsonSchemaObject,
   ): Boolean {
-    if (!baseSchema.hasChildFieldsExcept(APPLICATOR_MARKERS)) return false
+    if (!baseSchema.hasChildFieldsExcept(ONE_OF, ALL_OF, ANY_OF)) return false
 
     return sequence {
       yieldAll(baseSchema.oneOf.orEmpty())
@@ -127,13 +134,10 @@ interface JsonSchemaInterpretationStrategy {
     baseSchema: JsonSchemaObject,
     childSchema: JsonSchemaObject,
   ): Boolean {
-    if (!baseSchema.hasChildFieldsExcept(IF_ELSE_MARKERS)) return false
+    if (!baseSchema.hasChildFieldsExcept(IF, THEN, ELSE)) return false
 
     return baseSchema.ifThenElse?.any { condition ->
       condition.then == childSchema || condition.`else` == childSchema
     } ?: false
   }
 }
-
-private val IF_ELSE_MARKERS = listOf(IF, THEN, ELSE)
-private val APPLICATOR_MARKERS = listOf(ONE_OF, ALL_OF, ANY_OF)

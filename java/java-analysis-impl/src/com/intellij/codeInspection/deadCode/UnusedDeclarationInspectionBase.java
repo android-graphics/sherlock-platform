@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -29,7 +29,10 @@ import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.uast.UastMetaLanguage;
 import com.intellij.util.containers.Stack;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UField;
 import org.jetbrains.uast.UMethod;
@@ -49,8 +52,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
   public static final String ALTERNATIVE_ID = "UnusedDeclaration";
 
-  @ApiStatus.Internal
-  public final UnusedSymbolLocalInspection localInspectionBase = createUnusedSymbolLocalInspection();
+  final UnusedSymbolLocalInspection myLocalInspectionBase = createUnusedSymbolLocalInspection();
 
   private static final Key<Set<RefElement>> PROCESSED_SUSPICIOUS_ELEMENTS_KEY = Key.create("java.unused.declaration.processed.suspicious.elements");
   private static final Key<Integer> PHASE_KEY = Key.create("java.unused.declaration.phase");
@@ -72,13 +74,15 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     myEnabledInEditor = enabledInEditor;
   }
 
-  protected @NotNull UnusedSymbolLocalInspection createUnusedSymbolLocalInspection() {
+  @NotNull
+  protected UnusedSymbolLocalInspection createUnusedSymbolLocalInspection() {
     return new UnusedSymbolLocalInspection();
   }
 
+  @NotNull
   @Override
-  public @NotNull UnusedSymbolLocalInspection getSharedLocalInspectionTool() {
-    return localInspectionBase;
+  public UnusedSymbolLocalInspection getSharedLocalInspectionTool() {
+    return myLocalInspectionBase;
   }
 
   private boolean isAddMainsEnabled() {
@@ -106,19 +110,21 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   @Override
-  public @NotNull String getGroupDisplayName() {
+  @NotNull
+  public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
-  public @NotNull String getShortName() {
+  @NotNull
+  public String getShortName() {
     return SHORT_NAME;
   }
 
   @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     super.readSettings(node);
-    localInspectionBase.readSettings(node);
+    myLocalInspectionBase.readSettings(node);
     for (EntryPoint extension : getExtensions()) {
       extension.readExternal(node);
       saveEntryPointElement(extension);
@@ -136,7 +142,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    localInspectionBase.writeSettings(node);
+    myLocalInspectionBase.writeSettings(node);
     writeUnusedDeclarationSettings(node);
 
     if (!TEST_ENTRY_POINTS) {
@@ -170,7 +176,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     if (!file.getLanguage().isKindOf("JAVA")) return;
     // don't use supplied problems holder to get nice warnings attached to members instead of anchored at the file level
     ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, false);
-    PsiElementVisitor visitor = localInspectionBase.buildVisitor(problemsHolder, false);
+    PsiElementVisitor visitor = myLocalInspectionBase.buildVisitor(problemsHolder, false);
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
@@ -303,7 +309,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return myEnabledInEditor;
   }
 
-  public static @NotNull UnusedDeclarationInspectionBase findUnusedDeclarationInspection(@NotNull PsiElement element) {
+  @NotNull
+  public static UnusedDeclarationInspectionBase findUnusedDeclarationInspection(@NotNull PsiElement element) {
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
     UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(SHORT_NAME, element);
     return tool == null ? new UnusedDeclarationInspectionBase() : tool;
@@ -616,7 +623,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
   }
 
-  public @NotNull List<EntryPoint> getExtensions() {
+  @NotNull
+  public List<EntryPoint> getExtensions() {
     List<EntryPoint> extensions = EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList();
     List<EntryPoint> deadCodeAddIns = new ArrayList<>(extensions.size());
     for (EntryPoint entryPoint : extensions) {

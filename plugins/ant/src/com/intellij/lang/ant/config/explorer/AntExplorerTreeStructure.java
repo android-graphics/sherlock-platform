@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -39,7 +39,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public boolean isToBuildChildrenInBackground(final @NotNull Object element) {
+  public boolean isToBuildChildrenInBackground(@NotNull final Object element) {
     return true;
   }
 
@@ -49,7 +49,8 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public @NotNull AntNodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
+  @NotNull
+  public AntNodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     if (element == myRoot) {
       return new RootNodeDescriptor(myProject, parentDescriptor);
     }
@@ -87,7 +88,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
         new ArrayList<>(Arrays.asList(myFilteredTargets ? model.getFilteredTargets() : model.getTargets()));
       targets.sort(ourTargetComparator);
 
-      final List<AntBuildTarget> metaTargets = new ArrayList<>(Arrays.asList(configuration.getMetaTargets(buildFile)));
+      final List<AntBuildTarget> metaTargets = Arrays.asList(configuration.getMetaTargets(buildFile));
       metaTargets.sort(ourTargetComparator);
       targets.addAll(metaTargets);
 
@@ -98,7 +99,8 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public @Nullable Object getParentElement(@NotNull Object element) {
+  @Nullable
+  public Object getParentElement(@NotNull Object element) {
     if (element instanceof AntBuildTarget) {
       if (element instanceof MetaTarget) {
         return ((MetaTarget)element).getBuildFile();
@@ -123,13 +125,15 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     return PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments();
   }
 
+  @NotNull
   @Override
-  public @NotNull ActionCallback asyncCommit() {
+  public ActionCallback asyncCommit() {
     return asyncCommitDocuments(myProject);
   }
 
+  @NotNull
   @Override
-  public @NotNull Object getRootElement() {
+  public Object getRootElement() {
     return myRoot;
   }
 

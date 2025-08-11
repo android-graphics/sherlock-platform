@@ -8,7 +8,6 @@ import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -223,7 +222,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   fun addCommitCustomListener(listener: CommitterResultHandler, parent: Disposable) =
     commitCustomEventDispatcher.addListener(listener, parent)
 
-  internal suspend fun executeSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
+  suspend fun executeSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
     return withModalProgress(project, message("commit.checks.on.commit.progress.text")) {
       withContext(Dispatchers.EDT) {
         fireBeforeCommitChecksStarted(sessionInfo)
@@ -300,9 +299,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION])
       }?.let { return it }
 
-      writeIntentReadAction {
-        FileDocumentManager.getInstance().saveAllDocuments()
-      }
+      FileDocumentManager.getInstance().saveAllDocuments()
 
       reporter.nextStep(PROGRESS_FRACTION_LATE) {
         runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.LATE])
@@ -353,7 +350,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   private suspend fun runModalCommitCheck(commitInfo: DynamicCommitInfo, commitCheck: CommitCheck): CommitChecksResult? {
     try {
       val problem = runCommitCheck(project, commitCheck, commitInfo) ?: return null
-      val result = writeIntentReadAction {
+      val result = blockingContext {
         problem.showModalSolution(project, commitInfo)
       }
       when (result) {

@@ -1,10 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.impl.RW;
-import org.jetbrains.jps.javac.Iterators;
 
 import java.io.IOException;
 
@@ -61,10 +60,10 @@ public final class AnnotationUsage extends JvmElementUsage {
     if (!myClassType.equals(that.myClassType)) {
       return false;
     }
-    if (!Iterators.equals(myUsedArgNames, that.myUsedArgNames)) {
+    if (!myUsedArgNames.equals(that.myUsedArgNames)) {
       return false;
     }
-    if (!Iterators.equals(myTargets, that.myTargets)) {
+    if (!myTargets.equals(that.myTargets)) {
       return false;
     }
 
@@ -74,8 +73,8 @@ public final class AnnotationUsage extends JvmElementUsage {
   @Override
   public int hashCode() {
     int result = myClassType.hashCode();
-    result = 31 * result + Iterators.hashCode(myUsedArgNames);
-    result = 31 * result + Iterators.hashCode(myTargets);
+    result = 31 * result + myUsedArgNames.hashCode();
+    result = 31 * result + myTargets.hashCode();
     return result;
   }
 }

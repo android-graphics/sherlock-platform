@@ -29,8 +29,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class JBCefInputMethodTest {
-  private static final boolean IS_ENABLED = Boolean.getBoolean("jcef.tests.input_method_test.enabled");
-
   @Language("HTML") final static String HTML_TEXT = """
     <html>
       <body>
@@ -82,9 +80,6 @@ public class JBCefInputMethodTest {
   @Test
   @Disabled
   public void test() throws InterruptedException, InvocationTargetException {
-    if (!IS_ENABLED)
-      return;
-
     var startupWaiter = new CefLoadHandlerAdapter() {
       final CountDownLatch latch = new CountDownLatch(1);
 

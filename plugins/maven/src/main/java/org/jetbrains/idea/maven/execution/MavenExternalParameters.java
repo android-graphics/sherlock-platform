@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.ExecutionException;
@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,8 +54,6 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 
 import static com.intellij.execution.util.ProgramParametersUtil.expandPathAndMacros;
@@ -68,13 +65,13 @@ public final class MavenExternalParameters {
 
   public static final String MAVEN_LAUNCHER_CLASS = "org.codehaus.classworlds.Launcher";
 
-  public static final @NonNls String MAVEN_OPTS = "MAVEN_OPTS";
+  @NonNls public static final String MAVEN_OPTS = "MAVEN_OPTS";
 
   /**
    * @param runConfiguration used to creation fix if maven home not found
    */
-  public static JavaParameters createJavaParameters(final @NotNull Project project,
-                                                    final @NotNull MavenRunnerParameters parameters,
+  public static JavaParameters createJavaParameters(@NotNull final Project project,
+                                                    @NotNull final MavenRunnerParameters parameters,
                                                     @Nullable MavenGeneralSettings coreSettings,
                                                     @Nullable MavenRunnerSettings runnerSettings,
                                                     @Nullable MavenRunConfiguration runConfiguration) throws ExecutionException {
@@ -100,24 +97,25 @@ public final class MavenExternalParameters {
 
     String jreName = runnerSettings.getJreName();
     boolean isGlobalRunnerSettings = MavenRunner.getInstance(project).getState() == runnerSettings;
-    Sdk jdk = ReadAction.compute(() -> getJdk(project, jreName, isGlobalRunnerSettings));
+    Sdk jdk = ReadAction.compute(()->getJdk(project, jreName, isGlobalRunnerSettings ));
     params.setJdk(jdk);
 
-    if (!verifyMavenSdkRequirements(jdk, mavenVersion)) {
+    if(!verifyMavenSdkRequirements(jdk, mavenVersion)){
       throw new ExecutionException(RunnerBundle.message("maven.3.3.1.bad.jdk"));
     }
 
     params.getProgramParametersList().addProperty("idea.version", MavenUtil.getIdeaVersionToPassToMavenProcess());
-
-    String mavenMultimoduleDir;
-    if (!StringUtil.isEmptyOrSpaces(parameters.getMultimoduleDir())) {
-      mavenMultimoduleDir = expandPathAndMacros(parameters.getMultimoduleDir(), null, project);
-    }
-    else {
-      mavenMultimoduleDir = MavenServerUtil.findMavenBasedir(parameters.getWorkingDirFile()).getPath();
-    }
-
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.3") >= 0) {
+      String mavenMultimoduleDir;
+
+      if (!StringUtil.isEmptyOrSpaces(parameters.getMultimoduleDir())) {
+        mavenMultimoduleDir = expandPathAndMacros(parameters.getMultimoduleDir(), null, project);
+      }
+      else {
+        mavenMultimoduleDir = MavenServerUtil.findMavenBasedir(parameters.getWorkingDirFile()).getPath();
+      }
+
+
       params.getVMParametersList().addProperty("maven.multiModuleProjectDirectory", mavenMultimoduleDir);
     }
 
@@ -125,20 +123,14 @@ public final class MavenExternalParameters {
       params.getVMParametersList().addProperty("jansi.passthrough", "true");
     }
 
-    if (StringUtil.compareVersionNumbers(mavenVersion, "4") >= 0) {
-      String currentWorkingDirectory = mavenMultimoduleDir;
-      params.getVMParametersList().addProperty("user.dir", currentWorkingDirectory);
-      params.getVMParametersList().addProperty("maven.mainClass", "org.apache.maven.cling.MavenCling");
-    }
-
     String vmOptions = getRunVmOptions(runnerSettings, project, parameters.getWorkingDirPath());
     vmOptions = expandPathAndMacros(vmOptions, null, project);
     addVMParameters(params.getVMParametersList(), mavenHome, vmOptions);
 
-    Path confFile = MavenUtil.getMavenConfFilePath(Path.of(mavenHome));
-    if (Files.isDirectory(confFile)) {
+    File confFile = MavenUtil.getMavenConfFile(new File(mavenHome));
+    if (!confFile.isFile()) {
       throw new ExecutionException(
-        MavenProjectBundle.message("dialog.message.configuration.file.not.exists.in.maven.home", confFile.toAbsolutePath()));
+        MavenProjectBundle.message("dialog.message.configuration.file.not.exists.in.maven.home", confFile.getAbsolutePath()));
     }
 
     if (parameters.isResolveToWorkspace()) {
@@ -155,7 +147,7 @@ public final class MavenExternalParameters {
       }
     }
 
-    params.getVMParametersList().addProperty("classworlds.conf", confFile.toString());
+    params.getVMParametersList().addProperty("classworlds.conf", confFile.getPath());
 
     for (String path : getMavenClasspathEntries(mavenHome)) {
       params.getClassPath().add(path);
@@ -182,13 +174,15 @@ public final class MavenExternalParameters {
     return readJvmConfigOptions(workingDirPath);
   }
 
-  public static @NotNull String readJvmConfigOptions(@NotNull String workingDirPath) {
+  @NotNull
+  public static String readJvmConfigOptions(@NotNull String workingDirPath) {
     return Optional.ofNullable(getJvmConfig(workingDirPath))
       .map(jdkOpts -> toVmString(jdkOpts))
       .orElse("");
   }
 
-  public static @Nullable VirtualFile getJvmConfig(@NotNull String workingDirPath) {
+  @Nullable
+  public static VirtualFile getJvmConfig(@NotNull String workingDirPath) {
     return Optional.ofNullable(LocalFileSystem.getInstance().findFileByPath(workingDirPath))
       .map(baseDir -> baseDir.findChild(".mvn"))
       .map(mvn -> mvn.findChild("jvm.config"))
@@ -205,18 +199,18 @@ public final class MavenExternalParameters {
     }
   }
 
-  private static Path patchConfFile(Path conf, String library) throws IOException {
-    // TODO: how we should create temp file usung eel?
-    Path tmpConf = FileUtil.createTempFile("idea-", "-mvn.conf").toPath();
+  private static File patchConfFile(File conf, String library) throws IOException {
+    File tmpConf = FileUtil.createTempFile("idea-", "-mvn.conf");
+    tmpConf.deleteOnExit();
     patchConfFile(conf, tmpConf, library);
 
     return tmpConf;
   }
 
-  private static void patchConfFile(Path originalConf, Path dest, String library) throws IOException {
+  private static void patchConfFile(File originalConf, File dest, String library) throws IOException {
 
-    try (Scanner sc = new Scanner(originalConf, StandardCharsets.UTF_8);
-         BufferedWriter out = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(dest), StandardCharsets.UTF_8))) {
+    try (Scanner sc = new Scanner(originalConf);
+         BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dest), StandardCharsets.UTF_8))) {
       boolean patched = false;
 
       while (sc.hasNextLine()) {
@@ -316,7 +310,8 @@ public final class MavenExternalParameters {
     }
   }
 
-  private static @NotNull Sdk getJdk(@Nullable Project project, String jreName, boolean isGlobalRunnerSettings)
+  @NotNull
+  private static Sdk getJdk(@Nullable Project project, String jreName, boolean isGlobalRunnerSettings)
     throws ExecutionException {
     if (jreName.equals(MavenRunnerSettings.USE_INTERNAL_JAVA)) {
       return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
@@ -344,7 +339,7 @@ public final class MavenExternalParameters {
       }
 
       throw new ProjectJdkSettingsOpenerExecutionException(
-        RunnerBundle.message("dialog.message.project.jdk.not.specified.href.configure"), project);
+       RunnerBundle.message("dialog.message.project.jdk.not.specified.href.configure"), project);
     }
 
     if (jreName.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
@@ -389,7 +384,7 @@ public final class MavenExternalParameters {
     }
 
     for (Map.Entry<String, String> entry : runnerSettings.getMavenProperties().entrySet()) {
-      if (!entry.getKey().isEmpty()) {
+      if (entry.getKey().length() > 0) {
         parametersList.addProperty(entry.getKey(), entry.getValue());
       }
     }
@@ -421,22 +416,23 @@ public final class MavenExternalParameters {
    * @param project          used to creation fix if maven home not found
    * @param runConfiguration used to creation fix if maven home not found
    */
-  public static @NotNull @NlsSafe String resolveMavenHome(@NotNull MavenGeneralSettings coreSettings,
+  @NotNull
+  @NlsSafe
+  public static String resolveMavenHome(@NotNull MavenGeneralSettings coreSettings,
                                         @NotNull Project project,
                                         @NotNull String workingDir, @Nullable MavenRunConfiguration runConfiguration)
     throws ExecutionException {
     MavenHomeType type = coreSettings.getMavenHomeType();
-    Path file = null;
+    File file = null;
     if (type instanceof StaticResolvedMavenHomeType st) {
-      file = MavenUtil.getMavenHomePath(st);
+      file = MavenUtil.getMavenHomeFile(st);
     }
     if (type instanceof MavenWrapper) {
       MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getWrapper(workingDir);
       if (distribution != null) {
-        file = distribution.getMavenHome();
-      }
-      else {
-        file = MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome();
+        file = distribution.getMavenHome().toFile();
+      } else {
+        file = MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome().toFile();
       }
     }
 
@@ -446,19 +442,24 @@ public final class MavenExternalParameters {
                                      coreSettings, project, runConfiguration);
     }
 
-    if (!Files.exists(file)) {
-      throw createExecutionException(RunnerBundle.message("external.maven.home.does.not.exist", file),
-                                     RunnerBundle.message("external.maven.home.does.not.exist.with.fix", file),
+    if (!file.exists()) {
+      throw createExecutionException(RunnerBundle.message("external.maven.home.does.not.exist", file.getPath()),
+                                     RunnerBundle.message("external.maven.home.does.not.exist.with.fix", file.getPath()),
                                      coreSettings, project, runConfiguration);
     }
 
     if (!MavenUtil.isValidMavenHome(file)) {
-      throw createExecutionException(RunnerBundle.message("external.maven.home.invalid", file),
-                                     RunnerBundle.message("external.maven.home.invalid.with.fix", file),
+      throw createExecutionException(RunnerBundle.message("external.maven.home.invalid", file.getPath()),
+                                     RunnerBundle.message("external.maven.home.invalid.with.fix", file.getPath()),
                                      coreSettings, project, runConfiguration);
     }
 
-    return NioPathUtil.toCanonicalPath(file);
+    try {
+      return file.getCanonicalPath();
+    }
+    catch (IOException e) {
+      throw new ExecutionException(e.getMessage(), e);
+    }
   }
 
   private static ExecutionException createExecutionException(@NlsContexts.DialogMessage String text,
@@ -552,7 +553,7 @@ public final class MavenExternalParameters {
   public static String encodeProfiles(Map<String, Boolean> profiles) {
     StringBuilder stringBuilder = new StringBuilder();
     for (Map.Entry<String, Boolean> entry : profiles.entrySet()) {
-      if (!stringBuilder.isEmpty()) {
+      if (stringBuilder.length() != 0) {
         stringBuilder.append(",");
       }
       if (!entry.getValue()) {
@@ -567,7 +568,7 @@ public final class MavenExternalParameters {
 
     private final Project myProject;
 
-    ProjectSettingsOpenerExecutionException(final @NlsContexts.DialogMessage String s, Project project) {
+    ProjectSettingsOpenerExecutionException(@NlsContexts.DialogMessage final String s, Project project) {
       super(s);
       myProject = project;
     }
@@ -582,7 +583,7 @@ public final class MavenExternalParameters {
 
     private final Project myProject;
 
-    ProjectJdkSettingsOpenerExecutionException(final @NlsContexts.DialogMessage String s, Project project) {
+    ProjectJdkSettingsOpenerExecutionException(@NlsContexts.DialogMessage final String s, Project project) {
       super(s);
       myProject = project;
     }
@@ -597,7 +598,7 @@ public final class MavenExternalParameters {
 
     private final MavenRunConfiguration myRunConfiguration;
 
-    RunConfigurationOpenerExecutionException(final @NlsContexts.DialogMessage String s, MavenRunConfiguration runConfiguration) {
+    RunConfigurationOpenerExecutionException(@NlsContexts.DialogMessage final String s, MavenRunConfiguration runConfiguration) {
       super(s);
       myRunConfiguration = runConfiguration;
     }
@@ -610,7 +611,7 @@ public final class MavenExternalParameters {
     }
   }
 
-  private abstract static class WithHyperlinkExecutionException extends ExecutionException
+  private static abstract class WithHyperlinkExecutionException extends ExecutionException
     implements HyperlinkListener, NotificationListener {
 
     WithHyperlinkExecutionException(@NlsContexts.DialogMessage String s) {

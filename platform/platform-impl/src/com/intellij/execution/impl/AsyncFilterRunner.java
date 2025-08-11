@@ -9,25 +9,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Expirable;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.Promise;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -42,50 +38,9 @@ final class AsyncFilterRunner {
   private final Queue<HighlighterJob> myQueue = new ConcurrentLinkedQueue<>();
   private @NotNull List<FilterResult> myResults = new ArrayList<>();
 
-  /**
-   * If true, deletions from the document top are tracked manually, not via `RangeMarker`.
-   */
-  private final boolean myTrackDocumentChangesManually;
-
-  AsyncFilterRunner(@NotNull EditorHyperlinkSupport hyperlinks, @NotNull Editor editor, boolean trackDocumentChangesManually) {
+  AsyncFilterRunner(@NotNull EditorHyperlinkSupport hyperlinks, @NotNull Editor editor) {
     myHyperlinks = hyperlinks;
     myEditor = editor;
-    myTrackDocumentChangesManually = trackDocumentChangesManually;
-    if (trackDocumentChangesManually) {
-      trackDocumentChanges(editor.getDocument());
-    }
-  }
-
-  private void trackDocumentChanges(@NotNull Document document) {
-    document.addDocumentListener(new DocumentListener() {
-      @Override
-      public void documentChanged(@NotNull DocumentEvent event) {
-        if (event.getOffset() == 0 && event.getNewLength() == 0) {
-          if (event.getOldLength() > 0) {
-            for (DeltaTracker deltaTracker : collectActiveDeltaTrackers()) {
-              deltaTracker.onDeletedFromDocumentTop(event.getOldLength());
-            }
-          }
-        }
-        else {
-          for (DeltaTracker deltaTracker : collectActiveDeltaTrackers()) {
-            deltaTracker.stopAt(event.getOffset());
-          }
-        }
-      }
-    });
-  }
-
-  private @NotNull Set<DeltaTracker> collectActiveDeltaTrackers() {
-    List<DeltaTracker> pendingResultTrackers;
-    synchronized (myQueue) {
-      pendingResultTrackers = ContainerUtil.map(myResults, result -> result.myDelta);
-    }
-    Set<DeltaTracker> trackers = new HashSet<>(pendingResultTrackers);
-    for (HighlighterJob runningJob : myQueue) {
-      trackers.add(runningJob.delta);
-    }
-    return trackers;
   }
 
   void highlightHyperlinks(@NotNull Project project,
@@ -97,12 +52,6 @@ final class AsyncFilterRunner {
 
     Document document = myEditor.getDocument();
     long startStamp = document.getModificationStamp();
-    if (myTrackDocumentChangesManually) {
-      for (DeltaTracker deltaTracker : collectActiveDeltaTrackers()) {
-        deltaTracker.stopAt(document.getLineStartOffset(startLine));
-      }
-    }
-
     myQueue.offer(new HighlighterJob(project, customFilter, startLine, endLine, document, token));
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       runTasks();
@@ -165,10 +114,9 @@ final class AsyncFilterRunner {
     }
   }
 
-  @TestOnly
   void waitForPendingFilters(long timeoutMs) {
     ThreadingAssertions.assertEventDispatchThread();
-
+    
     long started = System.currentTimeMillis();
     while (true) {
       if (myQueue.isEmpty()) {
@@ -184,9 +132,6 @@ final class AsyncFilterRunner {
 
       if (System.currentTimeMillis() - started > timeoutMs) {
         return;
-      }
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        UIUtil.dispatchAllInvocationEvents();
       }
       TimeoutUtil.sleep(1);
     }
@@ -236,15 +181,7 @@ final class AsyncFilterRunner {
 
     void applyHighlights() {
       if (!myDelta.isOutdated()) {
-        myHyperlinks.highlightHyperlinks(myResult, item -> {
-          int startOffset = item.getHighlightStartOffset();
-          int endOffset = item.getHighlightEndOffset();
-          if (myDelta.isSnapshotRangeValid(startOffset, endOffset)) {
-            int offsetDelta = myDelta.getOffsetDelta();
-            return new TextRange(startOffset + offsetDelta, endOffset + offsetDelta);
-          }
-          return null;
-        });
+        myHyperlinks.highlightHyperlinks(myResult, myDelta.getOffsetDelta());
       }
     }
   }
@@ -268,7 +205,7 @@ final class AsyncFilterRunner {
       this.endLine = endLine;
       this.filter = filter;
 
-      delta = new DeltaTracker(AsyncFilterRunner.this, document, document.getLineEndOffset(endLine), expirableToken);
+      delta = new DeltaTracker(document, document.getLineEndOffset(endLine), expirableToken);
 
       snapshot = ((DocumentImpl)document).freeze();
     }
@@ -284,36 +221,26 @@ final class AsyncFilterRunner {
       return result == null ? null : new FilterResult(delta, result);
     }
 
-    private @Nullable Filter.Result analyzeLine(int line) {
-      int lineStartOffset = snapshot.getLineStartOffset(line);
-      int lineEndOffset = snapshot.getLineEndOffset(line);
-      if (!delta.isSnapshotRangeValid(lineStartOffset, lineEndOffset)) {
-        return null;
-      }
+    private Filter.Result analyzeLine(int line) {
+      int lineStart = snapshot.getLineStartOffset(line);
+      if (lineStart + delta.getOffsetDelta() < 0) return null;
 
       String lineText = EditorHyperlinkSupport.getLineText(snapshot, line, true);
-      int endOffset = lineStartOffset + lineText.length();
+      int endOffset = lineStart + lineText.length();
       return checkRange(filter, endOffset, filter.applyFilter(lineText, endOffset));
     }
 
   }
 
   private static final class DeltaTracker {
-    private final AsyncFilterRunner myRunner;
     private final int initialMarkerOffset;
     private final RangeMarker endMarker;
     private final @NotNull Expirable myExpirableToken;
 
-    /** These fields can be accessed only if {@link #myTrackDocumentChangesManually} is true */
-    private final AtomicInteger myDeletedLengthFromDocumentTop = new AtomicInteger(0);
-    private final AtomicInteger myStopOffset;
-
-    DeltaTracker(@NotNull AsyncFilterRunner runner, @NotNull Document document, int offset, @NotNull Expirable token) {
-      myRunner = runner;
+    DeltaTracker(Document document, int offset, @NotNull Expirable token) {
       myExpirableToken = token;
       initialMarkerOffset = offset;
       endMarker = document.createRangeMarker(initialMarkerOffset, initialMarkerOffset);
-      myStopOffset = new AtomicInteger(offset);
     }
 
     boolean isOutdated() {
@@ -321,30 +248,7 @@ final class AsyncFilterRunner {
     }
 
     int getOffsetDelta() {
-      if (myRunner.myTrackDocumentChangesManually) {
-        return -myDeletedLengthFromDocumentTop.get();
-      }
       return endMarker.getStartOffset() - initialMarkerOffset;
-    }
-
-    void onDeletedFromDocumentTop(int deletedLengthFromDocumentTop) {
-      myDeletedLengthFromDocumentTop.addAndGet(deletedLengthFromDocumentTop);
-    }
-
-    void stopAt(int offset) {
-      int snapshotOffset = offset + myDeletedLengthFromDocumentTop.get();
-      myStopOffset.set(Math.min(myStopOffset.get(), snapshotOffset));
-    }
-
-    boolean isSnapshotRangeValid(int startOffset, int endOffset) {
-      if (startOffset + getOffsetDelta() < 0) {
-        // the top of the document has been deleted, including this line
-        return false;
-      }
-      if (myRunner.myTrackDocumentChangesManually && endOffset > myStopOffset.get()) {
-        return false;
-      }
-      return true;
     }
   }
 

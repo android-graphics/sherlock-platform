@@ -11,11 +11,6 @@ internal class EdtCoroutineDispatcherFactory : MainDispatcherFactory {
   override val loadPriority: Int get() = 0
 
   override fun createDispatcher(allFactories: List<MainDispatcherFactory>): MainCoroutineDispatcher {
-    return if (System.getProperty("ide.install.ui.dispatcher.as.main.coroutine.dispatcher")?.toBooleanStrictOrNull() ?: true) {
-      EdtCoroutineDispatcher.Main
-    }
-    else {
-      EdtCoroutineDispatcher.Locking
-    }
+    return EdtCoroutineDispatcher
   }
 }

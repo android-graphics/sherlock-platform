@@ -4,7 +4,6 @@ package com.intellij.formatting;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -16,7 +15,6 @@ public interface FormattingRangesInfo {
   boolean isOnInsertedLine(int offset);
 
   @NotNull
-  @Unmodifiable
   List<TextRange> getTextRanges();
 
   /**

@@ -1,15 +1,17 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.ListStack;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.BitSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class IfExprent extends Exprent {
 
@@ -62,7 +64,7 @@ public class IfExprent extends Exprent {
 
   private Exprent condition;
 
-  public IfExprent(int ifType, ListStack<Exprent> stack, BitSet bytecodeOffsets) {
+  public IfExprent(int ifType, ListStack<Exprent> stack, Set<Integer> bytecodeOffsets) {
     this(null, bytecodeOffsets);
 
     if (ifType <= IF_LE) {
@@ -80,7 +82,7 @@ public class IfExprent extends Exprent {
     }
   }
 
-  private IfExprent(Exprent condition, BitSet bytecodeOffsets) {
+  private IfExprent(Exprent condition, Set<Integer> bytecodeOffsets) {
     super(EXPRENT_IF);
     this.condition = condition;
 
@@ -93,7 +95,8 @@ public class IfExprent extends Exprent {
   }
 
   @Override
-  public List<Exprent> getAllExprents(List<Exprent> lst) {
+  public List<Exprent> getAllExprents() {
+    List<Exprent> lst = new ArrayList<>();
     lst.add(condition);
     return lst;
   }
@@ -130,11 +133,5 @@ public class IfExprent extends Exprent {
 
   public void setCondition(Exprent condition) {
     this.condition = condition;
-  }
-
-  @Override
-  public void fillBytecodeRange(@Nullable BitSet values) {
-    measureBytecode(values, condition);
-    measureBytecode(values);
   }
 }

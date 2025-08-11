@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.versionBrowser;
 
 import com.intellij.openapi.vcs.VcsBundle;
@@ -54,15 +54,18 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
     myUseNumAfterFilter.setVisible(false);
   }
 
-  protected @Nls String getChangeNumberTitle() {
+  @Nls
+  protected String getChangeNumberTitle() {
     return VcsBundle.message("border.changes.filter.change.number.filter");
   }
 
-  protected @Nls String getChangeFromParseError() {
+  @Nls
+  protected String getChangeFromParseError() {
     return VcsBundle.message("error.change.from.must.be.a.valid.number");
   }
 
-  protected @Nls String getChangeToParseError() {
+  @Nls
+  protected String getChangeToParseError() {
     return VcsBundle.message("error.change.to.must.be.a.valid.number");
   }
 
@@ -115,8 +118,9 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
     myUseNumAfterFilter.addActionListener(filterListener);
   }
 
+  @NotNull
   @Override
-  public @NotNull T getSettings() {
+  public T getSettings() {
     saveValues(mySettings);
     return mySettings;
   }
@@ -128,8 +132,9 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
     updateAllEnabled(null);
   }
 
+  @Nullable
   @Override
-  public @Nullable String validateInput() {
+  public String validateInput() {
     if (myUseNumAfterFilter.isSelected()) {
       try {
         Long.parseLong(myNumAfter.getText());
@@ -154,8 +159,9 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
     updateAllEnabled(null);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDimensionServiceKey() {
+  public String getDimensionServiceKey() {
     return getClass().getName();
   }
 }

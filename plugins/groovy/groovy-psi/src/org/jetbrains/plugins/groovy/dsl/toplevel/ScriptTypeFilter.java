@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl.toplevel;
 
 import com.intellij.psi.PsiFile;
@@ -25,7 +25,8 @@ public class ScriptTypeFilter implements ContextFilter {
     return false;
   }
 
-  private static @NotNull String getScriptTypeId(@NotNull GroovyFile script) {
+  @NotNull
+  private static String getScriptTypeId(@NotNull GroovyFile script) {
     GroovyScriptType scriptType = GroovyScriptTypeDetector.getScriptType(script);
     return scriptType == null ? "default" : scriptType.getId();
   }

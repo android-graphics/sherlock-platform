@@ -3,18 +3,21 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
 
 public abstract class CreateVarFromUsageFix extends CreateFromUsageBaseFix {
-  protected final SmartPsiElementPointer<PsiReferenceExpression> myReferenceExpression;
+  protected final PsiReferenceExpression myReferenceExpression;
 
   public CreateVarFromUsageFix(PsiReferenceExpression referenceElement) {
-    myReferenceExpression = SmartPointerManager.createPointer(referenceElement);
+    myReferenceExpression = referenceElement;
   }
 
   @Override
   protected boolean isValidElement(PsiElement element) {
-    PsiReferenceExpression expression = (PsiReferenceExpression)element;
+    PsiReferenceExpression expression = (PsiReferenceExpression) element;
     return CreateFromUsageUtils.isValidReference(expression, false);
   }
 
@@ -25,17 +28,15 @@ public abstract class CreateVarFromUsageFix extends CreateFromUsageBaseFix {
 
   @Override
   protected PsiElement getElement() {
-    PsiReferenceExpression element = myReferenceExpression.getElement();
-    if (element == null) return null;
-    if (!element.isValid() || !canModify(element)) return null;
+    if (!myReferenceExpression.isValid() || !canModify(myReferenceExpression)) return null;
 
-    PsiElement parent = element.getParent();
+    PsiElement parent = myReferenceExpression.getParent();
 
     if (parent instanceof PsiMethodCallExpression) return null;
 
-    if (element.getReferenceNameElement() != null) {
-      if (!CreateFromUsageUtils.isValidReference(element, false)) {
-        return element;
+    if (myReferenceExpression.getReferenceNameElement() != null) {
+      if (!CreateFromUsageUtils.isValidReference(myReferenceExpression, false)) {
+        return myReferenceExpression;
       }
     }
 
@@ -44,9 +45,7 @@ public abstract class CreateVarFromUsageFix extends CreateFromUsageBaseFix {
 
   @Override
   protected boolean isAvailableImpl(int offset) {
-    PsiReferenceExpression element = myReferenceExpression.getElement();
-    if (element == null) return false;
-    setText(getText(element.getReferenceName()));
+    setText(getText(myReferenceExpression.getReferenceName()));
     return true;
   }
 

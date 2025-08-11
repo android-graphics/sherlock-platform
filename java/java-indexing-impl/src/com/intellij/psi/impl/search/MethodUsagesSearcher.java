@@ -1,14 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchRequestCollector;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -92,7 +89,8 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
     });
   }
 
-  protected @NotNull MethodTextOccurrenceProcessor getTextOccurrenceProcessor(PsiMethod @NotNull [] methods, @NotNull PsiClass aClass, boolean strictSignatureSearch) {
+  @NotNull
+  protected MethodTextOccurrenceProcessor getTextOccurrenceProcessor(PsiMethod @NotNull [] methods, @NotNull PsiClass aClass, boolean strictSignatureSearch) {
     return new MethodTextOccurrenceProcessor(aClass, strictSignatureSearch, methods);
   }
 }

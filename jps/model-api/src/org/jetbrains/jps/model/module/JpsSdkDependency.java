@@ -31,11 +31,5 @@ public interface JpsSdkDependency extends JpsDependencyElement {
   @Nullable
   JpsSdkReference<?> getSdkReference();
 
-  /**
-   * @deprecated always returns {@code false}
-   */
-  @Deprecated(forRemoval = true)
-  default boolean isInherited() {
-    return false;
-  }
+  boolean isInherited();
 }

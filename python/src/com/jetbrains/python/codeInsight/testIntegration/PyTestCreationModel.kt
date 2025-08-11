@@ -13,7 +13,6 @@ import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.testing.PythonUnitTestDetectorsBasedOnSettings
-import java.util.Locale
 
 /**
  * Created with [createByElement], then modified my user and provided to [PyTestCreator.createTest] to create test
@@ -30,7 +29,7 @@ class PyTestCreationModel(var fileName: String,
   companion object {
     private val String.asFunName
       get():String {
-        return replace(Regex("([a-z])([A-Z])"), "$1_$2").lowercase(Locale.getDefault())
+        return replace(Regex("([a-z])([A-Z])"), "$1_$2").toLowerCase()
       }
 
     /**

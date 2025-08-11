@@ -1,5 +1,4 @@
 // IS_APPLICABLE: false
-// K2_ERROR: Class 'C' is not abstract and does not implement abstract base class member:<br>val foo: Int
 // ERROR: Class 'C' is not abstract and does not implement abstract base class member public abstract val foo: Int defined in B
 interface A {
     val <caret>foo: Int

@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.openapi.util.io.ContentTooBigException;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -17,7 +16,6 @@ import java.security.MessageDigest;
 import static com.intellij.util.io.blobstorage.StreamlinedBlobStorage.NULL_ID;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-@ApiStatus.Internal
 public final class PersistentFSContentAccessor {
 
   private final @NotNull PersistentFSConnection connection;
@@ -29,44 +27,39 @@ public final class PersistentFSContentAccessor {
   @Nullable
   InputStream readContent(int fileId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
-    int contentId = connection.records().getContentRecordId(fileId);
+    int contentId = connection.getRecords().getContentRecordId(fileId);
     if (contentId == 0) return null;
     return readContentByContentId(contentId);
   }
 
   @NotNull
   InputStream readContentByContentId(int contentId) throws IOException {
-    return connection.contents().readStream(contentId);
+    return connection.getContents().readStream(contentId);
   }
 
   void writeContent(int fileId,
                     @NotNull ByteArraySequence content,
                     boolean fixedSizeHint) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
-    PersistentFSRecordsStorage records = connection.records();
+    PersistentFSRecordsStorage records = connection.getRecords();
 
-    int contentRecordId = writeContentRecord(content);
+    int contentRecordId = connection.getContents().storeRecord(content);
 
     records.setContentRecordId(fileId, contentRecordId);
   }
 
 
-  /**
-   * Stores content and return contentRecordId, by which content could be later retrieved.
-   * If the same content (bytes) was already stored -- method could return id of already existing record, without allocating
-   * & storing new record.
-   */
-  int writeContentRecord(@NotNull ByteArraySequence content) throws IOException, ContentTooBigException {
-    return connection.contents().storeRecord(content);
+  int allocateContentRecordAndStore(byte @NotNull [] content) throws IOException {
+    return connection.getContents().storeRecord(new ByteArraySequence(content));
   }
 
   @ApiStatus.Obsolete
   byte @Nullable [] getContentHash(int fileId) throws IOException {
-    int contentId = connection.records().getContentRecordId(fileId);
+    int contentId = connection.getRecords().getContentRecordId(fileId);
     if (contentId <= NULL_ID) {
       return null;
     }
-    return connection.contents().contentHash(contentId);
+    return connection.getContents().contentHash(contentId);
   }
 
   private static @NotNull MessageDigest contentHashDigest() {
@@ -128,10 +121,10 @@ public final class PersistentFSContentAccessor {
    * it entirely
    */
   int acquireContentRecord(int fileId) throws IOException {
-    return connection.records().getContentRecordId(fileId);
+    return connection.getRecords().getContentRecordId(fileId);
   }
 
-  void deleteContent(int fileId) {
+  void deleteContent(int fileId) throws IOException {
     //nothing: content records kept forever
   }
 

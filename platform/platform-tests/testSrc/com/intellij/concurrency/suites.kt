@@ -13,16 +13,6 @@ import org.junit.platform.suite.api.Suite
   WithThreadLocalTest::class,
   ThreadContextTest::class,
 
-  // general threading
-  NonBlockingReadActionTest::class,
-  ProgressRunnerTest::class,
-  EdtCoroutineDispatcherTest::class,
-  ImplicitReadTest::class,
-  LaterInvocatorTest::class,
-  ModalCoroutineTest::class,
-  ReadWritePropagationTest::class,
-  SwingThreadingTest::class,
-
   // contexts
   ContextSwitchTest::class,
   BlockingContextTest::class,
@@ -48,6 +38,7 @@ import org.junit.platform.suite.api.Suite
   // propagation
   ThreadContextPropagationTest::class,
   CancellationPropagationTest::class,
+  AlarmContextPropagationTest::class,
   MergingUpdateQueuePropagationTest::class,
   DocumentManagerPropagationTest::class,
   DumbServicePropagationTest::class,

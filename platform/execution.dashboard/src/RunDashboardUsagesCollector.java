@@ -36,8 +36,9 @@ final class RunDashboardUsagesCollector extends ProjectUsagesCollector {
     return GROUP;
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
+  public Set<MetricEvent> getMetrics(@NotNull Project project) {
     final Set<MetricEvent> metricEvents = new HashSet<>();
     RunDashboardManagerImpl runDashboardManager = (RunDashboardManagerImpl)RunDashboardManager.getInstance(project);
     final Set<String> dashboardTypes = new HashSet<>(runDashboardManager.getTypes());
@@ -71,13 +72,15 @@ final class RunDashboardUsagesCollector extends ProjectUsagesCollector {
 
 
   public static final class RunConfigurationTypeValidator extends CustomValidationRule {
+    @NotNull
     @Override
-    public @NotNull String getRuleId() {
+    public String getRuleId() {
       return "run_config";
     }
 
+    @NotNull
     @Override
-    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
       ConfigurationType configurationType = findConfigurationTypeById(data);
       if (configurationType == null) return ValidationResultType.REJECTED;

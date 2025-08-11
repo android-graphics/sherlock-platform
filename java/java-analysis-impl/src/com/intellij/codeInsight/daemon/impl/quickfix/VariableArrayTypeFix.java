@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -38,7 +38,8 @@ public final class VariableArrayTypeFix extends PsiUpdateModCommandAction<PsiArr
                                                                                                              : "fix.variable.type.family");
   }
 
-  public static @Nullable VariableArrayTypeFix createFix(PsiArrayInitializerExpression initializer, @NotNull PsiType componentType) {
+  @Nullable
+  public static VariableArrayTypeFix createFix(PsiArrayInitializerExpression initializer, @NotNull PsiType componentType) {
     PsiArrayType arrayType = new PsiArrayType(componentType);
     PsiArrayInitializerExpression arrayInitializer = initializer;
     while (arrayInitializer.getParent() instanceof PsiArrayInitializerExpression) {
@@ -80,7 +81,8 @@ public final class VariableArrayTypeFix extends PsiUpdateModCommandAction<PsiArr
     return ObjectUtils.tryCast(initializer.getParent(), PsiNewExpression.class);
   }
 
-  private static @Nullable PsiVariable getFromAssignment(final PsiAssignmentExpression assignment) {
+  @Nullable
+  private static PsiVariable getFromAssignment(final PsiAssignmentExpression assignment) {
     final PsiExpression reference = assignment.getLExpression();
     final PsiElement referencedElement = reference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)reference).resolve() : null;
     return referencedElement instanceof PsiVariable ? (PsiVariable)referencedElement : null;
@@ -96,7 +98,8 @@ public final class VariableArrayTypeFix extends PsiUpdateModCommandAction<PsiArr
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return myFamilyName;
   }
 

@@ -10,7 +10,6 @@ import com.intellij.execution.runners.AsyncProgramRunner
 import com.intellij.execution.runners.DebuggableRunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.xdebugger.XDebugProcess
@@ -21,8 +20,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.debugger.DebuggableRunConfiguration
-
-private val LOG = logger<DebuggableProgramRunner>()
+import org.jetbrains.rpc.LOG
 
 @InternalIgnoreDependencyViolation
 @Deprecated("Please consider implementing AsyncProgramRunner directly")

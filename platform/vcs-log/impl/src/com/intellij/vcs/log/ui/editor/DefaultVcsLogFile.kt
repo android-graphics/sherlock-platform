@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.editor
 
+import com.intellij.ide.actions.SplitAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -24,7 +24,7 @@ import javax.swing.JComponent
 
 internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.VcsLogComplexPath,
                                  private var filters: VcsLogFilterCollection? = null) :
-  VcsLogFile(VcsLogTabsUtil.getFullName(pathId.logId)), VirtualFilePathWrapper { //NON-NLS not displayed
+  VcsLogFile(VcsLogTabsManager.getFullName(pathId.logId)), VirtualFilePathWrapper { //NON-NLS not displayed
 
   private val fileSystemInstance: VcsLogVirtualFileSystem = VcsLogVirtualFileSystem.Holder.getInstance()
   internal val tabId get() = pathId.logId
@@ -34,7 +34,7 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
     set(value) = service<VcsLogEditorTabNameCache>().putTabName(path, value)
 
   init {
-    putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
+    putUserData(SplitAction.FORBID_TAB_SPLIT, true)
   }
 
   override fun createMainComponent(project: Project): JComponent {
@@ -46,9 +46,9 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
       try {
         val factory = tabsManager.getPersistentVcsLogUiFactory(tabId, VcsLogTabLocation.EDITOR, filters)
         val ui = logManager.createLogUi(factory, VcsLogTabLocation.EDITOR)
-        tabName = VcsLogTabsUtil.generateDisplayName(ui)
+        tabName = VcsLogTabsManager.generateDisplayName(ui)
         ui.onDisplayNameChange {
-          tabName = VcsLogTabsUtil.generateDisplayName(ui)
+          tabName = VcsLogTabsManager.generateDisplayName(ui)
           VcsLogEditorUtil.updateTabName(project, ui)
         }
         if (filters != null) filters = null
@@ -89,7 +89,7 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
   }
 }
 
-internal class DefaultVcsLogFileTabTitleProvider : EditorTabTitleProvider, DumbAware {
+class DefaultVcsLogFileTabTitleProvider : EditorTabTitleProvider, DumbAware {
 
   override fun getEditorTabTooltipText(project: Project, file: VirtualFile): String? {
     if (file !is DefaultVcsLogFile) return null
@@ -104,7 +104,7 @@ internal class DefaultVcsLogFileTabTitleProvider : EditorTabTitleProvider, DumbA
 
 @Service(Service.Level.APP)
 @State(name = "Vcs.Log.Editor.Tab.Names", storages = [Storage(StoragePathMacros.CACHE_FILE)])
-private class VcsLogEditorTabNameCache : SimplePersistentStateComponent<VcsLogEditorTabNameCache.MyState>(MyState()) {
+class VcsLogEditorTabNameCache : SimplePersistentStateComponent<VcsLogEditorTabNameCache.MyState>(MyState()) {
 
   fun getTabName(path: String) = state.pathToTabName[path]
 

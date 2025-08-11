@@ -10,9 +10,4 @@ fun foo() {
     require(true)
     requireNotNull(true)
     check(true)
-    // blacklisted from java
-    buildList {
-        add("a")
-    }
-    println("Kodee")
 }

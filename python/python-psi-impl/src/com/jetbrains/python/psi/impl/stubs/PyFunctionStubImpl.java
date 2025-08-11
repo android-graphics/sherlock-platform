@@ -1,17 +1,15 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl.stubs;
 
-import com.google.common.collect.RangeSet;
-import com.intellij.openapi.util.Version;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyFunctionStubImpl extends PyVersionSpecificStubBase<PyFunction> implements PyFunctionStub {
+public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFunctionStub {
   private final String myName;
   private final String myDocString;
   private final String myDeprecationMessage;
@@ -30,9 +28,8 @@ public class PyFunctionStubImpl extends PyVersionSpecificStubBase<PyFunction> im
                             @Nullable String typeCommentContent,
                             @Nullable String annotation,
                             final StubElement parent,
-                            @NotNull IStubElementType stubElementType,
-                            @NotNull RangeSet<Version> versions) {
-    super(parent, stubElementType, versions);
+                            @NotNull IStubElementType stubElementType) {
+    super(parent, stubElementType);
     myName = name;
     myDocString = docString;
     myDeprecationMessage = deprecationMessage;
@@ -43,28 +40,33 @@ public class PyFunctionStubImpl extends PyVersionSpecificStubBase<PyFunction> im
     myAnnotation = annotation;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getName() {
+  public String getName() {
     return myName;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getDocString() {
+  public String getDocString() {
     return myDocString;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getDeprecationMessage() {
+  public String getDeprecationMessage() {
     return myDeprecationMessage;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getTypeComment() {
+  public String getTypeComment() {
     return myTypeComment;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getAnnotation() {
+  public String getAnnotation() {
     return myAnnotation;
   }
 
@@ -85,17 +87,6 @@ public class PyFunctionStubImpl extends PyVersionSpecificStubBase<PyFunction> im
 
   @Override
   public String toString() {
-    // @formatter:off
-    return "PyFunctionStubImpl{" +
-           "myName='" + myName + '\'' +
-           ", myDocString='" + (myDocString != null ? StringUtil.escapeStringCharacters(myDocString) : null) + '\'' +
-           ", myDeprecationMessage='" + (myDeprecationMessage != null ? StringUtil.escapeStringCharacters(myDeprecationMessage) : null) + '\'' +
-           ", myAsync=" + myAsync +
-           ", myGenerator=" + myGenerator +
-           ", myOnlyRaisesNotImplementedError=" + myOnlyRaisesNotImplementedError +
-           ", myTypeComment='" + myTypeComment + '\'' +
-           ", myAnnotation='" + myAnnotation + '\'' +
-           '}';
-    // @formatter:on
+    return "PyFunctionStub(" + myName + ")";
   }
 }

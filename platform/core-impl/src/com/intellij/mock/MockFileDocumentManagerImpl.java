@@ -9,7 +9,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,13 +35,16 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
 
   @Override
   public Document getDocument(@NotNull VirtualFile file) {
-    if (file.isDirectory() || isBinaryWithoutDecompiler(file)) return null;
-    return ConcurrencyUtil.computeIfAbsent(file, MOCK_DOC_KEY, () -> {
+    Document document = file.getUserData(MOCK_DOC_KEY);
+    if (document == null) {
+      if (file.isDirectory() || isBinaryWithoutDecompiler(file)) return null;
+
       CharSequence text = LoadTextUtil.loadText(file);
-      Document document = myFactory.fun(text);
+      document = myFactory.fun(text);
       document.putUserData(MOCK_VIRTUAL_FILE_KEY, file);
-      return document;
-    });
+      document = file.putUserDataIfAbsent(MOCK_DOC_KEY, document);
+    }
+    return document;
   }
 
   @Override

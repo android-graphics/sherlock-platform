@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.externalSystem.model.execution;
 
 import com.intellij.openapi.externalSystem.model.task.TaskData;
@@ -12,10 +26,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ExternalTaskPojo implements Comparable<ExternalTaskPojo> {
   
-  private @NotNull String myName;
-  private @NotNull String myLinkedExternalProjectPath;
+  @NotNull private String myName;
+  @NotNull private String myLinkedExternalProjectPath;
   
-  private @Nullable String myDescription;
+  @Nullable private String myDescription;
 
   @SuppressWarnings("UnusedDeclaration")
   public ExternalTaskPojo() {
@@ -29,11 +43,13 @@ public class ExternalTaskPojo implements Comparable<ExternalTaskPojo> {
     myDescription = description;
   }
 
-  public static @NotNull ExternalTaskPojo from(@NotNull TaskData data) {
+  @NotNull
+  public static ExternalTaskPojo from(@NotNull TaskData data) {
     return new ExternalTaskPojo(data.getName(), data.getLinkedExternalProjectPath(), data.getDescription());
   }
   
-  public @NotNull @NlsSafe String getName() {
+  @NotNull
+  public @NlsSafe String getName() {
     return myName;
   }
 
@@ -41,7 +57,8 @@ public class ExternalTaskPojo implements Comparable<ExternalTaskPojo> {
     myName = name;
   }
 
-  public @Nullable @NlsSafe String getDescription() {
+  @Nullable
+  public @NlsSafe String getDescription() {
     return myDescription;
   }
 
@@ -49,7 +66,8 @@ public class ExternalTaskPojo implements Comparable<ExternalTaskPojo> {
     myDescription = description;
   }
 
-  public @NotNull String getLinkedExternalProjectPath() {
+  @NotNull
+  public String getLinkedExternalProjectPath() {
     return myLinkedExternalProjectPath;
   }
 

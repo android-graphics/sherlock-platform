@@ -62,7 +62,7 @@ public final class AsyncEventSupport {
           return;
         }
         List<AsyncFileListener.ChangeApplier> appliers = AsyncEventSupport.appliers.remove(events);
-        if (appliers != null && !appliers.isEmpty()) afterVfsChange(appliers);
+        afterVfsChange(appliers);
       }
     });
   }

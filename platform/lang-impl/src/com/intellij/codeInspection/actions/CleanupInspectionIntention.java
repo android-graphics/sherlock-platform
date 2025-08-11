@@ -1,4 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -12,7 +13,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.lang.LangBundle;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -22,23 +22,19 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-@ApiStatus.Internal
 public final class CleanupInspectionIntention implements IntentionAction, HighPriorityAction {
-  private final @NotNull InspectionToolWrapper<?,?> myToolWrapper;
+  @NotNull
+  private final InspectionToolWrapper<?,?> myToolWrapper;
   private final FileModifier myQuickfix;
-  private final @Nullable PsiFile myFile;
+  @Nullable private final PsiFile myFile;
   private final String myText;
 
   public CleanupInspectionIntention(@NotNull InspectionToolWrapper<?,?> toolWrapper,
@@ -52,17 +48,19 @@ public final class CleanupInspectionIntention implements IntentionAction, HighPr
   }
 
   @Override
-  public @NotNull String getText() {
+  @NotNull
+  public String getText() {
     return InspectionsBundle.message("fix.all.inspection.problems.in.file", myToolWrapper.getDisplayName());
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return getText();
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     String message = findAndFix(project, file);
 
     if (message != null) {
@@ -70,25 +68,20 @@ public final class CleanupInspectionIntention implements IntentionAction, HighPr
     }
   }
 
-  public @NlsContexts.HintText @Nullable String findAndFix(@NotNull Project project, PsiFile file) {
+  @NlsContexts.HintText
+  @Nullable
+  public String findAndFix(@NotNull Project project, PsiFile file) {
     assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "do not run under write action";
     PsiFile targetFile = myFile == null ? file : myFile;
-    if (targetFile == null) return null;
-    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(targetFile.getProject());
-    boolean injected = manager.isInjectedFragment(targetFile);
     List<ProblemDescriptor> descriptions;
-    if (injected) {
-      descriptions = new ArrayList<>();
-      PsiFile topLevelFile = manager.getTopLevelFile(targetFile);
-      PsiTreeUtil.processElements(topLevelFile, PsiLanguageInjectionHost.class, host ->  {
-        manager.enumerateEx(host, topLevelFile, false, (injectedPsi, places) -> {
-          descriptions.addAll(getDescriptors(project, injectedPsi));
-        });
-        return true;
-      });
+    try {
+      descriptions = ReadAction.nonBlocking(() -> ProgressManager.getInstance().runProcess(() -> {
+              InspectionManager inspectionManager = InspectionManager.getInstance(project);
+              return InspectionEngine.runInspectionOnFile(targetFile, myToolWrapper, inspectionManager.createNewGlobalContext());
+            }, new DaemonProgressIndicator())).submit(AppExecutorUtil.getAppExecutorService()).get();
     }
-    else {
-      descriptions = getDescriptors(project, targetFile);
+    catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
     }
 
     String message = null;
@@ -102,25 +95,12 @@ public final class CleanupInspectionIntention implements IntentionAction, HighPr
     return message;
   }
 
-  private List<ProblemDescriptor> getDescriptors(@NotNull Project project, PsiFile targetFile) {
-    List<ProblemDescriptor> descriptions;
-    try {
-      descriptions = ReadAction.nonBlocking(() -> ProgressManager.getInstance().runProcess(() -> {
-        InspectionManager inspectionManager = InspectionManager.getInstance(project);
-        return InspectionEngine.runInspectionOnFile(targetFile, myToolWrapper, inspectionManager.createNewGlobalContext());
-      }, new DaemonProgressIndicator())).submit(AppExecutorUtil.getAppExecutorService()).get();
-    }
-    catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-    return descriptions;
-  }
-
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return myQuickfix.getClass() != EmptyIntentionAction.class &&
            (myQuickfix.startInWriteAction() || myQuickfix instanceof BatchQuickFix || myQuickfix instanceof ModCommandQuickFix) &&
-           editor != null && !(myToolWrapper instanceof LocalInspectionToolWrapper wrapper && wrapper.isUnfair());
+           editor != null &&
+           !(myToolWrapper instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)myToolWrapper).isUnfair());
   }
 
   @Override

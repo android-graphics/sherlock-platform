@@ -9,17 +9,17 @@ import org.jetbrains.java.decompiler.util.VBStyleCollection;
 import java.util.*;
 
 public class VarVersionsGraph {
-  public final VBStyleCollection<VarVersionNode, VarVersion> nodes = new VBStyleCollection<>();
+  public final VBStyleCollection<VarVersionNode, VarVersionPair> nodes = new VBStyleCollection<>();
 
   private GenericDominatorEngine engine;
 
-  public VarVersionNode createNode(VarVersion ver) {
+  public VarVersionNode createNode(VarVersionPair ver) {
     VarVersionNode node;
     nodes.addWithKey(node = new VarVersionNode(ver.var, ver.version), ver);
     return node;
   }
 
-  public void addNodes(Collection<VarVersionNode> colnodes, Collection<VarVersion> colpaars) {
+  public void addNodes(Collection<VarVersionNode> colnodes, Collection<VarVersionPair> colpaars) {
     nodes.addAllWithKey(colnodes, colpaars);
   }
 

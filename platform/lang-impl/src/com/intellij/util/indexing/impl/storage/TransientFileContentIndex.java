@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.indexing.FileBasedIndexEx;
 import com.intellij.util.indexing.FileBasedIndexExtension;
@@ -12,6 +13,7 @@ import com.intellij.util.indexing.impl.*;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +23,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** In-memory index, with persistent index as a 'backend' storage -- so it is not really 'transient' */
 @Internal
 public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwareMapReduceIndex.IndexerIdHolder>
   extends VfsAwareMapReduceIndex<Key, Value, FileCachedData> {
@@ -44,7 +45,6 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
 
             @Override
             public void clearIndexData() {
-              //TODO why we don't clear TransientChangesIndexStorage's in-memory cache?
               indexStorageLayout.clearIndexData();
             }
 
@@ -61,8 +61,9 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
     installMemoryModeListener();
   }
 
+  @NotNull
   @Override
-  protected @NotNull InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) throws IOException {
+  protected InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) throws IOException {
     if (myInMemoryMode.get()) {
       Map<Key, Value> keysAndValues = myInMemoryKeysAndValues.get(inputId);
       if (keysAndValues != null) {
@@ -74,8 +75,8 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
 
   @Override
   protected void updateForwardIndex(int inputId, @NotNull InputData<Key, Value> data) throws IOException {
-    if (FileBasedIndexEx.doTraceStubUpdates(indexId())) {
-      LOG.info("updateForwardIndex,inputId=" + indexId() + ",index=" + indexId() + ",inMemory=" + myInMemoryMode.get());
+    if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
+      LOG.info("updateForwardIndex,inputId=" + myIndexId + ",index=" + myIndexId + ",inMemory=" + myInMemoryMode.get());
     }
 
     if (myInMemoryMode.get()) {
@@ -87,7 +88,8 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
   }
 
   @Override
-  protected @Nullable Map<Key, Value> getNullableIndexedData(int fileId) throws IOException, StorageException {
+  @Nullable
+  protected Map<Key, Value> getNullableIndexedData(int fileId) throws IOException, StorageException {
     if (myInMemoryMode.get()) {
       Map<Key, Value> map = myInMemoryKeysAndValues.get(fileId);
       if (map != null) return map;
@@ -107,8 +109,8 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
 
           @Override
           public void memoryStorageCleared() {
-            if (FileBasedIndexEx.doTraceStubUpdates(indexId())) {
-              LOG.info("memoryStorageCleared,index=" + indexId());
+            if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
+              LOG.info("memoryStorageCleared,index=" + myIndexId);
             }
             myInMemoryKeysAndValues.clear();
           }
@@ -126,20 +128,25 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
     if (IndexDebugProperties.DEBUG) {
       LOG.assertTrue(ProgressManager.getInstance().isInNonCancelableSection());
     }
-    //TODO RC: do we need a lock around here?
-    if (FileBasedIndexEx.doTraceStubUpdates(indexId())) {
-      LOG.info("removeTransientDataForFile,inputId=" + inputId + ",index=" + indexId());
-    }
-    Map<Key, Value> keyValueMap = myInMemoryKeysAndValues.remove(inputId);
-    if (keyValueMap == null) return;
-
+    getLock().writeLock().lock();
     try {
-      removeTransientDataForInMemoryKeys(inputId, keyValueMap);
-      InputDataDiffBuilder<Key, Value> builder = getKeysDiffBuilder(inputId);
-      removeTransientDataForKeys(inputId, builder);
+      if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
+        LOG.info("removeTransientDataForFile,inputId=" + inputId + ",index=" + myIndexId);
+      }
+      Map<Key, Value> keyValueMap = myInMemoryKeysAndValues.remove(inputId);
+      if (keyValueMap == null) return;
+
+      try {
+        removeTransientDataForInMemoryKeys(inputId, keyValueMap);
+        InputDataDiffBuilder<Key, Value> builder = getKeysDiffBuilder(inputId);
+        removeTransientDataForKeys(inputId, builder);
+      }
+      catch (IOException throwable) {
+        throw new RuntimeException(throwable);
+      }
     }
-    catch (IOException throwable) {
-      throw new RuntimeException(throwable);
+    finally {
+      getLock().writeLock().unlock();
     }
   }
 
@@ -176,8 +183,7 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
   @Override
   public void cleanupForNextTest() {
     IndexStorage<Key, Value> memStorage = getStorage();
-    //TODO RC: Other modifications (e.g.removeTransientDataForFile) are protected with writeLock?
-    memStorage.clearCaches();
+    ConcurrencyUtil.withLock(getLock().readLock(), () -> memStorage.clearCaches());
   }
 
   public static <Key, Value> TransientFileContentIndex<Key, Value, VfsAwareMapReduceIndex.IndexerIdHolder> createIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,

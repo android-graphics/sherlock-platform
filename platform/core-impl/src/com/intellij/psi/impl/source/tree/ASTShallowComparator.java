@@ -7,12 +7,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.util.ThreeState;
 import com.intellij.util.diff.ShallowNodeComparator;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-@ApiStatus.Internal
 public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTNode> {
   private final ProgressIndicator myIndicator;
 

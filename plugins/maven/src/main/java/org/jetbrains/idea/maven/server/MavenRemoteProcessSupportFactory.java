@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.execution.process.ProcessEvent;
@@ -50,7 +50,8 @@ public interface MavenRemoteProcessSupportFactory {
     throw new UnsupportedOperationException();
   }
 
-  static @NotNull MavenRemoteProcessSupportFactory forProject(@NotNull Project project) {
+  @NotNull
+  static MavenRemoteProcessSupportFactory forProject(@NotNull Project project) {
     MavenRemoteProcessSupportFactory applicable = MAVEN_SERVER_SUPPORT_EP_NAME.findFirstSafe(factory -> factory.isApplicable(project));
     if (applicable == null) {
       return new LocalMavenRemoteProcessSupportFactory();
@@ -58,7 +59,8 @@ public interface MavenRemoteProcessSupportFactory {
     return applicable;
   }
 
-  static @NotNull MavenRemoteProcessSupportFactory forIndexer() {
+  @NotNull
+  static MavenRemoteProcessSupportFactory forIndexer() {
     return new LocalMavenRemoteProcessSupportFactory();
   }
 

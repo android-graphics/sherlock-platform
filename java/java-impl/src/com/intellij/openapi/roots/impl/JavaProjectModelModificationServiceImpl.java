@@ -4,7 +4,6 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -126,10 +125,6 @@ public final class JavaProjectModelModificationServiceImpl extends JavaProjectMo
     if (to == null) return;
     PsiJavaModule fromModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByModule(from, scope == DependencyScope.TEST));
     if (fromModule == null) return;
-    CommandProcessor.getInstance().runUndoTransparentAction(() -> {
-      WriteAction.run(() -> {
-        JavaModuleGraphUtil.addDependency(fromModule, to, scope);
-      });
-    });
+    WriteAction.run(() -> JavaModuleGraphUtil.addDependency(fromModule, to, scope));
   }
 }

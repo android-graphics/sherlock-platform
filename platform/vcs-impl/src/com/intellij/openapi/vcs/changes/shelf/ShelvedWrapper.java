@@ -16,7 +16,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,11 +25,10 @@ import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
-@ApiStatus.Internal
 public class ShelvedWrapper extends ChangeViewDiffRequestProcessor.Wrapper implements SavedPatchesProvider.ChangeObject {
-  private final @Nullable ShelvedChange myShelvedChange;
-  private final @Nullable ShelvedBinaryFile myBinaryFile;
-  private final @NotNull ShelvedChangeList myChangeList;
+  @Nullable private final ShelvedChange myShelvedChange;
+  @Nullable private final ShelvedBinaryFile myBinaryFile;
+  @NotNull private final ShelvedChangeList myChangeList;
 
   public ShelvedWrapper(@Nullable ShelvedChange shelvedChange,
                         @Nullable ShelvedBinaryFile binaryFile,
@@ -48,7 +46,8 @@ public class ShelvedWrapper extends ChangeViewDiffRequestProcessor.Wrapper imple
     this(null, binaryFile, changeList);
   }
 
-  public @NotNull ShelvedChangeList getChangeList() {
+  @NotNull
+  public ShelvedChangeList getChangeList() {
     return myChangeList;
   }
 
@@ -57,25 +56,30 @@ public class ShelvedWrapper extends ChangeViewDiffRequestProcessor.Wrapper imple
     return myShelvedChange != null ? myShelvedChange : Objects.requireNonNull(myBinaryFile);
   }
 
+  @Nullable
   @Override
-  public @Nullable ChangesBrowserNode.Tag getTag() {
+  public ChangesBrowserNode.Tag getTag() {
     return new ShelvedListTag(myChangeList);
   }
 
-  public @Nullable ShelvedChange getShelvedChange() {
+  @Nullable
+  public ShelvedChange getShelvedChange() {
     return myShelvedChange;
   }
 
-  public @Nullable ShelvedBinaryFile getBinaryFile() {
+  @Nullable
+  public ShelvedBinaryFile getBinaryFile() {
     return myBinaryFile;
   }
 
-  public @NotNull String getPath() {
+  @NotNull
+  public String getPath() {
     return chooseNotNull(getAfterPath(), getBeforePath());
   }
 
+  @Nullable
   @Override
-  public @Nullable FilePath getOriginalFilePath() {
+  public FilePath getOriginalFilePath() {
     ContentRevision beforeRevision = myShelvedChange != null ? myShelvedChange.getChange().getBeforeRevision() : null;
     if (beforeRevision != null) {
       return beforeRevision.getFile();
@@ -85,12 +89,14 @@ public class ShelvedWrapper extends ChangeViewDiffRequestProcessor.Wrapper imple
     return VcsUtil.getFilePath(beforePath, false);
   }
 
-  public @NlsSafe String getRequestName() {
+  @NlsSafe
+  public String getRequestName() {
     return FileUtil.toSystemDependentName(getPath());
   }
 
+  @NotNull
   @Override
-  public @NotNull @Nls String getPresentableName() {
+  public @Nls String getPresentableName() {
     if (myShelvedChange == null) {
       return getRequestName();
     }
@@ -98,7 +104,7 @@ public class ShelvedWrapper extends ChangeViewDiffRequestProcessor.Wrapper imple
     return ChangesUtil.getFilePath(myShelvedChange.getChange()).getName();
   }
 
-  public String getBeforePath() {
+  String getBeforePath() {
     return myShelvedChange != null ? myShelvedChange.getBeforePath() : Objects.requireNonNull(myBinaryFile).BEFORE_PATH;
   }
 
@@ -113,16 +119,17 @@ public class ShelvedWrapper extends ChangeViewDiffRequestProcessor.Wrapper imple
   }
 
   @Override
-  public @NotNull FileStatus getFileStatus() {
+  @NotNull
+  public FileStatus getFileStatus() {
     return myShelvedChange != null ? myShelvedChange.getFileStatus() : Objects.requireNonNull(myBinaryFile).getFileStatus();
   }
 
-  @ApiStatus.Internal
-  public Change getChangeWithLocal(@NotNull Project project) {
+  Change getChangeWithLocal(@NotNull Project project) {
     return myShelvedChange != null ? myShelvedChange.getChange() : Objects.requireNonNull(myBinaryFile).createChange(project);
   }
 
-  public @Nullable VirtualFile getBeforeVFUnderProject(final @NotNull Project project) {
+  @Nullable
+  public VirtualFile getBeforeVFUnderProject(@NotNull final Project project) {
     if (getBeforePath() == null || project.getBasePath() == null) return null;
     final File baseDir = new File(project.getBasePath());
     final File file = new File(baseDir, getBeforePath());
@@ -135,13 +142,15 @@ public class ShelvedWrapper extends ChangeViewDiffRequestProcessor.Wrapper imple
     return new ShelvedWrapperDiffRequestProducer(project, this);
   }
 
+  @Nullable
   @Override
-  public @Nullable ChangeDiffRequestChain.Producer createDiffRequestProducer(@Nullable Project project) {
+  public ChangeDiffRequestChain.Producer createDiffRequestProducer(@Nullable Project project) {
     return createProducer(project);
   }
 
+  @Nullable
   @Override
-  public @Nullable ChangeDiffRequestChain.Producer createDiffWithLocalRequestProducer(@Nullable Project project, boolean useBeforeVersion) {
+  public ChangeDiffRequestChain.Producer createDiffWithLocalRequestProducer(@Nullable Project project, boolean useBeforeVersion) {
     if (useBeforeVersion || project == null) return null;
     return DiffShelvedChangesActionProvider.createDiffProducer(project, this, true);
   }
@@ -151,8 +160,9 @@ public class ShelvedWrapper extends ChangeViewDiffRequestProcessor.Wrapper imple
       super(value);
     }
 
+    @Nls
     @Override
-    public @Nls String toString() {
+    public String toString() {
       return value.getDescription();
     }
   }

@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.onboarding.k2
 
 import com.intellij.diagnostic.VMOptions
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.isPluginWhichDependsOnKotlinPluginInK2ModeAndItDoesNotSupportK2Mode
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -16,7 +18,6 @@ import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.base.plugin.getPluginsDependingOnKotlinPluginInK2ModeAndIncompatibleWithIt
 import org.jetbrains.kotlin.idea.base.util.containsNonScriptKotlinFile
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
@@ -69,8 +70,10 @@ class EnableK2NotificationService {
     }
 
     private fun hasIncompatibleWithK2ModeThirdPartyPluginsEnabled(): Boolean {
-        return getPluginsDependingOnKotlinPluginInK2ModeAndIncompatibleWithIt()
-            .any { !it.isBundled && it.isEnabled }
+        val allEnabledThirdPartyPlugins = PluginManagerCore.getPluginSet().allPlugins.filter { !it.isBundled && it.isEnabled }
+        return allEnabledThirdPartyPlugins.any {
+            isPluginWhichDependsOnKotlinPluginInK2ModeAndItDoesNotSupportK2Mode(it)
+        }
         // Code for future: get all incompatible plugins:
 
         /*        val pluginsToSwitchOff = mutableSetOf<IdeaPluginDescriptorImpl>()

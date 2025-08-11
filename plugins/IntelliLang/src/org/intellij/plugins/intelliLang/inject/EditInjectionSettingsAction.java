@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.intellij.plugins.intelliLang.inject;
 
@@ -23,15 +23,17 @@ import java.util.Collections;
 /**
  * @author Gregory.Shrago
  */
-final class EditInjectionSettingsAction implements IntentionAction, LowPriorityAction {
+public class EditInjectionSettingsAction implements IntentionAction, LowPriorityAction {
 
   @Override
-  public @NotNull String getText() {
+  @NotNull
+  public String getText() {
     return IntelliLangBundle.message("intention.name.language.injection.settings");
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return IntelliLangBundle.message("intention.family.name.edit.injection.settings");
   }
 
@@ -45,7 +47,7 @@ final class EditInjectionSettingsAction implements IntentionAction, LowPriorityA
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     ApplicationManager.getApplication().runReadAction(() -> invokeImpl(project, editor, file));
   }
 

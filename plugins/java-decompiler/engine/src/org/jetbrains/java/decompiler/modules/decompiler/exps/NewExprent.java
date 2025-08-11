@@ -1,8 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassWriter;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
@@ -12,12 +10,11 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
-import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericClassDescriptor;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
 import org.jetbrains.java.decompiler.util.ListStack;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
@@ -32,15 +29,13 @@ public class NewExprent extends Exprent {
   private boolean isVarArgParam;
   private boolean anonymous;
   private boolean lambda;
-  private boolean methodReference = false;
   private boolean enumConst;
-  private List<VarType> genericArgs = new ArrayList<>();
-  private @Nullable VarType inferredType;
-  public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, BitSet bytecodeOffsets) {
+
+  public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, Set<Integer> bytecodeOffsets) {
     this(newType, getDimensions(arrayDim, stack), bytecodeOffsets);
   }
 
-  public NewExprent(VarType newType, List<Exprent> lstDims, BitSet bytecodeOffsets) {
+  public NewExprent(VarType newType, List<Exprent> lstDims, Set<Integer> bytecodeOffsets) {
     super(EXPRENT_NEW);
     this.newType = newType;
     this.lstDims = lstDims;
@@ -53,7 +48,6 @@ public class NewExprent extends Exprent {
         anonymous = true;
         if (node.type == ClassNode.CLASS_LAMBDA) {
           lambda = true;
-          methodReference = node.lambdaInformation.is_method_reference;
         }
       }
     }
@@ -70,32 +64,8 @@ public class NewExprent extends Exprent {
   }
 
   @Override
-  public @NotNull VarType getExprType() {
-    if (inferredType != null) {
-      return inferredType;
-    }
-    VarType currentType =
-      anonymous ? DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.getValue()).anonymousClassType : newType;
-    if (currentType == null) {
-      return VarType.VARTYPE_NULL;
-    }
-    return currentType;
-  }
-
-  @Override
-  public void inferExprType(VarType upperBound) {
-    genericArgs.clear();
-    if (newType.getType() == CodeConstants.TYPE_OBJECT && newType.getArrayDim() == 0) {
-      StructClass node = DecompilerContext.getStructContext().getClass(newType.getValue());
-
-      if (node != null && node.getSignature() != null) {
-        GenericClassDescriptor sig = node.getSignature();
-        VarType _new = this.gatherGenerics(upperBound, sig.genericType, sig.fparameters, genericArgs);
-        if (sig.genericType != _new) {
-          inferredType = _new;
-        }
-      }
-    }
+  public VarType getExprType() {
+    return anonymous ? DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.getValue()).anonymousClassType : newType;
   }
 
   @Override
@@ -124,8 +94,9 @@ public class NewExprent extends Exprent {
   }
 
   @Override
+  public List<Exprent> getAllExprents() {
+    List<Exprent> lst = new ArrayList<>();
 
-  public List<Exprent> getAllExprents(List<Exprent> lst) {
     if (newType.getArrayDim() != 0) {
       lst.addAll(lstDims);
       lst.addAll(lstArrayElements);
@@ -198,17 +169,17 @@ public class NewExprent extends Exprent {
             }
           }
 
-          GenericClassDescriptor descriptor = child.getWrapper().getClassStruct().getSignature();
+          GenericClassDescriptor descriptor = ClassWriter.getGenericClassDescriptor(child.classStruct);
           if (descriptor != null) {
             if (descriptor.superinterfaces.isEmpty()) {
-              buf.append(ExprProcessor.getCastTypeName(descriptor.superclass, Collections.emptyList()));
+              buf.append(GenericMain.getGenericCastTypeName(descriptor.superclass, Collections.emptyList()));
             }
             else {
               if (descriptor.superinterfaces.size() > 1 && !lambda) {
                 DecompilerContext.getLogger().writeMessage("Inconsistent anonymous class signature: " + child.classStruct.qualifiedName,
                                                            IFernflowerLogger.Severity.WARN);
               }
-              buf.append(ExprProcessor.getCastTypeName(descriptor.superinterfaces.get(0), Collections.emptyList()));
+              buf.append(GenericMain.getGenericCastTypeName(descriptor.superinterfaces.get(0), Collections.emptyList()));
             }
           }
           else {
@@ -217,12 +188,11 @@ public class NewExprent extends Exprent {
         }
       }
 
-      appendParameters(buf, genericArgs);
       buf.append('(');
 
       if (!lambda && constructor != null) {
         List<Exprent> parameters = constructor.getParameters();
-        List<VarVersion> mask = child.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, constructor.getStringDescriptor()).synthParameters;
+        List<VarVersionPair> mask = child.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, constructor.getStringDescriptor()).synthParameters;
         if (mask == null) {
           InvocationExprent superCall = child.superInvocation;
           mask = ExprUtil.getSyntheticParametersMask(superCall.getClassName(), superCall.getStringDescriptor(), parameters.size());
@@ -305,11 +275,10 @@ public class NewExprent extends Exprent {
 
       if (constructor != null) {
         List<Exprent> parameters = constructor.getParameters();
-        List<VarVersion> mask = ExprUtil.getSyntheticParametersMask(constructor.getClassName(), constructor.getStringDescriptor(), parameters.size());
+        List<VarVersionPair> mask = ExprUtil.getSyntheticParametersMask(constructor.getClassName(), constructor.getStringDescriptor(), parameters.size());
 
         int start = enumConst ? 2 : 0;
         if (!enumConst || start < parameters.size()) {
-          appendParameters(buf, genericArgs);
           buf.append('(');
 
           boolean firstParam = true;
@@ -412,7 +381,7 @@ public class NewExprent extends Exprent {
           VarExprent varEnclosing = (VarExprent)enclosing;
 
           StructClass current_class = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE)).classStruct;
-          String this_classname = varEnclosing.getProcessor().getThisVars().get(new VarVersion(varEnclosing));
+          String this_classname = varEnclosing.getProcessor().getThisVars().get(new VarVersionPair(varEnclosing));
 
           if (!current_class.qualifiedName.equals(this_classname)) {
             isQualifiedNew = true;
@@ -466,14 +435,6 @@ public class NewExprent extends Exprent {
            Objects.equals(lstArrayElements, ne.lstArrayElements);
   }
 
-  @Override
-  public void fillBytecodeRange(@Nullable BitSet values) {
-    measureBytecode(values, lstArrayElements);
-    measureBytecode(values, lstDims);
-    measureBytecode(values, constructor);
-    measureBytecode(values);
-  }
-
   public InvocationExprent getConstructor() {
     return constructor;
   }
@@ -520,18 +481,5 @@ public class NewExprent extends Exprent {
 
   public void setEnumConst(boolean enumConst) {
     this.enumConst = enumConst;
-  }
-
-  public boolean isMethodReference() {
-    return methodReference;
-  }
-
-  public String getLambdaMethodKey() {
-    ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.getValue());
-    if (node != null && constructor != null) {
-      String descriptor = ((PrimitiveConstant)constructor.getBootstrapArguments().get(0)).getString();
-      return InterpreterUtil.makeUniqueKey(node.lambdaInformation.method_name, descriptor);
-    }
-    return "";
   }
 }

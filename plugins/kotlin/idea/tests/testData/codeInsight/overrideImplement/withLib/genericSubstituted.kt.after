@@ -8,8 +8,3 @@ class C: D<Int>() {
         <selection><caret>return super.id(t)</selection>
     }
 }
-
-// MEMBER: "equals(other: Any?): Boolean"
-// MEMBER: "hashCode(): Int"
-// MEMBER: "id(t: Int): Int"
-// MEMBER: "toString(): String"

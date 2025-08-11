@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.diff.util.*;
@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,14 +17,13 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiStatus.Internal
 public class UnifiedDiffChangeUi {
-  protected final @NotNull UnifiedDiffViewer myViewer;
-  protected final @NotNull EditorEx myEditor;
-  protected final @NotNull UnifiedDiffChange myChange;
+  @NotNull protected final UnifiedDiffViewer myViewer;
+  @NotNull protected final EditorEx myEditor;
+  @NotNull protected final UnifiedDiffChange myChange;
 
-  protected final @NotNull List<RangeHighlighter> myHighlighters = new ArrayList<>();
-  protected final @NotNull List<DiffGutterOperation> myOperations = new ArrayList<>();
+  @NotNull protected final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+  @NotNull protected final List<DiffGutterOperation> myOperations = new ArrayList<>();
 
   public UnifiedDiffChangeUi(@NotNull UnifiedDiffViewer viewer, @NotNull UnifiedDiffChange change) {
     myViewer = viewer;
@@ -85,7 +83,8 @@ public class UnifiedDiffChangeUi {
     }
   }
 
-  protected @NotNull DiffGutterOperation createOperation(@NotNull DiffGutterOperation.RendererBuilder builder) {
+  @NotNull
+  protected DiffGutterOperation createOperation(@NotNull DiffGutterOperation.RendererBuilder builder) {
     int offset = myEditor.getDocument().getLineStartOffset(myChange.getLine1());
 
     return new DiffGutterOperation.Simple(myEditor, offset, builder);
@@ -101,11 +100,13 @@ public class UnifiedDiffChangeUi {
                                : DiffBundle.message("action.presentation.diff.accept.text");
   }
 
-  static @NotNull Icon getApplyIcon(@NotNull Side sourceSide) {
+  @NotNull
+  static Icon getApplyIcon(@NotNull Side sourceSide) {
     return sourceSide.select(AllIcons.Diff.Revert, AllIcons.Actions.Checked);
   }
 
-  private @NotNull DiffGutterOperation createAcceptOperation(@NotNull Side sourceSide) {
+  @NotNull
+  private DiffGutterOperation createAcceptOperation(@NotNull Side sourceSide) {
     return createOperation(() -> {
       if (myViewer.isStateIsOutOfDate()) return null;
       if (!myViewer.isEditable(sourceSide.other(), true)) return null;
@@ -117,9 +118,9 @@ public class UnifiedDiffChangeUi {
     });
   }
 
-  private GutterIconRenderer createIconRenderer(final @NotNull Side sourceSide,
-                                                final @NotNull @NlsContexts.Tooltip String tooltipText,
-                                                final @NotNull Icon icon) {
+  private GutterIconRenderer createIconRenderer(@NotNull final Side sourceSide,
+                                                @NotNull final @NlsContexts.Tooltip String tooltipText,
+                                                @NotNull final Icon icon) {
     return new DiffGutterRenderer(icon, tooltipText) {
       @Override
       protected void handleMouseClick() {

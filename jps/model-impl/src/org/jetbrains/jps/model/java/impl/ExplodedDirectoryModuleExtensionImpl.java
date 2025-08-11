@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -46,8 +46,9 @@ class ExplodedDirectoryModuleExtensionImpl extends JpsElementBase<ExplodedDirect
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull ExplodedDirectoryModuleExtensionImpl createCopy() {
+  public ExplodedDirectoryModuleExtensionImpl createCopy() {
     return new ExplodedDirectoryModuleExtensionImpl(this);
   }
 
@@ -58,8 +59,9 @@ class ExplodedDirectoryModuleExtensionImpl extends JpsElementBase<ExplodedDirect
       super("exploded directory");
     }
 
+    @NotNull
     @Override
-    public @NotNull ExplodedDirectoryModuleExtension create() {
+    public ExplodedDirectoryModuleExtension create() {
       return new ExplodedDirectoryModuleExtensionImpl();
     }
   }

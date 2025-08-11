@@ -3,7 +3,6 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
-import org.jetbrains.annotations.ApiStatus
 
 interface RTBarAction {
   enum class Type {
@@ -25,7 +24,6 @@ interface RTBarAction {
   fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean
 }
 
-@ApiStatus.Internal
 interface RTRunConfiguration : RTBarAction {
   override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.STABLE
   fun isStable(): Boolean {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.codeInspection.*;
@@ -30,7 +30,7 @@ import static com.intellij.xml.util.XmlUtil.isNotInjectedOrCustomHtmlFile;
  * @author Maxim Mossienko
  */
 public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
-  private static final @NonNls Set<String> ourTagsWithEmptyEndsNotAllowed =
+  @NonNls private static final Set<String> ourTagsWithEmptyEndsNotAllowed =
     Set.of(HtmlUtil.SCRIPT_TAG_NAME, "div", "iframe");
 
   @Override
@@ -39,7 +39,8 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
   }
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  @NotNull
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override
       public void visitXmlTag(final @NotNull XmlTag tag) {
@@ -80,7 +81,9 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
   }
 
   @Override
-  public @NotNull @NonNls String getShortName() {
+  @NotNull
+  @NonNls
+  public String getShortName() {
     return "CheckEmptyScriptTag";
   }
 
@@ -108,7 +111,8 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
 
   private static class MyLocalQuickFix implements LocalQuickFix {
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return XmlAnalysisBundle.message("html.inspections.check.empty.script.tag.fix.message");
     }
 

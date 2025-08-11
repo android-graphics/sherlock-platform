@@ -17,10 +17,8 @@
 package com.intellij.execution.actions;
 
 import com.intellij.execution.Executor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public final class ChooseDebugConfigurationPopupAction extends ChooseRunConfigurationPopupAction {
   @Override
   protected Executor getDefaultExecutor() {

@@ -29,27 +29,33 @@ public class AnActionEvent implements PlaceProvider {
   private final @NotNull ActionManager myActionManager;
   private final @NotNull DataContext myDataContext;
   private final @NotNull @NonNls String myPlace;
-  private final @NotNull ActionUiKind myUiKind;
   private final @NotNull Presentation myPresentation;
   @JdkConstants.InputEventMask
   private final int myModifiers;
+  private final boolean myIsContextMenuAction;
+  private final boolean myIsActionToolbar;
 
   private @NotNull UpdateSession myUpdateSession = UpdateSession.EMPTY;
 
-  /** @deprecated Use {@link #createEvent(DataContext, Presentation, String, ActionUiKind, InputEvent)} or
-   * {@link #AnActionEvent(DataContext, Presentation, String, ActionUiKind, InputEvent, int, ActionManager)} instead. */
-  @Deprecated(forRemoval = true)
+  /**
+   * @throws IllegalArgumentException if {@code dataContext} is {@code null} or
+   *                                  {@code place} is {@code null} or {@code presentation} is {@code null}
+   * @see ActionManager#getInstance()
+   */
   public AnActionEvent(@Nullable InputEvent inputEvent,
                        @NotNull DataContext dataContext,
                        @NotNull @NonNls String place,
                        @NotNull Presentation presentation,
                        @NotNull ActionManager actionManager,
                        @JdkConstants.InputEventMask int modifiers) {
-    this(dataContext, presentation, place, ActionUiKind.NONE, inputEvent, modifiers, actionManager);
+    this(inputEvent, dataContext, place, presentation, actionManager, modifiers, false, false);
   }
 
-  /** @deprecated Use {@link #AnActionEvent(DataContext, Presentation, String, ActionUiKind, InputEvent, int, ActionManager)} instead. */
-  @Deprecated(forRemoval = true)
+  /**
+   * @throws IllegalArgumentException if {@code dataContext} is {@code null} or
+   *                                  {@code place} is {@code null} or {@code presentation} is {@code null}
+   * @see ActionManager#getInstance()
+   */
   public AnActionEvent(@Nullable InputEvent inputEvent,
                        @NotNull DataContext dataContext,
                        @NotNull @NonNls String place,
@@ -58,20 +64,6 @@ public class AnActionEvent implements PlaceProvider {
                        @JdkConstants.InputEventMask int modifiers,
                        boolean isContextMenuAction,
                        boolean isActionToolbar) {
-    this(dataContext, presentation, place,
-         isContextMenuAction ? ActionUiKind.POPUP :
-         isActionToolbar ? ActionUiKind.TOOLBAR :
-         ActionUiKind.NONE,
-         inputEvent, modifiers, actionManager);
-  }
-
-  public AnActionEvent(@NotNull DataContext dataContext,
-                       @NotNull Presentation presentation,
-                       @NotNull @NonNls String place,
-                       @NotNull ActionUiKind uiKind,
-                       @Nullable InputEvent inputEvent,
-                       @JdkConstants.InputEventMask int modifiers,
-                       @NotNull ActionManager actionManager) {
     presentation.assertNotTemplatePresentation();
     myInputEvent = inputEvent;
     myActionManager = actionManager;
@@ -79,87 +71,63 @@ public class AnActionEvent implements PlaceProvider {
     myPlace = place;
     myPresentation = presentation;
     myModifiers = modifiers;
-    myUiKind = uiKind;
+    myIsContextMenuAction = isContextMenuAction;
+    myIsActionToolbar = isActionToolbar;
   }
 
-  public final @NotNull AnActionEvent withDataContext(@NotNull DataContext dataContext) {
+  public @NotNull AnActionEvent withDataContext(@NotNull DataContext dataContext) {
     if (myDataContext == dataContext) return this;
-    AnActionEvent event = new AnActionEvent(dataContext, myPresentation, myPlace, myUiKind, myInputEvent,
-                                            myModifiers, myActionManager);
+    AnActionEvent event = new AnActionEvent(myInputEvent, dataContext, myPlace, myPresentation,
+                                            myActionManager, myModifiers, myIsContextMenuAction, myIsActionToolbar);
     event.setUpdateSession(myUpdateSession);
     return event;
   }
 
-  public static @NotNull AnActionEvent createEvent(@NotNull AnAction action,
-                                                   @NotNull DataContext dataContext,
-                                                   @Nullable Presentation presentation,
-                                                   @NotNull String place,
-                                                   @NotNull ActionUiKind uiKind,
-                                                   @Nullable InputEvent event) {
-    Presentation p = presentation == null ? action.getTemplatePresentation().clone() : presentation;
-    AnActionEvent result = createEvent(dataContext, p, place, uiKind, event);
-    result.setInjectedContext(action.isInInjectedContext());
-    return result;
-  }
-
-  public static @NotNull AnActionEvent createEvent(@NotNull DataContext dataContext,
-                                                   @Nullable Presentation presentation,
-                                                   @NotNull String place,
-                                                   @NotNull ActionUiKind uiKind,
-                                                   @Nullable InputEvent event) {
-    //noinspection MagicConstant
-    return new AnActionEvent(dataContext, presentation == null ? new Presentation() : presentation,
-                             place, uiKind, event, event == null ? 0 : event.getModifiers(),
-                             ActionManager.getInstance());
-  }
-
-  /** @deprecated use {@link #createEvent(DataContext, Presentation, String, ActionUiKind, InputEvent)} */
+  /**
+   * @deprecated use {@link #createFromInputEvent(InputEvent, String, Presentation, DataContext, boolean, boolean)}
+   */
   @Deprecated(forRemoval = true)
   public static @NotNull AnActionEvent createFromInputEvent(@NotNull AnAction action, @Nullable InputEvent event, @NotNull String place) {
-    DataContext context = event == null ? DataManager.getInstance().getDataContext() :
-                          DataManager.getInstance().getDataContext(event.getComponent());
+    DataContext context =
+      event == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(event.getComponent());
     return createFromAnAction(action, event, place, context);
   }
 
-  /** @deprecated use {@link #createEvent(AnAction, DataContext, Presentation, String, ActionUiKind, InputEvent)} */
-  @Deprecated(forRemoval = true)
   public static @NotNull AnActionEvent createFromAnAction(@NotNull AnAction action,
                                                           @Nullable InputEvent event,
                                                           @NotNull String place,
                                                           @NotNull DataContext dataContext) {
-    return createEvent(action, dataContext, null, place, ActionUiKind.NONE, event);
+    int modifiers = event == null ? 0 : event.getModifiers();
+    Presentation presentation = action.getTemplatePresentation().clone();
+    AnActionEvent anActionEvent = new AnActionEvent(event, dataContext, place, presentation, ActionManager.getInstance(), modifiers);
+    anActionEvent.setInjectedContext(action.isInInjectedContext());
+    return anActionEvent;
   }
 
-  /** @deprecated use {@link #createEvent(DataContext, Presentation, String, ActionUiKind, InputEvent)} */
-  @Deprecated(forRemoval = true)
   public static @NotNull AnActionEvent createFromDataContext(@NotNull String place,
                                                              @Nullable Presentation presentation,
                                                              @NotNull DataContext dataContext) {
-    return createEvent(dataContext, presentation, place, ActionUiKind.NONE, null);
+    return new AnActionEvent(null, dataContext, place, presentation == null ? new Presentation() : presentation,
+                             ActionManager.getInstance(), 0);
   }
 
 
-  /** @deprecated use {@link #createEvent(DataContext, Presentation, String, ActionUiKind, InputEvent)} */
-  @Deprecated(forRemoval = true)
   public static @NotNull AnActionEvent createFromInputEvent(@Nullable InputEvent event,
                                                             @NotNull String place,
                                                             @Nullable Presentation presentation,
                                                             @NotNull DataContext dataContext) {
-    return createEvent(dataContext, presentation, place, ActionUiKind.NONE, event);
+    return createFromInputEvent(event, place, presentation, dataContext, false, false);
   }
 
-  /** @deprecated Use {@link #createEvent(DataContext, Presentation, String, ActionUiKind, InputEvent)} */
-  @Deprecated(forRemoval = true)
   public static @NotNull AnActionEvent createFromInputEvent(@Nullable InputEvent event,
                                                             @NotNull String place,
                                                             @Nullable Presentation presentation,
                                                             @NotNull DataContext dataContext,
                                                             boolean isContextMenuAction,
                                                             boolean isToolbarAction) {
-    ActionUiKind uiKind = isContextMenuAction ? ActionUiKind.POPUP :
-                          isToolbarAction ? ActionUiKind.TOOLBAR :
-                          ActionUiKind.NONE;
-    return createEvent(dataContext, presentation, place, uiKind, event);
+    return new AnActionEvent(event, dataContext, place, presentation == null ? new Presentation() : presentation,
+                             ActionManager.getInstance(),
+                             event == null ? 0 : event.getModifiers(), isContextMenuAction, isToolbarAction);
   }
 
   /**
@@ -181,14 +149,14 @@ public class AnActionEvent implements PlaceProvider {
    * <li> Tests
    * </ul>
    */
-  public final @Nullable InputEvent getInputEvent() {
+  public @Nullable InputEvent getInputEvent() {
     return myInputEvent;
   }
 
   /**
    * @return Project from the context of this event.
    */
-  public final @Nullable Project getProject() {
+  public @Nullable Project getProject() {
     return getData(CommonDataKeys.PROJECT);
   }
 
@@ -206,74 +174,70 @@ public class AnActionEvent implements PlaceProvider {
    *
    * @return the data context instance.
    */
-  public final @NotNull DataContext getDataContext() {
+  public @NotNull DataContext getDataContext() {
     return myPresentation.isPreferInjectedPsi() ? getInjectedDataContext(myDataContext) : myDataContext;
   }
 
-  public final @Nullable <T> T getData(@NotNull DataKey<T> key) {
+  /**
+   * @see #getRequiredData(DataKey)
+   */
+  public @Nullable <T> T getData(@NotNull DataKey<T> key) {
     return getDataContext().getData(key);
   }
 
   /**
-   * Returns not null data by a data key. This method assumes that data has been checked for {@code null} before.
+   * Returns not null data by a data key. This method assumes that data has been checked for {@code null} in {@code AnAction#update} method.
+   * <br/><br/>
+   * Example of proper usage:
    *
-   * @deprecated See the {@link AnAction#beforeActionPerformedUpdate(AnActionEvent)} javadoc.
+   * <pre>
+   *
+   * public class MyAction extends AnAction {
+   *   public void update(AnActionEvent e) {
+   *     // perform action if and only if EDITOR != null
+   *     boolean enabled = e.getData(CommonDataKeys.EDITOR) != null;
+   *     e.getPresentation().setEnabled(enabled);
+   *   }
+   *
+   *   public void actionPerformed(AnActionEvent e) {
+   *     // if we're here then EDITOR != null
+   *     Document doc = e.getRequiredData(CommonDataKeys.EDITOR).getDocument();
+   *     doSomething(doc);
+   *   }
+   * }
+   *
+   * </pre>
    * @see #getData(DataKey)
    */
-  @Deprecated
-  public final @NotNull <T> T getRequiredData(@NotNull DataKey<T> key) {
+  public @NotNull <T> T getRequiredData(@NotNull DataKey<T> key) {
     T data = getData(key);
-    if (data == null) throw new AssertionError(key.getName() + " is missing");
+    assert data != null : key.getName() + " is missing";
     return data;
   }
 
   /**
-   * Returns some user defined string intended for stats, logging and debugging.
+   * Returns the identifier of the place in the IDE user interface from where the action is invoked
+   * or updated.
    *
+   * @return the place identifier
    * @see com.intellij.openapi.actionSystem.ActionPlaces
    */
   @Override
-  public final @NotNull @NonNls String getPlace() {
+  public @NotNull @NonNls String getPlace() {
     return myPlace;
   }
 
-  /**
-   * Returns the kind of UI for which the event is created - a toolbar, a menu, a popup.
-   */
-  public final @NotNull ActionUiKind getUiKind() {
-    return myUiKind;
+  public boolean isFromActionToolbar() {
+    return myIsActionToolbar;
   }
 
   /**
-   * @see #getUiKind()
-   * @see ActionUiKind#TOOLBAR
+   * @deprecated This method returns {@code true} for both main menu and context menu invocations. Use {@link ActionPlaces#isPopupPlace(String)}
+   * instead to get results only from context menus.
    */
-  public final boolean isFromActionToolbar() {
-    return myUiKind instanceof ActionUiKind.Toolbar;
-  }
-
-  /**
-   * @see #getUiKind()
-   * @see ActionUiKind#POPUP
-   */
-  public final boolean isFromContextMenu() {
-    return myUiKind instanceof ActionUiKind.Popup o && !o.isMainMenu() && !o.isSearchPopup();
-  }
-
-  /**
-   * @see #getUiKind()
-   * @see ActionUiKind#POPUP
-   */
-  public final boolean isFromMainMenu() {
-    return myUiKind instanceof ActionUiKind.Popup o && o.isMainMenu();
-  }
-
-  /**
-   * @see #getUiKind()
-   * @see ActionUiKind#POPUP
-   */
-  public final boolean isFromSearchPopup() {
-    return myUiKind instanceof ActionUiKind.Popup o && o.isSearchPopup();
+  @Deprecated(forRemoval = true)
+  public boolean isFromContextMenu() {
+    return myIsContextMenuAction;
   }
 
   /**
@@ -282,7 +246,7 @@ public class AnActionEvent implements PlaceProvider {
    *
    * @return the presentation instance.
    */
-  public final @NotNull Presentation getPresentation() {
+  public @NotNull Presentation getPresentation() {
     return myPresentation;
   }
 
@@ -292,19 +256,19 @@ public class AnActionEvent implements PlaceProvider {
    * @return the modifier keys.
    */
   @JdkConstants.InputEventMask
-  public final int getModifiers() {
+  public int getModifiers() {
     return myModifiers;
   }
 
-  public final @NotNull ActionManager getActionManager() {
+  public @NotNull ActionManager getActionManager() {
     return myActionManager;
   }
 
-  public final void setInjectedContext(boolean worksInInjected) {
+  public void setInjectedContext(boolean worksInInjected) {
     myPresentation.setPreferInjectedPsi(worksInInjected);
   }
 
-  public final boolean isInInjectedContext() {
+  public boolean isInInjectedContext() {
     return myPresentation.isPreferInjectedPsi();
   }
 
@@ -312,11 +276,11 @@ public class AnActionEvent implements PlaceProvider {
     visitor.visitEvent(this);
   }
 
-  public final @NotNull UpdateSession getUpdateSession() {
+  public @NotNull UpdateSession getUpdateSession() {
     return myUpdateSession;
   }
 
-  public final void setUpdateSession(@NotNull UpdateSession updateSession) {
+  public void setUpdateSession(@NotNull UpdateSession updateSession) {
     myUpdateSession = updateSession;
   }
 

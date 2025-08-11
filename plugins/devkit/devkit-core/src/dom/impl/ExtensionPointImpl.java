@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -28,8 +28,9 @@ import java.util.Set;
 
 public abstract class ExtensionPointImpl implements ExtensionPoint {
 
+  @Nullable
   @Override
-  public @Nullable PsiClass getEffectiveClass() {
+  public PsiClass getEffectiveClass() {
     return DomUtil.hasXml(getInterface()) ? getInterface().getValue() : getBeanClass().getValue();
   }
 
@@ -40,8 +41,9 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
     "className" // ChangesViewContentEP
   );
 
+  @Nullable
   @Override
-  public @Nullable PsiClass getExtensionPointClass() {
+  public PsiClass getExtensionPointClass() {
     final GenericAttributeValue<PsiClass> attribute = findExtensionPointClassAttribute();
     if (attribute == null) return null;
 
@@ -56,7 +58,8 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
     return attribute.getStringValue();
   }
 
-  private @Nullable GenericAttributeValue<PsiClass> findExtensionPointClassAttribute() {
+  @Nullable
+  private GenericAttributeValue<PsiClass> findExtensionPointClassAttribute() {
     final DomElement domElement = getExtensionPointClassNameElement();
     if (domElement == null) return null;
 
@@ -90,8 +93,9 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getNamePrefix() {
+  public String getNamePrefix() {
     if (DomUtil.hasXml(getQualifiedName())) {
       return null;
     }
@@ -102,8 +106,9 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
     return StringUtil.notNullize(plugin.getPluginId(), PluginManagerCore.CORE_PLUGIN_ID);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getEffectiveQualifiedName() {
+  public String getEffectiveQualifiedName() {
     if (DomUtil.hasXml(getQualifiedName())) {
       return StringUtil.notNullize(getQualifiedName().getRawText());
     }
@@ -139,8 +144,9 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
     "com.intellij.dom.fileDescription", "com.intellij.dom.fileMetaData",
     "com.intellij.exportable", "");
 
+  @NotNull
   @Override
-  public @NotNull ExtensionPoint.Status getExtensionPointStatus() {
+  public ExtensionPoint.Status getExtensionPointStatus() {
     return new Status() {
 
       @Override
@@ -183,8 +189,9 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
         return Kind.DEFAULT;
       }
 
+      @Nullable
       @Override
-      public @Nullable String getAdditionalData() {
+      public String getAdditionalData() {
         final Kind kind = getKind();
         if (kind == Kind.ADDITIONAL_DEPRECATED) {
           return StringUtil.nullize(ADDITIONAL_DEPRECATED_EP.get(getEffectiveQualifiedName()));

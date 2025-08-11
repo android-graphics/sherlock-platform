@@ -50,7 +50,8 @@ internal class OperatorToFunctionIntention :
         }
     }
 
-    override fun KaSession.prepareContext(element: KtExpression): Unit? = (when (element) {
+    context(KaSession)
+    override fun prepareContext(element: KtExpression): Unit? = (when (element) {
         is KtUnaryExpression -> isApplicableUnary(element)
         is KtBinaryExpression -> isApplicableBinary(element)
         is KtArrayAccessExpression -> isApplicableArrayAccess(element)

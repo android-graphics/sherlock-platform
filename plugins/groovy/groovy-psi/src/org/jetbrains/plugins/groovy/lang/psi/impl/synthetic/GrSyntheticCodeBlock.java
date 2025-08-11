@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -67,7 +67,8 @@ public class GrSyntheticCodeBlock extends LightElement implements PsiCodeBlock {
     return getOrCreateJavaToken(myCodeBlock.getRBrace(), JavaTokenType.RBRACE);
   }
 
-  private static @Nullable PsiJavaToken getOrCreateJavaToken(@Nullable PsiElement element, @NotNull IElementType type) {
+  @Nullable
+  private static PsiJavaToken getOrCreateJavaToken(@Nullable PsiElement element, @NotNull IElementType type) {
     if (element == null) return null;
 
     final SoftReference<PsiJavaToken> ref = element.getUserData(PSI_JAVA_TOKEN);
@@ -118,8 +119,9 @@ public class GrSyntheticCodeBlock extends LightElement implements PsiCodeBlock {
     return myCodeBlock.getText();
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getNavigationElement() {
+  public PsiElement getNavigationElement() {
     return myCodeBlock;
   }
 

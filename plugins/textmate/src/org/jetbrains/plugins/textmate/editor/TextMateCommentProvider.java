@@ -18,11 +18,12 @@ import org.jetbrains.plugins.textmate.language.preferences.ShellVariablesRegistr
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 
 public class TextMateCommentProvider implements MultipleLangCommentProvider, Commenter {
+  @Nullable
   @Override
-  public @Nullable Commenter getLineCommenter(@NotNull PsiFile file,
-                                              @NotNull Editor editor,
-                                              @NotNull Language lineStartLanguage,
-                                              @NotNull Language lineEndLanguage) {
+  public Commenter getLineCommenter(@NotNull PsiFile file,
+                                    @NotNull Editor editor,
+                                    @NotNull Language lineStartLanguage,
+                                    @NotNull Language lineEndLanguage) {
     final TextMateScope actualScope = TextMateEditorUtils.getCurrentScopeSelector((EditorEx)editor);
     if (actualScope == null) {
       return null;
@@ -39,63 +40,73 @@ public class TextMateCommentProvider implements MultipleLangCommentProvider, Com
     return file.getFileType() == TextMateFileType.INSTANCE;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getLineCommentPrefix() {
+  public String getLineCommentPrefix() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getBlockCommentPrefix() {
+  public String getBlockCommentPrefix() {
     return "";
   }
 
+  @Nullable
   @Override
-  public @Nullable String getBlockCommentSuffix() {
+  public String getBlockCommentSuffix() {
     return "";
   }
 
+  @Nullable
   @Override
-  public @Nullable String getCommentedBlockCommentPrefix() {
+  public String getCommentedBlockCommentPrefix() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getCommentedBlockCommentSuffix() {
+  public String getCommentedBlockCommentSuffix() {
     return null;
   }
 
   private static final class MyCommenter implements Commenter {
-    final @Nullable String myLinePrefix;
+    @Nullable final String myLinePrefix;
 
-    final @Nullable TextMateBlockCommentPair myBlockPrefixes;
+    @Nullable final TextMateBlockCommentPair myBlockPrefixes;
 
     private MyCommenter(@NotNull TextMateCommentPrefixes prefixes) {
       myLinePrefix = prefixes.getLineCommentPrefix();
       myBlockPrefixes = prefixes.getBlockCommentPair();
     }
 
+    @Nullable
     @Override
-    public @Nullable String getLineCommentPrefix() {
+    public String getLineCommentPrefix() {
       return myLinePrefix;
     }
 
+    @Nullable
     @Override
-    public @Nullable String getBlockCommentPrefix() {
+    public String getBlockCommentPrefix() {
       return myBlockPrefixes != null ? myBlockPrefixes.getPrefix() : null;
     }
 
+    @Nullable
     @Override
-    public @Nullable String getBlockCommentSuffix() {
+    public String getBlockCommentSuffix() {
       return myBlockPrefixes != null ? myBlockPrefixes.getSuffix() : null;
     }
 
+    @Nullable
     @Override
-    public @Nullable String getCommentedBlockCommentPrefix() {
+    public String getCommentedBlockCommentPrefix() {
       return null;
     }
 
+    @Nullable
     @Override
-    public @Nullable String getCommentedBlockCommentSuffix() {
+    public String getCommentedBlockCommentSuffix() {
       return null;
     }
   }

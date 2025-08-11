@@ -32,25 +32,28 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class PyElementPresentation implements ColoredItemPresentation {
-  private final @NotNull PyElement myElement;
+  @NotNull private final PyElement myElement;
 
   public PyElementPresentation(@NotNull PyElement element) {
     myElement = element;
   }
 
+  @Nullable
   @Override
-  public @Nullable TextAttributesKey getTextAttributesKey() {
+  public TextAttributesKey getTextAttributesKey() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getPresentableText() {
+  public String getPresentableText() {
     final String name = myElement.getName();
     return name != null ? name : PyNames.UNNAMED_ELEMENT;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getLocationString() {
+  public String getLocationString() {
     PsiFile containingFile = myElement.getContainingFile();
 
     String packageForFile = getPackageForFile(containingFile);
@@ -76,12 +79,14 @@ public class PyElementPresentation implements ColoredItemPresentation {
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable Icon getIcon(boolean unused) {
+  public Icon getIcon(boolean unused) {
     return myElement.getIcon(0);
   }
 
-  public static @Nullable String getPackageForFile(@NotNull PsiFile containingFile) {
+  @Nullable
+  public static String getPackageForFile(@NotNull PsiFile containingFile) {
     final VirtualFile vFile = containingFile.getVirtualFile();
 
     if (vFile != null) {

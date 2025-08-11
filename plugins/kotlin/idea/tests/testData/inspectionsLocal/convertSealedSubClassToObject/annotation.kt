@@ -1,5 +1,5 @@
 // PROBLEM: none
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 sealed class Bar
 
 annotation <caret>class Foo : Bar()

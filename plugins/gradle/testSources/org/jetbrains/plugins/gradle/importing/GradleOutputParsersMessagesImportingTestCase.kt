@@ -56,7 +56,7 @@ open class GradleOutputParsersMessagesImportingTestCase : BuildViewMessagesImpor
     @JvmStatic
     protected fun ScriptTreeBuilder.mavenRepository(url: String, useOldStyleMetadata: Boolean) {
       call("maven") {
-        assign("url", url)
+        call("url", url)
         if (useOldStyleMetadata) {
           call("metadataSources") {
             call("mavenPom")

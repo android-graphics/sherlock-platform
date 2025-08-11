@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.console;
 
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -71,7 +71,8 @@ public final class MergedHorizontalScrollBarModel extends DefaultBoundedRangeMod
     myBar.setVisible(enabled);
   }
 
-  public static @NotNull MergedHorizontalScrollBarModel create(@NotNull JScrollBar bar, @NotNull EditorEx first, @NotNull EditorEx second) {
+  @NotNull
+  public static MergedHorizontalScrollBarModel create(@NotNull JScrollBar bar, @NotNull EditorEx first, @NotNull EditorEx second) {
     MergedHorizontalScrollBarModel model = new MergedHorizontalScrollBarModel(bar, first, second);
     bar.setModel(model);
     model.setEnabled(true);

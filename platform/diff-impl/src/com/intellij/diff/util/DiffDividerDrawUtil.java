@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
@@ -34,7 +34,8 @@ public final class DiffDividerDrawUtil {
   /*
    * Clip given graphics of a divider component such that result graphics is aligned with base component by 'y' coordinate.
    */
-  public static @NotNull Graphics2D getDividerGraphics(@NotNull Graphics g, @NotNull Component divider, @NotNull Component base) {
+  @NotNull
+  public static Graphics2D getDividerGraphics(@NotNull Graphics g, @NotNull Component divider, @NotNull Component base) {
     int width = divider.getWidth();
     int editorHeight = base.getHeight();
     int dividerOffset = divider.getLocationOnScreen().y;
@@ -83,10 +84,11 @@ public final class DiffDividerDrawUtil {
     });
   }
 
-  private static @NotNull List<DividerPolygon> createVisiblePolygons(@NotNull Editor editor1,
-                                                                     @NotNull Editor editor2,
-                                                                     @NotNull DividerPaintable paintable,
-                                                                     @NotNull Rectangle paintedArea) {
+  @NotNull
+  private static List<DividerPolygon> createVisiblePolygons(@NotNull Editor editor1,
+                                                            @NotNull Editor editor2,
+                                                            @NotNull DividerPaintable paintable,
+                                                            @NotNull Rectangle paintedArea) {
     if (editor1.isDisposed() || editor2.isDisposed()) return Collections.emptyList();
 
     IntPair yRange = new IntPair(paintedArea.y, paintedArea.y + paintedArea.height);
@@ -101,10 +103,11 @@ public final class DiffDividerDrawUtil {
     return FoldingUtil.isTextRangeFolded(editor, range);
   }
 
-  private static @NotNull List<DividerSeparator> createVisibleSeparators(@NotNull Editor editor1,
-                                                                         @NotNull Editor editor2,
-                                                                         @NotNull DividerSeparatorPaintable paintable,
-                                                                         @NotNull Rectangle paintedArea) {
+  @NotNull
+  private static List<DividerSeparator> createVisibleSeparators(@NotNull Editor editor1,
+                                                                @NotNull Editor editor2,
+                                                                @NotNull DividerSeparatorPaintable paintable,
+                                                                @NotNull Rectangle paintedArea) {
     if (editor1.isDisposed() || editor2.isDisposed()) return Collections.emptyList();
 
     final List<DividerSeparator> separators = new ArrayList<>();
@@ -130,7 +133,7 @@ public final class DiffDividerDrawUtil {
   }
 
   @ApiStatus.Internal
-  public static int getEditorTopOffset(final @NotNull Editor editor) {
+  public static int getEditorTopOffset(@NotNull final Editor editor) {
     final JComponent header = editor.getHeaderComponent();
     int headerOffset = header == null ? 0 : header.getHeight();
     return -editor.getScrollingModel().getVerticalScrollOffset() + headerOffset;
@@ -150,9 +153,10 @@ public final class DiffDividerDrawUtil {
     return new MarkerRange(startOffset, endOffset);
   }
 
-  private static @NotNull DividerSeparator createSeparator(@NotNull Editor editor1, @NotNull Editor editor2,
-                                                           int line1, int line2, int height1, int height2, boolean isHovered,
-                                                           @Nullable EditorColorsScheme scheme) {
+  @NotNull
+  private static DividerSeparator createSeparator(@NotNull Editor editor1, @NotNull Editor editor2,
+                                                  int line1, int line2, int height1, int height2, boolean isHovered,
+                                                  @Nullable EditorColorsScheme scheme) {
     int topOffset1 = getEditorTopOffset(editor1);
     int topOffset2 = getEditorTopOffset(editor2);
     int start1 = lineToY(editor1, line1) + topOffset1;
@@ -167,8 +171,9 @@ public final class DiffDividerDrawUtil {
    * @param editor editor which supplies the line numbers
    * @param yRange a closed interval of editor y-axis coordinates to be painted
    */
+  @NotNull
   @ApiStatus.Internal
-  public static @NotNull LineRange getPaintedInterval(@NotNull Editor editor, @NotNull IntPair yRange) {
+  public static LineRange getPaintedInterval(@NotNull Editor editor, @NotNull IntPair yRange) {
     int visibleAreaYOffset = editor.getScrollingModel().getVerticalScrollOffset();
     // convert editor coordinates to editor component coordinates
     int yStart = visibleAreaYOffset + yRange.first;
@@ -218,7 +223,8 @@ public final class DiffDividerDrawUtil {
       myRightInterval = getPaintedInterval(editor2, yRange);
     }
 
-    public @NotNull List<DividerPolygon> getPolygons() {
+    @NotNull
+    public List<DividerPolygon> getPolygons() {
       return myPolygons;
     }
 
@@ -270,10 +276,11 @@ public final class DiffDividerDrawUtil {
       return true;
     }
 
-    private static @Nullable DividerPolygon createPolygon(@NotNull Editor editor1, @NotNull Editor editor2,
-                                                          int startLine1, int endLine1,
-                                                          int startLine2, int endLine2,
-                                                          @NotNull Painter painter) {
+    @Nullable
+    private static DividerPolygon createPolygon(@NotNull Editor editor1, @NotNull Editor editor2,
+                                                int startLine1, int endLine1,
+                                                int startLine2, int endLine2,
+                                                @NotNull Painter painter) {
       int topOffset1 = getEditorTopOffset(editor1);
       int topOffset2 = getEditorTopOffset(editor2);
 
@@ -296,7 +303,8 @@ public final class DiffDividerDrawUtil {
                                 painter.isDottedBorder());
     }
 
-    private static @NotNull TextDiffType correctType(@NotNull TextDiffType type, boolean isFolded) {
+    @NotNull
+    private static TextDiffType correctType(@NotNull TextDiffType type, boolean isFolded) {
       if (isFolded && (type == TextDiffType.DELETED || type == TextDiffType.INSERTED)) return TextDiffType.MODIFIED;
       return type;
     }
@@ -444,8 +452,8 @@ public final class DiffDividerDrawUtil {
     private final int myStart2;
     private final int myEnd1;
     private final int myEnd2;
-    private final @Nullable Color myFillColor;
-    private final @Nullable Color myBorderColor;
+    @Nullable private final Color myFillColor;
+    @Nullable private final Color myBorderColor;
     private final boolean myDottedBorder;
 
     public DividerPolygon(int start1, int start2, int end1, int end2,
@@ -507,7 +515,8 @@ public final class DiffDividerDrawUtil {
       }
     }
 
-    public @NotNull DividerPolygon withAlignedHeight() {
+    @NotNull
+    public DividerPolygon withAlignedHeight() {
       int delta = (myEnd2 - myStart2) - (myEnd1 - myStart1);
       if (delta == 0) return this;
 
@@ -537,7 +546,6 @@ public final class DiffDividerDrawUtil {
       }
     }
 
-    @Override
     public String toString() {
       return "<" + myStart1 + ", " + myEnd1 + " : " + myStart2 + ", " + myEnd2 + "> " + myFillColor + ", " + myBorderColor;
     }
@@ -550,7 +558,7 @@ public final class DiffDividerDrawUtil {
     private final int myEnd1;
     private final int myEnd2;
     private final boolean myIsHovered;
-    private final @Nullable EditorColorsScheme myScheme;
+    @Nullable private final EditorColorsScheme myScheme;
 
     public DividerSeparator(int start1, int start2, int end1, int end2, boolean isHovered, @Nullable EditorColorsScheme scheme) {
       myStart1 = start1;
@@ -565,7 +573,6 @@ public final class DiffDividerDrawUtil {
       DiffLineSeparatorRenderer.drawConnectorLine(g, 0, width, myStart1, myStart2, myEnd1 - myStart1, myIsHovered, myScheme);
     }
 
-    @Override
     public String toString() {
       return "<" + myStart1 + ", " + myEnd1 + " : " + myStart2 + ", " + myEnd2 + "> ";
     }

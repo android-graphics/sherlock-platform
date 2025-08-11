@@ -9,7 +9,6 @@ import com.intellij.debugger.impl.PositionUtil
 import com.intellij.debugger.ui.tree.FieldDescriptor
 import com.intellij.debugger.ui.tree.LocalVariableDescriptor
 import com.intellij.debugger.ui.tree.NodeDescriptor
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -20,15 +19,14 @@ import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.ClassNotPreparedException
 import com.sun.jdi.ClassType
 import com.sun.jdi.ReferenceType
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameter
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameterSymbol
-import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllInterfaces
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
-import org.jetbrains.kotlin.idea.debugger.core.render.GetterDescriptor
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.load.java.possibleGetMethodNames
 import org.jetbrains.kotlin.name.Name
@@ -37,7 +35,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 
 class KotlinSourcePositionProvider : SourcePositionProvider() {
-    override suspend fun computeSourcePositionAsync(
+    override fun computeSourcePosition(
         descriptor: NodeDescriptor,
         project: Project,
         context: DebuggerContextImpl,
@@ -48,16 +46,13 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         return when (descriptor) {
             is FieldDescriptor -> computeSourcePosition(descriptor, context, nearest)
             is GetterDescriptor -> computeSourcePosition(descriptor, context, nearest)
-            is LocalVariableDescriptor -> {
-                val descriptorName = descriptor.name
-                readAction { computeSourcePosition(descriptorName, context, nearest) }
-            }
+            is LocalVariableDescriptor -> computeSourcePosition(descriptor, context, nearest)
             else -> null
         }
     }
 
     private fun computeSourcePosition(
-        descriptorName: String,
+        descriptor: LocalVariableDescriptor,
         context: DebuggerContextImpl,
         nearest: Boolean
     ): SourcePosition? {
@@ -65,33 +60,34 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         if (place.containingFile !is KtFile) return null
 
         val contextElement = CodeFragmentContextTuner.getInstance().tuneContextElement(place) ?: return null
-        val codeFragment = KtPsiFactory(context.project).createExpressionCodeFragment(descriptorName, contextElement)
+        val codeFragment = KtPsiFactory(context.project).createExpressionCodeFragment(descriptor.name, contextElement)
         val localReferenceExpression = codeFragment.getContentElement()
 
         if (localReferenceExpression !is KtSimpleNameExpression) return null
 
-        return runDumbAnalyze(localReferenceExpression, fallback = null) f@ {
+        analyze(localReferenceExpression) {
             for (symbol in localReferenceExpression.mainReference.resolveToSymbols()) {
                 if (symbol !is KaVariableSymbol) continue
 
                 if (symbol is KaValueParameterSymbol && symbol.isImplicitLambdaParameter) {
                     // symbol.psi is null or lambda, so we need a bit more work to find nearest position.
                     val lambda = symbol.getFunctionLiteralByImplicitLambdaParameterSymbol() ?: continue
-                    return@f when {
+                    return when {
                         nearest -> DebuggerContextUtil.findNearest(context, lambda.containingFile) { _ -> implicitLambdaParameterUsages(lambda) }
                         else -> SourcePosition.createFromOffset(lambda.containingFile, lambda.lBrace.textOffset)
                     }
                 }
 
                 symbol.psi?.let { element ->
-                    return@f when {
+                    return when {
                         nearest -> DebuggerContextUtil.findNearest(context, element, element.containingFile)
                         else -> SourcePosition.createFromOffset(element.containingFile, element.textOffset)
                     }
                 }
             }
-            null
         }
+
+        return null
     }
 
     private fun implicitLambdaParameterUsages(lambda: KtFunctionLiteral): List<TextRange> {
@@ -108,7 +104,7 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         }
     }
 
-    private suspend fun computeSourcePositionForPropertyDeclaration(
+    private fun computeSourcePositionForPropertyDeclaration(
         name: String,
         declaringType: ReferenceType,
         context: DebuggerContextImpl,
@@ -122,26 +118,22 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         return possibleGetMethodNames(name).map(Name::asString)
     }
 
-    /**
-     * @param declarationSelector should not perform debugger operations
-     */
-    private suspend fun computeSourcePositionForDeclaration(
+    private fun computeSourcePositionForDeclaration(
         declaringType: ReferenceType,
         context: DebuggerContextImpl,
         nearest: Boolean,
         declarationSelector: (KtDeclaration) -> Boolean
     ): SourcePosition? {
-        val foundClass = findClassByType(context.project, declaringType, context)
-        val myClass = readAction { foundClass?.navigationElement } as? KtClassOrObject ?: return null
-        val declaration = readAction { myClass.declarations.firstOrNull(declarationSelector) } ?: return null
+        val myClass = findClassByType(context.project, declaringType, context)?.navigationElement as? KtClassOrObject ?: return null
+        val declaration = myClass.declarations.firstOrNull(declarationSelector) ?: return null
 
         if (nearest) {
-            return readAction { DebuggerContextUtil.findNearest(context, declaration, myClass.containingFile) }
+            return DebuggerContextUtil.findNearest(context, declaration, myClass.containingFile)
         }
-        return SourcePosition.createFromOffset(readAction { declaration.containingFile }, readAction { declaration.textOffset })
+        return SourcePosition.createFromOffset(declaration.containingFile, declaration.textOffset)
     }
 
-    private suspend fun computeSourcePosition(
+    private fun computeSourcePosition(
         descriptor: FieldDescriptor,
         context: DebuggerContextImpl,
         nearest: Boolean
@@ -160,7 +152,7 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         }
     }
 
-    private suspend fun computeSourcePosition(
+    private fun computeSourcePosition(
         descriptor: GetterDescriptor,
         context: DebuggerContextImpl,
         nearest: Boolean
@@ -179,32 +171,32 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         return null
     }
 
-    private suspend fun findClassByType(project: Project, type: ReferenceType, context: DebuggerContextImpl): PsiElement? {
+    private fun findClassByType(project: Project, type: ReferenceType, context: DebuggerContextImpl): PsiElement? {
         val scope = context.debuggerSession?.searchScope ?: GlobalSearchScope.allScope(project)
         val className = JvmClassName.byInternalName(type.name()).fqNameForClassNameWithoutDollars.asString()
 
-        val myClass = readAction { JavaPsiFacade.getInstance(project).findClass(className, scope) }
+        val myClass = JavaPsiFacade.getInstance(project).findClass(className, scope)
         if (myClass != null) return myClass
 
         val position = getLastSourcePosition(type, context)
         if (position != null) {
             val element = position.elementAt
             if (element != null) {
-                return readAction { element.getStrictParentOfType<KtClassOrObject>() }
+                return element.getStrictParentOfType<KtClassOrObject>()
             }
         }
 
         return null
     }
 
-    private suspend fun getLastSourcePosition(type: ReferenceType, context: DebuggerContextImpl): SourcePosition? {
+    private fun getLastSourcePosition(type: ReferenceType, context: DebuggerContextImpl): SourcePosition? {
         val debugProcess = context.debugProcess ?: return null
 
         try {
             val locations = type.safeAllLineLocations()
             if (locations.isNotEmpty()) {
                 val lastLocation = locations[locations.size - 1]
-                return debugProcess.positionManager.getSourcePositionAsync(lastLocation)
+                return debugProcess.positionManager.getSourcePosition(lastLocation)
             }
         } catch (ignored: AbsentInformationException) {
         } catch (ignored: ClassNotPreparedException) {

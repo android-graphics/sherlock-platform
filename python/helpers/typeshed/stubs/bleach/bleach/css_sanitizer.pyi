@@ -1,8 +1,7 @@
 from collections.abc import Container
-from typing import Final
 
-ALLOWED_CSS_PROPERTIES: Final[frozenset[str]]
-ALLOWED_SVG_PROPERTIES: Final[frozenset[str]]
+ALLOWED_CSS_PROPERTIES: frozenset[str]
+ALLOWED_SVG_PROPERTIES: frozenset[str]
 
 class CSSSanitizer:
     allowed_css_properties: Container[str]

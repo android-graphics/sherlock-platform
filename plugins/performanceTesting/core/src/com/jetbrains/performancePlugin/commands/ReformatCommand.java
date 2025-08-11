@@ -21,8 +21,9 @@ public class ReformatCommand extends AbstractCommand {
     super(text, line);
   }
 
+  @NotNull
   @Override
-  protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
+  protected Promise<Object> _execute(@NotNull PlaybackContext context) {
     ActionCallback myActionCallback = new ActionCallbackProfilerStopper();
     ReformatCodeProcessor codeProcessor = new ReformatCodeProcessor(context.getProject(), false);
     codeProcessor.setPostRunnable(() -> {

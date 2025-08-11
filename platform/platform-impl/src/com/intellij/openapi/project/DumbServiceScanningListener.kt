@@ -7,10 +7,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
-@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class DumbServiceScanningListener(private val project: Project, private val cs: CoroutineScope) {
   fun subscribe() {

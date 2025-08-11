@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
 import com.jetbrains.python.debugger.IPyDebugProcess;
@@ -46,7 +46,8 @@ public class LoadFullValueCommand extends AbstractFrameCommand {
     }
   }
 
-  private @NotNull String buildPayloadForVar(@NotNull PyDebugValue var) {
+  @NotNull
+  private String buildPayloadForVar(@NotNull PyDebugValue var) {
     StringBuilder sb = new StringBuilder();
     String varName = GetVariableCommand.composeName(var);
     if (varName.contains(GetVariableCommand.BY_ID)) {

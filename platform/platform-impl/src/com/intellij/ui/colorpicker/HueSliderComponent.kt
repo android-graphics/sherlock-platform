@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:ApiStatus.Internal
-
 package com.intellij.ui.colorpicker
 
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.LinearGradientPaint
@@ -37,7 +34,6 @@ private val POINTS = COLORS.mapIndexed { index, color ->
 
 const val SLIDE_UNIT: Int = 1
 
-@ApiStatus.Internal
 class HueSliderComponent : SliderComponent<Int>(0) {
 
   override fun knobPositionToValue(knobPosition: Int): Int {

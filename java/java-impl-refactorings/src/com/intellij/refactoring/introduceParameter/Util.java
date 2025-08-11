@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.introduceParameter;
 
@@ -55,7 +55,8 @@ public final class Util {
     }
   }
 
-  private static @NotNull PsiElement getPhysical(@NotNull PsiElement expr) {
+  @NotNull
+  private static PsiElement getPhysical(@NotNull PsiElement expr) {
     PsiElement physicalElement = expr.getUserData(ElementToWorkOn.PARENT);
     if (physicalElement != null) expr = physicalElement;
     return expr;
@@ -85,8 +86,9 @@ public final class Util {
   }
 
   // returns parameters that are used solely in specified expression
-  public static @NotNull IntList findParametersToRemove(@NotNull PsiMethod method,
-                                               final @NotNull PsiExpression expr,
+  @NotNull
+  public static IntList findParametersToRemove(@NotNull PsiMethod method,
+                                               @NotNull final PsiExpression expr,
                                                final PsiExpression @Nullable [] occurences) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length == 0) {

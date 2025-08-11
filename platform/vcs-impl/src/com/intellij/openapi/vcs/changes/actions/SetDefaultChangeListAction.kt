@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vcs.changes.ChangeListManager
 
-internal class SetDefaultChangeListAction : AbstractChangeListAction() {
+class SetDefaultChangeListAction : AbstractChangeListAction() {
   override fun update(e: AnActionEvent) {
     val changeList = getTargetChangeList(e)
     val enabled = changeList != null && !changeList.isDefault

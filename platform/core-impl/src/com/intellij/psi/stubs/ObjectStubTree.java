@@ -1,16 +1,20 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashingStrategy;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * @author Dmitry Avdeev
@@ -26,8 +30,7 @@ public class ObjectStubTree<T extends Stub> {
     myRoot = root;
     myPlainList = enumerateStubs(root);
     if (withBackReference) {
-      // this will prevent soft references to a stub tree to be collected before all the stubs are collected
-      myRoot.putUserData(STUB_TO_TREE_REFERENCE, this);
+      myRoot.putUserData(STUB_TO_TREE_REFERENCE, this); // This will prevent soft references to stub tree to be collected before all of the stubs are collected.
     }
   }
 
@@ -35,21 +38,18 @@ public class ObjectStubTree<T extends Stub> {
     return myRoot;
   }
 
-  public @Unmodifiable @NotNull List<T> getPlainList() {
+  public @NotNull List<T> getPlainList() {
     return myPlainList;
   }
 
   @NotNull
-  @Unmodifiable
   List<T> getPlainListFromAllRoots() {
     return getPlainList();
   }
 
   @ApiStatus.Internal
-  public @NotNull Map<StubIndexKey<?, ?>, Map<Object, int[]>> indexStubTree(
-    @Nullable HashingStrategyProvider keyHashingStrategyProvider
-  ) {
-    StubIndexSink sink = new StubIndexSink(keyHashingStrategyProvider);
+  public @NotNull Map<StubIndexKey<?, ?>, Map<Object, int[]>> indexStubTree(@Nullable Function<? super StubIndexKey<?, ?>, ? extends HashingStrategy<Object>> keyHashingStrategyFunction) {
+    StubIndexSink sink = new StubIndexSink(keyHashingStrategyFunction);
     List<T> plainList = getPlainListFromAllRoots();
     for (int i = 0, plainListSize = plainList.size(); i < plainListSize; i++) {
       Stub stub = plainList.get(i);
@@ -60,9 +60,9 @@ public class ObjectStubTree<T extends Stub> {
     return sink.getResult();
   }
 
-  protected @Unmodifiable @NotNull List<T> enumerateStubs(@NotNull Stub root) {
+  protected @NotNull List<T> enumerateStubs(@NotNull Stub root) {
     List<T> result = new ArrayList<>();
-    //noinspection rawtypes,unchecked
+    //noinspection unchecked
     enumerateStubsInto(root, (List)result);
     return result;
   }
@@ -71,6 +71,7 @@ public class ObjectStubTree<T extends Stub> {
     ((ObjectStubBase<?>)root).id = result.size();
     result.add(root);
     List<? extends Stub> childrenStubs = root.getChildrenStubs();
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < childrenStubs.size(); i++) {
       Stub child = childrenStubs.get(i);
       enumerateStubsInto(child, result);
@@ -86,7 +87,7 @@ public class ObjectStubTree<T extends Stub> {
     myDebugInfo = info;
   }
 
-  public static @Nullable ObjectStubTree<?> getStubTree(@NotNull ObjectStubBase<?> root) {
+  public static @Nullable ObjectStubTree getStubTree(@NotNull ObjectStubBase root) {
     return root.getUserData(STUB_TO_TREE_REFERENCE);
   }
 
@@ -101,10 +102,10 @@ public class ObjectStubTree<T extends Stub> {
 
   private static final class StubIndexSink implements IndexSink {
     private final Map<StubIndexKey<?, ?>, Map<Object, int[]>> myResult = new HashMap<>();
-    private final @Nullable HashingStrategyProvider myHashingStrategyFunction;
+    private final @Nullable Function<? super StubIndexKey<?, ?>, ? extends HashingStrategy<Object>> myHashingStrategyFunction;
     private int myStubIdx;
 
-    private StubIndexSink(@Nullable HashingStrategyProvider hashingStrategyFunction) {
+    private StubIndexSink(@Nullable Function<? super StubIndexKey<?, ?>, ? extends HashingStrategy<Object>> hashingStrategyFunction) {
       myHashingStrategyFunction = hashingStrategyFunction;
     }
 
@@ -112,10 +113,7 @@ public class ObjectStubTree<T extends Stub> {
     public void occurrence(@NotNull StubIndexKey indexKey, @NotNull Object value) {
       Map<Object, int[]> map = myResult.get(indexKey);
       if (map == null) {
-        map = myHashingStrategyFunction == null
-              ? new HashMap<>()
-              : CollectionFactory.createCustomHashingStrategyMap(myHashingStrategyFunction.getStrategy(indexKey));
-
+        map = myHashingStrategyFunction == null ? new HashMap<>() : CollectionFactory.createCustomHashingStrategyMap(myHashingStrategyFunction.apply((StubIndexKey<?, ?>)indexKey));
         myResult.put(indexKey, map);
       }
 
@@ -126,16 +124,16 @@ public class ObjectStubTree<T extends Stub> {
       else {
         int lastNonZero = ArrayUtil.lastIndexOfNot(list, 0);
         if (lastNonZero >= 0 && list[lastNonZero] == myStubIdx) {
-          // the second and later occurrence calls for the same value are no op
+          // second and subsequent occurrence calls for the same value are no op
           return;
         }
-        int firstZero = lastNonZero + 1;
+        int lastZero = lastNonZero + 1;
 
-        if (firstZero == list.length) {
+        if (lastZero == list.length) {
           list = ArrayUtil.realloc(list, Math.max(4, list.length << 1));
           map.put(value, list);
         }
-        list[firstZero] = myStubIdx;
+        list[lastZero] = myStubIdx;
       }
     }
 
@@ -155,11 +153,5 @@ public class ObjectStubTree<T extends Stub> {
       }
       return myResult;
     }
-  }
-
-  @ApiStatus.Internal
-  @FunctionalInterface
-  public interface HashingStrategyProvider {
-    HashingStrategy<Object> getStrategy(StubIndexKey<?, ?> key);
   }
 }

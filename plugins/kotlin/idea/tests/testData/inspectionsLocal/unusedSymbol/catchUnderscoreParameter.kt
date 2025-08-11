@@ -1,10 +1,8 @@
 // PROBLEM: none
 class Foo {
-    fun bar() {}
-
     fun foo() {
         try {
-            bar()
+            println();
         } catch (_<caret>: Throwable) {
         }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.console
 
@@ -33,6 +33,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiFileFactoryImpl
@@ -55,23 +56,24 @@ import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.trackers.KOTLIN_CONSOLE_KEY
-import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
+import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.resolve.lazy.ForceResolveUtil
 import org.jetbrains.kotlin.resolve.repl.ReplState
+import org.jetbrains.kotlin.scripting.definitions.KotlinScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import java.awt.Color
 import java.awt.Font
-import java.nio.charset.StandardCharsets
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.properties.Delegates
-import kotlin.script.experimental.api.*
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
 private const val KOTLIN_SHELL_EXECUTE_ACTION_ID = "KotlinShellExecute"
@@ -92,7 +94,7 @@ class KotlinConsoleRunner(
 
     override fun finishConsole() {
         KotlinConsoleKeeper.getInstance(project).removeConsole(consoleView.virtualFile)
-        val consoleContributor = ConsoleScriptDefinitionSource.getInstance(project)!!
+        val consoleContributor = ScriptDefinitionContributor.find<ConsoleScriptDefinitionContributor>(project)!!
         consoleContributor.unregisterDefinition(consoleScriptDefinition)
         ScriptDefinitionsManager.getInstance(project).reloadDefinitionsBy(consoleContributor)
 
@@ -127,16 +129,10 @@ class KotlinConsoleRunner(
     val executor = CommandExecutor(this)
     var compilerHelper: ConsoleCompilerHelper by Delegates.notNull()
 
-    val consoleScriptDefinition = object : ScriptDefinition.FromConfigurations(
-        defaultJvmScriptingHostConfiguration,
-        ScriptCompilationConfiguration {
-            displayName(KotlinIdeaReplBundle.message("name.kotlin.repl"))
-        },
-        ScriptEvaluationConfiguration({
-            hostConfiguration(defaultJvmScriptingHostConfiguration)
-        })
-    ) {
-        override fun isScript(script: SourceCode): Boolean = script.name?.startsWith(consoleView.virtualFile.name) == true
+    private val consoleScriptDefinition = object : KotlinScriptDefinition(Any::class) {
+        override val name get() = KotlinIdeaReplBundle.message("name.kotlin.repl")
+        override fun isScript(fileName: String): Boolean = fileName.startsWith(consoleView.virtualFile.name)
+        override fun getScriptName(script: KtScript) = Name.identifier("REPL")
     }
 
     override fun createProcess(): Process {
@@ -167,7 +163,7 @@ class KotlinConsoleRunner(
         val executeAction = KtExecuteCommandAction(consoleView.virtualFile)
         executeAction.registerCustomShortcutSet(CommonShortcuts.getCtrlEnter(), consoleView.consoleEditor.component)
 
-        val consoleContributor = ConsoleScriptDefinitionSource.getInstance(project)!!
+        val consoleContributor = ScriptDefinitionContributor.find<ConsoleScriptDefinitionContributor>(project)!!
         consoleContributor.registerDefinition(consoleScriptDefinition)
         ScriptDefinitionsManager.getInstance(project).reloadDefinitionsBy(consoleContributor)
 
@@ -286,7 +282,7 @@ class KotlinConsoleRunner(
                     "${consoleView.virtualFile.name}$lineNumber${KotlinParserDefinition.STD_SCRIPT_EXT}",
                     KotlinLanguage.INSTANCE, text
                 ).apply {
-                    charset = StandardCharsets.UTF_8
+                    charset = CharsetToolkit.UTF8_CHARSET
                     isWritable = false
                 }
             val psiFile = (PsiFileFactory.getInstance(project) as PsiFileFactoryImpl).trySetupPsiForFile(
@@ -324,25 +320,21 @@ class KotlinConsoleRunner(
     }
 }
 
-class ConsoleScriptDefinitionSource : ScriptDefinitionsSource {
+class ConsoleScriptDefinitionContributor : ScriptDefinitionSourceAsContributor {
 
     private val definitionsSet = ConcurrentCollectionFactory.createConcurrentSet<ScriptDefinition>()
 
     override val definitions: Sequence<ScriptDefinition>
         get() = definitionsSet.asSequence()
 
-    fun registerDefinition(definition: ScriptDefinition) {
-        definitionsSet.add(definition)
+    override val id: String = "IDEA Console"
+
+    // TODO: rewrite to ScriptDefinition
+    fun registerDefinition(definition: KotlinScriptDefinition) {
+        definitionsSet.add(ScriptDefinition.FromLegacy(defaultJvmScriptingHostConfiguration, definition))
     }
 
-    fun unregisterDefinition(definition: ScriptDefinition) {
-        definitionsSet.remove(definition)
-    }
-
-    companion object {
-        fun getInstance(project: Project): ConsoleScriptDefinitionSource? =
-            SCRIPT_DEFINITIONS_SOURCES.getExtensions(project)
-                .filterIsInstance<ConsoleScriptDefinitionSource>()
-                .singleOrNull()
+    fun unregisterDefinition(definition: KotlinScriptDefinition) {
+        definitionsSet.removeIf { it.asLegacyOrNull<KotlinScriptDefinition>() == definition }
     }
 }

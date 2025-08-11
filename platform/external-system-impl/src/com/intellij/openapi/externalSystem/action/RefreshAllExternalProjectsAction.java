@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
@@ -16,7 +17,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -26,7 +26,6 @@ import java.util.List;
  * Forces the ide to retrieve the most up-to-date info about the linked external projects and updates project state if necessary
  * (e.g. imports missing libraries).
  */
-@ApiStatus.Internal
 public class RefreshAllExternalProjectsAction extends DumbAwareAction {
   public RefreshAllExternalProjectsAction() {
     getTemplatePresentation().setText(ExternalSystemBundle.messagePointer("action.refresh.all.projects.text", "External"));
@@ -51,7 +50,8 @@ public class RefreshAllExternalProjectsAction extends DumbAwareAction {
     e.getPresentation().setText(ExternalSystemBundle.messagePointer("action.refresh.all.projects.text", name));
     e.getPresentation().setDescription(ExternalSystemBundle.messagePointer("action.refresh.all.projects.description", name));
 
-    var processingManager = ExternalSystemProcessingManager.getInstance();
+    ExternalSystemProcessingManager processingManager =
+      ApplicationManager.getApplication().getService(ExternalSystemProcessingManager.class);
     e.getPresentation().setEnabled(!processingManager.hasTaskOfTypeInProgress(ExternalSystemTaskType.RESOLVE_PROJECT, project));
   }
 
@@ -85,7 +85,8 @@ public class RefreshAllExternalProjectsAction extends DumbAwareAction {
     return ActionUpdateThread.BGT;
   }
 
-  private static @NotNull List<ProjectSystemId> getSystemIds(@NotNull AnActionEvent e) {
+  @NotNull
+  private static List<ProjectSystemId> getSystemIds(@NotNull AnActionEvent e) {
     List<ProjectSystemId> systemIds = new ArrayList<>();
     ProjectSystemId externalSystemId = e.getData(ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID);
     if (externalSystemId == null) {

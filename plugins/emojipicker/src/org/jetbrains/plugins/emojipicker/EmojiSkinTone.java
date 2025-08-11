@@ -11,11 +11,12 @@ public enum EmojiSkinTone {
   MEDIUM_DARK("\uD83C\uDFFE"),
   DARK("\uD83C\uDFFF");
 
-  private final @NonNls String myValue;
+  @NonNls private final String myValue;
 
   EmojiSkinTone(@NonNls String value) {this.myValue = value;}
 
-  public @NonNls String getStringValue() {
+  @NonNls
+  public String getStringValue() {
     return myValue;
   }
 }

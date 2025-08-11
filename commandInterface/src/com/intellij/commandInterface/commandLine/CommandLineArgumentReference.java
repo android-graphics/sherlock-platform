@@ -2,11 +2,11 @@
 package com.intellij.commandInterface.commandLine;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.psi.PsiElement;
 import com.intellij.commandInterface.command.Argument;
 import com.intellij.commandInterface.command.Help;
 import com.intellij.commandInterface.command.Option;
 import com.intellij.commandInterface.commandLine.psi.CommandLineArgument;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,12 +18,13 @@ import java.util.Collection;
  * @author Ilya.Kazakevich
  */
 public final class CommandLineArgumentReference extends CommandLineElementReference<CommandLineArgument> {
-  CommandLineArgumentReference(final @NotNull CommandLineArgument element) {
+  CommandLineArgumentReference(@NotNull final CommandLineArgument element) {
     super(element);
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement resolve() {
+  public PsiElement resolve() {
     return null;
   }
 

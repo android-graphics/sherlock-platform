@@ -1,15 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
-import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiComment
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSemicolon
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtLambdaExpression
@@ -18,12 +15,11 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespace
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespace
 
-internal sealed class ConvertLambdaLineIntention(private val toMultiLine: Boolean) :
-    KotlinApplicableModCommandAction<KtLambdaExpression, Unit>(KtLambdaExpression::class) {
-    override fun getFamilyName(): @IntentionFamilyName String =
-        KotlinBundle.message("intention.convert.lambda.line", 1.takeIf { toMultiLine } ?: 0)
-
-    override fun isApplicableByPsi(element: KtLambdaExpression): Boolean {
+internal sealed class ConvertLambdaLineIntention(private val toMultiLine: Boolean) : SelfTargetingIntention<KtLambdaExpression>(
+    KtLambdaExpression::class.java,
+    KotlinBundle.lazyMessage("intention.convert.lambda.line", 1.takeIf { toMultiLine } ?: 0),
+) {
+    override fun isApplicableTo(element: KtLambdaExpression, caretOffset: Int): Boolean {
         val functionLiteral = element.functionLiteral
         val body = functionLiteral.bodyBlockExpression ?: return false
         val startLine = functionLiteral.getLineNumber(start = true)
@@ -40,14 +36,7 @@ internal sealed class ConvertLambdaLineIntention(private val toMultiLine: Boolea
         }
     }
 
-    override fun KaSession.prepareContext(element: KtLambdaExpression): Unit = Unit
-
-    override fun invoke(
-        actionContext: ActionContext,
-        element: KtLambdaExpression,
-        elementContext: Unit,
-        updater: ModPsiUpdater,
-    ) {
+    override fun applyTo(element: KtLambdaExpression, editor: Editor?) {
         val functionLiteral = element.functionLiteral
         val body = functionLiteral.bodyBlockExpression ?: return
         val psiFactory = KtPsiFactory(element.project)

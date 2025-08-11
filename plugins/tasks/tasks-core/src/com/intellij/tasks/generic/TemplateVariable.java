@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.generic;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -61,16 +60,19 @@ public class TemplateVariable {
     myValue = value;
   }
 
-  public @NotNull @NlsSafe String getName() {
+  @NotNull
+  public @NlsSafe String getName() {
     return myName;
   }
 
-  public @NotNull @NlsSafe String getValue() {
+  @NotNull
+  public @NlsSafe String getValue() {
     return myValue;
   }
 
   // TODO: actually not used in UI
-  public @NotNull @NlsContexts.Tooltip String getDescription() {
+  @NotNull
+  public @NlsContexts.Tooltip String getDescription() {
     return myDescription;
   }
 
@@ -133,8 +135,9 @@ public class TemplateVariable {
     }
 
 
+    @NotNull
     @Override
-    public abstract @NotNull String getValue();
+    public abstract String getValue();
 
     @Override
     public final void setName(@NotNull String name) {

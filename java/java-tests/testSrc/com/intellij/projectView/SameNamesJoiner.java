@@ -81,7 +81,6 @@ class SameNamesJoiner implements TreeStructureProvider {
       myFile = file;
     }
 
-    @Override
     public String toString() {
       return myFile.getVirtualFile().getNameWithoutExtension();
     }
@@ -90,7 +89,6 @@ class SameNamesJoiner implements TreeStructureProvider {
       return myFile;
     }
 
-    @Override
     public boolean equals(Object object) {
       if (!(object instanceof Joined)) return false;
       return myFile.getVirtualFile().getNameWithoutExtension()

@@ -95,7 +95,7 @@ public class XsltExtractFunctionAction extends BaseIntroduceAction<RefactoringOp
             }
             RefactoringUtil.addParameter(xmlTag, param);
 
-            if (!argList.isEmpty()) {
+            if (argList.length() > 0) {
               argList.append(", ");
             }
             argList.append("$").append(variable.getName());
@@ -129,7 +129,7 @@ public class XsltExtractFunctionAction extends BaseIntroduceAction<RefactoringOp
     if (type instanceof XPath2Type) {
       final QName name = ((XPath2Type)type).getQName();
       final String uri = name.getNamespaceURI();
-      if (!uri.isEmpty()) {
+      if (uri.length() > 0) {
         final String prefix = context.getPrefixByNamespace(uri);
         if (prefix != null) {
           return (prefix + ":" + name.getLocalPart());

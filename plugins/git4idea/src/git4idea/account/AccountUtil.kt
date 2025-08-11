@@ -11,7 +11,6 @@ import git4idea.remote.hosting.HostedGitRepositoryMapping
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitRepositoryMappingData
 
-@Deprecated("Use git4idea.push.GitPushNotificationUtil instead")
 object AccountUtil {
 
   /**
@@ -64,7 +63,6 @@ object AccountUtil {
   }
 }
 
-@Deprecated("Use git4idea.push.GitPushNotificationUtil instead")
 data class RepoAndAccount<M : GitRepositoryMappingData, A : ServerAccount>(
   val projectMapping: M,
   val account: A

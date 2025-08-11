@@ -12,7 +12,6 @@
 // ACTION: Introduce local variable
 // ACTION: Rename reference
 // ERROR: Unresolved reference: FunctionReference
-// K2_AFTER_ERROR: Unresolved reference 'FunctionReference'.
 
 fun some() {
     FunctionReference<caret>::class

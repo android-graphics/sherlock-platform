@@ -1,5 +1,0 @@
-package a.b.c
-
-class SelfRef(val ref: a.b.c.SelfRef?)
-
-// IGNORE_K1

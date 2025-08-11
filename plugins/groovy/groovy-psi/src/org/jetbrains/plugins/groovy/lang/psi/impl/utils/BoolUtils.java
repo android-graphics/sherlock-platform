@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.utils;
 
 import com.intellij.psi.PsiElement;
@@ -30,7 +30,8 @@ public final class BoolUtils {
     return false;
   }
 
-  public static @Nullable GrExpression findNegation(GrExpression exp) {
+  @Nullable
+  public static GrExpression findNegation(GrExpression exp) {
     GrExpression ancestor = exp;
     while (ancestor.getParent() instanceof GrParenthesizedExpression) {
       ancestor = (GrExpression) ancestor.getParent();

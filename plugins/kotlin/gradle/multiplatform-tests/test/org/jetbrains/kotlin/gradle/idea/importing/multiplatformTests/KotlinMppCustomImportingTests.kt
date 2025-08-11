@@ -3,11 +3,10 @@ package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 import junit.framework.AssertionFailedError
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.CustomChecksDsl
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProjectsLinker
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.buildGradleModel
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.buildKotlinMPPGradleModel
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.CustomImportChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.hooks.KotlinMppTestHooks
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
 import org.jetbrains.kotlin.idea.codeInsight.gradle.assertNoAndroidSourceSetInfo
 import org.jetbrains.kotlin.idea.codeInsight.gradle.getAndroidSourceSetInfoOrFail
@@ -30,10 +29,10 @@ import org.junit.Assume
 import org.junit.Test
 
 @TestMetadata("multiplatform/core/features/customImportTests")
-class KotlinMppCustomImportingTests : AbstractKotlinMppGradleImportingTest() {
+class KotlinMppCustomImportingTests : AbstractKotlinMppGradleImportingTest(), CustomChecksDsl {
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
         // Disable all default checkers
-        onlyCheckers(KotlinMppTestHooks)
+        onlyCheckers(CustomImportChecker)
         disableCheckers(HighlightingChecker)
         // Those tests don't run proper import, so source files will be mistreated as not under content root
         // We can't remove those sources because they are reused in other test runners (that actually check highlighting)
@@ -43,7 +42,7 @@ class KotlinMppCustomImportingTests : AbstractKotlinMppGradleImportingTest() {
     @Test
     fun testKotlinGradlePluginVersionImporting() {
         doTest(runImport = false) {
-            runAfterImport {
+            customChecks {
                 val builtGradleModel = buildKotlinMPPGradleModel()
                 val model = builtGradleModel.getNotNullByProjectPathOrThrow(":")
 
@@ -69,7 +68,7 @@ class KotlinMppCustomImportingTests : AbstractKotlinMppGradleImportingTest() {
 
     @Test
     fun testPrepareKotlinIdeaImport() = doTest(runImport = false) {
-        runBeforeImport {
+        customChecks {
             val builtGradleModel = buildGradleModel(PrepareKotlinIdeImportTaskModel::class)
 
             assertNull(builtGradleModel.getByProjectPathOrThrow(":p3"))
@@ -123,7 +122,7 @@ class KotlinMppCustomImportingTests : AbstractKotlinMppGradleImportingTest() {
 
     @Test
     fun `testPrepareKotlinIdeaImport-compositeBuild`() = doTest(runImport = false) {
-        runBeforeImport {
+        customChecks {
             /* Only run against a single configuration */
             Assume.assumeTrue(kotlinPluginVersion == KotlinGradlePluginVersions.latest)
 
@@ -140,7 +139,7 @@ class KotlinMppCustomImportingTests : AbstractKotlinMppGradleImportingTest() {
 
     @Test
     fun testImportKotlinAndroidSourceSetInfo() = doTest(runImport = false) {
-        runBeforeImport {
+        customChecks {
             val model = buildKotlinMPPGradleModel().getNotNullByProjectPathOrThrow(":")
 
             val commonMain = model.getSourceSetOrFail("commonMain")
@@ -185,7 +184,7 @@ class KotlinMppCustomImportingTests : AbstractKotlinMppGradleImportingTest() {
     @Test
     @TestMetadata("../misc/associateCompilationIntegrationTest")
     fun testAssociateCompilationIntegrationTest() = doTest(runImport = false) {
-        runBeforeImport {
+        customChecks {
             val model = buildKotlinMPPGradleModel().getNotNullByProjectPathOrThrow(":kmm")
 
             /* Test all associate coordinates can be resolved */

@@ -42,7 +42,8 @@ public class FlipOperandsFix extends AbstractFix {
     }
 
     @Override
-    public @NotNull String getText() {
+    @NotNull
+    public String getText() {
         return XPathBundle.message("intention.name.flip.binary.expression.to", myToken.getText(), myToken.getText().replace('<', '>'));
     }
 

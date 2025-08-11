@@ -3,10 +3,8 @@ package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public class EmptyLookupItem extends LookupElement {
   private final String myText;
   private final boolean myLoading;

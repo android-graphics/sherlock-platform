@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -7,7 +7,8 @@ import com.intellij.xdebugger.impl.actions.*;
 import com.intellij.xdebugger.impl.actions.handlers.*;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointPanelProvider;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.xdebugger.impl.evaluate.quick.XQuickEvaluateHandler;
+import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import org.jetbrains.annotations.NotNull;
 
 public class XDebuggerSupport extends DebuggerSupport {
@@ -25,6 +26,7 @@ public class XDebuggerSupport extends DebuggerSupport {
   private final XDebuggerPauseActionHandler myPauseHandler;
   private final XDebuggerSuspendedActionHandler myShowExecutionPointHandler;
   private final XDebuggerEvaluateActionHandler myEvaluateHandler;
+  private final XQuickEvaluateHandler myQuickEvaluateHandler;
 
   private final XAddToWatchesFromEditorActionHandler myAddToWatchesActionHandler;
   private final XAddToInlineWatchesFromEditorActionHandler myAddToInlineWatchesActionHandler;
@@ -43,26 +45,26 @@ public class XDebuggerSupport extends DebuggerSupport {
     myAddToInlineWatchesActionHandler = new XAddToInlineWatchesFromEditorActionHandler();
     myStepOverHandler = new XDebuggerSuspendedActionHandler() {
       @Override
-      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
         session.stepOver(false);
       }
     };
     myStepIntoHandler = new XDebuggerStepIntoHandler();
     myStepOutHandler = new XDebuggerSuspendedActionHandler() {
       @Override
-      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
         session.stepOut();
       }
     };
     myForceStepOverHandler = new XDebuggerSuspendedActionHandler() {
       @Override
-      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
         session.stepOver(true);
       }
     };
     myForceStepIntoHandler = new XDebuggerSuspendedActionHandler() {
       @Override
-      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
         session.forceStepInto();
       }
     };
@@ -71,132 +73,159 @@ public class XDebuggerSupport extends DebuggerSupport {
     myForceRunToCursor = new XDebuggerRunToCursorActionHandler(true);
     myResumeHandler = new XDebuggerActionHandler() {
       @Override
-      protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+      protected boolean isEnabled(@NotNull final XDebugSession session, final DataContext dataContext) {
         return session.isPaused();
       }
 
       @Override
-      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
         session.resume();
       }
     };
     myPauseHandler = new XDebuggerPauseActionHandler();
     myShowExecutionPointHandler = new XDebuggerSuspendedActionHandler() {
       @Override
-      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
         session.showExecutionPoint();
       }
     };
     myMuteBreakpointsHandler = new XDebuggerMuteBreakpointsHandler();
     myEvaluateHandler = new XDebuggerEvaluateActionHandler();
+    myQuickEvaluateHandler = new XQuickEvaluateHandler();
     myMarkObjectActionHandler = new XMarkObjectActionHandler();
     myEditBreakpointActionHandler = new XDebuggerEditBreakpointActionHandler();
   }
 
   @Override
-  public @NotNull BreakpointPanelProvider<?> getBreakpointPanelProvider() {
+  @NotNull
+  public BreakpointPanelProvider<?> getBreakpointPanelProvider() {
     return myBreakpointPanelProvider;
   }
 
   @Override
-  public @NotNull DebuggerActionHandler getStepOverHandler() {
+  @NotNull
+  public DebuggerActionHandler getStepOverHandler() {
     return myStepOverHandler;
   }
 
   @Override
-  public @NotNull DebuggerActionHandler getStepIntoHandler() {
+  @NotNull
+  public DebuggerActionHandler getStepIntoHandler() {
     return myStepIntoHandler;
   }
 
   @Override
-  public @NotNull DebuggerActionHandler getSmartStepIntoHandler() {
+  @NotNull
+  public DebuggerActionHandler getSmartStepIntoHandler() {
     return mySmartStepIntoHandler;
   }
 
   @Override
-  public @NotNull DebuggerActionHandler getStepOutHandler() {
+  @NotNull
+  public DebuggerActionHandler getStepOutHandler() {
     return myStepOutHandler;
   }
 
   @Override
-  public @NotNull DebuggerActionHandler getForceStepOverHandler() {
+  @NotNull
+  public DebuggerActionHandler getForceStepOverHandler() {
     return myForceStepOverHandler;
   }
 
   @Override
-  public @NotNull DebuggerActionHandler getForceStepIntoHandler() {
+  @NotNull
+  public DebuggerActionHandler getForceStepIntoHandler() {
     return myForceStepIntoHandler;
   }
 
   @Override
-  public @NotNull DebuggerActionHandler getRunToCursorHandler() {
+  @NotNull
+  public DebuggerActionHandler getRunToCursorHandler() {
     return myRunToCursorHandler;
   }
 
   @Override
-  public @NotNull DebuggerActionHandler getForceRunToCursorHandler() {
+  @NotNull
+  public DebuggerActionHandler getForceRunToCursorHandler() {
     return myForceRunToCursor;
   }
 
   @Override
-  public @NotNull DebuggerActionHandler getResumeActionHandler() {
+  @NotNull
+  public DebuggerActionHandler getResumeActionHandler() {
     return myResumeHandler;
   }
 
   @Override
-  public @NotNull DebuggerActionHandler getPauseHandler() {
+  @NotNull
+  public DebuggerActionHandler getPauseHandler() {
     return myPauseHandler;
   }
 
   @Override
-  public @NotNull DebuggerActionHandler getToggleLineBreakpointHandler() {
+  @NotNull
+  public DebuggerActionHandler getToggleLineBreakpointHandler() {
     return myToggleLineBreakpointActionHandler;
   }
 
+  @NotNull
   @Override
-  public @NotNull DebuggerActionHandler getToggleTemporaryLineBreakpointHandler() {
+  public DebuggerActionHandler getToggleTemporaryLineBreakpointHandler() {
     return myToggleTemporaryLineBreakpointActionHandler;
   }
 
   @Override
-  public @NotNull DebuggerActionHandler getShowExecutionPointHandler() {
+  @NotNull
+  public DebuggerActionHandler getShowExecutionPointHandler() {
     return myShowExecutionPointHandler;
   }
 
   @Override
-  public @NotNull DebuggerActionHandler getEvaluateHandler() {
+  @NotNull
+  public DebuggerActionHandler getEvaluateHandler() {
     return myEvaluateHandler;
   }
 
   @Override
-  public @NotNull DebuggerActionHandler getAddToWatchesActionHandler() {
+  @NotNull
+  public QuickEvaluateHandler getQuickEvaluateHandler() {
+    return myQuickEvaluateHandler;
+  }
+
+  @NotNull
+  @Override
+  public DebuggerActionHandler getAddToWatchesActionHandler() {
     return myAddToWatchesActionHandler;
   }
 
+  @NotNull
   @Override
-  public @NotNull DebuggerActionHandler getAddToInlineWatchesActionHandler() {
+  public DebuggerActionHandler getAddToInlineWatchesActionHandler() {
     return myAddToInlineWatchesActionHandler;
   }
 
 
+  @NotNull
   @Override
-  public @NotNull DebuggerActionHandler getEvaluateInConsoleActionHandler() {
+  public DebuggerActionHandler getEvaluateInConsoleActionHandler() {
     return myEvaluateInConsoleActionHandler;
   }
 
   @Override
-  public @NotNull DebuggerToggleActionHandler getMuteBreakpointsHandler() {
+  @NotNull
+  public DebuggerToggleActionHandler getMuteBreakpointsHandler() {
     return myMuteBreakpointsHandler;
   }
 
-  @ApiStatus.Internal
+  @NotNull
   @Override
-  public @NotNull MarkObjectActionHandler getMarkObjectHandler() {
+  public MarkObjectActionHandler getMarkObjectHandler() {
     return myMarkObjectActionHandler;
   }
 
+  @NotNull
   @Override
-  public @NotNull EditBreakpointActionHandler getEditBreakpointAction() {
+  public EditBreakpointActionHandler getEditBreakpointAction() {
     return myEditBreakpointActionHandler;
   }
 }

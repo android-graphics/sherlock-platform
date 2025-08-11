@@ -25,13 +25,15 @@ import org.jetbrains.annotations.NotNull;
 public final class PyDocstringTokenSetContributor extends PythonDialectsTokenSetContributorBase {
   public static final TokenSet DOCSTRING_REFERENCE_EXPRESSIONS = TokenSet.create(PyDocstringTokenTypes.DOC_REFERENCE);
 
+  @NotNull
   @Override
-  public @NotNull TokenSet getExpressionTokens() {
+  public TokenSet getExpressionTokens() {
     return DOCSTRING_REFERENCE_EXPRESSIONS;
   }
 
+  @NotNull
   @Override
-  public @NotNull TokenSet getReferenceExpressionTokens() {
+  public TokenSet getReferenceExpressionTokens() {
     return DOCSTRING_REFERENCE_EXPRESSIONS;
   }
 }

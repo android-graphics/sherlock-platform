@@ -2,7 +2,6 @@
 package com.intellij.ui.list
 
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.JList
@@ -15,7 +14,6 @@ import javax.swing.ListCellRenderer
  * [mainRenderer] component is aligned to the left, [rightRenderer] component is aligned to the right.
  * This renderer uses background from [mainRenderer] component.
  */
-@ApiStatus.Internal
 class LeftRightRenderer<T>(
   private val mainRenderer: ListCellRenderer<T>,
   private val rightRenderer: ListCellRenderer<T>,

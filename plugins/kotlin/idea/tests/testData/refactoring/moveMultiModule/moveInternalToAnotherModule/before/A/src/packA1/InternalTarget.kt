@@ -10,7 +10,7 @@ class <caret>InternalContent {
     }
 
     fun useInternal() {
-        InternalContentUser().internalFunUser()
+        InternalContentUser().internalFun()
     }
 }
 

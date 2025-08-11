@@ -10,7 +10,3 @@ interface Some<T> {
 class SomeOther<S> : Some<S> {
     <caret>
 }
-
-// MEMBER: "someFoo(): Unit"
-// MEMBER: "someOtherFoo(): Int"
-// MEMBER: "someGenericFoo(): S"

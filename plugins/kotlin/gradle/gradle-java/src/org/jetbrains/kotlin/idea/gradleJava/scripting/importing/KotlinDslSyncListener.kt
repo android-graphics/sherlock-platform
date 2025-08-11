@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.projectRoots.JdkUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsContributor
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
@@ -17,32 +18,29 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.*
 
-val kotlinDslSyncListenerInstance: KotlinDslSyncListener?
-    get() =
-        ExternalSystemTaskNotificationListener.EP_NAME.findExtension(KotlinDslSyncListener::class.java)
-
 class KotlinDslSyncListener : ExternalSystemTaskNotificationListener {
     companion object {
         val instance: KotlinDslSyncListener?
             get() =
-                kotlinDslSyncListenerInstance
+                ExternalSystemTaskNotificationListener.EP_NAME.findExtension(KotlinDslSyncListener::class.java)
     }
 
     internal val tasks = WeakHashMap<ExternalSystemTaskId, KotlinDslGradleBuildSync>()
 
-    override fun onStart(projectPath: String, id: ExternalSystemTaskId) {
+    override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
         if (!id.isGradleRelatedTask()) return
 
-        val task = KotlinDslGradleBuildSync(projectPath, id)
+        if (workingDir == null) return
+        val task = KotlinDslGradleBuildSync(workingDir, id)
         synchronized(tasks) { tasks[id] = task }
 
         // project may be null in case of new project
         val project = id.findProject() ?: return
-        task.projectId = id.ideProjectId
-        GradleBuildRootsManager.getInstance(project)?.markImportingInProgress(projectPath)
+        task.project = project
+        GradleBuildRootsManager.getInstance(project)?.markImportingInProgress(workingDir)
     }
 
-    override fun onEnd(projectPath: String, id: ExternalSystemTaskId) {
+    override fun onEnd(id: ExternalSystemTaskId) {
         if (!id.isGradleRelatedTask()) return
 
         val sync = synchronized(tasks) { tasks.remove(id) } ?: return
@@ -52,8 +50,8 @@ class KotlinDslSyncListener : ExternalSystemTaskNotificationListener {
 
         if (sync.gradleHome == null) {
             sync.gradleHome = GradleInstallationManager.getInstance()
-                .getGradleHomePath(project, sync.workingDir)
-                ?.toString()
+                .getGradleHome(project, sync.workingDir)
+                ?.path
         }
 
         if (sync.javaHome == null) {
@@ -68,14 +66,14 @@ class KotlinDslSyncListener : ExternalSystemTaskNotificationListener {
                 val gradleJvm = GradleSettings.getInstance(project).getLinkedProjectSettings(sync.workingDir)?.gradleJvm
                 try {
                     ExternalSystemJdkUtil.getJdk(project, gradleJvm)?.homePath
-                } catch (_: Exception) {
+                } catch (e: Exception) {
                     null
                 }
             }
 
         if (KotlinPluginModeProvider.isK1Mode()) {
             @Suppress("DEPRECATION")
-            GradleScriptDefinitionsContributor.getInstance(project)?.reloadIfNeeded(
+            ScriptDefinitionContributor.find<GradleScriptDefinitionsContributor>(project)?.reloadIfNeeded(
                 sync.workingDir, sync.gradleHome, sync.javaHome
             )
         }
@@ -83,14 +81,14 @@ class KotlinDslSyncListener : ExternalSystemTaskNotificationListener {
         saveScriptModels(project, sync)
     }
 
-    override fun onFailure(projectPath: String, id: ExternalSystemTaskId, exception: Exception) {
+    override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
         if (!id.isGradleRelatedTask()) return
 
         val sync = synchronized(tasks) { tasks[id] } ?: return
         sync.failed = true
     }
 
-    override fun onCancel(projectPath: String, id: ExternalSystemTaskId) {
+    override fun onCancel(id: ExternalSystemTaskId) {
         if (!id.isGradleRelatedTask()) return
 
         val sync = synchronized(tasks) { tasks[id] } ?: return

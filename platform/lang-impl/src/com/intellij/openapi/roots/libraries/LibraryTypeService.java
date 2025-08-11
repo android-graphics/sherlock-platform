@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,9 +15,10 @@ public abstract class LibraryTypeService {
     return ApplicationManager.getApplication().getService(LibraryTypeService.class);
   }
 
-  public abstract @Nullable NewLibraryConfiguration createLibraryFromFiles(@NotNull LibraryRootsComponentDescriptor descriptor,
-                                                                           @NotNull JComponent parentComponent,
-                                                                           @Nullable VirtualFile contextDirectory,
-                                                                           @Nullable LibraryType<?> type,
-                                                                           final @Nullable Project project);
+  @Nullable
+  public abstract NewLibraryConfiguration createLibraryFromFiles(@NotNull LibraryRootsComponentDescriptor descriptor,
+                                                                 @NotNull JComponent parentComponent,
+                                                                 @Nullable VirtualFile contextDirectory,
+                                                                 @Nullable LibraryType<?> type,
+                                                                 final @Nullable Project project);
 }

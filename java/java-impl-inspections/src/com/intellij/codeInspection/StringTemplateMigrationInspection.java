@@ -30,8 +30,9 @@ public final class StringTemplateMigrationInspection extends AbstractBaseJavaLoc
     return Set.of(JavaFeature.STRING_TEMPLATES);
   }
   
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
@@ -44,7 +45,8 @@ public final class StringTemplateMigrationInspection extends AbstractBaseJavaLoc
                                type, new ReplaceWithStringTemplateFix());
       }
 
-      private static @Nullable ProblemHighlightType getProblemHighlightType(@NotNull PsiPolyadicExpression expression) {
+      @Nullable
+      private static ProblemHighlightType getProblemHighlightType(@NotNull PsiPolyadicExpression expression) {
         PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiExpression.class);
         if (parent instanceof PsiNameValuePair || parent instanceof PsiCaseLabelElementList || parent instanceof PsiAnnotationMethod) {
           return null;
@@ -108,8 +110,10 @@ public final class StringTemplateMigrationInspection extends AbstractBaseJavaLoc
 
   private static class ReplaceWithStringTemplateFix extends PsiUpdateModCommandQuickFix {
 
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
     @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaBundle.message("inspection.replace.with.string.template.fix");
     }
 

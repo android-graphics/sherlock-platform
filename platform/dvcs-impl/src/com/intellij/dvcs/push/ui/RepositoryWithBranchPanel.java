@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.PushTarget;
@@ -13,7 +13,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -31,9 +30,9 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
   private final @Nls String myRepositoryName;
   private final @Nls String mySourceName;
   private final ColoredTreeCellRenderer myTextRenderer;
-  private final @NotNull List<RepositoryNodeListener<T>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  @NotNull private final List<RepositoryNodeListener<T>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public RepositoryWithBranchPanel(final @NotNull Project project, @NotNull @Nls String repoName,
+  public RepositoryWithBranchPanel(@NotNull final Project project, @NotNull @Nls String repoName,
                                    @NotNull @Nls String sourceName, @NotNull PushTargetPanel<T> destPushTargetPanelComponent) {
     super();
     setLayout(new BorderLayout());
@@ -89,47 +88,46 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     add(panel, BorderLayout.CENTER);
   }
 
-  public @Nls @NotNull String getRepositoryName() {
+  @Nls
+  @NotNull
+  public String getRepositoryName() {
     return myRepositoryName;
   }
 
-  public @Nls String getSourceName() {
+  @Nls
+  public String getSourceName() {
     return mySourceName;
   }
 
-  public @Nls String getArrow() {
+  @Nls
+  public String getArrow() {
     return " " + UIUtil.rightArrow() + " ";
   }
 
-  public @NotNull Component getTreeCellEditorComponent(JTree tree,
-                                                       Object value,
-                                                       boolean selected,
-                                                       boolean expanded,
-                                                       boolean leaf,
-                                                       int row,
-                                                       boolean hasFocus) {
+  @NotNull
+  public Component getTreeCellEditorComponent(JTree tree,
+                                              Object value,
+                                              boolean selected,
+                                              boolean expanded,
+                                              boolean leaf,
+                                              int row,
+                                              boolean hasFocus) {
     Rectangle bounds = tree.getPathBounds(tree.getPathForRow(row));
     invalidate();
     myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-    if (value instanceof SingleRepositoryNode) {
-      myTextRenderer.setIpad(JBUI.insetsLeft(10));
-      myRepositoryCheckbox.setVisible(false);
-    } else {
+    if (!(value instanceof SingleRepositoryNode)) {
       RepositoryNode node = (RepositoryNode)value;
       myRepositoryCheckbox.setSelected(node.isChecked());
       myRepositoryCheckbox.setVisible(true);
-      myTextRenderer.setIpad(JBUI.emptyInsets());
       myTextRenderer.append(getRepositoryName(), SimpleTextAttributes.GRAY_ATTRIBUTES);
       myTextRenderer.appendTextPadding(120);
     }
-
-    if (myDestPushTargetPanelComponent.showSourceWhenEditing()) {
-      if (value instanceof SingleRepositoryNode) {
-        myTextRenderer.append(" ");
-      }
-      myTextRenderer.append(getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      myTextRenderer.append(getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    else {
+      myRepositoryCheckbox.setVisible(false);
+      myTextRenderer.append(" ");
     }
+    myTextRenderer.append(getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    myTextRenderer.append(getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     if (bounds != null) {
       setPreferredSize(new Dimension(tree.getVisibleRect().width - bounds.x, bounds.height));
     }

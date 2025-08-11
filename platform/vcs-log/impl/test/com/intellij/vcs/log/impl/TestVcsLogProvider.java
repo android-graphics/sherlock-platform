@@ -14,7 +14,6 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.*;
 import java.io.DataInput;
@@ -195,7 +194,6 @@ public class TestVcsLogProvider implements VcsLogProvider {
     }
 
     @Override
-    @Unmodifiable
     public @NotNull List<RefGroup> groupForBranchFilter(@NotNull Collection<? extends VcsRef> refs) {
       return ContainerUtil.map(refs, SingletonRefGroup::new);
     }

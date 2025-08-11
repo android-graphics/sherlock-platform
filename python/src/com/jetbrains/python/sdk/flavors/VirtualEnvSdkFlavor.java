@@ -11,14 +11,16 @@ import com.jetbrains.python.icons.PythonIcons;
 import com.jetbrains.python.sdk.BasePySdkExtKt;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import com.jetbrains.python.venvReader.VirtualEnvReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * User : catherine
@@ -27,9 +29,11 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
   private VirtualEnvSdkFlavor() {
   }
 
+  private static final Set<String> NAMES = Set.of("jython", "pypy", "python", "jython.bat", "pypy.exe", "python.exe");
+  private static final Pattern PATTERN = Pattern.compile("");
 
   public static VirtualEnvSdkFlavor getInstance() {
-    return EP_NAME.findExtension(VirtualEnvSdkFlavor.class);
+    return PythonSdkFlavor.EP_NAME.findExtension(VirtualEnvSdkFlavor.class);
   }
 
   @Override
@@ -52,16 +56,16 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
 
       var reader = VirtualEnvReader.getInstance();
       if (baseDirFromModule != null) {
-        candidates.addAll(reader.findLocalInterpreters(baseDirFromModule.toNioPath()));
+        candidates.addAll(reader.findLocalInterpreters(baseDirFromModule.toNioPath(), NAMES, PATTERN));
       } else if (baseDirFromContext != null) {
         final VirtualFile dir = VfsUtil.findFile(baseDirFromContext, false);
         if (dir != null) {
-          candidates.addAll(reader.findLocalInterpreters(dir.toNioPath()));
+          candidates.addAll(reader.findLocalInterpreters(dir.toNioPath(), NAMES, PATTERN));
         }
       }
 
-      candidates.addAll(reader.findVEnvInterpreters());
-      candidates.addAll(reader.findPyenvInterpreters());
+      candidates.addAll(reader.findVEnvInterpreters(NAMES, PATTERN));
+      candidates.addAll(reader.findPyenvInterpreters(NAMES, PATTERN));
 
       return ContainerUtil.filter(candidates, (Path path) -> {
         return PythonSdkUtil.isVirtualEnv(path.toString());
@@ -69,17 +73,14 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
     });
   }
 
-  public static @NotNull Path getDefaultLocation() {
+  public static Path getDefaultLocation() {
     return VirtualEnvReader.getInstance().getVEnvRootDir();
   }
 
   @Override
-  public boolean isValidSdkPath(@NotNull String pathStr) {
-    if (!super.isValidSdkPath(pathStr)) {
-      return false;
-    }
-
-    return PythonSdkUtil.getVirtualEnvRoot(pathStr) != null;
+  public boolean isValidSdkPath(@NotNull File file) {
+    if (!super.isValidSdkPath(file)) return false;
+    return PythonSdkUtil.getVirtualEnvRoot(file.getPath()) != null;
   }
 
   @Override

@@ -1,4 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright (c) 2000-2019 by JetBrains s.r.o. All Rights Reserved.
+ * Use is subject to license terms.
+ */
 package com.intellij.debugger.mockJDI.types;
 
 import com.intellij.debugger.mockJDI.MockVirtualMachine;
@@ -6,7 +9,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -15,18 +17,19 @@ public class MockPsiClassType extends MockPsiReferenceType implements ClassType 
     super(virtualMachine, psiClass);
   }
 
+  @Nullable
   @Override
-  public @Nullable ClassType superclass() {
+  public ClassType superclass() {
     return (ClassType)myVirtualMachine.createReferenceType(myClass.getSuperClass());
   }
 
   @Override
-  public @Unmodifiable List<InterfaceType> interfaces() {
+  public List<InterfaceType> interfaces() {
     return ContainerUtil.map(myClass.getInterfaces(), iFace -> (InterfaceType)myVirtualMachine.createReferenceType(iFace));
   }
 
   @Override
-  public @Unmodifiable List<InterfaceType> allInterfaces() {
+  public List<InterfaceType> allInterfaces() {
     return interfaces();
   }
 

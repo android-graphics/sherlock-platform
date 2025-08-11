@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.linearBek;
 
 import com.intellij.util.Function;
@@ -13,18 +13,16 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@ApiStatus.Internal
-public final class LinearBekGraphBuilder {
+final class LinearBekGraphBuilder {
   static final int MAX_BLOCK_SIZE = 200;
   private static final int MAGIC_SET_SIZE = PrintElementGeneratorImpl.LONG_EDGE_SIZE;
   private static final GraphEdgeToDownNode GRAPH_EDGE_TO_DOWN_NODE = new GraphEdgeToDownNode();
-  private final @NotNull GraphLayout myGraphLayout;
+  @NotNull private final GraphLayout myGraphLayout;
   private final LinearBekGraph myLinearBekGraph;
 
   LinearBekGraphBuilder(@NotNull LinearBekGraph bekGraph, @NotNull GraphLayout graphLayout) {
@@ -32,7 +30,8 @@ public final class LinearBekGraphBuilder {
     myGraphLayout = graphLayout;
   }
 
-  public @NotNull IntSet collapseAll() {
+  @NotNull
+  public IntSet collapseAll() {
     IntSet collapsedMerges = new IntOpenHashSet();
     for (int i = myLinearBekGraph.getGraph().nodesCount() - 1; i >= 0; i--) {
       MergeFragment fragment = getFragment(i);
@@ -44,7 +43,8 @@ public final class LinearBekGraphBuilder {
     return collapsedMerges;
   }
 
-  public @Nullable MergeFragment collapseFragment(int mergeCommit) {
+  @Nullable
+  public MergeFragment collapseFragment(int mergeCommit) {
     MergeFragment fragment = getFragment(mergeCommit);
     if (fragment != null) {
       fragment.collapse(myLinearBekGraph);
@@ -53,14 +53,16 @@ public final class LinearBekGraphBuilder {
     return null;
   }
 
-  public @Nullable MergeFragment getFragment(int mergeCommit) {
+  @Nullable
+  public MergeFragment getFragment(int mergeCommit) {
     List<Integer> downNodes = ContainerUtil.sorted(LinearGraphUtils.getDownNodes(myLinearBekGraph, mergeCommit));
     if (downNodes.size() != 2) return null;
 
     return getFragment(downNodes.get(1), downNodes.get(0), mergeCommit);
   }
 
-  private @Nullable MergeFragment getFragment(int leftChild, int rightChild, int parent) {
+  @Nullable
+  private MergeFragment getFragment(int leftChild, int rightChild, int parent) {
     MergeFragment fragment = new MergeFragment(parent, leftChild, rightChild);
 
     int leftLi = myGraphLayout.getLayoutIndex(leftChild);
@@ -161,7 +163,8 @@ public final class LinearBekGraphBuilder {
     return fragment;
   }
 
-  private @NotNull Set<Integer> calculateMagicSet(int node) {
+  @NotNull
+  private Set<Integer> calculateMagicSet(int node) {
     Set<Integer> magicSet;
     magicSet = new HashSet<>(MAGIC_SET_SIZE);
 
@@ -176,15 +179,15 @@ public final class LinearBekGraphBuilder {
     return magicSet;
   }
 
-  public static final class MergeFragment {
+  public final static class MergeFragment {
     private final int myParent;
     private final int myLeftChild;
     private final int myRightChild;
 
     private boolean myMergeWithOldCommit = false;
-    private final @NotNull IntIntMultiMap myTailEdges = new IntIntMultiMap();
-    private final @NotNull IntSet myBlockBody = new IntOpenHashSet();
-    private final @NotNull IntSet myTails = new IntOpenHashSet();
+    @NotNull private final IntIntMultiMap myTailEdges = new IntIntMultiMap();
+    @NotNull private final IntSet myBlockBody = new IntOpenHashSet();
+    @NotNull private final IntSet myTails = new IntOpenHashSet();
 
     private MergeFragment(int parent, int leftChild, int rightChild) {
       myParent = parent;
@@ -217,7 +220,8 @@ public final class LinearBekGraphBuilder {
       myBlockBody.add(body);
     }
 
-    public @NotNull IntSet getTails() {
+    @NotNull
+    public IntSet getTails() {
       return myTails;
     }
 

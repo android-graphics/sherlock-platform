@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -43,7 +43,7 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
+  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(file)) return;
 

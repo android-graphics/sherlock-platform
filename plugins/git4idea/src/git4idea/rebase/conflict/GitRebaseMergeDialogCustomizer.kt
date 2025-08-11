@@ -12,9 +12,9 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
-import git4idea.branch.GitRebaseParams
 import git4idea.history.GitHistoryUtils
 import git4idea.i18n.GitBundleExtensions.html
 import git4idea.merge.*
@@ -32,9 +32,7 @@ internal fun createRebaseDialogCustomizer(repository: GitRepository, rebaseSpec:
 
   // check that upstream is HEAD to overcome a hack: passing HEAD into `git rebase HEAD branch`
   // to avoid passing branch names for different repositories
-  val upstream = rebaseParams.upstream.takeUnless {
-    it is GitRebaseParams.RebaseUpstream.Reference && it.ref == GitUtil.HEAD
-  } ?: currentBranchAtTheStartOfRebase?.let { GitRebaseParams.RebaseUpstream.fromRefString(currentBranchAtTheStartOfRebase) }
+  val upstream = rebaseParams.upstream.takeIf { it != GitUtil.HEAD } ?: currentBranchAtTheStartOfRebase
   val branch = rebaseParams.branch ?: currentBranchAtTheStartOfRebase
 
   if (upstream == null || branch == null) {
@@ -64,10 +62,10 @@ internal fun createRebaseDialogCustomizer(repository: GitRepository, rebaseSpec:
 
 private class GitRebaseMergeDialogCustomizer(
   private val repository: GitRepository,
-  upstream: GitRebaseParams.RebaseUpstream,
+  upstream: String,
   @NlsSafe private val rebasingBranch: String,
   private val ingoingCommit: Hash?,
-  private val mergeBase: Hash?,
+  private val mergeBase: Hash?
 ) : MergeDialogCustomizer() {
   private val baseHash: Hash?
 
@@ -78,19 +76,14 @@ private class GitRebaseMergeDialogCustomizer(
   private val baseBranch: String?
 
   init {
-    if (upstream is GitRebaseParams.RebaseUpstream.Commit) {
-      basePresentable = upstream.commit.toShortString()
+    if (GitUtil.isHashString(upstream)) {
+      basePresentable = VcsLogUtil.getShortHash(upstream)
       baseBranch = null
-      baseHash = upstream.commit
-    }
-    else if (upstream is GitRebaseParams.RebaseUpstream.Reference) {
-      basePresentable = upstream.ref
-      baseBranch = upstream.ref
-      baseHash = null
+      baseHash = HashImpl.build(upstream)
     }
     else {
-      basePresentable = null
-      baseBranch = null
+      basePresentable = upstream
+      baseBranch = upstream
       baseHash = null
     }
   }
@@ -109,8 +102,10 @@ private class GitRebaseMergeDialogCustomizer(
     GitMergeProvider.calcColumnName(true, basePresentable)
   )
 
-  override fun getTitleCustomizerList(file: FilePath) = GitMergeDialogCustomizerHelper.getCustomizers(
-    repository.project, file, getLeftTitleCustomizer(file), getRightTitleCustomizer(file)
+  override fun getTitleCustomizerList(file: FilePath) = DiffEditorTitleCustomizerList(
+    getLeftTitleCustomizer(file),
+    null,
+    getRightTitleCustomizer(file)
   )
 
   private fun getLeftTitleCustomizer(file: FilePath): DiffEditorTitleCustomizer? {

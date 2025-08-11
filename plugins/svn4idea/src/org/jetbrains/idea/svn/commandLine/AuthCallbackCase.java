@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import org.jetbrains.annotations.NotNull;
@@ -9,7 +9,7 @@ import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public abstract class AuthCallbackCase {
   protected final Url myUrl;
-  protected final @NotNull AuthenticationService myAuthenticationService;
+  @NotNull protected final AuthenticationService myAuthenticationService;
 
   AuthCallbackCase(@NotNull AuthenticationService authenticationService, Url url) {
     myAuthenticationService = authenticationService;

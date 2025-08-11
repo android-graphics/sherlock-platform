@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -8,13 +22,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class DataViewsConfigurable extends SubCompositeConfigurable {
+  @NotNull
   @Override
-  public @NotNull String getId() {
+  public String getId() {
     return "debugger.dataViews";
   }
 
+  @Nls
   @Override
-  public @Nls String getDisplayName() {
+  public String getDisplayName() {
     return XDebuggerBundle.message("debugger.dataViews.display.name");
   }
 
@@ -23,18 +39,21 @@ class DataViewsConfigurable extends SubCompositeConfigurable {
     return new DataViewsConfigurableUi();
   }
 
+  @NotNull
   @Override
-  protected @NotNull DebuggerSettingsCategory getCategory() {
+  protected DebuggerSettingsCategory getCategory() {
     return DebuggerSettingsCategory.DATA_VIEWS;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getHelpTopic() {
+  public String getHelpTopic() {
     return "reference.idesettings.debugger.dataviews";
   }
 
+  @NotNull
   @Override
-  protected @NotNull XDebuggerDataViewSettings getSettings() {
+  protected XDebuggerDataViewSettings getSettings() {
     return XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings();
   }
 }

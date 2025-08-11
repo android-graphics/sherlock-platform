@@ -35,7 +35,7 @@ class PyAncestorTypeProvider : PyTypeProviderBase() {
     if (callable is PyFunction) {
       val typeFromSupertype = getReturnTypeFromSupertype(callable, context)
       if (typeFromSupertype != null) {
-        return typeFromSupertype
+        return Ref.create(PyTypingTypeProvider.toAsyncIfNeeded(callable, typeFromSupertype.get()))
       }
     }
     return null
@@ -90,9 +90,7 @@ private fun getReturnTypeFromSupertype(function: PyFunction, context: TypeEvalCo
     val superFunctionAnnotation = getReturnTypeAnnotation(overriddenFunction, context)
     if (superFunctionAnnotation != null) {
       val typeRef = PyTypingTypeProvider.getType(superFunctionAnnotation, context)
-      if (typeRef != null && function.isAsync == overriddenFunction.isAsync) {
-        return Ref.create(PyTypingTypeProvider.toAsyncIfNeeded(function, typeRef.get()))
-      }
+      typeRef?.let { return Ref.create(PyTypingTypeProvider.toAsyncIfNeeded(function, it.get())) }
     }
   }
   return null

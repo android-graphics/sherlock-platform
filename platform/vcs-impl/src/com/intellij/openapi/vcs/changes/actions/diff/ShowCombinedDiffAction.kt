@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions.diff
 
 import com.intellij.diff.editor.DiffEditorTabFilesManager
@@ -10,11 +10,13 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.history.VcsDiffUtil
 
-internal class ShowCombinedDiffAction : DumbAwareAction() {
+class ShowCombinedDiffAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val changes = e.getData(VcsDataKeys.CHANGES)
     val project = e.project
@@ -37,7 +39,9 @@ internal class ShowCombinedDiffAction : DumbAwareAction() {
   companion object {
     fun showDiff(project: Project, changes: List<Change>) {
       val producers: List<CombinedBlockProducer> = changes.mapNotNull {
-        val producer = ChangeDiffRequestProducer.create(project, it) ?: return@mapNotNull null
+        val changeContext = mutableMapOf<Key<out Any>, Any?>()
+        VcsDiffUtil.putFilePathsIntoChangeContext(it, changeContext)
+        val producer = ChangeDiffRequestProducer.create(project, it, changeContext) ?: return@mapNotNull null
         val id = CombinedPathBlockId(producer.filePath, it.fileStatus)
         CombinedBlockProducer(id, producer)
       }

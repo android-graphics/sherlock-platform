@@ -3,21 +3,17 @@
 package org.jetbrains.plugins.gradle.service.project.open
 
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.getPresentablePath
-import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.observation.launchTracked
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
@@ -50,12 +46,10 @@ fun canLinkAndRefreshGradleProject(projectFilePath: String, project: Project, sh
   return false
 }
 
-@Deprecated("Use linkAndSyncGradleProject instead", ReplaceWith("linkAndSyncGradleProject(project, projectFilePath)"))
+@Obsolete
 fun linkAndRefreshGradleProject(projectFilePath: String, project: Project) {
-  LOG.warn("Use linkAndSyncGradleProject instead")
-  CoroutineScopeService.getCoroutineScope(project).launchTracked {
-    GradleOpenProjectProvider().linkToExistingProjectAsync(projectFilePath, project)
-  }
+  @Suppress("DEPRECATION")
+  GradleOpenProjectProvider().linkToExistingProject(projectFilePath, project)
 }
 
 suspend fun linkAndSyncGradleProject(project: Project, projectFilePath: String) {
@@ -95,7 +89,7 @@ fun suggestGradleHome(project: Project?): String? {
     return lastUsedGradleHome
   }
   val gradleHome = GradleInstallationManager.getInstance().getAutodetectedGradleHome(project)
-  return gradleHome?.toCanonicalPath()
+  return gradleHome?.toPath()?.toCanonicalPath()
 }
 
 private fun validateGradleProject(projectFilePath: String, project: Project): ValidationInfo? {
@@ -111,14 +105,3 @@ private fun validateGradleProject(projectFilePath: String, project: Project): Va
   if (projectSettings != null) return ValidationInfo(ExternalSystemBundle.message("error.project.already.registered"))
   return null
 }
-
-@Service(Service.Level.PROJECT)
-private class CoroutineScopeService(val coroutineScope: CoroutineScope) {
-  companion object {
-    fun getCoroutineScope(project: Project): CoroutineScope {
-      return project.service<CoroutineScopeService>().coroutineScope
-    }
-  }
-}
-
-private val LOG = Logger.getInstance("#org.jetbrains.plugins.gradle.service.project.open.GradleProjectImportUtil")

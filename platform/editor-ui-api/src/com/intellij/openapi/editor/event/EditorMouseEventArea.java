@@ -16,7 +16,6 @@ public final class EditorMouseEventArea {
     myDebugName = debugName;
   }
 
-  @Override
   public @NonNls String toString() {
     return myDebugName;
   }

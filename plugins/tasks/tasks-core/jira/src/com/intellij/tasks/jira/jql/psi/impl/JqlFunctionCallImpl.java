@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.jql.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -21,15 +20,17 @@ public class JqlFunctionCallImpl extends JqlElementImpl implements JqlFunctionCa
     visitor.visitJqlFunctionCall(this);
   }
 
+  @NotNull
   @Override
-  public @NotNull JqlIdentifier getFunctionName() {
+  public JqlIdentifier getFunctionName() {
     JqlIdentifier idenifier = findChildByClass(JqlIdentifier.class);
     assert idenifier != null;
     return idenifier;
   }
 
+  @NotNull
   @Override
-  public @NotNull JqlArgumentList getArgumentList() {
+  public JqlArgumentList getArgumentList() {
     return findChildByClass(JqlArgumentList.class);
   }
 }

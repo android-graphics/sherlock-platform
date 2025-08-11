@@ -65,8 +65,9 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
     super(text);
   }
 
+  @Nullable
   @Override
-  protected @Nullable FieldType getFieldType(@NotNull String title) {
+  protected FieldType getFieldType(@NotNull String title) {
     return ourSectionFieldMapping.get(title);
   }
 
@@ -161,8 +162,9 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
   }
 
 
+  @NotNull
   @Override
-  protected @NotNull Pair<Substring, Integer> parseSectionHeader(int lineNum) {
+  protected Pair<Substring, Integer> parseSectionHeader(int lineNum) {
     final Substring line = getLine(lineNum);
     final Matcher matcher = SECTION_HEADER.matcher(line);
     if (matcher.matches()) {

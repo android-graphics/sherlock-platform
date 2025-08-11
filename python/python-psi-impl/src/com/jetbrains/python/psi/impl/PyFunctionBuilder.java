@@ -34,7 +34,8 @@ public class PyFunctionBuilder {
   private final List<String> myDecorators = new ArrayList<>();
   private final PsiElement mySettingAnchor;
   private String myAnnotation = null;
-  private final @NotNull Map<String, String> myDecoratorValues = new HashMap<>();
+  @NotNull
+  private final Map<String, String> myDecoratorValues = new HashMap<>();
   private boolean myAsync = false;
   private PyDocstringGenerator myDocStringGenerator;
 
@@ -45,7 +46,8 @@ public class PyFunctionBuilder {
    * @param decoratorsToCopyIfExist list of decorator names to be copied to new function.
    * @return builder configured by this function
    */
-  public static @NotNull PyFunctionBuilder copySignature(final @NotNull PyFunction source, final String @NotNull ... decoratorsToCopyIfExist) {
+  @NotNull
+  public static PyFunctionBuilder copySignature(@NotNull final PyFunction source, final String @NotNull ... decoratorsToCopyIfExist) {
     final String name = source.getName();
     final PyFunctionBuilder functionBuilder = new PyFunctionBuilder((name != null) ? name : "", source);
     for (final PyParameter parameter : source.getParameterList().getParameters()) {
@@ -87,7 +89,8 @@ public class PyFunctionBuilder {
    * @param name param name
    * @param type param type
    */
-  public @NotNull PyFunctionBuilder parameterWithType(@NotNull String name, @NotNull String type) {
+  @NotNull
+  public PyFunctionBuilder parameterWithType(@NotNull String name, @NotNull String type) {
     parameter(name);
     myDocStringGenerator.withParamTypedByName(name, type);
     return this;
@@ -174,7 +177,7 @@ public class PyFunctionBuilder {
    * @param decoratorName decorator name
    * @param value         its argument
    */
-  public void decorate(final @NotNull String decoratorName, final @NotNull String value) {
+  public void decorate(@NotNull final String decoratorName, @NotNull final String value) {
     decorate(decoratorName);
     myDecoratorValues.put(decoratorName, value);
   }

@@ -14,6 +14,7 @@ import com.intellij.platform.execution.serviceView.ServiceModel.ServiceViewItem;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.tabs.JBTabs;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -30,15 +31,16 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.platform.execution.serviceView.ServiceViewDragHelper.getTheOnlyRootContributor;
 
 final class ServiceViewActionProvider {
-  private static final @NonNls String SERVICE_VIEW_ITEM_TOOLBAR = "ServiceViewItemToolbar";
-  static final @NonNls String SERVICE_VIEW_ITEM_POPUP = "ServiceViewItemPopup";
-  private static final @NonNls String SERVICE_VIEW_TREE_TOOLBAR = "ServiceViewTreeToolbar";
+  @NonNls private static final String SERVICE_VIEW_ITEM_TOOLBAR = "ServiceViewItemToolbar";
+  @NonNls static final String SERVICE_VIEW_ITEM_POPUP = "ServiceViewItemPopup";
+  @NonNls private static final String SERVICE_VIEW_TREE_TOOLBAR = "ServiceViewTreeToolbar";
 
   static final DataKey<List<ServiceViewItem>> SERVICES_SELECTED_ITEMS = DataKey.create("services.selected.items");
 
@@ -101,22 +103,31 @@ final class ServiceViewActionProvider {
       group.add(collapseAllAction);
     }
 
-    ActionToolbar treeActionsToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TREE_TOOLBAR, group, true);
+    ActionToolbar treeActionsToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TOOLBAR, group, true);
     treeActionsToolBar.setTargetComponent(component);
     return treeActionsToolBar;
   }
 
   List<AnAction> getAdditionalGearActions() {
-    AnAction additionalActions = ActionManager.getInstance().getAction("ServiceView.Gear");
-    return ContainerUtil.createMaybeSingletonList(additionalActions);
+    List<AnAction> result = new ArrayList<>();
+    AnAction selectActiveServiceActions = ActionManager.getInstance().getAction("ServiceView.SelectActiveService");
+    ContainerUtil.addIfNotNull(result, selectActiveServiceActions);
+    result.add(Separator.getInstance());
+    AnAction configureServicesActions = ActionManager.getInstance().getAction("ServiceView.ConfigureServices");
+    ContainerUtil.addIfNotNull(result, configureServicesActions);
+    AnAction showServicesActions = ActionManager.getInstance().getAction("ServiceView.ShowServices");
+    ContainerUtil.addIfNotNull(result, showServicesActions);
+    return result;
   }
 
-  static @Nullable ServiceView getSelectedView(@NotNull AnActionEvent e) {
+  @Nullable
+  static ServiceView getSelectedView(@NotNull AnActionEvent e) {
     return getSelectedView(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
   }
 
-  static @Nullable ServiceView getSelectedView(@NotNull DataContext dataContext) {
-    return getSelectedView(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
+  @Nullable
+  static ServiceView getSelectedView(@NotNull DataProvider provider) {
+    return getSelectedView(ObjectUtils.tryCast(provider.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT.getName()), Component.class));
   }
 
   static @NotNull List<ServiceViewItem> getSelectedItems(@NotNull AnActionEvent e) {
@@ -155,7 +166,8 @@ final class ServiceViewActionProvider {
     }
   }
 
-  private static @Nullable ServiceView getSelectedView(@Nullable Component contextComponent) {
+  @Nullable
+  private static ServiceView getSelectedView(@Nullable Component contextComponent) {
     while (contextComponent != null && !(contextComponent instanceof ServiceView)) {
       if (contextComponent instanceof ServiceViewNavBarPanel navBarPanel) {
         return navBarPanel.getView();
@@ -241,7 +253,7 @@ final class ServiceViewActionProvider {
     if (descriptor == null) return AnAction.EMPTY_ARRAY;
 
     ActionGroup group = toolbar ? descriptor.getToolbarActions() : descriptor.getPopupActions();
-    return group == null ? AnAction.EMPTY_ARRAY : new AnAction[] { group };
+    return group == null ? AnAction.EMPTY_ARRAY : group.getChildren(e);
   }
 
   public static JComponent createEmptyToolbar(boolean horizontal, JComponent targetComponent) {

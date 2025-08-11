@@ -12,7 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.dvcs.commit.DvcsCommitModeProvider;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
@@ -40,10 +39,6 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
-import com.intellij.vcs.commit.CommitMode;
-import kotlin.coroutines.EmptyCoroutineContext;
-import kotlinx.coroutines.CoroutineScope;
-import kotlinx.coroutines.CoroutineScopeKt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -66,12 +61,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
-import static com.intellij.util.concurrency.AppJavaExecutorUtil.awaitCancellationAndDispose;
 import static com.intellij.util.containers.ContainerUtil.exists;
 import static org.zmlx.hg4idea.HgNotificationIdsHolder.*;
 
-public final class HgVcs extends AbstractVcs {
+public class HgVcs extends AbstractVcs {
+
   @Topic.ProjectLevel
   public static final Topic<HgUpdater> REMOTE_TOPIC = new Topic<>("hg4idea.remote", HgUpdater.class);
 
@@ -101,7 +95,7 @@ public final class HgVcs extends AbstractVcs {
   private final HgUpdateEnvironment updateEnvironment;
   private final HgCommittedChangesProvider committedChangesProvider;
 
-  private final AtomicReference<CoroutineScope> myActiveScope = new AtomicReference<>();
+  private final AtomicReference<Disposable> myDisposable = new AtomicReference<>();
 
   private final HgMergeProvider myMergeProvider;
   private HgExecutableValidator myExecutableValidator;
@@ -243,15 +237,12 @@ public final class HgVcs extends AbstractVcs {
 
   @Override
   public void activate() {
-    CoroutineScope globalScope = HgDisposable.getCoroutineScope(myProject);
-    CoroutineScope activeScope = childScope(globalScope, "HgVcs", EmptyCoroutineContext.INSTANCE, true);
-
     Disposable disposable = Disposer.newDisposable();
-    awaitCancellationAndDispose(activeScope, disposable);
-
+    // do not leak Project if 'deactivate' is never called
+    Disposer.register(HgDisposable.getInstance(myProject), disposable);
     // workaround the race between 'activate' and 'deactivate'
-    CoroutineScope oldScope = myActiveScope.getAndSet(activeScope);
-    if (oldScope != null) CoroutineScopeKt.cancel(oldScope, null);
+    Disposable oldDisposable = myDisposable.getAndSet(disposable);
+    if (oldDisposable != null) Disposer.dispose(oldDisposable);
 
     // validate hg executable on start and update hg version
     checkExecutableAndVersion();
@@ -261,7 +252,7 @@ public final class HgVcs extends AbstractVcs {
     Disposer.register(disposable, remoteStatusUpdater);
     myHgRemoteStatusUpdater = remoteStatusUpdater;
 
-    HgVFSListener VFSListener = HgVFSListener.createInstance(this, activeScope);
+    HgVFSListener VFSListener = HgVFSListener.createInstance(this);
     Disposer.register(disposable, VFSListener);
 
     // ignore temporary files
@@ -280,8 +271,8 @@ public final class HgVcs extends AbstractVcs {
 
   @Override
   public void deactivate() {
-    CoroutineScope oldScope = myActiveScope.getAndSet(null);
-    if (oldScope != null) CoroutineScopeKt.cancel(oldScope, null);
+    Disposable disposable = myDisposable.getAndSet(null);
+    if (disposable != null) Disposer.dispose(disposable);
   }
 
   public static @Nullable HgVcs getInstance(Project project) {
@@ -330,11 +321,6 @@ public final class HgVcs extends AbstractVcs {
   @Override
   public VcsType getType() {
     return VcsType.distributed;
-  }
-
-  @Override
-  public @Nullable CommitMode getForcedCommitMode() {
-    return DvcsCommitModeProvider.compute();
   }
 
   @Override

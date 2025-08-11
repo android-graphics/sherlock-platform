@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.makeStatic;
 
@@ -49,31 +49,35 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   }
 
   @Override
-  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  @NotNull
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new MakeMethodOrClassStaticViewDescriptor(myMember);
   }
 
+  @Nullable
   @Override
-  protected @Nullable String getRefactoringId() {
+  protected String getRefactoringId() {
     return "refactoring.makeStatic";
   }
 
+  @Nullable
   @Override
-  protected @Nullable RefactoringEventData getBeforeData() {
+  protected RefactoringEventData getBeforeData() {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElement(myMember);
+    return data;
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     RefactoringEventData data = new RefactoringEventData();
     data.addElement(myMember);
     return data;
   }
 
   @Override
-  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
-    RefactoringEventData data = new RefactoringEventData();
-    data.addElement(myMember);
-    return data;
-  }
-
-  @Override
-  protected final boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
+  protected final boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     if (ApplicationManager.getApplication().isUnitTestMode() && !BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) {
       MultiMap<PsiElement, @Nls String> conflictDescriptions = getConflictDescriptions(usagesIn);
@@ -218,7 +222,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   protected abstract void findExternalUsages(ArrayList<UsageInfo> result);
 
   protected void findExternalReferences(final PsiMethod method, final ArrayList<UsageInfo> result) {
-    for (PsiReference ref : ReferencesSearch.search(method).asIterable()) {
+    for (PsiReference ref : ReferencesSearch.search(method)) {
       PsiElement element = ref.getElement();
       PsiElement qualifier = null;
       if (element instanceof PsiReferenceExpression) {
@@ -266,7 +270,8 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   }
 
   @Override
-  protected @NotNull String getCommandName() {
+  @NotNull
+  protected String getCommandName() {
     return JavaRefactoringBundle.message("make.static.command", DescriptiveNameUtil.getDescriptiveName(myMember));
   }
 

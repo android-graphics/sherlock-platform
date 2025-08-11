@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.decompose;
 
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
-import org.jetbrains.java.decompiler.modules.decompiler.StrongConnectivityHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
@@ -15,9 +14,9 @@ public class FastExtendedPostdominanceHelper {
 
   private List<Statement> lstReversePostOrderList;
 
-  private HashMap<Integer, FastFixedSet<Integer>> mapSupportPoints = new LinkedHashMap<>();
+  private HashMap<Integer, FastFixedSet<Integer>> mapSupportPoints = new HashMap<>();
 
-  private final HashMap<Integer, FastFixedSet<Integer>> mapExtPostdominators = new LinkedHashMap<>();
+  private final HashMap<Integer, FastFixedSet<Integer>> mapExtPostdominators = new HashMap<>();
 
   private Statement statement;
 
@@ -27,7 +26,7 @@ public class FastExtendedPostdominanceHelper {
 
     this.statement = statement;
 
-    HashSet<Integer> set = new LinkedHashSet<>();
+    HashSet<Integer> set = new HashSet<>();
     for (Statement st : statement.getStats()) {
       set.add(st.id);
     }
@@ -52,14 +51,10 @@ public class FastExtendedPostdominanceHelper {
 
     filterOnDominance(filter);
 
-    addSupportedComponents(filter);
-
     Set<Entry<Integer, FastFixedSet<Integer>>> entries = mapExtPostdominators.entrySet();
     HashMap<Integer, Set<Integer>> res = new HashMap<>(entries.size());
     for (Entry<Integer, FastFixedSet<Integer>> entry : entries) {
-      List<Integer> lst = new ArrayList<>(entry.getValue().toPlainSet());
-      Collections.sort(lst); // Order Matters!
-      res.put(entry.getKey(), new LinkedHashSet<>(lst));
+      res.put(entry.getKey(), entry.getValue().toPlainSet());
     }
 
     return res;
@@ -118,23 +113,6 @@ public class FastExtendedPostdominanceHelper {
 
       if (setPostdoms.isEmpty()) {
         mapExtPostdominators.remove(head);
-      }
-    }
-  }
-
-  private void addSupportedComponents(DominatorTreeExceptionFilter filter) {
-    StrongConnectivityHelper schelp = new StrongConnectivityHelper(this.statement);
-
-    for (List<Statement> comp : schelp.getComponents()) {
-      SupportComponent supcomp = SupportComponent.identify(comp, this.mapSupportPoints, filter.getDomEngine());
-
-      if (supcomp != null) {
-        // If the identified support component is not null, then add additional postdom info
-        for (Statement st : supcomp.stats) {
-          if (st != supcomp.supportedPoint) {
-            this.mapExtPostdominators.computeIfAbsent(st.id, i -> this.factory.spawnEmptySet()).add(supcomp.supportedPoint.id);
-          }
-        }
       }
     }
   }

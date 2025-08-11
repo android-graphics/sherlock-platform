@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.generation.CommenterDataHolder;
@@ -43,16 +43,18 @@ public class PropertiesCommenter implements CodeDocumentationAwareCommenter, Sel
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable CommenterDataHolder createLineCommentingState(int startLine, int endLine, @NotNull Document document, @NotNull PsiFile file) {
+  public CommenterDataHolder createLineCommentingState(int startLine, int endLine, @NotNull Document document, @NotNull PsiFile file) {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable CommenterDataHolder createBlockCommentingState(int selectionStart,
-                                                                  int selectionEnd,
-                                                                  @NotNull Document document,
-                                                                  @NotNull PsiFile file) {
+  public CommenterDataHolder createBlockCommentingState(int selectionStart,
+                                                        int selectionEnd,
+                                                        @NotNull Document document,
+                                                        @NotNull PsiFile file) {
     return null;
   }
 
@@ -72,26 +74,30 @@ public class PropertiesCommenter implements CodeDocumentationAwareCommenter, Sel
            CharArrayUtil.regionMatches(document.getCharsSequence(), offset, EXCLAMATION_COMMENT_PREFIX);
   }
 
+  @Nullable
   @Override
-  public @Nullable String getCommentPrefix(int line, @NotNull Document document, @NotNull CommenterDataHolder data) {
+  public String getCommentPrefix(int line, @NotNull Document document, @NotNull CommenterDataHolder data) {
     return HASH_COMMENT_PREFIX;
   }
 
+  @Nullable
   @Override
-  public @Nullable TextRange getBlockCommentRange(int selectionStart,
-                                                  int selectionEnd,
-                                                  @NotNull Document document,
-                                                  @NotNull CommenterDataHolder data) {
+  public TextRange getBlockCommentRange(int selectionStart,
+                                        int selectionEnd,
+                                        @NotNull Document document,
+                                        @NotNull CommenterDataHolder data) {
     throw new UnsupportedOperationException();
   }
 
+  @Nullable
   @Override
-  public @Nullable String getBlockCommentPrefix(int selectionStart, @NotNull Document document, @NotNull CommenterDataHolder data) {
+  public String getBlockCommentPrefix(int selectionStart, @NotNull Document document, @NotNull CommenterDataHolder data) {
     return getBlockCommentPrefix();
   }
 
+  @Nullable
   @Override
-  public @Nullable String getBlockCommentSuffix(int selectionEnd, @NotNull Document document, @NotNull CommenterDataHolder data) {
+  public String getBlockCommentSuffix(int selectionEnd, @NotNull Document document, @NotNull CommenterDataHolder data) {
     return getBlockCommentSuffix();
   }
 
@@ -100,38 +106,45 @@ public class PropertiesCommenter implements CodeDocumentationAwareCommenter, Sel
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
-  public @NotNull TextRange insertBlockComment(int startOffset, int endOffset, Document document, CommenterDataHolder data) {
+  public TextRange insertBlockComment(int startOffset, int endOffset, Document document, CommenterDataHolder data) {
     throw new UnsupportedOperationException();
   }
 
+  @Nullable
   @Override
-  public @Nullable IElementType getLineCommentTokenType() {
+  public IElementType getLineCommentTokenType() {
     return PropertiesTokenTypes.END_OF_LINE_COMMENT;
   }
 
+  @Nullable
   @Override
-  public @Nullable IElementType getBlockCommentTokenType() {
+  public IElementType getBlockCommentTokenType() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable IElementType getDocumentationCommentTokenType() {
+  public IElementType getDocumentationCommentTokenType() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getDocumentationCommentPrefix() {
+  public String getDocumentationCommentPrefix() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getDocumentationCommentLinePrefix() {
+  public String getDocumentationCommentLinePrefix() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getDocumentationCommentSuffix() {
+  public String getDocumentationCommentSuffix() {
     return null;
   }
 

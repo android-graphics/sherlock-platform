@@ -1,4 +1,3 @@
-// PRIORITY: HIGH
 // INTENTION_TEXT: "Add import for 'pack.name.Fixtures.Register.Domain.UserRepository.authSuccess'"
 
 package pack.name

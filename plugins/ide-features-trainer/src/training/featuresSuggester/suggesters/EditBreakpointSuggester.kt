@@ -26,8 +26,6 @@ class EditBreakpointSuggester : AbstractFeatureSuggester() {
 
   override val languages = listOf(Language.ANY.id)
 
-  override val forceCheckForStatistics = true
-
   private val numOfPausesToGetSuggestion = 8
 
   @Suppress("UnstableApiUsage")

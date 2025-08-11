@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
@@ -25,8 +25,9 @@ import static com.intellij.lang.documentation.DocumentationMarkup.PRE_ELEMENT;
 
 final class ThemeJsonDocumentationProvider extends AbstractDocumentationProvider {
 
+  @Nullable
   @Override
-  public @Nullable @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     final Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> resolve = resolve(element);
     if (resolve == null) return null;
 
@@ -105,7 +106,8 @@ final class ThemeJsonDocumentationProvider extends AbstractDocumentationProvider
     builder.append(HtmlChunk.tag("tr").children(headerCell, contentCell));
   }
 
-  private static @Nullable Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> resolve(PsiElement element) {
+  @Nullable
+  private static Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> resolve(PsiElement element) {
     if (!(element instanceof JsonProperty)) return null;
     if (!ThemeJsonUtil.isThemeFilename(element.getContainingFile().getName())) return null;
 

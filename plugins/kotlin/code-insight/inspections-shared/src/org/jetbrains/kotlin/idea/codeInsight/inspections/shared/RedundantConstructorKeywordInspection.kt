@@ -1,16 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix
+import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -45,12 +39,13 @@ internal class RedundantConstructorKeywordInspection : AbstractKotlinInspection(
         siblings(forward = false, withItself = false).takeWhile { it is PsiComment || it is PsiWhiteSpace }.any { it is PsiComment }
 }
 
-private class RemoveRedundantConstructorFix : PsiUpdateModCommandQuickFix() {
-    override fun getFamilyName(): @IntentionFamilyName String =
-        KotlinBundle.message("remove.redundant.constructor.keyword.fix.text")
+private class RemoveRedundantConstructorFix : LocalQuickFix {
+    override fun getName() = KotlinBundle.message("remove.redundant.constructor.keyword.fix.text")
 
-    override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
-        val constructor = element as? KtPrimaryConstructor ?: return
+    override fun getFamilyName() = name
+
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val constructor = descriptor.psiElement as? KtPrimaryConstructor ?: return
         constructor.removeRedundantConstructorKeywordAndSpace()
     }
 }

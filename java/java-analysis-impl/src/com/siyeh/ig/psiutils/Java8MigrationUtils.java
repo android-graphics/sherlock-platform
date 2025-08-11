@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -16,9 +16,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public final class Java8MigrationUtils {
-  private static @Nullable Java8MigrationUtils.MapCheckCondition tryExtract(PsiExpression fullCondition,
-                                                                            @Nullable PsiStatement statement,
-                                                                            boolean treatGetNullAsContainsKey) {
+  @Nullable
+  private static Java8MigrationUtils.MapCheckCondition tryExtract(PsiExpression fullCondition,
+                                                                  @Nullable PsiStatement statement,
+                                                                  boolean treatGetNullAsContainsKey) {
     PsiExpression condition = PsiUtil.skipParenthesizedExprDown(fullCondition);
     boolean negated = false;
     while (condition != null && BoolUtils.isNegation(condition)) {
@@ -55,8 +56,9 @@ public final class Java8MigrationUtils {
                                                      treatGetNullAsContainsKey);
   }
 
+  @Nullable
   @Contract("_, null -> null")
-  private static @Nullable PsiMethodCallExpression tryExtractMapGetCall(PsiReferenceExpression target, PsiElement element) {
+  private static PsiMethodCallExpression tryExtractMapGetCall(PsiReferenceExpression target, PsiElement element) {
     if (element instanceof PsiDeclarationStatement declaration) {
       PsiElement[] elements = declaration.getDeclaredElements();
       if (elements.length > 0) {
@@ -102,7 +104,8 @@ public final class Java8MigrationUtils {
    * Extracts expression, that can be lambda body from Map.put() call
    * @param statement  - put call or block with expected put call inside
    */
-  public static @Nullable PsiExpression extractLambdaCandidate(Java8MigrationUtils.MapCheckCondition condition, PsiStatement statement) {
+  @Nullable
+  public static PsiExpression extractLambdaCandidate(Java8MigrationUtils.MapCheckCondition condition, PsiStatement statement) {
     PsiAssignmentExpression assignment;
     PsiExpression putValue = extractPutValue(condition, statement);
     if (putValue != null) {
@@ -130,7 +133,8 @@ public final class Java8MigrationUtils {
    * @return put value
    */
   @Contract("_, null -> null")
-  public static @Nullable PsiExpression extractPutValue(Java8MigrationUtils.MapCheckCondition condition, PsiStatement statement) {
+  @Nullable
+  public static PsiExpression extractPutValue(Java8MigrationUtils.MapCheckCondition condition, PsiStatement statement) {
     if (!(statement instanceof PsiExpressionStatement)) return null;
     PsiMethodCallExpression putCall = extractMapMethodCall(((PsiExpressionStatement)statement).getExpression(), "put");
     if (putCall == null) return null;
@@ -172,11 +176,13 @@ public final class Java8MigrationUtils {
       myTreatGetNullAsContainsKey = treatGetNullAsContainsKey;
     }
 
-    public @Nullable PsiReferenceExpression getValueReference() {
+    @Nullable
+    public PsiReferenceExpression getValueReference() {
       return myValueReference;
     }
 
-    public @Nullable PsiExpression getMapExpression() {
+    @Nullable
+    public PsiExpression getMapExpression() {
       return myMapExpression;
     }
 
@@ -289,7 +295,8 @@ public final class Java8MigrationUtils {
      *
      * @see ControlFlowUtils#stripBraces(PsiStatement)
      */
-    public @Nullable PsiMethodCallExpression extractPut(@NotNull PsiForeachStatement statement) {
+    @Nullable
+    public PsiMethodCallExpression extractPut(@NotNull PsiForeachStatement statement) {
       PsiExpressionStatement putStatement =
         ObjectUtils.tryCast(ControlFlowUtils.stripBraces(statement.getBody()), PsiExpressionStatement.class);
       if (putStatement == null) return null;
@@ -363,7 +370,8 @@ public final class Java8MigrationUtils {
      * Create {@link MapLoopCondition} from enhanced for statement.
      * Loop condition instance created only if iteration is done using {@link Map#keySet()} or {@link Map#entrySet()} methods.
      */
-    public static @Nullable MapLoopCondition create(@NotNull PsiForeachStatement statement) {
+    @Nullable
+    public static MapLoopCondition create(@NotNull PsiForeachStatement statement) {
       PsiExpression iteratedValue = statement.getIteratedValue();
       PsiParameter iterParam = statement.getIterationParameter();
       PsiMethodCallExpression iterCall = extractMapMethodCall(iteratedValue, "keySet");

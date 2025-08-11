@@ -46,13 +46,14 @@ public class PyRefactoringUiService {
     callback.accept(operation);
   }
 
-  public @Nullable <T> ExtractMethodSettings<T> showExtractMethodDialog(final Project project,
-                                                                        final String defaultName,
-                                                                        final CodeFragment fragment,
-                                                                        final T[] visibilityVariants,
-                                                                        final ExtractMethodValidator validator,
-                                                                        final ExtractMethodDecorator<T> decorator,
-                                                                        final FileType type, String helpId) {
+  @Nullable
+  public <T> ExtractMethodSettings<T> showExtractMethodDialog(final Project project,
+                                                          final String defaultName,
+                                                          final CodeFragment fragment,
+                                                          final T[] visibilityVariants,
+                                                          final ExtractMethodValidator validator,
+                                                          final ExtractMethodDecorator<T> decorator,
+                                                          final FileType type, String helpId) {
     return new ExtractMethodSettings<T>() {
       @Override
       public @NotNull String getMethodName() {

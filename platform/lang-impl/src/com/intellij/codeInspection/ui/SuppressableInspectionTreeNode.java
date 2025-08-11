@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.Interner;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,9 +21,9 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@ApiStatus.Internal
 public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode {
-  private final @NotNull InspectionToolPresentation myPresentation;
+  @NotNull
+  private final InspectionToolPresentation myPresentation;
   private volatile Set<SuppressIntentionAction> myAvailableSuppressActions;
   private volatile @Nls String myPresentableName;
   private volatile Boolean myValid;
@@ -47,7 +46,8 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     return true;
   }
 
-  public @NotNull InspectionToolPresentation getPresentation() {
+  @NotNull
+  public InspectionToolPresentation getPresentation() {
     return myPresentation;
   }
 
@@ -68,7 +68,8 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     }
   }
 
-  public synchronized @NotNull Set<SuppressIntentionAction> getAvailableSuppressActions() {
+  @NotNull
+  public synchronized Set<SuppressIntentionAction> getAvailableSuppressActions() {
     if (myAvailableSuppressActions == null) {
       updateAvailableSuppressActions();
     }
@@ -83,7 +84,8 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     myAvailableSuppressActions.remove(action);
   }
 
-  public abstract @Nullable RefEntity getElement();
+  @Nullable
+  public abstract RefEntity getElement();
 
   @Override
   public final synchronized boolean isValid() {
@@ -105,8 +107,9 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     return name;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getTailText() {
+  public String getTailText() {
     if (isQuickFixAppliedFromView()) {
       return "";
     }
@@ -116,15 +119,18 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     return !isValid() ? LangBundle.message("no.longer.valid") : null;
   }
 
-  private @NotNull Set<SuppressIntentionAction> calculateAvailableSuppressActions() {
+  @NotNull
+  private Set<SuppressIntentionAction> calculateAvailableSuppressActions() {
     return getElement() == null
                                  ? Collections.emptySet()
                                  : calculateAvailableSuppressActions(myPresentation.getContext().getProject());
   }
 
-  public abstract @NotNull Pair<PsiElement, CommonProblemDescriptor> getSuppressContent();
+  @NotNull
+  public abstract Pair<PsiElement, CommonProblemDescriptor> getSuppressContent();
 
-  private @NotNull Set<SuppressIntentionAction> calculateAvailableSuppressActions(@NotNull Project project) {
+  @NotNull
+  private Set<SuppressIntentionAction> calculateAvailableSuppressActions(@NotNull Project project) {
     if (myPresentation.isDummy()) return Collections.emptySet();
     final Pair<PsiElement, CommonProblemDescriptor> suppressContent = getSuppressContent();
     PsiElement element = suppressContent.getFirst();
@@ -139,7 +145,8 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
       .collect(Collectors.toCollection(() -> ConcurrentCollectionFactory.createConcurrentSet(HashingStrategy.identity()))));
   }
 
-  protected abstract @Nls String calculatePresentableName();
+  @Nls
+  protected abstract String calculatePresentableName();
 
   protected abstract boolean calculateIsValid();
 

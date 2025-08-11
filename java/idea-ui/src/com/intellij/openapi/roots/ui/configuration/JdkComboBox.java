@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.JavaUiBundle;
@@ -29,15 +29,15 @@ import static com.intellij.openapi.roots.ui.configuration.JdkComboBox.JdkComboBo
  */
 public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
   private final @Nullable Project myProject;
-  private final @NotNull Consumer<Sdk> myOnNewSdkAdded;
-  private @Nullable JButton myEditButton;
+  @NotNull private final Consumer<Sdk> myOnNewSdkAdded;
+  @Nullable private JButton myEditButton;
 
   /**
    * @deprecated since {@link #setSetupButton} methods are deprecated, use the
    * more specific constructor to pass all parameters
    */
   @Deprecated
-  public JdkComboBox(final @NotNull ProjectSdksModel jdkModel,
+  public JdkComboBox(@NotNull final ProjectSdksModel jdkModel,
                      @Nullable Condition<? super SdkTypeId> filter) {
     this(null, jdkModel, filter, getSdkFilter(filter), filter, null);
   }
@@ -127,7 +127,8 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
     setModel(newModel);
   }
 
-  private static @NotNull SdkListItem unwrapItem(@Nullable JdkComboBoxItem item) {
+  @NotNull
+  private static SdkListItem unwrapItem(@Nullable JdkComboBoxItem item) {
     if (item == null) item = new ProjectJdkComboBoxItem();
 
     if (item instanceof InnerComboBoxItem) {
@@ -136,7 +137,8 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
     throw new RuntimeException("Failed to unwrap " + item.getClass().getName() + ": " + item);
   }
 
-  private static @NotNull JdkComboBoxItem wrapItem(@NotNull SdkListItem item) {
+  @NotNull
+  private static JdkComboBoxItem wrapItem(@NotNull SdkListItem item) {
     if (item instanceof SdkListItem.SdkItem) {
       return new ActualJdkInnerItem((SdkListItem.SdkItem)item);
     }
@@ -159,11 +161,11 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
    */
   @Deprecated(forRemoval = true)
   public void setSetupButton(final JButton setUpButton,
-                             final @Nullable Project project,
-                             final ProjectSdksModel jdksModel,
-                             final JdkComboBoxItem firstItem,
-                             final @Nullable Condition<? super Sdk> additionalSetup,
-                             final boolean moduleJdkSetup) {
+                                @Nullable final Project project,
+                                final ProjectSdksModel jdksModel,
+                                final JdkComboBoxItem firstItem,
+                                @Nullable final Condition<? super Sdk> additionalSetup,
+                                final boolean moduleJdkSetup) {
   }
 
   public void setEditButton(@NotNull JButton editButton,
@@ -191,8 +193,9 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable JdkComboBoxItem getSelectedItem() {
+  public JdkComboBoxItem getSelectedItem() {
     return (JdkComboBoxItem)super.getSelectedItem();
   }
 
@@ -307,8 +310,9 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
       return wrapItem(myInnerModel.getItems().get(index));
     }
 
+    @Nullable
     @Override
-    public @Nullable ListModel<JdkComboBoxItem> onChosen(JdkComboBoxItem selectedValue) {
+    public ListModel<JdkComboBoxItem> onChosen(JdkComboBoxItem selectedValue) {
       if (selectedValue instanceof InnerComboBoxItem) {
         SdkListModel inner = myInnerModel.onChosen(((InnerComboBoxItem)selectedValue).getItem());
         return inner == null ? null : new JdkComboBoxModel(inner);
@@ -346,7 +350,8 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
     }
   }
 
-  public static @NotNull Condition<Sdk> getSdkFilter(final @Nullable Condition<? super SdkTypeId> filter) {
+  @NotNull
+  public static Condition<Sdk> getSdkFilter(@Nullable final Condition<? super SdkTypeId> filter) {
     return filter == null ? Conditions.alwaysTrue() : sdk -> filter.value(sdk.getSdkType());
   }
 
@@ -357,11 +362,13 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
   private interface SelectableComboBoxItem { }
 
   public abstract static class JdkComboBoxItem {
-    public @Nullable Sdk getJdk() {
+    @Nullable
+    public Sdk getJdk() {
       return null;
     }
 
-    public @Nullable String getSdkName() {
+    @Nullable
+    public String getSdkName() {
       return null;
     }
   }
@@ -373,8 +380,9 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
       myItem = item;
     }
 
+    @NotNull
     @Override
-    public @NotNull SdkListItem getItem() {
+    public SdkListItem getItem() {
       return myItem;
     }
 
@@ -400,8 +408,9 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
       myItem = item;
     }
 
+    @NotNull
     @Override
-    public @NotNull SdkListItem getItem() {
+    public SdkListItem getItem() {
       return myItem;
     }
   }
@@ -418,13 +427,15 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
       return myJdk.getName();
     }
 
+    @NotNull
     @Override
-    public @NotNull Sdk getJdk() {
+    public Sdk getJdk() {
       return myJdk;
     }
 
+    @Nullable
     @Override
-    public @Nullable String getSdkName() {
+    public String getSdkName() {
       return myJdk.getName();
     }
 
@@ -443,8 +454,9 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
   }
 
   public static class ProjectJdkComboBoxItem extends JdkComboBoxItem implements InnerComboBoxItem, SelectableComboBoxItem {
+    @NotNull
     @Override
-    public @NotNull SdkListItem getItem() {
+    public SdkListItem getItem() {
       return new SdkListItem.ProjectSdkItem();
     }
 
@@ -460,12 +472,12 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
   }
 
   public static class NoneJdkComboBoxItem extends JdkComboBoxItem implements InnerComboBoxItem, SelectableComboBoxItem {
+    @NotNull
     @Override
-    public @NotNull SdkListItem getItem() {
+    public SdkListItem getItem() {
       return new SdkListItem.NoneSdkItem();
     }
 
-    @Override
     public String toString() {
       return JavaUiBundle.message("jdk.combo.box.none.item");
     }

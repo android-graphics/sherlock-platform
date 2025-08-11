@@ -1,5 +1,5 @@
 // "Remove parameter 'x'" "true"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 
 open class Base(var x: Int) {
     val y = Base(1);

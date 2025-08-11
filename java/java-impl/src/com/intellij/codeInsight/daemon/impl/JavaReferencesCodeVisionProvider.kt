@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
@@ -24,8 +24,9 @@ class JavaReferencesCodeVisionProvider : RenameAwareReferencesCodeVisionProvider
   private fun getVisionInfo(element: PsiElement, file: PsiFile): CodeVisionProviderBase.CodeVisionInfo? {
     val inspection = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(element)
     if (inspection.isEntryPoint(element)) return null
-    val usagesHint = JavaTelescope.usagesHint(element as PsiMember, file) ?: return null
-    return CodeVisionProviderBase.CodeVisionInfo(usagesHint.hint, usagesHint.count)
+    return JavaTelescope.usagesHint(element as PsiMember, file)?.let {
+      CodeVisionProviderBase.CodeVisionInfo(it.hint, it.count)
+    }
   }
 
   override fun getHint(element: PsiElement, file: PsiFile): String? {

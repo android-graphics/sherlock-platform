@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 import javax.swing.Icon
 
@@ -19,7 +18,6 @@ abstract class HostedGitRepositoryReferenceActionGroup : ActionGroup, DumbAware 
               icon: Supplier<Icon?>?)
     : super(dynamicText, dynamicDescription, icon)
 
-  @ApiStatus.ScheduledForRemoval
   @Deprecated(level = DeprecationLevel.ERROR, message = "Use icon supplier")
   constructor(dynamicText: Supplier<@NlsActions.ActionText String>,
               dynamicDescription: Supplier<@NlsActions.ActionDescription String>,

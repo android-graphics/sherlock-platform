@@ -38,15 +38,24 @@ import java.awt.event.ItemListener;
 import java.util.*;
 
 public class AdvancedDtdOptions implements AdvancedOptions {
-  private static final @NonNls String COLON_REPLACEMENT = "colon-replacement";
-  private static final @NonNls String ELEMENT_DEFINE = "element-define";
-  private static final @NonNls String ATTLIST_DEFINE = "attlist-define";
-  private static final @NonNls String INLINE_ATTLIST = "inline-attlist";
-  private static final @NonNls String ANY_NAME = "any-name";
-  private static final @NonNls String STRICT_ANY = "strict-any";
-  private static final @NonNls String ANNOTATION_PREFIX = "annotation-prefix";
-  private static final @NonNls String GENERATE_START = "generate-start";
-  private static final @NonNls String XMLNS = "xmlns";
+  @NonNls
+  private static final String COLON_REPLACEMENT = "colon-replacement";
+  @NonNls
+  private static final String ELEMENT_DEFINE = "element-define";
+  @NonNls
+  private static final String ATTLIST_DEFINE = "attlist-define";
+  @NonNls
+  private static final String INLINE_ATTLIST = "inline-attlist";
+  @NonNls
+  private static final String ANY_NAME = "any-name";
+  @NonNls
+  private static final String STRICT_ANY = "strict-any";
+  @NonNls
+  private static final String ANNOTATION_PREFIX = "annotation-prefix";
+  @NonNls
+  private static final String GENERATE_START = "generate-start";
+  @NonNls
+  private static final String XMLNS = "xmlns";
 
   private JComponent myRoot;
 
@@ -129,7 +138,7 @@ public class AdvancedDtdOptions implements AdvancedOptions {
 
     map.put(GENERATE_START, myGenerateStartCheckBox.isSelected());
 
-    if (!myDefaultNS.getText().trim().isEmpty()) {
+    if (myDefaultNS.getText().trim().length() > 0) {
       map.put(XMLNS, myDefaultNS.getText() );
     }
 
@@ -143,7 +152,7 @@ public class AdvancedDtdOptions implements AdvancedOptions {
 
   private static void setText(HashMap<String, Object> map, String option, JTextField field) {
     final String colonReplacement = field.getText();
-    if (colonReplacement != null && !colonReplacement.trim().isEmpty()) {
+    if (colonReplacement != null && colonReplacement.trim().length() > 0) {
       map.put(option, colonReplacement);
     }
   }

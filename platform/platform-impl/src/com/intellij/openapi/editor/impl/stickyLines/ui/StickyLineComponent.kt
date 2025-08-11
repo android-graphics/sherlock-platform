@@ -88,7 +88,8 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     assert(!isEmpty()) { "sticky panel should mark this line as not visible" }
     val editorY = editorY()
     val lineHeight = lineHeight()
-    val (gutterWidth, textWidth) = gutterAndTextWidth()
+    val gutterWidth = editor.gutterComponentEx.width
+    val textWidth = lineWidth() - gutterWidth
     val editorBackground = editor.backgroundColor
     var isBackgroundChanged = false
     (editor as EditorImpl).isStickyLinePainting = true
@@ -108,16 +109,6 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
         editor.backgroundColor = editorBackground
       }
     }
-  }
-
-  private fun gutterAndTextWidth(): Pair<Int, Int> {
-    val lineWidth =  lineWidth()
-    val gutterWidth = editor.gutterComponentEx.width
-    if (gutterWidth > lineWidth) {
-      // IJPL-159801
-      return lineWidth to 0
-    }
-    return gutterWidth to lineWidth - gutterWidth
   }
 
   private fun setStickyLineBackgroundColor(): Boolean {

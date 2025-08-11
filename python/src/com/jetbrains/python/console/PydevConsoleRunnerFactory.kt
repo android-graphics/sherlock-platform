@@ -10,9 +10,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.PathMapper
-import com.intellij.util.SystemProperties
 import com.jetbrains.python.console.PyConsoleOptions.PyConsoleSettings
 import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.run.*
@@ -68,9 +68,16 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
     val pathMapper = getPathMapper(project, sdk, settingsProvider)
     val envs = settingsProvider.envs.toMutableMap()
     putIPythonEnvFlag(project, envs)
-    val workingDirFunction = getWorkingDirFunction(project, module, pathMapper, settingsProvider)
-    val setupScriptFunction = createSetupScriptFunction(project, module, workingDirFunction, pathMapper, settingsProvider)
-    return TargetedConsoleParameters(project, sdk, workingDirFunction, envs, PyConsoleType.PYTHON, settingsProvider, setupScriptFunction)
+    if (Registry.`is`("python.use.targets.api")) {
+      val workingDirFunction = getWorkingDirFunction(project, module, pathMapper, settingsProvider)
+      val setupScriptFunction = createSetupScriptFunction(project, module, workingDirFunction, pathMapper, settingsProvider)
+      return TargetedConsoleParameters(project, sdk, workingDirFunction, envs, PyConsoleType.PYTHON, settingsProvider, setupScriptFunction)
+    }
+    else {
+      val workingDir = getWorkingDir(project, module, pathMapper, settingsProvider)
+      val setupFragment = createSetupFragment(module, workingDir, pathMapper, settingsProvider)
+      return ConstantConsoleParameters(project, sdk, workingDir, envs, PyConsoleType.PYTHON, settingsProvider, setupFragment)
+    }
   }
 
   override fun createConsoleRunner(project: Project, contextModule: Module?): PydevConsoleRunner {
@@ -164,7 +171,24 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
           return root.path
         }
       }
-      return SystemProperties.getUserHome()
+      return System.getProperty("user.home")
+    }
+
+    fun createSetupFragment(module: Module?,
+                            workingDir: String?,
+                            pathMapper: PathMapper?,
+                            settingsProvider: PyConsoleSettings): Array<String> {
+      var customStartScript = settingsProvider.customStartScript
+      if (customStartScript.isNotBlank()) {
+        customStartScript = "\n" + customStartScript
+      }
+      var pythonPath = PythonCommandLineState.collectPythonPath(module, settingsProvider.shouldAddContentRoots(),
+                                                                settingsProvider.shouldAddSourceRoots())
+      if (pathMapper != null) {
+        pythonPath = pathMapper.convertToRemote(pythonPath)
+      }
+      val selfPathAppend = constructPyPathAndWorkingDirCommand(pythonPath, workingDir, customStartScript)
+      return arrayOf(selfPathAppend)
     }
 
     private fun makeStartWithEmptyLine(line: String): String {

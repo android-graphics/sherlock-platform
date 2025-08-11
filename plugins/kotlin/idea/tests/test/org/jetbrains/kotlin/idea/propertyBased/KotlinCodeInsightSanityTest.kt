@@ -19,7 +19,7 @@ import java.util.function.Function
 import java.util.function.Supplier
 
 @SkipSlowTestLocally
-open class KotlinCodeInsightSanityTest : KotlinLightCodeInsightFixtureTestCase() {
+class KotlinCodeInsightSanityTest : KotlinLightCodeInsightFixtureTestCase() {
     private val seed: String? = System.getProperty("seed")
 
     override fun setUp() {

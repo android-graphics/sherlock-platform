@@ -6,14 +6,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.PlatformUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dennis.Ushakov
  */
-@ApiStatus.Internal
 public final class MacHelpUtil {
   static boolean invokeHelp(@NonNls @Nullable String id) {
     if (id == null || "top".equals(id)) id = "startpage";

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.impl;
 
 import com.intellij.tasks.TaskRepositoryType;
@@ -86,7 +86,8 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
     }
   }
 
-  private static @Nullable Credentials getCredentials(@NotNull String login, String password, String host) {
+  @Nullable
+  private static Credentials getCredentials(@NotNull String login, String password, String host) {
     int domainIndex = login.indexOf("\\");
     if (domainIndex > 0) {
       // if the username is in the form "user\domain"

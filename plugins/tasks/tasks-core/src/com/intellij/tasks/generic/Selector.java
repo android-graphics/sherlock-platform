@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.generic;
 
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -11,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 
 @Tag("selector")
 public final class Selector {
-  private @NotNull String myName = "";
-  private @NotNull String myPath = "";
+  @NotNull private String myName = "";
+  @NotNull private String myPath = "";
 
   /**
    * Serialization constructor
@@ -36,12 +35,14 @@ public final class Selector {
   }
 
   @Attribute("name")
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return myName;
   }
 
   @Attribute("path")
-  public @NotNull String getPath() {
+  @NotNull
+  public String getPath() {
     return myPath;
   }
 

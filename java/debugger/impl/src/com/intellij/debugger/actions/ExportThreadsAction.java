@@ -4,7 +4,6 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -17,7 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.unscramble.ThreadDumpPanel;
-import com.intellij.threadDumpParser.ThreadState;
+import com.intellij.unscramble.ThreadState;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -34,9 +33,8 @@ public class ExportThreadsAction extends AnAction {
     final DebuggerSession session = context.getDebuggerSession();
     if (session != null && session.isAttached()) {
       final DebugProcessImpl process = context.getDebugProcess();
-      DebuggerManagerThreadImpl managerThread = context.getManagerThread();
-      if (process != null && managerThread != null) {
-        managerThread.schedule(new DebuggerCommandImpl() {
+      if (process != null) {
+        process.getManagerThread().invoke(new DebuggerCommandImpl() {
           @Override
           protected void action() {
             final List<ThreadState> threads = ThreadDumpAction.buildThreadStates(process.getVirtualMachineProxy());

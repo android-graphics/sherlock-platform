@@ -74,7 +74,7 @@ public class TableView<Item> extends BaseTableView implements SelectionProvider 
     super.tableChanged(e);
   }
 
-  public void setSelection(Collection<? extends Item> selection) {
+  public void setSelection(Collection<Item> selection) {
     clearSelection();
     for (Object aSelection : selection) {
       addSelection(aSelection);
@@ -125,10 +125,10 @@ public class TableView<Item> extends BaseTableView implements SelectionProvider 
       }
       final String maxStringValue;
       final String preferredValue;
-      int columnWidth = columnInfo.getWidth(this);
-      if (columnWidth > 0) {
+      if (columnInfo.getWidth(this) > 0) {
         sizeMode[i] = 1;
-        widths[i] = columnWidth;
+        int width = columnInfo.getWidth(this);
+        widths[i] = width;
       }
       else if ((maxStringValue = columnInfo.getMaxStringValue()) != null) {
         sizeMode[i] = 2;

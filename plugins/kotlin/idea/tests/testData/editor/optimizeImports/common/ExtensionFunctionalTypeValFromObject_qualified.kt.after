@@ -1,8 +1,0 @@
-// FIR_COMPARISON
-package p2
-
-import p1.TopLevelObject
-
-fun test() {
-    10.(TopLevelObject.VAL)()
-}

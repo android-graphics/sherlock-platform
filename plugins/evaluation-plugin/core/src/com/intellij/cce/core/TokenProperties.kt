@@ -11,8 +11,6 @@ interface TokenProperties {
 
   fun additionalProperty(name: String): String?
 
-  fun additionalPropertyNames(): Set<String>
-
   fun describe(): String
 
   fun hasFeature(feature: String): Boolean
@@ -51,7 +49,6 @@ class LineProperties(val completableRanges: List<TextRange>) : TokenProperties {
   override val tokenType: TypeProperty = TypeProperty.LINE
   override val location: SymbolLocation = SymbolLocation.UNKNOWN
   override fun additionalProperty(name: String): String? = null
-  override fun additionalPropertyNames(): Set<String> = setOf()
   override fun describe(): String = ""
   override fun hasFeature(feature: String): Boolean = false
   override fun withFeatures(features: Set<String>): TokenProperties = this
@@ -123,8 +120,6 @@ class SimpleTokenProperties private constructor(
     return additional[name]
   }
 
-  override fun additionalPropertyNames(): Set<String> = additional.keys
-
   override fun describe(): String {
     return buildString {
       append("tokenType=$tokenType")
@@ -139,25 +134,12 @@ class SimpleTokenProperties private constructor(
 
   override fun withFeatures(features: Set<String>): TokenProperties =
     SimpleTokenProperties(tokenType, location, this.features.apply { addAll(features) }, additional)
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is SimpleTokenProperties) return false
-
-    if (tokenType != other.tokenType) return false
-    if (location != other.location) return false
-    if (features != other.features) return false
-    if (additional != other.additional) return false
-
-    return true
-  }
 }
 
 class DocumentationProperties(val docComment: String, val startOffset: Int, val endOffset: Int, val docStartOffset: Int, val docEndOffset: Int, val nameIdentifierOffset: Int) : TokenProperties {
   override val tokenType: TypeProperty = TypeProperty.UNKNOWN
   override val location: SymbolLocation = SymbolLocation.UNKNOWN
   override fun additionalProperty(name: String): String? = null
-  override fun additionalPropertyNames(): Set<String> = emptySet()
   override fun describe(): String = ""
   override fun hasFeature(feature: String): Boolean = false
   override fun withFeatures(features: Set<String>): TokenProperties = this
@@ -186,7 +168,6 @@ enum class TypeProperty {
   METHOD_BODY,
   CLASS,
   FUNCTION,
-  FILE,
   TOKEN,
   UNKNOWN,
 }

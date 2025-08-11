@@ -14,21 +14,25 @@ import static com.jetbrains.python.ast.PyAstElementKt.findChildByType;
 
 @ApiStatus.Experimental
 public interface PyAstImportElement extends PyAstElement, PyAstImportedNameDefiner {
-  default @Nullable PyAstReferenceExpression getImportReferenceExpression() {
+  @Nullable
+  default PyAstReferenceExpression getImportReferenceExpression() {
     final ASTNode node = getNode().findChildByType(PythonDialectsTokenSetProvider.getInstance().getReferenceExpressionTokens());
     return node == null ? null : (PyAstReferenceExpression) node.getPsi();
   }
 
-  default @Nullable QualifiedName getImportedQName() {
+  @Nullable
+  default QualifiedName getImportedQName() {
     final PyAstReferenceExpression importReference = getImportReferenceExpression();
     return importReference != null ? importReference.asQualifiedName() : null;
   }
 
-  default @Nullable PyAstTargetExpression getAsNameElement() {
+  @Nullable
+  default PyAstTargetExpression getAsNameElement() {
     return findChildByType(this, PyElementTypes.TARGET_EXPRESSION);
   }
 
-  default @Nullable String getAsName() {
+  @Nullable
+  default String getAsName() {
     final PyAstTargetExpression element = getAsNameElement();
     return element != null ? element.getName() : null;
   }
@@ -36,7 +40,8 @@ public interface PyAstImportElement extends PyAstElement, PyAstImportedNameDefin
   /**
    * @return name under which the element is visible, that is, "as name" is there is one, or just name.
    */
-  default @Nullable String getVisibleName() {
+  @Nullable
+  default String getVisibleName() {
     PyAstTargetExpression asNameElement = getAsNameElement();
     if (asNameElement != null) {
       return asNameElement.getName();

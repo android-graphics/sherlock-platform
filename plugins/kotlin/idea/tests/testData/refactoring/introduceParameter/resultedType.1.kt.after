@@ -1,8 +1,0 @@
-package p2
-
-class Outer {
-    enum class Inner {
-        V1,
-        V2
-    }
-}

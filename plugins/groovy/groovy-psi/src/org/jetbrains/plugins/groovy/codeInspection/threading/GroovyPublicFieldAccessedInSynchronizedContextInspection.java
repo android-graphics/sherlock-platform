@@ -28,12 +28,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 public final class GroovyPublicFieldAccessedInSynchronizedContextInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return GroovyBundle.message("inspection.message.non.private.field.accessed.in.synchronized.context");
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new PublicFieldAccessedInSynchronizedContextVisitor();
   }
 

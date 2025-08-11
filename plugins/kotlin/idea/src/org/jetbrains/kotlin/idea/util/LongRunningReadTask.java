@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.util;
 
@@ -144,7 +144,8 @@ public abstract class LongRunningReadTask<RequestInfo, ResultData> {
      * Executed in GUI Thread.
      */
     @SuppressWarnings("UnusedParameters")
-    protected @NotNull RequestInfo cloneRequestInfo(@NotNull RequestInfo requestInfo) {
+    @NotNull
+    protected RequestInfo cloneRequestInfo(@NotNull RequestInfo requestInfo) {
         RequestInfo cloneRequestInfo = prepareRequestInfo();
         if (cloneRequestInfo == null) {
             throw new IllegalStateException("Cloned request object can't be null");
@@ -158,7 +159,8 @@ public abstract class LongRunningReadTask<RequestInfo, ResultData> {
      *
      * @return null if current request is invalid and task shouldn't be executed.
      */
-    protected abstract @Nullable RequestInfo prepareRequestInfo();
+    @Nullable
+    protected abstract RequestInfo prepareRequestInfo();
 
     /**
      * Executed in GUI Thread.
@@ -173,7 +175,8 @@ public abstract class LongRunningReadTask<RequestInfo, ResultData> {
     /**
      * Executed in thread pool under read lock with write priority.
      */
-    protected abstract @Nullable ResultData processRequest(@NotNull RequestInfo requestInfo);
+    @Nullable
+    protected abstract ResultData processRequest(@NotNull RequestInfo requestInfo);
 
     /**
      * Executed in GUI Thread. Do nothing by default.
@@ -187,9 +190,9 @@ public abstract class LongRunningReadTask<RequestInfo, ResultData> {
      *
      */
     public static void runWithWriteActionPriority(
-            final @NotNull ProgressIndicator indicator,
+            @NotNull final ProgressIndicator indicator,
             @NotNull Disposable parentDisposable,
-            final @NotNull Runnable action
+            @NotNull final Runnable action
     ) {
         Disposable disposable = Disposer.newDisposable();
         Disposer.register(parentDisposable, disposable);

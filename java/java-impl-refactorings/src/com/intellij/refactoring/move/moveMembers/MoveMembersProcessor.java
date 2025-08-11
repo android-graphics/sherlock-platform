@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.ide.util.EditorHelper;
@@ -10,18 +10,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.extractSuperclass.ExtractSuperClassUtil;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveMemberViewDescriptor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -69,7 +68,9 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected @NotNull @Command String getCommandName() {
+  @NotNull
+  @Command
+  protected String getCommandName() {
     return myCommandName;
   }
 
@@ -90,7 +91,9 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
-    return ExtractSuperClassUtil.createAfterData(myTargetClass);
+    RefactoringEventData eventData = new RefactoringEventData();
+    eventData.addElement(myTargetClass);
+    return eventData;
   }
 
   private void setOptions(MoveMembersOptions dialog) {
@@ -109,7 +112,8 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  @NotNull
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new MoveMemberViewDescriptor(PsiUtilCore.toPsiElementArray(myMembersToMove));
   }
 
@@ -121,7 +125,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
     final List<UsageInfo> usagesList = new ArrayList<>();
     for (PsiMember member : myMembersToMove) {
-      for (PsiReference psiReference : ReferencesSearch.search(member).asIterable()) {
+      for (PsiReference psiReference : ReferencesSearch.search(member)) {
         PsiElement ref = psiReference.getElement();
         final MoveMemberHandler handler = MoveMemberHandler.EP_NAME.forLanguage(ref.getLanguage());
         MoveMembersUsageInfo usage = null;
@@ -132,7 +136,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
           usagesList.add(usage);
         }
         else {
-          if (!RefactoringUtil.isInMovedElement(ref, myMembersToMove)) {
+          if (!isInMovedElement(ref)) {
             usagesList.add(new MoveMembersUsageInfo(member, ref, null, ref, psiReference));
           }
         }
@@ -150,6 +154,13 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     for (PsiElement resolved : elements) {
       myMembersToMove.add((PsiMember)resolved);
     }
+  }
+
+  private boolean isInMovedElement(PsiElement element) {
+    for (PsiMember member : myMembersToMove) {
+      if (PsiTreeUtil.isAncestor(member, element, false)) return true;
+    }
+    return false;
   }
 
   @Override

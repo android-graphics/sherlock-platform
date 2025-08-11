@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Ref
 import com.intellij.remote.RemoteSdkException
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 
 @Throws(RemoteSdkException::class)
 fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?, nullForUnparsableVersion: Boolean = true): String? {
@@ -39,7 +38,7 @@ fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?,
           try {
             val targetedCommandLineBuilder = TargetedCommandLineBuilder(targetEnvironmentRequest)
             targetedCommandLineBuilder.setExePath(interpreterPath)
-            targetedCommandLineBuilder.addParameter(PythonSdkFlavor.PYTHON_VERSION_ARG)
+            targetedCommandLineBuilder.addParameter(flavor.versionOption)
             val targetEnvironment = targetEnvironmentRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
             val targetedCommandLine = targetedCommandLineBuilder.build()
             val process = targetEnvironment.createProcess(targetedCommandLine, indicator)
@@ -47,7 +46,7 @@ fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?,
             val capturingProcessHandler = CapturingProcessHandler(process, Charsets.UTF_8, commandLineString)
             val processOutput = capturingProcessHandler.runProcess()
             if (processOutput.exitCode == 0) {
-              val version = PythonSdkFlavor.getVersionStringFromOutput(processOutput)
+              val version = flavor.getVersionStringFromOutput(processOutput)
               if (version != null || nullForUnparsableVersion) {
                 result.set(version)
                 return

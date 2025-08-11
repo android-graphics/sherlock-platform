@@ -57,11 +57,11 @@ interface CellBase<out T : CellBase<T>> {
    */
   fun enabledIf(property: ObservableProperty<Boolean>): CellBase<T>
 
-  @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead", level = DeprecationLevel.ERROR)
+  @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
   fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T>
 
-  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead", level = DeprecationLevel.ERROR)
+  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
   fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T>
 
@@ -98,7 +98,7 @@ interface CellBase<out T : CellBase<T>> {
   /**
    * Overrides all gaps around the cell by [customGaps]. Should be used rarely for very specific cases
    */
-  @Deprecated("Use customize(UnscaledGaps) instead", level = DeprecationLevel.HIDDEN)
+  @Deprecated("Use customize(UnscaledGaps) instead")
   @ApiStatus.ScheduledForRemoval
   fun customize(customGaps: Gaps): CellBase<T>
 

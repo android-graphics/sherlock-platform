@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.ibm.icu.text.MessagePattern;
@@ -28,8 +28,9 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspectionTool {
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @SuppressWarnings("unchecked") 
       private static final Class<? extends UExpression>[] uExpressionClasses = new Class[] 
@@ -107,7 +108,8 @@ public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalIn
     };
   }
 
-  private static @Nullable Value getTitleValue(@Nullable UExpression arg, @Nullable Set<? super UExpression> processed) {
+  @Nullable
+  private static Value getTitleValue(@Nullable UExpression arg, @Nullable Set<? super UExpression> processed) {
     if (arg instanceof UInjectionHost) {
       return Value.of((UInjectionHost)arg);
     }
@@ -145,7 +147,8 @@ public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalIn
     return null;
   }
 
-  private static @Nullable Property getPropertyArgument(UCallExpression arg) {
+  @Nullable
+  private static Property getPropertyArgument(UCallExpression arg) {
     List<UExpression> args = arg.getValueArguments();
     if (!args.isEmpty()) {
       return JavaI18nUtil.resolveProperty(args.get(0));
@@ -162,8 +165,9 @@ public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalIn
       myCapitalization = capitalization;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getName() {
+    public String getName() {
       return JavaI18nBundle.message("quickfix.text.title.capitalization", myTitleValue);
     }
 
@@ -208,25 +212,27 @@ public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalIn
       return null;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaI18nBundle.message("quickfix.family.title.capitalization.fix");
     }
   }
 
   interface Value {
-    @Override
     @NotNull String toString();
     boolean isSatisfied(@NotNull Nls.Capitalization capitalization);
 
-    default @NotNull String fixCapitalization(@NotNull Nls.Capitalization capitalization) {
+    @NotNull
+    default String fixCapitalization(@NotNull Nls.Capitalization capitalization) {
       return NlsCapitalizationUtil.fixValue(toString(), capitalization);
     }
 
     default boolean canFix() { return true; }
 
     @Contract("null, _ -> null")
-    static @Nullable Value of(@Nullable Property property, boolean useFormat) {
+    @Nullable
+    static Value of(@Nullable Property property, boolean useFormat) {
       if (property == null) return null;
       String value = property.getUnescapedValue();
       if (value == null) return null;
@@ -247,12 +253,14 @@ public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalIn
       return value == null ? null : new TextValue(value);
     }
 
-    static @Nullable Value of(@NotNull PsiLiteralExpression literal) {
+    @Nullable
+    static Value of(@NotNull PsiLiteralExpression literal) {
       Object value = literal.getValue();
       return value instanceof String ? new TextValue((String)value) : null;
     }
 
-    static @Nullable Value of(NlsInfo info) {
+    @Nullable
+    static Value of(NlsInfo info) {
       if (info instanceof NlsInfo.Localized) {
         Nls.Capitalization capitalization = ((NlsInfo.Localized)info).getCapitalization();
         if (capitalization != Nls.Capitalization.NotSpecified) {
@@ -268,8 +276,9 @@ public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalIn
 
     TextValue(String text) { myText = text; }
 
+    @NotNull
     @Override
-    public @NotNull String toString() { return myText;}
+    public String toString() { return myText;}
 
     @Override
     public boolean isSatisfied(@NotNull Nls.Capitalization capitalization) {
@@ -294,8 +303,9 @@ public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalIn
       return false;
     }
 
+    @NotNull
     @Override
-    public @NotNull String toString() { return getCapitalizationName(myDeclared);}
+    public String toString() { return getCapitalizationName(myDeclared);}
   }
 
   static class PropertyValue implements Value {
@@ -307,8 +317,8 @@ public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalIn
       myPattern = pattern;
     }
 
-    @Override
-    public @NotNull String toString() {
+    @NotNull @Override
+    public String toString() {
       return myPresentation;
     }
     

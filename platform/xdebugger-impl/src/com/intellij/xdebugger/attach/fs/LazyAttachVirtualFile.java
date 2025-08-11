@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.attach.fs;
 
 import com.intellij.testFramework.LightVirtualFile;
@@ -18,13 +18,15 @@ class LazyAttachVirtualFile extends LightVirtualFile {
   }
 
 
+  @NotNull
   @Override
-  public @NotNull String getPath() {
+  public String getPath() {
     return myRemotePath;
   }
 
   @Override
-  public @NotNull LazyAttachVirtualFS getFileSystem() {
+  @NotNull
+  public LazyAttachVirtualFS getFileSystem() {
     return LazyAttachVirtualFS.getInstance();
   }
 }

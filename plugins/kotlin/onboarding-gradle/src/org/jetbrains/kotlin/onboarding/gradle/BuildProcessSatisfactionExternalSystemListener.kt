@@ -7,13 +7,11 @@ import com.intellij.openapi.project.modules
 import org.jetbrains.kotlin.idea.configuration.hasKotlinPluginEnabled
 
 private class BuildProcessSatisfactionExternalSystemListener: ExternalSystemTaskNotificationListener {
-    override fun onSuccess(proojecPath: String, id: ExternalSystemTaskId) {
+    override fun onSuccess(id: ExternalSystemTaskId) {
         if (id.projectSystemId.id != "GRADLE") return
         val project = id.findProject() ?: return
         if (project.modules.any { it.hasKotlinPluginEnabled() }) {
-            BuildProcessSatisfactionSurveyStore.getInstance().recordKotlinBuild()
-        } else {
-            BuildProcessSatisfactionSurveyStore.getInstance().recordNonKotlinBuild()
+            BuildProcessSatisfactionSurveyStore.getInstance().recordBuild()
         }
     }
 }

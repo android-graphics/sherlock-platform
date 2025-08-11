@@ -25,7 +25,8 @@ import org.jetbrains.annotations.NotNull;
 public final class AwaitWithoutCorrespondingSignalInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "await.without.corresponding.signal.problem.descriptor");
   }

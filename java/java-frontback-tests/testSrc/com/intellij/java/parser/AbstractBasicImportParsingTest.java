@@ -18,5 +18,4 @@ public abstract class AbstractBasicImportParsingTest extends AbstractBasicJavaPa
   public void testModuleImport() { doTest(true); }
   public void testImportWithModulePackage() { doTest(true); }
   public void testImportWithModuleClass() { doTest(true); }
-  public void testImportModuleBrokenStatement() { doTest(true); }
 }

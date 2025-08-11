@@ -2,13 +2,18 @@
 package com.intellij.debugger.engine.dfaassist;
 
 import com.intellij.debugger.engine.MockDebugProcess;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.mockJDI.MockStackFrame;
 import com.intellij.debugger.mockJDI.MockVirtualMachine;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.dfaassist.DfaHint;
 import com.intellij.xdebugger.impl.dfaassist.DfaResult;
 import one.util.streamex.EntryStream;
@@ -16,11 +21,8 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-
-import static com.intellij.debugger.engine.dfaassist.DfaTestUtilsKt.getDfaRunnerNow;
 
 /**
  * A facility to test DfaAssist
@@ -42,17 +44,22 @@ public abstract class DfaAssistTest extends LightPlatformCodeInsightTestCase {
     MockStackFrame frame = new MockStackFrame(vm, element);
     mockValues.accept(vm, frame);
 
+    Ref<DebuggerDfaRunner> runnerRef = Ref.create();
     MockDebugProcess process = new MockDebugProcess(getProject(), vm, getTestRootDisposable());
-    DebuggerDfaRunner runner = getDfaRunnerNow(element, process, frame);
+    SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(element);
+    process.getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
+      @Override
+      protected void action() {
+        ThreadReferenceProxyImpl threadProxy = ContainerUtil.getFirstItem(process.getVirtualMachineProxy().allThreads());
+        StackFrameProxyImpl frameProxy = new StackFrameProxyImpl(threadProxy, frame, 1);
+        DebuggerDfaRunner runner = DfaAssist.createDfaRunner(frameProxy, pointer);
+        runnerRef.set(runner);
+      }
+    });
 
+    DebuggerDfaRunner runner = runnerRef.get();
     assertNotNull(context, runner);
-    DfaResult dfaResult;
-    try {
-      dfaResult = ReadAction.nonBlocking(() -> runner.computeHints()).submit(AppExecutorUtil.getAppExecutorService()).get();
-    }
-    catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
+    DfaResult dfaResult = runner.computeHints();
     Map<PsiElement, DfaHint> hints = dfaResult.hints;
 
     String fileText = filteredText.replace("<caret>", "");

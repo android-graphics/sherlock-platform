@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.local;
 
 import com.intellij.codeHighlighting.*;
@@ -16,8 +16,9 @@ final class GroovyUnusedImportsPassFactory implements TextEditorHighlightingPass
   }
 
   @Override
-  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
-    if (!(psiFile instanceof GroovyFile)) return null;
-    return new GroovyPostHighlightingPass((GroovyFile)psiFile, editor);
+  @Nullable
+  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+    if (!(file instanceof GroovyFile)) return null;
+    return new GroovyPostHighlightingPass((GroovyFile)file, editor);
   }
 }

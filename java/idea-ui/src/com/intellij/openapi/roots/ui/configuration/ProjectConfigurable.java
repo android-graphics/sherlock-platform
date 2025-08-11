@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.roots.ui.configuration;
 
@@ -126,7 +126,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
       // set the output path first so that handlers of RootsChanged event sent after JDK is set
       // would see the updated path
       String canonicalPath = myUi.getProjectCompilerOutput();
-      if (!canonicalPath.isEmpty()) {
+      if (canonicalPath.length() > 0) {
         try {
           canonicalPath = FileUtil.resolveShortWindowsName(canonicalPath);
         }
@@ -182,7 +182,9 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   }
 
   @Override
-  public @Nullable @NonNls String getHelpTopic() {
+  @Nullable
+  @NonNls
+  public String getHelpTopic() {
     return "reference.settingsdialog.project.structure.general";
   }
 
@@ -203,15 +205,17 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     return false;
   }
 
-  public @NotNull @NlsSafe String getProjectName() {
+  @NotNull
+  public @NlsSafe String getProjectName() {
     if (ProjectKt.isDirectoryBased(myProject)) {
-      final @NlsSafe String text = myUi.getProjectName();
+      @NlsSafe final String text = myUi.getProjectName();
       return text.trim();
     }
     return myProject.getName();
   }
 
-  private @Nullable String getOriginalCompilerOutputUrl() {
+  @Nullable
+  private String getOriginalCompilerOutputUrl() {
     final CompilerProjectExtension extension = CompilerProjectExtension.getInstance(myProject);
     return extension != null ? extension.getCompilerOutputUrl() : null;
   }

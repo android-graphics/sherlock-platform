@@ -10,16 +10,10 @@ import com.intellij.collaboration.ui.util.bindEnabledIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.collaboration.util.exceptionOrNull
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
-import com.intellij.ui.JBColor
-import com.intellij.util.asSafely
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
@@ -34,26 +28,10 @@ import javax.swing.Action
 import javax.swing.JComponent
 
 object CodeReviewCommentTextFieldFactory {
-  fun createIn(
-    cs: CoroutineScope, vm: CodeReviewSubmittableTextViewModel,
-    actions: CommentInputActionsComponentFactory.Config,
-    icon: CommentTextFieldFactory.IconConfig? = null,
-  ): JComponent = createIn(cs, vm, actions, icon) {}
-
-  fun createIn(
-    cs: CoroutineScope, vm: CodeReviewSubmittableTextViewModel,
-    actions: CommentInputActionsComponentFactory.Config,
-    icon: CommentTextFieldFactory.IconConfig? = null,
-    setupEditor: (Editor) -> Unit = {},
-  ): JComponent {
-    val editor = CodeReviewMarkdownEditor.create(vm.project).apply {
-      component.isOpaque = false
-      val fieldBackground = JBColor.lazy {
-        if (component.isEnabled) UIUtil.getTextFieldBackground() else UIUtil.getTextFieldDisabledBackground()
-      }
-      component.background = fieldBackground
-      asSafely<EditorEx>()?.backgroundColor = fieldBackground
-    }
+  fun createIn(cs: CoroutineScope, vm: CodeReviewSubmittableTextViewModel,
+               actions: CommentInputActionsComponentFactory.Config,
+               icon: CommentTextFieldFactory.IconConfig? = null): JComponent {
+    val editor = CodeReviewMarkdownEditor.create(vm.project)
     cs.launchNow {
       try {
         editor.document.bindTextIn(this, vm.text)
@@ -100,15 +78,7 @@ object CodeReviewCommentTextFieldFactory {
     }
 
     CollaborationToolsUIUtil.installValidator(editor.component, errorValue)
-
-    setupEditor(editor)
-
-    val editorComponent = UiDataProvider.wrapComponent(editor.component) { sink ->
-      // required for undo/redo
-      sink[PlatformCoreDataKeys.FILE_EDITOR] = TextEditorProvider.getInstance().getTextEditor(editor)
-    }
-
-    val inputField = CollaborationToolsUIUtil.wrapWithProgressOverlay(editorComponent, busyValue).let {
+    val inputField = CollaborationToolsUIUtil.wrapWithProgressOverlay(editor.component, busyValue).let {
       if (icon != null) {
         CommentTextFieldFactory.wrapWithLeftIcon(icon, it) {
           val borderInsets = editor.component.border.getBorderInsets(editor.component)

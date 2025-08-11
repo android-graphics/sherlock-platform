@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.openapi.util.Key;
@@ -19,15 +19,16 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public final class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescriptor, CheckResourcesTarget> {
+public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescriptor, CheckResourcesTarget> {
   public static final Key<Boolean> CHECKING_RESOURCES_REBUILD = Key.create("CHECKING_RESOURCES");
 
   public GroovyResourceChecker() {
     super(CheckResourcesTarget.TARGET_TYPES);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPresentableName() {
+  public String getPresentableName() {
     return GroovyJpsBundle.message("builder.resource.checker");
   }
 
@@ -37,9 +38,9 @@ public final class GroovyResourceChecker extends TargetBuilder<GroovyResourceRoo
   }
 
   @Override
-  public void build(@NotNull CheckResourcesTarget target,
+  public void build(@NotNull final CheckResourcesTarget target,
                     @NotNull DirtyFilesHolder<GroovyResourceRootDescriptor, CheckResourcesTarget> holder,
-                    @NotNull BuildOutputConsumer outputConsumer,
+                    @NotNull final BuildOutputConsumer outputConsumer,
                     @NotNull CompileContext context) throws ProjectBuildException, IOException {
     if (context.getBuilderParameter(CHECKING_RESOURCES_REBUILD.toString()) == null) {
       return;
@@ -53,11 +54,13 @@ public final class GroovyResourceChecker extends TargetBuilder<GroovyResourceRoo
     });
   }
 
-  private static @NotNull ModuleChunk singleModuleChunk(final JpsModule module) {
+  @NotNull
+  private static ModuleChunk singleModuleChunk(final JpsModule module) {
     return new ModuleChunk(Collections.singleton(new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION)));
   }
 
-  private static final class ResourceCheckingGroovycRunner extends JpsGroovycRunner<GroovyResourceRootDescriptor, CheckResourcesTarget> {
+  private static class ResourceCheckingGroovycRunner extends JpsGroovycRunner<GroovyResourceRootDescriptor, CheckResourcesTarget> {
+
     private final CheckResourcesTarget myTarget;
 
     ResourceCheckingGroovycRunner(CheckResourcesTarget target) {
@@ -67,7 +70,7 @@ public final class GroovyResourceChecker extends TargetBuilder<GroovyResourceRoo
 
     @Override
     protected Map<CheckResourcesTarget, String> getCanonicalOutputs(CompileContext context, ModuleChunk chunk, Builder builder) {
-      return Map.of(myTarget, myTarget.getOutputRoot(context).toString());
+      return Collections.singletonMap(myTarget, myTarget.getOutputRoot(context).getPath());
     }
 
     @Override
@@ -92,7 +95,8 @@ public final class GroovyResourceChecker extends TargetBuilder<GroovyResourceRoo
       return paths;
     }
 
-    private @NotNull List<File> getVisibleResourceOutputs(CompileContext context, boolean tests) {
+    @NotNull
+    private List<File> getVisibleResourceOutputs(CompileContext context, boolean tests) {
       List<File> resourceOutputs = new ArrayList<>();
       JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(myTarget.getModule()).
         includedIn(JpsJavaClasspathKind.compile(tests)).

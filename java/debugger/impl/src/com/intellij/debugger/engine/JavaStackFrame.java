@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -13,7 +13,6 @@ import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.*;
-import com.intellij.debugger.ui.tree.ExtraDebugNodesProvider;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -56,9 +55,9 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     new DummyMessageValueNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(), XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
 
   private final DebugProcessImpl myDebugProcess;
-  private final @Nullable XSourcePosition myXSourcePosition;
+  @Nullable private final XSourcePosition myXSourcePosition;
   private final NodeManagerImpl myNodeManager;
-  private final @NotNull StackFrameDescriptorImpl myDescriptor;
+  @NotNull private final StackFrameDescriptorImpl myDescriptor;
   private JavaDebuggerEvaluator myEvaluator = null;
   private final String myEqualityObject;
 
@@ -70,20 +69,23 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     myXSourcePosition = DebuggerUtilsEx.toXSourcePosition(myDescriptor.getSourcePosition());
   }
 
-  public @NotNull StackFrameDescriptorImpl getDescriptor() {
+  @NotNull
+  public StackFrameDescriptorImpl getDescriptor() {
     return myDescriptor;
   }
 
+  @Nullable
   @Override
-  public @Nullable XDebuggerEvaluator getEvaluator() {
+  public XDebuggerEvaluator getEvaluator() {
     if (myEvaluator == null) {
       myEvaluator = new JavaDebuggerEvaluator(myDebugProcess, this);
     }
     return myEvaluator;
   }
 
+  @Nullable
   @Override
-  public @Nullable XSourcePosition getSourcePosition() {
+  public XSourcePosition getSourcePosition() {
     return myXSourcePosition;
   }
 
@@ -104,32 +106,35 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   }
 
   @Override
-  public void computeChildren(final @NotNull XCompositeNode node) {
+  public void computeChildren(@NotNull final XCompositeNode node) {
     if (node.isObsolete()) return;
-    DebuggerContextImpl debuggerContext = myDebugProcess.getDebuggerContext();
-    Objects.requireNonNull(debuggerContext.getManagerThread()).schedule(
-      new DebuggerContextCommandImpl(debuggerContext, myDescriptor.getFrameProxy().threadProxy()) {
-        @Override
-        public @NotNull Priority getPriority() {
-          return Priority.NORMAL;
-        }
+    ThreadReferenceProxyImpl thread = myDescriptor.getFrameProxy().threadProxy();
+    DebuggerContextUtil.scheduleWithCorrectPausedDebuggerContext(myDebugProcess, thread, myDescriptor.getFrameProxy(),
+                                                                 c -> scheduleComputeChildrenTask(node, c, thread));
+  }
 
-        @Override
-        public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-          if (node.isObsolete()) return;
-          XValueChildrenList children = new XValueChildrenList();
-          buildVariablesThreadAction(getFrameDebuggerContext(getDebuggerContext()), children, node);
-          node.addChildren(children, true);
-        }
+  private void scheduleComputeChildrenTask(@NotNull XCompositeNode node, DebuggerContextImpl context, ThreadReferenceProxyImpl thread) {
+    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(context, thread) {
+      @Override
+      public Priority getPriority() {
+        return Priority.NORMAL;
+      }
 
-        @Override
-        protected void commandCancelled() {
-          if (!node.isObsolete()) {
-            node.addChildren(XValueChildrenList.EMPTY, true);
-          }
+      @Override
+      public void threadAction(@NotNull SuspendContextImpl suspendContext) {
+        if (node.isObsolete()) return;
+        XValueChildrenList children = new XValueChildrenList();
+        buildVariablesThreadAction(getFrameDebuggerContext(getDebuggerContext()), children, node);
+        node.addChildren(children, true);
+      }
+
+      @Override
+      protected void commandCancelled() {
+        if (!node.isObsolete()) {
+          node.addChildren(XValueChildrenList.EMPTY, true);
         }
       }
-    );
+    });
   }
 
   DebuggerContextImpl getFrameDebuggerContext(@Nullable DebuggerContextImpl context) {
@@ -155,7 +160,8 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     return context;
   }
 
-  protected @Nullable XNamedValue createThisNode(EvaluationContextImpl evaluationContext) {
+  @Nullable
+  protected XNamedValue createThisNode(EvaluationContextImpl evaluationContext) {
     ObjectReference thisObjectReference = myDescriptor.getThisObject();
     if (thisObjectReference != null) {
       return JavaValue.create(myNodeManager.getThisDescriptor(null, thisObjectReference), evaluationContext, myNodeManager);
@@ -178,7 +184,8 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
   }
 
-  protected @NotNull List<? extends XNamedValue> createReturnValueNodes(EvaluationContextImpl evaluationContext) {
+  @NotNull
+  protected List<? extends XNamedValue> createReturnValueNodes(EvaluationContextImpl evaluationContext) {
     Pair<Method, Value> methodValuePair = myDebugProcess.getLastExecutedMethod();
     if (methodValuePair != null && myDescriptor.getUiIndex() == 0) {
       Value returnValue = methodValuePair.getSecond();
@@ -195,7 +202,8 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     return Collections.emptyList();
   }
 
-  protected @NotNull List<? extends XNamedValue> createExceptionNodes(EvaluationContextImpl evaluationContext) {
+  @NotNull
+  protected List<? extends XNamedValue> createExceptionNodes(EvaluationContextImpl evaluationContext) {
     if (myDescriptor.getUiIndex() != 0) {
       return Collections.emptyList();
     }
@@ -244,7 +252,6 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       catch (EvaluateException e) {
         node.setErrorMessage(e.getMessage());
       }
-      DebuggerUtilsImpl.forEachSafe(ExtraDebugNodesProvider.getProviders(), p -> p.addExtraNodes(evaluationContext, children));
     }
     catch (InvalidStackFrameException e) {
       LOG.info(e);
@@ -264,7 +271,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
 
   // copied from FrameVariablesTree
   private void buildVariables(DebuggerContextImpl debuggerContext,
-                              final @NotNull EvaluationContextImpl evaluationContext,
+                              final EvaluationContextImpl evaluationContext,
                               @NotNull DebugProcessImpl debugProcess,
                               XValueChildrenList children,
                               ObjectReference thisObjectReference,
@@ -273,7 +280,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     int positionOfLocalVariablesAsFields = children.size();
     final List<FieldDescriptorImpl> outerLocalVariablesAsFields = new SmartList<>();
     if (NodeRendererSettings.getInstance().getClassRenderer().SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
-      if (thisObjectReference != null && evaluationContext.getVirtualMachineProxy().canGetSyntheticAttribute()) {
+      if (thisObjectReference != null && debugProcess.getVirtualMachineProxy().canGetSyntheticAttribute()) {
         final ReferenceType thisRefType = thisObjectReference.referenceType();
         if (thisRefType instanceof ClassType && location != null
             && thisRefType.equals(location.declaringType()) && thisRefType.name().contains("$")) { // makes sense for nested classes only
@@ -289,6 +296,9 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
 
     boolean myAutoWatchMode = DebuggerSettings.getInstance().AUTO_VARIABLES_MODE;
+    if (evaluationContext == null) {
+      return;
+    }
 
     try {
       if (!XDebuggerSettingsManager.getInstance().getDataViewSettings().isAutoExpressions() && !myAutoWatchMode) {
@@ -412,8 +422,9 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     @Override
     public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
       node.setPresentation(myIcon, new XValuePresentation() {
+        @NotNull
         @Override
-        public @NotNull String getSeparator() {
+        public String getSeparator() {
           return "";
         }
 
@@ -434,12 +445,14 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     buildLocalVariables(evaluationContext, children, getVisibleVariables());
   }
 
-  public @NotNull StackFrameProxyImpl getStackFrameProxy() {
+  @NotNull
+  public StackFrameProxyImpl getStackFrameProxy() {
     return myDescriptor.getFrameProxy();
   }
 
+  @Nullable
   @Override
-  public @Nullable Object getEqualityObject() {
+  public Object getEqualityObject() {
     return myEqualityObject;
   }
 
@@ -474,7 +487,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
 
     @Override
-    public void visitElement(final @NotNull PsiElement element) {
+    public void visitElement(@NotNull final PsiElement element) {
       if (myLineRange.intersects(element.getTextRange())) {
         super.visitElement(element);
       }

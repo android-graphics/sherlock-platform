@@ -17,7 +17,8 @@ public class Loader {
             stream.read(bytes);
             stream.close();
             return new String(bytes, "UTF-8");
-         } catch (Exception e) {
+         } catch (Exception var5) {
+            Exception e = var5;
             throw new RuntimeException("Resource load failed", e);
          }
       }

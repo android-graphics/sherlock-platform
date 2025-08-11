@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.model.MavenIndexId;
 
 import java.io.Serializable;
 

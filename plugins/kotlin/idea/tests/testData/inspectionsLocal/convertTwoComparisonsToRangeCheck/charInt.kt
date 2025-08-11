@@ -1,5 +1,5 @@
 // PROBLEM: none
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 fun foo(bar: Char) {
     bar > 1 && 2 > bar<caret>
 }

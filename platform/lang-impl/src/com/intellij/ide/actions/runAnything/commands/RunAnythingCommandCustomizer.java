@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything.commands;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -24,7 +24,8 @@ public abstract class RunAnythingCommandCustomizer {
    * @param commandLine   command line to be customized
    * @return patched command line
    */
-  protected @NotNull GeneralCommandLine customizeCommandLine(@NotNull VirtualFile workDirectory,
+  @NotNull
+  protected GeneralCommandLine customizeCommandLine(@NotNull VirtualFile workDirectory,
                                                     @NotNull DataContext dataContext,
                                                     @NotNull GeneralCommandLine commandLine) {
     return commandLine;
@@ -36,18 +37,21 @@ public abstract class RunAnythingCommandCustomizer {
    * @param dataContext original {@link DataContext}
    * @return customized {@link DataContext}
    */
-  protected @NotNull DataContext customizeDataContext(@NotNull DataContext dataContext) {
+  @NotNull
+  protected DataContext customizeDataContext(@NotNull DataContext dataContext) {
     return dataContext;
   }
 
-  public static @NotNull GeneralCommandLine customizeCommandLine(@NotNull DataContext dataContext,
-                                                                 @NotNull VirtualFile workDirectory,
-                                                                 @NotNull GeneralCommandLine commandLine) {
+  @NotNull
+  public static GeneralCommandLine customizeCommandLine(@NotNull DataContext dataContext,
+                                                        @NotNull VirtualFile workDirectory,
+                                                        @NotNull GeneralCommandLine commandLine) {
     return StreamEx.of(EP_NAME.getExtensions())
                    .foldLeft(commandLine, (cmdLine, customizer) -> customizer.customizeCommandLine(workDirectory, dataContext, cmdLine));
   }
 
-  public static @NotNull DataContext customizeContext(@NotNull DataContext dataContext) {
+  @NotNull
+  public static DataContext customizeContext(@NotNull DataContext dataContext) {
     return StreamEx.of(EP_NAME.getExtensions()).foldLeft(dataContext, (context, customizer) -> customizer.customizeDataContext(context));
   }
 }

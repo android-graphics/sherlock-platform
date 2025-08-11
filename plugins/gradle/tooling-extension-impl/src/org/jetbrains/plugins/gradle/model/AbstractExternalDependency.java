@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
 import org.gradle.internal.impldep.com.google.common.base.Objects;
@@ -101,8 +101,9 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
     myId.setVersion(version);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPackaging() {
+  public String getPackaging() {
     return myId.getPackaging();
   }
 
@@ -110,8 +111,9 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
     myId.setPackaging(packaging);
   }
 
+  @Nullable
   @Override
-  public @Nullable String getClassifier() {
+  public String getClassifier() {
     return myId.getClassifier();
   }
 
@@ -119,8 +121,9 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
     myId.setClassifier(classifier);
   }
 
+  @Nullable
   @Override
-  public @Nullable String getSelectionReason() {
+  public String getSelectionReason() {
     return mySelectionReason;
   }
 

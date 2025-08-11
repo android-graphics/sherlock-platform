@@ -21,10 +21,8 @@ if sys.version_info >= (3, 13):
 
 _T = TypeVar("_T")
 _W = TypeVar("_W", bound=list[WarningMessage] | None)
-if sys.version_info >= (3, 14):
-    _ActionKind: TypeAlias = Literal["default", "error", "ignore", "always", "module", "once"]
-else:
-    _ActionKind: TypeAlias = Literal["default", "error", "ignore", "always", "all", "module", "once"]
+_ActionKind: TypeAlias = Literal["default", "error", "ignore", "always", "module", "once"]
+
 filters: Sequence[tuple[str, str | None, type[Warning], str | None, int]]  # undocumented, do not mutate
 
 def showwarning(

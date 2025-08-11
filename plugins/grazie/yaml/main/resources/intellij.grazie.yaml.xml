@@ -1,6 +1,6 @@
 <idea-plugin package="com.intellij.grazie.ide.language.yaml">
   <dependencies>
-    <module name="intellij.yaml.backend"/>
+    <plugin id="org.jetbrains.plugins.yaml"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.grazie">

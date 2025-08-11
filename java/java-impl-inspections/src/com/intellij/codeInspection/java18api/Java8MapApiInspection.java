@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.Nullability;
@@ -318,7 +318,8 @@ public final class Java8MapApiInspection extends AbstractBaseJavaLocalInspection
   }
 
 
-  public static @NotNull String getNameCandidate(String name) {
+  @NotNull
+  public static String getNameCandidate(String name) {
     // Either last uppercase letter (if it's not the last letter) or the first letter, removing leading underscores
     // token -> t
     // myAccessToken -> t
@@ -454,7 +455,8 @@ public final class Java8MapApiInspection extends AbstractBaseJavaLocalInspection
       CodeStyleManager.getInstance(project).reformat(result);
     }
 
-    private static @NotNull String suggestKeyName(@NotNull MapLoopCondition loopCondition, @NotNull PsiElement value) {
+    @NotNull
+    private static String suggestKeyName(@NotNull MapLoopCondition loopCondition, @NotNull PsiElement value) {
       VariableNameGenerator generator = new VariableNameGenerator(value, VariableKind.PARAMETER);
       if (!loopCondition.isEntrySet()) {
         String origName = loopCondition.getIterParam().getName();
@@ -465,12 +467,13 @@ public final class Java8MapApiInspection extends AbstractBaseJavaLocalInspection
       return generator.byName("k", "key").generate(true);
     }
 
-    private static @NotNull PsiExpression createLambdaForLoopReplacement(@NotNull PsiElementFactory factory,
-                                                                         @NotNull String kVar,
-                                                                         @NotNull String vVar,
-                                                                         @NotNull MapLoopCondition loopCondition,
-                                                                         @NotNull PsiExpression value,
-                                                                         @NotNull CommentTracker tracker) {
+    @NotNull
+    private static PsiExpression createLambdaForLoopReplacement(@NotNull PsiElementFactory factory,
+                                                                @NotNull String kVar,
+                                                                @NotNull String vVar,
+                                                                @NotNull MapLoopCondition loopCondition,
+                                                                @NotNull PsiExpression value,
+                                                                @NotNull CommentTracker tracker) {
       if (value instanceof PsiMethodCallExpression) {
         if (loopCondition.isKeyAccess(value)) return factory.createExpressionFromText("(" + kVar + "," + vVar + ") ->" + kVar, value);
         if (loopCondition.isValueAccess(value)) return factory.createExpressionFromText("(" + kVar + "," + vVar + ") ->" + vVar, value);
@@ -491,22 +494,28 @@ public final class Java8MapApiInspection extends AbstractBaseJavaLocalInspection
       return factory.createExpressionFromText("(" + kVar + "," + vVar + ") ->" + tracker.text(value), value);
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getName() {
+    public String getName() {
       return QuickFixBundle.message("java.8.map.api.inspection.fix.text", myMethodName);
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return QuickFixBundle.message("java.8.map.api.inspection.fix.family.name");
     }
 
-    static @NotNull ReplaceWithSingleMapOperation fromIf(String methodName, MapCheckCondition condition, PsiExpression value) {
+    @NotNull
+    static ReplaceWithSingleMapOperation fromIf(String methodName, MapCheckCondition condition, PsiExpression value) {
       PsiMethodCallExpression call = condition.getCheckCall();
       return create(methodName, call, value);
     }
 
-    static @NotNull ReplaceWithSingleMapOperation create(String methodName, PsiMethodCallExpression call, PsiExpression value) {
+    @NotNull
+    static ReplaceWithSingleMapOperation create(String methodName, PsiMethodCallExpression call, PsiExpression value) {
       PsiStatement result = PsiTreeUtil.getParentOfType(call, PsiStatement.class);
       LOG.assertTrue(result != null);
       return new ReplaceWithSingleMapOperation(methodName, call, value, result);

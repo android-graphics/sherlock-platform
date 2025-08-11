@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.util.io.FileUtil
@@ -11,16 +12,17 @@ import java.nio.file.Paths
 import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
 
-internal sealed class RuntimeChooserItem
 
-internal object RuntimeChooserSelectRuntimeItem: RuntimeChooserItem()
+abstract class RuntimeChooserItem
+
+object RuntimeChooserSelectRuntimeItem: RuntimeChooserItem()
 
 internal fun <Y> GraphProperty<Y>.getAndSubscribe(lifetime: Disposable, action: (Y) -> Unit) {
   action(get())
   afterChange(lifetime, action)
 }
 
-internal class RuntimeChooserModel {
+class RuntimeChooserModel {
   private val graph = PropertyGraph()
 
   val currentRuntime: GraphProperty<RuntimeChooserCurrentItem?> = graph.property(null)
@@ -48,7 +50,7 @@ internal class RuntimeChooserModel {
         file = Paths.get(path + "-" + (it + 1))
       }
     }
-    return RuntimeChooserJbrInstaller.defaultInstallDir(item)
+    return service<RuntimeChooserJbrInstaller>().defaultInstallDir(item)
   }
 
   private fun updateMainCombobox(newSelection: RuntimeChooserItem? = null) {

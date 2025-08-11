@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,20 +41,22 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   public static final String COMMIT_MESSAGE = "svn:log";
   private static final int BATCH_INFO_SIZE = 20;
 
-  private final @NotNull SvnVcs myVcs;
+  @NotNull private final SvnVcs myVcs;
 
   public SvnDiffProvider(@NotNull SvnVcs vcs) {
     myVcs = vcs;
   }
 
+  @Nullable
   @Override
-  public @Nullable VcsRevisionNumber getCurrentRevision(@NotNull VirtualFile file) {
+  public VcsRevisionNumber getCurrentRevision(@NotNull VirtualFile file) {
     final Info svnInfo = myVcs.getInfo(virtualToIoFile(file));
 
     return getRevision(svnInfo);
   }
 
-  private static @Nullable VcsRevisionNumber getRevision(@Nullable Info info) {
+  @Nullable
+  private static VcsRevisionNumber getRevision(@Nullable Info info) {
     VcsRevisionNumber result = null;
 
     if (info != null) {
@@ -68,8 +70,9 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     return result;
   }
 
+  @NotNull
   @Override
-  public @NotNull Map<VirtualFile, VcsRevisionNumber> getCurrentRevisions(@NotNull Iterable<? extends VirtualFile> files) {
+  public Map<VirtualFile, VcsRevisionNumber> getCurrentRevisions(@NotNull Iterable<? extends VirtualFile> files) {
     Map<VirtualFile, VcsRevisionNumber> result = new HashMap<>();
     Map<String, VirtualFile> items = new HashMap<>();
     List<File> ioFiles = new ArrayList<>();
@@ -98,8 +101,9 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     myVcs.collectInfo(ioFiles, createInfoHandler(revisionMap, fileMap));
   }
 
-  private static @NotNull InfoConsumer createInfoHandler(final @NotNull Map<VirtualFile, VcsRevisionNumber> revisionMap,
-                                                         final @NotNull Map<String, VirtualFile> fileMap) {
+  @NotNull
+  private static InfoConsumer createInfoHandler(@NotNull final Map<VirtualFile, VcsRevisionNumber> revisionMap,
+                                                @NotNull final Map<String, VirtualFile> fileMap) {
     return info -> {
       if (info != null) {
         VirtualFile file = fileMap.get(info.getFile().getAbsolutePath());
@@ -114,12 +118,14 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     };
   }
 
+  @Nullable
   @Override
-  public @Nullable VcsRevisionDescription getCurrentRevisionDescription(@NotNull VirtualFile file) {
+  public VcsRevisionDescription getCurrentRevisionDescription(@NotNull VirtualFile file) {
     return getCurrentRevisionDescription(virtualToIoFile(file));
   }
 
-  private @Nullable VcsRevisionDescription getCurrentRevisionDescription(@NotNull File path) {
+  @Nullable
+  private VcsRevisionDescription getCurrentRevisionDescription(@NotNull File path) {
     final Info svnInfo = myVcs.getInfo(path);
     if (svnInfo == null) {
       return null;
@@ -137,7 +143,8 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
                                           svnInfo.getCommitInfo().getAuthor(), getCommitMessage(path, svnInfo));
   }
 
-  private @Nullable String getCommitMessage(@NotNull File path, @NotNull Info info) {
+  @Nullable
+  private String getCommitMessage(@NotNull File path, @NotNull Info info) {
     String result;
 
     try {
@@ -154,21 +161,25 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     return result;
   }
 
-  private static @NotNull ItemLatestState defaultResult() {
+  @NotNull
+  private static ItemLatestState defaultResult() {
     return createResult(Revision.HEAD, true, true);
   }
 
-  private static @NotNull ItemLatestState createResult(@NotNull Revision revision, boolean exists, boolean defaultHead) {
+  @NotNull
+  private static ItemLatestState createResult(@NotNull Revision revision, boolean exists, boolean defaultHead) {
     return new ItemLatestState(new SvnRevisionNumber(revision), exists, defaultHead);
   }
 
+  @NotNull
   @Override
-  public @NotNull ItemLatestState getLastRevision(@NotNull VirtualFile file) {
+  public ItemLatestState getLastRevision(@NotNull VirtualFile file) {
     return getLastRevision(virtualToIoFile(file));
   }
 
+  @NotNull
   @Override
-  public @NotNull ContentRevision createFileContent(@NotNull VcsRevisionNumber revisionNumber, @NotNull VirtualFile selectedFile) {
+  public ContentRevision createFileContent(@NotNull VcsRevisionNumber revisionNumber, @NotNull VirtualFile selectedFile) {
     FilePath filePath = VcsUtil.getFilePath(selectedFile);
     Revision revision = ((SvnRevisionNumber)revisionNumber).getRevision();
 
@@ -184,7 +195,8 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
            : SvnContentRevision.createRemote(myVcs, filePath, revision);
   }
 
-  private @Nullable Status getFileStatus(@NotNull File file, boolean remote) {
+  @Nullable
+  private Status getFileStatus(@NotNull File file, boolean remote) {
     Status result = null;
 
     try {
@@ -197,19 +209,22 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     return result;
   }
 
+  @NotNull
   @Override
-  public @NotNull ItemLatestState getLastRevision(@NotNull FilePath filePath) {
+  public ItemLatestState getLastRevision(@NotNull FilePath filePath) {
     return getLastRevision(filePath.getIOFile());
   }
 
+  @Nullable
   @Override
-  public @Nullable VcsRevisionNumber getLatestCommittedRevision(@NotNull VirtualFile vcsRoot) {
+  public VcsRevisionNumber getLatestCommittedRevision(@NotNull VirtualFile vcsRoot) {
     Info info = myVcs.getInfo(virtualToIoFile(vcsRoot), Revision.HEAD);
 
     return info != null ? new SvnRevisionNumber(info.getCommitInfo().getRevision()) : null;
   }
 
-  private @NotNull ItemLatestState getLastRevision(@NotNull File file) {
+  @NotNull
+  private ItemLatestState getLastRevision(@NotNull File file) {
     Status svnStatus = getFileStatus(file, true);
 
     if (svnStatus == null || itemExists(svnStatus)) {
@@ -225,7 +240,8 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     return createResult(getLastExistingRevision(file, svnStatus), false, false);
   }
 
-  private @NotNull Revision getLastExistingRevision(@NotNull File file, @NotNull Status svnStatus) {
+  @NotNull
+  private Revision getLastExistingRevision(@NotNull File file, @NotNull Status svnStatus) {
     WorkingCopyFormat format = myVcs.getWorkingCopyFormat(file);
     long revision = -1;
 

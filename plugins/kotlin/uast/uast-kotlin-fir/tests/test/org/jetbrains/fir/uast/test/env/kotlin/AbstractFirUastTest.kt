@@ -5,6 +5,8 @@ package org.jetbrains.fir.uast.test.env.kotlin
 import com.intellij.core.CoreApplicationEnvironment
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.LightProjectDescriptor
@@ -71,10 +73,14 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun setUp() {
         super.setUp()
         registerExtensionPointAndServiceIfNeeded()
+        scriptSupportRegistry.setValue(true)
     }
+
+    private val scriptSupportRegistry: RegistryValue get() = Registry.get("kotlin.k2.scripting.enabled")
 
     override fun tearDown() {
         runAll(
+            { scriptSupportRegistry.resetToDefault() },
             { project.invalidateAllCachesForUastTests() },
             { super.tearDown() },
         )

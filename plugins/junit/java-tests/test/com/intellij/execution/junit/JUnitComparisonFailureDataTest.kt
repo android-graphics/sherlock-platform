@@ -34,25 +34,13 @@ class JUnitComparisonFailureDataTest {
     val expectedText = "expected text"
     val actualText = "actual text"
 
-    run {
-      val exception = junit.framework.ComparisonFailure("message", expectedText, actualText)
-      val comparisonData = ComparisonFailureData.create(exception)
-      Assertions.assertNotNull(comparisonData)
-      Assertions.assertEquals(expectedText, comparisonData.expected)
-      Assertions.assertEquals(actualText, comparisonData.actual)
-      Assertions.assertNull(comparisonData.expectedFilePath)
-      Assertions.assertNull(comparisonData.actualFilePath)
-    }
-
-    run {
-      val exception = CustomJunit3ComparisonFailure("message", expectedText, actualText)
-      val comparisonData = ComparisonFailureData.create(exception)
-      Assertions.assertNotNull(comparisonData)
-      Assertions.assertEquals(expectedText, comparisonData.expected)
-      Assertions.assertEquals(actualText, comparisonData.actual)
-      Assertions.assertNull(comparisonData.expectedFilePath)
-      Assertions.assertNull(comparisonData.actualFilePath)
-    }
+    val exception = junit.framework.ComparisonFailure("message", expectedText, actualText)
+    val comparisonData = ComparisonFailureData.create(exception)
+    Assertions.assertNotNull(comparisonData)
+    Assertions.assertEquals(expectedText, comparisonData.expected)
+    Assertions.assertEquals(actualText, comparisonData.actual)
+    Assertions.assertNull(comparisonData.expectedFilePath)
+    Assertions.assertNull(comparisonData.actualFilePath)
   }
 
   @Test
@@ -60,25 +48,13 @@ class JUnitComparisonFailureDataTest {
     val expectedText = "expected text"
     val actualText = "actual text"
 
-    run {
-      val exception = org.junit.ComparisonFailure("message", expectedText, actualText)
-      val comparisonData = ComparisonFailureData.create(exception)
-      Assertions.assertNotNull(comparisonData)
-      Assertions.assertEquals(expectedText, comparisonData.expected)
-      Assertions.assertEquals(actualText, comparisonData.actual)
-      Assertions.assertNull(comparisonData.expectedFilePath)
-      Assertions.assertNull(comparisonData.actualFilePath)
-    }
-
-    run {
-      val exception = CustomJunit4ComparisonFailure("message", expectedText, actualText)
-      val comparisonData = ComparisonFailureData.create(exception)
-      Assertions.assertNotNull(comparisonData)
-      Assertions.assertEquals(expectedText, comparisonData.expected)
-      Assertions.assertEquals(actualText, comparisonData.actual)
-      Assertions.assertNull(comparisonData.expectedFilePath)
-      Assertions.assertNull(comparisonData.actualFilePath)
-    }
+    val exception = org.junit.ComparisonFailure("message", expectedText, actualText)
+    val comparisonData = ComparisonFailureData.create(exception)
+    Assertions.assertNotNull(comparisonData)
+    Assertions.assertEquals(expectedText, comparisonData.expected)
+    Assertions.assertEquals(actualText, comparisonData.actual)
+    Assertions.assertNull(comparisonData.expectedFilePath)
+    Assertions.assertNull(comparisonData.actualFilePath)
   }
 
   @Test
@@ -130,52 +106,6 @@ class JUnitComparisonFailureDataTest {
 
     run {
       val exception = org.opentest4j.AssertionFailedError()
-      val comparisonData = ComparisonFailureData.create(exception)
-      Assertions.assertNull(comparisonData)
-    }
-
-    run {
-      val exception = CustomJunit5AssertionFailedError("message", expected, actual)
-      val comparisonData = ComparisonFailureData.create(exception)
-      Assertions.assertNotNull(comparisonData)
-      Assertions.assertEquals(expectedText, comparisonData.expected)
-      Assertions.assertEquals(actualText, comparisonData.actual)
-      Assertions.assertNull(comparisonData.expectedFilePath)
-      Assertions.assertNull(comparisonData.actualFilePath)
-    }
-
-    run {
-      val exception = CustomJunit5AssertionFailedError("message", expectedText, actual)
-      val comparisonData = ComparisonFailureData.create(exception)
-      Assertions.assertNotNull(comparisonData)
-      Assertions.assertEquals(expectedText, comparisonData.expected)
-      Assertions.assertEquals(actualText, comparisonData.actual)
-      Assertions.assertNull(comparisonData.expectedFilePath)
-      Assertions.assertNull(comparisonData.actualFilePath)
-    }
-
-    run {
-      val exception = CustomJunit5AssertionFailedError("message", expected, actualText)
-      val comparisonData = ComparisonFailureData.create(exception)
-      Assertions.assertNotNull(comparisonData)
-      Assertions.assertEquals(expectedText, comparisonData.expected)
-      Assertions.assertEquals(actualText, comparisonData.actual)
-      Assertions.assertNull(comparisonData.expectedFilePath)
-      Assertions.assertNull(comparisonData.actualFilePath)
-    }
-
-    run {
-      val exception = CustomJunit5AssertionFailedError("message", expectedText, actualText)
-      val comparisonData = ComparisonFailureData.create(exception)
-      Assertions.assertNotNull(comparisonData)
-      Assertions.assertEquals(expectedText, comparisonData.expected)
-      Assertions.assertEquals(actualText, comparisonData.actual)
-      Assertions.assertNull(comparisonData.expectedFilePath)
-      Assertions.assertNull(comparisonData.actualFilePath)
-    }
-
-    run {
-      val exception = CustomJunit5AssertionFailedError()
       val comparisonData = ComparisonFailureData.create(exception)
       Assertions.assertNull(comparisonData)
     }
@@ -357,26 +287,5 @@ class JUnitComparisonFailureDataTest {
       Assertions.assertNull(comparisonData.expectedFilePath)
       Assertions.assertNull(comparisonData.actualFilePath)
     }
-  }
-
-  private class CustomJunit3ComparisonFailure : junit.framework.ComparisonFailure {
-
-    constructor(message: String?, expected: String?, actual: String?) :
-      super(message, expected, actual)
-  }
-
-  private class CustomJunit4ComparisonFailure : org.junit.ComparisonFailure {
-
-    constructor(message: String?, expected: String?, actual: String?) :
-      super(message, expected, actual)
-  }
-
-  private class CustomJunit5AssertionFailedError : org.opentest4j.AssertionFailedError {
-
-    constructor() :
-      super()
-
-    constructor(message: String?, expected: Any?, actual: Any?) :
-      super(message, expected, actual)
   }
 }

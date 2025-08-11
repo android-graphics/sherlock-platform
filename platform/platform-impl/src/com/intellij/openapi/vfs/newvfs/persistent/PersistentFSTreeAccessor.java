@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,7 +14,6 @@ import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.DataEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,8 +30,7 @@ import java.util.function.BiConsumer;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER;
 
-@ApiStatus.Internal
-public class PersistentFSTreeAccessor {
+class PersistentFSTreeAccessor {
   /**
    * The attribute is a list of child fileId, diff-compressed -- see {@link #doSaveChildren} for details.
    * The FS super-root ({@link #SUPER_ROOT_ID}) is an exceptional case: there is stored both child fileId
@@ -106,7 +104,7 @@ public class PersistentFSTreeAccessor {
         "Super-root is a special file record for internal use, it MUST NOT be used directly");
     }
 
-    final PersistentFSRecordsStorage records = connection.records();
+    final PersistentFSRecordsStorage records = connection.getRecords();
     final int parentModCount = records.getModCount(parentId);
     try (DataInputStream input = attributeAccessor.readAttribute(parentId, CHILDREN_ATTR)) {
       final int count = (input == null) ? 0 : DataInputOutputUtil.readINT(input);
@@ -147,7 +145,7 @@ public class PersistentFSTreeAccessor {
     try (DataInputStream input = attributeAccessor.readAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
       if (input == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
 
-      final PersistentFSRecordsStorage records = connection.records();
+      final PersistentFSRecordsStorage records = connection.getRecords();
       final int maxID = records.maxAllocatedID();
 
       final int count = DataInputOutputUtil.readINT(input);
@@ -176,7 +174,7 @@ public class PersistentFSTreeAccessor {
     try (final DataInputStream input = attributeAccessor.readAttribute(fileId, CHILDREN_ATTR)) {
       if (input == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
 
-      final PersistentFSRecordsStorage records = connection.records();
+      final PersistentFSRecordsStorage records = connection.getRecords();
       final int maxID = records.maxAllocatedID();
 
       final int count = DataInputOutputUtil.readINT(input);
@@ -211,13 +209,13 @@ public class PersistentFSTreeAccessor {
     try {
       PersistentFSConnection connection = this.connection;
 
-      int rootUrlId = connection.names().tryEnumerate(rootUrl);
+      int rootUrlId = connection.getNames().tryEnumerate(rootUrl);
 
       int[] rootUrls = ArrayUtilRt.EMPTY_INT_ARRAY;
       int[] rootIds = ArrayUtilRt.EMPTY_INT_ARRAY;
-      try (DataInputStream input = attributeAccessor.readAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
+      try (final DataInputStream input = attributeAccessor.readAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
         if (input != null) {
-          int rootsCount = DataInputOutputUtil.readINT(input);
+          final int rootsCount = DataInputOutputUtil.readINT(input);
           if (rootsCount < 0) {
             throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: roots count(=" + rootsCount + ") must be >=0");
           }
@@ -230,7 +228,7 @@ public class PersistentFSTreeAccessor {
             int urlId = DataInputOutputUtil.readINT(input) + prevUrlId;
             int rootId = DataInputOutputUtil.readINT(input) + prevRootId;
             if (urlId == rootUrlId) {
-              checkChildIdValid(SUPER_ROOT_ID, rootId, i, connection.records().maxAllocatedID());
+              checkChildIdValid(SUPER_ROOT_ID, rootId, i, connection.getRecords().maxAllocatedID());
               return rootId;
             }
 
@@ -240,12 +238,13 @@ public class PersistentFSTreeAccessor {
         }
       }
 
-      rootUrlId = connection.names().enumerate(rootUrl);
+      connection.markDirty();
+      rootUrlId = connection.getNames().enumerate(rootUrl);
 
       try (DataOutputStream output = attributeAccessor.writeAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
-        int newRootFileId = recordAccessor.createRecord(Collections.emptyList());
+        final int newRootFileId = recordAccessor.createRecord(Collections.emptyList());
 
-        int index = Arrays.binarySearch(rootIds, newRootFileId);
+        final int index = Arrays.binarySearch(rootIds, newRootFileId);
         if (index >= 0) {
           throw new AssertionError("Newly allocated newRootFileId(=" + newRootFileId + ") already exists in root record: " +
                                    "rootIds(=" + Arrays.toString(rootIds) + "), rootUrls(=" + Arrays.toString(rootUrls) + "), " +
@@ -337,7 +336,7 @@ public class PersistentFSTreeAccessor {
 
       int[] names;
       int[] ids;
-      try (DataInputStream input = attributeAccessor.readAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
+      try (final DataInputStream input = attributeAccessor.readAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
         assert input != null;
         int count = DataInputOutputUtil.readINT(input);
 
@@ -353,7 +352,7 @@ public class PersistentFSTreeAccessor {
         }
       }
 
-      int index = ArrayUtil.find(ids, fileId);
+      final int index = ArrayUtil.find(ids, fileId);
       assert index >= 0;
 
       names = ArrayUtil.remove(names, index);
@@ -362,6 +361,8 @@ public class PersistentFSTreeAccessor {
       try (DataOutputStream output = attributeAccessor.writeAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
         saveNameIdSequenceWithDeltas(names, ids, output);
       }
+
+      connection.markDirty();
     }
     finally {
       rootsAccessLock.unlock();
@@ -373,7 +374,7 @@ public class PersistentFSTreeAccessor {
       fsRootDataLoader.ensureLoaded(getRootsStoragePath(fsRootDataLoader));
     }
 
-    connection.enumerateAttributeId(CHILDREN_ATTR.getId()); // trigger writing / loading of vfs attribute ids in top level write action
+    connection.getAttributeId(CHILDREN_ATTR.getId()); // trigger writing / loading of vfs attribute ids in top level write action
   }
 
   static void saveNameIdSequenceWithDeltas(int[] names, int[] ids, DataOutputStream output) throws IOException {
@@ -389,7 +390,7 @@ public class PersistentFSTreeAccessor {
   }
 
   private @NotNull Path getRootsStoragePath(FsRootDataLoader loader) {
-    return connection.paths().getRootsStorage(loader.getName());
+    return connection.getPersistentFSPaths().getRootsStorage(loader.getName());
   }
 
   protected static void checkNameIdValid(int nameId,

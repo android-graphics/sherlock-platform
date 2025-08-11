@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.validation.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -26,17 +26,20 @@ public class XsltDeclarationInspection extends XsltInspection {
     private XsltElementFactory myXsltElementFactory;
 
   @Override
-  public @NotNull String getShortName() {
+    @NotNull
+    public String getShortName() {
         return "XsltDeclarations";
     }
 
     @Override
-    public @NotNull HighlightDisplayLevel getDefaultLevel() {
+    @NotNull
+    public HighlightDisplayLevel getDefaultLevel() {
         return HighlightDisplayLevel.ERROR;
     }
 
     @Override
-    public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
+    @NotNull
+    public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
         if (!(holder.getFile() instanceof XmlFile)) return PsiElementVisitor.EMPTY_VISITOR;
         return new XmlElementVisitor() {
             @Override
@@ -57,7 +60,7 @@ public class XsltDeclarationInspection extends XsltInspection {
                 final XmlTag tag = element.getTag();
 
                 final PsiElement token = element.getNameIdentifier();
-                if (name == null || name.isEmpty()) {
+                if (name == null || name.length() == 0) {
                     if (token != null) {
                         holder.registerProblem(token, XPathBundle.message("inspection.message.empty.name.not.permitted"));
                     } else {

@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.hints.declarative
 
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
@@ -25,16 +24,5 @@ interface InlayActionHandler {
    * Handles click on the corresponding inlay entry. Payload is provided by the entry.
    */
   @RequiresEdt
-  @Deprecated(message = "Please override handleClick(EditorMouseEvent, InlayActionPayload) instead")
-  fun handleClick(editor: Editor, payload: InlayActionPayload) {
-    throw UnsupportedOperationException()
-  }
-
-  /**
-   * Handles click on the corresponding inlay entry. Payload is provided by the entry.
-   */
-  @RequiresEdt
-  fun handleClick(e: EditorMouseEvent, payload: InlayActionPayload) {
-    handleClick(e.editor, payload)
-  }
+  fun handleClick(editor: Editor, payload: InlayActionPayload)
 }

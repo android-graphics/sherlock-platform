@@ -10,7 +10,6 @@ import com.intellij.ui.hover.HoverListener;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtilities;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,7 +20,6 @@ import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
 import java.awt.*;
 
-@ApiStatus.Internal
 public final class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
   public static ComponentUI createUI(JComponent c) {
     return new MainToolbarComboBoxButtonUI();

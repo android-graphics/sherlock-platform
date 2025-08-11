@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.fir.completion.test.handlers
 
-import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
@@ -21,19 +20,11 @@ class K2CompletionMultiFileHandlerTest : AbstractCompletionMultiFileHandlerTest(
     /**
      * This is a temporary solution! This test should be rewritten to be generated!
      */
-    override fun doTest(
-        completionChar: Char,
-        vararg extraFileNames: String,
-        predicate: LookupElementPresentation.() -> Boolean,
-    ) {
+    override fun doTest(completionChar: Char, vararg extraFileNames: String, tailText: String?) {
         val testFile = Paths.get(testDataDirectory.path, getTestFileName())
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(testFile, IgnoreTests.DIRECTIVES.IGNORE_K2) {
-            super.doTest(
-                completionChar = completionChar,
-                extraFileNames = extraFileNames,
-                predicate = predicate,
-            )
+            super.doTest(completionChar, *extraFileNames, tailText = tailText)
         }
     }
 

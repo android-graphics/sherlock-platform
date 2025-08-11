@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.generic;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -20,9 +20,9 @@ import java.util.List;
 
 class HighlightedSelectorsTable extends TableView<Selector> {
 
-  HighlightedSelectorsTable(final @NotNull FileType valueFileType,
-                            final @NotNull Project project,
-                            final @NotNull List<Selector> selectors) {
+  HighlightedSelectorsTable(@NotNull final FileType valueFileType,
+                                   @NotNull final Project project,
+                                   @NotNull final List<Selector> selectors) {
     super(new ListTableModel<>(new ColumnInfo[]{
       new ColumnInfo<Selector, String>(TaskBundle.message("column.name.name")) {
         @Override

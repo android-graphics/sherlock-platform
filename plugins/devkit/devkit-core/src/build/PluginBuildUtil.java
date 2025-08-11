@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.application.ReadAction;
@@ -25,7 +25,7 @@ public final class PluginBuildUtil {
   private PluginBuildUtil() {
   }
 
-  public static @NonNls @Nullable String getPluginExPath(Module module) {
+  @NonNls @Nullable public static String getPluginExPath(Module module) {
     final Sdk jdk = IdeaJdk.findIdeaJdk(ModuleRootManager.getInstance(module).getSdk());
     if (jdk == null) {
       return null;

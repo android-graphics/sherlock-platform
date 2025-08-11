@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.test.KotlinCliCompilerFacade
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
-abstract class AbstractIrKotlinScriptEvaluateExpressionTest : AbstractIrKotlinEvaluateExpressionTest() {
+abstract class AbstractIrKotlinScriptEvaluateExpressionTest : AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest() {
 
     override fun configureProjectByTestFiles(testFiles: List<TestFileWithModule>, testAppDirectory: File) {
         val scriptsSrcPath = listOf(testAppPath, SCRIPT_SOURCES_DIR).joinToString(File.separator)

@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractableSubstringInfo
@@ -35,38 +34,19 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 
 object K2CreateParameterFromUsageBuilder {
-    fun generateCreateParameterAction(element: KtElement): List<IntentionAction>? {
+    fun generateCreateParameterAction(element: KtElement): IntentionAction? {
         val refExpr = element.findParentOfType<KtNameReferenceExpression>(strict = false) ?: return null
+        if (refExpr.getQualifiedElement() != refExpr) return null
         if (refExpr.getParentOfTypeAndBranch<KtCallableReferenceExpression> { callableReference } != null) return null
 
-        val qualifiedElement = refExpr.getQualifiedElement()
-        if (qualifiedElement == refExpr) {
-            //unqualified reference
-            val varExpected = refExpr.getAssignmentByLHS() != null
-            val containers = CreateParameterUtil.chooseContainers(refExpr, varExpected)
-            if (varExpected) {
-                val pair = containers.firstOrNull() ?: return null
-                val container = pair.first as? KtNamedDeclaration ?: return null
-                return listOf(CreateParameterFromUsageAction(refExpr, refExpr.getReferencedName(), pair.second, container))
-            }
+        val pair = getContainer(refExpr)
+        val container = pair.first as? KtNamedDeclaration ?: return null
+        return CreateParameterFromUsageAction(refExpr, refExpr.getReferencedName(), pair.second, container)
+    }
 
-            val classes = mutableSetOf<KtNamedDeclaration>()
-            return containers.mapNotNull { pair ->
-                val container = pair.first as? KtNamedDeclaration ?: return@mapNotNull null
-                if (!classes.add(container)) return@mapNotNull null
-                CreateParameterFromUsageAction(refExpr, refExpr.getReferencedName(), pair.second, container)
-            }.toList()
-        }
-
-        if (qualifiedElement !is KtQualifiedExpression) return null
-        val container = analyze(refExpr) {
-            qualifiedElement.receiverExpression.expressionType?.symbol?.psi as? KtClass
-        } ?: return null
-
-        if (!container.manager.isInProject(container)) return null
-        if (container.isInterface()) return null
-        val valVar = if (qualifiedElement.getAssignmentByLHS() != null) CreateParameterUtil.ValVar.VAR else CreateParameterUtil.ValVar.VAL
-        return listOf(CreateParameterFromUsageAction(qualifiedElement, refExpr.getReferencedName(), valVar, container))
+    private fun getContainer(refExpr: KtExpression): Pair<PsiElement?, CreateParameterUtil.ValVar> {
+        val varExpected = refExpr.getAssignmentByLHS() != null
+        return CreateParameterUtil.chooseContainerPreferringClass(refExpr, varExpected)
     }
 
     fun generateCreateParameterActionForNamedParameterNotFound(arg: KtValueArgument): IntentionAction? {
@@ -113,14 +93,16 @@ object K2CreateParameterFromUsageBuilder {
         }
 
         override fun startInWriteAction(): Boolean = false
-        override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = originalExprPointer.element != null
+        override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
+            return originalExprPointer.element != null
+        }
         override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
 
         context(KaSession)
         private fun getExpectedType(expression: KtExpression): KaType {
             if (expression is KtDestructuringDeclarationEntry) {
                 val type = expression.returnType
-                return if (type is KaErrorType) builtinTypes.any else type
+                return if (type is KaErrorType) builtinTypes.ANY else type
             }
             val physicalExpression = expression.substringContextOrThis
             val type = if (physicalExpression is KtProperty && physicalExpression.isLocal) {
@@ -128,24 +110,16 @@ object K2CreateParameterFromUsageBuilder {
             } else {
                 (expression.extractableSubstringInfo as? K2ExtractableSubstringInfo)?.guessLiteralType() ?: physicalExpression.expressionType
             }
-
-            fun KaType?.withResolvableApproximation(): KaType? {
-                val approximatedType = approximateWithResolvableType(this, physicalExpression)
-                if (approximatedType != null && !approximatedType.semanticallyEquals(builtinTypes.unit)) {
-                    return approximatedType
-                }
-                return null
-            }
-
-            type.withResolvableApproximation()?.let { return it }
+            val approximatedType = approximateWithResolvableType(type, physicalExpression)
+            if (approximatedType != null && approximatedType != builtinTypes.UNIT) { return approximatedType }
 
             expression.expectedType?.let { return it }
             val binaryExpression = expression.getAssignmentByLHS()
             val right = binaryExpression?.right
-            right?.expressionType.withResolvableApproximation()?.let { return it }
+            right?.expressionType?.let { return it }
             right?.expectedType?.let { return it }
-            (expression.parent as? KtDeclaration)?.returnType.withResolvableApproximation()?.let { return it }
-            return builtinTypes.any
+            (expression.parent as? KtDeclaration)?.returnType?.let { return it }
+            return builtinTypes.ANY
         }
 
         private fun runChangeSignature(
@@ -167,16 +141,7 @@ object K2CreateParameterFromUsageBuilder {
                     return descriptor
                 }
             }
-            KotlinFirIntroduceParameterHandler(helper).addParameter(
-                project,
-                editor,
-                originalExpression,
-                null,
-                container,
-                { getExpectedType(originalExpression) },
-                { _ -> listOf(name) },
-                true
-            )
+            KotlinFirIntroduceParameterHandler(helper).addParameter(project, editor, originalExpression, container, { getExpectedType(originalExpression) }, { _ -> listOf(name) })
         }
     }
 }

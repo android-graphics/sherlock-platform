@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -23,8 +23,9 @@ public class JavaValuePresentation extends XValueExtendedPresentation implements
     myValueDescriptor = valueDescriptor;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getType() {
+  public String getType() {
     return myValueDescriptor.getIdLabel();
   }
 
@@ -71,8 +72,9 @@ public class JavaValuePresentation extends XValueExtendedPresentation implements
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull String getSeparator() {
+  public String getSeparator() {
     boolean emptyAfterSeparator = !myValueDescriptor.isShowIdLabel() && isValueEmpty();
     String declaredType = myValueDescriptor.getDeclaredTypeLabel();
     if (!StringUtil.isEmpty(declaredType)) {

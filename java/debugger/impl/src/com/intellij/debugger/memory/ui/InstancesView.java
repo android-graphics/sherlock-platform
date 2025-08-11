@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.CommonBundle;
@@ -59,7 +59,6 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -233,13 +232,14 @@ class InstancesView extends InstancesViewBase {
     return myProgress;
   }
 
-  private static final class MyNodeManager extends NodeManagerImpl {
+  private final static class MyNodeManager extends NodeManagerImpl {
     MyNodeManager(Project project) {
       super(project, null);
     }
 
+    @NotNull
     @Override
-    public @NotNull DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
+    public DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
       return new DebuggerTreeNodeImpl(null, descriptor);
     }
 
@@ -248,8 +248,9 @@ class InstancesView extends InstancesViewBase {
       return new DebuggerTreeNodeImpl(null, descriptor);
     }
 
+    @NotNull
     @Override
-    public @NotNull DebuggerTreeNodeImpl createMessageNode(String message) {
+    public DebuggerTreeNodeImpl createMessageNode(String message) {
       return new DebuggerTreeNodeImpl(null, new MessageDescriptor(message));
     }
   }
@@ -272,7 +273,8 @@ class InstancesView extends InstancesViewBase {
     private long myLastTreeUpdatingTime;
     private long myLastProgressUpdatingTime;
 
-    private @Nullable FilteringResult myCompletionReason = null;
+    @Nullable
+    private FilteringResult myCompletionReason = null;
 
     MyFilteringCallback(@NotNull EvaluationContextImpl evaluationContext) {
       myEvaluationContext = evaluationContext;
@@ -295,8 +297,9 @@ class InstancesView extends InstancesViewBase {
       ApplicationManager.getApplication().invokeLater(() -> myProgressIndicator.start());
     }
 
+    @NotNull
     @Override
-    public @NotNull Action matched(@NotNull JavaReferenceInfo ref) {
+    public Action matched(@NotNull JavaReferenceInfo ref) {
       final JavaValue val = new InstanceJavaValue(ref.createDescriptor(myDebugProcess.getProject()),
                                                   myEvaluationContext, myNodeManager);
       myMatchedCount++;
@@ -308,16 +311,18 @@ class InstancesView extends InstancesViewBase {
       return myMatchedCount < MAX_TREE_NODE_COUNT ? Action.CONTINUE : Action.STOP;
     }
 
+    @NotNull
     @Override
-    public @NotNull Action notMatched(@NotNull JavaReferenceInfo ref) {
+    public Action notMatched(@NotNull JavaReferenceInfo ref) {
       myProceedCount++;
       updateProgress();
 
       return Action.CONTINUE;
     }
 
+    @NotNull
     @Override
-    public @NotNull Action error(@NotNull JavaReferenceInfo ref, @NotNull String description) {
+    public Action error(@NotNull JavaReferenceInfo ref, @NotNull String description) {
       final JavaValue val = new InstanceJavaValue(ref.createDescriptor(myDebugProcess.getProject()),
                                                   myEvaluationContext, myNodeManager);
       myErrorsGroup.addErrorValue(description, val);
@@ -478,7 +483,7 @@ class InstancesView extends InstancesViewBase {
 
     @Override
     public List<JavaReferenceInfo> fetchInstances(@NotNull EvaluationContextImpl evaluationContext) {
-      final int limit = DebuggerUtils.isAndroidVM(evaluationContext.getVirtualMachineProxy().getVirtualMachine())
+      final int limit = DebuggerUtils.isAndroidVM(myDebugProcess.getVirtualMachineProxy().getVirtualMachine())
                         ? AndroidUtil.ANDROID_INSTANCES_LIMIT
                         : DEFAULT_INSTANCES_LIMIT;
       List<JavaReferenceInfo> instances = getInstances(limit);
@@ -492,7 +497,7 @@ class InstancesView extends InstancesViewBase {
     }
   }
 
-  private @Unmodifiable @NotNull List<JavaReferenceInfo> getInstances(int limit) {
+  private @NotNull List<JavaReferenceInfo> getInstances(int limit) {
     return ContainerUtil.map(
       getInstancesProvider().getInstances(limit),
       referenceInfo -> ((JavaReferenceInfo)referenceInfo)

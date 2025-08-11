@@ -124,7 +124,7 @@ public class FastFileAttributesTest {
   }
 
   private @NotNull VFileMock createFile(int fileId, long timestamp) {
-    while (fileId > vfs.connection().records().maxAllocatedID()) {
+    while (fileId > vfs.connection().getRecords().maxAllocatedID()) {
       vfs.createRecord();
     }
     return new VFileMock(fileId, timestamp);

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.annotations.NotNull;
@@ -99,18 +99,24 @@ public final class SwitchPatternHelper {
     /**
      * not null for nested switch
      */
-    private final @Nullable VarTracker myVarTracker;
+    @Nullable
+    private final VarTracker myVarTracker;
 
     /**
      * Represents a set of type variables, which is used as second parameter in bootstrap call.
      */
-    private final @NotNull Set<Exprent> myTypeVars;
-    private final @NotNull SwitchStatement myRootSwitchStatement;
-    private final @NotNull InvocationExprent mySwitchSelector;
+    @NotNull
+    private final Set<Exprent> myTypeVars;
+    @NotNull
+    private final SwitchStatement myRootSwitchStatement;
+    @NotNull
+    private final InvocationExprent mySwitchSelector;
 
-    private final @NotNull List<TempVarAssignmentItem> myTempVarAssignments = new ArrayList<>();
+    @NotNull
+    private final List<TempVarAssignmentItem> myTempVarAssignments = new ArrayList<>();
 
-    private final @NotNull Set<SwitchStatement> myUsedSwitch = new HashSet<>();
+    @NotNull
+    private final Set<SwitchStatement> myUsedSwitch = new HashSet<>();
 
     private JavacReferenceFinder(@Nullable VarTracker tracker,
                                  @NotNull Set<Exprent> typeVars,
@@ -208,7 +214,8 @@ public final class SwitchPatternHelper {
       });
     }
 
-    private @NotNull SwitchPatternHelper.JavacReferenceFinder.Initializer findInitializer(@NotNull Root root, Exprent typeVar) {
+    @NotNull
+    private SwitchPatternHelper.JavacReferenceFinder.Initializer findInitializer(@NotNull Root root, Exprent typeVar) {
       Exprent instance = Objects.requireNonNull(mySwitchSelector.getInstance());
 
       Exprent nonNullCheck = null;
@@ -256,7 +263,8 @@ public final class SwitchPatternHelper {
      *
      * @return The `Root` object representing the root `DoStatement` and expression statements, or null if not found.
      */
-    private @Nullable Root getRoot() {
+    @Nullable
+    private Root getRoot() {
       Statement first = myRootSwitchStatement.getFirst();
       if (first == null) {
         return null;
@@ -420,7 +428,8 @@ public final class SwitchPatternHelper {
       return false;
     }
 
-    private static @Nullable List<FullCase> resortForSwitchBootstrap(@NotNull SwitchStatement statement) {
+    @Nullable
+    private static List<FullCase> resortForSwitchBootstrap(@NotNull SwitchStatement statement) {
       for (Statement caseStatement : statement.getCaseStatements()) {
         if (caseStatement == null) {
           return null;
@@ -505,20 +514,22 @@ public final class SwitchPatternHelper {
       return sortedAll;
     }
 
-    private static @NotNull VarExprent createDefaultPatternVal(@NotNull String className) {
+    @NotNull
+    private static VarExprent createDefaultPatternVal(@NotNull String className) {
       VarProcessor processor = DecompilerContext.getVarProcessor();
       VarExprent varExprent = new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
                                              new VarType(CodeConstants.TYPE_OBJECT, 0, className),
                                              processor);
       varExprent.setDefinition(true);
-      processor.setVarName(varExprent.getVarVersion(), VarExprent.getName(varExprent.getVarVersion()));
+      processor.setVarName(varExprent.getVarVersionPair(), VarExprent.getName(varExprent.getVarVersionPair()));
       return varExprent;
     }
 
     /**
      * @return A map of case statements from switch and their pattern variable candidates, or null if the collection fails.
      */
-    private @Nullable Map<Statement, List<PatternVariableCandidate>> collectPatterns(@NotNull VarExprent instance,
+    @Nullable
+    private Map<Statement, List<PatternVariableCandidate>> collectPatterns(@NotNull VarExprent instance,
                                                                            @Nullable DoStatement doStatement,
                                                                            @NotNull Set<AssignmentExprent> assignmentExprents) {
 
@@ -648,7 +659,8 @@ public final class SwitchPatternHelper {
      * @param usedAssignments   a set of used assignments
      * @return a PatternContainer object containing the collected guards
      */
-    private @NotNull SwitchPatternHelper.PatternContainer collectGuards(@NotNull Map<Statement, List<PatternVariableCandidate>> candidates,
+    @NotNull
+    private SwitchPatternHelper.PatternContainer collectGuards(@NotNull Map<Statement, List<PatternVariableCandidate>> candidates,
                                                                @NotNull Exprent typeVar,
                                                                @Nullable Statement doParentStatement,
                                                                @NotNull Set<AssignmentExprent> usedAssignments) {
@@ -779,7 +791,8 @@ public final class SwitchPatternHelper {
      * @param assignmentExprent         The AssignmentExprent to add (from last).
      * @return The normalized PatternVariableCandidate or null if normalization fails.
      */
-    private @Nullable PatternVariableCandidate normalizeCandidateWithBrokenEdges(@NotNull PatternVariableCandidate oldCandidate,
+    @Nullable
+    private PatternVariableCandidate normalizeCandidateWithBrokenEdges(@NotNull PatternVariableCandidate oldCandidate,
                                                                        @NotNull SequenceStatement newSequence,
                                                                        @NotNull SequenceStatement previousSequenceStatement,
                                                                        @NotNull Statement last,
@@ -871,7 +884,8 @@ public final class SwitchPatternHelper {
      * @return A list of pattern variable candidates or null, if it is impossible
      * List with only previousCandidate can be returned, if nested switch is not found
      */
-    private @Nullable List<PatternVariableCandidate> tryToFindNestedSwitch(@NotNull PatternVariableCandidate previousCandidate,
+    @Nullable
+    private List<PatternVariableCandidate> tryToFindNestedSwitch(@NotNull PatternVariableCandidate previousCandidate,
                                                                  @NotNull Statement caseStatement,
                                                                  @NotNull Set<AssignmentExprent> usedAssignmentExprents,
                                                                  @NotNull VarTracker varTracker) {
@@ -1093,7 +1107,8 @@ public final class SwitchPatternHelper {
     }
   }
 
-  private static @NotNull Map<Integer, String> getMapCaseClasses(List<PooledConstant> bootstrapArguments) {
+  @NotNull
+  private static Map<Integer, String> getMapCaseClasses(List<PooledConstant> bootstrapArguments) {
     Map<Integer, String> mapCaseClasses = new HashMap<>();
     for (int i = 0; i < bootstrapArguments.size(); i++) {
       PooledConstant constant = bootstrapArguments.get(i);
@@ -1160,17 +1175,27 @@ public final class SwitchPatternHelper {
    * It can convert a usual switch statement to switch a statement with patterns.
    */
   private static class SwitchOnReferenceCandidate implements SwitchOnCandidate {
-    private final @NotNull SwitchStatement myRootSwitchStatement;
-    private final @NotNull InvocationExprent myPreviousSelector;
-    private final @NotNull Exprent myNewSwitchSelectorVariant;
-    private final @NotNull List<TempVarAssignmentItem> myTempVarAssignments;
-    private final @NotNull List<JavacReferenceFinder.FullCase> mySortedCasesFromRoot;
+    @NotNull
+    private final SwitchStatement myRootSwitchStatement;
+    @NotNull
+    private final InvocationExprent myPreviousSelector;
+    @NotNull
+    private final Exprent myNewSwitchSelectorVariant;
+    @NotNull
+    private final List<TempVarAssignmentItem> myTempVarAssignments;
+    @NotNull
+    private final List<JavacReferenceFinder.FullCase> mySortedCasesFromRoot;
 
-    private final @NotNull Set<SwitchStatement> myUsedSwitchStatements;
-    private final @NotNull Set<AssignmentExprent> myUsedTypeVarAssignments;
-    private final @Nullable Runnable myCleaner;
-    private final @NotNull SwitchPatternHelper.PatternContainer myPatternContainer;
-    private final @Nullable DoStatement myUppedDoStatement;
+    @NotNull
+    private final Set<SwitchStatement> myUsedSwitchStatements;
+    @NotNull
+    private final Set<AssignmentExprent> myUsedTypeVarAssignments;
+    @Nullable
+    private final Runnable myCleaner;
+    @NotNull
+    private final SwitchPatternHelper.PatternContainer myPatternContainer;
+    @Nullable
+    private final DoStatement myUppedDoStatement;
     private final boolean myMustCleanNonNull;
 
     private SwitchOnReferenceCandidate(@NotNull SwitchStatement rootSwitchStatement,
@@ -1240,6 +1265,7 @@ public final class SwitchPatternHelper {
               statementWithFirstAssignment.getExprents().get(0) instanceof AssignmentExprent assignmentExprent &&
               assignmentExprent.getRight() != null &&
               assignmentExprent.getLeft() instanceof VarExprent newVarExprent &&
+              assignmentExprent.getLeft().getExprType() != null &&
               assignmentExprent.getRight().equals(newSwitch) &&
               assignmentExprent.getLeft().getExprType().equals(newSwitch.getExprType())) {
             statementWithFirstAssignment.getExprents().remove(0);
@@ -1253,7 +1279,8 @@ public final class SwitchPatternHelper {
       }
     }
 
-    private static @Nullable Statement getStatementWithFirstAssignment(@NotNull Statement statement) {
+    @Nullable
+    private static Statement getStatementWithFirstAssignment(@NotNull Statement statement) {
       if (statement.getExprents() != null && !statement.getExprents().isEmpty()) {
         if (statement.getExprents().get(0) instanceof AssignmentExprent) {
           return statement;
@@ -1297,7 +1324,8 @@ public final class SwitchPatternHelper {
       return this.myTempVarAssignments;
     }
 
-    private @NotNull Map<Integer, Exprent> getMapCaseValue(List<PooledConstant> bootstrapArguments) {
+    @NotNull
+    private Map<Integer, Exprent> getMapCaseValue(List<PooledConstant> bootstrapArguments) {
       Map<Integer, Exprent> mapCaseValue = new HashMap<>();
       for (int i = 0; i < bootstrapArguments.size(); i++) {
         PooledConstant constant = bootstrapArguments.get(i);
@@ -1463,18 +1491,7 @@ public final class SwitchPatternHelper {
           upperDoStatement.getParent().replaceStatement(upperDoStatement, statement);
         }
         else {
-          List<StatEdge> continueEdges = upperDoStatement.getPredecessorEdges(EdgeType.CONTINUE);
           upperDoStatement.getParent().replaceStatement(upperDoStatement, switchStatement);
-          for (StatEdge edge : switchStatement.getPredecessorEdges(EdgeType.CONTINUE)) {
-            Statement source = edge.getSource();
-            if (continueEdges.contains(edge) && upperDoStatement.containsStatement(source)) {
-              source.removeSuccessor(edge);
-              source.getParent().getStats().removeWithKey(source.id);
-              for (StatEdge predecessorEdge : source.getAllPredecessorEdges()) {
-                predecessorEdge.getSource().removeSuccessor(predecessorEdge);
-              }
-            }
-          }
         }
         normalizeCaseLabels(switchStatement, upperDoStatement);
       }

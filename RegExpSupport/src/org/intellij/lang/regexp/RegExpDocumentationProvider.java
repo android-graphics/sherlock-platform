@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp;
 
 import com.intellij.lang.ASTNode;
@@ -12,7 +12,9 @@ import org.jetbrains.annotations.Nullable;
 
 public final class RegExpDocumentationProvider extends AbstractDocumentationProvider {
   @Override
-  public @Nullable @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+  @Nullable
+  @Nls
+  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     if (element instanceof RegExpProperty prop) {
       final ASTNode node = prop.getCategoryNode();
       if (node != null) {
@@ -30,7 +32,8 @@ public final class RegExpDocumentationProvider extends AbstractDocumentationProv
   }
 
   @Override
-  public @Nullable @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  @Nullable
+  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof RegExpGroup group) {
       return StringUtil.escapeXmlEntities(group.getUnescapedText());
     } else {

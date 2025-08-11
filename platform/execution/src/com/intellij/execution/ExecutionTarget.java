@@ -1,12 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 
@@ -30,17 +27,22 @@ public abstract class ExecutionTarget {
   /**
    * Id is used to save selected target between restarts
    */
-  public abstract @NotNull @NonNls String getId();
+  @NotNull
+  @NonNls
+  public abstract String getId();
 
-  public abstract @NotNull @Nls String getDisplayName();
+  @NotNull
+  @Nls
+  public abstract String getDisplayName();
 
-  public @Nullable @Nls String getGroupName() {
+  @Nullable
+  @Nls
+  public String getGroupName() {
     return null;
   }
 
-  public abstract @Nullable Icon getIcon();
-
-  public @Nullable @Nls String getDescription() { return null; }
+  @Nullable
+  public abstract Icon getIcon();
 
   /**
    * Implementation-specific logic should decide whether to suggest this target for the given configuration.

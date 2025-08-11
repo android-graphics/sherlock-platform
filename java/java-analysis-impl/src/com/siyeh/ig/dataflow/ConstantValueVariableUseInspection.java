@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -22,7 +22,8 @@ import org.jetbrains.annotations.Nullable;
 public final class ConstantValueVariableUseInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "constant.value.variable.use.problem.descriptor");
   }
@@ -41,12 +42,14 @@ public final class ConstantValueVariableUseInspection extends BaseInspection imp
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", myText);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return CommonQuickFixBundle.message("fix.simplify");
     }
 
@@ -172,7 +175,8 @@ public final class ConstantValueVariableUseInspection extends BaseInspection imp
 
   private static class VariableReadVisitor extends JavaRecursiveElementWalkingVisitor {
 
-    private final @NotNull PsiVariable variable;
+    @NotNull
+    private final PsiVariable variable;
     private boolean read = false;
     private boolean stop = false;
     private PsiReferenceExpression reference = null;

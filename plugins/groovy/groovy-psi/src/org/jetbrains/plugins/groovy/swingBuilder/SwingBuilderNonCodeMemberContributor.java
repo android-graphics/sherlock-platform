@@ -3,11 +3,11 @@ package org.jetbrains.plugins.groovy.swingBuilder;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +29,7 @@ public final class SwingBuilderNonCodeMemberContributor extends NonCodeMembersCo
 
   private static final Key<MultiMap<String, PsiMethod>> KEY = Key.create("SwingBuilderNonCodeMemberContributor.KEY");
 
-  private static final @NonNls Object METHOD_KIND = "SwingBuilder_builder_method";
+  @NonNls private static final Object METHOD_KIND = "SwingBuilder_builder_method";
 
   private static final class MyBuilder {
     private final PsiManager myManager;
@@ -58,8 +58,9 @@ public final class SwingBuilderNonCodeMemberContributor extends NonCodeMembersCo
         setOriginInfo("SwingBuilder method");
       }
 
+      @NotNull
       @Override
-      public @NotNull PsiElement getNavigationElement() {
+      public PsiElement getNavigationElement() {
         PsiElement res = super.getNavigationElement();
         if (res != this || myNavigationClass == null) return res;
 
@@ -77,7 +78,8 @@ public final class SwingBuilderNonCodeMemberContributor extends NonCodeMembersCo
       }
     }
 
-    private @NotNull PsiType type(@NotNull String typeName) {
+    @NotNull
+    private PsiType type(@NotNull String typeName) {
       PsiType res = myTypeMap.get(typeName);
       if (res == null) {
         res = myFactory.createTypeByFQClassName(typeName, myResolveScope);
@@ -800,11 +802,12 @@ public final class SwingBuilderNonCodeMemberContributor extends NonCodeMembersCo
     if (aClass == null) return;
     if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return;
 
-    MultiMap<String, PsiMethod> methodMap = ConcurrencyUtil.computeIfAbsent(aClass, KEY, ()->{
+    MultiMap<String, PsiMethod> methodMap = aClass.getUserData(KEY);
+    if (methodMap == null) {
       MyBuilder builder = new MyBuilder(aClass);
       builder.generateMethods();
-      return builder.myResult;
-    });
+      methodMap = ((UserDataHolderEx)aClass).putUserDataIfAbsent(KEY, builder.myResult);
+    }
 
     String nameHint = ResolveUtil.getNameHint(processor);
 

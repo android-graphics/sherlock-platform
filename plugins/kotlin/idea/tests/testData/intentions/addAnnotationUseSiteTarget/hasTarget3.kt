@@ -1,4 +1,4 @@
-// CHOSEN_OPTION: PROPERTY_GETTER|Add use-site target 'get'
+// CHOOSE_USE_SITE_TARGET: get
 
 annotation class A
 

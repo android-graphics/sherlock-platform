@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.visibility;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -47,17 +47,20 @@ public class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspect
   }
 
   @Override
-  public @NotNull String getGroupDisplayName() {
+  @NotNull
+  public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.visibility.issues");
   }
 
   @Override
-  public @NotNull String getShortName() {
+  @NotNull
+  public String getShortName() {
     return VisibilityInspection.SHORT_NAME;
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new MyVisitor(holder);
   }
 
@@ -86,7 +89,7 @@ public class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspect
       checkMember(field);
     }
 
-    private void checkMember(final @NotNull PsiMember member) {
+    private void checkMember(@NotNull final PsiMember member) {
       if (!myVisibilityInspection.SUGGEST_FOR_CONSTANTS && isConstantField(member)) {
         return;
       }
@@ -346,7 +349,8 @@ public class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspect
     }
   }
 
-  private static @Nullable PsiPackage getPackage(@NotNull PsiElement element) {
+  @Nullable
+  private static PsiPackage getPackage(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     PsiDirectory directory = file == null ? null : file.getContainingDirectory();
     return directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);

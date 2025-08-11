@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.openapi.Disposable;
@@ -18,7 +18,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -34,8 +33,7 @@ import java.util.concurrent.Future;
  * This class stores the data annotations for coverage information in the editor.
  */
 @Service(Service.Level.PROJECT)
-@ApiStatus.Internal
-public final class CoverageDataAnnotationsManager implements Disposable {
+final class CoverageDataAnnotationsManager implements Disposable {
   private final Project myProject;
   private final Object myAnnotationsLock = new Object();
   private final ExecutorService myExecutor;
@@ -45,7 +43,7 @@ public final class CoverageDataAnnotationsManager implements Disposable {
 
   CoverageDataAnnotationsManager(Project project) {
     myProject = project;
-    myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("CoverageDataAnnotationsManager Pool", 1);
+    myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("CoverageDataAnnotationsManager Pool", 1);
   }
 
   public static CoverageDataAnnotationsManager getInstance(@NotNull Project project) {
@@ -59,7 +57,7 @@ public final class CoverageDataAnnotationsManager implements Disposable {
 
   public synchronized void clearAnnotations() {
     for (var it = myRequests.entrySet().iterator(); it.hasNext(); ) {
-      it.next().getValue().cancel(false);
+      it.next().getValue().cancel(true);
       it.remove();
     }
     myExecutor.execute(() -> {
@@ -104,7 +102,8 @@ public final class CoverageDataAnnotationsManager implements Disposable {
     myRequests.put(editor, future);
   }
 
-  private @NotNull CoverageEditorAnnotator getOrCreateAnnotator(Editor editor, PsiFile file, CoverageEngine engine) {
+  @NotNull
+  private CoverageEditorAnnotator getOrCreateAnnotator(Editor editor, PsiFile file, CoverageEngine engine) {
     synchronized (myAnnotationsLock) {
       return myAnnotators.computeIfAbsent(editor, (x) -> engine.createSrcFileAnnotator(file, editor));
     }
@@ -136,7 +135,8 @@ public final class CoverageDataAnnotationsManager implements Disposable {
    * Returns a Future that ensures that all requests in the coverage data annotations manager are completed.
    */
   @TestOnly
-  public @NotNull Future<?> getAllRequestsCompletion() {
+  @NotNull
+  public Future<?> getAllRequestsCompletion() {
     if (myUpdateRequest == null) return CompletableFuture.runAsync(() -> { }, myExecutor);
     return myUpdateRequest.thenRunAsync(() -> {}, myExecutor);
   }
@@ -167,7 +167,7 @@ public final class CoverageDataAnnotationsManager implements Disposable {
 
       Future<?> request = manager.myRequests.remove(editor);
       if (request != null) {
-        request.cancel(false);
+        request.cancel(true);
       }
 
       manager.myExecutor.execute(() -> manager.clearEditor(editor));

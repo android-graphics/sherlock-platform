@@ -66,13 +66,15 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
   }
 
   @Override
-  public @Nullable String getPrefix() {
+  @Nullable
+  public String getPrefix() {
     final String[] parts = EscapeUtil.unescapeText(getNode()).split(":", 2);
     return parts.length == 2 ? parts[0] : null;
   }
 
   @Override
-  public @NotNull String getLocalPart() {
+  @NotNull
+  public String getLocalPart() {
     final String[] parts = EscapeUtil.unescapeText(getNode()).split(":", 2);
     return parts.length == 1 ? parts[0] : parts[1];
   }
@@ -87,18 +89,21 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     return getPrefix() == null ? null : this;
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getElement() {
+  public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
-  public @NotNull TextRange getRangeInElement() {
+  public TextRange getRangeInElement() {
     return TextRange.from(0, getText().indexOf(':'));
   }
 
   @Override
-  public @Nullable PsiElement resolve() {
+  @Nullable
+  public PsiElement resolve() {
     final MyResolver resolver = new MyResolver(getPrefix(), getKind());
     getContainingFile().processDeclarations(resolver, ResolveState.initial(), this, this);
     return resolver.getResult();
@@ -114,7 +119,8 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
   }
 
   @Override
-  public @NotNull String getCanonicalText() {
+  @NotNull
+  public String getCanonicalText() {
     return getRangeInElement().substring(getText());
   }
 
@@ -143,7 +149,8 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
   }
 
   @Override
-  public @NotNull String getUnresolvedMessagePattern() {
+  @NotNull
+  public String getUnresolvedMessagePattern() {
     //The format substitution is performed at the call site
     //noinspection UnresolvedPropertyKey
     return RelaxngBundle.message("relaxng.annotator.unresolved-namespace-prefix");
@@ -208,12 +215,14 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return myName;
     }
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return XmlPsiBundle.message("xml.quickfix.create.namespace.declaration.family");
     }
 

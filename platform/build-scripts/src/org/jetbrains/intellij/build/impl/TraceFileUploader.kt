@@ -10,7 +10,6 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import org.jetbrains.intellij.build.impl.compilation.executeAsync
 import org.jetbrains.intellij.build.impl.compilation.httpClient
 import java.io.IOException
 import java.net.URLEncoder
@@ -24,7 +23,7 @@ open class TraceFileUploader(serverUrl: String, token: String?) {
 
   protected open fun log(message: String) {}
 
-  suspend fun upload(file: Path, metadata: Map<String, String>) {
+  fun upload(file: Path, metadata: Map<String, String>) {
     log("Preparing to upload '$file' to '$serverUrl'")
     if (!Files.exists(file)) {
       throw RuntimeException("The file does not exist: $file")
@@ -36,13 +35,13 @@ open class TraceFileUploader(serverUrl: String, token: String?) {
     log("Performed file upload. Server answered: $response")
   }
 
-  private suspend fun uploadMetadata(metadata: Map<String, String>): String {
+  private fun uploadMetadata(metadata: Map<String, String>): String {
     val url = "$serverUrl/import"
     val content = JSON.std.asString(metadata)
     log("Uploading metadata to '$url': $content")
     val builder = prepareRequestBuilder(url)
     builder.post(content.toRequestBody("application/json".toMediaType()))
-    httpClient.newCall(builder.build()).executeAsync().use { response ->
+    httpClient.newCall(builder.build()).execute().use { response ->
       when (response.code) {
         200, 201, 202, 204 -> return readPlainMetadata(response)
         else -> throw readError(response, response.code)
@@ -50,12 +49,12 @@ open class TraceFileUploader(serverUrl: String, token: String?) {
     }
   }
 
-  private suspend fun uploadFile(file: Path, id: String): String {
+  private fun uploadFile(file: Path, id: String): String {
     val url = "$serverUrl/import/${URLEncoder.encode(id, StandardCharsets.UTF_8)}/upload/tr-single"
     log("Uploading '${file.fileName}' to '$url'")
     val builder = prepareRequestBuilder(url)
     builder.post(file.toFile().asRequestBody("application/octet-stream".toMediaType()))
-    httpClient.newCall(builder.build()).executeAsync().use { response ->
+    httpClient.newCall(builder.build()).execute().use { response ->
       return readBody(response)
     }
   }

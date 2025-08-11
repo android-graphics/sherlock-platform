@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.icons.AllIcons;
@@ -15,7 +15,6 @@ import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.sun.jna.Pointer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -25,12 +24,11 @@ import java.awt.*;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 
-@ApiStatus.Internal
-public class TBItemButton extends TBItem {
+class TBItemButton extends TBItem {
   private static final int TEST_DELAY_MS = Integer.getInteger("touchbar.test.delay", 0);
   private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Touchbar buttons updater", 2);
 
-  final @Nullable TouchBarStats.AnActionStats actionStats;
+  protected final @Nullable TouchBarStats.AnActionStats actionStats;
 
   private @Nullable String myText;
   private @Nullable String myHint;

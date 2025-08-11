@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.options.OptPane;
@@ -30,7 +30,8 @@ public final class MethodOnlyUsedFromInnerClassInspection extends BaseInspection
   public boolean onlyReportStaticMethods = false;
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     final PsiClass containingClass = (PsiClass)infos[0];
     final int ordinal = ClassUtils.getTypeOrdinal(containingClass);
     final String name = containingClass instanceof PsiAnonymousClass
@@ -107,7 +108,7 @@ public final class MethodOnlyUsedFromInnerClassInspection extends BaseInspection
       if (method.equals(containingMethod)) { // recursive call
         return true;
       }
-      final PsiClass containingClass = PsiUtil.getContainingClass(element);
+      final PsiClass containingClass = ClassUtils.getContainingClass(element);
       if (containingClass == null) {
         return false;
       }

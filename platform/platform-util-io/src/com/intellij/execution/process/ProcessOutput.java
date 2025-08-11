@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -53,23 +52,23 @@ public class ProcessOutput {
     return myStderrBuilder.toString();
   }
 
-  public @Unmodifiable @NotNull List<@NlsSafe String> getStdoutLines() {
+  public @NotNull List<@NlsSafe String> getStdoutLines() {
     return getStdoutLines(true);
   }
 
-  public @Unmodifiable @NotNull List<@NlsSafe String> getStdoutLines(boolean excludeEmptyLines) {
+  public @NotNull List<@NlsSafe String> getStdoutLines(boolean excludeEmptyLines) {
     return splitLines(getStdout(), excludeEmptyLines);
   }
 
-  public @Unmodifiable @NotNull List<@NlsSafe String> getStderrLines() {
+  public @NotNull List<@NlsSafe String> getStderrLines() {
     return getStderrLines(true);
   }
 
-  public @Unmodifiable @NotNull List<@NlsSafe String> getStderrLines(boolean excludeEmptyLines) {
+  public @NotNull List<@NlsSafe String> getStderrLines(boolean excludeEmptyLines) {
     return splitLines(getStderr(), excludeEmptyLines);
   }
 
-  private static @Unmodifiable List<String> splitLines(String s, boolean excludeEmptyLines) {
+  private static List<String> splitLines(String s, boolean excludeEmptyLines) {
     String converted = StringUtil.convertLineSeparators(s);
     return StringUtil.split(converted, "\n", true, excludeEmptyLines);
   }

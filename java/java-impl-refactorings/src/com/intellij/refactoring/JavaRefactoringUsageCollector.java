@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -22,7 +22,8 @@ import java.util.function.Function;
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addBoolIfDiffers;
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addMetricIfDiffers;
 
-public final @NonNls class JavaRefactoringUsageCollector extends ApplicationUsagesCollector {
+@NonNls
+public final class JavaRefactoringUsageCollector extends ApplicationUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("java.refactoring.settings", 7);
   private static final VarargEventId RENAME_SEARCH_IN_COMMENTS_FOR_FIELD =
     GROUP.registerVarargEvent("rename.search.in.comments.for.field", EventFields.Enabled);
@@ -100,8 +101,9 @@ public final @NonNls class JavaRefactoringUsageCollector extends ApplicationUsag
     return GROUP;
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<MetricEvent> getMetrics() {
+  public Set<MetricEvent> getMetrics() {
     Set<MetricEvent> result = new HashSet<>();
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     JavaRefactoringSettings defaultSettings = new JavaRefactoringSettings();

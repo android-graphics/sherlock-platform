@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -27,7 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class PsiShortNamesCacheImpl extends PsiShortNamesCache {
-  private final @NotNull Project myProject;
+  @NotNull
+  private final Project myProject;
 
   public PsiShortNamesCacheImpl(@NotNull Project project) {
     myProject = project;

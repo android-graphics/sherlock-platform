@@ -14,8 +14,8 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityKt;
 import com.intellij.openapi.application.ModalityState;
@@ -64,10 +64,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SingleAlarm;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.indexing.DumbModeAccessType;
@@ -76,6 +73,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.CoroutineScopeKt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,7 +98,7 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 /**
  * @author Konstantin Bulenkov
  */
-public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
+public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   private static final Color BOX_COLOR = new JBColor(new Color(0xFC6C00), new Color(0xDE6C01));
   public static final Logger LOG = Logger.getInstance(PsiViewerDialog.class);
   private final Project myProject;
@@ -157,13 +155,6 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
 
   private final @NotNull SingleAlarm myPsiUpdateAlarm;
 
-  /**
-   * If "view psi structure of current file" is used,
-   * we use the original PSI until the user does to change the file type or an extension.
-   * In this case, the new PSI structure is built from scratch
-   */
-  private boolean myIsUsingOriginalFile;
-
   private static class ExtensionComparator implements Comparator<String> {
     private final String myOnTop;
 
@@ -182,16 +173,15 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
   public PsiViewerDialog(@NotNull Project project, @Nullable Editor selectedEditor) {
     super(project, true, IdeModalityType.MODELESS);
     myPsiTreePanel = new JPanel(new BorderLayout());
-    myPsiTreeSeparator = new TitledSeparator(DevPsiViewerBundle.message("separator.psi.tree"));
+    myPsiTreeSeparator = new TitledSeparator("P&SI Tree");
     myPsiTree = new Tree();
     myProject = project;
     myExternalDocument = selectedEditor != null;
     myOriginalPsiFile = getOriginalPsiFile(project, selectedEditor);
-    myIsUsingOriginalFile = myOriginalPsiFile != null;
     myTabs = createTabPanel(project);
     myRefs = new JBList<>(new DefaultListModel<>());
 
-    myPsiUpdateAlarm = new SingleAlarm(this::doUpdatePsi, 1500, getDisposable());
+    myPsiUpdateAlarm = new SingleAlarm(() -> doUpdatePsi(), 1500, getDisposable(), Alarm.ThreadToUse.SWING_THREAD);
 
     myCoroutineScope = CoroutineScopeKt.CoroutineScope(ModalityKt.asContextElement(ModalityState.nonModal()));
     myPsiViewerPropertiesTabViewModel = new PsiViewerPropertiesTabViewModel(myProject, myCoroutineScope, PsiViewerSettings.getSettings(), (psiElement) -> {
@@ -418,9 +408,9 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
     myFileTypeComboBox.addActionListener(__ -> {
       updateDialectsCombo(null);
       updateExtensionsCombo();
-      rebuildPsiAndUpdateEditor();
+      updateEditor();
     });
-    myDialectComboBox.addActionListener(__ -> rebuildPsiAndUpdateEditor());
+    myDialectComboBox.addActionListener(__ -> updateEditor());
     ComboboxSpeedSearch search = new ComboboxSpeedSearch(myDialectComboBox, null) {
       @Override
       protected String getElementText(Object element) {
@@ -437,7 +427,6 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
     myDialectComboBox.addFocusListener(new AutoExpandFocusListener(myDialectComboBox));
     myExtensionComboBox.setRenderer(SimpleListCellRenderer.create("", value -> "." + value)); //NON-NLS
     myExtensionComboBox.addFocusListener(new AutoExpandFocusListener(myExtensionComboBox));
-    myExtensionComboBox.addActionListener(__ -> rebuildPsiAndUpdateEditor());
 
     myShowWhiteSpacesBox.addActionListener(__ -> {
       myTreeStructure.setShowWhiteSpaces(myShowWhiteSpacesBox.isSelected());
@@ -482,12 +471,6 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
     //GuiUtils.replaceJSplitPaneWithIDEASplitter(myTreeSplit, true);
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myTextSplit, true);
     super.init();
-  }
-
-  private void rebuildPsiAndUpdateEditor() {
-    myIsUsingOriginalFile = false;
-    doUpdatePsi();
-    updateEditor();
   }
 
   private static @NotNull @NlsSafe String getElementDescription(Object element) {
@@ -665,7 +648,26 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
 
   @Override
   protected Action @NotNull [] createActions() {
-    return ArrayUtil.mergeArrays(new Action[]{new CopyAction()}, super.createActions());
+    AbstractAction copyPsi = new AbstractAction(DevPsiViewerBundle.message("cop.y.psi")) {
+      @Override
+      public void actionPerformed(@NotNull ActionEvent e) {
+        PsiElement element = parseText(myEditor.getDocument().getText());
+        setOriginalFiles(element);
+        List<PsiElement> allToParse = new ArrayList<>();
+        if (element instanceof PsiFile) {
+          allToParse.addAll(((PsiFile)element).getViewProvider().getAllFiles());
+        }
+        else if (element != null) {
+          allToParse.add(element);
+        }
+        StringBuilder data = new StringBuilder();
+        for (PsiElement psiElement : allToParse) {
+          data.append(DebugUtil.psiToString(psiElement, myShowWhiteSpacesBox.isSelected(), true));
+        }
+        CopyPasteManager.getInstance().setContents(new StringSelection(data.toString()));
+      }
+    };
+    return ArrayUtil.mergeArrays(new Action[]{copyPsi}, super.createActions());
   }
 
   @Override
@@ -681,13 +683,7 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
     myLastParsedText = text;
     myLastParsedTextHashCode = text.hashCode();
     myNewDocumentHashCode = myLastParsedTextHashCode;
-    PsiElement rootElement;
-    if (myOriginalPsiFile != null && myIsUsingOriginalFile) {
-      rootElement = myOriginalPsiFile;
-    }
-    else {
-      rootElement = parseText(text);
-    }
+    PsiElement rootElement = parseText(text);
     setOriginalFiles(rootElement);
     myTreeStructure.setRootPsiElement(rootElement);
 
@@ -737,7 +733,7 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
   }
 
   private void setOriginalFiles(@Nullable PsiElement root) {
-    if (root != null && myOriginalPsiFile != null && !myIsUsingOriginalFile) {
+    if (root != null && myOriginalPsiFile != null) {
       PsiFile newPsiFile = root.getContainingFile();
       newPsiFile.putUserData(PsiFileFactory.ORIGINAL_FILE, myOriginalPsiFile);
 
@@ -748,12 +744,20 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
     }
   }
 
+
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    Object selection =
-      myPsiTree.hasFocus() ? TreeUtil.getLastUserObject(myPsiTree.getSelectionPath()) :
-      myRefs.hasFocus() ? myRefs.getSelectedValue() : null;
-    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
+  public Object getData(@NotNull @NonNls String dataId) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      Object selection =
+        myPsiTree.hasFocus() ? TreeUtil.getLastUserObject(myPsiTree.getSelectionPath()) :
+        myRefs.hasFocus() ? myRefs.getSelectedValue() : null;
+      return selection == null ? null : (DataProvider)slowId -> getSlowData(slowId, selection);
+    }
+    return null;
+  }
+
+  private @Nullable PsiFile getSlowData(@NonNls String dataId, @NotNull Object selection) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       String fqn;
       if (selection instanceof ViewerNodeDescriptor descriptor) {
         Object elementObject = descriptor.getElement();
@@ -769,7 +773,8 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
         fqn = null;
       }
       return fqn == null ? null : getContainingFileForClass(fqn);
-    });
+    }
+    return null;
   }
 
   private class MyPsiTreeSelectionListener implements TreeSelectionListener {
@@ -1030,7 +1035,7 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  private static @NotNull PsiElement getElementToChooseInPsiTree(@NotNull PsiElement element) {
+  private @NotNull PsiElement getElementToChooseInPsiTree(@NotNull PsiElement element) {
     if (element.getFirstChild() != null) {
       return element;
     }
@@ -1165,29 +1170,5 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
         return ReadAction.nonBlocking(callable).executeSynchronously();
       }
     });
-  }
-
-  private class CopyAction extends AbstractAction {
-    CopyAction() {
-      super(DevPsiViewerBundle.message("cop.y.psi"));
-    }
-
-    @Override
-    public void actionPerformed(@NotNull ActionEvent e) {
-      PsiElement element = myTreeStructure.getRootPsiElement();
-      setOriginalFiles(element);
-      List<PsiElement> allToParse = new ArrayList<>();
-      if (element instanceof PsiFile) {
-        allToParse.addAll(((PsiFile)element).getViewProvider().getAllFiles());
-      }
-      else if (element != null) {
-        allToParse.add(element);
-      }
-      StringBuilder data = new StringBuilder();
-      for (PsiElement psiElement : allToParse) {
-        data.append(DebugUtil.psiToString(psiElement, myShowWhiteSpacesBox.isSelected(), true));
-      }
-      CopyPasteManager.getInstance().setContents(new StringSelection(data.toString()));
-    }
   }
 }

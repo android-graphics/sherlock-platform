@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoListener
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.KlibCompatibilityInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NativeKlibLibraryInfo
-import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.isGradleLibraryName
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.parseIDELibraryName
@@ -25,7 +24,6 @@ import org.jetbrains.kotlin.idea.versions.UnsupportedAbiVersionNotificationPanel
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 
 /** TODO: merge [KotlinNativeABICompatibilityChecker] in the future with [UnsupportedAbiVersionNotificationPanelProvider], KT-34525 */
-@K1ModeProjectStructureApi
 internal class KotlinNativeABICompatibilityChecker : ProjectActivity {
     override suspend fun execute(project: Project) : Unit = blockingContext {
         KotlinNativeABICompatibilityCheckerService.getInstance(project).runActivity()
@@ -33,7 +31,6 @@ internal class KotlinNativeABICompatibilityChecker : ProjectActivity {
 }
 
 @Service(Service.Level.PROJECT)
-@K1ModeProjectStructureApi
 internal class KotlinNativeABICompatibilityCheckerService(private val project: Project): Disposable {
     fun runActivity() {
         val connection = project.messageBus.connect(this)

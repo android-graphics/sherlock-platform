@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.project.Project;
@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class VariableDataSnapshot extends AbstractVariableData {
-  private final @Nullable SmartPsiElementPointer<PsiVariable> myVariable;
-  private final @Nullable SmartTypePointer myType;
+  @Nullable private final SmartPsiElementPointer<PsiVariable> myVariable;
+  @Nullable private final SmartTypePointer myType;
 
   VariableDataSnapshot(@NotNull VariableData data, @NotNull Project project) {
     this(data.variable, data.type, data.name, data.originalName, data.passAsParameter, project);
@@ -26,7 +26,8 @@ class VariableDataSnapshot extends AbstractVariableData {
     this.passAsParameter = passAsParameter;
   }
 
-  public @Nullable VariableData getData() {
+  @Nullable
+  public VariableData getData() {
     PsiVariable variable = getVariable();
     if (variable != null) {
       PsiType type = getType();

@@ -3,7 +3,6 @@ package git4idea.commands;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.MathUtil;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -107,6 +106,6 @@ public final class GitStandardProgressAnalyzer implements GitProgressAnalyzer {
     for (Object2DoubleMap.Entry<Operation> entry : myOperationsProgress.object2DoubleEntrySet()) {
       totalProgress += entry.getKey().myFractionInTotal * entry.getDoubleValue();
     }
-    return MathUtil.clamp(totalProgress, 0, 1);
+    return totalProgress;
   }
 }

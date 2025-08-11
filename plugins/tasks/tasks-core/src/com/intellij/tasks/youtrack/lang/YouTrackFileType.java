@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.youtrack.lang;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -19,18 +19,21 @@ public final class YouTrackFileType extends LanguageFileType {
     super(YouTrackLanguage.INSTANCE);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return "YouTrack";
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
+  public String getDescription() {
     return TaskBundle.message("filetype.youtrack.query.description");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDefaultExtension() {
+  public String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 

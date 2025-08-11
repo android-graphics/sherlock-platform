@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionEP;
@@ -21,6 +21,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLabelDecorator;
+import com.intellij.ui.components.panels.StatelessCardLayout;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -34,10 +35,10 @@ import java.awt.event.MouseEvent;
  * @author Dmitry Batkovich
  */
 public final class InspectionNodeInfo extends JPanel {
-  private static final Logger LOG = Logger.getInstance(InspectionNodeInfo.class);
+  private final static Logger LOG = Logger.getInstance(InspectionNodeInfo.class);
 
-  public InspectionNodeInfo(final @NotNull InspectionTree tree,
-                            final @NotNull Project project) {
+  public InspectionNodeInfo(@NotNull final InspectionTree tree,
+                            @NotNull final Project project) {
     setLayout(new GridBagLayout());
     setBorder(JBUI.Borders.emptyTop(11));
     final InspectionToolWrapper<?, ?> toolWrapper = tree.getSelectedToolWrapper(false);
@@ -75,7 +76,7 @@ public final class InspectionNodeInfo extends JPanel {
     JScrollPane pane = ScrollPaneFactory.createScrollPane(description, true);
     pane.setAlignmentX(0);
 
-    add(pane,
+    add(StatelessCardLayout.wrap(pane),
         new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                new JBInsets(0, 10, 0, 0), 0, 0));
 

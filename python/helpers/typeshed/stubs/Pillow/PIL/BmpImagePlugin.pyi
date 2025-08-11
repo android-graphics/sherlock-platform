@@ -1,5 +1,6 @@
 from _typeshed import Incomplete
-from typing import ClassVar, Final, Literal
+from typing import ClassVar
+from typing_extensions import Final, Literal
 
 from .ImageFile import ImageFile, PyDecoder
 

@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.lang.psi.impl;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
@@ -20,17 +19,20 @@ public abstract class MarkdownCompositePsiElementBase extends ASTWrapperPsiEleme
     super(node);
   }
 
-  protected @NotNull CharSequence getChars() {
+  @NotNull
+  protected CharSequence getChars() {
     return getTextRange().subSequence(getContainingFile().getViewProvider().getContents());
   }
 
-  protected @NotNull String shrinkTextTo(int length) {
+  @NotNull
+  protected String shrinkTextTo(int length) {
     final CharSequence chars = getChars();
     return chars.subSequence(0, Math.min(length, chars.length())).toString();
   }
 
+  @NotNull
   @Override
-  public @NotNull List<MarkdownPsiElement> getCompositeChildren() {
+  public List<MarkdownPsiElement> getCompositeChildren() {
     return Arrays.asList(findChildrenByClass(MarkdownPsiElement.class));
   }
 
@@ -49,20 +51,22 @@ public abstract class MarkdownCompositePsiElementBase extends ASTWrapperPsiEleme
   @Override
   public ItemPresentation getPresentation() {
     return new MarkdownBasePresentation() {
+      @Nullable
       @Override
-      public @Nullable String getPresentableText() {
+      public String getPresentableText() {
         if (!isValid()) {
           return null;
         }
         return getPresentableTagName();
       }
 
+      @Nullable
       @Override
-      public @Nullable String getLocationString() {
+      public String getLocationString() {
         if (!isValid()) {
           return null;
         }
-        if (getCompositeChildren().isEmpty()) {
+        if (getCompositeChildren().size() == 0) {
           return shrinkTextTo(PRESENTABLE_TEXT_LENGTH);
         }
         else {

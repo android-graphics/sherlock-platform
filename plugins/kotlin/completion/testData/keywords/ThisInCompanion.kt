@@ -3,7 +3,7 @@
 class C {
     companion object {
         fun String.foo() {
-            thi<caret> // TODO too many lookup elements for an empty prefix
+            <caret>
         }
     }
 }

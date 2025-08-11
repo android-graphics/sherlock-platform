@@ -15,7 +15,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -39,7 +38,8 @@ class PsiViewerSourceWrapper implements Comparable<PsiViewerSourceWrapper> {
     return myFileType != null ? DevPsiViewerBundle.message("label.file", myFileType.getName()) : myExtension.getName();
   }
 
-  public @Nullable Icon getIcon() {
+  @Nullable
+  public Icon getIcon() {
     return myFileType != null ? myFileType.getIcon() : myExtension.getIcon();
   }
 
@@ -49,11 +49,13 @@ class PsiViewerSourceWrapper implements Comparable<PsiViewerSourceWrapper> {
   }
 
 
-  static @NotNull @Unmodifiable List<PsiViewerSourceWrapper> getExtensionBasedWrappers() {
+  @NotNull
+  static List<PsiViewerSourceWrapper> getExtensionBasedWrappers() {
     return ContainerUtil.map(PsiViewerExtension.EP_NAME.getExtensionList(), el -> new PsiViewerSourceWrapper(el));
   }
 
-  static @NotNull List<PsiViewerSourceWrapper> getFileTypeBasedWrappers() {
+  @NotNull
+  static List<PsiViewerSourceWrapper> getFileTypeBasedWrappers() {
     Set<FileType> allFileTypes = new HashSet<>();
     List<PsiViewerSourceWrapper> sourceWrappers = new ArrayList<>();
     Collections.addAll(allFileTypes, FileTypeManager.getInstance().getRegisteredFileTypes());

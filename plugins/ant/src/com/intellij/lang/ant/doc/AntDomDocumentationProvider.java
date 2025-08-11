@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.doc;
 
 import com.intellij.lang.ant.AntFilesProvider;
@@ -43,7 +43,7 @@ final class AntDomDocumentationProvider implements DocumentationProvider {
     if (mainDoc == null && additionalDoc == null) {
       return null;
     }
-    final @NlsSafe StringBuilder builder = new StringBuilder();
+    @NlsSafe final StringBuilder builder = new StringBuilder();
     if (additionalDoc != null) {
       builder.append(additionalDoc);
     }
@@ -53,7 +53,8 @@ final class AntDomDocumentationProvider implements DocumentationProvider {
     return builder.toString();
   }
 
-  private static @Nullable String getMainDocumentation(PsiElement elem) {
+  @Nullable
+  private static String getMainDocumentation(PsiElement elem) {
     final VirtualFile helpFile = getHelpFile(elem);
     if (helpFile != null) {
       try {
@@ -65,7 +66,8 @@ final class AntDomDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  private static @Nullable String getAdditionalDocumentation(PsiElement elem) {
+  @Nullable
+  private static String getAdditionalDocumentation(PsiElement elem) {
     final XmlTag xmlTag = PsiTreeUtil.getParentOfType(elem, XmlTag.class);
     if (xmlTag == null) {
       return null;
@@ -73,7 +75,7 @@ final class AntDomDocumentationProvider implements DocumentationProvider {
     final AntDomElement antElement = AntSupport.getAntDomElement(xmlTag);
     if (antElement instanceof AntFilesProvider) {
       final List<File> list = ((AntFilesProvider)antElement).getFiles(new HashSet<>());
-      if (!list.isEmpty()) {
+      if (list.size() > 0) {
         final @NonNls StringBuilder builder = new StringBuilder();
         final XmlTag tag = antElement.getXmlTag();
         if (tag != null) {
@@ -82,7 +84,7 @@ final class AntDomDocumentationProvider implements DocumentationProvider {
           builder.append(":</b>");
         }
         for (File file : list) {
-          if (!builder.isEmpty()) {
+          if (builder.length() > 0) {
             builder.append("<br>");
           }
           builder.append(file.getPath());
@@ -93,7 +95,8 @@ final class AntDomDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  private static @Nullable VirtualFile getHelpFile(final PsiElement element) {
+  @Nullable
+  private static VirtualFile getHelpFile(final PsiElement element) {
     final XmlTag xmlTag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
     if (xmlTag == null) {
       return null;
@@ -143,12 +146,13 @@ final class AntDomDocumentationProvider implements DocumentationProvider {
     "Tasks", "Types", "CoreTasks", "OptionalTasks", "CoreTypes", "OptionalTypes"
   };
 
-  private static @Nullable VirtualFile getHelpFile(AntDomElement antElement, final VirtualFile documentationRoot) {
+  @Nullable
+  private static VirtualFile getHelpFile(AntDomElement antElement, final VirtualFile documentationRoot) {
     final XmlTag xmlTag = antElement.getXmlTag();
     if (xmlTag == null) {
       return null;
     }
-    final @NonNls String helpFileShortName = "/" + xmlTag.getName() + ".html";
+    @NonNls final String helpFileShortName = "/" + xmlTag.getName() + ".html";
 
     for (String folderName : DOC_FOLDER_NAMES) {
       final VirtualFile candidateHelpFile = documentationRoot.findFileByRelativePath(folderName + helpFileShortName);
@@ -168,14 +172,15 @@ final class AntDomDocumentationProvider implements DocumentationProvider {
   }
 
   @Override
-  public @Nullable @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {  // todo!
+  @Nullable
+  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {  // todo!
     if (element instanceof PomTargetPsiElement) {
       final PomTarget pomTarget = ((PomTargetPsiElement)element).getTarget();
       if (pomTarget instanceof DomTarget) {
         final DomElement domElement = ((DomTarget)pomTarget).getDomElement();
         if (domElement instanceof AntDomTarget antTarget) {
           final String description = antTarget.getDescription().getRawText();
-          if (description != null && !description.isEmpty()) {
+          if (description != null && description.length() > 0) {
             final String targetName = antTarget.getName().getRawText();
             final StringBuilder builder = new StringBuilder();
             builder.append("Target");
@@ -190,7 +195,7 @@ final class AntDomDocumentationProvider implements DocumentationProvider {
                 builder.append(" [").append(fileName).append("]");
               }
             }
-            final @NlsSafe String result = builder.append(" ").append(description).toString();
+            @NlsSafe final String result = builder.append(" ").append(description).toString();
             return result;
           }
         }
@@ -215,7 +220,7 @@ final class AntDomDocumentationProvider implements DocumentationProvider {
               builder.append("Data structure ");
             }
             builder.append(elemName);
-            final @NlsSafe String result = builder.toString();
+            @NlsSafe final String result = builder.toString();
             return result;
           }
         }

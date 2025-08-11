@@ -857,7 +857,7 @@ abstract class KtBlockingContextInspectionTestCase : LightJavaCodeInsightFixture
   }
 }
 
-internal val PROJECT_DESCRIPTOR_WITH_KOTLIN = object : DefaultLightProjectDescriptor() {
+private val PROJECT_DESCRIPTOR_WITH_KOTLIN = object : DefaultLightProjectDescriptor() {
   override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
     super.configureModule(module, model, contentEntry)
     model.getModuleExtension(LanguageLevelModuleExtension::class.java).languageLevel = LanguageLevel.JDK_17

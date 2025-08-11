@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.*;
 

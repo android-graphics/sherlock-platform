@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.events.impl;
 
 import com.intellij.build.BuildDescriptor;
@@ -29,8 +29,9 @@ public final class StartBuildEventImpl extends StartEventImpl implements StartBu
   }
 
   @ApiStatus.Experimental
+  @NotNull
   @Override
-  public @NotNull DefaultBuildDescriptor getBuildDescriptor() {
+  public DefaultBuildDescriptor getBuildDescriptor() {
     return myBuildDescriptor;
   }
 
@@ -52,8 +53,9 @@ public final class StartBuildEventImpl extends StartEventImpl implements StartBu
     return this;
   }
 
+  @Nullable
   @ApiStatus.Experimental
-  public @Nullable BuildViewSettingsProvider getBuildViewSettingsProvider() {
+  public BuildViewSettingsProvider getBuildViewSettingsProvider() {
     return myBuildViewSettingsProvider;
   }
 

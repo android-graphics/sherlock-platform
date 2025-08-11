@@ -1,4 +1,4 @@
-// "Create 'default' branch" "false"
+// "Insert 'default' branch" "false"
 class X {
   void test(int i) {
     switch(i) {

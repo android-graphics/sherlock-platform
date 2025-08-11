@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis;
 
 import com.intellij.analysis.dialog.ModelScopeItem;
@@ -15,12 +15,13 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-public final class VcsScopeItem implements ModelScopeItem {
+public class VcsScopeItem implements ModelScopeItem {
   private final ChangeListManager myChangeListManager;
   private final DefaultComboBoxModel<LocalChangeList> myModel;
   private final Project myProject;
 
-  public static @Nullable VcsScopeItem createIfHasVCS(Project project) {
+  @Nullable
+  public static VcsScopeItem createIfHasVCS(Project project) {
     if (ChangeListManager.getInstance(project).getAffectedFiles().isEmpty()) {
       return null;
     }
@@ -66,7 +67,8 @@ public final class VcsScopeItem implements ModelScopeItem {
     return new AnalysisScope(myProject, new HashSet<>(files));
   }
 
-  public @Nullable DefaultComboBoxModel<LocalChangeList> getChangeListsModel() {
+  @Nullable
+  public DefaultComboBoxModel<LocalChangeList> getChangeListsModel() {
     return myModel;
   }
 }

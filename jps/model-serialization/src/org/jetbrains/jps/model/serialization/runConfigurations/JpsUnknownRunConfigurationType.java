@@ -15,7 +15,8 @@ public final class JpsUnknownRunConfigurationType extends JpsElementTypeWithDumm
     myTypeId = typeId;
   }
 
-  public @NotNull String getTypeId() {
+  @NotNull
+  public String getTypeId() {
     return myTypeId;
   }
 }

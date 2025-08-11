@@ -80,7 +80,7 @@ public class IDEA261496Test {
       frame.setVisible(true);
     });
 
-    await(latch, "waiting onLoadEnd");
+    await(latch);
 
     assertThat(jbCefBrowser.getCefBrowser().getURL()).contains("version");
   }

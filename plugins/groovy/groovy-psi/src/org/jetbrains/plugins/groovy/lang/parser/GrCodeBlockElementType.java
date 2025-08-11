@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.lang.ASTNode;
@@ -19,13 +19,15 @@ public abstract class GrCodeBlockElementType extends IReparseableElementType imp
     this.isInsideSwitch = isInsideSwitch;
   }
 
+  @NotNull
   @Override
-  public @NotNull ASTNode createCompositeNode() {
+  public ASTNode createCompositeNode() {
     return createNode(null);
   }
 
   @Override
-  public abstract @NotNull GrBlockImpl createNode(final CharSequence text);
+  @NotNull
+  public abstract GrBlockImpl createNode(final CharSequence text);
 
   @Override
   public boolean isParsable(@NotNull CharSequence buffer, @NotNull Language fileLanguage, @NotNull Project project) {

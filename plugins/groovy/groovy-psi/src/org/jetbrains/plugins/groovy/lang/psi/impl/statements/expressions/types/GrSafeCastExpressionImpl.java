@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types;
 
 import com.intellij.lang.ASTNode;
@@ -22,8 +22,9 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
     super(node);
   }
 
+  @NotNull
   @Override
-  public @NotNull GroovyReference getReference() {
+  public GroovyReference getReference() {
     return myReference;
   }
 
@@ -38,17 +39,20 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
   }
 
   @Override
-  public @Nullable GrTypeElement getCastTypeElement() {
+  @Nullable
+  public GrTypeElement getCastTypeElement() {
     return findChildByClass(GrTypeElement.class);
   }
 
   @Override
-  public @NotNull GrExpression getOperand() {
+  @NotNull
+  public GrExpression getOperand() {
     return findNotNullChildByClass(GrExpression.class);
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getOperationToken() {
+  public PsiElement getOperationToken() {
     return findNotNullChildByType(GroovyTokenTypes.kAS);
   }
 }

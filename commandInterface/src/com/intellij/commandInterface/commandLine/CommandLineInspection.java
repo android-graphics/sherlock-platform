@@ -23,25 +23,29 @@ import java.util.List;
  */
 public final class CommandLineInspection extends LocalInspectionTool {
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
-                                                 final boolean isOnTheFly,
-                                                 final @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
+                                        final boolean isOnTheFly,
+                                        @NotNull final LocalInspectionToolSession session) {
     return new MyVisitor(holder);
   }
 
   private static final class MyVisitor extends CommandLineVisitor {
-    private final @NotNull ProblemsHolder myHolder;
+    @NotNull
+    private final ProblemsHolder myHolder;
 
-    private MyVisitor(final @NotNull ProblemsHolder holder) {
+    private MyVisitor(@NotNull final ProblemsHolder holder) {
       myHolder = holder;
     }
 
-    private static @Nullable CommandLineFile getFile(final @NotNull PsiElement element) {
+    @Nullable
+    private static CommandLineFile getFile(@NotNull final PsiElement element) {
       return PsiTreeUtil.getParentOfType(element, CommandLineFile.class);
     }
 
-    private static @Nullable ValidationResult getValidationResult(final @NotNull PsiElement element) {
+    @Nullable
+    private static ValidationResult getValidationResult(@NotNull final PsiElement element) {
       final CommandLineFile file = getFile(element);
       if (file == null) {
         return null;
@@ -50,7 +54,7 @@ public final class CommandLineInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void visitCommand(final @NotNull CommandLineCommand o) {
+    public void visitCommand(@NotNull final CommandLineCommand o) {
       super.visitCommand(o);
       final CommandLineFile file = getFile(o);
       if (file == null) {
@@ -69,7 +73,7 @@ public final class CommandLineInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void visitOption(final @NotNull CommandLineOption o) {
+    public void visitOption(@NotNull final CommandLineOption o) {
       super.visitOption(o);
       final ValidationResult validationResult = getValidationResult(o);
       if (validationResult != null && validationResult.isBadValue(o)) {
@@ -79,7 +83,7 @@ public final class CommandLineInspection extends LocalInspectionTool {
 
 
     @Override
-    public void visitArgument(final @NotNull CommandLineArgument o) {
+    public void visitArgument(@NotNull final CommandLineArgument o) {
       super.visitArgument(o);
       final ValidationResult validationResult = getValidationResult(o);
       if (validationResult != null) {

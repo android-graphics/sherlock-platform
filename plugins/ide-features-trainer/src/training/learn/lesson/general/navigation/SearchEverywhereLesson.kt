@@ -55,19 +55,18 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
       test { actions(it) }
     }
 
-    task {
+    task("que") {
       before {
         if (backupPopupLocation == null) {
           backupPopupLocation = adjustPopupPosition(SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY)
         }
       }
-      val prefix = "que"
-      text(LessonsBundle.message("search.everywhere.type.prefixes", strong("quadratic"), strong("equation"), code(prefix)))
-      stateCheck { checkWordInSearch(prefix) }
+      text(LessonsBundle.message("search.everywhere.type.prefixes", strong("quadratic"), strong("equation"), code(it)))
+      stateCheck { checkWordInSearch(it) }
       restoreByUi()
       test {
         Thread.sleep(500)
-        type(prefix)
+        type(it)
       }
     }
 
@@ -140,22 +139,21 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
       LessonsBundle.message("search.everywhere.goto.class", action(it))
     }
 
-    task {
-      text(LessonsBundle.message("search.everywhere.type.class.name", code(goToClassSearchQuery)))
-      stateCheck { checkWordInSearch(goToClassSearchQuery) }
+    task(goToClassSearchQuery) {
+      text(LessonsBundle.message("search.everywhere.type.class.name", code(it)))
+      stateCheck { checkWordInSearch(it) }
       restoreAfterStateBecomeFalse { !checkInsideSearchEverywhere() }
-      test { type(goToClassSearchQuery) }
+      test { type(it) }
     }
 
-    task {
-      val globalScopeName = EverythingGlobalScope.getNameText()
+    task(EverythingGlobalScope.getNameText()) {
       text(LessonsBundle.message("search.everywhere.use.all.places",
-                                 strong(projectFilesScopeName), strong(globalScopeName)))
+                                 strong(projectFilesScopeName), strong(it)))
       triggerAndFullHighlight().component { button: ActionButtonWithText ->
         button.accessibleContext.accessibleName.isToStringContains(projectFilesScopeName)
       }
       triggerUI().component { button: ActionButtonWithText ->
-        button.accessibleContext.accessibleName == globalScopeName
+        button.accessibleContext.accessibleName == it
       }
       showWarning(LessonsBundle.message("search.everywhere.class.popup.closed.warning.message", action("GotoClass"))) {
         !checkInsideSearchEverywhere() && focusOwner !is JList<*>

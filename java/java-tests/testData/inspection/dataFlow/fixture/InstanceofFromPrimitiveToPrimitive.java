@@ -1,10 +1,5 @@
 package dfa;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
-
 public class InstanceofFromPrimitiveToPrimitive {
     public static void main(String[] args) {
         System.out.println("testBoolean");
@@ -23,13 +18,6 @@ public class InstanceofFromPrimitiveToPrimitive {
         testFloat();
         System.out.println("testDouble");
         testDouble();
-        System.out.println("testWithInference");
-        testWithInference(new ArrayList<>());
-    }
-
-    private static void testWithInference(List<@NotNull Short> list) {
-        if(<warning descr="Condition 'list.get(0) instanceof int' is always 'true'">list.get(0) instanceof int</warning>) { //redundant
-        }
     }
 
     private static void testDouble() {

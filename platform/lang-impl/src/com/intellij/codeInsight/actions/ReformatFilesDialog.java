@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.actions;
 
@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.search.SearchScope;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +23,6 @@ import java.util.stream.Stream;
 import static com.intellij.codeInsight.actions.TextRangeType.VCS_CHANGED_TEXT;
 import static com.intellij.codeInsight.actions.TextRangeType.WHOLE_FILE;
 
-@ApiStatus.Internal
 public final class ReformatFilesDialog extends DialogWrapper implements ReformatFilesOptions {
   private JPanel myPanel;
   private JCheckBox myOptimizeImports;
@@ -120,13 +118,15 @@ public final class ReformatFilesDialog extends DialogWrapper implements Reformat
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable SearchScope getSearchScope() {
+  public SearchScope getSearchScope() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getFileTypeMask() {
+  public String getFileTypeMask() {
     return null;
   }
 }

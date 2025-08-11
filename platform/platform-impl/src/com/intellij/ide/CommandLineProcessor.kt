@@ -12,11 +12,9 @@ import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.util.PsiNavigationSupport
-import com.intellij.idea.AppMode
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -36,6 +34,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.CommandLineProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.configureToOpenDotIdeaOrCreateNewIfNotExists
 import com.intellij.platform.ide.bootstrap.CommandLineArgs
+import com.intellij.platform.ide.bootstrap.findStarter
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
@@ -43,7 +42,7 @@ import com.intellij.util.io.URLUtil
 import io.netty.handler.codec.http.QueryStringDecoder
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asDeferred
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Frame
 import java.awt.Window
@@ -53,15 +52,6 @@ import java.text.ParseException
 import java.util.concurrent.CancellationException
 import kotlin.Result
 
-@get:Internal
-val isIdeStartupWizardEnabled: Boolean
-  get() {
-    return (!ApplicationManagerEx.isInIntegrationTest() ||
-            System.getProperty("show.wizard.in.test", "false").toBoolean()) &&
-           !AppMode.isRemoteDevHost() &&
-           System.getProperty("intellij.startup.wizard", "true").toBoolean()
-  }
-
 object CommandLineProcessor {
   private val LOG = logger<CommandLineProcessor>()
   private const val OPTION_WAIT = "--wait"
@@ -69,11 +59,11 @@ object CommandLineProcessor {
   @JvmField
   val OK_FUTURE: Deferred<CliResult> = CompletableDeferred(value = CliResult.OK)
 
-  @Internal
+  @ApiStatus.Internal
   const val SCHEME_INTERNAL: String = "!!!internal!!!"
 
   @VisibleForTesting
-  @Internal
+  @ApiStatus.Internal
   suspend fun doOpenFileOrProject(file: Path, shouldWait: Boolean): CommandLineProcessorResult {
     if (!LightEditUtil.isForceOpenInLightEditMode()) {
       val options = OpenProjectTask {
@@ -91,7 +81,7 @@ object CommandLineProcessor {
           )
         }
       }
-      catch (_: ProcessCanceledException) {
+      catch (e: ProcessCanceledException) {
         return createError(IdeBundle.message("dialog.message.open.cancelled"))
       }
     }
@@ -163,14 +153,14 @@ object CommandLineProcessor {
     return if (project != null && !LightEdit.owns(project)) project else projects.first()
   }
 
-  @Internal
+  @ApiStatus.Internal
   fun scheduleProcessProtocolCommand(rawUri: @NlsSafe String) {
     (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
       processProtocolCommand(rawUri)
     }
   }
 
-  @Internal
+  @ApiStatus.Internal
   suspend fun processProtocolCommand(rawUri: @NlsSafe String): CliResult {
     LOG.info("external URI request:\n$rawUri")
     check(!ApplicationManager.getApplication().isHeadlessEnvironment) { "cannot process URI requests in headless state" }
@@ -280,8 +270,7 @@ object CommandLineProcessor {
   }
 
   // find a frame to activate
-  @Internal
-  fun findVisibleFrame(): Window? {
+  internal fun findVisibleFrame(): Window? {
     // we assume that the most recently created frame is the most relevant one
     return Frame.getFrames().asList().asReversed().firstOrNull { it.isVisible }
   }
@@ -507,25 +496,4 @@ object CommandLineProcessor {
       }
     }
   }
-}
-
-private const val APP_STARTER_EP_NAME = "com.intellij.appStarter"
-
-/**
- * Returns name of the command for this [ApplicationStarter] specified in plugin.xml file.
- * It should be used instead of deprecated [ApplicationStarter.commandName].
- */
-@get:Internal
-val ApplicationStarter.commandNameFromExtension: String?
-  get() {
-    return ExtensionPointName<ApplicationStarter>(APP_STARTER_EP_NAME)
-      .filterableLazySequence()
-      .find { it.implementationClassName == javaClass.name }
-      ?.id
-  }
-
-@Suppress("DEPRECATION")
-@Internal
-fun findStarter(key: String): ApplicationStarter? {
-  return ExtensionPointName<ApplicationStarter>(APP_STARTER_EP_NAME).findByIdOrFromInstance(key) { it.commandName }
 }

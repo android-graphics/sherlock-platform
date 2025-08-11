@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.intention;
 
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.psi.PsiFile;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
 
 public abstract class LombokIntentionActionTest extends AbstractLombokLightCodeInsightTestCase {

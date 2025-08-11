@@ -15,7 +15,6 @@ import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.RunConfigurationNode;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -24,7 +23,6 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Internal
 public final class ExternalSystemRunConfigurationMenu extends DefaultActionGroup implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {

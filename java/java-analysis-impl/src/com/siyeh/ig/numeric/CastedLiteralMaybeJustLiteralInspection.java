@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -12,24 +12,29 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
-public abstract class CastedLiteralMaybeJustLiteralInspection extends BaseInspection {
+/**
+ * @author Bas Leijdekkers
+ */
+abstract class CastedLiteralMaybeJustLiteralInspection extends BaseInspection {
 
   @Override
-  protected final @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected final String buildErrorString(Object... infos) {
     final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)infos[0];
     final StringBuilder replacementText = buildReplacementText(typeCastExpression, new StringBuilder());
     return InspectionGadgetsBundle.message("int.literal.may.be.long.literal.problem.descriptor", replacementText);
   }
 
-  abstract @NotNull String getSuffix();
+  @NotNull
+  abstract String getSuffix();
 
-  abstract @NotNull PsiType getTypeBeforeCast();
+  @NotNull
+  abstract PsiType getTypeBeforeCast();
 
-  abstract @NotNull PsiPrimitiveType getCastType();
+  @NotNull
+  abstract PsiPrimitiveType getCastType();
 
   private StringBuilder buildReplacementText(PsiExpression expression, StringBuilder out) {
     if (expression instanceof PsiLiteralExpression) {
@@ -69,12 +74,14 @@ public abstract class CastedLiteralMaybeJustLiteralInspection extends BaseInspec
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", replacementString);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle
         .message("replace.casted.literal.with.just.literal.fix.family.name", getCastType().getPresentableText());
     }

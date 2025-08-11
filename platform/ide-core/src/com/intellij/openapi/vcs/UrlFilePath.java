@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,7 +22,8 @@ public class UrlFilePath extends LocalFilePath {
   }
 
   @Override
-  protected @NotNull @NonNls String getPath(@NotNull VirtualFile cachedFile) {
+  @NotNull
+  protected @NonNls String getPath(@NotNull VirtualFile cachedFile) {
     return cachedFile.getUrl();
   }
 }

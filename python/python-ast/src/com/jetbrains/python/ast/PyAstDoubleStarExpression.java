@@ -21,7 +21,8 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 public interface PyAstDoubleStarExpression extends PyAstExpression {
-  default @Nullable PyAstExpression getExpression() {
+  @Nullable
+  default PyAstExpression getExpression() {
     return PsiTreeUtil.getChildOfType(this, PyAstExpression.class);
   }
 

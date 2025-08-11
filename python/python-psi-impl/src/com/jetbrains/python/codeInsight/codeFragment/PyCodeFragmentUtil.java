@@ -4,14 +4,15 @@ package com.jetbrains.python.codeInsight.codeFragment;
 import com.intellij.codeInsight.codeFragment.CannotCreateCodeFragmentException;
 import com.intellij.codeInsight.codeFragment.CodeFragmentUtil;
 import com.intellij.codeInsight.codeFragment.Position;
-import com.intellij.codeInsight.controlflow.ConditionalInstruction;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -20,6 +21,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyForStatementNavigator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,9 +32,10 @@ public final class PyCodeFragmentUtil {
   private PyCodeFragmentUtil() {
   }
 
-  public static @NotNull PyCodeFragment createCodeFragment(final @NotNull ScopeOwner owner,
-                                                           final @NotNull PsiElement startInScope,
-                                                           final @NotNull PsiElement endInScope) throws CannotCreateCodeFragmentException {
+  @NotNull
+  public static PyCodeFragment createCodeFragment(@NotNull final ScopeOwner owner,
+                                                  @NotNull final PsiElement startInScope,
+                                                  @NotNull final PsiElement endInScope) throws CannotCreateCodeFragmentException {
     final int start = startInScope.getTextOffset();
     final int end = endInScope.getTextOffset() + endInScope.getTextLength();
     final ControlFlow flow = ControlFlowCache.getControlFlow(owner);
@@ -112,7 +115,8 @@ public final class PyCodeFragmentUtil {
     return false;
   }
 
-  private static @Nullable String getName(@NotNull PsiElement element) {
+  @Nullable
+  private static String getName(@NotNull PsiElement element) {
     if (element instanceof PsiNamedElement) {
       return ((PsiNamedElement)element).getName();
     }
@@ -125,16 +129,11 @@ public final class PyCodeFragmentUtil {
     return null;
   }
 
-  private static @NotNull List<Instruction> getFragmentSubGraph(@NotNull List<Instruction> graph, int start, int end) {
+  @NotNull
+  private static List<Instruction> getFragmentSubGraph(@NotNull List<Instruction> graph, int start, int end) {
     List<Instruction> instructions = new ArrayList<>();
     for (Instruction instruction : graph) {
-      final PsiElement element;
-      if (instruction instanceof ConditionalInstruction conditionalInstruction) {
-        element = conditionalInstruction.getCondition();
-      }
-      else {
-        element = instruction.getElement();
-      }
+      final PsiElement element = instruction.getElement();
       if (element != null) {
         if (CodeFragmentUtil.getPosition(element, start, end) == Position.INSIDE) {
           instructions.add(instruction);
@@ -177,7 +176,8 @@ public final class PyCodeFragmentUtil {
     }
   }
 
-  private static @NotNull AnalysisResult analyseSubGraph(@NotNull List<Instruction> subGraph, int start, int end) {
+  @NotNull
+  private static AnalysisResult analyseSubGraph(@NotNull List<Instruction> subGraph, int start, int end) {
     int returnSources = 0;
     int regularSources = 0;
     int starImports = 0;
@@ -222,7 +222,8 @@ public final class PyCodeFragmentUtil {
     return new AnalysisResult(starImports, returnSources, regularSources, outerLoopBreaks, yieldExpressions);
   }
 
-  private static @NotNull Set<Pair<Instruction, Instruction>> getOutgoingEdges(@NotNull Collection<Instruction> subGraph) {
+  @NotNull
+  private static Set<Pair<Instruction, Instruction>> getOutgoingEdges(@NotNull Collection<Instruction> subGraph) {
     final Set<Pair<Instruction, Instruction>> outgoing = new HashSet<>();
     for (Instruction instruction : subGraph) {
       for (Instruction next : instruction.allSucc()) {
@@ -234,7 +235,8 @@ public final class PyCodeFragmentUtil {
     return outgoing;
   }
 
-  public static @NotNull List<PsiElement> getInputElements(@NotNull List<Instruction> subGraph, @NotNull List<Instruction> graph) {
+  @NotNull
+  public static List<PsiElement> getInputElements(@NotNull List<Instruction> subGraph, @NotNull List<Instruction> graph) {
     final List<PsiElement> result = new ArrayList<>();
     final Set<PsiElement> subGraphElements = getSubGraphElements(subGraph);
     for (Instruction instruction : getReadInstructions(subGraph)) {
@@ -268,7 +270,8 @@ public final class PyCodeFragmentUtil {
     return result;
   }
 
-  private static @NotNull List<PsiElement> getOutputElements(@NotNull List<Instruction> subGraph, @NotNull List<Instruction> graph) {
+  @NotNull
+  private static List<PsiElement> getOutputElements(@NotNull List<Instruction> subGraph, @NotNull List<Instruction> graph) {
     final List<PsiElement> result = new ArrayList<>();
     final List<Instruction> outerGraph = new ArrayList<>();
     for (Instruction instruction : graph) {
@@ -293,7 +296,8 @@ public final class PyCodeFragmentUtil {
     return result;
   }
 
-  private static @NotNull List<PsiElement> filterElementsInScope(@NotNull Collection<PsiElement> elements, @NotNull ScopeOwner owner) {
+  @NotNull
+  private static List<PsiElement> filterElementsInScope(@NotNull Collection<PsiElement> elements, @NotNull ScopeOwner owner) {
     final List<PsiElement> result = new ArrayList<>();
     for (PsiElement element : elements) {
       final PsiReference reference = element.getReference();
@@ -307,7 +311,8 @@ public final class PyCodeFragmentUtil {
     return result;
   }
 
-  private static @NotNull Set<PsiElement> getSubGraphElements(@NotNull List<Instruction> subGraph) {
+  @NotNull
+  private static Set<PsiElement> getSubGraphElements(@NotNull List<Instruction> subGraph) {
     final Set<PsiElement> result = new HashSet<>();
     for (Instruction instruction : subGraph) {
       final PsiElement element = instruction.getElement();
@@ -318,7 +323,8 @@ public final class PyCodeFragmentUtil {
     return result;
   }
 
-  private static @NotNull Set<String> getGlobalWrites(@NotNull List<Instruction> instructions, @NotNull ScopeOwner owner) {
+  @NotNull
+  private static Set<String> getGlobalWrites(@NotNull List<Instruction> instructions, @NotNull ScopeOwner owner) {
     final Scope scope = ControlFlowCache.getScope(owner);
     final Set<String> globalWrites = new LinkedHashSet<>();
     for (Instruction instruction : getWriteInstructions(instructions)) {
@@ -340,7 +346,8 @@ public final class PyCodeFragmentUtil {
                                 usageInfo -> !subGraphElements.contains(usageInfo.getElement()));
   }
 
-  private static @NotNull Set<String> getNonlocalWrites(@NotNull List<Instruction> instructions, @NotNull ScopeOwner owner) {
+  @NotNull
+  private static Set<String> getNonlocalWrites(@NotNull List<Instruction> instructions, @NotNull ScopeOwner owner) {
     final Scope scope = ControlFlowCache.getScope(owner);
     final Set<String> nonlocalWrites = new LinkedHashSet<>();
     for (Instruction instruction : getWriteInstructions(instructions)) {
@@ -354,7 +361,8 @@ public final class PyCodeFragmentUtil {
     return nonlocalWrites;
   }
 
-  private static @NotNull List<PsiElement> multiResolve(@NotNull PsiReference reference) {
+  @NotNull
+  private static List<PsiElement> multiResolve(@NotNull PsiReference reference) {
     if (reference instanceof PsiPolyVariantReference) {
       final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
       final List<PsiElement> resolved = new ArrayList<>();
@@ -378,7 +386,8 @@ public final class PyCodeFragmentUtil {
     return Collections.emptyList();
   }
 
-  private static @NotNull List<Instruction> getReadInstructions(@NotNull List<Instruction> subGraph) {
+  @NotNull
+  private static List<Instruction> getReadInstructions(@NotNull List<Instruction> subGraph) {
     final List<Instruction> result = new ArrayList<>();
     for (Instruction instruction : subGraph) {
       if (instruction instanceof ReadWriteInstruction readWriteInstruction) {
@@ -390,7 +399,8 @@ public final class PyCodeFragmentUtil {
     return result;
   }
 
-  private static @NotNull List<Instruction> getWriteInstructions(@NotNull List<Instruction> subGraph) {
+  @NotNull
+  private static List<Instruction> getWriteInstructions(@NotNull List<Instruction> subGraph) {
     final List<Instruction> result = new ArrayList<>();
     for (Instruction instruction : subGraph) {
       if (instruction instanceof ReadWriteInstruction readWriteInstruction) {

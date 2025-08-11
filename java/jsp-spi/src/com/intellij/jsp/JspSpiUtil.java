@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jsp;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,9 +33,10 @@ import java.util.List;
 
 public abstract class JspSpiUtil {
   private static final Logger LOG = Logger.getInstance(JspSpiUtil.class);
-  private static final @NonNls String JAR_EXTENSION = "jar";
+  @NonNls private static final String JAR_EXTENSION = "jar";
 
-  private static @Nullable JspSpiUtil getJspSpiUtil() {
+  @Nullable
+  private static JspSpiUtil getJspSpiUtil() {
     return ApplicationManager.getApplication().getService(JspSpiUtil.class);
   }
 
@@ -55,12 +56,14 @@ public abstract class JspSpiUtil {
 
   protected abstract void _visitAllIncludedFilesRecursively(BaseJspFile jspFile, Processor<? super BaseJspFile> visitor);
 
-  public static @Nullable PsiElement resolveMethodPropertyReference(@NotNull PsiReference reference, @Nullable PsiClass resolvedClass, boolean readable) {
+  @Nullable
+  public static PsiElement resolveMethodPropertyReference(@NotNull PsiReference reference, @Nullable PsiClass resolvedClass, boolean readable) {
     final JspSpiUtil util = getJspSpiUtil();
     return util == null ? null : util._resolveMethodPropertyReference(reference, resolvedClass, readable);
   }
 
-  protected abstract @Nullable PsiElement _resolveMethodPropertyReference(@NotNull PsiReference reference, @Nullable PsiClass resolvedClass, boolean readable);
+  @Nullable
+  protected abstract PsiElement _resolveMethodPropertyReference(@NotNull PsiReference reference, @Nullable PsiClass resolvedClass, boolean readable);
 
   public static Object @NotNull [] getMethodPropertyReferenceVariants(@NotNull PsiReference reference, @Nullable PsiClass resolvedClass, boolean readable) {
     final JspSpiUtil util = getJspSpiUtil();
@@ -78,14 +81,14 @@ public abstract class JspSpiUtil {
     return util != null && util._isIncluded(jspFile);
   }
 
-  public abstract boolean _isIncluded(final @NotNull JspFile jspFile);
+  public abstract boolean _isIncluded(@NotNull final JspFile jspFile);
 
   public static boolean isIncludingAnything(@NotNull JspFile jspFile) {
     final JspSpiUtil util = getJspSpiUtil();
     return util != null && util._isIncludingAnything(jspFile);
   }
 
-  protected abstract boolean _isIncludingAnything(final @NotNull JspFile jspFile);
+  protected abstract boolean _isIncludingAnything(@NotNull final JspFile jspFile);
 
   public static PsiFile[] getIncludedFiles(@NotNull JspFile jspFile) {
     final JspSpiUtil util = getJspSpiUtil();
@@ -99,7 +102,7 @@ public abstract class JspSpiUtil {
 
   protected abstract PsiFile[] _getIncludingFiles(@NotNull PsiFile file);
 
-  protected abstract PsiFile @NotNull [] _getIncludedFiles(final @NotNull JspFile jspFile);
+  protected abstract PsiFile @NotNull [] _getIncludedFiles(@NotNull final JspFile jspFile);
 
   public static boolean isJavaContext(PsiElement position) {
     if(PsiTreeUtil.getContextOfType(position, JspClass.class, false) != null) return true;
@@ -117,11 +120,11 @@ public abstract class JspSpiUtil {
     return false;
   }
 
-  public static List<URL> buildUrls(final @Nullable VirtualFile virtualFile, final @Nullable Module module) {
+  public static List<URL> buildUrls(@Nullable final VirtualFile virtualFile, @Nullable final Module module) {
     return buildUrls(virtualFile, module, true);
   }
 
-  public static List<URL> buildUrls(final @Nullable VirtualFile virtualFile, final @Nullable Module module, boolean includeModuleOutput) {
+  public static List<URL> buildUrls(@Nullable final VirtualFile virtualFile, @Nullable final Module module, boolean includeModuleOutput) {
     final List<URL> urls = new ArrayList<>();
     processClassPathItems(virtualFile, module, file -> addUrl(urls, file), includeModuleOutput);
     return urls;
@@ -177,7 +180,8 @@ public abstract class JspSpiUtil {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static @Nullable URL getUrl(VirtualFile file) {
+  @Nullable
+  private static URL getUrl(VirtualFile file) {
     if (file.getFileSystem() instanceof JarFileSystem && file.getParent() != null) return null;
 
     String path = file.getPath();

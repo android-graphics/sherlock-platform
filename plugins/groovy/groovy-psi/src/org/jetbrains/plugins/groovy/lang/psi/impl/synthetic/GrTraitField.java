@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,14 +35,16 @@ public class GrTraitField extends GrLightField implements PsiMirrorElement {
     myField = field;
   }
 
-  private static @NotNull String getNewNameForField(@NotNull PsiField field) {
+  @NotNull
+  private static String getNewNameForField(@NotNull PsiField field) {
     PsiClass containingClass = field.getContainingClass();
     LOG.assertTrue(containingClass != null);
     return GrTraitUtil.getTraitFieldPrefix(containingClass) + field.getName();
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiField getPrototype() {
+  public PsiField getPrototype() {
     return myField;
   }
 }

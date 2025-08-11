@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi;
 
 import com.jetbrains.python.ast.PyAstAssignmentExpression;
@@ -15,7 +15,8 @@ public interface PyAssignmentExpression extends PyAstAssignmentExpression, PyExp
    * @return LHS of an expression (before :=), null if underlying target is not an identifier.
    */
   @Override
-  default @Nullable PyTargetExpression getTarget() {
+  @Nullable
+  default PyTargetExpression getTarget() {
     return (PyTargetExpression)PyAstAssignmentExpression.super.getTarget();
   }
 
@@ -23,7 +24,8 @@ public interface PyAssignmentExpression extends PyAstAssignmentExpression, PyExp
    * @return RHS of an expression (after :=), null if assigned value is omitted or not an expression.
    */
   @Override
-  default @Nullable PyExpression getAssignedValue() {
+  @Nullable
+  default PyExpression getAssignedValue() {
     return (PyExpression)PyAstAssignmentExpression.super.getAssignedValue();
   }
 }

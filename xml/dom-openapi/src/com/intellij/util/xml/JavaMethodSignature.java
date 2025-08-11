@@ -82,7 +82,6 @@ public final class JavaMethodSignature {
     return null;
   }
 
-  @Override
   public String toString() {
     return myMethodName + Arrays.asList(myMethodParameters);
   }

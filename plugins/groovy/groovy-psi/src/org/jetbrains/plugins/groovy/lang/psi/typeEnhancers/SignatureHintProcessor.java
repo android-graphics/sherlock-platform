@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -31,11 +31,13 @@ public abstract class SignatureHintProcessor {
 
   public abstract String getHintName();
 
-  public abstract @NotNull List<PsiType[]> inferExpectedSignatures(@NotNull PsiMethod method,
-                                                                   @NotNull PsiSubstitutor substitutor,
-                                                                   String @NotNull [] options);
+  @NotNull
+  public abstract List<PsiType[]> inferExpectedSignatures(@NotNull PsiMethod method,
+                                                          @NotNull PsiSubstitutor substitutor,
+                                                          String @NotNull [] options);
 
-  public static @Nullable SignatureHintProcessor getHintProcessor(@NotNull String hint) {
+  @Nullable
+  public static SignatureHintProcessor getHintProcessor(@NotNull String hint) {
     for (SignatureHintProcessor processor : EP_NAME.getExtensions()) {
       if (hint.equals(processor.getHintName())) {
         return processor;

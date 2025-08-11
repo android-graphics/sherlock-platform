@@ -2,12 +2,10 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Emulates Emacs 'backward-paragraph' action
  */
-@ApiStatus.Internal
 public final class BackwardParagraphWithSelectionAction extends EditorAction {
   public BackwardParagraphWithSelectionAction() {
     super(new BackwardParagraphAction.Handler(true));

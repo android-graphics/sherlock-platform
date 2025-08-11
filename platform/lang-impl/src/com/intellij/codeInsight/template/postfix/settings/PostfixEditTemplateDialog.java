@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -11,7 +11,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +19,6 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-@ApiStatus.Internal
 public final class PostfixEditTemplateDialog extends DialogWrapper {
   private final JBTextField myTemplateNameTextField;
   private final PostfixTemplateEditor myEditor;
@@ -39,13 +37,15 @@ public final class PostfixEditTemplateDialog extends DialogWrapper {
     init();
   }
 
+  @Nullable
   @Override
-  public @Nullable JComponent getPreferredFocusedComponent() {
+  public JComponent getPreferredFocusedComponent() {
     return myTemplateNameTextField;
   }
 
+  @NotNull
   @Override
-  protected @NotNull List<ValidationInfo> doValidateAll() {
+  protected List<ValidationInfo> doValidateAll() {
     String templateName = myTemplateNameTextField.getText();
     if (!StringUtil.isJavaIdentifier(templateName)) {
       return Collections.singletonList(new ValidationInfo(CodeInsightBundle.message("message.template.key.must.be.an.identifier"), myTemplateNameTextField));
@@ -53,7 +53,8 @@ public final class PostfixEditTemplateDialog extends DialogWrapper {
     return super.doValidateAll();
   }
 
-  public @NotNull String getTemplateName() {
+  @NotNull
+  public String getTemplateName() {
     return myTemplateNameTextField.getText();
   }
 
@@ -65,8 +66,9 @@ public final class PostfixEditTemplateDialog extends DialogWrapper {
       .getPanel();
   }
 
+  @Nullable
   @Override
-  protected @Nullable String getHelpId() {
+  protected String getHelpId() {
     return myEditor.getHelpId();
   }
 }

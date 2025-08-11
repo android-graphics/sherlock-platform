@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataContextWrapper;
 import com.intellij.openapi.editor.Caret;

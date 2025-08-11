@@ -11,7 +11,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
@@ -52,8 +51,9 @@ public final class OutsidersPsiFileSupport {
 
   @ApiStatus.Internal
   public static class HighlightingSettingProvider extends DefaultHighlightingSettingProvider {
+    @Nullable
     @Override
-    public @Nullable FileHighlightingSetting getDefaultSetting(@NotNull Project project, @NotNull VirtualFile file) {
+    public FileHighlightingSetting getDefaultSetting(@NotNull Project project, @NotNull VirtualFile file) {
       if (!isOutsiderFile(file)) return null;
       return FileHighlightingSetting.SKIP_INSPECTION;
     }
@@ -62,10 +62,6 @@ public final class OutsidersPsiFileSupport {
 
   public static void markFile(@NotNull VirtualFile file) {
     markFileWithUrl(file, null);
-  }
-
-  public static void markFile(@NotNull VirtualFile file, @Nullable FilePath originalPath) {
-    markFile(file, originalPath != null ? originalPath.getPath() : null);
   }
 
   public static void markFile(@NotNull VirtualFile file, @Nullable String originalPath) {
@@ -94,11 +90,13 @@ public final class OutsidersPsiFileSupport {
    * @return The VFS URL of the outsider file's original file as defined by {@link VirtualFile#getUrl}, or `null` if the outsider doesn't
    *         have an original file.
    */
-  public static @Nullable String getOriginalFileUrl(@NotNull VirtualFile file) {
+  @Nullable
+  public static String getOriginalFileUrl(@NotNull VirtualFile file) {
     return file.getUserData(VFS_URL_KEY);
   }
 
-  public static @Nullable String getOriginalFilePath(@NotNull VirtualFile file) {
+  @Nullable
+  public static String getOriginalFilePath(@NotNull VirtualFile file) {
     var vfsUrl = getOriginalFileUrl(file);
     return vfsUrl != null ? VirtualFileManager.extractPath(vfsUrl) : null;
   }

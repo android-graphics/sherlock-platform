@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.text.DateTimeFormatManager;
-import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,7 +16,6 @@ import java.util.concurrent.TimeUnit;
 import static java.awt.RenderingHints.KEY_ANTIALIASING;
 import static java.util.Calendar.*;
 
-@ApiStatus.Internal
 public final class ClockPanel extends JComponent {
   //                                    Digit segments
   //                                        9876543210

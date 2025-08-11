@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.IStubElementType;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyTypeParameter;
@@ -31,7 +32,8 @@ public class PyTypeParameterListImpl extends PyBaseElementImpl<PyTypeParameterLi
 
 
   @Override
-  public @NotNull List<PyTypeParameter> getTypeParameters() {
+  @NotNull
+  public List<PyTypeParameter> getTypeParameters() {
     return List.of(getStubOrPsiChildren(PyStubElementTypes.TYPE_PARAMETER, new PyTypeParameter[0]));
   }
 }

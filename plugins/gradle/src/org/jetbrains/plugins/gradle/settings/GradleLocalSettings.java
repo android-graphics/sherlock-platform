@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.components.*;
@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -25,15 +24,18 @@ public final class GradleLocalSettings extends AbstractExternalSystemLocalSettin
     super(GradleConstants.SYSTEM_ID, project, new MyState());
   }
 
-  public static @NotNull GradleLocalSettings getInstance(@NotNull Project project) {
+  @NotNull
+  public static GradleLocalSettings getInstance(@NotNull Project project) {
     return project.getService(GradleLocalSettings.class);
   }
 
-  public @Nullable String getGradleHome(String linkedProjectPath) {
+  @Nullable
+  public String getGradleHome(String linkedProjectPath) {
     return ContainerUtil.notNullize(state.myGradleHomes).get(linkedProjectPath);
   }
 
-  public @Nullable String getGradleVersion(String linkedProjectPath) {
+  @Nullable
+  public String getGradleVersion(String linkedProjectPath) {
     return ContainerUtil.notNullize(state.myGradleVersions).get(linkedProjectPath);
   }
 
@@ -45,11 +47,12 @@ public final class GradleLocalSettings extends AbstractExternalSystemLocalSettin
     if (state.myGradleVersions == null) {
       state.myGradleVersions = new HashMap<>();
     }
-    state.myGradleVersions.put(linkedProjectPath, GradleInstallationManager.getGradleVersion(Path.of(gradleHome)));
+    state.myGradleVersions.put(linkedProjectPath, GradleInstallationManager.getGradleVersion(gradleHome));
   }
 
   @ApiStatus.Internal
-  public @Nullable String getGradleUserHome() {
+  @Nullable
+  public String getGradleUserHome() {
     return state.myGradleUserHome;
   }
 

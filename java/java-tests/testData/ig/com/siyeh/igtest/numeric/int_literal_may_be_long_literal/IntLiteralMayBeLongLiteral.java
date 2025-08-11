@@ -9,7 +9,7 @@ public class IntLiteralMayBeLongLiteral {
     }
 
     void error() {
-        int answer = <error descr="Incompatible types. Found: 'long', required: 'int'">(long)42;</error>
+        <error descr="Incompatible types. Found: 'long', required: 'int'">int answer = (long)42;</error>
     }
 
     Long boxed() {

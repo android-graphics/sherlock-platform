@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.chains.DiffRequestChain;
@@ -41,7 +41,6 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.vcs.commit.PartialCommitChangeNodeDecorator;
 import com.intellij.vcs.commit.PartialCommitInclusionModel;
 import com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,23 +61,23 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FI
 import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
 
 class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser implements Disposable {
-  private final @NotNull MergingUpdateQueue myUpdateQueue =
+  @NotNull private final MergingUpdateQueue myUpdateQueue =
     new MergingUpdateQueue("MultipleLocalChangeListsBrowser", 300, true, ANY_COMPONENT, this);
 
   private final Collection<AbstractVcs> myAffectedVcses;
   private final boolean myEnableUnversioned;
   private final boolean myEnablePartialCommit;
-  private @Nullable Supplier<? extends JComponent> myBottomDiffComponent;
+  @Nullable private Supplier<? extends JComponent> myBottomDiffComponent;
 
-  private final @NotNull ChangeListChooser myChangeListChooser;
-  private final @NotNull DeleteProvider myDeleteProvider = new VirtualFileDeleteProvider();
+  @NotNull private final ChangeListChooser myChangeListChooser;
+  @NotNull private final DeleteProvider myDeleteProvider = new VirtualFileDeleteProvider();
 
-  private final @NotNull PartialCommitInclusionModel myInclusionModel;
-  private @NotNull LocalChangeList myChangeList;
+  @NotNull private final PartialCommitInclusionModel myInclusionModel;
+  @NotNull private LocalChangeList myChangeList;
   private List<Change> myChanges = Collections.emptyList();
   private List<FilePath> myUnversioned = Collections.emptyList();
 
-  private @Nullable SingleChangeListCommitWorkflowUi.ChangeListListener mySelectedListChangeListener;
+  @Nullable private SingleChangeListCommitWorkflowUi.ChangeListListener mySelectedListChangeListener;
 
   MultipleLocalChangeListsBrowser(@NotNull Project project,
                                   @NotNull Collection<AbstractVcs> affectedVcses,
@@ -123,14 +122,16 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       });
   }
 
+  @Nullable
   @Override
-  protected @Nullable JComponent createHeaderPanel() {
+  protected JComponent createHeaderPanel() {
     return JBUI.Panels.simplePanel(myChangeListChooser)
       .withBorder(JBUI.Borders.emptyLeft(6));
   }
 
+  @NotNull
   @Override
-  protected @NotNull List<AnAction> createToolbarActions() {
+  protected List<AnAction> createToolbarActions() {
     AnAction rollbackGroup = createRollbackGroup(true);
     return ContainerUtil.append(
       super.createToolbarActions(),
@@ -163,8 +164,9 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     return result;
   }
 
+  @NotNull
   @Override
-  protected @NotNull List<AnAction> createPopupMenuActions() {
+  protected List<AnAction> createPopupMenuActions() {
     List<AnAction> result = new ArrayList<>(super.createPopupMenuActions());
 
     result.add(ActionManager.getInstance().getAction("ChangesView.Refresh"));
@@ -189,8 +191,9 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     return result;
   }
 
+  @NotNull
   @Override
-  protected @NotNull List<AnAction> createDiffActions() {
+  protected List<AnAction> createDiffActions() {
     return ContainerUtil.append(
       super.createDiffActions(),
       new ToggleChangeDiffAction()
@@ -216,8 +219,9 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     mySelectedListChangeListener = runnable;
   }
 
+  @NotNull
   @Override
-  public @NotNull LocalChangeList getSelectedChangeList() {
+  public LocalChangeList getSelectedChangeList() {
     return myChangeList;
   }
 
@@ -242,7 +246,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @Override
   public void updateDisplayedChangeLists() {
     List<LocalChangeList> changeLists = ChangeListManager.getInstance(myProject).getChangeLists();
-    myChangeListChooser.setAvailableLists(new ArrayList<>(changeLists));
+    myChangeListChooser.setAvailableLists(changeLists);
   }
 
   public void updateDisplayedChanges() {
@@ -253,8 +257,9 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     myViewer.rebuildTree();
   }
 
+  @NotNull
   @Override
-  protected @NotNull DefaultTreeModel buildTreeModel() {
+  protected DefaultTreeModel buildTreeModel() {
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307313, EA-736680")) {
       PartialCommitChangeNodeDecorator decorator =
         new PartialCommitChangeNodeDecorator(myProject, RemoteRevisionsCache.getInstance(myProject).getChangesNodeDecorator());
@@ -269,8 +274,9 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     }
   }
 
+  @Nullable
   @Override
-  protected @Nullable ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object entry) {
+  protected ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object entry) {
     if (entry instanceof FilePath) {
       return UnversionedDiffRequestProducer.create(myProject, (FilePath)entry);
     }
@@ -289,23 +295,27 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
              VcsTreeModelData.mapToExactVirtualFile(VcsTreeModelData.exactlySelected(myViewer)));
   }
 
+  @NotNull
   @Override
-  public @NotNull List<Change> getDisplayedChanges() {
+  public List<Change> getDisplayedChanges() {
     return VcsTreeModelData.all(myViewer).userObjects(Change.class);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<Change> getSelectedChanges() {
+  public List<Change> getSelectedChanges() {
     return VcsTreeModelData.selected(myViewer).userObjects(Change.class);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<Change> getIncludedChanges() {
+  public List<Change> getIncludedChanges() {
     return VcsTreeModelData.included(myViewer).userObjects(Change.class);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<FilePath> getDisplayedUnversionedFiles() {
+  public List<FilePath> getDisplayedUnversionedFiles() {
     if (!myEnableUnversioned) return Collections.emptyList();
 
     VcsTreeModelData treeModelData = VcsTreeModelData.allUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
@@ -316,8 +326,9 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     return treeModelData.userObjects(FilePath.class);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<FilePath> getSelectedUnversionedFiles() {
+  public List<FilePath> getSelectedUnversionedFiles() {
     if (!myEnableUnversioned) return Collections.emptyList();
 
     VcsTreeModelData treeModelData = VcsTreeModelData.selectedUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
@@ -328,8 +339,9 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     return treeModelData.userObjects(FilePath.class);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<FilePath> getIncludedUnversionedFiles() {
+  public List<FilePath> getIncludedUnversionedFiles() {
     if (!myEnableUnversioned) return Collections.emptyList();
 
     VcsTreeModelData treeModelData = VcsTreeModelData.includedUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
@@ -350,8 +362,8 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   }
 
   private class ChangeListChooser extends JPanel {
-    private static final int MAX_NAME_LEN = 35;
-    private final @NotNull ComboBox<LocalChangeList> myChooser = new ComboBox<>();
+    private final static int MAX_NAME_LEN = 35;
+    @NotNull private final ComboBox<LocalChangeList> myChooser = new ComboBox<>();
 
     ChangeListChooser() {
       myChooser.setEditable(false);
@@ -385,7 +397,6 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       add(myChooser, BorderLayout.CENTER);
     }
 
-    @Contract(mutates = "this,param1")
     public void setAvailableLists(@NotNull List<LocalChangeList> lists) {
       LocalChangeList currentList = ContainerUtil.find(lists, getSelectedChangeList());
       if (currentList == null) currentList = lists.get(0);
@@ -420,8 +431,9 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       return ActionUpdateThread.EDT;
     }
 
+    @NotNull
     @Override
-    public @NotNull State isSelected(AnActionEvent e) {
+    public State isSelected(AnActionEvent e) {
       Object object = getUserObject(e);
       if (object == null) return State.NOT_SELECTED;
       return myInclusionModel.getInclusionState(object);
@@ -440,7 +452,8 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       }
     }
 
-    private static @Nullable Object getUserObject(@NotNull AnActionEvent e) {
+    @Nullable
+    private static Object getUserObject(@NotNull AnActionEvent e) {
       Object object = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (object == null) object = e.getData(VcsDataKeys.CURRENT_UNVERSIONED);
       return object;

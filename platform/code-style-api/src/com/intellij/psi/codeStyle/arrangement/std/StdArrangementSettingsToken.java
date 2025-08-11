@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.CodeStyleBundle;
@@ -11,21 +11,23 @@ import org.jetbrains.annotations.PropertyKey;
  */
 public class StdArrangementSettingsToken extends ArrangementSettingsToken {
 
-  private final @NotNull StdArrangementTokenType myTokenType;
+  @NotNull private final StdArrangementTokenType myTokenType;
 
-  public static @NotNull StdArrangementSettingsToken token(@NotNull String id,
-                                                           @Nls @NotNull String name,
-                                                           @NotNull StdArrangementTokenType tokenType) {
+  @NotNull
+  public static StdArrangementSettingsToken token(@NotNull String id,
+                                                  @Nls @NotNull String name,
+                                                  @NotNull StdArrangementTokenType tokenType) {
     return new StdArrangementSettingsToken(id, name, tokenType);
   }
 
-  public static @NotNull StdArrangementSettingsToken tokenByBundle(@NotNull String id,
-                                                                   @NotNull @PropertyKey(resourceBundle = CodeStyleBundle.BUNDLE) String key,
-                                                                   @NotNull StdArrangementTokenType tokenType) {
+  @NotNull
+  public static StdArrangementSettingsToken tokenByBundle(@NotNull String id,
+                                                          @NotNull @PropertyKey(resourceBundle = CodeStyleBundle.BUNDLE) String key,
+                                                          @NotNull StdArrangementTokenType tokenType) {
     return new StdArrangementSettingsToken(id, CodeStyleBundle.message(key), tokenType);
   }
 
-  public @NotNull StdArrangementTokenType getTokenType() {
+  @NotNull public StdArrangementTokenType getTokenType() {
     return myTokenType;
   }
 

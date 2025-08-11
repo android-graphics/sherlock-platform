@@ -1,8 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
-import com.intellij.diff.requests.DiffRequest;
-import com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Key;
@@ -33,12 +31,16 @@ import static com.intellij.diff.util.DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_T
 import static com.intellij.vcsUtil.VcsUtil.getShortRevisionString;
 
 public final class VcsDiffUtil {
-  public static @Nls @NotNull String getRevisionTitle(@NotNull @NlsSafe String revision, boolean localMark) {
+  @Nls
+  @NotNull
+  public static String getRevisionTitle(@NotNull @NlsSafe String revision, boolean localMark) {
     return revision +
            (localMark ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
   }
 
-  public static @Nls @NotNull String getRevisionTitle(@NotNull @NlsSafe String revision, @Nullable FilePath file, @Nullable FilePath baseFile) {
+  @Nls
+  @NotNull
+  public static String getRevisionTitle(@NotNull @NlsSafe String revision, @Nullable FilePath file, @Nullable FilePath baseFile) {
     boolean needFileName = file != null && !ChangesUtil.equalsCaseSensitive(baseFile, file);
     if (!needFileName) return revision;
 
@@ -47,11 +49,6 @@ public final class VcsDiffUtil {
     return revision.isEmpty() ? fileName : String.format("%s (%s)", revision, fileName); //NON-NLS
   }
 
-  /**
-   * @deprecated - Consider using {@link DiffTitleWithDetailsCustomizers#getTitleCustomizers} and
-   * {@link com.intellij.diff.util.DiffUtil#addTitleCustomizers(DiffRequest, List)} instead
-   */
-  @Deprecated
   public static void putFilePathsIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
     ContentRevision afterRevision = change.getAfterRevision();
     ContentRevision beforeRevision = change.getBeforeRevision();
@@ -64,18 +61,26 @@ public final class VcsDiffUtil {
     context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(beforeRevision, bFile, aFile));
   }
 
-  public static @Nls @NotNull String getRevisionTitle(@Nullable ContentRevision revision,
-                                                      @Nullable FilePath file,
-                                                      @Nullable FilePath baseFile) {
+  @Nls
+  @NotNull
+  public static String getRevisionTitle(@Nullable ContentRevision revision,
+                                        @Nullable FilePath file,
+                                        @Nullable FilePath baseFile) {
     return getRevisionTitle(getShortHash(revision), file, baseFile);
   }
 
-  private static @NlsSafe @NotNull String getShortHash(@Nullable ContentRevision revision) {
+  @NlsSafe
+  @NotNull
+  private static String getShortHash(@Nullable ContentRevision revision) {
     if (revision == null) return "";
-    return getShortRevisionString(revision.getRevisionNumber());
+    VcsRevisionNumber revisionNumber = revision.getRevisionNumber();
+    if (revisionNumber instanceof ShortVcsRevisionNumber) return ((ShortVcsRevisionNumber)revisionNumber).toShortString();
+    return revisionNumber.asString();
   }
 
-  private static @NlsSafe @NotNull String getRelativeFileName(@Nullable FilePath baseFile, @NotNull FilePath file) {
+  @NlsSafe
+  @NotNull
+  private static String getRelativeFileName(@Nullable FilePath baseFile, @NotNull FilePath file) {
     if (baseFile == null || !baseFile.getName().equals(file.getName())) return file.getName();
     FilePath aParentPath = baseFile.getParentPath();
     if (aParentPath == null) return file.getName();
@@ -99,14 +104,15 @@ public final class VcsDiffUtil {
     dialogBuilder.showNotModal();
   }
 
-  public static @NotNull List<Change> createChangesWithCurrentContentForFile(@NotNull FilePath filePath,
-                                                                             @Nullable ContentRevision beforeContentRevision) {
+  @NotNull
+  public static List<Change> createChangesWithCurrentContentForFile(@NotNull FilePath filePath,
+                                                                    @Nullable ContentRevision beforeContentRevision) {
     return Collections.singletonList(new Change(beforeContentRevision, CurrentContentRevision.create(filePath)));
   }
 
-  public static void showChangesWithWorkingDirLater(final @NotNull Project project,
-                                                    final @NotNull VirtualFile file,
-                                                    final @NotNull VcsRevisionNumber targetRevNumber,
+  public static void showChangesWithWorkingDirLater(@NotNull final Project project,
+                                                    @NotNull final VirtualFile file,
+                                                    @NotNull final VcsRevisionNumber targetRevNumber,
                                                     @NotNull DiffProvider provider) {
     String revNumTitle1 = getRevisionTitle(getShortRevisionString(targetRevNumber), false);
     String revNumTitle2 = VcsBundle.message("diff.title.local");

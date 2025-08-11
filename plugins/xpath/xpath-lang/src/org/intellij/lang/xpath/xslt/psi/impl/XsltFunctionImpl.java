@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.psi.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
@@ -9,6 +8,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
+import icons.XpathIcons;
 import org.intellij.lang.xpath.context.functions.Function;
 import org.intellij.lang.xpath.context.functions.FunctionImpl;
 import org.intellij.lang.xpath.context.functions.Parameter;
@@ -57,7 +57,7 @@ public class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, I
 
   @Override
   public Icon getIcon(boolean open) {
-    return AllIcons.Nodes.Function;
+    return XpathIcons.Function;
   }
 
   @Override
@@ -86,7 +86,8 @@ public class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, I
   }
 
   @Override
-  public @Nullable @NlsSafe String getPresentableText() {
+  @Nullable
+  public @NlsSafe String getPresentableText() {
     final Function function = getFunction();
     return function.buildSignature() + ": " + function.getReturnType().getName();
   }
@@ -96,8 +97,9 @@ public class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, I
     return getFunction().getParameters();
   }
 
+  @NotNull
   @Override
-  public @NotNull XPathType getReturnType() {
+  public XPathType getReturnType() {
     return getFunction().getReturnType();
   }
 

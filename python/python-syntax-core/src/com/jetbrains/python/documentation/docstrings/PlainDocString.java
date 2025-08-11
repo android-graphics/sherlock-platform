@@ -57,8 +57,9 @@ public class PlainDocString extends DocStringLineParser implements StructuredDoc
     return mySummary;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
+  public String getDescription() {
     return myDescription;
   }
 
@@ -67,78 +68,93 @@ public class PlainDocString extends DocStringLineParser implements StructuredDoc
     return false;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<String> getParameters() {
+  public List<String> getParameters() {
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
-  public @NotNull List<Substring> getParameterSubstrings() {
+  public List<Substring> getParameterSubstrings() {
     return Collections.emptyList();
   }
 
+  @Nullable
   @Override
-  public @Nullable String getParamType(@Nullable String paramName) {
+  public String getParamType(@Nullable String paramName) {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable Substring getParamTypeSubstring(@Nullable String paramName) {
+  public Substring getParamTypeSubstring(@Nullable String paramName) {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getParamDescription(@Nullable String paramName) {
+  public String getParamDescription(@Nullable String paramName) {
     return null;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<String> getKeywordArguments() {
+  public List<String> getKeywordArguments() {
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
-  public @NotNull List<Substring> getKeywordArgumentSubstrings() {
+  public List<Substring> getKeywordArgumentSubstrings() {
     return Collections.emptyList();
   }
 
+  @Nullable
   @Override
-  public @Nullable String getKeywordArgumentDescription(@Nullable String paramName) {
+  public String getKeywordArgumentDescription(@Nullable String paramName) {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getReturnType() {
+  public String getReturnType() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable Substring getReturnTypeSubstring() {
+  public Substring getReturnTypeSubstring() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getReturnDescription() {
+  public String getReturnDescription() {
     return null;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<String> getRaisedExceptions() {
+  public List<String> getRaisedExceptions() {
     return Collections.emptyList();
   }
 
+  @Nullable
   @Override
-  public @Nullable String getRaisedExceptionDescription(@Nullable String exceptionName) {
+  public String getRaisedExceptionDescription(@Nullable String exceptionName) {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getAttributeDescription() {
+  public String getAttributeDescription() {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getAttributeDescription(@Nullable String name) {
+  public String getAttributeDescription(@Nullable String name) {
     return null;
   }
 

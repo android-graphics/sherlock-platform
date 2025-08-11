@@ -33,7 +33,6 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.PythonSdkUtil
 import java.nio.file.Paths
-import java.util.Locale
 
 
 /**
@@ -68,14 +67,10 @@ private class PyCollectImportsTask(
   override fun compute(indicator: ProgressIndicator): Set<String> {
     val imported = mutableSetOf<String>()
     ReadAction.run<Throwable> {
-      module.rootManager.fileIndex.iterateContent { virtualFile ->
+      module.rootManager.fileIndex.iterateContent {
         indicator.checkCanceled()
-        val fileName = FileTypeRegistry.getInstance().getFileTypeByFileName(virtualFile.name)
-
-        if (PythonFileType.INSTANCE == fileName || fileName.defaultExtension == "ipynb") {
-          val findFile = psiManager.findFile(virtualFile)
-          val pyFile = findFile?.viewProvider?.allFiles?.firstOrNull { it is PyFile } as? PyFile ?: return@iterateContent true
-          addImports(pyFile, imported)
+        if (PythonFileType.INSTANCE == FileTypeRegistry.getInstance().getFileTypeByFileName(it.name)) {
+          addImports(psiManager.findFile(it) as PyFile, imported)
         }
         return@iterateContent true
       }
@@ -89,7 +84,7 @@ internal fun syncWithImports(module: Module) {
   val sdk = PythonSdkUtil.findPythonSdk(module)
   if (sdk == null) {
     val configureSdkAction = NotificationAction.createSimpleExpiring(PySdkBundle.message("python.configure.interpreter.action")) {
-      PySdkPopupFactory.createAndShow(module)
+      PySdkPopupFactory.createAndShow(module.project, module)
     }
     showNotification(notificationGroup,
                      NotificationType.ERROR,
@@ -167,7 +162,7 @@ private fun prepareRequirementsText(module: Module, sdk: Sdk, settings: PyPackag
         if (alias.isNotEmpty()) yield(alias)
       }.mapNotNull { name -> installedPackages.find { StringUtil.equalsIgnoreCase(it.name, name) } }
     }
-    .map { it.name.lowercase(Locale.getDefault()) to it }
+    .map { it.name.toLowerCase() to it }
     .toMap(mutableMapOf())
 
   val analysisResult = when (val requirementsFile = PyPackageUtil.findRequirementsTxt(module)) {

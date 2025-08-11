@@ -1,10 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Dmitry Avdeev
@@ -15,8 +14,7 @@ import org.jetbrains.annotations.ApiStatus;
   additionalExportDirectory = FileTemplatesLoader.TEMPLATES_DIR,
   category = SettingsCategory.CODE
 )
-@ApiStatus.Internal
-public final class ExportableFileTemplateSettings extends FileTemplateSettings {
+final class ExportableFileTemplateSettings extends FileTemplateSettings {
   ExportableFileTemplateSettings() {
     super(null);
   }

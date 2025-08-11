@@ -3,7 +3,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.wm.IdeFocusManager;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -12,7 +11,6 @@ import java.awt.*;
 /**
  * @author ignatov
  */
-@ApiStatus.Internal
 public final class ZoomCurrentWindowAction extends MacWindowActionBase {
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {

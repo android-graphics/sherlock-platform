@@ -1,8 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.lang.jvm.DefaultJvmElementVisitor;
+import com.intellij.lang.jvm.JvmClass;
+import com.intellij.lang.jvm.JvmElementVisitor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,8 +21,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.quickfix.RegisterActionFix;
 import org.jetbrains.idea.devkit.inspections.quickfix.RegisterComponentFix;
@@ -32,8 +35,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-@ApiStatus.Internal
-public final class ComponentNotRegisteredInspection extends DevKitJvmInspection.ForClass {
+final class ComponentNotRegisteredInspection extends DevKitJvmInspection {
   private static final Logger LOG = Logger.getInstance(ComponentNotRegisteredInspection.class);
 
   public boolean CHECK_ACTIONS = true;
@@ -53,8 +55,23 @@ public final class ComponentNotRegisteredInspection extends DevKitJvmInspection.
     );
   }
 
+  @Nullable
   @Override
-  protected void checkClass(@NotNull Project project, @NotNull PsiClass checkedClass, @NotNull HighlightSink sink) {
+  protected JvmElementVisitor<Boolean> buildVisitor(@NotNull Project project, @NotNull HighlightSink sink, boolean isOnTheFly) {
+    return new DefaultJvmElementVisitor<>() {
+      @Override
+      public Boolean visitClass(@NotNull JvmClass clazz) {
+        PsiElement sourceElement = clazz.getSourceElement();
+        if (!(sourceElement instanceof PsiClass)) {
+          return null;
+        }
+        checkClass(project, (PsiClass)sourceElement, sink);
+        return false;
+      }
+    };
+  }
+
+  private void checkClass(@NotNull Project project, @NotNull PsiClass checkedClass, @NotNull HighlightSink sink) {
     if (checkedClass.getQualifiedName() == null ||
         checkedClass.getContainingFile().getVirtualFile() == null ||
         checkedClass.hasModifierProperty(PsiModifier.ABSTRACT) ||
@@ -102,8 +119,7 @@ public final class ComponentNotRegisteredInspection extends DevKitJvmInspection.
     }
 
     for (ComponentType componentType : ComponentType.values()) {
-      if (InheritanceUtil.isInheritor(checkedClass, componentType.myClassName) &&
-          checkComponentRegistration(checkedClass, sink, componentType)) {
+      if (InheritanceUtil.isInheritor(checkedClass, componentType.myClassName) && checkComponentRegistration(checkedClass, sink, componentType)) {
         return;
       }
     }
@@ -151,7 +167,7 @@ public final class ComponentNotRegisteredInspection extends DevKitJvmInspection.
     }
 
     final Query<PsiReference> search = ReferencesSearch.search(actionClass, actionClass.getUseScope());
-    for (PsiReference reference : search.asIterable()) {
+    for (PsiReference reference : search) {
       if (!(reference instanceof PsiJavaCodeReferenceElement)) continue;
 
       final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(reference.getElement(), PsiNewExpression.class);

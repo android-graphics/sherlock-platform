@@ -1,4 +1,5 @@
-from typing import Any, Literal
+from typing import Any
+from typing_extensions import Literal
 
 from .backends import AESKey as AESKey, ECKey as ECKey, HMACKey as HMACKey, RSAKey as RSAKey
 from .backends.base import DIRKey as DIRKey, Key

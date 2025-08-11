@@ -2,7 +2,6 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
@@ -21,16 +20,6 @@ public class MenuItemPresentationFactory extends PresentationFactory {
 
   public MenuItemPresentationFactory(boolean forceHideIcon) {
     this.forceHideIcon = forceHideIcon;
-  }
-
-  @Override
-  protected void processPresentation(@NotNull AnAction action, @NotNull Presentation presentation) {
-    if (forceHideIcon || !UISettings.getInstance().getShowIconsInMenus()) {
-      presentation.setIcon(null);
-      presentation.setDisabledIcon(null);
-      presentation.setHoveredIcon(null);
-      presentation.putClientProperty(HIDE_ICON, Boolean.TRUE);
-    }
   }
 
   @Override

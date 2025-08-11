@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
 import com.intellij.lang.ASTNode;
@@ -28,8 +28,9 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
     super(node);
   }
 
+  @NotNull
   @Override
-  public @NotNull GroovyMethodCallReference getReference() {
+  public GroovyMethodCallReference getReference() {
     return myReference;
   }
 
@@ -38,8 +39,9 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
     return "Unary expression";
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiType getOperationType() {
+  public PsiType getOperationType() {
     final GroovyCallReference reference = getReference();
     final GroovyResolveResult result = reference.advancedResolve();
     final PsiType operatorType = getTypeFromResult(result, reference.getArguments(), this);
@@ -60,7 +62,8 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
   }
 
   @Override
-  public @NotNull IElementType getOperationTokenType() {
+  @NotNull
+  public IElementType getOperationTokenType() {
     PsiElement opElement = getOperationToken();
     ASTNode node = opElement.getNode();
     assert node != null;
@@ -68,7 +71,8 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
   }
 
   @Override
-  public @NotNull PsiElement getOperationToken() {
+  @NotNull
+  public PsiElement getOperationToken() {
     PsiElement opElement = findChildByType(TokenSets.UNARY_OP_SET);
     assert opElement != null;
     return opElement;

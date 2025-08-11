@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.codeInspection.restriction.AnnotationContext;
@@ -17,7 +17,8 @@ import java.util.stream.Collector;
 public enum TaintValue implements RestrictionInfo {
   UNTAINTED(RestrictionInfoKind.KNOWN) {
     @Override
-    public @NotNull TaintValue join(@NotNull TaintValue other) {
+    @NotNull
+    public TaintValue join(@NotNull TaintValue other) {
       return other;
     }
 
@@ -28,7 +29,8 @@ public enum TaintValue implements RestrictionInfo {
   },
   TAINTED(RestrictionInfoKind.KNOWN) {
     @Override
-    public @NotNull TaintValue join(@NotNull TaintValue other) {
+    @NotNull
+    public TaintValue join(@NotNull TaintValue other) {
       return this;
     }
 
@@ -43,7 +45,8 @@ public enum TaintValue implements RestrictionInfo {
   },
   UNKNOWN(RestrictionInfoKind.UNKNOWN) {
     @Override
-    public @NotNull TaintValue join(@NotNull TaintValue other) {
+    @NotNull
+    public TaintValue join(@NotNull TaintValue other) {
       return other == TAINTED ? other : this;
     }
 

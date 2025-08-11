@@ -9,7 +9,7 @@ plugins {
 
 kotlin {
     jvm()
-    {{androidTargetPlaceholder}}
+    android()
 
     sourceSets.commonMain.get().dependencies {
         implementation("org.jetbrains.sample:producerA:1.0.0-SNAPSHOT")

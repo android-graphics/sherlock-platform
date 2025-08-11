@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search.impl
 
 import com.intellij.lang.Language
@@ -15,6 +15,7 @@ import com.intellij.psi.search.PsiSearchScopeUtil.restrictScopeToFileLanguage
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.Query
 import com.intellij.util.containers.toArray
+import java.util.*
 
 internal data class SearchWordQueryBuilderImpl(
   private val myProject: Project,
@@ -47,7 +48,7 @@ internal data class SearchWordQueryBuilderImpl(
   )
 
   override fun inContexts(context: SearchContext, vararg otherContexts: SearchContext): SearchWordQueryBuilder = copy(
-    mySearchContexts = setOf(context, *otherContexts)
+    mySearchContexts = EnumSet.of(context, *otherContexts)
   )
 
   override fun inContexts(contexts: Set<SearchContext>): SearchWordQueryBuilder {
@@ -78,7 +79,7 @@ internal data class SearchWordQueryBuilderImpl(
     return scope
   }
 
-  override fun <T : Any> buildQuery(mapper: LeafOccurrenceMapper<out T>): Query<out T> = SearchWordQuery(
+  override fun <T> buildQuery(mapper: LeafOccurrenceMapper<T>): Query<out T> = SearchWordQuery(
     Parameters(
       myProject,
       myWord,

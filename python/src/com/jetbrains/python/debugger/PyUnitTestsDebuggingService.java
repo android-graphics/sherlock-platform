@@ -25,7 +25,6 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -135,7 +134,7 @@ final class PyUnitTestsDebuggingService {
    */
   public static boolean isErrorInTestSetUpOrTearDown(@NotNull List<PyStackFrameInfo> frames) {
     for (PyStackFrameInfo frameInfo : frames) {
-      if (ContainerUtil.exists(SET_UP_AND_TEAR_DOWN_FUNCTIONS_BY_FRAMEWORK.values(), names -> names.contains(frameInfo.getName())))
+      if (SET_UP_AND_TEAR_DOWN_FUNCTIONS_BY_FRAMEWORK.values().stream().anyMatch(names -> names.contains(frameInfo.getName())))
         return true;
     }
     return false;
@@ -211,7 +210,7 @@ final class PyUnitTestsDebuggingService {
       return UIUtil.getFontWithFallback(fontName, Font.PLAIN, fontSize);
     }
 
-    private void drawStringToInlayBox(@NotNull String str, @NotNull Inlay<?> inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion) {
+    private void drawStringToInlayBox(@NotNull String str, @NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion) {
       g.drawString(str, targetRegion.x + INLAY_TEXT_INDENT, targetRegion.y + inlay.getEditor().getLineHeight() * myCurrentLineNumber);
       myCurrentLineNumber++;
     }
@@ -241,7 +240,7 @@ final class PyUnitTestsDebuggingService {
   }
 
   private static @NotNull Color getInlayBackgroundColor() {
-    return JBColor.isBright() ? new JBColor(Gray._240, Gray._192) : JBColor.WHITE;
+    return UIUtil.isUnderDarcula() ? JBColor.WHITE : new JBColor(Gray._240, Gray._192);
   }
 
   private static @Nls String getFailedTestCaption() {
@@ -278,7 +277,7 @@ final class PyUnitTestsDebuggingService {
 
     @Override
     public int hashCode() {
-      return System.identityHashCode(this);
+      return ((Object)this).hashCode();
     }
   }
 }

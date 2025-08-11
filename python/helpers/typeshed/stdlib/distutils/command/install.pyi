@@ -1,5 +1,4 @@
-from collections.abc import Callable
-from typing import Any, ClassVar
+from typing import Any
 
 from ..cmd import Command
 
@@ -9,9 +8,9 @@ INSTALL_SCHEMES: dict[str, dict[Any, Any]]
 
 class install(Command):
     description: str
-    user_options: ClassVar[list[tuple[str, str | None, str]]]
-    boolean_options: ClassVar[list[str]]
-    negative_opt: ClassVar[dict[str, str]]
+    user_options: Any
+    boolean_options: Any
+    negative_opt: Any
     prefix: str | None
     exec_prefix: Any
     home: str | None
@@ -61,5 +60,4 @@ class install(Command):
     def has_headers(self): ...
     def has_scripts(self): ...
     def has_data(self): ...
-    # Any to work around variance issues
-    sub_commands: ClassVar[list[tuple[str, Callable[[Any], bool] | None]]]
+    sub_commands: Any

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -37,8 +37,9 @@ public final class SimplifiableEqualsExpressionInspection extends BaseInspection
       checkbox("REPORT_NON_CONSTANT", InspectionGadgetsBundle.message("simplifiable.equals.expression.option.non.constant")));
   }
 
+  @NotNull
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("simplifiable.equals.expression.problem.descriptor", infos[0]);
   }
 
@@ -55,13 +56,15 @@ public final class SimplifiableEqualsExpressionInspection extends BaseInspection
       myMethodName = methodName;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getName() {
+    public String getName() {
       return InspectionGadgetsBundle.message("simplifiable.equals.expression.quickfix", myMethodName);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return CommonQuickFixBundle.message("fix.simplify");
     }
 
@@ -76,7 +79,7 @@ public final class SimplifiableEqualsExpressionInspection extends BaseInspection
         return;
       }
       PsiExpression operand = PsiUtil.skipParenthesizedExprDown(operands[1]);
-      final @NonNls StringBuilder newExpressionText = new StringBuilder();
+      @NonNls final StringBuilder newExpressionText = new StringBuilder();
       if (operand instanceof PsiPrefixExpression prefixExpression) {
         if (!JavaTokenType.EXCL.equals(prefixExpression.getOperationTokenType())) {
           return;

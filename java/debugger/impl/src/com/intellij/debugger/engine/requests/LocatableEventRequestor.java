@@ -2,15 +2,21 @@
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.requests.Requestor;
 import com.intellij.openapi.util.NlsContexts;
 import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NotNull;
 
-public interface LocatableEventRequestor extends SuspendingRequestor {
+public interface LocatableEventRequestor extends Requestor {
   /**
    * @return true if request was hit by the event, false otherwise
    */
   boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) throws EventProcessingException;
+
+  /**
+   * @return either DebuggerSettings.SUSPEND_NONE or DebuggerSettings.SUSPEND_ALL or DebuggerSettings.SUSPEND_THREAD
+   */
+  String getSuspendPolicy();
 
   default boolean shouldIgnoreThreadFiltering() {
     return false;

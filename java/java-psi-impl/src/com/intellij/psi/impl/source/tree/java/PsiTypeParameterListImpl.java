@@ -42,7 +42,7 @@ public class PsiTypeParameterListImpl extends JavaStubPsiElement<PsiTypeParamete
   }
 
   @Override
-  public int getTypeParameterIndex(@NotNull PsiTypeParameter typeParameter) {
+  public int getTypeParameterIndex(PsiTypeParameter typeParameter) {
     LOG.assertTrue(typeParameter.getParent() == this);
     return PsiImplUtil.getTypeParameterIndex(typeParameter, this);
   }

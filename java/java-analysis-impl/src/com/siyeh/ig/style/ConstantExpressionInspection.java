@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -45,8 +45,9 @@ public final class ConstantExpressionInspection extends AbstractBaseJavaLocalIns
         .description(InspectionGadgetsBundle.message("inspection.constant.expression.report.compile.time.description")));
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
@@ -83,7 +84,8 @@ public final class ConstantExpressionInspection extends AbstractBaseJavaLocalIns
         }
       }
 
-      private @Nullable Object computeConstant(PsiExpression expression) {
+      @Nullable
+      private Object computeConstant(PsiExpression expression) {
         if (expression.getTextLength() > MAX_EXPRESSION_LENGTH) return null;
         if (expression.getType() == null) return null;
         Object value = computeValue(expression);
@@ -97,7 +99,7 @@ public final class ConstantExpressionInspection extends AbstractBaseJavaLocalIns
         if (expression instanceof PsiClassObjectAccessExpression) return null;
         try {
           Object value = ExpressionUtils.computeConstantExpression(expression, true);
-          if (value != null) {
+          if (value != null && !(value instanceof Enum<?>)) {
             return value;
           }
         }
@@ -109,7 +111,8 @@ public final class ConstantExpressionInspection extends AbstractBaseJavaLocalIns
         return CommonDataflow.computeValue(expression);
       }
 
-      private static @Nullable PsiExpression getParentExpression(PsiExpression expression) {
+      @Nullable
+      private static PsiExpression getParentExpression(PsiExpression expression) {
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
         if (parent instanceof PsiExpressionList || parent instanceof PsiTemplate) {
           parent = parent.getParent();
@@ -133,16 +136,20 @@ public final class ConstantExpressionInspection extends AbstractBaseJavaLocalIns
       myValueText = valueText;
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getName() {
+    public String getName() {
       if (myText.length() < MAX_RESULT_LENGTH_TO_DISPLAY) {
         return InspectionGadgetsBundle.message("inspection.constant.expression.fix.name", myText);
       }
       return InspectionGadgetsBundle.message("inspection.constant.expression.fix.name.short");
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.constant.expression.fix.family.name");
     }
 
@@ -154,7 +161,7 @@ public final class ConstantExpressionInspection extends AbstractBaseJavaLocalIns
   }
 
   private static String getValueText(Object value) {
-    final @NonNls String newExpression;
+    @NonNls final String newExpression;
     if (value instanceof String string) {
       newExpression = '"' + StringUtil.escapeStringCharacters(string) + '"';
     }

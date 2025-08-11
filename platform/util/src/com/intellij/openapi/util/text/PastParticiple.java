@@ -2,7 +2,6 @@
 package com.intellij.openapi.util.text;
 
 import com.intellij.util.containers.CollectionFactory;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -13,7 +12,6 @@ import static com.intellij.openapi.util.text.StringUtil.isVowel;
 /**
  * @author Bas Leijdekkers
  */
-@ApiStatus.Internal
 public final class PastParticiple {
 
   private static final int IRREGULAR_SIZE = 175;

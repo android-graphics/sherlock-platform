@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
@@ -45,28 +45,32 @@ public final class CountingLoop {
   /**
    * @return loop counter variable
    */
-  public @NotNull PsiLocalVariable getCounter() {
+  @NotNull
+  public PsiLocalVariable getCounter() {
     return myCounter;
   }
 
   /**
    * @return loop statement
    */
-  public @NotNull PsiLoopStatement getLoop() {
+  @NotNull
+  public PsiLoopStatement getLoop() {
     return myLoop;
   }
 
   /**
    * @return counter variable initial value
    */
-  public @NotNull PsiExpression getInitializer() {
+  @NotNull
+  public PsiExpression getInitializer() {
     return myInitializer;
   }
 
   /**
    * @return loop bound
    */
-  public @NotNull PsiExpression getBound() {
+  @NotNull
+  public PsiExpression getBound() {
     return myBound;
   }
 
@@ -92,7 +96,8 @@ public final class CountingLoop {
     return myMayOverflow;
   }
 
-  public static @Nullable CountingLoop from(PsiForStatement forStatement) {
+  @Nullable
+  public static CountingLoop from(PsiForStatement forStatement) {
     // check that initialization is for(int/long i = <initial_value>;...;...)
     PsiDeclarationStatement initialization = tryCast(forStatement.getInitialization(), PsiDeclarationStatement.class);
     if (initialization == null) return null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.chainsSearch.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -98,7 +98,8 @@ public final class MethodChainCompletionContributor extends CompletionContributo
       .collect(Collectors.toList());
   }
 
-  private static @Nullable ChainCompletionContext extractContext(CompletionParameters parameters) {
+  @Nullable
+  private static ChainCompletionContext extractContext(CompletionParameters parameters) {
     PsiElement parent = PsiTreeUtil.getParentOfType(parameters.getPosition(),
                                                     PsiAssignmentExpression.class,
                                                     PsiLocalVariable.class,
@@ -118,8 +119,9 @@ public final class MethodChainCompletionContributor extends CompletionContributo
     return extractContextFromMethodCall((PsiMethodCallExpression)parent, parameters);
   }
 
-  private static @Nullable ChainCompletionContext extractContextFromMethodCall(PsiMethodCallExpression parent,
-                                                                               CompletionParameters parameters) {
+  @Nullable
+  private static ChainCompletionContext extractContextFromMethodCall(PsiMethodCallExpression parent,
+                                                                     CompletionParameters parameters) {
     PsiMethod method = parent.resolveMethod();
     if (method == null) return null;
     PsiExpression expression = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiExpression.class);
@@ -134,21 +136,24 @@ public final class MethodChainCompletionContributor extends CompletionContributo
     return null;
   }
 
-  private static @Nullable ChainCompletionContext extractContextFromReturn(PsiReturnStatement returnStatement,
-                                                                           CompletionParameters parameters) {
+  @Nullable
+  private static ChainCompletionContext extractContextFromReturn(PsiReturnStatement returnStatement,
+                                                                 CompletionParameters parameters) {
     PsiType type = PsiTypesUtil.getMethodReturnType(returnStatement);
     if (type == null) return null;
     return ChainCompletionContext.createContext(type, returnStatement, suggestIterators(parameters));
   }
 
-  private static @Nullable ChainCompletionContext extractContextFromVariable(PsiLocalVariable localVariable,
-                                                                             CompletionParameters parameters) {
+  @Nullable
+  private static ChainCompletionContext extractContextFromVariable(PsiLocalVariable localVariable,
+                                                                   CompletionParameters parameters) {
     PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(localVariable, PsiDeclarationStatement.class);
     return ChainCompletionContext.createContext(localVariable.getType(), declaration, suggestIterators(parameters));
   }
 
-  private static @Nullable ChainCompletionContext extractContextFromAssignment(PsiAssignmentExpression assignmentExpression,
-                                                                               CompletionParameters parameters) {
+  @Nullable
+  private static ChainCompletionContext extractContextFromAssignment(PsiAssignmentExpression assignmentExpression,
+                                                                     CompletionParameters parameters) {
     PsiExpression lExpr = assignmentExpression.getLExpression();
     if (!(lExpr instanceof PsiReferenceExpression)) return null;
     PsiElement resolved = ((PsiReferenceExpression)lExpr).resolve();
@@ -157,7 +162,8 @@ public final class MethodChainCompletionContributor extends CompletionContributo
            : null;
   }
 
-  private static @NotNull ElementPattern<PsiElement> patternForVariableAssignment() {
+  @NotNull
+  private static ElementPattern<PsiElement> patternForVariableAssignment() {
     final ElementPattern<PsiElement> patternForParent = or(psiElement().withText(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED)
                                                              .afterSiblingSkipping(psiElement(PsiWhiteSpace.class),
                                                                                    psiElement(PsiJavaToken.class).withText("=")));
@@ -167,7 +173,8 @@ public final class MethodChainCompletionContributor extends CompletionContributo
                                                                              .inside(PsiDeclarationStatement.class))).inside(PsiMethod.class);
   }
 
-  private static @NotNull ElementPattern<PsiElement> patternForMethodCallArgument() {
+  @NotNull
+  private static ElementPattern<PsiElement> patternForMethodCallArgument() {
     return psiElement().withSuperParent(3, PsiMethodCallExpression.class).withParent(psiReferenceExpression().with(
       new PatternCondition<>("QualifierIsNull") {
         @Override

@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.BlockTerminalColors
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.ui.SimpleColoredComponent
-import com.intellij.util.concurrency.EdtScheduler
+import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -23,7 +23,6 @@ import org.jetbrains.plugins.terminal.block.output.TerminalSelectionModel.Termin
 import org.jetbrains.plugins.terminal.block.ui.GradientTextureCache
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils.getAwtForegroundByIndex
-import org.jetbrains.plugins.terminal.block.ui.VerticalSpaceInlayRenderer
 import java.awt.Font
 import java.awt.Graphics
 import java.awt.Rectangle
@@ -37,22 +36,22 @@ internal class TerminalBlocksDecorator(
 ) : TerminalOutputModelListener {
   private val decorations: MutableMap<CommandBlock, BlockDecoration> = HashMap()
 
-  private val hoveredGradientCache: GradientTextureCache = GradientTextureCache(
+  private val gradientCache: GradientTextureCache = GradientTextureCache(
     scheme = editor.colorsScheme,
-    colorStartKey = BlockTerminalColors.HOVERED_BLOCK_BACKGROUND_START,
-    colorEndKey = BlockTerminalColors.HOVERED_BLOCK_BACKGROUND_END
+    colorStartKey = BlockTerminalColors.BLOCK_BACKGROUND_START,
+    colorEndKey = BlockTerminalColors.BLOCK_BACKGROUND_END
   )
 
   init {
     outputModel.addListener(this)
-    EditorUtil.disposeWithEditor(editor, hoveredGradientCache)
+    EditorUtil.disposeWithEditor(editor, gradientCache)
     editor.markupModel.addRangeHighlighter(0, 0,
-                                           // the order doesn't matter because there is only a custom renderer with its own order
+                                           // the order doesn't matter because there is only custom renderer with its own order
                                            HighlighterLayer.LAST, null,
                                            HighlighterTargetArea.LINES_IN_RANGE).apply {
       isGreedyToLeft = true
       isGreedyToRight = true
-      setCustomRenderer(TerminalRightAreaRenderer())
+      customRenderer = TerminalRightAreaRenderer()
     }
 
     outputModel.addListener(object : TerminalOutputModelListener {
@@ -99,15 +98,6 @@ internal class TerminalBlocksDecorator(
         }
         updateSelectionDecorationState(newSelection)
       }
-
-      override fun hoverChanged(oldHovered: CommandBlock?, newHovered: CommandBlock?) {
-        if (oldHovered != null && decorations.contains(oldHovered)) {
-          updateDecorationState(oldHovered)
-        }
-        if (newHovered != null) {
-          updateHoveredState(newHovered)
-        }
-      }
     })
 
     // Mark selected blocks as inactive when the terminal loses the focus.
@@ -117,11 +107,11 @@ internal class TerminalBlocksDecorator(
         // Remove inactive state with a delay to make it after selected blocks change.
         // Because otherwise, the old selected block will first become active, and then the selection will be removed.
         // So, it will cause blinking. But with delay, the selection will be removed first, and it won't become active.
-        EdtScheduler.getInstance().schedule(150) {
+        Alarm().addRequest(Runnable {
           if (!editor.isDisposed) {
             updateSelectionDecorationState(selectionModel.selectedBlocks)
           }
-        }
+        }, 150)
       }
     })
   }
@@ -132,22 +122,22 @@ internal class TerminalBlocksDecorator(
       return
     }
 
-    // add additional empty space on top of the block if it is the first block
-    val topRenderer = VerticalSpaceInlayRenderer {
-      val additionalInset = if (outputModel.blocks[0] === block) 0 else 1
+    // add additional empty space on top of the block, if it is the first block
+    val topRenderer = EmptyWidthInlayRenderer {
+      val additionalInset = if (outputModel.blocks[0] === block) TerminalUi.blocksGap else 0
       TerminalUi.blockTopInset + additionalInset
     }
     val topInlay = editor.inlayModel.addBlockElement(block.startOffset, false, true, 1, topRenderer)!!
-    val bottomRenderer = VerticalSpaceInlayRenderer(TerminalUi.blockBottomInset + TerminalUi.blocksGap)
+    val bottomRenderer = EmptyWidthInlayRenderer(TerminalUi.blockBottomInset + TerminalUi.blocksGap)
     val bottomInlay = editor.inlayModel.addBlockElement(block.endOffset, true, false, 0, bottomRenderer)!!
     val commandToOutputInlay = if (block.withCommand) {
-      val renderer = VerticalSpaceInlayRenderer(TerminalUi.commandToOutputInset)
+      val renderer = EmptyWidthInlayRenderer(TerminalUi.commandToOutputInset)
       editor.inlayModel.addBlockElement(block.outputStartOffset, false, false, 0, renderer)!!
     }
     else null
 
     val bgHighlighter = editor.markupModel.addRangeHighlighter(block.startOffset, block.endOffset,
-                                                               // the order doesn't matter because there is only a custom renderer with its own order
+                                                               // the order doesn't matter because there is only custom renderer with its own order
                                                                HighlighterLayer.LAST, null,
                                                                HighlighterTargetArea.LINES_IN_RANGE)
     bgHighlighter.isGreedyToRight = true
@@ -159,7 +149,7 @@ internal class TerminalBlocksDecorator(
 
     val decoration = BlockDecoration(bgHighlighter, cornersHighlighter, topInlay, bottomInlay, commandToOutputInlay)
     decorations[block] = decoration
-    setDecorationState(block, DefaultBlockDecorationState())
+    setDecorationState(block, DefaultBlockDecorationState(gradientCache))
   }
 
   private fun updateDecorationState(block: CommandBlock) {
@@ -169,55 +159,30 @@ internal class TerminalBlocksDecorator(
 
   private fun updateSelectionDecorationState(selectedBlocks: List<CommandBlock>) {
     val state = calculateSelectionDecorationState()
-    val errorState = calculateErrorSelectionDecorationState()
     for (block in selectedBlocks) {
-      if (outputModel.isErrorBlock(block)) {
-        setDecorationState(block, errorState)
-      }
-      else {
-        setDecorationState(block, state)
-      }
+      setDecorationState(block, state)
     }
-  }
-
-  private fun updateHoveredState(block: CommandBlock) {
-    val state = if (outputModel.isErrorBlock(block)) {
-      HoveredErrorBlockDecorationState(hoveredGradientCache)
-    }
-    else {
-      HoveredBlockDecorationState(hoveredGradientCache)
-    }
-    setDecorationState(block, state)
   }
 
   private fun calculateDecorationState(block: CommandBlock): BlockDecorationState {
     return if (selectionModel.selectedBlocks.contains(block)) {
-      if (outputModel.isErrorBlock(block)) {
-        calculateErrorSelectionDecorationState()
-      }
-      else {
-        calculateSelectionDecorationState()
-      }
+      calculateSelectionDecorationState()
     }
-    else if (outputModel.isErrorBlock(block)) {
-      ErrorBlockDecorationState()
+    else if (outputModel.getBlockInfo(block).let { it != null && it.exitCode != 0 }) {
+      ErrorBlockDecorationState(gradientCache)
     }
-    else DefaultBlockDecorationState()
+    else DefaultBlockDecorationState(gradientCache)
   }
 
   private fun calculateSelectionDecorationState(): BlockDecorationState {
     return if (focusModel.isActive) SelectedBlockDecorationState() else InactiveSelectedBlockDecorationState()
   }
 
-  private fun calculateErrorSelectionDecorationState(): BlockDecorationState {
-    return if (focusModel.isActive) SelectedErrorBlockDecorationState() else InactiveSelectedErrorBlockDecorationState()
-  }
-
   private fun setDecorationState(block: CommandBlock, state: BlockDecorationState) {
     val decoration = decorations[block] ?: error("No decoration for block, installDecoration should be called first")
     with(decoration) {
-      backgroundHighlighter.setCustomRenderer(state.backgroundRenderer)
-      cornersHighlighter.setCustomRenderer(state.cornersRenderer)
+      backgroundHighlighter.customRenderer = state.backgroundRenderer
+      cornersHighlighter.customRenderer = state.cornersRenderer
       cornersHighlighter.lineMarkerRenderer = state.leftAreaRenderer
     }
 
@@ -274,6 +239,15 @@ internal class TerminalBlocksDecorator(
     }
   }
 
+  /** Inlay to just create the space between lines */
+  private class EmptyWidthInlayRenderer(private val heightSupplier: () -> Int) : EditorCustomElementRenderer {
+    constructor(height: Int) : this({ height })
+
+    override fun calcWidthInPixels(inlay: Inlay<*>): Int = 0
+
+    override fun calcHeightInPixels(inlay: Inlay<*>): Int = JBUI.scale(heightSupplier())
+  }
+
   /**
    * By default, the selection is painted for the whole width of the editor.
    * This renderer overrides the background between blocks' right corner and terminal right corner,
@@ -285,7 +259,7 @@ internal class TerminalBlocksDecorator(
       val width = JBUI.scale(TerminalUi.cornerToBlockInset)
       val oldColor = g.color
       try {
-        g.color = TerminalUi.defaultBackground(editor)
+        g.color = editor.colorsScheme.getColor(BlockTerminalColors.DEFAULT_BACKGROUND)
         g.fillRect(visibleArea.width - width, visibleArea.y, width, visibleArea.height)
       }
       finally {

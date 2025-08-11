@@ -1,21 +1,18 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.containers.IdBitSet;
-import com.intellij.util.indexing.containers.IntIdsIterator;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
 /**
- * Set of {@link VirtualFile}s optimized for compact storage of very large number of files.
+ * Set of VirtualFiles optimized for compact storage of very large number of files.
  * <p>
  * Supports optimized {@link Collection#add(Object)} and {@link Collection#addAll(Collection)}
  * without materialization of all containing files.
@@ -28,53 +25,25 @@ import java.util.*;
  */
 @ApiStatus.Internal
 public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implements VirtualFileSetEx {
-  /** Max weirdFiles.size to convert storage to {@link IntSetStorage} */
-  @VisibleForTesting
-  public static final int INT_SET_LIMIT = 10;
-  /**
-   * Max storage.size to convert {@link IntSetStorage} impl to either {@link IdBitSetStorage} or {@link PartitionedBitSetStorage}
-   * (depending on ids range)
-   */
-  @VisibleForTesting
-  public static final int BIT_SET_LIMIT = 1000;
-  /** max fileId range covered by {@link IdBitSetStorage}, to convert it to {@link PartitionedBitSetStorage} */
-  @VisibleForTesting
-  public static final int PARTITION_BIT_SET_LIMIT = 20000;
-  /**
-   * If {@link IdBitSetStorage} covers id range more than PARTITION_BIT_SET_LIMIT, and less than this % of {@link IdBitSetStorage}
-   * bits are set -> convert it to {@link PartitionedBitSetStorage}
-   */
-  private static final int PARTITION_BIT_SET_THRESHOLD = 25; // 25% of bits are set
-  /** Size of (=id range covered by) individual partition in {@link PartitionedBitSetStorage} */
-  private static final int PARTITION_BIT_SET_PARTITION_SIZE = 2048; // =256 bytes per partition
+  static final int BIT_SET_LIMIT = 1000;
+  static final int INT_SET_LIMIT = 10;
 
-  /**
-   * First several (=less than INT_SET_LIMIT) files are stored here, then all non-{@link VirtualFileWithId} files are stored
-   * here afterward.
-   * If storage == null, then this set _could_ contain both {@link VirtualFileWithId} and non-{@link VirtualFileWithId} files.
-   * If storage!=null => all {@link VirtualFileWithId} are stored in the storage, as fileIds, and only non-{@link VirtualFileWithId}
-   * files are stored in this set.
-   */
+  // all non-VirtualFileWithId files and first several files are stored here
   private final Set<VirtualFile> weirdFiles = new HashSet<>();
-  /**
-   * file id storage; an actual implementation is switched in runtime to accommodate actual ids set memory-efficiently.
-   * Could be null if there are very few files in the set (=less than INT_SET_LIMIT), so all of them fit into {@link #weirdFiles}.
-   * <p>
-   * When a file set become large (>INT_SET_LIMIT), fileIds are stored using {@link IntSetStorage}
-   * When a file set become very big (>BIT_SET_LIMIT, e.g. whole project files AnalysisScope) a {@link IdBitSetStorage} is used with a
-   * bit-mask of their ids
-   * When file ids start to spread out too much, i.e.
-   * {@code max - min > PARTITION_BIT_SET_LIMIT && 100*size/(max-min) < PARTITION_BIT_SET_THRESHOLD}
-   * => a {@link PartitionedBitSetStorage} is used
-   */
-  //TODO RC: current implementation only able to adapt to set growing -- but set could also shrink (=remove() method _is_ implemented),
-  //         so we also need 'downward' adaptation
-  private @Nullable SetStorage storage;
+  // when file set become large, they stored as id-set here
+  private IntSet idSet;
+  // when file set become very big (e.g. whole project files AnalysisScope) the bit-mask of their ids are stored here
+  private BitSet fileIds;
   private boolean frozen;
 
   CompactVirtualFileSet() {
   }
 
+  /**
+   * @deprecated Use {@link VfsUtilCore#createCompactVirtualFileSet(Collection)} instead
+   */
+  @Deprecated
+  @ApiStatus.Internal
   CompactVirtualFileSet(@NotNull Collection<? extends VirtualFile> files) {
     addAll(files);
   }
@@ -84,17 +53,22 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public CompactVirtualFileSet(@NotNull IntSet fileIds) {
-    storage = new IntSetStorage(fileIds);
-    if (storage.size() > BIT_SET_LIMIT) {
+  @ApiStatus.Internal
+  public CompactVirtualFileSet(IntSet fileIds) {
+    idSet = fileIds;
+    if (idSet.size() > BIT_SET_LIMIT) {
       convertToBitSet();
     }
   }
 
   @Override
+  @ApiStatus.Internal
   public boolean containsId(int fileId) {
-    if (storage != null) {
-      return storage.containsId(fileId);
+    if (idSet != null) {
+      return idSet.contains(fileId);
+    }
+    if (fileIds != null) {
+      return fileIds.get(fileId);
     }
     for (VirtualFile file : weirdFiles) {
       if (file instanceof VirtualFileWithId && ((VirtualFileWithId)file).getId() == fileId) {
@@ -105,9 +79,13 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   }
 
   @Override
+  @ApiStatus.Internal
   public int @NotNull [] onlyInternalFileIds() {
-    if (storage != null) {
-      return storage.toIntArray();
+    if (idSet != null) {
+      return idSet.toIntArray();
+    }
+    if (fileIds != null) {
+      return fileIds.stream().toArray();
     }
     return weirdFiles
       .stream()
@@ -119,9 +97,14 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   @Override
   public boolean contains(Object file) {
     if (file instanceof VirtualFileWithId) {
+      BitSet ids = fileIds;
       int id = ((VirtualFileWithId)file).getId();
-      if (storage != null) {
-        return storage.containsId(id);
+      if (ids != null) {
+        return ids.get(id);
+      }
+      IntSet idSet = this.idSet;
+      if (idSet != null) {
+        return idSet.contains(id);
       }
     }
     return weirdFiles.contains(file);
@@ -129,71 +112,63 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
 
   @Override
   public boolean add(@NotNull VirtualFile file) {
-    assertNotFrozen();
-
-    if (!(file instanceof VirtualFileWithId)) {
-      return weirdFiles.add(file);
+    if (frozen) {
+      throw new UnsupportedOperationException();
     }
-
-    if (storage == null) {
-      boolean added = weirdFiles.add(file);
-      if (weirdFiles.size() > INT_SET_LIMIT) {
-        convertToIntSet();
+    boolean added;
+    if (file instanceof VirtualFileWithId) {
+      int id = ((VirtualFileWithId)file).getId();
+      BitSet ids = fileIds;
+      IntSet idSet = this.idSet;
+      if (ids != null) {
+        added = !ids.get(id);
+        ids.set(id);
       }
-      return added;
+      else if (idSet != null) {
+        added = idSet.add(id);
+        if (idSet.size() > BIT_SET_LIMIT) {
+          convertToBitSet();
+        }
+      }
+      else {
+        added = weirdFiles.add(file);
+        if (weirdFiles.size() > INT_SET_LIMIT) {
+          convertToIntSet();
+        }
+      }
     }
-
-    int id = ((VirtualFileWithId)file).getId();
-    return addToStorageWithUpgradeCheck(id);
-  }
-
-  private boolean addToStorageWithUpgradeCheck(int fileId) {
-    //TODO RC: current design is complicated.
-    //         Simpler approach is to add the fileId directly to the storage, but each storage impl throws an exception
-    //         (~StorageOverflowException) if it can't accommodate this fileId -> the exception is caught and another
-    //         storage impl is chosen then.
-    if (storage instanceof IntSetStorage
-        && storage.shouldUpgradeBeforeAdd(fileId)) {
-      convertToBitSet();
+    else {
+      added = weirdFiles.add(file);
     }
-    if (storage instanceof IdBitSetStorage
-        && storage.shouldUpgradeBeforeAdd(fileId)) {
-      convertToPartitionedBitSet();
-    }
-    return storage.add(fileId);
+    return added;
   }
 
   private void convertToIntSet() {
-    storage = new IntSetStorage();
+    IntSet idSet = new IntOpenHashSet(weirdFiles.size());
     for (Iterator<VirtualFile> iterator = weirdFiles.iterator(); iterator.hasNext(); ) {
       VirtualFile wf = iterator.next();
       if (wf instanceof VirtualFileWithId) {
-        addToStorageWithUpgradeCheck(((VirtualFileWithId)wf).getId());
+        idSet.add(((VirtualFileWithId)wf).getId());
         iterator.remove();
       }
     }
+    this.idSet = idSet;
   }
 
   private void convertToBitSet() {
-    IntIterator iterator = storage.intIterator();
-    storage = new IdBitSetStorage();
+    fileIds = new BitSet();
+    IntIterator iterator = idSet.intIterator();
     while (iterator.hasNext()) {
-      addToStorageWithUpgradeCheck(iterator.nextInt());
+      fileIds.set(iterator.nextInt());
     }
-  }
-
-  private void convertToPartitionedBitSet() {
-    IntIterator iterator = storage.intIterator();
-    storage = new PartitionedBitSetStorage();
-    while (iterator.hasNext()) {
-      //should be addToStorageWithUpgradeCheck(), but there is nothing to upgrade PartitionedBitSetStorage to
-      storage.add(iterator.nextInt());
-    }
+    this.idSet = null;
   }
 
   @Override
   public boolean remove(Object o) {
-    assertNotFrozen();
+    if (frozen) {
+      throw new IllegalStateException();
+    }
 
     if (weirdFiles.remove(o)) {
       return true;
@@ -202,17 +177,21 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
       return false;
     }
     int fileId = ((VirtualFileWithId)o).getId();
-    if (storage != null) {
-      return storage.remove(fileId);
+    if (fileIds != null && fileIds.get(fileId)) {
+      fileIds.clear(fileId);
+      return true;
+    }
+    if (idSet != null && idSet.remove(fileId)) {
+      return true;
     }
     return false;
   }
 
   @Override
   public void clear() {
-    assertNotFrozen();
     weirdFiles.clear();
-    storage = null;
+    idSet = null;
+    fileIds = null;
   }
 
 
@@ -225,7 +204,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   }
 
   @Override
-  public @NotNull Set<VirtualFile> freezed() {
+  public Set<VirtualFile> freezed() {
     freeze();
     return this;
   }
@@ -233,8 +212,17 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   @Override
   public boolean process(@NotNull Processor<? super VirtualFile> processor) {
     VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-    if (storage != null) {
-      IntIterator iterator = storage.intIterator();
+    BitSet ids = fileIds;
+    if (ids != null) {
+      for (int id = ids.nextSetBit(0); id < ids.size(); id = ids.nextSetBit(id + 1)) {
+        if (id < 0) break;
+        VirtualFile file = virtualFileManager.findFileById(id);
+        if (file != null && !processor.process(file)) return false;
+      }
+    }
+    IntSet idSet = this.idSet;
+    if (idSet != null) {
+      IntIterator iterator = idSet.iterator();
       while (iterator.hasNext()) {
         VirtualFile file = virtualFileManager.findFileById(iterator.nextInt());
         if (file != null && !processor.process(file)) {
@@ -252,22 +240,42 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
 
   @Override
   public int size() {
-    return (storage != null ? storage.size() : 0) + weirdFiles.size();
+    BitSet ids = fileIds;
+    IntSet idSet = this.idSet;
+    return (ids == null ? 0 : ids.cardinality()) + (idSet == null ? 0 : idSet.size()) + weirdFiles.size();
   }
 
   @Override
   public boolean retainAll(@NotNull Collection<?> c) {
-    assertNotFrozen();
+    if (frozen) {
+      throw new IllegalStateException();
+    }
     if (c instanceof CompactVirtualFileSet) {
-      CompactVirtualFileSet compactVirtualFileSet = (CompactVirtualFileSet)c;
       boolean modified = false;
+      IntSet specifiedIdSet = ((CompactVirtualFileSet)c).idSet;
+      BitSet specifiedFileIds = ((CompactVirtualFileSet)c).fileIds;
+      Set<VirtualFile> specifiedWeirdFiles = ((CompactVirtualFileSet)c).weirdFiles;
 
-      if (storage != null) {
-        IntIterator iterator = storage.intIterator();
+      if (idSet != null) {
+        IntList toRemove = new IntArrayList();
+        IntIterator iterator = idSet.intIterator();
         while (iterator.hasNext()) {
           int id = iterator.nextInt();
-          if (!compactVirtualFileSet.containsId(id)) {
-            iterator.remove();
+          if (!contains(id, specifiedIdSet, specifiedFileIds, specifiedWeirdFiles)) {
+            toRemove.add(id);
+            modified = true;
+          }
+        }
+
+        toRemove.forEach(i -> {
+          idSet.remove(i);
+        });
+      }
+
+      if (fileIds != null) {
+        for (int id : fileIds.stream().toArray()) {
+          if (!contains(id, specifiedIdSet, specifiedFileIds, specifiedWeirdFiles)) {
+            fileIds.set(id, false);
             modified = true;
           }
         }
@@ -289,15 +297,11 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
     }
   }
 
-  private void assertNotFrozen() {
-    if (frozen) {
-      throw new IllegalStateException("Must not mutate the set after freeze() was called");
-    }
-  }
-
   @Override
   public boolean addAll(@NotNull Collection<? extends VirtualFile> c) {
-    assertNotFrozen();
+    if (frozen) {
+      throw new IllegalStateException();
+    }
     if (c instanceof CompactVirtualFileSet) {
       boolean modified = false;
       CompactVirtualFileSet setToAdd = (CompactVirtualFileSet)c;
@@ -307,16 +311,37 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
         }
       }
 
-      if (setToAdd.storage == null) return modified;
-
-      if (storage == null) {
-        convertToIntSet();
+      IntIterator toAdd;
+      if (setToAdd.idSet != null) {
+        toAdd = setToAdd.idSet.intIterator();
+      }
+      else if (setToAdd.fileIds != null) {
+        toAdd = IntIterators.asIntIterator(setToAdd.fileIds.stream().iterator());
+      }
+      else {
+        return modified;
       }
 
-      IntIterator toAdd = setToAdd.storage.intIterator();
       while (toAdd.hasNext()) {
         int id = toAdd.nextInt();
-        addToStorageWithUpgradeCheck(id);
+
+        if (fileIds == null && idSet == null) {
+          convertToIntSet();
+        }
+
+        if (fileIds != null) {
+          modified = !fileIds.get(id);
+          fileIds.set(id);
+        }
+        else if (idSet != null) {
+          modified = idSet.add(id);
+          if (idSet.size() > BIT_SET_LIMIT) {
+            convertToBitSet();
+          }
+        }
+        else {
+          throw new IllegalStateException();
+        }
       }
 
       return modified;
@@ -328,14 +353,41 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
 
   @Override
   public @NotNull Iterator<VirtualFile> iterator() {
+    BitSet ids = fileIds;
+    IntSet idSet = this.idSet;
     VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-    Iterator<VirtualFile> storageIterator;
-    if (storage == null || storage.size() == 0) {
-      storageIterator = Collections.emptyIterator();
+    Iterator<VirtualFile> fromIdsIterator;
+    if (ids == null) {
+      fromIdsIterator = Collections.emptyIterator();
     }
     else {
-      storageIterator = new Iterator<VirtualFile>() {
-        final IntIterator iterator = storage.intIterator();
+      BitSetIterator idIterator = new BitSetIterator(ids);
+      fromIdsIterator = new Iterator<VirtualFile>() {
+        @Override
+        public boolean hasNext() {
+          return idIterator.hasNext();
+        }
+
+        @Override
+        public VirtualFile next() {
+          ProgressManager.checkCanceled();
+          return virtualFileManager.findFileById(idIterator.next());
+        }
+
+        @Override
+        public void remove() {
+          idIterator.remove();
+        }
+      };
+    }
+
+    Iterator<? extends VirtualFile> totalIterator;
+    if (idSet == null) {
+      totalIterator = ContainerUtil.concatIterators(fromIdsIterator, weirdFiles.iterator());
+    }
+    else {
+      Iterator<VirtualFile> idSetIterator = new Iterator<VirtualFile>() {
+        final IntIterator iterator = idSet.intIterator();
 
         @Override
         public boolean hasNext() {
@@ -353,8 +405,8 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
           iterator.remove();
         }
       };
+      totalIterator = ContainerUtil.concatIterators(fromIdsIterator, idSetIterator, weirdFiles.iterator());
     }
-    Iterator<VirtualFile> totalIterator = ContainerUtil.concatIterators(storageIterator, weirdFiles.iterator());
 
     return new Iterator<VirtualFile>() {
       VirtualFile next;
@@ -401,234 +453,32 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
     };
   }
 
-  private interface SetStorage {
-
-    int size();
-
-    boolean containsId(int id);
-
-    default int[] toIntArray() {
-      int[] result = new int[size()];
-      IntIterator iterator = intIterator();
-      for (int i = 0; i < result.length; i++) {
-        result[i] = iterator.nextInt();
-      }
-      return result;
-    }
-
-    boolean add(int id);
-
-    IntIterator intIterator();
-
-    boolean remove(int id);
-
-    boolean shouldUpgradeBeforeAdd(int id);
-  }
-
-  private static class IntSetStorage implements SetStorage {
-    private final IntSet set;
-
-    IntSetStorage() {
-      set = new IntOpenHashSet();
-    }
-
-    IntSetStorage(IntSet ids) {
-      set = new IntOpenHashSet(ids);
-    }
-
-    @Override
-    public int size() {
-      return set.size();
-    }
-
-    @Override
-    public boolean containsId(int id) {
-      return set.contains(id);
-    }
-
-    @Override
-    public int[] toIntArray() {
-      return set.toIntArray();
-    }
-
-    @Override
-    public boolean shouldUpgradeBeforeAdd(int id) {
-      return set.size() >= BIT_SET_LIMIT;
-    }
-
-    @Override
-    public boolean add(int id) {
-      return set.add(id);
-    }
-
-    @Override
-    public boolean remove(int id) {
-      return set.remove(id);
-    }
-
-    @Override
-    public IntIterator intIterator() {
-      return set.intIterator();
-    }
-  }
-
-  private static class IdBitSetStorage implements SetStorage {
-    private final IdBitSet set = new IdBitSet(INT_SET_LIMIT);
-
-    @Override
-    public int size() {
-      return set.size();
-    }
-
-    @Override
-    public boolean containsId(int id) {
-      return set.contains(id);
-    }
-
-    @Override
-    public boolean shouldUpgradeBeforeAdd(int id) {
-      int size = set.size();
-      if (size == 0) return false;
-
-      int setMin = set.getMin();
-      int setMax = set.getMax();
-      if (setMin <= id && id <= setMax) return false;
-
-      int min = Math.min(setMin, id);
-      int max = Math.max(setMax, id);
-
-      if (max - min < PARTITION_BIT_SET_LIMIT) {
-        return false;
-      }
-      return 100 * (size + 1) / (max - min) < PARTITION_BIT_SET_THRESHOLD;
-    }
-
-    @Override
-    public boolean add(int id) {
-      return set.add(id);
-    }
-
-    @Override
-    public boolean remove(int id) {
-      return set.remove(id);
-    }
-
-    @Override
-    public IntIterator intIterator() {
-      return new IdBitSetIterator(set);
-    }
-  }
-
-  private static class PartitionedBitSetStorage implements SetStorage {
-    private final Int2ObjectMap<BitSet> map = new Int2ObjectOpenHashMap<>();
-
-    @Override
-    public int size() {
-      int result = 0;
-      for (Int2ObjectMap.Entry<BitSet> entry : map.int2ObjectEntrySet()) {
-        result += entry.getValue().cardinality();
-      }
-      return result;
-    }
-
-    @Override
-    public boolean containsId(int id) {
-      BitSet partition = map.get(id / PARTITION_BIT_SET_PARTITION_SIZE);
-      return partition != null && partition.get(id % PARTITION_BIT_SET_PARTITION_SIZE);
-    }
-
-    @Override
-    public boolean shouldUpgradeBeforeAdd(int id) {
-      return false;
-    }
-
-    @Override
-    public boolean add(int id) {
-      BitSet partition = map.computeIfAbsent(
-        id / PARTITION_BIT_SET_PARTITION_SIZE,
-        k -> new BitSet(PARTITION_BIT_SET_PARTITION_SIZE - 1)
-      );
-      if (partition.get(id % PARTITION_BIT_SET_PARTITION_SIZE)) return false;
-      partition.set(id % PARTITION_BIT_SET_PARTITION_SIZE);
-      return true;
-    }
-
-    @Override
-    public boolean remove(int id) {
-      BitSet partition = map.get(id / PARTITION_BIT_SET_PARTITION_SIZE);
-      if (partition == null || !partition.get(id % PARTITION_BIT_SET_PARTITION_SIZE)) return false;
-      partition.clear(id % PARTITION_BIT_SET_PARTITION_SIZE);
-      if (partition.cardinality() == 0) {
-        map.remove(id / PARTITION_BIT_SET_PARTITION_SIZE);
-      }
-      return true;
-    }
-
-    @Override
-    public IntIterator intIterator() {
-      return new PartitionedBitSetIterator(map);
-    }
-  }
-
-  private static class IdBitSetIterator implements IntIterator {
-    private final IdBitSet set;
-    private final @NotNull IntIdsIterator iterator;
-    private int toRemove;
-
-    private IdBitSetIterator(@NotNull IdBitSet set) {
-      this.set = set;
-      iterator = set.intIterator();
-    }
-
-    @Override
-    public boolean hasNext() {
-      return iterator.hasNext();
-    }
-
-    @Override
-    public int nextInt() {
-      toRemove = iterator.next();
-      return toRemove;
-    }
-
-    @Override
-    public void remove() {
-      set.remove(toRemove);
-    }
-  }
-
-  private static class BitSetIterator implements IntIterator {
+  private static class BitSetIterator {
     private final @NotNull BitSet myBitSet;
     private int currentBit = -1;
-    private int toRemoveBit = -1;
     private Boolean hasNext;
-
     private BitSetIterator(@NotNull BitSet set) {
       myBitSet = set;
     }
 
-    @Override
     public boolean hasNext() {
       findNext();
       return hasNext;
     }
 
-    @Override
-    public int nextInt() {
+    public int next() {
       findNext();
       if (!hasNext) {
         throw new NoSuchElementException();
       }
       hasNext = null;
-      toRemoveBit = currentBit;
       return currentBit;
     }
 
-    @Override
+    // be careful: doesn't follow contract of Iterator#remove()
     public void remove() {
-      if (toRemoveBit >= 0) {
-        myBitSet.clear(toRemoveBit);
-        toRemoveBit = -1;
+      if (currentBit >= 0) {
+        myBitSet.set(currentBit, false);
       }
     }
 
@@ -640,74 +490,14 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
     }
   }
 
-  private static class PartitionedBitSetIterator implements IntIterator {
-
-    private int next;
-    private boolean canRemove;
-    private Boolean hasNext;
-    private BitSetIterator idIterator;
-    private Int2ObjectMap.Entry<BitSet> curEntry;
-    private final Iterator<Int2ObjectMap.Entry<BitSet>> entryIterator;
-
-    PartitionedBitSetIterator(Int2ObjectMap<BitSet> map) {
-      entryIterator = map.int2ObjectEntrySet().iterator();
-    }
-
-    @Override
-    public boolean hasNext() {
-      canRemove = false;
-      findNext();
-      return hasNext;
-    }
-
-    private void findNext() {
-      if (hasNext == null) {
-        hasNext = false;
-        int id = -1;
-        if (curEntry != null && idIterator != null && idIterator.hasNext()) {
-          id = idIterator.nextInt();
-        }
-        else {
-          while (entryIterator.hasNext()) {
-            curEntry = entryIterator.next();
-            idIterator = new BitSetIterator(curEntry.getValue());
-            if (idIterator.hasNext()) {
-              id = idIterator.nextInt();
-              break;
-            }
-          }
-        }
-        if (id >= 0) {
-          int offset = curEntry.getIntKey() * PARTITION_BIT_SET_PARTITION_SIZE;
-          next = id + offset;
-          hasNext = true;
-        }
+  private static boolean contains(int id, @Nullable IntSet idSet, @Nullable BitSet fileIds, @NotNull Set<? extends VirtualFile> weirdFiles) {
+    if (idSet != null && idSet.contains(id)) return true;
+    if (fileIds != null && fileIds.get(id)) return true;
+    for (VirtualFile file : weirdFiles) {
+      if (file instanceof VirtualFileWithId && ((VirtualFileWithId)file).getId() == id) {
+        return true;
       }
     }
-
-    @Override
-    public int nextInt() {
-      findNext();
-
-      if (!hasNext) {
-        throw new NoSuchElementException();
-      }
-
-      canRemove = true;
-      int result = next;
-      hasNext = null;
-      return result;
-    }
-
-    @Override
-    public void remove() {
-      if (!canRemove) {
-        throw new IllegalStateException("Cannot remove element using PartitionedBitSetIterator after a call to hasNext().");
-      }
-      idIterator.remove();
-      if (curEntry.getValue().isEmpty()) {
-        entryIterator.remove();
-      }
-    }
+    return false;
   }
 }

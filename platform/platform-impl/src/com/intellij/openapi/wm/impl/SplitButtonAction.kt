@@ -14,12 +14,9 @@ import javax.swing.JComponent
 
 abstract class SplitButtonAction : AnAction(), CustomComponentAction {
 
-  @Suppress("DuplicatedCode") // SplitButtonAction
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val model = MyPopupModel()
-    model.addActionListener { actionEvent ->
-      buttonPressed(actionEvent, actionEvent.source as JComponent, presentation, place)
-    }
+    model.addActionListener { actionEvent -> buttonPressed(actionEvent, actionEvent.source as JComponent, presentation, place) }
     model.addExpandListener { actionEvent ->
       val combo = (actionEvent.source as? ToolbarSplitButton) ?: return@addExpandListener
       val dataContext = DataManager.getInstance().getDataContext(combo)
@@ -39,10 +36,22 @@ abstract class SplitButtonAction : AnAction(), CustomComponentAction {
     return ToolbarSplitButton(model)
   }
 
-  @Suppress("DuplicatedCode")
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    super.updateCustomComponent(component, presentation)
     component.isEnabled = presentation.isEnabled
-    (component as? AbstractToolbarCombo)?.updateFromPresentation(presentation)
+    (component as? AbstractToolbarCombo)?.let {
+      it.text = presentation.text
+      it.toolTipText = presentation.description
+      val pLeftIcons = presentation.getClientProperty(ExpandableComboAction.LEFT_ICONS_KEY)
+      val pRightIcons = presentation.getClientProperty(ExpandableComboAction.RIGHT_ICONS_KEY)
+      it.leftIcons = when {
+        pLeftIcons != null -> pLeftIcons
+        !presentation.isEnabled && presentation.disabledIcon != null -> listOf(presentation.disabledIcon!!)
+        presentation.icon != null -> listOf(presentation.icon!!)
+        else -> emptyList()
+      }
+      if (pRightIcons != null) it.rightIcons = pRightIcons
+    }
   }
 
   protected abstract fun createPopup(event: AnActionEvent): JBPopup?
@@ -60,4 +69,5 @@ abstract class SplitButtonAction : AnAction(), CustomComponentAction {
       return super.isExpandButtonSelected() || isPopupShown
     }
   }
+
 }

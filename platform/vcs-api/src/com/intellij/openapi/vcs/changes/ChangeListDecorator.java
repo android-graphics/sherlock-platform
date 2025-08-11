@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
@@ -15,7 +15,8 @@ import java.util.List;
 public interface ChangeListDecorator {
   ProjectExtensionPointName<ChangeListDecorator> EP_NAME = new ProjectExtensionPointName<>("com.intellij.vcs.changeListDecorator");
 
-  static @NotNull List<ChangeListDecorator> getDecorators(@NotNull Project project) {
+  @NotNull
+  static List<ChangeListDecorator> getDecorators(@NotNull Project project) {
     return project.isDisposed() ? Collections.emptyList() : EP_NAME.getExtensions(project);
   }
 

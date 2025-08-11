@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -11,10 +11,10 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.impl.statistics.ProgramRunnerUsageCollector;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.execution.runners.JvmPatchableProgramRunner;
+import com.intellij.execution.impl.statistics.ProgramRunnerUsageCollector;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -43,13 +43,14 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
   private static final Logger LOG = Logger.getInstance(GenericDebuggerRunner.class);
 
   @Override
-  public boolean canRun(final @NotNull String executorId, final @NotNull RunProfile profile) {
+  public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
     return executorId.equals(DefaultDebugExecutor.EXECUTOR_ID) && profile instanceof ModuleRunProfile
            && !(profile instanceof RunConfigurationWithSuppressedDefaultDebugAction);
   }
 
   @Override
-  public @NotNull String getRunnerId() {
+  @NotNull
+  public String getRunnerId() {
     return DebuggingRunnerData.DEBUGGER_RUNNER_ID;
   }
 
@@ -92,8 +93,9 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     return createContentDescriptor(state, env);
   }
 
-  protected @NotNull Promise<@Nullable RunContentDescriptor> doExecuteAsync(@NotNull TargetEnvironmentAwareRunProfileState state,
-                                                                            @NotNull ExecutionEnvironment env)
+  @NotNull
+  protected Promise<@Nullable RunContentDescriptor> doExecuteAsync(@NotNull TargetEnvironmentAwareRunProfileState state,
+                                                                   @NotNull ExecutionEnvironment env)
     throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
     return state.prepareTargetToCommandExecution(env, LOG, "Failed to execute debug configuration async", () -> {
@@ -104,15 +106,9 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     });
   }
 
-  protected @Nullable RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state,
-                                                                   @NotNull ExecutionEnvironment environment) throws ExecutionException {
-    if (state instanceof RemoteConnectionCreator) {
-      RemoteConnection connection = ((RemoteConnectionCreator)state).createRemoteConnection(environment);
-      boolean isPollConnection = ((RemoteConnectionCreator)state).isPollConnection();
-      if (connection != null) {
-        return attachVirtualMachine(state, environment, connection, isPollConnection);
-      }
-    }
+  @Nullable
+  protected RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state,
+                                                         @NotNull ExecutionEnvironment environment) throws ExecutionException {
     if (state instanceof JavaCommandLine) {
       JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
       boolean isPollConnection = true;
@@ -133,7 +129,8 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
       return attachVirtualMachine(state, environment, connection, isPollConnection);
     }
     if (state instanceof PatchedRunnableState) {
-      RemoteConnection connection = createPatchedConnection(environment);
+      RemoteConnection connection =
+        doPatch(new JavaParameters(), environment.getRunnerSettings(), true, environment.getProject());
       return attachVirtualMachine(state, environment, connection, true);
     }
     if (state instanceof RemoteState) {
@@ -144,18 +141,20 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     return null;
   }
 
-  protected @Nullable RunContentDescriptor attachVirtualMachine(RunProfileState state,
-                                                                @NotNull ExecutionEnvironment env,
-                                                                RemoteConnection connection,
-                                                                boolean pollConnection) throws ExecutionException {
+  @Nullable
+  protected RunContentDescriptor attachVirtualMachine(RunProfileState state,
+                                                      @NotNull ExecutionEnvironment env,
+                                                      RemoteConnection connection,
+                                                      boolean pollConnection) throws ExecutionException {
     return attachVirtualMachine(state, env, connection, pollConnection ? DebugEnvironment.LOCAL_START_TIMEOUT : 0);
   }
 
 
-  protected @Nullable RunContentDescriptor attachVirtualMachine(RunProfileState state,
-                                                                @NotNull ExecutionEnvironment env,
-                                                                RemoteConnection connection,
-                                                                long pollTimeout) throws ExecutionException {
+  @Nullable
+  protected RunContentDescriptor attachVirtualMachine(RunProfileState state,
+                                                      @NotNull ExecutionEnvironment env,
+                                                      RemoteConnection connection,
+                                                      long pollTimeout) throws ExecutionException {
     DebugEnvironment environment = new DefaultDebugEnvironment(env, state, connection, pollTimeout);
     DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(env.getProject()).attachVirtualMachine(environment);
     if (debuggerSession == null) {
@@ -169,7 +168,8 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
         DebugProcessImpl debugProcess = debuggerSession.getProcess();
         result.set(XDebuggerManager.getInstance(env.getProject()).startSession(env, new XDebugProcessStarter() {
           @Override
-          public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
+          @NotNull
+          public XDebugProcess start(@NotNull XDebugSession session) {
             XDebugSessionImpl sessionImpl = (XDebugSessionImpl)session;
             ExecutionResult executionResult = debugProcess.getExecutionResult();
             sessionImpl.addExtraActions(executionResult.getActions());
@@ -218,10 +218,6 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
             runProfile instanceof RunConfiguration ? ((RunConfiguration)runProfile).getProject() : null);
     JavaProgramPatcher
       .runCustomPatchers(javaParameters, Executor.EXECUTOR_EXTENSION_NAME.findExtensionOrFail(DefaultDebugExecutor.class), runProfile);
-  }
-
-  public static RemoteConnection createPatchedConnection(@NotNull ExecutionEnvironment environment) throws ExecutionException {
-    return doPatch(new JavaParameters(), environment.getRunnerSettings(), true, environment.getProject());
   }
 
   private static RemoteConnection doPatch(@NotNull JavaParameters javaParameters,

@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
@@ -20,7 +20,8 @@ import org.jetbrains.annotations.Nullable;
 public final class ImplicitArrayToStringInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     if (((Boolean)infos[1]).booleanValue()) {
       return InspectionGadgetsBundle.message(
         "explicit.array.to.string.problem.descriptor");
@@ -41,7 +42,8 @@ public final class ImplicitArrayToStringInspection extends BaseInspection {
   }
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  @Nullable
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     final boolean removeToString = ((Boolean)infos[1]).booleanValue();
     final PsiArrayType type = (PsiArrayType)expression.getType();
@@ -64,14 +66,16 @@ public final class ImplicitArrayToStringInspection extends BaseInspection {
       this.removeToString = removeToString;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("implicit.array.to.string.fix.family.name");
     }
 
     @Override
-    public @NotNull String getName() {
-      final @NonNls String expressionText;
+    @NotNull
+    public String getName() {
+      @NonNls final String expressionText;
       if (deepString) {
         expressionText = "java.util.Arrays.deepToString()";
       }
@@ -105,7 +109,7 @@ public final class ImplicitArrayToStringInspection extends BaseInspection {
       else {
         expressionText = commentTracker.text(expression);
       }
-      final @NonNls String newExpressionText;
+      @NonNls final String newExpressionText;
       if (deepString) {
         newExpressionText =
           "java.util.Arrays.deepToString(" + expressionText + ')';

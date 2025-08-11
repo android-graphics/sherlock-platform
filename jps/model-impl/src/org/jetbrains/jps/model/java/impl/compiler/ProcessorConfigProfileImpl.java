@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java.impl.compiler;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -86,7 +86,8 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
 
   @ApiStatus.Internal
   @Override
-  public @NotNull String getProcessorPath() {
+  @NotNull
+  public String getProcessorPath() {
     return myProcessorPath;
   }
 
@@ -122,7 +123,8 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
 
   @ApiStatus.Internal
   @Override
-  public @NotNull String getGeneratedSourcesDirectoryName(boolean forTests) {
+  @NotNull
+  public String getGeneratedSourcesDirectoryName(boolean forTests) {
     return forTests? myGeneratedTestsDirectoryName : myGeneratedProductionDirectoryName;
   }
 
@@ -163,7 +165,8 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
 
   @ApiStatus.Internal
   @Override
-  public @NotNull Set<String> getModuleNames() {
+  @NotNull
+  public Set<String> getModuleNames() {
     return myModuleNames;
   }
 
@@ -217,13 +220,15 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
 
   @ApiStatus.Internal
   @Override
-  public @NotNull Set<String> getProcessors() {
+  @NotNull
+  public Set<String> getProcessors() {
     return Collections.unmodifiableSet(myProcessors);
   }
 
   @ApiStatus.Internal
   @Override
-  public @NotNull Map<String, String> getProcessorOptions() {
+  @NotNull
+  public Map<String, String> getProcessorOptions() {
     return Collections.unmodifiableMap(myProcessorOptions);
   }
 
@@ -235,7 +240,8 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
 
   @ApiStatus.Internal
   @Override
-  public @Nullable String getOption(String key) {
+  @Nullable
+  public String getOption(String key) {
     return myProcessorOptions.get(key);
   }
 

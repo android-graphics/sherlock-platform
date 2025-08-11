@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -16,13 +16,15 @@ abstract class DfAbstractRangeType implements DfIntegralType {
     myWideRange = wideRange;
   }
 
+  @NotNull
   @Override
-  public @NotNull LongRangeSet getRange() {
+  public LongRangeSet getRange() {
     return myRange;
   }
 
+  @NotNull
   @Override
-  public @NotNull LongRangeSet getWideRange() {
+  public LongRangeSet getWideRange() {
     return myWideRange == null ? myRange : myWideRange;
   }
 
@@ -40,5 +42,5 @@ abstract class DfAbstractRangeType implements DfIntegralType {
   }
 
   @Override
-  public abstract @NotNull String toString();
+  abstract public @NotNull String toString();
 }

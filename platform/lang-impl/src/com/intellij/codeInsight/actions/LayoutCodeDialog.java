@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.application.options.CodeStyle;
@@ -113,7 +113,8 @@ public final class LayoutCodeDialog extends DialogWrapper {
     }
   }
 
-  private @Nullable @NlsContexts.Tooltip String getChangesNotAvailableHint() {
+  @Nullable
+  private @NlsContexts.Tooltip String getChangesNotAvailableHint() {
     if (!VcsFacade.getInstance().isFileUnderVcs(myFile)) {
       return CodeInsightBundle.message("tooltip.file.not.under.vcs.root");
     }
@@ -177,13 +178,15 @@ public final class LayoutCodeDialog extends DialogWrapper {
     };
   }
 
+  @Nullable
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  protected JComponent createCenterPanel() {
     return myButtonsPanel;
   }
 
+  @Nullable
   @Override
-  protected @Nullable String getHelpId() {
+  protected String getHelpId() {
     return myHelpId;
   }
 

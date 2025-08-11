@@ -17,7 +17,9 @@ package com.jetbrains.python.ast;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.util.ObjectUtils;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.StubElement;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.ast.impl.ParamHelperCore;
@@ -32,12 +34,14 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Experimental
 public interface PyAstNamedParameter extends PyAstParameter, PsiNamedElement, PsiNameIdentifierOwner, PyAstExpression, PyAstTypeCommentOwner,
                                              PyAstAnnotationOwner {
-  default @Nullable ASTNode getNameIdentifierNode() {
+  @Nullable
+  default ASTNode getNameIdentifierNode() {
     return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
   }
 
   @Override
-  default @Nullable String getName() {
+  @Nullable
+  default String getName() {
     ASTNode node = getNameIdentifierNode();
     return node != null ? node.getText() : null;
   }
@@ -49,7 +53,8 @@ public interface PyAstNamedParameter extends PyAstParameter, PsiNamedElement, Ps
   }
 
   @Override
-  default @Nullable PsiElement getNameIdentifier() {
+  @Nullable
+  default PsiElement getNameIdentifier() {
     final ASTNode node = getNameIdentifierNode();
     return node == null ? null : node.getPsi();
   }
@@ -63,7 +68,8 @@ public interface PyAstNamedParameter extends PyAstParameter, PsiNamedElement, Ps
   }
 
   @Override
-  default @Nullable PyAstExpression getDefaultValue() {
+  @Nullable
+  default PyAstExpression getDefaultValue() {
     final ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
     if (nodes.length > 0) {
       return (PyAstExpression)nodes[0].getPsi();
@@ -77,7 +83,8 @@ public interface PyAstNamedParameter extends PyAstParameter, PsiNamedElement, Ps
   }
 
   @Override
-  default @Nullable String getDefaultValueText() {
+  @Nullable
+  default String getDefaultValueText() {
     return ParamHelperCore.getDefaultValueText(getDefaultValue());
   }
 
@@ -86,25 +93,18 @@ public interface PyAstNamedParameter extends PyAstParameter, PsiNamedElement, Ps
    * @return canonical representation of parameter.
    * Includes asterisks for *param and **param, and name.
    */
-  default @NotNull String getRepr(boolean includeDefaultValue) {
-    final StringBuilder sb = new StringBuilder();
-
-    sb.append(ParamHelperCore.getNameInSignature(this));
-
-    if (includeDefaultValue) {
-      sb.append(ObjectUtils.notNull(ParamHelperCore.getDefaultValuePartInSignature(getDefaultValueText(), false), ""));
-    }
-
-    return sb.toString();
-  }
+  @NotNull
+  String getRepr(boolean includeDefaultValue);
 
   @Override
-  default @NotNull PyAstNamedParameter getAsNamed() {
+  @NotNull
+  default PyAstNamedParameter getAsNamed() {
     return this;
   }
 
   @Override
-  default @Nullable PyAstTupleParameter getAsTuple() {
+  @Nullable
+  default PyAstTupleParameter getAsTuple() {
     return null; // we're not a tuple
   }
 
@@ -164,8 +164,9 @@ public interface PyAstNamedParameter extends PyAstParameter, PsiNamedElement, Ps
     pyVisitor.visitPyNamedParameter(this);
   }
 
+  @Nullable
   @Override
-  default @Nullable PsiComment getTypeComment() {
+  default PsiComment getTypeComment() {
     for (PsiElement next = getNextSibling(); next != null; next = next.getNextSibling()) {
       if (next.textContains('\n')) break;
       if (!(next instanceof PsiWhiteSpace)) {

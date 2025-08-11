@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira;
 
 import com.intellij.openapi.project.Project;
@@ -21,29 +20,34 @@ public class JiraRepositoryType extends BaseRepositoryType<JiraRepository> {
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return "JIRA";
   }
 
   @Override
-  public @NotNull Icon getIcon() {
+  @NotNull
+  public Icon getIcon() {
     return TasksCoreIcons.Jira;
   }
 
   @Override
-  public @NotNull JiraRepository createRepository() {
+  @NotNull
+  public JiraRepository createRepository() {
     return new JiraRepository(this);
   }
 
+  @NotNull
   @Override
-  public @NotNull Class<JiraRepository> getRepositoryClass() {
+  public Class<JiraRepository> getRepositoryClass() {
     return JiraRepository.class;
   }
 
+  @NotNull
   @Override
-  public @NotNull TaskRepositoryEditor createEditor(JiraRepository repository,
-                                                    Project project,
-                                                    Consumer<? super JiraRepository> changeListener) {
+  public TaskRepositoryEditor createEditor(JiraRepository repository,
+                                           Project project,
+                                           Consumer<? super JiraRepository> changeListener) {
     return new JiraRepositoryEditor(project, repository, changeListener);
   }
 

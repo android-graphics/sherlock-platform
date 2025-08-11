@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
-internal object ProjectTaskManagerStatisticsCollector : CounterUsagesCollector() {
+object ProjectTaskManagerStatisticsCollector : CounterUsagesCollector() {
   val GROUP: EventLogGroup = EventLogGroup("build", 8)
 
   @JvmField

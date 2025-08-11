@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.ImageUtil;
@@ -36,22 +37,22 @@ final class ChangeLAFAnimator {
       }
       @Override
       protected void paintCycleEnd() {
-        dispose();
+        if (!isDisposed()) {
+          Disposer.dispose(this);
+        }
       }
 
       @Override
       public void dispose() {
         try {
           super.dispose();
-
           for (Map.Entry<JLayeredPane, JComponent> entry : myMap.entrySet()) {
             JLayeredPane layeredPane = entry.getKey();
             layeredPane.remove(entry.getValue());
             layeredPane.revalidate();
             layeredPane.repaint();
           }
-        }
-        finally {
+        } finally {
           myMap.clear();
         }
       }
@@ -70,6 +71,7 @@ final class ChangeLAFAnimator {
         rootPaneContainer.getRootPane().paint(imageGraphics);
 
         JComponent imageLayer = new JComponent() {
+
           @Override
           public void paint(Graphics g) {
             g = g.create();
@@ -93,6 +95,7 @@ final class ChangeLAFAnimator {
   void hideSnapshotWithAnimation() {
     myAnimator.resume();
   }
+
 
   private void doPaint() {
     for (Map.Entry<JLayeredPane, JComponent> entry : myMap.entrySet()) {

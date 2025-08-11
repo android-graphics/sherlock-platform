@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.modifier;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -30,7 +30,8 @@ public interface CodeStyleStatusBarUIContributor {
   /**
    * @return A title used for a group of actions opened from the status bar or {@code null} if no title is shown.
    */
-  default @Nullable @NlsContexts.PopupTitle String getActionGroupTitle() {
+  @Nullable
+  default @NlsContexts.PopupTitle String getActionGroupTitle() {
     return null;
   }
 
@@ -54,7 +55,8 @@ public interface CodeStyleStatusBarUIContributor {
    * @param project The project to show the files for.
    * @return The "Show all" action or {@code null} if not applicable;
    */
-  default @Nullable AnAction createShowAllAction(@NotNull Project project) {
+  @Nullable
+  default AnAction createShowAllAction(@NotNull Project project) {
     return null;
   }
 
@@ -70,7 +72,8 @@ public interface CodeStyleStatusBarUIContributor {
    * @param psiFile The currently open {@code PsiFile}.
    * @return A status text to be shown in code style widget for the given {@code PsiFile}
    */
-  default @NotNull @NlsContexts.StatusBarText String getStatusText(@NotNull PsiFile psiFile) {
+  @NotNull
+  default @NlsContexts.StatusBarText String getStatusText(@NotNull PsiFile psiFile) {
     return "*";
   }
 }

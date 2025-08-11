@@ -40,9 +40,11 @@ import javax.swing.*;
 public class IgnoreLanguage extends Language {
   public static final IgnoreLanguage INSTANCE = new IgnoreLanguage();
 
-  private static final @NonNls String DOT = ".";
+  @NonNls
+  private static final String DOT = ".";
 
-  private final @NotNull String myExtension;
+  @NotNull
+  private final String myExtension;
 
   protected IgnoreLanguage() {
     this("IgnoreLang", "ignore");
@@ -53,7 +55,8 @@ public class IgnoreLanguage extends Language {
     myExtension = extension;
   }
 
-  public @NotNull String getExtension() {
+  @NotNull
+  public String getExtension() {
     return myExtension;
   }
 
@@ -62,24 +65,29 @@ public class IgnoreLanguage extends Language {
    *
    * @return filename.
    */
-  public @NotNull String getFilename() {
+  @NotNull
+  public String getFilename() {
     return DOT + getExtension();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDisplayName() {
+  public String getDisplayName() {
     return getFilename() + " (" + getID() + ")";
   }
 
-  public @Nullable Icon getIcon() {
+  @Nullable
+  public Icon getIcon() {
     return AllIcons.Vcs.Ignore_file;
   }
 
-  public @NotNull IgnoreFileType getFileType() {
+  @NotNull
+  public IgnoreFileType getFileType() {
     return IgnoreFileType.INSTANCE;
   }
 
-  public final @NotNull IgnoreFile createFile(@NotNull FileViewProvider viewProvider) {
+  @NotNull
+  public final IgnoreFile createFile(@NotNull FileViewProvider viewProvider) {
     return new IgnoreFile(viewProvider, getFileType());
   }
 
@@ -97,7 +105,8 @@ public class IgnoreLanguage extends Language {
    *
    * @return default syntax
    */
-  public @NotNull Syntax getDefaultSyntax() {
+  @NotNull
+  public Syntax getDefaultSyntax() {
     return Syntax.GLOB;
   }
 
@@ -107,7 +116,8 @@ public class IgnoreLanguage extends Language {
    * For some ignore files the affected root match to the whole repository root (e.g. .git/info/exclude).
    *
    */
-  public @Nullable VirtualFile getAffectedRoot(@NotNull Project project, @NotNull VirtualFile ignoreFile){
+  @Nullable
+  public VirtualFile getAffectedRoot(@NotNull Project project, @NotNull VirtualFile ignoreFile){
     return ignoreFile.getParent();
   }
 }

@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.NonFocusableCheckBox;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,12 +25,7 @@ public abstract class RenameWithOptionalReferencesDialog extends RenameDialog {
 
   @Override
   protected void createCheckboxes(JPanel panel, GridBagConstraints gbConstraints) {
-    createSearchForReferencesCheckbox(panel, gbConstraints);
-    super.createCheckboxes(panel, gbConstraints);
-  }
-
-  protected void createSearchForReferencesCheckbox(JPanel panel, GridBagConstraints gbConstraints) {
-    gbConstraints.insets = JBUI.insetsBottom(4);
+    gbConstraints.insets = new Insets(0, 0, 4, 0);
     gbConstraints.gridwidth = 1;
     gbConstraints.gridx = 0;
     gbConstraints.weighty = 0;
@@ -40,16 +34,14 @@ public abstract class RenameWithOptionalReferencesDialog extends RenameDialog {
     myCbSearchForReferences = new NonFocusableCheckBox(RefactoringBundle.message("search.for.references"));
     myCbSearchForReferences.setSelected(getSearchForReferences());
     panel.add(myCbSearchForReferences, gbConstraints);
+
+    super.createCheckboxes(panel, gbConstraints);
   }
 
   @Override
   protected void doAction() {
     setSearchForReferences(myCbSearchForReferences.isSelected());
     super.doAction();
-  }
-
-  protected JCheckBox getCbSearchForReferences() {
-    return myCbSearchForReferences;
   }
 
   protected abstract boolean getSearchForReferences();

@@ -16,6 +16,7 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -32,8 +33,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInspection.options.OptPane.checkbox;
-import static com.intellij.codeInspection.options.OptPane.pane;
+import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public final class UseOfConcreteClassInspection extends BaseInspection {
   private static final CallMatcher OBJECT_GET_CLASS =
@@ -53,7 +55,8 @@ public final class UseOfConcreteClassInspection extends BaseInspection {
   public boolean reportCast = true;
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return (String)infos[0];
   }
 

@@ -1,4 +1,3 @@
-// PRIORITY: LOW
 package test
 
 val <caret>bar: Int

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmAnnotation;
@@ -7,7 +7,6 @@ import com.intellij.lang.jvm.JvmEnumField;
 import com.intellij.lang.jvm.annotation.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -28,8 +27,9 @@ class PsiAnnotationConstantValue extends PsiAnnotationAttributeValue<PsiExpressi
     super(value);
   }
 
+  @Nullable
   @Override
-  public @Nullable Object getConstantValue() {
+  public Object getConstantValue() {
     PsiConstantEvaluationHelper evaluationHelper = JavaPsiFacade.getInstance(myElement.getProject()).getConstantEvaluationHelper();
     return evaluationHelper.computeConstantExpression(myElement);
   }
@@ -45,14 +45,16 @@ class PsiAnnotationClassValue extends PsiAnnotationAttributeValue<PsiClassObject
     return myElement.getOperand().getInnermostComponentReferenceElement();
   }
 
+  @Nullable
   @Override
-  public @Nullable String getQualifiedName() {
+  public String getQualifiedName() {
     final PsiJavaCodeReferenceElement referenceElement = getReferenceElement();
     return referenceElement == null ? null : referenceElement.getQualifiedName();
   }
 
+  @Nullable
   @Override
-  public @Nullable JvmClass getClazz() {
+  public JvmClass getClazz() {
     PsiJavaCodeReferenceElement referenceElement = getReferenceElement();
     if (referenceElement == null) return null;
     PsiElement resolved = referenceElement.resolve();
@@ -66,8 +68,9 @@ class PsiNestedAnnotationValue extends PsiAnnotationAttributeValue<PsiAnnotation
     super(value);
   }
 
+  @NotNull
   @Override
-  public @NotNull JvmAnnotation getValue() {
+  public JvmAnnotation getValue() {
     return myElement;
   }
 }
@@ -81,8 +84,9 @@ class PsiAnnotationEnumFieldValue extends PsiAnnotationAttributeValue<PsiReferen
     myEnumField = field;
   }
 
+  @Nullable
   @Override
-  public @Nullable JvmEnumField getField() {
+  public JvmEnumField getField() {
     return myEnumField;
   }
 }
@@ -93,8 +97,9 @@ class PsiAnnotationArrayValue extends PsiAnnotationAttributeValue<PsiArrayInitia
     super(value);
   }
 
+  @NotNull
   @Override
-  public @NotNull @Unmodifiable List<JvmAnnotationAttributeValue> getValues() {
+  public List<JvmAnnotationAttributeValue> getValues() {
     return map(myElement.getInitializers(), PsiJvmConversionHelper::getAnnotationAttributeValue);
   }
 }

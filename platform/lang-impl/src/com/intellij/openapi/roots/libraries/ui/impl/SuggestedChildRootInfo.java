@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.libraries.ui.impl;
 
 import com.intellij.openapi.roots.libraries.LibraryRootType;
@@ -23,11 +23,13 @@ final class SuggestedChildRootInfo {
     mySelectedRootType = detectedRoot.getTypes().get(0);
   }
 
-  public @NotNull VirtualFile getRootCandidate() {
+  @NotNull
+  public VirtualFile getRootCandidate() {
     return myRootCandidate;
   }
 
-  public @NotNull DetectedLibraryRoot getDetectedRoot() {
+  @NotNull
+  public DetectedLibraryRoot getDetectedRoot() {
     return myDetectedRoot;
   }
 
@@ -35,7 +37,8 @@ final class SuggestedChildRootInfo {
     return myRootTypeNames.get(type);
   }
 
-  public @NotNull LibraryRootType getSelectedRootType() {
+  @NotNull
+  public LibraryRootType getSelectedRootType() {
     return mySelectedRootType;
   }
 

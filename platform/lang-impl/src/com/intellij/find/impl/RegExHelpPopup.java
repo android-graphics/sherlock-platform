@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -68,9 +68,10 @@ public final class RegExHelpPopup extends JPanel {
     return createRegExLink(title, owner, null);
   }
 
-  public static @NotNull LinkLabel<?> createRegExLink(@NotNull @NlsContexts.LinkLabel String title,
-                                                      @Nullable Component owner,
-                                                      @Nullable String place) {
+  @NotNull
+  public static LinkLabel<?> createRegExLink(@NotNull @NlsContexts.LinkLabel String title,
+                                             @Nullable Component owner,
+                                             @Nullable String place) {
     Runnable action = createRegExLinkRunnable(owner);
     return new LinkLabel<>(title, null, (aSource, aLinkData) -> {
       FindUsagesCollector.triggerRegexHelpClicked(place);
@@ -78,7 +79,8 @@ public final class RegExHelpPopup extends JPanel {
     });
   }
 
-  public static @NotNull Runnable createRegExLinkRunnable(@Nullable Component owner) {
+  @NotNull
+  public static Runnable createRegExLinkRunnable(@Nullable Component owner) {
     return new Runnable() {
       JBPopup helpPopup;
 

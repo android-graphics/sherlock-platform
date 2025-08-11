@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse.importer;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,13 +21,13 @@ public class EclipseProjectCodeStyleData extends EclipseCodeStylePropertiesImpor
 
   private static final Logger LOG = Logger.getInstance(EclipseProjectCodeStyleData.class);
 
-  public static final String CORE_PREFS_FILE_NAME = "org.eclipse.jdt.core.prefs";
-  public static final String UI_PREFS_FILE_NAME = "org.eclipse.jdt.ui.prefs";
-  public static final String ECLIPSE_SETTINGS_SUBDIR = ".settings";
+  public final static String CORE_PREFS_FILE_NAME = "org.eclipse.jdt.core.prefs";
+  public final static String UI_PREFS_FILE_NAME = "org.eclipse.jdt.ui.prefs";
+  public final static String ECLIPSE_SETTINGS_SUBDIR = ".settings";
 
   private boolean myImportOrganizeImportsConfig;
 
-  private static final Map<String, String> PREDEFINED_ECLIPSE_PROFILES = new HashMap<>();
+  private final static Map<String, String> PREDEFINED_ECLIPSE_PROFILES = new HashMap<>();
 
   static {
     PREDEFINED_ECLIPSE_PROFILES.put("org.eclipse.jdt.ui.default.eclipse_profile", "Eclipse [built-in]");
@@ -77,7 +77,8 @@ public class EclipseProjectCodeStyleData extends EclipseCodeStylePropertiesImpor
     return false;
   }
 
-  private @Nullable File getPreferencesFile(@NotNull String fileName) {
+  @Nullable
+  private File getPreferencesFile(@NotNull String fileName) {
     String filePath = myProjectPath + File.separator + ECLIPSE_SETTINGS_SUBDIR + File.separator + fileName;
     File prefsFile = new File(filePath);
     return prefsFile.exists() ? prefsFile : null;
@@ -93,7 +94,8 @@ public class EclipseProjectCodeStyleData extends EclipseCodeStylePropertiesImpor
     return myProjectName + (profileName != null ? ": " + profileName : "");
   }
 
-  private @Nullable String getFormatterProfileName() {
+  @Nullable
+  private String getFormatterProfileName() {
     String rawName = myUiPreferences != null ? myUiPreferences.getProperty(OPTION_FORMATTER_PROFILE) : null;
     if (rawName != null) {
       if (PREDEFINED_ECLIPSE_PROFILES.containsKey(rawName)) {
@@ -104,7 +106,8 @@ public class EclipseProjectCodeStyleData extends EclipseCodeStylePropertiesImpor
     return rawName;
   }
 
-  public @Nullable CodeStyleSettings importCodeStyle() throws SchemeImportException {
+  @Nullable
+  public CodeStyleSettings importCodeStyle() throws SchemeImportException {
     if (myCorePreferences != null) {
       CodeStyleSettings settings = CodeStyleSettingsManager.getInstance().createSettings();
       importProperties(myCorePreferences, settings);

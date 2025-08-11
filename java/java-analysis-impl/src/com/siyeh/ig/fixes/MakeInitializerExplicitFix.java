@@ -15,8 +15,8 @@
  */
 package com.siyeh.ig.fixes;
 
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -26,7 +26,8 @@ import org.jetbrains.annotations.NotNull;
 public class MakeInitializerExplicitFix extends PsiUpdateModCommandQuickFix {
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return InspectionGadgetsBundle.message(
       "make.initialization.explicit.quickfix");
   }

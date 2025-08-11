@@ -4,7 +4,6 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.workspace.jps.entities.*;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,7 +21,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class CustomEntitiesCausingReindexTracker {
-  private @NotNull Set<Class<? extends WorkspaceEntity>> customEntitiesToRescan;
+  @NotNull
+  private Set<Class<? extends WorkspaceEntity>> customEntitiesToRescan;
 
   CustomEntitiesCausingReindexTracker() {
     ExtensionPointListener<?> listener =
@@ -76,8 +76,7 @@ final class CustomEntitiesCausingReindexTracker {
 
   private static boolean isEntityReindexingCustomised(Class<? extends WorkspaceEntity> entityClass) {
     return LibraryEntity.class.isAssignableFrom(entityClass) ||
-           LibraryPropertiesEntity.class.isAssignableFrom(entityClass) ||
-           SdkEntity.class.isAssignableFrom(entityClass);
+           LibraryPropertiesEntity.class.isAssignableFrom(entityClass);
   }
 
   /**
@@ -99,17 +98,6 @@ final class CustomEntitiesCausingReindexTracker {
              !newContentRootEntity.getExcludedPatterns().equals(oldContentRootEntity.getExcludedPatterns());
     }
 
-    // The rootsChanged is not thrown if the order of root groups has changed. Root group - group of roots collected by type.
-    //   rootsChanged is still thrown if the order of roots inside one group changes.
-    if (newEntity instanceof LibraryEntity newLibraryEntity && oldEntity instanceof LibraryEntity oldLibraryEntity) {
-      if (newLibraryEntity.getTableId().equals(oldLibraryEntity.getTableId()) &&
-          newLibraryEntity.getRoots().size() == oldLibraryEntity.getRoots().size() &&
-          newLibraryEntity.getRoots().stream().collect(Collectors.groupingBy(o -> o.getType()))
-            .equals(oldLibraryEntity.getRoots().stream().collect(Collectors.groupingBy(o -> o.getType())))) {
-        return false;
-      }
-    }
-
     WorkspaceEntity entity = newEntity != null ? newEntity : oldEntity;
 
     // `rootsChanged` should not be thrown for changes in global libraries that are not presented in a project
@@ -129,8 +117,6 @@ final class CustomEntitiesCausingReindexTracker {
         return isEntityToRescan(contentRoot);
       }
       return false;
-    } else if (Registry.is("ide.workspace.model.sdk.remove.custom.processing") && entity instanceof SdkEntity) {
-      return hasDependencyOn((SdkEntity) entity, project);
     }
     return isEntityToRescan(entity);
   }
@@ -142,9 +128,5 @@ final class CustomEntitiesCausingReindexTracker {
 
   private static boolean hasDependencyOn(LibraryEntity library, Project project) {
     return ModuleDependencyIndex.getInstance(project).hasDependencyOn(library.getSymbolicId());
-  }
-
-  private static boolean hasDependencyOn(SdkEntity sdkEntity, Project project) {
-    return ModuleDependencyIndex.getInstance(project).hasDependencyOn(sdkEntity.getSymbolicId());
   }
 }

@@ -2,9 +2,7 @@
 package com.intellij.remoteServer.util;
 
 import com.intellij.openapi.util.NlsContexts;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
 public abstract class Column<T> {
 
   private final @NlsContexts.ColumnName String myName;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.visibility;
 
 import com.intellij.analysis.AnalysisScope;
@@ -51,7 +51,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   public boolean SUGGEST_PRIVATE_FOR_INNERS;
   public boolean SUGGEST_FOR_CONSTANTS = true;
   private final Map<String, Boolean> myExtensions = new TreeMap<>();
-  public static final @NonNls String SHORT_NAME = "WeakerAccess";
+  @NonNls public static final String SHORT_NAME = "WeakerAccess";
 
   @Override
   public @NotNull OptPane getOptionsPane() {
@@ -77,27 +77,30 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       (bindId, value) -> myExtensions.put(bindId, (Boolean)value));
   }
 
+  @NotNull
   @Override
-  public @NotNull LocalInspectionTool getSharedLocalInspectionTool() {
+  public LocalInspectionTool getSharedLocalInspectionTool() {
     return new AccessCanBeTightenedInspection(this);
   }
 
   @Override
-  public @NotNull String getGroupDisplayName() {
+  @NotNull
+  public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
-  public @NotNull String getShortName() {
+  @NotNull
+  public String getShortName() {
     return SHORT_NAME;
   }
 
   @Override
-  public CommonProblemDescriptor @Nullable [] checkElement(final @NotNull RefEntity refEntity,
-                                                           final @NotNull AnalysisScope scope,
-                                                           final @NotNull InspectionManager manager,
-                                                           final @NotNull GlobalInspectionContext globalContext,
-                                                           final @NotNull ProblemDescriptionsProcessor processor) {
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull final RefEntity refEntity,
+                                                           @NotNull final AnalysisScope scope,
+                                                           @NotNull final InspectionManager manager,
+                                                           @NotNull final GlobalInspectionContext globalContext,
+                                                           @NotNull final ProblemDescriptionsProcessor processor) {
     if (!(refEntity instanceof RefJavaElement refElement)) {
       return null;
     }
@@ -228,8 +231,9 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     return EntryPointWithVisibilityLevel.ACCESS_LEVEL_INVALID;
   }
 
+  @NotNull
   @PsiModifier.ModifierConstant
-  private @NotNull String getPossibleAccess(@NotNull RefJavaElement refElement, int minLevel) {
+  private String getPossibleAccess(@NotNull RefJavaElement refElement, int minLevel) {
     @PsiModifier.ModifierConstant String curAccess = refElement.getAccessModifier();
     String weakestAccess = PsiUtil.getAccessModifier(minLevel);
 
@@ -274,8 +278,9 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     return refElement instanceof RefClass && refElement.getOwner() instanceof RefPackage;
   }
 
+  @Nullable
   @PsiModifier.ModifierConstant
-  private @Nullable String getWeakerAccess(@PsiModifier.ModifierConstant String curAccess, RefElement refElement) {
+  private String getWeakerAccess(@PsiModifier.ModifierConstant String curAccess, RefElement refElement) {
     if (PsiModifier.PUBLIC.equals(curAccess)) {
       return isTopLevelClass(refElement) ? PsiModifier.PACKAGE_LOCAL : PsiModifier.PROTECTED;
     }
@@ -404,9 +409,9 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   }
 
   @Override
-  protected boolean queryExternalUsagesRequests(final @NotNull RefManager manager,
-                                                final @NotNull GlobalJavaInspectionContext globalContext,
-                                                final @NotNull ProblemDescriptionsProcessor processor) {
+  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager,
+                                                @NotNull final GlobalJavaInspectionContext globalContext,
+                                                @NotNull final ProblemDescriptionsProcessor processor) {
     final EntryPointsManager entryPointsManager = globalContext.getEntryPointsManager(manager);
     for (RefElement entryPoint : entryPointsManager.getEntryPoints(manager)) {
       //don't ignore entry points with explicit visibility requirements
@@ -422,7 +427,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     }
     manager.iterate(new RefJavaVisitor() {
       @Override
-      public void visitField(final @NotNull RefField refField) {
+      public void visitField(@NotNull final RefField refField) {
         if (processor.getDescriptions(refField) == null) return;
         if (!PsiModifier.PRIVATE.equals(refField.getAccessModifier())) {
           globalContext.enqueueFieldUsagesProcessor(refField, psiReference -> {
@@ -433,7 +438,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       }
 
       @Override
-      public void visitMethod(final @NotNull RefMethod refMethod) {
+      public void visitMethod(@NotNull final RefMethod refMethod) {
         if (processor.getDescriptions(refMethod) == null) return;
         if (!refMethod.isExternalOverride() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) &&
             !(refMethod instanceof RefImplicitConstructor)) {
@@ -450,7 +455,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       }
 
       @Override
-      public void visitClass(final @NotNull RefClass refClass) {
+      public void visitClass(@NotNull final RefClass refClass) {
         if (processor.getDescriptions(refClass) == null) return;
         if (!refClass.isAnonymous() && !PsiModifier.PRIVATE.equals(refClass.getAccessModifier())) {
           globalContext.enqueueDerivedClassesProcessor(refClass, inheritor -> {
@@ -501,17 +506,19 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   }
 
   @Override
-  public void compose(@NotNull StringBuilder buf, final @NotNull RefEntity refEntity, final @NotNull HTMLComposer composer) {
+  public void compose(@NotNull StringBuilder buf, @NotNull final RefEntity refEntity, @NotNull final HTMLComposer composer) {
     composer.appendElementInReferences(buf, (RefElement)refEntity);
   }
 
+  @NotNull
   @Override
-  public @NotNull QuickFix<?> getQuickFix(final String hint) {
+  public QuickFix<?> getQuickFix(final String hint) {
     return new AcceptSuggestedAccess(hint, null);
   }
 
   @Override
-  public @Nullable String getHint(final @NotNull QuickFix fix) {
+  @Nullable
+  public String getHint(@NotNull final QuickFix fix) {
     return ((AcceptSuggestedAccess)fix).myHint;
   }
 
@@ -558,12 +565,14 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return myName != null ? myName : getFamilyName();
     }
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return JavaAnalysisBundle.message("inspection.visibility.accept.quickfix");
     }
 

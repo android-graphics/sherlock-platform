@@ -2,10 +2,8 @@
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.progress.StandardProgressIndicator;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 
-@ApiStatus.Internal
 public final class StandardProgressIndicatorBase extends AbstractProgressIndicatorBase implements StandardProgressIndicator {
 
   @Obsolete

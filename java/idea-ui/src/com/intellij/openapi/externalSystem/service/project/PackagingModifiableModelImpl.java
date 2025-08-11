@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.facet.Facet;
@@ -42,7 +42,8 @@ public class PackagingModifiableModelImpl implements PackagingModifiableModel {
   }
 
   @Override
-  public @NotNull ModifiableArtifactModel getModifiableArtifactModel() {
+  @NotNull
+  public ModifiableArtifactModel getModifiableArtifactModel() {
     if (myModifiableArtifactModel == null) {
       myModifiableArtifactModel = myModelsProvider instanceof IdeUIModifiableModelsProvider
                                   ?
@@ -59,8 +60,9 @@ public class PackagingModifiableModelImpl implements PackagingModifiableModel {
     });
   }
 
+  @NotNull
   @Override
-  public @NotNull PackagingElementResolvingContext getPackagingElementResolvingContext() {
+  public PackagingElementResolvingContext getPackagingElementResolvingContext() {
     if (myPackagingElementResolvingContext == null) {
       myPackagingElementResolvingContext = new MyPackagingElementResolvingContext();
     }
@@ -93,22 +95,26 @@ public class PackagingModifiableModelImpl implements PackagingModifiableModel {
     private final ManifestFileProvider myManifestFileProvider = new DefaultManifestFileProvider(this);
 
     @Override
-    public @NotNull Project getProject() {
+    @NotNull
+    public Project getProject() {
       return myProject;
     }
 
     @Override
-    public @NotNull ArtifactModel getArtifactModel() {
+    @NotNull
+    public ArtifactModel getArtifactModel() {
       return PackagingModifiableModelImpl.this.getModifiableArtifactModel();
     }
 
     @Override
-    public @NotNull ModulesProvider getModulesProvider() {
+    @NotNull
+    public ModulesProvider getModulesProvider() {
       return myModulesProvider;
     }
 
     @Override
-    public @NotNull FacetsProvider getFacetsProvider() {
+    @NotNull
+    public FacetsProvider getFacetsProvider() {
       return myFacetsProvider;
     }
 
@@ -121,8 +127,9 @@ public class PackagingModifiableModelImpl implements PackagingModifiableModel {
       return table != null ? table.getLibraryByName(libraryName) : null;
     }
 
+    @NotNull
     @Override
-    public @NotNull ManifestFileProvider getManifestFileProvider() {
+    public ManifestFileProvider getManifestFileProvider() {
       return myManifestFileProvider;
     }
   }
@@ -143,8 +150,9 @@ public class PackagingModifiableModelImpl implements PackagingModifiableModel {
       return myModelsProvider.getModifiableRootModel(module);
     }
 
+    @NotNull
     @Override
-    public @NotNull FacetModel getFacetModel(@NotNull Module module) {
+    public FacetModel getFacetModel(@NotNull Module module) {
       return myModelsProvider.getModifiableFacetModel(module);
     }
   }
@@ -156,7 +164,8 @@ public class PackagingModifiableModelImpl implements PackagingModifiableModel {
     }
 
     @Override
-    public @NotNull <F extends Facet> Collection<F> getFacetsByType(Module module, FacetTypeId<F> type) {
+    @NotNull
+    public <F extends Facet> Collection<F> getFacetsByType(Module module, FacetTypeId<F> type) {
       return myModelsProvider.getModifiableFacetModel(module).getFacetsByType(type);
     }
 
@@ -167,11 +176,12 @@ public class PackagingModifiableModelImpl implements PackagingModifiableModel {
   }
 
   private static class DummyArtifactModel implements ModifiableArtifactModel {
+    @NotNull
     @Override
-    public @NotNull ModifiableArtifact addArtifact(@NotNull String name,
-                                                   @NotNull ArtifactType artifactType,
-                                                   CompositePackagingElement<?> rootElement,
-                                                   @Nullable ProjectModelExternalSource externalSource) {
+    public ModifiableArtifact addArtifact(@NotNull String name,
+                                          @NotNull ArtifactType artifactType,
+                                          CompositePackagingElement<?> rootElement,
+                                          @Nullable ProjectModelExternalSource externalSource) {
       throw new UnsupportedOperationException();
     }
 
@@ -179,13 +189,15 @@ public class PackagingModifiableModelImpl implements PackagingModifiableModel {
     public void removeArtifact(@NotNull Artifact artifact) {
     }
 
+    @NotNull
     @Override
-    public @NotNull ModifiableArtifact getOrCreateModifiableArtifact(@NotNull Artifact artifact) {
+    public ModifiableArtifact getOrCreateModifiableArtifact(@NotNull Artifact artifact) {
       throw new UnsupportedOperationException();
     }
 
+    @Nullable
     @Override
-    public @Nullable Artifact getModifiableCopy(@NotNull Artifact artifact) {
+    public Artifact getModifiableCopy(@NotNull Artifact artifact) {
       return null;
     }
 
@@ -215,23 +227,27 @@ public class PackagingModifiableModelImpl implements PackagingModifiableModel {
       return new Artifact[0];
     }
 
+    @Nullable
     @Override
-    public @Nullable Artifact findArtifact(@NotNull String name) {
+    public Artifact findArtifact(@NotNull String name) {
       return null;
     }
 
+    @NotNull
     @Override
-    public @NotNull Artifact getArtifactByOriginal(@NotNull Artifact artifact) {
+    public Artifact getArtifactByOriginal(@NotNull Artifact artifact) {
       throw new UnsupportedOperationException();
     }
 
+    @NotNull
     @Override
-    public @NotNull Artifact getOriginalArtifact(@NotNull Artifact artifact) {
+    public Artifact getOriginalArtifact(@NotNull Artifact artifact) {
       throw new UnsupportedOperationException();
     }
 
+    @NotNull
     @Override
-    public @NotNull Collection<? extends Artifact> getArtifactsByType(@NotNull ArtifactType type) {
+    public Collection<? extends Artifact> getArtifactsByType(@NotNull ArtifactType type) {
       throw new UnsupportedOperationException();
     }
 

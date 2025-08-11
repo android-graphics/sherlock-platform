@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.cacheBuilder;
 
@@ -25,5 +25,6 @@ public abstract class CacheBuilderRegistry {
    * @param fileType the file type for which the cache builder is registered.
    * @return the cache builder, or null if none was registered.
    */
-  public abstract @Nullable WordsScanner getCacheBuilder(@NotNull FileType fileType);
+  @Nullable
+  public abstract WordsScanner getCacheBuilder(@NotNull FileType fileType);
 }

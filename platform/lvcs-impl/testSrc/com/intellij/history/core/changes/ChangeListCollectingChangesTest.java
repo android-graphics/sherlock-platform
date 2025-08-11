@@ -16,7 +16,6 @@
 
 package com.intellij.history.core.changes;
 
-import com.intellij.history.core.HistoryPathFilter;
 import org.junit.Test;
 
 import java.util.List;
@@ -334,8 +333,22 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
     assertEquals(array(cs2), getChangesFor("dir", "f"));
     assertEquals(array(cs2), getChangesFor("dir", "foo"));
     assertEquals(array(cs2), getChangesFor("dir", "FB"));
-    assertEquals(array(cs3, cs2), getChangesFor("dir", "bar"));
-    assertEquals(array(cs3), getChangesFor("dir", "Baz"));
+    assertEquals(array(cs3), getChangesFor("dir", "bar"));
+    assertEquals(array(), getChangesFor("dir", "Baz"));
+    assertEquals(array(cs3, cs2), getChangesFor("dir", "*Bar*"));
+  }
+
+  @Test
+  public void testFilteredChangesDoesnTIncludeChanges() {
+    ChangeSet cs1 = addChangeSet(facade, createDirectory(r, "dir"));
+    ChangeSet cs2 = addChangeSet(facade, createFile(r, "dir/FooBar"));
+    ChangeSet cs3 = addChangeSet(facade, createFile(r, "dir/BarBaz"));
+
+    assertEquals(array(cs2), getChangesFor("dir", "f"));
+    assertEquals(array(cs2), getChangesFor("dir", "foo"));
+    assertEquals(array(cs2), getChangesFor("dir", "FB"));
+    assertEquals(array(cs3), getChangesFor("dir", "bar"));
+    assertEquals(array(), getChangesFor("dir", "Baz"));
     assertEquals(array(cs3, cs2), getChangesFor("dir", "*Bar*"));
   }
 
@@ -359,6 +372,6 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
   }
 
   private List<ChangeSet> getChangesFor(String path, String pattern) {
-    return collectChanges(facade, path, PROJECT_ID, HistoryPathFilter.create(r.getPath(), pattern));
+    return collectChanges(facade, path, PROJECT_ID, pattern);
   }
 }

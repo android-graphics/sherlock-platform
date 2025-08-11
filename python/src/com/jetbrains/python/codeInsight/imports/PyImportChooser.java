@@ -4,11 +4,9 @@ package com.jetbrains.python.codeInsight.imports;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
@@ -23,7 +21,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class PyImportChooser implements ImportChooser {
+public final class PyImportChooser implements ImportChooser {
 
   @Override
   public Promise<ImportCandidateHolder> selectImport(List<? extends ImportCandidateHolder> sources, boolean useQualifiedImport) {
@@ -34,23 +32,18 @@ public class PyImportChooser implements ImportChooser {
     AsyncPromise<ImportCandidateHolder> result = new AsyncPromise<>();
 
     // GUI part
-    DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> {
-      var popup = JBPopupFactory.getInstance()
+    DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> JBPopupFactory.getInstance()
       .createPopupChooserBuilder(sources)
+      .setRenderer(new CellRenderer())
+      .setTitle(useQualifiedImport ? PyPsiBundle.message("ACT.qualify.with.module") : PyPsiBundle.message("ACT.from.some.module.import"))
       .setItemChosenCallback(item -> {
         result.setResult(item);
-      });
-      processPopup(popup, useQualifiedImport);
-      popup.createPopup()
-      .showInBestPositionFor(dataContext);
-    });
-    return result;
-  }
+      })
+      .setNamerForFiltering(o -> o.getPresentableText())
+      .createPopup()
+      .showInBestPositionFor(dataContext));
 
-  protected void processPopup(IPopupChooserBuilder<? extends ImportCandidateHolder> popup, boolean useQualifiedImport) {
-    popup.setRenderer(new CellRenderer())
-      .setTitle(useQualifiedImport ? PyPsiBundle.message("ACT.qualify.with.module") : PyPsiBundle.message("ACT.from.some.module.import"))
-      .setNamerForFiltering(o -> o.getPresentableText());
+    return result;
   }
 
   // Stolen from FQNameCellRenderer
@@ -73,8 +66,7 @@ public class PyImportChooser implements ImportChooser {
 
       PsiElement importable = value.getImportable();
       if (importable != null) {
-        Icon icon = ReadAction.compute(() -> importable.getIcon(0));
-        setIcon(icon);
+        setIcon(importable.getIcon(0));
       }
       String item_name = value.getPresentableText();
       append(item_name, SimpleTextAttributes.REGULAR_ATTRIBUTES);

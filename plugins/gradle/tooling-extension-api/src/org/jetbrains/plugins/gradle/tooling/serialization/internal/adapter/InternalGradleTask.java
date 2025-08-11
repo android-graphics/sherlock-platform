@@ -92,7 +92,6 @@ public final class InternalGradleTask implements GradleTask {
     this.gradleProject = gradleProject;
   }
 
-  @Override
   public String toString() {
     return "GradleTask{path='" + this.path + "',public=" + this.isPublic + "}";
   }

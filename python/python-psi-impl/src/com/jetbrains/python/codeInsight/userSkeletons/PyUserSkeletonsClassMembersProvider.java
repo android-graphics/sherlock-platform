@@ -21,8 +21,9 @@ import java.util.Collections;
 import java.util.List;
 
 public final class PyUserSkeletonsClassMembersProvider extends PyClassMembersProviderBase implements PyOverridingAncestorsClassMembersProvider {
+  @NotNull
   @Override
-  public @NotNull Collection<PyCustomMember> getMembers(@NotNull PyClassType classType, PsiElement location, @NotNull TypeEvalContext context) {
+  public Collection<PyCustomMember> getMembers(@NotNull PyClassType classType, PsiElement location, @NotNull TypeEvalContext context) {
     final PyClass cls = classType.getPyClass();
     final PyClass skeleton = PyUserSkeletonsUtil.getUserSkeletonWithContext(cls, context);
     if (skeleton != null) {
@@ -31,11 +32,12 @@ public final class PyUserSkeletonsClassMembersProvider extends PyClassMembersPro
     return Collections.emptyList();
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement resolveMember(@NotNull PyClassType type,
-                                            @NotNull String name,
-                                            @Nullable PsiElement location,
-                                            @NotNull PyResolveContext resolveContext) {
+  public PsiElement resolveMember(@NotNull PyClassType type,
+                                  @NotNull String name,
+                                  @Nullable PsiElement location,
+                                  @NotNull PyResolveContext resolveContext) {
     final PyClass cls = type.getPyClass();
     final PyClass skeleton = PyUserSkeletonsUtil.getUserSkeletonWithContext(cls, resolveContext.getTypeEvalContext());
     if (skeleton != null) {

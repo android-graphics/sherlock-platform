@@ -38,7 +38,8 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     super(GradleSettingsListener.TOPIC, project);
   }
 
-  public static @NotNull GradleSettings getInstance(@NotNull Project project) {
+  @NotNull
+  public static GradleSettings getInstance(@NotNull Project project) {
     return project.getService(GradleSettings.class);
   }
 
@@ -51,8 +52,9 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   protected void copyExtraSettingsFrom(@NotNull GradleSettings settings) {
   }
 
+  @Nullable
   @Override
-  public @Nullable GradleSettings.MyState getState() {
+  public GradleSettings.MyState getState() {
     MyState state = new MyState();
     fillState(state);
 
@@ -97,7 +99,9 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
    * is a possible situation when a user wants to configure particular directory to be excluded from anti-virus protection
    * in order to increase performance
    */
-  public @Nullable @NlsSafe String getServiceDirectoryPath() {
+  @Nullable
+  @NlsSafe
+  public String getServiceDirectoryPath() {
     return GradleLocalSettings.getInstance(getProject()).getGradleUserHome();
   }
 
@@ -109,7 +113,8 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     }
   }
 
-  public @Nullable String getGradleVmOptions() {
+  @Nullable
+  public String getGradleVmOptions() {
     return GradleSystemSettings.getInstance().getGradleVmOptions();
   }
 

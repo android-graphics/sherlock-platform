@@ -18,7 +18,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Dimension
 import java.util.concurrent.atomic.AtomicInteger
@@ -94,7 +93,7 @@ abstract class AsyncChangesTree : ChangesTree {
                               onRefreshed = null)
   }
 
-  open fun requestRefresh(treeStateStrategy: TreeStateStrategy<*>) {
+  fun requestRefresh(treeStateStrategy: TreeStateStrategy<*>) {
     return requestRefreshImpl(treeStateStrategy = treeStateStrategy,
                               onRefreshed = null)
   }
@@ -281,7 +280,6 @@ abstract class SimpleAsyncChangesTreeModel : AsyncChangesTreeModel {
 /**
  * [com.intellij.openapi.progress.ProgressIndicator]-friendly wrapper with two-step model updates.
  */
-@ApiStatus.Internal
 abstract class TwoStepAsyncChangesTreeModel<T>(val scope: CoroutineScope) : AsyncChangesTreeModel {
   private val deferredData: AtomicReference<Deferred<T>?> = AtomicReference()
 

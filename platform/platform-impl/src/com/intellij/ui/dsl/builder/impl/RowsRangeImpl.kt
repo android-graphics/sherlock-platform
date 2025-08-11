@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.observable.properties.whenPropertyChanged
 import com.intellij.ui.dsl.builder.RowsRange
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus

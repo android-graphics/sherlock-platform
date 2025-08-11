@@ -5,6 +5,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.StubElement;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.ast.controlFlow.AstScopeOwner;
 import org.jetbrains.annotations.ApiStatus;
@@ -18,7 +21,8 @@ public interface PyAstTypeAliasStatement extends PyAstStatement, PsiNameIdentifi
                                                  PyAstQualifiedNameOwner, AstScopeOwner {
 
   @Override
-  default @Nullable PsiElement getNameIdentifier() {
+  @Nullable
+  default PsiElement getNameIdentifier() {
     ASTNode nameNode = getNode().findChildByType(PyTokenTypes.IDENTIFIER);
     return nameNode != null ? nameNode.getPsi() : null;
   }
@@ -27,7 +31,8 @@ public interface PyAstTypeAliasStatement extends PyAstStatement, PsiNameIdentifi
   @Nullable
   PyAstTypeParameterList getTypeParameterList();
 
-  default @Nullable PyAstExpression getTypeExpression() {
+  @Nullable
+  default PyAstExpression getTypeExpression() {
     PsiElement child = getLastChild();
     while (child != null && !(child instanceof PyAstExpression)) {
       if (child instanceof PsiErrorElement) return null;

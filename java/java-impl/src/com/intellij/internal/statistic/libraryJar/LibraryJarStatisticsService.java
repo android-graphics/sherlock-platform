@@ -8,7 +8,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.net.URL;
 import java.util.Set;
@@ -25,7 +24,7 @@ public final class LibraryJarStatisticsService implements DumbAware {
     return ourInstance;
   }
 
-  public @Unmodifiable Set<String> getLibraryNames() {
+  public Set<String> getLibraryNames() {
     return ContainerUtil.map2Set(getTechnologyDescriptors(), descriptor -> descriptor.myName);
   }
 

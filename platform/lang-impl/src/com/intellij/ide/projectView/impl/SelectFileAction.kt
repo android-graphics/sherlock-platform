@@ -60,7 +60,7 @@ internal class SelectFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecifi
       }
       return true
     }
-    val wasJustActivated = projectFrame?.wasJustActivatedByClick == true
+    val wasJustActivated = projectFrame?.mouseReleaseCountSinceLastActivated == 1
     if (wasJustActivated) {
       if (SELECT_IN_LOG.isDebugEnabled) {
         SELECT_IN_LOG.debug("Forcing use of the last focused editor because the IDE frame was activated " +
@@ -116,4 +116,4 @@ internal class SelectFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecifi
     }
 }
 
-private val SELECT_IN_LOG = logger<SelectInProjectViewImpl>()
+val SELECT_IN_LOG = logger<SelectInProjectViewImpl>()

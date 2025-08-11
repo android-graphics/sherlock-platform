@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant;
 
 import com.intellij.lang.ant.dom.AntDomAntlib;
@@ -34,7 +34,8 @@ public final class AntSupport {
   // Managing ant files dependencies via the <import> task.
   //
 
-  public static @Nullable AntDomProject getAntDomProject(PsiFile psiFile) {
+  @Nullable
+  public static AntDomProject getAntDomProject(PsiFile psiFile) {
     if (psiFile instanceof XmlFile) {
       final DomManager domManager = DomManager.getDomManager(psiFile.getProject());
       final DomFileElement<AntDomProject> fileElement = domManager.getFileElement((XmlFile)psiFile, AntDomProject.class);
@@ -43,7 +44,8 @@ public final class AntSupport {
     return null;
   }
 
-  public static @Nullable AntDomProject getAntDomProjectForceAntFile(PsiFile psiFile) {
+  @Nullable
+  public static AntDomProject getAntDomProjectForceAntFile(PsiFile psiFile) {
     if (psiFile instanceof XmlFile) {
       final DomManager domManager = DomManager.getDomManager(psiFile.getProject());
       DomFileElement<AntDomProject> fileElement = domManager.getFileElement((XmlFile)psiFile, AntDomProject.class);
@@ -56,7 +58,8 @@ public final class AntSupport {
     return null;
   }
 
-  public static @Nullable AntDomAntlib getAntLib(PsiFile psiFile) {
+  @Nullable
+  public static AntDomAntlib getAntLib(PsiFile psiFile) {
     if (psiFile instanceof XmlFile) {
       final DomManager domManager = DomManager.getDomManager(psiFile.getProject());
       final DomFileElement<AntDomAntlib> fileElement = domManager.getFileElement((XmlFile)psiFile, AntDomAntlib.class);
@@ -65,12 +68,14 @@ public final class AntSupport {
     return null;
   }
 
-  public static @Nullable AntDomElement getAntDomElement(XmlTag xmlTag) {
+  @Nullable
+  public static AntDomElement getAntDomElement(XmlTag xmlTag) {
     final DomElement domElement = DomManager.getDomManager(xmlTag.getProject()).getDomElement(xmlTag);
     return domElement instanceof AntDomElement? (AntDomElement)domElement : null;
   }
 
-  public static @Nullable AntDomElement getInvocationAntDomElement(ConvertContext context) {
+  @Nullable
+  public static AntDomElement getInvocationAntDomElement(ConvertContext context) {
     return context.getInvocationElement().getParentOfType(AntDomElement.class, false);
   }
 }

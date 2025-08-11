@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.AntBundle;
@@ -23,7 +23,7 @@ public class MetaTarget implements AntBuildTargetBase {
   private final @Nls String myName;
   private final @Nls String myDescription;
 
-  public MetaTarget(final AntBuildFileBase buildFile, final @Nls String displayName, final List<String> targets) {
+  public MetaTarget(final AntBuildFileBase buildFile, @Nls final String displayName, final List<String> targets) {
     myBuildFile = buildFile;
     myTargets = targets;
     myName = displayName;
@@ -39,8 +39,9 @@ public class MetaTarget implements AntBuildTargetBase {
     return myBuildFile;
   }
 
+  @NotNull
   @Override
-  public @NotNull List<@NlsSafe String> getTargetNames() {
+  public List<@NlsSafe String> getTargetNames() {
     return myTargets;
   }
 
@@ -50,7 +51,8 @@ public class MetaTarget implements AntBuildTargetBase {
   }
 
   @Override
-  public @Nullable @NlsSafe String getDisplayName() {
+  @Nullable
+  public @NlsSafe String getDisplayName() {
     return getName();
   }
 
@@ -83,12 +85,14 @@ public class MetaTarget implements AntBuildTargetBase {
   }
 
   @Override
-  public @Nullable Navigatable getOpenFileDescriptor() {
+  @Nullable
+  public Navigatable getOpenFileDescriptor() {
     return null;
   }
 
   @Override
-  public @Nullable BuildTask findTask(final String taskName) {
+  @Nullable
+  public BuildTask findTask(final String taskName) {
     return null;
   }
 
@@ -98,11 +102,11 @@ public class MetaTarget implements AntBuildTargetBase {
   }
 
   @Override
-  public @Nullable VirtualFile getContainingFile() {
+  @Nullable
+  public VirtualFile getContainingFile() {
     return myBuildFile.getVirtualFile();
   }
 
-  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -123,7 +127,6 @@ public class MetaTarget implements AntBuildTargetBase {
     return true;
   }
 
-  @Override
   public int hashCode() {
     int code = myBuildFile.hashCode();
     for (String name : myTargets) {

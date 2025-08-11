@@ -79,7 +79,6 @@ import java.util.function.Supplier;
  */
 @Deprecated
 @ApiStatus.Experimental
-@ApiStatus.Internal
 public final class Checks {
 
   public static final @NotNull @NonNls String PRECONDITION_IS_NOT_SATISFIED = "Precondition is not satisfied";

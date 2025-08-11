@@ -16,12 +16,10 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.openapi.Disposable;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Dmitry Batkovich
  */
-@ApiStatus.Internal
 public interface InspectionTreeLoadingProgressAware extends Disposable {
 
   void updateLoadingProgress();

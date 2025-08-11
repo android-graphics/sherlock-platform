@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -34,13 +34,15 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentModCo
   }
 
   @Override
-  public @NotNull String getText() {
+  @NotNull
+  public String getText() {
     String myText = super.getText();
     return StringUtil.isEmpty(myText) ? JavaAnalysisBundle.message("suppress.inspection.member") : myText;
   }
 
   @Override
-  public @Nullable PsiJavaDocumentedElement getContainer(final PsiElement context) {
+  @Nullable
+  public PsiJavaDocumentedElement getContainer(final PsiElement context) {
     if (context == null || !BaseIntentionAction.canModify(context)) {
       return null;
     }
@@ -61,7 +63,7 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentModCo
   }
 
   @Override
-  public boolean isAvailable(final @NotNull Project project, final @NotNull PsiElement context) {
+  public boolean isAvailable(@NotNull final Project project, @NotNull final PsiElement context) {
     PsiJavaDocumentedElement container = getContainer(context);
     boolean isValid = container != null && !(container instanceof PsiMethod && container instanceof SyntheticElement);
     if (!isValid) {
@@ -83,14 +85,15 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentModCo
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, @NotNull final PsiElement element) throws IncorrectOperationException {
     PsiJavaDocumentedElement container = getContainer(element);
     if (container == null) return;
     doSuppress(project, container);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return JavaAnalysisBundle.message("suppress.inspection.member");
   }
 
@@ -142,7 +145,8 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentModCo
     return id != null ? id : myID;
   }
 
-  static @Nullable String getID(@NotNull PsiElement place, String alternativeID) {
+  @Nullable
+  static String getID(@NotNull PsiElement place, String alternativeID) {
     if (alternativeID != null) {
       final Module module = ModuleUtilCore.findModuleForPsiElement(place);
       if (module != null) {
@@ -153,10 +157,5 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentModCo
     }
 
     return null;
-  }
-
-  @Override
-  public int getPriority() {
-    return 40;
   }
 }

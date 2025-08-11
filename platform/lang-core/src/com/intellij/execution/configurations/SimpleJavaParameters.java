@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.CantRunException;
@@ -40,7 +40,8 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
 
   private final JavaTargetDependentParameters myTargetDependentParameters = new JavaTargetDependentParameters();
 
-  public @Nullable Sdk getJdk() {
+  @Nullable
+  public Sdk getJdk() {
     return myJdk;
   }
 
@@ -76,7 +77,8 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     return myVmParameters;
   }
 
-  public @Nullable Charset getCharset() {
+  @Nullable
+  public Charset getCharset() {
     return myCharset;
   }
 
@@ -186,7 +188,8 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   }
 
   @ApiStatus.Experimental
-  public @NotNull JavaTargetDependentParameters getTargetDependentParameters() {
+  @NotNull
+  public JavaTargetDependentParameters getTargetDependentParameters() {
     return myTargetDependentParameters;
   }
 
@@ -196,7 +199,8 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
    * @throws CantRunException when incorrect Java SDK is specified
    * @see JdkUtil#setupJVMCommandLine(SimpleJavaParameters)
    */
-  public @NotNull GeneralCommandLine toCommandLine() throws CantRunException {
+  @NotNull
+  public GeneralCommandLine toCommandLine() throws CantRunException {
     return JdkUtil.setupJVMCommandLine(this);
   }
 
@@ -204,12 +208,14 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
    * @throws CantRunException when incorrect Java SDK is specified
    * @see JdkUtil#setupJVMCommandLine(SimpleJavaParameters)
    */
-  public @NotNull TargetedCommandLineBuilder toCommandLine(@NotNull TargetEnvironmentRequest request)
+  @NotNull
+  public TargetedCommandLineBuilder toCommandLine(@NotNull TargetEnvironmentRequest request)
     throws CantRunException {
     return JdkUtil.setupJVMCommandLine(this, request);
   }
 
-  public @NotNull OSProcessHandler createOSProcessHandler() throws ExecutionException {
+  @NotNull
+  public OSProcessHandler createOSProcessHandler() throws ExecutionException {
     OSProcessHandler processHandler = new OSProcessHandler(toCommandLine());
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;

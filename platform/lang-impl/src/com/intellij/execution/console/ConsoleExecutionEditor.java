@@ -76,7 +76,8 @@ public final class ConsoleExecutionEditor implements Disposable {
     myConsolePromptDecorator.update();
   }
 
-  public @NotNull VirtualFile getVirtualFile() {
+  @NotNull
+  public VirtualFile getVirtualFile() {
     return myHelper.virtualFile;
   }
 
@@ -84,7 +85,8 @@ public final class ConsoleExecutionEditor implements Disposable {
     return myConsoleEditor;
   }
 
-  public @NotNull EditorEx getCurrentEditor() {
+  @NotNull
+  public EditorEx getCurrentEditor() {
     return ObjectUtils.notNull(myCurrentEditor, myConsoleEditor);
   }
 
@@ -96,7 +98,8 @@ public final class ConsoleExecutionEditor implements Disposable {
     return myConsoleEditor.getComponent();
   }
 
-  public @NotNull ConsolePromptDecorator getConsolePromptDecorator() {
+  @NotNull
+  public ConsolePromptDecorator getConsolePromptDecorator() {
     return myConsolePromptDecorator;
   }
 
@@ -119,11 +122,13 @@ public final class ConsoleExecutionEditor implements Disposable {
     return myConsoleEditor.getComponent().isVisible();
   }
 
-  public @NotNull String getPrompt() {
+  @Nullable
+  public String getPrompt() {
     return myConsolePromptDecorator.getMainPrompt();
   }
 
-  public @NotNull ConsoleViewContentType getPromptAttributes() {
+  @NotNull
+  public ConsoleViewContentType getPromptAttributes() {
     return myConsolePromptDecorator.getPromptAttributes();
   }
 
@@ -135,6 +140,7 @@ public final class ConsoleExecutionEditor implements Disposable {
     setPromptInner(prompt);
   }
 
+
   public void setEditable(boolean editable) {
     myConsoleEditor.setRendererMode(!editable);
     myConsolePromptDecorator.update();
@@ -145,7 +151,7 @@ public final class ConsoleExecutionEditor implements Disposable {
   }
 
 
-  private void setPromptInner(final @Nullable String prompt) {
+  private void setPromptInner(@Nullable final String prompt) {
     if (!myConsoleEditor.isDisposed()) {
       myConsolePromptDecorator.setMainPrompt(prompt != null ? prompt : "");
     }
@@ -165,12 +171,10 @@ public final class ConsoleExecutionEditor implements Disposable {
             continue;
           }
 
-          final Editor editor = ((TextEditor)fileEditor).getEditor();
-          if (editor instanceof EditorEx editorEx) {
-            editorEx.addFocusListener(myFocusListener, ConsoleExecutionEditor.this);
-            if (selectedTextEditor == editorEx) { // already focused
-              myCurrentEditor = editorEx;
-            }
+          final EditorEx editor = (EditorEx)((TextEditor)fileEditor).getEditor();
+          editor.addFocusListener(myFocusListener);
+          if (selectedTextEditor == editor) { // already focused
+            myCurrentEditor = editor;
           }
           ActionUtil.copyRegisteredShortcuts(editor.getComponent(), myConsoleEditor.getComponent());
         }
@@ -204,7 +208,7 @@ public final class ConsoleExecutionEditor implements Disposable {
 
   }
 
-  public void setInputText(final @NotNull String query) {
+  public void setInputText(@NotNull final String query) {
     DocumentUtil.writeInRunUndoTransparentAction(() -> myConsoleEditor.getDocument().setText(StringUtil.convertLineSeparators(query)));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
@@ -37,23 +37,28 @@ public final class MessageType {
     myBorderColor = borderColor;
   }
 
-  public @NotNull Icon getDefaultIcon() {
+  @NotNull
+  public Icon getDefaultIcon() {
     return myDefaultIcon;
   }
 
-  public @NotNull Color getPopupBackground() {
+  @NotNull
+  public Color getPopupBackground() {
     return myPopupBackground;
   }
 
-  public @NotNull Color getTitleForeground() {
+  @NotNull
+  public Color getTitleForeground() {
     return myForeground;
   }
 
-  public @NotNull Color getBorderColor() {
+  @NotNull
+  public Color getBorderColor() {
     return myBorderColor;
   }
 
-  public @NotNull NotificationType toNotificationType() {
+  @NotNull
+  public NotificationType toNotificationType() {
     return this == ERROR ? NotificationType.ERROR : this == WARNING ? NotificationType.WARNING : NotificationType.INFORMATION;
   }
 }

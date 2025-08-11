@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.memory.component;
 
 import com.intellij.openapi.Disposable;
@@ -35,11 +35,13 @@ public class InstancesTracker implements PersistentStateComponent<InstancesTrack
     return myState.isBackgroundTrackingEnabled;
   }
 
-  public @Nullable TrackingType getTrackingType(@NotNull String className) {
+  @Nullable
+  public TrackingType getTrackingType(@NotNull String className) {
     return myState.classes.getOrDefault(className, null);
   }
 
-  public @NotNull Map<String, TrackingType> getTrackedClasses() {
+  @NotNull
+  public Map<String, TrackingType> getTrackedClasses() {
     return new HashMap<>(myState.classes);
   }
 
@@ -79,8 +81,9 @@ public class InstancesTracker implements PersistentStateComponent<InstancesTrack
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable MyState getState() {
+  public MyState getState() {
     return new MyState(myState);
   }
 

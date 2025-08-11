@@ -23,8 +23,9 @@ public final class NumpyClassMembersProvider extends PyClassMembersProviderBase 
   private static final String BUNCH = "sklearn.datasets.base.Bunch";
   public static final List<String> BUNCH_MEMBERS = Lists.newArrayList("target", "data", "filenames", "target_names", "DESCR");
 
+  @NotNull
   @Override
-  public @NotNull Collection<PyCustomMember> getMembers(PyClassType clazz, PsiElement location, @NotNull TypeEvalContext context) {
+  public Collection<PyCustomMember> getMembers(PyClassType clazz, PsiElement location, @NotNull TypeEvalContext context) {
     if (location != null) {
       final PyClass pyClass = clazz.getPyClass();
       if (BUNCH.equals(pyClass.getQualifiedName())) {

@@ -27,7 +27,6 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SearchTextField;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -180,7 +179,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       ShowDiffAction.showDiffForChange(myProject, changes, index, new ShowDiffContext(DiffDialogHints.FRAME));
     }
 
-    private @Unmodifiable @NotNull List<DirectoryChange> iterFileChanges() {
+    private @NotNull List<DirectoryChange> iterFileChanges() {
       return ContainerUtil.filter(getDisplayedChanges(), each -> each.canShowFileDifference());
     }
 

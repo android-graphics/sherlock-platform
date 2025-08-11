@@ -135,19 +135,6 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase(),
 
     fun VirtualFile.sourceIOFile(): File? = getUserData(sourceIOFile)
 
-    fun VirtualFile.toIOFile(): File? {
-        val paths = mutableListOf<String>()
-        var vFile: VirtualFile? = this
-        while (vFile != null) {
-            vFile.sourceIOFile()?.let {
-                return File(it, paths.reversed().joinToString("/"))
-            }
-            paths.add(vFile.name)
-            vFile = vFile.parent
-        }
-        return null
-    }
-
     fun addRoot(module: Module, sourceDirInTestData: File, isTestRoot: Boolean, transformContainedFiles: ((File) -> Unit)? = null) {
         val tmpDir = createTempDirectory()
 
@@ -169,16 +156,17 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase(),
     fun Module.addDependency(
         other: Module,
         dependencyScope: DependencyScope = DependencyScope.COMPILE,
-        exported: Boolean = false,
-        productionOnTest: Boolean = false,
-    ): Module = this.apply { ModuleRootModificationUtil.addDependency(this, other, dependencyScope, exported, productionOnTest) }
+        exported: Boolean = false
+    ): Module = this.apply { ModuleRootModificationUtil.addDependency(this, other, dependencyScope, exported) }
 
     fun Module.removeDependency(
         other: Module,
     ): Module = this.apply {
         ModuleRootModificationUtil.updateModel(this) { model ->
             val entry = model.orderEntries
-                .filterIsInstance<ModuleOrderEntry>().single { it.moduleName == other.name }
+                .filterIsInstance<ModuleOrderEntry>()
+                .filter { it.moduleName == other.name }
+                .single()
             model.removeOrderEntry(entry)
         }
     }
@@ -186,23 +174,18 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase(),
     fun Module.addLibrary(
         jar: File,
         name: String = KotlinJdkAndLibraryProjectDescriptor.LIBRARY_NAME,
-        kind: PersistentLibraryKind<*>? = null,
-        sourceJar: File? = null
-    ) = addMultiJarLibrary(listOf(jar), name, kind, listOfNotNull(sourceJar))
+        kind: PersistentLibraryKind<*>? = null
+    ) = addMultiJarLibrary(listOf(jar), name, kind)
 
     fun Module.addMultiJarLibrary(
         jars: Collection<File>,
         name: String = KotlinJdkAndLibraryProjectDescriptor.LIBRARY_NAME,
         kind: PersistentLibraryKind<*>? = null,
-        sourceJars: Collection<File> = emptyList(),
     ) {
         assert(jars.isNotEmpty()) { "No JARs passed for a library" }
         ConfigLibraryUtil.addLibrary(this, name, kind) {
             for (jar in jars) {
                 addRoot(jar, OrderRootType.CLASSES)
-            }
-            for (sourceJar in sourceJars) {
-                addRoot(sourceJar, OrderRootType.SOURCES)
             }
         }
     }
@@ -211,11 +194,9 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase(),
         file: VirtualFile,
         name: String = KotlinJdkAndLibraryProjectDescriptor.LIBRARY_NAME,
         kind: PersistentLibraryKind<*>? = null,
-        sourceFile: VirtualFile? = null,
     ) {
         ConfigLibraryUtil.addLibrary(this, name, kind) {
             addRoot(file, OrderRootType.CLASSES)
-            sourceFile?.let { addRoot(it, OrderRootType.SOURCES) }
         }
     }
 
@@ -310,12 +291,11 @@ fun Module.createMultiplatformFacetM3(
     dependsOnModuleNames: List<String> = emptyList(),
     pureKotlinSourceFolders: List<String> = emptyList(),
     additionalVisibleModuleNames: Set<String> = emptySet(),
-    isHmppEnabled: Boolean = true
 ) {
     createFacetWithAdditionalSetup(platformKind, useProjectSettings) {
         this.dependsOnModuleNames = dependsOnModuleNames
         this.additionalVisibleModuleNames = additionalVisibleModuleNames
-        this.isHmppEnabled = isHmppEnabled
+        this.isHmppEnabled = true
         this.pureKotlinSourceFolders = pureKotlinSourceFolders
     }
 }

@@ -4,7 +4,6 @@ package com.intellij.psi.search;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -15,6 +14,5 @@ public interface IndexPatternOptimizer {
    return ApplicationManager.getApplication().getService(IndexPatternOptimizer.class);
  }
 
-  @Unmodifiable
  @NotNull List<String> extractStringsToFind(@NotNull String regexp);
 }

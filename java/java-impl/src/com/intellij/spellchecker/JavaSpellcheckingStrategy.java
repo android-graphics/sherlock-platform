@@ -3,7 +3,6 @@ package com.intellij.spellchecker;
 
 import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.util.ChronoUtil;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiMethod;
@@ -16,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author shkate@jetbrains.com
  */
-public final class JavaSpellcheckingStrategy extends SpellcheckingStrategy implements DumbAware {
+public final class JavaSpellcheckingStrategy extends SpellcheckingStrategy {
   private final MethodNameTokenizerJava myMethodNameTokenizer = new MethodNameTokenizerJava();
   private final DocCommentTokenizer myDocCommentTokenizer = new DocCommentTokenizer();
   private final LiteralExpressionTokenizer myLiteralExpressionTokenizer = new LiteralExpressionTokenizer();
@@ -31,7 +30,8 @@ public final class JavaSpellcheckingStrategy extends SpellcheckingStrategy imple
       return myDocCommentTokenizer;
     }
     if (element instanceof PsiLiteralExpression literalExpression) {
-      if (ChronoUtil.isPatternForDateFormat(literalExpression) || SuppressManager.isSuppressedInspectionName(literalExpression)) {
+      if (SuppressManager.isSuppressedInspectionName(literalExpression) ||
+          ChronoUtil.isPatternForDateFormat(literalExpression)) {
         return EMPTY_TOKENIZER;
       }
       return myLiteralExpressionTokenizer;

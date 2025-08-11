@@ -2,4 +2,7 @@ package com.intellij.marketplaceMl
 
 import com.intellij.ide.plugins.marketplace.ranking.MarketplaceLocalRanker
 
-private class MarketplaceLocalRankerImpl : MarketplaceLocalRanker by MarketplaceLocalRankingService.getInstance()
+val rankingService
+  get() = MarketplaceLocalRankingService.getInstance()
+
+class MarketplaceLocalRankerImpl : MarketplaceLocalRanker by rankingService

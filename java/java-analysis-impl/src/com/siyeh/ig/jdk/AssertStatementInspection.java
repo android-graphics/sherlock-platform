@@ -27,7 +27,8 @@ import java.util.Set;
 public final class AssertStatementInspection extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "statement.problem.descriptor");
   }

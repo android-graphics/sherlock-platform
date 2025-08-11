@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.impl;
 
@@ -12,18 +12,17 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsImplUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
 
-@ApiStatus.Internal
 public class ModuleVcsPathPresenter extends VcsPathPresenter {
   private final Project myProject;
 
@@ -31,8 +30,9 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
     myProject = project;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPresentableRelativePathFor(final VirtualFile file) {
+  public String getPresentableRelativePathFor(final VirtualFile file) {
     if (file == null) return "";
     return ReadAction.compute(() -> {
       if (myProject.isDisposed()) return file.getPresentableUrl();
@@ -50,8 +50,9 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
     });
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPresentableRelativePath(final @NotNull ContentRevision fromRevision, final @NotNull ContentRevision toRevision) {
+  public String getPresentableRelativePath(@NotNull final ContentRevision fromRevision, @NotNull final ContentRevision toRevision) {
     final FilePath fromPath = fromRevision.getFile();
     final FilePath toPath = toRevision.getFile();
 

@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.psi.PsiElement;
@@ -23,7 +22,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShowModulePropertiesFix implements QuickFix<CommonProblemDescriptor>, IntentionAction, LowPriorityAction, DumbAware {
+public class ShowModulePropertiesFix implements QuickFix<CommonProblemDescriptor>, IntentionAction, LowPriorityAction {
   private final String myModuleName;
 
   public ShowModulePropertiesFix(@NotNull PsiElement context) {

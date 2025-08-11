@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.internal;
 
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 final class DumpIntentionsAction extends AnAction implements DumbAware {
@@ -42,10 +43,11 @@ final class DumpIntentionsAction extends AnAction implements DumbAware {
       return;
     }
 
+    List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
     File root = VfsUtilCore.virtualToIoFile(file);
     Element el = new Element("root");
     Map<String, Element> categoryMap = new HashMap<>();
-    for (IntentionActionMetaData metaData : IntentionManagerSettings.getInstance().getMetaData()) {
+    for (IntentionActionMetaData metaData : list) {
       try {
         Element metadataElement = new Element("intention");
         metadataElement.setAttribute("family", metaData.getFamily());
@@ -85,7 +87,7 @@ final class DumpIntentionsAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(final @NotNull AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 }

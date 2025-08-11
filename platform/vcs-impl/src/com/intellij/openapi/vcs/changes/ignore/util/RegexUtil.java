@@ -129,7 +129,7 @@ public final class RegexUtil {
       if (!inSquare && Character.isLetterOrDigit(ch)) {
         part.append(sPattern.charAt(i));
       }
-      else if (!part.isEmpty()) {
+      else if (part.length() > 0) {
         parts.add(part.toString());
         part = new StringBuilder();
       }

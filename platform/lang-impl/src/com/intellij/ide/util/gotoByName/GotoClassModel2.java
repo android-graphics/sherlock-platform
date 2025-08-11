@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.IdeBundle;
@@ -51,7 +51,8 @@ public class GotoClassModel2 extends FilteringGotoByModel<LanguageRef> {
   }
 
   @Override
-  public @Nullable String getPromptText() {
+  @Nullable
+  public String getPromptText() {
     return IdeBundle.message("prompt.gotoclass.enter.class.name", StringUtil.toLowerCase(GotoClassPresentationUpdater.getActionTitle()));
   }
 
@@ -60,13 +61,15 @@ public class GotoClassModel2 extends FilteringGotoByModel<LanguageRef> {
     return IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getNotInMessage() {
+  public String getNotInMessage() {
     return IdeUICustomization.getInstance().projectMessage("label.no.matches.found.in.project");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getNotFoundMessage() {
+  public String getNotFoundMessage() {
     return IdeBundle.message("label.no.matches.found");
   }
 
@@ -87,7 +90,7 @@ public class GotoClassModel2 extends FilteringGotoByModel<LanguageRef> {
   }
 
   @Override
-  public String getFullName(final @NotNull Object element) {
+  public String getFullName(@NotNull final Object element) {
     if (element instanceof PsiElement && !((PsiElement)element).isValid()) {
       return null;
     }
@@ -126,8 +129,9 @@ public class GotoClassModel2 extends FilteringGotoByModel<LanguageRef> {
     return "procedures.navigating.goto.class";
   }
 
+  @NotNull
   @Override
-  public @NotNull String removeModelSpecificMarkup(@NotNull String pattern) {
+  public String removeModelSpecificMarkup(@NotNull String pattern) {
     if (pattern.startsWith("@")) return pattern.substring(1);
     return pattern;
   }

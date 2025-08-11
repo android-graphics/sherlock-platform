@@ -70,9 +70,11 @@ public final class XsltDebuggerExtension extends XsltRunnerExtension {
   private static final Key<Manifest> MANIFEST = Key.create("MANIFEST");
   private static final Key<String> ACCESS_TOKEN = Key.create("access token");
 
-  private static final @NonNls String SAXON_6_JAR = "saxon.jar";
+  @NonNls
+  private static final String SAXON_6_JAR = "saxon.jar";
 
-  private static final @NonNls String SAXON_9_JAR = "saxon9he.jar";
+  @NonNls
+  private static final String SAXON_9_JAR = "saxon9he.jar";
 
   @Override
   protected boolean supports(XsltRunConfiguration config, boolean debugger) {
@@ -202,7 +204,8 @@ public final class XsltDebuggerExtension extends XsltRunnerExtension {
     parameters.getClassPath().addTail(absolutePath.toString());
   }
 
-  private static @Nullable Boolean isValidXalanPresent(SimpleJavaParameters parameters) {
+  @Nullable
+  private static Boolean isValidXalanPresent(SimpleJavaParameters parameters) {
     final List<VirtualFile> files = parameters.getClassPath().getVirtualFiles();
     for (VirtualFile file : files) {
       if (file.getName().matches(".*xalan.*\\.jar")) {
@@ -273,7 +276,8 @@ public final class XsltDebuggerExtension extends XsltRunnerExtension {
     return transformerFile;
   }
 
-  private static @NotNull Path getPluginEngineDirInSources() {
+  @NotNull
+  private static Path getPluginEngineDirInSources() {
     Path path = PluginPathManager.getPluginHome("xslt-debugger").toPath().resolve("engine");
     assert Files.isDirectory(path) : path.toString();
     return path;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.ide.JavaUiBundle;
@@ -58,7 +58,8 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
 
   protected abstract JComponent getParentComponent();
 
-  protected @Nullable Library doCopy(LibraryEx library) {
+  @Nullable
+  protected Library doCopy(LibraryEx library) {
     final VirtualFile baseDir = getBaseDir();
     final String libPath = baseDir != null ? baseDir.getPath() + "/lib" : "";
     final VirtualFile[] classesRoots = library.getFiles(OrderRootType.CLASSES);
@@ -105,8 +106,8 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
   }
 
   private boolean copyOrMoveFiles(final Set<File> filesToProcess,
-                                  final @NotNull String targetDirPath,
-                                  final Map<String, String> copiedFiles) {
+                                    @NotNull final String targetDirPath,
+                                    final Map<String, String> copiedFiles) {
     final Ref<Boolean> finished = Ref.create(false);
     new Task.Modal(myProject, JavaUiBundle.message("progress.title.0.library.files", myCopy ? "Copying" : "Moving"), true) {
       @Override
@@ -176,7 +177,8 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
     presentation.setEnabledAndVisible(enabled);
   }
 
-  protected @Nullable VirtualFile getBaseDir() {
+  @Nullable
+  protected VirtualFile getBaseDir() {
     return myProject.getBaseDir();
   }
 

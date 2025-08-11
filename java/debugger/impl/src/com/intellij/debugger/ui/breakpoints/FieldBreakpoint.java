@@ -10,9 +10,9 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
@@ -50,7 +50,7 @@ import javax.swing.*;
 public final class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpointProperties> {
   private static final Logger LOG = Logger.getInstance(FieldBreakpoint.class);
 
-  public static final @NonNls Key<FieldBreakpoint> CATEGORY = BreakpointCategory.lookup("field_breakpoints");
+  @NonNls public static final Key<FieldBreakpoint> CATEGORY = BreakpointCategory.lookup("field_breakpoints");
 
   FieldBreakpoint(Project project, XBreakpoint breakpoint) {
     super(project, breakpoint);
@@ -148,20 +148,21 @@ public final class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBr
 
   @Override
   public void createRequestForPreparedClass(DebugProcessImpl debugProcess,
-                                            @NotNull ReferenceType refType) {
+                                            ReferenceType refType) {
+    VirtualMachineProxy vm = debugProcess.getVirtualMachineProxy();
     try {
       RequestManagerImpl manager = debugProcess.getRequestsManager();
-      Field field = DebuggerUtils.findField(refType, getFieldName());
+      Field field = refType.fieldByName(getFieldName());
       if (field == null) {
         manager.setInvalid(this, JavaDebuggerBundle.message("error.invalid.breakpoint.missing.field.in.class",
                                                             getFieldName(), refType.name()));
         return;
       }
-      if (isWatchModification() && refType.virtualMachine().canWatchFieldModification()) {
+      if (isWatchModification() && vm.canWatchFieldModification()) {
         manager.enableRequest(manager.createModificationWatchpointRequest(this, field));
         LOG.debug("Modification request added");
       }
-      if (isWatchAccess() && refType.virtualMachine().canWatchFieldAccess()) {
+      if (isWatchAccess() && vm.canWatchFieldAccess()) {
         manager.enableRequest(manager.createAccessWatchpointRequest(this, field));
         if (LOG.isDebugEnabled()) {
           LOG.debug("Access request added field = " + field.name() + "; refType = " + refType.name());

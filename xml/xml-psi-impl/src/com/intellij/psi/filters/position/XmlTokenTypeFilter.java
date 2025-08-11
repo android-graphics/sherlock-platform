@@ -48,7 +48,6 @@ public class XmlTokenTypeFilter implements ElementFilter{
     return false;
   }
 
-  @Override
   public String toString(){
     return "token-type(" + myType + ")";
   }

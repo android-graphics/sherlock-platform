@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.actions;
 
@@ -14,11 +14,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.NlsActions.ActionText;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
 public class MoveModulesToGroupAction extends AnAction {
   protected final ModuleGroup myModuleGroup;
 
@@ -55,7 +53,7 @@ public class MoveModulesToGroupAction extends AnAction {
     doMove(modules, myModuleGroup, e.getDataContext());
   }
 
-  public static void doMove(final Module @NotNull [] modules, final ModuleGroup group, final @Nullable DataContext dataContext) {
+  public static void doMove(final Module @NotNull [] modules, final ModuleGroup group, @Nullable final DataContext dataContext) {
     Project project = modules[0].getProject();
     ModifiableModuleModel modifiableModuleModel = dataContext != null
                                   ? LangDataKeys.MODIFIABLE_MODULE_MODEL.getData(dataContext)
@@ -74,8 +72,7 @@ public class MoveModulesToGroupAction extends AnAction {
       pane.updateFromRoot(true);
     }
 
-    String targetGroupName = group == null ? null : group.toString();
-    if (!ProjectSettingsService.getInstance(project).processModulesMoved(modules, targetGroupName) && pane != null) {
+    if (!ProjectSettingsService.getInstance(project).processModulesMoved(modules, group) && pane != null) {
       if (group != null) {
         pane.selectModuleGroup(group, true);
       }

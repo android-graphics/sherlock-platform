@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -12,7 +12,6 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -20,8 +19,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class XmlReferenceInspectionBase extends XmlSuppressableInspectionTool {
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override
       public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
@@ -82,7 +82,8 @@ public abstract class XmlReferenceInspectionBase extends XmlSuppressableInspecti
     return true;
   }
 
-  private @NotNull @Unmodifiable Collection<PsiReference> getUnresolvedReferencesToAnnotate(PsiReference[] references) {
+  @NotNull
+  private Collection<PsiReference> getUnresolvedReferencesToAnnotate(PsiReference[] references) {
     Map<TextRange, PsiReference> unresolvedReferences = new HashMap<>();
     for (PsiReference reference : references) {
       if (!needToCheckRef(reference)) {

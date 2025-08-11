@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.tools;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,7 +19,6 @@ import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
 import org.apache.xmlbeans.*;
 import org.apache.xmlbeans.impl.tool.CommandLine;
-import org.apache.xmlbeans.impl.xb.xsdschema.SchemaDocument;
 import org.apache.xmlbeans.impl.xsd2inst.SampleXmlUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +68,7 @@ final class Xsd2InstanceUtils {
     var sdocs = new ArrayList<XmlObject>();
     for (File schemaFile : schemaFiles) {
       try {
-        sdocs.add(SchemaDocument.Factory.parse(schemaFile,
+        sdocs.add(XmlObject.Factory.parse(schemaFile,
                                           (new XmlOptions()).setLoadLineNumbers().setLoadMessageDigest()));
       }
       catch (Exception e) {
@@ -98,13 +97,8 @@ final class Xsd2InstanceUtils {
       catch (XmlException e) {
         StringBuilder out = new StringBuilder("Schema compilation errors: ");
         var errors = e.getErrors();
-        if (errors != null) {
-          for (Object error : errors) {
-            out.append("\n").append(error);
-          }
-        }
-        else {
-          out.append(e.getMessage());
+        for (Object error : errors) {
+          out.append("\n").append(error);
         }
         throw new IllegalArgumentException(out.toString());
       }
@@ -156,7 +150,7 @@ final class Xsd2InstanceUtils {
     return Collections.emptyList();
   }
 
-  public static @NotNull String processAndSaveAllSchemas(@NotNull XmlFile file, final @NotNull Map<String, String> scannedToFileName,
+  public static @NotNull String processAndSaveAllSchemas(@NotNull XmlFile file, @NotNull final Map<String, String> scannedToFileName,
                                                          final @NotNull SchemaReferenceProcessor schemaReferenceProcessor) {
     final String fileName = file.getName();
 

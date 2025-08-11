@@ -1,4 +1,4 @@
-# $Id: body.py 9500 2023-12-14 22:38:49Z milde $
+# $Id: body.py 7267 2011-12-20 14:14:21Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -10,13 +10,11 @@ See `docutils.parsers.rst.directives` for API details.
 
 __docformat__ = 'reStructuredText'
 
-
 from docutils import nodes
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives
 from docutils.parsers.rst.roles import set_classes
 from docutils.utils.code_analyzer import Lexer, LexerError, NumberLines
-
 
 class BasePseudoSection(Directive):
 
@@ -36,21 +34,16 @@ class BasePseudoSection(Directive):
             raise self.error('The "%s" directive may not be used within '
                              'topics or body elements.' % self.name)
         self.assert_has_content()
-        if self.arguments:  # title (in sidebars optional)
-            title_text = self.arguments[0]
-            textnodes, messages = self.state.inline_text(
-                                      title_text, self.lineno)
-            titles = [nodes.title(title_text, '', *textnodes)]
-            # Sidebar uses this code.
-            if 'subtitle' in self.options:
-                textnodes, more_messages = self.state.inline_text(
-                    self.options['subtitle'], self.lineno)
-                titles.append(nodes.subtitle(self.options['subtitle'], '',
-                                             *textnodes))
-                messages.extend(more_messages)
-        else:
-            titles = []
-            messages = []
+        title_text = self.arguments[0]
+        textnodes, messages = self.state.inline_text(title_text, self.lineno)
+        titles = [nodes.title(title_text, '', *textnodes)]
+        # Sidebar uses this code.
+        if 'subtitle' in self.options:
+            textnodes, more_messages = self.state.inline_text(
+                self.options['subtitle'], self.lineno)
+            titles.append(nodes.subtitle(self.options['subtitle'], '',
+                                         *textnodes))
+            messages.extend(more_messages)
         text = '\n'.join(self.content)
         node = self.node_class(text, *(titles + messages))
         node['classes'] += self.options.get('class', [])
@@ -69,8 +62,6 @@ class Sidebar(BasePseudoSection):
 
     node_class = nodes.sidebar
 
-    required_arguments = 0
-    optional_arguments = 1
     option_spec = BasePseudoSection.option_spec.copy()
     option_spec['subtitle'] = directives.unchanged_required
 
@@ -78,10 +69,6 @@ class Sidebar(BasePseudoSection):
         if isinstance(self.state_machine.node, nodes.sidebar):
             raise self.error('The "%s" directive may not be used within a '
                              'sidebar element.' % self.name)
-        if 'subtitle' in self.options and not self.arguments:
-            raise self.error('The "subtitle" option may not be used '
-                             'without a title.')
-
         return BasePseudoSection.run(self)
 
 
@@ -137,8 +124,8 @@ class CodeBlock(Directive):
     optional_arguments = 1
     option_spec = {'class': directives.class_option,
                    'name': directives.unchanged,
-                   'number-lines': directives.unchanged  # integer or None
-                   }
+                   'number-lines': directives.unchanged # integer or None
+                  }
     has_content = True
 
     def run(self):
@@ -159,11 +146,7 @@ class CodeBlock(Directive):
             tokens = Lexer('\n'.join(self.content), language,
                            self.state.document.settings.syntax_highlight)
         except LexerError as error:
-            if self.state.document.settings.report_level > 2:
-                # don't report warnings -> insert without syntax highlight
-                tokens = Lexer('\n'.join(self.content), language, 'none')
-            else:
-                raise self.warning(error)
+            raise self.warning(error)
 
         if 'number-lines' in self.options:
             # optional argument `startline`, defaults to 1
@@ -182,11 +165,12 @@ class CodeBlock(Directive):
             node.attributes['source'] = self.options['source']
         # analyze content and add nodes for every token
         for classes, value in tokens:
+            # print (classes, value)
             if classes:
                 node += nodes.inline(value, value, classes=classes)
             else:
                 # insert as Text to decrease the verbosity of the output
-                node += nodes.Text(value)
+                node += nodes.Text(value, value)
 
         return [node]
 
@@ -194,10 +178,9 @@ class CodeBlock(Directive):
 class MathBlock(Directive):
 
     option_spec = {'class': directives.class_option,
-                   'name': directives.unchanged,
-                   # TODO: Add Sphinx' ``mathbase.py`` option 'nowrap'?
+                   'name': directives.unchanged}
+                   ## TODO: Add Sphinx' ``mathbase.py`` option 'nowrap'?
                    # 'nowrap': directives.flag,
-                   }
     has_content = True
 
     def run(self):
@@ -210,8 +193,7 @@ class MathBlock(Directive):
             if not block:
                 continue
             node = nodes.math_block(self.block_text, block, **self.options)
-            (node.source,
-             node.line) = self.state_machine.get_source_and_line(self.lineno)
+            node.line = self.content_offset + 1
             self.add_name(node)
             _nodes.append(node)
         return _nodes

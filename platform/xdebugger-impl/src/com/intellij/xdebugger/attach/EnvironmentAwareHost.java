@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.ExecutionException;
@@ -25,19 +25,22 @@ public abstract class EnvironmentAwareHost implements XAttachHost {
    * @param commandLine commandLine to execute on this host
    * @return {@link BaseProcessHandler}, with which the command is executed (for example with a timeout)
    */
-  public abstract @NotNull BaseProcessHandler getProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException;
+  @NotNull
+  public abstract BaseProcessHandler getProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException;
 
   /**
    * @param commandLine commandLine to execute on this host
    * @return output of the corresponding process
    */
-  public @NotNull ProcessOutput getProcessOutput(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+  @NotNull
+  public ProcessOutput getProcessOutput(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     BaseProcessHandler handler = getProcessHandler(commandLine);
     CapturingProcessRunner runner = new CapturingProcessRunner(handler);
     return runner.runProcess();
   }
 
-  public @NotNull AttachOSHandler getOsHandler() {
+  @NotNull
+  public AttachOSHandler getOsHandler() {
     if(myOsHandler == null) {
       myOsHandler = AttachOSHandler.getAttachOsHandler(this);
     }
@@ -52,7 +55,8 @@ public abstract class EnvironmentAwareHost implements XAttachHost {
    * @return stream with file contents or <code>null</code> if the specified file does not exist
    * @throws IOException on stream retrieval error
    */
-  public abstract @Nullable InputStream getFileContent(@NotNull String filePath) throws IOException;
+  @Nullable
+  public abstract InputStream getFileContent(@NotNull String filePath) throws IOException;
 
   /**
    * Check if it is possible to read the file on host machine
@@ -66,13 +70,14 @@ public abstract class EnvironmentAwareHost implements XAttachHost {
    * File system prefix for files from this host. It should be noted that the prefixes must be different for different hosts.
    * Path to the host file is obtained by concatenation of hostId and it's on-host path
    */
-  public abstract @NotNull String getFileSystemHostId();
+  @NotNull
+  public abstract String getFileSystemHostId();
 
   /**
    * @param credentialsObject is a parametrization of a host
    * @return whether the given credentials corresponds the same host
    */
-  public boolean isSameHost(final @NotNull Object credentialsObject) {
+  public boolean isSameHost(@NotNull final Object credentialsObject) {
     return false;
   }
 }

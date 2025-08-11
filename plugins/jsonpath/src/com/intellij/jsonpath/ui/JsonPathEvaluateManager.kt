@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jsonpath.ui
 
 import com.intellij.icons.AllIcons
@@ -25,7 +25,7 @@ import java.util.function.Supplier
 
 @Service(Service.Level.PROJECT)
 @ApiStatus.Experimental
-internal class JsonPathEvaluateManager internal constructor(private val project: Project) {
+class JsonPathEvaluateManager internal constructor(private val project: Project) {
   fun evaluateExpression(jsonPathExpr: String? = null) {
     val toolWindow = initToolwindow()
     val cm = toolWindow.contentManager

@@ -335,13 +335,6 @@ public enum GitVersionSpecialty {
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 26, 0, 0));
     }
-  },
-
-  INIT_SUPPORTS_REFTABLE_FORMAT {
-    @Override
-    public boolean existsIn(@NotNull GitVersion version) {
-      return version.isLaterOrEqual(new GitVersion(2, 45, 0, 0));
-    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);

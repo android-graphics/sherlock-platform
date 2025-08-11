@@ -14,7 +14,6 @@ public class ParamInfo {
     this.type = type;
   }
 
-  @Override
   public final int hashCode() {
     int hashCode = 0;
     if (name != null) {
@@ -26,7 +25,6 @@ public class ParamInfo {
     return hashCode;
   }
 
-  @Override
   public String toString() {
     return "<" + name + "," + type + ">";
   }

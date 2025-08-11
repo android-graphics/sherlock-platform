@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.facet.impl;
 
@@ -6,13 +6,11 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetModel;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@ApiStatus.Internal
 public abstract class FacetModelBase implements FacetModel {
   private volatile Map<FacetTypeId<?>, Collection<Facet<?>>> myType2Facets;
   private volatile Map<FacetAndType, Collection<Facet<?>>> myChildFacets;
@@ -45,7 +43,8 @@ public abstract class FacetModelBase implements FacetModel {
   }
 
   @Override
-  public @NotNull <F extends Facet<?>> Collection<F> getFacetsByType(@NotNull Facet<?> underlyingFacet, FacetTypeId<F> typeId) {
+  @NotNull
+  public <F extends Facet<?>> Collection<F> getFacetsByType(@NotNull Facet<?> underlyingFacet, FacetTypeId<F> typeId) {
     if (myChildFacets == null) {
       MultiMap<FacetAndType, Facet<?>> children = new MultiMap<>();
       for (Facet<?> facet : getAllFacets()) {
@@ -62,12 +61,14 @@ public abstract class FacetModelBase implements FacetModel {
   }
 
   @Override
-  public @NotNull String getFacetName(@NotNull Facet<?> facet) {
+  @NotNull
+  public String getFacetName(@NotNull Facet<?> facet) {
     return facet.getName();
   }
 
   @Override
-  public @Nullable <F extends Facet<?>> F findFacet(final FacetTypeId<F> type, final String name) {
+  @Nullable
+  public <F extends Facet<?>> F findFacet(final FacetTypeId<F> type, final String name) {
     final Collection<F> fs = getFacetsByType(type);
     for (F f : fs) {
       if (f.getName().equals(name)) {
@@ -78,19 +79,22 @@ public abstract class FacetModelBase implements FacetModel {
   }
 
   @Override
-  public @Nullable <F extends Facet<?>> F getFacetByType(final @NotNull Facet<?> underlyingFacet, final FacetTypeId<F> typeId) {
+  @Nullable
+  public <F extends Facet<?>> F getFacetByType(@NotNull final Facet<?> underlyingFacet, final FacetTypeId<F> typeId) {
     final Collection<F> fs = getFacetsByType(underlyingFacet, typeId);
     return fs.isEmpty() ? null : fs.iterator().next();
   }
 
   @Override
-  public @Nullable <F extends Facet<?>> F getFacetByType(FacetTypeId<F> typeId) {
+  @Nullable
+  public <F extends Facet<?>> F getFacetByType(FacetTypeId<F> typeId) {
     final Collection<F> facets = getFacetsByType(typeId);
     return facets.isEmpty() ? null : facets.iterator().next();
   }
 
   @Override
-  public @NotNull <F extends Facet<?>> Collection<F> getFacetsByType(FacetTypeId<F> typeId) {
+  @NotNull
+  public <F extends Facet<?>> Collection<F> getFacetsByType(FacetTypeId<F> typeId) {
     if (myType2Facets == null) {
       MultiMap<FacetTypeId<?>, Facet<?>> typeToFacets = new MultiMap<>();
       for (Facet<?> facet : getAllFacets()) {

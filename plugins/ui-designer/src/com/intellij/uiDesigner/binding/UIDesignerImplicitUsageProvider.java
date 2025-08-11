@@ -8,8 +8,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.stream.Stream;
 
 
 public final class UIDesignerImplicitUsageProvider implements ImplicitUsageProvider {
@@ -32,7 +33,7 @@ public final class UIDesignerImplicitUsageProvider implements ImplicitUsageProvi
 
   @Override
   public boolean isImplicitWrite(@NotNull PsiElement element) {
-    return element instanceof PsiField psiField && FormReferenceProvider.getFormFile(psiField) != null;
+    return element instanceof PsiField && FormReferenceProvider.getFormFile((PsiField)element) != null;
   }
 
   @Override
@@ -42,6 +43,6 @@ public final class UIDesignerImplicitUsageProvider implements ImplicitUsageProvi
 
   @Override
   public boolean isClassWithCustomizedInitialization(@NotNull PsiElement element) {
-    return element instanceof PsiClass psiClass && ContainerUtil.or(psiClass.getMethods(), this::isImplicitUsage);
+    return element instanceof PsiClass && Stream.of(((PsiClass)element).getMethods()).anyMatch(this::isImplicitUsage);
   }
 }

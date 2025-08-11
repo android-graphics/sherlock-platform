@@ -1,5 +1,5 @@
 // WITH_STDLIB
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 class FooException : Exception()
 
 class BarException : Exception()

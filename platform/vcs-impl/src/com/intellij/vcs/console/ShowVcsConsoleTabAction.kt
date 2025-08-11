@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.console
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -8,7 +8,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.wm.ToolWindowManager
 
-internal class ShowVcsConsoleTabAction : DumbAwareAction() {
+class ShowVcsConsoleTabAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.EDT
   }
@@ -28,8 +28,7 @@ internal class ShowVcsConsoleTabAction : DumbAwareAction() {
 
     val consoleTabService = project.serviceIfCreated<VcsConsoleTabService>()
     e.presentation.isEnabledAndVisible = consoleTabService != null &&
-                                         consoleTabService.hadMessages() &&
-                                         !consoleTabService.isConsoleVisible()
+                                         (!consoleTabService.isConsoleEmpty() || consoleTabService.isConsoleVisible())
   }
 
   override fun actionPerformed(e: AnActionEvent) {

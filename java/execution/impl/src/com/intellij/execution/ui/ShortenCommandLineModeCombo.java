@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -66,7 +66,8 @@ public class ShortenCommandLineModeCombo extends ComboBox<ShortenCommandLine> {
     setSelectedItem(preselection);
   }
 
-  private @Nullable String getJdkRoot(JrePathEditor pathEditor, Module module) {
+  @Nullable
+  private String getJdkRoot(JrePathEditor pathEditor, Module module) {
     if (!pathEditor.isAlternativeJreSelected()) {
       if (module != null) {
         Sdk sdk = JavaParameters.getJdkToRunModule(module, productionOnly());
@@ -91,8 +92,9 @@ public class ShortenCommandLineModeCombo extends ComboBox<ShortenCommandLine> {
     return true;
   }
 
+  @Nullable
   @Override
-  public @Nullable ShortenCommandLine getSelectedItem() {
+  public ShortenCommandLine getSelectedItem() {
     return (ShortenCommandLine)super.getSelectedItem();
   }
 

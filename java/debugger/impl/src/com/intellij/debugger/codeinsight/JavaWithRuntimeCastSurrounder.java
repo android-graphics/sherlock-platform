@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.codeinsight;
 
 import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder;
@@ -19,8 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
 
 public final class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
 
@@ -49,7 +47,7 @@ public final class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounde
       final ProgressWindow progressWindow = new ProgressWindow(true, expr.getProject());
       SurroundWithCastWorker worker = new SurroundWithCastWorker(editor, expr, debuggerContext, progressWindow);
       progressWindow.setTitle(JavaDebuggerBundle.message("title.evaluating"));
-      Objects.requireNonNull(debuggerContext.getManagerThread()).startProgress(worker, progressWindow);
+      debuggerContext.getDebugProcess().getManagerThread().startProgress(worker, progressWindow);
     }
     return null;
   }
@@ -63,7 +61,7 @@ public final class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounde
     }
 
     @Override
-    protected void typeCalculationFinished(final @Nullable PsiType type) {
+    protected void typeCalculationFinished(@Nullable final PsiType type) {
       if (type == null) {
         return;
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.internal;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,10 +14,11 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThrowableRunnable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -35,11 +36,11 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     new AtomicReference<>(ExternalSystemTaskState.NOT_STARTED);
   private final AtomicReference<Throwable> myError = new AtomicReference<>();
 
-  private final transient @NotNull Project myIdeProject;
+  @NotNull private final transient Project myIdeProject;
 
-  private final @NotNull ExternalSystemTaskId myId;
-  private final @NotNull ProjectSystemId myExternalSystemId;
-  private final @NotNull String myExternalProjectPath;
+  @NotNull private final ExternalSystemTaskId myId;
+  @NotNull private final ProjectSystemId myExternalSystemId;
+  @NotNull private final String myExternalProjectPath;
 
   protected AbstractExternalSystemTask(@NotNull ProjectSystemId id,
                                        @NotNull ExternalSystemTaskType type,
@@ -51,17 +52,20 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     myExternalProjectPath = externalProjectPath;
   }
 
-  public @NotNull ProjectSystemId getExternalSystemId() {
+  @NotNull
+  public ProjectSystemId getExternalSystemId() {
     return myExternalSystemId;
   }
 
   @Override
-  public @NotNull ExternalSystemTaskId getId() {
+  @NotNull
+  public ExternalSystemTaskId getId() {
     return myId;
   }
 
   @Override
-  public @NotNull ExternalSystemTaskState getState() {
+  @NotNull
+  public ExternalSystemTaskState getState() {
     return myState.get();
   }
 
@@ -78,11 +82,13 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     return myError.get();
   }
 
-  public @NotNull Project getIdeProject() {
+  @NotNull
+  public Project getIdeProject() {
     return myIdeProject;
   }
 
-  public @NotNull String getExternalProjectPath() {
+  @NotNull
+  public String getExternalProjectPath() {
     return myExternalProjectPath;
   }
 
@@ -110,14 +116,14 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   protected abstract boolean doCancel() throws Exception;
 
   @Override
-  public void execute(final @NotNull ProgressIndicator indicator, ExternalSystemTaskNotificationListener @NotNull ... listeners) {
+  public void execute(@NotNull final ProgressIndicator indicator, ExternalSystemTaskNotificationListener @NotNull ... listeners) {
     indicator.setIndeterminate(true);
     var listener = getProgressIndicatorListener(indicator);
     execute(ArrayUtil.append(listeners, listener));
   }
 
   @Override
-  public boolean cancel(final @NotNull ProgressIndicator indicator, ExternalSystemTaskNotificationListener @NotNull ... listeners) {
+  public boolean cancel(@NotNull final ProgressIndicator indicator, ExternalSystemTaskNotificationListener @NotNull ... listeners) {
     indicator.setIndeterminate(true);
     var listener = getProgressIndicatorListener(indicator);
     return cancel(ArrayUtil.append(listeners, listener));
@@ -132,17 +138,20 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
       addProgressListeners(listeners);
       withProcessingManager(() -> {
         withExecutionProgressManager(() -> {
-          withExecutionState(() -> {
-            doExecute();
-          });
+          doExecute();
         });
       });
+      setState(ExternalSystemTaskState.FINISHED);
     }
     catch (Exception e) {
       LOG.debug(e);
+      myError.set(e);
+      setState(ExternalSystemTaskState.FAILED);
     }
     catch (Throwable e) {
       LOG.error(e);
+      myError.set(e);
+      setState(ExternalSystemTaskState.FAILED);
     }
   }
 
@@ -158,19 +167,17 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     try {
       addProgressListeners(listeners);
       return withCancellationProgressManager(() -> {
-        return withCancellationState(() -> {
-          return doCancel();
-        });
+        return doCancel();
       });
     }
     catch (NotSupportedException e) {
+      setState(ExternalSystemTaskState.CANCELLATION_FAILED);
       showCancellationFailedNotification(e);
     }
-    catch (Exception e) {
-      LOG.debug(e);
-    }
     catch (Throwable e) {
-      LOG.error(e);
+      setState(ExternalSystemTaskState.CANCELLATION_FAILED);
+      myError.set(e);
+      LOG.warn(e);
     }
     return false;
   }
@@ -206,17 +213,14 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   }
 
   private void withExecutionProgressManager(@NotNull ThrowableRunnable<Exception> runnable) {
-    var projectPath = myExternalProjectPath;
-    var id = myId;
-
     var progressManager = ExternalSystemProgressNotificationManagerImpl.getInstanceImpl();
     try {
-      progressManager.onStart(projectPath, id);
+      progressManager.onStart(getId(), myExternalProjectPath);
       runnable.run();
-      progressManager.onSuccess(projectPath, id);
+      progressManager.onSuccess(getId());
     }
     catch (ProcessCanceledException exception) {
-      progressManager.onCancel(projectPath, id);
+      progressManager.onCancel(getId());
 
       Throwable cause = exception.getCause();
       if (cause == null || cause instanceof ExternalSystemException) {
@@ -225,72 +229,36 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
       throw new ProcessCanceledException(new ExternalSystemException(cause));
     }
     catch (ExternalSystemException exception) {
-      progressManager.onFailure(projectPath, id, exception);
+      progressManager.onFailure(getId(), exception);
       throw exception;
     }
     catch (Exception exception) {
-      progressManager.onFailure(projectPath, id, exception);
+      progressManager.onFailure(getId(), exception);
       throw new ExternalSystemException(exception);
     }
     catch (Throwable throwable) {
       var exception = new ExternalSystemException(throwable);
-      progressManager.onFailure(projectPath, id, exception);
+      progressManager.onFailure(getId(), exception);
       throw exception;
     }
     finally {
-      progressManager.onEnd(projectPath, id);
+      progressManager.onEnd(getId());
     }
   }
 
-  private boolean withCancellationProgressManager(@NotNull ThrowableComputable<Boolean, Exception> runnable) throws Exception {
+  private <R> R withCancellationProgressManager(@NotNull ThrowableComputable<R, Exception> runnable) throws Exception {
     var progressManager = ExternalSystemProgressNotificationManagerImpl.getInstanceImpl();
     try {
       progressManager.beforeCancel(getId());
       return runnable.compute();
     }
     finally {
-      progressManager.onCancel(myExternalProjectPath, getId());
+      progressManager.onCancel(getId());
     }
   }
 
-  private void withExecutionState(@NotNull ThrowableRunnable<Exception> runnable) throws Exception {
-    try {
-      runnable.run();
-      setState(ExternalSystemTaskState.FINISHED);
-    }
-    catch (ProcessCanceledException exception) {
-      setState(ExternalSystemTaskState.CANCELED);
-      myError.set(exception);
-      throw exception;
-    }
-    catch (Throwable exception) {
-      setState(ExternalSystemTaskState.FAILED);
-      myError.set(exception);
-      throw exception;
-    }
-  }
-
-  private boolean withCancellationState(@NotNull ThrowableComputable<Boolean, Exception> runnable) throws Exception {
-    try {
-      var isCancelled = runnable.compute();
-      if (isCancelled) {
-        setState(ExternalSystemTaskState.CANCELED);
-      }
-      return isCancelled;
-    }
-    catch (ProcessCanceledException exception) {
-      setState(ExternalSystemTaskState.CANCELED);
-      myError.set(exception);
-      throw exception;
-    }
-    catch (Throwable exception) {
-      setState(ExternalSystemTaskState.CANCELLATION_FAILED);
-      myError.set(exception);
-      throw exception;
-    }
-  }
-
-  protected @NotNull @NlsContexts.ProgressText String wrapProgressText(@NotNull String text) {
+  @NotNull
+  protected @NlsContexts.ProgressText String wrapProgressText(@NotNull String text) {
     return ExternalSystemBundle.message("progress.update.text", getExternalSystemId().getReadableName(), text);
   }
 
@@ -313,19 +281,6 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     return String.format("%s task %s: %s", myExternalSystemId.getReadableName(), myId, myState);
   }
 
-  /**
-   * @see com.intellij.openapi.util.UserDataHolderBase#copyUserDataTo
-   */
-  @ApiStatus.Internal
-  @SuppressWarnings({"unchecked", "rawtypes"})
-  protected void putUserDataTo(@NotNull UserDataHolder dataHolder) {
-    var userMap = getUserMap();
-    for (Key key : userMap.getKeys()) {
-      dataHolder.putUserData(key, userMap.get(key));
-    }
-  }
-
-  @ApiStatus.Internal
   protected static @NotNull ExternalSystemTaskNotificationListener wrapWithListener(
     @NotNull ExternalSystemProgressNotificationManagerImpl manager
   ) {
@@ -351,8 +306,8 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
       }
 
       @Override
-      public void onEnd(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
-        updater.onTaskEnd(id);
+      public void onEnd(@NotNull ExternalSystemTaskId id) {
+          updater.onTaskEnd(id);
       }
     };
   }

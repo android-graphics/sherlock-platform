@@ -1,11 +1,11 @@
-# $Id: cs.py 9452 2023-09-27 00:11:54Z milde $
+# $Id: cs.py 4564 2006-05-21 20:44:42Z wiemann $
 # Author: Marek Blaha <mb@dat.cz>
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
-# Two files must be translated for each language: one in docutils/languages,
-# the other in docutils/parsers/rst/languages.
+# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
+# translated for each language: one in docutils/languages, the other in
+# docutils/parsers/rst/languages.
 
 """
 Czech-language mappings for language-dependent features of Docutils.
@@ -16,7 +16,7 @@ __docformat__ = 'reStructuredText'
 labels = {
       # fixed: language-dependent
       'author': 'Autor',
-      'authors': 'Autoři',
+      'authors': 'Auto\u0159i',
       'organization': 'Organizace',
       'address': 'Adresa',
       'contact': 'Kontakt',
@@ -25,24 +25,24 @@ labels = {
       'status': 'Stav',
       'date': 'Datum',
       'copyright': 'Copyright',
-      'dedication': 'Věnování',
+      'dedication': 'V\u011Bnov\u00E1n\u00ED',
       'abstract': 'Abstrakt',
       'attention': 'Pozor!',
-      'caution': 'Opatrně!',
-      'danger': '!NEBEZPEČÍ!',
+      'caution': 'Opatrn\u011B!',
+      'danger': '!NEBEZPE\u010C\u00CD!',
       'error': 'Chyba',
       'hint': 'Rada',
-      'important': 'Důležité',
-      'note': 'Poznámka',
+      'important': 'D\u016Fle\u017Eit\u00E9',
+      'note': 'Pozn\u00E1mka',
       'tip': 'Tip',
-      'warning': 'Varování',
+      'warning': 'Varov\u00E1n\u00ED',
       'contents': 'Obsah'}
 """Mapping of node class name to label text."""
 
 bibliographic_fields = {
       # language-dependent: fixed
       'autor': 'author',
-      'autoři': 'authors',
+      'auto\u0159i': 'authors',
       'organizace': 'organization',
       'adresa': 'address',
       'kontakt': 'contact',
@@ -51,7 +51,7 @@ bibliographic_fields = {
       'stav': 'status',
       'datum': 'date',
       'copyright': 'copyright',
-      'věnování': 'dedication',
+      'v\u011Bnov\u00E1n\u00ED': 'dedication',
       'abstrakt': 'abstract'}
 """Czech (lowcased) to canonical name mapping for bibliographic fields."""
 

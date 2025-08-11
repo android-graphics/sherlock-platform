@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.console;
 
 import com.intellij.execution.filters.Filter;
@@ -19,13 +19,15 @@ import javax.swing.*;
 public class ConsoleViewWrapperBase implements ConsoleView, ExecutionConsoleEx {
   public static final String CONSOLE_VIEW_WRAPPER_VIEW_ID_PREFIX = "ConsoleViewWrapper";
 
-  private final @NotNull ConsoleView myDelegate;
+  @NotNull
+  private final ConsoleView myDelegate;
 
   public ConsoleViewWrapperBase(@NotNull ConsoleView delegate) {
     myDelegate = delegate;
   }
 
-  public @NotNull ConsoleView getDelegate() {
+  @NotNull
+  public ConsoleView getDelegate() {
     return myDelegate;
   }
 
@@ -119,15 +121,17 @@ public class ConsoleViewWrapperBase implements ConsoleView, ExecutionConsoleEx {
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable String getExecutionConsoleId() {
+  public String getExecutionConsoleId() {
     return myDelegate instanceof ExecutionConsoleEx
            ? ((ExecutionConsoleEx)myDelegate).getExecutionConsoleId()
            : null;
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent getComponent() {
+  public JComponent getComponent() {
     return myDelegate.getComponent();
   }
 

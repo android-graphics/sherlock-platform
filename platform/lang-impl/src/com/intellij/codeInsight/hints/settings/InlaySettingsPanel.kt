@@ -1,6 +1,4 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:ApiStatus.Internal
-
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
@@ -29,7 +27,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.tree.TreeUtil
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.util.concurrent.Callable
@@ -380,7 +377,7 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
     apply(tree.model.root as CheckedTreeNode, InlayHintsSettings.instance())
     ParameterHintsPassFactory.forceHintsUpdateOnNextPass()
     DeclarativeInlayHintsPassFactory.resetModificationStamp()
-    InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project, "InlaySettingsPanel.apply()")
+    InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project)
   }
 
   private fun apply(node: CheckedTreeNode, settings: InlayHintsSettings) {

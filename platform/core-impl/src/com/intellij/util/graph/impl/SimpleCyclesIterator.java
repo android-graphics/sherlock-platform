@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.graph.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.graph.Graph;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -16,7 +15,6 @@ import java.util.function.Consumer;
  *
  * @see <a href="https://github.com/jgrapht/jgrapht/blob/master/jgrapht-core/src/main/java/org/jgrapht/alg/cycle/JohnsonSimpleCycles.java">JGraphT implementation</a>
  */
-@ApiStatus.Internal
 public class SimpleCyclesIterator<Node> {
   // The graph.
   private Graph<Node> myGraph;
@@ -265,7 +263,7 @@ public class SimpleCyclesIterator<Node> {
   private void unblock(@NotNull Node vertex) {
     myBlocked.remove(vertex);
     Set<Node> bSet = getBSet(vertex);
-    while (!bSet.isEmpty()) {
+    while (bSet.size() > 0) {
       Node w = bSet.iterator().next();
       bSet.remove(w);
       if (myBlocked.contains(w)) {

@@ -12,10 +12,11 @@ import org.jetbrains.kotlin.psi.KtProperty
 
 object AddToStringFixFactories {
 
-    private fun KaSession.getFixes(element: PsiElement?, expectedType: KaType, actualType: KaType): List<AddToStringFix> {
+    context(KaSession)
+    private fun getFixes(element: PsiElement?, expectedType: KaType, actualType: KaType): List<AddToStringFix> {
         if (element !is KtExpression) return emptyList()
         return buildList {
-            if (expectedType.isStringType || expectedType.isCharSequenceType) {
+            if (expectedType.isString || expectedType.isCharSequence) {
                 add(AddToStringFix(element, false))
                 if (expectedType.isMarkedNullable && actualType.isMarkedNullable) {
                     add(AddToStringFix(element, true))

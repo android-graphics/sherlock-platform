@@ -16,8 +16,8 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClassInitializer;
 import com.intellij.psi.PsiCodeBlock;
@@ -31,12 +31,14 @@ import org.jetbrains.annotations.NotNull;
 public final class EmptyInitializerInspection extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "EmptyClassInitializer";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "empty.class.initializer.problem.descriptor");
   }
@@ -49,7 +51,8 @@ public final class EmptyInitializerInspection extends BaseInspection {
   private static class EmptyInitializerFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "empty.class.initializer.delete.quickfix");
     }

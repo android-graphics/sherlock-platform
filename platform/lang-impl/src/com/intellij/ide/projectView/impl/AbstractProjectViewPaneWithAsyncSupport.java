@@ -46,18 +46,17 @@ import java.util.Comparator;
 
 import static com.intellij.ide.projectView.ProjectViewSelectionTopicKt.PROJECT_VIEW_SELECTION_TOPIC;
 
-public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractProjectViewPane
-  implements AbstractProjectViewPane.ProjectViewPaneWithAsyncSelect {
-
-  private ProjectViewPaneSupport myAsyncSupport;
+public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractProjectViewPane {
+  private AsyncProjectViewSupport myAsyncSupport;
   private JComponent myComponent;
 
   protected AbstractProjectViewPaneWithAsyncSupport(@NotNull Project project) {
     super(project);
   }
 
+  @NotNull
   @Override
-  public @NotNull JComponent createComponent() {
+  public JComponent createComponent() {
     if (myComponent != null) {
       SwingUtilities.updateComponentTreeUI(myComponent);
       return myComponent;
@@ -91,8 +90,7 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
       });
     }
     myTreeStructure = createStructure();
-    myAsyncSupport = myProject.getService(ProjectViewPaneSupportService.class)
-      .createProjectViewPaneSupport(this, myTreeStructure, createComparator());
+    myAsyncSupport = new AsyncProjectViewSupport(this, myProject, myTreeStructure, createComparator());
     configureAsyncSupport(myAsyncSupport);
     myAsyncSupport.setModelTo(myTree);
 
@@ -121,7 +119,7 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
   }
 
   @ApiStatus.Internal
-  protected void configureAsyncSupport(@NotNull ProjectViewPaneSupport support) {
+  protected void configureAsyncSupport(@NotNull AsyncProjectViewSupport support) {
   }
 
   @Override
@@ -184,8 +182,9 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
+  public ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
     Runnable afterUpdate;
     final ActionCallback cb = new ActionCallback();
     afterUpdate = cb.createSetDoneRunnable();
@@ -203,8 +202,8 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     selectCB(element, file, requestFocus);
   }
 
-  @Override
-  public @NotNull ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
+  @NotNull
+  public ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
     if (file != null) {
       if (myAsyncSupport != null) {
         return myAsyncSupport.select(myTree, element, file);
@@ -213,12 +212,15 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     return ActionCallback.DONE;
   }
 
-  protected abstract @NotNull AbstractTreeStructureBase createStructure();
+  @NotNull
+  protected abstract AbstractTreeStructureBase createStructure();
 
-  protected abstract @NotNull DnDAwareTree createTree(@NotNull DefaultTreeModel treeModel);
+  @NotNull
+  protected abstract DnDAwareTree createTree(@NotNull DefaultTreeModel treeModel);
 
   @ApiStatus.Internal
-  protected @Nullable JComponent createPromoter() {
+  @Nullable
+  protected JComponent createPromoter() {
     return null;
   }
 
@@ -240,13 +242,13 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
   }
 
   @Override
-  ProjectViewPaneSupport getAsyncSupport() {
+  AsyncProjectViewSupport getAsyncSupport() {
     return myAsyncSupport;
   }
 
   @ApiStatus.Internal
-  public @NotNull AsyncProjectViewSupport createAsyncSupport(@NotNull Disposable parent, @NotNull Comparator<NodeDescriptor<?>> comparator) {
-    // TODO: how do we apply the new implementation to CWM?
+  @NotNull
+  public AsyncProjectViewSupport createAsyncSupport(@NotNull Disposable parent, @NotNull Comparator<NodeDescriptor<?>> comparator) {
     return new AsyncProjectViewSupport(parent, myProject, createStructure(), comparator);
   }
 }

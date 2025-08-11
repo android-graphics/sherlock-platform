@@ -2,9 +2,7 @@
 package com.intellij.util.indexing.containers;
 
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
 public final class SortedFileIdSetIterator implements IntIdsIterator {
   private final int[] myBits;
   private final int myBitsLength;

@@ -1,7 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.FileViewProvider;
@@ -33,6 +34,7 @@ import java.util.function.Predicate;
  */
 @ApiStatus.Internal
 public final class Divider {
+  private static final Logger LOG = Logger.getInstance(Divider.class);
   private static final int STARTING_TREE_HEIGHT = 10;
 
   public record DividedElements(@NotNull PsiFile psiRoot, long priorityRange,
@@ -62,8 +64,7 @@ public final class Divider {
     }
   }
 
-  @ApiStatus.Internal
-  public static void divideInsideAndOutsideInOneRoot(@NotNull PsiFile root,
+  static void divideInsideAndOutsideInOneRoot(@NotNull PsiFile root,
                                               long restrictRange,
                                               long priorityRange,
                                               @NotNull Processor<? super DividedElements> processor) {

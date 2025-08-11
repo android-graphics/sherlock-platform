@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.application.WriteAction;
@@ -37,18 +37,22 @@ import java.io.IOException;
 import java.util.function.Function;
 
 public final class EclipseClasspathStorageProvider implements ClasspathStorageProvider {
+  @NotNull
   @Override
-  public @NotNull @NonNls String getID() {
+  @NonNls
+  public String getID() {
     return JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID;
   }
 
+  @NotNull
   @Override
-  public @NotNull @Nls String getDescription() {
+  @Nls
+  public String getDescription() {
     return getDescr();
   }
 
   @Override
-  public void assertCompatible(final @NotNull ModuleRootModel model) throws ConfigurationException {
+  public void assertCompatible(@NotNull final ModuleRootModel model) throws ConfigurationException {
     final String moduleName = model.getModule().getName();
     for (OrderEntry entry : model.getOrderEntries()) {
       if (entry instanceof LibraryOrderEntry libraryEntry) {
@@ -116,7 +120,8 @@ public final class EclipseClasspathStorageProvider implements ClasspathStoragePr
     }
   }
 
-  static @NotNull CachedXmlDocumentSet getFileCache(@NotNull Module module) {
+  @NotNull
+  static CachedXmlDocumentSet getFileCache(@NotNull Module module) {
     EclipseModuleManagerImpl moduleManager = EclipseModuleManagerImpl.getInstance(module);
     CachedXmlDocumentSet fileCache = moduleManager != null ? moduleManager.getDocumentSet() : null;
     if (fileCache == null) {

@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.reference;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -14,7 +13,6 @@ public interface RefOverridable extends RefJavaElement {
    * @return the collection of derived references, e.g. RefMethod may contain at least RefMethod, RefFunctionalExpression as derived reference,
    * RefFunctionalExpression contains nothing.
    */
-  @Unmodifiable
   @NotNull Collection<? extends RefOverridable> getDerivedReferences();
 
   /**

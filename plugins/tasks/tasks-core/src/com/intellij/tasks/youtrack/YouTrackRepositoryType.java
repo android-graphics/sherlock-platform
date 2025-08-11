@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.youtrack;
 
 import com.intellij.openapi.project.Project;
@@ -20,27 +19,32 @@ import java.util.EnumSet;
 public class YouTrackRepositoryType extends BaseRepositoryType<YouTrackRepository> {
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return "YouTrack";
   }
 
   @Override
-  public @NotNull Icon getIcon() {
+  @NotNull
+  public Icon getIcon() {
     return TasksCoreIcons.Youtrack;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getAdvertiser() {
+  public String getAdvertiser() {
     return TaskBundle.message("more.features.available.in.youtrack.plugin");
   }
 
   @Override
-  public @NotNull YouTrackRepository createRepository() {
+  @NotNull
+  public YouTrackRepository createRepository() {
     return new YouTrackRepository(this);
   }
 
+  @NotNull
   @Override
-  public @NotNull Class<YouTrackRepository> getRepositoryClass() {
+  public Class<YouTrackRepository> getRepositoryClass() {
     return YouTrackRepository.class;
   }
 
@@ -49,8 +53,9 @@ public class YouTrackRepositoryType extends BaseRepositoryType<YouTrackRepositor
     return EnumSet.of(TaskState.IN_PROGRESS, TaskState.RESOLVED);
   }
 
+  @NotNull
   @Override
-  public @NotNull TaskRepositoryEditor createEditor(YouTrackRepository repository, Project project, Consumer<? super YouTrackRepository> changeListener) {
+  public TaskRepositoryEditor createEditor(YouTrackRepository repository, Project project, Consumer<? super YouTrackRepository> changeListener) {
     return new YouTrackRepositoryEditor(project, repository, changeListener);
   }
 

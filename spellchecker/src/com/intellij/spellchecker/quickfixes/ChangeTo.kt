@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.quickfixes
 
 import com.intellij.codeInsight.intention.FileModifier
@@ -10,7 +10,6 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Segment
@@ -23,7 +22,7 @@ import com.intellij.psi.util.startOffset
 import com.intellij.spellchecker.util.SpellCheckerBundle
 import com.intellij.util.concurrency.ThreadingAssertions
 
-internal class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) : DefaultIntentionActionWithChoice, LazySuggestions(typo) {
+class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) : DefaultIntentionActionWithChoice, LazySuggestions(typo) {
   private val pointer = SmartPointerManager.getInstance(element.project).createSmartPsiElementPointer(element, element.containingFile)
 
   companion object {
@@ -33,13 +32,13 @@ internal class ChangeTo(typo: String, element: PsiElement, private val range: Te
     }
   }
 
-  private object ChangeToTitleAction : ChoiceTitleIntentionAction(fixName, fixName), HighPriorityAction, DumbAware
+  private object ChangeToTitleAction : ChoiceTitleIntentionAction(fixName, fixName), HighPriorityAction
 
   override fun getTitle(): ChoiceTitleIntentionAction = ChangeToTitleAction
 
   private inner class ChangeToVariantAction(
     override val index: Int
-  ) : ChoiceVariantIntentionAction(), HighPriorityAction, DumbAware {
+  ) : ChoiceVariantIntentionAction(), HighPriorityAction {
 
     @NlsSafe
     private var suggestion: String? = null

@@ -5,7 +5,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.CaretEvent;
@@ -16,13 +15,13 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyClipboardOwner;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import org.jetbrains.annotations.NotNull;
@@ -30,10 +29,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public final class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, Disposable, Dumpable, InlayModel.Listener {
   private static final RegistryValue MAX_CARET_COUNT = Registry.get("editor.max.caret.count");
@@ -305,7 +304,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
         }
       }
       finally {
-        myCurrentCaret.remove();
+        myCurrentCaret.set(null);
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -525,14 +524,12 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   }
 
   void updateSystemSelection() {
-    if (GraphicsEnvironment.isHeadless() ||
-        !Registry.is("editor.caret.update.primary.selection") ||
-        !CopyPasteManager.getInstance().isSystemSelectionSupported()) {
-      return;
-    }
+    if (GraphicsEnvironment.isHeadless() || !Registry.is("editor.caret.update.primary.selection")) return;
 
-    Transferable selection = new StringSelection(myEditor.getSelectionModel().getSelectedText(true));
-    CopyPasteManager.getInstance().setSystemSelectionContents(selection);
+    final Clipboard clip = myEditor.getComponent().getToolkit().getSystemSelection();
+    if (clip != null) {
+      clip.setContents(new StringSelection(myEditor.getSelectionModel().getSelectedText(true)), EmptyClipboardOwner.INSTANCE);
+    }
   }
 
   void fireCaretPositionChanged(@NotNull CaretEvent caretEvent) {
@@ -620,15 +617,13 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
 
   @Override
   public void onBatchModeFinish(@NotNull Editor editor) {
-    WriteIntentReadAction.run((Runnable)() -> {
-      if (myEditor.getDocument().isInBulkUpdate()) return;
-      doWithCaretMerging(() -> {
-        for (CaretImpl caret : myCarets) {
-          caret.resetCachedState();
-          caret.myVisualColumnAdjustment = 0;
-          caret.updateVisualPosition();
-        }
-      });
+    if (myEditor.getDocument().isInBulkUpdate()) return;
+    doWithCaretMerging(() -> {
+      for (CaretImpl caret : myCarets) {
+        caret.resetCachedState();
+        caret.myVisualColumnAdjustment = 0;
+        caret.updateVisualPosition();
+      }
     });
   }
 

@@ -1,4 +1,4 @@
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 fun test(f: (Int) -> Unit) {
     f(<selection>-</selection>)
     f(-)

@@ -1,4 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -50,7 +62,6 @@ public interface PyRequirement {
   @Nullable
   PyPackage match(@NotNull Collection<? extends PyPackage> packages);
 
-  boolean match(@NotNull PyPackage packageName);
 
   default boolean isEditable() {
     if (getInstallOptions().isEmpty()) return false;
@@ -59,11 +70,10 @@ public interface PyRequirement {
   }
 
   /**
-   * @return concatenated representation of name, extras and version specs, so it could be easily displayed.
+   * @return concatenated representation of name, extras and version specs so it could be easily displayed.
    */
-  default @NotNull @NlsSafe String getPresentableText() {
-    return getPresentableTextWithoutVersion() + getExtras() + StringUtil.join(getVersionSpecs(), PyRequirementVersionSpec::getPresentableText, ",");
+  @NotNull
+  default @NlsSafe String getPresentableText() {
+    return getName() + getExtras() + StringUtil.join(getVersionSpecs(), PyRequirementVersionSpec::getPresentableText, ",");
   }
-
-  @NotNull @NlsSafe String getPresentableTextWithoutVersion();
 }

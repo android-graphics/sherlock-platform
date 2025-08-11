@@ -1,1 +1,0 @@
-data class Main(val mainAttribute: String)

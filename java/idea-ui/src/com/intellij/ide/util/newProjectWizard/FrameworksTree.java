@@ -9,10 +9,12 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -29,7 +31,7 @@ public class FrameworksTree extends CheckboxTree {
     putClientProperty("JTree.lineStyle", "None");
   }
 
-  public void setRoots(List<? extends FrameworkSupportNodeBase<?>> roots) {
+  public void setRoots(List<? extends FrameworkSupportNodeBase> roots) {
     CheckedTreeNode root = new CheckedTreeNode(null);
     for (FrameworkSupportNodeBase<?> base : roots) {
       root.add(base);
@@ -106,5 +108,17 @@ public class FrameworksTree extends CheckboxTree {
         getCheckbox().setVisible(value instanceof FrameworkSupportNode);
       }
     }
+  }
+
+  @TestOnly
+  public boolean selectFramework(final String id, final boolean checked) {
+    TreeNode root = (TreeNode)getModel().getRoot();
+    return !TreeUtil.traverse(root, node -> {
+      if (node instanceof FrameworkSupportNode && id.equals(((FrameworkSupportNode)node).getId())) {
+        ((FrameworkSupportNode)node).setChecked(checked);
+        return false;
+      }
+      return true;
+    });
   }
 }

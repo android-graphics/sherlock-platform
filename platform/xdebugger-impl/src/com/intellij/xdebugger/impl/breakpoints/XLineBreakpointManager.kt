@@ -36,8 +36,8 @@ import com.intellij.openapi.vfs.VirtualFileUrlChangeAdapter
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
+import com.intellij.util.Alarm
 import com.intellij.util.DocumentUtil
-import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.EDT
@@ -48,21 +48,18 @@ import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.breakpoints.InlineBreakpointInlayManager.Companion.getInstance
-import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.event.MouseEvent
 
-@Internal
-class XLineBreakpointManager(private val project: Project, coroutineScope: CoroutineScope) {
+class XLineBreakpointManager(private val myProject: Project) {
   private val myBreakpoints = MultiMap.createConcurrent<String, XLineBreakpointImpl<*>>()
-  private val breakpointUpdateQueue: MergingUpdateQueue
+  private val myBreakpointsUpdateQueue: MergingUpdateQueue
 
   fun updateBreakpointsUI() {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
 
-    StartupManager.getInstance(project).runAfterOpened { queueAllBreakpointsUpdate() }
+    StartupManager.getInstance(myProject).runAfterOpened { queueAllBreakpointsUpdate() }
   }
 
   fun registerBreakpoint(breakpoint: XLineBreakpointImpl<*>, initUI: Boolean) {
@@ -88,9 +85,8 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
     if (breakpoints.isEmpty() || ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
-    SlowOperations.knownIssue("IJPL-162343").use {
-      breakpoints.forEach { it.updatePosition() }
-    }
+
+    breakpoints.forEach { it.updatePosition() }
 
     // Check if two or more breakpoints occurred at the same position and remove duplicates.
     val (valid, invalid) = breakpoints.partition { it.isValid }
@@ -101,9 +97,7 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
         if (areInlineBreakpoints) {
           // We cannot show multiple breakpoints of the same type at the same position.
           // Note that highlightRange might be null, so we still have to add line as an identity element.
-          SlowOperations.knownIssue("IJPL-162343").use {
-            Triple(b.type, b.line, b.highlightRange?.startOffset)
-          }
+          Triple(b.type, b.line, b.highlightRange?.startOffset)
         } else {
           // We cannot show multiple breakpoints of any type at the same line.
           b.line
@@ -117,7 +111,7 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
 
   private fun removeBreakpoints(toRemove: Collection<XLineBreakpoint<*>>?) {
     if (!toRemove.isNullOrEmpty()) {
-      (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).removeBreakpoints(toRemove)
+      (XDebuggerManager.getInstance(myProject).breakpointManager as XBreakpointManagerImpl).removeBreakpoints(toRemove)
     }
   }
 
@@ -140,11 +134,11 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
   // Skip waiting 300ms in myBreakpointsUpdateQueue (good for sync updates like enable/disable or create new breakpoint)
   private fun updateBreakpointNow(breakpoint: XLineBreakpointImpl<*>) {
     queueBreakpointUpdate(breakpoint)
-    breakpointUpdateQueue.sendFlush()
+    myBreakpointsUpdateQueue.sendFlush()
   }
 
   private fun queueBreakpointUpdate(breakpoint: XLineBreakpointImpl<*>, callOnUpdate: Runnable? = null) {
-    breakpointUpdateQueue.queue(object : Update(breakpoint) {
+    myBreakpointsUpdateQueue.queue(object : Update(breakpoint) {
       override fun run() {
         breakpoint.doUpdateUI(callOnUpdate ?: EmptyRunnable.INSTANCE)
       }
@@ -152,13 +146,13 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
   }
 
   fun queueAllBreakpointsUpdate() {
-    breakpointUpdateQueue.queue(object : Update("all breakpoints") {
+    myBreakpointsUpdateQueue.queue(object : Update("all breakpoints") {
       override fun run() {
         myBreakpoints.values().forEach { it.doUpdateUI(EmptyRunnable.INSTANCE) }
       }
     })
     // skip waiting
-    breakpointUpdateQueue.sendFlush()
+    myBreakpointsUpdateQueue.sendFlush()
   }
 
   private inner class MyDocumentListener : DocumentListener {
@@ -166,7 +160,7 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
       val document = e.document
       val breakpoints = getDocumentBreakpoints(document)
       if (!breakpoints.isEmpty()) {
-        breakpointUpdateQueue.queue(object : Update(document) {
+        myBreakpointsUpdateQueue.queue(object : Update(document) {
           override fun run() {
             ApplicationManager.getApplication().invokeLater {
               updateBreakpoints(document)
@@ -174,7 +168,7 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
           }
         })
 
-        getInstance(project).redrawDocument(e)
+        getInstance(myProject).redrawDocument(e)
       }
     }
   }
@@ -182,13 +176,13 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
   private var myDragDetected = false
 
   init {
-    val busConnection = project.messageBus.connect(coroutineScope)
+    val busConnection = myProject.messageBus.connect()
 
-    if (!project.isDefault) {
+    if (!myProject.isDefault) {
       val editorEventMulticaster = EditorFactory.getInstance().eventMulticaster
-      editorEventMulticaster.addDocumentListener(MyDocumentListener(), project)
-      editorEventMulticaster.addEditorMouseListener(MyEditorMouseListener(), project)
-      editorEventMulticaster.addEditorMouseMotionListener(MyEditorMouseMotionListener(), project)
+      editorEventMulticaster.addDocumentListener(MyDocumentListener(), myProject)
+      editorEventMulticaster.addEditorMouseListener(MyEditorMouseListener(), myProject)
+      editorEventMulticaster.addEditorMouseMotionListener(MyEditorMouseMotionListener(), myProject)
 
       busConnection.subscribe(XDependentBreakpointListener.TOPIC, MyDependentBreakpointListener())
       busConnection.subscribe(VirtualFileManager.VFS_CHANGES, BulkVirtualFileListenerAdapter(object : VirtualFileUrlChangeAdapter() {
@@ -216,13 +210,9 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
             updateBreakpoints(document)
           }
         }
-      }, project)
+      }, myProject)
     }
-    breakpointUpdateQueue = MergingUpdateQueue.mergingUpdateQueue(
-      name = "XLine breakpoints",
-      mergingTimeSpan = 300,
-      coroutineScope = coroutineScope,
-    )
+    myBreakpointsUpdateQueue = MergingUpdateQueue("XLine breakpoints", 300, true, null, myProject, null, Alarm.ThreadToUse.POOLED_THREAD)
 
     // Update breakpoints colors if global color schema was changed
     busConnection.subscribe(EditorColorsManager.TOPIC, MyEditorColorsListener())
@@ -261,7 +251,7 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
       }
 
       val document = editor.document
-      PsiDocumentManager.getInstance(project).commitDocument(document)
+      PsiDocumentManager.getInstance(myProject).commitDocument(document)
       val line = EditorUtil.yToLogicalLineNoCustomRenderers(editor, mouseEvent.y)
       val file = FileDocumentManager.getInstance().getFile(document)
       if (DocumentUtil.isValidLine(line, document) && file != null) {
@@ -278,9 +268,6 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
       if (isNewUI() && e.area == EditorMouseEventArea.LINE_NUMBERS_AREA) {
         return getInstance().showBreakpointsOverLineNumbers
       }
-      if (isNewUI() && e.editor.settings.isLineNumbersAfterIcons && e.editor.settings.isLineNumbersShown) {
-        return false
-      }
       if (e.area != EditorMouseEventArea.LINE_MARKERS_AREA && e.area != EditorMouseEventArea.FOLDING_OUTLINE_AREA) {
         return false
       }
@@ -289,11 +276,11 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
   }
 
   private fun isFromMyProject(editor: Editor): Boolean {
-    if (project === editor.project) {
+    if (myProject === editor.project) {
       return true
     }
 
-    for (fileEditor in FileEditorManager.getInstance(project).allEditors) {
+    for (fileEditor in FileEditorManager.getInstance(myProject).allEditors) {
       if (fileEditor is TextEditor && fileEditor.editor == editor) {
         return true
       }

@@ -103,12 +103,10 @@ public abstract class DfaValue {
     return false;
   }
 
-  @Override
   public boolean equals(Object obj) {
     return obj instanceof DfaValue && getID() == ((DfaValue)obj).getID();
   }
 
-  @Override
   public int hashCode() {
     return getID();
   }

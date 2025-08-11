@@ -17,7 +17,6 @@ import com.intellij.openapi.observable.util.whenKeyReleased
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
-import com.intellij.ui.UserActivityProviderComponent
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.SpacingConfiguration
@@ -39,16 +38,13 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
 import javax.swing.JPanel
-import javax.swing.event.ChangeEvent
-import javax.swing.event.ChangeListener
 import kotlin.math.max
 import kotlin.math.roundToInt
 
 private const val PLACE = "SegmentedButton"
 
 @ApiStatus.Internal
-class SegmentedButtonComponent<T>(private val presentation: (T) -> com.intellij.ui.dsl.builder.SegmentedButton.ItemPresentation)
-  : JPanel(GridLayout()), UserActivityProviderComponent {
+class SegmentedButtonComponent<T>(private val presentation: (T) -> com.intellij.ui.dsl.builder.SegmentedButton.ItemPresentation) : JPanel(GridLayout()) {
 
   var items: Collection<T> = emptyList()
     set(value) {
@@ -72,9 +68,6 @@ class SegmentedButtonComponent<T>(private val presentation: (T) -> com.intellij.
         for (listener in listenerList.getListeners(ModelListener::class.java)) {
           listener.onItemSelected()
         }
-        for (listener in listenerList.getListeners(ChangeListener::class.java)) {
-          listener.stateChanged(ChangeEvent(this))
-        }
 
         repaint()
       }
@@ -84,7 +77,7 @@ class SegmentedButtonComponent<T>(private val presentation: (T) -> com.intellij.
     isFocusable = true
     border = SegmentedButtonBorder()
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(size = DarculaUIUtil.BW.unscaled.roundToInt()))
-    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH)
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(true, true))
 
     addFocusListener(object : FocusListener {
       override fun focusGained(e: FocusEvent?) {
@@ -260,14 +253,6 @@ class SegmentedButtonComponent<T>(private val presentation: (T) -> com.intellij.
     fun onItemSelected() {}
 
     fun onRebuild() {}
-  }
-
-  override fun addChangeListener(changeListener: ChangeListener) {
-    listenerList.add(ChangeListener::class.java, changeListener)
-  }
-
-  override fun removeChangeListener(changeListener: ChangeListener) {
-    listenerList.remove(ChangeListener::class.java, changeListener)
   }
 }
 

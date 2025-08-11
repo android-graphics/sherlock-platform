@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.compiler;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -14,18 +14,21 @@ public final class JavacQuirksInspection extends AbstractBaseJavaLocalInspection
     return true;
   }
 
+  @Nls @NotNull
   @Override
-  public @Nls @NotNull String getGroupDisplayName() {
+  public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.compiler.issues");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getShortName() {
+  public String getShortName() {
     return "JavacQuirks";
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavacQuirksInspectionVisitor(holder);
   }
 }

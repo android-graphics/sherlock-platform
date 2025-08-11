@@ -28,7 +28,8 @@ public final class ClassComplexityInspection
   private static final int DEFAULT_COMPLEXITY_LIMIT = 80;
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "OverlyComplexClass";
   }
 
@@ -44,7 +45,8 @@ public final class ClassComplexityInspection
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final Integer totalComplexity = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "overly.complex.class.problem.descriptor", totalComplexity);

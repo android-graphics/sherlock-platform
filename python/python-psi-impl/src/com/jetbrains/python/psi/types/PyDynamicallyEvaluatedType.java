@@ -26,7 +26,8 @@ public final class PyDynamicallyEvaluatedType extends PyUnionType {
     super(members);
   }
 
-  public static @NotNull PyDynamicallyEvaluatedType create(@NotNull PyType type) {
+  @NotNull
+  public static PyDynamicallyEvaluatedType create(@NotNull PyType type) {
     final LinkedHashSet<PyType> members = new LinkedHashSet<>();
     if (type instanceof PyUnionType) {
       members.addAll(((PyUnionType)type).getMembers());

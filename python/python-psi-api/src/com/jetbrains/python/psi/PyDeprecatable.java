@@ -4,5 +4,6 @@ package com.jetbrains.python.psi;
 import org.jetbrains.annotations.Nullable;
 
 public interface PyDeprecatable {
-  default @Nullable String getDeprecationMessage() { return null; }
+  @Nullable
+  default String getDeprecationMessage() { return null; }
 }

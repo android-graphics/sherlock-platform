@@ -21,7 +21,8 @@ import java.util.List;
 @Service(Service.Level.PROJECT)
 public final class PsiJavaModuleModificationTracker extends SimpleModificationTracker implements Disposable {
 
-  private final @NotNull Project myProject;
+  @NotNull
+  private final Project myProject;
 
   public static PsiJavaModuleModificationTracker getInstance(Project project) {
     return project.getService(PsiJavaModuleModificationTracker.class);

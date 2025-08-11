@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -28,8 +28,9 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class PointlessNullCheckInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
+  @NotNull
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  protected String buildErrorString(Object... infos) {
     PsiMethodCallExpression parent =
       Objects.requireNonNull(PsiTreeUtil.getParentOfType((PsiElement)infos[1], PsiMethodCallExpression.class));
     return InspectionGadgetsBundle.message("pointless.nullcheck.problem.descriptor.call",
@@ -41,8 +42,9 @@ public final class PointlessNullCheckInspection extends BaseInspection implement
     return new PointlessNullCheckVisitor();
   }
 
+  @Nullable
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     return new RemoveRedundantPolyadicOperandFix(expression.getText());
   }
@@ -115,12 +117,14 @@ public final class PointlessNullCheckInspection extends BaseInspection implement
       return Arrays.stream(operands, i + 1, j).anyMatch(op -> VariableAccessUtils.variableIsUsed(variable, op));
     }
 
-    private static @Nullable PsiReferenceExpression getReferenceFromNullCheck(PsiBinaryExpression expression) {
+    @Nullable
+    private static PsiReferenceExpression getReferenceFromNullCheck(PsiBinaryExpression expression) {
       PsiExpression comparedWithNull = ExpressionUtils.getValueComparedWithNull(expression);
       return tryCast(PsiUtil.skipParenthesizedExprDown(comparedWithNull), PsiReferenceExpression.class);
     }
 
-    private @Nullable PsiReferenceExpression getReferenceFromImplicitNullCheckExpression(PsiExpression expression) {
+    @Nullable
+    private PsiReferenceExpression getReferenceFromImplicitNullCheckExpression(PsiExpression expression) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
       PsiReferenceExpression checked = getReferenceFromBooleanCall(expression);
       if (checked == null) {
@@ -129,7 +133,8 @@ public final class PointlessNullCheckInspection extends BaseInspection implement
       return checked;
     }
 
-    private static @Nullable PsiReferenceExpression getReferenceFromBooleanCall(PsiExpression expression) {
+    @Nullable
+    private static PsiReferenceExpression getReferenceFromBooleanCall(PsiExpression expression) {
       if (!(expression instanceof PsiMethodCallExpression call)) return null;
       if (!PsiTypes.booleanType().equals(call.getType())) return null;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
@@ -167,7 +172,8 @@ public final class PointlessNullCheckInspection extends BaseInspection implement
       return reference;
     }
 
-    private @Nullable PsiReferenceExpression getReferenceFromOrChain(PsiExpression expression) {
+    @Nullable
+    private PsiReferenceExpression getReferenceFromOrChain(PsiExpression expression) {
       if (!(expression instanceof PsiPolyadicExpression polyadicExpression)) return null;
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (JavaTokenType.OROR != tokenType) return null;

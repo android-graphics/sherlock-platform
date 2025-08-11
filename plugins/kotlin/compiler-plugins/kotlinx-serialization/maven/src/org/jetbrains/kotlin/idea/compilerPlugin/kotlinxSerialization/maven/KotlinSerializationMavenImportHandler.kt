@@ -3,9 +3,10 @@
 package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.maven
 
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.KotlinSerializationImportHandler
-import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
+import java.io.File
 
 class KotlinSerializationMavenImportHandler : AbstractMavenImportHandler() {
     override val compilerPluginId: String = "org.jetbrains.kotlinx.serialization"

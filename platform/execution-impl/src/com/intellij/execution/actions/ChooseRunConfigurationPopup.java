@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.CommonBundle;
@@ -41,7 +41,10 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -248,8 +251,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     return new MyAbstractAction(listPopup, number, executor);
   }
 
-  @ApiStatus.Internal
-  public abstract static class Wrapper implements NumericMnemonicItem {
+  private abstract static class Wrapper implements NumericMnemonicItem {
     private int myMnemonic = -1;
     private boolean myMnemonicsEnabled;
     private final boolean myAddSeparatorAbove;
@@ -502,7 +504,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     @Override
-    public PopupStep<?> onChosen(final ItemWrapper wrapper, boolean finalChoice) {
+    public PopupStep onChosen(final ItemWrapper wrapper, boolean finalChoice) {
       if (myAction.myEditConfiguration) {
         final Object o = wrapper.getValue();
         if (o instanceof RunnerAndConfigurationSettingsImpl) {
@@ -665,7 +667,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     @Override
-    public PopupStep<?> onChosen(final ActionWrapper selectedValue, boolean finalChoice) {
+    public PopupStep onChosen(final ActionWrapper selectedValue, boolean finalChoice) {
       return doFinalStep(() -> selectedValue.perform());
     }
 
@@ -894,7 +896,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     @Override
-    public PopupStep<?> onChosen(final ConfigurationActionsStep selectedValue, boolean finalChoice) {
+    public PopupStep onChosen(final ConfigurationActionsStep selectedValue, boolean finalChoice) {
       if (finalChoice) {
         if (myPopup.myEditConfiguration) {
           final RunnerAndConfigurationSettings settings = selectedValue.getSettings();
@@ -930,7 +932,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
   /**
    * @deprecated Use {@link #createSettingsList(Project, ExecutorProvider, DataContext, boolean)}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static @NotNull List<ItemWrapper<?>> createSettingsList(@NotNull Project project,
                                                                  @NotNull ExecutorProvider executorProvider,
                                                                  boolean isCreateEditAction) {
@@ -1131,11 +1133,11 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
                                                  @NotNull DataContext dataContext) {
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
 
-    List<ConfigurationFromContext> producers = PreferredProducerFind.getConfigurationsFromContext(context.getLocation(),
+    final List<ConfigurationFromContext> producers = PreferredProducerFind.getConfigurationsFromContext(context.getLocation(),
                                                                                                         context, false, true);
     if (producers == null) return;
 
-    producers = ContainerUtil.sorted(producers, ConfigurationFromContext.NAME_COMPARATOR);
+    producers.sort(ConfigurationFromContext.NAME_COMPARATOR);
 
     final RunnerAndConfigurationSettings[] preferred = {null};
 

@@ -6,17 +6,16 @@ internal class OpentelemetrySpanJsonParserWithChildrenFiltering(
   spanFilter: SpanFilter,
   private val childFilter: SpanFilter,
 ) : OpentelemetrySpanJsonParser(spanFilter) {
-  override fun processChild(result: MutableSet<SpanElement>, parent: SpanElement, index: Map<String, Collection<SpanData>>) {
+  override fun processChild(result: MutableSet<SpanElement>, parent: SpanElement, index: Map<String, Collection<SpanElement>>) {
     index.get(parent.spanId)?.forEach {
-      val span = toSpanElement(it)
       if (parent.isWarmup) {
-        span.isWarmup = true
+        it.isWarmup = true
       }
-      if (!childFilter.filter(span)) {
+      if (!childFilter.filter(it)) {
         return@forEach
       }
-      result.add(span)
-      processChild(result, span, index)
+      result.add(it)
+      processChild(result, it, index)
     }
   }
 }

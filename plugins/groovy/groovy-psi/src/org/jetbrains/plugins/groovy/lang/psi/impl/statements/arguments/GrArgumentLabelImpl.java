@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 
 import com.intellij.lang.ASTNode;
@@ -57,7 +57,8 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     return "Argument label";
   }
 
-  private @Nullable PsiPolyVariantReference getReferenceFromNamedArgumentProviders() {
+  @Nullable
+  private PsiPolyVariantReference getReferenceFromNamedArgumentProviders() {
     PsiElement namedArgument = getParent();
     if (!(namedArgument instanceof GrNamedArgument)) return null;
 
@@ -88,7 +89,8 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     return null;
   }
 
-  private @NotNull PsiPolyVariantReference getRealReference() {
+  @NotNull
+  private PsiPolyVariantReference getRealReference() {
     PsiReference[] otherReferences = ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS);
     PsiPolyVariantReference reference = getReferenceFromNamedArgumentProviders();
 
@@ -134,7 +136,8 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   }
 
   @Override
-  public @Nullable String getName() {
+  @Nullable
+  public String getName() {
     final PsiElement expression = PsiUtil.skipParentheses(getNameElement(), false);
     if (expression instanceof GrLiteral) {
       final Object value = ((GrLiteral)expression).getValue();
@@ -163,13 +166,15 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     return null;
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getElement() {
+  public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
-  public @NotNull TextRange getRangeInElement() {
+  public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());
   }
 
@@ -196,7 +201,8 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   }
 
   @Override
-  public @NotNull String getCanonicalText() {
+  @NotNull
+  public String getCanonicalText() {
     PsiElement resolved = resolve();
     if (resolved instanceof PsiMember && resolved instanceof PsiNamedElement) {
       PsiClass clazz = ((PsiMember)resolved).getContainingClass();
@@ -232,7 +238,8 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   }
 
   @Override
-  public @NotNull PsiElement getNameElement() {
+  @NotNull
+  public PsiElement getNameElement() {
     final PsiElement element = getFirstChild();
     assert element != null;
     return element;
@@ -247,7 +254,8 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   }
 
   @Override
-  public @Nullable PsiType getExpectedArgumentType() { // TODO use GroovyNamedArgumentProvider to determinate expected argument type.
+  @Nullable
+  public PsiType getExpectedArgumentType() { // TODO use GroovyNamedArgumentProvider to determinate expected argument type.
     return null;
   }
 
@@ -264,8 +272,9 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     return this;
   }
 
+  @Nullable
   @Override
-  public @Nullable GroovyPropertyWriteReference getConstructorPropertyReference() {
+  public GroovyPropertyWriteReference getConstructorPropertyReference() {
     return hasConstructorPropertyReference() ? myConstructorPropertyReference : null;
   }
 

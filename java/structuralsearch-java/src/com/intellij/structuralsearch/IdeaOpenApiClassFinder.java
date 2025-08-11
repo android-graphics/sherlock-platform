@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.application.PathManager;
@@ -29,8 +31,9 @@ public final class IdeaOpenApiClassFinder extends NonClasspathClassFinder {
     super(project);
   }
 
+  @NotNull
   @Override
-  protected @NotNull PackageDirectoryCache getCache(@Nullable GlobalSearchScope scope) {
+  protected PackageDirectoryCache getCache(@Nullable GlobalSearchScope scope) {
     return scope instanceof StructuralSearchScriptScope ? super.getCache(scope) : EMPTY_PACKAGE_DIRECTORY_CACHE;
   }
 

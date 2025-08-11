@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.local;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -6,15 +6,13 @@ import com.intellij.openapi.vcs.changes.ChangeListData;
 import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vcs.changes.ChangeListWorker;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
 public class AddList implements ChangeListCommand {
-  private final @NotNull String myName;
-  private final @Nullable String myComment;
-  private final @Nullable ChangeListData myData;
+  @NotNull private final String myName;
+  @Nullable private final String myComment;
+  @Nullable private final ChangeListData myData;
 
   private boolean myWasListCreated;
   private LocalChangeList myNewListCopy;
@@ -59,7 +57,8 @@ public class AddList implements ChangeListCommand {
     }
   }
 
-  public @Nullable LocalChangeList getNewListCopy() {
+  @Nullable
+  public LocalChangeList getNewListCopy() {
     return myNewListCopy;
   }
 }

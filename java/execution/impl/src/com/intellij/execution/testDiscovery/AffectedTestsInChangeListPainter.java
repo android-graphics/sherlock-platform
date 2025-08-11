@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction;
@@ -20,7 +20,7 @@ import static com.intellij.ui.SimpleTextAttributes.STYLE_UNDERLINE;
 final class AffectedTestsInChangeListPainter implements ChangeListDecorator {
   private final Project myProject;
 
-  AffectedTestsInChangeListPainter(@NotNull Project project) {
+  public AffectedTestsInChangeListPainter(@NotNull Project project) {
     myProject = project;
   }
 

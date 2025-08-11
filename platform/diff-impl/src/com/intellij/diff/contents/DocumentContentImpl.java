@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.diff.contents;
 
 import com.intellij.openapi.editor.Document;
@@ -15,12 +29,12 @@ import java.nio.charset.Charset;
  * Allows to compare some text associated with document.
  */
 public class DocumentContentImpl extends DocumentContentBase {
-  private final @Nullable FileType myType;
-  private final @Nullable VirtualFile myHighlightFile;
+  @Nullable private final FileType myType;
+  @Nullable private final VirtualFile myHighlightFile;
 
-  private final @Nullable LineSeparator mySeparator;
-  private final @Nullable Charset myCharset;
-  private final @Nullable Boolean myBOM;
+  @Nullable private final LineSeparator mySeparator;
+  @Nullable private final Charset myCharset;
+  @Nullable private final Boolean myBOM;
 
   public DocumentContentImpl(@NotNull Document document) {
     this(null, document, null);
@@ -47,28 +61,33 @@ public class DocumentContentImpl extends DocumentContentBase {
     myBOM = bom;
   }
 
+  @Nullable
   @Override
-  public @Nullable VirtualFile getHighlightFile() {
+  public VirtualFile getHighlightFile() {
     return myHighlightFile;
   }
 
+  @Nullable
   @Override
-  public @Nullable LineSeparator getLineSeparator() {
+  public LineSeparator getLineSeparator() {
     return mySeparator;
   }
 
   @Override
-  public @Nullable Boolean hasBom() {
+  @Nullable
+  public Boolean hasBom() {
     return myBOM;
   }
 
+  @Nullable
   @Override
-  public @Nullable FileType getContentType() {
+  public FileType getContentType() {
     return myType;
   }
 
+  @Nullable
   @Override
-  public @Nullable Charset getCharset() {
+  public Charset getCharset() {
     return myCharset;
   }
 }

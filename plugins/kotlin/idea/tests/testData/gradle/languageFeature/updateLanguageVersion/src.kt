@@ -1,1 +1,1 @@
-data object Test
+val x get() = 1

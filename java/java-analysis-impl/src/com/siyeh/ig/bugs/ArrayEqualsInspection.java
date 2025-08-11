@@ -33,7 +33,8 @@ import org.jetbrains.annotations.NotNull;
 public final class ArrayEqualsInspection extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "equals.called.on.array.problem.descriptor");
   }
@@ -64,12 +65,14 @@ public final class ArrayEqualsInspection extends BaseInspection {
     }
 
     @Override
-    public @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", deepEquals ? "Arrays.deepEquals()" : "Arrays.equals()");
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "Arrays.equals()");
     }
 
@@ -87,7 +90,7 @@ public final class ArrayEqualsInspection extends BaseInspection {
       final PsiExpressionList argumentList = call.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       final String argumentText = commentTracker.text(arguments[0]);
-      final @NonNls StringBuilder newExpressionText = new StringBuilder();
+      @NonNls final StringBuilder newExpressionText = new StringBuilder();
       if (deepEquals) {
         newExpressionText.append("java.util.Arrays.deepEquals(");
       }

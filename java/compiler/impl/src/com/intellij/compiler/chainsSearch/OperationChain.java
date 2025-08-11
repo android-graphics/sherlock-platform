@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.chainsSearch;
 
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
@@ -28,9 +28,10 @@ public final class OperationChain {
   private final int myWeight;
   private final PsiClass myQualifierClass;
 
-  public static @Nullable OperationChain create(@NotNull RefChainOperation operation,
-                                                int weight,
-                                                @NotNull ChainCompletionContext context) {
+  @Nullable
+  public static OperationChain create(@NotNull RefChainOperation operation,
+                                      int weight,
+                                      @NotNull ChainCompletionContext context) {
     if (operation instanceof MethodCall signature) {
       PsiClass qualifier = context.resolvePsiClass(signature.getQualifierDef());
       if (qualifier == null || (!signature.isStatic() && InheritanceUtil.isInheritorOrSelf(context.getTarget().getTargetClass(), qualifier, true))) {
@@ -74,11 +75,13 @@ public final class OperationChain {
     return Arrays.stream(myReverseOperations).anyMatch(op -> op instanceof ChainOperation.TypeCast);
   }
 
-  public @Nullable MethodCall getHeadMethodCall() {
+  @Nullable
+  public MethodCall getHeadMethodCall() {
     return myHeadMethodCall;
   }
 
-  public @NotNull RefChainOperation getHead() {
+  @NotNull
+  public RefChainOperation getHead() {
     return myHeadOperation;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.copy;
 
@@ -16,7 +16,9 @@ public interface CopyHandlerDelegate {
   void doCopy(PsiElement[] elements, PsiDirectory defaultTargetDirectory);
   void doClone(PsiElement element);
 
-  default @Nullable @Nls(capitalization = Nls.Capitalization.Title) String getActionName(PsiElement[] elements) {
+  @Nullable
+  @Nls(capitalization = Nls.Capitalization.Title)
+  default String getActionName(PsiElement[] elements) {
     return null;
   }
 }

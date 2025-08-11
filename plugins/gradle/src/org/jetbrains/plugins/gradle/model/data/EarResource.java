@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.serialization.PropertyMapping;
@@ -13,9 +13,12 @@ import java.io.Serializable;
 public class EarResource implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  private final @NotNull String earDirectory;
-  private final @NotNull String relativePath;
-  private final @NotNull File file;
+  @NotNull
+  private final String earDirectory;
+  @NotNull
+  private final String relativePath;
+  @NotNull
+  private final File file;
 
   @PropertyMapping({"earDirectory", "relativePath", "file"})
   public EarResource(@NotNull String earDirectory, @NotNull String relativePath, @NotNull File file) {
@@ -24,15 +27,18 @@ public class EarResource implements Serializable {
     this.file = file;
   }
 
-  public @NotNull String getEarDirectory() {
+  @NotNull
+  public String getEarDirectory() {
     return earDirectory;
   }
 
-  public @NotNull String getRelativePath() {
+  @NotNull
+  public String getRelativePath() {
     return relativePath;
   }
 
-  public @NotNull File getFile() {
+  @NotNull
+  public File getFile() {
     return file;
   }
 

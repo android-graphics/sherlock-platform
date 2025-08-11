@@ -8,7 +8,6 @@ import com.intellij.facet.impl.FacetEventsPublisher
 import com.intellij.facet.impl.FacetUtil
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -28,9 +27,10 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import io.opentelemetry.api.metrics.Meter
+import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.PROJECT)
-internal class FacetEntityChangeListener(private val project: Project) {
+internal class FacetEntityChangeListener(private val project: Project, coroutineScope: CoroutineScope) {
   private val publisher: FacetEventsPublisher
     get() = FacetEventsPublisher.getInstance(project)
 
@@ -40,9 +40,7 @@ internal class FacetEntityChangeListener(private val project: Project) {
       changes[facetType]?.asSequence()?.filterIsInstance<EntityChange.Added<*>>()?.forEach perFacet@{ facetChange ->
         fun createBridge(entity: ModuleSettingsFacetBridgeEntity): Facet<*> {
           val existingFacetBridge = builder.facetMapping().getDataByEntity(entity)
-          if (existingFacetBridge != null) {
-            return existingFacetBridge
-          }
+          if (existingFacetBridge != null) return existingFacetBridge
 
           val moduleEntity = facetBridgeContributor.getParentModuleEntity(entity)
           val module = builder.moduleMap.getDataByEntity(moduleEntity) ?: error("Module bridge should be available")
@@ -63,7 +61,7 @@ internal class FacetEntityChangeListener(private val project: Project) {
   }
 
   class WorkspaceModelListener(project: Project) : WorkspaceModelChangeListener {
-    private val facetEntityChangeListener = project.service<FacetEntityChangeListener>()
+    private val facetEntityChangeListener = getInstance(project)
 
     override fun beforeChanged(event: VersionedStorageChange) {
       for (facetBridgeContributor in WorkspaceFacetContributor.EP_NAME.extensionList) {
@@ -238,7 +236,7 @@ internal class FacetEntityChangeListener(private val project: Project) {
 
   // TODO: 12.09.2022 Rewrite and extract init bridges from this listener
   companion object {
-    suspend fun getInstance(project: Project): FacetEntityChangeListener = project.serviceAsync<FacetEntityChangeListener>()
+    fun getInstance(project: Project): FacetEntityChangeListener = project.service<FacetEntityChangeListener>()
 
     private val initializeFacetBridgeTimeMs = MillisecondsMeasurer()
     private val processBeforeChangeEventsMs = MillisecondsMeasurer()

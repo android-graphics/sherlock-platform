@@ -7,19 +7,19 @@ import com.intellij.lang.CodeInsightActions;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.project.DumbAware;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public final class OverrideMethodsAction extends PresentableActionHandlerBasedAction implements DumbAware {
 
+  @NotNull
   @Override
-  protected @NotNull CodeInsightActionHandler getHandler() {
+  protected CodeInsightActionHandler getHandler() {
     return new OverrideMethodsHandler();
   }
 
+  @NotNull
   @Override
-  protected @NotNull LanguageExtension<LanguageCodeInsightActionHandler> getLanguageExtension() {
+  protected LanguageExtension<LanguageCodeInsightActionHandler> getLanguageExtension() {
     return CodeInsightActions.OVERRIDE_METHOD;
   }
 }

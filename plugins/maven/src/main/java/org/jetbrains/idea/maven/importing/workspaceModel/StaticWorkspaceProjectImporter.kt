@@ -14,11 +14,11 @@ import org.jetbrains.idea.maven.project.*
 
 internal class StaticWorkspaceProjectImporter(
   projectsTree: MavenProjectsTree,
-  projectsToImport: List<MavenProject>,
+  projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
   importingSettings: MavenImportingSettings,
   modifiableModelsProvider: IdeModifiableModelsProvider,
   project: Project
-) : WorkspaceProjectImporter(projectsTree, projectsToImport, importingSettings, modifiableModelsProvider, project) {
+) : WorkspaceProjectImporter(projectsTree, projectsToImportWithChanges, importingSettings, modifiableModelsProvider, project) {
 
   override fun workspaceConfigurators(): List<MavenWorkspaceConfigurator> {
     return super.workspaceConfigurators().filter { it is MavenStaticSyncAware }
@@ -43,7 +43,7 @@ internal class StaticWorkspaceProjectImporter(
                                                                             moduleWithType.module,
                                                                             moduleWithType.type,
                                                                             myProjectsTree,
-                                                                            projectWithModules.hasChanges,
+                                                                            projectWithModules.changes,
                                                                             moduleNameByProject,
                                                                             importers)
       }

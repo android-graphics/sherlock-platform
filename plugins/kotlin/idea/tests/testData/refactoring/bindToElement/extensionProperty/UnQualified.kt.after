@@ -1,8 +1,6 @@
 // BIND_TO test.barFoo
 package test
 
-import test.barFoo
-
 fun foo() {
     0.<caret>barFoo
 }

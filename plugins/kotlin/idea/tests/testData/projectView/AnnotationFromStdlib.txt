@@ -44,7 +44,6 @@ Navigation item file #0: kotlin-stdlib.jar!/kotlin/annotation/AnnotationTarget.c
      +PsiDirectory: system
      +PsiDirectory: text
      +PsiDirectory: time
-     +PsiDirectory: uuid
      _Assertions
      BuilderInference
      ConsistentCopyVisibility
@@ -145,4 +144,4 @@ Navigation item file #0: kotlin-stdlib.jar!/kotlin/annotation/AnnotationTarget.c
      UShortArrayKt
      UShortKt
     +PsiDirectory: META-INF
-   +PsiDirectory: kotlin-stdlib-common.klib
+   +PsiDirectory: kotlin-stdlib-common.jar

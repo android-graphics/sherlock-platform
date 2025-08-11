@@ -2,41 +2,35 @@
 package org.jetbrains.kotlin.idea.search
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExpectFunctionFqNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExpectPropertyFqNameIndex
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
-import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 
 object ExpectActualUtils {
-    fun KtDeclaration.expectDeclarationIfAny(): KtDeclaration? =
-        ExpectActualSupport.getInstance(project).expectDeclarationIfAny(this)
+    fun KtDeclaration.expectedDeclarationIfAny(): KtDeclaration? =
+        ExpectActualSupport.getInstance(project).expectedDeclarationIfAny(this)
 
-    fun KtDeclaration.actualsForExpect(module: Module? = null): Set<KtDeclaration> =
-        ExpectActualSupport.getInstance(project).actualsForExpect(this, module)
+    fun KtDeclaration.actualsForExpected(module: Module? = null): Set<KtDeclaration> =
+        ExpectActualSupport.getInstance(project).actualsForExpected(this, module)
 
 
-    fun liftToExpect(declaration: KtDeclaration): KtDeclaration? {
+    fun liftToExpected(declaration: KtDeclaration): KtDeclaration? {
         if (declaration is KtParameter) {
             val function = declaration.ownerFunction as? KtCallableDeclaration ?: return null
             val index = function.valueParameters.indexOf(declaration)
-            return (liftToExpect(function) as? KtCallableDeclaration)?.valueParameters?.getOrNull(index)
+            return (liftToExpected(function) as? KtCallableDeclaration)?.valueParameters?.getOrNull(index)
         }
 
-        return if (declaration.isExpectDeclaration()) declaration else declaration.expectDeclarationIfAny()
+        return if (declaration.isExpectDeclaration()) declaration else declaration.expectedDeclarationIfAny()
     }
 
     fun withExpectedActuals(classOrObject: KtDeclaration): List<KtDeclaration> {
-        val expect = liftToExpect(classOrObject) ?: return listOf(classOrObject)
-        val actuals = expect.actualsForExpect()
+        val expect = liftToExpected(classOrObject) ?: return listOf(classOrObject)
+        val actuals = expect.actualsForExpected()
         return listOf(expect) + actuals
     }
 
@@ -44,18 +38,8 @@ object ExpectActualUtils {
         kotlinOptions: KotlinReferencesSearchOptions,
         unwrappedElement: PsiNamedElement
     ): PsiNamedElement = if (kotlinOptions.searchForExpectedUsages && unwrappedElement is KtDeclaration && unwrappedElement.hasActualModifier()) {
-        unwrappedElement.expectDeclarationIfAny() as? PsiNamedElement
+        unwrappedElement.expectedDeclarationIfAny() as? PsiNamedElement
     } else {
         null
     } ?: unwrappedElement
-
-    fun collectTopLevelExpectDeclarations(project: Project, modules: List<KaModule>): List<KtNamedDeclaration> {
-        val searchScope = GlobalSearchScope.union(modules.map { it.contentScope })
-
-        return sequenceOf(
-            KotlinTopLevelExpectFunctionFqNameIndex,
-            KotlinTopLevelExpectPropertyFqNameIndex,
-        ).flatMap { it.getAllElements<KtNamedDeclaration>(project, searchScope) }
-            .toList()
-    }
 }

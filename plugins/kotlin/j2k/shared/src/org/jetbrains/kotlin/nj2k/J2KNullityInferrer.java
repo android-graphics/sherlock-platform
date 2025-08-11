@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.nj2k;
 
 import com.intellij.codeInsight.Nullability;
@@ -103,7 +103,7 @@ class J2KNullityInferrer {
             return false;
         }
         if (ExpressionUtils.nonStructuralChildren(expression).anyMatch(
-                expr -> expr instanceof PsiMethodCallExpression callExpression && isNullable(callExpression.resolveMethod()))) {
+                expr -> expr instanceof PsiMethodCallExpression && isNullable(((PsiMethodCallExpression) expr).resolveMethod()))) {
             return true;
         }
         return NullabilityUtil.getExpressionNullability(expression, true) == Nullability.NULLABLE;
@@ -206,21 +206,10 @@ class J2KNullityInferrer {
             public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
                 super.visitTypeElement(typeElement);
                 PsiType type = typeElement.getType();
-                PsiModifierListOwner owner =
-                        typeElement.getParent() instanceof PsiModifierListOwner modifierListOwner ? modifierListOwner : null;
-                if (owner instanceof PsiMethod) return;
-                Nullability nullability = DfaPsiUtil.getElementNullability(type, owner);
+                Nullability nullability = DfaPsiUtil.getTypeNullability(type);
                 switch (nullability) {
                     case NULLABLE -> registerNullableType(type);
                     case NOT_NULL -> registerNotNullType(type);
-                }
-                if (type instanceof PsiArrayType arrayType) {
-                    PsiType componentType = arrayType.getComponentType();
-                    Nullability componentNullability = DfaPsiUtil.getTypeNullability(componentType);
-                    switch (componentNullability) {
-                        case NULLABLE -> registerNullableType(componentType);
-                        case NOT_NULL -> registerNotNullType(componentType);
-                    }
                 }
             }
 
@@ -468,30 +457,17 @@ class J2KNullityInferrer {
         private void unifyNullabilityOfMethodReturnTypeAndReturnedExpressions(@NotNull PsiMethod method) {
             if (KotlinPluginModeProvider.Companion.isK1Mode()) return;
 
+            PsiType methodReturnType = method.getReturnType();
+            if (methodReturnType == null) return;
+
             PsiReturnStatement[] statements = PsiUtil.findReturnStatements(method);
             if (statements.length == 0) {
                 // Stick to nullable by default for empty methods (ex. in interfaces)
                 return;
             }
 
-            PsiType methodReturnType = method.getReturnType();
-            if (methodReturnType == null) return;
-
-            Nullability methodNullability = DfaPsiUtil.getElementNullability(methodReturnType, method);
-            if (methodNullability == Nullability.NOT_NULL) {
-                registerNotNullType(methodReturnType);
-            }
-            if (methodReturnType instanceof PsiArrayType arrayType) {
-                PsiType componentType = arrayType.getComponentType();
-                Nullability componentNullability = DfaPsiUtil.getTypeNullability(componentType);
-                switch (componentNullability) {
-                    case NULLABLE -> registerNullableType(componentType);
-                    case NOT_NULL -> registerNotNullType(componentType);
-                }
-            }
-
             boolean allRawReturnValueTypesAreNotNull = true;
-            boolean rawMethodReturnTypeIsNotNull = methodNullability == Nullability.NOT_NULL || isNotNull(methodReturnType);
+            boolean rawMethodReturnTypeIsNotNull = isNotNull(methodReturnType);
 
             for (PsiReturnStatement statement : statements) {
                 PsiExpression returnValue = statement.getReturnValue();
@@ -664,7 +640,7 @@ class J2KNullityInferrer {
                     }
                 }
             } else if (grandParent instanceof PsiForeachStatement foreachStatement) {
-                for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(foreachStatement)).asIterable()) {
+                for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(foreachStatement))) {
                     final PsiElement place = reference.getElement();
                     if (place instanceof PsiReferenceExpression expr) {
                         final PsiElement parent =

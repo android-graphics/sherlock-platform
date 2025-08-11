@@ -1,8 +1,0 @@
-package two
-
-import one.EnumClass
-import one.function
-
-fun test() {
-    function(EnumClass.A)
-}

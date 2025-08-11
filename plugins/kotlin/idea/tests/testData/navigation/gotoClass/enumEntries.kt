@@ -8,3 +8,4 @@ public enum class EnumClass {
 // Check that enum class present but entries are not
 
 // SEARCH_TEXT: EnumClass
+// REF: (some.small).EnumClass

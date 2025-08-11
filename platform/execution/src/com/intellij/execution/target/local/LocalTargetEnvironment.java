@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target.local;
 
 import com.intellij.execution.CantRunException;
@@ -68,8 +68,7 @@ public class LocalTargetEnvironment extends TargetEnvironment {
     for (TargetPortBinding targetPortBinding : request.getTargetPortBindings()) {
       int theOnlyPort = targetPortBinding.getTarget();
       if (targetPortBinding.getLocal() != null && !targetPortBinding.getLocal().equals(theOnlyPort)) {
-        throw new UnsupportedOperationException("TCP port forwarding for the local target is not implemented. " +
-                                                "Please use the same port number for both local and target ports.");
+        throw new UnsupportedOperationException("Local target's TCP port forwarder is not implemented");
       }
       myTargetPortBindings.put(targetPortBinding, getResolvedPortBinding(theOnlyPort));
     }
@@ -77,8 +76,7 @@ public class LocalTargetEnvironment extends TargetEnvironment {
     for (LocalPortBinding localPortBinding : request.getLocalPortBindings()) {
       int theOnlyPort = localPortBinding.getLocal();
       if (localPortBinding.getTarget() != null && !localPortBinding.getTarget().equals(theOnlyPort)) {
-        throw new UnsupportedOperationException("TCP port forwarding for the local target is not implemented. " +
-                                                "Please use the same port number for both local and target ports.");
+        throw new UnsupportedOperationException("Local target's TCP port forwarder is not implemented");
       }
       myLocalPortBindings.put(localPortBinding, getResolvedPortBinding(theOnlyPort));
     }
@@ -94,37 +92,44 @@ public class LocalTargetEnvironment extends TargetEnvironment {
     return new ResolvedPortBinding(hostPort, hostPort);
   }
 
+  @NotNull
   @Override
-  public @NotNull Map<UploadRoot, UploadableVolume> getUploadVolumes() {
+  public Map<UploadRoot, UploadableVolume> getUploadVolumes() {
     return Collections.unmodifiableMap(myUploadVolumes);
   }
 
+  @NotNull
   @Override
-  public @NotNull Map<DownloadRoot, DownloadableVolume> getDownloadVolumes() {
+  public Map<DownloadRoot, DownloadableVolume> getDownloadVolumes() {
     return Collections.unmodifiableMap(myDownloadVolumes);
   }
 
+  @NotNull
   @Override
-  public @NotNull Map<TargetPortBinding, ResolvedPortBinding> getTargetPortBindings() {
+  public Map<TargetPortBinding, ResolvedPortBinding> getTargetPortBindings() {
     return Collections.unmodifiableMap(myTargetPortBindings);
   }
 
+  @NotNull
   @Override
-  public @NotNull Map<LocalPortBinding, ResolvedPortBinding> getLocalPortBindings() {
+  public Map<LocalPortBinding, ResolvedPortBinding> getLocalPortBindings() {
     return Collections.unmodifiableMap(myLocalPortBindings);
   }
 
+  @NotNull
   @Override
-  public @NotNull TargetPlatform getTargetPlatform() {
+  public TargetPlatform getTargetPlatform() {
     return TargetPlatform.CURRENT;
   }
 
+  @NotNull
   @Override
-  public @NotNull Process createProcess(@NotNull TargetedCommandLine commandLine, @NotNull ProgressIndicator indicator) throws ExecutionException {
+  public Process createProcess(@NotNull TargetedCommandLine commandLine, @NotNull ProgressIndicator indicator) throws ExecutionException {
     return createGeneralCommandLine(commandLine).createProcess();
   }
 
-  public @NotNull GeneralCommandLine createGeneralCommandLine(@NotNull TargetedCommandLine commandLine) throws CantRunException {
+  @NotNull
+  public GeneralCommandLine createGeneralCommandLine(@NotNull TargetedCommandLine commandLine) throws CantRunException {
     try {
       PtyOptions ptyOption = commandLine.getPtyOptions();
       LocalPtyOptions localPtyOptions = ptyOption != null ? LocalTargets.toLocalPtyOptions(ptyOption) : null;
@@ -198,18 +203,21 @@ public class LocalTargetEnvironment extends TargetEnvironment {
       }
     }
 
+    @NotNull
     @Override
-    public @NotNull Path getLocalRoot() {
+    public Path getLocalRoot() {
       return myLocalRoot;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getTargetRoot() {
+    public String getTargetRoot() {
       return myTargetRoot.toString();
     }
 
+    @NotNull
     @Override
-    public @NotNull String resolveTargetPath(@NotNull String relativePath) throws IOException {
+    public String resolveTargetPath(@NotNull String relativePath) throws IOException {
       if (myReal) {
         File targetFile = myTargetRoot.resolve(relativePath).toFile().getCanonicalFile();
         return targetFile.toString();

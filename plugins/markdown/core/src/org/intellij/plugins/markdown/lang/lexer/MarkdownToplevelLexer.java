@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.lang.lexer;
 
 import com.intellij.lexer.LexerBase;
@@ -29,7 +28,7 @@ public class MarkdownToplevelLexer extends LexerBase {
 
   private int myLexemeIndex;
 
-  private final @NotNull MarkdownFlavourDescriptor flavour;
+  private @NotNull final MarkdownFlavourDescriptor flavour;
 
   public MarkdownToplevelLexer() {
     this(MarkdownParserManager.FLAVOUR);
@@ -63,8 +62,9 @@ public class MarkdownToplevelLexer extends LexerBase {
     return myLexemeIndex;
   }
 
+  @Nullable
   @Override
-  public @Nullable IElementType getTokenType() {
+  public IElementType getTokenType() {
     if (myLexemeIndex >= myLexemes.size()) {
       return null;
     }
@@ -92,8 +92,9 @@ public class MarkdownToplevelLexer extends LexerBase {
     myLexemeIndex++;
   }
 
+  @NotNull
   @Override
-  public @NotNull CharSequence getBufferSequence() {
+  public CharSequence getBufferSequence() {
     return myBuffer;
   }
 

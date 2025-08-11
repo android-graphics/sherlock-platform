@@ -76,12 +76,4 @@ class ForMultiLanguageSupport {
   // Some legitimate English comment
   // to be checked.
   // noinspection ConstantValue
-
-  //  EmailTemplateInstance emailTemplateInstance = localTemplateInstanceService.get(storeId, emailType, adminTemplateId);
-  //  try {
-  //    final TemplateInstance templateInstance = templateInstanceApi.createTemplateInstanceFromTemplate(
-
-  //        for (Person person : people) {
-  //            System.out.println(person);
-  //        }
 }

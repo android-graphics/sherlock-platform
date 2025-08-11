@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.openapi.application.WriteAction;
@@ -28,13 +28,15 @@ import static org.junit.Assert.assertNotNull;
 public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFixture {
   private Path myTempDir;
 
+  @NotNull
   @Override
-  public @NotNull VirtualFile copyAll(@NotNull String dataDir, @NotNull String targetDir) {
+  public VirtualFile copyAll(@NotNull String dataDir, @NotNull String targetDir) {
     return copyAll(dataDir, targetDir, VirtualFileFilter.ALL);
   }
 
+  @NotNull
   @Override
-  public @NotNull VirtualFile copyAll(@NotNull String dataDir, @NotNull String targetDir, @NotNull VirtualFileFilter filter) {
+  public VirtualFile copyAll(@NotNull String dataDir, @NotNull String targetDir, @NotNull VirtualFileFilter filter) {
     createTempDirectory();
     return WriteAction.computeAndWait(() -> {
       try {
@@ -54,8 +56,9 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     });
   }
 
+  @NotNull
   @Override
-  public @NotNull String getTempDirPath() {
+  public String getTempDirPath() {
     return createTempDirectory().toString();
   }
 
@@ -80,8 +83,9 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     return vFile;
   }
 
+  @NotNull
   @Override
-  public @NotNull VirtualFile createFile(@NotNull String name) {
+  public VirtualFile createFile(@NotNull String name) {
     Path file;
     try {
       file = createEmptyTempFile(createTempDirectory(), name);
@@ -98,26 +102,30 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     return createdVFile;
   }
 
-  public static @NotNull Path createEmptyTempFile(@NotNull Path parent, @NotNull String name) throws IOException {
+  @NotNull
+  public static Path createEmptyTempFile(@NotNull Path parent, @NotNull String name) throws IOException {
     Path file = resolvePath(parent, name);
     Files.createDirectories(file.getParent());
     Files.newByteChannel(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE).close();
     return file;
   }
 
-  private static @NotNull Path resolvePath(@NotNull Path parent, @NotNull String name) {
+  @NotNull
+  private static Path resolvePath(@NotNull Path parent, @NotNull String name) {
     return parent.resolve(name.startsWith("/") ? name.substring(1) : name).normalize();
   }
 
+  @NotNull
   @Override
-  public @NotNull VirtualFile findOrCreateDir(@NotNull String name) throws IOException {
+  public VirtualFile findOrCreateDir(@NotNull String name) throws IOException {
     String path = resolvePath(createTempDirectory(), name).toString();
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), path);
     return VfsUtil.createDirectories(path);
   }
 
+  @NotNull
   @Override
-  public @NotNull VirtualFile createFile(@NotNull String name, @NotNull String text) throws IOException {
+  public VirtualFile createFile(@NotNull String name, @NotNull String text) throws IOException {
     VirtualFile file = createFile(name);
     WriteAction.runAndWait(() -> VfsUtil.saveText(file, text));
     return file;
@@ -157,18 +165,21 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     return true;
   }
 
-  protected @Nullable Path getTempHome() {
+  @Nullable
+  protected Path getTempHome() {
     return null;
   }
 
-  private @NotNull Path createTempDirectory() {
+  @NotNull
+  private Path createTempDirectory() {
     if (myTempDir == null) {
       myTempDir = doCreateTempDirectory();
     }
     return myTempDir;
   }
 
-  protected @NotNull Path doCreateTempDirectory() {
+  @NotNull
+  protected Path doCreateTempDirectory() {
     return HeavyTestHelper.createTempDirectoryForTempDirTestFixture(getTempHome(), "unitTest");
   }
 }

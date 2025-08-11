@@ -155,9 +155,7 @@ class KotlinAddImportAction internal constructor(
             variantsList()
         } else {
             project.runSynchronouslyWithProgress(KotlinBundle.message("import.progress.text.resolve.imports"), true) {
-                runReadAction {
-                    variantsList()
-                }
+                variantsList()
             }.orEmpty()
         }
     }

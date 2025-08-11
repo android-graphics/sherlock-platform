@@ -9,7 +9,6 @@ import git4idea.index.StatusCode
 import git4idea.index.getFileStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
-import java.util.Locale
 
 val LightFileStatus.color: Color?
   get() = getFileStatus().color
@@ -28,13 +27,12 @@ private fun LightFileStatus.StatusRecord.getPresentation(): String {
   if (index == '!' || workTree == '!' || index == '?' || workTree == '?') return "$fileName: ${getPresentation(index)}"
   if (isConflicted()) {
     val status = if (index == workTree) {
-      GitBundle.message("git.status.unmerged.both", getFileStatus(if (index == 'U') 'M' else index)!!.text.lowercase(Locale.getDefault()))
+      GitBundle.message("git.status.unmerged.both", getFileStatus(if (index == 'U') 'M' else index)!!.text.toLowerCase())
     }
     else {
-      val indexPresentation = if (index == 'U') "" else GitBundle.message("git.status.unmerged.index",
-                                                                          getPresentation(index).lowercase(Locale.getDefault()))
+      val indexPresentation = if (index == 'U') "" else GitBundle.message("git.status.unmerged.index", getPresentation(index).toLowerCase())
       val workTreePresentation = if (workTree == 'U') "" else GitBundle.message("git.status.unmerged.work.tree",
-                                                                                getPresentation(workTree).lowercase(Locale.getDefault()))
+                                                                                getPresentation(workTree).toLowerCase())
       when {
         indexPresentation.isBlank() -> workTreePresentation
         workTreePresentation.isBlank() -> indexPresentation

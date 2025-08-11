@@ -51,8 +51,9 @@ public final class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     if (PyiUtil.isInsideStub(callable)) {
       return null;
     }
@@ -77,8 +78,9 @@ public final class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable PyType getCallableType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+  public PyType getCallableType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     if (PyiUtil.isInsideStub(callable)) {
       return null;
     }

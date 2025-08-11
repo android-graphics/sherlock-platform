@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.uploader.util;
 
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +15,8 @@ public final class ExtraHTTPHeadersParser {
    * @param data headers string
    * @return empty map if data is empty, null of malformed
    */
-  public static @NotNull Map<String, String> parse(@Nullable String data) {
+  @NotNull
+  public static Map<String, String> parse(@Nullable String data) {
     if (data == null) {
       return Collections.emptyMap();
     } else {
@@ -36,7 +37,8 @@ public final class ExtraHTTPHeadersParser {
     }
   }
 
-  public static @NotNull String serialize(@NotNull Map<String, String> headers) {
+  @NotNull
+  public static String serialize(@NotNull Map<String, String> headers) {
     StringBuilder stringBuilder = new StringBuilder();
     headers.forEach((k, v) -> {
       stringBuilder.append(k);

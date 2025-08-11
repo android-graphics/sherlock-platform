@@ -1,4 +1,4 @@
-from typing import Final
+from typing_extensions import Final
 
 NoValue: Final = 0x0000
 XValue: Final = 0x0001

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -22,7 +22,6 @@ import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,14 +31,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-@ApiStatus.Internal
 public final class ScopesOrderDialog extends DialogWrapper {
   private final ScopesOrderTable myOptionsTable;
   private final InspectionProfileImpl myInspectionProfile;
-  private final @NotNull Project myProject;
+  @NotNull
+  private final Project myProject;
   private final JPanel myPanel;
 
-  ScopesOrderDialog(final @NotNull Component parent,
+  ScopesOrderDialog(@NotNull final Component parent,
                     @NotNull InspectionProfileImpl inspectionProfile,
                     @NotNull Project project) {
     super(parent, true);
@@ -100,8 +99,9 @@ public final class ScopesOrderDialog extends DialogWrapper {
     myOptionsTable.updateItems(scopes);
   }
 
+  @Nullable
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  protected JComponent createCenterPanel() {
     return myPanel;
   }
 

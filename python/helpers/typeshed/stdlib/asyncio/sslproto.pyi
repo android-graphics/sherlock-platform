@@ -3,8 +3,8 @@ import sys
 from collections import deque
 from collections.abc import Callable
 from enum import Enum
-from typing import Any, ClassVar, Final, Literal
-from typing_extensions import TypeAlias
+from typing import Any, ClassVar
+from typing_extensions import Literal, TypeAlias
 
 from . import constants, events, futures, protocols, transports
 
@@ -14,25 +14,24 @@ if sys.version_info >= (3, 11):
     SSLAgainErrors: tuple[type[ssl.SSLWantReadError], type[ssl.SSLSyscallError]]
 
     class SSLProtocolState(Enum):
-        UNWRAPPED = "UNWRAPPED"
-        DO_HANDSHAKE = "DO_HANDSHAKE"
-        WRAPPED = "WRAPPED"
-        FLUSHING = "FLUSHING"
-        SHUTDOWN = "SHUTDOWN"
+        UNWRAPPED: str
+        DO_HANDSHAKE: str
+        WRAPPED: str
+        FLUSHING: str
+        SHUTDOWN: str
 
     class AppProtocolState(Enum):
-        STATE_INIT = "STATE_INIT"
-        STATE_CON_MADE = "STATE_CON_MADE"
-        STATE_EOF = "STATE_EOF"
-        STATE_CON_LOST = "STATE_CON_LOST"
-
+        STATE_INIT: str
+        STATE_CON_MADE: str
+        STATE_EOF: str
+        STATE_CON_LOST: str
     def add_flowcontrol_defaults(high: int | None, low: int | None, kb: int) -> tuple[int, int]: ...
 
 else:
-    _UNWRAPPED: Final = "UNWRAPPED"
-    _DO_HANDSHAKE: Final = "DO_HANDSHAKE"
-    _WRAPPED: Final = "WRAPPED"
-    _SHUTDOWN: Final = "SHUTDOWN"
+    _UNWRAPPED: Literal["UNWRAPPED"]
+    _DO_HANDSHAKE: Literal["DO_HANDSHAKE"]
+    _WRAPPED: Literal["WRAPPED"]
+    _SHUTDOWN: Literal["SHUTDOWN"]
 
 if sys.version_info < (3, 11):
     class _SSLPipe:
@@ -83,8 +82,6 @@ class _SSLProtocolTransport(transports._FlowControlMixin, transports.Transport):
         def get_read_buffer_limits(self) -> tuple[int, int]: ...
         def set_read_buffer_limits(self, high: int | None = None, low: int | None = None) -> None: ...
         def get_read_buffer_size(self) -> int: ...
-
-    def __del__(self) -> None: ...
 
 if sys.version_info >= (3, 11):
     _SSLProtocolBase: TypeAlias = protocols.BufferedProtocol
@@ -156,10 +153,9 @@ class SSLProtocol(_SSLProtocolBase):
     def _check_handshake_timeout(self) -> None: ...
     def _on_handshake_complete(self, handshake_exc: BaseException | None) -> None: ...
     def _fatal_error(self, exc: BaseException, message: str = "Fatal error on transport") -> None: ...
+    def _abort(self) -> None: ...
     if sys.version_info >= (3, 11):
-        def _abort(self, exc: BaseException | None) -> None: ...
         def get_buffer(self, n: int) -> memoryview: ...
     else:
-        def _abort(self) -> None: ...
         def _finalize(self) -> None: ...
         def _process_write_backlog(self) -> None: ...

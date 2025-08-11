@@ -5,7 +5,10 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.*
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.scopeView.ScopeViewPane
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ReadConstraint
+import com.intellij.openapi.application.constrainedReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
@@ -375,7 +378,7 @@ private class EditorSelectInContext(
           LOG.debug("Not selecting anything because the editor is disposed")
           break
         }
-        val offset = writeIntentReadAction { editor.caretModel.offset }
+        val offset = editor.caretModel.offset
         if (LOG.isDebugEnabled) {
           LOG.debug("Looking for the element at offset $offset")
         }
@@ -388,8 +391,7 @@ private class EditorSelectInContext(
         if (LOG.isDebugEnabled) {
           LOG.debug("The element is $element")
         }
-        val newOffset = writeIntentReadAction { editor.caretModel.offset }
-        if (newOffset == offset && PsiDocumentManager.getInstance(project).isCommitted(editor.document)) {
+        if (editor.caretModel.offset == offset && PsiDocumentManager.getInstance(project).isCommitted(editor.document)) {
           super.selectInCurrentTarget(requestFocus)
           break
         }
@@ -416,4 +418,4 @@ private fun <T : Editor> T.nullIfDisposed(): T? = if (isDisposed) null else this
 private fun <T : VirtualFile> T.nullIfInvalid(): T? = if (isValid) this else null
 private val PsiElement.virtualFile: VirtualFile? get() = PsiUtilCore.getVirtualFile(this)
 
-private val LOG = logger<SelectInProjectViewImpl>()
+internal val LOG = logger<SelectInProjectViewImpl>()

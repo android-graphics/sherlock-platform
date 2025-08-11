@@ -1,5 +1,5 @@
 from _typeshed import Incomplete
-from typing import Final
+from typing_extensions import Final
 
 from openpyxl.cell import _CellValue
 from openpyxl.styles.alignment import Alignment
@@ -8,26 +8,20 @@ from openpyxl.styles.cell_style import StyleArray
 from openpyxl.styles.fills import Fill
 from openpyxl.styles.fonts import Font
 from openpyxl.styles.protection import Protection
-from openpyxl.workbook.child import _WorkbookChild
-from openpyxl.worksheet._read_only import ReadOnlyWorksheet
 
 class ReadOnlyCell:
-    parent: _WorkbookChild | ReadOnlyWorksheet
+    parent: Incomplete
     row: Incomplete
     column: Incomplete
     data_type: Incomplete
-    def __init__(
-        self, sheet: _WorkbookChild | ReadOnlyWorksheet, row, column, value, data_type: str = "n", style_id: int = 0
-    ) -> None: ...
-    def __eq__(self, other: object) -> bool: ...
-    def __ne__(self, other: object) -> bool: ...
+    def __init__(self, sheet, row, column, value, data_type: str = "n", style_id: int = 0) -> None: ...
+    def __eq__(self, other): ...
+    def __ne__(self, other): ...
     # Same as Cell.coordinate
-    # https://github.com/python/mypy/issues/6700
     # Defined twice in the implementation
     @property
     def coordinate(self) -> str: ...
     # Same as Cell.column_letter
-    # https://github.com/python/mypy/issues/6700
     @property
     def column_letter(self) -> str: ...
     @property
@@ -47,7 +41,6 @@ class ReadOnlyCell:
     @property
     def protection(self) -> Protection: ...
     # Same as Cell.is_date
-    # https://github.com/python/mypy/issues/6700
     @property
     def is_date(self) -> bool: ...
     @property

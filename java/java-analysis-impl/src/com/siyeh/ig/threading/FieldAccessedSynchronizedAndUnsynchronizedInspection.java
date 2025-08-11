@@ -40,7 +40,8 @@ public final class FieldAccessedSynchronizedAndUnsynchronizedInspection extends 
   public boolean countGettersAndSetters = false;
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "field.accessed.synchronized.and.unsynchronized.problem.descriptor");
   }

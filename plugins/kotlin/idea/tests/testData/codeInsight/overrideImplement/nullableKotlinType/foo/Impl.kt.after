@@ -8,8 +8,3 @@ class C : IBase {
         <selection><caret>TODO("Not yet implemented")</selection>
     }
 }
-
-// MEMBER: "foo(): Any?"
-// MEMBER: "equals(other: Any?): Boolean"
-// MEMBER: "hashCode(): Int"
-// MEMBER: "toString(): String"

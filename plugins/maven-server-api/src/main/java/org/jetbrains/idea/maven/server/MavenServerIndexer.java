@@ -22,11 +22,10 @@ import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenIndexId;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
-import java.nio.file.Path;
+import java.io.File;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 
 public interface MavenServerIndexer extends Remote {
   String SEARCH_TERM_CLASS_NAMES = "c"; // see org.sonatype.nexus.index.ArtifactInfo
@@ -44,7 +43,7 @@ public interface MavenServerIndexer extends Remote {
     throws RemoteException, MavenServerIndexerException;
 
   @NotNull
-  ArrayList<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId mavenIndexId, @NotNull ArrayList<Path> artifactFiles, MavenToken token)
+  ArrayList<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId mavenIndexId, @NotNull ArrayList<File> artifactFiles, MavenToken token)
     throws RemoteException, MavenServerIndexerException;
 
   HashSet<MavenArtifactInfo> search(MavenIndexId mavenIndexId, String pattern, int maxResult, MavenToken token)
@@ -54,5 +53,5 @@ public interface MavenServerIndexer extends Remote {
 
   void release(MavenToken token) throws RemoteException;
 
-  boolean indexExists(Path dir, MavenToken token) throws RemoteException;
+  boolean indexExists(File dir, MavenToken token) throws RemoteException;
 }

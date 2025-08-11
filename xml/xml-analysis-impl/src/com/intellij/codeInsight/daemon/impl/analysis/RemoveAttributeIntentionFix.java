@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl.analysis;
 
@@ -30,17 +30,21 @@ public class RemoveAttributeIntentionFix extends PsiElementBaseIntentionAction i
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return XmlAnalysisBundle.message("xml.quickfix.remove.attribute.text", myLocalName);
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NotNull
   @Override
-  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getText() {
+  public String getText() {
     return myLocalName != null ? getName() : getFamilyName();
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return XmlAnalysisBundle.message("xml.quickfix.remove.attribute.family");
   }
 
@@ -60,7 +64,7 @@ public class RemoveAttributeIntentionFix extends PsiElementBaseIntentionAction i
   }
 
   @Override
-  public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     PsiElement e = descriptor.getPsiElement();
     removeAttribute(e, null);
   }
@@ -77,7 +81,8 @@ public class RemoveAttributeIntentionFix extends PsiElementBaseIntentionAction i
     }
   }
 
-  private static @Nullable PsiElement findNextAttribute(final XmlAttribute attribute) {
+  @Nullable
+  private static PsiElement findNextAttribute(final XmlAttribute attribute) {
     PsiElement nextSibling = attribute.getNextSibling();
     while (nextSibling != null) {
       if (nextSibling instanceof XmlAttribute) return nextSibling;

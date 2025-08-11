@@ -36,7 +36,6 @@ public abstract class DomChildDescriptionImpl extends AbstractDomChildDescriptio
     return getCommonPresentableName(getDomNameStrategy(parent));
   }
 
-  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!super.equals(o)) return false;
@@ -48,7 +47,6 @@ public abstract class DomChildDescriptionImpl extends AbstractDomChildDescriptio
     return true;
   }
 
-  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + (myTagName != null ? myTagName.hashCode() : 0);

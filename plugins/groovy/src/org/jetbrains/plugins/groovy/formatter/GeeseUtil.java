@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.formatter;
 
 import com.intellij.lang.ASTNode;
@@ -26,7 +26,8 @@ public final class GeeseUtil {
   private GeeseUtil() {
   }
 
-  public static @Nullable ASTNode getClosureRBraceAtTheEnd(ASTNode node) {
+  @Nullable
+  public static ASTNode getClosureRBraceAtTheEnd(ASTNode node) {
     IElementType elementType = node.getElementType();
     if (elementType == GroovyElementTypes.CLOSABLE_BLOCK) {
       PsiElement rBrace = ((GrClosableBlock)node.getPsi()).getRBrace();
@@ -48,7 +49,8 @@ public final class GeeseUtil {
            ((GrClosableBlock)e.getParent()).getRBrace() == e;
   }
 
-  public static @Nullable PsiElement getNextNonWhitespaceToken(PsiElement e) {
+  @Nullable
+  public static PsiElement getNextNonWhitespaceToken(PsiElement e) {
     PsiElement next = PsiTreeUtil.nextLeaf(e);
     while (next != null && next.getNode().getElementType() == TokenType.WHITE_SPACE) next = PsiTreeUtil.nextLeaf(next);
     return next;

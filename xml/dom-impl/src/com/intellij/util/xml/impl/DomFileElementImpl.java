@@ -151,7 +151,6 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return null;
   }
 
-  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof DomFileElementImpl that)) return false;
@@ -163,7 +162,6 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return true;
   }
 
-  @Override
   public int hashCode() {
     int result;
     result = (myFile != null ? myFile.hashCode() : 0);
@@ -279,7 +277,6 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return myRootHandler;
   }
 
-  @Override
   public @NonNls String toString() {
     return "File " + myFile.toString();
   }

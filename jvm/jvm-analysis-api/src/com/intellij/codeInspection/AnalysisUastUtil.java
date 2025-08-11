@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -10,7 +10,8 @@ import org.jetbrains.uast.*;
 
 @ApiStatus.Internal
 public final class AnalysisUastUtil {
-  public static @Nullable UCallExpression getUCallExpression(@NotNull PsiElement element) {
+  @Nullable
+  public static UCallExpression getUCallExpression(@NotNull PsiElement element) {
     UCallExpression callExpression = UastContextKt.toUElement(element, UCallExpression.class);
     if (callExpression == null) {
       return null;
@@ -22,7 +23,8 @@ public final class AnalysisUastUtil {
     return callExpression;
   }
 
-  public static @Nullable PsiElement getMethodIdentifierSourcePsi(@NotNull UCallExpression callExpression) {
+  @Nullable
+  public static PsiElement getMethodIdentifierSourcePsi(@NotNull UCallExpression callExpression) {
     UIdentifier methodIdentifier = callExpression.getMethodIdentifier();
     if (methodIdentifier == null) {
       return null;
@@ -30,21 +32,25 @@ public final class AnalysisUastUtil {
     return methodIdentifier.getSourcePsi();
   }
 
-  public static @Nullable String getExpressionReturnTypePsiClassFqn(@NotNull UCallExpression expression) {
+  @Nullable
+  public static String getExpressionReturnTypePsiClassFqn(@NotNull UCallExpression expression) {
     return getTypeClassFqn(expression.getReturnType());
   }
 
-  public static @Nullable PsiClass getTypePsiClass(@Nullable PsiType type) {
+  @Nullable
+  public static PsiClass getTypePsiClass(@Nullable PsiType type) {
     type = GenericsUtil.eliminateWildcards(type);
     if (!(type instanceof PsiClassType)) return null;
     return ((PsiClassType)type).rawType().resolve();
   }
 
-  public static @Nullable String getExpressionReceiverTypeClassFqn(@NotNull UCallExpression expression) {
+  @Nullable
+  public static String getExpressionReceiverTypeClassFqn(@NotNull UCallExpression expression) {
     return getTypeClassFqn(expression.getReceiverType());
   }
 
-  public static @Nullable String getTypeClassFqn(@Nullable PsiType type) {
+  @Nullable
+  public static String getTypeClassFqn(@Nullable PsiType type) {
     if (type == null) return null;
     return type.getCanonicalText().replaceAll("<.*?>", ""); // workaround
     //TODO https://youtrack.jetbrains.com/issue/KT-25024
@@ -53,7 +59,8 @@ public final class AnalysisUastUtil {
     //return psiClass.getQualifiedName();
   }
 
-  public static @Nullable String getCallableReferenceClassFqn(@NotNull UCallableReferenceExpression expression) {
+  @Nullable
+  public static String getCallableReferenceClassFqn(@NotNull UCallableReferenceExpression expression) {
     //TODO why getQualifierType() -> null for Java?
     String classFqn = getTypeClassFqn(expression.getQualifierType());
     if (classFqn != null) return classFqn;

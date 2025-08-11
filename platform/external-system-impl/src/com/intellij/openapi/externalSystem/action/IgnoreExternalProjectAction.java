@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -33,7 +32,6 @@ import java.util.stream.Collectors;
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Internal
 public class IgnoreExternalProjectAction extends ExternalSystemToggleAction {
 
   private static final Logger LOG = Logger.getInstance(IgnoreExternalProjectAction.class);
@@ -114,7 +112,8 @@ public class IgnoreExternalProjectAction extends ExternalSystemToggleAction {
     return ContainerUtil.exists(getProjectNodes(e), projectNode -> projectNode.isIgnored());
   }
 
-  private static @NotNull List<ExternalSystemNode<ExternalConfigPathAware>> getProjectNodes(@NotNull AnActionEvent e) {
+  @NotNull
+  private static List<ExternalSystemNode<ExternalConfigPathAware>> getProjectNodes(@NotNull AnActionEvent e) {
     final List<ExternalSystemNode> selectedNodes = e.getData(ExternalSystemDataKeys.SELECTED_NODES);
     if (selectedNodes == null || selectedNodes.isEmpty()) return Collections.emptyList();
 

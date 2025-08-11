@@ -12,15 +12,15 @@ public enum ProductMode {
   /**
    * Indicates that this process performs all necessary tasks to provide smart features itself. This is the default mode for all IDEs. 
    */
-  MONOLITH("monolith"),
+  LOCAL_IDE("local_IDE"),
   /**
    * Indicates that this process doesn't perform heavy tasks like code analysis, and takes necessary information from another process.
    * Currently, this is used by JetBrains Client process connected to a remote development host or CodeWithMe session.
    */
   FRONTEND("frontend"),
   /**
-   * Indicates that this process doesn't perform heavy tasks like code analysis and takes necessary information from another process.
-   * Currently, this is used by an IDE running as a remote development host.
+   * Indicates that this process doesn't perform heavy tasks like code analysis, and takes necessary information from another process.
+   * Currently, this is used by JetBrains Client process connected to a remote development host or CodeWithMe session.
    */
   BACKEND("backend");
 

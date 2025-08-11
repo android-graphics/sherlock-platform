@@ -1,11 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.download;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.net.URL;
 import java.util.List;
 
@@ -15,7 +17,8 @@ public abstract class DownloadableFileService {
     return ApplicationManager.getApplication().getService(DownloadableFileService.class);
   }
 
-  public abstract @NotNull DownloadableFileDescription createFileDescription(@NotNull String downloadUrl, @NotNull String fileName);
+  @NotNull
+  public abstract DownloadableFileDescription createFileDescription(@NotNull String downloadUrl, @NotNull String fileName);
 
   /**
    * Create descriptor for set of files
@@ -23,10 +26,21 @@ public abstract class DownloadableFileService {
    * @param localUrls URLs of local copies of the descriptors
    * @return {@link DownloadableFileSetVersions} instance
    */
-  public abstract @NotNull DownloadableFileSetVersions<DownloadableFileSetDescription> createFileSetVersions(@Nullable String groupId,
+  @NotNull
+  public abstract DownloadableFileSetVersions<DownloadableFileSetDescription> createFileSetVersions(@Nullable String groupId,
                                                                                                     URL @NotNull ... localUrls);
 
-  public abstract @NotNull FileDownloader createDownloader(@NotNull DownloadableFileSetDescription description);
+  @NotNull
+  public abstract FileDownloader createDownloader(@NotNull DownloadableFileSetDescription description);
 
-  public abstract @NotNull FileDownloader createDownloader(@NotNull List<? extends DownloadableFileDescription> fileDescriptions, @NotNull String presentableDownloadName);
+  @NotNull
+  public abstract FileDownloader createDownloader(@NotNull List<? extends DownloadableFileDescription> fileDescriptions, @NotNull String presentableDownloadName);
+
+  /**
+   * @deprecated use {@link #createDownloader(List, String)} instead
+   */
+  @Deprecated(forRemoval = true)
+  @NotNull
+  public abstract FileDownloader createDownloader(List<? extends DownloadableFileDescription> fileDescriptions, @Nullable Project project,
+                                                  JComponent parent, @NotNull String presentableDownloadName);
 }

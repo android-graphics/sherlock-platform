@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,8 +7,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class PyFullValueEvaluator extends XFullValueEvaluator {
-  protected final @NotNull PyFrameAccessor myDebugProcess;
-  protected final @NotNull String myExpression;
+  @NotNull protected final PyFrameAccessor myDebugProcess;
+  @NotNull protected final String myExpression;
 
   /**
    * @param linkText     text of the link what will be appended to a variables tree node text

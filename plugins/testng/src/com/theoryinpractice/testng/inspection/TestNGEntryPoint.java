@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInspection.reference.EntryPoint;
@@ -28,7 +28,8 @@ final class TestNGEntryPoint extends EntryPoint {
   }
 
   @Override
-  public @NotNull String getDisplayName() {
+  @NotNull
+  public String getDisplayName() {
     return TestngBundle.message("testng.entry.point.test.cases");
   }
 

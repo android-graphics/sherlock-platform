@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import org.apache.commons.lang3.StringUtils;
@@ -32,7 +32,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.util.*;
 
@@ -65,7 +64,8 @@ public abstract class Maven3ServerIndexerImpl extends MavenWatchdogAware impleme
     }
   }
 
-  private @NotNull IndexingContext getIndex(MavenIndexId mavenIndexId) throws IOException {
+  @NotNull
+  private IndexingContext getIndex(MavenIndexId mavenIndexId) throws IOException {
     IndexingContext context = myIndexer.getIndexingContexts().get(mavenIndexId.indexId);
     if (context == null) {
       synchronized (myIndexer) {
@@ -84,11 +84,10 @@ public abstract class Maven3ServerIndexerImpl extends MavenWatchdogAware impleme
   }
 
   @Override
-  public boolean indexExists(Path dir, MavenToken token) throws RemoteException {
+  public boolean indexExists(File dir, MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
-      // TODO: how correct?
-      return IndexReader.indexExists(dir.toString());
+      return IndexReader.indexExists(dir);
     }
     catch (Exception e) {
       MavenServerGlobals.getLogger().warn(e);
@@ -166,7 +165,8 @@ public abstract class Maven3ServerIndexerImpl extends MavenWatchdogAware impleme
     }
   }
 
-  private @NotNull WagonTransferListenerAdapter getWagonTransferListenerAdapter(MavenServerProgressIndicator indicator) {
+  @NotNull
+  private WagonTransferListenerAdapter getWagonTransferListenerAdapter(MavenServerProgressIndicator indicator) {
     return new WagonTransferListenerAdapter(indicator) {
       @Override
       protected void downloadProgress(long downloaded, long total) {
@@ -243,21 +243,21 @@ public abstract class Maven3ServerIndexerImpl extends MavenWatchdogAware impleme
   }
 
   @Override
-  public @NotNull ArrayList<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId indexId, @NotNull ArrayList<Path> artifactFiles, MavenToken token) throws MavenServerIndexerException {
+  public @NotNull ArrayList<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId indexId, @NotNull ArrayList<File> artifactFiles, MavenToken token) throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
       IndexingContext index = getIndex(indexId);
       ArrayList<AddArtifactResponse> results = new ArrayList<>();
       synchronized (index) {
-        for (Path artifactFile : artifactFiles) {
-          ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(index, artifactFile.toFile());
+        for (File artifactFile : artifactFiles) {
+          ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(index, artifactFile);
           IndexedMavenId id = null;
           if (artifactContext != null) {
             addArtifact(myIndexer, index, artifactContext);
             ArtifactInfo a = artifactContext.getArtifactInfo();
             id = new IndexedMavenId(a.groupId, a.artifactId, a.version, a.packaging, a.description);
           }
-          results.add(new AddArtifactResponse(artifactFile.toFile(), id));
+          results.add(new AddArtifactResponse(artifactFile, id));
         }
       }
       return results;
@@ -313,7 +313,8 @@ public abstract class Maven3ServerIndexerImpl extends MavenWatchdogAware impleme
     }
   }
 
-  private static @NotNull WildcardQuery getWildcardQuery(String pattern) {
+  @NotNull
+  private static WildcardQuery getWildcardQuery(String pattern) {
     return new WildcardQuery(new Term(SEARCH_TERM_CLASS_NAMES, "*/" + pattern.replaceAll("\\.", "/")));
   }
 

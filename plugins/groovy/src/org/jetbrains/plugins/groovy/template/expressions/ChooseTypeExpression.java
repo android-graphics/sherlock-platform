@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.template.expressions;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -61,7 +61,8 @@ public class ChooseTypeExpression extends Expression {
     mySelectDef = selectDef;
   }
 
-  private static @NotNull List<SmartTypePointer> createItems(TypeConstraint @NotNull [] constraints, @NotNull SmartTypePointerManager typePointerManager) {
+  @NotNull
+  private static List<SmartTypePointer> createItems(TypeConstraint @NotNull [] constraints, @NotNull SmartTypePointerManager typePointerManager) {
     List<SmartTypePointer> result = new ArrayList<>();
 
     for (TypeConstraint constraint : constraints) {
@@ -85,7 +86,8 @@ public class ChooseTypeExpression extends Expression {
     }
   }
 
-  private static @NotNull PsiType chooseType(TypeConstraint @NotNull [] constraints, @NotNull GlobalSearchScope scope, @NotNull PsiManager manager) {
+  @NotNull
+  private static PsiType chooseType(TypeConstraint @NotNull [] constraints, @NotNull GlobalSearchScope scope, @NotNull PsiManager manager) {
     if (constraints.length > 0) return constraints[0].getDefaultType();
     return PsiType.getJavaLangObject(manager, scope);
   }

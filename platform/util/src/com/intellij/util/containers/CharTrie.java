@@ -3,10 +3,8 @@ package com.intellij.util.containers;
 
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public final class CharTrie {
   private int myAllNodesSize;
   private char[] myAllNodesChars;

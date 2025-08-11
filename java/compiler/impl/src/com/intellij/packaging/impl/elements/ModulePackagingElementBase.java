@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.openapi.module.Module;
@@ -51,12 +51,14 @@ public abstract class ModulePackagingElementBase extends PackagingElement<Module
   }
 
   @Override
-  public @Nullable String getModuleName() {
+  @Nullable
+  public String getModuleName() {
     return myModulePointer != null ? myModulePointer.getModuleName() : null;
   }
 
   @Override
-  public @Nullable Module findModule(PackagingElementResolvingContext context) {
+  @Nullable
+  public Module findModule(PackagingElementResolvingContext context) {
     if (myModulePointer != null) {
       final Module module = myModulePointer.getModule();
       final ModulesProvider modulesProvider = context.getModulesProvider();

@@ -25,7 +25,8 @@ import org.jetbrains.annotations.NotNull;
 public final class WaitOrAwaitWithoutTimeoutInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "wait.or.await.without.timeout.problem.descriptor");
   }
@@ -44,7 +45,7 @@ public final class WaitOrAwaitWithoutTimeoutInspection extends BaseInspection {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
-      final @NonNls String methodName = methodExpression.getReferenceName();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"wait".equals(methodName) && !"await".equals(methodName)) {
         return;
       }

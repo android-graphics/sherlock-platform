@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.testframework.TestConsoleProperties;
@@ -18,6 +18,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ import javax.swing.border.CompoundBorder;
 import java.awt.*;
 
 
-public abstract class TestResultsPanel extends JPanel implements Disposable, UiCompatibleDataProvider  {
+public abstract class TestResultsPanel extends JPanel implements Disposable, DataProvider  {
   private JScrollPane myLeftPane;
   protected final JComponent myConsole;
   protected ToolbarPanel myToolbarPanel;
@@ -57,7 +58,8 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, UiC
     properties.getProject().getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, listener);
   }
 
-  public @NotNull TestStatusLine getStatusLine() {
+  @NotNull
+  public TestStatusLine getStatusLine() {
     return myStatusLine;
   }
 
@@ -140,20 +142,27 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, UiC
 
   protected abstract JComponent createTestTreeView();
 
-  protected @Nullable TestTreeView getTreeView() {
+  @Nullable
+  protected TestTreeView getTreeView() {
     return null;
   }
 
+  @Nullable
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    DataSink.uiDataSnapshot(sink, getTreeView());
+  public Object getData(@NotNull @NonNls String dataId) {
+    final TestTreeView view = getTreeView();
+    if (view != null) {
+      return view.getData(dataId);
+    }
+    return null;
   }
 
   @Override
   public void dispose() {
   }
 
-  protected static @NotNull JBSplitter createSplitter(@NotNull String proportionProperty, float defaultProportion, boolean splitVertically) {
+  @NotNull
+  protected static JBSplitter createSplitter(@NotNull String proportionProperty, float defaultProportion, boolean splitVertically) {
     JBSplitter splitter = new OnePixelSplitter(splitVertically, proportionProperty, defaultProportion);
     splitter.setHonorComponentsMinimumSize(true);
     return splitter;

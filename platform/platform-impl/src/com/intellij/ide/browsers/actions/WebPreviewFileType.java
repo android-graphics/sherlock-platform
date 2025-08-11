@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +15,6 @@ import javax.swing.*;
 /**
  * @author Konstantin Bulenkov
  */
-@ApiStatus.Internal
 public final class WebPreviewFileType extends FakeFileType {
   public static final WebPreviewFileType INSTANCE = new WebPreviewFileType();
 

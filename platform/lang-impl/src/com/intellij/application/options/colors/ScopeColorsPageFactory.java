@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.colors;
 
@@ -21,8 +21,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 final class ScopeColorsPageFactory implements ColorAndFontPanelFactoryEx {
+  @NotNull
   @Override
-  public @NotNull NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
+  public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
     final JPanel scopePanel = createChooseScopePanel();
     return NewColorAndFontPanel.create(new PreviewPanel.Empty(){
       @Override
@@ -33,8 +34,9 @@ final class ScopeColorsPageFactory implements ColorAndFontPanelFactoryEx {
     }, ColorAndFontOptions.getScopesGroup(), options, null, null);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPanelDisplayName() {
+  public String getPanelDisplayName() {
     return ColorAndFontOptions.getScopesGroup();
   }
 

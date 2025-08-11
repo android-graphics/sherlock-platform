@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
@@ -20,7 +20,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
-import org.jetbrains.annotations.ApiStatus
 import java.awt.datatransfer.StringSelection
 
 abstract class CopyPathProvider : AnAction() {
@@ -106,7 +105,6 @@ abstract class CopyPathProvider : AnAction() {
 
 abstract class DumbAwareCopyPathProvider : CopyPathProvider(), DumbAware
 
-@ApiStatus.Internal
 class CopyAbsolutePathProvider : DumbAwareCopyPathProvider() {
   override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): @NlsSafe String? = virtualFile?.presentableUrl
 }
@@ -122,13 +120,12 @@ class CopyContentRootPathProvider : DumbAwareCopyPathProvider() {
   }
 }
 
-@ApiStatus.Internal
 class CopyFileWithLineNumberPathProvider : DumbAwareCopyPathProvider() {
   override fun getPathToElement(project: Project,
                                 virtualFile: VirtualFile?,
                                 editor: Editor?): String? {
     return if (virtualFile == null) null
-    else editor?.let { FqnUtil.getVirtualFileFqn(virtualFile, project) + ":" + (editor.caretModel.logicalPosition.line + 1) }
+    else editor?.let { CopyReferenceUtil.getVirtualFileFqn(virtualFile, project) + ":" + (editor.caretModel.logicalPosition.line + 1) }
   }
 }
 
@@ -139,7 +136,6 @@ class CopySourceRootPathProvider : DumbAwareCopyPathProvider() {
     }
 }
 
-@ApiStatus.Internal
 class CopyTBXReferenceProvider : CopyPathProvider() {
   override fun getQualifiedName(project: Project,
                                 elements: List<PsiElement>,
@@ -148,7 +144,6 @@ class CopyTBXReferenceProvider : CopyPathProvider() {
     CopyTBXReferenceAction.createJetBrainsLink(project, elements, editor)
 }
 
-@ApiStatus.Internal
 class CopyFileNameProvider : DumbAwareCopyPathProvider() {
   override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): String? = virtualFile?.name
 }

@@ -1,39 +1,33 @@
-from _typeshed import FileDescriptorOrPath
+from _typeshed import Incomplete
 from collections.abc import Callable
+from io import TextIOWrapper
 from os import _Environ
-from typing import AnyStr
 
-from .spawnbase import SpawnBase, _Logfile
+from .spawnbase import SpawnBase
 
-PY3: bool
+PY3: Incomplete
 
-class spawn(SpawnBase[AnyStr]):
+class spawn(SpawnBase):
     use_native_pty_fork: bool
-    STDIN_FILENO: int
-    STDOUT_FILENO: int
-    STDERR_FILENO: int
+    STDIN_FILENO: Incomplete
+    STDOUT_FILENO: Incomplete
+    STDERR_FILENO: Incomplete
     str_last_chars: int
-    cwd: FileDescriptorOrPath | None
-    env: _Environ[str]
-    echo: bool
-    ignore_sighup: bool
-    command: str
-    args: list[str]
+    env: Incomplete
     name: str
-    use_poll: bool
     def __init__(
         self,
         command: str,
         args: list[str] = [],
-        timeout: float | None = 30,
+        timeout: int = 30,
         maxread: int = 2000,
         searchwindowsize: int | None = None,
-        logfile: _Logfile | None = None,
-        cwd: FileDescriptorOrPath | None = None,
-        env: _Environ[str] | None = None,
+        logfile: TextIOWrapper | None = None,
+        cwd: str | bytes | None = None,
+        env: _Environ[Incomplete] | None = None,
         ignore_sighup: bool = False,
         echo: bool = True,
-        preexec_fn: Callable[[], None] | None = None,
+        preexec_fn: Callable[[Incomplete], Incomplete] | None = None,
         encoding: str | None = None,
         codec_errors: str = "strict",
         dimensions: tuple[int, int] | None = None,
@@ -42,16 +36,16 @@ class spawn(SpawnBase[AnyStr]):
     child_fd: int
     closed: bool
     def close(self, force: bool = True) -> None: ...
-    def isatty(self) -> bool: ...
-    def waitnoecho(self, timeout: float | None = -1) -> None: ...
-    def getecho(self) -> bool: ...
-    def setecho(self, state: bool) -> None: ...
-    def read_nonblocking(self, size: int = 1, timeout: float | None = -1) -> AnyStr: ...
+    def isatty(self): ...
+    def waitnoecho(self, timeout: int = -1): ...
+    def getecho(self): ...
+    def setecho(self, state: bool): ...
+    def read_nonblocking(self, size: int = 1, timeout: int | None = -1) -> bytes: ...
     def write(self, s: str | bytes) -> None: ...
     def writelines(self, sequence: list[str | bytes]) -> None: ...
-    def send(self, s: str | bytes) -> int: ...
-    def sendline(self, s: str | bytes = "") -> int: ...
-    def sendcontrol(self, char: str) -> int: ...
+    def send(self, s: str | bytes): ...
+    def sendline(self, s: str | bytes = ""): ...
+    def sendcontrol(self, char: str): ...
     def sendeof(self) -> None: ...
     def sendintr(self) -> None: ...
     @property
@@ -59,7 +53,7 @@ class spawn(SpawnBase[AnyStr]):
     @flag_eof.setter
     def flag_eof(self, value: bool) -> None: ...
     def eof(self) -> bool: ...
-    def terminate(self, force: bool = False) -> bool: ...
+    def terminate(self, force: bool = False): ...
     status: int | None
     exitstatus: bool | None
     signalstatus: int | None
@@ -72,24 +66,8 @@ class spawn(SpawnBase[AnyStr]):
     def interact(
         self,
         escape_character="\x1d",
-        input_filter: Callable[[AnyStr], AnyStr] | None = None,
-        output_filter: Callable[[AnyStr], AnyStr] | None = None,
+        input_filter: Callable[[Incomplete], Incomplete] | None = None,
+        output_filter: Callable[[Incomplete], Incomplete] | None = None,
     ) -> None: ...
 
-def spawnu(
-    command: str,
-    args: list[str] = [],
-    timeout: float | None = 30,
-    maxread: int = 2000,
-    searchwindowsize: int | None = None,
-    logfile: _Logfile | None = None,
-    cwd: FileDescriptorOrPath | None = None,
-    env: _Environ[str] | None = None,
-    ignore_sighup: bool = False,
-    echo: bool = True,
-    preexec_fn: Callable[[], None] | None = None,
-    encoding: str | None = "utf-8",
-    codec_errors: str = "strict",
-    dimensions: tuple[int, int] | None = None,
-    use_poll: bool = False,
-) -> spawn[str]: ...
+def spawnu(*args: str, **kwargs: str): ...

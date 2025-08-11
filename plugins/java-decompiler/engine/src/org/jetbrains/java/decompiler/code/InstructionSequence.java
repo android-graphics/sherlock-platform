@@ -50,9 +50,8 @@ public abstract class InstructionSequence {
   }
 
   public void addSequence(InstructionSequence seq) {
-	int base = this.length() == 0 ? 0 : this.getOffset(this.length() - 1);
     for (int i = 0; i < seq.length(); i++) {
-      addInstruction(seq.getInstr(i), base + seq.getOffset(i));
+      addInstruction(seq.getInstr(i), -1); // TODO: any sensible value possible?
     }
   }
 
@@ -110,7 +109,6 @@ public abstract class InstructionSequence {
     this.pointer += diff;
   }
 
-  @Override
   public String toString() {
     return toString(0);
   }

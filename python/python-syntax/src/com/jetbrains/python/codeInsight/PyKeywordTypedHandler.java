@@ -32,8 +32,9 @@ import org.jetbrains.annotations.Nullable;
  * Handles overtyping ':' in definitions.
  */
 public final class PyKeywordTypedHandler extends TypedHandlerDelegate {
+  @NotNull
   @Override
-  public @NotNull Result beforeCharTyped(char character, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {
+  public Result beforeCharTyped(char character, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {
     if (!(fileType instanceof PythonFileType)) return Result.CONTINUE; // else we'd mess up with other file types!
     if (character == ':') {
       final Document document = editor.getDocument();
@@ -50,7 +51,8 @@ public final class PyKeywordTypedHandler extends TypedHandlerDelegate {
     return Result.CONTINUE; // the default
   }
 
-  private static @Nullable Result getOverTypeResult(Editor editor, PsiFile file) {
+  @Nullable
+  private static Result getOverTypeResult(Editor editor, PsiFile file) {
     final int offset = editor.getCaretModel().getOffset();
 
     PsiElement token = file.findElementAt(offset - 1);

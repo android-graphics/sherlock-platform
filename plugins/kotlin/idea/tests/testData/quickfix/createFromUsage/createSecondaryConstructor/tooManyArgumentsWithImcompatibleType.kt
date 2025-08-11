@@ -1,5 +1,5 @@
 // "Create secondary constructor" "true"
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 
 class CtorPrimary(val f1: Int, val f2: String)
 

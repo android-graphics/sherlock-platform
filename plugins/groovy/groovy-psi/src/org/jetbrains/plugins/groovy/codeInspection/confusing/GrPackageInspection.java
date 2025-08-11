@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -35,7 +35,8 @@ public final class GrPackageInspection extends BaseInspection {
   public boolean myCheckScripts = true;
 
   @Override
-  protected @Nullable String buildErrorString(Object... args) {
+  @Nullable
+  protected String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.package.name.mismatch");
   }
 
@@ -45,8 +46,9 @@ public final class GrPackageInspection extends BaseInspection {
       checkbox("myCheckScripts", GroovyBundle.message("gr.package.inspection.check.scripts")));
   }
 
+  @NotNull
   @Override
-  protected @NotNull BaseInspectionVisitor buildVisitor() {
+  protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
       public void visitFile(@NotNull GroovyFileBase file) {
@@ -71,7 +73,8 @@ public final class GrPackageInspection extends BaseInspection {
     };
   }
 
-  private static @Nullable PsiElement getElementToHighlight(GroovyFile file) {
+  @Nullable
+  private static PsiElement getElementToHighlight(GroovyFile file) {
     GrPackageDefinition packageDefinition = file.getPackageDefinition();
     if (packageDefinition != null) return packageDefinition;
 
@@ -101,7 +104,8 @@ public final class GrPackageInspection extends BaseInspection {
     }
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return GroovyBundle.message("fix.package.name");
     }
 

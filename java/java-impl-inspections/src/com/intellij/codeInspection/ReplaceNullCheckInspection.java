@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.Nullability;
@@ -45,8 +45,9 @@ public final class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspe
       checkbox("noWarningReplacementBigger", JavaBundle.message("inspection.require.non.null.no.warning.replacement.bigger")));
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     PsiFile file = holder.getFile();
     if (!PsiUtil.isLanguageLevel9OrHigher(file)) {
       return PsiElementVisitor.EMPTY_VISITOR;
@@ -68,7 +69,8 @@ public final class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspe
                                new ReplaceWithRequireNonNullFix(method, false));
       }
 
-      private static @NotNull ProblemHighlightType getHighlight(NotNullContext context, boolean isInfoLevel) {
+      @NotNull
+      private static ProblemHighlightType getHighlight(NotNullContext context, boolean isInfoLevel) {
         if(context.myIsStream) {
           return ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
         }
@@ -104,13 +106,17 @@ public final class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspe
       myIsTernary = ternary;
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getName() {
+    public String getName() {
       return JavaBundle.message("inspection.require.non.null.quickfix", myIsTernary ? 2 : 1, myMethod);
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaBundle.message("inspection.require.non.null");
     }
 
@@ -149,11 +155,12 @@ public final class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspe
     }
   }
 
-  private static @NotNull PsiExpression createRequireExpression(@NotNull CommentTracker tracker,
-                                                                @NotNull PsiExpression expression,
-                                                                @NotNull Project project,
-                                                                @NotNull PsiReferenceExpression nullableReference,
-                                                                @NotNull PsiElement context) {
+  @NotNull
+  private static PsiExpression createRequireExpression(@NotNull CommentTracker tracker,
+                                                       @NotNull PsiExpression expression,
+                                                       @NotNull Project project,
+                                                       @NotNull PsiReferenceExpression nullableReference,
+                                                       @NotNull PsiElement context) {
     boolean isSimple = ExpressionUtils.isSafelyRecomputableExpression(expression);
     String expr = tracker.text(expression);
     if (!isSimple) {
@@ -198,7 +205,8 @@ public final class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspe
       return lengthAfterReplace;
     }
 
-    static @Nullable NotNullContext from(@NotNull PsiIfStatement ifStatement) {
+    @Nullable
+    static NotNullContext from(@NotNull PsiIfStatement ifStatement) {
       PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
       if(condition == null) return null;
       PsiBinaryExpression binOp = tryCast(condition, PsiBinaryExpression.class);
@@ -262,11 +270,13 @@ public final class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspe
     }
   }
 
-  private static @NotNull String getMethod(PsiExpression expression) {
+  @NotNull
+  private static String getMethod(PsiExpression expression) {
     return ExpressionUtils.isSafelyRecomputableExpression(expression) ? "requireNonNullElse" : "requireNonNullElseGet";
   }
 
-  private static @NotNull String getMethodWithClass(PsiExpression expression, boolean isStream) {
+  @NotNull
+  private static String getMethodWithClass(PsiExpression expression, boolean isStream) {
     return isStream ? "Stream.ofNullable" : "Objects." + getMethod(expression);
   }
 
@@ -284,7 +294,8 @@ public final class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspe
       myReferenceExpression = expression;
     }
 
-    static @Nullable TernaryNotNullContext from(@NotNull PsiConditionalExpression ternary) {
+    @Nullable
+    static TernaryNotNullContext from(@NotNull PsiConditionalExpression ternary) {
       PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(ternary.getCondition()), PsiBinaryExpression.class);
       if(binOp == null) return null;
       PsiExpression value = ExpressionUtils.getValueComparedWithNull(binOp);
@@ -316,15 +327,18 @@ public final class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspe
       myRight = right;
     }
 
-    public @Nullable PsiExpression getRight() {
+    @Nullable
+    public PsiExpression getRight() {
       return myRight;
     }
 
-    public @Nullable PsiExpression getLeft() {
+    @Nullable
+    public PsiExpression getLeft() {
       return myLeft;
     }
 
-    static @Nullable TopmostQualifierDiff from(@Nullable PsiExpression left, @Nullable PsiExpression right) {
+    @Nullable
+    static TopmostQualifierDiff from(@Nullable PsiExpression left, @Nullable PsiExpression right) {
       PsiMethodCallExpression leftCall = tryCast(left, PsiMethodCallExpression.class);
       PsiMethodCallExpression rightCall = tryCast(right, PsiMethodCallExpression.class);
       if(leftCall == null || rightCall == null) return null;

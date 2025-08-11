@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.groovy;
 
 import org.jetbrains.annotations.NotNull;
@@ -7,10 +7,9 @@ import org.jetbrains.jps.builders.java.ResourceRootDescriptor;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.nio.file.Path;
 import java.util.Set;
 
-final class GroovyResourceRootDescriptor extends BuildRootDescriptor {
+class GroovyResourceRootDescriptor extends BuildRootDescriptor {
   private final CheckResourcesTarget myTarget;
   private final ResourceRootDescriptor myDescriptor;
 
@@ -25,7 +24,8 @@ final class GroovyResourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public @NotNull FileFilter createFileFilter() {
+  @NotNull
+  public FileFilter createFileFilter() {
     return myDescriptor.createFileFilter();
   }
 
@@ -40,6 +40,11 @@ final class GroovyResourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
+  public boolean canUseFileCache() {
+    return myDescriptor.canUseFileCache();
+  }
+
+  @Override
   public @NotNull String getRootId() {
     return myDescriptor.getRootId();
   }
@@ -49,8 +54,9 @@ final class GroovyResourceRootDescriptor extends BuildRootDescriptor {
     return myDescriptor.getRootFile();
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<Path> getExcludedRoots() {
+  public Set<File> getExcludedRoots() {
     return myDescriptor.getExcludedRoots();
   }
 }

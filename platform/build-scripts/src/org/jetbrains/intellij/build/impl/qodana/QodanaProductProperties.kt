@@ -15,14 +15,7 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Didea.job.launcher.without.timeout=true",
   "-Dscanning.in.smart.mode=false",
   "-Deap.login.enabled=false",
-  "-Dsdk.download.consent=true",
-  "-Dide.activity.tracking.enable.debug=true",
-  "-Deslint.service.expiration.timeout.ms=5000",
-  "-Dphp.additional.library.manager.new.updater=true",
-  "-Dgradle.force.project.sdk.import=true", //workaround for https://youtrack.jetbrains.com/issue/IDEA-367680/The-module-SDK-isnt-always-specified
-  "-Dide.region.url.mapping.expiration.timeout=7200",
-  "-Dexternal.system.auto.import.headless.async=true",
-  "-Dmaven.default.headless.import=true",
+  "-Djdk.download.consent=true"
   )
 
 private const val IS_EAP = false

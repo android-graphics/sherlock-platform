@@ -53,4 +53,5 @@ internal class PyTargetPathMapper(private val targetEnvironment: TargetEnvironme
     return false
   }
 
+  fun getFileMappings(): MutableList<PathMappingSettings.PathMapping> = pathMappingSettings.pathMappings
 }

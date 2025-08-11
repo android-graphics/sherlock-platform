@@ -2,7 +2,6 @@
 package com.intellij.dvcs.ui;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +14,7 @@ import java.util.List;
  * Lightweight alternative to {@link DefaultActionGroup}.
  * Does not use `createLockFreeCopyOnWriteList` and action order constraints, making it suitable for use cases with many (10k+) children actions.
  */
-public class LightActionGroup extends ActionGroup implements ActionUpdateThreadAware.Recursive {
+public class LightActionGroup extends ActionGroup implements AlwaysVisibleActionGroup, ActionUpdateThreadAware.Recursive {
   private final List<AnAction> myChildren = new ArrayList<>();
 
   public LightActionGroup() {
@@ -24,7 +23,6 @@ public class LightActionGroup extends ActionGroup implements ActionUpdateThreadA
 
   public LightActionGroup(boolean popup) {
     super(Presentation.NULL_STRING, popup);
-    getTemplatePresentation().putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true);
   }
 
   @Override

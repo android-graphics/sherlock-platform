@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
@@ -93,7 +93,8 @@ public class FacetUtil {
   }
 
   @ApiStatus.Internal
-  public static @Nullable Element saveFacetConfiguration(Facet<?> facet) {
+  @Nullable
+  public static Element saveFacetConfiguration(Facet<?> facet) {
     final Element config;
     try {
       FacetConfiguration configuration = facet.getConfiguration();

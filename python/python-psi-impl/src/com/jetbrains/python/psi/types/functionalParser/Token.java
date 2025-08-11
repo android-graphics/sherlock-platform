@@ -19,9 +19,9 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 public class Token<T> {
-  private final @NotNull CharSequence myText;
-  private final @NotNull TextRange myRange;
-  private final @NotNull T myType;
+  @NotNull private final CharSequence myText;
+  @NotNull private final TextRange myRange;
+  @NotNull private final T myType;
 
   public Token(@NotNull T type, @NotNull CharSequence text, @NotNull TextRange range) {
     myText = text;
@@ -29,15 +29,18 @@ public class Token<T> {
     myType = type;
   }
 
-  public @NotNull T getType() {
+  @NotNull
+  public T getType() {
     return myType;
   }
 
-  public @NotNull CharSequence getText() {
+  @NotNull
+  public CharSequence getText() {
     return myText;
   }
 
-  public @NotNull TextRange getRange() {
+  @NotNull
+  public TextRange getRange() {
     return myRange;
   }
 

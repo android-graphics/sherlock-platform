@@ -1,7 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
@@ -31,8 +32,9 @@ import java.util.*;
 /**
  * @author Maxim.Medvedev
  */
-final class JavaChangeSignatureUsageSearcher {
+class JavaChangeSignatureUsageSearcher {
   private final JavaChangeInfo myChangeInfo;
+  private static final Logger LOG = Logger.getInstance(JavaChangeSignatureUsageSearcher.class);
 
   JavaChangeSignatureUsageSearcher(JavaChangeInfo changeInfo) {
     this.myChangeInfo = changeInfo;
@@ -57,7 +59,7 @@ final class JavaChangeSignatureUsageSearcher {
     methods.add(method);
 
     for (PsiMethod psiMethod : methods) {
-      for (PsiFunctionalExpression functionalExpression : FunctionalExpressionSearch.search(psiMethod).asIterable()) {
+      for (PsiFunctionalExpression functionalExpression : FunctionalExpressionSearch.search(psiMethod)) {
         result.add(new FunctionalInterfaceChangedUsageInfo(functionalExpression, method));
       }
     }
@@ -81,7 +83,7 @@ final class JavaChangeSignatureUsageSearcher {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     List<PsiDeconstructionPattern> deconstructions = new ArrayList<>();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(method.getProject());
-    for (PsiReference reference : ReferencesSearch.search(aClass, projectScope).asIterable()) {
+    for (PsiReference reference : ReferencesSearch.search(aClass, projectScope)) {
       PsiElement element = reference.getElement();
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiTypeElement)) {
@@ -102,6 +104,12 @@ final class JavaChangeSignatureUsageSearcher {
     PsiPattern[] components = deconstruction.getDeconstructionList().getDeconstructionComponents();
     if (components.length != parameters.length) {
       return false;
+    }
+    for (int i = 0; i < components.length; i++) {
+      PsiType type = JavaPsiPatternUtil.getPatternType(components[i]);
+      if (!parameters[i].getType().equals(type)) {
+        return false;
+      }
     }
     return true;
   }
@@ -294,7 +302,8 @@ final class JavaChangeSignatureUsageSearcher {
     return overridingMethods;
   }
 
-  private static @NotNull ChangeSignatureUsageProvider getProvider(PsiElement element) {
+  @NotNull
+  private static ChangeSignatureUsageProvider getProvider(PsiElement element) {
     ChangeSignatureUsageProvider provider = ChangeSignatureUsageProviders.findProvider(element.getLanguage());
     if (provider == null) {
       provider = ChangeSignatureUsageProviders.findProvider(JavaLanguage.INSTANCE);
@@ -306,7 +315,7 @@ final class JavaChangeSignatureUsageSearcher {
   private static void addParameterUsages(PsiNamedElement parameter, ArrayList<? super UsageInfo> results, ParameterInfo info) {
     PsiManager manager = parameter.getManager();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-    for (PsiReference psiReference : ReferencesSearch.search(parameter, projectScope, false).asIterable()) {
+    for (PsiReference psiReference : ReferencesSearch.search(parameter, projectScope, false)) {
       PsiElement parmRef = psiReference.getElement();
       UsageInfo usageInfo = new ChangeSignatureParameterUsageInfo(parmRef, parameter.getName(), info.getName());
       results.add(usageInfo);

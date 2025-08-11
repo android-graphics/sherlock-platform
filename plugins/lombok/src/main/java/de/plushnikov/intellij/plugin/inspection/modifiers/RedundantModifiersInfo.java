@@ -10,7 +10,7 @@ public class RedundantModifiersInfo {
 
   private final RedundantModifiersInfoType redundantModifiersInfoType;
   private final String[] modifiers;
-  private final @InspectionMessage String description;
+  @InspectionMessage private final String description;
   private final String dontRunOnModifier;
 
   public RedundantModifiersInfo(@NotNull RedundantModifiersInfoType redundantModifiersInfoType,
@@ -28,7 +28,8 @@ public class RedundantModifiersInfo {
     return modifiers;
   }
 
-  public @InspectionMessage String getDescription() {
+  @InspectionMessage
+  public String getDescription() {
     return description;
   }
 

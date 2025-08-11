@@ -59,7 +59,7 @@ internal class FeatureUsageSettingsEvents private constructor(private val projec
       coroutineScope.launch {
         delay(1.minutes)
 
-        if (!FeatureUsageLogger.getInstance().isEnabled()) {
+        if (!FeatureUsageLogger.isEnabled()) {
           channel.close()
           return@launch
         }
@@ -72,7 +72,7 @@ internal class FeatureUsageSettingsEvents private constructor(private val projec
 
       (project ?: ApplicationManager.getApplication()).messageBus.simpleConnect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
         override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-          if (!FeatureUsageLogger.getInstance().isEnabled()) return
+          if (!FeatureUsageLogger.isEnabled()) return
           // process all pending requests
           synchronized(printer) {
             while (true) {

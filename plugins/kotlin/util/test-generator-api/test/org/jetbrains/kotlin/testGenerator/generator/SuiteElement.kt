@@ -17,9 +17,12 @@ import java.io.File
 import java.util.*
 import javax.lang.model.element.Modifier
 
-fun File.toRelativeStringSystemIndependent(base: File): String = toRelativeString(base).toStringSystemIndependent()
-
-fun String.toStringSystemIndependent(): String = if (File.separatorChar == '\\') this.replace('\\', '/') else this
+fun File.toRelativeStringSystemIndependent(base: File): String {
+    val path = this.toRelativeString(base)
+    return if (File.separatorChar == '\\') {
+        path.replace('\\', '/')
+    } else path
+}
 
 interface TestMethod : RenderElement {
     val methodName: String
@@ -53,7 +56,7 @@ class SuiteElement private constructor(
             val nestedSuites = mutableListOf<SuiteElement>()
 
             for (file in rootFile.listFiles().orEmpty()) {
-                if (depth > 0 && !file.isExcluded(model)) {
+                if (depth > 0 && file.isDirectory && file.name !in model.excludedDirectories) {
                     val nestedClassName = file.toJavaIdentifier().capitalizeAsciiOnly()
                     val nestedModel = model.copy(
                         path = file.toRelativeStringSystemIndependent(group.testDataRoot),
@@ -71,9 +74,10 @@ class SuiteElement private constructor(
                     }
                 }
 
-                if (file.isExcluded(model)) continue
-
                 val match = model.matcher(file.name) ?: continue
+
+                // Don't generate a directory-based test if the directory is excluded.
+                if (file.isDirectory && file.name in model.excludedDirectories) continue
 
                 val methodNameBase = getTestMethodNameBase(match.methodName)
                 val path = file.toRelativeStringSystemIndependent(group.moduleRoot)
@@ -141,20 +145,6 @@ class SuiteElement private constructor(
             }
 
             return createElement(className, isNested, methods, nestedSuites)
-        }
-
-        private fun File.isExcluded(model: TModel): Boolean {
-            if (model.excludedDirectories.isNotEmpty()) {
-                // Don't generate a directory-based test if the directory is excluded.
-                if (isDirectory && name in model.excludedDirectories) return true
-
-                // Don't generate a file-based test if its parent directory is excluded.
-                if (isFile) {
-                    val p = parentFile.path.toStringSystemIndependent()
-                    if (model.excludedDirectories.any { p.contains(it) }) return true
-                }
-            }
-            return false
         }
 
         private fun createStatements(

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.psi.PsiElement;
@@ -28,7 +28,8 @@ public final class PropertyResolver extends PropertyProviderFinder {
 
   public record PropertyData(PsiElement element, Collection<String> variants, PropertiesProvider provider) {}
 
-  public static @NotNull PropertyData resolve(@NotNull AntDomProject project, @NotNull String propertyName, DomElement contextElement) {
+  @NotNull
+  public static PropertyData resolve(@NotNull AntDomProject project, @NotNull String propertyName, DomElement contextElement) {
     final PropertyResolver resolver = new PropertyResolver(propertyName, contextElement);
     resolver.execute(project, project.getDefaultTarget().getRawText());
     if (resolver.getContextElement() instanceof PropertiesProvider provider) {
@@ -38,7 +39,8 @@ public final class PropertyResolver extends PropertyProviderFinder {
     return resolver.getResult();
   }
 
-  public @NotNull PropertyData getResult() {
+  @NotNull
+  public PropertyData getResult() {
     final PsiElement element = myResult != null ? myResult.getNavigationElement(myPropertyName) : null;
     return new PropertyData(element, Collections.unmodifiableSet(myVariants), myResult);
   }

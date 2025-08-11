@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.configuration
 
 import com.intellij.execution.ShortenCommandLine
@@ -11,8 +11,9 @@ import com.intellij.openapi.externalSystem.service.project.settings.RunConfigura
 import com.intellij.openapi.project.Project
 import com.intellij.util.ObjectUtils.consumeIfCast
 import com.theoryinpractice.testng.model.TestType
+import java.util.*
 
-internal class TestNGRunConfigurationImporter: RunConfigurationImporter {
+class TestNGRunConfigurationImporter: RunConfigurationImporter {
   override fun process(project: Project,
                        runConfiguration: RunConfiguration,
                        cfg: MutableMap<String, Any>,

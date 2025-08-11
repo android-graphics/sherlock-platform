@@ -4,7 +4,6 @@ package com.intellij.internal.ml.ngram
 import com.intellij.completion.ngram.slp.modeling.ngram.NGramModel
 import com.intellij.completion.ngram.slp.translating.Vocabulary
 import com.intellij.openapi.diagnostic.Logger
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.Externalizable
 import java.io.IOException
@@ -13,7 +12,6 @@ import java.io.ObjectOutput
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 
-@ApiStatus.Internal
 class VocabularyWithLimit(var maxVocabularySize: Int,
                           nGramOrder: Int, maxSequenceSize: Int,
                           sequenceInitialSize: Int = SEQUENCE_INITIAL_SIZE) : Vocabulary(), Externalizable {
@@ -134,7 +132,6 @@ class VocabularyWithLimit(var maxVocabularySize: Int,
  *
  * Last token appearance is used to find a minimum sequence which have to be forgotten together with the token.
  */
-@ApiStatus.Internal
 class NGramRecentTokens(private val maxSequenceSize: Int) : Externalizable {
   private var maxTokenIndex: Int = Int.MAX_VALUE - 1
 

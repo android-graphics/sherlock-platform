@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -16,7 +15,8 @@ public abstract class AbstractImportFromExternalSystemWizardStep extends Project
   }
 
   @Override
-  protected @Nullable AbstractExternalProjectImportBuilder getBuilder() {
+  @Nullable
+  protected AbstractExternalProjectImportBuilder getBuilder() {
     return (AbstractExternalProjectImportBuilder)getWizardContext().getProjectBuilder();
   }
 }

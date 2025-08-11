@@ -3,13 +3,10 @@ package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandService;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -18,7 +15,6 @@ import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
@@ -150,13 +146,7 @@ public final class SystemOutErrInspection extends BaseInspection {
 
         boolean informationLevel = InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
         if (informationLevel) {
-          Collection<PsiLiteralExpression> literals =
-            PsiTreeUtil.findChildrenOfType(callExpression.getArgumentList(), PsiLiteralExpression.class);
-          InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(expression.getProject());
-          if (!ContainerUtil.exists(literals, literal -> injectedLanguageManager.hasInjections(literal))) {
-            registerError(callExpression, expression);
-            return;
-          }
+          registerError(callExpression, expression);
         }
       }
 

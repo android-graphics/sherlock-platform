@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.serialization.PropertyMapping;
@@ -13,10 +13,13 @@ import java.util.List;
 public class Ear extends Jar {
   private static final long serialVersionUID = 1L;
 
-  private final @NotNull String appDirName;
-  private final @NotNull String libDirName;
+  @NotNull
+  private final String appDirName;
+  @NotNull
+  private final String libDirName;
   private String deploymentDescriptor;
-  private @NotNull List<EarResource> myResources = Collections.emptyList();
+  @NotNull
+  private List<EarResource> myResources = Collections.emptyList();
 
   @PropertyMapping({"name", "appDirName", "libDirName"})
   public Ear(@NotNull String name, @NotNull String appDirName, @NotNull String libDirName) {
@@ -25,11 +28,13 @@ public class Ear extends Jar {
     this.libDirName = libDirName;
   }
 
-  public @NotNull String getAppDirName() {
+  @NotNull
+  public String getAppDirName() {
     return appDirName;
   }
 
-  public @NotNull String getLibDirName() {
+  @NotNull
+  public String getLibDirName() {
     return libDirName;
   }
 
@@ -41,7 +46,8 @@ public class Ear extends Jar {
     return deploymentDescriptor;
   }
 
-  public @NotNull List<EarResource> getResources() {
+  @NotNull
+  public List<EarResource> getResources() {
     return myResources;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.infos;
 
 import com.intellij.openapi.project.Project;
@@ -335,7 +335,8 @@ public class MethodCandidateInfo extends CandidateInfo{
     return ThreeState.YES;
   }
 
-  public @NotNull PsiSubstitutor getSiteSubstitutor() {
+  @NotNull
+  public PsiSubstitutor getSiteSubstitutor() {
     PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
     if (myTypeArguments != null) {
       PsiMethod method = getElement();
@@ -347,16 +348,19 @@ public class MethodCandidateInfo extends CandidateInfo{
     return incompleteSubstitutor;
   }
 
-  public @NotNull PsiSubstitutor getSubstitutorFromQualifier() {
+  @NotNull
+  public PsiSubstitutor getSubstitutorFromQualifier() {
     return super.getSubstitutor();
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiSubstitutor getSubstitutor() {
+  public PsiSubstitutor getSubstitutor() {
     return getSubstitutor(true);
   }
 
-  public @NotNull PsiSubstitutor getSubstitutor(boolean includeReturnConstraint) {
+  @NotNull
+  public PsiSubstitutor getSubstitutor(boolean includeReturnConstraint) {
     PsiSubstitutor substitutor = myCalcedSubstitutor;
     if (substitutor == null || !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) || isOverloadCheck()) {
 
@@ -421,12 +425,14 @@ public class MethodCandidateInfo extends CandidateInfo{
     return super.isValidResult() && isApplicable();
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiMethod getElement(){
+  public PsiMethod getElement(){
     return (PsiMethod)super.getElement();
   }
 
-  public @NotNull PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
+  @NotNull
+  public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
     return inferTypeArguments(policy, myArgumentList instanceof PsiExpressionList
                                       ? ((PsiExpressionList)myArgumentList).getExpressions()
                                       : PsiExpression.EMPTY_ARRAY, includeReturnConstraint);
@@ -442,7 +448,8 @@ public class MethodCandidateInfo extends CandidateInfo{
   /**
    * If iterated through all candidates, should be called under {@link #ourOverloadGuard} guard so results won't be cached on the top level call
    */
-  public @NotNull PsiSubstitutor inferTypeArguments(final @NotNull ParameterTypeInferencePolicy policy,
+  @NotNull
+  public PsiSubstitutor inferTypeArguments(@NotNull final ParameterTypeInferencePolicy policy,
                                            final PsiExpression @NotNull [] arguments,
                                            boolean includeReturnConstraint) {
     final Computable<PsiSubstitutor> computable = () -> {

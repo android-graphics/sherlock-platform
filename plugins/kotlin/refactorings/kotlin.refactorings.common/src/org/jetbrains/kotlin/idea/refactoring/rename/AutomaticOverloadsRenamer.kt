@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
@@ -52,11 +52,11 @@ private fun KtNamedFunction.getOverloads(): Collection<KtNamedFunction> {
             if (symbol.isActual && symbol.getExpectsForActual().isNotEmpty()) return emptyList()
             val result = LinkedHashSet<KtNamedFunction>()
             listOfNotNull(
-                findPackage(containingKtFile.packageFqName)?.packageScope,
+                getPackageSymbolIfPackageExists(containingKtFile.packageFqName)?.packageScope,
                 (symbol.containingDeclaration as? KaClassSymbol)?.declaredMemberScope,
-                symbol.receiverParameter?.returnType?.expandedSymbol?.declaredMemberScope,
+                symbol.receiverParameter?.type?.expandedSymbol?.declaredMemberScope
             ).flatMapTo(result) { scope ->
-                scope.callables(name).mapNotNull {
+                scope.getCallableSymbols(name).mapNotNull {
                     it.psi as? KtNamedFunction
                 }
             }

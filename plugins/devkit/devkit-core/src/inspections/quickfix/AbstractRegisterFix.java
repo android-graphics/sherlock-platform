@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -34,7 +34,8 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return DevKitBundle.message("inspections.component.not.registered.quickfix.family", StringUtil.toLowerCase(getType()));
   }
 
@@ -44,7 +45,8 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return DevKitBundle.message("inspections.component.not.registered.quickfix.name", getType());
   }
 
@@ -59,7 +61,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
   }
 
   @Override
-  public void applyFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) return;
     PsiFile psiFile = myPointer.getContainingFile();
     final PsiClass element = myPointer.getElement();

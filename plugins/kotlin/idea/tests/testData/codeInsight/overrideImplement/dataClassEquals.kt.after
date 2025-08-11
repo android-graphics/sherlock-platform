@@ -4,7 +4,3 @@ data class Foo(val name: String) {
         <selection>return super.equals(other)</selection>
     }
 }
-
-// MEMBER: "equals(other: Any?): Boolean"
-// MEMBER: "hashCode(): Int"
-// MEMBER: "toString(): String"

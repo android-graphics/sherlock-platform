@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
@@ -25,18 +24,66 @@ object CreateFromUsageUtil {
     fun <D : KtNamedDeclaration> placeDeclarationInContainer(
       declaration: D,
       container: PsiElement,
-      anchor: PsiElement?,
-      fileToEdit: PsiFile = container.containingFile
+      anchor: PsiElement,
+      fileToEdit: KtFile = container.containingFile as KtFile
     ): D {
         val psiFactory = KtPsiFactory(container.project)
         val newLine = psiFactory.createNewLine()
 
+        fun calcNecessaryEmptyLines(decl: KtDeclaration, after: Boolean): Int {
+            var lineBreaksPresent = 0
+            var neighbor: PsiElement? = null
+
+            siblingsLoop@
+            for (sibling in decl.siblings(forward = after, withItself = false)) {
+                when (sibling) {
+                    is PsiWhiteSpace -> lineBreaksPresent += (sibling.text ?: "").count { it == '\n' }
+                    else -> {
+                        neighbor = sibling
+                        break@siblingsLoop
+                    }
+                }
+            }
+
+            val neighborType = neighbor?.node?.elementType
+            val lineBreaksNeeded = when {
+              neighborType == KtTokens.LBRACE || neighborType == KtTokens.RBRACE -> 1
+              neighbor is KtDeclaration && (neighbor !is KtProperty || decl !is KtProperty) -> 2
+                else -> 1
+            }
+
+            return max(lineBreaksNeeded - lineBreaksPresent, 0)
+        }
+
         val actualContainer = (container as? KtClassOrObject)?.getOrCreateBody() ?: container
+
+        fun addDeclarationToClassOrObject(
+          classOrObject: KtClassOrObject,
+          declaration: KtNamedDeclaration
+        ): KtNamedDeclaration {
+            val classBody = classOrObject.getOrCreateBody()
+            return if (declaration is KtNamedFunction) {
+                val neighbor = PsiTreeUtil.skipSiblingsBackward(
+                  classBody.rBrace ?: classBody.lastChild!!,
+                  PsiWhiteSpace::class.java
+                )
+                classBody.addAfter(declaration, neighbor) as KtNamedDeclaration
+            } else classBody.addAfter(declaration, classBody.lBrace!!) as KtNamedDeclaration
+        }
+
+
+        fun addNextToOriginalElementContainer(addBefore: Boolean): D {
+            val sibling = anchor.parentsWithSelf.first { it.parent == actualContainer }
+            return if (addBefore || PsiTreeUtil.hasErrorElements(sibling)) {
+                actualContainer.addBefore(declaration, sibling)
+            } else {
+                actualContainer.addAfter(declaration, sibling)
+            } as D
+        }
 
         val declarationInPlace = when {
             declaration is KtPrimaryConstructor -> {
-                val primaryConstructor = (container as? KtClass)?.createPrimaryConstructorIfAbsent()
-                primaryConstructor?.replaced(declaration) ?: declaration
+                (container as KtClass).createPrimaryConstructorIfAbsent().replaced(declaration)
             }
 
             declaration is KtProperty && container !is KtBlockExpression -> {
@@ -47,17 +94,8 @@ object CreateFromUsageUtil {
                 }
                 sibling?.let { actualContainer.addBefore(declaration, it) as D } ?: fileToEdit.add(declaration) as D
             }
-            declaration is KtParameter -> {
-                val sibling = when (actualContainer) {
-                    is KtParameterList -> actualContainer.rightParenthesis
-                    else -> error("Invalid container: $actualContainer for parameter $declaration\n${actualContainer.text}")
-                }
-                sibling?.let {
-                    actualContainer.addBefore(declaration, it) as D
-                } ?: fileToEdit.add(declaration) as D
-            }
 
-            anchor != null && actualContainer.isAncestor(anchor, true) -> {
+            actualContainer.isAncestor(anchor, true) -> {
                 val insertToBlock = container is KtBlockExpression
                 if (insertToBlock) {
                     val parent = container.parent
@@ -68,7 +106,7 @@ object CreateFromUsageUtil {
                         }
                     }
                 }
-                addNextToOriginalElementContainer(insertToBlock || declaration is KtTypeAlias, anchor, declaration, actualContainer)
+                addNextToOriginalElementContainer(insertToBlock || declaration is KtTypeAlias)
             }
 
             container is KtFile -> container.add(declaration) as D
@@ -116,13 +154,11 @@ object CreateFromUsageUtil {
             }
             !is KtPrimaryConstructor -> {
                 val parent = declarationInPlace.parent
-                if (parent !is KtParameterList) {
-                    calcNecessaryEmptyLines(declarationInPlace, false).let {
-                        if (it > 0) parent.addBefore(psiFactory.createNewLine(it), declarationInPlace)
-                    }
-                    calcNecessaryEmptyLines(declarationInPlace, true).let {
-                        if (it > 0) parent.addAfter(psiFactory.createNewLine(it), declarationInPlace)
-                    }
+                calcNecessaryEmptyLines(declarationInPlace, false).let {
+                    if (it > 0) parent.addBefore(psiFactory.createNewLine(it), declarationInPlace)
+                }
+                calcNecessaryEmptyLines(declarationInPlace, true).let {
+                    if (it > 0) parent.addAfter(psiFactory.createNewLine(it), declarationInPlace)
                 }
             }
         }
@@ -160,72 +196,13 @@ object CreateFromUsageUtil {
         } else null
     }
 
-    private val visibilityModifierToKotlinToken: Map<JvmModifier, KtModifierKeywordToken> = mapOf(
+    private val modifierToKotlinToken: Map<JvmModifier, KtModifierKeywordToken> = mapOf(
       JvmModifier.PRIVATE to KtTokens.PRIVATE_KEYWORD,
       JvmModifier.PACKAGE_LOCAL to KtTokens.INTERNAL_KEYWORD,
       JvmModifier.PROTECTED to KtTokens.PROTECTED_KEYWORD,
-      JvmModifier.PUBLIC to KtTokens.PUBLIC_KEYWORD,
+      JvmModifier.PUBLIC to KtTokens.PUBLIC_KEYWORD
     )
-
-    fun visibilityModifierToString(modifier: JvmModifier?): String? =
-        visibilityModifierToKotlinToken[modifier]?.takeIf { it != KtTokens.PUBLIC_KEYWORD }?.value
-
-    private val modifierToKotlinToken: Map<JvmModifier, KtModifierKeywordToken> =
-        visibilityModifierToKotlinToken + mapOf(JvmModifier.ABSTRACT to KtTokens.ABSTRACT_KEYWORD)
-
-    fun jvmModifierToKotlin(modifier: JvmModifier?): KtModifierKeywordToken? =
-        modifierToKotlinToken[modifier]
-
-    private fun calcNecessaryEmptyLines(decl: KtDeclaration, after: Boolean): Int {
-        var lineBreaksPresent = 0
-        var neighbor: PsiElement? = null
-
-        siblingsLoop@
-        for (sibling in decl.siblings(forward = after, withItself = false)) {
-            when (sibling) {
-                is PsiWhiteSpace -> lineBreaksPresent += (sibling.text ?: "").count { it == '\n' }
-                else -> {
-                    neighbor = sibling
-                    break@siblingsLoop
-                }
-            }
-        }
-
-        val neighborType = neighbor?.node?.elementType
-        val lineBreaksNeeded = when {
-          neighborType == KtTokens.LBRACE || neighborType == KtTokens.RBRACE -> 1
-          neighbor is KtDeclaration && (neighbor !is KtProperty || decl !is KtProperty) -> 2
-            else -> 1
-        }
-
-        return max(lineBreaksNeeded - lineBreaksPresent, 0)
-    }
-    fun addDeclarationToClassOrObject(
-      classOrObject: KtClassOrObject,
-      declaration: KtNamedDeclaration
-    ): KtNamedDeclaration {
-        val classBody = classOrObject.getOrCreateBody()
-        return if (declaration is KtNamedFunction) {
-            val neighbor = PsiTreeUtil.skipSiblingsBackward(
-              classBody.rBrace ?: classBody.lastChild!!,
-              PsiWhiteSpace::class.java
-            )
-            classBody.addAfter(declaration, neighbor) as KtNamedDeclaration
-        } else classBody.addAfter(declaration, classBody.lBrace!!) as KtNamedDeclaration
-    }
-
-
-    private fun <D : KtNamedDeclaration> addNextToOriginalElementContainer(
-        addBefore: Boolean,
-        anchor: PsiElement,
-        declaration: D,
-        actualContainer: PsiElement
-    ): D {
-        val sibling = anchor.parentsWithSelf.first { it.parent == actualContainer }
-        return if (addBefore || PsiTreeUtil.hasErrorElements(sibling)) {
-            actualContainer.addBefore(declaration, sibling)
-        } else {
-            actualContainer.addAfter(declaration, sibling)
-        } as D
+    fun modifierToString(modifier: JvmModifier?):String {
+        return modifierToKotlinToken[modifier]?.let { if (it == KtTokens.PUBLIC_KEYWORD) "" else it.value } ?: ""
     }
 }

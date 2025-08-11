@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -24,13 +24,15 @@ public class EventLogInternalSendConfig implements EventLogSendConfig {
     myFilterActiveFile = filterActiveFile;
   }
 
-  public static @NotNull EventLogInternalSendConfig createByRecorder(@NotNull String recorderId, boolean filterActiveFile) {
+  @NotNull
+  public static EventLogInternalSendConfig createByRecorder(@NotNull String recorderId, boolean filterActiveFile) {
     EventLogRecorderConfiguration config = EventLogConfiguration.getInstance().getOrCreate(recorderId);
     return new EventLogInternalSendConfig(recorderId, config, filterActiveFile);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDeviceId() {
+  public String getDeviceId() {
     return myDeviceId;
   }
 
@@ -39,13 +41,15 @@ public class EventLogInternalSendConfig implements EventLogSendConfig {
     return myBucket;
   }
 
+  @NotNull
   @Override
-  public @NotNull MachineId getMachineId() {
+  public MachineId getMachineId() {
     return myMachineId;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getRecorderId() {
+  public String getRecorderId() {
     return myRecorderId;
   }
 
@@ -59,8 +63,9 @@ public class EventLogInternalSendConfig implements EventLogSendConfig {
     return StatisticsEventLogProviderUtil.getEventLogProvider(myRecorderId).isCharsEscapingRequired();
   }
 
+  @NotNull
   @Override
-  public @NotNull FilesToSendProvider getFilesToSendProvider() {
+  public FilesToSendProvider getFilesToSendProvider() {
     int maxFilesToSend = EventLogConfiguration.getInstance().getOrCreate(myRecorderId).getMaxFilesToSend();
     EventLogFilesProvider logFilesProvider = StatisticsEventLogProviderUtil.getEventLogProvider(myRecorderId).getLogFilesProvider();
     return new DefaultFilesToSendProvider(logFilesProvider, maxFilesToSend, myFilterActiveFile);

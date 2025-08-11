@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptDropdown;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
@@ -41,10 +42,11 @@ import static com.intellij.codeInspection.options.OptPane.*;
  */
 public final class PyMandatoryEncodingInspection extends PyInspection {
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                                 boolean isOnTheFly,
-                                                 @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                        boolean isOnTheFly,
+                                        @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -58,9 +60,10 @@ public final class PyMandatoryEncodingInspection extends PyInspection {
 
       final String charsetString = PythonFileType.getCharsetFromEncodingDeclaration(node);
       if (charsetString == null) {
+        TextRange tr = new TextRange(0, 0);
         ProblemsHolder holder = getHolder();
         if (holder != null) {
-          holder.registerProblem(node, PyPsiBundle.message("INSP.mandatory.encoding.no.encoding.specified.for.file"),
+          holder.registerProblem(node, tr, PyPsiBundle.message("INSP.mandatory.encoding.no.encoding.specified.for.file"),
                                  new AddEncodingQuickFix(myDefaultEncoding, myEncodingFormatIndex));
         }
       }
@@ -80,12 +83,14 @@ public final class PyMandatoryEncodingInspection extends PyInspection {
     );
   }
 
-  static @NotNull OptDropdown defaultEncodingDropDown() {
+  @NotNull
+  static OptDropdown defaultEncodingDropDown() {
     return dropdown("myDefaultEncoding", PyPsiBundle.message("INSP.mandatory.encoding.label.select.default.encoding"),
                     Arrays.asList(PyEncodingUtil.POSSIBLE_ENCODINGS), Function.identity(), Function.identity());
   }
 
-  static @NotNull OptDropdown encodingFormatDropDown() {
+  @NotNull
+  static OptDropdown encodingFormatDropDown() {
     return dropdown("myEncodingFormatIndex", PyPsiBundle.message("INSP.mandatory.encoding.label.encoding.comment.format"),
                     EntryStream.of(PyEncodingUtil.ENCODING_FORMAT).mapKeyValue((idx, format) -> option(String.valueOf(idx), format))
                       .toArray(OptDropdown.Option.class));

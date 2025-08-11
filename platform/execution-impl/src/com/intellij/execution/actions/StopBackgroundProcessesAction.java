@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -23,7 +23,6 @@ import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -101,7 +100,7 @@ final class StopBackgroundProcessesAction extends DumbAwareAction {
 
   }
 
-  private static @Unmodifiable @NotNull List<Pair<TaskInfo, ProgressIndicator>>  getCancellableProcesses(@Nullable Project project) {
+  private static @NotNull List<Pair<TaskInfo, ProgressIndicator>>  getCancellableProcesses(@Nullable Project project) {
     IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(project);
     StatusBarEx statusBar = frame == null ? null : (StatusBarEx)frame.getStatusBar();
     if (statusBar == null) return Collections.emptyList();

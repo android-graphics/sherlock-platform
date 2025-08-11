@@ -44,7 +44,8 @@ public final class AbstractClassWithoutAbstractMethodsInspection
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "abstract.class.without.abstract.methods.problem.descriptor");
   }

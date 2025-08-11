@@ -1,4 +1,5 @@
-// IGNORE_K2
+// FIR_IDENTICAL
+// FIR_COMPARISON
 fun some(f: () -> Unit) { f() }
 
 fun test() {

@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.project;
 
 import org.jetbrains.annotations.Nullable;
@@ -62,10 +61,11 @@ public enum ExternalSystemSourceType implements IExternalSystemSourceType {
     throw new IllegalArgumentException("Invalid source type: " + sourceType);
   }
 
-  public static @Nullable ExternalSystemSourceType from(boolean isTest,
-                                                        boolean isGenerated,
-                                                        boolean isResource,
-                                                        boolean isExcluded) {
+  @Nullable
+  public static ExternalSystemSourceType from(boolean isTest,
+                                              boolean isGenerated,
+                                              boolean isResource,
+                                              boolean isExcluded) {
     for (ExternalSystemSourceType systemSourceType : ExternalSystemSourceType.values()) {
       if (systemSourceType.isGenerated == isGenerated &&
           systemSourceType.isResource == isResource &&

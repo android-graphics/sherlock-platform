@@ -15,7 +15,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-final class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K>, ReferenceQueueable {
+final class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
   private final Object2IntMap<MyReference<K>> myMap = new Object2IntOpenHashMap<>();
   private final ReferenceQueue<K> myQueue = new ReferenceQueue<>();
 
@@ -44,19 +44,15 @@ final class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K>, ReferenceQueue
     }
   }
 
-  @Override
-  public boolean processQueue() {
-    boolean processed = false;
+  private void processQueue() {
     while (true) {
       //noinspection unchecked
       MyReference<K> ref = (MyReference<K>)myQueue.poll();
       if (ref == null) {
-        break;
+        return;
       }
       myMap.removeInt(ref);
-      processed = true;
     }
-    return processed;
   }
 
   @Override

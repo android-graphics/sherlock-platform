@@ -40,7 +40,6 @@ public abstract class TextComponentEditorAction extends EditorAction {
   }
 
   private void ensureHandlerChainIsLoaded() {
-    //noinspection ResultOfMethodCallIgnored
     getHandler().runForAllCarets(); // triggers DynamicEditorActionHandler.getHandlerChain
   }
 

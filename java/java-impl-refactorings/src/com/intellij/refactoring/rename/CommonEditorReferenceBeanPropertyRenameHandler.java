@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -26,11 +26,13 @@ public abstract class CommonEditorReferenceBeanPropertyRenameHandler extends Bea
   }
 
   @Override
-  protected @Nullable BeanProperty getProperty(DataContext context) {
+  @Nullable
+  protected BeanProperty getProperty(DataContext context) {
     return getBeanProperty(context);
   }
 
-  protected @Nullable BeanProperty getBeanProperty(DataContext dataContext) {
+  @Nullable
+  protected BeanProperty getBeanProperty(DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     if (file == null && editor != null && ApplicationManager.getApplication().isUnitTestMode()) {
@@ -48,21 +50,24 @@ public abstract class CommonEditorReferenceBeanPropertyRenameHandler extends Bea
     }
   }
 
-  protected @Nullable BeanProperty getBeanProperty(final @NotNull Editor editor, final @NotNull PsiFile file) {
+  @Nullable
+  protected BeanProperty getBeanProperty(@NotNull final Editor editor, @NotNull final PsiFile file) {
     final int offset = editor.getCaretModel().getOffset();
     final PsiReference reference = file.findReferenceAt(offset);
     if (reference == null) return null;
     return getBeanProperty(reference);
   }
 
-  protected @Nullable BeanProperty getBeanProperty(@Nullable PsiElement psiElement) {
+  @Nullable
+  protected BeanProperty getBeanProperty(@Nullable PsiElement psiElement) {
     if (psiElement instanceof PsiMethod && PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)psiElement)) {
       return BeanProperty.createBeanProperty((PsiMethod)psiElement);
     }
     return null;
   }
 
-  protected @Nullable BeanProperty getBeanProperty(@NotNull PsiReference reference) {
+  @Nullable
+  protected BeanProperty getBeanProperty(@NotNull PsiReference reference) {
     if (acceptableReferenceClass.isAssignableFrom(reference.getClass())) {
       final PsiElement psiElement = reference.resolve();
       return getBeanProperty(psiElement);

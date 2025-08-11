@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -6,7 +6,6 @@ import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,8 +16,7 @@ import java.util.EventListener;
 import java.util.Iterator;
 import java.util.List;
 
-@ApiStatus.Internal
-public final class NSScrollerHelper {
+final class NSScrollerHelper {
   private static final Callback APPEARANCE_CALLBACK = new Callback() {
     @SuppressWarnings("UnusedDeclaration")
     public void callback(ID self, Pointer selector, ID event) {
@@ -32,11 +30,9 @@ public final class NSScrollerHelper {
     }
   };
 
-  @ApiStatus.Internal
-  public enum ClickBehavior {NextPage, JumpToSpot}
+  enum ClickBehavior {NextPage, JumpToSpot}
 
-  @ApiStatus.Internal
-  public enum Style {Legacy, Overlay}
+  enum Style {Legacy, Overlay}
 
   private static ClickBehavior ourClickBehavior;
   private static final List<Reference<ScrollbarStyleListener>> ourStyleListeners = new ArrayList<>();
@@ -94,8 +90,7 @@ public final class NSScrollerHelper {
     }
   }
 
-  @ApiStatus.Internal
-  public static @Nullable ClickBehavior getClickBehavior() {
+  static @Nullable ClickBehavior getClickBehavior() {
     if (!SystemInfoRt.isMac) return null;
     return ourClickBehavior;
   }
@@ -115,8 +110,7 @@ public final class NSScrollerHelper {
     }
   }
 
-  @ApiStatus.Internal
-  public static @Nullable Style getScrollerStyle() {
+  static @Nullable Style getScrollerStyle() {
     if (!isOverlayScrollbarSupported()) return null;
 
     Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
@@ -133,13 +127,11 @@ public final class NSScrollerHelper {
     return Style.Legacy;
   }
 
-  @ApiStatus.Internal
-  public static void addScrollbarStyleListener(@NotNull ScrollbarStyleListener listener) {
+  static void addScrollbarStyleListener(@NotNull ScrollbarStyleListener listener) {
     processReferences(listener, null, null);
   }
 
-  @ApiStatus.Internal
-  public static void removeScrollbarStyleListener(@NotNull ScrollbarStyleListener listener) {
+  static void removeScrollbarStyleListener(@NotNull ScrollbarStyleListener listener) {
     processReferences(null, listener, null);
   }
 
@@ -170,8 +162,7 @@ public final class NSScrollerHelper {
     }
   }
 
-  @ApiStatus.Internal
-  public interface ScrollbarStyleListener extends EventListener {
+  interface ScrollbarStyleListener extends EventListener {
     void styleChanged();
   }
 }

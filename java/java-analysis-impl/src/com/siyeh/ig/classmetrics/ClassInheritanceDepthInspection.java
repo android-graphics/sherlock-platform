@@ -29,7 +29,8 @@ public final class ClassInheritanceDepthInspection
   extends ClassMetricInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "ClassTooDeepInInheritanceTree";
   }
 
@@ -47,7 +48,8 @@ public final class ClassInheritanceDepthInspection
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final Integer count = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "class.too.deep.problem.descriptor", count);

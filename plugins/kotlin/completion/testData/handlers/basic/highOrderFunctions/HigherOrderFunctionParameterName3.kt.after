@@ -1,8 +1,0 @@
-// FIR_COMPARISON
-
-fun foo() {
-    emptyMap<String, Int>()
-        .forEach { entry -> <caret> }
-}
-
-// ELEMENT: "entry ->"

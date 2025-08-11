@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.util;
 
 import com.intellij.psi.*;
@@ -8,7 +8,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public final class ChangeToAppendUtil {
-  public static @Nullable PsiExpression buildAppendExpression(PsiExpression appendable, PsiExpression concatenation) {
+  @Nullable
+  public static PsiExpression buildAppendExpression(PsiExpression appendable, PsiExpression concatenation) {
     if (concatenation == null) return null;
     final PsiType type = appendable.getType();
     if (type == null) return null;
@@ -20,7 +21,8 @@ public final class ChangeToAppendUtil {
     return factory.createExpressionFromText(result.toString(), appendable);
   }
 
-  public static @Nullable StringBuilder buildAppendExpression(@Nullable PsiExpression concatenation, boolean useStringValueOf, @NonNls StringBuilder out) {
+  @Nullable
+  public static StringBuilder buildAppendExpression(@Nullable PsiExpression concatenation, boolean useStringValueOf, @NonNls StringBuilder out) {
     if (concatenation == null) return null;
     final PsiType type = concatenation.getType();
     if (concatenation instanceof PsiPolyadicExpression polyadicExpression && type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.*;
@@ -12,7 +12,9 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
@@ -25,8 +27,7 @@ import java.util.Objects;
 
 import static com.intellij.lang.jvm.actions.AnnotationRequestsKt.annotationRequest;
 
-@ApiStatus.Internal
-public final class SerializableCtorInspection extends DevKitUastInspectionBase {
+final class SerializableCtorInspection extends DevKitUastInspectionBase {
 
   private static final String PROPERTY_MAPPING_ANNOTATION = "com.intellij.serialization.PropertyMapping";
 
@@ -59,7 +60,8 @@ public final class SerializableCtorInspection extends DevKitUastInspectionBase {
     return ContainerUtil.exists(aClass.getFields(), field -> name.equals(field.getName()));
   }
 
-  private static @NotNull @Unmodifiable List<UMethod> getConstructors(@NotNull UClass aClass) {
+  @NotNull
+  private static List<UMethod> getConstructors(@NotNull UClass aClass) {
     return ContainerUtil.filter(aClass.getMethods(), method -> method.isConstructor());
   }
 

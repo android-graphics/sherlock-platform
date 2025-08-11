@@ -1,8 +1,11 @@
-# :Author: Georg Brandl; Lea Wiemann; Günter Milde
-# :Date: $Date: 2022-11-16 15:01:31 +0100 (Mi, 16. Nov 2022) $
-# :Copyright: This module has been placed in the public domain.
+#!/usr/bin/python
+# coding: utf-8
 
 """Lexical analysis of formal languages (i.e. code) using Pygments."""
+
+# :Author: Georg Brandl; Felix Wiemann; Günter Milde
+# :Date: $Date: 2011-12-20 15:14:21 +0100 (Die, 20. Dez 2011) $
+# :Copyright: This module has been placed in the public domain.
 
 from docutils import ApplicationError
 try:
@@ -14,24 +17,22 @@ except ImportError:
     with_pygments = False
 
 # Filter the following token types from the list of class arguments:
-unstyled_tokens = ['token',  # Token (base token type)
-                   'text',   # Token.Text
-                   '']       # short name for Token and Text
+unstyled_tokens = ['token', # Token (base token type)
+                   'text',  # Token.Text
+                   '']      # short name for Token and Text
 # (Add, e.g., Token.Punctuation with ``unstyled_tokens += 'punctuation'``.)
 
-
-class LexerError(ApplicationError):
+class LexerError(ApplicationError): 
     pass
 
-
-class Lexer:
+class Lexer(object):
     """Parse `code` lines and yield "classified" tokens.
 
     Arguments
 
       code       -- string of source code to parse,
       language   -- formal language the code is written in,
-      tokennames -- either 'long', 'short', or 'none' (see below).
+      tokennames -- either 'long', 'short', or '' (see below).
 
     Merge subsequent tokens of the same token-type.
 
@@ -41,7 +42,7 @@ class Lexer:
       'long':  downcased full token type name,
       'short': short name defined by pygments.token.STANDARD_TYPES
                (= class argument used in pygments html output),
-      'none':  skip lexical analysis.
+      'none':      skip lexical analysis.
     """
 
     def __init__(self, code, language, tokennames='short'):
@@ -57,20 +58,17 @@ class Lexer:
             return
         if not with_pygments:
             raise LexerError('Cannot analyze code. '
-                             'Pygments package not found.')
+                                    'Pygments package not found.')
         try:
             self.lexer = get_lexer_by_name(self.language)
         except pygments.util.ClassNotFound:
             raise LexerError('Cannot analyze code. '
-                             'No Pygments lexer found for "%s".' % language)
-        # self.lexer.add_filter('tokenmerge')
-        # Since version 1.2. (released Jan 01, 2010) Pygments has a
-        # TokenMergeFilter. # ``self.merge(tokens)`` in __iter__ could
-        # be replaced by ``self.lexer.add_filter('tokenmerge')`` in __init__.
-        # However, `merge` below also strips a final newline added by pygments.
-        #
-        # self.lexer.add_filter('tokenmerge')
+                'No Pygments lexer found for "%s".' % language)
 
+    # Since version 1.2. (released Jan 01, 2010) Pygments has a
+    # TokenMergeFilter. However, this requires Python >= 2.4. When Docutils
+    # requires same minimal version,  ``self.merge(tokens)`` in __iter__ can
+    # be replaced by ``self.lexer.add_filter('tokenmerge')`` in __init__.
     def merge(self, tokens):
         """Merge subsequent tokens of same token-type.
 
@@ -82,30 +80,30 @@ class Lexer:
             if ttype is lasttype:
                 lastval += value
             else:
-                yield lasttype, lastval
+                yield(lasttype, lastval)
                 (lasttype, lastval) = (ttype, value)
         if lastval.endswith('\n'):
             lastval = lastval[:-1]
         if lastval:
-            yield lasttype, lastval
+            yield(lasttype, lastval)
 
     def __iter__(self):
         """Parse self.code and yield "classified" tokens.
         """
         if self.lexer is None:
-            yield [], self.code
+            yield ([], self.code)
             return
         tokens = pygments.lex(self.code, self.lexer)
         for tokentype, value in self.merge(tokens):
-            if self.tokennames == 'long':  # long CSS class args
+            if self.tokennames == 'long': # long CSS class args
                 classes = str(tokentype).lower().split('.')
-            else:  # short CSS class args
+            else: # short CSS class args
                 classes = [_get_ttype_class(tokentype)]
             classes = [cls for cls in classes if cls not in unstyled_tokens]
-            yield classes, value
+            yield (classes, value)
 
 
-class NumberLines:
+class NumberLines(object):
     """Insert linenumber-tokens at the start of every code line.
 
     Arguments
@@ -116,7 +114,7 @@ class NumberLines:
 
     Iterating over an instance yields the tokens with a
     ``(['ln'], '<the line number>')`` token added for every code line.
-    Multi-line tokens are split."""
+    Multi-line tokens are splitted."""
 
     def __init__(self, tokens, startline, endline):
         self.tokens = tokens
@@ -126,11 +124,11 @@ class NumberLines:
 
     def __iter__(self):
         lineno = self.startline
-        yield ['ln'], self.fmt_str % lineno
+        yield (['ln'], self.fmt_str % lineno)
         for ttype, value in self.tokens:
             lines = value.split('\n')
             for line in lines[:-1]:
-                yield ttype, line + '\n'
+                yield (ttype, line + '\n')
                 lineno += 1
-                yield ['ln'], self.fmt_str % lineno
-            yield ttype, lines[-1]
+                yield (['ln'], self.fmt_str % lineno)
+            yield (ttype, lines[-1])

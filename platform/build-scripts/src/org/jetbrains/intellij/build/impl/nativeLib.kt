@@ -5,11 +5,8 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.PathUtilRt
 import com.intellij.util.lang.ZipFile
-import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.plus
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -24,43 +21,15 @@ import java.nio.file.attribute.PosixFilePermission
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.*
 
-/**
- * Set of native files that shouldn't be signed.
- */
-@Suppress("SpellCheckingInspection")
-private val nonSignFiles = java.util.Set.of(
-  // Native file used by skiko (Compose backend) for Windows.
-  // It cannot be signed.
-  "icudtl.dat"
-)
-
 @VisibleForTesting
 object OsFamilyDetector {
-  private val macosRegex = "(darwin|mac|macos)".toRegex(RegexOption.IGNORE_CASE)
-  private val windowsRegex = "(windows|win32-|win)".toRegex(RegexOption.IGNORE_CASE)
-  private val linuxRegex = "linux".toRegex(RegexOption.IGNORE_CASE)
+  private val regex = "(^|/)((?<macos>(darwin|mac|macos)[-/])|(?<win>win32-|(win|windows)[-/])|(?<android>Linux-(Android|Musl)/)|(?<linux>linux[-/]))".toRegex(RegexOption.IGNORE_CASE)
 
-  private val regex = "(^|-|/)((?<macos>(darwin|mac|macos)[-/])|(?<win>win32-|(win|windows)[-/])|(?<android>Linux-(Android|Musl)/)|(?<linux>linux[-/]))".toRegex(RegexOption.IGNORE_CASE)
-
-  fun detectOsFamily(path: String): Pair<OsFamily, String>? {
-    if (!path.contains("/")) { // support for dirless natives like skiko
-      return when {
-        macosRegex.containsMatchIn(path) -> OsFamily.MACOS to ""
-        windowsRegex.containsMatchIn(path) -> OsFamily.WINDOWS to ""
-        linuxRegex.containsMatchIn(path) -> OsFamily.LINUX to ""
-        path == "icudtl.dat" -> OsFamily.WINDOWS to ""
-        else -> null
-      }
-    }
-
+  fun detectOsFamily(path: String): Pair<OsFamily, Int>? {
     val result = regex.find(path) ?: return null
-    return result.groups["macos"]?.run { OsFamily.MACOS to path.extractPrefix(range) }
-           ?: result.groups["win"]?.run { OsFamily.WINDOWS to path.extractPrefix(range) }
-           ?: result.groups["linux"]?.run { OsFamily.LINUX to path.extractPrefix(range) }
-  }
-
-  private fun String.extractPrefix(range: IntRange): String {
-    return subSequence(startIndex = 0, endIndex = range.first).toString()
+    return result.groups["macos"]?.run { OsFamily.MACOS to range.first }
+           ?: result.groups["win"]?.run { OsFamily.WINDOWS to range.first }
+           ?: result.groups["linux"]?.run { OsFamily.LINUX to range.first }
   }
 }
 
@@ -72,16 +41,13 @@ class NativeFilesMatcher(paths: List<String>, private val targetOs: Iterable<OsF
   fun findNext(): Match? {
     while (iterator.hasNext()) {
       val pathWithPrefix = iterator.next()
-      val (osFamily, newPrefix) = OsFamilyDetector.detectOsFamily(pathWithPrefix) ?: continue
-
-      if (commonPathPrefix != null) {
-        assert(commonPathPrefix == newPrefix) {
+      val osAndIndex = OsFamilyDetector.detectOsFamily(pathWithPrefix) ?: continue
+      val prefix = commonPathPrefix?.apply {
+        assert(length == osAndIndex.second) {
           "All native runtimes should have common path prefix. Failed to match $pathWithPrefix to $this"
         }
-      }
-
-      val prefix = commonPathPrefix ?: newPrefix.also { commonPathPrefix = it }
-
+      } ?: pathWithPrefix.subSequence(startIndex = 0, endIndex = osAndIndex.second).also { commonPathPrefix = it }
+      val osFamily = osAndIndex.first
       if (targetOs != null && !targetOs.contains(osFamily)) {
         continue
       }
@@ -105,40 +71,32 @@ class NativeFilesMatcher(paths: List<String>, private val targetOs: Iterable<OsF
   ) {
     override fun toString(): String = "$pathWithPrefix, path=$path, os=$osFamily, arch=$arch"
   }
-
-  companion object {
-    fun isCompatibleWithTargetPlatform(name: String, os: PersistentList<OsFamily>, arch: JvmArchitecture?): Boolean {
-      val fileOs = OsFamilyDetector.detectOsFamily(name)?.first ?: error("Cannot determine native file OS Family")
-      val fileArch = determineArch(fileOs, name) ?: error("Cannot determine native file architecture")
-      return os.contains(fileOs) && (arch == null || fileArch.compatibleWithTarget(arch))
-    }
-  }
 }
 
-private val posixExecutableFileAttribute = PosixFilePermissions.asFileAttribute(
-  EnumSet.of(
-    PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
-    PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
-    PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
-  )
-)
+private val posixExecutableFileAttribute = PosixFilePermissions.asFileAttribute(EnumSet.of(
+  PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
+  PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
+  PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
+))
 
-internal fun CoroutineScope.packNativePresignedFiles(
+internal suspend fun packNativePresignedFiles(
   nativeFiles: Map<ZipSource, List<String>>,
   dryRun: Boolean,
   context: BuildContext,
   toRelativePath: (String, String) -> String,
 ) {
-  for ((source, paths) in nativeFiles) {
-    val sourceFile = source.file
-    launch(Dispatchers.IO + CoroutineName("pack native presigned file $sourceFile")) {
-      unpackNativeLibraries(
-        sourceFile = sourceFile,
-        paths = paths,
-        dryRun = dryRun,
-        context = context,
-        toRelativePath = toRelativePath,
-      )
+  coroutineScope {
+    for ((source, paths) in nativeFiles) {
+      val sourceFile = source.file
+      launch(Dispatchers.IO) {
+        unpackNativeLibraries(
+          sourceFile = sourceFile,
+          paths = paths,
+          dryRun = dryRun,
+          context = context,
+          toRelativePath = toRelativePath,
+        )
+      }
     }
   }
 }
@@ -181,7 +139,7 @@ private suspend fun unpackNativeLibraries(
       val os = match.osFamily
       val arch = match.arch
 
-      var file: Path? = if (os == OsFamily.LINUX || fileName in nonSignFiles || signTool.signNativeFileMode != SignNativeFileMode.ENABLED) {
+      var file: Path? = if (os == OsFamily.LINUX || signTool.signNativeFileMode != SignNativeFileMode.ENABLED) {
         null
       }
       else {
@@ -197,39 +155,35 @@ private suspend fun unpackNativeLibraries(
           extractFileToDisk(file = file, zipFile = zipFile, pathWithPackage = pathWithPackage, isExecutable = isExecutable)
         }
 
-        if (os != OsFamily.LINUX && fileName !in nonSignFiles) {
+        if (os != OsFamily.LINUX) {
           unsignedFiles.computeIfAbsent(os) { mutableListOf() }.add(file)
         }
       }
 
-      context.addDistFile(
-        DistFile(
-          content = LocalDistFileContent(file = file, isExecutable = isExecutable),
-          relativePath = toRelativePath(libName, getRelativePath(libName = libName, arch = arch, fileName = fileName, path = path)),
-          os = os.takeUnless { allPlatformsRequired },
-          arch = arch.takeUnless { allPlatformsRequired },
-        )
-      )
+      context.addDistFile(DistFile(
+        content = LocalDistFileContent(file = file, isExecutable = isExecutable),
+        relativePath = toRelativePath(libName, getRelativePath(libName = libName, arch = arch, fileName = fileName, path = path)),
+        os = os.takeUnless { allPlatformsRequired },
+        arch = arch.takeUnless { allPlatformsRequired },
+      ))
     }
   }
 
   if (signTool.signNativeFileMode == SignNativeFileMode.PREPARE) {
     val versionOption = mapOf(SignTool.LIB_VERSION_OPTION_NAME to libVersion)
     coroutineScope {
-      launch(CoroutineName("signing macOS binaries")) {
+      launch {
         unsignedFiles.get(OsFamily.MACOS)?.let {
           signMacBinaries(files = it, context = context, additionalOptions = versionOption, checkPermissions = false)
         }
       }
-      launch(CoroutineName("signing Windows binaries")) {
+      launch {
         unsignedFiles.get(OsFamily.WINDOWS)?.let {
           @Suppress("SpellCheckingInspection")
-          context.signFiles(
-            it, BuildOptions.WIN_SIGN_OPTIONS + versionOption + persistentMapOf(
+          context.signFiles(it, BuildOptions.WIN_SIGN_OPTIONS + versionOption + persistentMapOf(
             "contentType" to "application/x-exe",
             "jsign_replace" to "true"
-          )
-          )
+          ))
         }
       }
     }
@@ -240,7 +194,7 @@ private fun extractFileToDisk(file: Path, zipFile: ZipFile, pathWithPackage: Str
   Files.createDirectories(file.parent)
   when {
     // add an executable flag for native packaged files without an extension on POSIX OS (as it can be executed directly, opposite to lib)
-    isExecutable && !isWindows -> FileChannel.open(file, W_CREATE_NEW, posixExecutableFileAttribute)
+    isExecutable -> FileChannel.open(file, W_CREATE_NEW, posixExecutableFileAttribute)
     else -> FileChannel.open(file, W_CREATE_NEW)
   }.use { channel ->
     val byteBuffer = zipFile.getByteBuffer(pathWithPackage)!!
@@ -261,7 +215,6 @@ private fun extractFileToDisk(file: Path, zipFile: ZipFile, pathWithPackage: Str
 private enum class NativeFileArchitecture(@JvmField val jvmArch: JvmArchitecture?) {
   X_64(JvmArchitecture.x64),
   AARCH_64(JvmArchitecture.aarch64),
-
   // universal native file can be used by any platform
   UNIVERSAL(null);
 
@@ -273,19 +226,10 @@ private enum class NativeFileArchitecture(@JvmField val jvmArch: JvmArchitecture
 @Suppress("SpellCheckingInspection")
 private fun determineArch(os: OsFamily, path: CharSequence): NativeFileArchitecture? {
   // detect architecture from subfolders e.g. "linux-aarch64/libsqliteij.so"
-  if (!path.contains("/")) {
-    return when {
-      path.contains("x64") -> X_64
-      path.contains("aarch64") || path.contains("arm64") -> AARCH_64
-      path == "icudtl.dat" -> UNIVERSAL
-      else -> null
-    }
-  }
-
   val osAndArch = path.indexOf('/').takeIf { it != -1 }?.let { path.subSequence(0, it) } ?: return null
   return when {
-    osAndArch.endsWith("-aarch64") || path.contains("/aarch64/") || osAndArch.contains("arm64") -> AARCH_64
-    path.contains("x86-64") || path.contains("x86_64") || osAndArch.contains("x64") -> X_64
+    osAndArch.endsWith("-aarch64") || path.contains("/aarch64/") -> AARCH_64
+    path.contains("x86-64") || path.contains("x86_64") -> X_64
     os == OsFamily.MACOS && path.count { it == '/' } == 1 -> UNIVERSAL
     !osAndArch.contains('-') && path.count { it == '/' } == 1 -> X_64
     else -> null
@@ -294,16 +238,11 @@ private fun determineArch(os: OsFamily, path: CharSequence): NativeFileArchitect
 
 // each library has own implementation of handling path property
 private fun getRelativePath(libName: String, arch: JvmArchitecture?, fileName: String, path: String): String {
-  when (libName) {
-    "async-profiler" -> {
-      return if (arch == null) fileName else "${arch.dirName}/$fileName"
-    }
-    "skiko-awt-runtime-all" -> {
-      return fileName
-    }
-    else -> {
-      return if (libName == "jna") "${arch!!.dirName}/$fileName" else path
-    }
+  if (libName == "async-profiler") {
+    return if (arch == null) fileName else "${arch.dirName}/$fileName"
+  }
+  else {
+    return if (libName == "jna") "${arch!!.dirName}/$fileName" else path
   }
 }
 

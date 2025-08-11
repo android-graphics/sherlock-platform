@@ -1,7 +1,7 @@
 package whenWithoutExpression
 
 fun test(a: String): String {
-    val b = a.lowercase()
+    val b = a.toLowerCase()
     //Breakpoint!
     return when {
         b.startsWith("a") -> "A"

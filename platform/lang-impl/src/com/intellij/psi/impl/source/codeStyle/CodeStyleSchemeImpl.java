@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.configurationStore.SchemeDataHolder;
@@ -38,7 +38,8 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     myCodeStyleSettings = init(parentScheme);
   }
 
-  private static @NotNull CodeStyleSettings init(@Nullable CodeStyleScheme parentScheme) {
+  @NotNull
+  private static CodeStyleSettings init(@Nullable CodeStyleScheme parentScheme) {
     final CodeStyleSettings settings;
     if (parentScheme == null) {
       settings = CodeStyleSettingsManager.getInstance().createSettings();
@@ -69,7 +70,8 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   }
 
   @Override
-  public @NotNull CodeStyleSettings getCodeStyleSettings() {
+  @NotNull
+  public CodeStyleSettings getCodeStyleSettings() {
     SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder = myDataHolder;
     if (dataHolder == null) {
       return myCodeStyleSettings;
@@ -105,8 +107,9 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     return myIsDefault;
   }
 
+  @Nullable
   @Override
-  public @Nullable SchemeState getSchemeState() {
+  public SchemeState getSchemeState() {
     synchronized (lock) {
       if (myDataHolder == null) {
         final long currModificationCount = myCodeStyleSettings.getModificationTracker().getModificationCount();
@@ -121,7 +124,8 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   }
 
   @Override
-  public @NotNull Element writeScheme() {
+  @NotNull
+  public Element writeScheme() {
     SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder;
     synchronized (lock) {
       dataHolder = myDataHolder;

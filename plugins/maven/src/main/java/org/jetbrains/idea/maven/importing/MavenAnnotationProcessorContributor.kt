@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.ExceptionUtil
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfiguratorUtil.getProcessorArtifactInfos
-import org.jetbrains.idea.maven.importing.MavenImportUtil.compilerConfigsForCompilePhase
 import org.jetbrains.idea.maven.model.MavenArtifactInfo
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
@@ -13,14 +12,19 @@ import org.jetbrains.idea.maven.project.MavenProjectResolutionContributor
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenResolveResultProblemProcessor
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
+import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 
 internal class MavenAnnotationProcessorContributor : MavenProjectResolutionContributor {
-  override suspend fun onMavenProjectResolved(project: Project, mavenProject: MavenProject, embedder: MavenEmbedderWrapper) {
-    val artifactsInfo = mavenProject.compilerConfigsForCompilePhase()
-      .mapNotNull { MavenJDOMUtil.findChildByPath(it, "annotationProcessorPaths") }
-      .flatMap { getProcessorArtifactInfos(it, mavenProject) }
+  override suspend fun onMavenProjectResolved(project: Project, mavenProject: MavenProject, nativeMavenProject: NativeMavenProjectHolder, embedder: MavenEmbedderWrapper) {
+    val pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin")
+    val config = MavenJDOMUtil.findChildByPath(pluginConfiguration, "annotationProcessorPaths")
+    if (config == null) return
 
+    val artifactsInfo = getProcessorArtifactInfos(config)
+    if (artifactsInfo.isEmpty()) {
+      return
+    }
 
     val externalArtifacts: MutableList<MavenArtifactInfo> = ArrayList()
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
@@ -28,9 +32,7 @@ internal class MavenAnnotationProcessorContributor : MavenProjectResolutionContr
     for (info in artifactsInfo) {
       val mavenArtifact = tree.findProject(MavenId(info.groupId, info.artifactId, info.version))
       if (mavenArtifact == null) {
-        if (!externalArtifacts.contains(info)) {
-          externalArtifacts.add(info)
-        }
+        externalArtifacts.add(info)
       }
     }
 

@@ -11,8 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ShLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
+  @NotNull
   @Override
-  public @NotNull CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
+  public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
     return new CodeStyleAbstractConfigurable(settings, modelSettings, getLanguage().getID()) {
       @Override
       protected @NotNull CodeStyleAbstractPanel createPanel(final @NotNull CodeStyleSettings settings) {
@@ -29,23 +30,28 @@ public class ShLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull String getCodeSample(@NotNull SettingsType settingsType) {
+  public String getCodeSample(@NotNull SettingsType settingsType) {
     return "";
   }
 
+  @NotNull
   @Override
-  public @NotNull Language getLanguage() {
+  public Language getLanguage() {
     return ShLanguage.INSTANCE;
   }
 
+  @NonNls
+  @NotNull
   @Override
-  public @NonNls @NotNull String getExternalLanguageId() {
+  public String getExternalLanguageId() {
     return "shell";
   }
 
+  @Nullable
   @Override
-  public @Nullable CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new ShCodeStyleSettings(settings);
   }
 

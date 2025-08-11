@@ -41,8 +41,9 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     super(supportedClass, supportedAnnotationClass, equivalentAnnotationClass);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
+  public List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
     List<? super PsiElement> result = Collections.emptyList();
     PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, getSupportedAnnotationClasses());
     if (null != psiAnnotation
@@ -73,8 +74,9 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     Collection<PsiAnnotation> result = new ArrayList<>();
     PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, getSupportedAnnotationClasses());
     if (null != psiAnnotation) {
@@ -99,11 +101,12 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
+  public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     Collection<LombokProblem> result = Collections.emptyList();
     // check first for fields, methods and filter it out, because PsiClass is parent of all annotations and will match other parents too
-    PsiElement psiElement = PsiTreeUtil.getParentOfType(psiAnnotation, PsiField.class, PsiRecordComponent.class, PsiMethod.class, PsiClass.class);
+    PsiElement psiElement = PsiTreeUtil.getParentOfType(psiAnnotation, PsiField.class, PsiMethod.class, PsiClass.class);
     if (psiElement instanceof PsiClass) {
       ProblemValidationSink problemNewBuilder = new ProblemValidationSink();
       validate(psiAnnotation, (PsiClass) psiElement, problemNewBuilder);
@@ -121,7 +124,8 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     return Optional.empty();
   }
 
-  protected @Nullable PsiAnnotation getSupportedAnnotation(@NotNull PsiClass psiParentClass) {
+  @Nullable
+  protected PsiAnnotation getSupportedAnnotation(@NotNull PsiClass psiParentClass) {
     return PsiAnnotationSearchUtil.findAnnotation(psiParentClass, getSupportedAnnotationClasses());
   }
 

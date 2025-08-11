@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.psi.PsiElement;
@@ -24,7 +24,8 @@ public class InstructionImpl implements Instruction {
   private int myNumber = -1;
 
   @Override
-  public @Nullable PsiElement getElement() {
+  @Nullable
+  public PsiElement getElement() {
     return myPsiElement;
   }
 
@@ -32,8 +33,9 @@ public class InstructionImpl implements Instruction {
     myPsiElement = element;
   }
 
+  @NotNull
   @Override
-  public @NotNull Iterable<Instruction> successors(@NotNull CallEnvironment environment) {
+  public Iterable<Instruction> successors(@NotNull CallEnvironment environment) {
     final Deque<CallInstruction> stack = environment.callStack(this);
     for (Instruction instruction : mySuccessors) {
       environment.update(stack, instruction);
@@ -41,8 +43,9 @@ public class InstructionImpl implements Instruction {
     return mySuccessors;
   }
 
+  @NotNull
   @Override
-  public @NotNull Iterable<Instruction> predecessors(@NotNull CallEnvironment environment) {
+  public Iterable<Instruction> predecessors(@NotNull CallEnvironment environment) {
     final Deque<CallInstruction> stack = environment.callStack(this);
     for (Instruction instruction : myPredecessors) {
       environment.update(stack, instruction);
@@ -50,18 +53,21 @@ public class InstructionImpl implements Instruction {
     return myPredecessors;
   }
 
+  @NotNull
   @Override
-  public @NotNull Iterable<Instruction> allSuccessors() {
+  public Iterable<Instruction> allSuccessors() {
     return mySuccessors;
   }
 
+  @NotNull
   @Override
-  public @NotNull Iterable<Instruction> allPredecessors() {
+  public Iterable<Instruction> allPredecessors() {
     return myPredecessors;
   }
 
+  @NonNls
   @Override
-  public @NonNls String toString() {
+  public String toString() {
     final StringBuilder builder = new StringBuilder();
     builder.append(myNumber);
     builder.append("(");
@@ -74,7 +80,9 @@ public class InstructionImpl implements Instruction {
     return builder.toString();
   }
 
-  protected @NotNull @NonNls String getElementPresentation() {
+  @NotNull
+  @NonNls
+  protected String getElementPresentation() {
     //return "element: " + (myPsiElement != null ? myPsiElement.getText() : null);
     return "element: " + myPsiElement;
   }
@@ -85,8 +93,9 @@ public class InstructionImpl implements Instruction {
     return myNumber;
   }
 
+  @NotNull
   @Override
-  public @NotNull Iterable<? extends NegatingGotoInstruction> getNegatingGotoInstruction() {
+  public Iterable<? extends NegatingGotoInstruction> getNegatingGotoInstruction() {
     if (myNegations == null) {
       return Collections.emptyList();
     }

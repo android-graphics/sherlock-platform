@@ -4,10 +4,8 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.refactoring.RefactoringActionHandler;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public final class PullUpAction extends BasePlatformRefactoringAction {
   public PullUpAction() {
     setInjectedContext(true);

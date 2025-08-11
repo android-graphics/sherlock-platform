@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -16,16 +16,13 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteOverridingMethodUsageInfo;
 import com.intellij.ui.BooleanTableCellRenderer;
-import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsagePreviewPanel;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -36,7 +33,6 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -50,7 +46,7 @@ class OverridingMethodsDialog extends DialogWrapper {
 
   private static final int CHECK_COLUMN = 0;
   private JBTable myTable;
-  private final UsagePreviewPanel myUsagePreviewPanel;
+   private final UsagePreviewPanel myUsagePreviewPanel;
 
   OverridingMethodsDialog(Project project, List<? extends UsageInfo> overridingMethods) {
     super(project, true);
@@ -62,12 +58,11 @@ class OverridingMethodsDialog extends DialogWrapper {
     myMethodText = new String[myOverridingMethods.size()];
     for (int i = 0; i < myMethodText.length; i++) {
       PsiElement overridingMethod = ((SafeDeleteOverridingMethodUsageInfo)myOverridingMethods.get(i)).getOverridingMethod();
-      if (overridingMethod instanceof PsiMethod method) {
-        int options = PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
-                      PsiFormatUtilBase.SHOW_NAME |
-                      PsiFormatUtilBase.SHOW_PARAMETERS |
-                      PsiFormatUtilBase.SHOW_TYPE;
-        myMethodText[i] = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, PsiFormatUtilBase.SHOW_TYPE);
+      if (overridingMethod instanceof PsiMethod) {
+        myMethodText[i] = PsiFormatUtil.formatMethod((PsiMethod)overridingMethod,
+                                                     PsiSubstitutor.EMPTY,
+                                                     PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS | PsiFormatUtilBase.SHOW_TYPE,
+                                                     PsiFormatUtilBase.SHOW_TYPE);
       }
       else {
         myMethodText[i] = SymbolPresentationUtil.getSymbolPresentableText(overridingMethod);
@@ -86,7 +81,7 @@ class OverridingMethodsDialog extends DialogWrapper {
   public ArrayList<UsageInfo> getSelected() {
     ArrayList<UsageInfo> result = new ArrayList<>();
     for (int i = 0; i < myChecked.length; i++) {
-      if (myChecked[i]) {
+      if(myChecked[i]) {
         result.add(myOverridingMethods.get(i));
       }
     }
@@ -96,6 +91,15 @@ class OverridingMethodsDialog extends DialogWrapper {
   @Override
   protected String getHelpId() {
     return HelpID.SAFE_DELETE_OVERRIDING;
+  }
+
+  @Override
+  protected JComponent createNorthPanel() {
+    JPanel panel = new JPanel();
+    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+    panel.add(new JLabel(JavaRefactoringBundle.message("there.are.unused.methods.that.override.methods.you.delete")));
+    panel.add(new JLabel(JavaRefactoringBundle.message("choose.the.ones.you.want.to.be.deleted")));
+    return panel;
   }
 
   @Override
@@ -111,53 +115,61 @@ class OverridingMethodsDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout(0, UIUtil.DEFAULT_VGAP));
-    panel.add(new JLabel(JavaRefactoringBundle.message("there.are.unused.methods.that.override.methods.you.delete")), BorderLayout.NORTH);
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.setBorder(BorderFactory.createEmptyBorder(8, 0, 4, 0));
     final MyTableModel tableModel = new MyTableModel();
     myTable = new JBTable(tableModel);
     myTable.setShowGrid(false);
 
     TableColumnModel columnModel = myTable.getColumnModel();
     TableColumn checkboxColumn = columnModel.getColumn(CHECK_COLUMN);
-    TableUtil.setupCheckboxColumn(checkboxColumn, columnModel.getColumnMargin());
+    TableUtil.setupCheckboxColumn(checkboxColumn);
     checkboxColumn.setCellRenderer(new BooleanTableCellRenderer());
 
     // make SPACE check/uncheck selected rows
     @NonNls InputMap inputMap = myTable.getInputMap();
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "enable_disable");
-    final @NonNls ActionMap actionMap = myTable.getActionMap();
+    @NonNls final ActionMap actionMap = myTable.getActionMap();
     actionMap.put("enable_disable", new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (myTable.isEditing()) return;
         int[] rows = myTable.getSelectedRows();
         if (rows.length > 0) {
+          boolean valueToBeSet = false;
           for (int row : rows) {
-            myChecked[row] = !myChecked[row];
+            if (!myChecked[row]) {
+              valueToBeSet = true;
+              break;
+            }
           }
-          myTable.repaint();
+          for (int row : rows) {
+            myChecked[row] = valueToBeSet;
+          }
+
+          tableModel.updateData();
         }
       }
     });
-    new DoubleClickListener() {
-      @Override
-      protected boolean onDoubleClick(@NotNull MouseEvent event) {
-        int row = myTable.getSelectedRow();
-        if (row < 0 || row >= myOverridingMethods.size()) return false;
-        myChecked[row] = !myChecked[row];
-        myTable.repaint();
-        return true;
-      }
-    }.installOn(myTable);
+
+
+
+    /*Border titledBorder = IdeBorderFactory.createBoldTitledBorder("Select methods");
+    Border emptyBorder = BorderFactory.createEmptyBorder(0, 5, 5, 5);
+    Border border = BorderFactory.createCompoundBorder(titledBorder, emptyBorder);
+    panel.setBorder(border);*/
+    panel.setLayout(new BorderLayout());
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
+
+    panel.add(scrollPane, BorderLayout.CENTER);
     ListSelectionListener selectionListener = new ListSelectionListener() {
       @Override
       public void valueChanged(final ListSelectionEvent e) {
         int index = myTable.getSelectionModel().getLeadSelectionIndex();
         if (index != -1) {
           UsageInfo usageInfo = myOverridingMethods.get(index);
-          myUsagePreviewPanel.updateLayout(myProject, Collections.singletonList(usageInfo));
+          myUsagePreviewPanel.updateLayout(usageInfo.getProject(), Collections.singletonList(usageInfo));
         }
         else {
           myUsagePreviewPanel.updateLayout(myProject, null);
@@ -166,21 +178,22 @@ class OverridingMethodsDialog extends DialogWrapper {
     };
     myTable.getSelectionModel().addListSelectionListener(selectionListener);
 
-    final Splitter splitter = new Splitter(true, 0.4f);
-    splitter.setFirstComponent(scrollPane);
+    final Splitter splitter = new Splitter(true, 0.3f);
+    splitter.setFirstComponent(panel);
     splitter.setSecondComponent(myUsagePreviewPanel);
+    myUsagePreviewPanel.updateLayout(myProject,null);
+
     Disposer.register(myDisposable, new Disposable(){
       @Override
       public void dispose() {
         splitter.dispose();
       }
     });
-    panel.add(splitter, BorderLayout.CENTER);
 
     if (tableModel.getRowCount() != 0) {
-      SwingUtilities.invokeLater(() -> myTable.setRowSelectionInterval(0, 0));
+      myTable.getSelectionModel().addSelectionInterval(0,0);
     }
-    return panel;
+    return splitter;
   }
 
   class MyTableModel extends AbstractTableModel {
@@ -195,9 +208,13 @@ class OverridingMethodsDialog extends DialogWrapper {
     }
 
     @Override
-    public Class<?> getColumnClass(int columnIndex) {
-      return columnIndex == CHECK_COLUMN ? Boolean.class : String.class;
+    public Class getColumnClass(int columnIndex) {
+      if (columnIndex == CHECK_COLUMN) {
+        return Boolean.class;
+      }
+      return String.class;
     }
+
 
     @Override
     public int getColumnCount() {
@@ -206,12 +223,17 @@ class OverridingMethodsDialog extends DialogWrapper {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-      return columnIndex == CHECK_COLUMN ? Boolean.valueOf(myChecked[rowIndex]) : myMethodText[rowIndex];
+      if(columnIndex == CHECK_COLUMN) {
+        return Boolean.valueOf(myChecked[rowIndex]);
+      }
+      else {
+        return myMethodText[rowIndex];
+      }
     }
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-      if (columnIndex == CHECK_COLUMN) {
+      if(columnIndex == CHECK_COLUMN) {
         myChecked[rowIndex] = ((Boolean) aValue).booleanValue();
       }
     }
@@ -219,6 +241,10 @@ class OverridingMethodsDialog extends DialogWrapper {
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       return columnIndex == CHECK_COLUMN;
+    }
+
+    void updateData() {
+      fireTableDataChanged();
     }
   }
 }

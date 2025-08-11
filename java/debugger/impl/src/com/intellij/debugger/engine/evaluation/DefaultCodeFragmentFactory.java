@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.codeInsight.completion.CompletionService;
@@ -6,11 +6,10 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.codeinsight.RuntimeTypeEvaluator;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.JavaDebuggerCodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProgressManager;
@@ -28,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Eugene Zhuravlev
  */
-public class DefaultCodeFragmentFactory extends JavaDebuggerCodeFragmentFactory {
+public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
   private static final class SingletonHolder {
     public static final DefaultCodeFragmentFactory ourInstance = new DefaultCodeFragmentFactory();
   }
@@ -38,14 +37,12 @@ public class DefaultCodeFragmentFactory extends JavaDebuggerCodeFragmentFactory 
   }
 
   @Override
-  protected JavaCodeFragment createPresentationPsiCodeFragmentImpl(final @NotNull TextWithImports item,
-                                                                   final PsiElement context,
-                                                                   final @NotNull Project project) {
-    return createPsiCodeFragment(item, context, project);
+  public JavaCodeFragment createPresentationCodeFragment(final TextWithImports item, final PsiElement context, final Project project) {
+    return createCodeFragment(item, context, project);
   }
 
   @Override
-  public JavaCodeFragment createPsiCodeFragmentImpl(TextWithImports item, PsiElement context, final @NotNull Project project) {
+  public JavaCodeFragment createCodeFragment(TextWithImports item, PsiElement context, final Project project) {
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     final String text = item.getText();
 
@@ -82,8 +79,8 @@ public class DefaultCodeFragmentFactory extends JavaDebuggerCodeFragmentFactory 
       }
 
       final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(project).getContext();
-      DebuggerManagerThreadImpl managerThread = debuggerContext.getManagerThread();
-      if (managerThread != null) {
+      DebuggerSession debuggerSession = debuggerContext.getDebuggerSession();
+      if (debuggerSession != null && debuggerContext.getSuspendContext() != null) {
         final Semaphore semaphore = new Semaphore();
         semaphore.down();
         final AtomicReference<PsiType> nameRef = new AtomicReference<>();
@@ -95,7 +92,7 @@ public class DefaultCodeFragmentFactory extends JavaDebuggerCodeFragmentFactory 
               semaphore.up();
             }
           };
-        managerThread.invoke(worker);
+        debuggerSession.getProcess().getManagerThread().invoke(worker);
         for (int i = 0; i < 50; i++) {
           ProgressManager.checkCanceled();
           if (semaphore.waitFor(20)) break;
@@ -114,18 +111,14 @@ public class DefaultCodeFragmentFactory extends JavaDebuggerCodeFragmentFactory 
   }
 
   @Override
-  public @NotNull LanguageFileType getFileType() {
+  @NotNull
+  public LanguageFileType getFileType() {
     return JavaFileType.INSTANCE;
   }
 
   @Override
   public EvaluatorBuilder getEvaluatorBuilder() {
     return EvaluatorBuilderImpl.getInstance();
-  }
-
-  @Override
-  public EvaluationContextWrapper createEvaluationContextWrapper() {
-    return new JavaEvaluationContextWrapper();
   }
 
   public static final Key<String> KEY = Key.create("DefaultCodeFragmentFactory.KEY");

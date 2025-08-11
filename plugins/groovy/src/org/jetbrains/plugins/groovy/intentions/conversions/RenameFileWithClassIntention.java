@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.openapi.editor.Editor;
@@ -28,13 +28,15 @@ public final class RenameFileWithClassIntention extends Intention implements Con
     new RenameRefactoringImpl(project, file, myNewFileName, true, true).run();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getText() {
+  public String getText() {
     return GroovyBundle.message("rename.file.to.0", myNewFileName);
   }
 
+  @NotNull
   @Override
-  protected @NotNull PsiElementPredicate getElementPredicate() {
+  protected PsiElementPredicate getElementPredicate() {
     return new ClassNameDiffersFromFileNamePredicate(this);
   }
 

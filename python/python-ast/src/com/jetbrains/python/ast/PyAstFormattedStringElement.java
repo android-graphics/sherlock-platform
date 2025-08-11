@@ -3,7 +3,6 @@ package com.jetbrains.python.ast;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,7 +37,8 @@ public interface PyAstFormattedStringElement extends PyAstStringElement, PyAstEl
    * format specifier of a another fragment one should use {@link PyAstFStringFragment#getFormatPart()} and
    * {@link PyAstFStringFragmentFormatPart#getFragments()}.
    */
-  default @NotNull List<? extends PyAstFStringFragment> getFragments() {
+  @NotNull
+  default List<? extends PyAstFStringFragment> getFragments() {
     return findChildrenByType(this, PyElementTypes.FSTRING_FRAGMENT);
   }
 
@@ -56,13 +56,15 @@ public interface PyAstFormattedStringElement extends PyAstStringElement, PyAstEl
    * }</pre>
    * this method will return ranges {@code (2, 5)} and {@code (17, 20)}.
    */
-  default @NotNull List<TextRange> getLiteralPartRanges() {
+  @NotNull
+  default List<TextRange> getLiteralPartRanges() {
     final List<PsiElement> textTokens = findChildrenByType(this, PyTokenTypes.FSTRING_TEXT_TOKENS);
     return ContainerUtil.map(textTokens, PsiElement::getTextRangeInParent);
   }
 
+  @NotNull
   @Override
-  default @NotNull TextRange getContentRange() {
+  default TextRange getContentRange() {
     final TextRange textRange = getTextRange();
     final int startOffset = textRange.getStartOffset();
     final int endOffset = textRange.getEndOffset();
@@ -74,8 +76,9 @@ public interface PyAstFormattedStringElement extends PyAstStringElement, PyAstEl
     return absoluteRange.shiftLeft(startOffset);
   }
 
+  @NotNull
   @Override
-  default @NotNull List<Pair<TextRange, String>> getDecodedFragments() {
+  default List<Pair<TextRange, String>> getDecodedFragments() {
     final ArrayList<Pair<TextRange, String>> result = new ArrayList<>();
     final PyStringLiteralDecoder decoder = new PyStringLiteralDecoder(this);
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -92,8 +95,9 @@ public interface PyAstFormattedStringElement extends PyAstStringElement, PyAstEl
     return result;
   }
 
+  @NotNull
   @Override
-  default @NotNull String getQuote() {
+  default String getQuote() {
     final PsiElement start = findChildByTypeNotNull(this, PyTokenTypes.FSTRING_START);
     return start.getText().substring(getPrefixLength());
   }
@@ -105,12 +109,7 @@ public interface PyAstFormattedStringElement extends PyAstStringElement, PyAstEl
 
   @Override
   default boolean isFormatted() {
-    return StringUtil.containsIgnoreCase(getPrefix(), "f");
-  }
-
-  @Override
-  default boolean isTemplate() {
-    return StringUtil.containsIgnoreCase(getPrefix(), "t");
+    return true;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -64,8 +64,9 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
     return CodeInsightBundle.message("gutter.color.preview");
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getIcon() {
+  public Icon getIcon() {
     return AllIcons.Gutter.Colors;
   }
 
@@ -73,7 +74,7 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
 
     private final Color myColor;
 
-    MyInfo(final @NotNull PsiElement element, final Color color, final ElementColorProvider colorProvider) {
+    MyInfo(@NotNull final PsiElement element, final Color color, final ElementColorProvider colorProvider) {
       super(element,
             element.getTextRange(),
             JBUIScale.scaleIcon(new ColorIcon(12, color)),
@@ -111,8 +112,9 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
       return JBUIScale.scaleIcon(new ColorsIcon(12, colors));
     }
 
+    @NotNull
     @Override
-    public @NotNull Function<? super PsiElement, String> getCommonTooltip(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
+    public Function<? super PsiElement, String> getCommonTooltip(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
       return FunctionUtil.nullConstant();
     }
   }

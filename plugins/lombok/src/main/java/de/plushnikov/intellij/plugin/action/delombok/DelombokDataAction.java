@@ -6,7 +6,8 @@ import org.jetbrains.annotations.NotNull;
 public final class DelombokDataAction extends AbstractDelombokAction {
 
   @Override
-  protected @NotNull DelombokHandler createHandler() {
+  @NotNull
+  protected DelombokHandler createHandler() {
     return new DelombokHandler(LombokProcessorManager.getInstance().getDataProcessor());
   }
 }

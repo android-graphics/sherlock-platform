@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.application.ModalityState;
@@ -10,8 +10,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 @ApiStatus.Internal
 public interface DocumentCommitProcessor {
   void commitSynchronously(@NotNull Document document, @NotNull Project project, @NotNull PsiFile psiFile);
@@ -21,5 +19,5 @@ public interface DocumentCommitProcessor {
                             @NotNull Document document,
                             @NonNls @NotNull Object reason,
                             @NotNull ModalityState modality,
-                            @NotNull List<FileViewProvider> cachedViewProviders);
+                            @NotNull FileViewProvider cachedViewProvider);
 }

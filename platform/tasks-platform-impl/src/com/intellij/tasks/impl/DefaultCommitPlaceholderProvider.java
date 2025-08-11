@@ -1,15 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.CommitPlaceholderProvider;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskRepository;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
 public class DefaultCommitPlaceholderProvider implements CommitPlaceholderProvider {
 
   @Override
@@ -17,8 +15,9 @@ public class DefaultCommitPlaceholderProvider implements CommitPlaceholderProvid
     return new String[] { "id", "number", "summary", "project", "taskType"};
   }
 
+  @Nullable
   @Override
-  public @Nullable String getPlaceholderValue(LocalTask task, String placeholder) {
+  public String getPlaceholderValue(LocalTask task, String placeholder) {
     if ("id".equals(placeholder))
       return task.getPresentableId();
     if ("number".equals(placeholder))

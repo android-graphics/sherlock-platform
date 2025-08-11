@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.actions;
 
 import com.intellij.CommonBundle;
@@ -15,7 +15,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -29,8 +32,8 @@ import java.util.List;
 import java.util.Map;
 
 @ApiStatus.Internal
-public final class CoverageSuiteChooserDialog extends DialogWrapper {
-  private static final @NonNls String LOCAL = "Local";
+public class CoverageSuiteChooserDialog extends DialogWrapper {
+  @NonNls private static final String LOCAL = "Local";
   private final Project myProject;
   private final CheckboxTree mySuitesTree;
   private final CoverageDataManager myCoverageManager;
@@ -163,8 +166,8 @@ public final class CoverageSuiteChooserDialog extends DialogWrapper {
     }
   }
 
-  private void createSuitesNodes(@Unmodifiable List<CoverageSuite> suites, DefaultMutableTreeNode parent) {
-    suites = ContainerUtil.sorted(suites, (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
+  private void createSuitesNodes(List<CoverageSuite> suites, DefaultMutableTreeNode parent) {
+    suites.sort((o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
     for (CoverageSuite suite : suites) {
       CheckedTreeNode treeNode = new CheckedTreeNode(suite);
       treeNode.setChecked(isSuiteActive(suite));
@@ -218,8 +221,7 @@ public final class CoverageSuiteChooserDialog extends DialogWrapper {
     }
   }
 
-  @ApiStatus.Internal
-  public final class NoCoverageAction extends DialogWrapperAction {
+  class NoCoverageAction extends DialogWrapperAction {
     NoCoverageAction() {
       super(CoverageBundle.message("coverage.data.no.coverage.button"));
     }
@@ -233,7 +235,7 @@ public final class CoverageSuiteChooserDialog extends DialogWrapper {
     }
   }
 
-  private final class AddExternalSuiteAction extends AnAction {
+  private class AddExternalSuiteAction extends AnAction {
     AddExternalSuiteAction() {
       super(CommonBundle.message("button.add"), CommonBundle.message("button.add"), IconUtil.getAddIcon());
       registerCustomShortcutSet(CommonShortcuts.getInsert(), mySuitesTree);
@@ -253,7 +255,7 @@ public final class CoverageSuiteChooserDialog extends DialogWrapper {
     }
   }
 
-  private final class RemoveSuiteAction extends AnAction {
+  private class RemoveSuiteAction extends AnAction {
     RemoveSuiteAction() {
       super(CommonBundle.message("button.remove"), CommonBundle.message("button.remove"), PlatformIcons.DELETE_ICON);
     }
@@ -283,7 +285,7 @@ public final class CoverageSuiteChooserDialog extends DialogWrapper {
     }
   }
 
-  private final class DeleteSuiteAction extends AnAction {
+  private class DeleteSuiteAction extends AnAction {
     DeleteSuiteAction() {
       super(CommonBundle.message("button.delete"), CommonBundle.message("button.delete"), AllIcons.Actions.GC);
       registerCustomShortcutSet(CommonShortcuts.getDelete(), mySuitesTree);

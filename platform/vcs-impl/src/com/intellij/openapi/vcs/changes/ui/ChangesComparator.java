@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.util.treeView.FileNameComparator;
@@ -9,12 +9,10 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
-@ApiStatus.Internal
 public final class ChangesComparator {
   private static final Comparator<VirtualFile> VIRTUAL_FILE_FLAT = new VirtualFileComparator(true);
   private static final Comparator<VirtualFile> VIRTUAL_FILE_TREE = new VirtualFileComparator(false);
@@ -23,15 +21,18 @@ public final class ChangesComparator {
   private static final Comparator<FilePath> FILE_PATH_FLAT = new FilePathComparator(true);
   private static final Comparator<FilePath> FILE_PATH_TREE = new FilePathComparator(false);
 
-  public static @NotNull Comparator<Change> getInstance(boolean flattened) {
+  @NotNull
+  public static Comparator<Change> getInstance(boolean flattened) {
     return flattened ? CHANGE_FLAT : CHANGE_TREE;
   }
 
-  public static @NotNull Comparator<VirtualFile> getVirtualFileComparator(boolean flattened) {
+  @NotNull
+  public static Comparator<VirtualFile> getVirtualFileComparator(boolean flattened) {
     return flattened ? VIRTUAL_FILE_FLAT : VIRTUAL_FILE_TREE;
   }
 
-  public static @NotNull Comparator<FilePath> getFilePathComparator(boolean flattened) {
+  @NotNull
+  public static Comparator<FilePath> getFilePathComparator(boolean flattened) {
     return flattened ? FILE_PATH_FLAT : FILE_PATH_TREE;
   }
 

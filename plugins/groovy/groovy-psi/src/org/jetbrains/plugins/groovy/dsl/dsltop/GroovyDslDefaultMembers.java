@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package org.jetbrains.plugins.groovy.dsl.dsltop;
 
@@ -27,7 +41,8 @@ public final class GroovyDslDefaultMembers implements GdslMembersProvider {
   /**
    * Find a class by its full-qualified name
    */
-  public @Nullable PsiClass findClass(String fqn, GdslMembersHolderConsumer consumer) {
+  @Nullable
+  public PsiClass findClass(String fqn, GdslMembersHolderConsumer consumer) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(consumer.getProject());
     return facade.findClass(fqn, GlobalSearchScope.allScope(consumer.getProject()));
   }
@@ -84,7 +99,8 @@ public final class GroovyDslDefaultMembers implements GdslMembersProvider {
   /**
    * Returns enclosing method call of a given context's place
    */
-  public @Nullable GrCall enclosingCall(String name, GdslMembersHolderConsumer consumer) {
+  @Nullable
+  public GrCall enclosingCall(String name, GdslMembersHolderConsumer consumer) {
     final PsiElement place = consumer.getPlace();
     if (place == null) return null;
     GrCall call = PsiTreeUtil.getParentOfType(place, GrCall.class, true);
@@ -113,13 +129,15 @@ public final class GroovyDslDefaultMembers implements GdslMembersProvider {
     return null;
   }
 
-  public @Nullable PsiMethod enclosingMethod(GdslMembersHolderConsumer consumer) {
+  @Nullable
+  public PsiMethod enclosingMethod(GdslMembersHolderConsumer consumer) {
     final PsiElement place = consumer.getPlace();
     if (place == null) return null;
     return PsiTreeUtil.getParentOfType(place, PsiMethod.class, true);
   }
 
-  public @Nullable PsiMember enclosingMember(GdslMembersHolderConsumer consumer) {
+  @Nullable
+  public PsiMember enclosingMember(GdslMembersHolderConsumer consumer) {
     final PsiElement place = consumer.getPlace();
     if (place == null) return null;
     final PsiMember member = PsiTreeUtil.getParentOfType(place, PsiMember.class, true);
@@ -127,13 +145,15 @@ public final class GroovyDslDefaultMembers implements GdslMembersProvider {
     return member;
   }
 
-  public @Nullable PsiClass enclosingClass(GdslMembersHolderConsumer consumer) {
+  @Nullable
+  public PsiClass enclosingClass(GdslMembersHolderConsumer consumer) {
     final PsiElement place = consumer.getPlace();
     if (place == null) return null;
     return PsiTreeUtil.getParentOfType(place, PsiClass.class, true);
   }
 
-  private static @Nullable String getInvokedMethodName(GrCall call) {
+  @Nullable
+  private static String getInvokedMethodName(GrCall call) {
     if (call instanceof GrMethodCall) {
       final GrExpression expr = ((GrMethodCall)call).getInvokedExpression();
       if (expr instanceof GrReferenceExpression) {

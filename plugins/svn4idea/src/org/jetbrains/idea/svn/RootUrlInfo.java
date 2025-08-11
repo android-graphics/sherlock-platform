@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -11,39 +11,43 @@ import java.io.File;
 
 public class RootUrlInfo implements RootUrlPair {
 
-  private final @NotNull WorkingCopyFormat myFormat;
-  private final @NotNull Node myNode;
+  @NotNull private final WorkingCopyFormat myFormat;
+  @NotNull private final Node myNode;
   // vcs root
-  private final @NotNull VirtualFile myRoot;
-  private volatile @Nullable NestedCopyType myType;
+  @NotNull private final VirtualFile myRoot;
+  @Nullable private volatile NestedCopyType myType;
 
-  public RootUrlInfo(final @NotNull Node node, final @NotNull WorkingCopyFormat format, final @NotNull VirtualFile root) {
+  public RootUrlInfo(@NotNull final Node node, @NotNull final WorkingCopyFormat format, @NotNull final VirtualFile root) {
     this(node, format, root, null);
   }
 
-  public RootUrlInfo(final @NotNull Node node,
-                     final @NotNull WorkingCopyFormat format,
-                     final @NotNull VirtualFile root,
-                     final @Nullable NestedCopyType type) {
+  public RootUrlInfo(@NotNull final Node node,
+                     @NotNull final WorkingCopyFormat format,
+                     @NotNull final VirtualFile root,
+                     @Nullable final NestedCopyType type) {
     myNode = node;
     myFormat = format;
     myRoot = root;
     myType = type;
   }
 
-  public @NotNull Node getNode() {
+  @NotNull
+  public Node getNode() {
     return myNode;
   }
 
-  public @NotNull Url getRepositoryUrl() {
+  @NotNull
+  public Url getRepositoryUrl() {
     return myNode.getRepositoryRootUrl();
   }
 
-  public @NotNull WorkingCopyFormat getFormat() {
+  @NotNull
+  public WorkingCopyFormat getFormat() {
     return myFormat;
   }
 
-  public @NotNull File getIoFile() {
+  @NotNull
+  public File getIoFile() {
     return myNode.getIoFile();
   }
 
@@ -52,21 +56,25 @@ public class RootUrlInfo implements RootUrlPair {
   }
 
   // vcs root
-  public @NotNull VirtualFile getRoot() {
+  @NotNull
+  public VirtualFile getRoot() {
     return myRoot;
   }
 
   @Override
-  public @NotNull VirtualFile getVirtualFile() {
+  @NotNull
+  public VirtualFile getVirtualFile() {
     return myNode.getFile();
   }
 
   @Override
-  public @NotNull Url getUrl() {
+  @NotNull
+  public Url getUrl() {
     return myNode.getUrl();
   }
 
-  public @Nullable NestedCopyType getType() {
+  @Nullable
+  public NestedCopyType getType() {
     return myType;
   }
 

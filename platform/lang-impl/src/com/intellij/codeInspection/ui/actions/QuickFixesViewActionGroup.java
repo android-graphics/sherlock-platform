@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +19,6 @@ import static com.intellij.codeInspection.ui.actions.InspectionViewActionBase.ge
 /**
  * @author Dmitry Batkovich
  */
-@ApiStatus.Internal
 public final class QuickFixesViewActionGroup extends ActionGroup {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

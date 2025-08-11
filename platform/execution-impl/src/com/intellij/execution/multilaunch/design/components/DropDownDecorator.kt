@@ -3,7 +3,6 @@ package com.intellij.execution.multilaunch.design.components
 import com.intellij.icons.AllIcons
 import com.intellij.util.PlatformIcons
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -13,7 +12,6 @@ import javax.swing.JPanel
 /**
  * A class that decorates a given JComponent with a drop-down icon on the right side, imitating combobox visuals.
  */
-@ApiStatus.Internal
 open class DropDownDecorator() : JPanel(MigLayout("fillx, insets 0", "[left][right]")) {
   private val downIcon: JLabel = JLabel(PlatformIcons.COMBOBOX_ARROW_ICON)
   private var component: JComponent? = null

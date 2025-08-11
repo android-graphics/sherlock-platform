@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.model;
 
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +37,8 @@ public class MavenArtifactNode implements Serializable {
     myPremanagedScope = premanagedScope;
   }
 
-  public @Nullable MavenArtifactNode getParent() {
+  @Nullable
+  public MavenArtifactNode getParent() {
     return myParent;
   }
 
@@ -50,19 +51,23 @@ public class MavenArtifactNode implements Serializable {
     return myState;
   }
 
-  public @Nullable MavenArtifact getRelatedArtifact() {
+  @Nullable
+  public MavenArtifact getRelatedArtifact() {
     return myRelatedArtifact;
   }
 
-  public @Nullable String getOriginalScope() {
+  @Nullable
+  public String getOriginalScope() {
     return myOriginalScope;
   }
 
-  public @Nullable String getPremanagedVersion() {
+  @Nullable
+  public String getPremanagedVersion() {
     return myPremanagedVersion;
   }
 
-  public @Nullable String getPremanagedScope() {
+  @Nullable
+  public String getPremanagedScope() {
     return myPremanagedScope;
   }
 

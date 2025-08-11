@@ -2,14 +2,12 @@ from _typeshed import Incomplete, Unused
 from typing import ClassVar
 
 from openpyxl.descriptors.serialisable import Serialisable
-from openpyxl.worksheet.worksheet import Worksheet
 
 from .cell_range import CellRange
 
 class MergeCell(CellRange):
     tagname: ClassVar[str]
     # Same as CellRange.coord
-    # https://github.com/python/mypy/issues/6700
     @property
     def ref(self) -> str: ...
     __attrs__: ClassVar[tuple[str, ...]]
@@ -28,9 +26,9 @@ class MergeCells(Serialisable):
     def count(self) -> int: ...
 
 class MergedCellRange(CellRange):
-    ws: Worksheet
+    ws: Incomplete
     start_cell: Incomplete
-    def __init__(self, worksheet: Worksheet, coord) -> None: ...
+    def __init__(self, worksheet, coord) -> None: ...
     def format(self) -> None: ...
-    def __contains__(self, coord: str) -> bool: ...
+    def __contains__(self, coord): ...
     def __copy__(self): ...

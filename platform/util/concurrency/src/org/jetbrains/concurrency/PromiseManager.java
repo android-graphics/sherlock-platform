@@ -2,14 +2,12 @@
 package org.jetbrains.concurrency;
 
 import com.intellij.util.concurrency.AtomicFieldUpdater;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-@ApiStatus.Internal
 public abstract class PromiseManager<HOST, VALUE> {
   private final AtomicFieldUpdater<HOST, Promise<VALUE>> fieldUpdater;
 
@@ -27,7 +25,8 @@ public abstract class PromiseManager<HOST, VALUE> {
     return true;
   }
 
-  public abstract @NotNull Promise<VALUE> load(@NotNull HOST host);
+  @NotNull
+  public abstract Promise<VALUE> load(@NotNull HOST host);
 
   public final void reset(HOST host) {
     fieldUpdater.setVolatile(host, null);
@@ -47,20 +46,24 @@ public abstract class PromiseManager<HOST, VALUE> {
     return result != null && result.isSucceeded();
   }
 
-  public final @Nullable Promise.State getState(HOST host) {
+  @Nullable
+  public final Promise.State getState(HOST host) {
     Promise<VALUE> result = fieldUpdater.getVolatile(host);
     return result == null ? null : result.getState();
   }
 
-  public final @NotNull Promise<VALUE> get(HOST host) {
+  @NotNull
+  public final Promise<VALUE> get(HOST host) {
     return get(host, true);
   }
 
-  public final @NotNull Promise<VALUE> get(HOST host, boolean checkFreshness) {
+  @NotNull
+  public final Promise<VALUE> get(HOST host, boolean checkFreshness) {
     return getOrCreateAsyncResult(host, checkFreshness, true);
   }
 
-  private @NotNull Promise<VALUE> getOrCreateAsyncResult(HOST host, boolean checkFreshness, boolean load) {
+  @NotNull
+  private Promise<VALUE> getOrCreateAsyncResult(HOST host, boolean checkFreshness, boolean load) {
     Promise<VALUE> promise = fieldUpdater.getVolatile(host);
     if (promise == null) {
       promise = new AsyncPromise<>();
@@ -103,7 +106,8 @@ public abstract class PromiseManager<HOST, VALUE> {
     return getPromise(host, load, promise);
   }
 
-  private @NotNull Promise<VALUE> getPromise(HOST host, boolean load, Promise<VALUE> promise) {
+  @NotNull
+  private Promise<VALUE> getPromise(HOST host, boolean load, Promise<VALUE> promise) {
     if (!load || promise.getState() != Promise.State.PENDING) {
       return promise;
     }

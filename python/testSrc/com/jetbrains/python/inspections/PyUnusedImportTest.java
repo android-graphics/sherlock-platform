@@ -37,10 +37,6 @@ public class PyUnusedImportTest extends PyTestCase {
     doTest("test1.py");
   }
 
-  public void testUnresolvedModule() {
-    doTest("test.py");
-  }
-
   //PY-20075
   public void testMultipleSubmodules() {
     doTest("test1.py");

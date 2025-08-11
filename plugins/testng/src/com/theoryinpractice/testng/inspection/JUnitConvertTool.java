@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -41,13 +41,15 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
     ANNOTATIONS_MAP.put("org.junit.After", "@org.testng.annotations.AfterMethod");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getGroupDisplayName() {
+  public String getGroupDisplayName() {
     return TestNGUtil.TESTNG_GROUP_NAME;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getShortName() {
+  public String getShortName() {
     return "JUnitTestNG";
   }
 
@@ -66,7 +68,8 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
   public static class JUnitConverterQuickFix implements LocalQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return TestngBundle.message("intention.family.name.convert.testcase.to.testng");
     }
 

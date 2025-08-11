@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -10,11 +10,9 @@ import com.intellij.codeInsight.template.postfix.templates.editable.EditablePost
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public final class EditablePostfixTemplateMetaData implements BeforeAfterMetaData {
 
   private static final @NlsSafe String EXPR = "$EXPR$";
@@ -41,8 +39,9 @@ public final class EditablePostfixTemplateMetaData implements BeforeAfterMetaDat
     return new TextDescriptor[]{new PlainTextDescriptor(myAfterText, "after.txt")};
   }
 
+  @NotNull
   @Override
-  public @NotNull TextDescriptor getDescription() {
+  public TextDescriptor getDescription() {
     return new PlainTextDescriptor(CodeInsightBundle.message("templates.postfix.editable.description"), "description.txt");
   }
 }

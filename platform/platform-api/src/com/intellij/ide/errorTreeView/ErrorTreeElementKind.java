@@ -31,7 +31,6 @@ public enum ErrorTreeElementKind {
     myIcon = icon;
   }
 
-  @Override
   public String toString() {
     return myText; // for debug purposes
   }

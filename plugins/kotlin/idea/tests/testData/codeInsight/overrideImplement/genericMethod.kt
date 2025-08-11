@@ -6,5 +6,3 @@ interface G<T> {
 class GC() : G<Int> {
     <caret>
 }
-
-// MEMBER: "foo(t: Int): Int"

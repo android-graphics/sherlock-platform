@@ -21,30 +21,33 @@ final class SuperClassesManager extends MembersManager<PyClass> {
   }
 
 
+  @NotNull
   @Override
-  protected @NotNull Collection<PyElement> getDependencies(final @NotNull MultiMap<PyClass, PyElement> usedElements) {
+  protected Collection<PyElement> getDependencies(@NotNull final MultiMap<PyClass, PyElement> usedElements) {
     return Lists.newArrayList(usedElements.keySet());
   }
 
   @Override
-  protected @NotNull MultiMap<PyClass, PyElement> getDependencies(@NotNull PyElement member) {
+  @NotNull
+  protected MultiMap<PyClass, PyElement> getDependencies(@NotNull PyElement member) {
     return MultiMap.empty();
   }
 
   @Override
-  public boolean hasConflict(final @NotNull PyClass member, final @NotNull PyClass aClass) {
+  public boolean hasConflict(@NotNull final PyClass member, @NotNull final PyClass aClass) {
     final List<PyExpression> expressionList = getExpressionsBySuperClass(aClass, Collections.singleton(member));
     return !expressionList.isEmpty();
   }
 
+  @NotNull
   @Override
-  protected @NotNull List<PyElement> getMembersCouldBeMoved(final @NotNull PyClass pyClass) {
+  protected List<PyElement> getMembersCouldBeMoved(@NotNull final PyClass pyClass) {
     return Lists.newArrayList(Arrays.asList(pyClass.getSuperClasses(null)));
   }
 
   @Override
-  protected Collection<PyElement> moveMembers(final @NotNull PyClass from,
-                                              final @NotNull Collection<PyMemberInfo<PyClass>> members,
+  protected Collection<PyElement> moveMembers(@NotNull final PyClass from,
+                                              @NotNull final Collection<PyMemberInfo<PyClass>> members,
                                               final PyClass @NotNull ... to) {
     final Collection<PyClass> elements = fetchElements(members);
     for (final PyClass destClass : to) {
@@ -65,7 +68,8 @@ final class SuperClassesManager extends MembersManager<PyClass> {
    * @param classes classes to check superclasses against
    * @return collection of expressions that are resolved to one or more class from classes param
    */
-  private static @NotNull List<PyExpression> getExpressionsBySuperClass(final @NotNull PyClass from, final @NotNull Collection<PyClass> classes) {
+  @NotNull
+  private static List<PyExpression> getExpressionsBySuperClass(@NotNull final PyClass from, @NotNull final Collection<PyClass> classes) {
     final List<PyExpression> expressionsToDelete = new ArrayList<>(classes.size());
 
     for (final PyExpression expression : from.getSuperClassExpressions()) {
@@ -83,8 +87,9 @@ final class SuperClassesManager extends MembersManager<PyClass> {
     return expressionsToDelete;
   }
 
+  @NotNull
   @Override
-  public @NotNull PyMemberInfo<PyClass> apply(final @NotNull PyClass input) {
+  public PyMemberInfo<PyClass> apply(@NotNull final PyClass input) {
     final String name = RefactoringBundle.message("member.info.extends.0", input.getName());
     //TODO: Check for "overrides"
     return new PyMemberInfo<>(input, false, name, false, this, false);

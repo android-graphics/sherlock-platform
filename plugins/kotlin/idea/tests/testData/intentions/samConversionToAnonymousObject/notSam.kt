@@ -1,4 +1,4 @@
 // IS_APPLICABLE: false
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 val s = <caret>NotSam {
 }

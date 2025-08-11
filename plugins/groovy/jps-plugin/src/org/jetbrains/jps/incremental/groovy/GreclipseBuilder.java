@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.execution.process.BaseOSProcessHandler;
@@ -73,7 +73,8 @@ public final class GreclipseBuilder extends ModuleLevelBuilder {
   }
 
 
-  private @Nullable ClassLoader createGreclipseLoader(@Nullable String jar) {
+  @Nullable
+  private ClassLoader createGreclipseLoader(@Nullable String jar) {
     if (StringUtil.isEmpty(jar)) return null;
 
     if (jar.equals(myGreclipseJar)) {
@@ -98,8 +99,9 @@ public final class GreclipseBuilder extends ModuleLevelBuilder {
   }
 
 
+  @NotNull
   @Override
-  public @NotNull List<String> getCompilableFileExtensions() {
+  public List<String> getCompilableFileExtensions() {
     return Arrays.asList("groovy", "java");
   }
 
@@ -288,8 +290,9 @@ public final class GreclipseBuilder extends ModuleLevelBuilder {
         );
         final Process process = Runtime.getRuntime().exec(ArrayUtilRt.toStringArray(cmd));
         ProcessHandler handler = new BaseOSProcessHandler(process, StringUtil.join(cmd, " "), null) {
+          @NotNull
           @Override
-          public @NotNull Future<?> executeTask(@NotNull Runnable task) {
+          public Future<?> executeTask(@NotNull Runnable task) {
             return SharedThreadPool.getInstance().submit(task);
           }
 
@@ -410,8 +413,9 @@ public final class GreclipseBuilder extends ModuleLevelBuilder {
     return StringUtil.join(cp, File.pathSeparator);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPresentableName() {
+  public String getPresentableName() {
     return GroovyJpsBundle.message("compiler.name.greclipse");
   }
 

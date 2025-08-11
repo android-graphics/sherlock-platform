@@ -2,6 +2,8 @@
 package com.intellij.searchEverywhereMl.ranking.core.model
 
 import com.intellij.internal.ml.DecisionFunction
+import com.intellij.internal.ml.FeaturesInfo
+import com.intellij.internal.ml.catboost.CatBoostResourcesModelMetadataReader
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 import com.intellij.searchEverywhereMl.ranking.core.model.local.LocalRankingModelProviderUtil
@@ -63,10 +65,13 @@ internal abstract class SearchEverywhereMLRankingModelLoader {
     return LocalRankingModelProviderUtil.getLocalModel(supportedTab)!!
   }
 
-  protected fun getCatBoostModel(resourceDirectory: String, modelDirectory: String): SearchEverywhereCatBoostModel {
-    return CatBoostModelFactory()
-      .withModelDirectory(modelDirectory)
-      .withResourceDirectory(resourceDirectory)
-      .buildModel()
+  protected fun getCatBoostModel(resourceDirectory: String, modelDirectory: String): DecisionFunction {
+    val metadataReader = CatBoostResourcesModelMetadataReader(this::class.java, resourceDirectory, modelDirectory)
+    val metadata = FeaturesInfo.buildInfo(metadataReader)
+    val model = metadataReader.loadModel()
+
+    return object : SearchEverywhereMLRankingDecisionFunction(metadata) {
+      override fun predict(features: DoubleArray): Double = model.makePredict(features)
+    }
   }
 }

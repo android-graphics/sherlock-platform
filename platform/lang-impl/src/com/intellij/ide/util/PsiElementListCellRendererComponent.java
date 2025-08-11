@@ -11,13 +11,15 @@ import java.awt.*;
 final class PsiElementListCellRendererComponent extends SelectablePanel {
 
   PsiElementListCellRendererComponent() {
-    setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+    setLayout(new BorderLayout());
   }
 
   private final class MyAccessibleContext extends JPanel.AccessibleJPanel {
     @Override
     public String getAccessibleName() {
-      Component leftCellRendererComp = getComponent(0);
+      LayoutManager lm = getLayout();
+      assert lm instanceof BorderLayout;
+      Component leftCellRendererComp = ((BorderLayout)lm).getLayoutComponent(BorderLayout.WEST);
       return leftCellRendererComp instanceof Accessible ?
              leftCellRendererComp.getAccessibleContext().getAccessibleName() : super.getAccessibleName();
     }

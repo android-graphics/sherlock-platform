@@ -9,7 +9,6 @@
 */
 package org.picocontainer;
 
-import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Aslak Helles&oslash;y
  * @author Jon Tirs&eacute;n
  */
-@Internal
 public interface PicoContainer {
   /**
    * @deprecated Use ComponentManager directly instead.

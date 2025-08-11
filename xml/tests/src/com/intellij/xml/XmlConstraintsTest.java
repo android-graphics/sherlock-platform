@@ -41,7 +41,6 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
@@ -139,7 +138,7 @@ public class XmlConstraintsTest extends LightJavaCodeInsightFixtureTestCase {
     assertNotNull(descriptor);
     XmlElementDescriptor[] descriptors = descriptor.getElementsDescriptors(tag);
     Map<String, XmlElementDescriptor> map =
-      new HashMap<>(ContainerUtil.newMapFromValues(Arrays.asList(descriptors).iterator(), o -> o.getName()));
+      ContainerUtil.newMapFromValues(Arrays.asList(descriptors).iterator(), o -> o.getName());
     map.put(tag.getName(), tag.getDescriptor());
     return map;
   }

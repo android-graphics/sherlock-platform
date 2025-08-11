@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -12,8 +12,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class InvalidComparatorMethodReferenceInspection extends AbstractBaseJavaLocalInspectionTool {
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
@@ -61,13 +62,17 @@ public final class InvalidComparatorMethodReferenceInspection extends AbstractBa
       this.reverse = reverse;
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getName() {
+    public String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", reverse ? "Comparator.reverseOrder()" : "Comparator.naturalOrder()");
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaAnalysisBundle.message("replace.with.comparator");
     }
 

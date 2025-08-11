@@ -17,7 +17,6 @@ interface SdkLookupProvider {
 
   fun getSdk(): Sdk?
 
-  @ApiStatus.ScheduledForRemoval
   @Deprecated("Consider using the SdkLookupProvider.waitForLookup with the SdkLookupUtil.getSdk")
   fun blockingGetSdk(): Sdk?
 

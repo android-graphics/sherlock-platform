@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.uiDesigner.compiler;
 
 import com.intellij.openapi.util.Key;
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.util.containers.FileCollectionFactory;
@@ -23,7 +22,7 @@ import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
 import org.jetbrains.jps.incremental.java.FormsParsing;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
-import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
@@ -32,73 +31,57 @@ import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerConfiguration;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerExtensionService;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
  */
-public final class FormsBindingManager extends ModuleLevelBuilder {
-  private static final String FORM_EXTENSION = "form";
-  private static final FileFilter FORM_SOURCES_FILTER = FileFilters.withExtension(FORM_EXTENSION);
-  private static final FileFilter JAVA_SOURCES_FILTER = FileFilters.withExtension("java");
+public final class FormsBindingManager extends FormsBuilder {
   private static final @NlsSafe String BUILDER_NAME = "form-bindings";
   private static final String JAVA_EXTENSION = ".java";
   private static final Key<Boolean> FORCE_FORMS_REBUILD_FLAG = Key.create("_forms_rebuild_flag_");
   private static final Key<Boolean> FORMS_REBUILD_FORCED = Key.create("_forms_rebuild_forced_flag_");
 
   public FormsBindingManager() {
-    super(BuilderCategory.SOURCE_PROCESSOR);
+    super(BuilderCategory.SOURCE_PROCESSOR, BUILDER_NAME);
   }
 
   @Override
   public void buildStarted(CompileContext context) {
-    FORCE_FORMS_REBUILD_FLAG.set(context, Files.exists(getMarkerFile(context)));
+    FORCE_FORMS_REBUILD_FLAG.set(context, getMarkerFile(context).exists());
   }
 
   @Override
   public void chunkBuildFinished(CompileContext context, ModuleChunk chunk) {
-    FORMS_REBUILD_FORCED.set(context, null); // clear the flag on a per-chunk basis
+    FORMS_REBUILD_FORCED.set(context, null); // clear the flag on per-chunk basis
     super.chunkBuildFinished(context, chunk);
   }
 
   @Override
   public void buildFinished(CompileContext context) {
-    boolean previousValue = FORCE_FORMS_REBUILD_FLAG.get(context, Boolean.FALSE);
-    JpsUiDesignerConfiguration config = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(context.getProjectDescriptor().getProject());
-    boolean currentRebuildValue = config != null && !config.isInstrumentClasses();
-    if (previousValue == currentRebuildValue) {
-      return;
-    }
-
-    Path marker = getMarkerFile(context);
-    if (currentRebuildValue) {
-      FileUtil.createIfDoesntExist(marker.toFile());
-    }
-    else {
-      try {
-        Files.deleteIfExists(marker);
+    final boolean previousValue = FORCE_FORMS_REBUILD_FLAG.get(context, Boolean.FALSE);
+    final JpsUiDesignerConfiguration config = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(context.getProjectDescriptor().getProject());
+    final boolean currentRebuildValue = config != null && !config.isInstrumentClasses();
+    if (previousValue != currentRebuildValue) {
+      final File marker = getMarkerFile(context);
+      if (currentRebuildValue) {
+        FileUtil.createIfDoesntExist(marker);
       }
-      catch (IOException ignored) {
+      else {
+        FileUtil.delete(marker);
       }
     }
   }
 
-  @Override
-  public @NotNull String getPresentableName() {
-    return BUILDER_NAME;
+  @NotNull
+  private static File getMarkerFile(CompileContext context) {
+    return new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), "forms_rebuild_required");
   }
 
-  private static @NotNull Path getMarkerFile(CompileContext context) {
-    return context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageDir().resolve("forms_rebuild_required");
-  }
-
+  @NotNull
   @Override
-  public @NotNull List<String> getCompilableFileExtensions() {
+  public List<String> getCompilableFileExtensions() {
     return Collections.singletonList(FORM_EXTENSION);
   }
 
@@ -114,7 +97,7 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
 
     final Map<File, ModuleBuildTarget> filesToCompile = FileCollectionFactory.createCanonicalFileMap();
     final Map<File, ModuleBuildTarget> formsToCompile = FileCollectionFactory.createCanonicalFileMap();
-    final Map<Path, List<Path>> sourceToForms = FileCollectionFactory.createCanonicalPathMap();
+    final Map<File, Collection<File>> srcToForms = FileCollectionFactory.createCanonicalFileMap();
 
     if (!JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) && config.isInstrumentClasses() && FORCE_FORMS_REBUILD_FLAG.get(context, Boolean.FALSE)) {
       // force compilation of all forms, but only once per chunk
@@ -124,9 +107,9 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
       }
     }
 
-    dirtyFilesHolder.processDirtyFiles(new FileProcessor<>() {
+    dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
       @Override
-      public boolean apply(@NotNull ModuleBuildTarget target, @NotNull File file, @NotNull JavaSourceRootDescriptor descriptor) {
+      public boolean apply(@NotNull ModuleBuildTarget target, @NotNull File file, @NotNull JavaSourceRootDescriptor descriptor) throws IOException {
         if (JAVA_SOURCES_FILTER.accept(file)) {
           filesToCompile.put(file, target);
         }
@@ -143,21 +126,21 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
 
       final FSOperations.DirtyFilesHolderBuilder<JavaSourceRootDescriptor, ModuleBuildTarget> holderBuilder = FSOperations.createDirtyFilesHolderBuilder(context, CompilationRound.CURRENT);
 
-      // force compilation of the bound source file if the form is dirty
+      // force compilation of bound source file if the form is dirty
       final Set<File> alienForms = FileCollectionFactory.createCanonicalFileSet();
       for (final Map.Entry<File, ModuleBuildTarget> entry : formsToCompile.entrySet()) {
         final File form = entry.getKey();
         final ModuleBuildTarget target = entry.getValue();
         try {
-          final Collection<Path> sources = findBoundSourceCandidates(context, target, form);
+          final Collection<File> sources = findBoundSourceCandidates(context, target, form);
           boolean isFormBound = false;
-          for (Path boundSource : sources) {
-            if (!excludes.isExcluded(boundSource.toFile())) {
+          for (File boundSource : sources) {
+            if (!excludes.isExcluded(boundSource)) {
               isFormBound = true;
-              FormBindings.addBinding(boundSource, form.toPath(), sourceToForms);
+              addBinding(boundSource, form, srcToForms);
               holderBuilder.markDirtyFile(target, boundSource);
               context.getScope().markIndirectlyAffected(target, boundSource);
-              filesToCompile.put(boundSource.toFile(), target);
+              filesToCompile.put(boundSource, target);
               exitCode = ExitCode.OK;
             }
           }
@@ -175,23 +158,22 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
       formsToCompile.keySet().removeAll(alienForms);
 
       // form should be considered dirty if the class it is bound to is dirty
-      BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
+      final OneToManyPathsMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
       for (Map.Entry<File, ModuleBuildTarget> entry : filesToCompile.entrySet()) {
-        File srcFile = entry.getKey();
-        ModuleBuildTarget target = entry.getValue();
-        Collection<Path> boundForms = dataManager.getSourceToFormMap(target).getOutputs(srcFile.toPath());
-        if (boundForms == null) {
-          continue;
-        }
+        final File srcFile = entry.getKey();
+        final ModuleBuildTarget target = entry.getValue();
+        final Collection<String> boundForms = sourceToFormMap.getState(srcFile.getPath());
+        if (boundForms != null) {
+          for (String formPath : boundForms) {
+            final File formFile = new File(formPath);
+            if (!excludes.isExcluded(formFile) && formFile.exists()) {
+              addBinding(srcFile, formFile, srcToForms);
+              holderBuilder.markDirtyFile(target, formFile);
 
-        for (Path formFile : boundForms) {
-          if (!excludes.isExcluded(formFile.toFile()) && Files.exists(formFile)) {
-            FormBindings.addBinding(srcFile.toPath(), formFile, sourceToForms);
-            holderBuilder.markDirtyFile(target, formFile);
-
-            context.getScope().markIndirectlyAffected(target, formFile);
-            formsToCompile.put(formFile.toFile(), target);
-            exitCode = ExitCode.OK;
+              context.getScope().markIndirectlyAffected(target, formFile);
+              formsToCompile.put(formFile, target);
+              exitCode = ExitCode.OK;
+            }
           }
         }
       }
@@ -199,14 +181,14 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
       BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, holderBuilder.create());
     }
 
-    FormBindings.setFormsToCompile(context, sourceToForms);
+    FORMS_TO_COMPILE.set(context, srcToForms.isEmpty()? null : srcToForms);
 
     if (config.isCopyFormsRuntimeToOutput() && containsValidForm(formsToCompile.keySet())) {
       for (ModuleBuildTarget target : chunk.getTargets()) {
         if (!target.isTests()) {
           final File outputDir = target.getOutputDir();
           if (outputDir != null) {
-            final String outputRoot = FileUtilRt.toSystemIndependentName(outputDir.getPath());
+            final String outputRoot = FileUtil.toSystemIndependentName(outputDir.getPath());
             final List<File> generatedFiles = CopyResourcesUtil.copyFormsRuntime(outputRoot, false);
             if (!generatedFiles.isEmpty()) {
               exitCode = ExitCode.OK;
@@ -226,7 +208,7 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
   private static boolean containsValidForm(Set<File> files) {
     for (File file : files) {
       try {
-        if (FormsParsing.readBoundClassName(file.toPath()) != null) {
+        if (FormsParsing.readBoundClassName(file) != null) {
           return true;
         }
       }
@@ -236,32 +218,32 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
     return false;
   }
 
-  private static @NotNull Collection<Path> findBoundSourceCandidates(CompileContext context, final ModuleBuildTarget target, File form) throws IOException, AlienFormFileException {
+  @NotNull
+  private static Collection<File> findBoundSourceCandidates(CompileContext context, final ModuleBuildTarget target, File form) throws IOException, AlienFormFileException {
     final List<JavaSourceRootDescriptor> targetRoots = context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context);
     if (targetRoots.isEmpty()) {
-      return List.of();
+      return Collections.emptyList();
     }
-
-    String className = FormsParsing.readBoundClassName(form.toPath());
+    final String className = FormsParsing.readBoundClassName(form);
     if (className == null) {
-      return List.of();
+      return Collections.emptyList();
     }
-
     for (JavaSourceRootDescriptor rd : targetRoots) {
       final File boundSource = findSourceForClass(rd, className);
       if (boundSource != null) {
-        return List.of(boundSource.toPath());
+        return Collections.singleton(boundSource);
       }
     }
 
-    Set<Path> candidates = FileCollectionFactory.createCanonicalPathSet();
+    final Set<File> candidates = FileCollectionFactory.createCanonicalFileSet();
     for (JavaSourceRootDescriptor rd : targetRoots) {
-      collectPossibleSourcesForClass(rd, className, candidates);
+      candidates.addAll(findPossibleSourcesForClass(rd, className));
     }
     return candidates;
   }
 
-  private static @Nullable File findSourceForClass(JavaSourceRootDescriptor rd, final @Nullable String boundClassName) {
+  @Nullable
+  private static File findSourceForClass(JavaSourceRootDescriptor rd, final @Nullable String boundClassName) throws IOException {
     if (boundClassName == null) {
       return null;
     }
@@ -279,33 +261,25 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
     }
   }
 
-  private static void collectPossibleSourcesForClass(@NotNull JavaSourceRootDescriptor rootDescriptor,
-                                                     @Nullable String boundClassName,
-                                                     @NotNull Set<Path> result) {
+  @NotNull
+  private static Collection<File> findPossibleSourcesForClass(JavaSourceRootDescriptor rd, final @Nullable String boundClassName) throws IOException {
     if (boundClassName == null) {
-      return;
+      return Collections.emptyList();
     }
-
-    String relPath = suggestRelativePath(rootDescriptor, boundClassName);
-    Path containingDirectory = rootDescriptor.getFile().resolve(relPath).getParent();
+    String relPath = suggestRelativePath(rd, boundClassName);
+    final File containingDirectory = new File(rd.getRootFile(), relPath).getParentFile();
     if (containingDirectory == null) {
-      return;
+      return Collections.emptyList();
     }
-
-    try {
-      try (DirectoryStream<Path> stream = Files.newDirectoryStream(containingDirectory, "*.java")) {
-        for (Path file : stream) {
-          if (Files.isRegularFile(file)) {
-            result.add(file);
-          }
-        }
-      }
+    final File[] files = containingDirectory.listFiles(FileFilters.withExtension("java"));
+    if (files == null || files.length == 0) {
+      return Collections.emptyList();
     }
-    catch (IOException ignored) {
-    }
+    return Arrays.asList(files);
   }
 
-  private static @NotNull String suggestRelativePath(@NotNull JavaSourceRootDescriptor rd, @NotNull String className) {
+  @NotNull
+  private static String suggestRelativePath(@NotNull JavaSourceRootDescriptor rd, @NotNull String className) {
     String clsName = className;
     String prefix = rd.getPackagePrefix();
     if (!StringUtil.isEmpty(prefix)) {

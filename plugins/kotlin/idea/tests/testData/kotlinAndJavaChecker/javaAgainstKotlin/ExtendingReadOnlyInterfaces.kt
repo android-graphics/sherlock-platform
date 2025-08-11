@@ -42,5 +42,3 @@ interface IMapEntry<KElem, VElem> : Map.Entry<KElem, VElem>
 open class CMapEntry<KElem, VElem> : Map.Entry<KElem, VElem> by emptyMap<KElem, VElem>().entries.first()
 open class SMapEntry<VElem> : Map.Entry<String, VElem> by emptyMap<String, VElem>().entries.first()
 open class ABMapEntry : Map.Entry<A, B> by emptyMap<A, B>().entries.first()
-
-// IGNORE_K2

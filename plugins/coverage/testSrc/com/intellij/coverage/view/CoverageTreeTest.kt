@@ -4,7 +4,6 @@ package com.intellij.coverage.view
 import com.intellij.coverage.CoverageIntegrationBaseTest
 import com.intellij.coverage.CoverageSuitesBundle
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.ui.tree.StructureTreeModel
@@ -84,7 +83,7 @@ class CoverageTreeTest : CoverageIntegrationBaseTest() {
     val model = StructureTreeModel(treeStructure, null, Invoker.forEventDispatchThread(disposable), disposable)
 
     withContext(Dispatchers.EDT) {
-      val tree = writeIntentReadAction { JTree(model) }
+      val tree = JTree(model)
       TreeUtil.promiseExpandAll(tree).await()
       PlatformTestUtil.assertTreeEqual(tree, expected)
       Disposer.dispose(disposable)

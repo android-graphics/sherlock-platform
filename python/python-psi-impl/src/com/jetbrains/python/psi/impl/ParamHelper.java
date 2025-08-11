@@ -15,11 +15,10 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.ast.PyAstSingleStarParameter;
-import com.jetbrains.python.ast.PyAstSlashParameter;
-import com.jetbrains.python.ast.impl.ParamHelperCore;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
@@ -77,15 +76,17 @@ public final class ParamHelper {
     }
   }
 
-  public static @NotNull String getPresentableText(PyParameter @NotNull [] parameters,
-                                                   boolean includeDefaultValue,
-                                                   @Nullable TypeEvalContext context) {
+  @NotNull
+  public static String getPresentableText(PyParameter @NotNull [] parameters,
+                                          boolean includeDefaultValue,
+                                          @Nullable TypeEvalContext context) {
     return getPresentableText(ContainerUtil.map(parameters, PyCallableParameterImpl::psi), includeDefaultValue, context);
   }
 
-  public static @NotNull String getPresentableText(@NotNull List<? extends PyCallableParameter> parameters,
-                                                   boolean includeDefaultValue,
-                                                   @Nullable TypeEvalContext context) {
+  @NotNull
+  public static String getPresentableText(@NotNull List<? extends PyCallableParameter> parameters,
+                                          boolean includeDefaultValue,
+                                          @Nullable TypeEvalContext context) {
     final StringBuilder result = new StringBuilder();
     result.append("(");
 
@@ -110,13 +111,13 @@ public final class ParamHelper {
 
         @Override
         public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) {
-          result.append(PyAstSlashParameter.TEXT);
+          result.append(PySlashParameter.TEXT);
           if (!last) result.append(", ");
         }
 
         @Override
         public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
-          result.append(PyAstSingleStarParameter.TEXT);
+          result.append(PySingleStarParameter.TEXT);
           if (!last) result.append(", ");
         }
 
@@ -132,7 +133,8 @@ public final class ParamHelper {
     return result.toString();
   }
 
-  public static @NotNull String getNameInSignature(@NotNull PyCallableParameter parameter) {
+  @NotNull
+  public static String getNameInSignature(@NotNull PyCallableParameter parameter) {
     final StringBuilder sb = new StringBuilder();
 
     if (parameter.isPositionalContainer()) sb.append("*");
@@ -144,8 +146,17 @@ public final class ParamHelper {
     return sb.toString();
   }
 
-  public static @NotNull String getNameInSignature(@NotNull PyNamedParameter parameter) {
-    return ParamHelperCore.getNameInSignature(parameter);
+  @NotNull
+  public static String getNameInSignature(@NotNull PyNamedParameter parameter) {
+    final StringBuilder sb = new StringBuilder();
+
+    if (parameter.isPositionalContainer()) sb.append("*");
+    else if (parameter.isKeywordContainer()) sb.append("**");
+
+    final String name = parameter.getName();
+    sb.append(name != null ? name : "...");
+
+    return sb.toString();
   }
 
   /**
@@ -154,13 +165,32 @@ public final class ParamHelper {
    * @return equal sign (surrounded with spaces if {@code parameterRenderedAsTyped}) +
    * {@code defaultValue} (with body escaped if it is a string literal)
    */
+  @Nullable
   @Contract("null, _->null")
-  public static @Nullable String getDefaultValuePartInSignature(@Nullable String defaultValue, boolean parameterRenderedAsTyped) {
-    return ParamHelperCore.getDefaultValuePartInSignature(defaultValue, parameterRenderedAsTyped);
+  public static String getDefaultValuePartInSignature(@Nullable String defaultValue, boolean parameterRenderedAsTyped) {
+    if (defaultValue == null) return null;
+
+    final StringBuilder sb = new StringBuilder();
+
+    // According to PEP 8 equal sign should be surrounded by spaces if annotation is present
+    sb.append(parameterRenderedAsTyped ? " = " : "=");
+
+    final Pair<String, String> quotes = PyStringLiteralCoreUtil.getQuotes(defaultValue);
+    if (quotes != null) {
+      final String value = defaultValue.substring(quotes.getFirst().length(), defaultValue.length() - quotes.getSecond().length());
+      sb.append(quotes.getFirst());
+      StringUtil.escapeStringCharacters(value.length(), value, sb);
+      sb.append(quotes.getSecond());
+    }
+    else {
+      sb.append(defaultValue);
+    }
+
+    return sb.toString();
   }
 
   public static boolean couldHaveDefaultValue(@NotNull String parameterName) {
-    return !parameterName.startsWith("*") && !parameterName.equals(PyAstSlashParameter.TEXT);
+    return !parameterName.startsWith("*") && !parameterName.equals(PySlashParameter.TEXT);
   }
 
   public static boolean isSelfArgsKwargsCallable(@Nullable PsiElement element, @NotNull TypeEvalContext context) {
@@ -207,7 +237,7 @@ public final class ParamHelper {
     void visitNonPsiParameter(@NotNull PyCallableParameter parameter, boolean first, boolean last);
   }
 
-  public abstract static class ParamVisitor implements ParamWalker {
+  public static abstract class ParamVisitor implements ParamWalker {
 
     @Override
     public void enterTupleParameter(PyTupleParameter param, boolean first, boolean last) { }

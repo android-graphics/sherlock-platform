@@ -67,7 +67,7 @@ open class PyAstElementVisitor : PsiElementVisitor() {
   }
 
   open fun visitPySetLiteralExpression(node: PyAstSetLiteralExpression) {
-    visitPySequenceExpression(node)
+    visitPyExpression(node)
   }
 
   open fun visitPyListCompExpression(node: PyAstListCompExpression) {
@@ -99,10 +99,6 @@ open class PyAstElementVisitor : PsiElementVisitor() {
   }
 
   open fun visitPyReturnStatement(node: PyAstReturnStatement) {
-    visitPyStatement(node)
-  }
-  
-  open fun visitPyPassStatement(node: PyAstPassStatement) {
     visitPyStatement(node)
   }
 

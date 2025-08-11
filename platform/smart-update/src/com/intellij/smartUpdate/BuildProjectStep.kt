@@ -5,9 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.task.ProjectTaskManager
 import com.intellij.task.impl.ProjectTaskManagerImpl
 
-private const val BUILD_PROJECT = "build.project"
+const val BUILD_PROJECT = "build.project"
 
-internal class BuildProjectStep: SmartUpdateStep {
+class BuildProjectStep: SmartUpdateStep {
   override val id = BUILD_PROJECT
   override val stepName = SmartUpdateBundle.message("checkbox.build.project")
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
 import com.jetbrains.python.run.target.ConnectionCredentialsToTargetConfigurationConverter
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import com.jetbrains.python.target.PythonLanguageRuntimeType

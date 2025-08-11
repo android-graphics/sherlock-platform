@@ -46,6 +46,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.profile.codeInspection.ui.ErrorOptionsProvider
 import com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP
 import com.intellij.ui.ClientProperty
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
@@ -425,11 +426,11 @@ internal class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorO
         row(message("combobox.next.error.action.goes.to.label")) {
           comboBox(
             DefaultComboBoxModel(arrayOf(true, false)),
-            renderer = textListCellRenderer {
+            renderer = SimpleListCellRenderer.create("") {
               when (it) {
                 true -> message("combobox.next.error.action.goes.to.errors")
                 false -> message("combobox.next.error.action.goes.to.all.problems")
-                null -> ""
+                else -> it.toString()
               }
             }
           ).bindItem(codeAnalyzerSettings::isNextErrorActionGoesToErrorsFirst
@@ -457,7 +458,7 @@ private fun <E : EditorCaretStopPolicyItem> Panel.caretStopRow(@Nls label: Strin
   row(label) {
     val itemWithSeparator: E = values.first { it.osDefault === OsDefault.NONE }
 
-    comboBox(values.sortedBy { if (it.osDefault.isIdeDefault) -1 else 0 }, EditorCaretStopPolicyItem.createRenderer(itemWithSeparator))
+    comboBox(values.sortedBy { if (it.osDefault.isIdeDefault) -1 else 0 }, EditorCaretStopPolicyItemRenderer(itemWithSeparator))
       .applyToComponent { isSwingPopup = false }
       .align(AlignX.FILL)
       .bind(

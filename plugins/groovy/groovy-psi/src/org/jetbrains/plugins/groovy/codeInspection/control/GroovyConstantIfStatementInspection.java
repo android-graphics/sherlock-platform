@@ -34,12 +34,14 @@ import static org.jetbrains.plugins.groovy.codeInspection.GroovyFix.replaceState
 public final class GroovyConstantIfStatementInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... args) {
+  @NotNull
+  protected String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.ref.statement.can.be.simplified");
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new ConstantIfStatementVisitor();
   }
 
@@ -51,7 +53,8 @@ public final class GroovyConstantIfStatementInspection extends BaseInspection {
   private static class ConstantIfStatementFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return GroovyBundle.message("intention.family.name.simplify");
     }
 
@@ -96,12 +99,12 @@ public final class GroovyConstantIfStatementInspection extends BaseInspection {
   }
 
   private static boolean isFalse(GrExpression expression) {
-    final @NonNls String text = expression.getText();
+    @NonNls final String text = expression.getText();
     return "false".equals(text);
   }
 
   private static boolean isTrue(GrExpression expression) {
-    final @NonNls String text = expression.getText();
+    @NonNls final String text = expression.getText();
     return "true".equals(text);
   }
 }

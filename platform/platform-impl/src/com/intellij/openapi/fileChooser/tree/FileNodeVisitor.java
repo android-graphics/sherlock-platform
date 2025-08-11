@@ -3,12 +3,10 @@ package com.intellij.openapi.fileChooser.tree;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.tree.TreeVisitor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
 
-@ApiStatus.Internal
 public final class FileNodeVisitor extends TreeVisitor.ByComponent<VirtualFile, VirtualFile> {
 
   public FileNodeVisitor(@NotNull VirtualFile file) {

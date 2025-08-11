@@ -327,8 +327,8 @@ abstract class ScriptClassRootsUpdater(
 
     private fun updateModificationTracker() = scope.async {
         withContext(Dispatchers.EDT) {
-            edtWriteAction {
-                if (project.isDisposed) return@edtWriteAction
+            writeAction {
+                if (project.isDisposed) return@writeAction
 
                 ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
             }

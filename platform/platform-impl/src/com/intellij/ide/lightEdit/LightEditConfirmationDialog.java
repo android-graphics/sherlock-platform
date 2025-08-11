@@ -7,7 +7,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +17,6 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiStatus.Internal
 public final class LightEditConfirmationDialog extends DialogWrapper {
   static final int STAY_IN_LIGHT_EDIT = 100;
   static final int PROCEED_TO_PROJECT = 101;

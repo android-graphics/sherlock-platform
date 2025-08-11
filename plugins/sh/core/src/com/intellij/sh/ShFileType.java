@@ -15,17 +15,20 @@ public final class ShFileType extends LanguageFileType {
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return "Shell Script";
   }
 
   @Override
-  public @NotNull String getDescription() {
+  @NotNull
+  public String getDescription() {
     return ShBundle.message("filetype.sh.shell.script.description");
   }
 
   @Override
-  public @NotNull String getDefaultExtension() {
+  @NotNull
+  public String getDefaultExtension() {
     return "sh";
   }
 

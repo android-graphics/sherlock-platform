@@ -20,23 +20,26 @@ import java.util.List;
  */
 public final class PsiAnnotationUtil {
 
-  public static @NotNull PsiAnnotation createPsiAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, String annotationClassName) {
+  @NotNull
+  public static PsiAnnotation createPsiAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, String annotationClassName) {
     return createPsiAnnotation(psiModifierListOwner, "", annotationClassName);
   }
 
-  public static @NotNull PsiAnnotation createPsiAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner,
-                                                           @Nullable String value,
-                                                           String annotationClassName) {
+  @NotNull
+  public static PsiAnnotation createPsiAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner,
+                                                  @Nullable String value,
+                                                  String annotationClassName) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiModifierListOwner.getProject());
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiModifierListOwner, PsiClass.class);
     final String valueString = StringUtil.isNotEmpty(value) ? "(" + value + ")" : "";
     return elementFactory.createAnnotationFromText("@" + annotationClassName + valueString, psiClass);
   }
 
-  public static @NotNull <T> Collection<T> getAnnotationValues(@NotNull PsiAnnotation psiAnnotation,
-                                                               @NotNull String parameter,
-                                                               @NotNull Class<T> asClass,
-                                                               @NotNull List<T> defaultDumbValue) {
+  @NotNull
+  public static <T> Collection<T> getAnnotationValues(@NotNull PsiAnnotation psiAnnotation,
+                                                      @NotNull String parameter,
+                                                      @NotNull Class<T> asClass,
+                                                      @NotNull List<T> defaultDumbValue) {
     Collection<T> result = Collections.emptyList();
     PsiAnnotationMemberValue attributeValue;
     if (DumbIncompleteModeUtil.isDumbOrIncompleteMode(psiAnnotation)) {
@@ -96,7 +99,8 @@ public final class PsiAnnotationUtil {
     return result instanceof Number ? ((Number) result).intValue() : defaultValue;
   }
 
-  private static @Nullable <T> T resolveElementValue(@NotNull PsiElement psiElement, @NotNull Class<T> asClass) {
+  @Nullable
+  private static <T> T resolveElementValue(@NotNull PsiElement psiElement, @NotNull Class<T> asClass) {
     T value = null;
     if (psiElement instanceof PsiReferenceExpression) {
       final PsiElement resolved = ((PsiReferenceExpression) psiElement).resolve();
@@ -136,7 +140,8 @@ public final class PsiAnnotationUtil {
     return value;
   }
 
-  public static @Nullable Boolean getDeclaredBooleanAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
+  @Nullable
+  public static Boolean getDeclaredBooleanAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
     PsiAnnotationMemberValue attributeValue = psiAnnotation.findDeclaredAttributeValue(parameter);
     final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(psiAnnotation.getProject());
     Object constValue = javaPsiFacade.getConstantEvaluationHelper().computeConstantExpression(attributeValue);

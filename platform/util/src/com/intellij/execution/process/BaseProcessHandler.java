@@ -18,10 +18,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
   private static final Logger LOG = Logger.getInstance(BaseProcessHandler.class);
 
   protected final T myProcess;
-  /**
-   * @deprecated Use {@link #getCommandLine()} or {@link #getCommandLineForLog()}
-   */
-  @Deprecated protected final String myCommandLine;
+  protected final String myCommandLine;
   protected final Charset myCharset;
   protected final @NonNls String myPresentableName;
   protected final ProcessWaitFor myWaitFor;
@@ -37,27 +34,15 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
       LOG.warn(new IllegalArgumentException("Must specify non-empty 'commandLine' parameter"));
     }
     myPresentableName = CommandLineUtil.extractPresentableName(StringUtil.notNullize(commandLine));
-    myWaitFor = createWaitFor();
+    myWaitFor = new ProcessWaitFor(process, this, myPresentableName);
   }
 
   public final @NotNull T getProcess() {
     return myProcess;
   }
 
-  /**
-   * Warning: resulting string is not OS-dependent - <b>do not</b> use it for executing this command line.
-   * <p>
-   * See {@link com.intellij.execution.configurations.GeneralCommandLine#getCommandLineString()}
-   */
   /*@NotNull*/
-  public @NonNls String getCommandLine() {
-    return myCommandLine;
-  }
-
-  /**
-   * User-visible representation of the command
-   */
-  public @NlsSafe String getCommandLineForLog() {
+  public @NlsSafe String getCommandLine() {
     return myCommandLine;
   }
 
@@ -73,10 +58,6 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
   protected void onOSProcessTerminated(final int exitCode) {
     notifyProcessTerminated(exitCode);
     closeStreams();
-  }
-
-  protected ProcessWaitFor createWaitFor() {
-    return new ProcessWaitFor(myProcess, this, myPresentableName);
   }
 
   protected void doDestroyProcess() {
@@ -117,7 +98,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
       // In this case, `close` will fail, because of close -> flush -> write, and 'write' cannot be performed
       // on a stream of the terminated process.
       if (myProcess.isAlive()) {
-        LOG.warn("Cannot close stdin of '" + getCommandLineForLog() + "'", e);
+        LOG.warn("Cannot close stdin of '" + getCommandLine() + "'", e);
       }
     }
     try {
@@ -125,7 +106,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
     }
     catch (IOException e) {
       if (myProcess.isAlive()) {
-        LOG.warn("Cannot close stdout of '" + getCommandLineForLog() + "'", e);
+        LOG.warn("Cannot close stdout of '" + getCommandLine() + "'", e);
       }
     }
     try {
@@ -133,7 +114,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
     }
     catch (IOException e) {
       if (myProcess.isAlive()) {
-        LOG.warn("Cannot close stderr of '" + getCommandLineForLog() + "'", e);
+        LOG.warn("Cannot close stderr of '" + getCommandLine() + "'", e);
       }
     }
   }

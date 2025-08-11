@@ -106,11 +106,11 @@ public final class MethodReturnAlwaysConstantInspection extends BaseGlobalInspec
   }
 
   @Override
-  protected boolean queryExternalUsagesRequests(final @NotNull RefManager manager, final @NotNull GlobalJavaInspectionContext globalContext,
-                                                final @NotNull ProblemDescriptionsProcessor processor) {
+  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
+                                                @NotNull final ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
       @Override
-      public void visitMethod(final @NotNull RefMethod refMethod) {
+      public void visitMethod(@NotNull final RefMethod refMethod) {
         if (processor.getDescriptions(refMethod) == null) return;
         if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
         globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {

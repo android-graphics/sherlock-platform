@@ -51,7 +51,7 @@ public interface ExternalSystemNotificationExtension {
   /**
    * @deprecated Use {@link #customize(NotificationData, Project, String, Throwable)} instead
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   default void customize(
     @NotNull NotificationData notificationData,
     @NotNull Project project,

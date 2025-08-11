@@ -16,12 +16,10 @@ internal data class WebSymbolDocumentationImpl(override val name: String,
                                                override val library: String?,
                                                override val icon: Icon?,
                                                override val descriptionSections: Map<@Nls String, @Nls String>,
-                                               override val footnote: @Nls String?,
-                                               override val header: @Nls String?) : WebSymbolDocumentation {
+                                               override val footnote: @Nls String?) : WebSymbolDocumentation {
   override fun isNotEmpty(): Boolean =
     name != definition || description != null || docUrl != null || (apiStatus != null && apiStatus != WebSymbolApiStatus.Stable)
     || required || defaultValue != null || library != null || descriptionSections.isNotEmpty() || footnote != null
-    || header != null
 
   override fun withName(name: String): WebSymbolDocumentation =
     copy(name = name)
@@ -58,9 +56,6 @@ internal data class WebSymbolDocumentationImpl(override val name: String,
 
   override fun withFootnote(@Nls footnote: String?): WebSymbolDocumentation =
     copy(footnote = footnote)
-
-  override fun withHeader(header: @Nls String?): WebSymbolDocumentation =
-    copy(header = header)
 
   override fun with(name: String,
                     definition: String,

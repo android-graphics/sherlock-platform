@@ -28,7 +28,7 @@ object KotlinPsiUtil {
     }
 }
 
-internal fun KtCallExpression.callName(): String = this.calleeExpression!!.text
+fun KtCallExpression.callName(): String = this.calleeExpression!!.text
 
 fun KtCallExpression.previousCall(): KtCallExpression? {
     val parent = this.parent as? KtDotQualifiedExpression ?: return null

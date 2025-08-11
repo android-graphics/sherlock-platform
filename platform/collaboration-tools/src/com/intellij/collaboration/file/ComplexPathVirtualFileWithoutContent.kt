@@ -3,12 +3,13 @@
 
 package com.intellij.collaboration.file
 
-import com.intellij.openapi.fileEditor.FileEditorManagerKeys
+import com.intellij.ide.actions.SplitAction
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileWithoutContent
 import com.intellij.testFramework.LightVirtualFileBase
+import com.intellij.ui.docking.impl.DockManagerImpl
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 
 /**
@@ -24,8 +25,8 @@ abstract class ComplexPathVirtualFileWithoutContent(protected val sessionId: Str
     VirtualFilePathWrapper {
 
   init {
-    putUserData(FileEditorManagerKeys.REOPEN_WINDOW, false)
-    putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
+    putUserData(DockManagerImpl.REOPEN_WINDOW, false)
+    putUserData(SplitAction.FORBID_TAB_SPLIT, true)
     isWritable = false
   }
 

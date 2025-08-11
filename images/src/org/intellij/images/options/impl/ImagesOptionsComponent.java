@@ -113,7 +113,8 @@ final class ImagesOptionsComponent {
     }
   }
 
-  public @NotNull Options getOptions() {
+  @NotNull
+  public Options getOptions() {
     return options;
   }
 
@@ -133,7 +134,8 @@ final class ImagesOptionsComponent {
   }
 
   private final class CheckboxOptionsListener implements ItemListener {
-    private final @NotNull String name;
+    @NotNull
+    private final String name;
 
     private CheckboxOptionsListener(@NotNull String name) {
       this.name = name;

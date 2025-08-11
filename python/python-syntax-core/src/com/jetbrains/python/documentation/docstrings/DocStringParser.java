@@ -21,20 +21,24 @@ public final class DocStringParser {
   /**
    * @param stringText docstring text with possible string prefix and quotes
    */
-  public static @NotNull StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull String stringText) {
+  @NotNull
+  public static StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull String stringText) {
     return parseDocString(format, stripPrefixAndQuotes(stringText));
   }
 
-  public static @NotNull StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull Substring content) {
+  @NotNull
+  public static StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull Substring content) {
     return switch (format) {
       case REST -> new SphinxDocString(content);
+      case EPYTEXT -> new EpydocString(content);
       case GOOGLE -> new GoogleCodeStyleDocString(content);
       case NUMPY -> new NumpyDocString(content);
       case PLAIN -> new PlainDocString(content);
     };
   }
 
-  private static @NotNull Substring stripPrefixAndQuotes(@NotNull String text) {
+  @NotNull
+  private static Substring stripPrefixAndQuotes(@NotNull String text) {
     final TextRange contentRange = PyStringLiteralUtil.getContentRange(text);
     return new Substring(text, contentRange.getStartOffset(), contentRange.getEndOffset());
   }
@@ -44,7 +48,11 @@ public final class DocStringParser {
    * {@link #guessDocStringFormat(String, PsiElement)} of this method.
    * @see #guessDocStringFormat(String, PsiElement)
    */
-  public static @NotNull DocStringFormat guessDocStringFormat(@NotNull String text) {
+  @NotNull
+  public static DocStringFormat guessDocStringFormat(@NotNull String text) {
+    if (isLikeEpydocDocString(text)) {
+      return DocStringFormat.EPYTEXT;
+    }
     if (isLikeSphinxDocString(text)) {
       return DocStringFormat.REST;
     }
@@ -63,7 +71,8 @@ public final class DocStringParser {
    * @return docstring inferred heuristically and if unsuccessful fallback to configured format retrieved from anchor PSI element
    * @see #getConfiguredDocStringFormat(PsiElement)
    */
-  public static @NotNull DocStringFormat guessDocStringFormat(@NotNull String text, @Nullable PsiElement anchor) {
+  @NotNull
+  public static DocStringFormat guessDocStringFormat(@NotNull String text, @Nullable PsiElement anchor) {
     final DocStringFormat guessed = guessDocStringFormat(text);
     return guessed == DocStringFormat.PLAIN && anchor != null ? getConfiguredDocStringFormatOrPlain(anchor) : guessed;
   }
@@ -73,7 +82,8 @@ public final class DocStringParser {
    * @return docstring format configured for file or module containing given anchor PSI element
    * @see PyDocumentationSettings#getFormatForFile(PsiFile)
    */
-  public static @Nullable DocStringFormat getConfiguredDocStringFormat(@NotNull PsiElement anchor) {
+  @Nullable
+  public static DocStringFormat getConfiguredDocStringFormat(@NotNull PsiElement anchor) {
     final Module module = getModuleForElement(anchor);
     if (module == null) {
       return null;
@@ -83,7 +93,8 @@ public final class DocStringParser {
     return settings.getFormatForFile(anchor.getContainingFile());
   }
 
-  public static @NotNull DocStringFormat getConfiguredDocStringFormatOrPlain(@NotNull PsiElement anchor) {
+  @NotNull
+  public static DocStringFormat getConfiguredDocStringFormatOrPlain(@NotNull PsiElement anchor) {
     return ObjectUtils.chooseNotNull(getConfiguredDocStringFormat(anchor), DocStringFormat.PLAIN);
   }
 
@@ -94,6 +105,15 @@ public final class DocStringParser {
            text.contains(":raise ") || text.contains(":raises ") || text.contains(":except ") || text.contains(":exception ") ||
            text.contains(":rtype") || text.contains(":type") ||
            text.contains(":var") || text.contains(":ivar") || text.contains(":cvar");
+  }
+
+  public static boolean isLikeEpydocDocString(@NotNull String text) {
+    return text.contains("@param ") ||
+           text.contains("@kwarg ") || text.contains("@keyword ") || text.contains("@kwparam ") ||
+           text.contains("@raise ") || text.contains("@raises ") || text.contains("@except ") || text.contains("@exception ") ||
+           text.contains("@return:") ||
+           text.contains("@rtype") || text.contains("@type") ||
+           text.contains("@var") || text.contains("@ivar") || text.contains("@cvar");
   }
 
   public static boolean isLikeGoogleDocString(@NotNull String text) {
@@ -110,7 +130,7 @@ public final class DocStringParser {
     for (int i = 0; i < lines.length; i++) {
       final String line = lines[i];
       if (NumpyDocString.SECTION_HEADER.matcher(line).matches() && i > 0) {
-        final @NonNls String lineBefore = lines[i - 1];
+        @NonNls final String lineBefore = lines[i - 1];
         if (SectionBasedDocString.SECTION_NAMES.contains(StringUtil.toLowerCase(lineBefore.trim()))) {
           return true;
         }
@@ -121,7 +141,8 @@ public final class DocStringParser {
 
   // Might return {@code null} in some rare cases when PSI element doesn't have an associated module.
   // For instance, an empty IDEA project with a Python scratch file.
-  public static @Nullable Module getModuleForElement(@NotNull PsiElement element) {
+  @Nullable
+  public static Module getModuleForElement(@NotNull PsiElement element) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(element.getContainingFile());
     if (module != null) {
       return module;

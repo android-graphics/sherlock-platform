@@ -13,7 +13,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diff.DefaultFlagsProvider
-import com.intellij.openapi.diff.LineStatusMarkerColorScheme
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -35,7 +34,6 @@ import com.intellij.openapi.vcs.ex.LineStatusMarkerRendererWithPopup
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.ui.EditorTextField
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Point
@@ -44,17 +42,14 @@ import java.awt.datatransfer.StringSelection
 /**
  * Draws and handles review changes markers in gutter
  */
-@ApiStatus.NonExtendable
-open class CodeReviewEditorGutterChangesRenderer(
-  protected val model: CodeReviewEditorGutterActionableChangesModel,
-  protected val editor: Editor,
-  disposable: Disposable,
-  private val lineStatusMarkerColorScheme: LineStatusMarkerColorScheme = ReviewInEditorUtil.REVIEW_STATUS_MARKER_COLOR_SCHEME,
-) : LineStatusMarkerRendererWithPopup(editor.project, editor.document, model, disposable, { it === editor }) {
+class CodeReviewEditorGutterChangesRenderer(private val model: CodeReviewEditorGutterActionableChangesModel,
+                                            private val editor: Editor,
+                                            disposable: Disposable)
+  : LineStatusMarkerRendererWithPopup(editor.project, editor.document, model, disposable, { it === editor }) {
 
   override fun paintGutterMarkers(editor: Editor, ranges: List<Range>, g: Graphics) {
     LineStatusMarkerDrawUtil.paintDefault(editor, g, ranges, DefaultFlagsProvider.DEFAULT,
-                                          lineStatusMarkerColorScheme, 0)
+                                          ReviewInEditorUtil.REVIEW_STATUS_MARKER_COLOR_SCHEME, 0)
   }
 
   override fun createErrorStripeTextAttributes(diffType: Byte): TextAttributes = ReviewChangesTextAttributes()
@@ -63,14 +58,13 @@ open class CodeReviewEditorGutterChangesRenderer(
     override fun getErrorStripeColor(): Color = ReviewInEditorUtil.REVIEW_CHANGES_STATUS_COLOR
   }
 
-
   override fun createPopupPanel(editor: Editor,
                                 range: Range,
                                 mousePosition: Point?,
                                 disposable: Disposable): LineStatusMarkerPopupPanel {
     val vcsContent = model.getBaseContent(LineRange(range.vcsLine1, range.vcsLine2))?.removeSuffix("\n")
 
-    val editorComponent = if (vcsContent != null) {
+    val editorComponent = if (!vcsContent.isNullOrEmpty()) {
       val popupEditor = createPopupEditor(project, editor, vcsContent, disposable)
       showLineDiff(editor, popupEditor, range, vcsContent, disposable)
       LineStatusMarkerPopupPanel.createEditorComponent(editor, popupEditor.component)
@@ -79,20 +73,16 @@ open class CodeReviewEditorGutterChangesRenderer(
       null
     }
 
-    val actions = createActions(range)
-
-    val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, disposable)
-    return LineStatusMarkerPopupPanel.create(editor, toolbar, editorComponent, null)
-  }
-
-  protected open fun createActions(range: Range): List<AnAction> {
-    return listOf(
+    val actions = mutableListOf<AnAction>(
       ShowPrevChangeMarkerAction(range),
       ShowNextChangeMarkerAction(range),
       CopyLineStatusRangeAction(range),
       ShowDiffAction(range),
       ToggleByWordDiffAction()
     )
+
+    val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, disposable)
+    return LineStatusMarkerPopupPanel.create(editor, toolbar, editorComponent, null)
   }
 
   private fun createPopupEditor(project: Project?, mainEditor: Editor, vcsContent: String, disposable: Disposable): Editor {
@@ -134,6 +124,8 @@ open class CodeReviewEditorGutterChangesRenderer(
     var highlightersDisposable: Disposable? = null
     fun update(show: Boolean) {
       if (show && highlightersDisposable == null) {
+        if (vcsContent.isEmpty()) return
+
         val currentContent = DiffUtil.getLinesContent(editor.document, range.line1, range.line2)
         if (currentContent.isEmpty()) return
 
@@ -167,7 +159,7 @@ open class CodeReviewEditorGutterChangesRenderer(
     update(model.shouldHighlightDiffRanges)
   }
 
-  protected inner class ShowNextChangeMarkerAction(range: Range)
+  private inner class ShowNextChangeMarkerAction(range: Range)
     : LineStatusMarkerPopupActions.RangeMarkerAction(editor, rangesSource, range, "VcsShowNextChangeMarker"), LightEditCompatible {
 
     override fun isEnabled(editor: Editor, range: Range): Boolean = getNextRange(range.line1) != null
@@ -185,7 +177,7 @@ open class CodeReviewEditorGutterChangesRenderer(
     }
   }
 
-  protected inner class ShowPrevChangeMarkerAction(range: Range)
+  private inner class ShowPrevChangeMarkerAction(range: Range)
     : LineStatusMarkerPopupActions.RangeMarkerAction(editor, rangesSource, range, "VcsShowPrevChangeMarker"), LightEditCompatible {
 
     override fun isEnabled(editor: Editor, range: Range): Boolean = getPrevRange(range.line1) != null
@@ -203,7 +195,7 @@ open class CodeReviewEditorGutterChangesRenderer(
     }
   }
 
-  protected inner class CopyLineStatusRangeAction(range: Range)
+  private inner class CopyLineStatusRangeAction(range: Range)
     : LineStatusMarkerPopupActions.RangeMarkerAction(editor, rangesSource, range, IdeActions.ACTION_COPY), LightEditCompatible {
     override fun isEnabled(editor: Editor, range: Range): Boolean = range.hasVcsLines()
     override fun actionPerformed(editor: Editor, range: Range) {
@@ -212,7 +204,7 @@ open class CodeReviewEditorGutterChangesRenderer(
     }
   }
 
-  protected inner class ShowDiffAction(range: Range)
+  private inner class ShowDiffAction(range: Range)
     : LineStatusMarkerPopupActions.RangeMarkerAction(editor, rangesSource, range, "Vcs.ShowDiffChangedLines"), LightEditCompatible {
     init {
       setShortcutSet(CompositeShortcutSet(KeymapUtil.getActiveKeymapShortcuts("Vcs.ShowDiffChangedLines"),
@@ -229,7 +221,7 @@ open class CodeReviewEditorGutterChangesRenderer(
     }
   }
 
-  protected inner class ToggleByWordDiffAction
+  private inner class ToggleByWordDiffAction
     : ToggleAction(CollaborationToolsBundle.message("review.editor.action.highlight.lines.text"), null, AllIcons.Actions.Highlighting),
       DumbAware, LightEditCompatible {
 
@@ -243,7 +235,6 @@ open class CodeReviewEditorGutterChangesRenderer(
   }
 
   companion object {
-    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use a suspending function", ReplaceWith("cs.launch { render(model, editor) }"))
     fun setupIn(cs: CoroutineScope, model: CodeReviewEditorGutterActionableChangesModel, editor: Editor) {
       cs.launchNow { render(model, editor) }
@@ -254,7 +245,7 @@ open class CodeReviewEditorGutterChangesRenderer(
         val disposable = Disposer.newDisposable("Editor code review changes renderer disposable")
         editor.putUserData(CodeReviewEditorGutterActionableChangesModel.KEY, model)
         try {
-          val renderer = CodeReviewEditorGutterChangesRenderer(model, editor, disposable, ReviewInEditorUtil.REVIEW_STATUS_MARKER_COLOR_SCHEME)
+          val renderer = CodeReviewEditorGutterChangesRenderer(model, editor, disposable)
           model.reviewRanges.collect {
             renderer.scheduleUpdate()
           }

@@ -23,21 +23,19 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.impl.BridgeTaskSupport
-import com.intellij.openapi.progress.impl.PerProjectTaskInfoEntityCollector
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.BalloonHandler
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.StatusBarWidget.*
 import com.intellij.openapi.wm.WidgetPresentation
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.status.TextPanel.WithIconAndArrows
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
@@ -59,7 +57,6 @@ import com.intellij.ui.util.height
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
-import fleet.util.logging.logger
 import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -83,12 +80,11 @@ private val WIDGET_ID = Key.create<String>("STATUS_BAR_WIDGET_ID")
 private val minIconHeight: Int
   get() = JBUIScale.scale(18 + 1 + 1)
 
-open class IdeStatusBarImpl @ApiStatus.Internal constructor(
-  parentCs: CoroutineScope,
-  private val getProject : () -> Project?,
+open class IdeStatusBarImpl internal constructor(
+  private val coroutineScope: CoroutineScope,
+  private val frameHelper: ProjectFrameHelper,
   addToolWindowWidget: Boolean,
-) : JComponent(), Accessible, StatusBarEx, UiDataProvider {
-  private val coroutineScope = parentCs.childScope("IdeStatusBarImpl", supervisor = false)
+) : JComponent(), Accessible, StatusBarEx, DataProvider {
   private var infoAndProgressPanel: InfoAndProgressPanel? = null
 
   internal enum class WidgetEffect {
@@ -99,7 +95,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   private val widgetMap = LinkedHashMap<String, WidgetBean>()
   private var leftPanel: JPanel? = null
 
-  private var rightPanelLayout = GridBagLayout()
+  private val rightPanelLayout = GridBagLayout()
   private val rightPanel: JPanel
 
   private val centerPanel: JPanel
@@ -108,7 +104,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
 
   private var preferredTextHeight: Int = 0
 
-  private var editorProvider: () -> FileEditor? = createDefaultEditorProvider()
+  private var editorProvider: () -> FileEditor? = createDefaultEditorProvider(frameHelper)
 
   @Volatile
   private var children = persistentHashSetOf<IdeStatusBarImpl>()
@@ -121,8 +117,6 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     internal val WIDGET_EFFECT_KEY: Key<WidgetEffect> = Key.create("TextPanel.widgetEffect")
 
     const val NAVBAR_WIDGET_KEY: String = "NavBar"
-
-    private val LOG = logger<IdeStatusBarImpl>()
   }
 
   override fun findChild(c: Component): StatusBar {
@@ -145,7 +139,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   @RequiresEdt
   override fun createChild(coroutineScope: CoroutineScope, frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar {
     EDT.assertIsEdt()
-    val bar = IdeStatusBarImpl(parentCs = coroutineScope, getProject = ::project, addToolWindowWidget = false)
+    val bar = IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowWidget = false, coroutineScope = coroutineScope)
     bar.editorProvider = editorProvider
     bar.isVisible = isVisible
     synchronized(this) {
@@ -193,6 +187,8 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     rightPanel.border = JBUI.Borders.emptyLeft(1)
     add(rightPanel, BorderLayout.EAST)
 
+    registerCloneTasks()
+
     if (addToolWindowWidget) {
       val disposable = Disposer.newDisposable()
       coroutineScope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
@@ -215,13 +211,6 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     IdeEventQueue.getInstance().addDispatcher({ e -> if (e is MouseEvent) dispatchMouseEvent(e) else false }, coroutineScope)
   }
 
-  internal fun initialize() {
-    LOG.info("Initializing status bar")
-
-    registerCloneTasks()
-    project?.service<PerProjectTaskInfoEntityCollector>()?.startCollectingActiveTasks()
-  }
-
   private fun createInfoAndProgressPanel(): InfoAndProgressPanel {
     infoAndProgressPanel?.let {
       return it
@@ -240,10 +229,13 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     return Dimension(size.width, size.height.coerceAtLeast(minHeight))
   }
 
-  override fun uiDataSnapshot(sink: DataSink) {
-    sink[CommonDataKeys.PROJECT] = project
-    sink[PlatformDataKeys.STATUS_BAR] = this
-    sink[HOVERED_WIDGET_ID] = ClientProperty.get(effectComponent, WIDGET_ID)
+  override fun getData(dataId: String): Any? {
+    return when {
+      CommonDataKeys.PROJECT.`is`(dataId) -> project
+      PlatformDataKeys.STATUS_BAR.`is`(dataId) -> this
+      HOVERED_WIDGET_ID.`is`(dataId) -> ClientProperty.get(effectComponent, WIDGET_ID)
+      else -> null
+    }
   }
 
   override fun setVisible(aFlag: Boolean) {
@@ -259,7 +251,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   }
 
   override fun addWidget(widget: StatusBarWidget, anchor: String) {
-    val order = LoadingOrder.anchorToOrder(anchor)
+    val order = StatusBarWidgetsManager.anchorToOrder(anchor)
     EdtInvocationManager.invokeLaterIfNeeded { addWidget(widget, Position.RIGHT, order) }
   }
 
@@ -270,7 +262,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   }
 
   override fun addWidget(widget: StatusBarWidget, anchor: String, parentDisposable: Disposable) {
-    val order = LoadingOrder.anchorToOrder(anchor)
+    val order = StatusBarWidgetsManager.anchorToOrder(anchor)
     EdtInvocationManager.invokeLaterIfNeeded {
       addWidget(widget = widget, position = Position.RIGHT, anchor = order)
       val id = widget.ID()
@@ -465,18 +457,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
 
   override fun getInfo(): @NlsContexts.StatusBarText String? = info
 
-  @Suppress("UsagesOfObsoleteApi")
   override fun addProgress(indicator: ProgressIndicatorEx, info: TaskInfo) {
-    if (Registry.`is`("rhizome.progress")) {
-      @Suppress("DEPRECATION")
-      BridgeTaskSupport.getInstance().withBridgeBackgroundProgress(project, indicator, info)
-    }
-    else {
-      addProgressImpl(indicator, info)
-    }
-  }
-
-  internal fun addProgressImpl(indicator: ProgressIndicatorEx, info: TaskInfo) {
     check(progressFlow.tryEmit(ProgressSetChangeEvent(newProgress = Triple(info, indicator, ClientId.currentOrNull),
                                                       existingProgresses = infoAndProgressPanel?.backgroundProcesses ?: emptyList())))
     createInfoAndProgressPanel().addProgress(indicator, info)
@@ -688,23 +669,11 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
 
         val targetPanel = getTargetPanel(bean.position)
         targetPanel.remove(bean.component)
-        recreateLayoutIfIsEmptyRightPanel(targetPanel)
         targetPanel.revalidate()
         Disposer.dispose(bean.widget)
         fireWidgetRemoved(id)
       }
       updateChildren { it.removeWidget(id) }
-    }
-  }
-
-  private fun recreateLayoutIfIsEmptyRightPanel(panel: JPanel) {
-    if (panel === rightPanel && panel.components.none { it.isVisible }) {
-      // Workaround of a bug in AWT:
-      // GridBagLayout.componentAdjusting is not set to NULL after removing the last visible child component.
-      // That leads to a leak of the StatusBarWidget component, and that leads to a situation when the plugin can't be properly unloaded.
-      rightPanelLayout = GridBagLayout()
-      panel.layout = rightPanelLayout
-      sortRightWidgets()
     }
   }
 
@@ -734,7 +703,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   fun getWidgetComponent(id: String): JComponent? = widgetMap.get(id)?.component
 
   override val project: Project?
-    get() = getProject()
+    get() = frameHelper.project
 
   override val currentEditor: () -> FileEditor?
     get() = editorProvider
@@ -746,14 +715,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
 
   @ApiStatus.Internal
   fun resetEditorProvider() {
-    editorProvider = createDefaultEditorProvider()
-  }
-
-  private fun createDefaultEditorProvider(): () -> FileEditor? {
-    return p@{
-      val project = project ?: return@p null
-      project.service<StatusBarWidgetsManager>().dataContext.currentFileEditor.value
-    }
+    editorProvider = createDefaultEditorProvider(frameHelper)
   }
 
   override fun getAccessibleContext(): AccessibleContext {
@@ -918,6 +880,13 @@ private fun wrapCustomStatusBarWidget(widget: CustomStatusBarWidget): JComponent
     component
   }
   return result
+}
+
+private fun createDefaultEditorProvider(frameHelper: ProjectFrameHelper): () -> FileEditor? {
+  return p@{
+    val project = frameHelper.project ?: return@p null
+    project.service<StatusBarWidgetsManager>().dataContext.currentFileEditor.value
+  }
 }
 
 private class IconPresentationComponent(private val presentation: IconPresentation) : WithIconAndArrows(presentation::getTooltipText),

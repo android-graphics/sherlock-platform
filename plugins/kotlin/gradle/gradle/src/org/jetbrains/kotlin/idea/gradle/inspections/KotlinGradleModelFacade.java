@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradle.inspections;
 
@@ -15,7 +15,8 @@ import java.util.List;
 public interface KotlinGradleModelFacade {
     ExtensionPointName<KotlinGradleModelFacade> EP_NAME = ExtensionPointName.create("org.jetbrains.kotlin.gradleModelFacade");
 
-    default @Nullable String getResolvedVersionByModuleData(
+    @Nullable
+    default String getResolvedVersionByModuleData(
             @NotNull DataNode<?> moduleData,
             @NotNull String groupId,
             @NotNull List<String> libraryIds

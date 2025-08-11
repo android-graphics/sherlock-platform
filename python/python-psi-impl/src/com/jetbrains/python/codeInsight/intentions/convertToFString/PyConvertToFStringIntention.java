@@ -40,8 +40,10 @@ public final class PyConvertToFStringIntention extends PsiUpdateModCommandAction
   }
 
 
+  @Nls
+  @NotNull
   @Override
-  public @Nls @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.convert.to.fstring.literal");
   }
 
@@ -62,7 +64,8 @@ public final class PyConvertToFStringIntention extends PsiUpdateModCommandAction
     processor.doRefactoring();
   }
 
-  private static @Nullable BaseConvertToFStringProcessor findSuitableProcessor(@NotNull PsiElement anchor) {
+  @Nullable
+  private static BaseConvertToFStringProcessor findSuitableProcessor(@NotNull PsiElement anchor) {
     final PyBinaryExpression binaryExpr = PsiTreeUtil.getParentOfType(anchor, PyBinaryExpression.class);
     if (binaryExpr != null && binaryExpr.getOperator() == PyTokenTypes.PERC) {
       final PyStringLiteralExpression pyString = as(binaryExpr.getLeftExpression(), PyStringLiteralExpression.class);

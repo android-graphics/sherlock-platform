@@ -1,17 +1,5 @@
-from _typeshed import Incomplete, SupportsRead
-from codecs import CodecInfo
-from typing import Any, Protocol, overload
-from typing_extensions import TypeAlias
-
-# Is actually webencodings.Encoding
-class _Encoding(Protocol):
-    name: str
-    codec_info: CodecInfo
-    def __init__(self, name: str, codec_info: CodecInfo) -> None: ...
-
-_UnicodeInputStream: TypeAlias = str | SupportsRead[str]
-_BinaryInputStream: TypeAlias = bytes | SupportsRead[bytes]
-_InputStream: TypeAlias = _UnicodeInputStream | _BinaryInputStream  # noqa: Y047  # used in other files
+from _typeshed import Incomplete
+from typing import Any
 
 spaceCharactersBytes: Any
 asciiLettersBytes: Any
@@ -32,35 +20,23 @@ class BufferedStream:
     def seek(self, pos) -> None: ...
     def read(self, bytes): ...
 
-@overload
-def HTMLInputStream(source: _UnicodeInputStream) -> HTMLUnicodeInputStream: ...
-@overload
-def HTMLInputStream(
-    source: _BinaryInputStream,
-    *,
-    override_encoding: str | bytes | None = None,
-    transport_encoding: str | bytes | None = None,
-    same_origin_parent_encoding: str | bytes | None = None,
-    likely_encoding: str | bytes | None = None,
-    default_encoding: str = "windows-1252",
-    useChardet: bool = True,
-) -> HTMLBinaryInputStream: ...
+def HTMLInputStream(source, **kwargs): ...
 
 class HTMLUnicodeInputStream:
     reportCharacterErrors: Any
     newLines: Any
-    charEncoding: tuple[_Encoding, str]
+    charEncoding: Any
     dataStream: Any
-    def __init__(self, source: _UnicodeInputStream) -> None: ...
+    def __init__(self, source) -> None: ...
     chunk: str
     chunkSize: int
     chunkOffset: int
-    errors: list[str]
+    errors: Any
     prevNumLines: int
     prevNumCols: int
     def reset(self) -> None: ...
     def openStream(self, source): ...
-    def position(self) -> tuple[int, int]: ...
+    def position(self): ...
     def char(self): ...
     def readChunk(self, chunkSize: Incomplete | None = None): ...
     def characterErrorsUCS4(self, data) -> None: ...
@@ -77,14 +53,14 @@ class HTMLBinaryInputStream(HTMLUnicodeInputStream):
     same_origin_parent_encoding: Any
     likely_encoding: Any
     default_encoding: Any
-    charEncoding: tuple[_Encoding, str]
+    charEncoding: Any
     def __init__(
         self,
-        source: _BinaryInputStream,
-        override_encoding: str | bytes | None = None,
-        transport_encoding: str | bytes | None = None,
-        same_origin_parent_encoding: str | bytes | None = None,
-        likely_encoding: str | bytes | None = None,
+        source,
+        override_encoding: Incomplete | None = None,
+        transport_encoding: Incomplete | None = None,
+        same_origin_parent_encoding: Incomplete | None = None,
+        likely_encoding: Incomplete | None = None,
         default_encoding: str = "windows-1252",
         useChardet: bool = True,
     ) -> None: ...
@@ -92,7 +68,7 @@ class HTMLBinaryInputStream(HTMLUnicodeInputStream):
     def reset(self) -> None: ...
     def openStream(self, source): ...
     def determineEncoding(self, chardet: bool = True): ...
-    def changeEncoding(self, newEncoding: str | bytes | None) -> None: ...
+    def changeEncoding(self, newEncoding) -> None: ...
     def detectBOM(self): ...
     def detectEncodingMeta(self): ...
 
@@ -132,4 +108,4 @@ class ContentAttrParser:
     def __init__(self, data) -> None: ...
     def parse(self): ...
 
-def lookupEncoding(encoding: str | bytes | None) -> str | None: ...
+def lookupEncoding(encoding): ...

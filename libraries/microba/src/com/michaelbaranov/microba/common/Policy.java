@@ -7,7 +7,7 @@ public interface Policy {
    * @param listener
    *            a {@link PolicyListener} to add
    */
-  void addVetoPolicyListener(PolicyListener listener);
+  public void addVetoPolicyListener(PolicyListener listener);
 
   /**
    * Removes a {@link PolicyListener}.
@@ -15,5 +15,5 @@ public interface Policy {
    * @param listener
    *            a {@link PolicyListener} to remove
    */
-  void removeVetoPolicyListener(PolicyListener listener);
+  public void removeVetoPolicyListener(PolicyListener listener);
 }

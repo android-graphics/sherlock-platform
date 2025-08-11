@@ -4,8 +4,9 @@ package com.intellij.ide.startup.importSettings.providers.vscode
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.TransferSettingsConfiguration
 import com.intellij.ide.startup.importSettings.TransferableIdeId
-import com.intellij.ide.startup.importSettings.providers.TransferSettingsProvider
 import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
+import com.intellij.ide.startup.importSettings.providers.TransferSettingsProvider
+import com.intellij.ide.startup.importSettings.providers.vscode.VSCodeSettingsProcessor.Companion.vsCodeHome
 import com.intellij.ide.startup.importSettings.ui.representation.TransferSettingsRightPanelChooser
 import com.intellij.util.SmartList
 import kotlinx.coroutines.CoroutineScope
@@ -14,18 +15,15 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Paths
 
-open class VSCodeTransferSettingsProvider(scope: CoroutineScope) : TransferSettingsProvider {
+class VSCodeTransferSettingsProvider(scope: CoroutineScope) : TransferSettingsProvider {
 
-  override val transferableIdeId: TransferableIdeId = TransferableIdeId.VSCode
+  override val transferableIdeId = TransferableIdeId.VSCode
 
-  protected open val processor: VSCodeSettingsProcessor = VSCodeSettingsProcessor(scope)
-
-  override val name: String = "Visual Studio Code"
-
-  protected open val id: String = "VSCode"
+  private val processor = VSCodeSettingsProcessor(scope)
+  override val name: String
+    get() = "Visual Studio Code"
 
   override fun isAvailable(): Boolean = true
-
   override suspend fun hasDataToImport(): Boolean =
     withContext(Dispatchers.IO) {
       isVSCodeDetected()
@@ -38,11 +36,11 @@ open class VSCodeTransferSettingsProvider(scope: CoroutineScope) : TransferSetti
 
   private val cachedIdeVersion by lazy {
     IdeVersion(
-      transferableIdeId,
+      TransferableIdeId.VSCode,
       null,
-      id,
+      "VSCode",
       AllIcons.TransferSettings.Vscode,
-      name,
+      "Visual Studio Code",
       settingsInit = { processor.getProcessedSettings() },
       provider = this
     )
@@ -53,7 +51,7 @@ open class VSCodeTransferSettingsProvider(scope: CoroutineScope) : TransferSetti
   }
 
   private fun isVSCodeDetected() =
-    Files.isDirectory(Paths.get(processor.vsCodeHome))
+    Files.isDirectory(Paths.get(vsCodeHome))
     && processor.isInstanceRecentEnough()
     && processor.willDetectAtLeastSomething()
 

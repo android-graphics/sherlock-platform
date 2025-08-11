@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.ide.IdeBundle;
@@ -90,11 +90,12 @@ public final class RenameModuleAndDirectoryHandler implements RenameHandler, Tit
       myModule = module;
     }
 
+    @NotNull
     @Override
-    public @NotNull RenameDialog createRenameDialog(@NotNull Project project,
-                                                    @NotNull PsiElement element,
-                                                    PsiElement nameSuggestionContext,
-                                                    Editor editor) {
+    public RenameDialog createRenameDialog(@NotNull Project project,
+                                           @NotNull PsiElement element,
+                                           PsiElement nameSuggestionContext,
+                                           Editor editor) {
       return new RenameWithOptionalReferencesDialog(project, element, nameSuggestionContext, editor) {
 
         @Override
@@ -125,8 +126,9 @@ public final class RenameModuleAndDirectoryHandler implements RenameHandler, Tit
               super.performRefactoring(usages);
             }
 
+            @NotNull
             @Override
-            protected @NotNull String getCommandName() {
+            protected String getCommandName() {
               return JavaRefactoringBundle.message("rename.module.directory.command", newName);
             }
           };

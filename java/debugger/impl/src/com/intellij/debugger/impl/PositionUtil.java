@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.SourcePosition;
@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -21,15 +22,17 @@ public class PositionUtil extends ContextUtil {
     return ContextUtil.getSourcePosition(context);
   }
 
-  public static @Nullable PsiElement getContextElement(final StackFrameContext context) {
+  @Nullable
+  public static PsiElement getContextElement(final StackFrameContext context) {
     if (context instanceof DebuggerContextImpl) return ((DebuggerContextImpl)context).getContextElement();
 
     return ContextUtil.getContextElement(context);
   }
 
-  public static @Nullable <T extends PsiElement> T getPsiElementAt(@NotNull Project project,
-                                                                   @NotNull Class<T> expectedPsiElementClass,
-                                                                   @Nullable SourcePosition sourcePosition) {
+  @Nullable
+  public static <T extends PsiElement> T getPsiElementAt(@NotNull Project project,
+                                                         @NotNull Class<T> expectedPsiElementClass,
+                                                         @Nullable SourcePosition sourcePosition) {
     if (sourcePosition == null) {
       return null;
     }

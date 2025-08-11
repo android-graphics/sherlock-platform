@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -57,7 +57,8 @@ public class MigrationNode extends AbstractTreeNode<TypeMigrationUsageInfo> impl
   }
 
   @Override
-  public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
+  @NotNull
+  public Collection<? extends AbstractTreeNode<?>> getChildren() {
     if (myCachedChildren == null) {
       myCachedChildren = new ArrayList<>();
 
@@ -95,7 +96,7 @@ public class MigrationNode extends AbstractTreeNode<TypeMigrationUsageInfo> impl
   }
 
   @Override
-  protected void update(final @NotNull PresentationData presentation) {
+  protected void update(@NotNull final PresentationData presentation) {
 
   }
 

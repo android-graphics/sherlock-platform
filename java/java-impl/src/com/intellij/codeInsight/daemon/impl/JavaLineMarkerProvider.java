@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.*;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.codeserver.core.JavaServiceProviderUtil;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -34,7 +33,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -212,18 +210,18 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor impleme
         if (mySiblingsOption.isEnabled() && FindSuperElementsHelper.canHaveSiblingSuper(method, containingClass)) {
           canHaveSiblings.putValue(containingClass, method);
         }
-        if (JavaServiceProviderUtil.isServiceProviderMethod(method)) {
-          tasks.add(() -> JavaServiceLineMarkerUtil.collectServiceProviderMethod(method));
+        if (JavaServiceUtil.isServiceProviderMethod(method)) {
+          tasks.add(() -> JavaServiceUtil.collectServiceProviderMethod(method));
         }
       }
       else if (parent instanceof PsiClass && !(parent instanceof PsiTypeParameter)) {
         tasks.add(() -> collectInheritingClasses((PsiClass)parent));
-        tasks.add(() -> JavaServiceLineMarkerUtil.collectServiceImplementationClass((PsiClass)parent));
+        tasks.add(() -> JavaServiceUtil.collectServiceImplementationClass((PsiClass)parent));
       }
       else if (parent instanceof PsiReferenceExpression &&
                parent.getParent() instanceof PsiMethodCallExpression parentCall &&
-               JavaServiceLineMarkerUtil.SERVICE_LOADER_LOAD.test(parentCall)) {
-        tasks.add(() -> JavaServiceLineMarkerUtil.collectServiceLoaderLoadCall((PsiIdentifier)element, parentCall));
+               JavaServiceUtil.SERVICE_LOADER_LOAD.test(parentCall)) {
+        tasks.add(() -> JavaServiceUtil.collectServiceLoaderLoadCall((PsiIdentifier)element, parentCall));
       }
     }
 
@@ -252,7 +250,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor impleme
     }
   }
 
-  private @Unmodifiable @NotNull List<LineMarkerInfo<PsiElement>> collectSiblingInheritedMethods(@NotNull Collection<? extends PsiMethod> methods) {
+  private @NotNull List<LineMarkerInfo<PsiElement>> collectSiblingInheritedMethods(@NotNull Collection<? extends PsiMethod> methods) {
     if (!shouldSearchImplementedMethods() && !shouldSearchOverriddenMethods()) {
       return Collections.emptyList();
     }

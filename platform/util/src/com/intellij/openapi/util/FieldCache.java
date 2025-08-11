@@ -16,11 +16,8 @@
 
 package com.intellij.openapi.util;
 
-import org.jetbrains.annotations.ApiStatus;
-
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-@ApiStatus.Internal
 public abstract class FieldCache<T, Owner,AccessorParameter,Parameter> {
   private final ReentrantReadWriteLock.ReadLock r;
   private final ReentrantReadWriteLock.WriteLock w;

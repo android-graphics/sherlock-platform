@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.openapi.editor.Editor;
@@ -32,14 +32,16 @@ public class DynamicPropertyFromRefFix extends DynamicPropertyFix {
     return expression != null && !isInStaticCompilationContext(expression);
   }
 
+  @Nullable
   @Override
-  protected @Nullable String getRefName() {
+  protected String getRefName() {
     GrReferenceExpression referenceExpression = myReferenceExpressionPointer.getElement();
     return referenceExpression == null ? null : referenceExpression.getReferenceName();
   }
 
+  @NotNull
   @Override
-  protected @NotNull DynamicDialog createDialog() {
+  protected DynamicDialog createDialog() {
     return new DynamicPropertyDialog(myReferenceExpressionPointer.getElement());
   }
 

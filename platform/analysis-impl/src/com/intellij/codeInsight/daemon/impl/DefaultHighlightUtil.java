@@ -19,7 +19,7 @@ public final class DefaultHighlightUtil {
     HighlightInfo.Builder builder = checkUnicodeBadCharacter(element);
     return builder == null ? null : builder.create();
   }
-  private static @Nullable HighlightInfo.Builder checkUnicodeBadCharacter(@NotNull PsiElement element) {
+  public static @Nullable HighlightInfo.Builder checkUnicodeBadCharacter(@NotNull PsiElement element) {
     ASTNode node = element.getNode();
     if (node != null && node.getElementType() == TokenType.BAD_CHARACTER) {
       char c = element.textToCharArray()[0];

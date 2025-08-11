@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.navigation
 
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -12,7 +13,7 @@ import kotlin.io.path.Path
 @RunWith(JUnit38ClassRunner::class)
 abstract class AbstractKotlinGotoImplementationMultifileTest : KotlinLightCodeInsightFixtureTestCase() {
   protected fun doKotlinJavaTest(path: String) {
-      IgnoreTests.runTestIfNotDisabledByFileDirective(Path(path), IgnoreTests.DIRECTIVES.of(pluginMode)) {
+      IgnoreTests.runTestIfNotDisabledByFileDirective(Path(path), if (pluginMode == KotlinPluginMode.K2) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1) {
           doMultiFileTest(getTestName(false) + ".kt", getTestName(false) + ".java")
       }
   }

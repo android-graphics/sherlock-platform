@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.conflicts;
 
@@ -41,8 +41,9 @@ public class MoveChangesDialog extends DialogWrapper {
     mySelected = selected;
     setTitle(VcsBundle.message("dialog.title.move.changes.to.active.changelist"));
     myTreeList = new AsyncChangesTree(project, true, false) {
+      @NotNull
       @Override
-      protected @NotNull AsyncChangesTreeModel getChangesTreeModel() {
+      protected AsyncChangesTreeModel getChangesTreeModel() {
         return SimpleAsyncChangesTreeModel.create(grouping -> {
           return TreeModelBuilder.buildFromChangeLists(project, grouping, changeLists);
         });
@@ -104,8 +105,9 @@ public class MoveChangesDialog extends DialogWrapper {
     return !getIncludedChanges().isEmpty();
   }
 
+  @Nullable
   @Override
-  protected @Nullable JComponent createDoNotAskCheckbox() {
+  protected JComponent createDoNotAskCheckbox() {
     return myCheckBox;
   }
   /*

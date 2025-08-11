@@ -29,7 +29,8 @@ internal class RemoveAllArgumentNamesIntention :
         return arguments.count { it.isNamed() } > 1
     }
 
-    override fun KaSession.prepareContext(element: KtCallElement): ArgumentsDataContext? {
+    context(KaSession)
+    override fun prepareContext(element: KtCallElement): ArgumentsDataContext? {
         val context = collectSortedArgumentsThatCanBeUnnamed(element) ?: return null
         if (context.sortedArguments.isEmpty()) return null
         val manager = SmartPointerManager.getInstance(element.project)

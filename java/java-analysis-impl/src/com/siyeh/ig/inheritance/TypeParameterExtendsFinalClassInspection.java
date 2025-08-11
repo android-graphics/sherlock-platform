@@ -42,7 +42,8 @@ import java.util.Set;
 public final class TypeParameterExtendsFinalClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     final Integer problemType = (Integer)infos[1];
     final PsiClass aClass = (PsiClass)infos[0];
     final String name = aClass.getName();
@@ -59,14 +60,16 @@ public final class TypeParameterExtendsFinalClassInspection extends BaseInspecti
   }
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  @Nullable
+  protected LocalQuickFix buildFix(Object... infos) {
     return new TypeParameterExtendsFinalClassFix();
   }
 
   private static class TypeParameterExtendsFinalClassFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    public @NotNull String getFamilyName() {
+    @NotNull
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("type.parameter.extends.final.class.quickfix");
     }
 
@@ -94,7 +97,7 @@ public final class TypeParameterExtendsFinalClassInspection extends BaseInspecti
       final Project project = typeParameter.getProject();
       final PsiJavaCodeReferenceElement classReference = JavaPsiFacade.getElementFactory(project).createReferenceElementByType(types[0]);
       final Query<PsiReference> query = ReferencesSearch.search(typeParameter, typeParameter.getUseScope());
-      for (PsiReference reference : query.asIterable()) {
+      for (PsiReference reference : query) {
         final PsiElement referenceElement = reference.getElement();
         referenceElement.replace(classReference);
       }

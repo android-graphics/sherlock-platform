@@ -3,7 +3,6 @@ package com.jetbrains.python.packaging.ui;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsContexts;
@@ -20,7 +19,6 @@ import com.intellij.webcore.packaging.PackageManagementServiceEx;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PySdkBundle;
-import com.jetbrains.python.execution.FailureReason;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.PyPIPackageUtil.PackageDetails;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
@@ -125,6 +123,16 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
       result.addAll(getCachedPyPIPackages());
     }
     result.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackages(getAdditionalRepositories()));
+    return result;
+  }
+
+  public Map<String, List<RepoPackage>> getAllPackagesByRepository() {
+    Map<String, List<RepoPackage>> result = new HashMap<>();
+    result.put(PyPIPackageUtil.PYPI_LIST_URL, getCachedPyPIPackages());
+    List<String> repositories = getAdditionalRepositories();
+    for (String repo : repositories) {
+      result.put(repo, PyPIPackageUtil.INSTANCE.getAdditionalPackages(List.of(repo)));
+    }
     return result;
   }
 
@@ -318,25 +326,22 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   private static @NotNull PyPackageInstallationErrorDescription createDescription(@NotNull ExecutionException e,
                                                                                   @Nullable Sdk sdk,
                                                                                   @Nullable String packageName) {
-    if (e instanceof PyExecutionException pyExecEx && pyExecEx.getFailureReason() instanceof FailureReason.ExecutionFailed execFailed) {
-      var ee = execFailed.getOutput();
+    if (e instanceof PyExecutionException ee) {
       final String stdout = ee.getStdout();
       final String stdoutCause = findErrorCause(stdout);
       final String stderrCause = findErrorCause(ee.getStderr());
       final String cause = stdoutCause != null ? stdoutCause : stderrCause;
-      final String message = cause != null ? cause : pyExecEx.getMessage();
-      final String command = pyExecEx.getCommand() + " " + StringUtil.join(pyExecEx.getArgs(), " ");
+      final String message = cause != null ? cause : ee.getMessage();
+      final String command = ee.getCommand() + " " + StringUtil.join(ee.getArgs(), " ");
       return new PyPackageInstallationErrorDescription(message, command, stdout.isEmpty() ? ee.getStderr() : stdout + "\n" + ee.getStderr(),
-                                                       findErrorSolution(pyExecEx, cause, sdk), packageName, sdk);
+                                                       findErrorSolution(ee, cause, sdk), packageName, sdk);
     }
     else {
       return new PyPackageInstallationErrorDescription(e.getMessage(), null, null, null, packageName, sdk);
     }
   }
 
-  private static @Nullable @DetailedDescription String findErrorSolution(@NotNull PyExecutionException e,
-                                                                         @Nullable String cause,
-                                                                         @Nullable Sdk sdk) {
+  private static @Nullable @DetailedDescription String findErrorSolution(@NotNull PyExecutionException e, @Nullable String cause, @Nullable Sdk sdk) {
     if (cause != null) {
       if (StringUtil.containsIgnoreCase(cause, "SyntaxError")) {
         final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
@@ -344,10 +349,8 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
       }
     }
 
-    if (e.getFailureReason() instanceof FailureReason.ExecutionFailed executionFailed) {
-      if (SystemInfo.isLinux && (containsInOutput(executionFailed.getOutput(), "pyconfig.h") || containsInOutput(executionFailed.getOutput(), "Python.h"))) {
-        return PySdkBundle.message("python.sdk.check.python.development.packages.installed");
-      }
+    if (SystemInfo.isLinux && (containsInOutput(e, "pyconfig.h") || containsInOutput(e, "Python.h"))) {
+      return PySdkBundle.message("python.sdk.check.python.development.packages.installed");
     }
 
     if ("pip".equals(e.getCommand()) && sdk != null) {
@@ -357,7 +360,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     return null;
   }
 
-  private static boolean containsInOutput(@NotNull ProcessOutput e, @NotNull String text) {
+  private static boolean containsInOutput(@NotNull PyExecutionException e, @NotNull String text) {
     return StringUtil.containsIgnoreCase(e.getStdout(), text) || StringUtil.containsIgnoreCase(e.getStderr(), text);
   }
 

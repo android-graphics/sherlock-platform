@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.cacheBuilder;
 
 import com.intellij.diagnostic.PluginException;
@@ -9,11 +9,9 @@ import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
-public final class CacheBuilderEP implements PluginAware {
+final class CacheBuilderEP implements PluginAware {
   private static final Logger LOG = Logger.getInstance(CacheBuilderEP.class);
 
   private CacheBuilderEP() {
@@ -27,13 +25,11 @@ public final class CacheBuilderEP implements PluginAware {
   private transient Class<WordsScanner> cachedClass;
   private transient PluginDescriptor pluginDescriptor;
 
-  @ApiStatus.Internal
-  public String getFileType() {
+  String getFileType() {
     return fileType;
   }
 
-  @ApiStatus.Internal
-  public WordsScanner getWordsScanner() {
+  WordsScanner getWordsScanner() {
     try {
       Class<WordsScanner> aClass = cachedClass;
       Application app = ApplicationManager.getApplication();

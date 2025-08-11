@@ -52,23 +52,16 @@ _T = TypeVar("_T")
 _UrlopenRet: TypeAlias = Any
 _DataType: TypeAlias = ReadableBuffer | SupportsRead[bytes] | Iterable[bytes] | None
 
-if sys.version_info >= (3, 13):
-    def urlopen(
-        url: str | Request, data: _DataType | None = None, timeout: float | None = ..., *, context: ssl.SSLContext | None = None
-    ) -> _UrlopenRet: ...
-
-else:
-    def urlopen(
-        url: str | Request,
-        data: _DataType | None = None,
-        timeout: float | None = ...,
-        *,
-        cafile: str | None = None,
-        capath: str | None = None,
-        cadefault: bool = False,
-        context: ssl.SSLContext | None = None,
-    ) -> _UrlopenRet: ...
-
+def urlopen(
+    url: str | Request,
+    data: _DataType | None = None,
+    timeout: float | None = ...,
+    *,
+    cafile: str | None = None,
+    capath: str | None = None,
+    cadefault: bool = False,
+    context: ssl.SSLContext | None = None,
+) -> _UrlopenRet: ...
 def install_opener(opener: OpenerDirector) -> None: ...
 def build_opener(*handlers: BaseHandler | Callable[[], BaseHandler]) -> OpenerDirector: ...
 
@@ -235,8 +228,6 @@ class _HTTPConnectionProtocol(Protocol):
     def __call__(
         self,
         host: str,
-        /,
-        *,
         port: int | None = ...,
         timeout: float = ...,
         source_address: tuple[str, int] | None = ...,
@@ -345,7 +336,6 @@ class URLopener:
     def open_https(self, url: str, data: ReadableBuffer | None = None) -> _UrlopenRet: ...  # undocumented
     def open_local_file(self, url: str) -> addinfourl: ...  # undocumented
     def open_unknown_proxy(self, proxy: str, fullurl: str, data: ReadableBuffer | None = None) -> None: ...  # undocumented
-    def __del__(self) -> None: ...
 
 class FancyURLopener(URLopener):
     def prompt_user_passwd(self, host: str, realm: str) -> tuple[str, str]: ...

@@ -105,15 +105,10 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     String qualifiedName  = qualifierClass.getQualifiedName();
     List<PsiJavaCodeReferenceElement> refs = getImportsFromClass(importList, qualifiedName);
     JavaFileCodeStyleFacade javaCodeStyleSettingsFacade = JavaFileCodeStyleFacade.forContext(importList.getContainingFile());
-    JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(qualifierClass.getProject());
-    boolean hasToBeImportedBySettings =
-      (javaCodeStyleSettingsFacade.isToImportOnDemand(qualifiedName) ||
-      refs.size() + 1 >= javaCodeStyleSettingsFacade.getNamesCountToUseImportOnDemand());
-    if (!hasToBeImportedBySettings ||
-        javaCodeStyleManager.hasConflictingOnDemandImport((PsiJavaFile)importList.getContainingFile(), qualifierClass, staticName)) {
+    if (!javaCodeStyleSettingsFacade.isToImportOnDemand(qualifiedName) && refs.size() + 1 < javaCodeStyleSettingsFacade.getNamesCountToUseImportOnDemand() ||
+        JavaCodeStyleManager.getInstance(qualifierClass.getProject()).hasConflictingOnDemandImport((PsiJavaFile)importList.getContainingFile(), qualifierClass, staticName)) {
       importList.add(JavaPsiFacade.getElementFactory(qualifierClass.getProject()).createImportStaticStatement(qualifierClass, staticName));
-    }
-    else {
+    } else {
       for (PsiJavaCodeReferenceElement ref : refs) {
         PsiImportStaticStatement importStatement = PsiTreeUtil.getParentOfType(ref, PsiImportStaticStatement.class);
         if (importStatement != null) {
@@ -124,15 +119,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
   }
 
-  /**
-   * Retrieves the static import statements from the given import list that reference
-   * a specified class.
-   *
-   * @param importList the list of import statements in a Java file.
-   * @param className the fully qualified name of the class for which static imports are to be retrieved.
-   * @return a list of static import references corresponding to the specified class.
-   */
-  public static @NotNull List<PsiJavaCodeReferenceElement> getImportsFromClass(@NotNull PsiImportList importList, String className) {
+  private static @NotNull List<PsiJavaCodeReferenceElement> getImportsFromClass(@NotNull PsiImportList importList, String className) {
     List<PsiJavaCodeReferenceElement> array = new ArrayList<>();
     for (PsiImportStaticStatement staticStatement : importList.getImportStaticStatements()) {
       PsiClass psiClass = staticStatement.resolveTargetClass();
@@ -684,15 +671,12 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
       return ref;
     }
-    else if ((element instanceof PsiField || element instanceof PsiMethod)) {
+    else if ((element instanceof PsiField || element instanceof PsiMethod) && ((PsiMember) element).hasModifierProperty(PsiModifier.STATIC)) {
       PsiMember member = (PsiMember) element;
       PsiClass psiClass = member.getContainingClass();
       if (psiClass == null) throw new IncorrectOperationException();
-      boolean isStatic = ((PsiMember)element).hasModifierProperty(PsiModifier.STATIC);
-      String qName = psiClass.getQualifiedName();
-      if (qName == null) qName = psiClass.getName(); // local class has no qualified name, but has a short name
-      if (qName == null) return this; // ref can't be fixed
-      PsiExpression ref = parserFacade.createExpressionFromText(qName + (isStatic ? "." : ".this.") + member.getName(), this);
+      String qName = psiClass.getQualifiedName() + "." + member.getName();
+      PsiExpression ref = parserFacade.createExpressionFromText(qName, this);
       getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
       return ref;
     }

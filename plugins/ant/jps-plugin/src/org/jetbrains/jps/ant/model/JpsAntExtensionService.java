@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.ant.model;
 
 import com.intellij.openapi.application.PathManager;
@@ -26,11 +26,13 @@ public final class JpsAntExtensionService {
   public static final String BUNDLED_ANT_PATH_PROPERTY = "jps.bundled.ant.path";
   private static final Logger LOG = Logger.getInstance(JpsAntExtensionService.class);
 
-  public static @Nullable JpsAntArtifactExtension getPreprocessingExtension(@NotNull JpsArtifact artifact) {
+  @Nullable
+  public static JpsAntArtifactExtension getPreprocessingExtension(@NotNull JpsArtifact artifact) {
     return artifact.getContainer().getChild(JpsAntArtifactExtensionImpl.PREPROCESSING_ROLE);
   }
 
-  public static @Nullable JpsAntArtifactExtension getPostprocessingExtension(@NotNull JpsArtifact artifact) {
+  @Nullable
+  public static JpsAntArtifactExtension getPostprocessingExtension(@NotNull JpsArtifact artifact) {
     return artifact.getContainer().getChild(JpsAntArtifactExtensionImpl.POSTPROCESSING_ROLE);
   }
 
@@ -38,7 +40,8 @@ public final class JpsAntExtensionService {
     global.getContainer().getOrSetChild(JpsAntInstallationImpl.COLLECTION_ROLE).addChild(antInstallation);
   }
 
-  public static @NotNull JpsAntBuildFileOptions getOptions(@NotNull JpsProject project, @NotNull String buildFileUrl) {
+  @NotNull
+  public static JpsAntBuildFileOptions getOptions(@NotNull JpsProject project, @NotNull String buildFileUrl) {
     JpsAntConfiguration configuration = getAntConfiguration(project);
     if (configuration != null) {
       return configuration.getOptions(buildFileUrl);
@@ -46,11 +49,13 @@ public final class JpsAntExtensionService {
     return new JpsAntBuildFileOptionsImpl();
   }
 
-  private static @Nullable JpsAntConfiguration getAntConfiguration(JpsProject project) {
+  @Nullable
+  private static JpsAntConfiguration getAntConfiguration(JpsProject project) {
     return project.getContainer().getChild(JpsAntConfigurationImpl.ROLE);
   }
 
-  public static @NotNull JpsAntConfiguration getOrCreateAntConfiguration(@NotNull JpsProject project) {
+  @NotNull
+  public static JpsAntConfiguration getOrCreateAntConfiguration(@NotNull JpsProject project) {
     JpsAntConfiguration configuration = getAntConfiguration(project);
     if (configuration != null) {
       return configuration;
@@ -59,7 +64,8 @@ public final class JpsAntExtensionService {
     return project.getContainer().setChild(JpsAntConfigurationImpl.ROLE, antConfiguration);
   }
 
-  private static @Nullable JpsAntInstallation getBundledAntInstallation() {
+  @Nullable
+  private static JpsAntInstallation getBundledAntInstallation() {
     String antPath = System.getProperty(BUNDLED_ANT_PATH_PROPERTY);
     File antHome;
     if (antPath != null) {
@@ -99,7 +105,8 @@ public final class JpsAntExtensionService {
     return new JpsAntInstallationImpl(antHome, "Bundled Ant", emptyList(), singletonList(antJarsHome));
   }
 
-  public static @Nullable JpsAntInstallation getAntInstallationForBuildFile(@NotNull JpsModel model, @NotNull String buildFileUrl) {
+  @Nullable
+  public static JpsAntInstallation getAntInstallationForBuildFile(@NotNull JpsModel model, @NotNull String buildFileUrl) {
     JpsAntBuildFileOptions options = getOptions(model.getProject(), buildFileUrl);
     String antInstallationName;
     if (options.isUseProjectDefaultAnt()) {
@@ -115,7 +122,8 @@ public final class JpsAntExtensionService {
     return findAntInstallation(model, antInstallationName);
   }
 
-  public static @Nullable JpsAntInstallation findAntInstallation(@NotNull JpsModel model, @NotNull String antInstallationName) {
+  @Nullable
+  public static JpsAntInstallation findAntInstallation(@NotNull JpsModel model, @NotNull String antInstallationName) {
     JpsElementCollection<JpsAntInstallation> antInstallations = model.getGlobal().getContainer().getChild(JpsAntInstallationImpl.COLLECTION_ROLE);
     if (antInstallations != null) {
       for (JpsAntInstallation installation : antInstallations.getElements()) {

@@ -22,7 +22,6 @@ import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.jsp.JspClassLevelDeclarationStatementType;
 import com.intellij.psi.jsp.JspCodeBlockType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -169,7 +168,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                          @NotNull AlignmentStrategy alignmentStrategy,
                                          int startOffset,
                                          @NotNull FormattingMode formattingMode) {
-    Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, settings, javaSettings) : indent;
+    Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, settings) : indent;
     IElementType elementType = child.getElementType();
     Alignment alignment = alignmentStrategy.getAlignment(elementType);
     PsiElement childPsi = child.getPsi();
@@ -237,7 +236,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                             @NotNull CommonCodeStyleSettings settings,
                                             @NotNull JavaCodeStyleSettings javaSettings,
                                             @NotNull FormattingMode formattingMode) {
-    final Indent indent = getDefaultSubtreeIndent(child, settings, javaSettings);
+    final Indent indent = getDefaultSubtreeIndent(child, settings);
     return newJavaBlock(child, settings, javaSettings, indent, null, AlignmentStrategy.getNullStrategy(), formattingMode);
   }
 
@@ -287,36 +286,24 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
 
-  private static @Nullable Indent getDefaultSubtreeIndent(@NotNull ASTNode child, @NotNull CommonCodeStyleSettings settings, @NotNull JavaCodeStyleSettings javaSettings) {
+  private static @Nullable Indent getDefaultSubtreeIndent(@NotNull ASTNode child, @NotNull CommonCodeStyleSettings settings) {
     CommonCodeStyleSettings.IndentOptions indentOptions= getJavaIndentOptions(settings);
     final ASTNode parent = child.getTreeParent();
     final IElementType childNodeType = child.getElementType();
     if (childNodeType == JavaElementType.ANNOTATION) {
       if (parent.getPsi() instanceof PsiArrayInitializerMemberValue) {
         return Indent.getNormalIndent();
-      } else if (JavaFormatterRecordUtil.shouldAdjustIndentForRecordComponentChild(child, javaSettings)) {
-        return Indent.getContinuationIndent();
       }
       return Indent.getNoneIndent();
     }
 
     final ASTNode prevElement = skipCommentsAndWhitespacesBackwards(child);
-    if (prevElement != null) {
-      if (JavaFormatterRecordUtil.shouldAdjustIndentForRecordComponentChild(child, javaSettings)) {
-        return Indent.getContinuationIndent();
-      }
-      else if (prevElement.getElementType() == JavaElementType.MODIFIER_LIST) {
-        return Indent.getNoneIndent();
-      }
+    if (prevElement != null && prevElement.getElementType() == JavaElementType.MODIFIER_LIST) {
+      return Indent.getNoneIndent();
     }
 
     if (childNodeType == JavaDocElementType.DOC_TAG) return Indent.getNoneIndent();
-    if (childNodeType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
-      if(PsiUtil.isInMarkdownDocComment(child.getPsi())) {
-        return Indent.getNoneIndent();
-      }
-      return Indent.getSpaceIndent(1);
-    }
+    if (childNodeType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) return Indent.getSpaceIndent(1);
     if (child.getPsi() instanceof PsiFile) return Indent.getNoneIndent();
     if (parent != null) {
       final Indent defaultChildIndent = getChildIndent(parent, indentOptions);
@@ -374,7 +361,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (parentType == JavaElementType.FIELD) return Indent.getContinuationWithoutFirstIndent(indentOptions.USE_RELATIVE_INDENTS);
     if (parentType == JavaElementType.EXPRESSION_STATEMENT) return Indent.getNoneIndent();
     if (parentType == JavaElementType.IMPLICIT_CLASS) return Indent.getNoneIndent();
-    if (parentType == JavaElementType.RECORD_COMPONENT) return Indent.getNoneIndent();
     if (SourceTreeToPsiMap.treeElementToPsi(parent) instanceof PsiFile) {
       return Indent.getNoneIndent();
     }
@@ -874,7 +860,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       // hence, no alignment should be applied to them in order to avoid subsequent blocks aligned with the same alignment to
       // be located at the left editor edge as well.
       CharSequence prevChars;
-      if (previous != null && previous.getElementType() == TokenType.WHITE_SPACE && !(prevChars = previous.getChars()).isEmpty()
+      if (previous != null && previous.getElementType() == TokenType.WHITE_SPACE && (prevChars = previous.getChars()).length() > 0
           && prevChars.charAt(prevChars.length() - 1) == '\n') {
         return false;
       }
@@ -963,7 +949,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     Indent externalIndent = Indent.getNoneIndent();
     Indent internalIndent = Indent.getContinuationWithoutFirstIndent(false);
 
-    if (isInsideMethodCallParenthesis(child) || isInsideMethodDeclarationParenthesis(child)) {
+    if (isInsideMethodCallParenthesis(child)) {
       internalIndent = Indent.getSmartIndent(Indent.Type.CONTINUATION);
     }
 
@@ -1033,13 +1019,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return currentPredecessor != null && currentPredecessor.getElementType() == JavaElementType.METHOD_CALL_EXPRESSION;
     }
     return false;
-  }
-
-  private static boolean isInsideMethodDeclarationParenthesis(@NotNull ASTNode child) {
-    ASTNode parent = child.getTreeParent();
-    if (parent == null || parent.getElementType() != JavaElementType.PARAMETER_LIST) return false;
-    ASTNode grandParent = parent.getTreeParent();
-    return grandParent != null && grandParent.getElementType() == JavaElementType.METHOD;
   }
 
   private static boolean canUseAnonymousClassAlignment(@NotNull ASTNode child) {

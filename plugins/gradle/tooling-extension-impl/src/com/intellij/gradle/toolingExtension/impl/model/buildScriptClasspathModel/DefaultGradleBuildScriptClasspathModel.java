@@ -6,8 +6,8 @@ import org.gradle.tooling.model.internal.ImmutableDomainObjectSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel;
+import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -21,7 +21,8 @@ import java.util.Objects;
 public class DefaultGradleBuildScriptClasspathModel implements GradleBuildScriptClasspathModel {
 
   private final List<ClasspathEntryModel> myClasspathEntries;
-  private @Nullable File gradleHomeDir;
+  @Nullable
+  private File gradleHomeDir;
   private String myGradleVersion;
 
   public DefaultGradleBuildScriptClasspathModel() {
@@ -37,8 +38,9 @@ public class DefaultGradleBuildScriptClasspathModel implements GradleBuildScript
     gradleHomeDir = file;
   }
 
+  @Nullable
   @Override
-  public @Nullable File getGradleHomeDir() {
+  public File getGradleHomeDir() {
     return gradleHomeDir;
   }
 
@@ -50,8 +52,9 @@ public class DefaultGradleBuildScriptClasspathModel implements GradleBuildScript
     myGradleVersion = gradleVersion;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getGradleVersion() {
+  public String getGradleVersion() {
     return myGradleVersion;
   }
 

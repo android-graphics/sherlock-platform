@@ -12,7 +12,10 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColors
@@ -21,6 +24,7 @@ import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ClientFileEditorManager.Companion.assignClientId
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.DUMB_AWARE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.FILE_ATTRIBUTE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.TAG
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
@@ -31,7 +35,6 @@ import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Weighted
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.FocusWatcher
@@ -58,7 +61,6 @@ import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.util.concurrent.TimeUnit
 import javax.swing.*
-import kotlin.collections.firstOrNull
 
 private val LOG = logger<EditorComposite>()
 
@@ -113,8 +115,7 @@ open class EditorComposite internal constructor(
    * Currently selected editor
    */
   @JvmField
-  @Internal
-  val selectedEditorWithProvider: StateFlow<FileEditorWithProvider?> = _selectedEditorWithProvider.asStateFlow()
+  internal val selectedEditorWithProvider: StateFlow<FileEditorWithProvider?> = _selectedEditorWithProvider.asStateFlow()
 
   private val topComponents = HashMap<FileEditor, JComponent>()
   private val bottomComponents = HashMap<FileEditor, JComponent>()
@@ -190,7 +191,8 @@ open class EditorComposite internal constructor(
     if (fileEditorWithProviders.isEmpty()) {
       withContext(Dispatchers.EDT) {
         compositePanel.removeAll()
-        setFileEditors(fileEditors = emptyList(), selectedEditor = null)
+        this@EditorComposite.fileEditorWithProviders.value = emptyList()
+        _selectedEditorWithProvider.value = null
       }
       return
     }
@@ -204,11 +206,35 @@ open class EditorComposite internal constructor(
       }
       val beforePublisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
 
-      val selectedFileEditor = getSelectedEditor(fileEditorWithProviders, model.state)
+      val selectedFileEditor = if (model.state == null) {
+        (serviceAsync<FileEditorProviderManager>() as FileEditorProviderManagerImpl).getSelectedFileEditorProvider(
+          file = file,
+          fileEditorWithProviders = fileEditorWithProviders,
+          editorHistoryManager = project.serviceAsync<EditorHistoryManager>(),
+        )
+      }
+      else {
+        model.state.selectedProvider?.let { selectedProvider ->
+          fileEditorWithProviders.firstOrNull { it.provider.editorTypeId == selectedProvider }?.provider
+        }
+      }
 
       // read not in EDT
+      val isNewEditor = true
       val states = fileEditorWithProviders.map { (_, provider) ->
-        getEditorState(provider, model.state)
+        if (model.state == null) {
+          if (isNewEditor) {
+            // We have to try to get state from the history only in case of the editor is not opened.
+            // Otherwise, history entry might have a state out of sync with the current editor state.
+            project.serviceAsync<EditorHistoryManager>().getState(file, provider)
+          }
+          else {
+            null
+          }
+        }
+        else {
+          model.state.providers.get(provider.editorTypeId)?.let { provider.readState(it, project, file) }
+        }
       }
 
       val fileEditorManager = project.serviceAsync<FileEditorManager>()
@@ -217,10 +243,7 @@ open class EditorComposite internal constructor(
       span("file opening in EDT and repaint", Dispatchers.EDT) {
         span("beforeFileOpened event executing") {
           blockingContext {
-            computeOrLogException(
-              lambda = { beforePublisher!!.beforeFileOpened(fileEditorManager, file) },
-              errorMessage = { "exception during beforeFileOpened notification" },
-            )
+            beforePublisher!!.beforeFileOpened(fileEditorManager, file)
           }
         }
 
@@ -230,7 +253,7 @@ open class EditorComposite internal constructor(
           selectedFileEditorProvider = selectedFileEditor,
         )
 
-        writeIntentReadAction {
+        blockingContext {
           goodPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
           @Suppress("DEPRECATION")
           deprecatedPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
@@ -247,7 +270,7 @@ open class EditorComposite internal constructor(
 
       val publisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
       span("fileOpened event executing", Dispatchers.EDT) {
-        writeIntentReadAction {
+        blockingContext {
           publisher.fileOpened(fileEditorManager, file)
         }
       }
@@ -334,14 +357,14 @@ open class EditorComposite internal constructor(
     fileEditorWithProviders: List<FileEditorWithProvider>,
     states: List<FileEditorState?>,
     selectedFileEditorProvider: FileEditorProvider?,
-  ) = WriteIntentReadAction.run {
+  ) {
     for ((index, fileEditorWithProvider) in fileEditorWithProviders.withIndex()) {
-      states.get(index)?.also { state ->
-        computeOrLogException(
-          lambda = { restoreEditorState(fileEditorWithProvider, state, exactState = false, project) },
-          errorMessage = { "failed to restore state for $fileEditorWithProvider" },
-        )
-      }
+      restoreEditorState(
+        fileEditorWithProvider = fileEditorWithProvider,
+        state = states.get(index) ?: continue,
+        exactState = false,
+        project = project,
+      )
     }
 
     var fileEditorWithProviderToSelect = fileEditorWithProviders.firstOrNull()
@@ -361,61 +384,13 @@ open class EditorComposite internal constructor(
       }
     }
 
-    computeOrLogException(
-      lambda = {
-        // ensure FileEditor's component has valid boundaries after creation
-        // Otherwise, the listeners may get an invalid state for AsyncFileEditorProvider right after creation.
-        // Ex: OpenFileDescriptor is trying to scroll zero-height component in the 'FileEditorManager.runWhenLoaded' callback
-        component.validate()
-      },
-      errorMessage = { "failed to validate panel component" },
-    )
-
-    computeOrLogException(
-      lambda = { fileEditorWithProviderToSelect?.fileEditor?.selectNotify() },
-      errorMessage = { "exception during selectNotify" },
-    )
+    fileEditorWithProviderToSelect?.fileEditor?.selectNotify()
 
     // Only after applyFileEditorsInEdt - for external clients composite API should use _actual_ _applied_ state, not intermediate.
     // For example, see EditorHistoryManager -
     // we will get assertion if we return a non-empty list of editors but do not set selected file editor.
-    setFileEditors(fileEditorWithProviders, fileEditorWithProviderToSelect)
-  }
-
-  private suspend fun getSelectedEditor(fileEditorWithProviders: List<FileEditorWithProvider>, state: FileEntry?): FileEditorProvider? {
-    return if (state != null) {
-      state.selectedProvider?.let { selectedProvider ->
-        fileEditorWithProviders.firstOrNull { it.provider.editorTypeId == selectedProvider }?.provider
-      }
-    }
-    else {
-      val providerManager = serviceAsync<FileEditorProviderManager>() as FileEditorProviderManagerImpl
-      val historyManager = project.serviceAsync<EditorHistoryManager>()
-      computeOrLogException(
-        lambda = { providerManager.getSelectedFileEditorProvider(file, fileEditorWithProviders, historyManager) },
-        errorMessage = { "failed to choose selected editor" },
-      )
-    }
-  }
-
-  private suspend fun getEditorState(provider: FileEditorProvider, state: FileEntry?): FileEditorState? {
-    return if (state != null) {
-      state.providers.get(provider.editorTypeId)?.let {
-        computeOrLogException(
-          lambda = { provider.readState(it, project, file) },
-          errorMessage = { "failed to read editor state" },
-        )
-      }
-    }
-    else {
-      // We have to try to get state from the history only in case of the editor is not opened.
-      // Otherwise, history entry might have a state out of sync with the current editor state.
-      val historyManager = project.serviceAsync<EditorHistoryManager>()
-      computeOrLogException(
-        lambda = { historyManager.getState(file, provider) },
-        errorMessage = { "failed to read editor state" },
-      )
-    }
+    this.fileEditorWithProviders.value = fileEditorWithProviders
+    _selectedEditorWithProvider.value = fileEditorWithProviderToSelect
   }
 
   private fun setTabbedPaneComponent(tabbedPaneWrapper: TabbedPaneWrapper) {
@@ -429,11 +404,6 @@ open class EditorComposite internal constructor(
       newComponent = createEditorComponent(fileEditor),
       focusComponent = { fileEditor.preferredFocusedComponent },
     )
-  }
-
-  private fun setFileEditors(fileEditors: List<FileEditorWithProvider>, selectedEditor: FileEditorWithProvider?) {
-    fileEditorWithProviders.value = fileEditors
-    _selectedEditorWithProvider.value = selectedEditor
   }
 
   @get:Deprecated("use {@link #getAllEditorsWithProviders()}", ReplaceWith("allProviders"), level = DeprecationLevel.ERROR)
@@ -519,7 +489,7 @@ open class EditorComposite internal constructor(
     get() {
       val editorWithProvider = selectedEditorWithProvider.value ?: return null
       val component = focusWatcher.focusedComponent
-      if (component !is JComponent || !component.isShowing() || !component.isEnabled || !component.isFocusable) {
+      if (component !is JComponent || !component.isShowing() || !component.isEnabled() || !component.isFocusable()) {
         return editorWithProvider.fileEditor.preferredFocusedComponent
       }
       else {
@@ -573,19 +543,12 @@ open class EditorComposite internal constructor(
     val container = (if (top) topComponents.get(editor) else bottomComponents.get(editor))!!
     selfBorder = false
     if (remove) {
-      val componentParent = component.parent
-      if (componentParent == null) {
-        LOG.warn("Attempting to remove component '$component' from the editor '$editor'," +
-                 "but the component has no parent", Throwable())
+      container.remove(component.parent)
+      if (top) {
+        dispatcher.multicaster.topComponentRemoved(editor, component, container)
       }
       else {
-        container.remove(componentParent)
-        if (top) {
-          dispatcher.multicaster.topComponentRemoved(editor, component, container)
-        }
-        else {
-          dispatcher.multicaster.bottomComponentRemoved(editor, component, container)
-        }
+        dispatcher.multicaster.bottomComponentRemoved(editor, component, container)
       }
     }
     else {
@@ -763,7 +726,6 @@ open class EditorComposite internal constructor(
     dispatcher.multicaster.editorRemoved(editorTypeId)
   }
 
-  @JvmName("currentStateAsFileEntry")
   internal fun currentStateAsFileEntry(): FileEntry? {
     val fileEditorWithProviderList = fileEditorWithProviders.value
     if (fileEditorWithProviderList.isEmpty()) {
@@ -836,20 +798,6 @@ open class EditorComposite internal constructor(
       element.setAttribute(PREVIEW_ATTRIBUTE, "true")
     }
     return element
-  }
-
-  /**
-   * Never rethrows exceptions from [lambda] to make sure that [setFileEditors] is always invoked releasing [waitForAvailable].
-   *
-   * IJPL-181752 logging all exceptions including PCE may not be the best solution,
-   * but it can make life easier while investigating why the selected editor / editor state is null
-   */
-  private fun <T> computeOrLogException(lambda: () -> T, errorMessage: () -> String): T? {
-    return runCatching {
-      lambda.invoke()
-    }.onFailure {
-      LOG.error(errorMessage.invoke(), it)
-    }.getOrNull()
   }
 
   override fun toString() = "EditorComposite(identityHashCode=${System.identityHashCode(this)}, file=$file)"
@@ -990,13 +938,32 @@ internal fun isEditorComposite(component: Component): Boolean = component is Edi
  * A mapper for old API with arrays and pairs
  */
 @Internal
-fun retrofitEditorComposite(composite: FileEditorComposite?): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+fun retrofitEditorComposite(composite: FileEditorComposite?): com.intellij.openapi.util.Pair<Array<FileEditor>, Array<FileEditorProvider>> {
   if (composite == null) {
-    return Pair(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY)
+    return com.intellij.openapi.util.Pair(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY)
   }
   else {
     return composite.retrofit()
   }
+}
+
+internal fun restoreEditorState(
+  file: VirtualFile,
+  fileEditorWithProvider: FileEditorWithProvider,
+  isNewEditor: Boolean,
+  exactState: Boolean,
+  project: Project,
+) {
+  val state = if (isNewEditor) {
+    // We have to try to get state from the history only in case of the editor is not opened.
+    // Otherwise, history entry might have a state out of sync with the current editor state.
+    EditorHistoryManager.getInstance(project).getState(file, fileEditorWithProvider.provider) ?: return
+  }
+  else {
+    return
+  }
+
+  restoreEditorState(fileEditorWithProvider = fileEditorWithProvider, state = state, exactState = exactState, project = project)
 }
 
 internal fun restoreEditorState(
@@ -1015,7 +982,7 @@ internal fun restoreEditorState(
 }
 
 private fun isDumbAware(editor: FileEditor): Boolean {
-  return editor.getUserData(FileEditorManagerKeys.DUMB_AWARE) == true && (editor !is PossiblyDumbAware || (editor as PossiblyDumbAware).isDumbAware)
+  return editor.getUserData(DUMB_AWARE) == true && (editor !is PossiblyDumbAware || (editor as PossiblyDumbAware).isDumbAware)
 }
 
 @RequiresEdt

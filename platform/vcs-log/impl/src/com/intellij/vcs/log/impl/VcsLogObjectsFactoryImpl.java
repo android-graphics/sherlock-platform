@@ -4,12 +4,10 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-@ApiStatus.Internal
 public final class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
   private final @NotNull VcsUserRegistry myUserRegistry;
 

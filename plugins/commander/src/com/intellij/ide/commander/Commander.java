@@ -38,6 +38,7 @@ import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -57,7 +58,7 @@ import static com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy.getPreferredFoc
  * @author Eugene Belyaev
  */
 @State(name = "Commander", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class Commander extends JPanel implements PersistentStateComponent<Element>, UiDataProvider, TwoPaneIdeView, Disposable {
+public class Commander extends JPanel implements PersistentStateComponent<Element>, DataProvider, TwoPaneIdeView, Disposable {
   private final Project project;
   private CommanderPanel myLeftPanel;
   private CommanderPanel myRightPanel;
@@ -69,16 +70,16 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   private final FocusWatcher myFocusWatcher;
   private final CommanderHistory myHistory;
   private boolean myAutoScrollMode;
-  private static final @NonNls String ACTION_BACKCOMMAND = "backCommand";
-  private static final @NonNls String ACTION_FORWARDCOMMAND = "forwardCommand";
-  private static final @NonNls String ELEMENT_LEFTPANEL = "leftPanel";
-  private static final @NonNls String ATTRIBUTE_MOVE_FOCUS = "MOVE_FOCUS";
-  private static final @NonNls String ELEMENT_OPTION = "OPTION";
-  private static final @NonNls String ATTRIBUTE_PROPORTION = "proportion";
-  private static final @NonNls String ELEMENT_SPLITTER = "splitter";
-  private static final @NonNls String ELEMENT_RIGHTPANEL = "rightPanel";
-  private static final @NonNls String ATTRIBUTE_URL = "url";
-  private static final @NonNls String ATTRIBUTE_CLASS = "class";
+  @NonNls private static final String ACTION_BACKCOMMAND = "backCommand";
+  @NonNls private static final String ACTION_FORWARDCOMMAND = "forwardCommand";
+  @NonNls private static final String ELEMENT_LEFTPANEL = "leftPanel";
+  @NonNls private static final String ATTRIBUTE_MOVE_FOCUS = "MOVE_FOCUS";
+  @NonNls private static final String ELEMENT_OPTION = "OPTION";
+  @NonNls private static final String ATTRIBUTE_PROPORTION = "proportion";
+  @NonNls private static final String ELEMENT_SPLITTER = "splitter";
+  @NonNls private static final String ELEMENT_RIGHTPANEL = "rightPanel";
+  @NonNls private static final String ATTRIBUTE_URL = "url";
+  @NonNls private static final String ATTRIBUTE_CLASS = "class";
 
 
   public Commander(Project project) {
@@ -393,8 +394,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     final CommanderPanel inactivePanel = getInactivePanel();
     inactivePanel.setActive(true);
     activePanel.setActive(false);
-    IdeFocusManager.getGlobalInstance()
-      .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getPreferredFocusedComponent(inactivePanel), true));
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getPreferredFocusedComponent(inactivePanel), true));
   }
 
   public void enterElementInActivePanel(final PsiElement element) {
@@ -416,8 +416,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     if (isLeftPanelActive()) {
       activePanel = myLeftPanel;
       passivePanel = myRightPanel;
-    }
-    else {
+    } else {
       activePanel = myRightPanel;
       passivePanel = myLeftPanel;
     }
@@ -434,22 +433,36 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(PlatformCoreDataKeys.HELP_ID, "viewingStructure.commander");
-    sink.set(CommonDataKeys.PROJECT, project);
+  public Object getData(@NotNull final String dataId) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
+      return "viewingStructure.commander";
+    }
+    else if (CommonDataKeys.PROJECT.is(dataId)) {
+      return project;
+    }
+    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      AbstractTreeNode<?> parent1 = getActivePanel().getBuilder().getParentNode();
+      AbstractTreeNode<?> selection1 = getActivePanel().getSelectedNode();
+      AbstractTreeNode<?> parent2 = getInactivePanel().getBuilder().getParentNode();
+      AbstractTreeNode<?> selection2 = getInactivePanel().getSelectedNode();
+      Couple<AbstractTreeNode<?>> activeSelection = Couple.of(parent1, selection1);
+      Couple<AbstractTreeNode<?>> inactiveSelection = Couple.of(parent2, selection2);
 
-    getActivePanel().uiDataSnapshot(sink);
+      DataProvider panelProvider = (DataProvider)getActivePanel().getDataImpl(dataId);
+      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, activeSelection, inactiveSelection), panelProvider);
+    }
+    else {
+      return getActivePanel().getDataImpl(dataId);
+    }
+  }
 
-    AbstractTreeNode<?> parent1 = getActivePanel().getBuilder().getParentNode();
-    AbstractTreeNode<?> selection1 = getActivePanel().getSelectedNode();
-    AbstractTreeNode<?> parent2 = getInactivePanel().getBuilder().getParentNode();
-    AbstractTreeNode<?> selection2 = getInactivePanel().getSelectedNode();
-    Couple<AbstractTreeNode<?>> active = Couple.of(parent1, selection1);
-    Couple<AbstractTreeNode<?>> inactive = Couple.of(parent2, selection2);
-    sink.lazy(LangDataKeys.TARGET_PSI_ELEMENT, () -> {
+  private static @Nullable Object getSlowData(@NotNull String dataId,
+                                              @NotNull Couple<AbstractTreeNode<?>> active,
+                                              @NotNull Couple<AbstractTreeNode<?>> inactive) {
+    if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {
       return getNodeElement(inactive.first);
-    });
-    sink.lazy(DiffDataKeys.DIFF_REQUEST_TO_COMPARE, () -> {
+    }
+    else if (DiffDataKeys.DIFF_REQUEST_TO_COMPARE.is(dataId)) {
       PsiElement primary = getNodeElement(active.second);
       PsiElement secondary = getNodeElement(inactive.second);
       if (primary != null && secondary != null &&
@@ -458,8 +471,8 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
           !PsiTreeUtil.isAncestor(secondary, primary, false)) {
         return PsiDiffContentFactory.comparePsiElements(primary, secondary);
       }
-      return null;
-    });
+    }
+    return null;
   }
 
   @Override
@@ -492,14 +505,14 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     if (builder == null) return;
 
     final AbstractTreeNode parentNode = builder.getParentNode();
-    final Object parentElement = parentNode != null ? parentNode.getValue() : null;
+    final Object parentElement = parentNode != null? parentNode.getValue() : null;
     if (parentElement instanceof PsiDirectory directory) {
       element.setAttribute(ATTRIBUTE_URL, directory.getVirtualFile().getUrl());
     }
     else if (parentElement instanceof PsiClass) {
-      for (PsiElement e = (PsiElement)parentElement; e != null && e.isValid(); e = e.getParent()) {
+      for (PsiElement e = (PsiElement) parentElement; e != null && e.isValid(); e = e.getParent()) {
         if (e instanceof PsiClass) {
-          final String qualifiedName = ((PsiClass)e).getQualifiedName();
+          final String qualifiedName = ((PsiClass) e).getQualifiedName();
           if (qualifiedName != null) {
             element.setAttribute(ATTRIBUTE_CLASS, qualifiedName);
             break;
@@ -555,7 +568,8 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   private static class CommanderPluginPanel extends CommanderPanel {
-    private final @NotNull CopyPasteDelegator myCopyPasteDelegator;
+    @NotNull
+    private final CopyPasteDelegator myCopyPasteDelegator;
 
     CommanderPluginPanel(Project project, boolean enablePopupMenu, boolean enableSearchHighlighting) {
       super(project, enableSearchHighlighting);
@@ -586,11 +600,17 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     }
 
     @Override
-    public void uiDataSnapshot(@NotNull DataSink sink) {
-      super.uiDataSnapshot(sink);
-      sink.set(PlatformDataKeys.COPY_PROVIDER, myCopyPasteDelegator.getCopyProvider());
-      sink.set(PlatformDataKeys.CUT_PROVIDER, myCopyPasteDelegator.getCutProvider());
-      sink.set(PlatformDataKeys.PASTE_PROVIDER, myCopyPasteDelegator.getPasteProvider());
+    public Object getDataImpl(String dataId) {
+      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+        return myCopyPasteDelegator.getCopyProvider();
+      }
+      if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
+        return myCopyPasteDelegator.getCutProvider();
+      }
+      if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
+        return myCopyPasteDelegator.getPasteProvider();
+      }
+      return super.getDataImpl(dataId);
     }
   }
 }

@@ -4,16 +4,13 @@ package com.intellij.platform.workspace.storage.tests.propertyBased
 import com.google.common.collect.HashBiMap
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.*
+import com.intellij.platform.workspace.storage.impl.StorageIndexes
 import com.intellij.platform.workspace.storage.impl.exceptions.ApplyChangesFromException
 import com.intellij.platform.workspace.storage.impl.exceptions.ReplaceBySourceException
 import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.tests.createBuilderFrom
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
-import com.intellij.testFramework.propertyBased.MadTestingUtil.assertNoErrorLoggedIn
-import kotlinx.collections.immutable.persistentHashMapOf
-import kotlinx.collections.immutable.toPersistentHashSet
-import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
@@ -26,34 +23,34 @@ class PropertyTest {
   @Test
   fun entityManipulations() {
     PropertyChecker.checkScenarios {
-      assertNoErrorLoggedIn(ImperativeCommand { env ->
+      ImperativeCommand { env ->
         val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
         val detachedEntities = ArrayList<WorkspaceEntity>()
         env.executeCommands(getEntityManipulation(workspace, detachedEntities))
         workspace.assertConsistency()
-      })
+      }
     }
   }
 
   @Test
   fun testReplaceBySource() {
     PropertyChecker.checkScenarios {
-      assertNoErrorLoggedIn(ImperativeCommand { env ->
+      ImperativeCommand { env ->
         val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
         env.executeCommands(ReplaceBySource.create(workspace))
         workspace.assertConsistency()
-      })
+      }
     }
   }
 
   @Test
   fun testApplyChangesFrom() {
     PropertyChecker.checkScenarios {
-      assertNoErrorLoggedIn(ImperativeCommand { env ->
+      ImperativeCommand { env ->
         val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
         env.executeCommands(ApplyChangesFrom.create(workspace))
         workspace.assertConsistency()
-      })
+      }
     }
   }
 
@@ -63,9 +60,9 @@ class PropertyTest {
   @Test
   fun `add diff generates same changelog simple test`() {
     PropertyChecker.checkScenarios {
-      assertNoErrorLoggedIn(ImperativeCommand { env ->
+      ImperativeCommand { env ->
         env.executeCommands(ApplyChangesFromCheckChangelog.create(null))
-      })
+      }
     }
   }
 
@@ -75,11 +72,11 @@ class PropertyTest {
   @Test
   fun `add diff generates same changelog`() {
     PropertyChecker.checkScenarios {
-      assertNoErrorLoggedIn(ImperativeCommand { env ->
+      ImperativeCommand { env ->
         val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
         env.executeCommands(ApplyChangesFromCheckChangelog.create(workspace))
         workspace.assertConsistency()
-      })
+      }
     }
   }
 }
@@ -153,14 +150,14 @@ private class ApplyChangesFromCheckChangelog(val preBuilder: MutableEntityStorag
   private fun assertEntries(updatedChangelog: Map<EntityId, ChangeEntry>, actualChangelog: Map<EntityId, ChangeEntry>) {
     val left = updatedChangelog.mapValues { (k, v) ->
       if (v is ChangeEntry.ReplaceEntity) {
-        val newRefs = v.references?.copy(childrenOrdering = persistentHashMapOf()).takeUnless { it?.isEmpty() == true }
+        val newRefs = v.references?.copy(childrenOrdering = emptyMap()).takeUnless { it?.isEmpty() == true }
         v.copy(references = newRefs).takeUnless { it.data == null && it.references == null }
       }
       else v
     }.filterValues { it != null }
     val right = actualChangelog.mapValues { (k, v) ->
       if (v is ChangeEntry.ReplaceEntity) {
-        val references = v.references?.copy(childrenOrdering = persistentHashMapOf()).takeUnless { it?.isEmpty() == true }
+        val references = v.references?.copy(childrenOrdering = emptyMap()).takeUnless { it?.isEmpty() == true }
         v.copy(references = references).takeUnless { it.data == null && it.references == null }
       }
       else v
@@ -201,14 +198,14 @@ private class ApplyChangesFromCheckChangelog(val preBuilder: MutableEntityStorag
             }
             newEntry = newEntry.copy(
               references = entry.references?.copy(
-                newChildren = entry.references.newChildren.map {
+                newChildren = entry.references.newChildren.mapTo(HashSet()) {
                   it.copy(second = replaceMap[it.second.id.notThis()]?.id?.asChild() ?: it.second)
-                }.toPersistentHashSet(),
-                removedChildren = entry.references.removedChildren.map {
+                },
+                removedChildren = entry.references.removedChildren.mapTo(HashSet()) {
                   it.copy(second = replaceMap[it.second.id.notThis()]?.id?.asChild() ?: it.second)
-                }.toPersistentHashSet(),
-                newParents = entry.references.newParents.mapValues { (_, v) -> replaceMap[v.id.notThis()]?.id?.asParent() ?: v }.toPersistentMap(),
-                removedParents = entry.references.removedParents.mapValues { (_, v) -> replaceMap[v.id.notThis()]?.id?.asParent() ?: v }.toPersistentMap(),
+                },
+                newParents = entry.references.newParents.mapValues { (_, v) -> replaceMap[v.id.notThis()]?.id?.asParent() ?: v },
+                removedParents = entry.references.removedParents.mapValues { (_, v) -> replaceMap[v.id.notThis()]?.id?.asParent() ?: v },
               )
             )
             put(newId, newEntry)

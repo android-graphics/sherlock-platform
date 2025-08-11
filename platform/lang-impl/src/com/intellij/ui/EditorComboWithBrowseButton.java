@@ -1,7 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.util.ArrayUtilRt;
@@ -17,14 +17,14 @@ import java.util.List;
 public class EditorComboWithBrowseButton extends ComponentWithBrowseButton<EditorComboBox> implements TextAccessor {
   public EditorComboWithBrowseButton(final ActionListener browseActionListener,
                                      final String text,
-                                     final @NotNull Project project,
+                                     @NotNull final Project project,
                                      final String recentsKey) {
-    super(new EditorComboBox(text, project, FileTypes.PLAIN_TEXT), browseActionListener);
+    super(new EditorComboBox(text, project, StdFileTypes.PLAIN_TEXT), browseActionListener);
     final List<String> recentEntries = RecentsManager.getInstance(project).getRecentEntries(recentsKey);
     if (recentEntries != null) {
       setHistory(ArrayUtilRt.toStringArray(recentEntries));
     }
-    if (text != null && !text.isEmpty()) {
+    if (text != null && text.length() > 0) {
       prependItem(text);
     }
   }

@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.lang.ant.AntBundle;
@@ -39,7 +53,8 @@ public class AntSetPanel {
     myForm = new Form(antConfiguration);
   }
 
-  public @Nullable AntInstallation showDialog(JComponent parent) {
+  @Nullable
+  public AntInstallation showDialog(JComponent parent) {
     final DialogWrapper dialog = new MyDialog(parent);
     if (!dialog.showAndGet()) {
       return null;
@@ -243,12 +258,14 @@ public class AntSetPanel {
     }
 
     @Override
-    protected @Nullable JComponent createCenterPanel() {
+    @Nullable
+      protected JComponent createCenterPanel() {
       return myForm.getComponent();
     }
 
     @Override
-    protected @NonNls String getDimensionServiceKey() {
+    @NonNls
+      protected String getDimensionServiceKey() {
       return "antSetDialogDimensionKey";
     }
 
@@ -263,7 +280,7 @@ public class AntSetPanel {
       final ListModel<AntInstallation> model = myForm.getAntsList().getModel();
       for (int idx = 0; idx  < model.getSize(); idx++) {
         final AntInstallation inst = model.getElementAt(idx);
-        final @NlsSafe String name = AntInstallation.NAME.get(myForm.getProperties(inst));
+        @NlsSafe final String name = AntInstallation.NAME.get(myForm.getProperties(inst));
         if (names.contains(name)) {
           Messages.showErrorDialog(AntBundle.message("dialog.message.duplicate.ant.installation.name", name), getTitle());
           return;

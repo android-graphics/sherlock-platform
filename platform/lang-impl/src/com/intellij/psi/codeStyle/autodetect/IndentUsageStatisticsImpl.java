@@ -4,13 +4,11 @@ package com.intellij.psi.codeStyle.autodetect;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiStatus.Internal
 public final class IndentUsageStatisticsImpl implements IndentUsageStatistics {
   private final List<LineIndentInfo> myLineInfos;
 

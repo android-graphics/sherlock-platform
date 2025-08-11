@@ -5,9 +5,7 @@ import com.intellij.vcs.log.graph.api.EdgeFilter
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.collapsing.EdgeStorageWrapper
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 open class LinearGraphWrapper @JvmOverloads constructor(val graph: LinearGraph,
                                                         val hiddenEdges: EdgeStorageWrapper = EdgeStorageWrapper.createSimpleEdgeStorage(),
                                                         val dottedEdges: EdgeStorageWrapper = EdgeStorageWrapper.createSimpleEdgeStorage()) : LinearGraph {

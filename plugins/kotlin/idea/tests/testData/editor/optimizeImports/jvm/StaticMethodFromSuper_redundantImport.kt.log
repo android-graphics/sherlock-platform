@@ -1,3 +1,0 @@
-Additional checking of reference Getter: currentThread
-Additional checking of reference KtSimpleNameReference: currentThread
-Additional checking of reference KtInvokeFunctionReference: currentThread()

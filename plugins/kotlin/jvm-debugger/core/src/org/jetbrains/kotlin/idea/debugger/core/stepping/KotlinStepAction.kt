@@ -22,9 +22,9 @@ sealed class KotlinStepAction {
         }
     }
 
-    class StepOut(private val filter: MethodFilter? = null) : KotlinStepAction() {
+    object StepOut : KotlinStepAction() {
         override fun createCommand(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl, ignoreBreakpoints: Boolean): DebugProcessImpl.StepCommand {
-            return KotlinStepActionFactory.createStepOutCommand(debugProcess, suspendContext, filter)
+            return KotlinStepActionFactory.createStepOutCommand(debugProcess, suspendContext)
         }
     }
 

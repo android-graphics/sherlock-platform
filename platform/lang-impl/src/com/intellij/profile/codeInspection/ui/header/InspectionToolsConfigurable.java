@@ -113,6 +113,8 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
     };
     wholePanel.add(myProfilePanelHolder, BorderLayout.CENTER);
 
+    JPanel profilesHolder = new JPanel();
+    profilesHolder.setLayout(new CardLayout());
     myAbstractSchemesPanel = new InspectionProfileSchemesPanel(getProject(),
                                                                myApplicationProfileManager,
                                                                myProjectProfileManager,

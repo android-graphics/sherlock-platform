@@ -15,13 +15,15 @@ public final class NameSuggesterUtil {
   private NameSuggesterUtil() {
   }
 
-  private static @NotNull String deleteNonLetterFromString(final @NotNull String string) {
+  @NotNull
+  private static String deleteNonLetterFromString(@NotNull final String string) {
     Pattern pattern = Pattern.compile("[^a-zA-Z_]+");
     Matcher matcher = pattern.matcher(string);
     return matcher.replaceAll("_");
   }
 
-  public static @NotNull Collection<String> generateNames(@NotNull String name) {
+  @NotNull
+  public static Collection<String> generateNames(@NotNull String name) {
     name = StringUtil.decapitalize(deleteNonLetterFromString(StringUtil.unquoteString(name.replace('.', '_'))));
     if (name.startsWith("get")) {
       name = name.substring(3);
@@ -56,7 +58,8 @@ public final class NameSuggesterUtil {
     return possibleNames;
   }
 
-  public static @NotNull String toUnderscoreCase(final @NotNull String name) {
+  @NotNull
+  public static String toUnderscoreCase(@NotNull final String name) {
     StringBuilder buffer = new StringBuilder();
     final int length = name.length();
 

@@ -1,4 +1,5 @@
-from typing import ClassVar, Literal
+from typing import ClassVar
+from typing_extensions import Literal
 
 from openpyxl.descriptors.base import Bool, _ConvertibleToBool
 from openpyxl.descriptors.serialisable import Serialisable

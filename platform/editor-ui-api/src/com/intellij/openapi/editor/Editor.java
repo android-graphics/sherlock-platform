@@ -353,11 +353,7 @@ public interface Editor extends UserDataHolder {
   /** Returns the project to which the editor is related, if any. */
   @Nullable Project getProject();
 
-  /**
-   * Returns the file being edited, if any. Not necessary matching the {@link #getDocument()}, often <code>null</code>.
-   * <p>
-   * See also {@link com.intellij.openapi.fileEditor.FileDocumentManager#getFile(Document)} as a more reliable alternative.
-   */
+  /** Returns the file being edited, if any. */
   default VirtualFile getVirtualFile() {
     return null;
   }

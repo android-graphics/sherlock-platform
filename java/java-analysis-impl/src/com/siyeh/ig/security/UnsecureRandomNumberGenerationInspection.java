@@ -27,8 +27,9 @@ public final class UnsecureRandomNumberGenerationInspection
   extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
-    final @NonNls String text = ((PsiElement)infos[0]).getText();
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    @NonNls final String text = ((PsiElement)infos[0]).getText();
     if ("random".equals(text)) {
       return InspectionGadgetsBundle.message(
         "unsecure.random.number.generation.problem.descriptor1");
@@ -80,7 +81,7 @@ public final class UnsecureRandomNumberGenerationInspection
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
-      final @NonNls String methodName =
+      @NonNls final String methodName =
         methodExpression.getReferenceName();
       if (!"random".equals(methodName)) {
         return;

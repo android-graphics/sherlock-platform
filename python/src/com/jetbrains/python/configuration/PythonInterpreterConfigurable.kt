@@ -9,12 +9,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DetailsComponent
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.ModuleOrProject.*
 import javax.swing.JComponent
 
-class PythonInterpreterConfigurable(moduleOrProject: ModuleOrProject) : SearchableConfigurable, MasterDetails {
-  private val masterDetailsComponent: PythonInterpreterMasterDetails = PythonInterpreterMasterDetails(moduleOrProject, this)
+class PythonInterpreterConfigurable(project: Project, module: Module?) : SearchableConfigurable, MasterDetails {
+  private val masterDetailsComponent: PythonInterpreterMasterDetails = PythonInterpreterMasterDetails(project, module, this)
 
   override fun createComponent(): JComponent {
     val component = masterDetailsComponent.createComponent()
@@ -52,7 +50,7 @@ class PythonInterpreterConfigurable(moduleOrProject: ModuleOrProject) : Searchab
 
     @JvmStatic
     fun openInDialog(project: Project, module: Module?, initiallySelectedSdk: Sdk?): Sdk? {
-      val configurable = PythonInterpreterConfigurable(if (module != null) ModuleAndProject(module) else ProjectOnly(project))
+      val configurable = PythonInterpreterConfigurable(project, module)
       // `ShowSettingsUtil.editConfigurable()` with `advancedInitialization` parameter could be possibly also used here
       val dialogWrapper = SettingsDialogFactory.getInstance().create(project, DIMENSION_KEY, configurable, true, false)
       // select project Python interpreter

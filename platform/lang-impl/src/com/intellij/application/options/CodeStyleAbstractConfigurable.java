@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
@@ -15,7 +15,8 @@ import java.util.Set;
 
 public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigurable, OptionsContainingConfigurable {
   private CodeStyleAbstractPanel myPanel;
-  private final @NotNull CodeStyleSettings mySettings;
+  @NotNull
+  private final CodeStyleSettings mySettings;
   private final CodeStyleSettings myCloneSettings;
   private final @NlsContexts.ConfigurableName String myDisplayName;
 
@@ -38,7 +39,8 @@ public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigur
     return myPanel.getPanel();
   }
 
-  protected abstract @NotNull CodeStyleAbstractPanel createPanel(@NotNull CodeStyleSettings settings);
+  @NotNull
+  protected abstract CodeStyleAbstractPanel createPanel(@NotNull CodeStyleSettings settings);
 
   @Override
   public void apply() throws ConfigurationException {
@@ -97,8 +99,9 @@ public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigur
     myPanel.onSomethingChanged();
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<String> processListOptions() {
+  public Set<String> processListOptions() {
     return myPanel.getOptionIndexer().processListOptions();
   }
 

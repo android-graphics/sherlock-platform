@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
@@ -11,9 +11,9 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import static org.jetbrains.java.decompiler.modules.decompiler.SwitchPatternHelper.isBootstrapSwitch;
 
@@ -22,7 +22,7 @@ public class SwitchExprent extends Exprent {
   private Exprent value;
   private List<List<Exprent>> caseValues = new ArrayList<>();
 
-  public SwitchExprent(Exprent value, BitSet bytecodeOffsets) {
+  public SwitchExprent(Exprent value, Set<Integer> bytecodeOffsets) {
     super(EXPRENT_SWITCH);
     this.value = value;
 
@@ -43,7 +43,7 @@ public class SwitchExprent extends Exprent {
   }
 
   @Override
-  public @NotNull VarType getExprType() {
+  public VarType getExprType() {
     return value.getExprType();
   }
 
@@ -71,7 +71,8 @@ public class SwitchExprent extends Exprent {
   }
 
   @Override
-  public List<Exprent> getAllExprents(List<Exprent> lst) {
+  public List<Exprent> getAllExprents() {
+    List<Exprent> lst = new ArrayList<>();
     lst.add(value);
     return lst;
   }
@@ -121,22 +122,6 @@ public class SwitchExprent extends Exprent {
     }
 
     return Objects.equals(value, sw.getValue());
-  }
-
-  @Override
-  public void fillBytecodeRange(@Nullable BitSet values) {
-    if (caseValues != null && !caseValues.isEmpty()) {
-      for (List<Exprent> l : caseValues) {
-        if (l != null && !l.isEmpty()) {
-          for (Exprent e : l) {
-            if (e != null)
-              e.fillBytecodeRange(values);
-          }
-        }
-      }
-    }
-    measureBytecode(values, value);
-    measureBytecode(values);
   }
 
   public Exprent getValue() {

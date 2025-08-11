@@ -7,18 +7,15 @@ import org.jetbrains.annotations.NonNls
 import java.awt.CardLayout
 import javax.swing.JComponent
 
-internal class ExpandablePanelController(
-  expandedControlContent: JComponent,
-  collapsedControlContent: JComponent,
-  private val expandablePanel: JComponent,
-) {
+class ExpandablePanelController(expandedControlContent: JComponent,
+                                collapsedControlContent: JComponent,
+                                private val expandablePanel: JComponent) {
 
   @NonNls private val EXPAND = "expand"
   @NonNls private val COLLAPSE = "collapse"
 
-  private val layout = CardLayout()
-  val expandControlPanel: JComponent =
-    JBPanel<JBPanel<*>>(layout)
+  val expandControlPanel =
+    JBPanel<JBPanel<*>>(CardLayout())
       .apply {
         val collapsedWrapped = Wrapper(collapsedControlContent)
         val expandedWrapped = Wrapper(expandedControlContent)
@@ -31,7 +28,7 @@ internal class ExpandablePanelController(
   fun isExpanded(): Boolean = expandablePanel.isVisible
 
   fun toggleExpand(expand: Boolean) {
-    layout.show(expandControlPanel, if (expand) EXPAND else COLLAPSE)
+    (expandControlPanel.layout as CardLayout).show(expandControlPanel, if (expand) EXPAND else COLLAPSE)
     expandablePanel.isVisible = expand
   }
 }

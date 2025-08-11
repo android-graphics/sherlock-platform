@@ -1,9 +1,10 @@
-from _typeshed import Incomplete
+from typing import Any
 
-from braintree.resource import Resource
+from braintree.payment_method_parser import parse_payment_method as parse_payment_method
+from braintree.resource import Resource as Resource
 
 class RevokedPaymentMethodMetadata(Resource):
-    revoked_payment_method: Incomplete
-    customer_id: Incomplete
-    token: Incomplete
+    revoked_payment_method: Any
+    customer_id: Any
+    token: Any
     def __init__(self, gateway, attributes) -> None: ...

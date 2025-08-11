@@ -10,12 +10,12 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * An {@link ExecutorService} implementation which schedules tasks to the EDT for execution.
-  * @deprecated Use coroutines.
-  */
-@Deprecated
+ * An {@link ExecutorService} implementation which
+ * schedules tasks to the EDT for execution.
+ */
 public interface EdtScheduledExecutorService extends ScheduledExecutorService {
-  static @NotNull EdtScheduledExecutorService getInstance() {
+  @NotNull
+  static EdtScheduledExecutorService getInstance() {
     return EdtScheduledExecutorServiceImpl.INSTANCE;
   }
 

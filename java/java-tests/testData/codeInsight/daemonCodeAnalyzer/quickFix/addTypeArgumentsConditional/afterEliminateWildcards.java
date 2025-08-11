@@ -1,4 +1,4 @@
-// "Add explicit type arguments to else-branch call" "true-preview"
+// "Add explicit type arguments" "true-preview"
 import java.util.*;
 
 class Test {

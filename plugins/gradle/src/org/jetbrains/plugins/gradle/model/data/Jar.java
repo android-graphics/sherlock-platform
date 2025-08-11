@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.serialization.PropertyMapping;
@@ -14,21 +14,26 @@ import java.io.Serializable;
 public class Jar implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  private final @NotNull String name;
-  private @Nullable File archivePath;
+  @NotNull
+  private final String name;
+  @Nullable
+  private File archivePath;
 
-  private @Nullable String manifestContent;
+  @Nullable
+  private String manifestContent;
 
   @PropertyMapping({"name"})
   public Jar(@NotNull String name) {
     this.name = name;
   }
 
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return name;
   }
 
-  public @Nullable String getManifestContent() {
+  @Nullable
+  public String getManifestContent() {
     return manifestContent;
   }
 
@@ -36,7 +41,8 @@ public class Jar implements Serializable {
     this.manifestContent = manifestContent;
   }
 
-  public @Nullable File getArchivePath() {
+  @Nullable
+  public File getArchivePath() {
     return archivePath;
   }
 

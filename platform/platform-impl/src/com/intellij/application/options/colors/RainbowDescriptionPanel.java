@@ -19,7 +19,6 @@ import com.intellij.util.FontUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +27,6 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 
 
-@ApiStatus.Internal
 public final class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.ColorDescriptionPanel {
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 

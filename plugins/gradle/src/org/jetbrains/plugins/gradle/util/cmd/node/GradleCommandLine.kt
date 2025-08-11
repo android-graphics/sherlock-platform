@@ -10,6 +10,8 @@ data class GradleCommandLine(val tasks: GradleCommandLineTasks, val options: Gra
 
   override val tokens: List<String> = tasks.tokens + options.tokens
 
+  override val text: String = tokens.joinToString(" ")
+
   constructor(tasks: List<GradleCommandLineTask>, options: List<GradleCommandLineOption>)
     : this(GradleCommandLineTasks(tasks), GradleCommandLineOptions(options))
 

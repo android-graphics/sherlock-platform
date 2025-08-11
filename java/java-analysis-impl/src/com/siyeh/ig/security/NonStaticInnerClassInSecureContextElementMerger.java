@@ -6,6 +6,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
+
 /**
  * @author Bas Leijdekkers
  */

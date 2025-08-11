@@ -3,7 +3,7 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
-import junit.framework.TestCase;
+import com.intellij.testFramework.UsefulTestCase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Ignore;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  */
 @SuppressWarnings("NewClassNamingConvention")
 @Ignore
-public class GenerateJavaFormattingStyleCollector extends TestCase {
+public class GenerateJavaFormattingStyleCollector extends UsefulTestCase {
 
   public static final String PATH =
     "/community/java/java-impl/src/com/intellij/internal/statistic/JavaFormattingStyleCollector.kt";
@@ -36,7 +36,7 @@ public class GenerateJavaFormattingStyleCollector extends TestCase {
    * After that, check file com.intellij.internal.statistic.JavaFormattingStyleCollector
    */
   public void testGenerate() {
-    int version = 3; //change it
+    int version = 2; //change it
     List<String> names2 = new ArrayList<>();
     List<String> collectors4 = new ArrayList<>();
     collectFrom(CommonCodeStyleSettings.class, names2, collectors4, "commonSettings", "defaultCommonSettings", "COMMON_");
@@ -97,8 +97,9 @@ public class GenerateJavaFormattingStyleCollector extends TestCase {
       String name = prefix + fieldName;
       names6.add("\"" + name + "\"");
       collectors4.add(
-        "addMetricIfDiffersCustom(result, {nameSetting}, {nameDefaultSetting}, { s -> s.{fieldName} }, \"{name}\")"
-          .replace("{name}", name)
+        """
+          addMetricIfDiffersCustom(result, {nameSetting}, {nameDefaultSetting}, { s -> s.{fieldName} }, "{name}")
+          """.replace("{name}", name)
           .replace("{fieldName}", fieldName)
           .replace("{nameSetting}", nameSetting)
           .replace("{nameDefaultSetting}", nameDefaultSetting)

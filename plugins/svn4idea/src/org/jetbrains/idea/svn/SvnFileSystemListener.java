@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package org.jetbrains.idea.svn;
@@ -52,10 +52,10 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   private static class AddedFileInfo {
     private final VirtualFile myDir;
     private final String myName;
-    private final @Nullable File myCopyFrom;
+    @Nullable private final File myCopyFrom;
     private final boolean myRecursive;
 
-    AddedFileInfo(@NotNull VirtualFile dir, @NotNull String name, final @Nullable File copyFrom, boolean recursive) {
+    AddedFileInfo(@NotNull VirtualFile dir, @NotNull String name, @Nullable final File copyFrom, boolean recursive) {
       myDir = dir;
       myName = name;
       myCopyFrom = copyFrom;
@@ -73,7 +73,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     }
   }
 
-  private final @NotNull SvnVcs myVcs;
+  @NotNull private final SvnVcs myVcs;
 
   private final VcsShowConfirmationOption myAddConfirmation;
   private final VcsShowConfirmationOption myDeleteConfirmation;
@@ -83,7 +83,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   private final List<MovedFileInfo> myMovedFiles = new ArrayList<>();
   private final List<VcsException> myMoveExceptions = new ArrayList<>();
   private final List<VirtualFile> myFilesToRefresh = new ArrayList<>();
-  private @Nullable File myStorageForUndo;
+  @Nullable private File myStorageForUndo;
   private final List<Couple<File>> myUndoStorageContents = new ArrayList<>();
   private boolean myUndoingMove = false;
 
@@ -110,11 +110,13 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     return VcsUtil.isFileForVcs(file, myVcs.getProject(), myVcs);
   }
 
-  private static @NotNull VcsException handleMoveException(@NotNull VcsException e) {
+  @NotNull
+  private static VcsException handleMoveException(@NotNull VcsException e) {
     return e instanceof SvnBindException && ((SvnBindException)e).contains(ErrorCode.ENTRY_EXISTS) ? createMoveTargetExistsError(e) : e;
   }
 
-  private static @NotNull VcsException createMoveTargetExistsError(@NotNull Exception e) {
+  @NotNull
+  private static VcsException createMoveTargetExistsError(@NotNull Exception e) {
     return new VcsException(Arrays.asList(
       message("error.target.of.move.operation.is.already.under.version.control"),
       message("error.move.have.not.been.performed"),
@@ -123,7 +125,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   }
 
   @Override
-  public @Nullable File copy(final @NotNull VirtualFile file, final @NotNull VirtualFile toDir, final @NotNull String copyName) {
+  @Nullable
+  public File copy(@NotNull final VirtualFile file, @NotNull final VirtualFile toDir, @NotNull final String copyName) {
     if (!isMyVcs(toDir)) return null;
 
     startOperation(toDir);
@@ -163,7 +166,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   /**
    * passed dir must be under VC control (it is assumed)
    */
-  private @Nullable String getRepositoryUUID(@NotNull VirtualFile dir) {
+  @Nullable
+  private String getRepositoryUUID(@NotNull VirtualFile dir) {
     try {
       final Info info1 = new RepeatSvnActionThroughBusy() {
         @Override
@@ -456,7 +460,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     }
   }
 
-  private @NotNull RepeatSvnActionThroughBusy createRevertAction(final @NotNull File file, final boolean recursive) {
+  @NotNull
+  private RepeatSvnActionThroughBusy createRevertAction(@NotNull final File file, final boolean recursive) {
     return new RepeatSvnActionThroughBusy() {
       @Override
       protected void executeImpl() throws VcsException {
@@ -465,7 +470,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     };
   }
 
-  private @NotNull RepeatSvnActionThroughBusy createDeleteAction(final @NotNull File file, final boolean force) {
+  @NotNull
+  private RepeatSvnActionThroughBusy createDeleteAction(@NotNull final File file, final boolean force) {
     return new RepeatSvnActionThroughBusy() {
       @Override
       protected void executeImpl() throws VcsException {
@@ -929,11 +935,13 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     runInBackground(message("progress.title.moving.files.in.subversion"), runnable);
   }
 
-  private static @NotNull File getIOFile(@NotNull VirtualFile vf) {
+  @NotNull
+  private static File getIOFile(@NotNull VirtualFile vf) {
     return virtualToIoFile(vf).getAbsoluteFile();
   }
 
-  private @Nullable Status getFileStatus(final @NotNull File file) {
+  @Nullable
+  private Status getFileStatus(@NotNull final File file) {
     try {
       return new RepeatSvnActionThroughBusy() {
         @Override

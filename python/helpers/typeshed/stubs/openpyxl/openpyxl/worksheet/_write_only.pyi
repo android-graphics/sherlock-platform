@@ -3,9 +3,7 @@ from collections.abc import Iterable
 from openpyxl import _Decodable
 from openpyxl.cell.cell import Cell
 from openpyxl.workbook.child import _WorkbookChild
-from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.table import TableList
-from openpyxl.worksheet.views import SheetView
 from openpyxl.worksheet.worksheet import Worksheet
 
 class WriteOnlyWorksheet(_WorkbookChild):
@@ -15,7 +13,6 @@ class WriteOnlyWorksheet(_WorkbookChild):
     add_table = Worksheet.add_table
 
     # Same properties as Worksheet
-    # https://github.com/python/mypy/issues/6700
     @property
     def tables(self) -> TableList: ...
     @property
@@ -37,8 +34,8 @@ class WriteOnlyWorksheet(_WorkbookChild):
     @print_area.setter
     def print_area(self, value: str | Iterable[str] | None) -> None: ...
     @property
-    def sheet_view(self) -> SheetView: ...
-    def __init__(self, parent: Workbook | None, title: str | _Decodable | None) -> None: ...
+    def sheet_view(self): ...
+    def __init__(self, parent, title: str | _Decodable | None) -> None: ...
     @property
     def closed(self) -> bool: ...
     def close(self) -> None: ...

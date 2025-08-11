@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.facet;
 
@@ -21,18 +21,18 @@ import org.jetbrains.annotations.Nullable;
  */
 public class Facet<C extends FacetConfiguration> extends UserDataHolderBase implements UserDataHolder, Disposable, ProjectModelElement {
   public static final Facet[] EMPTY_ARRAY = new Facet[0];
-  private final @NotNull FacetType myFacetType;
-  private final @NotNull Module myModule;
-  private final @NotNull C myConfiguration;
+  @NotNull private final FacetType myFacetType;
+  @NotNull private final Module myModule;
+  @NotNull private final C myConfiguration;
   private final Facet myUnderlyingFacet;
   private @NlsSafe String myName;
   private boolean isDisposed;
   private ProjectModelExternalSource myExternalSource;
 
-  public Facet(final @NotNull FacetType facetType,
-               final @NotNull Module module,
-               final @NotNull @NlsSafe String name,
-               final @NotNull C configuration,
+  public Facet(@NotNull final FacetType facetType,
+               @NotNull final Module module,
+               @NotNull final @NlsSafe String name,
+               @NotNull final C configuration,
                Facet underlyingFacet) {
     myName = name;
     myFacetType = facetType;
@@ -42,7 +42,8 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
     Disposer.register(myModule, this);
   }
 
-  public final @NotNull FacetType getType() {
+  @NotNull
+  public final FacetType getType() {
     return myFacetType;
   }
 
@@ -54,11 +55,13 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
     return myUnderlyingFacet;
   }
 
-  public final @NotNull C getConfiguration() {
+  @NotNull
+  public final C getConfiguration() {
     return myConfiguration;
   }
 
-  public final @NotNull Module getModule() {
+  @NotNull
+  public final Module getModule() {
     return myModule;
   }
 
@@ -85,30 +88,29 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
     disposeFacet();
   }
 
-  @Override
   public final int hashCode() {
     return super.hashCode();
   }
 
-  @Override
   public final boolean equals(Object obj) {
     return super.equals(obj);
   }
 
-  public final @NotNull @NlsSafe String getName() {
+  @NotNull
+  public final @NlsSafe String getName() {
     return myName;
   }
 
   /**
    * Use {@link ModifiableFacetModel#rename} to rename facets
    */
-  @ApiStatus.Internal
-  public final void setName(final @NotNull @NlsSafe String name) {
+  final void setName(@NotNull final @NlsSafe String name) {
     myName = name;
   }
 
+  @Nullable
   @Override
-  public @Nullable ProjectModelExternalSource getExternalSource() {
+  public ProjectModelExternalSource getExternalSource() {
     return myExternalSource;
   }
 

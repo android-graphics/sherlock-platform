@@ -1,9 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.SourcePositionProvider;
+import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
@@ -15,10 +18,12 @@ import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -28,8 +33,6 @@ import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.debugger.actions.ToggleFieldBreakpointActionUtilsKt.getSourcePositionNow;
 
 public class ToggleFieldBreakpointAction extends AnAction implements ActionRemoteBehaviorSpecification.Disabled {
 
@@ -84,7 +87,8 @@ public class ToggleFieldBreakpointAction extends AnAction implements ActionRemot
     return ActionUpdateThread.BGT;
   }
 
-  private static @Nullable SourcePosition getPlace(AnActionEvent event) {
+  @Nullable
+  private static SourcePosition getPlace(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
@@ -105,9 +109,22 @@ public class ToggleFieldBreakpointAction extends AnAction implements ActionRemot
       NodeDescriptorImpl descriptor = ((NodeDescriptorProvider)value).getDescriptor();
       if (descriptor instanceof FieldDescriptorImpl) {
         final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(dataContext);
-        DebuggerManagerThreadImpl managerThread = debuggerContext.getManagerThread();
-        if (managerThread != null) { // if there is an active debug session
-          final SourcePosition sourcePosition = getSourcePositionNow(managerThread, debuggerContext, descriptor);
+        final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
+        if (debugProcess != null) { // if there is an active debug session
+          final Ref<SourcePosition> positionRef = new Ref<>(null);
+          debugProcess.getManagerThread().invokeAndWait(new DebuggerContextCommandImpl(debuggerContext) {
+            @Override
+            public Priority getPriority() {
+              return Priority.HIGH;
+            }
+
+            @Override
+            public void threadAction(@NotNull SuspendContextImpl suspendContext) {
+              ApplicationManager.getApplication().runReadAction(
+                () -> positionRef.set(SourcePositionProvider.getSourcePosition(descriptor, project, debuggerContext)));
+            }
+          });
+          final SourcePosition sourcePosition = positionRef.get();
           if (sourcePosition != null) {
             return sourcePosition;
           }

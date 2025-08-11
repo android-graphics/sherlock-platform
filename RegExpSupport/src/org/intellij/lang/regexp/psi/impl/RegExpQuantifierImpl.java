@@ -44,7 +44,8 @@ public class RegExpQuantifierImpl extends RegExpElementImpl implements RegExpQua
     }
 
     @Override
-    public @Nullable ASTNode getToken() {
+    @Nullable
+    public ASTNode getToken() {
         final ASTNode node = getNode().getFirstChildNode();
         final IElementType type = node.getElementType();
         if (type == RegExpTT.LBRACE) {
@@ -53,8 +54,9 @@ public class RegExpQuantifierImpl extends RegExpElementImpl implements RegExpQua
         return node;
     }
 
+    @Nullable
     @Override
-    public @Nullable RegExpNumber getMin() {
+    public RegExpNumber getMin() {
         final ASTNode[] nodes = getNode().getChildren(TOKENS);
         if (nodes.length == 0 || nodes[0].getElementType() != RegExpElementTypes.NUMBER) {
             return null;
@@ -62,8 +64,9 @@ public class RegExpQuantifierImpl extends RegExpElementImpl implements RegExpQua
         return (RegExpNumber)nodes[0].getPsi();
     }
 
+    @Nullable
     @Override
-    public @Nullable RegExpNumber getMax() {
+    public RegExpNumber getMax() {
         final ASTNode[] nodes = getNode().getChildren(TOKENS);
         if (nodes.length == 0) {
             return null;
@@ -75,8 +78,9 @@ public class RegExpQuantifierImpl extends RegExpElementImpl implements RegExpQua
         return (RegExpNumber)node.getPsi();
     }
 
+    @Nullable
     @Override
-    public @Nullable ASTNode getModifier() {
+    public ASTNode getModifier() {
         final ASTNode[] nodes = getNode().getChildren(RegExpTT.QUANTIFIERS);
         if (nodes.length > 1) {
             final ASTNode node = nodes[1];

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -112,7 +112,8 @@ public final class GrTypeComboBox extends ComboBox {
     addItem(new PsiTypeItem(cl, true));
   }
 
-  public @Nullable PsiType getSelectedType() {
+  @Nullable
+  public PsiType getSelectedType() {
     final Object selected = getSelectedItem();
     assert selected instanceof PsiTypeItem;
     return ((PsiTypeItem)selected).getType();
@@ -201,7 +202,8 @@ public final class GrTypeComboBox extends ComboBox {
   }
 
   private static final class PsiTypeItem {
-    private final @Nullable PsiType myType;
+    @Nullable
+    private final PsiType myType;
 
     private final boolean isClosure;
 
@@ -209,12 +211,13 @@ public final class GrTypeComboBox extends ComboBox {
       this(type, false);
     }
 
-    private PsiTypeItem(final @Nullable PsiType type, boolean closure) {
+    private PsiTypeItem(@Nullable final PsiType type, boolean closure) {
       myType = type;
       isClosure = closure;
     }
 
-    public @Nullable PsiType getType() {
+    @Nullable
+    public PsiType getType() {
       return myType;
     }
 

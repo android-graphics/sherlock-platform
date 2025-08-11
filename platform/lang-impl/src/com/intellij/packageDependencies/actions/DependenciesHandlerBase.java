@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -10,8 +10,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -22,16 +22,15 @@ import com.intellij.packageDependencies.ui.DependenciesPanel;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
 import java.util.Set;
 
-@ApiStatus.Internal
 public abstract class DependenciesHandlerBase {
-  protected final @NotNull Project myProject;
+  @NotNull
+  protected final Project myProject;
   private final List<? extends AnalysisScope> myScopes;
   private final Set<PsiFile> myExcluded;
 
@@ -48,7 +47,7 @@ public abstract class DependenciesHandlerBase {
     if (canStartInBackground()) {
       task = new Task.Backgroundable(myProject, getProgressTitle(), true, new PerformAnalysisInBackgroundOption(myProject)) {
         @Override
-        public void run(final @NotNull ProgressIndicator indicator) {
+        public void run(@NotNull final ProgressIndicator indicator) {
           indicator.setIndeterminate(false);
           perform(result, indicator);
         }
@@ -75,7 +74,8 @@ public abstract class DependenciesHandlerBase {
     ProgressManager.getInstance().run(task);
   }
 
-  protected @NotNull DependencyAnalysisResult createAnalysisResult() {
+  @NotNull
+  protected DependencyAnalysisResult createAnalysisResult() {
     return new DependencyAnalysisResult();
   }
 

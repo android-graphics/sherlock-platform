@@ -142,7 +142,6 @@ public class FastFixedSetFactory<E> {
     }
 
 
-    @Override
     public boolean equals(Object o) {
       if (o == this) return true;
       if (!(o instanceof FastFixedSet)) return false;
@@ -200,7 +199,6 @@ public class FastFixedSetFactory<E> {
       return cl;
     }
 
-    @Override
     public String toString() {
 
       StringBuilder buffer = new StringBuilder("{");

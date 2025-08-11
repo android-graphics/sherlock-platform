@@ -19,7 +19,7 @@ class OpenFileCommandOptionsTest {
   fun testThat_Options_Successfully_Parsed(commandLine: String) {
     //Related to OpenFileCommand logic
     val myOptions = runCatching {
-      OpenFileCommandOptions().apply { Args.parse(this, commandLine.split(" ").toTypedArray(), false) }
+      OpenFileCommandOptions().apply { Args.parse(this, commandLine.split(" ").toTypedArray()) }
     }.getOrNull()
 
     assertTrue(myOptions!!.suppressErrors)
@@ -32,7 +32,7 @@ class OpenFileCommandOptionsTest {
   fun testThat_DisableCodeAnalysis_is_False_ByDefault() {
     //Related to OpenFileCommand logic
     val myOptions = runCatching {
-      OpenFileCommandOptions().apply { Args.parse(this, "-file src/Main.java -suppressErrors -timeout 99".split(" ").toTypedArray(), false) }
+      OpenFileCommandOptions().apply { Args.parse(this, "-file src/Main.java -suppressErrors -timeout 99".split(" ").toTypedArray()) }
     }.getOrNull()
 
     assertFalse(myOptions!!.disableCodeAnalysis)

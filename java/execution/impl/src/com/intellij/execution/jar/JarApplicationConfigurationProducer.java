@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jar;
 
 import com.intellij.execution.Location;
@@ -14,8 +14,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class JarApplicationConfigurationProducer extends LazyRunConfigurationProducer<JarApplicationConfiguration> {
+  @NotNull
   @Override
-  public @NotNull ConfigurationFactory getConfigurationFactory() {
+  public ConfigurationFactory getConfigurationFactory() {
     return JarApplicationConfigurationType.getInstance();
   }
 
@@ -32,7 +33,8 @@ public final class JarApplicationConfigurationProducer extends LazyRunConfigurat
     return false;
   }
 
-  private static @Nullable VirtualFile getJarFileFromContext(ConfigurationContext context) {
+  @Nullable
+  private static VirtualFile getJarFileFromContext(ConfigurationContext context) {
     Location location = context.getLocation();
     if (location == null) return null;
 

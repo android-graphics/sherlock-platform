@@ -1,4 +1,6 @@
 // ERROR: Cannot access 'val MAGIC: Int': it is private in '/J.Z'.
+import J.Z
+
 class J {
     object Z {
         private const val MAGIC = 42

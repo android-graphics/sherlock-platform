@@ -1,11 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
-import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
@@ -16,13 +14,10 @@ import org.jetbrains.java.decompiler.struct.attr.StructAnnotationParameterAttrib
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public final class IdeaNotNullHelper {
 
-
-  private static final String REPORT_NOT_NULL = "$$$reportNull$$$";
 
   public static boolean removeHardcodedChecks(Statement root, StructMethod mt) {
 
@@ -45,15 +40,7 @@ public final class IdeaNotNullHelper {
 
     Statement st = stat.getFirst();
     while (st.type == StatementType.SEQUENCE) {
-      if (st.getFirst() instanceof BasicBlockStatement blockStatement &&
-          st.getStats().size() > 1 &&
-          (blockStatement.getExprents() == null ||
-           blockStatement.getExprents().isEmpty())) {
-        st = st.getStats().get(1);
-      }
-      else {
-        st = st.getFirst();
-      }
+      st = st.getFirst();
     }
 
     if (st.type == StatementType.IF) {
@@ -70,11 +57,8 @@ public final class IdeaNotNullHelper {
           if_condition.type == Exprent.EXPRENT_FUNCTION &&
           ((FunctionExprent)if_condition).getFuncType() == FunctionExprent.FUNCTION_EQ &&
           ifbranch.type == StatementType.BASIC_BLOCK &&
-          ifbranch.getExprents() != null && ifbranch.getExprents().size() == 1 &&
-          (ifbranch.getExprents().get(0).type == Exprent.EXPRENT_EXIT ||
-           (ifbranch.getExprents().get(0) instanceof InvocationExprent invocationExprent &&
-            invocationExprent.getName() != null &&
-            invocationExprent.getName().startsWith(REPORT_NOT_NULL)))) {
+          ifbranch.getExprents().size() == 1 &&
+          ifbranch.getExprents().get(0).type == Exprent.EXPRENT_EXIT) {
 
         FunctionExprent func = (FunctionExprent)if_condition;
         Exprent first_param = func.getLstOperands().get(0);
@@ -142,27 +126,12 @@ public final class IdeaNotNullHelper {
 
     Statement st = stat.getFirst();
     while (st.type == StatementType.SEQUENCE) {
-      if (st.getFirst() instanceof BasicBlockStatement blockStatement &&
-          st.getStats().size() > 1 &&
-          (blockStatement.getExprents() == null ||
-           blockStatement.getExprents().isEmpty())) {
-        st = st.getStats().get(1);
-      }
-      else {
-        st = st.getFirst();
-      }
+      st = st.getFirst();
     }
 
     IfStatement ifstat = (IfStatement)st;
-    if (ifstat.getIfstat().getExprents() != null && ifstat.getIfstat().getExprents().size() == 1 &&
-        ifstat.getIfstat().getExprents().get(0) instanceof InvocationExprent invocationExprent && invocationExprent.getName() != null &&
-        invocationExprent.getName().startsWith(REPORT_NOT_NULL)) {
-      Statement parent = ifstat.getParent();
-      BasicBlockStatement newstat = new BasicBlockStatement(new BasicBlock(ifstat.id));
-      newstat.setExprents(new ArrayList<>());
-      parent.replaceStatement(ifstat, newstat);
-    }
-    else if (ifstat.getElsestat() != null) { // if - else
+
+    if (ifstat.getElsestat() != null) { // if - else
       StatEdge ifedge = ifstat.getIfEdge();
       StatEdge elseedge = ifstat.getElseEdge();
 
@@ -265,13 +234,13 @@ public final class IdeaNotNullHelper {
               }
             }
           }
+          //}
         }
       }
     }
     else if (parent != null &&
              parent.type == StatementType.SEQUENCE &&
              stat.type == StatementType.BASIC_BLOCK &&
-             stat.getExprents() !=null &&
              stat.getExprents().size() == 1) {
       Exprent exprent = stat.getExprents().get(0);
       if (exprent.type == Exprent.EXPRENT_EXIT) {
@@ -304,10 +273,7 @@ public final class IdeaNotNullHelper {
                   if (ifbranch.type == StatementType.BASIC_BLOCK &&
                       ifbranch.getExprents().size() == 1 &&
                       // TODO: special check for IllegalStateException
-                      (ifbranch.getExprents().get(0).type == Exprent.EXPRENT_EXIT  ||
-                       (ifbranch.getExprents().get(0) instanceof InvocationExprent invocationExprent &&
-                        invocationExprent.getName() != null &&
-                        invocationExprent.getName().startsWith(REPORT_NOT_NULL)))) {
+                      ifbranch.getExprents().get(0).type == Exprent.EXPRENT_EXIT) {
 
                     ifstat.removeSuccessor(ifstat.getAllSuccessorEdges().get(0)); // remove 'else' edge
 

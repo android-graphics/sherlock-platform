@@ -10,5 +10,3 @@ class Bar(override val text: String, val number: Int) : Foo {
         get() = TODO("Not yet implemented")
 
 }
-
-// MEMBER: "name: String"

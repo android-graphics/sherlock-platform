@@ -57,8 +57,9 @@ public class Xslt2ContextProvider extends XsltContextProviderBase {
     super(contextElement);
   }
 
+  @NotNull
   @Override
-  public @NotNull ContextType getContextType() {
+  public ContextType getContextType() {
     return TYPE;
   }
 
@@ -117,7 +118,8 @@ public class Xslt2ContextProvider extends XsltContextProviderBase {
     };
 
   @Override
-  public @NotNull FunctionContext createFunctionContext() {
+  @NotNull
+  public FunctionContext createFunctionContext() {
     final XmlElement contextElement = getContextElement();
     return contextElement != null && contextElement.isValid() ?
             functionContextCache.get((XmlFile)contextElement.getContainingFile(), null) :
@@ -141,7 +143,8 @@ public class Xslt2ContextProvider extends XsltContextProviderBase {
     return Collections.emptyMap();
   }
 
-  private static @Nullable Function resolveCustomFunction(final XmlFile file, final QName name, int argCount) {
+  @Nullable
+  private static Function resolveCustomFunction(final XmlFile file, final QName name, int argCount) {
     final Map<Pair<QName, Integer>, Function> functions = getCustomFunctions(file);
     final Function exactMatch = functions.get(Pair.create(name, argCount));
     if (exactMatch != null) {
@@ -173,7 +176,7 @@ public class Xslt2ContextProvider extends XsltContextProviderBase {
 
       final Collection<XmlFile> data = ResolveUtil.getDependencies(param);
       final Object[] dependencies;
-      if (data == null || data.isEmpty()) {
+      if (data == null || data.size() == 0) {
         dependencies = new Object[]{ param };
       } else {
         data.add(param);

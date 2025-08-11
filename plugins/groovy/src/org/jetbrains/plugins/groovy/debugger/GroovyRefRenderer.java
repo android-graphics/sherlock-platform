@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.debugger.DebuggerContext;
@@ -114,7 +114,8 @@ public final class GroovyRefRenderer extends NodeRendererImpl {
   }
 
   @Override
-  public @Nullable String calcIdLabel(ValueDescriptor descriptor, DebugProcess process, DescriptorLabelListener labelListener) {
+  @Nullable
+  public String calcIdLabel(ValueDescriptor descriptor, DebugProcess process, DescriptorLabelListener labelListener) {
     ValueDescriptor fieldDescriptor = getWrappedDescriptor(descriptor.getValue(), process.getProject());
     return getDelegateRenderer(process, fieldDescriptor)
       .thenApply(renderer -> ((NodeRendererImpl)renderer).calcIdLabel(fieldDescriptor, process, labelListener))

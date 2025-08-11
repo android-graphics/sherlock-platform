@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -7,8 +7,6 @@ import com.intellij.codeInsight.daemon.UnusedImportProvider;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.codeInspection.ExternalSourceProblemGroup;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -38,11 +36,10 @@ import java.util.function.Function;
 
 class UnusedImportsVisitor extends JavaElementVisitor {
   private final LocalRefUseInfo myRefCountHolder;
-  private final @NotNull Project myProject;
+  @NotNull private final Project myProject;
   private final PsiFile myFile;
-  private final @NotNull Document myDocument;
-  private final @NotNull CodeInsightContext myContext;
-  private boolean requiresFix = false;
+  @NotNull private final Document myDocument;
+  private IntentionAction myOptimizeImportsFix; // when not null, there are not-optimized imports in the file
   private int myCurrentEntryIndex = -1;
   private boolean errorFound;
 
@@ -53,7 +50,6 @@ class UnusedImportsVisitor extends JavaElementVisitor {
     myFile = file;
     myDocument = document;
     myRefCountHolder = LocalRefUseInfo.forFile(file);
-    myContext = FileViewProviderUtil.getCodeInsightContext(file);
   }
 
   void collectHighlights(@NotNull HighlightInfoHolder holder) {
@@ -73,19 +69,17 @@ class UnusedImportsVisitor extends JavaElementVisitor {
     if (errorFound) {
       DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
       FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
-      fileStatusMap.setErrorFoundFlag(myDocument, myContext, true);
+      fileStatusMap.setErrorFoundFlag(myProject, myDocument, true);
     }
-    IntentionAction fixNotOnFly = null;
-    if (requiresFix) {
-      IntentionAction fix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFile);
+    IntentionAction fix = myOptimizeImportsFix;
+    if (fix != null) {
       OptimizeImportRestarter.getInstance(myProject).scheduleOnDaemonFinish(myFile, fix);
-      fixNotOnFly = QuickFixFactory.getInstance().createOptimizeImportsFix(false, myFile);
     }
     HighlightDisplayKey misSortedKey = HighlightDisplayKey.find(MissortedImportsInspection.SHORT_NAME);
-    if (misSortedKey != null && isToolEnabled(misSortedKey) && fixNotOnFly != null && importList != null) {
+    if (misSortedKey != null && isToolEnabled(misSortedKey) && fix != null && importList != null) {
       holder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.MISSORTED_IMPORTS)
         .range(importList)
-        .registerFix(fixNotOnFly, null, HighlightDisplayKey.getDisplayNameByKey(misSortedKey), null, misSortedKey)
+        .registerFix(fix, null, HighlightDisplayKey.getDisplayNameByKey(misSortedKey), null, misSortedKey)
         .create());
     }
   }
@@ -116,7 +110,8 @@ class UnusedImportsVisitor extends JavaElementVisitor {
            !HighlightingLevelManager.getInstance(myProject).runEssentialHighlightingOnly(myFile);
   }
 
-  private static @NotNull InspectionProfile getCurrentProfile(@NotNull PsiFile file) {
+  @NotNull
+  private static InspectionProfile getCurrentProfile(@NotNull PsiFile file) {
     Function<? super InspectionProfile, ? extends InspectionProfileWrapper> custom = InspectionProfileWrapper.getCustomInspectionProfileWrapper(file);
     InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(file.getProject()).getCurrentProfile();
     return custom != null ? custom.apply(currentProfile).getInspectionProfile() : currentProfile;
@@ -140,9 +135,9 @@ class UnusedImportsVisitor extends JavaElementVisitor {
     }
 
     int entryIndex = JavaCodeStyleManager.getInstance(myProject).findEntryIndex(importStatement);
-    if (entryIndex < myCurrentEntryIndex && !requiresFix) {
+    if (entryIndex < myCurrentEntryIndex && myOptimizeImportsFix == null) {
       // mis-sorted imports found
-      requiresFix = true;
+      myOptimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFile);
     }
     myCurrentEntryIndex = entryIndex;
   }
@@ -176,7 +171,7 @@ class UnusedImportsVisitor extends JavaElementVisitor {
     String description = !predefinedImport ? JavaAnalysisBundle.message("unused.import.statement") :
                          JavaAnalysisBundle.message("text.unused.import.in.template");
     InspectionProfile profile = getCurrentProfile(myFile);
-    TextAttributesKey key = ObjectUtils.notNull(profile.getEditorAttributes(unusedImportKey.getShortName(), myFile),
+    TextAttributesKey key = ObjectUtils.notNull(profile.getEditorAttributes(unusedImportKey.toString(), myFile),
                                                 JavaHighlightInfoTypes.UNUSED_IMPORT.getAttributesKey());
     HighlightInfoType.HighlightInfoTypeImpl configHighlightType =
       new HighlightInfoType.HighlightInfoTypeImpl(profile.getErrorLevel(unusedImportKey, myFile).getSeverity(), key);
@@ -196,14 +191,15 @@ class UnusedImportsVisitor extends JavaElementVisitor {
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(configHighlightType)
         .range(importStatement)
         .descriptionAndTooltip(description)
+        .group(GeneralHighlightingPass.POST_UPDATE_ALL)
         .problemGroup(problemGroup);
 
     builder.registerFix(new RemoveAllUnusedImportsFix(), null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
 
     IntentionAction switchFix = QuickFixFactory.getInstance().createEnableOptimizeImportsOnTheFlyFix();
     builder.registerFix(switchFix, null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
-    if (!predefinedImport && !requiresFix) {
-      requiresFix = true;
+    if (!predefinedImport && myOptimizeImportsFix == null) {
+      myOptimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFile);
     }
     addInfo(holder, builder);
   }

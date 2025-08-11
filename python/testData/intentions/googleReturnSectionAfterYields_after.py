@@ -4,7 +4,7 @@ def f():
         int: meaning of life, universe and everything
 
     Returns:
-        Generator[int, Any, None]: 
+        object: 
         
     Example:
         print(next(f))

@@ -4,9 +4,13 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
+import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
 import org.jetbrains.plugins.textmate.plist.Plist;
+import org.jetbrains.plugins.textmate.plist.PlistReader;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
 import java.util.*;
 
 import static java.util.Collections.emptyList;
@@ -37,7 +41,7 @@ public class Bundle {
   /**
    * @deprecated use `TextMateService#readBundle#readGrammars` or `TextMateBundleReader`
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public @NotNull Collection<File> getGrammarFiles() {
     switch (myType) {
       case TEXTMATE -> {
@@ -118,6 +122,14 @@ public class Bundle {
   @Deprecated(forRemoval = true)
   public Collection<String> getExtensions(@NotNull File file, @NotNull Plist plist) {
     return plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList()).getStringArray();
+  }
+
+  /**
+   * @deprecated use `TextMateService#readBundle#readPreferences` or `TextMateBundleReader`
+   */
+  @Deprecated(forRemoval = true)
+  public List<Map.Entry<String, Plist>> loadPreferenceFile(@NotNull File file, @NotNull PlistReader plistReader) throws IOException {
+    return Collections.singletonList(PreferencesReadUtil.retrieveSettingsPlist(plistReader.read(file)));
   }
 
   private static final class BundleFilesFilter implements FileFilter {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmClass;
@@ -13,7 +13,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -73,15 +72,6 @@ public interface PsiClass
   }
 
   /**
-   * Checks if the class is a Valhalla value class.
-   *
-   * @return true if the class is a value class, false otherwise.
-   */
-  default boolean isValueClass() {
-    return false;
-  }
-
-  /**
    * Returns the list of classes that this class or interface extends.
    *
    * @return the extends list, or null for anonymous classes and unnamed classes.
@@ -117,7 +107,8 @@ public interface PsiClass
    *
    * @return the permits list, or null if there's none.
    */
-  default @Nullable PsiReferenceList getPermitsList() {
+  @Nullable
+  default PsiReferenceList getPermitsList() {
     return null;
   }
 
@@ -282,7 +273,6 @@ public interface PsiClass
    * @return the found methods and their substitutors, or an empty list if no methods are found.
    */
   @NotNull
-  @Unmodifiable
   List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls @NotNull String name, boolean checkBases);
 
   /**
@@ -292,7 +282,6 @@ public interface PsiClass
    * @return the list of methods and their substitutors
    */
   @NotNull
-  @Unmodifiable
   List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors();
 
   /**
@@ -387,13 +376,15 @@ public interface PsiClass
   @Override
   PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException;
 
+  @NotNull
   @Override
-  default @NotNull JvmClassKind getClassKind() {
+  default JvmClassKind getClassKind() {
     return PsiJvmConversionHelper.getJvmClassKind(this);
   }
 
+  @Nullable
   @Override
-  default @Nullable JvmReferenceType getSuperClassType() {
+  default JvmReferenceType getSuperClassType() {
     return PsiJvmConversionHelper.getClassSuperType(this);
   }
 
@@ -406,7 +397,8 @@ public interface PsiClass
     return PsiRecordComponent.EMPTY_ARRAY;
   }
 
-  default @Nullable PsiRecordHeader getRecordHeader() {
+  @Nullable
+  default PsiRecordHeader getRecordHeader() {
     return null;
   }
 }

@@ -7,7 +7,7 @@ from .syntax import Destination, PDFObject, PDFString
 
 class OutlineSection(NamedTuple):
     name: str
-    level: int
+    level: str
     page_number: int
     dest: Destination
     struct_elem: StructElem | None = ...

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.project.Project;
@@ -17,8 +17,9 @@ public final class SvnSelectRevisionUtil {
   private SvnSelectRevisionUtil() {
   }
 
-  public static @Nullable SvnChangeList chooseCommittedChangeList(final Project project, final SvnRepositoryLocation location,
-                                                                  final VirtualFile root) {
+  @Nullable
+  public static SvnChangeList chooseCommittedChangeList(final Project project, final SvnRepositoryLocation location,
+                                                              final VirtualFile root) {
     try {
       final SvnCommittedChangesTableModel model = new SvnCommittedChangesTableModel(location, project, root,
                                                                                     SvnVcs.getInstance(project)

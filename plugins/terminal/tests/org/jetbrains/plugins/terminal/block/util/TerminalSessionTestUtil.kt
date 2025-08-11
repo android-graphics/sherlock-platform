@@ -17,11 +17,9 @@ import com.jediterm.terminal.RequestOrigin
 import com.jediterm.terminal.TerminalCustomCommandListener
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
-import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.block.session.*
 import org.jetbrains.plugins.terminal.block.testApps.LINE_SEPARATOR
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
-import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil
 import org.jetbrains.plugins.terminal.util.ShellType
 import org.junit.Assert
 import org.junit.Assume
@@ -43,7 +41,7 @@ internal object TerminalSessionTestUtil {
     disableSavingHistory: Boolean = true,
     terminalCustomCommandListener: TerminalCustomCommandListener = TerminalCustomCommandListener {}
   ): BlockTerminalSession {
-    TerminalTestUtil.setTerminalEngineForTest(TerminalEngine.NEW_TERMINAL, parentDisposable)
+    Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY).setValue(true, parentDisposable)
     Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_FISH_REGISTRY).setValue(true, parentDisposable)
     Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_POWERSHELL_WIN11_REGISTRY).setValue(true, parentDisposable)
     Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_POWERSHELL_WIN10_REGISTRY).setValue(true, parentDisposable)
@@ -61,12 +59,7 @@ internal object TerminalSessionTestUtil {
     val ttyConnector = runner.createTtyConnector(process)
 
     val session = BlockTerminalSession(runner.settingsProvider, BlockTerminalColorPalette(), configuredOptions.shellIntegration!!)
-    Disposer.register(parentDisposable) {
-      Disposer.dispose(session)
-      if (!process.waitFor(60, TimeUnit.SECONDS)) {
-        fail("Shell hasn't been terminated within timeout, pid:${process.pid()}")
-      }
-    }
+    Disposer.register(parentDisposable, session)
     session.controller.resize(initialTermSize, RequestOrigin.User)
     val model: TerminalModel = session.model
     session.controller.addCustomCommandListener(terminalCustomCommandListener)
@@ -110,7 +103,7 @@ internal object TerminalSessionTestUtil {
 
   fun getCommandResultFuture(session: BlockTerminalSession): CompletableFuture<CommandResult> {
     val disposable = Disposer.newDisposable(session)
-    val scraper = ShellCommandOutputScraperImpl(session)
+    val scraper = ShellCommandOutputScraper(session)
     val lastOutput: AtomicReference<StyledCommandOutput?> = AtomicReference()
     scraper.addListener(object : ShellCommandOutputListener {
       override fun commandOutputChanged(output: StyledCommandOutput) {

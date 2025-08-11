@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies;
 
 import com.intellij.ide.scratch.ScratchesNamedScope;
@@ -30,7 +30,8 @@ public final class DefaultScopesProvider extends CustomScopesProviderEx {
   }
 
   @Override
-  public @NotNull List<NamedScope> getCustomScopes() {
+  @NotNull
+  public List<NamedScope> getCustomScopes() {
     return myScopes;
   }
 }

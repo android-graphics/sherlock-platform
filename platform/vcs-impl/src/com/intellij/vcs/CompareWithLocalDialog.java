@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs;
 
 import com.intellij.icons.AllIcons;
@@ -36,8 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public final class CompareWithLocalDialog {
   @RequiresEdt
@@ -89,15 +89,17 @@ public final class CompareWithLocalDialog {
     ChangesBrowserToolWindow.showTab(project, content);
   }
 
-  private static @NotNull MyLoadingChangesPanel createPanel(
+  @NotNull
+  private static MyLoadingChangesPanel createPanel(
     @NotNull Project project,
     @NotNull LocalContent localContent,
     @NotNull ThrowableComputable<? extends Collection<Change>, ? extends VcsException> changesLoader
   ) {
     MyChangesBrowser changesBrowser = new MyChangesBrowser(project, localContent);
     MyLoadingChangesPanel changesPanel = new MyLoadingChangesPanel(changesBrowser) {
+      @NotNull
       @Override
-      protected @NotNull Collection<Change> loadChanges() throws VcsException {
+      protected Collection<Change> loadChanges() throws VcsException {
         return changesLoader.compute();
       }
     };
@@ -107,7 +109,7 @@ public final class CompareWithLocalDialog {
     return changesPanel;
   }
 
-  private abstract static class MyLoadingChangesPanel extends JPanel implements UiDataProvider, Disposable {
+  private static abstract class MyLoadingChangesPanel extends JPanel implements DataProvider, Disposable {
     public static final DataKey<MyLoadingChangesPanel> DATA_KEY = DataKey.create("git4idea.log.MyLoadingChangesPanel");
 
     private final SimpleAsyncChangesBrowser myChangesBrowser;
@@ -126,7 +128,8 @@ public final class CompareWithLocalDialog {
     public void dispose() {
     }
 
-    public @NotNull ChangesBrowserBase getChangesBrowser() {
+    @NotNull
+    public ChangesBrowserBase getChangesBrowser() {
       return myChangesBrowser;
     }
 
@@ -134,20 +137,25 @@ public final class CompareWithLocalDialog {
       myLoadingPanel.loadChangesInBackground(this::loadChanges, this::applyResult);
     }
 
-    protected abstract @NotNull Collection<Change> loadChanges() throws VcsException;
+    @NotNull
+    protected abstract Collection<Change> loadChanges() throws VcsException;
 
     private void applyResult(@Nullable Collection<? extends Change> changes) {
       myChangesBrowser.setChangesToDisplay(changes != null ? changes : Collections.emptyList());
     }
 
+    @Nullable
     @Override
-    public void uiDataSnapshot(@NotNull DataSink sink) {
-      sink.set(DATA_KEY, this);
+    public Object getData(@NotNull String dataId) {
+      if (DATA_KEY.is(dataId)) {
+        return this;
+      }
+      return null;
     }
   }
 
   private static class MyChangesBrowser extends SimpleAsyncChangesBrowser implements Disposable {
-    private final @NotNull CompareWithLocalDialog.LocalContent myLocalContent;
+    @NotNull private final CompareWithLocalDialog.LocalContent myLocalContent;
 
     private MyChangesBrowser(@NotNull Project project, @NotNull LocalContent localContent) {
       super(project, false, true);
@@ -162,8 +170,9 @@ public final class CompareWithLocalDialog {
       shutdown();
     }
 
+    @NotNull
     @Override
-    protected @NotNull List<AnAction> createToolbarActions() {
+    protected List<AnAction> createToolbarActions() {
       List<AnAction> actions = new ArrayList<>();
       actions.add(new MyRefreshAction());
       actions.addAll(super.createToolbarActions());
@@ -171,8 +180,9 @@ public final class CompareWithLocalDialog {
       return actions;
     }
 
+    @NotNull
     @Override
-    protected @NotNull List<AnAction> createPopupMenuActions() {
+    protected List<AnAction> createPopupMenuActions() {
       return ContainerUtil.append(
         super.createPopupMenuActions(),
         ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"),
@@ -226,8 +236,8 @@ public final class CompareWithLocalDialog {
     }
 
     private static class MyFileContentProvider implements FileRevisionProvider {
-      private final @NotNull Change myChange;
-      private final @NotNull CompareWithLocalDialog.LocalContent myLocalContent;
+      @NotNull private final Change myChange;
+      @NotNull private final CompareWithLocalDialog.LocalContent myLocalContent;
 
       private MyFileContentProvider(@NotNull Change change,
                                     @NotNull LocalContent localContent) {
@@ -235,8 +245,9 @@ public final class CompareWithLocalDialog {
         myLocalContent = localContent;
       }
 
+      @NotNull
       @Override
-      public @NotNull FilePath getFilePath() {
+      public FilePath getFilePath() {
         return ChangesUtil.getFilePath(myChange);
       }
 

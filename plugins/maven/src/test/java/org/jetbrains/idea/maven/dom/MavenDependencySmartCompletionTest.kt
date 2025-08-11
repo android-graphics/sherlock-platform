@@ -184,7 +184,6 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    refreshFiles(listOf(projectPom))
     fixture.configureFromExistingVirtualFile(projectPom)
 
     var elements = fixture.completeBasic()
@@ -225,7 +224,6 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    refreshFiles(listOf(projectPom))
     fixture.configureFromExistingVirtualFile(projectPom)
 
     val elements = fixture.completeBasic()
@@ -262,7 +260,6 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    refreshFiles(listOf(projectPom))
     fixture.configureFromExistingVirtualFile(projectPom)
     val elements = fixture.completeBasic()
     UsefulTestCase.assertSize(1, elements)
@@ -286,7 +283,6 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencyManagement>
                        """.trimIndent())
 
-    refreshFiles(listOf(projectPom))
     fixture.configureFromExistingVirtualFile(projectPom)
 
     val elements = fixture.completeBasic()
@@ -336,7 +332,6 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    refreshFiles(listOf(projectPom))
     fixture.configureFromExistingVirtualFile(projectPom)
 
     var elements = fixture.completeBasic()
@@ -392,7 +387,6 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    refreshFiles(listOf(projectPom))
     fixture.configureFromExistingVirtualFile(projectPom)
 
     val elements = fixture.complete(CompletionType.BASIC)

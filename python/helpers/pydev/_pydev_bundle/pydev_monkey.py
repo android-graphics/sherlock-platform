@@ -14,7 +14,7 @@ except:
     xrange = range
 
 
-PYTHON_NAMES = ['python', 'jython', 'pypy', "python3"]
+PYTHON_NAMES = ['python', 'jython', 'pypy']
 
 #===============================================================================
 # Things that are dependent on having the pydevd debugger
@@ -440,12 +440,12 @@ def warn_bytes_args():
 
 def create_warn_multiproc(original_name):
 
-    def new_warn_multiproc(*args, **kwargs):
+    def new_warn_multiproc(*args):
         import os
 
         warn_multiproc()
 
-        result = getattr(os, original_name)(*args, **kwargs)
+        result = getattr(os, original_name)(*args)
 
         if original_name == _ORIGINAL_PREFIX + 'fork':
             pid = result

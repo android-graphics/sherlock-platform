@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Executor;
@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParser {
   private final RunProfile myConfiguration;
-  private final @NotNull String myTestFrameworkName;
+  @NotNull private final String myTestFrameworkName;
   private final CompositeFilter myCustomFilter;
   private boolean myIdBasedTestTree = false;
   private boolean myPrintTestingStartedTime = true;
@@ -128,8 +128,9 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
+  public Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
     if (myCustomFilter.isEmpty()) {
       return null;
     }
@@ -191,19 +192,23 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   /**
    * @return custom test locator which would be combined with default {@link FileUrlProvider}
    */
-  public @Nullable SMTestLocator getTestLocator() {
+  @Nullable
+  public SMTestLocator getTestLocator() {
     return null;
   }
 
-  public @Nullable TestProxyFilterProvider getFilterProvider() {
+  @Nullable
+  public TestProxyFilterProvider getFilterProvider() {
     return null;
   }
 
-  public @Nullable AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
+  @Nullable
+  public AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
     return null;
   }
 
-  public @NotNull String getTestFrameworkName() {
+  @NotNull
+  public String getTestFrameworkName() {
     return myTestFrameworkName;
   }
 

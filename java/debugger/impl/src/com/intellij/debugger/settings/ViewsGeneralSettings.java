@@ -31,7 +31,6 @@ public final class ViewsGeneralSettings implements PersistentStateComponent<View
     return this;
   }
 
-  @Override
   public boolean equals(Object object) {
     return object instanceof ViewsGeneralSettings generalSettings && 
            HIDE_NULL_ARRAY_ELEMENTS == generalSettings.HIDE_NULL_ARRAY_ELEMENTS &&

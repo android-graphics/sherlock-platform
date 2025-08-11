@@ -28,8 +28,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class PyMakePublicQuickFix implements LocalQuickFix {
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.make.public");
   }
 

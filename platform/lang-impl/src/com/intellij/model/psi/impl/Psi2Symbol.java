@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi.impl;
 
 import com.intellij.model.Pointer;
@@ -36,8 +36,9 @@ final class Psi2Symbol implements Symbol {
     return myElement;
   }
 
+  @NotNull
   @Override
-  public @NotNull Pointer<Psi2Symbol> createPointer() {
+  public Pointer<Psi2Symbol> createPointer() {
     return myPointer;
   }
 
@@ -49,8 +50,9 @@ final class Psi2Symbol implements Symbol {
       myPointer = SmartPointerManager.createPointer(element);
     }
 
+    @Nullable
     @Override
-    public @Nullable Psi2Symbol dereference() {
+    public Psi2Symbol dereference() {
       PsiElement element = myPointer.dereference();
       if (element == null) {
         return null;

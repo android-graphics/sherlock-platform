@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.header;
 
 import com.intellij.CommonBundle;
@@ -33,7 +33,6 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,16 +70,17 @@ public final class InspectionProfileSchemesPanel extends AbstractDescriptionAwar
         selectScheme(ContainerUtil.getFirstItem(currentProfiles));
       }
 
+      @NotNull
       @Override
-      protected @NotNull SingleInspectionProfilePanel createPanel(@NotNull InspectionProfileModifiableModel model) {
+      protected SingleInspectionProfilePanel createPanel(@NotNull InspectionProfileModifiableModel model) {
         return myConfigurable.createPanel(model);
       }
     };
   }
 
-  @ApiStatus.Internal
+  @NotNull
   @Override
-  public @NotNull InspectionProfileSchemesModel getModel() {
+  public InspectionProfileSchemesModel getModel() {
     return myModel;
   }
 
@@ -104,11 +104,13 @@ public final class InspectionProfileSchemesPanel extends AbstractDescriptionAwar
     return false;
   }
 
+  @NotNull
   @Override
-  protected @NotNull AbstractSchemeActions<InspectionProfileModifiableModel> createSchemeActions() {
+  protected AbstractSchemeActions<InspectionProfileModifiableModel> createSchemeActions() {
     return new DescriptionAwareSchemeActions<>(this) {
+      @Nullable
       @Override
-      public @Nullable String getDescription(@NotNull InspectionProfileModifiableModel scheme) {
+      public String getDescription(@NotNull InspectionProfileModifiableModel scheme) {
         SingleInspectionProfilePanel inspectionProfile = ((InspectionProfileSchemesModel)getModel()).getProfilePanel(scheme);
         return inspectionProfile == null ? null : inspectionProfile.getProfile().getDescription();
       }
@@ -203,8 +205,9 @@ public final class InspectionProfileSchemesPanel extends AbstractDescriptionAwar
         copyToAnotherLevel(scheme, false);
       }
 
+      @NotNull
       @Override
-      protected @NotNull Class<InspectionProfileModifiableModel> getSchemeType() {
+      protected Class<InspectionProfileModifiableModel> getSchemeType() {
         return InspectionProfileModifiableModel.class;
       }
 
@@ -221,8 +224,9 @@ public final class InspectionProfileSchemesPanel extends AbstractDescriptionAwar
     };
   }
 
+  @NotNull
   @Override
-  protected @NotNull String getSchemeTypeName() {
+  protected String getSchemeTypeName() {
     return LangBundle.message("inspection.profile.scheme.type.name.panel");
   }
 
@@ -239,10 +243,11 @@ public final class InspectionProfileSchemesPanel extends AbstractDescriptionAwar
     getModel().updatePanel(this);
   }
 
-  private @NotNull InspectionProfileModifiableModel copyToNewProfile(@NotNull InspectionProfileImpl selectedProfile,
-                                                                     @NotNull Project project,
-                                                                     @NotNull String newName,
-                                                                     boolean modifyLevel) {
+  @NotNull
+  private InspectionProfileModifiableModel copyToNewProfile(@NotNull InspectionProfileImpl selectedProfile,
+                                                            @NotNull Project project,
+                                                            @NotNull String newName,
+                                                            boolean modifyLevel) {
     final boolean isProjectLevel = selectedProfile.isProjectLevel() ^ modifyLevel;
 
     BaseInspectionProfileManager profileManager = isProjectLevel ? myProjectProfileManager : myAppProfileManager;
@@ -267,8 +272,9 @@ public final class InspectionProfileSchemesPanel extends AbstractDescriptionAwar
     selectScheme(selected);
   }
 
+  @NotNull
   @Override
-  protected @NotNull JComponent getConfigurableFocusComponent() {
+  protected JComponent getConfigurableFocusComponent() {
     return myConfigurable.getPreferredFocusedComponent();
   }
 
@@ -284,9 +290,10 @@ public final class InspectionProfileSchemesPanel extends AbstractDescriptionAwar
     }
   }
 
-  public static @Nullable("returns null if xml has invalid format") InspectionProfileImpl importInspectionProfile(@NotNull Element rootElement,
-                                                                                                                  @NotNull BaseInspectionProfileManager profileManager,
-                                                                                                                  @NotNull Project project) {
+  @Nullable("returns null if xml has invalid format")
+  public static InspectionProfileImpl importInspectionProfile(@NotNull Element rootElement,
+                                                              @NotNull BaseInspectionProfileManager profileManager,
+                                                              @NotNull Project project) {
     if (Comparing.strEqual(rootElement.getName(), "component")) { //NON-NLS
       //import right from .idea/inspectProfiles/xxx.xml
       rootElement = rootElement.getChildren().get(0);

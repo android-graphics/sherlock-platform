@@ -2,6 +2,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <psi.classFileDecompiler implementation="org.jetbrains.kotlin.analysis.decompiler.konan.K2KotlinNativeMetadataDecompiler"/>
 
+    <projectService
+            serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsModelChangeService"/>
     <postStartupActivity
             implementation="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsStartupActivity"/>
 
@@ -9,10 +11,5 @@
             implementation="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceFileIndexContributor"/>
     <virtualFileSystem implementationClass="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileSystemImpl"
                        key="fwd" physical="false"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <idea.base.projectStructure.moduleInfoProviderExtension
-            implementation="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsModuleInfoProviderExtension"/>
   </extensions>
 </idea-plugin>

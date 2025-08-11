@@ -30,12 +30,14 @@ public class RegExpCharRangeImpl extends RegExpElementImpl implements RegExpChar
     }
 
     @Override
-    public @NotNull RegExpChar getFrom() {
+    @NotNull
+    public RegExpChar getFrom() {
         return (RegExpChar)getFirstChild();
     }
 
     @Override
-    public @Nullable RegExpChar getTo() {
+    @Nullable
+    public RegExpChar getTo() {
         final PsiElement child = getLastChild();
         return child instanceof RegExpChar ? (RegExpChar)child : null;
     }

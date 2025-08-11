@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +37,7 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
     this(psiElement.getProject(), psiElement);
   }
 
-  public PsiLocation(final @NotNull Project project, final @NotNull E psiElement) {
+  public PsiLocation(@NotNull final Project project, @NotNull final E psiElement) {
     myPsiElement = psiElement;
     myProject = project;
     myModule = ModuleUtilCore.findModuleForPsiElement(psiElement);
@@ -36,12 +50,14 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
   }
 
   @Override
-  public @NotNull E getPsiElement() {
+  @NotNull
+  public E getPsiElement() {
     return myPsiElement;
   }
 
   @Override
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myProject;
   }
 
@@ -51,7 +67,8 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
   }
 
   @Override
-  public @NotNull <T extends PsiElement> Iterator<Location<T>> getAncestors(final @NotNull Class<T> ancestorClass, final boolean strict) {
+  @NotNull
+  public <T extends PsiElement> Iterator<Location<T>> getAncestors(@NotNull final Class<T> ancestorClass, final boolean strict) {
     final T first = strict || !ancestorClass.isInstance(myPsiElement) ? findNext(myPsiElement, ancestorClass) : (T)myPsiElement;
     return new Iterator<>() {
       private T myCurrent = first;
@@ -77,7 +94,8 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
   }
 
   @Override
-  public @NotNull PsiLocation<E> toPsiLocation() {
+  @NotNull
+  public PsiLocation<E> toPsiLocation() {
     return this;
   }
 

@@ -58,7 +58,6 @@ public class OptionalUsedAsFieldOrParameterTypeInspectionTest extends LightJavaI
   }
 
   public void testParameterInOverridingMethod() {
-    //noinspection OptionalIsPresent
     doTest("import java.util.Optional;" +
            "import java.util.function.Function;" +
            "class X {" +

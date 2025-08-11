@@ -41,12 +41,14 @@ public final class FieldCountInspection extends ClassMetricInspection {
   public boolean myCountEnumConstants = false;
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "ClassWithTooManyFields";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("too.many.fields.problem.descriptor", infos[0]);
   }
 

@@ -1,3 +1,0 @@
-// "Implement as constructor parameters" "true"
-
-actual class End(actual override val a: Int<selection><caret></selection>) : IFoo

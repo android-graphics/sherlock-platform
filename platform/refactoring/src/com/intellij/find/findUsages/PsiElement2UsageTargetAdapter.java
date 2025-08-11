@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.find.findUsages;
 
@@ -41,7 +41,7 @@ import javax.swing.*;
 public class PsiElement2UsageTargetAdapter
   implements PsiElementUsageTarget, DataProvider, PsiElementNavigationItem, ItemPresentation, ConfigurableUsageTarget {
   private final SmartPsiElementPointer<?> myPointer;
-  protected final @NotNull FindUsagesOptions myOptions;
+  @NotNull protected final FindUsagesOptions myOptions;
   private String myPresentableText;
   private String myLocationText;
   private Icon myIcon;
@@ -79,7 +79,8 @@ public class PsiElement2UsageTargetAdapter
   }
 
   @Override
-  public @NotNull ItemPresentation getPresentation() {
+  @NotNull
+  public ItemPresentation getPresentation() {
     return this;
   }
 
@@ -186,8 +187,9 @@ public class PsiElement2UsageTargetAdapter
     return targets;
   }
 
+  @Nullable
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       return (DataProvider)this::getSlowData;
     }
@@ -277,7 +279,8 @@ public class PsiElement2UsageTargetAdapter
     return myIcon;
   }
 
-  public @NotNull Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myPointer.getProject();
   }
 }

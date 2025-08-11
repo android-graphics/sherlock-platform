@@ -68,7 +68,8 @@ public abstract class PsiFragment {
                  : null;
   }
 
-  private static @NotNull Language doGetLanguageForElement(@NotNull PsiElement element) {
+  @NotNull
+  private static Language doGetLanguageForElement(@NotNull PsiElement element) {
     final DuplicatesProfile profile = DuplicatesProfile.findProfileForLanguage(element.getLanguage());
     if (profile == null) {
       return element.getLanguage();
@@ -133,7 +134,8 @@ public abstract class PsiFragment {
     return elements;
   }
 
-  public @Nullable PsiFile getFile() {
+  @Nullable
+  public PsiFile getFile() {
     return myElementAnchors.length > 0 ? myElementAnchors[0].getFile() : null;
   }
 
@@ -167,7 +169,8 @@ public abstract class PsiFragment {
 
   public abstract boolean isEqual(PsiElement[] elements, int discardCost);
 
-  public @Nullable UsageInfo getUsageInfo() {
+  @Nullable
+  public UsageInfo getUsageInfo() {
     if (myElementAnchors.length == 1) {
       final PsiElement element = myElementAnchors[0].retrieve();
       if (element == null || !element.isValid()) return null;
@@ -186,7 +189,6 @@ public abstract class PsiFragment {
   }
 
   //debug only
-  @Override
   public String toString() {
     StringBuilder buffer = new StringBuilder();
 
@@ -201,7 +203,6 @@ public abstract class PsiFragment {
     return buffer.toString();
   }
 
-  @Override
   public boolean equals(Object o) {
     if (o == this) return true;
     if (!(o instanceof PsiFragment other)) return false;
@@ -211,7 +212,6 @@ public abstract class PsiFragment {
            Comparing.equal(other.getFile(), getFile());
   }
 
-  @Override
   public int hashCode() {
     int result = getStartOffset();
     result += 31 * result + getEndOffset();
@@ -240,7 +240,8 @@ public abstract class PsiFragment {
     return myElementAnchors.length > 1;
   }
 
-  public @Nullable Language getLanguage() {
+  @Nullable
+  public Language getLanguage() {
     return myLanguage;
   }
 }

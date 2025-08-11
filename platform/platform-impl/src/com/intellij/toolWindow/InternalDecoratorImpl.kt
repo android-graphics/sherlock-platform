@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.accessibility.AccessibilityUtils
@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Queryable
@@ -16,7 +15,6 @@ import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.InternalDecorator
@@ -39,7 +37,6 @@ import com.intellij.util.SmartList
 import com.intellij.util.animation.AlphaAnimated
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -51,7 +48,6 @@ import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.*
 import javax.swing.border.Border
-import javax.swing.plaf.UIResource
 import javax.swing.text.JTextComponent
 
 @ApiStatus.Internal
@@ -178,22 +174,28 @@ class InternalDecoratorImpl internal constructor(
       return preventRecoloring == true
     }
 
-    internal fun setBackgroundFor(component: Component, bg: Color) {
-      if (component is ActionButton ||
-          component is Divider ||
-          component is JTextComponent ||
-          component is JComboBox<*> ||
-          component is EditorTextField) return
-      if (component.isBackgroundSet && component.background !is UIResource) {
-        return
+    internal fun setBackgroundRecursively(component: Component, bg: Color) {
+      val action: (Component) -> Unit = { c ->
+        if (c !is ActionButton &&
+            c !is Divider &&
+            c !is JTextComponent &&
+            c !is JComboBox<*> &&
+            c !is EditorTextField) {
+          c.background = bg
+        }
       }
-      component.background = bg
+      setBackgroundRecursively(action, component)
     }
 
-    internal fun setBackgroundRecursively(component: Component, bg: Color) {
-      UIUtil.uiTraverser(component)
-        .expandAndFilter { !isRecursiveBackgroundUpdateDisabled(component) }
-        .forEach { setBackgroundFor(it, bg) }
+    private fun setBackgroundRecursively(action: (Component) -> Unit, component: Component) {
+      if (isRecursiveBackgroundUpdateDisabled(component)) return
+
+      action(component)
+      if (component is Container) {
+        for (c in component.components) {
+          setBackgroundRecursively(action, c)
+        }
+      }
     }
 
     private fun installDefaultFocusTraversalKeys(container: Container, id: Int) {
@@ -230,7 +232,6 @@ class InternalDecoratorImpl internal constructor(
   private var splitter: Splitter? = null
   private val componentsWithEditorLikeBackground = SmartList<Component>()
   private var tabActions: List<AnAction> = emptyList()
-  private val titleActions = mutableListOf<AnAction>()
 
   init {
     isFocusable = false
@@ -278,15 +279,9 @@ class InternalDecoratorImpl internal constructor(
     when (mode) {
       Mode.SINGLE, Mode.CELL -> {
         layout = BorderLayout()
-
-        InternalUICustomization.getInstance().internalCustomizer.decorateAndReturnHolder(dividerAndHeader, myDecoratorChild)?.let {
-          add(it, BorderLayout.CENTER)
-        } ?: run {
-          add(dividerAndHeader, BorderLayout.NORTH)
-          add(myDecoratorChild, BorderLayout.CENTER)
-          border = InnerPanelBorder(toolWindow)
-        }
-
+        add(dividerAndHeader, BorderLayout.NORTH)
+        add(myDecoratorChild, BorderLayout.CENTER)
+        border = InnerPanelBorder(toolWindow)
         firstDecorator?.let {
           Disposer.dispose(it.contentManager)
         }
@@ -314,15 +309,9 @@ class InternalDecoratorImpl internal constructor(
       contentManager.addContent(content, dropIndex)
       return
     }
-    firstDecorator = toolWindow.createCellDecorator().also {
-      it.setTabActions(tabActions)
-      it.setTitleActions(titleActions)
-    }
+    firstDecorator = toolWindow.createCellDecorator().also { it.setTabActions(tabActions) }
     attach(firstDecorator)
-    secondDecorator = toolWindow.createCellDecorator().also {
-      it.setTabActions(tabActions)
-      it.setTitleActions(titleActions)
-    }
+    secondDecorator = toolWindow.createCellDecorator().also { it.setTabActions(tabActions) }
     attach(secondDecorator)
     val contents = contentManager.contents.toMutableList()
     if (!contents.contains(content)) {
@@ -537,11 +526,7 @@ class InternalDecoratorImpl internal constructor(
   }
 
   fun setTitleActions(actions: List<AnAction>) {
-    titleActions.clear()
-    titleActions.addAll(actions)
-    header.setAdditionalTitleActions(titleActions)
-    firstDecorator?.setTitleActions(actions)
-    secondDecorator?.setTitleActions(actions)
+    header.setAdditionalTitleActions(actions)
   }
 
   fun setTabActions(actions: List<AnAction>) {
@@ -850,22 +835,16 @@ class InternalDecoratorImpl internal constructor(
     }
 
     val divider = divider
-    val disposable = Disposer.newCheckedDisposable()
-    this.disposable = disposable
-    HOVER_STATE_LISTENER.addTo(this, disposable)
+    disposable = Disposer.newCheckedDisposable()
+    HOVER_STATE_LISTENER.addTo(this, disposable!!)
     updateActiveAndHoverState()
     if (divider != null) {
       val glassPane = rootPane.glassPane as IdeGlassPane
       val listener = ResizeOrMoveDocketToolWindowMouseListener(divider, glassPane, this)
-      glassPane.addMouseMotionPreprocessor(listener, disposable)
-      glassPane.addMousePreprocessor(listener, disposable)
+      glassPane.addMouseMotionPreprocessor(listener, disposable!!)
+      glassPane.addMousePreprocessor(listener, disposable!!)
     }
     contentUi.update()
-
-    if ((toolWindow.type == ToolWindowType.WINDOWED || toolWindow.type == ToolWindowType.FLOATING) &&
-        Registry.`is`("ide.allow.split.and.reorder.in.tool.window")) {
-      ToolWindowInnerDragHelper(disposable, this).start()
-    }
   }
 
   override fun removeNotify() {

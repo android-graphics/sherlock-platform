@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.UITheme;
@@ -43,8 +43,9 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
     this.theme = theme;
   }
 
+  @Nls
   @Override
-  public @Nls @NotNull String getName() {
+  public @NotNull String getName() {
     //noinspection HardCodedStringLiteral
     return Objects.requireNonNullElse(theme.getName(), theme.getId());
   }
@@ -175,7 +176,7 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
 
   @Override
   public @NotNull UIThemeExportableBean describe() {
-    return theme.describe();
+    return theme.describe$intellij_platform_ide_impl();
   }
 
   private static <T extends Enum<T>> String parseEnumValue(Object value, T defaultValue) {

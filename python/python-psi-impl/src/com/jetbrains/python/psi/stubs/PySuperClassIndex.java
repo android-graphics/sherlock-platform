@@ -11,7 +11,8 @@ public final class PySuperClassIndex extends StringStubIndexExtension<PyClass> {
   public static final StubIndexKey<String, PyClass> KEY = StubIndexKey.createIndexKey("Py.class.super");
 
   @Override
-  public @NotNull StubIndexKey<String, PyClass> getKey() {
+  @NotNull
+  public StubIndexKey<String, PyClass> getKey() {
     return KEY;
   }
 }

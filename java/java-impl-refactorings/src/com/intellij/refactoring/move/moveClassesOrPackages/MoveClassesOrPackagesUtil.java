@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.lang.java.JavaFindUsagesProvider;
@@ -56,7 +56,7 @@ public final class MoveClassesOrPackagesUtil {
     ArrayList<UsageInfo> results = new ArrayList<>();
     Set<PsiReference> foundReferences = new HashSet<>();
 
-    for (PsiReference reference : ReferencesSearch.search(element, searchScope, false).asIterable()) {
+    for (PsiReference reference : ReferencesSearch.search(element, searchScope, false)) {
       TextRange range = reference.getRangeInElement();
       if (foundReferences.contains(reference)) continue;
       results.add(new MoveRenameUsageInfo(reference.getElement(), reference, range.getStartOffset(), range.getEndOffset(), element, false));
@@ -106,7 +106,8 @@ public final class MoveClassesOrPackagesUtil {
   }
 
   // Does not process non-code usages!
-  static @NotNull PsiPackage doMovePackage(@NotNull PsiPackage aPackage,
+  @NotNull
+  static PsiPackage doMovePackage(@NotNull PsiPackage aPackage,
                                   @NotNull GlobalSearchScope scope,
                                   @NotNull MoveDestination moveDestination) throws IncorrectOperationException {
     final PackageWrapper targetPackage = moveDestination.getTargetPackage();
@@ -262,7 +263,8 @@ public final class MoveClassesOrPackagesUtil {
     return newClass;
   }
 
-  private static @Nullable PsiClass findClassByName(PsiClassOwner file, String name) {
+  @Nullable
+  private static PsiClass findClassByName(PsiClassOwner file, String name) {
     PsiClass[] classes = file.getClasses();
     for (PsiClass aClass : classes) {
       if (name.equals(aClass.getName())) {
@@ -272,7 +274,8 @@ public final class MoveClassesOrPackagesUtil {
     return null;
   }
 
-  public static @NotNull String getPackageName(@NotNull PackageWrapper aPackage) {
+  @NotNull
+  public static String getPackageName(@NotNull PackageWrapper aPackage) {
     String name = aPackage.getQualifiedName();
     if (!name.isEmpty()) {
       return name;
@@ -284,7 +287,8 @@ public final class MoveClassesOrPackagesUtil {
    * @deprecated use CommonMoveClassesOrPackagesUtil.chooseSourceRoot
    */
   @Deprecated
-  public static @Nullable VirtualFile chooseSourceRoot(@NotNull PackageWrapper targetPackage,
+  @Nullable
+  public static VirtualFile chooseSourceRoot(@NotNull PackageWrapper targetPackage,
                                              @NotNull List<? extends VirtualFile> contentSourceRoots,
                                              @Nullable PsiDirectory initialDirectory) {
     return CommonMoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, contentSourceRoots, initialDirectory);

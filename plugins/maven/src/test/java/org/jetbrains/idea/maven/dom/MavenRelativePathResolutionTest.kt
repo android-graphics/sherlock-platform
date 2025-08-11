@@ -1,16 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.impl.source.xml.XmlFileImpl
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.io.File
 
 class MavenRelativePathResolutionTest : MavenDomWithIndicesTestCase() {
-  override fun setUp() = runBlocking {
+  override fun setUp() = runBlocking(Dispatchers.EDT) {
     super.setUp()
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -20,12 +21,12 @@ class MavenRelativePathResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testParentRelativePathOutsideProjectRoot() = runBlocking {
+  fun testParentRelativePathOutsideProjectRoot() = runBlocking(Dispatchers.EDT) {
     val file = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/example/1.0/example-1.0.pom")
 
 
     val relativePathUnixSeparator =
-      FileUtil.getRelativePath(projectRoot.getPath(), file.toString(), File.separatorChar)!!.replace("\\\\".toRegex(), "/")
+      FileUtil.getRelativePath(File(projectRoot.getPath()), file)!!.replace("\\\\".toRegex(), "/")
 
     val pom = createProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -39,12 +40,10 @@ $relativePathUnixSeparator<caret></relativePath>
 </parent>"""
     )
 
-    refreshFiles(listOf(pom))
     fixture.configureFromExistingVirtualFile(pom)
-
-    val resolved = readAction { fixture.getElementAtCaret() }
+    val resolved = fixture.getElementAtCaret()
     assertTrue(resolved is XmlFileImpl)
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.path)
     val parentPsi = findPsiFile(f)
     assertResolved(projectPom, parentPsi)
     assertSame(parentPsi, resolved)
@@ -52,16 +51,14 @@ $relativePathUnixSeparator<caret></relativePath>
 
 
   @Test
-  fun testParentRelativePathOutsideProjectRootWithDir() = runBlocking {
+  fun testParentRelativePathOutsideProjectRootWithDir() = runBlocking(Dispatchers.EDT) {
     val file = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/example/1.0/pom.xml")
 
-    val parentFile = file.parent
+    val parentFile = file.getParentFile()
 
-    val relativePathUnixSeparator = FileUtil.getRelativePath(
-      projectRoot.getPath(),
-      parentFile.toString(),
-      File.separatorChar
-    )!!.replace("\\\\".toRegex(), "/")
+
+    val relativePathUnixSeparator =
+      FileUtil.getRelativePath(File(projectRoot.getPath()), parentFile)!!.replace("\\\\".toRegex(), "/")
 
     val pom = createProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -74,12 +71,11 @@ $relativePathUnixSeparator<caret></relativePath>
 $relativePathUnixSeparator<caret></relativePath>
 </parent>"""
     )
-    refreshFiles(listOf(pom))
-    fixture.configureFromExistingVirtualFile(pom)
 
-    val resolved = readAction { fixture.getElementAtCaret() }
+    fixture.configureFromExistingVirtualFile(pom)
+    val resolved = fixture.getElementAtCaret()
     assertTrue(resolved is XmlFileImpl)
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.path)
     val parentPsi = findPsiFile(f)
     assertResolved(projectPom, parentPsi)
     assertSame(parentPsi, resolved)

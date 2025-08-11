@@ -3,7 +3,8 @@ package com.intellij.util.io;
 
 import com.github.markusbernhardt.proxy.ProxySearch;
 import com.github.markusbernhardt.proxy.selector.misc.BufferedProxySelector;
-import com.github.markusbernhardt.proxy.util.ProxyUtil;
+import com.github.markusbernhardt.proxy.selector.pac.PacProxySelector;
+import com.github.markusbernhardt.proxy.selector.pac.UrlPacScriptSource;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +21,7 @@ public class IoServiceImpl implements IoService {
       newProxySelector = proxySearch.getProxySelector();
     }
     else {
-      newProxySelector = ProxyUtil.buildPacSelectorForUrl(pacUrlForUse);
+      newProxySelector = new PacProxySelector(new UrlPacScriptSource(pacUrlForUse));
     }
     return newProxySelector;
   }

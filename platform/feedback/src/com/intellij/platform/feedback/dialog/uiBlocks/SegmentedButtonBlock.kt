@@ -10,13 +10,11 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.put
-import javax.swing.Icon
 import javax.swing.SwingConstants
 
 class SegmentedButtonBlock(@NlsContexts.Label private val myMainLabel: String?,
                            private val myItems: List<String>,
-                           private val myJsonElementName: String,
-                           private val myIcons: List<Icon> = emptyList()) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
+                           private val myJsonElementName: String) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
 
   private var myProperty: String = ""
 
@@ -30,8 +28,6 @@ class SegmentedButtonBlock(@NlsContexts.Label private val myMainLabel: String?,
   private var myRightBottomLabel: String? = null
 
   override fun addToPanel(panel: Panel) {
-    val items = myItems.mapIndexed { index, s -> SegmentItem(s, myIcons.getOrNull(index)) }
-
     panel.apply {
       if (myMainLabel != null) {
         row {
@@ -40,20 +36,11 @@ class SegmentedButtonBlock(@NlsContexts.Label private val myMainLabel: String?,
         }.bottomGap(BottomGap.SMALL)
       }
       row {
-        segmentedButton(items) {
-          if (it.icon != null) {
-            icon = it.icon
-            text = ""
-          }
-          else {
-            text = it.text
-          }
-        }
+        segmentedButton(myItems) { text = it }
           .apply {
             maxButtonsCount(myItems.size)
-          }
-          .customize(UnscaledGaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
-          .whenItemSelected { myProperty = it.text }
+          }.customize(UnscaledGaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
+          .whenItemSelected { myProperty = it }
           .align(Align.FILL)
           .validation {
             addApplyRule(CommonFeedbackBundle.message("dialog.feedback.segmentedButton.required")) { it.selectedItem == null }
@@ -130,8 +117,3 @@ class SegmentedButtonBlock(@NlsContexts.Label private val myMainLabel: String?,
     return this
   }
 }
-
-private class SegmentItem(
-  val text: String,
-  val icon: Icon? = null
-)

@@ -1,8 +1,0 @@
-{
-  "mainFile": "p1/AliasChild.kt",
-  "type": "MOVE_DIRECTORY_WITH_CLASSES",
-  "sourceDir": "p2",
-  "targetDir": "target",
-  "enabledInK1": "true",
-  "enabledInK2": "true"
-}

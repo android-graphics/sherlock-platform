@@ -2,14 +2,12 @@
 package org.jetbrains.kotlin.idea.testIntegration
 
 import com.intellij.codeInsight.navigation.activateFileWithPsiElement
-import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import org.jetbrains.kotlin.idea.actions.JavaToKotlinAction
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -30,15 +28,13 @@ class KotlinCreateTestIntention: AbstractKotlinCreateTestIntention() {
     override fun isApplicableForModule(module: Module): Boolean =
         !(module.platform.isJs() && !AdvancedSettings.getBoolean("kotlin.mpp.experimental"))
 
-    override fun convertClass(
+    override fun convertJavaClass(
         project: Project,
         generatedClass: PsiClass,
         existingClass: KtClassOrObject?,
-        generatedFile: PsiFile,
+        generatedFile: PsiJavaFile,
         srcModule: Module
     ) {
-        if (generatedFile !is PsiJavaFile || generatedClass.language != JavaLanguage.INSTANCE) return
-
         project.executeCommand<Unit>(
             KotlinBundle.message("convert.class.0.to.kotlin", generatedClass.name.toString()),
             this
@@ -77,7 +73,7 @@ class KotlinCreateTestIntention: AbstractKotlinCreateTestIntention() {
                     project,
                     srcModule,
                     enableExternalCodeProcessing = false,
-                    forceUsingOldJ2k = false,
+                    forceUsingOldJ2k = true,
                     settings = publicByDefault
                 ).singleOrNull()
             }

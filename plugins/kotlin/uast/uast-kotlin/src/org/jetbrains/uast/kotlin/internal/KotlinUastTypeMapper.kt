@@ -112,7 +112,9 @@ object KotlinUastTypeMapper {
 
         for (i in 0 until type.argumentsCount()) {
             val projection = type.getArgument(i)
-            val argument = projection.getType() ?: continue
+            if (projection.isStarProjection()) continue
+
+            val argument = projection.getType()
 
             if (argument.isNullableNothing() ||
                 argument.isNothing() && typeConstructor.getParameter(i).getVariance() != TypeVariance.IN
@@ -180,20 +182,19 @@ object KotlinUastTypeMapper {
         mapType: (KotlinTypeMarker, JvmSignatureWriter, TypeMappingMode) -> Type
     ) {
         for ((parameter, argument) in parameters.zip(arguments)) {
-            val argumentType = argument.getType()
-            if (argumentType == null ||
+            if (argument.isStarProjection() ||
                 // In<Nothing, Foo> == In<*, Foo> -> In<?, Foo>
-                argumentType.isNothing() && parameter.getVariance() == TypeVariance.IN
+                argument.getType().isNothing() && parameter.getVariance() == TypeVariance.IN
             ) {
                 signatureVisitor.writeUnboundedWildcard()
             } else {
-                val argumentMode = mode.updateArgumentModeFromAnnotations(argumentType, this)
+                val argumentMode = mode.updateArgumentModeFromAnnotations(argument.getType(), this)
                 val projectionKind = getVarianceForWildcard(parameter, argument, argumentMode)
 
                 signatureVisitor.writeTypeArgument(projectionKind)
 
                 mapType(
-                    argumentType, signatureVisitor,
+                    argument.getType(), signatureVisitor,
                     argumentMode.toGenericArgumentMode(
                         getEffectiveVariance(parameter.getVariance().convertVariance(), argument.getVariance().convertVariance())
                     )
@@ -219,13 +220,12 @@ object KotlinUastTypeMapper {
         }
 
         if (projectionKind == Variance.INVARIANT || projectionKind == parameterVariance) {
-            val type = projection.getType()
-            if (mode.skipDeclarationSiteWildcardsIfPossible && type != null) {
-                if (parameterVariance == Variance.OUT_VARIANCE && isMostPreciseCovariantArgument(type)) {
+            if (mode.skipDeclarationSiteWildcardsIfPossible && !projection.isStarProjection()) {
+                if (parameterVariance == Variance.OUT_VARIANCE && isMostPreciseCovariantArgument(projection.getType())) {
                     return Variance.INVARIANT
                 }
 
-                if (parameterVariance == Variance.IN_VARIANCE && isMostPreciseContravariantArgument(type)) {
+                if (parameterVariance == Variance.IN_VARIANCE && isMostPreciseContravariantArgument(projection.getType())) {
                     return Variance.INVARIANT
                 }
             }

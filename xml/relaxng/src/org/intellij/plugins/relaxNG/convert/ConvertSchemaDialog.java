@@ -51,7 +51,7 @@ public class ConvertSchemaDialog extends DialogWrapper implements PropertyChange
 
     init();
 
-    getOKAction().setEnabled(!mySettings.getOutputDestination().trim().isEmpty());
+    getOKAction().setEnabled(mySettings.getOutputDestination().trim().length() > 0);
   }
 
   @Override
@@ -67,7 +67,8 @@ public class ConvertSchemaDialog extends DialogWrapper implements PropertyChange
   }
 
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  @Nullable
+  protected JComponent createCenterPanel() {
     return mySettings.getRoot();
   }
 
@@ -80,7 +81,7 @@ public class ConvertSchemaDialog extends DialogWrapper implements PropertyChange
     if (ConvertSchemaSettingsImpl.OUTPUT_TYPE.equals(evt.getPropertyName())) {
       myAdvancedAction.setEnabled(mySettings.hasAdvancedSettings());
     } else if (ConvertSchemaSettingsImpl.OUTPUT_PATH.equals(evt.getPropertyName())) {
-      getOKAction().setEnabled(!((String)evt.getNewValue()).trim().isEmpty());
+      getOKAction().setEnabled(((String)evt.getNewValue()).trim().length() > 0);
     }
   }
 }

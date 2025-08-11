@@ -1,17 +1,17 @@
 package com.siyeh.igtest.initialization.field;
 
-import junit.framework.TestCase;
+import <error descr="Cannot resolve symbol 'junit'">junit</error>.framework.TestCase;
 
-public class InstanceVariableInitialization extends TestCase {
+public class InstanceVariableInitialization extends <error descr="Cannot resolve symbol 'TestCase'">TestCase</error> { // needs junit.jar for testcase to work
 
-    private String <warning descr="Instance field 'javaHome' may not be initialized during object construction or 'setUp()' call">javaHome</warning>;
+    private String <warning descr="Instance field 'javaHome' may not be initialized during object construction">javaHome</warning>;
 
     InstanceVariableInitialization() {
         //javaHome = System.getProperty("java.home");
     }
 
     protected void setUp() throws Exception {
-        super.setUp();
+        super.<error descr="Cannot resolve method 'setUp()'">setUp</error>();
     }
 }
 class InstanceVariableInitializationInspection

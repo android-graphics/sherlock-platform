@@ -185,7 +185,6 @@ public final class PropertyAccessor implements MutableAccessor {
     return writeMethod != null && writeMethod.isAccessible();
   }
 
-  @Override
   public @NonNls String toString() {
     return "PropertyAccessor(name=" + name + ", class=" + readMethod.getDeclaringClass().getName() + ")";
   }

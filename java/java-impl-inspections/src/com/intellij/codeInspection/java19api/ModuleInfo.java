@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.openapi.application.ReadAction;
@@ -40,7 +40,8 @@ record ModuleInfo(@NotNull PsiDirectory rootDir, @NotNull ModuleNode node) {
       .append("}");
   }
 
-  private @NotNull CharSequence requiresText() {
+  @NotNull
+  private CharSequence requiresText() {
     StringBuilder text = new StringBuilder();
     for (Map.Entry<ModuleNode, Set<ModuleNode.DependencyType>> dependency : node().getDependencies().entrySet()) {
       if(dependency.getValue() == null) continue;
@@ -61,7 +62,8 @@ record ModuleInfo(@NotNull PsiDirectory rootDir, @NotNull ModuleNode node) {
     return text;
   }
 
-  private @NotNull CharSequence exportsText() {
+  @NotNull
+  private CharSequence exportsText() {
     StringBuilder text = new StringBuilder();
     for (String packageName : node().getExports()) {
       text.append(PsiKeyword.EXPORTS).append(' ').append(packageName).append(";\n");

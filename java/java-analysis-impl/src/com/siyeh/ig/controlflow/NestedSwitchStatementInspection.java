@@ -29,7 +29,8 @@ import org.jetbrains.annotations.NotNull;
 public final class NestedSwitchStatementInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "nested.switch.statement.problem.descriptor",
       JavaElementKind.fromElement((PsiElement)infos[0]).subject());

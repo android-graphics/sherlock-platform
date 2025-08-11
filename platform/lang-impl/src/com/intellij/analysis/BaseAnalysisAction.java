@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis;
 
 import com.intellij.analysis.dialog.ModelScopeItem;
@@ -78,12 +78,13 @@ public abstract class BaseAnalysisAction extends AnAction {
     analyze(project, scope);
   }
 
-  public @NotNull BaseAnalysisActionDialog getAnalysisDialog(Project project,
-                                                             @DialogTitle String title,
-                                                             @NlsSafe String scopeTitle,
-                                                             boolean rememberScope,
-                                                             AnalysisUIOptions uiOptions,
-                                                             List<? extends ModelScopeItem> items) {
+  @NotNull
+  public BaseAnalysisActionDialog getAnalysisDialog(Project project,
+                                                    @DialogTitle String title,
+                                                    @NlsSafe String scopeTitle,
+                                                    boolean rememberScope,
+                                                    AnalysisUIOptions uiOptions,
+                                                    List<? extends ModelScopeItem> items) {
     return new BaseAnalysisActionDialog(title, scopeTitle, project, items, uiOptions, rememberScope) {
       @Override
       protected JComponent getAdditionalActionSettings(@NotNull Project project) {
@@ -109,7 +110,8 @@ public abstract class BaseAnalysisAction extends AnAction {
 
   protected abstract void analyze(@NotNull Project project, @NotNull AnalysisScope scope);
 
-  private @Nullable AnalysisScope getInspectionScope(@NotNull DataContext dataContext, @NotNull Project project) {
+  @Nullable
+  private AnalysisScope getInspectionScope(@NotNull DataContext dataContext, @NotNull Project project) {
     return AnalysisActionUtils.getInspectionScope(dataContext, project, acceptNonProjectDirectories());
   }
 
@@ -117,11 +119,13 @@ public abstract class BaseAnalysisAction extends AnAction {
     return false;
   }
 
-  protected @Nullable JComponent getAdditionalActionSettings(@NotNull Project project, BaseAnalysisActionDialog dialog) {
+  @Nullable
+  protected JComponent getAdditionalActionSettings(@NotNull Project project, BaseAnalysisActionDialog dialog) {
     return null;
   }
 
-  private static @Nullable Module getModuleFromContext(@NotNull DataContext dataContext) {
+  @Nullable
+  private static Module getModuleFromContext(@NotNull DataContext dataContext) {
     InspectionResultsView inspectionView = dataContext.getData(InspectionResultsView.DATA_KEY);
     if (inspectionView != null) {
       AnalysisScope scope = inspectionView.getScope();

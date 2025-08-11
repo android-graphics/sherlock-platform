@@ -61,7 +61,7 @@ public class MakeModuleAction extends CompileActionBase {
                            JavaCompilerBundle.message("action.make.few.modules.text", moduleNames);
       }
     }
-    else if (!event.isFromContextMenu()) {
+    else if (!ActionPlaces.isPopupPlace(event.getPlace())) {
       final Module module = event.getData(PlatformCoreDataKeys.MODULE);
       if (module != null) {
         isEnabled = true;

@@ -1,5 +1,0 @@
-
-fun testValLabel() {
-    val fn = {}
-    fn()
-}

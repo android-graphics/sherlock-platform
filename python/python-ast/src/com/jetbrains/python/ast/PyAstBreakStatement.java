@@ -8,7 +8,8 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 public interface PyAstBreakStatement extends PyAstStatement {
-  default @Nullable PyAstLoopStatement getLoopStatement() {
+  @Nullable
+  default PyAstLoopStatement getLoopStatement() {
     return PyUtilCore.getCorrespondingLoop(this);
   }
 

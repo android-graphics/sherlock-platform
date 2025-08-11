@@ -29,7 +29,8 @@ public abstract class TextMateService {
    *
    * @return bundle object or {@code null} if directory doesn't exist or bundle type can't be defined
    */
-  public @Nullable TextMateBundleReader readBundle(@Nullable Path directory) {
+  @Nullable
+  public TextMateBundleReader readBundle(@Nullable Path directory) {
     return null;
   }
 
@@ -42,21 +43,28 @@ public abstract class TextMateService {
    */
   public abstract void reloadEnabledBundles();
 
-  public abstract @Nullable TextMateLanguageDescriptor getLanguageDescriptorByExtension(@Nullable CharSequence extension);
+  @Nullable
+  public abstract TextMateLanguageDescriptor getLanguageDescriptorByExtension(@Nullable CharSequence extension);
 
-  public abstract @NotNull ShellVariablesRegistry getShellVariableRegistry();
+  @NotNull
+  public abstract ShellVariablesRegistry getShellVariableRegistry();
 
-  public abstract @NotNull SnippetsRegistry getSnippetRegistry();
+  @NotNull
+  public abstract SnippetsRegistry getSnippetRegistry();
 
-  public abstract @NotNull PreferencesRegistry getPreferenceRegistry();
+  @NotNull
+  public abstract PreferencesRegistry getPreferenceRegistry();
 
-  public abstract @Nullable TextMateLanguageDescriptor getLanguageDescriptorByFileName(@NotNull CharSequence fileName);
+  @Nullable
+  public abstract TextMateLanguageDescriptor getLanguageDescriptorByFileName(@NotNull CharSequence fileName);
 
-  public abstract @NotNull Map<TextMateFileNameMatcher, CharSequence> getFileNameMatcherToScopeNameMapping();
+  @NotNull
+  public abstract Map<TextMateFileNameMatcher, CharSequence> getFileNameMatcherToScopeNameMapping();
 
   /**
    * @return custom highlighting colors defined inside bundles (not in themes).
    * Note that background color in text attributes is stored in raw format and isn't merged with default background.
    */
-  public abstract @NotNull Map<CharSequence, TextMateTextAttributesAdapter> getCustomHighlightingColors();
+  @NotNull
+  public abstract Map<CharSequence, TextMateTextAttributesAdapter> getCustomHighlightingColors();
 }

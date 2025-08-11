@@ -5,9 +5,7 @@ import com.intellij.diagnostic.logging.LogsGroupFragment
 import com.intellij.execution.ui.*
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.service.execution.configuration.fragments.SettingsEditorFragmentContainer
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 class ExternalSystemRunConfigurationFragmentedEditor(
   runConfiguration: ExternalSystemRunConfiguration
 ) : RunConfigurationFragmentedEditor<ExternalSystemRunConfiguration>(

@@ -40,13 +40,13 @@ public class NodeSpecificHasherBase extends NodeSpecificHasher {
            !myDuplicatesProfile.getDuplocatorState(myDuplicatesProfile.getLanguage(element)).distinguishLiterals();
   }
 
-  public NodeSpecificHasherBase(final @NotNull DuplocatorSettings settings,
+  public NodeSpecificHasherBase(@NotNull final DuplocatorSettings settings,
                                 @NotNull FragmentsCollector callback,
                                 @NotNull DuplicatesProfileBase duplicatesProfile) {
     this(settings, callback, duplicatesProfile, false);
   }
 
-  public NodeSpecificHasherBase(final @NotNull DuplocatorSettings settings,
+  public NodeSpecificHasherBase(@NotNull final DuplocatorSettings settings,
                                 @NotNull FragmentsCollector callback,
                                 @NotNull DuplicatesProfileBase duplicatesProfile,
                                 boolean forIndexing) {
@@ -56,7 +56,8 @@ public class NodeSpecificHasherBase extends NodeSpecificHasher {
     myForIndexing = forIndexing;
   }
 
-  public @NotNull NodeFilter getNodeFilter() {
+  @NotNull
+  public NodeFilter getNodeFilter() {
     return myNodeFilter;
   }
 
@@ -119,7 +120,8 @@ public class NodeSpecificHasherBase extends NodeSpecificHasher {
     return new DuplicatesMatchingVisitor(this, myNodeFilter, discardCost).match(root1, root2);
   }
 
-  public @NotNull DuplicatesProfileBase getDuplicatesProfile() {
+  @NotNull
+  public DuplicatesProfileBase getDuplicatesProfile() {
     return myDuplicatesProfile;
   }
 

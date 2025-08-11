@@ -30,7 +30,8 @@ public abstract class AddParamBase extends AbstractFix {
 
     protected abstract String getParamName();
 
-    protected abstract @Nullable XmlTag findTemplateTag();
+    @Nullable
+    protected abstract XmlTag findTemplateTag();
 
     @Override
     protected boolean requiresEditor() {

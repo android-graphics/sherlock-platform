@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +19,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.function.Supplier;
 
-@ApiStatus.Internal
 public final class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> {
   public ApplyTextFilePatch(final TextFilePatch patch) {
     super(patch);

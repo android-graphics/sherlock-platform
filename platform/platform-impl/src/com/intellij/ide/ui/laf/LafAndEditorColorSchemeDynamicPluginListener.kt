@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UIThemeProvider
-import com.intellij.idea.AppMode
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -53,7 +52,7 @@ internal class LafDynamicPluginManager(private val coroutineScope: CoroutineScop
         manager.updateLafComboboxModel()
 
         // when updating a theme plugin that doesn't provide the current theme, don't select any of its themes as current
-        if (!AppMode.isRemoteDevHost() && !manager.autodetect && (!isUpdatingPlugin || newItem.id == themeIdBeforePluginUpdate)) {
+        if (!manager.autodetect && (!isUpdatingPlugin || newItem.id == themeIdBeforePluginUpdate)) {
           scheduleLafChange(newItem.theme.get())
         }
       }

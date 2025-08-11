@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -115,7 +115,8 @@ class DiscoveredTestsTree extends Tree implements UiDataProvider, Disposable {
     myModel.addTest(testClass, testMethod, parameter);
   }
 
-  public @NotNull Set<Module> getContainingModules() {
+  @NotNull
+  public Set<Module> getContainingModules() {
     return myModel.getTestClasses().stream()
                   .map(element -> {
                     SmartPsiElementPointer<PsiClass> pointer = element.getPointer();
@@ -129,12 +130,14 @@ class DiscoveredTestsTree extends Tree implements UiDataProvider, Disposable {
     return myModel.getTestMethods();
   }
 
-  public @Nullable PsiElement getSelectedElement() {
+  @Nullable
+  public PsiElement getSelectedElement() {
     TreePath path = getSelectionModel().getSelectionPath();
     return obj2psi(path == null ? null : path.getLastPathComponent());
   }
 
-  private static @Nullable PsiElement obj2psi(@Nullable Object obj) {
+  @Nullable
+  private static PsiElement obj2psi(@Nullable Object obj) {
     return Optional.ofNullable(ObjectUtils.tryCast(obj, DiscoveredTestsTreeModel.Node.class))
                    .map(n -> n.getPointer())
                    .map(p -> p.getElement())

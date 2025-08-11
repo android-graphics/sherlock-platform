@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
@@ -31,15 +31,18 @@ public class VcsExecutablePathSelector {
   private final JButton myTestButton;
   private final BorderLayoutPanel myErrorComponent = new BorderLayoutPanel(UIUtil.DEFAULT_HGAP, 0);
 
-  private @Nullable String mySavedPath;
-  private @Nullable String myAutoDetectedPath = null;
+  @Nullable private String mySavedPath;
+  @Nullable private String myAutoDetectedPath = null;
 
   public VcsExecutablePathSelector(@NotNull @Nls String vcsName, @Nullable Disposable disposable, @NotNull ExecutableHandler handler) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, 0);
 
     myPathSelector = new TextFieldWithBrowseButton(null, disposable);
-    var descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle(VcsBundle.message("executable.select.title"));
-    myPathSelector.addBrowseFolderListener(null, descriptor, new MyTextComponentAccessor(handler));
+    myPathSelector.addBrowseFolderListener(VcsBundle.message("executable.select.title"),
+                                           null,
+                                           null,
+                                           FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
+                                           new MyTextComponentAccessor(handler));
     myPathSelector.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
@@ -66,7 +69,8 @@ public class VcsExecutablePathSelector {
     myMainPanel.add(myErrorComponent, gb.nextLine().next().next().insets(JBUI.insets(4, 4, 0, 0)));
   }
 
-  public @NotNull BorderLayoutPanel getErrorComponent() {
+  @NotNull
+  public BorderLayoutPanel getErrorComponent() {
     return myErrorComponent;
   }
 
@@ -89,7 +93,8 @@ public class VcsExecutablePathSelector {
     }
   }
 
-  public @Nullable String getCurrentPath() {
+  @Nullable
+  public String getCurrentPath() {
     return StringUtil.nullize(myPathSelector.getText().trim());
   }
 
@@ -134,11 +139,13 @@ public class VcsExecutablePathSelector {
     }
   }
 
-  public @NotNull JPanel getMainPanel() {
+  @NotNull
+  public JPanel getMainPanel() {
     return myMainPanel;
   }
 
-  private @Nullable String getExecutablePath() {
+  @Nullable
+  private String getExecutablePath() {
     return ObjectUtils.chooseNotNull(getCurrentPath(), myAutoDetectedPath);
   }
 
@@ -171,7 +178,8 @@ public class VcsExecutablePathSelector {
   }
 
   public interface ExecutableHandler {
-    default @Nullable String patchExecutable(@NotNull String executable) {
+    @Nullable
+    default String patchExecutable(@NotNull String executable) {
       return null;
     }
 

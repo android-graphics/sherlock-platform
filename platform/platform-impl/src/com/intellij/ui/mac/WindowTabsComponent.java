@@ -59,7 +59,6 @@ import java.util.*;
 @ApiStatus.Internal
 public final class WindowTabsComponent extends JBTabsImpl {
   private static final String TITLE_LISTENER_KEY = "TitleListener";
-  public static final String CLOSE_TAB_KEY = "CloseTab";
 
   private static final int TAB_HEIGHT = 30;
 
@@ -507,7 +506,6 @@ public final class WindowTabsComponent extends JBTabsImpl {
   }
 
   private static void closeTab(@NotNull IdeFrameImpl tabFrame, boolean closeOthers) {
-    tabFrame.getRootPane().putClientProperty(CLOSE_TAB_KEY, Boolean.TRUE);
     Foundation.executeOnMainThread(true, false, () -> {
       ID window = MacUtil.getWindowFromJavaWindow(tabFrame);
       Foundation.invoke(window, closeOthers ? "performCloseOtherTabs:" : "performClose:", ID.NIL);

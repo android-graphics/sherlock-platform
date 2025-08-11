@@ -9,12 +9,12 @@ buildscript {
     }
 
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:{{kotlin_plugin_version}}")
     }
 }
 
 apply plugin: 'kotlin-platform-common'
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-common"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-common"
 }

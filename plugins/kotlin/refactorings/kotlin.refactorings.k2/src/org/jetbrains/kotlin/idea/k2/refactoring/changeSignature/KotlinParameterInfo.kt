@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.base.psi.copied
-import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
+import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableParameterInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
@@ -35,7 +35,6 @@ class KotlinParameterInfo(
     override var defaultValueForCall: KtExpression?,
     override var defaultValueAsDefaultParameter: Boolean,
     override var defaultValue: KtExpression?,
-    val modifierList: KtModifierList? = null,
     val context: KtElement
 ) : KotlinModifiableParameterInfo {
     val oldName: String = name
@@ -136,9 +135,6 @@ class KotlinParameterInfo(
         val psiFactory = KtPsiFactory(context.project)
 
         val buffer = StringBuilder()
-        if (modifierList != null) {
-            buffer.append(modifierList.text).append(' ')
-        }
 
         if (valOrVar != KotlinValVar.None && !(baseFunction is KtNamedDeclaration && baseFunction.isExpectDeclaration())) {
             buffer.append(valOrVar).append(' ')
@@ -212,7 +208,7 @@ class KotlinParameterInfo(
                     }
 
                     if (declarationSymbol.receiverParameter != null &&
-                        (target.containingDeclaration as? KaConstructorSymbol)?.containingDeclaration == declarationSymbol.receiverParameter?.returnType?.expandedSymbol
+                        (target.containingDeclaration as? KaConstructorSymbol)?.containingDeclaration == declarationSymbol.receiverParameter?.type?.expandedSymbol
                     ) {
                         return Int.MAX_VALUE
                     }
@@ -239,8 +235,7 @@ class KotlinParameterInfo(
                     ?.takeIf { it == declarationSymbol.receiverParameter || it == declarationSymbol.containingDeclaration }
                     ?.let { return Int.MAX_VALUE }
 
-                val parent = expression.parent
-                if (parent is KtThisExpression && parent.getLabelName() == null && declarationSymbol.receiverParameter == null) {
+                if (expression.parent is KtThisExpression && declarationSymbol.receiverParameter == null) {
                     return Int.MAX_VALUE
                 }
             }

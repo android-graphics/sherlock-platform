@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.ConfigurableFactory;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.application.options.codeStyle.group.CodeStyleGroupProvider;
 import com.intellij.application.options.codeStyle.group.CodeStyleGroupProviderFactory;
-import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -26,7 +25,7 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
 
   public static final String CONFIGURABLE_ID = "preferences.sourceCode";
 
-  private final @NotNull CodeStyleSchemesModel myModel;
+  private @NotNull final CodeStyleSchemesModel myModel;
   private List<Configurable> myPanels;
   private boolean myResetCompleted = false;
   private boolean myInitResetInvoked = false;
@@ -41,10 +40,6 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
 
   @Override
   public JComponent createComponent() {
-    if (myPanels == null && AppMode.isRemoteDevHost()) {
-      buildConfigurables();
-    }
-
     return myPanels == null || myPanels.isEmpty() ? null : myPanels.get(0).createComponent();
   }
 
@@ -256,7 +251,8 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
   }
 
   @Override
-  public @NotNull String getId() {
+  @NotNull
+  public String getId() {
     return CONFIGURABLE_ID;
   }
 
@@ -265,19 +261,21 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
     return myModel.isUsePerProjectSettings();
   }
 
-  public @Nullable SearchableConfigurable findSubConfigurable(final @NotNull String name) {
+  @Nullable
+  public SearchableConfigurable findSubConfigurable(@NotNull final String name) {
     return findSubConfigurable(this, name);
   }
 
+  @NotNull
   @Override
-  public @NotNull Collection<BaseExtensionPointName<?>> getDependencies() {
+  public Collection<BaseExtensionPointName<?>> getDependencies() {
     return Arrays.asList(new ExtensionPointName<?>[]{
       LanguageCodeStyleSettingsProvider.EP_NAME,
       CodeStyleSettingsProvider.EXTENSION_POINT_NAME
     });
   }
 
-  private static SearchableConfigurable findSubConfigurable(SearchableConfigurable.Parent topConfigurable, final @NotNull String name) {
+  private static SearchableConfigurable findSubConfigurable(SearchableConfigurable.Parent topConfigurable, @NotNull final String name) {
     for (Configurable configurable : topConfigurable.getConfigurables()) {
       if (configurable instanceof SearchableConfigurable) {
         if (name.equals(configurable.getDisplayName())) return (SearchableConfigurable)configurable;

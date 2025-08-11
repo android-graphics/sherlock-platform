@@ -19,7 +19,6 @@ import com.intellij.execution.multilaunch.statistics.*
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.openapi.util.Key
-import org.jetbrains.annotations.ApiStatus
 
 class MultiLaunchConfiguration(
   private val project: Project,
@@ -38,7 +37,6 @@ class MultiLaunchConfiguration(
 
   val origin get() = getUserData(ORIGIN_KEY) ?: MultiLaunchCreationOrigin.EDIT_CONFIGURATIONS
 
-  @ApiStatus.Internal
   override fun getState(executor: Executor, environment: ExecutionEnvironment) = MultiLaunchProfileState(this, project)
 
   override fun getState() = options as MultiLaunchConfigurationSnapshot
@@ -63,7 +61,6 @@ class MultiLaunchConfiguration(
     }
   }
 
-  @ApiStatus.Internal
   override fun getConfigurationEditor() = MultiLaunchConfigurationEditor(project, this)
 
   override fun getAdditionalUsageData(): MutableList<EventPair<*>> {

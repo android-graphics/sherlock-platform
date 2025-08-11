@@ -18,8 +18,9 @@ public class PyAssignmentExpressionImpl extends PyElementImpl implements PyAssig
     super(astNode);
   }
 
+  @Nullable
   @Override
-  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyTargetExpression target = getTarget();
     return target == null ? null : context.getType(target);
   }

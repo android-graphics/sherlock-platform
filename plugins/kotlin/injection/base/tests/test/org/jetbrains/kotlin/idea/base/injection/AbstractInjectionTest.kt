@@ -4,25 +4,18 @@ package org.jetbrains.kotlin.idea.base.injection
 
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiLanguageInjectionHost
-import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.injection.Injectable
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.InjectionTestFixture
-import com.intellij.util.Processor
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.intellij.plugins.intelliLang.Configuration
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
-import org.intellij.plugins.intelliLang.inject.InjectLanguageAction.FixPresenter
 import org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction
 import org.intellij.plugins.intelliLang.references.FileReferenceInjector
-import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -43,7 +36,8 @@ abstract class AbstractInjectionTest : KotlinLightCodeInsightFixtureTestCase() {
         val hostRange: TextRange,
         val prefix: String = "",
         val suffix: String = ""
-    )
+    ) {
+    }
 
     val myInjectionFixture: InjectionTestFixture
        get() = InjectionTestFixture(myFixture)
@@ -90,7 +84,7 @@ abstract class AbstractInjectionTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     protected fun assertInjectionPresent(languageId: String?, unInjectShouldBePresent: Boolean) {
-        assertFalse(
+        TestCase.assertFalse(
             "Injection action is available. There's probably no injection at caret place",
             InjectLanguageAction().isAvailable(project, myFixture.editor, myFixture.file)
         )
@@ -101,7 +95,7 @@ abstract class AbstractInjectionTest : KotlinLightCodeInsightFixtureTestCase() {
         }
 
         if (unInjectShouldBePresent) {
-            assertTrue(
+            TestCase.assertTrue(
                 "UnInjection action is not available. There's no injection at caret place or some other troubles.",
                 UnInjectLanguageAction().isAvailable(project, myFixture.editor, myFixture.file)
             )
@@ -111,7 +105,7 @@ abstract class AbstractInjectionTest : KotlinLightCodeInsightFixtureTestCase() {
     protected fun assertNoInjection(@Language("kotlin") text: String) {
         myFixture.configureByText("${getTestName(true)}.kt", text.trimIndent())
 
-        assertTrue(
+        TestCase.assertTrue(
             "Injection action is not available. There's probably some injection but nothing was expected.",
             InjectLanguageAction().isAvailable(project, myFixture.editor, myFixture.file)
         )
@@ -127,7 +121,7 @@ abstract class AbstractInjectionTest : KotlinLightCodeInsightFixtureTestCase() {
 
         myFixture.configureByText("${getTestName(true)}.kt", before.trimIndent())
 
-        assertTrue(UnInjectLanguageAction().isAvailable(project, myFixture.editor, myFixture.file))
+        TestCase.assertTrue(UnInjectLanguageAction().isAvailable(project, myFixture.editor, myFixture.file))
         allowAnalysisOnEdt {
             UnInjectLanguageAction.invokeImpl(project, myFixture.editor, myFixture.file)
         }
@@ -153,29 +147,5 @@ abstract class AbstractInjectionTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
-    protected fun doInjectLanguageOrReferenceTest(@Language("kotlin") before: String, @Language("kotlin") after: String) {
-        myFixture.configureByText("${getTestName(true)}.kt", before)
-
-        InjectLanguageAction.invokeImpl(
-            project,
-            editor,
-            file,
-            Injectable.fromLanguage(KotlinLanguage.INSTANCE),
-            object : FixPresenter {
-                override fun showFix(
-                    editor: Editor,
-                    range: TextRange,
-                    pointer: SmartPsiElementPointer<PsiLanguageInjectionHost?>,
-                    text: @Nls String,
-                    data: Processor<in PsiLanguageInjectionHost>
-                ) {
-                    data.process(pointer.getElement())
-                }
-            })
-
-        myInjectionFixture.assertInjectedLangAtCaret("kotlin")
-        assertEquals(after, myInjectionFixture.topLevelFile.text)
-    }
-
-    fun range(start: Int, end: Int): TextRange = TextRange.create(start, end)
+    fun range(start: Int, end: Int) = TextRange.create(start, end)
 }

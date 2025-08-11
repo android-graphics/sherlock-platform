@@ -20,17 +20,20 @@ public enum Side {
     myIndex = index;
   }
 
-  public static @NotNull Side fromIndex(int index) {
+  @NotNull
+  public static Side fromIndex(int index) {
     if (index == 0) return LEFT;
     if (index == 1) return RIGHT;
     throw new IndexOutOfBoundsException("index: " + index);
   }
 
-  public static @NotNull Side fromLeft(boolean isLeft) {
+  @NotNull
+  public static Side fromLeft(boolean isLeft) {
     return isLeft ? LEFT : RIGHT;
   }
 
-  public static @NotNull Side fromRight(boolean isRight) {
+  @NotNull
+  public static Side fromRight(boolean isRight) {
     return isRight ? RIGHT : LEFT;
   }
 
@@ -42,13 +45,15 @@ public enum Side {
     return myIndex == 0;
   }
 
+  @NotNull
   @Contract(pure = true)
-  public @NotNull Side other() {
+  public Side other() {
     return isLeft() ? RIGHT : LEFT;
   }
 
+  @NotNull
   @Contract(pure = true)
-  public @NotNull Side other(boolean other) {
+  public Side other(boolean other) {
     return other ? other() : this;
   }
 
@@ -60,13 +65,15 @@ public enum Side {
     return isLeft() ? left : right;
   }
 
+  @Nullable
   @Contract(value = "!null, !null -> !null; null, null -> null", pure = true)
-  public @Nullable <T> T select(@Nullable T left, @Nullable T right) {
+  public <T> T select(@Nullable T left, @Nullable T right) {
     return isLeft() ? left : right;
   }
 
+  @NotNull
   @Contract(pure = true)
-  public @NotNull <T> T selectNotNull(@NotNull T left, @NotNull T right) {
+  public <T> T selectNotNull(@NotNull T left, @NotNull T right) {
     return isLeft() ? left : right;
   }
 
@@ -88,8 +95,9 @@ public enum Side {
     return array[myIndex];
   }
 
+  @NotNull
   @Contract(pure = true)
-  public @NotNull <T> T selectNotNull(T @NotNull [] array) {
+  public <T> T selectNotNull(T @NotNull [] array) {
     assert array.length == 2;
     return array[myIndex];
   }
@@ -100,8 +108,9 @@ public enum Side {
     return list.get(myIndex);
   }
 
+  @NotNull
   @Contract(pure = true)
-  public @NotNull <T> T selectNotNull(@NotNull List<T> list) {
+  public <T> T selectNotNull(@NotNull List<T> list) {
     assert list.size() == 2;
     return list.get(myIndex);
   }
@@ -111,13 +120,15 @@ public enum Side {
     return isLeft() ? region.first : region.second;
   }
 
+  @NotNull
   @Contract(pure = true)
-  public @NotNull <T> T selectNotNull(@NotNull Couple<T> region) {
+  public <T> T selectNotNull(@NotNull Couple<T> region) {
     return isLeft() ? region.first : region.second;
   }
 
+  @Nullable
   @Contract(pure = true)
-  public static @Nullable <T> Side fromValue(@NotNull List<? extends T> list, @Nullable T value) {
+  public static <T> Side fromValue(@NotNull List<? extends T> list, @Nullable T value) {
     assert list.size() == 2;
     int index = list.indexOf(value);
     return index != -1 ? fromIndex(index) : null;

@@ -1,18 +1,15 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -20,19 +17,24 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 abstract class ReplaceCallFix(
-    element: KtQualifiedExpression,
+    expression: KtQualifiedExpression,
     private val operation: String,
     private val notNullNeeded: Boolean = false
-) : PsiUpdateModCommandAction<KtQualifiedExpression>(element) {
+) : KotlinPsiOnlyQuickFixAction<KtQualifiedExpression>(expression) {
 
-    override fun getPresentation(context: ActionContext, element: KtQualifiedExpression): Presentation? =
-        Presentation.of(familyName).takeIf { element.selectorExpression != null }
+    override fun getFamilyName() = text
 
-    override fun invoke(context: ActionContext, element: KtQualifiedExpression, updater: ModPsiUpdater) {
-        replace(element, context.project, updater)
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
+        val element = element ?: return false
+        return element.selectorExpression != null
     }
 
-    protected fun replace(element: KtQualifiedExpression?, project: Project, updater: ModPsiUpdater): KtExpression? {
+    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
+        val element = element ?: return
+        replace(element, project, editor)
+    }
+
+    protected fun replace(element: KtQualifiedExpression?, project: Project, editor: Editor?): KtExpression? {
         val selectorExpression = element?.selectorExpression ?: return null
         val elvis = element.elvisOrEmpty(notNullNeeded)
         val betweenReceiverAndOperation = element.elementsBetweenReceiverAndOperation().joinToString(separator = "") { it.text }
@@ -44,7 +46,7 @@ abstract class ReplaceCallFix(
 
         val replacement = element.replace(newExpression)
         if (elvis.isNotEmpty()) {
-            replacement.moveCaretToEnd(project, updater)
+            replacement.moveCaretToEnd(editor, project)
         }
 
         return replacement as? KtExpression
@@ -60,47 +62,50 @@ abstract class ReplaceCallFix(
 }
 
 class ReplaceImplicitReceiverCallFix(
-    element: KtExpression,
+    expression: KtExpression,
     private val notNullNeeded: Boolean
-) : PsiUpdateModCommandAction<KtExpression>(element) {
+) : KotlinPsiOnlyQuickFixAction<KtExpression>(expression) {
+    override fun getFamilyName() = text
 
-    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.with.safe.this.call")
+    override fun getText() = KotlinBundle.message("replace.with.safe.this.call")
 
-    override fun invoke(context: ActionContext, element: KtExpression, updater: ModPsiUpdater) {
+    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
+        val element = element ?: return
         val elvis = element.elvisOrEmpty(notNullNeeded)
-        val newExpression = KtPsiFactory(context.project).createExpressionByPattern("this?.$0$elvis", element)
+        val newExpression = KtPsiFactory(project).createExpressionByPattern("this?.$0$elvis", element)
         val replacement = element.replace(newExpression)
         if (elvis.isNotEmpty()) {
-            replacement.moveCaretToEnd(context.project, updater)
+            replacement.moveCaretToEnd(editor, project)
         }
     }
 }
 
 class ReplaceWithSafeCallFix(
-    element: KtDotQualifiedExpression,
+    expression: KtDotQualifiedExpression,
     notNullNeeded: Boolean
-) : ReplaceCallFix(element, "?.", notNullNeeded) {
-    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.with.safe.call")
+) : ReplaceCallFix(expression, "?.", notNullNeeded) {
+    override fun getText() = KotlinBundle.message("replace.with.safe.call")
 }
 
 class ReplaceWithSafeCallForScopeFunctionFix(
-    element: KtDotQualifiedExpression,
+    expression: KtDotQualifiedExpression,
     notNullNeeded: Boolean
-) : ReplaceCallFix(element, "?.", notNullNeeded) {
-    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.scope.function.with.safe.call")
+) : ReplaceCallFix(expression, "?.", notNullNeeded) {
+    override fun getText() = KotlinBundle.message("replace.scope.function.with.safe.call")
 }
 
 class ReplaceWithDotCallFix(
-    element: KtSafeQualifiedExpression,
+    expression: KtSafeQualifiedExpression,
     private val callChainCount: Int = 0
-) : ReplaceCallFix(element, "."), CleanupFix.ModCommand {
-    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.with.dot.call")
+) : ReplaceCallFix(expression, "."), CleanupFix {
+    override fun getText() = KotlinBundle.message("replace.with.dot.call")
 
-    override fun invoke(context: ActionContext, element: KtQualifiedExpression, updater: ModPsiUpdater) {
-        var replaced = replace(element, context.project, updater) ?: return
+    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
+        val element = element ?: return
+        var replaced = replace(element, project, editor) ?: return
         repeat(callChainCount) {
             val parent = replaced.getQualifiedExpressionForReceiver() as? KtSafeQualifiedExpression ?: return
-            replaced = replace(parent, context.project, updater) ?: return
+            replaced = replace(parent, project, editor) ?: return
         }
     }
 }
@@ -111,10 +116,11 @@ fun KtExpression.elvisOrEmpty(notNullNeeded: Boolean): String {
     return if (binaryExpression?.left == this && binaryExpression.operationToken == KtTokens.ELVIS) "" else "?:"
 }
 
-fun PsiElement.moveCaretToEnd(project: Project, updater: ModPsiUpdater) {
-    val document = containingFile.fileDocument
-    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document)
-    val endOffset = if (text.endsWith(")")) endOffset - 1 else endOffset
-    document.insertString(endOffset, " ")
-    updater.moveCaretTo(endOffset + 1)
+fun PsiElement.moveCaretToEnd(editor: Editor?, project: Project) {
+    editor?.run {
+        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document)
+        val endOffset = if (text.endsWith(")")) endOffset - 1 else endOffset
+        document.insertString(endOffset, " ")
+        caretModel.moveToOffset(endOffset + 1)
+    }
 }

@@ -10,8 +10,8 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.testFramework.PsiTestUtil
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
+import java.io.File
 import java.io.IOException
-import java.nio.file.Files
 
 class StructureImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
@@ -68,6 +68,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        <modules>
                          <module>m1</module>
                          <module>m2</module>
+                         <module>m3</module>
                        </modules>
                        """.trimIndent())
 
@@ -90,7 +91,8 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
     createProjectSubDirs("m1/src/main/java",
                          "m2/src/main/java",
-                         "m3/src/main/java")
+                         "m3/src/main/jva",
+                         "m4/src/main/java")
 
     importProjectAsync()
     assertModules("project", "m1", "m2", "m3", "m4")
@@ -165,7 +167,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
     PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, projectRoot)
     val anotherContentRoot = createProjectSubFile("m1/user-content")
     PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, anotherContentRoot)
-    assertContentRoots(userModuleWithConflictingRoot.getName(), projectPath.toString(), anotherContentRoot.getPath())
+    assertContentRoots(userModuleWithConflictingRoot.getName(), projectPath, anotherContentRoot.getPath())
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -175,7 +177,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
     importProjectAsync()
     assertModules("project", userModuleWithConflictingRoot.getName())
-    assertContentRoots("project", projectPath.toString())
+    assertContentRoots("project", projectPath)
     assertContentRoots(userModuleWithConflictingRoot.getName(), anotherContentRoot.getPath())
   }
 
@@ -184,7 +186,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
     val userModuleWithConflictingRoot = createModule("userModuleWithConflictingRoot")
     PsiTestUtil.removeAllRoots(userModuleWithConflictingRoot, null)
     PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, projectRoot)
-    assertContentRoots(userModuleWithConflictingRoot.getName(), projectPath.toString())
+    assertContentRoots(userModuleWithConflictingRoot.getName(), projectPath)
 
     val userModuleWithUniqueRoot = createModule("userModuleWithUniqueRoot")
     assertContentRoots(userModuleWithUniqueRoot.getName(), "$projectPath/userModuleWithUniqueRoot")
@@ -197,7 +199,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
     importProjectAsync()
     assertModules("project", userModuleWithUniqueRoot.getName())
-    assertContentRoots("project", projectPath.toString())
+    assertContentRoots("project", projectPath)
     assertContentRoots(userModuleWithUniqueRoot.getName(), "$projectPath/userModuleWithUniqueRoot")
   }
 
@@ -227,7 +229,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
     assertMavenizedModule("m1")
     assertNotMavenizedModule("userModule")
 
-    updateProjectPom("""
+    createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -463,8 +465,6 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testModulePathsAsProperties() = runBlocking {
-    // Maven 4 doesn't allow module paths as properties
-    assumeMaven3()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -522,7 +522,6 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testParentWithoutARelativePath() = runBlocking {
-    runWithoutStaticSync()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -639,10 +638,10 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testParentInRemoteRepository() = runBlocking {
     val pathToJUnit = "asm/asm-parent/3.0"
-    val parentDir = repositoryPath.resolve(pathToJUnit)
+    val parentDir = File(repositoryPath, pathToJUnit)
 
     removeFromLocalRepository(pathToJUnit)
-    assertFalse(Files.exists(parentDir))
+    assertFalse(parentDir.exists())
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -658,10 +657,10 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
     importProjectAsync()
     assertModules("project")
 
-    assertTrue(Files.exists(parentDir))
+    assertTrue(parentDir.exists())
 
     assertEquals("asm-parent", projectsTree.rootProjects[0].parentId!!.artifactId)
-    assertTrue(Files.exists(parentDir.resolve("asm-parent-3.0.pom")))
+    assertTrue(File(parentDir, "asm-parent-3.0.pom").exists())
   }
 
   @Test
@@ -804,69 +803,6 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testFileProfileActivationInParentPom2() = runBlocking {
-    assumeMaven4()
-    createProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <packaging>pom</packaging>
-                         <profiles>
-                           <profile>
-                             <id>xxx</id>
-                             <dependencies>
-                               <dependency>
-                                 <groupId>junit</groupId>
-                                 <artifactId>junit</artifactId>
-                                 <version>4.0</version>
-                               </dependency>
-                             </dependencies>
-                             <activation>
-                               <file>
-                                 <exists>src/io.properties</exists>
-                               </file>
-                             </activation>
-                           </profile>
-                         </profiles>
-                       <modules>
-                         <module>m1</module>
-                         <module>m2</module>
-                       </modules>
-                       """.trimIndent())
-
-    val m1 =createModulePom("m1", """
-      <groupId>test</groupId>
-      <artifactId>m1</artifactId>
-      <parent>
-        <groupId>test</groupId>
-        <artifactId>project</artifactId>
-        <version>1</version>
-      </parent>
-      """.trimIndent())
-
-    val m2 = createModulePom("m2", """
-      <groupId>test</groupId>
-      <artifactId>m2</artifactId>
-      <parent>
-        <groupId>test</groupId>
-        <artifactId>project</artifactId>
-        <version>1</version>
-      </parent>
-      """.trimIndent())
-    createProjectSubFile("m2/src/io.properties", "")
-
-    assertTrue("File src/io.properties not found", Files.exists(m2.toNioPath().parent.resolve("src/io.properties")))
-
-    importProjectAsync()
-
-    val m1Project = projectsManager.findProject(m1)!!
-    assertSameElements("m1 enabled profiles", m1Project.activatedProfilesIds.enabledProfiles, emptyList())
-
-    val m2Project = projectsManager.findProject(m2)!!
-    assertSameElements("m2 enabled profiles", m2Project.activatedProfilesIds.enabledProfiles, listOf("xxx"))
-  }
-
-  @Test
   fun testProjectWithProfiles() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -1002,16 +938,15 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testProjectWithMavenConfigCustomUserSettingsXml() = runBlocking {
-    runWithoutStaticSync()
-    val configFile = createProjectSubFile(".mvn/maven.config", "-s .mvn/custom-settings.xml")
-    val settingsFile = createProjectSubFile(".mvn/custom-settings.xml",
+    createProjectSubFile(".mvn/maven.config", "-s .mvn/custom-settings.xml")
+    createProjectSubFile(".mvn/custom-settings.xml",
                          """
                            <settings>
                                <profiles>
                                    <profile>
                                        <id>custom1</id>
                                        <properties>
-                                           <projectName>customName</projectName>
+                                           <projectName>customName</prop>
                                        </properties>
                                    </profile>
                                </profiles>
@@ -1024,7 +959,6 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        <artifactId>${'$'}{projectName}</artifactId>
                        <version>1</version>
                        """.trimIndent())
-    refreshFiles(listOf(configFile, settingsFile))
 
     val settings = mavenGeneralSettings
     settings.setUserSettingsFile("")
@@ -1043,32 +977,24 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
     createProjectPom("""
                        <groupId>test</groupId>
-                       <artifactId>project</artifactId>
+                       <artifactId>${'$'}{projectName}</artifactId>
                        <version>1</version>
                        <profiles>
                          <profile>
                            <id>one</id>
                            <properties>
-                               <myProp>1.2.3</myProp>
+                             <projectName>project-one</projectName>
                            </properties>
                          </profile>
                        </profiles>
-                       <dependencies>
-                           <dependency>
-                               <groupId>group</groupId>
-                               <artifactId>artifact</artifactId>
-                               <version>${'$'}{myProp}</version>
-                           </dependency>
-                       </dependencies>
                        """.trimIndent())
 
     importProjectAsync()
-    assertModuleLibDeps("project", "Maven: group:artifact:1.2.3")
+    assertModules("project-one")
   }
 
   @Test
   fun testProjectWithActiveProfilesAndInactiveFromSettingsXml() = runBlocking {
-    runWithoutStaticSync()
     updateSettingsXml("""
                         <activeProfiles>
                           <activeProfile>one</activeProfile>

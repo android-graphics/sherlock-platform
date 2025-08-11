@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
 import org.jetbrains.annotations.NotNull;
@@ -11,8 +11,8 @@ import java.util.List;
  */
 public class ExternalModuleBuildClasspathPojo {
 
-  private @NotNull String myPath;
-  private @NotNull List<String> myEntries;
+  @NotNull private String myPath;
+  @NotNull private List<String> myEntries;
 
   @SuppressWarnings("UnusedDeclaration")
   public ExternalModuleBuildClasspathPojo() {
@@ -25,7 +25,8 @@ public class ExternalModuleBuildClasspathPojo {
     myEntries = entries;
   }
 
-  public @NotNull String getPath() {
+  @NotNull
+  public String getPath() {
     return myPath;
   }
 
@@ -33,7 +34,8 @@ public class ExternalModuleBuildClasspathPojo {
     myPath = path;
   }
 
-  public @NotNull List<String> getEntries() {
+  @NotNull
+  public List<String> getEntries() {
     return myEntries;
   }
 

@@ -12,6 +12,10 @@ import com.intellij.build.events.MessageEventResult
 import com.intellij.build.events.impl.*
 import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -63,6 +67,21 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
     if (started) {
       return
     }
+    val restartAction: AnAction = object : AnAction(SyncBundle.message("maven.sync.title")) {
+      override fun update(e: AnActionEvent) {
+        e.presentation.isEnabled = !started || finished
+        e.presentation.icon = AllIcons.Actions.Refresh
+      }
+
+      override fun actionPerformed(e: AnActionEvent) {
+        e.project?.let {
+          MavenLog.LOG.info("${this.javaClass.simpleName} forceUpdateAllProjectsOrFindAllAvailablePomFiles")
+          MavenProjectsManager.getInstance(it).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
+        }
+      }
+
+      override fun getActionUpdateThread() = ActionUpdateThread.BGT
+    }
     started = true
     finished = false
     hasErrors = false
@@ -70,7 +89,9 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
     shownIssues.clear()
     mySyncId = createTaskId()
 
-    val descriptor = DefaultBuildDescriptor(mySyncId, SyncBundle.message("maven.sync.title"), myProject.basePath!!, System.currentTimeMillis())
+    val descriptor = DefaultBuildDescriptor(mySyncId, SyncBundle.message("maven.sync.title"), myProject.basePath!!,
+                                            System.currentTimeMillis())
+      .withRestartAction(restartAction)
     descriptor.isActivateToolWindowWhenFailed = explicit
     descriptor.isActivateToolWindowWhenAdded = false
     descriptor.isNavigateToError = if (explicit) ThreeState.YES else ThreeState.NO
@@ -201,13 +222,12 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
 
   @Synchronized
   fun showProblem(problem: MavenProjectProblem) = doIfImportInProcess {
-    hasErrors = hasErrors || problem.isError
-    val group = if (problem.isError) SyncBundle.message("maven.sync.group.error") else SyncBundle.message("maven.sync.group.warning")
-    val kind = if (problem.isError) MessageEvent.Kind.ERROR else MessageEvent.Kind.WARNING
+    hasErrors = true
+    val group = SyncBundle.message("maven.sync.group.error")
     val position = problem.getFilePosition()
     val message = problem.description ?: SyncBundle.message("maven.sync.failure.error.undefined.message")
     val detailedMessage = problem.description ?: SyncBundle.message("maven.sync.failure.error.undefined.detailed.message", problem.path)
-    val eventImpl = FileMessageEventImpl(mySyncId, kind, group, message, detailedMessage, position)
+    val eventImpl = FileMessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, group, message, detailedMessage, position)
     mySyncView.onEvent(mySyncId, eventImpl)
   }
 
@@ -237,7 +257,6 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
   }
 
   @Synchronized
-  @ApiStatus.ScheduledForRemoval
   @ApiStatus.Internal
   @Deprecated("use {@link #addException(Throwable)}", ReplaceWith("addException(e)"))
   fun addException(e: Throwable, ignoredProgressListener: BuildProgressListener) {
@@ -296,8 +315,8 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
   private fun attachFullSyncQuickFix() {
     try {
       mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
-        override val title: String = "Sync Finished"
-        override val description: String = "Sync finished. If there is something wrong with the project model, <a href=\"${MavenFullSyncQuickFix.ID}\">reload all projects</a>\n"
+        override val title: String = "Incremental Sync Finished"
+        override val description: String = "Incremental sync finished. If there is something wrong with the project model, <a href=\"${MavenFullSyncQuickFix.ID}\">run full sync</a>\n"
         override val quickFixes: List<BuildIssueQuickFix> = listOf(MavenFullSyncQuickFix())
         override fun getNavigatable(project: Project): Navigatable? = null
       }, MessageEvent.Kind.INFO))

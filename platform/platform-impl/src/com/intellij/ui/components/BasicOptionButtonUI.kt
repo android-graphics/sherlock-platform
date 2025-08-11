@@ -299,8 +299,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     val presentationFactory = PresentationFactory()
     val actionItems = ActionPopupStep.createActionItems(
       actionGroup, dataContext, place, presentationFactory,
-      if (optionButton.hideDisabledOptions) ActionPopupOptions.honorMnemonics()
-      else ActionPopupOptions.mnemonicsAndDisabled())
+      ActionPopupOptions.mnemonicsAndDisabled())
     val defaultSelection = if (toSelect != null) Condition<AnAction> { mapping[it] == toSelect } else null
     val step = OptionButtonPopupStep(actionItems, place, defaultSelection, dataContext, presentationFactory)
     return OptionButtonPopup(step, dataContext, toSelect != null || ensureSelection)
@@ -310,11 +309,13 @@ open class BasicOptionButtonUI : OptionButtonUI() {
 
   protected open fun createActionMapping(): Pair<ActionGroup, Map<AnAction, Action>> {
     val mapping = optionButton.options?.associateBy(this@BasicOptionButtonUI::createAnAction) ?: emptyMap()
-    val actionGroup = DefaultActionGroup()
-    mapping.keys.forEachIndexed { index, it ->
-      if (index > 0 && optionButton.addSeparator) actionGroup.addSeparator()
-      actionGroup.add(it)
+    val actionGroup = DefaultActionGroup().apply {
+      mapping.keys.forEachIndexed { index, it ->
+        if (index > 0 && optionButton.addSeparator) addSeparator()
+        add(it)
+      }
     }
+
     return Pair(actionGroup, mapping)
   }
 

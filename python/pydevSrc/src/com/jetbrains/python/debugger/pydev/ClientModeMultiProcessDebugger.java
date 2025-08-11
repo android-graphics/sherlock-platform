@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
 import com.google.common.collect.Collections2;
@@ -6,7 +6,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
@@ -15,14 +14,13 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
-import com.jetbrains.python.tables.TableCommandParameters;
-import com.jetbrains.python.tables.TableCommandType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.jetbrains.python.tables.TableCommandParameters;
+import com.jetbrains.python.tables.TableCommandType;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 
 /**
  * @see com.jetbrains.python.debugger.pydev.transport.ClientModeDebuggerTransport
@@ -31,7 +29,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   private static final Logger LOG = Logger.getInstance(ClientModeMultiProcessDebugger.class);
 
   private final IPyDebugProcess myDebugProcess;
-  private final @NotNull String myHost;
+  @NotNull private final String myHost;
   private final int myPort;
 
   private final Object myDebuggersObject = new Object();
@@ -46,59 +44,48 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
   private final CompositeRemoteDebuggerCloseListener myCompositeListener = new CompositeRemoteDebuggerCloseListener();
 
-  private final @NotNull ExecutorService myExecutor;
+  private final RecurrentTaskExecutor<RemoteDebugger> myExecutor;
 
-  private class ConnectToDebuggerTask implements Runnable {
-    @Override
-    public void run() {
-      try {
-        tryToConnectRemoteDebugger();
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-  }
-
-  public ClientModeMultiProcessDebugger(final @NotNull IPyDebugProcess debugProcess,
+  public ClientModeMultiProcessDebugger(@NotNull final IPyDebugProcess debugProcess,
                                         @NotNull String host, int port) {
     myDebugProcess = debugProcess;
     myHost = host;
     myPort = port;
 
-    String connectionThreadsName = "Debugger connection thread (" + host + ":" + port + ")";
-
-    myExecutor = ConcurrencyUtil.newSingleThreadExecutor(connectionThreadsName);
-
-    myExecutor.execute(new ConnectToDebuggerTask());
+    String connectionThreadsName = "Debugger connection threads (" + host + ":" + port + ")";
+    myExecutor = new RecurrentTaskExecutor<>(connectionThreadsName, this::tryToConnectRemoteDebugger, this::onRemoteDebuggerConnected);
   }
 
   /**
-   * Should either successfully connect to the debugger script or throw {@link IOException} because of the
+   * Should either successfully connect to the debugger script and return the
+   * {@link RemoteDebugger} or throw {@link IOException} because of the
    * connection error or the socket timeout error.
    * <p>
    * We assume that debugger is successfully connected if the Python debugger
-   * script responded on `CMD_VERSION` command (see {@link RemoteDebugger#handshake()}).
+   * script responded on `CMD_VERSION` command (see
+   * {@link RemoteDebugger#handshake()}).
    *
+   * @return the successfully connected {@link RemoteDebugger}
    * @throws Exception if the connection or timeout error occurred
    * @see com.jetbrains.python.debugger.pydev.transport.ClientModeDebuggerTransport
    */
-  private void tryToConnectRemoteDebugger() throws Exception {
+  @NotNull
+  private RemoteDebugger tryToConnectRemoteDebugger() throws Exception {
     RemoteDebugger debugger = new RemoteDebugger(myDebugProcess, myHost, myPort) {
       @Override
       protected void onProcessCreatedEvent(int commandSequence) {
         try {
           ProcessCreatedMsgReceivedCommand command = new ProcessCreatedMsgReceivedCommand(this, commandSequence);
           command.execute();
-          myExecutor.execute(new ConnectToDebuggerTask());
         }
         catch (PyDebuggerException e) {
           LOG.info(e);
         }
+        myExecutor.incrementRequests();
       }
     };
     debugger.waitForConnect();
-    onRemoteDebuggerConnected(debugger);
+    return debugger;
   }
 
   private void onRemoteDebuggerConnected(@NotNull RemoteDebugger debugger) {
@@ -135,6 +122,10 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
     myDebuggerStatusHolder.onConnecting();
 
+    // increment the number of debugger connection request initially
+    myExecutor.incrementRequests();
+
+    // waiting for the first connected thread
     if (!myDebuggerStatusHolder.awaitWhileConnecting()) {
       throw new PyDebuggerException("The process terminated before IDE established connection with Python debugger script");
     }
@@ -143,6 +134,8 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   @Override
   public void close() {
     myDebuggerStatusHolder.onDisconnectionInitiated();
+
+    myExecutor.dispose();
 
     for (ProcessDebugger d : allDebuggers()) {
       d.close();
@@ -158,6 +151,8 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   @Override
   public void disconnect() {
     myDebuggerStatusHolder.onDisconnectionInitiated();
+
+    myExecutor.dispose();
 
     for (ProcessDebugger d : allDebuggers()) {
       d.disconnect();
@@ -177,20 +172,14 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public PyDebugValue evaluate(String threadId, String frameId, String expression, boolean execute, int evaluationTimeout)
-    throws PyDebuggerException {
-    return debugger(threadId).evaluate(threadId, frameId, expression, execute, evaluationTimeout);
+  public PyDebugValue evaluate(String threadId, String frameId, String expression, boolean execute) throws PyDebuggerException {
+    return debugger(threadId).evaluate(threadId, frameId, expression, execute);
   }
 
   @Override
-  public PyDebugValue evaluate(String threadId,
-                               String frameId,
-                               String expression,
-                               boolean execute,
-                               int evaluationTimeout,
-                               boolean trimResult)
+  public PyDebugValue evaluate(String threadId, String frameId, String expression, boolean execute, boolean trimResult)
     throws PyDebuggerException {
-    return debugger(threadId).evaluate(threadId, frameId, expression, execute, evaluationTimeout, trimResult);
+    return debugger(threadId).evaluate(threadId, frameId, expression, execute, trimResult);
   }
 
   @Override
@@ -207,8 +196,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   public @Nullable String execTableCommand(String threadId,
                                            String frameId,
                                            String command,
-                                           TableCommandType commandType, TableCommandParameters tableCommandParameters)
-    throws PyDebuggerException {
+                                           TableCommandType commandType, TableCommandParameters tableCommandParameters) throws PyDebuggerException {
     return debugger(threadId).execTableCommand(threadId, frameId, command, commandType, tableCommandParameters);
   }
 
@@ -236,20 +224,19 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public @NotNull DataViewerCommandResult executeDataViewerCommand(@NotNull DataViewerCommandBuilder builder) throws PyDebuggerException {
+  @NotNull
+  public DataViewerCommandResult executeDataViewerCommand(@NotNull DataViewerCommandBuilder builder) throws PyDebuggerException {
     assert builder.getThreadId() != null;
     return debugger(builder.getThreadId()).executeDataViewerCommand(builder);
   }
 
   @Override
-  public void loadReferrers(String threadId,
-                            String frameId,
-                            PyReferringObjectsValue var,
-                            PyDebugCallback<? super XValueChildrenList> callback) {
+  public void loadReferrers(String threadId, String frameId, PyReferringObjectsValue var, PyDebugCallback<? super XValueChildrenList> callback) {
     debugger(threadId).loadReferrers(threadId, frameId, var, callback);
   }
 
-  private @NotNull ProcessDebugger debugger(@NotNull String threadId) {
+  @NotNull
+  private ProcessDebugger debugger(@NotNull String threadId) {
     ProcessDebugger debugger = myThreadRegistry.getDebugger(threadId);
     if (debugger != null) {
       return debugger;

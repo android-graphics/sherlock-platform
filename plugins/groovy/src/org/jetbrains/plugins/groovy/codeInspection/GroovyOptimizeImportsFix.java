@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -58,12 +58,14 @@ public final class GroovyOptimizeImportsFix implements IntentionAction {
   }
 
   @Override
-  public @NotNull String getText() {
+  @NotNull
+  public String getText() {
     return GroovyBundle.message("optimize.all.imports");
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return GroovyBundle.message("optimize.imports");
   }
 
@@ -128,9 +130,9 @@ public final class GroovyOptimizeImportsFix implements IntentionAction {
       });
   }
 
-  public static void invokeOnTheFlyImportOptimizer(final @NotNull Runnable runnable,
-                                                   final @NotNull PsiFile file,
-                                                   final @NotNull Editor editor) {
+  public static void invokeOnTheFlyImportOptimizer(@NotNull final Runnable runnable,
+                                                   @NotNull final PsiFile file,
+                                                   @NotNull final Editor editor) {
     final long stamp = editor.getDocument().getModificationStamp();
     Project project = file.getProject();
     ApplicationManager.getApplication().invokeLater(() -> {

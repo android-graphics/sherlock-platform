@@ -45,6 +45,11 @@ public final class PyNamespacePackagesService implements PersistentStateComponen
     return module.getService(PyNamespacePackagesService.class);
   }
 
+  public @NotNull List<String> getNamespacePackageFolders() {
+    removeInvalidNamespacePackageFolders();
+    return Collections.unmodifiableList(myTools.getFoldersAsStrings());
+  }
+
   @Transient
   public @NotNull List<VirtualFile> getNamespacePackageFoldersVirtualFiles() {
     removeInvalidNamespacePackageFolders();

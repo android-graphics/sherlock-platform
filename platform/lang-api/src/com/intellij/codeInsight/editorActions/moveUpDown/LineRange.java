@@ -37,7 +37,6 @@ public class LineRange {
     this(element, element);
   }
 
-  @Override
   public @NonNls String toString() {
     return "line range: ["+startLine+"-"+endLine+"]";
   }

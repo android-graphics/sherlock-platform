@@ -7,12 +7,10 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
 
-@ApiStatus.Internal
 public class CopyCommitSubjectAction extends DumbAwareAction {
 
   @Override

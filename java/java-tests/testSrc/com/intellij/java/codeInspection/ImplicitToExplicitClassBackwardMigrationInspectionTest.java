@@ -4,8 +4,6 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.ImplicitToExplicitClassBackwardMigrationInspection;
 import com.intellij.java.JavaBundle;
-import com.intellij.pom.java.JavaFeature;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -55,15 +53,5 @@ public class ImplicitToExplicitClassBackwardMigrationInspectionTest extends Ligh
                          public class List {}
                          """);
     doTest();
-  }
-
-  public void testConflictModuleImportDemandOverModule() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
-      myFixture.addClass("""
-                           package test;
-                           public class List {}
-                           """);
-      doTest();
-    });
   }
 }

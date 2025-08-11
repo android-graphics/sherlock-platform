@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.lang.ASTNode;
@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 import java.util.ArrayList;
 
 public final class GantUtils {
-  public static final @NonNls String GANT_JAR_FILE_PATTERN = "gant((_groovy)?|-)\\d.*\\.jar";
+  @NonNls public static final String GANT_JAR_FILE_PATTERN = "gant((_groovy)?|-)\\d.*\\.jar";
 
   private GantUtils() {
   }
@@ -111,7 +111,8 @@ public final class GantUtils {
     return "";
   }
 
-  public static @NotNull String getSDKInstallPath(@Nullable Module module, @NotNull Project project) {
+  @NotNull
+  public static String getSDKInstallPath(@Nullable Module module, @NotNull Project project) {
     if (module != null) {
       final String fromClasspath = getSdkHomeFromClasspath(module);
       if (fromClasspath != null) {
@@ -123,7 +124,8 @@ public final class GantUtils {
     return sdkHome != null ? sdkHome.getPath() : "";
   }
 
-  public static @Nullable String getSdkHomeFromClasspath(@NotNull Module module) {
+  @Nullable
+  public static String getSdkHomeFromClasspath(@NotNull Module module) {
     Library[] libraries = LibrariesUtil.getLibrariesByCondition(module, library1 -> isSDKLibrary(library1));
     if (libraries.length != 0) {
       final String home = getGantLibraryHome(libraries[0]);

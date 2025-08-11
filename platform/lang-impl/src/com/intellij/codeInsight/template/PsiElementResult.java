@@ -26,7 +26,6 @@ public class PsiElementResult implements Result {
     return text.equals(toString());
   }
 
-  @Override
   public String toString() {
     PsiElement element = getElement();
     if (element != null) {

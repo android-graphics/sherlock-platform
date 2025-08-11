@@ -34,7 +34,8 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private final Project myProject;
   private final PyPluginCommonOptionsPanel content;
   private JComponent labelAnchor;
-  private @NotNull List<String> myEnvPaths = Collections.emptyList();
+  @NotNull
+  private List<String> myEnvPaths = Collections.emptyList();
 
   private final List<Consumer<Boolean>> myRemoteInterpreterModeListeners = new ArrayList<>();
 
@@ -44,12 +45,12 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     content = new PyPluginCommonOptionsPanel();
     final List<Module> validModules = data.getValidModules();
     validModules.sort(new ModulesAlphaComparator());
-    Module selection = !validModules.isEmpty() ? validModules.get(0) : null;
+    Module selection = validModules.size() > 0 ? validModules.get(0) : null;
     content.moduleComboBox.setModules(validModules);
     content.moduleComboBox.setSelectedModule(selection);
 
-    content.workingDirectoryTextField.addBrowseFolderListener(data.getProject(), FileChooserDescriptorFactory.createSingleFolderDescriptor()
-      .withTitle(PyBundle.message("configurable.select.working.directory")));
+    content.workingDirectoryTextField.addBrowseFolderListener(PyBundle.message("configurable.select.working.directory"), "", data.getProject(),
+                                                              FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     ActionListener listener = new ActionListener() {
       @Override
@@ -123,7 +124,8 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   @Override
-  public @Nullable String getSdkHome() {
+  @Nullable
+  public String getSdkHome() {
     Sdk selectedSdk = (Sdk)content.interpreterComboBox.getSelectedItem();
     return selectedSdk == null ? null : selectedSdk.getHomePath();
   }
@@ -269,8 +271,9 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     content.addSourceRootsCheckbox.setSelected(flag);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<String> getEnvFilePaths() {
+  public List<String> getEnvFilePaths() {
     return myEnvPaths;
   }
 

@@ -1,8 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +13,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Constructor;
 import java.util.Collection;
-import java.util.concurrent.CancellationException;
 import java.util.function.Function;
 
 /**
@@ -25,7 +26,7 @@ import java.util.function.Function;
  * <li>Debug and trace messages are dropped by default.
  * <li>In EAP versions or if the {@code idea.fatal.error.notification} system property is set to {@code true},
  * errors additionally result in an 'IDE Internal Error'.
- * See {@link com.intellij.diagnostic.DialogAppender DialogAppender} for more details.
+ * See {@link com.intellij.diagnostic.DefaultIdeaErrorLogger#canHandle} for more details.
  * <li>The log level of each logger can be adjusted in
  * <a href="https://plugins.jetbrains.com/docs/intellij/ide-infrastructure.html#logging">Help | Diagnostic Tools | Debug Log Settings</a>.
  * </ul>
@@ -89,7 +90,7 @@ public abstract class Logger {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void logFactoryChanged(Class<? extends Factory> factory) {
-    if (Boolean.getBoolean("idea.log.logger.factory.changed")) {
+    if (SystemProperties.getBooleanProperty("idea.log.logger.factory.changed", false)) {
       System.out.println("Changing log factory from " + ourFactory.getClass().getCanonicalName() +
                          " to " + factory.getCanonicalName() + '\n' + ExceptionUtil.getThrowableText(new Throwable()));
     }
@@ -298,7 +299,7 @@ public abstract class Logger {
   }
 
   /**
-   * Log a stack trace at the info level.
+   * Log a stack trace at info level.
    * <p>
    * In production mode, info messages are enabled by default.
    * <p>
@@ -343,7 +344,7 @@ public abstract class Logger {
   }
 
   /**
-   * Log a stack trace at the warning level.
+   * Log a stack trace at warning level.
    * <p>
    * In production mode, warning messages are enabled by default.
    * <p>
@@ -354,7 +355,7 @@ public abstract class Logger {
   }
 
   /**
-   * Log a message and a stack trace at the warning level.
+   * Log a message and a stack trace at warning level.
    * <p>
    * In production mode, warning messages are enabled by default.
    * <p>
@@ -363,7 +364,7 @@ public abstract class Logger {
   public abstract void warn(String message, @Nullable Throwable t);
 
   /**
-   * Log a message at the error level.
+   * Log a message at error level.
    * <p>
    * In production mode, error messages are enabled by default.
    * In EAP versions, error messages result in an 'IDE Internal Error'.
@@ -388,11 +389,7 @@ public abstract class Logger {
   }
 
   public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
-    String[] result = new String[attachments.length];
-    for (int i = 0; i < attachments.length; i++) {
-      result[i] = ATTACHMENT_TO_STRING.apply(attachments[i]);
-    }
-    error(message, t, result);
+    error(message, t, ContainerUtil.map2Array(attachments, String.class, ATTACHMENT_TO_STRING::apply));
   }
 
   /**
@@ -414,7 +411,7 @@ public abstract class Logger {
   }
 
   /**
-   * Log a message and a stack trace at the error level.
+   * Log a message and a stack trace at error level.
    * <p>
    * In production mode, error messages are enabled by default.
    * In EAP versions, error messages result in an 'IDE Internal Error'.
@@ -491,15 +488,8 @@ public abstract class Logger {
     error(getClass() + " should override '#setLevel(LogLevel)'");
   }
 
-  private static final boolean ourRethrowCE = "true".equals(System.getProperty("idea.log.rethrow.ce", "true"));
-
-  public static boolean shouldRethrow(@NotNull Throwable t) {
-    return t instanceof ControlFlowException ||
-           t instanceof CancellationException && ourRethrowCE;
-  }
-
   protected static @Nullable Throwable ensureNotControlFlow(@Nullable Throwable t) {
-    return t != null && shouldRethrow(t) ?
+    return t instanceof ControlFlowException ?
            new Throwable("Control-flow exceptions (e.g. this " + t.getClass() + ") should never be logged. " +
                          "Instead, these should have been rethrown if caught.", t) :
            t;

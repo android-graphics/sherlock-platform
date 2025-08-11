@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,8 +13,8 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
-import com.intellij.platform.jbr.JdkEx;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
@@ -25,7 +26,6 @@ import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +38,6 @@ import static com.intellij.openapi.wm.impl.IdeGlassPaneImplKt.executeOnCancelInE
 /**
  * @author Alexander Lobas
  */
-@ApiStatus.Internal
 public class MacWinTabsHandler {
   private static final String WIN_TAB_FILLER = "WIN_TAB_FILLER_KEY";
   private static final String CLOSE_MARKER = "TABS_CLOSE_MARKER";
@@ -50,18 +49,22 @@ public class MacWinTabsHandler {
   private static Callback myObserverCallback; // don't convert to local var
   private static ID myObserverDelegate;
 
-  public static @NotNull JComponent createAndInstallHandlerComponent(@NotNull JRootPane rootPane) {
+  public static @NotNull JComponent wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {
     if (isVersion2()) {
-      return MacWinTabsHandlerV2._createAndInstallHandlerComponent(rootPane);
+      return MacWinTabsHandlerV2._wrapRootPaneNorthSide(rootPane, northComponent);
     }
+
+    JPanel panel = new NonOpaquePanel(new BorderLayout());
 
     JPanel filler = new OpaquePanel();
     filler.setBorder(JBUI.Borders.customLineBottom(UIUtil.getTooltipSeparatorColor()));
     filler.setVisible(false);
 
+    panel.add(filler, BorderLayout.NORTH);
+    panel.add(northComponent);
     rootPane.putClientProperty(WIN_TAB_FILLER, filler);
     rootPane.putClientProperty("Window.transparentTitleBarHeight", 28);
-    return filler;
+    return panel;
   }
 
   public static void fastInit(@NotNull IdeFrameImpl frame) {
@@ -173,7 +176,7 @@ public class MacWinTabsHandler {
 
       for (int i = 0; i < frames.length; i++) {
         ProjectFrameHelper helper = (ProjectFrameHelper)frames[i];
-        if (helper.isDisposed()) {
+        if (helper.rootPane.isCoroutineScopeCancelled$intellij_platform_ide_impl()) {
           visibleAndHeights[i] = 0;
           continue;
         }

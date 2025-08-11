@@ -3,10 +3,10 @@ import lombok.val;
 import java.util.*;
 
 class Test {
-  val field = <error descr="Incompatible types. Found: 'int', required: 'lombok.val'">0;</error>
+  <error descr="Incompatible types. Found: 'int', required: 'lombok.val'">val field = 0;</error>
 
   void method(val param) {
-    int p = <error descr="Incompatible types. Found: 'lombok.val', required: 'int'">param</error>;
+    <error descr="Incompatible types. Found: 'lombok.val', required: 'int'">int p = param;</error>
 
     val i = 0;
     int j = i + 1;
@@ -15,7 +15,7 @@ class Test {
     Object o = a.get(0);
 
     val b = new ArrayList<>();
-    String s = b.<error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">get</error>(0);
+    <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">String s = b.get(0);</error>
     o = b.get(0);
 
     for (val v : a) {

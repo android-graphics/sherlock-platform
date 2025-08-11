@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerReferenceService;
@@ -29,7 +29,7 @@ import java.util.*;
 public final class JavaCompilerElementRetriever {
   private static final Logger LOG = Logger.getInstance(JavaCompilerElementRetriever.class);
 
-  private static final TokenSet FUN_EXPR = TokenSet.create(JavaElementType.LAMBDA_EXPRESSION, JavaElementType.METHOD_REF_EXPRESSION);
+  private final static TokenSet FUN_EXPR = TokenSet.create(JavaElementType.LAMBDA_EXPRESSION, JavaElementType.METHOD_REF_EXPRESSION);
 
   static PsiFunctionalExpression @NotNull [] retrieveFunExpressionsByIndices(@NotNull IntSet indices,
                                                                              @NotNull PsiFileWithStubSupport psiFile) {
@@ -92,8 +92,10 @@ public final class JavaCompilerElementRetriever {
   }
 
   private static final class ClassMatcher {
-    private final @Nullable IntSet myAnonymousIndices;
-    private final @NotNull Collection<? extends InternalNameMatcher> myClassNameMatchers;
+    @Nullable
+    private final IntSet myAnonymousIndices;
+    @NotNull
+    private final Collection<? extends InternalNameMatcher> myClassNameMatchers;
 
     private ClassMatcher(@Nullable IntSet anonymousIndices,
                          @NotNull Collection<? extends InternalNameMatcher> nameMatchers) {

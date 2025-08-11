@@ -1,5 +1,0 @@
-<idea-plugin>
-  <dependencies>
-    <module name="intellij.debugger.streams.core"/>
-  </dependencies>
-</idea-plugin>

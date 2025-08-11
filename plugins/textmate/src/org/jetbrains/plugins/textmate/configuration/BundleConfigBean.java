@@ -20,7 +20,8 @@ public class BundleConfigBean implements Cloneable {
     this.enabled = enabled;
   }
 
-  public @NlsSafe String getName() {
+  @NlsSafe
+  public String getName() {
     return name;
   }
 

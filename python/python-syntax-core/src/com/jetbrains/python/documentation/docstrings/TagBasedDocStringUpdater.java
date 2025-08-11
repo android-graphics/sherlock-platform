@@ -33,7 +33,8 @@ public class TagBasedDocStringUpdater extends DocStringUpdater<TagBasedDocString
     myTagPrefix = tagPrefix;
   }
 
-  private @NotNull TagBasedDocStringBuilder createBuilder() {
+  @NotNull
+  private TagBasedDocStringBuilder createBuilder() {
     return new TagBasedDocStringBuilder(myTagPrefix);
   }
 

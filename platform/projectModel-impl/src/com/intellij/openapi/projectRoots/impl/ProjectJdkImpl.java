@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.Disposable;
@@ -61,12 +61,14 @@ public class ProjectJdkImpl extends UserDataHolderBase implements SdkBridge, Sdk
   }
 
   @Override
-  public @NotNull SdkTypeId getSdkType() {
+  @NotNull
+  public SdkTypeId getSdkType() {
     return delegate.getSdkType();
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     if (modificator != null) {
       return modificator.getName();
     } else {
@@ -145,12 +147,14 @@ public class ProjectJdkImpl extends UserDataHolderBase implements SdkBridge, Sdk
 
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
-  public @NotNull ProjectJdkImpl clone() {
+  @NotNull
+  public ProjectJdkImpl clone() {
     return new ProjectJdkImpl(delegate.clone());
   }
 
   @Override
-  public @NotNull RootProvider getRootProvider() {
+  @NotNull
+  public RootProvider getRootProvider() {
     return delegate.getRootProvider();
   }
 
@@ -166,7 +170,8 @@ public class ProjectJdkImpl extends UserDataHolderBase implements SdkBridge, Sdk
 
   // SdkModificator implementation
   @Override
-  public @NotNull SdkModificator getSdkModificator() {
+  @NotNull
+  public SdkModificator getSdkModificator() {
     if (modificator != null) {
       LOG.error("Forbidden to call `getSdkModificator` on already modifiable version of SDK");
     }

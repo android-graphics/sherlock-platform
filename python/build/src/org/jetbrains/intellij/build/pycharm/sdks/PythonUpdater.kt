@@ -135,6 +135,9 @@ class PythonUpdater {
       }
     }
 
+    // get PyPy from the current list, we have no update logic for it
+    releases.addAll(SdksKeeper.sdks.python.filter { it.product == Product.PyPy })
+
     return releases
   }
 

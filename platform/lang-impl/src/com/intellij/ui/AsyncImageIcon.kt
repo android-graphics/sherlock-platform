@@ -31,7 +31,6 @@ import javax.swing.Icon
  * if it is better for the case to use single thread shared with all [DeferredIconImpl] instances to load the [Image]
  *
  */
-@ApiStatus.Internal
 @ApiStatus.Experimental
 class AsyncImageIcon private constructor(
   parentCs: CoroutineScope,

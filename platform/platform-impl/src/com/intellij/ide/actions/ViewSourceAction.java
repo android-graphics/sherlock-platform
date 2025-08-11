@@ -5,10 +5,8 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public final class ViewSourceAction extends BaseNavigateToSourceAction {
   public ViewSourceAction() {
     super(false);

@@ -24,7 +24,6 @@ public class DomEvent {
     return myDefined;
   }
 
-  @Override
   public String toString() {
     return (myDefined ? "Defined " : "Changed ") + myElement;
   }

@@ -142,10 +142,8 @@ public final class ConfigurableExtensionPointUtil {
       LOG.warn("ignore groups: " + tree.keySet());
     }
 
-    if (root != null && root.myList != null) {
-      if (Registry.is("ide.settings.replace.group.with.single.configurable")) {
-        replaceGroupWithSingleConfigurable(root.myList);
-      }
+    if (root != null && root.myList != null && Registry.is("ide.settings.replace.group.with.single.configurable")) {
+      replaceGroupWithSingleConfigurable(root.myList);
     }
     return root;
   }

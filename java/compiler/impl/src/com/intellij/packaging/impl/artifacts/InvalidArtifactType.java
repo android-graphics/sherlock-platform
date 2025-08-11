@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.icons.AllIcons;
@@ -23,8 +23,9 @@ public final class InvalidArtifactType extends ArtifactType {
     super("invalid", IdeBundle.messagePointer("invalid.node.text"));
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getIcon() {
+  public Icon getIcon() {
     return AllIcons.FileTypes.Unknown;
   }
 
@@ -33,8 +34,9 @@ public final class InvalidArtifactType extends ArtifactType {
     return "";
   }
 
+  @NotNull
   @Override
-  public @NotNull CompositePackagingElement<?> createRootElement(@NotNull String artifactName) {
+  public CompositePackagingElement<?> createRootElement(@NotNull String artifactName) {
     return PackagingElementFactory.getInstance().createArtifactRootElement();
   }
 }

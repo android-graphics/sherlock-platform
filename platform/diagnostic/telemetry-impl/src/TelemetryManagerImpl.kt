@@ -12,9 +12,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Ref
 import com.intellij.platform.diagnostic.telemetry.*
-import com.intellij.platform.diagnostic.telemetry.OtlpConfiguration.getTraceEndpoint
 import com.intellij.platform.diagnostic.telemetry.exporters.BatchSpanProcessor
-import com.intellij.platform.diagnostic.telemetry.exporters.IdeaOtlpMeterProvider
 import com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter
 import com.intellij.platform.diagnostic.telemetry.exporters.OtlpSpanExporter
 import com.intellij.platform.util.coroutines.childScope
@@ -59,8 +57,17 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
   init {
     verboseMode = System.getProperty("idea.diagnostic.opentelemetry.verbose")?.toBooleanStrictOrNull() == true
 
-    val configurator: OpenTelemetryConfigurator = createOpenTelemetryConfigurator()
-    aggregatedMetricExporter = AggregatedMetricExporter()
+    val configurator: OpenTelemetryConfigurator = try {
+      val appInfo = ApplicationInfoImpl.getShadowInstance()
+      createOpenTelemetryConfigurator(serviceName = ApplicationNamesInfo.getInstance().fullProductName,
+                                      serviceVersion = appInfo.build.asStringWithoutProductCode(),
+                                      serviceNamespace = appInfo.build.productCode)
+    }
+    catch (e: Throwable) {
+      createOpenTelemetryConfigurator(serviceName = "", serviceVersion = "", serviceNamespace = "")
+    }
+
+    aggregatedMetricExporter = configurator.aggregatedMetricExporter
     otlpService = OtlpService.getInstance()
 
     var otlJob: Job? = null
@@ -82,9 +89,15 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
         }
       })
 
+      val batchSpanProcessor = BatchSpanProcessor(coroutineScope = coroutineScope, spanExporters = java.util.List.copyOf(spanExporters))
       // make sure that otlpService job is canceled before BatchSpanProcessor job
       otlpServiceCoroutineScope = coroutineScope.childScope(supervisor = false)
-      BatchSpanProcessor(coroutineScope = coroutineScope, spanExporters = java.util.List.copyOf(spanExporters))
+      val tracerProvider = SdkTracerProvider.builder()
+        .addSpanProcessor(batchSpanProcessor)
+        .setResource(configurator.resource)
+        .build()
+      configurator.sdkBuilder.setTracerProvider(tracerProvider)
+      batchSpanProcessor
     }
     else {
       null
@@ -94,18 +107,9 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
                                  batchSpanProcessor = batchSpanProcessor,
                                  opentelemetrySdkResource = configurator.resource)
 
-    sdk = configurator.sdkBuilder
-      .apply {
-        setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
-        setMeterProvider(IdeaOtlpMeterProvider.get(configurator.resource, aggregatedMetricExporter))
-        if (batchSpanProcessor != null) {
-          val tracerProvider = SdkTracerProvider.builder()
-            .addSpanProcessor(batchSpanProcessor)
-            .setResource(configurator.resource)
-            .build()
-          setTracerProvider(tracerProvider)
-        }
-      }
+    // W3CTraceContextPropagator is needed to make backend/client spans properly synced, issue: RDCT-408
+    sdk = configurator.getConfiguredSdkBuilder()
+      .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
       .buildAndRegisterGlobal()
   }
 
@@ -162,11 +166,6 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
     }
 
     log.info("OpenTelemetry metrics were flushed")
-  }
-
-  @TestOnly
-  override suspend fun resetExporters() {
-    batchSpanProcessor?.reset()
   }
 }
 
@@ -229,7 +228,7 @@ private fun createSpanExporters(resource: Resource, isUnitTestMode: Boolean = fa
     ))
   }
 
-  getTraceEndpoint()?.let {
+  getOtlpEndPoint()?.let {
     spanExporters.add(OtlpSpanExporter(it))
   }
 
@@ -251,14 +250,20 @@ private fun createSpanExporters(resource: Resource, isUnitTestMode: Boolean = fa
   return spanExporters
 }
 
-private fun createOpenTelemetryConfigurator(): OpenTelemetryConfigurator {
-  return try {
-    val appInfo = ApplicationInfoImpl.getShadowInstance()
-    OpenTelemetryConfigurator.create(serviceName = ApplicationNamesInfo.getInstance().fullProductName,
-                                     serviceVersion = appInfo.build.asStringWithoutProductCode(),
-                                     serviceNamespace = appInfo.build.productCode)
-  }
-  catch (e: Throwable) {
-    OpenTelemetryConfigurator.create(serviceName = "", serviceVersion = "", serviceNamespace = "")
-  }
+private fun createOpenTelemetryConfigurator(serviceName: String,
+                                            serviceVersion: String,
+                                            serviceNamespace: String): OpenTelemetryConfigurator {
+  return OpenTelemetryConfigurator(
+    sdkBuilder = OpenTelemetrySdk.builder(),
+    serviceName = serviceName,
+    serviceVersion = serviceVersion,
+    serviceNamespace = serviceNamespace,
+    customResourceBuilder = {
+      // don't write username to file - it maybe private information
+      if (getOtlpEndPoint() != null) {
+        it.put(AttributeKey.stringKey("process.owner"), System.getProperty("user.name") ?: "unknown")
+      }
+    },
+  )
 }
+

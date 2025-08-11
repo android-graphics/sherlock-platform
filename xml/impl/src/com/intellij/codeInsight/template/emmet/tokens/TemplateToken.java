@@ -129,7 +129,6 @@ public class TemplateToken extends ZenCodingToken {
     return myTemplate;
   }
 
-  @Override
   public @NotNull String toString() {
     return "TEMPLATE";
   }

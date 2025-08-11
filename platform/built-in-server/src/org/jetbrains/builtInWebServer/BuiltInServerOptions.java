@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer;
 
 import com.intellij.notification.Notification;
@@ -44,8 +44,9 @@ public final class BuiltInServerOptions implements PersistentStateComponent<Buil
   }
 
   static final class BuiltInServerDebuggerConfigurableProvider extends DebuggerConfigurableProvider {
+    @NotNull
     @Override
-    public @NotNull Collection<? extends Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category) {
+    public Collection<? extends Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category) {
       if (category == DebuggerSettingsCategory.GENERAL) {
         return Collections.singletonList(SimpleConfigurable.create("builtInServer", BuiltInServerBundle
           .message("setting.builtin.server.category.label"), BuiltInServerConfigurableUi.class, () -> getInstance()));
@@ -93,7 +94,8 @@ public final class BuiltInServerOptions implements PersistentStateComponent<Buil
 
   public static void onBuiltInServerPortChanged() {
     CustomPortServerManager.EP_NAME.forEachExtensionSafe(extension -> {
-      if (extension instanceof CustomPortServerManagerBase baseManager) {
+      CustomPortServerManagerBase baseManager = (CustomPortServerManagerBase) extension;
+      if (baseManager != null) {
         baseManager.portChanged();
       }
     });

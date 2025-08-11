@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.concurrency.JobLauncher;
@@ -117,12 +117,13 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     return processByNames(base, everywhere, indicator, context, consumer, namesList, parameters);
   }
 
-  private static @NotNull List<MatchResult> getSortedNamesForAllWildcards(@NotNull ChooseByNameViewModel base,
-                                                                          @NotNull FindSymbolParameters parameters,
-                                                                          @NotNull ProgressIndicator indicator,
-                                                                          @Nullable Supplier<String[]> allNamesProducer,
-                                                                          String namePattern,
-                                                                          boolean preferStartMatches) {
+  @NotNull
+  private static List<MatchResult> getSortedNamesForAllWildcards(@NotNull ChooseByNameViewModel base,
+                                                                 @NotNull FindSymbolParameters parameters,
+                                                                 @NotNull ProgressIndicator indicator,
+                                                                 @Nullable Supplier<String[]> allNamesProducer,
+                                                                 String namePattern,
+                                                                 boolean preferStartMatches) {
     String matchingPattern = convertToMatchingPattern(base, namePattern);
     if (matchingPattern.isEmpty() && !base.canShowListForEmptyPattern()) return Collections.emptyList();
 
@@ -145,11 +146,12 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     return result;
   }
 
-  private static @NotNull List<MatchResult> getSortedNames(@NotNull ChooseByNameViewModel base,
-                                                           @NotNull FindSymbolParameters parameters,
-                                                           @NotNull ProgressIndicator indicator,
-                                                           @Nullable Supplier<String[]> allNamesProducer,
-                                                           String namePattern, boolean preferStartMatches) {
+  @NotNull
+  private static List<MatchResult> getSortedNames(@NotNull ChooseByNameViewModel base,
+                                                  @NotNull FindSymbolParameters parameters,
+                                                  @NotNull ProgressIndicator indicator,
+                                                  @Nullable Supplier<String[]> allNamesProducer,
+                                                  String namePattern, boolean preferStartMatches) {
     List<MatchResult> namesList = getAllNames(base, parameters, indicator, allNamesProducer, namePattern, preferStartMatches);
 
     indicator.checkCanceled();
@@ -165,12 +167,13 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     return namesList;
   }
 
-  private static @NotNull List<MatchResult> getAllNames(@NotNull ChooseByNameViewModel base,
-                                                        @NotNull FindSymbolParameters parameters,
-                                                        @NotNull ProgressIndicator indicator,
-                                                        @Nullable Supplier<String[]> allNamesProducer,
-                                                        @NotNull String namePattern,
-                                                        boolean preferStartMatches) {
+  @NotNull
+  private static List<MatchResult> getAllNames(@NotNull ChooseByNameViewModel base,
+                                               @NotNull FindSymbolParameters parameters,
+                                               @NotNull ProgressIndicator indicator,
+                                               @Nullable Supplier<String[]> allNamesProducer,
+                                               @NotNull String namePattern,
+                                               boolean preferStartMatches) {
     List<MatchResult> namesList = new ArrayList<>();
 
     final CollectConsumer<MatchResult> collect = new SynchronizedCollectConsumer<>(namesList);
@@ -210,7 +213,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     }
   }
 
-  private static @NotNull FindSymbolParameters createParameters(@NotNull ChooseByNameViewModel base, @NotNull String pattern, boolean everywhere) {
+  @NotNull
+  private static FindSymbolParameters createParameters(@NotNull ChooseByNameViewModel base, @NotNull String pattern, boolean everywhere) {
     ChooseByNameModel model = base.getModel();
     IdFilter idFilter = model instanceof ContributorsBasedGotoByModel ? IdFilter.getProjectIdFilter(
       ((ContributorsBasedGotoByModel)model).getProject(), everywhere) : null;
@@ -273,18 +277,21 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     return true;
   }
 
-  protected @NotNull PathProximityComparator getPathProximityComparator() {
+  @NotNull
+  protected PathProximityComparator getPathProximityComparator() {
     return new PathProximityComparator(myContext == null ? null : myContext.getElement());
   }
 
-  private static @NotNull MinusculeMatcher getFullMatcher(@NotNull FindSymbolParameters parameters, @NotNull ChooseByNameViewModel base) {
+  @NotNull
+  private static MinusculeMatcher getFullMatcher(@NotNull FindSymbolParameters parameters, @NotNull ChooseByNameViewModel base) {
     String fullRawPattern = buildFullPattern(base, parameters.getCompletePattern());
     String fullNamePattern = buildFullPattern(base, base.transformPattern(parameters.getCompletePattern()));
 
     return NameUtil.buildMatcherWithFallback(fullRawPattern, fullNamePattern, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
-  private static @NotNull String buildFullPattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
+  @NotNull
+  private static String buildFullPattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
     String fullPattern = "*" + removeModelSpecificMarkup(base.getModel(), pattern);
     for (String separator : base.getModel().getSeparators()) {
       fullPattern = StringUtil.replace(fullPattern, separator, "*" + UNIVERSAL_SEPARATOR + "*");
@@ -292,12 +299,14 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     return fullPattern;
   }
 
-  private static @NotNull String getNamePattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
+  @NotNull
+  private static String getNamePattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
     String transformedPattern = base.transformPattern(pattern);
     return getNamePattern(base.getModel(), transformedPattern);
   }
 
-  private static @NotNull String getNamePattern(@NotNull ChooseByNameModel model, @NotNull String pattern) {
+  @NotNull
+  private static String getNamePattern(@NotNull ChooseByNameModel model, @NotNull String pattern) {
     final String[] separators = model.getSeparators();
     int lastSeparatorOccurrence = 0;
     for (String separator : separators) {
@@ -311,7 +320,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     return pattern.substring(lastSeparatorOccurrence);
   }
 
-  private static @Nullable MatchResult matchQualifiedName(@NotNull ChooseByNameModel model, @NotNull MinusculeMatcher fullMatcher, @NotNull Object element) {
+  @Nullable
+  private static MatchResult matchQualifiedName(@NotNull ChooseByNameModel model, @NotNull MinusculeMatcher fullMatcher, @NotNull Object element) {
     String fullName = model.getFullName(element);
     if (fullName == null) return null;
 
@@ -321,8 +331,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     return matchName(fullMatcher, fullName);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<String> filterNames(@NotNull ChooseByNameViewModel base, String @NotNull [] names, @NotNull String pattern) {
+  public List<String> filterNames(@NotNull ChooseByNameViewModel base, String @NotNull [] names, @NotNull String pattern) {
     boolean preferStartMatches = pattern.startsWith("*");
     pattern = convertToMatchingPattern(base, pattern);
     if (pattern.isEmpty() && !base.canShowListForEmptyPattern()) return Collections.emptyList();
@@ -338,11 +349,11 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     }
   }
 
-  private static void processNamesByPattern(final @NotNull ChooseByNameViewModel base,
+  private static void processNamesByPattern(@NotNull final ChooseByNameViewModel base,
                                             final String @NotNull [] names,
-                                            final @NotNull String pattern,
+                                            @NotNull final String pattern,
                                             final ProgressIndicator indicator,
-                                            final @NotNull Consumer<? super MatchResult> consumer,
+                                            @NotNull final Consumer<? super MatchResult> consumer,
                                             boolean preferStartMatches) {
     MinusculeMatcher matcher = buildPatternMatcher(pattern, preferStartMatches);
     Processor<String> processor = name -> {
@@ -358,11 +369,13 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     }
   }
 
-  private static @NotNull String convertToMatchingPattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
+  @NotNull
+  private static String convertToMatchingPattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
     return addSearchAnywherePatternDecorationIfNeeded(base, removeModelSpecificMarkup(base.getModel(), pattern));
   }
 
-  private static @NotNull String addSearchAnywherePatternDecorationIfNeeded(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
+  @NotNull
+  private static String addSearchAnywherePatternDecorationIfNeeded(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
     String trimmedPattern;
     if (base.isSearchInAnyPlace() && !(trimmedPattern = pattern.trim()).isEmpty() && trimmedPattern.length() > 1) {
       pattern = "*" + pattern;
@@ -370,17 +383,19 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     return pattern;
   }
 
-  private static @NotNull String removeModelSpecificMarkup(@NotNull ChooseByNameModel model, @NotNull String pattern) {
+  @NotNull
+  private static String removeModelSpecificMarkup(@NotNull ChooseByNameModel model, @NotNull String pattern) {
     if (model instanceof ContributorsBasedGotoByModel) {
       pattern = ((ContributorsBasedGotoByModel)model).removeModelSpecificMarkup(pattern);
     }
     return pattern;
   }
 
-  protected static @Nullable MatchResult matches(@NotNull ChooseByNameViewModel base,
-                                                 @NotNull String pattern,
-                                                 @NotNull MinusculeMatcher matcher,
-                                                 @Nullable String name) {
+  @Nullable
+  protected static MatchResult matches(@NotNull ChooseByNameViewModel base,
+                                     @NotNull String pattern,
+                                     @NotNull MinusculeMatcher matcher,
+                                     @Nullable String name) {
     if (name == null) {
       return null;
     }
@@ -397,12 +412,14 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     return matchName(matcher, name);
   }
 
-  private static @Nullable MatchResult matchName(@NotNull MinusculeMatcher matcher, @NotNull String name) {
+  @Nullable
+  private static MatchResult matchName(@NotNull MinusculeMatcher matcher, @NotNull String name) {
     FList<TextRange> fragments = matcher.matchingFragments(name);
     return fragments != null ? new MatchResult(name, matcher.matchingDegree(name, false, fragments), MinusculeMatcher.isStartMatch(fragments)) : null;
   }
 
-  protected static @NotNull MinusculeMatcher buildPatternMatcher(@NotNull String pattern, boolean preferStartMatches) {
+  @NotNull
+  protected static MinusculeMatcher buildPatternMatcher(@NotNull String pattern, boolean preferStartMatches) {
     NameUtil.MatcherBuilder builder = NameUtil.buildMatcher(pattern).withCaseSensitivity(NameUtil.MatchingCaseSensitivity.NONE);
     if (preferStartMatches) {
       builder = builder.preferringStartMatches();
@@ -412,9 +429,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   }
 
   protected static final class PathProximityComparator implements Comparator<Object> {
-    private final @NotNull PsiProximityComparator myProximityComparator;
+    @NotNull private final PsiProximityComparator myProximityComparator;
 
-    private PathProximityComparator(final @Nullable PsiElement context) {
+    private PathProximityComparator(@Nullable final PsiElement context) {
       myProximityComparator = new PsiProximityComparator(context);
     }
 

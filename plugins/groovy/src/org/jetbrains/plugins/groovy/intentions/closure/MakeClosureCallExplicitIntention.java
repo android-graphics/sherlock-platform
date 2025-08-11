@@ -1,12 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.closure;
 
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -17,7 +17,8 @@ public final class MakeClosureCallExplicitIntention extends GrPsiUpdateIntention
 
 
   @Override
-  public @NotNull PsiElementPredicate getElementPredicate() {
+  @NotNull
+  public PsiElementPredicate getElementPredicate() {
     return ImplicitClosureCallPredicate.INSTANCE;
   }
 

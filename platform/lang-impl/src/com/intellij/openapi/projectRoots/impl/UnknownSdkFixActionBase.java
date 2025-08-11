@@ -1,24 +1,22 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.EventDispatcher;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@ApiStatus.Internal
-public abstract class UnknownSdkFixActionBase implements UnknownSdkFixAction, FixWithConsent {
+public abstract class UnknownSdkFixActionBase implements UnknownSdkFixAction {
   private final EventDispatcher<Listener> myListeners = EventDispatcher.create(Listener.class);
-  private boolean hasUserConsent = false;
 
   @Override
   public final void addSuggestionListener(@NotNull Listener listener) {
     myListeners.addListener(listener);
   }
 
-  protected final @NotNull Listener getMulticaster() {
+  @NotNull
+  protected final Listener getMulticaster() {
     Listener proxy = myListeners.getMulticaster();
     return new Listener() {
       private final AtomicBoolean myIsFinished = new AtomicBoolean(false);
@@ -39,18 +37,6 @@ public abstract class UnknownSdkFixActionBase implements UnknownSdkFixAction, Fi
         if (!myIsFinished.compareAndSet(false, true)) return;
         proxy.onResolveFailed();
       }
-
-      @Override
-      public void onResolveCancelled() {
-        if (!myIsFinished.compareAndSet(false, true)) return;
-        proxy.onResolveCancelled();
-      }
     };
   }
-
-  @Override
-  public void giveConsent() { hasUserConsent = true; }
-
-  @Override
-  public boolean hasConsent() { return hasUserConsent; }
 }

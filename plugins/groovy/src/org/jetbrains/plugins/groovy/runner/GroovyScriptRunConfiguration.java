@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
@@ -60,8 +60,8 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
   private String workDir;
   private boolean isDebugEnabled;
   private boolean isAddClasspathToTheRunner;
-  private @Nullable String scriptParams;
-  private @Nullable String scriptPath;
+  @Nullable private String scriptParams;
+  @Nullable private String scriptPath;
   private final Map<String, String> envs = new LinkedHashMap<>();
   public boolean passParentEnv = true;
 
@@ -73,13 +73,15 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     workDir = PathUtil.getLocalPath(project.getBaseDir());
   }
 
-  public @Nullable Module getModule() {
+  @Nullable
+  public Module getModule() {
     Module module = getConfigurationModule().getModule();
     if (module != null) return module;
     return getFirstValidModule();
   }
 
-  private @Nullable Module getFirstValidModule() {
+  @Nullable
+  private Module getFirstValidModule() {
     final GroovyScriptRunner scriptRunner = getScriptRunner();
     Module[] modules = ModuleManager.getInstance(getProject()).getModules();
     if (scriptRunner == null) {
@@ -111,7 +113,8 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     return res;
   }
 
-  private @Nullable GroovyScriptRunner getScriptRunner() {
+  @Nullable
+  private GroovyScriptRunner getScriptRunner() {
     final VirtualFile scriptFile = ScriptFileUtil.findScriptFileByPath(getScriptPath());
     if (scriptFile == null) return null;
 
@@ -175,8 +178,9 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     if (scriptRunner == null) return null;
 
     return new JavaCommandLineState(environment) {
+      @NotNull
       @Override
-      protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
+      protected OSProcessHandler startProcess() throws ExecutionException {
         final OSProcessHandler handler = super.startProcess();
         handler.setShouldDestroyProcessRecursively(true);
         if (scriptRunner.shouldRefreshAfterFinish()) {
@@ -206,8 +210,9 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
                          : JavaParametersUtil.createModuleJdk(module, !tests, jrePath)
         );
         configureConfiguration(params, new CommonProgramRunConfigurationParametersDelegate(GroovyScriptRunConfiguration.this) {
+          @Nullable
           @Override
-          public @Nullable String getProgramParameters() {
+          public String getProgramParameters() {
             return null;
           }
         });
@@ -257,7 +262,8 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     return null;
   }
 
-  private static @Nullable String getPathByElement(@NotNull PsiElement element) {
+  @Nullable
+  private static String getPathByElement(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
     VirtualFile vfile = file.getVirtualFile();
@@ -282,7 +288,8 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
   }
 
   @Override
-  public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  @NotNull
+  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new GroovyRunConfigurationEditor(getProject());
   }
 
@@ -340,8 +347,9 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     myAlternativeJrePathEnabled = alternativeJrePathEnabled;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getAlternativeJrePath() {
+  public String getAlternativeJrePath() {
     return myAlternativeJrePath;
   }
 
@@ -386,8 +394,9 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     this.envs.putAll(envs);
   }
 
+  @NotNull
   @Override
-  public @NotNull Map<String, String> getEnvs() {
+  public Map<String, String> getEnvs() {
     return envs;
   }
 
@@ -417,7 +426,8 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     isAddClasspathToTheRunner = addClasspathToTheRunner;
   }
 
-  public @Nullable @NlsSafe String getScriptPath() {
+  @Nullable
+  public @NlsSafe String getScriptPath() {
     return scriptPath;
   }
 

@@ -18,8 +18,9 @@ public class ShIncludeCommandReference extends PsiReferenceBase<PsiElement> {
     super(element, TextRange.create(0, element.getTextLength()));
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement resolve() {
+  public PsiElement resolve() {
     return CachedValuesManager.getCachedValue(myElement, new ShIncludeCommandCachedValueProvider(myElement));
   }
 
@@ -33,7 +34,8 @@ public class ShIncludeCommandReference extends PsiReferenceBase<PsiElement> {
       return Result.create(resolveInner(), myElement.getContainingFile());
     }
 
-    private @Nullable PsiElement resolveInner() {
+    @Nullable
+    private PsiElement resolveInner() {
       PsiElement parent = myElement.getParent();
       if (!(parent instanceof ShIncludeCommandImpl includeCommand)) return null;
       List<ShSimpleCommandElement> commandList = includeCommand.getSimpleCommandElementList();

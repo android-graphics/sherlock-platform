@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.checkout;
 
 import com.intellij.openapi.application.ModalityState;
@@ -57,7 +57,7 @@ import static org.jetbrains.idea.svn.WorkingCopyFormat.UNKNOWN;
 public class SvnCheckoutProvider implements CheckoutProvider {
 
   @Override
-  public void doCheckout(final @NotNull Project project, Listener listener) {
+  public void doCheckout(@NotNull final Project project, Listener listener) {
     // TODO: Several dialogs is invoked while dialog.show() - seems code should be rewritten to be more transparent
     CheckoutDialog dialog = new CheckoutDialog(project, listener);
     dialog.show();
@@ -81,7 +81,8 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
   }
 
-  public static @NotNull ClientFactory getFactory(@NotNull SvnVcs vcs) {
+  @NotNull
+  public static ClientFactory getFactory(@NotNull SvnVcs vcs) {
     return vcs.getFactoryFromSettings();
   }
 
@@ -100,8 +101,9 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     CloneTask cloneTask = new CloneTask() {
       final Ref<Boolean> checkoutSuccessful = new Ref<>();
 
+      @NotNull
       @Override
-      public @NotNull CloneTaskInfo taskInfo() {
+      public CloneTaskInfo taskInfo() {
         return new CloneTaskInfo(message("progress.title.check.out"),
                                  message("progress.title.check.out.cancel"),
                                  message("checkout.repository"),
@@ -112,8 +114,9 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                                  message("checkout.stop.message.description", url.toString()));
       }
 
+      @NotNull
       @Override
-      public @NotNull CloneStatus run(@NotNull ProgressIndicator indicator) {
+      public CloneStatus run(@NotNull ProgressIndicator indicator) {
         WorkingCopyFormat format = selectedFormat == null ? UNKNOWN : selectedFormat;
         SvnVcs vcs = SvnVcs.getInstance(project);
         ProgressTracker handler = new CheckoutEventHandler(vcs, false, ProgressManager.getInstance().getProgressIndicator());
@@ -171,7 +174,8 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   }
 
   @RequiresEdt
-  public static @NotNull WorkingCopyFormat promptForWCopyFormat(@NotNull File target, @NotNull Project project) {
+  @NotNull
+  public static WorkingCopyFormat promptForWCopyFormat(@NotNull File target, @NotNull Project project) {
     return new CheckoutFormatFromUserProvider(project, target).prompt();
   }
 
@@ -244,8 +248,8 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   }
 
   private static final class MyFilter implements Predicate<File> {
-    private final @NotNull LocalFileSystem myLfs = LocalFileSystem.getInstance();
-    private final @NotNull SvnExcludingIgnoredOperation.Filter myFilter;
+    @NotNull private final LocalFileSystem myLfs = LocalFileSystem.getInstance();
+    @NotNull private final SvnExcludingIgnoredOperation.Filter myFilter;
 
     private MyFilter(@NotNull SvnExcludingIgnoredOperation.Filter filter) {
       myFilter = filter;
@@ -265,11 +269,11 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
   public static class CheckoutFormatFromUserProvider {
 
-    private final @NotNull Project myProject;
-    private final @NotNull SvnVcs myVcs;
-    private final @NotNull File myPath;
+    @NotNull private final Project myProject;
+    @NotNull private final SvnVcs myVcs;
+    @NotNull private final File myPath;
 
-    private final @NotNull AtomicReference<String> error;
+    @NotNull private final AtomicReference<String> error;
 
     public CheckoutFormatFromUserProvider(@NotNull Project project, @NotNull File path) {
       myProject = project;
@@ -290,7 +294,8 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       return result;
     }
 
-    private @NotNull WorkingCopyFormat displayUpgradeDialog() {
+    @NotNull
+    private WorkingCopyFormat displayUpgradeDialog() {
       final UpgradeFormatDialog dialog = new UpgradeFormatDialog(myProject, myPath, false);
       final ModalityState dialogState = any();
 
@@ -317,7 +322,8 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       return dialog.showAndGet() ? dialog.getUpgradeMode() : UNKNOWN;
     }
 
-    private @NotNull List<WorkingCopyFormat> loadSupportedFormats() {
+    @NotNull
+    private List<WorkingCopyFormat> loadSupportedFormats() {
       List<WorkingCopyFormat> result = new ArrayList<>();
 
       try {
@@ -331,10 +337,11 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull VcsCloneComponent buildVcsCloneComponent(@NotNull Project project,
-                                                           @NotNull ModalityState modalityState,
-                                                           @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
+  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project,
+                                                  @NotNull ModalityState modalityState,
+                                                  @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
     return new SvnCloneDialogExtension(project);
   }
 }

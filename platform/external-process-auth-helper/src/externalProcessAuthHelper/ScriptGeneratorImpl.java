@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalProcessAuthHelper;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -20,7 +20,8 @@ public class ScriptGeneratorImpl implements ScriptGenerator {
   /**
    * Add internal parameters for the script
    */
-  public @NotNull ScriptGeneratorImpl addParameters(@NonNls String... parameters) {
+  @NotNull
+  public ScriptGeneratorImpl addParameters(@NonNls String... parameters) {
     ContainerUtil.addAll(myInternalParameters, parameters);
     return this;
   }
@@ -58,7 +59,8 @@ public class ScriptGeneratorImpl implements ScriptGenerator {
     return line;
   }
 
-  protected @NotNull String getJavaExecutablePath() {
+  @NotNull
+  protected String getJavaExecutablePath() {
     return String.format("%s/bin/java", System.getProperty("java.home"));
   }
 

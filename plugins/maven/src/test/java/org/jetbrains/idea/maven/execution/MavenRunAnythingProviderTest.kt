@@ -8,15 +8,20 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.junit.Test
 import java.util.function.Consumer
+import java.util.function.Function
+import java.util.stream.Collectors
 
 class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
   private var myDataContext: DataContext? = null
   private var myProvider: MavenRunAnythingProvider? = null
 
+  @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
 
@@ -29,8 +34,8 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
     withVariantsFor("") { it: List<String> ->
       assertContain(it, "clean", "validate", "compile", "test", "package", "verify", "install", "deploy", "site")
       val options = MavenCommandLineOptions.getAllOptions()
-      assertTrue(it.containsAll(options.map { option: MavenCommandLineOptions.Option -> option.getName(true) }))
-      assertTrue(it.containsAll(options.map { option: MavenCommandLineOptions.Option -> option.getName(false) }))
+      assertTrue(it.containsAll(ContainerUtil.map(options) { option: MavenCommandLineOptions.Option -> option.getName(true) }))
+      assertTrue(it.containsAll(ContainerUtil.map(options) { option: MavenCommandLineOptions.Option -> option.getName(false) }))
       assertDoNotContain(it, "clean:clean", "clean:help", "compiler:testCompile", "compiler:compile", "compiler:help")
     }
   }
@@ -43,10 +48,11 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
     withVariantsFor("") { variants: List<String> ->
-      val groupedValues = variants.groupBy {
+      val classifier = Function { it: String ->
         if (it.contains(":")) StringUtil.substringBefore(it, ":")
         else if (StringUtil.startsWith(it, "-")) "-" else ""
       }
+      val groupedValues = variants.stream().collect(Collectors.groupingBy(classifier))
       val expectedValues = arrayOfNotNull(
         "",
         "-",
@@ -57,11 +63,12 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
         "jar",
         "install",
         "deploy",
-        "site")
-      assertSameElements(groupedValues.keys, *expectedValues)
-      assertSameElements(groupedValues[""]!!, MavenConstants.BASIC_PHASES)
-      assertSameElements(groupedValues["clean"]!!, "clean:clean", "clean:help")
-      assertSameElements(groupedValues["compiler"]!!, "compiler:testCompile", "compiler:compile", "compiler:help")
+        "site",
+        maven4orNull("wrapper"))
+      UsefulTestCase.assertSameElements(groupedValues.keys, *expectedValues)
+      UsefulTestCase.assertSameElements(groupedValues[""]!!, MavenConstants.BASIC_PHASES)
+      UsefulTestCase.assertSameElements(groupedValues["clean"]!!, "clean:clean", "clean:help")
+      UsefulTestCase.assertSameElements(groupedValues["compiler"]!!, "compiler:testCompile", "compiler:compile", "compiler:help")
     }
     withVariantsFor("") { it: List<String> ->
       assertContain(it, "clean", "validate", "compile", "test", "package", "verify", "install", "deploy", "site")
@@ -103,7 +110,7 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
         <artifactId>m2</artifactId>
         <version>1</version>
         """.trimIndent())
-    importProjectsAsync(m1, m2)
+    importProjects(m1, m2)
 
     withVariantsFor("", "m1") { it: List<String> ->
       assertContain(it, "war:help", "war:inplace", "war:exploded", "war:war")
@@ -128,6 +135,9 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
   private fun withVariantsFor(context: RunAnythingContext, command: String, supplier: Consumer<List<String>>) {
     val dataContext = SimpleDataContext.getSimpleContext(RunAnythingProvider.EXECUTING_CONTEXT, context, myDataContext)
     val variants = myProvider!!.getValues(dataContext, "mvn $command")
-    supplier.accept(variants.map { it: String? -> it!!.removePrefix("mvn ") })
+    supplier.accept(ContainerUtil.map(variants) { it: String? ->
+      StringUtil.trimStart(
+        it!!, "mvn ")
+    })
   }
 }

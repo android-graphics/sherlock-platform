@@ -16,8 +16,8 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -44,7 +44,8 @@ public class NormalizeDeclarationFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return myCStyleDeclaration
            ? InspectionGadgetsBundle.message("c.style.array.declaration.replace.quickfix")
            : InspectionGadgetsBundle.message("normalize.declaration.quickfix");

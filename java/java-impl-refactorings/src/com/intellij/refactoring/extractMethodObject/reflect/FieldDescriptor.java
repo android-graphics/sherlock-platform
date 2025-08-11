@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,7 +33,8 @@ public final class FieldDescriptor implements ItemToReplaceDescriptor {
     myAccessibleType = fieldType;
   }
 
-  public static @Nullable ItemToReplaceDescriptor createIfInaccessible(@NotNull PsiClass outerClass, @NotNull PsiReferenceExpression expression) {
+  @Nullable
+  public static ItemToReplaceDescriptor createIfInaccessible(@NotNull PsiClass outerClass, @NotNull PsiReferenceExpression expression) {
     final PsiElement resolved = expression.resolve();
     if (resolved instanceof PsiField field) {
       PsiClass containingClass = field.getContainingClass();
@@ -97,7 +98,8 @@ public final class FieldDescriptor implements ItemToReplaceDescriptor {
     assignmentExpression.replace(newMethodCallExpression);
   }
 
-  private @Nullable PsiMethod createPsiMethod(FieldAccessType accessType, PsiClass outerClass, PsiElementFactory elementFactory) {
+  @Nullable
+  private PsiMethod createPsiMethod(FieldAccessType accessType, PsiClass outerClass, PsiElementFactory elementFactory) {
     PsiClass containingClass = myField.getContainingClass();
     String className = containingClass == null ? null : ClassUtil.getJVMClassName(containingClass);
     String fieldName = myField.getName();
@@ -127,7 +129,8 @@ public final class FieldDescriptor implements ItemToReplaceDescriptor {
     return !PsiReflectionAccessUtil.isAccessibleMember(field, outerClass, expression.getQualifierExpression());
   }
 
-  private static @NotNull PsiType resolveFieldType(@NotNull PsiField field, @NotNull PsiReferenceExpression referenceExpression) {
+  @NotNull
+  private static PsiType resolveFieldType(@NotNull PsiField field, @NotNull PsiReferenceExpression referenceExpression) {
     PsiType rawType = field.getType();
     return referenceExpression.advancedResolve(false).getSubstitutor().substitute(rawType);
   }

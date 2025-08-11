@@ -1,4 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.ui
 
 import com.intellij.openapi.application.ModalityState
@@ -21,9 +22,9 @@ import com.intellij.ui.layout.selected
 import com.intellij.util.Alarm
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableMethodDescriptor
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableParameterInfo
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.ui.KotlinSignatureComponent
+import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeCodeFragment
@@ -40,6 +41,8 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
+import kotlin.apply
+import kotlin.let
 
 abstract class KotlinBaseChangePropertySignatureDialog<P: KotlinModifiableParameterInfo, V, M : KotlinModifiableMethodDescriptor<P, V>>(
     project: Project,
@@ -75,7 +78,7 @@ abstract class KotlinBaseChangePropertySignatureDialog<P: KotlinModifiableParame
 
     protected var receiverTypeCheckBox: JCheckBox? = null
 
-    private val updateSignatureAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, myDisposable)
+    private val updateSignatureAlarm = Alarm()
     private val signatureComponent: MethodSignatureComponent = KotlinSignatureComponent("", project).apply {
         preferredSize = Dimension(-1, 130)
         minimumSize = Dimension(-1, 130)
@@ -85,6 +88,9 @@ abstract class KotlinBaseChangePropertySignatureDialog<P: KotlinModifiableParame
         title = RefactoringBundle.message("changeSignature.refactoring.name")
         fillVisibilities(visibilityCombo.model as DefaultComboBoxModel<V>)
         init()
+        Disposer.register(myDisposable) {
+            updateSignatureAlarm.cancelAllRequests()
+        }
     }
 
     protected abstract fun fillVisibilities(model: DefaultComboBoxModel<V>)

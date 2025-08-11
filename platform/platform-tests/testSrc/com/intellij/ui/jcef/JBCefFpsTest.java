@@ -2,11 +2,17 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.scale.TestScaleHelper;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,12 +24,27 @@ import java.util.function.Consumer;
 import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLatch;
 import static org.junit.Assert.fail;
 
+@Disabled
 public class JBCefFpsTest {
   static {
     TestScaleHelper.setSystemProperty("java.awt.headless", "false");
     TestScaleHelper.setSystemProperty("jcef.debug.collect_fps_stats", "true");
   }
 
+  @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
+
+  @Before
+  public void before() {
+    TestScaleHelper.assumeStandalone();
+  }
+
+  @After
+  public void after() {
+    TestScaleHelper.restoreSystemProperties();
+  }
+
+  @Disabled
+  @Test
   public void testPageScrolling() {
     _testScrollingImpl(600, 1000, 5, 20);
   }
@@ -49,10 +70,14 @@ public class JBCefFpsTest {
     }, url, String.format("test_scroll_fps_%dx%d_speed%d.csv", w, h, speed));
   }
 
+  @Disabled
+  @Test
   public void testAnimatedSvgLarge() {
     _testSvgImpl(2500, 1600);
   }
 
+  @Disabled
+  @Test
   public void testAnimatedSvg() {
     _testSvgImpl(1400, 800);
   }
@@ -68,11 +93,10 @@ public class JBCefFpsTest {
       }
     }, url, String.format("test_svg_fps_%dx%d.csv", w, h));
   }
-
   private void _testImpl(int w, int h, Consumer<JFrame> testActor, String url, String outFilename) {
     final CountDownLatch loaded = new CountDownLatch(1);
     JFrame[] f = new JFrame[]{null};
-    invokeAndWaitForLatch(loaded, "create browser and loadUrl -> wait onLoadEnd", () -> {
+    invokeAndWaitForLatch(loaded, () -> {
       JFrame frame = f[0] = new JFrame(String.format("Test fps %dx%d (%s)", w, h, url));
       frame.setSize(w, h);
       frame.setLocationRelativeTo(null);

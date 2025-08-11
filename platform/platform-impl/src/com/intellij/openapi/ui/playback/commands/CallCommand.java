@@ -4,7 +4,6 @@ package com.intellij.openapi.ui.playback.commands;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -17,7 +16,6 @@ import java.util.Set;
 /**
  * Author: kirillk
  */
-@ApiStatus.Internal
 public final class CallCommand extends AbstractCommand {
 
   public static final String PREFIX = CMD_PREFIX + "call";

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.searches;
 
 import com.intellij.lang.Language;
@@ -38,13 +38,17 @@ public final class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
   public static final ClassInheritorsSearch INSTANCE = new ClassInheritorsSearch();
 
   public static class SearchParameters implements QueryParameters {
-    private final @NotNull PsiClass myClass;
-    private final @NotNull SearchScope myScope;
+    @NotNull
+    private final PsiClass myClass;
+    @NotNull
+    private final SearchScope myScope;
     private final boolean myCheckDeep;
     private final boolean myCheckInheritance;
     private final boolean myIncludeAnonymous;
-    private final @NotNull Condition<? super String> myNameCondition;
-    private final @NotNull Project myProject;
+    @NotNull
+    private final Condition<? super String> myNameCondition;
+    @NotNull
+    private final Project myProject;
 
     public SearchParameters(@NotNull PsiClass aClass, @NotNull SearchScope scope, boolean checkDeep, boolean checkInheritance, boolean includeAnonymous) {
       this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, Conditions.alwaysTrue());
@@ -62,12 +66,14 @@ public final class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
       myProject = PsiUtilCore.getProjectInReadAction(myClass);
     }
 
-    public @NotNull PsiClass getClassToProcess() {
+    @NotNull
+    public PsiClass getClassToProcess() {
       return myClass;
     }
 
+    @NotNull
     @Override
-    public @NotNull Project getProject() {
+    public Project getProject() {
       return myProject;
     }
 
@@ -76,7 +82,8 @@ public final class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
       return myClass.isValid();
     }
 
-    public @NotNull Condition<? super String> getNameCondition() {
+    @NotNull
+    public Condition<? super String> getNameCondition() {
       return myNameCondition;
     }
 
@@ -84,7 +91,8 @@ public final class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
       return myCheckDeep;
     }
 
-    public @NotNull SearchScope getScope() {
+    @NotNull
+    public SearchScope getScope() {
       return myScope;
     }
 
@@ -142,15 +150,17 @@ public final class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
     super(EP_NAME);
   }
 
-  public static @NotNull Query<PsiClass> search(@NotNull PsiClass aClass,
-                                                @NotNull SearchScope scope,
-                                                boolean checkDeep,
-                                                boolean checkInheritance,
-                                                boolean includeAnonymous) {
+  @NotNull
+  public static Query<PsiClass> search(@NotNull PsiClass aClass,
+                                       @NotNull SearchScope scope,
+                                       boolean checkDeep,
+                                       boolean checkInheritance,
+                                       boolean includeAnonymous) {
     return search(new SearchParameters(aClass, scope, checkDeep, checkInheritance, includeAnonymous));
   }
 
-  public static @NotNull Query<PsiClass> search(@NotNull SearchParameters parameters) {
+  @NotNull
+  public static Query<PsiClass> search(@NotNull SearchParameters parameters) {
     if (!parameters.isCheckDeep()) {
       Query<PsiClass> directQuery = DirectClassInheritorsSearch
         .search(new DirectClassInheritorsSearch.SearchParameters(parameters.getClassToProcess(), parameters.getScope(),
@@ -175,11 +185,13 @@ public final class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
       ReadAction.compute(() -> SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass)));
   }
 
-  public static @NotNull Query<PsiClass> search(@NotNull PsiClass aClass, @NotNull SearchScope scope, boolean checkDeep) {
+  @NotNull
+  public static Query<PsiClass> search(@NotNull PsiClass aClass, @NotNull SearchScope scope, boolean checkDeep) {
     return search(aClass, scope, checkDeep, true, true);
   }
 
-  public static @NotNull Query<PsiClass> search(@NotNull PsiClass aClass, boolean checkDeep) {
+  @NotNull
+  public static Query<PsiClass> search(@NotNull PsiClass aClass, boolean checkDeep) {
     return search(aClass, ReadAction.compute(() -> {
       if (!aClass.isValid()) {
         throw new ProcessCanceledException();
@@ -189,7 +201,8 @@ public final class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
     }), checkDeep);
   }
 
-  public static @NotNull Query<PsiClass> search(@NotNull PsiClass aClass) {
+  @NotNull
+  public static Query<PsiClass> search(@NotNull PsiClass aClass) {
     return search(aClass, true);
   }
 }

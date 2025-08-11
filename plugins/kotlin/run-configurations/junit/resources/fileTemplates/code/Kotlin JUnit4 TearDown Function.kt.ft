@@ -1,4 +1,0 @@
-@org.junit.After
-fun tearDown() {
-  ${BODY}
-}

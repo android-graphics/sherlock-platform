@@ -42,12 +42,14 @@ public class AddMethodQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return PyPsiBundle.message("QFIX.add.method.to.class", myIdentifier, myClassName);
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.add.method.to.class");
   }
 
@@ -131,7 +133,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
     }
   }
 
-  private static PyClassType getClassType(final @NotNull PsiElement problemElement) {
+  private static PyClassType getClassType(@NotNull final PsiElement problemElement) {
     if ((problemElement instanceof PyQualifiedExpression)) {
       final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
       if (qualifier == null) return null;

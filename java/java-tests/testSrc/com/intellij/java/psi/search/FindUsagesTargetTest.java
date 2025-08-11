@@ -1,13 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.search;
 
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -49,12 +45,7 @@ public class FindUsagesTargetTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private PsiElement getTargetElement() {
-    DataContext dataContext = ((EditorEx)myFixture.getEditor()).getDataContext();
-    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
-    PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-
-    UsageTarget[] targets = UsageTargetUtil.findUsageTargets(editor, psiFile, psiElement);
+    UsageTarget[] targets = UsageTargetUtil.findUsageTargets(((EditorEx)myFixture.getEditor()).getDataContext()::getData);
     assertTrue(targets.length > 0);
     assertTrue(targets[0] instanceof PsiElementUsageTarget);
     return ((PsiElementUsageTarget)targets[0]).getElement();

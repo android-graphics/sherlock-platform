@@ -21,8 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class PyPreFormatProcessor implements PreFormatProcessor {
+  @NotNull
   @Override
-  public @NotNull TextRange process(@NotNull ASTNode element, @NotNull TextRange range) {
+  public TextRange process(@NotNull ASTNode element, @NotNull TextRange range) {
     PsiElement psiElement = element.getPsi();
     if (psiElement == null) return range;
 

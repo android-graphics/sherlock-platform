@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.core.breakpoints;
 
 import com.intellij.debugger.InstanceFilter;
@@ -114,8 +114,9 @@ public class KotlinBreakpointFiltersPanel<T extends KotlinPropertyBreakpointProp
         DebuggerUIUtil.focusEditorOnCheck(myClassFiltersCheckBox, myClassFiltersField.getTextField());
     }
 
+    @NotNull
     @Override
-    public @NotNull JComponent getComponent() {
+    public JComponent getComponent() {
         return myConditionsPanel;
     }
 
@@ -151,8 +152,8 @@ public class KotlinBreakpointFiltersPanel<T extends KotlinPropertyBreakpointProp
         updateClassFilterEditor(true);
 
         changed = properties.setINSTANCE_FILTERS_ENABLED(
-                !myInstanceFiltersField.getText().isEmpty() && myInstanceFiltersCheckBox.isSelected()) || changed;
-        changed = properties.setCLASS_FILTERS_ENABLED(!myClassFiltersField.getText().isEmpty() && myClassFiltersCheckBox.isSelected()) ||
+                myInstanceFiltersField.getText().length() > 0 && myInstanceFiltersCheckBox.isSelected()) || changed;
+        changed = properties.setCLASS_FILTERS_ENABLED(myClassFiltersField.getText().length() > 0 && myClassFiltersCheckBox.isSelected()) ||
                   changed;
         changed = properties.setClassFilters(myClassFilters) || changed;
         changed = properties.setClassExclusionFilters(myClassExclusionFilters) || changed;
@@ -224,7 +225,7 @@ public class KotlinBreakpointFiltersPanel<T extends KotlinPropertyBreakpointProp
             reloadInstanceFilters();
             updateInstanceFilterEditor(false);
             String toolTipText = super.getToolTipText(event);
-            return getToolTipText().isEmpty() ? null : toolTipText;
+            return getToolTipText().length() == 0 ? null : toolTipText;
         }
 
         @Override
@@ -330,7 +331,8 @@ public class KotlinBreakpointFiltersPanel<T extends KotlinPropertyBreakpointProp
         myClassFiltersField.getTextField().setToolTipText(tipText);
     }
 
-    private static @NlsSafe StringBuilder concatWithEx(StringBuilder builder, List<String> s, String glue, int N, String nthGlue) {
+    @NlsSafe
+    private static StringBuilder concatWithEx(StringBuilder builder, List<String> s, String glue, int N, String nthGlue) {
         int i = 1;
         for (Iterator<String> iterator = s.iterator(); iterator.hasNext(); i++) {
             String str = iterator.next();

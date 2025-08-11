@@ -1,8 +1,0 @@
-// FIX: Simplify boolean expression
-fun bar(): Boolean {
-    return false
-}
-
-fun foo(y: Boolean) {
-    bar() && y
-}

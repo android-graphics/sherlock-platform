@@ -1,12 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
-import com.intellij.concurrency.ContextAwareRunnable;
-import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.EventWatcher;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -28,25 +27,23 @@ final class FlushQueue {
   private final BulkArrayQueue<RunnableInfo> myQueue = new BulkArrayQueue<>();  //guarded by getQueueLock()
 
   private void flushNow() {
-    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
-      ThreadingAssertions.assertEventDispatchThread();
-      synchronized (getQueueLock()) {
-        FLUSHER_SCHEDULED = false;
+    ThreadingAssertions.assertEventDispatchThread();
+    synchronized (getQueueLock()) {
+      FLUSHER_SCHEDULED = false;
+    }
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    long startTime = System.currentTimeMillis();
+    while (true) {
+      RunnableInfo info = pollNextEvent();
+      if (info == null) {
+        break;
       }
-
-      long startTime = System.currentTimeMillis();
-      while (true) {
-        RunnableInfo info = pollNextEvent();
-        if (info == null) {
-          break;
+      runNextEvent(info, app);
+      if (InvocationUtil.priorityEventPending() || System.currentTimeMillis() - startTime > 5) {
+        synchronized (getQueueLock()) {
+          requestFlush();
         }
-        runNextEvent(info);
-        if (InvocationUtil.priorityEventPending() || System.currentTimeMillis() - startTime > 5) {
-          synchronized (getQueueLock()) {
-            requestFlush();
-          }
-          break;
-        }
+        break;
       }
     }
   }
@@ -76,6 +73,11 @@ final class FlushQueue {
     }
   }
 
+  // Extracted to have a capture point
+  private static void doRun(@Async.Execute @NotNull RunnableInfo info, @NotNull ApplicationEx app) {
+    app.runWithImplicitRead(info.runnable);
+  }
+
   @Override
   public String toString() {
     synchronized (getQueueLock()) {
@@ -95,7 +97,7 @@ final class FlushQueue {
         if (info.expired.value(null)) {
           continue;
         }
-        if (currentModality.accepts(info.modalityState)) {
+        if (!currentModality.dominates(info.modalityState)) {
           requestFlush(); // in case someone wrote "invokeLater { UIUtil.dispatchAllInvocationEvents(); }"
           return info;
         }
@@ -110,11 +112,11 @@ final class FlushQueue {
     }
   }
 
-  private static void runNextEvent(@NotNull RunnableInfo info) {
+  private static void runNextEvent(@NotNull RunnableInfo info, @NotNull ApplicationEx app) {
     final EventWatcher watcher = EventWatcher.getInstanceOrNull();
     final long waitingFinishedNs = System.nanoTime();
     try {
-      info.runnable.run();
+      doRun(info, app);
     }
     catch (ProcessCanceledException ignored) {
 
@@ -195,7 +197,7 @@ final class FlushQueue {
     }
   }
 
-  private final Runnable FLUSH_NOW = (ContextAwareRunnable)this::flushNow;
+  private final Runnable FLUSH_NOW = this::flushNow;
 
   boolean isFlushNow(@NotNull Runnable runnable) {
     return runnable == FLUSH_NOW;

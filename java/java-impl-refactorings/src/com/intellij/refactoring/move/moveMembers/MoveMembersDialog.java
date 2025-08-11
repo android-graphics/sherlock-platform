@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.ide.util.ClassFilter;
@@ -35,7 +35,6 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
-import com.intellij.ui.components.JBBox;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -128,7 +127,8 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
   }
 
   @Override
-  public @Nullable String getMemberVisibility() {
+  @Nullable
+  public String getMemberVisibility() {
     return myVisibilityPanel.getVisibility();
   }
 
@@ -147,7 +147,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     JPanel panel = new JPanel(new BorderLayout());
 
     JPanel _panel;
-    JBBox box = JBBox.createVerticalBox();
+    Box box = Box.createVerticalBox();
 
     _panel = new JPanel(new BorderLayout());
     JTextField sourceClassField = new JTextField();
@@ -226,7 +226,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     String message = validateInputData();
 
     if (message != null) {
-      if (!message.isEmpty()) {
+      if (message.length() != 0) {
         CommonRefactoringUtil.showErrorMessage(
           MoveMembersImpl.getRefactoringName(),
           message,
@@ -264,7 +264,8 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     //if (getTargetClassName().length() == 0) throw new ConfigurationException("Destination class name not found");
   }
 
-  private @Nullable @NlsContexts.DialogMessage String validateInputData() {
+  @Nullable
+  private @NlsContexts.DialogMessage String validateInputData() {
     final PsiManager manager = PsiManager.getInstance(myProject);
     final String fqName = getTargetClassName();
     if (fqName != null && fqName.isEmpty()) {
@@ -318,7 +319,8 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     }
   }
 
-  private @Nullable PsiClass findOrCreateTargetClass(final PsiManager manager, final String fqName) throws IncorrectOperationException {
+  @Nullable
+  private PsiClass findOrCreateTargetClass(final PsiManager manager, final String fqName) throws IncorrectOperationException {
     final String className;
     final String packageName;
     int dotIndex = fqName.lastIndexOf('.');
@@ -409,7 +411,8 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     }
 
     @Override
-    public @Nullable Boolean isFixedAbstract(MemberInfo member) {
+    @Nullable
+    public Boolean isFixedAbstract(MemberInfo member) {
       return null;
     }
 

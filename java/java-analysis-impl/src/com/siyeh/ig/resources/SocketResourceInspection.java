@@ -26,7 +26,8 @@ import org.jetbrains.annotations.NotNull;
 public final class SocketResourceInspection extends ResourceInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "SocketOpenedButNotSafelyClosed";
   }
 
@@ -34,7 +35,7 @@ public final class SocketResourceInspection extends ResourceInspection {
   protected boolean isResourceCreation(PsiExpression expression) {
     if (expression instanceof PsiMethodCallExpression methodCallExpression) {
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      final @NonNls String methodName = methodExpression.getReferenceName();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"accept".equals(methodName)) {
         return false;
       }

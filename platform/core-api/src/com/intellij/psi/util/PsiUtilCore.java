@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.diagnostic.PluginException;
@@ -28,12 +28,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -446,7 +444,8 @@ public class PsiUtilCore {
     PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
 
-    return TemplateLanguageUtil.getBaseFile(containingFile);
+    FileViewProvider viewProvider = containingFile.getViewProvider();
+    return viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
 
   public static PsiFile @NotNull [] toPsiFileArray(@NotNull Collection<? extends PsiFile> collection) {
@@ -475,17 +474,20 @@ public class PsiUtilCore {
     return name;
   }
 
-  public static @NotNull String getQualifiedNameAfterRename(String qName, @NotNull String newName) {
+  @NotNull
+  public static String getQualifiedNameAfterRename(String qName, @NotNull String newName) {
     if (qName == null) return newName;
     int index = qName.lastIndexOf('.');
     return index < 0 ? newName : qName.substring(0, index + 1) + newName;
   }
 
-  public static @NotNull Language getDialect(@NotNull PsiElement element) {
+  @NotNull
+  public static Language getDialect(@NotNull PsiElement element) {
     return narrowLanguage(element.getLanguage(), element.getContainingFile().getLanguage());
   }
 
-  protected static @NotNull Language narrowLanguage(@NotNull Language language, @NotNull Language candidate) {
+  @NotNull
+  protected static Language narrowLanguage(@NotNull Language language, @NotNull Language candidate) {
     return candidate.isKindOf(language) ? candidate : language;
   }
 
@@ -509,7 +511,6 @@ public class PsiUtilCore {
     }
   }
 
-  @RequiresBackgroundThread(generateAssertion = false)
   public static @Nullable PsiFileSystemItem findFileSystemItem(@Nullable Project project, @Nullable VirtualFile file) {
     if (project == null || file == null) return null;
     if (project.isDisposed() || !file.isValid()) return null;
@@ -523,17 +524,7 @@ public class PsiUtilCore {
   public static @NotNull PsiFile getPsiFile(@NotNull Project project, @NotNull VirtualFile file) {
     PsiManager psiManager = PsiManager.getInstance(project);
     PsiFile psi = psiManager.findFile(file);
-    if (psi == null) {
-      logFileIsNotFound(file, psiManager, project);
-      throw new AssertionError();
-    }
-
-    return psi;
-  }
-
-  private static void logFileIsNotFound(@NotNull VirtualFile file,
-                                        @NotNull PsiManager psiManager,
-                                        @NotNull Project project) {
+    if (psi != null) return psi;
     FileType fileType = file.getFileType();
     FileViewProvider viewProvider = psiManager.findViewProvider(file);
     Document document = FileDocumentManager.getInstance().getDocument(file);
@@ -566,6 +557,7 @@ public class PsiUtilCore {
       }
     }
     LOG.error("no PSI for file '" + file.getName() + "'", new Attachment(file.getPresentableUrl(), sb.toString()));
+    throw new AssertionError();
   }
 
 
@@ -628,7 +620,7 @@ public class PsiUtilCore {
   @Contract("null -> null")
   public static IElementType getElementType(@Nullable PsiElement element) {
     return element == null ? null :
-           element instanceof StubBasedPsiElement ? ((StubBasedPsiElement<?>)element).getIElementType() :
+           element instanceof StubBasedPsiElement ? ((StubBasedPsiElement<?>)element).getElementType() :
            element instanceof PsiFile ? ((PsiFile)element).getFileElementType() :
            getElementType(element.getNode());
   }

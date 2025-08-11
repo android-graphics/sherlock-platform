@@ -4,6 +4,7 @@ package com.intellij.platform.execution.dashboard.actions;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -40,7 +41,7 @@ final class StopAction extends DumbAwareAction {
       return content != null && !RunContentManagerImpl.isTerminated(content);
     }).isNotEmpty();
     presentation.setEnabled(enabled);
-    presentation.setVisible(enabled || !e.isFromContextMenu());
+    presentation.setVisible(enabled || !ActionPlaces.isPopupPlace(e.getPlace()));
   }
 
   @Override

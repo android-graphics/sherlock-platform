@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.actions;
 
@@ -21,11 +21,12 @@ import java.util.Properties;
 
 public final class GroovyTemplatesFactory {
 
-  static final @NonNls String NAME_TEMPLATE_PROPERTY = "NAME";
+  @NonNls
+  static final String NAME_TEMPLATE_PROPERTY = "NAME";
   static final String LOW_CASE_NAME_TEMPLATE_PROPERTY = "lowCaseName";
 
-  public static PsiFile createFromTemplate(final @NotNull PsiDirectory directory,
-                                           final @NotNull String name,
+  public static PsiFile createFromTemplate(@NotNull final PsiDirectory directory,
+                                           @NotNull final String name,
                                            @NotNull String fileName,
                                            @NotNull String templateName,
                                            boolean allowReformatting,

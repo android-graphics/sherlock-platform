@@ -1,4 +1,3 @@
-// HIGHLIGHT: GENERIC_ERROR_OR_WARNING
 fun foo() {
     var a: Int? = null
     var b: Boolean? = null

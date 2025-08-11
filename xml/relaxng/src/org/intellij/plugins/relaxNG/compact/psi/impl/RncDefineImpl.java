@@ -68,7 +68,8 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
     return getNameNode().getPsi();
   }
 
-  public @NotNull ASTNode getNameNode() {
+  @NotNull
+  public ASTNode getNameNode() {
     final ASTNode node = getNode().findChildByType(RncTokenTypes.IDENTIFIERS);
     assert node != null;
     return node;
@@ -82,7 +83,8 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
   }
 
   @Override
-  public @Nullable RncPattern getPattern() {
+  @Nullable
+  public RncPattern getPattern() {
     return findChildByClass(RncPattern.class);
   }
 
@@ -120,7 +122,8 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
   }
 
   @Override
-  public @Nullable Icon getIcon(int flags) {
+  @Nullable
+  public Icon getIcon(int flags) {
     return IconManager.getInstance().getPlatformIcon(PlatformIcons.Property);
   }
 
@@ -129,7 +132,8 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
   }
 
   @Override
-  public @Nullable PsiMetaData getMetaData() {
+  @Nullable
+  public PsiMetaData getMetaData() {
     return new MyMetaData();
   }
 
@@ -139,7 +143,8 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
     }*/
 
     @Override
-    public @Nullable Icon getIcon() {
+    @Nullable
+    public Icon getIcon() {
       return RncDefineImpl.this.getIcon(0);
     }
 
@@ -154,12 +159,14 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
     }
 
     @Override
-    public @NonNls String getName(PsiElement context) {
+    @NonNls
+    public String getName(PsiElement context) {
       return RncDefineImpl.this.getName();
     }
 
     @Override
-    public @NonNls String getName() {
+    @NonNls
+    public String getName() {
       return RncDefineImpl.this.getName();
     }
 

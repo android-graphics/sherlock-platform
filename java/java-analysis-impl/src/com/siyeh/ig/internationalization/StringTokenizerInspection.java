@@ -25,12 +25,14 @@ import org.jetbrains.annotations.NotNull;
 public final class StringTokenizerInspection extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "UseOfStringTokenizer";
   }
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "use.stringtokenizer.problem.descriptor");
   }

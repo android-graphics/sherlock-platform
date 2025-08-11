@@ -22,7 +22,6 @@ import com.jetbrains.rd.util.debounceNotNull
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.viewNotNull
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Cursor
 import java.awt.Graphics
 import java.awt.Point
@@ -32,7 +31,6 @@ import java.time.Duration
 import javax.swing.JLabel
 import javax.swing.SwingUtilities
 
-@ApiStatus.Internal
 abstract class CodeVisionInlayRendererBase(theme: CodeVisionTheme = CodeVisionTheme()) : CodeVisionInlayRenderer {
   private var isHovered = false
   private var hoveredEntry: Property<CodeVisionEntry?> = Property(null)

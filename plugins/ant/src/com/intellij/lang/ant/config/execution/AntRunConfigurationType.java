@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
@@ -21,12 +21,14 @@ public final class AntRunConfigurationType extends SimpleConfigurationType {
     return "reference.dialogs.rundebug.AntRunConfiguration";
   }
 
-  public static @NotNull AntRunConfigurationType getInstance() {
+  @NotNull
+  public static AntRunConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(AntRunConfigurationType.class);
   }
 
+  @NotNull
   @Override
-  public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+  public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
     return new AntRunConfiguration(project, this);
   }
 }

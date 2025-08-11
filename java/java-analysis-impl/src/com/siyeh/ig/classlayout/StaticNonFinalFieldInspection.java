@@ -34,13 +34,15 @@ public final class StaticNonFinalFieldInspection extends BaseInspection {
   public boolean ignoreNonPublicFields = true;
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "static.non.final.field.problem.descriptor");
   }
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  @Nullable
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiField field = (PsiField)infos[0];
     return MakeFieldFinalFix.buildFix(field);
   }

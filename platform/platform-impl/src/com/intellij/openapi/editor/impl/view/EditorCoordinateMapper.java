@@ -1,12 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.InlayModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.FoldingKeys;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
@@ -30,25 +28,22 @@ final class EditorCoordinateMapper {
   private final EditorView myView;
   private final Document myDocument;
   private final FoldingModelImpl myFoldingModel;
-  private final InlayModelEx myInlayModel;
-  private final SoftWrapModelImpl mySoftWrapModel;
 
   EditorCoordinateMapper(EditorView view) {
     myView = view;
-    myDocument = myView.getDocument();
-    myFoldingModel = myView.getFoldingModel();
-    myInlayModel = myView.getInlayModel();
-    mySoftWrapModel = myView.getSoftWrapModel();
+    myDocument = myView.getEditor().getDocument();
+    myFoldingModel = myView.getEditor().getFoldingModel();
   }
 
-  int[] visualLineToYRange(int line) {
+  public int[] visualLineToYRange(int line) {
     if (line < 0) line = 0;
-    int offset = line >= myView.getVisibleLineCount() ? myDocument.getTextLength() + 1 : visualLineToOffset(line);
+    int offset = line >= myView.getEditor().getVisibleLineCount() ? myDocument.getTextLength() + 1 : visualLineToOffset(line);
     int lineHeight = myView.getLineHeight();
-    int idx = myFoldingModel.getLastCollapsedRegionBefore(offset);
-    IntPair adjustment = myFoldingModel.getCustomRegionsYAdjustment(offset, idx);
+    FoldingModelImpl foldingModel = myView.getEditor().getFoldingModel();
+    int idx = foldingModel.getLastCollapsedRegionBefore(offset);
+    IntPair adjustment = foldingModel.getCustomRegionsYAdjustment(offset, idx);
     int startY = myView.getInsets().top + line * lineHeight + adjustment.first +
-                 myInlayModel.getHeightOfBlockElementsBeforeVisualLine(line, offset, idx);
+                 myView.getEditor().getInlayModel().getHeightOfBlockElementsBeforeVisualLine(line, offset, idx);
     return new int[] {startY, startY + lineHeight + adjustment.second};
   }
 
@@ -62,7 +57,7 @@ final class EditorCoordinateMapper {
     if (y < lineHeight) return 0;
     int lineMin = 0;
     int yMin = 0;
-    int lineMax = myView.getVisibleLineCount() - 1;
+    int lineMax = myView.getEditor().getVisibleLineCount() - 1;
     int yMax = visualLineToY(lineMax + 1);
     if (y >= yMax) {
       return lineMax + 1 + (y - yMax) / lineHeight;
@@ -88,7 +83,7 @@ final class EditorCoordinateMapper {
   }
 
   private int getInlaysHeight(int visualLine, boolean above) {
-    return EditorUtil.getInlaysHeight(myInlayModel, visualLine, above);
+    return EditorUtil.getInlaysHeight(myView.getEditor(), visualLine, above);
   }
 
   @NotNull
@@ -106,7 +101,7 @@ final class EditorCoordinateMapper {
     int column = pos.column;
     int logicalLineCount = Math.max(1, myDocument.getLineCount());
     if (line >= logicalLineCount) {
-      return new VisualPosition(line - logicalLineCount + myView.getVisibleLineCount(), column, pos.leansForward);
+      return new VisualPosition(line - logicalLineCount + myView.getEditor().getVisibleLineCount(), column, pos.leansForward);
     }
     int offset = logicalPositionToOffset(pos);
     int visualLine = offsetToVisualLine(offset, beforeSoftWrap);
@@ -156,14 +151,14 @@ final class EditorCoordinateMapper {
 
   private int logToVisWithInlays(int logLine, int remainingLogColumn, boolean leansForward) {
     if (remainingLogColumn > 1 || remainingLogColumn == 1 && leansForward) {
-      remainingLogColumn += myInlayModel.getAfterLineEndElementsForLogicalLine(logLine).size();
+      remainingLogColumn += myView.getEditor().getInlayModel().getAfterLineEndElementsForLogicalLine(logLine).size();
     }
     return remainingLogColumn;
   }
 
   private int visToLogWithInlays(int logLine, int remainingVisColumns, boolean[] leansForward) {
     if (remainingVisColumns == 0) return 0;
-    int inlayCount = myInlayModel.getAfterLineEndElementsForLogicalLine(logLine).size();
+    int inlayCount = myView.getEditor().getInlayModel().getAfterLineEndElementsForLogicalLine(logLine).size();
     if (inlayCount == 0) return remainingVisColumns;
     if (remainingVisColumns < inlayCount + 1) {
       leansForward[0] = false;
@@ -179,7 +174,7 @@ final class EditorCoordinateMapper {
   LogicalPosition visualToLogicalPosition(@NotNull VisualPosition pos) {
     int line = pos.line;
     int column = pos.column;
-    int visualLineCount = myView.getVisibleLineCount();
+    int visualLineCount = myView.getEditor().getVisibleLineCount();
     if (line >= visualLineCount) {
       return new LogicalPosition(line - visualLineCount + myDocument.getLineCount(), column, pos.leansRight);
     }
@@ -197,17 +192,8 @@ final class EditorCoordinateMapper {
       }
       int minColumn = fragment.getStartVisualColumn();
       int maxColumn = fragment.getEndVisualColumn();
-      if (delayedResult != null) {
-        LogicalPosition possibleResult = delayedInlay ? delayedResult.leanForward(fragment.getCurrentInlay() == null) : delayedResult;
-        if (minColumn != maxColumn) {
-          return possibleResult;
-        }
-        // Please see documentation of FoldingKeys.ADDITIONAL_CARET_POSITION_FOR_EMPTY_PLACEHOLDER
-        if (column == minColumn && foldRegion != null && !foldRegion.isExpanded() && foldRegion.getPlaceholderText().isEmpty()) {
-          if (foldRegion.getUserData(FoldingKeys.ADDITIONAL_CARET_POSITION_FOR_EMPTY_PLACEHOLDER) != null) {
-            return possibleResult;
-          }
-        }
+      if (delayedResult != null && minColumn != maxColumn) {
+        return delayedInlay ? delayedResult.leanForward(fragment.getCurrentInlay() == null) : delayedResult;
       }
       if (column < minColumn || column == minColumn && !pos.leansRight && minColumn != maxColumn) {
         return offsetToLogicalPosition(offset);
@@ -232,7 +218,7 @@ final class EditorCoordinateMapper {
       maxOffset = Math.max(maxOffset, fragment.getMaxOffset());
     }
     if (delayedResult != null && !delayedInlay) return delayedResult;
-    if (mySoftWrapModel.getSoftWrap(maxOffset) == null) {
+    if (myView.getEditor().getSoftWrapModel().getSoftWrap(maxOffset) == null) {
       boolean[] leansForward = new boolean[] {pos.leansRight};
       int resultColumn = maxLogicalColumn + visToLogWithInlays(logicalLine, column - maxVisualColumn, leansForward);
       if (resultColumn < 0) resultColumn = Integer.MAX_VALUE; // guarding against overflow
@@ -267,7 +253,7 @@ final class EditorCoordinateMapper {
       beforeSoftWrap = false;
     }
 
-    int wrapIndex = mySoftWrapModel.getSoftWrapIndex(offset);
+    int wrapIndex = myView.getEditor().getSoftWrapModel().getSoftWrapIndex(offset);
     int softWrapsBeforeOrAtOffset = wrapIndex < 0 ? (- wrapIndex - 1) : wrapIndex + (beforeSoftWrap ? 0 : 1);
 
     return myDocument.getLineNumber(offset) - myFoldingModel.getFoldedLinesCountBefore(offset) + softWrapsBeforeOrAtOffset;
@@ -277,18 +263,20 @@ final class EditorCoordinateMapper {
     int start = 0;
     int end = myDocument.getTextLength();
     if (visualLine <= 0) return start;
-    if (visualLine >= myView.getVisibleLineCount()) return end;
+    if (visualLine >= myView.getEditor().getVisibleLineCount()) return end;
     int current = ObjectUtils.binarySearch(0, myDocument.getTextLength(), mid -> Integer.compare(offsetToVisualLine(mid, false), visualLine));
     if (current < 0) current = -current-1;
     return visualLineStartOffset(current, true);
   }
 
   private int visualLineStartOffset(int offset, boolean leanForward) {
+    EditorImpl editor = myView.getEditor();
     offset = DocumentUtil.alignToCodePointBoundary(myDocument, offset);
-    int result = EditorUtil.getNotFoldedLineStartOffset(myDocument, myFoldingModel, offset, false);
+    int result = EditorUtil.getNotFoldedLineStartOffset(editor, offset);
 
-    List<? extends SoftWrap> softWraps = mySoftWrapModel.getRegisteredSoftWraps();
-    int currentOrPrevWrapIndex = mySoftWrapModel.getSoftWrapIndex(offset);
+    SoftWrapModelImpl softWrapModel = editor.getSoftWrapModel();
+    List<? extends SoftWrap> softWraps = softWrapModel.getRegisteredSoftWraps();
+    int currentOrPrevWrapIndex = softWrapModel.getSoftWrapIndex(offset);
     SoftWrap currentOrPrevWrap;
     if (currentOrPrevWrapIndex < 0) {
       currentOrPrevWrapIndex = - currentOrPrevWrapIndex - 2;
@@ -305,21 +293,18 @@ final class EditorCoordinateMapper {
   }
 
   private float getStartX(int line) {
-    return isRightAligned() ?
+    return myView.getEditor().isRightAligned() ?
            getRightAlignmentLineStartX(line) :
            myView.getInsets().left + (line == 0 ? myView.getPrefixTextWidthInPixels() : 0);
   }
 
-  private boolean isRightAligned() {
-    return myView.getEditor().isRightAligned();
-  }
-
   float getRightAlignmentLineStartX(int visualLine) {
     checkRightAlignment();
+    EditorImpl editor = myView.getEditor();
     int max = getRightAlignmentMarginX();
     float shift = visualLine == 0 ? myView.getPrefixTextWidthInPixels() : 0;
-    if (visualLine >= myView.getVisibleLineCount()) return max - shift;
-    int lineWidth = myView.getSizeManager().getVisualLineWidth(new VisualLinesIterator(myView, visualLine), false);
+    if (visualLine >= editor.getVisibleLineCount()) return max - shift;
+    int lineWidth = myView.getSizeManager().getVisualLineWidth(new VisualLinesIterator(editor, visualLine), false);
     return Math.max(max - lineWidth, 0);
   }
 
@@ -332,7 +317,7 @@ final class EditorCoordinateMapper {
   }
 
   private void checkRightAlignment() {
-    if (!isRightAligned()) throw new IllegalStateException("Editor is not right-aligned");
+    if (!myView.getEditor().isRightAligned()) throw new IllegalStateException("Editor is not right-aligned");
   }
 
   @NotNull
@@ -342,7 +327,7 @@ final class EditorCoordinateMapper {
     float x = getStartX(visualLine);
     float px = (float)p.getX();
     int logicalLine = -1;
-    if (visualLine < myView.getVisibleLineCount()) {
+    if (visualLine < myView.getEditor().getVisibleLineCount()) {
       int visualLineStartOffset = visualLineToOffset(visualLine);
       int maxOffset = 0;
       for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false, true)) {
@@ -353,7 +338,7 @@ final class EditorCoordinateMapper {
           if (fragment.getStartVisualColumn() == 0) {
             return new VisualPosition(visualLine, 0);
           }
-          int markerWidth = mySoftWrapModel.getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
+          int markerWidth = myView.getEditor().getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
           float indent = fragment.getStartX() - markerWidth;
           if (px <= indent) {
             break;
@@ -371,8 +356,8 @@ final class EditorCoordinateMapper {
         maxOffset = Math.max(maxOffset, fragment.getMaxOffset());
         logicalLine = fragment.getEndLogicalLine();
       }
-      if (mySoftWrapModel.getSoftWrap(maxOffset) != null) {
-        int markerWidth = mySoftWrapModel.getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
+      if (myView.getEditor().getSoftWrapModel().getSoftWrap(maxOffset) != null) {
+        int markerWidth = myView.getEditor().getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
         if (px <= x + markerWidth) {
           boolean after = px >= x + markerWidth / 2;
           return new VisualPosition(visualLine, lastColumn + (after ? 1 : 0), !after);
@@ -388,7 +373,7 @@ final class EditorCoordinateMapper {
     float plainSpaceWidth = myView.getPlainSpaceWidth();
     float remainingShift = px - x;
     if (remainingShift > plainSpaceWidth && logicalLine >= 0) {
-      List<Inlay<?>> inlays = myInlayModel.getAfterLineEndElementsForLogicalLine(logicalLine);
+      List<Inlay<?>> inlays = myView.getEditor().getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
       int inlaysWidth = 0;
       int inlayCount = 0;
       for (Inlay inlay : inlays) {
@@ -416,7 +401,7 @@ final class EditorCoordinateMapper {
     float x = getStartX(visualLine);
     int lastColumn = 0;
     int logicalLine = -1;
-    if (visualLine < myView.getVisibleLineCount()) {
+    if (visualLine < myView.getEditor().getVisibleLineCount()) {
       int visualLineStartOffset = visualLineToOffset(visualLine);
       int maxOffset = 0;
       for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false, true)) {
@@ -436,16 +421,16 @@ final class EditorCoordinateMapper {
         maxOffset = Math.max(maxOffset, fragment.getMaxOffset());
         logicalLine = fragment.getEndLogicalLine();
       }
-      if (column > lastColumn && mySoftWrapModel.getSoftWrap(maxOffset) != null) {
+      if (column > lastColumn && myView.getEditor().getSoftWrapModel().getSoftWrap(maxOffset) != null) {
         column--;
-        x += mySoftWrapModel.getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
+        x += myView.getEditor().getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
       }
       else if (logicalLine == -1) {
         logicalLine = myDocument.getLineNumber(visualLineStartOffset);
       }
     }
     if (column > lastColumn + 1 && logicalLine >= 0) {
-      List<Inlay<?>> inlays = myInlayModel.getAfterLineEndElementsForLogicalLine(logicalLine);
+      List<Inlay<?>> inlays = myView.getEditor().getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
       int inlaysWidth = 0;
       int inlayCount = 0;
       for (Inlay inlay : inlays) {

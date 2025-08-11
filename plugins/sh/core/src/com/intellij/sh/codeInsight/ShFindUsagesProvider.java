@@ -15,9 +15,11 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.sh.lexer.ShTokenTypes.*;
 
-final class ShFindUsagesProvider implements FindUsagesProvider {
+public class ShFindUsagesProvider implements FindUsagesProvider {
+
+  @Nullable
   @Override
-  public @NotNull WordsScanner getWordsScanner() {
+  public WordsScanner getWordsScanner() {
     return new DefaultWordsScanner(new ShLexer(), TokenSet.create(WORD), commentTokens, literals);
   }
 
@@ -26,18 +28,21 @@ final class ShFindUsagesProvider implements FindUsagesProvider {
     return psiElement instanceof ShFunctionDefinition;
   }
 
+  @Nullable
   @Override
-  public @Nullable String getHelpId(@NotNull PsiElement psiElement) {
+  public String getHelpId(@NotNull PsiElement psiElement) {
     return null;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getType(@NotNull PsiElement element) {
+  public String getType(@NotNull PsiElement element) {
     return ShBundle.message("find.usages.type.function");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDescriptiveName(@NotNull PsiElement element) {
+  public String getDescriptiveName(@NotNull PsiElement element) {
     if (element instanceof PsiNamedElement) {
       String name = ((PsiNamedElement)element).getName();
       if (name != null) return name;
@@ -45,8 +50,9 @@ final class ShFindUsagesProvider implements FindUsagesProvider {
     return element.getText();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getNodeText(@NotNull PsiElement element, boolean useFullName) {
+  public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
     return element.getText();
   }
 }

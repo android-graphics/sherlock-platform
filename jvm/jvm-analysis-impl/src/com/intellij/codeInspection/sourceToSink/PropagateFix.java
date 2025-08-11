@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.analysis.JvmAnalysisBundle;
@@ -32,7 +32,8 @@ import java.util.function.Consumer;
 
 public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
-  private final @NotNull TaintValueFactory myTaintValueFactory;
+  @NotNull
+  private final TaintValueFactory myTaintValueFactory;
 
   private final boolean supportRefactoring;
 

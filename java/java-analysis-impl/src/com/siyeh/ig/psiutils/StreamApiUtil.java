@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
@@ -78,7 +78,8 @@ public final class StreamApiUtil {
    * @return a fully-qualified class name
    */
   @Contract("null -> null")
-  public static @Nullable String getStreamClassForType(@Nullable PsiType type) {
+  @Nullable
+  public static String getStreamClassForType(@Nullable PsiType type) {
     if(type == null) return null;
     if(type instanceof PsiPrimitiveType) {
       if(type.equals(PsiTypes.intType())) return CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM;
@@ -97,7 +98,8 @@ public final class StreamApiUtil {
    * @param isAllowedIntermediateCall predicate on the name of any other call between start call and wanted call
    * @return call that satisfies isWantedCall predicate or null otherwise
    */
-  public static @Nullable PsiMethodCallExpression findSubsequentCall(PsiMethodCallExpression call,
+  @Nullable
+  public static PsiMethodCallExpression findSubsequentCall(PsiMethodCallExpression call,
                                                            Predicate<? super String> isWantedCall,
                                                            Predicate<? super String> isAllowedIntermediateCall) {
     return findSubsequentCall(call, isWantedCall, c -> false, isAllowedIntermediateCall);
@@ -114,7 +116,8 @@ public final class StreamApiUtil {
    * @param isAllowedIntermediateCall predicate on the name of any other call between start call and wanted call
    * @return call that satisfies isWantedCall predicate or null otherwise
    */
-  public static @Nullable PsiMethodCallExpression findSubsequentCall(PsiMethodCallExpression call,
+  @Nullable
+  public static PsiMethodCallExpression findSubsequentCall(PsiMethodCallExpression call,
                                                            Predicate<? super String> isWantedCall,
                                                            Predicate<? super PsiMethodCallExpression> isWantedCollector,
                                                            Predicate<? super String> isAllowedIntermediateCall) {

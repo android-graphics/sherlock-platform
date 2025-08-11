@@ -15,10 +15,7 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiRecordComponent;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -31,7 +28,8 @@ import static com.intellij.psi.PsiModifier.*;
 public final class SerialPersistentFieldsWithWrongSignatureInspection extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "serialpersistentfields.with.wrong.signature.problem.descriptor");
   }

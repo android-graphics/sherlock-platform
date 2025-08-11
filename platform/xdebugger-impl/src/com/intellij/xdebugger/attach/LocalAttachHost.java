@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.ExecutionException;
@@ -21,19 +21,22 @@ import java.util.List;
 public class LocalAttachHost extends EnvironmentAwareHost {
   public static final LocalAttachHost INSTANCE = new LocalAttachHost();
 
+  @NotNull
   @Override
-  public @NotNull List<ProcessInfo> getProcessList() {
+  public List<ProcessInfo> getProcessList() {
     return Arrays.asList(OSProcessUtil.getProcessList());
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseProcessHandler getProcessHandler(@NotNull GeneralCommandLine commandLine)
+  public BaseProcessHandler getProcessHandler(@NotNull GeneralCommandLine commandLine)
     throws ExecutionException {
     return new CapturingProcessHandler(commandLine);
   }
 
+  @Nullable
   @Override
-  public @Nullable InputStream getFileContent(@NotNull String filePath) throws IOException {
+  public InputStream getFileContent(@NotNull String filePath) throws IOException {
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
     if (file == null) {
       return null;
@@ -47,8 +50,9 @@ public class LocalAttachHost extends EnvironmentAwareHost {
     return new File(filePath).canRead();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFileSystemHostId() {
+  public String getFileSystemHostId() {
     return "";
   }
 }

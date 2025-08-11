@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -34,13 +34,15 @@ class RegisterInspectionFix implements IntentionAction {
     myEp = ep;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getText() {
+  public String getText() {
     return DevKitBundle.message("register.inspection.fix.name", myPsiClass.getName());
   }
 
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return DevKitBundle.message("register.inspection.fix.family.name");
   }
 
@@ -50,7 +52,7 @@ class RegisterInspectionFix implements IntentionAction {
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     PluginDescriptorChooser.show(project, editor, file, element -> doFix(element, project, file));
   }
 

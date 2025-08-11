@@ -1,17 +1,16 @@
-from _typeshed.wsgi import WSGIApplication
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from logging import Logger
-from typing import Final, NamedTuple, TypeVar
+from typing import Any, NamedTuple
 
-_T = TypeVar("_T")
+from .utilities import BadRequest as BadRequest
 
-PROXY_HEADERS: Final[frozenset[str]]
+PROXY_HEADERS: frozenset[Any]
 
 class Forwarded(NamedTuple):
-    by: str
-    for_: str
-    host: str
-    proto: str
+    by: Any
+    for_: Any
+    host: Any
+    proto: Any
 
 class MalformedProxyHeader(Exception):
     header: str
@@ -20,18 +19,18 @@ class MalformedProxyHeader(Exception):
     def __init__(self, header: str, reason: str, value: str) -> None: ...
 
 def proxy_headers_middleware(
-    app: WSGIApplication,
+    app: Any,
     trusted_proxy: str | None = None,
     trusted_proxy_count: int = 1,
     trusted_proxy_headers: set[str] | None = None,
     clear_untrusted: bool = True,
     log_untrusted: bool = False,
     logger: Logger = ...,
-) -> WSGIApplication: ...
+) -> Callable[..., Any]: ...
 def parse_proxy_headers(
     environ: Mapping[str, str], trusted_proxy_count: int, trusted_proxy_headers: set[str], logger: Logger = ...
 ) -> set[str]: ...
-def strip_brackets(addr: Sequence[_T]) -> Sequence[_T]: ...
+def strip_brackets(addr: str) -> str: ...
 def clear_untrusted_headers(
     environ: Mapping[str, str], untrusted_headers: Sequence[str], log_warning: bool = False, logger: Logger = ...
 ) -> None: ...

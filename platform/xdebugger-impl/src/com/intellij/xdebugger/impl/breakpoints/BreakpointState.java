@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -12,12 +14,10 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Tag("breakpoint")
-@ApiStatus.Internal
 public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProperties, T extends XBreakpointType<B,P>> {
   private String myTypeId;
   private boolean myEnabled;
@@ -109,7 +109,8 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
     myLogStack = logStack;
   }
 
-  public @Nullable String getGroup() {
+  @Nullable
+  public String getGroup() {
     return myGroup;
   }
 
@@ -125,8 +126,9 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
     myDescription = description;
   }
 
+  @Nullable
   @Property(surroundWithTag = false)
-  public @Nullable LogExpression getLogExpression() {
+  public LogExpression getLogExpression() {
     return myLogExpression;
   }
 
@@ -137,8 +139,9 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
     myLogExpression = logExpression;
   }
 
+  @Nullable
   @Property(surroundWithTag = false)
-  public @Nullable Condition getCondition() {
+  public Condition getCondition() {
     return myCondition;
   }
 
@@ -191,7 +194,8 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
       super(disabled, expression);
     }
 
-    public static @Nullable Condition create(boolean disabled, XExpression expression) {
+    @Nullable
+    public static Condition create(boolean disabled, XExpression expression) {
       if (XDebuggerUtilImpl.isEmptyExpression(expression)) {
         return null;
       }
@@ -208,7 +212,8 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
       super(disabled, expression);
     }
 
-    public static @Nullable LogExpression create(boolean disabled, XExpression expression) {
+    @Nullable
+    public static LogExpression create(boolean disabled, XExpression expression) {
       if (XDebuggerUtilImpl.isEmptyExpression(expression)) {
         return null;
       }

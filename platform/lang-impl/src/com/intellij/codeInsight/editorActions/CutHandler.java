@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -22,7 +21,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-@ApiStatus.Internal
 public final class CutHandler extends EditorWriteActionHandler {
   private final EditorActionHandler myOriginalHandler;
 

@@ -6,7 +6,6 @@ import com.intellij.openapi.util.text.HtmlChunk.*
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.JEditorPane
 import javax.swing.text.html.HTMLEditorKit
 
@@ -15,7 +14,6 @@ private const val PADDING = "padding-left:15px;padding-right:15px;padding-top:10
 /**
  * @author Alexander Lobas
  */
-@ApiStatus.Internal
 class SuggestedComponent : JEditorPane() {
   init {
     UIUtil.convertToLabel(this)

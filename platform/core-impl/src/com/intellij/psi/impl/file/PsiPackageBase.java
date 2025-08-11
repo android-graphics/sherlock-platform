@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.lang.ASTNode;
@@ -20,7 +20,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Map;
@@ -29,25 +28,23 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   private static final Logger LOG = Logger.getInstance(PsiPackageBase.class);
 
   private final PsiManager myManager;
-  private final @NotNull String myQualifiedName;
+  private final String myQualifiedName;
 
-  protected abstract @Unmodifiable Collection<PsiDirectory> getAllDirectories(@NotNull GlobalSearchScope scope);
+  protected abstract Collection<PsiDirectory> getAllDirectories(GlobalSearchScope scope);
 
-  protected abstract PsiPackageBase findPackage(@NotNull String qName);
+  protected abstract PsiPackageBase findPackage(String qName);
 
-  public PsiPackageBase(PsiManager manager, @NotNull String qualifiedName) {
+  public PsiPackageBase(PsiManager manager, String qualifiedName) {
     myManager = manager;
     myQualifiedName = qualifiedName;
   }
 
-  @Override
   public boolean equals(Object o) {
     return o != null && getClass() == o.getClass()
            && myManager == ((PsiPackageBase)o).myManager
            && myQualifiedName.equals(((PsiPackageBase)o).myQualifiedName);
   }
 
-  @Override
   public int hashCode() {
     return myQualifiedName.hashCode();
   }
@@ -105,7 +102,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     }
   }
 
-  public @Nullable PsiPackageBase getParentPackage() {
+  public PsiPackageBase getParentPackage() {
     if (myQualifiedName.isEmpty()) return null;
     return findPackage(StringUtil.getPackageName(myQualifiedName));
   }
@@ -211,7 +208,6 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     }
   }
 
-  @Deprecated
   @Override
   public void checkDelete() throws IncorrectOperationException {
     for (PsiDirectory dir : getDirectories()) {

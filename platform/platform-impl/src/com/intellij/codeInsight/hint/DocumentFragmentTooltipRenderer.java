@@ -10,13 +10,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
-@ApiStatus.Internal
 public final class DocumentFragmentTooltipRenderer implements TooltipRenderer {
   private final DocumentFragment myDocumentFragment;
 

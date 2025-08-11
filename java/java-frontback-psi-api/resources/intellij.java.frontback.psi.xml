@@ -1,2 +1,2 @@
-<idea-plugin>
+<idea-plugin package="com.intellij.java.frontback.psi.fake">
 </idea-plugin>

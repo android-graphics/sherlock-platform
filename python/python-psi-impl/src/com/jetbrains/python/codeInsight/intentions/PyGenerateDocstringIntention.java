@@ -31,7 +31,8 @@ import java.util.List;
  */
 public final class PyGenerateDocstringIntention extends PyBaseIntentionAction {
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.insert.docstring.stub");
   }
 

@@ -14,7 +14,6 @@
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Set;
 
@@ -53,6 +52,5 @@ public interface ObjectIntMap<K> {
   }
 
   @NotNull
-  @Unmodifiable
   Iterable<Entry<K>> entries();
 }

@@ -1,11 +1,11 @@
-# $Id: sk.py 9452 2023-09-27 00:11:54Z milde $
+# $Id: sk.py 4564 2006-05-21 20:44:42Z wiemann $
 # Author: Miroslav Vasko <zemiak@zoznam.sk>
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
-# Two files must be translated for each language: one in docutils/languages,
-# the other in docutils/parsers/rst/languages.
+# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
+# translated for each language: one in docutils/languages, the other in
+# docutils/parsers/rst/languages.
 
 """
 Slovak-language mappings for language-dependent features of Docutils.
@@ -16,23 +16,23 @@ __docformat__ = 'reStructuredText'
 labels = {
       'author': 'Autor',
       'authors': 'Autori',
-      'organization': 'Organizácia',
+      'organization': 'Organiz\u00E1cia',
       'address': 'Adresa',
       'contact': 'Kontakt',
       'version': 'Verzia',
-      'revision': 'Revízia',
+      'revision': 'Rev\u00EDzia',
       'status': 'Stav',
-      'date': 'Dátum',
+      'date': 'D\u00E1tum',
       'copyright': 'Copyright',
       'dedication': 'Venovanie',
       'abstract': 'Abstraktne',
       'attention': 'Pozor!',
       'caution': 'Opatrne!',
-      'danger': '!NEBEZPEČENSTVO!',
+      'danger': '!NEBEZPE\u010cENSTVO!',
       'error': 'Chyba',
       'hint': 'Rada',
-      'important': 'Dôležité',
-      'note': 'Poznámka',
+      'important': 'D\u00F4le\u017Eit\u00E9',
+      'note': 'Pozn\u00E1mka',
       'tip': 'Tip',
       'warning': 'Varovanie',
       'contents': 'Obsah'}
@@ -41,13 +41,13 @@ labels = {
 bibliographic_fields = {
       'autor': 'author',
       'autori': 'authors',
-      'organizácia': 'organization',
+      'organiz\u00E1cia': 'organization',
       'adresa': 'address',
       'kontakt': 'contact',
       'verzia': 'version',
-      'revízia': 'revision',
+      'rev\u00EDzia': 'revision',
       'stav': 'status',
-      'dátum': 'date',
+      'd\u00E1tum': 'date',
       'copyright': 'copyright',
       'venovanie': 'dedication',
       'abstraktne': 'abstract'}

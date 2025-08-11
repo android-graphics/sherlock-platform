@@ -1,6 +1,7 @@
 from _typeshed import Incomplete, Unused
 from enum import IntEnum
-from typing import ClassVar, Literal
+from typing import ClassVar
+from typing_extensions import Literal
 
 from ._binary import o8 as o8
 from .ImageFile import ImageFile
@@ -10,13 +11,13 @@ MAX_TEXT_CHUNK: Incomplete
 MAX_TEXT_MEMORY: Incomplete
 
 class Disposal(IntEnum):
-    OP_NONE = 0
-    OP_BACKGROUND = 1
-    OP_PREVIOUS = 2
+    OP_NONE: int
+    OP_BACKGROUND: int
+    OP_PREVIOUS: int
 
 class Blend(IntEnum):
-    OP_SOURCE = 0
-    OP_OVER = 1
+    OP_SOURCE: int
+    OP_OVER: int
 
 class ChunkStream:
     fp: Incomplete

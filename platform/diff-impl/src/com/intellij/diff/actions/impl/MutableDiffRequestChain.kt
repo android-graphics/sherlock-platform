@@ -3,18 +3,16 @@ package com.intellij.diff.actions.impl
 
 import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffContextEx
-import com.intellij.diff.DiffEditorTitleCustomizer
+import com.intellij.diff.DiffRequestFactory
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.contents.FileContent
-import com.intellij.diff.impl.DiffEditorTitleDetails
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeys.ThreeSideDiffColors
-import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -26,41 +24,29 @@ import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.*
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.LocalFilePath
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
 import javax.swing.JComponent
-import kotlin.collections.List
-import kotlin.collections.MutableMap
-import kotlin.collections.buildList
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.forEach
-import kotlin.collections.listOf
-import kotlin.collections.map
-import kotlin.collections.mutableMapOf
 
-class MutableDiffRequestChain @JvmOverloads constructor(
+class MutableDiffRequestChain(
   var content1: DiffContent,
   var baseContent: DiffContent?,
-  var content2: DiffContent,
-  private val project: Project? = null,
+  var content2: DiffContent
 ) : UserDataHolderBase(), DiffRequestChain {
 
   private val producer = MyDiffRequestProducer()
   private val requestUserData: MutableMap<Key<*>, Any> = mutableMapOf()
 
   var windowTitle: String? = null
-  var title1: String? = null
-  var title2: String? = null
-  var baseTitle: String? = null
+  var title1: String? = getTitleFor(content1)
+  var title2: String? = getTitleFor(content2)
+  var baseTitle: String? = baseContent?.let { getTitleFor(it) }
 
   var baseColorMode: ThreeSideDiffColors = ThreeSideDiffColors.LEFT_TO_RIGHT
 
-  @JvmOverloads
-  constructor(content1: DiffContent, content2: DiffContent, project: Project? = null) : this(content1, null, content2, project)
+  constructor(content1: DiffContent, content2: DiffContent) : this(content1, null, content2)
 
   fun <T : Any> putRequestUserData(key: Key<T>, value: T) {
     requestUserData.put(key, value)
@@ -85,27 +71,13 @@ class MutableDiffRequestChain @JvmOverloads constructor(
       else {
         SimpleDiffRequest(windowTitle, content1, content2, title1, title2)
       }
-
       request.putUserData(CHAIN_KEY, this@MutableDiffRequestChain)
-      requestUserData.forEach { (key, value) ->
+      requestUserData.forEach { key, value ->
         @Suppress("UNCHECKED_CAST")
         request.putUserData(key as Key<Any>, value)
       }
-
-      return DiffUtil.addTitleCustomizers(request, buildList {
-        add(getTitleCustomizer(content1, title1))
-        if (baseContent != null) {
-          add(getTitleCustomizer(baseContent, baseTitle))
-        }
-        add(getTitleCustomizer(content2, title2))
-      })
+      return request
     }
-
-    private fun getTitleCustomizer(content: DiffContent?, customTitle: @NlsSafe String?): DiffEditorTitleCustomizer = when {
-      customTitle != null -> DiffEditorTitleDetails.createFromTitle(customTitle)
-      content is FileContent -> DiffEditorTitleDetails.create(project, LocalFilePath(content.file.path, content.file.isDirectory), null)
-      else -> DiffEditorTitleDetails.EMPTY
-    }.getCustomizer()
   }
 
   companion object {
@@ -126,11 +98,11 @@ class MutableDiffRequestChain @JvmOverloads constructor(
 
   data class Helper(val chain: MutableDiffRequestChain, val context: DiffContextEx) {
     fun setContent(newContent: DiffContent, side: Side) {
-      setContent(newContent, null, side)
+      setContent(newContent, getTitleFor(newContent), side)
     }
 
     fun setContent(newContent: DiffContent, side: ThreeSide) {
-      setContent(newContent, null, side)
+      setContent(newContent, getTitleFor(newContent), side)
     }
 
     fun setContent(newContent: DiffContent, title: String?, side: Side) {
@@ -230,10 +202,5 @@ internal class SwapThreeWayColorModeAction : ComboBoxAction() {
   }
 }
 
-private fun getDisplayPath(guessedProjectDir: VirtualFile?, file: VirtualFile): String {
-  if (guessedProjectDir == null) return FileUtil.getLocationRelativeToUserHome(file.presentableUrl)
-
-  val filePath = file.toNioPath()
-  val projectDirPath = guessedProjectDir.toNioPath()
-  return if (filePath.startsWith(projectDirPath)) projectDirPath.relativize(filePath).toString() else FileUtil.getLocationRelativeToUserHome(file.presentableUrl)
-}
+private fun getTitleFor(content: DiffContent) =
+  if (content is FileContent) DiffRequestFactory.getInstance().getContentTitle(content.file) else null

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.type;
 
 import com.intellij.psi.PsiElement;
@@ -37,7 +37,8 @@ public final class GroovyTypeCheckVisitorHelper {
     return initializer instanceof GrListOrMap && ((GrListOrMap)initializer).getConstructorReference() != null;
   }
 
-  public static @NotNull PsiElement getExpressionPartToHighlight(@NotNull GrExpression expr) {
+  @NotNull
+  public static PsiElement getExpressionPartToHighlight(@NotNull GrExpression expr) {
     return expr instanceof GrClosableBlock ? ((GrClosableBlock)expr).getLBrace() : expr;
   }
 
@@ -67,7 +68,8 @@ public final class GroovyTypeCheckVisitorHelper {
     return TypesUtil.isNumericType(ltype) && (rtype == null || TypesUtil.isNumericType(rtype));
   }
 
-  public static @Nullable String getLValueVarName(@NotNull PsiElement highlight) {
+  @Nullable
+  public static String getLValueVarName(@NotNull PsiElement highlight) {
     final PsiElement parent = highlight.getParent();
     if (parent instanceof GrVariable) {
       return ((GrVariable)parent).getName();
@@ -84,7 +86,8 @@ public final class GroovyTypeCheckVisitorHelper {
     return null;
   }
 
-  public static @Nullable List<GrExpression> getExpressionArgumentsOfCall(@NotNull GrArgumentList argumentList) {
+  @Nullable
+  public static List<GrExpression> getExpressionArgumentsOfCall(@NotNull GrArgumentList argumentList) {
     final ArrayList<GrExpression> args = new ArrayList<>();
 
     for (GroovyPsiElement arg : argumentList.getAllArguments()) {

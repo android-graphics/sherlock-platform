@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from .enums import Align as Align, TextMode as TextMode, XPos as XPos, YPos as YPos
-from .fonts import FontFace as FontFace
 from .fpdf import FPDF as FPDF, FPDFException as FPDFException, TitleStyle as TitleStyle
 from .html import HTML2FPDF as HTML2FPDF, HTMLMixin as HTMLMixin
 from .prefs import ViewerPreferences as ViewerPreferences
@@ -17,9 +16,7 @@ __all__ = [
     "__license__",
     "FPDF",
     "FPDFException",
-    "FontFace",
     "Align",
-    "TextMode",
     "XPos",
     "YPos",
     "Template",

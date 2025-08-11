@@ -1,8 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView.smartTree;
 
-import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.StructureViewElementWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +18,8 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   private static final Logger LOG = Logger.getInstance(CachingChildrenTreeNode.class);
   private List<CachingChildrenTreeNode<?>> myChildren;
   private List<CachingChildrenTreeNode<?>> myOldChildren;
-  protected final @NotNull TreeModel myTreeModel;
+  @NotNull
+  protected final TreeModel myTreeModel;
 
   CachingChildrenTreeNode(Project project, @NotNull Value value, @NotNull TreeModel treeModel) {
     super(project,
@@ -29,7 +28,8 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   }
 
   @Override
-  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
+  @NotNull
+  public Collection<AbstractTreeNode<?>> getChildren() {
     ensureChildrenAreInitialized();
     return new ArrayList<>(myChildren);
   }
@@ -174,11 +174,13 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     }
   }
 
-  protected @NotNull TreeElementWrapper createChildNode(@NotNull TreeElement child) {
+  @NotNull
+  protected TreeElementWrapper createChildNode(@NotNull TreeElement child) {
     return new TreeElementWrapper(getProject(), child, myTreeModel);
   }
 
-  private static @NotNull Map<TreeElement, AbstractTreeNode> collectValues(@NotNull List<? extends AbstractTreeNode<TreeElement>> ungrouped) {
+  @NotNull
+  private static Map<TreeElement, AbstractTreeNode> collectValues(@NotNull List<? extends AbstractTreeNode<TreeElement>> ungrouped) {
     Map<TreeElement, AbstractTreeNode> objects = new LinkedHashMap<>();
     for (final AbstractTreeNode<TreeElement> node : ungrouped) {
       objects.put(node.getValue(), node);
@@ -186,7 +188,8 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     return objects;
   }
 
-  private @NotNull Map<Group, GroupWrapper> createGroupNodes(@NotNull Collection<? extends Group> groups) {
+  @NotNull
+  private Map<Group, GroupWrapper> createGroupNodes(@NotNull Collection<? extends Group> groups) {
     Map<Group, GroupWrapper> result = CollectionFactory.createSmallMemoryFootprintMap(groups.size());
     for (Group group : groups) {
       result.put(group, createGroupWrapper(getProject(), group, myTreeModel));
@@ -194,7 +197,8 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     return result;
   }
 
-  protected @NotNull GroupWrapper createGroupWrapper(final Project project, @NotNull Group group, @NotNull TreeModel treeModel) {
+  @NotNull
+  protected GroupWrapper createGroupWrapper(final Project project, @NotNull Group group, @NotNull TreeModel treeModel) {
     return new GroupWrapper(project, group, treeModel);
   }
 
@@ -254,15 +258,6 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   @Override
   public boolean canNavigateToSource() {
     return getValue() instanceof Navigatable && ((Navigatable)getValue()).canNavigateToSource();
-  }
-
-  @Override
-  public boolean isAutoExpandAllowed() {
-    if (myTreeModel instanceof StructureViewModel.ExpandInfoProvider expandInfoProvider
-        && getValue() instanceof StructureViewTreeElement structureViewTreeElement) {
-      return expandInfoProvider.isAutoExpand(structureViewTreeElement);
-    }
-    return super.isAutoExpandAllowed();
   }
 
   protected void clearChildren() {

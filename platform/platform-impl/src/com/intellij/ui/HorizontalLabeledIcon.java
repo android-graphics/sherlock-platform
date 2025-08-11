@@ -5,12 +5,10 @@ import com.intellij.util.text.StringTokenizer;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
 
-@ApiStatus.Internal
 public final class HorizontalLabeledIcon implements Icon {
   private final Icon myIcon;
   private final String[] myStrings;

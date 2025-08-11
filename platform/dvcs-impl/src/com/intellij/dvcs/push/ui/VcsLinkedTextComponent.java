@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -18,11 +18,11 @@ import java.util.regex.Pattern;
 public class VcsLinkedTextComponent extends JLabel {
   private static final Pattern HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>");
 
-  private final @NotNull @NlsSafe String myTextBefore;
-  private final @NotNull @NlsSafe String myTextAfter;
-  private @NotNull @NlsSafe String myHandledLink;
+  @NotNull private final @NlsSafe String myTextBefore;
+  @NotNull private final @NlsSafe String myTextAfter;
+  @NotNull private @NlsSafe String myHandledLink;
 
-  private final @Nullable VcsLinkListener myLinkListener;
+  @Nullable private final VcsLinkListener myLinkListener;
   private boolean mySelected;
   private boolean myUnderlined;
   private boolean myTransparent;
@@ -81,7 +81,8 @@ public class VcsLinkedTextComponent extends JLabel {
   }
 
   @Override
-  public @NotNull String getText() {
+  @NotNull
+  public String getText() {
     return myTextBefore + myHandledLink + myTextAfter;
   }
 }

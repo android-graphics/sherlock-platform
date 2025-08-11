@@ -58,8 +58,8 @@ internal class ActionsLanguageModel(val coroutineScope: CoroutineScope) {
   // Accept any word that consist of only alphabetical characters, that are between 3 and 45 characters long
   private val acceptableWordsPattern = Pattern.compile("^[a-zA-Z]{3,45}\$")
 
-  private suspend fun getWordsFromActions(): Sequence<@NlsActions.ActionText String> {
-    return (serviceAsync<ActionManager>() as ActionManagerImpl).actionsOrStubs()
+  private fun getWordsFromActions(): Sequence<@NlsActions.ActionText String> {
+    return (ActionManager.getInstance() as ActionManagerImpl).actionsOrStubs()
       .filterNot { it is ActionGroup && !it.isSearchable }
       .mapNotNull {
         val presentation = it.templatePresentation
@@ -68,18 +68,18 @@ internal class ActionsLanguageModel(val coroutineScope: CoroutineScope) {
       }
   }
 
-  private suspend fun getWordsFromSettings(): Sequence<@NlsContexts.ConfigurableName CharSequence> {
-    val registrar = serviceAsync<SearchableOptionsRegistrar>() as? SearchableOptionsRegistrarImpl
+  private fun getWordsFromSettings(): Sequence<@NlsContexts.ConfigurableName CharSequence> {
+    val registrar = SearchableOptionsRegistrar.getInstance() as? SearchableOptionsRegistrarImpl
     if (registrar == null) {
       thisLogger().warn("Failed to cast SearchableOptionsRegistrar")
       return emptySequence()
     }
 
     registrar.initialize()
-    return registrar.getAllOptionNames().asSequence()
+    return registrar.allOptionNames.asSequence()
   }
 
-  private suspend fun computeLanguageModelDictionary(): LanguageModelDictionary {
+  private fun computeLanguageModelDictionary(): LanguageModelDictionary {
     return (getWordsFromActions() + getWordsFromSettings())
       .flatMap {
         splitText(it)

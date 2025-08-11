@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira;
 
 import com.intellij.tasks.CustomTaskState;
@@ -25,17 +24,21 @@ public abstract class JiraRemoteApi {
     myRepository = repository;
   }
 
-  public abstract @NotNull List<Task> findTasks(@NotNull String jql, int max) throws Exception;
+  @NotNull
+  public abstract List<Task> findTasks(@NotNull String jql, int max) throws Exception;
 
-  public abstract @Nullable Task findTask(@NotNull String key) throws Exception;
+  @Nullable
+  public abstract Task findTask(@NotNull String key) throws Exception;
 
-  public abstract @NotNull Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception;
+  @NotNull
+  public abstract Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception;
 
   public abstract void setTaskState(@NotNull Task task, @NotNull CustomTaskState state) throws Exception;
 
   public abstract void updateTimeSpend(@NotNull LocalTask task, @NotNull String timeSpent, String comment) throws Exception;
 
-  public final @NotNull String getVersionName() {
+  @NotNull
+  public final String getVersionName() {
     return getType().getVersionName();
   }
 
@@ -44,24 +47,28 @@ public abstract class JiraRemoteApi {
     return "JiraRemoteApi(" + getType().getVersionName() + ")";
   }
 
-  public abstract @NotNull ApiType getType();
+  @NotNull
+  public abstract ApiType getType();
 
   public enum ApiType {
     LEGACY("XML-RPC + RSS") {
+      @NotNull
       @Override
-      public @NotNull JiraLegacyApi createApi(@NotNull JiraRepository repository) {
+      public JiraLegacyApi createApi(@NotNull JiraRepository repository) {
         return new JiraLegacyApi(repository);
       }
     },
     REST_2_0("REST 2.0") {
+      @NotNull
       @Override
-      public @NotNull JiraRestApi2 createApi(@NotNull JiraRepository repository) {
+      public JiraRestApi2 createApi(@NotNull JiraRepository repository) {
         return new JiraRestApi2(repository);
       }
     },
     REST_2_0_ALPHA("REST 2.0.alpha1") {
+      @NotNull
       @Override
-      public @NotNull JiraRestApi20Alpha1 createApi(@NotNull JiraRepository repository) {
+      public JiraRestApi20Alpha1 createApi(@NotNull JiraRepository repository) {
         return new JiraRestApi20Alpha1(repository);
       }
     };
@@ -70,9 +77,11 @@ public abstract class JiraRemoteApi {
       myVersionName = versionName;
     }
     private final String myVersionName;
-    public abstract @NotNull JiraRemoteApi createApi(@NotNull JiraRepository repository);
+    @NotNull
+    public abstract JiraRemoteApi createApi(@NotNull JiraRepository repository);
 
-    public @NotNull String getVersionName() {
+    @NotNull
+    public String getVersionName() {
       return myVersionName;
     }
   }

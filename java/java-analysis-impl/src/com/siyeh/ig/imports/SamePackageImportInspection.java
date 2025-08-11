@@ -28,7 +28,8 @@ import org.jetbrains.annotations.NotNull;
 public final class SamePackageImportInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "import.from.same.package.problem.descriptor");
   }

@@ -21,12 +21,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderIdeImpl"/>
-
-    <lang.parserDefinition language="kotlin" implementationClass="org.jetbrains.kotlin.parsing.KotlinParserDefinition"/>
-
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.K1PluginStartupActivity"/>
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility"
@@ -61,10 +55,6 @@
             serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.K1ReferenceImporterFacility"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
-
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.imports.KaDefaultImportsProvider"
-            serviceImplementation="org.jetbrains.kotlin.base.fe10.analysis.KaFe10DefaultImportsProvider"/>
 
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.stubindex.resolve.KotlinShortClassNameFileIndex"/>
     <projectService
@@ -165,9 +155,6 @@
             order="first"
             key="KNM"
             factoryClass="org.jetbrains.kotlin.idea.structureView.KtDecompiledFileStructureViewBuilderProvider"/>
-    <lang.logicalStructureTreeElementProvider
-            implementation="org.jetbrains.kotlin.idea.structureView.KotlinClassLogicalStructureTreeElementProvider"
-            order="before javaPsiClassLogicalStructureTreeElementProvider"/>
   </extensions>
 
   <!-- Line markers -->
@@ -184,6 +171,10 @@
   <extensions defaultExtensionNs="com.intellij">
     <codeInsight.parameterNameHints language="kotlin"
                                     implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinInlayParameterHintsProvider"/>
+
+    <!-- CodeVision is disabled for Kotlin -->
+<!--    <codeInsight.inlayProvider language="kotlin"-->
+<!--                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionProvider"/>-->
 
     <codeInsight.inlayActionHandler implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler"
                                     handlerId="kotlin.fqn.class"/>
@@ -279,8 +270,12 @@
 
   <!-- Copy-paste -->
   <extensions defaultExtensionNs="com.intellij">
+    <copyPastePostProcessor implementation="org.jetbrains.kotlin.idea.conversion.copy.ConvertJavaCopyPasteProcessor"/>
+    <copyPastePostProcessor implementation="org.jetbrains.kotlin.idea.conversion.copy.ConvertTextJavaCopyPasteProcessor"/>
     <copyPastePostProcessor implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor"/>
     <copyPastePostProcessor implementation="org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsCopyPasteProcessor"/>
+
+    <filePasteProvider implementation="org.jetbrains.kotlin.idea.conversion.copy.KotlinFilePasteProvider" order="first"/>
 
     <elementDescriptionProvider order="first" implementation="org.jetbrains.kotlin.idea.findUsages.KotlinElementDescriptionProvider"/>
   </extensions>
@@ -319,6 +314,10 @@
     <overridingMethodsSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinOverridingMethodsWithGenericsSearcher"/>
 
     <iconProvider implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10KotlinIconProvider"/>
+
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.analysis.decompiled.light.classes.origin.KotlinDeclarationInCompiledFileSearcher"
+            serviceImplementation="org.jetbrains.kotlin.analysis.decompiled.light.classes.fe10.KotlinDeclarationInCompiledFileSearcherFE10Impl"/>
   </extensions>
 
   <!-- dataflow -->
@@ -336,11 +335,6 @@
   <!-- legacy JS decompiler for .kjsm files, not supported in K2 -->
   <extensions defaultExtensionNs="com.intellij">
     <psi.classFileDecompiler implementation="org.jetbrains.kotlin.analysis.decompiler.js.KotlinJavaScriptMetaFileDecompiler"/>
-  </extensions>
-
-  <!-- notification about unsupported K2 features in K1 mode -->
-  <extensions defaultExtensionNs="com.intellij">
-    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.configuration.KotlinK2FeaturesInK1ModeNotifier"/>
   </extensions>
 
 </idea-plugin>

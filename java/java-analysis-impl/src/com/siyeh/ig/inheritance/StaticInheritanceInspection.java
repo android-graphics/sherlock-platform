@@ -31,7 +31,8 @@ import java.util.Set;
 public final class StaticInheritanceInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "static.inheritance.problem.descriptor");
   }

@@ -1,15 +1,14 @@
-from _typeshed import Incomplete
-from typing import ClassVar
+from typing import Any
 
 from .. import Command
 
 class rotate(Command):
     description: str
-    user_options: ClassVar[list[tuple[str, str, str]]]
-    boolean_options: ClassVar[list[str]]
-    match: Incomplete
-    dist_dir: Incomplete
-    keep: Incomplete
+    user_options: Any
+    boolean_options: Any
+    match: Any
+    dist_dir: Any
+    keep: Any
     def initialize_options(self) -> None: ...
     def finalize_options(self) -> None: ...
     def run(self) -> None: ...

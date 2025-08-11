@@ -1,3 +1,0 @@
-package unrelatedLibrary
-
-class UnrelatedRoot

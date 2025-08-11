@@ -144,7 +144,6 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     }
   }
 
-  @Override
   public String toString() {
     return new ArrayList<>(myChangedElements.values()).toString();
   }

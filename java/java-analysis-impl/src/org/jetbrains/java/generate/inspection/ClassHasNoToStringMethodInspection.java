@@ -63,12 +63,14 @@ public final class ClassHasNoToStringMethodInspection extends AbstractToStringIn
 
 
   @Override
-  public @NotNull String getShortName() {
+    @NotNull
+    public String getShortName() {
         return "ClassHasNoToStringMethod";
     }
 
+    @NotNull
     @Override
-    public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
         return new JavaElementVisitor() {
             @Override
             public void visitClass(@NotNull PsiClass clazz) {

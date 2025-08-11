@@ -1,13 +1,12 @@
 from _typeshed import Incomplete
-from typing import ClassVar
 
 from ..cmd import Command
 
 class bdist_rpm(Command):
     description: str
-    user_options: ClassVar[list[tuple[str, str | None, str]]]
-    boolean_options: ClassVar[list[str]]
-    negative_opt: ClassVar[dict[str, str]]
+    user_options: Incomplete
+    boolean_options: Incomplete
+    negative_opt: Incomplete
     bdist_base: Incomplete
     rpm_base: Incomplete
     dist_dir: Incomplete

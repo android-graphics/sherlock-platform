@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import com.intellij.openapi.util.Pair;
@@ -6,11 +6,10 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.impl.Containers;
-import org.jetbrains.jps.javac.Iterators;
 
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -81,7 +80,8 @@ public final class Utils {
     return getNodes(new JvmNodeReferenceID(name), JvmModule.class);
   }
 
-  public @Nullable String getNodeName(ReferenceID id) {
+  @Nullable
+  public String getNodeName(ReferenceID id) {
     if (id instanceof JvmNodeReferenceID) {
       return ((JvmNodeReferenceID)id).getNodeName();
     }
@@ -158,17 +158,13 @@ public final class Utils {
     else {
       allNodes = fromDeltaOnly? Collections.emptyList() : flat(map(filter(myGraph.getSources(id), mySourcesFilter::test), src -> myGraph.getNodes(src, selector)));
     }
-    return filter(allNodes, n -> id.equals(n.getReferenceID()));
-  }
-
-  public static <T> @NotNull Iterable<T> uniqueBy(Iterable<? extends T> it, final BiFunction<? super T, ? super T, Boolean> equalsImpl, final Function<? super T, Integer> hashCodeImpl) {
-    return Iterators.uniqueBy(it, () -> new BooleanFunction<>() {
+    return uniqueBy(filter(allNodes, n -> id.equals(n.getReferenceID())), () -> new BooleanFunction<>() {
       Set<T> visited;
 
       @Override
       public boolean fun(T t) {
         if (visited == null) {
-          visited = Containers.createCustomPolicySet(equalsImpl, hashCodeImpl);
+          visited = Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode);
         }
         return visited.add(t);
       }
@@ -194,15 +190,18 @@ public final class Utils {
     return recurse(classId, this::allDirectSupertypes, false);
   }
 
-  public @NotNull Iterable<ReferenceID> withAllSubclasses(ReferenceID from) {
+  @NotNull
+  public Iterable<ReferenceID> withAllSubclasses(ReferenceID from) {
     return recurse(from, this::directSubclasses, true);
   }
 
-  public @NotNull Iterable<ReferenceID> allSubclasses(ReferenceID from) {
+  @NotNull
+  public Iterable<ReferenceID> allSubclasses(ReferenceID from) {
     return recurse(from, this::directSubclasses, false);
   }
 
-  public @NotNull Iterable<ReferenceID> directSubclasses(ReferenceID from) {
+  @NotNull
+  public Iterable<ReferenceID> directSubclasses(ReferenceID from) {
     if (myDeltaDirectSubclasses != null) {
       BooleanFunction<ReferenceID> subClassFilter = sub -> {
         if (myIsNodeDeleted.test(sub)) {
@@ -383,7 +382,8 @@ public final class Utils {
     };
   }
 
-  public @Nullable Boolean isSubtypeOf(final TypeRepr who, final TypeRepr whom) {
+  @Nullable
+  public Boolean isSubtypeOf(final TypeRepr who, final TypeRepr whom) {
     if (who.equals(whom)) {
       return Boolean.TRUE;
     }

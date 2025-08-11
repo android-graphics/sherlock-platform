@@ -11,7 +11,6 @@ import com.intellij.ui.LightColors
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList
 import com.intellij.util.ui.UIUtil.getTextFieldBackground
-import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.event.ItemListener
 import java.util.function.Supplier
@@ -24,7 +23,6 @@ private typealias CommittedChangeListPredicate = (CommittedChangeList) -> Boolea
 
 private val TEXT_FILTER_KEY = CommittedChangesFilterKey("text", CommittedChangesFilterPriority.TEXT)
 
-@ApiStatus.Internal
 class CommittedChangesFilterComponent :
   FilterComponent("COMMITTED_CHANGES_FILTER_HISTORY", 20),
   ChangeListFilteringStrategy,

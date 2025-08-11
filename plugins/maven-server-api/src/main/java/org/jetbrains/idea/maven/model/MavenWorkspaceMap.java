@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.model;
 
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,8 @@ public class MavenWorkspaceMap implements Serializable {
     return myAdditionalContext.get(id);
   }
 
-  public @NotNull Set<String> getAvailableContextIds() {
+  @NotNull
+  public Set<String> getAvailableContextIds() {
     return myAdditionalContext.keySet();
   }
 
@@ -43,11 +44,13 @@ public class MavenWorkspaceMap implements Serializable {
     }
   }
 
-  public @Nullable Data findFileAndOriginalId(@NotNull MavenId dependencyId) {
+  @Nullable
+  public Data findFileAndOriginalId(@NotNull MavenId dependencyId) {
     return myMapping.get(dependencyId);
   }
 
-  public @NotNull Set<MavenId> getAvailableIds() {
+  @NotNull
+  public Set<MavenId> getAvailableIds() {
     return myMapping.keySet();
   }
 

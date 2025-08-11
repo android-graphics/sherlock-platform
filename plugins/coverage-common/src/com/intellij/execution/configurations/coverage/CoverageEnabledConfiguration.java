@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations.coverage;
 
 import com.intellij.coverage.*;
@@ -176,7 +176,8 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     }
   }
 
-  public @NonNls @Nullable String getCoverageFilePath() {
+  @NonNls
+  public @Nullable String getCoverageFilePath() {
     if (myCoverageFilePath == null) {
       myCoverageFilePath = createCoverageFile();
     }
@@ -234,7 +235,8 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     }
   }
 
-  protected @NonNls @Nullable String createCoverageFile() {
+  @NonNls
+  protected @Nullable String createCoverageFile() {
     CoverageRunner runner = getCoverageRunner();
     if (runner == null) {
       return null;
@@ -289,7 +291,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   /**
    * @deprecated Is not used
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public boolean canHavePerTestCoverage() {
     for (CoverageEngine engine : CoverageEngine.EP_NAME.getExtensions()) {
       if (engine.isApplicableTo(myConfiguration)) {

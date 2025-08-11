@@ -22,8 +22,9 @@ public final class LombokPostfixTemplateProvider implements PostfixTemplateProvi
     lombokTemplates.add(new LombokVarPostfixTemplate());
   }
 
+  @NotNull
   @Override
-  public @NotNull Set<PostfixTemplate> getTemplates() {
+  public Set<PostfixTemplate> getTemplates() {
     return lombokTemplates;
   }
 
@@ -40,8 +41,9 @@ public final class LombokPostfixTemplateProvider implements PostfixTemplateProvi
   public void afterExpand(@NotNull PsiFile file, @NotNull Editor editor) {
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiFile preCheck(@NotNull PsiFile copyFile, @NotNull Editor realEditor, int currentOffset) {
+  public PsiFile preCheck(@NotNull PsiFile copyFile, @NotNull Editor realEditor, int currentOffset) {
     Document document = copyFile.getFileDocument();
     CharSequence sequence = document.getCharsSequence();
     StringBuilder fileContentWithSemicolon = new StringBuilder(sequence);

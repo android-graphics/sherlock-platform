@@ -1,9 +1,10 @@
 package com.intellij.tools.launch.ide.splitMode.dsl
 
+import com.intellij.tools.launch.ide.splitMode.IdeConstants
 import java.nio.file.Path
 
 interface LaunchIdeBuilder {
-  fun frontend(product: Product, init: IdeFrontendBuilder.() -> Unit)
+  fun frontend(init: IdeFrontendBuilder.() -> Unit)
 
   fun docker(init: DockerBuilder.() -> Unit)
 
@@ -14,12 +15,8 @@ interface IdeBuilder {
   fun attachDebugger(callback: suspend (Int) -> Unit)
 }
 
-enum class Product(val backendMainModule: String,
-                   val frontendRootProductModule: String) {
-  IDEA_ULTIMATE(
-    backendMainModule = "intellij.idea.ultimate.main",
-    frontendRootProductModule = "intellij.idea.frontend.split"
-  ),
+enum class Product(val mainModule: String) {
+  IDEA_ULTIMATE(mainModule = IdeConstants.INTELLIJ_IDEA_ULTIMATE_MAIN_MODULE),
 }
 
 interface IdeBackendBuilder : IdeBuilder {

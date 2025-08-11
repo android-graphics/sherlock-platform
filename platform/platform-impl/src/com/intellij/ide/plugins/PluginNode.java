@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
@@ -7,6 +7,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSou
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import java.text.DecimalFormat;
 import java.util.*;
 
 public final class PluginNode implements IdeaPluginDescriptor {
+
   private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
   private static final DecimalFormat M_FORMAT = new DecimalFormat("###.#M");
 
@@ -57,8 +59,8 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private List<IdeaPluginDependency> myDependencies = new ArrayList<>();
   private Status myStatus = Status.UNKNOWN;
   private boolean myLoaded;
-  private String myDownloadUrl;
-  private String myChannel; // TODO parameters map?
+  private @NonNls String myDownloadUrl;
+  private @NonNls String myChannel; // TODO parameters map?
   private @NlsSafe String myRepositoryName;
   private String myInstalledVersion;
   private boolean myEnabled = true;
@@ -71,11 +73,18 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private List<String> screenShots;
   private String externalPluginIdForScreenShots;
   private String mySuggestedCommercialIde = null;
-  private @NotNull Collection<String> suggestedFeatures = Collections.emptyList();
+  private Collection<String> mySuggestedFeatures;
   private boolean myConverted;
   private Collection<String> dependencyNames;
 
   private FUSEventSource installSource;
+
+  /**
+   * @deprecated Use {@link #PluginNode(PluginId)}
+   */
+  @Deprecated
+  public PluginNode() {
+  }
 
   public PluginNode(@NotNull PluginId id) {
     this.id = id;
@@ -115,15 +124,15 @@ public final class PluginNode implements IdeaPluginDescriptor {
   /**
    * @deprecated Use {@link #getDefaultTrialPeriod()}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public @Nullable Integer getTrialPeriod() {
     return defaultTrialPeriod;
   }
 
   /**
-   * @deprecated Use {@link #setDefaultTrialPeriod(Integer)}}
+   * @deprecated Use {@link #setDefaultTrialPeriod(Integer)}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public void setTrialPeriod(@Nullable Integer trialPeriod) {
     this.defaultTrialPeriod = trialPeriod;
   }
@@ -137,7 +146,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   /*
-    Allows customizing trial period duration per product for a plugin on Marketplace.
+    Allows customising trial period duration per product for a plugin on Marketplace.
     For the details, see: https://youtrack.jetbrains.com/issue/LLM-3752
   */
   @ApiStatus.Internal
@@ -188,8 +197,8 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   /**
-   * Plugin update unique ID from the Marketplace database.
-   * Needed for getting plugin meta-information.
+   * Plugin update unique ID from Marketplace database.
+   * Needed for getting Plugin meta information.
    */
   public @Nullable String getExternalUpdateId() {
     return externalUpdateId;
@@ -200,8 +209,8 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   /**
-   * Plugin unique ID from the Marketplace storage.
-   * Needed for getting plugin meta-information.
+   * Plugin unique ID from Marketplace storage.
+   * Needed for getting Plugin meta information.
    */
   public @Nullable String getExternalPluginId() {
     return externalPluginId;
@@ -316,6 +325,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
     myLoaded = loaded;
   }
 
+  @Override
   public @Nullable @NlsSafe String getDownloads() {
     return downloads;
   }
@@ -325,14 +335,19 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   public @Nullable @NlsSafe String getPresentableDownloads() {
+    String downloads = getDownloads();
+
     if (!StringUtil.isEmptyOrSpaces(downloads)) {
       try {
         long value = Long.parseLong(downloads);
-        return value <= 1000 ? Long.toString(value) :
-               value < 1000000 ? K_FORMAT.format(value / 1000D) :
+        return value <= 1000 ?
+               Long.toString(value) :
+               value < 1000000 ?
+               K_FORMAT.format(value / 1000D) :
                M_FORMAT.format(value / 1000000D);
       }
-      catch (NumberFormatException ignore) { }
+      catch (NumberFormatException ignore) {
+      }
     }
 
     return null;
@@ -357,7 +372,10 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public @Nullable @NlsSafe String getPresentableSize() {
     long size = getIntegerSize();
-    return size >= 0 ? StringUtil.formatFileSize(size).toUpperCase(Locale.ENGLISH) : null;
+
+    return size >= 0 ?
+           StringUtil.formatFileSize(size).toUpperCase(Locale.ENGLISH) :
+           null;
   }
 
   @Override
@@ -524,6 +542,17 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
+  public PluginId @NotNull [] getOptionalDependentPluginIds() {
+    List<PluginId> result = new ArrayList<>();
+    for (IdeaPluginDependency dependency : myDependencies) {
+      if (dependency.isOptional()) {
+        result.add(dependency.getPluginId());
+      }
+    }
+    return result.toArray(PluginId.EMPTY_ARRAY);
+  }
+
+  @Override
   public @Nullable String getResourceBundleBaseName() {
     return null;
   }
@@ -547,21 +576,21 @@ public final class PluginNode implements IdeaPluginDescriptor {
     myEnabled = enabled;
   }
 
-  public String getDownloadUrl() {
+  public @NonNls String getDownloadUrl() {
     return myDownloadUrl;
   }
 
-  public void setDownloadUrl(String downloadUrl) {
+  public void setDownloadUrl(@NonNls String downloadUrl) {
     myDownloadUrl = downloadUrl;
   }
 
   @ApiStatus.Experimental
-  public String getChannel() {
+  public @NonNls String getChannel() {
     return myChannel;
   }
 
   @ApiStatus.Experimental
-  public void setChannel(String channel) {
+  public void setChannel(@NonNls String channel) {
     myChannel = channel;
   }
 
@@ -616,12 +645,10 @@ public final class PluginNode implements IdeaPluginDescriptor {
     return externalPluginId == null || externalUpdateId == null || description != null;
   }
 
-  @ApiStatus.Internal
   public @Nullable PageContainer<PluginReviewComment> getReviewComments() {
     return reviewComments;
   }
 
-  @ApiStatus.Internal
   public void setReviewComments(@NotNull PageContainer<PluginReviewComment> reviewComments) {
     this.reviewComments = reviewComments;
   }
@@ -650,12 +677,12 @@ public final class PluginNode implements IdeaPluginDescriptor {
     mySuggestedCommercialIde = commercialIdeCode;
   }
 
-  public @NotNull Collection<String> getSuggestedFeatures() {
-    return suggestedFeatures;
+  public Collection<String> getSuggestedFeatures() {
+    return mySuggestedFeatures;
   }
 
   public void setSuggestedFeatures(@NotNull Collection<String> features) {
-    suggestedFeatures = features;
+    mySuggestedFeatures = features;
   }
 
   public @Nullable Collection<String> getDependencyNames() {
@@ -696,7 +723,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  public @NotNull String toString() {
+  public @NotNull @NonNls String toString() {
     return String.format("PluginNode{id=%s, name='%s'}", id, name);
   }
 
@@ -717,11 +744,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
     @Override
     public boolean isOptional() {
       return myOptional;
-    }
-
-    @Override
-    public String toString() {
-      return "PluginNodeDependency{pluginId=" + myPluginId + ", optional=" + myOptional + '}';
     }
   }
 }

@@ -20,9 +20,8 @@ class PyRepositoriesList(val project: Project) : MasterDetailsComponent() {
 
   init {
     initTree()
-    service<PyPackageRepositories>()
-      .repositories
-      .map { MyNode(PyRepositoryListItem(it, project)) }
+    service<PyPackageRepositories>().repositories
+      .map { MyNode(PyRepositoryListItem(it)) }
       .forEach { addNode(it, myRoot) }
   }
 
@@ -35,7 +34,7 @@ class PyRepositoriesList(val project: Project) : MasterDetailsComponent() {
           PyBundle.message("python.packaging.repository.form.default.name"),
           remainingRepositories().map { it.name }.toMutableList())
 
-        val newNode = MyNode(PyRepositoryListItem(PyPackageRepository(uniqueName, null, null), project))
+        val newNode = MyNode(PyRepositoryListItem(PyPackageRepository(uniqueName, "", "")))
         addNode(newNode, myRoot)
         selectNodeInTree(newNode)
       }

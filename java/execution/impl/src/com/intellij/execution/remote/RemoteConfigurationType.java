@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class RemoteConfigurationFactory
@@ -24,12 +24,14 @@ public final class RemoteConfigurationType extends SimpleConfigurationType imple
   }
 
   @Override
-  public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+  @NotNull
+  public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
     return new RemoteConfiguration(project, this);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getTag() {
+  public String getTag() {
     return "javaRemote";
   }
 
@@ -38,12 +40,14 @@ public final class RemoteConfigurationType extends SimpleConfigurationType imple
     return "reference.dialogs.rundebug.Remote";
   }
 
+  @NotNull
   @Deprecated(forRemoval = true)
-  public @NotNull ConfigurationFactory getFactory() {
+  public ConfigurationFactory getFactory() {
     return this;
   }
 
-  public static @NotNull RemoteConfigurationType getInstance() {
+  @NotNull
+  public static RemoteConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(RemoteConfigurationType.class);
   }
 

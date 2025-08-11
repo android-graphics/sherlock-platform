@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.optionalToIf;
 
 import com.intellij.codeInspection.optionalToIf.OptionalToIfInspection.OperationRecord;
@@ -18,7 +18,8 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 abstract class IntermediateOperation implements Operation {
 
-  static @Nullable IntermediateOperation create(@NotNull String name, PsiExpression @NotNull [] args) {
+  @Nullable
+  static IntermediateOperation create(@NotNull String name, PsiExpression @NotNull [] args) {
     if (args.length != 1) return null;
 
     if (name.equals("map")) {
@@ -76,8 +77,9 @@ abstract class IntermediateOperation implements Operation {
       myFn = fn;
     }
 
+    @NotNull
     @Override
-    public @NotNull ChainVariable getOutVar(@NotNull ChainVariable inVar) {
+    public ChainVariable getOutVar(@NotNull ChainVariable inVar) {
       return inVar;
     }
 
@@ -91,11 +93,12 @@ abstract class IntermediateOperation implements Operation {
       myFn.preprocessVariable(context, inVar, 0);
     }
 
+    @Nullable
     @Override
-    public @Nullable String generate(@NotNull ChainVariable inVar,
-                                     @NotNull ChainVariable outVar,
-                                     @NotNull String code,
-                                     @NotNull OptionalToIfContext context) {
+    public String generate(@NotNull ChainVariable inVar,
+                           @NotNull ChainVariable outVar,
+                           @NotNull String code,
+                           @NotNull OptionalToIfContext context) {
       myFn.transform(context, outVar.getName());
       return context.generateCondition(myFn.getExpression(), code);
     }
@@ -121,16 +124,18 @@ abstract class IntermediateOperation implements Operation {
       myFn.rename(oldName, newVar.getName(), context);
     }
 
+    @NotNull
     @Override
-    public @NotNull ChainVariable getOutVar(@NotNull ChainVariable inVar) {
+    public ChainVariable getOutVar(@NotNull ChainVariable inVar) {
       return new ChainVariable(myFn.getResultType());
     }
 
+    @Nullable
     @Override
-    public @Nullable String generate(@NotNull ChainVariable inVar,
-                                     @NotNull ChainVariable outVar,
-                                     @NotNull String code,
-                                     @NotNull OptionalToIfContext context) {
+    public String generate(@NotNull ChainVariable inVar,
+                           @NotNull ChainVariable outVar,
+                           @NotNull String code,
+                           @NotNull OptionalToIfContext context) {
       myFn.transform(context, inVar.getName());
       return outVar.getDeclaration(myFn.getText()) +
              context.generateNotNullCondition(outVar.getName(), code);
@@ -146,8 +151,9 @@ abstract class IntermediateOperation implements Operation {
       myRecords = records;
     }
 
+    @NotNull
     @Override
-    public @NotNull ChainVariable getOutVar(@NotNull ChainVariable inVar) {
+    public ChainVariable getOutVar(@NotNull ChainVariable inVar) {
       return new ChainVariable(inVar.getType());
     }
 
@@ -156,16 +162,18 @@ abstract class IntermediateOperation implements Operation {
       myRecords = ContainerUtil.map(myRecords, r -> replaceFnVariable(oldName, r, newVar, context));
     }
 
+    @NotNull
     @Override
-    public @NotNull StreamEx<OperationRecord> nestedOperations() {
+    public StreamEx<OperationRecord> nestedOperations() {
       return StreamEx.of(myRecords).flatMap(or -> StreamEx.of(or).append(or.myOperation.nestedOperations()));
     }
 
+    @Nullable
     @Override
-    public @Nullable String generate(@NotNull ChainVariable inVar,
-                                     @NotNull ChainVariable outVar,
-                                     @NotNull String code,
-                                     @NotNull OptionalToIfContext context) {
+    public String generate(@NotNull ChainVariable inVar,
+                           @NotNull ChainVariable outVar,
+                           @NotNull String code,
+                           @NotNull OptionalToIfContext context) {
       String orResult = myRecords.get(myRecords.size() - 1).myOutVar.getName();
       String orCode = OptionalToIfInspection.wrapCode(context, myRecords, outVar.getName() + "=" + orResult + ";");
       if (orCode == null) return null;
@@ -194,22 +202,25 @@ abstract class IntermediateOperation implements Operation {
       myFn = fn;
     }
 
+    @NotNull
     @Override
-    public @NotNull ChainVariable getOutVar(@NotNull ChainVariable inVar) {
+    public ChainVariable getOutVar(@NotNull ChainVariable inVar) {
       ChainVariable outVar = myRecords.get(myRecords.size() - 1).myOutVar;
       return myVarName.equals(outVar.getName()) ? inVar : outVar;
     }
 
+    @NotNull
     @Override
-    public @NotNull StreamEx<OperationRecord> nestedOperations() {
+    public StreamEx<OperationRecord> nestedOperations() {
       return StreamEx.of(myRecords).flatMap(or -> StreamEx.of(or).append(or.myOperation.nestedOperations()));
     }
 
+    @Nullable
     @Override
-    public @Nullable String generate(@NotNull ChainVariable inVar,
-                                     @NotNull ChainVariable outVar,
-                                     @NotNull String code,
-                                     @NotNull OptionalToIfContext context) {
+    public String generate(@NotNull ChainVariable inVar,
+                           @NotNull ChainVariable outVar,
+                           @NotNull String code,
+                           @NotNull OptionalToIfContext context) {
       String elseBranch = context.getElseBranch();
       List<OperationRecord> records = ContainerUtil.map(myRecords, r -> replaceFnVariable(myVarName, r, inVar, context));
       String wrapped = OptionalToIfInspection.wrapCode(context, records, code);

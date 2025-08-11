@@ -28,7 +28,6 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.ComponentManagerImpl.Companion.createAllServices2
 import com.intellij.util.getErrorsAsString
 import io.github.classgraph.*
-import java.awt.Component
 import java.lang.reflect.Constructor
 import kotlin.properties.Delegates.notNull
 
@@ -93,7 +92,7 @@ fun performAction() {
   actionManager.tryToExecute(
     actionManager.getAction(ACTION_ID),
     null,
-    object: Component() {},
+    null,
     ActionPlaces.UNKNOWN,
     true,
   )

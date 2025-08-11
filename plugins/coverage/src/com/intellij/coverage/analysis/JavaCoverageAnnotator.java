@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.analysis;
 
 import com.intellij.coverage.*;
@@ -39,7 +39,8 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     super(project);
   }
 
-  public final @Nullable CoverageClassStructure getStructure() {
+  @Nullable
+  public final CoverageClassStructure getStructure() {
     return myStructure;
   }
 
@@ -48,9 +49,10 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
   }
 
   @Override
-  public final @Nullable @Nls String getDirCoverageInformationString(@NotNull PsiDirectory psiDirectory,
-                                                                     @NotNull CoverageSuitesBundle currentSuite,
-                                                                     @NotNull CoverageDataManager coverageDataManager) {
+  @Nullable
+  public final @Nls String getDirCoverageInformationString(@NotNull PsiDirectory psiDirectory,
+                                                           @NotNull CoverageSuitesBundle currentSuite,
+                                                           @NotNull CoverageDataManager coverageDataManager) {
     final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
     if (psiPackage == null) return null;
 
@@ -60,9 +62,10 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
   }
 
   @Override
-  public final @Nullable @Nls String getDirCoverageInformationString(@NotNull Project project, @NotNull VirtualFile virtualFile,
-                                                                     @NotNull CoverageSuitesBundle currentSuite,
-                                                                     @NotNull CoverageDataManager coverageDataManager) {
+  @Nullable
+  public final @Nls String getDirCoverageInformationString(@NotNull Project project, @NotNull VirtualFile virtualFile,
+                                                           @NotNull CoverageSuitesBundle currentSuite,
+                                                           @NotNull CoverageDataManager coverageDataManager) {
     if (!currentSuite.isTrackTestFolders() && TestSourcesFilter.isTestSources(virtualFile, project)) {
       return null;
     }
@@ -70,9 +73,10 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
   }
 
   @Override
-  public final @Nullable String getFileCoverageInformationString(@NotNull PsiFile psiFile,
-                                                                 @NotNull CoverageSuitesBundle currentSuite,
-                                                                 @NotNull CoverageDataManager manager) {
+  @Nullable
+  public final String getFileCoverageInformationString(@NotNull PsiFile psiFile,
+                                                       @NotNull CoverageSuitesBundle currentSuite,
+                                                       @NotNull CoverageDataManager manager) {
     for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
       final PackageAnnotator.ClassCoverageInfo info = extension.getSummaryCoverageInfo(this, psiFile);
       if (info != null) {
@@ -127,7 +131,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
   }
 
   @Override
-  protected Runnable createRenewRequest(final @NotNull CoverageSuitesBundle suite, final @NotNull CoverageDataManager dataManager) {
+  protected Runnable createRenewRequest(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager) {
     final Project project = getProject();
 
     return () -> {
@@ -145,7 +149,8 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     };
   }
 
-  public static @Nullable @Nls String getCoverageInformationString(PackageAnnotator.SummaryCoverageInfo info, boolean subCoverageActive) {
+  @Nullable
+  public static @Nls String getCoverageInformationString(PackageAnnotator.SummaryCoverageInfo info, boolean subCoverageActive) {
     if (info == null) return null;
     if (info.totalClassCount == 0 || info.totalLineCount == 0) return null;
     if (subCoverageActive) {
@@ -161,9 +166,10 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
    * @param module optional parameter to restrict coverage to source directories of a certain module
    * @return human-readable coverage information
    */
-  public final @Nullable String getPackageCoverageInformationString(final PsiPackage psiPackage,
-                                                          final @Nullable Module module,
-                                                          final @NotNull CoverageDataManager coverageDataManager) {
+  @Nullable
+  public final String getPackageCoverageInformationString(final PsiPackage psiPackage,
+                                                    @Nullable final Module module,
+                                                    @NotNull final CoverageDataManager coverageDataManager) {
     return getPackageCoverageInformationString(psiPackage, module, coverageDataManager, false);
   }
 
@@ -174,10 +180,11 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
    * @param module optional parameter to restrict coverage to source directories of a certain module
    * @return human-readable coverage information
    */
-  public final @Nullable String getPackageCoverageInformationString(final PsiPackage psiPackage,
-                                                          final @Nullable Module module,
-                                                          final @NotNull CoverageDataManager coverageDataManager,
-                                                          boolean flatten) {
+  @Nullable
+  public final String getPackageCoverageInformationString(final PsiPackage psiPackage,
+                                                    @Nullable final Module module,
+                                                    @NotNull final CoverageDataManager coverageDataManager,
+                                                    boolean flatten) {
     if (psiPackage == null) return null;
     final boolean subCoverageActive = coverageDataManager.isSubCoverageActive();
     if (module != null) {
@@ -225,8 +232,8 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     return percentage + "% (" + covered + "/" + total + ")";
   }
 
-  public static PackageAnnotator.SummaryCoverageInfo merge(final @Nullable PackageAnnotator.SummaryCoverageInfo info,
-                                                           final @Nullable PackageAnnotator.SummaryCoverageInfo testInfo) {
+  public static PackageAnnotator.SummaryCoverageInfo merge(@Nullable final PackageAnnotator.SummaryCoverageInfo info,
+                                                           @Nullable final PackageAnnotator.SummaryCoverageInfo testInfo) {
     if (info == null) return testInfo;
     if (testInfo == null) return info;
     final PackageAnnotator.PackageCoverageInfo coverageInfo = new PackageAnnotator.PackageCoverageInfo();
@@ -245,12 +252,14 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
    * @param classFQName to obtain coverage information for
    * @return human-readable coverage information
    */
-  public final @Nullable @Nls String getClassCoverageInformationString(String classFQName, CoverageDataManager coverageDataManager) {
+  @Nullable
+  public final @Nls String getClassCoverageInformationString(String classFQName, CoverageDataManager coverageDataManager) {
     final PackageAnnotator.ClassCoverageInfo info = myClassCoverageInfos.get(classFQName);
     return getClassCoverageInformationString(info, coverageDataManager);
   }
 
-  public static @Nullable @Nls String getClassCoverageInformationString(PackageAnnotator.ClassCoverageInfo info, CoverageDataManager coverageDataManager) {
+  @Nullable
+  public static @Nls String getClassCoverageInformationString(PackageAnnotator.ClassCoverageInfo info, CoverageDataManager coverageDataManager) {
     if (info == null) return null;
     if (info.totalMethodCount == 0 || info.totalLineCount == 0) return null;
     if (coverageDataManager.isSubCoverageActive()){
@@ -260,7 +269,8 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
            CoverageBundle.message("coverage.view.text.lines.covered", (int)((double)(info.fullyCoveredLineCount + info.partiallyCoveredLineCount) / info.totalLineCount * 100));
   }
 
-  public final @Nullable PackageAnnotator.ClassCoverageInfo getClassCoverageInfo(@Nullable String classFQName) {
+  @Nullable
+  public final PackageAnnotator.ClassCoverageInfo getClassCoverageInfo(@Nullable String classFQName) {
     if (classFQName == null) return null;
     return myClassCoverageInfos.get(classFQName);
   }
@@ -283,7 +293,8 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     return ContainerUtil.and(bundle.getSuites(), suite -> suite instanceof JavaCoverageSuite javaSuite && javaSuite.isSkipUnloadedClassesAnalysis());
   }
 
-  public final @Nullable PackageAnnotator.SummaryCoverageInfo getExtensionCoverageInfo(@Nullable PsiNamedElement value) {
+  @Nullable
+  public final PackageAnnotator.SummaryCoverageInfo getExtensionCoverageInfo(@Nullable PsiNamedElement value) {
     if (value == null) return null;
     PackageAnnotator.SummaryCoverageInfo cachedInfo = myExtensionCoverageInfos.get(value);
     if (cachedInfo != null) {

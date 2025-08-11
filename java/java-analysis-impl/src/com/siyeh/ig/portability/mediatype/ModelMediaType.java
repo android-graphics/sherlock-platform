@@ -39,7 +39,6 @@ public enum ModelMediaType {
     this.contentType = contentType;
   }
 
-  @Override
   public String toString() {
     return contentType;
   }

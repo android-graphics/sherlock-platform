@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -7,8 +7,8 @@ import org.jetbrains.jps.model.ex.JpsElementBase;
 
 import java.util.Objects;
 
-public final class JavaSourceRootProperties extends JpsElementBase<JavaSourceRootProperties> {
-  private String myPackagePrefix;
+public class JavaSourceRootProperties extends JpsElementBase<JavaSourceRootProperties> {
+  private String myPackagePrefix = "";
   private boolean myForGeneratedSources;
 
   @ApiStatus.Internal
@@ -17,12 +17,14 @@ public final class JavaSourceRootProperties extends JpsElementBase<JavaSourceRoo
     myForGeneratedSources = forGeneratedSources;
   }
 
-  public @NotNull String getPackagePrefix() {
+  @NotNull
+  public String getPackagePrefix() {
     return myPackagePrefix;
   }
 
+  @NotNull
   @Override
-  public @NotNull JavaSourceRootProperties createCopy() {
+  public JavaSourceRootProperties createCopy() {
     return new JavaSourceRootProperties(myPackagePrefix, myForGeneratedSources);
   }
 

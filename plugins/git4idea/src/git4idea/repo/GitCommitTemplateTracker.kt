@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
@@ -23,8 +24,6 @@ import git4idea.commands.Git
 import git4idea.config.GitConfigUtil
 import git4idea.config.GitConfigUtil.COMMIT_TEMPLATE
 import git4idea.config.GitExecutableManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -33,15 +32,11 @@ import java.io.IOException
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
-import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<GitCommitTemplateTracker>()
 
 @Service(Service.Level.PROJECT)
-internal class GitCommitTemplateTracker(
-  private val project: Project,
-  coroutineScope: CoroutineScope,
-) : GitConfigListener, AsyncVfsEventsListener, Disposable {
+internal class GitCommitTemplateTracker(private val project: Project) : GitConfigListener, AsyncVfsEventsListener, Disposable {
   private val commitTemplates = mutableMapOf<GitRepository, GitCommitTemplate>()
   private val TEMPLATES_LOCK = ReentrantReadWriteLock()
 
@@ -49,8 +44,8 @@ internal class GitCommitTemplateTracker(
   val initPromise: Promise<Unit> get() = _initPromise
 
   init {
-    project.messageBus.connect(coroutineScope).subscribe(GitConfigListener.TOPIC, this)
-    AsyncVfsEventsPostProcessor.getInstance().addListener(this, coroutineScope)
+    project.messageBus.connect(this).subscribe(GitConfigListener.TOPIC, this)
+    AsyncVfsEventsPostProcessor.getInstance().addListener(this, this)
   }
 
   fun templatesCount(): Int {
@@ -85,12 +80,10 @@ internal class GitCommitTemplateTracker(
     trackCommitTemplate(repository)
   }
 
-  override suspend fun filesChanged(events: List<VFileEvent>) {
-    if (TEMPLATES_LOCK.read { commitTemplates.isEmpty() }) {
-      return
-    }
+  override fun filesChanged(events: List<VFileEvent>) {
+    if (TEMPLATES_LOCK.read { commitTemplates.isEmpty() }) return
 
-    processEvents(events)
+    BackgroundTaskUtil.runUnderDisposeAwareIndicator(this) { processEvents(events) }
   }
 
   @VisibleForTesting
@@ -106,15 +99,15 @@ internal class GitCommitTemplateTracker(
     }
   }
 
-  private suspend fun processEvents(events: List<VFileEvent>) {
+  private fun processEvents(events: List<VFileEvent>) {
     val allTemplates = TEMPLATES_LOCK.read { commitTemplates.toMap() }
     if (allTemplates.isEmpty()) return
 
     for (event in events) {
-      coroutineContext.ensureActive()
+      ProgressManager.checkCanceled()
 
       for ((repository, template) in allTemplates) {
-        coroutineContext.ensureActive()
+        ProgressManager.checkCanceled()
         val watchedTemplatePath = template.watchedRoot.rootPath
 
         var templateChanged = false
@@ -166,7 +159,7 @@ internal class GitCommitTemplateTracker(
 
   private fun loadTemplateContent(repository: GitRepository, commitTemplateFilePath: String): String? {
     try {
-      val fileContent = FileUtil.loadFile(File(commitTemplateFilePath), GitConfigUtil.getCommitEncodingCharset(project, repository.root))
+      val fileContent = FileUtil.loadFile(File(commitTemplateFilePath), GitConfigUtil.getCommitEncoding(project, repository.root))
       if (fileContent.isBlank()) {
         LOG.warn("Empty or blank commit template detected for repository $repository by path $commitTemplateFilePath")
       }

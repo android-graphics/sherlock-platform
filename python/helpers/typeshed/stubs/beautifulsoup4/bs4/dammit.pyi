@@ -1,7 +1,8 @@
 from _typeshed import Incomplete
 from collections.abc import Iterable, Iterator
 from logging import Logger
-from typing import Any, Literal
+from typing import Any
+from typing_extensions import Literal
 
 def chardet_dammit(s): ...
 

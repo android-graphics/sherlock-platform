@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.project.Project;
@@ -40,12 +40,12 @@ public class SvnMergeInfoRootPanelManual {
   private JTextArea myLocalArea;
   private JTextArea myMixedRevisions;
 
-  private final @NotNull Project myProject;
-  private final @NotNull NotNullFunction<? super WCInfoWithBranches, ? extends WCInfoWithBranches> myRefresher;
-  private final @NotNull Runnable myListener;
+  @NotNull private final Project myProject;
+  @NotNull private final NotNullFunction<? super WCInfoWithBranches, ? extends WCInfoWithBranches> myRefresher;
+  @NotNull private final Runnable myListener;
   private boolean myOnlyOneRoot;
-  private @NotNull WCInfoWithBranches myInfo;
-  private final @NotNull Map<Url, String> myBranchToLocal;
+  @NotNull private WCInfoWithBranches myInfo;
+  @NotNull private final Map<Url, String> myBranchToLocal;
   private WCInfoWithBranches.Branch mySelectedBranch;
 
   public SvnMergeInfoRootPanelManual(@NotNull Project project,
@@ -175,7 +175,8 @@ public class SvnMergeInfoRootPanelManual {
     myMixedRevisions.setVisible(value);
   }
 
-  private static @Nullable String getLocal(@NotNull Url url, @Nullable String localPath) {
+  @Nullable
+  private static String getLocal(@NotNull Url url, @Nullable String localPath) {
     String result = null;
     Set<String> paths = SvnBranchMapperManager.getInstance().get(url);
 
@@ -233,7 +234,8 @@ public class SvnMergeInfoRootPanelManual {
     myFixedSelectLocal = new FixedSizeButton(20);
   }
 
-  public @NotNull InfoHolder getInfo() {
+  @NotNull
+  public InfoHolder getInfo() {
     return new InfoHolder(mySelectedBranch, getLocalBranch(), myInclude.isSelected());
   }
 
@@ -247,8 +249,8 @@ public class SvnMergeInfoRootPanelManual {
 
   public static class InfoHolder {
 
-    private final @Nullable WCInfoWithBranches.Branch myBranch;
-    private final @Nullable String myLocal;
+    @Nullable private final WCInfoWithBranches.Branch myBranch;
+    @Nullable private final String myLocal;
     private final boolean myEnabled;
 
     public InfoHolder(@Nullable WCInfoWithBranches.Branch branch, @Nullable String local, boolean enabled) {
@@ -257,11 +259,13 @@ public class SvnMergeInfoRootPanelManual {
       myEnabled = enabled;
     }
 
-    public @Nullable WCInfoWithBranches.Branch getBranch() {
+    @Nullable
+    public WCInfoWithBranches.Branch getBranch() {
       return myBranch;
     }
 
-    public @Nullable String getLocal() {
+    @Nullable
+    public String getLocal() {
       return myLocal;
     }
 
@@ -270,15 +274,18 @@ public class SvnMergeInfoRootPanelManual {
     }
   }
 
-  public @NotNull WCInfoWithBranches getWcInfo() {
+  @NotNull
+  public WCInfoWithBranches getWcInfo() {
     return myInfo;
   }
 
-  public @Nullable WCInfoWithBranches.Branch getBranch() {
+  @Nullable
+  public WCInfoWithBranches.Branch getBranch() {
     return mySelectedBranch;
   }
 
-  public @Nullable String getLocalBranch() {
+  @Nullable
+  public String getLocalBranch() {
     return mySelectedBranch != null ? myBranchToLocal.get(mySelectedBranch.getUrl()) : null;
   }
 

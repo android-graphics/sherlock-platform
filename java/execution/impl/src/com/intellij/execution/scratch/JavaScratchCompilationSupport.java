@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.scratch;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
@@ -37,12 +37,14 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 final class JavaScratchCompilationSupport implements CompileTask {
-  public static @Nullable File getScratchOutputDirectory(Project project) {
+  @Nullable
+  public static File getScratchOutputDirectory(Project project) {
     final File root = CompilerManager.getInstance(project).getJavacCompilerWorkingDir();
     return root != null? new File(root, "scratches/out") : null;
   }
 
-  public static @Nullable File getScratchTempDirectory(Project project) {
+  @Nullable
+  public static File getScratchTempDirectory(Project project) {
     final File root = CompilerManager.getInstance(project).getJavacCompilerWorkingDir();
     return root != null? new File(root, "scratches/src") : null;
   }
@@ -60,7 +62,8 @@ final class JavaScratchCompilationSupport implements CompileTask {
       context.addMessage(CompilerMessageCategory.ERROR, ExecutionBundle.message("run.java.scratch.associated.file.not.specified"), null, -1, -1);
       return false;
     }
-    final @Nullable Module module = scratchConfig.getConfigurationModule().getModule();
+    @Nullable
+    final Module module = scratchConfig.getConfigurationModule().getModule();
     final Sdk targetSdk = module != null? ModuleRootManager.getInstance(module).getSdk() : ProjectRootManager.getInstance(project).getProjectSdk();
     if (targetSdk == null) {
       final String message = module != null?

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -343,7 +343,8 @@ class DfDoubleRangeType implements DfDoubleType {
     return formatFrom(from) + " && " + formatTo(to);
   }
 
-  private static @NotNull String formatFrom(double from) {
+  @NotNull
+  private static String formatFrom(double from) {
     double prev = nextDown(from);
     if (Double.toString(prev).length() < Double.toString(from).length()) {
       return "> " + prev;
@@ -351,7 +352,8 @@ class DfDoubleRangeType implements DfDoubleType {
     return ">= " + from;
   }
 
-  private static @NotNull String formatTo(double to) {
+  @NotNull
+  private static String formatTo(double to) {
     double next = nextUp(to);
     if (Double.toString(next).length() < Double.toString(to).length()) {
       return "< " + next;

@@ -1,10 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.uploader;
 
-import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
-import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
-import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo;
-import com.intellij.internal.statistic.eventLog.EventLogSendConfig;
+import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.config.EventLogExternalApplicationInfo;
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener;
@@ -16,8 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +30,7 @@ public final class EventLogUploader {
     }
     catch (Throwable e) {
       logger.warn("Failed uploading logs", e);
-      eventsLogger.logSendingLogsFinished(StatisticsResult.ResultCode.EXCEPTION_OCCURRED);
+      eventsLogger.logSendingLogsFinished("EXCEPTION_OCCURRED");
     }
   }
 
@@ -47,7 +43,7 @@ public final class EventLogUploader {
     eventsLogger.logSendingLogsStarted();
     if (args.length == 0) {
       logger.warn("No arguments were found");
-      eventsLogger.logSendingLogsFinished(StatisticsResult.ResultCode.NO_ARGUMENTS);
+      eventsLogger.logSendingLogsFinished("NO_ARGUMENTS");
       return;
     }
 
@@ -55,7 +51,7 @@ public final class EventLogUploader {
     EventLogApplicationInfo appInfo = newApplicationInfo(options, logger, eventsLogger);
     if (appInfo == null) {
       logger.warn("Failed creating application info from arguments");
-      eventsLogger.logSendingLogsFinished(StatisticsResult.ResultCode.NO_APPLICATION_CONFIG);
+      eventsLogger.logSendingLogsFinished("NO_APPLICATION_CONFIG");
       return;
     }
 
@@ -66,7 +62,7 @@ public final class EventLogUploader {
 
     if (!waitForIde(logger, options, 20)) {
       logger.warn("Cannot send logs because IDE didn't close during " + (20 * WAIT_FOR_IDE_MS) + "ms");
-      eventsLogger.logSendingLogsFinished(StatisticsResult.ResultCode.IDE_NOT_CLOSING);
+      eventsLogger.logSendingLogsFinished("IDE_NOT_CLOSING");
       return;
     }
 
@@ -125,13 +121,14 @@ public final class EventLogUploader {
     }
     catch (Exception e) {
       logger.warn("[" + recorderId + "] Failed sending files: " + e.getMessage());
-      eventsLogger.logSendingLogsFinished(recorderId, StatisticsResult.ResultCode.ERROR_ON_SEND);
+      eventsLogger.logSendingLogsFinished(recorderId, "ERROR_ON_SEND");
     }
   }
 
-  private static @Nullable EventLogApplicationInfo newApplicationInfo(Map<String, String> options,
-                                                                      DataCollectorDebugLogger logger,
-                                                                      DataCollectorSystemEventLogger eventLogger) {
+  @Nullable
+  private static EventLogApplicationInfo newApplicationInfo(Map<String, String> options,
+                                                            DataCollectorDebugLogger logger,
+                                                            DataCollectorSystemEventLogger eventLogger) {
     String productCode = options.get(EventLogUploaderOptions.PRODUCT_OPTION);
     String productVersion = options.get(EventLogUploaderOptions.PRODUCT_VERSION_OPTION);
     String url = options.get(EventLogUploaderOptions.URL_OPTION);

@@ -1,4 +1,3 @@
-// PRIORITY: HIGH
 package p
 
 object Container {

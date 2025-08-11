@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
@@ -25,17 +26,18 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.List;
 
+@HardwareAgentRequired
 public class DomPerformanceTest extends DomHardCoreTestCase {
   public void testVisitorPerformance() {
     Ref<MyElement> ref = new Ref<>();
 
-    Benchmark.newBenchmark("creating", () -> ApplicationManager.getApplication().runWriteAction(() -> {
+    PerformanceTestUtil.newPerformanceTest("creating", () -> ApplicationManager.getApplication().runWriteAction(() -> {
         MyElement element = createElement("<root xmlns=\"http://www.w3.org/1999/xhtml\"/>", MyElement.class);
         MyElement child = element.addChildElement();
         child.getAttr().setValue("239");
@@ -56,7 +58,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase {
 
     MyElement newElement = createElement(DomUtil.getFile(ref.get()).getText(), MyElement.class);
 
-    Benchmark.newBenchmark("visiting", () ->
+    PerformanceTestUtil.newPerformanceTest("visiting", () ->
       newElement.acceptChildren(new DomElementVisitor() {
         @Override
         public void visitDomElement(DomElement element) {
@@ -97,7 +99,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase {
     final XmlFile file = (XmlFile)getPsiManager().findFile(virtualFile);
     assertFalse(file.getNode().isParsed());
     assertTrue(StringUtil.isNotEmpty(file.getText()));
-    Benchmark.newBenchmark("DOM parsing", () -> assertNull(getDomManager().getFileElement(file))).start();
+    PerformanceTestUtil.newPerformanceTest("DOM parsing", () -> assertNull(getDomManager().getFileElement(file))).start();
   }
 
   public void testDontParseNamespacedDomFiles() throws Exception {

@@ -2,9 +2,7 @@
 package com.intellij.formatting.service
 
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 class PostQuickFixTaskServiceImpl : PostQuickFixTaskService {
 
   override fun runOrRegisterPostQuickFixTask(filesToSave: List<VirtualFile>, block: () -> Unit) {

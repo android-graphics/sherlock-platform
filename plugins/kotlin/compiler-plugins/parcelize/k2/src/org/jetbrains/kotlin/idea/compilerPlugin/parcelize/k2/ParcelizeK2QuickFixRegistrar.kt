@@ -101,7 +101,7 @@ private inline fun <reified DIAGNOSTIC : KaDiagnosticWithPsi<*>> createApplicato
     crossinline createQuickFixes: context(KaSession)(DIAGNOSTIC) -> List<IntentionAction>
 ) = KotlinQuickFixFactory.IntentionBased { diagnostic: DIAGNOSTIC ->
     if (diagnostic.factoryName == factory.name) {
-        createQuickFixes(useSiteSession, diagnostic)
+        createQuickFixes(analysisSession, diagnostic)
     } else {
         emptyList()
     }

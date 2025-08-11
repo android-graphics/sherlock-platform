@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.mantis;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -71,13 +71,15 @@ public class MantisRepository extends BaseRepositoryImpl {
     myAllProjectsAvailable = other.myAllProjectsAvailable;
   }
 
+  @NotNull
   @Override
-  public @NotNull BaseRepository clone() {
+  public BaseRepository clone() {
     return new MantisRepository(this);
   }
 
+  @Nullable
   @Override
-  public @Nullable String extractId(@NotNull String taskName) {
+  public String extractId(@NotNull String taskName) {
     Matcher matcher = ID_PATTERN.matcher(taskName);
     return matcher.find() ? matcher.group() : null;
   }
@@ -130,8 +132,9 @@ public class MantisRepository extends BaseRepositoryImpl {
     });
   }
 
+  @Nullable
   @Override
-  public @Nullable Task findTask(@NotNull String id) throws Exception {
+  public Task findTask(@NotNull String id) throws Exception {
     IssueData data = fetchIssueById(createSoap(), id);
     // sanity check
     if (data == null || data.getId() == null || data.getSummary() == null) {
@@ -140,8 +143,9 @@ public class MantisRepository extends BaseRepositoryImpl {
     return new MantisTask(data, this);
   }
 
+  @Nullable
   @Override
-  public @Nullable CancellableConnection createCancellableConnection() {
+  public CancellableConnection createCancellableConnection() {
     return new CancellableConnection() {
       @Override
       protected void doTest() throws Exception {
@@ -160,7 +164,8 @@ public class MantisRepository extends BaseRepositoryImpl {
     };
   }
 
-  public @NotNull List<MantisProject> getProjects() throws Exception {
+  @NotNull
+  public List<MantisProject> getProjects() throws Exception {
     ensureProjectsRefreshed();
     return myProjects == null ? Collections.emptyList() : myProjects;
   }
@@ -226,7 +231,8 @@ public class MantisRepository extends BaseRepositoryImpl {
     throw e;
   }
 
-  private @NotNull MantisConnectPortType createSoap() throws Exception {
+  @NotNull
+  private MantisConnectPortType createSoap() throws Exception {
     if (isUseProxy()) {
       for (Pair<String, String> pair : HttpConfigurable.getInstance().getJvmProperties(false, null)) {
         String key = pair.first, value = pair.second;
@@ -246,7 +252,8 @@ public class MantisRepository extends BaseRepositoryImpl {
     return new MantisConnectLocator().getMantisConnectPort(new URL(getUrl() + SOAP_API_LOCATION));
   }
 
-  private @Nullable IssueData fetchIssueById(@NotNull MantisConnectPortType soap, @NotNull String id) throws Exception {
+  @Nullable
+  private IssueData fetchIssueById(@NotNull MantisConnectPortType soap, @NotNull String id) throws Exception {
     try {
       return soap.mc_issue_get(getUsername(), getPassword(), BigInteger.valueOf(Integer.parseInt(id)));
     }
@@ -312,7 +319,8 @@ public class MantisRepository extends BaseRepositoryImpl {
     }
   }
 
-  public @Nullable MantisProject getCurrentProject() {
+  @Nullable
+  public MantisProject getCurrentProject() {
     return myCurrentProject;
   }
 
@@ -320,7 +328,8 @@ public class MantisRepository extends BaseRepositoryImpl {
     myCurrentProject = currentProject;
   }
 
-  public @Nullable MantisFilter getCurrentFilter() {
+  @Nullable
+  public MantisFilter getCurrentFilter() {
     return myCurrentFilter;
   }
 
@@ -330,7 +339,7 @@ public class MantisRepository extends BaseRepositoryImpl {
 
   @Override
   public boolean isConfigured() {
-    return super.isConfigured() && StringUtil.isNotEmpty(getUsername()) && StringUtil.isNotEmpty(getPassword());
+    return super.isConfigured() && StringUtil.isNotEmpty(myUsername) && StringUtil.isNotEmpty(myPassword);
   }
 
   @Override

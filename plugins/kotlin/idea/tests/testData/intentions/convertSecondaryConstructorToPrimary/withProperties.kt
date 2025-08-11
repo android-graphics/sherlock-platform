@@ -1,4 +1,3 @@
-// "Convert to primary constructor" "true"
 class WithProperties {
     val x: Int
     val y: Int
@@ -10,4 +9,3 @@ class WithProperties {
         this.z = z
     }
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertSecondaryConstructorToPrimaryInspection$createQuickFix$1

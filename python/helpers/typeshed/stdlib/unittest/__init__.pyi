@@ -1,17 +1,21 @@
 import sys
-from unittest.async_case import *
 
 from .case import (
     FunctionTestCase as FunctionTestCase,
     SkipTest as SkipTest,
     TestCase as TestCase,
-    addModuleCleanup as addModuleCleanup,
     expectedFailure as expectedFailure,
     skip as skip,
     skipIf as skipIf,
     skipUnless as skipUnless,
 )
-from .loader import TestLoader as TestLoader, defaultTestLoader as defaultTestLoader
+from .loader import (
+    TestLoader as TestLoader,
+    defaultTestLoader as defaultTestLoader,
+    findTestCases as findTestCases,
+    getTestCaseNames as getTestCaseNames,
+    makeSuite as makeSuite,
+)
 from .main import TestProgram as TestProgram, main as main
 from .result import TestResult as TestResult
 from .runner import TextTestResult as TextTestResult, TextTestRunner as TextTestRunner
@@ -23,11 +27,15 @@ from .signals import (
 )
 from .suite import BaseTestSuite as BaseTestSuite, TestSuite as TestSuite
 
+if sys.version_info >= (3, 8):
+    from unittest.async_case import *
+
+    from .case import addModuleCleanup as addModuleCleanup
+
 if sys.version_info >= (3, 11):
     from .case import doModuleCleanups as doModuleCleanups, enterModuleContext as enterModuleContext
 
 __all__ = [
-    "IsolatedAsyncioTestCase",
     "TestResult",
     "TestCase",
     "TestSuite",
@@ -46,13 +54,13 @@ __all__ = [
     "registerResult",
     "removeResult",
     "removeHandler",
-    "addModuleCleanup",
+    "getTestCaseNames",
+    "makeSuite",
+    "findTestCases",
 ]
 
-if sys.version_info < (3, 13):
-    from .loader import findTestCases as findTestCases, getTestCaseNames as getTestCaseNames, makeSuite as makeSuite
-
-    __all__ += ["getTestCaseNames", "makeSuite", "findTestCases"]
+if sys.version_info >= (3, 8):
+    __all__ += ["addModuleCleanup", "IsolatedAsyncioTestCase"]
 
 if sys.version_info >= (3, 11):
     __all__ += ["enterModuleContext", "doModuleCleanups"]

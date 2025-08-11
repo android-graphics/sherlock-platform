@@ -16,15 +16,18 @@
 package com.siyeh.ig.security;
 
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInspection.options.OptPane.checkbox;
-import static com.intellij.codeInspection.options.OptPane.pane;
+import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public final class RuntimeExecWithNonConstantStringInspection extends BaseInspection {
 
@@ -32,12 +35,14 @@ public final class RuntimeExecWithNonConstantStringInspection extends BaseInspec
   public boolean considerStaticFinalConstant = false;
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "CallToRuntimeExecWithNonConstantString";
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("runtime.exec.with.non.constant.string.problem.descriptor");
   }
 

@@ -21,7 +21,6 @@ import com.intellij.navigation.PsiElementNavigationItem
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -37,13 +36,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.NavigationRequests
-import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.GlobalSearchScope
@@ -325,11 +322,8 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
       fetchRunnable.run()
     }
     else {
-      // IJPL-176529
-      if (ModalityState.defaultModalityState() == ModalityState.nonModal()) {
-        @Suppress("UsagesOfObsoleteApi", "DEPRECATION")
-        ProgressIndicatorUtils.yieldToPendingWriteActions()
-      }
+      @Suppress("UsagesOfObsoleteApi", "DEPRECATION")
+      ProgressIndicatorUtils.yieldToPendingWriteActions()
       @Suppress("UsagesOfObsoleteApi", "DEPRECATION")
       ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(fetchRunnable, progressIndicator)
     }
@@ -384,18 +378,15 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
       return true
     }
 
+    if (!selected.isValid) {
+      LOG.warn("Cannot navigate to invalid PsiElement")
+      return true
+    }
+
     project.service<SearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch(ClientId.coroutineContext()) {
       val command = readAction {
-        if (!selected.isValid) {
-          LOG.warn("Cannot navigate to invalid PsiElement")
-          return@readAction null
-        }
-
         val psiElement = preparePsi(selected, searchText)
-        val file =
-          if (selected is PsiFile) selected.virtualFile
-          else PsiUtilCore.getVirtualFile(psiElement)
-
+        val file = PsiUtilCore.getVirtualFile(psiElement)
         val extendedNavigatable = if (file == null) {
           null
         }
@@ -417,16 +408,7 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
             .preserveCaret(true)
           if (extendedNavigatable == null) {
             if (file == null) {
-              val navigatable = psiElement as? Navigatable
-              if (navigatable != null) {
-                // Navigation items from rd protocol often lack .containingFile or other PSI extensions, and are only expected to be
-                // navigated through the Navigatable API.
-                // This fallback is for items like that.
-                val navRequest = RawNavigationRequest(navigatable, true)
-                project.serviceAsync<NavigationService>().navigate(navRequest, navigationOptions)
-              } else {
-                LOG.warn("Cannot navigate to invalid PsiElement (psiElement=$psiElement, selected=$selected)")
-              }
+              LOG.warn("Cannot navigate to invalid PsiElement (psiElement=$psiElement, selected=$selected)")
             }
             else {
               createSourceNavigationRequest(element = psiElement, file = file, searchText = searchText)?.let {
@@ -441,7 +423,7 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
         }
       }
 
-      command?.invoke()
+      command()
     }
 
     return true

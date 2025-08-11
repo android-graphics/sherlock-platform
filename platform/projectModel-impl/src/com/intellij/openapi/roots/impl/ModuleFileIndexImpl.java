@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ReadAction;
@@ -29,7 +29,8 @@ import java.util.*;
  */
 @ApiStatus.Internal
 public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileIndex {
-  private final @NotNull Module myModule;
+  @NotNull
+  private final Module myModule;
 
   public ModuleFileIndexImpl(@NotNull Module module) {
     super(module.getProject());
@@ -46,14 +47,9 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
       Collection<VirtualFile> recursiveRoots = new HashSet<>();
       Collection<VirtualFile> nonRecursiveRoots = new SmartList<>();
       index.visitFileSets(new WorkspaceFileSetVisitor() {
-        private int visitedCount = 0;
-
         @Override
         public void visitIncludedRoot(@NotNull WorkspaceFileSet fileSet) {
-          visitedCount++;
-          if (visitedCount % 100 == 0) {
-            ProgressManager.checkCanceled();
-          }
+          ProgressManager.checkCanceled();
           if (!(fileSet instanceof WorkspaceFileSetWithCustomData<?>) || !isInContent((WorkspaceFileSetWithCustomData<?>)fileSet)) {
             return;
           }
@@ -107,7 +103,8 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   }
 
   @Override
-  public @NotNull List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir) {
+  @NotNull
+  public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir) {
     return findAllOrderEntriesWithOwnerModule(myModule, myDirectoryIndex.getOrderEntries(fileOrDir));
   }
 
@@ -133,7 +130,8 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     return myModule.isDisposed();
   }
 
-  public static @Nullable OrderEntry findOrderEntryWithOwnerModule(@NotNull Module ownerModule, @NotNull List<? extends OrderEntry> orderEntries) {
+  @Nullable
+  public static OrderEntry findOrderEntryWithOwnerModule(@NotNull Module ownerModule, @NotNull List<? extends OrderEntry> orderEntries) {
     if (orderEntries.size() < 10) {
       for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry.getOwnerModule() == ownerModule) {
@@ -146,7 +144,8 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     return index < 0 ? null : orderEntries.get(index);
   }
 
-  private static @NotNull List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull Module ownerModule, @NotNull List<? extends OrderEntry> entries) {
+  @NotNull
+  private static List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull Module ownerModule, @NotNull List<? extends OrderEntry> entries) {
     if (entries.isEmpty()) return Collections.emptyList();
 
     if (entries.size() == 1) {
@@ -182,7 +181,13 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     }
 
     @Override
-    public @NotNull String getPresentableName() {
+    public String @NotNull [] getUrls(@NotNull OrderRootType rootType) {
+      throw new IncorrectOperationException();
+    }
+
+    @NotNull
+    @Override
+    public String getPresentableName() {
       throw new IncorrectOperationException();
     }
 
@@ -191,8 +196,9 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
       throw new IncorrectOperationException();
     }
 
+    @NotNull
     @Override
-    public @NotNull Module getOwnerModule() {
+    public Module getOwnerModule() {
       return myOwnerModule;
     }
 

@@ -1,7 +1,0 @@
-fun main() {
-    mutableMapOf<Int, Int>().apply {
-        this[5] = 5
-    }
-}
-
-// IGNORE_K1

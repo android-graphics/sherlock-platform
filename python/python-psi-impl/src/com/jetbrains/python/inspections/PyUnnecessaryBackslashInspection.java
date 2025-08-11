@@ -36,10 +36,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class PyUnnecessaryBackslashInspection extends PyInspection {
 
+  @NotNull
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                                 boolean isOnTheFly,
-                                                 @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                        boolean isOnTheFly,
+                                        @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -106,7 +107,7 @@ public final class PyUnnecessaryBackslashInspection extends PyInspection {
       }
     }
 
-    private void findProblem(final @Nullable PsiElement expression) {
+    private void findProblem(@Nullable final PsiElement expression) {
       final PsiWhiteSpace[] children = PsiTreeUtil.getChildrenOfType(expression, PsiWhiteSpace.class);
       if (children != null) {
         for (PsiWhiteSpace ws : children) {

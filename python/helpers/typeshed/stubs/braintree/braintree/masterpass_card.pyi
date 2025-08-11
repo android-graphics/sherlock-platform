@@ -1,10 +1,11 @@
-from braintree.address import Address
-from braintree.resource import Resource
-from braintree.subscription import Subscription
+from typing import Any
+
+from braintree.address import Address as Address
+from braintree.resource import Resource as Resource
 
 class MasterpassCard(Resource):
-    billing_address: Address | None
-    subscriptions: list[Subscription]
+    billing_address: Any
+    subscriptions: Any
     def __init__(self, gateway, attributes) -> None: ...
     @property
     def expiration_date(self): ...

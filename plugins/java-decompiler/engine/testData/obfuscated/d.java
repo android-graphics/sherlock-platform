@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -24,8 +25,10 @@ public class d {
 
    public static void b() {
       boolean var2 = b;
+      Iterator var0 = a().iterator();
 
-      for(a var1 : a()) {
+      while(var0.hasNext()) {
+         a var1 = (a)var0.next();
          var1.i();
          if (var2) {
             break;

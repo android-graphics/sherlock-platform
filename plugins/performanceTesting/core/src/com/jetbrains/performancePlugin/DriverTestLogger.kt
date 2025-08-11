@@ -14,10 +14,5 @@ internal class DriverTestLogger {
     fun warn(text: String) {
       LOG.warn(text)
     }
-
-    @JvmStatic
-    fun warn(t: Throwable) {
-      LOG.warn(t)
-    }
   }
 }

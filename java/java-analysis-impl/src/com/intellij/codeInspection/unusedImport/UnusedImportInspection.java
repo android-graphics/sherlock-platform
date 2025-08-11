@@ -27,7 +27,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public final class UnusedImportInspection extends GlobalSimpleInspectionTool {
-  public static final @NonNls String SHORT_NAME = "UNUSED_IMPORT";
+  @NonNls
+  public static final String SHORT_NAME = "UNUSED_IMPORT";
 
   @Override
   public void checkFile(@NotNull PsiFile file,
@@ -58,8 +59,9 @@ public final class UnusedImportInspection extends GlobalSimpleInspectionTool {
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull String getShortName() {
+  public String getShortName() {
     return SHORT_NAME;
   }
 
@@ -68,7 +70,8 @@ public final class UnusedImportInspection extends GlobalSimpleInspectionTool {
     return false;
   }
 
-  public static @NotNull @Nls String getDisplayNameText() {
+  @NotNull
+  public static @Nls String getDisplayNameText() {
     return JavaAnalysisBundle.message("unused.import.display.name");
   }
 }

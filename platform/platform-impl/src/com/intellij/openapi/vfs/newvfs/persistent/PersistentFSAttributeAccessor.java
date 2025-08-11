@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
@@ -19,29 +19,29 @@ public final class PersistentFSAttributeAccessor {
   private final @NotNull PersistentFSConnection connection;
   private final @NotNull VFSAttributesStorage attributesStorage;
 
-  PersistentFSAttributeAccessor(@NotNull PersistentFSConnection connection) {
+  PersistentFSAttributeAccessor(final @NotNull PersistentFSConnection connection) {
     this.connection = connection;
-    attributesStorage = connection.attributes();
+    attributesStorage = connection.getAttributes();
   }
 
-  public boolean hasAttributePage(int fileId,
-                                  @NotNull FileAttribute attribute) throws IOException {
+  public boolean hasAttributePage(final int fileId,
+                                  final @NotNull FileAttribute attribute) throws IOException {
     connection.ensureFileIdIsValid(fileId);
     return attributesStorage.hasAttributePage(connection, fileId, attribute);
   }
 
-  public @Nullable AttributeInputStream readAttribute(int fileId,
-                                                      @NotNull FileAttribute attribute) throws IOException {
-    AttributeInputStream attributeStream = attributesStorage.readAttribute(connection, fileId, attribute);
+  public @Nullable AttributeInputStream readAttribute(final int fileId,
+                                                      final @NotNull FileAttribute attribute) throws IOException {
+    final AttributeInputStream attributeStream = attributesStorage.readAttribute(connection, fileId, attribute);
     return validateAttributeVersion(attribute, attributeStream);
   }
 
   @ApiStatus.Internal
-  public static @Nullable AttributeInputStream validateAttributeVersion(@NotNull FileAttribute attribute,
-                                                                        AttributeInputStream attributeStream) {
+  public static @Nullable AttributeInputStream validateAttributeVersion(final @NotNull FileAttribute attribute,
+                                                                        final AttributeInputStream attributeStream) {
     if (attributeStream != null && attribute.isVersioned()) {
       try {
-        int actualVersion = DataInputOutputUtil.readINT(attributeStream);
+        final int actualVersion = DataInputOutputUtil.readINT(attributeStream);
         if (actualVersion != attribute.getVersion()) {
           return null;
         }
@@ -66,9 +66,9 @@ public final class PersistentFSAttributeAccessor {
    *
    * @return null if an appropriate attribute record does not exist
    */
-  <R> @Nullable R readAttributeRaw(int fileId,
-                                   @NotNull FileAttribute attribute,
-                                   ByteBufferReader<R> reader) throws IOException {
+  <R> @Nullable R readAttributeRaw(final int fileId,
+                                   final @NotNull FileAttribute attribute,
+                                   final ByteBufferReader<R> reader) throws IOException {
     if (!(attributesStorage instanceof AttributesStorageOverBlobStorage newAttributesStorage)) {
       throw new UnsupportedOperationException("Raw attribute access is not implemented for " + attributesStorage.getClass().getName());
     }
@@ -77,7 +77,7 @@ public final class PersistentFSAttributeAccessor {
 
     return newAttributesStorage.readAttributeRaw(connection, fileId, attribute, buffer -> {
       if (attribute.isVersioned()) {
-        int actualVersion = DataInputOutputUtil.readINT(buffer);
+        final int actualVersion = DataInputOutputUtil.readINT(buffer);
         if (actualVersion != attribute.getVersion()) {
           return null;
         }
@@ -86,15 +86,9 @@ public final class PersistentFSAttributeAccessor {
     });
   }
 
-  //TODO RC: it seems there is no real use for 'raw' writes:
-  //         1. most frequently-updated small-size attributes are moved to FastFileAttributes impl
-  //         2. remaining attributes are not fixed-size, so 'raw' write still needs to allocate temporary buffer and copy from it,
-  //            which reduces the performance benefits of 'raw' access. And without performance benefits, OutputStream is way more
-  //            convenient/familiar API to use, than ByteBufferWriter.
-  //
-  public void writeAttributeRaw(int fileId,
-                                @NotNull FileAttribute attribute,
-                                @NotNull ByteBufferWriter writer) {
+  public void writeAttributeRaw(final int fileId,
+                                final @NotNull FileAttribute attribute,
+                                final ByteBufferWriter writer) {
     if (!(attributesStorage instanceof AttributesStorageOverBlobStorage newAttributesStorage)) {
       throw new UnsupportedOperationException("Raw attribute access is not implemented for " + attributesStorage.getClass().getName());
     }
@@ -113,10 +107,10 @@ public final class PersistentFSAttributeAccessor {
   /**
    * Opens given attribute of given file for writing
    */
-  public @NotNull AttributeOutputStream writeAttribute(int fileId,
-                                                       @NotNull FileAttribute attribute) {
+  public @NotNull AttributeOutputStream writeAttribute(final int fileId,
+                                                       final @NotNull FileAttribute attribute) {
     connection.ensureFileIdIsValid(fileId);
-    AttributeOutputStream attributeStream = attributesStorage.writeAttribute(connection, fileId, attribute);
+    final AttributeOutputStream attributeStream = attributesStorage.writeAttribute(connection, fileId, attribute);
     if (attribute.isVersioned()) {
       try {
         DataInputOutputUtil.writeINT(attributeStream, attribute.getVersion());
@@ -129,7 +123,7 @@ public final class PersistentFSAttributeAccessor {
     return attributeStream;
   }
 
-  public void deleteAttributes(int fileId) throws IOException {
+  public void deleteAttributes(final int fileId) throws IOException {
     connection.ensureFileIdIsValid(fileId);
     attributesStorage.deleteAttributes(connection, fileId);
   }

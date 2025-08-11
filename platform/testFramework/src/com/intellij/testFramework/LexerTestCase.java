@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.lang.TokenWrapper;
@@ -45,11 +45,13 @@ public abstract class LexerTestCase extends UsefulTestCase {
     return printTokens(text, start, lexer);
   }
 
-  protected @NotNull String getPathToTestDataFile(@NotNull String extension) {
+  @NotNull
+  protected String getPathToTestDataFile(@NotNull String extension) {
     return IdeaTestExecutionPolicy.getHomePathWithPolicy() + "/" + getDirPath() + "/" + getTestName(true) + extension;
   }
 
-  protected @NotNull String getExpectedFileExtension() {
+  @NotNull
+  protected String getExpectedFileExtension() {
     return ".txt";
   }
 
@@ -101,10 +103,11 @@ public abstract class LexerTestCase extends UsefulTestCase {
     }
   }
 
-  private static @NotNull List<Trinity<IElementType, Integer, Integer>> tokenize(@NotNull String text,
-                                                                                 int start,
-                                                                                 int state,
-                                                                                 @NotNull Lexer lexer) {
+  @NotNull
+  private static List<Trinity<IElementType, Integer, Integer>> tokenize(@NotNull String text,
+                                                                        int start,
+                                                                        int state,
+                                                                        @NotNull Lexer lexer) {
     List<Trinity<IElementType, Integer, Integer>> allTokens = new ArrayList<>();
     try {
       lexer.start(text, start, text.length(), state);
@@ -131,7 +134,8 @@ public abstract class LexerTestCase extends UsefulTestCase {
     return result.toString();
   }
 
-  public static @NotNull String printTokens(@NotNull HighlighterIterator iterator) {
+  @NotNull
+  public static String printTokens(@NotNull HighlighterIterator iterator) {
     CharSequence text = iterator.getDocument().getCharsSequence();
     StringBuilder result = new StringBuilder();
     IElementType tokenType;
@@ -151,7 +155,8 @@ public abstract class LexerTestCase extends UsefulTestCase {
     doTest(loadTestDataFile("." + fileExt));
   }
 
-  protected @NotNull String loadTestDataFile(String fileExt) {
+  @NotNull
+  protected String loadTestDataFile(String fileExt) {
     String fileName = getPathToTestDataFile(fileExt);
     String text = "";
     try {
@@ -168,9 +173,10 @@ public abstract class LexerTestCase extends UsefulTestCase {
     return true;
   }
 
-  private static @NotNull String getTokenText(IElementType tokenType, CharSequence sequence, int start, int end) {
+  @NotNull
+  private static String getTokenText(IElementType tokenType, CharSequence sequence, int start, int end) {
     return tokenType instanceof TokenWrapper
-           ? ((TokenWrapper)tokenType).getText()
+           ? ((TokenWrapper)tokenType).getValue()
            : StringUtil.replace(sequence.subSequence(start, end).toString(), "\n", "\\n");
   }
 

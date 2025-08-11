@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableBase;
@@ -33,8 +32,9 @@ public abstract class FrameworkBasedOptionsStep<T extends FrameworkSupportProvid
     LibrariesContainer container = LibrariesContainerFactory.createContainer(myContext.getProject());
     myBuilder = builder;
     myFrameworkSupportModel = new FrameworkSupportModelBase(context.getProject(), myBuilder, container) {
+      @NotNull
       @Override
-      public @NotNull String getBaseDirectoryForLibrariesPath() {
+      public String getBaseDirectoryForLibrariesPath() {
         return StringUtil.notNullize(builder.getContentEntryPath());
       }
     };

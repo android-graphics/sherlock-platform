@@ -23,8 +23,9 @@ final class PyClassGroupingRuleProvider implements FileStructureGroupRuleProvide
   }
 
   private static class PyClassGroupingRule extends SingleParentUsageGroupingRule {
+    @Nullable
     @Override
-    protected @Nullable UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+    protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
       if (!(usage instanceof PsiElementUsage)) return null;
       final PsiElement psiElement = ((PsiElementUsage)usage).getElement();
       final PyClass pyClass = PsiTreeUtil.getParentOfType(psiElement, PyClass.class);

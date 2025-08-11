@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.pivotal;
 
 import com.intellij.openapi.project.Project;
@@ -18,18 +17,21 @@ import java.util.EnumSet;
  */
 public class PivotalTrackerRepositoryType extends BaseRepositoryType<PivotalTrackerRepository> {
 
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return "PivotalTracker";
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getIcon() {
+  public Icon getIcon() {
     return TasksCoreIcons.Pivotal;
   }
 
+  @NotNull
   @Override
-  public @NotNull TaskRepository createRepository() {
+  public TaskRepository createRepository() {
     return new PivotalTrackerRepository(this);
   }
 
@@ -43,10 +45,11 @@ public class PivotalTrackerRepositoryType extends BaseRepositoryType<PivotalTrac
     return EnumSet.of(TaskState.SUBMITTED, TaskState.OPEN, TaskState.RESOLVED, TaskState.OTHER, TaskState.IN_PROGRESS);
   }
 
+  @NotNull
   @Override
-  public @NotNull TaskRepositoryEditor createEditor(PivotalTrackerRepository repository,
-                                                    Project project,
-                                                    Consumer<? super PivotalTrackerRepository> changeListener) {
+  public TaskRepositoryEditor createEditor(PivotalTrackerRepository repository,
+                                           Project project,
+                                           Consumer<? super PivotalTrackerRepository> changeListener) {
     return new PivotalTrackerRepositoryEditor(project, repository, changeListener);
   }
 }

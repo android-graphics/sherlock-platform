@@ -58,11 +58,13 @@ public class PatchedJar extends Jar {
   private Resource[][] grabManifests(ResourceCollection[] rcs) {
       Resource[][] manifests = new Resource[rcs.length][];
       for (int i = 0; i < rcs.length; i++) {
-          Resource[][] resources;
+          Resource[][] resources = null;
           if (rcs[i] instanceof FileSet) {
               resources = grabResources(new FileSet[] {(FileSet) rcs[i]});
           } else {
-              resources = grabNonFileSetResources(new ResourceCollection[] {rcs[i]});
+              resources = grabNonFileSetResources(new ResourceCollection[] {
+                      rcs[i]
+                  });
           }
           for (int j = 0; j < resources[0].length; j++) {
               String name = resources[0][j].getName().replace('\\', '/');

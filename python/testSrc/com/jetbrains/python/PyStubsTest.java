@@ -1,15 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.google.common.collect.ImmutableRangeSet;
-import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Version;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -133,37 +128,6 @@ public class PyStubsTest extends PyTestCase {
         assertNotParsed(file);
       }
     );
-  }
-
-  // PY-34617
-  public void testStubStructureWithVersionChecks() {
-    final PsiFileImpl file = (PsiFileImpl)getTestFile();
-    element(PyFileStub.class)
-      .withChildren(
-        element(PyImportStatementStub.class),
-        element(PyFunctionStub.class, versionRange("3.0", "3.12")),
-        element(PyTypeAliasStatementStub.class, versionLessThan("2.2")),
-        element(PyTargetExpressionStub.class, versionRange("2.2", "2.5")),
-        element(PyClassStub.class, versionRange("2.5", "3.0"))
-          .withChildren(
-            element(PyClassStub.class, versionRange("2.5", "3.0"))
-              .withChildren(
-                element(PyFunctionStub.class, ImmutableRangeSet.of()),
-                element(PyTargetExpressionStub.class, versionRange("2.5", "3.0"))
-              ),
-            element(PyTargetExpressionStub.class, ImmutableRangeSet.of())
-          ),
-        element(PyTargetExpressionStub.class,
-                ImmutableRangeSet.of(Range.greaterThan(Version.parseVersion("2.1")))
-                  .intersection(ImmutableRangeSet.unionOf(
-                    List.of(Range.atMost(Version.parseVersion("2.2")), Range.greaterThan(Version.parseVersion("3.0")))))),
-        element(PyImportStatementStub.class, versionAtMost("2.1")),
-        element(PyImportStatementStub.class, versionAtMost("2.1")),
-        element(PyFromImportStatementStub.class, versionAtMost("2.1")),
-        element(PyFromImportStatementStub.class, versionAtMost("2.1")),
-        element(PyFromImportStatementStub.class, versionAtMost("2.1"))
-      )
-      .test(file.getStub());
   }
 
   public void testLoadingDeeperTreeRemainsKnownPsiElement() {
@@ -318,12 +282,10 @@ public class PyStubsTest extends PyTestCase {
   }
 
   public void testImportInExcept() {
-    runWithLanguageLevel(LanguageLevel.PYTHON26, () -> {
-      final PyFileImpl file = (PyFileImpl)getTestFile();
-      final PsiElement element = file.getElementNamed("tzinfo");
-      assertTrue(element != null ? element.toString() : "null", element instanceof PyClass);
-      assertNotParsed(file);
-    });
+    final PyFileImpl file = (PyFileImpl) getTestFile();
+    final PsiElement element = file.getElementNamed("tzinfo");
+    assertTrue(element != null ? element.toString() : "null", element instanceof PyClass);
+    assertNotParsed(file);
   }
 
 
@@ -401,9 +363,7 @@ public class PyStubsTest extends PyTestCase {
       //fooPyFile.unloadContent();
       DumbModeTestUtils.runInDumbModeSynchronously(project, () -> {
         assertEquals(1, ((PyFile)fooPyFile).getTopLevelClasses().size());
-        if (Registry.is("ide.dumb.mode.check.awareness")) {
-          assertFalse(fooPyFile.isContentsLoaded());
-        }
+        assertFalse(fooPyFile.isContentsLoaded());
       });
       final Collection<PyClass> committedClasses = PyClassNameIndex.find("Foo123", project, GlobalSearchScope.allScope(project));
       assertEquals(1, committedClasses.size());
@@ -859,14 +819,6 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file);
   }
 
-  // PY-75291
-  public void testTypeAliasNameIndex() {
-    getTestFile();
-    GlobalSearchScope scope = GlobalSearchScope.allScope(myFixture.getProject());
-    assertEquals(1, PyTypeAliasNameIndex.find("PublicType", myFixture.getProject(), scope).size());
-    assertEquals(0, PyTypeAliasNameIndex.find("_PrivateType", myFixture.getProject(), scope).size());
-  }
-
   // PY-18866
   public void testUnresolvedTypingSymbol() {
     final PyFile file = getTestFile();
@@ -992,7 +944,7 @@ public class PyStubsTest extends PyTestCase {
 
     assertTrue(file.findTopLevelClass("Foo1").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
     assertFalse(file.findTopLevelClass("Foo2").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
-    assertNull(file.findTopLevelClass("Foo3").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
+    assertFalse(file.findTopLevelClass("Foo3").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
 
     assertNotParsed(file);
   }
@@ -1002,7 +954,7 @@ public class PyStubsTest extends PyTestCase {
     final PyFile file = getTestFile();
     final PyClass cls = file.findTopLevelClass("Foo");
 
-    assertNull(cls.findClassAttribute("bar1", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
+    assertFalse(cls.findClassAttribute("bar1", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
     assertTrue(cls.findClassAttribute("bar2", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
     assertFalse(cls.findClassAttribute("bar3", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
 
@@ -1091,6 +1043,16 @@ public class PyStubsTest extends PyTestCase {
     doTestTypingTypedDictArguments();
   }
 
+  // PY-36008
+  public void testTypedDictNameKeyword() {
+    doTestTypingTypedDictArguments();
+  }
+
+  // PY-36008
+  public void testTypedDictFieldsKeyword() {
+    doTestTypingTypedDictArguments();
+  }
+
   // PY-41305
   public void testDecoratorQualifiedNames() {
     final PyFile file = getTestFile();
@@ -1112,7 +1074,7 @@ public class PyStubsTest extends PyTestCase {
 
     assertTrue(file.findTopLevelClass("Foo1").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
     assertFalse(file.findTopLevelClass("Foo2").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
-    assertNull(file.findTopLevelClass("Foo3").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
+    assertFalse(file.findTopLevelClass("Foo3").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
 
     assertNotParsed(file);
   }
@@ -1122,7 +1084,7 @@ public class PyStubsTest extends PyTestCase {
     final PyFile file = getTestFile();
     final PyClass cls = file.findTopLevelClass("Foo");
 
-    assertNull(cls.findClassAttribute("bar1", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
+    assertFalse(cls.findClassAttribute("bar1", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
     assertTrue(cls.findClassAttribute("bar2", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
     assertFalse(cls.findClassAttribute("bar3", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
 
@@ -1160,81 +1122,7 @@ public class PyStubsTest extends PyTestCase {
     assertNotNull(typeAliasStatement);
     doTestTypeParameterStub(typeAliasStatement, file);
   }
-  
-  // PY-54560
-  public void testDataclassTransformDecoratorStub() {
-    PyFile file = getTestFile();
-    PyFunction decoratedFunction = file.findTopLevelFunction("func");
-    assertNotNull(decoratedFunction);
-    PyDecorator decorator = assertOneElement(decoratedFunction.getDecoratorList().getDecorators());
-    PyDataclassTransformDecoratorStub customStub = decorator.getStub().getCustomStub(PyDataclassTransformDecoratorStub.class);
-    assertNotNull(customStub);
-    assertFalse(customStub.getEqDefault());
-    assertTrue(customStub.getOrderDefault());
-    assertFalse(customStub.getKwOnlyDefault());
-    assertFalse(customStub.getFrozenDefault());
-    assertEquals(
-      List.of(
-        QualifiedName.fromDottedString("field1"),
-        QualifiedName.fromDottedString("mod2.field2"),
-        QualifiedName.fromDottedString("field3")
-      ),
-      customStub.getFieldSpecifiers());
-    assertNotParsed(file);
-  }
 
-  // PY-54560
-  public void testDataclassFieldSpecifierStub() {
-    PyFile file = getTestFile();
-    @Nullable PyClass dataclass = file.findTopLevelClass("Customer");
-    assertNotNull(dataclass);
-    @Nullable PyTargetExpression attribute = dataclass.findClassAttribute("attr", false, TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
-    assertNotNull(attribute);
-    PyDataclassFieldStub dataclassFieldStub = attribute.getStub().getCustomStub(PyDataclassFieldStub.class);
-    assertNotNull(dataclassFieldStub);
-    assertFalse(dataclassFieldStub.hasDefault());
-    assertTrue(dataclassFieldStub.hasDefaultFactory());
-    assertFalse(dataclassFieldStub.initValue());
-    assertFalse(dataclassFieldStub.kwOnly());
-    assertEquals(dataclassFieldStub.getAlias(), "alias");
-    assertNotParsed(file);
-  }
-
-  // PY-54560
-  public void testDataclassStubForClassDecoratedWithDataclassTransformFactoryFunction() {
-    PyFile file = getTestFile();
-    PyClass modelClass = file.findTopLevelClass("CustomerModel");
-    assertNotNull(modelClass);
-    PyDataclassStub customStub = modelClass.getStub().getCustomStub(PyDataclassStub.class);
-    assertNotNull(customStub);
-    assertEquals("DATACLASS_TRANSFORM", customStub.getType());
-    assertNull(customStub.initValue());
-    assertNull(customStub.reprValue());
-    assertNull(customStub.eqValue());
-    assertNull(customStub.orderValue());
-    assertNull(customStub.unsafeHashValue());
-    assertTrue(customStub.frozenValue());
-    assertFalse(customStub.kwOnly());
-    assertNotParsed(file);
-  }
-
-  // PY-54560
-  public void testDataclassStubForClassExtendingDataclassTransformFactoryBase() {
-    PyFile file = getTestFile();
-    PyClass modelClass = file.findTopLevelClass("CustomerModel");
-    assertNotNull(modelClass);
-    PyDataclassStub customStub = modelClass.getStub().getCustomStub(PyDataclassStub.class);
-    assertNotNull(customStub);
-    assertEquals("DATACLASS_TRANSFORM", customStub.getType());
-    assertFalse(customStub.initValue());
-    assertNull(customStub.reprValue());
-    assertFalse(customStub.eqValue());
-    assertFalse(customStub.orderValue());
-    assertNull(customStub.unsafeHashValue());
-    assertTrue(customStub.frozenValue());
-    assertNull(customStub.kwOnly());
-    assertNotParsed(file);
-  }
 
   private void doTestTypingTypedDictArguments() {
     doTestTypedDict("name", Arrays.asList("x", "y"), Arrays.asList("str", "int"), QualifiedName.fromComponents("TypedDict"));
@@ -1302,15 +1190,11 @@ public class PyStubsTest extends PyTestCase {
   private static void doTestTypeParameterStub(@NotNull PyTypeParameterListOwner parameterListOwner, @NotNull PyFile file) {
     PyTypeParameter firstTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(0);
     PyTypeParameter secondTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(1);
-    PyTypeParameter thirdTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(2);
-    PyTypeParameter fourthTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(3);
-    PyTypeParameter typeVarTupleTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(4);
-    PyTypeParameter paramSpecTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(5);
+    PyTypeParameter typeVarTupleTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(2);
+    PyTypeParameter paramSpecTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(3);
 
     assertNotNull(firstTypeParameter);
     assertNotNull(secondTypeParameter);
-    assertNotNull(thirdTypeParameter);
-    assertNotNull(fourthTypeParameter);
     assertNotNull(typeVarTupleTypeParameter);
     assertNotNull(paramSpecTypeParameter);
 
@@ -1318,20 +1202,13 @@ public class PyStubsTest extends PyTestCase {
     assertEquals(PyTypeParameter.Kind.TypeVar, firstTypeParameter.getKind());
     assertEquals("U", secondTypeParameter.getName());
     assertEquals(PyTypeParameter.Kind.TypeVar, secondTypeParameter.getKind());
-    assertEquals("M", thirdTypeParameter.getName());
-    assertEquals(PyTypeParameter.Kind.TypeVar, thirdTypeParameter.getKind());
-    assertEquals("N", fourthTypeParameter.getName());
-    assertEquals(PyTypeParameter.Kind.TypeVar, fourthTypeParameter.getKind());
     assertEquals("Ts", typeVarTupleTypeParameter.getName());
     assertEquals(PyTypeParameter.Kind.TypeVarTuple, typeVarTupleTypeParameter.getKind());
     assertEquals("P", paramSpecTypeParameter.getName());
     assertEquals(PyTypeParameter.Kind.ParamSpec, paramSpecTypeParameter.getKind());
 
     assertNull(firstTypeParameter.getBoundExpressionText());
-    assertEquals("str", secondTypeParameter.getBoundExpressionText());
-    assertEquals("int", thirdTypeParameter.getDefaultExpressionText());
-    assertEquals("list", fourthTypeParameter.getDefaultExpressionText());
-    assertEquals("float", fourthTypeParameter.getBoundExpressionText());
+    assertEquals(secondTypeParameter.getBoundExpressionText(), "str");
 
     assertNotParsed(file);
   }
@@ -1355,45 +1232,6 @@ public class PyStubsTest extends PyTestCase {
       assertEquals(hasDefault, fieldStub.hasDefault());
       assertEquals(hasDefaultFactory, fieldStub.hasDefaultFactory());
       assertEquals(initValue, fieldStub.initValue());
-    }
-  }
-
-  private static <T extends StubElement<?>> @NotNull StubElementValidator element(@NotNull Class<T> clazz) {
-    return stub -> assertInstanceOf(stub, clazz);
-  }
-
-  private static <T extends PyVersionSpecificStub> @NotNull StubElementValidator element(@NotNull Class<T> clazz,
-                                                                                         @NotNull RangeSet<Version> versions) {
-    return stub -> {
-      assertInstanceOf(stub, clazz);
-      assertEquals(versions, clazz.cast(stub).getVersions());
-    };
-  }
-
-  private static @NotNull RangeSet<Version> versionLessThan(@NotNull String version) {
-    return ImmutableRangeSet.of(Range.lessThan(Version.parseVersion(version)));
-  }
-
-  private static @NotNull RangeSet<Version> versionAtMost(@NotNull String version) {
-    return ImmutableRangeSet.of(Range.atMost(Version.parseVersion(version)));
-  }
-
-  private static @NotNull RangeSet<Version> versionRange(@NotNull String lowInclusive, @NotNull String highExclusive) {
-    return ImmutableRangeSet.of(Range.closedOpen(Version.parseVersion(lowInclusive), Version.parseVersion(highExclusive)));
-  }
-
-  private interface StubElementValidator {
-    void test(@NotNull StubElement<?> stub);
-
-    default @NotNull StubElementValidator withChildren(StubElementValidator @NotNull ... children) {
-      return stub -> {
-        test(stub);
-        List<StubElement<?>> childrenStubs = stub.getChildrenStubs();
-        assertSize(children.length, childrenStubs);
-        for (int i = 0; i != children.length; i++) {
-          children[i].test(childrenStubs.get(i));
-        }
-      };
     }
   }
 }

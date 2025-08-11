@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.largeFilesEditor.actions;
 
 import com.intellij.largeFilesEditor.editor.LargeFileEditor;
@@ -12,7 +12,8 @@ import org.jetbrains.annotations.Nullable;
 
 final class Utils {
 
-  static @Nullable LargeFileEditor tryGetLargeFileEditorManager(AnActionEvent e) {
+  @Nullable
+  static LargeFileEditor tryGetLargeFileEditorManager(AnActionEvent e) {
     FileEditor fileEditor = getFileEditor(e);
     if (fileEditor instanceof LargeFileEditor) {
       return (LargeFileEditor)fileEditor;
@@ -22,7 +23,8 @@ final class Utils {
     return editor == null ? null : tryGetLargeFileEditorManagerFromEditor(editor);
   }
 
-  static @Nullable LargeFileEditor tryGetLargeFileEditorManagerFromEditor(@NotNull Editor editor) {
+  @Nullable
+  static LargeFileEditor tryGetLargeFileEditorManagerFromEditor(@NotNull Editor editor) {
     return editor.getUserData(LargeFileEditor.LARGE_FILE_EDITOR_KEY);
   }
 

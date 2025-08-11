@@ -16,8 +16,7 @@ class MarketplaceEventLoggerProvider : StatisticsEventLoggerProvider(
   version = 1,
   sendFrequencyMs = TimeUnit.MINUTES.toMillis(10),
   maxFileSizeInBytes = 10 * 1024,
-  sendLogsOnIdeClose = true,
-  isCharsEscapingRequired = false
+  sendLogsOnIdeClose = true
 ) {
   override fun isRecordEnabled(): Boolean {
     val app = ApplicationManager.getApplication()

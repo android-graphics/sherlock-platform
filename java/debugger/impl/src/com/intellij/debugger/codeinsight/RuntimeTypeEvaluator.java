@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.codeinsight;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -49,7 +49,8 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiTy
   protected abstract void typeCalculationFinished(@Nullable PsiType type);
 
   @Override
-  protected @Nullable PsiType evaluate(final EvaluationContextImpl evaluationContext) throws EvaluateException {
+  @Nullable
+  protected PsiType evaluate(final EvaluationContextImpl evaluationContext) throws EvaluateException {
     Project project = evaluationContext.getProject();
     SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
     ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<>() {
@@ -67,7 +68,8 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiTy
     throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.surrounded.expression.null"));
   }
 
-  public static @Nullable PsiType getCastableRuntimeType(Project project, Value value) {
+  @Nullable
+  public static PsiType getCastableRuntimeType(Project project, Value value) {
     Type type = value.type();
     PsiType psiType = findPsiType(project, type);
     if (psiType != null) {

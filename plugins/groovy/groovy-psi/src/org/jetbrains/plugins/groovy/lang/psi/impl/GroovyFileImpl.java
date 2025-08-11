@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
@@ -49,7 +48,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   private static final Logger LOG = Logger.getInstance(GroovyFileImpl.class);
 
-  private static final @NlsSafe String SYNTHETIC_PARAMETER_NAME = "args";
+  @NlsSafe private static final String SYNTHETIC_PARAMETER_NAME = "args";
 
   private volatile Boolean myScript;
   private volatile GroovyScriptClass myScriptClass;
@@ -61,7 +60,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   @Override
-  public @NotNull String getPackageName() {
+  @NotNull
+  public String getPackageName() {
     GrPackageDefinition packageDef = getPackageDefinition();
     if (packageDef != null) {
       final String name = packageDef.getPackageName();
@@ -97,7 +97,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   @Override
-  public boolean processDeclarations(final @NotNull PsiScopeProcessor processor,
+  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
@@ -165,26 +165,25 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
 
+  @NotNull
   @Override
-  public @NotNull GrImportStatement addImport(@NotNull GrImportStatement statement) throws IncorrectOperationException {
+  public GrImportStatement addImport(@NotNull GrImportStatement statement) throws IncorrectOperationException {
     return GroovyCodeStyleManager.getInstance(getProject()).addImport(this, statement);
   }
 
   @Override
   public boolean isScript() {
-    return ReadAction.compute(() -> {
-      final StubElement stub = getStub();
-      if (stub instanceof GrFileStub) {
-        return ((GrFileStub)stub).isScript();
-      }
+    final StubElement stub = getStub();
+    if (stub instanceof GrFileStub) {
+      return ((GrFileStub)stub).isScript();
+    }
 
-      Boolean isScript = myScript;
-      if (isScript == null) {
-        isScript = checkIsScript();
-        myScript = isScript;
-      }
-      return isScript;
-    });
+    Boolean isScript = myScript;
+    if (isScript == null) {
+      isScript = checkIsScript();
+      myScript = isScript;
+    }
+    return isScript;
   }
 
   private boolean checkIsScript() {
@@ -268,8 +267,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
   }
 
+  @Nullable
   @Override
-  public @Nullable GrPackageDefinition setPackage(@Nullable GrPackageDefinition newPackage) {
+  public GrPackageDefinition setPackage(@Nullable GrPackageDefinition newPackage) {
     final GrPackageDefinition oldPackage = getPackageDefinition();
     if (oldPackage == null) {
       if (newPackage != null) {
@@ -350,8 +350,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return PsiImplUtilKt.getScriptDeclarations(this, topLevelOnly);
   }
 
+  @NotNull
   @Override
-  public @NotNull GroovyFileImports getImports() {
+  public GroovyFileImports getImports() {
     return GroovyImports.getFileImports(this);
   }
 

@@ -1,6 +1,6 @@
 // "Specify supertype" "true"
 // SHOULD_DIFFER_FROM_FE10
-// DISABLE_ERRORS
+// DISABLE-ERRORS
 interface Z {
     fun foo(): CharSequence = ""
 }

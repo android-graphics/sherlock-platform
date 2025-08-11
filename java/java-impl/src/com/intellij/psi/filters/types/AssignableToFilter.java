@@ -36,7 +36,6 @@ public class AssignableToFilter implements ElementFilter {
     return typeByElement != null && typeByElement.isAssignableFrom(myType) && !typeByElement.equals(myType);
   }
 
-  @Override
   public String toString(){
     return "assignable-to(" + myType + ")";
   }

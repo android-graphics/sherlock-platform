@@ -20,7 +20,6 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.io.InputStream;
@@ -315,7 +314,7 @@ public final class GenericRepository extends BaseRepositoryImpl {
   /**
    * Returns all template variables including both predefined and defined by user
    */
-  public @Unmodifiable List<TemplateVariable> getAllTemplateVariables() {
+  public List<TemplateVariable> getAllTemplateVariables() {
     return ContainerUtil.concat(myPredefinedTemplateVariables, getTemplateVariables());
   }
 

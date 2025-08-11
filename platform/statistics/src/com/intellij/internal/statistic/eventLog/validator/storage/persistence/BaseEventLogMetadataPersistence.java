@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public abstract class BaseEventLogMetadataPersistence {
+abstract public class BaseEventLogMetadataPersistence {
   private static final Logger LOG = Logger.getInstance(BaseEventLogMetadataPersistence.class);
 
   public static final String DEPRECATED_FUS_METADATA_DIR = "event-log-whitelist";
@@ -25,7 +25,8 @@ public abstract class BaseEventLogMetadataPersistence {
    */
   private static final String CUSTOM_FUS_SCHEMA_DIR_PROPERTY = "intellij.fus.custom.schema.dir";
 
-  public abstract @Nullable String getCachedEventsScheme();
+  @Nullable
+  public abstract String getCachedEventsScheme();
 
   public static Path getDefaultMetadataFile(@NotNull String recorderId,
                                             @NotNull String fileName,
@@ -53,7 +54,8 @@ public abstract class BaseEventLogMetadataPersistence {
     return file;
   }
 
-  public static @NotNull Path getDeprecatedMetadataDir() {
+  @NotNull
+  public static Path getDeprecatedMetadataDir() {
     return getMetadataConfigRoot(DEPRECATED_FUS_METADATA_DIR);
   }
 
@@ -65,7 +67,8 @@ public abstract class BaseEventLogMetadataPersistence {
       .normalize().toAbsolutePath();
   }
 
-  private static @NotNull Path getMetadataConfigRoot(@NotNull String dir) {
+  @NotNull
+  private static Path getMetadataConfigRoot(@NotNull String dir) {
     String customFusPath = System.getProperty(CUSTOM_FUS_SCHEMA_DIR_PROPERTY);
     if (!StringUtil.isEmpty(customFusPath)) {
       return Path.of(customFusPath);

@@ -32,9 +32,6 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate {
     if (element instanceof PsiJavaToken) {
       token = (PsiJavaToken)element;
     }
-    else if (element instanceof PsiFile) {
-      return false;
-    }
     else {
       final PsiElement prevSibling = element.getPrevSibling();
       if (prevSibling instanceof PsiJavaToken) {

@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.tools.util.text.MergeInnerDifferences;
@@ -14,11 +28,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ThreesideDiffChangeBase {
-  protected @NotNull MergeConflictType myType;
+  @NotNull protected MergeConflictType myType;
 
-  protected final @NotNull List<RangeHighlighter> myHighlighters = new ArrayList<>();
-  protected final @NotNull List<RangeHighlighter> myInnerHighlighters = new ArrayList<>();
-  protected final @NotNull List<DiffGutterOperation> myOperations = new ArrayList<>();
+  @NotNull protected final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+  @NotNull protected final List<RangeHighlighter> myInnerHighlighters = new ArrayList<>();
+  @NotNull protected final List<DiffGutterOperation> myOperations = new ArrayList<>();
 
   public ThreesideDiffChangeBase(@NotNull MergeConflictType type) {
     myType = type;
@@ -93,15 +107,19 @@ public abstract class ThreesideDiffChangeBase {
 
   public abstract boolean isResolved(@NotNull ThreeSide side);
 
-  protected abstract @NotNull Editor getEditor(@NotNull ThreeSide side);
+  @NotNull
+  protected abstract Editor getEditor(@NotNull ThreeSide side);
 
-  protected abstract @Nullable MergeInnerDifferences getInnerFragments();
+  @Nullable
+  protected abstract MergeInnerDifferences getInnerFragments();
 
-  public @NotNull TextDiffType getDiffType() {
+  @NotNull
+  public TextDiffType getDiffType() {
     return DiffUtil.getDiffType(myType);
   }
 
-  public @NotNull MergeConflictType getConflictType() {
+  @NotNull
+  public MergeConflictType getConflictType() {
     return myType;
   }
 

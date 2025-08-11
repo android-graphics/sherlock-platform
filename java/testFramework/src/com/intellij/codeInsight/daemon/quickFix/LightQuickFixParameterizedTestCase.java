@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.testFramework.FileBasedTestCaseHelperEx;
@@ -18,14 +18,16 @@ public abstract class LightQuickFixParameterizedTestCase extends LightQuickFixTe
     return getBasePath();
   }
 
+  @Nullable
   @Override
-  public @Nullable String getFileSuffix(@NotNull String fileName) {
+  public String getFileSuffix(@NotNull String fileName) {
     if (!fileName.startsWith(BEFORE_PREFIX)) return null;
     return fileName.substring(BEFORE_PREFIX.length());
   }
 
+  @Nullable
   @Override
-  public @Nullable String getBaseName(@NotNull String fileAfterSuffix) {
+  public String getBaseName(@NotNull String fileAfterSuffix) {
     if (!fileAfterSuffix.startsWith(AFTER_PREFIX)) return null;
     return fileAfterSuffix.substring(AFTER_PREFIX.length());
   }

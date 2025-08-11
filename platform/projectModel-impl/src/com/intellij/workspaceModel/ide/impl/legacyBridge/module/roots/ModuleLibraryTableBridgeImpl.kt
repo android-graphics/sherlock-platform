@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.module.Module
@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryOrigin
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -57,7 +56,7 @@ class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : Mod
   fun addLibrary(entity: LibraryEntity, storageBuilder: MutableEntityStorage): LibraryBridgeImpl {
     val library = LibraryBridgeImpl(
       libraryTable = this,
-      origin = LibraryOrigin.OfProject(module.project),
+      project = module.project,
       initialId = entity.symbolicId,
       initialEntityStorage = moduleBridge.entityStorage,
       targetBuilder = storageBuilder

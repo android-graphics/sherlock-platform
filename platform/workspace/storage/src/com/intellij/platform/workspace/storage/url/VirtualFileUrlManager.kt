@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus
  * In order to obtain a [VirtualFileUrl] instance for a [VirtualFile][com.intellij.openapi.vfs.VirtualFile], use 
  * `virtualFile.toVirtualFileUrl(virtualFileUrlManager)` extension function.
  */
-@ApiStatus.NonExtendable
 public interface VirtualFileUrlManager {
 
   /**

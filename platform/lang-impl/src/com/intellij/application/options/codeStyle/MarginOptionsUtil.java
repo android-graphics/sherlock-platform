@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -25,7 +25,7 @@ final class MarginOptionsUtil {
   static @NlsContexts.Label String getDefaultVisualGuidesText(@NotNull CodeStyleSettings settings) {
     List<Integer> softMargins = settings.getDefaultSoftMargins();
     return getDefaultValueText(
-      (!softMargins.isEmpty()
+      (softMargins.size() > 0
        ? CommaSeparatedIntegersValueEditor.intListToString(settings.getDefaultSoftMargins())
        : ApplicationBundle.message("settings.soft.margins.empty.list")));
   }

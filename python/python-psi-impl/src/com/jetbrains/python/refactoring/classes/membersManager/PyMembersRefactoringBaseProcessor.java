@@ -33,14 +33,16 @@ import java.util.List;
 
 /**
  * Processor for member-based refactorings. It moves members from one place to another using {@link MembersManager}.
- * Inheritors only need to implement {@link UsageViewDescriptor} methods (while this class also implements this interface)
+ * Inheritors only need to implement {@link UsageViewDescriptor} methods (while this interface is also implemented by this class)
  *
  * @author Ilya.Kazakevich
  */
 public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringProcessor implements UsageViewDescriptor {
 
-  protected final @NotNull Collection<PyMemberInfo<PyElement>> myMembersToMove;
-  protected final @NotNull PyClass myFrom;
+  @NotNull
+  protected final Collection<PyMemberInfo<PyElement>> myMembersToMove;
+  @NotNull
+  protected final PyClass myFrom;
   private final PyClass @NotNull [] myTo;
 
   /**
@@ -49,9 +51,9 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
    * @param to            where to move
    */
   protected PyMembersRefactoringBaseProcessor(
-    final @NotNull Project project,
-    final @NotNull Collection<PyMemberInfo<PyElement>> membersToMove,
-    final @NotNull PyClass from,
+    @NotNull final Project project,
+    @NotNull final Collection<PyMemberInfo<PyElement>> membersToMove,
+    @NotNull final PyClass from,
     final PyClass @NotNull ... to) {
     super(project);
     myFrom = from;
@@ -59,8 +61,9 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
     myTo = to.clone();
   }
 
+  @NotNull
   @Override
-  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(final UsageInfo @NotNull [] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo @NotNull [] usages) {
     return this;
   }
 
@@ -70,7 +73,7 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
   }
 
   /**
-   * @return destinations (so user would be able to choose if she wants to move member to a certain place or not)
+   * @return destinations (so user would be able to choose if she wants to move member to certain place or not)
    */
   @Override
   protected final PyUsageInfo @NotNull [] findUsages() {
@@ -95,8 +98,9 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
     PyClassRefactoringUtil.optimizeImports(myFrom.getContainingFile()); // To remove unneeded imports
   }
 
+  @Nullable
   @Override
-  protected @Nullable RefactoringEventData getBeforeData() {
+  protected RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
     data.addElement(myFrom);
     data.addMembers(myMembersToMove.toArray(new PyMemberInfo[0]), info -> info.getMember());
@@ -104,8 +108,9 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
   }
 
 
+  @Nullable
   @Override
-  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     final RefactoringEventData data = new RefactoringEventData();
     data.addElements(myTo);
     return data;

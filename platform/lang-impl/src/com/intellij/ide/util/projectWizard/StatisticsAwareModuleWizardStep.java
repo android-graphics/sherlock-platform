@@ -2,11 +2,9 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
-@ApiStatus.Internal
 public interface StatisticsAwareModuleWizardStep {
   void addCustomFeatureUsageData(@NotNull String eventId, @NotNull FeatureUsageData data);
 }

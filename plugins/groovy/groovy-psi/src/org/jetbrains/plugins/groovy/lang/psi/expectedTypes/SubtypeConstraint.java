@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
 import com.intellij.psi.PsiClassType;
@@ -21,7 +21,8 @@ public final class SubtypeConstraint extends TypeConstraint {
   }
 
   @Override
-  public @NotNull PsiType getDefaultType() {
+  @NotNull
+  public PsiType getDefaultType() {
     return myDefaultType;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.chains.DiffRequestProducer;
@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.Collection;
 
+import static com.intellij.util.ObjectUtils.chooseNotNull;
+
 public final class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFilePatch> {
   TextFilePatchInProgress(TextFilePatch patch, Collection<VirtualFile> autoBases, VirtualFile baseDir) {
     super(patch.pathsOnlyCopy(), autoBases, baseDir);
@@ -40,26 +42,29 @@ public final class TextFilePatchInProgress extends AbstractFilePatchInProgress<T
     if (myNewContentRevision == null) {
       myConflicts = null;
       final FilePath newFilePath = getFilePath();
-      PatchedRevisionNumber revisionNumber = new PatchedRevisionNumber(myPatch.getAfterVersionId());
       if (FilePatchStatus.ADDED.equals(myStatus)) {
         final String content = myPatch.getSingleHunkPatchText();
-        myNewContentRevision = new SimpleContentRevision(content, newFilePath, revisionNumber);
+        myNewContentRevision = new SimpleContentRevision(content, newFilePath, chooseNotNull(myPatch.getAfterVersionId(), VcsBundle
+          .message("patch.apply.conflict.patched.version")));
       }
       else {
-        myNewContentRevision = new LazyPatchContentRevision(myCurrentBase, newFilePath, revisionNumber, myPatch);
+        myNewContentRevision = new LazyPatchContentRevision(myCurrentBase, newFilePath, chooseNotNull(myPatch.getAfterVersionId(), VcsBundle
+          .message("patch.apply.conflict.patched.version")), myPatch);
       }
     }
     return myNewContentRevision;
   }
 
+  @NotNull
   @Override
-  public @NotNull DiffRequestProducer getDiffRequestProducers(final Project project, final PatchReader patchReader) {
+  public DiffRequestProducer getDiffRequestProducers(final Project project, final PatchReader patchReader) {
     PatchChange change = getChange();
     FilePatch patch = getPatch();
     String path = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
     return new DiffRequestProducer() {
+      @NotNull
       @Override
-      public @NotNull DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
+      public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
         throws DiffRequestProducerException, ProcessCanceledException {
         if (myCurrentBase != null && FileTypeRegistry.getInstance().isFileOfType(myCurrentBase, UnknownFileType.INSTANCE)) {
           return new UnknownFileTypeDiffRequest(myCurrentBase, getName());
@@ -81,8 +86,9 @@ public final class TextFilePatchInProgress extends AbstractFilePatchInProgress<T
         }
       }
 
+      @NotNull
       @Override
-      public @NotNull String getName() {
+      public String getName() {
         final File ioCurrentBase = getIoCurrentBase();
         return ioCurrentBase == null ? getCurrentPath() : ioCurrentBase.getPath();
       }

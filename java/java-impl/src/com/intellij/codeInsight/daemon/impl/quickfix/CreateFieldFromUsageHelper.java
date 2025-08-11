@@ -23,7 +23,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiSubstitutor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Max Medvedev
@@ -66,7 +65,7 @@ public abstract class CreateFieldFromUsageHelper {
                                              Object expectedTypes,
                                              PsiClass targetClass,
                                              Editor editor,
-                                             @Nullable PsiElement context,
+                                             PsiElement context,
                                              boolean createConstantField,
                                              boolean isScrollToTemplate,
                                              @NotNull PsiSubstitutor substitutor);

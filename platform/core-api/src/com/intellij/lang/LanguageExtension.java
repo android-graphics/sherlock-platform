@@ -7,7 +7,10 @@ import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
 import kotlinx.collections.immutable.PersistentList;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -83,7 +86,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     }
   }
 
-  public @UnknownNullability T forLanguage(@NotNull Language l) {
+  public T forLanguage(@NotNull Language l) {
     T cached = l.getUserData(cacheKey);
     if (cached != null) return cached;
 
@@ -139,7 +142,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     return buildExtensions(allKeys);
   }
 
-  public @Unmodifiable @NotNull List<T> allForLanguageOrAny(@NotNull Language l) {
+  public @NotNull List<T> allForLanguageOrAny(@NotNull Language l) {
     List<T> forLanguage = allForLanguage(l);
     if (l == Language.ANY) {
       return forLanguage;

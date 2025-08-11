@@ -40,7 +40,6 @@ public class AssignableFromContextFilter implements ElementFilter {
     return qualifiedName != null && (qualifiedName.equals(candidate.getQualifiedName()) || candidate.isInheritor(curClass, true));
   }
 
-  @Override
   public String toString() {
     return "assignable-from-context";
   }

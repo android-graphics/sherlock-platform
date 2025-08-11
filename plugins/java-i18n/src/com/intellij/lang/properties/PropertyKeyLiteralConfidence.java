@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.completion.CompletionConfidence;
@@ -12,8 +12,9 @@ import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.expressions.UInjectionHost;
 
 public final class PropertyKeyLiteralConfidence extends CompletionConfidence {
+  @NotNull
   @Override
-  public @NotNull ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+  public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
     if (DumbService.isDumb(psiFile.getProject())) return ThreeState.UNSURE;
 
     UInjectionHost injectionHost = UastContextKt.getUastParentOfType(contextElement.getParent(), UInjectionHost.class, false);

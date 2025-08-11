@@ -38,17 +38,22 @@ public class RegExpFileType extends LanguageFileType {
     }
 
     @Override
-    public @NotNull @NonNls String getName() {
+    @NotNull
+    @NonNls
+    public String getName() {
         return "RegExp";
     }
 
     @Override
-    public @NotNull String getDescription() {
+    @NotNull
+    public String getDescription() {
         return RegExpBundle.message("filetype.regular.expression.description");
     }
 
     @Override
-    public @NotNull @NonNls String getDefaultExtension() {
+    @NotNull
+    @NonNls
+    public String getDefaultExtension() {
         return "regexp";
     }
 
@@ -57,7 +62,8 @@ public class RegExpFileType extends LanguageFileType {
         return getLanguage() == RegExpLanguage.INSTANCE ? AllIcons.FileTypes.Regexp : null;
     }
 
-    public static @NotNull LanguageFileType forLanguage(@NotNull Language language) {
+    @NotNull
+    public static LanguageFileType forLanguage(@NotNull Language language) {
         return new RegExpFileType(language);
     }
 }

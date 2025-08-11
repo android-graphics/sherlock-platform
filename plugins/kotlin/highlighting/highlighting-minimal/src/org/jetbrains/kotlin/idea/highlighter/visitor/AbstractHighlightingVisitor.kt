@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtVisitorVoid
+import kotlin.let
 
 @ApiStatus.Internal
 abstract class AbstractHighlightingVisitor(protected val holder: HighlightInfoHolder): KtVisitorVoid() {
@@ -18,8 +19,8 @@ abstract class AbstractHighlightingVisitor(protected val holder: HighlightInfoHo
         holder.add(HighlightingFactory.highlightName(element, highlightInfoType, message)?.create())
     }
 
-    protected fun highlightName(project: Project, element: PsiElement, textRange: TextRange, highlightInfoType: HighlightInfoType, message: @DetailedDescription String? = null) {
-        holder.add(HighlightingFactory.highlightName(project, element, textRange, highlightInfoType, message).create())
+    protected fun highlightName(project: Project, textRange: TextRange, highlightInfoType: HighlightInfoType, message: @DetailedDescription String? = null) {
+        holder.add(HighlightingFactory.highlightName(project, textRange, highlightInfoType, message).create())
     }
 
     protected fun highlightNamedDeclaration(declaration: KtNamedDeclaration, attributesKey: HighlightInfoType) {

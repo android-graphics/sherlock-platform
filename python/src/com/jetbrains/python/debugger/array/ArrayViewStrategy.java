@@ -19,10 +19,6 @@ public class ArrayViewStrategy extends DataViewStrategy {
     return new ArrayViewStrategy("ndarray");
   }
 
-  public static @NotNull ArrayViewStrategy createInstanceForNumpyRecarray() {
-    return new ArrayViewStrategy("recarray");
-  }
-
   public static @NotNull ArrayViewStrategy createInstanceForEagerTensor() {
     return new ArrayViewStrategy("EagerTensor");
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.actions;
 
 import com.intellij.ide.scratch.RootType;
@@ -98,7 +98,8 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
     }
   }
 
-  private @NotNull EditorEx initEditor(@Nullable Editor selectedEditor, @NotNull String fileName, @NotNull String templateText) {
+  @NotNull
+  private EditorEx initEditor(@Nullable Editor selectedEditor, @NotNull String fileName, @NotNull String templateText) {
     if (selectedEditor != null) {
       return (EditorEx)EditorFactory.getInstance().createEditor(selectedEditor.getDocument(), myProject);
     }
@@ -118,7 +119,8 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
     return editor;
   }
 
-  public static @Nullable PsiFile createTempFile(@NotNull Project project, @NotNull String filename, @NotNull String request) {
+  @Nullable
+  public static PsiFile createTempFile(@NotNull Project project, @NotNull String filename, @NotNull String request) {
     final String fileName = PathUtil.makeFileName(filename, "json");
     try {
       final ThrowableComputable<PsiFile, Exception> computable = () -> {
@@ -178,7 +180,8 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
   }
 
   @Override
-  protected @NotNull String getDimensionServiceKey() {
+  @NotNull
+  protected String getDimensionServiceKey() {
     return TestParseEventsSchemeDialog.class.getCanonicalName();
   }
 
@@ -210,7 +213,8 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
     });
   }
 
-  private static @NotNull String parseLogAndFilter(@NotNull LogEventFilter filter, @NotNull String text)
+  @NotNull
+  private static String parseLogAndFilter(@NotNull LogEventFilter filter, @NotNull String text)
     throws IOException, ParseEventLogMetadataException {
     final File log = FileUtil.createTempFile("feature-event-log", ".log");
     try {
@@ -231,8 +235,9 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
     }
   }
 
+  @Nullable
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  protected JComponent createCenterPanel() {
     return myMainPanel;
   }
 

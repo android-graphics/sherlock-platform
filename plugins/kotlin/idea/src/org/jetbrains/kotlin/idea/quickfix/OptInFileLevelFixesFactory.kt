@@ -3,6 +3,9 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.openapi.module.Module
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.descriptors.resolveClassByFqName
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -39,22 +42,20 @@ internal object OptInFileLevelFixesFactory : KotlinIntentionActionsFactory() {
 
         val optInFqName = OptInFixesUtils.optInFqName(moduleDescriptor)
 
-        val containingFile = element.containingKtFile
-
         val result = mutableListOf<IntentionAction>()
-        result += UseOptInFileAnnotationFix(
-            element = containingFile,
-            optInFqName = optInFqName,
-            annotationFinder = { file: KtFile, annotationFqName: FqName -> findFileAnnotation(file, annotationFqName) },
-            argumentClassFqName = annotationFqName,
-        ).asIntention()
 
-        containingFile.module?.let { module ->
-            result += AddModuleOptInFix(
-                file = containingFile,
-                module = module,
-                annotationFqName = annotationFqName,
+        val containingFile = element.containingKtFile
+        val module = containingFile.module
+
+        result.add(
+            UseOptInFileAnnotationFix(
+                containingFile, optInFqName, annotationFqName,
+                findFileAnnotation(containingFile, optInFqName)?.createSmartPointer()
             )
+        )
+
+        if (module != null) {
+            result.add(MakeModuleOptInFix(containingFile, module, annotationFqName))
         }
 
         return result

@@ -124,7 +124,7 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
   @Override
   protected Document createDefaultModel() {
     Document model = super.createDefaultModel();
-    TextLayoutUtil.disableTextLayoutIfNeeded(model);
+    UIUtil.disableTextLayoutIfNeeded(model);
     return model;
   }
 

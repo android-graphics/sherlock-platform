@@ -20,7 +20,6 @@ internal fun createLayoutBuilder(): LayoutBuilder {
 interface LayoutBuilderImpl {
   @get:Deprecated("Use Kotlin UI DSL Version 2")
   @get:ApiStatus.ScheduledForRemoval
-  @get:ApiStatus.Internal
   @Deprecated("Use Kotlin UI DSL Version 2")
   val rootRow: Row
 
@@ -45,21 +44,24 @@ interface LayoutBuilderImpl {
   @Deprecated("Use Kotlin UI DSL Version 2")
   val componentValidateCallbacks: Map<JComponent, () -> ValidationInfo?>
 
+  // Validation applicants for custom validation events
   @get:Deprecated("Use Kotlin UI DSL Version 2")
   @get:ApiStatus.ScheduledForRemoval
-  @get:ApiStatus.Internal
+  @Deprecated("Use Kotlin UI DSL Version 2")
+  val customValidationRequestors: Map<JComponent, List<(() -> Unit) -> Unit>>
+
+  @get:Deprecated("Use Kotlin UI DSL Version 2")
+  @get:ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   val applyCallbacks: Map<JComponent?, List<() -> Unit>>
 
   @get:Deprecated("Use Kotlin UI DSL Version 2")
   @get:ApiStatus.ScheduledForRemoval
-  @get:ApiStatus.Internal
   @Deprecated("Use Kotlin UI DSL Version 2")
   val resetCallbacks: Map<JComponent?, List<() -> Unit>>
 
   @get:Deprecated("Use Kotlin UI DSL Version 2")
   @get:ApiStatus.ScheduledForRemoval
-  @get:ApiStatus.Internal
   @Deprecated("Use Kotlin UI DSL Version 2")
   val isModifiedCallbacks: Map<JComponent?, List<() -> Boolean>>
 }

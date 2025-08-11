@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 
@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -65,7 +64,8 @@ internal class ReplaceCallWithBinaryOperatorInspection :
                 || identifier in OperatorNameConventions.BINARY_OPERATION_NAMES)
     }
 
-    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Context? {
+    context(KaSession)
+    override fun prepareContext(element: KtDotQualifiedExpression): Context? {
         val callExpression = element.selectorExpression as? KtCallExpression ?: return null
         val calleeExpression = callExpression.calleeExpression as? KtSimpleNameExpression ?: return null
         val receiver = element.receiverExpression
@@ -87,7 +87,7 @@ internal class ReplaceCallWithBinaryOperatorInspection :
     override fun createQuickFix(
         element: KtDotQualifiedExpression,
         context: Context,
-    ): KotlinModCommandQuickFix<KtDotQualifiedExpression> = object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
+    ) = object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("replace.with.binary.operator")
@@ -172,20 +172,16 @@ internal class ReplaceCallWithBinaryOperatorInspection :
             OperatorNameConventions.COMPARE_TO -> {
                 if (!isOperatorOrCompatible()) return null
                 val binaryParent = dotQualified.parent as? KtBinaryExpression ?: return null
-
-                val right = binaryParent.right ?: return null
-                val left = binaryParent.left ?: return null
-
                 val comparedToZero = when {
-                    right.isZeroIntegerConstant -> left
-                    left.isZeroIntegerConstant -> right
+                    binaryParent.right?.isZeroIntegerConstant() == true -> binaryParent.left
+                    binaryParent.left?.isZeroIntegerConstant() == true -> binaryParent.right
                     else -> return null
                 }
                 if (comparedToZero != dotQualified) return null
 
                 val token = binaryParent.operationToken as? KtSingleValueToken ?: return null
                 if (token in OperatorConventions.COMPARISON_OPERATIONS) {
-                    if (comparedToZero == left) token else token.invertedComparison()
+                    if (comparedToZero == binaryParent.left) token else token.invertedComparison()
                 } else {
                     null
                 }
@@ -203,7 +199,11 @@ private val KOTLIN_ANY_EQUALS_CALLABLE_ID = CallableId(StandardClassIds.Any, Nam
 
 context(KaSession)
 private fun KaCallableSymbol.isAnyEquals(): Boolean {
-    return allOverriddenSymbolsWithSelf.any { it.callableId == KOTLIN_ANY_EQUALS_CALLABLE_ID }
+    val overriddenSymbols = sequence {
+        yield(this@isAnyEquals)
+        yieldAll(this@isAnyEquals.allOverriddenSymbols)
+    }
+    return overriddenSymbols.any { it.callableId == KOTLIN_ANY_EQUALS_CALLABLE_ID }
 }
 
 context(KaSession)
@@ -221,13 +221,13 @@ context(KaSession)
 private fun areRelatedBySubtyping(first: KtExpression, second: KtExpression): Boolean {
     val firstType = first.expressionType ?: return false
     val secondType = second.expressionType ?: return false
-    return firstType.isSubtypeOf(secondType) || secondType.isSubtypeOf(firstType)
+    return firstType.isSubTypeOf(secondType) || secondType.isSubTypeOf(firstType)
 }
 
 context(KaSession)
 private fun KtExpression.hasDoubleOrFloatType(): Boolean {
     val type = expressionType ?: return false
-    return type.isSubtypeOf(builtinTypes.double) || type.isSubtypeOf(builtinTypes.float)
+    return type.isSubTypeOf(builtinTypes.DOUBLE) || type.isSubTypeOf(builtinTypes.FLOAT)
 }
 
 context(KaSession)

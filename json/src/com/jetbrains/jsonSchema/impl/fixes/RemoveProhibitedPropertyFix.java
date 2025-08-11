@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
-import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.impl.JsonValidationError;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +38,7 @@ public final class RemoveProhibitedPropertyFix extends PsiUpdateModCommandQuickF
   protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(element);
     if (walker == null) return;
-    JsonPropertyAdapter parentProperty = walker.getParentPropertyAdapter(element);
-    assert myData.propertyName.equals(Objects.requireNonNull(parentProperty).getName());
-    myQuickFixAdapter.removeProperty(parentProperty.getDelegate());
+    assert myData.propertyName.equals(Objects.requireNonNull(walker.getParentPropertyAdapter(element)).getName());
+    myQuickFixAdapter.removeProperty(element);
   }
 }

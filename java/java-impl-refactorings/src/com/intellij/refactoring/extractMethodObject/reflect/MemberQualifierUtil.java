@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,11 +11,12 @@ import org.jetbrains.annotations.Nullable;
 public final class MemberQualifierUtil {
   private static final Logger LOG = Logger.getInstance(MemberQualifierUtil.class);
 
-  public static @Nullable String findObjectExpression(@NotNull PsiReferenceExpression reference,
-                                                      @NotNull PsiMember member,
-                                                      @NotNull PsiClass outerClass,
-                                                      @NotNull PsiMethodCallExpression generatedCall,
-                                                      @NotNull PsiElementFactory elementFactory) {
+  @Nullable
+  public static String findObjectExpression(@NotNull PsiReferenceExpression reference,
+                                            @NotNull PsiMember member,
+                                            @NotNull PsiClass outerClass,
+                                            @NotNull PsiMethodCallExpression generatedCall,
+                                            @NotNull PsiElementFactory elementFactory) {
     if (member.hasModifierProperty(PsiModifier.STATIC)) {
       return null;
     }
@@ -35,11 +36,12 @@ public final class MemberQualifierUtil {
     return null;
   }
 
-  public static @NotNull String handleThisReference(@NotNull PsiElement reference,
-                                                    @NotNull PsiClass referencedClass,
-                                                    @NotNull PsiClass outerClass,
-                                                    @NotNull PsiMethodCallExpression generatedCall,
-                                                    @NotNull PsiElementFactory elementFactory) {
+  @NotNull
+  public static String handleThisReference(@NotNull PsiElement reference,
+                                           @NotNull PsiClass referencedClass,
+                                           @NotNull PsiClass outerClass,
+                                           @NotNull PsiMethodCallExpression generatedCall,
+                                           @NotNull PsiElementFactory elementFactory) {
     String qualifiedName = referencedClass.getName();
     if (qualifiedName == null) {
       // TODO: handle this case as well

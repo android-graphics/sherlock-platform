@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.ExecutionException;
@@ -29,8 +29,9 @@ final class AntRunner implements ProgramRunner<RunnerSettings> {
     });
   }
 
+  @NotNull
   @Override
-  public @NotNull @NonNls String getRunnerId() {
+  public @NonNls String getRunnerId() {
     return EXECUTOR_ID;
   }
 

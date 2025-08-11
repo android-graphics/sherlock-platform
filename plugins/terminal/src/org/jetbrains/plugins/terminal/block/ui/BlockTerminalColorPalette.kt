@@ -23,7 +23,8 @@ internal class BlockTerminalColorPalette : TerminalColorPalette() {
     }
   override val defaultBackground: Color
     get() {
-      return AwtTransformers.fromAwtColor(TerminalUi.defaultBackground())!!
+      val backgroundColor = colorsScheme.getColor(BlockTerminalColors.DEFAULT_BACKGROUND)
+      return AwtTransformers.fromAwtColor(backgroundColor ?: colorsScheme.defaultBackground)!!
     }
 
   override fun getAttributesByColorIndex(index: Int): TextAttributes? {

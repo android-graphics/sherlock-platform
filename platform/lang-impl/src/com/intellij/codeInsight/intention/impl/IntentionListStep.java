@@ -8,7 +8,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.AbstractEmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
-import com.intellij.codeInsight.intention.IntentionSource;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -46,7 +45,6 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   private final Project myProject;
   private final PsiFile myFile;
   private final @Nullable Editor myEditor;
-  private IntentionSource myIntentionSource = IntentionSource.CONTEXT_ACTIONS;
 
   /**
    * This constructor exists for binary compatibility
@@ -64,22 +62,12 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
                            @NotNull PsiFile file,
                            @NotNull Project project,
                            @NotNull IntentionContainer intentions) {
-    this(popup, editor, file, project, intentions, IntentionSource.CONTEXT_ACTIONS);
-  }
-
-  protected IntentionListStep(@Nullable IntentionHintComponent.IntentionPopup popup,
-                              @Nullable Editor editor,
-                              @NotNull PsiFile file,
-                              @NotNull Project project,
-                              @NotNull IntentionContainer intentions,
-                              @NotNull IntentionSource source) {
     myPopup = popup;
     myProject = project;
     myFile = file;
     myEditor = editor;
     myCachedIntentions = intentions;
     myMaxIconSize = getMaxIconSize();
-    myIntentionSource = source;
   }
 
   @Override
@@ -143,6 +131,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       if (file == null) {
         return;
       }
+
       chooseActionAndInvoke(cachedAction, file, myProject, myEditor);
     };
   }
@@ -151,8 +140,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
                                        @NotNull PsiFile file,
                                        @NotNull Project project,
                                        @Nullable Editor editor) {
-    ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, cachedAction.getAction(), cachedAction.getText(),
-                                                      cachedAction.getFixOffset(), myIntentionSource);
+    ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, cachedAction.getAction(), cachedAction.getText(), cachedAction.getFixOffset());
   }
 
   @NotNull
@@ -163,20 +151,20 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     }
     for (IntentionAction optionIntention : action.getOptionIntentions()) {
       intentions.intentionsToShow.add(
-        new HighlightInfo.IntentionActionDescriptor(optionIntention, null, null, getIcon(optionIntention), null, null, null, null));
+        new HighlightInfo.IntentionActionDescriptor(optionIntention, null, null, getIcon(optionIntention), null, null, null));
     }
     for (IntentionAction optionFix : action.getOptionErrorFixes()) {
       intentions.errorFixesToShow.add(
-        new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null, null));
+        new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null));
     }
     for (IntentionAction optionFix : action.getOptionInspectionFixes()) {
       intentions.inspectionFixesToShow.add(
-        new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null, null));
+        new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null));
     }
     intentions.setTitle(title);
 
     return new IntentionListStep(myPopup, myEditor, myFile, myProject,
-                                 CachedIntentions.create(myProject, myFile, myEditor, intentions), myIntentionSource) {
+                                 CachedIntentions.create(myProject, myFile, myEditor, intentions)) {
       @Override
       protected void chooseActionAndInvoke(@NotNull IntentionActionWithTextCaching cachedAction,
                                            @NotNull PsiFile file,

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.converters.repositories;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,16 +37,19 @@ public final class MavenRepositoriesProvider {
     myRepositoriesMap.put(id, info);
   }
 
-  public @NotNull Set<String> getRepositoryIds() {
+  @NotNull
+  public Set<String> getRepositoryIds() {
     return myRepositoriesMap.keySet();
   }
 
-  public @Nullable String getRepositoryName(@Nullable String id) {
+  @Nullable
+  public String getRepositoryName(@Nullable String id) {
     RepositoryBeanInfo pair = myRepositoriesMap.get(id);
     return pair != null ? pair.getName() : null;
   }
 
-  public @Nullable String getRepositoryUrl(@Nullable String id) {
+  @Nullable
+  public String getRepositoryUrl(@Nullable String id) {
     RepositoryBeanInfo pair = myRepositoriesMap.get(id);
     return pair != null ? pair.getUrl() : null;
   }

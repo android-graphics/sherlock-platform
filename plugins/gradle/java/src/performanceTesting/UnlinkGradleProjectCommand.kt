@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.gradle.performanceTesting
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.externalSystem.action.DetachExternalProjectAction.detachProject
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -36,9 +35,7 @@ class UnlinkGradleProjectCommand(text: String, line: Int) : PerformanceCommandCo
     val dataProject = ExternalSystemApiUtil.findProjectNode(project, GradleConstants.SYSTEM_ID, projectPath.path)!!.data
     dataProject.linkedExternalProjectPath
     withContext(Dispatchers.EDT) {
-      writeIntentReadAction {
-        detachProject(project, dataProject.owner, dataProject, null)
-      }
+      detachProject(project, dataProject.owner, dataProject, null)
     }
   }
 

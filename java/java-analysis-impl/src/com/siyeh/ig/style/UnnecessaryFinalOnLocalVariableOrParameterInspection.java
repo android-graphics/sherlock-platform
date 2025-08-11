@@ -47,7 +47,8 @@ public final class UnnecessaryFinalOnLocalVariableOrParameterInspection extends 
   public boolean reportParameters = true;
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     final PsiVariable variable = (PsiVariable)infos[0];
     final String variableName = variable.getName();
     if (variable instanceof PsiParameter) {

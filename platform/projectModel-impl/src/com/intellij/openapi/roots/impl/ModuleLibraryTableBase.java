@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
@@ -19,18 +19,21 @@ import java.util.List;
 @ApiStatus.Internal
 public abstract class ModuleLibraryTableBase implements LibraryTable, LibraryTable.ModifiableModel {
   public static final LibraryTablePresentation MODULE_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
+    @NotNull
     @Override
-    public @NotNull String getDisplayName(boolean plural) {
+    public String getDisplayName(boolean plural) {
       return ProjectModelBundle.message("module.library.display.name", plural ? 2 : 1);
     }
 
+    @NotNull
     @Override
-    public @NotNull String getDescription() {
+    public String getDescription() {
       return ProjectModelBundle.message("libraries.node.text.module");
     }
 
+    @NotNull
     @Override
-    public @NotNull String getLibraryTableEditorTitle() {
+    public String getLibraryTableEditorTitle() {
       return ProjectModelBundle.message("library.configure.module.title");
     }
   };
@@ -48,33 +51,39 @@ public abstract class ModuleLibraryTableBase implements LibraryTable, LibraryTab
     return result.toArray(Library.EMPTY_ARRAY);
   }
 
+  @NotNull
   @Override
-  public @NotNull Library createLibrary() {
+  public Library createLibrary() {
     return createLibrary(null);
   }
 
+  @NotNull
   @Override
-  public @NotNull Library createLibrary(String name) {
+  public Library createLibrary(String name) {
     return createLibrary(name, null);
   }
 
+  @NotNull
   @Override
-  public @NotNull Library createLibrary(String name, @Nullable PersistentLibraryKind<?> type) {
+  public Library createLibrary(String name, @Nullable PersistentLibraryKind<?> type) {
     return createLibrary(name, type, null);
   }
 
+  @NotNull
   @Override
-  public @NotNull String getTableLevel() {
+  public String getTableLevel() {
     return LibraryTableImplUtil.MODULE_LEVEL;
   }
 
+  @NotNull
   @Override
-  public @NotNull LibraryTablePresentation getPresentation() {
+  public LibraryTablePresentation getPresentation() {
     return MODULE_LIBRARY_TABLE_PRESENTATION;
   }
 
   @Override
-  public @Nullable Library getLibraryByName(@NotNull String name) {
+  @Nullable
+  public Library getLibraryByName(@NotNull String name) {
     final Iterator<Library> libraryIterator = getLibraryIterator();
     while (libraryIterator.hasNext()) {
       Library library = libraryIterator.next();
@@ -106,8 +115,9 @@ public abstract class ModuleLibraryTableBase implements LibraryTable, LibraryTab
   public void dispose() {
   }
 
+  @NotNull
   @Override
-  public @NotNull ModifiableModel getModifiableModel() {
+  public ModifiableModel getModifiableModel() {
     return this;
   }
 }

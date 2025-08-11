@@ -22,7 +22,7 @@ fun a() {
 
     with(d) out@{
         with(4) {
-            functionFromKotlin()
+            this@out.functionFromKotlin()
         }
     }
 }

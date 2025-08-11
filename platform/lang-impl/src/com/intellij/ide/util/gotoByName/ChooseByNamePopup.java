@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -26,15 +25,16 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
 import java.util.List;
@@ -56,11 +56,11 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private @NlsContexts.PopupAdvertisement String myAdText;
   private final MergingUpdateQueue myRepaintQueue = new MergingUpdateQueue("ChooseByNamePopup repaint", 50, true, myList, this);
 
-  protected ChooseByNamePopup(final @Nullable Project project,
+  protected ChooseByNamePopup(@Nullable final Project project,
                               @NotNull ChooseByNameModel model,
                               @NotNull ChooseByNameItemProvider provider,
                               @Nullable ChooseByNamePopup oldPopup,
-                              final @Nullable String predefinedText,
+                              @Nullable final String predefinedText,
                               boolean mayRequestOpenInCurrentWindow,
                               int initialIndex) {
     super(project, model, provider, oldPopup != null ? oldPopup.getEnteredText() : predefinedText, initialIndex);
@@ -176,7 +176,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     String adText = getAdText();
     if (myDropdownPopup == null) {
       ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myListScrollPane, myList);
-      builder.setFocusable(ScreenReader.isActive())
+      builder.setFocusable(false)
         .setLocateWithinScreenBounds(false)
         .setRequestFocus(false)
         .setCancelKeyEnabled(false)
@@ -189,25 +189,6 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       myDropdownPopup = builder.createPopup();
       myDropdownPopup.setSize(preferredScrollPaneSize);
       myDropdownPopup.showInScreenCoordinates(layeredPane, location);
-      if (ScreenReader.isActive()) {
-        Window window = SwingUtilities.getWindowAncestor(myDropdownPopup.getContent());
-        window.setFocusableWindowState(true);
-        window.setFocusable(true);
-        window.setFocusTraversalKeysEnabled(false);
-        window.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {});
-        window.addKeyListener(new KeyAdapter() {
-          @Override
-          public void keyReleased(KeyEvent e) {
-            if (e.getKeyCode() == KeyEvent.VK_TAB) {
-              if (e.isShiftDown()) {
-                IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
-              } else {
-                IdeFocusManager.getInstance(myProject).requestFocus(myCheckBox.isVisible() ? myCheckBox : myTextField, true);
-              }
-            }
-          }
-        });
-      }
     }
     else {
       myDropdownPopup.setLocation(location);
@@ -302,12 +283,12 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context,
-                                              final @Nullable String predefinedText) {
+                                              @Nullable final String predefinedText) {
     return createPopup(project, model, ChooseByNameModelEx.getItemProvider(model, context), predefinedText, false, 0);
   }
 
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context,
-                                              final @Nullable String predefinedText,
+                                              @Nullable final String predefinedText,
                                               boolean mayRequestOpenInCurrentWindow, final int initialIndex) {
     return createPopup(project, model, ChooseByNameModelEx.getItemProvider(model, context), predefinedText, mayRequestOpenInCurrentWindow,
                        initialIndex);
@@ -322,14 +303,14 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   public static ChooseByNamePopup createPopup(final Project project,
                                               @NotNull ChooseByNameModel model,
                                               @NotNull ChooseByNameItemProvider provider,
-                                              final @Nullable String predefinedText) {
+                                              @Nullable final String predefinedText) {
     return createPopup(project, model, provider, predefinedText, false, 0);
   }
 
   public static ChooseByNamePopup createPopup(final Project project,
-                                              final @NotNull ChooseByNameModel model,
+                                              @NotNull final ChooseByNameModel model,
                                               @NotNull ChooseByNameItemProvider provider,
-                                              final @Nullable String predefinedText,
+                                              @Nullable final String predefinedText,
                                               boolean mayRequestOpenInCurrentWindow,
                                               final int initialIndex) {
     final ChooseByNamePopup oldPopup = project == null ? null : project.getUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
@@ -356,13 +337,15 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   //space character in the end of pattern forces full matches search
   private static final String fullMatchSearchSuffix = " ";
 
+  @NotNull
   @Override
-  public @NotNull String transformPattern(@NotNull String pattern) {
+  public String transformPattern(@NotNull String pattern) {
     final ChooseByNameModel model = getModel();
     return getTransformedPattern(pattern, model);
   }
 
-  public static @NotNull String getTransformedPattern(@NotNull String pattern, @NotNull ChooseByNameModel model) {
+  @NotNull
+  public static String getTransformedPattern(@NotNull String pattern, @NotNull ChooseByNameModel model) {
     String rawPattern = pattern;
 
     Pattern regex = null;
@@ -416,7 +399,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return -1;
   }
 
-  public @Nullable String getPathToAnonymous() {
+  @Nullable
+  public String getPathToAnonymous() {
     Matcher matcher = patternToDetectAnonymousClasses.matcher(getTrimmedText());
     return pathToAnonymousClass(matcher);
   }
@@ -425,7 +409,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return getLineOrColumn(false);
   }
 
-  public @Nullable String getMemberPattern() {
+  @Nullable
+  public String getMemberPattern() {
     final String enteredText = getTrimmedText();
     final int index = enteredText.lastIndexOf('#');
     if (index == -1) {
@@ -443,7 +428,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     myActionMap.put(aActionName, aAction);
   }
 
-  public @NlsContexts.PopupAdvertisement String getAdText() {
+  @NlsContexts.PopupAdvertisement
+  public String getAdText() {
     return myAdText;
   }
 
@@ -482,8 +468,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     }
   }
 
+  @NotNull
   @TestOnly
-  public @NotNull List<Object> calcPopupElements(@NotNull String text, boolean checkboxState) {
+  public List<Object> calcPopupElements(@NotNull String text, boolean checkboxState) {
     List<Object> elements = new SmartList<>("empty");
     Semaphore semaphore = new Semaphore(1);
     scheduleCalcElements(text, checkboxState, ModalityState.nonModal(), SelectMostRelevant.INSTANCE, set -> {

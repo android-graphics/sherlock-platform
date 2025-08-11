@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.importing
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.CustomizedDataContext
 import org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction
 import org.junit.Test
 
@@ -15,11 +14,13 @@ class GradleImportActionTest: GradleImportingTestCase() {
 
     val action = ImportProjectFromScriptAction()
     val defaultContext = DataManager.getInstance().dataContext
-    val actionEvent = AnActionEvent.createFromDataContext(
-      "ProjectViewPopup", null, CustomizedDataContext.withSnapshot(defaultContext) { sink ->
-      sink[CommonDataKeys.PROJECT] = myProject
-      sink[CommonDataKeys.VIRTUAL_FILE] = virtualFile
-    })
+    val actionEvent = AnActionEvent.createFromDataContext("ProjectViewPopup", null) { dataId ->
+      when {
+        CommonDataKeys.PROJECT.`is`(dataId) -> myProject
+        CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> virtualFile
+        else -> defaultContext.getData(dataId)
+      }
+    }
 
     action.update(actionEvent)
     assertFalse(actionEvent.presentation.isVisible)
@@ -33,11 +34,13 @@ class GradleImportActionTest: GradleImportingTestCase() {
 
     val action = ImportProjectFromScriptAction()
     val defaultContext = DataManager.getInstance().dataContext
-    val actionEvent = AnActionEvent.createFromDataContext(
-      "ProjectViewPopup", null, CustomizedDataContext.withSnapshot(defaultContext) { sink ->
-      sink[CommonDataKeys.PROJECT] = myProject
-      sink[CommonDataKeys.VIRTUAL_FILE] = config
-    })
+    val actionEvent = AnActionEvent.createFromDataContext("ProjectViewPopup", null) { dataId ->
+      when {
+        CommonDataKeys.PROJECT.`is`(dataId) -> myProject
+        CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> config
+        else -> defaultContext.getData(dataId)
+      }
+    }
 
     action.update(actionEvent)
     assertTrue("Action should be visible if project is not imported", actionEvent.presentation.isVisible)

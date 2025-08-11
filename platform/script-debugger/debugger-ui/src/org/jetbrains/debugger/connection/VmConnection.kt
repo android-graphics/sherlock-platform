@@ -17,9 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.event.HyperlinkListener
 
-/**
- * The connection is closed and disposed by the debug process, so it shouldn't be closed manually.
- */
 abstract class VmConnection<T : Vm> : Disposable {
   open val browser: WebBrowser? = null
 

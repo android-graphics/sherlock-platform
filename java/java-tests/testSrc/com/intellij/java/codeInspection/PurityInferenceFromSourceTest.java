@@ -11,7 +11,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTestCase {
   public void test_getter() {
-    assertTransparent("""
+    assertPure("""
                  Object getField() {
                    return field;
                  }""");
@@ -41,7 +41,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
   }
 
   public void test_local_var_assignment() {
-    assertTransparent("""
+    assertPure("""
                  int random(boolean b) {
                    int i = 4;
                    if (b) {
@@ -104,13 +104,13 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
   }
 
   public void test_empty_constructor() {
-    assertTransparent("""
+    assertPure("""
                  public Foo() {
                  }""");
   }
 
   public void test_field_writes() {
-    assertTransparent("""
+    assertPure("""
                  int x;
                  int y;
 
@@ -350,7 +350,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
   }
 
   public void test_plain_field_read() {
-    assertTransparent("""
+    assertPure("""
       int x;
       
       int get() {
@@ -443,10 +443,6 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
     assertMutationSignature(classBody, MutationSignature.pure());
   }
 
-  private void assertTransparent(String classBody) {
-    assertMutationSignature(classBody, MutationSignature.transparent());
-  }
-
   private void assertImpure(String classBody) {
     assertMutationSignature(classBody, MutationSignature.unknown());
   }
@@ -457,9 +453,9 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
 
   private void assertMutationSignature(String classBody, MutationSignature expected) {
     PsiClass clazz = myFixture.addClass("final class Foo { " + classBody + " }");
-    assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
+    assert !((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded();
     MutationSignature signature = JavaSourceInference.inferMutationSignature((PsiMethodImpl)clazz.getMethods()[0]);
-    assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
-    assertEquals(expected, signature);
+    assert !((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded();
+    assert expected.equals(signature);
   }
 }

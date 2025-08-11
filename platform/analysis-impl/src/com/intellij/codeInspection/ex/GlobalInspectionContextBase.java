@@ -29,7 +29,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -273,7 +272,6 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   protected void notifyInspectionsFinished(@NotNull AnalysisScope scope) {
   }
 
-  @RequiresBackgroundThread
   public void performInspectionsWithProgress(@NotNull AnalysisScope scope, boolean runGlobalToolsOnly, boolean isOfflineInspections) {
     myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (!(myProgressIndicator instanceof ProgressIndicatorEx) || !(myProgressIndicator instanceof ProgressIndicatorWithDelayedPresentation)) {
@@ -313,7 +311,6 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   }
 
-  @RequiresBackgroundThread
   protected void runTools(@NotNull AnalysisScope scope, boolean runGlobalToolsOnly, boolean isOfflineInspections) {
   }
 
@@ -466,41 +463,24 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   /**
-   * Runs code cleanup on the specified scope with the specified profile.
+   * Runs code cleanup on the specified scope
    *
    * @param project  project from which to use the inspection profile
    * @param runnable  will be run after completion of the cleanup
    * @param shouldApplyFix  predicate to filter out fixes
-   * @param profile inspection profile to use
    * @param scope  the elements to clean up
    */
   public static void cleanupElements(@NotNull Project project,
                                      @Nullable Runnable runnable,
-                                     @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix,
-                                     @Nullable InspectionProfile profile,
+                                     Predicate<? super ProblemDescriptor> shouldApplyFix,
                                      PsiElement @NotNull ... scope) {
-    final var activeProfile = profile == null ? InspectionProjectProfileManager.getInstance(project).getCurrentProfile() : profile;
     List<PsiElement> psiElements = Stream.of(scope).filter(e -> e != null && e.isPhysical()).toList();
     if (psiElements.isEmpty()) return;
     GlobalInspectionContextBase globalContext =
       (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext();
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(PsiElement.EMPTY_ARRAY)), project);
-    globalContext.codeCleanup(analysisScope, activeProfile, null, runnable, false, shouldApplyFix);
-  }
-
-  /**
-   * Runs code cleanup on the specified scope with the project current profile.
-   *
-   * @param project  project from which to use the inspection profile
-   * @param runnable  will be run after completion of the cleanup
-   * @param shouldApplyFix  predicate to filter out fixes
-   * @param scope  the elements to clean up
-   */
-  public static void cleanupElements(@NotNull Project project,
-                                     @Nullable Runnable runnable,
-                                     @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix,
-                                     PsiElement @NotNull ... scope) {
-    cleanupElements(project, runnable, shouldApplyFix, null, scope);
+    globalContext.codeCleanup(analysisScope, profile, null, runnable, false, shouldApplyFix);
   }
 
   public void close(boolean noSuspiciousCodeFound) {

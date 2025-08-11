@@ -54,12 +54,10 @@ internal class SpecifyTypeExplicitlyIntention:
         return Presentation.of(actionName)
     }
 
-    override fun KaSession.prepareContext(element: KtCallableDeclaration): TypeInfo? =
-        if (skip(element)) {
-            null
-        } else {
-            getTypeInfo(element).takeUnless { it.defaultType.isError }
-        }
+    context(KaSession)
+    override fun prepareContext(element: KtCallableDeclaration): TypeInfo? =
+        if (skip(element)) null
+        else getTypeInfo(element).takeUnless { it.defaultType.isError }
 
     override fun invoke(
         actionContext: ActionContext,
@@ -67,6 +65,6 @@ internal class SpecifyTypeExplicitlyIntention:
         elementContext: TypeInfo,
         updater: ModPsiUpdater,
     ) {
-        updateType(element, elementContext, element.project, updater)
+        updateType(element, elementContext, element.project, updater = updater)
     }
 }

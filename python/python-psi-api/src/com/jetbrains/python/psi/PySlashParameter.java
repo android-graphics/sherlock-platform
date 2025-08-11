@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.StubBasedPsiElement;
@@ -13,17 +13,20 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.NonExtendable
 public interface PySlashParameter extends PyAstSlashParameter, PyParameter, StubBasedPsiElement<PySlashParameterStub> {
   @Override
-  default @Nullable PyNamedParameter getAsNamed() {
+  @Nullable
+  default PyNamedParameter getAsNamed() {
     return (PyNamedParameter)PyAstSlashParameter.super.getAsNamed();
   }
 
   @Override
-  default @Nullable PyTupleParameter getAsTuple() {
+  @Nullable
+  default PyTupleParameter getAsTuple() {
     return (PyTupleParameter)PyAstSlashParameter.super.getAsTuple();
   }
 
   @Override
-  default @Nullable PyExpression getDefaultValue() {
+  @Nullable
+  default PyExpression getDefaultValue() {
     return (PyExpression)PyAstSlashParameter.super.getDefaultValue();
   }
 }

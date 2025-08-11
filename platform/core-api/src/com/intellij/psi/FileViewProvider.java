@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Set;
@@ -70,7 +69,6 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
    * @see #getPsi(Language)
    */
   @NotNull
-  @Unmodifiable
   Set<Language> getLanguages();
 
   /**
@@ -92,7 +90,6 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
    * Otherwise, the order is non-deterministic and should not be relied upon.
    */
   @NotNull
-  @Unmodifiable
   List<@NotNull PsiFile> getAllFiles();
 
   /**

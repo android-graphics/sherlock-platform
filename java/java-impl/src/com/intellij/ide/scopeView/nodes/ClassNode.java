@@ -10,7 +10,6 @@ public class ClassNode extends MemberNode<PsiClass> implements Comparable<ClassN
     super(aClass);
   }
 
-  @Override
   public String toString() {
     final PsiClass aClass = (PsiClass)getPsiElement();
     return aClass != null && aClass.isValid() ? ClassPresentationUtil.getNameForClass(aClass, false) : "";

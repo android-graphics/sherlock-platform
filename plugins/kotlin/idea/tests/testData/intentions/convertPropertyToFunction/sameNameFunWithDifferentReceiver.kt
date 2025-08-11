@@ -1,5 +1,3 @@
-// PRIORITY: LOW
-
 package foo
 
 class A

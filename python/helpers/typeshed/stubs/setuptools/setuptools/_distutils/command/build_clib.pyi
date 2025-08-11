@@ -1,14 +1,12 @@
-from _typeshed import Incomplete, Unused
-from collections.abc import Callable
-from typing import ClassVar
+from _typeshed import Incomplete
 
 from ..cmd import Command
 
 class build_clib(Command):
     description: str
-    user_options: ClassVar[list[tuple[str, str, str]]]
-    boolean_options: ClassVar[list[str]]
-    help_options: ClassVar[list[tuple[str, str | None, str, Callable[[], Unused]]]]
+    user_options: Incomplete
+    boolean_options: Incomplete
+    help_options: Incomplete
     build_clib: Incomplete
     build_temp: Incomplete
     libraries: Incomplete

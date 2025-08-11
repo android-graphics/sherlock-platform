@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.testframework;
 
@@ -68,33 +68,10 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
       sortGroup.addAction(suitesAlwaysOnTop);
     }
     sortGroup.addAction(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.name"),
-                                                            ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.description"),
+                                                             ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.description"),
                                                              AllIcons.ObjectBrowser.Sorted,
-                                                             properties, TestConsoleProperties.SORT_ALPHABETICALLY) {
-      @Override
-      public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        super.setSelected(e, state);
-        if (state) {
-          TestConsoleProperties.SORT_BY_DURATION.primSet(properties, false);
-          TestConsoleProperties.SORT_BY_DECLARATION_ORDER.primSet(properties, false);
-        }
-      }
-    });
-
-    sortGroup.addAction(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.by.declaration.order.action.name"),
-                                                            ExecutionBundle.message("junit.runing.info.sort.by.declaration.order.action.description"),
-                                                            AllIcons.ObjectBrowser.SortByType,
-                                                            properties, TestConsoleProperties.SORT_BY_DECLARATION_ORDER) {
-      @Override
-      public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        super.setSelected(e, state);
-        if (state) {
-          TestConsoleProperties.SORT_ALPHABETICALLY.primSet(properties, false);
-          TestConsoleProperties.SORT_BY_DURATION.primSet(properties, false);
-        }
-      }
-    });
-
+                                                             properties, TestConsoleProperties.SORT_ALPHABETICALLY));
+    
     final ToggleModelAction sortByStatistics = new SortByDurationAction(properties);
     myActions.add(sortByStatistics);
     sortGroup.addAction(sortByStatistics);
@@ -162,10 +139,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     myScrollToSource = new ScrollToTestSourceAction(properties);
     secondaryGroup.add(myScrollToSource);
 
-    secondaryGroup.add(new AdjustAutotestDelayActionGroup());
-    secondaryGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.running.info.show.auto.test.status.text"),
-                                                 ExecutionBundle.message("junit.running.info.show.auto.test.status.description"),
-                                                 null, properties, TestConsoleProperties.SHOW_AUTO_TEST_TOOLBAR));
+    secondaryGroup.add(new AdjustAutotestDelayActionGroup(parent));
     secondaryGroup.addSeparator();
     secondaryGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.select.first.failed.action.name"),
                                                  null, null, properties, TestConsoleProperties.SELECT_FIRST_DEFECT));
@@ -203,7 +177,6 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
       action.setModel(model);
     }
     TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_ALPHABETICALLY, createComparatorPropertyListener(model), model, true);
-    TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_BY_DECLARATION_ORDER, createComparatorPropertyListener(model), model, true);
     TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_BY_DURATION, createComparatorPropertyListener(model), model, true);
     TestFrameworkActions.addPropertyListener(TestConsoleProperties.SUITES_ALWAYS_ON_TOP, createComparatorPropertyListener(model), model, true);
   }
@@ -255,13 +228,15 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     return myOccurenceNavigator.goPreviousOccurence();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getNextOccurenceActionName() {
+  public String getNextOccurenceActionName() {
     return myOccurenceNavigator.getNextOccurenceActionName();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getPreviousOccurenceActionName() {
+  public String getPreviousOccurenceActionName() {
     return myOccurenceNavigator.getPreviousOccurenceActionName();
   }
 
@@ -293,15 +268,6 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     @Override
     public void setModel(TestFrameworkRunningModel model) {
       myModel = model;
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      super.setSelected(e, state);
-      if (state) {
-        TestConsoleProperties.SORT_BY_DECLARATION_ORDER.primSet(myModel.getProperties(), false);
-        TestConsoleProperties.SORT_ALPHABETICALLY.primSet(myModel.getProperties(), false);
-      }
     }
   }
 }

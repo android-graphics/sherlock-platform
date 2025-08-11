@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.ExecutionException;
@@ -18,7 +17,6 @@ import java.util.Objects;
 
 import static com.intellij.execution.process.impl.ProcessListUtil.COMMAND_LIST_COMMAND;
 import static com.intellij.execution.process.impl.ProcessListUtil.COMM_LIST_COMMAND;
-import static com.intellij.execution.process.impl.ProcessListUtil.PROCESS_OWNER_COMMAND;
 
 public class WslAttachHost implements XAttachHost {
   private final WSLDistribution myWsl;
@@ -27,7 +25,8 @@ public class WslAttachHost implements XAttachHost {
     myWsl = wsl;
   }
 
-  public @NotNull WSLDistribution getWsl() {
+  @NotNull
+  public WSLDistribution getWsl() {
     return myWsl;
   }
 
@@ -35,9 +34,8 @@ public class WslAttachHost implements XAttachHost {
   public @NotNull List<ProcessInfo> getProcessList() throws ExecutionException {
     String commListOutput = execAndCheckExitCode(COMM_LIST_COMMAND);
     String commandListOutput = execAndCheckExitCode(COMMAND_LIST_COMMAND);
-    var processOwnerOutput = execAndCheckExitCode(PROCESS_OWNER_COMMAND);
     String user = getUser();
-    List<ProcessInfo> processInfos = ProcessListUtil.parseLinuxOutputMacStyle(commListOutput, commandListOutput, processOwnerOutput, user);
+    List<ProcessInfo> processInfos = ProcessListUtil.parseLinuxOutputMacStyle(commListOutput, commandListOutput, user);
     if (processInfos == null) {
       throw new ExecutionException(XDebuggerBundle.message("dialog.message.error.parsing.ps.output"));
     }

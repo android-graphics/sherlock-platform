@@ -22,7 +22,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-final @NonNls
+@NonNls
+final
 class ConditionalUtils {
 
   private ConditionalUtils() {

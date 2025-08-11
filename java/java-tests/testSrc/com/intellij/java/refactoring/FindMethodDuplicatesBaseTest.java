@@ -4,7 +4,6 @@ package com.intellij.java.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.pom.java.LanguageLevel;
@@ -12,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class FindMethodDuplicatesBaseTest extends LightJavaCodeInsightTestCase {
@@ -35,7 +35,7 @@ public abstract class FindMethodDuplicatesBaseTest extends LightJavaCodeInsightT
     assertSame(TestDialog.DEFAULT, TestDialogManager.getTestImplementation());
     try {
       MethodDuplicatesHandler.invokeOnScope(getProject(), psiMethod, new AnalysisScope(getFile()));
-      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      UIUtil.dispatchAllInvocationEvents();
     }
     catch (RuntimeException e) {
       if (shouldSucceed) {

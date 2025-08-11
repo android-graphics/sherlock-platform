@@ -12,8 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger
 @Internal
 interface IndexingProgressReporter2 {
   fun setLocationBeingIndexed(fileProgressName: @NlsContexts.ProgressText String)
-  fun filesProcessed(filesProcessedCount: Int)
-
+  fun oneMoreFileProcessed()
 
   companion object {
     fun createInstance(indicator: ProgressIndicator, totalFiles: Int): IndexingProgressReporter2 {
@@ -29,7 +28,7 @@ interface IndexingProgressReporter2 {
 
 private class IndexingProgressReporter2Empty : IndexingProgressReporter2 {
   override fun setLocationBeingIndexed(fileProgressName: @NlsContexts.ProgressText String) = Unit
-  override fun filesProcessed(filesProcessedCount: Int) = Unit
+  override fun oneMoreFileProcessed() = Unit
 }
 
 private class IndexingProgressReporter2OverProgressIndicator(
@@ -48,8 +47,8 @@ private class IndexingProgressReporter2OverProgressIndicator(
     }
   }
 
-  override fun filesProcessed(filesProcessedCount: Int) {
-    val newCount = processedFiles.addAndGet(filesProcessedCount)
+  override fun oneMoreFileProcessed() {
+    val newCount = processedFiles.incrementAndGet()
     val newFraction = newCount / totalFiles.get().coerceAtLeast(1).toDouble()
     try {
       indicator.fraction = newFraction

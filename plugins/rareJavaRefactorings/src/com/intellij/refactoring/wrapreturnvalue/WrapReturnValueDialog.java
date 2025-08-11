@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.wrapreturnvalue;
 
 import com.intellij.ide.util.TreeClassChooser;
@@ -102,7 +102,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
       }
     } else if (useExistingClassButton.isSelected()) {
       final String className = existingClassField.getText().trim();
-      if (className.isEmpty() || !nameHelper.isQualifiedName(className)) {
+      if (className.length() == 0 || !nameHelper.isQualifiedName(className)) {
         throw new ConfigurationException(JavaRareRefactoringsBundle.message("dialog.message.invalid.qualified.wrapper.class.name", className));
       }
       final Object item = myFieldsCombo.getSelectedItem();
@@ -111,26 +111,29 @@ class WrapReturnValueDialog extends RefactoringDialog {
       }
     } else {
       final String className = getClassName();
-      if (className.isEmpty() || !nameHelper.isIdentifier(className)) {
+      if (className.length() == 0 || !nameHelper.isIdentifier(className)) {
         throw new ConfigurationException(JavaRareRefactoringsBundle.message("dialog.message.invalid.wrapper.class.name", className));
       }
       final String packageName = getPackageName();
 
-      if (packageName.isEmpty() || !nameHelper.isQualifiedName(packageName)) {
+      if (packageName.length() == 0 || !nameHelper.isQualifiedName(packageName)) {
         throw new ConfigurationException(JavaRareRefactoringsBundle.message("dialog.message.invalid.wrapper.class.package.name", packageName));
       }
     }
   }
 
-  private @NotNull String getInnerClassName() {
+  @NotNull
+  private String getInnerClassName() {
     return myInnerClassNameTextField.getText().trim();
   }
 
-  public @NotNull String getPackageName() {
+  @NotNull
+  public String getPackageName() {
     return packageTextField.getText().trim();
   }
 
-  public @NotNull String getClassName() {
+  @NotNull
+  public String getClassName() {
     return classNameField.getText().trim();
   }
 
@@ -140,7 +143,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
 
     final DocumentListener docListener = new DocumentAdapter() {
       @Override
-      protected void textChanged(final @NotNull DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         validateButtons();
       }
     };

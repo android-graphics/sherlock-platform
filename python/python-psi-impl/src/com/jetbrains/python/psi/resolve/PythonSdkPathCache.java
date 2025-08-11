@@ -58,7 +58,7 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
   private final Sdk mySdk;
   private final AtomicReference<PyBuiltinCache> myBuiltins = new AtomicReference<>();
 
-  public PythonSdkPathCache(final @NotNull Project project, final @NotNull Sdk sdk) {
+  public PythonSdkPathCache(@NotNull final Project project, @NotNull final Sdk sdk) {
     myProject = project;
     mySdk = sdk;
     if (project.isDisposed()) {
@@ -104,7 +104,8 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
     }
   }
 
-  public @NotNull PyBuiltinCache getBuiltins() {
+  @NotNull
+  public PyBuiltinCache getBuiltins() {
     while (true) {
       PyBuiltinCache pyBuiltinCache = myBuiltins.get();
       if (pyBuiltinCache == null || !pyBuiltinCache.isValid()) {

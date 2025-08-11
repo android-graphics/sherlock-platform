@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections;
 
 import com.intellij.testFramework.TestDataPath;
@@ -11,13 +11,6 @@ public class KtPluginXmlDomInspectionActionHighlightingTest extends PluginXmlDom
   @Override
   protected String getBasePath() {
     return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/xml/actions";
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    setUpActionClasses(!getTestName(false).contains("Without"));
   }
 
   public void testActionAbstractClass() {
@@ -63,12 +56,7 @@ public class KtPluginXmlDomInspectionActionHighlightingTest extends PluginXmlDom
                            return true
                          }
                        }""");
-
-    myFixture.addClass("""
-    package com.intellij.ui.components;
-    public class JBList {}
-    """);
-    myFixture.addFileToProject("keymaps/MyKeymap.xml", "<keymap name=\"MyKeymap\"/>");
+    myFixture.addFileToProject("keymaps/MyKeymap.xml", "<keymap/>");
     myFixture.testHighlighting("ActionComplexHighlighting.xml");
   }
 

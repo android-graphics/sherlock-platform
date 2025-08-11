@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.searching.usages.dialogs;
 
@@ -44,8 +44,9 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
     private StateRestoringCheckBox expectedUsages;
     private StateRestoringCheckBox searchInOverridingMethods;
 
+    @NotNull
     @Override
-    protected @NotNull KotlinPropertyFindUsagesOptions getFindUsagesOptions() {
+    protected KotlinPropertyFindUsagesOptions getFindUsagesOptions() {
         return (KotlinPropertyFindUsagesOptions) myFindUsagesOptions;
     }
 
@@ -98,6 +99,8 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
 
     @Override
     protected void addUsagesOptions(@NotNull JPanel optionsPanel) {
+        super.addUsagesOptions(optionsPanel);
+
         KtNamedDeclaration property = (KtNamedDeclaration) getPsiElement();
         if (property.hasModifier(KtTokens.OVERRIDE_KEYWORD) || property.hasModifier(KtTokens.OPEN_KEYWORD) ||
             property instanceof KtParameter && !((KtParameter) property).hasValOrVar()) {
@@ -147,7 +150,6 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
                     ___ -> setDisableComponentAndDestructionSearch(project, dataClassComponentCheckBox.isSelected())
             );
         }
-        addDefaultOptions(optionsPanel);
     }
 
     @Override

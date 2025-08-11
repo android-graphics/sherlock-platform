@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses;
 
 import com.intellij.lang.ASTNode;
@@ -39,12 +39,14 @@ public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForInCl
   }
 
   @Override
-  public @Nullable GrExpression getIteratedExpression() {
+  @Nullable
+  public GrExpression getIteratedExpression() {
     return findExpressionChild(this);
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getDelimiter() {
+  public PsiElement getDelimiter() {
     PsiElement in = findChildByType(GroovyTokenTypes.kIN);
     if (in != null) return in;
 

@@ -7,12 +7,14 @@ import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -20,7 +22,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 
-public class PaletteGroupHeader extends JCheckBox implements UiDataProvider {
+public class PaletteGroupHeader extends JCheckBox implements DataProvider {
   private final PaletteWindow myPaletteWindow;
   private PaletteComponentList myComponentList;
   private final PaletteGroup myGroup;
@@ -144,9 +146,11 @@ public class PaletteGroupHeader extends JCheckBox implements UiDataProvider {
   }
 
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    DataSink.uiDataSnapshot(sink, myPaletteWindow);
-    myGroup.uiDataSnapshot(sink, myPaletteWindow.getProject());
+  public @Nullable Object getData(@NotNull String dataId) {
+    Object data = myPaletteWindow.getData(dataId);
+    if (data != null) return data;
+    Project project = CommonDataKeys.PROJECT.getData(myPaletteWindow);
+    return myGroup.getData(project, dataId);
   }
 
   private class MoveFocusAction extends AbstractAction {

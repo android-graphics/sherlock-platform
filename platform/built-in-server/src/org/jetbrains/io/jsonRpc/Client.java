@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io.jsonRpc;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -24,19 +23,23 @@ public abstract class Client extends UserDataHolderBase {
     this.channel = channel;
   }
 
-  public final @NotNull EventLoop getEventLoop() {
+  @NotNull
+  public final EventLoop getEventLoop() {
     return channel.eventLoop();
   }
 
-  public final @NotNull ByteBufAllocator getByteBufAllocator() {
+  @NotNull
+  public final ByteBufAllocator getByteBufAllocator() {
     return channel.alloc();
   }
 
-  protected abstract @NotNull ChannelFuture send(@NotNull ByteBuf message);
+  @NotNull
+  protected abstract ChannelFuture send(@NotNull ByteBuf message);
 
   public abstract void sendHeartbeat();
 
-  final @Nullable <T> Promise<T> send(int messageId, @NotNull ByteBuf message) {
+  @Nullable
+  final <T> Promise<T> send(int messageId, @NotNull ByteBuf message) {
     ChannelFuture channelFuture = send(message);
     if (messageId == -1) {
       return null;

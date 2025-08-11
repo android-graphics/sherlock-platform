@@ -80,7 +80,7 @@ public class JBCefProxyTest {
       frame.setVisible(true);
     });
 
-    await(latch, "waiting onLoadEnd");
+    await(latch);
 
     assertEquals(200, statusCode.get());
   }

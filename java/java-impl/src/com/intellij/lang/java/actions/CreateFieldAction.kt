@@ -68,10 +68,7 @@ internal class JavaFieldRenderer(
   }
 
   fun renderField(): PsiField {
-    var fieldType = if (expectedTypes.isNotEmpty()) expectedTypes[0].type else PsiTypes.intType()
-    //something completely broken in this file, let's propose default value - Object
-    if (fieldType is PsiLambdaParameterType ||
-        fieldType is PsiLambdaExpressionType) fieldType = PsiType.getJavaLangObject(targetClass.manager, targetClass.getResolveScope())
+    val fieldType = if (expectedTypes.isNotEmpty()) expectedTypes[0].type else PsiTypes.intType()
     val field = JavaPsiFacade.getElementFactory(project).createField(request.fieldName, fieldType)
 
     // clean template modifiers

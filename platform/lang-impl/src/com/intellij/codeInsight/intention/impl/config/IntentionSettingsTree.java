@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
@@ -22,7 +22,6 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,10 +33,9 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
-@ApiStatus.Internal
 public abstract class IntentionSettingsTree {
   private JComponent myComponent;
   private CheckboxTree myTree;
@@ -96,9 +94,9 @@ public abstract class IntentionSettingsTree {
 
   protected abstract void selectionChanged(Object selected);
 
-  protected abstract Collection<IntentionActionMetaData> filterModel(String filter, boolean force);
+  protected abstract List<IntentionActionMetaData> filterModel(String filter, boolean force);
 
-  public void filter(@NotNull Collection<IntentionActionMetaData> intentionsToShow) {
+  public void filter(List<IntentionActionMetaData> intentionsToShow) {
     refreshCheckStatus((CheckedTreeNode)myTree.getModel().getRoot());
     reset(copyAndSort(intentionsToShow));
   }
@@ -111,7 +109,7 @@ public abstract class IntentionSettingsTree {
 
     IntentionManagerSettings intentionManagerSettings = IntentionManagerSettings.getInstance();
     myIntentionToCheckStatus.clear();
-    Collection<@NotNull IntentionActionMetaData> intentions = intentionManagerSettings.getMetaData();
+    List<IntentionActionMetaData> intentions = intentionManagerSettings.getMetaData();
     for (IntentionActionMetaData metaData : intentions) {
       myIntentionToCheckStatus.put(metaData, intentionManagerSettings.isEnabled(metaData));
     }
@@ -149,7 +147,7 @@ public abstract class IntentionSettingsTree {
     }
   }
 
-  private static @NotNull List<IntentionActionMetaData> copyAndSort(@NotNull Collection<IntentionActionMetaData> intentionsToShow) {
+  private static @NotNull List<IntentionActionMetaData> copyAndSort(@NotNull List<IntentionActionMetaData> intentionsToShow) {
     List<IntentionActionMetaData> copy = new ArrayList<>(intentionsToShow);
     copy.sort((data1, data2) -> {
       String[] category1 = data1.myCategory;
@@ -334,7 +332,7 @@ public abstract class IntentionSettingsTree {
     @Override
     public void filter() {
       String filter = getFilter();
-      if (filter != null && !filter.isEmpty()) {
+      if (filter != null && filter.length() > 0) {
         if (!myExpansionMonitor.isFreeze()) {
           myExpansionMonitor.freeze();
         }
@@ -350,7 +348,7 @@ public abstract class IntentionSettingsTree {
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
       });
       TreeUtil.expandAll(myTree);
-      if (filter == null || filter.isEmpty()) {
+      if (filter == null || filter.length() == 0) {
         TreeUtil.collapseAll(myTree, 0);
         myExpansionMonitor.restore();
       }
@@ -359,14 +357,14 @@ public abstract class IntentionSettingsTree {
     @Override
     protected void onlineFilter() {
       String filter = getFilter();
-      if (filter != null && !filter.isEmpty()) {
+      if (filter != null && filter.length() > 0) {
         if (!myExpansionMonitor.isFreeze()) {
           myExpansionMonitor.freeze();
         }
       }
       IntentionSettingsTree.this.filter(filterModel(filter, true));
       TreeUtil.expandAll(myTree);
-      if (filter == null || filter.isEmpty()) {
+      if (filter == null || filter.length() == 0) {
         TreeUtil.collapseAll(myTree, 0);
         myExpansionMonitor.restore();
       }

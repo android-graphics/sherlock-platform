@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer;
 
 import com.intellij.openapi.editor.Document;
@@ -54,7 +54,8 @@ public class DesignerEditorState implements FileEditorState {
   /**
    * @see com.intellij.openapi.fileEditor.FileEditorProvider#readState(Element, com.intellij.openapi.project.Project, VirtualFile)
    */
-  public static @NotNull FileEditorState readState(@Nullable Element sourceElement, @NotNull VirtualFile file, double defaultZoom) {
+  @NotNull
+  public static FileEditorState readState(@Nullable Element sourceElement, @NotNull VirtualFile file, double defaultZoom) {
     double zoom = defaultZoom;
     if (sourceElement != null) {
       try {

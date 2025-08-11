@@ -128,7 +128,7 @@ public final class PyInjectionUtil {
         final int nodeOffsetInParent = stringElem.getTextOffset() - expr.getTextRange().getStartOffset();
         final TextRange contentRange = stringElem.getContentRange();
         final int contentStartOffset = contentRange.getStartOffset();
-        if (formatting != Formatting.NONE || stringElem.isFormatted() || stringElem.isTemplate()) {
+        if (formatting != Formatting.NONE || stringElem.isFormatted()) {
           // Each range is relative to the start of the string element
           final List<TextRange> subsRanges;
           if (formatting != Formatting.NONE) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -167,12 +167,14 @@ public final class AttachDirectoryUtils {
 
 
 
-  private static @Nullable Module getAttachTargetModule(@NotNull Project project) {
+  @Nullable
+  private static Module getAttachTargetModule(@NotNull Project project) {
     Module[] modules = ModuleManager.getInstance(project).getModules();
     return modules.length == 0 ? null : modules[0];
   }
 
-  private static @NotNull Module createDefaultModule(@NotNull Project project) {
+  @NotNull
+  private static Module createDefaultModule(@NotNull Project project) {
     IProjectStore store = ProjectKt.getStateStore(project);
     Path proDir = store.getProjectFilePath().getParent();
     Path modulePath = proDir.resolve(project.getName() + ".iml");
@@ -180,7 +182,8 @@ public final class AttachDirectoryUtils {
     return ModuleManager.getInstance(project).newModule(modulePath, defType.getId());
   }
 
-  public static @NotNull List<VirtualFile> getAttachedDirectories(@NotNull Project project) {
+  @NotNull
+  public static List<VirtualFile> getAttachedDirectories(@NotNull Project project) {
     Module module = getAttachTargetModule(project);
     return module != null ? Arrays.asList(ModuleRootManager.getInstance(module).getContentRoots()) : Collections.emptyList();
   }

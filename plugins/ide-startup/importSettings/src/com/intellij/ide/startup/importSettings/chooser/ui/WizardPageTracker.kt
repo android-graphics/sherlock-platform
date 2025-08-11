@@ -9,7 +9,8 @@ import java.time.Duration
 
 private val logger = logger<WizardPageTracker>()
 
-internal class WizardPageTracker {
+class WizardPageTracker {
+
   private var lastEnterTimeNs: Long? = null
   private var currentStage: StartupWizardStage? = null
   fun onEnter(stage: StartupWizardStage?) {

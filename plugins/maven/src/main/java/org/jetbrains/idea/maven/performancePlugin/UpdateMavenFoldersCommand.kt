@@ -5,14 +5,12 @@ import com.intellij.build.SyncViewManager
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.FinishEventImpl
 import com.intellij.build.events.impl.MessageEventImpl
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.Disposer
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.idea.maven.project.MavenFolderResolver
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import java.util.concurrent.CountDownLatch
 
 /**
@@ -24,9 +22,6 @@ class UpdateMavenFoldersCommand(text: String, line: Int) : PerformanceCommandCor
     const val NAME = "updateMavenFolders"
     const val PREFIX = "$CMD_PREFIX$NAME"
   }
-
-  @Service(Service.Level.PROJECT)
-  private class CoroutineService(val coroutineScope: CoroutineScope)
 
   override suspend fun doExecute(context: PlaybackContext) {
     val disposable = Disposer.newDisposable()
@@ -45,7 +40,7 @@ class UpdateMavenFoldersCommand(text: String, line: Int) : PerformanceCommandCor
               latch.countDown()
             }
           }, disposable)
-        it.service<CoroutineService>().coroutineScope.launch {
+        MavenCoroutineScopeProvider.getCoroutineScope(it).launch {
           MavenFolderResolver(it).resolveFoldersAndImport()
         }
         latch.await()

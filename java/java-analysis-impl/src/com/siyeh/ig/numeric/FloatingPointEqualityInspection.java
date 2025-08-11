@@ -28,7 +28,8 @@ import org.jetbrains.annotations.NotNull;
 public final class FloatingPointEqualityInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("floating.point.equality.problem.descriptor");
   }
 

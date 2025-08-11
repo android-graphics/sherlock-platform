@@ -40,7 +40,8 @@ import org.jetbrains.annotations.NotNull;
 public class PyDefaultArgumentQuickFix extends PsiUpdateModCommandQuickFix {
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return PyPsiBundle.message("QFIX.default.argument");
   }
 

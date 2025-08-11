@@ -1,10 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import org.jetbrains.annotations.ApiStatus;
@@ -18,22 +18,21 @@ import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 /**
- * Highlights all unresolved {@link PluginConfigReference}s in code (including tests).
+ * Highlights all unresolved {@link PluginConfigReference}s in code.
  */
 @VisibleForTesting
 @ApiStatus.Internal
-public final class UnresolvedPluginConfigReferenceInspection extends DevKitUastInspectionBase {
+public final class UnresolvedPluginConfigReferenceInspection extends LocalInspectionTool {
 
   @SuppressWarnings("unchecked")
   private final Class<? extends UElement>[] HINTS = new Class[]{UInjectionHost.class};
 
   @Override
-  protected boolean isAllowed(@NotNull ProblemsHolder holder) {
-    return DevKitInspectionUtil.isAllowedIncludingTestSources(holder.getFile());
-  }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!DevKitInspectionUtil.isAllowed(holder.getFile())) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
 
-  @Override
-  protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
       @Override
       public boolean visitPolyadicExpression(@NotNull UPolyadicExpression node) {
@@ -53,15 +52,10 @@ public final class UnresolvedPluginConfigReferenceInspection extends DevKitUastI
         PsiElement element = node.getSourcePsi();
         if (element == null) return;
         for (PsiReference reference : element.getReferences()) {
-          if (reference instanceof PluginConfigReference && !reference.isSoft()) {
-            if (reference instanceof PsiPolyVariantReference polyVariantReference) {
-              if (polyVariantReference.multiResolve(false).length == 0) {
-                holder.registerProblem(reference);
-              }
-            }
-            else if (reference.resolve() == null) {
-              holder.registerProblem(reference);
-            }
+          if (reference instanceof PluginConfigReference &&
+              !reference.isSoft() &&
+              reference.resolve() == null) {
+            holder.registerProblem(reference);
           }
         }
       }

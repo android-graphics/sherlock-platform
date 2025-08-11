@@ -1,12 +1,14 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaLogger;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
@@ -14,30 +16,33 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.util.PathUtil;
+import com.intellij.util.Producer;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Supplier;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 /**
- * Provides three streams of output named system, stdout and stderr,
- * which are independent of Java's {@link System#out} and {@link System#err} but analogous to them.
+ * Provides 3 streams of output named system, stdout and stderr,
+ * which are independent of Java's {@link System#out} and {@link System#err}
+ * but analogous to them.
  * <p>
  * This output can be validated against prerecorded output in <tt>{@link #myAppPath}/outs</tt>.
  * The output files are named <i>testName[.platform][.jdkX].out</i>,
@@ -53,7 +58,6 @@ import static org.junit.Assert.fail;
  * The output is filtered and normalized to make it platform-independent.
  * To add custom normalization, override {@link #replaceAdditionalInOutput(String)}.
  */
-@SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName", "ExtractMethodRecommender"})
 public class OutputChecker {
   public static final ProcessOutputType[] OUTPUT_ORDER = {
     ProcessOutputType.SYSTEM,
@@ -73,9 +77,9 @@ public class OutputChecker {
   /** If a string containing one of the listed strings is written to {@link ProcessOutputType#STDERR}, the whole string is ignored. */
   private static final String[] IGNORED_IN_STDERR = {"Picked up _JAVA_OPTIONS:", "Picked up JAVA_TOOL_OPTIONS:"};
 
-  private final Supplier<String> myAppPath;
-  private final Supplier<String> myOutputPath;
-  private Map<Key<?>, StringBuffer> myBuffers;
+  private final Producer<String> myAppPath;
+  private final Producer<String> myOutputPath;
+  private Map<Key, StringBuffer> myBuffers;
   private String myTestName;
 
   private static String HOST_NAME = null;
@@ -83,14 +87,15 @@ public class OutputChecker {
 
   static {
     try {
-      var localHost = InetAddress.getLocalHost();
+      InetAddress localHost = InetAddress.getLocalHost();
       HOST_NAME = localHost.getHostName();
       CANONICAL_HOST_NAME = localHost.getCanonicalHostName();
     }
-    catch (UnknownHostException ignored) { }
+    catch (UnknownHostException ignored) {
+    }
   }
 
-  public OutputChecker(Supplier<String> appPath, Supplier<String> outputPath) {
+  public OutputChecker(Producer<String> appPath, Producer<String> outputPath) {
     myAppPath = appPath;
     myOutputPath = outputPath;
   }
@@ -106,7 +111,7 @@ public class OutputChecker {
   }
 
   @SuppressWarnings("SynchronizeOnThis")
-  public void print(String s, Key<?> outputType) {
+  public void print(String s, Key outputType) {
     synchronized (this) {
       if (myBuffers != null) {
         if (outputType == ProcessOutputType.STDERR && ContainerUtil.exists(IGNORED_IN_STDERR, s::contains)) {
@@ -117,7 +122,7 @@ public class OutputChecker {
     }
   }
 
-  public void println(String s, Key<?> outputType) {
+  public void println(String s, Key outputType) {
     print(s + "\n", outputType);
   }
 
@@ -125,16 +130,16 @@ public class OutputChecker {
     checkValid(jdk, false);
   }
 
-  private Path getOutFile(Path outsDir, Sdk jdk, @Nullable Path current, String prefix) {
-    var name = myTestName + prefix;
-    var res = outsDir.resolve(name + ".out");
-    if (current == null || Files.exists(res)) {
+  private File getOutFile(File outsDir, Sdk jdk, @Nullable File current, String prefix) {
+    String name = myTestName + prefix;
+    File res = new File(outsDir, name + ".out");
+    if (current == null || res.exists()) {
       current = res;
     }
-    var version = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
-    for (var feature = version.getMaxLanguageLevel().feature(); feature > 6; feature--) {
-      var outFile = outsDir.resolve(name + ".jdk" + feature + ".out");
-      if (Files.exists(outFile)) {
+    JavaSdkVersion version = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
+    for (int feature = version.getMaxLanguageLevel().feature(); feature > 6; feature--) {
+      File outFile = new File(outsDir, name + ".jdk" + feature + ".out");
+      if (outFile.exists()) {
         current = outFile;
         break;
       }
@@ -148,12 +153,13 @@ public class OutputChecker {
       throw IdeaLogger.ourErrorsOccurred;
     }
 
-    var actual = preprocessBuffer(buildOutputString(), sortClassPath);
+    String actual = preprocessBuffer(buildOutputString(), sortClassPath);
 
-    var outsDir = NioFiles.createDirectories(Path.of(myAppPath.get(), "outs"));
+    File outsDir = new File(myAppPath.produce(), "outs");
+    assert outsDir.exists() || outsDir.mkdirs() : outsDir;
 
-    var outFile = getOutFile(outsDir, jdk, null, "");
-    if (!Files.exists(outFile)) {
+    File outFile = getOutFile(outsDir, jdk, null, "");
+    if (!outFile.exists()) {
       if (SystemInfo.isWindows) {
         outFile = getOutFile(outsDir, jdk, outFile, ".win");
       }
@@ -162,20 +168,20 @@ public class OutputChecker {
       }
     }
 
-    if (!Files.exists(outFile)) {
-      Files.writeString(outFile, actual);
-      fail("Test file created " + outFile + "\n" + "**************** Don't forget to put it into VCS! *******************");
+    if (!outFile.exists()) {
+      FileUtil.writeToFile(outFile, actual);
+      fail("Test file created " + outFile.getPath() + "\n" + "**************** Don't forget to put it into VCS! *******************");
     }
     else {
-      var originalText = Files.readString(outFile);
-      var expected = StringUtilRt.convertLineSeparators(originalText);
+      String originalText = FileUtilRt.loadFile(outFile, CharsetToolkit.UTF8);
+      String expected = StringUtilRt.convertLineSeparators(originalText);
       if (!expected.equals(actual)) {
         System.out.println("expected:");
         System.out.println(originalText);
         System.out.println("actual:");
         System.out.println(actual);
 
-        var len = Math.min(expected.length(), actual.length());
+        int len = Math.min(expected.length(), actual.length());
         if (expected.length() != actual.length()) {
           System.out.println("Text sizes differ: expected " + expected.length() + " but actual: " + actual.length());
         }
@@ -186,15 +192,15 @@ public class OutputChecker {
           System.out.println("Rest from actual text is: \"" + actual.substring(len) + "\"");
         }
 
-        throw new FileComparisonFailedError(null, expected, actual, outFile.toString());
+        throw new FileComparisonFailedError(null, expected, actual, outFile.getPath());
       }
     }
   }
 
   private synchronized String buildOutputString() {
-    var result = new StringBuilder();
-    for (Key<?> key : OUTPUT_ORDER) {
-      var buffer = myBuffers.get(key);
+    StringBuilder result = new StringBuilder();
+    for (Key key : OUTPUT_ORDER) {
+      StringBuffer buffer = myBuffers.get(key);
       if (buffer != null) {
         result.append(buffer);
       }
@@ -202,31 +208,26 @@ public class OutputChecker {
     return result.toString();
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
-  private String preprocessBuffer(String buffer, boolean sortClassPath) {
-    var application = ApplicationManager.getApplication();
+  private String preprocessBuffer(String buffer, boolean sortClassPath) throws Exception {
+    Application application = ApplicationManager.getApplication();
 
     if (application == null) return buffer;
 
     return ReadAction.compute(() -> {
-      var result = buffer;
+      String result = buffer;
 
       result = result.replace("\r\n", "\n");
       result = result.replace('\r', '\n');
       result = replaceAdditionalInOutput(result);
-      result = replacePath(result, myAppPath.get(), "!APP_PATH!");
-      result = replacePath(result, myOutputPath.get(), "!OUTPUT_PATH!");
+      result = replacePath(result, myAppPath.produce(), "!APP_PATH!");
+      result = replacePath(result, myOutputPath.produce(), "!OUTPUT_PATH!");
       result = replacePath(result, JavaSdkUtil.getIdeaRtJarPath(), "!RT_JAR!");
       if (PluginManagerCore.isRunningFromSources()) {
         result = replacePath(result, DebuggerUtilsImpl.getIdeaRtPath(), "!RT_JAR!");
       }
 
-      var junit4JarPaths = StringUtil.join(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"), java.io.File.pathSeparator);
+      String junit4JarPaths = StringUtil.join(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"), File.pathSeparator);
       result = replacePath(result, junit4JarPaths, "!JUNIT4_JARS!");
-
-      @SuppressWarnings("removal") var homeDirectory = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomeDirectory();
-      assertNotNull(homeDirectory);
-      result = replacePath(result, homeDirectory.getPath(), JDK_HOME_STR);
 
       if (!StringUtil.isEmpty(CANONICAL_HOST_NAME)) {
         result = StringUtil.replace(result, CANONICAL_HOST_NAME, "!HOST_NAME!", true);
@@ -236,15 +237,19 @@ public class OutputChecker {
       }
       result = result.replace("127.0.0.1", "!HOST_NAME!");
 
-      var productionFile = Path.of(PathUtil.getJarPathForClass(OutputChecker.class));
-      if (Files.isDirectory(productionFile)) {
-        result = replacePath(result, UriUtil.trimTrailingSlashes(productionFile.getParent().toUri().toString()), "!PRODUCTION_PATH!");
+      VirtualFile homeDirectory = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomeDirectory();
+      assertNotNull(homeDirectory);
+      result = replacePath(result, homeDirectory.getPath(), JDK_HOME_STR);
+
+      File productionFile = new File(PathUtil.getJarPathForClass(OutputChecker.class));
+      if (productionFile.isDirectory()) {
+        result = replacePath(result, UriUtil.trimTrailingSlashes(productionFile.getParentFile().toURI().toString()), "!PRODUCTION_PATH!");
       }
 
       result = replacePath(result, PathManager.getHomePath(), "!IDEA_HOME!");
       result = result.replace("Process finished with exit code 255", "Process finished with exit code -1");
 
-      result = result.replaceAll(" -javaagent:.*?debugger-agent\\.jar(=.+?\\.props)?", "");
+      result = result.replaceAll(" -javaagent:.*debugger-agent\\.jar", "");
       result = result.replaceAll(" -agentpath:\\S*memory_agent([\\w^\\s]*)?\\.\\S+", "");
       result = result.replaceAll("!HOST_NAME!:\\d*", "!HOST_NAME!:!HOST_PORT!");
       result = result.replaceAll("at '.*?'", "at '!HOST_NAME!:PORT_NAME!'");
@@ -255,14 +260,11 @@ public class OutputChecker {
       result = result.replaceAll("\"(-D.*?)\"", "$1");  // unquote extra params
       result = result.replaceAll("-Didea.launcher.port=\\d*", "-Didea.launcher.port=!IDEA_LAUNCHER_PORT!");
       result = result.replaceAll("-Dfile.encoding=[\\w-]*", "-Dfile.encoding=!FILE_ENCODING!");
-      // Since Java 18, these options are added automatically to avoid garbled text in the console
+      // Since Java 18, these options are added automatically to avoid garbled text in console
       // See JdkCommandLineSetup::appendEncoding and IDEA-291006
       result = result.replace("-Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 ", "");
       result = result.replace("-Dkotlinx.coroutines.debug.enable.creation.stack.trace=false ", "");
       result = result.replace("-Ddebugger.agent.enable.coroutines=true ", "");
-      result = result.replace("-Dkotlinx.coroutines.debug.enable.flows.stack.trace=true ", "");
-      result = result.replace("-Dkotlinx.coroutines.debug.enable.mutable.state.flows.stack.trace=true ", "");
-      result = result.replace("-Ddebugger.agent.support.throwable=false ", "");
       result = result.replaceAll("\\((.*):\\d+\\)", "($1:!LINE_NUMBER!)");
 
       result = fixSlashes(result, JDK_HOME_STR);
@@ -270,15 +272,15 @@ public class OutputChecker {
 
       result = stripQuotesAroundClasspath(result);
 
-      var matcher = Pattern.compile("-classpath\\s+(\\S+)\\s+").matcher(result);
+      Matcher matcher = Pattern.compile("-classpath\\s+(\\S+)\\s+").matcher(result);
       while (matcher.find()) {
-        var classPath = matcher.group(1);
-        var classPathElements = classPath.split(java.io.File.pathSeparator);
+        String classPath = matcher.group(1);
+        String[] classPathElements = classPath.split(File.pathSeparator);
 
         // combine all JDK .jars into one marker
         List<String> classpathRes = new ArrayList<>();
-        var hasJdkJars = false;
-        for (var element : classPathElements) {
+        boolean hasJdkJars = false;
+        for (String element : classPathElements) {
           if (!element.startsWith(JDK_HOME_STR)) {
             classpathRes.add(element);
           }
@@ -294,7 +296,7 @@ public class OutputChecker {
           Collections.sort(classpathRes);
         }
 
-        var sortedPath = StringUtil.join(classpathRes, ";");
+        String sortedPath = StringUtil.join(classpathRes, ";");
         result = result.replace(" " + classPath + " ", " " + sortedPath + " ");
       }
 
@@ -312,14 +314,14 @@ public class OutputChecker {
   }
 
   private static String fixSlashes(String text, @SuppressWarnings("SameParameterValue") String jdkHomeMarker) {
-    var commandLineStart = text.indexOf(jdkHomeMarker);
+    int commandLineStart = text.indexOf(jdkHomeMarker);
     while (commandLineStart != -1) {
-      var builder = new StringBuilder(text);
-      var i = commandLineStart + 1;
+      StringBuilder builder = new StringBuilder(text);
+      int i = commandLineStart + 1;
       while (i < builder.length()) {
-        var c = builder.charAt(i);
+        char c = builder.charAt(i);
         if (c == '\n') break;
-        if (c == java.io.File.separatorChar) builder.setCharAt(i, '\\');
+        if (c == File.separatorChar) builder.setCharAt(i, '\\');
         i++;
       }
       text = builder.toString();
@@ -332,14 +334,14 @@ public class OutputChecker {
     return str;
   }
 
-  // do not depend on spaces in the classpath
+  // do not depend on spaces in classpath
   private static String stripQuotesAroundClasspath(String result) {
-    var cp = "-classpath ";
-    var cpIdx = 0;
+    String cp = "-classpath ";
+    int cpIdx = 0;
     while (true) {
       cpIdx = result.indexOf(cp, cpIdx);
       if (cpIdx == -1) break;
-      var spaceIdx = result.indexOf(" ", cpIdx + cp.length());
+      int spaceIdx = result.indexOf(" ", cpIdx + cp.length());
       if (spaceIdx == -1) break;
       result = result.substring(0, cpIdx) +
                cp +

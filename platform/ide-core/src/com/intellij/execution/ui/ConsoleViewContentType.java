@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -56,7 +56,7 @@ public class ConsoleViewContentType {
     ourRegisteredTypes.put(ProcessOutputTypes.STDERR, ERROR_OUTPUT);
   }
 
-  public ConsoleViewContentType(final @NonNls String name, final TextAttributes textAttributes) {
+  public ConsoleViewContentType(@NonNls final String name, final TextAttributes textAttributes) {
     myName = name;
     myTextAttributes = textAttributes;
     myTextAttributesKey = null;
@@ -72,7 +72,6 @@ public class ConsoleViewContentType {
     return myName;
   }
 
-  @Override
   public String toString() {
     return myName;
   }
@@ -90,11 +89,13 @@ public class ConsoleViewContentType {
     return myTextAttributes;
   }
 
-  public @Nullable TextAttributesKey getAttributesKey() {
+  @Nullable
+  public TextAttributesKey getAttributesKey() {
     return myTextAttributesKey;
   }
 
-  public static @NotNull ConsoleViewContentType registerNewConsoleViewType(@NotNull Key<?> key, @NotNull TextAttributesKey attributesKey) {
+  @NotNull
+  public static ConsoleViewContentType registerNewConsoleViewType(@NotNull Key<?> key, @NotNull TextAttributesKey attributesKey) {
     ConsoleViewContentType type = new ConsoleViewContentType(key.toString(), attributesKey);
     registerNewConsoleViewType(key, type);
     return type;
@@ -104,7 +105,8 @@ public class ConsoleViewContentType {
     ourRegisteredTypes.put(processOutputType, attributes);
   }
 
-  public static synchronized @NotNull ConsoleViewContentType getConsoleViewType(@NotNull Key<?> processOutputType) {
+  @NotNull
+  public static synchronized ConsoleViewContentType getConsoleViewType(@NotNull Key<?> processOutputType) {
     ConsoleViewContentType type = ourRegisteredTypes.get(processOutputType);
     if (type != null) {
       return type;
@@ -113,7 +115,8 @@ public class ConsoleViewContentType {
     return SYSTEM_OUTPUT;
   }
 
-  public static synchronized @NotNull Collection<ConsoleViewContentType> getRegisteredTypes() {
+  @NotNull
+  public static synchronized Collection<ConsoleViewContentType> getRegisteredTypes() {
     return ourRegisteredTypes.values();
   }
 

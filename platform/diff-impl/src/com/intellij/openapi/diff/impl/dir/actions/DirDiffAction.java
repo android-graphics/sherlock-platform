@@ -56,8 +56,9 @@ public abstract class DirDiffAction extends ToggleAction implements ShortcutProv
     e.getPresentation().setEnabled(!getModel().isUpdating());
   }
 
+  @Nullable
   @Override
-  public @Nullable ShortcutSet getShortcut() {
+  public ShortcutSet getShortcut() {
     return getShortcutSet();
   }
 

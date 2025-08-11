@@ -32,7 +32,8 @@ public final class EmptyTryBlockInspection extends BaseInspection {
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "empty.try.block.problem.descriptor");
   }

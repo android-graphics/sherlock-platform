@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.CommonBundle;
@@ -63,7 +63,8 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
     );
   }
 
-  private @NotNull String getProjectName() {
+  @NotNull
+  private String getProjectName() {
     Project project = ProjectUtil.guessCurrentProject(getSchemesPanel());
     return project.getName();
   }
@@ -103,7 +104,8 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
     }
   }
 
-  private @Nullable CodeStyleScheme importExternalCodeStyle(@NotNull SchemeImporter<CodeStyleScheme> importer, @NotNull CodeStyleScheme currentScheme)
+  @Nullable
+  private CodeStyleScheme importExternalCodeStyle(@NotNull SchemeImporter<CodeStyleScheme> importer, @NotNull CodeStyleScheme currentScheme)
     throws SchemeImportException {
     final VirtualFile selectedFile = SchemeImportUtil
       .selectImportSource(importer.getSourceExtensions(), getSchemesPanel(), CodeStyleSchemesUIConfiguration.Util.getRecentImportFile(), null);
@@ -133,32 +135,12 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
     return null;
   }
 
-  @Override
-  protected @NotNull Class<CodeStyleScheme> getSchemeType() {
-    return CodeStyleScheme.class;
-  }
-
-  @Override
-  protected @NotNull CodeStyleSchemesModel getModel() {
-    return (CodeStyleSchemesModel)super.getModel();
-  }
-
-  @Override
-  public void copyToProject(@NotNull CodeStyleScheme scheme) {
-    int copyToProjectConfirmation = MessageDialogBuilder.yesNo(ApplicationBundle.message("settings.editor.scheme.copy.to.project.title"),
-                                                               ApplicationBundle.message("settings.editor.scheme.copy.to.project.message",
-                                                                                         scheme.getName()))
-      .show();
-    if (copyToProjectConfirmation == Messages.YES) {
-      getModel().copyToProject(scheme);
-    }
-  }
-
   private final class SchemeCreator implements SchemeFactory<CodeStyleScheme> {
     private CodeStyleScheme myCreatedScheme = null;
 
+    @NotNull
     @Override
-    public @NotNull CodeStyleScheme createNewScheme(@Nullable String targetName) {
+    public CodeStyleScheme createNewScheme(@Nullable String targetName) {
       if (targetName == null) targetName = ApplicationBundle.message("code.style.scheme.import.unnamed");
       myCreatedScheme = getModel().createNewScheme(targetName, getCurrentScheme());
       getModel().addScheme(myCreatedScheme, true);
@@ -172,6 +154,29 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
     CodeStyleScheme getCreatedScheme() {
       return myCreatedScheme;
     }
+  }
+
+  @NotNull
+  @Override
+  protected Class<CodeStyleScheme> getSchemeType() {
+    return CodeStyleScheme.class;
+  }
+
+  @Override
+  public void copyToProject(@NotNull CodeStyleScheme scheme) {
+    int copyToProjectConfirmation = MessageDialogBuilder.yesNo(ApplicationBundle.message("settings.editor.scheme.copy.to.project.title"),
+                                                               ApplicationBundle.message("settings.editor.scheme.copy.to.project.message",
+                                                                                         scheme.getName()))
+      .show();
+    if (copyToProjectConfirmation == Messages.YES) {
+      getModel().copyToProject(scheme);
+    }
+  }
+
+  @NotNull
+  @Override
+  protected CodeStyleSchemesModel getModel() {
+    return (CodeStyleSchemesModel)super.getModel();
   }
 
   private static String getSharedImportSource() {

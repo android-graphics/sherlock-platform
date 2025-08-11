@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
@@ -42,7 +42,9 @@ public abstract class ResolverProcessor<T extends GroovyResolveResult> extends G
     myCandidates.add(candidate);
   }
 
-  private static @NonNls @NotNull String getElementInfo(@NotNull PsiElement element) {
+  @NonNls
+  @NotNull
+  private static String getElementInfo(@NotNull PsiElement element) {
     String text;
     if (element instanceof LightElement) {
       final PsiElement context = element.getContext();
@@ -55,7 +57,8 @@ public abstract class ResolverProcessor<T extends GroovyResolveResult> extends G
     return "invalid resolve candidate: " + element.getClass() + ", text: " + text;
   }
 
-  protected @NotNull List<T> getCandidatesInternal() {
+  @NotNull
+  protected List<T> getCandidatesInternal() {
     return myCandidates == null ? Collections.emptyList() : myCandidates;
   }
 
@@ -101,7 +104,8 @@ public abstract class ResolverProcessor<T extends GroovyResolveResult> extends G
   }
 
   @Override
-  public @NonNls String toString() {
+  @NonNls
+  public String toString() {
     return "NameHint: '" +
            myName +
            "', " +

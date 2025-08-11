@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -19,7 +19,8 @@ public final class PassThroughIdeFocusManager extends IdeFocusManager {
   }
 
   @Override
-  public @NotNull ActionCallback requestFocus(@NotNull Component c, boolean forced) {
+  @NotNull
+  public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
     c.requestFocus();
     return ActionCallback.DONE;
   }
@@ -81,8 +82,9 @@ public final class PassThroughIdeFocusManager extends IdeFocusManager {
     return null;
   }
 
+  @Nullable
   @Override
-  public @Nullable Window getLastFocusedIdeWindow() {
+  public Window getLastFocusedIdeWindow() {
     return null;
   }
 

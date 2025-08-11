@@ -72,7 +72,8 @@ public final class PsiAdapter {
      * @param name  name of method to find
      * @return the found method, null if none exist
      */
-    public static @Nullable PsiMethod findMethodByName(PsiClass clazz, String name) {
+    @Nullable
+    public static PsiMethod findMethodByName(PsiClass clazz, String name) {
         PsiMethod[] methods = clazz.getMethods();
 
         // use reverse to find from bottom as the duplicate conflict resolution policy requires this
@@ -311,7 +312,8 @@ public final class PsiAdapter {
      * @return the fully qualified classname, null if the field is a primitive.
      * @see #getTypeClassName(PsiType) for the non qualified version.
      */
-    public static @Nullable String getTypeQualifiedClassName(PsiType type) {
+    @Nullable
+    public static String getTypeQualifiedClassName(PsiType type) {
         if (isPrimitiveType(type)) {
             return null;
         }
@@ -332,7 +334,8 @@ public final class PsiAdapter {
      * @return the classname, null if the field is a primitive.
      * @see #getTypeQualifiedClassName(PsiType) for the qualified version.
      */
-    public static @Nullable String getTypeClassName(PsiType type) {
+    @Nullable
+    public static String getTypeClassName(PsiType type) {
         String name = getTypeQualifiedClassName(type);
 
         // return null if it was a primitive type
@@ -349,7 +352,8 @@ public final class PsiAdapter {
      * @param clazz the class.
      * @return the method if it exists, null if not.
      */
-    public static @Nullable PsiMethod findPublicStaticVoidMainMethod(PsiClass clazz) {
+    @Nullable
+    public static PsiMethod findPublicStaticVoidMainMethod(PsiClass clazz) {
         PsiMethod[] methods = clazz.findMethodsByName("main", false);
 
         // is it public static void main(String[] args)
@@ -398,7 +402,8 @@ public final class PsiAdapter {
      * @return the added/replace javadoc comment, null if the was an existing javadoc and it should <b>not</b> be replaced.
      * @throws IncorrectOperationException is thrown if error adding/replacing the javadoc comment.
      */
-    public static @Nullable PsiComment addOrReplaceJavadoc(PsiMethod method, String javadoc, boolean replace) {
+    @Nullable
+    public static PsiComment addOrReplaceJavadoc(PsiMethod method, String javadoc, boolean replace) {
         final Project project = method.getProject();
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         PsiComment comment = factory.createCommentFromText(javadoc, null);
@@ -465,7 +470,8 @@ public final class PsiAdapter {
      * @return the field name if this is a getter method.
      * @see #isGetterMethod(PsiMethod) for the getter check
      */
-    public static @Nullable String getGetterFieldName(PsiMethod method) {
+    @Nullable
+    public static String getGetterFieldName(PsiMethod method) {
         // must be a getter
         if (!isGetterMethod(method)) {
             return null;
@@ -500,7 +506,8 @@ public final class PsiAdapter {
      * @param clazz the class.
      * @return the method if it exists, null if not.
      */
-    public static @Nullable PsiMethod findEqualsMethod(PsiClass clazz) {
+    @Nullable
+    public static PsiMethod findEqualsMethod(PsiClass clazz) {
         PsiMethod[] methods = clazz.findMethodsByName("equals", false);
 
         // is it public boolean equals(Object o)
@@ -546,7 +553,8 @@ public final class PsiAdapter {
      * @param clazz the class.
      * @return the method if it exists, null if not.
      */
-    public static @Nullable PsiMethod findHashCodeMethod(PsiClass clazz) {
+    @Nullable
+    public static PsiMethod findHashCodeMethod(PsiClass clazz) {
         PsiMethod[] methods = clazz.findMethodsByName("hashCode", false);
 
         // is it public int hashCode()

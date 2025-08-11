@@ -15,7 +15,4 @@
  */
 package com.intellij.diagnostic.hprof.classstore
 
-import org.jetbrains.annotations.ApiStatus
-
-@ApiStatus.Internal
 class StaticField(val name: String, val value: Long)

@@ -1,4 +1,3 @@
-// PRIORITY: LOW
 package test
 
 object O {

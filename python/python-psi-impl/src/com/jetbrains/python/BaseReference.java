@@ -26,12 +26,14 @@ public abstract class BaseReference implements PsiReference, PyUserInitiatedReso
   }
 
   @Override
-  public @NotNull PsiElement getElement() {
+  @NotNull
+  public PsiElement getElement() {
     return myElement;
   }
 
   @Override
-  public @NotNull TextRange getRangeInElement() {
+  @NotNull
+  public TextRange getRangeInElement() {
     if (myTextRange == null) {
       return new TextRange(0, myElement.getTextLength());
     }
@@ -39,7 +41,8 @@ public abstract class BaseReference implements PsiReference, PyUserInitiatedReso
   }
 
   @Override
-  public @NotNull String getCanonicalText() {
+  @NotNull
+  public String getCanonicalText() {
     return myElement.getText();
   }
 
@@ -66,8 +69,9 @@ public abstract class BaseReference implements PsiReference, PyUserInitiatedReso
     return false;
   }
 
+  @Nullable
   @Override
-  public @Nullable PsiElement userInitiatedResolve() {
+  public PsiElement userInitiatedResolve() {
     // Override this method if your reference may benefit from this knowledge
     return resolve();
   }

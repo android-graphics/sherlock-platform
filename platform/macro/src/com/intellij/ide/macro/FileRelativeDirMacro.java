@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.macro;
 
@@ -11,13 +11,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public class FileRelativeDirMacro extends Macro {
+  @NotNull
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return "FileRelativeDir";
   }
 
+  @NotNull
   @Override
-  public @NotNull String getDescription() {
+  public String getDescription() {
     return IdeCoreBundle.message("macro.file.directory.relative");
   }
 

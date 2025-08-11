@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.Utils;
@@ -35,8 +35,6 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.accessibility.AccessibleContext;
-import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
@@ -45,7 +43,9 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -316,7 +316,8 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     updateIconsLayout();
   }
 
-  public @NotNull JTextArea getTextArea() {
+  @NotNull
+  public JTextArea getTextArea() {
     return myTextArea;
   }
 
@@ -421,24 +422,6 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
         if (selectedIcon != null) return selectedIcon;
       }
       return super.getIcon();
-    }
-
-    @Override
-    public @NotNull AccessibleContext getAccessibleContext() {
-      if (accessibleContext == null) {
-        accessibleContext = new AccessibleActionButton() {
-          @Override
-          public AccessibleRole getAccessibleRole() {
-            if (MyActionButton.this.getButtonLook() == FIELD_INPLACE_LOOK) {
-              return AccessibleRole.CHECK_BOX;
-            }
-            else {
-              return super.getAccessibleRole();
-            }
-          }
-        };
-      }
-      return accessibleContext;
     }
   }
 

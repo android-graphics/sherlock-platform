@@ -24,7 +24,8 @@ import org.jetbrains.annotations.NotNull;
 public class PythonParserDefinition implements ParserDefinition {
 
   @Override
-  public @NotNull Lexer createLexer(Project project) {
+  @NotNull
+  public Lexer createLexer(Project project) {
     return new PythonIndentingLexer();
   }
 
@@ -34,27 +35,32 @@ public class PythonParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public @NotNull TokenSet getWhitespaceTokens() {
+  @NotNull
+  public TokenSet getWhitespaceTokens() {
     return TokenSet.create(PyTokenTypes.LINE_BREAK, PyTokenTypes.SPACE, PyTokenTypes.TAB, PyTokenTypes.FORMFEED);
   }
 
   @Override
-  public @NotNull TokenSet getCommentTokens() {
+  @NotNull
+  public TokenSet getCommentTokens() {
     return TokenSet.create(PyTokenTypes.END_OF_LINE_COMMENT);
   }
 
   @Override
-  public @NotNull TokenSet getStringLiteralElements() {
+  @NotNull
+  public TokenSet getStringLiteralElements() {
     return TokenSet.orSet(PyTokenTypes.STRING_NODES, PyTokenTypes.FSTRING_TOKENS);
   }
 
   @Override
-  public @NotNull PsiParser createParser(Project project) {
+  @NotNull
+  public PsiParser createParser(Project project) {
     return new PyParser();
   }
 
   @Override
-  public @NotNull PsiElement createElement(@NotNull ASTNode node) {
+  @NotNull
+  public PsiElement createElement(@NotNull ASTNode node) {
     final IElementType type = node.getElementType();
     if (type instanceof PyElementType pyElType) {
       return pyElType.createElement(node);

@@ -7,7 +7,6 @@ import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.platform.diagnostic.telemetry.OtlpConfiguration.getTraceEndpoint
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.exporters.*
 import com.intellij.platform.util.http.ContentType
@@ -29,6 +28,10 @@ import kotlin.time.Duration.Companion.minutes
 
 private const val chunkSize = 512
 
+fun getOtlpEndPoint(): String? {
+  return normalizeOtlpEndPoint(System.getProperty("idea.diagnostic.opentelemetry.otlp"))
+}
+
 internal class OtlpService private constructor() {
   private val spans = Channel<ActivityImpl?>(capacity = Channel.UNLIMITED)
 
@@ -42,7 +45,7 @@ internal class OtlpService private constructor() {
   fun process(coroutineScope: CoroutineScope,
               batchSpanProcessor: BatchSpanProcessor?,
               opentelemetrySdkResource: io.opentelemetry.sdk.resources.Resource): Job? {
-    val endpoint = getTraceEndpoint()
+    val endpoint = getOtlpEndPoint()
     if (endpoint == null && batchSpanProcessor == null) {
       return null
     }

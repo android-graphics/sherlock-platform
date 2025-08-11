@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
-import org.jetbrains.annotations.ApiStatus
 import kotlin.math.min
 
 /**
@@ -16,7 +15,6 @@ import kotlin.math.min
  *
  * Computes nothing, just shows results from cache, the main work happens in [CodeVisionPass].
  */
-@ApiStatus.Internal
 class CodeVisionProviderAdapter(internal val delegate: DaemonBoundCodeVisionProvider) : CodeVisionProvider<Unit> {
   override fun precomputeOnUiThread(editor: Editor) {
     // nothing

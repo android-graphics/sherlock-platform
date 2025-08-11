@@ -11,10 +11,8 @@ import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.Collections;
@@ -23,7 +21,6 @@ import java.util.List;
 /**
  * @author michael.golubev
  */
-@ApiStatus.Internal
 public abstract class CloudServerRuntimeInstance
   <DC extends DeploymentConfiguration,
     A extends CloudAgent,
@@ -112,7 +109,7 @@ public abstract class CloudServerRuntimeInstance
     }, callback);
   }
 
-  protected @Unmodifiable List<CloudApplicationRuntime> getApplications() throws ServerRuntimeException {
+  protected List<CloudApplicationRuntime> getApplications() throws ServerRuntimeException {
     return getAgentTaskExecutor().execute(() -> {
       CloudRemoteApplication[] applications = getAgent().getApplications();
       if (applications == null) {

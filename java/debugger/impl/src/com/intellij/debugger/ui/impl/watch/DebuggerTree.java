@@ -7,7 +7,7 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -123,12 +123,12 @@ public abstract class DebuggerTree extends DnDAwareTree implements UiDataProvide
     if (node == null || node.getDescriptor() == null) {
       return;
     }
-    DebuggerManagerThreadImpl managerThread = getDebuggerContext().getManagerThread();
-    if (managerThread != null) {
+    final DebugProcessImpl debugProcess = getDebuggerContext().getDebugProcess();
+    if (debugProcess != null) {
       DebuggerCommandImpl command = getBuildNodeCommand(node);
       if (command != null) {
         node.add(myNodeManager.createMessageNode(MessageDescriptor.EVALUATING));
-        managerThread.schedule(command);
+        debugProcess.getManagerThread().schedule(command);
       }
     }
   }
@@ -280,13 +280,13 @@ public abstract class DebuggerTree extends DnDAwareTree implements UiDataProvide
 
   public void rebuild(final DebuggerContextImpl context) {
     ThreadingAssertions.assertEventDispatchThread();
-    DebuggerManagerThreadImpl managerThread = context.getManagerThread();
-    if (managerThread == null) {
+    final DebugProcessImpl process = context.getDebugProcess();
+    if (process == null) {
       return; // empty context, no process available yet
     }
     myDebuggerContext = context;
     saveState();
-    managerThread.schedule(PrioritizedTask.Priority.NORMAL, () -> getNodeFactory().setHistoryByContext(context));
+    process.getManagerThread().schedule(PrioritizedTask.Priority.NORMAL, () -> getNodeFactory().setHistoryByContext(context));
     build(context);
   }
 

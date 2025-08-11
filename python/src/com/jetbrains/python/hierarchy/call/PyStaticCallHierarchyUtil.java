@@ -128,7 +128,7 @@ public final class PyStaticCallHierarchyUtil {
     if (element instanceof PyFunction) {
       final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), null);
       final Collection<PsiElement> superMethods = PySuperMethodsSearch.search((PyFunction)element, true, context).findAll();
-      if (!superMethods.isEmpty()) {
+      if (superMethods.size() > 0) {
         final PsiElement next = superMethods.iterator().next();
         if (next instanceof PyFunction && !isInObject((PyFunction)next)) {
           List<PsiElement> allMethods = new ArrayList<>();

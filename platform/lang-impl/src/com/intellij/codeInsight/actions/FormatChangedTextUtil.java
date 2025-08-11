@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,10 +14,9 @@ import org.jetbrains.annotations.Nullable;
 @Deprecated
 public class FormatChangedTextUtil {
 
-  // External usages
-  @SuppressWarnings("unused")
-  public @Nullable ChangedRangesInfo getChangedRangesInfo(@NotNull PsiFile file) {
-    return VcsFacade.getInstance().getChangedRangesInfo(file);
+  @NotNull
+  public static FormatChangedTextUtil getInstance() {
+    return ApplicationManager.getApplication().getService(FormatChangedTextUtil.class);
   }
 
   @SuppressWarnings("unused") // External usages
@@ -30,8 +29,10 @@ public class FormatChangedTextUtil {
     return VcsFacade.getInstance().isChangeNotTrackedForFile(project, file);
   }
 
-  public static @NotNull FormatChangedTextUtil getInstance() {
-    return ApplicationManager.getApplication().getService(FormatChangedTextUtil.class);
+  @SuppressWarnings("unused") // External usages
+  @Nullable
+  public ChangedRangesInfo getChangedRangesInfo(@NotNull PsiFile file) {
+    return VcsFacade.getInstance().getChangedRangesInfo(file);
   }
 
 }

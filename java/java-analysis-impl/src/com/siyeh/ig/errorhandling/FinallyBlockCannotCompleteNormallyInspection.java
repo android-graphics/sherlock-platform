@@ -29,12 +29,14 @@ public final class FinallyBlockCannotCompleteNormallyInspection
   extends BaseInspection {
 
   @Override
-  public @NotNull String getID() {
+  @NotNull
+  public String getID() {
     return "finally";
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "finally.block.cannot.complete.normally.problem.descriptor");
   }

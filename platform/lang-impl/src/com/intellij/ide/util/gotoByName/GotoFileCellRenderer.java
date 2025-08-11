@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.Objects;
 
 public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSystemItem> {
   private final int myMaxWidth;
@@ -51,7 +52,8 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
     return "(" + path + ")";
   }
 
-  public static @Nullable String getRelativePath(final VirtualFile virtualFile, final Project project) {
+  @Nullable
+  public static String getRelativePath(final VirtualFile virtualFile, final Project project) {
     if (project == null) {
       return virtualFile.getPresentableUrl();
     }
@@ -73,7 +75,8 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
     return url;
   }
 
-  public static @Nullable VirtualFile getAnyRoot(@NotNull VirtualFile virtualFile, @NotNull Project project) {
+  @Nullable
+  public static VirtualFile getAnyRoot(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     VirtualFile root = index.getContentRootForFile(virtualFile);
     if (root == null) root = index.getClassRootForFile(virtualFile);
@@ -85,7 +88,8 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
     return root;
   }
 
-  static @NotNull String getRelativePathFromRoot(@NotNull VirtualFile file, @NotNull VirtualFile root) {
+  @NotNull
+  static String getRelativePathFromRoot(@NotNull VirtualFile file, @NotNull VirtualFile root) {
     return root.getName() + File.separatorChar + VfsUtilCore.getRelativePath(file, root, File.separatorChar);
   }
 
@@ -110,9 +114,7 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
     Color color = list.getForeground();
     if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color);
 
-    ItemPresentation presentation = item.getPresentation();
-    if (presentation == null) return false;
-
+    ItemPresentation presentation = Objects.requireNonNull(item.getPresentation());
     renderer.append(presentation.getPresentableText() + " ", nameAttributes);
     renderer.setIcon(presentation.getIcon(true));
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.ide.impl.OpenProjectTask
@@ -6,7 +6,6 @@ import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorSplitterState
@@ -30,7 +29,7 @@ import java.nio.file.Path
 private val CUSTOM_PROJECT_DESCRIPTOR = object : LightProjectDescriptor() {
   override fun getOpenProjectOptions(): OpenProjectTask {
     return OpenProjectTask {
-      beforeInit = { it.putUserData(FileEditorManagerKeys.ALLOW_IN_LIGHT_PROJECT, true) }
+      beforeInit = { it.putUserData(FileEditorManagerImpl.ALLOW_IN_LIGHT_PROJECT, true) }
     }
   }
 }
@@ -43,7 +42,7 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
     super.setUp()
 
     val project = project
-    project.putUserData(FileEditorManagerKeys.ALLOW_IN_LIGHT_PROJECT, true)
+    project.putUserData(FileEditorManagerImpl.ALLOW_IN_LIGHT_PROJECT, true)
     manager = FileEditorManagerImpl(project, (project as ComponentManagerEx).getCoroutineScope().childScope())
     project.replaceService(FileEditorManager::class.java, manager!!, testRootDisposable)
     (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).clearSelectedProviders()

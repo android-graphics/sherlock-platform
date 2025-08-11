@@ -13,7 +13,6 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Color
@@ -86,7 +85,6 @@ class AccountsMenuListPopup(
   }
 }
 
-@ApiStatus.Internal
 class AccountMenuItemRenderer : ListCellRenderer<AccountMenuItem> {
   private val leftInset = 12
   private val innerInset = 8

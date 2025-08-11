@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.diff.*;
@@ -56,7 +56,8 @@ public abstract class DiffActionExecutor {
     mySelectedLine = getSelectedLine(project, mySelectedFile, editor);
   }
 
-  private static @Nullable Integer getSelectedLine(@NotNull Project project, @NotNull VirtualFile file, @Nullable Editor contextEditor) {
+  @Nullable
+  private static Integer getSelectedLine(@NotNull Project project, @NotNull VirtualFile file, @Nullable Editor contextEditor) {
     Editor editor = null;
     if (contextEditor != null) {
       VirtualFile contextFile = FileDocumentManager.getInstance().getFile(contextEditor.getDocument());
@@ -72,7 +73,8 @@ public abstract class DiffActionExecutor {
     return editor.getCaretModel().getLogicalPosition().line;
   }
 
-  protected @NotNull DiffContent createRemote(@NotNull ContentRevision fileRevision) throws IOException, VcsException {
+  @NotNull
+  protected DiffContent createRemote(@NotNull ContentRevision fileRevision) throws IOException, VcsException {
     DiffContentFactoryEx contentFactory = DiffContentFactoryEx.getInstanceEx();
 
     DiffContent diffContent;
@@ -167,7 +169,8 @@ public abstract class DiffActionExecutor {
     executor.showDiff();
   }
 
-  protected abstract @Nullable ContentRevision getContentRevision();
+  @Nullable
+  protected abstract ContentRevision getContentRevision();
 
   public static class CompareToFixedExecutor extends DiffActionExecutor {
     private final VcsRevisionNumber myNumber;
@@ -182,7 +185,8 @@ public abstract class DiffActionExecutor {
     }
 
     @Override
-    protected @Nullable ContentRevision getContentRevision() {
+    @Nullable
+    protected ContentRevision getContentRevision() {
       return myDiffProvider.createFileContent(myNumber, mySelectedFile);
     }
   }
@@ -196,7 +200,8 @@ public abstract class DiffActionExecutor {
     }
 
     @Override
-    protected @Nullable ContentRevision getContentRevision() {
+    @Nullable
+    protected ContentRevision getContentRevision() {
       return myDiffProvider.createCurrentFileContent(mySelectedFile);
     }
   }
@@ -211,8 +216,9 @@ public abstract class DiffActionExecutor {
       super(diffProvider, selectedFile, project, editor);
     }
 
+    @Nullable
     @Override
-    protected @Nullable ContentRevision getContentRevision() {
+    protected ContentRevision getContentRevision() {
       final ItemLatestState itemState = myDiffProvider.getLastRevision(mySelectedFile);
       if (itemState == null) return null;
 
@@ -220,8 +226,9 @@ public abstract class DiffActionExecutor {
       return myDiffProvider.createFileContent(itemState.getNumber(), mySelectedFile);
     }
 
+    @NotNull
     @Override
-    protected @NotNull DiffContent createRemote(@NotNull ContentRevision fileRevision) throws IOException, VcsException {
+    protected DiffContent createRemote(@NotNull ContentRevision fileRevision) throws IOException, VcsException {
       if (myFileStillExists) {
         return super.createRemote(fileRevision);
       }

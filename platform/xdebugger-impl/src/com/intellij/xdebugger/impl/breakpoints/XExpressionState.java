@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.lang.Language;
@@ -60,7 +60,8 @@ public class XExpressionState {
     }
   }
 
-  public @Nullable XExpression toXExpression() {
+  @Nullable
+  public XExpression toXExpression() {
     checkConverted();
     // old versions may have empty expressions serialized
     if (StringUtil.isEmptyOrSpaces(myExpression)) {

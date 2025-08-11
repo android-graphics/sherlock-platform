@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util.dynamicMembers;
 
 import com.intellij.psi.*;
@@ -56,8 +56,9 @@ public class GrDynamicPropertyImpl extends LightElement implements GrField {
     return false;
   }
 
+  @NotNull
   @Override
-  public @NotNull PsiElement getNavigationElement() {
+  public PsiElement getNavigationElement() {
     return myNavigationalElement;
   }
 
@@ -78,12 +79,14 @@ public class GrDynamicPropertyImpl extends LightElement implements GrField {
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return myField.getName();
   }
 
   @Override
-  public @NotNull PsiType getType() {
+  @NotNull
+  public PsiType getType() {
     return myField.getType();
   }
 
@@ -113,7 +116,8 @@ public class GrDynamicPropertyImpl extends LightElement implements GrField {
   }
 
   @Override
-  public @NotNull PsiIdentifier getNameIdentifier() {
+  @NotNull
+  public PsiIdentifier getNameIdentifier() {
     return myField.getNameIdentifier();
   }
 
@@ -138,7 +142,8 @@ public class GrDynamicPropertyImpl extends LightElement implements GrField {
   }
 
   @Override
-  public @NotNull PsiElement getNameIdentifierGroovy() {
+  @NotNull
+  public PsiElement getNameIdentifierGroovy() {
     return myField.getNameIdentifierGroovy();
   }
 
@@ -191,7 +196,8 @@ public class GrDynamicPropertyImpl extends LightElement implements GrField {
   }
 
   @Override
-  public @NotNull Map<String, NamedArgumentDescriptor> getNamedParameters() {
+  @NotNull
+  public Map<String, NamedArgumentDescriptor> getNamedParameters() {
     return myField.getNamedParameters();
   }
 

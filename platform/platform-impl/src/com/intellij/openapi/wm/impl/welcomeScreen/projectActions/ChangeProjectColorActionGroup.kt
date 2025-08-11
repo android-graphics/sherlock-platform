@@ -7,7 +7,6 @@ import com.intellij.ide.RecentProjectIconHelper
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
@@ -18,7 +17,7 @@ import com.intellij.ui.ColorChooserService
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBPoint
 
-class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware, MainMenuPresentationAware, ActionRemoteBehaviorSpecification.Frontend {
+class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware, MainMenuPresentationAware {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return emptyArray()
     val projectPath = ProjectWindowCustomizerService.projectPath(project) ?: return emptyArray()

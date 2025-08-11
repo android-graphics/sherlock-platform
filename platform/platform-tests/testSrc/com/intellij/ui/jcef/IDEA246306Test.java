@@ -67,7 +67,7 @@ public class IDEA246306Test {
         frame.setVisible(true);
       });
 
-      invokeAndWaitForLatch(latch, "executeJavaScript -> wait js callback",
+      invokeAndWaitForLatch(latch,
         () -> getCefBrowser().executeJavaScript(myQuery.inject("'" + this + "'"), getCefBrowser().getURL(), 0));
     }
   }

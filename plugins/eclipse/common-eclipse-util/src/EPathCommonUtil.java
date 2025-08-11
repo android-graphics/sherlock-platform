@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse;
 
 import com.intellij.openapi.util.Comparing;
@@ -15,7 +15,8 @@ public final class EPathCommonUtil {
    * @param path path in format /module_root/relative_path
    * @return module_root
    */
-  public static @NotNull String getRelativeModuleName(String path) {
+  @NotNull
+  public static String getRelativeModuleName(String path) {
     int secondSlIdx = path.indexOf('/', 1);
     return secondSlIdx > 1 ? path.substring(1, secondSlIdx) : path.substring(1);
   }
@@ -24,14 +25,16 @@ public final class EPathCommonUtil {
    * @param path path in format /module_root/relative_path
    * @return relative_path or null if /module_root
    */
-  public static @Nullable String getRelativeToModulePath(String path) {
+  @Nullable
+  public static String getRelativeToModulePath(String path) {
     final int secondSlIdx = path.indexOf('/', 1);
     return secondSlIdx != -1 && secondSlIdx + 1 < path.length() ? path.substring(secondSlIdx + 1) : null;
   }
 
-  public static @Nullable String expandEclipseRelative2ContentRoots(final @NotNull List<String> currentRoots,
-                                                                    final @NotNull String rootPath,
-                                                                    final @Nullable String relativeToRootPath) {
+  @Nullable
+  public static String expandEclipseRelative2ContentRoots(final @NotNull List<String> currentRoots,
+                                                          final @NotNull String rootPath,
+                                                          final @Nullable String relativeToRootPath) {
     for (String currentRoot : currentRoots) {
       if (currentRoot.endsWith(rootPath)
           || Comparing.strEqual(rootPath, EclipseProjectFinder.findProjectName(currentRoot))) { //rootPath = content_root <=> applicable root: abs_path/content_root

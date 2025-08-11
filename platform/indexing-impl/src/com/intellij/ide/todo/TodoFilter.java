@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +9,7 @@ import com.intellij.psi.search.TodoPattern;
 import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -19,9 +20,9 @@ import java.util.Set;
 public final class TodoFilter implements Cloneable {
   private static final Logger LOG = Logger.getInstance(TodoFilter.class);
 
-  private static final String ATTRIBUTE_NAME = "name";
-  private static final String ELEMENT_PATTERN = "pattern";
-  private static final String ATTRIBUTE_INDEX = "index";
+  private static final @NonNls String ATTRIBUTE_NAME = "name";
+  private static final @NonNls String ELEMENT_PATTERN = "pattern";
+  private static final @NonNls String ATTRIBUTE_INDEX = "index";
 
   private @NlsSafe String myName;
   private Set<TodoPattern> myTodoPatterns;
@@ -107,19 +108,20 @@ public final class TodoFilter implements Cloneable {
     }
 
     myTodoPatterns.clear();
-    for (var child : element.getChildren(ELEMENT_PATTERN)) {
+    for (Element child : element.getChildren(ELEMENT_PATTERN)) {
       try {
         int index = Integer.parseInt(child.getAttributeValue(ATTRIBUTE_INDEX));
         if (index < 0 || index > patterns.size() - 1) {
           continue;
         }
-        var pattern = patterns.get(index);
+        TodoPattern pattern = patterns.get(index);
         if (myTodoPatterns.contains(pattern)) {
           continue;
         }
         myTodoPatterns.add(pattern);
       }
-      catch (NumberFormatException ignored) { }
+      catch (NumberFormatException ignored) {
+      }
     }
   }
 
@@ -129,34 +131,55 @@ public final class TodoFilter implements Cloneable {
    */
   public void writeExternal(Element element, TodoPattern[] patterns) {
     element.setAttribute(ATTRIBUTE_NAME, myName);
-    for (var pattern : myTodoPatterns) {
+    for (TodoPattern pattern : myTodoPatterns) {
       int index = ArrayUtilRt.find(patterns, pattern);
       LOG.assertTrue(index != -1);
-      var child = new Element(ELEMENT_PATTERN);
+      Element child = new Element(ELEMENT_PATTERN);
       child.setAttribute(ATTRIBUTE_INDEX, Integer.toString(index));
       element.addContent(child);
     }
   }
 
-  @Override
   public int hashCode() {
-    return myName.hashCode() * 31 + myTodoPatterns.hashCode();
+    int hashCode = myName.hashCode();
+    for (TodoPattern myTodoPattern : myTodoPatterns) {
+      hashCode += myTodoPattern.hashCode();
+    }
+    return hashCode;
   }
 
-  @Override
   public boolean equals(Object obj) {
-    return obj instanceof TodoFilter filter &&
-           myName.equals(filter.myName) &&
-           myTodoPatterns.size() == filter.myTodoPatterns.size() &&
-           filter.myTodoPatterns.containsAll(myTodoPatterns);
+    if (!(obj instanceof TodoFilter filter)) {
+      return false;
+    }
+
+    if (!myName.equals(filter.myName)) {
+      return false;
+    }
+
+    if (myTodoPatterns.size() != filter.myTodoPatterns.size()) {
+      return false;
+    }
+
+    for (TodoPattern pattern : myTodoPatterns) {
+      if (!filter.contains(pattern)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   @Override
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
   public TodoFilter clone() {
-    var filter = new TodoFilter();
-    filter.myName = myName;
-    filter.myTodoPatterns = new HashSet<>(myTodoPatterns);
-    return filter;
+    try {
+      TodoFilter filter = (TodoFilter)super.clone();
+      filter.myTodoPatterns = new HashSet<>(myTodoPatterns);
+      return filter;
+    }
+    catch (CloneNotSupportedException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 }

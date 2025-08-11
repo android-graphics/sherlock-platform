@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.instrumentation;
 
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -329,7 +329,6 @@ public class InstrumentationClassFinder {
       return result;
     }
 
-    @Override
     public boolean equals (final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -447,7 +446,7 @@ public class InstrumentationClassFinder {
     InputStream getInputStream() throws IOException;
   }
 
-  public static final class ClassFinderClasspath {
+  static class ClassFinderClasspath {
     private final Queue<URL> myUrls;
     private final List<Loader> myLoaders = new ArrayList<>();
     private final Map<URL,Loader> myLoadersMap = new HashMap<>();
@@ -516,7 +515,7 @@ public class InstrumentationClassFinder {
         s = url.getFile();
       }
 
-      if (s != null && !s.isEmpty()) {
+      if (s != null && s.length() > 0) {
         if (Loader.JRT_PROTOCOL.equals(protocol)) {
           final Loader jrtLoader = JrtClassHolder.create(url, index);
           if (jrtLoader != null) {
@@ -533,7 +532,7 @@ public class InstrumentationClassFinder {
     }
 
 
-    public abstract static class Loader {
+    abstract static class Loader {
       protected static final String JAR_PROTOCOL = "jar";
       protected static final String FILE_PROTOCOL = "file";
       protected static final String JRT_PROTOCOL = "jrt";
@@ -594,7 +593,6 @@ public class InstrumentationClassFinder {
                 return new BufferedInputStream(new FileInputStream(file));
               }
 
-              @Override
               public String toString() {
                 return file.getAbsolutePath();
               }
@@ -606,7 +604,6 @@ public class InstrumentationClassFinder {
         return null;
       }
 
-      @Override
       public String toString() {
         return "FileLoader [" + myRootDir + "]";
       }
@@ -680,7 +677,6 @@ public class InstrumentationClassFinder {
                   return null;
                 }
 
-                @Override
                 public String toString() {
                   return "JarLoader [" + myURL + "!/" + entry.getName() + "]";
                 }

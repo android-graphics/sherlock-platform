@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -13,7 +13,6 @@ import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -145,7 +144,7 @@ final class JavaLangReflectHandleInvocationChecker {
     final List<Supplier<ReflectiveType>> lazyMethodSignature = getLazyMethodSignature(signatureExpression);
     if (lazyMethodSignature == null) return true;
 
-    if (!isConstructor && !lazyMethodSignature.isEmpty()) {
+    if (!isConstructor && lazyMethodSignature.size() != 0) {
       final ReflectiveType returnType = lazyMethodSignature.get(0).get();
       checkReturnType(invokeCall, returnType, isExact, holder);
     }
@@ -248,7 +247,8 @@ final class JavaLangReflectHandleInvocationChecker {
     }
   }
 
-  private static @Nullable List<Supplier<ReflectiveType>> getLazyMethodSignature(@Nullable PsiExpression methodTypeExpression) {
+  @Nullable
+  private static List<Supplier<ReflectiveType>> getLazyMethodSignature(@Nullable PsiExpression methodTypeExpression) {
     final PsiExpression typeDefinition = findDefinition(methodTypeExpression);
     if (typeDefinition instanceof PsiMethodCallExpression) {
       return LAZY_SIGNATURE_MAPPER.mapFirst(((PsiMethodCallExpression)typeDefinition));
@@ -256,7 +256,8 @@ final class JavaLangReflectHandleInvocationChecker {
     return null;
   }
 
-  private static @Nullable @Unmodifiable List<Supplier<ReflectiveType>> getLazyMethodSignatureForGenericMethodType(
+  @Nullable
+  private static List<Supplier<ReflectiveType>> getLazyMethodSignatureForGenericMethodType(
     @NotNull PsiMethodCallExpression methodTypeExpression
   ) {
     final PsiExpression[] arguments = methodTypeExpression.getArgumentList().getExpressions();
@@ -283,7 +284,8 @@ final class JavaLangReflectHandleInvocationChecker {
     return null;
   }
 
-  private static @Nullable List<Supplier<ReflectiveType>> getLazyMethodSignatureForReturnTypeAndMethodType(
+  @Nullable
+  private static List<Supplier<ReflectiveType>> getLazyMethodSignatureForReturnTypeAndMethodType(
     @NotNull PsiMethodCallExpression callExpression
   ) {
     final PsiExpression[] arguments = callExpression.getArgumentList().getExpressions();
@@ -304,7 +306,8 @@ final class JavaLangReflectHandleInvocationChecker {
     return null;
   }
 
-  private static @Nullable @Unmodifiable List<Supplier<ReflectiveType>> getLazyMethodSignatureForReturnTypeAndArray(@NotNull PsiMethodCallExpression call) {
+  @Nullable
+  private static List<Supplier<ReflectiveType>> getLazyMethodSignatureForReturnTypeAndArray(@NotNull PsiMethodCallExpression call) {
     final PsiExpression[] arguments = call.getArgumentList().getExpressions();
     if (arguments.length == 2) {
       final PsiExpression returnType = findDefinition(arguments[0]);
@@ -318,7 +321,8 @@ final class JavaLangReflectHandleInvocationChecker {
     return null;
   }
 
-  private static @Nullable @Unmodifiable List<Supplier<ReflectiveType>> getLazyMethodSignatureForReturnTypeAndList(@NotNull PsiMethodCallExpression call) {
+  @Nullable
+  private static List<Supplier<ReflectiveType>> getLazyMethodSignatureForReturnTypeAndList(@NotNull PsiMethodCallExpression call) {
     final PsiExpression[] arguments = call.getArgumentList().getExpressions();
     if (arguments.length == 2) {
       final PsiExpression list = arguments[1];
@@ -332,7 +336,8 @@ final class JavaLangReflectHandleInvocationChecker {
     return null;
   }
 
-  private static @Nullable @Unmodifiable List<Supplier<ReflectiveType>> getLazyMethodSignatureForTypes(@NotNull PsiMethodCallExpression call) {
+  @Nullable
+  private static List<Supplier<ReflectiveType>> getLazyMethodSignatureForTypes(@NotNull PsiMethodCallExpression call) {
     final PsiExpression[] expressions = call.getArgumentList().getExpressions();
     if (expressions.length != 0) {
       return ContainerUtil.map(expressions, argument -> (() -> getReflectiveType(argument)));

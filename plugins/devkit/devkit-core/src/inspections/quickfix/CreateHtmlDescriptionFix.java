@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
@@ -24,16 +24,19 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.inspections.DescriptionCheckerUtil;
 import org.jetbrains.idea.devkit.inspections.DescriptionType;
-import org.jetbrains.idea.devkit.inspections.DescriptionTypesKt;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
 import javax.swing.*;
+import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -41,7 +44,8 @@ import java.util.List;
  */
 public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
 
-  private static final @NonNls String TEMPLATE_NAME = "InspectionDescription.html";
+  @NonNls
+  private static final String TEMPLATE_NAME = "InspectionDescription.html";
 
   private final String myFilename;
   private final Module myModule;
@@ -50,38 +54,62 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
   public CreateHtmlDescriptionFix(String filename, Module module, DescriptionType descriptionType) {
     myModule = module;
     myDescriptionType = descriptionType;
-    myFilename = isFixedDescriptionFilename() ? filename : filename + ".html";
+    myFilename = getNormalizedFileName(filename);
+  }
+
+  private boolean isFixedDescriptionFilename() {
+    return myDescriptionType.isFixedDescriptionFilename();
+  }
+
+  private static List<VirtualFile> getPotentialRoots(Module module, PsiDirectory[] dirs) {
+    if (dirs.length != 0) {
+      return StreamEx.of(dirs).map(PsiDirectory::getParentDirectory).nonNull().map(PsiDirectory::getVirtualFile).toList();
+    }
+    else {
+      ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+      List<VirtualFile> resourceRoots = rootManager.getSourceRoots(JavaResourceRootType.RESOURCE);
+      if (!resourceRoots.isEmpty()) {
+        return resourceRoots;
+      }
+      return rootManager.getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
+    }
+  }
+
+  private String getNormalizedFileName(String filename) {
+    return myDescriptionType.isFixedDescriptionFilename() ? filename : filename + ".html";
   }
 
   @Override
-  public @NotNull String getName() {
+  @NotNull
+  public String getName() {
     return DevKitBundle.message("create.description.file", getNewFileName());
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  @NotNull
+  public String getFamilyName() {
     return DevKitBundle.message("create.description.file.family.name");
   }
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiDirectory[] dirs = myDescriptionType.getDescriptionFolderDirs(myModule);
+    final PsiDirectory[] dirs = getDirectories();
     final List<VirtualFile> roots = getPotentialRoots(myModule, dirs);
     if (roots.size() == 1) {
       ApplicationManager.getApplication().runWriteAction(() -> createDescription(roots.get(0)));
-      return;
     }
-
-    final Editor editor = FileEditorManager.getInstance(myModule.getProject()).getSelectedTextEditor();
-    if (editor == null) return;
-    JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(roots)
-      .setRenderer(SimpleListCellRenderer.create("", VirtualFile::getPath))
-      .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-      .setTitle(DevKitBundle.message("select.target.location.of.description", myFilename))
-      .setItemChosenCallback((root) -> ApplicationManager.getApplication().runWriteAction(() -> createDescription(root)))
-      .createPopup()
-      .showInBestPositionFor(editor);
+    else {
+      final Editor editor = FileEditorManager.getInstance(myModule.getProject()).getSelectedTextEditor();
+      if (editor == null) return;
+      JBPopupFactory.getInstance()
+                    .createPopupChooserBuilder(roots)
+                    .setRenderer(SimpleListCellRenderer.create("", VirtualFile::getPath))
+                    .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+                    .setTitle(DevKitBundle.message("select.target.location.of.description", myFilename))
+                    .setItemChosenCallback((root) -> ApplicationManager.getApplication().runWriteAction(() -> createDescription(root)))
+                    .createPopup()
+                    .showInBestPositionFor(editor);
+    }
   }
 
   @Override
@@ -89,25 +117,37 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
     return false;
   }
 
+  private String getPath(VirtualFile file) {
+    String path = file.getPresentableUrl() + File.separator + getDescriptionFolderName() + File.separator + myFilename;
+    if (isFixedDescriptionFilename()) {
+      path += File.separator + "description.html";
+    }
+    return path;
+  }
+
+  private PsiDirectory[] getDirectories() {
+    return DescriptionCheckerUtil.getDescriptionsDirs(myModule, myDescriptionType);
+  }
+
   private void createDescription(VirtualFile root) {
     if (!root.isDirectory()) return;
     final PsiManager psiManager = PsiManager.getInstance(myModule.getProject());
     final PsiDirectory psiRoot = psiManager.findDirectory(root);
     if (psiRoot == null) return;
-    PsiDirectory descriptionRootDirectory =
+    PsiDirectory descrRoot =
       StreamEx.of(psiRoot.getSubdirectories()).findFirst(dir -> getDescriptionFolderName().equals(dir.getName())).orElse(null);
 
     try {
-      descriptionRootDirectory =
-        descriptionRootDirectory == null ? psiRoot.createSubdirectory(getDescriptionFolderName()) : descriptionRootDirectory;
+      descrRoot = descrRoot == null ? psiRoot.createSubdirectory(getDescriptionFolderName()) : descrRoot;
       if (isFixedDescriptionFilename()) {
-        PsiDirectory dir = descriptionRootDirectory.findSubdirectory(myFilename);
+        PsiDirectory dir = descrRoot.findSubdirectory(myFilename);
         if (dir == null) {
-          descriptionRootDirectory = descriptionRootDirectory.createSubdirectory(myFilename);
+          descrRoot = descrRoot.createSubdirectory(myFilename);
         }
       }
       final FileTemplate descrTemplate = FileTemplateManager.getInstance(myModule.getProject()).getJ2eeTemplate(TEMPLATE_NAME);
-      final PsiElement template = FileTemplateUtil.createFromTemplate(descrTemplate, getNewFileName(), null, descriptionRootDirectory);
+      final PsiElement template =
+        FileTemplateUtil.createFromTemplate(descrTemplate, getNewFileName(), null, descrRoot);
       if (template instanceof PsiFile) {
         final VirtualFile file = ((PsiFile)template).getVirtualFile();
         if (file != null) {
@@ -119,34 +159,27 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
     }
   }
 
-  private boolean isFixedDescriptionFilename() {
-    return myDescriptionType.hasBeforeAfterTemplateFiles();
-  }
-
-  private static List<VirtualFile> getPotentialRoots(Module module, PsiDirectory[] dirs) {
-    if (dirs.length != 0) {
-      return StreamEx.of(dirs).map(PsiDirectory::getParentDirectory).nonNull().map(PsiDirectory::getVirtualFile).toList();
-    }
-
-    ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    List<VirtualFile> resourceRoots = rootManager.getSourceRoots(JavaResourceRootType.RESOURCE);
-    if (!resourceRoots.isEmpty()) {
-      return resourceRoots;
-    }
-    return rootManager.getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
-  }
-
   private String getNewFileName() {
-    return isFixedDescriptionFilename() ? DescriptionTypesKt.DESCRIPTION_HTML : myFilename;
-  }
-
-  private String getDescriptionFolderName() {
-    return myDescriptionType.getDescriptionFolder();
+    return isFixedDescriptionFilename() ? "description.html" : myFilename;
   }
 
   @Override
   public Icon getIcon(int flags) {
     return LayeredIcon.layeredIcon(new Icon[]{AllIcons.FileTypes.Html, AllIcons.Actions.New});
+  }
+
+  private VirtualFile[] prepare(VirtualFile[] roots) {
+    VirtualFile[] found = Arrays.stream(roots).filter(this::containsDescriptionDir).toArray(VirtualFile[]::new);
+    return found.length > 0 ? found : roots;
+  }
+
+  private boolean containsDescriptionDir(VirtualFile root) {
+    if (!root.isDirectory()) return false;
+    return ContainerUtil.exists(root.getChildren(), file -> file.isDirectory() && getDescriptionFolderName().equals(file.getName()));
+  }
+
+  private String getDescriptionFolderName() {
+    return myDescriptionType.getDescriptionFolder();
   }
 
   @Override

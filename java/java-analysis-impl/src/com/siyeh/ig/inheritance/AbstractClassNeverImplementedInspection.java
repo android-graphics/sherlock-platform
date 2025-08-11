@@ -26,7 +26,8 @@ import org.jetbrains.annotations.NotNull;
 public final class AbstractClassNeverImplementedInspection extends BaseInspection {
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "abstract.class.never.implemented.problem.descriptor");
   }
@@ -45,9 +46,6 @@ public final class AbstractClassNeverImplementedInspection extends BaseInspectio
         return;
       }
       if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return;
-      }
-      if (aClass.isDeprecated()) {
         return;
       }
       if (InheritanceUtil.hasImplementation(aClass)) {

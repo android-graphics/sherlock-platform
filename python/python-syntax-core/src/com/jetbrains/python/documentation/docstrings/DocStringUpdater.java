@@ -90,7 +90,8 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
     insert(line.getStartOffset(), text + '\n');
   }
 
-  public final @NotNull String getDocStringText() {
+  @NotNull
+  public final String getDocStringText() {
     beforeApplyingModifications();
     // Move closing quotes to the next line, if new lines are going to be inserted
     if (myOriginalDocString.getLineCount() == 1 && !myUpdates.isEmpty()) {
@@ -116,11 +117,13 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
 
   }
 
-  public @NotNull T getOriginalDocString() {
+  @NotNull
+  public T getOriginalDocString() {
     return myOriginalDocString;
   }
 
-  protected @NotNull String getLineIndent(int lineNum) {
+  @NotNull
+  protected String getLineIndent(int lineNum) {
     final String lastLineIndent = myOriginalDocString.getLineIndent(lineNum);
     if (PyIndentUtil.getLineIndentSize(lastLineIndent) < PyIndentUtil.getLineIndentSize(myMinContentIndent)) {
       return myMinContentIndent;
@@ -148,8 +151,8 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
   public abstract void removeParameter(@NotNull String name);
 
   private static class Modification implements Comparable<Modification> {
-    final @NotNull TextRange range;
-    final @NotNull String text;
+    @NotNull final TextRange range;
+    @NotNull final String text;
 
     Modification(@NotNull TextRange range, @NotNull String newText) {
       this.range = range;

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -11,8 +11,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.convertInfixCallToOrdinary
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.binaryExpressionVisitor
+import org.jetbrains.kotlin.psi.*
 
 internal class InfixCallToOrdinaryInspection : KotlinApplicableInspectionBase.Simple<KtBinaryExpression, Unit>() {
 
@@ -24,7 +23,7 @@ internal class InfixCallToOrdinaryInspection : KotlinApplicableInspectionBase.Si
     override fun createQuickFix(
         element: KtBinaryExpression,
         context: Unit,
-    ): KotlinModCommandQuickFix<KtBinaryExpression> = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+    ) = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
 
         override fun applyFix(
             project: Project,
@@ -52,6 +51,7 @@ internal class InfixCallToOrdinaryInspection : KotlinApplicableInspectionBase.Si
         return !(element.operationToken != KtTokens.IDENTIFIER || element.left == null || element.right == null)
     }
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression) {
+    context(KaSession)
+    override fun prepareContext(element: KtBinaryExpression) {
     }
 }

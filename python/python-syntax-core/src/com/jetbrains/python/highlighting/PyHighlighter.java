@@ -29,7 +29,8 @@ public class PyHighlighter extends SyntaxHighlighterBase {
   private final LanguageLevel myLanguageLevel;
 
   @Override
-  public @NotNull Lexer getHighlightingLexer() {
+  @NotNull
+  public Lexer getHighlightingLexer() {
     LayeredLexer ret = new LayeredLexer(createHighlightingLexer(myLanguageLevel));
     ret.registerLayer(
       new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_STRING),

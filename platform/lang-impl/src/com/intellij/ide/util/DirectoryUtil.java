@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util;
 
@@ -60,7 +60,8 @@ public final class DirectoryUtil {
    * @param path directory path in the local file system; separators must be '/'
    * @return the inner most existing directory along the given <code>path</code>
    */
-  public static @Nullable PsiDirectory findLongestExistingDirectory(@NotNull PsiManager manager, @NotNull String path) {
+  @Nullable
+  public static PsiDirectory findLongestExistingDirectory(@NotNull PsiManager manager, @NotNull String path) {
     Pair<PsiDirectory, String> pair = findLongestExistingDirectoryAndItsPath(manager, path);
     return pair != null ? pair.first : null;
   }
@@ -69,10 +70,11 @@ public final class DirectoryUtil {
    * virtualFile.getPath() is not guaranteed to be the same as path by which virtualFile was found, e.g. on case insensitive OS
    * thus returning the path by which file was found
    */
-  private static @Nullable Pair<PsiDirectory, String> findLongestExistingDirectoryAndItsPath(@NotNull PsiManager manager, @NotNull String path) {
+  @Nullable
+  private static Pair<PsiDirectory, String> findLongestExistingDirectoryAndItsPath(@NotNull PsiManager manager, @NotNull String path) {
     PsiDirectory directory = null;
     // find longest existing path
-    while (!path.isEmpty()) {
+    while (path.length() > 0) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
       if (file != null) {
         directory = manager.findDirectory(file);

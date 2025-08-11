@@ -15,18 +15,18 @@
  */
 package com.siyeh.ig.imports;
 
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiImportStatement;
-import com.intellij.psi.util.FileTypeUtils;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public final class OnDemandImportInspection extends BaseInspection {
 
   @Override
-  public @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("import.problem.descriptor");
   }
 

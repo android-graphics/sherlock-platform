@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.execution.Executor;
@@ -15,29 +15,34 @@ public class CoverageExecutor extends Executor {
   public static final @NonNls String EXECUTOR_ID = "Coverage";
 
   @Override
-  public @NotNull String getStartActionText() {
+  @NotNull
+  public String getStartActionText() {
    return CoverageBundle.message("run.with.coverage");
   }
 
+  @NotNull
   @Override
-  public @NotNull String getStartActionText(@NotNull String configurationName) {
+  public String getStartActionText(@NotNull String configurationName) {
     if (configurationName.isEmpty()) return getStartActionText();
     String configName = shortenNameIfNeeded(configurationName);
     return TextWithMnemonic.parse(CoverageBundle.message("run.with.coverage.mnemonic")).replaceFirst("%s", configName).toString();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getToolWindowId() {
+  public String getToolWindowId() {
     return ToolWindowId.RUN;
   }
 
+  @NotNull
   @Override
-  public @NotNull Icon getToolWindowIcon() {
+  public Icon getToolWindowIcon() {
     return AllIcons.Toolwindows.ToolWindowRunWithCoverage;
   }
 
   @Override
-  public @NotNull Icon getIcon() {
+  @NotNull
+  public Icon getIcon() {
     return AllIcons.General.RunWithCoverage;
   }
 
@@ -52,12 +57,14 @@ public class CoverageExecutor extends Executor {
   }
 
   @Override
-  public @NotNull String getActionName() {
+  @NotNull
+  public String getActionName() {
     return CoverageBundle.message("action.name.cover");
   }
 
   @Override
-  public @NotNull String getId() {
+  @NotNull
+  public String getId() {
     return EXECUTOR_ID;
   }
 

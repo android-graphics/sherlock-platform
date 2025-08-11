@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -63,8 +63,9 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
     myApplicablePlaces = getApplicableInitPlaces();
   }
 
+  @Nullable
   @Override
-  protected @Nullable PsiElement checkLocalScope() {
+  protected PsiElement checkLocalScope() {
     final GrVariable variable = getVariable();
     if (variable instanceof PsiField) {
       return ((PsiField)getVariable()).getContainingClass();
@@ -89,10 +90,11 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
     });
   }
 
+  @Nullable
   @Override
-  protected @Nullable GrIntroduceFieldSettings getInitialSettingsForInplace(final @NotNull GrIntroduceContext context,
-                                                                            final @NotNull OccurrencesChooser.ReplaceChoice choice,
-                                                                            final String[] names) {
+  protected GrIntroduceFieldSettings getInitialSettingsForInplace(@NotNull final GrIntroduceContext context,
+                                                                  @NotNull final OccurrencesChooser.ReplaceChoice choice,
+                                                                  final String[] names) {
     return new GrIntroduceFieldSettings() {
       @Override
       public boolean declareFinal() {
@@ -136,8 +138,9 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
         return myLocalVar != null;
       }
 
+      @Nullable
       @Override
-      public @Nullable String getName() {
+      public String getName() {
         return names[0];
       }
 
@@ -146,8 +149,9 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
         return context.getVar() != null || choice == OccurrencesChooser.ReplaceChoice.ALL;
       }
 
+      @Nullable
       @Override
-      public @Nullable PsiType getSelectedType() {
+      public PsiType getSelectedType() {
         GrExpression expression = context.getExpression();
         GrVariable var = context.getVar();
         StringPartInfo stringPart = context.getStringPart();
@@ -187,8 +191,9 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
         return myLocalVar != null;
       }
 
+      @Nullable
       @Override
-      public @Nullable String getName() {
+      public String getName() {
         return getInputName();
       }
 
@@ -197,8 +202,9 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
         return isReplaceAllOccurrences();
       }
 
+      @Nullable
       @Override
-      public @Nullable PsiType getSelectedType() {
+      public PsiType getSelectedType() {
         return GrInplaceFieldIntroducer.this.getSelectedType();
       }
     };
@@ -226,8 +232,9 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
     super.restoreState(psiField);
   }
 
+  @Nullable
   @Override
-  protected @Nullable JComponent getComponent() {
+  protected JComponent getComponent() {
     myPanel = new GrInplaceIntroduceFieldPanel();
     return myPanel.getRootPane();
   }

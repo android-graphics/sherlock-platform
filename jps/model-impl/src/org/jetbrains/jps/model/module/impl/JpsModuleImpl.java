@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -50,8 +64,9 @@ public final class JpsModuleImpl<P extends JpsElement> extends JpsNamedComposite
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.getChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsModuleImpl<P> createCopy() {
+  public JpsModuleImpl<P> createCopy() {
     return new JpsModuleImpl<>(this);
   }
 
@@ -61,7 +76,8 @@ public final class JpsModuleImpl<P extends JpsElement> extends JpsNamedComposite
   }
 
   @Override
-  public @NotNull P getProperties() {
+  @NotNull
+  public P getProperties() {
     return myContainer.getChild(myModuleType.getPropertiesRole());
   }
 
@@ -71,34 +87,40 @@ public final class JpsModuleImpl<P extends JpsElement> extends JpsNamedComposite
     return myModuleType.equals(type) ? (JpsTypedModule<P>)this : null;
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsUrlList getContentRootsList() {
+  public JpsUrlList getContentRootsList() {
     return myContainer.getChild(CONTENT_ROOTS_ROLE);
   }
 
   @Override
-  public @NotNull JpsUrlList getExcludeRootsList() {
+  @NotNull
+  public JpsUrlList getExcludeRootsList() {
     return myContainer.getChild(EXCLUDED_ROOTS_ROLE);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<JpsModuleSourceRoot> getSourceRoots() {
+  public List<JpsModuleSourceRoot> getSourceRoots() {
     return myContainer.getChild(JpsModuleSourceRootRole.ROOT_COLLECTION_ROLE).getElements();
   }
 
+  @NotNull
   @Override
-  public @NotNull <P extends JpsElement> Iterable<JpsTypedModuleSourceRoot<P>> getSourceRoots(@NotNull JpsModuleSourceRootType<P> type) {
+  public <P extends JpsElement> Iterable<JpsTypedModuleSourceRoot<P>> getSourceRoots(@NotNull JpsModuleSourceRootType<P> type) {
     return myContainer.getChild(JpsModuleSourceRootRole.ROOT_COLLECTION_ROLE).getElementsOfType(type);
   }
 
+  @NotNull
   @Override
-  public @NotNull <P extends JpsElement> JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> rootType) {
+  public <P extends JpsElement> JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> rootType) {
     return addSourceRoot(url, rootType, rootType.createDefaultProperties());
   }
 
+  @NotNull
   @Override
-  public @NotNull <P extends JpsElement> JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> rootType,
-                                                                           @NotNull P properties) {
+  public <P extends JpsElement> JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> rootType,
+                                                                  @NotNull P properties) {
     final JpsModuleSourceRootImpl root = new JpsModuleSourceRootImpl<>(url, rootType, properties);
     addSourceRoot(root);
     return root;
@@ -143,13 +165,15 @@ public final class JpsModuleImpl<P extends JpsElement> extends JpsNamedComposite
     return child != null ? child.getElements() : Collections.emptyList();
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsDependenciesList getDependenciesList() {
+  public JpsDependenciesList getDependenciesList() {
     return myContainer.getChild(DEPENDENCIES_LIST_CHILD_ROLE);
   }
 
   @Override
-  public @NotNull JpsSdkReferencesTable getSdkReferencesTable() {
+  @NotNull
+  public JpsSdkReferencesTable getSdkReferencesTable() {
     return myContainer.getChild(JpsSdkReferencesTableImpl.ROLE);
   }
 
@@ -180,13 +204,15 @@ public final class JpsModuleImpl<P extends JpsElement> extends JpsNamedComposite
     ((JpsElementCollection<JpsModule>)myParent).removeChild(this);
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsModuleReference createReference() {
+  public JpsModuleReference createReference() {
     return new JpsModuleReferenceImpl(getName());
   }
 
+  @NotNull
   @Override
-  public @NotNull <P extends JpsElement, Type extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
+  public <P extends JpsElement, Type extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsLibrary addModuleLibrary(@NotNull String name, @NotNull Type type) {
     return myLibraryCollection.addLibrary(name, type);
   }
@@ -196,19 +222,22 @@ public final class JpsModuleImpl<P extends JpsElement> extends JpsNamedComposite
     myLibraryCollection.addLibrary(library);
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsLibraryCollection getLibraryCollection() {
+  public JpsLibraryCollection getLibraryCollection() {
     return myLibraryCollection;
   }
 
   @Override
-  public @Nullable JpsProject getProject() {
+  @Nullable
+  public JpsProject getProject() {
     JpsModel model = getModel();
     return model != null ? model.getProject() : null;
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsModuleType<P> getModuleType() {
+  public JpsModuleType<P> getModuleType() {
     return myModuleType;
   }
 

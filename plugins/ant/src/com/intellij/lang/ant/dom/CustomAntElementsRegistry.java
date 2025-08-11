@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -85,7 +85,8 @@ public final class CustomAntElementsRegistry {
     return registry;
   }
 
-  public @NotNull Set<XmlName> getCompletionVariants(AntDomElement parentElement) {
+  @NotNull
+  public Set<XmlName> getCompletionVariants(AntDomElement parentElement) {
     if (parentElement instanceof AntDomCustomElement) {
       // this case is already handled in AntDomExtender when defining children
       return Collections.emptySet();
@@ -133,7 +134,8 @@ public final class CustomAntElementsRegistry {
     return result;
   }
 
-  private @Nullable Pair<AntDomMacroDef, AntDomScriptDef> getContextMacroOrScriptDef(AntDomElement element) {
+  @Nullable
+  private Pair<AntDomMacroDef, AntDomScriptDef> getContextMacroOrScriptDef(AntDomElement element) {
     final AntDomMacroDef macrodef = element.getParentOfType(AntDomMacroDef.class, false);
     if (macrodef != null) {
       return new Pair<>(macrodef, null);
@@ -150,7 +152,8 @@ public final class CustomAntElementsRegistry {
     return null;
   }
 
-  public @Nullable AntDomElement findDeclaringElement(final AntDomElement parentElement, final XmlName customElementName) {
+  @Nullable
+  public AntDomElement findDeclaringElement(final AntDomElement parentElement, final XmlName customElementName) {
     final AntDomElement declaration = myDeclarations.get(customElementName);
     if (declaration == null) {
       return null;
@@ -178,12 +181,14 @@ public final class CustomAntElementsRegistry {
     return myDeclarations.get(customElementName);
   }
 
-  public @Nullable Class<?> lookupClass(XmlName xmlName) {
+  @Nullable
+  public Class<?> lookupClass(XmlName xmlName) {
     ClassProvider provider = myCustomElements.get(xmlName);
     return provider == null ? null : provider.lookupClass();
   }
 
-  public @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String lookupError(XmlName xmlName) {
+  @Nullable
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String lookupError(XmlName xmlName) {
     final ClassProvider provider = myCustomElements.get(xmlName);
     return provider == null ? null : provider.getError();
   }
@@ -225,7 +230,8 @@ public final class CustomAntElementsRegistry {
     }
   }
 
-  private @NotNull ClassLoader getClassLoader(AntDomCustomClasspathComponent customComponent, AntDomProject antProject) {
+  @NotNull
+  private ClassLoader getClassLoader(AntDomCustomClasspathComponent customComponent, AntDomProject antProject) {
     final String loaderRef = customComponent.getLoaderRef().getStringValue();
     if (loaderRef != null) {
       final ClassLoader loader = myNamedLoaders.get(loaderRef);
@@ -236,7 +242,8 @@ public final class CustomAntElementsRegistry {
     return createClassLoader(collectUrls(customComponent), antProject);
   }
 
-  public static @Nullable PsiFile loadContentAsFile(PsiFile originalFile, LanguageFileType fileType) {
+  @Nullable
+  public static PsiFile loadContentAsFile(PsiFile originalFile, LanguageFileType fileType) {
     final VirtualFile vFile = originalFile.getVirtualFile();
     if (vFile == null) {
       return null;
@@ -269,7 +276,7 @@ public final class CustomAntElementsRegistry {
     ProgressManager.checkCanceled();
   }
 
-  private static boolean isXmlFormat(AntDomTypeDef typedef, final @NotNull String resourceOrFileName) {
+  private static boolean isXmlFormat(AntDomTypeDef typedef, @NotNull final String resourceOrFileName) {
     final String format = typedef.getFormat().getStringValue();
     if (format != null) {
       return "xml".equalsIgnoreCase(format);

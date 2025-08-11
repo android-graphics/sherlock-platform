@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -6,8 +6,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -26,37 +29,59 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
-public class FileAttributesReadingTest {
+@SuppressWarnings("BulkFileAttributesRead")
+public abstract class FileAttributesReadingTest {
+  public static class MainTest extends FileAttributesReadingTest {
+    @BeforeClass
+    public static void setUpClass() {
+      assumeTrue(SystemInfo.OS_NAME + '/' + CpuArch.CURRENT + " is not supported", CpuArch.isIntel64() && !SystemInfo.isWindows);
+      assertEquals("JnaUnix", getMediatorName());
+    }
+  }
+
+  public static class Nio2Test extends FileAttributesReadingTest {
+    @BeforeClass
+    public static void setUpClass() {
+      System.setProperty(FileSystemUtil.FORCE_USE_NIO2_KEY, "true");
+      assertEquals("Nio2", getMediatorName());
+    }
+
+    @Test
+    public void winReparsePointAttributeConversion() {
+      assumeWindows();
+
+      var nioAttributes = new BasicFileAttributes() {
+        @Override public FileTime lastModifiedTime() { return FileTime.from(Instant.now()); }
+        @Override public FileTime lastAccessTime() { return lastModifiedTime(); }
+        @Override public FileTime creationTime() { return lastModifiedTime(); }
+        @Override public boolean isRegularFile() { return false; }
+        @Override public boolean isDirectory() { return true; }
+        @Override public boolean isSymbolicLink() { return false; }
+        @Override public boolean isOther() { return true; }
+        @Override public long size() { return 0; }
+        @Override public Object fileKey() { return null; }
+      };
+
+      var rootAttributes = FileAttributes.fromNio(Path.of(System.getenv("SystemDrive") + '\\'), nioAttributes);
+      assertTrue(rootAttributes.isDirectory());
+      assertEquals(FileAttributes.Type.DIRECTORY, rootAttributes.getType());
+      assertFalse(rootAttributes.isSymLink());
+
+      var dirAttributes = FileAttributes.fromNio(Path.of(System.getenv("USERPROFILE")), nioAttributes);
+      assertTrue(dirAttributes.isDirectory());
+      assertEquals(FileAttributes.Type.DIRECTORY, dirAttributes.getType());
+      assertTrue(dirAttributes.isSymLink());
+    }
+  }
+
+  @AfterClass
+  public static void tearDownClass() {
+    System.clearProperty(FileSystemUtil.FORCE_USE_NIO2_KEY);
+  }
+
   @Rule public TempDirectory tempDir = new TempDirectory();
 
   private final byte[] myTestData = {'t', 'e', 's', 't'};
-
-  @Test
-  public void winReparsePointAttributeConversion() {
-    assumeWindows();
-
-    var nioAttributes = new BasicFileAttributes() {
-      @Override public FileTime lastModifiedTime() { return FileTime.from(Instant.now()); }
-      @Override public FileTime lastAccessTime() { return lastModifiedTime(); }
-      @Override public FileTime creationTime() { return lastModifiedTime(); }
-      @Override public boolean isRegularFile() { return false; }
-      @Override public boolean isDirectory() { return true; }
-      @Override public boolean isSymbolicLink() { return false; }
-      @Override public boolean isOther() { return true; }
-      @Override public long size() { return 0; }
-      @Override public Object fileKey() { return null; }
-    };
-
-    var rootAttributes = FileAttributes.fromNio(Path.of(System.getenv("SystemDrive") + '\\'), nioAttributes);
-    assertTrue(rootAttributes.isDirectory());
-    assertEquals(FileAttributes.Type.DIRECTORY, rootAttributes.getType());
-    assertFalse(rootAttributes.isSymLink());
-
-    var dirAttributes = FileAttributes.fromNio(Path.of(System.getenv("USERPROFILE")), nioAttributes);
-    assertTrue(dirAttributes.isDirectory());
-    assertEquals(FileAttributes.Type.DIRECTORY, dirAttributes.getType());
-    assertTrue(dirAttributes.isSymLink());
-  }
 
   @Test
   public void missingFile() {
@@ -542,13 +567,17 @@ public class FileAttributesReadingTest {
     assertEquals(file.getPath(), target);
   }
 
-  @SuppressWarnings("UsagesOfObsoleteApi")
   private static @Nullable String resolveSymLink(File file) {
-    String realPath = FileSystemUtil.resolveSymLink(file.getAbsolutePath());
-    if (realPath != null && (SystemInfo.isWindows && realPath.startsWith("\\\\") || new File(realPath).exists())) {
-      return realPath;
+    try {
+      String realPath = FileSystemUtil.computeMediator().resolveSymLink(file.getAbsolutePath());
+      if (realPath != null && (SystemInfo.isWindows && realPath.startsWith("\\\\") || new File(realPath).exists())) {
+        return realPath;
+      }
+      return null;
     }
-    return null;
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static FileAttributes getAttributes(File file) {
@@ -558,9 +587,13 @@ public class FileAttributesReadingTest {
     return attributes;
   }
 
-  @SuppressWarnings("UsagesOfObsoleteApi")
   private static @Nullable FileAttributes getAttributes(String path) {
-    return FileSystemUtil.getAttributes(path);
+    try {
+      return FileSystemUtil.computeMediator().getAttributes(path);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static void assertFileAttributes(File file) {
@@ -572,5 +605,10 @@ public class FileAttributesReadingTest {
     assertEquals(file.length(), attributes.length);
     assertEquals(file.lastModified(), attributes.lastModified);
     assertTrue(attributes.isWritable());
+  }
+
+  private static String getMediatorName() {
+    Object mediator = FileSystemUtil.computeMediator();
+    return mediator.getClass().getSimpleName().replace("MediatorImpl", "");
   }
 }

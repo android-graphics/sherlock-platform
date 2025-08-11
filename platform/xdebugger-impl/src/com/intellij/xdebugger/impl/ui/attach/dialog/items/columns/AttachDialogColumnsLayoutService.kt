@@ -2,9 +2,7 @@
 package com.intellij.xdebugger.impl.ui.attach.dialog.items.columns
 
 import com.intellij.openapi.components.Service
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 @Service
 class AttachDialogColumnsLayoutService {
   fun getColumnsLayout(): AttachDialogColumnsLayout {

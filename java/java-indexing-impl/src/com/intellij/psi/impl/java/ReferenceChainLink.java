@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -20,7 +20,6 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,7 +64,6 @@ public class ReferenceChainLink {
 
 
   @Nullable
-  @Unmodifiable
   List<PsiMember> getGlobalMembers(VirtualFile placeFile, Project project) {
     if (isExpensive(project)) return null;
 
@@ -90,7 +88,8 @@ public class ReferenceChainLink {
     return ContainerUtil.filter(candidates, candidate -> canBeAccessible(placeFile, candidate));
   }
 
-  private @Nullable List<PsiMember> calcMembersUnlessTooMany(@NotNull GlobalSearchScope scope) {
+  @Nullable
+  private List<PsiMember> calcMembersUnlessTooMany(@NotNull GlobalSearchScope scope) {
     List<PsiMember> candidates = new ArrayList<>();
     AtomicInteger count = new AtomicInteger();
     Processor<PsiMember> processor = member -> {

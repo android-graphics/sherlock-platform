@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.JavaUiBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.*;
@@ -13,13 +12,13 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
+public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
   private final LibraryFilter myLibrariesFilter;
 
   public interface LibraryFilter {
     boolean isLibraryChosen(LibraryDescriptor libDescriptor);
   }
-  ModulesLayoutPanel(ModuleInsight insight, final LibraryFilter libFilter) {
+  public ModulesLayoutPanel(ModuleInsight insight, final LibraryFilter libFilter) {
     super(insight);
     myLibrariesFilter = libFilter;
   }
@@ -35,14 +34,14 @@ class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
   }
 
   @Override
-  protected @Unmodifiable List<ModuleDescriptor> getEntries() {
+  protected List<ModuleDescriptor> getEntries() {
     final List<ModuleDescriptor> modules = getInsight().getSuggestedModules();
     return modules != null? modules : Collections.emptyList();
   }
 
   @Override
-  protected Collection<Dependency> getDependencies(final ModuleDescriptor entry) {
-    final List<Dependency> deps = new ArrayList<>(entry.getDependencies());
+  protected Collection getDependencies(final ModuleDescriptor entry) {
+    final List<Object> deps = new ArrayList<>(entry.getDependencies());
     final Collection<LibraryDescriptor> libDependencies = getInsight().getLibraryDependencies(entry);
     for (LibraryDescriptor libDependency : libDependencies) {
       if (myLibrariesFilter.isLibraryChosen(libDependency)) {
@@ -53,7 +52,8 @@ class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
   }
 
   @Override
-  protected @Nullable ModuleDescriptor merge(final List<? extends ModuleDescriptor> entries) {
+  @Nullable
+  protected ModuleDescriptor merge(final List<? extends ModuleDescriptor> entries) {
     final ModuleInsight insight = getInsight();
     ModuleDescriptor mainDescr = null;
     for (ModuleDescriptor entry : entries) {

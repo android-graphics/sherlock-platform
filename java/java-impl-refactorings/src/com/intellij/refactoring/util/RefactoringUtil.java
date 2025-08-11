@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -94,7 +94,8 @@ public final class RefactoringUtil {
     }
   }
 
-  public static @Nullable String suggestNewOverriderName(String oldOverriderName, String oldBaseName, String newBaseName) {
+  @Nullable
+  public static String suggestNewOverriderName(String oldOverriderName, String oldBaseName, String newBaseName) {
     if (oldOverriderName.equals(oldBaseName)) {
       return newBaseName;
     }
@@ -203,7 +204,7 @@ public final class RefactoringUtil {
                                               String newName,
                                               SearchScope scope,
                                               final boolean ignoreAccessScope) throws IncorrectOperationException {
-    for (PsiReference reference : ReferencesSearch.search(variable, scope, ignoreAccessScope).asIterable()) {
+    for (PsiReference reference : ReferencesSearch.search(variable, scope, ignoreAccessScope)) {
       reference.handleElementRename(newName);
     }
   }
@@ -266,7 +267,8 @@ public final class RefactoringUtil {
     return false;
   }
 
-  public static @Nullable PsiExpressionList getArgumentListByMethodReference(PsiElement ref) {
+  @Nullable
+  public static PsiExpressionList getArgumentListByMethodReference(PsiElement ref) {
     if (ref instanceof PsiCall) return ((PsiCall)ref).getArgumentList();
     PsiElement parent = ref.getParent();
     if (parent instanceof PsiCall) {
@@ -487,7 +489,7 @@ public final class RefactoringUtil {
   /**
    * @deprecated use CommonJavaRefactoringUtil.suggestUniqueVariableName instead.
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static String suggestUniqueVariableName(String baseName, PsiElement place, PsiField fieldToReplace) {
     return CommonJavaRefactoringUtil.suggestUniqueVariableName(baseName, place, fieldToReplace);
   }
@@ -504,7 +506,8 @@ public final class RefactoringUtil {
    * @deprecated use CommonJavaRefactoringUtil.createPackageDirectoryInSourceRoot instead.
    */
   @Deprecated
-  public static @NotNull PsiDirectory createPackageDirectoryInSourceRoot(@NotNull PackageWrapper aPackage, final @NotNull VirtualFile sourceRoot)
+  @NotNull
+  public static PsiDirectory createPackageDirectoryInSourceRoot(@NotNull PackageWrapper aPackage, @NotNull final VirtualFile sourceRoot)
     throws IncorrectOperationException {
     return CommonJavaRefactoringUtil.createPackageDirectoryInSourceRoot(aPackage, sourceRoot);
   }
@@ -518,7 +521,7 @@ public final class RefactoringUtil {
       final PsiType substitutedType = substitutor.substitute(parameter);
       final PsiType erasedType = substitutedType == null ? TypeConversionUtil.erasure(factory.createType(parameter))
                                                          : substitutedType;
-      for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(member)).asIterable()) {
+      for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(member))) {
         final PsiElement element = reference.getElement();
         final PsiElement parent = element.getParent();
         if (parent instanceof PsiTypeElement) {
@@ -614,7 +617,8 @@ public final class RefactoringUtil {
     return false;
   }
 
-  public static @NlsContexts.DialogMessage String checkEnumConstantInSwitchLabel(PsiExpression expr) {
+  @NlsContexts.DialogMessage
+  public static String checkEnumConstantInSwitchLabel(PsiExpression expr) {
     if (PsiImplUtil.getSwitchLabel(expr) != null) {
       PsiReferenceExpression ref = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expr), PsiReferenceExpression.class);
       if (ref != null && ref.resolve() instanceof PsiEnumConstant) {
@@ -707,7 +711,7 @@ public final class RefactoringUtil {
   }
 
   public static boolean isModifiedInScope(PsiVariable variable, PsiElement scope) {
-    for (PsiReference reference : ReferencesSearch.search(variable, new LocalSearchScope(scope), false).asIterable()) {
+    for (PsiReference reference : ReferencesSearch.search(variable, new LocalSearchScope(scope), false)) {
       if (isAssignmentLHS(reference.getElement())) return true;
     }
     return false;

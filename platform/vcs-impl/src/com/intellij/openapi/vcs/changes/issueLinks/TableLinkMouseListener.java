@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.issueLinks;
 
 import com.intellij.ui.ColoredTableCellRenderer;
@@ -14,7 +14,8 @@ import java.awt.event.MouseEvent;
 
 public class TableLinkMouseListener extends AbstractBaseTagMouseListener {
   @Override
-  public @Nullable Object getTagAt(final @NotNull MouseEvent e) {
+  @Nullable
+  public Object getTagAt(@NotNull final MouseEvent e) {
     // TODO[yole]: don't update renderer on every event, like it's done in TreeLinkMouseListener
     Object tag;
     JTable table = (JTable)e.getSource();

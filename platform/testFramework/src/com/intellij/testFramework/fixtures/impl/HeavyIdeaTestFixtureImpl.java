@@ -36,7 +36,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
-import com.intellij.testFramework.fixtures.HeavyIdeaTestFixturePathProvider;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -65,17 +64,15 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
   private final String mySanitizedName;
-  private @Nullable HeavyIdeaTestFixturePathProvider myProjectPathProvider;
+  private final Path myProjectPath;
   private final boolean myIsDirectoryBasedProject;
   private SdkLeakTracker mySdkLeakTracker;
 
   private AccessToken projectTracker;
 
-  HeavyIdeaTestFixtureImpl(@NotNull String name,
-                           @Nullable HeavyIdeaTestFixturePathProvider projectPathProvider,
-                           boolean isDirectoryBasedProject) {
+  HeavyIdeaTestFixtureImpl(@NotNull String name, @Nullable Path projectPath, boolean isDirectoryBasedProject) {
     mySanitizedName = FileUtil.sanitizeFileName(name, false);
-    myProjectPathProvider = projectPathProvider;
+    myProjectPath = projectPath;
     myIsDirectoryBasedProject = isDirectoryBasedProject;
   }
 
@@ -89,7 +86,6 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
 
     initApplication();
     projectTracker = ((TestProjectManager)ProjectManager.getInstance()).startTracking();
-
     setUpProject();
 
     EncodingManager.getInstance(); // adds listeners
@@ -159,14 +155,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     });
     actions.add(() -> {
       if (myThreadTracker != null) {
-        VfsTestUtil.waitForFileWatcher();
         myThreadTracker.checkLeak();
-      }
-    });
-    actions.add(() -> {
-      HeavyIdeaTestFixturePathProvider provider = myProjectPathProvider;
-      if (provider != null) {
-        provider.afterTest(mySanitizedName);
       }
     });
     actions.add(() -> LightPlatformTestCase.checkEditorsReleased());
@@ -210,22 +199,15 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
-  private @NotNull Path generateProjectPath() {
+  @NotNull
+  private Path generateProjectPath() {
     Path tempDirectory;
-    HeavyIdeaTestFixturePathProvider pathProvider = myProjectPathProvider;
-    if (pathProvider == null) {
-      pathProvider = myProjectPathProvider = ApplicationManager.getApplication().getService(HeavyIdeaTestFixturePathProvider.class);
-    }
-    Path projectPath = null;
-    if (pathProvider != null) {
-      projectPath = pathProvider.get(mySanitizedName, getTestRootDisposable());
-    }
-    if (projectPath == null) {
+    if (myProjectPath == null) {
       tempDirectory = TemporaryDirectory.generateTemporaryPath(mySanitizedName);
       myFilesToDelete.add(tempDirectory);
     }
     else {
-      tempDirectory = projectPath;
+      tempDirectory = myProjectPath;
     }
     return tempDirectory.resolve(mySanitizedName + (myIsDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION));
   }
@@ -247,7 +229,8 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
 
   private final class MyDataProvider implements DataProvider {
     @Override
-    public @Nullable Object getData(@NotNull @NonNls String dataId) {
+    @Nullable
+    public Object getData(@NotNull @NonNls String dataId) {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }
@@ -277,7 +260,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   }
 
   @Override
-  public PsiFile addFileToProject(@NotNull @NonNls String rootPath, final @NotNull @NonNls String relativePath, final @NotNull @NonNls String fileText) throws IOException {
+  public PsiFile addFileToProject(@NotNull @NonNls String rootPath, @NotNull @NonNls final String relativePath, @NotNull @NonNls final String fileText) throws IOException {
     final VirtualFile dir = VfsUtil.createDirectories(rootPath + "/" + PathUtil.getParentPath(relativePath));
 
     final VirtualFile[] virtualFile = new VirtualFile[1];

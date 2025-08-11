@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 public final class ApplicationActionUtils {
   private ApplicationActionUtils() {
   }

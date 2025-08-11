@@ -28,7 +28,8 @@ public interface PyAstConditionalStatementPart extends PyAstStatementPart {
   /**
    * @return the condition expression.
    */
-  default @Nullable PyAstExpression getCondition() {
+  @Nullable
+  default PyAstExpression getCondition() {
     ASTNode n = getNode().findChildByType(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
     if (n != null) {
       return (PyAstExpression)n.getPsi();

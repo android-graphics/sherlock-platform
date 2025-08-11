@@ -18,7 +18,6 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitActivity;
 import git4idea.GitProtectedBranchesKt;
@@ -30,7 +29,6 @@ import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
-import io.opentelemetry.api.trace.Tracer;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static git4idea.GitBranchesUsageCollector.*;
 import static git4idea.GitNotificationIdsHolder.CHECKOUT_ROLLBACK_ERROR;
@@ -88,14 +87,14 @@ class GitCheckoutOperation extends GitBranchOperation {
 
   @Override
   protected void execute() {
-    Tracer tracer = TelemetryManager.getInstance().getTracer(VcsScope);
-    TraceKt.use(tracer.spanBuilder(Operation.Checkout.getName()).setAttribute("branch", myNewBranch != null ? myNewBranch : "null"), __ -> {
+    runWithSpan(TelemetryManager.getInstance().getTracer(VcsScope), Operation.Checkout.getName(), (span) -> {
       StructuredIdeActivity checkoutActivity = CHECKOUT_ACTIVITY.started(myProject, () -> List.of(
         IS_BRANCH_PROTECTED.with(isBranchProtected()),
         IS_NEW_BRANCH.with(myNewBranch != null)
       ));
       Ref<Boolean> finishedSuccessfullyRef = Ref.create(false);
 
+      span.setAttribute("branch", myNewBranch != null ? myNewBranch : "null");
       try {
         finishedSuccessfullyRef.set(doExecute(checkoutActivity));
       }
@@ -104,7 +103,6 @@ class GitCheckoutOperation extends GitBranchOperation {
           return List.of(FINISHED_SUCCESSFULLY.with(finishedSuccessfullyRef.get()));
         });
       }
-      return null;
     });
   }
 
@@ -143,21 +141,21 @@ class GitCheckoutOperation extends GitBranchOperation {
           vfsRefresh.finished();
           markSuccessful(repository);
         }
-        else if (unmergedFiles.isDetected()) {
+        else if (unmergedFiles.hasHappened()) {
           fatalUnmergedFilesError();
           fatalErrorHappened = true;
         }
-        else if (localChangesDetector.isDetected()) {
+        else if (localChangesDetector.wasMessageDetected()) {
           boolean smartCheckoutSucceeded = smartCheckoutOrNotify(repository, localChangesDetector, activity);
           if (!smartCheckoutSucceeded) {
             fatalErrorHappened = true;
           }
         }
-        else if (untrackedOverwrittenByCheckout.isDetected()) {
+        else if (untrackedOverwrittenByCheckout.wasMessageDetected()) {
           fatalUntrackedFilesError(repository.getRoot(), untrackedOverwrittenByCheckout.getRelativeFilePaths());
           fatalErrorHappened = true;
         }
-        else if (!myRefShouldBeValid && unknownPathspec.isDetected()) {
+        else if (!myRefShouldBeValid && unknownPathspec.hasHappened()) {
           markSkip(repository);
         }
         else {

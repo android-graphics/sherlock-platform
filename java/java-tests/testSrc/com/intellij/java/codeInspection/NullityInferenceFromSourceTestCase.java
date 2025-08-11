@@ -16,6 +16,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import java.util.Arrays;
 
@@ -421,18 +422,18 @@ public abstract class NullityInferenceFromSourceTestCase extends LightJavaCodeIn
                                                  PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
                                                });
       assertNotNull(method.getNode());
-      assertEquals(result, JavaSourceInference.inferNullability((PsiMethodImpl)method));
+      Assert.assertEquals(result, JavaSourceInference.inferNullability((PsiMethodImpl)method));
       return result;
     }
 
     public void testSkipWhenErrors() {
-      assertEquals(Nullability.UNKNOWN, inferNullability(parse("String foo() { if(); return 2; } ")));
+      Assert.assertEquals(inferNullability(parse("String foo() { if(); return 2; } ")), Nullability.UNKNOWN);
     }
 
     public void testNoNullableAnnotationInPresenceOfInferredNullContract() {
       PsiMethod method = parse("Object foo(Object o) { if (o == null) return null; return 2; }");
       PsiAnnotation[] annos = InferredAnnotationsManager.getInstance(getProject()).findInferredAnnotations(method);
-      assertEquals(Arrays.asList(Contract.class.getName()), Arrays.stream(annos).map(t -> t.getQualifiedName()).toList());
+      assertEquals(Arrays.stream(annos).map(t -> t.getQualifiedName()).toList(), Arrays.asList(Contract.class.getName()));
     }
   }
 

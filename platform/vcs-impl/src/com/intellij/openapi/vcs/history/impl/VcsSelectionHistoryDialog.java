@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history.impl;
 
 import com.intellij.CommonBundle;
@@ -43,8 +43,8 @@ import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.*;
 import com.intellij.util.ui.AnimatedIcon;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.vcsUtil.VcsUtil;
@@ -70,8 +70,10 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
   private static final DataKey<VcsSelectionHistoryDialog> SELECTION_HISTORY_DIALOG_KEY = DataKey.create("VCS_SELECTION_HISTORY_DIALOG");
 
   private static final VcsRevisionNumber LOCAL_REVISION_NUMBER = new VcsRevisionNumber() {
+    @Nls
+    @NotNull
     @Override
-    public @Nls @NotNull String asString() {
+    public String asString() {
       return VcsBundle.message("selection.history.local.revision.text");
     }
 
@@ -80,8 +82,9 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       return 0;
     }
 
+    @NonNls
     @Override
-    public @NonNls String toString() {
+    public String toString() {
       return "Local Changes";
     }
   };
@@ -93,10 +96,10 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
 
   private static final Block EMPTY_BLOCK = new Block("", 0, 0);
 
-  private final @NotNull Project myProject;
-  private final @NotNull VirtualFile myFile;
-  private final @NotNull AbstractVcs myActiveVcs;
-  private final @NotNull VcsHistoryProvider myVcsHistoryProvider;
+  @NotNull private final Project myProject;
+  @NotNull private final VirtualFile myFile;
+  @NotNull private final AbstractVcs myActiveVcs;
+  @NotNull private final VcsHistoryProvider myVcsHistoryProvider;
 
   private final ColumnInfo[] myDefaultColumns;
   private ListTableModel<VcsFileRevision> myListModel;
@@ -110,10 +113,10 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
   private final JEditorPane myComments;
   private final Wrapper myDetailsPanel = new Wrapper();
 
-  private @Nullable Consumer<VcsFileRevision> mySelectedRevisionListener;
+  @Nullable private Consumer<VcsFileRevision> mySelectedRevisionListener;
 
-  private final @NotNull MergingUpdateQueue myUpdateQueue;
-  private final @NotNull BlockLoader myBlockLoader;
+  @NotNull private final MergingUpdateQueue myUpdateQueue;
+  @NotNull private final BlockLoader myBlockLoader;
 
   private boolean myRevisionsLoaded = false;
   private boolean myIsDuringUpdate = false;
@@ -234,7 +237,9 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     updateDiff();
   }
 
-  private static @Nls @NotNull String canNoLoadMessage(@Nullable VcsException e) {
+  @Nls
+  @NotNull
+  private static String canNoLoadMessage(@Nullable VcsException e) {
     return VcsBundle.message("selection.history.can.not.load.message") + (e != null ? ": " + e.getLocalizedMessage() : "");
   }
 
@@ -273,7 +278,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       IntPair range = getSelectedRevisionsRange(data);
       List<VcsFileRevision> oldSelection = data.getRevisions().subList(range.first, range.second);
 
-      myListModel.setItems(new ArrayList<>(newItems));
+      myListModel.setItems(newItems);
 
       myList.setSelection(oldSelection);
       if (myList.getSelectedRowCount() == 0) {
@@ -314,7 +319,8 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     }
   }
 
-  private @NotNull IntPair getSelectedRevisionsRange(@NotNull BlockData blockData) {
+  @NotNull
+  private IntPair getSelectedRevisionsRange(@NotNull BlockData blockData) {
     List<VcsFileRevision> selection = myList.getSelectedObjects();
     if (selection.isEmpty()) return new IntPair(0, 0);
     int startIndex = blockData.getRevisions().indexOf(ContainerUtil.getFirstItem(selection));
@@ -398,12 +404,14 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     }
   }
 
-  private static @Nullable @NlsContexts.Label String createDiffContentTitle(int index, @NotNull BlockData data) {
+  @Nullable
+  private static @NlsContexts.Label String createDiffContentTitle(int index, @NotNull BlockData data) {
     if (index >= data.getRevisions().size()) return null;
     return VcsBundle.message("diff.content.title.revision.number", data.getRevisions().get(index).getRevisionNumber());
   }
 
-  private @Nullable DiffContent createDiffContent(int index, @NotNull BlockData data) {
+  @Nullable
+  private DiffContent createDiffContent(int index, @NotNull BlockData data) {
     if (index >= data.getRevisions().size()) return DiffContentFactory.getInstance().createEmpty();
     Block block = data.getBlock(index);
     if (block == null) return null;
@@ -486,14 +494,15 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     return null;
   }
 
-  private @NotNull DiffFromHistoryHandler getDiffHandler() {
+  @NotNull
+  private DiffFromHistoryHandler getDiffHandler() {
     VcsHistoryProvider historyProvider = myActiveVcs.getVcsHistoryProvider();
     DiffFromHistoryHandler handler = historyProvider != null ? historyProvider.getHistoryDiffHandler() : null;
     return handler != null ? handler : new StandardDiffFromHistoryHandler();
   }
 
-  private abstract static class BlockLoader {
-    private final @NotNull Object LOCK = new Object();
+  private static abstract class BlockLoader {
+    @NotNull private final Object LOCK = new Object();
 
     private final AbstractVcs myVcs;
     private final VirtualFile myFile;
@@ -503,7 +512,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     private final List<VcsFileRevision> myRevisions = new ArrayList<>();
     private final List<Block> myBlocks = new ArrayList<>();
 
-    private @Nullable VcsException myException;
+    @Nullable private VcsException myException;
     private boolean myIsLoading = true;
     private VcsFileRevision myCurrentLoadingRevision;
 
@@ -524,7 +533,8 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       return myLocalRevision;
     }
 
-    public @NotNull BlockData getLoadedData() {
+    @NotNull
+    public BlockData getLoadedData() {
       synchronized (LOCK) {
         return new BlockData(myIsLoading, mySession, new ArrayList<>(myRevisions), new ArrayList<>(myBlocks),
                              myException, myCurrentLoadingRevision);
@@ -587,7 +597,8 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     @RequiresBackgroundThread
     protected abstract void notifyUpdate(boolean shouldFlush);
 
-    private @NotNull Block createBlock(@NotNull Block block, @NotNull VcsFileRevision revision) throws VcsException {
+    @NotNull
+    private Block createBlock(@NotNull Block block, @NotNull VcsFileRevision revision) throws VcsException {
       if (block == EMPTY_BLOCK) return EMPTY_BLOCK;
 
       String revisionContent = loadContents(revision);
@@ -596,9 +607,14 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       return newBlock.getStart() != newBlock.getEnd() ? newBlock : EMPTY_BLOCK;
     }
 
-    private @NotNull String loadContents(@NotNull VcsFileRevision revision) throws VcsException {
+    @NotNull
+    private String loadContents(@NotNull VcsFileRevision revision) throws VcsException {
       try {
-        byte[] bytes = VcsHistoryUtil.loadRevisionContent(revision);
+        byte[] bytes = revision.loadContent();
+        if (bytes == null) {
+          throw new VcsException(VcsBundle.message("history.failed.to.load.content.for.revision.0",
+                                                   revision.getRevisionNumber().asString()));
+        }
         return new String(bytes, myFile.getCharset());
       }
       catch (IOException e) {
@@ -610,10 +626,10 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
   private static class BlockData {
     private final boolean myIsLoading;
     private final VcsHistorySession mySession;
-    private final @NotNull List<VcsFileRevision> myRevisions;
-    private final @NotNull List<? extends Block> myBlocks;
-    private final @Nullable VcsException myException;
-    private final @Nullable VcsFileRevision myCurrentLoadingRevision;
+    @NotNull private final List<VcsFileRevision> myRevisions;
+    @NotNull private final List<? extends Block> myBlocks;
+    @Nullable private final VcsException myException;
+    @Nullable private final VcsFileRevision myCurrentLoadingRevision;
 
     BlockData(boolean isLoading,
               @Nullable VcsHistorySession session,
@@ -633,24 +649,29 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       return myIsLoading;
     }
 
-    public @Nullable VcsException getException() {
+    @Nullable
+    public VcsException getException() {
       return myException;
     }
 
-    public @Nullable VcsFileRevision getCurrentLoadingRevision() {
+    @Nullable
+    public VcsFileRevision getCurrentLoadingRevision() {
       return myCurrentLoadingRevision;
     }
 
-    public @Nullable Block getBlock(int index) {
+    @Nullable
+    public Block getBlock(int index) {
       if (myBlocks.size() <= index) return null;
       return myBlocks.get(index);
     }
 
-    private @Nullable VcsHistorySession getSession() {
+    @Nullable
+    private VcsHistorySession getSession() {
       return mySession;
     }
 
-    private @NotNull List<VcsFileRevision> getRevisions() {
+    @NotNull
+    private List<VcsFileRevision> getRevisions() {
       return myRevisions;
     }
   }
@@ -667,7 +688,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     }
 
     @Override
-    public void update(final @NotNull AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       VcsSelectionHistoryDialog dialog = e.getRequiredData(SELECTION_HISTORY_DIALOG_KEY);
 
       e.getPresentation().setText(VcsBundle.message("action.name.compare"));
@@ -714,7 +735,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     }
 
     @Override
-    public void update(final @NotNull AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       VcsSelectionHistoryDialog dialog = e.getRequiredData(SELECTION_HISTORY_DIALOG_KEY);
 
       e.getPresentation().setEnabled(dialog.myList.getSelectedRowCount() == 1 &&

@@ -1,4 +1,3 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.model;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,9 +13,11 @@ public abstract class JpsMavenExtensionService {
     return JpsServiceManager.getInstance().getService(JpsMavenExtensionService.class);
   }
 
-  public abstract @Nullable JpsMavenModuleExtension getExtension(@NotNull JpsModule module);
+  @Nullable
+  public abstract JpsMavenModuleExtension getExtension(@NotNull JpsModule module);
 
-  public abstract @NotNull JpsMavenModuleExtension getOrCreateExtension(@NotNull JpsModule module);
+  @NotNull
+  public abstract JpsMavenModuleExtension getOrCreateExtension(@NotNull JpsModule module);
 
   public abstract void setProductionOnTestDependency(@NotNull JpsDependencyElement dependency, boolean value);
 
@@ -24,5 +25,6 @@ public abstract class JpsMavenExtensionService {
 
   public abstract boolean hasMavenProjectConfiguration(@NotNull BuildDataPaths paths);
 
-  public abstract @Nullable MavenProjectConfiguration getMavenProjectConfiguration(BuildDataPaths paths);
+  @Nullable
+  public abstract MavenProjectConfiguration getMavenProjectConfiguration(BuildDataPaths paths);
 }

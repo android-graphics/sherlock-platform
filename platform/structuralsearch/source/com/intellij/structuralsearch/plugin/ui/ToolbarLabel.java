@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -15,7 +15,7 @@ import javax.swing.*;
  */
 class ToolbarLabel extends AnAction implements CustomComponentAction {
 
-  private final @NlsContexts.Label String myText;
+  @NlsContexts.Label private final String myText;
 
   ToolbarLabel(@NlsContexts.Label String text) {
     myText = text;

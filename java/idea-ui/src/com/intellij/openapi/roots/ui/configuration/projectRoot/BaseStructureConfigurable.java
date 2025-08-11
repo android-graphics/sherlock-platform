@@ -31,13 +31,12 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public abstract class BaseStructureConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable, Place.Navigator {
   protected StructureConfigurableContext myContext;
@@ -85,7 +84,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
   @Override
-  public ActionCallback navigateTo(final @Nullable Place place, final boolean requestFocus) {
+  public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
     if (place == null) return ActionCallback.DONE;
 
     final Object object = place.getPath(TREE_OBJECT);
@@ -113,7 +112,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
 
   @Override
-  public void queryPlace(final @NotNull Place place) {
+  public void queryPlace(@NotNull final Place place) {
     if (myCurrentConfigurable != null) {
       place.putPath(TREE_OBJECT, myCurrentConfigurable.getEditableObject());
       Place.queryFurther(myCurrentConfigurable, place);
@@ -131,7 +130,8 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     myTree.setCellRenderer(new ProjectStructureElementRenderer(myContext));
   }
 
-  protected @NotNull String getTextForSpeedSearch(MyNode node) {
+  @NotNull
+  protected String getTextForSpeedSearch(MyNode node) {
     return node.getDisplayName();
   }
 
@@ -144,7 +144,6 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     myUiDisposed = true;
 
     myAutoScrollHandler.cancelAllRequests();
-    myAutoScrollHandler.resetAlarm();
 
     myContext.getDaemonAnalyzer().clear();
 
@@ -161,7 +160,8 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     result.add(actionsManager.createCollapseAllAction(expander, myTree));
   }
 
-  public @Nullable ProjectStructureElement getSelectedElement() {
+  @Nullable
+  public ProjectStructureElement getSelectedElement() {
     final TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath != null && selectionPath.getLastPathComponent() instanceof MyNode node &&
         node.getConfigurable() instanceof ProjectStructureElementConfigurable<?> configurable) {
@@ -233,7 +233,8 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     loadTreeNodes();
   }
 
-  protected @NotNull Collection<? extends ProjectStructureElement> getProjectStructureElements() {
+  @NotNull
+  protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
     return Collections.emptyList();
   }
 
@@ -241,7 +242,8 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
 
   @Override
-  protected @NotNull ArrayList<AnAction> createActions(final boolean fromPopup) {
+  @NotNull
+  protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<>();
     AbstractAddGroup addAction = createAddAction(fromPopup);
     if (addAction != null) {
@@ -260,7 +262,8 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     return result;
   }
 
-  protected @NotNull @Unmodifiable List<? extends AnAction> createCopyActions(boolean fromPopup) {
+  @NotNull
+  protected List<? extends AnAction> createCopyActions(boolean fromPopup) {
     return Collections.emptyList();
   }
 
@@ -270,13 +273,15 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   public void onStructureSelected() {
   }
 
-  protected abstract @Nullable AbstractAddGroup createAddAction(boolean fromPopup);
+  @Nullable
+  protected abstract AbstractAddGroup createAddAction(boolean fromPopup);
 
   protected List<? extends RemoveConfigurableHandler<?>> getRemoveHandlers() {
     return Collections.emptyList();
   }
 
-  private @NotNull MultiMap<RemoveConfigurableHandler, MyNode> groupNodes(List<? extends MyNode> nodes) {
+  @NotNull
+  private MultiMap<RemoveConfigurableHandler, MyNode> groupNodes(List<? extends MyNode> nodes) {
     List<? extends RemoveConfigurableHandler<?>> handlers = getRemoveHandlers();
     MultiMap<RemoveConfigurableHandler, MyNode> grouped = MultiMap.createLinked();
     for (MyNode node : nodes) {

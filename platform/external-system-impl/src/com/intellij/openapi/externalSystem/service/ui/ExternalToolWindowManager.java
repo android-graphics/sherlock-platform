@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.service.ui;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -56,13 +55,11 @@ final class ExternalToolWindowManager implements ExternalSystemSettingsListenerE
       }
       else {
         AppUIExecutor.onUiThread(ModalityState.nonModal()).expireWith(settings).later().execute(() -> {
-          WriteIntentReadAction.run((Runnable)() -> {
-            ToolWindowManager.getInstance(settings.getProject()).invokeLater(() -> {
-              ToolWindow toolWindow1 = getToolWindow(settings.getProject(), manager.getSystemId());
-              if (toolWindow1 != null) {
-                activate(toolWindow1, settings, showToolWindow);
-              }
-            });
+          ToolWindowManager.getInstance(settings.getProject()).invokeLater(() -> {
+            ToolWindow toolWindow1 = getToolWindow(settings.getProject(), manager.getSystemId());
+            if (toolWindow1 != null) {
+              activate(toolWindow1, settings, showToolWindow);
+            }
           });
         });
       }

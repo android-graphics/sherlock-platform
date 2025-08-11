@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.actions.generate;
 
@@ -21,8 +21,9 @@ public class ToStringMemberChooserHeaderPanel extends JPanel {
         comboBox = new ComboBox(KotlinGenerateToStringAction.Generator.values());
         comboBox.setRenderer(
                 new DefaultListCellRenderer() {
+                    @NotNull
                     @Override
-                    public @NotNull Component getListCellRendererComponent(
+                    public Component getListCellRendererComponent(
                             JList list,
                             Object value,
                             int index,

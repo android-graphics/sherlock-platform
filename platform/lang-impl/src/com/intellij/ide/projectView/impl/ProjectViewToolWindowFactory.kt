@@ -7,11 +7,9 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.Icon
 
-@ApiStatus.Internal
 @VisibleForTesting
 class ProjectViewToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {

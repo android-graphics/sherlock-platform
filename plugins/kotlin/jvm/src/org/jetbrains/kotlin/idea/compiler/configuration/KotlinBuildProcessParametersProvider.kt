@@ -5,11 +5,9 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 import com.intellij.compiler.server.BuildProcessParametersProvider
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.idea.PluginStartupApplicationService
-import java.nio.file.Path
 
 class KotlinBuildProcessParametersProvider(private val project: Project) : BuildProcessParametersProvider() {
 
@@ -26,7 +24,6 @@ class KotlinBuildProcessParametersProvider(private val project: Project) : Build
                 val configuredKotlinVersion = IdeKotlinVersion.opt(KotlinJpsPluginSettings.jpsVersion(project))
                 if (configuredKotlinVersion != null && configuredKotlinVersion.compareTo(MIN_DEP_GRAPH_SUPPORTING_VERSION) >= 0) {
                     arguments += "-Dkotlin.jps.dumb.mode=true"
-                    arguments += "-Dkotlin.jps.enable.lookups.in.dumb.mode=true"
                 }
             }
         }
@@ -45,14 +42,13 @@ class KotlinBuildProcessParametersProvider(private val project: Project) : Build
             }
         }
 
-        return arguments
-    }
-
-    override fun getPathParameters(): List<Pair<String, Path>> = buildList {
         PluginStartupApplicationService.getInstance().getAliveFlagPath().let {
             if (!it.isBlank()) {
-                add(Pair("-Dkotlin.daemon.client.alive.path=", Path.of(it)))
+                // TODO: consider taking the property name from compiler/daemon/common (check whether dependency will be not too heavy)
+                arguments += "-Dkotlin.daemon.client.alive.path=\"$it\""
             }
         }
+
+        return arguments
     }
 }

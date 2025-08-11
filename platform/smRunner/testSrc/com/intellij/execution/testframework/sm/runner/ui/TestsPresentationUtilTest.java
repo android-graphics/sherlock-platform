@@ -307,7 +307,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     assertIsAnimatorProgressIcon(myRenderer.getIcon());
     assertOneElement(myFragContainer.getFragments());
-    assertEquals("Running tests…", myFragContainer.getTextAt(0));
+    assertEquals("Running tests...", myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
   }
 
@@ -556,6 +556,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertOneElement(myFragContainer.getFragments());
     assertEquals("No Test Results", myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.ERROR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
+
   }
 
   public void testFormatRootNodeWithoutChildren_Started() {
@@ -565,8 +566,9 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     assertIsAnimatorProgressIcon(myRenderer.getIcon());
     assertOneElement(myFragContainer.getFragments());
-    assertEquals("Instantiating tests…", myFragContainer.getTextAt(0));
+    assertEquals("Instantiating tests...", myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
+
   }
 
   public void testFormatRootNodeWithoutChildren_ReporterRegistered() {
@@ -579,6 +581,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertOneElement(myFragContainer.getFragments());
     assertEquals("No tests were found", myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.ERROR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
+
   }
 
   public void testFormatRootNodeWithoutChildren_ReporterNotRegistered() {
@@ -590,6 +593,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertOneElement(myFragContainer.getFragments());
     assertEquals(SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.reporter.not.attached"), myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.ERROR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
+
   }
 
   public void testFormatRootNodeWithoutChildren_Terminated() {
@@ -602,6 +606,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertOneElement(myFragContainer.getFragments());
     assertEquals("Terminated", myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
+
   }
 
   public void testFormatRootNodeWithoutChildren_PY_2434() {

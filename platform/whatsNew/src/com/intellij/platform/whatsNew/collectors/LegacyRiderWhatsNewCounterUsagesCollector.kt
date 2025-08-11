@@ -8,7 +8,8 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import kotlin.jvm.java
 
 internal object LegacyRiderWhatsNewCounterUsagesCollector : CounterUsagesCollector() {
-  private val eventLogGroup: EventLogGroup = EventLogGroup("rider.whatsnew.eap", 4)
+  private val eventLogGroup: EventLogGroup = EventLogGroup("rider.whatsnew.eap", 3)
+
   internal val opened = eventLogGroup.registerEvent("tab_opened", EventFields.Enum(("type"), OpenedType::class.java))
   internal val closed = eventLogGroup.registerEvent("tab_closed")
   internal val actionId = EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java)

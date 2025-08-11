@@ -27,8 +27,9 @@ import com.jetbrains.python.psi.PyRaiseStatement;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceRaiseStatementQuickFix extends PsiUpdateModCommandQuickFix {
+  @NotNull
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return PyPsiBundle.message("INTN.replace.raise.statement");
   }
 

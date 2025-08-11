@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
@@ -11,29 +11,28 @@ import java.util.Set;
 public final class ProductCodeRuleValidator extends CustomValidationRule {
 
   private static final Set<String> codes = Set.of(
-    "AI",
-    "CL",
-    "DB",
-    "GO",
-    "IC",
     "IU",
-    "PC",
-    "PS",
+    "IC",
     "PY",
-    "QA",
+    "PC",
+    "WS",
+    "GO",
+    "CL",
     "RD",
     "RM",
     "RR",
-    "WS"
+    "AS"
   );
 
+  @NotNull
   @Override
-  public @NotNull String getRuleId() {
+  public String getRuleId() {
     return "productCode";
   }
 
+  @NotNull
   @Override
-  protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+  protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
     return codes.contains(data) ? ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
   }
 }

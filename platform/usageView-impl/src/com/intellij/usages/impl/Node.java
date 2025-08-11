@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,8 +14,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Vector;
 
-@ApiStatus.Internal
-public abstract class Node extends DefaultMutableTreeNode {
+abstract class Node extends DefaultMutableTreeNode {
+
+
   private int myCachedTextHash;
 
   private byte myCachedFlags; // guarded by this; bit packed flags below:

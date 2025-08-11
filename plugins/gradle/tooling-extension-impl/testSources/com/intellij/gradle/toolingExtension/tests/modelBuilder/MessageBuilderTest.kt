@@ -5,7 +5,6 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException
 import com.intellij.util.ExceptionUtil
 import org.junit.jupiter.api.Test
 
-@Suppress("checkReturnValue")
 class MessageBuilderTest : MessageBuilderTestCase() {
 
   @Test
@@ -143,9 +142,9 @@ class MessageBuilderTest : MessageBuilderTestCase() {
 
   @Test
   fun `test title with project by message builder`() {
-    val rootProject = createProject("project", null)
-    val project = createProject("module", rootProject)
-    val subProject = createProject("sub-module", project)
+    val rootProject = DummyProject("project", null)
+    val project = DummyProject("module", rootProject)
+    val subProject = DummyProject("sub-module", project)
     val exception = Exception("Exception message")
 
     assertMessageTitle("root project 'project': Title") {
@@ -181,7 +180,7 @@ class MessageBuilderTest : MessageBuilderTestCase() {
 
   @Test
   fun `test text with project by message builder`() {
-    val rootProject = createProject("project", null)
+    val rootProject = DummyProject("project", null)
     val exception = Exception("Exception message")
 
     assertMessageText("Text") {

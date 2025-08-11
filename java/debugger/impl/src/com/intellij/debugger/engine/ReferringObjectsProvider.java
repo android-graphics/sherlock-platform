@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -9,21 +9,20 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
 public interface ReferringObjectsProvider {
   @NotNull
-  @Unmodifiable
   List<ReferringObject> getReferringObjects(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference value, long limit)
     throws EvaluateException;
 
   ReferringObjectsProvider BASIC_JDI = new ReferringObjectsProvider() {
+    @NotNull
     @Override
-    public @NotNull @Unmodifiable List<ReferringObject> getReferringObjects(@NotNull EvaluationContextImpl evaluationContext,
-                                                                            @NotNull ObjectReference value,
-                                                                            long limit) {
+    public List<ReferringObject> getReferringObjects(@NotNull EvaluationContextImpl evaluationContext,
+                                                     @NotNull ObjectReference value,
+                                                     long limit) {
       return ContainerUtil.map(value.referringObjects(limit), x -> asReferringObject(x, value));
     }
 
@@ -36,7 +35,8 @@ public interface ReferringObjectsProvider {
       return new SimpleReferringObject(referrer);
     }
 
-    private static @Nullable Field findField(@NotNull Value value, @NotNull ObjectReference reference) {
+    @Nullable
+    private static Field findField(@NotNull Value value, @NotNull ObjectReference reference) {
       for (Field field : reference.referenceType().allFields()) {
         if (reference.getValue(field) == value) {
           return field;

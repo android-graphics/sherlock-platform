@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java.impl;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -16,8 +16,9 @@ public final class JpsJavaDependencyExtensionRole extends JpsElementChildRoleBas
     super("java dependency extension");
   }
 
+  @NotNull
   @Override
-  public @NotNull JpsJavaDependencyExtensionImpl create() {
+  public JpsJavaDependencyExtensionImpl create() {
     return new JpsJavaDependencyExtensionImpl(false, JpsJavaDependencyScope.COMPILE);
   }
 }

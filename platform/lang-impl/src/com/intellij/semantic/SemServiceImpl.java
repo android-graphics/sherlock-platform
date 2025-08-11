@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.semantic;
 
 import com.intellij.openapi.Disposable;
@@ -12,9 +12,9 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
@@ -26,7 +26,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import kotlin.Unit;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +36,6 @@ import static com.intellij.concurrency.ConcurrentCollectionFactory.createConcurr
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
-@ApiStatus.Internal
 public final class SemServiceImpl extends SemService implements Disposable {
   private static final Key<SemData> SEM_CACHE_KEY = Key.create("SEM");
 
@@ -97,7 +95,7 @@ public final class SemServiceImpl extends SemService implements Disposable {
         return Unit.INSTANCE;
       }
 
-      if (SemContributor.SemContributorHelper.isAvailable(semContributor, myProject)) {
+      if (semContributor.isAvailable(myProject)) {
         semContributor.registerSemProviders(registrar, myProject);
       }
       return Unit.INSTANCE;
@@ -152,7 +150,25 @@ public final class SemServiceImpl extends SemService implements Disposable {
   }
 
   private @NotNull SemServiceImpl.SemData getCacheHolder(@NotNull PsiElement psi) {
-    return ConcurrencyUtil.computeIfAbsent(psi, SEM_CACHE_KEY, () -> new SemData(getModCount()));
+    SemData cacheHolder = psi.getUserData(SEM_CACHE_KEY);
+    if (cacheHolder != null) {
+      return cacheHolder;
+    }
+
+    if (psi instanceof UserDataHolderEx) {
+      return ((UserDataHolderEx)psi).putUserDataIfAbsent(SEM_CACHE_KEY, new SemData(getModCount()));
+    }
+
+    SemData semData;
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (psi) {
+      semData = psi.getUserData(SEM_CACHE_KEY);
+      if (semData == null) {
+        semData = new SemData(getModCount());
+        psi.putUserData(SEM_CACHE_KEY, semData);
+      }
+    }
+    return semData;
   }
 
   private long getModCount() {

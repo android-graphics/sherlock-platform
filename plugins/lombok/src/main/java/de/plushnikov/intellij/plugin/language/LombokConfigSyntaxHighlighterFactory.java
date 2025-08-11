@@ -7,8 +7,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public final class LombokConfigSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
+  @NotNull
   @Override
-  public @NotNull SyntaxHighlighter getSyntaxHighlighter(Project project, VirtualFile virtualFile) {
+  public SyntaxHighlighter getSyntaxHighlighter(Project project, VirtualFile virtualFile) {
     return new LombokConfigSyntaxHighlighter();
   }
 }

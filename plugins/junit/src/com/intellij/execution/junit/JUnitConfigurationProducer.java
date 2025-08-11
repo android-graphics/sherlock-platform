@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -10,8 +10,9 @@ public abstract class JUnitConfigurationProducer extends AbstractJavaTestConfigu
     super();
   }
 
+  @NotNull
   @Override
-  public @NotNull ConfigurationFactory getConfigurationFactory() {
+  public ConfigurationFactory getConfigurationFactory() {
     return JUnitConfigurationType.getInstance().getConfigurationFactories()[0];
   }
 }

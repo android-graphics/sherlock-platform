@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.frame;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -17,11 +17,14 @@ public abstract class XValueGroup extends XValueContainer {
     myName = name;
   }
 
-  public @NotNull @NlsSafe String getName() {
+  @NotNull
+  @NlsSafe
+  public String getName() {
     return myName;
   }
 
-  public @Nullable Icon getIcon() {
+  @Nullable
+  public Icon getIcon() {
     return null;
   }
 
@@ -43,14 +46,18 @@ public abstract class XValueGroup extends XValueContainer {
   /**
    * @return separator between the group name and the {@link #getComment() comment} in the node text
    */
-  public @NotNull @NlsSafe String getSeparator() {
+  @NotNull
+  @NlsSafe
+  public String getSeparator() {
     return " = ";
   }
 
   /**
    * @return optional comment shown after the group name
    */
-  public @Nullable @NlsSafe String getComment() {
+  @Nullable
+  @NlsSafe
+  public String getComment() {
     return null;
   }
 }

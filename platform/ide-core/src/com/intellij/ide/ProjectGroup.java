@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.util.ModificationTracker;
@@ -34,7 +34,8 @@ public final class ProjectGroup implements ModificationTracker {
 
   public ProjectGroup() { }
 
-  public @NotNull @NlsSafe String getName() {
+  @NotNull
+  public @NlsSafe String getName() {
     return myName;
   }
 
@@ -90,7 +91,8 @@ public final class ProjectGroup implements ModificationTracker {
     myProjects = projects;
   }
 
-  public @NotNull List<String> getProjects() {
+  @NotNull
+  public List<String> getProjects() {
     return myProjects;
   }
 

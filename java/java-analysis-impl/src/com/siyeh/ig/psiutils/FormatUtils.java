@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
@@ -19,7 +19,8 @@ public final class FormatUtils {
 
   /**
    */
-  public static final @NonNls Set<String> formatMethodNames = new HashSet<>(2);
+  @NonNls
+  public static final Set<String> formatMethodNames = new HashSet<>(2);
   /**
    */
   public static final Set<String> formatClassNames = new HashSet<>(4);
@@ -69,7 +70,8 @@ public final class FormatUtils {
     return parent instanceof PsiMethodCallExpression && isFormatCall((PsiMethodCallExpression)parent);
   }
 
-  public static @Nullable PsiExpression getFormatArgument(PsiExpressionList argumentList) {
+  @Nullable
+  public static PsiExpression getFormatArgument(PsiExpressionList argumentList) {
     final PsiExpression[] arguments = argumentList.getExpressions();
     if (arguments.length == 0) {
       return null;

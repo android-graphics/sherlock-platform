@@ -15,7 +15,8 @@ public class JavaFxManifestAttribute {
     myValue = value;
   }
 
-  public @NlsSafe String getName() {
+  @NlsSafe
+  public String getName() {
     return myName;
   }
 
@@ -23,7 +24,8 @@ public class JavaFxManifestAttribute {
     myName = name;
   }
 
-  public @NlsSafe String getValue() {
+  @NlsSafe
+  public String getValue() {
     return myValue;
   }
 

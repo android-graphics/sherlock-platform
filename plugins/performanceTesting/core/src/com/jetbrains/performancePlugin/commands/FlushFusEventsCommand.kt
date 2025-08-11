@@ -12,6 +12,6 @@ internal class FlushFusEventsCommand(text: String, line: Int) : PlaybackCommandC
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    FeatureUsageLogger.getInstance().flush().asDeferred().join()
+    FeatureUsageLogger.flush().asDeferred().join()
   }
 }

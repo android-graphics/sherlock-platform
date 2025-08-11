@@ -80,7 +80,8 @@ public class AssociationsGroup extends ActionGroup {
         return XsltSupport.isXsltFile(psiFile);
     }
 
-    static @Nullable PsiFile getPsiFile(@Nullable AnActionEvent e) {
+    @Nullable
+    static PsiFile getPsiFile(@Nullable AnActionEvent e) {
         return e != null ? e.getData(CommonDataKeys.PSI_FILE) : null;
     }
 }

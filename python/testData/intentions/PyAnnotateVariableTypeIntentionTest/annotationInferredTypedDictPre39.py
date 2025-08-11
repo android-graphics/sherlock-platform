@@ -1,1 +1,0 @@
-v<caret>ar = {"foo": 42, "bar": "baz"}

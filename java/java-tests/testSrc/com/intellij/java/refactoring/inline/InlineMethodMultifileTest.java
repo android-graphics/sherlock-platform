@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.MockInlineMethodOptions;
 import com.intellij.refactoring.inline.InlineMethodProcessor;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -66,7 +67,8 @@ public class InlineMethodMultifileTest extends LightFixtureCompletionTestCase {
     final boolean condition = InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method);
     assertFalse("Bad returns found", condition);
 
-    new InlineMethodProcessor(getProject(), method, null, getEditor(), false).run();
+    new InlineMethodProcessor(getProject(), method, null, getEditor(), new MockInlineMethodOptions().isInlineThisOnly())
+      .run();
 
     Path expectedPath = myDescriptor.getAfterPath().resolve("src/org/jetbrains/" + getTestName(true));
     VirtualFile rootAfter = LocalFileSystem.getInstance().findFileByNioFile(expectedPath);

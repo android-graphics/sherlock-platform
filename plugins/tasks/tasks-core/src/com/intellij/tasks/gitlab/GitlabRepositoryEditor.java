@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.gitlab;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -52,8 +52,9 @@ public class GitlabRepositoryEditor extends BaseRepositoryEditor<GitlabRepositor
     }
   }
 
+  @Nullable
   @Override
-  protected @Nullable JComponent createCustomPanel() {
+  protected JComponent createCustomPanel() {
     myProjectLabel = new JBLabel(TaskBundle.message("label.project"), SwingConstants.RIGHT);
     myProjectComboBox = new ComboBox<>(300);
     myProjectComboBox.setRenderer(SimpleListCellRenderer.create(TaskBundle.message("label.set.server.url.token.first"), GitlabProject::getName));
@@ -91,13 +92,15 @@ public class GitlabRepositoryEditor extends BaseRepositoryEditor<GitlabRepositor
       return UNSPECIFIED_PROJECT;
     }
 
+    @Nullable
     @Override
-    public @Nullable GitlabProject getSelectedItem() {
+    public GitlabProject getSelectedItem() {
       return myRepository.getCurrentProject();
     }
 
+    @NotNull
     @Override
-    protected @NotNull List<GitlabProject> fetch(@NotNull ProgressIndicator indicator) throws Exception {
+    protected List<GitlabProject> fetch(@NotNull ProgressIndicator indicator) throws Exception {
       return myRepository.fetchProjects();
     }
   }

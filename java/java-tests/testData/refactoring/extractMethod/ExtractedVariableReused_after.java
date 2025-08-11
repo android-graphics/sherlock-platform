@@ -22,7 +22,7 @@ public class OutputVariableReused {
     }
 
     @Nullable
-    private OutputVariableReused.X newMethod(String s, String left, String right) {
+    private X newMethod(String s, String left, String right) {
         String res = convert(s, left, right);
         if (res != null) {
             return new X(res);

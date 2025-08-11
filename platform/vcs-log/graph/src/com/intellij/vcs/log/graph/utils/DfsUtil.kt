@@ -6,9 +6,7 @@ import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 import it.unimi.dsi.fastutil.ints.IntArrayList
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 object Dfs {
   object NextNode {
     const val NODE_NOT_FOUND = -1
@@ -32,7 +30,6 @@ private fun walk(start: Int, stack: IntArrayList, nextNodeFun: (Int) -> Int) {
   stack.clear()
 }
 
-@ApiStatus.Internal
 fun walk(start: Int, nextNodeFun: (Int) -> Int) {
   walk(start, IntArrayList(), nextNodeFun)
 }

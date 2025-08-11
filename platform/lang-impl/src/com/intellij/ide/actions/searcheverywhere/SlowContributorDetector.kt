@@ -2,7 +2,6 @@
 package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.openapi.diagnostic.Logger
-import org.jetbrains.annotations.ApiStatus
 import kotlin.math.ceil
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -13,7 +12,6 @@ private val LOG = Logger.getInstance(SlowContributorDetector::class.java)
 private const val EMPTY_RESULT_THRESHOLD = 50
 private const val WARNING_THRESHOLD = 2000
 
-@ApiStatus.Internal
 class SlowContributorDetector: SearchListener {
 
   private var startTimestamp: Long? = null

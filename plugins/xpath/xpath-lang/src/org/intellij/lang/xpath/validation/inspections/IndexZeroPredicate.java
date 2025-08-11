@@ -34,7 +34,9 @@ public class IndexZeroPredicate extends XPathInspection {
     }
 
   @Override
-  public @NotNull @NonNls String getShortName() {
+    @NotNull
+    @NonNls
+    public String getShortName() {
         return "IndexZeroUsage";
     }
 
@@ -48,7 +50,7 @@ public class IndexZeroPredicate extends XPathInspection {
     return language == XPathFileType.XPATH.getLanguage() || language == XPathFileType.XPATH2.getLanguage();
   }
 
-  static final class MyVisitor extends Visitor {
+  final static class MyVisitor extends Visitor {
         MyVisitor(InspectionManager manager, boolean isOnTheFly) {
             super(manager, isOnTheFly);
         }

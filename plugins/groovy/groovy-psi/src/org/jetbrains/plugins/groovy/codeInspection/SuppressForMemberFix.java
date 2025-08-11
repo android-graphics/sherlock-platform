@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoInspectionCommentModCommandFix;
@@ -32,7 +32,8 @@ public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCom
   }
 
   @Override
-  public @Nullable GrDocCommentOwner getContainer(final PsiElement context) {
+  @Nullable
+  public GrDocCommentOwner getContainer(final PsiElement context) {
     if (context == null || context instanceof PsiFile) {
       return null;
     }
@@ -64,13 +65,14 @@ public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCom
   }
 
   @Override
-  public @NotNull String getText() {
+  @NotNull
+  public String getText() {
     return JavaAnalysisBundle.message(myKey);
   }
 
 
   @Override
-  public boolean isAvailable(final @NotNull Project project, final @NotNull PsiElement context) {
+  public boolean isAvailable(@NotNull final Project project, @NotNull final PsiElement context) {
     final GrDocCommentOwner container = getContainer(context);
     myKey = container instanceof PsiClass ? "suppress.inspection.class"
                                           : container instanceof PsiMethod ? "suppress.inspection.method"

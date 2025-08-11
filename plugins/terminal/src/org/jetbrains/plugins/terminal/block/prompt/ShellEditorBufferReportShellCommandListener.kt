@@ -2,10 +2,12 @@
 package org.jetbrains.plugins.terminal.block.prompt
 
 import com.google.common.base.Ascii
+import com.intellij.openapi.editor.ex.EditorEx
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.CommandFinishedEvent
-import org.jetbrains.plugins.terminal.block.session.KeyBinding
+import org.jetbrains.plugins.terminal.block.session.ShellCommandExecutionManager.KeyBinding
 import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
+import org.jetbrains.plugins.terminal.block.ui.invokeLater
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.nio.charset.StandardCharsets
 
@@ -16,36 +18,23 @@ import java.nio.charset.StandardCharsets
  */
 internal class ShellEditorBufferReportShellCommandListener(
   private val blockTerminalSession: BlockTerminalSession,
-  private val onShellEditorBufferReceived: (String) -> Unit
+  private val model: TerminalPromptModel,
+  private val editor: EditorEx
 ) : ShellCommandListener {
 
-  @Volatile
-  private var isBlockClosedRecently: Boolean = false
-
   override fun commandBufferReceived(buffer: String) {
-    onShellEditorBufferReceived(buffer)
+    invokeLater {
+        model.commandText = buffer
+        editor.caretModel.moveToOffset(editor.document.textLength)
+    }
   }
 
   override fun initialized() {
-    isBlockClosedRecently = true
+    sendCodeToReportBuffer(blockTerminalSession)
   }
 
   override fun commandFinished(event: CommandFinishedEvent) {
-    isBlockClosedRecently = true
-  }
-
-  override fun promptShown() {
-    if (isBlockClosedRecently) {
-      isBlockClosedRecently = false
-      sendCodeToReportBuffer(blockTerminalSession)
-    }
-  }
-
-  override fun promptStateUpdated(newState: TerminalPromptState) {
-    if (isBlockClosedRecently) {
-      isBlockClosedRecently = false
-      sendCodeToReportBuffer(blockTerminalSession)
-    }
+    sendCodeToReportBuffer(blockTerminalSession)
   }
 
   private fun sendCodeToReportBuffer(

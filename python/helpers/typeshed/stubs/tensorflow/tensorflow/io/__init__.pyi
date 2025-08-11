@@ -1,10 +1,11 @@
 from _typeshed import Incomplete
 from collections.abc import Iterable, Mapping
 from types import TracebackType
-from typing import Literal, NamedTuple
-from typing_extensions import Self, TypeAlias
+from typing import NamedTuple
+from typing_extensions import Literal, Self, TypeAlias
 
-from tensorflow._aliases import DTypeLike, ShapeLike, TensorCompatible, TensorLike
+from tensorflow import _DTypeLike, _ShapeLike, _TensorCompatible
+from tensorflow._aliases import TensorLike
 from tensorflow.io import gfile as gfile
 
 _FeatureSpecs: TypeAlias = Mapping[str, FixedLenFeature | FixedLenSequenceFeature | VarLenFeature | RaggedFeature | SparseFeature]
@@ -53,23 +54,23 @@ class TFRecordWriter:
 # in this [issue](https://github.com/google/pytype/issues/1410#issue-1669793588). After
 # next release the defaults can be added back.
 class FixedLenFeature(NamedTuple):
-    shape: ShapeLike
-    dtype: DTypeLike
-    default_value: TensorCompatible | None = ...
+    shape: _ShapeLike
+    dtype: _DTypeLike
+    default_value: _TensorCompatible | None = ...
 
 class FixedLenSequenceFeature(NamedTuple):
-    shape: ShapeLike
-    dtype: DTypeLike
+    shape: _ShapeLike
+    dtype: _DTypeLike
     allow_missing: bool = ...
-    default_value: TensorCompatible | None = ...
+    default_value: _TensorCompatible | None = ...
 
 class VarLenFeature(NamedTuple):
-    dtype: DTypeLike
+    dtype: _DTypeLike
 
 class SparseFeature(NamedTuple):
     index_key: str | list[str]
     value_key: str
-    dtype: DTypeLike
+    dtype: _DTypeLike
     size: int | list[int]
     already_sorted: bool = ...
 
@@ -93,16 +94,13 @@ class RaggedFeature(NamedTuple):
 
     class UniformRowLength(NamedTuple):  # type: ignore[misc]
         length: int
-
-    dtype: DTypeLike
+    dtype: _DTypeLike
     value_key: str | None = ...
-    partitions: tuple[  # type: ignore[name-defined]
-        RowSplits | RowLengths | RowStarts | RowLimits | ValueRowIds | UniformRowLength, ...
-    ] = ...
-    row_splits_dtype: DTypeLike = ...
+    partitions: tuple[RowSplits | RowLengths | RowStarts | RowLimits | ValueRowIds | UniformRowLength, ...] = ...  # type: ignore[name-defined]
+    row_splits_dtype: _DTypeLike = ...
     validate: bool = ...
 
 def parse_example(
-    serialized: TensorCompatible, features: _FeatureSpecs, example_names: Iterable[str] | None = None, name: str | None = None
+    serialized: _TensorCompatible, features: _FeatureSpecs, example_names: Iterable[str] | None = None, name: str | None = None
 ) -> dict[str, TensorLike]: ...
 def __getattr__(name: str) -> Incomplete: ...

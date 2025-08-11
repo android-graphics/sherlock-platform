@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
@@ -51,18 +51,21 @@ public final class RawUseOfParameterizedTypeInspection extends BaseInspection {
   @SuppressWarnings("PublicField") public boolean ignoreWhenQuickFixNotAvailable = false;
 
   @Pattern(VALID_ID_PATTERN)
+  @NotNull
   @Override
-  public @NotNull String getID() {
+  public String getID() {
     return "rawtypes";
   }
 
+  @Nullable
   @Override
-  public @Nullable String getAlternativeID() {
+  public String getAlternativeID() {
     return "RawUseOfParameterized";
   }
 
   @Override
-  protected @NotNull String buildErrorString(Object... infos) {
+  @NotNull
+  protected String buildErrorString(Object... infos) {
     return JavaBundle.message("inspection.raw.use.of.parameterized.type.problem.descriptor");
   }
 
@@ -87,7 +90,8 @@ public final class RawUseOfParameterizedTypeInspection extends BaseInspection {
     return (LocalQuickFix)infos[0];
   }
 
-  private static @Nullable LocalQuickFix createFix(PsiElement target) {
+  @Nullable
+  private static LocalQuickFix createFix(PsiElement target) {
     if (target instanceof PsiTypeElement && target.getParent() instanceof PsiVariable variable) {
       final PsiType type = getSuggestedType(variable);
       if (type != null) {
@@ -303,7 +307,8 @@ public final class RawUseOfParameterizedTypeInspection extends BaseInspection {
     }
   }
 
-  private static @Nullable PsiType getSuggestedType(@NotNull PsiVariable variable) {
+  @Nullable
+  private static PsiType getSuggestedType(@NotNull PsiVariable variable) {
     final PsiExpression initializer = variable.getInitializer();
     if (initializer == null) return null;
     final PsiType variableType = variable.getType();
@@ -326,8 +331,9 @@ public final class RawUseOfParameterizedTypeInspection extends BaseInspection {
   }
 
   private static class UseDiamondFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return CommonQuickFixBundle.message("fix.insert.x", "<>");
     }
 
@@ -374,13 +380,15 @@ public final class RawUseOfParameterizedTypeInspection extends BaseInspection {
       myName = name;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getName() {
+    public String getName() {
       return myName;
     }
 
+    @NotNull
     @Override
-    public @NotNull String getFamilyName() {
+    public String getFamilyName() {
       return JavaBundle.message("raw.variable.type.can.be.generic.family.quickfix");
     }
 

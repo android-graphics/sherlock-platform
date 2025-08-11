@@ -9,6 +9,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -71,7 +72,8 @@ public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implemen
   }
 
   @Override
-  public @Nullable QualifiedName getQualifiedName() {
+  @Nullable
+  public QualifiedName getQualifiedName() {
     final PyDecoratorStub stub = getStub();
     if (stub != null) {
       return stub.getQualifiedName();
@@ -81,8 +83,9 @@ public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implemen
     }
   }
 
+  @NotNull
   @Override
-  public @NotNull List<PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext) {
+  public List<PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext) {
     final Function<PyCallableType, PyCallableType> mapping = callableType -> {
       if (!hasArgumentList()) {
         // NOTE: that +1 thing looks fishy
@@ -100,14 +103,15 @@ public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implemen
     return ContainerUtil.map(PyCallExpressionHelper.multiResolveCallee(this, resolveContext), mapping);
   }
 
+  @NotNull
   @Override
-  public @NotNull List<PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext) {
+  public List<PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext) {
     return PyCallExpressionHelper.mapArguments(this, resolveContext);
   }
 
   @Override
   public String toString() {
-    return "PyDecorator: @" + getQualifiedName();
+    return "PyDecorator: @" + PyUtil.getReadableRepr(getCallee(), true); //getCalledFunctionReference().getReferencedName();
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
@@ -124,7 +128,8 @@ public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implemen
   }
 
   @Override
-  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  @Nullable
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return PyCallExpressionHelper.getCallType(this, context, key);
   }
 }

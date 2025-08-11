@@ -1,52 +1,46 @@
-from _typeshed import Unused
-from collections.abc import Iterable
+from _typeshed import Incomplete, Unused
+from warnings import warn as warn
 
+from openpyxl.descriptors import Strict
 from openpyxl.descriptors.serialisable import Serialisable
-from openpyxl.workbook.child import _WorkbookChild
-from openpyxl.worksheet._read_only import ReadOnlyWorksheet
-
-from .named_styles import NamedStyle
-from .proxy import StyleProxy
 
 class StyleDescriptor:
-    collection: str
-    key: str
-    def __init__(self, collection: str, key: str) -> None: ...
-    def __set__(self, instance: StyleableObject, value: Serialisable) -> None: ...
-    def __get__(self, instance: StyleableObject, cls: Unused) -> StyleProxy: ...
+    collection: Incomplete
+    key: Incomplete
+    def __init__(self, collection, key) -> None: ...
+    def __set__(self, instance: Serialisable | Strict, value) -> None: ...
+    def __get__(self, instance: Serialisable | Strict, cls: Unused): ...
 
 class NumberFormatDescriptor:
     key: str
     collection: str
-    def __set__(self, instance: StyleableObject, value: str) -> None: ...
-    def __get__(self, instance: StyleableObject, cls: Unused) -> str: ...
+    def __set__(self, instance: Serialisable | Strict, value) -> None: ...
+    def __get__(self, instance: Serialisable | Strict, cls: Unused): ...
 
 class NamedStyleDescriptor:
     key: str
     collection: str
-    def __set__(self, instance: StyleableObject, value: NamedStyle | str) -> None: ...
-    def __get__(self, instance: StyleableObject, cls: Unused) -> str: ...
+    def __set__(self, instance: Serialisable | Strict, value) -> None: ...
+    def __get__(self, instance: Serialisable | Strict, cls: Unused): ...
 
 class StyleArrayDescriptor:
-    key: str
-    def __init__(self, key: str) -> None: ...
-    def __set__(self, instance: StyleableObject, value: int) -> None: ...
-    def __get__(self, instance: StyleableObject, cls: Unused) -> bool: ...
+    key: Incomplete
+    def __init__(self, key) -> None: ...
+    def __set__(self, instance: Serialisable | Strict, value) -> None: ...
+    def __get__(self, instance: Serialisable | Strict, cls: Unused): ...
 
 class StyleableObject:
-    font: StyleDescriptor
-    fill: StyleDescriptor
-    border: StyleDescriptor
-    number_format: NumberFormatDescriptor
-    protection: StyleDescriptor
-    alignment: StyleDescriptor
-    style: NamedStyleDescriptor
-    quotePrefix: StyleArrayDescriptor
-    pivotButton: StyleArrayDescriptor
-    parent: _WorkbookChild | ReadOnlyWorksheet
-    def __init__(
-        self, sheet: _WorkbookChild | ReadOnlyWorksheet, style_array: bytes | bytearray | Iterable[int] | None = None
-    ) -> None: ...
+    font: Incomplete
+    fill: Incomplete
+    border: Incomplete
+    number_format: Incomplete
+    protection: Incomplete
+    alignment: Incomplete
+    style: Incomplete
+    quotePrefix: Incomplete
+    pivotButton: Incomplete
+    parent: Incomplete
+    def __init__(self, sheet, style_array: Incomplete | None = None) -> None: ...
     @property
     def style_id(self) -> int: ...
     @property

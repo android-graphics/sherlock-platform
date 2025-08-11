@@ -1,7 +1,0 @@
-<caret>name = "User"
-greeting = t"""
-<div>
-  <h2>Hi, {name}!</h2>
-  <p>This is a t-string with both HTML and Python interpolation.</p>
-</div>
-"""

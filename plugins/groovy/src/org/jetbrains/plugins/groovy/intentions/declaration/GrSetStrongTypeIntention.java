@@ -1,4 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.intentions.declaration;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -140,7 +154,8 @@ public final class GrSetStrongTypeIntention extends Intention {
 
   }
 
-  private static @Nullable PsiType getClosureParameterType(@NotNull PsiParameter parameter) {
+  @Nullable
+  private static PsiType getClosureParameterType(@NotNull PsiParameter parameter) {
     final PsiElement scope = parameter.getDeclarationScope();
     final PsiType type;
     if (scope instanceof GrClosableBlock) {
@@ -162,8 +177,9 @@ public final class GrSetStrongTypeIntention extends Intention {
     }
   }
 
-  private static @NotNull TypeInfo getOrCreateTypeElement(@NotNull PsiElement parent,
-                                                          @NotNull PsiElement elementToBuildTemplateOn) {
+  @NotNull
+  private static TypeInfo getOrCreateTypeElement(@NotNull PsiElement parent,
+                                                 @NotNull PsiElement elementToBuildTemplateOn) {
     GrModifierList modifierList = getModifierList(parent);
 
     if (modifierList != null && modifierList.hasModifierProperty(GrModifier.DEF) && modifierList.getModifiers().length == 1) {
@@ -191,7 +207,8 @@ public final class GrSetStrongTypeIntention extends Intention {
     }
   }
 
-  private static @Nullable GrTypeElement getTypeElement(PsiElement parent) {
+  @Nullable
+  private static GrTypeElement getTypeElement(PsiElement parent) {
     if (parent instanceof GrVariable) {
       return ((GrVariable)parent).getTypeElementGroovy();
     }
@@ -200,7 +217,8 @@ public final class GrSetStrongTypeIntention extends Intention {
     }
   }
 
-  private static @Nullable GrModifierList getModifierList(PsiElement parent) {
+  @Nullable
+  private static GrModifierList getModifierList(PsiElement parent) {
     GrModifierList modifierList;
 
     if (parent instanceof GrVariable) {
@@ -212,8 +230,9 @@ public final class GrSetStrongTypeIntention extends Intention {
     return modifierList;
   }
 
+  @NotNull
   @Override
-  protected @NotNull PsiElementPredicate getElementPredicate() {
+  protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {

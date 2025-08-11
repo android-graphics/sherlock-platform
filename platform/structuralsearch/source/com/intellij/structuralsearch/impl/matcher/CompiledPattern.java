@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -84,7 +84,8 @@ public abstract class CompiledPattern {
     return !str.isEmpty() && isTypedVar(str);
   }
 
-  public @NotNull String getTypedVarString(@NotNull PsiElement element) {
+  @NotNull
+  public String getTypedVarString(@NotNull PsiElement element) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
     final String typedVarString = profile == null ? element.getText() : profile.getTypedVarString(element);
     return typedVarString.trim();
@@ -94,7 +95,8 @@ public abstract class CompiledPattern {
     return handlers.get(node);
   }
 
-  public @NotNull MatchingHandler getHandler(@NotNull PsiElement node) {
+  @NotNull
+  public MatchingHandler getHandler(@NotNull PsiElement node) {
     if (node == last) {
       return lastHandler;
     }
@@ -120,8 +122,9 @@ public abstract class CompiledPattern {
     handlers.put(node, handler);
   }
 
-  public @NotNull SubstitutionHandler createSubstitutionHandler(@NotNull String name, @NotNull String compiledName, boolean target, int minOccurs, int maxOccurs,
-                                                                boolean greedy) {
+  @NotNull
+  public SubstitutionHandler createSubstitutionHandler(@NotNull String name, @NotNull String compiledName, boolean target, int minOccurs, int maxOccurs,
+                                                       boolean greedy) {
     SubstitutionHandler handler = (SubstitutionHandler)handlers.get(compiledName);
     if (handler != null) return handler;
 
@@ -130,7 +133,8 @@ public abstract class CompiledPattern {
     return handler;
   }
 
-  protected @NotNull SubstitutionHandler doCreateSubstitutionHandler(@NotNull String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
+  @NotNull
+  protected SubstitutionHandler doCreateSubstitutionHandler(@NotNull String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
     return new SubstitutionHandler(name, target, minOccurs, maxOccurs, greedy);
   }
 
@@ -158,7 +162,8 @@ public abstract class CompiledPattern {
     return true;
   }
 
-  public @NotNull List<PsiElement> getVariableNodes(@NotNull String name) {
+  @NotNull
+  public List<PsiElement> getVariableNodes(@NotNull String name) {
     final Collection<PsiElement> elements = variableNodes.get(name);
     return elements instanceof List ? (List<PsiElement>)elements : new SmartList<>(elements);
   }

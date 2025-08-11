@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.DefaultExecutionTarget;
@@ -41,7 +41,6 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   public static final BooleanProperty SCROLL_TO_STACK_TRACE = new BooleanProperty("scrollToStackTrace", false);
   public static final BooleanProperty SORT_ALPHABETICALLY = new BooleanProperty("sortTestsAlphabetically", false);
   public static final BooleanProperty SORT_BY_DURATION = new BooleanProperty("sortTestsByDuration", false);
-  public static final BooleanProperty SORT_BY_DECLARATION_ORDER = new BooleanProperty("sortTestsByDeclarationOrder", false);
   public static final BooleanProperty SUITES_ALWAYS_ON_TOP = new BooleanProperty("suitesAlwaysOnTop", true);
   public static final BooleanProperty SELECT_FIRST_DEFECT = new BooleanProperty("selectFirtsDefect", false);
   public static final BooleanProperty TRACK_RUNNING_TEST = new BooleanProperty("trackRunningTest", true);
@@ -54,7 +53,6 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   public static final BooleanProperty SHOW_INLINE_STATISTICS = new BooleanProperty("showInlineStatistics", true);
   public static final BooleanProperty INCLUDE_NON_STARTED_IN_RERUN_FAILED = new BooleanProperty("includeNonStarted", true);
   public static final BooleanProperty HIDE_SUCCESSFUL_CONFIG = new BooleanProperty("hideConfig", false);
-  public static final BooleanProperty SHOW_AUTO_TEST_TOOLBAR = new BooleanProperty("autoTestToolbar", true);
 
   private final Project myProject;
   private final Executor myExecutor;
@@ -78,14 +76,16 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   /**
    * @return scope which was used to compose tests classpath
    */
-  public @NotNull GlobalSearchScope getScope() {
+  @NotNull
+  public GlobalSearchScope getScope() {
     if (myScope == null) {
       myScope = initScope();
     }
     return myScope;
   }
 
-  protected @NotNull GlobalSearchScope initScope() {
+  @NotNull
+  protected GlobalSearchScope initScope() {
     RunProfile configuration = getConfiguration();
     if (!(configuration instanceof ModuleRunProfile)) {
       return GlobalSearchScope.allScope(myProject);
@@ -186,7 +186,8 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   /**
    * Override to customize console used
    */
-  public @NotNull ConsoleView createConsole() {
+  @NotNull
+  public ConsoleView createConsole() {
     return new TestsConsoleBuilderImpl(getProject(),
                                        getScope(),
                                        !isEditable(),
@@ -210,7 +211,8 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   /**
    * If supported by the framework, can be used in additional actions toolbar
    */
-  protected @NotNull ToggleBooleanProperty createIncludeNonStartedInRerun(TestConsoleProperties target) {
+  @NotNull
+  protected ToggleBooleanProperty createIncludeNonStartedInRerun(TestConsoleProperties target) {
     String text = ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name");
     return new DumbAwareToggleBooleanProperty(text, null, null, target, INCLUDE_NON_STARTED_IN_RERUN_FAILED);
   }
@@ -218,7 +220,8 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   /**
    * If supported by the framework, can be used in additional actions toolbar
    */
-  protected @NotNull ToggleBooleanProperty createHideSuccessfulConfig(TestConsoleProperties target) {
+  @NotNull
+  protected ToggleBooleanProperty createHideSuccessfulConfig(TestConsoleProperties target) {
     String text = ExecutionBundle.message("junit.runing.info.hide.successful.config.action.name");
     setIfUndefined(HIDE_SUCCESSFUL_CONFIG, true);
     return new DumbAwareToggleBooleanProperty(text, null, null, target, HIDE_SUCCESSFUL_CONFIG);
@@ -232,14 +235,16 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return TreeSelectionModel.SINGLE_TREE_SELECTION;
   }
 
-  public @NotNull ExecutionTarget getExecutionTarget() {
+  @NotNull
+  public ExecutionTarget getExecutionTarget() {
     return DefaultExecutionTarget.INSTANCE;
   }
 
   /**
    * Override to choose toolwindow where test finished notification would be shown
    */
-  public @NotNull String getWindowId() {
+  @NotNull
+  public String getWindowId() {
     return isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
   }
 

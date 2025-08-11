@@ -11,7 +11,7 @@ import java.util.EventObject;
  */
 public class CommitEvent extends EventObject {
 
-  private final boolean commit;
+  private boolean commit;
 
   /**
    * Constructor.

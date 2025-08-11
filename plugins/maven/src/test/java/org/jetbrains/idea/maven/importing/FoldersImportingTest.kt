@@ -18,7 +18,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.execution.CommonProgramRunConfigurationParameters
 import com.intellij.execution.util.ProgramParametersUtil
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.project.Project
@@ -35,7 +35,6 @@ import org.junit.Test
 import java.io.File
 import java.io.IOException
 import java.util.function.Consumer
-import kotlin.io.path.exists
 
 class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
@@ -76,16 +75,6 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testDoNotResetFoldersAfterResolveIfProjectIsInvalid() = runBlocking {
     createStdProjectFolders()
-    importProjectAsync("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>""")
-    assertModules("project")
-    assertSources("project", "src/main/java")
-    assertDefaultResources("project")
-    assertTestSources("project", "src/test/java")
-    assertDefaultTestResources("project")
-
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -117,7 +106,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    edtWriteAction {
+    writeAction {
       val adapter = MavenRootModelAdapter(MavenRootModelAdapterLegacyImpl(
         projectsTree.findProject(projectPom)!!,
         getModule("project"),
@@ -761,8 +750,9 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   fun testDownloadingNecessaryPlugins() = runBlocking {
     try {
       val helper = MavenCustomRepositoryHelper(dir, "local1")
-      repositoryPath = helper.getTestData("local1")
-      val pluginFile = repositoryPath.resolve("org/codehaus/mojo/build-helper-maven-plugin/1.2/build-helper-maven-plugin-1.2.jar")
+      repositoryPath = helper.getTestDataPath("local1")
+      val pluginFile = File(repositoryPath,
+                            "org/codehaus/mojo/build-helper-maven-plugin/1.2/build-helper-maven-plugin-1.2.jar")
       assertFalse(pluginFile.exists())
       importProjectAsync("""
                       <groupId>test</groupId>
@@ -1578,7 +1568,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                   "src/main/java",
                   "target/generated-sources/baz")
     assertDefaultResources("project")
-    edtWriteAction {
+    writeAction {
       try {
         subDir.delete(this)
       }
@@ -1647,7 +1637,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
       assertDefaultTestResources("project")
     }
     testAssertions.accept(true)
-    edtWriteAction {
+    writeAction {
       try {
         target.delete(this)
       }
@@ -1908,7 +1898,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   private suspend fun resolveFoldersAndImport() {
-    MavenFolderResolver(projectsManager.project).resolveFoldersAndImport(projectsManager.projects)
+    MavenFolderResolver(projectsManager.project).resolveFoldersAndImport(projectsManager.getProjects())
   }
 
   private fun createProjectSubDirsWithFile(vararg dirs: String) {

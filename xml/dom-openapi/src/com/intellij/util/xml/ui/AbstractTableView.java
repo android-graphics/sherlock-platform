@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
 
-public abstract class AbstractTableView<T> extends JPanel implements UiDataProvider {
+public abstract class AbstractTableView<T> extends JPanel implements DataProvider {
   private final MyTableView myTable = new MyTableView();
   private final @NonNls String myHelpID;
   private final @Nls(capitalization = Nls.Capitalization.Sentence) String myEmptyPaneText;
@@ -210,8 +210,11 @@ public abstract class AbstractTableView<T> extends JPanel implements UiDataProvi
   }
 
   @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(PlatformCoreDataKeys.HELP_ID, getHelpId());
+  public @Nullable Object getData(@NotNull String dataId) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
+      return getHelpId();
+    }
+    return null;
   }
 
   private String getHelpId() {

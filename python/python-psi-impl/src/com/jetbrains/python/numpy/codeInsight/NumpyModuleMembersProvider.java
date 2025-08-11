@@ -41,7 +41,8 @@ public final class NumpyModuleMembersProvider extends PyModuleMembersProvider {
   private static final String DTYPE = "numpy.core.multiarray.dtype";
 
   @Override
-  protected @NotNull Collection<PyCustomMember> getMembersByQName(@NotNull PyFile module, @NotNull String qName, @NotNull TypeEvalContext context) {
+  @NotNull
+  protected Collection<PyCustomMember> getMembersByQName(@NotNull PyFile module, @NotNull String qName, @NotNull TypeEvalContext context) {
     if ("numpy".equals(qName)) {
       final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
       final PsiElement clazz = new PyPsiPath.ToClassQName(DTYPE).resolve(module, resolveContext);

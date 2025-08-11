@@ -107,7 +107,6 @@ public final class InternalGradleProject implements GradleProject {
     }
   }
 
-  @Override
   public String toString() {
     return "GradleProject{path='" + this.getPath() + '\'' + '}';
   }

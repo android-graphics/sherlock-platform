@@ -2,12 +2,10 @@
 package com.intellij.largeFilesEditor.editor;
 
 import com.intellij.ui.components.JBScrollBar;
-import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-@ApiStatus.Internal
 public final class GlobalScrollBar extends JBScrollBar {
 
   private final EditorModel myEditorModel;

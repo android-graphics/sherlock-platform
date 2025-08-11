@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
@@ -26,7 +26,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
   private JCheckBox myAllowSaveCheckBox;
   private JPasswordField myPasswordText;
 
-  private static final @NonNls String HELP_ID = "vcs.subversion.authentication";
+  @NonNls private static final String HELP_ID = "vcs.subversion.authentication";
 
   public SimpleCredentialsDialog(Project project) {
     super(project, true);
@@ -154,7 +154,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
 
   @Override
   public boolean isOKActionEnabled() {
-    return myUserNameText != null && !myUserNameText.getText().trim().isEmpty()
+    return myUserNameText != null && myUserNameText.getText().trim().length() > 0
            && myPasswordText != null && myPasswordText.getPassword() != null;
   }
 

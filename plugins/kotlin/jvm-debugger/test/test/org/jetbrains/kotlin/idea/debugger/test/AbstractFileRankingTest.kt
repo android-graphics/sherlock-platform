@@ -1,11 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
-import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.openapi.application.runReadAction
 import com.sun.jdi.ThreadReference
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -72,14 +70,14 @@ abstract class AbstractFileRankingTest : LowLevelDebuggerTestBase() {
             val jdiClass = mainThread.virtualMachine().classesByName(className).singleOrNull()
                 ?: error("Class '$className' was not found in the debuggee process class loader")
 
-            val locations = DebuggerUtilsAsync.allLineLocationsSync(jdiClass)
+            val locations = jdiClass.allLineLocations()
             assert(locations.isNotEmpty()) { "There are no locations for class $className" }
 
             val allFilesWithSameName = files.filter { it.name == expectedFile.name }
             for (location in locations) {
                 if (location.method().isBridge || location.method().isSynthetic) continue
 
-                val fileWithRankings: Map<KtFile, Int> = runBlocking {
+                val fileWithRankings: Map<KtFile, Int> = runReadAction {
                     calculator.rankFiles(allFilesWithSameName, location)
                 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.BundleBase;
@@ -9,9 +9,8 @@ import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
-import com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -66,13 +65,13 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   private HighlightInfoHolder myHolder;
 
   @Override
-  public void visit(final @NotNull PsiElement element) {
+  public void visit(@NotNull final PsiElement element) {
     myHasError = false;
     element.accept(this);
   }
 
   @Override
-  public boolean analyze(final @NotNull PsiFile file,
+  public boolean analyze(@NotNull final PsiFile file,
                          final boolean updateWholeFile,
                          @NotNull HighlightInfoHolder holder,
                          @NotNull Runnable action) {
@@ -253,11 +252,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         }
 
         HighlightInfoType type = getTagProblemInfoType(tag);
-        if (InjectedLanguageManager.getInstance(tag.getProject()).getInjectionHost(tag) != null) {
-          // disabled in injected fragments
-          return;
-        }
-
         addElementsForTagWithManyQuickFixes(tag, XmlAnalysisBundle.message("xml.inspections.element.is.not.allowed.here", name), type);
         return;
       }
@@ -519,7 +513,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
           }
         }
       }
-      UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(reference, builder);
+      UnresolvedReferenceQuickFixUpdater.getInstance(value.getProject()).registerQuickFixesLater(reference, builder);
       add(builder.create());
     }
   }
@@ -536,7 +530,8 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     return reference instanceof FileReferenceOwner || reference instanceof AnchorReference || reference instanceof PsiFileReference;
   }
 
-  public static @NotNull @InspectionMessage String getErrorDescription(@NotNull PsiReference reference) {
+  @NotNull
+  public static @InspectionMessage String getErrorDescription(@NotNull PsiReference reference) {
     @InspectionMessage String message;
     if (reference instanceof EmptyResolveMessageProvider) {
       message = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
@@ -581,7 +576,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   @Override
-  public void addMessageWithFixes(final PsiElement context, final String message, final @NotNull ErrorType type, final IntentionAction @NotNull ... fixes) {
+  public void addMessageWithFixes(final PsiElement context, final String message, @NotNull final ErrorType type, final IntentionAction @NotNull ... fixes) {
     if (message != null && !message.isEmpty()) {
       final PsiFile containingFile = context.getContainingFile();
       final HighlightInfoType defaultInfoType = type == ErrorType.ERROR ? HighlightInfoType.ERROR : type == ErrorType.WARNING ? HighlightInfoType.WARNING : HighlightInfoType.WEAK_WARNING;
@@ -611,12 +606,20 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   @Override
-  public boolean suitableForFile(final @NotNull PsiFile file) {
-    return file instanceof XmlFile || XmlTagTreeHighlightingUtil.hasXmlViewProvider(file);
+  public boolean suitableForFile(@NotNull final PsiFile file) {
+    if (file instanceof XmlFile) return true;
+
+    for (PsiFile psiFile : file.getViewProvider().getAllFiles()) {
+      if (psiFile instanceof XmlFile) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
-  public @NotNull HighlightVisitor clone() {
+  @NotNull
+  public HighlightVisitor clone() {
     return new XmlHighlightVisitor();
   }
 

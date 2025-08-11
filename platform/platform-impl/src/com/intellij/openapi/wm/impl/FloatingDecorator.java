@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -18,7 +18,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.Alarm;
 import com.intellij.util.MathUtil;
-import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.ui.JBInsets;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
@@ -42,14 +41,14 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
   private static final int DELAY = 15; // Delay between frames
   private static final int TOTAL_FRAME_COUNT = 7; // Total number of frames in animation sequence
 
-  private final MyUISettingsListener uiSettingsListener;
+  private final MyUISettingsListener myUISettingsListener;
   private final @NotNull InternalDecoratorImpl myDecorator;
   private WindowInfo myInfo;
   private final @NotNull ToolWindowExternalDecoratorBoundsHelper myBoundsHelper = new ToolWindowExternalDecoratorBoundsHelper(this);
 
-  private final Disposable disposable = Disposer.newDisposable();
+  private final Disposable myDisposable = Disposer.newDisposable();
   private boolean myDisposed = false;
-  private final SingleEdtTaskScheduler delayAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler(); // determines a moment when a tool window should become transparent
+  private final Alarm myDelayAlarm; // Determines moment when tool window should become transparent
   private final Alarm myFrameTicker; // Determines moments of rendering of next frame
   private final MyAnimator myAnimator; // Renders alpha ratio
   private int myCurrentFrame; // current frame in transparency animation
@@ -90,8 +89,8 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
         if (LOG.isDebugEnabled()) {
           LOG.debug("Updating floating window " + toolWindow.getId() + " bounds because it's closed: " + getBounds());
         }
-        toolWindow.toolWindowManager.movedOrResized(decorator);
-        toolWindow.toolWindowManager.hideToolWindow(toolWindow.getId(), false);
+        toolWindow.getToolWindowManager().movedOrResized(decorator);
+        toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), false);
       }
     });
     addComponentListener(new ComponentAdapter() {
@@ -107,20 +106,21 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
       // resize is handled by the internal decorator
     });
 
-    myFrameTicker = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
+    myDelayAlarm = new Alarm();
+    myFrameTicker = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
     myAnimator = new MyAnimator();
     myCurrentFrame = 0;
     myStartRatio = 0.0f;
     myEndRatio = 0.0f;
 
-    uiSettingsListener = new MyUISettingsListener();
+    myUISettingsListener = new MyUISettingsListener();
 
     IdeGlassPaneImpl ideGlassPane = new IdeGlassPaneImpl(getRootPane(), true);
     getRootPane().setGlassPane(ideGlassPane);
 
     //workaround: we need to add this IdeGlassPane instance as dispatcher in IdeEventQueue
     ideGlassPane.addMousePreprocessor(new MouseAdapter() {
-    }, disposable);
+    }, myDisposable);
 
     if (SystemInfo.isWindows && WindowRoundedCornersManager.isAvailable()) {
       WindowRoundedCornersManager.setRoundedCorners(this);
@@ -131,7 +131,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
   public void show(){
     ComponentUtil.decorateWindowHeader(rootPane);
     ToolbarService.Companion.getInstance().setTransparentTitleBar(this, rootPane, runnable -> {
-      Disposer.register(disposable, () -> runnable.run());
+      Disposer.register(myDisposable, () -> runnable.run());
       return Unit.INSTANCE;
     });
     boolean isActive = myInfo.isActiveOnStart();
@@ -158,14 +158,14 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     // this prevents annoying flick
     paint(getGraphics());
 
-    ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(UISettingsListener.TOPIC, uiSettingsListener);
+    ApplicationManager.getApplication().getMessageBus().connect(myDelayAlarm).subscribe(UISettingsListener.TOPIC, myUISettingsListener);
   }
 
   @Override
   public void dispose(){
     if (ScreenUtil.isStandardAddRemoveNotify(getParent())) {
-      delayAlarm.dispose();
-      Disposer.dispose(disposable);
+      Disposer.dispose(myDelayAlarm);
+      Disposer.dispose(myDisposable);
     }
     else if (isShowing()) {
       SwingUtilities.invokeLater(() -> show());
@@ -180,13 +180,15 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     return myDisposed;
   }
 
+  @NotNull
   @Override
-  public @NotNull Window getWindow() {
+  public Window getWindow() {
     return this;
   }
 
+  @NotNull
   @Override
-  public @NotNull String getId() {
+  public String getId() {
     return myDecorator.getToolWindowId();
   }
 
@@ -196,8 +198,9 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     myBoundsHelper.setBounds(getBounds());
   }
 
+  @NotNull
   @Override
-  public @NotNull Rectangle getVisibleWindowBounds() {
+  public Rectangle getVisibleWindowBounds() {
     var result = getBounds();
     JBInsets.removeFrom(result, ToolWindowExternalDecoratorKt.getInvisibleInsets(this));
     return result;
@@ -211,8 +214,9 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     super.setBounds(newBounds);
   }
 
+  @NotNull
   @Override
-  public @NotNull ToolWindowType getToolWindowType() {
+  public ToolWindowType getToolWindowType() {
     return ToolWindowType.FLOATING;
   }
 
@@ -246,7 +250,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
       return;
     }
 
-    delayAlarm.cancel();
+    myDelayAlarm.cancelAllRequests();
     if (info.isActiveOnStart()) {
       // make window non transparent
       myFrameTicker.cancelAllRequests();
@@ -259,7 +263,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     }
     else {
       // make window transparent
-      delayAlarm.request(uiSettings.getState().getAlphaModeDelay(), () -> {
+      myDelayAlarm.addRequest(() -> {
         myFrameTicker.cancelAllRequests();
         myStartRatio = getCurrentAlphaRatio();
         if (myCurrentFrame > 0) {
@@ -267,7 +271,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
         }
         myEndRatio = uiSettings.getState().getAlphaModeRatio();
         myFrameTicker.addRequest(myAnimator, DELAY);
-      });
+      }, uiSettings.getState().getAlphaModeDelay());
     }
   }
 
@@ -480,7 +484,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
       LOG.assertTrue(isDisplayable());
       LOG.assertTrue(isShowing());
       WindowManager windowManager = WindowManager.getInstance();
-      delayAlarm.cancel();
+      myDelayAlarm.cancelAllRequests();
       if (uiSettings.getState().getEnableAlphaMode()) {
         if (!isActive()) {
           windowManager.setAlphaModeEnabled(FloatingDecorator.this, true);
@@ -506,8 +510,9 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     super.reshape(x, y, width, height);
   }
 
+  @NotNull
   @Override
-  public @NotNull Logger log() {
+  public Logger log() {
     return LOG;
   }
 }

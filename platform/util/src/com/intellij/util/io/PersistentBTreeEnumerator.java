@@ -172,13 +172,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       unlockStorageWrite();
     }
 
-    try {
-      diagnose();
-    }
-    catch (Throwable t) {
-      close();
-      throw t;
-    }
+    diagnose();
 
     myWal = enableWal ? new PersistentEnumeratorWal<>(dataDescriptor,
                                                       false,

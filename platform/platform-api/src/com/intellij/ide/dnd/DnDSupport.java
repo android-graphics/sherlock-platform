@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.dnd.DragSourceDropEvent;
 
 /**
  * @author Konstantin Bulenkov
@@ -87,7 +86,7 @@ public final class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.Wi
   }
 
   @Override
-  public void dragDropEnd(@Nullable DnDEvent dragEvent, @Nullable DragSourceDropEvent dropEvent) {
+  public void dragDropEnd() {
     if (myDropEndedCallback != null) {
       myDropEndedCallback.run();
     }

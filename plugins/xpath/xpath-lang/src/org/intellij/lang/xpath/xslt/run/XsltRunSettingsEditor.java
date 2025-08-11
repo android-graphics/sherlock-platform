@@ -17,11 +17,9 @@ package org.intellij.lang.xpath.xslt.run;
 
 import com.intellij.execution.impl.CheckableRunConfigurationEditor;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
-import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -61,6 +59,7 @@ import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
+import org.intellij.lang.xpath.xslt.associations.impl.AnyXMLDescriptor;
 import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,8 +73,8 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
   implements CheckableRunConfigurationEditor<XsltRunConfiguration> {
@@ -121,24 +120,30 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
     private JPanel myParametersPanel;
     private JComponent anchor;
 
-    private final FileChooserDescriptor myXmlDescriptor;
+    private final AnyXMLDescriptor myXmlDescriptor;
     private final FileChooserDescriptor myXsltDescriptor;
 
-    Editor(Project project) {
-      var psiManager = PsiManager.getInstance(project);
-      myXsltDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(XmlFileType.INSTANCE)
-        .withFileFilter(file -> {
-          var psiFile = psiManager.findFile(file);
-          return psiFile != null && XsltSupport.isXsltFile(psiFile);
-        })
-        .withTitle(XPathBundle.message("dialog.title.choose.xslt.file"));
+    Editor(final Project project) {
+      final PsiManager psiManager = PsiManager.getInstance(project);
 
+      myXsltDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
+        @Override
+        public boolean isFileVisible(final VirtualFile file, boolean showHiddenFiles) {
+          if (file.isDirectory()) return true;
+          if (!super.isFileVisible(file, showHiddenFiles)) return false;
+
+          return ReadAction.compute(() -> {
+            final PsiFile psiFile = psiManager.findFile(file);
+            return psiFile != null && XsltSupport.isXsltFile(psiFile);
+          });
+        }
+      };
       final TextComponentAccessor<JTextField> projectDefaultAccessor = new TextComponentAccessor<>() {
         @Override
         public String getText(JTextField component) {
           final String text = component.getText();
           final VirtualFile baseDir = project.getBaseDir();
-          return !text.isEmpty() ? text : (baseDir != null ? baseDir.getPresentableUrl() : "");
+          return text.length() > 0 ? text : (baseDir != null ? baseDir.getPresentableUrl() : "");
         }
 
         @Override
@@ -146,7 +151,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
           component.setText(text);
         }
       };
-      myXsltFile.addBrowseFolderListener(project, myXsltDescriptor, projectDefaultAccessor);
+      myXsltFile.addBrowseFolderListener(XPathBundle.message("dialog.title.choose.xslt.file"), null, project, myXsltDescriptor, projectDefaultAccessor);
       myXsltFile.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
         final VirtualFileManager fileMgr = VirtualFileManager.getInstance();
         final FileAssociationsManager associationsManager = FileAssociationsManager.getInstance(project);
@@ -156,7 +161,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
           final String text = myXsltFile.getText();
           final JComboBox comboBox = myXmlInputFile.getComboBox();
           final Object oldXml = getXmlInputFile(); //NON-NLS
-          if (!text.isEmpty()) {
+          if (text.length() != 0) {
             final ComboBoxModel model = comboBox.getModel();
 
             boolean found = false;
@@ -190,36 +195,35 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
 
       myXmlInputFile.getComboBox().setEditable(true);
 
-      myXmlDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-        .withExtensionFilter(IdeCoreBundle.message("file.chooser.files.label", "XML"), FileAssociationsManager.Holder.XML_FILES)
-        .withTitle(XPathBundle.message("dialog.title.choose.xml.file"));
-      myXmlInputFile.addBrowseFolderListener(project, myXmlDescriptor, new TextComponentAccessor<>() {
-        @Override
-        public String getText(JComboBox comboBox) {
-          Object item = comboBox.getEditor().getItem();
-          if (item.toString().isEmpty()) {
-            final String text = projectDefaultAccessor.getText(myXsltFile.getChildComponent());
-            final VirtualFile file =
-              VirtualFileManager.getInstance()
-                .findFileByUrl(VfsUtil.pathToUrl(text.replace(File.separatorChar, '/')));
-            if (file != null && !file.isDirectory()) {
-              final VirtualFile parent = file.getParent();
-              assert parent != null;
-              return parent.getPresentableUrl();
-            }
-          }
-          return item.toString();
-        }
+      myXmlDescriptor = new AnyXMLDescriptor(false);
+      myXmlInputFile.addBrowseFolderListener(XPathBundle.message("dialog.title.choose.xml.file"), null, project, myXmlDescriptor,
+                                             new TextComponentAccessor<>() {
+                                               @Override
+                                               public String getText(JComboBox comboBox) {
+                                                 Object item = comboBox.getEditor().getItem();
+                                                 if (item.toString().length() == 0) {
+                                                   final String text = projectDefaultAccessor.getText(myXsltFile.getChildComponent());
+                                                   final VirtualFile file =
+                                                     VirtualFileManager.getInstance()
+                                                       .findFileByUrl(VfsUtil.pathToUrl(text.replace(File.separatorChar, '/')));
+                                                   if (file != null && !file.isDirectory()) {
+                                                     final VirtualFile parent = file.getParent();
+                                                     assert parent != null;
+                                                     return parent.getPresentableUrl();
+                                                   }
+                                                 }
+                                                 return item.toString();
+                                               }
 
-        @Override
-        public void setText(JComboBox comboBox, @NotNull String text) {
-          comboBox.getEditor().setItem(text);
-        }
-      });
+                                               @Override
+                                               public void setText(JComboBox comboBox, @NotNull String text) {
+                                                 comboBox.getEditor().setItem(text);
+                                               }
+                                             });
 
-      myOutputFile.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
-        .withTitle(XPathBundle.message("dialog.title.choose.output.file"))
-        .withDescription(XPathBundle.message("label.selected.file.will.be.overwritten.during.execution")));
+      myOutputFile.addBrowseFolderListener(XPathBundle.message("dialog.title.choose.output.file"),
+                                           XPathBundle.message("label.selected.file.will.be.overwritten.during.execution"),
+                                           project, FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor());
 
       final ItemListener outputStateListener = new ItemListener() {
         @Override
@@ -322,8 +326,8 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
       myJdkChoice.addItemListener(updateListener);
       updateJdkState();
 
-      myWorkingDirectory.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
-        .withTitle(XPathBundle.message("dialog.title.working.directory")));
+      myWorkingDirectory
+        .addBrowseFolderListener(XPathBundle.message("dialog.title.working.directory"), null, project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
       myVmArguments.setDialogCaption("VM Arguments");
 
@@ -461,7 +465,8 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
       myJDK.setEnabled(getSelectedIndex(myJdkOptions) == XsltRunConfiguration.JdkChoice.JDK.ordinal());
     }
 
-    private @Nullable Module getModule() {
+    @Nullable
+    private Module getModule() {
       final Object selectedItem = myModule.getSelectedItem();
       return selectedItem instanceof Module ? (Module)selectedItem : null;
     }
@@ -510,7 +515,6 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
           this.value = value;
         }
 
-        @Override
         public boolean equals(Object o) {
           if (this == o) return true;
           if (o == null || getClass() != o.getClass()) return false;
@@ -520,7 +524,6 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
           return name.equals(param.name) && value.equals(param.value);
         }
 
-        @Override
         public int hashCode() {
           int result = name.hashCode();
           result = 29 * result + value.hashCode();
@@ -625,7 +628,8 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
   }
 
   @Override
-  protected @NotNull JComponent createEditor() {
+  @NotNull
+  protected JComponent createEditor() {
     myEditor = new Editor(myProject);
     return myEditor.getComponent();
   }

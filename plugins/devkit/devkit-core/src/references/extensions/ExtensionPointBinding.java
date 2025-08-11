@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references.extensions;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -87,10 +87,11 @@ public final class ExtensionPointBinding {
     }
   }
 
-  private static @Nullable PsiAnnotation findAnnotationForField(final Class<?> annotationClass,
-                                                                PsiField field,
-                                                                NullableLazyValue<PsiMethod> fieldGetter,
-                                                                NullableLazyValue<PsiMethod> fieldSetter) {
+  @Nullable
+  private static PsiAnnotation findAnnotationForField(final Class<?> annotationClass,
+                                                      PsiField field,
+                                                      NullableLazyValue<PsiMethod> fieldGetter,
+                                                      NullableLazyValue<PsiMethod> fieldSetter) {
     PsiAnnotation annotation = PsiUtil.findAnnotation(annotationClass, field);
     if (annotation != null) {
       return annotation;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.ide.DeleteProvider;
@@ -36,6 +36,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import icons.JetgroovyIcons;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -312,7 +313,8 @@ public final class DynamicToolWindowWrapper {
 
     RefactoringListenerManager.getInstance(myProject).addListenerProvider(new RefactoringElementListenerProvider() {
       @Override
-      public @Nullable RefactoringElementListener getListener(final PsiElement element) {
+      @Nullable
+      public RefactoringElementListener getListener(final PsiElement element) {
         if (element instanceof PsiClass) {
           final String qualifiedName = ((PsiClass)element).getQualifiedName();
 
@@ -474,7 +476,8 @@ public final class DynamicToolWindowWrapper {
     myTreeTableModel.nodesWereRemoved(parent, new int[]{idx}, new TreeNode[]{child});
   }
 
-  private @Nullable TreeTableTree getTree() {
+  @Nullable
+  private TreeTableTree getTree() {
     return myTreeTable != null ? myTreeTable.getTree() : null;
   }
 
@@ -623,38 +626,49 @@ public final class DynamicToolWindowWrapper {
     }
   }
 
-  private class MyTreeTable extends TreeTable implements UiDataProvider {
+  private class MyTreeTable extends TreeTable implements DataProvider {
     MyTreeTable(TreeTableModel treeTableModel) {
       super(treeTableModel);
     }
 
     @Override
-    public void uiDataSnapshot(@NotNull DataSink sink) {
-      sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new DeleteProvider() {
-        @Override
-        public @NotNull ActionUpdateThread getActionUpdateThread() {
-          return ActionUpdateThread.EDT;
-        }
+    @Nullable
+    public Object getData(@NotNull @NonNls String dataId) {
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        TreePath path = getTree().getSelectionPath();
+        return path == null ? null : (DataProvider)slowId -> getSlowData(slowId, path);
+      }
+      else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+        return new DeleteProvider() {
+          @Override
+          public @NotNull ActionUpdateThread getActionUpdateThread() {
+            return ActionUpdateThread.EDT;
+          }
 
-        @Override
-        public void deleteElement(@NotNull DataContext dataContext) {
-          deleteRow();
-        }
+          @Override
+          public void deleteElement(@NotNull DataContext dataContext) {
+            deleteRow();
+          }
 
-        @Override
-        public boolean canDeleteElement(@NotNull DataContext dataContext) {
-          return myTreeTable.getTree().getSelectionPaths() != null;
-        }
-      });
-      TreePath path = getTree().getSelectionPath();
-      if (path == null) return;
-      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+          @Override
+          public boolean canDeleteElement(@NotNull DataContext dataContext) {
+            return myTreeTable.getTree().getSelectionPaths() != null;
+          }
+        };
+      }
+
+      return null;
+    }
+
+    private @Nullable Object getSlowData(@NotNull String dataId, @NotNull TreePath path) {
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         return getElementFromPath(path);
-      });
-      sink.lazy(CommonDataKeys.PSI_FILE, () -> {
+      }
+      else if (CommonDataKeys.PSI_FILE.is(dataId)) {
         PsiElement element = getElementFromPath(path);
         return element == null ? null : element.getContainingFile();
-      });
+      }
+      return null;
     }
 
     private @Nullable PsiElement getElementFromPath(@NotNull TreePath path) {
